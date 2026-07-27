@@ -141,6 +141,7 @@ import {
   mergeConversationLists,
   readHomeChatSeedForSpace,
   resolvePendingConversationSelection,
+  resolvePreferredConversationOpenId,
   resolveSpaceChatAutoFocusTarget,
   resolveSpaceChatScope,
   resolveSpaceChatSeedSendOptions,
@@ -187,7 +188,7 @@ export function SpaceVibeyChatPanel({
   const searchParams = useSearchParams()
   const isChannelScope = Boolean(channelContext?.channelId)
   const chatScopeId = channelContext?.channelId ?? spaceId ?? ''
-  const chatScopeStorageId = isChannelScope ? `channel:${chatScopeId}` : chatScopeId
+  const chatScopeStorageId = isChannelScope ? `channel:${chatScopeId}` : chatScopeId || 'general'
   const [mode, setMode] = useState<ChatMode>('chat')
   const presentationCommentsSession = usePresentationCommentsChatStore((s) => s.session)
   const presentationCommentsActive = usePresentationCommentsChatStore((s) => s.commentsChatActive)
@@ -763,6 +764,24 @@ export function SpaceVibeyChatPanel({
           return
         }
 
+        const preferredOpenId = resolvePreferredConversationOpenId({
+          pendingOpenConversationId: useSpacesStore.getState().pendingOpenConversationId,
+          shellDrawerConversationId: shellSidebarChrome
+            ? useShellStore.getState().chatDrawer.conversationId
+            : null,
+        })
+        if (preferredOpenId) {
+          setSelectedConversationId(preferredOpenId)
+          persistActiveConversationId(chatScopeStorageId, preferredOpenId, activeAgentKey)
+          if (useSpacesStore.getState().pendingOpenConversationId) {
+            useSpacesStore.getState().clearPendingOpenConversation()
+          }
+          if (useChatStore.getState().activeConversationId !== preferredOpenId) {
+            void selectConversation(preferredOpenId)
+          }
+          return
+        }
+
         const stored = readStoredAgentConversationId(chatScopeStorageId, activeAgentKey)
         const storedValid = Boolean(
           stored &&
@@ -802,6 +821,7 @@ export function SpaceVibeyChatPanel({
       searchParams,
       spaceId,
       spacesRosterLoaded,
+      shellSidebarChrome,
     ],
   )
 
@@ -815,10 +835,13 @@ export function SpaceVibeyChatPanel({
     const conversation =
       resolvePendingConversationSelection(conversations, conversationId) ??
       resolvePendingConversationSelection(useChatStore.getState().conversations, conversationId)
-    if (!conversation) return
-    setConversations((current) => mergeConversationLists(current, [conversation]))
+    if (conversation) {
+      setConversations((current) => mergeConversationLists(current, [conversation]))
+    }
     clearPendingOpenConversation()
-    const conversationAgentKey = getConversationAgentKey(conversation)
+    const conversationAgentKey = conversation
+      ? getConversationAgentKey(conversation)
+      : activeAgentKey
     setDraftAgentKey(conversationAgentKey)
     setSelectedConversationId(conversationId)
     persistActiveConversationId(chatScopeStorageId, conversationId, conversationAgentKey)
@@ -830,6 +853,7 @@ export function SpaceVibeyChatPanel({
     conversations,
     chatScopeStorageId,
     clearPendingOpenConversation,
+    activeAgentKey,
   ])
 
   // Keep shell drawer conversation id in sync so pen restore reopens this thread.
@@ -874,6 +898,7 @@ export function SpaceVibeyChatPanel({
     if (chatSurface === 'team' && teamOpsContext?.awarenessContext) {
       return teamOpsContext.awarenessContext
     }
+    if (chatSurface !== 'spaces') return ''
     return buildSpaceAwarenessContext({
       activeViewType: scopeMatchesVisibleSpace ? activeView?.type : undefined,
       activeViewName: scopeMatchesVisibleSpace ? activeView?.name : undefined,

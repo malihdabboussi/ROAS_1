@@ -5,6 +5,7 @@ import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatP
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { ResizableDivider } from '@/components/layout/ResizableDivider'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
+import { selectConversation } from '@/features/studio/services/chat.service'
 import { initConversationTitleAutogen } from '@/features/studio/services/conversation-title-scheduler'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cn } from '@/lib/utils/cn'
@@ -70,6 +71,7 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
     if (conversationId) {
       openConversationInSpaceChat(conversationId)
       setActiveConversationId(conversationId)
+      void selectConversation(conversationId)
       return
     }
     // Fresh chat request (pen while open / green New): clear the panel thread.

@@ -17,7 +17,7 @@ This registry is the fast lookup for reusable frontend surfaces in `apps/web`. C
 ## Global Chat Context Contract
 
 - The global chat store owns the context that is actually attached to a conversation. Route changes attach the current Team, Brain, Campaign, or Flows surface; feature containers may then enrich that context with the selected team, Brain scope, Space, or campaign.
-- `GlobalChatComposerFooter` renders the attached context as a removable chip above the composer. Removing the chip resets the chat to General and clears surface-specific awareness data. The adjacent context menu restores or replaces the attachment.
+- `GlobalChatComposerFooter` renders the attached context as a removable chip above the composer. Removing the chip clears surface-specific awareness data but keeps the open conversation (it does not remount to a blank General thread). The adjacent context menu restores or replaces the attachment.
 - Agent recommendations and the chat runtime must read the same attached store context. They must not infer a different context directly from the current URL, because that would make a visually detached context continue influencing the model.
 - Changing surfaces replaces the old context object instead of merging unrelated Team, Brain, Space, campaign, or channel fields into the new surface.
 

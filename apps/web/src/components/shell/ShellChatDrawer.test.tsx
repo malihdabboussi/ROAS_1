@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   openConversationInSpaceChat: vi.fn(),
   setChatRailIntent: vi.fn(),
   setCollapsed: vi.fn(),
+  selectConversation: vi.fn(),
 }))
 
 vi.mock('@/components/global-chat/containers/GlobalChatPanel', () => ({
@@ -33,6 +34,10 @@ vi.mock('@/features/spaces/store/use-spaces-store', () => ({
       openConversationInSpaceChat: mocks.openConversationInSpaceChat,
       setChatRailIntent: mocks.setChatRailIntent,
     }),
+}))
+
+vi.mock('@/features/studio/services/chat.service', () => ({
+  selectConversation: mocks.selectConversation,
 }))
 
 vi.mock('@/features/studio/store/use-chat-store', () => ({
@@ -114,6 +119,7 @@ describe('ShellChatDrawer', () => {
 
     expect(mocks.openConversationInSpaceChat).toHaveBeenCalledWith('conversation-1')
     expect(mocks.setActiveConversationId).toHaveBeenCalledWith('conversation-1')
+    expect(mocks.selectConversation).toHaveBeenCalledWith('conversation-1')
     expect(mocks.setChatRailIntent).not.toHaveBeenCalled()
   })
 

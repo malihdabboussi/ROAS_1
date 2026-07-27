@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react'
 import { backendGet } from '@/lib/api/backend-client'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
-import { QUICK_MISSION_PLAYBOOKS } from '@/lib/spaces'
+import { QUICK_MISSION_PLAYBOOKS } from '@/lib/spaces/quick-missions-catalog'
 import { getSlashTokenAtCursor } from '../../utils/textarea-caret-viewport'
 import type { SlashItem } from './chat-input-slash-menu'
 
@@ -11,6 +11,15 @@ type ChatInputSlashCachedFetch = (
   fetcher: () => Promise<unknown>,
   opts?: { ttlMs?: number },
 ) => Promise<unknown>
+
+const PLAYBOOK_SLASH_ITEMS: SlashItem[] = QUICK_MISSION_PLAYBOOKS.map((playbook) => ({
+  id: `playbook:${playbook.id}`,
+  key: playbook.key,
+  name: playbook.name,
+  description: playbook.description,
+  is_enabled: true,
+  type: 'playbook' as const,
+}))
 
 const defaultSlashDataFetch: ChatInputSlashDataFetch = (path) => backendGet<unknown>(path)
 
@@ -47,8 +56,8 @@ export function useChatInputSlashData({
   const [, setSlashQuery] = useState('')
   const [slashItems, setSlashItems] = useState<SlashItem[]>([])
   const [slashHighlight, setSlashHighlight] = useState(0)
-  const allSlashItemsRef = useRef<SlashItem[]>([])
-  const [allSlashItems, setAllSlashItems] = useState<SlashItem[]>([])
+  const allSlashItemsRef = useRef<SlashItem[]>(PLAYBOOK_SLASH_ITEMS)
+  const [allSlashItems, setAllSlashItems] = useState<SlashItem[]>(PLAYBOOK_SLASH_ITEMS)
 
   const syncSlashMenuFromComposer = useCallback((text: string, cursor: number) => {
     const token = getSlashTokenAtCursor(text, cursor)
@@ -70,6 +79,11 @@ export function useChatInputSlashData({
   }, [])
 
   useEffect(() => {
+    allSlashItemsRef.current = PLAYBOOK_SLASH_ITEMS
+    setAllSlashItems((prev) =>
+      sameSlashItems(prev, PLAYBOOK_SLASH_ITEMS) ? prev : PLAYBOOK_SLASH_ITEMS,
+    )
+
     Promise.allSettled([
       loadCached(
         `agent-workflows:${agentKey}`,
@@ -81,16 +95,7 @@ export function useChatInputSlashData({
         ttlMs: 300_000,
       }),
     ]).then(([workflowsResult, skillsResult]) => {
-      const items: SlashItem[] = [
-        ...QUICK_MISSION_PLAYBOOKS.map((playbook) => ({
-          id: `playbook:${playbook.id}`,
-          key: playbook.key,
-          name: playbook.name,
-          description: playbook.description,
-          is_enabled: true,
-          type: 'playbook' as const,
-        })),
-      ]
+      const items: SlashItem[] = [...PLAYBOOK_SLASH_ITEMS]
       if (skillsResult.status === 'fulfilled') {
         items.push(
           ...asSkillRows(skillsResult.value).map((skill) => ({

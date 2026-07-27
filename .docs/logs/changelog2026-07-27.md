@@ -1,5 +1,15 @@
 # Changelog - July 27, 2026
 
+## [2026-07-27 16:15] - [FIX]
+
+What: Slash playbooks seed before async catalog fetch; space awareness attaches only on `chatSurface === 'spaces'`; conversation hydrate prefers pending/shell drawer ids and keeps the thread when context chip is removed.
+
+Why: Playbook `/` entries were empty until skills/workflows loaded; global chat was injecting space awareness off-spaces; refresh and shell restore could clear the active thread or fail to reopen a pending conversation.
+
+Impact: Playbooks appear immediately in slash menu; detached global context no longer sends space awareness; shell drawer and pending open restore the same conversation without wiping selection on list load.
+
+Files: `use-chat-input-slash-data.ts`, `SpaceVibeyChatPanel.tsx`, `space-vibey-chat-panel.logic.ts`, `ShellChatDrawer.tsx`, `frontend-shared-surfaces.md`
+
 ## [2026-07-27 15:28] - [FEATURE]
 
 What: Redesigned the Home meeting detail modal and enriched agenda `related` payloads with summary, Fathom/recording URL fallback, and follow-up assignee fields so action items split into yours vs others.

@@ -286,3 +286,14 @@ export function resolveSpaceChatAutoFocusTarget(
   if (!viewType) return null
   return { key: `${viewType}:${artifactId}`, viewType }
 }
+
+export function resolvePreferredConversationOpenId(input: {
+  pendingOpenConversationId?: string | null
+  shellDrawerConversationId?: string | null
+}): string | null {
+  const pending = input.pendingOpenConversationId?.trim()
+  if (pending) return pending
+  const drawer = input.shellDrawerConversationId?.trim()
+  if (drawer) return drawer
+  return null
+}

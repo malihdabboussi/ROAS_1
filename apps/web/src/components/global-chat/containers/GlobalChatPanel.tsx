@@ -9,6 +9,7 @@ import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendati
 import { GlobalChatComposerFooter } from '../components/GlobalChatComposerFooter'
 import { QuickMissionsHubHost } from '../components/QuickMissionsHubHost'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
+import { useStickyGlobalChatPanelHost } from './global-chat-panel-host'
 
 export function GlobalChatPanel({
   shellSidebarChrome = false,
@@ -32,36 +33,37 @@ export function GlobalChatPanel({
   const channelRouteMatch = pathname.match(/^\/home\/channels\/([^/]+)/)
   const channelId = channelRouteMatch?.[1] ?? workContext.channelId ?? null
   const isChannelRoute = Boolean(channelId && pathname.startsWith('/home/channels/'))
-  const isSpacesRoute = pathname.startsWith('/spaces')
-  const spaceId = isSpacesRoute
-    ? (workContext.spaceId ?? activeSpaceId ?? undefined)
-    : workContext.surface === 'spaces' && workContext.spaceId
-      ? workContext.spaceId
-      : undefined
-
-  const panelKey = isChannelRoute
-    ? `channel:${channelId}`
-    : spaceId
-      ? `space:${spaceId}:${workContext.campaignId ?? activeSpace?.campaign_id ?? 'personal'}`
-      : `general:${workContext.surface}`
+  const isSpacesRoute = pathname.startsWith('/spaces') || pathname.startsWith('/campaigns')
+  const host = useStickyGlobalChatPanelHost({
+    isChannelRoute,
+    channelId,
+    isSpacesRoute,
+    activeSpaceId,
+    activeSpaceCampaignId: activeSpace?.campaign_id ?? null,
+    workContext,
+  })
+  const spaceId = host.spaceId
+  const awarenessSurface = workContext.surface === 'general' ? 'general' : workContext.surface
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <ChatSurfaceRecommendation />
       <ChatCampaignBrainNudge />
-      {/*
-        Bound height for SpaceVibeyChatPanel: without overflow-hidden + flex column here,
-        the thread spacer can grow the panel past the rail and clip the composer off-screen.
-      */}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <SpaceVibeyChatPanel
-          key={panelKey}
-          chatSurface={workContext.surface}
+          key={host.panelKey}
+          chatSurface={awarenessSurface}
           spaceId={spaceId}
-          campaignId={spaceId ? (workContext.campaignId ?? activeSpace?.campaign_id ?? null) : null}
-          campaignName={isSpacesRoute ? (activeSpace?.title ?? null) : null}
+          campaignId={
+            awarenessSurface === 'spaces'
+              ? (host.campaignId ?? activeSpace?.campaign_id ?? null)
+              : null
+          }
+          campaignName={
+            awarenessSurface === 'spaces' && isSpacesRoute ? (activeSpace?.title ?? null) : null
+          }
           brainContext={
-            workContext.surface === 'brain' && workContext.brainAwarenessContext
+            awarenessSurface === 'brain' && workContext.brainAwarenessContext
               ? {
                   brainId: workContext.brainId ?? null,
                   scopeLabel: workContext.brainScopeLabel ?? 'Brain',
@@ -70,7 +72,7 @@ export function GlobalChatPanel({
               : undefined
           }
           teamOpsContext={
-            workContext.surface === 'team' && workContext.teamOpsAwarenessContext
+            awarenessSurface === 'team' && workContext.teamOpsAwarenessContext
               ? {
                   label: workContext.teamOpsLabel ?? 'Ops Desk',
                   awarenessContext: workContext.teamOpsAwarenessContext,

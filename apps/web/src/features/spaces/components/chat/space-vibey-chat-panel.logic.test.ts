@@ -11,6 +11,7 @@ import {
   messageHasTaskMutation,
   readHomeChatSeedForSpace,
   resolvePendingConversationSelection,
+  resolvePreferredConversationOpenId,
   resolveSpaceChatAutoFocusTarget,
   resolveSpaceChatScope,
   resolveSpaceChatSeedSendOptions,
@@ -191,6 +192,28 @@ describe('space ROAS chat panel logic', () => {
 
     expect(merged.map((item) => item.id)).toEqual(['same', 'older'])
     expect(merged[0]?.title).toBe('Updated')
+  })
+
+  it('prefers pending shell open id over drawer conversation id', () => {
+    expect(
+      resolvePreferredConversationOpenId({
+        pendingOpenConversationId: 'pending-1',
+        shellDrawerConversationId: 'drawer-1',
+      }),
+    ).toBe('pending-1')
+    expect(
+      resolvePreferredConversationOpenId({
+        pendingOpenConversationId: null,
+        shellDrawerConversationId: 'drawer-1',
+      }),
+    ).toBe('drawer-1')
+    expect(
+      resolvePreferredConversationOpenId({
+        pendingOpenConversationId: '  ',
+        shellDrawerConversationId: 'drawer-1',
+      }),
+    ).toBe('drawer-1')
+    expect(resolvePreferredConversationOpenId({})).toBeNull()
   })
 
   it('waits for a pending shell conversation to exist before resolving its agent', () => {
