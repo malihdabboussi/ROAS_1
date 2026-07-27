@@ -1,5 +1,15 @@
 # Changelog - July 27, 2026
 
+## [2026-07-27 15:00] - [FIX]
+
+What: Moved `statusField` `useMemo` above the loading early-return in `HomeSpaceTaskDetailHost` so opening a home task (including meeting prep from agenda) no longer violates Rules of Hooks.
+
+Why: Production crashed with a blank client-side exception when agenda → open meeting → start/open prep mounted the host through loading → ready.
+
+Impact: Home meeting prep and Fathom-related agenda opens load the task detail instead of killing the app shell.
+
+Files: `apps/web/src/features/home/components/HomeTaskDetailHost.tsx`, `HomeTaskDetailHost.test.tsx`
+
 ## [2026-07-27 00:01] - [FIX]
 
 What: Replaced the duplicated, edge-clipped AI capability marquee with a stable responsive capability group, and made selected-agent layouts give the agent profile the work area while the canonical AI Chat is open.
@@ -39,4 +49,14 @@ Why: Holding the logo was lifting the PNG as a page image drag, so users never e
 Impact: Hold on R now owns the gesture: edge targets highlight and a tokenized lifted mark tracks the pointer; short click still opens Home/menu.
 
 Files: `SidebarHqHubLogoButton.tsx`, `ShellMenuDockOverlay.tsx`, `use-shell-menu-dock.ts`, both product `globals.css`, related tests.
+
+## [2026-07-27 15:10] - [FEATURE]
+
+What: Added a persisted HQ menu dock value `work` that mounts the rail on the left edge of the shell work card (Chat | Menu | Work), with seam-aware hold-to-dock targeting and frame-left fallback when the work column cannot host.
+
+Why: Users want the HQ menu attached to the work/Space card beside AI Chat for a true split-screen layout, not only on outer frame edges.
+
+Impact: Hold-R can drop onto the work seam; desktop flyouts from `work` open into the card like `left`. Mobile and collapsed/full-chat cases keep the previous left-rail fallback without clearing the saved preference.
+
+Files: `use-shell-menu-dock.ts`, `ShellSidebarSlot.tsx`, `ShellMenuDockLayout.tsx`, `ShellWorkspace.tsx`, `ShellMenuDockOverlay.tsx`, `SidebarHqHubLogoButton.tsx`, both product `globals.css`, shell docs/tests.
 
