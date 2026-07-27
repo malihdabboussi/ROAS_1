@@ -243,7 +243,7 @@ export function PageGraderClientScopeMapModal({
       )
       onSaved()
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Could not import Page Grader brain'
+      const message = e instanceof Error ? e.message : 'Could not import The ROAS Portal brain'
       setError(message)
       toast.error(message)
     } finally {
@@ -266,7 +266,7 @@ export function PageGraderClientScopeMapModal({
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <DialogPrimitive.Title className="body-2 text-foreground font-semibold">
-                    Map Page Grader clients
+                    Map The ROAS Portal clients
                   </DialogPrimitive.Title>
                   <DialogPrimitive.Description className="body-3 text-muted-foreground">
                     Link portal clients to ROAS campaigns (and optional spaces). Suggested matches
@@ -307,7 +307,7 @@ export function PageGraderClientScopeMapModal({
               ) : error && clients.length === 0 ? (
                 <p className="body-3 text-destructive">{error}</p>
               ) : clients.length === 0 ? (
-                <p className="body-3 text-muted-foreground">No Page Grader clients found.</p>
+                <p className="body-3 text-muted-foreground">No ROAS Portal clients found.</p>
               ) : filteredClients.length === 0 ? (
                 <p className="body-3 text-muted-foreground">No clients match “{query.trim()}”.</p>
               ) : (

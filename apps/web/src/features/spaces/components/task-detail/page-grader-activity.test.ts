@@ -30,7 +30,7 @@ describe('page-grader-activity', () => {
     ).toBeNull()
   })
 
-  it('labels page_grader sync as sent to Page Grader', () => {
-    expect(formatPageGraderFieldChangeLabel(payload)).toBe('sent this to Page Grader')
+  it('uses the public portal name for page_grader sync activity', () => {
+    expect(formatPageGraderFieldChangeLabel(payload)).toBe('sent this to The ROAS Portal')
   })
 })

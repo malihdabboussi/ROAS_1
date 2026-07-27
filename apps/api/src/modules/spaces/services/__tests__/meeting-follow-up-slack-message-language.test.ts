@@ -8,7 +8,7 @@ describe('meeting follow-up Slack message language', () => {
       followUps: [],
     })
 
-    expect(message).toContain('not sent to the ROAS portal yet')
+    expect(message).toContain('not sent to The ROAS Portal yet')
     expect(message).not.toContain('Page Grader')
   })
 })

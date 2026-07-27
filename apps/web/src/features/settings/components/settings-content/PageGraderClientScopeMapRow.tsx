@@ -71,7 +71,7 @@ export function PageGraderClientScopeMapRow({
             className="button-glass-accent inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium disabled:opacity-50"
             title={
               isMapped
-                ? "Import this Page Grader client's intelligence into the mapped ROAS campaign"
+                ? "Import this ROAS Portal client's intelligence into the mapped ROAS campaign"
                 : 'Create a campaign + space named after this client, then import its brain'
             }
           >

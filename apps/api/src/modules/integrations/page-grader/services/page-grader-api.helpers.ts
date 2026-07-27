@@ -107,7 +107,7 @@ export function derivePageGraderMcpUrl(baseUrl: string): string {
   url.pathname = url.pathname.replace(/\/+$/, '').replace(/\/roas-api$/i, '/page-grader-mcp')
   if (!url.pathname.endsWith('/page-grader-mcp')) {
     throw new BadRequestException(
-      'Page Grader API URL must end in /roas-api so its MCP endpoint can be derived',
+      'The ROAS Portal API URL must end in /roas-api so its connection can be configured',
     )
   }
   return url.toString().replace(/\/$/, '')
@@ -159,6 +159,6 @@ export async function getPageGraderCreds(
     vault.getSecret(userId, PAGE_GRADER_PROVIDER, PAGE_GRADER_LABEL_BASE_URL),
     vault.getSecret(userId, PAGE_GRADER_PROVIDER, PAGE_GRADER_LABEL_API_KEY),
   ])
-  if (!baseUrl || !apiKey) throw new BadRequestException('Page Grader is not connected')
+  if (!baseUrl || !apiKey) throw new BadRequestException('The ROAS Portal is not connected')
   return { baseUrl, apiKey }
 }

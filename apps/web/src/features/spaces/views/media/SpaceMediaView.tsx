@@ -1,11 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ChevronRight, MoreVertical } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { HomeChatHeroToggle } from '@/components/home-dashboard-v4/HomeDashboardV4Shell'
 import { MediaGenerateComposer } from '@/components/media'
+import { ConfirmDialog } from '@/components/ui/dialogs/ConfirmDialog'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
-import { ConfirmDialog } from '@/features/settings/components/settings-content/ConfirmDialog'
 import { deleteAsset, type MediaAsset } from '@/lib/services/media-api'
 import { cn } from '@/lib/utils/cn'
 import { MediaMenuDropdown } from '../../components/media-menu/MediaMenuDropdown'
@@ -21,6 +21,8 @@ import type {
   ViewDef,
 } from '../../types/space-schema'
 import { DEFAULT_MEDIA_VIEW_CONFIG, resolveMediaTypeFilters } from '../../types/space-schema'
+import { resolveMediaViewPresentation } from './media-view-presentation'
+import { MediaAssetCard } from './MediaAssetCard'
 import { resolveMediaEmptyState } from './MediaEmptyMockups'
 
 function mediaCardGridClass(layout: MediaLayoutMode, cardSize: MediaPreviewCardSize): string {
@@ -28,22 +30,22 @@ function mediaCardGridClass(layout: MediaLayoutMode, cardSize: MediaPreviewCardS
   if (layout === 'grid') {
     switch (cardSize) {
       case 'small':
-        return 'grid grid-cols-3 gap-spacing-2 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7'
+        return 'grid grid-cols-2 gap-spacing-2 md:grid-cols-4 lg:grid-cols-5'
       case 'compact':
-        return 'grid grid-cols-3 gap-spacing-2 md:grid-cols-4 lg:grid-cols-5'
+        return 'grid grid-cols-2 gap-spacing-2 md:grid-cols-3 lg:grid-cols-4'
       case 'preview':
       default:
-        return 'grid grid-cols-2 gap-spacing-3 md:grid-cols-3 lg:grid-cols-4'
+        return 'grid grid-cols-1 gap-spacing-3 sm:grid-cols-2 lg:grid-cols-3'
     }
   }
   switch (cardSize) {
     case 'small':
-      return 'grid grid-cols-2 gap-spacing-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+      return 'grid grid-cols-2 gap-spacing-2 sm:grid-cols-3 lg:grid-cols-4'
     case 'compact':
-      return 'grid grid-cols-2 gap-spacing-3 sm:grid-cols-3 lg:grid-cols-4'
+      return 'grid grid-cols-1 gap-spacing-3 sm:grid-cols-2 lg:grid-cols-3'
     case 'preview':
     default:
-      return 'grid grid-cols-1 gap-spacing-4 sm:grid-cols-2 lg:grid-cols-3'
+      return 'grid grid-cols-1 gap-spacing-4 sm:grid-cols-2'
   }
 }
 
@@ -106,6 +108,7 @@ export function SpaceMediaView({
   const [collapsedMediaGroups, setCollapsedMediaGroups] = useState<Record<string, boolean>>({})
 
   const emptyState = useMemo(() => resolveMediaEmptyState(typeFilters), [typeFilters])
+  const presentation = useMemo(() => resolveMediaViewPresentation(typeFilters), [typeFilters])
 
   const groupByMode = normalizeMediaGroupBy(mc.group_by)
 
@@ -176,189 +179,124 @@ export function SpaceMediaView({
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       {/* Keep composer outside overflow-hidden so Aspect/Model menus are not clipped.
           Drop below modal stacking while the slide-out editor or task modal is open. */}
-      <div
-        className={cn(
-          'home-dashboard-v4 relative min-w-0 shrink-0 overflow-visible',
-          mediaId || taskModalOpen ? 'z-0' : 'z-10',
-        )}
-      >
-        <div className="home-dashboard-v4-hero-glow" aria-hidden />
-        <div className="home-dashboard-v4-hero-grid" aria-hidden />
-        <div className="home-dashboard-v4-column home-dashboard-v4-column-media-composer min-w-0">
-          {composerCollapsed ? (
-            <HomeChatHeroToggle
-              collapsed
-              onToggle={toggleComposer}
-              expandLabel="New image"
-              expandAriaLabel="Expand new image composer"
-            />
-          ) : (
-            <>
-              <MediaGenerateComposer
-                spaceId={spaceId}
-                campaignId={campaignId}
-                onGenerated={() => {
-                  void reload()
-                }}
-              />
+      {presentation.showImageComposer ? (
+        <div
+          className={cn(
+            'home-dashboard-v4 relative min-w-0 shrink-0 overflow-visible',
+            mediaId || taskModalOpen ? 'z-0' : 'z-10',
+          )}
+        >
+          <div className="home-dashboard-v4-hero-glow" aria-hidden />
+          <div className="home-dashboard-v4-hero-grid" aria-hidden />
+          <div className="home-dashboard-v4-column home-dashboard-v4-column-media-composer min-w-0">
+            {composerCollapsed ? (
               <HomeChatHeroToggle
-                collapsed={false}
+                collapsed
                 onToggle={toggleComposer}
                 expandLabel="New image"
-                collapseLabel="Minimize"
-                collapseAriaLabel="Minimize new image composer"
+                expandAriaLabel="Expand new image composer"
               />
-            </>
-          )}
+            ) : (
+              <>
+                <MediaGenerateComposer
+                  spaceId={spaceId}
+                  campaignId={campaignId}
+                  onGenerated={() => {
+                    void reload()
+                  }}
+                />
+                <HomeChatHeroToggle
+                  collapsed={false}
+                  onToggle={toggleComposer}
+                  expandLabel="New image"
+                  collapseLabel="Minimize"
+                  collapseAriaLabel="Minimize new image composer"
+                />
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-      {loading ? (
-        <div className="py-spacing-12 flex flex-1 items-center justify-center">
-          <VibeyLoadingOrb text="Loading media…" state="processing" size="lg" />
-        </div>
-      ) : error ? (
-        <div className="body-3 text-muted-foreground flex flex-1 items-center justify-center">
-          {error}
-        </div>
-      ) : isEmpty ? (
-        <div className="gap-spacing-6 px-spacing-4 py-spacing-6 flex min-h-0 flex-1 flex-col items-center justify-center text-center">
-          {emptyState.mockup}
-          <div className="space-y-spacing-1 max-w-artifact-wide mx-auto">
-            <p className="title-h6 text-foreground">{emptyState.copy.title}</p>
-            <p className="body-3 text-muted-foreground">{emptyState.copy.description}</p>
+        {loading ? (
+          <div className="py-spacing-12 flex flex-1 items-center justify-center">
+            <VibeyLoadingOrb text="Loading media…" state="processing" size="lg" />
           </div>
-        </div>
-      ) : (
-        <div className="p-spacing-4 min-h-0 flex-1 overflow-y-auto">
-          <div className="mb-spacing-4">
-            <p className="title-h6 text-foreground">Your media</p>
+        ) : error ? (
+          <div className="body-3 text-muted-foreground flex flex-1 items-center justify-center">
+            {error}
           </div>
-          <div className="gap-spacing-10 flex flex-col">
-            {grouped.map((g) => {
-              const showHeader = groupByMode !== 'none' && g.displayLabel !== ''
-              const collapsed = collapsedMediaGroups[g.key] ?? false
+        ) : isEmpty ? (
+          <div className="gap-spacing-6 px-spacing-4 py-spacing-6 flex min-h-0 flex-1 flex-col items-center justify-center text-center">
+            {emptyState.mockup}
+            <div className="space-y-spacing-1 max-w-artifact-wide mx-auto">
+              <p className="title-h6 text-foreground">{emptyState.copy.title}</p>
+              <p className="body-3 text-muted-foreground">{emptyState.copy.description}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="p-spacing-4 min-h-0 flex-1 overflow-y-auto">
+            <div className="mb-spacing-4">
+              <p className="title-h6 text-foreground">{presentation.collectionTitle}</p>
+            </div>
+            <div className="gap-spacing-10 flex flex-col">
+              {grouped.map((g) => {
+                const showHeader = groupByMode !== 'none' && g.displayLabel !== ''
+                const collapsed = collapsedMediaGroups[g.key] ?? false
 
-              return (
-                <div key={g.key}>
-                  {showHeader ? (
-                    <div className="group/header mb-2 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setCollapsedMediaGroups((m) => ({ ...m, [g.key]: !m[g.key] }))
-                        }
-                        className="text-muted-foreground hover:text-foreground shrink-0 rounded p-0.5 transition-colors"
-                        aria-expanded={!collapsed}
-                      >
-                        <ChevronRight
-                          className={cn(
-                            'h-3 w-3 transition-transform duration-150',
-                            collapsed ? '' : 'rotate-90',
-                          )}
-                        />
-                      </button>
-                      <span
-                        className={cn(
-                          'rounded-spacing-2 inline-flex items-center px-2.5 py-0.5 text-xs font-normal uppercase tracking-wider',
-                          groupChip.chipClassName,
-                        )}
-                        style={groupChip.style}
-                      >
-                        {g.displayLabel}
-                      </span>
-                      <span className="body-4 text-muted-foreground">{g.items.length}</span>
-                    </div>
-                  ) : null}
-                  {!collapsed ? (
-                    <div className={gridClass}>
-                      {g.items.map((row) => {
-                        const selected = mediaId === row.id
-                        return (
-                          <div
-                            key={row.id}
-                            role="button"
-                            tabIndex={0}
-                            data-media-card
-                            onClick={() => openRow(row)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault()
-                                openRow(row)
-                              }
-                            }}
-                            onContextMenu={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              openMenuForRow(row, { x: e.clientX, y: e.clientY })
-                            }}
+                return (
+                  <div key={g.key}>
+                    {showHeader ? (
+                      <div className="group/header mb-2 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCollapsedMediaGroups((m) => ({ ...m, [g.key]: !m[g.key] }))
+                          }
+                          className="text-muted-foreground hover:text-foreground shrink-0 rounded p-0.5 transition-colors"
+                          aria-expanded={!collapsed}
+                        >
+                          <ChevronRight
                             className={cn(
-                              'surface-card border-border group text-left transition-colors hover:border-muted-foreground/40',
-                              mc.layout === 'list'
-                                ? 'gap-spacing-3 p-spacing-3 flex flex-row'
-                                : 'rounded-spacing-3 flex flex-col overflow-hidden border p-0',
-                              selected && 'border-primary ring-primary/30 ring-2',
+                              'h-3 w-3 transition-transform duration-150',
+                              collapsed ? '' : 'rotate-90',
                             )}
-                          >
-                            <div
-                              className={`bg-muted/20 relative overflow-hidden ${mc.layout === 'list' ? listThumbClass : 'aspect-video w-full'}`}
-                            >
-                              {row.asset_type === 'video' && row.public_url ? (
-                                <video
-                                  src={row.public_url}
-                                  className="h-full w-full object-cover"
-                                  muted
-                                  playsInline
-                                />
-                              ) : row.public_url ? (
-                                <img
-                                  src={row.public_url}
-                                  alt=""
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="body-4 text-muted-foreground flex h-full items-center justify-center p-2">
-                                  No preview
-                                </div>
-                              )}
-                              <div
-                                className="absolute right-1 top-1 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <button
-                                  type="button"
-                                  className="surface-card rounded-spacing-1 inline-flex p-1"
-                                  aria-label="Asset options"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    const rect = e.currentTarget.getBoundingClientRect()
-                                    openMenuForRow(row, { x: rect.right, y: rect.bottom })
-                                  }}
-                                >
-                                  <MoreVertical className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                            <div
-                              className={
-                                mc.layout === 'list' ? 'min-w-0 flex-1 py-1' : 'p-spacing-3'
-                              }
-                            >
-                              <p className="body-3 truncate font-medium">{row.name}</p>
-                              <p className="body-4 text-muted-foreground">{row.asset_type}</p>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ) : null}
-                </div>
-              )
-            })}
+                          />
+                        </button>
+                        <span
+                          className={cn(
+                            'rounded-spacing-2 inline-flex items-center px-2.5 py-0.5 text-xs font-normal uppercase tracking-wider',
+                            groupChip.chipClassName,
+                          )}
+                          style={groupChip.style}
+                        >
+                          {g.displayLabel}
+                        </span>
+                        <span className="body-4 text-muted-foreground">{g.items.length}</span>
+                      </div>
+                    ) : null}
+                    {!collapsed ? (
+                      <div className={gridClass}>
+                        {g.items.map((row) => (
+                          <MediaAssetCard
+                            key={row.id}
+                            asset={row}
+                            layout={mc.layout ?? 'gallery'}
+                            listThumbClass={listThumbClass}
+                            selected={mediaId === row.id}
+                            onOpen={() => openRow(row)}
+                            onOpenMenu={(position) => openMenuForRow(row, position)}
+                          />
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                )
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
       {menuState ? (
         <MediaMenuDropdown

@@ -1,5 +1,35 @@
 # Changelog - July 26, 2026
 
+## [2026-07-26 18:42] - [FEATURE]
+
+What: Added Videos as a first-class account and campaign artifact category with a dedicated filter, video icon, muted preview, and shared-viewer target.
+
+Why: Generated video assets were grouped under generic Files, making them difficult to discover and impossible to preview from artifact libraries.
+
+Impact: Users can filter and preview video deliverables in both the global Artifacts page and campaign Assets tab without changing upload or playback behavior.
+
+Files: `apps/web/src/lib/artifacts/global-artifacts-contracts.ts`, `apps/web/src/lib/artifacts/global-artifacts-api.ts`, `apps/web/src/features/artifacts/`, `apps/web/src/app/(dashboard)/campaigns/[id]/_components/tabs/CampaignAssetsTab.tsx`, focused tests, and `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-07-26 18:42] - [FIX]
+
+What: Standardized user-facing Page Grader references as **The ROAS Portal** across integration UI, API errors, task handoffs, agent policy, and system-agent skills while retaining internal service and tool identifiers. Added the database migration that updates the production agent policy rows.
+
+Why: The internal Page Grader name was still leaking through customer-visible controls, errors, and agent replies despite the product-facing portal language contract.
+
+Impact: Users now see one consistent product name without changing existing integration routes, credentials, MCP identifiers, or fulfillment behavior.
+
+Files: `apps/web/src/features/brain/`, `apps/web/src/features/settings/`, `apps/web/src/features/spaces/`, `apps/web/src/lib/integrations/integration-catalog.ts`, `apps/api/src/modules/brain/`, `apps/api/src/modules/integrations/page-grader/`, `apps/api/src/modules/spaces/`, `apps/agent-api/src/modules/agent-sync/services/pixel-user-facing-tool-language.test.ts`, `packages/agent-policy/src/platform-tools-template.ts`, `docker/agents/{vibey,atlas}/skills/page-grader-operator/SKILL.md`, `supabase/migrations/20260726233000_roas_portal_public_language.sql`, and `documentation/features/page-grader-mcp-bridge.md`.
+
+## [2026-07-26 18:33] - [STYLE]
+
+What: Consolidated empty-chat agent switching into the centered identity with a hover chevron, retained header switching for established conversations, and restyled Chats and Tasks with an aligned compact heading and list, updated dates, and row dividers.
+
+Why: Empty chats rendered the active agent twice, while the full chat-history page lacked scan-friendly dates, dividers, and alignment.
+
+Impact: New chats have one clear agent control, established chats remain switchable, and the full chat history is denser and easier to scan without changing embedded history sidebars.
+
+Files: `apps/web/src/features/spaces/components/chat/SpaceChatAgentPicker.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatAgentEmptyState.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/components/conversations/SpaceConversationRows.tsx`, `apps/web/src/components/conversations/SpaceConversationSections.tsx`, `apps/web/src/components/conversations/SpaceConversationsList.tsx`, `apps/web/src/features/studio/components/AllChatsPage.tsx`, focused tests, and `documentation/features/claude-chatgpt-shell.md`.
+
 ## [2026-07-26 17:59] - [FIX]
 
 What: Restored compact ChatGPT-style history typography and spacing, removed the always-visible age from the title width, retained timestamps as row tooltips, and made newly created store conversations merge immediately into the active agent's sidebar list.
@@ -371,3 +401,33 @@ Why: The menu only declared a minimum width, so long artifact names expanded it 
 Impact: Page names such as `Campaigns / General` and recent artifact names now share a consistent compact row width, align from the left, and truncate instead of widening the menu.
 
 Files: `apps/web/src/components/shell/ShellWorkAreaControl.tsx` and `apps/web/src/components/shell/ShellWorkAreaControl.test.tsx`.
+
+## [2026-07-26 18:51] - [FIX]
+
+What: Standardized the internal Page Grader integration as “The ROAS Portal” in every user-visible app label, Pixel response rule, Slack recap, task handoff, Brain import message, and integration error. Added a database migration that updates the global Pixel policy and the Vibey/Atlas fulfillment skills while preserving internal tool identifiers.
+
+Why: Page Grader is an internal implementation name that customers and team members do not recognize, and inconsistent portal naming made Pixel and Slack messages sound like they referred to a separate product.
+
+Impact: Users now see and hear one exact product name—The ROAS Portal—while code, logs, MCP routing, and internal operator terminology can continue using Page Grader safely.
+
+Files: `packages/agent-policy/src/platform-tools-template.ts`, `docker/agents/vibey/TOOLS.md`, `docker/agents/{vibey,atlas}/skills/page-grader-operator/SKILL.md`, `apps/agent-api/src/modules/agent-sync/services/pixel-user-facing-tool-language.test.ts`, `apps/api/src/modules/{brain,integrations,spaces}`, `apps/web/src/features/{brain,settings,spaces}`, `apps/web/src/lib/integrations`, `supabase/migrations/20260726233000_roas_portal_public_language.sql`, and `documentation/features/meeting-follow-up-slack.md`.
+
+## [2026-07-26 18:56] - [FEATURE]
+
+What: Rebuilt Inbox interaction as a responsive list/detail workspace with search, mark-all-read, clear-current-view, complete triage controls, native task/mission detail opening, and separate source navigation.
+
+Why: Selecting a notification only expanded a small body block, so task updates did not provide a real details workflow and the single Open action forced users to leave Inbox without distinguishing details from source context.
+
+Impact: Users can review notification context and process the queue in place, open full task, subtask, or mission details without losing Inbox position, and deliberately jump to the originating Space, Mission Control item, DM, invitation, or integration when needed.
+
+Files: `apps/web/src/components/notifications`, `apps/web/src/features/home/containers/HomeInboxWorkspace.tsx`, `apps/web/src/features/home/components/cards/InboxFeedCard.tsx`, `apps/web/src/features/home/lib/home-notification-action.ts`, `apps/web/src/lib/notifications`, `apps/web/src/features/mission-control/types/index.ts`, `apps/web/src/app/(dashboard)/home/inbox/page.tsx`, and `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-07-26 19:09] - [STYLE]
+
+What: Refined the Paid Ads and Media workspaces with clearer empty states, view-specific upload controls, a responsive Paid Ads mode switcher, roomier media grids, and a dedicated accessible media asset card with proper video previews. Video-only views no longer expose the image-generation composer or image upload language.
+
+Why: Ads and video views became cramped beside the app’s chat panels, empty states did not explain the next action, and video workspaces reused image-oriented controls that did not match what the view could actually do.
+
+Impact: Paid Ads remains readable at narrower workspace widths, empty creative and ad-set states give users a direct next step, and image, video, and mixed media views now present the correct title, uploader, preview behavior, and creation controls.
+
+Files: `apps/web/src/features/spaces/components/artifacts/paid-ads/PaidAdsSpaceView.tsx`, `PaidAdsCreativesPane.tsx`, `PaidAdsAdSetsPane.tsx`, `apps/web/src/features/spaces/views/artifacts/paid-ads-toolbar/PaidAdsWorkspaceModeToggle.tsx`, and `apps/web/src/features/spaces/views/media`.

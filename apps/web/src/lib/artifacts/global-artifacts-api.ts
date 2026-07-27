@@ -92,6 +92,7 @@ function mediaType(asset: MediaResult): DeliverableType {
 
 function mediaCategory(asset: MediaResult): GlobalArtifactCategory {
   if (asset.asset_type === 'image') return 'images'
+  if (asset.asset_type === 'video') return 'videos'
   if (isSheetMime(asset.mime_type)) return 'sheets'
   if (asset.asset_type === 'document') return 'docs'
   return 'files'

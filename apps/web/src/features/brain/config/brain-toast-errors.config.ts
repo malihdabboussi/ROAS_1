@@ -80,7 +80,7 @@ export const BRAIN_TOAST_ERRORS = {
     userMessage: "Couldn't activate Agent Brain. Try again.",
   },
   PAGE_GRADER_RESYNC_FAILED: {
-    userMessage: "Couldn't re-sync from Page Grader. Try again.",
+    userMessage: "Couldn't re-sync from The ROAS Portal. Try again.",
   },
 } as const
 
@@ -99,6 +99,6 @@ export const BRAIN_TOAST_SUCCESS = {
     userMessage: 'Agent Brain activated.',
   },
   PAGE_GRADER_RESYNCED: {
-    userMessage: 'Re-synced from Page Grader.',
+    userMessage: 'Re-synced from The ROAS Portal.',
   },
 } as const

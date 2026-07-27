@@ -1,3 +1,47 @@
+## 2026-07-26 - [ARCH] Finish ROAS Portal renames in over-limit Spaces bulk-send files
+
+Status: Open
+Found while: Shipping local ChatGPT agent WIP to main
+Files:
+- `apps/web/src/features/spaces/components/BulkActionBar.tsx` (allowlisted 1145, now 1285)
+- `apps/web/src/features/spaces/components/PageGraderBulkSendPanel.tsx` (686 LOC, cross-feature `@/features/settings` import)
+Evidence: Pre-commit architecture gate blocked the portal-language string pass on these already-oversized files.
+Needed work: Split both files under limits, move the settings modal hook behind a shared `@/lib` or `@/components` surface, then finish "Page Grader" → "The ROAS Portal" copy there.
+Deferred because: Required to unblock the broader WIP deploy; other portal-language surfaces already ship in this commit.
+
+## 2026-07-26 - [ARCH] Page Grader bulk-send surfaces remain over limits
+
+Status: Open
+
+Found while: Standardizing the public **The ROAS Portal** product name
+
+Files:
+
+- `apps/web/src/features/spaces/components/BulkActionBar.tsx` (1,285 LOC)
+- `apps/web/src/features/spaces/components/PageGraderBulkSendPanel.tsx` (686 LOC)
+
+Evidence: Both files were already over the 400-line component limit on `origin/main` (1,287 and 690 LOC respectively). The panel also retains its pre-existing cross-feature `@/features/settings` import. The staged architecture gate reports all three conditions even though this change only replaces user-facing copy and reduces each file's line count.
+
+Needed work: Complete the already-planned BulkActionBar panel extraction, split the bulk-send steps into focused components, and move the settings-modal boundary to a shared domain surface.
+
+Reason not done now: Refactoring two established workflow components is behaviorally separate from the requested WIP integration and public-name correction; focused tests and full web type-check cover the copy-only edits.
+
+## 2026-07-26 - [ARCH] Shared conversation list near component limit
+
+Status: Open
+
+Found while: Adding dated, divided rows to the full Chats and Tasks page
+
+Files:
+
+- `apps/web/src/components/conversations/SpaceConversationsList.tsx` (387 LOC; component limit 400)
+
+Evidence: The shared list remains within the architecture limit, but its paging, grouping, empty state, loading state, and live-store reconciliation leave little room for another behavior change.
+
+Needed work: Extract section/list state and live-store reconciliation into focused hooks or helpers before adding more shared conversation-list behavior.
+
+Reason not done now: The requested Chats and Tasks presentation is complete and the file remains compliant; a behavior-neutral extraction is separate follow-up work.
+
 ## 2026-07-26 - [ARCH] Chat access-context test fixture decomposition
 
 Status: Open
@@ -8808,3 +8852,34 @@ Evidence: The scoped fix adds only the mission-input normalization required at t
 Needed work: Extract mission creation and Space indexing into a focused service while preserving the current handler registry contract.
 
 Reason not done now: A complete service split would broaden the production playbook-routing fix across unrelated mission read, visibility, manager, and indexing paths.
+
+## 2026-07-26 - [ARCH] Inbox triage hook is near the hook LOC threshold
+
+Status: Open
+
+Found while: Adding the ClickUp-style Inbox list/detail workflow and bulk triage actions.
+
+File:
+
+- `apps/web/src/lib/notifications/use-inbox-triage.ts` (237 LOC; hook limit 300, extraction threshold 240)
+
+Evidence: The hook now owns scoped loading, realtime reconciliation, optimistic single-item mutations, and two bulk mutations. It remains below the hard limit but is three lines below the architecture extraction threshold.
+
+Needed work: Extract optimistic state transitions and rollback bookkeeping into a focused notification-triage state helper before adding another triage mutation.
+
+Reason not done now: The current bulk actions reuse the existing state contract and remain covered by focused tests; restructuring all realtime and rollback behavior would broaden this user-facing Inbox pass.
+
+## 2026-07-26 - [ARCH] Global artifact library near component limit
+
+Status: Open
+
+Found while: Adding first-class video filtering and previews
+
+Files:
+- `apps/web/src/features/artifacts/components/GlobalArtifactsPage.tsx` (368 LOC; component limit 400)
+
+Evidence: The component currently owns data loading, search and type filtering, display-mode controls, menus, and both list and card rendering.
+
+Needed work: Extract the artifact row/card preview rendering before adding more artifact types or interactions.
+
+Reason not done now: The requested video category is complete and the file remains compliant; a behavior-neutral extraction is separate work.

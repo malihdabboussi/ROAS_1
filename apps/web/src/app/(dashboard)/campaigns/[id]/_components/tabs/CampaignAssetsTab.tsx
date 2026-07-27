@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
-import { FileText, ImageIcon, Layers3, Presentation, Search, Workflow } from 'lucide-react'
+import { FileText, Film, ImageIcon, Layers3, Presentation, Search, Workflow } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   fetchCampaignArtifacts,
@@ -25,13 +25,16 @@ const FILTERS: Array<{ id: AssetFilter; label: string }> = [
 
 function matchesFilter(category: GlobalArtifactCategory, filter: AssetFilter): boolean {
   if (filter === 'all') return true
-  if (filter === 'media') return category === 'images' || category === 'files'
+  if (filter === 'media') {
+    return category === 'images' || category === 'videos' || category === 'files'
+  }
   return category === filter
 }
 
 function AssetIcon({ category }: { category: GlobalArtifactCategory }) {
   if (category === 'docs') return <FileText className="icon-sm" />
   if (category === 'images' || category === 'files') return <ImageIcon className="icon-sm" />
+  if (category === 'videos') return <Film className="icon-sm" />
   if (category === 'funnels') return <Workflow className="icon-sm" />
   if (category === 'presentations') return <Presentation className="icon-sm" />
   return <Layers3 className="icon-sm" />
@@ -139,6 +142,15 @@ export function CampaignAssetsTab({ campaignId }: { campaignId: string }) {
                     width={640}
                     height={360}
                     unoptimized
+                    className="h-full w-full object-cover"
+                  />
+                ) : item.category === 'videos' && item.viewer.fileUrl ? (
+                  <video
+                    src={item.viewer.fileUrl}
+                    aria-label={`${item.title} preview`}
+                    muted
+                    playsInline
+                    preload="metadata"
                     className="h-full w-full object-cover"
                   />
                 ) : (

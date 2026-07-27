@@ -8,9 +8,11 @@ import { notificationInboxView, notificationMatchesInboxView } from './inbox-vie
 import { INBOX_MESSAGES } from './inbox.config'
 import {
   clearNotification,
+  clearNotificationView,
   fetchInboxTriageCounts,
   fetchNotifications,
   markNotificationRead,
+  markNotificationsReadAll,
   markNotificationUnread,
   moveNotificationBucket,
   snoozeNotification,
@@ -153,6 +155,42 @@ export function useInboxTriage(initialView: InboxView = 'primary') {
     [counts, notifications, type, view],
   )
 
+  const clearCurrentView = useCallback(async () => {
+    if (view === 'all' || view === 'cleared') return
+    const beforeRows = notifications
+    const beforeCounts = counts
+    setNotifications([])
+    setCounts((current) => ({
+      ...current,
+      [view]: 0,
+      cleared: current.cleared + current[view],
+    }))
+    try {
+      await clearNotificationView(view)
+    } catch {
+      setNotifications(beforeRows)
+      setCounts(beforeCounts)
+      toast.error(INBOX_MESSAGES.ERRORS.update)
+    }
+  }, [counts, notifications, view])
+
+  const markAllRead = useCallback(async () => {
+    const beforeRows = notifications
+    const beforeCounts = counts
+    const readAt = new Date().toISOString()
+    setNotifications((current) =>
+      current.map((notification) => ({ ...notification, read_at: notification.read_at ?? readAt })),
+    )
+    setCounts(EMPTY_COUNTS)
+    try {
+      await markNotificationsReadAll()
+    } catch {
+      setNotifications(beforeRows)
+      setCounts(beforeCounts)
+      toast.error(INBOX_MESSAGES.ERRORS.update)
+    }
+  }, [counts, notifications])
+
   return {
     view,
     setView,
@@ -162,6 +200,8 @@ export function useInboxTriage(initialView: InboxView = 'primary') {
     counts,
     loading,
     reload: load,
+    clearCurrentView,
+    markAllRead,
     clear: (notification: UserNotification) =>
       optimistic(notification.id, { cleared_at: new Date().toISOString() }, () =>
         clearNotification(notification.id),

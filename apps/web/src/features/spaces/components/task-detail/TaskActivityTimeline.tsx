@@ -6,10 +6,8 @@ import type { TeamRosterEntry } from '@/lib/team'
 import type { SpaceItemActivity } from '../../services/spaces.service'
 import type { FieldDef } from '../../types/space-schema'
 import { AgentTaskExecutionBlock } from './AgentTaskExecutionBlock'
-import type { SendToAgentInstructionsSeed } from './SendTaskToAgentModal'
-import { TaskActivityAvatar } from './TaskActivityAvatar'
-import { TaskActivityComment } from './TaskActivityComment'
 import { getPageGraderWorkUrlFromActivityPayload } from './page-grader-activity'
+import type { SendToAgentInstructionsSeed } from './SendTaskToAgentModal'
 import {
   formatActivityDetail,
   formatEventLabel,
@@ -21,6 +19,8 @@ import {
   shouldRenderAssigneeActivityPreview,
   TaskActivityAssigneePreview,
 } from './TaskActivityAssigneePreview'
+import { TaskActivityAvatar } from './TaskActivityAvatar'
+import { TaskActivityComment } from './TaskActivityComment'
 import {
   shouldRenderFieldValuePreview,
   TaskActivityFieldValuePreview,
@@ -95,15 +95,15 @@ export function TaskActivityTimeline({
   return (
     <div className="relative min-w-0">
       {!merged.some((e) => e.event_type === 'created') && (
-        <div className="flex min-w-0 gap-spacing-2">
+        <div className="gap-spacing-2 flex min-w-0">
           <div className="relative flex w-6 shrink-0 flex-col items-center">
             <TaskActivityAvatar senderLabel="System" avatarUrl={null} isAgent={false} isSystem />
-            {merged.length > 0 && <div className="w-px flex-1 bg-border" />}
+            {merged.length > 0 && <div className="bg-border w-px flex-1" />}
           </div>
           <div className="pb-spacing-5 min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <div className="gap-spacing-1 flex items-center">
-                <span className="body-3 font-medium text-foreground">System</span>
+                <span className="body-3 text-foreground font-medium">System</span>
                 <span className="body-3 text-muted-foreground">Task created</span>
               </div>
             </div>
@@ -129,7 +129,7 @@ export function TaskActivityTimeline({
             ? getPageGraderWorkUrlFromActivityPayload(entry.payload)
             : null
         return (
-          <div key={entry.id} className="flex min-w-0 gap-spacing-2">
+          <div key={entry.id} className="gap-spacing-2 flex min-w-0">
             <div className="relative flex w-6 shrink-0 flex-col items-center">
               <TaskActivityAvatar
                 senderLabel={meta.senderLabel}
@@ -137,7 +137,7 @@ export function TaskActivityTimeline({
                 isAgent={meta.isAgent}
                 isSystem={meta.isSystem}
               />
-              {!isLast && <div className="w-px flex-1 bg-border" />}
+              {!isLast && <div className="bg-border w-px flex-1" />}
             </div>
 
             <div className="pb-spacing-5 min-w-0 flex-1">
@@ -146,9 +146,7 @@ export function TaskActivityTimeline({
                   entry={entry}
                   displayName={meta.label}
                   onOpenDeliverablePreview={onOpenDeliverablePreview}
-                  onStop={
-                    canEdit && isAgentWorking ? () => void onStopAgent(entry.id) : undefined
-                  }
+                  onStop={canEdit && isAgentWorking ? () => void onStopAgent(entry.id) : undefined}
                   stopping={stoppingAgentActivityId === entry.id}
                 />
               ) : isComment(entry.event_type) ? (
@@ -171,7 +169,7 @@ export function TaskActivityTimeline({
                 <>
                   <div className="flex min-w-0 items-start justify-between gap-2">
                     <div className="gap-spacing-1 flex min-w-0 flex-wrap items-center">
-                      <span className="body-3 min-w-0 break-words font-medium text-foreground">
+                      <span className="body-3 text-foreground min-w-0 break-words font-medium">
                         {meta.label}
                       </span>
                       <span
@@ -179,7 +177,7 @@ export function TaskActivityTimeline({
                           entry.event_type === 'automation_action' &&
                           entry.payload.status === 'failed'
                             ? 'body-3 text-destructive min-w-0 break-words'
-                            : 'body-3 min-w-0 break-words text-muted-foreground'
+                            : 'body-3 text-muted-foreground min-w-0 break-words'
                         }
                       >
                         {formatEventLabel(entry.event_type, entry.payload, roster, allFields)}
@@ -202,7 +200,7 @@ export function TaskActivityTimeline({
                       className="body-3 text-primary mt-spacing-1 inline-flex min-w-0 max-w-full truncate font-medium hover:underline"
                       title={pageGraderUrl}
                     >
-                      Open in Page Grader
+                      Open in The ROAS Portal
                     </a>
                   ) : null}
                   {entry.event_type === 'created' && Array.isArray(entry.payload.attachments) && (

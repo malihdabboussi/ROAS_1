@@ -5,12 +5,14 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Search, Upload } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import { usePresignedUpload } from '@/lib/hooks/use-presigned-upload'
+import { ARTIFACT_SLIDE_PREVIEW_TOOLBAR_MOTION } from '@/lib/ui/toolbar-motion'
 import { GroupByButton } from '../_shared/GroupByButton'
 import { SaveViewSlot } from '../_shared/SaveViewSeparator'
 import { ToolbarShell } from '../_shared/ToolbarShell'
 import { SpaceCustomizeButton } from '../../components/toolbar'
-import { ARTIFACT_SLIDE_PREVIEW_TOOLBAR_MOTION } from '@/lib/ui/toolbar-motion'
+import { resolveMediaTypeFilters } from '../../types/space-schema'
 import type { SpaceToolbarContext } from '../types'
+import { resolveMediaViewPresentation } from './media-view-presentation'
 import { MediaDetailToolbar } from './MediaDetailToolbar'
 import { MediaPreviewCardSizeControl } from './MediaPreviewCardSizeControl'
 import { MediaTypeFilterControl } from './MediaTypeFilterControl'
@@ -30,6 +32,7 @@ export function SpaceMediaToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
   } = ctx
 
   const mc = ctx.mediaViewConfig
+  const presentation = resolveMediaViewPresentation(resolveMediaTypeFilters(mc))
   const hideListToolbar = mediaDetailOpen
 
   const fileRef = useRef<HTMLInputElement>(null)
@@ -160,14 +163,14 @@ export function SpaceMediaToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
                     closeCustomizePanel={closeCustomizePanel}
                     openCustomizeFromToolbar={openCustomizeFromToolbar}
                   />
-                  <Tooltip label="Upload media" side="bottom">
+                  <Tooltip label={presentation.uploadTooltip} side="bottom">
                     <button
                       type="button"
                       onClick={() => fileRef.current?.click()}
                       className="badge-glass badge-glass-green body-3 rounded-spacing-2 inline-flex shrink-0 items-center gap-1.5 px-3 py-2 font-semibold transition-opacity hover:opacity-90"
                     >
                       <Upload className="h-3.5 w-3.5 shrink-0" />
-                      Upload
+                      {presentation.uploadLabel}
                     </button>
                   </Tooltip>
                 </motion.div>
@@ -181,7 +184,7 @@ export function SpaceMediaToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
         type="file"
         multiple
         className="hidden"
-        accept="image/*,video/*"
+        accept={presentation.uploadAccept}
         onChange={(e) => void onFiles(e.target.files)}
       />
     </>

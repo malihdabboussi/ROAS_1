@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-07-24
+**Last Modified:** 2026-07-26
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` uses those same stored drafts, sends account-manager reminders only to people classified Internal and individually set Active, and keeps the client-facing recap in the admin approval thread.
 
@@ -232,7 +232,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - Human teammate work creates a durable human-assigned task. Managed AI-agent work uses agent delegation. Funnel, landing-page, campaign-page, and related fulfillment requests without a named human/agent infer Page Grader and use its connected MCP tool surface; the user does not need to name the integration.
 - Page Grader writes resolve or confirm the client and campaign first. New campaigns and launches reuse known Brain, Space, and Page Grader context, then ask only for genuinely blocking missing details.
 - Pixel may report delegation success only after the selected tool confirms a durable result.
-- In funnel fulfillment, “the portal” means the ROAS portal fulfillment path. Pixel creates a native ROAS platform funnel only when explicitly asked to build it in the ROAS platform funnel builder; a failed portal request stops with a blocker instead of silently becoming a generic task or native funnel.
+- In funnel fulfillment, “the portal” means The ROAS Portal fulfillment path. Pixel creates a native ROAS platform funnel only when explicitly asked to build it in the ROAS platform funnel builder; a failed portal request stops with a blocker instead of silently becoming a generic task or native funnel.
 - Slack-facing failures use Pixel/product-neutral language; the retired Vibey product name is not shown to Slack users.
 
 ## File map (what we built / touched)
@@ -351,7 +351,8 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-22:** Recipient-less findings are Signals, never “Unknown person” conversations. External-subject Signals may create a linked Internal workspace-owner Shadow draft, but Pixel cannot target the external subject. The unified analyzer runs every five minutes from its exact cursor and rejects findings below 80% confidence.
 - **2026-07-23:** Slack does not receive raw Markdown tables. Pixel is instructed to use labeled metric bullets in Slack, and the final Slack formatter deterministically converts any remaining pipe table before delivery.
 - **2026-07-23:** Tagged Slack channels are authoritative client context. Pixel verifies the canonical channel identity before campaign/Brain lookup and fails closed rather than returning another client’s data.
-- **2026-07-23:** “The portal” in funnel fulfillment means the ROAS portal workflow. A failed fulfillment call cannot silently fall back to a generic task, native funnel, substitute owner, or substitute client.
+- **2026-07-23:** “The portal” in funnel fulfillment means The ROAS Portal workflow. A failed fulfillment call cannot silently fall back to a generic task, native funnel, substitute owner, or substitute client.
+- **2026-07-26:** Pixel and every user-visible Slack or portal surface call the internal Page Grader integration “The ROAS Portal.” The internal name remains limited to code, logs, tools, and operator documentation.
 - **2026-07-24:** Provider rate limits receive one delayed retry on the selected model before model fallback. Exhausted retries return a specific Pixel-busy response instead of the generic processing error.
 - **2026-07-24:** A Fathom webhook materializes one canonical Meetings item even when personal and organization automations both match. Equal filters prefer the organization Meetings route; transcript entry count remains segment count, not meeting count.
 

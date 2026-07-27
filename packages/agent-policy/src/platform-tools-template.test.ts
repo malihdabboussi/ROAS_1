@@ -67,11 +67,11 @@ describe('platform tools template', () => {
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Do not route an MCP service through')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('until the tool result confirms the effect')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
-      'In user-facing replies, call Page Grader the "ROAS portal"',
+      'In user-facing replies, call Page Grader "The ROAS Portal"',
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('call the AI platform the "ROAS platform"')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
-      'Never expose MCP, tool names, schemas, idempotency keys, routing, retries',
+      'Never expose the internal name "Page Grader", MCP, tool names, schemas',
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'Do not narrate tool selection or execution between tool calls',
@@ -170,7 +170,7 @@ For unclear, destructive, publish/send, or expensive actions:
     expect(repaired).toContain(
       'Treat an explicit Slack channel mention or channel ID as authoritative',
     )
-    expect(repaired).toContain('call Page Grader the "ROAS portal"')
+    expect(repaired).toContain('call Page Grader "The ROAS Portal"')
     expect(repaired).toContain('Do not narrate tool selection or execution between tool calls')
     expect(repaired).toContain(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING)
     expect(repaired).toContain('Slack does not reliably render Markdown tables')

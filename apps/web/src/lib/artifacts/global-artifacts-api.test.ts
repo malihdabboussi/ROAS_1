@@ -137,6 +137,46 @@ describe('fetchGlobalArtifacts', () => {
     )
   })
 
+  it('keeps videos as a first-class library category with their playable preview URL', async () => {
+    mockedBackendGet.mockImplementation(async (path: string) => {
+      if (path.includes('types=doc') || path.includes('types=artifact')) return { results: [] }
+      if (path.startsWith('/api/media/assets')) {
+        return {
+          assets: [
+            {
+              id: 'video-1',
+              name: 'Launch teaser',
+              original_filename: 'launch-teaser.mp4',
+              asset_type: 'video',
+              public_url: 'https://example.com/launch-teaser.mp4',
+              mime_type: 'video/mp4',
+              source: 'generated',
+              campaign_id: null,
+              created_at: '2026-07-18T12:00:00.000Z',
+            },
+          ],
+          total: 1,
+        }
+      }
+      if (path === '/api/campaigns' || path.startsWith('/api/spaces')) return []
+      throw new Error(`Unexpected path: ${path}`)
+    })
+
+    await expect(fetchGlobalArtifacts('')).resolves.toMatchObject([
+      {
+        id: 'video-1',
+        category: 'videos',
+        badge: 'Video',
+        sourceKind: 'generated',
+        viewer: {
+          type: 'video',
+          fileUrl: 'https://example.com/launch-teaser.mp4',
+          mimeType: 'video/mp4',
+        },
+      },
+    ])
+  })
+
   it('keeps successful artifact sources when one source returns a server error', async () => {
     mockedBackendGet.mockImplementation(async (path: string) => {
       if (path.includes('types=doc')) throw new Error('Internal server error')

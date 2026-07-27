@@ -142,7 +142,8 @@ export function resolveMediaEmptyState(filters: MediaAssetTypePick[]): {
       mockup: <MediaEmptyMockupVideo />,
       copy: {
         title: 'No videos yet',
-        description: 'Upload clips or generate motion — I’ll surface thumbnails and playback here.',
+        description:
+          'Upload clips from the toolbar — I’ll keep them organized with clear previews and playback.',
       },
     }
   }

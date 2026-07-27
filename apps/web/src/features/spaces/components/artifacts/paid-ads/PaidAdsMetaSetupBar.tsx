@@ -117,7 +117,7 @@ export function PaidAdsMetaSetupBar({
       .map((item) => ({
         value: item.id,
         label: item.name,
-        ...(item.id === recommendedId ? { description: 'Recommended by PageGrader' } : {}),
+        ...(item.id === recommendedId ? { description: 'Recommended by The ROAS Portal' } : {}),
       }))
       .sort(
         (left, right) =>
@@ -183,7 +183,7 @@ export function PaidAdsMetaSetupBar({
         <span className="badge-glass badge-glass-orange body-4">Draft mode</span>
         <p className="body-3 text-muted-foreground min-w-0 flex-1">
           {recommendation
-            ? `PageGrader found ${recommendation}. Connect Meta to sync and publish from this workspace.`
+            ? `The ROAS Portal found ${recommendation}. Connect Meta to sync and publish from this workspace.`
             : 'Meta is not connected. Connect it to sync and publish from this workspace.'}
         </p>
         <button

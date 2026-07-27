@@ -44,7 +44,7 @@ export function PaidAdsAdSetsPane({
   const expandedContent =
     sortedSets.length === 0 ? (
       <p className="typo-caption text-muted-foreground px-spacing-2 py-spacing-2">
-        No ad sets yet. Create a campaign in Campaigns view, then add an ad set.
+        No ad sets yet. Add one from the Ads toolbar to start organizing creative.
       </p>
     ) : (
       <div className="space-y-spacing-1">
