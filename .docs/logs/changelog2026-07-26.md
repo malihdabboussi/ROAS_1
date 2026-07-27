@@ -452,3 +452,13 @@ Why: Pre-commit architecture gate blocks staging those already-oversized files f
 Impact: Portal language already shipped in commit `40b0cda9` across other surfaces; bulk-send buttons/toasts stay as a follow-up PR after extraction.
 
 Files: `.docs/plans/agent-follow-up-work.md`.
+
+## [2026-07-26 21:52] - [FIX]
+
+What: Finished architecture-compliant BulkActionBar / PageGrader bulk-send extraction and completed user-facing **The ROAS Portal** wording on those surfaces; removed the BulkActionBar LOC/import allowlist entries.
+
+Why: Pre-commit architecture gates blocked the portal-language pass on over-limit files; extraction was mid-flight and unpushed.
+
+Impact: Spaces bulk actions stay under component limits, portal copy is consistent on send UI/toasts, and PR release tip can include the deferred wording.
+
+Files: `apps/web/src/features/spaces/components/BulkActionBar.tsx`, `PageGraderBulkSendPanel.tsx`, `bulk-action-bar/*`, `page-grader-bulk-send/*`, `scripts/arch/loc-allowlist.json`.

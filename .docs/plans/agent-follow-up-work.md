@@ -1,3 +1,9 @@
+## 2026-07-26 - [ARCH] Bulk-send ROAS Portal wording + extraction (resolved in WIP branch)
+
+Status: Done on `codex/integrate-local-wip-20260726`
+Evidence: `BulkActionBar` split under `bulk-action-bar/` (outer re-export); `PageGraderBulkSendPanel` at 400 LOC with steps under `page-grader-bulk-send/`; allowlist entries for BulkActionBar removed; user-facing copy uses The ROAS Portal.
+Remaining: Optional further step-file polish only if ESLint/style gates flag token usage in DeletePanel/ConvertPanel raw CSS vars.
+
 ## 2026-07-26 - [ARCH] Finish ROAS Portal renames in over-limit Spaces bulk-send files
 
 Status: Open
