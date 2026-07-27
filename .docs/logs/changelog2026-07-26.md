@@ -453,12 +453,29 @@ Impact: Portal language already shipped in commit `40b0cda9` across other surfac
 
 Files: `.docs/plans/agent-follow-up-work.md`.
 
-## [2026-07-26 21:52] - [FIX]
+## [2026-07-26 21:53] - [REFACTOR]
 
-What: Finished architecture-compliant BulkActionBar / PageGrader bulk-send extraction and completed user-facing **The ROAS Portal** wording on those surfaces; removed the BulkActionBar LOC/import allowlist entries.
+What: Split Spaces bulk-action and Page Grader bulk-send panels under LOC limits, moved settings modal import to `@/lib/settings`, and finished user-facing ROAS Portal wording in those surfaces.
+Why: Architecture gates blocked committing the remaining Page Grader → The ROAS Portal public copy.
+Impact: Bulk send UI and toasts say The ROAS Portal; allowlist for BulkActionBar shrinks; internal tool ids unchanged.
+Files: apps/web/src/features/spaces/components/BulkActionBar.tsx, apps/web/src/features/spaces/components/PageGraderBulkSendPanel.tsx, apps/web/src/features/spaces/components/bulk-action-bar/*, apps/web/src/features/spaces/components/page-grader-bulk-send/*, scripts/arch/loc-allowlist.json, .docs/logs/changelog2026-07-26.md, .docs/plans/agent-follow-up-work.md
 
-Why: Pre-commit architecture gates blocked the portal-language pass on over-limit files; extraction was mid-flight and unpushed.
+## [2026-07-26 21:54] - [FIX]
 
-Impact: Spaces bulk actions stay under component limits, portal copy is consistent on send UI/toasts, and PR release tip can include the deferred wording.
+What: Trimmed `PageGraderBulkSendPanel.tsx` back under the 400-line component limit after Prettier re-expanded it during commit.
 
-Files: `apps/web/src/features/spaces/components/BulkActionBar.tsx`, `PageGraderBulkSendPanel.tsx`, `bulk-action-bar/*`, `page-grader-bulk-send/*`, `scripts/arch/loc-allowlist.json`.
+Why: Architecture gate had passed on the pre-format staged file; the committed tip was 401 LOC.
+
+Impact: Keep the release tip architecture-clean for subsequent deploys.
+
+Files: `apps/web/src/features/spaces/components/PageGraderBulkSendPanel.tsx`.
+
+## [2026-07-26 21:55] - [REFACTOR]
+
+What: Consolidated BulkActionBar back to a single client component under limit, replaced page-grader step barrels with focused step files, and kept The ROAS Portal wording.
+
+Why: Concurrent extraction left duplicate entrypoints and mid-rename step modules unpushed.
+
+Impact: Release tip stays architecture-compliant with one BulkActionBar implementation and smaller portal send steps.
+
+Files: `apps/web/src/features/spaces/components/BulkActionBar.tsx`, `bulk-action-bar/*`, `PageGraderBulkSendPanel.tsx`, `page-grader-bulk-send/*`, `scripts/arch/loc-allowlist.json`.

@@ -3,7 +3,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useWorkspaceSettingsModal } from '@/lib/settings'
-import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import {
   collectSelectedTagIds,
   ensurePageGraderTagOption,
@@ -25,47 +24,17 @@ import {
   savePageGraderClientScopeMap,
   type PageGraderClient,
 } from '../services/page-grader-send.service'
-import type { SpaceItem } from '../types'
-import type { FieldDef, SelectOption } from '../types/space-schema'
 import {
   isNotConnectedError,
   stepSubtitle,
-  type PageGraderBulkSendStep,
+  type PageGraderBulkStep,
 } from './page-grader-bulk-send/page-grader-bulk-send-helpers'
-import {
-  PageGraderBulkSendAssigneeStep,
-  PageGraderBulkSendClientStep,
-  PageGraderBulkSendPreviewStep,
-  PageGraderBulkSendTypeStep,
-} from './page-grader-bulk-send/PageGraderBulkSendSteps'
+import { PageGraderBulkAssigneeStep } from './page-grader-bulk-send/PageGraderBulkAssigneeStep'
+import { PageGraderBulkClientStep } from './page-grader-bulk-send/PageGraderBulkClientStep'
+import { PageGraderBulkPreviewStep } from './page-grader-bulk-send/PageGraderBulkPreviewStep'
+import { PageGraderBulkTypeStep } from './page-grader-bulk-send/PageGraderBulkTypeStep'
+import type { PageGraderBulkSendPanelProps } from './page-grader-bulk-send/types'
 
-type Props = {
-  anchorRef: React.RefObject<HTMLButtonElement | null>
-  selectedCount: number
-  selectedItems: SpaceItem[]
-  roster: TeamRosterEntry[]
-  spaceId: string | null
-  campaignId: string | null
-  campaignName: string | null
-  tagsField?: FieldDef
-  attendeesField?: FieldDef
-  onCreateOption?: (fieldId: string, option: SelectOption) => void
-  onClose: () => void
-  onSend: (input: {
-    clientId: string
-    clientName: string
-    taskType: string
-    note: string
-    dueDate: string
-    clientTagId: string
-    clientTagLabel: string
-    assignee: {
-      pageGraderUserId?: string
-      email?: string
-      name?: string
-    } | null
-  }) => Promise<void>
-}
 export function PageGraderBulkSendPanel({
   anchorRef,
   selectedCount,
@@ -79,11 +48,11 @@ export function PageGraderBulkSendPanel({
   onCreateOption,
   onClose,
   onSend,
-}: Props) {
+}: PageGraderBulkSendPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
-  const [step, setStep] = useState<PageGraderBulkSendStep>('client')
+  const [step, setStep] = useState<PageGraderBulkStep>('client')
   const [clients, setClients] = useState<PageGraderClient[]>([])
   const [clientScopeMap, setClientScopeMap] = useState<PageGraderClientScopeMap>({})
   const [loading, setLoading] = useState(true)
@@ -105,12 +74,15 @@ export function PageGraderBulkSendPanel({
   const [rememberCampaign, setRememberCampaign] = useState(true)
   const defaultAppliedRef = useRef(false)
   const assigneeDefaultAppliedRef = useRef(false)
+
   const tagOptions = tagsField?.options ?? []
   const selectedTagIds = useMemo(() => collectSelectedTagIds(selectedItems), [selectedItems])
+
   const hasExistingCampaignMap = useMemo(() => {
     if (!campaignId) return false
     return Object.values(clientScopeMap).some((row) => row.campaign_id === campaignId)
   }, [campaignId, clientScopeMap])
+
   useLayoutEffect(() => {
     if (!anchorRef.current) return
     const width = 320
@@ -124,6 +96,7 @@ export function PageGraderBulkSendPanel({
       left: Math.max(8, Math.min(rawLeft, maxLeft)),
     })
   }, [anchorRef])
+
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const t = e.target as HTMLElement
@@ -139,6 +112,7 @@ export function PageGraderBulkSendPanel({
       document.removeEventListener('keydown', handleKey)
     }
   }, [onClose, anchorRef])
+
   useEffect(() => {
     let cancelled = false
     setLoading(true)
@@ -175,6 +149,7 @@ export function PageGraderBulkSendPanel({
       cancelled = true
     }
   }, [])
+
   useEffect(() => {
     if (step !== 'type') return
     let cancelled = false
@@ -325,72 +300,71 @@ export function PageGraderBulkSendPanel({
       </div>
 
       {step === 'client' ? (
-        <PageGraderBulkSendClientStep
+        <PageGraderBulkClientStep
           query={query}
-          onQueryChange={setQuery}
+          setQuery={setQuery}
           loading={loading}
           needsConnect={needsConnect}
           loadError={loadError}
           clients={clients}
           filteredClients={filteredClients}
           selectedClientId={selectedClientId}
+          setSelectedClientId={setSelectedClientId}
           selectedClient={selectedClient}
-          onSelectClient={setSelectedClientId}
           onClose={onClose}
-          onContinue={() => setStep('type')}
-          onOpenIntegrations={() => {
+          openIntegrations={() => {
             onClose()
             openWorkspaceSettings('integrations', {
               integrationsFocusIntegrationId: 'page_grader',
             })
           }}
+          onContinue={() => setStep('type')}
         />
       ) : null}
 
       {step === 'type' ? (
-        <PageGraderBulkSendTypeStep
-          selectedClientName={selectedClient?.name ?? 'Selected client'}
+        <PageGraderBulkTypeStep
+          selectedClient={selectedClient}
           taskTypesLoading={taskTypesLoading}
           taskTypes={taskTypes}
           selectedTaskTypeId={selectedTaskTypeId}
+          setSelectedTaskTypeId={setSelectedTaskTypeId}
           selectedTaskType={selectedTaskType}
-          onSelectTaskType={setSelectedTaskTypeId}
           onBack={() => setStep('client')}
           onContinue={() => setStep('assignee')}
         />
       ) : null}
 
       {step === 'assignee' ? (
-        <PageGraderBulkSendAssigneeStep
+        <PageGraderBulkAssigneeStep
           assigneeQuery={assigneeQuery}
-          onAssigneeQueryChange={setAssigneeQuery}
+          setAssigneeQuery={setAssigneeQuery}
           assigneesLoading={assigneesLoading}
           filteredAssignees={filteredAssignees}
           selectedAssigneeId={selectedAssigneeId}
+          setSelectedAssigneeId={setSelectedAssigneeId}
           selectedAssignee={selectedAssignee}
-          onSelectAssignee={setSelectedAssigneeId}
           onBack={() => setStep('type')}
           onContinue={() => setStep('preview')}
         />
       ) : null}
 
       {step === 'preview' ? (
-        <PageGraderBulkSendPreviewStep
-          selectedClientName={selectedClient?.name ?? ''}
-          selectedTaskTypeLabel={selectedTaskType?.label ?? ''}
-          selectedAssigneeName={selectedAssignee?.name ?? 'Unassigned'}
+        <PageGraderBulkPreviewStep
+          selectedClient={selectedClient}
+          selectedTaskType={selectedTaskType}
+          selectedAssignee={selectedAssignee}
           previews={previews}
           dueDate={dueDate}
-          onDueDateChange={setDueDate}
+          setDueDate={setDueDate}
           note={note}
-          onNoteChange={setNote}
+          setNote={setNote}
           campaignId={campaignId}
           campaignName={campaignName}
-          rememberCampaign={rememberCampaign}
-          onRememberCampaignChange={setRememberCampaign}
           hasExistingCampaignMap={hasExistingCampaignMap}
+          rememberCampaign={rememberCampaign}
+          setRememberCampaign={setRememberCampaign}
           sending={sending}
-          canSend={Boolean(selectedClient && selectedTaskType)}
           onBack={() => setStep('assignee')}
           onSend={() => void runSend().catch(() => undefined)}
         />
