@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useRef, type ReactNode } from 'react'
+import { ChevronLeft } from 'lucide-react'
 import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatPanel'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
@@ -169,6 +170,15 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
         {hostCollapsedRight ? (
           <div className="shell-menu-dock-collapsed-right" data-shell-menu-dock="work-right">
             <ShellSidebarSlot />
+            <button
+              type="button"
+              onClick={() => setWorkAreaOpen(true)}
+              className="shell-menu-dock-collapsed-right-expand nav-glass-text-purple hover:text-foreground"
+              aria-label="Show page"
+              title="Show page"
+            >
+              <ChevronLeft className="icon-sm" aria-hidden />
+            </button>
           </div>
         ) : null}
 

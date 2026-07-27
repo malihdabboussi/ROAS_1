@@ -4081,7 +4081,17 @@ html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollb
   height: 100%;
   min-height: 0;
   flex: 0 0 auto;
+  flex-direction: column;
   align-items: stretch;
+}
+.shell-menu-dock-collapsed-right-expand {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--spacing-2) 0;
+  border-top: 1px solid var(--color-shell-border, var(--color-border));
 }
 .shell-chat-history-restore {
   display: flex;
@@ -4103,11 +4113,16 @@ html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollb
   align-items: stretch;
 }
 .shell-work-area-body-dock-work > .shell-menu-dock-sidebar,
-.shell-work-area-body-dock-work-right > .shell-menu-dock-sidebar,
-.shell-menu-dock-collapsed-right > .shell-menu-dock-sidebar {
+.shell-work-area-body-dock-work-right > .shell-menu-dock-sidebar {
   flex: 0 0 auto;
   height: 100%;
   min-height: 0;
+}
+.shell-menu-dock-collapsed-right > .shell-menu-dock-sidebar {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
 }
 .shell-work-area-body-dock-work-top > .shell-menu-dock-sidebar,
 .shell-work-area-body-dock-work-bottom > .shell-menu-dock-sidebar {

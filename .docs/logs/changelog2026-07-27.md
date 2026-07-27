@@ -70,3 +70,13 @@ Impact: `pnpm --filter web exec vitest run src/components/shell/use-shell-menu-d
 
 Files: `apps/web/src/components/shell/use-shell-menu-dock.ts`, `ShellMenuDockLayout.tsx`, `ShellWorkspace.tsx`, `ShellChatDrawer.tsx`, `apps/web/src/components/layout/Sidebar.tsx`, `apps/web/src/components/layout/sidebar/{ShellMenuDockOverlay,SidebarHqHubLogoButton,SidebarHqRail,HubDockFlyout}.tsx`, matching tests, both product `globals.css`, `documentation/features/claude-chatgpt-shell.md`.
 
+## [2026-07-27 16:15] - [FIX]
+
+What: Added a bottom expand arrow to the collapsed work-attached rail (`.shell-menu-dock-collapsed-right`, shown when the menu dock is `work`/`work-top`/`work-bottom`/`work-right` and the work card is collapsed). The chevron button sits below the HQ rail inside the thin strip and calls the existing `useShellStore().setWorkAreaOpen(true)` action — the same store action `ShellWorkAreaControl` uses — to restore the work card.
+
+Why: PR #67 follow-up: the thin right collapsed rail previously had no way to re-expand the work card except the top-bar `ShellWorkAreaControl`; a bottom expand affordance on the rail itself was a locked requirement still missing.
+
+Impact: Users can restore the collapsed work card directly from the bottom of the collapsed HQ rail, without hunting for the top-bar control. No new store state — reuses `workAreaOpen`/`setWorkAreaOpen`. Verified History restore remains only in the chat top-left (`ShellChatDrawer`, guarded by `SidebarHqSection.test.tsx`) and R-logo click still toggles menu compact (Option A) in `SidebarHqHubLogoButton.tsx`.
+
+Files: `apps/web/src/components/shell/ShellWorkspace.tsx`, `ShellWorkspace.test.tsx`, both product `globals.css`.
+
