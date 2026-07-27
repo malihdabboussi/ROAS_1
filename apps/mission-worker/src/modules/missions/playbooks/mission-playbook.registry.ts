@@ -21,6 +21,22 @@ import {
   WEBINAR_FULFILLMENT_PLAYBOOK_ID,
 } from './webinar-fulfillment.playbook'
 
+export function resolveMissionPlaybookId(
+  input: Record<string, unknown> | null | undefined,
+): string {
+  if (!input) return ''
+  const kickoff =
+    input.playbook_kickoff &&
+    typeof input.playbook_kickoff === 'object' &&
+    !Array.isArray(input.playbook_kickoff)
+      ? (input.playbook_kickoff as Record<string, unknown>)
+      : {}
+  for (const value of [input.playbook_id, input.playbook, kickoff.playbook_id, kickoff.playbook]) {
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+}
+
 export function expandMissionPlaybook(
   input: MissionPlaybookExpandInput,
 ): MissionPlaybookPlanResult | null {
