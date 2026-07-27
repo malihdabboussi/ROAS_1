@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_MISSION_EXECUTION_LEASE_TIMEOUT_MS,
-  DEFAULT_MISSION_EXECUTION_START_LEASE_TIMEOUT_MS,
   DEFAULT_MISSION_EXECUTION_LEASE_WRITE_MS,
+  DEFAULT_MISSION_EXECUTION_START_LEASE_TIMEOUT_MS,
   isPastMissionExecutionLease,
+  shouldAbortMissionExecutionAfterLeaseFailure,
   shouldWriteMissionExecutionLease,
 } from '../mission-execution-lease'
 
@@ -31,8 +32,12 @@ describe('mission execution lease', () => {
       now - DEFAULT_MISSION_EXECUTION_START_LEASE_TIMEOUT_MS,
     ).toISOString()
 
-    expect(isPastMissionExecutionLease(activeLeaseExpiredAt, now, undefined, 'starting')).toBe(false)
-    expect(isPastMissionExecutionLease(startingLeaseExpiredAt, now, undefined, 'starting')).toBe(true)
+    expect(isPastMissionExecutionLease(activeLeaseExpiredAt, now, undefined, 'starting')).toBe(
+      false,
+    )
+    expect(isPastMissionExecutionLease(startingLeaseExpiredAt, now, undefined, 'starting')).toBe(
+      true,
+    )
   })
 
   it('allows queued work the same startup lease before recovery', () => {
@@ -61,6 +66,23 @@ describe('mission execution lease', () => {
       shouldWriteMissionExecutionLease(
         lastWrite,
         lastWrite + DEFAULT_MISSION_EXECUTION_LEASE_WRITE_MS,
+      ),
+    ).toBe(true)
+  })
+
+  it('tolerates a transient renewal failure inside the active lease window', () => {
+    const lastSuccessfulWrite = 100_000
+
+    expect(
+      shouldAbortMissionExecutionAfterLeaseFailure(
+        lastSuccessfulWrite,
+        lastSuccessfulWrite + DEFAULT_MISSION_EXECUTION_LEASE_TIMEOUT_MS - 1,
+      ),
+    ).toBe(false)
+    expect(
+      shouldAbortMissionExecutionAfterLeaseFailure(
+        lastSuccessfulWrite,
+        lastSuccessfulWrite + DEFAULT_MISSION_EXECUTION_LEASE_TIMEOUT_MS,
       ),
     ).toBe(true)
   })

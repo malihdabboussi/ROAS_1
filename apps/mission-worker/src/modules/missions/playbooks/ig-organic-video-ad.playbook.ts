@@ -9,15 +9,30 @@ export const IG_ORGANIC_VIDEO_AD_PLAYBOOK_ID = 'ig-organic-video-ad'
 export function expandIgOrganicVideoAdPlaybook(
   input: MissionPlaybookExpandInput,
 ): MissionPlaybookPlanResult {
-  const raw =
+  const kickoff =
     input.mission.input?.playbook_kickoff &&
     typeof input.mission.input.playbook_kickoff === 'object'
       ? (input.mission.input.playbook_kickoff as Record<string, unknown>)
-      : {}
-  const sceneIds = Array.isArray(raw.selected_scene_ids)
-    ? raw.selected_scene_ids.filter((item): item is string => typeof item === 'string')
-    : []
-  const count = Math.max(1, sceneIds.length)
+      : null
+  const raw = kickoff ?? input.mission.input ?? {}
+  const rawScenes = Array.isArray(raw.selected_scene_ids)
+    ? raw.selected_scene_ids
+    : Array.isArray(raw.scenes)
+      ? raw.scenes
+      : []
+  const sceneIds = rawScenes.filter(
+    (item): item is string => typeof item === 'string' && item.trim().length > 0,
+  )
+  const requestedCount =
+    typeof raw.output_count === 'number'
+      ? raw.output_count
+      : raw.deliverables &&
+          typeof raw.deliverables === 'object' &&
+          !Array.isArray(raw.deliverables) &&
+          typeof (raw.deliverables as Record<string, unknown>).video_count === 'number'
+        ? Number((raw.deliverables as Record<string, unknown>).video_count)
+        : 0
+  const count = Math.max(1, sceneIds.length, Number.isInteger(requestedCount) ? requestedCount : 0)
   const designer = pickAgent(['designer', 'lux'], input.workerAgentKeys, input.managerKey)
   const scope = JSON.stringify(raw)
   const hasPreapprovedCopy = raw.copy_mode === 'use_my_copy' && raw.copy_approved === true

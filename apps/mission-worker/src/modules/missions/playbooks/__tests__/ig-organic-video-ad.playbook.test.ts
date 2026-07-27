@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { IG_ORGANIC_VIDEO_AD_PLAYBOOK_ID } from '../ig-organic-video-ad.playbook'
-import { expandMissionPlaybook } from '../mission-playbook.registry'
+import { expandMissionPlaybook, resolveMissionPlaybookId } from '../mission-playbook.registry'
 
 describe('ig-organic-video-ad playbook', () => {
   it('registers the existing video production launcher as an executable designer playbook', () => {
@@ -72,5 +72,46 @@ describe('ig-organic-video-ad playbook', () => {
     expect(plan?.subtasks[0]?.intent.ecology).toMatch(
       /copy_approved.*proceed without another copy confirmation/i,
     )
+  })
+
+  it('routes and expands the top-level playbook payload used by Chat missions', () => {
+    const input = {
+      playbook: IG_ORGANIC_VIDEO_AD_PLAYBOOK_ID,
+      scenes: ['golden-hour pool', 'luxury car step-out'],
+      output_count: 2,
+      copy_mode: 'use_my_copy',
+      copy_approved: true,
+    }
+
+    expect(resolveMissionPlaybookId(input)).toBe(IG_ORGANIC_VIDEO_AD_PLAYBOOK_ID)
+    const plan = expandMissionPlaybook({
+      playbookId: resolveMissionPlaybookId(input),
+      mission: {
+        id: 'mission-chat',
+        title: 'Chat-created IG Stories',
+        user_id: 'user-1',
+        input,
+      },
+      workerAgentKeys: ['lux'],
+      managerKey: 'vibey',
+    })
+
+    expect(plan?.subtasks[0]?.outputContract).toMatchObject({
+      artifact_kind: 'media_artifact',
+      required_action: 'process_media',
+      required_artifact_type: 'video',
+      expected: {
+        exact_count: 2,
+        selected_scene_ids: ['golden-hour pool', 'luxury car step-out'],
+      },
+    })
+  })
+
+  it('resolves a playbook declared inside playbook_kickoff', () => {
+    expect(
+      resolveMissionPlaybookId({
+        playbook_kickoff: { playbook: IG_ORGANIC_VIDEO_AD_PLAYBOOK_ID },
+      }),
+    ).toBe(IG_ORGANIC_VIDEO_AD_PLAYBOOK_ID)
   })
 })

@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { Job } from 'bullmq'
 import { DatabaseService } from '../../../../lib/services/database.service'
-import { expandMissionPlaybook } from '../../playbooks/mission-playbook.registry'
+import {
+  expandMissionPlaybook,
+  resolveMissionPlaybookId,
+} from '../../playbooks/mission-playbook.registry'
 import type { MissionJobData, MissionJobResult, MissionStatus } from '../../types'
 import { MissionOpenclawGateway } from '../gateways/mission-openclaw.gateway'
 import { MissionAgentStateService } from '../persistence/mission-agent-state.service'
@@ -62,10 +65,7 @@ export class MissionPlanPhaseService {
         mission.input && typeof mission.input === 'object' && !Array.isArray(mission.input)
           ? (mission.input as Record<string, unknown>)
           : {}
-      const playbookIdEarly =
-        typeof missionInputEarly.playbook_id === 'string'
-          ? missionInputEarly.playbook_id.trim()
-          : ''
+      const playbookIdEarly = resolveMissionPlaybookId(missionInputEarly)
 
       if (
         [
@@ -168,8 +168,7 @@ export class MissionPlanPhaseService {
         mission.input && typeof mission.input === 'object' && !Array.isArray(mission.input)
           ? (mission.input as Record<string, unknown>)
           : {}
-      const playbookId =
-        typeof missionInput.playbook_id === 'string' ? missionInput.playbook_id.trim() : ''
+      const playbookId = resolveMissionPlaybookId(missionInput)
 
       let rawPlanResult: Record<string, unknown>
       if (playbookId) {

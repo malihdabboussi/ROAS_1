@@ -8760,3 +8760,19 @@ Evidence: These pre-existing channel components are at or above the 300-line com
 Needed work: Split channel membership confirmation, composer orchestration, and thread rendering into focused hooks/components while retaining the current public component contracts.
 
 Reason not done now: A full channel UI decomposition would materially broaden the requested mention-routing and picker fix across unrelated messages, deliverables, threads, uploads, and brainstorm behavior.
+## 2026-07-26 - [ARCH] Mission execution and gateway services remain oversized
+
+Status: Open
+
+Found while: Fixing Chat playbook routing, media-contract consistency, and transient mission lease renewal.
+
+Files:
+
+- `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts` (2,235 LOC; over the 600-line service limit)
+- `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw.gateway.ts` (2,516 LOC; over the 600-line service limit)
+
+Evidence: The scoped fix adds only the lease-grace decision at the existing stream heartbeat and extends the existing planner output-contract prompt. Both files still combine many pre-existing orchestration responsibilities. The new playbook resolver, contract consistency guard, and lease predicate remain in focused files of 58, 240, and 68 LOC.
+
+Needed work: Extract subtask stream checkpoint/lease handling from the execute phase and split planner prompt construction from runtime dispatch in the gateway while preserving the current callback contracts.
+
+Reason not done now: Decomposing the complete mission execution and gateway surfaces would broaden a production acceptance fix across unrelated planning, brain routing, tool streaming, review, and trace behavior.

@@ -105,6 +105,17 @@ export function normalizeOutputContract(value: unknown): MissionOutputContract |
   }
 }
 
+export function getOutputContractConsistencyError(contract: MissionOutputContract): string | null {
+  if (contract.required_action !== 'process_media') return null
+  if (contract.artifact_kind !== 'media_artifact') {
+    return 'Action "process_media" requires artifact_kind "media_artifact".'
+  }
+  if (!['image', 'video', 'file'].includes(contract.required_artifact_type)) {
+    return 'Action "process_media" requires required_artifact_type "image", "video", or "file".'
+  }
+  return null
+}
+
 export function prepareExecutionStateForContractCorrection(
   executionState: unknown,
   requiredAction: string,

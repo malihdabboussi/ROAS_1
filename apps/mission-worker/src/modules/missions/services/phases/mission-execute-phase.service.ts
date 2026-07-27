@@ -22,7 +22,10 @@ import {
 } from '../gateways/mission-openclaw-errors'
 import { MissionOpenclawGateway } from '../gateways/mission-openclaw.gateway'
 import { MissionExecBroadcastService } from '../mission-exec-broadcast.service'
-import { shouldWriteMissionExecutionLease } from '../mission-execution-lease'
+import {
+  shouldAbortMissionExecutionAfterLeaseFailure,
+  shouldWriteMissionExecutionLease,
+} from '../mission-execution-lease'
 import { MissionDeliverablesRepository } from '../persistence/mission-deliverables.repository'
 import type {
   MissionContractVerificationResult,
@@ -38,6 +41,7 @@ import {
   CONTRACT_ACTION_DOMAINS,
   evaluateSubtaskOutputAlignment,
   extractToolDeliverableReceipt,
+  getOutputContractConsistencyError,
   normalizeOutputContract,
   prepareExecutionStateForContractCorrection,
   resolveMissionStatusWhileSubtaskRuns,
@@ -244,6 +248,19 @@ export class MissionExecutePhaseService {
       'vibey') as AgentKey
     const preflightContract = normalizeOutputContract(subtask.output_contract)
     if (preflightContract) {
+      const consistencyError = getOutputContractConsistencyError(preflightContract)
+      if (consistencyError) {
+        return await this.handleContractPreflightFailure(
+          supabase,
+          mission,
+          missionId,
+          subtask,
+          String(subtaskId),
+          assignedAgent,
+          preflightContract,
+          consistencyError,
+        )
+      }
       const preflight = await this.preflightContractAction(
         supabase,
         mission,
@@ -428,6 +445,13 @@ export class MissionExecutePhaseService {
                 .eq('mission_id', missionId)
                 .maybeSingle()
           if (currentResult.error) {
+            const failureAtMs = Date.now()
+            if (!shouldAbortMissionExecutionAfterLeaseFailure(lastLeaseWriteAt, failureAtMs)) {
+              this.logger.warn(
+                `[mission_execution_lease_transient] mission_id=${missionId} subtask_id=${subtaskId} elapsed_ms=${failureAtMs - lastLeaseWriteAt} error=${currentResult.error.message}`,
+              )
+              return
+            }
             throw new Error(
               `Failed to renew subtask execution lease: ${currentResult.error.message}`,
             )

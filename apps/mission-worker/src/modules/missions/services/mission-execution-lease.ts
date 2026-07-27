@@ -58,3 +58,11 @@ export function shouldWriteMissionExecutionLease(
 ): boolean {
   return nowMs - lastWriteMs >= writeIntervalMs
 }
+
+export function shouldAbortMissionExecutionAfterLeaseFailure(
+  lastSuccessfulWriteMs: number,
+  nowMs = Date.now(),
+  leaseTimeoutMs = getMissionExecutionLeaseTimeoutMs(),
+): boolean {
+  return nowMs - lastSuccessfulWriteMs >= leaseTimeoutMs
+}
