@@ -70,3 +70,23 @@ Impact: Hold-R can drop onto the work seam; desktop flyouts from `work` open int
 
 Files: `use-shell-menu-dock.ts`, `ShellSidebarSlot.tsx`, `ShellMenuDockLayout.tsx`, `ShellWorkspace.tsx`, `ShellMenuDockOverlay.tsx`, `SidebarHqHubLogoButton.tsx`, both product `globals.css`, shell docs/tests.
 
+## [2026-07-27 16:10] - [FEATURE]
+
+What: Finished the five-zone HQ menu dock redesign — replaced the four frame edges (`left`/`right`/`top`/`bottom`) plus `work` with five homes that are never over AI Chat: frame `left`, `work`, `work-top`, `work-bottom`, `work-right` (legacy values auto-migrate). R logo click now toggles the rail between expanded and **compact** (Option A) in place instead of navigating Home; Home moved to the dedicated Home rail icon. Dragging the expanded rail lifts the whole menu, dragging compact lifts only the R chip. Removed the leftover chat-history "Show chat history" restore peek from the HQ rail (`SidebarHqRail.tsx`) so it only exists inside `ShellChatDrawer`, pinned top-left of the chat surface. Work-attached docks now ride with a collapsing work card as a thin right vertical rail instead of disappearing, and `work-top` / `work-bottom` are horizontally centered on the work card instead of spanning over chat.
+
+Why: Continuing prior WIP (`unrelated-wip-before-menu-dock-v2` branch work) per user-confirmed Option A for R-click behavior; the four-frame model let docks compete with Chat for edges and mixed chat-history restore with menu docking in the same corner.
+
+Impact: `pnpm --filter web exec vitest run src/components/shell/use-shell-menu-dock.test.ts src/components/shell/ShellMenuDockLayout.test.tsx src/components/layout/sidebar/SidebarHqHubLogoButton.test.tsx src/components/shell/ShellChatDrawer.test.tsx src/components/layout/sidebar/SidebarHqSection.test.tsx` is green (23/23), and the full `src/components/shell` + `src/components/layout/sidebar` suite is green (124/124). Purple drop targets are kept for manual QA of all five homes.
+
+Files: `apps/web/src/components/shell/use-shell-menu-dock.ts`, `ShellMenuDockLayout.tsx`, `ShellWorkspace.tsx`, `ShellChatDrawer.tsx`, `apps/web/src/components/layout/Sidebar.tsx`, `apps/web/src/components/layout/sidebar/{ShellMenuDockOverlay,SidebarHqHubLogoButton,SidebarHqRail,HubDockFlyout}.tsx`, matching tests, both product `globals.css`, `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-07-27 16:15] - [FIX]
+
+What: Added a bottom expand arrow to the collapsed work-attached rail (`.shell-menu-dock-collapsed-right`, shown when the menu dock is `work`/`work-top`/`work-bottom`/`work-right` and the work card is collapsed). The chevron button sits below the HQ rail inside the thin strip and calls the existing `useShellStore().setWorkAreaOpen(true)` action — the same store action `ShellWorkAreaControl` uses — to restore the work card.
+
+Why: PR #67 follow-up: the thin right collapsed rail previously had no way to re-expand the work card except the top-bar `ShellWorkAreaControl`; a bottom expand affordance on the rail itself was a locked requirement still missing.
+
+Impact: Users can restore the collapsed work card directly from the bottom of the collapsed HQ rail, without hunting for the top-bar control. No new store state — reuses `workAreaOpen`/`setWorkAreaOpen`. Verified History restore remains only in the chat top-left (`ShellChatDrawer`, guarded by `SidebarHqSection.test.tsx`) and R-logo click still toggles menu compact (Option A) in `SidebarHqHubLogoButton.tsx`.
+
+Files: `apps/web/src/components/shell/ShellWorkspace.tsx`, `ShellWorkspace.test.tsx`, both product `globals.css`.
+

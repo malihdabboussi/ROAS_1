@@ -312,7 +312,7 @@ describe('SidebarHqSection', () => {
     expect(useShellStore.getState().sidebarFlyoutCloseEpoch).toBe(closeEpochBeforeClick)
   })
 
-  it('peeks the chat-history restore control from the R sidebar when history is collapsed', () => {
+  it('does not peek chat-history restore from the HQ rail', () => {
     useShellStore.setState({
       chatDrawer: { open: true, conversationId: null, width: 420, minimized: false },
       chatHistoryCollapsed: true,
@@ -324,15 +324,6 @@ describe('SidebarHqSection', () => {
 
     render(<SidebarHqSection c={controller} />)
 
-    const restoreHistory = screen.getByRole('button', { name: 'Show chat history' })
-    expect(restoreHistory).toHaveClass(
-      'absolute',
-      'right-0',
-      'translate-x-full',
-      'nav-glass-text-purple',
-    )
-    expect(restoreHistory).not.toHaveClass('btn-icon-bare-sm', 'nav-glass-selected-purple')
-    fireEvent.click(restoreHistory)
-    expect(useShellStore.getState().chatHistoryCollapsed).toBe(false)
+    expect(screen.queryByRole('button', { name: 'Show chat history' })).toBeNull()
   })
 })
