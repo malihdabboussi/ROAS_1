@@ -1100,9 +1100,9 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   create_mission: {
     section: 'Missions',
     description:
-      'Creates a mission. User sees: mission card in Mission Control. When: delegating work to team agents or tracking a multi-step objective. Fields: title (required), brief, description, priority (low/medium/high/urgent), campaign_id, assigned_agent_key, input (arbitrary context object), idempotency_key, parent_mission_id.',
+      'Creates a mission. User sees: mission card in Mission Control. When: delegating work to team agents or tracking a multi-step objective. Fields: title (required), brief, description, priority (low/medium/high/urgent), campaign_id, assigned_agent_key, playbook_id, input (arbitrary context object), idempotency_key, parent_mission_id. When the user names a playbook, always pass its id in playbook_id; put playbook-specific kickoff values under input.playbook_kickoff.',
     parameters:
-      '```json\n{"action":"create_mission","label":"Creating mission brief","data":{"title":"InbarMD Blog — Viral Peptides Article","brief":"1,500-word blog post on viral peptide topics","priority":"medium","campaign_id":"UUID"}}\n```\n\nMinimal:\n```json\n{"action":"create_mission","label":"Creating mission","data":{"title":"Mission title"}}\n```',
+      '```json\n{"action":"create_mission","label":"Creating mission brief","data":{"title":"IG Organic Story Ad","brief":"Render one approved story ad","priority":"medium","campaign_id":"UUID","playbook_id":"ig-organic-video-ad","input":{"playbook_kickoff":{"output_count":1}}}}\n```\n\nMinimal:\n```json\n{"action":"create_mission","label":"Creating mission","data":{"title":"Mission title"}}\n```',
   },
   list_missions: {
     section: 'Missions',

@@ -2170,6 +2170,18 @@ describe('validateActionData', () => {
     it('validates mission and document contracts', async () => {
       expect(validateActionData('create_mission', {})).toMatch(/title.*required/i)
       expect(validateActionData('create_mission', { title: 'Draft the launch brief' })).toBeNull()
+      expect(
+        validateActionData('create_mission', {
+          title: 'Render the approved story ad',
+          playbook_id: 'ig-organic-video-ad',
+        }),
+      ).toBeNull()
+      expect(describeActionContract('create_mission')).toMatchObject({
+        optional: expect.arrayContaining(['playbook_id']),
+        descriptions: expect.objectContaining({
+          playbook_id: expect.stringContaining('playbook'),
+        }),
+      })
       expect(validateActionData('list_missions', { limit: 10 })).toBeNull()
       expect(
         validateActionData('compile_webinar_launch_bible', { mission_id: 'mission-1' }),

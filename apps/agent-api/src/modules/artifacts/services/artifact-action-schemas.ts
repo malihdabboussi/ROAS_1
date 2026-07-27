@@ -2496,6 +2496,7 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       'description',
       'priority',
       'assigned_agent_key',
+      'playbook_id',
       'input',
       'idempotency_key',
       'parent_mission_id',
@@ -2509,14 +2510,31 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       description: 'string',
       priority: 'string',
       assigned_agent_key: 'string',
+      playbook_id: 'string',
+      input: 'object',
       idempotency_key: 'string',
       parent_mission_id: 'string',
       campaign_id: 'string',
       space_id: 'string',
       source_space_item_id: 'string',
     },
+    descriptions: {
+      playbook_id:
+        'Canonical mission playbook id. When the user names a playbook, pass it here instead of only mentioning it in the brief.',
+      input:
+        'Additional mission context. Playbook kickoff fields belong under input.playbook_kickoff.',
+    },
     useWhen: ['Create a mission for Vibey to execute or track.'],
-    examples: [{ intent: 'create a campaign mission', data: { title: 'Draft the launch brief' } }],
+    examples: [
+      {
+        intent: 'create a campaign mission from a named playbook',
+        data: {
+          title: 'Render the approved story ad',
+          playbook_id: 'ig-organic-video-ad',
+          input: { playbook_kickoff: { output_count: 1 } },
+        },
+      },
+    ],
   },
   list_missions: {
     required: [],
