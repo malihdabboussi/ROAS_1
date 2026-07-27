@@ -9,6 +9,7 @@ import type { MissionSendOptions } from '../cells/MissionSendDropdown'
 import { TaskCursorStatusCard } from './TaskCursorStatusCard'
 import { TaskDescription } from './TaskDescription'
 import { TaskMetaFields } from './TaskMetaFields'
+import { SpeakerRemapPanel } from './SpeakerRemapPanel'
 import { TaskSubtasks } from './TaskSubtasks'
 import { TaskTitleInput } from './TaskTitleInput'
 
@@ -104,6 +105,27 @@ export function TaskDetailMainPanel({
             onDeleteOption={onDeleteOption}
             onTagCustomSwatchesChange={onTagCustomSwatchesChange}
             onPushToAgent={onPushToAgent}
+          />
+
+          <SpeakerRemapPanel
+            item={item}
+            spaceId={item.space_id}
+            personOptions={[
+              ...roster
+                .filter((entry) => entry.kind === 'human')
+                .map((entry) => ({
+                  label: String(entry.display_name ?? '').trim(),
+                  email: entry.email ?? null,
+                }))
+                .filter((p) => p.label),
+              ...((allFields.find((f) => f.id === 'attendees')?.options ?? [])
+                .map((opt) => ({
+                  label: String(opt.label ?? '').trim(),
+                  email: null as string | null,
+                }))
+                .filter((p) => p.label) as Array<{ label: string; email: string | null }>),
+            ]}
+            onRemapped={(updated) => onUpdateField(updated)}
           />
 
           <div className="mt-spacing-4 border-border mr-2 border-b" />

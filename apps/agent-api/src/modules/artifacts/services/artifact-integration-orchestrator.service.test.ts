@@ -82,6 +82,61 @@ describe('ArtifactIntegrationOrchestratorService connection repair', () => {
     )
   })
 
+  it('auto-uses personal Fathom in org scope so agents can pull transcripts', async () => {
+    const service = new ArtifactIntegrationOrchestratorService()
+    const host = {
+      serviceClient: {},
+      resolveAgentDomain: vi.fn(async () => null),
+      resolveUserId: vi.fn(() => 'user-1'),
+      resolveOrgId: vi.fn(() => 'org-1'),
+      getUserClient: vi.fn(async () => ({})),
+      isMissionSessionKey: vi.fn(() => false),
+      integrationsRepository: {
+        listDetailedCapabilities: vi.fn(async () => ({
+          data: [
+            {
+              action_slug: 'get_transcript',
+              execution_mode: 'legacy',
+              display_name: 'Get Meeting Transcript',
+              description: 'Pull transcript.',
+              parameters: { recordingId: { type: 'string' } },
+            },
+          ],
+          error: null,
+        })),
+        listIntegrationStatusRows: vi.fn(async () => ({
+          data: [
+            {
+              id: 'fathom-personal',
+              user_id: 'user-1',
+              status: 'connected',
+              agent_enabled: true,
+              scope_mode: 'personal',
+              metadata: { email: 'dylan@dylanvanas.com' },
+            },
+          ],
+          error: null,
+        })),
+      },
+    }
+
+    const result = (await service.getIntegration(
+      host,
+      { service: 'fathom' },
+      'session',
+    )) as Record<string, any>
+
+    expect(result.connected).toBe(true)
+    expect(result.status).toBe('connected')
+    expect(result.selected_connection_id).toBe('fathom-personal')
+    expect(result.selected_scope).toBe('personal')
+    expect(result.connection_resolution).toMatchObject({
+      status: 'personal_cross_context',
+      selected_connection_id: 'fathom-personal',
+    })
+    expect(result.repair).toBeUndefined()
+  })
+
   it('repairs stale connected rows when Composio reports the account expired', async () => {
     const service = new ArtifactIntegrationOrchestratorService()
     const updateComposioIntegrationRow = vi.fn(async () => ({ error: null }))

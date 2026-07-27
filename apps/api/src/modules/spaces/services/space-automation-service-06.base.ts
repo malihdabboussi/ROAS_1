@@ -402,6 +402,8 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
         recordedByEmail: meeting.recordedByEmail,
         attendees: meeting.attendees as FathomAttendeeLike[],
         attendeeLabels: resolvedAttendees.labels,
+        titleHint: meeting.title,
+        summary: meeting.summary,
       })
       const { optionIds, nextSchema, optionsChanged } = upsertAttendeeTagOptions(
         this.objectRecord(space?.schema),
@@ -453,6 +455,12 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
             ...(meeting.callDate ? { call_date: meeting.callDate } : {}),
             ...(meeting.url ? { recording_url: meeting.url, fathom_url: meeting.url } : {}),
             ...(optionIds.length > 0 ? { attendees: optionIds } : {}),
+            ...(Object.keys(resolvedAttendees.speakerRemaps).length > 0
+              ? { speaker_remaps: resolvedAttendees.speakerRemaps }
+              : {}),
+            ...(resolvedAttendees.unresolvedSpeakers.length > 0
+              ? { unresolved_speakers: resolvedAttendees.unresolvedSpeakers }
+              : {}),
             external_automation: {
               provider: 'fathom',
               trigger_slug: 'FATHOM_RECORDING_READY',

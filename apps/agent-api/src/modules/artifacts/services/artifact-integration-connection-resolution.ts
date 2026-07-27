@@ -5,6 +5,29 @@ function isConnectedAgentUsable(row: Record<string, unknown>, isMission: boolean
   )
 }
 
+/**
+ * Personal integrations that remain usable inside an org workspace without a
+ * separate Share-with-org flip (mirrors api personal-cross-context-providers).
+ * Agent may auto-select these for pull/read instead of "not connected".
+ */
+const PERSONAL_CROSS_CONTEXT_AUTO_USE = new Set([
+  'fathom',
+  'fireflies',
+  'page_grader',
+  'openai_codex',
+  'anthropic_claude',
+  'google_calendar',
+  'outlook',
+])
+
+export function isPersonalCrossContextAutoUse(service: string): boolean {
+  return PERSONAL_CROSS_CONTEXT_AUTO_USE.has(
+    String(service ?? '')
+      .trim()
+      .toLowerCase(),
+  )
+}
+
 function isOrgSharedRow(row: Record<string, unknown>): boolean {
   return String(row.scope_mode ?? '') === 'org_shared'
 }
@@ -301,6 +324,54 @@ export function resolveIntegrationConnectionState(input: {
   if (personalConnected) {
     const connectionId = String(personalConnected.id ?? '').trim()
     const label = connectionLabel(personalConnected, `personal ${input.providerLabel}`)
+
+    // Fathom / Fireflies / calendar / etc. are personal-cross-context: auto-use
+    // the owner's personal connection in org scope so agents can pull content
+    // instead of claiming "not connected" while Spaces already has recordings.
+    if (isPersonalCrossContextAutoUse(input.service)) {
+      const summary = `${input.providerLabel} is connected via your personal account and ready for this agent.`
+      const doctor = buildDoctor({
+        rows: scopedRows,
+        selectedRow: personalConnected,
+        selectedId: connectionId,
+        providerLabel: input.providerLabel,
+        status: 'ready',
+        summary,
+        isMission: input.isMission,
+        nextActions: [],
+        checks: [
+          {
+            label: 'Workspace connection',
+            status: orgRows.length > 0 ? 'warning' : 'pass',
+            detail:
+              orgRows.length > 0
+                ? 'No usable org-shared connection; using your personal connection.'
+                : 'Personal cross-context connection is ready.',
+          },
+          {
+            label: 'Personal connection',
+            status: 'pass',
+            detail: `${label} is connected.`,
+          },
+          { label: 'Agent access', status: 'pass', detail: 'Allowed for this agent.' },
+        ],
+      })
+      return {
+        connected: true,
+        status: 'connected',
+        selected_connection_id: connectionId,
+        selected_scope: 'personal',
+        connection_resolution: {
+          status: 'personal_cross_context',
+          preferred_scope: 'org_shared',
+          selected_scope: 'personal',
+          selected_connection_id: connectionId,
+          selected_label: label,
+        },
+        integration_doctor: doctor,
+      }
+    }
+
     const problem = `${input.providerLabel} is not ready in this workspace. Your personal ${input.providerLabel} is connected, but I need your approval before using it for this task.`
     const primaryAction: IntegrationRepairAction = {
       type: 'use_connection',

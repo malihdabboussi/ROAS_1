@@ -1,5 +1,16 @@
 # Changelog - July 27, 2026
 
+
+## [2026-07-27 15:19] - [FIX]
+
+What: Agent A Fathom truth — portal-grounded follow-up name prefixes (Anis→Anees), Speaker N remap API + minimal UI, personal Fathom auto-resolve/pull in org scope, and expanded call kinds (personal|team|executive|external|sales) with migration + classifier.
+
+Why: Feedback: wrong task owner names, junk Speaker labels, false "Fathom not connected" while recordings exist, and call kind stuck on personal/team.
+
+Impact: New Fathom follow-ups ground titles on portal People/roster; Speaker N can be bound and persisted; agents auto-use personal Fathom to pull transcripts in org workspaces; Meetings call kinds include executive/external/sales.
+
+Files: fathom-portal-people-grounding/loader, fathom-meeting-item-enrichment, fathom-call-kind, space-automation-service-06/13, artifact-integration-connection-resolution, space speaker-remaps API + SpeakerRemapPanel, personal-dashboard catalog, migration 20260727153000
+
 ## [2026-07-27 15:00] - [FIX]
 
 What: Moved `statusField` `useMemo` above the loading early-return in `HomeSpaceTaskDetailHost` so opening a home task (including meeting prep from agenda) no longer violates Rules of Hooks.

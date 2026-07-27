@@ -37,6 +37,7 @@ import { syncDocEditToConversationDocument } from '../lib/sync-doc-conversation-
 import { SpacesRepository } from '../repositories/spaces.repository'
 import { diffUpdateActivity, type ActivityInsert } from '../space-item-activity.helpers'
 import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
+import { applySpeakerRemapToMeetingItem } from './fathom-speaker-remap'
 import { SpaceAutomationService, type TriggerEvent } from './space-automation.service'
 import { SpaceNotificationsService } from './space-notifications.service'
 import { SpacePermissionsService } from './space-permissions.service'
@@ -111,5 +112,64 @@ export abstract class SpacesServiceBase07 extends SpacesServiceBase06 {
     patch: { is_favorite?: boolean; is_hidden?: boolean },
   ) {
     return this.userStateRepo.upsertUserState(supabase, userId, spaceId, patch)
+  }
+
+  /**
+   * Bind a junk diarization label (Speaker N) to a portal/calendar person and
+   * refresh Attendees multi_select on the meeting item.
+   */
+  async remapMeetingSpeaker(
+    supabase: SupabaseClient,
+    userId: string,
+    spaceId: string,
+    itemId: string,
+    body: {
+      speaker_key: string
+      label: string
+      email?: string | null
+      contact_id?: string | null
+    },
+    orgId?: string | null,
+    orgRole?: import('@vibey/api-shared').OrgRole | null,
+  ) {
+    await this.permissionsService.assertCanAccessItem(
+      supabase,
+      userId,
+      orgRole,
+      spaceId,
+      itemId,
+      'edit',
+      orgId,
+    )
+    const item = (await this.repo.findItemById(supabase, spaceId, itemId)) as Record<
+      string,
+      unknown
+    > | null
+    if (!item) throw new BadRequestException('Space item not found')
+
+    try {
+      return await applySpeakerRemapToMeetingItem({
+        supabase,
+        repo: {
+          findSpaceById: (sb, uid, sid, oid) => this.repo.findSpaceById(sb, uid, sid, oid),
+          updateSpace: (sb, uid, sid, patch, oid) => this.repo.updateSpace(sb, uid, sid, patch, oid),
+          updateItem: (sb, uid, sid, iid, patch, oid) =>
+            this.repo.updateItem(sb, uid, sid, iid, patch as never, oid),
+        },
+        userId,
+        orgId: orgId ?? null,
+        spaceId,
+        itemId,
+        item,
+        speakerKey: body.speaker_key,
+        binding: {
+          label: body.label,
+          email: body.email ?? null,
+          contact_id: body.contact_id ?? null,
+        },
+      })
+    } catch (error) {
+      throw new BadRequestException(error instanceof Error ? error.message : String(error))
+    }
   }
 }

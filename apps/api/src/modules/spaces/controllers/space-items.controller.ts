@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
 import { ThrottlerGuard } from '@nestjs/throttler'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { z } from 'zod'
 import {
   AuthGuard,
   CurrentUser,
@@ -27,6 +28,14 @@ import {
   type UpdateSpaceItemDto,
 } from '../dto'
 import { SpacesService } from '../services/spaces.service'
+
+const RemapMeetingSpeakerSchema = z.object({
+  speaker_key: z.string().trim().min(1).max(40),
+  label: z.string().trim().min(1).max(120),
+  email: z.string().trim().email().nullable().optional(),
+  contact_id: z.string().trim().uuid().nullable().optional(),
+})
+type RemapMeetingSpeakerDto = z.infer<typeof RemapMeetingSpeakerSchema>
 
 @Controller('spaces')
 @UseGuards(AuthGuard, ThrottlerGuard, OrgContextGuard, OrgRoleGuard)
@@ -120,6 +129,27 @@ export class SpaceItemsController {
     @OrgContext() scope: RequestScope,
   ) {
     return this.spacesService.updateItem(
+      supabase,
+      user.id,
+      params.id,
+      itemParams.itemId,
+      body,
+      scope.orgId,
+      scope.orgRole,
+    )
+  }
+
+  @Post(':id/items/:itemId/speaker-remaps')
+  @RequireOrgRole('editor')
+  async remapMeetingSpeaker(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @Param(new ZodValidationPipe(SpaceIdParamSchema)) params: SpaceIdParam,
+    @Param(new ZodValidationPipe(SpaceItemIdParamSchema)) itemParams: SpaceItemIdParam,
+    @Body(new ZodValidationPipe(RemapMeetingSpeakerSchema)) body: RemapMeetingSpeakerDto,
+    @OrgContext() scope: RequestScope,
+  ) {
+    return this.spacesService.remapMeetingSpeaker(
       supabase,
       user.id,
       params.id,

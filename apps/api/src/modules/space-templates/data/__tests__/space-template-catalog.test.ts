@@ -185,7 +185,17 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
     expect(dashboard?.schema.fields).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'call_date', name: 'Call Date' }),
-        expect.objectContaining({ id: 'call_kind', name: 'Call Kind' }),
+        expect.objectContaining({
+          id: 'call_kind',
+          name: 'Call Kind',
+          options: expect.arrayContaining([
+            expect.objectContaining({ id: 'personal' }),
+            expect.objectContaining({ id: 'team' }),
+            expect.objectContaining({ id: 'executive' }),
+            expect.objectContaining({ id: 'external' }),
+            expect.objectContaining({ id: 'sales' }),
+          ]),
+        }),
         expect.objectContaining({ id: 'due_date', name: 'Due Date' }),
       ]),
     )

@@ -196,6 +196,19 @@ export async function createSpaceItem(
   return backendPost<SpaceItem>(`/api/spaces/${spaceId}/items`, input)
 }
 
+export async function remapMeetingSpeaker(
+  spaceId: string,
+  itemId: string,
+  input: {
+    speaker_key: string
+    label: string
+    email?: string | null
+    contact_id?: string | null
+  },
+): Promise<SpaceItem> {
+  return backendPost<SpaceItem>(`/api/spaces/${spaceId}/items/${itemId}/speaker-remaps`, input)
+}
+
 /**
  * True batch PATCH — one request, one server-side permission pass + row fetch
  * for the whole set (vs one heavy pipeline per item). Used by drag-and-drop
