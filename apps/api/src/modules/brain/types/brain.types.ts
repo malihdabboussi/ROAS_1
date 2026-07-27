@@ -229,6 +229,10 @@ export interface ProcessConversationDto {
   source_id?: string
   source_title?: string
   agent_id?: string
+  /** When set, memories are saved into this campaign's brain (client/campaign knowledge). */
+  campaign_id?: string
+  /** Explicit brain override; preferred over campaign_id when both are present. */
+  brain_id?: string
   messages: Array<{ role?: string; speaker?: string; content?: string; text?: string }>
   agent_name?: string
 }

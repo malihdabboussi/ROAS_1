@@ -16,8 +16,19 @@ export const UpsertConversationShareSchema = z.object({
   entity_type: ConversationShareEntityTypeSchema,
   entity_id: z.string().uuid(),
   level: ConversationShareLevelSchema,
+  /** When true and entity_type is user, notify the teammate with a handoff link. */
+  notify: z.boolean().optional(),
+  note: z.string().max(500).optional(),
 })
 export type UpsertConversationShareDto = z.infer<typeof UpsertConversationShareSchema>
+
+export const PassOffConversationShareSchema = z.object({
+  user_id: z.string().uuid(),
+  level: ConversationShareLevelSchema.default('edit'),
+  note: z.string().max(500).optional(),
+  notify: z.boolean().default(true),
+})
+export type PassOffConversationShareDto = z.infer<typeof PassOffConversationShareSchema>
 
 export interface ConversationShareRecord {
   id: string

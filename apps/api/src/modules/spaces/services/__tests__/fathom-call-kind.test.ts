@@ -9,8 +9,13 @@ describe('fathom-call-kind', () => {
   })
 
   it('builds identity from email + fathom aliases', () => {
-    expect(identity.emails).toEqual(expect.arrayContaining(['test@gmail.com', 'dylan@dylanvanas.com']))
+    expect(identity.emails).toEqual(
+      expect.arrayContaining(['test@gmail.com', 'dylan@dylanvanas.com']),
+    )
     expect(identity.nameTokens).toEqual(expect.arrayContaining(['dylan', 'dylan vanas']))
+    expect(identity.internalDomains).toEqual(
+      expect.arrayContaining(['gmail.com', 'dylanvanas.com', 'roas.co']),
+    )
   })
 
   it('marks personal when owner recorded the call', () => {
@@ -52,5 +57,51 @@ describe('fathom-call-kind', () => {
         attendeeLabels: ['Nate Tilley', 'Filmar'],
       }),
     ).toBe('team')
+  })
+
+  it('marks sales when title signals sales and attendees are mostly external', () => {
+    expect(
+      resolveCeoCallKind({
+        identity,
+        recordedByEmail: 'nate@roas.co',
+        attendees: [
+          { name: 'Nate Tilley', email: 'nate@roas.co' },
+          { name: 'Prospect', email: 'buyer@acme.com' },
+        ],
+        attendeeLabels: ['Nate Tilley', 'Prospect'],
+        titleHint: 'Sales discovery demo — Acme',
+      }),
+    ).toBe('sales')
+  })
+
+  it('marks external when non-owner call is mostly outside org domains', () => {
+    expect(
+      resolveCeoCallKind({
+        identity,
+        recordedByEmail: 'nate@roas.co',
+        attendees: [
+          { name: 'Nate Tilley', email: 'nate@roas.co' },
+          { name: 'Partner', email: 'partner@vendor.com' },
+          { name: 'Other', email: 'other@vendor.com' },
+        ],
+        attendeeLabels: ['Nate', 'Partner', 'Other'],
+        titleHint: 'Vendor sync',
+      }),
+    ).toBe('external')
+  })
+
+  it('marks executive from leadership language on non-owner calls', () => {
+    expect(
+      resolveCeoCallKind({
+        identity,
+        recordedByEmail: 'nate@roas.co',
+        attendees: [
+          { name: 'Nate Tilley', email: 'nate@roas.co' },
+          { name: 'Bryce', email: 'bryce@roas.co' },
+        ],
+        attendeeLabels: ['Nate Tilley', 'Bryce'],
+        titleHint: 'Executive leadership offsite prep',
+      }),
+    ).toBe('executive')
   })
 })

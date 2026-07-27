@@ -24,13 +24,17 @@ function slashItem(overrides: Partial<SlashItem>): SlashItem {
 function layout(overrides: Partial<SlashMenuLayout> = {}): SlashMenuLayout {
   const skill = slashItem({ id: 'skill-1', key: 'brief', type: 'skill' })
   return {
+    playbookItems: [],
     skillItems: [skill],
     workflowItems: [],
+    playbookVisible: [],
     skillVisible: [skill],
     workflowVisible: [],
     visibleFlat: [skill],
+    playbookMoreCount: 0,
     skillMoreCount: 0,
     workflowMoreCount: 0,
+    showPlaybookMore: false,
     showSkillMore: false,
     showWorkflowMore: false,
     ...overrides,
@@ -48,6 +52,7 @@ function defaultProps(portalTarget: HTMLElement) {
     slashHighlight: 0,
     onSelect: vi.fn(),
     onHighlight: vi.fn(),
+    onShowMorePlaybooks: vi.fn(),
     onShowMoreSkills: vi.fn(),
     onShowMoreWorkflows: vi.fn(),
   }
@@ -85,10 +90,7 @@ describe('ChatInputSlashMenuPortal', () => {
 
     render(
       <div onMouseDown={onContainerMouseDown}>
-        <ChatInputSlashMenuPortal
-          {...defaultProps(portalTarget)}
-          onSelect={onSelect}
-        />
+        <ChatInputSlashMenuPortal {...defaultProps(portalTarget)} onSelect={onSelect} />
       </div>,
     )
 

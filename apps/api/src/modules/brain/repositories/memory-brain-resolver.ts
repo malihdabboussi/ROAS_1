@@ -91,6 +91,57 @@ export class MemoryBrainResolver {
     return this.resolveDefaultBrainId(client, ownerId, orgId)
   }
 
+  async resolveOrCreateCampaignBrainId(
+    client: SupabaseClient,
+    input: {
+      ownerId: string
+      orgId?: string | null
+      campaignId: string
+      campaignName?: string | null
+    },
+  ): Promise<string> {
+    const campaignId = input.campaignId.trim()
+    if (!campaignId) throw new Error('campaign_id is required for campaign brain resolution')
+
+    const { data: existing, error: existingError } = await client
+      .from('ns_brains')
+      .select('id')
+      .eq('campaign_id', campaignId)
+      .limit(1)
+      .maybeSingle()
+    if (existingError) throw new Error(`DB error: ${existingError.message}`)
+    if (existing?.id) return String(existing.id)
+
+    const name = (input.campaignName?.trim() || 'Campaign Brain').slice(0, 120)
+    const { data: created, error } = await client
+      .from('ns_brains')
+      .insert({
+        owner_id: input.ownerId,
+        org_id: input.orgId ?? null,
+        campaign_id: campaignId,
+        name,
+        scope: 'campaign',
+        is_default: false,
+        color: '#6366F1',
+        icon: 'campaign',
+        tags: [],
+      })
+      .select('id')
+      .maybeSingle()
+    if (created?.id) return String(created.id)
+    if (error && error.code !== '23505') throw new Error(`DB error: ${error.message}`)
+
+    const { data: fallback, error: fallbackError } = await client
+      .from('ns_brains')
+      .select('id')
+      .eq('campaign_id', campaignId)
+      .limit(1)
+      .maybeSingle()
+    if (fallbackError) throw new Error(`DB error: ${fallbackError.message}`)
+    if (fallback?.id) return String(fallback.id)
+    throw new Error('Failed creating or finding campaign brain')
+  }
+
   extractOwnerId(record: Record<string, unknown>): string {
     const directOwnerId = record.owner_id
     if (typeof directOwnerId === 'string' && directOwnerId.length > 0) return directOwnerId

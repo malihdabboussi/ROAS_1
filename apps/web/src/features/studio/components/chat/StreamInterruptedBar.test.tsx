@@ -75,6 +75,29 @@ describe('StreamInterruptedBar', () => {
     expect(useChatStore.getState().streamRunsByConversation['conversation-1']).toBeUndefined()
   })
 
+  it('keeps context-limit Resume available when continue fails', async () => {
+    vi.mocked(recoverConversation).mockRejectedValueOnce(new Error('continue failed'))
+    useChatStore.setState({
+      interruptedConversationIds: ['conversation-1'],
+      streamingConversationIds: [],
+      reconnectingConversationIds: [],
+      streamFailureByConversation: {
+        'conversation-1': resolveChatStreamFailure({ code: 'context_window_exceeded' }),
+      },
+    })
+
+    render(<StreamInterruptedBar conversationId="conversation-1" />)
+    fireEvent.click(screen.getByRole('button', { name: /resume/i }))
+
+    await waitFor(() => {
+      expect(recoverConversation).toHaveBeenCalledWith('conversation-1')
+    })
+    expect(useChatStore.getState().interruptedConversationIds).toContain('conversation-1')
+    expect(useChatStore.getState().streamFailureByConversation['conversation-1']?.code).toBe(
+      'context_window_exceeded',
+    )
+  })
+
   it('starts OpenAI Codex OAuth for reconnect-required failures', async () => {
     const dispatchSpy = vi.spyOn(window, 'dispatchEvent')
     useChatStore.setState({

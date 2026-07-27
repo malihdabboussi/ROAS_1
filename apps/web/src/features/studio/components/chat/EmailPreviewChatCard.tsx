@@ -25,7 +25,7 @@ export function EmailPreviewChatCard({
           style={{ height: ARTIFACT_CHAT_PREVIEW_PANE_PX }}
         >
           {snippet.trim() ? (
-            <p className="body-3 text-muted-foreground h-full overflow-y-auto whitespace-pre-line pr-1">
+            <p className="body-3 text-muted-foreground h-full min-w-0 overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words pr-1">
               {snippet}
             </p>
           ) : (

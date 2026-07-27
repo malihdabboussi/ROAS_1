@@ -9,21 +9,75 @@ export class ArtifactLegacyIntegrationsRepository {
     supabase: SupabaseClient,
     input: { userId: string; orgId?: string | null },
   ): Promise<{ data: Array<Record<string, unknown>> | null; error: QueryError | null }> {
-    let query = supabase
-      .from('user_integrations')
-      .select(
-        'id, user_id, integration_id, provider, status, agent_enabled, scope_mode, is_default',
-      )
-      .eq('status', 'connected')
-    if (input.orgId) {
-      query = query.eq('org_id', input.orgId)
-    } else {
-      query = query.eq('user_id', input.userId).is('org_id', null)
+    if (!input.orgId) {
+      return (await supabase
+        .from('user_integrations')
+        .select(
+          'id, user_id, integration_id, provider, status, agent_enabled, scope_mode, is_default',
+        )
+        .eq('status', 'connected')
+        .eq('user_id', input.userId)
+        .is('org_id', null)) as {
+        data: Array<Record<string, unknown>> | null
+        error: QueryError | null
+      }
     }
-    return (await query) as {
+
+    const personalCrossContextIds = [
+      'fathom',
+      'fireflies',
+      'page_grader',
+      'openai_codex',
+      'anthropic_claude',
+      'google_calendar',
+      'outlook',
+      'slack',
+    ]
+
+    const [orgRows, personalRows] = await Promise.all([
+      supabase
+        .from('user_integrations')
+        .select(
+          'id, user_id, integration_id, provider, status, agent_enabled, scope_mode, is_default',
+        )
+        .eq('status', 'connected')
+        .eq('org_id', input.orgId),
+      supabase
+        .from('user_integrations')
+        .select(
+          'id, user_id, integration_id, provider, status, agent_enabled, scope_mode, is_default',
+        )
+        .eq('status', 'connected')
+        .eq('user_id', input.userId)
+        .eq('scope_mode', 'personal')
+        .is('org_id', null)
+        .in('integration_id', personalCrossContextIds),
+    ])
+
+    const orgResult = orgRows as {
       data: Array<Record<string, unknown>> | null
       error: QueryError | null
     }
+    if (orgResult.error) return { data: null, error: orgResult.error }
+    const personalResult = personalRows as {
+      data: Array<Record<string, unknown>> | null
+      error: QueryError | null
+    }
+    if (personalResult.error) return { data: null, error: personalResult.error }
+
+    const rows: Array<Record<string, unknown>> = []
+    const seen = new Set<string>()
+    for (const row of [...(orgResult.data ?? []), ...(personalResult.data ?? [])]) {
+      const id = String(row.id ?? '').trim()
+      const integrationId = String(row.integration_id ?? '')
+        .trim()
+        .toLowerCase()
+      const key = id || `${integrationId}:${String(row.scope_mode ?? '')}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      rows.push(row)
+    }
+    return { data: rows, error: null }
   }
 
   async listCapabilities(

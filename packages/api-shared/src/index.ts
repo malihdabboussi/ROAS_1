@@ -316,6 +316,7 @@ export {
   ConversationShareEntityTypeSchema,
   ConversationShareIdParamSchema,
   ConversationShareLevelSchema,
+  PassOffConversationShareSchema,
   UpsertConversationShareSchema,
 } from './types/conversation-sharing'
 export type {
@@ -324,6 +325,7 @@ export type {
   ConversationShareIdParam,
   ConversationShareLevel,
   ConversationShareRecord,
+  PassOffConversationShareDto,
   UpsertConversationShareDto,
 } from './types/conversation-sharing'
 

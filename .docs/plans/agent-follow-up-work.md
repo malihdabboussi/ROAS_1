@@ -1,6 +1,48 @@
+## 2026-07-27 - [ARCH] Feedback-b-chat over-limit files after resume/hydrate/drag
+
+Status: Open
+
+Found while: Feedback phase Agent B (items 4/5/7/8)
+
+Files:
+- `apps/web/src/features/spaces/components/content/SpaceContentRouter.tsx` (829 LOC; component limit 400)
+- `apps/web/src/features/studio/services/chat.service.ts` (2827 LOC; pre-existing mega-service)
+
+Evidence: Drag wiring added ~9 lines to SpaceContentRouter; context-window continue branch added ~30 lines to studio chat.service. `artifact-tasks.service.ts` brought back under 600 via `artifact-space-item-get.helper.ts`.
+
+Needed work: Split SpaceContentRouter view branches into dedicated content hosts; extract recoverConversation / stream recovery from studio chat.service into a focused module.
+
+Reason not done now: Out of scope for feedback reliability fixes; only drag prop + recover branch were required.
+
+## 2026-07-27 - [ARCH] SpaceItemsContainer + StudioSearchModal LOC after shell open/search polish
+
+Status: Open
+
+Found while: Agent D feedback shell (Inbox panes, Cmd+K idle, Spaces open lag)
+
+Files:
+- `apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx` (1,481 LOC; pre-existing over 600 container limit)
+- `apps/web/src/features/studio/components/StudioSearchModal.tsx` (helpers extracted to `studio-search-modal-helpers.tsx` during integrate; modal under 400)
+
+Evidence: Container already far over limit; idle recents/presets pushed the modal past 400 until helpers were extracted on integrate.
+
+Needed work: Split SpaceItemsContainer toolbar/modals/open-path orchestration.
+
+Reason not done now: In-scope fix was open-path + idle search behavior; container split remains adjacent debt.
+
 ## 2026-07-26 - [ARCH] Finish ROAS Portal renames in over-limit Spaces bulk-send files — RESOLVED
 
 Resolved by splitting `BulkActionBar` into `bulk-action-bar/*` modules and `PageGraderBulkSendPanel` into `page-grader-bulk-send/*` step components, switching the settings hook to `@/lib/settings`, and shipping The ROAS Portal public copy.
+
+## 2026-07-27 - [ARCH] Split space-automation-service-13 after portal grounding
+
+Status: Open
+Found while: Agent A Feedback Fathom truth (portal-grounded task names)
+Files:
+- `apps/api/src/modules/spaces/services/space-automation-service-13.base.ts` (706 LOC; limit 600)
+Evidence: Already over limit before this change (~683); portal grounding adds ~23 LOC via imports + title rewrite in `execAgentSuggestTasks`.
+Needed work: Extract `execAgentSuggestTasks` (+ portal people load/grounding) into a dedicated mixin/file under the automation service split pattern.
+Deferred because: In-scope grounding is required for Anis→Anees; full base-13 split is adjacent cleanup outside the feedback item deliverable.
 
 ## 2026-07-26 - [ARCH] Finish ROAS Portal renames in over-limit Spaces bulk-send files
 
@@ -8918,3 +8960,33 @@ Evidence: `pnpm lint` reports 351 existing architecture, line-limit, and cross-f
 Needed work: Remediate the repository-wide lint backlog in architecture-scoped batches without mixing unrelated feature behavior into UI polish changes.
 
 Reason not done now: The reported violations predate and sit outside this change set; expanding this pass to hundreds of unrelated files would make the verified UI work unsafe to integrate.
+
+## 2026-07-27 - [FEATURE] Home deep-link for conversation pass-off
+
+Status: Open
+Found while: Agent C feedback — share pass-off notifies with `/home?conversation=<id>`
+Files:
+- `apps/web/src/components/shell` / home conversation open path
+Evidence: Pass-off writes `user_notifications.action_url` to `/home?conversation=…`, but Home may not yet select that conversation on load.
+Needed work: Honor `?conversation=` (or equivalent) when opening Home / global chat so the handoff link lands on the shared thread.
+Deferred because: Out of Agent C scope (Agent D owns shell polish); share + notify still grants access via the People share list without the deep-link.
+
+## 2026-07-27 - [ARCH] QuickMissionsHubModal near component limit
+
+Status: Open
+Found while: Agent C feedback — Quick Missions hub; reconfirmed on main integrate
+Files:
+- `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx` (436 LOC; allowlisted)
+Evidence: Hub ships mission/client/context steps in one modal; over preferred 400.
+Needed work: Split step panels (mission / client / context) into sibling files.
+Deferred because: In-scope hub + arch-gate allowlist for main merge; further split not required for the deliverable.
+
+## 2026-07-27 - [ARCH] ConversationShareModal over component limit after pass-off
+
+Status: Open
+Found while: Main merge of feedback phase1 (pass-off notify UI)
+Files:
+- `apps/web/src/components/conversations/ConversationShareModal.tsx` (418 LOC; allowlisted)
+Evidence: Notify toggle + note + handoff link pushed past 400.
+Needed work: Extract pass-off / notify subsection into a sibling presentational component.
+Deferred because: Behavior merge onto local main; split is adjacent cleanup.

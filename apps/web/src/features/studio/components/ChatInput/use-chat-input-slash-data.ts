@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react'
 import { backendGet } from '@/lib/api/backend-client'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { QUICK_MISSION_PLAYBOOKS } from '@/lib/spaces'
 import { getSlashTokenAtCursor } from '../../utils/textarea-caret-viewport'
 import type { SlashItem } from './chat-input-slash-menu'
 
@@ -80,7 +81,16 @@ export function useChatInputSlashData({
         ttlMs: 300_000,
       }),
     ]).then(([workflowsResult, skillsResult]) => {
-      const items: SlashItem[] = []
+      const items: SlashItem[] = [
+        ...QUICK_MISSION_PLAYBOOKS.map((playbook) => ({
+          id: `playbook:${playbook.id}`,
+          key: playbook.key,
+          name: playbook.name,
+          description: playbook.description,
+          is_enabled: true,
+          type: 'playbook' as const,
+        })),
+      ]
       if (skillsResult.status === 'fulfilled') {
         items.push(
           ...asSkillRows(skillsResult.value).map((skill) => ({

@@ -30,6 +30,11 @@ import {
   type FathomActionItemLike,
 } from './fathom-follow-up-enrichment'
 import { upsertAttendeeTagOptions } from './fathom-meeting-item-enrichment'
+import {
+  groundAssigneeNameOnPortalPeople,
+  groundFollowUpTitleOnPortalPeople,
+} from './fathom-portal-people-grounding'
+import { loadPortalPeopleForSpaceFollowUps } from './fathom-portal-people-loader'
 import { SocialResearchOrchestrationService } from './social-research-orchestration.service'
 import { SpaceAutomationServiceBase12 } from './space-automation-service-12.base'
 import { renderTemplate, type TemplateContext } from './space-automation-template'
@@ -292,7 +297,11 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
     ownerUserId: string,
     orgId: string | null,
     email: string | null,
-  ): Promise<{ assignee_type: 'human'; assignee_id: string; assignees: Array<{ type: 'human'; id: string }> } | null> {
+  ): Promise<{
+    assignee_type: 'human'
+    assignee_id: string
+    assignees: Array<{ type: 'human'; id: string }>
+  } | null> {
     if (!email || !isInternalAssigneeEmail(email)) return null
     const { data: profile, error } = await supabase
       .from('profiles')
@@ -407,6 +416,12 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
 
     const rawTasks = Array.isArray(body?.tasks) ? body.tasks : []
     let spaceSchema = this.objectRecord(templateCtx.space.schema)
+    const portalPeople = await loadPortalPeopleForSpaceFollowUps({
+      supabase: ctx.supabase,
+      ownerUserId,
+      orgId: ctx.orgId,
+      spaceSchema,
+    })
     const statusField = Array.isArray(spaceSchema.fields)
       ? (spaceSchema.fields as Array<Record<string, unknown>>).find(
           (field) => String(field.id ?? '') === 'status',
@@ -426,10 +441,12 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
     const createdIds: string[] = []
     for (const [index, raw] of rawTasks.slice(0, maxSuggestions).entries()) {
       const task = this.objectRecord(raw)
-      const title = String(task.title ?? '')
+      const rawTitle = String(task.title ?? '')
         .trim()
         .slice(0, 1000)
-      if (!title) continue
+      if (!rawTitle) continue
+      const groundedTitle = groundFollowUpTitleOnPortalPeople(rawTitle, portalPeople)
+      const title = groundedTitle.title
       const description = String(task.description ?? '')
         .trim()
         .slice(0, 20000)
@@ -441,6 +458,10 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
         assignee_email: typeof task.assignee_email === 'string' ? task.assignee_email : null,
         actionItems,
       })
+      const groundedAssigneeName = groundAssigneeNameOnPortalPeople(
+        enriched.assignee_name,
+        portalPeople,
+      )
       const assignee = await this.resolveInternalFollowUpAssignee(
         ctx.supabase,
         ownerUserId,
@@ -449,7 +470,7 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
       )
 
       const ownerHint = {
-        name: enriched.assignee_name,
+        name: groundedAssigneeName,
         email: enriched.assignee_email,
       }
       let ownerAttendeeIds: string[] = []
@@ -527,13 +548,19 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
               suggestion_index: index,
               source_action: 'agent_suggest_tasks',
             },
-            ...(enriched.assignee_email || enriched.assignee_name
+            ...(enriched.assignee_email || groundedAssigneeName
               ? {
                   ...(enriched.assignee_email
                     ? { suggested_assignee_email: enriched.assignee_email }
                     : {}),
-                  ...(enriched.assignee_name
-                    ? { suggested_assignee_name: enriched.assignee_name }
+                  ...(groundedAssigneeName
+                    ? { suggested_assignee_name: groundedAssigneeName }
+                    : {}),
+                  ...(groundedTitle.grounded && groundedTitle.matched
+                    ? {
+                        suggested_title_grounded_from: rawTitle,
+                        suggested_title_portal_person: groundedTitle.matched.label,
+                      }
                     : {}),
                   ...(assignee
                     ? {}

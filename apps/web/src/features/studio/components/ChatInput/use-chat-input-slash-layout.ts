@@ -17,9 +17,15 @@ export function useChatInputSlashLayout({
   const [slashSkillsExpanded, setSlashSkillsExpanded] = useState(false)
   const [slashWorkflowsExpanded, setSlashWorkflowsExpanded] = useState(false)
 
+  const [slashPlaybooksExpanded, setSlashPlaybooksExpanded] = useState(false)
+
   const slashMenuLayout = useMemo(() => {
+    const playbookItems = slashItems.filter((i) => i.type === 'playbook')
     const skillItems = slashItems.filter((i) => i.type === 'skill')
     const workflowItems = slashItems.filter((i) => i.type === 'workflow')
+    const playbookVisible = slashPlaybooksExpanded
+      ? playbookItems
+      : playbookItems.slice(0, SLASH_SECTION_PREVIEW)
     const skillVisible = slashSkillsExpanded
       ? skillItems
       : skillItems.slice(0, SLASH_SECTION_PREVIEW)
@@ -27,19 +33,24 @@ export function useChatInputSlashLayout({
       ? workflowItems
       : workflowItems.slice(0, SLASH_SECTION_PREVIEW)
     return {
+      playbookItems,
       skillItems,
       workflowItems,
+      playbookVisible,
       skillVisible,
       workflowVisible,
-      visibleFlat: [...skillVisible, ...workflowVisible] as SlashItem[],
+      visibleFlat: [...playbookVisible, ...skillVisible, ...workflowVisible] as SlashItem[],
+      playbookMoreCount: Math.max(0, playbookItems.length - SLASH_SECTION_PREVIEW),
       skillMoreCount: Math.max(0, skillItems.length - SLASH_SECTION_PREVIEW),
       workflowMoreCount: Math.max(0, workflowItems.length - SLASH_SECTION_PREVIEW),
+      showPlaybookMore: !slashPlaybooksExpanded && playbookItems.length > SLASH_SECTION_PREVIEW,
       showSkillMore: !slashSkillsExpanded && skillItems.length > SLASH_SECTION_PREVIEW,
       showWorkflowMore: !slashWorkflowsExpanded && workflowItems.length > SLASH_SECTION_PREVIEW,
     }
-  }, [slashItems, slashSkillsExpanded, slashWorkflowsExpanded])
+  }, [slashItems, slashPlaybooksExpanded, slashSkillsExpanded, slashWorkflowsExpanded])
 
   useEffect(() => {
+    setSlashPlaybooksExpanded(false)
     setSlashSkillsExpanded(false)
     setSlashWorkflowsExpanded(false)
   }, [slashItems])
@@ -55,14 +66,17 @@ export function useChatInputSlashLayout({
   }, [
     slashMenuOpen,
     slashMenuLayout.visibleFlat.length,
+    slashPlaybooksExpanded,
     slashSkillsExpanded,
     slashWorkflowsExpanded,
     setSlashHighlight,
   ])
 
   return {
+    slashPlaybooksExpanded,
     slashSkillsExpanded,
     slashWorkflowsExpanded,
+    setSlashPlaybooksExpanded,
     setSlashSkillsExpanded,
     setSlashWorkflowsExpanded,
     slashMenuLayout,

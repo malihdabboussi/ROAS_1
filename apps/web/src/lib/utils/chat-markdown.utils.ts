@@ -47,7 +47,7 @@ renderer.code = ({ text, lang }) => {
   }
   const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const langClass = lang ? ` class="language-${lang}"` : ''
-  return `<div class="chat-markdown-code-block chat-markdown-code-block--scroll"><pre><code${langClass}>${escaped}</code></pre></div>`
+  return `<div class="chat-markdown-code-block chat-markdown-code-block--wrap"><pre><code${langClass}>${escaped}</code></pre></div>`
 }
 
 marked.setOptions({

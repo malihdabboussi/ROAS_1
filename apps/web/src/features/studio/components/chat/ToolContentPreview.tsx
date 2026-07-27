@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { ChatMarkdownView } from '@/features/studio/components/chat/ChatMarkdownView'
 import { useTypewriter } from '@/lib/hooks/use-typewriter'
 import { renderChatMarkdown } from '@/lib/utils/chat-markdown.utils'
-import { ChatMarkdownView } from '@/features/studio/components/chat/ChatMarkdownView'
 
 interface ToolContentPreviewProps {
   content: string
@@ -23,8 +23,11 @@ export function ToolContentPreview({ content, isActive }: ToolContentPreviewProp
   if (!displayText.trim()) return null
 
   return (
-    <div className="card-glass my-1.5 overflow-hidden">
-      <div ref={scrollRef} className="max-h-64 overflow-y-auto px-3 py-2">
+    <div className="card-glass relative my-1.5 min-w-0 overflow-hidden overflow-x-hidden">
+      <div
+        ref={scrollRef}
+        className="max-h-64 min-w-0 overflow-y-auto overflow-x-hidden break-words px-3 py-2"
+      >
         <ChatMarkdownView html={html} />
       </div>
       {isActive && (

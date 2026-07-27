@@ -1,25 +1,39 @@
 /**
- * Classify Fathom calls as personal vs team for CEO Meetings.
- * Personal = space owner was on the call (host, invitee, or speaker label).
+ * Classify Fathom calls for CEO Meetings:
+ * personal | team | executive | external | sales
  */
 
 import type { FathomAttendeeLike } from './fathom-meeting-item-enrichment'
 
-export type CeoCallKind = 'personal' | 'team'
+export type CeoCallKind = 'personal' | 'team' | 'executive' | 'external' | 'sales'
+
+export const CEO_CALL_KIND_OPTIONS: Array<{ id: CeoCallKind; label: string; color: string }> = [
+  { id: 'personal', label: 'Personal', color: 'emerald' },
+  { id: 'team', label: 'Team', color: 'violet' },
+  { id: 'executive', label: 'Executive', color: 'amber' },
+  { id: 'external', label: 'External', color: 'cyan' },
+  { id: 'sales', label: 'Sales', color: 'orange' },
+]
 
 export type CeoCallIdentity = {
   emails: string[]
   /** Lowercased name tokens / phrases, e.g. "dylan", "dylan vanas" */
   nameTokens: string[]
+  /** Org / internal email domains used to detect external attendees. */
+  internalDomains: string[]
 }
 
 export function buildCeoCallIdentity(input: {
   email?: string | null
   fathomAliases?: string[] | null
   fullName?: string | null
+  internalDomains?: string[] | null
 }): CeoCallIdentity {
   const emails = new Set<string>()
   const nameTokens = new Set<string>()
+  const internalDomains = new Set<string>(
+    (input.internalDomains ?? ['roas.co', 'dylanvanas.com']).map((d) => d.trim().toLowerCase()),
+  )
 
   const pushEmail = (raw: string | null | undefined) => {
     const email = String(raw ?? '')
@@ -27,6 +41,8 @@ export function buildCeoCallIdentity(input: {
       .toLowerCase()
     if (!email || !email.includes('@')) return
     emails.add(email)
+    const domain = email.split('@')[1]
+    if (domain) internalDomains.add(domain)
     const local = email.split('@')[0]?.replace(/[._+]/g, ' ').trim()
     if (
       local &&
@@ -56,7 +72,11 @@ export function buildCeoCallIdentity(input: {
     nameTokens.add('dylan vanas')
   }
 
-  return { emails: [...emails], nameTokens: [...nameTokens] }
+  return {
+    emails: [...emails],
+    nameTokens: [...nameTokens],
+    internalDomains: [...internalDomains],
+  }
 }
 
 function labelMatchesIdentity(label: string, identity: CeoCallIdentity): boolean {
@@ -79,31 +99,86 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-export function resolveCeoCallKind(input: {
+function isInternalEmail(email: string, identity: CeoCallIdentity): boolean {
+  const normalized = email.trim().toLowerCase()
+  const at = normalized.lastIndexOf('@')
+  if (at < 0) return false
+  const domain = normalized.slice(at + 1)
+  return identity.internalDomains.some((d) => domain === d || domain.endsWith(`.${d}`))
+}
+
+function ownerOnCall(input: {
   identity: CeoCallIdentity
   recordedByEmail: string
   attendees: FathomAttendeeLike[]
   attendeeLabels: string[]
-}): CeoCallKind {
+}): boolean {
   const recorded = String(input.recordedByEmail ?? '')
     .trim()
     .toLowerCase()
-  if (recorded && input.identity.emails.includes(recorded)) return 'personal'
+  if (recorded && input.identity.emails.includes(recorded)) return true
 
   for (const person of input.attendees) {
     const email = String(person.email ?? '')
       .trim()
       .toLowerCase()
-    if (email && input.identity.emails.includes(email)) return 'personal'
+    if (email && input.identity.emails.includes(email)) return true
     const label = String(
       person.name ?? person.display_name ?? person.matched_speaker_display_name ?? '',
     ).trim()
-    if (label && labelMatchesIdentity(label, input.identity)) return 'personal'
+    if (label && labelMatchesIdentity(label, input.identity)) return true
   }
 
   for (const label of input.attendeeLabels) {
-    if (labelMatchesIdentity(label, input.identity)) return 'personal'
+    if (labelMatchesIdentity(label, input.identity)) return true
   }
 
+  return false
+}
+
+const SALES_RE =
+  /\b(sales|demo|discovery|pitch|prospect|pipeline|pricing|proposal|close|quota|ae\b|sdr\b|outbound|inbound lead)\b/i
+const EXECUTIVE_RE =
+  /\b(executive|board|leadership|offsite|strategy offsite|c[- ]?level|all[- ]?hands|investor|founder sync)\b/i
+
+function countExternalAttendees(
+  attendees: FathomAttendeeLike[],
+  identity: CeoCallIdentity,
+): { external: number; known: number } {
+  let external = 0
+  let known = 0
+  for (const person of attendees) {
+    const email = String(person.email ?? '')
+      .trim()
+      .toLowerCase()
+    if (!email || !email.includes('@')) continue
+    known += 1
+    if (!isInternalEmail(email, identity)) external += 1
+  }
+  return { external, known }
+}
+
+export function resolveCeoCallKind(input: {
+  identity: CeoCallIdentity
+  recordedByEmail: string
+  attendees: FathomAttendeeLike[]
+  attendeeLabels: string[]
+  titleHint?: string | null
+  summary?: string | null
+}): CeoCallKind {
+  const blob = `${String(input.titleHint ?? '')}\n${String(input.summary ?? '')}`
+  const { external, known } = countExternalAttendees(input.attendees, input.identity)
+  const mostlyExternal = known > 0 && external / known >= 0.5
+  const salesSignal = SALES_RE.test(blob)
+  const executiveSignal = EXECUTIVE_RE.test(blob)
+
+  if (ownerOnCall(input)) {
+    if (salesSignal && mostlyExternal) return 'sales'
+    return 'personal'
+  }
+
+  if (salesSignal || (mostlyExternal && SALES_RE.test(blob))) return 'sales'
+  if (mostlyExternal) return 'external'
+  if (executiveSignal) return 'executive'
   return 'team'
 }

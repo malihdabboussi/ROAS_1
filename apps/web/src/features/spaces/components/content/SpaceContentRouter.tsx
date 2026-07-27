@@ -28,6 +28,7 @@ import type { ContactsViewHandle } from '../contacts/ContactsView'
 import type { MissionsViewHandle } from '../MissionsView'
 import type { CampaignFinanceTabHandle } from '../reporting/FinanceOverviewView'
 import type { ReportingToolbarApi } from '../reporting/shared/reporting-toolbar.types'
+import { buildSpaceTaskChatDragPayload } from '../space-item-values'
 import { EmptySpaceCanvas } from './EmptySpaceCanvas'
 
 function SpaceViewLoading() {
@@ -760,6 +761,14 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
           roster={roster}
           currentUserId={currentUserId}
           readOnly={!perm.canEdit}
+          getRowChatDragPayload={
+            perm.canEdit
+              ? (item) => {
+                  const { id, label } = buildSpaceTaskChatDragPayload(item)
+                  return { id, type: 'space-task', label }
+                }
+              : undefined
+          }
           onUpdateItem={updateItem}
           onDeleteItem={deleteItem}
           onPushToAgent={pushToAgent}

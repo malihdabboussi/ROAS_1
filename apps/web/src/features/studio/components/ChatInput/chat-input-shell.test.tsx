@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createRef } from 'react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ChatInputShell } from './chat-input-shell'
 
@@ -118,13 +118,17 @@ function defaultProps(
       floatingStyles: {},
       portalTarget: null,
       layout: {
+        playbookItems: [],
         skillItems: [],
         workflowItems: [],
+        playbookVisible: [],
         skillVisible: [],
         workflowVisible: [],
         visibleFlat: [],
+        playbookMoreCount: 0,
         skillMoreCount: 0,
         workflowMoreCount: 0,
+        showPlaybookMore: false,
         showSkillMore: false,
         showWorkflowMore: false,
       },
@@ -132,6 +136,7 @@ function defaultProps(
       slashHighlight: 0,
       onSelect: vi.fn(),
       onHighlight: vi.fn(),
+      onShowMorePlaybooks: vi.fn(),
       onShowMoreSkills: vi.fn(),
       onShowMoreWorkflows: vi.fn(),
     },

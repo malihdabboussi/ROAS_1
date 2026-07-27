@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { classifyChatStreamError, type ChatStreamErrorCode } from '../chat-stream-errors'
 
+/** Hidden continue prompt after a recoverable context-window failure. */
+export const CONTEXT_WINDOW_CONTINUE_CONTENT =
+  'Continue from where you left off. Compact earlier context if needed and finish the unfinished work.'
+
 @Injectable()
 export class ChatStreamRecoveryService {
   isRetryableProviderError(failureMessage: string | undefined): boolean {
@@ -80,5 +84,14 @@ export class ChatStreamRecoveryService {
       windowTokens > 0 &&
       inputTokens >= Math.floor(windowTokens * 0.95),
     )
+  }
+
+  /** Resume after context overflow must start a compact+continue turn, not poll a dead run. */
+  shouldContinueAfterContextWindow(failureCode: string | undefined): boolean {
+    return failureCode === 'context_window_exceeded'
+  }
+
+  buildContextWindowContinueContent(): string {
+    return CONTEXT_WINDOW_CONTINUE_CONTENT
   }
 }

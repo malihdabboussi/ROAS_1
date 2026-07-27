@@ -64,7 +64,7 @@ export function InboxListRow({
   const read = notification.read_at !== null
 
   return (
-    <li className="border-border border-b last:border-b-0">
+    <li className="border-border shrink-0 border-b last:border-b-0">
       <div
         className={`group/inbox-row flex min-w-0 items-start transition-colors ${
           selected ? 'nav-glass-selected-purple' : 'hover:bg-hover-subtle'

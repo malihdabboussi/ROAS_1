@@ -18,13 +18,13 @@ import {
   fetchConversations,
 } from '@/lib/conversations/conversations-api'
 import { stripEmoji } from '@/lib/utils/text'
+import { ChatStreamUserError, resolveChatStreamFailure } from '../config/chat-stream-errors.config'
 import {
   assistantHasRenderableText,
   assistantHasVisibleOutput,
   getLastAssistantMessage,
   isAssistantTurnComplete,
 } from '../lib/chat-turn-completion'
-import { ChatStreamUserError, resolveChatStreamFailure } from '../config/chat-stream-errors.config'
 import { reportStudioError } from '../lib/report-studio-error'
 import {
   endToolInTimeline,
@@ -329,9 +329,7 @@ function resolveLocalAssistantMessageForMerge(
     backendMsg === [...backendMessages].reverse().find((message) => message.role === 'assistant')
   if (!isLatestBackendAssistant) return undefined
 
-  const latestLocalAssistant = [...localMessages]
-    .reverse()
-    .find(hasAssistantDisplayContent)
+  const latestLocalAssistant = [...localMessages].reverse().find(hasAssistantDisplayContent)
   if (!latestLocalAssistant || latestLocalAssistant.id === backendMsg.id) return undefined
 
   const localOrdered =
@@ -1024,6 +1022,37 @@ export async function recoverStalledConversation(conversationId: string): Promis
 export async function recoverConversation(conversationId: string): Promise<void> {
   if (activeRecoveries.has(conversationId)) return
   if (isStreamActive(conversationId)) return
+
+  const storeAtStart = useChatStore.getState()
+  const failureAtStart = storeAtStart.streamFailureByConversation[conversationId]
+  if (failureAtStart?.code === 'context_window_exceeded') {
+    // Dead-run polling cannot compact+continue. Start a hidden continue turn instead.
+    storeAtStart.setConversationInterrupted(conversationId, false)
+    storeAtStart.setConversationStreamFailure(conversationId, null)
+    storeAtStart.setConversationReconnecting(conversationId, true)
+    try {
+      await sendMessageStreaming({
+        conversation_id: conversationId,
+        content:
+          'Continue from where you left off. Compact earlier context if needed and finish the unfinished work.',
+        suppressUserMessage: true,
+        system_context:
+          'The previous turn hit the context window limit. Compact earlier conversation context as needed and continue unfinished work from that turn.',
+      })
+    } catch (error) {
+      const store = useChatStore.getState()
+      store.setConversationInterrupted(conversationId, true)
+      store.setConversationStreamFailure(
+        conversationId,
+        resolveChatStreamFailure({ code: 'context_window_exceeded' }),
+      )
+      throw error
+    } finally {
+      useChatStore.getState().setConversationReconnecting(conversationId, false)
+    }
+    return
+  }
+
   if (shouldSkipStreamRecovery(conversationId)) {
     clearCompletedConversationRecoveryState(conversationId)
     return

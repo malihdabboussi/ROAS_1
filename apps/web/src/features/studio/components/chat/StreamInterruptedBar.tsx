@@ -60,11 +60,20 @@ function InterruptedConversationRow({ conversationId }: { conversationId: string
       const stillInterrupted = store.interruptedConversationIds.includes(conversationId)
       const stillStreaming = store.streamingConversationIds.includes(conversationId)
       const stillReconnecting = store.reconnectingConversationIds.includes(conversationId)
-      if (stillInterrupted && !stillStreaming && !stillReconnecting) {
+      const failure = store.streamFailureByConversation[conversationId]
+      if (
+        stillInterrupted &&
+        !stillStreaming &&
+        !stillReconnecting &&
+        failure?.code !== 'context_window_exceeded'
+      ) {
         stopInterruptedFlow()
       }
     } catch {
-      stopInterruptedFlow()
+      const failure = useChatStore.getState().streamFailureByConversation[conversationId]
+      if (failure?.code !== 'context_window_exceeded') {
+        stopInterruptedFlow()
+      }
     } finally {
       setBusy(false)
     }

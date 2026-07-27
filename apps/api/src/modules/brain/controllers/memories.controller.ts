@@ -123,6 +123,7 @@ export class MemoriesController {
     assertBrainFeatureAllowed(scope)
     return this.conversationProcessing.processConversation(supabase, {
       ...body,
+      owner_id: body.owner_id ?? user.id,
       org_id: scope.orgId,
     })
   }

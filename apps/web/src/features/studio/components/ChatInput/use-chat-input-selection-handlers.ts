@@ -1,8 +1,7 @@
 import { useCallback } from 'react'
 import type { Dispatch, RefObject, SetStateAction } from 'react'
-import type { AttachedArtifact } from '../chat/ArtifactAttachments'
 import type { MessageReference } from '../../types'
-import type { AtMentionItem, StudioAtMenuTabId } from './chat-input-at-mentions'
+import type { AttachedArtifact } from '../chat/ArtifactAttachments'
 import {
   appendUniqueAttachedArtifact,
   appendUniqueMessageReference,
@@ -12,9 +11,10 @@ import {
   getAtMentionSelectionTextUpdate,
   isReferenceAtMentionItem,
 } from './chat-input-at-mention-selection'
+import type { AtMentionItem, StudioAtMenuTabId } from './chat-input-at-mentions'
+import type { ChatInputRecordingState } from './chat-input-recording-footer'
 import type { SlashItem } from './chat-input-slash-menu'
 import { getSlashSelectionTextUpdate } from './chat-input-slash-selection'
-import type { ChatInputRecordingState } from './chat-input-recording-footer'
 
 export interface UseChatInputSelectionHandlersOptions {
   textareaRef: RefObject<HTMLTextAreaElement | null>
@@ -69,6 +69,17 @@ export function useChatInputSelectionHandlers({
 
   const handleSlashSelect = useCallback(
     (item: SlashItem) => {
+      if (item.type === 'playbook') {
+        setSlashMenuOpen(false)
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('vibey:open-quick-missions', {
+              detail: { playbookKey: item.key },
+            }),
+          )
+        }
+        return
+      }
       const t = textareaRef.current
       const text = recordingState === 'idle' ? value : displayText
       const cursor = Math.min(t?.selectionStart ?? text.length, text.length)

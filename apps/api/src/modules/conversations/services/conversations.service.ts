@@ -18,6 +18,7 @@ import {
   type ConversationAssetsScope,
 } from './conversation-assets.service'
 import { ConversationMessagesService } from './conversation-messages.service'
+import { insertConversationPassOffNotification } from './conversation-pass-off-notify'
 import { ConversationPermissionsService } from './conversation-permissions.service'
 import { ConversationTitleSuggestionService } from './conversation-title-suggestion.service'
 
@@ -418,13 +419,86 @@ export class ConversationsService {
       'admin',
       orgId,
     )
-    return this.permissionsService.upsertConversationShare(
+    const share = await this.permissionsService.upsertConversationShare(
       supabase,
       userId,
       conversationId,
       data,
       orgId,
     )
+
+    const notify = Boolean((data as { notify?: boolean }).notify)
+    const note =
+      typeof (data as { note?: string }).note === 'string'
+        ? (data as { note?: string }).note!.trim()
+        : ''
+    if (notify && data.entity_type === 'user') {
+      await this.notifyConversationPassOff(supabase, {
+        conversationId,
+        fromUserId: userId,
+        toUserId: data.entity_id,
+        orgId: orgId ?? null,
+        note,
+      })
+    }
+
+    return share
+  }
+
+  async passOffConversation(
+    supabase: SupabaseClient,
+    userId: string,
+    conversationId: string,
+    input: {
+      user_id: string
+      level: 'view' | 'edit' | 'admin'
+      note?: string
+      notify?: boolean
+    },
+    orgId?: string | null,
+    orgRole?: OrgRole | null,
+  ) {
+    return this.upsertConversationShare(
+      supabase,
+      userId,
+      conversationId,
+      {
+        entity_type: 'user',
+        entity_id: input.user_id,
+        level: input.level,
+        notify: input.notify ?? true,
+        note: input.note,
+      },
+      orgId,
+      orgRole,
+    )
+  }
+
+  private async notifyConversationPassOff(
+    supabase: SupabaseClient,
+    input: {
+      conversationId: string
+      fromUserId: string
+      toUserId: string
+      orgId: string | null
+      note: string
+    },
+  ): Promise<void> {
+    const conversation = await this.conversationsRepo.findById(supabase, input.conversationId)
+    try {
+      await insertConversationPassOffNotification(supabase, {
+        conversationId: input.conversationId,
+        conversationTitle: typeof conversation?.title === 'string' ? conversation.title : null,
+        fromUserId: input.fromUserId,
+        toUserId: input.toUserId,
+        orgId: input.orgId,
+        note: input.note,
+      })
+    } catch (error) {
+      throw new BadRequestException(
+        error instanceof Error ? error.message : 'Failed to notify teammate',
+      )
+    }
   }
 
   async deleteConversationShare(

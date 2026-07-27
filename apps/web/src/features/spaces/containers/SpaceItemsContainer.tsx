@@ -325,12 +325,21 @@ export function SpaceItemsContainer() {
     handleContactDetailLayout,
   } = toolbar
 
+  /** Open modal first, then focus a task-capable view so query swaps cannot clear selection. */
+  const openSpaceItemFromSelection = useCallback(
+    (item: import('../types').SpaceItem) => {
+      openSpaceItemModal(item)
+      if (activeSpaceId) focusTaskCapableViewIfNeeded(activeSpaceId)
+    },
+    [activeSpaceId, focusTaskCapableViewIfNeeded, openSpaceItemModal],
+  )
+
   const { urlSpaceItemDeepLinkRef } = useSpaceItemNavigationEvents({
     activeSpaceId,
     items,
     itemsLoadedForSpaceId,
     focusTaskCapableViewIfNeeded,
-    openSpaceItemModal,
+    openSpaceItemModal: openSpaceItemFromSelection,
     setDocEditorItem,
     setSelectedItem,
   })
@@ -1347,7 +1356,7 @@ export function SpaceItemsContainer() {
                 taskModalOpen={Boolean(selectedItem)}
                 setReportingToolbarApi={setReportingToolbarApi}
                 setSelectedItem={setSelectedItem}
-                openSpaceItemModal={openSpaceItemModal}
+                openSpaceItemModal={openSpaceItemFromSelection}
                 setDocEditorItem={setDocEditorItem}
                 reloadCampaignDocs={reloadCampaignDocs}
                 setCategoryEditorOpen={setCategoryEditorOpen}

@@ -2325,7 +2325,13 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
   },
   get_space_item: {
     required: ['space_id', 'item_id'],
-    optional: ['include_activity', 'scope_override'],
+    optional: [
+      'include_activity',
+      'include_deliverables',
+      'include_action_items',
+      'include_meeting',
+      'scope_override',
+    ],
     aliases: { task_id: 'item_id', document_id: 'item_id' },
     types: {
       space_id: 'string',
@@ -2333,6 +2339,9 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       task_id: 'string',
       document_id: 'string',
       include_activity: 'boolean',
+      include_deliverables: 'boolean',
+      include_action_items: 'boolean',
+      include_meeting: 'boolean',
       scope_override: 'boolean',
     },
   },

@@ -31,8 +31,12 @@ export const CONVERSATION_SHARE_TOAST_ERRORS = {
   CHANGE_PERMISSION_FAILED: { userMessage: 'Failed to change permission — try again.' },
   UPDATE_CONVERSATION_SHARE_FAILED: { userMessage: 'Failed to update share — try again.' },
   UPDATE_ORG_SHARE_FAILED: { userMessage: 'Failed to update organization share — try again.' },
+  PASS_OFF_FAILED: { userMessage: 'Failed to pass off conversation — try again.' },
+  COPY_LINK_FAILED: { userMessage: 'Could not copy link — try again.' },
 } as const
 
 export const CONVERSATION_SHARE_TOAST_SUCCESS = {
   SHARE_UPDATED: { userMessage: 'Share updated.' },
+  PASSED_OFF: { userMessage: 'Passed off — teammate notified.' },
+  LINK_COPIED: { userMessage: 'Handoff link copied.' },
 } as const

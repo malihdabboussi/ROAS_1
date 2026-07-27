@@ -66,6 +66,11 @@ export function collectFathomInviteeLabels(attendees: FathomAttendeeLike[]): str
 }
 
 const JUNK_SPEAKER = /^(starting transcription\.?.*|speaker\s*\d+|unknown|you|me)$/i
+const JUNK_SPEAKER_ORDINAL = /^speaker\s*(\d+)$/i
+
+export function isJunkSpeakerLabel(label: string): boolean {
+  return JUNK_SPEAKER.test(label.trim())
+}
 
 export function collectFathomSpeakerLabels(transcript: FathomTranscriptEntryLike[]): string[] {
   const seen = new Set<string>()
@@ -79,6 +84,138 @@ export function collectFathomSpeakerLabels(transcript: FathomTranscriptEntryLike
     labels.push(label)
   }
   return labels
+}
+
+/** Ordered unique junk diarization labels (Speaker 1, Speaker 2, …). */
+export function collectJunkSpeakerLabels(transcript: FathomTranscriptEntryLike[]): string[] {
+  const seen = new Set<string>()
+  const labels: string[] = []
+  for (const entry of transcript) {
+    const label = String(entry.speaker?.display_name ?? entry.speaker?.name ?? '').trim()
+    if (!label || !JUNK_SPEAKER_ORDINAL.test(label)) continue
+    const key = label.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    labels.push(label)
+  }
+  return labels
+}
+
+export type SpeakerRemapBinding = {
+  label: string
+  email?: string | null
+  contact_id?: string | null
+}
+
+export type SpeakerRemapMap = Record<string, SpeakerRemapBinding>
+
+/**
+ * Prefer durable remaps, then calendar invitees (non-host) matched by ordinal /
+ * People email, so Speaker N becomes a named portal person when possible.
+ */
+export function resolveJunkSpeakerRemaps(input: {
+  junkLabels: string[]
+  attendees: FathomAttendeeLike[]
+  recordedByEmail: string
+  /** Durable bindings already saved on the meeting item. */
+  existingRemaps?: SpeakerRemapMap | null
+  /** CRM / portal people with emails for invitee matching. */
+  peopleByEmail?: Map<string, { label: string; contact_id?: string | null }>
+}): { remaps: SpeakerRemapMap; unresolved: string[] } {
+  const remaps: SpeakerRemapMap = { ...(input.existingRemaps ?? {}) }
+  const unresolved: string[] = []
+  const hostEmail = input.recordedByEmail.trim().toLowerCase()
+
+  const inviteeCandidates = input.attendees
+    .map((person) => {
+      const email = String(person.email ?? '')
+        .trim()
+        .toLowerCase()
+      const label = fathomPersonLabel(person)
+      if (!label || label === 'Unknown') return null
+      if (email && hostEmail && email === hostEmail) return null
+      const peopleHit = email ? input.peopleByEmail?.get(email) : undefined
+      return {
+        label: peopleHit?.label || label,
+        email: email || null,
+        contact_id: peopleHit?.contact_id ?? null,
+      }
+    })
+    .filter((row): row is NonNullable<typeof row> => !!row)
+
+  const usedEmails = new Set(
+    Object.values(remaps)
+      .map((b) =>
+        String(b.email ?? '')
+          .trim()
+          .toLowerCase(),
+      )
+      .filter(Boolean),
+  )
+  const usedLabels = new Set(
+    Object.values(remaps)
+      .map((b) => b.label.trim().toLowerCase())
+      .filter(Boolean),
+  )
+
+  const sortedJunk = [...input.junkLabels].sort((a, b) => {
+    const na = Number(a.match(JUNK_SPEAKER_ORDINAL)?.[1] ?? 0)
+    const nb = Number(b.match(JUNK_SPEAKER_ORDINAL)?.[1] ?? 0)
+    return na - nb
+  })
+
+  let inviteeIdx = 0
+  for (const junk of sortedJunk) {
+    const key = junk.trim()
+    const existing = remaps[key]
+    if (existing?.label && !isJunkSpeakerLabel(existing.label)) continue
+
+    while (inviteeIdx < inviteeCandidates.length) {
+      const candidate = inviteeCandidates[inviteeIdx]!
+      inviteeIdx += 1
+      const emailKey = String(candidate.email ?? '')
+        .trim()
+        .toLowerCase()
+      const labelKey = candidate.label.trim().toLowerCase()
+      if (emailKey && usedEmails.has(emailKey)) continue
+      if (usedLabels.has(labelKey)) continue
+      remaps[key] = {
+        label: candidate.label,
+        email: candidate.email,
+        contact_id: candidate.contact_id,
+      }
+      if (emailKey) usedEmails.add(emailKey)
+      usedLabels.add(labelKey)
+      break
+    }
+
+    if (!remaps[key]?.label || isJunkSpeakerLabel(remaps[key]!.label)) {
+      unresolved.push(key)
+    }
+  }
+
+  return { remaps, unresolved }
+}
+
+/** Apply remaps onto a label list (replaces Speaker N entries in place). */
+export function applySpeakerRemapsToLabels(
+  labels: string[],
+  remaps: SpeakerRemapMap | null | undefined,
+): string[] {
+  if (!remaps || Object.keys(remaps).length === 0) return labels
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const label of labels) {
+    const binding = remaps[label] ?? remaps[label.trim()]
+    const next =
+      binding?.label && !isJunkSpeakerLabel(binding.label) ? binding.label.trim() : label.trim()
+    if (!next || isJunkSpeakerLabel(next)) continue
+    const key = next.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(next)
+  }
+  return out
 }
 
 /**
@@ -109,25 +246,78 @@ export function resolveFathomAttendeeLabels(input: {
   transcript: FathomTranscriptEntryLike[]
   recordedByEmail: string
   titleHint?: string | null
-}): { labels: string[]; usedSpeakers: boolean } {
+  existingRemaps?: SpeakerRemapMap | null
+  peopleByEmail?: Map<string, { label: string; contact_id?: string | null }>
+}): {
+  labels: string[]
+  usedSpeakers: boolean
+  speakerRemaps: SpeakerRemapMap
+  unresolvedSpeakers: string[]
+} {
+  const junkLabels = collectJunkSpeakerLabels(input.transcript)
+  const { remaps, unresolved } = resolveJunkSpeakerRemaps({
+    junkLabels,
+    attendees: input.attendees,
+    recordedByEmail: input.recordedByEmail,
+    existingRemaps: input.existingRemaps,
+    peopleByEmail: input.peopleByEmail,
+  })
+
   // Default: who actually spoke on the call (invite lists are often wrong/incomplete).
   const speakerLabels = collectFathomSpeakerLabels(input.transcript)
   if (speakerLabels.length > 0) {
-    return { labels: speakerLabels, usedSpeakers: true }
+    const remappedExtras = Object.values(remaps)
+      .map((b) => b.label.trim())
+      .filter((label) => label && !isJunkSpeakerLabel(label))
+    const merged = applySpeakerRemapsToLabels([...speakerLabels, ...remappedExtras], remaps)
+    return {
+      labels: merged.length > 0 ? merged : speakerLabels,
+      usedSpeakers: true,
+      speakerRemaps: remaps,
+      unresolvedSpeakers: unresolved,
+    }
+  }
+
+  // Only junk speakers: remap Speaker N → invitees / People, else fall through.
+  if (junkLabels.length > 0) {
+    const remapped = applySpeakerRemapsToLabels(junkLabels, remaps)
+    if (remapped.length > 0) {
+      return {
+        labels: remapped,
+        usedSpeakers: true,
+        speakerRemaps: remaps,
+        unresolvedSpeakers: unresolved,
+      }
+    }
   }
 
   const inviteeLabels = collectFathomInviteeLabels(input.attendees)
   // Real multi-person invite roster when speakers are unavailable.
   if (inviteeLabels.length > 0 && !isHostOnlyAttendeeList(input.attendees, input.recordedByEmail)) {
-    return { labels: inviteeLabels, usedSpeakers: false }
+    return {
+      labels: inviteeLabels,
+      usedSpeakers: false,
+      speakerRemaps: remaps,
+      unresolvedSpeakers: unresolved,
+    }
   }
 
   // Host-only / empty invitees: try title pair before accepting the host-only list.
   const fromTitle = labelsFromMeetingTitleHint(input.titleHint)
   if (fromTitle.length > 0) {
-    return { labels: fromTitle, usedSpeakers: true }
+    return {
+      labels: fromTitle,
+      usedSpeakers: true,
+      speakerRemaps: remaps,
+      unresolvedSpeakers: unresolved,
+    }
   }
-  return { labels: inviteeLabels, usedSpeakers: false }
+  return {
+    labels: inviteeLabels,
+    usedSpeakers: false,
+    speakerRemaps: remaps,
+    unresolvedSpeakers: unresolved,
+  }
 }
 
 /** e.g. "Carol <> Dylan" / "Carol x Dylan" → Carol + Dylan when speakers + invitees are weak. */

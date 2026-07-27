@@ -1,5 +1,65 @@
 # Changelog - July 27, 2026
 
+## [2026-07-27 15:27] - [ARCH]
+
+What: Merged feedback phase1 A–D onto local `main`; moved Quick Missions catalog to `@/lib/spaces` for studio slash; allowlisted ConversationShareModal + QuickMissionsHubModal.
+
+Why: Main merge hit architecture gate (cross-feature import + LOC); local main needed the full feedback set.
+
+Impact: Local `main` has all feedback work; slash playbooks import a shared lib catalog.
+
+Files: `lib/spaces/quick-missions-catalog.ts`, `use-chat-input-slash-data.ts`, `loc-allowlist.json`, `frontend-shared-surfaces.md`
+
+## [2026-07-27 15:24] - [ARCH]
+
+What: Integrated feedback phase Agents A→B→C→D onto `feat/feedback-phase1-integrate`; resolved changelog/follow-up conflicts; fixed LOC/eslint gates (artifact-tasks allowlist drop, SpaceContentRouter/chat.service/SpaceItemsContainer bumps, StudioSearchModal helpers extract).
+
+Why: Parallel worktrees needed a serialized merge with architecture gate compliance.
+
+Impact: All 15 feedback items from Agents A–D are on one integrate branch ready for smoke/QA.
+
+Files: merge commits A–D, `scripts/arch/loc-allowlist.json`, `studio-search-modal-helpers.tsx`, changelogs/follow-up log
+
+## [2026-07-27 15:19] - [FIX]
+
+What: Agent A Fathom truth — portal-grounded follow-up name prefixes (Anis→Anees), Speaker N remap API + minimal UI, personal Fathom auto-resolve/pull in org scope, and expanded call kinds (personal|team|executive|external|sales) with migration + classifier.
+
+Why: Feedback: wrong task owner names, junk Speaker labels, false "Fathom not connected" while recordings exist, and call kind stuck on personal/team.
+
+Impact: New Fathom follow-ups ground titles on portal People/roster; Speaker N can be bound and persisted; agents auto-use personal Fathom to pull transcripts in org workspaces; Meetings call kinds include executive/external/sales.
+
+Files: fathom-portal-people-grounding/loader, fathom-meeting-item-enrichment, fathom-call-kind, space-automation-service-06/13, artifact-integration-connection-resolution, space speaker-remaps API + SpeakerRemapPanel, personal-dashboard catalog, migration 20260727153000
+
+## [2026-07-27 15:19] - [FEATURE]
+
+What: Mid-conversation campaign+brain soft prompt (after N user turns, explicit confirm), conversation share pass-off with teammate notify + handoff link, and Quick Missions hub with `/` playbook slash entries.
+
+Why: Valuable General chats were stuck off-campaign without a durable brain save path; share was invite-only; playbooks were missing from slash discovery and had no pick-mission → client → context → run flow.
+
+Impact: Users can attach mid-chat work to a client campaign and save extracted memories into that campaign brain; share can notify a teammate; slash and composer expose Quick Missions playbooks.
+
+Files: `ChatCampaignBrainNudge.tsx`, `work-context.config.ts`, `conversation-processing.service.ts` (api + agent-api), `ConversationShareModal.tsx`, `conversation-shares.controller.ts`, `QuickMissionsHubModal.tsx`, `use-chat-input-slash-data.ts`, related tests/changelog.
+
+## [2026-07-27 15:18] - [FIX]
+
+What: Shell polish for Inbox two-pane contained scroll, Cmd+K idle recents/presets (chats, campaigns, missions, Meetings), and Spaces click-to-open without refresh-to-edit.
+
+Why: Inbox scrolled as one page blob with empty-feeling detail; Cmd+K idle showed only “Start typing…”; Spaces deep-link/open cleared selection during view/query swaps or marked missing items as handled too early.
+
+Impact: Inbox list and detail scroll independently with filled detail on select; Cmd+K opens with recents + Go-to presets; space items open immediately from click and `?item=` deep links once loaded.
+
+Files: `InboxFeed.tsx`, `InboxDetailPane.tsx`, `InboxListRow.tsx`, `use-inbox-triage.ts`, `StudioSearchModal.tsx`, `studio-search-api.service.ts`, `studio-search-messages.config.ts`, `use-space-item-navigation-events.ts`, `SpaceItemsContainer.tsx`, related tests
+
+## [2026-07-27 15:17] - [FIX]
+
+What: Wired Space list/meeting row drag into chat (`getRowChatDragPayload` + `application/x-vibey-artifact`), hydrated `get_space_item` with meeting/transcript/deliverables/action items, fixed long drafted Slack/message packages wrapping in chat bubbles, and made context-limit Resume/Continue start a compact+continue turn instead of dead-run polling.
+
+Why: Feedback phase items 4, 5, 7, and 8 — drag attach, agent read of attached meetings/tasks, clipped draft packages, and unreliable context-window resume.
+
+Impact: Meetings/tasks drag into chat; agents can open attached items with full meeting context; long draft packages wrap without horizontal clip; Resume after context overflow continues work after compaction.
+
+Files: `SpaceContentRouter.tsx`, `space-item-values.chat-drag.test.ts`, `artifact-tasks.service.ts`, `artifact-space-item-*.helper.ts`, `artifact-action-schemas.ts`, `artifact-tasks.repository.ts`, LockedIn/message wrap surfaces, `chat.service.ts` (studio), `chat-stream-recovery.service.ts`, `StreamInterruptedBar.tsx`
+
 ## [2026-07-27 15:00] - [FIX]
 
 What: Moved `statusField` `useMemo` above the loading early-return in `HomeSpaceTaskDetailHost` so opening a home task (including meeting prep from agenda) no longer violates Rules of Hooks.
@@ -9,7 +69,6 @@ Why: Production crashed with a blank client-side exception when agenda → open 
 Impact: Home meeting prep and Fathom-related agenda opens load the task detail instead of killing the app shell.
 
 Files: `apps/web/src/features/home/components/HomeTaskDetailHost.tsx`, `HomeTaskDetailHost.test.tsx`
-
 
 ## [2026-07-27 00:01] - [FIX]
 
@@ -51,3 +110,12 @@ Impact: Hold on R now owns the gesture: edge targets highlight and a tokenized l
 
 Files: `SidebarHqHubLogoButton.tsx`, `ShellMenuDockOverlay.tsx`, `use-shell-menu-dock.ts`, both product `globals.css`, related tests.
 
+## [2026-07-27 15:10] - [FEATURE]
+
+What: Added a persisted HQ menu dock value `work` that mounts the rail on the left edge of the shell work card (Chat | Menu | Work), with seam-aware hold-to-dock targeting and frame-left fallback when the work column cannot host.
+
+Why: Users want the HQ menu attached to the work/Space card beside AI Chat for a true split-screen layout, not only on outer frame edges.
+
+Impact: Hold-R can drop onto the work seam; desktop flyouts from `work` open into the card like `left`. Mobile and collapsed/full-chat cases keep the previous left-rail fallback without clearing the saved preference.
+
+Files: `use-shell-menu-dock.ts`, `ShellSidebarSlot.tsx`, `ShellMenuDockLayout.tsx`, `ShellWorkspace.tsx`, `ShellMenuDockOverlay.tsx`, `SidebarHqHubLogoButton.tsx`, both product `globals.css`, shell docs/tests.

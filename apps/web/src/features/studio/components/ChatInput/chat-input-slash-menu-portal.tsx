@@ -15,6 +15,7 @@ interface ChatInputSlashMenuPortalProps {
   slashHighlight: number
   onSelect: (item: SlashItem) => void
   onHighlight: (index: number) => void
+  onShowMorePlaybooks: () => void
   onShowMoreSkills: () => void
   onShowMoreWorkflows: () => void
 }
@@ -29,6 +30,7 @@ export function ChatInputSlashMenuPortal({
   slashHighlight,
   onSelect,
   onHighlight,
+  onShowMorePlaybooks,
   onShowMoreSkills,
   onShowMoreWorkflows,
 }: ChatInputSlashMenuPortalProps) {
@@ -47,6 +49,7 @@ export function ChatInputSlashMenuPortal({
         slashHighlight={slashHighlight}
         onSelect={onSelect}
         onHighlight={onHighlight}
+        onShowMorePlaybooks={onShowMorePlaybooks}
         onShowMoreSkills={onShowMoreSkills}
         onShowMoreWorkflows={onShowMoreWorkflows}
       />

@@ -133,14 +133,51 @@ export type AgendaRelatedFollowUp = {
   id: string
   title: string
   status: string
+  assignee_id: string | null
+  assignee_type: string | null
 }
 
 export type AgendaRelatedCall = {
   space_id: string
   call_item_id: string
   title: string
+  /** Short meeting summary for the agenda detail modal (not a full transcript). */
+  summary: string | null
   recording_url: string | null
   follow_ups: AgendaRelatedFollowUp[]
+}
+
+const MAX_AGENDA_SUMMARY_CHARS = 600
+
+/** Prefer recording_url, then fathom_url from call custom_data. */
+export function resolveAgendaRecordingUrl(
+  custom: Record<string, unknown> | null | undefined,
+): string | null {
+  for (const key of ['recording_url', 'fathom_url'] as const) {
+    const raw = custom?.[key]
+    if (typeof raw === 'string' && /^https?:\/\//i.test(raw.trim())) return raw.trim()
+  }
+  return null
+}
+
+/**
+ * Prefer a short purpose summary. Avoid dumping full transcripts into the agenda modal.
+ */
+export function resolveAgendaCallSummary(input: {
+  description?: string | null
+  custom?: Record<string, unknown> | null
+}): string | null {
+  const customSummary = input.custom?.summary
+  if (typeof customSummary === 'string' && customSummary.trim()) {
+    return customSummary.trim().slice(0, MAX_AGENDA_SUMMARY_CHARS)
+  }
+  const description = typeof input.description === 'string' ? input.description.trim() : ''
+  if (!description) return null
+  // Transcript dumps are long / multi-speaker; keep those out of the modal.
+  if (description.length > 1800 || /\n\s*[A-Z][a-z]+:\s/.test(description.slice(0, 400))) {
+    return null
+  }
+  return description.slice(0, MAX_AGENDA_SUMMARY_CHARS)
 }
 
 /** Pad around the calendar event when deciding whether a Fathom call_date overlaps. */
@@ -268,6 +305,7 @@ export function buildFathomAgendaEvent(input: {
   title: string
   callDate: string
   recordingUrl: string | null
+  summary?: string | null
   followUps?: AgendaRelatedCall['follow_ups']
 }): {
   id: string
@@ -310,6 +348,9 @@ export function buildFathomAgendaEvent(input: {
       space_id: input.spaceId,
       call_item_id: input.callItemId,
       title,
+      summary: input.summary?.trim()
+        ? input.summary.trim().slice(0, MAX_AGENDA_SUMMARY_CHARS)
+        : null,
       recording_url: input.recordingUrl,
       follow_ups: input.followUps ?? [],
     },

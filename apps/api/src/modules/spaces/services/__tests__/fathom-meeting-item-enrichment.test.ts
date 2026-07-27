@@ -3,6 +3,7 @@ import {
   collectFathomAttendeesWithEmail,
   isHostOnlyAttendeeList,
   resolveFathomAttendeeLabels,
+  resolveJunkSpeakerRemaps,
   upsertAttendeeTagOptions,
 } from '../fathom-meeting-item-enrichment'
 import {
@@ -56,17 +57,51 @@ describe('fathom-meeting-item-enrichment', () => {
         { name: 'Dylan Vanas', email: 'dylan@dylanvanas.com' },
         { name: 'Yasir Khan', email: 'yasir@example.com' },
       ],
-      transcript: [{ speaker: { display_name: 'Speaker 2' }, text: 'Hi' }],
+      transcript: [{ speaker: { display_name: 'Unknown' }, text: 'Hi' }],
       recordedByEmail: 'dylan@dylanvanas.com',
     })
     expect(result.usedSpeakers).toBe(false)
     expect(result.labels).toEqual(['Dylan Vanas', 'Yasir Khan'])
   })
 
+  it('remaps Speaker N junk labels onto calendar invitees', () => {
+    const result = resolveFathomAttendeeLabels({
+      attendees: [
+        { name: 'Dylan Vanas', email: 'dylan@dylanvanas.com' },
+        { name: 'Nate Tilley', email: 'nate@roas.co' },
+      ],
+      transcript: [
+        { speaker: { display_name: 'Speaker 1' }, text: 'Hey' },
+        { speaker: { display_name: 'Speaker 2' }, text: 'Update' },
+      ],
+      recordedByEmail: 'dylan@dylanvanas.com',
+    })
+    expect(result.usedSpeakers).toBe(true)
+    expect(result.labels).toEqual(['Nate Tilley'])
+    expect(result.speakerRemaps['Speaker 1']?.label).toBe('Nate Tilley')
+    expect(result.unresolvedSpeakers).toEqual(['Speaker 2'])
+  })
+
+  it('keeps durable speaker remaps over invitee ordinal matching', () => {
+    const remaps = resolveJunkSpeakerRemaps({
+      junkLabels: ['Speaker 1'],
+      attendees: [
+        { name: 'Dylan Vanas', email: 'dylan@dylanvanas.com' },
+        { name: 'Calendar Ghost', email: 'ghost@example.com' },
+      ],
+      recordedByEmail: 'dylan@dylanvanas.com',
+      existingRemaps: {
+        'Speaker 1': { label: 'Nate Tilley', email: 'nate@roas.co' },
+      },
+    })
+    expect(remaps.remaps['Speaker 1']?.label).toBe('Nate Tilley')
+    expect(remaps.unresolved).toEqual([])
+  })
+
   it('parses Carol <> Dylan style titles when speakers and invitees are weak', () => {
     const result = resolveFathomAttendeeLabels({
       attendees: [{ name: 'Dylan Vanas', email: 'dylan@dylanvanas.com' }],
-      transcript: [{ speaker: { display_name: 'Speaker 2' }, text: 'Hi' }],
+      transcript: [{ speaker: { display_name: 'Unknown' }, text: 'Hi' }],
       recordedByEmail: 'dylan@dylanvanas.com',
       titleHint: 'Carol <> Dylan',
     })
