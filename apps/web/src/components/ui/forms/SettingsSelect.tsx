@@ -24,6 +24,7 @@ export interface SettingsSelectProps<V extends string = string> {
   triggerClassName?: string
   menuMinWidth?: number
   id?: string
+  ariaLabel?: string
 }
 
 export function SettingsSelect<V extends string = string>({
@@ -36,6 +37,7 @@ export function SettingsSelect<V extends string = string>({
   triggerClassName = 'gap-spacing-1 h-spacing-9 px-spacing-3 input-glass rounded-spacing-2 flex w-full items-center justify-between transition-colors disabled:opacity-60',
   menuMinWidth,
   id,
+  ariaLabel,
 }: SettingsSelectProps<V>) {
   const [open, setOpen] = useState(false)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
@@ -132,6 +134,7 @@ export function SettingsSelect<V extends string = string>({
       <button
         ref={setRefs}
         id={id}
+        aria-label={ariaLabel}
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen((current) => !current)}

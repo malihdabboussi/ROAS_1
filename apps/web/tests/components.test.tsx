@@ -83,7 +83,7 @@ describe('Sidebar Component', () => {
       </AccountSettingsModalProvider>,
     )
 
-    expect(screen.getAllByText('Campaigns').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Programs').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('Team').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('Brain').length).toBeGreaterThanOrEqual(1)
   })

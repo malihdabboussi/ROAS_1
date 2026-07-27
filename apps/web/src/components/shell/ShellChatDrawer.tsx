@@ -37,7 +37,6 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
   const [isDragging, setIsDragging] = useState(false)
   const [isHistoryDragging, setIsHistoryDragging] = useState(false)
   const [mounted, setMounted] = useState(open)
-  const [slidIn, setSlidIn] = useState(false)
   const drawerRef = useRef<HTMLDivElement>(null)
   const dragStartX = useRef(0)
   const dragStartWidth = useRef(width)
@@ -53,23 +52,15 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
     initConversationTitleAutogen()
   }, [])
 
-  // Mount at zero width, then slide the body in on the next frame so the page
-  // glides sideways instead of the panel popping into the flex row.
+  // Keep the drawer mounted for its single width transition. The contents are
+  // clipped by the drawer itself so they never run a second, conflicting slide.
   useEffect(() => {
     if (!open) {
-      setSlidIn(false)
       const timer = setTimeout(() => setMounted(false), DRAWER_SLIDE_MS)
       return () => clearTimeout(timer)
     }
     setMounted(true)
-    let inner = 0
-    const outer = requestAnimationFrame(() => {
-      inner = requestAnimationFrame(() => setSlidIn(true))
-    })
-    return () => {
-      cancelAnimationFrame(outer)
-      cancelAnimationFrame(inner)
-    }
+    return undefined
   }, [open])
 
   useEffect(() => {
@@ -176,13 +167,8 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
 
   // Expanded = page collapsed: history stays, chat fills the freed width.
   // Docked = fixed width with slide-in animation.
-  const drawerWidthStyle = expanded ? undefined : { width: slidIn ? `${width}px` : '0px' }
-  const bodyStyle = expanded
-    ? undefined
-    : {
-        width: `${width}px`,
-        transform: slidIn ? 'translateX(0)' : `translateX(-${width}px)`,
-      }
+  const drawerWidthStyle = expanded ? undefined : { width: open ? `${width}px` : '0px' }
+  const bodyStyle = expanded ? undefined : { width: `${width}px` }
 
   return (
     <>
@@ -194,16 +180,12 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
           !isDragging && !expanded && 'shell-chat-drawer-animated',
         )}
         style={drawerWidthStyle}
-        aria-hidden={!expanded && !slidIn}
+        aria-hidden={!expanded && !open}
         data-shell-chat-drawer
         data-expanded={expanded ? 'true' : 'false'}
       >
         <div
-          className={cn(
-            'shell-chat-drawer-body',
-            expanded && 'shell-chat-drawer-body-expanded',
-            !isDragging && !expanded && 'shell-chat-drawer-body-animated',
-          )}
+          className={cn('shell-chat-drawer-body', expanded && 'shell-chat-drawer-body-expanded')}
           style={bodyStyle}
         >
           {!historyCollapsed ? (

@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { CrmContactsContainer } from './CrmContactsContainer'
 import type { CrmContactRow } from '../services/crm-contacts-api'
 import { listCrmContacts, listCrmFunnels } from '../services/crm-contacts-api'
+import { CrmContactsContainer } from './CrmContactsContainer'
 
 const pushMock = vi.fn()
 
@@ -105,6 +105,21 @@ describe('CrmContactsContainer', () => {
           contactType: 'lead',
           includeArchived: false,
         }),
+      )
+    })
+  })
+
+  it('uses the shared contact search and sort controls', async () => {
+    render(<CrmContactsContainer />)
+    await screen.findByText('Ada Lovelace')
+
+    expect(screen.getByRole('searchbox', { name: 'Search contacts' })).toHaveClass('input-leading')
+    fireEvent.click(screen.getByRole('button', { name: 'Sort contacts' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Name A -> Z' }))
+
+    await waitFor(() => {
+      expect(listCrmContacts).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sort: 'name.asc' }),
       )
     })
   })

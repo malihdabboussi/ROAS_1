@@ -10,6 +10,7 @@ import { buildSpaceItemHref } from '@/lib/spaces/space-item-href'
 import type { TaskRollupItem, TaskRollupView } from '@/lib/tasks'
 import { resolveWorkViewFromSearch, useTaskRollup, type TaskWorkViewId } from '@/lib/work-views'
 import { ALL_TASKS_TOAST_ERRORS } from '../config/all-tasks-toast-errors.config'
+import { AllTasksScopeFilters } from './AllTasksScopeFilters'
 
 export function AllTasksBoard() {
   const router = useRouter()
@@ -106,71 +107,29 @@ export function AllTasksBoard() {
               updateSearch({ view: nextView })
             }}
           />
-          <div className="gap-spacing-1 border-border flex rounded-lg border p-1">
-            <button
-              type="button"
-              onClick={() => {
-                setScope('my')
-                updateSearch({ scope: '' })
-              }}
-              className={`body-3 rounded-md px-3 py-1.5 font-medium ${
-                scope === 'my'
-                  ? 'button-glass-accent'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              My Tasks
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setScope('all')
-                updateSearch({ scope: 'all' })
-              }}
-              className={`body-3 rounded-md px-3 py-1.5 font-medium ${
-                scope === 'all'
-                  ? 'button-glass-accent'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              All Tasks
-            </button>
-          </div>
-
-          <select
-            value={programId}
-            onChange={(e) => {
-              setProgramId(e.target.value)
+          <AllTasksScopeFilters
+            scope={scope}
+            programId={programId}
+            campaignId={campaignId}
+            programs={programs.map((program) => ({ id: program.id, name: program.name }))}
+            campaigns={campaignOptions.map((campaign) => ({
+              id: campaign.id,
+              name: campaign.name ?? 'Untitled campaign',
+            }))}
+            onScopeChange={(nextScope) => {
+              setScope(nextScope)
+              updateSearch({ scope: nextScope === 'all' ? 'all' : '' })
+            }}
+            onProgramChange={(nextProgramId) => {
+              setProgramId(nextProgramId)
               setCampaignId('')
-              updateSearch({ program: e.target.value, campaign: '' })
+              updateSearch({ program: nextProgramId, campaign: '' })
             }}
-            className="input-glass body-3 text-foreground rounded-lg px-3 py-2"
-            aria-label="Filter by program"
-          >
-            <option value="">All programs</option>
-            {programs.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={campaignId}
-            onChange={(e) => {
-              setCampaignId(e.target.value)
-              updateSearch({ campaign: e.target.value })
+            onCampaignChange={(nextCampaignId) => {
+              setCampaignId(nextCampaignId)
+              updateSearch({ campaign: nextCampaignId })
             }}
-            className="input-glass body-3 text-foreground rounded-lg px-3 py-2"
-            aria-label="Filter by campaign"
-          >
-            <option value="">All campaigns</option>
-            {campaignOptions.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
         <TaskWorkViewContent

@@ -1,6 +1,5 @@
 'use client'
 
-import { AnimatePresence } from 'framer-motion'
 import { SpaceCustomizeButton } from '@/features/spaces/components/toolbar'
 import {
   isPaidAdsViewType,
@@ -95,21 +94,17 @@ export function PaidAdsToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
 
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
         <SaveViewSlot ctx={ctx} />
-        {activeView ? (
-          <AnimatePresence mode="popLayout" initial={false}>
-            {!hideListToolbar && !isNonLaunchMode ? (
-              <PaidAdsSearchControls
-                isCreativesMode={isCreativesMode}
-                artifactConfig={artifactConfig}
-                artifactCampaignId={artifactCampaignId}
-                includeCampaignArtifacts={includeCampaignArtifacts}
-                loadCampaignArtifacts={loadCampaignArtifacts}
-                spaceToolbarSearchOpen={spaceToolbarSearchOpen}
-                setSpaceToolbarSearchOpen={setSpaceToolbarSearchOpen}
-                handleArtifactConfigPatch={handleArtifactConfigPatch}
-              />
-            ) : null}
-          </AnimatePresence>
+        {activeView && !hideListToolbar && !isNonLaunchMode ? (
+          <PaidAdsSearchControls
+            isCreativesMode={isCreativesMode}
+            artifactConfig={artifactConfig}
+            artifactCampaignId={artifactCampaignId}
+            includeCampaignArtifacts={includeCampaignArtifacts}
+            loadCampaignArtifacts={loadCampaignArtifacts}
+            spaceToolbarSearchOpen={spaceToolbarSearchOpen}
+            setSpaceToolbarSearchOpen={setSpaceToolbarSearchOpen}
+            handleArtifactConfigPatch={handleArtifactConfigPatch}
+          />
         ) : null}
         {activeView && !hideListToolbar && !isNonLaunchMode ? (
           <PaidAdsMetaRefreshButton campaignId={activeSpace.campaign_id ?? null} />
@@ -124,21 +119,17 @@ export function PaidAdsToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
             openCustomizeFromToolbar={openCustomizeFromToolbar}
           />
         ) : null}
-        {activeView && !isNonLaunchMode ? (
-          <AnimatePresence mode="popLayout" initial={false}>
-            {!hideListToolbar ? (
-              <PaidAdsPrimaryActions
-                hierarchyMode={hierarchyMode}
-                campaignId={activeSpace.campaign_id ?? null}
-                createLabel={createLabel}
-                schemaEditorOpen={schemaEditorOpen}
-                closeCustomizePanel={closeCustomizePanel}
-                openCustomizeFromToolbar={openCustomizeFromToolbar}
-                loadCampaignArtifacts={loadCampaignArtifacts}
-                handleCreateArtifact={handleCreateArtifact}
-              />
-            ) : null}
-          </AnimatePresence>
+        {activeView && !hideListToolbar && !isNonLaunchMode ? (
+          <PaidAdsPrimaryActions
+            hierarchyMode={hierarchyMode}
+            campaignId={activeSpace.campaign_id ?? null}
+            createLabel={createLabel}
+            schemaEditorOpen={schemaEditorOpen}
+            closeCustomizePanel={closeCustomizePanel}
+            openCustomizeFromToolbar={openCustomizeFromToolbar}
+            loadCampaignArtifacts={loadCampaignArtifacts}
+            handleCreateArtifact={handleCreateArtifact}
+          />
         ) : null}
       </div>
     </ToolbarShell>

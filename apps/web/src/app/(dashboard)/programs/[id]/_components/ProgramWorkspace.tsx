@@ -20,6 +20,7 @@ import {
 } from '@/lib/work-views'
 import { PROGRAM_VIEW_MESSAGES } from '../_config/program-view-messages.config'
 import { CampaignsHub } from '../../../campaigns/_components/CampaignsHub'
+import { ProgramCampaignFilter } from './ProgramCampaignFilter'
 import { ProgramViewSettingsMenu } from './ProgramViewSettingsMenu'
 
 export function ProgramWorkspace() {
@@ -165,7 +166,7 @@ export function ProgramWorkspace() {
               type="button"
               onClick={() => changeView('overview')}
               className={cn(
-                'body-3 gap-spacing-1-5 rounded-spacing-2 px-spacing-3 py-spacing-1-5 flex items-center font-medium',
+                'button-compact',
                 activeView === 'overview'
                   ? 'button-glass-accent text-foreground'
                   : 'text-muted-foreground hover:text-foreground',
@@ -192,7 +193,7 @@ export function ProgramWorkspace() {
                     key={viewId}
                     type="button"
                     onClick={() => changeView(viewId)}
-                    className="body-3 text-muted-foreground hover:text-foreground rounded-spacing-2 px-spacing-3 py-spacing-1-5 font-medium"
+                    className="button-compact text-muted-foreground hover:text-foreground"
                   >
                     {WORK_VIEW_LABELS[viewId]}
                   </button>
@@ -206,22 +207,14 @@ export function ProgramWorkspace() {
         ) : (
           <>
             <div className="mb-spacing-4 flex justify-end">
-              <select
-                value={campaignId}
-                onChange={(event) => {
-                  setCampaignId(event.target.value)
-                  updateSearch({ campaign: event.target.value })
+              <ProgramCampaignFilter
+                campaignId={campaignId}
+                campaigns={campaigns}
+                onChange={(nextCampaignId) => {
+                  setCampaignId(nextCampaignId)
+                  updateSearch({ campaign: nextCampaignId })
                 }}
-                aria-label="Filter Program tasks by Campaign"
-                className="input-glass body-3 text-foreground rounded-lg px-3 py-2"
-              >
-                <option value="">All campaigns</option>
-                {campaigns.map((campaign) => (
-                  <option key={campaign.id} value={campaign.id}>
-                    {campaign.name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
             <TaskWorkViewContent
               view={taskView}

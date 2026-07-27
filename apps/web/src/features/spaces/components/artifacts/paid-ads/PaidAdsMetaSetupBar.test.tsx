@@ -79,7 +79,7 @@ describe('PaidAdsMetaSetupBar', () => {
     })
   })
 
-  it('surfaces the PageGrader account recommendation before Meta is connected', async () => {
+  it('surfaces the ROAS Portal account recommendation before Meta is connected', async () => {
     getPaidAdsMetaConnectionStatus.mockResolvedValue({
       connected: false,
       adAccounts: null,
@@ -94,7 +94,7 @@ describe('PaidAdsMetaSetupBar', () => {
 
     render(<PaidAdsMetaSetupBar campaignId="campaign-1" spaceId="space-1" />)
 
-    expect(await screen.findByText(/PageGrader found Sakha Media/i)).toBeInTheDocument()
+    expect(await screen.findByText(/The ROAS Portal found Sakha Media/i)).toBeInTheDocument()
   })
 
   it('maps the selected Meta account and Page into the campaign defaults', async () => {

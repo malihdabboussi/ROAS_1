@@ -291,6 +291,27 @@ describe('SidebarHqSection', () => {
     expect(screen.queryByRole('button', { name: 'Collapse AI Chats' })).not.toBeInTheDocument()
   })
 
+  it('does not broadcast a flyout close when opening More from an already unpinned rail', () => {
+    useShellStore.setState({
+      sidebarPinned: false,
+      sidebarPeek: false,
+      sidebarFlyoutCloseEpoch: 0,
+    })
+    const setActiveManagePanel = vi.fn()
+    const controller = makeSidebarHqController({
+      mobileDrawerOpen: false,
+      pathname: '/brain',
+      setActiveManagePanel,
+    })
+
+    render(<SidebarHqSection c={controller} />)
+    const closeEpochBeforeClick = useShellStore.getState().sidebarFlyoutCloseEpoch
+    fireEvent.click(screen.getByRole('button', { name: 'More' }))
+
+    expect(setActiveManagePanel).toHaveBeenCalledWith('more')
+    expect(useShellStore.getState().sidebarFlyoutCloseEpoch).toBe(closeEpochBeforeClick)
+  })
+
   it('peeks the chat-history restore control from the R sidebar when history is collapsed', () => {
     useShellStore.setState({
       chatDrawer: { open: true, conversationId: null, width: 420, minimized: false },

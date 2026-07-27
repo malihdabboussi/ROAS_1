@@ -267,9 +267,9 @@ export default function BrainHome() {
   }
 
   return (
-    <div className="relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden p-3">
-      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--border)]">
-        <div className="gap-spacing-3 flex min-h-0 flex-1 flex-col overflow-hidden p-3">
+    <div className="p-spacing-3 relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
+      <div className="rounded-spacing-3 border-border flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden border">
+        <div className="gap-spacing-3 p-spacing-3 flex min-h-0 flex-1 flex-col overflow-hidden">
           <BrainHomeToolbar
             search={search}
             searchOpen={searchOpen}

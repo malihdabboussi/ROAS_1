@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import type { AgentInfoPanelTab, MissionAgent } from '@/lib/agents'
+import { cn } from '@/lib/utils/cn'
 import { Team2AgentInfoCollapsedRail } from './Team2AgentInfoCollapsedRail'
 
 const COLLAPSED_INFO_PANEL_WIDTH_PX = 56
@@ -28,6 +29,7 @@ export function Team2DetailView({
   infoPanel,
 }: Team2DetailViewProps) {
   const [infoPanelCollapsed, setInfoPanelCollapsed] = useState(false)
+  const chatDrawerOpen = useShellStore((state) => state.chatDrawer.open)
   const openChatDrawer = useShellStore((state) => state.openChatDrawer)
   const setChatHistoryCollapsed = useShellStore((state) => state.setChatHistoryCollapsed)
   const requestAgentSwitch = useGlobalChatStore((state) => state.requestAgentSwitch)
@@ -53,11 +55,21 @@ export function Team2DetailView({
 
   return (
     <div className="gap-spacing-3 px-spacing-3 pb-spacing-3 pt-spacing-3 flex h-full min-h-0 flex-1 flex-row overflow-hidden">
-      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
+      <div
+        className={cn(
+          'h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden',
+          chatDrawerOpen ? 'hidden' : 'flex',
+        )}
+      >
+        {children}
+      </div>
       <div
         data-team-agent-info-sidebar
-        className="md:pb-spacing-3 relative hidden min-h-0 min-w-0 shrink-0 overflow-hidden will-change-[width] md:flex md:flex-col"
-        style={infoPanelWidthStyle}
+        className={cn(
+          'md:pb-spacing-3 relative hidden min-h-0 min-w-0 overflow-hidden will-change-[width] md:flex md:flex-col',
+          chatDrawerOpen ? 'w-full flex-1' : 'shrink-0',
+        )}
+        style={chatDrawerOpen ? undefined : infoPanelWidthStyle}
       >
         <div className="card-glass flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border-0">
           <div className={infoPanelCollapsed ? 'hidden' : 'group relative h-full min-h-0'}>

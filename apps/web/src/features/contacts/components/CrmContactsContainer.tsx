@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { getOrgScopedKey } from '@/lib/utils/org-storage'
 import {
   listCrmContacts,
   listCrmFunnels,
@@ -11,18 +12,17 @@ import {
   type CrmStatusFilter,
   type FilterState,
 } from '../services/crm-contacts-api'
-import { getOrgScopedKey } from '@/lib/utils/org-storage'
-import { CrmContactsFilterDrawer } from './CrmContactsFilterDrawer'
-import { CrmContactsTable } from './CrmContactsTable'
-import { CrmContactsToolbar } from './crm-contacts-container/CrmContactsToolbar'
 import {
-  DEFAULT_COLUMNS,
   countActiveFilters,
   crmListCache,
+  DEFAULT_COLUMNS,
   safeLoadJson,
   safeSaveJson,
   type ColumnVisibility,
 } from './crm-contacts-container/crm-contacts-container-utils'
+import { CrmContactsToolbar } from './crm-contacts-container/CrmContactsToolbar'
+import { CrmContactsFilterDrawer } from './CrmContactsFilterDrawer'
+import { CrmContactsTable } from './CrmContactsTable'
 
 export function CrmContactsContainer() {
   const filtersStorageKey = getOrgScopedKey('crm-contacts-filters')
@@ -54,7 +54,6 @@ export function CrmContactsContainer() {
   const limit = 50
 
   const [columnsOpen, setColumnsOpen] = useState(false)
-  const [sortOpen, setSortOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>(() => {
@@ -75,7 +74,6 @@ export function CrmContactsContainer() {
       const target = e.target as HTMLElement
       if (dropdownRef.current && !dropdownRef.current.contains(target)) {
         setColumnsOpen(false)
-        setSortOpen(false)
       }
     }
     document.addEventListener('mousedown', onDown)
@@ -179,8 +177,6 @@ export function CrmContactsContainer() {
         activeFilterCount={activeFilterCount}
         columnsOpen={columnsOpen}
         setColumnsOpen={setColumnsOpen}
-        sortOpen={sortOpen}
-        setSortOpen={setSortOpen}
         dropdownRef={dropdownRef}
         loading={loading}
         onOpenFilters={() => setFilterDrawerOpen(true)}

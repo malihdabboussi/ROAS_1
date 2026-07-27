@@ -1,9 +1,9 @@
 'use client'
 
-import { AnimatePresence, motion } from 'framer-motion'
 import { GraduationCap, Grid3x3, List, Search } from 'lucide-react'
 import { Team2FilterDropdown } from '@/components/filters/Team2FilterDropdown'
 import { Tooltip } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils/cn'
 import {
   SORT_OPTIONS,
   STATUS_OPTIONS,
@@ -11,13 +11,6 @@ import {
   type BrainStatusFilter,
   type BrainViewMode,
 } from '../lib/brain-home-state'
-
-const TOOLBAR_SPRING = {
-  type: 'spring' as const,
-  stiffness: 460,
-  damping: 40,
-  mass: 0.78,
-}
 
 export function BrainHomeToolbar({
   search,
@@ -65,59 +58,39 @@ export function BrainHomeToolbar({
       </div>
 
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
-        <div className="flex h-7 shrink-0 items-center justify-center">
-          <AnimatePresence mode="popLayout" initial={false}>
-            {searchOpen ? (
-              <motion.div
-                key="brain-search-field"
-                initial={{ opacity: 0, scale: 0.94 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={TOOLBAR_SPRING}
-                className="flex h-7 items-center justify-center"
+        {searchOpen ? (
+          <input
+            autoFocus
+            type="search"
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
+            onBlur={() => {
+              if (!search.trim()) onSearchOpenChange(false)
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                onSearchChange('')
+                onSearchOpenChange(false)
+              }
+            }}
+            placeholder="Search brains..."
+            aria-label="Search brains"
+            className="input-glass h-spacing-7 w-spacing-40 body-4 text-foreground placeholder:text-muted-foreground outline-none"
+          />
+        ) : (
+          <Tooltip label="Search" side="bottom" triggerClassName="flex h-full items-center">
+            <span className="inline-flex">
+              <button
+                type="button"
+                onClick={() => onSearchOpenChange(true)}
+                className="btn-icon-glass"
+                aria-label="Search brains"
               >
-                <input
-                  autoFocus
-                  type="search"
-                  value={search}
-                  onChange={(event) => onSearchChange(event.target.value)}
-                  onBlur={() => {
-                    if (!search.trim()) onSearchOpenChange(false)
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Escape') {
-                      onSearchChange('')
-                      onSearchOpenChange(false)
-                    }
-                  }}
-                  placeholder="Search brains..."
-                  className="w-40 rounded-md border border-border bg-background px-2.5 py-1 text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="brain-search-icon"
-                initial={{ opacity: 0, scale: 0.94 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={TOOLBAR_SPRING}
-                className="flex h-7 items-center justify-center"
-              >
-                <Tooltip label="Search" side="bottom" triggerClassName="flex h-full items-center">
-                  <span className="inline-flex">
-                    <button
-                      type="button"
-                      onClick={() => onSearchOpenChange(true)}
-                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-hover-subtle hover:text-foreground"
-                    >
-                      <Search className="h-3.5 w-3.5" />
-                    </button>
-                  </span>
-                </Tooltip>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                <Search className="icon-sm" />
+              </button>
+            </span>
+          </Tooltip>
+        )}
 
         <Tooltip label="Grid view" side="bottom" triggerClassName="flex h-full items-center">
           <span className="inline-flex">
@@ -125,13 +98,12 @@ export function BrainHomeToolbar({
               type="button"
               onClick={() => onViewChange('grid')}
               aria-pressed={view === 'grid'}
-              className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
-                view === 'grid'
-                  ? 'bg-hover-subtle text-foreground'
-                  : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground'
-              }`}
+              className={cn(
+                'btn-icon-glass',
+                view === 'grid' ? 'bg-hover-subtle text-foreground' : 'text-muted-foreground',
+              )}
             >
-              <Grid3x3 className="h-3.5 w-3.5" />
+              <Grid3x3 className="icon-sm" />
             </button>
           </span>
         </Tooltip>
@@ -141,13 +113,12 @@ export function BrainHomeToolbar({
               type="button"
               onClick={() => onViewChange('list')}
               aria-pressed={view === 'list'}
-              className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
-                view === 'list'
-                  ? 'bg-hover-subtle text-foreground'
-                  : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground'
-              }`}
+              className={cn(
+                'btn-icon-glass',
+                view === 'list' ? 'bg-hover-subtle text-foreground' : 'text-muted-foreground',
+              )}
             >
-              <List className="h-3.5 w-3.5" />
+              <List className="icon-sm" />
             </button>
           </span>
         </Tooltip>
@@ -158,9 +129,9 @@ export function BrainHomeToolbar({
           type="button"
           disabled={trainDisabled}
           onClick={onTrain}
-          className="badge-glass badge-glass-green rounded-spacing-2 body-3 inline-flex h-7 shrink-0 items-center gap-1.5 px-3 font-semibold transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-50"
+          className="button-glass-primary button-compact disabled:pointer-events-none disabled:opacity-50"
         >
-          <GraduationCap className="h-3.5 w-3.5 shrink-0" />
+          <GraduationCap className="icon-sm shrink-0" />
           Train
         </button>
       </div>

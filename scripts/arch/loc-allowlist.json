@@ -84,11 +84,6 @@
       "limit": 400,
       "lines": 979
     },
-    "apps/web/src/features/contacts/components/CrmContactsContainer.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 443
-    },
     "apps/web/src/features/flows/components/flow-builder/FlowBuilderStepSetupPanel.tsx": {
       "kind": "web-component",
       "limit": 400,

@@ -189,10 +189,7 @@ describe('ShellWorkspace', () => {
     expect(screen.getByText('Brain page').closest('[aria-hidden="true"]')).not.toBeNull()
   })
 
-  it('uses one work-area transition while keeping the page right anchored', () => {
-    const boundingRectSpy = vi
-      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
-      .mockReturnValue(new DOMRect(0, 0, 800, 600))
+  it('uses the work-area track as the only page transition owner', () => {
     mocks.pathname = '/brain'
     mocks.params = new Map()
     mocks.workAreaOpen = false
@@ -208,7 +205,8 @@ describe('ShellWorkspace', () => {
       'shell-work-area',
       'shell-work-area-collapsed',
     )
-    expect(pageBody).toHaveClass('shell-work-area-body-anchored')
+    expect(pageBody).toHaveClass('shell-work-area-body')
+    expect(pageBody).not.toHaveClass('shell-work-area-body-anchored')
 
     mocks.workAreaOpen = true
     rerender(<ShellWorkspace>Brain page</ShellWorkspace>)
@@ -219,8 +217,7 @@ describe('ShellWorkspace', () => {
     expect(screen.getByText('Brain page').closest('[data-shell-work-area]')).not.toHaveClass(
       'shell-work-area-collapsed',
     )
-    expect(pageBody).toHaveClass('shell-work-area-body-anchored')
-    boundingRectSpy.mockRestore()
+    expect(pageBody).not.toHaveClass('shell-work-area-body-anchored')
   })
 
   it('replaces the page work surface while an artifact is open', () => {

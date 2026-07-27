@@ -41,12 +41,13 @@ export function useChatInputPlusMenu() {
       measured && measured > 0 ? measured : PLUS_MENU_HEIGHT_ESTIMATE,
       PLUS_MENU_HEIGHT_CAP,
     )
-    const nextPosition = positionFloatingMenuFromAnchorRect(rect, {
+    const { top, left } = positionFloatingMenuFromAnchorRect(rect, {
       menuWidth: PLUS_MENU_WIDTH,
       menuHeight,
       gap: PLUS_MENU_GAP,
       viewportMargin: VIEWPORT_MARGIN,
     })
+    const nextPosition = { top, left }
     setPlusMenuPos((prev) =>
       prev.top === nextPosition.top && prev.left === nextPosition.left ? prev : nextPosition,
     )

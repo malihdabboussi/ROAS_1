@@ -37,41 +37,25 @@ export function ShellEmptyChatCapabilityScroller({
   onSelect: (quickStart: ShellChatQuickStart) => void
   className?: string
 }) {
-  // Duplicate the track so the CSS marquee can loop seamlessly.
-  const track = SHELL_EMPTY_CHAT_CAPABILITIES
-
   return (
-    <div className={cn('shell-empty-capability-scroller-frame', className)}>
-      <div
-        className="shell-empty-capability-scroller"
-        role="group"
-        aria-label="Suggested capabilities"
-      >
-        <div className="shell-empty-capability-marquee" aria-hidden={false}>
-          <div className="shell-empty-capability-marquee-track">
-            {track.map((capability) => (
-              <CapabilityChip
-                key={`a-${capability.id}`}
-                id={capability.id}
-                label={capability.label}
-                icon={capability.icon}
-                quickStart={capability}
-                onSelect={onSelect}
-              />
-            ))}
-            {track.map((capability) => (
-              <CapabilityChip
-                key={`b-${capability.id}`}
-                id={capability.id}
-                label={capability.label}
-                icon={capability.icon}
-                quickStart={capability}
-                onSelect={onSelect}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
+    <div
+      className={cn(
+        'gap-x-spacing-3 gap-y-spacing-2 flex w-full flex-wrap items-center justify-center',
+        className,
+      )}
+      role="group"
+      aria-label="Suggested capabilities"
+    >
+      {SHELL_EMPTY_CHAT_CAPABILITIES.map((capability) => (
+        <CapabilityChip
+          key={capability.id}
+          id={capability.id}
+          label={capability.label}
+          icon={capability.icon}
+          quickStart={capability}
+          onSelect={onSelect}
+        />
+      ))}
     </div>
   )
 }
