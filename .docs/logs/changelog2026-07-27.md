@@ -29,3 +29,14 @@ Why: Architecture gate requires allowlist shrink when a file recovers under its 
 Impact: Contacts list container is no longer permanently allowlisted.
 
 Files: `scripts/arch/loc-allowlist.json`
+
+## [2026-07-27 14:54] - [FIX]
+
+What: Stopped the R logo from triggering native browser image-drag during hold-to-dock, and made the dock affordance follow the pointer instead of a static center ghost.
+
+Why: Holding the logo was lifting the PNG as a page image drag, so users never entered the four-edge menu dock gesture.
+
+Impact: Hold on R now owns the gesture: edge targets highlight and a tokenized lifted mark tracks the pointer; short click still opens Home/menu.
+
+Files: `SidebarHqHubLogoButton.tsx`, `ShellMenuDockOverlay.tsx`, `use-shell-menu-dock.ts`, both product `globals.css`, related tests.
+
