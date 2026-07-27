@@ -22,13 +22,13 @@ Found while: Agent D feedback shell (Inbox panes, Cmd+K idle, Spaces open lag)
 
 Files:
 - `apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx` (1,481 LOC; pre-existing over 600 container limit)
-- `apps/web/src/features/studio/components/StudioSearchModal.tsx` (402 LOC; at/over 400 component soft limit)
+- `apps/web/src/features/studio/components/StudioSearchModal.tsx` (helpers extracted to `studio-search-modal-helpers.tsx` during integrate; modal under 400)
 
-Evidence: Container already far over limit; idle recents/presets UI pushed the search modal just over 400.
+Evidence: Container already far over limit; idle recents/presets pushed the modal past 400 until helpers were extracted on integrate.
 
-Needed work: Split SpaceItemsContainer toolbar/modals/open-path orchestration; extract StudioSearchModal idle/results list into a presentational child.
+Needed work: Split SpaceItemsContainer toolbar/modals/open-path orchestration.
 
-Reason not done now: In-scope fix was open-path + idle search behavior only; full splits are adjacent debt.
+Reason not done now: In-scope fix was open-path + idle search behavior; container split remains adjacent debt.
 
 ## 2026-07-26 - [ARCH] Finish ROAS Portal renames in over-limit Spaces bulk-send files — RESOLVED
 
