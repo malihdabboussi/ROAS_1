@@ -14,6 +14,22 @@ Needed work: Split the direct access-context/image cases from prewarm and sessio
 
 Reason not done now: The requested production outage fix is covered by a new 28-line capability contract test; decomposing the existing 1,400-line suite is a behavior-neutral architecture task outside this incident.
 
+## 2026-07-26 - [ARCH] Shell chat menu at component limit
+
+Status: Open
+
+Found while: Compacting live chat history and inserting newly created conversations immediately
+
+Files:
+
+- `apps/web/src/components/shell/ShellChatMenu.tsx` (399 LOC; component limit 400)
+
+Evidence: The component remains within the architecture limit after the live-store merge, but has no meaningful room for another behavior change.
+
+Needed work: Extract conversation history loading and live-store reconciliation into a focused hook before adding more shell-history behavior.
+
+Reason not done now: The requested density and live-insertion fix is complete and the file remains compliant; a behavior-neutral extraction is separate follow-up work.
+
 ## 2026-07-25 - [ARCH] Studio chat.service still oversized (title scheduler external)
 
 Status: Open

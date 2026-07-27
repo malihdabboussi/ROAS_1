@@ -1987,6 +1987,15 @@ export function SpaceVibeyChatPanel({
   const chatPanelRef = useRef<HTMLDivElement | null>(null)
   const agentPickerDisabled =
     isStreaming || isStopping || selectedConversationReadOnly || voiceActive
+  const renderAgentPicker = (variant?: 'hero') => (
+    <SpaceChatAgentPicker
+      agents={chatAgents}
+      value={activeAgentKey}
+      onChange={handleAgentChange}
+      disabled={agentPickerDisabled}
+      variant={variant}
+    />
+  )
 
   const chatHeaderActions = (
     <SpaceChatHeaderActions
@@ -2013,14 +2022,9 @@ export function SpaceVibeyChatPanel({
     <div className="pt-spacing-2 pb-spacing-1 relative shrink-0 px-3 md:px-4">
       <div className="mx-auto w-full max-w-3xl">
         <div className="min-h-spacing-10 gap-spacing-2 flex items-center">
-          <div className="flex shrink-0 items-center">
-            <SpaceChatAgentPicker
-              agents={chatAgents}
-              value={activeAgentKey}
-              onChange={handleAgentChange}
-              disabled={agentPickerDisabled}
-            />
-          </div>
+          {messages.length > 0 || isLoadingMessages || voiceActive ? (
+            <div className="flex shrink-0 items-center">{renderAgentPicker()}</div>
+          ) : null}
           {headerLayout === 'full' && sessionTitle && selectedConversationId ? (
             <ConversationHeaderTitle
               title={sessionTitle}
@@ -2122,6 +2126,7 @@ export function SpaceVibeyChatPanel({
                           agent={emptyStateAgent}
                           showCapabilities={!composerHasText}
                           onSelectCapability={quickStart.selectQuickStart}
+                          agentPicker={renderAgentPicker('hero')}
                         />
                       ) : null}
                       <div className="flex flex-1 flex-col gap-3">

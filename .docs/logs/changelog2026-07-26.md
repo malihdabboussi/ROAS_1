@@ -1,5 +1,25 @@
 # Changelog - July 26, 2026
 
+## [2026-07-26 17:59] - [FIX]
+
+What: Restored compact ChatGPT-style history typography and spacing, removed the always-visible age from the title width, retained timestamps as row tooltips, and made newly created store conversations merge immediately into the active agent's sidebar list.
+
+Why: A prior spacing pass enlarged every title and row while the relative age permanently reduced usable title width. The sidebar's store sync also updated only rows that had already been fetched, so a new conversation remained absent until a reload.
+
+Impact: The history sidebar fits substantially more chats, preserves more of titles such as “Consolidate and improve Spaces,” keeps hover actions available, and inserts a newly started chat immediately while its generated title updates in place.
+
+Files: `apps/web/src/components/conversations/SpaceConversationRows.tsx`, `apps/web/src/components/conversations/SpaceConversationSections.tsx`, `apps/web/src/components/conversations/SpaceConversationsList.tsx`, `apps/web/src/components/conversations/SpaceConversationsList.test.tsx`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/components/shell/ShellChatMenu.test.tsx`, and `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-07-26 16:14] - [FIX]
+
+What: Made image history query with the conversation and Space resolved from the opened media asset instead of the incomplete click target.
+
+Why: Chat image clicks intentionally send only the asset id. The viewer resolved the asset's conversation afterward, but the history rail continued using the original empty conversation value and therefore showed only the active image.
+
+Impact: Opening an image from chat now loads the other images belonging to that same chat while keeping the current image selected.
+
+Files: `apps/web/src/features/studio/components/preview/ShellMediaArtifactViewer.tsx` and `apps/web/src/features/studio/components/preview/ShellMediaArtifactViewer.test.tsx`.
+
 ## [2026-07-26 15:00] - [FIX]
 
 What: Moved OpenRouter image generation to its dedicated image API, added explicit provider-output validation states to the billing ledger, verified ambiguous paid results through OpenRouter generation metadata, stopped agent retries when provider effect may already have occurred, and surfaced paid invalid outputs in the admin AI usage report.
@@ -12,11 +32,11 @@ Files: `packages/api-shared/src/services/provider-billing`, `apps/api/src/module
 
 ## 2026-07-26 13:18 - [FIX]
 
-What: Kept the image history rail mounted while switching versions, limited selection changes to the main preview and active outline, made the artifact editor replace the existing right work surface, made the expanded editor close action return to its docked state, and changed generated-image chat previews to show the full image without a caption card. OpenRouter image generation now retries one malformed successful response inside the provider boundary.
+What: Kept the image history rail mounted while switching versions, limited selection changes to the main preview and active outline, made the artifact editor replace the existing right work surface, made the expanded editor close action return to its docked state, and changed generated-image chat previews to show the full image without a caption card.
 
-Why: Selecting a thumbnail reloaded the entire history menu, the editor could compete with Agenda or another right-side surface, expanded close discarded the editor, chat previews cropped generated images, and an empty OpenRouter success body forced Pixel into a visible second tool attempt.
+Why: Selecting a thumbnail reloaded the entire history menu, the editor could compete with Agenda or another right-side surface, expanded close discarded the editor, and chat previews cropped generated images.
 
-Impact: Version browsing feels immediate and stable, right-side work remains mutually exclusive and recoverable, generated images are visible in full, and transient provider response corruption is repaired before it reaches the agent.
+Impact: Version browsing feels immediate and stable, right-side work remains mutually exclusive and recoverable, and generated images are visible in full.
 
 Files: `apps/web/src/features/studio/components/preview/ShellMediaArtifactViewer.tsx`, `apps/web/src/features/studio/components/preview/ShellMediaHistoryRail.tsx`, `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/ShellWorkAreaControl.tsx`, `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/chat/GeneratedMedia.tsx`, `apps/web/src/features/studio/components/chat/InlineImageGen.tsx`, `apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-provider.service.ts`, focused tests, and `documentation/features/claude-chatgpt-shell.md`.
 
@@ -341,3 +361,13 @@ Why: A newer admin dashboard could receive an older API or in-memory cache shape
 Impact: AI Usage remains renderable across rollout version skew, and both fresh and already-cached legacy reports safely show zero for image-output metrics that were not previously reported.
 
 Files: `apps/web/src/features/admin-ai-usage/services/admin-ai-usage.service.ts`, `apps/web/src/features/admin-ai-usage/services/admin-ai-usage.service.test.ts`.
+
+## 2026-07-26 18:20 - [STYLE]
+
+What: Fixed the top-right recent-page menu to a compact 256px width and explicitly left-aligned every page and artifact row.
+
+Why: The menu only declared a minimum width, so long artifact names expanded it across most of the screen, while button text inherited centered alignment.
+
+Impact: Page names such as `Campaigns / General` and recent artifact names now share a consistent compact row width, align from the left, and truncate instead of widening the menu.
+
+Files: `apps/web/src/components/shell/ShellWorkAreaControl.tsx` and `apps/web/src/components/shell/ShellWorkAreaControl.test.tsx`.

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ShellChatMenu } from './ShellChatMenu'
 
@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   addConversation: vi.fn(),
   openChatDrawer: vi.fn(),
   openInNewTab: vi.fn(),
+  storeConversations: [] as Array<Record<string, unknown>>,
 }))
 
 vi.mock('next/navigation', () => ({
@@ -23,6 +24,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/components/conversations/SpaceConversationsListAdapter', () => ({
   SpaceConversationsList: (props: {
+    conversations: Array<{ id: string; title: string | null }>
     onSelectConversation: (conversationId: string) => void
     onShareConversation: (conversation: typeof mocks.conversation) => void
     onOpenConversationInNewTab: (conversationId: string) => void
@@ -30,6 +32,9 @@ vi.mock('@/components/conversations/SpaceConversationsListAdapter', () => ({
     headerFooterSlot?: ReactNode
   }) => (
     <>
+      <div data-testid="conversation-titles">
+        {props.conversations.map((conversation) => conversation.title).join('|')}
+      </div>
       {props.headerEndSlot}
       {props.headerFooterSlot}
       <button type="button" onClick={() => props.onSelectConversation(mocks.conversation.id)}>
@@ -92,7 +97,7 @@ vi.mock('@/features/studio/store/use-chat-store', () => ({
     (selector: (state: Record<string, unknown>) => unknown) =>
       selector({
         setActiveConversationId: vi.fn(),
-        conversations: [],
+        conversations: mocks.storeConversations,
         activeConversationId: null,
       }),
     { getState: () => ({ addConversation: mocks.addConversation }) },
@@ -124,6 +129,7 @@ vi.mock('./use-shell-store', () => ({
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  mocks.storeConversations = []
 })
 
 describe('ShellChatMenu', () => {
@@ -189,5 +195,30 @@ describe('ShellChatMenu', () => {
 
     fireEvent.click(collapseHistory)
     expect(onCollapse).toHaveBeenCalledOnce()
+  })
+
+  it('inserts a newly created conversation from the live chat store without reloading history', async () => {
+    const view = render(<ShellChatMenu />)
+    expect(screen.getByTestId('conversation-titles')).toHaveTextContent('Quarterly launch')
+
+    mocks.storeConversations = [
+      {
+        id: 'conversation-new',
+        title: 'Consolidate and improve Spaces',
+        agent_id: 'reed',
+        campaign_id: null,
+        metadata: {},
+        status: 'active',
+        created_at: '2026-07-26T22:00:00.000Z',
+        updated_at: '2026-07-26T22:00:00.000Z',
+      },
+    ]
+    view.rerender(<ShellChatMenu />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('conversation-titles')).toHaveTextContent(
+        'Consolidate and improve Spaces|Quarterly launch',
+      )
+    })
   })
 })

@@ -173,9 +173,9 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
         {activeTarget.type === 'image' ? (
           <ShellMediaHistoryRail
             activeAssetId={activeTarget.mediaAssetId}
-            conversationId={target.conversationId}
+            conversationId={activeTarget.conversationId}
             resolvedAsset={resolvedAsset}
-            spaceId={target.spaceId}
+            spaceId={activeTarget.spaceId}
             onSelect={(asset) =>
               openArtifactViewer({
                 ...activeTarget,

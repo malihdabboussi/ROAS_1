@@ -79,6 +79,10 @@ export interface SpaceConversationsListProps {
   groupBy?: ChatHistoryGroupBy
   campaignNameById?: Record<string, string>
   headerStartSlot?: ReactNode
+  /** Show a compact updated date at the end of each row. */
+  showUpdatedAt?: boolean
+  /** Separate rows with a subtle rule instead of card spacing. */
+  dividedRows?: boolean
 }
 
 const INITIAL_SECTION_VISIBLE = 6
@@ -127,6 +131,8 @@ export function SpaceConversationsList({
   headerStartSlot,
   groupBy = 'none',
   campaignNameById,
+  showUpdatedAt,
+  dividedRows,
 }: SpaceConversationsListProps) {
   const [menuConversationId, setMenuConversationId] = useState<string | null>(null)
   const [menuAnchor, setMenuAnchor] = useState<{ top: number; left: number } | null>(null)
@@ -298,6 +304,8 @@ export function SpaceConversationsList({
         onRenameDraftChange={setRenameDraft}
         onSubmitRename={submitRename}
         onCancelRename={cancelRename}
+        showUpdatedAt={showUpdatedAt}
+        divided={dividedRows}
       />
     )
   }
@@ -326,7 +334,7 @@ export function SpaceConversationsList({
         headerEndSlot={headerEndSlot}
         headerFooterSlot={headerFooterSlot}
       />
-      <div className="p-spacing-3 min-h-0 flex-1 overflow-y-auto">
+      <div className="py-spacing-3 min-h-0 flex-1 overflow-y-auto">
         {loading ? (
           <div className="body-4 text-muted-foreground p-spacing-4 text-center">
             Loading conversations...
@@ -349,6 +357,7 @@ export function SpaceConversationsList({
             onToggleSectionCollapsed={toggleSectionCollapsed}
             onShowMoreInSection={showMoreInSection}
             renderConversationRow={renderConversationRow}
+            dividedRows={dividedRows}
           />
         )}
       </div>

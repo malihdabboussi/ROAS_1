@@ -45,7 +45,7 @@ export function ShellWorkAreaControl({ currentPage }: ShellWorkAreaControlProps)
         <div
           role="menu"
           aria-label="Recent work surfaces"
-          className="dropdown-menu-solid p-spacing-2 gap-spacing-1 z-dropdown absolute right-0 top-full flex min-w-64 flex-col"
+          className="dropdown-menu-solid p-spacing-2 gap-spacing-1 z-dropdown w-spacing-64 absolute right-0 top-full flex flex-col"
         >
           {pageTargets.map((target) => (
             <button
@@ -59,7 +59,7 @@ export function ShellWorkAreaControl({ currentPage }: ShellWorkAreaControlProps)
                 setHistoryOpen(false)
               }}
               className={cn(
-                'hub-dock-flyout-row gap-spacing-2',
+                'hub-dock-flyout-row gap-spacing-2 text-left',
                 !activeTarget && target.id === currentPage.id && workAreaOpen && 'bg-hover-subtle',
               )}
             >
@@ -77,7 +77,7 @@ export function ShellWorkAreaControl({ currentPage }: ShellWorkAreaControlProps)
                 setHistoryOpen(false)
               }}
               className={cn(
-                'hub-dock-flyout-row gap-spacing-2',
+                'hub-dock-flyout-row gap-spacing-2 text-left',
                 activeTarget?.id === target.id && workAreaOpen && 'bg-hover-subtle',
               )}
             >

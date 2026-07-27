@@ -185,4 +185,50 @@ describe('SpaceConversationsList', () => {
 
     expect(onNewConversation).toHaveBeenCalledTimes(1)
   })
+
+  it('keeps history rows compact and gives the full row width to the title', () => {
+    render(
+      <SpaceConversationsList
+        {...baseProps({
+          conversations: [
+            conversation({
+              id: 'spaces-1',
+              title: 'Consolidate and improve Spaces',
+            }),
+          ],
+          selectedConversationId: 'spaces-1',
+          leadingIcon: 'none',
+        })}
+      />,
+    )
+
+    const title = screen.getByText('Consolidate and improve Spaces')
+    expect(title).toHaveClass('body-3')
+    expect(title.closest('div[title]')).toHaveClass('px-spacing-1', 'py-spacing-1', 'gap-spacing-2')
+    expect(screen.queryByText('now')).not.toBeInTheDocument()
+  })
+
+  it('can render dated, divided rows for the full chats page', () => {
+    render(
+      <SpaceConversationsList
+        {...baseProps({
+          conversations: [
+            conversation({
+              id: 'dated-1',
+              title: 'Campaign review',
+              updated_at: '2025-06-10T12:00:00.000Z',
+            }),
+          ],
+          showUpdatedAt: true,
+          dividedRows: true,
+        })}
+      />,
+    )
+
+    expect(screen.getByText('Jun 10, 2025')).toBeInTheDocument()
+    expect(screen.getByText('Campaign review').closest('div[title]')).toHaveClass(
+      'border-b',
+      'rounded-none',
+    )
+  })
 })

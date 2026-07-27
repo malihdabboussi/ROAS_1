@@ -6,7 +6,6 @@ import { ConversationChannelIcon } from '@/components/chat/ConversationChannelIc
 import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyChatOrb } from '@/components/vibey/vibey-chat-orb'
 import {
-  formatCompactRelativeTime,
   getAgentInitial,
   getConversationAgentDisplay,
   needsGeneratedConversationTitle,
@@ -98,7 +97,26 @@ function ConversationRowTitle({ rawTitle }: { rawTitle: string | null }) {
     }
   }, [target])
 
-  return <p className="body-2 truncate font-medium">{shown}</p>
+  return <p className="body-3 truncate font-medium">{shown}</p>
+}
+
+function formatConversationUpdatedAt(value: string | null): string {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const now = new Date()
+  const sameDay =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  if (sameDay) {
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  }
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    ...(date.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),
+  })
 }
 
 function ConversationAgentAvatar({
@@ -159,6 +177,8 @@ interface SpaceConversationRowProps {
   onRenameDraftChange: (value: string) => void
   onSubmitRename: () => void | Promise<void>
   onCancelRename: () => void
+  showUpdatedAt?: boolean
+  divided?: boolean
 }
 
 export function SpaceConversationRow({
@@ -180,17 +200,19 @@ export function SpaceConversationRow({
   onRenameDraftChange,
   onSubmitRename,
   onCancelRename,
+  showUpdatedAt = false,
+  divided = false,
 }: SpaceConversationRowProps) {
   const resolvedLeadingIcon: ChatHistoryLeadingIcon =
     leadingIcon ?? (allAgentsMode ? 'agent' : 'logo')
   const showLeadingSlot = resolvedLeadingIcon !== 'none'
-  const relativeAge = formatCompactRelativeTime(conversation.updated_at)
-
   return (
     <div
       onContextMenu={(event) => onOpenContextMenu(event, conversation.id)}
+      title={conversation.updated_at}
       className={cn(
-        'group/conversation px-spacing-3 py-spacing-2 gap-spacing-3 rounded-spacing-3 flex items-center transition-colors',
+        'group/conversation px-spacing-1 py-spacing-1 gap-spacing-2 rounded-spacing-3 relative flex items-center transition-colors',
+        divided && 'border-border rounded-none border-b',
         selected
           ? 'bg-hover-subtle text-foreground'
           : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground',
@@ -227,7 +249,7 @@ export function SpaceConversationRow({
               onCancelRename()
             }
           }}
-          className="body-2 border-primary bg-background text-foreground rounded-spacing-1 px-spacing-1 py-spacing-1 min-w-0 flex-1 border font-medium outline-none"
+          className="body-3 border-primary bg-background text-foreground rounded-spacing-1 px-spacing-1 py-spacing-1 min-w-0 flex-1 border font-medium outline-none"
         />
       ) : (
         <button
@@ -242,31 +264,23 @@ export function SpaceConversationRow({
           {showSubtitle ? <ConversationRowSubtitle runtimeState={runtimeState} /> : null}
         </button>
       )}
-      <div className="relative flex shrink-0 items-center justify-end">
-        {relativeAge ? (
-          <span
-            className={cn(
-              'typo-caption text-muted-foreground text-right tabular-nums transition-opacity',
-              menuOpen ? 'opacity-0' : 'group-hover/conversation:opacity-0',
-            )}
-            title={conversation.updated_at}
-          >
-            {relativeAge}
-          </span>
-        ) : null}
-        <button
-          type="button"
-          onClick={(event) => onOpenMenu(event, conversation.id)}
-          className={cn(
-            'text-muted-foreground hover:bg-hover-subtle hover:text-foreground rounded-spacing-1 p-spacing-1 absolute inset-y-0 right-0 flex items-center justify-center transition-opacity',
-            menuOpen ? 'opacity-100' : 'opacity-0 group-hover/conversation:opacity-100',
-          )}
-          aria-label="Conversation actions"
-          aria-haspopup="menu"
-        >
-          <MoreHorizontal className="icon-sm" />
-        </button>
-      </div>
+      {showUpdatedAt ? (
+        <span className="body-4 text-muted-foreground shrink-0">
+          {formatConversationUpdatedAt(conversation.updated_at)}
+        </span>
+      ) : null}
+      <button
+        type="button"
+        onClick={(event) => onOpenMenu(event, conversation.id)}
+        className={cn(
+          'text-muted-foreground bg-hover-subtle hover:text-foreground rounded-spacing-1 p-spacing-1 absolute inset-y-0 right-0 flex items-center justify-center transition-opacity',
+          menuOpen ? 'opacity-100' : 'opacity-0 group-hover/conversation:opacity-100',
+        )}
+        aria-label="Conversation actions"
+        aria-haspopup="menu"
+      >
+        <MoreHorizontal className="icon-sm" />
+      </button>
     </div>
   )
 }

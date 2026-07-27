@@ -65,6 +65,18 @@ describe('SpaceChatAgentEmptyState', () => {
     expect(screen.queryByText('ROAS')).not.toBeInTheDocument()
   })
 
+  it('replaces the static identity when an agent picker is provided', () => {
+    const { container } = render(
+      <SpaceChatAgentEmptyState
+        agent={agent}
+        agentPicker={<button type="button">Choose Pixel</button>}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Choose Pixel' })).toBeInTheDocument()
+    expect(container.querySelector('img')).toBeNull()
+  })
+
   it('renders capability scroller when enabled', () => {
     const onSelectCapability = vi.fn()
     render(
