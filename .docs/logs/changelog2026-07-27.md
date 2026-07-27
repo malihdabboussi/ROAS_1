@@ -1,5 +1,15 @@
 # Changelog - July 27, 2026
 
+## [2026-07-27 15:28] - [FEATURE]
+
+What: Redesigned the Home meeting detail modal and enriched agenda `related` payloads with summary, Fathom/recording URL fallback, and follow-up assignee fields so action items split into yours vs others.
+
+Why: The old “Call recording & tasks” block showed opaque titles and raw `logged` status ids, with no summary or clear Fathom link, so meetings were hard to scan after open.
+
+Impact: Meeting modal order is Summary → Meeting links (task + Fathom/join) → Your action items → Other action items → Prep → Who/Where. Tasks no longer append `· logged`. Requires API + web deploy for summary/assignee split.
+
+Files: `HomeMeetingDetailHost.tsx`, `HomeMeetingDetailHost.test.tsx`, `calendar-api.ts`, `meetings-precall-prep.service.ts`, `meetings-precall-prep.helpers.ts`, helpers tests.
+
 ## [2026-07-27 15:27] - [ARCH]
 
 What: Merged feedback phase1 A–D onto local `main`; moved Quick Missions catalog to `@/lib/spaces` for studio slash; allowlisted ConversationShareModal + QuickMissionsHubModal.

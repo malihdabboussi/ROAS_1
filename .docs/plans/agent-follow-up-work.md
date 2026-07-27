@@ -1,3 +1,18 @@
+## 2026-07-27 - [ARCH] meetings-precall-prep.helpers over service limit
+
+Status: Open
+
+Found while: Meeting detail modal redesign (summary + assignee enrich)
+
+Files:
+- `apps/api/src/modules/spaces/services/meetings-precall-prep.helpers.ts` (515 LOC; pre-existing ~474, now further over common service helper budget)
+
+Evidence: Added `resolveAgendaCallSummary` / `resolveAgendaRecordingUrl` and expanded related DTO fields for the Home meeting modal.
+
+Needed work: Extract agenda-related matching + Fathom synthetic row builders into a dedicated `meetings-agenda-related.helpers.ts`.
+
+Reason not done now: In-scope change was enrich + modal UX; full helpers split is adjacent debt.
+
 ## 2026-07-27 - [ARCH] Feedback-b-chat over-limit files after resume/hydrate/drag
 
 Status: Open
