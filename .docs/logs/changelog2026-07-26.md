@@ -331,3 +331,13 @@ Why: Post-deploy production acceptance showed Chat calling `create_mission` with
 Impact: Chat agents now receive an explicit playbook field in the hard action contract and examples. A named playbook reaches `input.playbook_id`, allowing the deterministic planner to build the correct media contract.
 
 Files: `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-missions.service.ts`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, focused action/schema/drift tests, `documentation/features/missions.md`, and `.docs/plans/agent-follow-up-work.md`.
+
+## [2026-07-26 18:08] - [FIX]
+
+What: Normalized legacy and cached AI usage reports at the frontend service boundary by defaulting newly added image-output metrics before rendering.
+
+Why: A newer admin dashboard could receive an older API or in-memory cache shape during local development or a mixed-version rollout, leaving `paidOutputInvalid` and `outputIssues` undefined and crashing the page.
+
+Impact: AI Usage remains renderable across rollout version skew, and both fresh and already-cached legacy reports safely show zero for image-output metrics that were not previously reported.
+
+Files: `apps/web/src/features/admin-ai-usage/services/admin-ai-usage.service.ts`, `apps/web/src/features/admin-ai-usage/services/admin-ai-usage.service.test.ts`.
