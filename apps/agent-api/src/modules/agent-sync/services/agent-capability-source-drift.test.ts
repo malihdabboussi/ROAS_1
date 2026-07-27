@@ -1,15 +1,15 @@
+import { describe, expect, it } from 'vitest'
 import {
-  ACTIONS,
   ACTION_TO_DOMAIN,
+  ACTIONS,
   getActionContract,
   isPromptModeActionOnHold,
   ON_HOLD_PROMPTMODE_ACTIONS,
   type Action,
 } from '@vibey/agent-policy'
-import { describe, expect, it } from 'vitest'
 import { VALID_ACTIONS } from '../../artifacts/dtos/artifact-action.dto'
-import { ACTION_METHOD_MAP } from '../../artifacts/services/artifact-action.registry'
 import { ACTION_SCHEMAS } from '../../artifacts/services/artifact-action-schemas'
+import { ACTION_METHOD_MAP } from '../../artifacts/services/artifact-action.registry'
 import { VIBEY_API_ACTION_DOCS } from '../data/vibey-api-action-docs'
 
 function uniqueSorted(values: string[]): string[] {
@@ -71,6 +71,23 @@ describe('agent capability source drift guardrail', () => {
         expect(example.data).toMatchObject({ brain_type: expect.any(String) })
       }
     }
+  })
+
+  it('keeps named mission playbooks materializable from agent-facing docs', () => {
+    expect(ACTION_SCHEMAS.create_mission?.optional).toContain('playbook_id')
+    expect(VIBEY_API_ACTION_DOCS.create_mission.description).toContain('playbook_id')
+
+    const examples = extractDocExamples('create_mission')
+    expect(examples).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: 'create_mission',
+          data: expect.objectContaining({
+            playbook_id: 'ig-organic-video-ad',
+          }),
+        }),
+      ]),
+    )
   })
 
   it('keeps on-hold backend actions explicit without promoting them to active policy', () => {

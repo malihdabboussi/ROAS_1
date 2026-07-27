@@ -299,7 +299,6 @@ export class ArtifactMissionsService {
       'description',
       'priority',
       'assigned_agent_key',
-      'input',
       'idempotency_key',
       'parent_mission_id',
       'campaign_id',
@@ -308,6 +307,14 @@ export class ArtifactMissionsService {
     ]) {
       if (input[key] !== undefined) payload[key] = input[key]
     }
+
+    const missionInput =
+      input.input && typeof input.input === 'object' && !Array.isArray(input.input)
+        ? { ...(input.input as Record<string, unknown>) }
+        : {}
+    const playbookId = typeof input.playbook_id === 'string' ? input.playbook_id.trim() : ''
+    if (playbookId) missionInput.playbook_id = playbookId
+    if (input.input !== undefined || playbookId) payload.input = missionInput
 
     const result = (await target.mainApiCall(
       'POST',

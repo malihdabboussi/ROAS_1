@@ -8776,3 +8776,19 @@ Evidence: The scoped fix adds only the lease-grace decision at the existing stre
 Needed work: Extract subtask stream checkpoint/lease handling from the execute phase and split planner prompt construction from runtime dispatch in the gateway while preserving the current callback contracts.
 
 Reason not done now: Decomposing the complete mission execution and gateway surfaces would broaden a production acceptance fix across unrelated planning, brain routing, tool streaming, review, and trace behavior.
+
+## 2026-07-26 - [ARCH] Artifact mission service is at the service LOC limit
+
+Status: Open
+
+Found while: Exposing named playbooks through the agent-facing mission creation contract.
+
+Files:
+
+- `apps/agent-api/src/modules/artifacts/services/artifact-missions.service.ts` (599 LOC; 600-line service limit)
+
+Evidence: The scoped fix adds only the mission-input normalization required at the existing `createMission` boundary. The service already combines mission creation, visibility, reads, updates, indexing, and manager/API action routing.
+
+Needed work: Extract mission creation and Space indexing into a focused service while preserving the current handler registry contract.
+
+Reason not done now: A complete service split would broaden the production playbook-routing fix across unrelated mission read, visibility, manager, and indexing paths.

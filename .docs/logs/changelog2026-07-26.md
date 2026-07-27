@@ -321,3 +321,13 @@ What: Routed Chat-created mission `playbook` aliases through the deterministic p
 Why: Production Chat acceptance bypassed the requested IG playbook, generated an impossible `process_media` plus `doc` contract, and then aborted both corrective renders after a temporary Supabase timeout even though their 90-second execution leases were still valid.
 Impact: Chat and UI playbook launches now share the same deterministic media contract, malformed media contracts replan before artifact work begins, and short database interruptions no longer destroy otherwise healthy long-running renders.
 Files: `apps/mission-worker/src/modules/missions/playbooks/mission-playbook.registry.ts`, `apps/mission-worker/src/modules/missions/playbooks/ig-organic-video-ad.playbook.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-plan-phase.service.ts`, `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw.gateway.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-execute-helpers.ts`, `apps/mission-worker/src/modules/missions/services/mission-execution-lease.ts`, focused regression tests, `documentation/features/missions.md`, and `.docs/plans/agent-follow-up-work.md`.
+
+## [2026-07-26 17:38] - [FIX]
+
+What: Added a canonical top-level `playbook_id` to the agent-facing `create_mission` schema, persisted it into mission input without dropping kickoff context, and aligned generated action guidance and drift coverage.
+
+Why: Post-deploy production acceptance showed Chat calling `create_mission` with only title, priority, and brief even after the user explicitly named `ig-organic-video-ad`. The mission stored `input = {}` and remained in freeform planning, so downstream playbook alias resolution never had a value to resolve.
+
+Impact: Chat agents now receive an explicit playbook field in the hard action contract and examples. A named playbook reaches `input.playbook_id`, allowing the deterministic planner to build the correct media contract.
+
+Files: `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-missions.service.ts`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, focused action/schema/drift tests, `documentation/features/missions.md`, and `.docs/plans/agent-follow-up-work.md`.
