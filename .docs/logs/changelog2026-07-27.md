@@ -1,5 +1,15 @@
 # Changelog - July 27, 2026
 
+## [2026-07-27 15:24] - [ARCH]
+
+What: Integrated feedback phase Agents A→B→C→D onto `feat/feedback-phase1-integrate`; resolved changelog/follow-up conflicts; fixed LOC/eslint gates (artifact-tasks allowlist drop, SpaceContentRouter/chat.service/SpaceItemsContainer bumps, StudioSearchModal helpers extract).
+
+Why: Parallel worktrees needed a serialized merge with architecture gate compliance.
+
+Impact: All 15 feedback items from Agents A–D are on one integrate branch ready for smoke/QA.
+
+Files: merge commits A–D, `scripts/arch/loc-allowlist.json`, `studio-search-modal-helpers.tsx`, changelogs/follow-up log
+
 ## [2026-07-27 15:19] - [FIX]
 
 What: Agent A Fathom truth — portal-grounded follow-up name prefixes (Anis→Anees), Speaker N remap API + minimal UI, personal Fathom auto-resolve/pull in org scope, and expanded call kinds (personal|team|executive|external|sales) with migration + classifier.
