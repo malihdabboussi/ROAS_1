@@ -110,6 +110,11 @@ vi.mock('./ShellChatDrawer', () => ({
 vi.mock('./ShellNewChatGreeting', () => ({
   ShellNewChatGreeting: () => <div>New chat greeting</div>,
 }))
+vi.mock('./PageGraderPortalSurface', () => ({
+  PageGraderPortalSurface: ({ active }: { active: boolean }) => (
+    <div data-testid="portal-surface" data-active={active ? 'true' : 'false'} />
+  ),
+}))
 vi.mock('./ShellRightPanel', () => ({ ShellRightPanel: () => null }))
 vi.mock('./SpaceWorkDock', () => ({
   SpaceWorkDock: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -166,6 +171,15 @@ describe('ShellWorkspace', () => {
 
     expect(screen.getByTestId('artifact-viewer-adapter')).toBeInTheDocument()
     expect(screen.queryByText('Artifact editor')).not.toBeInTheDocument()
+  })
+
+  it('activates the embedded Portal from the surface query parameter', () => {
+    mocks.params = new Map([['surface', 'portal']])
+
+    render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
+
+    expect(screen.getByTestId('portal-surface')).toHaveAttribute('data-active', 'true')
+    expect(screen.getByText('Home dashboard').closest('.hidden')).not.toBeNull()
   })
 
   it('replaces the temporary starting route with the created conversation route', async () => {

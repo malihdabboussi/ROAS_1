@@ -5,6 +5,7 @@ import { SupabaseServiceClient } from '@vibey/api-shared'
 import { VaultService } from '../../../vault/services/vault.service'
 import { IntegrationConnectionsRepository } from '../../repositories/integration-connections.repository'
 import type {
+  CreatePageGraderEmbedSessionDto,
   ListPageGraderAssigneesDto,
   ListPageGraderClientsDto,
   SendPageGraderWorkDto,
@@ -220,6 +221,21 @@ export class PageGraderApiService {
     const creds = await this.getCreds(userId)
     const assignees = await this.pageGrader.listAssignees(creds.baseUrl, creds.apiKey, opts)
     return { assignees }
+  }
+
+  async createEmbedSession(
+    userId: string,
+    email: string,
+    dto: CreatePageGraderEmbedSessionDto,
+  ) {
+    const normalizedEmail = email.trim().toLowerCase()
+    if (!normalizedEmail) throw new BadRequestException('Your ROAS account has no email address')
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.createEmbedSession(creds.baseUrl, creds.apiKey, {
+      email: normalizedEmail,
+      parentOrigin: dto.parent_origin,
+      targetPath: dto.target_path ?? '/clients',
+    })
   }
 
   async upsertClientScopeMap(userId: string, dto: UpsertPageGraderClientScopeMapDto) {

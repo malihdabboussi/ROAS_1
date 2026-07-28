@@ -5,6 +5,8 @@ import { McpModule } from '../../mcp/mcp.module'
 import { SpacesModule } from '../../spaces/spaces.module'
 import { IntegrationConnectionsRepository } from '../repositories/integration-connections.repository'
 import { PageGraderWebhooksController } from './controllers/page-grader-webhooks.controller'
+import { PageGraderEmbedController } from './controllers/page-grader-embed.controller'
+import { PageGraderMeetingController } from './controllers/page-grader-meeting.controller'
 import { PageGraderController } from './controllers/page-grader.controller'
 import { PageGraderIntegration } from './integrations/page-grader.integration'
 import { PageGraderBrainSyncRepository } from './repositories/page-grader-brain-sync.repository'
@@ -18,7 +20,12 @@ import { PageGraderSendWorkService } from './services/page-grader-send-work.serv
 
 @Module({
   imports: [ConfigModule, SpacesModule, BrainModule, McpModule],
-  controllers: [PageGraderController, PageGraderWebhooksController],
+  controllers: [
+    PageGraderController,
+    PageGraderEmbedController,
+    PageGraderMeetingController,
+    PageGraderWebhooksController,
+  ],
   providers: [
     PageGraderIntegration,
     PageGraderSendWorkService,

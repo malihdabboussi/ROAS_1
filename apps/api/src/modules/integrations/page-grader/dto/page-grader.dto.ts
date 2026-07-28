@@ -72,6 +72,22 @@ export const ListPageGraderAssigneesSchema = z.object({
 
 export type ListPageGraderAssigneesDto = z.infer<typeof ListPageGraderAssigneesSchema>
 
+export const CreatePageGraderEmbedSessionSchema = z.object({
+  parent_origin: z.string().url().max(300),
+  target_path: z
+    .string()
+    .min(1)
+    .max(500)
+    .refine((value) => value.startsWith('/') && !value.startsWith('//'), {
+      message: 'target_path must be an application-relative path',
+    })
+    .optional(),
+})
+
+export type CreatePageGraderEmbedSessionDto = z.infer<
+  typeof CreatePageGraderEmbedSessionSchema
+>
+
 export const PageGraderClientScopeMappingSchema = z.object({
   client_id: z.string().uuid(),
   campaign_id: z.string().uuid(),
