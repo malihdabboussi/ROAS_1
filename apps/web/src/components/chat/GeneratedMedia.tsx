@@ -31,7 +31,13 @@ function GeneratedImageComponent({
     void (async () => {
       if (
         mediaAssetId &&
-        openMediaAssetInApp({ mediaAssetId, title: prompt, spaceId: spaceId ?? undefined })
+        openMediaAssetInApp({
+          mediaAssetId,
+          title: prompt,
+          spaceId: spaceId ?? undefined,
+          kind: 'image',
+          fileUrl: url,
+        })
       ) {
         return
       }
@@ -43,6 +49,8 @@ function GeneratedImageComponent({
           mediaAssetId: resolvedId,
           title: prompt,
           spaceId: spaceId ?? undefined,
+          kind: 'image',
+          fileUrl: url,
         })
       ) {
         return

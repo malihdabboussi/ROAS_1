@@ -23,6 +23,10 @@ vi.mock('@/features/studio/store/use-chat-store', () => ({
   ) => selector({ messagesByConversation: mocks.messagesByConversation }),
 }))
 
+vi.mock('@/components/conversations', () => ({
+  ConversationScopePicker: () => <div data-testid="scope-picker">Scope</div>,
+}))
+
 vi.mock('./ShellRightPanelTasks', () => ({
   ShellRightPanelTasks: ({ conversationId }: { conversationId: string | null }) => (
     <div data-testid="tasks-context">{conversationId ?? 'home'}</div>
@@ -51,15 +55,18 @@ describe('ShellRightPanel', () => {
     expect(screen.getByRole('tab', { name: 'Tasks' })).toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Files' })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Sources' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Campaign & space')).not.toBeInTheDocument()
     expect(screen.getByTestId('tasks-context')).toHaveTextContent('home')
   })
 
   it('shows all chat-specific summary tabs for an active conversation', () => {
-    render(<ShellRightPanel conversationId="conversation-1" />)
+    render(<ShellRightPanel conversationId="conversation-1" showScope />)
 
     expect(screen.getByRole('tab', { name: 'Tasks' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tab', { name: 'Files' })).toHaveAttribute('aria-selected', 'false')
     expect(screen.getByRole('tab', { name: 'Sources' })).toBeInTheDocument()
+    expect(screen.getByText('Campaign & space')).toBeInTheDocument()
+    expect(screen.getByTestId('scope-picker')).toBeInTheDocument()
     expect(screen.getByRole('complementary', { name: 'Work summary' })).toHaveClass(
       'motion-reduce:transition-none',
     )

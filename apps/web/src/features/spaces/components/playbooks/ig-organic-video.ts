@@ -4,6 +4,8 @@ export type IgOrganicVideoKickoffFields = {
   copyMode: 'write_for_me' | 'use_my_copy'
   sourceStrategy: 'reuse_when_available' | 'generate_new'
   selectedSceneIds: string[]
+  footageFit?: 'lifestyle' | 'industry_adjacent' | 'all'
+  industryPack?: string
   pillLine: string
   headline: string
   highlightPhrase: string
@@ -27,6 +29,10 @@ export function buildIgOrganicVideoMissionPayload(fields: IgOrganicVideoKickoffF
         copy_approved: fields.copyMode === 'use_my_copy',
         source_strategy: fields.sourceStrategy,
         selected_scene_ids: fields.selectedSceneIds,
+        footage_fit:
+          fields.footageFit && fields.footageFit !== 'all' ? fields.footageFit : undefined,
+        industry_pack:
+          fields.industryPack && fields.industryPack !== 'all' ? fields.industryPack : undefined,
         pill_line: fields.pillLine.trim() || undefined,
         headline: fields.headline.trim() || undefined,
         highlight_phrase: fields.highlightPhrase.trim() || undefined,

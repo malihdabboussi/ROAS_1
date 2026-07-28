@@ -230,8 +230,6 @@ export function buildFinalAnswerLayoutSegments(contentBlocksOrdered: MessageCont
     pendingClarifications.push(block)
     return false
   })
-  const summaryLayout = buildOrderedLayoutSegments(prefix)
-  if (summaryLayout.segments.length === 0 && pendingClarifications.length === 0) return baseLayout
 
   const toolsBeforeTail = countToolBlocks(prefix)
   const tailLayout = buildOrderedLayoutSegmentsFrom(
@@ -239,12 +237,32 @@ export function buildFinalAnswerLayoutSegments(contentBlocksOrdered: MessageCont
     toolsBeforeTail,
   )
   const finalOutputBlocks = extractFinalOutputBlocks(contentBlocksOrdered)
+  const suppressInlineMediaKeys = new Set(
+    finalOutputBlocks
+      .filter(
+        (block): block is Extract<FinalOutputBlock, { type: 'media_asset' }> =>
+          block.type === 'media_asset',
+      )
+      .map(finalOutputBlockKey),
+  )
+  const summarySource = prefix.filter((block) => {
+    if (block.type !== 'media_asset') return true
+    return !suppressInlineMediaKeys.has(finalOutputBlockKey(block))
+  })
+  const summaryLayout = buildOrderedLayoutSegments(summarySource)
+  if (
+    summaryLayout.segments.length === 0 &&
+    pendingClarifications.length === 0 &&
+    finalOutputBlocks.length === 0
+  ) {
+    return baseLayout
+  }
 
   const segments: OrderedLayoutSegment[] = []
   if (summaryLayout.segments.length > 0) {
     segments.push({
       kind: 'worked_summary',
-      blocks: prefix.filter((block) => block.type !== 'status'),
+      blocks: summarySource.filter((block) => block.type !== 'status'),
       segments: summaryLayout.segments,
       toolIdxOffset: 0,
     })

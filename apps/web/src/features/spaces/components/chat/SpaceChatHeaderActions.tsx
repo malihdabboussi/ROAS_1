@@ -19,6 +19,8 @@ interface SpaceChatHeaderActionsProps {
   onShowConversations: () => void
   /** When true, hide search / new / conversations — owned by the shell Chat sidebar. */
   hideHistoryChrome?: boolean
+  summaryOpen?: boolean
+  onToggleSummary?: () => void
 }
 
 export function SpaceChatHeaderActions({
@@ -35,17 +37,40 @@ export function SpaceChatHeaderActions({
   onShowVoiceRuns,
   onShowConversations,
   hideHistoryChrome = false,
+  summaryOpen = false,
+  onToggleSummary,
 }: SpaceChatHeaderActionsProps) {
+  const hoverReveal =
+    !hideHistoryChrome &&
+    !searchOpen &&
+    'pointer-events-none translate-x-4 opacity-0 group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100'
+
   return (
     <div
       className={cn(
         'gap-spacing-0 flex shrink-0 items-center transition-[opacity,transform] duration-200 ease-out',
         searchOpen || hideHistoryChrome
           ? 'pointer-events-auto translate-x-0 opacity-100'
-          : 'pointer-events-none translate-x-4 opacity-0 group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100',
+          : hoverReveal,
       )}
       onClick={(e) => e.stopPropagation()}
     >
+      {onToggleSummary ? (
+        <button
+          type="button"
+          onClick={onToggleSummary}
+          className={cn(
+            'text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 flex shrink-0 items-center justify-center transition-colors',
+            hideHistoryChrome && 'btn-icon-bare hover:bg-hover-subtle',
+            summaryOpen && 'text-foreground bg-hover-subtle',
+          )}
+          aria-label="Summary panel"
+          aria-pressed={summaryOpen}
+          title="Summary panel"
+        >
+          <List className="icon-sm" aria-hidden />
+        </button>
+      ) : null}
       <button
         type="button"
         onClick={onCollapse}

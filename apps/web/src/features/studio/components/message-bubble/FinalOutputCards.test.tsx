@@ -122,6 +122,8 @@ describe('FinalOutputCards', () => {
         detail: expect.objectContaining({
           mediaAssetId,
           title: 'Generated video',
+          kind: 'video',
+          fileUrl: 'https://cdn.vibey.ai/video.mp4',
         }),
       }),
     )

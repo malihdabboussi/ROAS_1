@@ -121,6 +121,90 @@ describe('IntegrationContextService', () => {
     })
   })
 
+  it('includes personal Fathom even when org agent grants omit it', async () => {
+    const repository = makeRepository([
+      { data: [] },
+      {
+        data: [
+          {
+            id: 'fathom-row',
+            user_id: 'user-1',
+            integration_id: 'fathom',
+            provider: 'fathom',
+            status: 'connected',
+            connected_at: null,
+            last_sync_at: null,
+            agent_enabled: true,
+            scope_mode: 'personal',
+            is_default: false,
+            connection_label: 'Fathom',
+          },
+        ],
+      },
+    ])
+    const resolveAgentPolicy = vi.fn(async () => ({
+      grants: [{ kind: 'integration', id: 'google_drive' }],
+      overrides: { allow_extra: [], deny: [] },
+      effective: new Set(['integration:google_drive']),
+      teamId: 'team-1',
+    }))
+    const service = new IntegrationContextService(
+      { client: {} } as any,
+      { resolveAgentPolicy } as any,
+      repository as any,
+    )
+
+    const context = await service.buildIntegrationContext('user-1', 'vibey', 'org-1')
+
+    expect(context).toContain('fathom')
+    expect(context).toContain('fathom: Fathom(personal,non_default)')
+    expect(context).not.toContain('google_drive')
+    expect(resolveAgentPolicy).toHaveBeenCalledWith('vibey', {
+      orgId: 'org-1',
+      userId: null,
+    })
+  })
+
+  it('still injects personal cross-context tools when agent has zero integration grants', async () => {
+    const repository = makeRepository([
+      { data: [] },
+      {
+        data: [
+          {
+            id: 'fathom-row',
+            user_id: 'user-1',
+            integration_id: 'fathom',
+            provider: 'fathom',
+            status: 'connected',
+            connected_at: null,
+            last_sync_at: null,
+            agent_enabled: true,
+            scope_mode: 'personal',
+            is_default: false,
+            connection_label: 'Fathom',
+          },
+        ],
+      },
+    ])
+    const service = new IntegrationContextService(
+      { client: {} } as any,
+      {
+        resolveAgentPolicy: vi.fn(async () => ({
+          grants: [],
+          overrides: { allow_extra: [], deny: [] },
+          effective: new Set(),
+          teamId: 'team-1',
+        })),
+      } as any,
+      repository as any,
+    )
+
+    const context = await service.buildIntegrationContext('user-1', 'vibey', 'org-1')
+
+    expect(context).toContain('<connected_integrations>')
+    expect(context).toContain('fathom')
+  })
+
   it('caches integration context until explicitly busted', async () => {
     const repository = makeRepository([
       {

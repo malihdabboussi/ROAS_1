@@ -138,7 +138,7 @@ describe('ShellMediaArtifactViewer', () => {
       />,
     )
 
-    const history = await screen.findByRole('complementary', { name: 'Image history' })
+    const history = await screen.findByRole('complementary', { name: 'Media history' })
     await waitFor(() =>
       expect(
         within(history)
@@ -149,9 +149,10 @@ describe('ShellMediaArtifactViewer', () => {
     expect(
       within(history).getByRole('button', { name: 'Open Selected version' }).className,
     ).toContain('ring-2')
-    expect(listAssets).toHaveBeenCalledWith(
-      expect.objectContaining({ conversation_id: 'conversation-old' }),
-    )
+    expect(listAssets).toHaveBeenCalledWith({
+      conversation_id: 'conversation-old',
+      limit: 40,
+    })
     expect(within(history).getByRole('button', { name: 'Open First version' }).className).toContain(
       'opacity-50',
     )
@@ -165,5 +166,58 @@ describe('ShellMediaArtifactViewer', () => {
     )
     expect(listAssets).toHaveBeenCalledTimes(1)
     expect(within(history).getAllByRole('button')).toHaveLength(3)
+  })
+
+  it('renders a video player after resolving a video media asset', async () => {
+    const videoAsset: MediaAsset = {
+      id: 'video-1',
+      user_id: 'user-1',
+      name: 'Story ad',
+      original_filename: 'story.mp4',
+      file_path: 'story.mp4',
+      bucket_name: 'media',
+      file_size: 1,
+      mime_type: 'video/mp4',
+      width: 1080,
+      height: 1920,
+      asset_type: 'video',
+      category: null,
+      subcategory: null,
+      campaign_id: null,
+      space_id: 'space-1',
+      conversation_id: 'conversation-old',
+      tags: [],
+      description: null,
+      is_public: false,
+      public_url: 'https://example.com/story.mp4',
+      source: null,
+      source_model: null,
+      source_prompt: null,
+      usage_count: 0,
+      last_used_at: null,
+      created_at: '2026-07-26T00:00:00.000Z',
+      updated_at: '2026-07-26T00:00:00.000Z',
+    }
+    vi.mocked(getAsset).mockResolvedValue(videoAsset)
+    vi.mocked(listAssets).mockResolvedValue({ assets: [videoAsset], total: 1 })
+
+    render(
+      <ShellMediaArtifactViewer
+        target={{
+          id: 'video-1',
+          title: 'Processed media',
+          type: 'image',
+          mediaAssetId: 'video-1',
+          conversationId: 'conversation-old',
+        }}
+      />,
+    )
+
+    await waitFor(() => {
+      const video = document.querySelector('video')
+      expect(video?.getAttribute('src')).toBe('https://example.com/story.mp4')
+    })
+    expect(screen.queryByAltText('Processed media')).toBeNull()
+    expect(screen.getByRole('complementary', { name: 'Media history' })).toBeTruthy()
   })
 })

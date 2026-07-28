@@ -19,9 +19,82 @@ const AUDIO_URL_REGEX =
 const PDF_URL_REGEX =
   /(?:\[([^\]]+)\]\((https?:\/\/[^\s)]+\.pdf[^\s)]*)\)|(https?:\/\/[^\s]+\.pdf(?:\?[^\s]*)?))/gi
 
+function findMatchingBrace(content: string, start: number): number {
+  let depth = 0
+  let inString = false
+  let escaped = false
+  for (let i = start; i < content.length; i++) {
+    const ch = content[i]!
+    if (inString) {
+      if (escaped) {
+        escaped = false
+        continue
+      }
+      if (ch === '\\') {
+        escaped = true
+        continue
+      }
+      if (ch === '"') inString = false
+      continue
+    }
+    if (ch === '"') {
+      inString = true
+      continue
+    }
+    if (ch === '{') depth++
+    if (ch === '}') {
+      depth--
+      if (depth === 0) return i
+    }
+  }
+  return -1
+}
+
+function isEchoedMediaToolResult(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  const obj = value as Record<string, unknown>
+  if (typeof obj.media_asset_id === 'string') return true
+  if (obj.operation === 'render_ig_story' || obj.operation === 'process_media') return true
+  if (
+    obj.success === true &&
+    typeof obj.url === 'string' &&
+    (obj.format === 'mp4' || typeof obj.file_path === 'string')
+  ) {
+    return true
+  }
+  return false
+}
+
+/** Drop assistant-pasted process_media / render_ig_story toolResult JSON blobs. */
+export function stripEchoedMediaToolJson(content: string): string {
+  let result = ''
+  let i = 0
+  while (i < content.length) {
+    if (content[i] === '{') {
+      const end = findMatchingBrace(content, i)
+      if (end !== -1) {
+        const slice = content.slice(i, end + 1)
+        try {
+          if (isEchoedMediaToolResult(JSON.parse(slice))) {
+            i = end + 1
+            continue
+          }
+        } catch {
+          // Keep non-JSON brace regions as text.
+        }
+      }
+    }
+    result += content[i]
+    i++
+  }
+  return result.replace(/\n{3,}/g, '\n\n').trim()
+}
+
 export function parseContent(content: string): ParsedContentSegment[] {
   const healed = healRedactedSupabaseStorageUrls(content)
-  const cleaned = healed.replace(/\[STATUS\][\s\S]*?\[\/STATUS\]/g, '').trim()
+  const cleaned = stripEchoedMediaToolJson(
+    healed.replace(/\[STATUS\][\s\S]*?\[\/STATUS\]/g, '').trim(),
+  )
 
   const mediaMatches: Array<{ index: number; length: number; segment: ParsedContentSegment }> = []
 

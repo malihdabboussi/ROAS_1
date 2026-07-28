@@ -13,7 +13,6 @@ import { cn } from '@/lib/utils/cn'
 import { isShellHomeRoute, isShellWorkspaceRoute } from './shell-route-policy'
 import { ShellChatDrawer } from './ShellChatDrawer'
 import { ShellNewChatGreeting } from './ShellNewChatGreeting'
-import { ShellRightPanel } from './ShellRightPanel'
 import { ShellSidebarSlot } from './ShellSidebarSlot'
 import { SpaceWorkDock } from './SpaceWorkDock'
 import { isWorkAttachedDock, useShellMenuDock } from './use-shell-menu-dock'
@@ -28,8 +27,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const convParam = searchParams.get('conv')
 
   const workAreaOpen = useShellStore((s) => s.workAreaOpen)
-  const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
-  const chatDrawerConversationId = useShellStore((s) => s.chatDrawer.conversationId)
   const openChatDrawer = useShellStore((s) => s.openChatDrawer)
   const requestNewChat = useShellStore((s) => s.requestNewChat)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
@@ -97,12 +94,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const onSpaces = pathname.startsWith('/spaces')
   const workAreaCollapsible = !showFullNewChat && !showFullConversation
   const workAreaCollapsed = workAreaCollapsible && !workAreaOpen
-  const summaryConversationId = showFullConversation
-    ? (convParam ?? activeConversationId)
-    : chatDrawerOpen
-      ? chatDrawerConversationId
-      : null
-
   let homeOrDefaultMain: ReactNode = children
   if (showFullNewChat) {
     homeOrDefaultMain = <ShellNewChatGreeting />
@@ -191,7 +182,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
         >
           <ShellArtifactViewerAdapter />
         </div>
-        <ShellRightPanel conversationId={summaryConversationId} />
       </div>
     </div>
   )

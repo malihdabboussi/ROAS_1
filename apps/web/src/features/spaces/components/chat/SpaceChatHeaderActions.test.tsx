@@ -91,6 +91,7 @@ describe('SpaceChatHeaderActions', () => {
 
   it('uses an X close control in shell chrome', () => {
     const onCollapse = vi.fn()
+    const onToggleSummary = vi.fn()
 
     render(
       <SpaceChatHeaderActions
@@ -107,11 +108,15 @@ describe('SpaceChatHeaderActions', () => {
         onShowVoiceRuns={vi.fn()}
         onShowConversations={vi.fn()}
         hideHistoryChrome
+        summaryOpen={false}
+        onToggleSummary={onToggleSummary}
       />,
     )
 
+    fireEvent.click(screen.getByRole('button', { name: 'Summary panel' }))
     fireEvent.click(screen.getByRole('button', { name: 'Close AI Chats' }))
 
+    expect(onToggleSummary).toHaveBeenCalledTimes(1)
     expect(onCollapse).toHaveBeenCalledTimes(1)
     expect(screen.queryByLabelText('Collapse ROAS chat')).not.toBeInTheDocument()
   })

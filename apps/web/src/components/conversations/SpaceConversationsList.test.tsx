@@ -186,7 +186,7 @@ describe('SpaceConversationsList', () => {
     expect(onNewConversation).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps history rows compact and gives the full row width to the title', () => {
+  it('keeps history rows compact and shows Cursor-style relative age', () => {
     render(
       <SpaceConversationsList
         {...baseProps({
@@ -194,6 +194,7 @@ describe('SpaceConversationsList', () => {
             conversation({
               id: 'spaces-1',
               title: 'Consolidate and improve Spaces',
+              updated_at: new Date().toISOString(),
             }),
           ],
           selectedConversationId: 'spaces-1',
@@ -205,7 +206,7 @@ describe('SpaceConversationsList', () => {
     const title = screen.getByText('Consolidate and improve Spaces')
     expect(title).toHaveClass('body-3')
     expect(title.closest('div[title]')).toHaveClass('px-spacing-1', 'py-spacing-1', 'gap-spacing-2')
-    expect(screen.queryByText('now')).not.toBeInTheDocument()
+    expect(screen.getByText('now')).toBeInTheDocument()
   })
 
   it('can render dated, divided rows for the full chats page', () => {

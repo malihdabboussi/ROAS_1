@@ -13,6 +13,21 @@ interface ShellMediaHistoryRailProps {
   onSelect: (asset: MediaAsset) => void
 }
 
+function MediaThumb({ asset }: { asset: MediaAsset }) {
+  if (asset.asset_type === 'video' && asset.public_url) {
+    return (
+      <video
+        src={asset.public_url}
+        muted
+        playsInline
+        preload="metadata"
+        className="h-full w-full object-cover"
+      />
+    )
+  }
+  return <img src={asset.public_url!} alt="" className="h-full w-full object-cover" />
+}
+
 export function ShellMediaHistoryRail({
   activeAssetId,
   conversationId,
@@ -32,12 +47,16 @@ export function ShellMediaHistoryRail({
     let cancelled = false
     setLoading(true)
     void listAssets({
-      asset_type: 'image',
       limit: 40,
       ...(conversationId ? { conversation_id: conversationId } : { space_id: spaceId! }),
     })
       .then((result) => {
-        if (!cancelled) setHistory(result.assets)
+        if (cancelled) return
+        setHistory(
+          result.assets.filter(
+            (asset) => asset.asset_type === 'image' || asset.asset_type === 'video',
+          ),
+        )
       })
       .catch(() => {
         if (!cancelled) setHistory([])
@@ -54,6 +73,7 @@ export function ShellMediaHistoryRail({
     const seen = new Set<string>()
     return [...history, resolvedAsset].filter((asset): asset is MediaAsset => {
       if (!asset?.public_url || seen.has(asset.id)) return false
+      if (asset.asset_type !== 'image' && asset.asset_type !== 'video') return false
       seen.add(asset.id)
       return true
     })
@@ -68,7 +88,7 @@ export function ShellMediaHistoryRail({
 
   return (
     <aside
-      aria-label="Image history"
+      aria-label="Media history"
       className="border-border gap-spacing-2 p-spacing-2 flex w-20 shrink-0 flex-col overflow-y-auto border-r"
     >
       {loading ? (
@@ -90,7 +110,7 @@ export function ShellMediaHistoryRail({
             )}
             aria-label={`Open ${asset.name}`}
           >
-            <img src={asset.public_url!} alt="" className="h-full w-full object-cover" />
+            <MediaThumb asset={asset} />
           </button>
         ))
       )}

@@ -8,6 +8,11 @@ import {
 } from '../../shared/utils/integration-id.util'
 import { ChatContextRepository } from '../repositories/chat-context.repository'
 
+/**
+ * Personal-account integrations that stay usable by the owning user inside an
+ * org workspace. Must stay injectable in agent context even when org team
+ * grants only list org_shared providers (seed joins ui.org_id = team.org_id).
+ */
 const PERSONAL_CROSS_CONTEXT_INTEGRATIONS = [
   'fathom',
   'fireflies',
@@ -16,6 +21,8 @@ const PERSONAL_CROSS_CONTEXT_INTEGRATIONS = [
   'google_calendar',
   'outlook',
 ] as const
+
+const PERSONAL_CROSS_CONTEXT_SET = new Set<string>(PERSONAL_CROSS_CONTEXT_INTEGRATIONS)
 
 interface ConnectedIntegration {
   integration_id: string
@@ -78,8 +85,9 @@ export class IntegrationContextService {
           if (d.kind === 'integration')
             allowedIntegrationIds.delete(canonicalizeIntegrationId(d.id))
         }
-        // No allowed integrations at all = nothing to inject.
-        if (allowedIntegrationIds.size === 0) return ''
+        // Empty team grants must NOT blank the whole context: personal
+        // cross-context tools (Fathom, etc.) and platform-managed providers
+        // remain available to the owning user.
       } catch (err) {
         this.logger.warn(
           `policy resolve failed, falling back to permissive: ${err instanceof Error ? err.message : err}`,
@@ -137,7 +145,13 @@ export class IntegrationContextService {
         const integrationId = String(row.integration_id ?? '')
           .trim()
           .toLowerCase()
-        if (allowedIntegrationIds && !allowedIntegrationIds.has(integrationId)) return false
+        if (
+          allowedIntegrationIds &&
+          !allowedIntegrationIds.has(integrationId) &&
+          !PERSONAL_CROSS_CONTEXT_SET.has(integrationId)
+        ) {
+          return false
+        }
         return row.agent_enabled !== false
       })
 

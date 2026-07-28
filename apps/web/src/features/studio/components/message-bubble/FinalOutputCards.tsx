@@ -196,12 +196,18 @@ function openDefaultOutput(block: FinalOutputBlock) {
   }
 
   if (block.type === 'media_asset') {
+    const kind =
+      block.kind === 'video' || block.kind === 'audio' || block.kind === 'image'
+        ? block.kind
+        : 'image'
     if (
       block.mediaAssetId &&
       openMediaAssetInApp({
         mediaAssetId: block.mediaAssetId,
         title: block.title,
         spaceId: block.spaceId,
+        kind,
+        fileUrl: block.url,
       })
     ) {
       return
@@ -248,7 +254,9 @@ function FinalOutputThumb({
   }
   if (isDocumentSnippet && subtitle) {
     return (
-      <span className="typo-caption text-muted-foreground px-spacing-2 line-clamp-3">{subtitle}</span>
+      <span className="typo-caption text-muted-foreground px-spacing-2 line-clamp-3">
+        {subtitle}
+      </span>
     )
   }
   return <span className="text-muted-foreground">{icon}</span>

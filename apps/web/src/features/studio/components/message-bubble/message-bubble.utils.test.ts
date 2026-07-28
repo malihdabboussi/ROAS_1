@@ -216,6 +216,28 @@ describe('buildFinalAnswerLayoutSegments', () => {
       'outputs:doc-1,presentation-1',
     ])
   })
+
+  it('keeps media_asset only in final output cards, not duplicated in the worked summary', () => {
+    const media: MessageContentBlock = {
+      type: 'media_asset',
+      id: 'media-1',
+      kind: 'video',
+      title: 'Processed media',
+      url: 'https://cdn.example.com/story.mp4',
+      mediaAssetId: '548941d2-dc17-4943-a0d2-37a66e263aa6',
+    }
+    const blocks = [
+      tool('exec-1', 'process_media', 'Rendering story'),
+      media,
+      text('answer-1', 'It rendered.'),
+    ]
+
+    expect(finalAnswerLabels(blocks)).toEqual([
+      'summary:exec-1',
+      'block:answer-1',
+      'outputs:media-1',
+    ])
+  })
 })
 
 describe('extractFinalOutputBlocks', () => {

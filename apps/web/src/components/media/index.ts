@@ -41,6 +41,7 @@ export {
   openMediaAssetInApp,
   VIBEY_OPEN_MEDIA_EVENT,
   type VibeyOpenMediaDetail,
+  type VibeyOpenMediaKind,
 } from '@/lib/media/open-media-asset-in-app'
 export * from './MediaPickerModal'
 export * from './MediaPickerModalHeader'

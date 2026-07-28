@@ -150,16 +150,22 @@ export class FathomRepository {
     client: SupabaseClient,
     userId: string,
   ): Promise<FathomUserIntegration | null> {
+    // Prefer personal (org_id null) then newest — never maybeSingle: multiple
+    // connected rows (personal + org_shared) would error and look "disconnected".
     const { data, error } = await client
       .from('user_integrations')
       .select('*')
       .eq('user_id', userId)
       .eq('integration_id', 'fathom')
       .eq('status', 'connected')
-      .maybeSingle()
+      .order('org_id', { ascending: true, nullsFirst: true })
+      .order('updated_at', { ascending: false })
+      .limit(1)
 
-    if (error || !data) return null
-    return data as unknown as FathomUserIntegration
+    if (error) return null
+    const row = Array.isArray(data) ? data[0] : null
+    if (!row) return null
+    return row as unknown as FathomUserIntegration
   }
 
   async updateTokens(userId: string, tokens: FathomOAuthTokenResponse): Promise<void> {

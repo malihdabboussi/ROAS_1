@@ -1,10 +1,14 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import { Check, Circle } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import {
+  filterIgOrganicScenes,
   IG_ORGANIC_APPROVED_EMOJIS,
-  IG_ORGANIC_VIDEO_SCENES,
+  IG_ORGANIC_INDUSTRY_PACKS,
+  type IgOrganicFootageFit,
+  type IgOrganicIndustryPack,
 } from '../config/ig-organic-video-scenes.config'
 import { STATIC_AD_FORMATS } from '../config/static-ad-formats.config'
 import type { IgOrganicVideoKickoffFields } from './playbooks/ig-organic-video'
@@ -162,6 +166,20 @@ function VideoFields({
   fields: IgOrganicVideoKickoffFields
   onChange: (fields: IgOrganicVideoKickoffFields) => void
 }) {
+  const [footageFit, setFootageFit] = useState<IgOrganicFootageFit | 'all'>(
+    fields.footageFit ?? 'all',
+  )
+  const [industryPack, setIndustryPack] = useState<IgOrganicIndustryPack | 'all'>(
+    (fields.industryPack as IgOrganicIndustryPack | 'all' | undefined) ?? 'all',
+  )
+  const visibleScenes = useMemo(
+    () =>
+      filterIgOrganicScenes({
+        fit: footageFit,
+        industryPack: footageFit === 'industry_adjacent' ? industryPack : 'all',
+      }),
+    [footageFit, industryPack],
+  )
   const toggleScene = (sceneId: string) => {
     const selectedSceneIds = fields.selectedSceneIds.includes(sceneId)
       ? fields.selectedSceneIds.filter((id) => id !== sceneId)
@@ -175,8 +193,70 @@ function VideoFields({
         <p className="body-4 text-muted-foreground">
           Each selected scene produces one finished video.
         </p>
+        <div className="mt-spacing-2 gap-spacing-2 flex flex-wrap">
+          {(
+            [
+              { value: 'all', label: 'All fits' },
+              { value: 'lifestyle', label: 'Lifestyle' },
+              { value: 'industry_adjacent', label: 'Industry-adjacent' },
+            ] as const
+          ).map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={cn(
+                'button-compact',
+                footageFit === option.value ? 'button-glass-primary' : 'button-glass-neutral',
+              )}
+              onClick={() => {
+                setFootageFit(option.value)
+                if (option.value !== 'industry_adjacent') setIndustryPack('all')
+                onChange({
+                  ...fields,
+                  footageFit: option.value,
+                  industryPack: option.value === 'industry_adjacent' ? industryPack : undefined,
+                })
+              }}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        {footageFit === 'industry_adjacent' ? (
+          <div className="mt-spacing-2 gap-spacing-2 flex flex-wrap">
+            <button
+              type="button"
+              className={cn(
+                'button-compact',
+                industryPack === 'all' ? 'button-glass-primary' : 'button-glass-neutral',
+              )}
+              onClick={() => {
+                setIndustryPack('all')
+                onChange({ ...fields, footageFit, industryPack: undefined })
+              }}
+            >
+              All industries
+            </button>
+            {IG_ORGANIC_INDUSTRY_PACKS.map((pack) => (
+              <button
+                key={pack.id}
+                type="button"
+                className={cn(
+                  'button-compact',
+                  industryPack === pack.id ? 'button-glass-primary' : 'button-glass-neutral',
+                )}
+                onClick={() => {
+                  setIndustryPack(pack.id)
+                  onChange({ ...fields, footageFit, industryPack: pack.id })
+                }}
+              >
+                {pack.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div className="border-border mt-spacing-2 p-spacing-2 gap-spacing-1 rounded-spacing-2 grid border sm:grid-cols-2">
-          {IG_ORGANIC_VIDEO_SCENES.map((scene) => {
+          {visibleScenes.map((scene) => {
             const active = fields.selectedSceneIds.includes(scene.id)
             return (
               <button

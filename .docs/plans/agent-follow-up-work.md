@@ -1,3 +1,50 @@
+## 2026-07-27 - [ARCH] StartAdProductionPlaybookFields over LOC after industry filters
+
+Status: Open
+
+Found while: Adding industry-adjacent IG Story scene packs + fit filters
+
+Files:
+- `apps/web/src/features/spaces/components/StartAdProductionPlaybookFields.tsx` (432 LOC; component limit 400)
+- `apps/web/src/features/spaces/config/ig-organic-video-scenes.config.ts` (365 LOC; approaching 400)
+
+Evidence: Industry pack filter UI pushed playbook fields over the component budget; scene catalog grew with 15 industry scenes.
+
+Needed work: Extract shared `IgOrganicScenePicker` used by Production launcher + Quick Missions; optionally split industry packs into a second config module.
+
+Reason not done now: In-scope ask was invent industry packs + wire selection; shared picker split is adjacent cleanup.
+
+## 2026-07-27 - [ARCH] FinalOutputCards + Space MediaImageWorkspace after video open fix
+
+Status: Open
+
+Found while: Fixing chat video cards / artifacts panel after Pixel Story render
+
+Files:
+- `apps/web/src/features/studio/components/message-bubble/FinalOutputCards.tsx` (323 LOC; component limit 400; ~80%)
+- `apps/web/src/features/spaces/views/media/MediaImageWorkspace.tsx` (still loads history with `asset_type: 'image'` only)
+
+Evidence: Shell history rail now loads image+video; Space deep media workspace remains image-edit lineage only.
+
+Needed work: Split FinalOutputCards describe/open helpers if it grows further; optionally align Space MediaImageWorkspace history with mixed media when opening videos from Space.
+
+Reason not done now: In-scope fix was shell chat/artifacts open path; Space deep-edit workspace is adjacent and still image-composer oriented.
+
+## 2026-07-27 - [ARCH] SpaceVibeyChatPanel still over LOC after summary panel host move
+
+Status: Open
+
+Found while: Home inbox scroll + chat history time + chat-header summary panel
+
+Files:
+- `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` (2496 LOC; component limit 400; allowlist bumped 2493→2496)
+
+Evidence: Mounted `ShellRightPanel` + summary toggle wiring added ~3 LOC to the already over-limit panel host.
+
+Needed work: Continue extracting header chrome / panel host into a focused `SpaceChatPanelChrome` (or similar) so summary + scope stay out of the mega panel.
+
+Reason not done now: In-scope UX was relocate summary + restore times + inbox height; full panel split remains pre-existing debt.
+
 ## 2026-07-27 - [ARCH] meetings-precall-prep.helpers over service limit
 
 Status: Open

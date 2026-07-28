@@ -7,6 +7,7 @@ function makeQuery(result: Record<string, unknown>) {
     eq: vi.fn(() => query),
     is: vi.fn(() => query),
     order: vi.fn(() => query),
+    limit: vi.fn(() => query),
     maybeSingle: vi.fn(async () => result),
     then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) =>
       Promise.resolve(result).then(resolve, reject),

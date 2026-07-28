@@ -11,7 +11,6 @@ import {
   FolderGit2,
   Inbox,
   Layers3,
-  List,
   ListChecks,
   MessageSquare,
   PanelLeftClose,
@@ -67,8 +66,6 @@ export function ShellTopBar() {
   const restoreChatDrawer = useShellStore((s) => s.restoreChatDrawer)
   const minimizeChatDrawer = useShellStore((s) => s.minimizeChatDrawer)
   const setSidebarPinned = useShellStore((s) => s.setSidebarPinned)
-  const toggleRightPanel = useShellStore((s) => s.toggleRightPanel)
-  const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
   const workAreaOpen = useShellStore((s) => s.workAreaOpen)
   const artifactTarget = useShellStore((s) => s.artifactViewer.target)
   const pageBreadcrumb = useShellStore((s) => s.pageBreadcrumb)
@@ -197,16 +194,6 @@ export function ShellTopBar() {
 
       <div className="ml-auto flex items-center gap-1.5">
         <ShellOpenInMenu targets={targets} />
-
-        <button
-          type="button"
-          title="Summary panel"
-          aria-pressed={rightPanelOpen}
-          onClick={() => toggleRightPanel()}
-          className={cn('shell-topbar-icon-btn', rightPanelOpen && 'shell-topbar-icon-btn-active')}
-        >
-          <List />
-        </button>
 
         {showWorkAreaControl ? <ShellWorkAreaControl currentPage={currentPage} /> : null}
       </div>

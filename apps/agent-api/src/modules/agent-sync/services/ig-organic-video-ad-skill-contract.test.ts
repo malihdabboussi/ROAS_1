@@ -10,6 +10,8 @@ describe('ig-organic-video-ad skill migration', () => {
     '../../supabase/migrations/20260726122500_ig_organic_video_renderer_path.sql',
     '../../supabase/migrations/20260726124500_ig_organic_video_server_renderer.sql',
     '../../supabase/migrations/20260726222500_ig_organic_video_visual_qa.sql',
+    '../../supabase/migrations/20260727163000_ig_organic_video_industry_scenes.sql',
+    '../../supabase/migrations/20260727164500_ig_organic_video_industry_packs_v2.sql',
   ]
     .map((filePath) => fs.readFileSync(path.resolve(process.cwd(), filePath), 'utf8'))
     .join('\n')
@@ -52,5 +54,20 @@ describe('ig-organic-video-ad skill migration', () => {
     expect(VIBEY_API_ACTION_DOCS.analyze_video.parameters).toMatch(
       /"extract_frames":true,"transcribe":false,"frame_count":12/,
     )
+  })
+
+  it('adds industry-adjacent packs and footage_fit selection guidance', () => {
+    expect(migration).toMatch(/footage_fit/)
+    expect(migration).toMatch(/industry_adjacent/)
+    expect(migration).toMatch(/trades-home-services/)
+    expect(migration).toMatch(/health-fitness/)
+    expect(migration).toMatch(/professional-services/)
+    expect(migration).toMatch(/real-estate-mortgage/)
+    expect(migration).toMatch(/coaching/)
+    expect(migration).toMatch(/social-media-influencer/)
+    expect(migration).toMatch(/agency-desk-morning/)
+    expect(migration).toMatch(/work-truck-dawn/)
+    expect(migration).toMatch(/staged-living-room/)
+    expect(migration).toMatch(/creator-ring-light-desk/)
   })
 })

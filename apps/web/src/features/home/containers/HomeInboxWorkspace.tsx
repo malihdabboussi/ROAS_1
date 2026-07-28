@@ -11,7 +11,7 @@ export function HomeInboxWorkspace() {
 
   return (
     <>
-      <main className="flex min-h-0 flex-1 overflow-hidden">
+      <main className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
         <h1 className="sr-only">INBOX</h1>
         <InboxFeed presentation="page" onOpenDetails={openNotification} />
       </main>

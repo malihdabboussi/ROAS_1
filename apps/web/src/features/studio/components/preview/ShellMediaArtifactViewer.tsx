@@ -32,6 +32,33 @@ function targetAttachment(target: ShellArtifactViewerTarget): DocumentAttachment
   }
 }
 
+function mediaTypeFromAsset(
+  assetType: string | null | undefined,
+  fallback: ShellArtifactViewerTarget['type'],
+): ShellArtifactViewerTarget['type'] {
+  if (assetType === 'video' || assetType === 'audio' || assetType === 'image') return assetType
+  return fallback
+}
+
+function viewerTargetFromAsset(
+  base: ShellArtifactViewerTarget,
+  asset: MediaAsset,
+): ShellArtifactViewerTarget {
+  return {
+    ...base,
+    id: asset.id,
+    mediaAssetId: asset.id,
+    title: asset.name || base.title,
+    fileName: asset.original_filename || asset.name || base.fileName,
+    fileUrl: asset.public_url,
+    mimeType: asset.mime_type,
+    type: mediaTypeFromAsset(asset.asset_type, base.type),
+    spaceId: asset.space_id || base.spaceId,
+    campaignId: asset.campaign_id || base.campaignId,
+    conversationId: asset.conversation_id || base.conversationId,
+  }
+}
+
 export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactViewerTarget }) {
   const pathname = usePathname() || '/home'
   const router = useRouter()
@@ -44,18 +71,7 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
 
   const activeTarget = useMemo<ShellArtifactViewerTarget>(() => {
     if (!resolvedAsset) return target
-    return {
-      ...target,
-      id: resolvedAsset.id,
-      mediaAssetId: resolvedAsset.id,
-      title: resolvedAsset.name || target.title,
-      fileName: resolvedAsset.original_filename || resolvedAsset.name || target.fileName,
-      fileUrl: resolvedAsset.public_url,
-      mimeType: resolvedAsset.mime_type,
-      spaceId: resolvedAsset.space_id || target.spaceId,
-      campaignId: resolvedAsset.campaign_id || target.campaignId,
-      conversationId: resolvedAsset.conversation_id || target.conversationId,
-    }
+    return viewerTargetFromAsset(target, resolvedAsset)
   }, [resolvedAsset, target])
 
   useEffect(() => {
@@ -170,24 +186,13 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
       showOpenTargets={false}
     >
       <div className="flex h-full min-h-0">
-        {activeTarget.type === 'image' ? (
+        {activeTarget.type === 'image' || activeTarget.type === 'video' ? (
           <ShellMediaHistoryRail
             activeAssetId={activeTarget.mediaAssetId}
             conversationId={activeTarget.conversationId}
             resolvedAsset={resolvedAsset}
             spaceId={activeTarget.spaceId}
-            onSelect={(asset) =>
-              openArtifactViewer({
-                ...activeTarget,
-                id: asset.id,
-                mediaAssetId: asset.id,
-                title: asset.name || activeTarget.title,
-                fileName: asset.original_filename || asset.name || activeTarget.fileName,
-                fileUrl: asset.public_url,
-                mimeType: asset.mime_type,
-                conversationId: asset.conversation_id || activeTarget.conversationId,
-              })
-            }
+            onSelect={(asset) => openArtifactViewer(viewerTargetFromAsset(activeTarget, asset))}
           />
         ) : null}
 

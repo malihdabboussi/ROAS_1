@@ -36,7 +36,9 @@ vi.mock('@/components/spaces/SpaceDocEditorPanelAdapter', () => ({
 
 vi.mock('./ShellMediaArtifactViewer', () => ({
   ShellMediaArtifactViewer: ({ target }: { target: ShellArtifactViewerTarget }) => (
-    <div data-testid="media-studio">{target.mediaAssetId}</div>
+    <div data-testid="media-studio">
+      {target.type}:{target.mediaAssetId}
+    </div>
   ),
 }))
 
@@ -81,6 +83,28 @@ describe('ShellArtifactViewerAdapter', () => {
     })
 
     await waitFor(() => expect(screen.getByTestId('media-studio')).toBeTruthy())
-    expect(screen.getByText('0f3fa1a4-6c8e-4282-bc68-00161152e039')).toBeTruthy()
+    expect(screen.getByText('image:0f3fa1a4-6c8e-4282-bc68-00161152e039')).toBeTruthy()
+  })
+
+  it('opens the media studio as video when kind is video', async () => {
+    useShellStore.setState({ artifactViewer: { target: null, width: 480 } })
+    render(<ShellArtifactViewerAdapter />)
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent(VIBEY_OPEN_MEDIA_EVENT, {
+          detail: {
+            mediaAssetId: '548941d2-dc17-4943-a0d2-37a66e263aa6',
+            title: 'Processed media',
+            kind: 'video',
+            fileUrl: 'https://example.com/story.mp4',
+          },
+          cancelable: true,
+        }),
+      )
+    })
+
+    await waitFor(() => expect(screen.getByTestId('media-studio')).toBeTruthy())
+    expect(screen.getByText('video:548941d2-dc17-4943-a0d2-37a66e263aa6')).toBeTruthy()
   })
 })

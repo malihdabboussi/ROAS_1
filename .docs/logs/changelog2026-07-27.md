@@ -1,5 +1,15 @@
 # Changelog - July 27, 2026
 
+## [2026-07-27 21:45] - [FIX]
+
+What: Agent chat context now always injects personal-cross-context Fathom (and peers) for the owning user in org workspaces, even when org agent-team grants omit them; Fathom token lookup prefers personal/`limit(1)` instead of `maybeSingle`.
+
+Why: Org General-team grants seed only `user_integrations.org_id = team.org_id`, so personal Fathom was stripped from `<connected_integrations>` and Pixel told users it was not connected while Settings showed connected.
+
+Impact: Pixel sees Fathom as connected in org chat and can run `list_meetings` / `get_transcript` without a false disconnect. Requires agent-api (+ api) deploy.
+
+Files: `integration-context.service.ts`, `fathom.repository.ts`, `integrations-status.service.ts`, `integration-connections.md`, tests
+
 ## [2026-07-27 16:20] - [FEATURE]
 
 What: Redesigned the Home meeting detail modal (summary → full transcript disclosure → meeting links → your/other action items) and made transcripts durable + lazy-loaded. Fathom ingest stores `custom_data.summary` + `custom_data.transcript_text`; agenda `related` returns summary, has_transcript, and assignee fields without shipping full transcripts in the agenda list.
@@ -9,6 +19,16 @@ Why: The old modal mashed recording + tasks with opaque `logged` status, and tra
 Impact: New Fathom calls keep a full transcript for on-demand “Full transcript”. Existing calls still work via legacy description detection or Fathom link. Requires API + web production deploy.
 
 Files: `HomeMeetingDetailHost.tsx`, `extract-call-transcript.ts`, `calendar-api.ts`, `meetings-precall-prep.service.ts`, `meetings-precall-prep.helpers.ts`, `space-automation-service-06.base.ts`, related tests.
+
+## [2026-07-27 16:20] - [FIX]
+
+What: Bound Home Inbox card height so list/detail scroll; restored Cursor-style chat-history relative age ↔ ⋯ hover flip; moved summary panel into the chat header (left of close) with Campaign & space scope inside the chat column.
+
+Why: Unbounded Inbox `h-full` blocked Home scroll; history times were unused; workspace top-bar summary lived outside chat and General chats had no campaign reconnect control.
+
+Impact: Home Agenda+Inbox scrolls again; chat rows show `19m`/`10h` until hover reveals ⋯; Tasks/Files/Sources + campaign/space picker open beside the thread.
+
+Files: `InboxFeedCard.tsx`, `HomeInboxWorkspace.tsx`, `SpaceConversationRows.tsx`, `SpaceChatHeaderActions.tsx`, `ShellRightPanel.tsx`, `SpaceVibeyChatPanel.tsx`, `ShellTopBar.tsx`, `ShellWorkspace.tsx`, `claude-chatgpt-shell.md`
 
 ## [2026-07-27 16:15] - [FIX]
 
@@ -169,3 +189,24 @@ Why: PR #67 follow-up: the thin right collapsed rail previously had no way to re
 Impact: Users can restore the collapsed work card directly from the bottom of the collapsed HQ rail, without hunting for the top-bar control. No new store state — reuses `workAreaOpen`/`setWorkAreaOpen`. Verified History restore remains only in the chat top-left (`ShellChatDrawer`, guarded by `SidebarHqSection.test.tsx`) and R-logo click still toggles menu compact (Option A) in `SidebarHqHubLogoButton.tsx`.
 
 Files: `apps/web/src/components/shell/ShellWorkspace.tsx`, `ShellWorkspace.test.tsx`, both product `globals.css`.
+
+## [2026-07-27 16:28] - [FIX]
+
+What: Fixed chat video artifact UI: open events pass media kind, the shell viewer corrects type from the resolved asset, history rail lists images and videos, final-answer layout stops duplicating media_asset players, and echoed process_media toolResult JSON is stripped before URL scraping.
+
+Why: Pixel’s successful Story render showed multiple video cards, raw JSON interleaved with players, and clicking Processed media opened as an image (No preview → broken MP4 img) with an images-only artifacts rail.
+
+Impact: Video cards open as playable videos; artifacts rail shows mixed image/video history; chat no longer scrapes tool JSON into extra players.
+
+Files: `open-media-asset-in-app.ts`, `ShellArtifactViewerAdapter.tsx`, `ShellMediaArtifactViewer.tsx`, `ShellMediaHistoryRail.tsx`, `FinalOutputCards.tsx`, `GeneratedMedia.tsx`, `chat-content-segments.ts`, `message-bubble.utils.ts`, related tests, `claude-chatgpt-shell.md`.
+
+## [2026-07-27 16:42] - [FEATURE]
+
+What: Reshaped IG industry packs to six client-aligned niches: merged trades+home, dropped auto, added real estate/mortgage, coaching, and social/influencer (3 scenes each).
+
+Why: Client base is educator verticals (RE/mortgage, coaching, insurance, trades/home, creators), not auto repair; selection needed packs that match the book of business.
+
+Impact: Production filters and skill library now expose the revised pack list; 18 industry scenes ready for Higgsfield preset generation.
+
+Files: `ig-organic-video-scenes.config.ts`, migration `20260727164500_ig_organic_video_industry_packs_v2.sql`, skill contract test, `social-research.md`.
+

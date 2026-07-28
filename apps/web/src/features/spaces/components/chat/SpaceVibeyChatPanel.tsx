@@ -12,11 +12,7 @@ import { MessageBubble } from '@/components/chat/MessageBubbleAdapter'
 import { MessageQueue } from '@/components/chat/MessageQueue'
 import { PlanStickyTracker } from '@/components/chat/PlanStickyTracker'
 import { VoiceApprovalProvider } from '@/components/chat/VoiceApprovalContext'
-import {
-  ConversationHeaderTitle,
-  ConversationScopePicker,
-  ConversationShareModal,
-} from '@/components/conversations'
+import { ConversationHeaderTitle, ConversationShareModal } from '@/components/conversations'
 import { globalChatSeedMatchesPanel } from '@/components/global-chat/lib/global-chat-seed-match'
 import {
   GLOBAL_CHAT_AGENT_SWITCH_EVENT,
@@ -29,6 +25,7 @@ import {
 } from '@/components/global-chat/store/use-global-chat-store'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
 import { ShellEmptyChatActionPills } from '@/components/shell/ShellEmptyChatActionPills'
+import { ShellRightPanel } from '@/components/shell/ShellRightPanel'
 import { useShellChatQuickStart } from '@/components/shell/use-shell-chat-quick-start'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
@@ -2022,6 +2019,9 @@ export function SpaceVibeyChatPanel({
     />
   )
 
+  const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
+  const toggleRightPanel = useShellStore((s) => s.toggleRightPanel)
+
   const chatHeaderActions = (
     <SpaceChatHeaderActions
       searchOpen={searchOpen}
@@ -2040,6 +2040,8 @@ export function SpaceVibeyChatPanel({
       onShowVoiceRuns={() => setMode('voice-runs')}
       onShowConversations={() => setMode('conversations')}
       hideHistoryChrome={shellSidebarChrome}
+      summaryOpen={rightPanelOpen}
+      onToggleSummary={() => toggleRightPanel()}
     />
   )
 
@@ -2058,17 +2060,6 @@ export function SpaceVibeyChatPanel({
           ) : (
             <div className="min-w-0 flex-1" aria-hidden />
           )}
-          {!isChannelScope && spaceId ? (
-            <ConversationScopePicker
-              conversation={selectedConversation}
-              campaignId={effectiveCampaignId}
-              spaceId={effectiveSpaceId}
-              showLabel
-              compact={headerLayout === 'compact'}
-              onConversationUpdated={handleConversationScopeUpdated}
-              onScopeChanged={setScopeOverride}
-            />
-          ) : null}
           <div className="flex shrink-0 items-center">{chatHeaderActions}</div>
         </div>
       </div>
@@ -2081,7 +2072,7 @@ export function SpaceVibeyChatPanel({
       data-spaces-chat-panel
       ref={chatPanelRef}
       className={cn(
-        'flex h-full min-h-0 min-w-0 flex-col overflow-hidden',
+        'relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden',
         // Shell chrome: fluid full-bleed chat (no card frame). Embedded uses card chrome.
         shellSidebarChrome ? 'bg-background' : 'rounded-2xl border border-[var(--border)]',
         !shellSidebarChrome &&
@@ -2488,6 +2479,15 @@ export function SpaceVibeyChatPanel({
           onSharesChanged={() => void loadConversations({ force: true })}
         />
       ) : null}
+      <ShellRightPanel
+        conversationId={selectedConversationId}
+        conversation={selectedConversation}
+        campaignId={effectiveCampaignId}
+        spaceId={effectiveSpaceId}
+        showScope={!isChannelScope}
+        onConversationUpdated={handleConversationScopeUpdated}
+        onScopeChanged={setScopeOverride}
+      />
     </div>
   )
 }

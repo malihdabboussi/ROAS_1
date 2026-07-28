@@ -6,6 +6,7 @@ import { ConversationChannelIcon } from '@/components/chat/ConversationChannelIc
 import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyChatOrb } from '@/components/vibey/vibey-chat-orb'
 import {
+  formatCompactRelativeTime,
   getAgentInitial,
   getConversationAgentDisplay,
   needsGeneratedConversationTitle,
@@ -206,6 +207,7 @@ export function SpaceConversationRow({
   const resolvedLeadingIcon: ChatHistoryLeadingIcon =
     leadingIcon ?? (allAgentsMode ? 'agent' : 'logo')
   const showLeadingSlot = resolvedLeadingIcon !== 'none'
+  const relativeAge = formatCompactRelativeTime(conversation.updated_at)
   return (
     <div
       onContextMenu={(event) => onOpenContextMenu(event, conversation.id)}
@@ -264,23 +266,34 @@ export function SpaceConversationRow({
           {showSubtitle ? <ConversationRowSubtitle runtimeState={runtimeState} /> : null}
         </button>
       )}
-      {showUpdatedAt ? (
-        <span className="body-4 text-muted-foreground shrink-0">
-          {formatConversationUpdatedAt(conversation.updated_at)}
-        </span>
-      ) : null}
-      <button
-        type="button"
-        onClick={(event) => onOpenMenu(event, conversation.id)}
+      <span
         className={cn(
-          'text-muted-foreground bg-hover-subtle hover:text-foreground rounded-spacing-1 p-spacing-1 absolute inset-y-0 right-0 flex items-center justify-center transition-opacity',
-          menuOpen ? 'opacity-100' : 'opacity-0 group-hover/conversation:opacity-100',
+          'relative flex shrink-0 items-center justify-end',
+          showUpdatedAt ? 'w-spacing-20 h-6' : 'w-spacing-10 h-6',
         )}
-        aria-label="Conversation actions"
-        aria-haspopup="menu"
       >
-        <MoreHorizontal className="icon-sm" />
-      </button>
+        <span
+          className={cn(
+            'text-muted-foreground tabular-nums transition-opacity',
+            showUpdatedAt ? 'body-4' : 'typo-caption',
+            menuOpen ? 'opacity-0' : 'group-hover/conversation:opacity-0',
+          )}
+        >
+          {showUpdatedAt ? formatConversationUpdatedAt(conversation.updated_at) : relativeAge}
+        </span>
+        <button
+          type="button"
+          onClick={(event) => onOpenMenu(event, conversation.id)}
+          className={cn(
+            'text-muted-foreground hover:text-foreground bg-hover-subtle rounded-spacing-1 absolute inset-y-0 right-0 flex items-center justify-center p-1 transition-opacity',
+            menuOpen ? 'opacity-100' : 'opacity-0 group-hover/conversation:opacity-100',
+          )}
+          aria-label="Conversation actions"
+          aria-haspopup="menu"
+        >
+          <MoreHorizontal className="icon-sm" />
+        </button>
+      </span>
     </div>
   )
 }

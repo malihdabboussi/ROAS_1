@@ -7,8 +7,12 @@ import { createMission, type Mission, type MissionDeliverable } from '@/lib/miss
 import { cn } from '@/lib/utils/cn'
 import { ADS_RESEARCH_MESSAGES } from '../../config/ads-research-messages.config'
 import {
+  filterIgOrganicScenes,
   IG_ORGANIC_APPROVED_EMOJIS,
+  IG_ORGANIC_INDUSTRY_PACKS,
   IG_ORGANIC_VIDEO_SCENES,
+  type IgOrganicFootageFit,
+  type IgOrganicIndustryPack,
 } from '../../config/ig-organic-video-scenes.config'
 import { buildIgOrganicVideoMissionPayload } from '../playbooks/ig-organic-video'
 
@@ -26,6 +30,8 @@ export function IgOrganicVideoProductionLauncher({
   sourceDeliverables = [],
 }: IgOrganicVideoProductionLauncherProps) {
   const [selectedSceneIds, setSelectedSceneIds] = useState<string[]>(['golden-hour-infinity-pool'])
+  const [footageFit, setFootageFit] = useState<IgOrganicFootageFit | 'all'>('all')
+  const [industryPack, setIndustryPack] = useState<IgOrganicIndustryPack | 'all'>('all')
   const [copyMode, setCopyMode] = useState<'write_for_me' | 'use_my_copy'>('write_for_me')
   const [sourceStrategy, setSourceStrategy] = useState<'reuse_when_available' | 'generate_new'>(
     'reuse_when_available',
@@ -38,6 +44,15 @@ export function IgOrganicVideoProductionLauncher({
   const [offerContext, setOfferContext] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [mission, setMission] = useState<Mission | null>(null)
+
+  const visibleScenes = useMemo(
+    () =>
+      filterIgOrganicScenes({
+        fit: footageFit,
+        industryPack: footageFit === 'industry_adjacent' ? industryPack : 'all',
+      }),
+    [footageFit, industryPack],
+  )
 
   const presetCount = useMemo(
     () =>
@@ -69,6 +84,8 @@ export function IgOrganicVideoProductionLauncher({
         copyMode,
         sourceStrategy,
         selectedSceneIds,
+        footageFit,
+        industryPack: footageFit === 'industry_adjacent' ? industryPack : 'all',
         pillLine,
         headline,
         highlightPhrase,
@@ -128,8 +145,59 @@ export function IgOrganicVideoProductionLauncher({
             Select one or many. The number selected is the number of video variants produced.
           </p>
         </div>
+        <div className="gap-spacing-2 flex flex-wrap">
+          {(
+            [
+              { value: 'all', label: 'All fits' },
+              { value: 'lifestyle', label: 'Lifestyle' },
+              { value: 'industry_adjacent', label: 'Industry-adjacent' },
+            ] as const
+          ).map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={cn(
+                'button-compact',
+                footageFit === option.value ? 'button-glass-primary' : 'button-glass-neutral',
+              )}
+              onClick={() => {
+                setFootageFit(option.value)
+                if (option.value !== 'industry_adjacent') setIndustryPack('all')
+              }}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        {footageFit === 'industry_adjacent' ? (
+          <div className="gap-spacing-2 flex flex-wrap">
+            <button
+              type="button"
+              className={cn(
+                'button-compact',
+                industryPack === 'all' ? 'button-glass-primary' : 'button-glass-neutral',
+              )}
+              onClick={() => setIndustryPack('all')}
+            >
+              All industries
+            </button>
+            {IG_ORGANIC_INDUSTRY_PACKS.map((pack) => (
+              <button
+                key={pack.id}
+                type="button"
+                className={cn(
+                  'button-compact',
+                  industryPack === pack.id ? 'button-glass-primary' : 'button-glass-neutral',
+                )}
+                onClick={() => setIndustryPack(pack.id)}
+              >
+                {pack.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div className="gap-spacing-2 grid sm:grid-cols-2 lg:grid-cols-3">
-          {IG_ORGANIC_VIDEO_SCENES.map((scene) => {
+          {visibleScenes.map((scene) => {
             const selected = selectedSceneIds.includes(scene.id)
             return (
               <button

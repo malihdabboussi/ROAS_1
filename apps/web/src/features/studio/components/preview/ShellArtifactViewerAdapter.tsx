@@ -110,11 +110,23 @@ export function ShellArtifactViewerAdapter() {
       if (!detail?.mediaAssetId) return
       queueMicrotask(() => {
         if (mediaEvent.defaultPrevented) return
+        const mediaType =
+          detail.kind === 'video' || detail.kind === 'audio' || detail.kind === 'image'
+            ? detail.kind
+            : 'image'
+        const fallbackTitle =
+          mediaType === 'video'
+            ? 'Generated video'
+            : mediaType === 'audio'
+              ? 'Generated audio'
+              : 'Generated image'
         openArtifactViewer({
           id: detail.mediaAssetId,
           mediaAssetId: detail.mediaAssetId,
-          title: detail.title?.trim() || 'Generated image',
-          type: 'image',
+          title: detail.title?.trim() || fallbackTitle,
+          type: mediaType,
+          fileUrl: detail.fileUrl ?? undefined,
+          mimeType: detail.mimeType ?? undefined,
           spaceId: detail.spaceId,
         })
       })

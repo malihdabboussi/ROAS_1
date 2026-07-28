@@ -78,13 +78,15 @@ export class IntegrationsStatusService {
     })
 
     if (scope.orgId && isPersonalCrossContextProvider(integrationId)) {
-      const { data: personalRow } = await this.repository
+      const { data: personalRows } = await this.repository
         .table(supabase, 'user_integrations')
         .select('id, user_id, status, connected_at, metadata, scope_mode, is_default')
         .eq('integration_id', integrationId)
         .eq('user_id', user.id)
         .is('org_id', null)
-        .maybeSingle()
+        .order('updated_at', { ascending: false })
+        .limit(1)
+      const personalRow = Array.isArray(personalRows) ? personalRows[0] : personalRows
       if (personalRow) {
         const personalId = String((personalRow as Record<string, unknown>).id ?? '')
         const alreadyIncluded = scopedRows.some((row) => String(row.id ?? '') === personalId)
