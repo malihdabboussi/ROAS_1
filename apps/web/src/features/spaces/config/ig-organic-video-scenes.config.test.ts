@@ -6,7 +6,7 @@ import {
 } from './ig-organic-video-scenes.config'
 
 describe('ig-organic-video-scenes', () => {
-  it('keeps lifestyle presets and six industry packs with three scenes each', () => {
+  it('keeps lifestyle presets and six industry packs with three preset scenes each', () => {
     const lifestyle = filterIgOrganicScenes({ fit: 'lifestyle' })
     const industry = filterIgOrganicScenes({ fit: 'industry_adjacent' })
 
@@ -21,6 +21,9 @@ describe('ig-organic-video-scenes', () => {
       'social-media-influencer',
     ])
     expect(industry).toHaveLength(18)
+    expect(industry.every((scene) => Boolean(scene.presetVideoUrl && scene.presetStillUrl))).toBe(
+      true,
+    )
     for (const pack of IG_ORGANIC_INDUSTRY_PACKS) {
       expect(
         filterIgOrganicScenes({ fit: 'industry_adjacent', industryPack: pack.id }),

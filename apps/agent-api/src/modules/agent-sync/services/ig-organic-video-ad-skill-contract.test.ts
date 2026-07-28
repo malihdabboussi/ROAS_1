@@ -12,6 +12,7 @@ describe('ig-organic-video-ad skill migration', () => {
     '../../supabase/migrations/20260726222500_ig_organic_video_visual_qa.sql',
     '../../supabase/migrations/20260727163000_ig_organic_video_industry_scenes.sql',
     '../../supabase/migrations/20260727164500_ig_organic_video_industry_packs_v2.sql',
+    '../../supabase/migrations/20260728120000_ig_organic_video_industry_presets.sql',
   ]
     .map((filePath) => fs.readFileSync(path.resolve(process.cwd(), filePath), 'utf8'))
     .join('\n')
@@ -65,9 +66,10 @@ describe('ig-organic-video-ad skill migration', () => {
     expect(migration).toMatch(/real-estate-mortgage/)
     expect(migration).toMatch(/coaching/)
     expect(migration).toMatch(/social-media-influencer/)
-    expect(migration).toMatch(/agency-desk-morning/)
-    expect(migration).toMatch(/work-truck-dawn/)
-    expect(migration).toMatch(/staged-living-room/)
-    expect(migration).toMatch(/creator-ring-light-desk/)
+    expect(migration).toMatch(/wc-open-office-golden/)
+    expect(migration).toMatch(/trades-truck-dawn/)
+    expect(migration).toMatch(/re-staged-living-room/)
+    expect(migration).toMatch(/creator-ring-light/)
+    expect(migration).toMatch(/now ship with clean presets/)
   })
 })
