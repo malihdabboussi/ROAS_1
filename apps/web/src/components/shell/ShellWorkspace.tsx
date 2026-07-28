@@ -18,6 +18,7 @@ import { SpaceWorkDock } from './SpaceWorkDock'
 import {
   isWorkAttachedDock,
   resolveShellMenuDockForLayout,
+  useActiveShellMenuDock,
   useShellMenuDock,
 } from './use-shell-menu-dock'
 import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
@@ -39,6 +40,8 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const shellPrefsHydrated = useShellPrefsHydrated()
   const desktop = useMediaQuery('(min-width: 768px)')
   const savedMenuDock = useShellMenuDock((s) => s.dock)
+  const dragging = useShellMenuDock((s) => s.dragging)
+  const activeMenuDock = useActiveShellMenuDock()
   const setWorkCardHostAvailable = useShellMenuDock((s) => s.setWorkCardHostAvailable)
   const setWorkCollapsedHostAvailable = useShellMenuDock((s) => s.setWorkCollapsedHostAvailable)
 
@@ -113,14 +116,19 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const showChatDrawer = workAreaCollapsible
   const workColumnPresent =
     shellPrefsHydrated && desktop && !artifactTarget && !showFullNewChat && !showFullConversation
-  // Announce host availability from the raw dock so left→work remap can opt in.
-  const rawWorkAttached = isWorkAttachedDock(savedMenuDock) || savedMenuDock === 'left'
+  // During drag, keep work host open so the menu can preview-lock into work seams.
+  const rawWorkAttached =
+    isWorkAttachedDock(savedMenuDock) ||
+    savedMenuDock === 'left' ||
+    (dragging && isWorkAttachedDock(activeMenuDock))
   const hostInsideWorkBase = workColumnPresent && !workAreaCollapsed
   const hostCollapsedRightBase = workColumnPresent && workAreaCollapsed
 
   useEffect(() => {
-    setWorkCardHostAvailable(hostInsideWorkBase && rawWorkAttached)
-    setWorkCollapsedHostAvailable(hostCollapsedRightBase && isWorkAttachedDock(savedMenuDock))
+    setWorkCardHostAvailable(hostInsideWorkBase && (rawWorkAttached || dragging))
+    setWorkCollapsedHostAvailable(
+      hostCollapsedRightBase && (isWorkAttachedDock(savedMenuDock) || dragging),
+    )
     return () => {
       setWorkCardHostAvailable(false)
       setWorkCollapsedHostAvailable(false)
@@ -130,11 +138,12 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     hostCollapsedRightBase,
     rawWorkAttached,
     savedMenuDock,
+    dragging,
     setWorkCardHostAvailable,
     setWorkCollapsedHostAvailable,
   ])
 
-  const menuDock = resolveShellMenuDockForLayout(savedMenuDock, {
+  const menuDock = resolveShellMenuDockForLayout(activeMenuDock, {
     chatOpen: chatDrawerOpen,
     workHostAvailable: hostInsideWorkBase,
   })
@@ -142,7 +151,9 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const hostInsideWork = hostInsideWorkBase && workAttached
   // Collapsed-right rail only for docks that were already work-attached (not remapped left).
   const hostCollapsedRight =
-    hostCollapsedRightBase && isWorkAttachedDock(savedMenuDock) && workAttached
+    hostCollapsedRightBase &&
+    (isWorkAttachedDock(savedMenuDock) || (dragging && isWorkAttachedDock(activeMenuDock))) &&
+    workAttached
 
   const workBodyDockClass =
     hostInsideWork && menuDock === 'work'

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
+  activeShellMenuDock,
   hydrateShellMenuDockFromStorage,
   resetShellMenuDockHydrationForTests,
   resolveShellMenuDockForLayout,
@@ -74,5 +75,10 @@ describe('shell menu dock', () => {
     expect(
       resolveShellMenuDockForLayout('left', { chatOpen: false, workHostAvailable: false }),
     ).toBe('left')
+  })
+
+  it('uses the live candidate while dragging', () => {
+    useShellMenuDock.setState({ dock: 'left', candidate: 'work-top', dragging: true })
+    expect(activeShellMenuDock(useShellMenuDock.getState())).toBe('work-top')
   })
 })

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, Search, X } from 'lucide-react'
-import { useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
+import { useActiveShellMenuDock } from '@/components/shell/use-shell-menu-dock'
 import { HUB_DOCK_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 import { cn } from '@/lib/utils/cn'
 
@@ -91,7 +91,7 @@ export function HubDockFlyout({
   searchInputRef,
   children,
 }: HubDockFlyoutProps) {
-  const menuDock = useShellMenuDock((state) => state.dock)
+  const menuDock = useActiveShellMenuDock()
   const rootRef = useRef<HTMLDivElement>(null)
   const [top, setTop] = useState(anchor.top)
   const [left, setLeft] = useState(anchor.right + offsetPx)

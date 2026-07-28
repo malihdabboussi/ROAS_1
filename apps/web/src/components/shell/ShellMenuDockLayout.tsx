@@ -7,6 +7,7 @@ import { ShellTopBar } from './ShellTopBar'
 import {
   isWorkAttachedDock,
   resolveShellMenuDockForLayout,
+  useActiveShellMenuDock,
   useShellMenuDock,
 } from './use-shell-menu-dock'
 import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
@@ -21,11 +22,12 @@ export function ShellMenuDockLayout({
 }) {
   const hydrated = useShellPrefsHydrated()
   const desktop = useMediaQuery('(min-width: 768px)')
-  const savedDock = useShellMenuDock((state) => state.dock)
+  const activeDock = useActiveShellMenuDock()
+  const dragging = useShellMenuDock((state) => state.dragging)
   const workCardHostAvailable = useShellMenuDock((state) => state.workCardHostAvailable)
   const workCollapsedHostAvailable = useShellMenuDock((state) => state.workCollapsedHostAvailable)
   const chatOpen = useShellStore((state) => state.chatDrawer.open)
-  const rawDock = hydrated && desktop ? savedDock : 'left'
+  const rawDock = hydrated && desktop ? activeDock : 'left'
   const workHostAvailable = workCardHostAvailable || workCollapsedHostAvailable
   // Remap frame-left onto the work card only when chat is closed and the work card can host.
   const dock = resolveShellMenuDockForLayout(rawDock, {
@@ -47,7 +49,11 @@ export function ShellMenuDockLayout({
 
   return (
     <ShellSidebarSlotProvider sidebar={sidebar}>
-      <div className="shell-menu-dock-frame" data-shell-menu-dock={frameAttr}>
+      <div
+        className="shell-menu-dock-frame"
+        data-shell-menu-dock={frameAttr}
+        data-shell-menu-dock-dragging={dragging ? 'true' : undefined}
+      >
         <ShellTopBar />
         <div className="shell-menu-dock-body">
           {resolvedFrameDock === 'left' ? <ShellSidebarSlot /> : null}

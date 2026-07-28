@@ -62,6 +62,19 @@ export function isHorizontalWorkDock(dock: ShellMenuDock): boolean {
   return dock === 'work-top' || dock === 'work-bottom'
 }
 
+/** While dragging, layout follows the live candidate so the menu visually locks into place. */
+export function activeShellMenuDock(state: {
+  dock: ShellMenuDock
+  candidate: ShellMenuDock
+  dragging: boolean
+}): ShellMenuDock {
+  return state.dragging ? state.candidate : state.dock
+}
+
+export function useActiveShellMenuDock(): ShellMenuDock {
+  return useShellMenuDock((state) => activeShellMenuDock(state))
+}
+
 function normalizeDock(value: string | null): ShellMenuDock | null {
   if (value === null) return null
   if (VALID_DOCKS.has(value as ShellMenuDock)) return value as ShellMenuDock

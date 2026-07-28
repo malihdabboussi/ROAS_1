@@ -10591,7 +10591,7 @@ html.dark .chat-markdown-code-block__shadow {
 @media (min-width: 768px) {
   .shell-menu-dock-sidebar[data-shell-menu-dock='work-top'],
   .shell-menu-dock-sidebar[data-shell-menu-dock='work-bottom'] {
-    width: 100%;
+    width: auto;
     height: calc(var(--spacing-16) + var(--spacing-2));
     flex-direction: row;
   }
@@ -10630,7 +10630,8 @@ html.dark .chat-markdown-code-block__shadow {
   }
   .hub-sidebar-shell[data-shell-menu-dock='work-top'],
   .hub-sidebar-shell[data-shell-menu-dock='work-bottom'] {
-    width: 100%;
+    width: auto;
+    max-width: 100%;
     height: calc(var(--spacing-16) + var(--spacing-2));
     padding: 0;
   }
@@ -10675,11 +10676,7 @@ html.dark .chat-markdown-code-block__shadow {
     padding: 0 var(--spacing-2);
   }
 }
-.shell-menu-dock-lifting {
-  position: fixed;
-  z-index: 120;
-  margin: 0;
-  pointer-events: none;
+.shell-menu-dock-previewing {
   box-shadow: var(--shadow-2);
 }
 .shell-menu-dock-collapsed-right {
@@ -10974,8 +10971,8 @@ html.dark .chat-markdown-code-block__shadow {
 }
 .shell-work-area-body-dock-work-top > .shell-menu-dock-sidebar,
 .shell-work-area-body-dock-work-bottom > .shell-menu-dock-sidebar {
-  align-self: stretch;
-  width: 100%;
+  align-self: center;
+  width: auto;
   height: auto;
   max-width: 100%;
 }

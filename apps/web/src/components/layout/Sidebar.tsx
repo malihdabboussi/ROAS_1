@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
+import { useActiveShellMenuDock, useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
 import { useShellPrefsHydrated } from '@/components/shell/use-shell-prefs-hydrated'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { useOrgStore } from '@/features/org/store/use-org-store'
@@ -33,9 +33,9 @@ export function Sidebar(props: SidebarProps) {
   const desktop = useMediaQuery('(min-width: 768px)')
   const sidebarPinned = shellPrefsHydrated ? sidebarPinnedRaw : false
   const sidebarPeek = shellPrefsHydrated ? sidebarPeekRaw : false
-  const savedMenuDock = useShellMenuDock((state) => state.dock)
+  const activeMenuDock = useActiveShellMenuDock()
   const menuCompact = useShellMenuDock((state) => state.menuCompact)
-  const menuDock = shellPrefsHydrated && desktop ? savedMenuDock : 'left'
+  const menuDock = shellPrefsHydrated && desktop ? activeMenuDock : 'left'
   // Menu pin/peek still works while AI chat is open — drawer sits beside the rail.
   const hqDesktopWidth =
     c.sidebarMode === 'hq'

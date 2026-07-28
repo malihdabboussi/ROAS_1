@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
+import { useActiveShellMenuDock } from '@/components/shell/use-shell-menu-dock'
 import { CreateSpaceModal } from '@/features/spaces/components/CreateSpaceModal'
 import { SpaceTemplatesBrowsePanel } from '@/features/spaces/components/templates/SpaceTemplatesBrowsePanel'
 import { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
@@ -22,7 +22,7 @@ export function SidebarHqSection({
   c: SidebarControllerReturn
   featureUpdates?: { hasUnread: boolean; onOpen: (anchor: HTMLElement) => void }
 }) {
-  const menuDock = useShellMenuDock((state) => state.dock)
+  const menuDock = useActiveShellMenuDock()
   const [spacesSearchOpen, setSpacesSearchOpen] = useState(false)
   const [spacesSearchQuery, setSpacesSearchQuery] = useState('')
   const [hiddenMenuOpen, setHiddenMenuOpen] = useState(false)

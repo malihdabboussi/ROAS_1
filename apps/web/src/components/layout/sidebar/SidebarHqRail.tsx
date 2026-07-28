@@ -6,7 +6,7 @@ import { useEffect } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { surfaceFromPathname } from '@/components/global-chat/config/work-context.config'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
-import { isHorizontalWorkDock, useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
+import { useActiveShellMenuDock, useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
 import { shellSidebarExpanded, useShellStore } from '@/components/shell/use-shell-store'
 import { cn } from '@/lib/utils/cn'
 import { isManageRailItemActive, workContextSurfaceForPanel } from './sidebar-hq-rail.helpers'
@@ -38,8 +38,9 @@ export function SidebarHqRail({
   const holdSidebarPeek = useShellStore((s) => s.holdSidebarPeek)
   const scheduleSidebarPeekClose = useShellStore((s) => s.scheduleSidebarPeekClose)
   const setSidebarPinned = useShellStore((s) => s.setSidebarPinned)
-  const menuDock = useShellMenuDock((state) => state.dock)
+  const menuDock = useActiveShellMenuDock()
   const menuCompact = useShellMenuDock((state) => state.menuCompact)
+  const dragging = useShellMenuDock((state) => state.dragging)
   const setMenuCompact = useShellMenuDock((state) => state.setMenuCompact)
   const shellExpanded = shellSidebarExpanded({ sidebarPinned, sidebarPeek })
 
@@ -95,11 +96,13 @@ export function SidebarHqRail({
   return (
     <div
       data-shell-menu-dock={menuDock}
+      data-shell-menu-dock-dragging={dragging ? 'true' : undefined}
       className={cn(
         'hub-sidebar-shell relative box-border flex h-full min-h-0 shrink-0 flex-col transition-[width] duration-200 ease-out',
         hubExpanded ? 'hub-sidebar-shell-expanded' : 'hub-sidebar-shell-collapsed',
         // Hover peek pops over main content; pin stays in-flow.
         isPeeking && 'hub-sidebar-shell-peek',
+        dragging && 'shell-menu-dock-previewing',
       )}
       onMouseEnter={() => {
         // Only hold an existing peek — rail hover must not expand the sidebar.
@@ -112,11 +115,7 @@ export function SidebarHqRail({
       <div
         className={cn(
           'hub-sidebar-rail-layout flex min-h-0 flex-1 flex-col overflow-visible',
-          hubExpanded
-            ? 'bg-background shell-sidebar-panel'
-            : isHorizontalWorkDock(menuDock)
-              ? 'bg-transparent'
-              : 'card-glass rounded-2xl',
+          hubExpanded ? 'bg-background shell-sidebar-panel' : 'card-glass rounded-2xl',
         )}
       >
         <div className="hub-sidebar-logo-header relative shrink-0">

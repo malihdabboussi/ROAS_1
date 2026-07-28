@@ -28,15 +28,20 @@ vi.mock('./use-shell-menu-dock', async () => {
     await vi.importActual<typeof import('./use-shell-menu-dock')>('./use-shell-menu-dock')
   return {
     ...actual,
+    useActiveShellMenuDock: () => mocks.dock,
     useShellMenuDock: (
       selector: (state: {
         dock: typeof mocks.dock
+        candidate: typeof mocks.dock
+        dragging: boolean
         workCardHostAvailable: boolean
         workCollapsedHostAvailable: boolean
       }) => unknown,
     ) =>
       selector({
         dock: mocks.dock,
+        candidate: mocks.dock,
+        dragging: false,
         workCardHostAvailable: mocks.workCardHostAvailable,
         workCollapsedHostAvailable: mocks.workCollapsedHostAvailable,
       }),
