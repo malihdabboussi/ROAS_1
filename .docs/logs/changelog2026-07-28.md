@@ -50,3 +50,13 @@ Why: Chat-launched missions did not visibly confirm their start, the current Spa
 Impact: A user can launch the correct static-ad workflow from Chat or Missions, inherit the current client context, request one to ten final ads across multiple templates, and see the launched Mission immediately in the conversation. The worker now contracts each production lane on its correct final-image action and exact output count.
 
 Files: `QuickMissionsHubHost.tsx`, `QuickMissionsHubModal.tsx`, `QuickMissionContextFields.tsx`, `StaticAdProductionFields.tsx`, `StartAdProductionPlaybookFields.tsx`, `static-ad-production.ts`, `static-ad-formats.config.ts`, `static-ad-production.playbook.ts`, focused tests, `loc-allowlist.json`, `missions.md`.
+
+## [2026-07-28 10:44] - [FIX]
+
+What: Replaced the native campaign select in the valuable-chat save prompt with a branded searchable picker, clear selected state, an empty-campaign state, and standard app action buttons.
+
+Why: The browser-native select looked disconnected from the app, did not support campaign search, and made selection and saving unclear.
+
+Impact: Users can now search client campaigns by name, confirm the selected campaign, and attach or dismiss the chat through consistent ROAS controls.
+
+Files: `apps/web/src/components/global-chat/components/ChatCampaignBrainNudge.tsx`, `apps/web/src/components/global-chat/components/ChatCampaignPicker.tsx`, `apps/web/src/components/global-chat/components/ChatCampaignPicker.test.tsx`.

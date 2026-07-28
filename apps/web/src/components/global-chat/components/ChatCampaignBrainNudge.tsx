@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { BrainCircuit } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useActiveMessages, useChatStore } from '@/features/studio/store/use-chat-store'
@@ -17,6 +18,7 @@ import {
   readCampaignBrainNudgeDismissedConversationIds,
 } from '../lib/global-chat-storage'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
+import { ChatCampaignPicker } from './ChatCampaignPicker'
 
 const NUDGE_ERRORS = {
   SELECT_CAMPAIGN: 'Pick a client campaign first.',
@@ -38,7 +40,6 @@ export function ChatCampaignBrainNudge() {
   )
   const [selectedSpaceId, setSelectedSpaceId] = useState('')
   const [saving, setSaving] = useState(false)
-  const [pickerOpen, setPickerOpen] = useState(false)
 
   const userTurnCount = useMemo(() => countUserMessageTurns(messages), [messages])
   const dismissed =
@@ -69,14 +70,12 @@ export function ChatCampaignBrainNudge() {
 
   const handleDismiss = () => {
     setDismissedIds(addCampaignBrainNudgeDismissedConversationId(activeConversationId))
-    setPickerOpen(false)
   }
 
   const handleAccept = async () => {
     const space = clientSpaces.find((row) => row.id === selectedSpaceId)
     if (!space?.campaign_id) {
       toast.error(NUDGE_ERRORS.SELECT_CAMPAIGN)
-      setPickerOpen(true)
       return
     }
 
@@ -115,50 +114,42 @@ export function ChatCampaignBrainNudge() {
   }
 
   return (
-    <div className="chat-surface-rec-banner mx-2 mb-2 shrink-0">
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="body-4 text-foreground font-medium leading-snug">
-            This chat looks valuable — attach it to a client campaign and save decisions to that
-            campaign brain?
-          </p>
-          {pickerOpen ? (
-            <label className="mt-spacing-2 block">
-              <span className="body-4 text-muted-foreground">Client campaign</span>
-              <select
-                className="input-glass body-3 text-foreground mt-spacing-1 h-spacing-8 w-full"
-                value={selectedSpaceId}
-                onChange={(event) => setSelectedSpaceId(event.target.value)}
-                aria-label="Select client campaign"
-              >
-                <option value="">Select a campaign…</option>
-                {clientSpaces.map((space) => (
-                  <option key={space.id} value={space.id}>
-                    {space.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
+    <div className="chat-surface-rec-banner mx-spacing-2 mb-spacing-2 shrink-0">
+      <div className="gap-spacing-3 flex items-start">
+        <div className="bg-primary/10 text-primary mt-spacing-1 h-spacing-8 w-spacing-8 flex shrink-0 items-center justify-center rounded-full">
+          <BrainCircuit className="icon-sm" />
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-0.5">
-          <button
-            type="button"
-            className="button-glass-accent rounded-spacing-1 px-spacing-2 py-spacing-1 typo-caption font-medium disabled:opacity-50"
-            disabled={saving || clientSpaces.length === 0}
-            onClick={() => {
-              if (!pickerOpen) {
-                setPickerOpen(true)
-                return
-              }
-              void handleAccept()
-            }}
-          >
-            {saving ? 'Saving…' : pickerOpen ? 'Attach + save' : 'Add to campaign'}
-          </button>
-          <button type="button" className="chat-surface-rec-dismiss" onClick={handleDismiss}>
-            Not now
-          </button>
+        <div className="min-w-0 flex-1">
+          <p className="body-3 text-foreground font-semibold">Save this chat to a campaign</p>
+          <p className="body-4 text-muted-foreground mt-spacing-1 leading-snug">
+            Keep this conversation and its decisions with the right client campaign.
+          </p>
+          <div className="mt-spacing-2">
+            <ChatCampaignPicker
+              options={clientSpaces.map((space) => ({ id: space.id, label: space.title }))}
+              value={selectedSpaceId}
+              onChange={setSelectedSpaceId}
+              disabled={saving || clientSpaces.length === 0}
+            />
+          </div>
+          <div className="gap-spacing-2 mt-spacing-2 flex items-center justify-end">
+            <button
+              type="button"
+              className="button-compact button-glass-neutral"
+              disabled={saving}
+              onClick={handleDismiss}
+            >
+              Not now
+            </button>
+            <button
+              type="button"
+              className="button-compact button-glass-purple disabled:opacity-50"
+              disabled={saving || !selectedSpaceId}
+              onClick={() => void handleAccept()}
+            >
+              {saving ? 'Saving…' : 'Attach and save'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
