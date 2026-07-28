@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { backendGet, backendPost } from '@/lib/api/backend-client'
+import { backendFetch, backendGet, backendPost } from '@/lib/api/backend-client'
+import { resolveChatStreamFailure } from '../config/chat-stream-errors.config'
 import { isAssistantTurnComplete } from '../lib/chat-turn-completion'
 import { useChatStore } from '../store/use-chat-store'
 import type { Message } from '../types'
@@ -232,6 +233,83 @@ describe('chat stream interruption classification', () => {
       run_id: 'run-1',
     })
     expect(useChatStore.getState().streamRunsByConversation['conversation-1']).toBeUndefined()
+  })
+
+  it('manually resumes an interrupted run with the exact task and partial output', async () => {
+    const messages: Message[] = [
+      {
+        id: 'user-1',
+        conversation_id: 'conversation-1',
+        role: 'user',
+        content: 'Explain why the 4.5% conversion rate is low.',
+        content_blocks: null,
+        metadata: {
+          documents: [
+            {
+              filename: 'page.png',
+              type: 'image',
+              fileUrl: 'https://example.com/page.png',
+              mimeType: 'image/png',
+            },
+          ],
+        },
+        created_at: '2026-07-28T17:00:00.000Z',
+      },
+      {
+        id: 'assistant-1',
+        conversation_id: 'conversation-1',
+        role: 'assistant',
+        content: 'The page is well built, which makes the 4.5% more interesting, not less.',
+        content_blocks: null,
+        metadata: {},
+        created_at: '2026-07-28T17:00:01.000Z',
+      },
+    ]
+    const store = useChatStore.getState()
+    store.setMessages('conversation-1', messages)
+    store.setConversationStreamRun('conversation-1', {
+      runId: 'run-1',
+      messageId: 'assistant-1',
+      cursor: '2-0',
+    })
+    store.setConversationInterrupted('conversation-1', true)
+    store.setConversationStreamFailure(
+      'conversation-1',
+      resolveChatStreamFailure({ code: 'stream_interrupted' }),
+    )
+    vi.mocked(backendGet).mockResolvedValue(messages as never)
+    vi.mocked(backendPost).mockResolvedValue({ stopped: true } as never)
+    vi.mocked(backendFetch).mockResolvedValue(
+      new Response(
+        [
+          'data: {"type":"message_start","message_id":"assistant-2"}',
+          'data: {"type":"content_delta","content":"The likely issue is traffic-message mismatch."}',
+          'data: {"type":"done","message_id":"assistant-2","duration_ms":100}',
+          'data: [DONE]',
+          '',
+        ].join('\n\n'),
+        { status: 200, headers: { 'content-type': 'text/event-stream' } },
+      ),
+    )
+
+    await recoverConversation('conversation-1', { manual: true })
+
+    expect(backendPost).toHaveBeenCalledWith('/api/chat/stop', {
+      conversation_id: 'conversation-1',
+      run_id: 'run-1',
+    })
+    const chatRequest = vi
+      .mocked(backendFetch)
+      .mock.calls.find(([url]) => url === '/api/chat')
+    expect(chatRequest).toBeDefined()
+    const body = JSON.parse(String(chatRequest?.[1]?.body)) as Record<string, unknown>
+    expect(body.hidden).toBe(true)
+    expect(body.content).toContain('Explain why the 4.5% conversion rate is low.')
+    expect(body.content).toContain(
+      'The page is well built, which makes the 4.5% more interesting, not less.',
+    )
+    expect(body.documents).toEqual(messages[0]?.metadata.documents)
+    expect(useChatStore.getState().interruptedConversationIds).not.toContain('conversation-1')
   })
 
   it('completes recovery when status is inactive and assistant has visible content without duration_ms', async () => {

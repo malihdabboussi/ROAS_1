@@ -1,3 +1,18 @@
+## 2026-07-28 - [ARCH] Extract manual recovery orchestration from chat.service
+
+Status: Open
+
+Found while: Fixing interrupted chat Resume continuation fidelity
+
+Files:
+- `apps/web/src/features/studio/services/chat.service.ts` (2,850 LOC; pre-existing mega-service)
+
+Evidence: The exact-task continuation builder is isolated in `chat-resume-context.ts`, but `recoverConversation` still coordinates canonical refresh, orphan cancellation, and stream restart inside the over-limit service.
+
+Needed work: Extract recovery orchestration and its store/backend dependencies into a focused chat recovery service without changing reconnect semantics.
+
+Reason not done now: The requested reliability fix required a narrow change to the existing recovery entry point; restructuring the full streaming service would materially widen regression risk.
+
 ## 2026-07-27 - [ARCH] StartAdProductionPlaybookFields over LOC after industry filters
 
 Status: Open
@@ -9076,4 +9091,3 @@ Reason not done now: Out of scope for the requested five-zone dock + R-compact +
 - **Evidence:** Management API 403 on `qfrvyks`; Jul 27 migrations applied only to `lhfgts`. API git deploys canceled until ignore cleared.
 - **Needed work:** Confirm which Supabase project production API should use and align env; replace `exit 0` ignore with a path-aware ignore (or document mandatory force-deploy).
 - **Why not now:** Out of ship scope; production agent/web already on `lhfgts`.
-
