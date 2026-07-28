@@ -4,7 +4,7 @@ import { chain } from './space-automation-fathom-test-helpers'
 import { automationsRepoFromRepo, emptyAutomationsRepo } from './space-automation-test-utils'
 
 describe('SpaceAutomationService Fathom actions and revocation', () => {
-  it('runs agent_suggest_tasks and writes suggestions for the Fathom owner', async () => {
+  it('uses authoritative provider actions instead of generating extra Fathom tasks', async () => {
     const parentItem = { id: 'item_parent', title: 'Sales call' }
     const suggestionA = { id: 'suggestion_a', title: 'Follow up with buyer' }
     const suggestionB = { id: 'suggestion_b', title: 'Send recap' }
@@ -109,6 +109,15 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
         }
       }),
     }
+    const meetingSourceIngestion = {
+      findMatchingMeetingItem: vi.fn().mockResolvedValue(null),
+      ingestFathomSource: vi.fn().mockResolvedValue({
+        recording_id: 'recording-1',
+        transcript_doc_item_id: 'transcript-1',
+        provider_action_ids: ['provider-action-1'],
+        primary_recording_id: 'recording-1',
+      }),
+    }
     const service = new SpaceAutomationService(
       repo as never,
       automationsRepoFromRepo({
@@ -139,6 +148,19 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
       undefined,
       undefined,
       userAgentApi as never,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      meetingSourceIngestion as never,
     )
 
     const result = await service.processFathomRecordingEvent(supabase as never, 'rep_1', {
@@ -158,46 +180,20 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
       }),
       expect.anything(),
     )
-    expect(userAgentApi.invoke).toHaveBeenCalledWith(
-      'rep_1',
+    expect(userAgentApi.invoke).not.toHaveBeenCalledWith(
+      expect.anything(),
       '/api/agents/suggest-tasks',
-      expect.objectContaining({
-        method: 'POST',
-      }),
+      expect.anything(),
       expect.anything(),
     )
-    expect(createItem).toHaveBeenCalledWith(
+    expect(createItem).toHaveBeenCalledTimes(1)
+    expect(meetingSourceIngestion.ingestFathomSource).toHaveBeenCalledWith(
       expect.anything(),
-      'rep_1',
-      'space_admin',
       expect.objectContaining({
-        title: 'Follow up with buyer',
-        source: 'agent_suggested',
-        priority: 'medium',
-        parent_item_id: 'item_parent',
-        custom_data: expect.objectContaining({
-          entry_type: 'follow_up',
-          source_call_item_id: 'item_parent',
-          source_call: 'Sales call',
-          suggestion_origin: expect.objectContaining({
-            trigger_type: 'external_fathom_recording_ready',
-            fathom_meeting_id: 'rec_agent',
-            rule_trigger_item_id: 'item_parent',
-          }),
-        }),
+        meetingItemId: 'item_parent',
+        spaceId: 'space_admin',
+        userId: 'admin_1',
       }),
-      'org_42',
-    )
-    expect(createItem).toHaveBeenCalledWith(
-      expect.anything(),
-      'rep_1',
-      'space_admin',
-      expect.objectContaining({
-        title: 'Send recap ASAP',
-        source: 'agent_suggested',
-        priority: 'urgent',
-      }),
-      'org_42',
     )
   })
 
@@ -373,14 +369,20 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
   })
 
   it('dedupes repeated Fathom recording webhook events', async () => {
+    const existing = { id: 'event-1', status: 'processed' }
     const supabase = {
-      from: vi.fn(() => ({
-        insert: () => ({
+      from: vi.fn(() => {
+        const builder: Record<string, unknown> = {}
+        builder.insert = () => ({
           select: () => ({
             single: async () => ({ error: { code: '23505', message: 'duplicate' } }),
           }),
-        }),
-      })),
+        })
+        builder.select = () => builder
+        builder.eq = () => builder
+        builder.maybeSingle = async () => ({ data: existing, error: null })
+        return builder
+      }),
     }
     const service = new SpaceAutomationService(
       {} as never,
@@ -394,6 +396,6 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
       title: 'Demo call',
     })
 
-    expect(result).toEqual({ processed: false, duplicate: true })
+    expect(result).toEqual({ processed: false, duplicate: true, status: 'processed' })
   })
 })

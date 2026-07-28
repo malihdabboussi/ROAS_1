@@ -1,6 +1,6 @@
 # Page Grader MCP bridge
 
-Last Modified: 2026-07-26
+Last Modified: 2026-07-28
 
 ## Ownership
 
@@ -61,6 +61,22 @@ Pixel must not claim that a request was delegated or created until the tool
 response confirms a durable result. A missing server, unresolved target, or
 failed write is reported as a blocker rather than described as completed.
 
+## Delegation Desk
+
+Spaces can capture selected work in a private **Delegation Desk** before it
+reaches a teammate or fulfillment system. One intake batch preserves the source
+Space and task ids, dispatch mode, user note, and a stable source fingerprint.
+The Desk's `task_created` automation sends only top-level Inbox items to Pixel.
+Packets Pixel creates in later statuses do not retrigger the intake automation.
+
+Pixel's `delegation-desk` skill reads every referenced item, checks existing
+work, and consolidates related sources into the fewest coherent Delegation
+Packets. Batch and Review first modes stop at human review. Urgent mode can
+dispatch in the same run after client, destination, and duplicate checks.
+Funnel, landing-page, campaign-page, and fulfillment packets continue through
+the Page Grader bridge described above, while the user sees **The ROAS Portal**.
+Raw intake is never assigned directly to the team.
+
 ## User-facing language
 
 `Page Grader`, `MCP`, tool names, schemas, idempotency keys, routing, retries,
@@ -112,3 +128,8 @@ campaign, and the next step—or one plain-language blocker.
 Grader`, `MCP`, tool names, schemas, idempotency keys, or retry mechanics.
 - Multi-tool fulfillment produces one concise final result instead of
   tool-by-tool narration.
+- A five-task bulk delegation creates one private intake batch, preserves all
+  source ids, and produces fewer coherent packets instead of five automatic
+  team assignments.
+- Urgent Delegation Desk intake dispatches only after duplicate, target, and
+  destination checks and stores the confirmed destination receipt.

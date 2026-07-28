@@ -13,6 +13,7 @@ import { CursorApiService } from '../../integrations/cursor/services/cursor-api.
 import { scrapecreatorsCreditsForAction } from '../../integrations/scrapecreators/scrapecreators.constants'
 import { ScrapeCreatorsApiService } from '../../integrations/scrapecreators/services/scrapecreators-api.service'
 import { isContactChannel } from '../../leads/services/contact-identifier.service'
+import { MeetingSourceIngestionService } from '../../meetings/services/meeting-source-ingestion.service'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import {
@@ -204,6 +205,7 @@ export type TriggerEvent =
       attendees?: Array<Record<string, unknown>>
       url?: string | null
       fathom_owner_user_id?: string
+      meeting_workspace_actions_authoritative?: boolean
     }
   | {
       type: 'external_app_event'
@@ -422,6 +424,7 @@ export abstract class SpaceAutomationServiceBase01 {
     automationActionsRepo?: SpaceAutomationActionsRepository,
     externalEventsRepo?: SpaceAutomationExternalEventsRepository,
     automationRunsRepo?: SpaceAutomationRunsRepository,
+    protected readonly meetingSourceIngestion?: MeetingSourceIngestionService,
   ) {
     this.automationActionsRepo = automationActionsRepo ?? new SpaceAutomationActionsRepository()
     this.externalEventsRepo = externalEventsRepo ?? new SpaceAutomationExternalEventsRepository()

@@ -9123,3 +9123,33 @@ Evidence: `pnpm --filter @vibey/web typecheck` reports that the untouched fixtur
 Needed work: Align the Home task fixture with the current `YourTurnItem` contract, or restore `priority` to that contract if product behavior still requires it.
 
 Reason not done now: This is pre-existing, outside chat recovery, and changing the Home task contract without tracing its feature would violate task scope.
+
+## 2026-07-28 — Meeting webhook base and workspace dialog decomposition
+
+Status: Open
+
+Files:
+
+- `apps/api/src/modules/spaces/services/space-automation-service-06.base.ts` (789 LOC; 600-line service limit)
+- `apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx` (399 LOC; near the 400-line component limit)
+
+Evidence: Meeting-source cutover added a narrow orchestration path to a pre-existing generated automation base that was already above the service limit. The curated workspace remains under the component cap but has only one line of headroom.
+
+Needed work: Move the Fathom webhook orchestration behind a dedicated meeting webhook processor and extract the workspace recording/continuity sidebar into a sibling presentational component.
+
+Reason not done now: The current change preserves the generated automation inheritance contract and isolates new meeting repositories/services. A separate behavior-neutral decomposition should follow after the webhook and workspace contract land, without mixing generated-base restructuring into the data migration.
+
+## 2026-07-28 — Spaces bulk toolbar design-system cleanup
+
+Status: Open
+
+Files:
+
+- `apps/web/src/features/spaces/components/bulk-action-bar/BulkActionBarToolbar.tsx`
+- `apps/web/src/features/spaces/components/bulk-action-bar/FloatingPanel.tsx`
+
+Evidence: The touched toolbar remains under its 400-line component limit, but pre-existing shell code still uses arbitrary z-index, viewport-width, raw token wrappers, and inline positioning styles that predate the current utility-only design rules. The new Delegation panel itself uses existing design utilities and introduces no new CSS.
+
+Needed work: Move the shared floating-panel position contract onto approved named utilities and bring the toolbar shell onto the current tokenized spacing, typography, and z-index classes without changing menu behavior.
+
+Reason not done now: Rebuilding the shared bulk-menu shell would affect every existing bulk action and is separate from the requested Delegation workflow.

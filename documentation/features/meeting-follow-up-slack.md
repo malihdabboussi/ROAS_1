@@ -1,8 +1,26 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-07-26
+**Last Modified:** 2026-07-28
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` uses those same stored drafts, sends account-manager reminders only to people classified Internal and individually set Active, and keeps the client-facing recap in the admin approval thread.
+
+## Meeting workspace architecture (2026-07-28)
+
+The canonical post-call path is now meeting-first rather than automation-task-first:
+
+1. A durable Fathom event claim enters `processing`; a failed attempt is reclaimable instead of being permanently treated as a duplicate.
+2. Recording reconciliation attaches a short pre-call, main call, or other fragment to one canonical meeting when calendar identity matches or start/title/participant evidence is unambiguous.
+3. Every provider recording is stored in `meeting_recordings`. Every supplied transcript becomes its own complete child document deliverable.
+4. Exact Fathom action items are stored in `meeting_actions` with provider evidence. Canonical profile/CRM identity resolves display names and IDs, while original provider assignee text remains in evidence.
+5. A unified recap document refreshes from every attached provider summary and all exact provider actions. The longest/evidence-richest source is marked primary, but supplemental recordings remain visible.
+6. Attendee contacts plus the owning Space and campaign become typed `meeting_context_links`. Context can guide prep and chat without rewriting provider evidence.
+7. The curated meeting workspace exposes agenda/prep, recordings, transcript and recap deliverables, action items, live notes/snippets, and prior unresolved commitments in one read model.
+8. `Start call` creates one persistent conversation with meeting metadata. The embedded Meeting AI uses that exact conversation and treats pasted text as possible call snippets.
+9. The next meeting can point back through `next_meeting_item_id`; unresolved confirmed/in-progress/rolled-forward commitments are surfaced before the next call.
+
+The default `Fathom Meeting Log` automation no longer runs `send_to_agent`, `agent_suggest_tasks`, or Slack-confirm actions. The migration removes those steps from installed rules with that exact template name. Custom Fathom automations are preserved. Slack delivery remains an explicit downstream workflow, not an automatic side effect of ingesting a recording.
+
+Legacy Fathom call rows are backfilled into workspaces and recording sources. Existing full transcript text is copied into a transcript deliverable without deleting the original call data.
 
 ## Status (2026-07-22)
 
@@ -39,8 +57,11 @@ Fathom recording ready (my_recordings OR shared_team_recordings)
   → webhook resolves owner by webhook secret
   → optional transcript hydrate via Fathom API if payload omitted it
   → choose one canonical matching Meetings route (organization route wins an equal match)
-  → one Meetings space item (call)  ← required; Slack loop never starts without this
-  → agent_suggest_tasks (follow-ups with suggested owners)
+  → one canonical Meetings item
+  → one or more meeting_recordings + complete transcript deliverables
+  → exact provider actions + canonical identity mapping
+  → unified recap refreshed across every attached recording
+  → optional explicit Slack delivery workflow
   → Pixel + post-call-delivery skill drafts once
   → store the exact recap in the Shadow ledger
   → request_slack_follow_up_confirm
@@ -223,6 +244,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 ### Slack context and delegation contract
 
 - Slack is organization-scoped. Ambient campaign context is a retrieval hint, never a lock.
+- Organization owners have **AI Data Admin** by default and can explicitly grant it to another active organization member. Pixel resolves that capability from the linked platform identity or Slack connection owner; Slack requests cannot self-assert it. The capability permits same-organization discovery across observed public/internal channels and private channels where Pixel is already a member. It never grants bulk private DM/group-DM access, cross-organization reads, access to unobserved private channels, or a bypass around Shadow, approval, audience, or send controls. Privileged Slack access decisions are written to `ai_data_access_audit`.
 - An explicit Slack channel mention or channel ID is authoritative. Channel history returns the canonical channel ID/name with its messages; Pixel must verify that identity before mapping the client and must never substitute a client inferred from message content.
 - Slack replies use compact labeled bullets for row-based data. Markdown tables remain available on portal surfaces, but Pixel's Slack delivery formatter converts any pipe table that slips through before posting.
 - If Dylan names `Asura Group` (or another client/campaign), Pixel must call `search_campaign_brain` with that explicit campaign name/id instead of continuing to query the prior campaign.
@@ -279,8 +301,8 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 
 | Path                                                                                     | Role                                                                |
 | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `apps/api/src/modules/space-templates/data/space-template-catalog-personal-dashboard.ts` | Fathom Meeting Log includes confirm action                          |
-| `apps/api/src/modules/space-templates/data/__tests__/space-template-catalog.test.ts`     | Expects action type                                                 |
+| `apps/api/src/modules/space-templates/data/space-template-catalog-personal-dashboard.ts` | Default Fathom Meeting Log performs lifecycle updates only          |
+| `apps/api/src/modules/space-templates/data/__tests__/space-template-catalog.test.ts`     | Protects template action ordering and defaults                      |
 | `packages/api-shared/src/types/flow-capabilities.ts`                                     | Capability surface                                                  |
 | `apps/web/src/features/spaces/types/space-schema.ts`                                     | Frontend action type                                                |
 | `apps/web/src/features/spaces/components/automations/automation-catalog.ts`              | Catalog entry                                                       |
@@ -355,6 +377,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-26:** Pixel and every user-visible Slack or portal surface call the internal Page Grader integration “The ROAS Portal.” The internal name remains limited to code, logs, tools, and operator documentation.
 - **2026-07-24:** Provider rate limits receive one delayed retry on the selected model before model fallback. Exhausted retries return a specific Pixel-busy response instead of the generic processing error.
 - **2026-07-24:** A Fathom webhook materializes one canonical Meetings item even when personal and organization automations both match. Equal filters prefer the organization Meetings route; transcript entry count remains segment count, not meeting count.
+- **2026-07-28:** Linked Fathom Agenda rows open the curated meeting workspace. Ingestion owns processing/complete lifecycle state; reopening a completed call resumes its persistent chat without marking it live or relaunching its join URL.
 
 ## Related
 

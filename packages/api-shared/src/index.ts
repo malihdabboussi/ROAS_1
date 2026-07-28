@@ -143,6 +143,7 @@ export {
 export type { McpOAuthTokenBundle } from './services/mcp-oauth-token-bundle'
 export {
   isModelStrategy,
+  resolveChatStageModel,
   resolveFallbackForStrategy,
   resolveModelForStrategy,
 } from './services/model-strategy'
@@ -153,6 +154,7 @@ export {
 } from './services/gemini-api-keys'
 export type { GeminiEnvReader } from './services/gemini-api-keys'
 export type {
+  ChatGenerationStage,
   ModelStrategy,
   ResolvedStrategyModel,
   StrategyModelReasoningEffort,

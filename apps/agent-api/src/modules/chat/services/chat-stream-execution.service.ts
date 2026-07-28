@@ -1,5 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { isModelStrategy, resolveFallbackForStrategy, type ModelStrategy } from '@vibey/api-shared'
+import {
+  isModelStrategy,
+  resolveChatStageModel,
+  resolveFallbackForStrategy,
+  type ModelStrategy,
+} from '@vibey/api-shared'
+import {
+  AUTO_WRITER_INSTRUCTIONS,
+  buildAutoWriterInput,
+  mergeAutoStageResults,
+  withGenerationStage,
+} from './chat-auto-pipeline'
 import {
   ChatModelInputService,
   type ChatModelSettings,
@@ -44,6 +55,7 @@ export interface ChatStreamExecutionInput {
   enabledToolkitsForGateway?: string[]
   gatewayAgentId: string
   gatewayModelId: string
+  generationStage?: 'research' | 'write'
   getAccumulatedContent: () => string
   identitySuffix?: string
   inputArray: OpenClawInputMessage[]
@@ -77,6 +89,15 @@ export class ChatStreamExecutionService {
   ) {}
 
   async run(input: ChatStreamExecutionInput): Promise<OpenClawCompletionResult> {
+    if (input.selectedModelInput === 'auto') {
+      return this.runAutoPipeline(input)
+    }
+    return this.runWithRecovery(input)
+  }
+
+  private async runWithRecovery(
+    input: ChatStreamExecutionInput,
+  ): Promise<OpenClawCompletionResult> {
     let result = await this.streamCompletion(input, input.inputArray, input.gatewayModelId)
 
     if (result.truncated && result.content.trim().length > 0) {
@@ -123,11 +144,89 @@ export class ChatStreamExecutionService {
     return result
   }
 
+  private async runAutoPipeline(
+    input: ChatStreamExecutionInput,
+  ): Promise<OpenClawCompletionResult> {
+    const researchRoute = resolveChatStageModel('auto', 'research')
+    const writerRoute = resolveChatStageModel('auto', 'write')
+    const [researchSettings, writerSettings] = await Promise.all([
+      this.modelInputService.validateModelSettings(
+        researchRoute.modelId,
+        researchRoute.modelSettings,
+      ),
+      this.modelInputService.validateModelSettings(writerRoute.modelId, writerRoute.modelSettings),
+    ])
+    const researchSend: SendFn = async (type, data) => {
+      if (type === 'content_delta' || type === 'thinking_delta') return
+      await input.progressiveSend(type, data)
+    }
+    const researchInput: ChatStreamExecutionInput = {
+      ...input,
+      gatewayModelId: researchRoute.modelId,
+      generationStage: 'research',
+      progressiveSend: researchSend,
+      selectedModelInput: 'auto:economy',
+      selectedSettings: researchSettings,
+    }
+    const researchResult = await this.runWithRecovery(researchInput)
+    if (
+      researchResult.failed ||
+      (researchResult.content.trim().length === 0 && researchResult.toolSteps.length === 0)
+    ) {
+      return withGenerationStage(researchResult, 'research')
+    }
+
+    const writerInput = buildAutoWriterInput(input.userContent, researchResult)
+    const writerResult = await this.streamCompletion(
+      {
+        ...input,
+        gatewayModelId: writerRoute.modelId,
+        instructions: AUTO_WRITER_INSTRUCTIONS,
+        inputArray: writerInput,
+        selectedSettings: writerSettings,
+        sessionKey: `${input.sessionKey}:writer:${input.runId ?? input.messageId ?? 'turn'}`,
+      },
+      writerInput,
+      writerRoute.modelId,
+      writerSettings.openClaw,
+      {
+        generationStage: 'write',
+        sessionKey: `${input.sessionKey}:writer:${input.runId ?? input.messageId ?? 'turn'}`,
+        toolChoice: 'none',
+      },
+    )
+
+    const stagedResearch = withGenerationStage(researchResult, 'research')
+    const stagedWriter = withGenerationStage(writerResult, 'write')
+    if (writerResult.failed || writerResult.content.trim().length === 0) {
+      await input.progressiveSend('content_delta', { delta: researchResult.content })
+      return mergeAutoStageResults(stagedResearch, stagedWriter, {
+        content: researchResult.content,
+        failed: undefined,
+        recoveryEvent: this.buildRecoveryEvent(
+          'writer_fallback_to_research',
+          'recovered',
+          writerResult.failed ?? 'empty_writer_response',
+        ),
+      })
+    }
+
+    return mergeAutoStageResults(stagedResearch, stagedWriter, {
+      content: writerResult.content,
+      failed: writerResult.failed,
+    })
+  }
+
   private streamCompletion(
     input: ChatStreamExecutionInput,
     messages: OpenClawInputMessage[],
     model: string | undefined,
     modelSettings = input.selectedSettings.openClaw,
+    overrides?: {
+      generationStage?: 'research' | 'write'
+      sessionKey?: string
+      toolChoice?: 'none'
+    },
   ): Promise<OpenClawCompletionResult> {
     return this.openClaw.streamCompletion({
       input: messages,
@@ -135,7 +234,7 @@ export class ChatStreamExecutionService {
       send: input.progressiveSend,
       model,
       agentId: input.gatewayAgentId,
-      sessionKey: input.sessionKey,
+      sessionKey: overrides?.sessionKey ?? input.sessionKey,
       conversationId: input.conversationId,
       campaignId: input.campaignId,
       orgId: input.orgId,
@@ -152,6 +251,8 @@ export class ChatStreamExecutionService {
       disabledNativeActions: input.disabledNativeActions,
       skillCatalog: input.openClawSkillCatalog,
       modelSettings,
+      generationStage: overrides?.generationStage ?? input.generationStage,
+      toolChoice: overrides?.toolChoice,
     })
   }
 

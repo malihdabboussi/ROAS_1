@@ -87,3 +87,52 @@ Why: Keep ROAS as the primary shell while letting internal users work in Portal 
 Impact: Authenticated ROAS users with matching Portal internal accounts can open Clients/Campaigns/Launches/Performance inside the shell.
 Files: apps/api/.../page-grader-embed.controller.ts, page-grader-meeting.controller.ts, page-grader integration/API/module/dto, apps/web shell Portal surface + TopBar/Workspace, globals.css (web+website)
 
+## [2026-07-28 13:03] - [ARCH]
+
+What: Added the first-class meeting workspace storage foundation, deterministic multi-recording reconciliation, full-fidelity Fathom source normalization, safely rendered transcript deliverables, and an ingestion service that idempotently persists provider recordings and exact provider action items.
+
+Why: The existing pipeline equates one Fathom recording with one meeting, truncates transcript text on the call item, and immediately sends broad AI task suggestions into Space subtasks. A canonical meeting needs many recording sources and auditable provider evidence before recap, task, live-chat, and continuity features can be correct.
+
+Impact: The backend now has tested contracts for a two-minute pre-call plus a main call, short-call-only handling, primary recording selection, complete per-recording transcript documents, provider action source keys, meeting context links, snippets, live workspace state, and future next-meeting continuity. Webhook cutover remains pending until durable retry/reconciliation replaces the current external-event completion boundary.
+
+Files: `supabase/migrations/20260728200000_meeting_workspace_foundation.sql`, `apps/api/src/modules/meetings/domain/meeting-recording-reconciliation.ts`, `apps/api/src/modules/meetings/providers/fathom-meeting-source.ts`, `apps/api/src/modules/meetings/repositories/meeting-workspace.repository.ts`, `apps/api/src/modules/meetings/services/meeting-source-ingestion.service.ts`, and focused tests.
+
+## [2026-07-28 13:29] - [FEATURE]
+
+What: Cut Fathom webhooks over to durable meeting-source reconciliation; added retryable event claims, multi-recording transcript deliverables, canonical assignee identity, typed Space/contact/campaign context, unified provider recaps, exact provider actions, legacy-call backfill, meeting workspace APIs, live notes/snippets, prior-commitment continuity, and a curated meeting UI with persistent meeting-scoped AI chat.
+
+Why: A short pre-call and main call could become separate meeting tasks, provider action items were mixed with excessive generated tasks, assignee names varied between processors, and calendar prep/live notes/chat/transcripts/recap/next-meeting continuity had no shared meeting lifecycle.
+
+Impact: One meeting can now own every matching Fathom recording without losing individual transcripts. New and migrated default Fathom flows no longer invent task suggestions or duplicate AI recap documents. Users can start a call, keep notes and snippets, work exact actions, inspect all deliverables, and chat with AI in one meeting-specific surface.
+
+Files: `supabase/migrations/20260728200000_meeting_workspace_foundation.sql`, `apps/api/src/modules/meetings/**`, Fathom webhook/repository/service wiring, Personal Dashboard Fathom template, `MeetingWorkspaceDialog.tsx`, meeting workspace API client, shared meeting chat selection, Home meeting detail integration, focused tests, and `documentation/features/meeting-follow-up-slack.md`.
+
+## [2026-07-28 13:37] - [FEATURE]
+
+What: Added a private Delegation Desk Space template, Pixel's database-backed delegation skill, and a task-list bulk Delegate action with Batch, Review first, and Urgent modes. Multiple selected tasks are captured as one source-linked intake batch instead of being assigned individually.
+
+Why: Brain dumps and bulk-selected work need filtering, consolidation, duplicate checks, and human-readable briefs before they reach teammates, managed agents, or The ROAS Portal.
+
+Impact: Pixel can process private raw intake into concise Delegation Packets. Review modes stop before dispatch; urgent mode can route in the same run after required checks. Durable source fingerprints and destination receipts prevent duplicate or unconfirmed assignments.
+
+Files: `space-template-catalog-delegation-desk.ts`, Delegation Desk catalog and provisioning tests, `delegation-intake.service.ts`, `DelegationBulkPanel.tsx`, bulk action wiring, delegation message config, Pixel `delegation-desk` skill, migrations `20260728203000` and `20260728203100`, and Spaces/Page Grader feature documentation.
+
+## [2026-07-28 13:46] - [FIX]
+
+What: Completed the meeting lifecycle and Agenda entrypoint by moving Fathom ingestion through processing to complete, preserving completed status when reopening the persistent meeting chat, preventing post-call call-link relaunches, and routing linked Fathom Agenda rows into the curated meeting detail instead of the generic task card.
+
+Why: Completed recordings could otherwise look like live calls, and the existing Fathom-specific Agenda branch bypassed the new meeting workspace entirely.
+
+Impact: Recorded and upcoming calls now share the same meeting-first entry flow. Post-call users continue the existing meeting conversation without falsely restarting the call, while new calls still use Start call and Rejoin call states.
+
+Files: `apps/api/src/modules/meetings/repositories/meeting-workspace.repository.ts`, `apps/api/src/modules/meetings/services/meeting-source-ingestion.service.ts`, `apps/api/src/modules/meetings/services/meeting-workspace.service.ts`, `apps/web/src/features/home/components/AgendaCard.tsx`, `apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx`, `apps/web/src/features/home/lib/agenda-open-routing.ts`, and focused tests.
+
+## [2026-07-28 13:55] - [PERF]
+
+What: Split Auto chat into a low-cost GPT-5.6 Terra research/tool stage and one bounded, tool-free Claude Opus 5 writing stage. Added generation-level provider identifiers, token/cache/cost telemetry, and settlement-aware completion accounting.
+
+Why: Opus 5 was repeatedly receiving full tool-loop context and workspace history, producing several large provider generations for a single visible answer while legacy completion accounting collapsed the run into one opaque charge.
+
+Impact: Retrieval, tool execution, and evidence reduction stay on the cheaper model; Opus receives only a compact evidence packet and writes once. Every provider generation is now attributable by stage and cost, and a generation already recorded by provider settlement cannot be charged again by legacy completion accounting.
+
+Files: `packages/api-shared/src/services/model-strategy.ts`, `packages/api-shared/src/services/model-strategy.test.ts`, `packages/api-shared/src/index.ts`, `apps/agent-api/src/modules/chat/services/chat-auto-pipeline.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `apps/agent-api/src/modules/chat/services/openclaw-completed-generation.ts`, `apps/agent-api/src/modules/chat/services/openclaw-stream-lifecycle.service.ts`, `apps/agent-api/src/modules/chat/services/openclaw-stream-lifecycle.service.test.ts`, `apps/agent-api/src/modules/chat/services/openclaw-gateway-request.service.ts`, `apps/agent-api/src/modules/chat/services/openclaw-gateway-request.service.test.ts`, `apps/agent-api/src/modules/chat/services/openclaw-proxy.types.ts`, `apps/agent-api/src/modules/chat/services/chat-completion-side-effects.service.ts`, `apps/agent-api/src/modules/chat/services/chat-completion-side-effects.service.test.ts`, and `documentation/features/chat-stream-recovery.md`.

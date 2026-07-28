@@ -13,6 +13,7 @@ import { CursorApiService } from '../../integrations/cursor/services/cursor-api.
 import { scrapecreatorsCreditsForAction } from '../../integrations/scrapecreators/scrapecreators.constants'
 import { ScrapeCreatorsApiService } from '../../integrations/scrapecreators/services/scrapecreators-api.service'
 import { isContactChannel } from '../../leads/services/contact-identifier.service'
+import { MeetingSourceIngestionService } from '../../meetings/services/meeting-source-ingestion.service'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import {
@@ -303,6 +304,7 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
     @Optional() private readonly meetingsPrecallPrep?: MeetingsPrecallPrepService,
     @Optional() private readonly meetingFollowUpSlackConfirm?: MeetingFollowUpSlackConfirmService,
     @Optional() private readonly slackTeamLoop?: SlackTeamLoopService,
+    @Optional() meetingSourceIngestion?: MeetingSourceIngestionService,
   ) {
     super(
       repo,
@@ -322,6 +324,7 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
       automationActionsRepo,
       externalEventsRepo,
       automationRunsRepo,
+      meetingSourceIngestion,
     )
   }
 

@@ -1,1 +1,8 @@
-export type PanelKey = 'custom' | 'move' | 'convert' | 'delete' | 'removeFromSpace' | 'pageGrader'
+export type PanelKey =
+  | 'custom'
+  | 'move'
+  | 'convert'
+  | 'delete'
+  | 'removeFromSpace'
+  | 'delegation'
+  | 'pageGrader'

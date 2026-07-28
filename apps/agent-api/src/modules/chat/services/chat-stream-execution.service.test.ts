@@ -6,6 +6,7 @@ import { ChatStreamRecoveryService } from './chat-stream-recovery.service'
 function makeService(input?: {
   streamCompletion?: ReturnType<typeof vi.fn>
   recovery?: ChatStreamRecoveryService
+  validateModelSettings?: ReturnType<typeof vi.fn>
 }) {
   const openClaw = {
     streamCompletion:
@@ -18,7 +19,20 @@ function makeService(input?: {
   return new ChatStreamExecutionService(
     openClaw as any,
     input?.recovery ?? new ChatStreamRecoveryService(),
-    {} as ChatModelInputService,
+    {
+      mergeResolvedModelSettings: vi.fn((resolved) => resolved.modelSettings),
+      validateModelSettings:
+        input?.validateModelSettings ??
+        vi.fn(async (modelId, settings) => ({
+          requestedModelId: modelId,
+          resolvedModelId: modelId,
+          request: {},
+          openClaw: {
+            contextWindowTokens: settings?.context_window_tokens,
+            reasoningEffort: settings?.reasoning_effort,
+          },
+        })),
+    } as unknown as ChatModelInputService,
   )
 }
 
@@ -145,6 +159,93 @@ describe('ChatStreamExecutionService', () => {
     expect(result.recoveryEvents).toEqual([
       expect.objectContaining({
         type: 'provider_busy_retry',
+        status: 'recovered',
+      }),
+    ])
+  })
+
+  it('runs Auto retrieval on Terra and gives one bounded, tool-free writing pass to Opus', async () => {
+    const streamCompletion = vi
+      .fn()
+      .mockImplementationOnce(async ({ send }) => {
+        await send('content_delta', { delta: 'internal research text' })
+        await send('tool_update', { tool: 'search_brain', status: 'completed' })
+        return {
+          content: `Research evidence ${'x'.repeat(30_000)}`,
+          toolSteps: [{ name: 'search_brain', label: 'Search Brain', status: 'completed' }],
+          completedGenerations: [{ generationId: 'gen-research', model: 'openai/gpt-5.6-terra' }],
+        }
+      })
+      .mockResolvedValueOnce({
+        content: 'Polished answer.',
+        toolSteps: [],
+        completedGenerations: [{ generationId: 'gen-write', model: 'anthropic/claude-opus-5' }],
+      })
+    const progressiveSend = vi.fn(async () => undefined)
+    const service = makeService({ streamCompletion })
+
+    const result = await service.run(
+      makeRunInput({
+        progressiveSend,
+        selectedModelInput: 'auto',
+      }),
+    )
+
+    expect(streamCompletion).toHaveBeenCalledTimes(2)
+    expect(streamCompletion.mock.calls[0]?.[0]).toMatchObject({
+      model: 'openai/gpt-5.6-terra',
+      generationStage: 'research',
+    })
+    expect(streamCompletion.mock.calls[1]?.[0]).toMatchObject({
+      model: 'anthropic/claude-opus-5',
+      generationStage: 'write',
+      toolChoice: 'none',
+    })
+    expect(streamCompletion.mock.calls[1]?.[0].sessionKey).toContain(':writer:')
+    expect(JSON.stringify(streamCompletion.mock.calls[1]?.[0].input).length).toBeLessThan(25_000)
+    expect(progressiveSend).not.toHaveBeenCalledWith(
+      'content_delta',
+      expect.objectContaining({ delta: 'internal research text' }),
+    )
+    expect(result.content).toBe('Polished answer.')
+    expect(result.completedGenerations).toEqual([
+      expect.objectContaining({ generationId: 'gen-research', stage: 'research' }),
+      expect.objectContaining({ generationId: 'gen-write', stage: 'write' }),
+    ])
+  })
+
+  it('shows the research answer when the single Opus writing pass fails', async () => {
+    const streamCompletion = vi
+      .fn()
+      .mockResolvedValueOnce({
+        content: 'Useful researched answer.',
+        toolSteps: [],
+        completedGenerations: [{ generationId: 'gen-research' }],
+      })
+      .mockResolvedValueOnce({
+        content: '',
+        toolSteps: [],
+        failed: 'provider_busy',
+        completedGenerations: [{ generationId: 'gen-write' }],
+      })
+    const progressiveSend = vi.fn(async () => undefined)
+    const service = makeService({ streamCompletion })
+
+    const result = await service.run(
+      makeRunInput({
+        progressiveSend,
+        selectedModelInput: 'auto',
+      }),
+    )
+
+    expect(streamCompletion).toHaveBeenCalledTimes(2)
+    expect(result.content).toBe('Useful researched answer.')
+    expect(progressiveSend).toHaveBeenCalledWith('content_delta', {
+      delta: 'Useful researched answer.',
+    })
+    expect(result.recoveryEvents).toEqual([
+      expect.objectContaining({
+        type: 'writer_fallback_to_research',
         status: 'recovered',
       }),
     ])

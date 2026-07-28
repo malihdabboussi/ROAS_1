@@ -7,6 +7,7 @@ import {
   CopyPlus,
   FolderInput,
   FolderMinus,
+  ListTodo,
   Loader2,
   Send,
   Trash2,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { cn } from '@/lib/utils/cn'
+import type { DelegationDispatchMode } from '../../services/delegation-intake.service'
 import type { SpaceItem } from '../../types'
 import type { FieldDef, SelectOption } from '../../types/space-schema'
 import type { MissionSendOptions } from '../cells/MissionSendDropdown'
@@ -22,6 +24,7 @@ import { BTN } from './bulk-action-helpers'
 import { BulkActionBarCoreFields } from './BulkActionBarCoreFields'
 import { ConvertPanel } from './ConvertPanel'
 import { CustomFieldsPanel } from './CustomFieldsPanel'
+import { DelegationBulkPanel } from './DelegationBulkPanel'
 import { DeletePanel } from './DeletePanel'
 import { MovePanel } from './MovePanel'
 import type { PanelKey } from './panel-key'
@@ -51,6 +54,7 @@ export type BulkActionBarToolbarProps = {
   moveRef: React.RefObject<HTMLButtonElement | null>
   convertRef: React.RefObject<HTMLButtonElement | null>
   removeFromSpaceRef: React.RefObject<HTMLButtonElement | null>
+  delegationRef: React.RefObject<HTMLButtonElement | null>
   pageGraderRef: React.RefObject<HTMLButtonElement | null>
   deleteRef: React.RefObject<HTMLButtonElement | null>
   onClearSelection: () => void
@@ -73,6 +77,7 @@ export type BulkActionBarToolbarProps = {
   handleConvertToSubtasks: () => Promise<void>
   handlePromoteToTasks: () => Promise<void>
   handleDuplicate: () => Promise<void>
+  handleDelegationCapture: (mode: DelegationDispatchMode, note: string) => Promise<void>
   handlePageGraderSend: (input: {
     clientId: string
     clientName: string
@@ -115,6 +120,7 @@ export function BulkActionBarToolbar({
   moveRef,
   convertRef,
   removeFromSpaceRef,
+  delegationRef,
   pageGraderRef,
   deleteRef,
   onClearSelection,
@@ -133,6 +139,7 @@ export function BulkActionBarToolbar({
   handleConvertToSubtasks,
   handlePromoteToTasks,
   handleDuplicate,
+  handleDelegationCapture,
   handlePageGraderSend,
   handleDelete,
   handleRemoveFromSpace,
@@ -285,6 +292,23 @@ export function BulkActionBarToolbar({
 
         {itemKind !== 'doc' && (
           <>
+            <button
+              ref={delegationRef}
+              type="button"
+              className={cn(BTN, 'shrink-0')}
+              onClick={() => toggle('delegation')}
+            >
+              <ListTodo className="h-3.5 w-3.5" /> Delegate
+            </button>
+            {activePanel === 'delegation' && (
+              <DelegationBulkPanel
+                anchorRef={delegationRef}
+                selectedCount={selectedIds.size}
+                busy={busy}
+                onDelegate={handleDelegationCapture}
+                onClose={closePanel}
+              />
+            )}
             <button
               ref={pageGraderRef}
               type="button"

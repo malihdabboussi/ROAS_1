@@ -15,6 +15,7 @@ import {
 import { BulkActionBarToolbar } from './bulk-action-bar/BulkActionBarToolbar'
 import type { PanelKey } from './bulk-action-bar/panel-key'
 import type { BulkActionBarProps } from './bulk-action-bar/types'
+import { useDelegationBulkCapture } from './bulk-action-bar/use-delegation-bulk-capture'
 import { readFieldValue, toFieldPatch } from './space-item-values'
 
 export type { BulkActionBarProps } from './bulk-action-bar/types'
@@ -51,6 +52,7 @@ export function BulkActionBar({
   const moveRef = useRef<HTMLButtonElement>(null)
   const convertRef = useRef<HTMLButtonElement>(null)
   const removeFromSpaceRef = useRef<HTMLButtonElement>(null)
+  const delegationRef = useRef<HTMLButtonElement>(null)
   const pageGraderRef = useRef<HTMLButtonElement>(null)
   const deleteRef = useRef<HTMLButtonElement>(null)
 
@@ -270,6 +272,15 @@ export function BulkActionBar({
     ],
   )
 
+  const handleDelegationCapture = useDelegationBulkCapture({
+    spaces,
+    activeSpace,
+    selectedItems,
+    closePanel,
+    onClearSelection,
+    setBusy,
+  })
+
   const handleDelete = useCallback(async () => {
     closePanel()
     setBusy(true)
@@ -341,6 +352,7 @@ export function BulkActionBar({
       moveRef={moveRef}
       convertRef={convertRef}
       removeFromSpaceRef={removeFromSpaceRef}
+      delegationRef={delegationRef}
       pageGraderRef={pageGraderRef}
       deleteRef={deleteRef}
       onClearSelection={onClearSelection}
@@ -359,6 +371,7 @@ export function BulkActionBar({
       handleConvertToSubtasks={handleConvertToSubtasks}
       handlePromoteToTasks={handlePromoteToTasks}
       handleDuplicate={handleDuplicate}
+      handleDelegationCapture={handleDelegationCapture}
       handlePageGraderSend={handlePageGraderSend}
       handleDelete={handleDelete}
       handleRemoveFromSpace={handleRemoveFromSpace}

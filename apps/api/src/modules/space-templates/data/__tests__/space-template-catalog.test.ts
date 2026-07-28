@@ -4,6 +4,7 @@ import { SPACE_TEMPLATE_CATALOG } from '../space-template-catalog'
 const EXPECTED_TEMPLATE_SLUGS = [
   'personal-dashboard',
   'personal-workspace',
+  'delegation-desk',
   'client-account-workspace',
   'agency-client-webinar',
   'product-launch',
@@ -139,17 +140,9 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
     const actionTypes = (dashboard?.automations[2]?.actions ?? []).map((action) => action.type)
     expect(actionTypes).not.toContain('create_task')
     expect(actionTypes).toContain('change_status')
-    expect(actionTypes).toContain('send_to_agent')
-    expect(actionTypes).toContain('agent_suggest_tasks')
-    expect(actionTypes).toContain('request_slack_follow_up_confirm')
-    expect(dashboard?.automations[2]?.actions).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          type: 'request_slack_follow_up_confirm',
-          delivery_mode: 'shadow',
-        }),
-      ]),
-    )
+    expect(actionTypes).not.toContain('send_to_agent')
+    expect(actionTypes).not.toContain('agent_suggest_tasks')
+    expect(actionTypes).not.toContain('request_slack_follow_up_confirm')
     expect(dashboard?.schema.fields).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -189,10 +182,11 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
           id: 'call_kind',
           name: 'Call Kind',
           options: expect.arrayContaining([
-            expect.objectContaining({ id: 'personal' }),
+            expect.objectContaining({ id: 'private' }),
             expect.objectContaining({ id: 'team' }),
             expect.objectContaining({ id: 'executive' }),
-            expect.objectContaining({ id: 'external' }),
+            expect.objectContaining({ id: 'client' }),
+            expect.objectContaining({ id: 'partner' }),
             expect.objectContaining({ id: 'sales' }),
           ]),
         }),

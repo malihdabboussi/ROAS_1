@@ -297,3 +297,19 @@ export function resolvePreferredConversationOpenId(input: {
   if (drawer) return drawer
   return null
 }
+
+/**
+ * `activeConversationId` alone does not mean messages are in the store.
+ * Shell stamps active before fetch; skipping hydrate on that match leaves an empty Pixel pane.
+ */
+export function conversationNeedsMessageHydration(
+  conversationId: string,
+  state: {
+    activeConversationId: string | null
+    messagesByConversation: Record<string, { length: number } | undefined>
+  },
+): boolean {
+  if (state.activeConversationId !== conversationId) return true
+  const cached = state.messagesByConversation[conversationId]
+  return !cached || cached.length === 0
+}

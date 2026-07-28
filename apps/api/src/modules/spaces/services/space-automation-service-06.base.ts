@@ -215,6 +215,7 @@ export type TriggerEvent =
       attendees?: Array<Record<string, unknown>>
       url?: string | null
       fathom_owner_user_id?: string
+      meeting_workspace_actions_authoritative?: boolean
     }
   | {
       type: 'external_app_event'
@@ -304,263 +305,294 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
       action_items: meeting.actionItems.length,
     }
 
-    const insertedEvent = await this.externalEventsRepo.insertExternalEvent(supabase, {
+    const claim = await this.externalEventsRepo.claimFathomExternalEvent(supabase, {
       composio_event_id: eventId,
       provider: 'fathom',
       trigger_slug: 'FATHOM_RECORDING_READY',
       connected_account_id: `fathom:${userId}`,
       payload_summary: payloadSummary,
-      status: 'received',
       user_id: userId,
     })
 
-    if (insertedEvent.error) {
-      if (insertedEvent.error.code === '23505') return { processed: false, duplicate: true }
-      throw new Error(insertedEvent.error.message)
+    if (!claim.claimed) {
+      return {
+        processed: false,
+        duplicate: true,
+        status: String(claim.row.status ?? 'duplicate'),
+      }
     }
 
-    const eventRow = insertedEvent.data as Record<string, unknown>
-    // Resolve matching routes across THREE source modes:
-    //
-    // 1. self    — rule owner = recording owner. The historical case.
-    // 2. user    — admin's rule pointed at a specific user_integrations.id;
-    //              fires when that integration's owner records.
-    // 3. team    — admin's rule pointed at an agent_team; fires when ANY
-    //              member of that team records.
-    //
-    // Each mode is loaded with its own filtered query so we never scan the
-    // global trigger table. A single canonical route stores the meeting so
-    // one Fathom call cannot become duplicate meeting records.
-    const matchingRoutes = await this.collectMatchingFathomRoutes(supabase, userId, meeting)
+    const eventRow = claim.row
+    try {
+      // Resolve matching routes across THREE source modes:
+      //
+      // 1. self    — rule owner = recording owner. The historical case.
+      // 2. user    — admin's rule pointed at a specific user_integrations.id;
+      //              fires when that integration's owner records.
+      // 3. team    — admin's rule pointed at an agent_team; fires when ANY
+      //              member of that team records.
+      //
+      // Each mode is loaded with its own filtered query so we never scan the
+      // global trigger table. A single canonical route stores the meeting so
+      // one Fathom call cannot become duplicate meeting records.
+      const matchingRoutes = await this.collectMatchingFathomRoutes(supabase, userId, meeting)
 
-    if (matchingRoutes.length === 0) {
-      await this.updateExternalEvent(supabase, eventRow.id, { status: 'ignored' })
-      return { processed: false, reason: 'no_matching_route' }
-    }
+      if (matchingRoutes.length === 0) {
+        await this.updateExternalEvent(supabase, eventRow.id, { status: 'ignored' })
+        return { processed: false, reason: 'no_matching_route' }
+      }
 
-    const canonicalRoute = this.selectCanonicalFathomRoute(matchingRoutes)
-    const canonicalResults: Array<{
-      route_id: string
-      space_id: string
-      automation_id: string
-      item_id: string
-    }> = []
+      const canonicalRoute = this.selectCanonicalFathomRoute(matchingRoutes)
+      const canonicalResults: Array<{
+        route_id: string
+        space_id: string
+        automation_id: string
+        item_id: string
+      }> = []
 
-    for (const routeRecord of [canonicalRoute]) {
-      const spaceId = String(routeRecord.space_id)
-      const automationId = String(routeRecord.automation_id)
-      const orgId = routeRecord.org_id ? String(routeRecord.org_id) : null
-      // Billing + RLS identity per locked decision #4: the rule's own user_id
-      // owns the run, not the Fathom recording owner. For self-source rules
-      // these are identical anyway. For user/team-source rules this routes
-      // credits to the rule creator (admin/owner) and gives them rights to
-      // mutate the synthetic Space item.
-      const runUserId = routeRecord.user_id ? String(routeRecord.user_id) : userId
+      for (const routeRecord of [canonicalRoute]) {
+        const spaceId = String(routeRecord.space_id)
+        const automationId = String(routeRecord.automation_id)
+        const orgId = routeRecord.org_id ? String(routeRecord.org_id) : null
+        // Billing + RLS identity per locked decision #4: the rule's own user_id
+        // owns the run, not the Fathom recording owner. For self-source rules
+        // these are identical anyway. For user/team-source rules this routes
+        // credits to the rule creator (admin/owner) and gives them rights to
+        // mutate the synthetic Space item.
+        const runUserId = routeRecord.user_id ? String(routeRecord.user_id) : userId
 
-      const existingCall = await this.repo.findItemByFathomMeetingId(
-        supabase,
-        spaceId,
-        meeting.meetingId,
-      )
-      if (existingCall?.id) {
-        this.logger.log(
-          `Fathom meeting ${meeting.meetingId} already on space ${spaceId} as ${String(existingCall.id)} — skipping duplicate create`,
+        const exactCall = await this.repo.findItemByFathomMeetingId(
+          supabase,
+          spaceId,
+          meeting.meetingId,
         )
-        canonicalResults.push({
-          route_id: String(routeRecord.id),
-          space_id: spaceId,
-          automation_id: automationId,
-          item_id: String(existingCall.id),
-        })
-        continue
-      }
-
-      const space = (await this.repo.findSpaceById(supabase, runUserId, spaceId, orgId)) as Record<
-        string,
-        unknown
-      > | null
-      const resolvedAttendees = resolveFathomAttendeeLabels({
-        attendees: meeting.attendees as FathomAttendeeLike[],
-        transcript: meeting.transcript as FathomTranscriptEntryLike[],
-        recordedByEmail: meeting.recordedByEmail,
-        titleHint: meeting.title,
-      })
-      const { data: ownerProfile } = await supabase
-        .from('profiles')
-        .select('email, fathom_aliases, full_name')
-        .eq('id', runUserId)
-        .maybeSingle()
-      const callIdentity = buildCeoCallIdentity({
-        email: typeof ownerProfile?.email === 'string' ? ownerProfile.email : null,
-        fathomAliases: Array.isArray(ownerProfile?.fathom_aliases)
-          ? (ownerProfile.fathom_aliases as string[])
-          : null,
-        fullName: typeof ownerProfile?.full_name === 'string' ? ownerProfile.full_name : null,
-      })
-      const callKind = resolveCeoCallKind({
-        identity: callIdentity,
-        recordedByEmail: meeting.recordedByEmail,
-        attendees: meeting.attendees as FathomAttendeeLike[],
-        attendeeLabels: resolvedAttendees.labels,
-        titleHint: meeting.title,
-        summary: meeting.summary,
-      })
-      const { optionIds, nextSchema, optionsChanged } = upsertAttendeeTagOptions(
-        this.objectRecord(space?.schema),
-        resolvedAttendees.labels,
-      )
-      if (optionsChanged && nextSchema) {
-        try {
-          await this.repo.updateSpace(
-            supabase,
-            runUserId,
-            spaceId,
-            { schema: nextSchema as never },
-            orgId,
+        const reconciledMeetingItemId =
+          !exactCall?.id && this.meetingSourceIngestion
+            ? await this.meetingSourceIngestion.findMatchingMeetingItem(supabase, {
+                spaceId,
+                userId: runUserId,
+                event,
+              })
+            : null
+        const existingCall =
+          exactCall ??
+          (reconciledMeetingItemId
+            ? await this.repo.findItemById(supabase, spaceId, reconciledMeetingItemId)
+            : null)
+        if (existingCall?.id) {
+          if (this.meetingSourceIngestion) {
+            await this.meetingSourceIngestion.ingestFathomSource(supabase, {
+              meetingItemId: String(existingCall.id),
+              spaceId,
+              userId: runUserId,
+              orgId,
+              calendarEventId: null,
+              event,
+            })
+          }
+          this.logger.log(
+            `Attached Fathom recording ${meeting.meetingId} to meeting ${String(existingCall.id)} on space ${spaceId}`,
           )
-        } catch (error) {
-          this.logger.warn(
-            `Failed to upsert Fathom attendee tags on space ${spaceId}: ${
-              error instanceof Error ? error.message : String(error)
-            }`,
-          )
+          canonicalResults.push({
+            route_id: String(routeRecord.id),
+            space_id: spaceId,
+            automation_id: automationId,
+            item_id: String(existingCall.id),
+          })
+          continue
         }
-      }
 
-      const statusField = Array.isArray(this.objectRecord(space?.schema).fields)
-        ? (this.objectRecord(space?.schema).fields as Array<Record<string, unknown>>).find(
-            (field) => String(field.id ?? '') === 'status',
-          )
-        : null
-      const statusOptions = Array.isArray(statusField?.options)
-        ? (statusField.options as Array<Record<string, unknown>>)
-        : []
-      const hasProcessingStatus = statusOptions.some(
-        (option) => String(option.id ?? '') === 'processing',
-      )
+        const space = (await this.repo.findSpaceById(
+          supabase,
+          runUserId,
+          spaceId,
+          orgId,
+        )) as Record<string, unknown> | null
+        const resolvedAttendees = resolveFathomAttendeeLabels({
+          attendees: meeting.attendees as FathomAttendeeLike[],
+          transcript: meeting.transcript as FathomTranscriptEntryLike[],
+          recordedByEmail: meeting.recordedByEmail,
+          titleHint: meeting.title,
+        })
+        const { data: ownerProfile } = await supabase
+          .from('profiles')
+          .select('email, fathom_aliases, full_name')
+          .eq('id', runUserId)
+          .maybeSingle()
+        const callIdentity = buildCeoCallIdentity({
+          email: typeof ownerProfile?.email === 'string' ? ownerProfile.email : null,
+          fathomAliases: Array.isArray(ownerProfile?.fathom_aliases)
+            ? (ownerProfile.fathom_aliases as string[])
+            : null,
+          fullName: typeof ownerProfile?.full_name === 'string' ? ownerProfile.full_name : null,
+        })
+        const callKind = resolveCeoCallKind({
+          identity: callIdentity,
+          recordedByEmail: meeting.recordedByEmail,
+          attendees: meeting.attendees as FathomAttendeeLike[],
+          attendeeLabels: resolvedAttendees.labels,
+          titleHint: meeting.title,
+          summary: meeting.summary,
+        })
+        const { optionIds, nextSchema, optionsChanged } = upsertAttendeeTagOptions(
+          this.objectRecord(space?.schema),
+          resolvedAttendees.labels,
+        )
+        if (optionsChanged && nextSchema) {
+          try {
+            await this.repo.updateSpace(
+              supabase,
+              runUserId,
+              spaceId,
+              { schema: nextSchema as never },
+              orgId,
+            )
+          } catch (error) {
+            this.logger.warn(
+              `Failed to upsert Fathom attendee tags on space ${spaceId}: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            )
+          }
+        }
 
-      const provisionalTitle = provisionalFathomMeetingTitle(meeting.title)
-      let item = (await this.repo.createItem(
-        supabase,
-        runUserId,
-        spaceId,
-        {
-          title: provisionalTitle,
-          // Keep description as the short purpose summary; full transcript lives in custom_data.
-          description: meeting.summary || null,
-          source: 'fathom',
-          ...(hasProcessingStatus ? { status: 'processing' as const } : {}),
-          custom_data: {
-            entry_type: 'call',
-            call_kind: callKind,
-            ...(meeting.callDate ? { call_date: meeting.callDate } : {}),
-            ...(meeting.url ? { recording_url: meeting.url, fathom_url: meeting.url } : {}),
-            ...(meeting.summary ? { summary: meeting.summary } : {}),
-            ...(meeting.transcriptText ? { transcript_text: meeting.transcriptText } : {}),
-            ...(optionIds.length > 0 ? { attendees: optionIds } : {}),
-            ...(Object.keys(resolvedAttendees.speakerRemaps).length > 0
-              ? { speaker_remaps: resolvedAttendees.speakerRemaps }
-              : {}),
-            ...(resolvedAttendees.unresolvedSpeakers.length > 0
-              ? { unresolved_speakers: resolvedAttendees.unresolvedSpeakers }
-              : {}),
-            external_automation: {
-              provider: 'fathom',
-              trigger_slug: 'FATHOM_RECORDING_READY',
-              meeting_id: meeting.meetingId,
-              recorded_by_email: meeting.recordedByEmail,
-              transcript_entries: meeting.transcriptEntries,
-              fathom_owner_user_id: userId,
-              attendees_from_speakers: resolvedAttendees.usedSpeakers,
+        const statusField = Array.isArray(this.objectRecord(space?.schema).fields)
+          ? (this.objectRecord(space?.schema).fields as Array<Record<string, unknown>>).find(
+              (field) => String(field.id ?? '') === 'status',
+            )
+          : null
+        const statusOptions = Array.isArray(statusField?.options)
+          ? (statusField.options as Array<Record<string, unknown>>)
+          : []
+        const hasProcessingStatus = statusOptions.some(
+          (option) => String(option.id ?? '') === 'processing',
+        )
+
+        const provisionalTitle = provisionalFathomMeetingTitle(meeting.title)
+        let item = (await this.repo.createItem(
+          supabase,
+          runUserId,
+          spaceId,
+          {
+            title: provisionalTitle,
+            // Keep description as the short purpose summary; full transcript lives in custom_data.
+            description: meeting.summary || null,
+            source: 'fathom',
+            ...(hasProcessingStatus ? { status: 'processing' as const } : {}),
+            custom_data: {
+              entry_type: 'call',
               call_kind: callKind,
+              ...(meeting.callDate ? { call_date: meeting.callDate } : {}),
+              ...(meeting.url ? { recording_url: meeting.url, fathom_url: meeting.url } : {}),
+              ...(meeting.summary ? { summary: meeting.summary } : {}),
+              ...(meeting.transcriptText ? { transcript_text: meeting.transcriptText } : {}),
+              ...(optionIds.length > 0 ? { attendees: optionIds } : {}),
+              ...(Object.keys(resolvedAttendees.speakerRemaps).length > 0
+                ? { speaker_remaps: resolvedAttendees.speakerRemaps }
+                : {}),
+              ...(resolvedAttendees.unresolvedSpeakers.length > 0
+                ? { unresolved_speakers: resolvedAttendees.unresolvedSpeakers }
+                : {}),
+              external_automation: {
+                provider: 'fathom',
+                trigger_slug: 'FATHOM_RECORDING_READY',
+                meeting_id: meeting.meetingId,
+                recorded_by_email: meeting.recordedByEmail,
+                transcript_entries: meeting.transcriptEntries,
+                fathom_owner_user_id: userId,
+                attendees_from_speakers: resolvedAttendees.usedSpeakers,
+                call_kind: callKind,
+              },
             },
           },
-        },
-        orgId,
-      )) as Record<string, unknown>
-
-      const aiTitle = await this.suggestCeoMeetingTitle(runUserId, spaceId, orgId, {
-        calendar_title: meeting.title,
-        summary: meeting.summary,
-        transcript_text: meeting.transcriptText,
-        attendees: meeting.attendees,
-        action_items: meeting.actionItems,
-        recorded_by_email: meeting.recordedByEmail,
-      })
-      const resolvedTitle =
-        aiTitle ??
-        fallbackCeoMeetingTitle({
-          summary: meeting.summary,
-          calendarTitle: meeting.title,
-          attendees: meeting.attendees as Array<{ name?: string | null } | null>,
-        })
-      if (resolvedTitle && resolvedTitle !== provisionalTitle) {
-        try {
-          item = (await this.repo.updateItem(
-            supabase,
-            runUserId,
-            spaceId,
-            String(item.id),
-            { title: resolvedTitle },
-            orgId,
-          )) as Record<string, unknown>
-        } catch (error) {
-          this.logger.warn(
-            `Failed to apply CEO meeting title on space ${spaceId}: ${
-              error instanceof Error ? error.message : String(error)
-            }`,
-          )
-        }
-      }
-
-      await upsertFathomPeopleFromAttendees(
-        supabase,
-        {
-          userId: runUserId,
           orgId,
-          campaignId:
-            typeof space?.campaign_id === 'string' && space.campaign_id.trim()
-              ? space.campaign_id.trim()
-              : null,
-          attendees: meeting.attendees as FathomAttendeeLike[],
-        },
-        (message) => this.logger.warn(message),
-      )
+        )) as Record<string, unknown>
 
-      await this.repo.createActivity(supabase, {
-        item_id: String(item.id),
-        space_id: spaceId,
-        user_id: runUserId,
-        org_id: orgId,
-        event_type: 'external_fathom_recording_ready',
-        payload: payloadSummary,
-      })
+        const aiTitle = await this.suggestCeoMeetingTitle(runUserId, spaceId, orgId, {
+          calendar_title: meeting.title,
+          summary: meeting.summary,
+          transcript_text: meeting.transcriptText,
+          attendees: meeting.attendees,
+          action_items: meeting.actionItems,
+          recorded_by_email: meeting.recordedByEmail,
+        })
+        const resolvedTitle =
+          aiTitle ??
+          fallbackCeoMeetingTitle({
+            summary: meeting.summary,
+            calendarTitle: meeting.title,
+            attendees: meeting.attendees as Array<{ name?: string | null } | null>,
+          })
+        if (resolvedTitle && resolvedTitle !== provisionalTitle) {
+          try {
+            item = (await this.repo.updateItem(
+              supabase,
+              runUserId,
+              spaceId,
+              String(item.id),
+              { title: resolvedTitle },
+              orgId,
+            )) as Record<string, unknown>
+          } catch (error) {
+            this.logger.warn(
+              `Failed to apply CEO meeting title on space ${spaceId}: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            )
+          }
+        }
 
-      const fathomTriggerEvent: TriggerEvent = {
-        type: 'external_fathom_recording_ready',
-        title: meeting.title,
-        recorded_by_email: meeting.recordedByEmail,
-        meeting_id: meeting.meetingId,
-        summary: meeting.summary,
-        transcript_text: meeting.transcriptText,
-        transcript_entries: meeting.transcriptEntries,
-        transcript: meeting.transcript,
-        action_items: meeting.actionItems,
-        attendees: meeting.attendees,
-        url: meeting.url,
-        fathom_owner_user_id: userId,
-      }
+        await upsertFathomPeopleFromAttendees(
+          supabase,
+          {
+            userId: runUserId,
+            orgId,
+            campaignId:
+              typeof space?.campaign_id === 'string' && space.campaign_id.trim()
+                ? space.campaign_id.trim()
+                : null,
+            attendees: meeting.attendees as FathomAttendeeLike[],
+          },
+          (message) => this.logger.warn(message),
+        )
 
-      const queued = await this.enqueueAutomationRuntimeJob(automationId, fathomTriggerEvent, {
-        supabase,
-        userId: runUserId,
-        orgId,
-        spaceId,
-        itemId: String(item.id),
-        depth: 0,
-      })
-      if (!queued) {
-        await this.executeAutomationById(automationId, fathomTriggerEvent, {
+        if (this.meetingSourceIngestion) {
+          await this.meetingSourceIngestion.ingestFathomSource(supabase, {
+            meetingItemId: String(item.id),
+            spaceId,
+            userId: runUserId,
+            orgId,
+            calendarEventId: null,
+            event,
+          })
+        }
+
+        await this.repo.createActivity(supabase, {
+          item_id: String(item.id),
+          space_id: spaceId,
+          user_id: runUserId,
+          org_id: orgId,
+          event_type: 'external_fathom_recording_ready',
+          payload: payloadSummary,
+        })
+
+        const fathomTriggerEvent: TriggerEvent = {
+          type: 'external_fathom_recording_ready',
+          title: meeting.title,
+          recorded_by_email: meeting.recordedByEmail,
+          meeting_id: meeting.meetingId,
+          summary: meeting.summary,
+          transcript_text: meeting.transcriptText,
+          transcript_entries: meeting.transcriptEntries,
+          transcript: meeting.transcript,
+          action_items: meeting.actionItems,
+          attendees: meeting.attendees,
+          url: meeting.url,
+          fathom_owner_user_id: userId,
+          meeting_workspace_actions_authoritative: Boolean(this.meetingSourceIngestion),
+        }
+
+        const queued = await this.enqueueAutomationRuntimeJob(automationId, fathomTriggerEvent, {
           supabase,
           userId: runUserId,
           orgId,
@@ -568,40 +600,57 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
           itemId: String(item.id),
           depth: 0,
         })
+        if (!queued) {
+          await this.executeAutomationById(automationId, fathomTriggerEvent, {
+            supabase,
+            userId: runUserId,
+            orgId,
+            spaceId,
+            itemId: String(item.id),
+            depth: 0,
+          })
+        }
+
+        canonicalResults.push({
+          route_id: String(routeRecord.id),
+          space_id: spaceId,
+          automation_id: automationId,
+          item_id: String(item.id),
+        })
       }
 
-      canonicalResults.push({
-        route_id: String(routeRecord.id),
-        space_id: spaceId,
-        automation_id: automationId,
-        item_id: String(item.id),
+      // The audit row stores the canonical meeting pointer plus how many routes
+      // matched, which preserves routing diagnostics without duplicating data.
+      const first = canonicalResults[0]
+      await this.updateExternalEvent(supabase, eventRow.id, {
+        status: 'processed',
+        external_trigger_id: first.route_id,
+        space_id: first.space_id,
+        automation_id: first.automation_id,
+        item_id: first.item_id,
+        org_id: canonicalRoute.org_id ? String(canonicalRoute.org_id) : null,
+        processed_at: new Date().toISOString(),
+        payload_summary: {
+          ...payloadSummary,
+          fanout_count: canonicalResults.length,
+          matching_route_count: matchingRoutes.length,
+        },
       })
-    }
 
-    // The audit row stores the canonical meeting pointer plus how many routes
-    // matched, which preserves routing diagnostics without duplicating data.
-    const first = canonicalResults[0]
-    await this.updateExternalEvent(supabase, eventRow.id, {
-      status: 'processed',
-      external_trigger_id: first.route_id,
-      space_id: first.space_id,
-      automation_id: first.automation_id,
-      item_id: first.item_id,
-      org_id: canonicalRoute.org_id ? String(canonicalRoute.org_id) : null,
-      processed_at: new Date().toISOString(),
-      payload_summary: {
-        ...payloadSummary,
+      return {
+        processed: true,
         fanout_count: canonicalResults.length,
-        matching_route_count: matchingRoutes.length,
-      },
-    })
-
-    return {
-      processed: true,
-      fanout_count: canonicalResults.length,
-      space_id: first.space_id,
-      item_id: first.item_id,
-      automation_id: first.automation_id,
+        space_id: first.space_id,
+        item_id: first.item_id,
+        automation_id: first.automation_id,
+      }
+    } catch (error) {
+      await this.updateExternalEvent(supabase, eventRow.id, {
+        status: 'failed',
+        error: error instanceof Error ? error.message : String(error),
+        processed_at: new Date().toISOString(),
+      })
+      throw error
     }
   }
 

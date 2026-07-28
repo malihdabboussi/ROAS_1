@@ -12,6 +12,7 @@ import { SearchApiModule } from '../integrations/searchapi/searchapi.module'
 import { LinkPreviewModule } from '../link-preview/link-preview.module'
 import { MachinesModule } from '../machines/machines.module'
 import { MediaModule } from '../media/media.module'
+import { MeetingsModule } from '../meetings/meetings.module'
 import { ProgramsModule } from '../programs/programs.module'
 import { ProviderBillingModule } from '../provider-billing/provider-billing.module'
 import { SlackModule } from '../slack/slack.module'
@@ -117,6 +118,7 @@ import { SpacesService } from './services/spaces.service'
 
 @Module({
   imports: [
+    MeetingsModule,
     BillingModule,
     BrainModule,
     EmailModule,

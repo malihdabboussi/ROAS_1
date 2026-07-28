@@ -131,6 +131,7 @@ import {
   buildSpaceChatConversationUrl,
   conversationBelongsToChannel,
   conversationBelongsToSpace,
+  conversationNeedsMessageHydration,
   DEFAULT_SPACE_CHAT_AGENT_KEY,
   getConversationAgentKey,
   HOME_CHAT_SEED_STORAGE_KEY,
@@ -180,6 +181,8 @@ export function SpaceVibeyChatPanel({
   shellSidebarChrome = false,
   headerLayout = 'compact',
   composerContextSlot,
+  preferredConversationId,
+  awarenessContextOverride,
 }: SpaceVibeyChatPanelProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -230,9 +233,7 @@ export function SpaceVibeyChatPanel({
   const funnelTweaksActive = useFunnelTweaksChatStore((s) => s.tweaksChatActive)
   const setFunnelTweaksChatActive = useFunnelTweaksChatStore((s) => s.setTweaksChatActive)
   const setFunnelFullMode = useFunnelFullModeStore((s) => s.setMode)
-  // Cache-first: paint the last known conversation list (and restore the
-  // stored selection when it's still valid) synchronously on mount, then
-  // revalidate in the background via loadConversations.
+  // Paint cached conversations and valid selection before background revalidation.
   const [conversations, setConversations] = useState<Conversation[]>(
     () => spaceConversationsCache.get(chatScopeStorageId) ?? [],
   )
@@ -335,9 +336,7 @@ export function SpaceVibeyChatPanel({
     homeSeedConsumedRef.current = false
   }, [chatScopeStorageId])
 
-  // Keep the per-scope cache in sync with local state. If the scope changes
-  // in place (no remount), reset to the new scope's cached list instead of
-  // writing the previous scope's rows under the new key.
+  // Reset local state from the new scope cache before syncing it.
   const conversationsScopeRef = useRef(chatScopeStorageId)
   useEffect(() => {
     if (conversationsScopeRef.current !== chatScopeStorageId) {
@@ -348,8 +347,7 @@ export function SpaceVibeyChatPanel({
     spaceConversationsCache.set(chatScopeStorageId, conversations)
   }, [chatScopeStorageId, conversations])
 
-  // When a cached selection was restored synchronously, hydrate its messages
-  // (instant when already in the chat store, background refetch otherwise).
+  // Hydrate a synchronously restored cached selection.
   const initialCachedSelectionRef = useRef(selectedConversationId)
   useEffect(() => {
     const conversationId = initialCachedSelectionRef.current
@@ -457,8 +455,7 @@ export function SpaceVibeyChatPanel({
   const activeAgentKey =
     selectedConversation?.agent_id?.trim() || draftAgentKey || DEFAULT_SPACE_CHAT_AGENT_KEY
 
-  // Stable key so loadConversations doesn't re-run on roster array identity
-  // changes — only when the actual set of agent keys changes.
+  // Re-run only when the actual agent-key set changes.
   const chatAgentKeysKey = useMemo(
     () =>
       Array.from(
@@ -563,8 +560,7 @@ export function SpaceVibeyChatPanel({
       .catch(() => null)
   }, [activeAgentKey])
 
-  // Human roster (share modal) derived from the store's full roster — the
-  // store already fetches kind 'all', so no extra request per mount.
+  // The share modal reuses the store's full human roster.
   const roster = useMemo(
     () => (isOrgContext ? spacesRoster.filter((entry) => entry.kind === 'human') : []),
     [isOrgContext, spacesRoster],
@@ -700,16 +696,12 @@ export function SpaceVibeyChatPanel({
       if (!isChannelScope && spaceId && isHomeChatSeedPending(spaceId, searchParams)) {
         return
       }
-      // Wait for the roster so the legacy-agent fetch runs exactly once with the
-      // full agent set (instead of once with the fallback and again on arrival).
+      // Wait for the full roster before the single legacy-agent fetch.
       if (!isChannelScope && !spacesRosterLoaded) {
         return
       }
 
-      // Skip redundant re-runs caused by dependency identity churn (e.g. the URL
-      // updating after a space switch). Only inputs that change the result count.
-      // Channel scope never runs the legacy agent fetch, so the agent-keys set is
-      // irrelevant there — including it would refetch on roster arrival for free.
+      // Ignore dependency identity churn and channel-only roster changes.
       const loadSignature = isChannelScope
         ? `${chatScopeStorageId}|${activeAgentKey}`
         : `${chatScopeStorageId}|${chatAgentKeysKey}|${activeAgentKey}`
@@ -753,16 +745,23 @@ export function SpaceVibeyChatPanel({
         list.forEach((c) => useChatStore.getState().addConversation(c))
         setConversations(list)
 
-        // Shell pen / green New: do not revive the last stored thread after a fresh-chat request.
+        // Preserve a drawer-targeted thread despite a stale fresh-chat intent.
         if (useSpacesStore.getState().chatRailIntent === 'new') {
-          setSelectedConversationId(null)
-          persistActiveConversationId(chatScopeStorageId, null, activeAgentKey)
-          useChatStore.getState().setActiveConversationId(null)
-          return
+          const drawerConversationId = shellSidebarChrome
+            ? useShellStore.getState().chatDrawer.conversationId
+            : null
+          if (!drawerConversationId) {
+            setSelectedConversationId(null)
+            persistActiveConversationId(chatScopeStorageId, null, activeAgentKey)
+            useChatStore.getState().setActiveConversationId(null)
+            return
+          }
+          useSpacesStore.getState().setChatRailIntent(null)
         }
 
         const preferredOpenId = resolvePreferredConversationOpenId({
-          pendingOpenConversationId: useSpacesStore.getState().pendingOpenConversationId,
+          pendingOpenConversationId:
+            preferredConversationId ?? useSpacesStore.getState().pendingOpenConversationId,
           shellDrawerConversationId: shellSidebarChrome
             ? useShellStore.getState().chatDrawer.conversationId
             : null,
@@ -773,7 +772,7 @@ export function SpaceVibeyChatPanel({
           if (useSpacesStore.getState().pendingOpenConversationId) {
             useSpacesStore.getState().clearPendingOpenConversation()
           }
-          if (useChatStore.getState().activeConversationId !== preferredOpenId) {
+          if (conversationNeedsMessageHydration(preferredOpenId, useChatStore.getState())) {
             void selectConversation(preferredOpenId)
           }
           return
@@ -792,9 +791,7 @@ export function SpaceVibeyChatPanel({
         if (storedValid && stored) {
           setSelectedConversationId(stored)
           persistActiveConversationId(chatScopeStorageId, stored, activeAgentKey)
-          // Already hydrated (cache-first mount selected it): skip the redundant
-          // blocking re-select; selectConversation revalidates in background.
-          if (useChatStore.getState().activeConversationId !== stored) {
+          if (conversationNeedsMessageHydration(stored, useChatStore.getState())) {
             await selectConversation(stored)
           }
           return
@@ -819,6 +816,7 @@ export function SpaceVibeyChatPanel({
       spaceId,
       spacesRosterLoaded,
       shellSidebarChrome,
+      preferredConversationId,
     ],
   )
 
@@ -890,6 +888,7 @@ export function SpaceVibeyChatPanel({
   }, [messages])
 
   const buildContextForSend = useCallback(() => {
+    if (awarenessContextOverride?.trim()) return awarenessContextOverride.trim()
     if (isChannelScope) return channelContext?.awarenessContext ?? ''
     if (chatSurface === 'brain') return brainContext?.awarenessContext ?? ''
     if (chatSurface === 'team' && teamOpsContext?.awarenessContext) {
@@ -905,6 +904,7 @@ export function SpaceVibeyChatPanel({
   }, [
     activeView?.name,
     activeView?.type,
+    awarenessContextOverride,
     brainContext,
     campaignName,
     channelContext,
@@ -1816,12 +1816,15 @@ export function SpaceVibeyChatPanel({
   useEffect(() => {
     if (!chatRailIntent) return
     if (chatRailIntent === 'new') {
-      void handleNewConversation()
+      const drawerConversationId = shellSidebarChrome
+        ? useShellStore.getState().chatDrawer.conversationId
+        : null
+      if (!drawerConversationId) void handleNewConversation()
     } else if (chatRailIntent === 'list') {
       setMode('conversations')
     }
     setChatRailIntent(null)
-  }, [chatRailIntent, handleNewConversation, setChatRailIntent])
+  }, [chatRailIntent, handleNewConversation, setChatRailIntent, shellSidebarChrome])
 
   const applyGlobalChatSeed = useCallback(
     async (seed: GlobalChatSeedDetail) => {

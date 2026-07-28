@@ -21,9 +21,7 @@ describe('fathom-follow-up-enrichment', () => {
   it('normalizes due dates and infers priority from urgency language', () => {
     expect(normalizeFollowUpDueDateIso('2026-07-20')).toMatch(/^2026-07-20/)
     expect(normalizeFollowUpDueDateIso('not a date')).toBeNull()
-    expect(
-      inferFollowUpPriority({ title: 'Send deck ASAP', explicit: 'medium' }),
-    ).toBe('urgent')
+    expect(inferFollowUpPriority({ title: 'Send deck ASAP', explicit: 'medium' })).toBe('urgent')
     expect(inferFollowUpPriority({ title: 'Nice to have cleanup', explicit: null })).toBe('low')
   })
 
@@ -43,6 +41,20 @@ describe('fathom-follow-up-enrichment', () => {
     expect(enriched.assignee_email).toBe('bryce@roas.co')
     expect(enriched.assignee_name).toBe('Bryce Knutson')
     expect(enriched.priority).toBe('medium')
+    expect(enriched.source_action_index).toBe(0)
+  })
+
+  it('uses the exact source action index instead of fuzzy title matching', () => {
+    const enriched = enrichSuggestedFollowUp({
+      title: 'Send the follow-up',
+      source_action_index: 1,
+      actionItems: [
+        { description: 'Send follow-up notes', assignee: { name: 'Dylan' } },
+        { description: 'Send follow-up deck', assignee: { name: 'Nate' } },
+      ],
+    })
+    expect(enriched.assignee_name).toBe('Nate')
+    expect(enriched.source_action_index).toBe(1)
   })
 
   it('matches action items by overlapping title words', () => {

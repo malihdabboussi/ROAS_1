@@ -181,6 +181,61 @@ export class SpaceAutomationExternalEventsRepository {
     return supabase.from('space_external_automation_events').insert(payload).select().single()
   }
 
+  async claimFathomExternalEvent(
+    supabase: SupabaseClient,
+    payload: Record<string, unknown>,
+  ): Promise<{ claimed: boolean; row: Record<string, unknown> }> {
+    const claimedAt = new Date().toISOString()
+    const inserted = await supabase
+      .from('space_external_automation_events')
+      .insert({
+        ...payload,
+        status: 'processing',
+        claimed_at: claimedAt,
+        attempt_count: 1,
+      })
+      .select()
+      .single()
+    if (!inserted.error && inserted.data) {
+      return { claimed: true, row: inserted.data as Record<string, unknown> }
+    }
+    if (inserted.error?.code !== '23505') {
+      throw new Error(inserted.error?.message ?? 'Failed to claim Fathom event')
+    }
+
+    const eventId = String(payload.composio_event_id ?? '')
+    const { data: existing, error: existingError } = await supabase
+      .from('space_external_automation_events')
+      .select('*')
+      .eq('composio_event_id', eventId)
+      .maybeSingle()
+    if (existingError) throw new Error(existingError.message)
+    if (!existing) throw new Error(`Fathom event claim conflict without row: ${eventId}`)
+
+    const status = String(existing.status ?? '')
+    if (status !== 'failed' && status !== 'received') {
+      return { claimed: false, row: existing as Record<string, unknown> }
+    }
+
+    const nextAttempt = Math.max(0, Number(existing.attempt_count ?? 0)) + 1
+    const { data: retried, error: retryError } = await supabase
+      .from('space_external_automation_events')
+      .update({
+        status: 'processing',
+        claimed_at: claimedAt,
+        attempt_count: nextAttempt,
+        error: null,
+        payload_summary: payload.payload_summary ?? existing.payload_summary ?? {},
+      })
+      .eq('id', existing.id)
+      .in('status', ['failed', 'received'])
+      .select()
+      .maybeSingle()
+    if (retryError) throw new Error(retryError.message)
+    if (!retried) return { claimed: false, row: existing as Record<string, unknown> }
+    return { claimed: true, row: retried as Record<string, unknown> }
+  }
+
   async updateExternalEvent(
     supabase: SupabaseClient,
     eventId: string,

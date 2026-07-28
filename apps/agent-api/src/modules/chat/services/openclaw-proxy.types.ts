@@ -49,6 +49,7 @@ export interface CompletedGeneration {
   usage?: UsageData
   model?: string
   providerCost?: number
+  stage?: 'research' | 'write'
 }
 
 export interface ProviderBillingStartedEvent {
@@ -59,6 +60,8 @@ export interface ProviderBillingStartedEvent {
   provider_generation_id?: string
   provider_request_id?: string
   source?: string
+  recorded?: boolean
+  stage?: 'research' | 'write'
   metadata?: Record<string, unknown>
 }
 
@@ -155,6 +158,8 @@ export interface ProxyOptions {
   strictDisabledNativeActions?: boolean
   skillCatalog?: OpenClawSkillCatalog
   modelSettings?: OpenClawModelSettings
+  generationStage?: 'research' | 'write'
+  toolChoice?: 'none'
 }
 
 export interface OpenClawCompletionResult {

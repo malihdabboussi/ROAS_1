@@ -23,7 +23,7 @@ import {
   pickNextAgendaEvent,
   tomorrowDayKey,
 } from '@/features/home/lib/agenda-list-view'
-import { minimalSpaceYourTurnItem } from '@/features/home/lib/home-your-turn-item'
+import { openAgendaEventDetail } from '@/features/home/lib/agenda-open-routing'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { useWorkspaceSettingsModal } from '@/lib/settings/workspace-settings-modal-context'
 import type { YourTurnItem } from '@/lib/your-turn/types'
@@ -169,19 +169,7 @@ export function AgendaCard({
 
   const openAgendaEvent = useCallback(
     (ev: CalendarAgendaEvent) => {
-      if (isFathomAgendaEvent(ev) && ev.related) {
-        if (!onOpenItem) return
-        void onOpenItem(
-          minimalSpaceYourTurnItem(
-            ev.related.space_id,
-            ev.related.call_item_id,
-            ev.related.title || ev.title,
-            null,
-          ),
-        )
-        return
-      }
-      onOpenMeeting?.(ev)
+      openAgendaEventDetail(ev, onOpenMeeting, onOpenItem)
     },
     [onOpenItem, onOpenMeeting],
   )

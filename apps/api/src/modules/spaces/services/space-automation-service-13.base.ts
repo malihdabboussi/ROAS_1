@@ -347,6 +347,16 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
     if (!internalToken) throw new Error('INTERNAL_API_TOKEN not configured')
 
     const event = this.objectRecord(templateCtx.event)
+    if (
+      event.type === 'external_fathom_recording_ready' &&
+      event.meeting_workspace_actions_authoritative === true
+    ) {
+      return {
+        skipped: true,
+        reason: 'provider_actions_are_authoritative',
+        suggestion_count: 0,
+      }
+    }
     const ownerUserId =
       event.type === 'external_fathom_recording_ready' &&
       typeof event.fathom_owner_user_id === 'string' &&
@@ -457,6 +467,8 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
         priority: typeof task.priority === 'string' ? task.priority : null,
         assignee_email: typeof task.assignee_email === 'string' ? task.assignee_email : null,
         actionItems,
+        source_action_index:
+          typeof task.source_action_index === 'number' ? task.source_action_index : null,
       })
       const groundedAssigneeName = groundAssigneeNameOnPortalPeople(
         enriched.assignee_name,
@@ -546,6 +558,11 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
                 typeof event.meeting_id === 'string' && event.meeting_id ? event.meeting_id : null,
               agent_key: agentKey,
               suggestion_index: index,
+              source_action_index: enriched.source_action_index,
+              source_action_key:
+                enriched.source_action_index === null
+                  ? null
+                  : `${String(event.meeting_id ?? 'meeting')}:${enriched.source_action_index}`,
               source_action: 'agent_suggest_tasks',
             },
             ...(enriched.assignee_email || groundedAssigneeName

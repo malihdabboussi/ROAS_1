@@ -4,6 +4,7 @@ import {
   buildSpaceChatConversationUrl,
   conversationBelongsToChannel,
   conversationBelongsToSpace,
+  conversationNeedsMessageHydration,
   DEFAULT_SPACE_CHAT_AGENT_KEY,
   getConversationAgentKey,
   isHomeChatSeedPending,
@@ -214,6 +215,33 @@ describe('space ROAS chat panel logic', () => {
       }),
     ).toBe('drawer-1')
     expect(resolvePreferredConversationOpenId({})).toBeNull()
+  })
+
+  it('hydrates when active id is set but messages are missing', () => {
+    expect(
+      conversationNeedsMessageHydration('conv-1', {
+        activeConversationId: 'conv-1',
+        messagesByConversation: {},
+      }),
+    ).toBe(true)
+    expect(
+      conversationNeedsMessageHydration('conv-1', {
+        activeConversationId: 'conv-1',
+        messagesByConversation: { 'conv-1': [] },
+      }),
+    ).toBe(true)
+    expect(
+      conversationNeedsMessageHydration('conv-1', {
+        activeConversationId: 'conv-1',
+        messagesByConversation: { 'conv-1': [{ length: 1 }] },
+      }),
+    ).toBe(false)
+    expect(
+      conversationNeedsMessageHydration('conv-1', {
+        activeConversationId: 'other',
+        messagesByConversation: { 'conv-1': [{ length: 1 }] },
+      }),
+    ).toBe(true)
   })
 
   it('waits for a pending shell conversation to exist before resolving its agent', () => {

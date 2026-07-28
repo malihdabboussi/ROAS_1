@@ -117,6 +117,46 @@ describe('OpenClawGatewayRequestService', () => {
     expect(postResponses).toHaveBeenCalledTimes(1)
   })
 
+  it('disables tools for the final writing pass', async () => {
+    vi.stubEnv('OPENCLAW_GATEWAY_URL', 'http://gateway.local')
+    vi.stubEnv('OPENCLAW_GATEWAY_TOKEN', 'gateway-token')
+    const postResponses = vi.fn().mockResolvedValue(
+      new Response('ok', {
+        status: 200,
+        statusText: 'OK',
+      }),
+    )
+    const service = new OpenClawGatewayRequestService(
+      { report: vi.fn() } as never,
+      { resolveRuntimeCredential: vi.fn() } as never,
+      { resolveRuntimeCredential: vi.fn() } as never,
+      { postResponses } as never,
+    )
+
+    const result = await service.openGatewayStream({
+      agentId: 'agent-1',
+      logger: { log: vi.fn(), warn: vi.fn(), error: vi.fn() } as never,
+      logStreamTiming: vi.fn(),
+      options: {
+        conversationId: 'conversation-1',
+        input: 'write the final answer',
+        model: 'anthropic/claude-opus-5',
+        send: vi.fn(async () => undefined),
+        sessionKey: 'session-1:writer',
+        toolChoice: 'none',
+        userId: 'user-1',
+      } as never,
+      requestTimeoutMs: 1000,
+      resolvedModel: 'openrouter/anthropic/claude-opus-5',
+      streamTimingLogsEnabled: false,
+    })
+
+    clearTimeout(result.timeoutHandle)
+    expect(postResponses.mock.calls[0]?.[0]?.payload).toMatchObject({
+      tool_choice: 'none',
+    })
+  })
+
   it('preserves OpenRouter billing failures from gateway status responses', async () => {
     vi.stubEnv('OPENCLAW_GATEWAY_URL', 'http://gateway.local')
     vi.stubEnv('OPENCLAW_GATEWAY_TOKEN', 'gateway-token')

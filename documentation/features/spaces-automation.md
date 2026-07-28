@@ -1,6 +1,6 @@
 # Spaces Flows
 
-Last Modified: 2026-07-22
+Last Modified: 2026-07-28
 
 ## Overview
 
@@ -25,6 +25,12 @@ Spaces automations run rules from the `space_automations` table through the sing
 - Vercel calls the CRON_SECRET-protected `/api/internal/space-automations/process-due` endpoint every minute. The endpoint invokes the existing due-schedule scanner; its database compare-and-swap claim prevents duplicate execution when a warm Nest cron and Vercel wakeup overlap. Scheduled agent actions do not pre-wake Fly in the scheduler. `SpaceAutomationService` calls `UserAgentApiService` for agent execution, so shared Railway profiles route to the shared Agent API/OpenClaw runtime and Fly-machine profiles wake through the shared runtime service path when needed.
 - Rule execution now dispatches through `agent-runtime-queue-automation` when the queue is available. Trigger evaluation, scheduled itemless runs, contact-route automations, Fathom fanout, and connected-app webhook runs enqueue automation jobs with `AGENT_RUNTIME_AUTOMATION_CONCURRENCY` worker concurrency. Unit tests and local contexts without a queue keep the inline fallback path.
 - Flow and Spaces run-history views subscribe to `space_automation_runs` over Supabase Realtime and reload their scoped history after external automation executions, so run history does not depend on reopening the panel.
+- The Delegation Desk template keeps raw work intake private. The Spaces bulk
+  action writes one top-level Inbox task with source task ids, dispatch mode,
+  user context, and a stable source fingerprint. Its `task_created` automation
+  sends that intake to Pixel. Because the trigger is limited to top-level
+  `inbox` items, Pixel can create Ready for review or Dispatched Delegation
+  Packets without recursively starting another run.
 
 ## Persistence
 
@@ -121,6 +127,11 @@ Spaces automations run rules from the `space_automations` table through the sing
 
 ## Decision Log
 
+- 2026-07-28: Added the private Delegation Desk template and Pixel
+  `delegation-desk` skill. Bulk-selected Space tasks enter as one source-linked
+  intake batch with Batch, Review first, or Urgent mode; raw intake does not
+  become a team assignment, and only confirmed destination receipts can mark a
+  packet Dispatched.
 - 2026-07-21: Successful Fathom OAuth reconnect restores the matching user's Fathom routes and automation rules only when they were disabled with the canonical disconnect reason. Manual disables and unrelated failures remain untouched.
 - 2026-07-22: Vercel now wakes the due-schedule processor every minute through a CRON_SECRET-protected internal endpoint. In-process Nest cron remains as an idempotent secondary trigger, but serverless instance warmth is no longer required for scheduled Flows to run.
 - 2026-06-29: Automation run history now listens to `space_automation_runs` changes and reloads the current scoped history for Space and Flow history panels without a manual refresh.
@@ -172,4 +183,5 @@ Spaces automations run rules from the `space_automations` table through the sing
 - 2026-07-22: Unmatched Slack people default to External rather than Internal. Signal evidence stores and displays the readable channel, speaker, timestamp, exact source excerpt, rationale, confidence, and Slack source link; a ledger backfill repairs older ID-only findings.
 - 2026-07-22: Pixel automatically joins non-excluded public channels after OAuth includes `channels:join`, immediately reconciles their history, and exposes workspace coverage states in Channels. Signal review accepts administrator coaching, generates internal-only Shadow action plans (including explicitly requested group DMs), and can save that coaching as an analyzer playbook rule without granting send permission.
 - 2026-07-22: Post-call delivery now uses the same flow-level Shadow/Active safety contract as Team Intelligence. Shadow processes and logs account-manager drafts without Slack sends; Active sends only to Internal + Active people, while the client recap remains separately reviewable.
+- 2026-07-28: Meetings preloads Private, Team, Client, Partner, Sales, and Executive call kinds. Classification no longer treats every owner-attended call as personal, public email domains do not imply company membership, and generated follow-ups retain the exact Fathom action-item index so the Meetings task and Slack recap use the same source owner.
 - 2026-07-22: The unified Slack analyzer runs every five minutes from a durable incremental cursor. Empty intervals do not invoke Gemini. Signals below 80% confidence are rejected, external-subject findings remain in Signals, and a mapped Internal workspace owner receives a separate linked Shadow follow-up instead of Pixel ever addressing the external person.

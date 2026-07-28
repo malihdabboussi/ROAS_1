@@ -2,6 +2,7 @@ import { Injectable, Optional } from '@nestjs/common'
 import { ErrorReporter } from '@vibey/api-shared'
 import { ProviderBillingAttemptsService } from '../../billing/services/provider-billing-attempts.service'
 import type { UsageData } from '../types/stream-events'
+import { parseCompletedProviderGeneration } from './openclaw-completed-generation'
 import { resolveOpenRouterGenerationId } from './openclaw-model-routing'
 import type {
   ProviderBillingStartedEvent,
@@ -68,6 +69,8 @@ export class OpenClawStreamLifecycleService {
       provider_generation_id: providerGenerationId,
       provider_request_id: providerRequestId ?? undefined,
       source: this.readString(evt.source) ?? 'openclaw',
+      recorded: false,
+      stage: context.options.generationStage,
       metadata:
         evt.metadata && typeof evt.metadata === 'object' && !Array.isArray(evt.metadata)
           ? (evt.metadata as Record<string, unknown>)
@@ -107,9 +110,11 @@ export class OpenClawStreamLifecycleService {
           run_id: context.options.runId,
           agent_id: context.agentId,
           event_source: billingEvent.source,
+          generation_stage: billingEvent.stage,
           ...(billingEvent.metadata ?? {}),
         },
       })
+      billingEvent.recorded = true
     } catch (error) {
       state.providerBillingAttemptWriteFailed = true
       context.logger.warn(
@@ -165,13 +170,39 @@ export class OpenClawStreamLifecycleService {
       state.systemPromptReport = respMetadata.system_prompt_report as SystemPromptReport
     }
 
-    state.completedGenerations.push({
-      generationId: completedGenerationId,
-      usage: completedUsage,
-      model: completedModel,
-      providerCost,
-    })
-    state.generationId = completedGenerationId
+    const providerGenerations = Array.isArray(respMetadata?.provider_generations)
+      ? respMetadata.provider_generations
+      : []
+    const providerGenerationIds = Array.isArray(respMetadata?.provider_generation_ids)
+      ? respMetadata.provider_generation_ids
+      : []
+    const detailedGenerations = providerGenerations
+      .map((generation, index) =>
+        parseCompletedProviderGeneration(
+          generation,
+          providerGenerationIds[index],
+          completedModel,
+          context.options.generationStage,
+        ),
+      )
+      .filter((generation): generation is NonNullable<typeof generation> => Boolean(generation))
+
+    if (detailedGenerations.length > 0) {
+      state.completedGenerations.push(...detailedGenerations)
+      state.generationId =
+        detailedGenerations[detailedGenerations.length - 1]?.generationId ??
+        completedGenerationId ??
+        state.generationId
+    } else {
+      state.completedGenerations.push({
+        generationId: completedGenerationId,
+        usage: completedUsage,
+        model: completedModel,
+        providerCost,
+        stage: context.options.generationStage,
+      })
+      state.generationId = completedGenerationId
+    }
     state.usage = completedUsage
   }
 

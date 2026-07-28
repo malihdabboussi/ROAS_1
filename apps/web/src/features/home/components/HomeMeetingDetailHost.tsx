@@ -1,24 +1,27 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
-  Check,
   ChevronDown,
   Copy,
   ExternalLink,
-  HelpCircle,
   MapPin,
   MessageSquare,
+  PanelsTopLeft,
   Video,
   X,
-  XCircle,
 } from 'lucide-react'
-import { toast } from 'sonner'
-import { MeetingTranscriptPanel } from '@/features/home/components/MeetingTranscriptPanel'
-import { HOME_TOAST_SUCCESS } from '@/features/home/config/home-toast-errors.config'
 import {
   attendeeStatusLabel,
+  copyMeetingJoinLink,
+  MeetingAttendeeStatusIcon,
+  MeetingSectionLabel,
+  MeetingTaskRow,
+} from '@/features/home/components/home-meeting-detail-parts'
+import { MeetingTranscriptPanel } from '@/features/home/components/MeetingTranscriptPanel'
+import { MeetingWorkspaceDialog } from '@/features/home/components/MeetingWorkspaceDialog'
+import {
   formatMeetingTimeRange,
   isHttpUrl,
   isYoursFollowUp,
@@ -34,46 +37,6 @@ import type {
 import { buildSpaceItemHref } from '@/lib/spaces/space-item-href'
 import { createClient } from '@/lib/supabase/client'
 
-function SectionLabel({ children }: { children: ReactNode }) {
-  return (
-    <p className="typo-caption text-muted-foreground mb-1.5 font-medium uppercase tracking-wide">
-      {children}
-    </p>
-  )
-}
-
-function TaskRow({ title, onClick }: { title: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="border-border hover:bg-hover-subtle body-3 text-foreground w-full rounded-lg border px-3 py-2 text-left"
-    >
-      {title}
-    </button>
-  )
-}
-
-function AttendeeStatusIcon({
-  status,
-}: {
-  status: CalendarAgendaEvent['attendees'][number]['status']
-}) {
-  if (status === 'accepted') {
-    return <Check className="text-success h-3.5 w-3.5 shrink-0" aria-hidden />
-  }
-  if (status === 'declined') {
-    return <XCircle className="text-destructive h-3.5 w-3.5 shrink-0" aria-hidden />
-  }
-  return <HelpCircle className="text-muted-foreground h-3.5 w-3.5 shrink-0" aria-hidden />
-}
-
-function copyJoinLink(url: string) {
-  void navigator.clipboard.writeText(url).then(() => {
-    toast.success(HOME_TOAST_SUCCESS.LINK_COPIED.userMessage)
-  })
-}
-
 export function HomeMeetingDetailHost({
   event,
   onClose,
@@ -88,6 +51,7 @@ export function HomeMeetingDetailHost({
   const router = useRouter()
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [fullDetails, setFullDetails] = useState(false)
+  const [workspaceOpen, setWorkspaceOpen] = useState(false)
   const location = event.location?.trim() || null
   const description = event.description?.trim() || null
   const related = event.related ?? null
@@ -156,6 +120,19 @@ export function HomeMeetingDetailHost({
     event.html_link,
   )
 
+  if (workspaceOpen && related?.space_id && related.call_item_id) {
+    return (
+      <MeetingWorkspaceDialog
+        spaceId={related.space_id}
+        meetingItemId={related.call_item_id}
+        joinUrl={joinUrl}
+        fallbackTitle={event.title}
+        onBack={() => setWorkspaceOpen(false)}
+        onClose={onClose}
+      />
+    )
+  }
+
   return (
     <div className="z-modal-backdrop bg-modal-overlay fixed inset-0 flex items-center justify-center p-4">
       <div
@@ -204,7 +181,7 @@ export function HomeMeetingDetailHost({
                   </p>
                   <button
                     type="button"
-                    onClick={() => copyJoinLink(joinUrl)}
+                    onClick={() => copyMeetingJoinLink(joinUrl)}
                     className="text-muted-foreground hover:text-foreground hover:bg-hover-subtle shrink-0 rounded-md p-1"
                     aria-label="Copy join link"
                     title="Copy join link"
@@ -218,14 +195,14 @@ export function HomeMeetingDetailHost({
 
           {event.attendees.length > 0 ? (
             <section>
-              <SectionLabel>Guests · {event.attendees.length}</SectionLabel>
+              <MeetingSectionLabel>Guests · {event.attendees.length}</MeetingSectionLabel>
               <ul className="gap-spacing-1 flex flex-col">
                 {event.attendees.map((a) => {
                   const status = attendeeStatusLabel(a.status)
                   const name = a.name?.trim() || null
                   return (
                     <li key={`${a.email}-${name ?? ''}`} className="flex items-start gap-2">
-                      <AttendeeStatusIcon status={a.status} />
+                      <MeetingAttendeeStatusIcon status={a.status} />
                       <div className="min-w-0 flex-1">
                         <p className="body-3 text-foreground truncate">{name || a.email}</p>
                         {name ? (
@@ -246,7 +223,7 @@ export function HomeMeetingDetailHost({
 
           {location && !locationIsJoin ? (
             <section>
-              <SectionLabel>Where</SectionLabel>
+              <MeetingSectionLabel>Where</MeetingSectionLabel>
               <p className="body-3 text-foreground flex items-start gap-2 break-all">
                 <MapPin className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 {location}
@@ -258,14 +235,14 @@ export function HomeMeetingDetailHost({
             <>
               {calendarsLabel ? (
                 <section>
-                  <SectionLabel>On calendars</SectionLabel>
+                  <MeetingSectionLabel>On calendars</MeetingSectionLabel>
                   <p className="body-3 text-foreground">{calendarsLabel}</p>
                 </section>
               ) : null}
 
               {description ? (
                 <section>
-                  <SectionLabel>Details</SectionLabel>
+                  <MeetingSectionLabel>Details</MeetingSectionLabel>
                   <p className="body-3 text-foreground whitespace-pre-wrap break-words">
                     {description}
                   </p>
@@ -274,7 +251,7 @@ export function HomeMeetingDetailHost({
 
               {summary ? (
                 <section>
-                  <SectionLabel>Summary</SectionLabel>
+                  <MeetingSectionLabel>Summary</MeetingSectionLabel>
                   <p className="body-3 text-foreground whitespace-pre-wrap">{summary}</p>
                 </section>
               ) : null}
@@ -288,7 +265,7 @@ export function HomeMeetingDetailHost({
 
               {relatedHref || recordingUrl ? (
                 <section className="flex flex-col gap-2">
-                  <SectionLabel>Meeting record</SectionLabel>
+                  <MeetingSectionLabel>Meeting record</MeetingSectionLabel>
                   {relatedHref ? (
                     <button
                       type="button"
@@ -319,27 +296,35 @@ export function HomeMeetingDetailHost({
 
               {yours.length > 0 ? (
                 <section className="flex flex-col gap-2">
-                  <SectionLabel>Your action items</SectionLabel>
+                  <MeetingSectionLabel>Your action items</MeetingSectionLabel>
                   {yours.slice(0, 8).map((fu) => (
-                    <TaskRow key={fu.id} title={fu.title} onClick={() => openFollowUp(fu.id)} />
+                    <MeetingTaskRow
+                      key={fu.id}
+                      title={fu.title}
+                      onClick={() => openFollowUp(fu.id)}
+                    />
                   ))}
                 </section>
               ) : null}
 
               {others.length > 0 ? (
                 <section className="flex flex-col gap-2">
-                  <SectionLabel>
+                  <MeetingSectionLabel>
                     {yours.length > 0 ? 'Other action items' : 'Action items'}
-                  </SectionLabel>
+                  </MeetingSectionLabel>
                   {others.slice(0, 8).map((fu) => (
-                    <TaskRow key={fu.id} title={fu.title} onClick={() => openFollowUp(fu.id)} />
+                    <MeetingTaskRow
+                      key={fu.id}
+                      title={fu.title}
+                      onClick={() => openFollowUp(fu.id)}
+                    />
                   ))}
                 </section>
               ) : null}
 
               {related && yours.length === 0 && others.length === 0 ? (
                 <section>
-                  <SectionLabel>Action items</SectionLabel>
+                  <MeetingSectionLabel>Action items</MeetingSectionLabel>
                   <p className="typo-caption text-muted-foreground">No follow-up tasks yet.</p>
                 </section>
               ) : null}
@@ -374,6 +359,16 @@ export function HomeMeetingDetailHost({
         </div>
 
         <div className="border-border flex flex-col gap-2 border-t px-5 py-4">
+          {related?.space_id && related.call_item_id ? (
+            <button
+              type="button"
+              onClick={() => setWorkspaceOpen(true)}
+              className="button-glass-primary body-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 font-semibold"
+            >
+              <PanelsTopLeft className="h-4 w-4" aria-hidden />
+              Open meeting workspace
+            </button>
+          ) : null}
           {event.prep ? (
             <button
               type="button"
@@ -383,17 +378,21 @@ export function HomeMeetingDetailHost({
               {prepOpenLabel(event.prep.status)}
             </button>
           ) : null}
-          <button
-            type="button"
-            onClick={onTalkWithPixel}
-            className="button-glass-purple body-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 font-semibold"
-          >
-            <MessageSquare className="h-4 w-4" aria-hidden />
-            Prepare with Pixel
-          </button>
-          <p className="typo-caption text-muted-foreground text-center">
-            Pixel asks whether to prep beforehand or guide you live on the call.
-          </p>
+          {!related?.call_item_id ? (
+            <>
+              <button
+                type="button"
+                onClick={onTalkWithPixel}
+                className="button-glass-purple body-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 font-semibold"
+              >
+                <MessageSquare className="h-4 w-4" aria-hidden />
+                Prepare with Pixel
+              </button>
+              <p className="typo-caption text-muted-foreground text-center">
+                Pixel asks whether to prep beforehand or guide you live on the call.
+              </p>
+            </>
+          ) : null}
         </div>
       </div>
     </div>

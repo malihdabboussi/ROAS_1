@@ -223,6 +223,7 @@ export class OpenClawGatewayRequestService {
       max_output_tokens: resolveGatewayMaxTokens(resolvedModel),
     }
     if (options.conversationId) payload.lane = `chat:${options.conversationId}`
+    if (options.toolChoice) payload.tool_choice = options.toolChoice
     if (options.modelSettings?.contextWindowTokens) {
       payload.context_window_tokens = options.modelSettings.contextWindowTokens
     }

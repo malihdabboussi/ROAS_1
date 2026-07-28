@@ -99,7 +99,8 @@ describe('HomeMeetingDetailHost', () => {
     expect(screen.getByText('Dylan')).toBeTruthy()
     expect(screen.getByText('dylan@dylanvanas.com')).toBeTruthy()
     expect(screen.queryByText('Mine · Aaron McKeague')).toBeNull()
-    expect(screen.getByRole('button', { name: 'Prepare with Pixel' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Open meeting workspace' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Prepare with Pixel' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Start pre-call prep' })).toBeNull()
 
     const dialog = screen.getByRole('dialog')

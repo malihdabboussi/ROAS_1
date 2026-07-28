@@ -107,8 +107,7 @@ export function extractDueDateFromText(text: string, now = new Date()): string |
   return Number.isNaN(d.getTime()) ? null : d.toISOString()
 }
 
-const URGENT_RE =
-  /\b(asap|urgent|immediately|right away|eod|end of day|blocker|critical|today)\b/i
+const URGENT_RE = /\b(asap|urgent|immediately|right away|eod|end of day|blocker|critical|today)\b/i
 const HIGH_RE =
   /\b(this week|by friday|by monday|important|priority|follow[- ]?up (asap|soon)|needs? (to )?(go|ship|send) (today|tomorrow))\b/i
 const LOW_RE = /\b(nice to have|when you can|someday|fyi|low priority|no rush)\b/i
@@ -122,12 +121,7 @@ export function inferFollowUpPriority(input: {
   const explicit = String(input.explicit ?? '')
     .trim()
     .toLowerCase()
-  if (
-    explicit === 'low' ||
-    explicit === 'medium' ||
-    explicit === 'high' ||
-    explicit === 'urgent'
-  ) {
+  if (explicit === 'low' || explicit === 'medium' || explicit === 'high' || explicit === 'urgent') {
     // Soft override: agent said medium but language is louder → raise.
     if (explicit === 'medium' || explicit === 'low') {
       const inferred = inferFromText(input)
@@ -200,13 +194,24 @@ export function enrichSuggestedFollowUp(input: {
   priority?: string | null
   assignee_email?: string | null
   actionItems?: FathomActionItemLike[]
+  source_action_index?: number | null
 }): {
   due_date: string | null
   priority: FollowUpPriority
   assignee_email: string | null
   assignee_name: string | null
+  source_action_index: number | null
 } {
-  const matched = matchFathomActionItem(input.title, input.actionItems ?? [])
+  const actionItems = input.actionItems ?? []
+  const exactIndex =
+    Number.isInteger(input.source_action_index) &&
+    Number(input.source_action_index) >= 0 &&
+    Number(input.source_action_index) < actionItems.length
+      ? Number(input.source_action_index)
+      : null
+  const matched =
+    exactIndex === null ? matchFathomActionItem(input.title, actionItems) : actionItems[exactIndex]
+  const matchedIndex = exactIndex ?? (matched ? actionItems.indexOf(matched) : -1)
   const textForDate = [input.title, input.description, actionItemLabel(matched ?? {})]
     .filter(Boolean)
     .join('\n')
@@ -215,11 +220,7 @@ export function enrichSuggestedFollowUp(input: {
     normalizeFollowUpDueDateIso(matched?.deadline) ||
     normalizeFollowUpDueDateIso(matched?.due_date) ||
     extractDueDateFromText(textForDate)
-  const assignee_email = (
-    input.assignee_email ||
-    matched?.assignee?.email ||
-    ''
-  )
+  const assignee_email = (input.assignee_email || matched?.assignee?.email || '')
     .trim()
     .toLowerCase()
   const assignee_name = String(matched?.assignee?.name ?? '').trim() || null
@@ -234,6 +235,7 @@ export function enrichSuggestedFollowUp(input: {
     priority,
     assignee_email: assignee_email || null,
     assignee_name,
+    source_action_index: matchedIndex >= 0 ? matchedIndex : null,
   }
 }
 

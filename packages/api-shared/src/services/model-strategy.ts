@@ -1,4 +1,5 @@
 export type ModelStrategy = 'auto' | 'auto:economy' | 'auto:power'
+export type ChatGenerationStage = 'research' | 'write'
 
 export type TaskType =
   | 'chat'
@@ -43,6 +44,18 @@ const QUALITY_MODEL_SETTINGS = {
 const ECONOMY_MODEL_SETTINGS = {
   context_window_tokens: 272_000,
   reasoning_effort: 'low',
+  speed_mode: 'standard',
+} satisfies StrategyModelSettings
+
+const CHAT_RESEARCH_MODEL_SETTINGS = {
+  context_window_tokens: 128_000,
+  reasoning_effort: 'low',
+  speed_mode: 'standard',
+} satisfies StrategyModelSettings
+
+const CHAT_WRITER_MODEL_SETTINGS = {
+  context_window_tokens: 64_000,
+  reasoning_effort: 'medium',
   speed_mode: 'standard',
 } satisfies StrategyModelSettings
 
@@ -130,6 +143,25 @@ export function resolveModelForStrategy(
   task: TaskType,
 ): ResolvedStrategyModel {
   return STRATEGY_MATRIX[strategy][task]
+}
+
+export function resolveChatStageModel(
+  strategy: ModelStrategy,
+  stage: ChatGenerationStage,
+): ResolvedStrategyModel {
+  if (strategy === 'auto:economy') {
+    return routedModel(ECONOMY_MODEL_ID, CHAT_RESEARCH_MODEL_SETTINGS, `economy_chat_${stage}`)
+  }
+  if (strategy === 'auto:power') {
+    return routedModel(
+      HIGH_STAKES_MODEL_ID,
+      stage === 'research' ? CHAT_RESEARCH_MODEL_SETTINGS : CHAT_WRITER_MODEL_SETTINGS,
+      `power_chat_${stage}`,
+    )
+  }
+  return stage === 'research'
+    ? routedModel(ECONOMY_MODEL_ID, CHAT_RESEARCH_MODEL_SETTINGS, 'auto_chat_research')
+    : routedModel(QUALITY_MODEL_ID, CHAT_WRITER_MODEL_SETTINGS, 'auto_chat_write')
 }
 
 const FALLBACK_MATRIX: Record<ModelStrategy, Record<TaskType, ResolvedStrategyModel>> = {

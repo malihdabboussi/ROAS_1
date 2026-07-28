@@ -15,10 +15,16 @@ export function GlobalChatPanel({
   shellSidebarChrome = false,
   onCollapseChat,
   presentation = 'compact',
+  meetingContext,
 }: {
   shellSidebarChrome?: boolean
   onCollapseChat?: () => void
   presentation?: 'full' | 'compact'
+  meetingContext?: {
+    spaceId: string
+    conversationId: string | null
+    awarenessContext: string
+  }
 } = {}) {
   const pathname = usePathname() ?? ''
   const workContext = useGlobalChatStore((s) => s.workContext)
@@ -42,8 +48,12 @@ export function GlobalChatPanel({
     activeSpaceCampaignId: activeSpace?.campaign_id ?? null,
     workContext,
   })
-  const spaceId = host.spaceId
-  const awarenessSurface = workContext.surface === 'general' ? 'general' : workContext.surface
+  const spaceId = meetingContext?.spaceId ?? host.spaceId
+  const awarenessSurface = meetingContext
+    ? 'spaces'
+    : workContext.surface === 'general'
+      ? 'general'
+      : workContext.surface
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
@@ -51,7 +61,9 @@ export function GlobalChatPanel({
       <ChatCampaignBrainNudge />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <SpaceVibeyChatPanel
-          key={host.panelKey}
+          key={
+            meetingContext ? `meeting:${meetingContext.conversationId ?? spaceId}` : host.panelKey
+          }
           chatSurface={awarenessSurface}
           spaceId={spaceId}
           campaignId={
@@ -62,6 +74,8 @@ export function GlobalChatPanel({
           campaignName={
             awarenessSurface === 'spaces' && isSpacesRoute ? (activeSpace?.title ?? null) : null
           }
+          preferredConversationId={meetingContext?.conversationId}
+          awarenessContextOverride={meetingContext?.awarenessContext}
           brainContext={
             awarenessSurface === 'brain' && workContext.brainAwarenessContext
               ? {

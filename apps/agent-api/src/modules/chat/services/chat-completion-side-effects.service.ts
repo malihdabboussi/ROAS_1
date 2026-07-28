@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { CreditsService, type TokenUsage } from '../../billing/services/credits.service'
 import type { CreditData } from '../types/stream-events'
-import { OpenRouterCostService, type CompletedGenerationCostInput } from './openrouter-cost.service'
+import type { ResolvedSlashCommand } from './chat-slash-command.service'
 import type { OpenClawCompletionResult } from './openclaw-proxy.service'
 import type {
   ToolStep,
@@ -10,7 +10,7 @@ import type {
   TraceTerminalStatus,
   TraceUserVisibleOutcome,
 } from './openclaw-proxy.types'
-import type { ResolvedSlashCommand } from './chat-slash-command.service'
+import { OpenRouterCostService, type CompletedGenerationCostInput } from './openrouter-cost.service'
 import { SkillRecommendationEventRecorderService } from './skill-recommendation-event-recorder.service'
 import { TracingService } from './tracing.service'
 
@@ -54,7 +54,17 @@ export class ChatCompletionSideEffectsService {
 
   runDetached(input: ChatCompletionSideEffectsInput): void {
     const costInput = this.buildCostInput(input.result, input.resolvedModelId)
-    const tokenUsage = this.aggregateLiveTokenUsage(input.result)
+    const coveredGenerationIds = new Set(
+      (input.result.providerBillingAttempts ?? [])
+        .filter((attempt) => attempt.recorded === true)
+        .map((attempt) => attempt.provider_generation_id)
+        .filter((id): id is string => Boolean(id)),
+    )
+    const billableCostInput = costInput.filter(
+      (generation) =>
+        !generation.generationId || !coveredGenerationIds.has(generation.generationId),
+    )
+    const tokenUsage = this.aggregateLiveTokenUsage(input.result, coveredGenerationIds)
     const resultContent = input.result.content
     const resultUsage = input.result.usage
     const resultToolSteps = input.toolSteps
@@ -74,6 +84,32 @@ export class ChatCompletionSideEffectsService {
       } catch (err) {
         input.logger.error(`[Background] Cost lookup failed for ${input.conversationId}: ${err}`)
       }
+      input.logger.log(
+        JSON.stringify({
+          feature: 'chat_generation_cost_v1',
+          agent_key: input.agentKey,
+          channel: input.channel,
+          conversation_id: input.conversationId,
+          requested_model: input.requestedModelId,
+          resolved_model: input.resolvedModelId ?? null,
+          total_cost_usd: costUsd ?? null,
+          cost_source: costSource ?? null,
+          priced_generation_ids: generationIds,
+          generations: (input.result.completedGenerations ?? []).map((generation) => ({
+            generation_id: generation.generationId ?? null,
+            model: generation.model ?? input.resolvedModelId ?? null,
+            stage: generation.stage ?? null,
+            input_tokens: generation.usage?.input_tokens ?? null,
+            output_tokens: generation.usage?.output_tokens ?? null,
+            cache_read_tokens: generation.usage?.cache_read_input_tokens ?? null,
+            cache_write_tokens: generation.usage?.cache_creation_input_tokens ?? null,
+            provider_cost: generation.providerCost ?? null,
+            settlement_recorded: generation.generationId
+              ? coveredGenerationIds.has(generation.generationId)
+              : false,
+          })),
+        }),
+      )
 
       this.tracing
         .completeTrace(input.traceId, {
@@ -115,14 +151,20 @@ export class ChatCompletionSideEffectsService {
           )
           return
         }
-        if (
-          (input.result.providerBillingAttempts?.length ?? 0) > 0 &&
-          !input.result.providerBillingAttemptWriteFailed
-        ) {
+        if (costInput.length > 0 && billableCostInput.length === 0) {
           input.logger.log(
-            `[Credits] Skipping legacy completion charge for ${input.conversationId} — provider billing settlement owns this generation`,
+            `[Credits] Skipping legacy completion charge for ${input.conversationId} — provider billing settlement owns every generation`,
           )
           return
+        }
+        if (billableCostInput.length !== costInput.length) {
+          const unbilled = await this.costService.sumGenerationCosts(
+            billableCostInput,
+            input.resolvedModelId,
+          )
+          costUsd = unbilled.totalUsd
+          costSource = unbilled.totalUsd !== undefined ? unbilled.costSource : undefined
+          generationIds = unbilled.generationIds
         }
 
         let creditData: CreditData | undefined
@@ -215,8 +257,14 @@ export class ChatCompletionSideEffectsService {
     })
   }
 
-  private aggregateLiveTokenUsage(result: OpenClawCompletionResult): TokenUsage | undefined {
-    const completed = result.completedGenerations ?? []
+  private aggregateLiveTokenUsage(
+    result: OpenClawCompletionResult,
+    coveredGenerationIds: Set<string>,
+  ): TokenUsage | undefined {
+    const completed = (result.completedGenerations ?? []).filter(
+      (generation) =>
+        !generation.generationId || !coveredGenerationIds.has(generation.generationId),
+    )
     if (completed.length === 0) return undefined
 
     const aggregate: TokenUsage = {
