@@ -19,31 +19,44 @@ function formatWhen(ev: CalendarAgendaEvent): string {
   })}`
 }
 
-/** Open left-rail chat (Vibey) scoped to personal Meetings for this calendar event. */
+/**
+ * Open left-rail chat (Pixel) scoped to Meetings for this calendar event.
+ * Auto-sends so Pixel asks whether to prep beforehand or guide live on the call.
+ */
 export function askAboutMeetingInChat(ev: CalendarAgendaEvent): void {
   void (async () => {
     const spaceId = await resolveMeetingsSpaceId()
     const campaignId = peekPersonalMeetingsCampaignId()
     const attendees = ev.attendees
-      .map((a) => a.name?.trim() || a.email)
+      .map((a) => {
+        const label = a.name?.trim() || a.email
+        const status = a.status && a.status !== 'unknown' ? ` (${a.status})` : ''
+        return `${label}${status}`
+      })
       .filter(Boolean)
       .join(', ')
 
     const lines = [
-      `Help me with this meeting: ${ev.title}`,
+      `I'm looking at this meeting and need your help.`,
+      '',
+      `Meeting: ${ev.title}`,
       `When: ${formatWhen(ev)}`,
       attendees ? `Who: ${attendees}` : null,
       ev.location?.trim() ? `Where: ${ev.location.trim()}` : null,
       ev.video_url ? `Join: ${ev.video_url}` : null,
+      ev.account_label ? `Calendar: ${ev.account_label}` : null,
       ev.prep
-        ? `Prep item: ${ev.prep.title ?? 'Prep'} (${ev.prep.status}) — space item ${ev.prep.space_item_id}`
-        : 'Prep: not started yet.',
+        ? `Existing prep doc: ${ev.prep.title ?? 'Prep'} (${ev.prep.status}) — space item ${ev.prep.space_item_id}`
+        : null,
       ev.related
         ? `Linked call recording: ${ev.related.title}${ev.related.recording_url ? ` — ${ev.related.recording_url}` : ''}`
         : null,
       '',
-      'Use Meetings space context. Help with prep, talking points, notes, and follow-ups. Never send messages or emails unless I explicitly ask.',
+      'First, ask me which mode I want:',
+      '1) Prepare beforehand — talking points, open loops, suggested approach, and a short prep doc.',
+      '2) Guide me live — I am on (or about to join) the call; keep answers short and tactical.',
       '',
+      'Then follow my choice. Use Meetings space context. Never send Slack, email, or DMs unless I explicitly ask.',
     ].filter((line): line is string => line !== null)
 
     useGlobalChatStore.getState().seedComposer({

@@ -176,6 +176,8 @@ export class GoogleWorkspaceApiService {
     for (const user of users) {
       if (user.suspended) continue
       const existing = await this.identitiesRepo.findByEmail(supabase, orgId, user.primaryEmail)
+      // Directory users are Team Agenda–eligible by default. Rejected stays out.
+      // Slack/portal person links still attach via seedFromOrgSurfaces below.
       await this.identitiesRepo.upsertByEmail(supabase, {
         orgId,
         calendarEmail: user.primaryEmail,
@@ -183,15 +185,14 @@ export class GoogleWorkspaceApiService {
         googleWorkspaceUserId: user.id,
         source: 'directory_sync',
         lastSyncedAt: now,
-        matchStatus: existing?.match_status === 'confirmed' ? 'confirmed' : existing?.match_status,
+        matchStatus: existing?.match_status === 'rejected' ? 'rejected' : 'confirmed',
+        matchMethod:
+          existing?.match_status === 'rejected'
+            ? (existing.match_method ?? 'manual')
+            : (existing?.match_method ?? 'directory_sync'),
       })
       const row = await this.identitiesRepo.findByEmail(supabase, orgId, user.primaryEmail)
-      if (row && row.match_status !== 'confirmed' && row.match_status !== 'rejected') {
-        const linked = await this.identities.refreshSuggestions(supabase, orgId, row)
-        if (linked.match_status === 'confirmed') matched += 1
-      } else if (row?.match_status === 'confirmed') {
-        matched += 1
-      }
+      if (row?.match_status === 'confirmed') matched += 1
       upserted += 1
     }
 

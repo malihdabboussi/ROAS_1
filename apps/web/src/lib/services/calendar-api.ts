@@ -40,6 +40,7 @@ export type CalendarAgendaEvent = {
   end: string
   all_day: boolean
   location?: string | null
+  description?: string | null
   video_url: string | null
   video_label: string | null
   html_link: string | null
@@ -76,6 +77,15 @@ export async function runMeetingsPrecallPrepEvent(input: {
   calendarEventId: string
   timezone?: string
   refresh?: boolean
+  event?: {
+    title: string
+    start: string
+    end: string
+    all_day: boolean
+    video_url?: string | null
+    location?: string | null
+    attendees?: Array<{ email?: string | null; name?: string | null }>
+  }
 }): Promise<{
   calendar_event_id: string
   space_item_id: string
@@ -88,6 +98,8 @@ export async function runMeetingsPrecallPrepEvent(input: {
     calendar_event_id: input.calendarEventId,
     timezone: input.timezone,
     refresh: input.refresh !== false,
+    event_start: input.event?.start,
+    ...(input.event ? { event: input.event } : {}),
   })
 }
 
@@ -99,12 +111,44 @@ export type CalendarAgendaAccount = {
   provider: CalendarProvider
 }
 
+export type TeamAgendaCoverage = {
+  included: Array<{
+    identity_id: string
+    email: string
+    display_name: string | null
+    match_status: string
+    event_count: number
+    error?: string
+  }>
+  skipped: Array<{
+    identity_id: string
+    email: string
+    display_name: string | null
+    match_status: string
+    reason: 'rejected' | 'capped'
+  }>
+  errors: Array<{
+    identity_id: string
+    email: string
+    display_name: string | null
+    error: string
+  }>
+  totals: {
+    directory: number
+    pulled: number
+    rejected: number
+    capped: number
+    failed: number
+  }
+}
+
 export type CalendarAgendaResponse = {
   success: boolean
   events: CalendarAgendaEvent[]
   connected: { google_calendar: boolean; outlook: boolean }
   accounts?: CalendarAgendaAccount[]
   team_available?: boolean
+  team_coverage?: TeamAgendaCoverage
   error?: string
 }
 

@@ -105,15 +105,18 @@ export function HomeTaskDetailHost({
   item,
   onClose,
   onUpdated,
+  presentation = 'modal',
 }: {
   item: YourTurnItem
   onClose: () => void
   onUpdated?: () => void
+  presentation?: 'modal' | 'panel'
 }) {
   if (item.kind === 'mission_subtask') {
     return (
       <YourTurnSubtaskDrawer
         item={item}
+        presentation={presentation}
         onClose={onClose}
         onActionCompleted={() => {
           onUpdated?.()
@@ -131,6 +134,7 @@ export function HomeTaskDetailHost({
     <HomeSpaceTaskDetailHost
       spaceId={item.space_id}
       itemId={item.id}
+      presentation={presentation}
       onClose={onClose}
       onUpdated={onUpdated}
     />
@@ -140,11 +144,13 @@ export function HomeTaskDetailHost({
 function HomeSpaceTaskDetailHost({
   spaceId,
   itemId,
+  presentation,
   onClose,
   onUpdated,
 }: {
   spaceId: string
   itemId: string
+  presentation: 'modal' | 'panel'
   onClose: () => void
   onUpdated?: () => void
 }) {
@@ -243,11 +249,7 @@ function HomeSpaceTaskDetailHost({
         const hydratedItems = items.some((i) => i.id === targetItem!.id)
           ? items
           : [targetItem, ...items]
-        hydrateStoreForSpaceTask(
-          { ...loadedSpace, schema: mergedSchema },
-          hydratedItems,
-          view.id,
-        )
+        hydrateStoreForSpaceTask({ ...loadedSpace, schema: mergedSchema }, hydratedItems, view.id)
 
         // Always load roster (personal = self + agents; org = team members).
         // Skipping personal spaces left Assignee Empty even when assignee_id was set.
@@ -333,7 +335,13 @@ function HomeSpaceTaskDetailHost({
 
   if (loading || !space || !schema || !activeView || !selectedItem) {
     return (
-      <div className="fixed inset-0 z-[50] flex items-center justify-center bg-black/40">
+      <div
+        className={
+          presentation === 'panel'
+            ? 'flex h-full min-h-0 w-full items-center justify-center'
+            : 'bg-modal-overlay z-modal fixed inset-0 flex items-center justify-center'
+        }
+      >
         <VibeyLoadingOrb state="processing" size="md" />
       </div>
     )
@@ -342,6 +350,7 @@ function HomeSpaceTaskDetailHost({
   return (
     <SpaceStatusCascadeConfirmProvider statusField={statusField} spaceId={spaceId}>
       <TaskDetailModal
+        presentation={presentation}
         item={selectedItem}
         allFields={fieldsForUi}
         activeView={activeView}

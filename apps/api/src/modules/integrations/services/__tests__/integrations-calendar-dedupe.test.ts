@@ -4,6 +4,7 @@ import {
   dedupeCalendarAgendaEvents,
   dedupeTeamAgendaEvents,
   mergeFathomIntoNearStartCalendars,
+  mergeTeamAgendaWithPersonal,
   normalizeAgendaTitle,
   resolveTeamAgendaAccountLabel,
   teamAgendaDedupeKey,
@@ -67,9 +68,11 @@ describe('integrations-calendar-dedupe', () => {
     ])
   })
 
-  it('drops Mine when a teammate calendar also has the call', () => {
-    expect(resolveTeamAgendaAccountLabel(['Mine', 'Aaron McKeague'])).toBe('Aaron McKeague')
-    expect(resolveTeamAgendaAccountLabel(['Fathom', 'Mine', 'Nefi Blanco'])).toBe('Nefi Blanco')
+  it('keeps Mine first when a teammate calendar also has the call', () => {
+    expect(resolveTeamAgendaAccountLabel(['Mine', 'Aaron McKeague'])).toBe('Mine · Aaron McKeague')
+    expect(resolveTeamAgendaAccountLabel(['Fathom', 'Mine', 'Nefi Blanco'])).toBe(
+      'Mine · Nefi Blanco',
+    )
     expect(resolveTeamAgendaAccountLabel(['Mine', 'Fathom'])).toBe('Mine')
     expect(resolveTeamAgendaAccountLabel(['Fathom'])).toBe('Fathom')
   })
@@ -203,5 +206,49 @@ describe('integrations-calendar-dedupe', () => {
       event({ id: 'b', title: 'Dylan Vanas and Joey Abdullah | Zoom Call' }),
     ])
     expect(deduped).toHaveLength(2)
+  })
+
+  it('preserves team_coverage when merging Mine calendars into Team', () => {
+    const coverage = {
+      included: [
+        {
+          identity_id: 'nate',
+          email: 'nate@roas.co',
+          display_name: 'Nate',
+          match_status: 'confirmed',
+          event_count: 1,
+        },
+      ],
+      skipped: [],
+      errors: [],
+      totals: { directory: 1, pulled: 1, rejected: 0, capped: 0, failed: 0 },
+    }
+    const merged = mergeTeamAgendaWithPersonal(
+      {
+        success: true,
+        events: [event({ id: 'team-1', account_label: 'Nate' })],
+        connected: { google_calendar: true, outlook: false },
+        accounts: [],
+        team_available: true,
+        team_coverage: coverage,
+      },
+      {
+        success: true,
+        events: [event({ id: 'mine-1', account_label: 'Dylan' })],
+        connected: { google_calendar: true, outlook: false },
+        accounts: [
+          {
+            userIntegrationId: 'u1',
+            composioAccountId: 'c1',
+            label: 'Dylan',
+            isDefault: true,
+            provider: 'google_calendar',
+          },
+        ],
+        team_available: false,
+      },
+    )
+    expect(merged.team_coverage).toEqual(coverage)
+    expect(merged.accounts.some((a) => a.label === 'Mine')).toBe(true)
   })
 })

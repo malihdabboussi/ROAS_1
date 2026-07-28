@@ -62,6 +62,7 @@ export type GoogleWorkspaceAgendaEvent = {
   end: string
   all_day: boolean
   location: string | null
+  description: string | null
   video_url: string | null
   html_link: string | null
   ical_uid: string | null

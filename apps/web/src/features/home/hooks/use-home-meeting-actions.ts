@@ -6,6 +6,7 @@ import { runMeetingsPrecallPrepEvent, type CalendarAgendaEvent } from '@/lib/ser
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import type { YourTurnItem } from '@/lib/your-turn/types'
 import { HOME_TOAST_ERRORS, HOME_TOAST_SUCCESS } from '../config/home-toast-errors.config'
+import { askAboutMeetingInChat } from '../lib/ask-meeting-in-chat'
 import { minimalSpaceYourTurnItem } from '../lib/home-your-turn-item'
 import { resolveMeetingsSpaceId } from '../lib/resolve-meetings-space-id'
 
@@ -36,6 +37,18 @@ export function useHomeMeetingActions({
         calendarEventId: activeMeetingEvent.id,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         refresh: true,
+        event: {
+          title: activeMeetingEvent.title,
+          start: activeMeetingEvent.start,
+          end: activeMeetingEvent.end,
+          all_day: activeMeetingEvent.all_day,
+          video_url: activeMeetingEvent.video_url,
+          location: activeMeetingEvent.location,
+          attendees: activeMeetingEvent.attendees.map((a) => ({
+            email: a.email,
+            name: a.name,
+          })),
+        },
       })
       toast.success(HOME_TOAST_SUCCESS.PREP_STARTED.userMessage)
       closeMeetingEvent()
@@ -66,5 +79,16 @@ export function useHomeMeetingActions({
     )
   }, [activeMeetingEvent, openYourTurnItemFromMeeting, startMeetingPrep])
 
-  return { meetingPrepBusy, startMeetingPrep, openMeetingPrep }
+  const talkWithPixelAboutMeeting = useCallback(() => {
+    if (!activeMeetingEvent) return
+    askAboutMeetingInChat(activeMeetingEvent)
+    closeMeetingEvent()
+  }, [activeMeetingEvent, closeMeetingEvent])
+
+  return {
+    meetingPrepBusy,
+    startMeetingPrep,
+    openMeetingPrep,
+    talkWithPixelAboutMeeting,
+  }
 }

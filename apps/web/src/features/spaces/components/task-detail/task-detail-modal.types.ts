@@ -3,6 +3,7 @@ import type { SpaceItem } from '../../types'
 import type { FieldDef, SelectOption, SpaceSchema, ViewDef } from '../../types/space-schema'
 
 export interface TaskDetailModalProps {
+  presentation?: 'modal' | 'panel'
   item: SpaceItem
   allFields: FieldDef[]
   activeView: ViewDef

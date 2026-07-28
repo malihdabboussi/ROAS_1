@@ -26,8 +26,10 @@ import type { TaskDetailModalProps } from './task-detail-modal.types'
 import { TaskActivity } from './TaskActivity'
 import { TaskDetailHeader } from './TaskDetailHeader'
 import { TaskDetailMainPanel } from './TaskDetailMainPanel'
+import { TaskDetailPresentationShell } from './TaskDetailPresentationShell'
 
 export function TaskDetailModal({
+  presentation = 'modal',
   item: initialItem,
   allFields,
   activeView,
@@ -255,80 +257,74 @@ export function TaskDetailModal({
   )
 
   const tree = (
-    <div className="z-modal-content fixed inset-0 flex items-center justify-center">
-      <div className="bg-modal-overlay absolute inset-0" onClick={onClose} />
-
-      <div
-        data-dropzone
-        className="surface-card border-border container-modal-task-detail rounded-spacing-4 pt-spacing-4 pb-spacing-6 pl-spacing-6 pr-spacing-6 relative z-10 flex flex-col overflow-hidden border shadow-xl"
-      >
-        <TaskDetailHeader
-          committedTitle={item.title}
-          liveTitle={title}
-          spaceName={spaceName}
-          viewName={viewName}
-          viewType={activeView.type ?? null}
-          breadcrumbParentCrumb={breadcrumbParentCrumb}
-          canGoBack={canGoBack}
-          onBack={onBack}
-          onShare={() => setShareOpen(true)}
-          onClose={onClose}
-          onOpenMenu={(anchor) => setMenuAnchor(anchor)}
+    <TaskDetailPresentationShell presentation={presentation} onClose={onClose}>
+      <TaskDetailHeader
+        committedTitle={item.title}
+        liveTitle={title}
+        spaceName={spaceName}
+        viewName={viewName}
+        viewType={activeView.type ?? null}
+        breadcrumbParentCrumb={breadcrumbParentCrumb}
+        canGoBack={canGoBack}
+        onBack={onBack}
+        onShare={() => setShareOpen(true)}
+        onClose={onClose}
+        onOpenMenu={(anchor) => setMenuAnchor(anchor)}
+      />
+      {menuAnchor ? (
+        <TaskMenuDropdown
+          task={item}
+          anchorRef={{ current: menuAnchor }}
+          onClose={() => setMenuAnchor(null)}
+          onChanged={onUpdated}
+          subtaskCount={subtasks.length}
+          onDelete={() => void handleDelete()}
+          onSendToAgent={() => {
+            setMenuAnchor(null)
+            setSendToAgentInstructionsSeed(null)
+            setSendToAgentOpen(true)
+          }}
         />
-        {menuAnchor ? (
-          <TaskMenuDropdown
-            task={item}
-            anchorRef={{ current: menuAnchor }}
-            onClose={() => setMenuAnchor(null)}
-            onChanged={onUpdated}
-            subtaskCount={subtasks.length}
-            onDelete={() => void handleDelete()}
-            onSendToAgent={() => {
-              setMenuAnchor(null)
-              setSendToAgentInstructionsSeed(null)
-              setSendToAgentOpen(true)
-            }}
-          />
-        ) : null}
+      ) : null}
 
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          {/* Left panel: title + main fields + subtasks + deliverables & media scroll together.
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {/* Left panel: title + main fields + subtasks + deliverables & media scroll together.
               Title lives in here (not in TaskDetailHeader) so the right-side Activity
               panel spans the full modal-body height. */}
-          <TaskDetailMainPanel
-            item={item}
-            title={title}
-            allFields={allFields}
-            activeView={activeView}
-            spaceSchema={spaceSchema}
-            onViewPatch={onViewPatch}
-            roster={roster}
-            currentUserId={currentUserId}
-            taskDeliverables={taskDeliverables}
-            subtasks={subtasks}
-            loading={loading}
-            subtasksSectionCollapsed={subtasksSectionCollapsed}
-            onSubtasksSectionCollapsedChange={setSubtasksSectionCollapsed}
-            onTitleChange={setTitle}
-            onTitleBlur={handleTitleBlur}
-            onUpdateField={(patch) => void handleUpdateField(patch)}
-            onDescriptionChange={handleDescriptionChange}
-            onUpdateSubtask={(id, patch) => void handleUpdateSubtask(id, patch)}
-            onCreateSubtask={handleCreateSubtask}
-            onDeleteSubtask={handleDeleteSubtask}
-            onEditStatuses={onEditStatuses}
-            onEditCategories={onEditCategories}
-            onPushToAgent={pushToAgent}
-            onCreateOption={onCreateOption}
-            onUpdateOption={onUpdateOption}
-            onDeleteOption={onDeleteOption}
-            onTagCustomSwatchesChange={onTagCustomSwatchesChange}
-            onOpenTaskDetail={onOpenTaskByItem}
-            onRefresh={async () => reload()}
-            onSelectDeliverable={(d) => setPreviewDeliverable(d)}
-          />
+        <TaskDetailMainPanel
+          item={item}
+          title={title}
+          allFields={allFields}
+          activeView={activeView}
+          spaceSchema={spaceSchema}
+          onViewPatch={onViewPatch}
+          roster={roster}
+          currentUserId={currentUserId}
+          taskDeliverables={taskDeliverables}
+          subtasks={subtasks}
+          loading={loading}
+          subtasksSectionCollapsed={subtasksSectionCollapsed}
+          onSubtasksSectionCollapsedChange={setSubtasksSectionCollapsed}
+          onTitleChange={setTitle}
+          onTitleBlur={handleTitleBlur}
+          onUpdateField={(patch) => void handleUpdateField(patch)}
+          onDescriptionChange={handleDescriptionChange}
+          onUpdateSubtask={(id, patch) => void handleUpdateSubtask(id, patch)}
+          onCreateSubtask={handleCreateSubtask}
+          onDeleteSubtask={handleDeleteSubtask}
+          onEditStatuses={onEditStatuses}
+          onEditCategories={onEditCategories}
+          onPushToAgent={pushToAgent}
+          onCreateOption={onCreateOption}
+          onUpdateOption={onUpdateOption}
+          onDeleteOption={onDeleteOption}
+          onTagCustomSwatchesChange={onTagCustomSwatchesChange}
+          onOpenTaskDetail={onOpenTaskByItem}
+          onRefresh={async () => reload()}
+          onSelectDeliverable={(d) => setPreviewDeliverable(d)}
+        />
 
-          {/* Right panel - Activity */}
+        {presentation === 'modal' ? (
           <TaskActivity
             spaceId={item.space_id}
             itemId={item.id}
@@ -348,7 +344,7 @@ export function TaskDetailModal({
             onActivityEntryAdded={appendActivityRow}
             isAgentWorking={item.task_execution_status === 'running'}
           />
-        </div>
+        ) : null}
       </div>
 
       {previewDeliverable && (
@@ -393,8 +389,9 @@ export function TaskDetailModal({
         initialInstructionsHtml={sendToAgentInstructionsSeed}
         onSent={() => void reload()}
       />
-    </div>
+    </TaskDetailPresentationShell>
   )
 
+  if (presentation === 'panel') return tree
   return portalTarget ? createPortal(tree, portalTarget) : null
 }

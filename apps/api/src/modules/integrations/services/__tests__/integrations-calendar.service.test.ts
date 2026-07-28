@@ -1,5 +1,29 @@
 import { describe, expect, it, vi } from 'vitest'
+import { mergeTeamAgendaWithPersonal } from '../integrations-calendar-dedupe'
 import { IntegrationsCalendarService } from '../integrations-calendar.service'
+
+function mockTeamAgendaWithMine(teamAgenda: {
+  getTeamAgenda: ReturnType<typeof vi.fn>
+  isTeamAvailable: ReturnType<typeof vi.fn>
+}) {
+  return {
+    ...teamAgenda,
+    getTeamAgendaWithMine: vi.fn(
+      async (
+        supabase: unknown,
+        user: unknown,
+        scope: unknown,
+        query: unknown,
+        loadPersonal: (q: unknown) => Promise<Parameters<typeof mergeTeamAgendaWithPersonal>[1]>,
+      ) => {
+        const team = await teamAgenda.getTeamAgenda(supabase, user, scope, query)
+        if (!team.team_available) return team
+        const personal = await loadPersonal({ ...(query as object), scope: 'personal' })
+        return mergeTeamAgendaWithPersonal(team, personal)
+      },
+    ),
+  }
+}
 
 function makeService(options?: {
   orgRows?: Array<Record<string, unknown>>
@@ -45,7 +69,7 @@ function makeService(options?: {
 
 describe('IntegrationsCalendarService team+Mine merge', () => {
   it('merges personal Composio events into Team as Mine', async () => {
-    const teamAgenda = {
+    const teamAgenda = mockTeamAgendaWithMine({
       getTeamAgenda: vi.fn().mockResolvedValue({
         success: true,
         events: [
@@ -81,7 +105,7 @@ describe('IntegrationsCalendarService team+Mine merge', () => {
         team_available: true,
       }),
       isTeamAvailable: vi.fn().mockResolvedValue(true),
-    }
+    })
     const service = new IntegrationsCalendarService(
       { table: vi.fn() } as never,
       { executeTool: vi.fn() } as never,
@@ -152,8 +176,8 @@ describe('IntegrationsCalendarService team+Mine merge', () => {
     expect(result.connected.google_calendar).toBe(true)
   })
 
-  it('prefers teammate label when Mine and teammate share the same invite', async () => {
-    const teamAgenda = {
+  it('keeps Mine with teammate label when both calendars share the invite', async () => {
+    const teamAgenda = mockTeamAgendaWithMine({
       getTeamAgenda: vi.fn().mockResolvedValue({
         success: true,
         events: [
@@ -190,7 +214,7 @@ describe('IntegrationsCalendarService team+Mine merge', () => {
         team_available: true,
       }),
       isTeamAvailable: vi.fn().mockResolvedValue(true),
-    }
+    })
     const service = new IntegrationsCalendarService(
       { table: vi.fn() } as never,
       { executeTool: vi.fn() } as never,
@@ -252,7 +276,7 @@ describe('IntegrationsCalendarService team+Mine merge', () => {
     )
 
     expect(result.events).toHaveLength(1)
-    expect(result.events[0]?.account_label).toBe('Aaron McKeague')
+    expect(result.events[0]?.account_label).toBe('Mine · Aaron McKeague')
   })
 })
 

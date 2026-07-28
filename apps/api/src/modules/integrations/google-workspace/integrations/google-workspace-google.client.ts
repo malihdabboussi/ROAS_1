@@ -200,6 +200,16 @@ export class GoogleWorkspaceGoogleClient {
     const videoEntry = entryPoints.find((entry): entry is Record<string, unknown> =>
       Boolean(entry && typeof entry === 'object' && entry.entryPointType === 'video'),
     )
+    const location = item.location ? String(item.location) : null
+    const description = item.description ? String(item.description) : null
+    let videoUrl = videoEntry?.uri ? String(videoEntry.uri) : null
+    if (!videoUrl) {
+      const haystack = `${location ?? ''} ${description ?? ''}`
+      const urlMatch = haystack.match(
+        /https?:\/\/[^\s<>"]+(?:zoom\.us|teams\.microsoft\.com|meet\.google\.com)[^\s<>"]*/i,
+      )
+      if (urlMatch) videoUrl = urlMatch[0]
+    }
 
     return {
       id: String(item.id ?? ''),
@@ -207,8 +217,9 @@ export class GoogleWorkspaceGoogleClient {
       start,
       end,
       all_day: allDay,
-      location: item.location ? String(item.location) : null,
-      video_url: videoEntry?.uri ? String(videoEntry.uri) : null,
+      location,
+      description,
+      video_url: videoUrl,
       html_link: item.htmlLink ? String(item.htmlLink) : null,
       ical_uid: item.iCalUID ? String(item.iCalUID) : null,
       attendees,

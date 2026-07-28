@@ -16,6 +16,7 @@ import {
   fetchGoogleWorkspaceStatus,
   type CalendarAgendaAccount,
   type CalendarAgendaEvent,
+  type TeamAgendaCoverage,
 } from '@/lib/services/calendar-api'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
@@ -52,6 +53,7 @@ export function useAgendaCardData() {
   const [workspaceConnected, setWorkspaceConnected] = useState(false)
   const [events, setEvents] = useState<CalendarAgendaEvent[]>([])
   const [accounts, setAccounts] = useState<CalendarAgendaAccount[]>([])
+  const [teamCoverage, setTeamCoverage] = useState<TeamAgendaCoverage | null>(null)
   const [connected, setConnected] = useState<{ google_calendar: boolean; outlook: boolean }>({
     google_calendar: false,
     outlook: false,
@@ -78,6 +80,7 @@ export function useAgendaCardData() {
         loadedScopeRef.current = null
         setEvents([])
         setAccounts([])
+        setTeamCoverage(null)
         setLoading(true)
         setInitialized(false)
       }
@@ -126,6 +129,7 @@ export function useAgendaCardData() {
       lastEventsRef.current = []
       setEvents([])
       setAccounts([])
+      setTeamCoverage(null)
     }
     try {
       let fetchStart: Date
@@ -160,6 +164,7 @@ export function useAgendaCardData() {
         if (effectiveScope === 'personal') setConnected(peeked.connected)
         setAccounts(peeked.accounts ?? [])
         setTeamAvailable(Boolean(peeked.team_available))
+        setTeamCoverage(effectiveScope === 'team' ? (peeked.team_coverage ?? null) : null)
         const warmed =
           view === 'list'
             ? filterEventsToWindow(peeked.events ?? [], viewStart, viewEnd)
@@ -188,6 +193,7 @@ export function useAgendaCardData() {
       else if (res.team_available) setConnected(res.connected)
       setAccounts(res.accounts ?? [])
       setTeamAvailable(Boolean(res.team_available))
+      setTeamCoverage(effectiveScope === 'team' ? (res.team_coverage ?? null) : null)
       loadedScopeRef.current = effectiveScope
       if (!res.success && res.error) {
         toast.error(HOME_TOAST_ERRORS.CALENDAR_LOAD_FAILED.userMessage)
@@ -208,6 +214,7 @@ export function useAgendaCardData() {
       toast.error(sanitizeUserError(e, HOME_TOAST_ERRORS.CALENDAR_LOAD_FAILED.userMessage))
       lastEventsRef.current = []
       setEvents([])
+      setTeamCoverage(null)
     } finally {
       if (blocking) setLoading(false)
       setInitialized(true)
@@ -269,6 +276,7 @@ export function useAgendaCardData() {
     workspaceConnected,
     events,
     accounts,
+    teamCoverage,
     connected,
     loading,
     initialized,

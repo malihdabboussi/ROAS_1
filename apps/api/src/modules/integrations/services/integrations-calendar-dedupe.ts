@@ -86,8 +86,9 @@ export function teamAgendaDedupeKey(event: AgendaDedupeEvent): string {
 }
 
 /**
- * On Team agenda, shared calls should read as teammate calendars — not "Mine" / "Fathom".
- * Keep Mine only when the row exists solely on the caller's personal calendar.
+ * On Team agenda, shared calls keep Mine first when the caller's personal calendar
+ * also has the invite, then teammate calendar names. Fathom stays label-only when
+ * there is no calendar row.
  */
 export function resolveTeamAgendaAccountLabel(
   labels: Array<string | null | undefined>,
@@ -102,17 +103,19 @@ export function resolveTeamAgendaAccountLabel(
   ]
   if (parts.length === 0) return null
 
-  const teammates = parts.filter((part) => {
-    const key = part.toLowerCase()
-    return key !== MINE_LABEL && key !== FATHOM_LABEL
-  })
-  if (teammates.length > 0) {
-    return teammates.sort((a, b) => a.localeCompare(b)).join(' · ')
-  }
-
   const hasMine = parts.some((part) => part.toLowerCase() === MINE_LABEL)
-  if (hasMine) return 'Mine'
   const hasFathom = parts.some((part) => part.toLowerCase() === FATHOM_LABEL)
+  const teammates = parts
+    .filter((part) => {
+      const key = part.toLowerCase()
+      return key !== MINE_LABEL && key !== FATHOM_LABEL
+    })
+    .sort((a, b) => a.localeCompare(b))
+
+  if (teammates.length > 0) {
+    return hasMine ? ['Mine', ...teammates].join(' · ') : teammates.join(' · ')
+  }
+  if (hasMine) return 'Mine'
   if (hasFathom) return 'Fathom'
   return parts.sort((a, b) => a.localeCompare(b)).join(' · ')
 }
@@ -289,6 +292,7 @@ function mergeAgendaEvents(
   if (!kept.prep && other.prep) kept.prep = other.prep
   if (!kept.html_link && other.html_link) kept.html_link = other.html_link
   if (!kept.location && other.location) kept.location = other.location
+  if (!kept.description && other.description) kept.description = other.description
   if (!kept.color_id && other.color_id) kept.color_id = other.color_id
 
   // Keep calendar join links; only borrow Fathom recording when the invite has no video.
@@ -361,12 +365,48 @@ function mergeAttendees(
   return [...byEmail.values()]
 }
 
+export type TeamAgendaCoveragePerson = {
+  identity_id: string
+  email: string
+  display_name: string | null
+  match_status: string
+  event_count: number
+  error?: string
+}
+
+export type TeamAgendaCoverageSkipped = {
+  identity_id: string
+  email: string
+  display_name: string | null
+  match_status: string
+  reason: 'rejected' | 'capped'
+}
+
+export type TeamAgendaCoverage = {
+  included: TeamAgendaCoveragePerson[]
+  skipped: TeamAgendaCoverageSkipped[]
+  errors: Array<{
+    identity_id: string
+    email: string
+    display_name: string | null
+    error: string
+  }>
+  totals: {
+    directory: number
+    pulled: number
+    rejected: number
+    capped: number
+    failed: number
+  }
+}
+
 export type TeamAgendaPayload = {
   success: boolean
   events: CalendarAgendaEvent[]
   connected: { google_calendar: boolean; outlook: boolean }
   accounts: CalendarConnectionRef[]
   team_available: boolean
+  team_coverage?: TeamAgendaCoverage
   error?: string
 }
 
@@ -395,6 +435,7 @@ export function mergeTeamAgendaWithPersonal(
     },
     accounts: [...personalAccounts, ...team.accounts],
     team_available: true,
+    ...(team.team_coverage ? { team_coverage: team.team_coverage } : {}),
     ...(team.error ? { error: team.error } : {}),
   }
 }

@@ -45,6 +45,46 @@ export function localDayBounds(
   return { startIso: start.toISOString(), endIso: end.toISOString(), dayKey }
 }
 
+/** Inclusive local-day window centered on an event start (±padDays). */
+export function localDayWindowAround(
+  instant: Date,
+  timeZone: string,
+  padDays = 1,
+): { startIso: string; endIso: string } {
+  const center = localDayBounds(instant, timeZone)
+  const start = new Date(new Date(center.startIso).getTime() - padDays * 86_400_000)
+  const end = new Date(new Date(center.endIso).getTime() + padDays * 86_400_000)
+  return { startIso: start.toISOString(), endIso: end.toISOString() }
+}
+
+export type PrecallEventSnapshot = {
+  title: string
+  start: string
+  end: string
+  all_day: boolean
+  video_url?: string | null
+  location?: string | null
+  attendees?: Array<{ email?: string | null; name?: string | null }>
+}
+
+export function eventFromPrecallSnapshot(
+  calendarEventId: string,
+  snapshot: PrecallEventSnapshot,
+): PrecallAgendaEventLike {
+  return {
+    id: calendarEventId,
+    title: snapshot.title.trim() || 'Untitled meeting',
+    start: snapshot.start,
+    end: snapshot.end,
+    all_day: Boolean(snapshot.all_day),
+    video_url: snapshot.video_url?.trim() || null,
+    attendees: (snapshot.attendees ?? []).map((a) => ({
+      email: a.email ?? null,
+      name: a.name ?? null,
+    })),
+  }
+}
+
 function localOffsetMsAt(instant: Date, timeZone: string): number {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone,

@@ -9,8 +9,6 @@ describe('AgendaCardChrome', () => {
     render(
       <AgendaCardHeader
         showAgendaSurface
-        accounts={[]}
-        anyConnected
         bothConnected={false}
         provider="all"
         setProvider={vi.fn()}
@@ -19,16 +17,48 @@ describe('AgendaCardChrome', () => {
         showTeamToggle
         view="list"
         setView={vi.fn()}
-        prepRunning={false}
-        runPrepToday={vi.fn()}
+        teamCoverage={null}
       />,
     )
 
     expect(screen.getByRole('button', { name: 'Mine' })).toHaveClass('button-compact')
-    expect(screen.getByRole('button', { name: 'Prep today' })).toHaveClass('button-compact')
+    expect(screen.queryByRole('button', { name: 'Prep today' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Ask Pixel about your agenda' })).toBeNull()
     expect(screen.getByRole('button', { name: 'List view' })).toHaveClass('btn-icon-glass')
     expect(screen.getByRole('button', { name: 'List view' })).toHaveClass('btn-icon-glass--active')
     expect(screen.getByRole('button', { name: 'Calendar views' })).toHaveClass('btn-icon-glass')
+  })
+
+  it('shows team calendar coverage menu for Team scope', () => {
+    render(
+      <AgendaCardHeader
+        showAgendaSurface
+        bothConnected={false}
+        provider="all"
+        setProvider={vi.fn()}
+        agendaScope="team"
+        setAgendaScope={vi.fn()}
+        showTeamToggle
+        view="list"
+        setView={vi.fn()}
+        teamCoverage={{
+          included: [
+            {
+              identity_id: 'nate',
+              email: 'nate@roas.co',
+              display_name: 'Nate',
+              match_status: 'confirmed',
+              event_count: 2,
+            },
+          ],
+          skipped: [],
+          errors: [],
+          totals: { directory: 1, pulled: 1, rejected: 0, capped: 0, failed: 0 },
+        }}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Team calendar coverage' })).toBeTruthy()
   })
 
   it('opens an app-styled date-range menu without arbitrary-value classes', () => {

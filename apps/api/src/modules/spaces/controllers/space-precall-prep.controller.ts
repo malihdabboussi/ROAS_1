@@ -27,6 +27,26 @@ const PrecallPrepEventBodySchema = z.object({
   calendar_event_id: z.string().min(1).max(500),
   timezone: z.string().min(1).max(100).optional(),
   refresh: z.boolean().optional(),
+  event_start: z.string().min(1).max(64).optional(),
+  event: z
+    .object({
+      title: z.string().min(1).max(500),
+      start: z.string().min(1).max(64),
+      end: z.string().min(1).max(64),
+      all_day: z.boolean(),
+      video_url: z.string().max(2000).nullable().optional(),
+      location: z.string().max(2000).nullable().optional(),
+      attendees: z
+        .array(
+          z.object({
+            email: z.string().max(320).nullable().optional(),
+            name: z.string().max(200).nullable().optional(),
+          }),
+        )
+        .max(100)
+        .optional(),
+    })
+    .optional(),
 })
 type PrecallPrepEventBody = z.infer<typeof PrecallPrepEventBodySchema>
 
@@ -92,6 +112,8 @@ export class SpacePrecallPrepController {
       timezone: body.timezone,
       refresh: body.refresh !== false,
       scope,
+      eventSnapshot: body.event ?? null,
+      eventStartHint: body.event_start ?? body.event?.start ?? null,
     })
   }
 }

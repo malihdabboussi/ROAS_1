@@ -16,7 +16,7 @@ export default function HomeMeetingsPage() {
     closeYourTurnItem,
     closeMeetingEvent,
   } = useHomeFeedOpen()
-  const { meetingPrepBusy, startMeetingPrep, openMeetingPrep } = useHomeMeetingActions({
+  const { openMeetingPrep, talkWithPixelAboutMeeting } = useHomeMeetingActions({
     activeMeetingEvent,
     closeMeetingEvent,
     openYourTurnItem,
@@ -27,24 +27,28 @@ export default function HomeMeetingsPage() {
     <>
       <main className="flex min-h-0 flex-1 overflow-hidden">
         <h1 className="sr-only">MEETINGS</h1>
-        <AgendaCard
-          fullHeight
-          presentation="page"
-          onOpenItem={openYourTurnItem}
-          onOpenMeeting={openMeetingEvent}
-        />
+        {activeYourTurnItem ? (
+          <HomeTaskDetailHost
+            item={activeYourTurnItem}
+            presentation="panel"
+            onClose={closeYourTurnItem}
+          />
+        ) : (
+          <AgendaCard
+            fullHeight
+            presentation="page"
+            onOpenItem={openYourTurnItem}
+            onOpenMeeting={openMeetingEvent}
+          />
+        )}
       </main>
       {activeMeetingEvent ? (
         <HomeMeetingDetailHost
           event={activeMeetingEvent}
           onClose={closeMeetingEvent}
-          prepBusy={meetingPrepBusy}
           onOpenPrep={openMeetingPrep}
-          onStartPrep={() => void startMeetingPrep()}
+          onTalkWithPixel={talkWithPixelAboutMeeting}
         />
-      ) : null}
-      {activeYourTurnItem ? (
-        <HomeTaskDetailHost item={activeYourTurnItem} onClose={closeYourTurnItem} />
       ) : null}
     </>
   )

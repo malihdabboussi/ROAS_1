@@ -53,7 +53,7 @@ export function HomeDashboardContent() {
     void approvalFeed.reload()
   }, [myTasksFeed, approvalFeed])
 
-  const { meetingPrepBusy, startMeetingPrep, openMeetingPrep } = useHomeMeetingActions({
+  const { openMeetingPrep, talkWithPixelAboutMeeting } = useHomeMeetingActions({
     activeMeetingEvent,
     closeMeetingEvent,
     openYourTurnItem,
@@ -63,25 +63,34 @@ export function HomeDashboardContent() {
   return (
     <HomeDashboardVisualProvider variant="v4">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <HomeDashboardV4Shell>
-          <HomeCardsGrid
-            variant="v4"
-            myTasksScope={myTasks.scope}
-            updateMyTasksScope={myTasks.updateScope}
-            approvalScope={approval.scope}
-            updateApprovalScope={approval.updateScope}
-            myTasksLoading={myTasksFeed.loading}
-            approvalLoading={approvalFeed.loading}
-            myTasksItems={myTasksFeed.items}
-            approvalItems={approvalFeed.items}
-            onOpenItem={(item) => void openYourTurnItem(item)}
-            onOpenMeeting={openMeetingEvent}
-            onNotificationClick={(n) => void openNotification(n)}
-            onMyTasksChanged={handleFeedsUpdated}
-            onAccept={approvalFeed.acceptSuggestion}
-            onDismiss={approvalFeed.dismissSuggestion}
+        {activeYourTurnItem ? (
+          <HomeTaskDetailHost
+            item={activeYourTurnItem}
+            presentation="panel"
+            onClose={closeYourTurnItem}
+            onUpdated={handleFeedsUpdated}
           />
-        </HomeDashboardV4Shell>
+        ) : (
+          <HomeDashboardV4Shell>
+            <HomeCardsGrid
+              variant="v4"
+              myTasksScope={myTasks.scope}
+              updateMyTasksScope={myTasks.updateScope}
+              approvalScope={approval.scope}
+              updateApprovalScope={approval.updateScope}
+              myTasksLoading={myTasksFeed.loading}
+              approvalLoading={approvalFeed.loading}
+              myTasksItems={myTasksFeed.items}
+              approvalItems={approvalFeed.items}
+              onOpenItem={(item) => void openYourTurnItem(item)}
+              onOpenMeeting={openMeetingEvent}
+              onNotificationClick={(n) => void openNotification(n)}
+              onMyTasksChanged={handleFeedsUpdated}
+              onAccept={approvalFeed.acceptSuggestion}
+              onDismiss={approvalFeed.dismissSuggestion}
+            />
+          </HomeDashboardV4Shell>
+        )}
       </div>
 
       {selectedMission ? (
@@ -96,17 +105,8 @@ export function HomeDashboardContent() {
         <HomeMeetingDetailHost
           event={activeMeetingEvent}
           onClose={closeMeetingEvent}
-          prepBusy={meetingPrepBusy}
           onOpenPrep={openMeetingPrep}
-          onStartPrep={() => void startMeetingPrep()}
-        />
-      ) : null}
-
-      {activeYourTurnItem ? (
-        <HomeTaskDetailHost
-          item={activeYourTurnItem}
-          onClose={closeYourTurnItem}
-          onUpdated={handleFeedsUpdated}
+          onTalkWithPixel={talkWithPixelAboutMeeting}
         />
       ) : null}
     </HomeDashboardVisualProvider>

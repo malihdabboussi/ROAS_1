@@ -12,7 +12,12 @@ import { MeetingsPrecallPrepService } from '../../spaces/services/meetings-preca
 import { GoogleWorkspaceApiService } from '../google-workspace/services/google-workspace-api.service'
 import { GoogleWorkspaceCalendarService } from '../google-workspace/services/google-workspace-calendar.service'
 import type { CalendarConnectionRef } from './integrations-calendar-connections'
-import { dedupeTeamAgendaEvents, mergeTeamAgendaWithPersonal } from './integrations-calendar-dedupe'
+import {
+  dedupeTeamAgendaEvents,
+  mergeTeamAgendaWithPersonal,
+  type TeamAgendaCoverage,
+  type TeamAgendaPayload,
+} from './integrations-calendar-dedupe'
 import type { CalendarAgendaEvent } from './integrations-calendar.service'
 
 @Injectable()
@@ -45,14 +50,7 @@ export class IntegrationsCalendarTeamService {
       timezone?: string
       limit_people?: number
     },
-  ): Promise<{
-    success: boolean
-    events: CalendarAgendaEvent[]
-    connected: { google_calendar: boolean; outlook: boolean }
-    accounts: CalendarConnectionRef[]
-    team_available: boolean
-    error?: string
-  }> {
+  ): Promise<TeamAgendaPayload> {
     if (!scope.orgId) {
       throw new BadRequestException('Organization context is required for team agenda')
     }
@@ -89,7 +87,9 @@ export class IntegrationsCalendarTeamService {
 
     const accounts: CalendarConnectionRef[] = []
     const events: CalendarAgendaEvent[] = []
-    const errors: string[] = []
+    const errorLines: string[] = []
+    const included: TeamAgendaCoverage['included'] = []
+    const errors: TeamAgendaCoverage['errors'] = []
 
     for (const person of upcoming.people) {
       const label =
@@ -101,11 +101,33 @@ export class IntegrationsCalendarTeamService {
         isDefault: false,
         provider: 'google_calendar',
       })
+      included.push({
+        identity_id: person.identity.id,
+        email: person.identity.calendar_email,
+        display_name: person.identity.display_name,
+        match_status: person.identity.match_status,
+        event_count: person.error ? 0 : person.events.length,
+        ...(person.error ? { error: person.error } : {}),
+      })
       if (person.error) {
-        errors.push(`${label}: ${person.error}`)
+        errorLines.push(`${label}: ${person.error}`)
+        errors.push({
+          identity_id: person.identity.id,
+          email: person.identity.calendar_email,
+          display_name: person.identity.display_name,
+          error: person.error,
+        })
         continue
       }
       for (const event of person.events) {
+        const videoUrl = event.video_url
+        let videoLabel: string | null = null
+        if (videoUrl) {
+          if (videoUrl.includes('zoom.us')) videoLabel = 'Zoom'
+          else if (videoUrl.includes('teams.microsoft')) videoLabel = 'Teams'
+          else if (videoUrl.includes('meet.google')) videoLabel = 'Google Meet'
+          else videoLabel = 'Meet'
+        }
         events.push({
           id: `workspace:${person.identity.id}:${event.id}`,
           title: event.title,
@@ -113,8 +135,9 @@ export class IntegrationsCalendarTeamService {
           end: event.end,
           all_day: event.all_day,
           location: event.location,
-          video_url: event.video_url,
-          video_label: event.video_url ? 'Meet' : null,
+          description: event.description,
+          video_url: videoUrl,
+          video_label: videoLabel,
           html_link: event.html_link,
           color_id: null,
           attendees: event.attendees.map((attendee) => ({
@@ -130,6 +153,26 @@ export class IntegrationsCalendarTeamService {
           ...(event.ical_uid ? { ical_uid: event.ical_uid } : {}),
         } as CalendarAgendaEvent & { ical_uid?: string | null })
       }
+    }
+
+    const skipped = (upcoming.coverage?.skipped ?? []).map((row) => ({
+      identity_id: row.identity.id,
+      email: row.identity.calendar_email,
+      display_name: row.identity.display_name,
+      match_status: row.identity.match_status,
+      reason: row.reason,
+    }))
+    const team_coverage: TeamAgendaCoverage = {
+      included,
+      skipped,
+      errors,
+      totals: {
+        directory: upcoming.coverage?.directory_count ?? included.length + skipped.length,
+        pulled: upcoming.coverage?.pulled_count ?? included.length,
+        rejected: skipped.filter((row) => row.reason === 'rejected').length,
+        capped: skipped.filter((row) => row.reason === 'capped').length,
+        failed: errors.length,
+      },
     }
 
     let uniqueEvents = dedupeTeamAgendaEvents(events)
@@ -168,14 +211,15 @@ export class IntegrationsCalendarTeamService {
       }
     }
 
-    if (errors.length > 0 && uniqueEvents.length === 0) {
+    if (errorLines.length > 0 && uniqueEvents.length === 0) {
       return {
         success: false,
         events: [],
         connected: { google_calendar: true, outlook: false },
         accounts,
         team_available: true,
-        error: errors.join('; '),
+        team_coverage,
+        error: errorLines.join('; '),
       }
     }
 
@@ -185,6 +229,7 @@ export class IntegrationsCalendarTeamService {
       connected: { google_calendar: true, outlook: false },
       accounts,
       team_available: true,
+      team_coverage,
     }
   }
 

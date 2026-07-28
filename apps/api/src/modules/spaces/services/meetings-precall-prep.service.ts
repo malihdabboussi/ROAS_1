@@ -11,8 +11,10 @@ import {
   buildFathomAgendaEvent,
   buildPrecallPrompt,
   callDateInAgendaWindow,
+  eventFromPrecallSnapshot,
   isEligiblePrecallEvent,
   localDayBounds,
+  localDayWindowAround,
   mapPrepItemToAgendaLink,
   resolvePreferredMeetingsSpaceId,
   scoreRelatedCallMatch,
@@ -21,6 +23,7 @@ import {
   type AgendaPrepLink,
   type AgendaRelatedCall,
   type PrecallAgendaEventLike,
+  type PrecallEventSnapshot,
 } from './meetings-precall-prep.helpers'
 
 const RELATED_CALL_MATCH_PAD_MS = 36 * 60 * 60 * 1000
@@ -151,6 +154,10 @@ export class MeetingsPrecallPrepService {
     timezone?: string
     refresh?: boolean
     scope: RequestScope
+    /** Prefer this when the UI already has the meeting (Team/Mine/non-today). */
+    eventSnapshot?: PrecallEventSnapshot | null
+    /** When no snapshot, widen agenda lookup around this start instead of only today. */
+    eventStartHint?: string | null
   }): Promise<{
     calendar_event_id: string
     space_item_id: string
@@ -162,16 +169,36 @@ export class MeetingsPrecallPrepService {
     if (!calendarEventId) throw new BadRequestException('calendar_event_id is required')
 
     const timezone = input.timezone?.trim() || 'America/Los_Angeles'
-    const { startIso, endIso } = localDayBounds(new Date(), timezone)
-    const calendar = this.resolveCalendarService()
-    const agenda = await calendar.getAgenda(input.supabase, { id: input.userId }, input.scope, {
-      start: startIso,
-      end: endIso,
-      timezone,
-    })
-    const event = (agenda.events ?? []).find((row) => row.id === calendarEventId)
+    let event: CalendarAgendaEvent | null = null
+
+    if (input.eventSnapshot) {
+      event = {
+        ...eventFromPrecallSnapshot(calendarEventId, input.eventSnapshot),
+        location: input.eventSnapshot.location?.trim() || null,
+        html_link: null,
+        color_id: null,
+        video_label: null,
+        source: 'google_calendar',
+      } as CalendarAgendaEvent
+    } else {
+      const hintMs = input.eventStartHint ? new Date(input.eventStartHint).getTime() : NaN
+      const anchor = Number.isFinite(hintMs) ? new Date(hintMs) : new Date()
+      const window = Number.isFinite(hintMs)
+        ? localDayWindowAround(anchor, timezone, 1)
+        : localDayBounds(anchor, timezone)
+      const calendar = this.resolveCalendarService()
+      const agenda = await calendar.getAgenda(input.supabase, { id: input.userId }, input.scope, {
+        start: window.startIso,
+        end: window.endIso,
+        timezone,
+      })
+      event = (agenda.events ?? []).find((row) => row.id === calendarEventId) ?? null
+    }
+
     if (!event) {
-      throw new BadRequestException('Calendar event not found in today’s agenda')
+      throw new BadRequestException(
+        'Calendar event not found for prep. Open the meeting again and retry.',
+      )
     }
     if (!isEligiblePrecallEvent(event)) {
       throw new BadRequestException('This calendar event is not eligible for pre-call prep')

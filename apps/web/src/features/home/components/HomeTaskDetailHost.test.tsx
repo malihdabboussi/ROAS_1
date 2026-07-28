@@ -17,8 +17,16 @@ vi.mock('@/components/vibey/vibey-loading-orb', () => ({
 }))
 
 vi.mock('@/features/spaces/components/task-detail/TaskDetailModal', () => ({
-  TaskDetailModal: ({ item }: { item: { title: string | null } }) => (
-    <div data-testid="task-detail-modal">{item.title}</div>
+  TaskDetailModal: ({
+    item,
+    presentation,
+  }: {
+    item: { title: string | null }
+    presentation?: string
+  }) => (
+    <div data-presentation={presentation} data-testid="task-detail-modal">
+      {item.title}
+    </div>
   ),
 }))
 
@@ -61,13 +69,15 @@ const spaceItem: YourTurnItem = {
   space_id: 'space-1',
   title: 'Prep call notes',
   status: 'todo',
-  priority: 'medium',
+  assignee_user_id: 'user-1',
+  org_id: null,
+  mission_id: null,
+  suggestion_state: null,
   due_at: null,
+  source_url: null,
+  preview: null,
+  created_at: '2026-07-27T00:00:00.000Z',
   updated_at: '2026-07-27T00:00:00.000Z',
-  space_name: 'Home',
-  campaign_id: null,
-  campaign_name: null,
-  parent_item_id: null,
 }
 
 vi.mock('@/features/spaces/services/spaces.service', () => ({
@@ -95,12 +105,13 @@ describe('HomeTaskDetailHost', () => {
   afterEach(cleanup)
 
   it('survives loading → ready without a Rules of Hooks crash', async () => {
-    render(<HomeTaskDetailHost item={spaceItem} onClose={vi.fn()} />)
+    render(<HomeTaskDetailHost item={spaceItem} onClose={vi.fn()} presentation="panel" />)
 
     expect(screen.getByTestId('loading-orb')).toBeInTheDocument()
 
     await waitFor(() => {
       expect(screen.getByTestId('task-detail-modal')).toHaveTextContent('Prep call notes')
     })
+    expect(screen.getByTestId('task-detail-modal')).toHaveAttribute('data-presentation', 'panel')
   })
 })

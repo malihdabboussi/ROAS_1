@@ -6,13 +6,12 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  FileText,
   LayoutList,
 } from 'lucide-react'
+import { AgendaCardCoverageMenu } from '@/features/home/components/AgendaCardCoverageMenu'
 import { AgendaEmptyIllustration } from '@/features/home/components/AgendaEmptyIllustration'
-import { askAboutAgendaInChat } from '@/features/home/lib/ask-agenda-in-chat'
 import { getIntegrationLogoPath } from '@/lib/integrations/integration-logo'
-import type { CalendarAgendaAccount } from '@/lib/services/calendar-api'
+import type { TeamAgendaCoverage } from '@/lib/services/calendar-api'
 
 type AgendaView = 'list' | 'board'
 type ProviderFilter = 'all' | 'google_calendar' | 'outlook'
@@ -53,8 +52,6 @@ export function agendaRangeDetail(d: Date, r: DateRange): string {
 
 export function AgendaCardHeader(props: {
   showAgendaSurface: boolean
-  accounts: CalendarAgendaAccount[]
-  anyConnected: boolean
   bothConnected: boolean
   provider: ProviderFilter
   setProvider: (p: ProviderFilter) => void
@@ -63,13 +60,10 @@ export function AgendaCardHeader(props: {
   showTeamToggle: boolean
   view: AgendaView
   setView: (v: AgendaView) => void
-  prepRunning: boolean
-  runPrepToday: () => void | Promise<void>
+  teamCoverage: TeamAgendaCoverage | null
 }) {
   const {
     showAgendaSurface,
-    accounts,
-    anyConnected,
     bothConnected,
     provider,
     setProvider,
@@ -78,8 +72,7 @@ export function AgendaCardHeader(props: {
     showTeamToggle,
     view,
     setView,
-    prepRunning,
-    runPrepToday,
+    teamCoverage,
   } = props
 
   return (
@@ -87,18 +80,6 @@ export function AgendaCardHeader(props: {
       <div className="flex items-center gap-2">
         <CalendarClock className="text-icon h-4 w-4 shrink-0" />
         <span className="agenda-card-title">Agenda</span>
-        {showAgendaSurface ? (
-          <button
-            type="button"
-            onClick={() => askAboutAgendaInChat(accounts)}
-            className="rounded-md p-1 transition-opacity hover:opacity-90"
-            aria-label="Ask Vibey about your agenda"
-            title="Ask Vibey"
-          >
-            <img src="/Logos/roas/icon-black.png" alt="" className="h-5 w-5 dark:hidden" />
-            <img src="/Logos/roas/icon-white.png" alt="" className="hidden h-5 w-5 dark:block" />
-          </button>
-        ) : null}
       </div>
       {showAgendaSurface && (
         <div className="flex flex-wrap items-center justify-end gap-1">
@@ -120,18 +101,10 @@ export function AgendaCardHeader(props: {
               ))}
             </div>
           ) : null}
-          {anyConnected ? (
-            <button
-              type="button"
-              onClick={() => void runPrepToday()}
-              disabled={prepRunning}
-              className="button-compact button-glass-secondary disabled:opacity-50"
-              title="Generate pre-call prep docs for today’s meetings"
-            >
-              <FileText className="h-3.5 w-3.5" aria-hidden />
-              {prepRunning ? 'Prepping…' : 'Prep today'}
-            </button>
-          ) : null}
+          <AgendaCardCoverageMenu
+            coverage={teamCoverage}
+            visible={showTeamToggle && agendaScope === 'team'}
+          />
           {bothConnected && agendaScope === 'personal' && (
             <div className="bg-secondary rounded-spacing-2 p-spacing-0-5 mr-spacing-1 flex">
               {(['all', 'google_calendar', 'outlook'] as const).map((p) => (
@@ -253,7 +226,7 @@ export function AgendaCardDisconnected(props: {
         </p>
         <p className="body-3 text-muted-foreground mt-spacing-2 leading-relaxed">
           {isTeam
-            ? 'Connect Google Workspace in Integrations so Vibey can show teammate agendas with the same Fathom and prep context.'
+            ? 'Connect Google Workspace in Integrations so Pixel can show teammate agendas with the same Fathom and prep context.'
             : 'Tap a provider to open its integration and connect.'}
         </p>
       </div>

@@ -50,6 +50,7 @@ export type CalendarAgendaEvent = {
   end: string
   all_day: boolean
   location: string | null
+  description?: string | null
   video_url: string | null
   video_label: string | null
   html_link: string | null
@@ -580,6 +581,7 @@ export class IntegrationsCalendarService {
       }
 
       const locationRaw = typeof ev.location === 'string' ? ev.location.trim() : ''
+      const descriptionRaw = typeof ev.description === 'string' ? ev.description.trim() : ''
       out.push({
         id: `google:${id}`,
         title,
@@ -587,6 +589,7 @@ export class IntegrationsCalendarService {
         end: endIso,
         all_day: allDay,
         location: locationRaw || null,
+        description: descriptionRaw || null,
         video_url: videoUrl,
         video_label: videoLabel,
         html_link: htmlLink,
@@ -672,6 +675,13 @@ export class IntegrationsCalendarService {
           : typeof ev.location === 'string'
             ? ev.location.trim()
             : ''
+      const bodyWrap = this.asRecord(ev.body)
+      const descriptionRaw =
+        typeof ev.bodyPreview === 'string'
+          ? ev.bodyPreview.trim()
+          : bodyWrap && typeof bodyWrap.content === 'string'
+            ? bodyWrap.content.trim()
+            : ''
       const icalUid = readOutlookIcalUid(ev)
       out.push({
         id: `outlook:${id}`,
@@ -680,6 +690,7 @@ export class IntegrationsCalendarService {
         end: endRaw,
         all_day: allDay,
         location: locationRaw || null,
+        description: descriptionRaw || null,
         video_url: videoUrl,
         video_label: videoLabel,
         html_link: htmlLink,

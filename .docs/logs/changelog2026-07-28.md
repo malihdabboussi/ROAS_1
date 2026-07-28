@@ -70,3 +70,13 @@ Why: The task activity UI incorrectly used embedded composer mode as a working-s
 Impact: Users can continue sending task context during active mission work. Invoked account-level skills are copied into the active runtime without deleting its existing skills or rewriting its normal skill index.
 
 Files: `TaskActivity.tsx`, `TaskActivity.test.tsx`, agent runtime readiness, required-skill sync/materialization services, orchestration wiring, and focused tests.
+
+## [2026-07-28 10:47] - [FIX]
+
+What: Team agenda keeps **Mine** on shared invites (`Mine · teammate`). Meeting card no longer duplicates guests under the title; Join sits left of a copyable full link; More details expands downward at fixed width and shows calendars + event description.
+
+Why: Shared Team rows dropped Mine so Team looked teammate-only. The quick card widened on expand and repeated people as both account labels and guests.
+
+Impact: Team reads as mine + team. Meeting popup stays narrow, guests list name+email once, and join links are copyable.
+
+Files: `integrations-calendar-dedupe.ts`, `HomeMeetingDetailHost.tsx`, calendar description plumbing (Workspace/Google/Outlook), tests, `integration-connections.md`.

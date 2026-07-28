@@ -17,7 +17,6 @@ import {
 import { AgendaCardListBody } from '@/features/home/components/AgendaCardListBody'
 import { HOME_AGENDA_MESSAGES } from '@/features/home/config/home-agenda-messages.config'
 import { useAgendaCardData } from '@/features/home/hooks/use-agenda-card-data'
-import { useAgendaPrepActions } from '@/features/home/hooks/use-agenda-prep-actions'
 import { agendaEventDismissKey, dismissAgendaEvent } from '@/features/home/lib/agenda-dismiss'
 import {
   dedupeAgendaEvents,
@@ -61,6 +60,7 @@ export function AgendaCard({
     workspaceConnected,
     events,
     accounts,
+    teamCoverage,
     connected,
     loading,
     initialized,
@@ -69,10 +69,8 @@ export function AgendaCard({
     setDismissedKeys,
     setBoardFetchWindow,
     timezone,
-    load,
     effectiveScope,
     showTeamToggle,
-    activeOrgId,
   } = useAgendaCardData()
 
   const anyConnected = connected.google_calendar || connected.outlook
@@ -147,9 +145,12 @@ export function AgendaCard({
     [isToday, range, nowTick, timezone],
   )
 
-  const handleBoardVisibleWindow = useCallback((window: { start: Date; end: Date }) => {
-    setBoardFetchWindow(window)
-  }, [])
+  const handleBoardVisibleWindow = useCallback(
+    (window: { start: Date; end: Date }) => {
+      setBoardFetchWindow(window)
+    },
+    [setBoardFetchWindow],
+  )
 
   const openCalendarIntegration = useCallback(
     (integrationId: 'google_calendar' | 'outlook') => {
@@ -165,13 +166,6 @@ export function AgendaCard({
       integrationsFocusIntegrationId: 'google_workspace',
     })
   }, [openWorkspaceSettings])
-
-  const { prepRunning, runPrepToday } = useAgendaPrepActions({
-    timezone,
-    activeOrgId,
-    onOpenItem,
-    reloadAgenda: load,
-  })
 
   const openAgendaEvent = useCallback(
     (ev: CalendarAgendaEvent) => {
@@ -202,7 +196,7 @@ export function AgendaCard({
     if (!dismissPending) return
     setDismissedKeys(dismissAgendaEvent(dismissPending))
     setDismissPending(null)
-  }, [dismissPending])
+  }, [dismissPending, setDismissedKeys])
 
   return (
     <div
@@ -212,8 +206,6 @@ export function AgendaCard({
     >
       <AgendaCardHeader
         showAgendaSurface={showAgendaSurface || showTeamToggle}
-        accounts={accounts}
-        anyConnected={anyConnected}
         bothConnected={bothConnected}
         provider={provider}
         setProvider={setProvider}
@@ -222,8 +214,7 @@ export function AgendaCard({
         showTeamToggle={showTeamToggle}
         view={view}
         setView={setView}
-        prepRunning={prepRunning}
-        runPrepToday={runPrepToday}
+        teamCoverage={teamCoverage}
       />
 
       {showAgendaSurface && view === 'list' ? (

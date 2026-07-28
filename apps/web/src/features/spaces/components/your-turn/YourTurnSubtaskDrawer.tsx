@@ -6,12 +6,14 @@ import type { YourTurnItem } from '../../services/your-turn.service'
 
 export interface YourTurnSubtaskDrawerProps {
   item: YourTurnItem
+  presentation?: 'modal' | 'panel'
   onClose: () => void
   onActionCompleted: () => void
 }
 
 export function YourTurnSubtaskDrawer({
   item,
+  presentation = 'modal',
   onClose,
   onActionCompleted,
 }: YourTurnSubtaskDrawerProps) {
@@ -44,10 +46,20 @@ export function YourTurnSubtaskDrawer({
   return (
     <div
       role="dialog"
-      aria-modal
-      className="fixed inset-0 z-50 flex items-end justify-end bg-black/40 sm:items-center sm:justify-center"
+      aria-modal={presentation === 'modal'}
+      className={
+        presentation === 'panel'
+          ? 'flex h-full min-h-0 w-full flex-col overflow-y-auto'
+          : 'bg-modal-overlay z-modal fixed inset-0 flex items-end justify-end sm:items-center sm:justify-center'
+      }
     >
-      <div className="bg-background rounded-t-spacing-3 sm:rounded-spacing-3 p-spacing-6 w-full sm:max-w-lg">
+      <div
+        className={
+          presentation === 'panel'
+            ? 'bg-background p-spacing-4 w-full'
+            : 'bg-background rounded-t-spacing-3 sm:rounded-spacing-3 p-spacing-6 w-full sm:max-w-lg'
+        }
+      >
         <div className="mb-spacing-4 flex items-center justify-between">
           <h2 className="heading-4 text-foreground font-medium">{item.title}</h2>
           <button
@@ -79,9 +91,7 @@ export function YourTurnSubtaskDrawer({
           className="px-spacing-3 py-spacing-2 body-2 rounded-spacing-2 border-border surface-bg placeholder:text-muted-foreground text-foreground w-full border"
         />
 
-        {error && (
-          <p className="body-3 mt-spacing-2 text-[color:var(--color-destructive)]">{error}</p>
-        )}
+        {error && <p className="body-3 mt-spacing-2 text-destructive">{error}</p>}
 
         <div className="mt-spacing-6 gap-spacing-3 flex items-center justify-end">
           <button

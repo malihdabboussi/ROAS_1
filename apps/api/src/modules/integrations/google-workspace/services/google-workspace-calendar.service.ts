@@ -7,6 +7,16 @@ import { isWorkspaceDirectoryIdentity } from '../types/google-workspace.types'
 import { GoogleWorkspaceApiService } from './google-workspace-api.service'
 import { OrgPersonCalendarIdentitiesService } from './org-person-calendar-identities.service'
 
+export type OrgUpcomingCoverageSkip = {
+  identity: {
+    id: string
+    calendar_email: string
+    display_name: string | null
+    match_status: string
+  }
+  reason: 'rejected' | 'capped'
+}
+
 @Injectable()
 export class GoogleWorkspaceCalendarService {
   constructor(
@@ -69,19 +79,16 @@ export class GoogleWorkspaceCalendarService {
     if (!start || !end) throw new BadRequestException('start and end are required')
 
     const { serviceAccount } = await this.api.loadServiceAccount(scope.orgId)
-    // Service client: Team Agenda must see every confirmed Directory identity,
-    // not only what the caller's RLS snapshot happens to return. Never DWD-pull
-    // Slack-only / manual / external rows.
+    // Service client: Team Agenda must see every Directory identity that is not
+    // rejected — person-link match_status must not gate DWD calendar pulls.
+    // Never DWD-pull Slack-only / manual / external rows.
     const identities = await this.identitiesRepo.serviceList(scope.orgId)
-    const eligible = identities
-      .filter((row) => row.match_status === 'confirmed' && isWorkspaceDirectoryIdentity(row))
-      .slice(0, Math.max(1, Math.min(query.limit_people ?? 40, 50)))
-
-    const people: Array<{
-      identity: (typeof identities)[number]
-      events: Awaited<ReturnType<typeof this.client.listCalendarEvents>>
-      error?: string
-    }> = []
+    const directory = identities.filter(isWorkspaceDirectoryIdentity)
+    const rejected = directory.filter((row) => row.match_status === 'rejected')
+    const eligibleAll = directory.filter((row) => row.match_status !== 'rejected')
+    const limit = Math.max(1, Math.min(query.limit_people ?? 40, 50))
+    const eligible = eligibleAll.slice(0, limit)
+    const capped = eligibleAll.slice(limit)
 
     const settled = await Promise.all(
       eligible.map(async (identity) => {
@@ -103,8 +110,37 @@ export class GoogleWorkspaceCalendarService {
         }
       }),
     )
-    people.push(...settled)
 
-    return { success: true, people }
+    const skipped: OrgUpcomingCoverageSkip[] = [
+      ...rejected.map((identity) => ({
+        identity: {
+          id: identity.id,
+          calendar_email: identity.calendar_email,
+          display_name: identity.display_name,
+          match_status: identity.match_status,
+        },
+        reason: 'rejected' as const,
+      })),
+      ...capped.map((identity) => ({
+        identity: {
+          id: identity.id,
+          calendar_email: identity.calendar_email,
+          display_name: identity.display_name,
+          match_status: identity.match_status,
+        },
+        reason: 'capped' as const,
+      })),
+    ]
+
+    return {
+      success: true,
+      people: settled,
+      coverage: {
+        limit_people: limit,
+        directory_count: directory.length,
+        pulled_count: eligible.length,
+        skipped,
+      },
+    }
   }
 }
