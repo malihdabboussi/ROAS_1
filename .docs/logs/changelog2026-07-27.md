@@ -210,3 +210,14 @@ Impact: Production filters and skill library now expose the revised pack list; 1
 
 Files: `ig-organic-video-scenes.config.ts`, migration `20260727164500_ig_organic_video_industry_packs_v2.sql`, skill contract test, `social-research.md`.
 
+
+## [2026-07-27 22:10] - [FIX]
+
+What: Fixed call-kind expansion migration for production (`spaces` has no `deleted_at`) and applied the three Jul 27 migrations on `roas-production` (`lhfgtsjetcardinpgouq`): call-kind options, IG industry scenes, IG industry packs v2. Shipped local main to GitHub, redeployed `roas-web`/`roas-funnels`, forced `roas-api` + Fly `roas-runtimes`.
+
+Why: Production ship of local WIP; call-kind SQL failed on live schema; API builds are gated by `ignoreCommand: exit 0` so git push alone does not deploy Nest.
+
+Impact: Meetings call kinds include executive/external/sales; IG organic skill content updated; agent Fathom org context + chat UX live once API/Fly finish.
+
+Files: `supabase/migrations/20260727153000_expand_meeting_call_kind_options.sql`, production DB migrations, Vercel/Fly deploys.
+

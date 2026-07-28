@@ -9068,3 +9068,12 @@ Evidence: The compact/expanded branch and dock-attribute wiring added by this ch
 Needed work: Extract the rail-items nav list (`visibleRailItems.map(...)`, ~250 LOC of per-item-type button/link branches) into a focused `SidebarHqRailNav` (or similar) child component so `SidebarHqRail` only orchestrates dock/compact/peek state.
 
 Reason not done now: Out of scope for the requested five-zone dock + R-compact + test-green pass; the file is still under its hard limit and the change here is behavior-additive, not a refactor.
+
+## 2026-07-27 — Production ship leftovers
+
+- **Feature/App:** Deploy / Supabase
+- **File/Area:** `apps/api/.env` (`qfrvyks…`) vs linked production `lhfgtsjetcardinpgouq` / `apps/web/.env.local` / `apps/agent-api`; Vercel `roas-api` `commandForIgnoringBuildStep: exit 0`
+- **Evidence:** Management API 403 on `qfrvyks`; Jul 27 migrations applied only to `lhfgts`. API git deploys canceled until ignore cleared.
+- **Needed work:** Confirm which Supabase project production API should use and align env; replace `exit 0` ignore with a path-aware ignore (or document mandatory force-deploy).
+- **Why not now:** Out of ship scope; production agent/web already on `lhfgts`.
+

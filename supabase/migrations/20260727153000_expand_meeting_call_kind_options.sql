@@ -14,8 +14,7 @@ BEGIN
   FOR space_row IN
     SELECT id, schema
     FROM public.spaces
-    WHERE deleted_at IS NULL
-      AND COALESCE((schema ->> 'personal_dashboard')::boolean, false) = true
+    WHERE COALESCE((schema ->> 'personal_dashboard')::boolean, false) = true
   LOOP
     fields := COALESCE(space_row.schema -> 'fields', '[]'::jsonb);
     field_idx := NULL;
