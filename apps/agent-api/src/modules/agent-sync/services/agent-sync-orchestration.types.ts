@@ -3,7 +3,6 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { OpenClawGatewayService } from '../../shared/services/openclaw-gateway.service'
 import type { AgentSyncMaterializationRepository } from '../repositories/agent-sync-materialization.repository'
 import type { AgentRuntimeSkillScopeService } from './agent-runtime-skill-scope.service'
-import type { SkillGeneratorDomain } from './vibey-api-skill-generator'
 import type {
   AgentDefinitionRow,
   AgentRegistryRow,
@@ -13,6 +12,7 @@ import type {
   SyncManifestEntry,
   SyncResult,
 } from './agent-sync.types'
+import type { SkillGeneratorDomain } from './vibey-api-skill-generator'
 
 export type AgentSyncOrchestrationContext = {
   agentsBaseDir: string
@@ -63,6 +63,7 @@ export type AgentSyncOrchestrationContext = {
     resources: AgentSkillResourceRow[],
     useKeyAsDir: boolean,
     manifest?: SyncManifestEntry[],
+    options?: { replaceExisting?: boolean; writeIndex?: boolean },
   ): Promise<number>
   syncAgentWorkflows(
     agentKey: string,

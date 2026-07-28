@@ -60,3 +60,13 @@ Why: The browser-native select looked disconnected from the app, did not support
 Impact: Users can now search client campaigns by name, confirm the selected campaign, and attach or dismiss the chat through consistent ROAS controls.
 
 Files: `apps/web/src/components/global-chat/components/ChatCampaignBrainNudge.tsx`, `apps/web/src/components/global-chat/components/ChatCampaignPicker.tsx`, `apps/web/src/components/global-chat/components/ChatCampaignPicker.test.tsx`.
+
+## [2026-07-28 11:42] - [FIX]
+
+What: Kept mission task chat sendable while an agent is working, and added on-demand runtime materialization for invoked skills owned by another agent.
+
+Why: The task activity UI incorrectly used embedded composer mode as a working-state flag, which removed its send controls. Chat exposed the account-wide skill catalog, but runtime repair only synchronized the active agent's normal skill set, so cross-agent skill files remained missing and the agent could not start.
+
+Impact: Users can continue sending task context during active mission work. Invoked account-level skills are copied into the active runtime without deleting its existing skills or rewriting its normal skill index.
+
+Files: `TaskActivity.tsx`, `TaskActivity.test.tsx`, agent runtime readiness, required-skill sync/materialization services, orchestration wiring, and focused tests.

@@ -22,8 +22,13 @@ const servicesMocks = vi.hoisted(() => ({
   updateSpaceItem: vi.fn(),
 }))
 
+const channelComposerMock = vi.hoisted(() => vi.fn())
+
 vi.mock('@/components/channels/ChannelComposerAdapter', () => ({
-  ChannelComposer: () => <div data-testid="task-channel-composer" />,
+  ChannelComposer: (props: { embedded?: boolean }) => {
+    channelComposerMock(props)
+    return <div data-testid="task-channel-composer" />
+  },
 }))
 
 vi.mock('@/components/vibey/vibey-chat-orb', () => ({
@@ -105,7 +110,9 @@ describe('TaskActivity', () => {
     )
 
     expect(await screen.findByText('Activity')).not.toBeNull()
-    await waitFor(() => expect(servicesMocks.fetchItemActivity).toHaveBeenCalledWith('space-1', 'task-1'))
+    await waitFor(() =>
+      expect(servicesMocks.fetchItemActivity).toHaveBeenCalledWith('space-1', 'task-1'),
+    )
     expect(screen.getByText('Task created')).not.toBeNull()
     expect(screen.getByTestId('task-channel-composer')).not.toBeNull()
     expect(
@@ -113,5 +120,25 @@ describe('TaskActivity', () => {
         args.some((arg) => String(arg).includes('Maximum update depth')),
       ),
     ).toBe(false)
+  })
+
+  it('keeps the composer in sendable mode while the agent is working', async () => {
+    render(
+      <TaskActivity
+        spaceId="space-1"
+        itemId="task-1"
+        missionLogs={[]}
+        createdAt="2026-06-24T10:00:00.000Z"
+        allFields={[]}
+        campaignId={null}
+        roster={[]}
+        currentUserId="user-1"
+        isAgentWorking
+      />,
+    )
+
+    expect(await screen.findByText('Agent is working on this task...')).not.toBeNull()
+    expect(channelComposerMock).toHaveBeenCalled()
+    expect(channelComposerMock.mock.lastCall?.[0].embedded).not.toBe(true)
   })
 })

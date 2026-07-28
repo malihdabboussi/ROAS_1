@@ -14,11 +14,6 @@
       "limit": 600,
       "lines": 728
     },
-    "apps/agent-api/src/modules/agent-sync/services/agent-sync.service.ts": {
-      "kind": "service",
-      "limit": 600,
-      "lines": 2323
-    },
     "apps/agent-api/src/modules/artifacts/services/artifact-documents.service.ts": {
       "kind": "service",
       "limit": 600,

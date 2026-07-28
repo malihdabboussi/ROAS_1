@@ -7,9 +7,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { SupabaseServiceClient } from '@vibey/api-shared'
 import { AgentPolicyService } from '../../agent-policy/services/agent-policy.service'
 import { OpenClawGatewayService } from '../../shared/services/openclaw-gateway.service'
-import { AgentRuntimeSkillScopeService } from './agent-runtime-skill-scope.service'
-import { AgentSyncRepository } from '../repositories/agent-sync.repository'
 import { AgentSyncMaterializationRepository } from '../repositories/agent-sync-materialization.repository'
+import { AgentSyncRepository } from '../repositories/agent-sync.repository'
+import { AgentRuntimeSkillScopeService } from './agent-runtime-skill-scope.service'
 import { AgentSyncAgentService } from './agent-sync-agent.service'
 import { AgentSyncAllService } from './agent-sync-all.service'
 import { AgentSyncBrainLibraryService } from './agent-sync-brain-library.service'
@@ -18,6 +18,10 @@ import { AgentSyncOrchestrationContext } from './agent-sync-orchestration.types'
 import { AgentSyncOrgAgentService } from './agent-sync-org-agent.service'
 import { AgentSyncOrgSharedSkillsService } from './agent-sync-org-shared-skills.service'
 import { AgentSyncPolicySkillService } from './agent-sync-policy-skill.service'
+import {
+  AgentSyncRequiredSkillsService,
+  type SyncRequiredSkillsInput,
+} from './agent-sync-required-skills.service'
 import {
   AgentSyncRuntimeIdentityService,
   ARCHETYPE_IDENTITY_FILE_RE,
@@ -28,7 +32,6 @@ import {
 } from './agent-sync-runtime-identity.service'
 import { AgentSyncScopeService } from './agent-sync-scope.service'
 import { AgentSyncVerificationService } from './agent-sync-verification.service'
-import type { SkillGeneratorDomain } from './vibey-api-skill-generator'
 import {
   isUserProfileDefinitionFile,
   type AgentRegistryRow,
@@ -38,6 +41,7 @@ import {
   type SyncManifestEntry,
   type SyncResult,
 } from './agent-sync.types'
+import type { SkillGeneratorDomain } from './vibey-api-skill-generator'
 
 export type { SyncManifestEntry, SyncResult } from './agent-sync.types'
 
@@ -69,6 +73,7 @@ export class AgentSyncService implements OnModuleInit {
     private readonly agentSyncAllService: AgentSyncAllService = new AgentSyncAllService(),
     private readonly agentSyncAgentService: AgentSyncAgentService = new AgentSyncAgentService(),
     private readonly agentSyncOrgAgentService: AgentSyncOrgAgentService = new AgentSyncOrgAgentService(),
+    private readonly agentSyncRequiredSkillsService: AgentSyncRequiredSkillsService = new AgentSyncRequiredSkillsService(),
   ) {
     this.supabase = svc.client
     this.agentPolicyService = new AgentPolicyService(svc)
@@ -239,6 +244,13 @@ export class AgentSyncService implements OnModuleInit {
     )
   }
 
+  async syncRequiredSkillsForAgent(input: SyncRequiredSkillsInput): Promise<number> {
+    return this.agentSyncRequiredSkillsService.syncRequiredSkills(
+      this.createOrchestrationContext(),
+      input,
+    )
+  }
+
   private createOrchestrationContext(): AgentSyncOrchestrationContext {
     return {
       agentsBaseDir: this.agentsBaseDir,
@@ -261,8 +273,7 @@ export class AgentSyncService implements OnModuleInit {
         systemKeys: Set<string>,
       ) => this.filterSystemAgentRows(rows, systemKeys),
       deduplicateSkills: (rows, orgId) => this.deduplicateSkills(rows, orgId),
-      deduplicatePersonalSkills: (rows, userId) =>
-        this.deduplicatePersonalSkills(rows, userId),
+      deduplicatePersonalSkills: (rows, userId) => this.deduplicatePersonalSkills(rows, userId),
       deduplicateResources: (rows, orgId) => this.deduplicateResources(rows, orgId),
       deduplicatePersonalResources: (rows, userId) =>
         this.deduplicatePersonalResources(rows, userId),
@@ -270,20 +281,14 @@ export class AgentSyncService implements OnModuleInit {
       fetchLibraryResources: (skillKeys) => this.fetchLibraryResources(skillKeys),
       mergeWithLibraryFallback: (agentResources, libraryResources) =>
         this.mergeWithLibraryFallback(agentResources, libraryResources),
-      syncAgentSkills: (agentKey, rows, resources, useKeyAsDir, manifest) =>
-        this.syncAgentSkills(agentKey, rows, resources, useKeyAsDir, manifest),
+      syncAgentSkills: (agentKey, rows, resources, useKeyAsDir, manifest, options) =>
+        this.syncAgentSkills(agentKey, rows, resources, useKeyAsDir, manifest, options),
       syncAgentWorkflows: (agentKey, rows, useKeyAsDir, manifest) =>
         this.syncAgentWorkflows(agentKey, rows, useKeyAsDir, manifest),
       resolveAllowedActions: (row, scope) => this.resolveAllowedActions(row, scope),
       resolveEnabledSkillKeys: (rows) => this.resolveEnabledSkillKeys(rows),
       writeScopedVibeyApiSkill: (agentKeyOrDir, allowedActions, useKeyAsDir, domain, manifest) =>
-        this.writeScopedVibeyApiSkill(
-          agentKeyOrDir,
-          allowedActions,
-          useKeyAsDir,
-          domain,
-          manifest,
-        ),
+        this.writeScopedVibeyApiSkill(agentKeyOrDir, allowedActions, useKeyAsDir, domain, manifest),
       syncAllOrgAgents: (userId) => this.syncAllOrgAgents(userId),
       syncOrgSharedSkills: (userId, agentKeys, manifest) =>
         this.syncOrgSharedSkills(userId, agentKeys, manifest),
@@ -487,6 +492,7 @@ export class AgentSyncService implements OnModuleInit {
     resources: AgentSkillResourceRow[],
     useKeyAsDir = false,
     manifest?: SyncManifestEntry[],
+    options?: { replaceExisting?: boolean; writeIndex?: boolean },
   ): Promise<number> {
     return this.getAgentSyncFileMaterializationService().syncAgentSkills({
       agentsBaseDir: this.agentsBaseDir,
@@ -495,6 +501,7 @@ export class AgentSyncService implements OnModuleInit {
       resources,
       useKeyAsDir,
       manifest,
+      ...options,
     })
   }
 

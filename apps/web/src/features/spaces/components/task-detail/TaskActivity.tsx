@@ -143,7 +143,7 @@ export function TaskActivity({
       <div className="card-glass rounded-spacing-2 flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* Header */}
         <div className="px-spacing-6 py-spacing-3 flex-shrink-0">
-          <h3 className="body-3 font-semibold text-foreground">Activity</h3>
+          <h3 className="body-3 text-foreground font-semibold">Activity</h3>
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col">
@@ -209,7 +209,6 @@ export function TaskActivity({
                     </div>
                   ) : null}
                   <ChannelComposer
-                    embedded={isAgentWorking}
                     channelId={`task-activity-${itemId}`}
                     members={composerMembers}
                     rosterAvatars={rosterAvatars}

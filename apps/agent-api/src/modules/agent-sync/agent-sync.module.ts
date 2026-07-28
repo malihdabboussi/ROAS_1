@@ -18,9 +18,10 @@ import { AgentSyncFileMaterializationService } from './services/agent-sync-file-
 import { AgentSyncOrgAgentService } from './services/agent-sync-org-agent.service'
 import { AgentSyncOrgSharedSkillsService } from './services/agent-sync-org-shared-skills.service'
 import { AgentSyncPolicySkillService } from './services/agent-sync-policy-skill.service'
+import { AgentSyncRequiredSkillsService } from './services/agent-sync-required-skills.service'
 import { AgentSyncScopeService } from './services/agent-sync-scope.service'
-import { AgentSyncService } from './services/agent-sync.service'
 import { AgentSyncVerificationService } from './services/agent-sync-verification.service'
+import { AgentSyncService } from './services/agent-sync.service'
 
 @Module({
   imports: [SharedContextModule],
@@ -42,6 +43,7 @@ import { AgentSyncVerificationService } from './services/agent-sync-verification
     AgentSyncAgentService,
     AgentSyncOrgAgentService,
     AgentSyncOrgSharedSkillsService,
+    AgentSyncRequiredSkillsService,
     RuntimeIdentityGuard,
     SyncReadyInterceptor,
   ],

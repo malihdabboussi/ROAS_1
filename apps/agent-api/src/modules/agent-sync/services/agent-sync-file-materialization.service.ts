@@ -58,13 +58,17 @@ export class AgentSyncFileMaterializationService {
     resources: AgentSkillResourceRow[]
     useKeyAsDir?: boolean
     manifest?: AgentSyncManifestEntry[]
+    replaceExisting?: boolean
+    writeIndex?: boolean
   }): Promise<number> {
     const agentDir = params.useKeyAsDir
       ? params.agentKey
       : path.join(params.agentsBaseDir, params.agentKey)
     const resolvedAgentKey = params.useKeyAsDir ? path.basename(params.agentKey) : params.agentKey
     const skillsRoot = path.join(agentDir, 'skills')
-    await fs.rm(skillsRoot, { recursive: true, force: true })
+    if (params.replaceExisting !== false) {
+      await fs.rm(skillsRoot, { recursive: true, force: true })
+    }
     await fs.mkdir(skillsRoot, { recursive: true })
 
     let synced = 0
@@ -155,7 +159,9 @@ export class AgentSyncFileMaterializationService {
       }
     }
 
-    await this.writeSkillsIndex(agentDir, params.rows)
+    if (params.writeIndex !== false) {
+      await this.writeSkillsIndex(agentDir, params.rows)
+    }
     return synced
   }
 

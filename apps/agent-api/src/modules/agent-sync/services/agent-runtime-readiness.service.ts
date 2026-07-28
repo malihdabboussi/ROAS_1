@@ -88,6 +88,17 @@ export class AgentRuntimeReadinessService {
     } else {
       await this.syncService.syncAgent(input.agentKey, input.userId)
     }
+    const requiredSkillKeys = [
+      ...new Set((input.requiredSkillFiles ?? []).map((file) => file.skillKey)),
+    ]
+    if (requiredSkillKeys.length > 0) {
+      await this.syncService.syncRequiredSkillsForAgent({
+        userId: input.userId,
+        orgId: input.orgId,
+        agentKey: input.agentKey,
+        skillKeys: requiredSkillKeys,
+      })
+    }
 
     const after = await this.gateway.inspectAgentRuntime(
       input.gatewayAgentId,

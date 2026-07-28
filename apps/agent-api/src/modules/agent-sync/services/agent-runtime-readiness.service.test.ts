@@ -155,6 +155,7 @@ describe('AgentRuntimeReadinessService', () => {
     const syncService = {
       syncOrgAgent: vi.fn().mockResolvedValue({ healthy: true }),
       syncAgent: vi.fn(),
+      syncRequiredSkillsForAgent: vi.fn().mockResolvedValue(1),
     }
     const gateway = {
       inspectAgentRuntime: vi
@@ -193,6 +194,12 @@ describe('AgentRuntimeReadinessService', () => {
       '19847dc5-a29a-4684-87d0-4cf6560baa10',
       'vibey',
     )
+    expect(syncService.syncRequiredSkillsForAgent).toHaveBeenCalledWith({
+      userId: 'user-1',
+      orgId: '19847dc5-a29a-4684-87d0-4cf6560baa10',
+      agentKey: 'vibey',
+      skillKeys: ['kt-carousel-producer'],
+    })
     expect(gateway.inspectAgentRuntime).toHaveBeenCalledWith(
       'org-19847dc5-a29a-4684-87d0-4cf6560baa10-vibey',
       requiredSkillFiles,
