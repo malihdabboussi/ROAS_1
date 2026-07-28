@@ -26,7 +26,7 @@ describe('StreamInterruptedBar', () => {
     vi.clearAllMocks()
   })
 
-  it('shows one Resume action for interrupted streams', () => {
+  it('shows one Continue response action for interrupted streams', () => {
     useChatStore.setState({
       interruptedConversationIds: ['conversation-1'],
       streamingConversationIds: [],
@@ -38,15 +38,15 @@ describe('StreamInterruptedBar', () => {
 
     render(<StreamInterruptedBar conversationId="conversation-1" />)
 
-    const resumeButton = screen.getByRole('button', { name: /resume/i })
+    const resumeButton = screen.getByRole('button', { name: /continue response/i })
     fireEvent.click(resumeButton)
 
     expect(screen.queryByRole('button', { name: /retry/i })).toBeNull()
-    expect(screen.queryByRole('button', { name: /continue/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^resume$/i })).toBeNull()
     expect(recoverConversation).toHaveBeenCalledWith('conversation-1', { manual: true })
   })
 
-  it('clears the interrupted flow when Resume cannot recover', async () => {
+  it('keeps recovery available when Continue response cannot recover', async () => {
     vi.mocked(recoverConversation).mockRejectedValueOnce(new Error('resume failed'))
     useChatStore.setState({
       interruptedConversationIds: ['conversation-1'],
@@ -66,13 +66,19 @@ describe('StreamInterruptedBar', () => {
     })
 
     render(<StreamInterruptedBar conversationId="conversation-1" />)
-    fireEvent.click(screen.getByRole('button', { name: /resume/i }))
+    fireEvent.click(screen.getByRole('button', { name: /continue response/i }))
 
     await waitFor(() => {
-      expect(useChatStore.getState().interruptedConversationIds).not.toContain('conversation-1')
+      expect(recoverConversation).toHaveBeenCalledWith('conversation-1', { manual: true })
     })
-    expect(useChatStore.getState().streamFailureByConversation['conversation-1']).toBeUndefined()
-    expect(useChatStore.getState().streamRunsByConversation['conversation-1']).toBeUndefined()
+    expect(useChatStore.getState().interruptedConversationIds).toContain('conversation-1')
+    expect(useChatStore.getState().streamFailureByConversation['conversation-1']?.code).toBe(
+      'stream_interrupted',
+    )
+    expect(useChatStore.getState().streamRunsByConversation['conversation-1']).toBeDefined()
+    expect(
+      screen.getByText(/still couldn.t reconnect.*work is safe/i),
+    ).toBeInTheDocument()
   })
 
   it('keeps context-limit Resume available when continue fails', async () => {
@@ -87,7 +93,7 @@ describe('StreamInterruptedBar', () => {
     })
 
     render(<StreamInterruptedBar conversationId="conversation-1" />)
-    fireEvent.click(screen.getByRole('button', { name: /resume/i }))
+    fireEvent.click(screen.getByRole('button', { name: /continue response/i }))
 
     await waitFor(() => {
       expect(recoverConversation).toHaveBeenCalledWith('conversation-1', { manual: true })

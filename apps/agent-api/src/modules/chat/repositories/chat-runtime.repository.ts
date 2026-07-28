@@ -121,6 +121,19 @@ export class ChatRuntimeRepository {
     return error
   }
 
+  async findLatestRuntimeRunForConversation(
+    supabase: SupabaseClient,
+    conversationId: string,
+  ): Promise<Record<string, unknown> | null> {
+    const { data } = await this.table(supabase, 'agent_runtime_runs')
+      .select('run_id, message_id, status, error, created_at')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    return data
+  }
+
   async insertRuntimeRunCheckpoint(
     supabase: SupabaseClient,
     payload: Record<string, unknown>,

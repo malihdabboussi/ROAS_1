@@ -567,9 +567,9 @@ export function isRealAgentStreamEvent(type: string): boolean {
 }
 
 export function shouldMarkConversationInterruptedForStreamError(
-  hasRealAgentEventStarted: boolean,
+  _hasRealAgentEventStarted: boolean,
 ): boolean {
-  return hasRealAgentEventStarted
+  return true
 }
 
 export interface PrewarmChatContextParams {
@@ -942,9 +942,6 @@ export function needsStreamRecovery(messages: Message[]): boolean {
   if (!lastAssistant) return false
   if ((lastAssistant.metadata as Record<string, unknown> | undefined)?.duration_ms != null)
     return false
-  if (isAssistantTurnComplete(lastAssistant, true)) return false
-  const age = Date.now() - new Date(lastAssistant.created_at).getTime()
-  if (age > RECOVER_MAX_MESSAGE_AGE_MS) return false
   return true
 }
 
@@ -962,9 +959,25 @@ function clearCompletedConversationRecoveryState(conversationId: string): void {
   )
 }
 
+function markConversationRecoveryRequired(
+  conversationId: string,
+  code: 'stream_interrupted' | 'context_window_exceeded' = 'stream_interrupted',
+): void {
+  const store = useChatStore.getState()
+  store.setConversationReconnecting(conversationId, false)
+  store.setConversationStreaming(conversationId, false)
+  store.setConversationInterrupted(conversationId, true)
+  store.setConversationStreamFailure(conversationId, resolveChatStreamFailure({ code }))
+  store.setIsStreaming(activeControllers.size > 0)
+}
+
 export function shouldSkipStreamRecovery(conversationId: string): boolean {
-  const messages = useChatStore.getState().messagesByConversation[conversationId] ?? []
-  return isAssistantTurnComplete(getLastAssistantMessage(messages), true)
+  const store = useChatStore.getState()
+  if (store.streamFailureByConversation[conversationId]?.showInterruptedBar) {
+    return false
+  }
+  const messages = store.messagesByConversation[conversationId] ?? []
+  return isAssistantTurnComplete(getLastAssistantMessage(messages), false)
 }
 
 const activeRecoveries = new Set<string>()
@@ -1092,7 +1105,7 @@ export async function recoverConversation(
   const store = useChatStore.getState()
   store.setConversationInterrupted(conversationId, false)
 
-  let lastActivityAt = Date.now()
+  const recoveryStartedAt = Date.now()
   let shownReconnecting = false
   let contactEstablished = false
 
@@ -1124,7 +1137,7 @@ export async function recoverConversation(
   }
 
   try {
-    while (Date.now() - lastActivityAt < RECOVER_MAX_DURATION_MS) {
+    while (Date.now() - recoveryStartedAt < RECOVER_MAX_DURATION_MS) {
       if (signal.aborted || isStreamActive(conversationId)) {
         if (shownReconnecting) store.setConversationReconnecting(conversationId, false)
         return
@@ -1133,8 +1146,25 @@ export async function recoverConversation(
         const status = await backendGet<ChatStatusResponse>(`/api/chat/status/${conversationId}`)
         if (signal.aborted) return
 
+        if (
+          status.failureCode === 'stream_interrupted' ||
+          status.failureCode === 'context_window_exceeded'
+        ) {
+          if (status.runId && status.messageId) {
+            store.setConversationStreamRun(conversationId, {
+              runId: status.runId,
+              messageId: status.messageId,
+              cursor: status.resumeCursor ?? null,
+            })
+          }
+          markConversationRecoveryRequired(conversationId, status.failureCode)
+          return
+        }
+
         if (!status.active) {
-          const result = await pollOnce(true)
+          const hasKnownInterruption =
+            store.streamFailureByConversation[conversationId]?.code === 'stream_interrupted'
+          const result = await pollOnce(!hasKnownInterruption)
           if (signal.aborted) return
 
           if (result === 'completed') {
@@ -1144,6 +1174,11 @@ export async function recoverConversation(
             store.setConversationStreamFailure(conversationId, null)
             store.clearConversationStreamRun(conversationId)
             store.setIsStreaming(activeControllers.size > 0)
+            return
+          }
+
+          if (hasKnownInterruption) {
+            markConversationRecoveryRequired(conversationId)
             return
           }
 
@@ -1176,7 +1211,6 @@ export async function recoverConversation(
           return
         }
 
-        lastActivityAt = Date.now()
         store.setConversationStreaming(conversationId, true)
         store.setIsStreaming(true)
         if (status.messageId) {
@@ -1206,6 +1240,10 @@ export async function recoverConversation(
               store.setConversationInterrupted(conversationId, false)
               store.setConversationStreamFailure(conversationId, null)
               store.setIsStreaming(activeControllers.size > 0)
+              return
+            }
+            if (resumed === 'failed') {
+              markConversationRecoveryRequired(conversationId)
               return
             }
           } catch {
@@ -1282,7 +1320,7 @@ async function resumeConversationStream(params: {
   messageId: string
   afterCursor: string
   signal: AbortSignal
-}): Promise<'completed' | 'interrupted'> {
+}): Promise<'completed' | 'interrupted' | 'failed'> {
   const { conversationId, runId, messageId, afterCursor, signal } = params
   if (signal.aborted) return 'interrupted'
 
@@ -1340,7 +1378,9 @@ async function resumeConversationStream(params: {
 
           const event = JSON.parse(data) as Record<string, unknown>
           const type = event.type as string
-          rememberStreamCursor(conversationId, event, activeMessageId)
+          if (type !== 'error') {
+            rememberStreamCursor(conversationId, event, activeMessageId)
+          }
           store.touchAgentEvent(conversationId, Date.now())
 
           switch (type) {
@@ -1621,8 +1661,19 @@ async function resumeConversationStream(params: {
               store.clearConversationStreamRun(conversationId)
               break
             }
-            case 'error':
-              return 'interrupted'
+            case 'error': {
+              const failure = resolveChatStreamFailure({
+                code: typeof event.code === 'string' ? event.code : null,
+                message:
+                  typeof event.message === 'string'
+                    ? event.message
+                    : typeof event.error === 'string'
+                      ? event.error
+                      : null,
+              })
+              store.setConversationStreamFailure(conversationId, failure)
+              return 'failed'
+            }
           }
         }
       }
@@ -2295,7 +2346,9 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
             const event = JSON.parse(data) as Record<string, unknown>
             const type = event.type as string
             touchSse()
-            rememberStreamCursor(conversationId!, event, assistantMessageId)
+            if (type !== 'error') {
+              rememberStreamCursor(conversationId!, event, assistantMessageId)
+            }
             if (isRealAgentStreamEvent(type)) {
               sawRealAgentEvent = true
             }
@@ -2811,7 +2864,7 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
       const lastAssistant = [...localMessages]
         .reverse()
         .find((message) => message.role === 'assistant')
-      if (isAssistantTurnComplete(lastAssistant, true)) {
+      if (isAssistantTurnComplete(lastAssistant, false)) {
         finalizeCompletedConversationTurn(conversationId!)
         return conversationId!
       }
@@ -2825,11 +2878,9 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
       (err.message === '__MACHINE_WARMUP_INTERRUPTED__' ||
         !shouldMarkConversationInterruptedForStreamError(sawRealAgentEvent))
     ) {
-      store.updateConversationStreamUI(conversationId!, () => ({
-        agentPhase: 'thinking',
-        agentStatusMessage: "I'm still getting your workspace ready...",
-      }))
-      store.setConversationInterrupted(conversationId!, false)
+      const interrupted = resolveChatStreamFailure({ code: 'stream_interrupted' })
+      store.setConversationStreamFailure(conversationId!, interrupted)
+      store.setConversationInterrupted(conversationId!, true)
       finalizeStreamState()
       return conversationId!
     }

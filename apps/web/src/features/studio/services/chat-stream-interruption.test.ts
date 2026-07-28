@@ -51,8 +51,8 @@ describe('chat stream interruption classification', () => {
     })
   })
 
-  it('does not mark warm-up-only failures as interrupted conversations', () => {
-    expect(shouldMarkConversationInterruptedForStreamError(false)).toBe(false)
+  it('keeps recovery available when a turn fails during warm-up', () => {
+    expect(shouldMarkConversationInterruptedForStreamError(false)).toBe(true)
   })
 
   it('keeps interrupted recovery available after real agent work starts', () => {
@@ -310,6 +310,130 @@ describe('chat stream interruption classification', () => {
     )
     expect(body.documents).toEqual(messages[0]?.metadata.documents)
     expect(useChatStore.getState().interruptedConversationIds).not.toContain('conversation-1')
+  })
+
+  it('stops polling as soon as status reports an interrupted bridge', async () => {
+    const assistantMessage: Message = {
+      id: 'message-1',
+      conversation_id: 'conversation-1',
+      role: 'assistant',
+      content: 'The page is well built.',
+      content_blocks: null,
+      metadata: {},
+      created_at: new Date().toISOString(),
+    }
+    useChatStore.getState().setMessages('conversation-1', [
+      {
+        id: 'user-1',
+        conversation_id: 'conversation-1',
+        role: 'user',
+        content: 'Analyze why this page converts at 4.5%.',
+        content_blocks: null,
+        metadata: {},
+        created_at: new Date().toISOString(),
+      },
+      assistantMessage,
+    ])
+    useChatStore.getState().setConversationStreamFailure(
+      'conversation-1',
+      resolveChatStreamFailure({ code: 'stream_interrupted' }),
+    )
+    vi.mocked(backendGet).mockImplementation(async (url: string) => {
+      if (url.startsWith('/api/chat/status/')) {
+        return {
+          active: true,
+          messageId: 'message-1',
+          runId: 'run-1',
+          failureCode: 'stream_interrupted',
+          message: assistantMessage,
+          timelineEvents: [],
+        } as never
+      }
+      throw new Error(`Unexpected backendGet ${url}`)
+    })
+    await recoverConversation('conversation-1')
+
+    expect(backendGet).toHaveBeenCalledTimes(1)
+    expect(backendFetch).not.toHaveBeenCalled()
+    expect(useChatStore.getState().streamingConversationIds).not.toContain('conversation-1')
+    expect(useChatStore.getState().reconnectingConversationIds).not.toContain('conversation-1')
+    expect(useChatStore.getState().interruptedConversationIds).toContain('conversation-1')
+    expect(useChatStore.getState().streamFailureByConversation['conversation-1']?.code).toBe(
+      'stream_interrupted',
+    )
+  })
+
+  it('replays an interruption when status races ahead of the worker failure marker', async () => {
+    const assistantMessage: Message = {
+      id: 'message-1',
+      conversation_id: 'conversation-1',
+      role: 'assistant',
+      content: 'The page is well built.',
+      content_blocks: null,
+      metadata: {},
+      created_at: new Date().toISOString(),
+    }
+    const store = useChatStore.getState()
+    store.setMessages('conversation-1', [assistantMessage])
+    store.setConversationStreamFailure(
+      'conversation-1',
+      resolveChatStreamFailure({ code: 'stream_interrupted' }),
+    )
+    store.setConversationStreamRun('conversation-1', {
+      runId: 'run-1',
+      messageId: 'message-1',
+      cursor: '1-0',
+    })
+    vi.mocked(backendGet).mockResolvedValue({
+      active: true,
+      messageId: 'message-1',
+      runId: 'run-1',
+      resumeCursor: '1-0',
+      message: assistantMessage,
+      timelineEvents: [],
+    } as never)
+    vi.mocked(backendFetch).mockResolvedValue(
+      new Response(
+        [
+          'data: {"type":"error","run_id":"run-1","cursor":"2-0","code":"stream_interrupted","message":"response was interrupted"}',
+          'data: [DONE]',
+          '',
+        ].join('\n\n'),
+        { status: 200, headers: { 'content-type': 'text/event-stream' } },
+      ),
+    )
+
+    await recoverConversation('conversation-1')
+
+    expect(useChatStore.getState().interruptedConversationIds).toContain('conversation-1')
+    expect(useChatStore.getState().streamRunsByConversation['conversation-1']?.cursor).toBe('1-0')
+  })
+
+  it('keeps durable context-window recovery available after refresh', async () => {
+    useChatStore.getState().setMessages('conversation-1', [
+      {
+        id: 'message-1',
+        conversation_id: 'conversation-1',
+        role: 'assistant',
+        content: 'Partial answer',
+        content_blocks: null,
+        metadata: {},
+        created_at: new Date().toISOString(),
+      },
+    ])
+    vi.mocked(backendGet).mockResolvedValue({
+      active: false,
+      messageId: 'message-1',
+      runId: 'run-1',
+      failureCode: 'context_window_exceeded',
+    } as never)
+
+    await recoverConversation('conversation-1')
+
+    expect(useChatStore.getState().interruptedConversationIds).toContain('conversation-1')
+    expect(useChatStore.getState().streamFailureByConversation['conversation-1']?.code).toBe(
+      'context_window_exceeded',
+    )
   })
 
   it('completes recovery when status is inactive and assistant has visible content without duration_ms', async () => {
@@ -576,7 +700,7 @@ describe('mergeMessagesPreservingOrderedBlocks', () => {
 })
 
 describe('needsStreamRecovery', () => {
-  it('returns false when the latest assistant already has visible streamed content', () => {
+  it('checks status when visible streamed content has no completion marker', () => {
     const messages: Message[] = [
       {
         id: 'user-1',
@@ -598,7 +722,7 @@ describe('needsStreamRecovery', () => {
       },
     ]
 
-    expect(needsStreamRecovery(messages)).toBe(false)
+    expect(needsStreamRecovery(messages)).toBe(true)
   })
 
   it('returns true for a fresh empty assistant placeholder', () => {
@@ -626,7 +750,23 @@ describe('needsStreamRecovery', () => {
     expect(needsStreamRecovery(messages)).toBe(true)
   })
 
-  it('skips recovery when the latest assistant has legacy content_blocks only', () => {
+  it('checks durable status for old unmarked assistant turns', () => {
+    const messages: Message[] = [
+      {
+        id: 'assistant-1',
+        conversation_id: 'conversation-1',
+        role: 'assistant',
+        content: 'A response that may have stopped early.',
+        content_blocks: null,
+        metadata: {},
+        created_at: '2026-01-01T00:00:00.000Z',
+      },
+    ]
+
+    expect(needsStreamRecovery(messages)).toBe(true)
+  })
+
+  it('checks status when the latest assistant only has unmarked legacy blocks', () => {
     const messages: Message[] = [
       {
         id: 'assistant-1',
@@ -639,6 +779,6 @@ describe('needsStreamRecovery', () => {
       },
     ]
 
-    expect(needsStreamRecovery(messages)).toBe(false)
+    expect(needsStreamRecovery(messages)).toBe(true)
   })
 })

@@ -200,7 +200,9 @@ describe('AgentRuntimeChatProcessor', () => {
     )
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
-        status: 'running',
+        status: 'failed_recoverable',
+        failed_at: expect.any(String),
+        ended_at: expect.any(String),
         heartbeat_at: expect.any(String),
         error: 'terminated',
       }),

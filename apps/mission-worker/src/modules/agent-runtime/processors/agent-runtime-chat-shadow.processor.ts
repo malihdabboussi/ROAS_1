@@ -252,7 +252,9 @@ export class AgentRuntimeChatProcessor extends WorkerHost implements OnModuleDes
       .getClient()
       .from('agent_runtime_runs')
       .update({
-        status: 'running',
+        status: 'failed_recoverable',
+        failed_at: interruptedAt,
+        ended_at: interruptedAt,
         heartbeat_at: interruptedAt,
         error: message,
       })

@@ -3,7 +3,10 @@
 import { useCallback, useMemo, useState } from 'react'
 import { PlugZap, RefreshCw, X } from 'lucide-react'
 import { startOpenAICodexOAuth } from '@/lib/integrations/openai-codex-oauth'
-import { CHAT_STREAM_ERRORS } from '../../config/chat-stream-errors.config'
+import {
+  CHAT_STREAM_ERRORS,
+  CHAT_STREAM_RECOVERY_MESSAGES,
+} from '../../config/chat-stream-errors.config'
 import { recoverConversation } from '../../services/chat.service'
 import { useChatStore } from '../../store/use-chat-store'
 
@@ -33,6 +36,7 @@ function InterruptedConversationRow({ conversationId }: { conversationId: string
   const isReconnecting = useChatStore((s) => s.reconnectingConversationIds.includes(conversationId))
   const streamFailure = useChatStore((s) => s.streamFailureByConversation[conversationId])
   const [busy, setBusy] = useState(false)
+  const [resumeFailed, setResumeFailed] = useState(false)
   const isReconnectRequired = streamFailure?.bannerAction === 'reconnect'
 
   const handleDismiss = () => {
@@ -41,19 +45,9 @@ function InterruptedConversationRow({ conversationId }: { conversationId: string
     store.setConversationStreamFailure(conversationId, null)
   }
 
-  const stopInterruptedFlow = useCallback(() => {
-    const store = useChatStore.getState()
-    store.setConversationReconnecting(conversationId, false)
-    store.setConversationStreaming(conversationId, false)
-    store.setConversationStreamingMessageId(conversationId, null)
-    store.setConversationInterrupted(conversationId, false)
-    store.setConversationStreamFailure(conversationId, null)
-    store.clearConversationStreamRun(conversationId)
-    store.clearConversationStreamUI(conversationId)
-  }, [conversationId])
-
   const handleResume = useCallback(async () => {
     setBusy(true)
+    setResumeFailed(false)
     try {
       await recoverConversation(conversationId, { manual: true })
       const store = useChatStore.getState()
@@ -65,19 +59,16 @@ function InterruptedConversationRow({ conversationId }: { conversationId: string
         stillInterrupted &&
         !stillStreaming &&
         !stillReconnecting &&
-        failure?.code !== 'context_window_exceeded'
+        failure
       ) {
-        stopInterruptedFlow()
+        setResumeFailed(true)
       }
     } catch {
-      const failure = useChatStore.getState().streamFailureByConversation[conversationId]
-      if (failure?.code !== 'context_window_exceeded') {
-        stopInterruptedFlow()
-      }
+      setResumeFailed(true)
     } finally {
       setBusy(false)
     }
-  }, [conversationId, stopInterruptedFlow])
+  }, [conversationId])
 
   const handlePrimaryAction = useCallback(async () => {
     if (isReconnectRequired) {
@@ -99,7 +90,9 @@ function InterruptedConversationRow({ conversationId }: { conversationId: string
       <div className="flex w-full justify-center">
         <div className="card-glass h-spacing-10 gap-spacing-3 px-spacing-4 flex w-full max-w-3xl items-center">
           <RefreshCw className="icon-xs text-muted-foreground shrink-0 animate-spin" />
-          <span className="body-3 text-muted-foreground min-w-0 flex-1 truncate">Resuming...</span>
+          <span className="body-3 text-muted-foreground min-w-0 flex-1 truncate">
+            Picking up where I left off…
+          </span>
         </div>
       </div>
     )
@@ -109,7 +102,9 @@ function InterruptedConversationRow({ conversationId }: { conversationId: string
     <div className="flex w-full justify-center">
       <div className="card-glass h-spacing-10 gap-spacing-3 px-spacing-4 flex w-full max-w-3xl items-center">
         <span className="body-3 text-foreground min-w-0 flex-1 truncate">
-          {streamFailure?.userMessage ?? CHAT_STREAM_ERRORS.stream_interrupted.userMessage}
+          {resumeFailed
+            ? CHAT_STREAM_RECOVERY_MESSAGES.resumeFailed
+            : (streamFailure?.userMessage ?? CHAT_STREAM_ERRORS.stream_interrupted.userMessage)}
         </span>
         <button
           type="button"
@@ -128,7 +123,7 @@ function InterruptedConversationRow({ conversationId }: { conversationId: string
           ) : (
             <RefreshCw className="icon-xs shrink-0" />
           )}
-          {isReconnectRequired ? (busy ? 'Connecting...' : 'Reconnect') : 'Resume'}
+          {isReconnectRequired ? (busy ? 'Connecting...' : 'Reconnect') : 'Continue response'}
         </button>
         <button
           type="button"

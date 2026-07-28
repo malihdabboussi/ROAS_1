@@ -7,14 +7,14 @@ import {
 } from './chat-stream-errors.config'
 
 describe('resolveChatStreamFailure', () => {
-  it('marks transport interruptions for automatic recovery and a single Resume fallback', () => {
+  it('marks transport interruptions for automatic recovery and one continuation fallback', () => {
     const resolved = resolveChatStreamFailure({ code: 'stream_interrupted' })
 
     expect(resolved.code).toBe('stream_interrupted')
     expect(resolved.category).toBe('transport')
     expect(resolved.autoRecover).toBe(true)
     expect(resolved.showInterruptedBar).toBe(true)
-    expect(resolved.userMessage).toContain('Resume')
+    expect(resolved.userMessage).toContain('Continue')
   })
 
   it('does not show the interrupted banner for provider overloads', () => {
@@ -37,7 +37,7 @@ describe('resolveChatStreamFailure', () => {
     expect(resolved.showInterruptedBar).toBe(false)
   })
 
-  it('shows the Resume fallback for runtime context-window overflow', () => {
+  it('shows the continuation fallback for runtime context-window overflow', () => {
     const resolved = resolveChatStreamFailure({
       code: 'context_window_exceeded',
     })
@@ -47,7 +47,7 @@ describe('resolveChatStreamFailure', () => {
     expect(resolved.autoRecover).toBe(false)
     expect(resolved.retryable).toBe(true)
     expect(resolved.showInterruptedBar).toBe(true)
-    expect(resolved.userMessage).toContain('context limit')
+    expect(resolved.userMessage).toContain('ran out of room')
   })
 
   it('maps provider billing failures to a non-retryable model error', () => {

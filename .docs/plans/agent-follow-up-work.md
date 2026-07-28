@@ -9091,3 +9091,35 @@ Reason not done now: Out of scope for the requested five-zone dock + R-compact +
 - **Evidence:** Management API 403 on `qfrvyks`; Jul 27 migrations applied only to `lhfgts`. API git deploys canceled until ignore cleared.
 - **Needed work:** Confirm which Supabase project production API should use and align env; replace `exit 0` ignore with a path-aware ignore (or document mandatory force-deploy).
 - **Why not now:** Out of ship scope; production agent/web already on `lhfgts`.
+
+## 2026-07-28 - [ARCH] Studio chat recovery service remains oversized
+
+Status: Open
+
+Found while: Repairing stopped-chat recovery across open-tab, refresh, and durable worker-failure paths.
+
+Files:
+
+- `apps/web/src/features/studio/services/chat.service.ts` (2,901 LOC; frontend service/module hard limit 600 LOC)
+
+Evidence: The scoped repair changes completion classification, stream-error cursor handling, status recovery, and exact-context continuation in the existing owner. The service still combines conversation CRUD, optimistic messages, live SSE parsing, replay, recovery polling, and post-stream reconciliation.
+
+Needed work: Extract live stream parsing and conversation recovery into focused shared chat services while preserving the existing tests and public compatibility exports.
+
+Reason not done now: Decomposition is real pre-existing architecture debt already recorded for this file, but broad extraction would materially expand a production reliability fix. The in-scope recovery paths are regression-covered and targeted lint clean; both changed server packages type-check cleanly.
+
+## 2026-07-28 - [TEST] Web package typecheck blocked by unrelated Home task fixture
+
+Status: Open
+
+Found while: Running package-level verification for the stopped-chat recovery repair.
+
+Files:
+
+- `apps/web/src/features/home/components/HomeTaskDetailHost.test.tsx:64`
+
+Evidence: `pnpm --filter @vibey/web typecheck` reports that the untouched fixture supplies `priority`, which is not a property of `YourTurnItem`. The recovery branch has no diff in this file or its type.
+
+Needed work: Align the Home task fixture with the current `YourTurnItem` contract, or restore `priority` to that contract if product behavior still requires it.
+
+Reason not done now: This is pre-existing, outside chat recovery, and changing the Home task contract without tracing its feature would violate task scope.

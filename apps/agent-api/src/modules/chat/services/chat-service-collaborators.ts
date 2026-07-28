@@ -435,6 +435,7 @@ export class ChatServiceCollaborators {
         this.deps.chatRunEvents,
         this.deps.streamRegistry,
         this.deps.messageTimeline,
+        this.deps.svc,
       )
     }
     return this.chatTurnQueryService

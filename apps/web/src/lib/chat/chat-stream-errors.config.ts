@@ -72,7 +72,7 @@ export const CHAT_STREAM_ERRORS: Record<ChatStreamErrorCode, { userMessage: stri
   },
   context_window_exceeded: {
     userMessage:
-      'I hit the context limit while finishing. Resume to compact the work and continue.',
+      'I ran out of room while finishing. Continue the response and I’ll compact the thread.',
   },
   temporary_unavailable: {
     userMessage: 'The assistant is temporarily unavailable. Try again in a minute.',
@@ -91,7 +91,7 @@ export const CHAT_STREAM_ERRORS: Record<ChatStreamErrorCode, { userMessage: stri
       "I hit a model billing limit, so I couldn't answer. Switch models or ask an admin to check the provider.",
   },
   stream_interrupted: {
-    userMessage: 'The response was interrupted. Resume to reconnect.',
+    userMessage: 'I lost the connection, but your work is safe. Continue the response.',
   },
   reconnect_required: {
     userMessage: 'This integration needs to be reconnected',
@@ -106,6 +106,10 @@ export const CHAT_STREAM_ERRORS: Record<ChatStreamErrorCode, { userMessage: stri
     userMessage: CHAT_TOAST_ERRORS.CHAT_SEND_ERROR.userMessage,
   },
 }
+
+export const CHAT_STREAM_RECOVERY_MESSAGES = {
+  resumeFailed: "I still couldn't reconnect. Your work is safe — try continuing again.",
+} as const
 
 export class ChatStreamUserError extends Error {
   readonly code: ChatStreamErrorCode
