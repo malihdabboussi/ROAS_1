@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import {
   hydrateShellMenuDockFromStorage,
   resetShellMenuDockHydrationForTests,
+  resolveShellMenuDockForLayout,
   shellMenuDockForPoint,
   useShellMenuDock,
   type ShellMenuDockWorkRect,
@@ -29,8 +30,6 @@ describe('shell menu dock', () => {
       menuCompact: false,
       dragging: false,
       candidate: 'left',
-      pointerX: 0,
-      pointerY: 0,
       workCardHostAvailable: false,
       workCollapsedHostAvailable: false,
     })
@@ -53,10 +52,27 @@ describe('shell menu dock', () => {
   })
 
   it('prefers work-card edges over the frame when the pointer is on them', () => {
-    expect(shellMenuDockForPoint(410, 300, 1200, 800, workRect)).toBe('work')
-    expect(shellMenuDockForPoint(1180, 300, 1200, 800, workRect)).toBe('work-right')
-    expect(shellMenuDockForPoint(800, 60, 1200, 800, workRect)).toBe('work-top')
-    expect(shellMenuDockForPoint(800, 780, 1200, 800, workRect)).toBe('work-bottom')
-    expect(shellMenuDockForPoint(20, 400, 1200, 800, workRect)).toBe('left')
+    expect(shellMenuDockForPoint(410, 300, 1200, 800, workRect, true)).toBe('work')
+    expect(shellMenuDockForPoint(1180, 300, 1200, 800, workRect, true)).toBe('work-right')
+    expect(shellMenuDockForPoint(800, 60, 1200, 800, workRect, true)).toBe('work-top')
+    expect(shellMenuDockForPoint(800, 780, 1200, 800, workRect, true)).toBe('work-bottom')
+    expect(shellMenuDockForPoint(20, 400, 1200, 800, workRect, true)).toBe('left')
+  })
+
+  it('maps far-left to the work card when chat is closed', () => {
+    expect(shellMenuDockForPoint(20, 400, 1200, 800, workRect, false)).toBe('work')
+    expect(shellMenuDockForPoint(410, 300, 1200, 800, workRect, false)).toBe('work')
+  })
+
+  it('remaps a saved left dock onto work when chat is closed', () => {
+    expect(
+      resolveShellMenuDockForLayout('left', { chatOpen: false, workHostAvailable: true }),
+    ).toBe('work')
+    expect(resolveShellMenuDockForLayout('left', { chatOpen: true, workHostAvailable: true })).toBe(
+      'left',
+    )
+    expect(
+      resolveShellMenuDockForLayout('left', { chatOpen: false, workHostAvailable: false }),
+    ).toBe('left')
   })
 })

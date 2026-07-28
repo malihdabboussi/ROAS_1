@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   dock: 'left' as 'left' | 'work' | 'work-top' | 'work-bottom' | 'work-right',
   workCardHostAvailable: false,
   workCollapsedHostAvailable: false,
+  chatOpen: true,
 }))
 
 vi.mock('@/lib/hooks/use-media-query', () => ({
@@ -15,6 +16,11 @@ vi.mock('@/lib/hooks/use-media-query', () => ({
 
 vi.mock('./use-shell-prefs-hydrated', () => ({
   useShellPrefsHydrated: () => true,
+}))
+
+vi.mock('./use-shell-store', () => ({
+  useShellStore: (selector: (state: { chatDrawer: { open: boolean } }) => unknown) =>
+    selector({ chatDrawer: { open: mocks.chatOpen } }),
 }))
 
 vi.mock('./use-shell-menu-dock', async () => {
@@ -48,6 +54,7 @@ describe('ShellMenuDockLayout', () => {
     mocks.dock = 'left'
     mocks.workCardHostAvailable = false
     mocks.workCollapsedHostAvailable = false
+    mocks.chatOpen = true
   })
 
   it('mounts the menu on the far left of chat', () => {
@@ -59,6 +66,19 @@ describe('ShellMenuDockLayout', () => {
 
     expect(container.firstChild).toHaveAttribute('data-shell-menu-dock', 'left')
     expect(screen.getByText('Menu').nextElementSibling).toHaveRole('main')
+  })
+
+  it('remaps frame left onto work when chat is closed and work can host', () => {
+    mocks.chatOpen = false
+    mocks.workCardHostAvailable = true
+    const { container } = render(
+      <ShellMenuDockLayout sidebar={<nav>Menu</nav>}>
+        <div>Workspace</div>
+      </ShellMenuDockLayout>,
+    )
+
+    expect(container.firstChild).toHaveAttribute('data-shell-menu-dock', 'work')
+    expect(screen.queryByText('Menu')).toBeNull()
   })
 
   it('omits the frame sidebar when work dock is hosted in the workspace', () => {

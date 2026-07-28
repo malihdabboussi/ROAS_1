@@ -18,8 +18,6 @@ describe('SidebarHqHubLogoButton', () => {
       menuCompact: false,
       dragging: false,
       candidate: 'left',
-      pointerX: 0,
-      pointerY: 0,
       workCardHostAvailable: false,
       workCollapsedHostAvailable: false,
     })
@@ -31,7 +29,11 @@ describe('SidebarHqHubLogoButton', () => {
   })
 
   it('collapses the menu into the R chip on a short press', () => {
-    render(<SidebarHqHubLogoButton expanded />)
+    render(
+      <div className="hub-sidebar-shell">
+        <SidebarHqHubLogoButton expanded />
+      </div>,
+    )
 
     const logo = screen.getByRole('button', { name: 'Collapse menu' })
     Object.assign(logo, {
@@ -46,7 +48,11 @@ describe('SidebarHqHubLogoButton', () => {
   })
 
   it('turns a hold into a dock drag instead of collapse', () => {
-    render(<SidebarHqHubLogoButton expanded />)
+    render(
+      <div className="hub-sidebar-shell">
+        <SidebarHqHubLogoButton expanded />
+      </div>,
+    )
 
     const logo = screen.getByRole('button', { name: 'Collapse menu' })
     const setPointerCapture = vi.fn()
@@ -57,9 +63,11 @@ describe('SidebarHqHubLogoButton', () => {
 
     expect(useShellMenuDock.getState().dragging).toBe(true)
     expect(setPointerCapture).toHaveBeenCalledOnce()
+    expect(logo.closest('.hub-sidebar-shell')).toHaveClass('shell-menu-dock-lifting')
 
     fireEvent(logo, new MouseEvent('pointerup', { bubbles: true, clientX: 20, clientY: 20 }))
     expect(useShellMenuDock.getState().menuCompact).toBe(false)
     expect(releasePointerCapture).toHaveBeenCalledOnce()
+    expect(logo.closest('.hub-sidebar-shell')).not.toHaveClass('shell-menu-dock-lifting')
   })
 })

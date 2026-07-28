@@ -4,8 +4,13 @@ import type { ReactNode } from 'react'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { ShellSidebarSlot, ShellSidebarSlotProvider } from './ShellSidebarSlot'
 import { ShellTopBar } from './ShellTopBar'
-import { isWorkAttachedDock, useShellMenuDock } from './use-shell-menu-dock'
+import {
+  isWorkAttachedDock,
+  resolveShellMenuDockForLayout,
+  useShellMenuDock,
+} from './use-shell-menu-dock'
 import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
+import { useShellStore } from './use-shell-store'
 
 export function ShellMenuDockLayout({
   sidebar,
@@ -19,9 +24,16 @@ export function ShellMenuDockLayout({
   const savedDock = useShellMenuDock((state) => state.dock)
   const workCardHostAvailable = useShellMenuDock((state) => state.workCardHostAvailable)
   const workCollapsedHostAvailable = useShellMenuDock((state) => state.workCollapsedHostAvailable)
-  const dock = hydrated && desktop ? savedDock : 'left'
+  const chatOpen = useShellStore((state) => state.chatDrawer.open)
+  const rawDock = hydrated && desktop ? savedDock : 'left'
+  const workHostAvailable = workCardHostAvailable || workCollapsedHostAvailable
+  // Remap frame-left onto the work card only when chat is closed and the work card can host.
+  const dock = resolveShellMenuDockForLayout(rawDock, {
+    chatOpen,
+    workHostAvailable: workCardHostAvailable,
+  })
   const workAttached = isWorkAttachedDock(dock)
-  const hostedOnWork = workAttached && (workCardHostAvailable || workCollapsedHostAvailable)
+  const hostedOnWork = workAttached && workHostAvailable
   // Frame only hosts far-left (or fallback when work cannot host).
   const resolvedFrameDock =
     !desktop || !hydrated

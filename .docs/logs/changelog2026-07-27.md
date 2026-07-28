@@ -221,3 +221,14 @@ Impact: Meetings call kinds include executive/external/sales; IG organic skill c
 
 Files: `supabase/migrations/20260727153000_expand_meeting_call_kind_options.sql`, production DB migrations, Vercel/Fly deploys.
 
+
+## [2026-07-27 22:18] - [FIX]
+
+What: Menu dock drag now lifts the real HQ rail (no fake preview card, no purple drop targets). Top/bottom docks sit flush on the work card without floating padded chrome. With AI chat closed, left drag / saved `left` remaps to the work-card left seam.
+
+Why: The separate lift card and purple zones felt laggy and unfaithful; top dock looked like a floating mini rail; left-of-chat only makes sense when chat is open.
+
+Impact: Hold-drag feels like classic pick-up of the actual menu; drop feedback is invisible hit-testing only; chat-closed left docks beside the page card.
+
+Files: `SidebarHqHubLogoButton.tsx`, `use-shell-menu-dock.ts`, `ShellMenuDockLayout.tsx`, `ShellWorkspace.tsx`, `SidebarHqRail.tsx`, deleted `ShellMenuDockOverlay.tsx`, both product `globals.css`, tests, `claude-chatgpt-shell.md`.
+

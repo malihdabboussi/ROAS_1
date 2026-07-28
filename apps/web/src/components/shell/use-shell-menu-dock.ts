@@ -25,8 +25,6 @@ type ShellMenuDockStore = {
   menuCompact: boolean
   dragging: boolean
   candidate: ShellMenuDock
-  pointerX: number
-  pointerY: number
   /** Work card is open and can host work-* docks inside it. */
   workCardHostAvailable: boolean
   /** Work card collapsed — work-* docks render as a right vertical rail beside chat. */
@@ -36,8 +34,8 @@ type ShellMenuDockStore = {
   toggleMenuCompact: () => void
   setWorkCardHostAvailable: (available: boolean) => void
   setWorkCollapsedHostAvailable: (available: boolean) => void
-  startDragging: (pointerX?: number, pointerY?: number) => void
-  setCandidate: (candidate: ShellMenuDock, pointerX?: number, pointerY?: number) => void
+  startDragging: () => void
+  setCandidate: (candidate: ShellMenuDock) => void
   finishDragging: (dock?: ShellMenuDock) => void
   cancelDragging: () => void
 }
@@ -93,8 +91,6 @@ export const useShellMenuDock = create<ShellMenuDockStore>((set, get) => ({
   menuCompact: false,
   dragging: false,
   candidate: 'left',
-  pointerX: 0,
-  pointerY: 0,
   workCardHostAvailable: false,
   workCollapsedHostAvailable: false,
   setDock: (dock) => {
@@ -113,19 +109,12 @@ export const useShellMenuDock = create<ShellMenuDockStore>((set, get) => ({
   setWorkCardHostAvailable: (workCardHostAvailable) => set({ workCardHostAvailable }),
   setWorkCollapsedHostAvailable: (workCollapsedHostAvailable) =>
     set({ workCollapsedHostAvailable }),
-  startDragging: (pointerX, pointerY) =>
+  startDragging: () =>
     set((state) => ({
       dragging: true,
       candidate: state.dock,
-      pointerX: pointerX ?? state.pointerX,
-      pointerY: pointerY ?? state.pointerY,
     })),
-  setCandidate: (candidate, pointerX, pointerY) =>
-    set((state) => ({
-      candidate,
-      pointerX: pointerX ?? state.pointerX,
-      pointerY: pointerY ?? state.pointerY,
-    })),
+  setCandidate: (candidate) => set({ candidate }),
   finishDragging: (dock) => get().setDock(dock ?? get().candidate),
   cancelDragging: () => set((state) => ({ dragging: false, candidate: state.dock })),
 }))
@@ -170,6 +159,30 @@ export function getShellWorkAreaRect(): ShellMenuDockWorkRect | null {
   }
 }
 
+/** True when the AI chat drawer is open with real width (not the closed 0px column). */
+export function isShellChatDrawerOpen(): boolean {
+  if (typeof document === 'undefined') return false
+  const el = document.querySelector('[data-shell-chat-drawer]')
+  if (!(el instanceof HTMLElement)) return false
+  if (el.getAttribute('aria-hidden') === 'true' && el.getAttribute('data-expanded') !== 'true') {
+    return false
+  }
+  return el.getBoundingClientRect().width > 8
+}
+
+/**
+ * Frame `left` is only available when chat is open. With chat closed, a saved
+ * `left` dock remaps onto the work-card left seam so the menu never sits in the
+ * empty chat column.
+ */
+export function resolveShellMenuDockForLayout(
+  dock: ShellMenuDock,
+  opts: { chatOpen: boolean; workHostAvailable: boolean },
+): ShellMenuDock {
+  if (dock === 'left' && !opts.chatOpen && opts.workHostAvailable) return 'work'
+  return dock
+}
+
 function bandFor(size: number): number {
   return Math.min(WORK_BAND_PX, Math.max(48, size * 0.28))
 }
@@ -212,8 +225,14 @@ export function shellMenuDockForPoint(
   viewportWidth: number,
   viewportHeight: number,
   workRect: ShellMenuDockWorkRect | null = null,
+  chatOpen = true,
 ): ShellMenuDock {
-  const distances: Array<[ShellMenuDock, number]> = [['left', clientX]]
+  const distances: Array<[ShellMenuDock, number]> = []
+
+  // Frame left-of-chat only when chat has real width.
+  if (chatOpen) {
+    distances.push(['left', clientX])
+  }
 
   // Frame far-right only when there is no work card (otherwise use work-right).
   if (!workRect) {
@@ -225,10 +244,21 @@ export function shellMenuDockForPoint(
       const dist = edgeDistance(clientX, clientY, workRect, edge)
       if (dist !== null) distances.push([edge, dist])
     }
+    if (!chatOpen) {
+      // Far-left of the viewport with chat closed → left seam of the work card.
+      const xBand = bandFor(workRect.width)
+      if (clientX <= workRect.left + xBand) {
+        distances.push(['work', Math.abs(clientX - workRect.left)])
+      }
+    }
+  }
+
+  if (distances.length === 0) {
+    return workRect ? 'work' : 'left'
   }
 
   distances.sort((a, b) => a[1] - b[1])
-  return distances[0]?.[0] ?? 'left'
+  return distances[0]?.[0] ?? (workRect && !chatOpen ? 'work' : 'left')
 }
 
 export function shellMenuDockForClientPoint(clientX: number, clientY: number): ShellMenuDock {
@@ -238,5 +268,6 @@ export function shellMenuDockForClientPoint(clientX: number, clientY: number): S
     typeof window === 'undefined' ? 0 : window.innerWidth,
     typeof window === 'undefined' ? 0 : window.innerHeight,
     getShellWorkAreaRect(),
+    isShellChatDrawerOpen(),
   )
 }

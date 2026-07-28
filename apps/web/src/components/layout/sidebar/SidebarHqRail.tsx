@@ -6,7 +6,7 @@ import { useEffect } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { surfaceFromPathname } from '@/components/global-chat/config/work-context.config'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
-import { useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
+import { isHorizontalWorkDock, useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
 import { shellSidebarExpanded, useShellStore } from '@/components/shell/use-shell-store'
 import { cn } from '@/lib/utils/cn'
 import { isManageRailItemActive, workContextSurfaceForPanel } from './sidebar-hq-rail.helpers'
@@ -112,7 +112,11 @@ export function SidebarHqRail({
       <div
         className={cn(
           'hub-sidebar-rail-layout flex min-h-0 flex-1 flex-col overflow-visible',
-          hubExpanded ? 'bg-background shell-sidebar-panel' : 'card-glass rounded-2xl',
+          hubExpanded
+            ? 'bg-background shell-sidebar-panel'
+            : isHorizontalWorkDock(menuDock)
+              ? 'bg-transparent'
+              : 'card-glass rounded-2xl',
         )}
       >
         <div className="hub-sidebar-logo-header relative shrink-0">
