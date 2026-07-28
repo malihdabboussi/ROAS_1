@@ -5,10 +5,68 @@ import {
   QUICK_MISSIONS_OPEN_EVENT,
   QuickMissionsHubModal,
 } from '@/features/spaces/components/playbooks/QuickMissionsHubModal'
+import { QUICK_MISSIONS_MESSAGES } from '@/features/spaces/config/quick-missions-messages.config'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
+import { useChatStore } from '@/features/studio/store/use-chat-store'
+import { useGlobalChatStore } from '../store/use-global-chat-store'
+
+type QuickMissionClient = {
+  spaceId: string
+  campaignId: string
+  title: string
+}
+
+export function resolveQuickMissionDefaultSpaceId({
+  clients,
+  contextSpaceId,
+  contextCampaignId,
+  conversationCampaignId,
+  activeSpaceId,
+}: {
+  clients: QuickMissionClient[]
+  contextSpaceId?: string | null
+  contextCampaignId?: string | null
+  conversationCampaignId?: string | null
+  activeSpaceId?: string | null
+}): string | null {
+  if (contextSpaceId && clients.some((client) => client.spaceId === contextSpaceId)) {
+    return contextSpaceId
+  }
+  const campaignId = contextCampaignId ?? conversationCampaignId
+  const campaignSpaceId = clients.find((client) => client.campaignId === campaignId)?.spaceId
+  if (campaignSpaceId) return campaignSpaceId
+  return clients.some((client) => client.spaceId === activeSpaceId) ? (activeSpaceId ?? null) : null
+}
+
+export function buildQuickMissionReceipt(
+  missionId: string,
+  missionTitle: string,
+  conversationId: string,
+) {
+  return {
+    id: `quick-mission-receipt-${missionId}`,
+    conversation_id: conversationId,
+    role: 'assistant' as const,
+    content: QUICK_MISSIONS_MESSAGES.startedReceipt(missionTitle, missionId),
+    content_blocks: null,
+    metadata: { quick_mission_receipt: true, mission_id: missionId },
+    created_at: new Date().toISOString(),
+  }
+}
 
 export function QuickMissionsHubHost() {
   const spaces = useSpacesStore((s) => s.spaces)
+  const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
+  const loadSpaces = useSpacesStore((s) => s.loadSpaces)
+  const workContext = useGlobalChatStore((s) => s.workContext)
+  const activeConversationId = useChatStore((s) => s.activeConversationId)
+  const conversationCampaignId = useChatStore((s) => {
+    const active = s.activeConversationId
+    return active
+      ? s.conversations.find((conversation) => conversation.id === active)?.campaign_id
+      : null
+  })
+  const addMessage = useChatStore((s) => s.addMessage)
   const [open, setOpen] = useState(false)
   const [initialPlaybookKey, setInitialPlaybookKey] = useState<string | null>(null)
 
@@ -21,6 +79,10 @@ export function QuickMissionsHubHost() {
     window.addEventListener(QUICK_MISSIONS_OPEN_EVENT, onOpen as EventListener)
     return () => window.removeEventListener(QUICK_MISSIONS_OPEN_EVENT, onOpen as EventListener)
   }, [])
+
+  useEffect(() => {
+    if (open) void loadSpaces()
+  }, [loadSpaces, open])
 
   const clients = useMemo(
     () =>
@@ -38,12 +100,31 @@ export function QuickMissionsHubHost() {
         })),
     [spaces],
   )
+  const initialClientSpaceId = useMemo(
+    () =>
+      resolveQuickMissionDefaultSpaceId({
+        clients,
+        contextSpaceId: workContext.spaceId,
+        contextCampaignId: workContext.campaignId,
+        conversationCampaignId,
+        activeSpaceId,
+      }),
+    [activeSpaceId, clients, conversationCampaignId, workContext.campaignId, workContext.spaceId],
+  )
 
   return (
     <QuickMissionsHubModal
       open={open}
       clients={clients}
       initialPlaybookKey={initialPlaybookKey}
+      initialClientSpaceId={initialClientSpaceId}
+      onStarted={(missionId, missionTitle) => {
+        if (!activeConversationId) return
+        addMessage(
+          activeConversationId,
+          buildQuickMissionReceipt(missionId, missionTitle, activeConversationId),
+        )
+      }}
       onClose={() => {
         setOpen(false)
         setInitialPlaybookKey(null)

@@ -1,4 +1,27 @@
 export type StaticAdFamily = 'person' | 'receipt' | 'graphic'
+export type StaticAdProductionMode = {
+  id: 'validate_messaging' | 'image_brief' | 'static_ad_book'
+  name: string
+  description: string
+}
+
+export const STATIC_AD_PRODUCTION_MODES: readonly StaticAdProductionMode[] = [
+  {
+    id: 'validate_messaging',
+    name: 'Validate messaging angles',
+    description: 'Text-led ads that turn approved message angles into clear visual hooks.',
+  },
+  {
+    id: 'image_brief',
+    name: 'Image brief',
+    description: 'Build a qualified image brief, then generate the finished visual ads.',
+  },
+  {
+    id: 'static_ad_book',
+    name: 'Static ad book',
+    description: 'Use proven layouts such as chat receipt, myth vs. system, and offer stack.',
+  },
+] as const
 
 export type StaticAdFormat = {
   id: string
