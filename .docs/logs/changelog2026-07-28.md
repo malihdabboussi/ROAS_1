@@ -40,3 +40,13 @@ Why: Visible partial output was treated as complete, pre-agent stream failures w
 Impact: Standard users get a clear “work is safe” state, can continue the exact unfinished task and attachments without resending, can retry if continuation fails, and recover the same state after refresh without admin knowledge. Context-window recovery remains distinct and compacts before continuing.
 
 Files: `chat-runtime.repository.ts`, `chat-turn-query.service.ts`, `chat-service-collaborators.ts`, `agent-runtime-chat-shadow.processor.ts`, `chat.service.ts`, `StreamInterruptedBar.tsx`, `chat-stream-errors.config.ts`, related tests, `chat-stream-recovery.md`.
+
+## [2026-07-28 11:46] - [FEATURE]
+
+What: Expanded Quick Mission static-ad production into Validate Messaging, qualified image-brief, and multi-format static-ad-book lanes. Added per-format variation counts, per-output exact-copy fields, Write for me defaults, contextual client selection, tokenized dropdowns, and a linked launch receipt in the active chat.
+
+Why: Chat-launched missions did not visibly confirm their start, the current Space/campaign was discarded, native dropdowns rendered inconsistently, and the single-format kickoff could not represent the three approved static-ad production processes.
+
+Impact: A user can launch the correct static-ad workflow from Chat or Missions, inherit the current client context, request one to ten final ads across multiple templates, and see the launched Mission immediately in the conversation. The worker now contracts each production lane on its correct final-image action and exact output count.
+
+Files: `QuickMissionsHubHost.tsx`, `QuickMissionsHubModal.tsx`, `QuickMissionContextFields.tsx`, `StaticAdProductionFields.tsx`, `StartAdProductionPlaybookFields.tsx`, `static-ad-production.ts`, `static-ad-formats.config.ts`, `static-ad-production.playbook.ts`, focused tests, `loc-allowlist.json`, `missions.md`.

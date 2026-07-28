@@ -12,7 +12,9 @@ describe('static-ad-production playbook', () => {
         user_id: 'user-1',
         input: {
           playbook_kickoff: {
+            production_mode: 'static_ad_book',
             selected_format_ids: ['hero_framing', 'offer_stack'],
+            format_variations: { hero_framing: 2, offer_stack: 4 },
             quantity: 6,
             aspect_ratio: '4:5',
             copy_mode: 'write_for_me',
@@ -39,6 +41,71 @@ describe('static-ad-production playbook', () => {
       required_artifact_type: 'image',
       required_action: 'process_media',
       expected: { minimum_count: 6, width: 1080, height: 1350 },
+    })
+  })
+
+  it('routes Validate Messaging through deterministic copy and design rendering', () => {
+    const plan = expandMissionPlaybook({
+      playbookId: STATIC_AD_PRODUCTION_PLAYBOOK_ID,
+      mission: {
+        id: 'mission-validate',
+        title: 'Validate Messaging Ads',
+        user_id: 'user-1',
+        input: {
+          playbook_kickoff: {
+            production_mode: 'validate_messaging',
+            selected_format_ids: [],
+            quantity: 3,
+            aspect_ratio: '9:16',
+            copy_mode: 'write_for_me',
+            offer_context: 'A training for agency owners',
+          },
+        },
+      },
+      workerAgentKeys: ['lux'],
+      managerKey: 'vibey',
+    })
+
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/validate-messaging\.md/)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/roas-ad-design/)
+    expect(plan?.subtasks[0]?.outputContract).toMatchObject({
+      required_action: 'process_media',
+      expected: {
+        exact_count: 3,
+        production_mode: 'validate_messaging',
+        width: 1080,
+        height: 1920,
+      },
+    })
+  })
+
+  it('routes image-brief production through qualified briefs and final image generation', () => {
+    const plan = expandMissionPlaybook({
+      playbookId: STATIC_AD_PRODUCTION_PLAYBOOK_ID,
+      mission: {
+        id: 'mission-image-brief',
+        title: 'Image Brief Ads',
+        user_id: 'user-1',
+        input: {
+          playbook_kickoff: {
+            production_mode: 'image_brief',
+            selected_format_ids: [],
+            quantity: 2,
+            aspect_ratio: '4:5',
+            copy_mode: 'use_my_copy',
+            exact_copy_by_selection: { image_brief: ['First ad', 'Second ad'] },
+          },
+        },
+      },
+      workerAgentKeys: ['lux'],
+      managerKey: 'vibey',
+    })
+
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/roas-image-brief/)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/call generate_image for each final/i)
+    expect(plan?.subtasks[0]?.outputContract).toMatchObject({
+      required_action: 'generate_image',
+      expected: { exact_count: 2, production_mode: 'image_brief' },
     })
   })
 })

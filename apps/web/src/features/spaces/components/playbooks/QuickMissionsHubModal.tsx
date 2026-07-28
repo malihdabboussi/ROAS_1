@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { toast } from 'sonner'
+import { SettingsSelect } from '@/components/ui/forms/SettingsSelect'
 import { createMission, resolveMissionCreateToastMessage } from '@/lib/missions'
+import { QUICK_MISSIONS_MESSAGES } from '../../config/quick-missions-messages.config'
 import {
   EMPTY_IG_VIDEO_FIELDS,
   EMPTY_STATIC_AD_FIELDS,
   isAdProductionPlaybookValid,
-  StartAdProductionPlaybookFields,
 } from '../StartAdProductionPlaybookFields'
 import {
   buildIgOrganicVideoMissionPayload,
@@ -32,6 +33,7 @@ import {
   type QuickMissionCatalogEntry,
   type QuickMissionPlaybookId,
 } from './quick-missions-catalog'
+import { QuickMissionContextFields } from './QuickMissionContextFields'
 import {
   buildStaticAdProductionMissionPayload,
   STATIC_AD_PRODUCTION_PLAYBOOK_ID,
@@ -75,6 +77,7 @@ export function QuickMissionsHubModal({
   submitting,
   clients,
   initialPlaybookKey,
+  initialClientSpaceId,
   onClose,
   onStarted,
 }: {
@@ -82,8 +85,9 @@ export function QuickMissionsHubModal({
   submitting?: boolean
   clients: QuickMissionClientOption[]
   initialPlaybookKey?: string | null
+  initialClientSpaceId?: string | null
   onClose: () => void
-  onStarted?: (missionId: string) => void
+  onStarted?: (missionId: string, missionTitle: string) => void
 }) {
   const [step, setStep] = useState<HubStep>('mission')
   const [selected, setSelected] = useState<QuickMissionCatalogEntry | null>(null)
@@ -100,13 +104,13 @@ export function QuickMissionsHubModal({
     const preset = initialPlaybookKey ? findQuickMissionByKey(initialPlaybookKey) : null
     setSelected(preset ?? null)
     setStep(preset ? 'client' : 'mission')
-    setClientSpaceId('')
+    setClientSpaceId(initialClientSpaceId ?? '')
     setWebinar(EMPTY_WEBINAR)
     setStaticFields(EMPTY_STATIC_AD_FIELDS)
     setVideoFields(EMPTY_IG_VIDEO_FIELDS)
     setMeta(EMPTY_META)
     setAudit(EMPTY_AUDIT)
-  }, [open, initialPlaybookKey])
+  }, [open, initialClientSpaceId, initialPlaybookKey])
 
   const selectedClient = useMemo(
     () => clients.find((client) => client.spaceId === clientSpaceId) ?? null,
@@ -136,8 +140,8 @@ export function QuickMissionsHubModal({
         space_id: selectedClient.spaceId,
         idempotency_key: `quick-mission-${selected.id}-${crypto.randomUUID()}`,
       })
-      toast.success(`${payload.title} started`)
-      onStarted?.(mission.id)
+      toast.success(QUICK_MISSIONS_MESSAGES.startedToast(payload.title))
+      onStarted?.(mission.id, payload.title)
       onClose()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : resolveMissionCreateToastMessage(error))
@@ -210,26 +214,26 @@ export function QuickMissionsHubModal({
               ) : null}
 
               {step === 'client' ? (
-                <label className="space-y-spacing-2 block">
+                <div className="space-y-spacing-2">
                   <span className="body-3 text-foreground font-medium">Client campaign</span>
-                  <select
-                    className="input-glass body-3 text-foreground h-spacing-8 w-full"
+                  <SettingsSelect
                     value={clientSpaceId}
-                    onChange={(event) => setClientSpaceId(event.target.value)}
-                    aria-label="Select client campaign"
-                  >
-                    <option value="">Select a campaign…</option>
-                    {clients.map((client) => (
-                      <option key={client.spaceId} value={client.spaceId}>
-                        {client.title}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    ariaLabel="Select client campaign"
+                    placeholder="Select a campaign…"
+                    options={[
+                      { value: '', label: 'Select a campaign…' },
+                      ...clients.map((client) => ({
+                        value: client.spaceId,
+                        label: client.title,
+                      })),
+                    ]}
+                    onChange={setClientSpaceId}
+                  />
+                </div>
               ) : null}
 
               {step === 'context' && selected ? (
-                <ContextFields
+                <QuickMissionContextFields
                   selection={selected.selection}
                   webinar={webinar}
                   staticFields={staticFields}
@@ -312,116 +316,6 @@ function buildPayload(
     return buildIgOrganicVideoMissionPayload(fields.videoFields)
   }
   return buildWebinarFulfillmentMissionPayload(fields.webinar)
-}
-
-function ContextFields({
-  selection,
-  webinar,
-  staticFields,
-  videoFields,
-  meta,
-  audit,
-  setWebinar,
-  setStaticFields,
-  setVideoFields,
-  setMeta,
-  setAudit,
-}: {
-  selection: QuickMissionCatalogEntry['selection']
-  webinar: PlaybookKickoffFields
-  staticFields: StaticAdProductionKickoffFields
-  videoFields: IgOrganicVideoKickoffFields
-  meta: MetaAdsLaunchKickoffFields
-  audit: MetaAdsAuditKickoffFields
-  setWebinar: (fields: PlaybookKickoffFields) => void
-  setStaticFields: (fields: StaticAdProductionKickoffFields) => void
-  setVideoFields: (fields: IgOrganicVideoKickoffFields) => void
-  setMeta: (fields: MetaAdsLaunchKickoffFields) => void
-  setAudit: (fields: MetaAdsAuditKickoffFields) => void
-}) {
-  if (selection === 'static' || selection === 'video') {
-    return (
-      <StartAdProductionPlaybookFields
-        selected={selection}
-        staticFields={staticFields}
-        videoFields={videoFields}
-        onStaticChange={setStaticFields}
-        onVideoChange={setVideoFields}
-      />
-    )
-  }
-  if (selection === 'webinar') {
-    return (
-      <>
-        <Field
-          label="Client / campaign context"
-          value={webinar.client_context}
-          onChange={(value) => setWebinar({ ...webinar, client_context: value })}
-        />
-        <Field
-          label="Transcript URL (optional)"
-          value={webinar.transcript_url}
-          onChange={(value) => setWebinar({ ...webinar, transcript_url: value })}
-        />
-        <Field
-          label="Notes (optional)"
-          value={webinar.notes}
-          onChange={(value) => setWebinar({ ...webinar, notes: value })}
-        />
-      </>
-    )
-  }
-  if (selection === 'meta') {
-    return (
-      <>
-        <Field
-          label="Approved asset links"
-          value={meta.asset_links}
-          onChange={(value) => setMeta({ ...meta, asset_links: value })}
-        />
-        <Field
-          label="Launch notes (optional)"
-          value={meta.notes}
-          onChange={(value) => setMeta({ ...meta, notes: value })}
-        />
-      </>
-    )
-  }
-  return (
-    <>
-      <Field
-        label="Reporting period"
-        value={audit.reporting_period}
-        onChange={(value) => setAudit({ ...audit, reporting_period: value })}
-      />
-      <Field
-        label="Audit notes (optional)"
-        value={audit.notes}
-        onChange={(value) => setAudit({ ...audit, notes: value })}
-      />
-    </>
-  )
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-}: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-}) {
-  return (
-    <label className="space-y-spacing-2 block">
-      <span className="body-3 text-foreground font-medium">{label}</span>
-      <textarea
-        className="input-glass body-3 text-foreground h-spacing-16 w-full resize-y"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </label>
-  )
 }
 
 export const QUICK_MISSIONS_OPEN_EVENT = 'vibey:open-quick-missions'

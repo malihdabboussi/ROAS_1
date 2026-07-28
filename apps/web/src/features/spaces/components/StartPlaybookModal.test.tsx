@@ -62,8 +62,8 @@ describe('StartPlaybookModal', () => {
     render(<StartPlaybookModal open submitting={false} onClose={vi.fn()} onStart={onStart} />)
 
     fireEvent.click(screen.getByRole('button', { name: /Static Ad Production/i }))
-    fireEvent.change(screen.getByLabelText('Exact copy'), {
-      target: { value: 'MYTH: THREE WEEKS. SYSTEM: TEN MINUTES.' },
+    fireEvent.change(screen.getByLabelText('Offer and audience context'), {
+      target: { value: 'Agency owners launching a new campaign.' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Start playbook' }))
 
@@ -71,10 +71,12 @@ describe('StartPlaybookModal', () => {
       playbookId: 'static-ad-production',
       fields: expect.objectContaining({
         selectedFormatIds: ['myth_vs_system'],
+        productionMode: 'static_ad_book',
+        formatVariationCounts: { myth_vs_system: 1 },
         quantity: 1,
         aspectRatio: '4:5',
-        copyMode: 'use_my_copy',
-        exactCopy: 'MYTH: THREE WEEKS. SYSTEM: TEN MINUTES.',
+        copyMode: 'write_for_me',
+        offerContext: 'Agency owners launching a new campaign.',
       }),
     })
   })

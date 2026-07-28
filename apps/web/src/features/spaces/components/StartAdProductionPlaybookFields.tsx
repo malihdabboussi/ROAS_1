@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { Check, Circle } from 'lucide-react'
+import { SettingsSelect } from '@/components/ui/forms/SettingsSelect'
 import { cn } from '@/lib/utils/cn'
 import {
   filterIgOrganicScenes,
@@ -10,20 +11,11 @@ import {
   type IgOrganicFootageFit,
   type IgOrganicIndustryPack,
 } from '../config/ig-organic-video-scenes.config'
-import { STATIC_AD_FORMATS } from '../config/static-ad-formats.config'
 import type { IgOrganicVideoKickoffFields } from './playbooks/ig-organic-video'
 import type { StaticAdProductionKickoffFields } from './playbooks/static-ad-production'
+import { isStaticAdProductionValid, StaticAdProductionFields } from './StaticAdProductionFields'
 
-export const EMPTY_STATIC_AD_FIELDS: StaticAdProductionKickoffFields = {
-  selectedFormatIds: ['myth_vs_system'],
-  quantity: 1,
-  aspectRatio: '4:5',
-  copyMode: 'use_my_copy',
-  exactCopy: '',
-  offerContext: '',
-  personStrategy: 'generate',
-  referenceAssets: [],
-}
+export { EMPTY_STATIC_AD_FIELDS } from './StaticAdProductionFields'
 
 export const EMPTY_IG_VIDEO_FIELDS: IgOrganicVideoKickoffFields = {
   copyMode: 'use_my_copy',
@@ -43,11 +35,7 @@ export function isAdProductionPlaybookValid(
   videoFields: IgOrganicVideoKickoffFields,
 ) {
   if (selected === 'static') {
-    const hasCopy =
-      staticFields.copyMode === 'use_my_copy'
-        ? Boolean(staticFields.exactCopy?.trim())
-        : Boolean(staticFields.offerContext.trim())
-    return staticFields.selectedFormatIds.length > 0 && hasCopy
+    return isStaticAdProductionValid(staticFields)
   }
   const hasCopy =
     videoFields.copyMode === 'use_my_copy'
@@ -70,92 +58,9 @@ export function StartAdProductionPlaybookFields({
   onVideoChange: (fields: IgOrganicVideoKickoffFields) => void
 }) {
   return selected === 'static' ? (
-    <StaticFields fields={staticFields} onChange={onStaticChange} />
+    <StaticAdProductionFields fields={staticFields} onChange={onStaticChange} />
   ) : (
     <VideoFields fields={videoFields} onChange={onVideoChange} />
-  )
-}
-
-function StaticFields({
-  fields,
-  onChange,
-}: {
-  fields: StaticAdProductionKickoffFields
-  onChange: (fields: StaticAdProductionKickoffFields) => void
-}) {
-  const copyValue = fields.copyMode === 'use_my_copy' ? fields.exactCopy || '' : fields.offerContext
-  return (
-    <div className="space-y-spacing-4">
-      <div className="gap-spacing-3 grid sm:grid-cols-3">
-        <label className="space-y-spacing-2 block sm:col-span-2">
-          <span className="body-3 text-foreground font-medium">Format</span>
-          <select
-            className="input-glass body-3 h-spacing-9 w-full"
-            value={fields.selectedFormatIds[0]}
-            onChange={(event) => onChange({ ...fields, selectedFormatIds: [event.target.value] })}
-          >
-            {STATIC_AD_FORMATS.map((format) => (
-              <option key={format.id} value={format.id}>
-                {format.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="space-y-spacing-2 block">
-          <span className="body-3 text-foreground font-medium">Finished ads</span>
-          <input
-            aria-label="Finished ads"
-            type="number"
-            min={1}
-            max={10}
-            className="input-glass body-3 h-spacing-9 w-full"
-            value={fields.quantity}
-            onChange={(event) =>
-              onChange({
-                ...fields,
-                quantity: Math.min(10, Math.max(1, Number(event.target.value) || 1)),
-              })
-            }
-          />
-        </label>
-      </div>
-      <ToggleRow
-        label="Size"
-        options={[
-          { value: '4:5', label: '4:5 Feed' },
-          { value: '9:16', label: '9:16 Story' },
-        ]}
-        selected={fields.aspectRatio}
-        onSelect={(aspectRatio) =>
-          onChange({ ...fields, aspectRatio: aspectRatio as '4:5' | '9:16' })
-        }
-      />
-      <ToggleRow
-        label="Copy source"
-        options={[
-          { value: 'use_my_copy', label: 'Use exact copy' },
-          { value: 'write_for_me', label: 'Write for me' },
-        ]}
-        selected={fields.copyMode}
-        onSelect={(copyMode) =>
-          onChange({
-            ...fields,
-            copyMode: copyMode as StaticAdProductionKickoffFields['copyMode'],
-          })
-        }
-      />
-      <TextArea
-        label={fields.copyMode === 'use_my_copy' ? 'Exact copy' : 'Offer and audience context'}
-        value={copyValue}
-        onChange={(value) =>
-          onChange(
-            fields.copyMode === 'use_my_copy'
-              ? { ...fields, exactCopy: value }
-              : { ...fields, offerContext: value },
-          )
-        }
-      />
-    </div>
   )
 }
 
@@ -338,17 +243,15 @@ function VideoFields({
           />
           <label className="space-y-spacing-2 block">
             <span className="body-3 text-foreground font-medium">Apple-style emoji</span>
-            <select
-              className="input-glass body-3 h-spacing-9 w-full"
+            <SettingsSelect
               value={fields.emoji}
-              onChange={(event) => onChange({ ...fields, emoji: event.target.value })}
-            >
-              {IG_ORGANIC_APPROVED_EMOJIS.map((emoji) => (
-                <option key={emoji} value={emoji}>
-                  {emoji}
-                </option>
-              ))}
-            </select>
+              ariaLabel="Apple-style emoji"
+              options={IG_ORGANIC_APPROVED_EMOJIS.map((emoji) => ({
+                value: emoji,
+                label: emoji,
+              }))}
+              onChange={(emoji) => onChange({ ...fields, emoji })}
+            />
           </label>
         </div>
       )}

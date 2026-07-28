@@ -1,6 +1,6 @@
 # Missions harness
 
-Last updated: 2026-07-26
+Last updated: 2026-07-28
 
 ## Full subtask workspace
 
@@ -18,7 +18,7 @@ The header displays `Mission > Subtask`. Selecting the Mission breadcrumb return
 
 The Missions Space view now has **Mission List** and **Mission Views** surfaces. The list remains the operational table. Mission Views presents supported deterministic playbooks as action-oriented reports using one registry-backed phase contract rather than a custom page per mission.
 
-The global **Start playbook** dialog exposes the same canonical Static Ad Production and IG Organic Video payload builders used by Ads Research. Static runs collect format, size, quantity, and exact-copy or write-for-me context. Video runs collect one or more scenes, footage strategy, exact sticker copy or write-for-me context, CTA, and an approved emoji. The dialog cannot submit either production playbook until its required copy and output selections are present.
+The global **Start playbook** and Chat **Quick Missions** dialogs expose the same canonical Static Ad Production and IG Organic Video payload builders used by Ads Research. Quick Missions defaults the client campaign from the attached chat Space/campaign or active Space while keeping the campaign selectable, and a successful Chat launch appends a linked mission receipt to the active conversation. Static production starts with one of three explicit lanes: Validate Messaging, qualified image brief generation, or the static-ad-book template library. Template runs support multiple selected formats with an independent variation count for each; every lane defaults to **Write for me**, while **Use my exact copy** expands one required field per finished ad. Video runs collect one or more scenes, footage strategy, exact sticker copy or write-for-me context, CTA, and an approved emoji. The dialogs cannot submit either production playbook until the required copy and output selections are present.
 
 The agent-facing `create_mission` contract exposes a canonical top-level `playbook_id`. The action adapter persists that value as `input.playbook_id` while preserving `input.playbook_kickoff`, so a Chat agent cannot lose an explicitly named playbook by mentioning it only in the brief. Mission planning also recognizes the older `playbook` aliases, including `input.playbook_kickoff.playbook`. This keeps Chat and the Start playbook dialog on the same deterministic registry path. If a freeform plan is still used, its media output contract must pair `media_artifact` with an `image`, `video`, or `file` result; `process_media` combined with a document contract is rejected during preflight instead of entering execution.
 
@@ -26,7 +26,7 @@ Generated static-ad images are normalized before Media registration to the canon
 
 IG Organic Video missions contract on `process_media` rather than raw video generation. With `reuse_when_available`, clean scene presets are reused and only missing presets go through the direct Higgsfield MCP; Google/Veo is not a valid substitute. Every resolved source must finish through `render_ig_story`. That operation registers the deterministic MP4 in campaign Media and, during a mission session, creates the corresponding video Deliverable with authoritative 1080×1920 and 10-second metadata. Post-render visual QA extracts frames with `analyze_video` and explicitly disables transcription, so Deepgram is required only for separately requested spoken-audio transcripts. Mission verification therefore rejects raw generation placeholders and accepts only the final rendered outputs.
 
-Static Ad Production missions also contract on `process_media`. Each requested format finishes through `render_static_ad`, which loads the approved static-ad-book HTML template, escapes ordinary copy, permits only safe formatting tags in `_HTML` fields, renders one exact 1080-pixel-wide PNG, registers it in campaign Media, and creates one native image Deliverable. Image generation can supply clean source imagery when required, but it is never accepted as the final copy-bearing static.
+Static Ad Production missions persist `production_mode`, exact output count, per-format variation counts, and optional per-ad exact copy. `static_ad_book` contracts on `process_media`; each requested format finishes through `render_static_ad`, which loads the approved static-ad-book HTML template, escapes ordinary copy, permits only safe formatting tags in `_HTML` fields, renders one exact 1080-pixel-wide PNG, registers it in campaign Media, and creates one native image Deliverable. `validate_messaging` contracts on the deterministic `roas-ad-design` renderer through `process_media`. `image_brief` applies the qualification gates from `roas-image-brief` and contracts on `generate_image` for every final, rather than accepting the brief itself as a Deliverable.
 
 - Ads Research reuses its visual evidence report, linked source documents, concept selection, and persisted production handoff.
 - Webinar Fulfillment groups the existing subtasks and deliverables into Strategy, Copy, Creative, and Activation phases. Each phase links its native outputs and opens the exact subtask in Mission Details. The first unresolved human gate appears as the primary `Review now` action.
@@ -301,6 +301,7 @@ If the direct pool hits a transport failure, the worker removes it from service 
 
 ## Decision Log
 
+- 2026-07-28: Made Quick Missions inherit attached Space/campaign context, added an in-chat launch receipt, replaced native campaign and emoji selects with the shared tokenized control, and expanded Static Ad Production into Validate Messaging, image-brief, and multi-format static-ad-book lanes with per-output copy and counts.
 - 2026-07-26: Required Static Ad Production to finish through the deterministic server-side `render_static_ad` operation and made exact-count contracts reject both missing and extra matching Deliverables.
 - 2026-07-26: Made IG Organic Video contract on final `process_media` Story renders, persisted each render as both campaign Media and a mission Deliverable, and prohibited Google/Veo substitutes for missing Higgsfield footage.
 - 2026-07-26: Made IG Organic Video final-frame QA explicitly visual-only so it cannot block on an unrelated transcription provider.
