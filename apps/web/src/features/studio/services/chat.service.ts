@@ -41,6 +41,7 @@ import type {
   SendMessageParams,
 } from '../types'
 import { ensureGeneralCampaign } from './campaign.service'
+import { buildChatResumeContext } from './chat-resume-context'
 
 export {
   ChatStreamUserError,
@@ -1019,32 +1020,56 @@ export async function recoverStalledConversation(conversationId: string): Promis
   await recoverConversation(conversationId)
 }
 
-export async function recoverConversation(conversationId: string): Promise<void> {
+export async function recoverConversation(
+  conversationId: string,
+  options: { manual?: boolean } = {},
+): Promise<void> {
   if (activeRecoveries.has(conversationId)) return
   if (isStreamActive(conversationId)) return
 
   const storeAtStart = useChatStore.getState()
   const failureAtStart = storeAtStart.streamFailureByConversation[conversationId]
-  if (failureAtStart?.code === 'context_window_exceeded') {
-    // Dead-run polling cannot compact+continue. Start a hidden continue turn instead.
+  const shouldStartContinuation =
+    failureAtStart?.code === 'context_window_exceeded' ||
+    (options.manual === true && failureAtStart?.code === 'stream_interrupted')
+  if (shouldStartContinuation) {
+    // Manual Resume must not poll a known-dead run again. Refresh the canonical
+    // thread, stop any orphaned run, then continue with the exact unfinished task.
+    let resumeMessages = storeAtStart.messagesByConversation[conversationId] ?? []
+    try {
+      const canonicalMessages = await fetchMessages(conversationId)
+      resumeMessages = mergeMessagesPreservingOrderedBlocks(resumeMessages, canonicalMessages)
+      storeAtStart.setMessages(conversationId, resumeMessages)
+    } catch {
+      // The local thread still contains the visible task and partial answer.
+    }
+    const latestAssistant = getLastAssistantMessage(resumeMessages)
+    if (isAssistantTurnComplete(latestAssistant, false)) {
+      clearCompletedConversationRecoveryState(conversationId)
+      return
+    }
+    const resumeContext = buildChatResumeContext(resumeMessages)
+    if (!resumeContext) {
+      throw new Error('Cannot resume without the original user request')
+    }
+    if (failureAtStart?.code === 'stream_interrupted') {
+      await requestStopStream(conversationId)
+    }
     storeAtStart.setConversationInterrupted(conversationId, false)
     storeAtStart.setConversationStreamFailure(conversationId, null)
     storeAtStart.setConversationReconnecting(conversationId, true)
     try {
       await sendMessageStreaming({
         conversation_id: conversationId,
-        content:
-          'Continue from where you left off. Compact earlier context if needed and finish the unfinished work.',
+        ...resumeContext,
         suppressUserMessage: true,
-        system_context:
-          'The previous turn hit the context window limit. Compact earlier conversation context as needed and continue unfinished work from that turn.',
       })
     } catch (error) {
       const store = useChatStore.getState()
       store.setConversationInterrupted(conversationId, true)
       store.setConversationStreamFailure(
         conversationId,
-        resolveChatStreamFailure({ code: 'context_window_exceeded' }),
+        resolveChatStreamFailure({ code: failureAtStart.code }),
       )
       throw error
     } finally {

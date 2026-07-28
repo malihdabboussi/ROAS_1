@@ -55,7 +55,7 @@ function InterruptedConversationRow({ conversationId }: { conversationId: string
   const handleResume = useCallback(async () => {
     setBusy(true)
     try {
-      await recoverConversation(conversationId)
+      await recoverConversation(conversationId, { manual: true })
       const store = useChatStore.getState()
       const stillInterrupted = store.interruptedConversationIds.includes(conversationId)
       const stillStreaming = store.streamingConversationIds.includes(conversationId)

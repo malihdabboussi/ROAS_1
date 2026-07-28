@@ -43,7 +43,7 @@ describe('StreamInterruptedBar', () => {
 
     expect(screen.queryByRole('button', { name: /retry/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /continue/i })).toBeNull()
-    expect(recoverConversation).toHaveBeenCalledWith('conversation-1')
+    expect(recoverConversation).toHaveBeenCalledWith('conversation-1', { manual: true })
   })
 
   it('clears the interrupted flow when Resume cannot recover', async () => {
@@ -90,7 +90,7 @@ describe('StreamInterruptedBar', () => {
     fireEvent.click(screen.getByRole('button', { name: /resume/i }))
 
     await waitFor(() => {
-      expect(recoverConversation).toHaveBeenCalledWith('conversation-1')
+      expect(recoverConversation).toHaveBeenCalledWith('conversation-1', { manual: true })
     })
     expect(useChatStore.getState().interruptedConversationIds).toContain('conversation-1')
     expect(useChatStore.getState().streamFailureByConversation['conversation-1']?.code).toBe(

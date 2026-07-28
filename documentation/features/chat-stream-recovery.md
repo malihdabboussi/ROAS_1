@@ -1,6 +1,6 @@
 # Chat Stream Recovery
 
-Last Modified: 2026-07-26
+Last Modified: 2026-07-28
 
 ## Overview
 
@@ -84,12 +84,13 @@ Chat streaming uses Supabase messages as the canonical record and Redis as the l
 
 The browser tracks raw stream byte activity separately from visible assistant events, so SSE heartbeats keep a long-running answer marked healthy even when no assistant text is being rendered. If an active stream is silent for more than 60 seconds, the browser aborts the stale local reader, preserves the saved `run_id`/cursor, marks the conversation reconnecting, and starts the existing recovery flow.
 
-Transport failures auto-recover first. Redis resume is attempted for active runs, then DB polling recovery runs if resume cannot complete. If the answer still cannot recover, the interrupted banner shows one `Resume` action. `Resume` retries recovery once; if that cannot resume the run, the banner clears and the user can write their own follow-up.
+Transport failures auto-recover first. Redis resume is attempted for active runs, then DB polling recovery runs if resume cannot complete. If the answer still cannot recover, the interrupted banner shows one `Resume` action. A manual `Resume` refreshes the canonical thread, stops any orphaned active run, and starts one hidden continuation turn grounded in the exact latest visible user request, the partial assistant output already shown, and the original attachments. This prevents a dead queued run from being polled repeatedly and keeps the continuation on the unfinished task.
 
 Context-window failures are model failures, not transport failures. OpenClaw owns the recovery loop: it detects overflow, emits structured compaction progress, compacts session history or truncates oversized tool results, then retries the same assistant run without Agent API synthesizing a compact user prompt. If recovery still fails, the gateway emits a failed OpenResponses result with `context_window_exceeded`; Agent API marks the run `failed_recoverable`, and the frontend shows the recoverable context message instead of a fake completed answer. Model overload, model/context settings, workspace billing, provider billing, missing OpenAI Codex subscription auth, missing Claude Subscription auth, and runtime availability failures show specific messages instead of interrupted-answer controls.
 
 ## Decision Log
 
+- 2026-07-28: Made manual interrupted-turn recovery deterministic: refresh canonical messages, stop the orphaned run, then continue from the exact user request and partial output while preserving attachments. Automatic Redis/DB reconnect remains the first recovery path.
 - 2026-07-26: Added custom UTC date ranges, equal-length previous-period comparisons, daily metric sparklines, and provider-ledger spend stacked by model to the admin AI usage dashboard. Provider billing attempts remain authoritative for spend and request totals; traces remain authoritative for tokens and failures.
 - 2026-07-26: Added capability and pricing rows for Opus 5, Sonnet 5, GPT-5.6 Sol, and GPT-5.6 Terra, and aligned strategy context requests to supported 300K Anthropic and 272K OpenAI tiers. This prevents newly routed Chat requests from failing capability validation before provider execution.
 - 2026-07-26: Moved OpenRouter image calls to the dedicated image API, persisted output validation separately from settlement, verified ambiguous paid results against generation metadata, and made invalid paid output terminal for agent retries. The admin AI usage report now counts paid image outputs that failed validation.
