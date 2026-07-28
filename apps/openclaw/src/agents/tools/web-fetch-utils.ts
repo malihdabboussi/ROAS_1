@@ -2,6 +2,11 @@ export type ExtractMode = "markdown" | "text";
 
 const READABILITY_MAX_HTML_CHARS = 1_000_000;
 const READABILITY_MAX_ESTIMATED_NESTING_DEPTH = 3_000;
+/** Inline data-URI media bloats GHL/funnel HTML past fetch limits and then disappears on tag strip. */
+const EMBEDDED_DATA_URI_RE =
+  /data:(image|video|audio)\/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+/gi;
+/** GoHighLevel / builder placeholder labels that sit next to real headshots in the DOM. */
+const MEDIA_PLACEHOLDER_LABEL_RE = /\bPHOTO\s*(?:→|->)\s*IG\b/gi;
 
 let readabilityDepsPromise:
   | Promise<{
@@ -55,13 +60,42 @@ function normalizeWhitespace(value: string): string {
     .trim();
 }
 
+/**
+ * Replace huge inline data-URIs with short tokens so funnel HTML stays under
+ * fetch/Readability size caps without deleting the fact that media existed.
+ */
+export function shrinkEmbeddedMedia(html: string): string {
+  return html.replace(EMBEDDED_DATA_URI_RE, "data:$1/placeholder;base64,SHORT");
+}
+
+function attrValue(tag: string, name: string): string | undefined {
+  const match = tag.match(new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, "i"));
+  if (!match) return undefined;
+  return match[1] ?? match[2] ?? match[3];
+}
+
+function imageMarkdownFromTag(tag: string): string {
+  const alt = normalizeWhitespace(decodeEntities(attrValue(tag, "alt") ?? ""));
+  const src = decodeEntities(attrValue(tag, "src") ?? "").trim();
+  if (!src) {
+    return alt ? `![${alt}]` : "![image]";
+  }
+  if (/^data:/i.test(src)) {
+    return alt ? `![${alt}](embedded-image)` : "![image](embedded-image)";
+  }
+  return alt ? `![${alt}](${src})` : `![image](${src})`;
+}
+
 export function htmlToMarkdown(html: string): { text: string; title?: string } {
   const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
   const title = titleMatch ? normalizeWhitespace(stripTags(titleMatch[1])) : undefined;
-  let text = html
+  let text = shrinkEmbeddedMedia(html)
     .replace(/<script[\s\S]*?<\/script>/gi, "")
     .replace(/<style[\s\S]*?<\/style>/gi, "")
     .replace(/<noscript[\s\S]*?<\/noscript>/gi, "");
+  // Preserve image presence before stripTags — otherwise GHL pages look like
+  // broken PHOTO→IG placeholders with no proof the headshots exist.
+  text = text.replace(/<img\b[^>]*>/gi, (tag) => `\n${imageMarkdownFromTag(tag)}\n`);
   text = text.replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, href, body) => {
     const label = normalizeWhitespace(stripTags(body));
     if (!label) {
@@ -82,13 +116,22 @@ export function htmlToMarkdown(html: string): { text: string; title?: string } {
     .replace(/<(br|hr)\s*\/?>/gi, "\n")
     .replace(/<\/(p|div|section|article|header|footer|table|tr|ul|ol)>/gi, "\n");
   text = stripTags(text);
+  text = text.replace(MEDIA_PLACEHOLDER_LABEL_RE, "");
   text = normalizeWhitespace(text);
   return { text, title };
 }
 
 export function markdownToText(markdown: string): string {
   let text = markdown;
-  text = text.replace(/!\[[^\]]*]\([^)]+\)/g, "");
+  // Keep a human-readable image marker; deleting images caused false "broken photo" reports.
+  text = text.replace(/!\[([^\]]*)]\(([^)]*)\)/g, (_, alt: string) => {
+    const label = normalizeWhitespace(alt) || "image";
+    return `[image: ${label}]`;
+  });
+  text = text.replace(/!\[([^\]]*)]/g, (_, alt: string) => {
+    const label = normalizeWhitespace(alt) || "image";
+    return `[image: ${label}]`;
+  });
   text = text.replace(/\[([^\]]+)]\([^)]+\)/g, "$1");
   text = text.replace(/```[\s\S]*?```/g, (block) =>
     block.replace(/```[^\n]*\n?/g, "").replace(/```/g, ""),
@@ -97,6 +140,7 @@ export function markdownToText(markdown: string): string {
   text = text.replace(/^#{1,6}\s+/gm, "");
   text = text.replace(/^\s*[-*+]\s+/gm, "");
   text = text.replace(/^\s*\d+\.\s+/gm, "");
+  text = text.replace(MEDIA_PLACEHOLDER_LABEL_RE, "");
   return normalizeWhitespace(text);
 }
 
@@ -209,23 +253,25 @@ export async function extractReadableContent(params: {
   url: string;
   extractMode: ExtractMode;
 }): Promise<{ text: string; title?: string } | null> {
+  // Shrink before size/nesting checks so data-URI funnels stay parseable.
+  const html = shrinkEmbeddedMedia(params.html);
   const fallback = (): { text: string; title?: string } => {
-    const rendered = htmlToMarkdown(params.html);
+    const rendered = htmlToMarkdown(html);
     if (params.extractMode === "text") {
-      const text = markdownToText(rendered.text) || normalizeWhitespace(stripTags(params.html));
+      const text = markdownToText(rendered.text) || normalizeWhitespace(stripTags(html));
       return { text, title: rendered.title };
     }
     return rendered;
   };
   if (
-    params.html.length > READABILITY_MAX_HTML_CHARS ||
-    exceedsEstimatedHtmlNestingDepth(params.html, READABILITY_MAX_ESTIMATED_NESTING_DEPTH)
+    html.length > READABILITY_MAX_HTML_CHARS ||
+    exceedsEstimatedHtmlNestingDepth(html, READABILITY_MAX_ESTIMATED_NESTING_DEPTH)
   ) {
     return fallback();
   }
   try {
     const { Readability, parseHTML } = await loadReadabilityDeps();
-    const { document } = parseHTML(params.html);
+    const { document } = parseHTML(html);
     try {
       (document as { baseURI?: string }).baseURI = params.url;
     } catch {
@@ -238,8 +284,10 @@ export async function extractReadableContent(params: {
     }
     const title = parsed.title || undefined;
     if (params.extractMode === "text") {
-      const text = normalizeWhitespace(parsed.textContent ?? "");
-      return text ? { text, title } : fallback();
+      // Prefer markdown path so embedded images survive as [image: …] markers.
+      const rendered = htmlToMarkdown(parsed.content);
+      const text = markdownToText(rendered.text);
+      return text ? { text, title: title ?? rendered.title } : fallback();
     }
     const rendered = htmlToMarkdown(parsed.content);
     return { text: rendered.text, title: title ?? rendered.title };

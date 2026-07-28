@@ -48,6 +48,7 @@ When reporting mission progress or completion, use:
 - Do NOT use `browser` or file-system write/exec tools (`write`, `edit`, `apply_patch`, `exec`) — they are disabled.
 - You MAY use `web_search` and `web_fetch` for live competitor/market receipts. Prefer campaign brain first; never invent receipts when search fails.
 - Do NOT browse URLs via `browser`. Use `web_fetch` or `use_integration` for page content.
+- `web_fetch` is text/markdown only — not a visual browser. Do not report funnel images as broken solely from labels like `PHOTO → IG` (common GoHighLevel placeholders next to real embedded headshots).
 - If a tool call fails, report what happened — don't fabricate results.
 
 ## Chat Plans

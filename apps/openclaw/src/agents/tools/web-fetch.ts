@@ -12,6 +12,7 @@ import {
   extractReadableContent,
   htmlToMarkdown,
   markdownToText,
+  shrinkEmbeddedMedia,
   truncateText,
   type ExtractMode,
 } from "./web-fetch-utils.js";
@@ -33,7 +34,8 @@ export { extractReadableContent } from "./web-fetch-utils.js";
 const EXTRACT_MODES = ["markdown", "text"] as const;
 
 const DEFAULT_FETCH_MAX_CHARS = 50_000;
-const DEFAULT_FETCH_MAX_RESPONSE_BYTES = 2_000_000;
+/** Funnel builders embed large base64 images; allow enough headroom then shrink before extract. */
+const DEFAULT_FETCH_MAX_RESPONSE_BYTES = 8_000_000;
 const FETCH_MAX_RESPONSE_BYTES_MIN = 32_000;
 const FETCH_MAX_RESPONSE_BYTES_MAX = 10_000_000;
 const DEFAULT_FETCH_MAX_REDIRECTS = 3;
@@ -591,7 +593,10 @@ async function runWebFetch(params: WebFetchRuntimeParams): Promise<Record<string
     const contentType = res.headers.get("content-type") ?? "application/octet-stream";
     const normalizedContentType = normalizeContentType(contentType) ?? "application/octet-stream";
     const bodyResult = await readResponseText(res, { maxBytes: params.maxResponseBytes });
-    const body = bodyResult.text;
+    // Shrink inline data-URIs before extraction so GHL/funnel HTML stays parseable.
+    const body = contentType.includes("text/html")
+      ? shrinkEmbeddedMedia(bodyResult.text)
+      : bodyResult.text;
     const responseTruncatedWarning = bodyResult.truncated
       ? `Response body truncated after ${params.maxResponseBytes} bytes.`
       : undefined;

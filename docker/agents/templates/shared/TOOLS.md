@@ -48,6 +48,8 @@ When reporting mission progress or completion, use:
 - Do NOT use `browser` or file-system write/exec tools (`write`, `edit`, `apply_patch`, `exec`) — they are disabled.
 - You MAY use `web_search` and `web_fetch` for live research. Prefer campaign brain / Vibey tools first; never invent receipts when search fails.
 - Do NOT browse URLs via `browser`. Use `web_fetch` or `use_integration` for page content.
+- `web_fetch` returns text/markdown of the page — not a live browser render and not screenshots. It cannot verify visual layout, CSS background images, or "do the photos look good."
+- On funnel builders (GoHighLevel, etc.), labels like `PHOTO → IG` are often editor placeholders next to real embedded headshots. Do **not** report images as broken solely because that label appears in fetched text. Prefer: "I can read the copy/structure from fetch; I cannot visually confirm image rendering without a screenshot from you."
 - If a tool call fails, report what happened — don't fabricate results.
 
 ## Chat Plans
