@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils/cn'
 import { isShellHomeRoute, isShellWorkspaceRoute } from './shell-route-policy'
 import { ShellChatDrawer } from './ShellChatDrawer'
 import { ShellNewChatGreeting } from './ShellNewChatGreeting'
+import { PageGraderPortalSurface } from './PageGraderPortalSurface'
 import { ShellSidebarSlot } from './ShellSidebarSlot'
 import { SpaceWorkDock } from './SpaceWorkDock'
 import {
@@ -30,6 +31,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams()
   const chatParam = searchParams.get('chat')
   const convParam = searchParams.get('conv')
+  const portalActive = searchParams.get('surface') === 'portal'
 
   const workAreaOpen = useShellStore((s) => s.workAreaOpen)
   const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
@@ -166,7 +168,13 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
             ? 'shell-work-area-body-dock-work-bottom'
             : null
 
-  const workMain = onSpaces ? <SpaceWorkDock>{children}</SpaceWorkDock> : homeOrDefaultMain
+  const workspaceMain = onSpaces ? <SpaceWorkDock>{children}</SpaceWorkDock> : homeOrDefaultMain
+  const workMain = (
+    <>
+      <div className={cn('h-full min-h-0 w-full', portalActive && 'hidden')}>{workspaceMain}</div>
+      <PageGraderPortalSurface active={portalActive} />
+    </>
+  )
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">

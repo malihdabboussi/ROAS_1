@@ -80,3 +80,10 @@ Why: Shared Team rows dropped Mine so Team looked teammate-only. The quick card 
 Impact: Team reads as mine + team. Meeting popup stays narrow, guests list name+email once, and join links are copyable.
 
 Files: `integrations-calendar-dedupe.ts`, `HomeMeetingDetailHost.tsx`, calendar description plumbing (Workspace/Google/Outlook), tests, `integration-connections.md`.
+## [2026-07-28 12:55] - [FEATURE]
+
+What: Added Workspace | Portal surface toggle that embeds Page Grader via short-lived SSO session.
+Why: Keep ROAS as the primary shell while letting internal users work in Portal without a second login.
+Impact: Authenticated ROAS users with matching Portal internal accounts can open Clients/Campaigns/Launches/Performance inside the shell.
+Files: apps/api/.../page-grader-embed.controller.ts, page-grader-meeting.controller.ts, page-grader integration/API/module/dto, apps/web shell Portal surface + TopBar/Workspace, globals.css (web+website)
+

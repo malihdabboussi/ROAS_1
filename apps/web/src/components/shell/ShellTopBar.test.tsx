@@ -5,7 +5,9 @@ import { ShellTopBar } from './ShellTopBar'
 
 const mocks = vi.hoisted(() => ({
   pathname: '/home',
+  params: new URLSearchParams(),
   push: vi.fn(),
+  replace: vi.fn(),
   shellState: {
     sidebarPinned: false,
     sidebarPeek: false,
@@ -23,8 +25,10 @@ const mocks = vi.hoisted(() => ({
     openRightPanelSurface: vi.fn(),
     rightPanel: { open: false, tab: 'tasks' as const },
     workAreaOpen: true,
+    setWorkAreaOpen: vi.fn(),
     toggleWorkAreaOpen: vi.fn(),
     artifactViewer: { target: null as { id: string } | null },
+    closeArtifactViewer: vi.fn(),
     recentArtifactTargets: [],
     recentWorkAreaPages: [],
     recordWorkAreaPage: vi.fn(),
@@ -35,8 +39,13 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('next/navigation', () => ({
   usePathname: () => mocks.pathname,
-  useRouter: () => ({ back: vi.fn(), forward: vi.fn(), push: mocks.push }),
-  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({
+    back: vi.fn(),
+    forward: vi.fn(),
+    push: mocks.push,
+    replace: mocks.replace,
+  }),
+  useSearchParams: () => mocks.params,
 }))
 
 vi.mock('@/features/spaces/store/use-spaces-store', () => ({
@@ -83,6 +92,7 @@ vi.mock('./use-shell-store', () => ({
 describe('ShellTopBar', () => {
   beforeEach(() => {
     mocks.pathname = '/home'
+    mocks.params = new URLSearchParams()
     mocks.shellState.sidebarPinned = false
     mocks.shellState.pageBreadcrumb = null
     mocks.shellState.chatDrawer = { open: false }
@@ -169,5 +179,19 @@ describe('ShellTopBar', () => {
 
     expect(screen.getByText('Campaign / Launch')).toBeInTheDocument()
     expect(screen.queryByTitle('Section options')).not.toBeInTheDocument()
+  })
+
+  it('switches between the Workspace and Portal surfaces', () => {
+    render(<ShellTopBar />)
+
+    expect(screen.getByRole('button', { name: 'Workspace' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Portal' }))
+
+    expect(mocks.shellState.setWorkAreaOpen).toHaveBeenCalledWith(true)
+    expect(mocks.shellState.closeArtifactViewer).toHaveBeenCalledTimes(1)
+    expect(mocks.replace).toHaveBeenCalledWith('/home?surface=portal', { scroll: false })
   })
 })

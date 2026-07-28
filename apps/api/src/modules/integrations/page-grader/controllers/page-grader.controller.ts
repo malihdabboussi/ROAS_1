@@ -26,13 +26,11 @@ import {
   ListPageGraderAssigneesSchema,
   ListPageGraderClientsSchema,
   SendPageGraderWorkSchema,
-  SyncPageGraderMeetingSchema,
   UpsertPageGraderClientScopeMapSchema,
 } from '../dto/page-grader.dto'
 import { PageGraderApiService } from '../services/page-grader-api.service'
 import { PageGraderBrainImportService } from '../services/page-grader-brain-import.service'
 import { PageGraderMcpRegistrationService } from '../services/page-grader-mcp-registration.service'
-import { PageGraderMeetingSyncService } from '../services/page-grader-meeting-sync.service'
 
 @Controller('integrations/page-grader')
 @UseGuards(AuthGuard, OrgContextGuard, OrgRoleGuard)
@@ -40,7 +38,6 @@ export class PageGraderController {
   constructor(
     private readonly api: PageGraderApiService,
     private readonly brainImport: PageGraderBrainImportService,
-    private readonly meetingSync: PageGraderMeetingSyncService,
     private readonly mcpRegistration: PageGraderMcpRegistrationService,
   ) {}
   @Get('status')
@@ -187,28 +184,5 @@ export class PageGraderController {
       scope.orgRole,
     )
     return { success: result.success, results: result.results }
-  }
-
-  @Post('meetings/:spaceItemId/sync')
-  @RequireOrgRole('editor')
-  async syncMeeting(
-    @CurrentUser() user: { id: string },
-    @Supabase() supabase: SupabaseClient,
-    @Param('spaceItemId') spaceItemId: string,
-    @Body() body: unknown,
-  ) {
-    const validation = SyncPageGraderMeetingSchema.safeParse(body)
-    if (!validation.success) {
-      throw new HttpException(
-        { success: false, error: 'Invalid request', details: validation.error.flatten() },
-        HttpStatus.BAD_REQUEST,
-      )
-    }
-    return this.meetingSync.syncSpaceItem({
-      supabase,
-      userId: user.id,
-      spaceItemId,
-      clientIds: validation.data.client_ids,
-    })
   }
 }
