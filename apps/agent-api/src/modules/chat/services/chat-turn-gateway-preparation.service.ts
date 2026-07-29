@@ -402,7 +402,6 @@ export class ChatTurnGatewayPreparationService {
         conversationId,
         logger,
       })
-
     return this.buildPreparedGatewayTurn({
       conversationId,
       sessionKey,
@@ -496,7 +495,6 @@ export class ChatTurnGatewayPreparationService {
         agentBrainPresence: input.prewarmedStableContext.agentBrainPresence,
       }
     }
-
     const [
       previousImageUrls,
       userProfileSummary,

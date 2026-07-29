@@ -280,3 +280,13 @@ Why: Verified the full "Team Agenda Mine+Directory and Prepare with Pixel" slice
 Impact: Directory-synced calendar identities with a Workspace user id now default to `match_status = 'confirmed'`, so Team Agenda's Directory coverage works without a separate manual confirmation step. Migration is idempotent (0 pending rows after run) and recorded in `supabase_migrations.schema_migrations`.
 
 Files: `supabase/migrations/20260728154500_team_agenda_directory_default_confirmed.sql` (applied to production, no code changes).
+
+## [2026-07-28 21:29] - [FIX]
+
+What: Removed a duplicate `conversationNeedsMessageHydration` import introduced while integrating the local chat-panel work with current `origin/main`, and removed two redundant blank lines from the changed gateway-preparation service.
+
+Why: The duplicate identifier stopped the web TypeScript validation even though the underlying hydration behavior and tests were otherwise intact.
+
+Impact: The combined release branch type-checks the Space chat hydration coverage and keeps the changed agent gateway service within the 600-line architecture limit without changing runtime behavior.
+
+Files: `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.test.ts`, `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparation.service.ts`.
