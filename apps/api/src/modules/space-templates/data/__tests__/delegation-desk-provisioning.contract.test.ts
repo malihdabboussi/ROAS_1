@@ -24,7 +24,7 @@ describe('Delegation Desk provisioning', () => {
       'utf8',
     ).trim()
     const sql = readFileSync(
-      resolve(root, 'supabase/migrations/20260728203100_seed_pixel_delegation_desk_skill.sql'),
+      resolve(root, 'supabase/migrations/20260729170000_upgrade_delegation_desk_work_queue.sql'),
       'utf8',
     )
     const migratedBody = sql.match(/\$skillbody\$([\s\S]*?)\$skillbody\$/)?.[1]?.trim()
@@ -33,5 +33,43 @@ describe('Delegation Desk provisioning', () => {
     expect(sql).toMatch(
       /ON CONFLICT \(agent_key, skill_key\) WHERE user_id IS NULL AND org_id IS NULL/,
     )
+  })
+
+  it('upgrades published and instantiated Desks without losing the private intake boundary', () => {
+    const sql = readFileSync(
+      resolve(root, 'supabase/migrations/20260729170000_upgrade_delegation_desk_work_queue.sql'),
+      'utf8',
+    )
+
+    expect(sql).toMatch(/UPDATE public\.space_templates/)
+    expect(sql).toMatch(/UPDATE public\.spaces/)
+    expect(sql).toMatch(/UPDATE public\.space_automations/)
+    expect(sql).toMatch(/"label":"Holding tank"/)
+    expect(sql).toMatch(/"label":"Ready to delegate"/)
+    expect(sql).toMatch(/"id":"done","label":"Done"/)
+    expect(sql).toMatch(/WHEN 'packet' THEN 'work_group'/)
+  })
+
+  it('installs the protected Delegator and reroutes Desk processing without removing Pixel', () => {
+    const skill = readFileSync(
+      resolve(root, 'docker/agents/templates/delegator/skills/delegation-desk/SKILL.md'),
+      'utf8',
+    ).trim()
+    const sql = readFileSync(
+      resolve(root, 'supabase/migrations/20260729174500_seed_delegator_system_agent.sql'),
+      'utf8',
+    )
+    const migratedBody = sql.match(/\$skill\$([\s\S]*?)\$skill\$/)?.[1]?.trim()
+
+    expect(migratedBody).toBe(skill)
+    expect(sql).toMatch(/'delegator'/)
+    expect(sql).toMatch(/'Delegator'/)
+    expect(sql).toMatch(/'Delegation Manager'/)
+    expect(sql).toMatch(/"capability_profile":"system_delegation"/)
+    expect(sql).toMatch(/'699e3530-881c-4653-b507-4c4b5993538f'::uuid/)
+    expect(sql).toMatch(/INSERT INTO public\.agent_definitions/)
+    expect(sql).toMatch(/INSERT INTO public\.agent_skills/)
+    expect(sql).toMatch(/agent_key = 'delegator'/)
+    expect(sql).toMatch(/Pixel retains its delegation-desk skill/)
   })
 })

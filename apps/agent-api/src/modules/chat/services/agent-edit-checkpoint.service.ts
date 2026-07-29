@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SupabaseServiceClient } from '@vibey/api-shared'
-import { AgentEditCheckpointRepository } from '../repositories/agent-edit-checkpoint.repository'
 import type {
   AgentCheckpointMutation,
   AgentCheckpointSnapshot,
 } from '../../shared/services/request-context.service'
+import { AgentEditCheckpointRepository } from '../repositories/agent-edit-checkpoint.repository'
 
-const SYSTEM_AGENT_KEYS = new Set(['vibey', 'hr', 'brain_scholar', 'atlas', 'viktor'])
+const SYSTEM_AGENT_KEYS = new Set(['vibey', 'hr', 'brain_scholar', 'atlas', 'viktor', 'delegator'])
 
 @Injectable()
 export class AgentEditCheckpointService {

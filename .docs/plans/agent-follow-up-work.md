@@ -9246,3 +9246,15 @@ Evidence: The connected chat and its note/snippet composer were extracted into `
 Needed work: Extract the agenda, continuity, and recording sidebar into a focused presentational sibling without changing the meeting bundle contract.
 
 Reason not done now: The requested behavior is complete and covered; the remaining extraction is behavior-neutral cleanup of the existing sidebar.
+
+## 2026-07-29 — Delegator ship (deferred LOC)
+
+- **Feature/app:** agents / Delegation Desk
+- **Files:**
+  - `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts` (2711 LOC)
+  - `apps/agent-api/src/modules/artifacts/services/artifact-capability.policy.ts` (1428 LOC)
+  - `packages/agent-policy/src/action-contracts.ts` (1106 LOC)
+  - `apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain.service.ts` (599 LOC)
+- **Evidence:** Touched for `system_delegation` / Delegator wiring; already far over or at the 600 LOC service/guide limit.
+- **Needed work:** Split capability allowlists, action docs, and team-brain helpers into dedicated modules.
+- **Why not now:** Out of scope for the Delegator install; only additive profile/key lines were required for the ship.

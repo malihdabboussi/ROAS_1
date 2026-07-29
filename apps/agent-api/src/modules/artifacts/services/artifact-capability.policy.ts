@@ -6,6 +6,7 @@ export type ArtifactCapabilityProfile =
   | 'system_brain'
   | 'system_builder'
   | 'system_flows'
+  | 'system_delegation'
   | 'managed_domain'
 export type ArtifactCapabilityDomain =
   | 'management'
@@ -275,6 +276,35 @@ const CAT_TASKS_WRITE = new Set<string>([
   'update_task',
   'delete_task',
   'add_task_comment',
+])
+
+export const DELEGATOR_ALLOWED_ACTIONS = new Set<string>([
+  ...MISSION_READ_ACTIONS,
+  ...DELEGATION_READ_ACTIONS,
+  ...DELEGATION_WRITE_ACTIONS,
+  ...CAT_COMMUNICATION,
+  ...CAT_MCP_READ,
+  ...CAT_STATE,
+  ...CAT_BRAIN_READ,
+  ...CAT_BRAIN_CORTEX_READ,
+  ...CAT_SPACE_RETRIEVAL,
+  ...CAT_CONTACTS_READ,
+  ...CAT_TASKS_READ,
+  'create_task',
+  'update_task',
+  'add_task_comment',
+  'list_campaigns',
+  'get_campaign',
+  'list_campaign_team',
+  'list_campaign_media',
+  'list_strategy_nodes',
+  'list_documents',
+  'get_document',
+  'read_space_document',
+  'get_integration',
+  'search_available_integrations',
+  'check_integration_connection',
+  'get_capabilities',
 ])
 
 export const FLOW_ALLOWED_ACTIONS = new Set<string>([
@@ -907,6 +937,7 @@ function normalizeCapabilityProfile(
     value === 'system_brain' ||
     value === 'system_builder' ||
     value === 'system_flows' ||
+    value === 'system_delegation' ||
     value === 'managed_domain' ||
     value === 'managed_c_level' ||
     value === 'managed_manager' ||
@@ -985,6 +1016,7 @@ export function inferCapabilityProfile(
   if (agentKey === 'hr') return 'system_hr'
   if (agentKey === 'brain_scholar' || agentKey === 'atlas') return 'system_brain'
   if (agentKey === 'loop') return 'system_flows'
+  if (agentKey === 'delegator') return 'system_delegation'
   if (isSystemBuilderKey(agentKey)) return 'system_builder'
   if (level === 'system') return 'managed_domain'
   if (level === 'employee' || level === 'manager' || level === 'c_level') return 'managed_domain'
@@ -1093,6 +1125,10 @@ export function resolvePolicyActionAllowlist(policy: ArtifactCapabilityPolicy): 
     return toActiveActionSet(FLOW_ALLOWED_ACTIONS)
   }
 
+  if (policy.profile === 'system_delegation') {
+    return toActiveActionSet(DELEGATOR_ALLOWED_ACTIONS)
+  }
+
   if (policy.profile === 'vibey_ceo') {
     return resolvePromotedVibeyAllowlist()
   }
@@ -1122,6 +1158,7 @@ export function resolveCapabilityPolicy(
     explicitProfile === 'system_brain' ||
     explicitProfile === 'system_builder' ||
     explicitProfile === 'system_flows' ||
+    explicitProfile === 'system_delegation' ||
     explicitProfile === 'managed_domain'
   ) {
     profile = explicitProfile
@@ -1142,6 +1179,7 @@ export function resolveCapabilityPolicy(
   if (profile === 'system_brain') return { profile, level, domain: 'management' }
   if (profile === 'system_builder') return { profile, level, domain: 'developer' }
   if (profile === 'system_flows') return { profile, level, domain: 'flows' }
+  if (profile === 'system_delegation') return { profile, level, domain: 'operations' }
 
   const domain = explicitDomain || inferCapabilityDomain(agent.agent_key, agent.role)
   if (!domain) return null
@@ -1216,6 +1254,16 @@ export function isArtifactActionAllowed(
       return {
         allowed: false,
         reason: `Action "${action}" is not available for Flows agents.${hint}`,
+      }
+    }
+    return { allowed: true }
+  }
+
+  if (policy.profile === 'system_delegation') {
+    if (!DELEGATOR_ALLOWED_ACTIONS.has(action)) {
+      return {
+        allowed: false,
+        reason: `Action "${action}" is not available for the Delegator agent.`,
       }
     }
     return { allowed: true }
@@ -1300,6 +1348,21 @@ export function isIntegrationSubActionAllowed(
     return allowed
       ? { allowed: true }
       : { allowed: false, reason: 'system_flows can only inspect integration availability.' }
+  }
+
+  if (policy.profile === 'system_delegation') {
+    const allowed = [
+      'get_integration',
+      'search_available_integrations',
+      'check_integration_connection',
+      'get_capabilities',
+    ].includes(normalizedAction)
+    return allowed
+      ? { allowed: true }
+      : {
+          allowed: false,
+          reason: 'Delegator can inspect integration availability but cannot mutate integrations.',
+        }
   }
 
   if (normalizedService === 'scrapecreators') {

@@ -112,6 +112,7 @@ describe('artifact capability skill resource policy', () => {
       { profile: 'system_brain', level: 'system', domain: 'management' },
       { profile: 'system_builder', level: 'system', domain: 'developer' },
       { profile: 'system_flows', level: 'system', domain: 'flows' },
+      { profile: 'system_delegation', level: 'system', domain: 'operations' },
       { profile: 'managed_domain', level: 'employee', domain: 'marketing' },
       { profile: 'managed_domain', level: 'employee', domain: 'developer' },
       { profile: 'managed_domain', level: 'employee', domain: 'operations' },

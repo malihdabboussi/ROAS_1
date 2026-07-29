@@ -3,6 +3,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FinalOutputCards } from './FinalOutputCards'
 import type { FinalOutputBlock } from './message-bubble.utils'
 
+const { openArtifactInShell } = vi.hoisted(() => ({
+  openArtifactInShell: vi.fn(),
+}))
+
+vi.mock('@/lib/artifacts', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/artifacts')>()
+  return { ...actual, openArtifactInShell }
+})
+
 afterEach(cleanup)
 
 describe('FinalOutputCards', () => {
@@ -96,6 +105,31 @@ describe('FinalOutputCards', () => {
       }),
     )
     window.removeEventListener('vibey-open-artifact', listener)
+  })
+
+  it('opens created tasks in the right-side task panel without navigating away', () => {
+    const blocks: FinalOutputBlock[] = [
+      {
+        type: 'artifact_preview',
+        id: 'task-1',
+        artifactType: 'task',
+        artifactId: 'task-1',
+        name: 'Build Impact Elite GHL workflows',
+        spaceId: 'delegation-desk-1',
+      },
+    ]
+
+    render(<FinalOutputCards blocks={blocks} />)
+    fireEvent.click(screen.getByRole('button', { name: /Build Impact Elite GHL workflows/i }))
+
+    expect(openArtifactInShell).toHaveBeenCalledWith({
+      id: 'task-1',
+      entityId: 'task-1',
+      entityTable: 'space_items',
+      spaceId: 'delegation-desk-1',
+      title: 'Build Impact Elite GHL workflows',
+      type: 'task',
+    })
   })
 
   it('opens a generated video in the in-app media workspace', () => {

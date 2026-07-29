@@ -14,6 +14,7 @@ describe('system agent policy helpers', () => {
     expect(isSystemAgentKey('hr')).toBe(true)
     expect(isSystemAgentKey('atlas')).toBe(true)
     expect(isSystemAgentKey('viktor')).toBe(true)
+    expect(isSystemAgentKey('delegator')).toBe(true)
     expect(isSystemAgentKey('copywriter')).toBe(false)
   })
 
@@ -42,6 +43,7 @@ describe('system agent policy helpers', () => {
     expect(isSkillWriteLocked('brain_scholar')).toBe(true)
     expect(isSkillWriteLocked('viktor')).toBe(true)
     expect(isSkillWriteLocked('widget_builder')).toBe(true)
+    expect(isSkillWriteLocked('delegator')).toBe(true)
   })
 
   it('locks identity and purpose fields while allowing preferences', () => {

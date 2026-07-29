@@ -1,6 +1,6 @@
 # Page Grader MCP bridge
 
-Last Modified: 2026-07-28
+Last Modified: 2026-07-29
 
 ## Ownership
 
@@ -66,15 +66,18 @@ failed write is reported as a blocker rather than described as completed.
 Spaces can capture selected work in a private **Delegation Desk** before it
 reaches a teammate or fulfillment system. One intake batch preserves the source
 Space and task ids, dispatch mode, user note, and a stable source fingerprint.
-The Desk's `task_created` automation sends only top-level Inbox items to Pixel.
-Packets Pixel creates in later statuses do not retrigger the intake automation.
+The Desk's `task_created` automation sends only top-level Holding tank items to
+Pixel. Work Pixel creates in later statuses does not retrigger the intake
+automation.
 
 Pixel's `delegation-desk` skill reads every referenced item, checks existing
-work, and consolidates related sources into the fewest coherent Delegation
-Packets. Batch and Review first modes stop at human review. Urgent mode can
+work, and creates the smallest clear set of work items. Related items may share
+an optional parent work group, but each executable subtask keeps its own owner,
+deadline, status, and completion record. Work may remain unassigned or unmapped
+in Ready to delegate. Batch and Review first modes stop there; Urgent mode can
 dispatch in the same run after client, destination, and duplicate checks.
-Funnel, landing-page, campaign-page, and fulfillment packets continue through
-the Page Grader bridge described above, while the user sees **The ROAS Portal**.
+Funnel, landing-page, campaign-page, and fulfillment work continues through the
+Page Grader bridge described above, while the user sees **The ROAS Portal**.
 Raw intake is never assigned directly to the team.
 
 ## User-facing language
@@ -129,7 +132,7 @@ Grader`, `MCP`, tool names, schemas, idempotency keys, or retry mechanics.
 - Multi-tool fulfillment produces one concise final result instead of
   tool-by-tool narration.
 - A five-task bulk delegation creates one private intake batch, preserves all
-  source ids, and produces fewer coherent packets instead of five automatic
-  team assignments.
+  source ids, and produces the smallest coherent set of work items instead of
+  five automatic team assignments.
 - Urgent Delegation Desk intake dispatches only after duplicate, target, and
   destination checks and stores the confirmed destination receipt.

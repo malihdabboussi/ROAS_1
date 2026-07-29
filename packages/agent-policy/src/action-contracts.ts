@@ -2,7 +2,7 @@ import { isAction, type Action } from './actions.js'
 import type { Domain } from './domains.js'
 import { ACTION_TO_DOMAIN } from './registry.js'
 
-export type SystemActionOwner = 'vibey' | 'atlas' | 'hr' | 'loop'
+export type SystemActionOwner = 'vibey' | 'atlas' | 'hr' | 'loop' | 'delegator'
 export type ActionOwner = SystemActionOwner | 'managed'
 
 export type ActionFamily =
@@ -192,7 +192,7 @@ function taskContract(operation: ActionOperation): ExplicitActionContract {
   return {
     family: 'task',
     operation,
-    sharedOwners: ['vibey', 'loop', 'managed'],
+    sharedOwners: ['vibey', 'loop', 'delegator', 'managed'],
     userPolicyAddable: true,
     requiresExplicitUserIntent: operation !== 'read',
     forbiddenUnlessExplicit: false,
@@ -212,7 +212,7 @@ function contactContract(action: Action, operation: ActionOperation): ExplicitAc
   return {
     family: 'contact',
     operation,
-    sharedOwners: ['vibey', 'managed'],
+    sharedOwners: ['vibey', 'delegator', 'managed'],
     userPolicyAddable: true,
     requiresExplicitUserIntent: !isRead,
     forbiddenUnlessExplicit: false,
@@ -294,7 +294,7 @@ function companyCortexReadContract(
   return {
     family: 'brain.memory',
     operation,
-    sharedOwners: ['vibey', 'atlas', 'hr', 'managed'],
+    sharedOwners: ['vibey', 'atlas', 'hr', 'delegator', 'managed'],
     userPolicyAddable: true,
     requiresExplicitUserIntent: false,
     forbiddenUnlessExplicit: false,
@@ -340,7 +340,7 @@ function customerBrainContract(
     family: isWrite ? 'brain.ingestion' : 'brain.memory',
     operation,
     exclusiveOwner: isWrite ? 'atlas' : undefined,
-    sharedOwners: isWrite ? ['atlas'] : ['vibey', 'atlas', 'hr', 'managed'],
+    sharedOwners: isWrite ? ['atlas'] : ['vibey', 'atlas', 'hr', 'delegator', 'managed'],
     userPolicyAddable: !isWrite,
     requiresExplicitUserIntent: isWrite,
     forbiddenUnlessExplicit: isWrite,
@@ -526,7 +526,7 @@ const EXPLICIT_ACTION_CONTRACTS = {
   search_space_context: {
     family: 'space.context',
     operation: 'search',
-    sharedOwners: ['vibey', 'loop', 'managed'],
+    sharedOwners: ['vibey', 'loop', 'delegator', 'managed'],
     userPolicyAddable: true,
     requiresExplicitUserIntent: false,
     forbiddenUnlessExplicit: false,
@@ -620,7 +620,7 @@ const EXPLICIT_ACTION_CONTRACTS = {
   search_brain_context: {
     family: 'brain.memory',
     operation: 'search',
-    sharedOwners: ['vibey', 'atlas', 'hr', 'managed'],
+    sharedOwners: ['vibey', 'atlas', 'hr', 'delegator', 'managed'],
     userPolicyAddable: true,
     requiresExplicitUserIntent: false,
     forbiddenUnlessExplicit: false,
@@ -864,7 +864,7 @@ const EXPLICIT_ACTION_CONTRACTS = {
   ask_agent: {
     family: 'communication',
     operation: 'ask',
-    sharedOwners: ['vibey', 'atlas', 'hr', 'managed'],
+    sharedOwners: ['vibey', 'atlas', 'hr', 'delegator', 'managed'],
     userPolicyAddable: true,
     requiresExplicitUserIntent: false,
     forbiddenUnlessExplicit: false,
@@ -880,7 +880,7 @@ const EXPLICIT_ACTION_CONTRACTS = {
   delegate_to_agent: {
     family: 'communication',
     operation: 'delegate',
-    sharedOwners: ['vibey', 'atlas', 'hr', 'managed'],
+    sharedOwners: ['vibey', 'atlas', 'hr', 'delegator', 'managed'],
     userPolicyAddable: true,
     requiresExplicitUserIntent: false,
     forbiddenUnlessExplicit: false,
@@ -896,7 +896,7 @@ const EXPLICIT_ACTION_CONTRACTS = {
   describe_action: {
     family: 'communication',
     operation: 'read',
-    sharedOwners: ['vibey', 'atlas', 'hr', 'managed'],
+    sharedOwners: ['vibey', 'atlas', 'hr', 'delegator', 'managed'],
     userPolicyAddable: false,
     requiresExplicitUserIntent: false,
     forbiddenUnlessExplicit: false,

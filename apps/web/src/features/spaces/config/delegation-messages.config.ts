@@ -10,7 +10,7 @@ export const DELEGATION_MODE_MESSAGES: Record<
   },
   review: {
     label: 'Review first',
-    description: 'Prepare concise delegation packets and wait for your approval.',
+    description: 'Prepare clear work items and wait for your approval before delegation.',
   },
   urgent: {
     label: 'Urgent',
@@ -20,8 +20,9 @@ export const DELEGATION_MODE_MESSAGES: Record<
 
 export const DELEGATION_TOAST_MESSAGES = {
   CAPTURED: (count: number) =>
-    `Captured ${count} task${count === 1 ? '' : 's'} in the Delegation Desk.`,
+    `Captured ${count} task${count === 1 ? '' : 's'} as outstanding work in the Delegation Desk.`,
   CAPTURED_AND_CREATED_DESK: (count: number) =>
-    `Created your Delegation Desk and captured ${count} task${count === 1 ? '' : 's'}.`,
+    `Created your Delegation Desk and captured ${count} task${count === 1 ? '' : 's'} as outstanding work.`,
   CAPTURE_FAILED: 'Could not capture that delegation batch. Try again.',
+  OPEN_FAILED: 'Could not open the Delegation Desk. Try again.',
 } as const

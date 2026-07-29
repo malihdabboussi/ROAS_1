@@ -6,6 +6,7 @@ export type RoleDefaultKey =
   | 'system_brain'
   | 'system_builder'
   | 'system_flows'
+  | 'system_delegation'
   | 'managed_marketing_employee'
   | 'managed_analyst_employee'
   | 'managed_developer_employee'
@@ -140,6 +141,20 @@ export const ROLE_TO_DOMAINS = {
     'read_flows',
     'manage_flows',
     'use_integrations',
+    'communicate',
+    'use_mcp',
+  ],
+  system_delegation: [
+    'read_campaign',
+    'read_marketing_artifacts',
+    'read_space_context',
+    'read_contacts',
+    'manage_tasks_missions',
+    'use_integrations',
+    'read_brain_personal',
+    'read_brain_agent',
+    'read_brain_company',
+    'read_brain_customer',
     'communicate',
     'use_mcp',
   ],

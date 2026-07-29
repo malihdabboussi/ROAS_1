@@ -1,6 +1,6 @@
 # Spaces Flows
 
-Last Modified: 2026-07-28
+Last Modified: 2026-07-29
 
 ## Overview
 
@@ -25,12 +25,26 @@ Spaces automations run rules from the `space_automations` table through the sing
 - Vercel calls the CRON_SECRET-protected `/api/internal/space-automations/process-due` endpoint every minute. The endpoint invokes the existing due-schedule scanner; its database compare-and-swap claim prevents duplicate execution when a warm Nest cron and Vercel wakeup overlap. Scheduled agent actions do not pre-wake Fly in the scheduler. `SpaceAutomationService` calls `UserAgentApiService` for agent execution, so shared Railway profiles route to the shared Agent API/OpenClaw runtime and Fly-machine profiles wake through the shared runtime service path when needed.
 - Rule execution now dispatches through `agent-runtime-queue-automation` when the queue is available. Trigger evaluation, scheduled itemless runs, contact-route automations, Fathom fanout, and connected-app webhook runs enqueue automation jobs with `AGENT_RUNTIME_AUTOMATION_CONCURRENCY` worker concurrency. Unit tests and local contexts without a queue keep the inline fallback path.
 - Flow and Spaces run-history views subscribe to `space_automation_runs` over Supabase Realtime and reload their scoped history after external automation executions, so run history does not depend on reopening the panel.
-- The Delegation Desk template keeps raw work intake private. The Spaces bulk
-  action writes one top-level Inbox task with source task ids, dispatch mode,
-  user context, and a stable source fingerprint. Its `task_created` automation
-  sends that intake to Pixel. Because the trigger is limited to top-level
-  `inbox` items, Pixel can create Ready for review or Dispatched Delegation
-  Packets without recursively starting another run.
+- The Delegation Desk template is a private holding tank for commitments,
+  action items, promises, and suggested work before assignment. The Spaces bulk
+  action writes one top-level Holding tank item with source task ids, dispatch
+  mode, user context, and a stable source fingerprint. Its `task_created`
+  automation sends only that intake to Delegator, a protected system agent whose
+  sole job is delegation. Delegator turns intake into clear work items,
+  optionally grouped beneath a parent work group, resolves humans before managed
+  AI agents, and leaves unresolved work Ready to delegate. It records a
+  destination receipt before marking anything Delegated. Generated work does
+  not recursively start another intake run. Home → Delegation Desk is a
+  permanent entry immediately below My Tasks. It opens the organization's
+  existing full desk or provisions it privately on first use, so the holding
+  tank never depends on first running a bulk action. Created task cards open in
+  the canonical right-side task panel, preserving the current page and its
+  context. Delegator is also available under Team → Agents and in the chat agent
+  selector. Pixel keeps its delegation capability for general conversations,
+  while Delegator owns the focused Desk workflow. Delegator can read the
+  organization context needed to route work and can create/update task records,
+  but cannot mutate campaigns, write Brain memories, edit skills, or perform
+  external delivery without an approved path.
 
 ## Persistence
 
@@ -127,11 +141,23 @@ Spaces automations run rules from the `space_automations` table through the sing
 
 ## Decision Log
 
+- 2026-07-29: Added Delegator as a protected, organization-installed system
+  agent dedicated to the Delegation Desk. Pixel retains its delegation ability;
+  the Desk's automation now routes to Delegator, which uses human-first
+  resolution, narrow task/context permissions, and receipt-backed completion.
+- 2026-07-29: Made Delegation Desk a permanent Home menu destination beneath
+  My Tasks. The destination reuses the organization desk and creates the full
+  private template once when it does not exist.
+- 2026-07-29: Reframed Delegation Desk as an outstanding-work holding tank.
+  Intake becomes individual work items or an optional parent work group with
+  subtasks; unassigned or unmapped work remains visible until delegated,
+  dismissed, or completed. Created tasks open in the shell task panel instead
+  of navigating the ambient page.
 - 2026-07-28: Added the private Delegation Desk template and Pixel
   `delegation-desk` skill. Bulk-selected Space tasks enter as one source-linked
   intake batch with Batch, Review first, or Urgent mode; raw intake does not
-  become a team assignment, and only confirmed destination receipts can mark a
-  packet Dispatched.
+  become a team assignment, and only confirmed destination receipts can mark
+  work Delegated.
 - 2026-07-21: Successful Fathom OAuth reconnect restores the matching user's Fathom routes and automation rules only when they were disabled with the canonical disconnect reason. Manual disables and unrelated failures remain untouched.
 - 2026-07-22: Vercel now wakes the due-schedule processor every minute through a CRON_SECRET-protected internal endpoint. In-process Nest cron remains as an idempotent secondary trigger, but serverless instance warmth is no longer required for scheduled Flows to run.
 - 2026-06-29: Automation run history now listens to `space_automation_runs` changes and reloads the current scoped history for Space and Flow history panels without a manual refresh.

@@ -1,11 +1,12 @@
 'use client'
 
-import { EmailPreviewChatCard } from './EmailPreviewChatCard'
+import { openArtifactInShell } from '@/lib/artifacts'
 import { AdArtifactInlinePreview } from './AdArtifactInlinePreview'
 import type { ArtifactInlinePreviewCardProps } from './artifact-inline-preview.types'
 import { AvatarArtifactInlinePreview } from './AvatarArtifactInlinePreview'
 import { BlogPostArtifactInlinePreview } from './BlogPostArtifactInlinePreview'
 import { DefaultArtifactInlinePreview } from './DefaultArtifactInlinePreview'
+import { EmailPreviewChatCard } from './EmailPreviewChatCard'
 import { EmailSequenceArtifactInlinePreview } from './EmailSequenceArtifactInlinePreview'
 import { FunnelArtifactInlinePreview } from './FunnelArtifactInlinePreview'
 import { OfferArtifactInlinePreview } from './OfferArtifactInlinePreview'
@@ -33,6 +34,17 @@ export function ArtifactInlinePreviewCard({
   const handleClick = () => {
     if (openPreviewOverride) {
       openPreviewOverride()
+      return
+    }
+    if (artifactType === 'task' && spaceId) {
+      openArtifactInShell({
+        id: artifactId,
+        entityId: artifactId,
+        entityTable: 'space_items',
+        spaceId,
+        title: name,
+        type: 'task',
+      })
       return
     }
     window.dispatchEvent(

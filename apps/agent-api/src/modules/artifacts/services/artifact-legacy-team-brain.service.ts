@@ -12,7 +12,14 @@ import { ArtifactLegacyTeamBrainMemoryService } from './artifact-legacy-team-bra
 
 export { formatArtifactThrownError }
 
-const PROTECTED_SYSTEM_AGENTS = new Set(['vibey', 'hr', 'brain_scholar', 'atlas', 'viktor'])
+const PROTECTED_SYSTEM_AGENTS = new Set([
+  'vibey',
+  'hr',
+  'brain_scholar',
+  'atlas',
+  'viktor',
+  'delegator',
+])
 
 @Injectable()
 export class ArtifactLegacyTeamBrainService {
@@ -535,6 +542,7 @@ export class ArtifactLegacyTeamBrainService {
     if (agentKey === 'vibey') return 'vibey_ceo'
     if (agentKey === 'hr') return 'system_hr'
     if (agentKey === 'brain_scholar' || agentKey === 'atlas') return 'system_brain'
+    if (agentKey === 'delegator') return 'system_delegation'
     if (agentKey === 'viktor' || agentKey === 'widget_builder') return 'system_builder'
     if (level === 'system') return 'system_hr'
     return 'managed_domain'

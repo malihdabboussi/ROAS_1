@@ -2346,14 +2346,14 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   update_agent: {
     section: 'Team',
     description:
-      "Updates an existing agent's identity files (SOUL.md, ROLE.md, IDENTITY.md) and/or name/role. Use get_agent first so the update changes only what is needed. Cannot modify system agents (vibey, hr, brain_scholar, atlas, viktor). In org scope, only admins/owners can use this. Pass agent_key (required) plus any fields to update: name, role, soul (SOUL.md content), role_content (ROLE.md content), identity (IDENTITY.md content). Required for user-facing history: include change_summary (past-tense, behavior-focused, max 120 chars; never mention file names). Changes are synced to the agent runtime immediately.",
+      "Updates an existing agent's identity files (SOUL.md, ROLE.md, IDENTITY.md) and/or name/role. Use get_agent first so the update changes only what is needed. Cannot modify system agents (vibey, hr, brain_scholar, atlas, viktor, delegator). In org scope, only admins/owners can use this. Pass agent_key (required) plus any fields to update: name, role, soul (SOUL.md content), role_content (ROLE.md content), identity (IDENTITY.md content). Required for user-facing history: include change_summary (past-tense, behavior-focused, max 120 chars; never mention file names). Changes are synced to the agent runtime immediately.",
     parameters:
       '```json\n{"action":"update_agent","label":"Updating agent identity","data":{"agent_key":"designer","soul":"...new soul content...","role_content":"...new role content...","change_summary":"Made Lux more direct and decisive"}}\n```',
   },
   get_agent: {
     section: 'Team',
     description:
-      'Gets detailed information about a specific team agent — role, personality (DISC profile), specialty, communication style, values, and skills. Cannot inspect system agents (vibey, hr, atlas, brain_scholar, viktor). Returns a structured summary, not raw files. Use before update_agent to understand the current identity. Use after create_agent to verify the hire exists and matches the intended name, role, purpose, and communication style before telling the user the agent is ready.',
+      'Gets detailed information about a specific team agent — role, personality (DISC profile), specialty, communication style, values, and skills. Cannot inspect system agents (vibey, hr, atlas, brain_scholar, viktor, delegator). Returns a structured summary, not raw files. Use before update_agent to understand the current identity. Use after create_agent to verify the hire exists and matches the intended name, role, purpose, and communication style before telling the user the agent is ready.',
     parameters:
       '```json\n{"action":"get_agent","label":"Looking up agent details","data":{"agent_key":"copywriter"}}\n```',
   },

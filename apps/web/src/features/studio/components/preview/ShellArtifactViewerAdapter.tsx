@@ -6,6 +6,7 @@ import { renderDeliverableEntityPreview } from '@/components/deliverables/delive
 import { DeliverablePreviewBody } from '@/components/deliverables/DeliverablePreviewBody'
 import { useDeliverableEntityContent } from '@/components/deliverables/use-deliverable-entity-content'
 import { ShellArtifactViewerPanel } from '@/components/shell/ShellArtifactViewerPanel'
+import { ShellTaskArtifactViewerAdapter } from '@/components/shell/ShellTaskArtifactViewerAdapter'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { SpaceDocEditorPanelAdapter } from '@/components/spaces/SpaceDocEditorPanelAdapter'
 import { SHELL_ARTIFACT_OPEN_EVENT, type ShellArtifactViewerTarget } from '@/lib/artifacts'
@@ -148,6 +149,9 @@ export function ShellArtifactViewerAdapter() {
   }
   if (target.type === 'doc' && target.entityTable === 'space_items') {
     return <ShellSpaceDocumentArtifactViewer target={target} />
+  }
+  if (target.type === 'task' && target.entityTable === 'space_items') {
+    return <ShellTaskArtifactViewerAdapter target={target} />
   }
   return <ShellDocumentArtifactViewer target={target} />
 }

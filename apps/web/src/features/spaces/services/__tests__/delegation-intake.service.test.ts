@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Space, SpaceItem } from '../../types'
+import { ensureDelegationDesk } from '../delegation-desk.service'
 import { createDelegationIntake, type DelegationIntakeInput } from '../delegation-intake.service'
-import { instantiateSpaceTemplate } from '../space-templates.service'
 import { createSpaceItem } from '../spaces.service'
 
 vi.mock('../spaces.service', () => ({
   createSpaceItem: vi.fn(),
 }))
 
-vi.mock('../space-templates.service', () => ({
-  instantiateSpaceTemplate: vi.fn(),
+vi.mock('../delegation-desk.service', () => ({
+  ensureDelegationDesk: vi.fn(),
 }))
 
 const sourceItems = [
@@ -29,28 +29,38 @@ const baseInput: DelegationIntakeInput = {
 describe('createDelegationIntake', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(ensureDelegationDesk).mockResolvedValue({
+      desk: {
+        id: 'desk-new',
+        title: 'Delegation Desk',
+        schema: { delegation_desk: true },
+      } as unknown as Space,
+      createdDesk: true,
+    })
     vi.mocked(createSpaceItem).mockResolvedValue({
       id: 'intake-1',
       title: 'Delegate 2 tasks — Replace the old website',
     } as SpaceItem)
   })
 
-  it('uses an existing marked Delegation Desk and creates one batch for all selected work', async () => {
+  it('uses an existing marked Delegation Desk and creates one work group for selected work', async () => {
     const desk = {
       id: 'desk-1',
       title: 'Delegation Desk',
       schema: { delegation_desk: true },
     } as unknown as Space
+    vi.mocked(ensureDelegationDesk).mockResolvedValue({ desk, createdDesk: false })
 
     const result = await createDelegationIntake({ ...baseInput, spaces: [desk] })
 
-    expect(instantiateSpaceTemplate).not.toHaveBeenCalled()
+    expect(ensureDelegationDesk).toHaveBeenCalledWith([desk])
     expect(createSpaceItem).toHaveBeenCalledWith(
       'desk-1',
       expect.objectContaining({
         status: 'inbox',
         priority: 'high',
         custom_data: expect.objectContaining({
+          intake_type: 'work_group',
           delegation: expect.objectContaining({
             version: 1,
             mode: 'review',
@@ -68,32 +78,38 @@ describe('createDelegationIntake', () => {
     expect(result).toMatchObject({ deskId: 'desk-1', intakeItemId: 'intake-1', createdDesk: false })
   })
 
-  it('provisions a private automated Delegation Desk when one does not exist', async () => {
-    vi.mocked(instantiateSpaceTemplate).mockResolvedValue({
-      id: 'desk-new',
+  it('captures one selected task as a work item instead of an opaque packet', async () => {
+    const desk = {
+      id: 'desk-1',
       title: 'Delegation Desk',
       schema: { delegation_desk: true },
-    } as unknown as Space)
+    } as unknown as Space
+    vi.mocked(ensureDelegationDesk).mockResolvedValue({ desk, createdDesk: false })
 
+    await createDelegationIntake({
+      ...baseInput,
+      spaces: [desk],
+      selectedItems: [sourceItems[0]!],
+    })
+
+    expect(createSpaceItem).toHaveBeenCalledWith(
+      'desk-1',
+      expect.objectContaining({
+        title: 'Replace the old website',
+        custom_data: expect.objectContaining({ intake_type: 'work_item' }),
+      }),
+    )
+  })
+
+  it('provisions a private automated Delegation Desk when one does not exist', async () => {
     const result = await createDelegationIntake(baseInput)
 
-    expect(instantiateSpaceTemplate).toHaveBeenCalledWith('delegation-desk', {
-      visibility: 'private',
-      include_tasks: true,
-      include_docs: true,
-      include_channel: false,
-      include_automations: true,
-    })
+    expect(ensureDelegationDesk).toHaveBeenCalledWith([])
     expect(createSpaceItem).toHaveBeenCalledWith('desk-new', expect.any(Object))
     expect(result.createdDesk).toBe(true)
   })
 
   it('marks explicit urgent intake for same-run dispatch', async () => {
-    vi.mocked(instantiateSpaceTemplate).mockResolvedValue({
-      id: 'desk-new',
-      schema: { delegation_desk: true },
-    } as unknown as Space)
-
     await createDelegationIntake({ ...baseInput, mode: 'urgent' })
 
     expect(createSpaceItem).toHaveBeenCalledWith(

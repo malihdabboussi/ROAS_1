@@ -1,5 +1,5 @@
 import type { Space, SpaceItem } from '../types'
-import { instantiateSpaceTemplate } from './space-templates.service'
+import { ensureDelegationDesk } from './delegation-desk.service'
 import { createSpaceItem } from './spaces.service'
 
 export type DelegationDispatchMode = 'batch' | 'review' | 'urgent'
@@ -11,35 +11,6 @@ export type DelegationIntakeInput = {
   selectedItems: SpaceItem[]
   mode: DelegationDispatchMode
   note?: string
-}
-
-type DelegationDeskSchema = {
-  delegation_desk?: boolean
-}
-
-function findDelegationDesk(spaces: Space[]): Space | null {
-  return (
-    spaces.find(
-      (space) => (space.schema as typeof space.schema & DelegationDeskSchema).delegation_desk,
-    ) ?? null
-  )
-}
-
-async function ensureDelegationDesk(spaces: Space[]): Promise<{
-  desk: Space
-  createdDesk: boolean
-}> {
-  const existing = findDelegationDesk(spaces)
-  if (existing) return { desk: existing, createdDesk: false }
-
-  const desk = await instantiateSpaceTemplate('delegation-desk', {
-    visibility: 'private',
-    include_tasks: true,
-    include_docs: true,
-    include_channel: false,
-    include_automations: true,
-  })
-  return { desk, createdDesk: true }
 }
 
 export async function createDelegationIntake(input: DelegationIntakeInput): Promise<{
@@ -68,7 +39,8 @@ export async function createDelegationIntake(input: DelegationIntakeInput): Prom
   const sourceItemIds = sourceItems.map((item) => item.id)
   const itemCount = sourceItems.length
   const firstTitle = persistedItems[0]?.title ?? 'Selected work'
-  const title = `Delegate ${itemCount} task${itemCount === 1 ? '' : 's'} — ${firstTitle}`
+  const title =
+    itemCount === 1 ? firstTitle : `${input.sourceSpaceTitle} work group — ${itemCount} items`
   const note = input.note?.trim() ?? ''
 
   const intake = await createSpaceItem(desk.id, {
@@ -78,7 +50,7 @@ export async function createDelegationIntake(input: DelegationIntakeInput): Prom
     description:
       note || `Consolidate and route ${itemCount} selected task${itemCount === 1 ? '' : 's'}.`,
     custom_data: {
-      intake_type: 'signal',
+      intake_type: itemCount === 1 ? 'work_item' : 'work_group',
       dispatch_mode: input.mode,
       delegation: {
         version: 1,

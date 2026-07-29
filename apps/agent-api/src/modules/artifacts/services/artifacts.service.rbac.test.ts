@@ -1307,6 +1307,58 @@ describe('RBAC CRUD consistency', () => {
   })
 })
 
+describe('system_delegation (Delegator) RBAC', () => {
+  const delegatorPolicy: ArtifactCapabilityPolicy = {
+    profile: 'system_delegation',
+    level: 'system',
+    domain: 'operations',
+  }
+
+  it('resolves the protected delegation profile for the Delegator agent', () => {
+    const policy = resolveCapabilityPolicy({
+      agent_key: 'delegator',
+      level: 'system',
+      role: 'Delegation Manager',
+    })
+
+    expect(policy).toEqual(delegatorPolicy)
+  })
+
+  it('allows the context, task, delegation, and receipt actions needed by the Desk', () => {
+    for (const action of [
+      'list_tasks',
+      'get_task',
+      'create_task',
+      'update_task',
+      'add_task_comment',
+      'ask_agent',
+      'delegate_to_agent',
+      'list_campaigns',
+      'get_campaign',
+      'search_space_context',
+      'search_customer_brain',
+      'read_space_document',
+      'get_integration',
+      'use_mcp_tool',
+    ]) {
+      expect(isArtifactActionAllowed(delegatorPolicy, action).allowed, action).toBe(true)
+    }
+  })
+
+  it('blocks destructive, publishing, identity, and Brain-write actions', () => {
+    for (const action of [
+      'delete_task',
+      'create_campaign',
+      'update_campaign',
+      'save_user_memory',
+      'create_agent_skill',
+      'create_agent',
+    ]) {
+      expect(isArtifactActionAllowed(delegatorPolicy, action).allowed, action).toBe(false)
+    }
+  })
+})
+
 describe('system_flows (Loop) RBAC', () => {
   const flowActions = [
     'search_flow_capabilities',
