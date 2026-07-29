@@ -1,9 +1,13 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Check, ExternalLink, FileText, MessageSquare, Play, Plus, Radio, X } from 'lucide-react'
+import * as DialogPrimitive from '@radix-ui/react-dialog'
+import { Check, FileText, Play, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatPanel'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
+import { useShellStore } from '@/components/shell/use-shell-store'
+import { MeetingContextSidebar } from '@/features/home/components/MeetingContextSidebar'
+import { MeetingNoteCapture } from '@/features/home/components/MeetingNoteCapture'
 import {
   HOME_TOAST_ERRORS,
   HOME_TOAST_SUCCESS,
@@ -28,6 +32,7 @@ function SectionTitle({ children, count }: { children: string; count?: number })
     </div>
   )
 }
+
 function ActionRow({
   action,
   onToggle,
@@ -47,7 +52,7 @@ function ActionRow({
           resolved ? 'border-primary bg-primary text-primary-foreground' : 'border-border'
         }`}
       >
-        {resolved ? <Check className="h-3 w-3" aria-hidden /> : null}
+        {resolved ? <Check className="icon-xs" aria-hidden /> : null}
       </span>
       <span className="min-w-0 flex-1">
         <span className="body-3 text-foreground block">{action.title}</span>
@@ -59,6 +64,7 @@ function ActionRow({
     </button>
   )
 }
+
 export function MeetingWorkspaceDialog({
   spaceId,
   meetingItemId,
@@ -66,6 +72,7 @@ export function MeetingWorkspaceDialog({
   fallbackTitle,
   onBack,
   onClose,
+  onOpenPrep,
 }: {
   spaceId: string
   meetingItemId: string
@@ -73,24 +80,31 @@ export function MeetingWorkspaceDialog({
   fallbackTitle: string
   onBack: () => void
   onClose: () => void
+  onOpenPrep?: () => void
 }) {
   const [bundle, setBundle] = useState<MeetingWorkspaceBundle | null>(null)
   const [loading, setLoading] = useState(true)
   const [starting, setStarting] = useState(false)
   const [note, setNote] = useState('')
+  const [noteType, setNoteType] = useState<'observation' | 'call_quote'>('observation')
   const [savingNote, setSavingNote] = useState(false)
-  const refresh = useCallback(async () => {
-    const next = await fetchMeetingWorkspace(spaceId, meetingItemId)
+  const attachMeetingContext = useGlobalChatStore((state) => state.attachMeetingContext)
+  const openChatDrawer = useShellStore((state) => state.openChatDrawer)
+
+  const hydrateWorkspace = useCallback(async () => {
+    let next = await fetchMeetingWorkspace(spaceId, meetingItemId)
+    if (next.workspace?.phase === 'complete' && !next.workspace.conversation_id) {
+      await startMeetingCall(spaceId, meetingItemId)
+      next = await fetchMeetingWorkspace(spaceId, meetingItemId)
+    }
     setBundle(next)
     return next
   }, [meetingItemId, spaceId])
+
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    void fetchMeetingWorkspace(spaceId, meetingItemId)
-      .then((next) => {
-        if (!cancelled) setBundle(next)
-      })
+    void hydrateWorkspace()
       .catch(() => {
         if (!cancelled) toast.error(HOME_TOAST_ERRORS.MEETING_WORKSPACE_LOAD_FAILED.userMessage)
       })
@@ -100,7 +114,7 @@ export function MeetingWorkspaceDialog({
     return () => {
       cancelled = true
     }
-  }, [meetingItemId, spaceId])
+  }, [hydrateWorkspace])
 
   const title = bundle?.meeting.title?.trim() || fallbackTitle
   const awarenessContext = useMemo(() => {
@@ -134,12 +148,37 @@ export function MeetingWorkspaceDialog({
     ].join('\n\n')
   }, [bundle, meetingItemId, spaceId, title])
 
+  const isPostCall = bundle?.workspace?.phase === 'complete' && bundle.recordings.length > 0
+  const conversationId = bundle?.workspace?.conversation_id?.trim() || null
+
+  useEffect(() => {
+    if (!conversationId) return
+    openChatDrawer(conversationId)
+  }, [conversationId, openChatDrawer])
+
+  useEffect(() => {
+    if (!conversationId) return
+    attachMeetingContext({
+      spaceId,
+      meetingItemId,
+      conversationId,
+      awarenessContext,
+      timelineVersion: bundle?.snippets.length ?? 0,
+    })
+  }, [
+    attachMeetingContext,
+    awarenessContext,
+    bundle?.snippets.length,
+    conversationId,
+    meetingItemId,
+    spaceId,
+  ])
+
   const startCall = async () => {
-    const isPostCall = bundle?.workspace?.phase === 'complete' && bundle.recordings.length > 0
     setStarting(true)
     try {
       await startMeetingCall(spaceId, meetingItemId)
-      await refresh()
+      await hydrateWorkspace()
       if (!isPostCall && joinUrl) window.open(joinUrl, '_blank', 'noopener,noreferrer')
       if (!isPostCall) toast.success(HOME_TOAST_SUCCESS.MEETING_STARTED.userMessage)
     } catch {
@@ -149,16 +188,22 @@ export function MeetingWorkspaceDialog({
     }
   }
 
-  const isPostCall = bundle?.workspace?.phase === 'complete' && bundle.recordings.length > 0
-
   const saveNote = async () => {
     const text = note.trim()
     if (!text) return
     setSavingNote(true)
     try {
-      const snippet = await addMeetingSnippet(spaceId, meetingItemId, text)
+      const result = await addMeetingSnippet(spaceId, meetingItemId, text, noteType)
       setBundle((current) =>
-        current ? { ...current, snippets: [...current.snippets, snippet] } : current,
+        current
+          ? {
+              ...current,
+              snippets: [...current.snippets, result.snippet],
+              workspace: current.workspace
+                ? { ...current.workspace, conversation_id: result.conversation_id }
+                : current.workspace,
+            }
+          : current,
       )
       setNote('')
     } catch {
@@ -186,216 +231,142 @@ export function MeetingWorkspaceDialog({
   }
 
   return (
-    <div className="z-modal-backdrop bg-modal-overlay p-spacing-4 fixed inset-0 flex">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`${title} meeting workspace`}
-        className="border-border bg-background z-modal-content mx-auto flex h-full w-full max-w-7xl flex-col overflow-hidden rounded-2xl border shadow-xl"
-      >
-        <header className="border-border gap-spacing-3 px-spacing-4 py-spacing-3 flex items-center border-b">
-          <button
-            type="button"
-            onClick={onBack}
-            className="button-glass-neutral body-4 rounded-spacing-2 px-spacing-3 py-spacing-2"
-          >
-            Back
-          </button>
-          <div className="min-w-0 flex-1">
-            <p className="typo-caption text-muted-foreground uppercase">Meeting workspace</p>
-            <h1 className="title-h6 text-foreground truncate uppercase">{title}</h1>
-          </div>
-          <span className="badge-glass badge-glass-green">
-            {bundle?.workspace?.phase === 'live' ? 'Live' : 'Ready'}
-          </span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn-icon-glass"
-            aria-label="Close meeting workspace"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </header>
-
-        <div className="flex min-h-0 flex-1">
-          <aside className="border-border gap-spacing-4 p-spacing-4 hidden w-64 shrink-0 flex-col overflow-y-auto border-r lg:flex">
-            <section className="gap-spacing-2 flex flex-col">
-              <SectionTitle>Agenda & prep</SectionTitle>
-              <p className="body-4 text-muted-foreground whitespace-pre-wrap">
-                {bundle?.meeting.description || 'No agenda has been added yet.'}
-              </p>
-            </section>
-            <section className="gap-spacing-2 flex flex-col">
-              <SectionTitle count={bundle?.continuity.unresolved_commitments.length ?? 0}>
-                Open loops
-              </SectionTitle>
-              {bundle?.continuity.unresolved_commitments.map((action) => (
-                <p key={action.id} className="body-4 text-foreground">
-                  {action.title}
-                </p>
-              ))}
-              {bundle?.continuity.unresolved_commitments.length === 0 ? (
-                <p className="body-4 text-muted-foreground">No unresolved prior commitments.</p>
-              ) : null}
-            </section>
-            <section className="gap-spacing-2 flex flex-col">
-              <SectionTitle count={bundle?.recordings.length ?? 0}>Recordings</SectionTitle>
-              {bundle?.recordings.map((recording) => (
-                <div key={recording.id} className="section-card p-spacing-3">
-                  <div className="gap-spacing-2 flex items-center">
-                    <Radio className="text-primary h-3.5 w-3.5" aria-hidden />
-                    <span className="body-4 text-foreground truncate">{recording.title}</span>
-                  </div>
-                  <p className="typo-caption text-muted-foreground mt-spacing-1">
-                    {recording.is_primary ? 'Primary recording' : 'Supplemental recording'}
-                  </p>
-                  {recording.recording_url ? (
-                    <a
-                      href={recording.recording_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="typo-caption text-primary mt-spacing-2 gap-spacing-1 inline-flex items-center"
-                    >
-                      Open recording <ExternalLink className="h-3 w-3" />
-                    </a>
-                  ) : null}
-                </div>
-              ))}
-            </section>
-          </aside>
-
-          <main className="p-spacing-4 flex min-w-0 flex-1 flex-col overflow-y-auto">
-            <div className="gap-spacing-4 mx-auto flex w-full max-w-3xl flex-col">
-              <section className="section-card gap-spacing-4 p-spacing-4 flex items-center justify-between">
-                <div>
-                  <p className="body-3 text-foreground font-semibold">
-                    {bundle?.workspace?.phase === 'live'
-                      ? 'Call in progress'
-                      : isPostCall
-                        ? 'Post-call workspace'
-                        : 'Ready when you are'}
-                  </p>
-                  <p className="body-4 text-muted-foreground mt-spacing-1">
-                    {isPostCall
-                      ? 'Continue the same AI conversation with every recap, note, and transcript.'
-                      : 'Starting keeps the AI chat, notes, and meeting context together.'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={startCall}
-                  disabled={starting}
-                  className="button-glass-green body-3 gap-spacing-2 rounded-spacing-2 px-spacing-4 py-spacing-2 inline-flex shrink-0 items-center font-semibold disabled:opacity-50"
-                >
-                  <Play className="h-4 w-4" aria-hidden />
-                  {starting
-                    ? isPostCall
-                      ? 'Opening…'
-                      : 'Starting…'
-                    : bundle?.workspace?.phase === 'live'
-                      ? 'Rejoin call'
-                      : isPostCall
-                        ? 'Continue meeting chat'
-                        : 'Start call'}
-                </button>
-              </section>
-
-              {bundle?.continuity.unresolved_commitments.length ? (
-                <section className="section-card rounded-spacing-3 p-spacing-4">
-                  <SectionTitle>Resolve from last meeting</SectionTitle>
-                  <div className="mt-spacing-3 gap-spacing-2 flex flex-col">
-                    {bundle.continuity.unresolved_commitments.map((action) => (
-                      <p key={action.id} className="body-3 text-foreground">
-                        {action.title}
-                      </p>
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
-              <section className="gap-spacing-3 flex flex-col">
-                <SectionTitle count={bundle?.actions.length ?? 0}>Action items</SectionTitle>
-                {bundle?.actions.map((action) => (
-                  <ActionRow key={action.id} action={action} onToggle={toggleAction} />
-                ))}
-                {!loading && bundle?.actions.length === 0 ? (
-                  <p className="body-4 text-muted-foreground">
-                    No action items were captured by the recording provider.
-                  </p>
-                ) : null}
-              </section>
-
-              <section className="gap-spacing-3 flex flex-col">
-                <SectionTitle count={bundle?.snippets.length ?? 0}>
-                  Live notes & snippets
-                </SectionTitle>
-                <div className="input-glass gap-spacing-2 rounded-spacing-2 p-spacing-2 flex items-end">
-                  <textarea
-                    value={note}
-                    onChange={(event) => setNote(event.target.value)}
-                    placeholder="Paste a note, quote, or call snippet…"
-                    className="input-glass body-3 text-foreground p-spacing-2 min-h-20 flex-1 resize-none border-0 bg-transparent outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={saveNote}
-                    disabled={!note.trim() || savingNote}
-                    className="button-glass-accent gap-spacing-1 rounded-spacing-2 px-spacing-3 py-spacing-2 inline-flex items-center disabled:opacity-50"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Save
-                  </button>
-                </div>
-                {bundle?.snippets.map((snippet) => (
-                  <div key={snippet.id} className="section-card p-spacing-3">
-                    <p className="body-3 text-foreground whitespace-pre-wrap">{snippet.text}</p>
-                    <p className="typo-caption text-muted-foreground mt-spacing-2">
-                      {snippet.source_label || 'Meeting snippet'}
-                    </p>
-                  </div>
-                ))}
-              </section>
-
-              <section className="gap-spacing-3 flex flex-col">
-                <SectionTitle count={bundle?.deliverables.length ?? 0}>Deliverables</SectionTitle>
-                <div className="gap-spacing-2 grid grid-cols-1 sm:grid-cols-2">
-                  {bundle?.deliverables.map((deliverable) => (
-                    <a
-                      key={deliverable.id}
-                      href={buildSpaceItemHref(spaceId, deliverable.id)}
-                      className="section-card hover:bg-hover-subtle gap-spacing-2 p-spacing-3 flex items-center"
-                    >
-                      <FileText className="text-primary h-4 w-4" aria-hidden />
-                      <span className="body-3 text-foreground truncate">{deliverable.title}</span>
-                    </a>
-                  ))}
-                </div>
-              </section>
-            </div>
-          </main>
-
-          <aside className="border-border hidden w-96 shrink-0 overflow-hidden border-l xl:flex xl:flex-col">
-            <div className="border-border gap-spacing-2 p-spacing-3 flex items-center border-b">
-              <MessageSquare className="text-primary h-4 w-4" aria-hidden />
-              <div>
-                <p className="body-3 text-foreground font-semibold">Meeting AI</p>
-                <p className="typo-caption text-muted-foreground">Persistent for this call</p>
+    <DialogPrimitive.Root open onOpenChange={(open) => !open && onClose()}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="z-modal-backdrop bg-modal-overlay fixed inset-0" />
+        <DialogPrimitive.Content
+          aria-label={`${title} meeting workspace`}
+          className="z-modal-layer-3 p-spacing-4 fixed inset-0 flex"
+        >
+          <div className="border-border bg-background mx-auto flex h-full w-full max-w-7xl flex-col overflow-hidden rounded-2xl border shadow-xl">
+            <header className="border-border gap-spacing-3 px-spacing-4 py-spacing-3 flex items-center border-b">
+              <button
+                type="button"
+                onClick={onBack}
+                className="button-compact button-glass-neutral"
+              >
+                Back
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className="typo-caption text-muted-foreground uppercase">Meeting workspace</p>
+                <DialogPrimitive.Title className="title-h6 text-foreground truncate uppercase">
+                  {title}
+                </DialogPrimitive.Title>
+                <DialogPrimitive.Description className="sr-only">
+                  Agenda, live notes, snippets, recordings, action items, and deliverables for this
+                  call. The connected conversation opens in the main chat.
+                </DialogPrimitive.Description>
               </div>
+              <span className="badge-glass badge-glass-green">
+                {bundle?.workspace?.phase === 'live' ? 'Live' : 'Ready'}
+              </span>
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-icon-bare"
+                aria-label="Close meeting workspace"
+              >
+                <X className="icon-xs" />
+              </button>
+            </header>
+
+            <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+              <main className="p-spacing-4 flex min-w-0 flex-1 flex-col overflow-y-auto">
+                <div className="gap-spacing-4 mx-auto flex w-full max-w-4xl flex-col">
+                  <section className="section-card gap-spacing-4 p-spacing-4 flex items-center justify-between">
+                    <div>
+                      <p className="body-3 text-foreground font-semibold">
+                        {bundle?.workspace?.phase === 'live'
+                          ? 'Call in progress'
+                          : isPostCall
+                            ? 'Post-call workspace'
+                            : 'Ready when you are'}
+                      </p>
+                      <p className="body-4 text-muted-foreground mt-spacing-1">
+                        {isPostCall
+                          ? 'Continue the same conversation with every recap, note, and transcript.'
+                          : 'Start the call without losing your agenda, notes, snippets, or chat.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={startCall}
+                      disabled={starting}
+                      className="button-default button-glass-primary gap-spacing-2 inline-flex shrink-0 items-center disabled:opacity-50"
+                    >
+                      <Play className="icon-sm" aria-hidden />
+                      {starting
+                        ? 'Opening…'
+                        : bundle?.workspace?.phase === 'live'
+                          ? 'Rejoin call'
+                          : isPostCall
+                            ? 'Continue meeting chat'
+                            : 'Start call'}
+                    </button>
+                  </section>
+
+                  <MeetingNoteCapture
+                    count={bundle?.snippets.length ?? 0}
+                    note={note}
+                    noteType={noteType}
+                    saving={savingNote}
+                    onNoteChange={setNote}
+                    onNoteTypeChange={setNoteType}
+                    onSave={saveNote}
+                  />
+
+                  {bundle?.continuity.unresolved_commitments.length ? (
+                    <section className="section-card rounded-spacing-3 p-spacing-4">
+                      <SectionTitle>Resolve from last meeting</SectionTitle>
+                      <div className="mt-spacing-3 gap-spacing-2 flex flex-col">
+                        {bundle.continuity.unresolved_commitments.map((action) => (
+                          <p key={action.id} className="body-3 text-foreground">
+                            {action.title}
+                          </p>
+                        ))}
+                      </div>
+                    </section>
+                  ) : null}
+
+                  <section className="gap-spacing-3 flex flex-col">
+                    <SectionTitle count={bundle?.actions.length ?? 0}>Action items</SectionTitle>
+                    {bundle?.actions.map((action) => (
+                      <ActionRow key={action.id} action={action} onToggle={toggleAction} />
+                    ))}
+                    {!loading && bundle?.actions.length === 0 ? (
+                      <p className="body-4 text-muted-foreground">
+                        No action items were captured by the recording provider.
+                      </p>
+                    ) : null}
+                  </section>
+
+                  <section className="gap-spacing-3 flex flex-col">
+                    <SectionTitle count={bundle?.deliverables.length ?? 0}>
+                      Deliverables
+                    </SectionTitle>
+                    <div className="gap-spacing-2 grid grid-cols-1 sm:grid-cols-2">
+                      {bundle?.deliverables.map((deliverable) => (
+                        <a
+                          key={deliverable.id}
+                          href={buildSpaceItemHref(spaceId, deliverable.id)}
+                          className="section-card hover:bg-hover-subtle gap-spacing-2 p-spacing-3 flex items-center"
+                        >
+                          <FileText className="icon-sm text-primary" aria-hidden />
+                          <span className="body-3 text-foreground truncate">
+                            {deliverable.title}
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              </main>
+
+              <MeetingContextSidebar bundle={bundle} onOpenPrep={onOpenPrep} />
             </div>
-            <div className="min-h-0 flex-1">
-              <GlobalChatPanel
-                presentation="compact"
-                meetingContext={{
-                  spaceId,
-                  conversationId: bundle?.workspace?.conversation_id ?? null,
-                  awarenessContext,
-                }}
-              />
-            </div>
-          </aside>
-        </div>
-      </div>
-    </div>
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   )
 }

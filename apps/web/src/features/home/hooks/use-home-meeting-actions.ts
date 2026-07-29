@@ -6,7 +6,6 @@ import { runMeetingsPrecallPrepEvent, type CalendarAgendaEvent } from '@/lib/ser
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import type { YourTurnItem } from '@/lib/your-turn/types'
 import { HOME_TOAST_ERRORS, HOME_TOAST_SUCCESS } from '../config/home-toast-errors.config'
-import { askAboutMeetingInChat } from '../lib/ask-meeting-in-chat'
 import { minimalSpaceYourTurnItem } from '../lib/home-your-turn-item'
 import { resolveMeetingsSpaceId } from '../lib/resolve-meetings-space-id'
 
@@ -79,16 +78,9 @@ export function useHomeMeetingActions({
     )
   }, [activeMeetingEvent, openYourTurnItemFromMeeting, startMeetingPrep])
 
-  const talkWithPixelAboutMeeting = useCallback(() => {
-    if (!activeMeetingEvent) return
-    askAboutMeetingInChat(activeMeetingEvent)
-    closeMeetingEvent()
-  }, [activeMeetingEvent, closeMeetingEvent])
-
   return {
     meetingPrepBusy,
     startMeetingPrep,
     openMeetingPrep,
-    talkWithPixelAboutMeeting,
   }
 }

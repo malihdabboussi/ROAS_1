@@ -1,4 +1,5 @@
 import { backendGet, backendPatch, backendPost } from '@/lib/api/backend-client'
+import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 
 export type MeetingWorkspaceRecord = {
   meeting_item_id: string
@@ -39,6 +40,18 @@ export type MeetingSnippet = {
   created_at: string
 }
 
+export type MeetingSnippetResult = {
+  snippet: MeetingSnippet
+  conversation_id: string
+  message_id: string
+}
+
+export type ResolvedMeetingWorkspace = {
+  space_id: string
+  meeting_item_id: string
+  conversation_id: string
+}
+
 export type MeetingDeliverable = {
   id: string
   title: string
@@ -77,11 +90,36 @@ export function startMeetingCall(spaceId: string, meetingItemId: string) {
   return backendPost<MeetingWorkspaceRecord>(`${path(spaceId, meetingItemId)}/start`, {})
 }
 
-export function addMeetingSnippet(spaceId: string, meetingItemId: string, text: string) {
-  return backendPost<MeetingSnippet>(`${path(spaceId, meetingItemId)}/snippets`, {
-    source_type: 'observation',
+export function addMeetingSnippet(
+  spaceId: string,
+  meetingItemId: string,
+  text: string,
+  sourceType: 'observation' | 'call_quote',
+) {
+  return backendPost<MeetingSnippetResult>(`${path(spaceId, meetingItemId)}/snippets`, {
+    source_type: sourceType,
     text,
-    source_label: 'Live meeting note',
+    source_label: sourceType === 'call_quote' ? 'Call snippet' : 'Live note',
+  })
+}
+
+export function resolveScheduledMeeting(
+  spaceId: string,
+  event: CalendarAgendaEvent,
+): Promise<ResolvedMeetingWorkspace> {
+  return backendPost(`/api/spaces/${spaceId}/meetings/resolve`, {
+    calendar_event_id: event.id,
+    title: event.title,
+    start: event.start,
+    end: event.end,
+    description: event.description ?? null,
+    location: event.location ?? null,
+    video_url: event.video_url,
+    html_link: event.html_link,
+    attendees: event.attendees.map((attendee) => ({
+      email: attendee.email,
+      name: attendee.name,
+    })),
   })
 }
 

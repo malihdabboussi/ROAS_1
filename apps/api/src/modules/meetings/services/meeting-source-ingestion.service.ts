@@ -11,6 +11,7 @@ import {
   renderFathomTranscriptDocument,
 } from '../providers/fathom-meeting-source'
 import { MeetingRecapRepository } from '../repositories/meeting-recap.repository'
+import { MeetingWorkspaceResolutionRepository } from '../repositories/meeting-workspace-resolution.repository'
 import { MeetingWorkspaceRepository } from '../repositories/meeting-workspace.repository'
 
 type IngestFathomSourceInput = {
@@ -26,6 +27,7 @@ type IngestFathomSourceInput = {
 export class MeetingSourceIngestionService {
   constructor(
     private readonly repository: MeetingWorkspaceRepository,
+    private readonly resolutionRepository: MeetingWorkspaceResolutionRepository,
     private readonly recaps: MeetingRecapRepository,
   ) {}
 
@@ -38,6 +40,31 @@ export class MeetingSourceIngestionService {
     },
   ): Promise<string | null> {
     const source = normalizeFathomMeetingSource(input.event)
+    if (source.calendarEventId) {
+      const exactScheduled = await this.resolutionRepository.findByCalendarEvent(
+        supabase,
+        input.spaceId,
+        source.calendarEventId,
+      )
+      const exactMeetingItemId = text(exactScheduled?.meeting_item_id)
+      if (exactMeetingItemId) return exactMeetingItemId
+    }
+    const scheduledCandidates = await this.resolutionRepository.listScheduledMeetingCandidates(
+      supabase,
+      {
+        spaceId: input.spaceId,
+        userId: input.userId,
+        anchorAt: source.scheduledStart ?? source.recordingStart,
+      },
+    )
+    const scheduledMatches = scheduledCandidates.filter((row) => {
+      const result = reconcileMeetingRecordings(scheduledRowToCandidate(row), [
+        sourceToCandidate(source),
+      ])
+      return result.attached.length === 1
+    })
+    if (scheduledMatches.length === 1) return String(scheduledMatches[0]?.id)
+
     const rows = await this.repository.listCandidateRecordings(supabase, {
       spaceId: input.spaceId,
       userId: input.userId,
@@ -86,13 +113,18 @@ export class MeetingSourceIngestionService {
     recap_doc_item_id: string
   }> {
     const source = normalizeFathomMeetingSource(input.event)
+    const existingWorkspace = await this.resolutionRepository.findByMeetingItem(
+      supabase,
+      input.meetingItemId,
+    )
     const scope = {
       meetingItemId: input.meetingItemId,
       spaceId: input.spaceId,
       userId: input.userId,
       orgId: input.orgId,
     }
-    const calendarEventId = input.calendarEventId ?? source.calendarEventId
+    const calendarEventId =
+      input.calendarEventId ?? source.calendarEventId ?? text(existingWorkspace?.calendar_event_id)
     await this.repository.upsertWorkspace(supabase, {
       ...scope,
       calendarEventId,
@@ -172,6 +204,27 @@ export class MeetingSourceIngestionService {
   }
 }
 
+function scheduledRowToCandidate(row: Record<string, unknown>): MeetingRecordingCandidate {
+  const customData = record(row.custom_data)
+  const participantEmails = Array.isArray(customData.participant_emails)
+    ? customData.participant_emails.map((email) => String(email))
+    : []
+  return {
+    provider: 'calendar',
+    externalRecordingId: `calendar:${String(row.id ?? '')}`,
+    calendarEventId: text(customData.calendar_event_id),
+    title: String(row.title ?? ''),
+    scheduledStart: text(customData.call_date),
+    scheduledEnd: text(customData.call_end),
+    recordingStart: null,
+    recordingEnd: null,
+    participantEmails,
+    transcriptEntries: 0,
+    hasSummary: false,
+    actionItemCount: 0,
+  }
+}
+
 function toCandidate(row: Record<string, unknown>): MeetingRecordingCandidate {
   const actionItems = Array.isArray(row.provider_action_items) ? row.provider_action_items : []
   return {
@@ -213,4 +266,10 @@ function sourceToCandidate(
 
 function text(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function record(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
 }

@@ -9218,3 +9218,19 @@ typography, and z-index classes without changing menu behavior.
 
 Reason not done now: Rebuilding the shared bulk-menu shell would affect every
 existing bulk action and is separate from the requested Delegation workflow.
+
+## 2026-07-29 — Meeting workspace sidebar decomposition
+
+Status: Open
+
+Found while: Moving meeting chat to the far-left workspace column and unifying notes/snippets with the persistent conversation.
+
+Files:
+
+- `apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx` (396 LOC; component limit 400 LOC)
+
+Evidence: The connected chat and its note/snippet composer were extracted into `MeetingWorkspaceChatPanel.tsx`, but the dialog still owns the main action/deliverable surface plus the agenda/recording sidebar and remains within four lines of the component limit.
+
+Needed work: Extract the agenda, continuity, and recording sidebar into a focused presentational sibling without changing the meeting bundle contract.
+
+Reason not done now: The requested behavior is complete and covered; the remaining extraction is behavior-neutral cleanup of the existing sidebar.

@@ -48,6 +48,14 @@ export interface GlobalChatSeedDetail {
   modelSettings?: unknown
 }
 
+export interface GlobalMeetingChatContext {
+  spaceId: string
+  meetingItemId: string
+  conversationId: string
+  awarenessContext: string
+  timelineVersion: number
+}
+
 function defaultWorkContext(): GlobalWorkContext {
   return { surface: 'general' }
 }
@@ -58,6 +66,7 @@ interface GlobalChatStore {
   railIntent: GlobalChatRailIntent
   activeAgentKey: string
   workContext: GlobalWorkContext
+  meetingContext: GlobalMeetingChatContext | null
   suggestedWorkContext: GlobalWorkContext | null
   roster: TeamRosterEntry[]
   rosterLoaded: boolean
@@ -71,6 +80,7 @@ interface GlobalChatStore {
   setActiveAgentKey: (agentKey: string) => void
   requestAgentSwitch: (agentKey: string) => void
   setWorkContext: (patch: Partial<GlobalWorkContext>) => void
+  attachMeetingContext: (context: GlobalMeetingChatContext) => void
   setSuggestedWorkContext: (ctx: GlobalWorkContext | null) => void
   syncRouteContext: (pathname: string) => void
   loadRoster: () => Promise<void>
@@ -98,6 +108,7 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
   railIntent: null,
   activeAgentKey: persisted.activeAgentKey ?? GLOBAL_CHAT_DEFAULT_AGENT,
   workContext: persisted.workContext ?? defaultWorkContext(),
+  meetingContext: null,
   suggestedWorkContext: null,
   roster: [],
   rosterLoaded: false,
@@ -146,6 +157,8 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
     writePersistedGlobalChat({ workContext: next })
     set({ workContext: next })
   },
+
+  attachMeetingContext: (meetingContext) => set({ meetingContext }),
 
   setSuggestedWorkContext: (ctx) => set({ suggestedWorkContext: ctx }),
 

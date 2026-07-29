@@ -16,7 +16,7 @@ export default function HomeMeetingsPage() {
     closeYourTurnItem,
     closeMeetingEvent,
   } = useHomeFeedOpen()
-  const { openMeetingPrep, talkWithPixelAboutMeeting } = useHomeMeetingActions({
+  const { openMeetingPrep } = useHomeMeetingActions({
     activeMeetingEvent,
     closeMeetingEvent,
     openYourTurnItem,
@@ -47,7 +47,6 @@ export default function HomeMeetingsPage() {
           event={activeMeetingEvent}
           onClose={closeMeetingEvent}
           onOpenPrep={openMeetingPrep}
-          onTalkWithPixel={talkWithPixelAboutMeeting}
         />
       ) : null}
     </>

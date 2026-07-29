@@ -1,7 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { MessagesRepository } from '../../conversations/repositories/messages.repository'
 import { ConversationsService } from '../../conversations/services/conversations.service'
 import { MeetingWorkspaceReadRepository } from '../repositories/meeting-workspace-read.repository'
+import {
+  MeetingWorkspaceResolutionRepository,
+  type ScheduledMeetingEvent,
+} from '../repositories/meeting-workspace-resolution.repository'
 import { MeetingWorkspaceStateRepository } from '../repositories/meeting-workspace-state.repository'
 import { MeetingWorkspaceRepository } from '../repositories/meeting-workspace.repository'
 
@@ -9,10 +14,84 @@ import { MeetingWorkspaceRepository } from '../repositories/meeting-workspace.re
 export class MeetingWorkspaceService {
   constructor(
     private readonly repository: MeetingWorkspaceRepository,
+    private readonly resolutionRepository: MeetingWorkspaceResolutionRepository,
     private readonly readRepository: MeetingWorkspaceReadRepository,
     private readonly stateRepository: MeetingWorkspaceStateRepository,
     private readonly conversations: ConversationsService,
+    private readonly messages: MessagesRepository,
   ) {}
+
+  async resolveScheduledMeeting(
+    supabase: SupabaseClient,
+    input: {
+      spaceId: string
+      userId: string
+      orgId: string | null
+      event: ScheduledMeetingEvent
+    },
+  ): Promise<Record<string, unknown>> {
+    const orgId = await this.resolutionRepository.findSpaceOrgId(supabase, input.spaceId)
+    const scopedInput = { ...input, orgId }
+    const existing = await this.resolutionRepository.findByCalendarEvent(
+      supabase,
+      input.spaceId,
+      input.event.calendarEventId,
+    )
+    const meetingItemId = text(existing?.meeting_item_id)
+    const meeting =
+      meetingItemId === null
+        ? await this.resolutionRepository.createScheduledMeeting(supabase, scopedInput)
+        : { id: meetingItemId, title: input.event.title }
+    let resolvedMeetingItemId = String(meeting.id)
+    let workspace = existing
+    if (!workspace) {
+      try {
+        workspace = await this.repository.upsertWorkspace(supabase, {
+          meetingItemId: resolvedMeetingItemId,
+          spaceId: input.spaceId,
+          userId: input.userId,
+          orgId,
+          calendarEventId: input.event.calendarEventId,
+          phase: 'scheduled',
+        })
+      } catch (error) {
+        const racedWorkspace = await this.resolutionRepository.findByCalendarEvent(
+          supabase,
+          input.spaceId,
+          input.event.calendarEventId,
+        )
+        const racedMeetingItemId = text(racedWorkspace?.meeting_item_id)
+        if (!racedWorkspace || !racedMeetingItemId) throw error
+        await this.resolutionRepository.deleteScheduledMeeting(
+          supabase,
+          resolvedMeetingItemId,
+          input.event.calendarEventId,
+        )
+        workspace = racedWorkspace
+        resolvedMeetingItemId = racedMeetingItemId
+      }
+    }
+    await this.repository.upsertParticipantContextLinks(supabase, {
+      meetingItemId: resolvedMeetingItemId,
+      spaceId: input.spaceId,
+      userId: input.userId,
+      orgId,
+      participantEmails: input.event.attendees.map((attendee) => attendee.email),
+    })
+    const conversationId = await this.ensureConversation(supabase, {
+      meetingItemId: resolvedMeetingItemId,
+      spaceId: input.spaceId,
+      userId: input.userId,
+      orgId,
+      title: String(meeting.title ?? input.event.title),
+      workspace,
+    })
+    return {
+      space_id: input.spaceId,
+      meeting_item_id: resolvedMeetingItemId,
+      conversation_id: conversationId,
+    }
+  }
 
   async getWorkspace(
     supabase: SupabaseClient,
@@ -41,23 +120,11 @@ export class MeetingWorkspaceService {
         calendarEventId: text(record(meeting.custom_data).calendar_event_id),
       })
     }
-    let conversationId = text(workspace.conversation_id)
-    if (!conversationId) {
-      const conversation = await this.conversations.createConversation(
-        supabase,
-        input.userId,
-        {
-          title: `Meeting — ${String(meeting.title ?? 'Untitled')}`.slice(0, 500),
-          metadata: {
-            context_type: 'meeting',
-            meeting_item_id: input.meetingItemId,
-            space_id: input.spaceId,
-          },
-        },
-        input.orgId,
-      )
-      conversationId = String(conversation.id)
-    }
+    const conversationId = await this.ensureConversation(supabase, {
+      ...input,
+      title: String(meeting.title ?? 'Untitled'),
+      workspace,
+    })
     const isComplete = workspace.phase === 'complete'
     return this.stateRepository.updateWorkspace(supabase, input.meetingItemId, {
       phase: isComplete ? 'complete' : 'live',
@@ -96,11 +163,34 @@ export class MeetingWorkspaceService {
       sourceLabel?: string | null
     },
   ): Promise<Record<string, unknown>> {
-    await this.getWorkspace(supabase, input)
-    return this.stateRepository.createSnippet(supabase, {
+    const bundle = await this.getWorkspace(supabase, input)
+    const meeting = record(bundle.meeting)
+    const workspace = record(bundle.workspace)
+    const conversationId = await this.ensureConversation(supabase, {
+      ...input,
+      title: String(meeting.title ?? 'Untitled'),
+      workspace,
+    })
+    const snippet = await this.stateRepository.createSnippet(supabase, {
       ...input,
       authorName: null,
     })
+    const message = await this.messages.create(supabase, {
+      conversation_id: conversationId,
+      role: 'user',
+      content: input.text,
+      metadata: {
+        meeting_item_id: input.meetingItemId,
+        meeting_snippet_id: String(snippet.id),
+        meeting_entry_type: input.sourceType,
+        source_label: input.sourceLabel ?? null,
+      },
+    })
+    return {
+      snippet,
+      conversation_id: conversationId,
+      message_id: String(message.id),
+    }
   }
 
   async updateAction(
@@ -114,6 +204,39 @@ export class MeetingWorkspaceService {
   ): Promise<Record<string, unknown>> {
     await this.getWorkspace(supabase, input)
     return this.stateRepository.updateAction(supabase, input)
+  }
+
+  private async ensureConversation(
+    supabase: SupabaseClient,
+    input: {
+      meetingItemId: string
+      spaceId: string
+      userId: string
+      orgId: string | null
+      title: string
+      workspace: Record<string, unknown>
+    },
+  ): Promise<string> {
+    const existingConversationId = text(input.workspace.conversation_id)
+    if (existingConversationId) return existingConversationId
+    const conversation = await this.conversations.createConversation(
+      supabase,
+      input.userId,
+      {
+        title: `Meeting — ${input.title}`.slice(0, 500),
+        metadata: {
+          context_type: 'meeting',
+          meeting_item_id: input.meetingItemId,
+          space_id: input.spaceId,
+        },
+      },
+      input.orgId,
+    )
+    const conversationId = String(conversation.id)
+    await this.stateRepository.updateWorkspace(supabase, input.meetingItemId, {
+      conversation_id: conversationId,
+    })
+    return conversationId
   }
 }
 

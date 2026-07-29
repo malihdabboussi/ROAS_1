@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import { useMemo } from 'react'
 import { SpaceVibeyChatPanel } from '@/features/spaces/components/chat/SpaceVibeyChatPanel'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
+import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { ChatCampaignBrainNudge } from '../components/ChatCampaignBrainNudge'
 import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendation'
 import { GlobalChatComposerFooter } from '../components/GlobalChatComposerFooter'
@@ -15,20 +16,16 @@ export function GlobalChatPanel({
   shellSidebarChrome = false,
   onCollapseChat,
   presentation = 'compact',
-  meetingContext,
 }: {
   shellSidebarChrome?: boolean
   onCollapseChat?: () => void
   presentation?: 'full' | 'compact'
-  meetingContext?: {
-    spaceId: string
-    conversationId: string | null
-    awarenessContext: string
-  }
 } = {}) {
   const pathname = usePathname() ?? ''
   const workContext = useGlobalChatStore((s) => s.workContext)
+  const storedMeetingContext = useGlobalChatStore((s) => s.meetingContext)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
+  const activeConversationId = useChatStore((s) => s.activeConversationId)
   const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
   const spaces = useSpacesStore((s) => s.spaces)
   const activeSpace = useMemo(
@@ -48,6 +45,8 @@ export function GlobalChatPanel({
     activeSpaceCampaignId: activeSpace?.campaign_id ?? null,
     workContext,
   })
+  const meetingContext =
+    storedMeetingContext?.conversationId === activeConversationId ? storedMeetingContext : null
   const spaceId = meetingContext?.spaceId ?? host.spaceId
   const awarenessSurface = meetingContext
     ? 'spaces'
@@ -62,7 +61,9 @@ export function GlobalChatPanel({
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <SpaceVibeyChatPanel
           key={
-            meetingContext ? `meeting:${meetingContext.conversationId ?? spaceId}` : host.panelKey
+            meetingContext
+              ? `meeting:${meetingContext.conversationId ?? spaceId}:${meetingContext.timelineVersion ?? 0}`
+              : host.panelKey
           }
           chatSurface={awarenessSurface}
           spaceId={spaceId}

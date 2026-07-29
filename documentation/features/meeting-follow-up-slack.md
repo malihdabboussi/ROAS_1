@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-07-28
+**Last Modified:** 2026-07-29
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` uses those same stored drafts, sends account-manager reminders only to people classified Internal and individually set Active, and keeps the client-facing recap in the admin approval thread.
 
@@ -15,8 +15,11 @@ The canonical post-call path is now meeting-first rather than automation-task-fi
 5. A unified recap document refreshes from every attached provider summary and all exact provider actions. The longest/evidence-richest source is marked primary, but supplemental recordings remain visible.
 6. Attendee contacts plus the owning Space and campaign become typed `meeting_context_links`. Context can guide prep and chat without rewriting provider evidence.
 7. The curated meeting workspace exposes agenda/prep, recordings, transcript and recap deliverables, action items, live notes/snippets, and prior unresolved commitments in one read model.
-8. `Start call` creates one persistent conversation with meeting metadata. The embedded Meeting AI uses that exact conversation and treats pasted text as possible call snippets.
-9. The next meeting can point back through `next_meeting_item_id`; unresolved confirmed/in-progress/rolled-forward commitments are surfaced before the next call.
+8. Clicking a linked call opens the curated workspace directly. Clicking a future calendar call creates or reuses one scheduled call item and workspace, so its agenda, chat, notes, and later recording share the same meeting identity.
+9. Every workspace has one persistent meeting conversation. The connected chat is the far-left workspace surface before, during, and after the call; it is not a separate Meeting AI island.
+10. Live notes and pasted call snippets are stored both as typed meeting snippets and as entries in that same conversation. They appear in the chat timeline without being executed as AI instructions.
+11. When Fathom later publishes the recording, calendar/start/title/participant reconciliation attaches it to the scheduled workspace when the match is unambiguous instead of creating a duplicate call.
+12. The next meeting can point back through `next_meeting_item_id`; unresolved confirmed/in-progress/rolled-forward commitments are surfaced before the next call.
 
 The default `Fathom Meeting Log` automation no longer runs `send_to_agent`, `agent_suggest_tasks`, or Slack-confirm actions. The migration removes those steps from installed rules with that exact template name. Custom Fathom automations are preserved. Slack delivery remains an explicit downstream workflow, not an automatic side effect of ingesting a recording.
 
@@ -381,6 +384,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-28:** Linked Fathom Agenda rows open the curated meeting workspace. Ingestion owns processing/complete lifecycle state; reopening a completed call resumes its persistent chat without marking it live or relaunching its join URL.
 - **2026-07-28:** Historical Fathom recordings missing transcript deliverables are repaired in bounded cursor pages through the same canonical ingestion service. Unavailable recordings cannot block older pages, and successful replays remain idempotent.
 - **2026-07-28:** Production model capability tiers must cover every context window emitted by Auto chat routing. Contract tests enumerate full-task and staged-chat routes so meeting chat cannot select a context tier rejected by the runtime registry.
+- **2026-07-29:** Meeting workspaces never render a second chat surface. Opening a meeting attaches its canonical conversation and meeting-aware context to the existing shell chat; live notes and call snippets are stored as typed meeting records and mirrored into that same conversation.
 
 ## Related
 

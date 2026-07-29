@@ -23,7 +23,15 @@ describe('MeetingSourceIngestionService', () => {
         },
       ]),
     }
-    const service = new MeetingSourceIngestionService(repository as never, {} as never)
+    const resolutionRepository = {
+      findByCalendarEvent: vi.fn().mockResolvedValue(null),
+      listScheduledMeetingCandidates: vi.fn().mockResolvedValue([]),
+    }
+    const service = new MeetingSourceIngestionService(
+      repository as never,
+      resolutionRepository as never,
+      {} as never,
+    )
 
     const result = await service.findMatchingMeetingItem({} as never, {
       spaceId: 'space-1',
@@ -72,7 +80,15 @@ describe('MeetingSourceIngestionService', () => {
         },
       ]),
     }
-    const service = new MeetingSourceIngestionService(repository as never, {} as never)
+    const resolutionRepository = {
+      findByCalendarEvent: vi.fn().mockResolvedValue(null),
+      listScheduledMeetingCandidates: vi.fn().mockResolvedValue([]),
+    }
+    const service = new MeetingSourceIngestionService(
+      repository as never,
+      resolutionRepository as never,
+      {} as never,
+    )
 
     const result = await service.findMatchingMeetingItem({} as never, {
       spaceId: 'space-1',
@@ -132,7 +148,14 @@ describe('MeetingSourceIngestionService', () => {
       ]),
       upsertRecap: vi.fn().mockResolvedValue('recap-1'),
     }
-    const service = new MeetingSourceIngestionService(repository as never, recaps as never)
+    const resolutionRepository = {
+      findByMeetingItem: vi.fn().mockResolvedValue(null),
+    }
+    const service = new MeetingSourceIngestionService(
+      repository as never,
+      resolutionRepository as never,
+      recaps as never,
+    )
 
     const result = await service.ingestFathomSource({} as never, {
       meetingItemId: 'meeting-1',
@@ -202,5 +225,43 @@ describe('MeetingSourceIngestionService', () => {
         docBody: expect.stringContaining('Send the page — Dylan Vanas'),
       }),
     )
+  })
+
+  it('attaches the first Fathom recording to a matching scheduled calendar meeting', async () => {
+    const repository = { listCandidateRecordings: vi.fn().mockResolvedValue([]) }
+    const resolutionRepository = {
+      findByCalendarEvent: vi.fn().mockResolvedValue(null),
+      listScheduledMeetingCandidates: vi.fn().mockResolvedValue([
+        {
+          id: 'scheduled-meeting',
+          title: 'Client strategy call',
+          custom_data: {
+            calendar_event_id: 'calendar-1',
+            call_date: '2026-07-30T17:00:00.000Z',
+            call_end: '2026-07-30T18:00:00.000Z',
+            participant_emails: ['dylan@example.com', 'client@example.com'],
+          },
+        },
+      ]),
+    }
+    const service = new MeetingSourceIngestionService(
+      repository as never,
+      resolutionRepository as never,
+      {} as never,
+    )
+
+    const result = await service.findMatchingMeetingItem({} as never, {
+      spaceId: 'space-1',
+      userId: 'user-1',
+      event: {
+        recording_id: 'fathom-1',
+        title: 'Client strategy call',
+        scheduled_start_time: '2026-07-30T17:00:00.000Z',
+        scheduled_end_time: '2026-07-30T18:00:00.000Z',
+        calendar_invitees: [{ email: 'dylan@example.com' }, { email: 'client@example.com' }],
+      },
+    })
+
+    expect(result).toBe('scheduled-meeting')
   })
 })
