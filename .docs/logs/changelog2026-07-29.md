@@ -10,6 +10,16 @@ Impact: Stalled live delivery now self-recovers after 60 seconds without requiri
 
 Files: `apps/web/src/features/studio/services/stream-resilience.ts`, `apps/web/src/features/studio/services/stream-resilience.test.ts`, `apps/web/src/features/studio/services/chat-stream-interruption.test.ts`, `documentation/features/chat-stream-recovery.md`
 
+## [2026-07-29 12:40] - [FIX]
+
+What: Allowed the scheduled meeting workspace resolver to accept timezone-offset calendar timestamps and normalize them to UTC before persistence.
+
+Why: Google Calendar returns valid ISO 8601 values such as `2026-07-29T11:00:00-07:00`, while the resolver only accepted UTC `Z` timestamps and displayed `Invalid datetime` when a future agenda meeting was opened.
+
+Impact: Agenda meetings with explicit timezone offsets now open their curated workspace and connected chat, while stored meeting dates remain canonical UTC values for reliable later Fathom reconciliation.
+
+Files: `apps/api/src/modules/meetings/controllers/meeting-workspace-resolution.controller.ts`, `apps/api/src/modules/meetings/controllers/meeting-workspace-resolution.controller.test.ts`, `documentation/features/meeting-follow-up-slack.md`.
+
 ## [2026-07-29 12:22] - [FEATURE]
 
 What: Added one prioritized activity indicator to shared chat-history rows: amber for unresolved user action, animated purple while the agent is working, blue for unread assistant activity, and no indicator once read or idle. Added per-user conversation read timestamps and automatic read marking on selection.

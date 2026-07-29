@@ -16,11 +16,16 @@ import {
 import { MeetingWorkspaceService } from '../services/meeting-workspace.service'
 
 const ParamsSchema = z.object({ spaceId: z.string().uuid() })
-const ScheduledMeetingSchema = z.object({
+const ScheduledMeetingDateTimeSchema = z
+  .string()
+  .datetime({ offset: true })
+  .transform((value) => new Date(value).toISOString())
+
+export const ScheduledMeetingSchema = z.object({
   calendar_event_id: z.string().trim().min(1).max(2_000),
   title: z.string().trim().min(1).max(500),
-  start: z.string().datetime(),
-  end: z.string().datetime(),
+  start: ScheduledMeetingDateTimeSchema,
+  end: ScheduledMeetingDateTimeSchema,
   description: z.string().max(50_000).nullable().optional(),
   location: z.string().max(5_000).nullable().optional(),
   video_url: z.string().url().max(5_000).nullable().optional(),
