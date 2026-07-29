@@ -1,5 +1,14 @@
 # Changelog - July 29, 2026
 
+## [2026-07-29 12:11] - [FIX]
+
+What: Removed the unsupported API TypeScript path mapping that made Vercel recompile `@vibey/api-shared` source after the Nest build.
+
+Why: The frontend deployed the scheduled-meeting resolver while the backend deployment failed during Vercel's function compilation, leaving production on an older API without `POST /spaces/:spaceId/meetings/resolve`.
+
+Impact: The backend can deploy its prebuilt Nest output and compiled shared package consistently, allowing the meeting workspace resolver and persistent meeting chat flow to reach production.
+
+Files: `apps/api/tsconfig.json`.
 
 ## 2026-07-29 12:05 - [FIX]
 

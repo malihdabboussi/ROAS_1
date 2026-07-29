@@ -7,10 +7,6 @@
     "target": "ES2022",
     "outDir": "./dist",
     "baseUrl": "./",
-    "paths": {
-      "@vibey/api-shared": ["../../packages/api-shared/src"],
-      "@vibey/api-shared/*": ["../../packages/api-shared/src/*"]
-    },
     "sourceMap": true,
     "declaration": false,
     "removeComments": true,
