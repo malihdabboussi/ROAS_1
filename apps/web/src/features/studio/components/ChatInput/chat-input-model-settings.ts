@@ -4,8 +4,8 @@ import type {
   ModelReasoningEffort,
 } from '@/features/studio/services/chat.service'
 import {
-  MODEL_STRATEGIES as SHARED_MODEL_STRATEGIES,
   isModelStrategyId,
+  MODEL_STRATEGIES as SHARED_MODEL_STRATEGIES,
   type ModelStrategyId,
 } from '@/lib/agents/model-strategies'
 import { formatTokenK } from './chat-input-format'
@@ -13,7 +13,7 @@ import { formatTokenK } from './chat-input-format'
 const CHAT_INPUT_MODEL_STRATEGY_DESCRIPTIONS: Record<ModelStrategyId, string> = {
   'auto:economy': 'Best for lighter tasks and cost savings',
   auto: 'Best for balanced quality and cost',
-  'auto:power': 'Opus 4.8, 1M context, high thinking',
+  'auto:power': 'Opus 5, 300K context, medium thinking',
 }
 
 export const MODEL_STRATEGIES = SHARED_MODEL_STRATEGIES.map((strategy) => ({

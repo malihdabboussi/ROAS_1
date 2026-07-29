@@ -164,7 +164,7 @@ describe('ChatStreamExecutionService', () => {
     ])
   })
 
-  it('runs Auto retrieval on Terra and gives one bounded, tool-free writing pass to Opus', async () => {
+  it('runs Auto retrieval on Terra and gives one bounded, tool-free writing pass to Sonnet', async () => {
     const streamCompletion = vi
       .fn()
       .mockImplementationOnce(async ({ send }) => {
@@ -179,7 +179,7 @@ describe('ChatStreamExecutionService', () => {
       .mockResolvedValueOnce({
         content: 'Polished answer.',
         toolSteps: [],
-        completedGenerations: [{ generationId: 'gen-write', model: 'anthropic/claude-opus-5' }],
+        completedGenerations: [{ generationId: 'gen-write', model: 'anthropic/claude-sonnet-4.6' }],
       })
     const progressiveSend = vi.fn(async () => undefined)
     const service = makeService({ streamCompletion })
@@ -197,7 +197,7 @@ describe('ChatStreamExecutionService', () => {
       generationStage: 'research',
     })
     expect(streamCompletion.mock.calls[1]?.[0]).toMatchObject({
-      model: 'anthropic/claude-opus-5',
+      model: 'anthropic/claude-sonnet-4.6',
       generationStage: 'write',
       toolChoice: 'none',
     })
@@ -214,7 +214,7 @@ describe('ChatStreamExecutionService', () => {
     ])
   })
 
-  it('shows the research answer when the single Opus writing pass fails', async () => {
+  it('shows the research answer when the single Sonnet writing pass fails', async () => {
     const streamCompletion = vi
       .fn()
       .mockResolvedValueOnce({

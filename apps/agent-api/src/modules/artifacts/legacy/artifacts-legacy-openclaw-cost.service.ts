@@ -1,12 +1,14 @@
 import { Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { CreditsService } from '../../billing/services/credits.service'
+import type { ProviderBillingAttemptsService } from '../../billing/services/provider-billing-attempts.service'
 import {
   OpenRouterCostService,
   type CompletedGenerationCostInput,
   type CostSource,
 } from '../../chat/services/openrouter-cost.service'
 import { ArtifactLegacyRepository } from '../repositories/artifact-legacy.repository'
+import { recordLegacyOpenClawProviderAttempts } from './artifacts-legacy-openclaw-billing-attempts'
 
 export class ArtifactsLegacyOpenClawCostService {
   constructor(
@@ -15,18 +17,39 @@ export class ArtifactsLegacyOpenClawCostService {
     private readonly serviceClient: SupabaseClient,
     private readonly logger: Logger,
     private readonly openRouterCostService?: OpenRouterCostService,
+    private readonly providerBillingAttempts?: ProviderBillingAttemptsService,
   ) {}
 
-  resolveUsageLabels(params: { missionId?: string; agentKey?: string; sessionKey?: string }): {
+  resolveUsageLabels(params: {
+    missionId?: string
+    agentKey?: string
+    sessionKey?: string
+    workloadChannel?: unknown
+    workloadAction?: unknown
+  }): {
     feature: string
     action: string
   } {
-    const agentAction = params.agentKey?.trim() || 'execute'
-    if (params.missionId?.trim()) {
-      return { feature: 'mission', action: agentAction }
+    const workloadAction =
+      typeof params.workloadAction === 'string' && params.workloadAction.trim()
+        ? params.workloadAction
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '')
+        : null
+    if (params.workloadChannel === 'brain-ops') {
+      return { feature: 'brain', action: workloadAction || 'execute' }
     }
+    if (params.workloadChannel === 'dream-ops') {
+      return { feature: 'dream', action: workloadAction || 'execute' }
+    }
+    const agentAction = params.agentKey?.trim() || 'execute'
     if (params.sessionKey?.includes('-brain-job-')) {
       return { feature: 'brain', action: agentAction }
+    }
+    if (params.missionId?.trim()) {
+      return { feature: 'mission', action: workloadAction || agentAction }
     }
     return { feature: 'agent_chat', action: agentAction }
   }
@@ -56,12 +79,14 @@ export class ArtifactsLegacyOpenClawCostService {
     const totalTokens = usageData?.total_tokens ?? inputTokens + outputTokens
     if (totalTokens <= 0) return
 
+    const meta = (params.parsed.metadata ?? {}) as Record<string, unknown>
     const labels = this.resolveUsageLabels({
       missionId: params.missionId,
       agentKey: params.agentKey,
       sessionKey: params.sessionKey,
+      workloadChannel: meta.workload_channel,
+      workloadAction: meta.workload_action,
     })
-    const meta = (params.parsed.metadata ?? {}) as Record<string, unknown>
 
     try {
       const costResult = await this.resolveProviderCost(meta, modelName)
@@ -154,8 +179,15 @@ export class ArtifactsLegacyOpenClawCostService {
   }): Promise<void> {
     const { completedResponse, userId, orgId, missionId, agentKey, correlationId, sessionKey } =
       params
-    const labels = this.resolveUsageLabels({ missionId, agentKey, sessionKey })
     const rawModelName = (completedResponse.model as string) || 'unknown'
+    const meta = (completedResponse.metadata ?? {}) as Record<string, unknown>
+    const labels = this.resolveUsageLabels({
+      missionId,
+      agentKey,
+      sessionKey,
+      workloadChannel: meta.workload_channel,
+      workloadAction: meta.workload_action,
+    })
     const usage = completedResponse.usage as
       | {
           input_tokens?: number
@@ -188,7 +220,48 @@ export class ArtifactsLegacyOpenClawCostService {
     const totalTokens = usage.total_tokens ?? inputTokens + cacheRead + cacheWrite + outputTokens
     if (totalTokens <= 0) return
 
-    const meta = (completedResponse.metadata ?? {}) as Record<string, unknown>
+    const providerGenerations = this.providerGenerationsFromMetadata(meta, rawModelName)
+    try {
+      if (
+        await recordLegacyOpenClawProviderAttempts({
+          providerBillingAttempts: this.providerBillingAttempts,
+          providerGenerations,
+          aggregateCostUsd: this.finiteNumber(meta.provider_cost),
+          aggregateUsage: { inputTokens, outputTokens, cacheRead, cacheWrite, totalTokens },
+          userId,
+          orgId,
+          feature: labels.feature,
+          action: labels.action,
+          requestedModel: rawModelName,
+          missionId,
+          agentKey,
+          correlationId,
+          streamed: params.streamed,
+        })
+      ) {
+        return
+      }
+    } catch (err) {
+      await this.writeBillingHealthLog({
+        feature: labels.feature,
+        action: labels.action,
+        userId,
+        modelName: rawModelName,
+        reason: 'provider_attempt_write_failed',
+        errorMessage: err instanceof Error ? err.message : String(err),
+        usageJson: { input: inputTokens, output: outputTokens, cacheRead, cacheWrite, totalTokens },
+        metadata: {
+          proxy: params.streamed ? 'responses_stream' : 'responses',
+          mission_id: missionId,
+          correlation_id: correlationId,
+          provider_generation_ids: providerGenerations
+            .map((generation) => generation.generationId)
+            .filter(Boolean),
+        },
+      })
+      return
+    }
+
     let costResult: {
       costUsd?: number
       costSource?: CostSource
@@ -376,11 +449,23 @@ export class ArtifactsLegacyOpenClawCostService {
     fallbackModelId: string,
   ): CompletedGenerationCostInput[] {
     const generations = Array.isArray(meta.provider_generations) ? meta.provider_generations : []
+    const indexedGenerationIds = [
+      ...(Array.isArray(meta.provider_generation_ids) ? meta.provider_generation_ids : []),
+      ...(Array.isArray(meta.generation_ids) ? meta.generation_ids : []),
+    ]
+      .map((value) => this.openRouterGenerationId(value))
+      .filter((value): value is string => typeof value === 'string')
     const costInputs = generations
       .filter((generation): generation is Record<string, unknown> => {
         return Boolean(generation && typeof generation === 'object')
       })
-      .map((generation) => this.costInputFromProviderGeneration(generation, fallbackModelId))
+      .map((generation, index) => {
+        const costInput = this.costInputFromProviderGeneration(generation, fallbackModelId)
+        return {
+          ...costInput,
+          generationId: costInput.generationId ?? indexedGenerationIds[index],
+        }
+      })
 
     const seen = new Set(costInputs.map((generation) => generation.generationId).filter(Boolean))
     for (const generationId of this.providerGenerationIdsFromMetadata(meta)) {

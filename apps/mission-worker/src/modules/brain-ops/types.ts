@@ -41,4 +41,5 @@ export type OutboxRow = {
   payload: Record<string, unknown> | null
   attempts: number
   max_attempts: number
+  created_at: string
 }

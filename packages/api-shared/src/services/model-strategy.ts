@@ -30,8 +30,8 @@ export interface ResolvedStrategyModel {
   modelSettings?: StrategyModelSettings
 }
 
-const QUALITY_MODEL_ID = 'anthropic/claude-opus-5'
-const HIGH_STAKES_MODEL_ID = 'anthropic/claude-fable-5'
+const QUALITY_MODEL_ID = 'anthropic/claude-sonnet-4.6'
+const HIGH_STAKES_MODEL_ID = 'anthropic/claude-opus-5'
 const ECONOMY_MODEL_ID = 'openai/gpt-5.6-terra'
 const QUALITY_FALLBACK_MODEL_ID = 'anthropic/claude-sonnet-4.6'
 
@@ -150,11 +150,7 @@ export function resolveChatStageModel(
   stage: ChatGenerationStage,
 ): ResolvedStrategyModel {
   if (strategy === 'auto:economy') {
-    return routedModel(
-      ECONOMY_MODEL_ID,
-      CHAT_RESEARCH_MODEL_SETTINGS,
-      `economy_chat_${stage}`,
-    )
+    return routedModel(ECONOMY_MODEL_ID, CHAT_RESEARCH_MODEL_SETTINGS, `economy_chat_${stage}`)
   }
   if (strategy === 'auto:power') {
     return routedModel(

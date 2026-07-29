@@ -10,6 +10,7 @@ import {
   UserSessionMintService,
 } from '@vibey/api-shared'
 import { CreditsService } from '../../billing/services/credits.service'
+import { ProviderBillingAttemptsService } from '../../billing/services/provider-billing-attempts.service'
 import { MemoriesRepository } from '../../brain/repositories/memories.repository'
 import { EmbeddingService } from '../../brain/services/embedding.service'
 import { EmotionalTaggingService } from '../../brain/services/emotional-tagging.service'
@@ -74,6 +75,7 @@ export class ArtifactsService {
     private readonly clientFactory: SupabaseClientFactory,
     protected readonly errorReporter?: ErrorReporter,
     @Optional() private readonly openRouterCostService?: OpenRouterCostService,
+    @Optional() private readonly billingAttempts?: ProviderBillingAttemptsService,
   ) {
     this.supabaseUrl = this.config.getOrThrow<string>('SUPABASE_URL')
     this.supabaseAnonKey = this.config.getOrThrow<string>('SUPABASE_ANON_KEY')
@@ -89,6 +91,7 @@ export class ArtifactsService {
       this.serviceClient,
       this.logger,
       this.openRouterCostService,
+      this.billingAttempts,
     )
     this.openClawProxyService = new ArtifactsLegacyOpenClawProxyService(
       this.config,

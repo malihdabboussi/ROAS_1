@@ -23,6 +23,10 @@ function makeServiceHarness(openRouterCostService?: unknown) {
     assertHasAvailableCredits: vi.fn(async () => undefined),
     processDirectTextUsage: vi.fn(async () => undefined),
   }
+  const providerBillingAttempts = {
+    recordAttempt: vi.fn(async () => undefined),
+    recordAttempts: vi.fn(async () => undefined),
+  }
   const healthInsert = vi.fn(async () => ({ data: null, error: null }))
   const serviceClient = { from: vi.fn(() => ({ insert: healthInsert })) }
   const service = new ArtifactsService(
@@ -37,8 +41,9 @@ function makeServiceHarness(openRouterCostService?: unknown) {
     {} as never,
     undefined,
     openRouterCostService as never,
+    providerBillingAttempts as never,
   )
-  return { service, credits, healthInsert, serviceClient }
+  return { service, credits, healthInsert, serviceClient, providerBillingAttempts }
 }
 
 function makeService(): ArtifactsService {
@@ -136,13 +141,27 @@ describe('ArtifactsService OpenClaw response proxy compatibility', () => {
             metadata: {
               provider_cost: 2.5,
               provider_generation_ids: ['gen-test-1'],
+              provider_generations: [
+                {
+                  model: 'anthropic/claude-opus-4.6',
+                  providerCost: 2.5,
+                  usage: {
+                    input: 50,
+                    output: 20,
+                    cacheRead: 50,
+                    cacheWrite: 0,
+                  },
+                },
+              ],
               provider_billing: 'openrouter',
+              workload_channel: 'brain-ops',
+              workload_action: 'Brain Pattern Analysis',
             },
           }),
         ),
       }),
     )
-    const { service, credits } = makeServiceHarness()
+    const { service, credits, providerBillingAttempts } = makeServiceHarness()
 
     await service.proxyOpenClawResponses(
       {
@@ -154,17 +173,18 @@ describe('ArtifactsService OpenClaw response proxy compatibility', () => {
       'atlas',
     )
 
-    await vi.waitFor(() => expect(credits.processDirectTextUsage).toHaveBeenCalledTimes(1))
-    expect(credits.processDirectTextUsage).toHaveBeenCalledWith(
+    await vi.waitFor(() => expect(providerBillingAttempts.recordAttempts).toHaveBeenCalledTimes(1))
+    expect(providerBillingAttempts.recordAttempts).toHaveBeenCalledWith([
       expect.objectContaining({
         userId: 'user-1',
         feature: 'brain',
-        action: 'atlas',
-        costSource: 'provider_direct',
-        preComputedCost: 2.5,
-        generationIds: ['gen-test-1'],
+        action: 'brain_pattern_analysis',
+        provider: 'openrouter',
+        providerGenerationId: 'gen-test-1',
+        providerCostUsd: 2.5,
       }),
-    )
+    ])
+    expect(credits.processDirectTextUsage).not.toHaveBeenCalled()
   })
 
   it('logs missing OpenRouter cost instead of billing estimated gateway tokens', async () => {
@@ -207,6 +227,46 @@ describe('ArtifactsService OpenClaw response proxy compatibility', () => {
         action: 'atlas',
       }),
     )
+  })
+
+  it('does not fall back to direct charging when a generation-ledger write is uncertain', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: vi.fn(async () =>
+          JSON.stringify({
+            id: 'response-1',
+            model: 'anthropic/claude-sonnet-4.6',
+            usage: { input_tokens: 50, output_tokens: 20, total_tokens: 70 },
+            metadata: {
+              provider_generation_ids: ['gen-write-uncertain'],
+              provider_cost: 0.01,
+            },
+          }),
+        ),
+      }),
+    )
+    const { service, credits, providerBillingAttempts, healthInsert } = makeServiceHarness()
+    providerBillingAttempts.recordAttempts.mockRejectedValueOnce(new Error('write timed out'))
+
+    await service.proxyOpenClawResponses(
+      {
+        model: 'atlas',
+        input: 'train this',
+        metadata: { user_id: 'user-1', agent_key: 'atlas' },
+      },
+      'agent:atlas:run-brain-job-user-1',
+      'atlas',
+    )
+
+    await vi.waitFor(() =>
+      expect(healthInsert).toHaveBeenCalledWith(
+        expect.objectContaining({ reason: 'provider_attempt_write_failed' }),
+      ),
+    )
+    expect(credits.processDirectTextUsage).not.toHaveBeenCalled()
   })
 
   it('falls back from paid-model zero provider cost to OpenRouter calculated cost', async () => {

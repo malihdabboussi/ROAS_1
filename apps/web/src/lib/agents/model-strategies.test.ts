@@ -26,7 +26,7 @@ describe('model strategies', () => {
       {
         id: 'auto:power',
         label: 'Power',
-        description: 'Fable 5 for highest-stakes synthesis',
+        description: 'Opus 5 for highest-stakes work',
         chipClass: 'chip-glass-purple',
         textClass: 'text-chip-strategy-purple',
       },

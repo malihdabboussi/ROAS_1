@@ -60,16 +60,17 @@ function makeRecordingSupabase() {
 
 describe('BrainOpsProcessor customer pattern analysis', () => {
   it('keeps the targeted-evidence skill contract database-first', () => {
+    const repositoryRoot = path.resolve(__dirname, '../../../../..')
     const skill = fs.readFileSync(
       path.join(
-        process.cwd(),
+        repositoryRoot,
         'docker/agents/templates/brain_scholar/skills/customer-brain-pattern-analysis/SKILL.md',
       ),
       'utf8',
     )
     const migration = fs.readFileSync(
       path.join(
-        process.cwd(),
+        repositoryRoot,
         'supabase/migrations/20260726123000_customer_brain_targeted_evidence.sql',
       ),
       'utf8',
@@ -81,7 +82,7 @@ describe('BrainOpsProcessor customer pattern analysis', () => {
     expect(migration).toContain('The first pass is intentionally compact')
   })
 
-  it('routes full-worldview pattern synthesis to bounded Fable with retrieval tools intact', async () => {
+  it('routes full-worldview pattern synthesis through normal Auto with retrieval tools intact', async () => {
     const callOpenClawRaw = vi.fn().mockResolvedValue({ content: 'ok' })
     const processor = new BrainOpsProcessor(
       { callOpenClawRaw } as any,
@@ -110,7 +111,7 @@ describe('BrainOpsProcessor customer pattern analysis', () => {
       'atlas',
       '',
       expect.stringContaining('Keep retrieval targeted'),
-      'anthropic/claude-fable-5',
+      'auto',
       'mission_execute',
       {
         channel: 'brain-ops',

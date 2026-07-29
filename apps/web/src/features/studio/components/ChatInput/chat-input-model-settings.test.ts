@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
-  MODEL_STRATEGIES,
   applyComposerModelSettings,
   buildModelSettings,
   findContextOption,
@@ -9,6 +8,7 @@ import {
   formatReasoningLabel,
   isModelEditable,
   isModelStrategyId,
+  MODEL_STRATEGIES,
   serializeComposerModelPrefs,
 } from './chat-input-model-settings'
 
@@ -46,7 +46,7 @@ describe('chat input model settings helpers', () => {
     expect(MODEL_STRATEGIES.map((strategy) => [strategy.id, strategy.description])).toEqual([
       ['auto:economy', 'Best for lighter tasks and cost savings'],
       ['auto', 'Best for balanced quality and cost'],
-      ['auto:power', 'Opus 4.8, 1M context, high thinking'],
+      ['auto:power', 'Opus 5, 300K context, medium thinking'],
     ])
   })
 

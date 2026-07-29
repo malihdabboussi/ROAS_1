@@ -16,10 +16,10 @@ const TASKS: TaskType[] = [
 ]
 
 describe('model strategy routing', () => {
-  it('routes Auto tasks to Opus 5 with bounded context and medium thinking', () => {
+  it('routes Auto tasks to Sonnet 4.6 with bounded context and medium thinking', () => {
     for (const task of TASKS) {
       expect(resolveModelForStrategy('auto', task)).toEqual({
-        modelId: 'anthropic/claude-opus-5',
+        modelId: 'anthropic/claude-sonnet-4.6',
         reason: expect.stringMatching(/^auto_/),
         modelSettings: {
           context_window_tokens: 300_000,
@@ -44,10 +44,10 @@ describe('model strategy routing', () => {
     }
   })
 
-  it('routes explicit Power tasks to Fable 5 with medium thinking', () => {
+  it('routes explicit Power tasks to Opus 5 with medium thinking', () => {
     for (const task of TASKS) {
       expect(resolveModelForStrategy('auto:power', task)).toEqual({
-        modelId: 'anthropic/claude-fable-5',
+        modelId: 'anthropic/claude-opus-5',
         reason: expect.stringMatching(/^power_/),
         modelSettings: {
           context_window_tokens: 300_000,
@@ -68,7 +68,7 @@ describe('model strategy routing', () => {
     }
   })
 
-  it('uses an economy research pass and a bounded Opus writing pass for Auto chat', () => {
+  it('uses an economy research pass and a bounded Sonnet writing pass for Auto chat', () => {
     expect(resolveChatStageModel('auto', 'research')).toEqual({
       modelId: 'openai/gpt-5.6-terra',
       reason: 'auto_chat_research',
@@ -79,7 +79,7 @@ describe('model strategy routing', () => {
       },
     })
     expect(resolveChatStageModel('auto', 'write')).toEqual({
-      modelId: 'anthropic/claude-opus-5',
+      modelId: 'anthropic/claude-sonnet-4.6',
       reason: 'auto_chat_write',
       modelSettings: {
         context_window_tokens: 64_000,
@@ -90,11 +90,7 @@ describe('model strategy routing', () => {
   })
 
   it('keeps Economy chat on the economy model for both stages', () => {
-    expect(resolveChatStageModel('auto:economy', 'research').modelId).toBe(
-      'openai/gpt-5.6-terra',
-    )
-    expect(resolveChatStageModel('auto:economy', 'write').modelId).toBe(
-      'openai/gpt-5.6-terra',
-    )
+    expect(resolveChatStageModel('auto:economy', 'research').modelId).toBe('openai/gpt-5.6-terra')
+    expect(resolveChatStageModel('auto:economy', 'write').modelId).toBe('openai/gpt-5.6-terra')
   })
 })

@@ -79,7 +79,7 @@ const CUSTOMER_PATTERN_MEMORY_LIMIT = 200
 const CUSTOMER_PATTERN_TARGETED_MEMORY_LIMIT = 80
 const CUSTOMER_PATTERN_PROMPT_BUDGET_CHARS = 60_000
 const CUSTOMER_PATTERN_TARGETED_PROMPT_BUDGET_CHARS = 40_000
-const BRAIN_HIGH_STAKES_MODEL_ID = 'anthropic/claude-fable-5'
+const BRAIN_HIGH_STAKES_MODEL_ID = 'anthropic/claude-opus-5'
 const BRAIN_HIGH_STAKES_MODEL_SETTINGS = {
   context_window_tokens: 250_000,
   reasoning_effort: 'medium',
@@ -2348,7 +2348,7 @@ export class BrainOpsProcessor extends WorkerHost {
 
     let decision = firstDecision
     let targetedMemories: CustomerMemoryRow[] = []
-    let escalatedToFable = false
+    let escalatedToOpus = false
     if (this.shouldEscalatePatternDecision(firstDecision)) {
       const targetedMemoryIds = this.collectTargetedPatternMemoryIds({
         decision: firstDecision,
@@ -2385,15 +2385,15 @@ export class BrainOpsProcessor extends WorkerHost {
         brainId,
       )
       if (!reviewedDecision) {
-        throw new Error('customer pattern-analysis: Fable review did not parse to decision JSON')
+        throw new Error('customer pattern-analysis: Opus review did not parse to decision JSON')
       }
       if (reviewedDecision.evidence_requests.length > 0) {
         throw new Error(
-          'customer pattern-analysis: Fable review still requires unresolved older evidence',
+          'customer pattern-analysis: Opus review still requires unresolved older evidence',
         )
       }
       decision = reviewedDecision
-      escalatedToFable = true
+      escalatedToOpus = true
     }
 
     const decisionMemories = [...memories, ...targetedMemories].filter(
@@ -2428,7 +2428,7 @@ export class BrainOpsProcessor extends WorkerHost {
         memories: memories.length,
         distinct_customer_units: distinctCustomerUnitIds.size,
         targeted_older_memories: targetedMemories.length,
-        escalated_to_fable: escalatedToFable,
+        escalated_to_opus: escalatedToOpus,
         ...writeOutcome,
       },
     }
@@ -3370,7 +3370,7 @@ export class BrainOpsProcessor extends WorkerHost {
       'atlas',
       '',
       taskUserMessage,
-      BRAIN_HIGH_STAKES_MODEL_ID,
+      'auto',
       'mission_execute',
       { channel: 'brain-ops', modelSettings: BRAIN_HIGH_STAKES_MODEL_SETTINGS },
     )

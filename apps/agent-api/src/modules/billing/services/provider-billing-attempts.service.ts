@@ -12,8 +12,12 @@ export class ProviderBillingAttemptsService {
   constructor(private readonly svc: SupabaseServiceClient) {}
 
   async recordAttempt(input: ProviderBillingAttemptInput): Promise<void> {
-    const status = input.providerGenerationId ? 'pending_settlement' : 'pending_provider_id'
-    const row = {
+    await this.recordAttempts([input])
+  }
+
+  async recordAttempts(inputs: ProviderBillingAttemptInput[]): Promise<void> {
+    if (inputs.length === 0) return
+    const rows = inputs.map((input) => ({
       attempt_key: input.attemptKey,
       source_app: input.sourceApp,
       source_path: input.sourcePath,
@@ -37,18 +41,18 @@ export class ProviderBillingAttemptsService {
       total_tokens: input.totalTokens ?? null,
       provider_cost_usd: input.providerCostUsd ?? null,
       estimated_cost_usd: input.estimatedCostUsd ?? null,
-      status,
+      status: input.providerGenerationId ? 'pending_settlement' : 'pending_provider_id',
       last_error: null,
       next_attempt_at: new Date().toISOString(),
       metadata_json: input.metadata ?? {},
-    }
+    }))
 
     const { error } = await this.svc.client
       .from('provider_billing_attempts')
-      .upsert(row, { onConflict: 'attempt_key' })
+      .upsert(rows, { onConflict: 'attempt_key' })
 
     if (!error) return
-    const message = `Provider billing attempt write failed attemptKey=${input.attemptKey} providerGenerationId=${input.providerGenerationId ?? 'none'} error=${error.message}`
+    const message = `Provider billing attempt write failed attemptKeys=${inputs.map((input) => input.attemptKey).join(',')} error=${error.message}`
     this.logger.error(message)
     throw new Error(message)
   }

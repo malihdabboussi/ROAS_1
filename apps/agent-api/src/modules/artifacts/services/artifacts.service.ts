@@ -155,6 +155,8 @@ export class ArtifactsService extends LegacyArtifactsService {
       svc,
       clientFactory,
       errorReporter,
+      undefined,
+      providerBillingAttempts,
     )
 
     this.streamRegistry = streamRegistry ?? null

@@ -1853,6 +1853,11 @@ If the team is well-suited, omit capability_gap or set exists:false.
         org_id: String(mission.org_id ?? ''),
         parent_mission_id: parentMissionId,
         agent_key: String(agentKey),
+        workload_channel: execOptions?.channel ?? 'mission',
+        workload_action:
+          execOptions?.channel === 'brain-ops' || execOptions?.channel === 'dream-ops'
+            ? String(mission.title ?? taskType)
+            : taskType,
         ...(execOptions?.subtaskId ? { subtask_id: execOptions.subtaskId } : {}),
       },
     }
