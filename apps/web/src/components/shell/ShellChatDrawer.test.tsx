@@ -281,7 +281,7 @@ describe('ShellChatDrawer', () => {
     expect(useShellStore.getState().chatHistoryCollapsed).toBe(false)
   })
 
-  it('keeps collapsed history restore outside the chat canvas content', () => {
+  it('removes the collapsed history rail and restores history from the chat column', () => {
     useShellStore.setState({
       chatDrawer: {
         open: true,
@@ -293,8 +293,11 @@ describe('ShellChatDrawer', () => {
     })
 
     const { container } = render(<ShellChatDrawer />)
-    expect(container.querySelector('[data-shell-chat-history-collapsed]')).toBeNull()
-    expect(container.querySelector('.shell-chat-history-restore')).not.toBeNull()
+    expect(container.querySelector('.shell-chat-history-restore')).toBeNull()
+    expect(container.querySelector('[data-shell-chat-history-restore]')).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Show chat history' })).toHaveTextContent(
+      'Show chat history',
+    )
     expect(screen.getByText('Chat panel')).toBeInTheDocument()
   })
 

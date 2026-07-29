@@ -26,6 +26,7 @@ describe('shell persisted prefs hydration', () => {
       menuMode: 'home',
       workAreaOpen: true,
       chatHistoryCollapsed: false,
+      chatDrawer: { open: false, conversationId: null, width: 420, minimized: false },
       rightPanel: { open: false, tab: 'tasks' },
     })
   })
@@ -64,6 +65,55 @@ describe('shell persisted prefs hydration', () => {
     expect(useShellStore.getState().chatHistoryCollapsed).toBe(true)
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject({
       chatHistoryCollapsed: true,
+    })
+  })
+
+  it('restores the open chat and active conversation after a refresh', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        chatDrawerOpen: true,
+        chatDrawerConversationId: 'conversation-1',
+        chatDrawerMinimized: false,
+      }),
+    )
+
+    hydrateShellStoreFromStorage()
+
+    expect(useShellStore.getState().chatDrawer).toMatchObject({
+      open: true,
+      conversationId: 'conversation-1',
+      minimized: false,
+    })
+  })
+
+  it('persists open, minimized, restored, and explicitly closed chat states', () => {
+    useShellStore.getState().openChatDrawer('conversation-1')
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject({
+      chatDrawerOpen: true,
+      chatDrawerConversationId: 'conversation-1',
+      chatDrawerMinimized: false,
+    })
+
+    useShellStore.getState().minimizeChatDrawer()
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject({
+      chatDrawerOpen: false,
+      chatDrawerConversationId: 'conversation-1',
+      chatDrawerMinimized: true,
+    })
+
+    useShellStore.getState().restoreChatDrawer()
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject({
+      chatDrawerOpen: true,
+      chatDrawerConversationId: 'conversation-1',
+      chatDrawerMinimized: false,
+    })
+
+    useShellStore.getState().closeChatDrawer()
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject({
+      chatDrawerOpen: false,
+      chatDrawerConversationId: null,
+      chatDrawerMinimized: false,
     })
   })
 })

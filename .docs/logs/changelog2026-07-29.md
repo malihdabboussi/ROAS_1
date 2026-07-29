@@ -76,6 +76,16 @@ Impact: Quick production starts from the correct linked Space, unscoped launches
 
 Files: `apps/web/src/features/spaces/components/playbooks/`, `apps/web/src/components/shell/`, `apps/web/src/features/spaces/hooks/use-space-open-media-event.ts`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `documentation/features/missions.md`, `documentation/features/claude-chatgpt-shell.md`
 
+## 2026-07-29 13:00 - [FIX]
+
+What: Removed the collapsed chat-history rail, replaced it with a labeled History + right-arrow restore action inside the chat column, moved the Campaign & Space panel close action into a dedicated top-right header position, and made pinned user messages mouse- and keyboard-operable controls.
+
+Why: The collapsed history left unnecessary dead space, the work-summary close action looked attached to Sources, and the pinned user message appeared interactive without exposing reliable control semantics.
+
+Impact: Collapsing history now gives all of its width back to chat, restoring it is obvious, the summary panel has a conventional close location, and the pinned message can be expanded or edited consistently.
+
+Files: `apps/web/src/components/shell/ShellChatDrawer.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/features/studio/components/message-bubble/UserMessageBubble.tsx`, their focused tests, both product globals files, `documentation/features/claude-chatgpt-shell.md`
+
 ## 2026-07-29 13:12 - [FIX]
 
 What: Replaced the large in-chat campaign save form with a compact dismissible suggestion that opens the existing Campaign & Space picker in the right summary panel.
@@ -85,3 +95,13 @@ Why: The old form duplicated the canonical scope picker, consumed too much chat 
 Impact: Unscoped chats get one lightweight guide into the established workflow, while campaign- or Space-linked chats no longer receive a redundant prompt.
 
 Files: `apps/web/src/components/global-chat/components/ChatCampaignBrainNudge.tsx`, `apps/web/src/components/global-chat/config/work-context.config.ts`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/components/shell/use-shell-store.ts`, focused tests, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-07-29 13:18] - [FIX]
+
+What: Persisted AI Chat visibility, minimized state, and the selected conversation in the shared shell preferences.
+
+Why: The drawer state existed only in page memory, so navigation remounts and browser refreshes returned users to a closed chat instead of their prior workspace.
+
+Impact: Open chats now remain open on the same conversation across page changes and refreshes. Explicit minimize remains restorable, while explicit close still clears the conversation.
+
+Files: `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/shell/use-shell-store.test.ts`, `documentation/features/claude-chatgpt-shell.md`

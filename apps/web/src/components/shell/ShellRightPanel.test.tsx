@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ShellRightPanel } from './ShellRightPanel'
 
@@ -89,6 +89,16 @@ describe('ShellRightPanel', () => {
     )
     expect(screen.getByRole('complementary', { name: 'Work summary' })).not.toHaveClass('absolute')
     expect(screen.getByTestId('tasks-context')).toHaveTextContent('conversation-1')
+    expect(
+      within(screen.getByTestId('work-summary-header')).getByRole('button', {
+        name: 'Close work summary',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('tablist', { name: 'Work summary sections' })).queryByRole('button', {
+        name: 'Close work summary',
+      }),
+    ).not.toBeInTheDocument()
   })
 
   it('always enters from and exits toward the right edge', async () => {

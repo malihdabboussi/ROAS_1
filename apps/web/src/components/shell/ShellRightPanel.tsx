@@ -84,22 +84,38 @@ export function ShellRightPanel({
       aria-label="Work summary"
       aria-hidden={!visible}
     >
-      {scopeVisible ? (
-        <div className="border-border px-spacing-3 py-spacing-3 gap-spacing-2 flex shrink-0 flex-col border-b">
-          <p className="typo-caption text-muted-foreground font-medium uppercase tracking-wide">
-            Campaign & space
-          </p>
-          <ConversationScopePicker
-            ref={scopePickerRef}
-            conversation={conversation}
-            campaignId={campaignId}
-            spaceId={spaceId}
-            showLabel
-            onConversationUpdated={onConversationUpdated}
-            onScopeChanged={onScopeChanged}
-          />
-        </div>
-      ) : null}
+      <div
+        className="border-border px-spacing-3 py-spacing-3 gap-spacing-2 flex shrink-0 items-start border-b"
+        data-testid="work-summary-header"
+      >
+        {scopeVisible ? (
+          <div className="gap-spacing-2 flex min-w-0 flex-1 flex-col">
+            <p className="typo-caption text-muted-foreground font-medium uppercase tracking-wide">
+              Campaign & space
+            </p>
+            <ConversationScopePicker
+              ref={scopePickerRef}
+              conversation={conversation}
+              campaignId={campaignId}
+              spaceId={spaceId}
+              showLabel
+              onConversationUpdated={onConversationUpdated}
+              onScopeChanged={onScopeChanged}
+            />
+          </div>
+        ) : (
+          <div className="min-w-0 flex-1" />
+        )}
+        <button
+          type="button"
+          onClick={() => setRightPanelOpen(false)}
+          className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground p-spacing-1 shrink-0 rounded-lg transition-colors"
+          aria-label="Close work summary"
+          title="Close work summary"
+        >
+          <X className="icon-sm" aria-hidden />
+        </button>
+      </div>
       <div
         className="border-border gap-spacing-1 p-spacing-2 flex shrink-0 border-b"
         role="tablist"
@@ -122,15 +138,6 @@ export function ShellRightPanel({
             {t.label}
           </button>
         ))}
-        <button
-          type="button"
-          onClick={() => setRightPanelOpen(false)}
-          className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground p-spacing-1 shrink-0 rounded-lg transition-colors"
-          aria-label="Close work summary"
-          title="Close work summary"
-        >
-          <X className="icon-sm" aria-hidden />
-        </button>
       </div>
       <div className="scrollbar-hide p-spacing-3 min-h-0 flex-1 overflow-y-auto">
         {activeTab === 'tasks' ? (

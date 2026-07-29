@@ -35,6 +35,9 @@ export type ShellWorkAreaPageTarget = {
 type PersistedShell = {
   sidebarPinned?: boolean
   menuMode?: ShellMenuMode
+  chatDrawerOpen?: boolean
+  chatDrawerConversationId?: string | null
+  chatDrawerMinimized?: boolean
   chatDrawerWidth?: number
   chatHistoryWidth?: number
   chatHistoryCollapsed?: boolean
@@ -226,24 +229,36 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     }))
   },
   openChatDrawer: (conversationId) => {
+    const nextConversationId =
+      conversationId === undefined ? get().chatDrawer.conversationId : conversationId
     set((s) => ({
       chatDrawer: {
         ...s.chatDrawer,
         open: true,
         minimized: false,
-        conversationId: conversationId === undefined ? s.chatDrawer.conversationId : conversationId,
+        conversationId: nextConversationId,
       },
       rightPanel: { ...s.rightPanel, open: false },
       artifactViewer: { ...s.artifactViewer, target: null },
     }))
-    writePersisted({ rightPanelOpen: false })
+    writePersisted({
+      chatDrawerOpen: true,
+      chatDrawerConversationId: nextConversationId,
+      chatDrawerMinimized: false,
+      rightPanelOpen: false,
+    })
   },
   minimizeChatDrawer: () => {
     set((s) => ({
       chatDrawer: { ...s.chatDrawer, open: false, minimized: true },
       workAreaOpen: true,
     }))
-    writePersisted({ workAreaOpen: true })
+    writePersisted({
+      chatDrawerOpen: false,
+      chatDrawerConversationId: get().chatDrawer.conversationId,
+      chatDrawerMinimized: true,
+      workAreaOpen: true,
+    })
   },
   restoreChatDrawer: () => {
     set((s) => ({
@@ -251,12 +266,22 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       rightPanel: { ...s.rightPanel, open: false },
       artifactViewer: { ...s.artifactViewer, target: null },
     }))
-    writePersisted({ rightPanelOpen: false })
+    writePersisted({
+      chatDrawerOpen: true,
+      chatDrawerConversationId: get().chatDrawer.conversationId,
+      chatDrawerMinimized: false,
+      rightPanelOpen: false,
+    })
   },
   closeChatDrawer: () => {
     set((s) => ({
       chatDrawer: { ...s.chatDrawer, open: false, conversationId: null, minimized: false },
     }))
+    writePersisted({
+      chatDrawerOpen: false,
+      chatDrawerConversationId: null,
+      chatDrawerMinimized: false,
+    })
   },
   setChatDrawerWidth: (width) => {
     const clamped = clampChatDrawerWidth(width)
@@ -279,6 +304,11 @@ export const useShellStore = create<ShellStore>((set, get) => ({
         workAreaOpen: false,
         chatDrawer: { ...s.chatDrawer, open: true, minimized: false },
       }))
+      writePersisted({
+        chatDrawerOpen: true,
+        chatDrawerConversationId: get().chatDrawer.conversationId,
+        chatDrawerMinimized: false,
+      })
       return
     }
     set({ workAreaOpen: open })
@@ -357,7 +387,12 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       workAreaOpen: true,
       artifactViewer: { ...s.artifactViewer, target: null },
     }))
-    writePersisted({ workAreaOpen: true })
+    writePersisted({
+      chatDrawerOpen: false,
+      chatDrawerConversationId: null,
+      chatDrawerMinimized: false,
+      workAreaOpen: true,
+    })
   },
   openFreshChatDrawer: () => {
     set((s) => ({
@@ -372,7 +407,12 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       rightPanel: { ...s.rightPanel, open: false },
       artifactViewer: { ...s.artifactViewer, target: null },
     }))
-    writePersisted({ rightPanelOpen: false })
+    writePersisted({
+      chatDrawerOpen: true,
+      chatDrawerConversationId: null,
+      chatDrawerMinimized: false,
+      rightPanelOpen: false,
+    })
   },
   setPageBreadcrumb: (node, owner = null) => {
     if (node === null) {
@@ -399,11 +439,18 @@ export function hydrateShellStoreFromStorage(): void {
   shellStoreHydratedFromStorage = true
   const persisted = readPersisted()
   const persistedMenuMode = persisted.menuMode === 'work' ? 'work' : 'home'
+  const persistedConversationId =
+    typeof persisted.chatDrawerConversationId === 'string'
+      ? persisted.chatDrawerConversationId
+      : null
   useShellStore.setState({
     sidebarPinned: persisted.sidebarPinned ?? false,
     menuMode: persistedMenuMode,
     chatDrawer: {
       ...useShellStore.getState().chatDrawer,
+      open: persisted.chatDrawerOpen ?? false,
+      conversationId: persistedConversationId,
+      minimized: persisted.chatDrawerMinimized ?? false,
       width: clampChatDrawerWidth(persisted.chatDrawerWidth ?? 420),
     },
     chatHistoryWidth: clampChatHistoryWidth(persisted.chatHistoryWidth ?? 200),

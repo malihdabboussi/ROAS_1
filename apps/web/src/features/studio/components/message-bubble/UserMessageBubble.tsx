@@ -178,6 +178,14 @@ export function UserMessageBubble({
     setTimeout(() => setCopied(false), 1500)
   }, [content])
 
+  const handleActivate = useCallback(() => {
+    if (isEditable) {
+      handleEdit()
+      return
+    }
+    setExpanded((previous) => !previous)
+  }, [handleEdit, isEditable])
+
   const handleEditSend = useCallback(
     (
       newContent: string,
@@ -223,7 +231,16 @@ export function UserMessageBubble({
       ]
         .filter(Boolean)
         .join(' ')}
-      onClick={isEditable ? handleEdit : () => setExpanded((p) => !p)}
+      role="button"
+      tabIndex={0}
+      aria-label={isEditable ? 'Edit message' : expanded ? 'Collapse message' : 'Expand message'}
+      onClick={handleActivate}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return
+        if (event.key !== 'Enter' && event.key !== ' ') return
+        event.preventDefault()
+        handleActivate()
+      }}
     >
       {isEditable ? (
         <div ref={menuRef} className="absolute right-2 top-2 z-10">
