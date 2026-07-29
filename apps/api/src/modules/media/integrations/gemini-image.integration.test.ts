@@ -27,7 +27,7 @@ describe('GeminiImageIntegration image editing', () => {
         { buffer: Buffer.from('reference'), mimeType: 'image/jpeg' },
       ],
       'Make the background blue',
-      '3:4',
+      '4:5',
       {
         model: 'gpt-5.4-image-2',
         userId: 'user-1',
@@ -40,7 +40,7 @@ describe('GeminiImageIntegration image editing', () => {
     expect(createImage).toHaveBeenCalledWith(
       expect.objectContaining({
         model: 'openai/gpt-5.4-image-2',
-        aspectRatio: '3:4',
+        aspectRatio: '4:5',
         prompt: 'Make the background blue',
         inputReferences: [
           {

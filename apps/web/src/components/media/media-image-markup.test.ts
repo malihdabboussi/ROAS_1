@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { buildImageMarkupPrompt, type ImageMarkupAnnotation } from './media-image-markup'
+import {
+  buildImageMarkupPrompt,
+  closestImageAspectRatio,
+  type ImageMarkupAnnotation,
+} from './media-image-markup'
 
 describe('buildImageMarkupPrompt', () => {
   it('turns pins and freehand marks into localized edit instructions', () => {
@@ -25,10 +29,13 @@ describe('buildImageMarkupPrompt', () => {
       'Pin at 25% from the left and 40% from the top: Remove this icon.',
     )
     expect(buildImageMarkupPrompt(annotations, 'Keep the layout clean')).toContain(
-      'Freehand mark covering left 50%–80% and top 20%–35%: Move this headline down so no text is cut off.',
+      'Freehand mark enclosing the target near 65% from the left and 28% from the top (region: left 50%–80%, top 20%–35%). Apply this instruction to the content enclosed by that region, not to the markup line itself: Move this headline down so no text is cut off.',
     )
     expect(buildImageMarkupPrompt(annotations, 'Keep the layout clean')).toContain(
       'Additional direction: Keep the layout clean.',
+    )
+    expect(buildImageMarkupPrompt(annotations, 'Keep the layout clean')).toContain(
+      'Do not crop, resize, reflow, reposition, restyle, or regenerate any unmarked content.',
     )
   })
 
@@ -43,5 +50,11 @@ describe('buildImageMarkupPrompt', () => {
         },
       ]),
     ).toBe('')
+  })
+
+  it('maps a source canvas to the nearest supported aspect ratio', () => {
+    expect(closestImageAspectRatio(1080, 1350)).toBe('4:5')
+    expect(closestImageAspectRatio(1080, 1920)).toBe('9:16')
+    expect(closestImageAspectRatio(0, 1350)).toBeNull()
   })
 })

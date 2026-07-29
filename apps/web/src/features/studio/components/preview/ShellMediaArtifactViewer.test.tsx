@@ -50,21 +50,18 @@ describe('ShellMediaArtifactViewer', () => {
     expect(useGlobalChatStore.getState().pendingSeed).toBeNull()
   })
 
-  it('opens the source chat and attaches the current image only when requested', () => {
+  it('attaches the current image to the existing chat without closing the viewer', () => {
     render(<ShellMediaArtifactViewer target={target} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'More image actions' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Open in chat' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add image to chat' }))
 
     expect(useGlobalChatStore.getState().pendingSeed).toMatchObject({
       documents: [{ mediaAssetId: 'image-1' }],
       seedMode: 'attach',
-      conversationId: 'conversation-old',
     })
-    expect(useShellStore.getState().chatDrawer).toMatchObject({
-      open: true,
-      conversationId: 'conversation-old',
-    })
+    expect(useGlobalChatStore.getState().pendingSeed?.conversationId).toBeUndefined()
+    expect(useShellStore.getState().artifactViewer.target).toEqual(target)
+    expect(screen.queryByRole('button', { name: 'Open in chat' })).toBeNull()
   })
 
   it('keeps aspect ratio controls in the top toolbar', () => {
@@ -106,7 +103,8 @@ describe('ShellMediaArtifactViewer', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Feedback for annotation 1' }), {
       target: { value: 'Remove this icon' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Apply marked edits' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save mark 1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Regenerate with marked edits' }))
 
     await waitFor(() =>
       expect(editImageStream).toHaveBeenCalledWith(
@@ -214,6 +212,64 @@ describe('ShellMediaArtifactViewer', () => {
     )
     expect(listAssets).toHaveBeenCalledTimes(1)
     expect(within(history).getAllByRole('button')).toHaveLength(3)
+  })
+
+  it('keeps a newly resolved edit in history after selecting an older version', async () => {
+    const makeAsset = (id: string, name: string): MediaAsset => ({
+      id,
+      user_id: 'user-1',
+      name,
+      original_filename: `${id}.png`,
+      file_path: `${id}.png`,
+      bucket_name: 'media',
+      file_size: 1,
+      mime_type: 'image/png',
+      width: 1080,
+      height: 1350,
+      asset_type: 'image',
+      category: null,
+      subcategory: null,
+      campaign_id: 'campaign-1',
+      space_id: 'space-1',
+      conversation_id: 'conversation-old',
+      tags: [],
+      description: null,
+      is_public: false,
+      public_url: `https://example.com/${id}.png`,
+      source: null,
+      source_model: null,
+      source_prompt: null,
+      usage_count: 0,
+      last_used_at: null,
+      created_at: '2026-07-29T00:00:00.000Z',
+      updated_at: '2026-07-29T00:00:00.000Z',
+    })
+    const original = makeAsset('image-original', 'Original')
+    const edited = makeAsset('image-edited', 'Original — Edit')
+    vi.mocked(listAssets).mockResolvedValue({ assets: [original], total: 1 })
+    vi.mocked(getAsset).mockImplementation(async (assetId) => {
+      if (assetId === original.id) return original
+      if (assetId === edited.id) return edited
+      throw new Error('Asset not found')
+    })
+
+    const { rerender } = render(
+      <ShellMediaArtifactViewer target={{ ...target, id: edited.id, mediaAssetId: edited.id }} />,
+    )
+    const history = await screen.findByRole('complementary', { name: 'Media history' })
+    await waitFor(() =>
+      expect(within(history).getByRole('button', { name: 'Open Original — Edit' })).toBeTruthy(),
+    )
+
+    fireEvent.click(within(history).getByRole('button', { name: 'Open Original' }))
+    rerender(<ShellMediaArtifactViewer target={useShellStore.getState().artifactViewer.target!} />)
+
+    await waitFor(() =>
+      expect(within(history).getByRole('button', { name: 'Open Original' }).className).toContain(
+        'ring-2',
+      ),
+    )
+    expect(within(history).getByRole('button', { name: 'Open Original — Edit' })).toBeTruthy()
   })
 
   it('renders a video player after resolving a video media asset', async () => {

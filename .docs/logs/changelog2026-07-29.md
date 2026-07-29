@@ -186,6 +186,16 @@ Impact: The ROAS organization gets a visible Delegator agent that can be opened 
 
 Files: `docker/agents/templates/delegator/`, `supabase/migrations/20260729174500_seed_delegator_system_agent.sql`, `scripts/seed-system-agents.ts`, `packages/agent-policy/src/`, `apps/agent-api/src/modules/`, `apps/api/src/modules/org/services/org.service.ts`, `apps/api/src/modules/agent-teams/services/agent-policy-action-decision.service.ts`, `apps/api/src/modules/missions/lib/system-agent-keys.ts`, `apps/api/src/modules/space-templates/data/`, `apps/web/src/lib/agents/`, `documentation/features/spaces-automation.md`, `.docs/plans/agent-follow-up-work.md, `scripts/arch/loc-allowlist.json`
 
+## [2026-07-29 16:03] - [FIX]
+
+What: Persisted and restored the active artifact viewer, retained newly generated versions in the history rail, preserved source image ratios including 4:5, strengthened localized edit instructions, improved generated asset names, and revised markup into a movable multi-mark review workflow with separate Save/Delete and Regenerate actions. Moved Add to chat into the visible viewer toolbar and kept the studio open while attaching.
+
+Why: Refresh returned users to Home, new edits disappeared after thumbnail selection, 4:5 ads were submitted with a 16:9 default, prompts became asset titles, and the original markup panel obscured work while its single Apply action could regenerate before review was complete.
+
+Impact: The studio and its media context survive refresh; version history remains stable; edits retain the source canvas ratio and receive stricter semantic masking guidance; asset titles are readable; multiple annotations can be reviewed safely before one regeneration; and the selected image can be attached to the current chat without navigation.
+
+Files: `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/media/*image*`, `apps/web/src/features/studio/components/preview/ShellMedia*`, `apps/web/src/lib/services/media-api.ts`, `apps/api/src/modules/media/dto/index.ts`, `apps/api/src/modules/media/services/media-service-01.base.ts`, `apps/api/src/modules/media/services/media-service-02.base.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-media-processing-persistence.service.ts`, focused tests, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-07-29 16:10] - [FIX]
 
 What: Fixed Delegator production seed to install for every org that already has Pixel, replace system definition rows safely, and remove the hardcoded non-ROAS org id.

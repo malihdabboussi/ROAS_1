@@ -23,7 +23,7 @@ export const IMAGE_GENERATION_MODELS_PUBLIC = [
     name: 'ChatGPT',
     tier: 'pro' as const,
     description: 'OpenAI GPT Image 2 — ChatGPT images (not GPT-5.6 chat).',
-    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:4', '3:2', '4:3'] as const,
+    supportedAspectRatios: ['1:1', '16:9', '9:16', '4:5', '3:4', '3:2', '4:3'] as const,
     defaultAspectRatio: '16:9' as const,
   },
   {
@@ -31,7 +31,7 @@ export const IMAGE_GENERATION_MODELS_PUBLIC = [
     name: 'Nano Banana 2',
     tier: 'free' as const,
     description: 'Best for fast drafts and iteration.',
-    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:4', '3:2', '4:3'] as const,
+    supportedAspectRatios: ['1:1', '16:9', '9:16', '4:5', '3:4', '3:2', '4:3'] as const,
     defaultAspectRatio: '16:9' as const,
   },
   {
@@ -39,14 +39,14 @@ export const IMAGE_GENERATION_MODELS_PUBLIC = [
     name: 'Nano Banana',
     tier: 'pro' as const,
     description: 'Best for polished, final assets.',
-    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:4', '3:2', '4:3'] as const,
+    supportedAspectRatios: ['1:1', '16:9', '9:16', '4:5', '3:4', '3:2', '4:3'] as const,
     defaultAspectRatio: '16:9' as const,
   },
 ]
 
 export const GenerateImageSchema = z.object({
   prompt: z.string().min(3).max(12000),
-  aspect_ratio: z.enum(['1:1', '16:9', '9:16', '3:4', '3:2', '4:3']).default('16:9'),
+  aspect_ratio: z.enum(['1:1', '16:9', '9:16', '4:5', '3:4', '3:2', '4:3']).default('16:9'),
   campaign_id: z.string().uuid().optional(),
   space_id: z.string().uuid().optional(),
   conversation_id: z.string().uuid().optional(),
@@ -70,7 +70,7 @@ export const EditImageSchema = z
     parent_image_url: z.string().url().optional(),
     parent_image_asset_id: z.string().uuid().optional(),
     reference_image_asset_ids: z.array(z.string().uuid()).max(4).optional(),
-    aspect_ratio: z.enum(['1:1', '16:9', '9:16', '3:4', '3:2', '4:3']).default('16:9'),
+    aspect_ratio: z.enum(['1:1', '16:9', '9:16', '4:5', '3:4', '3:2', '4:3']).default('16:9'),
     campaign_id: z.string().uuid().optional(),
     space_id: z.string().uuid().optional(),
     conversation_id: z.string().uuid().optional(),

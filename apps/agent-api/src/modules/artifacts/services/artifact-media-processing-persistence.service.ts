@@ -54,18 +54,29 @@ export class ArtifactMediaProcessingPersistenceService {
     let mediaAssetId: string | null = null
     const processOrgId = input.target.resolveOrgId?.(input.sessionKey) as string | null | undefined
     const assetType = this.assetTypeForFormat(input.outputFormat)
+    const staticAdAspectRatio = input.actionInput.aspect_ratio === '9:16' ? '9:16' : '4:5'
+    const staticAdTemplateId = String(input.actionInput.template_id ?? '')
     const { data: asset, error: dbErr } = await this.repository.createGeneratedMediaAsset(
       input.target.serviceClient,
       {
         user_id: input.userId,
         org_id: processOrgId ?? null,
-        name: `processed-${input.operation}-${randomUUID().slice(0, 8)}`,
+        name:
+          input.operation === 'render_static_ad'
+            ? `Static ad — ${this.humanizeIdentifier(staticAdTemplateId)} — ${staticAdAspectRatio}`
+            : `processed-${input.operation}-${randomUUID().slice(0, 8)}`,
         original_filename: `output.${input.outputFormat}`,
         file_path: storagePath,
         bucket_name: 'media',
         file_size: outputBuffer.length,
         mime_type: mimeType,
         asset_type: assetType,
+        ...(input.operation === 'render_static_ad'
+          ? {
+              width: 1080,
+              height: staticAdAspectRatio === '9:16' ? 1920 : 1350,
+            }
+          : {}),
         category: 'processed',
         campaign_id: input.campaignId ?? null,
         tags: [`process-media-${input.operation}`],
@@ -101,16 +112,14 @@ export class ArtifactMediaProcessingPersistenceService {
       })
     }
     if (input.operation === 'render_static_ad') {
-      const templateId = String(input.actionInput.template_id ?? '')
-      const aspectRatio = input.actionInput.aspect_ratio === '9:16' ? '9:16' : '4:5'
       return this.staticAdMissionDeliverable.persist({
         target: input.target,
         userId: input.userId,
         campaignId: input.campaignId,
         sessionKey: input.sessionKey,
         processed: result,
-        templateId,
-        aspectRatio,
+        templateId: staticAdTemplateId,
+        aspectRatio: staticAdAspectRatio,
       })
     }
     return result
@@ -138,5 +147,10 @@ export class ArtifactMediaProcessingPersistenceService {
     if (['mp3', 'wav', 'ogg', 'aac', 'm4a'].includes(format)) return 'audio'
     if (['gif', 'jpg', 'png', 'webp'].includes(format)) return 'image'
     return 'video'
+  }
+
+  private humanizeIdentifier(value: string): string {
+    const words = value.trim().replace(/[_-]+/g, ' ')
+    return words ? `${words.charAt(0).toUpperCase()}${words.slice(1)}` : 'Creative'
   }
 }

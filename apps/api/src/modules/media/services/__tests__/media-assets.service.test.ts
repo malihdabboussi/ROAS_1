@@ -239,4 +239,64 @@ describe('MediaService asset library behavior', () => {
       source_surface: 'campaign',
     })
   })
+
+  it('names an image edit as the next version of its source asset instead of using the prompt', async () => {
+    const editedAsset = asset({
+      id: 'edited-asset-1',
+      name: 'Static ad — Edit',
+      category: 'generated',
+      source: 'generated',
+      source_prompt: 'Remove the icon',
+    })
+    const insertMediaAsset = vi.fn().mockResolvedValue({
+      asset: editedAsset,
+      errorMessage: null,
+    })
+    const mediaUploadRepository = {
+      downloadStorageObject: vi.fn().mockResolvedValue(new Blob(['source'])),
+      uploadStorageObject: vi.fn().mockResolvedValue(null),
+      createSignedUrlForPath: vi.fn().mockResolvedValue('https://example.com/edited.png'),
+      insertMediaAsset,
+    }
+    const service = new MediaService(
+      {
+        isConfigured: vi.fn(() => true),
+        editImage: vi.fn().mockResolvedValue({
+          buffer: Buffer.from('edited'),
+          mimeType: 'image/png',
+        }),
+      } as never,
+      { get: vi.fn(() => undefined) } as never,
+      { indexAsset: vi.fn().mockResolvedValue(undefined) } as never,
+      {} as never,
+      mediaUploadRepository as never,
+      {} as never,
+      {
+        indexSource: vi.fn().mockResolvedValue(undefined),
+      } as never,
+    )
+    vi.spyOn(service, 'getAsset').mockResolvedValue(
+      asset({ name: 'processed-render_static_ad-78b811c4' }),
+    )
+
+    await expect(
+      service.generateImageEdit(
+        {
+          prompt: 'Remove the icon',
+          parent_image_asset_id: '4d8bc673-40b4-48f1-b36c-100bce6c40ac',
+          aspect_ratio: '4:5',
+          count: undefined,
+        } as never,
+        { id: 'user-1' },
+        null,
+      ),
+    ).resolves.toMatchObject({ success: true, asset: editedAsset })
+
+    expect(insertMediaAsset).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Static ad — Edit',
+        source_prompt: 'Remove the icon',
+      }),
+    )
+  })
 })

@@ -9272,3 +9272,21 @@ Evidence: The durable call-kind fix only replaced the classifier import and adde
 Needed work: Complete the previously identified extraction of Fathom webhook orchestration into a dedicated meeting processor, then remove the superseded block from the generated automation base.
 
 Reason not done now: This change fixes classification behavior across scheduled creation, Fathom attachment, and legacy Space schemas. Restructuring the full webhook processor is behavior-neutral work outside this production data fix.
+
+## 2026-07-29 - [ARCH] Image markup and shell persistence files near or above size guidance
+
+Status: Open
+
+Found while: Fixing artifact refresh persistence, image edit history, ratio fidelity, and multi-mark feedback
+
+Files:
+- `apps/web/src/components/media/MediaImageMarkupCanvas.tsx` (365 LOC; component limit 400, above the 80% extraction threshold)
+- `apps/web/src/components/shell/use-shell-store.ts` (506 LOC; store combines shell domains beyond hook guidance)
+- `apps/api/src/modules/media/services/media-service-01.base.ts` (575 LOC; service limit 600)
+- `apps/api/src/modules/media/services/media-service-02.base.ts` (566 LOC; service limit 600)
+
+Evidence: The markup component now owns canvas input plus a movable feedback editor; the shell store owns persistence for chat, panels, work area, and artifacts; both media service bases are close to the hard service ceiling.
+
+Needed work: Extract the markup feedback card/tool strip, split persisted shell preference serialization from store actions, and continue the numbered media service decomposition without changing their inheritance contract.
+
+Reason not done now: The requested production fixes are covered by narrow behavioral tests; structural extraction would broaden this regression-sensitive change beyond the active bugs.

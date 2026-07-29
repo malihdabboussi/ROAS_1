@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ChevronDown, ExternalLink, MessageSquare, PenLine } from 'lucide-react'
+import { ChevronDown, ExternalLink, PenLine } from 'lucide-react'
 import {
   AspectRatioMenuOption,
   AspectRatioPickerGlyph,
@@ -118,11 +118,9 @@ export function ShellMediaMarkupAction({
 
 export function ShellMediaActionsMenu({
   target,
-  onOpenChat,
   onOpenCanva,
 }: {
   target: ShellArtifactViewerTarget
-  onOpenChat: () => void
   onOpenCanva?: () => void
 }) {
   const [open, setOpen] = useState(false)
@@ -178,17 +176,6 @@ export function ShellMediaActionsMenu({
               Open in Canva
             </button>
           ) : null}
-          <button
-            type="button"
-            onClick={() => {
-              setOpen(false)
-              onOpenChat()
-            }}
-            className="hub-dock-flyout-row gap-spacing-2"
-          >
-            <MessageSquare className="icon-sm shrink-0" />
-            Open in chat
-          </button>
         </div>
       ) : null}
     </div>
