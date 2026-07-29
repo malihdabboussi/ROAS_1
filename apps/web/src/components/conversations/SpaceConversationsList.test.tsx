@@ -24,10 +24,6 @@ vi.mock('@/components/ui/tooltip', () => ({
   Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
 }))
 
-vi.mock('@/components/vibey/vibey-chat-orb', () => ({
-  VibeyChatOrb: () => <span data-testid="chat-orb" />,
-}))
-
 vi.mock('./ConversationActionsMenu', () => ({
   ConversationActionsMenu: () => null,
 }))
@@ -144,11 +140,37 @@ describe('SpaceConversationsList', () => {
     expect(screen.getByText('Today')).toBeTruthy()
     expect(screen.getByText('Untitled conversation')).toBeTruthy()
     expect(screen.getByText('Thinking through it')).toBeTruthy()
-    expect(screen.getByTestId('chat-orb')).toBeTruthy()
+    expect(screen.getByRole('status', { name: 'Working' })).toBeTruthy()
 
     fireEvent.click(screen.getByText('Launch plan'))
 
     expect(onSelectConversation).toHaveBeenCalledWith('today-1')
+  })
+
+  it('shows one prioritized activity indicator per conversation', () => {
+    render(
+      <SpaceConversationsList
+        {...baseProps({
+          conversations: [
+            conversation({
+              id: 'action-1',
+              title: 'Approve campaign',
+              needs_action: true,
+              is_unread: true,
+            }),
+            conversation({ id: 'unread-1', title: 'Fresh result', is_unread: true }),
+            conversation({ id: 'idle-1', title: 'Already read' }),
+          ],
+          conversationRuntimeById: {
+            'action-1': { isRunning: true, phase: 'thinking' },
+          },
+        })}
+      />,
+    )
+
+    expect(screen.getByRole('status', { name: 'Needs your action' })).toBeTruthy()
+    expect(screen.getByRole('status', { name: 'New activity' })).toBeTruthy()
+    expect(screen.queryAllByRole('status')).toHaveLength(2)
   })
 
   it('filters by all-agent names and settles without render churn', () => {

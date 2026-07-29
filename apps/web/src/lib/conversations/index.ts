@@ -1,4 +1,6 @@
 export * from './conversation-assets'
+export * from './conversation-activity'
+export * from './conversation-activity-messages.config'
 export * from './conversation-toast-errors.config'
 export * from './conversation-list-sections'
 export * from './conversation-list-query'

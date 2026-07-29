@@ -24,6 +24,8 @@ export interface Conversation {
   effective_level?: ConversationShareLevel | null
   last_message?: string | null
   message_count?: number
+  is_unread?: boolean
+  needs_action?: boolean
 }
 
 export type MessageRole = 'user' | 'assistant' | 'system'

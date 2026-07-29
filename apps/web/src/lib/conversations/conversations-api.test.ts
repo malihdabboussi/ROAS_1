@@ -6,10 +6,11 @@ import {
   deleteConversation,
   deleteConversationShare,
   duplicateConversation,
-  fetchConversations,
   fetchConversationAssets,
+  fetchConversations,
   fetchConversationShares,
   fetchMessages,
+  markConversationRead,
   renameConversation,
   setConversationArchived,
   setConversationPinned,
@@ -69,9 +70,9 @@ describe('conversations api', () => {
       .mockResolvedValueOnce([{ id: 'message-1' }])
       .mockResolvedValueOnce({ items: [{ id: 'asset-1' }], nextCursor: 'cursor-1' })
 
-    await expect(fetchMessages('conversation-1', { limit: 20, before: 'message-0' })).resolves.toEqual([
-      { id: 'message-1' },
-    ])
+    await expect(
+      fetchMessages('conversation-1', { limit: 20, before: 'message-0' }),
+    ).resolves.toEqual([{ id: 'message-1' }])
     await expect(
       fetchConversationAssets('links', {
         agent_id: 'agent-1',
@@ -89,6 +90,20 @@ describe('conversations api', () => {
       2,
       '/api/conversations/assets?scope=links&agent_id=agent-1&campaign_id=campaign-1&limit=50&before=cursor-0',
     )
+  })
+
+  it('marks persisted conversations as read', async () => {
+    backendPostMock.mockResolvedValue({ success: true })
+
+    await expect(markConversationRead('conversation-1')).resolves.toBeUndefined()
+
+    expect(backendPostMock).toHaveBeenCalledWith('/api/conversations/conversation-1/read', {})
+  })
+
+  it('does not mark pending conversations as read', async () => {
+    await expect(markConversationRead('pending-1')).resolves.toBeUndefined()
+
+    expect(backendPostMock).not.toHaveBeenCalled()
   })
 
   it('pins conversations through metadata patching', async () => {
@@ -207,7 +222,10 @@ describe('conversations api', () => {
     })
 
     await expect(
-      duplicateConversation('conversation-1', { campaignId: 'campaign-2', titlePrefix: 'Copy of ' }),
+      duplicateConversation('conversation-1', {
+        campaignId: 'campaign-2',
+        titlePrefix: 'Copy of ',
+      }),
     ).resolves.toEqual({
       id: 'conversation-2',
       title: 'Copy of Original',

@@ -758,3 +758,4 @@
 20260722223500_sync_post_call_delivery_skill.sql
 20260726123000_customer_brain_targeted_evidence.sql
 20260726230500_model_strategy_capabilities.sql
+20260729123000_conversation_activity_states.sql

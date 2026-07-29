@@ -1,6 +1,6 @@
 import { Profiler, type HTMLAttributes, type ReactNode } from 'react'
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { act, cleanup, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Conversation } from '@/lib/conversations'
 import { SpaceConversationsList } from './SpaceConversationsListAdapter'
 
@@ -19,7 +19,7 @@ const chatStoreMock = vi.hoisted(() => {
     (selector: (nextState: typeof state) => unknown) => selector(state),
     { getState: () => state },
   )
-  return { useChatStore }
+  return { state, useChatStore }
 })
 
 vi.mock('framer-motion', () => ({
@@ -40,10 +40,6 @@ vi.mock('framer-motion', () => ({
 
 vi.mock('@/components/ui/tooltip', () => ({
   Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
-}))
-
-vi.mock('@/components/vibey/vibey-chat-orb', () => ({
-  VibeyChatOrb: () => <span data-testid="chat-orb" />,
 }))
 
 vi.mock('@/lib/chat/studio-chat-runtime-adapter', () => ({
@@ -106,6 +102,10 @@ afterEach(() => {
 })
 
 describe('SpaceConversationsListAdapter', () => {
+  beforeEach(() => {
+    chatStoreMock.state.streamingConversationIds = ['conversation-1']
+  })
+
   it('keeps Studio stream row state at the transitional adapter boundary', () => {
     let commitCount = 0
 
@@ -117,7 +117,22 @@ describe('SpaceConversationsListAdapter', () => {
 
     expect(screen.getByText('Launch plan')).toBeTruthy()
     expect(screen.getByText('Thinking through it')).toBeTruthy()
-    expect(screen.getByTestId('chat-orb')).toBeTruthy()
+    expect(screen.getByRole('status', { name: 'Working' })).toBeTruthy()
     expect(commitCount).toBeLessThan(8)
+  })
+
+  it('turns a background completion into unread activity immediately', () => {
+    const props = baseProps({ selectedConversationId: null })
+    const { rerender } = render(<SpaceConversationsList {...props} />)
+
+    expect(screen.getByRole('status', { name: 'Working' })).toBeTruthy()
+
+    act(() => {
+      chatStoreMock.state.streamingConversationIds = []
+      rerender(<SpaceConversationsList {...props} />)
+    })
+
+    expect(screen.getByRole('status', { name: 'New activity' })).toBeTruthy()
+    expect(screen.queryByRole('status', { name: 'Working' })).toBeNull()
   })
 })

@@ -6,6 +6,7 @@ import {
   HttpException,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   UseGuards,
@@ -21,12 +22,33 @@ import {
   Supabase,
   type RequestScope,
 } from '@vibey/api-shared'
+import { ConversationActivityService } from '../services/conversation-activity.service'
 import { ConversationsService } from '../services/conversations.service'
 
 @Controller('conversations')
 @UseGuards(AuthGuard, ThrottlerGuard, OrgContextGuard, OrgRoleGuard)
 export class ConversationRecordsController {
-  constructor(private readonly conversationsService: ConversationsService) {}
+  constructor(
+    private readonly conversationsService: ConversationsService,
+    private readonly conversationActivityService: ConversationActivityService,
+  ) {}
+
+  @Post(':id/read')
+  @HttpCode(HttpStatus.OK)
+  async markRead(
+    @CurrentUser() user: { id: string; email: string },
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param('id', new ParseUUIDPipe()) conversationId: string,
+  ) {
+    return this.conversationActivityService.markRead(
+      supabase,
+      user.id,
+      conversationId,
+      scope.orgId,
+      scope.orgRole,
+    )
+  }
 
   @Post(':id/auto-title')
   @HttpCode(HttpStatus.OK)

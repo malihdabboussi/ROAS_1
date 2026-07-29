@@ -1,4 +1,14 @@
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Query, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpException,
+  HttpStatus,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common'
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
@@ -19,12 +29,16 @@ import {
   SuggestConversationTitleBodySchema,
   type SuggestConversationTitleBody,
 } from '../dto/suggest-conversation-title.dto'
+import { ConversationFeedService } from '../services/conversation-feed.service'
 import { ConversationsService } from '../services/conversations.service'
 
 @Controller('conversations')
 @UseGuards(AuthGuard, ThrottlerGuard, OrgContextGuard, OrgRoleGuard)
 export class ConversationsController {
-  constructor(private readonly conversationsService: ConversationsService) {}
+  constructor(
+    private readonly conversationsService: ConversationsService,
+    private readonly conversationFeedService: ConversationFeedService,
+  ) {}
 
   @Get()
   async list(
@@ -33,7 +47,7 @@ export class ConversationsController {
     @OrgContext() scope: RequestScope,
     @Query(new ZodValidationPipe(ConversationListQuerySchema)) query: ConversationListQuery,
   ) {
-    return this.conversationsService.listConversations(
+    return this.conversationFeedService.list(
       supabase,
       user.id,
       {
@@ -55,12 +69,7 @@ export class ConversationsController {
     @Supabase() supabase: SupabaseClient,
     @OrgContext() scope: RequestScope,
   ) {
-    return this.conversationsService.listSharedConversations(
-      supabase,
-      user.id,
-      scope.orgId,
-      scope.orgRole,
-    )
+    return this.conversationFeedService.listShared(supabase, user.id, scope.orgId, scope.orgRole)
   }
 
   @Post()

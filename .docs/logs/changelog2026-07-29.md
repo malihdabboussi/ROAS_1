@@ -1,5 +1,15 @@
 # Changelog - July 29, 2026
 
+## [2026-07-29 12:22] - [FEATURE]
+
+What: Added one prioritized activity indicator to shared chat-history rows: amber for unresolved user action, animated purple while the agent is working, blue for unread assistant activity, and no indicator once read or idle. Added per-user conversation read timestamps and automatic read marking on selection.
+
+Why: Background chat progress, completed unread results, and conversations waiting on the user were not visible from the left chat list.
+
+Impact: All shell, Space, Team, and full-page chat lists that use the shared conversation list now expose the same activity state without duplicate green/blue meanings. Existing conversations are backfilled as read during migration.
+
+Files: `apps/web/src/components/conversations/`, `apps/web/src/lib/conversations/`, `apps/api/src/modules/conversations/`, `supabase/migrations/20260729123000_conversation_activity_states.sql`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-07-29 12:11] - [FIX]
 
 What: Removed the unsupported API TypeScript path mapping that made Vercel recompile `@vibey/api-shared` source after the Nest build.

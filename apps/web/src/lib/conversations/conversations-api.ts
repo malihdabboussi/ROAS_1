@@ -67,6 +67,11 @@ export async function fetchMessages(
   )
 }
 
+export async function markConversationRead(id: string): Promise<void> {
+  if (isPendingConversationId(id)) return
+  await backendPost(`/api/conversations/${id}/read`, {})
+}
+
 export interface SendConversationMessageStreamingParams {
   conversation_id: string
   content: string

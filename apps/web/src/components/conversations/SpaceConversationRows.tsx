@@ -1,21 +1,23 @@
 'use client'
 
 import { useEffect, useRef, useState, type MouseEvent, type RefObject } from 'react'
-import { CheckCircle2, MoreHorizontal, Pin } from 'lucide-react'
+import { MoreHorizontal, Pin } from 'lucide-react'
 import { ConversationChannelIcon } from '@/components/chat/ConversationChannelIcon'
 import { Tooltip } from '@/components/ui/tooltip'
-import { VibeyChatOrb } from '@/components/vibey/vibey-chat-orb'
 import {
   formatCompactRelativeTime,
   getAgentInitial,
   getConversationAgentDisplay,
   needsGeneratedConversationTitle,
+  resolveConversationActivity,
   stripLegacySpacesConversationTitle,
   type ChatHistoryLeadingIcon,
   type Conversation,
+  type ConversationActivity,
   type ConversationAgentDisplay,
 } from '@/lib/conversations'
 import { cn } from '@/lib/utils/cn'
+import { ConversationActivityIndicator } from './ConversationActivityIndicator'
 
 export interface ConversationRowRuntimeState {
   isRunning: boolean
@@ -24,26 +26,15 @@ export interface ConversationRowRuntimeState {
   statusMessage?: string | null
 }
 
-function ConversationRowStateIcon({
-  runtimeState,
-}: {
-  runtimeState?: ConversationRowRuntimeState
-}) {
-  if (runtimeState?.isRunning) {
-    return <VibeyChatOrb state="processing" className="vibey-chat-orb--neutral" />
-  }
-  return <CheckCircle2 className="text-muted-foreground icon-sm shrink-0" />
-}
-
 function ConversationRowLeadingIcon({
   conversation,
-  runtimeState,
   leadingIcon,
+  activity,
   agentByKey,
 }: {
   conversation: Conversation
-  runtimeState?: ConversationRowRuntimeState
   leadingIcon: ChatHistoryLeadingIcon
+  activity: ConversationActivity
   agentByKey?: Record<string, ConversationAgentDisplay>
 }) {
   if (leadingIcon === 'none') return null
@@ -51,17 +42,23 @@ function ConversationRowLeadingIcon({
     return <ConversationAgentAvatar conversation={conversation} agentByKey={agentByKey} />
   }
   if (leadingIcon === 'status') {
-    return <ConversationRowStateIcon runtimeState={runtimeState} />
+    return <ConversationActivityIndicator activity={activity} />
   }
-  // logo — channel mark when present; otherwise in-progress / done status
+  // logo — channel mark when present; otherwise the current activity state
   const source = conversation.metadata?.source
   if (source === 'slack' || source === 'telegram') {
     return <ConversationChannelIcon metadata={conversation.metadata} />
   }
-  return <ConversationRowStateIcon runtimeState={runtimeState} />
+  return <ConversationActivityIndicator activity={activity} />
 }
 
-function ConversationRowTitle({ rawTitle }: { rawTitle: string | null }) {
+function ConversationRowTitle({
+  rawTitle,
+  emphasized,
+}: {
+  rawTitle: string | null
+  emphasized: boolean
+}) {
   const target = stripLegacySpacesConversationTitle(rawTitle) || 'Untitled conversation'
   const [shown, setShown] = useState(target)
   const prevTargetRef = useRef(target)
@@ -98,7 +95,9 @@ function ConversationRowTitle({ rawTitle }: { rawTitle: string | null }) {
     }
   }, [target])
 
-  return <p className="body-3 truncate font-medium">{shown}</p>
+  return (
+    <p className={cn('body-3 truncate', emphasized ? 'font-semibold' : 'font-medium')}>{shown}</p>
+  )
 }
 
 function formatConversationUpdatedAt(value: string | null): string {
@@ -207,6 +206,17 @@ export function SpaceConversationRow({
   const resolvedLeadingIcon: ChatHistoryLeadingIcon =
     leadingIcon ?? (allAgentsMode ? 'agent' : 'logo')
   const showLeadingSlot = resolvedLeadingIcon !== 'none'
+  const activity = resolveConversationActivity({
+    status: conversation.status,
+    needsAction: conversation.needs_action,
+    isRunning: runtimeState?.isRunning,
+    isUnread: conversation.is_unread,
+  })
+  const source = conversation.metadata?.source
+  const leadingRendersActivity =
+    resolvedLeadingIcon === 'status' ||
+    (resolvedLeadingIcon === 'logo' && source !== 'slack' && source !== 'telegram')
+  const showSeparateActivity = activity !== 'idle' && !leadingRendersActivity
   const relativeAge = formatCompactRelativeTime(conversation.updated_at)
   return (
     <div
@@ -221,6 +231,7 @@ export function SpaceConversationRow({
         menuOpen && 'bg-hover-subtle text-foreground',
       )}
     >
+      {showSeparateActivity ? <ConversationActivityIndicator activity={activity} /> : null}
       {showLeadingSlot ? (
         <div
           className={cn(
@@ -230,8 +241,8 @@ export function SpaceConversationRow({
         >
           <ConversationRowLeadingIcon
             conversation={conversation}
-            runtimeState={runtimeState}
             leadingIcon={resolvedLeadingIcon}
+            activity={activity}
             agentByKey={agentByKey}
           />
         </div>
@@ -261,7 +272,10 @@ export function SpaceConversationRow({
         >
           <div className="gap-spacing-1 flex min-w-0 items-center">
             {pinned ? <Pin className="text-muted-foreground icon-xs shrink-0" /> : null}
-            <ConversationRowTitle rawTitle={conversation.title} />
+            <ConversationRowTitle
+              rawTitle={conversation.title}
+              emphasized={activity === 'needs_action' || activity === 'unread'}
+            />
           </div>
           {showSubtitle ? <ConversationRowSubtitle runtimeState={runtimeState} /> : null}
         </button>

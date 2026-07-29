@@ -133,6 +133,10 @@ export interface Conversation {
   last_message?: string | null
   /** Client-only: unread count */
   message_count?: number
+  /** Per-user activity state returned by the conversations feed. */
+  is_unread?: boolean
+  /** Whether the latest chat UI contains an unresolved user action. */
+  needs_action?: boolean
 }
 
 export interface ConversationShareRecord {
