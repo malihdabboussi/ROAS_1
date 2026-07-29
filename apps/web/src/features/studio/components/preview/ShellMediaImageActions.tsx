@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ChevronDown, ExternalLink, MessageSquare } from 'lucide-react'
+import { ChevronDown, ExternalLink, MessageSquare, PenLine } from 'lucide-react'
 import {
   AspectRatioMenuOption,
   AspectRatioPickerGlyph,
@@ -10,6 +10,7 @@ import {
   type MediaImageEditController,
 } from '@/components/media'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
+import { cn } from '@/lib/utils/cn'
 
 export async function downloadMediaTarget(target: ShellArtifactViewerTarget): Promise<void> {
   if (!target.fileUrl) return
@@ -85,6 +86,33 @@ export function ShellMediaAspectRatioAction({ editor }: { editor: MediaImageEdit
         </div>
       ) : null}
     </div>
+  )
+}
+
+export function ShellMediaMarkupAction({
+  active,
+  disabled,
+  onToggle,
+}: {
+  active: boolean
+  disabled: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onToggle}
+      aria-label="Markup"
+      aria-pressed={active}
+      className={cn(
+        'button-compact gap-spacing-1 disabled:opacity-50',
+        active ? 'button-glass-primary' : 'button-glass-neutral',
+      )}
+    >
+      <PenLine className="icon-sm" />
+      Markup
+    </button>
   )
 }
 

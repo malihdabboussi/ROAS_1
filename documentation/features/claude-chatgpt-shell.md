@@ -42,6 +42,7 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 28. Established chat composers place the model selector beside the voice/send controls and render context usage as a compact segmented line beneath send. New, conversation-less composers omit the meter entirely so context chrome appears only after a chat has started.
 29. Tasks / Files / Sources is an in-flow third chat column. Opening it expands the shell drawer by the panel width while preserving the user's saved chat width, pushes the work screen right, and uses one right-edge transition instead of overlaying chat. Space media listeners no longer consume the shared media-open event, so generated-image cards can continue into the persistent shell viewer.
 30. Every chat-history row resolves one per-user activity state with fixed priority: amber **Needs your action**, animated purple **Working**, blue **New activity**, then no indicator for read/idle. Opening a conversation records its read timestamp immediately; a background stream that completes while another conversation is selected becomes unread without waiting for a feed refresh.
+31. Image viewer **Markup** mode records pen paths and pins as normalized image coordinates. Each mark owns its feedback, and Apply converts the completed marks into location-specific edit instructions before using the existing image-edit stream. The source remains unchanged; the generated result is registered as a new media version in the existing history rail.
 
 ## Key files
 
@@ -51,6 +52,8 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 - `apps/web/src/features/studio/components/AllChatsPage.tsx`
 - `apps/web/src/components/spaces/SpaceDocEditorPanelAdapter.tsx`
 - `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`
+- `apps/web/src/components/media/MediaImageMarkupCanvas.tsx`
+- `apps/web/src/components/media/media-image-markup.ts`
 - `apps/web/src/lib/artifacts/shell-artifact-viewer.ts`
 - `apps/web/src/lib/artifacts/global-artifacts-api.ts`
 - `apps/web/src/features/artifacts/components/GlobalArtifactsPage.tsx`
@@ -72,6 +75,7 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 - Chat work summaries are part of the drawer layout, not an absolute overlay. Their temporary width is additive and must never overwrite the user's saved chat width.
 - AI Chat visibility and its selected conversation are shell preferences, not page-local state. Navigation and refresh restore an open chat; explicit minimize preserves the conversation for restore, while explicit close clears it.
 - Space media navigation and the persistent shell viewer cooperate through the same open-media event; a Space listener must not cancel the event before the shell viewer resolves the selected asset.
+- Image markup is non-destructive and coordinate-based. Pen strokes and pins guide the existing multimodal edit path; only feedback-complete annotations can be applied, and every result remains a separate media version.
 - Space work collapse (`PanelRight`) hides the Space **dock** beside chat; Space stays mounted so selection/scroll survive expand. Docs/tasks open in normal Space UI — no shell open-item tab strip. Entering or switching `?space=` auto-opens the dock so a prior collapse does not stick. Artifact viewer stays a separate dock. List / summary panel is unrelated.
 - Page work-area collapse is available on shell routes only when chat is open or the page is already hidden. The page body moves beyond the right edge while chat expands; **Show page** slides it back from right to left. Dragging the outer AI drawer to the viewport edge enters the same collapsed state. Full-page Home chat closes back to Home rather than revealing an empty shell state.
 - The collapsed work-attached rail's bottom expand chevron and the top-bar `ShellWorkAreaControl` are two entry points into the same `workAreaOpen` state — neither owns a parallel flag. The rail chevron exists because the top-bar control is not reachable while attention is on the far-right collapsed strip.

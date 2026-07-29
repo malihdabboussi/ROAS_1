@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
-import { getAsset, listAssets, type MediaAsset } from '@/lib/services/media-api'
+import { editImageStream, getAsset, listAssets, type MediaAsset } from '@/lib/services/media-api'
 import { ShellMediaArtifactViewer } from './ShellMediaArtifactViewer'
 
 vi.mock('next/navigation', () => ({
@@ -15,6 +15,7 @@ vi.mock('@/lib/services/media-api', () => ({
   getAsset: vi.fn().mockResolvedValue(null),
   listAssets: vi.fn().mockResolvedValue({ assets: [] }),
   fetchImageGenerationModels: vi.fn().mockResolvedValue({ models: [] }),
+  editImageStream: vi.fn().mockResolvedValue(null),
   openMediaAssetInCanva: vi.fn(),
 }))
 
@@ -72,6 +73,53 @@ describe('ShellMediaArtifactViewer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Aspect ratio' }))
     expect(screen.getByText('Generate this image with a different aspect ratio')).toBeTruthy()
     expect(screen.getByText('16:9')).toBeTruthy()
+  })
+
+  it('opens image markup controls from the top toolbar', () => {
+    render(<ShellMediaArtifactViewer target={target} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Markup' }))
+
+    expect(screen.getByRole('application', { name: 'Image markup canvas' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Pen tool' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Pin tool' })).toBeTruthy()
+  })
+
+  it('routes completed markup feedback through the saved image edit flow', async () => {
+    render(<ShellMediaArtifactViewer target={target} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Markup' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Pin tool' }))
+
+    const canvas = screen.getByRole('application', { name: 'Image markup canvas' })
+    vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: 100,
+      bottom: 100,
+      width: 100,
+      height: 100,
+      toJSON: () => ({}),
+    })
+    fireEvent(canvas, new MouseEvent('pointerdown', { bubbles: true, clientX: 25, clientY: 40 }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Feedback for annotation 1' }), {
+      target: { value: 'Remove this icon' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply marked edits' }))
+
+    await waitFor(() =>
+      expect(editImageStream).toHaveBeenCalledWith(
+        expect.objectContaining({
+          parent_image_asset_id: 'image-1',
+          prompt: expect.stringContaining(
+            'Pin at 25% from the left and 40% from the top: Remove this icon.',
+          ),
+        }),
+        expect.any(Object),
+        expect.any(AbortSignal),
+      ),
+    )
   })
 
   it('renders a compact floating composer over the image canvas', () => {
