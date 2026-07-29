@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ConfirmDialog } from '@/components/ui/dialogs/ConfirmDialog'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   dayKeyInTimeZone,
@@ -15,9 +14,11 @@ import {
   AgendaCardRangeNav,
 } from '@/features/home/components/AgendaCardChrome'
 import { AgendaCardListBody } from '@/features/home/components/AgendaCardListBody'
-import { HOME_AGENDA_MESSAGES } from '@/features/home/config/home-agenda-messages.config'
 import { useAgendaCardData } from '@/features/home/hooks/use-agenda-card-data'
-import { agendaEventDismissKey, dismissAgendaEvent } from '@/features/home/lib/agenda-dismiss'
+import {
+  agendaEventMinimizeKey,
+  setAgendaEventMinimized,
+} from '@/features/home/lib/agenda-minimize'
 import { openAgendaEventDetail } from '@/features/home/lib/agenda-open-routing'
 import {
   dedupeAgendaEvents,
@@ -65,8 +66,8 @@ export function AgendaCard({
     loading,
     initialized,
     nowTick,
-    dismissedKeys,
-    setDismissedKeys,
+    minimizedKeys,
+    setMinimizedKeys,
     setBoardFetchWindow,
     timezone,
     effectiveScope,
@@ -99,8 +100,8 @@ export function AgendaCard({
     // Team API already collapses the same invite across people. Client fuzzy
     // dedupe would incorrectly merge different teammates' similarly named calls.
     const deduped = effectiveScope === 'team' ? sorted : dedupeAgendaEvents(sorted)
-    return deduped.filter((ev) => !dismissedKeys.has(agendaEventDismissKey(ev)))
-  }, [events, dismissedKeys, effectiveScope])
+    return deduped
+  }, [events, effectiveScope])
 
   const eventKey = (ev: CalendarAgendaEvent) => `${ev.account_id ?? ev.source}:${ev.id}`
   const todayDayKey = useMemo(
@@ -111,10 +112,12 @@ export function AgendaCard({
     if (!isToday) return null
     // Hero + earlier-today scroll are scoped to today's events only.
     const todays = visibleEvents.filter(
-      (ev) => dayKeyInTimeZone(new Date(ev.start), timezone) === todayDayKey,
+      (ev) =>
+        dayKeyInTimeZone(new Date(ev.start), timezone) === todayDayKey &&
+        !minimizedKeys.has(agendaEventMinimizeKey(ev)),
     )
     return pickNextAgendaEvent(todays, nowTick)
-  }, [isToday, visibleEvents, nowTick, timezone, todayDayKey])
+  }, [isToday, visibleEvents, minimizedKeys, nowTick, timezone, todayDayKey])
   const nextEventKey = nextEvent ? eventKey(nextEvent) : null
   const tomorrowKey = useMemo(() => tomorrowDayKey(nowTick, timezone), [nowTick, timezone])
   const [selectedEventKey, setSelectedEventKey] = useState<string | null>(null)
@@ -174,17 +177,12 @@ export function AgendaCard({
     [onOpenItem, onOpenMeeting],
   )
 
-  const [dismissPending, setDismissPending] = useState<CalendarAgendaEvent | null>(null)
-
-  const handleDismissEvent = useCallback((ev: CalendarAgendaEvent) => {
-    setDismissPending(ev)
-  }, [])
-
-  const confirmDismissEvent = useCallback(() => {
-    if (!dismissPending) return
-    setDismissedKeys(dismissAgendaEvent(dismissPending))
-    setDismissPending(null)
-  }, [dismissPending, setDismissedKeys])
+  const handleMinimizedChange = useCallback(
+    (ev: CalendarAgendaEvent, minimized: boolean) => {
+      setMinimizedKeys(setAgendaEventMinimized(ev, minimized))
+    },
+    [setMinimizedKeys],
+  )
 
   return (
     <div
@@ -247,8 +245,9 @@ export function AgendaCard({
             nowTick={nowTick}
             timezone={timezone}
             showAccountLabel={showAccountLabel}
+            minimizedKeys={minimizedKeys}
             openAgendaEvent={openAgendaEvent}
-            onDismissEvent={handleDismissEvent}
+            onMinimizedChange={handleMinimizedChange}
           />
         ) : (
           <AgendaCalendarPanel
@@ -262,17 +261,6 @@ export function AgendaCard({
         )}
       </div>
 
-      <ConfirmDialog
-        open={Boolean(dismissPending)}
-        title={HOME_AGENDA_MESSAGES.CONFIRM_DISMISS_TITLE.message}
-        description={HOME_AGENDA_MESSAGES.CONFIRM_DISMISS_DESCRIPTION.message}
-        confirmText={HOME_AGENDA_MESSAGES.CONFIRM_DISMISS_CONFIRM.message}
-        confirmTone="primary"
-        onConfirm={confirmDismissEvent}
-        onOpenChange={(open) => {
-          if (!open) setDismissPending(null)
-        }}
-      />
     </div>
   )
 }

@@ -6,6 +6,7 @@ import {
   dayKeyInTimeZone,
 } from '@/features/home/components/agenda-list-grouping'
 import { AgendaEventEntry } from '@/features/home/components/AgendaCardEventEntry'
+import { agendaEventMinimizeKey } from '@/features/home/lib/agenda-minimize'
 import { splitTodayAgendaEvents } from '@/features/home/lib/agenda-list-view'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 
@@ -28,8 +29,9 @@ export function AgendaCardListBody(props: {
   nowTick: number
   timezone: string
   showAccountLabel: boolean
+  minimizedKeys: Set<string>
   openAgendaEvent: (ev: CalendarAgendaEvent) => void
-  onDismissEvent: (ev: CalendarAgendaEvent) => void
+  onMinimizedChange: (ev: CalendarAgendaEvent, minimized: boolean) => void
 }) {
   const {
     visibleEvents,
@@ -46,8 +48,9 @@ export function AgendaCardListBody(props: {
     nowTick,
     timezone,
     showAccountLabel,
+    minimizedKeys,
     openAgendaEvent,
-    onDismissEvent,
+    onMinimizedChange,
   } = props
 
   const listRef = useRef<HTMLDivElement>(null)
@@ -70,17 +73,21 @@ export function AgendaCardListBody(props: {
       ? splitTodayAgendaEvents(todayEvents, nowTick, nextEventKey, eventKey)
       : { earlier: [] as CalendarAgendaEvent[], later: [] as CalendarAgendaEvent[] }
 
-  const renderRow = (ev: CalendarAgendaEvent, expanded: boolean) => (
-    <AgendaEventEntry
-      ev={ev}
-      isExpanded={expanded}
-      onSelect={() => setSelectedEventKey(eventKey(ev))}
-      onOpenMeeting={() => openAgendaEvent(ev)}
-      onDismiss={() => onDismissEvent(ev)}
-      nowTick={nowTick}
-      showAccountLabel={showAccountLabel}
-    />
-  )
+  const renderRow = (ev: CalendarAgendaEvent, expanded: boolean) => {
+    const isMinimized = minimizedKeys.has(agendaEventMinimizeKey(ev))
+    return (
+      <AgendaEventEntry
+        ev={ev}
+        isExpanded={!isMinimized && expanded}
+        isMinimized={isMinimized}
+        onSelect={() => setSelectedEventKey(eventKey(ev))}
+        onOpenMeeting={() => openAgendaEvent(ev)}
+        onMinimizedChange={(minimized) => onMinimizedChange(ev, minimized)}
+        nowTick={nowTick}
+        showAccountLabel={showAccountLabel}
+      />
+    )
+  }
 
   return (
     <div
@@ -116,7 +123,7 @@ export function AgendaCardListBody(props: {
               isNextHero
               onSelect={() => setSelectedEventKey(nextEventKey)}
               onOpenMeeting={() => openAgendaEvent(nextEvent)}
-              onDismiss={() => onDismissEvent(nextEvent)}
+              onMinimizedChange={(minimized) => onMinimizedChange(nextEvent, minimized)}
               nowTick={nowTick}
               showAccountLabel={showAccountLabel}
             />

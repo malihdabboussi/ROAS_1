@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { agendaBoardFallbackWindow } from '@/features/home/components/AgendaCalendarPanel'
 import { HOME_TOAST_ERRORS } from '@/features/home/config/home-toast-errors.config'
-import { readDismissedAgendaKeys } from '@/features/home/lib/agenda-dismiss'
+import { readMinimizedAgendaKeys } from '@/features/home/lib/agenda-minimize'
 import {
   agendaListFetchWindow,
   filterEventsToWindow,
@@ -61,7 +61,9 @@ export function useAgendaCardData() {
   const [loading, setLoading] = useState(true)
   const [initialized, setInitialized] = useState(false)
   const [nowTick, setNowTick] = useState(() => Date.now())
-  const [dismissedKeys, setDismissedKeys] = useState<Set<string>>(() => readDismissedAgendaKeys())
+  const [minimizedKeys, setMinimizedKeys] = useState<Set<string>>(() =>
+    readMinimizedAgendaKeys(),
+  )
   const [boardFetchWindow, setBoardFetchWindow] = useState<{
     start: Date
     end: Date
@@ -283,8 +285,8 @@ export function useAgendaCardData() {
     loading,
     initialized,
     nowTick,
-    dismissedKeys,
-    setDismissedKeys,
+    minimizedKeys,
+    setMinimizedKeys,
     setBoardFetchWindow,
     timezone,
     load,

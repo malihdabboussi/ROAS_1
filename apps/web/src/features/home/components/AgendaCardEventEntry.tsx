@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, Video, X } from 'lucide-react'
+import { MapPin, Minus, Video } from 'lucide-react'
+import { AgendaMinimizedEventEntry } from '@/features/home/components/AgendaMinimizedEventEntry'
 import type { CalendarAgendaEvent, CalendarAttendee } from '@/lib/services/calendar-api'
 
 const GCAL_EVENT_COLORS: Record<string, { border: string; bg: string; text: string }> = {
@@ -27,7 +28,6 @@ function eventColor(ev: CalendarAgendaEvent): (typeof GCAL_EVENT_COLORS)[string]
   }
   return DEFAULT_EVENT_COLOR
 }
-
 function formatTimeRange(ev: CalendarAgendaEvent): string {
   const s = new Date(ev.start)
   const e = new Date(ev.end)
@@ -35,7 +35,6 @@ function formatTimeRange(ev: CalendarAgendaEvent): string {
   const opts: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' }
   return `${s.toLocaleTimeString('en-US', opts)} – ${e.toLocaleTimeString('en-US', opts)}`
 }
-
 function minutesBetween(a: number, b: number): number {
   return Math.max(0, Math.round((b - a) / 60000))
 }
@@ -67,7 +66,6 @@ function attendeeRsvpSummary(attendees: CalendarAttendee[]): string | null {
   if (pending > 0) parts.push(`${pending} Pending`)
   return parts.join(' · ')
 }
-
 function attendeeLabel(a: CalendarAttendee): string {
   const name = a.name?.trim()
   if (name) return name
@@ -83,7 +81,6 @@ function attendeeInitials(a: CalendarAttendee): string {
   }
   return (a.email[0] ?? '?').toUpperCase()
 }
-
 const AVATAR_COLORS = [
   'bg-primary/20 text-primary',
   'bg-success/20 text-success',
@@ -181,41 +178,60 @@ export function AgendaEventEntry({
   ev,
   isExpanded,
   isNextHero = false,
+  isMinimized = false,
   onSelect,
   onOpenMeeting,
-  onDismiss,
+  onMinimizedChange,
   nowTick,
   showAccountLabel,
 }: {
   ev: CalendarAgendaEvent
   isExpanded: boolean
   isNextHero?: boolean
+  isMinimized?: boolean
   onSelect: () => void
   onOpenMeeting?: () => void
-  onDismiss?: () => void
+  onMinimizedChange?: (minimized: boolean) => void
   nowTick: number
   showAccountLabel: boolean
 }) {
   const color = eventColor(ev)
   const accountLabel = showAccountLabel && ev.account_label ? String(ev.account_label).trim() : ''
 
-  const dismissButton = onDismiss ? (
+  const minimizeButton = onMinimizedChange ? (
     <button
       type="button"
       onClick={(e) => {
         e.stopPropagation()
-        onDismiss()
+        onMinimizedChange(true)
       }}
-      className="text-muted-foreground hover:text-foreground hover:bg-hover-subtle rounded-md p-1 transition-colors"
-      aria-label="Dismiss from agenda"
-      title="Dismiss from agenda"
+      className="btn-icon-bare"
+      aria-label="Minimize meeting"
+      title="Minimize meeting"
     >
-      <X className="h-3.5 w-3.5" aria-hidden />
+      <Minus className="icon-sm" aria-hidden />
     </button>
   ) : null
 
   const openMeeting = () => {
     onOpenMeeting?.()
+  }
+
+  if (isMinimized) {
+    return (
+      <AgendaMinimizedEventEntry
+        ev={ev}
+        accountLabel={accountLabel}
+        eventColor={color.border}
+        onRestore={
+          onMinimizedChange
+            ? () => {
+                onMinimizedChange(false)
+              }
+            : undefined
+        }
+      />
+    )
   }
 
   return (
@@ -253,7 +269,7 @@ export function AgendaEventEntry({
                 <p className="typo-caption text-muted-foreground mt-0.5 truncate">{accountLabel}</p>
               ) : null}
             </div>
-            {dismissButton}
+            {minimizeButton}
           </div>
           {ev.source === 'fathom' ? (
             <span className="badge-glass badge-glass-cyan typo-caption mt-1 inline-flex">
@@ -344,7 +360,7 @@ export function AgendaEventEntry({
             </span>
           ) : null}
           {ev.video_url ? <Video className="text-muted-foreground h-3.5 w-3.5 shrink-0" /> : null}
-          {dismissButton}
+          {minimizeButton}
         </motion.div>
       )}
     </motion.div>

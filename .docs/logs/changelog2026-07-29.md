@@ -105,3 +105,13 @@ Why: The drawer state existed only in page memory, so navigation remounts and br
 Impact: Open chats now remain open on the same conversation across page changes and refreshes. Explicit minimize remains restorable, while explicit close still clears the conversation.
 
 Files: `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/shell/use-shell-store.test.ts`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-07-29 13:46] - [FIX]
+
+What: Replaced Agenda meeting dismissal with a persisted minimize and restore interaction. Minimized meetings remain in the calendar as compact rows with struck-through times and titles plus a clear minimized state.
+
+Why: The previous X action removed meetings from every Agenda view, which made it look like the calendar item had been deleted instead of temporarily collapsed.
+
+Impact: Users can reduce meeting clutter without losing calendar context, restore any minimized occurrence, and keep that choice across refreshes. Previously hidden occurrences migrate into the new minimized state.
+
+Files: `apps/web/src/features/home/components/AgendaCard.tsx`, `apps/web/src/features/home/components/AgendaCardListBody.tsx`, `apps/web/src/features/home/components/AgendaCardEventEntry.tsx`, `apps/web/src/features/home/components/AgendaMinimizedEventEntry.tsx`, `apps/web/src/features/home/hooks/use-agenda-card-data.ts`, `apps/web/src/features/home/lib/agenda-minimize.ts`, focused tests, and Agenda message cleanup.
