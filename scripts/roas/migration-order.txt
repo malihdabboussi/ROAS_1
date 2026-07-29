@@ -762,3 +762,4 @@
 20260729170000_upgrade_delegation_desk_work_queue.sql
 20260729173000_static_ad_chat_selection_gate.sql
 20260729174500_seed_delegator_system_agent.sql
+20260729180000_repair_delegator_org_seed_and_defs.sql
