@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { MeetingRecordingBackfillRepository } from '../../../meetings/repositories/meeting-recording-backfill.repository'
+import {
+  MeetingRecordingBackfillRepository,
+  type MeetingRecordingBackfillCursor,
+} from '../../../meetings/repositories/meeting-recording-backfill.repository'
 import { MeetingSourceIngestionService } from '../../../meetings/services/meeting-source-ingestion.service'
 import { FathomApiService } from './fathom-api.service'
 
@@ -9,7 +12,7 @@ type BackfillResult = {
   repaired: number
   unavailable: number
   failed: number
-  next_cursor: string | null
+  next_cursor: MeetingRecordingBackfillCursor | null
   failures: Array<{ recording_id: string; error: string }>
 }
 
@@ -25,16 +28,21 @@ export class FathomMeetingWorkspaceBackfillService {
 
   async backfillMissingTranscripts(
     supabase: SupabaseClient,
-    input: { userId: string; limit: number; beforeCreatedAt?: string },
+    input: { userId: string; limit: number; cursor?: MeetingRecordingBackfillCursor },
   ): Promise<BackfillResult> {
     const rows = await this.repository.listMissingTranscripts(supabase, input)
     const lastRow = rows.at(-1)
+    const lastCreatedAt = text(lastRow?.created_at)
+    const lastId = text(lastRow?.id)
     const result: BackfillResult = {
       scanned: rows.length,
       repaired: 0,
       unavailable: 0,
       failed: 0,
-      next_cursor: rows.length === input.limit ? text(lastRow?.created_at) : null,
+      next_cursor:
+        rows.length === input.limit && lastCreatedAt && lastId
+          ? { createdAt: lastCreatedAt, id: lastId }
+          : null,
       failures: [],
     }
     for (const row of rows) {

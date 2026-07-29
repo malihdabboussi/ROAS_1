@@ -1,5 +1,15 @@
 # Changelog - July 28, 2026
 
+## [2026-07-28 18:15] - [FIX]
+
+**What:** Changed historical Fathom transcript repair pagination to use a stable composite cursor containing both the recording creation timestamp and record ID.
+
+**Why:** Migration-created historical recordings can share one timestamp, so timestamp-only pagination skipped the remaining rows after the first page.
+
+**Impact:** Bounded transcript repair now visits every missing recording deterministically, including batches whose rows have identical creation timestamps.
+
+**Files:** `apps/api/src/modules/meetings/repositories/meeting-recording-backfill.repository.ts`, `apps/api/src/modules/integrations/fathom/services/fathom-meeting-workspace-backfill.service.ts`, `apps/api/src/modules/integrations/fathom/controllers/fathom-meetings.controller.ts`, `apps/api/src/modules/integrations/fathom/services/fathom-meeting-workspace-backfill.service.test.ts`
+
 ## [2026-07-28 07:50] - [FEATURE]
 
 What: Wired 18 industry-adjacent IG Story CloudFront presets + stills into the scene catalog and skill stock library (Claude-generated Higgsfield assets; scene IDs aligned to delivered names).

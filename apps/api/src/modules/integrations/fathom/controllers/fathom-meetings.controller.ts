@@ -21,6 +21,7 @@ import {
   type RequestScope,
 } from '@vibey/api-shared'
 import { BrainImportJobsService } from '../../../brain/services/brain-import-jobs.service'
+import type { MeetingRecordingBackfillCursor } from '../../../meetings/repositories/meeting-recording-backfill.repository'
 import { ListFathomMeetingsSchema } from '../dto/fathom.dto'
 import { FathomApiService } from '../services/fathom-api.service'
 import { FathomMeetingWorkspaceBackfillService } from '../services/fathom-meeting-workspace-backfill.service'
@@ -101,19 +102,29 @@ export class FathomMeetingsController {
   async backfillMeetingTranscripts(
     @Supabase() supabase: SupabaseClient,
     @CurrentUser() user: { id: string },
-    @Body() body: { limit?: number; cursor?: string },
+    @Body() body: { limit?: number; cursor?: { createdAt?: unknown; id?: unknown } },
   ) {
     const requested = Number(body?.limit ?? 25)
     const limit = Number.isInteger(requested) ? Math.min(Math.max(requested, 1), 100) : 25
-    const cursor = body?.cursor?.trim()
-    if (cursor && Number.isNaN(Date.parse(cursor))) {
-      throw new BadRequestException('cursor must be an ISO timestamp')
+    const cursor = parseBackfillCursor(body?.cursor)
+    if (body?.cursor && !cursor) {
+      throw new BadRequestException('cursor must contain an ISO createdAt and record id')
     }
     const result = await this.meetingBackfill.backfillMissingTranscripts(supabase, {
       userId: user.id,
       limit,
-      beforeCreatedAt: cursor,
+      cursor,
     })
     return { success: true, ...result }
   }
+}
+
+function parseBackfillCursor(
+  cursor: { createdAt?: unknown; id?: unknown } | undefined,
+): MeetingRecordingBackfillCursor | undefined {
+  if (!cursor) return undefined
+  const createdAt = typeof cursor.createdAt === 'string' ? cursor.createdAt.trim() : ''
+  const id = typeof cursor.id === 'string' ? cursor.id.trim() : ''
+  if (!createdAt || Number.isNaN(Date.parse(createdAt)) || !id) return undefined
+  return { createdAt, id }
 }

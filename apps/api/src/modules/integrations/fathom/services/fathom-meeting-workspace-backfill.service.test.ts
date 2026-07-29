@@ -118,12 +118,14 @@ describe('FathomMeetingWorkspaceBackfillService', () => {
           meeting_item_id: 'meeting-item-1',
           space_id: 'space',
           external_recording_id: '1',
+          id: 'recording-1',
           created_at: '2026-07-28T11:00:00.000Z',
         },
         {
           meeting_item_id: 'meeting-item-2',
           space_id: 'space',
           external_recording_id: '2',
+          id: 'recording-2',
           created_at: '2026-07-28T10:00:00.000Z',
         },
       ]),
@@ -137,14 +139,25 @@ describe('FathomMeetingWorkspaceBackfillService', () => {
     const result = await service.backfillMissingTranscripts({} as never, {
       userId: 'user',
       limit: 2,
-      beforeCreatedAt: '2026-07-28T12:00:00.000Z',
+      cursor: {
+        createdAt: '2026-07-28T12:00:00.000Z',
+        id: 'recording-before',
+      },
     })
 
     expect(repository.listMissingTranscripts).toHaveBeenCalledWith(
       {},
-      expect.objectContaining({ beforeCreatedAt: '2026-07-28T12:00:00.000Z' }),
+      expect.objectContaining({
+        cursor: {
+          createdAt: '2026-07-28T12:00:00.000Z',
+          id: 'recording-before',
+        },
+      }),
     )
-    expect(result.next_cursor).toBe('2026-07-28T10:00:00.000Z')
+    expect(result.next_cursor).toEqual({
+      createdAt: '2026-07-28T10:00:00.000Z',
+      id: 'recording-2',
+    })
     expect(result.unavailable).toBe(2)
   })
 })
