@@ -23,12 +23,14 @@ import {
 import { BrainImportJobsService } from '../../../brain/services/brain-import-jobs.service'
 import { ListFathomMeetingsSchema } from '../dto/fathom.dto'
 import { FathomApiService } from '../services/fathom-api.service'
+import { FathomMeetingWorkspaceBackfillService } from '../services/fathom-meeting-workspace-backfill.service'
 
 @Controller('integrations/fathom')
 export class FathomMeetingsController {
   constructor(
     private readonly api: FathomApiService,
     private readonly importJobs: BrainImportJobsService,
+    private readonly meetingBackfill: FathomMeetingWorkspaceBackfillService,
   ) {}
 
   @Get('meetings')
@@ -92,5 +94,26 @@ export class FathomMeetingsController {
       scope.orgId ?? null,
     )
     return { success: true, ...queued }
+  }
+
+  @Post('meetings/backfill-transcripts')
+  @UseGuards(AuthGuard, OrgContextGuard, OrgRoleGuard)
+  async backfillMeetingTranscripts(
+    @Supabase() supabase: SupabaseClient,
+    @CurrentUser() user: { id: string },
+    @Body() body: { limit?: number; cursor?: string },
+  ) {
+    const requested = Number(body?.limit ?? 25)
+    const limit = Number.isInteger(requested) ? Math.min(Math.max(requested, 1), 100) : 25
+    const cursor = body?.cursor?.trim()
+    if (cursor && Number.isNaN(Date.parse(cursor))) {
+      throw new BadRequestException('cursor must be an ISO timestamp')
+    }
+    const result = await this.meetingBackfill.backfillMissingTranscripts(supabase, {
+      userId: user.id,
+      limit,
+      beforeCreatedAt: cursor,
+    })
+    return { success: true, ...result }
   }
 }

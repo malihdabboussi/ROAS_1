@@ -20,7 +20,7 @@ The canonical post-call path is now meeting-first rather than automation-task-fi
 
 The default `Fathom Meeting Log` automation no longer runs `send_to_agent`, `agent_suggest_tasks`, or Slack-confirm actions. The migration removes those steps from installed rules with that exact template name. Custom Fathom automations are preserved. Slack delivery remains an explicit downstream workflow, not an automatic side effect of ingesting a recording.
 
-Legacy Fathom call rows are backfilled into workspaces and recording sources. Existing full transcript text is copied into a transcript deliverable without deleting the original call data.
+Legacy Fathom call rows are backfilled into workspaces and recording sources. Existing full transcript text is copied into a transcript deliverable without deleting the original call data. Historical recording rows that predate transcript persistence can be repaired through the authenticated, cursor-paginated transcript backfill endpoint. It refetches the original Fathom transcript and reuses canonical meeting ingestion, so retries update the existing recording, recap, and provider actions without creating duplicate meetings or task floods.
 
 ## Status (2026-07-22)
 
@@ -56,6 +56,7 @@ Legacy Fathom call rows are backfilled into workspaces and recording sources. Ex
 Fathom recording ready (my_recordings OR shared_team_recordings)
   → webhook resolves owner by webhook secret
   → optional transcript hydrate via Fathom API if payload omitted it
+  → cursor-paginated transcript repair for historical rows that omitted transcript payloads
   → choose one canonical matching Meetings route (organization route wins an equal match)
   → one canonical Meetings item
   → one or more meeting_recordings + complete transcript deliverables
@@ -378,6 +379,8 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-24:** Provider rate limits receive one delayed retry on the selected model before model fallback. Exhausted retries return a specific Pixel-busy response instead of the generic processing error.
 - **2026-07-24:** A Fathom webhook materializes one canonical Meetings item even when personal and organization automations both match. Equal filters prefer the organization Meetings route; transcript entry count remains segment count, not meeting count.
 - **2026-07-28:** Linked Fathom Agenda rows open the curated meeting workspace. Ingestion owns processing/complete lifecycle state; reopening a completed call resumes its persistent chat without marking it live or relaunching its join URL.
+- **2026-07-28:** Historical Fathom recordings missing transcript deliverables are repaired in bounded cursor pages through the same canonical ingestion service. Unavailable recordings cannot block older pages, and successful replays remain idempotent.
+- **2026-07-28:** Production model capability tiers must cover every context window emitted by Auto chat routing. Contract tests enumerate full-task and staged-chat routes so meeting chat cannot select a context tier rejected by the runtime registry.
 
 ## Related
 
