@@ -35,3 +35,13 @@ Files:
 - `apps/web/src/components/global-chat/`
 - `apps/web/src/app/(dashboard)/home/`
 - `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-07-29 12:18 - [FIX]
+
+What: Made Quick Missions reuse an attached chat campaign and Space, added a searchable Campaign → Space fallback, changed Tasks / Files / Sources into an in-flow third chat column, and restored generated-image cards to the shared viewer.
+
+Why: Scoped chats were asking for context they already had, the fallback was difficult to search, the work summary overlaid chat, and a Space media listener consumed image-open events before the persistent viewer could handle them.
+
+Impact: Quick production starts from the correct linked Space, unscoped launches remain easy to target, chat and work content resize without overlap, and generated image cards open their actual asset viewer.
+
+Files: `apps/web/src/features/spaces/components/playbooks/`, `apps/web/src/components/shell/`, `apps/web/src/features/spaces/hooks/use-space-open-media-event.ts`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `documentation/features/missions.md`, `documentation/features/claude-chatgpt-shell.md`

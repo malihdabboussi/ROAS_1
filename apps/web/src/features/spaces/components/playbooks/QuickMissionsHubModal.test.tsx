@@ -3,6 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createMission } from '@/lib/missions'
 import { QuickMissionsHubModal } from './QuickMissionsHubModal'
 
+vi.mock('./QuickMissionCampaignSpaceSelect', () => ({
+  QuickMissionCampaignSpaceSelect: () => <div>Searchable campaign and space picker</div>,
+}))
+
 vi.mock('@/lib/missions', () => ({
   createMission: vi.fn(),
   resolveMissionCreateToastMessage: vi.fn(() => 'Could not start mission'),
@@ -31,10 +35,7 @@ describe('QuickMissionsHubModal', () => {
       />,
     )
 
-    expect(screen.getByRole('button', { name: 'Select client campaign' })).toHaveTextContent(
-      'Current Course',
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    expect(screen.queryByText('Searchable campaign and space picker')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Static ad book/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Write for me' })).toHaveClass('button-glass-primary')
 
@@ -60,5 +61,19 @@ describe('QuickMissionsHubModal', () => {
       ),
     )
     expect(onStarted).toHaveBeenCalledWith('mission-1', 'Static Ad Production')
+  })
+
+  it('shows a searchable campaign and space picker when the chat is unscoped', () => {
+    render(
+      <QuickMissionsHubModal
+        open
+        clients={[{ spaceId: 'space-1', campaignId: 'campaign-1', title: 'Current Course' }]}
+        initialPlaybookKey="static-ad-production"
+        onClose={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Choose the client campaign.')).toBeInTheDocument()
+    expect(screen.getByText('Searchable campaign and space picker')).toBeInTheDocument()
   })
 })

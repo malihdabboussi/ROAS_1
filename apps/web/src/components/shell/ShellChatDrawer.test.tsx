@@ -79,6 +79,7 @@ describe('ShellChatDrawer', () => {
       chatHistoryCollapsed: false,
       workAreaOpen: true,
       newChatNonce: 0,
+      rightPanel: { open: false, tab: 'tasks' },
     })
     vi.clearAllMocks()
   })
@@ -162,6 +163,24 @@ describe('ShellChatDrawer', () => {
     expect(screen.getByText('Chat history')).toBeInTheDocument()
     expect(screen.getByText('Chat panel')).toBeInTheDocument()
     expect(container.querySelector('[data-expanded="true"]')).not.toBeNull()
+  })
+
+  it('adds the work summary as a third column instead of overlaying chat', () => {
+    useShellStore.setState({
+      chatDrawer: {
+        open: true,
+        conversationId: 'conversation-1',
+        width: 420,
+        minimized: false,
+      },
+      rightPanel: { open: true, tab: 'tasks' },
+    })
+
+    const { container } = render(<ShellChatDrawer />)
+
+    expect(container.querySelector('[data-shell-chat-drawer]')).toHaveStyle({ width: '708px' })
+    expect(container.querySelector('.shell-chat-drawer-body')).toHaveStyle({ width: '708px' })
+    expect(useShellStore.getState().chatDrawer.width).toBe(420)
   })
 
   it('resizes the chat history rail independently in expanded chat', () => {

@@ -1,7 +1,7 @@
 'use client'
 
-import { X } from 'lucide-react'
 import { useEffect } from 'react'
+import { X } from 'lucide-react'
 import { ConversationScopePicker } from '@/components/conversations'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import type { Conversation } from '@/lib/conversations'
@@ -56,7 +56,7 @@ export function ShellRightPanel({
   return (
     <aside
       className={cn(
-        'border-border bg-background w-spacing-72 z-dropdown absolute inset-y-0 right-0 flex h-full shrink-0 flex-col overflow-hidden border-l shadow-xl transition-transform duration-300 ease-out motion-reduce:transition-none',
+        'border-border bg-background w-spacing-72 flex h-full shrink-0 flex-col overflow-hidden border-l transition-transform duration-300 ease-out motion-reduce:transition-none',
         visible ? 'translate-x-0' : 'translate-x-full',
       )}
       aria-label="Work summary"

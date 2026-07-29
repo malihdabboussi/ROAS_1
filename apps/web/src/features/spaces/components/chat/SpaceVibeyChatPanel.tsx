@@ -440,8 +440,7 @@ export function SpaceVibeyChatPanel({
   }
 
   const chatAgents = useMemo(() => {
-    // Loop is the Flows specialist — only selectable while working on the Flows
-    // surface, hidden everywhere else (spaces, brain, team, general).
+    // Loop is the Flows specialist and stays hidden on every other surface.
     const allowLoop = chatSurface === 'flows'
     const agents = spacesRoster.filter(
       (entry) =>
@@ -1900,8 +1899,7 @@ export function SpaceVibeyChatPanel({
     return () => window.removeEventListener(GLOBAL_CHAT_SEED_EVENT, onSeed)
   }, [applyGlobalChatSeed])
 
-  // Mirror the panel's real active agent into the global chat store so the
-  // surface recommendation banner reflects what the user is actually talking to.
+  // Mirror the active agent so the recommendation banner stays accurate.
   useEffect(() => {
     const store = useGlobalChatStore.getState()
     if (store.activeAgentKey !== activeAgentKey) {
@@ -2078,8 +2076,7 @@ export function SpaceVibeyChatPanel({
       data-spaces-chat-panel
       ref={chatPanelRef}
       className={cn(
-        'relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden',
-        // Shell chrome: fluid full-bleed chat (no card frame). Embedded uses card chrome.
+        'relative flex h-full min-h-0 min-w-0 flex-row overflow-hidden',
         shellSidebarChrome ? 'bg-background' : 'rounded-2xl border border-[var(--border)]',
         !shellSidebarChrome &&
           (panelMode === 'conversations' ||

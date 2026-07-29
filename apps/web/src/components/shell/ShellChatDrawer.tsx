@@ -11,12 +11,14 @@ import { initConversationTitleAutogen } from '@/features/studio/services/convers
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cn } from '@/lib/utils/cn'
 import { ShellChatMenu } from './ShellChatMenu'
+import { useRightEdgePresence } from './use-right-edge-presence'
 import { useShellStore } from './use-shell-store'
 
 /** Matches the drawer/HQ-rail transition in globals.css. */
 const DRAWER_SLIDE_MS = 300
 const DRAWER_COLLAPSE_EDGE_TOLERANCE = 24
 const HISTORY_COLLAPSE_THRESHOLD = 96
+const RIGHT_PANEL_WIDTH = 288
 
 export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
   const open = useShellStore((s) => s.chatDrawer.open)
@@ -30,6 +32,8 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
   const minimizeChatDrawer = useShellStore((s) => s.minimizeChatDrawer)
   const newChatNonce = useShellStore((s) => s.newChatNonce)
+  const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
+  const { mounted: rightPanelMounted } = useRightEdgePresence(rightPanelOpen, rightPanelOpen)
 
   const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
   const openConversationInSpaceChat = useSpacesStore((s) => s.openConversationInSpaceChat)
@@ -173,8 +177,9 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
 
   // Expanded = page collapsed: history stays, chat fills the freed width.
   // Docked = fixed width with slide-in animation.
-  const drawerWidthStyle = expanded ? undefined : { width: open ? `${width}px` : '0px' }
-  const bodyStyle = expanded ? undefined : { width: `${width}px` }
+  const dockedWidth = width + (rightPanelMounted ? RIGHT_PANEL_WIDTH : 0)
+  const drawerWidthStyle = expanded ? undefined : { width: open ? `${dockedWidth}px` : '0px' }
+  const bodyStyle = expanded ? undefined : { width: `${dockedWidth}px` }
 
   return (
     <>

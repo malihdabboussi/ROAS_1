@@ -1,6 +1,6 @@
 # Missions harness
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 ## Full subtask workspace
 
@@ -18,7 +18,7 @@ The header displays `Mission > Subtask`. Selecting the Mission breadcrumb return
 
 The Missions Space view now has **Mission List** and **Mission Views** surfaces. The list remains the operational table. Mission Views presents supported deterministic playbooks as action-oriented reports using one registry-backed phase contract rather than a custom page per mission.
 
-The global **Start playbook** and Chat **Quick Missions** dialogs expose the same canonical Static Ad Production and IG Organic Video payload builders used by Ads Research. Quick Missions defaults the client campaign from the attached chat Space/campaign or active Space while keeping the campaign selectable, and a successful Chat launch appends a linked mission receipt to the active conversation. Static production starts with one of three explicit lanes: Validate Messaging, qualified image brief generation, or the static-ad-book template library. Template runs support multiple selected formats with an independent variation count for each; every lane defaults to **Write for me**, while **Use my exact copy** expands one required field per finished ad. Video runs collect one or more scenes, footage strategy, exact sticker copy or write-for-me context, CTA, and an approved emoji. The dialogs cannot submit either production playbook until the required copy and output selections are present.
+The global **Start playbook** and Chat **Quick Missions** dialogs expose the same canonical Static Ad Production and IG Organic Video payload builders used by Ads Research. Quick Missions reuses the attached chat Space/campaign or active Space without asking the user to select it again. When no scope exists, the fallback picker is searchable and groups Spaces under their campaigns. A successful Chat launch appends a linked mission receipt to the active conversation. Static production starts with one of three explicit lanes: Validate Messaging, qualified image brief generation, or the static-ad-book template library. Template runs support multiple selected formats with an independent variation count for each; every lane defaults to **Write for me**, while **Use my exact copy** expands one required field per finished ad. Video runs collect one or more scenes, footage strategy, exact sticker copy or write-for-me context, CTA, and an approved emoji. The dialogs cannot submit either production playbook until the required copy and output selections are present.
 
 The agent-facing `create_mission` contract exposes a canonical top-level `playbook_id`. The action adapter persists that value as `input.playbook_id` while preserving `input.playbook_kickoff`, so a Chat agent cannot lose an explicitly named playbook by mentioning it only in the brief. Mission planning also recognizes the older `playbook` aliases, including `input.playbook_kickoff.playbook`. This keeps Chat and the Start playbook dialog on the same deterministic registry path. If a freeform plan is still used, its media output contract must pair `media_artifact` with an `image`, `video`, or `file` result; `process_media` combined with a document contract is rejected during preflight instead of entering execution.
 
@@ -301,6 +301,7 @@ If the direct pool hits a transport failure, the worker removes it from service 
 
 ## Decision Log
 
+- 2026-07-29: Made Chat Quick Missions trust an attached campaign/Space scope and skip redundant selection; unscoped launches use one searchable Campaign → Space control.
 - 2026-07-28: Made Quick Missions inherit attached Space/campaign context, added an in-chat launch receipt, replaced native campaign and emoji selects with the shared tokenized control, and expanded Static Ad Production into Validate Messaging, image-brief, and multi-format static-ad-book lanes with per-output copy and counts.
 - 2026-07-26: Required Static Ad Production to finish through the deterministic server-side `render_static_ad` operation and made exact-count contracts reject both missing and extra matching Deliverables.
 - 2026-07-26: Made IG Organic Video contract on final `process_media` Story renders, persisted each render as both campaign Media and a mission Deliverable, and prohibited Google/Veo substitutes for missing Higgsfield footage.

@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { toast } from 'sonner'
-import { SettingsSelect } from '@/components/ui/forms/SettingsSelect'
 import { createMission, resolveMissionCreateToastMessage } from '@/lib/missions'
 import { QUICK_MISSIONS_MESSAGES } from '../../config/quick-missions-messages.config'
 import {
@@ -33,6 +32,7 @@ import {
   type QuickMissionCatalogEntry,
   type QuickMissionPlaybookId,
 } from './quick-missions-catalog'
+import { QuickMissionCampaignSpaceSelect } from './QuickMissionCampaignSpaceSelect'
 import { QuickMissionContextFields } from './QuickMissionContextFields'
 import {
   buildStaticAdProductionMissionPayload,
@@ -103,7 +103,7 @@ export function QuickMissionsHubModal({
     if (!open) return
     const preset = initialPlaybookKey ? findQuickMissionByKey(initialPlaybookKey) : null
     setSelected(preset ?? null)
-    setStep(preset ? 'client' : 'mission')
+    setStep(preset ? (initialClientSpaceId ? 'context' : 'client') : 'mission')
     setClientSpaceId(initialClientSpaceId ?? '')
     setWebinar(EMPTY_WEBINAR)
     setStaticFields(EMPTY_STATIC_AD_FIELDS)
@@ -215,18 +215,10 @@ export function QuickMissionsHubModal({
 
               {step === 'client' ? (
                 <div className="space-y-spacing-2">
-                  <span className="body-3 text-foreground font-medium">Client campaign</span>
-                  <SettingsSelect
+                  <span className="body-3 text-foreground font-medium">Campaign &amp; space</span>
+                  <QuickMissionCampaignSpaceSelect
+                    clients={clients}
                     value={clientSpaceId}
-                    ariaLabel="Select client campaign"
-                    placeholder="Select a campaign…"
-                    options={[
-                      { value: '', label: 'Select a campaign…' },
-                      ...clients.map((client) => ({
-                        value: client.spaceId,
-                        label: client.title,
-                      })),
-                    ]}
                     onChange={setClientSpaceId}
                   />
                 </div>
@@ -273,7 +265,7 @@ export function QuickMissionsHubModal({
                 }
                 onClick={() => {
                   if (step === 'mission') {
-                    setStep('client')
+                    setStep(selectedClient ? 'context' : 'client')
                     return
                   }
                   if (step === 'client') {

@@ -78,6 +78,7 @@ describe('ShellRightPanel', () => {
     expect(screen.getByRole('complementary', { name: 'Work summary' })).toHaveClass(
       'motion-reduce:transition-none',
     )
+    expect(screen.getByRole('complementary', { name: 'Work summary' })).not.toHaveClass('absolute')
     expect(screen.getByTestId('tasks-context')).toHaveTextContent('conversation-1')
   })
 
