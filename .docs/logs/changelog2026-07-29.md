@@ -1,5 +1,15 @@
 # Changelog - July 29, 2026
 
+## [2026-07-29 12:58] - [FIX]
+
+What: Added a durable run-status probe when a chat stream keeps receiving heartbeat bytes but stops delivering structured agent events. Completed or failed runs now enter the existing reconciliation flow, while genuinely active runs remain connected. Added regression coverage for heartbeat-only completed and active runs plus stream closure before a terminal event.
+
+Why: A production chat completed and persisted its 2,605-character answer, but the live browser connection stopped after context/tool events. Heartbeats kept the old stall detector satisfied, so the saved answer did not appear until refresh.
+
+Impact: Stalled live delivery now self-recovers after 60 seconds without requiring a page refresh or a manual “continue” message, while long-running active work is not aborted solely because its heartbeat stream is quiet between structured events.
+
+Files: `apps/web/src/features/studio/services/stream-resilience.ts`, `apps/web/src/features/studio/services/stream-resilience.test.ts`, `apps/web/src/features/studio/services/chat-stream-interruption.test.ts`, `documentation/features/chat-stream-recovery.md`
+
 ## [2026-07-29 12:22] - [FEATURE]
 
 What: Added one prioritized activity indicator to shared chat-history rows: amber for unresolved user action, animated purple while the agent is working, blue for unread assistant activity, and no indicator once read or idle. Added per-user conversation read timestamps and automatic read marking on selection.

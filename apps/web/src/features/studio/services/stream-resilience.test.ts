@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { backendGet } from '@/lib/api/backend-client'
 import { useChatStore } from '../store/use-chat-store'
 import { isStreamActive, recoverConversation, recoverStalledConversation } from './chat.service'
 import { handleStreamStalls, STREAM_STALL_TIMEOUT_MS } from './stream-resilience'
@@ -6,6 +7,10 @@ import { handleStreamStalls, STREAM_STALL_TIMEOUT_MS } from './stream-resilience
 vi.mock('@/lib/utils/org-storage', () => ({
   getActiveOrgIdFromStorage: () => null,
   getOrgScopedKey: (_scope: string, key: string) => key,
+}))
+
+vi.mock('@/lib/api/backend-client', () => ({
+  backendGet: vi.fn(),
 }))
 
 vi.mock('./chat.service', () => ({
@@ -42,9 +47,14 @@ describe('stream stall resilience', () => {
     expect(recoverStalledConversation).toHaveBeenCalledWith('conversation-1')
   })
 
-  it('does not recover when SSE heartbeats continue after the last agent event', () => {
+  it('reconciles a completed run when only SSE heartbeats continue', async () => {
     const now = Date.now()
     vi.mocked(isStreamActive).mockReturnValue(true)
+    vi.mocked(backendGet).mockResolvedValue({
+      active: false,
+      messageId: 'assistant-1',
+      runId: 'run-1',
+    } as never)
     useChatStore.setState({
       streamingConversationIds: ['conversation-1'],
       reconnectingConversationIds: [],
@@ -58,6 +68,36 @@ describe('stream stall resilience', () => {
 
     handleStreamStalls(now)
 
+    await vi.waitFor(() => {
+      expect(backendGet).toHaveBeenCalledWith('/api/chat/status/conversation-1')
+      expect(recoverStalledConversation).toHaveBeenCalledWith('conversation-1')
+    })
+  })
+
+  it('keeps a heartbeat-backed stream open while its durable run is still active', async () => {
+    const now = Date.now()
+    vi.mocked(isStreamActive).mockReturnValue(true)
+    vi.mocked(backendGet).mockResolvedValue({
+      active: true,
+      messageId: 'assistant-1',
+      runId: 'run-1',
+    } as never)
+    useChatStore.setState({
+      streamingConversationIds: ['conversation-1'],
+      reconnectingConversationIds: [],
+      lastAgentEventAtByConversation: {
+        'conversation-1': now - STREAM_STALL_TIMEOUT_MS - 1,
+      },
+      lastStreamActivityAtByConversation: {
+        'conversation-1': now,
+      },
+    })
+
+    handleStreamStalls(now)
+
+    await vi.waitFor(() => {
+      expect(backendGet).toHaveBeenCalledWith('/api/chat/status/conversation-1')
+    })
     expect(recoverStalledConversation).not.toHaveBeenCalled()
   })
 

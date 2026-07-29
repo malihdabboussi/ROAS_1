@@ -1,6 +1,8 @@
 'use client'
 
+import { backendGet } from '@/lib/api/backend-client'
 import { useChatStore } from '../store/use-chat-store'
+import type { ChatStatusResponse } from '../types'
 import {
   isStreamActive,
   recoverConversation,
@@ -9,9 +11,29 @@ import {
 } from './chat.service'
 
 let initialized = false
+const activeSilentStatusChecks = new Set<string>()
 
 export const STREAM_STALL_CHECK_INTERVAL_MS = 5_000
 export const STREAM_STALL_TIMEOUT_MS = 60_000
+
+async function reconcileHeartbeatOnlyStream(conversationId: string): Promise<void> {
+  if (activeSilentStatusChecks.has(conversationId)) return
+  activeSilentStatusChecks.add(conversationId)
+  try {
+    const status = await backendGet<ChatStatusResponse>(`/api/chat/status/${conversationId}`)
+    if (
+      !status.active ||
+      status.failureCode === 'stream_interrupted' ||
+      status.failureCode === 'context_window_exceeded'
+    ) {
+      await recoverStalledConversation(conversationId)
+    }
+  } catch {
+    // A healthy heartbeat-backed stream is safer than aborting on a failed status probe.
+  } finally {
+    activeSilentStatusChecks.delete(conversationId)
+  }
+}
 
 export function initStreamResilience(): void {
   if (initialized || typeof window === 'undefined') return
@@ -38,11 +60,17 @@ export function handleStreamStalls(now = Date.now()): void {
 
     const lastAgentEventAt = store.lastAgentEventAtByConversation[conversationId] ?? 0
     const lastStreamActivityAt = store.lastStreamActivityAtByConversation[conversationId] ?? 0
-    // SSE comment heartbeats (`: heartbeat`) update stream byte activity but not agent events.
-    // Use the latest of both so long gateway-prep windows do not false-trigger recovery.
+    const agentEventsAreStale =
+      lastAgentEventAt > 0 && now - lastAgentEventAt >= STREAM_STALL_TIMEOUT_MS
+    const streamBytesAreRecent =
+      lastStreamActivityAt > 0 && now - lastStreamActivityAt < STREAM_STALL_TIMEOUT_MS
+    if (agentEventsAreStale && streamBytesAreRecent) {
+      void reconcileHeartbeatOnlyStream(conversationId)
+      continue
+    }
+
     const lastActivityAt = Math.max(lastAgentEventAt, lastStreamActivityAt)
-    if (lastActivityAt <= 0) continue
-    if (now - lastActivityAt < STREAM_STALL_TIMEOUT_MS) continue
+    if (lastActivityAt <= 0 || now - lastActivityAt < STREAM_STALL_TIMEOUT_MS) continue
 
     void recoverStalledConversation(conversationId)
   }

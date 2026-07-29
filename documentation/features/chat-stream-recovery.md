@@ -1,6 +1,6 @@
 # Chat Stream Recovery
 
-Last Modified: 2026-07-28
+Last Modified: 2026-07-29
 
 ## Overview
 
@@ -84,7 +84,7 @@ Chat streaming uses Supabase messages as the canonical record and Redis as the l
 
 ## Recovery Behavior
 
-The browser tracks raw stream byte activity separately from visible assistant events, so SSE heartbeats keep a long-running answer marked healthy even when no assistant text is being rendered. If an active stream is silent for more than 60 seconds, the browser aborts the stale local reader, preserves the saved `run_id`/cursor, marks the conversation reconnecting, and starts the existing recovery flow.
+The browser tracks raw stream byte activity separately from visible assistant events. If both are silent for more than 60 seconds, the browser aborts the stale local reader, preserves the saved `run_id`/cursor, marks the conversation reconnecting, and starts the existing recovery flow. If heartbeat bytes continue but structured agent events have been silent for 60 seconds, the browser checks the durable run status first. Active runs stay connected; completed, failed, or recoverable runs enter the same reconciliation flow so persisted final content appears without a page refresh.
 
 Transport failures auto-recover first. Redis resume is attempted for active runs, then DB polling recovery runs if resume cannot complete. If the answer still cannot recover, the interrupted banner shows one `Resume` action. A manual `Resume` refreshes the canonical thread, stops any orphaned active run, and starts one hidden continuation turn grounded in the exact latest visible user request, the partial assistant output already shown, and the original attachments. This prevents a dead queued run from being polled repeatedly and keeps the continuation on the unfinished task.
 
@@ -92,6 +92,7 @@ Context-window failures are model failures, not transport failures. OpenClaw own
 
 ## Decision Log
 
+- 2026-07-29: Added durable status reconciliation for heartbeat-only live streams. A proxy connection can remain byte-active after it stops delivering structured agent events; the browser now checks the run after 60 seconds and hydrates a completed persisted answer instead of waiting indefinitely for refresh.
 - 2026-07-28: Split Auto into a low-cost research/tool stage and a single bounded Opus 5 writing stage. Added generation-level settlement reconciliation and cost telemetry so repeated provider calls are visible and already-settled generations cannot be charged again.
 - 2026-07-28: Made manual interrupted-turn recovery deterministic: refresh canonical messages, stop the orphaned run, then continue from the exact user request and partial output while preserving attachments. Automatic Redis/DB reconnect remains the first recovery path.
 - 2026-07-26: Added custom UTC date ranges, equal-length previous-period comparisons, daily metric sparklines, and provider-ledger spend stacked by model to the admin AI usage dashboard. Provider billing attempts remain authoritative for spend and request totals; traces remain authoritative for tokens and failures.

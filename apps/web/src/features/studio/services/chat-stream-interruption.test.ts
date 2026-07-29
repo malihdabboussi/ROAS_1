@@ -12,6 +12,7 @@ import {
   needsStreamRecovery,
   recoverConversation,
   requestStopStream,
+  sendMessageStreaming,
   shouldMarkConversationInterruptedForStreamError,
 } from './chat.service'
 
@@ -57,6 +58,49 @@ describe('chat stream interruption classification', () => {
 
   it('keeps interrupted recovery available after real agent work starts', () => {
     expect(shouldMarkConversationInterruptedForStreamError(true)).toBe(true)
+  })
+
+  it('does not treat tool output as a completed turn when the stream closes before done', async () => {
+    const store = useChatStore.getState()
+    store.setActiveConversationId('conversation-1')
+    vi.mocked(backendFetch).mockResolvedValueOnce(
+      new Response(
+        [
+          'data: {"type":"message_start","message_id":"assistant-1"}',
+          'data: {"type":"tool_start","name":"brain_context","label":"Exploring Brain context","tool_call_id":"tool-1"}',
+          'data: {"type":"tool_end","name":"brain_context","label":"Explored Brain context","tool_call_id":"tool-1","status":"completed"}',
+          'data: {"type":"content_delta","content":"I found the relevant campaign context, and"}',
+          'data: [DONE]',
+          '',
+        ].join('\n\n'),
+        { status: 200, headers: { 'content-type': 'text/event-stream' } },
+      ),
+    )
+    vi.mocked(backendGet).mockImplementation(async (url: string) => {
+      if (url.startsWith('/api/chat/status/')) {
+        return {
+          active: false,
+          messageId: 'assistant-1',
+          runId: 'run-1',
+          failureCode: 'stream_interrupted',
+        } as never
+      }
+      return [] as never
+    })
+
+    await sendMessageStreaming({
+      conversation_id: 'conversation-1',
+      content: 'Research this campaign and give me a recommendation.',
+    })
+
+    await vi.waitFor(() => {
+      expect(useChatStore.getState().interruptedConversationIds).toContain('conversation-1')
+    })
+    expect(backendGet).toHaveBeenCalledWith('/api/chat/status/conversation-1')
+    const assistant = (useChatStore.getState().messagesByConversation['conversation-1'] ?? []).find(
+      (message) => message.role === 'assistant',
+    )
+    expect(assistant?.metadata.duration_ms).toBeUndefined()
   })
 
   it('treats machine warm-up status as pre-agent progress', () => {
@@ -298,9 +342,7 @@ describe('chat stream interruption classification', () => {
       conversation_id: 'conversation-1',
       run_id: 'run-1',
     })
-    const chatRequest = vi
-      .mocked(backendFetch)
-      .mock.calls.find(([url]) => url === '/api/chat')
+    const chatRequest = vi.mocked(backendFetch).mock.calls.find(([url]) => url === '/api/chat')
     expect(chatRequest).toBeDefined()
     const body = JSON.parse(String(chatRequest?.[1]?.body)) as Record<string, unknown>
     expect(body.hidden).toBe(true)
@@ -334,10 +376,12 @@ describe('chat stream interruption classification', () => {
       },
       assistantMessage,
     ])
-    useChatStore.getState().setConversationStreamFailure(
-      'conversation-1',
-      resolveChatStreamFailure({ code: 'stream_interrupted' }),
-    )
+    useChatStore
+      .getState()
+      .setConversationStreamFailure(
+        'conversation-1',
+        resolveChatStreamFailure({ code: 'stream_interrupted' }),
+      )
     vi.mocked(backendGet).mockImplementation(async (url: string) => {
       if (url.startsWith('/api/chat/status/')) {
         return {
