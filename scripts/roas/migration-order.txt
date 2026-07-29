@@ -759,3 +759,4 @@
 20260726123000_customer_brain_targeted_evidence.sql
 20260726230500_model_strategy_capabilities.sql
 20260729123000_conversation_activity_states.sql
+20260729173000_static_ad_chat_selection_gate.sql

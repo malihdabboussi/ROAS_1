@@ -125,3 +125,13 @@ Why: The previous X action removed meetings from every Agenda view, which made i
 Impact: Users can reduce meeting clutter without losing calendar context, restore any minimized occurrence, and keep that choice across refreshes. Previously hidden occurrences migrate into the new minimized state.
 
 Files: `apps/web/src/features/home/components/AgendaCard.tsx`, `apps/web/src/features/home/components/AgendaCardListBody.tsx`, `apps/web/src/features/home/components/AgendaCardEventEntry.tsx`, `apps/web/src/features/home/components/AgendaMinimizedEventEntry.tsx`, `apps/web/src/features/home/hooks/use-agenda-card-data.ts`, `apps/web/src/features/home/lib/agenda-minimize.ts`, focused tests, and Agenda message cleanup.
+
+## [2026-07-29 14:03] - [FEATURE]
+
+What: Added a pre-generation Static Ad Production gate in chat that uses the existing clickable, numbered clarification UI for the same three production types shown in the Builder, followed by staged family and format choices for Static Ad Book.
+
+Why: Conversational ad generation could interpret a generic “yes” as permission to choose a layout and render immediately, preventing the user from selecting a better production type or format.
+
+Impact: Builder selections remain authoritative, explicit chat choices skip redundant questions, and ambiguous chat requests must select a production direction before any image or deterministic static-ad render begins.
+
+Files: `apps/web/src/components/chat/ClarificationCard.test.tsx`, `supabase/migrations/20260729173000_static_ad_chat_selection_gate.sql`, `scripts/roas/migration-order.txt`, `documentation/features/missions.md`
