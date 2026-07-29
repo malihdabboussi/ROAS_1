@@ -5,7 +5,7 @@ import type { LucideIcon } from 'lucide-react'
 import { Footer } from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Features | Vibey',
+  title: 'Features | ROAS',
   description: 'The Brain, Agents, and Spaces. Everything your organization needs to run on AI.',
 }
 

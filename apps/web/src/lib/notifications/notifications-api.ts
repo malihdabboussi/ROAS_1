@@ -10,7 +10,7 @@ export async function fetchNotifications(opts?: {
   const params = new URLSearchParams()
   if (opts?.limit) params.set('limit', String(opts.limit))
   if (opts?.unreadOnly) params.set('unread_only', 'true')
-  if (opts?.view) params.set('view', opts.view)
+  if (opts?.view) params.set('view', opts.view === 'system' ? 'all' : opts.view)
   if (opts?.types?.length) params.set('types', opts.types.join(','))
   return backendGet<UserNotification[]>(`/api/missions/notifications?${params.toString()}`)
 }

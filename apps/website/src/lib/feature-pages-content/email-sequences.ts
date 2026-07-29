@@ -2,7 +2,7 @@ import type { FeaturePageDefinition } from './types'
 
 export const emailSequencesFeaturePage: FeaturePageDefinition = {
   slug: 'email-sequences',
-  metaTitle: 'Email Sequences | Vibey',
+  metaTitle: 'Email Sequences | ROAS',
   metaDescription:
     'Build nurture flows from the same conversation that created your funnel. Aligned messaging, zero context switching.',
   mockupKind: 'studio',
@@ -11,15 +11,15 @@ export const emailSequencesFeaturePage: FeaturePageDefinition = {
     kicker: '',
     title: 'NURTURE FLOWS FROM ONE THREAD',
     subtitle:
-      'Describe the journey once. Vibey writes the sequence, schedules the sends, and keeps every email aligned with your funnel and offer.',
+      'Describe the journey once. ROAS writes the sequence, schedules the sends, and keeps every email aligned with your funnel and offer.',
     primaryCta: { href: '/waitlist', label: 'Join Waitlist' },
     secondaryCta: { href: '/features/social-content', label: 'See Social Content' },
   },
   comparison: {
-    title: 'Vibey sequences vs. standalone email tools',
+    title: 'ROAS sequences vs. standalone email tools',
     subtitle:
-      'Most email tools know nothing about your funnel. Vibey keeps the whole story connected.',
-    columns: ['Vibey', 'Standalone email'],
+      'Most email tools know nothing about your funnel. ROAS keeps the whole story connected.',
+    columns: ['ROAS', 'Standalone email'],
     rows: [
       { label: 'Context', cells: ['Inherits funnel, offer, and Brain', 'Starts from blank'] },
       { label: 'Copy', cells: ['AI-written, voice-matched', 'Manual copywriting'] },
@@ -43,7 +43,7 @@ export const emailSequencesFeaturePage: FeaturePageDefinition = {
           {
             title: 'Describe the flow',
             description:
-              'Tell Vibey the goal-welcome, nurture, re-engage-and it drafts the full sequence.',
+              'Tell Pixel the goal-welcome, nurture, re-engage-and it drafts the full sequence.',
           },
           {
             title: 'Voice-matched copy',
@@ -64,7 +64,7 @@ export const emailSequencesFeaturePage: FeaturePageDefinition = {
           {
             title: 'Smart scheduling',
             description:
-              'Vibey suggests optimal send times based on audience patterns stored in Brain.',
+              'ROAS suggests optimal send times based on audience patterns stored in Brain.',
           },
           {
             title: 'Preview before sending',
@@ -135,7 +135,7 @@ export const emailSequencesFeaturePage: FeaturePageDefinition = {
       {
         title: 'Describe',
         description:
-          'Tell Vibey who the audience is, what the goal is, and how many emails you want.',
+          'Tell Pixel who the audience is, what the goal is, and how many emails you want.',
       },
       {
         title: 'Review',
@@ -156,12 +156,12 @@ export const emailSequencesFeaturePage: FeaturePageDefinition = {
         a: 'Yes. Connect your domain and verified sender identity in workspace settings.',
       },
       {
-        q: 'Does Vibey handle unsubscribes?',
+        q: 'Does ROAS handle unsubscribes?',
         a: 'Yes. CAN-SPAM compliant unsubscribe links are included by default.',
       },
       {
         q: 'How many emails can a sequence have?',
-        a: 'As many as you need. Vibey drafts the full flow and you adjust.',
+        a: 'As many as you need. ROAS drafts the full flow and you adjust.',
       },
       {
         q: 'Can I send one-off broadcasts?',

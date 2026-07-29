@@ -1,4 +1,23 @@
-import type { InboxView, UserNotification } from './types'
+import type { InboxView, NotificationType, UserNotification } from './types'
+
+export const SYSTEM_NOTIFICATION_TYPES: readonly NotificationType[] = [
+  'mission_completed',
+  'deliverable_ready',
+  'space_task_unassigned',
+  'space_task_status_changed',
+  'human_subtask_cancelled',
+  'brain_import_succeeded',
+  'brain_import_failed',
+  'awareness_paused',
+  'space_automation_disabled',
+  'browser_session_expiring',
+]
+
+const SYSTEM_NOTIFICATION_TYPE_SET = new Set<NotificationType>(SYSTEM_NOTIFICATION_TYPES)
+
+export function isSystemNotification(notification: UserNotification): boolean {
+  return SYSTEM_NOTIFICATION_TYPE_SET.has(notification.type)
+}
 
 export function notificationInboxView(
   notification: UserNotification,
@@ -11,6 +30,7 @@ export function notificationInboxView(
   ) {
     return 'later'
   }
+  if (isSystemNotification(notification)) return 'system'
   return notification.inbox_bucket
 }
 

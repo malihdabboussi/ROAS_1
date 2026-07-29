@@ -9,7 +9,7 @@ const SECTIONS = [
   'The Solution',
   'Your Team',
   'Autopilot',
-  'How to Use Vibey',
+  'How to Use ROAS',
   'Core Power Features',
   'Business Story',
   'Closing',
@@ -22,7 +22,7 @@ const NAV_RAW: { section: SectionName; crumbs: string[] }[] = [
   { section: 'Opening', crumbs: ['Opening', 'Founders'] },
   { section: 'Opening', crumbs: ['Opening', 'The Problem'] },
   { section: 'Opening', crumbs: ['Opening', 'Why Now'] },
-  { section: 'The Solution', crumbs: ['The Solution', 'Meet Vibey'] },
+  { section: 'The Solution', crumbs: ['The Solution', 'Meet ROAS'] },
   { section: 'The Solution', crumbs: ['The Solution', 'Four Pillars'] },
   { section: 'The Solution', crumbs: ['The Solution', 'Brain'] },
   { section: 'The Solution', crumbs: ['The Solution', 'Cloud Computer'] },
@@ -35,10 +35,10 @@ const NAV_RAW: { section: SectionName; crumbs: string[] }[] = [
   { section: 'Your Team', crumbs: ['Your Team', 'Custom Skills'] },
   { section: 'Your Team', crumbs: ['Your Team', 'Preloaded & Hireable'] },
   { section: 'Autopilot', crumbs: ['Autopilot'] },
-  { section: 'How to Use Vibey', crumbs: ['How to Use Vibey', 'Overview'] },
-  { section: 'How to Use Vibey', crumbs: ['How to Use Vibey', 'Studio'] },
-  { section: 'How to Use Vibey', crumbs: ['How to Use Vibey', 'Missions'] },
-  { section: 'How to Use Vibey', crumbs: ['How to Use Vibey', 'Communications'] },
+  { section: 'How to Use ROAS', crumbs: ['How to Use ROAS', 'Overview'] },
+  { section: 'How to Use ROAS', crumbs: ['How to Use ROAS', 'Studio'] },
+  { section: 'How to Use ROAS', crumbs: ['How to Use ROAS', 'Missions'] },
+  { section: 'How to Use ROAS', crumbs: ['How to Use ROAS', 'Communications'] },
   {
     section: 'Core Power Features',
     crumbs: ['Core Power Features', 'Integrations + Capabilities'],
@@ -87,7 +87,7 @@ const NAV: PitchNav[] = NAV_RAW.map((r) => {
 
 export function getPitchNav(slideIndex: number): PitchNav {
   if (slideIndex < 0 || slideIndex >= NAV.length) {
-    return { badge: 'Vibey Pitch', crumbs: ['Vibey'], sectionNum: 0, sectionTotal: SECTION_TOTAL }
+    return { badge: 'ROAS Pitch', crumbs: ['ROAS'], sectionNum: 0, sectionTotal: SECTION_TOTAL }
   }
   return NAV[slideIndex]!
 }

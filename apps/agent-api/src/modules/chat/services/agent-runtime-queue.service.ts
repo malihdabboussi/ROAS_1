@@ -33,6 +33,8 @@ export interface AgentRuntimeChatRunInput extends AgentRuntimeShadowRunInput {
   spaceId?: string
   scopeKind?: string
   source?: string
+  orgMemberId?: string | null
+  organizationWideDataAccess?: boolean
   previousResponseId?: string
   documents?: unknown[]
   highlightedArtifacts?: unknown[]

@@ -5,25 +5,25 @@ import { ArrowRight } from 'lucide-react'
 import { Footer } from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'About | Vibey',
+  title: 'About | ROAS',
   description:
-    'Vibey is an AI operating system for running a business — built by Sefy Tofan to give every founder and operator the power of a full team, without the headcount.',
+    'ROAS is an AI operating system for running a business — built by Sefy Tofan to give every founder and operator the power of a full team, without the headcount.',
   openGraph: {
-    title: 'About | Vibey',
+    title: 'About | ROAS',
     description:
-      'Vibey is an AI operating system for running a business — built to give every founder and operator the power of a full team, without the headcount.',
+      'ROAS is an AI operating system for running a business — built to give every founder and operator the power of a full team, without the headcount.',
     url: 'https://vibey.im/about',
-    siteName: 'Vibey',
+    siteName: 'ROAS',
     type: 'website',
     images: [
-      { url: '/Logos/logov2/icon-text-white.png', width: 1200, height: 630, alt: 'About Vibey' },
+      { url: '/Logos/logov2/icon-text-white.png', width: 1200, height: 630, alt: 'About ROAS' },
     ],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@usevibey',
-    title: 'About | Vibey',
-    description: 'Vibey is an AI operating system for running a business.',
+    title: 'About | ROAS',
+    description: 'ROAS is an AI operating system for running a business.',
   },
   alternates: { canonical: 'https://vibey.im/about' },
 }
@@ -31,11 +31,11 @@ export const metadata: Metadata = {
 const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'Vibey',
+  name: 'ROAS',
   url: 'https://vibey.im',
   logo: 'https://vibey.im/Logos/logov2/icon-text-white.png',
   description:
-    'Vibey is an AI operating system for running a business — a team of specialist AI agents with persistent memory, autonomous execution, and a built-in marketing engine.',
+    'ROAS is an AI operating system for running a business — a team of specialist AI agents with persistent memory, autonomous execution, and a built-in marketing engine.',
   founder: {
     '@type': 'Person',
     name: 'Sefy Tofan',
@@ -69,7 +69,7 @@ export default function AboutPage() {
                 THE AI OPERATING SYSTEM FOR YOUR BUSINESS
               </h1>
               <p className="body-1 text-color-secondary leading-relaxed">
-                Vibey is not a chatbot. It is not a single AI assistant. It is an operating layer —
+                ROAS is not a chatbot. It is not a single AI assistant. It is an operating layer —
                 a team of specialist AI agents that work together, remember your brand, and execute
                 real work: funnels that publish, ads that run, email sequences that send, and
                 missions that ship.
@@ -86,20 +86,20 @@ export default function AboutPage() {
                   you have to paste somewhere else. Neither solves the real problem — execution.
                 </p>
                 <p className="body-2 text-color-secondary leading-relaxed">
-                  Vibey was built on a simple belief: the bottleneck isn&apos;t ideas. It&apos;s the
+                  ROAS was built on a simple belief: the bottleneck isn&apos;t ideas. It&apos;s the
                   gap between thinking and doing. Between strategy and execution. Between &quot;we
                   should run ads&quot; and ads actually running.
                 </p>
                 <p className="body-2 text-color-secondary leading-relaxed">
-                  We built Vibey to close that gap permanently — with a team of agents that know
+                  We built ROAS to close that gap permanently — with a team of agents that know
                   your brand, remember your decisions, and get the work done.
                 </p>
               </div>
             </section>
 
-            {/* What Vibey does */}
+            {/* What ROAS does */}
             <section className="mb-16">
-              <h2 className="h3 mb-6 text-white">What Vibey does</h2>
+              <h2 className="h3 mb-6 text-white">What ROAS does</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {[
                   {
@@ -120,7 +120,7 @@ export default function AboutPage() {
                   {
                     title: 'Autopilot',
                     description:
-                      'Set your North Star, close the tab. Vibey runs the business, creates missions, retries failures, and sends daily digests.',
+                      'Set your North Star, close the tab. ROAS runs the business, creates missions, retries failures, and sends daily digests.',
                   },
                   {
                     title: 'Marketing Engine',
@@ -171,7 +171,7 @@ export default function AboutPage() {
                   <p className="body-2 mb-0.5 font-semibold text-white">Sefy Tofan</p>
                   <p className="text-color-muted body-3 mb-3">Founder & CEO</p>
                   <p className="body-3 text-color-secondary leading-relaxed">
-                    Sefy built Vibey after years of watching brilliant founders spend more time
+                    Sefy built ROAS after years of watching brilliant founders spend more time
                     managing tools, agencies, and workflows than actually building their business.
                     The vision: an AI team that doesn&apos;t just help you think — it gets the work
                     done.
@@ -184,7 +184,7 @@ export default function AboutPage() {
             <section className="text-center">
               <h2 className="h3 mb-4 text-white">Ready to run your business on AI?</h2>
               <p className="body-2 text-color-muted mb-8">
-                Join founders and operators already using Vibey to execute faster than ever.
+                Join founders and operators already using ROAS to execute faster than ever.
               </p>
               <Link
                 href="/pricing"

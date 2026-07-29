@@ -1,5 +1,5 @@
 /**
- * Vibey Animation States Configuration
+ * ROAS Animation States Configuration
  *
  * Defines different animation behaviors for various loading/processing contexts
  * Each state controls: speed, bloom intensity, oscillation strength, and color tint

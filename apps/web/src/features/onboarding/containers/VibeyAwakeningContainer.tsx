@@ -271,7 +271,7 @@ export function VibeyAwakeningContainer({ onContinue }: VibeyAwakeningContainerP
                     transition: 'opacity 400ms ease-out',
                   }}
                 >
-                  VIBEY
+                  PIXEL
                 </h1>
               </div>
             </div>

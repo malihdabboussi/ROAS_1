@@ -31,6 +31,8 @@ export class OrgContextGuard implements CanActivate {
     if (!orgId) {
       request.orgId = null
       request.orgRole = null
+      request.orgMemberId = null
+      request.organizationWideDataAccess = false
       return true
     }
 
@@ -40,7 +42,7 @@ export class OrgContextGuard implements CanActivate {
 
     const { data: membership, error } = await this.serviceClient.client
       .from('org_members')
-      .select('id, role, status')
+      .select('id, role, status, ai_data_admin')
       .eq('org_id', orgId)
       .eq('user_id', userId)
       .maybeSingle()
@@ -57,6 +59,8 @@ export class OrgContextGuard implements CanActivate {
     request.orgId = orgId
     request.orgRole = membership.role as OrgRole
     request.orgMemberId = membership.id
+    request.organizationWideDataAccess =
+      membership.role === 'owner' || membership.ai_data_admin === true
 
     return true
   }

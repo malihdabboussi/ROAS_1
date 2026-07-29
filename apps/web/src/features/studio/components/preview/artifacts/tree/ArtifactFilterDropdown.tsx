@@ -10,7 +10,7 @@ export type SourceFilterValue = 'all' | 'vibey' | 'meta'
 
 const SOURCE_OPTIONS: Array<{ value: SourceFilterValue; label: string }> = [
   { value: 'all', label: 'All Sources' },
-  { value: 'vibey', label: 'ROAS Only' },
+  { value: 'vibey', label: 'Pixel Only' },
   { value: 'meta', label: 'Meta Only' },
 ]
 

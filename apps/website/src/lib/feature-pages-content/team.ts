@@ -2,7 +2,7 @@ import type { FeaturePageDefinition } from './types'
 
 export const teamFeaturePage: FeaturePageDefinition = {
   slug: 'team',
-  metaTitle: 'Agent Team | Vibey',
+  metaTitle: 'Agent Team | ROAS',
   metaDescription:
     'Specialized agents for strategy, copy, funnels, and distribution-coordinated inside one Studio thread.',
   mockupKind: 'team',
@@ -11,14 +11,14 @@ export const teamFeaturePage: FeaturePageDefinition = {
     kicker: '',
     title: 'A ROSTER THAT SHOWS UP IN ONE THREAD',
     subtitle:
-      'Instead of juggling tools and freelancers, Vibey routes work between specialized agents while you stay in conversation. Strategy, copy, build, and distribution-coordinated automatically.',
+      'Instead of juggling tools and freelancers, ROAS routes work between specialized agents while you stay in conversation. Strategy, copy, build, and distribution-coordinated automatically.',
     primaryCta: { href: '/waitlist', label: 'Join Waitlist' },
     secondaryCta: { href: '/features/your-team', label: 'See Your Team' },
   },
   comparison: {
     title: 'Team mode vs. solo assistant',
     subtitle: 'One generalist can only do one thing at a time. A coordinated team ships campaigns.',
-    columns: ['Vibey Agent Team', 'Single AI assistant'],
+    columns: ['ROAS Agent Team', 'Single AI assistant'],
     rows: [
       {
         label: 'Specialization',
@@ -42,7 +42,7 @@ export const teamFeaturePage: FeaturePageDefinition = {
   },
   showcase: {
     title: 'How your AI team operates',
-    subtitle: 'You talk to Vibey. Behind the scenes, specialists divide the work.',
+    subtitle: 'You talk to Pixel. Behind the scenes, specialists divide the work.',
     blocks: [
       {
         mockupKind: 'team',
@@ -51,7 +51,7 @@ export const teamFeaturePage: FeaturePageDefinition = {
           {
             title: 'You set the objective',
             description:
-              'Describe the campaign goal-launch a product, fill a webinar, generate leads. Vibey sequences the work across agents.',
+              'Describe the campaign goal-launch a product, fill a webinar, generate leads. ROAS sequences the work across agents.',
           },
           {
             title: 'Strategic planning',
@@ -103,7 +103,7 @@ export const teamFeaturePage: FeaturePageDefinition = {
           {
             title: 'Mission complete',
             description:
-              'When all assets are approved, Vibey publishes the campaign and logs learnings back to Brain.',
+              'When all assets are approved, ROAS publishes the campaign and logs learnings back to Brain.',
           },
         ],
       },
@@ -150,7 +150,7 @@ export const teamFeaturePage: FeaturePageDefinition = {
       {
         title: 'Brief',
         description:
-          'Tell Vibey your campaign goal, target audience, and desired channels. The strategist takes it from there.',
+          'Tell Pixel your campaign goal, target audience, and desired channels. The strategist takes it from there.',
       },
       {
         title: 'Execute',
@@ -169,7 +169,7 @@ export const teamFeaturePage: FeaturePageDefinition = {
     items: [
       {
         q: 'Do I talk to each agent separately?',
-        a: 'No. You speak normally in Studio. Vibey delegates to the right specialist behind the scenes.',
+        a: 'No. You speak normally in Studio. ROAS delegates to the right specialist behind the scenes.',
       },
       {
         q: 'Can I restrict certain actions?',
@@ -181,11 +181,11 @@ export const teamFeaturePage: FeaturePageDefinition = {
       },
       {
         q: 'What specialists are available?',
-        a: 'Strategist, copywriter, funnel builder, ads specialist, and analyst. The roster expands as Vibey evolves.',
+        a: 'Strategist, copywriter, funnel builder, ads specialist, and analyst. The roster expands as ROAS evolves.',
       },
       {
         q: 'Can I add my own agents?',
-        a: 'Custom agent configuration is on the enterprise roadmap. Today, Vibey ships with a curated team.',
+        a: 'Custom agent configuration is on the enterprise roadmap. Today, ROAS ships with a curated team.',
       },
       {
         q: 'How do agents share context?',

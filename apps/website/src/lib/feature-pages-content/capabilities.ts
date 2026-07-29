@@ -2,7 +2,7 @@ import type { FeaturePageDefinition } from './types'
 
 export const capabilitiesFeaturePage: FeaturePageDefinition = {
   slug: 'capabilities',
-  metaTitle: 'Capabilities | Vibey',
+  metaTitle: 'Capabilities | ROAS',
   metaDescription:
     'Everything your AI team can produce: funnels, email, ads, video, images, audio, apps, dashboards, research, and more.',
   mockupKind: 'capabilities-carousel',
@@ -90,7 +90,7 @@ export const capabilitiesFeaturePage: FeaturePageDefinition = {
           {
             title: 'The open frontier',
             description:
-              'People use Vibey to manage client work, coordinate teams, generate training materials, build internal tools, and run operations we never anticipated.',
+              'People use ROAS to manage client work, coordinate teams, generate training materials, build internal tools, and run operations we never anticipated.',
           },
         ],
       },
@@ -136,7 +136,7 @@ export const capabilitiesFeaturePage: FeaturePageDefinition = {
     title: 'Frequently asked questions',
     items: [
       {
-        q: 'What can Vibey actually build?',
+        q: 'What can ROAS actually build?',
         a: 'Funnels, websites, email sequences, ad campaigns, social content, presentations, video, images, audio, apps, dashboards, research reports, and more.',
       },
       {
@@ -145,7 +145,7 @@ export const capabilitiesFeaturePage: FeaturePageDefinition = {
       },
       {
         q: 'Do funnels actually publish?',
-        a: 'Yes. To Vibey hosting or your custom domain. Live, with lead capture and analytics.',
+        a: 'Yes. To ROAS hosting or your custom domain. Live, with lead capture and analytics.',
       },
       { q: 'Do emails actually send?', a: 'Yes. From your verified domain via SendGrid.' },
       {

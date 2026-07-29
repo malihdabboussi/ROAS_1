@@ -4,7 +4,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useOrgStore } from '@/lib/org'
 import { createClient } from '@/lib/supabase/client'
-import { notificationInboxView, notificationMatchesInboxView } from './inbox-view-predicates'
+import {
+  isSystemNotification,
+  notificationInboxView,
+  notificationMatchesInboxView,
+  SYSTEM_NOTIFICATION_TYPES,
+} from './inbox-view-predicates'
 import { INBOX_MESSAGES } from './inbox.config'
 import {
   clearNotification,
@@ -21,7 +26,13 @@ import {
 } from './notifications-api'
 import type { InboxTriageCounts, InboxView, UserNotification } from './types'
 
-const EMPTY_COUNTS: InboxTriageCounts = { primary: 0, other: 0, later: 0, cleared: 0 }
+const EMPTY_COUNTS: InboxTriageCounts = {
+  primary: 0,
+  system: 0,
+  other: 0,
+  later: 0,
+  cleared: 0,
+}
 
 export function useInboxTriage(initialView: InboxView = 'primary') {
   const [view, setView] = useState<InboxView>(initialView)
@@ -46,16 +57,30 @@ export function useInboxTriage(initialView: InboxView = 'primary') {
       const silent = Boolean(options?.silent && hasLoadedOnceRef.current)
       if (!silent) setLoading(true)
       try {
-        const [rows, nextCounts] = await Promise.all([
+        const [rows, nextCounts, systemRows] = await Promise.all([
           fetchNotifications({
             limit: 200,
             view,
-            types: type === 'all' ? [] : [type],
+            types:
+              type === 'all' ? (view === 'system' ? [...SYSTEM_NOTIFICATION_TYPES] : []) : [type],
           }),
           fetchInboxTriageCounts(),
+          fetchNotifications({
+            limit: 200,
+            unreadOnly: true,
+            view: 'all',
+            types: [...SYSTEM_NOTIFICATION_TYPES],
+          }),
         ])
-        setNotifications(rows)
-        setCounts(nextCounts)
+        const systemUnreadCount = systemRows.filter(isSystemNotification).length
+        setNotifications(
+          rows.filter((notification) => notificationMatchesInboxView(notification, view)),
+        )
+        setCounts({
+          ...nextCounts,
+          primary: Math.max(0, nextCounts.primary - systemUnreadCount),
+          system: systemUnreadCount,
+        })
         hasLoadedOnceRef.current = true
       } catch {
         toast.error(INBOX_MESSAGES.ERRORS.load)
@@ -173,7 +198,11 @@ export function useInboxTriage(initialView: InboxView = 'primary') {
       cleared: current.cleared + current[view],
     }))
     try {
-      await clearNotificationView(view)
+      if (view === 'system') {
+        await Promise.all(beforeRows.map((notification) => clearNotification(notification.id)))
+      } else {
+        await clearNotificationView(view)
+      }
     } catch {
       setNotifications(beforeRows)
       setCounts(beforeCounts)

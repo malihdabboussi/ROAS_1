@@ -17,6 +17,14 @@ function sender(overrides: Record<string, unknown> = {}) {
   }
 }
 
+function runtimeRepository(overrides: Record<string, unknown> = {}) {
+  return {
+    findAiDataAdminMembership: vi.fn().mockResolvedValue(null),
+    recordAiDataAccessAudit: vi.fn().mockResolvedValue(undefined),
+    ...overrides,
+  }
+}
+
 describe('SlackAccessControlService', () => {
   it('allows a manually mapped internal Slack-only user without granting owner personal Brain access', async () => {
     const resolver = {
@@ -25,6 +33,7 @@ describe('SlackAccessControlService', () => {
     const service = new SlackAccessControlService(
       { listConversationMembers: vi.fn() } as never,
       resolver as never,
+      runtimeRepository() as never,
     )
 
     await expect(
@@ -66,6 +75,7 @@ describe('SlackAccessControlService', () => {
     const service = new SlackAccessControlService(
       { listConversationMembers: vi.fn() } as never,
       resolver as never,
+      runtimeRepository() as never,
     )
 
     await expect(
@@ -107,6 +117,7 @@ describe('SlackAccessControlService', () => {
       const service = new SlackAccessControlService(
         { listConversationMembers: vi.fn() } as never,
         resolver as never,
+        runtimeRepository() as never,
       )
 
       await expect(
@@ -141,6 +152,7 @@ describe('SlackAccessControlService', () => {
     const service = new SlackAccessControlService(
       { listConversationMembers: vi.fn(), postMessage } as never,
       resolver as never,
+      runtimeRepository() as never,
     )
 
     await expect(
@@ -172,6 +184,7 @@ describe('SlackAccessControlService', () => {
     const service = new SlackAccessControlService(
       { listConversationMembers: vi.fn() } as never,
       resolver as never,
+      runtimeRepository() as never,
     )
 
     await expect(
@@ -199,6 +212,7 @@ describe('SlackAccessControlService', () => {
     const service = new SlackAccessControlService(
       { listConversationMembers: vi.fn(), postMessage } as never,
       resolver as never,
+      runtimeRepository() as never,
     )
 
     await expect(
@@ -238,6 +252,7 @@ describe('SlackAccessControlService', () => {
         listConversationMembers: vi.fn().mockResolvedValue(['U_CONNECT', 'U_TEAM', 'B_APP']),
       } as never,
       resolver as never,
+      runtimeRepository() as never,
     )
 
     await expect(
@@ -266,6 +281,7 @@ describe('SlackAccessControlService', () => {
     const service = new SlackAccessControlService(
       { listConversationMembers: vi.fn().mockResolvedValue(['U_INTERNAL', 'U_CLIENT']) } as never,
       resolver as never,
+      runtimeRepository() as never,
     )
 
     await expect(
@@ -283,5 +299,51 @@ describe('SlackAccessControlService', () => {
       allowed: false,
       reason: 'channel_not_internal',
     })
+  })
+
+  it('grants same-organization data access to an explicitly enabled internal member', async () => {
+    const resolver = {
+      resolveSlackSenders: vi.fn().mockResolvedValue(
+        new Map([['U_INTERNAL', sender({ vibeyUserId: 'user-1' })]]),
+      ),
+    }
+    const repository = runtimeRepository({
+      findAiDataAdminMembership: vi.fn().mockResolvedValue({
+        id: 'membership-1',
+        user_id: 'user-1',
+        org_id: 'org-1',
+        role: 'admin',
+        status: 'active',
+        ai_data_admin: true,
+      }),
+    })
+    const service = new SlackAccessControlService(
+      { listConversationMembers: vi.fn() } as never,
+      resolver as never,
+      repository as never,
+    )
+
+    await expect(
+      service.authorize({
+        supabase: {} as never,
+        botToken: 'xoxb',
+        ownerUserId: 'owner-1',
+        ownerSlackUserId: 'U_OWNER',
+        orgId: 'org-1',
+        slackUserId: 'U_INTERNAL',
+        channelId: 'D_INTERNAL',
+        isDirectMessage: true,
+      }),
+    ).resolves.toMatchObject({
+      allowed: true,
+      principal: { organizationWideDataAccess: true },
+    })
+    expect(repository.recordAiDataAccessAudit).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        outcome: 'allowed',
+        reason: 'organization_data_access_allowed',
+      }),
+    )
   })
 })

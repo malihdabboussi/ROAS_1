@@ -102,12 +102,12 @@ export function NotificationFeedCard({
             onChange={(patch) => setFilters((prev) => ({ ...prev, ...patch }))}
           />
           {unreadAwareness > 0 ? (
-            <Tooltip label="Talk to ROAS" side="bottom" triggerClassName="inline-flex items-center">
+            <Tooltip label="Talk to Pixel" side="bottom" triggerClassName="inline-flex items-center">
               <button
                 type="button"
                 onClick={() => void handleTalkToVibey()}
                 className={NOTIFICATION_FEED_HEADER_ICON_BUTTON}
-                aria-label="Talk to ROAS"
+                aria-label="Talk to Pixel"
               >
                 <MessageCircle className="icon-sm" />
               </button>

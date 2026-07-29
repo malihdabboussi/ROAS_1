@@ -26,7 +26,7 @@ const agents: MissionAgent[] = [
     id: 'agent-1',
     user_id: 'user-1',
     agent_key: 'vibey',
-    name: 'ROAS',
+    name: 'Pixel',
     image_url: null,
     role: 'CEO',
     level: 'c_level',

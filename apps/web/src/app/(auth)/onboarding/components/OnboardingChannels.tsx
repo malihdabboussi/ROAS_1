@@ -113,7 +113,7 @@ export function OnboardingChannels({ onComplete, onBack }: OnboardingChannelsPro
           {showTelegramSetup && (
             <TelegramSetupDialog
               agentKey="vibey"
-              agentName="ROAS"
+              agentName="Pixel"
               onClose={() => setShowTelegramSetup(false)}
               onConnected={(botUsername) => {
                 setTelegramConnected(true)
@@ -126,7 +126,7 @@ export function OnboardingChannels({ onComplete, onBack }: OnboardingChannelsPro
           {showSlackSetup && (
             <SlackSetupDialog
               agentKey="vibey"
-              agentName="ROAS"
+              agentName="Pixel"
               onClose={() => setShowSlackSetup(false)}
               onConnected={(channelName) => {
                 setSlackConnected(true)
@@ -143,10 +143,10 @@ export function OnboardingChannels({ onComplete, onBack }: OnboardingChannelsPro
         <div className="mb-spacing-8 text-center">
           <h2 className="title-h1 text-foreground">
             STAY CONNECTED WITH{' '}
-            <span className="vibey-shine-text bg-clip-text text-transparent">VIBEY</span>
+            <span className="vibey-shine-text bg-clip-text text-transparent">PIXEL</span>
           </h2>
           <p className="title-h4 text-muted-foreground mt-spacing-2">
-            Choose where ROAS reaches you.
+            Choose where Pixel reaches you.
           </p>
         </div>
 
@@ -156,7 +156,7 @@ export function OnboardingChannels({ onComplete, onBack }: OnboardingChannelsPro
               Default Channel
             </p>
             <p className="body-3 text-muted-foreground/70 mb-spacing-4">
-              Where ROAS sends proactive updates
+              Where Pixel sends proactive updates
             </p>
             <div className="gap-spacing-3 flex flex-col">
               {CHANNELS.map((card) => {

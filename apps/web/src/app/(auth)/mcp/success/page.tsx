@@ -27,7 +27,7 @@ export default function McpSuccessPage() {
   if (missingRedirect) {
     return (
       <section className="surface-card rounded-spacing-4 border-border p-spacing-6 max-w-lg border text-center">
-        <h1 className="title-h6 text-foreground">CONNECT VIBEY</h1>
+        <h1 className="title-h6 text-foreground">CONNECT ROAS</h1>
         <p className="body-2 mt-spacing-3 text-muted-foreground">
           This connection link is no longer valid. Close this window and try connecting again from
           your app.

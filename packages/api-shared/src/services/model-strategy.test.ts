@@ -90,7 +90,11 @@ describe('model strategy routing', () => {
   })
 
   it('keeps Economy chat on the economy model for both stages', () => {
-    expect(resolveChatStageModel('auto:economy', 'research').modelId).toBe('openai/gpt-5.6-terra')
-    expect(resolveChatStageModel('auto:economy', 'write').modelId).toBe('openai/gpt-5.6-terra')
+    expect(resolveChatStageModel('auto:economy', 'research').modelId).toBe(
+      'openai/gpt-5.6-terra',
+    )
+    expect(resolveChatStageModel('auto:economy', 'write').modelId).toBe(
+      'openai/gpt-5.6-terra',
+    )
   })
 })

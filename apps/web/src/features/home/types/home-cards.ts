@@ -15,18 +15,24 @@ export type HomeCardId =
 
 /** Grid footprint in the 2-column Home dashboard. */
 export type HomeCardGridSize = 'half' | 'full'
+/** Vertical footprint in the Home dashboard. */
+export type HomeCardGridRows = 1 | 2 | 3
 
 export interface HomeLayoutState {
-  version: 2
+  version: 3
   cardIds: HomeCardId[]
   /** Optional per-card width. Missing keys default to `half`. */
   cardSizes?: Partial<Record<HomeCardId, HomeCardGridSize>>
+  /** Optional per-card height. Missing keys use the card definition default. */
+  cardRows?: Partial<Record<HomeCardId, HomeCardGridRows>>
 }
 
 export interface HomeCardDefinition {
   id: HomeCardId
   title: string
   description: string
+  /** Default vertical footprint when the user has not customized the card. */
+  defaultRows?: HomeCardGridRows
   /** When true, card is only offered in org account context */
   orgOnly?: boolean
 }

@@ -27,33 +27,25 @@ export function getContextMeterRingState(meter: ChatInputContextMeterValue) {
     circumference,
     dashOffset: circumference * (1 - remainPct / 100),
     label: `Context: ${formatTokenK(meter.totalTokens)} / ${formatTokenK(meter.contextWindow)} (${Math.round(remainPct)}% remaining)`,
+    filledSegments: Math.max(1, Math.ceil(usedPct / 25)),
   }
 }
 
-function ContextMeterRing({ state }: { state: NonNullable<ReturnType<typeof getContextMeterRingState>> }) {
+function ContextMeterLine({
+  state,
+}: {
+  state: NonNullable<ReturnType<typeof getContextMeterRingState>>
+}) {
   return (
-    <svg width="22" height="22" viewBox="0 0 22 22" className="-rotate-90">
-      <circle
-        cx="11"
-        cy="11"
-        r={state.radius}
-        fill="none"
-        stroke="var(--color-muted)"
-        strokeWidth="2.5"
-      />
-      <circle
-        cx="11"
-        cy="11"
-        r={state.radius}
-        fill="none"
-        stroke={state.stroke}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeDasharray={state.circumference}
-        strokeDashoffset={state.dashOffset}
-        className="transition-all duration-700 ease-out"
-      />
-    </svg>
+    <span className="gap-spacing-1 w-spacing-16 flex" aria-hidden>
+      {[0, 1, 2, 3].map((segment) => (
+        <span key={segment} className="progress-bar-track flex-1">
+          {segment < state.filledSegments ? (
+            <span className="progress-bar-fill block w-full" />
+          ) : null}
+        </span>
+      ))}
+    </span>
   )
 }
 
@@ -76,12 +68,12 @@ export function ChatInputContextMeter({
 }) {
   const state = getContextMeterRingState(meter)
   if (!state) return null
-  const ring = <ContextMeterRing state={state} />
+  const line = <ContextMeterLine state={state} />
 
   if (!breakdownPanelEnabled) {
     return (
       <Tooltip label={state.label}>
-        <div className="flex h-8 w-8 items-center justify-center">{ring}</div>
+        <div className="py-spacing-1 flex items-center justify-center">{line}</div>
       </Tooltip>
     )
   }
@@ -104,9 +96,9 @@ export function ChatInputContextMeter({
             if (!popoverOpen) onOpenBeforeToggle()
             onToggle()
           }}
-          className="flex h-8 w-8 items-center justify-center rounded-full"
+          className="py-spacing-1 flex items-center justify-center"
         >
-          {ring}
+          {line}
         </button>
       </Tooltip>
     </>

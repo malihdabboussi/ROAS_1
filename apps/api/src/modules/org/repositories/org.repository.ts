@@ -95,6 +95,7 @@ export class OrgRepository {
         user_id: userId,
         role,
         status: 'active',
+        ai_data_admin: role === 'owner',
         invited_by: invitedBy,
         accepted_at: new Date().toISOString(),
       })
@@ -119,7 +120,7 @@ export class OrgRepository {
     const { data, error } = await supabase
       .from('org_members')
       .select(
-        'id, user_id, role, status, accepted_at, created_at, profiles!org_members_user_id_fk_profiles(id, full_name, avatar_url, email)',
+        'id, user_id, role, status, ai_data_admin, accepted_at, created_at, profiles!org_members_user_id_fk_profiles(id, full_name, avatar_url, email)',
       )
       .eq('org_id', orgId)
       .eq('status', 'active')
@@ -132,6 +133,21 @@ export class OrgRepository {
     const { data, error } = await supabase
       .from('org_members')
       .update({ role })
+      .eq('id', memberId)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  }
+
+  async updateMemberAiDataAdmin(
+    supabase: SupabaseClient,
+    memberId: string,
+    enabled: boolean,
+  ) {
+    const { data, error } = await supabase
+      .from('org_members')
+      .update({ ai_data_admin: enabled })
       .eq('id', memberId)
       .select()
       .single()

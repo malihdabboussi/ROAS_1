@@ -1,4 +1,4 @@
-Vibey LLC, its subsidiaries, and affiliates (collectively, “Vibey LLC,” the “Company,” “We,” or “Us”) thank you for visiting the online and mobile resources we publish. We use the words “you” and “your” to mean you, the reader, and other visitors to our online and mobile resources who are, in all cases, over the age of 13. Our privacy statement (“this statement,” “this privacy statement,” and “our statement”) informs you about from whom and the types of personal information we collect, how we use it, who we share it with and why, and what we do to try to protect it.
+ROAS LLC, its subsidiaries, and affiliates (collectively, “ROAS LLC,” the “Company,” “We,” or “Us”) thank you for visiting the online and mobile resources we publish. We use the words “you” and “your” to mean you, the reader, and other visitors to our online and mobile resources who are, in all cases, over the age of 13. Our privacy statement (“this statement,” “this privacy statement,” and “our statement”) informs you about from whom and the types of personal information we collect, how we use it, who we share it with and why, and what we do to try to protect it.
 
 Online and mobile resources mean the websites and other internet features we own that allow you to interact with our websites, as well apps we’ve created and distributed to let our customers and followers view our online and mobile resources or otherwise interact with the content we provide.
 
@@ -69,7 +69,7 @@ We use voluntarily provided personal information to respond to your inquiries an
 
 Affiliates
 
-In addition to those third parties set forth above, we may share your information, including personal information, within our family of companies, including but not limited to Vibey LLC. Those companies will use such information in generally the same manner as we do under this privacy statement, which includes sending you information about their products, services, or initiatives that may be of interest to you.
+In addition to those third parties set forth above, we may share your information, including personal information, within our family of companies, including but not limited to ROAS LLC. Those companies will use such information in generally the same manner as we do under this privacy statement, which includes sending you information about their products, services, or initiatives that may be of interest to you.
 
 Legally Compelled Disclosures
 
@@ -151,7 +151,7 @@ In other jurisdictions, with similar data privacy regulations, we may collect fr
 
 GOOGLE USER DATA: RETENTION AND DELETION
 
-When you connect a Google account or grant Vibey access to Google services (such as Gmail, Google Calendar, or Google Drive) via OAuth, we may access and store certain data obtained through Google APIs ("Google User Data"). This section describes how we handle that data.
+When you connect a Google account or grant ROAS access to Google services (such as Gmail, Google Calendar, or Google Drive) via OAuth, we may access and store certain data obtained through Google APIs ("Google User Data"). This section describes how we handle that data.
 
 What Google User Data We Collect
 
@@ -159,19 +159,19 @@ We collect only the Google User Data necessary to provide the features you have 
 
 How Long We Retain Google User Data
 
-We retain Google User Data for as long as your account is active and you maintain an active Google OAuth connection with Vibey. Specifically:
+We retain Google User Data for as long as your account is active and you maintain an active Google OAuth connection with ROAS. Specifically:
 
 - Active connection: Google User Data is retained and used to provide the connected features you have enabled.
-- Disconnected connection: If you revoke Vibey's access to your Google account (via your Google Account settings at myaccount.google.com/permissions or within Vibey's settings), we will delete the associated Google User Data from our systems within 30 days of the revocation.
-- Account deletion: If you delete your Vibey account, all Google User Data associated with your account will be permanently deleted from our systems within 30 days.
+- Disconnected connection: If you revoke ROAS's access to your Google account (via your Google Account settings at myaccount.google.com/permissions or within ROAS's settings), we will delete the associated Google User Data from our systems within 30 days of the revocation.
+- Account deletion: If you delete your ROAS account, all Google User Data associated with your account will be permanently deleted from our systems within 30 days.
 
 How to Request Deletion of Your Google User Data
 
 You may request deletion of your Google User Data at any time by:
 
-1. Revoking Vibey's access in your Google Account at myaccount.google.com/permissions; or
-2. Disconnecting the Google integration within Vibey's account settings; or
-3. Deleting your Vibey account entirely; or
+1. Revoking ROAS's access in your Google Account at myaccount.google.com/permissions; or
+2. Disconnecting the Google integration within ROAS's account settings; or
+3. Deleting your ROAS account entirely; or
 4. Contacting us directly at info@vibey.im with a deletion request.
 
 Upon receiving a verifiable deletion request, we will permanently delete your Google User Data from our active systems and any backups within 30 days.
@@ -182,7 +182,7 @@ Our use of data received from Google APIs is limited to the practices disclosed 
 
 PAYPAL USER DATA: COLLECTION, USE, AND DELETION
 
-When you connect a PayPal account to Vibey via "Log in with PayPal" (OAuth), we may access and store certain data obtained through PayPal APIs ("PayPal User Data"). This section describes how we handle that data.
+When you connect a PayPal account to ROAS via "Log in with PayPal" (OAuth), we may access and store certain data obtained through PayPal APIs ("PayPal User Data"). This section describes how we handle that data.
 
 What PayPal User Data We Collect
 
@@ -201,27 +201,27 @@ How We Use PayPal User Data
 
 We use PayPal User Data solely to:
 
-- Display your PayPal account information and transaction data within the Vibey platform
-- Enable Vibey's AI agents to provide insights based on your PayPal activity when you request it
+- Display your PayPal account information and transaction data within the ROAS platform
+- Enable ROAS's AI agents to provide insights based on your PayPal activity when you request it
 - Provide analytics, reporting, and business intelligence features you have opted into
 
 We do not use PayPal User Data for advertising purposes. We do not automatically sign you up for marketing emails or newsletters based on your PayPal connection. We will only send you communications related to your PayPal integration status (connected, disconnected, errors) unless you separately opt into other communications.
 
 How Long We Retain PayPal User Data
 
-We retain PayPal User Data for as long as your account is active and you maintain an active PayPal OAuth connection with Vibey. Specifically:
+We retain PayPal User Data for as long as your account is active and you maintain an active PayPal OAuth connection with ROAS. Specifically:
 
 - Active connection: PayPal User Data is accessed on-demand via PayPal APIs when you or your agents request it. OAuth tokens (access and refresh) are stored securely to maintain the connection.
-- Disconnected connection: If you disconnect your PayPal account within Vibey's settings, we will delete the associated OAuth tokens and stored PayPal User Data from our systems within 30 days of disconnection.
-- Account deletion: If you delete your Vibey account, all PayPal User Data and OAuth tokens associated with your account will be permanently deleted from our systems within 30 days.
+- Disconnected connection: If you disconnect your PayPal account within ROAS's settings, we will delete the associated OAuth tokens and stored PayPal User Data from our systems within 30 days of disconnection.
+- Account deletion: If you delete your ROAS account, all PayPal User Data and OAuth tokens associated with your account will be permanently deleted from our systems within 30 days.
 
 How to Request Deletion of Your PayPal User Data
 
 You may request deletion of your PayPal User Data at any time by:
 
-1. Disconnecting the PayPal integration within Vibey's account settings; or
-2. Revoking Vibey's access from your PayPal account settings; or
-3. Deleting your Vibey account entirely; or
+1. Disconnecting the PayPal integration within ROAS's account settings; or
+2. Revoking ROAS's access from your PayPal account settings; or
+3. Deleting your ROAS account entirely; or
 4. Contacting us directly at info@vibey.im with a deletion request.
 
 Upon receiving a verifiable deletion request, we will permanently delete your PayPal User Data and OAuth tokens from our active systems within 30 days.
@@ -232,7 +232,7 @@ We do not sell, rent, or trade your PayPal User Data with third parties. PayPal 
 
 META (FACEBOOK) USER DATA: COLLECTION, USE, AND DELETION
 
-When you connect a Meta (Facebook) account to Vibey via OAuth ("Login with Facebook"), we may access and store certain data obtained through Meta Graph APIs ("Meta User Data"). This section describes how we handle that data.
+When you connect a Meta (Facebook) account to ROAS via OAuth ("Login with Facebook"), we may access and store certain data obtained through Meta Graph APIs ("Meta User Data"). This section describes how we handle that data.
 
 What Meta User Data We Collect
 
@@ -253,31 +253,31 @@ How We Use Meta User Data
 
 We use Meta User Data solely to:
 
-- Allow you to create, manage, update, pause, and activate advertising campaigns on Meta platforms (Facebook and Instagram) directly from within Vibey
+- Allow you to create, manage, update, pause, and activate advertising campaigns on Meta platforms (Facebook and Instagram) directly from within ROAS
 - Display your connected Facebook Pages and ad accounts so you can select which to use for advertising
 - Upload ad creative assets (images and videos) to your Meta ad account on your behalf
-- Retrieve and display ad performance analytics and insights within the Vibey platform
-- Enable Vibey's AI agents to optimize and manage your advertising campaigns when you request it
-- Configure Meta Pixels on landing pages you publish through Vibey
+- Retrieve and display ad performance analytics and insights within the ROAS platform
+- Enable ROAS's AI agents to optimize and manage your advertising campaigns when you request it
+- Configure Meta Pixels on landing pages you publish through ROAS
 
 We do not use Meta User Data for advertising purposes unrelated to your own campaigns. We do not automatically sign you up for marketing emails or newsletters based on your Meta connection.
 
 How Long We Retain Meta User Data
 
-We retain Meta User Data for as long as your account is active and you maintain an active Meta OAuth connection with Vibey. Specifically:
+We retain Meta User Data for as long as your account is active and you maintain an active Meta OAuth connection with ROAS. Specifically:
 
 - Active connection: Meta User Data is accessed on-demand via Meta Graph APIs when you or your agents interact with your advertising campaigns. OAuth tokens (long-lived access tokens) are stored securely to maintain the connection.
-- Disconnected connection: If you disconnect your Meta account within Vibey's settings, we will delete the associated OAuth tokens and stored Meta User Data from our systems within 30 days of disconnection.
-- Account deletion: If you delete your Vibey account, all Meta User Data and OAuth tokens associated with your account will be permanently deleted from our systems within 30 days.
-- Facebook-initiated deletion: If you remove Vibey from your Facebook account settings or submit a data deletion request through Facebook, we will receive a callback notification and will delete all associated Meta User Data and OAuth tokens from our systems promptly.
+- Disconnected connection: If you disconnect your Meta account within ROAS's settings, we will delete the associated OAuth tokens and stored Meta User Data from our systems within 30 days of disconnection.
+- Account deletion: If you delete your ROAS account, all Meta User Data and OAuth tokens associated with your account will be permanently deleted from our systems within 30 days.
+- Facebook-initiated deletion: If you remove ROAS from your Facebook account settings or submit a data deletion request through Facebook, we will receive a callback notification and will delete all associated Meta User Data and OAuth tokens from our systems promptly.
 
 How to Request Deletion of Your Meta User Data
 
 You may request deletion of your Meta User Data at any time by:
 
-1. Disconnecting the Meta integration within Vibey's account settings; or
-2. Removing Vibey from your Facebook account settings (Settings > Business Integrations); or
-3. Deleting your Vibey account entirely; or
+1. Disconnecting the Meta integration within ROAS's account settings; or
+2. Removing ROAS from your Facebook account settings (Settings > Business Integrations); or
+3. Deleting your ROAS account entirely; or
 4. Contacting us directly at info@vibey.im with a deletion request.
 
 Upon receiving a verifiable deletion request, we will permanently delete your Meta User Data and OAuth tokens from our active systems within 30 days.
@@ -292,18 +292,18 @@ This privacy statement was drafted on March 28, 2024, and last updated on March 
 CONTACTING US
 If you have questions about our privacy statement or privacy practices, please contact us at:
 
-Vibey LLC
+ROAS LLC
 Attn: Legal & Compliance Department
 Kotkapoja tn 2a-10, 10615 Tallinn
 Email: info@vibey.im
 
 Note on how we can communicate with you:
 
-By agreeing to our terms of service a prospect agrees to receive snail mail, email, phone, and automated prerecorded voice message solicitations from Vibey LLC, including its various business divisions, affiliates, partners, vendors, list managers, and clients who purchase our lists. You also agree to be contacted on a recurring basis for as long as you are a part of our SMS/MMS mobile message marketing program. We may sell the personal information that you supply to us and we may work with other third-party businesses to bring selected retail opportunities to our members via direct mail, email, SMS, text, and telemarketing (including but not limited to pre-recorded phone messages). Filling out any forms on our pages constitutes your signature and agreement that Vibey LLC and its representatives, agents, and partners may contact you by telephone (including at your wireless telephone number), email, SMS, or pre-recorded message at the information you provided through this website, and you understand and agree that this consent applies even if your number is listed on a state or federal do-not-call list. By filling out any of our forms you also agree that you cannot “build a case” against Vibey LLC (by counting infractions per solicitation) because by submitting any forms or filling out any information signifies that you are requesting to be contacted by email, including SMS, text, and pre-recorded phone calls. In no event shall either party be liable for special, indirect, incidental, or consequential damages, including, but not limited to, loss of use, or loss of profits.
+By agreeing to our terms of service a prospect agrees to receive snail mail, email, phone, and automated prerecorded voice message solicitations from ROAS LLC, including its various business divisions, affiliates, partners, vendors, list managers, and clients who purchase our lists. You also agree to be contacted on a recurring basis for as long as you are a part of our SMS/MMS mobile message marketing program. We may sell the personal information that you supply to us and we may work with other third-party businesses to bring selected retail opportunities to our members via direct mail, email, SMS, text, and telemarketing (including but not limited to pre-recorded phone messages). Filling out any forms on our pages constitutes your signature and agreement that ROAS LLC and its representatives, agents, and partners may contact you by telephone (including at your wireless telephone number), email, SMS, or pre-recorded message at the information you provided through this website, and you understand and agree that this consent applies even if your number is listed on a state or federal do-not-call list. By filling out any of our forms you also agree that you cannot “build a case” against ROAS LLC (by counting infractions per solicitation) because by submitting any forms or filling out any information signifies that you are requesting to be contacted by email, including SMS, text, and pre-recorded phone calls. In no event shall either party be liable for special, indirect, incidental, or consequential damages, including, but not limited to, loss of use, or loss of profits.
 
 Message and data rates may apply.
 
-Prospect agrees he/she is solely responsible for any and all third-party fees a prospect may incur when being contacted by Vibey LLC and its business divisions, affiliates, partners, clients, vendors, and list managers. By filling out ANY of our forms you also forfeit your right to litigate against Vibey LLC based on any previously alleged infraction (alleged infractions prior to you submitting any forms) including but not limited to SMS, email, or robo-dial. If any of the terms are held unenforceable, the remainder of the terms shall remain in effect.
+Prospect agrees he/she is solely responsible for any and all third-party fees a prospect may incur when being contacted by ROAS LLC and its business divisions, affiliates, partners, clients, vendors, and list managers. By filling out ANY of our forms you also forfeit your right to litigate against ROAS LLC based on any previously alleged infraction (alleged infractions prior to you submitting any forms) including but not limited to SMS, email, or robo-dial. If any of the terms are held unenforceable, the remainder of the terms shall remain in effect.
 
 Please DO NOT digitally sign this agreement by submitting any forms on any of our websites if you do not agree with our terms and conditions.
 

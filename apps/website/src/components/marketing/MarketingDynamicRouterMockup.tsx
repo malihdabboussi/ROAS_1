@@ -165,7 +165,7 @@ export function MarketingDynamicRouterMockup(props?: {
             <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-500 border-4 border-[#0a0a0a]" />
           </div>
           <div className="text-center">
-            <p className="text-[12px] font-bold text-white uppercase tracking-wider">Vibey</p>
+            <p className="text-[12px] font-bold text-white uppercase tracking-wider">Pixel</p>
             <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Autonomous CEO</p>
           </div>
         </div>

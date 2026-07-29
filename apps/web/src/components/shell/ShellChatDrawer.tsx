@@ -70,6 +70,9 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
     // Keep legacy global chat collapsed — shell owns the drawer.
     setCollapsed(true)
     if (conversationId) {
+      // Selecting a history row must cancel a stale "new chat" intent so list
+      // hydration cannot wipe the panel while the drawer still highlights the row.
+      setChatRailIntent(null)
       openConversationInSpaceChat(conversationId)
       setActiveConversationId(conversationId)
       void selectConversation(conversationId)

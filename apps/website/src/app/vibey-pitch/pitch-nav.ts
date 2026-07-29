@@ -53,7 +53,7 @@ const NAV: PitchNav[] = NAV_RAW.map((r) => {
 
 export function getPitchNav(slideIndex: number): PitchNav {
   if (slideIndex < 0 || slideIndex >= NAV.length) {
-    return { badge: 'Vibey Pitch', crumbs: ['Vibey'], sectionNum: 0, sectionTotal: SECTION_TOTAL }
+    return { badge: 'ROAS Pitch', crumbs: ['ROAS'], sectionNum: 0, sectionTotal: SECTION_TOTAL }
   }
   return NAV[slideIndex]!
 }

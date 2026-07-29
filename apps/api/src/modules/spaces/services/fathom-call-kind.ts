@@ -1,17 +1,18 @@
 /**
  * Classify Fathom calls for CEO Meetings:
- * personal | team | executive | external | sales
+ * private | team | executive | client | partner | sales
  */
 
 import type { FathomAttendeeLike } from './fathom-meeting-item-enrichment'
 
-export type CeoCallKind = 'personal' | 'team' | 'executive' | 'external' | 'sales'
+export type CeoCallKind = 'private' | 'team' | 'executive' | 'client' | 'partner' | 'sales'
 
 export const CEO_CALL_KIND_OPTIONS: Array<{ id: CeoCallKind; label: string; color: string }> = [
-  { id: 'personal', label: 'Personal', color: 'emerald' },
+  { id: 'private', label: 'Private', color: 'emerald' },
   { id: 'team', label: 'Team', color: 'violet' },
   { id: 'executive', label: 'Executive', color: 'amber' },
-  { id: 'external', label: 'External', color: 'cyan' },
+  { id: 'client', label: 'Client', color: 'cyan' },
+  { id: 'partner', label: 'Partner', color: 'blue' },
   { id: 'sales', label: 'Sales', color: 'orange' },
 ]
 
@@ -42,7 +43,7 @@ export function buildCeoCallIdentity(input: {
     if (!email || !email.includes('@')) return
     emails.add(email)
     const domain = email.split('@')[1]
-    if (domain) internalDomains.add(domain)
+    if (domain && !PUBLIC_EMAIL_DOMAINS.has(domain)) internalDomains.add(domain)
     const local = email.split('@')[0]?.replace(/[._+]/g, ' ').trim()
     if (
       local &&
@@ -140,6 +141,18 @@ const SALES_RE =
   /\b(sales|demo|discovery|pitch|prospect|pipeline|pricing|proposal|close|quota|ae\b|sdr\b|outbound|inbound lead)\b/i
 const EXECUTIVE_RE =
   /\b(executive|board|leadership|offsite|strategy offsite|c[- ]?level|all[- ]?hands|investor|founder sync)\b/i
+const PARTNER_RE = /\b(partner|partnership|vendor|agency|affiliate|integration)\b/i
+const CLIENT_RE =
+  /\b(client|customer|account|campaign|coaching|workshop|fulfillment|review|strategy session)\b/i
+const PRIVATE_RE = /\b(private|personal|one[- ]?on[- ]?one|1[: -]?1|check[- ]?in)\b/i
+const PUBLIC_EMAIL_DOMAINS = new Set([
+  'gmail.com',
+  'googlemail.com',
+  'outlook.com',
+  'hotmail.com',
+  'icloud.com',
+  'yahoo.com',
+])
 
 function countExternalAttendees(
   attendees: FathomAttendeeLike[],
@@ -171,14 +184,13 @@ export function resolveCeoCallKind(input: {
   const mostlyExternal = known > 0 && external / known >= 0.5
   const salesSignal = SALES_RE.test(blob)
   const executiveSignal = EXECUTIVE_RE.test(blob)
+  const ownerPresent = ownerOnCall(input)
+  const participantCount = Math.max(known, input.attendees.length, input.attendeeLabels.length)
 
-  if (ownerOnCall(input)) {
-    if (salesSignal && mostlyExternal) return 'sales'
-    return 'personal'
-  }
-
-  if (salesSignal || (mostlyExternal && SALES_RE.test(blob))) return 'sales'
-  if (mostlyExternal) return 'external'
+  if (salesSignal && external > 0) return 'sales'
+  if (external > 0 && PARTNER_RE.test(blob)) return 'partner'
+  if (external > 0 && (CLIENT_RE.test(blob) || mostlyExternal)) return 'client'
   if (executiveSignal) return 'executive'
+  if (ownerPresent && (participantCount <= 1 || PRIVATE_RE.test(blob))) return 'private'
   return 'team'
 }

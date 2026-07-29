@@ -251,7 +251,7 @@ function StudioLayout() {
     void load()
   }, [activeCampaignId])
 
-  // Listen for vibey:sendMessage (e.g. from Instagram post "Ask ROAS to reply")
+  // Listen for vibey:sendMessage (e.g. from Instagram post "Ask Pixel to reply")
   useEffect(() => {
     const handler = (e: Event) => {
       const ev = e as CustomEvent<{ content: string }>

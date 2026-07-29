@@ -1,12 +1,13 @@
 import type {
   HomeCardDefinition,
+  HomeCardGridRows,
   HomeCardGridSize,
   HomeCardId,
   HomeLayoutState,
 } from '../types/home-cards'
 
 export const HOME_LAYOUT_STORAGE_KEY = 'vibey-home-layout'
-export const HOME_LAYOUT_VERSION = 2 as const
+export const HOME_LAYOUT_VERSION = 3 as const
 
 /** Per-user local cache so shared browsers do not leak another account's layout. */
 export function homeLayoutStorageKey(userId: string): string {
@@ -21,6 +22,9 @@ export const DEFAULT_HOME_LAYOUT: HomeLayoutState = {
   cardSizes: {
     agenda: 'full',
     inbox_feed: 'full',
+  },
+  cardRows: {
+    inbox_feed: 2,
   },
 }
 
@@ -86,11 +90,12 @@ export const HOME_CARD_DEFINITIONS: HomeCardDefinition[] = [
     id: 'inbox_feed',
     title: 'Inbox',
     description: 'Primary, Other, Later, and Cleared notifications',
+    defaultRows: 2,
   },
   {
     id: 'chat_composer',
-    title: 'Ask ROAS',
-    description: 'Start work with ROAS from your Home dashboard',
+    title: 'Ask Pixel',
+    description: 'Start work with Pixel from your Home dashboard',
   },
 ]
 
@@ -100,6 +105,10 @@ export function homeCardDefinition(id: HomeCardId): HomeCardDefinition {
 
 export function homeCardGridSize(layout: HomeLayoutState, id: HomeCardId): HomeCardGridSize {
   return layout.cardSizes?.[id] === 'full' ? 'full' : 'half'
+}
+
+export function homeCardGridRows(layout: HomeLayoutState, id: HomeCardId): HomeCardGridRows {
+  return layout.cardRows?.[id] ?? homeCardDefinition(id).defaultRows ?? 1
 }
 
 function parseCardSizes(
@@ -118,15 +127,32 @@ function parseCardSizes(
   return Object.keys(out).length > 0 ? out : undefined
 }
 
+function parseCardRows(
+  raw: unknown,
+  cardIds: HomeCardId[],
+): Partial<Record<HomeCardId, HomeCardGridRows>> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const allowed = new Set(cardIds)
+  const out: Partial<Record<HomeCardId, HomeCardGridRows>> = {}
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!allowed.has(key as HomeCardId)) continue
+    if (value === 1 || value === 2 || value === 3) {
+      out[key as HomeCardId] = value
+    }
+  }
+  return Object.keys(out).length > 0 ? out : undefined
+}
+
 export function parseHomeLayout(raw: unknown): HomeLayoutState {
   if (!raw || typeof raw !== 'object')
     return { ...DEFAULT_HOME_LAYOUT, cardIds: [...DEFAULT_HOME_CARD_IDS] }
   const o = raw as Record<string, unknown>
-  if (o.version !== HOME_LAYOUT_VERSION)
+  if (o.version !== HOME_LAYOUT_VERSION && o.version !== 2)
     return {
       ...DEFAULT_HOME_LAYOUT,
       cardIds: [...DEFAULT_HOME_CARD_IDS],
       cardSizes: { ...DEFAULT_HOME_LAYOUT.cardSizes },
+      cardRows: { ...DEFAULT_HOME_LAYOUT.cardRows },
     }
   const ids = o.cardIds
   if (!Array.isArray(ids)) return { ...DEFAULT_HOME_LAYOUT, cardIds: [...DEFAULT_HOME_CARD_IDS] }
@@ -136,9 +162,14 @@ export function parseHomeLayout(raw: unknown): HomeLayoutState {
   )
   if (cardIds.length === 0) return { ...DEFAULT_HOME_LAYOUT, cardIds: [...DEFAULT_HOME_CARD_IDS] }
   const cardSizes = parseCardSizes(o.cardSizes, cardIds)
-  return cardSizes
-    ? { version: HOME_LAYOUT_VERSION, cardIds, cardSizes }
-    : { version: HOME_LAYOUT_VERSION, cardIds }
+  const cardRows =
+    o.version === HOME_LAYOUT_VERSION ? parseCardRows(o.cardRows, cardIds) : undefined
+  return {
+    version: HOME_LAYOUT_VERSION,
+    cardIds,
+    ...(cardSizes ? { cardSizes } : {}),
+    ...(cardRows ? { cardRows } : {}),
+  }
 }
 
 export function homeLayoutNeedsMigration(raw: unknown): boolean {

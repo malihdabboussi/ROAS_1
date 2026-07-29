@@ -171,7 +171,7 @@ export function EnterpriseContactForm({ onDone }: { onDone?: () => void }) {
         value={useCase}
         onChange={(e) => setUseCase(e.target.value)}
         rows={2}
-        placeholder="How do you plan to use Vibey?"
+        placeholder="How do you plan to use ROAS?"
         className="placeholder-dim body-3 w-full resize-none rounded-xl px-4 py-3 outline-none transition-all"
         style={GLASS.input}
       />

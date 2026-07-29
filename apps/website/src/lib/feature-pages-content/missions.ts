@@ -2,9 +2,9 @@ import type { FeaturePageDefinition } from './types'
 
 export const missionsFeaturePage: FeaturePageDefinition = {
   slug: 'missions',
-  metaTitle: 'Missions | Vibey',
+  metaTitle: 'Missions | ROAS',
   metaDescription:
-    'Delegate work to your AI team. Describe the outcome, Vibey plans the subtasks, assigns specialists, and delivers finished work for your review.',
+    'Delegate work to your AI team. Describe the outcome, ROAS plans the subtasks, assigns specialists, and delivers finished work for your review.',
   mockupKind: 'mission-detail-modal',
   heroBadges: [
     'Delegation',
@@ -19,17 +19,17 @@ export const missionsFeaturePage: FeaturePageDefinition = {
     kicker: '',
     title: 'DESCRIBE THE OUTCOME. YOUR TEAM HANDLES THE REST.',
     subtitle:
-      'Studio is hands-on. Missions are hands-off. You write the brief, Vibey breaks it into subtasks, assigns the right agents, and delivers finished work for your review.',
+      'Studio is hands-on. Missions are hands-off. You write the brief, ROAS breaks it into subtasks, assigns the right agents, and delivers finished work for your review.',
     primaryCta: { href: '/waitlist', label: 'Join Waitlist' },
     secondaryCta: { href: '/features/capabilities', label: 'See Capabilities' },
   },
   comparison: {
     title: 'Missions vs. doing it yourself',
-    columns: ['Vibey Missions', 'Doing it yourself'],
+    columns: ['ROAS Missions', 'Doing it yourself'],
     rows: [
       {
         label: 'Planning',
-        cells: ['Vibey breaks the brief into subtasks', 'You plan every step manually'],
+        cells: ['ROAS breaks the brief into subtasks', 'You plan every step manually'],
       },
       {
         label: 'Execution',
@@ -61,7 +61,7 @@ export const missionsFeaturePage: FeaturePageDefinition = {
               'Describe the end result you need. Be specific about the deliverable: what, for whom, in what format.',
           },
           {
-            title: 'Vibey plans',
+            title: 'ROAS plans',
             description:
               'The CEO agent analyzes the mission, breaks it into subtasks, and assigns the right specialist for each piece.',
           },
@@ -130,7 +130,7 @@ export const missionsFeaturePage: FeaturePageDefinition = {
       {
         title: 'Review the plan',
         description:
-          'Vibey shows the subtask breakdown. Approve the plan or adjust before execution starts.',
+          'ROAS shows the subtask breakdown. Approve the plan or adjust before execution starts.',
         mockupKind: 'mission-delegate-step-plan',
       },
       {
@@ -145,7 +145,7 @@ export const missionsFeaturePage: FeaturePageDefinition = {
     items: [
       {
         q: 'Do I have to plan the subtasks myself?',
-        a: 'No. Vibey\u2019s CEO agent creates the plan. You approve it.',
+        a: 'No. ROAS\u2019s CEO agent creates the plan. You approve it.',
       },
       {
         q: 'Can I send multiple missions at once?',

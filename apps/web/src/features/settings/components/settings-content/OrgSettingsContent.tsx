@@ -180,6 +180,21 @@ export default function OrgSettingsContent() {
     }
   }
 
+  const handleAiDataAdmin = async (memberId: string, enabled: boolean) => {
+    if (!activeOrgId) return
+    try {
+      await orgService.updateAiDataAdmin(activeOrgId, memberId, enabled)
+      setMembers((prev) =>
+        prev.map((member) =>
+          member.id === memberId ? { ...member, ai_data_admin: enabled } : member,
+        ),
+      )
+      toast.success(enabled ? 'Organization-wide AI data access enabled' : 'AI data access removed')
+    } catch (err) {
+      toast.error(sanitizeUserError(err, 'Failed to update AI data access'))
+    }
+  }
+
   const handleRemoveMember = async (memberId: string, memberName: string) => {
     if (!activeOrgId) return
     try {
@@ -482,6 +497,30 @@ export default function OrgSettingsContent() {
                               : `Joined ${new Date(member.created_at).toLocaleDateString()}`)}
                         </p>
                       </div>
+
+                      <Tooltip
+                        label={
+                          member.ai_data_admin
+                            ? 'Can ask Pixel to discover same-organization knowledge. Private conversations, external channels, and unapproved actions stay restricted.'
+                            : 'Uses only normally shared data and assigned context.'
+                        }
+                        side="top"
+                        delayMs={200}
+                      >
+                        <button
+                          type="button"
+                          disabled={!isOwner || isMemberOwner}
+                          onClick={() =>
+                            void handleAiDataAdmin(member.id, !member.ai_data_admin)
+                          }
+                          className={`body-3 rounded-spacing-1 border-border gap-spacing-1 flex items-center border px-2 py-1 font-medium ${
+                            member.ai_data_admin ? 'text-primary' : 'text-muted-foreground'
+                          }`}
+                        >
+                          <Shield className="h-3 w-3" />
+                          AI Data Admin
+                        </button>
+                      </Tooltip>
 
                       {/* Role badge or selector */}
                       {isMemberOwner || isSelf || !hasMinRole('admin') ? (

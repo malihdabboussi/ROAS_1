@@ -122,7 +122,7 @@ export function HomeDashboardV4Composer({
 
   const placeholder = useMemo(() => {
     if (committedTemplate) return committedTemplate.placeholder
-    return 'Tell ROAS what to do…'
+    return 'Tell Pixel what to do…'
   }, [committedTemplate])
 
   const plusMenuSpacePicker = useMemo<ChatInputPlusMenuSpacePickerConfig>(

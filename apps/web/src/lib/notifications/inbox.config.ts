@@ -4,6 +4,7 @@ export const INBOX_MESSAGES = {
   LOADING: 'Pulling your inbox together…',
   VIEWS: {
     primary: 'Primary',
+    system: 'System',
     other: 'Other',
     later: 'Later',
     cleared: 'Cleared',
@@ -21,6 +22,9 @@ export const INBOX_MESSAGES = {
     location: 'Location',
     status: 'Inbox status',
     readState: 'Read state',
+    sourceStatus: 'Current status',
+    resolved: 'Resolved',
+    awaitingApproval: 'Awaiting approval',
     read: 'Read',
     unread: 'Unread',
     inboxOnly: 'Inbox only',
@@ -29,6 +33,7 @@ export const INBOX_MESSAGES = {
   },
   EMPTY: {
     primary: 'Primary is clear. You’re all caught up.',
+    system: 'No system updates are waiting.',
     other: 'Nothing else is waiting.',
     later: 'Nothing is snoozed right now.',
     cleared: 'Cleared items will show up here.',

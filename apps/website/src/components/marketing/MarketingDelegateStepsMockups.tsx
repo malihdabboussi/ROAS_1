@@ -102,7 +102,7 @@ export function MarketingMissionDelegateStepPlanMockup() {
           <div className="relative flex items-start justify-between gap-2 pl-4">
             <div className="indicator-dot-glass indicator-dot-glass-green absolute left-[5px] top-1 z-10 h-2.5 w-2.5 shrink-0 -translate-x-1/2" />
             <div className="min-w-0 flex-1">
-              <span className="body-4 font-medium text-white">Vibey planned this mission</span>
+              <span className="body-4 font-medium text-white">ROAS planned this mission</span>
               <span className="body-4 text-text-muted mt-0.5 block opacity-60">Just now</span>
             </div>
             <div className="border-color-glass h-7 w-7 shrink-0 overflow-hidden rounded-full border">

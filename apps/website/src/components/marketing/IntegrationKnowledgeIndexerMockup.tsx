@@ -100,7 +100,7 @@ export function IntegrationKnowledgeIndexerMockup({
     <div className="relative flex h-full min-h-[400px] w-full items-center justify-center p-8">
       <IntegrationConnectorLines />
 
-      {/* Central Vibey Agent */}
+      {/* Central ROAS Agent */}
       <div className="relative z-20">
         <div
           className={`h-20 w-20 overflow-hidden rounded-full ${
@@ -109,7 +109,7 @@ export function IntegrationKnowledgeIndexerMockup({
               : 'border-color-glass border'
           }`}
         >
-          <img src={vibeySrc} alt="Vibey CEO" className="h-full w-full object-cover" />
+          <img src={vibeySrc} alt="Pixel" className="h-full w-full object-cover" />
         </div>
       </div>
 

@@ -57,7 +57,7 @@ export function PresentationMarkupOverlay<TTrace extends MarkupElementTrace>({
           if (event.key === 'Enter') sendToVibe()
         }}
         autoFocus
-        placeholder="Tell ROAS what to edit..."
+        placeholder="Tell Pixel what to edit..."
         className="h-spacing-9 rounded-spacing-2 border-border bg-background px-spacing-3 body-3 text-foreground placeholder:text-muted-foreground w-full border outline-none focus:outline-none"
       />
       <div className="gap-spacing-2 mt-spacing-2 flex justify-end">

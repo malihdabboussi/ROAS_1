@@ -15,7 +15,7 @@ describe('fetchStudioSearchIdle', () => {
           kind: 'conversation',
           id: 'c1',
           label: 'Recent chat',
-          subtitle: 'Vibey',
+          subtitle: 'ROAS',
           url: null,
         },
         {

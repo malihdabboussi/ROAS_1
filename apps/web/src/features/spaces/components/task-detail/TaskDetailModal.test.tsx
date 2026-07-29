@@ -2,8 +2,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import '@testing-library/jest-dom/vitest'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { TeamRosterEntry } from '@/lib/team'
 import type { MissionDeliverable } from '@/lib/missions'
+import type { TeamRosterEntry } from '@/lib/team'
 import type { SpaceItem } from '../../types'
 import type { FieldDef, SpaceSchema, ViewDef } from '../../types/space-schema'
 import { TaskDetailModal } from './TaskDetailModal'
@@ -41,11 +41,7 @@ const componentMocks = vi.hoisted(() => ({
       <section data-testid="deliverables-carousel">
         <h2>{headingLabel}</h2>
         {deliverables.map((deliverable) => (
-          <button
-            key={deliverable.id}
-            type="button"
-            onClick={() => onSelect(deliverable)}
-          >
+          <button key={deliverable.id} type="button" onClick={() => onSelect(deliverable)}>
             Open {deliverable.title}
           </button>
         ))}
@@ -71,7 +67,8 @@ const componentMocks = vi.hoisted(() => ({
         <span>campaign: {campaignId}</span>
         <span>space: {fallbackSpaceId}</span>
         <span>
-          agents: {agents.map((agent) => `${agent.name}:${agent.role}:${agent.level ?? ''}`).join(',')}
+          agents:{' '}
+          {agents.map((agent) => `${agent.name}:${agent.role}:${agent.level ?? ''}`).join(',')}
         </span>
         <span>renderer: {renderEntityPreview ? 'present' : 'missing'}</span>
       </div>
@@ -111,24 +108,19 @@ const componentMocks = vi.hoisted(() => ({
     }) => (
       <header data-testid="task-detail-header">
         <span>{committedTitle}</span>
-        <button
-          type="button"
-          onClick={(event) => onOpenMenu?.(event.currentTarget)}
-        >
+        <button type="button" onClick={(event) => onOpenMenu?.(event.currentTarget)}>
           More actions
         </button>
       </header>
     ),
   ),
-  TaskMenuDropdown: vi.fn(
-    ({ onSendToAgent }: { onSendToAgent?: () => void }) => (
-      <div data-testid="task-menu">
-        <button type="button" onClick={onSendToAgent}>
-          Send to agent
-        </button>
-      </div>
-    ),
-  ),
+  TaskMenuDropdown: vi.fn(({ onSendToAgent }: { onSendToAgent?: () => void }) => (
+    <div data-testid="task-menu">
+      <button type="button" onClick={onSendToAgent}>
+        Send to agent
+      </button>
+    </div>
+  )),
   TaskMetaFields: vi.fn(() => <div data-testid="task-meta-fields" />),
   TaskSubtasks: vi.fn(() => <div data-testid="task-subtasks" />),
   TaskTitleInput: vi.fn(
@@ -149,9 +141,7 @@ const componentMocks = vi.hoisted(() => ({
       open: boolean
     }) =>
       open ? (
-        <div data-testid="send-task-modal">
-          seed: {initialInstructionsHtml ?? 'empty'}
-        </div>
+        <div data-testid="send-task-modal">seed: {initialInstructionsHtml ?? 'empty'}</div>
       ) : null,
   ),
 }))
@@ -391,5 +381,13 @@ describe('TaskDetailModal', () => {
       ),
     ).toBe(false)
     consoleError.mockRestore()
+  })
+
+  it('renders panel presentation inline without the activity column', async () => {
+    const { container } = render(<TaskDetailModal {...props} presentation="panel" />)
+
+    expect(await screen.findByTestId('task-detail-header')).toHaveTextContent('Launch task')
+    expect(container.querySelector('[data-dropzone]')).toBeInTheDocument()
+    expect(screen.queryByTestId('task-activity')).not.toBeInTheDocument()
   })
 })

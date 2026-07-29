@@ -5,11 +5,11 @@ import { getAgentLibraryForMarketing } from '@/lib/get-agent-library-for-marketi
 const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'Vibey',
+  name: 'ROAS',
   url: 'https://vibey.im',
   logo: 'https://vibey.im/Logos/logov2/icon-text-white.png',
   description:
-    'Vibey is the hybrid operating layer for humans and AI agents — The Brain, Agents, and Spaces in one place.',
+    'ROAS is the hybrid operating layer for humans and AI agents — The Brain, Agents, and Spaces in one place.',
   sameAs: [
     'https://x.com/usevibey',
     'https://www.instagram.com/vibey.im/',
@@ -21,7 +21,7 @@ const organizationSchema = {
 const softwareSchema = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
-  name: 'Vibey',
+  name: 'ROAS',
   url: 'https://vibey.im',
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Web',

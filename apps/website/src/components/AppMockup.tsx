@@ -232,7 +232,7 @@ export function AppMockup({ withPerimeterLight = false, className = '' }: AppMoc
 
       {/* Mockup frame */}
       <div className="app-mockup-scale hero-screenshot-frame bg-color-deep relative z-[1] overflow-hidden rounded-[14px] shadow-2xl">
-        {/* Real Vibey Studio UI: collapsed sidebar (72px) floating rail like production */}
+        {/* Real ROAS Studio UI: collapsed sidebar (72px) floating rail like production */}
         <div className="bg-color-deep flex h-[520px] sm:h-[500px] lg:h-[600px]">
           {/* ── Studio Sidebar (matches app md:w-[72px] collapsed rail) ── */}
           <div className="hidden w-[72px] flex-shrink-0 items-stretch py-3 pl-2 md:flex">
@@ -243,7 +243,7 @@ export function AppMockup({ withPerimeterLight = false, className = '' }: AppMoc
               {/* 1. Logo Area */}
               <div className="flex h-14 items-center justify-center pt-1 shrink-0">
                 <button className="cursor-pointer transition-opacity hover:opacity-80">
-                  <img src="/Logos/logov2/icon-white.png" alt="Vibey" className="h-10 w-10" />
+                  <img src="/Logos/logov2/icon-white.png" alt="ROAS" className="h-10 w-10" />
                 </button>
               </div>
 

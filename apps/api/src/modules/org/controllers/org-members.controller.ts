@@ -24,10 +24,12 @@ import {
   ChangeMemberRoleSchema,
   MemberIdParamSchema,
   OrgIdParamSchema,
+  UpdateAiDataAdminSchema,
   UpdateCreditLimitSchema,
   type ChangeMemberRoleInput,
   type MemberIdParam,
   type OrgIdParam,
+  type UpdateAiDataAdminInput,
   type UpdateCreditLimitInput,
 } from '../dto'
 import { OrgService } from '../services/org.service'
@@ -67,6 +69,29 @@ export class OrgMembersController {
         throw new HttpException(error.message, HttpStatus.FORBIDDEN)
       }
       throw new HttpException('Failed to change role', HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+  }
+
+  @Patch(':orgId/members/:memberId/ai-data-admin')
+  @RequireOrgRole('owner')
+  async updateAiDataAdmin(
+    @Param(new ZodValidationPipe(MemberIdParamSchema)) params: MemberIdParam,
+    @Body(new ZodValidationPipe(UpdateAiDataAdminSchema)) dto: UpdateAiDataAdminInput,
+    @Supabase() supabase: SupabaseClient,
+  ) {
+    try {
+      const member = await this.orgService.updateAiDataAdmin(
+        supabase,
+        params.orgId,
+        params.memberId,
+        dto.enabled,
+      )
+      return { success: true, member }
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Owner access cannot be disabled') {
+        throw new HttpException(error.message, HttpStatus.FORBIDDEN)
+      }
+      throw new HttpException('Failed to update AI data access', HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
 

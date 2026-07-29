@@ -6,6 +6,7 @@ export interface ChannelPrincipalUser {
   relationship_kind?: 'internal'
   is_connection_owner?: boolean
   personal_brain_access?: boolean
+  organization_wide_data_access?: boolean
 }
 
 export function applyChannelPrincipalBrainPolicy(input: {

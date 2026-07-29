@@ -18,7 +18,7 @@ export function FeatureHero(props: {
   heroVisual?: 'default' | 'agent-library'
   /** Server-resolved agents (DB or seed fallback); required when `heroVisual` is `agent-library`. */
   agentLibraryAgents?: PublicAgentLibraryRow[]
-  /** Passed into `mission-detail-modal` mockup for team portraits + Vibey. */
+  /** Passed into `mission-detail-modal` mockup for team portraits + ROAS. */
   missionDetailLibraryAgents?: PublicAgentLibraryRow[]
   missionDetailVibeyPortraitUrl?: string
 }) {

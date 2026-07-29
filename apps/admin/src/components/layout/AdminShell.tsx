@@ -69,7 +69,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <div className="gap-spacing-3 px-spacing-6 py-spacing-4 flex flex-row items-center">
           <img
             src="/Logos/logov2_transperent.png"
-            alt="Vibey"
+            alt="ROAS"
             className="h-spacing-10 w-spacing-10 object-contain"
           />
           <span className="body-1 text-foreground font-medium">Admin Dashboard</span>

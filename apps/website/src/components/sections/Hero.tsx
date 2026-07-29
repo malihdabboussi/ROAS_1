@@ -382,7 +382,7 @@ export function Hero(props: { teamPreviewAgents?: { imageUrl: string; label: str
                 <span className="badge-glass badge-glass-secondary rounded-full font-semibold">
                   New
                 </span>
-                <span className="body-3 font-medium text-white">Introducing Vibey</span>
+                <span className="body-3 font-medium text-white">Introducing ROAS</span>
                 <ArrowRight size={14} className="text-color-muted" />
               </Link>
 

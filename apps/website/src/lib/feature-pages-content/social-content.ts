@@ -2,7 +2,7 @@ import type { FeaturePageDefinition } from './types'
 
 export const socialContentFeaturePage: FeaturePageDefinition = {
   slug: 'social-content',
-  metaTitle: 'Social Content | Vibey',
+  metaTitle: 'Social Content | ROAS',
   metaDescription:
     'Generate social posts tied to your campaigns. Consistent voice, platform-native formats, scheduled from one workspace.',
   mockupKind: 'ads',
@@ -11,15 +11,15 @@ export const socialContentFeaturePage: FeaturePageDefinition = {
     kicker: '',
     title: 'POSTS TIED TO YOUR CAMPAIGNS',
     subtitle:
-      'Vibey generates platform-native social content from the same brief that built your funnel. Consistent voice, zero tab switching.',
+      'ROAS generates platform-native social content from the same brief that built your funnel. Consistent voice, zero tab switching.',
     primaryCta: { href: '/waitlist', label: 'Join Waitlist' },
     secondaryCta: { href: '/features/leads', label: 'See Leads' },
   },
   comparison: {
-    title: 'Vibey social vs. standalone schedulers',
+    title: 'ROAS social vs. standalone schedulers',
     subtitle:
-      'Schedulers post content. Vibey creates content that matches your campaign narrative.',
-    columns: ['Vibey', 'Standalone scheduler'],
+      'Schedulers post content. ROAS creates content that matches your campaign narrative.',
+    columns: ['ROAS', 'Standalone scheduler'],
     rows: [
       {
         label: 'Content creation',
@@ -73,7 +73,7 @@ export const socialContentFeaturePage: FeaturePageDefinition = {
           },
           {
             title: 'Schedule sends',
-            description: 'Set publish dates and times. Vibey handles the rest.',
+            description: 'Set publish dates and times. ROAS handles the rest.',
           },
           {
             title: 'Multi-platform batch',
@@ -105,7 +105,7 @@ export const socialContentFeaturePage: FeaturePageDefinition = {
   },
   valuePropGrid: {
     title: 'Your content, your platforms',
-    subtitle: 'Vibey creates-you own and distribute.',
+    subtitle: 'ROAS creates-you own and distribute.',
     items: [
       {
         title: 'Multi-platform',
@@ -135,13 +135,13 @@ export const socialContentFeaturePage: FeaturePageDefinition = {
     items: [
       {
         title: 'Prompt',
-        description: 'Tell Vibey which campaign to promote and which platforms to target.',
+        description: 'Tell Pixel which campaign to promote and which platforms to target.',
       },
       {
         title: 'Review',
         description: 'Preview platform-native posts. Edit by talking until they match your intent.',
       },
-      { title: 'Schedule', description: 'Set publish dates and let Vibey handle distribution.' },
+      { title: 'Schedule', description: 'Set publish dates and let ROAS handle distribution.' },
     ],
   },
   faq: {
@@ -152,7 +152,7 @@ export const socialContentFeaturePage: FeaturePageDefinition = {
         a: 'LinkedIn, Instagram, Twitter/X, and Facebook. More channels ship based on demand.',
       },
       {
-        q: 'Can Vibey generate images?',
+        q: 'Can ROAS generate images?',
         a: 'Text copy and carousel layouts ship today. AI-generated visuals are on the roadmap.',
       },
       {

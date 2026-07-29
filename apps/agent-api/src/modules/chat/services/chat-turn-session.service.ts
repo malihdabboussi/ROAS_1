@@ -45,6 +45,7 @@ interface ChannelUser {
   relationship_kind?: 'internal'
   is_connection_owner?: boolean
   personal_brain_access?: boolean
+  organization_wide_data_access?: boolean
 }
 
 interface MessageScope {
@@ -287,6 +288,8 @@ export class ChatTurnSessionService {
             relationship_kind: state.channelUser.relationship_kind,
             is_connection_owner: state.channelUser.is_connection_owner,
             personal_brain_access: state.channelUser.personal_brain_access,
+            organization_wide_data_access:
+              state.channelUser.organization_wide_data_access,
           }
         : null,
       state.messageScope.space_id,

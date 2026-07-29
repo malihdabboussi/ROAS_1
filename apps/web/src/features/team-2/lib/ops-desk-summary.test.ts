@@ -77,7 +77,7 @@ describe('ops-desk-summary', () => {
 
   it('builds summary counts and idle candidates excluding vibey', () => {
     const agents = [
-      agent({ agent_key: 'vibey', name: 'Vibey', status: 'online' }),
+      agent({ agent_key: 'vibey', name: 'Pixel', status: 'online' }),
       agent({ agent_key: 'lux', name: 'Lux', status: 'working' }),
       agent({ agent_key: 'copy', name: 'Copy', status: 'idle' }),
     ]

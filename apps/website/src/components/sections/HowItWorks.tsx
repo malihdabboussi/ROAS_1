@@ -7,16 +7,16 @@ const steps = [
   {
     icon: MessageSquare,
     number: 1,
-    title: 'Tell Vibey about your business',
+    title: 'Tell Pixel about your business',
     description:
-      'Describe your product, audience, and goals. Vibey asks smart follow-up questions to nail your positioning.',
+      'Describe your product, audience, and goals. ROAS asks smart follow-up questions to nail your positioning.',
   },
   {
     icon: Wand2,
     number: 2,
     title: 'Review your campaign',
     description:
-      'Vibey builds everything: funnels, emails, offers, presentations. Preview each piece and make changes in real-time.',
+      'ROAS builds everything: funnels, emails, offers, presentations. Preview each piece and make changes in real-time.',
   },
   {
     icon: Rocket,

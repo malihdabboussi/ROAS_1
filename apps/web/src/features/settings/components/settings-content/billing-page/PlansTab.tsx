@@ -101,7 +101,7 @@ export function PlansTab({
 
   return (
     <div className="space-y-spacing-4">
-      <h2 className="title-h3 text-foreground text-center uppercase">VIBEY PRICING PLANS</h2>
+      <h2 className="title-h3 text-foreground text-center uppercase">ROAS PRICING PLANS</h2>
 
       <div className="gap-spacing-3 flex items-center justify-center">
         <span

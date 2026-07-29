@@ -40,16 +40,16 @@ const fontMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Vibey — AI Operating System for Your Business',
+  title: 'ROAS — AI Operating System for Your Business',
   description:
     'A team of specialist AI agents that execute your business: build funnels, run ads, send email sequences, manage missions, and operate autonomously with persistent memory.',
   metadataBase: new URL('https://vibey.im'),
   openGraph: {
-    title: 'Vibey — AI Operating System for Your Business',
+    title: 'ROAS — AI Operating System for Your Business',
     description:
       'A team of specialist AI agents that execute your business: build funnels, run ads, send email sequences, manage missions, and operate autonomously with persistent memory.',
     url: 'https://vibey.im',
-    siteName: 'Vibey',
+    siteName: 'ROAS',
     type: 'website',
     locale: 'en_US',
     images: [
@@ -57,14 +57,14 @@ export const metadata: Metadata = {
         url: '/Logos/logov2/icon-text-white.png',
         width: 1200,
         height: 630,
-        alt: 'Vibey — AI Operating System for Your Business',
+        alt: 'ROAS — AI Operating System for Your Business',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@usevibey',
-    title: 'Vibey — AI Operating System for Your Business',
+    title: 'ROAS — AI Operating System for Your Business',
     description:
       'A team of specialist AI agents that execute your business: build funnels, run ads, send email sequences, manage missions, and operate autonomously.',
     images: ['/Logos/logov2/icon-text-white.png'],

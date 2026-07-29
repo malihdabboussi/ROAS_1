@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import {
-  shellMenuDockForClientPoint,
+  shellMenuDockHitAtClientPoint,
   useShellMenuDock,
 } from '@/components/shell/use-shell-menu-dock'
 
@@ -17,12 +17,8 @@ export function SidebarHqHubLogoButton({
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pointerActiveRef = useRef(false)
   const holdStartedRef = useRef(false)
-  const lastCandidateRef = useRef<string | null>(null)
-  const dragging = useShellMenuDock((state) => state.dragging)
   const startDragging = useShellMenuDock((state) => state.startDragging)
-  const setCandidate = useShellMenuDock((state) => state.setCandidate)
-  const finishDragging = useShellMenuDock((state) => state.finishDragging)
-  const cancelDragging = useShellMenuDock((state) => state.cancelDragging)
+  const clearLift = useShellMenuDock((state) => state.clearLift)
   const toggleMenuCompact = useShellMenuDock((state) => state.toggleMenuCompact)
 
   const clearHoldTimer = () => {
@@ -31,50 +27,8 @@ export function SidebarHqHubLogoButton({
     holdTimerRef.current = null
   }
 
-  useEffect(
-    () => () => {
-      clearHoldTimer()
-      cancelDragging()
-    },
-    [cancelDragging],
-  )
-
-  // Document listeners survive sidebar remounts when the candidate dock changes.
-  useEffect(() => {
-    if (!dragging) return
-
-    const onMove = (event: PointerEvent) => {
-      if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return
-      const next = shellMenuDockForClientPoint(event.clientX, event.clientY)
-      if (next === lastCandidateRef.current) return
-      lastCandidateRef.current = next
-      setCandidate(next)
-    }
-
-    const onUp = (event: PointerEvent) => {
-      holdStartedRef.current = false
-      pointerActiveRef.current = false
-      const dock = shellMenuDockForClientPoint(event.clientX, event.clientY)
-      lastCandidateRef.current = null
-      finishDragging(dock)
-    }
-
-    const onCancel = () => {
-      holdStartedRef.current = false
-      pointerActiveRef.current = false
-      lastCandidateRef.current = null
-      cancelDragging()
-    }
-
-    document.addEventListener('pointermove', onMove)
-    document.addEventListener('pointerup', onUp)
-    document.addEventListener('pointercancel', onCancel)
-    return () => {
-      document.removeEventListener('pointermove', onMove)
-      document.removeEventListener('pointerup', onUp)
-      document.removeEventListener('pointercancel', onCancel)
-    }
-  }, [dragging, setCandidate, finishDragging, cancelDragging])
+  // Never cancelDragging on unmount — soft-lock remounts this button between docks.
+  useEffect(() => () => clearHoldTimer(), [])
 
   return (
     <button
@@ -90,25 +44,41 @@ export function SidebarHqHubLogoButton({
         holdStartedRef.current = false
         clearHoldTimer()
         const { clientX, clientY } = event
+        const shell =
+          event.currentTarget instanceof HTMLElement
+            ? event.currentTarget.closest('.hub-sidebar-shell')
+            : null
         holdTimerRef.current = setTimeout(() => {
           holdStartedRef.current = true
-          const next = shellMenuDockForClientPoint(clientX, clientY)
-          lastCandidateRef.current = next
-          startDragging()
-          setCandidate(next)
+          const rect =
+            shell instanceof HTMLElement
+              ? shell.getBoundingClientRect()
+              : new DOMRect(clientX - 24, clientY - 24, 72, 320)
+          startDragging({
+            left: rect.left,
+            top: rect.top,
+            width: rect.width,
+            height: rect.height,
+            grabX: clientX - rect.left,
+            grabY: clientY - rect.top,
+          })
+          // Soft-lock immediately if the hold starts over a seam.
+          if (shellMenuDockHitAtClientPoint(clientX, clientY) !== null) {
+            clearLift()
+          }
         }, HOLD_TO_DOCK_MS)
       }}
       onPointerUp={() => {
         if (!pointerActiveRef.current) return
         clearHoldTimer()
-        // Document listeners own the drag end once hold-to-dock has started.
-        if (holdStartedRef.current || dragging) return
+        // ShellMenuDockDragController owns the drag end once hold-to-dock has started.
+        if (holdStartedRef.current || useShellMenuDock.getState().dragging) return
         pointerActiveRef.current = false
         toggleMenuCompact()
       }}
       onPointerCancel={() => {
         clearHoldTimer()
-        if (holdStartedRef.current || dragging) return
+        if (holdStartedRef.current || useShellMenuDock.getState().dragging) return
         pointerActiveRef.current = false
       }}
       className="hub-sidebar-logo-button cursor-pointer rounded-lg p-1 transition-all hover:opacity-80"

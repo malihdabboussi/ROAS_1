@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
+import { ShellMenuDockDragController } from './ShellMenuDockDragController'
 import { ShellSidebarSlot, ShellSidebarSlotProvider } from './ShellSidebarSlot'
 import { ShellTopBar } from './ShellTopBar'
 import {
@@ -49,6 +50,7 @@ export function ShellMenuDockLayout({
 
   return (
     <ShellSidebarSlotProvider sidebar={sidebar}>
+      <ShellMenuDockDragController />
       <div
         className="shell-menu-dock-frame"
         data-shell-menu-dock={frameAttr}

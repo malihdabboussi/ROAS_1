@@ -2,7 +2,7 @@ import type { FeaturePageDefinition } from './types'
 
 export const yourTeamFeaturePage: FeaturePageDefinition = {
   slug: 'your-team',
-  metaTitle: 'Your Team | Vibey',
+  metaTitle: 'Your Team | ROAS',
   metaDescription:
     'AI agents that work alongside your team so your best people can focus on the work that actually needs them. Each agent is powered by a brain, trained on your business, and connected to your tools.',
   mockupKind: 'team',

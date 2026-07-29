@@ -76,7 +76,7 @@ const HR_SHOWCASE_FALLBACK: MarketingHrShowcasePayload = {
   },
 }
 
-// ─── Slide 23: Appendix — Meet Vibey ─────────────────────────────────────────
+// ─── Slide 23: Appendix — Meet ROAS ─────────────────────────────────────────
 
 export function SlideMeetVibey() {
   const CHIPS = [

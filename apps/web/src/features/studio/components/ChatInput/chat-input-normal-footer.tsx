@@ -82,8 +82,6 @@ export function ChatInputNormalFooter({
           </button>
         </Tooltip>
 
-        <ChatInputModelPickerView {...modelPickerProps} />
-
         {composerFooterAfterIntegrationsSlot ? (
           <div className="ml-spacing-1 flex min-w-0 shrink-0 items-center">
             {composerFooterAfterIntegrationsSlot}
@@ -97,9 +95,11 @@ export function ChatInputNormalFooter({
         <ChatInputPlusMenuPortal {...plusMenuProps} />
       </div>
 
-      <div className="flex items-center gap-0.5">
-        {contextMeter && contextMeter.contextWindow > 0 ? (
-          <>
+      <div className="gap-spacing-1 flex items-center">
+        <ChatInputModelPickerView {...modelPickerProps} />
+        <div className="flex flex-col items-center">
+          <ChatInputVoiceSendControls {...voiceSendProps} />
+          {contextMeter && contextMeter.contextWindow > 0 ? (
             <ChatInputContextMeter
               meter={contextMeter}
               breakdownPanelEnabled={breakdownPanelEnabled}
@@ -109,6 +109,10 @@ export function ChatInputNormalFooter({
               onOpenBeforeToggle={onOpenContextPopoverBeforeToggle}
               onToggle={onToggleContextPopover}
             />
+          ) : null}
+        </div>
+        {contextMeter && contextMeter.contextWindow > 0 ? (
+          <>
             <ChatInputContextPopoverPortal
               open={breakdownPanelEnabled && contextPopoverOpen}
               panelRef={contextPopoverPanelRef}
@@ -118,7 +122,6 @@ export function ChatInputNormalFooter({
             />
           </>
         ) : null}
-        <ChatInputVoiceSendControls {...voiceSendProps} />
       </div>
     </div>
   )

@@ -28,7 +28,7 @@ function summary(partial: Partial<OpsDeskSummary> = {}): OpsDeskSummary {
 }
 
 describe('buildOpsDeskTalkKickoffMessage', () => {
-  it('asks Vibey to open a short Ops Desk check-in', () => {
+  it('asks ROAS to open a short Ops Desk check-in', () => {
     const message = buildOpsDeskTalkKickoffMessage({
       firstName: 'Dylan',
       summary: summary(),

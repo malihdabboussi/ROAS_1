@@ -28,7 +28,7 @@ describe('ChatInputContextMeter', () => {
     )
   })
 
-  it('renders a non-button meter when the breakdown panel is disabled', () => {
+  it('renders a non-button progress line when the breakdown panel is disabled', () => {
     const { container } = render(
       <ChatInputContextMeter
         meter={{ totalTokens: 25_000, contextWindow: 100_000 }}
@@ -42,8 +42,8 @@ describe('ChatInputContextMeter', () => {
     )
 
     expect(screen.queryByRole('button', { name: 'Open context breakdown' })).toBeNull()
-    const progressCircle = container.querySelectorAll('circle')[1]
-    expect(progressCircle?.getAttribute('stroke')).toBe('var(--color-success)')
+    expect(container.querySelectorAll('.progress-bar-track')).toHaveLength(4)
+    expect(container.querySelectorAll('.progress-bar-fill')).toHaveLength(1)
   })
 
   it('delegates popover positioning before opening and toggles expanded state', () => {

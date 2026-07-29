@@ -66,7 +66,7 @@ export function FunnelCommentsChatView({
               className="button-compact button-glass-primary gap-spacing-1 shrink-0"
             >
               <Send className="icon-xs" />
-              Send to ROAS
+              Send to Pixel
             </button>
           ) : null}
         </div>

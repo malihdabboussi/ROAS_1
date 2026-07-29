@@ -356,7 +356,7 @@ interface ChatState {
   // Active tools (shown during executing phase, supports parallel tool calls)
   activeTools: Array<{ name: string; label: string; toolCallId?: string }>
 
-  // Status Messages (progress indicators from ROAS)
+  // Status Messages (progress indicators from Pixel)
   statusMessages: string[]
   flowTimeline: FlowTimelineBlock[]
 

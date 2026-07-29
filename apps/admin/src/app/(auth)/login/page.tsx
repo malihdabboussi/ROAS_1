@@ -68,7 +68,7 @@ export default function LoginPage() {
       <div className="mb-[var(--spacing-6)] text-center">
         <img
           src="/Logos/logov2_transperent.png"
-          alt="Vibey"
+          alt="ROAS"
           className="mb-spacing-3 h-spacing-20 mx-auto w-auto object-contain"
         />
         <h1 className="title-h3">Admin</h1>

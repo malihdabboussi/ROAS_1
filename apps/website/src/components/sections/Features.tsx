@@ -18,7 +18,7 @@ const roles: Role[] = [
     role: 'Your Copywriter',
     title: 'Writes copy that sounds like you',
     description:
-      'Emails, ad copy, landing pages, headlines: all in your voice. Not templates. Not AI slop. Vibey learns your brand and writes like you would, just faster.',
+      'Emails, ad copy, landing pages, headlines: all in your voice. Not templates. Not AI slop. ROAS learns your brand and writes like you would, just faster.',
   },
   {
     icon: Layers,
@@ -32,14 +32,14 @@ const roles: Role[] = [
     role: 'Your Designer',
     title: 'Creates pages and assets',
     description:
-      'Professional landing pages, presentations, and visual assets. No Canva. No freelancers. Tell Vibey what you need, get production-ready output.',
+      'Professional landing pages, presentations, and visual assets. No Canva. No freelancers. Tell Pixel what you need, get production-ready output.',
   },
   {
     icon: Mail,
     role: 'Your Email Marketer',
     title: 'Builds sequences that nurture and convert',
     description:
-      'Welcome series, sales sequences, re-engagement campaigns. Vibey writes the full sequence, sets the timing, and nails the CTAs.',
+      'Welcome series, sales sequences, re-engagement campaigns. ROAS writes the full sequence, sets the timing, and nails the CTAs.',
   },
   {
     icon: BarChart3,
@@ -53,21 +53,21 @@ const roles: Role[] = [
     role: 'Your Content Strategist',
     title: 'Plans docs, guides, and presentations',
     description:
-      'PDFs, checklists, playbooks: Vibey creates the assets that capture leads and build your list. Strategy and execution in one step.',
+      'PDFs, checklists, playbooks: ROAS creates the assets that capture leads and build your list. Strategy and execution in one step.',
   },
   {
     icon: Globe,
     role: 'Your Web Developer',
     title: 'Codes and publishes pages',
     description:
-      'Full Next.js pages, published and live. No staging. No deploy pipeline. Vibey builds it, you review it, it\u2019s live.',
+      'Full Next.js pages, published and live. No staging. No deploy pipeline. ROAS builds it, you review it, it\u2019s live.',
   },
   {
     icon: Search,
     role: 'Your SEO Specialist',
     title: 'Optimizes for search and discovery',
     description:
-      'Meta tags, keyword targeting, structured content: baked into every page and post Vibey creates. Not an afterthought.',
+      'Meta tags, keyword targeting, structured content: baked into every page and post ROAS creates. Not an afterthought.',
   },
 ]
 
@@ -126,7 +126,7 @@ export function Features() {
             The team you&apos;d hire: <span className="gradient-text">without the headcount.</span>
           </h2>
           <p className="text-color-muted body-2 mx-auto mt-4 max-w-2xl">
-            Vibey replaces eight marketing roles with one conversation. Same output. Fraction of the
+            ROAS replaces eight marketing roles with one conversation. Same output. Fraction of the
             cost. Available 24/7.
           </p>
         </div>

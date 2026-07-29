@@ -17,13 +17,13 @@ export function HomeFounderNote() {
               </div>
 
               <p className="body-1 leading-relaxed text-white">
-                I did not build Vibey to replace your team. I built it because the people I respect
+                I did not build ROAS to replace your team. I built it because the people I respect
                 most are drowning in tools that should be doing the boring half of the job for them.
               </p>
 
               <p className="body-2 text-color-secondary leading-relaxed">
                 Every other &ldquo;AI for business&rdquo; tool I tried gave me a smarter chatbot
-                and asked me to do the integration work. Vibey flips it: the system is the
+                and asked me to do the integration work. ROAS flips it: the system is the
                 integration. Your knowledge lives in one place. Your agents share it. Your team
                 works in the same workspace as them. The result is not autonomy theater — it is a
                 hybrid org where humans make the calls and agents take the load.
@@ -44,7 +44,7 @@ export function HomeFounderNote() {
                 </div>
                 <div className="min-w-0">
                   <p className="body-3 font-semibold text-white">Sefy Tofan</p>
-                  <p className="body-4 text-color-muted">Founder, Vibey</p>
+                  <p className="body-4 text-color-muted">Founder, ROAS</p>
                 </div>
               </div>
             </div>

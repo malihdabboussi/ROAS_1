@@ -3,14 +3,14 @@ export const TEAM_OPS_DESK_MESSAGES = {
   BRIEFING_INTRO: "Here's what's happening with your team.",
   BRIEFING_EMPTY_FLOOR: "Nobody's on a mission right now.",
   BRIEFING_EMPTY_AUTOPILOT:
-    'Autopilot is on — Vibey is watching. With campaign strategy set, it can create and assign missions on its own.',
-  BRIEFING_PROMPT: "Tell Vibey what's on your mind, or assign someone below.",
+    'Autopilot is on — Pixel is watching. With campaign strategy set, it can create and assign missions on its own.',
+  BRIEFING_PROMPT: "Tell Pixel what's on your mind, or assign someone below.",
   BRIEFING_PROMPT_AUTOPILOT:
-    'You can still Talk to Vibey to deploy something now, or open Autopilot to set Result / Purpose / Strategy.',
-  TALK_TO_VIBEY: 'Talk to Vibey',
+    'You can still Talk to Pixel to deploy something now, or open Autopilot to set Result / Purpose / Strategy.',
+  TALK_TO_VIBEY: 'Talk to Pixel',
   TALK_CONTEXT_LABEL: 'Ops Desk',
   AUTOPILOT_HINT:
-    'Vibey watches your campaigns, creates and assigns missions from your strategy, retries stuck work, and can send a daily digest. Credits are used when agents run.',
+    'Pixel watches your campaigns, creates and assigns missions from your strategy, retries stuck work, and can send a daily digest. Credits are used when agents run.',
   AUTOPILOT_OPEN_SETTINGS: 'Set strategy',
   IDLE_FOCUS: 'Nothing assigned',
   WORKING_NOW: 'Working now',

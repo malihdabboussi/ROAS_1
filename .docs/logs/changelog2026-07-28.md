@@ -9,6 +9,55 @@
 **Impact:** Bounded transcript repair now visits every missing recording deterministically, including batches whose rows have identical creation timestamps.
 
 **Files:** `apps/api/src/modules/meetings/repositories/meeting-recording-backfill.repository.ts`, `apps/api/src/modules/integrations/fathom/services/fathom-meeting-workspace-backfill.service.ts`, `apps/api/src/modules/integrations/fathom/controllers/fathom-meetings.controller.ts`, `apps/api/src/modules/integrations/fathom/services/fathom-meeting-workspace-backfill.service.test.ts`
+## [2026-07-28 13:27] - [ARCH]
+
+What: Hardened agents against writing to legacy Vibey Supabase: rewrote `supa-project` skill for ROAS prod only, added always-on Cursor rule + AGENTS.md hard stop, extended `sync-local-agent-env.sh` / `verify-local-env-alignment.sh` to cover `apps/api/.env` and root `.env`, and synced those files onto `lhfgtsjetcardinpgouq`.
+
+Why: Agents were loading service-role keys from misaligned `apps/api/.env` (still on `qfrvykscoymiwwgysvsr`) and granting credits on the wrong database.
+
+Impact: Credit/org/data ops must confirm host `lhfgtsjetcardinpgouq`; verify script fails if any checked env still points at Vibey; local api/root env landmines are aligned.
+
+Files: `.claude/skills/supa-project/SKILL.md`, `.cursor/rules/supabase-roas-db.mdc`, `AGENTS.md`, `scripts/roas/sync-local-agent-env.sh`, `scripts/roas/verify-local-env-alignment.sh`, `scripts/roas/roas-secrets.env.template`, local gitignored env files.
+
+## [2026-07-28 13:24] - [FIX]
+
+What: Granted 50,000 org credits to ROAS on the **ROAS-platform** Supabase project (`lhfgtsjetcardinpgouq`, org `f69bd799-…`), after an earlier grant was applied to the wrong (legacy Vibey) database.
+
+Why: Local `apps/api/.env` still pointed at old Vibey prod (`qfrvykscoymiwwgysvsr`); production web/agent-api use `lhfgtsjetcardinpgouq`. ROAS on the correct DB was at 0 available.
+
+Impact: ROAS org available credits moved 0 → 50,000 (`org_credit_purchases` `f83b6e72-…`).
+
+Files: Data-only on `lhfgtsjetcardinpgouq` (no code).
+
+## [2026-07-28 13:07] - [FIX]
+
+What: Account credits menu now re-fetches balance when `activeOrgId` changes.
+
+Why: Credits are org-scoped; switching workspace could leave a stale 0 from a depleted org while ROAS had balance.
+
+Impact: Opening the account card after switching to ROAS shows that org’s wallet.
+
+Files: `AvatarAccountMenuPanel.tsx`.
+
+## [2026-07-28 11:24] - [FEATURE]
+
+What: Closed out Home + Inbox triage plan verification — production schema confirmed live, backend/frontend Vitest suites green (24 tests), docs and follow-up log updated.
+
+Why: Implementation already shipped in-tree; remaining work was apply/verify migration and regression coverage before marking plan todos done.
+
+Impact: `user_notifications` triage columns + classifier/counts RPCs verified on `lhfgtsjetcardinpgouq`; Browser MCP unavailable this session so visual theme pass deferred to manual check.
+
+Files: `agent-follow-up-work.md` (migration OPS entry resolved), targeted inbox/home/sidebar tests.
+
+## [2026-07-28 10:47] - [FIX]
+
+What: Team agenda keeps **Mine** on shared invites (`Mine · teammate`). Meeting card no longer duplicates guests under the title; Join sits left of a copyable full link; More details expands downward at fixed width and shows calendars + event description.
+
+Why: Shared Team rows dropped Mine so Team looked teammate-only. The quick card widened on expand and repeated people as both account labels and guests.
+
+Impact: Team reads as mine + team. Meeting popup stays narrow, guests list name+email once, and join links are copyable.
+
+Files: `integrations-calendar-dedupe.ts`, `HomeMeetingDetailHost.tsx`, calendar description plumbing (Workspace/Google/Outlook), tests, `integration-connections.md`.
 
 ## [2026-07-28 07:50] - [FEATURE]
 
@@ -60,6 +109,15 @@ Why: Chat-launched missions did not visibly confirm their start, the current Spa
 Impact: A user can launch the correct static-ad workflow from Chat or Missions, inherit the current client context, request one to ten final ads across multiple templates, and see the launched Mission immediately in the conversation. The worker now contracts each production lane on its correct final-image action and exact output count.
 
 Files: `QuickMissionsHubHost.tsx`, `QuickMissionsHubModal.tsx`, `QuickMissionContextFields.tsx`, `StaticAdProductionFields.tsx`, `StartAdProductionPlaybookFields.tsx`, `static-ad-production.ts`, `static-ad-formats.config.ts`, `static-ad-production.playbook.ts`, focused tests, `loc-allowlist.json`, `missions.md`.
+## [2026-07-28 10:45] - [FEATURE]
+
+What: Added an explicit organization-level AI Data Admin capability for Pixel and ROAS AI Chat, enabled it for organization owners, exposed owner-controlled member access in Organization settings, propagated the verified scope through direct, queued, and Slack agent turns, and recorded privileged access decisions in an audit ledger.
+
+Why: Organization administrators needed broad same-organization discovery without turning the generic admin role into a blanket bypass of private conversations, cross-organization boundaries, RLS, write approvals, or Slack delivery controls.
+
+Impact: Authorized members can ask Pixel organization-wide questions across same-org knowledge and observed Slack channels. Private DMs/group DMs, unobserved private channels, cross-org data, and approval/send safeguards remain protected.
+
+Files: `packages/api-shared/src/services/ai-data-access-policy.ts`, organization context guard/scope files, org member controller/service/repository/DTO files, Slack access-control/runtime files, agent chat context and queue files, `OrgSettingsContent.tsx`, `org-api.ts`, `20260728173000_ai_data_admin_capability.sql`, focused tests, and AI Chat/Slack feature documentation.
 
 ## [2026-07-28 10:44] - [FIX]
 
@@ -71,11 +129,30 @@ Impact: Users can now search client campaigns by name, confirm the selected camp
 
 Files: `apps/web/src/components/global-chat/components/ChatCampaignBrainNudge.tsx`, `apps/web/src/components/global-chat/components/ChatCampaignPicker.tsx`, `apps/web/src/components/global-chat/components/ChatCampaignPicker.test.tsx`.
 
+## [2026-07-28 11:09] - [FIX]
+
+What: Documented Page Grader fulfillment title/body format in Vibey + Atlas operator skills, and repaired the Impact Elite Lab opt-in task so the portal title is short while the brief stays in notes.full_description.
+Why: Agents were dumping the full brief into description; portal uses task_description as the Title column, which made Tasks/Requests unreadable.
+Impact: New fulfillment requests should get clean titles; Impact Elite task ea787490 reads correctly after repair. Portal MCP already splits first line → title after Lovable deploy.
+Files: docker/agents/atlas/skills/page-grader-operator/SKILL.md, docker/agents/vibey/skills/page-grader-operator/SKILL.md, supabase/migrations/20260728181500_page_grader_fulfillment_title_body_format.sql
+
+
+## [2026-07-28 11:25] - [FIX]
+
+What: Deployed OpenClaw `web_fetch` image-extraction fix to Fly `roas-runtimes` (release v168); also excluded `.worktrees` / large local media from `docker/fly.dockerignore` so Fly builds stay lean.
+
+Why: Pixel was falsely reporting broken coach photos on GHL funnels; production needed the extractor fix live.
+
+Impact: Runtime health is green on the new image. Ask Pixel to re-fetch opt-in pages to validate.
+
+Files: `apps/openclaw` web-fetch tools (already on main), `docker/fly.dockerignore`, deploy via `scripts/roas` Fly path.
+
 ## [2026-07-28 11:42] - [FIX]
 
 What: Kept mission task chat sendable while an agent is working, and added on-demand runtime materialization for invoked skills owned by another agent.
 
 Why: The task activity UI incorrectly used embedded composer mode as a working-state flag, which removed its send controls. Chat exposed the account-wide skill catalog, but runtime repair only synchronized the active agent's normal skill set, so cross-agent skill files remained missing and the agent could not start.
+Why: The task activity UI incorrectly used embedded composer mode as a working-state flag, which removed its send controls. Chat exposed the account-wide skill catalog, but runtime repair only synchronized the active agent’s normal skill set, so cross-agent skill files remained missing and the agent could not start.
 
 Impact: Users can continue sending task context during active mission work. Invoked account-level skills are copied into the active runtime without deleting its existing skills or rewriting its normal skill index.
 
@@ -96,6 +173,15 @@ What: Added Workspace | Portal surface toggle that embeds Page Grader via short-
 Why: Keep ROAS as the primary shell while letting internal users work in Portal without a second login.
 Impact: Authenticated ROAS users with matching Portal internal accounts can open Clients/Campaigns/Launches/Performance inside the shell.
 Files: apps/api/.../page-grader-embed.controller.ts, page-grader-meeting.controller.ts, page-grader integration/API/module/dto, apps/web shell Portal surface + TopBar/Workspace, globals.css (web+website)
+## [2026-07-28 12:38] - [FIX]
+
+What: Granted 50,000 org-scoped credits to the ROAS org (`788cfdba-b9f3-4c8c-a16f-0de85ba446c0`, owner `dylan@dylanvanas.com`) via an `org_credit_purchases` ledger insert (`credits_purchased: 50000`, `amount_paid: 0`, `status: completed`), matching the audit-trail pattern the app's `getOrgBalance()` formula reads.
+
+Why: User requested the 50,000-credit grant land on the ROAS org account (org-scoped usage), not only the personal account that already received a prior +50k grant.
+
+Impact: ROAS org `totalAvailable` balance moved from 121,403 → 171,403 credits (base 8,000 fully used, purchased pool 228,000 → 278,000). Personal account grant for dylan@dylanvanas.com was left untouched as instructed.
+
+Files: Data-only change — one row inserted into `org_credit_purchases` (production Supabase, service role via `apps/api/.env`); no code files touched.
 
 ## [2026-07-28 13:03] - [ARCH]
 
@@ -126,6 +212,25 @@ Why: Brain dumps and bulk-selected work need filtering, consolidation, duplicate
 Impact: Pixel can process private raw intake into concise Delegation Packets. Review modes stop before dispatch; urgent mode can route in the same run after required checks. Durable source fingerprints and destination receipts prevent duplicate or unconfirmed assignments.
 
 Files: `space-template-catalog-delegation-desk.ts`, Delegation Desk catalog and provisioning tests, `delegation-intake.service.ts`, `DelegationBulkPanel.tsx`, bulk action wiring, delegation message config, Pixel `delegation-desk` skill, migrations `20260728203000` and `20260728203100`, and Spaces/Page Grader feature documentation.
+What: Added a private Delegation Desk Space template, Pixel's database-backed
+delegation skill, and a task-list bulk Delegate action with Batch, Review first,
+and Urgent modes. Multiple selected tasks are captured as one source-linked
+intake batch instead of being assigned individually.
+
+Why: Brain dumps and bulk-selected work need filtering, consolidation, duplicate
+checks, and human-readable briefs before they reach teammates, managed agents,
+or The ROAS Portal.
+
+Impact: Pixel can process private raw intake into concise Delegation Packets.
+Review modes stop before dispatch; urgent mode can route in the same run after
+required checks. Durable source fingerprints and destination receipts prevent
+duplicate or unconfirmed assignments.
+
+Files: `space-template-catalog-delegation-desk.ts`, Delegation Desk catalog and
+provisioning tests, `delegation-intake.service.ts`, `DelegationBulkPanel.tsx`,
+bulk action wiring, delegation message config, Pixel `delegation-desk` skill,
+migrations `20260728203000` and `20260728203100`, and Spaces/Page Grader feature
+documentation.
 
 ## [2026-07-28 13:46] - [FIX]
 
@@ -166,3 +271,12 @@ Why: PostgREST represented omitted metadata fields as null in mixed bulk upserts
 Impact: Canonical meeting ingestion and transcript repair can persist linked spaces and campaigns without failing before recording and transcript deliverables are updated.
 
 Files: `apps/api/src/modules/meetings/repositories/meeting-workspace.repository.ts`, `apps/api/src/modules/meetings/repositories/meeting-workspace.repository.test.ts`.
+## [2026-07-28 16:11] - [FIX]
+
+What: Applied the `20260728154500_team_agenda_directory_default_confirmed` data migration to production Supabase, which was already committed to `supabase/migrations/` (via `origin/main` commit `d89baa03`) but never actually run against `lhfgtsjetcardinpgouq`.
+
+Why: Verified the full "Team Agenda Mine+Directory and Prepare with Pixel" slice (API + web) was already merged to `origin/main` and deployed to production on both `roas-web` and `roas-api` (commit `a4f9d1bf`), but the accompanying data migration had 20 pending `org_person_calendar_identities` rows still gating Directory calendar coverage in the Team Agenda view.
+
+Impact: Directory-synced calendar identities with a Workspace user id now default to `match_status = 'confirmed'`, so Team Agenda's Directory coverage works without a separate manual confirmation step. Migration is idempotent (0 pending rows after run) and recorded in `supabase_migrations.schema_migrations`.
+
+Files: `supabase/migrations/20260728154500_team_agenda_directory_default_confirmed.sql` (applied to production, no code changes).

@@ -2,7 +2,7 @@ import type { FeaturePageDefinition } from './types'
 
 export const skillsFeaturePage: FeaturePageDefinition = {
   slug: 'skills',
-  metaTitle: 'Vibey Skills | Vibey',
+  metaTitle: 'ROAS Skills | ROAS',
   metaDescription:
     'Teach your agent repeatable plays-lead magnets, webinar funnels, launch sequences-so campaigns start from proven scaffolds.',
   mockupKind: 'skills-hero',
@@ -70,7 +70,7 @@ export const skillsFeaturePage: FeaturePageDefinition = {
           },
           {
             title: 'One-click launch',
-            description: 'Pick a skill, provide the brief, and Vibey runs the full play.',
+            description: 'Pick a skill, provide the brief, and ROAS runs the full play.',
           },
           {
             title: 'Continuous improvement',
@@ -87,7 +87,7 @@ export const skillsFeaturePage: FeaturePageDefinition = {
     title: 'Frequently asked questions',
     items: [
       {
-        q: 'What is a Vibey Skill?',
+        q: 'What is a ROAS Skill?',
         a: 'A reusable campaign scaffold that defines structure, prompts, and artifact types. Run it with fresh context anytime.',
       },
       {
@@ -100,7 +100,7 @@ export const skillsFeaturePage: FeaturePageDefinition = {
       },
       { q: 'Can teammates use my skills?', a: 'Yes. Skills are shared at the workspace level.' },
       {
-        q: 'What built-in skills ship with Vibey?',
+        q: 'What built-in skills ship with ROAS?',
         a: 'Lead magnet funnels, webinar registration, product launches, and more. The library grows continuously.',
       },
     ],

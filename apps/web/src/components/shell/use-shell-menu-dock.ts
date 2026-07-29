@@ -1,22 +1,32 @@
 'use client'
 
 import { create } from 'zustand'
+import {
+  shellMenuDockForPoint as hitTestForPoint,
+  shellMenuDockHitAtPoint,
+  type ShellMenuDock,
+  type ShellMenuDockWorkRect,
+} from './shell-menu-dock-hit-test'
 
-const STORAGE_KEY = 'vibey.shell.menu-dock.v1'
+export type { ShellMenuDock, ShellMenuDockWorkRect }
+
+const STORAGE_KEY = 'vibey.shell.menu-dock.v2'
+const LEGACY_STORAGE_KEY = 'vibey.shell.menu-dock.v1'
 const COMPACT_STORAGE_KEY = 'vibey.shell.menu-compact.v1'
-const WORK_BAND_PX = 120
-const WORK_BAND_SLACK_PX = 48
 
-/** Five dock homes — never over AI Chat. */
-export type ShellMenuDock = 'left' | 'work' | 'work-top' | 'work-bottom' | 'work-right'
+/** Product default: left of the work card (not frame-left of chat). */
+const DEFAULT_DOCK: ShellMenuDock = 'work'
 
-export type ShellMenuDockWorkRect = {
+export type ShellMenuDockLift = {
+  /** Fixed left of the lifted rail (px). */
   left: number
+  /** Fixed top of the lifted rail (px). */
   top: number
-  right: number
-  bottom: number
   width: number
   height: number
+  /** Pointer offset inside the rail at lift start. */
+  grabX: number
+  grabY: number
 }
 
 type ShellMenuDockStore = {
@@ -25,6 +35,8 @@ type ShellMenuDockStore = {
   menuCompact: boolean
   dragging: boolean
   candidate: ShellMenuDock
+  /** Floating geometry while the rail follows the pointer. */
+  lift: ShellMenuDockLift | null
   /** Work card is open and can host work-* docks inside it. */
   workCardHostAvailable: boolean
   /** Work card collapsed — work-* docks render as a right vertical rail beside chat. */
@@ -34,8 +46,11 @@ type ShellMenuDockStore = {
   toggleMenuCompact: () => void
   setWorkCardHostAvailable: (available: boolean) => void
   setWorkCollapsedHostAvailable: (available: boolean) => void
-  startDragging: () => void
+  startDragging: (lift: ShellMenuDockLift) => void
   setCandidate: (candidate: ShellMenuDock) => void
+  moveLift: (clientX: number, clientY: number) => void
+  clearLift: () => void
+  ensureLift: (lift: ShellMenuDockLift) => void
   finishDragging: (dock?: ShellMenuDock) => void
   cancelDragging: () => void
 }
@@ -62,7 +77,11 @@ export function isHorizontalWorkDock(dock: ShellMenuDock): boolean {
   return dock === 'work-top' || dock === 'work-bottom'
 }
 
-/** While dragging, layout follows the live candidate so the menu visually locks into place. */
+/**
+ * Soft-lock: while dragging, layout follows the live candidate so the menu
+ * snaps into each seam (vertical left/right, horizontal top/bottom). Free
+ * pointer-follow lift is only used in the dead zone between seams.
+ */
 export function activeShellMenuDock(state: {
   dock: ShellMenuDock
   candidate: ShellMenuDock
@@ -99,16 +118,19 @@ function persistCompact(compact: boolean): void {
   }
 }
 
+const EMPTY_LIFT = null as ShellMenuDockLift | null
+
 export const useShellMenuDock = create<ShellMenuDockStore>((set, get) => ({
-  dock: 'left',
+  dock: DEFAULT_DOCK,
   menuCompact: false,
   dragging: false,
-  candidate: 'left',
+  candidate: DEFAULT_DOCK,
+  lift: EMPTY_LIFT,
   workCardHostAvailable: false,
   workCollapsedHostAvailable: false,
   setDock: (dock) => {
     persistDock(dock)
-    set({ dock, candidate: dock, dragging: false })
+    set({ dock, candidate: dock, dragging: false, lift: null })
   },
   setMenuCompact: (menuCompact) => {
     persistCompact(menuCompact)
@@ -122,30 +144,60 @@ export const useShellMenuDock = create<ShellMenuDockStore>((set, get) => ({
   setWorkCardHostAvailable: (workCardHostAvailable) => set({ workCardHostAvailable }),
   setWorkCollapsedHostAvailable: (workCollapsedHostAvailable) =>
     set({ workCollapsedHostAvailable }),
-  startDragging: () =>
+  startDragging: (lift) =>
     set((state) => ({
       dragging: true,
       candidate: state.dock,
+      lift,
     })),
   setCandidate: (candidate) => set({ candidate }),
+  moveLift: (clientX, clientY) => {
+    const { lift } = get()
+    if (!lift) return
+    set({
+      lift: {
+        ...lift,
+        left: clientX - lift.grabX,
+        top: clientY - lift.grabY,
+      },
+    })
+  },
+  clearLift: () => set({ lift: null }),
+  ensureLift: (lift) => {
+    if (get().lift) return
+    set({ lift })
+  },
   finishDragging: (dock) => get().setDock(dock ?? get().candidate),
-  cancelDragging: () => set((state) => ({ dragging: false, candidate: state.dock })),
+  cancelDragging: () => set((state) => ({ dragging: false, candidate: state.dock, lift: null })),
 }))
 
 let hydrated = false
 
+/** Resolve persisted dock: v2 wins; v1 `left` upgrades to default work; other v1 docks keep. */
+function readPersistedDock(): ShellMenuDock | null {
+  const current = normalizeDock(window.localStorage.getItem(STORAGE_KEY))
+  if (current) return current
+
+  const legacyRaw = window.localStorage.getItem(LEGACY_STORAGE_KEY)
+  const legacy = normalizeDock(legacyRaw)
+  if (!legacy) return null
+  if (legacy === 'left') return DEFAULT_DOCK
+  return legacy
+}
+
 export function hydrateShellMenuDockFromStorage(): void {
   if (typeof window === 'undefined' || hydrated) return
   hydrated = true
-  const dock = normalizeDock(window.localStorage.getItem(STORAGE_KEY))
+  const dock = readPersistedDock() ?? DEFAULT_DOCK
   const compactRaw = window.localStorage.getItem(COMPACT_STORAGE_KEY)
   const menuCompact = compactRaw === '1'
-  if (dock) {
-    if (window.localStorage.getItem(STORAGE_KEY) !== dock) persistDock(dock)
-    useShellMenuDock.setState({ dock, candidate: dock, menuCompact })
-    return
+  if (window.localStorage.getItem(STORAGE_KEY) !== dock) persistDock(dock)
+  try {
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY)
+  } catch {
+    /* optional */
   }
-  useShellMenuDock.setState({ menuCompact })
+  useShellMenuDock.setState({ dock, candidate: dock, menuCompact, lift: null, dragging: false })
 }
 
 export function resetShellMenuDockHydrationForTests(): void {
@@ -196,42 +248,6 @@ export function resolveShellMenuDockForLayout(
   return dock
 }
 
-function bandFor(size: number): number {
-  return Math.min(WORK_BAND_PX, Math.max(48, size * 0.28))
-}
-
-function edgeDistance(
-  clientX: number,
-  clientY: number,
-  workRect: ShellMenuDockWorkRect,
-  edge: 'work' | 'work-top' | 'work-bottom' | 'work-right',
-): number | null {
-  const xBand = bandFor(workRect.width)
-  const yBand = bandFor(workRect.height)
-
-  if (edge === 'work') {
-    if (clientY < workRect.top || clientY > workRect.bottom) return null
-    if (clientX < workRect.left - WORK_BAND_SLACK_PX || clientX > workRect.left + xBand) return null
-    return Math.abs(clientX - workRect.left)
-  }
-  if (edge === 'work-right') {
-    if (clientY < workRect.top || clientY > workRect.bottom) return null
-    if (clientX > workRect.right + WORK_BAND_SLACK_PX || clientX < workRect.right - xBand)
-      return null
-    return Math.abs(clientX - workRect.right)
-  }
-  if (edge === 'work-top') {
-    if (clientX < workRect.left || clientX > workRect.right) return null
-    if (clientY < workRect.top - WORK_BAND_SLACK_PX || clientY > workRect.top + yBand) return null
-    return Math.abs(clientY - workRect.top)
-  }
-  // work-bottom
-  if (clientX < workRect.left || clientX > workRect.right) return null
-  if (clientY > workRect.bottom + WORK_BAND_SLACK_PX || clientY < workRect.bottom - yBand)
-    return null
-  return Math.abs(clientY - workRect.bottom)
-}
-
 export function shellMenuDockForPoint(
   clientX: number,
   clientY: number,
@@ -239,43 +255,41 @@ export function shellMenuDockForPoint(
   viewportHeight: number,
   workRect: ShellMenuDockWorkRect | null = null,
   chatOpen = true,
+  current: ShellMenuDock | null = null,
 ): ShellMenuDock {
-  const distances: Array<[ShellMenuDock, number]> = []
-
-  // Frame left-of-chat only when chat has real width.
-  if (chatOpen) {
-    distances.push(['left', clientX])
-  }
-
-  // Frame far-right only when there is no work card (otherwise use work-right).
-  if (!workRect) {
-    distances.push(['work-right', viewportWidth - clientX])
-    distances.push(['work-top', clientY])
-    distances.push(['work-bottom', viewportHeight - clientY])
-  } else {
-    for (const edge of ['work', 'work-top', 'work-bottom', 'work-right'] as const) {
-      const dist = edgeDistance(clientX, clientY, workRect, edge)
-      if (dist !== null) distances.push([edge, dist])
-    }
-    if (!chatOpen) {
-      // Far-left of the viewport with chat closed → left seam of the work card.
-      const xBand = bandFor(workRect.width)
-      if (clientX <= workRect.left + xBand) {
-        distances.push(['work', Math.abs(clientX - workRect.left)])
-      }
-    }
-  }
-
-  if (distances.length === 0) {
-    return workRect ? 'work' : 'left'
-  }
-
-  distances.sort((a, b) => a[1] - b[1])
-  return distances[0]?.[0] ?? (workRect && !chatOpen ? 'work' : 'left')
+  return hitTestForPoint(
+    clientX,
+    clientY,
+    viewportWidth,
+    viewportHeight,
+    workRect,
+    chatOpen,
+    current,
+  )
 }
 
-export function shellMenuDockForClientPoint(clientX: number, clientY: number): ShellMenuDock {
+export function shellMenuDockForClientPoint(
+  clientX: number,
+  clientY: number,
+  current: ShellMenuDock | null = null,
+): ShellMenuDock {
   return shellMenuDockForPoint(
+    clientX,
+    clientY,
+    typeof window === 'undefined' ? 0 : window.innerWidth,
+    typeof window === 'undefined' ? 0 : window.innerHeight,
+    getShellWorkAreaRect(),
+    isShellChatDrawerOpen(),
+    current,
+  )
+}
+
+/** Raw seam under the pointer, or null in the dead zone (for soft-lock vs free-lift). */
+export function shellMenuDockHitAtClientPoint(
+  clientX: number,
+  clientY: number,
+): ShellMenuDock | null {
+  return shellMenuDockHitAtPoint(
     clientX,
     clientY,
     typeof window === 'undefined' ? 0 : window.innerWidth,

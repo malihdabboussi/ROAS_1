@@ -2,7 +2,7 @@ import type { FeaturePageDefinition } from './types'
 
 export const adsFeaturePage: FeaturePageDefinition = {
   slug: 'ads',
-  metaTitle: 'Ads & Distribution | Vibey',
+  metaTitle: 'Ads & Distribution | ROAS',
   metaDescription:
     'Draft channel-specific creative from the same brief that built your funnel-keep messaging aligned end to end.',
   mockupKind: 'ads',
@@ -11,15 +11,15 @@ export const adsFeaturePage: FeaturePageDefinition = {
     kicker: '',
     title: 'CREATIVE THAT MATCHES THE FUNNEL',
     subtitle:
-      'Vibey pulls proof points and offers straight from your campaign so ads, landing pages, and emails tell one story. No more creative drift.',
+      'ROAS pulls proof points and offers straight from your campaign so ads, landing pages, and emails tell one story. No more creative drift.',
     primaryCta: { href: '/waitlist', label: 'Join Waitlist' },
     secondaryCta: { href: '/features/funnels', label: 'See Funnels' },
   },
   comparison: {
-    title: 'Vibey ads vs. disconnected tools',
+    title: 'ROAS ads vs. disconnected tools',
     subtitle:
-      'Most teams write ads in a separate tool and pray the messaging matches. Vibey keeps everything aligned.',
-    columns: ['Vibey', 'Siloed stack'],
+      'Most teams write ads in a separate tool and pray the messaging matches. ROAS keeps everything aligned.',
+    columns: ['ROAS', 'Siloed stack'],
     rows: [
       {
         label: 'Brief',
@@ -50,7 +50,7 @@ export const adsFeaturePage: FeaturePageDefinition = {
   showcase: {
     title: 'Everything you need to create, test & optimize ads',
     subtitle:
-      'Ads are not standalone-they are the first impression of your funnel. Vibey keeps them aligned.',
+      'Ads are not standalone-they are the first impression of your funnel. ROAS keeps them aligned.',
     blocks: [
       {
         mockupKind: 'ads',
@@ -59,7 +59,7 @@ export const adsFeaturePage: FeaturePageDefinition = {
           {
             title: 'Inherit the campaign context',
             description:
-              'Vibey reads your live funnel, offer, and audience from the same mission. No separate brief needed.',
+              'ROAS reads your live funnel, offer, and audience from the same mission. No separate brief needed.',
           },
           {
             title: 'Platform-specific variants',
@@ -69,7 +69,7 @@ export const adsFeaturePage: FeaturePageDefinition = {
           {
             title: 'Multiple angles',
             description:
-              'Vibey suggests headline variations, hook alternatives, and CTA options so you can test without starting from scratch.',
+              'ROAS suggests headline variations, hook alternatives, and CTA options so you can test without starting from scratch.',
           },
         ],
       },
@@ -86,7 +86,7 @@ export const adsFeaturePage: FeaturePageDefinition = {
           {
             title: 'Email sequence sync',
             description:
-              'The nurture sequence Vibey built matches the ad promise, so post-click experience is consistent.',
+              'The nurture sequence ROAS built matches the ad promise, so post-click experience is consistent.',
           },
           {
             title: 'Brand voice enforcement',
@@ -113,7 +113,7 @@ export const adsFeaturePage: FeaturePageDefinition = {
           {
             title: 'Continuous iteration',
             description:
-              'Ask Vibey for new variants anytime. The campaign context persists-no re-onboarding.',
+              'Ask Pixel for new variants anytime. The campaign context persists-no re-onboarding.',
           },
         ],
       },
@@ -123,12 +123,12 @@ export const adsFeaturePage: FeaturePageDefinition = {
   },
   valuePropGrid: {
     title: 'Control over your creative pipeline',
-    subtitle: 'Vibey drafts. You approve. Nothing spends without your sign-off.',
+    subtitle: 'ROAS drafts. You approve. Nothing spends without your sign-off.',
     items: [
       {
         title: 'Human in the loop',
         description:
-          'Vibey generates-you approve. No budget is spent without explicit authorization.',
+          'ROAS generates-you approve. No budget is spent without explicit authorization.',
       },
       {
         title: 'Multi-platform output',
@@ -158,7 +158,7 @@ export const adsFeaturePage: FeaturePageDefinition = {
       {
         title: 'Confirm the offer',
         description:
-          'Vibey locks the hook, proof points, and CTA from your live funnel so the ad matches the landing page.',
+          'ROAS locks the hook, proof points, and CTA from your live funnel so the ad matches the landing page.',
       },
       {
         title: 'Generate variants',
@@ -176,24 +176,24 @@ export const adsFeaturePage: FeaturePageDefinition = {
     title: 'Frequently asked questions',
     items: [
       {
-        q: 'Does Vibey spend my ad budget automatically?',
-        a: 'No. You approve creative and set budgets inside the ad platforms. Vibey generates the copy and creative briefs.',
+        q: 'Does ROAS spend my ad budget automatically?',
+        a: 'No. You approve creative and set budgets inside the ad platforms. ROAS generates the copy and creative briefs.',
       },
       {
         q: 'Which ad networks are supported?',
         a: 'Meta, Google, and LinkedIn to start. More channels are prioritized by customer demand.',
       },
       {
-        q: 'Can Vibey read performance data?',
+        q: 'Can ROAS read performance data?',
         a: 'With integrations connected, results flow back into The Workspace Brain so future creative improves.',
       },
       {
         q: 'How are variants generated?',
-        a: 'Vibey creates multiple headline, body, and CTA options per platform using your campaign context and Brain insights.',
+        a: 'ROAS creates multiple headline, body, and CTA options per platform using your campaign context and Brain insights.',
       },
       {
         q: 'What if I want to change an ad after generating?',
-        a: 'Edit in conversation. Vibey revises the copy while preserving platform constraints.',
+        a: 'Edit in conversation. ROAS revises the copy while preserving platform constraints.',
       },
       {
         q: 'Do ads stay aligned with my funnel?',

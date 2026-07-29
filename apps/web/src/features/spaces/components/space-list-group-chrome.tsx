@@ -113,14 +113,14 @@ export function GroupedRowGripColumn({
       {isTable && !reserveLayoutOnly && (
         <div className="relative z-[2] grid h-4 w-full place-items-center">
           {showRowNum && !isSelected && (
-            <span className="col-start-1 row-start-1 select-none text-[11px] tabular-nums leading-none text-[var(--color-muted-foreground)] opacity-100 transition-opacity duration-150 group-hover/gripcol:pointer-events-none group-hover/gripcol:opacity-0">
+            <span className="col-start-1 row-start-1 select-none text-[11px] tabular-nums leading-none text-[var(--color-muted-foreground)] opacity-100 transition-opacity duration-150 group-hover/row:pointer-events-none group-hover/row:opacity-0">
               {tableRowLabel}
             </span>
           )}
           <div
             className={cn(
               'col-start-1 row-start-1 flex items-center justify-center transition-opacity duration-150',
-              isSelected ? 'opacity-100' : 'opacity-0 group-hover/gripcol:opacity-100',
+              isSelected ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100',
             )}
           >
             {checkbox}

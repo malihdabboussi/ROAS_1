@@ -297,7 +297,7 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     provider: 'google_workspace',
     name: 'Google Workspace',
     description:
-      'Connect your Google Workspace (admin) so Vibey can map work emails to teammates and agents can read calendars by person — not on every member Home Agenda.',
+      'Connect your Google Workspace (admin) so Pixel can map work emails to teammates and agents can read calendars by person — not on every member Home Agenda.',
     category: 'productivity',
     auth_type: 'api_key',
     is_active: true,

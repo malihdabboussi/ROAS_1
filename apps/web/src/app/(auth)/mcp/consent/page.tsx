@@ -310,7 +310,7 @@ export default function McpConsentPage() {
   if (error || !preview) {
     return (
       <section className="surface-card rounded-spacing-4 border-border p-spacing-6 max-w-lg border text-center">
-        <h1 className="title-h6 text-foreground">CONNECT VIBEY</h1>
+        <h1 className="title-h6 text-foreground">CONNECT ROAS</h1>
         <p className="body-2 mt-spacing-3 text-muted-foreground">
           {error ?? 'This MCP connection request is missing.'}
         </p>

@@ -51,7 +51,7 @@ export function FunnelHeroStack(props: { kicker: string; title: string; subtitle
         ],
       }}
       headline={{ line1: 'One-click publish.', line2: 'Your custom domain.' }}
-      subtitle="Go live on Vibey infrastructure or connect your own domain. SSL, DNS, and hosting handled automatically: just hit publish."
+      subtitle="Go live on ROAS infrastructure or connect your own domain. SSL, DNS, and hosting handled automatically: just hit publish."
     />
   )
 

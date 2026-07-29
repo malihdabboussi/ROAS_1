@@ -38,6 +38,8 @@ type HubDockFlyoutProps = {
   nested?: boolean
   /** Natural-height primary flyout aligned to its trigger instead of filling the viewport. */
   compact?: boolean
+  /** Omit the title header (e.g. account card that brings its own chrome). */
+  hideHeader?: boolean
   /** Fixed panel width; long names truncate instead of growing the flyout. */
   fixedWidth?: boolean
   headerActions?: HubDockFlyoutHeaderAction[]
@@ -81,6 +83,7 @@ export function HubDockFlyout({
   offsetPx = HUB_DOCK_FLYOUT_OFFSET_PX,
   nested = false,
   compact = false,
+  hideHeader = false,
   fixedWidth = false,
   headerActions,
   searchOpen,
@@ -210,32 +213,34 @@ export function HubDockFlyout({
       }}
       onClick={handleContentClick}
     >
-      <div className="hub-dock-flyout-header" data-hub-dock-keep-open>
-        <p className="hub-dock-flyout-title">{title}</p>
-        {headerActions && headerActions.length > 0 ? (
-          <div className="hub-dock-flyout-header-actions">
-            {headerActions.map((action) => (
-              <button
-                key={action.kind}
-                type="button"
-                title={action.title}
-                aria-label={action.title}
-                data-hub-dock-keep-open
-                onClick={(e) => {
-                  e.stopPropagation()
-                  action.onClick(e)
-                }}
-                className={cn(
-                  'hub-dock-flyout-header-btn',
-                  action.kind === 'plus' && 'hub-dock-flyout-header-btn-plus',
-                )}
-              >
-                {action.kind === 'search' ? <Search /> : <Plus />}
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
+      {!hideHeader ? (
+        <div className="hub-dock-flyout-header" data-hub-dock-keep-open>
+          <p className="hub-dock-flyout-title">{title}</p>
+          {headerActions && headerActions.length > 0 ? (
+            <div className="hub-dock-flyout-header-actions">
+              {headerActions.map((action) => (
+                <button
+                  key={action.kind}
+                  type="button"
+                  title={action.title}
+                  aria-label={action.title}
+                  data-hub-dock-keep-open
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    action.onClick(e)
+                  }}
+                  className={cn(
+                    'hub-dock-flyout-header-btn',
+                    action.kind === 'plus' && 'hub-dock-flyout-header-btn-plus',
+                  )}
+                >
+                  {action.kind === 'search' ? <Search /> : <Plus />}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {searchOpen ? (
         <div className="hub-dock-flyout-search relative" data-hub-dock-keep-open>

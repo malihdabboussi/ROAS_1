@@ -150,7 +150,11 @@ export function resolveChatStageModel(
   stage: ChatGenerationStage,
 ): ResolvedStrategyModel {
   if (strategy === 'auto:economy') {
-    return routedModel(ECONOMY_MODEL_ID, CHAT_RESEARCH_MODEL_SETTINGS, `economy_chat_${stage}`)
+    return routedModel(
+      ECONOMY_MODEL_ID,
+      CHAT_RESEARCH_MODEL_SETTINGS,
+      `economy_chat_${stage}`,
+    )
   }
   if (strategy === 'auto:power') {
     return routedModel(

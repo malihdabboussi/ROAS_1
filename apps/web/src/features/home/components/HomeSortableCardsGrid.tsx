@@ -13,22 +13,30 @@ import {
 } from '@dnd-kit/core'
 import { rectSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Columns2, RectangleHorizontal, X } from 'lucide-react'
+import { Columns2, RectangleHorizontal, Rows2, Rows3, X } from 'lucide-react'
 import { homeCardDefinition } from '@/features/home/config/home-cards.config'
-import type { HomeCardGridSize, HomeCardId } from '@/features/home/types/home-cards'
+import type {
+  HomeCardGridRows,
+  HomeCardGridSize,
+  HomeCardId,
+} from '@/features/home/types/home-cards'
 import { cn } from '@/lib/utils/cn'
 
 function SortableHomeCard({
   cardId,
   size,
+  rows,
   onRemove,
   onSetSize,
+  onSetRows,
   children,
 }: {
   cardId: HomeCardId
   size: HomeCardGridSize
+  rows: HomeCardGridRows
   onRemove: (id: HomeCardId) => void
   onSetSize: (id: HomeCardId, size: HomeCardGridSize) => void
+  onSetRows: (id: HomeCardId, rows: HomeCardGridRows) => void
   children: ReactNode
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -49,6 +57,9 @@ function SortableHomeCard({
       className={cn(
         'group/home-card ring-dashed relative min-w-0 cursor-grab touch-none rounded-xl ring-1 ring-[var(--color-border)] active:cursor-grabbing',
         size === 'full' && 'hd4-card-grid-item-full',
+        rows === 1 && 'hd4-card-grid-item-rows-1',
+        rows === 2 && 'hd4-card-grid-item-rows-2',
+        rows === 3 && 'hd4-card-grid-item-rows-3',
         isDragging && 'opacity-40',
       )}
       aria-label={`Drag ${title}`}
@@ -93,6 +104,52 @@ function SortableHomeCard({
           >
             <RectangleHorizontal className="h-3.5 w-3.5" aria-hidden />
           </button>
+          <span className="bg-border h-spacing-4 w-px" aria-hidden />
+          <button
+            type="button"
+            onClick={() => onSetRows(cardId, 1)}
+            className={cn(
+              'rounded-spacing-1 p-1 transition-colors',
+              rows === 1
+                ? 'bg-secondary text-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-hover-subtle',
+            )}
+            aria-label={`One row tall for ${title}`}
+            aria-pressed={rows === 1}
+            title="One row tall"
+          >
+            <RectangleHorizontal className="h-3.5 w-3.5" aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={() => onSetRows(cardId, 2)}
+            className={cn(
+              'rounded-spacing-1 p-1 transition-colors',
+              rows === 2
+                ? 'bg-secondary text-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-hover-subtle',
+            )}
+            aria-label={`Two rows tall for ${title}`}
+            aria-pressed={rows === 2}
+            title="Two rows tall"
+          >
+            <Rows2 className="h-3.5 w-3.5" aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={() => onSetRows(cardId, 3)}
+            className={cn(
+              'rounded-spacing-1 p-1 transition-colors',
+              rows === 3
+                ? 'bg-secondary text-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-hover-subtle',
+            )}
+            aria-label={`Three rows tall for ${title}`}
+            aria-pressed={rows === 3}
+            title="Three rows tall"
+          >
+            <Rows3 className="h-3.5 w-3.5" aria-hidden />
+          </button>
           <button
             type="button"
             onClick={() => onRemove(cardId)}
@@ -104,7 +161,14 @@ function SortableHomeCard({
           </button>
         </div>
       </div>
-      <div className={cn('pointer-events-none', isDragging && 'invisible')}>{children}</div>
+      <div
+        className={cn(
+          'home-dashboard-sortable-card-content pointer-events-none',
+          isDragging && 'invisible',
+        )}
+      >
+        {children}
+      </div>
     </div>
   )
 }
@@ -112,17 +176,21 @@ function SortableHomeCard({
 export function HomeSortableCardsGrid({
   cardIds,
   cardSizes,
+  cardRows,
   onReorder,
   onRemove,
   onSetSize,
+  onSetRows,
   renderCard,
   variant = 'default',
 }: {
   cardIds: HomeCardId[]
   cardSizes?: Partial<Record<HomeCardId, HomeCardGridSize>>
+  cardRows?: Partial<Record<HomeCardId, HomeCardGridRows>>
   onReorder: (activeId: HomeCardId, overId: HomeCardId) => void
   onRemove: (id: HomeCardId) => void
   onSetSize: (id: HomeCardId, size: HomeCardGridSize) => void
+  onSetRows: (id: HomeCardId, rows: HomeCardGridRows) => void
   renderCard: (cardId: HomeCardId) => ReactNode
   variant?: 'default' | 'v4'
 }) {
@@ -151,6 +219,8 @@ export function HomeSortableCardsGrid({
 
   const sizeFor = (id: HomeCardId): HomeCardGridSize =>
     cardSizes?.[id] === 'full' ? 'full' : 'half'
+  const rowsFor = (id: HomeCardId): HomeCardGridRows =>
+    cardRows?.[id] ?? homeCardDefinition(id).defaultRows ?? 1
 
   return (
     <DndContext
@@ -162,17 +232,17 @@ export function HomeSortableCardsGrid({
     >
       <SortableContext items={cardIds} strategy={rectSortingStrategy}>
         <div
-          className={
-            variant === 'v4' ? 'hd4-card-grid' : 'grid grid-cols-1 gap-6 md:grid-cols-2'
-          }
+          className={variant === 'v4' ? 'hd4-card-grid' : 'grid grid-cols-1 gap-6 md:grid-cols-2'}
         >
           {cardIds.map((cardId) => (
             <SortableHomeCard
               key={cardId}
               cardId={cardId}
               size={sizeFor(cardId)}
+              rows={rowsFor(cardId)}
               onRemove={onRemove}
               onSetSize={onSetSize}
+              onSetRows={onSetRows}
             >
               {renderCard(cardId)}
             </SortableHomeCard>
@@ -185,6 +255,9 @@ export function HomeSortableCardsGrid({
             className={cn(
               'ring-primary/40 cursor-grabbing rounded-xl shadow-lg ring-2',
               sizeFor(activeId) === 'full' && 'hd4-card-grid-item-full',
+              rowsFor(activeId) === 1 && 'hd4-card-grid-item-rows-1',
+              rowsFor(activeId) === 2 && 'hd4-card-grid-item-rows-2',
+              rowsFor(activeId) === 3 && 'hd4-card-grid-item-rows-3',
             )}
           >
             {renderCard(activeId)}

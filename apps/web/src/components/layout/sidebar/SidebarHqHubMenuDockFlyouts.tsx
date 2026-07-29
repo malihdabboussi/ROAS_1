@@ -40,6 +40,7 @@ export function SidebarHqHubMenuDockFlyouts({
   setCreateSpaceModalFor,
   spaceUserState,
   showAdminSections,
+  featureUpdates,
 }: {
   showFlyout: boolean
   dock: HubMenuDockKey | null
@@ -67,6 +68,7 @@ export function SidebarHqHubMenuDockFlyouts({
   setCreateSpaceModalFor: Dispatch<SetStateAction<{ campaignId: string | null } | null>>
   spaceUserState: ReturnType<typeof useSpaceUserState>
   showAdminSections: boolean
+  featureUpdates?: { hasUnread: boolean; onOpen: (anchor: HTMLElement) => void }
 }) {
   const [createMenuAnchor, setCreateMenuAnchor] = useState<DOMRect | null>(null)
 
@@ -225,6 +227,7 @@ export function SidebarHqHubMenuDockFlyouts({
       <SidebarHqMoreFlyoutBody
         c={c}
         showProjects={showAdminSections}
+        featureUpdates={featureUpdates}
         onNavigate={handleNavigate}
         onHoldParentFlyout={clearClose}
         onReleaseParentFlyout={scheduleClose}

@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: (result.page.seo as any)?.title || result.funnel.title || result.funnel.name,
     description:
-      (result.page.seo as any)?.description || `${result.funnel.name} — Powered by Vibey`,
+      (result.page.seo as any)?.description || `${result.funnel.name} — Powered by ROAS`,
   }
 }
 

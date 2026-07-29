@@ -38,7 +38,7 @@ export function Watermark() {
             WebkitTextFillColor: 'transparent',
           }}
         >
-          Vibey
+          ROAS
         </span>
       </a>
     </div>

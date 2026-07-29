@@ -66,6 +66,12 @@ export const ChangeMemberRoleSchema = z.object({
 
 export type ChangeMemberRoleInput = z.infer<typeof ChangeMemberRoleSchema>
 
+export const UpdateAiDataAdminSchema = z.object({
+  enabled: z.boolean(),
+})
+
+export type UpdateAiDataAdminInput = z.infer<typeof UpdateAiDataAdminSchema>
+
 export const MemberIdParamSchema = z.object({
   orgId: z.string().uuid('Invalid organization ID'),
   memberId: z.string().uuid('Invalid member ID'),

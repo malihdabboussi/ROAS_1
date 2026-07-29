@@ -259,6 +259,8 @@ export class ChatService {
       spaceId,
       scopeKind,
       orgId,
+      orgMemberId,
+      organizationWideDataAccess,
       source,
       channelUser,
       documents,
@@ -423,6 +425,7 @@ export class ChatService {
       history,
       userId,
       orgId,
+      organizationWideDataAccess,
       source,
       systemContext,
       channelUser,
@@ -439,6 +442,13 @@ export class ChatService {
       logChatTiming,
       recordTimingSpan,
       logger: this.logger,
+    })
+    await this.recordOrganizationDataAccess({
+      orgId,
+      orgMemberId,
+      userId,
+      conversationId,
+      allowed: organizationWideDataAccess === true,
     })
 
     // 5. Create the durable assistant turn before exposing its message ID to SSE/timeline.
@@ -563,5 +573,29 @@ export class ChatService {
       hasActiveWorkingSetEntries: (workingSet) =>
         referenceContextService.hasActiveWorkingSetEntries(workingSet),
     })
+  }
+
+  private async recordOrganizationDataAccess(input: {
+    orgId?: string
+    orgMemberId?: string | null
+    userId: string
+    conversationId: string
+    allowed: boolean
+  }): Promise<void> {
+    if (!input.orgId || !input.allowed) return
+    const { error } = await this.svc.client.from('ai_data_access_audit').insert({
+      org_id: input.orgId,
+      org_member_id: input.orgMemberId ?? null,
+      user_id: input.userId,
+      surface: 'ai_chat',
+      resource_type: 'conversation',
+      resource_id: input.conversationId,
+      outcome: 'allowed',
+      reason: 'organization_wide_ai_data_access_enabled',
+      metadata: {},
+    })
+    if (error) {
+      this.logger.warn(`AI data access audit failed: ${error.message}`)
+    }
   }
 }

@@ -78,8 +78,8 @@ export function SpaceChatHeaderActions({
           'text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 flex shrink-0 items-center justify-center transition-colors',
           hideHistoryChrome && 'btn-icon-bare hover:bg-hover-subtle',
         )}
-        aria-label={hideHistoryChrome ? 'Close AI Chats' : 'Collapse ROAS chat'}
-        title={hideHistoryChrome ? 'Close AI Chats' : 'Collapse ROAS chat'}
+        aria-label={hideHistoryChrome ? 'Close AI Chats' : 'Collapse Pixel chat'}
+        title={hideHistoryChrome ? 'Close AI Chats' : 'Collapse Pixel chat'}
       >
         <X className="icon-sm" aria-hidden />
       </button>

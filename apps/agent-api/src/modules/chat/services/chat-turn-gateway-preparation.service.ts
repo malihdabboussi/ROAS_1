@@ -59,6 +59,7 @@ interface ChannelUser {
   relationship_kind?: 'internal'
   is_connection_owner?: boolean
   personal_brain_access?: boolean
+  organization_wide_data_access?: boolean
 }
 
 type RunPlatformTool = <T>(
@@ -78,6 +79,7 @@ interface PrepareGatewayInput {
   history: Record<string, unknown>[]
   userId: string
   orgId?: string
+  organizationWideDataAccess?: boolean
   source?: string
   systemContext?: string
   channelUser?: ChannelUser
@@ -159,6 +161,7 @@ export class ChatTurnGatewayPreparationService {
       history,
       userId,
       orgId,
+      organizationWideDataAccess,
       source,
       systemContext,
       channelUser,
@@ -372,6 +375,7 @@ export class ChatTurnGatewayPreparationService {
       messageReferencesContext,
       modelInputService: this.modelInputService,
       orgId,
+      organizationWideDataAccess: organizationWideDataAccess === true,
       policyScope,
       previousImageUrls: runtimeContext.previousImageUrls,
       resolvedAgentId,

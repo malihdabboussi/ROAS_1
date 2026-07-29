@@ -2,9 +2,9 @@ import type { FeaturePageDefinition } from './types'
 
 export const theBrainFeaturePage: FeaturePageDefinition = {
   slug: 'the-brain',
-  metaTitle: 'The Brain | Vibey',
+  metaTitle: 'The Brain | ROAS',
   metaDescription:
-    'Vibey structures the knowledge scattered across your organization into four living brains: User, Agent, Company, and Customer. So your AI agents can operate on it, not just search through it.',
+    'ROAS structures the knowledge scattered across your organization into four living brains: User, Agent, Company, and Customer. So your AI agents can operate on it, not just search through it.',
   mockupKind: 'brain',
   heroBadges: [
     'User Brain',
@@ -21,7 +21,7 @@ export const theBrainFeaturePage: FeaturePageDefinition = {
     kicker: '',
     title: 'YOUR DOMAIN KNOWLEDGE, EXECUTABLE BY AI',
     subtitle:
-      'Vibey pulls the knowledge scattered across your people, tools, and processes and structures it into four living brains: User, Agent, Company, and Customer. So your AI agents can operate on it, not just search through it.',
+      'ROAS pulls the knowledge scattered across your people, tools, and processes and structures it into four living brains: User, Agent, Company, and Customer. So your AI agents can operate on it, not just search through it.',
     primaryCta: { href: '/waitlist', label: 'Get Early Access' },
   },
   comparison: {
@@ -134,7 +134,7 @@ export const theBrainFeaturePage: FeaturePageDefinition = {
   articlePromo: {
     title: 'A brain that builds a real identity',
     subtitle:
-      'The Brain does not just store information. Over time, memories form beliefs, beliefs form perspectives, and perspectives form a worldview. Read how Vibey builds identity for agents, users, and organizations.',
+      'The Brain does not just store information. Over time, memories form beliefs, beliefs form perspectives, and perspectives form a worldview. Read how ROAS builds identity for agents, users, and organizations.',
     ctaLabel: 'Read the full story',
     ctaHref: '/blog/the-brain',
   },

@@ -2,7 +2,7 @@ import type { FeaturePageDefinition } from './types'
 
 export const funnelsFeaturePage: FeaturePageDefinition = {
   slug: 'funnels',
-  metaTitle: 'Funnel Builder | Vibey',
+  metaTitle: 'Funnel Builder | ROAS',
   metaDescription:
     'Landing pages from conversation-custom code preview, publish, and iterate without drag-and-drop grids.',
   mockupKind: 'funnels',
@@ -11,15 +11,15 @@ export const funnelsFeaturePage: FeaturePageDefinition = {
     kicker: '',
     title: 'CONVERSATION-FIRST LANDING PAGES',
     subtitle:
-      'No component library fatigue. Vibey generates structured pages you preview live, then publish with one click. Iterate by talking, not clicking.',
+      'No component library fatigue. ROAS generates structured pages you preview live, then publish with one click. Iterate by talking, not clicking.',
     primaryCta: { href: '/waitlist', label: 'Join Waitlist' },
     secondaryCta: { href: '/features/studio', label: 'See Studio' },
   },
   comparison: {
-    title: 'Why Vibey funnels?',
+    title: 'Why ROAS funnels?',
     subtitle:
-      'Traditional builders require you to learn their interface. Vibey lets you describe what you want and ships it.',
-    columns: ['Vibey', 'Classic builders'],
+      'Traditional builders require you to learn their interface. ROAS lets you describe what you want and ships it.',
+    columns: ['ROAS', 'Classic builders'],
     rows: [
       {
         label: 'Creation method',
@@ -40,7 +40,7 @@ export const funnelsFeaturePage: FeaturePageDefinition = {
       {
         label: 'Publishing',
         cells: [
-          'One-click publish on Vibey; custom domain + SSL/DNS handled',
+          'One-click publish on ROAS; custom domain + SSL/DNS handled',
           'Publish inside the vendor stack; domain rules vary',
         ],
       },
@@ -62,17 +62,17 @@ export const funnelsFeaturePage: FeaturePageDefinition = {
           {
             title: 'Prompt to page',
             description:
-              'Tell Vibey your product, audience, and goal. It generates a complete landing page with headline, body, social proof, and CTA: no drag-and-drop editor.',
+              'Tell Pixel your product, audience, and goal. It generates a complete landing page with headline, body, social proof, and CTA: no drag-and-drop editor.',
           },
           {
             title: 'Brand-aware copy',
             description:
-              'Vibey reads voice and positioning from The Workspace Brain so the first draft already sounds like your brand.',
+              'ROAS reads voice and positioning from The Workspace Brain so the first draft already sounds like your brand.',
           },
           {
             title: 'Live preview in Studio',
             description:
-              'See the exact page visitors will land on while Vibey assembles it. Edit by continuing the conversation.',
+              'See the exact page visitors will land on while ROAS assembles it. Edit by continuing the conversation.',
           },
         ],
       },
@@ -83,7 +83,7 @@ export const funnelsFeaturePage: FeaturePageDefinition = {
           {
             title: 'One-click publish',
             description:
-              'Hit publish in Studio. Vibey handles slug generation, hosting, and theme CSS. Your page is live immediately.',
+              'Hit publish in Studio. ROAS handles slug generation, hosting, and theme CSS. Your page is live immediately.',
           },
           {
             title: 'Custom domain',
@@ -114,7 +114,7 @@ export const funnelsFeaturePage: FeaturePageDefinition = {
           {
             title: 'Meta Pixel support',
             description:
-              'Connect your Meta Pixel ID and Vibey injects the tracking script on every published page: no code editing required.',
+              'Connect your Meta Pixel ID and ROAS injects the tracking script on every published page: no code editing required.',
           },
         ],
       },
@@ -129,7 +129,7 @@ export const funnelsFeaturePage: FeaturePageDefinition = {
       {
         title: 'Conversation-driven edits',
         description:
-          'Every revision happens in the same Studio thread. Ask Vibey to change copy, layout, or structure: no separate editor.',
+          'Every revision happens in the same Studio thread. Ask Pixel to change copy, layout, or structure: no separate editor.',
       },
       {
         title: 'Custom domains',
@@ -139,7 +139,7 @@ export const funnelsFeaturePage: FeaturePageDefinition = {
       {
         title: 'Workspace Brain context',
         description:
-          'Vibey pulls your brand voice, audience, and positioning from The Workspace Brain so every page matches your brand.',
+          'ROAS pulls your brand voice, audience, and positioning from The Workspace Brain so every page matches your brand.',
       },
       {
         title: 'Lead list integration',
@@ -164,12 +164,12 @@ export const funnelsFeaturePage: FeaturePageDefinition = {
       {
         title: 'Prompt',
         description:
-          'Describe your funnel idea in plain English. Tell Vibey your offer, audience, and conversion goal.',
+          'Describe your funnel idea in plain English. Tell Pixel your offer, audience, and conversion goal.',
       },
       {
         title: 'Build',
         description:
-          'Vibey generates the page structure, writes copy, designs the layout, and wires lead capture-automatically.',
+          'ROAS generates the page structure, writes copy, designs the layout, and wires lead capture-automatically.',
       },
       {
         title: 'Launch & grow',
@@ -203,12 +203,12 @@ export const funnelsFeaturePage: FeaturePageDefinition = {
     title: 'Frequently asked questions',
     items: [
       {
-        q: 'What is Vibey Funnel Builder?',
-        a: 'A conversational tool that generates complete landing pages from natural language. Describe your offer, and Vibey builds the page with copy, layout, and lead capture-no drag-and-drop.',
+        q: 'What is ROAS Funnel Builder?',
+        a: 'A conversational tool that generates complete landing pages from natural language. Describe your offer, and ROAS builds the page with copy, layout, and lead capture-no drag-and-drop.',
       },
       {
         q: 'Do I need coding experience?',
-        a: 'No. Describe what you want in your own words. Vibey handles all the technical implementation.',
+        a: 'No. Describe what you want in your own words. ROAS handles all the technical implementation.',
       },
       {
         q: 'What types of funnels can I build?',
@@ -216,7 +216,7 @@ export const funnelsFeaturePage: FeaturePageDefinition = {
       },
       {
         q: 'Do I get the raw code?',
-        a: 'Yes. Export your page code at any time for reference or hand it to developers. Hosting runs through Vibey with your custom domain.',
+        a: 'Yes. Export your page code at any time for reference or hand it to developers. Hosting runs through ROAS with your custom domain.',
       },
       {
         q: 'Can I split-test pages?',
@@ -224,7 +224,7 @@ export const funnelsFeaturePage: FeaturePageDefinition = {
       },
       {
         q: 'How does SEO work?',
-        a: 'Vibey automatically generates meta tags, structured data, semantic HTML, and clean URLs. Your pages are crawlable out of the box.',
+        a: 'ROAS automatically generates meta tags, structured data, semantic HTML, and clean URLs. Your pages are crawlable out of the box.',
       },
       {
         q: 'Can I connect my own domain?',
@@ -240,7 +240,7 @@ export const funnelsFeaturePage: FeaturePageDefinition = {
       },
       {
         q: 'How is this different from ClickFunnels?',
-        a: 'ClickFunnels centers drag-and-drop editing. Vibey centers conversation-describe what you want, see it built, and iterate by talking.',
+        a: 'ClickFunnels centers drag-and-drop editing. ROAS centers conversation-describe what you want, see it built, and iterate by talking.',
       },
     ],
   },

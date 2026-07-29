@@ -43,6 +43,11 @@ docs
 # CI/CD
 .github
 
+# Local agent worktrees / media dumps (not needed in image)
+.worktrees
+Ad Swipe Files
+product-video
+
 # Other apps (not needed in Fly image — agent-api + openclaw only)
 apps/web
 apps/admin

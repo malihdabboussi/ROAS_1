@@ -83,7 +83,7 @@ export const SPACES_ACTIONS_TOAST_ERRORS = {
     userMessage: "Couldn't create the Google Doc — check your Drive connection and try again.",
   },
   SAVE_GOOGLE_DOC_LINK_FAILED: {
-    userMessage: 'Google Doc created, but its link could not be saved to Vibey.',
+    userMessage: 'Google Doc created, but its link could not be saved to ROAS.',
   },
 } as const
 

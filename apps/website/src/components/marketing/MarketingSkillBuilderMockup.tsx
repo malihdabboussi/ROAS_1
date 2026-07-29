@@ -65,7 +65,7 @@ function SkillInput({ briefText, submitted }: { briefText: string; submitted: bo
           readOnly
           tabIndex={-1}
           rows={1}
-          placeholder="Tell Vibey what skill to create..."
+          placeholder="Tell Pixel what skill to create..."
           className="body-2 placeholder-muted max-h-[120px] min-h-[44px] w-full resize-none bg-transparent outline-none focus:outline-none"
           style={{ color: submitted ? 'rgba(255,255,255,0.45)' : '#fff' }}
         />

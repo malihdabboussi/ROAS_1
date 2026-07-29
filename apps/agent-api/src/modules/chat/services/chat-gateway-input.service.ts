@@ -33,6 +33,7 @@ interface ChatGatewayChannelUser {
   relationship_kind?: 'internal'
   is_connection_owner?: boolean
   personal_brain_access?: boolean
+  organization_wide_data_access?: boolean
 }
 
 interface BuildContextInput {
@@ -57,6 +58,7 @@ interface BuildContextInput {
   messageReferencesContext: string
   modelInputService: ChatModelInputService
   orgId?: string | null
+  organizationWideDataAccess: boolean
   policyScope: { orgId: string | null; userId: string | null }
   previousImageUrls: Array<{ filename: string; url: string }>
   resolvedAgentId: string
@@ -140,6 +142,10 @@ export class ChatGatewayInputService {
     const effectiveImageParts = input.modelInputService.buildChatImageParts(input.documents)
     const effectiveFileParts = input.modelInputService.buildChatFileParts(input.documents)
     const channelUserContext = this.buildChannelUserContext(input.resolvedChannel, input.channelUser)
+    const organizationDataAccessContext = this.buildOrganizationDataAccessContext(
+      input.resolvedChannel,
+      input.organizationWideDataAccess,
+    )
     const policyDeniedNativeActions = await this.resolvePolicyDeniedNativeActions(input)
     const disabledNativeActions = buildDisabledNativeActions({
       hasUserBrain: input.userBrainAccess,
@@ -168,6 +174,7 @@ export class ChatGatewayInputService {
       input.themeSummary,
       input.userBrainSummary,
       input.integrationSummary,
+      organizationDataAccessContext,
       channelUserContext,
       input.callerContext,
     ].filter(Boolean)
@@ -303,10 +310,33 @@ export class ChatGatewayInputService {
       channelUser.relationship_kind ? `- Access: ${channelUser.relationship_kind}` : '',
       channelUser.is_connection_owner ? '- Slack connection owner: yes' : '',
       channelUser.personal_brain_access === false ? '- Personal Brain access: no' : '',
+      channelUser.organization_wide_data_access
+        ? '- Organization-wide data access: yes (same-organization knowledge only)'
+        : '- Organization-wide data access: no',
+      channelUser.organization_wide_data_access
+        ? '- Keep private conversations, cross-organization data, and unapproved writes restricted.'
+        : '',
       channelUser.language ? `- Language: ${channelUser.language}` : '',
     ]
       .filter(Boolean)
       .join('\n')
+  }
+
+  private buildOrganizationDataAccessContext(
+    resolvedChannel: ChatGatewayChannel,
+    organizationWideDataAccess: boolean,
+  ): string {
+    if (resolvedChannel !== 'studio') return ''
+    return [
+      'ORGANIZATION_DATA_ACCESS:',
+      organizationWideDataAccess
+        ? '- Organization-wide data access: yes'
+        : '- Organization-wide data access: no',
+      organizationWideDataAccess
+        ? '- You may discover and use same-organization knowledge across campaigns and Spaces.'
+        : '- Stay within the conversation, attached context, and normally authorized scopes.',
+      '- Private conversations, cross-organization data, and unapproved writes remain restricted.',
+    ].join('\n')
   }
 
   private hasActionDomainPolicy(resolvedPolicy: ResolvedAgentPolicy | null): boolean {

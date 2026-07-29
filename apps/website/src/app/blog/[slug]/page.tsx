@@ -23,27 +23,27 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const post = BLOG_POSTS.find((p) => p.slug === slug)
-  if (!post) return { title: 'Not found | Vibey' }
+  if (!post) return { title: 'Not found | ROAS' }
   const url = `https://vibey.im/blog/${slug}`
   return {
-    title: `${post.title} | Vibey`,
+    title: `${post.title} | ROAS`,
     description: post.excerpt,
     openGraph: {
-      title: `${post.title} | Vibey`,
+      title: `${post.title} | ROAS`,
       description: post.excerpt,
       url,
-      siteName: 'Vibey',
+      siteName: 'ROAS',
       type: 'article',
       publishedTime: post.date,
       authors: post.author ? [post.author] : undefined,
       images: post.authorImage
-        ? [{ url: post.authorImage, width: 800, height: 800, alt: post.author ?? 'Vibey' }]
+        ? [{ url: post.authorImage, width: 800, height: 800, alt: post.author ?? 'ROAS' }]
         : [{ url: '/Logos/logov2/icon-text-white.png', width: 1200, height: 630, alt: post.title }],
     },
     twitter: {
       card: 'summary_large_image',
       site: '@usevibey',
-      title: `${post.title} | Vibey`,
+      title: `${post.title} | ROAS`,
       description: post.excerpt,
     },
     alternates: { canonical: url },
@@ -98,12 +98,12 @@ export default async function BlogPostPage({ params }: Props) {
     url: `https://vibey.im/blog/${post.slug}`,
     author: {
       '@type': 'Person',
-      name: post.author ?? 'Vibey',
+      name: post.author ?? 'ROAS',
       image: post.authorImage ? `https://vibey.im${post.authorImage}` : undefined,
     },
     publisher: {
       '@type': 'Organization',
-      name: 'Vibey',
+      name: 'ROAS',
       url: 'https://vibey.im',
       logo: { '@type': 'ImageObject', url: 'https://vibey.im/Logos/logov2/icon-text-white.png' },
     },

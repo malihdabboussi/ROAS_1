@@ -110,7 +110,7 @@ export function InboxListRow({
               </MarkdownRenderer>
             ) : null}
           </span>
-          <ChevronRight className="icon-sm text-muted-foreground mt-spacing-1 shrink-0" />
+          <ChevronRight className="icon-sm text-muted-foreground shrink-0 self-center" />
         </button>
 
         <span className="gap-spacing-1 py-spacing-3 pr-spacing-3 hidden shrink-0 items-center opacity-0 transition-opacity group-hover/inbox-row:opacity-100 lg:flex">

@@ -412,7 +412,7 @@ export function ProductivityBento() {
             <div className="relative z-10 p-8 pb-4">
               <h3 className="h3 text-white">Infinite Context</h3>
               <p className="text-color-dim body-3 mt-2">
-                Vibey remembers your brand voice, history, and goals across every task.
+                ROAS remembers your brand voice, history, and goals across every task.
               </p>
             </div>
 

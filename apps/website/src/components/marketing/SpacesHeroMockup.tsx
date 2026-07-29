@@ -124,7 +124,7 @@ function buildKanbanColumns(photos: ReturnType<typeof resolveSpacesAssigneePhoto
   }
   const VB = {
     photoUrl: photos.vibey,
-    label: 'Vibey',
+    label: 'ROAS',
   }
   const SF = { photoUrl: photos.humanSf, label: 'Sefy' }
   const MY = { photoUrl: photos.humanMaya, label: 'Maya' }
@@ -449,7 +449,7 @@ function SpacesHeroChatComposerCompact() {
             aria-hidden
             tabIndex={-1}
             rows={1}
-            placeholder="Message Vibey..."
+            placeholder="Message Pixel..."
             className="body-2 caret-accent relative max-h-[200px] min-h-[24px] w-full resize-none bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
         </div>
@@ -584,7 +584,7 @@ function SpacesVibeyOpenChatPanel({ vibeyPhotoUrl }: { vibeyPhotoUrl: string }) 
             transition={{ duration: 0.35, delay: 0.12 }}
             className="flex gap-2"
           >
-            <AssigneeAvatar photoUrl={vibeyPhotoUrl} label="Vibey" size="sm" isAgent />
+            <AssigneeAvatar photoUrl={vibeyPhotoUrl} label="ROAS" size="sm" isAgent />
             <div className="min-w-0 flex-1 space-y-2">
               <div className="card-glass rounded-2xl px-2.5 py-2">
                 <p className="text-[10px] leading-snug text-white/85">

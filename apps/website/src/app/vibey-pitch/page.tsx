@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { PitchDeck } from './PitchDeck'
 
 export const metadata: Metadata = {
-  title: 'Vibey Pitch | Vibey',
+  title: 'ROAS Pitch | ROAS',
   robots: { index: false, follow: false },
 }
 

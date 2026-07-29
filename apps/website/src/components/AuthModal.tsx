@@ -243,7 +243,7 @@ export function AuthModal({ open, onClose, pendingMessage }: AuthModalProps) {
               ? 'We sent a verification link.'
               : showForgot
                 ? "We'll email you a magic link."
-                : 'Start building with Vibey'}
+                : 'Start building with ROAS'}
           </p>
         </div>
 

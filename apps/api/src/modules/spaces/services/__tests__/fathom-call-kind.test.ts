@@ -13,12 +13,11 @@ describe('fathom-call-kind', () => {
       expect.arrayContaining(['test@gmail.com', 'dylan@dylanvanas.com']),
     )
     expect(identity.nameTokens).toEqual(expect.arrayContaining(['dylan', 'dylan vanas']))
-    expect(identity.internalDomains).toEqual(
-      expect.arrayContaining(['gmail.com', 'dylanvanas.com', 'roas.co']),
-    )
+    expect(identity.internalDomains).toEqual(expect.arrayContaining(['dylanvanas.com', 'roas.co']))
+    expect(identity.internalDomains).not.toContain('gmail.com')
   })
 
-  it('marks personal when owner recorded the call', () => {
+  it('marks private when owner recorded a solo call', () => {
     expect(
       resolveCeoCallKind({
         identity,
@@ -26,10 +25,10 @@ describe('fathom-call-kind', () => {
         attendees: [],
         attendeeLabels: [],
       }),
-    ).toBe('personal')
+    ).toBe('private')
   })
 
-  it('marks personal when owner is an attendee by email or name', () => {
+  it('does not collapse owner-attended team calls into private', () => {
     expect(
       resolveCeoCallKind({
         identity,
@@ -37,7 +36,7 @@ describe('fathom-call-kind', () => {
         attendees: [{ name: 'Dylan Vanas', email: 'dylan@dylanvanas.com' }],
         attendeeLabels: ['Dylan Vanas', 'Nate Tilley'],
       }),
-    ).toBe('personal')
+    ).toBe('team')
     expect(
       resolveCeoCallKind({
         identity,
@@ -45,7 +44,7 @@ describe('fathom-call-kind', () => {
         attendees: [],
         attendeeLabels: ['Dylan Vanas', 'Nate Tilley'],
       }),
-    ).toBe('personal')
+    ).toBe('team')
   })
 
   it('marks team when owner was not on the call', () => {
@@ -74,7 +73,7 @@ describe('fathom-call-kind', () => {
     ).toBe('sales')
   })
 
-  it('marks external when non-owner call is mostly outside org domains', () => {
+  it('marks partner when an external call has partnership language', () => {
     expect(
       resolveCeoCallKind({
         identity,
@@ -85,9 +84,24 @@ describe('fathom-call-kind', () => {
           { name: 'Other', email: 'other@vendor.com' },
         ],
         attendeeLabels: ['Nate', 'Partner', 'Other'],
-        titleHint: 'Vendor sync',
+        titleHint: 'Vendor partnership sync',
       }),
-    ).toBe('external')
+    ).toBe('partner')
+  })
+
+  it('marks client when the owner attends an external client call', () => {
+    expect(
+      resolveCeoCallKind({
+        identity,
+        recordedByEmail: 'dylan@dylanvanas.com',
+        attendees: [
+          { name: 'Dylan Vanas', email: 'dylan@dylanvanas.com' },
+          { name: 'Client', email: 'client@gmail.com' },
+        ],
+        attendeeLabels: ['Dylan Vanas', 'Client'],
+        titleHint: 'Impact Elite client campaign review',
+      }),
+    ).toBe('client')
   })
 
   it('marks executive from leadership language on non-owner calls', () => {

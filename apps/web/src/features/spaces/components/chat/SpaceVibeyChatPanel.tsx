@@ -745,7 +745,9 @@ export function SpaceVibeyChatPanel({
         list.forEach((c) => useChatStore.getState().addConversation(c))
         setConversations(list)
 
-        // Preserve a drawer-targeted thread despite a stale fresh-chat intent.
+        // Shell pen / green New: do not revive the last stored thread after a fresh-chat request.
+        // If the drawer already targets a conversation, a stale "new" intent must not wipe the pane
+        // while history still highlights that row.
         if (useSpacesStore.getState().chatRailIntent === 'new') {
           const drawerConversationId = shellSidebarChrome
             ? useShellStore.getState().chatDrawer.conversationId
@@ -1819,6 +1821,7 @@ export function SpaceVibeyChatPanel({
       const drawerConversationId = shellSidebarChrome
         ? useShellStore.getState().chatDrawer.conversationId
         : null
+      // Drawer already has a target thread — do not clear the panel underneath it.
       if (!drawerConversationId) void handleNewConversation()
     } else if (chatRailIntent === 'list') {
       setMode('conversations')

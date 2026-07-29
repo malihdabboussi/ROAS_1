@@ -21,7 +21,7 @@ export type BlogPostMeta = {
 export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'vibey-beta',
-    title: 'Introducing Vibey Beta',
+    title: 'Introducing ROAS Beta',
     excerpt:
       'Three pieces that fit together so you can run a company as a hybrid of humans and agents. The Brain holds the knowledge. Agents do the work. Spaces is where it all happens.',
     date: '2026-04-06',

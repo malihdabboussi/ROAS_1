@@ -65,7 +65,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           ? seo.description
           : null) ??
         blogPost.excerpt ??
-        `${result.funnel.name} — Powered by Vibey`,
+        `${result.funnel.name} — Powered by ROAS`,
       openGraph: {
         title:
           (typeof seo.title === 'string' && seo.title.length > 0 ? seo.title : null) ??
@@ -96,7 +96,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const pageDescription =
     (result.page.seo as any)?.description ||
     bundleHead.description ||
-    `${result.funnel.name} — Powered by Vibey`
+    `${result.funnel.name} — Powered by ROAS`
 
   return {
     title: pageTitle,

@@ -30,6 +30,7 @@ export interface OrgMember {
   user_id: string
   role: string
   status: string
+  ai_data_admin?: boolean
   accepted_at: string | null
   created_at: string
   profiles: {
@@ -133,6 +134,12 @@ export const orgService = {
 
   changeMemberRole: (orgId: string, memberId: string, role: string) =>
     backendPatch<{ success: boolean }>(`/api/org/${orgId}/members/${memberId}/role`, { role }),
+
+  updateAiDataAdmin: (orgId: string, memberId: string, enabled: boolean) =>
+    backendPatch<{ success: boolean; member: OrgMember }>(
+      `/api/org/${orgId}/members/${memberId}/ai-data-admin`,
+      { enabled },
+    ),
 
   removeMember: (orgId: string, memberId: string) =>
     backendDelete<{ success: boolean }>(`/api/org/${orgId}/members/${memberId}`),

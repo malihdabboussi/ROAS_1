@@ -210,7 +210,7 @@ export function MockPresentationCoverCreative() {
             WebkitTextFillColor: 'transparent',
           }}
         >
-          Vibey Marketing Funnel
+          ROAS Marketing Funnel
         </h2>
         <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, margin: 0 }}>
           Top-of-funnel to conversion: complete flow

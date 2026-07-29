@@ -91,11 +91,11 @@ export function OrgOnboardingQuestions({
     >
       <form onSubmit={handleSubmit} className="w-full">
         <h2 className="title-h1 text-foreground mb-spacing-2">
-          TELL <span className="vibey-shine-text bg-clip-text text-transparent">VIBEY</span> ABOUT{' '}
+          TELL <span className="vibey-shine-text bg-clip-text text-transparent">PIXEL</span> ABOUT{' '}
           {orgName ? orgName.toUpperCase() : 'YOUR ORGANIZATION'}
         </h2>
         <p className="body-2 text-muted-foreground mb-spacing-6">
-          This helps your team&apos;s ROAS research and strategize from day one.
+          This helps your team&apos;s Pixel research and strategize from day one.
         </p>
 
         <label className="mb-spacing-3 block">
@@ -192,7 +192,7 @@ export function OrgOnboardingQuestions({
             onChange={(e) => setDescription(e.target.value)}
             className="input-glass body-2 px-spacing-3 py-spacing-3 w-full resize-none"
             rows={3}
-            placeholder="Brief description so ROAS can hit the ground running"
+            placeholder="Brief description so Pixel can hit the ground running"
           />
         </label>
 

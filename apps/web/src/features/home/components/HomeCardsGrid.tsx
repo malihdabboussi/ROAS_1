@@ -6,7 +6,12 @@ import { HomeDashboardV4CustomizePopover } from '@/components/home-dashboard-v4/
 import { HomeCardRenderer } from '@/features/home/components/cards/HomeCardRenderer'
 import { HomeSortableCardsGrid } from '@/features/home/components/HomeSortableCardsGrid'
 import { MyTasksPanel } from '@/features/home/components/MyTasksPanel'
-import { HOME_CARD_DEFINITIONS, homeCardDefinition, homeCardGridSize } from '@/features/home/config/home-cards.config'
+import {
+  HOME_CARD_DEFINITIONS,
+  homeCardDefinition,
+  homeCardGridRows,
+  homeCardGridSize,
+} from '@/features/home/config/home-cards.config'
 import { HomeCustomizeProvider } from '@/features/home/context/home-customize-context'
 import { useHomeLayout } from '@/features/home/hooks/use-home-layout'
 import type { HomeCardId } from '@/features/home/types/home-cards'
@@ -51,8 +56,16 @@ export function HomeCardsGrid({
   variant?: 'default' | 'v4'
 }) {
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
-  const { layout, editing, setEditing, addCard, removeCard, reorderCards, setCardSize } =
-    useHomeLayout()
+  const {
+    layout,
+    editing,
+    setEditing,
+    addCard,
+    removeCard,
+    reorderCards,
+    setCardSize,
+    setCardRows,
+  } = useHomeLayout()
   const [addOpen, setAddOpen] = useState(false)
   const [myTasksPanelOpen, setMyTasksPanelOpen] = useState(false)
 
@@ -90,7 +103,13 @@ export function HomeCardsGrid({
   }
 
   const renderCard = (cardId: (typeof visibleCardIds)[number]) => (
-    <HomeCardRenderer cardId={cardId} {...cardRendererProps} onMyTasksChanged={onMyTasksChanged} />
+    <div className="home-dashboard-card-content">
+      <HomeCardRenderer
+        cardId={cardId}
+        {...cardRendererProps}
+        onMyTasksChanged={onMyTasksChanged}
+      />
+    </div>
   )
 
   const isV4 = variant === 'v4'
@@ -203,9 +222,11 @@ export function HomeCardsGrid({
             <HomeSortableCardsGrid
               cardIds={visibleCardIds}
               cardSizes={layout.cardSizes}
+              cardRows={layout.cardRows}
               onReorder={reorderCards}
               onRemove={removeCard}
               onSetSize={setCardSize}
+              onSetRows={setCardRows}
               renderCard={renderCard}
               variant={variant}
             />
@@ -213,12 +234,16 @@ export function HomeCardsGrid({
             <div className={isV4 ? 'hd4-card-grid' : 'grid grid-cols-1 gap-6 md:grid-cols-2'}>
               {visibleCardIds.map((cardId) => {
                 const size = homeCardGridSize(layout, cardId)
+                const rows = homeCardGridRows(layout, cardId)
                 return (
                   <div
                     key={cardId}
                     className={cn(
                       'relative min-w-0',
                       size === 'full' && 'hd4-card-grid-item-full',
+                      rows === 1 && 'hd4-card-grid-item-rows-1',
+                      rows === 2 && 'hd4-card-grid-item-rows-2',
+                      rows === 3 && 'hd4-card-grid-item-rows-3',
                     )}
                   >
                     {renderCard(cardId)}

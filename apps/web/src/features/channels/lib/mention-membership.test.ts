@@ -9,7 +9,7 @@ const vibey: TeamRosterEntry = {
   org_id: 'org-1',
   user_id: null,
   agent_key: 'vibey',
-  display_name: 'Vibey',
+  display_name: 'Pixel',
   avatar_url: null,
   role_label: 'CEO',
   specialties: [],
@@ -30,8 +30,8 @@ const vibey: TeamRosterEntry = {
 describe('getMissingMentionRosterEntries', () => {
   it('returns mentioned addable agents only when they are not channel members', () => {
     const mentions: ChannelMention[] = [
-      { type: 'agent', agent_key: 'vibey', label: 'Vibey' },
-      { type: 'agent', agent_key: 'vibey', label: 'Vibey' },
+      { type: 'agent', agent_key: 'vibey', label: 'Pixel' },
+      { type: 'agent', agent_key: 'vibey', label: 'Pixel' },
     ]
 
     expect(getMissingMentionRosterEntries(mentions, [vibey], new Set())).toEqual([vibey])

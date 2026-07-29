@@ -39,6 +39,7 @@ export function SidebarHqHubMenuContent({
   setBrowsePanelBucket,
   setCreateSpaceModalFor,
   spaceUserState,
+  featureUpdates,
 }: {
   c: SidebarControllerReturn
   variant: 'panel' | 'drawer'
@@ -59,6 +60,7 @@ export function SidebarHqHubMenuContent({
   setBrowsePanelBucket: Dispatch<SetStateAction<string | null>>
   setCreateSpaceModalFor: Dispatch<SetStateAction<{ campaignId: string | null } | null>>
   spaceUserState: ReturnType<typeof useSpaceUserState>
+  featureUpdates?: { hasUnread: boolean; onOpen: (anchor: HTMLElement) => void }
 }) {
   const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
   const setChatCollapsed = useGlobalChatStore((s) => s.setCollapsed)
@@ -274,6 +276,7 @@ export function SidebarHqHubMenuContent({
         setCreateSpaceModalFor={setCreateSpaceModalFor}
         spaceUserState={spaceUserState}
         showAdminSections={showAdminSections}
+        featureUpdates={featureUpdates}
       />
     </div>
   )

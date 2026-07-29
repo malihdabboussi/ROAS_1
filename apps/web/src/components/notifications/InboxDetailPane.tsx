@@ -33,6 +33,7 @@ function DetailFact({ label, value }: { label: string; value: string }) {
 
 export function InboxDetailPane({
   notification,
+  sourceStatus,
   onBack,
   onOpenDetails,
   onViewSource,
@@ -44,6 +45,7 @@ export function InboxDetailPane({
   onToggleRead,
 }: {
   notification: UserNotification | null
+  sourceStatus?: string | null
   onBack: () => void
   onOpenDetails: () => void
   onViewSource: () => void
@@ -76,6 +78,14 @@ export function InboxDetailPane({
   const detailLabel = notificationDetailActionLabel(notification)
   const sourceLabel = notificationSourceActionLabel(notification)
   const currentView = notificationInboxView(notification)
+  const sourceStatusLabel =
+    notification.type === 'plan_approval_required'
+      ? sourceStatus === 'pending_approval'
+        ? INBOX_MESSAGES.DETAIL.awaitingApproval
+        : sourceStatus
+          ? INBOX_MESSAGES.DETAIL.resolved
+          : null
+      : null
 
   return (
     <article className="flex h-full min-h-0 w-full flex-col overflow-hidden">
@@ -100,6 +110,64 @@ export function InboxDetailPane({
           })}
         </span>
       </header>
+
+      <div className="border-border px-spacing-5 py-spacing-3 gap-spacing-2 flex shrink-0 flex-wrap items-center border-b">
+        {detailLabel ? (
+          <button
+            type="button"
+            className="button-default button-glass-primary gap-spacing-2"
+            onClick={onOpenDetails}
+          >
+            <Maximize2 className="icon-sm" />
+            {detailLabel}
+          </button>
+        ) : null}
+        {sourceLabel ? (
+          <button
+            type="button"
+            className="button-default button-glass-neutral gap-spacing-2"
+            onClick={onViewSource}
+          >
+            <ExternalLink className="icon-sm" />
+            {sourceLabel}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className="button-compact button-glass-neutral gap-spacing-1"
+          onClick={cleared ? onRestore : onClear}
+        >
+          {cleared ? <RotateCcw className="icon-sm" /> : <Archive className="icon-sm" />}
+          {cleared ? INBOX_MESSAGES.ACTIONS.restore : INBOX_MESSAGES.ACTIONS.clear}
+        </button>
+        <button
+          type="button"
+          className="button-compact button-glass-neutral gap-spacing-1"
+          onClick={snoozed ? onUnsnooze : onSnooze}
+        >
+          {snoozed ? <RotateCcw className="icon-sm" /> : <Clock3 className="icon-sm" />}
+          {snoozed ? INBOX_MESSAGES.ACTIONS.unsnooze : INBOX_MESSAGES.ACTIONS.snooze}
+        </button>
+        <button
+          type="button"
+          className="button-compact button-glass-neutral gap-spacing-1"
+          onClick={onToggleRead}
+        >
+          {read ? <Mail className="icon-sm" /> : <MailOpen className="icon-sm" />}
+          {read ? INBOX_MESSAGES.ACTIONS.unread : INBOX_MESSAGES.ACTIONS.read}
+        </button>
+        {!cleared && !snoozed ? (
+          <button
+            type="button"
+            className="button-compact button-glass-neutral"
+            onClick={() => onMove(notification.inbox_bucket === 'primary' ? 'other' : 'primary')}
+          >
+            {notification.inbox_bucket === 'primary'
+              ? INBOX_MESSAGES.ACTIONS.other
+              : INBOX_MESSAGES.ACTIONS.primary}
+          </button>
+        ) : null}
+      </div>
 
       <div className="px-spacing-6 py-spacing-5 min-h-0 flex-1 overflow-y-auto">
         <MarkdownRenderer compact className="title-h6 text-foreground max-w-none">
@@ -140,74 +208,12 @@ export function InboxDetailPane({
               label={INBOX_MESSAGES.DETAIL.readState}
               value={read ? INBOX_MESSAGES.DETAIL.read : INBOX_MESSAGES.DETAIL.unread}
             />
+            {sourceStatusLabel ? (
+              <DetailFact label={INBOX_MESSAGES.DETAIL.sourceStatus} value={sourceStatusLabel} />
+            ) : null}
           </dl>
         </section>
       </div>
-
-      <footer className="border-border px-spacing-5 py-spacing-4 gap-spacing-3 flex shrink-0 flex-col border-t">
-        {detailLabel || sourceLabel ? (
-          <div className="gap-spacing-2 flex flex-wrap">
-            {detailLabel ? (
-              <button
-                type="button"
-                className="button-default button-glass-primary gap-spacing-2"
-                onClick={onOpenDetails}
-              >
-                <Maximize2 className="icon-sm" />
-                {detailLabel}
-              </button>
-            ) : null}
-            {sourceLabel ? (
-              <button
-                type="button"
-                className="button-default button-glass-neutral gap-spacing-2"
-                onClick={onViewSource}
-              >
-                <ExternalLink className="icon-sm" />
-                {sourceLabel}
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-
-        <div className="gap-spacing-2 flex flex-wrap">
-          <button
-            type="button"
-            className="button-compact button-glass-neutral gap-spacing-1"
-            onClick={cleared ? onRestore : onClear}
-          >
-            {cleared ? <RotateCcw className="icon-sm" /> : <Archive className="icon-sm" />}
-            {cleared ? INBOX_MESSAGES.ACTIONS.restore : INBOX_MESSAGES.ACTIONS.clear}
-          </button>
-          <button
-            type="button"
-            className="button-compact button-glass-neutral gap-spacing-1"
-            onClick={snoozed ? onUnsnooze : onSnooze}
-          >
-            {snoozed ? <RotateCcw className="icon-sm" /> : <Clock3 className="icon-sm" />}
-            {snoozed ? INBOX_MESSAGES.ACTIONS.unsnooze : INBOX_MESSAGES.ACTIONS.snooze}
-          </button>
-          <button
-            type="button"
-            className="button-compact button-glass-neutral gap-spacing-1"
-            onClick={onToggleRead}
-          >
-            {read ? <Mail className="icon-sm" /> : <MailOpen className="icon-sm" />}
-            {read ? INBOX_MESSAGES.ACTIONS.unread : INBOX_MESSAGES.ACTIONS.read}
-          </button>
-          {!cleared && !snoozed ? (
-            <button
-              type="button"
-              className="button-compact button-glass-neutral"
-              onClick={() => onMove(notification.inbox_bucket === 'primary' ? 'other' : 'primary')}
-            >
-              {notification.inbox_bucket === 'primary'
-                ? INBOX_MESSAGES.ACTIONS.other
-                : INBOX_MESSAGES.ACTIONS.primary}
-            </button>
-          ) : null}
-        </div>
-      </footer>
     </article>
   )
 }

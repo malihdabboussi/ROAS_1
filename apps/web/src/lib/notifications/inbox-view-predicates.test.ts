@@ -38,10 +38,23 @@ describe('notificationInboxView', () => {
     ).toBe('cleared')
   })
 
-  it('returns expired snoozes to their persisted bucket', () => {
+  it('returns expired system snoozes to the system view', () => {
     expect(
       notificationInboxView(
         notification({ inbox_bucket: 'primary', snoozed_until: '2026-07-25T11:59:59.000Z' }),
+        now,
+      ),
+    ).toBe('system')
+  })
+
+  it('returns expired actionable snoozes to their persisted bucket', () => {
+    expect(
+      notificationInboxView(
+        notification({
+          type: 'plan_approval_required',
+          inbox_bucket: 'primary',
+          snoozed_until: '2026-07-25T11:59:59.000Z',
+        }),
         now,
       ),
     ).toBe('primary')

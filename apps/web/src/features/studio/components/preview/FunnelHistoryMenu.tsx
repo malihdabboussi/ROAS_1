@@ -146,7 +146,7 @@ export function FunnelHistoryMenu({
                       <div className="gap-spacing-1 body-4 text-muted-foreground mt-spacing-1 flex items-center">
                         <Clock3 className="icon-xs shrink-0" />
                         <span className="truncate">
-                          {entry.source === 'agent' ? 'Vibey' : 'You'} ·{' '}
+                          {entry.source === 'agent' ? 'Pixel' : 'You'} ·{' '}
                           <time dateTime={entry.created_at}>
                             {formatRevisionTime(entry.created_at)}
                           </time>

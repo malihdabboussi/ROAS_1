@@ -92,6 +92,16 @@ export function HomeDashboardV4CustomizePopover({
         Customize
       </button>
       <HomeDashboardV4Menu open={open} onClose={() => setOpen(false)} width={300} align="right">
+        <HomeDashboardV4MenuLabel>Layout</HomeDashboardV4MenuLabel>
+        <HomeDashboardV4MenuItem
+          icon={SlidersHorizontal}
+          label={editing ? 'Finish resizing cards' : 'Resize and reorder cards'}
+          sub="Set each card to one or two columns wide and one, two, or three rows tall."
+          onClick={() => {
+            onToggleEditing()
+            setOpen(false)
+          }}
+        />
         <HomeDashboardV4MenuLabel>Dashboard cards</HomeDashboardV4MenuLabel>
         {cardOptions.map((def) => {
           const Icon = HOME_CARD_ICONS[def.id]

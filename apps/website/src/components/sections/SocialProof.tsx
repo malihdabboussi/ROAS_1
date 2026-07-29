@@ -71,7 +71,7 @@ export function SocialProof() {
               <span className="gradient-text">with one conversation.</span>
             </h2>
             <p className="text-color-muted body-2 mx-auto mt-5 max-w-xl">
-              Vibey gives every founder the same advantage.
+              ROAS gives every founder the same advantage.
             </p>
           </div>
 

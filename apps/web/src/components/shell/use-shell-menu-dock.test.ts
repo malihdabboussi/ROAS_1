@@ -9,7 +9,8 @@ import {
   type ShellMenuDockWorkRect,
 } from './use-shell-menu-dock'
 
-const STORAGE_KEY = 'vibey.shell.menu-dock.v1'
+const STORAGE_KEY = 'vibey.shell.menu-dock.v2'
+const LEGACY_STORAGE_KEY = 'vibey.shell.menu-dock.v1'
 const COMPACT_KEY = 'vibey.shell.menu-compact.v1'
 
 const workRect: ShellMenuDockWorkRect = {
@@ -24,19 +25,22 @@ const workRect: ShellMenuDockWorkRect = {
 describe('shell menu dock', () => {
   beforeEach(() => {
     window.localStorage.removeItem(STORAGE_KEY)
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY)
     window.localStorage.removeItem(COMPACT_KEY)
     resetShellMenuDockHydrationForTests()
     useShellMenuDock.setState({
-      dock: 'left',
+      dock: 'work',
       menuCompact: false,
       dragging: false,
-      candidate: 'left',
+      candidate: 'work',
+      lift: null,
       workCardHostAvailable: false,
       workCollapsedHostAvailable: false,
     })
   })
 
-  it('persists work docks and migrates legacy right/top/bottom', () => {
+  it('defaults to work (left of the work card) and persists work docks', () => {
+    expect(useShellMenuDock.getState().dock).toBe('work')
     useShellMenuDock.getState().setDock('work-right')
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe('work-right')
 
@@ -46,6 +50,27 @@ describe('shell menu dock', () => {
     expect(useShellMenuDock.getState().dock).toBe('work-bottom')
   })
 
+  it('migrates legacy v1 left to the new work default; keeps other custom docks', () => {
+    window.localStorage.setItem(LEGACY_STORAGE_KEY, 'left')
+    hydrateShellMenuDockFromStorage()
+    expect(useShellMenuDock.getState().dock).toBe('work')
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('work')
+    expect(window.localStorage.getItem(LEGACY_STORAGE_KEY)).toBeNull()
+
+    resetShellMenuDockHydrationForTests()
+    window.localStorage.removeItem(STORAGE_KEY)
+    window.localStorage.setItem(LEGACY_STORAGE_KEY, 'work-top')
+    hydrateShellMenuDockFromStorage()
+    expect(useShellMenuDock.getState().dock).toBe('work-top')
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('work-top')
+  })
+
+  it('hydrates unset storage to work', () => {
+    hydrateShellMenuDockFromStorage()
+    expect(useShellMenuDock.getState().dock).toBe('work')
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('work')
+  })
+
   it('toggles compact menu into the R chip', () => {
     useShellMenuDock.getState().toggleMenuCompact()
     expect(useShellMenuDock.getState().menuCompact).toBe(true)
@@ -53,16 +78,27 @@ describe('shell menu dock', () => {
   })
 
   it('prefers work-card edges over the frame when the pointer is on them', () => {
-    expect(shellMenuDockForPoint(410, 300, 1200, 800, workRect, true)).toBe('work')
-    expect(shellMenuDockForPoint(1180, 300, 1200, 800, workRect, true)).toBe('work-right')
-    expect(shellMenuDockForPoint(800, 60, 1200, 800, workRect, true)).toBe('work-top')
-    expect(shellMenuDockForPoint(800, 780, 1200, 800, workRect, true)).toBe('work-bottom')
-    expect(shellMenuDockForPoint(20, 400, 1200, 800, workRect, true)).toBe('left')
+    expect(shellMenuDockForPoint(410, 300, 1200, 800, workRect, true, 'work')).toBe('work')
+    expect(shellMenuDockForPoint(1180, 300, 1200, 800, workRect, true, 'work')).toBe('work-right')
+    expect(shellMenuDockForPoint(800, 60, 1200, 800, workRect, true, 'work')).toBe('work-top')
+    expect(shellMenuDockForPoint(800, 780, 1200, 800, workRect, true, 'work')).toBe('work-bottom')
+    expect(shellMenuDockForPoint(20, 400, 1200, 800, workRect, true, 'work')).toBe('left')
+  })
+
+  it('only senses top/bottom in the centered third of the work card', () => {
+    // Near the left corner of the top edge → left seam, not top.
+    expect(shellMenuDockForPoint(420, 60, 1200, 800, workRect, true, 'work')).toBe('work')
+    expect(shellMenuDockForPoint(800, 60, 1200, 800, workRect, true, 'work')).toBe('work-top')
+  })
+
+  it('keeps the sticky candidate in the work-card dead zone instead of snapping to left', () => {
+    expect(shellMenuDockForPoint(800, 400, 1200, 800, workRect, true, 'work-top')).toBe('work-top')
+    expect(shellMenuDockForPoint(800, 400, 1200, 800, workRect, true, 'work')).toBe('work')
   })
 
   it('maps far-left to the work card when chat is closed', () => {
-    expect(shellMenuDockForPoint(20, 400, 1200, 800, workRect, false)).toBe('work')
-    expect(shellMenuDockForPoint(410, 300, 1200, 800, workRect, false)).toBe('work')
+    expect(shellMenuDockForPoint(20, 400, 1200, 800, workRect, false, 'work')).toBe('work')
+    expect(shellMenuDockForPoint(410, 300, 1200, 800, workRect, false, 'work')).toBe('work')
   })
 
   it('remaps a saved left dock onto work when chat is closed', () => {
@@ -77,8 +113,31 @@ describe('shell menu dock', () => {
     ).toBe('left')
   })
 
-  it('uses the live candidate while dragging', () => {
-    useShellMenuDock.setState({ dock: 'left', candidate: 'work-top', dragging: true })
+  it('soft-locks layout onto the live candidate while dragging', () => {
+    useShellMenuDock.getState().startDragging({
+      left: 10,
+      top: 20,
+      width: 72,
+      height: 400,
+      grabX: 12,
+      grabY: 18,
+    })
+    useShellMenuDock.getState().setCandidate('work-top')
     expect(activeShellMenuDock(useShellMenuDock.getState())).toBe('work-top')
+    expect(useShellMenuDock.getState().candidate).toBe('work-top')
+
+    useShellMenuDock.getState().clearLift()
+    expect(useShellMenuDock.getState().lift).toBeNull()
+
+    useShellMenuDock.getState().ensureLift({
+      left: 10,
+      top: 20,
+      width: 72,
+      height: 400,
+      grabX: 12,
+      grabY: 18,
+    })
+    useShellMenuDock.getState().moveLift(100, 200)
+    expect(useShellMenuDock.getState().lift).toMatchObject({ left: 88, top: 182 })
   })
 })

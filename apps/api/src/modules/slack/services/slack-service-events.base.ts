@@ -215,6 +215,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
         relationship_kind: principal.relationshipKind,
         is_connection_owner: principal.isConnectionOwner,
         personal_brain_access: principal.personalBrainAccess,
+        organization_wide_data_access: principal.organizationWideDataAccess,
       },
       orgId: channelOrgId ?? null,
       documents: documents.length > 0 ? documents : undefined,
@@ -308,6 +309,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
         relationship_kind: principal.relationshipKind,
         is_connection_owner: principal.isConnectionOwner,
         personal_brain_access: principal.personalBrainAccess,
+        organization_wide_data_access: principal.organizationWideDataAccess,
       },
       orgId: fallback.orgId,
       documents: documents.length > 0 ? documents : undefined,
@@ -332,6 +334,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       relationship_kind: 'internal'
       is_connection_owner: boolean
       personal_brain_access: boolean
+      organization_wide_data_access: boolean
     }
     documents?: Array<{
       filename: string
@@ -422,6 +425,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       relationship_kind: 'internal'
       is_connection_owner: boolean
       personal_brain_access: boolean
+      organization_wide_data_access: boolean
     },
     documents?: Array<{
       filename: string

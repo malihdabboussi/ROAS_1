@@ -179,7 +179,7 @@ export function SequenceEmailPreview() {
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#1F1F1F' }}>
-                    Vibey Team
+                    ROAS Team
                   </span>
                   <span style={{ fontSize: 11, color: '#5F6368', marginLeft: 'auto' }}>
                     10:42 AM
@@ -216,9 +216,9 @@ export function SequenceEmailPreview() {
                 Talk soon,
                 <br />
                 <br />
-                — The Vibey Team
+                — The ROAS Team
                 <br />
-                <span style={{ fontSize: 11, color: '#999' }}>Vibey · AI-powered marketing</span>
+                <span style={{ fontSize: 11, color: '#999' }}>ROAS · AI-powered marketing</span>
               </p>
             </div>
           </div>

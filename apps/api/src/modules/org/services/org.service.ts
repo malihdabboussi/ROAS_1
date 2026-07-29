@@ -178,6 +178,19 @@ export class OrgService {
     return this.repo.updateMemberRole(supabase, memberId, newRole)
   }
 
+  async updateAiDataAdmin(
+    supabase: SupabaseClient,
+    orgId: string,
+    memberId: string,
+    enabled: boolean,
+  ) {
+    const members = await this.repo.listMembers(supabase, orgId)
+    const target = members.find((member) => member.id === memberId)
+    if (!target) throw new Error('Member not found')
+    if (target.role === 'owner') throw new Error('Owner access cannot be disabled')
+    return this.repo.updateMemberAiDataAdmin(supabase, memberId, enabled)
+  }
+
   async removeMember(supabase: SupabaseClient, orgId: string, memberId: string, userId: string) {
     const members = await this.repo.listMembers(supabase, orgId)
     const target = members.find((m) => m.id === memberId)

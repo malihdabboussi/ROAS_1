@@ -5,8 +5,8 @@ import { TAILWIND_BROWSER_SCRIPT_SRC } from '@/lib/tailwind-browser'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Vibey',
-  description: 'Powered by Vibey',
+  title: 'ROAS',
+  description: 'Powered by ROAS',
   icons: {
     icon: '/Logos/logov2/icon-white.png',
     apple: '/Logos/logov2/icon-white.png',

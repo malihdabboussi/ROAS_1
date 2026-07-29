@@ -18,12 +18,12 @@ import { AgendaCardListBody } from '@/features/home/components/AgendaCardListBod
 import { HOME_AGENDA_MESSAGES } from '@/features/home/config/home-agenda-messages.config'
 import { useAgendaCardData } from '@/features/home/hooks/use-agenda-card-data'
 import { agendaEventDismissKey, dismissAgendaEvent } from '@/features/home/lib/agenda-dismiss'
+import { openAgendaEventDetail } from '@/features/home/lib/agenda-open-routing'
 import {
   dedupeAgendaEvents,
   pickNextAgendaEvent,
   tomorrowDayKey,
 } from '@/features/home/lib/agenda-list-view'
-import { openAgendaEventDetail } from '@/features/home/lib/agenda-open-routing'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { useWorkspaceSettingsModal } from '@/lib/settings/workspace-settings-modal-context'
 import type { YourTurnItem } from '@/lib/your-turn/types'

@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# Sync ROAS local agent-api env from scripts/roas/roas-secrets.env.
-# Gitignored apps/agent-api/.env is not part of deploy automation — run this after
-# ROAS secret rotation or when local chat fails with Invalid API key / runtime_not_ready.
+# Sync ROAS local env files from scripts/roas/roas-secrets.env.
+# Aligns apps/agent-api/.env and, when present, apps/api/.env + root .env so
+# agents never silently use legacy Vibey prod (qfrvykscoymiwwgysvsr).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SECRETS_FILE="${ROOT}/scripts/roas/roas-secrets.env"
 AGENT_ENV="${ROOT}/apps/agent-api/.env"
+API_ENV="${ROOT}/apps/api/.env"
+ROOT_ENV="${ROOT}/.env"
 WEB_ENV="${ROOT}/apps/web/.env.local"
 
 if [[ ! -f "${SECRETS_FILE}" ]]; then
@@ -18,11 +20,11 @@ if [[ ! -f "${AGENT_ENV}" ]]; then
   exit 1
 fi
 
-python3 - "${SECRETS_FILE}" "${AGENT_ENV}" "${WEB_ENV}" <<'PY'
+python3 - "${SECRETS_FILE}" "${AGENT_ENV}" "${WEB_ENV}" "${API_ENV}" "${ROOT_ENV}" <<'PY'
 import sys
 from pathlib import Path
 
-secrets_path, agent_path, web_path = map(Path, sys.argv[1:4])
+secrets_path, agent_path, web_path, api_path, root_env_path = map(Path, sys.argv[1:6])
 
 def parse_env(path: Path) -> dict[str, str]:
     data: dict[str, str] = {}
@@ -83,4 +85,25 @@ if changed:
     print('Updated apps/agent-api/.env:', ', '.join(changed))
 else:
     print('apps/agent-api/.env already aligned with roas-secrets.env')
+
+# Same Supabase + vault keys for Nest API / root env landmines.
+api_updates = {
+    'SUPABASE_URL': updates['SUPABASE_URL'],
+    'SUPABASE_ANON_KEY': updates['SUPABASE_ANON_KEY'],
+    'SUPABASE_SERVICE_ROLE_KEY': updates['SUPABASE_SERVICE_ROLE_KEY'],
+    'VAULT_ENCRYPTION_KEY': updates['VAULT_ENCRYPTION_KEY'],
+    'INTERNAL_API_TOKEN': updates['INTERNAL_API_TOKEN'],
+}
+
+for path, label in ((api_path, 'apps/api/.env'), (root_env_path, 'root .env')):
+    if not path.exists():
+        print(f'Skip {label} (missing)')
+        continue
+    changed = write_env(path, api_updates)
+    if changed:
+        print(f'Updated {label}:', ', '.join(changed))
+    else:
+        print(f'{label} already aligned with roas-secrets.env')
 PY
+
+bash "${ROOT}/scripts/roas/verify-local-env-alignment.sh"

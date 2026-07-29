@@ -74,7 +74,7 @@ export function MarketingDailyDigestMockup(props?: { vibeyPortraitUrl?: string }
             <div className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-[#1c1c1c] bg-emerald-500" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-[14px] font-bold leading-tight text-white">Vibey</h3>
+            <h3 className="truncate text-[14px] font-bold leading-tight text-white">Pixel</h3>
             <p className="text-[11px] text-[#50a2e9]">bot</p>
           </div>
           <MoreVertical size={18} className="cursor-pointer text-white/40" />
@@ -89,7 +89,7 @@ export function MarketingDailyDigestMockup(props?: { vibeyPortraitUrl?: string }
             </span>
           </div>
 
-          {/* Vibey Message Bubble */}
+          {/* ROAS Message Bubble */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, x: -20 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}

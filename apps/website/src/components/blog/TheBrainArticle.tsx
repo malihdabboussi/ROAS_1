@@ -159,7 +159,7 @@ export function TheBrainArticle() {
           trying to store?
         </p>
         <p className="body-2 text-color-secondary leading-relaxed">
-          Vibey isn't a chatbot. It isn't a single AI assistant. It's a coordinated swarm of
+          ROAS isn't a chatbot. It isn't a single AI assistant. It's a coordinated swarm of
           specialist agents that together form something closer to a functioning team than a tool. A
           copywriter. An analyst. A strategist. An ads manager. Each one with their own domain,
           their own expertise, their own way of approaching work. The Brain is the memory
@@ -451,7 +451,7 @@ export function TheBrainArticle() {
         </p>
         <p className="body-2 text-color-secondary leading-relaxed">
           What changes immediately: you stop re-explaining things that should already be known. Your
-          copywriter Vibey agent doesn't need to be told who you're writing for. Your analyst
+          copywriter ROAS agent doesn't need to be told who you're writing for. Your analyst
           doesn't need last quarter's report pasted in. Your strategist doesn't ask questions that
           anyone who's been paying attention would already know the answer to.
         </p>

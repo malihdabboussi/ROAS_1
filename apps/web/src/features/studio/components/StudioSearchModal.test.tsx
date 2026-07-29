@@ -36,7 +36,7 @@ describe('StudioSearchModal', () => {
           kind: 'conversation',
           id: 'conv-1',
           label: 'Offer strategy chat',
-          subtitle: 'Vibey',
+          subtitle: 'ROAS',
           url: null,
         },
         {
@@ -105,7 +105,7 @@ describe('StudioSearchModal', () => {
         subtitle: 'Deliverable',
         url: '/mission-control?mission=m1',
       },
-      { kind: 'conversation', id: 'conv-1', label: 'Strategy chat', subtitle: 'Vibey', url: null },
+      { kind: 'conversation', id: 'conv-1', label: 'Strategy chat', subtitle: 'ROAS', url: null },
       {
         kind: 'campaign',
         id: 'camp-1',

@@ -18,7 +18,7 @@ export interface GlobalWorkContext {
   brainAwarenessContext?: string
   /** Manage Agents Ops Desk label for the work-context chip. */
   teamOpsLabel?: string | null
-  /** Live team floor context injected when opening Vibey from Ops Desk. */
+  /** Live team floor context injected when opening Pixel from Ops Desk. */
   teamOpsAwarenessContext?: string
 }
 

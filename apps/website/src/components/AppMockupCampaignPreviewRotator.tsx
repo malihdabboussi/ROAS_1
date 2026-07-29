@@ -470,7 +470,7 @@ function AdsPane() {
               V
             </div>
             <div className="min-w-0 flex-1">
-              <span className="text-[14px] font-semibold text-[#050505]">Vibey</span>
+              <span className="text-[14px] font-semibold text-[#050505]">Pixel</span>
               <div className="flex items-center gap-1">
                 <span className="text-[12px] text-[#65676b]">Sponsored</span>
                 <span className="text-[12px] text-[#65676b]">·</span>
@@ -558,7 +558,7 @@ function InstagramPane() {
         <div className="mx-auto w-full max-w-[390px] overflow-hidden rounded-lg bg-[#121212] text-white shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
           <div className="flex items-center gap-2.5 px-3 py-2.5">
             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-yellow-400 via-pink-500 to-purple-600" />
-            <div className="min-w-0 flex-1 text-[13px] font-semibold">Vibey.im</div>
+            <div className="min-w-0 flex-1 text-[13px] font-semibold">ROAS.im</div>
             <MoreHorizontal className="h-5 w-5 shrink-0 opacity-80" />
           </div>
           <div className="relative w-full overflow-hidden rounded-lg px-0.5">
@@ -573,7 +573,7 @@ function InstagramPane() {
           </div>
           <div className="px-3 pb-3 pt-1">
             <p className="text-[13px]">
-              <span className="font-semibold">Vibey.im</span>{' '}
+              <span className="font-semibold">ROAS.im</span>{' '}
               <span className="text-white/90">
                 Q1 launch is live: funnel + emails + ads in one workspace. Link in bio.
               </span>

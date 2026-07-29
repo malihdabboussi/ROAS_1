@@ -192,6 +192,55 @@ export class SlackRuntimeRepository {
     return data ?? []
   }
 
+  async findAiDataAdminMembership(
+    supabase: SupabaseClient,
+    orgId: string,
+    userId: string,
+  ): Promise<{
+    id: string
+    user_id: string
+    org_id: string
+    role: string
+    status: string
+    ai_data_admin: boolean
+  } | null> {
+    const { data, error } = await supabase
+      .from('org_members')
+      .select('id, user_id, org_id, role, status, ai_data_admin')
+      .eq('org_id', orgId)
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (error) throw error
+    return data
+  }
+
+  async recordAiDataAccessAudit(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      orgMemberId: string | null
+      userId: string | null
+      resourceType: string
+      resourceId: string | null
+      outcome: 'allowed' | 'denied'
+      reason: string
+      metadata?: Record<string, unknown>
+    },
+  ): Promise<void> {
+    const { error } = await supabase.from('ai_data_access_audit').insert({
+      org_id: input.orgId,
+      org_member_id: input.orgMemberId,
+      user_id: input.userId,
+      surface: 'slack',
+      resource_type: input.resourceType,
+      resource_id: input.resourceId,
+      outcome: input.outcome,
+      reason: input.reason,
+      metadata: input.metadata ?? {},
+    })
+    if (error) throw error
+  }
+
   async findSlackConversation(
     supabase: SupabaseClient,
     input: {

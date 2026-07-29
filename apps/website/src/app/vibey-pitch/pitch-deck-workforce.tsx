@@ -272,9 +272,9 @@ function SlideTeamToOrgTransition({ phase }: { phase: 0 | 1 }) {
                   >
                     <div className="relative">
                       <div className="absolute -inset-2 rounded-full bg-emerald-500/15 blur-md" />
-                      <AgentAvatar src={VIBEY_MARKETING_PORTRAIT_FALLBACK} name="Vibey" size={56} />
+                      <AgentAvatar src={VIBEY_MARKETING_PORTRAIT_FALLBACK} name="Pixel" size={56} />
                     </div>
-                    <span className="text-xs font-semibold text-white">Vibey</span>
+                    <span className="text-xs font-semibold text-white">Pixel</span>
                     <span className="text-[10px] text-emerald-400">CEO</span>
                   </motion.div>
 

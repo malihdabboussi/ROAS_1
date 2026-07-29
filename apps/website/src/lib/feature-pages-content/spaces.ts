@@ -2,7 +2,7 @@ import type { FeaturePageDefinition } from './types'
 
 export const spacesFeaturePage: FeaturePageDefinition = {
   slug: 'spaces',
-  metaTitle: 'Spaces | Vibey',
+  metaTitle: 'Spaces | ROAS',
   metaDescription:
     'The work, the team, and the agents. One place. Tasks, docs, channels, and flows. Humans and agents working in the same workspace, not in parallel tools.',
   mockupKind: 'spaces-hero',

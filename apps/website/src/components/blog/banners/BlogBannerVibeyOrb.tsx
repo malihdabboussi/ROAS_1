@@ -96,7 +96,7 @@ function OrbScene() {
   )
 }
 
-/** Vibey orb — breathing + slow rotation only, no mouse interaction. */
+/** ROAS orb — breathing + slow rotation only, no mouse interaction. */
 export function BlogBannerVibeyOrb() {
   const [canvasReady, setCanvasReady] = useState(false)
 

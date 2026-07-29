@@ -217,7 +217,7 @@ export function SlideSolutionHeadline() {
   return (
     <Slide className="!py-4">
       <SlideLabel>The Solution</SlideLabel>
-      <SlideTitle>Vibey turns company knowledge into structured memory, for a supercharged human + agent workspace.</SlideTitle>
+      <SlideTitle>ROAS turns company knowledge into structured memory, for a supercharged human + agent workspace.</SlideTitle>
 
       <motion.div
         initial={{ opacity: 0, y: 14 }}
@@ -437,7 +437,7 @@ export function SlideOrgChartOnboarding() {
     <Slide className="!py-4">
       <SlideTitle>THE HYBRID ORG CHART</SlideTitle>
 
-      {/* Founder above Vibey */}
+      {/* Founder above ROAS */}
       <HumanCard h={humans[0]!} delay={0.3} />
 
       <motion.div
@@ -447,7 +447,7 @@ export function SlideOrgChartOnboarding() {
         className="h-4 w-px origin-top bg-gradient-to-b from-white/20 to-emerald-500/20"
       />
 
-      {/* Vibey CMO */}
+      {/* ROAS CMO */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -456,9 +456,9 @@ export function SlideOrgChartOnboarding() {
       >
         <div className="relative">
           <div className="absolute -inset-2 rounded-full bg-emerald-500/15 blur-md" />
-          <AgentAvatar src={VIBEY_MARKETING_PORTRAIT_FALLBACK} name="Vibey" size={48} />
+          <AgentAvatar src={VIBEY_MARKETING_PORTRAIT_FALLBACK} name="Pixel" size={48} />
         </div>
-        <span className="text-[10px] font-semibold text-white">Vibey</span>
+        <span className="text-[10px] font-semibold text-white">Pixel</span>
         <span className="text-[8px] text-emerald-400">CMO Agent</span>
       </motion.div>
 
@@ -529,7 +529,7 @@ export function SlideOrgChartOnboarding() {
         transition={{ delay: 1.1 }}
         className="mt-6 max-w-2xl text-center text-sm leading-relaxed text-white/55"
       >
-        Vibey works alongside your team and creates an integrated memory workspace that companies
+        ROAS works alongside your team and creates an integrated memory workspace that companies
         will use for years or even decades.
       </motion.p>
     </Slide>
@@ -582,4 +582,3 @@ export function SlideSpacesWorkspace() {
     </Slide>
   )
 }
-

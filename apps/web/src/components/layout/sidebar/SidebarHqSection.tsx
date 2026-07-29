@@ -173,6 +173,7 @@ export function SidebarHqSection({
               setBrowsePanelBucket={setBrowsePanelBucket}
               setCreateSpaceModalFor={setCreateSpaceModalFor}
               spaceUserState={spaceUserState}
+              featureUpdates={featureUpdates}
             />
           </div>
         </div>

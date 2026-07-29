@@ -48,7 +48,7 @@ describe('SpaceChatHeaderActions', () => {
       />,
     )
 
-    fireEvent.click(screen.getByLabelText('Collapse ROAS chat'))
+    fireEvent.click(screen.getByLabelText('Collapse Pixel chat'))
     fireEvent.click(screen.getByLabelText('Search in conversation'))
     fireEvent.click(screen.getByLabelText('New conversation'))
     fireEvent.click(screen.getByLabelText('Show tasks and runs'))
@@ -118,6 +118,6 @@ describe('SpaceChatHeaderActions', () => {
 
     expect(onToggleSummary).toHaveBeenCalledTimes(1)
     expect(onCollapse).toHaveBeenCalledTimes(1)
-    expect(screen.queryByLabelText('Collapse ROAS chat')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Collapse Pixel chat')).not.toBeInTheDocument()
   })
 })

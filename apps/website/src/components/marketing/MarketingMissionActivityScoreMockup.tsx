@@ -131,7 +131,7 @@ export function MarketingMissionActivityScoreMockup(props?: { vibeyPortraitUrl?:
                       <div className="border-color-glass h-8 w-8 shrink-0 overflow-hidden rounded-full border">
                         <img src={vibeySrc} alt="" className="h-full w-full object-cover" />
                       </div>
-                      <span className="body-2 text-text-muted">Vibey</span>
+                      <span className="body-2 text-text-muted">Pixel</span>
                     </div>
                   </div>
                   <span className="body-4 mt-0.5 block text-text-muted opacity-50">Just now</span>

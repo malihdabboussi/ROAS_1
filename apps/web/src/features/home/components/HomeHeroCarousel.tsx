@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState } from 'react'
 
-// Port of `VIBEY UI/hero-carousel.jsx`: 2 cards visible, auto-rotate through N cards.
+// Port of `ROAS UI/hero-carousel.jsx`: 2 cards visible, auto-rotate through N cards.
 // Presentational only — wire `onAction` later when quick actions are hooked up.
 
 export type HomeHeroCarouselCard = {
@@ -21,7 +21,7 @@ export const HOME_HERO_CAROUSEL_CARDS: HomeHeroCarouselCard[] = [
     eyebrow: 'Live event',
     eyebrowClassName: 'text-blue-400',
     title: 'Launch a webinar',
-    body: 'ROAS drafts the funnel, registration page, and 5-email reminder sequence.',
+    body: 'Pixel drafts the funnel, registration page, and 5-email reminder sequence.',
     vignette: 'webinar',
     glowClassName: 'bg-blue-500/15',
   },

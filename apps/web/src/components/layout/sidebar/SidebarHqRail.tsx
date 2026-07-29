@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, type CSSProperties } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { surfaceFromPathname } from '@/components/global-chat/config/work-context.config'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
@@ -13,12 +13,11 @@ import { isManageRailItemActive, workContextSurfaceForPanel } from './sidebar-hq
 import type { ManagePanelId, ManageRailItem } from './sidebar-types'
 import { SidebarHqHubLogoButton } from './SidebarHqHubLogoButton'
 import type { HubMenuPaneProps } from './SidebarHqHubMenu'
-import { SidebarHqShellFooter } from './SidebarHqShellFooter'
 import type { SidebarControllerReturn } from './useSidebarController'
 
 export function SidebarHqRail({
   c,
-  featureUpdates,
+  featureUpdates: _featureUpdates,
   visibleRailItems,
   clearSpacesFlyoutCloseTimer,
   closeHoverManageFlyout,
@@ -41,8 +40,10 @@ export function SidebarHqRail({
   const menuDock = useActiveShellMenuDock()
   const menuCompact = useShellMenuDock((state) => state.menuCompact)
   const dragging = useShellMenuDock((state) => state.dragging)
+  const lift = useShellMenuDock((state) => state.lift)
   const setMenuCompact = useShellMenuDock((state) => state.setMenuCompact)
   const shellExpanded = shellSidebarExpanded({ sidebarPinned, sidebarPeek })
+  const lifting = dragging && lift !== null
 
   // Keep the HQ rail icon-only — never promote the expanded hub menu.
   useEffect(() => {
@@ -92,8 +93,35 @@ export function SidebarHqRail({
   const isPeeking = false
   // Icon rail only — expanded hub menu is retired.
   const hubExpanded = false
+  const iconOnlyDock = menuDock === 'work-top' || menuDock === 'work-bottom'
+
+  // Pointer-follow geometry for the lifted rail (not a color — dock drag exception).
+  const liftStyle =
+    lifting && lift
+      ? ({
+          '--shell-menu-lift-left': `${lift.left}px`,
+          '--shell-menu-lift-top': `${lift.top}px`,
+          '--shell-menu-lift-width': `${lift.width}px`,
+          '--shell-menu-lift-height': `${lift.height}px`,
+        } as CSSProperties)
+      : undefined
 
   return (
+    <div
+      className={cn(
+        'shell-menu-dock-rail-lift-root',
+        !lifting && 'h-full',
+        lifting && 'shell-menu-dock-rail-lift-root-active',
+      )}
+      style={
+        lifting && lift
+          ? ({
+              width: lift.width,
+              height: lift.height,
+            } as CSSProperties)
+          : undefined
+      }
+    >
     <div
       data-shell-menu-dock={menuDock}
       data-shell-menu-dock-dragging={dragging ? 'true' : undefined}
@@ -102,8 +130,9 @@ export function SidebarHqRail({
         hubExpanded ? 'hub-sidebar-shell-expanded' : 'hub-sidebar-shell-collapsed',
         // Hover peek pops over main content; pin stays in-flow.
         isPeeking && 'hub-sidebar-shell-peek',
-        dragging && 'shell-menu-dock-previewing',
+        lifting && 'shell-menu-dock-lifting',
       )}
+      style={liftStyle}
       onMouseEnter={() => {
         // Only hold an existing peek — rail hover must not expand the sidebar.
         if (!sidebarPinned && sidebarPeek) holdSidebarPeek()
@@ -115,6 +144,7 @@ export function SidebarHqRail({
       <div
         className={cn(
           'hub-sidebar-rail-layout flex min-h-0 flex-1 flex-col overflow-visible',
+          // Same gray glass chrome as the vertical HQ rail.
           hubExpanded ? 'bg-background shell-sidebar-panel' : 'card-glass rounded-2xl',
         )}
       >
@@ -138,18 +168,23 @@ export function SidebarHqRail({
                 <nav className="hub-sidebar-rail-nav flex flex-1 flex-col items-center gap-0.5 px-0.5 pb-2 pt-0">
                   {visibleRailItems.map((item) => {
                     const isItemActive = isManageRailItemActive(item, c.pathname, c.isActive)
+                    const railItemClass = iconOnlyDock
+                      ? 'flex w-full flex-col items-center gap-0 px-0.5 py-1 transition-all'
+                      : 'flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all'
                     const iconSpan = (
                       <span
-                        className={`flex items-center justify-center rounded-lg border border-transparent p-1.5 transition-all ${
+                        className={cn(
+                          'flex items-center justify-center rounded-lg border border-transparent transition-all',
+                          iconOnlyDock ? 'p-1' : 'p-1.5',
                           isItemActive
                             ? 'nav-glass-selected-purple nav-glass-text-purple'
-                            : 'text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]'
-                        }`}
+                            : 'text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]',
+                        )}
                       >
                         {item.icon}
                       </span>
                     )
-                    const labelSpan = (
+                    const labelSpan = iconOnlyDock ? null : (
                       <span
                         className={`text-[10px] leading-tight transition-colors ${
                           isItemActive
@@ -182,7 +217,9 @@ export function SidebarHqRail({
                             setCollapsed(true)
                             pushIfNeeded(item.href)
                           }}
-                          className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                          className={railItemClass}
+                          aria-label={item.label}
+                          title={item.label}
                         >
                           {iconSpan}
                           {labelSpan}
@@ -204,7 +241,9 @@ export function SidebarHqRail({
                             setCollapsed(true)
                             c.setActiveManagePanel(null)
                           }}
-                          className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                          className={railItemClass}
+                          aria-label={item.label}
+                          title={item.label}
                         >
                           {iconSpan}
                           {labelSpan}
@@ -235,7 +274,9 @@ export function SidebarHqRail({
                             c.setActiveManagePanel('home')
                             pushIfNeeded(item.href ?? '/home')
                           }}
-                          className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                          className={railItemClass}
+                          aria-label={item.label}
+                          title={item.label}
                         >
                           {iconSpan}
                           {labelSpan}
@@ -267,7 +308,9 @@ export function SidebarHqRail({
                               c.setIsPanelClosing(true)
                             }
                           }}
-                          className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                          className={railItemClass}
+                          aria-label={item.label}
+                          title={item.label}
                         >
                           {iconSpan}
                           {labelSpan}
@@ -298,7 +341,9 @@ export function SidebarHqRail({
                             c.setActiveManagePanel('team2')
                             pushIfNeeded(item.href ?? '/team')
                           }}
-                          className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                          className={railItemClass}
+                          aria-label={item.label}
+                          title={item.label}
                         >
                           {iconSpan}
                           {labelSpan}
@@ -329,7 +374,9 @@ export function SidebarHqRail({
                             c.setActiveManagePanel('brain')
                             pushIfNeeded(item.href ?? '/brain')
                           }}
-                          className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                          className={railItemClass}
+                          aria-label={item.label}
+                          title={item.label}
                         >
                           {iconSpan}
                           {labelSpan}
@@ -359,7 +406,9 @@ export function SidebarHqRail({
                             c.setIsPanelClosing(false)
                             c.setActiveManagePanel('more')
                           }}
-                          className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                          className={railItemClass}
+                          aria-label={item.label}
+                          title={item.label}
                         >
                           {iconSpan}
                           {labelSpan}
@@ -371,13 +420,6 @@ export function SidebarHqRail({
                 </nav>
               </div>
             </div>
-            <SidebarHqShellFooter
-              c={c}
-              expanded={hubExpanded}
-              pathname={c.pathname}
-              featureUpdates={featureUpdates}
-              onChatHover={closeHoverManageFlyout}
-            />
           </>
         ) : (
           <button
@@ -391,6 +433,7 @@ export function SidebarHqRail({
           </button>
         )}
       </div>
+    </div>
     </div>
   )
 }

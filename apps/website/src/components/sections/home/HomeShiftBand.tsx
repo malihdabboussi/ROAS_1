@@ -17,7 +17,7 @@ export function HomeShiftBand() {
             A chatbot in one window. A workflow tool in another. Three docs that contradict each
             other. Your team paying the tax of stitching it all together. The next wave is not a
             smarter chatbot — it is a company that runs as a hybrid of humans and agents in one
-            place. Vibey is that place.
+            place. ROAS is that place.
           </p>
         </div>
       </div>

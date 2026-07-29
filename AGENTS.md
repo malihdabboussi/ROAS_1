@@ -73,6 +73,7 @@ Read the guideline that matches the work (or invoke the matching skill):
 ## 8. MCP servers (prefer over guessing)
 
 - **Supabase** — schema, SQL, migrations, `get_advisors`, TS types (skill: `supa-project`).
+  - **Hard stop:** this repo’s production DB is only `lhfgtsjetcardinpgouq` (`lhfgtsjetcardinpgouq.supabase.co`). Never use legacy Vibey `qfrvykscoymiwwgysvsr` for credits/orgs/profiles/migrations. Confirm host/project_id before every data write; if sibling orgs look like Vibey/MFS/ROAS-PR-SEO, abort — wrong DB. Prefer `apps/agent-api/.env` or `scripts/roas/roas-secrets.env`; run `bash scripts/roas/verify-local-env-alignment.sh` when unsure.
 - **Context7** — current library/framework docs.
 - **Browser MCP** — whichever the tool exposes (Puppeteer, Cursor Browser, or Claude-in-Chrome): visual UI checks, flow/form validation, layout debugging.
 - **Vercel** — deploy/runtime debugging. **Sentry** — incident/error triage. **Fathom** — meeting transcripts. **Stripe** — billing. **Railway / Fly.io** — workers and agent-api deploys.

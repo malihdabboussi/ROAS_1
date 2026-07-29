@@ -16,7 +16,7 @@ function ScaledPitchMockup({
   sizePercent: number
   scale: number
   opacityClass?: string
-  /** When false, overflow visible so mockup animations aren’t clipped (pitch “How to Use Vibey”). */
+  /** When false, overflow visible so mockup animations aren’t clipped (pitch “How to Use ROAS”). */
   clip?: boolean
   children: React.ReactNode
 }) {

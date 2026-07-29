@@ -606,7 +606,7 @@ export function MarketingSkillsHeroMockup() {
         </span>
       </div>
 
-      {/* Right: Built by Vibey */}
+      {/* Right: Built by ROAS */}
       <div
         style={{
           position: 'absolute',
@@ -628,7 +628,7 @@ export function MarketingSkillsHeroMockup() {
           style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgb(52 211 153)', display: 'inline-block' }}
         />
         <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.07em', fontFamily: 'system-ui, sans-serif' }}>
-          Built by Vibey Skills
+          Built by ROAS Skills
         </span>
       </div>
 

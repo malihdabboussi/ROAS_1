@@ -757,7 +757,7 @@ function VibeyBrandingFooter({ theme }: { theme: 'light' | 'dark' }) {
         rel="noopener noreferrer"
         className={linkClass}
       >
-        Vibey
+        ROAS
       </a>
     </p>
   )

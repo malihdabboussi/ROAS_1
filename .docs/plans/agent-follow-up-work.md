@@ -1,3 +1,39 @@
+## 2026-07-28 - [OPS] supa-project skill documents stale production Supabase ref
+
+Status: Open
+
+Found while: Multi-slice release coordination (Part D — applying `20260728154500_team_agenda_directory_default_confirmed.sql` to production)
+
+Evidence: `.claude/skills/supa-project/SKILL.md` states production is `qfrvykscoymiwwgysvsr` ("Vibey2,0") and "this is also the DB all local .env files point at". All three checked local env files (`apps/api/.env`, `apps/web/.env.local`, `apps/agent-api/.env`) and the machine's linked/starred `supabase` CLI project actually point to `lhfgtsjetcardinpgouq` ("roas-production"). No Supabase MCP server was available this session to cross-check via `list_projects`.
+
+Needed work: Confirm with the user which project is authoritative production, then update the skill file's DB ref/table and the "all local .env files point at" claim so future agents don't risk targeting the wrong project for migrations.
+
+Reason not done now: Correcting a skill file that documents infrastructure facts needs human confirmation, not an agent guess: applied the requested migration to `lhfgtsjetcardinpgouq` based on convergent local-env + CLI-link evidence, but did not edit the skill file without that confirmation.
+
+## 2026-07-28 - [OPS] Railway mission-worker deploy could not be verified/triggered
+
+Status: Open
+
+Found while: Part A (PR #69 static-ad-production playbook change) shipping steps
+
+Evidence: PR #69 touched `apps/mission-worker/src/playbooks/static-ad-production.playbook.ts`. No Railway MCP server and no `railway` CLI (not installed, no `RAILWAY_TOKEN` in env) were available this session. `apps/mission-worker/railway.json` exists but there is no way to confirm whether Railway's own GitHub integration auto-deployed on the `main` push, or to trigger a manual deploy.
+
+Needed work: Verify (via Railway dashboard or a future session with Railway CLI/MCP access) that `mission-worker` picked up commit `52bc1ae3` (and the later `ce758eb4`/`8e277f82`/`d89baa03` pushes), and manually redeploy if it did not.
+
+Reason not done now: No credentialed access path to Railway was available in this environment.
+
+## 2026-07-28 - [OPS] Fly.io agent-api deploy could not be triggered for Part C
+
+Status: Open
+
+Found while: Part C (`agent-sync` mission chat + cross-agent skill materialization) deploy step
+
+Evidence: `flyctl auth whoami` reports no access token locally, and `.github/workflows/deploy-fly.yml` (documented by the `fly-io-deploy` skill as the primary CI deploy path) is listed in `.gitignore` (`.github/workflows/`) and is **not present on GitHub** (`gh api repos/.../actions/workflows` returns zero registered workflows) — so pushing `apps/agent-api` changes to `main` does not auto-deploy to Fly.
+
+Needed work: Either commit `.github/workflows/deploy-fly.yml` (remove it from `.gitignore` deliberately) so CI auto-deploys agent-api changes, or run `fly deploy --app vibey-runtimes ...` manually from an authenticated machine after `git pull origin main`.
+
+Reason not done now: No Fly.io credentials/token available in this environment; changing `.gitignore`/CI wiring is an infra decision outside this release's explicit scope.
+
 ## 2026-07-28 - [ARCH] Extract manual recovery orchestration from chat.service
 
 Status: Open
@@ -8676,7 +8712,7 @@ Reason not done now: The Home submenu only needs one additional panel id. A full
 
 ## 2026-07-25 - [OPS] Linked Supabase migration history blocks safe Inbox migration push
 
-Status: Blocked
+Status: Resolved (2026-07-28)
 
 Found while: Verifying `20260725120000_user_notifications_inbox_triage.sql`
 
@@ -8687,9 +8723,11 @@ Files:
 
 Evidence: `supabase db push --dry-run` connected successfully but stopped because remote versions `20260716215937`, `20260716220226`, `20260716220901`, `20260716220903`, `20260720042223`, and `20260721013000` are absent locally. A normal push could not safely prove that it would apply only the Inbox migration.
 
-Needed work: Reconcile the linked branch with `supabase migration repair` and `supabase db pull` under the repository's database-release workflow, then dry-run and apply the Inbox migration and run advisors.
+Resolution: Applied/verified via Management API (`scripts/roas/apply-via-supabase-api.sh`). Production `lhfgtsjetcardinpgouq` has `inbox_bucket`, `snoozed_until`, `cleared_at`, `user_notification_default_bucket`, and `user_notification_inbox_counts`. Broader migration-history repair remains optional ops debt, not a blocker for Inbox triage.
 
-Reason not done now: Repairing shared remote migration history is a separate database operation and could alter migration state beyond this feature.
+Needed work (optional): Reconcile remote-only migration versions with `supabase migration repair` / `db pull` so future `db push` dry-runs are clean.
+
+Reason not done now: Inbox schema is live; full history repair is still a separate database ops task.
 
 ## 2026-07-25 - [ARCH] CEO chat quick-start wiring touches oversized Space chat panel
 
@@ -9123,6 +9161,18 @@ Evidence: `pnpm --filter @vibey/web typecheck` reports that the untouched fixtur
 Needed work: Align the Home task fixture with the current `YourTurnItem` contract, or restore `priority` to that contract if product behavior still requires it.
 
 Reason not done now: This is pre-existing, outside chat recovery, and changing the Home task contract without tracing its feature would violate task scope.
+## 2026-07-28 — AI Data Admin capability
+
+Files:
+
+- `apps/web/src/features/settings/components/settings-content/OrgSettingsContent.tsx`
+- `apps/agent-api/src/modules/chat/services/chat.service.ts`
+
+Evidence: `wc -l` reports 637 LOC and 601 LOC respectively after adding the scoped AI Data Admin setting and privileged-turn audit. Both were already documented as decomposition debt; the settings component remains above the 400-line component cap and the chat service has reached the 600-line service cap.
+
+Needed work: Extract organization-member access controls into a focused settings component and move privileged-turn audit persistence behind a focused chat collaborator/repository.
+
+Deferred because: The requested security capability required narrow changes in the existing authoritative settings and chat orchestration surfaces. Decomposing those shared files is behavior-preserving architecture work outside this security change.
 
 ## 2026-07-28 — Meeting webhook base and workspace dialog decomposition
 
@@ -9134,6 +9184,9 @@ Files:
 - `apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx` (399 LOC; near the 400-line component limit)
 
 Evidence: Meeting-source cutover added a narrow orchestration path to a pre-existing generated automation base that was already above the service limit. The curated workspace remains under the component cap but has only one line of headroom.
+- `apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx` (394 LOC; near the 400-line component limit)
+
+Evidence: Meeting-source cutover added a narrow orchestration path to a pre-existing generated automation base that was already above the service limit. The curated workspace remains under the component cap but has only six lines of headroom.
 
 Needed work: Move the Fathom webhook orchestration behind a dedicated meeting webhook processor and extract the workspace recording/continuity sidebar into a sibling presentational component.
 
@@ -9153,3 +9206,15 @@ Evidence: The touched toolbar remains under its 400-line component limit, but pr
 Needed work: Move the shared floating-panel position contract onto approved named utilities and bring the toolbar shell onto the current tokenized spacing, typography, and z-index classes without changing menu behavior.
 
 Reason not done now: Rebuilding the shared bulk-menu shell would affect every existing bulk action and is separate from the requested Delegation workflow.
+Evidence: The touched toolbar remains under its 400-line component limit, but
+pre-existing shell code still uses arbitrary z-index, viewport-width, raw token
+wrappers, and inline positioning styles that predate the current utility-only
+design rules. The new Delegation panel itself uses existing design utilities and
+introduces no new CSS.
+
+Needed work: Move the shared floating-panel position contract onto approved
+named utilities and bring the toolbar shell onto the current tokenized spacing,
+typography, and z-index classes without changing menu behavior.
+
+Reason not done now: Rebuilding the shared bulk-menu shell would affect every
+existing bulk action and is separate from the requested Delegation workflow.

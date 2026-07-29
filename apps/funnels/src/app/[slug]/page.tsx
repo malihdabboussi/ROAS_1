@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     bundleHead = extractFunnelBundleHeadMeta(bundle)
   }
   const title = bundleHead.title || result.funnel.title || result.funnel.name
-  const description = bundleHead.description || `${result.funnel.name} — Powered by Vibey`
+  const description = bundleHead.description || `${result.funnel.name} — Powered by ROAS`
 
   return {
     title,

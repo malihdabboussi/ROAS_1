@@ -2,7 +2,7 @@ import type { FeaturePageDefinition } from './types'
 
 export const studioFeaturePage: FeaturePageDefinition = {
   slug: 'studio',
-  metaTitle: 'Vibey Studio | Vibey',
+  metaTitle: 'ROAS Studio | ROAS',
   metaDescription:
     'One conversation builds funnels, emails, and offers. Real-time artifacts, no template maze.',
   mockupKind: 'app-studio',
@@ -11,7 +11,7 @@ export const studioFeaturePage: FeaturePageDefinition = {
     kicker: '',
     title: 'YOUR MARKETING COMMAND CENTER',
     subtitle:
-      'Describe the outcome. Vibey runs the strategy conversation, then materializes landing pages, sequences, and lead magnets as you watch. No templates. No forms. Just talk.',
+      'Describe the outcome. ROAS runs the strategy conversation, then materializes landing pages, sequences, and lead magnets as you watch. No templates. No forms. Just talk.',
     primaryCta: { href: '/waitlist', label: 'Join Waitlist' },
     secondaryCta: { href: '/features/integrations', label: 'See Integrations' },
   },
@@ -27,7 +27,7 @@ export const studioFeaturePage: FeaturePageDefinition = {
           {
             title: 'Describe your goal',
             description:
-              'Share your offer, audience, and channel. Vibey asks clarifying questions, then starts building-no templates, no forms.',
+              'Share your offer, audience, and channel. ROAS asks clarifying questions, then starts building-no templates, no forms.',
           },
           {
             title: 'Artifacts appear in real time',
@@ -48,13 +48,13 @@ export const studioFeaturePage: FeaturePageDefinition = {
           {
             title: 'Funnel preview + publish',
             description:
-              'Preview your landing page exactly as visitors will see it. Push live to Vibey hosting or your custom domain with one click.',
+              'Preview your landing page exactly as visitors will see it. Push live to ROAS hosting or your custom domain with one click.',
             link: { href: '/features/funnels', label: 'Learn more' },
           },
           {
             title: 'Brand-aware output',
             description:
-              'Vibey pulls voice, positioning, and audience insights from The Workspace Brain so every asset matches your brand without re-explaining.',
+              'ROAS pulls voice, positioning, and audience insights from The Workspace Brain so every asset matches your brand without re-explaining.',
             link: { href: '/features/brain', label: 'Learn more' },
           },
           {
@@ -115,12 +115,12 @@ export const studioFeaturePage: FeaturePageDefinition = {
     title: 'Frequently asked questions',
     items: [
       {
-        q: 'What is Vibey Studio?',
-        a: 'Vibey Studio is a conversational marketing workspace where you build campaign assets in real-time. Unlike a standard chatbot, Studio materializes "artifacts" like landing pages, email sequences, and branded PDFs that you can preview, edit, and publish directly.',
+        q: 'What is ROAS Studio?',
+        a: 'ROAS Studio is a conversational marketing workspace where you build campaign assets in real-time. Unlike a standard chatbot, Studio materializes "artifacts" like landing pages, email sequences, and branded PDFs that you can preview, edit, and publish directly.',
       },
       {
-        q: 'What can I send to Vibey in the Studio?',
-        a: 'Vibey understands text, URLs, documents (PDFs, spreadsheets), videos (Loom or files), and images. You can drop a link to analyze a competitor or upload a recording to turn it into a week of social content.',
+        q: 'What can I send to ROAS in the Studio?',
+        a: 'ROAS understands text, URLs, documents (PDFs, spreadsheets), videos (Loom or files), and images. You can drop a link to analyze a competitor or upload a recording to turn it into a week of social content.',
       },
       {
         q: 'When should I use Studio vs. Missions?',
@@ -132,15 +132,15 @@ export const studioFeaturePage: FeaturePageDefinition = {
       },
       {
         q: 'How does Studio use my brand voice?',
-        a: 'Every Studio conversation is tied to a campaign. Vibey automatically pulls your brand guidelines, audience insights, and past winners from The Workspace Brain so every new asset sounds like you.',
+        a: 'Every Studio conversation is tied to a campaign. ROAS automatically pulls your brand guidelines, audience insights, and past winners from The Workspace Brain so every new asset sounds like you.',
       },
       {
         q: 'Can I publish directly from the Studio?',
-        a: 'Yes. You can push funnels live to Vibey hosting or your custom domain, and send email sequences or ad campaigns directly to connected platforms like SendGrid and Meta.',
+        a: 'Yes. You can push funnels live to ROAS hosting or your custom domain, and send email sequences or ad campaigns directly to connected platforms like SendGrid and Meta.',
       },
       {
         q: 'Is my business data kept private?',
-        a: 'Yes. Vibey uses tenant-isolated storage. Your conversations and campaign data are strictly your own and are never used to train public AI models.',
+        a: 'Yes. ROAS uses tenant-isolated storage. Your conversations and campaign data are strictly your own and are never used to train public AI models.',
       },
     ],
   },

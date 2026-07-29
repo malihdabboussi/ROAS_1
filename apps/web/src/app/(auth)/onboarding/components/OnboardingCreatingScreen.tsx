@@ -76,7 +76,7 @@ export function OnboardingCreatingScreen({
     <div className="flex w-full flex-col items-center">
       {header ?? (
         <p className="text-foreground title-h1 mb-spacing-4 text-center">
-          GETTING YOUR <span className="vibey-shine-text bg-clip-text text-transparent">VIBEY</span>{' '}
+          GETTING YOUR <span className="vibey-shine-text bg-clip-text text-transparent">PIXEL</span>{' '}
           UP TO SPEED
         </p>
       )}

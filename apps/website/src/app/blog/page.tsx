@@ -8,8 +8,8 @@ import {
 } from '@/lib/get-agent-library-for-marketing'
 
 export const metadata = {
-  title: 'Blog | Vibey',
-  description: 'Updates, product news, and insights from Vibey: your AI marketing team.',
+  title: 'Blog | ROAS',
+  description: 'Updates, product news, and insights from ROAS: your AI marketing team.',
 }
 
 export default async function BlogPage() {
@@ -26,7 +26,7 @@ export default async function BlogPage() {
           <div className="mx-auto max-w-6xl">
             <h1 className="h1 mb-2 tracking-tight text-white">BLOG</h1>
             <p className="text-color-muted mb-16">
-              Product updates, announcements, and insights from the Vibey team.
+              Product updates, announcements, and insights from the ROAS team.
             </p>
 
             <Suspense fallback={<div className="text-color-muted body-3">Loading…</div>}>

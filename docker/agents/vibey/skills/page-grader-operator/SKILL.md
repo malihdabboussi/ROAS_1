@@ -70,8 +70,13 @@ own that work.
   retry cannot create a second campaign or task.
 - For a funnel fulfillment request, discover the current MCP schema and use
   `page_grader_create_fulfillment_request` with the resolved `client_ref`,
-  `task_type:"funnel"`, the complete request in `description`, a stable
-  `idempotency_key`, and `assignee_name` when the user named an owner.
+  `task_type:"funnel"`, a stable `idempotency_key`, and `assignee_name` when
+  the user named an owner. Format `description` as:
+  - Line 1: a short title only (≤ ~100 characters; no scope dump).
+  - Blank line.
+  - Remaining lines: full brief, links, scope, and constraints.
+  The portal uses the first line as the task title and the rest as the body.
+  Never put the entire brief on one line.
 - Report the created Page Grader record and its current workflow state.
 - Do not say a request was delegated or created until the MCP result confirms
   the effect and returns the created record or an equivalent durable result.

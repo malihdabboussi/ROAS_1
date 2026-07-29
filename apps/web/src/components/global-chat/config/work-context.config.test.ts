@@ -12,7 +12,7 @@ import {
 
 describe('work-context.config', () => {
   const roster = [
-    { kind: 'agent' as const, agent_key: 'vibey', display_name: 'ROAS' },
+    { kind: 'agent' as const, agent_key: 'vibey', display_name: 'Pixel' },
     { kind: 'agent' as const, agent_key: 'atlas', display_name: 'Atlas' },
     { kind: 'agent' as const, agent_key: 'hr', display_name: 'Jaime' },
     { kind: 'agent' as const, agent_key: 'loop', display_name: 'Loop' },

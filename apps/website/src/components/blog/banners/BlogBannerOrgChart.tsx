@@ -103,7 +103,7 @@ export function BlogBannerOrgChart(props: {
         <div className="border-color-glass h-8 w-8 shrink-0 overflow-hidden rounded-full border">
           <img src={vibeySrc} alt="" className="h-full w-full object-cover" />
         </div>
-        <p className="text-[10px] font-semibold text-white">Vibey</p>
+        <p className="text-[10px] font-semibold text-white">Pixel</p>
         <p className="text-[8px] text-[var(--text-muted)]">CEO</p>
       </div>
 

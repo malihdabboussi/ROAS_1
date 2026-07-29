@@ -139,7 +139,7 @@ export function ActivityTimelineComposer({
                 e.preventDefault()
                 onPasteFiles(imageFiles)
               }}
-              placeholder="Message Vibey..."
+              placeholder="Message Pixel..."
               rows={1}
               className="body-3 text-foreground placeholder:text-muted-foreground max-h-[200px] min-h-[32px] w-full resize-none bg-transparent focus:outline-none"
             />

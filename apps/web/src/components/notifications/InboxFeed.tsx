@@ -8,6 +8,7 @@ import { InboxListRow } from '@/components/notifications/InboxListRow'
 import { SettingsSelect } from '@/components/ui/forms/SettingsSelect'
 import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { fetchMissionById } from '@/lib/missions'
 import {
   INBOX_MESSAGES,
   notificationTypeLabel,
@@ -18,6 +19,7 @@ import {
 
 const VIEW_OPTIONS: Array<{ id: Exclude<InboxView, 'all'>; label: string }> = [
   { id: 'primary', label: INBOX_MESSAGES.VIEWS.primary },
+  { id: 'system', label: INBOX_MESSAGES.VIEWS.system },
   { id: 'other', label: INBOX_MESSAGES.VIEWS.other },
   { id: 'later', label: INBOX_MESSAGES.VIEWS.later },
   { id: 'cleared', label: INBOX_MESSAGES.VIEWS.cleared },
@@ -44,6 +46,7 @@ export function InboxFeed({
   const inbox = useInboxTriage(initialView)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [sourceStatus, setSourceStatus] = useState<string | null>(null)
 
   const typeOptions = useMemo(() => {
     const types = new Set(inbox.notifications.map((notification) => notification.type))
@@ -78,6 +81,25 @@ export function InboxFeed({
     }
   }, [inbox.notifications, selectedId])
 
+  useEffect(() => {
+    let cancelled = false
+    setSourceStatus(null)
+    if (
+      selectedNotification?.type !== 'plan_approval_required' ||
+      !selectedNotification.mission_id
+    ) {
+      return
+    }
+    void fetchMissionById(selectedNotification.mission_id)
+      .then((mission) => {
+        if (!cancelled) setSourceStatus(mission.status ?? null)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [selectedNotification])
+
   const selectNotification = (notification: UserNotification) => {
     setSelectedId(notification.id)
     if (!notification.read_at) void inbox.toggleRead(notification)
@@ -105,7 +127,8 @@ export function InboxFeed({
         </div>
 
         <div className="gap-spacing-2 ml-auto flex items-center">
-          {inbox.counts.primary + inbox.counts.other + inbox.counts.later > 0 ? (
+          {inbox.counts.primary + inbox.counts.system + inbox.counts.other + inbox.counts.later >
+          0 ? (
             <Tooltip label={INBOX_MESSAGES.ACTIONS.readAll} side="bottom">
               <button
                 type="button"
@@ -238,6 +261,7 @@ export function InboxFeed({
         >
           <InboxDetailPane
             notification={selectedNotification}
+            sourceStatus={sourceStatus}
             onBack={() => setSelectedId(null)}
             onOpenDetails={() => {
               if (selectedNotification) void onOpenDetails?.(selectedNotification)

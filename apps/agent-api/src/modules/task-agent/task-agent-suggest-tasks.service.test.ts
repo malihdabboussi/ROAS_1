@@ -34,7 +34,12 @@ describe('TaskAgentService.suggestTasks', () => {
     const { service } = buildService(
       JSON.stringify({
         tasks: [
-          { title: 'Send recap', description: 'Email the buyer.', priority: 'high' },
+          {
+            title: 'Send recap',
+            description: 'Email the buyer.',
+            priority: 'high',
+            source_action_index: 0,
+          },
           { title: 'Book follow-up', priority: 'medium' },
           { title: 'Ignored overflow', priority: 'low' },
         ],
@@ -51,7 +56,12 @@ describe('TaskAgentService.suggestTasks', () => {
     })
 
     expect(result.tasks).toEqual([
-      { title: 'Send recap', description: 'Email the buyer.', priority: 'high' },
+      {
+        title: 'Send recap',
+        description: 'Email the buyer.',
+        priority: 'high',
+        source_action_index: 0,
+      },
       { title: 'Book follow-up', priority: 'medium' },
     ])
   })

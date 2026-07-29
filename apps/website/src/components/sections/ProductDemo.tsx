@@ -119,7 +119,7 @@ export function ProductDemo() {
     addTimeout(() => setPhase('streaming'), 1200)
   }, [phase, addTimeout])
 
-  // Stream Vibey response lines
+  // Stream ROAS response lines
   useEffect(() => {
     if (phase !== 'streaming') return
     setStreamedLines([])
@@ -264,7 +264,7 @@ export function ProductDemo() {
             See it in action
           </p>
           <h2 className="h2 tracking-tight">
-            Watch Vibey build a campaign <span className="gradient-text">in under 2 minutes.</span>
+            Watch ROAS build a campaign <span className="gradient-text">in under 2 minutes.</span>
           </h2>
           <p className="text-color-muted body-2 mx-auto mt-4 max-w-2xl">
             One prompt. Four production-ready assets. No templates, no drag-and-drop: just describe
@@ -367,12 +367,12 @@ export function ProductDemo() {
                             <span className="product-demo-secondary-dot h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:150ms]" />
                             <span className="product-demo-secondary-dot h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:300ms]" />
                           </div>
-                          <span className="text-color-dim body-4">Vibey is thinking...</span>
+                          <span className="text-color-dim body-4">Pixel is thinking...</span>
                         </div>
                       </div>
                     )}
 
-                    {/* Vibey response */}
+                    {/* ROAS response */}
                     {(phase === 'streaming' ||
                       phase === 'checklist' ||
                       phase === 'artifacts' ||
@@ -384,7 +384,7 @@ export function ProductDemo() {
                             <div className="bg-gradient-secondary-icon flex h-5 w-5 items-center justify-center rounded-full">
                               <span className="text-[9px] font-bold text-white">V</span>
                             </div>
-                            <span className="text-color-muted body-4 font-medium">Vibey</span>
+                            <span className="text-color-muted body-4 font-medium">Pixel</span>
                             {isActive && (
                               <span className="relative flex h-2 w-2">
                                 <span className="bg-emerald-accent absolute inline-flex h-full w-full animate-ping opacity-40" />
@@ -439,7 +439,7 @@ export function ProductDemo() {
                             <span className="bg-emerald-accent relative inline-flex h-2 w-2 rounded-full" />
                           </span>
                           <span className="text-color-dim body-4">
-                            Vibey is building your campaign...
+                            Pixel is building your campaign...
                           </span>
                         </>
                       ) : (
@@ -506,7 +506,7 @@ export function ProductDemo() {
                         <p className="text-color-faint body-4 text-center">
                           Artifacts will appear here
                           <br />
-                          as Vibey builds them
+                          as ROAS builds them
                         </p>
                       </div>
                     )}

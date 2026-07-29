@@ -22,6 +22,7 @@ const EXPECTED_ORG_ROUTES = [
   'POST org/:orgId/restore -> restoreOrg',
   'GET org/:orgId/members -> listMembers',
   'PATCH org/:orgId/members/:memberId/role -> changeMemberRole',
+  'PATCH org/:orgId/members/:memberId/ai-data-admin -> updateAiDataAdmin',
   'DELETE org/:orgId/members/:memberId -> removeMember',
   'PATCH org/:orgId/members/:memberId/credit-limit -> updateCreditLimit',
   'POST org/:orgId/campaigns/transfer/preview -> transferPreview',

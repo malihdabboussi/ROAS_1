@@ -164,7 +164,7 @@ const PITCH_MAP_NODES: PitchMapNode[] = [
   {
     id: 's4',
     slide: 22,
-    label: 'Appendix · Meet Vibey',
+    label: 'Appendix · Meet ROAS',
     shortLabel: 'Meet',
     x: 4,
     y: 96,
@@ -256,7 +256,7 @@ const PITCH_MAP_EDGES: [string, string][] = [
   ['s27', 's28'],
   ['s28', 's29'],
   ['s29', 's31'],
-  // Closing → Appendix chain (Meet Vibey first preview, then capability deep-dives)
+  // Closing → Appendix chain (Meet ROAS first preview, then capability deep-dives)
   ['s31', 's4'],
   ['s4', 's7'],
   ['s7', 's8'],

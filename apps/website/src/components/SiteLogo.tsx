@@ -23,7 +23,7 @@ export function SiteLogo({ className = '', forceDark }: SiteLogoProps) {
 
   if (forceDark) {
     return (
-      <img src={WHITE_SRC} alt="Vibey" className={`h-10 w-auto ${className}`} />
+      <img src={WHITE_SRC} alt="ROAS" className={`h-10 w-auto ${className}`} />
     )
   }
 
@@ -34,7 +34,7 @@ export function SiteLogo({ className = '', forceDark }: SiteLogoProps) {
       <>
         <img
           src={WHITE_SRC}
-          alt="Vibey"
+          alt="ROAS"
           className={`hidden h-10 w-auto dark:block ${className}`}
         />
         <img
@@ -48,5 +48,5 @@ export function SiteLogo({ className = '', forceDark }: SiteLogoProps) {
   }
 
   const src = isLight ? BLACK_SRC : WHITE_SRC
-  return <img src={src} alt="Vibey" className={`h-10 w-auto ${className}`} />
+  return <img src={src} alt="ROAS" className={`h-10 w-auto ${className}`} />
 }

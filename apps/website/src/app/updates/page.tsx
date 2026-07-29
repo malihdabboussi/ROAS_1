@@ -3,14 +3,14 @@ import { AnimateOnScroll } from '@/components/AnimateOnScroll'
 import { FeaturePageLayout } from '@/components/feature-pages/FeaturePageLayout'
 
 export const metadata: Metadata = {
-  title: 'Updates | Vibey',
-  description: 'Product changelog and release notes for Vibey.',
+  title: 'Updates | ROAS',
+  description: 'Product changelog and release notes for ROAS.',
 }
 
 const entries = [
   {
     date: '2026-02-16',
-    title: 'Vibey Beta',
+    title: 'ROAS Beta',
     body: 'Public beta opens for waitlist members. Studio, Funnel Builder, and The Workspace Brain ship together.',
   },
   {

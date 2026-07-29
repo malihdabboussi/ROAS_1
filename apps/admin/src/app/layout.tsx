@@ -8,8 +8,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Admin | Vibey',
-  description: 'Vibey Admin Dashboard',
+  title: 'Admin | ROAS',
+  description: 'ROAS Admin Dashboard',
   icons: {
     icon: '/Logos/logov2_transperent.png',
   },

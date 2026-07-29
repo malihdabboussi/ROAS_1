@@ -136,7 +136,7 @@ export function VibeyBetaArticle(props: {
           all together. AI was supposed to remove that. So far it has mostly added another tab.
         </p>
         <p className="body-2 text-color-secondary leading-relaxed">
-          Vibey Beta is the opposite move. Three pieces that fit together so your company can
+          ROAS Beta is the opposite move. Three pieces that fit together so your company can
           actually operate as a hybrid of humans and agents.{' '}
           <span className="text-white">The Brain</span> holds the knowledge.{' '}
           <span className="text-white">Agents</span> do the work.{' '}

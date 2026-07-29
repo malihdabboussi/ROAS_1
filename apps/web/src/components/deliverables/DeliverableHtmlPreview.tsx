@@ -15,7 +15,7 @@ export function looksLikeDeliverableHtml(raw: string): boolean {
   return /<(h[1-6]|p|ul|ol|li|table|blockquote|div|section|article|hr)\b/i.test(trimmed)
 }
 
-/** Resolve mission deliverable text into editor HTML for Vibey-doc-style preview. */
+/** Resolve mission deliverable text into editor HTML for ROAS-doc-style preview. */
 export function resolveDeliverablePreviewHtml(raw: string): string {
   const normalized = normalizeDeliverableContent(raw)
   if (!normalized) return ''

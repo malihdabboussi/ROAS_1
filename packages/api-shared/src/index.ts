@@ -113,6 +113,14 @@ export type {
   AgentRuntimeRedisEnvKey,
   AgentRuntimeWorkload,
 } from './services/agent-runtime-queues'
+export { authorizeOrganizationWideAiData } from './services/ai-data-access-policy'
+export type {
+  AiDataAccessDecision,
+  AiDataAccessMembership,
+  AiDataAccessReason,
+  AiDataResourceKind,
+  AuthorizeOrganizationWideAiDataInput,
+} from './services/ai-data-access-policy'
 export {
   buildSafeFallbackFunnelTsx,
   normalizeFunnelPageSource,

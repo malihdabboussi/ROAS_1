@@ -3,6 +3,7 @@ const ORG_GATEWAY_AGENT_RE =
   /^org[-:]([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})[-:](.+)$/i
 
 function formatSlugLabel(slug: string): string {
+  if (slug.toLowerCase() === 'vibey') return 'Pixel'
   return slug
     .split('_')
     .filter(Boolean)
@@ -13,7 +14,7 @@ function formatSlugLabel(slug: string): string {
     .join(' ')
 }
 
-/** e.g. `org-…-vibey` → "Vibey (Org)", `vibey` → "Vibey (Personal)" */
+/** e.g. `org-…-vibey` → "Pixel (Org)", `vibey` → "Pixel (Personal)" */
 export function formatAgentKeyDisplay(raw: string | null | undefined): string {
   const s = raw?.trim()
   if (!s) return '—'

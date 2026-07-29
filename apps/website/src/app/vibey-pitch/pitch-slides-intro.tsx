@@ -75,7 +75,7 @@ export function SlideFounders() {
           <ul className="space-y-2 text-sm text-white/60 max-md:text-[12px] max-md:leading-relaxed">
             <li>Decade in performance marketing; built and exited 2 companies, including DopeTech.com</li>
             <li>Running ROAS.co, his team copy-pasted client context into LLMs on every project</li>
-            <li>Built Vibey to fix it; closes six-figure deals and demos product live</li>
+            <li>Built ROAS to fix it; closes six-figure deals and demos product live</li>
             <li>Invested $50K personal capital before raising a dollar</li>
           </ul>
         </motion.div>
@@ -114,7 +114,7 @@ export function SlideFounders() {
   )
 }
 
-/** Slide 4 table: artifact row vs ChatGPT · Claude · Manus vs Vibey.
+/** Slide 4 table: artifact row vs ChatGPT · Claude · Manus vs ROAS.
  * Platform shorthand reflects public positioning (GPT agent mode & connectors,
  * Claude app artifacts + Claude Code/agent SDK general execution, Manus autonomous
  * web/spreadsheet/design workflows), not exhaustive feature parity. */
@@ -190,7 +190,7 @@ function GeneralistVersusMarketingTable() {
                   className="mx-auto h-7 w-7 object-contain opacity-95"
                   loading="lazy"
                 />
-                <span className="text-emerald-400/90">Vibey</span>
+                <span className="text-emerald-400/90">Pixel</span>
               </div>
             </th>
           </tr>
@@ -429,4 +429,3 @@ export function SlideMarket() {
     </Slide>
   )
 }
-

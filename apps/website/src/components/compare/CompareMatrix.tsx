@@ -40,7 +40,7 @@ export function CompareMatrix(props: {
           <div className="mx-auto max-w-5xl">
             <header className="mx-auto mb-10 max-w-2xl text-center md:mb-12">
               <h2 className="h2 mb-2 tracking-tight text-white">Feature comparison</h2>
-              <p className="text-text-muted body-2">Vibey vs. {props.themLabel}</p>
+              <p className="text-text-muted body-2">ROAS vs. {props.themLabel}</p>
             </header>
 
             <div className="border-section mb-10 hidden overflow-hidden rounded-2xl border md:block">
@@ -60,7 +60,7 @@ export function CompareMatrix(props: {
                             height={32}
                             className="h-8 w-8 object-contain"
                           />
-                          <span className="body-2 font-semibold text-white">Vibey</span>
+                          <span className="body-2 font-semibold text-white">ROAS</span>
                         </div>
                       </th>
                       <th className="border-color-glass w-[34%] border-b px-5 py-5 align-bottom">
@@ -108,7 +108,7 @@ export function CompareMatrix(props: {
                   </p>
                   <div className="border-emerald-soft bg-emerald-soft border-b px-4 py-4">
                     <p className="text-emerald-accent body-4 mb-1.5 font-semibold uppercase tracking-wide">
-                      Vibey
+                      ROAS
                     </p>
                     <p className="body-3 text-color-secondary leading-relaxed">{row.vibey}</p>
                   </div>

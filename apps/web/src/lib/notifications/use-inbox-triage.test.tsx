@@ -75,6 +75,7 @@ describe('useInboxTriage optimistic actions', () => {
     mocks.fetchNotifications.mockResolvedValue([notification()])
     mocks.fetchInboxTriageCounts.mockResolvedValue({
       primary: 1,
+      system: 0,
       other: 0,
       later: 0,
       cleared: 0,
@@ -96,6 +97,7 @@ describe('useInboxTriage optimistic actions', () => {
     expect(result.current.notifications).toEqual([])
     expect(result.current.counts).toEqual({
       primary: 0,
+      system: 0,
       other: 0,
       later: 0,
       cleared: 1,
@@ -143,6 +145,7 @@ describe('useInboxTriage optimistic actions', () => {
     expect(result.current.notifications[0]?.read_at).not.toBeNull()
     expect(result.current.counts).toEqual({
       primary: 0,
+      system: 0,
       other: 0,
       later: 0,
       cleared: 0,

@@ -34,7 +34,7 @@ const USE_CASE_STORIES: Record<'adley' | 'brian' | 'roas' | 'neel', UseCaseStory
     imageSrc: '/pitch/brian-mark.png',
     imagePosition: 'object-top',
     about:
-      'Runs a high-ticket service business at $9,500/month. Not here for marketing. Vibey is how he runs the company.',
+      'Runs a high-ticket service business at $9,500/month. Not here for marketing. ROAS is how he runs the company.',
     brain: 'Connected Stripe, PayPal, Whoop and loaded his SOPs',
     agents: 'Handle client reporting, follow-ups, and recurring ops without him',
     spaces: 'Client management, revenue tracking, ops, and client coaching bot',

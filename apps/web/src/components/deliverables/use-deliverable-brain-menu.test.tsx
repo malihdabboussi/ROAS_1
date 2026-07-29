@@ -88,7 +88,7 @@ describe('useDeliverableBrainMenu', () => {
         id: 'system-agent',
         user_id: 'user-1',
         agent_key: 'vibey',
-        name: 'ROAS',
+        name: 'Pixel',
         role: 'System',
         status: 'online',
         skills: [],
@@ -156,7 +156,7 @@ describe('useDeliverableBrainMenu', () => {
 
     expect(screen.getByRole('button', { name: 'Growth Agent' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Launch Campaign' })).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'ROAS' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Pixel' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'General' })).toBeNull()
     expect(brainMenuMocks.fetchMissionAgents).toHaveBeenCalledTimes(1)
     expect(brainMenuMocks.fetchCampaigns).toHaveBeenCalledTimes(1)

@@ -318,7 +318,7 @@ export function MarketingMissionExecutionMockup(props?: {
                   />
                 </div>
                 <div>
-                  <p className="text-[11px] font-bold text-white/90">Vibey CEO is planning...</p>
+                  <p className="text-[11px] font-bold text-white/90">Pixel is planning...</p>
                   <p className="text-[10px] text-white/40">
                     Breaking brief into specialized subtasks
                   </p>

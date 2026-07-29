@@ -12,7 +12,12 @@ import {
   parseHomeLayout,
 } from '../config/home-cards.config'
 import { fetchHomeLayoutPreference, saveHomeLayoutPreference } from '../services/home-layout-api'
-import type { HomeCardGridSize, HomeCardId, HomeLayoutState } from '../types/home-cards'
+import type {
+  HomeCardGridRows,
+  HomeCardGridSize,
+  HomeCardId,
+  HomeLayoutState,
+} from '../types/home-cards'
 
 const SAVE_DEBOUNCE_MS = 400
 
@@ -21,6 +26,7 @@ function defaultHomeLayoutState(): HomeLayoutState {
     ...DEFAULT_HOME_LAYOUT,
     cardIds: [...DEFAULT_HOME_LAYOUT.cardIds],
     cardSizes: { ...DEFAULT_HOME_LAYOUT.cardSizes },
+    cardRows: { ...DEFAULT_HOME_LAYOUT.cardRows },
   }
 }
 
@@ -61,6 +67,13 @@ function layoutsEqual(a: HomeLayoutState, b: HomeLayoutState): boolean {
   for (const key of keys) {
     const id = key as HomeCardId
     if ((aSizes[id] ?? 'half') !== (bSizes[id] ?? 'half')) return false
+  }
+  const aRows = a.cardRows ?? {}
+  const bRows = b.cardRows ?? {}
+  const rowKeys = new Set([...Object.keys(aRows), ...Object.keys(bRows)])
+  for (const key of rowKeys) {
+    const id = key as HomeCardId
+    if ((aRows[id] ?? 1) !== (bRows[id] ?? 1)) return false
   }
   return true
 }
@@ -189,11 +202,14 @@ export function useHomeLayout() {
     (id: HomeCardId) => {
       setLayout((prev) => {
         const nextSizes = { ...prev.cardSizes }
+        const nextRows = { ...prev.cardRows }
         delete nextSizes[id]
+        delete nextRows[id]
         const next: HomeLayoutState = {
           version: HOME_LAYOUT_VERSION,
           cardIds: prev.cardIds.filter((c) => c !== id),
           ...(Object.keys(nextSizes).length > 0 ? { cardSizes: nextSizes } : {}),
+          ...(Object.keys(nextRows).length > 0 ? { cardRows: nextRows } : {}),
         }
         latestLayoutRef.current = next
         saveLocalLayout(next)
@@ -234,6 +250,27 @@ export function useHomeLayout() {
           version: HOME_LAYOUT_VERSION,
           cardIds: prev.cardIds,
           ...(Object.keys(nextSizes).length > 0 ? { cardSizes: nextSizes } : {}),
+          ...(prev.cardRows ? { cardRows: prev.cardRows } : {}),
+        }
+        latestLayoutRef.current = next
+        saveLocalLayout(next)
+        queueServerSave(next)
+        return next
+      })
+    },
+    [queueServerSave, saveLocalLayout],
+  )
+
+  const setCardRows = useCallback(
+    (id: HomeCardId, rows: HomeCardGridRows) => {
+      setLayout((prev) => {
+        if (!prev.cardIds.includes(id)) return prev
+        const nextRows = { ...prev.cardRows, [id]: rows }
+        const next: HomeLayoutState = {
+          version: HOME_LAYOUT_VERSION,
+          cardIds: prev.cardIds,
+          ...(prev.cardSizes ? { cardSizes: prev.cardSizes } : {}),
+          cardRows: nextRows,
         }
         latestLayoutRef.current = next
         saveLocalLayout(next)
@@ -256,6 +293,7 @@ export function useHomeLayout() {
     removeCard,
     reorderCards,
     setCardSize,
+    setCardRows,
     resetLayout,
   }
 }

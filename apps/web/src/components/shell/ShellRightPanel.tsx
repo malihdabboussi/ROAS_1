@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { X } from 'lucide-react'
+import { useEffect } from 'react'
 import { ConversationScopePicker } from '@/components/conversations'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import type { Conversation } from '@/lib/conversations'
@@ -8,6 +9,7 @@ import { cn } from '@/lib/utils/cn'
 import { ShellRightPanelFiles } from './ShellRightPanelFiles'
 import { ShellRightPanelSources } from './ShellRightPanelSources'
 import { ShellRightPanelTasks } from './ShellRightPanelTasks'
+import { useRightEdgePresence } from './use-right-edge-presence'
 import { useShellStore, type ShellRightPanelTab } from './use-shell-store'
 
 const TABS: { id: ShellRightPanelTab; label: string }[] = [
@@ -17,8 +19,6 @@ const TABS: { id: ShellRightPanelTab; label: string }[] = [
 ]
 
 const EMPTY_MESSAGES: never[] = []
-const PANEL_TRANSITION_MS = 300
-
 export function ShellRightPanel({
   conversationId,
   conversation = null,
@@ -38,29 +38,18 @@ export function ShellRightPanel({
 }) {
   const open = useShellStore((s) => s.rightPanel.open)
   const tab = useShellStore((s) => s.rightPanel.tab)
+  const setRightPanelOpen = useShellStore((s) => s.setRightPanelOpen)
   const setRightPanelTab = useShellStore((s) => s.setRightPanelTab)
   const messages = useChatStore((s) =>
     conversationId ? (s.messagesByConversation[conversationId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES,
   )
   const tabs = conversationId ? TABS : TABS.slice(0, 1)
   const activeTab = conversationId ? tab : 'tasks'
-  const [mounted, setMounted] = useState(open)
-  const [visible, setVisible] = useState(open)
+  const { mounted, visible } = useRightEdgePresence(open)
   const scopeVisible = showScope && Boolean(conversationId)
   useEffect(() => {
     if (open && !conversationId && tab !== 'tasks') setRightPanelTab('tasks')
   }, [conversationId, open, setRightPanelTab, tab])
-
-  useEffect(() => {
-    if (open) {
-      setMounted(true)
-      const frame = requestAnimationFrame(() => setVisible(true))
-      return () => cancelAnimationFrame(frame)
-    }
-    setVisible(false)
-    const timer = setTimeout(() => setMounted(false), PANEL_TRANSITION_MS)
-    return () => clearTimeout(timer)
-  }, [open])
 
   if (!mounted) return null
 
@@ -110,6 +99,15 @@ export function ShellRightPanel({
             {t.label}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => setRightPanelOpen(false)}
+          className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground p-spacing-1 shrink-0 rounded-lg transition-colors"
+          aria-label="Close work summary"
+          title="Close work summary"
+        >
+          <X className="icon-sm" aria-hidden />
+        </button>
       </div>
       <div className="scrollbar-hide p-spacing-3 min-h-0 flex-1 overflow-y-auto">
         {activeTab === 'tasks' ? (

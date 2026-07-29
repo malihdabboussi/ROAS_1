@@ -38,7 +38,7 @@ vi.mock('@/lib/notifications', async (importOriginal) => {
       view: 'primary',
       type: 'all',
       notifications: [taskNotification],
-      counts: { primary: 23, other: 376, later: 0, cleared: 0 },
+      counts: { primary: 23, system: 0, other: 376, later: 0, cleared: 0 },
       loading: false,
       setView: vi.fn(),
       setType: vi.fn(),
@@ -64,6 +64,7 @@ describe('InboxFeed', () => {
     expect(screen.getByRole('button', { name: /All types/i })).toBeInTheDocument()
     expect(container.querySelector('section')).not.toHaveClass('section-card')
     expect(screen.getByText('Primary')).toBeInTheDocument()
+    expect(screen.getByText('System')).toBeInTheDocument()
     expect(screen.getByText('23')).toBeInTheDocument()
     expect(screen.getByRole('searchbox', { name: 'Search this view' })).toBeInTheDocument()
     expect(screen.getByText('Select something to review')).toBeInTheDocument()

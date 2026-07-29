@@ -86,8 +86,8 @@ export function SlideCompetition() {
               </th>
               <th className="w-[13.2%] px-1 py-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-white/50">
                 <div className="flex flex-col items-center gap-1.5">
-                  <img src="/Logos/logov2/icon-white.png" alt="Vibey" className="h-6 w-6 object-contain opacity-95" loading="lazy" />
-                  <span className="text-emerald-400/90">Vibey</span>
+                  <img src="/Logos/logov2/icon-white.png" alt="ROAS" className="h-6 w-6 object-contain opacity-95" loading="lazy" />
+                  <span className="text-emerald-400/90">Pixel</span>
                 </div>
               </th>
               <th className="w-[13.2%] px-1 py-3 text-[9px] font-semibold uppercase tracking-[0.12em] text-white/50">
@@ -137,7 +137,7 @@ export function SlideCompetition() {
         transition={{ delay: 0.75 }}
         className="mt-5 w-full max-w-5xl rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 max-md:mt-3 max-md:max-h-[30svh] max-md:overflow-y-auto max-md:p-4"
       >
-        <p className="text-lg font-bold text-white max-md:text-base">What Vibey understands that nobody else does</p>
+        <p className="text-lg font-bold text-white max-md:text-base">What ROAS understands that nobody else does</p>
         <p className="mt-2 text-sm leading-relaxed text-white/70 max-md:text-[13px]">
           The hard part is not making another agent. The hard part is giving agents the same context
           a great employee builds after working inside a company for years. That context is not just

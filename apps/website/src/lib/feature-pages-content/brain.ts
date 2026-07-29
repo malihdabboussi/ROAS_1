@@ -2,7 +2,7 @@ import type { FeaturePageDefinition } from './types'
 
 export const brainFeaturePage: FeaturePageDefinition = {
   slug: 'brain',
-  metaTitle: 'The Workspace Brain | Vibey',
+  metaTitle: 'The Workspace Brain | ROAS',
   metaDescription:
     'Persistent memory for your brand, audience insights, and conversion patterns-applied to every new campaign.',
   mockupKind: 'brain',
@@ -11,7 +11,7 @@ export const brainFeaturePage: FeaturePageDefinition = {
     kicker: '',
     title: 'MEMORY THAT COMPOUNDS',
     subtitle:
-      'Every approved insight becomes a reusable signal. Vibey applies brand voice, ICP notes, and winning angles automatically-so every campaign gets sharper.',
+      'Every approved insight becomes a reusable signal. ROAS applies brand voice, ICP notes, and winning angles automatically-so every campaign gets sharper.',
     primaryCta: { href: '/waitlist', label: 'Join Waitlist' },
     secondaryCta: { href: '/features/the-brain', label: 'See The Brain' },
   },
@@ -50,7 +50,7 @@ export const brainFeaturePage: FeaturePageDefinition = {
           {
             title: 'Voice and tone extraction',
             description:
-              'Vibey analyzes your approved outputs and crystallizes your communication style-punchy, luxurious, technical, casual-so new content matches automatically.',
+              'ROAS analyzes your approved outputs and crystallizes your communication style-punchy, luxurious, technical, casual-so new content matches automatically.',
           },
           {
             title: 'ICP memory',
@@ -81,7 +81,7 @@ export const brainFeaturePage: FeaturePageDefinition = {
           {
             title: 'Negative signals',
             description:
-              'Words to avoid, compliance restrictions, and failed angles are flagged so Vibey never repeats them.',
+              'Words to avoid, compliance restrictions, and failed angles are flagged so ROAS never repeats them.',
           },
         ],
       },
@@ -117,7 +117,7 @@ export const brainFeaturePage: FeaturePageDefinition = {
     items: [
       {
         title: 'Full editability',
-        description: 'Add, update, or delete any memory. Vibey applies only what you approve.',
+        description: 'Add, update, or delete any memory. ROAS applies only what you approve.',
       },
       {
         title: 'Team segmentation',
@@ -184,11 +184,11 @@ export const brainFeaturePage: FeaturePageDefinition = {
     items: [
       {
         q: 'What is The Workspace Brain?',
-        a: 'A persistent memory layer that stores your brand voice, audience insights, conversion patterns, and guardrails. It applies them automatically to every campaign Vibey builds.',
+        a: 'A persistent memory layer that stores your brand voice, audience insights, conversion patterns, and guardrails. It applies them automatically to every campaign ROAS builds.',
       },
       {
         q: 'Can I delete a memory?',
-        a: 'Yes. Edit or remove any entry so Vibey stops applying outdated guidance.',
+        a: 'Yes. Edit or remove any entry so ROAS stops applying outdated guidance.',
       },
       {
         q: 'Does every teammate share the same Brain?',
@@ -196,7 +196,7 @@ export const brainFeaturePage: FeaturePageDefinition = {
       },
       {
         q: 'Is my data used to train public models?',
-        a: 'No. Vibey isolates tenant context. Refer to the privacy policy for retention specifics.',
+        a: 'No. ROAS isolates tenant context. Refer to the privacy policy for retention specifics.',
       },
       {
         q: 'What can I import?',
@@ -212,7 +212,7 @@ export const brainFeaturePage: FeaturePageDefinition = {
       },
       {
         q: 'Does Brain work across Studio and Funnels?',
-        a: 'Yes. Brain is workspace-wide. Every feature in Vibey reads from the same memory.',
+        a: 'Yes. Brain is workspace-wide. Every feature in ROAS reads from the same memory.',
       },
       {
         q: 'What happens if I add conflicting memories?',

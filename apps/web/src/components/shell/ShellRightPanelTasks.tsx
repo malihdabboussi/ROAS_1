@@ -28,36 +28,38 @@ function HomeRightPanelTasks() {
     )
   }
 
+  if (activeYourTurnItem) {
+    return (
+      <HomeTaskDetailHost
+        item={activeYourTurnItem}
+        presentation="panel"
+        onClose={closeYourTurnItem}
+        onUpdated={() => void feed.reload()}
+      />
+    )
+  }
+
   return (
-    <>
-      <ul className="space-y-spacing-1">
-        {feed.items.slice(0, 40).map((item) => (
-          <li key={item.id}>
-            <button
-              type="button"
-              onClick={() => void openYourTurnItem(item)}
-              className={cn(
-                'hover:bg-hover-subtle px-spacing-2 py-spacing-2 flex w-full flex-col rounded-lg text-left',
-              )}
-            >
-              <span className="body-3 text-foreground line-clamp-2">{item.title}</span>
-              {item.due_at ? (
-                <span className="body-4 text-muted-foreground">
-                  {formatHomeShortDate(new Date(item.due_at))}
-                </span>
-              ) : null}
-            </button>
-          </li>
-        ))}
-      </ul>
-      {activeYourTurnItem ? (
-        <HomeTaskDetailHost
-          item={activeYourTurnItem}
-          onClose={closeYourTurnItem}
-          onUpdated={() => void feed.reload()}
-        />
-      ) : null}
-    </>
+    <ul className="space-y-spacing-1">
+      {feed.items.slice(0, 40).map((item) => (
+        <li key={item.id}>
+          <button
+            type="button"
+            onClick={() => void openYourTurnItem(item)}
+            className={cn(
+              'hover:bg-hover-subtle px-spacing-2 py-spacing-2 flex w-full flex-col rounded-lg text-left',
+            )}
+          >
+            <span className="body-3 text-foreground line-clamp-2">{item.title}</span>
+            {item.due_at ? (
+              <span className="body-4 text-muted-foreground">
+                {formatHomeShortDate(new Date(item.due_at))}
+              </span>
+            ) : null}
+          </button>
+        </li>
+      ))}
+    </ul>
   )
 }
 

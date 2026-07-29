@@ -9,7 +9,7 @@ const agent: TeamRosterEntry = {
   org_id: null,
   user_id: null,
   agent_key: 'vibey',
-  display_name: 'Vibey · CEO',
+  display_name: 'Pixel · CEO',
   avatar_url: null,
   role_label: null,
   specialties: [],
@@ -33,7 +33,7 @@ describe('SpaceChatAgentPicker', () => {
   it('uses the standard agent trigger in space chat', () => {
     render(<SpaceChatAgentPicker agents={[agent]} value="vibey" onChange={vi.fn()} />)
 
-    const trigger = screen.getByRole('button', { name: 'Talking with Vibey · CEO. Change agent.' })
+    const trigger = screen.getByRole('button', { name: 'Talking with Pixel · CEO. Change agent.' })
     expect(trigger).toBeTruthy()
   })
 
@@ -43,7 +43,7 @@ describe('SpaceChatAgentPicker', () => {
     )
 
     const trigger = screen.getByRole('button', {
-      name: 'Talking with Vibey · CEO. Change agent.',
+      name: 'Talking with Pixel · CEO. Change agent.',
     })
     expect(trigger).toHaveClass('flex-col')
     expect(trigger.querySelector('.rounded-full')).toBeInTheDocument()

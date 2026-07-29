@@ -49,8 +49,13 @@ when strategy or brand interpretation is required, and call out disagreements.
     generic ROAS task, native funnel, different assignee, or different client.
 13. For funnel work, discover the current MCP schema and use
     `page_grader_create_fulfillment_request` with the resolved `client_ref`,
-    `task_type:"funnel"`, full `description`, stable `idempotency_key`, and
-    `assignee_name` when supplied.
+    `task_type:"funnel"`, stable `idempotency_key`, and `assignee_name` when
+    supplied. Format `description` as:
+    - Line 1: a short title only (≤ ~100 characters; no scope dump).
+    - Blank line.
+    - Remaining lines: full brief, links, scope, and constraints.
+    The portal uses the first line as the task title and the rest as the body.
+    Never put the entire brief on one line.
 
 ## User-facing response
 

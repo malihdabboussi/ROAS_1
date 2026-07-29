@@ -10,7 +10,7 @@ import { AnimationState, getAnimationState } from './animation-states.config'
 // Create noise instance (global, created once)
 const noise3D = createNoise3D()
 
-// VIBEY 3D orb + rings: original lime / warm glow (intentionally not emerald — UI uses emerald)
+// ROAS 3D orb + rings: original lime / warm glow (intentionally not emerald — UI uses emerald)
 const VIBE_GREEN = new THREE.Color(217 / 255, 252 / 255, 103 / 255) // #d9fc67
 const VIBE_GREEN_LIGHT = new THREE.Color(225 / 255, 255 / 255, 140 / 255) // #e1ff8c
 const VIBE_GREEN_DARK = new THREE.Color(195 / 255, 230 / 255, 80 / 255) // #c3e650

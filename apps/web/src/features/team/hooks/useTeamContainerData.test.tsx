@@ -123,7 +123,7 @@ function agentFixture(overrides: Partial<MissionAgent> = {}): MissionAgent {
     id: 'vibey-id',
     user_id: 'user-1',
     agent_key: 'vibey',
-    name: 'ROAS',
+    name: 'Pixel',
     role: 'Founder',
     status: 'online',
     skills: [],

@@ -178,7 +178,7 @@ function defaultProps(
       renderHighlightBackdrop: vi.fn(),
       composerPadX: 'px-spacing-2',
       compact: false,
-      placeholder: 'Message ROAS...',
+      placeholder: 'Message Pixel...',
       disabled: false,
       onFocus: vi.fn(),
       onChange: vi.fn(),

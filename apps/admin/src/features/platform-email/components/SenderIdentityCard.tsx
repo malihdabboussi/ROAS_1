@@ -23,7 +23,7 @@ export function SenderIdentityCard({
   busy: boolean
 }) {
   const [email, setEmail] = useState('')
-  const [name, setName] = useState('Vibey')
+  const [name, setName] = useState('ROAS')
   const [replyTo, setReplyTo] = useState('')
   const [address, setAddress] = useState('')
   const [city, setCity] = useState('')

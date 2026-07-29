@@ -1,16 +1,16 @@
-Vibey™
-Vibey™
+ROAS™
+ROAS™
 Back to Home
 No Refunds / Returns Policy
 Effective Date: June 16, 2025
 
 1. Introduction
-   This No Refunds / Returns Policy ("Policy") applies to every purchase from Vibey LLC, doing business as Vibey ("we," "our," "us"). By paying for or using any of our offerings, you agree to the terms below.
+   This No Refunds / Returns Policy ("Policy") applies to every purchase from ROAS LLC ("we," "our," "us"). By paying for or using any of our offerings, you agree to the terms below.
 
 2. Scope of Services
    This Policy covers all services and products we provide, including:
 
-Coaching and training programs (e.g., The Vibey Protocol weekly implementation sprints)
+Coaching and training programs (e.g., The ROAS Protocol weekly implementation sprints)
 AI employee / agent deployment and related implementations
 Digital services, SaaS subscriptions, and data or information sales
 Marketing, advertising, and consulting services
@@ -35,7 +35,7 @@ All sales in these categories are final and non-refundable.
    By completing your purchase, you waive any right to initiate a charge-back with your card issuer or banking institution for amounts paid, except where required under non-waivable consumer-protection law.
 
 7. Contact
-   Scality Ltd. (Reg. No. HE459172)
+   ROAS LLC
 
 Attikis 3, Suite 401, Larnaca Center, 6045, Cyprus
 
@@ -47,10 +47,10 @@ Website: scalingcollective.co
 
 All refund-related communications must be submitted in writing to the email address above. No exceptions.
 
-All sales are final. By purchasing from Scality Ltd., you confirm that you have read, understood, and accepted this No Refunds / Returns Policy in full.
+All sales are final. By purchasing from ROAS LLC, you confirm that you have read, understood, and accepted this No Refunds / Returns Policy in full.
 
-Vibey™
-Vibey™
+ROAS™
+ROAS™
 AI-Powered Marketing Automation
 
 Legal
@@ -67,4 +67,4 @@ Cookies
 Contact
 Support
 Help Center
-© 2025 The Scaling Collective. All rights reserved.
+© 2025 ROAS LLC. All rights reserved.

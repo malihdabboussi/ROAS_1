@@ -134,7 +134,7 @@ export function AwarenessToggle({
         onEnabledChange?.(result.awareness_loop_enabled)
         if (result.awareness_loop_enabled) {
           toast.success(
-            'Autopilot is on. Vibey will watch campaigns and deploy from your strategy.',
+            'Autopilot is on. Pixel will watch campaigns and deploy from your strategy.',
           )
         }
       }
@@ -203,7 +203,7 @@ export function AwarenessToggle({
                     {enabled ? 'Autopilot Settings' : 'Enable ROAS Autopilot'}
                   </Dialog.Title>
                   <Dialog.Description className="body-2 text-muted-foreground mt-2">
-                    Autopilot lets Vibey watch your campaigns and act like an ops lead: create and
+                    Autopilot lets Pixel watch your campaigns and act like an ops lead: create and
                     assign missions from your strategy, retry stuck work, and keep the floor moving
                     without you babysitting. It uses{' '}
                     <span className="text-foreground font-bold">credits</span> when agents run —
@@ -234,7 +234,7 @@ export function AwarenessToggle({
                       </span>
                       <Tooltip
                         wide
-                        label="Gives ROAS the option to keep on going without getting stuck when credits are finished"
+                        label="Gives Pixel the option to keep on going without getting stuck when credits are finished"
                       >
                         <Info className="icon-sm text-muted-foreground cursor-help" />
                       </Tooltip>

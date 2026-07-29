@@ -231,35 +231,26 @@ describe('ShellWorkspace', () => {
     expect(screen.getByText('Brain page').closest('[aria-hidden="true"]')).not.toBeNull()
   })
 
-  it('uses the work-area track as the only page transition owner', () => {
+  it('slides the page surface in from the right without animating the layout track', async () => {
     mocks.pathname = '/brain'
     mocks.params = new Map()
     mocks.workAreaOpen = false
     mocks.chatDrawerOpen = true
 
     const { rerender } = render(<ShellWorkspace>Brain page</ShellWorkspace>)
-    const pageBody = screen
-      .getByText('Brain page')
-      .closest('[data-shell-work-area]')
-      ?.querySelector('.shell-work-area-body')
-    expect(pageBody).not.toBeNull()
-    expect(screen.getByText('Brain page').closest('[data-shell-work-area]')).toHaveClass(
-      'shell-work-area',
-      'shell-work-area-collapsed',
-    )
-    expect(pageBody).toHaveClass('shell-work-area-body')
-    expect(pageBody).not.toHaveClass('shell-work-area-body-anchored')
+    const workArea = screen.getByText('Brain page').closest('[data-shell-work-area]')
+    const pageBody = workArea?.querySelector('.shell-work-area-body')
+    expect(workArea).toHaveClass('shell-work-area', 'shell-work-area-collapsed')
+    expect(pageBody).toHaveClass('shell-work-area-body', 'shell-work-area-body-offscreen-right')
 
     mocks.workAreaOpen = true
     rerender(<ShellWorkspace>Brain page</ShellWorkspace>)
 
-    expect(screen.getByText('Brain page').closest('[data-shell-work-area]')).toHaveClass(
-      'shell-work-area',
-    )
-    expect(screen.getByText('Brain page').closest('[data-shell-work-area]')).not.toHaveClass(
-      'shell-work-area-collapsed',
-    )
-    expect(pageBody).not.toHaveClass('shell-work-area-body-anchored')
+    expect(workArea).not.toHaveClass('shell-work-area-collapsed')
+    await waitFor(() => {
+      expect(pageBody).toHaveClass('shell-work-area-body-visible')
+    })
+    expect(pageBody).not.toHaveClass('shell-work-area-body-offscreen-left')
   })
 
   it('replaces the page work surface while an artifact is open', () => {

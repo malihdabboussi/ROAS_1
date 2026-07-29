@@ -164,7 +164,9 @@ export function useAgendaCardData() {
         if (effectiveScope === 'personal') setConnected(peeked.connected)
         setAccounts(peeked.accounts ?? [])
         setTeamAvailable(Boolean(peeked.team_available))
-        setTeamCoverage(effectiveScope === 'team' ? (peeked.team_coverage ?? null) : null)
+        setTeamCoverage(
+          effectiveScope === 'team' ? (peeked.team_coverage ?? null) : null,
+        )
         const warmed =
           view === 'list'
             ? filterEventsToWindow(peeked.events ?? [], viewStart, viewEnd)

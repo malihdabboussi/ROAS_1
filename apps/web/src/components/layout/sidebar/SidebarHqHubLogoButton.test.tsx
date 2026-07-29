@@ -18,6 +18,7 @@ describe('SidebarHqHubLogoButton', () => {
       menuCompact: false,
       dragging: false,
       candidate: 'left',
+      lift: null,
       workCardHostAvailable: false,
       workCollapsedHostAvailable: false,
     })
@@ -58,10 +59,26 @@ describe('SidebarHqHubLogoButton', () => {
 
     expect(useShellMenuDock.getState().dragging).toBe(true)
     expect(useShellMenuDock.getState().menuCompact).toBe(false)
+  })
 
+  it('does not cancel an in-flight drag when the logo remounts (soft-lock)', async () => {
+    const { unmount } = render(
+      <div className="hub-sidebar-shell">
+        <SidebarHqHubLogoButton expanded />
+      </div>,
+    )
+
+    const logo = screen.getByRole('button', { name: 'Collapse menu' })
+    pointerDownAt(logo, 20, 20)
     await act(async () => {
-      fireEvent.pointerUp(document, { clientX: 20, clientY: 20 })
+      vi.advanceTimersByTime(220)
     })
-    expect(useShellMenuDock.getState().dragging).toBe(false)
+    useShellMenuDock.getState().setCandidate('work-top')
+    expect(useShellMenuDock.getState().dragging).toBe(true)
+
+    unmount()
+
+    expect(useShellMenuDock.getState().dragging).toBe(true)
+    expect(useShellMenuDock.getState().candidate).toBe('work-top')
   })
 })

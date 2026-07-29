@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
-# Guardrail: local web + agent-api must share the same Supabase project and ROAS keys.
-# Catches the hybrid-dev footgun where web uses ROAS auth but agent-api still points at Vibey dev.
+# Guardrail: local web + agent-api (+ api/.env when present) must share the ROAS
+# Supabase project. Catches the footgun where apps/api/.env still points at
+# legacy Vibey prod (qfrvykscoymiwwgysvsr) while web/agent-api use ROAS.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SECRETS_FILE="${ROOT}/scripts/roas/roas-secrets.env"
 WEB_ENV="${ROOT}/apps/web/.env.local"
 AGENT_ENV="${ROOT}/apps/agent-api/.env"
+API_ENV="${ROOT}/apps/api/.env"
+ROOT_ENV="${ROOT}/.env"
 BLOCKED_HOST="qfrvykscoymiwwgysvsr.supabase.co"
+EXPECTED_HOST="lhfgtsjetcardinpgouq.supabase.co"
 
 fail=0
 
@@ -25,11 +29,19 @@ if [[ "${fail}" -ne 0 ]]; then
   exit 1
 fi
 
-python3 - "${WEB_ENV}" "${AGENT_ENV}" "${SECRETS_FILE}" "${BLOCKED_HOST}" <<'PY'
+python3 - "${WEB_ENV}" "${AGENT_ENV}" "${SECRETS_FILE}" "${BLOCKED_HOST}" "${EXPECTED_HOST}" "${API_ENV}" "${ROOT_ENV}" <<'PY'
 import sys
 from pathlib import Path
 
-web_path, agent_path, secrets_path, blocked_host = sys.argv[1:5]
+(
+    web_path,
+    agent_path,
+    secrets_path,
+    blocked_host,
+    expected_host,
+    api_path,
+    root_env_path,
+) = sys.argv[1:8]
 
 def parse_env(path: Path) -> dict[str, str]:
     data: dict[str, str] = {}
@@ -47,10 +59,14 @@ def host(url: str) -> str:
 web = parse_env(Path(web_path))
 agent = parse_env(Path(agent_path))
 secrets = parse_env(Path(secrets_path))
+api = parse_env(Path(api_path)) if Path(api_path).exists() else {}
+root_env = parse_env(Path(root_env_path)) if Path(root_env_path).exists() else {}
 
 web_url = web.get('NEXT_PUBLIC_SUPABASE_URL', '')
 agent_url = agent.get('SUPABASE_URL', '')
-canonical_url = secrets.get('SUPABASE_URL', '')
+canonical_url = secrets.get('SUPABASE_URL', '') or secrets.get('NEXT_PUBLIC_SUPABASE_URL', '')
+api_url = api.get('SUPABASE_URL', '')
+root_url = root_env.get('SUPABASE_URL', '')
 
 errors: list[str] = []
 
@@ -66,9 +82,31 @@ if canonical_url and web_url and host(web_url) != host(canonical_url):
     errors.append(
         f'web Supabase host != roas-secrets.env ({host(web_url)} vs {host(canonical_url)})'
     )
-for label, url in [('web', web_url), ('agent-api', agent_url)]:
-    if blocked_host in url:
-        errors.append(f'{label} still points at blocked Vibey dev host {blocked_host}')
+
+checks: list[tuple[str, str]] = [
+    ('web', web_url),
+    ('agent-api', agent_url),
+]
+if Path(api_path).exists():
+    checks.append(('apps/api/.env', api_url))
+if Path(root_env_path).exists():
+    checks.append(('root .env', root_url))
+
+for label, url in checks:
+    if not url:
+        if label in ('apps/api/.env', 'root .env'):
+            errors.append(f'{label} exists but missing SUPABASE_URL')
+        continue
+    h = host(url)
+    if blocked_host in url or h == blocked_host:
+        errors.append(
+            f'{label} still points at blocked legacy Vibey host {blocked_host} '
+            f'(expected {expected_host})'
+        )
+    elif expected_host and h != expected_host and label in ('apps/api/.env', 'root .env'):
+        errors.append(
+            f'{label} Supabase host={h} (expected {expected_host})'
+        )
 
 for key in ('SUPABASE_SERVICE_ROLE_KEY', 'VAULT_ENCRYPTION_KEY'):
     secret_val = secrets.get(key, '')
@@ -87,4 +125,7 @@ if errors:
 
 print('PASS  local env alignment')
 print(f'  supabase_host={host(web_url)}')
+for label, url in checks:
+    if url:
+        print(f'  {label}={host(url)}')
 PY

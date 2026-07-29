@@ -21,7 +21,7 @@ export function TheHarnessArticle() {
       {/* ── Opening ── */}
       <div className="flex flex-col gap-5">
         <p className="body-2 text-color-secondary leading-relaxed">
-          There's a question I kept asking myself in the early days of building Vibey that I
+          There's a question I kept asking myself in the early days of building ROAS that I
           couldn't quite shake: what are we actually building here?
         </p>
         <p className="body-2 text-color-secondary leading-relaxed">
@@ -204,7 +204,7 @@ export function TheHarnessArticle() {
           together.
         </p>
         <p className="body-2 text-color-secondary leading-relaxed">
-          In Vibey, it's the same. The harness is what you don't see when you're watching an agent
+          In ROAS, it's the same. The harness is what you don't see when you're watching an agent
           produce a deliverable. It's the CEO agent, the orchestration layer that decomposes your
           brief into subtasks and assigns the right specialist to each one. It's the mission system
           that serializes the work so the designer waits for the copywriter, who waits for the
@@ -220,7 +220,7 @@ export function TheHarnessArticle() {
           precisely, the organizing principle.
         </Pull>
         <p className="body-2 text-color-secondary leading-relaxed">
-          When you give a mission to Vibey, you're not prompting a model. You're briefing a CEO who
+          When you give a mission to ROAS, you're not prompting a model. You're briefing a CEO who
           runs a planning process, assembles a team, assigns work, manages dependencies, reviews
           outputs, and routes the results back to you. The model is in there somewhere. But the
           model is not the product. The harness is the product.
@@ -269,10 +269,10 @@ export function TheHarnessArticle() {
         </p>
         <Pull>
           The ceiling on what one person can achieve isn't their capability. It's what they can
-          organize. Vibey moves that ceiling.
+          organize. ROAS moves that ceiling.
         </Pull>
         <p className="body-2 text-color-secondary leading-relaxed">
-          A solo operator running Vibey is not a solo operator using AI. They are a founder running
+          A solo operator running ROAS is not a solo operator using AI. They are a founder running
           a team. The team happens to be AI. The harness happens to be software. But the leverage is
           organizational, and the organizational leverage is the same leverage that let ten people
           do what one person couldn't, and let a hundred do what ten couldn't.
@@ -299,7 +299,7 @@ export function TheHarnessArticle() {
           href="/waitlist"
           className="chip-glass-emerald body-3 inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold"
         >
-          Join Vibey Beta
+          Join ROAS Beta
           <ArrowRight size={16} />
         </WaitlistAwareLink>
       </div>

@@ -91,7 +91,7 @@ function InstagramPostCell({
             </button>
           </Tooltip>
           <Tooltip
-            label={`${commentsCount} comment${commentsCount !== 1 ? 's' : ''} · Ask ROAS to reply`}
+            label={`${commentsCount} comment${commentsCount !== 1 ? 's' : ''} · Ask Pixel to reply`}
           >
             <button
               type="button"

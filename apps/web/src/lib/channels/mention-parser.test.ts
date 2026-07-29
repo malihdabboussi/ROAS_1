@@ -101,7 +101,7 @@ describe('mention parser', () => {
       org_id: 'org-1',
       user_id: null,
       agent_key: 'vibey',
-      display_name: 'Vibey',
+      display_name: 'Pixel',
       avatar_url: null,
       role_label: 'CEO',
       specialties: [],
@@ -120,11 +120,11 @@ describe('mention parser', () => {
     } satisfies TeamRosterEntry
     const candidates = buildMentionCandidates(members, undefined, [vibey])
 
-    expect(parseMentionsFromText('@vibey take a look', candidates)).toContainEqual({
+    expect(parseMentionsFromText('@pixel take a look', candidates)).toContainEqual({
       type: 'agent',
       user_id: undefined,
       agent_key: 'vibey',
-      label: 'Vibey',
+      label: 'Pixel',
     })
   })
 

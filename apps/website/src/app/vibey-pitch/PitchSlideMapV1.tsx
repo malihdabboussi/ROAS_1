@@ -31,7 +31,7 @@ const PITCH_MAP_NODES: PitchMapNode[] = [
     id: 's4',
     slide: 4,
     label: 'Meet the most powerful agent',
-    shortLabel: 'Meet Vibey',
+    shortLabel: 'Meet ROAS',
     x: 22,
     y: 10,
     isCore: true,
@@ -100,7 +100,7 @@ const PITCH_MAP_NODES: PitchMapNode[] = [
   {
     id: 's17',
     slide: 17,
-    label: 'How to Use Vibey',
+    label: 'How to Use ROAS',
     shortLabel: 'How to use',
     x: 58,
     y: 14,

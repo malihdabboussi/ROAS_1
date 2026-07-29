@@ -29,7 +29,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const page = FEATURE_PAGES[slug as FeatureSlug]
-  if (!page) return { title: 'Not found | Vibey' }
+  if (!page) return { title: 'Not found | ROAS' }
   const url = `https://vibey.im/features/${slug}`
   return {
     title: page.metaTitle,
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: page.metaTitle,
       description: page.metaDescription,
       url,
-      siteName: 'Vibey',
+      siteName: 'ROAS',
       type: 'website',
       images: [
         { url: '/Logos/logov2/icon-text-white.png', width: 1200, height: 630, alt: page.metaTitle },

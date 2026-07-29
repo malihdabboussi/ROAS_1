@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: Params) {
     .eq('slug', slug)
     .maybeSingle()
 
-  const title = (funnel?.title || funnel?.name || slug || 'Vibey').toString()
+  const title = (funnel?.title || funnel?.name || slug || 'ROAS').toString()
 
   return new ImageResponse(
     <div
@@ -28,11 +28,11 @@ export async function GET(_request: Request, { params }: Params) {
         color: 'white',
       }}
     >
-      <div style={{ fontSize: 32, opacity: 0.9 }}>Vibey Website</div>
+      <div style={{ fontSize: 32, opacity: 0.9 }}>ROAS Website</div>
       <div style={{ fontSize: 72, lineHeight: 1.05, fontWeight: 700, maxWidth: '90%' }}>
         {title}
       </div>
-      <div style={{ fontSize: 28, opacity: 0.85 }}>Generated with Vibey</div>
+      <div style={{ fontSize: 28, opacity: 0.85 }}>Generated with ROAS</div>
     </div>,
     {
       width: 1200,

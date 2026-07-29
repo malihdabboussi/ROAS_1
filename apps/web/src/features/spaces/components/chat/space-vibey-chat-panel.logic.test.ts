@@ -13,6 +13,7 @@ import {
   readHomeChatSeedForSpace,
   resolvePendingConversationSelection,
   resolvePreferredConversationOpenId,
+  conversationNeedsMessageHydration,
   resolveSpaceChatAutoFocusTarget,
   resolveSpaceChatScope,
   resolveSpaceChatSeedSendOptions,

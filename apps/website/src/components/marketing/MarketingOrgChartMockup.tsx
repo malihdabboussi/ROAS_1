@@ -119,7 +119,7 @@ export function MarketingOrgChartMockup(props?: {
             <div className="border-color-glass h-11 w-11 shrink-0 overflow-hidden rounded-full border sm:h-12 sm:w-12">
               <img src={vibeySrc} alt="" className="h-full w-full object-cover" />
             </div>
-            <p className="text-[11px] font-semibold text-white sm:text-[12px]">Vibey</p>
+            <p className="text-[11px] font-semibold text-white sm:text-[12px]">Pixel</p>
             <p className="text-[9px] text-[var(--text-muted)] sm:text-[10px]">CEO</p>
           </div>
         </div>
@@ -149,4 +149,3 @@ export function MarketingOrgChartMockup(props?: {
     </FeatureFloatingMockShell>
   )
 }
-

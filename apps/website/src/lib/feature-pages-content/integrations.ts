@@ -2,24 +2,24 @@ import type { FeaturePageDefinition } from './types'
 
 export const integrationsFeaturePage: FeaturePageDefinition = {
   slug: 'integrations',
-  metaTitle: 'Integrations | Vibey',
+  metaTitle: 'Integrations | ROAS',
   metaDescription:
-    'Connect CRMs, ad accounts, storage, and comms so Vibey acts with your stack-not beside it.',
+    'Connect CRMs, ad accounts, storage, and comms so ROAS acts with your stack-not beside it.',
   mockupKind: 'integrations',
   heroBadges: ['Google', 'Slack', 'Stripe', 'Meta', 'HubSpot', 'Notion', 'PayPal', 'Zapier'],
   hero: {
     kicker: '',
     title: 'OAUTH INTO YOUR REAL STACK',
     subtitle:
-      'Authorize once. Vibey pulls context, pushes updates, and respects workspace boundaries. Your tools, connected to your AI marketing team.',
+      'Authorize once. ROAS pulls context, pushes updates, and respects workspace boundaries. Your tools, connected to your AI marketing team.',
     primaryCta: { href: '/waitlist', label: 'Join Waitlist' },
     secondaryCta: { href: '/features/ads', label: 'See Ads' },
   },
   comparison: {
     title: 'Deep links vs. copy/paste',
     subtitle:
-      'Most AI tools require manual export-import or risky API key exposure. Vibey integrates securely via OAuth at the API level.',
-    columns: ['Vibey integrations', 'Manual workflows'],
+      'Most AI tools require manual export-import or risky API key exposure. ROAS integrates securely via OAuth at the API level.',
+    columns: ['ROAS integrations', 'Manual workflows'],
     rows: [
       {
         label: 'Setup',
@@ -40,7 +40,7 @@ export const integrationsFeaturePage: FeaturePageDefinition = {
           'Shared credentials or risky manual tokens',
         ],
       },
-      { label: 'Maintenance', cells: ['Vibey handles token refresh', 'You manage credentials'] },
+      { label: 'Maintenance', cells: ['ROAS handles token refresh', 'You manage credentials'] },
       {
         label: 'Context richness',
         cells: ['CRM + analytics + ads data flow into Brain', 'Whatever you paste in'],
@@ -49,7 +49,7 @@ export const integrationsFeaturePage: FeaturePageDefinition = {
   },
   showcase: {
     title: 'Everything connected, nothing siloed',
-    subtitle: 'Integrations give Vibey live context and action paths-not just data imports.',
+    subtitle: 'Integrations give ROAS live context and action paths-not just data imports.',
     blocks: [
       {
         mockupKind: 'integration-indexer',
@@ -132,7 +132,7 @@ export const integrationsFeaturePage: FeaturePageDefinition = {
       },
       {
         q: 'What if a vendor is missing?',
-        a: 'Request it. Vibey prioritizes new integrations by customer demand.',
+        a: 'Request it. ROAS prioritizes new integrations by customer demand.',
       },
       {
         q: 'How is my data secured?',
@@ -144,14 +144,14 @@ export const integrationsFeaturePage: FeaturePageDefinition = {
       },
       {
         q: 'Do I need to re-authorize periodically?',
-        a: 'No. Vibey handles token refresh automatically. You only re-auth if you revoke and reconnect.',
+        a: 'No. ROAS handles token refresh automatically. You only re-auth if you revoke and reconnect.',
       },
       {
         q: 'Which integrations are available today?',
         a: 'Google, Slack, Stripe, Meta, HubSpot, Notion, PayPal, FanBasis, Zapier, and Airtable. More ship continuously.',
       },
       {
-        q: 'Can Vibey write data back to my tools?',
+        q: 'Can ROAS write data back to my tools?',
         a: 'Where the integration supports it, yes. For example, pushing ad creative to Meta or creating contacts in HubSpot.',
       },
     ],

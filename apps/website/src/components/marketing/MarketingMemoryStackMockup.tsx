@@ -363,7 +363,7 @@ export function MarketingMemoryStackMockup() {
               )
             })}
 
-            {/* Central Vibey Mark */}
+            {/* Central ROAS Mark */}
             <motion.div
               className="relative z-40 h-20 w-20 overflow-hidden rounded-full border border-emerald-500/20 bg-black shadow-2xl"
               animate={{ scale: [1, 1.02, 1] }}

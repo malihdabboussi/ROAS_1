@@ -46,6 +46,7 @@ export function SidebarHqFlyouts({
   setBrowsePanelBucket,
   setCreateSpaceModalFor,
   spaceUserState,
+  featureUpdates,
 }: {
   placement?: 'all' | 'inline' | 'hover'
   c: SidebarControllerReturn
@@ -64,6 +65,7 @@ export function SidebarHqFlyouts({
   setBrowsePanelBucket: Dispatch<SetStateAction<string | null>>
   setCreateSpaceModalFor: Dispatch<SetStateAction<{ campaignId: string | null } | null>>
   spaceUserState: ReturnType<typeof useSpaceUserState>
+  featureUpdates?: { hasUnread: boolean; onOpen: (anchor: HTMLElement) => void }
 }) {
   const showHover = (placement === 'all' || placement === 'hover') && !c.hubMenuOpen
   const [pinned, setPinned] = useState(false)
@@ -328,6 +330,7 @@ export function SidebarHqFlyouts({
           <SidebarHqMoreFlyoutBody
             c={c}
             showProjects={c.isAdmin}
+            featureUpdates={featureUpdates}
             onNavigate={closeHover}
             onHoldParentFlyout={clearSpacesFlyoutCloseTimer}
             onReleaseParentFlyout={() => {

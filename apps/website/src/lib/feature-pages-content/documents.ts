@@ -2,7 +2,7 @@ import type { FeaturePageDefinition } from './types'
 
 export const documentsFeaturePage: FeaturePageDefinition = {
   slug: 'documents',
-  metaTitle: 'Documents | Vibey',
+  metaTitle: 'Documents | ROAS',
   metaDescription:
     'One Docs view for pages from Studio, Space, Missions, and Drive-filter, pin, and open editors without hunting across tabs.',
   mockupKind: 'documents',
@@ -16,10 +16,10 @@ export const documentsFeaturePage: FeaturePageDefinition = {
     secondaryCta: { href: '/features/studio', label: 'See Studio' },
   },
   comparison: {
-    title: 'Docs in Vibey vs. scattered files',
+    title: 'Docs in ROAS vs. scattered files',
     subtitle:
-      'Traditional stacks bury files per tool. Vibey ties origins together so you always know where truth lives.',
-    columns: ['Vibey Documents', 'Scattered tools'],
+      'Traditional stacks bury files per tool. ROAS ties origins together so you always know where truth lives.',
+    columns: ['ROAS Documents', 'Scattered tools'],
     rows: [
       {
         label: 'Surfaces',
@@ -121,7 +121,7 @@ export const documentsFeaturePage: FeaturePageDefinition = {
   },
   valuePropGrid: {
     title: 'Operational details',
-    subtitle: 'Docs inherits the same permissions and workspace boundaries as the rest of Vibey.',
+    subtitle: 'Docs inherits the same permissions and workspace boundaries as the rest of ROAS.',
     items: [
       {
         title: 'Workspace scoped',
@@ -154,7 +154,7 @@ export const documentsFeaturePage: FeaturePageDefinition = {
     items: [
       {
         q: 'Do Documents replace Google Drive?',
-        a: 'No. Drive files stay in Drive. Vibey surfaces them alongside native docs so you see everything that matters for the campaign.',
+        a: 'No. Drive files stay in Drive. ROAS surfaces them alongside native docs so you see everything that matters for the campaign.',
       },
       {
         q: 'Can I hide Studio exports?',

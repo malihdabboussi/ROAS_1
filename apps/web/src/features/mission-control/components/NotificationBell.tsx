@@ -265,7 +265,7 @@ export function NotificationBell() {
               onClick={() => void handleTalkToVibey()}
               className="button-glass-primary rounded-spacing-2 px-spacing-3 py-spacing-2 body-3 flex-1"
             >
-              Talk to ROAS
+              Talk to Pixel
             </button>
             {unified.length > 0 ? (
               <Tooltip label="Open full notification feed" side="bottom">

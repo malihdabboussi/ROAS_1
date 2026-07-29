@@ -93,6 +93,8 @@ export class InternalChatRuntimeController {
         spaceId: body.spaceId,
         scopeKind: body.scopeKind as ChatScopeKind | undefined,
         orgId: body.orgId ?? undefined,
+        orgMemberId: body.orgMemberId ?? null,
+        organizationWideDataAccess: body.organizationWideDataAccess === true,
         source: body.source,
         previousResponseId: body.previousResponseId,
         documents: body.documents as never,

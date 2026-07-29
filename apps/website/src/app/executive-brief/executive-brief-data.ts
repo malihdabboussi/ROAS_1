@@ -45,7 +45,7 @@ export const executiveBriefTabs = [
     label: 'Brain',
     title: 'Turn what your company knows into working memory.',
     summary:
-      'Vibey turns your documents, calls, and decisions into structured memory. It is organized by company, customer, and person, ready before any agent acts.',
+      'ROAS turns your documents, calls, and decisions into structured memory. It is organized by company, customer, and person, ready before any agent acts.',
     points: [
       'Company knowledge captures how you operate and your standards.',
       'Customer knowledge holds accounts and segments, with sensitive data controlled.',
@@ -112,7 +112,7 @@ export const executiveUseCases = [
     steps: [
       'Train the Brain on your products, services, and FAQs.',
       'Create an agent that answers in your company voice.',
-      'Embed it on your site as a Vibey widget.',
+      'Embed it on your site as a ROAS widget.',
       'Each chat captures the lead to your CRM and feeds the Customer Brain.',
     ],
     result: 'Visitors get instant answers, and every chat becomes a lead you already understand.',
@@ -230,7 +230,7 @@ export const securityPhases = {
   roadmap: {
     title: 'In progress',
     items: [
-      'Vibey platform certifications: SOC 2 Type 2, HIPAA, GDPR, and ISO 27001.',
+      'ROAS platform certifications: SOC 2 Type 2, HIPAA, GDPR, and ISO 27001.',
       'Deeper integrations with your core systems as pilots expand.',
       'Wider automation across more of your operations over time.',
     ],
@@ -266,7 +266,7 @@ export const proofStories = [
     stats: [
       { value: '7M+', label: 'followers' },
       { value: '1-3B', label: 'views/month' },
-      { value: '9-person', label: 'team running on Vibey' },
+      { value: '9-person', label: 'team running on ROAS' },
     ],
   },
   {
@@ -281,7 +281,7 @@ export const proofStories = [
     outcome: '10,000+ people coached in 72 hours without adding headcount.',
     stats: [
       { value: '697K', label: 'followers' },
-      { value: '5-person', label: 'team running on Vibey' },
+      { value: '5-person', label: 'team running on ROAS' },
     ],
   },
   {
@@ -309,7 +309,7 @@ export const proofStories = [
     image: '/proof/hadassah.png',
     context: 'Medical center launch · Limassol, Cyprus',
     title: 'A greenfield launch, built compliance-first.',
-    body: 'Hadassah started with no marketing stack, fragmented accounts, and strict medical data rules. Vibey built a shared Brain from their service catalog and clinical input, stood up patient-facing agents and funnels, and wired leads through a compliance boundary before anything touches the patient system — with IT, clinical, and marketing working in one Space.',
+    body: 'Hadassah started with no marketing stack, fragmented accounts, and strict medical data rules. ROAS built a shared Brain from their service catalog and clinical input, stood up patient-facing agents and funnels, and wired leads through a compliance boundary before anything touches the patient system — with IT, clinical, and marketing working in one Space.',
     outcome:
       'A new medical center moved from fragmented launch inputs to one governed go-to-market system.',
     stats: [

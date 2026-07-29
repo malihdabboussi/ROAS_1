@@ -19,7 +19,7 @@ export function HomeHeroNew() {
             <span className="badge-glass badge-glass-secondary rounded-full font-semibold">
               Beta
             </span>
-            <span className="body-3 font-medium text-white">Introducing Vibey</span>
+            <span className="body-3 font-medium text-white">Introducing ROAS</span>
             <ArrowRight size={14} className="text-color-muted" />
           </Link>
 
@@ -31,7 +31,7 @@ export function HomeHeroNew() {
           </h1>
 
           <p className="body-1 text-color-secondary max-w-2xl leading-relaxed">
-            AI tools gave you a chatbot. You wanted a company. Vibey is the hybrid operating layer
+            AI tools gave you a chatbot. You wanted a company. ROAS is the hybrid operating layer
             where your team and your AI agents share the same knowledge, the same workspace, and
             the same work.
           </p>

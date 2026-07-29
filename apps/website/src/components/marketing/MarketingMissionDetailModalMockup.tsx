@@ -425,9 +425,9 @@ function SequenceEmailPreview() {
               Talk soon.
               <br />
               <br />
-              — The Vibey Team
+              — The ROAS Team
               <br />
-              <span style={{ fontSize: 13, color: '#999' }}>Vibey · AI-powered marketing</span>
+              <span style={{ fontSize: 13, color: '#999' }}>ROAS · AI-powered marketing</span>
             </p>
             <p
               style={{
@@ -559,7 +559,7 @@ function PresentationDeckPreview() {
               letterSpacing: '1px',
             }}
           >
-            PREPARED BY VIBEY · SCALE ENGINE
+            PREPARED BY PIXEL · SCALE ENGINE
           </div>
         </div>
       </div>
@@ -1208,7 +1208,7 @@ export function MarketingMissionDetailModalMockup(props?: {
                             <span className="font-bold text-emerald-400" style={{ fontSize: 10 }}>
                               Plan approved
                             </span>
-                            <ActivityFace src={vibeyPortrait} name="Vibey" />
+                            <ActivityFace src={vibeyPortrait} name="Pixel" />
                           </div>
                           <p className="text-app-muted-dim" style={{ fontSize: 9 }}>
                             3h ago

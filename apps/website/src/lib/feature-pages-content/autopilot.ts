@@ -2,9 +2,9 @@ import type { FeaturePageDefinition } from './types'
 
 export const autopilotFeaturePage: FeaturePageDefinition = {
   slug: 'autopilot',
-  metaTitle: 'Autopilot | Vibey',
+  metaTitle: 'Autopilot | ROAS',
   metaDescription:
-    'Define your strategy, enable Autopilot, and close the tab. Vibey monitors progress, creates missions, retries failures, and sends you a daily digest.',
+    'Define your strategy, enable Autopilot, and close the tab. ROAS monitors progress, creates missions, retries failures, and sends you a daily digest.',
   mockupKind: 'autopilot-depth',
   heroBadges: [
     'Strategy',
@@ -19,13 +19,13 @@ export const autopilotFeaturePage: FeaturePageDefinition = {
     kicker: '',
     title: 'YOUR CEO NEVER SLEEPS',
     subtitle:
-      'Define your strategy, turn on Autopilot, and close the tab. Vibey monitors progress, creates missions, retries failures, and sends you a daily digest of what happened.',
+      'Define your strategy, turn on Autopilot, and close the tab. ROAS monitors progress, creates missions, retries failures, and sends you a daily digest of what happened.',
     primaryCta: { href: '/waitlist', label: 'Join Waitlist' },
     secondaryCta: { href: '/features/the-brain', label: 'See The Brain' },
   },
   showcase: {
     title: 'How Autopilot runs your operation',
-    subtitle: 'Set your strategy once. Vibey keeps everything moving toward your goals.',
+    subtitle: 'Set your strategy once. ROAS keeps everything moving toward your goals.',
     blocks: [
       {
         mockupKind: 'northstar-guardrail',
@@ -50,7 +50,7 @@ export const autopilotFeaturePage: FeaturePageDefinition = {
       },
       {
         mockupKind: 'dynamic-router',
-        title: 'What Vibey does autonomously',
+        title: 'What ROAS does autonomously',
         features: [
           {
             title: 'Create missions',
@@ -96,7 +96,7 @@ export const autopilotFeaturePage: FeaturePageDefinition = {
   },
   valuePropGrid: {
     title: 'Autonomous but accountable',
-    subtitle: 'Vibey acts, but you always have the final word.',
+    subtitle: 'ROAS acts, but you always have the final word.',
     items: [
       {
         title: 'Strategy guardrails',
@@ -120,19 +120,19 @@ export const autopilotFeaturePage: FeaturePageDefinition = {
     items: [
       {
         q: 'How is Autopilot different from a regular flow?',
-        a: 'It is a continuous decision-making loop. Vibey acts like a CEO, evaluating signals across your missions and agents to take the next best action. It doesn’t just follow a sequence; it weighs priorities and only acts when it makes sense for your goals.',
+        a: 'It is a continuous decision-making loop. ROAS acts like a CEO, evaluating signals across your missions and agents to take the next best action. It doesn’t just follow a sequence; it weighs priorities and only acts when it makes sense for your goals.',
       },
       {
         q: 'Does it require a campaign strategy?',
-        a: 'Autopilot works best with a defined North Star: Result, Purpose, Strategy, and Off-Limits. While Vibey can still retry failed work and nudge stuck tasks without one, a strategy is required for the system to proactively create and assign new missions.',
+        a: 'Autopilot works best with a defined North Star: Result, Purpose, Strategy, and Off-Limits. While ROAS can still retry failed work and nudge stuck tasks without one, a strategy is required for the system to proactively create and assign new missions.',
       },
       {
         q: 'Can I review plans before agents start working?',
-        a: 'Yes. By default, auto-approve is disabled. Vibey will plan the subtasks and wait for your review. You can enable auto-approve in settings if you want agents to start executing immediately after the plan is generated.',
+        a: 'Yes. By default, auto-approve is disabled. ROAS will plan the subtasks and wait for your review. You can enable auto-approve in settings if you want agents to start executing immediately after the plan is generated.',
       },
       {
         q: 'How do I stay updated on what happened?',
-        a: 'You can enable a daily digest in your communication settings. Vibey will send a narrative briefing to Studio, Telegram, or Slack at your preferred time, summarizing completed work, active missions, and anything that needs your attention.',
+        a: 'You can enable a daily digest in your communication settings. ROAS will send a narrative briefing to Studio, Telegram, or Slack at your preferred time, summarizing completed work, active missions, and anything that needs your attention.',
       },
       {
         q: 'What happens if I run out of credits?',
@@ -146,7 +146,7 @@ export const autopilotFeaturePage: FeaturePageDefinition = {
   },
   finalCta: {
     title: 'Ready to close the tab?',
-    subtitle: 'Define your strategy. Let Vibey run the operation. Wake up to finished work.',
+    subtitle: 'Define your strategy. Let ROAS run the operation. Wake up to finished work.',
     ctaHref: '/waitlist',
     ctaLabel: 'Join Waitlist',
   },

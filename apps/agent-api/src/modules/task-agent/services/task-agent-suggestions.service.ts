@@ -24,6 +24,7 @@ export interface SuggestedTask {
   assignee_email?: string
   due_date?: string
   priority?: 'low' | 'medium' | 'high' | 'urgent'
+  source_action_index?: number
 }
 
 export interface SuggestMeetingTitlePayload {
@@ -228,10 +229,11 @@ export class TaskAgentSuggestionsService {
       `Return at most ${maxSuggestions} tasks.`,
       'Each task must be concrete, actionable, and based only on the payload.',
       'Prefer payload.action_items when present — turn each into a task when possible.',
+      'For every task derived from payload.action_items, preserve its zero-based array position in source_action_index.',
       'Always set priority (not everything medium): urgent/high when ASAP/today/blocker/this week; low for nice-to-have/FYI.',
       'Set due_date to ISO-8601 when the payload has a deadline/due date; otherwise "".',
       'Set assignee_email when an owner email is present on the action item or clearly stated; else "".',
-      'Use this exact shape: {"tasks":[{"title":"...","description":"...","assignee_email":"...","due_date":"ISO-8601 or empty","priority":"low|medium|high|urgent"}]}',
+      'Use this exact shape: {"tasks":[{"title":"...","description":"...","assignee_email":"...","due_date":"ISO-8601 or empty","priority":"low|medium|high|urgent","source_action_index":0}]}',
       payload.instructions ? `User instructions: ${payload.instructions}` : '',
     ]
       .filter(Boolean)
@@ -356,6 +358,7 @@ function parseSuggestedTasks(raw: string, maxSuggestions: number): SuggestedTask
     const title = String(task.title ?? '').trim()
     if (!title) continue
     const priority = String(task.priority ?? '').trim()
+    const sourceActionIndex = Number(task.source_action_index)
     tasks.push({
       title: title.slice(0, 1000),
       ...(typeof task.description === 'string' && task.description.trim()
@@ -372,6 +375,9 @@ function parseSuggestedTasks(raw: string, maxSuggestions: number): SuggestedTask
       priority === 'high' ||
       priority === 'urgent'
         ? { priority }
+        : {}),
+      ...(Number.isInteger(sourceActionIndex) && sourceActionIndex >= 0
+        ? { source_action_index: sourceActionIndex }
         : {}),
     })
     if (tasks.length >= maxSuggestions) break

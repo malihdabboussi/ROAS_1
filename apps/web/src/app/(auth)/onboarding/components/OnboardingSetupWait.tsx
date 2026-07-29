@@ -16,7 +16,7 @@ interface OnboardingSetupWaitProps {
 const LEARNING_CARDS = [
   {
     title: 'Meet your core team',
-    body: 'Your team starts with three agents: ROAS, Atlas, and Jaime. ROAS is your main point of contact. Ask ROAS to create, plan, research, organize, or help move work forward across the platform.',
+    body: 'Your team starts with three agents: Pixel, Atlas, and Jaime. Pixel is your main point of contact. Ask Pixel to create, plan, research, organize, or help move work forward across the platform.',
   },
   {
     title: 'Atlas manages your Brain',
@@ -32,11 +32,11 @@ const LEARNING_CARDS = [
   },
   {
     title: 'Start by talking naturally',
-    body: 'You do not need to learn commands first. Start by telling ROAS what you want to make, fix, research, or organize. ROAS will help choose the right next step.',
+    body: 'You do not need to learn commands first. Start by telling Pixel what you want to make, fix, research, or organize. Pixel will help choose the right next step.',
   },
   {
     title: 'Your agents work together',
-    body: 'ROAS can coordinate with specialized agents as your workspace grows. You can keep things simple at first, then hire more help when the work becomes more specific.',
+    body: 'Pixel can coordinate with specialized agents as your workspace grows. You can keep things simple at first, then hire more help when the work becomes more specific.',
   },
 ]
 

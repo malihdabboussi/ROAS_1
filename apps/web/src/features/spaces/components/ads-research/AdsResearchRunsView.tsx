@@ -29,7 +29,7 @@ Ask me these three questions together before creating anything:
 2. Standard or deep?
 3. Anything in particular you're looking for?
 
-After I answer, stay as Blaze and use \`delegate_to_agent\` with target_agent_key: \`vibey\`. In the task_description, tell Vibey to call \`create_mission\` with the exact current space_id and campaign_id, title \`Ads Research\`, assigned_agent_key \`ads_manager\`, and input.playbook_id: \`ads-research\`. Put my answers into input.playbook_kickoff using prompt, depth, reporting_period, selected_campaigns, competitors, and links. Do not call \`create_mission\` yourself because mission creation is owned by Vibey.
+After I answer, stay as Blaze and use \`delegate_to_agent\` with target_agent_key: \`vibey\`. In the task_description, tell Pixel to call \`create_mission\` with the exact current space_id and campaign_id, title \`Ads Research\`, assigned_agent_key \`ads_manager\`, and input.playbook_id: \`ads-research\`. Put my answers into input.playbook_kickoff using prompt, depth, reporting_period, selected_campaigns, competitors, and links. Do not call \`create_mission\` yourself because mission creation is owned by Pixel.
 
 Only after the delegated action succeeds, confirm "New mission created" in chat and show or link the mission. Do not send me to Mission Control or ask me to create the mission manually. Use the mounted Meta connection as the source of truth for current performance. Do not infer that Meta is disconnected from missing documents or prior research.`
 

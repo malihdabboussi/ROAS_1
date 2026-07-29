@@ -256,7 +256,7 @@ function ScaledPitchMockup({
   sizePercent: number
   scale: number
   opacityClass?: string
-  /** When false, overflow visible so mockup animations aren’t clipped (pitch “How to Use Vibey”). */
+  /** When false, overflow visible so mockup animations aren’t clipped (pitch “How to Use ROAS”). */
   clip?: boolean
   children: React.ReactNode
 }) {
@@ -389,7 +389,7 @@ function SlideCover() {
         transition={{ duration: 0.8 }}
         className="flex flex-col items-center"
       >
-        <img src="/Logos/logov2/icon-white.png" alt="Vibey" className="mb-6 h-14 w-14 opacity-80" />
+        <img src="/Logos/logov2/icon-white.png" alt="ROAS" className="mb-6 h-14 w-14 opacity-80" />
         <h1 className="max-w-3xl text-center font-[family-name:var(--font-site-headline)] text-4xl font-bold tracking-tight text-white md:text-6xl lg:text-7xl">
           YOUR AI TEAM.
           <br />
@@ -446,7 +446,7 @@ function SlideFounders() {
           <ul className="space-y-2 text-sm text-white/60">
             <li>Decade of performance marketing</li>
             <li>Built &amp; exited 2 companies (incl. DopeTech.com)</li>
-            <li>Runs ROAS.co — now operating through Vibey</li>
+            <li>Runs ROAS.co — now operating through ROAS</li>
             <li>Closes six-figure deals; demos product himself</li>
           </ul>
         </motion.div>
@@ -686,7 +686,7 @@ function SlideMarket() {
   )
 }
 
-// ─── Slide 5: Meet Vibey ─────────────────────────────────────────────────────
+// ─── Slide 5: Meet ROAS ─────────────────────────────────────────────────────
 
 function SlideMeetVibey() {
   const CHIPS = [
@@ -1363,12 +1363,12 @@ function SlideTeamToOrgTransition({ phase }: { phase: 0 | 1 }) {
             <div className="absolute -inset-3 rounded-full bg-emerald-500/15 blur-lg" />
             <div
               className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-gradient-to-b from-white/[0.14] to-white/[0.05] ring-2 ring-emerald-500/35"
-              title="Vibey"
+              title="ROAS"
             >
-              <img src={VIBEY_ORG_CEO_LOGO_SRC} alt="Vibey" className="h-9 w-9 object-contain" />
+              <img src={VIBEY_ORG_CEO_LOGO_SRC} alt="ROAS" className="h-9 w-9 object-contain" />
             </div>
           </div>
-          <span className="text-xs font-semibold text-white">Vibey</span>
+          <span className="text-xs font-semibold text-white">Pixel</span>
           <span className="text-[10px] text-emerald-400">CEO</span>
         </motion.div>
 
@@ -1535,7 +1535,7 @@ function SlideTeamToOrgTransition({ phase }: { phase: 0 | 1 }) {
               </div>
             </div>
             <p className="text-center font-[family-name:var(--font-site-headline)] text-xl font-semibold leading-snug tracking-tight text-white/90 md:text-2xl lg:text-3xl">
-              That&apos;s exactly what Vibey does — with AI agents instead of only employees.
+              That&apos;s exactly what ROAS does — with AI agents instead of only employees.
             </p>
           </motion.div>
         )}
@@ -1897,7 +1897,7 @@ function SlideAutopilot() {
   )
 }
 
-// ─── Slide 19: How to Use Vibey (overview) ───────────────────────────────────
+// ─── Slide 19: How to Use ROAS (overview) ───────────────────────────────────
 
 function SlideTwoWaysWork() {
   const [zoom, setZoom] = useState<'none' | 'studio' | 'missions'>('none')
@@ -1925,7 +1925,7 @@ function SlideTwoWaysWork() {
   return (
     <Slide className="relative !py-4">
       <SlideLabel>How It Works</SlideLabel>
-      <SlideTitle>TWO WAYS TO WORK WITH VIBEY</SlideTitle>
+      <SlideTitle>TWO WAYS TO WORK WITH ROAS</SlideTitle>
 
       <div className="mx-auto mt-6 grid w-full max-w-6xl gap-8 md:grid-cols-2 md:gap-10">
         <motion.div
@@ -2444,7 +2444,7 @@ function SlideIntegrations() {
         36+ <span className="gradient-text">NATIVE INTEGRATIONS</span>
       </SlideTitle>
       <SlideSub>
-        Authorize once. Vibey pulls context, pushes updates, and respects workspace boundaries.
+        Authorize once. ROAS pulls context, pushes updates, and respects workspace boundaries.
       </SlideSub>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -2832,7 +2832,7 @@ function SlideUseCaseROAS() {
             AUTOMATED <span className="gradient-text">CLIENT ONBOARDING</span>
           </SlideTitle>
           <p className="mx-auto mt-1 max-w-2xl text-xs text-white/45 md:text-sm">
-            ROAS.co built a custom onboarding skill in Vibey, wired to Slack. Click through each
+            ROAS.co built a custom onboarding skill in ROAS, wired to Slack. Click through each
             step — full screenshots, one at a time.
           </p>
         </div>
@@ -3123,7 +3123,7 @@ function SlideTraction() {
         className="mt-4 w-full max-w-5xl rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-3.5"
       >
         <p className="text-center text-[11px] leading-relaxed text-white/50 sm:text-xs">
-          Enterprise design partners are using Vibey in real workflows — proof of demand that helped
+          Enterprise design partners are using ROAS in real workflows — proof of demand that helped
           us balance costs while staying{' '}
           <span className="font-medium text-white/75">bootstrapped and pre-revenue</span>. Clear
           path to repeatable ARR once we scale.
@@ -3176,7 +3176,7 @@ function SlideCaseStudy() {
             CAMPAIGN PLANNED. <span className="gradient-text">LIVE RESULTS.</span>
           </SlideTitle>
           <p className="mx-auto mt-1 max-w-2xl text-xs text-white/45 md:text-sm">
-            Neel Dhingra used Vibey to plan, design, launch, and optimize his entire &ldquo;Escape
+            Neel Dhingra used ROAS to plan, design, launch, and optimize his entire &ldquo;Escape
             the Middle&rdquo; webinar campaign — on a flight.
           </p>
         </div>
@@ -3196,7 +3196,7 @@ function SlideCaseStudy() {
               <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
             </div>
             <span className="ml-2 text-[10px] font-medium text-white/30">
-              Vibey · Mission: Escape the Middle Campaign
+              ROAS · Mission: Escape the Middle Campaign
             </span>
             <span className="ml-auto rounded-md bg-emerald-500/15 px-2 py-0.5 text-[9px] font-semibold text-emerald-400">
               Completed
@@ -3223,7 +3223,7 @@ function SlideCaseStudy() {
               {/* Workflow steps */}
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
                 <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.15em] text-white/30">
-                  What Vibey did
+                  What ROAS did
                 </p>
                 <div className="space-y-2">
                   {workflow.map((w, i) => (
@@ -3296,11 +3296,11 @@ function SlideCaseStudy() {
                 className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 md:w-[42%]"
               >
                 <p className="mb-2 shrink-0 text-[9px] font-semibold uppercase tracking-[0.15em] text-white/30">
-                  Ad creatives · Generated by Vibey
+                  Ad creatives · Generated by ROAS
                 </p>
                 <img
                   src="/pitch/case-study/neel-ad-creatives.png"
-                  alt="Ad creatives generated by Vibey"
+                  alt="Ad creatives generated by ROAS"
                   className="min-h-0 w-full flex-1 rounded-lg object-contain object-top ring-1 ring-white/[0.06]"
                 />
               </motion.div>
@@ -3406,7 +3406,7 @@ function SlideAcquisition() {
                   1.2M followers · 3B+ views / mo
                 </p>
                 <p className="mt-2 text-[11px] leading-relaxed text-white/60">
-                  Signed affiliate — surfaces Vibey to enterprise and power users with ongoing
+                  Signed affiliate — surfaces ROAS to enterprise and power users with ongoing
                   content.
                 </p>
               </div>
@@ -3476,7 +3476,7 @@ function SlideAcquisition() {
               },
               {
                 title: 'Agency white-label',
-                body: 'Partners deliver Vibey under their brand — expand revenue without linear headcount.',
+                body: 'Partners deliver ROAS under their brand — expand revenue without linear headcount.',
                 icon: Share2,
                 tone: 'text-emerald-400',
                 bg: 'bg-emerald-500/12',
@@ -3685,7 +3685,7 @@ function SlideCompetition() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-400/50">
-                      Vibey
+                      ROAS
                     </p>
                     <p className="mt-0.5 text-[11px] font-medium leading-relaxed text-emerald-400/90 sm:text-xs">
                       {r.vibey}
@@ -3969,7 +3969,7 @@ function SlideFundingRunway() {
               Small commando teams stay autonomous but run on{' '}
               <span className="font-medium text-white/75">one platform layer</span> — shared brain,
               skills, and missions — so leadership sets north star, specialists execute in parallel,
-              and nothing ships without passing through the same Vibey OS.
+              and nothing ships without passing through the same ROAS OS.
             </p>
           </motion.div>
         </div>
@@ -4105,7 +4105,7 @@ function SlideVision() {
   const phases = [
     {
       phase: 'Phase 1',
-      title: 'Vibey',
+      title: 'ROAS',
       desc: 'Dominate the attention graph. Creators, coaches, agencies, performance marketers.',
       active: true,
       icon: Rocket,
@@ -4509,7 +4509,7 @@ export function PitchDeckV1() {
           if (i > 0) pdf.addPage([1920, 1080], 'landscape')
           pdf.addImage(images[i]!, 'PNG', 0, 0, 1920, 1080)
         }
-        pdf.save('Vibey-Pitch-Deck.pdf')
+        pdf.save('ROAS-Pitch-Deck.pdf')
       } else {
         await new Promise<void>((resolve, reject) => {
           if ((window as any).PptxGenJS) {
@@ -4530,7 +4530,7 @@ export function PitchDeckV1() {
           slide.background = { color: '09090b' }
           slide.addImage({ data: img, x: 0, y: 0, w: 13.33, h: 7.5 })
         }
-        await pptx.writeFile({ fileName: 'Vibey-Pitch-Deck.pptx' })
+        await pptx.writeFile({ fileName: 'ROAS-Pitch-Deck.pptx' })
       }
     },
     [current, teamOrgPhase],

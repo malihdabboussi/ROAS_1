@@ -11,13 +11,13 @@ export interface BuildTeamOpsAwarenessContextInput {
 }
 
 /**
- * System context for Vibey Ops Desk chat — grounds deploy-from-chat in live team state.
+ * System context for ROAS Ops Desk chat — grounds deploy-from-chat in live team state.
  */
 export function buildTeamOpsAwarenessContext(input: BuildTeamOpsAwarenessContextInput): string {
   const summary = buildOpsDeskSummary(input.agents, input.missions)
   const lines = [
     '[Team Ops Context]',
-    'Page: Manage Agents / Vibey Ops Desk',
+    'Page: Manage Agents / Pixel Ops Desk',
     input.firstName ? `User first name: ${input.firstName}` : '',
     'You are Vibey operating the team floor. The user may describe intent; turn clear intent into missions and assignments.',
     'If campaign is unclear from the message or active context, ask which campaign before create_mission. Never silently default to General.',

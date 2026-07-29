@@ -42,7 +42,7 @@ function CompareHeroVisual({ slug, themLabel }: { slug: CompareSlug; themLabel: 
           <div className="chip-glass-neutral flex h-[4.75rem] w-[4.75rem] shrink-0 items-center justify-center rounded-2xl sm:h-[5.25rem] sm:w-[5.25rem]">
             <img
               src="/Logos/logov2/icon-white.png"
-              alt="Vibey"
+              alt="ROAS"
               width={48}
               height={48}
               className="h-12 w-12 object-contain"

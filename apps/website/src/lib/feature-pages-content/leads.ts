@@ -2,7 +2,7 @@ import type { FeaturePageDefinition } from './types'
 
 export const leadsFeaturePage: FeaturePageDefinition = {
   slug: 'leads',
-  metaTitle: 'Leads & CRM | Vibey',
+  metaTitle: 'Leads & CRM | ROAS',
   metaDescription:
     'Contacts, imports, segments, and campaign membership-managed inside the same workspace where you build.',
   mockupKind: 'integrations',
@@ -16,10 +16,10 @@ export const leadsFeaturePage: FeaturePageDefinition = {
     secondaryCta: { href: '/features/email-sequences', label: 'See Email Sequences' },
   },
   comparison: {
-    title: 'Vibey leads vs. standalone CRM',
+    title: 'ROAS leads vs. standalone CRM',
     subtitle:
-      'Traditional CRMs live in a separate tab. Vibey keeps contacts next to the campaigns targeting them.',
-    columns: ['Vibey', 'Standalone CRM'],
+      'Traditional CRMs live in a separate tab. ROAS keeps contacts next to the campaigns targeting them.',
+    columns: ['ROAS', 'Standalone CRM'],
     rows: [
       { label: 'Location', cells: ['Same workspace as campaigns', 'Separate tool and tab'] },
       {
@@ -52,7 +52,7 @@ export const leadsFeaturePage: FeaturePageDefinition = {
           {
             title: 'CSV upload',
             description:
-              'Drag and drop a spreadsheet. Vibey maps columns and imports contacts instantly.',
+              'Drag and drop a spreadsheet. ROAS maps columns and imports contacts instantly.',
           },
           {
             title: 'ActiveCampaign sync',
@@ -169,7 +169,7 @@ export const leadsFeaturePage: FeaturePageDefinition = {
       },
       {
         q: 'How does background sync work?',
-        a: 'Vibey paginates through your CRM account server-side. Progress is tracked in real time.',
+        a: 'ROAS paginates through your CRM account server-side. Progress is tracked in real time.',
       },
       {
         q: 'Are contacts shared across workspaces?',

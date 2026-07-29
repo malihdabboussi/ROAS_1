@@ -6,8 +6,8 @@ export interface BuildOpsDeskTalkKickoffInput {
 }
 
 /**
- * User message seeded into sidebar chat when clicking Talk to Vibey.
- * Vibey answers with the Ops Desk check-in (greeting + ask what to focus on).
+ * User message seeded into sidebar chat when clicking Talk to Pixel.
+ * ROAS answers with the Ops Desk check-in (greeting + ask what to focus on).
  */
 export function buildOpsDeskTalkKickoffMessage(input: BuildOpsDeskTalkKickoffInput): string {
   const { firstName, summary } = input

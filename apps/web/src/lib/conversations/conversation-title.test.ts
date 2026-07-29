@@ -9,6 +9,7 @@ import {
 
 describe('stripLegacySpacesConversationTitle', () => {
   it('hides legacy default conversation titles', () => {
+    expect(stripLegacySpacesConversationTitle('Chat with Vibey')).toBe('')
     expect(stripLegacySpacesConversationTitle('Chat with ROAS')).toBe('')
     expect(stripLegacySpacesConversationTitle(' New conversation ')).toBe('')
     expect(stripLegacySpacesConversationTitle('team conversation')).toBe('')

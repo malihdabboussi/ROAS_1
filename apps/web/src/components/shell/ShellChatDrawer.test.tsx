@@ -120,7 +120,7 @@ describe('ShellChatDrawer', () => {
     expect(mocks.openConversationInSpaceChat).toHaveBeenCalledWith('conversation-1')
     expect(mocks.setActiveConversationId).toHaveBeenCalledWith('conversation-1')
     expect(mocks.selectConversation).toHaveBeenCalledWith('conversation-1')
-    expect(mocks.setChatRailIntent).not.toHaveBeenCalled()
+    expect(mocks.setChatRailIntent).toHaveBeenCalledWith(null)
   })
 
   it('does not re-fire fresh intent when restoring an empty shell id after the same nonce', () => {

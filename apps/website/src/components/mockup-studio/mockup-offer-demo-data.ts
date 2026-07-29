@@ -3,7 +3,7 @@ export const MOCKUP_OFFER_DEMO = {
   name: 'SaaS Launch Offer',
   step1_data: {
     what_we_sell:
-      'Vibey Studio: a conversational workspace that ships funnels, sequences, presentations, and ads from one brief.',
+      'ROAS Studio: a conversational workspace that ships funnels, sequences, presentations, and ads from one brief.',
     who_we_sell_to: 'B2B SaaS founders and lean GTM teams from roughly $500K–$15M ARR.',
     product:
       'Campaign-scoped artifacts with preview, publish hooks, and CRM integrations: not a generic chat UI bolted onto marketing.',

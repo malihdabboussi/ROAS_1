@@ -180,7 +180,7 @@ function SkillBuilderChatPanelInner({
             <div className="min-w-0">
               <h3 className="title-h4 text-foreground">Skill builder chat</h3>
               <p className="body-4 text-muted-foreground mt-spacing-1">
-                Vibey + skill-creator · invisible to customer
+                ROAS + skill-creator · invisible to customer
               </p>
             </div>
             <div className="gap-spacing-0 flex shrink-0 items-center">

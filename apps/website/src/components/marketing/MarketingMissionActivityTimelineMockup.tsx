@@ -109,7 +109,7 @@ export function MarketingMissionActivityTimelineMockup(props?: {
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[10px] font-bold text-emerald-400">Plan approved</span>
-                      <ActivityFace src={vibeyPortrait} name="Vibey" />
+                      <ActivityFace src={vibeyPortrait} name="Pixel" />
                     </div>
                     <p className="text-app-muted-dim" style={{ fontSize: 9 }}>
                       3h ago

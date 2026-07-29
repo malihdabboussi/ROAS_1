@@ -19,7 +19,7 @@ const TABS: Array<{ id: TabId; label: string }> = [
 ]
 
 
-const DEMO_CAMPAIGNS = ['Sefy Tofan', 'Healing Waves', 'Vibey']
+const DEMO_CAMPAIGNS = ['Sefy Tofan', 'Healing Waves', 'ROAS']
 
 export function LibraryAgentProfileCard({ row, fixedTab }: { row: PublicAgentLibraryRow; fixedTab?: TabId }) {
   const [userTab, setUserTab] = useState<TabId | null>(null)

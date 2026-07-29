@@ -20,7 +20,7 @@ function undoStateFromMessage(message: Message): UndoState {
 
 function skippedSentence(count: number): string {
   if (count === 0) return ''
-  return `${count} ${count === 1 ? 'change was' : 'changes were'} skipped because the task changed after ROAS touched it.`
+  return `${count} ${count === 1 ? 'change was' : 'changes were'} skipped because the task changed after Pixel touched it.`
 }
 
 export function SpaceUndoButton({ message }: { message: Message }) {

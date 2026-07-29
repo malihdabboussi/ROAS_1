@@ -52,6 +52,7 @@ export interface ChannelUser {
   relationship_kind?: 'internal'
   is_connection_owner?: boolean
   personal_brain_access?: boolean
+  organization_wide_data_access?: boolean
 }
 
 export interface ProcessMessageOptions {
@@ -71,6 +72,8 @@ export interface ProcessMessageOptions {
   spaceId?: string | null
   scopeKind?: ChatScopeKind
   orgId?: string
+  orgMemberId?: string | null
+  organizationWideDataAccess?: boolean
   source?: string
   channelUser?: ChannelUser
   previousResponseId?: string

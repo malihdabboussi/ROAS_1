@@ -14,7 +14,7 @@ export function OnboardingLetsStart({ onStart }: OnboardingLetsStartProps) {
       </div>
 
       <h1 className="mb-4 text-center text-4xl font-bold uppercase text-[var(--color-foreground)]">
-        VIBEY
+        PIXEL
       </h1>
       <p className="body-1 mb-10 text-center text-[var(--color-muted-foreground)]">JUST FLOW</p>
 

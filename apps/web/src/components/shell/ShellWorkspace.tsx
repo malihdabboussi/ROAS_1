@@ -23,6 +23,7 @@ import {
   useShellMenuDock,
 } from './use-shell-menu-dock'
 import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
+import { useRightEdgePresence } from './use-right-edge-presence'
 import { useShellStore } from './use-shell-store'
 
 export function ShellWorkspace({ children }: { children: ReactNode }) {
@@ -43,6 +44,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const desktop = useMediaQuery('(min-width: 768px)')
   const savedMenuDock = useShellMenuDock((s) => s.dock)
   const dragging = useShellMenuDock((s) => s.dragging)
+  const candidateMenuDock = useShellMenuDock((s) => s.candidate)
   const activeMenuDock = useActiveShellMenuDock()
   const setWorkCardHostAvailable = useShellMenuDock((s) => s.setWorkCardHostAvailable)
   const setWorkCollapsedHostAvailable = useShellMenuDock((s) => s.setWorkCollapsedHostAvailable)
@@ -103,7 +105,11 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
 
   const onSpaces = pathname.startsWith('/spaces')
   const workAreaCollapsible = !showFullNewChat && !showFullConversation
-  const workAreaCollapsed = workAreaCollapsible && !workAreaOpen
+  const { mounted: workAreaMounted, visible: workAreaVisible } = useRightEdgePresence(
+    workAreaOpen,
+    true,
+  )
+  const workAreaCollapsed = workAreaCollapsible && !workAreaMounted
   let homeOrDefaultMain: ReactNode = children
   if (showFullNewChat) {
     homeOrDefaultMain = <ShellNewChatGreeting />
@@ -118,11 +124,11 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const showChatDrawer = workAreaCollapsible
   const workColumnPresent =
     shellPrefsHydrated && desktop && !artifactTarget && !showFullNewChat && !showFullConversation
-  // During drag, keep work host open so the menu can preview-lock into work seams.
+  // During drag, keep work host open so seams stay hittable — layout still uses saved dock.
   const rawWorkAttached =
     isWorkAttachedDock(savedMenuDock) ||
     savedMenuDock === 'left' ||
-    (dragging && isWorkAttachedDock(activeMenuDock))
+    (dragging && isWorkAttachedDock(candidateMenuDock))
   const hostInsideWorkBase = workColumnPresent && !workAreaCollapsed
   const hostCollapsedRightBase = workColumnPresent && workAreaCollapsed
 
@@ -131,10 +137,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     setWorkCollapsedHostAvailable(
       hostCollapsedRightBase && (isWorkAttachedDock(savedMenuDock) || dragging),
     )
-    return () => {
-      setWorkCardHostAvailable(false)
-      setWorkCollapsedHostAvailable(false)
-    }
   }, [
     hostInsideWorkBase,
     hostCollapsedRightBase,
@@ -145,6 +147,16 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     setWorkCollapsedHostAvailable,
   ])
 
+  // Only clear host flags on unmount — clearing on every dep change briefly
+  // forces frame-left fallback mid soft-lock remount.
+  useEffect(
+    () => () => {
+      setWorkCardHostAvailable(false)
+      setWorkCollapsedHostAvailable(false)
+    },
+    [setWorkCardHostAvailable, setWorkCollapsedHostAvailable],
+  )
+
   const menuDock = resolveShellMenuDockForLayout(activeMenuDock, {
     chatOpen: chatDrawerOpen,
     workHostAvailable: hostInsideWorkBase,
@@ -154,7 +166,8 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   // Collapsed-right rail only for docks that were already work-attached (not remapped left).
   const hostCollapsedRight =
     hostCollapsedRightBase &&
-    (isWorkAttachedDock(savedMenuDock) || (dragging && isWorkAttachedDock(activeMenuDock))) &&
+    (isWorkAttachedDock(savedMenuDock) ||
+      (dragging && isWorkAttachedDock(candidateMenuDock))) &&
     workAttached
 
   const workBodyDockClass =
@@ -162,11 +175,9 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
       ? 'shell-work-area-body-dock-work'
       : hostInsideWork && menuDock === 'work-right'
         ? 'shell-work-area-body-dock-work-right'
-        : hostInsideWork && menuDock === 'work-top'
-          ? 'shell-work-area-body-dock-work-top'
-          : hostInsideWork && menuDock === 'work-bottom'
-            ? 'shell-work-area-body-dock-work-bottom'
-            : null
+        : null
+  const floatTop = hostInsideWork && menuDock === 'work-top'
+  const floatBottom = hostInsideWork && menuDock === 'work-bottom'
 
   const workspaceMain = onSpaces ? <SpaceWorkDock>{children}</SpaceWorkDock> : homeOrDefaultMain
   const workMain = (
@@ -186,18 +197,35 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
             artifactTarget ? 'hidden' : 'shell-work-area',
             !artifactTarget && workAreaCollapsed && 'shell-work-area-collapsed',
           )}
-          aria-hidden={workAreaCollapsed || Boolean(artifactTarget)}
+          aria-hidden={!workAreaVisible || Boolean(artifactTarget)}
           data-shell-work-area
         >
-          <div className={cn('shell-work-area-body', workBodyDockClass)}>
-            {hostInsideWork && (menuDock === 'work' || menuDock === 'work-top') ? (
-              <ShellSidebarSlot />
-            ) : null}
+          <div
+            className={cn(
+              'shell-work-area-body',
+              workAreaVisible
+                ? 'shell-work-area-body-visible'
+                : 'shell-work-area-body-offscreen-right',
+              workBodyDockClass,
+            )}
+          >
+            {hostInsideWork && menuDock === 'work' ? <ShellSidebarSlot /> : null}
             <div className={cn(hostInsideWork && 'shell-work-area-body-main')}>{workMain}</div>
-            {hostInsideWork && (menuDock === 'work-right' || menuDock === 'work-bottom') ? (
-              <ShellSidebarSlot />
-            ) : null}
+            {hostInsideWork && menuDock === 'work-right' ? <ShellSidebarSlot /> : null}
           </div>
+          {floatTop ? (
+            <div className="shell-menu-dock-float shell-menu-dock-float-top" data-shell-menu-dock="work-top">
+              <ShellSidebarSlot />
+            </div>
+          ) : null}
+          {floatBottom ? (
+            <div
+              className="shell-menu-dock-float shell-menu-dock-float-bottom"
+              data-shell-menu-dock="work-bottom"
+            >
+              <ShellSidebarSlot />
+            </div>
+          ) : null}
         </div>
 
         {hostCollapsedRight ? (

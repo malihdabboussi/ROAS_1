@@ -61,7 +61,7 @@ export function ExecutiveBriefContent() {
                 <h1 className="h1 executive-brief-hero-title tracking-tight text-foreground uppercase">
                   <span className="executive-brief-hero-line">Your systems hold everything.</span>
                   <span className="executive-brief-hero-line executive-brief-hero-accent">
-                    Vibey finally ties them together.
+                    ROAS finally ties them together.
                   </span>
                 </h1>
               </div>
@@ -100,7 +100,7 @@ export function ExecutiveBriefContent() {
           <div className="site-container">
             <figure className="executive-brief-statement">
               <blockquote className="h3 text-foreground">
-                Vibey isn’t here to replace your people. It’s here to take the repetitive 90% off
+                ROAS isn’t here to replace your people. It’s here to take the repetitive 90% off
                 their plate, so they can finally do the 10% you actually hired them for.
               </blockquote>
               <figcaption className="text-text-muted body-2 mt-4 leading-relaxed">
@@ -125,7 +125,7 @@ export function ExecutiveBriefContent() {
           <div
             className="solution-marketing-showcase-tabs mt-10"
             role="tablist"
-            aria-label="Vibey operating model"
+            aria-label="ROAS operating model"
           >
             {executiveBriefTabs.map((tab) => {
               const isActive = tab.id === active.id
@@ -172,7 +172,7 @@ export function ExecutiveBriefContent() {
           <AnimateOnScroll>
             <BriefSectionIntro
               align="center"
-              title="Real workflows teams have built on Vibey."
+              title="Real workflows teams have built on ROAS."
               description="A few of the ways customers put the Brain, agents, and Spaces to work. Pick one to see how it runs."
             />
           </AnimateOnScroll>
@@ -181,7 +181,7 @@ export function ExecutiveBriefContent() {
             <div
               className="executive-brief-usecase-tabs"
               role="tablist"
-              aria-label="Vibey use cases"
+              aria-label="ROAS use cases"
             >
               {executiveUseCases.map((uc) => {
                 const isActive = uc.id === useCase.id
@@ -237,7 +237,7 @@ export function ExecutiveBriefContent() {
                   Most software does the same thing forever.
                 </span>
                 <span className="h3 text-foreground mt-2 block">
-                  Vibey gets better at your work the longer it runs it.
+                  ROAS gets better at your work the longer it runs it.
                 </span>
               </blockquote>
               <figcaption className="text-text-muted body-2 mt-4 leading-relaxed">
@@ -419,7 +419,7 @@ export function ExecutiveBriefContent() {
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <a
-                  href="mailto:dylan@vibey.im?subject=Vibey executive walkthrough"
+                  href="mailto:dylan@vibey.im?subject=ROAS executive walkthrough"
                   className="chip-glass-emerald body-3 inline-flex items-center gap-2 rounded-full px-8 py-3 font-semibold"
                 >
                   Book leadership call

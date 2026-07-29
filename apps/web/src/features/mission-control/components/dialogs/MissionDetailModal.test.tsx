@@ -319,7 +319,7 @@ describe('MissionDetailModal', () => {
       />,
     )
 
-    fireEvent.change(screen.getByPlaceholderText('Message Vibey...'), {
+    fireEvent.change(screen.getByPlaceholderText('Message Pixel...'), {
       target: { value: 'Revise the pricing section.' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Request changes' }))
@@ -341,7 +341,7 @@ describe('MissionDetailModal', () => {
     fireEvent.click(screen.getByLabelText('Open timeline'))
 
     expect(screen.getAllByText('Activity')).toHaveLength(2)
-    expect(screen.getByPlaceholderText('Message Vibey...')).toBeTruthy()
+    expect(screen.getByPlaceholderText('Message Pixel...')).toBeTruthy()
   })
 
   it('sends a text comment from the activity composer', async () => {
@@ -360,7 +360,7 @@ describe('MissionDetailModal', () => {
 
     render(<MissionDetailModal mission={mission} onClose={vi.fn()} onUpdated={vi.fn()} />)
 
-    const composer = screen.getByPlaceholderText('Message Vibey...')
+    const composer = screen.getByPlaceholderText('Message Pixel...')
     fireEvent.change(composer, { target: { value: 'Ship it' } })
     fireEvent.keyDown(composer, { key: 'Enter' })
 

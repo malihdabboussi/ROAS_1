@@ -137,8 +137,8 @@ export function routeRecommendation(
     case 'spaces':
       return {
         headline: 'Campaigns work best with',
-        agentName: 'ROAS',
-        body: 'ROAS can read this space and help you ship in one flow.',
+        agentName: 'Pixel',
+        body: 'Pixel can read this space and help you ship in one flow.',
         suggestedAgentKey: 'vibey',
       }
     case 'flows':

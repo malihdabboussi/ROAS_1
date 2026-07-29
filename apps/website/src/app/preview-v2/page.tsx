@@ -12,9 +12,9 @@ import {
 } from '@/lib/get-agent-library-for-marketing'
 
 export const metadata = {
-  title: 'Vibey Homepage v2 (Draft, do not link)',
+  title: 'ROAS Homepage v2 (Draft, do not link)',
   description:
-    'Internal draft of a proposed Vibey homepage. Parked here while the real v2 is in design.',
+    'Internal draft of a proposed ROAS homepage. Parked here while the real v2 is in design.',
   robots: { index: false, follow: false },
 }
 

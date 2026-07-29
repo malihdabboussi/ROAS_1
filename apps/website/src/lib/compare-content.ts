@@ -74,13 +74,13 @@ export type ComparePageDefinition = {
 export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
   'vs-chatgpt': {
     slug: 'vs-chatgpt',
-    metaTitle: 'Vibey vs. ChatGPT | Vibey',
+    metaTitle: 'ROAS vs. ChatGPT | ROAS',
     metaDescription:
-      'ChatGPT answers prompts. Vibey runs marketing missions with artifacts, memory, and publish paths.',
-    kicker: 'Vibey vs. ChatGPT',
-    title: 'VIBEY VS. CHATGPT',
+      'ChatGPT answers prompts. ROAS runs marketing missions with artifacts, memory, and publish paths.',
+    kicker: 'ROAS vs. ChatGPT',
+    title: 'ROAS VS. CHATGPT',
     subtitle:
-      'Use ChatGPT for research. Use Vibey when you need landing pages, sequences, and campaigns that ship from one conversation.',
+      'Use ChatGPT for research. Use ROAS when you need landing pages, sequences, and campaigns that ship from one conversation.',
     bullets: [
       'Artifact-first workspace, not a scroll of text',
       'The Workspace Brain carries voice, ICP, and learnings forward',
@@ -158,7 +158,7 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
           'ChatGPT excels at speed, breadth, and accessibility for general thinking, not at shipping your funnel.',
       },
       vibey: {
-        title: 'Use Vibey when you need',
+        title: 'Use ROAS when you need',
         points: [
           'Landing pages, emails, PDFs, and ads as structured artifacts, not only text',
           'One place for strategy, copy, preview, and handoff across a campaign',
@@ -167,12 +167,12 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
           'Multi-agent workflows tuned to how growth teams actually execute',
         ],
         summary:
-          'Vibey excels at depth, completeness, and execution when revenue work has to ship, not just be discussed.',
+          'ROAS excels at depth, completeness, and execution when revenue work has to ship, not just be discussed.',
       },
     },
     differentiation: {
-      headlineCards: ['Most AI answers in text.', 'Vibey answers with campaigns you can ship.'],
-      subhead: 'What makes Vibey different',
+      headlineCards: ['Most AI answers in text.', 'ROAS answers with campaigns you can ship.'],
+      subhead: 'What makes ROAS different',
       cards: [
         {
           icon: 'layers',
@@ -180,7 +180,7 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
           bodyLines: [
             'ChatGPT: answers live in chat; you copy and rebuild elsewhere.',
             'Shipping means format, paste, and wire hosting yourself.',
-            'Vibey: pages, emails, PDFs, drafts inside one workspace.',
+            'ROAS: pages, emails, PDFs, drafts inside one workspace.',
           ],
           punchline: 'Less “wall of text.” More ready-to-ship GTM work.',
         },
@@ -199,7 +199,7 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
           title: 'Path to publish vs. paste-it-yourself assembly',
           bodyLines: [
             'ChatGPT won’t host your funnel or map your domain.',
-            'Vibey links chat to preview and publish in the product.',
+            'ROAS links chat to preview and publish in the product.',
             'Built for live pages-not only prose in a sidebar.',
           ],
           punchline: 'From conversation toward hosted pages, not only copy blocks.',
@@ -210,20 +210,20 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
           bodyLines: [
             'One assistant thread can do a lot with one model.',
             'GTM still spans copy, layout, sequencing, and handoffs.',
-            'Vibey runs multi-agent missions tuned for marketing execution.',
+            'ROAS runs multi-agent missions tuned for marketing execution.',
           ],
           punchline: 'Built like a small team, not a single chatbot.',
         },
       ],
     },
     showcase: {
-      sectionTitle: 'What Vibey does better',
+      sectionTitle: 'What ROAS does better',
       sectionSubtitle:
-        'Vibey goes beyond long chat threads through artifact-first design, pages, sequences, and memory that persist for your next launch.',
+        'ROAS goes beyond long chat threads through artifact-first design, pages, sequences, and memory that persist for your next launch.',
       rows: [
         {
           title: 'Ship landing pages, emails, and PDFs from one thread',
-          body: 'Describe the offer once. Vibey structures work as real marketing artifacts with preview and iteration, not only paragraphs you copy into other tools.',
+          body: 'Describe the offer once. ROAS structures work as real marketing artifacts with preview and iteration, not only paragraphs you copy into other tools.',
           visual: 'studio',
         },
         {
@@ -254,20 +254,20 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
       ],
     },
     closingCta: {
-      headline: 'Do what ChatGPT can’t with Vibey',
+      headline: 'Do what ChatGPT can’t with ROAS',
       subhead:
         'Join marketers who moved from long threads to artifacts, memory, and funnels that actually ship.',
     },
   },
   'vs-manus': {
     slug: 'vs-manus',
-    metaTitle: 'Vibey vs. Manus | Vibey',
+    metaTitle: 'ROAS vs. Manus | ROAS',
     metaDescription:
-      'Manus is a broad computer-use agent. Vibey is a marketing specialist with funnels, brain memory, and GTM artifacts.',
-    kicker: 'Vibey vs. Manus',
-    title: 'VIBEY VS. MANUS',
+      'Manus is a broad computer-use agent. ROAS is a marketing specialist with funnels, brain memory, and GTM artifacts.',
+    kicker: 'ROAS vs. Manus',
+    title: 'ROAS VS. MANUS',
     subtitle:
-      'Both feel like “an AI that does the work.” Vibey narrows the scope to revenue teams: funnels, campaigns, and brand memory out of the box.',
+      'Both feel like “an AI that does the work.” ROAS narrows the scope to revenue teams: funnels, campaigns, and brand memory out of the box.',
     bullets: [
       'Opinionated marketing data model, not generic browser automation',
       'Funnel preview + publish native to the product',
@@ -345,7 +345,7 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
           'Manus excels at breadth, autonomy, and execution across the open web, not at a dedicated marketing workspace.',
       },
       vibey: {
-        title: 'Use Vibey when you need',
+        title: 'Use ROAS when you need',
         points: [
           'Funnels, launches, and nurture treated as first-class deliverables',
           'Preview, iterate, and publish inside a marketing-native product',
@@ -354,22 +354,22 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
           'Repeatable plays for presentations, webinars, ads, and email, without reinventing the scaffold',
         ],
         summary:
-          'Vibey excels at specialized GTM execution: systems that ship when revenue work is the job.',
+          'ROAS excels at specialized GTM execution: systems that ship when revenue work is the job.',
       },
     },
     differentiation: {
       headlineCards: [
         'General agents automate tasks.',
-        'Vibey automates how marketing gets built.',
+        'ROAS automates how marketing gets built.',
       ],
-      subhead: 'What makes Vibey different',
+      subhead: 'What makes ROAS different',
       cards: [
         {
           icon: 'target',
           title: 'GTM depth vs. open-ended computer use',
           bodyLines: [
             'Manus runs real tasks across the web and your tools.',
-            'Vibey narrows to offers, funnels, campaigns, and assets.',
+            'ROAS narrows to offers, funnels, campaigns, and assets.',
             'Marketing-native scope-not open-ended “do anything.”',
           ],
           punchline: 'Same AI era; different job description.',
@@ -379,7 +379,7 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
           title: 'Funnel-native workspace vs. generic outputs',
           bodyLines: [
             'Broad agents: files, screenshots, or steps from the run.',
-            'Vibey: preview, iterate, and publish funnels in one flow.',
+            'ROAS: preview, iterate, and publish funnels in one flow.',
             'You see the page and sequence-not only sandbox exports.',
           ],
           punchline: 'Optimized for launches, not for arbitrary browsing.',
@@ -399,7 +399,7 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
           title: 'Campaign plays vs. one-off missions',
           bodyLines: [
             'Flexible agent: new plan every time you aim it.',
-            'Vibey bakes in plays for presentations, launches, and nurture.',
+            'ROAS bakes in plays for presentations, launches, and nurture.',
             'Less reinventing scaffolding on every run.',
           ],
           punchline: 'Less “define the mission.” More “run the play.”',
@@ -407,7 +407,7 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
       ],
     },
     showcase: {
-      sectionTitle: 'What Vibey does better',
+      sectionTitle: 'What ROAS does better',
       sectionSubtitle:
         'Same agentic feel, scoped to revenue teams with funnels, campaigns, and org-ready workspaces instead of generic browser missions.',
       rows: [
@@ -438,25 +438,25 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
         },
         {
           title: 'Integrations without losing the thread',
-          body: 'Hand off to your stack while the narrative of the campaign stays attached in Vibey.',
+          body: 'Hand off to your stack while the narrative of the campaign stays attached in ROAS.',
           visual: 'integrations',
         },
       ],
     },
     closingCta: {
-      headline: 'Do what open-web agents don’t specialize in with Vibey',
+      headline: 'Do what open-web agents don’t specialize in with ROAS',
       subhead: 'Join growth teams who picked a marketing workspace over generic task automation.',
     },
   },
   'vs-clickfunnels': {
     slug: 'vs-clickfunnels',
-    metaTitle: 'Vibey vs. ClickFunnels | Vibey',
+    metaTitle: 'ROAS vs. ClickFunnels | ROAS',
     metaDescription:
-      'ClickFunnels centers drag-and-drop pages. Vibey centers conversation, AI layout, and instant iteration.',
-    kicker: 'Vibey vs. ClickFunnels',
-    title: 'VIBEY VS. CLICKFUNNELS',
+      'ClickFunnels centers drag-and-drop pages. ROAS centers conversation, AI layout, and instant iteration.',
+    kicker: 'ROAS vs. ClickFunnels',
+    title: 'ROAS VS. CLICKFUNNELS',
     subtitle:
-      'Classic builders excel when you enjoy tweaking sections. Vibey excels when you want to describe the funnel and get a live page immediately.',
+      'Classic builders excel when you enjoy tweaking sections. ROAS excels when you want to describe the funnel and get a live page immediately.',
     bullets: [
       'No grid lock: revise structure by talking',
       'Same thread handles copy, design, and downstream emails',
@@ -532,7 +532,7 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
         summary: 'ClickFunnels rewards builders who want the editor as their primary interface.',
       },
       vibey: {
-        title: 'Use Vibey when you need',
+        title: 'Use ROAS when you need',
         points: [
           'Offer- and audience-led pages you shape by talking, not only dragging',
           'AI-proposed structure with live preview instead of template roulette',
@@ -540,22 +540,22 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
           'Rapid rewrites when messaging and hierarchy change often',
           'A marketer-first loop when intent matters more than the widget tree',
         ],
-        summary: 'Vibey rewards teams who want conversation-led iteration without grid lock.',
+        summary: 'ROAS rewards teams who want conversation-led iteration without grid lock.',
       },
     },
     differentiation: {
       headlineCards: [
         'Classic builders start with the canvas.',
-        'Vibey starts with what you want to sell.',
+        'ROAS starts with what you want to sell.',
       ],
-      subhead: 'What makes Vibey different',
+      subhead: 'What makes ROAS different',
       cards: [
         {
           icon: 'message-square',
           title: 'Conversation-led vs. canvas-led',
           bodyLines: [
             'ClickFunnels: assemble sections and styles in the canvas.',
-            'Vibey: describe offer, audience, and outcome in language first.',
+            'ROAS: describe offer, audience, and outcome in language first.',
             'Reshape structure and copy by talking-not widget hunting.',
           ],
           punchline: 'Intent first; layout follows.',
@@ -565,7 +565,7 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
           title: 'One thread for page + nurture vs. split workflows',
           bodyLines: [
             'Pages and email drift when they live in separate tools.',
-            'Vibey keeps funnel, messaging, and sequences in one workspace.',
+            'ROAS keeps funnel, messaging, and sequences in one workspace.',
             'Positioning stays coherent through follow-up.',
           ],
           punchline: 'One narrative thread, not three tabs that disagree.',
@@ -575,7 +575,7 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
           title: 'AI-proposed structure vs. template picking alone',
           bodyLines: [
             'Templates still mean picking sections and hierarchy yourself.',
-            'Vibey proposes layout and copy from your strategy.',
+            'ROAS proposes layout and copy from your strategy.',
             'Refine in language-not only manual tweaks.',
           ],
           punchline: 'Strategy drives the first draft, not the template gallery.',
@@ -593,13 +593,13 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
       ],
     },
     showcase: {
-      sectionTitle: 'What Vibey does better',
+      sectionTitle: 'What ROAS does better',
       sectionSubtitle:
         'Turn strategy into structure with language, then refine the funnel without living inside the section list.',
       rows: [
         {
           title: 'Talk the funnel into existence',
-          body: 'Start from audience, offer, and goal. Vibey proposes layout and copy iteratively so you steer with prompts, not only drag targets and template slots.',
+          body: 'Start from audience, offer, and goal. ROAS proposes layout and copy iteratively so you steer with prompts, not only drag targets and template slots.',
           visual: 'studio',
         },
         {
@@ -630,7 +630,7 @@ export const COMPARE_PAGES: Record<CompareSlug, ComparePageDefinition> = {
       ],
     },
     closingCta: {
-      headline: 'Do what the canvas alone can’t pace with Vibey',
+      headline: 'Do what the canvas alone can’t pace with ROAS',
       subhead:
         'Join founders who lead with offers and audience, and let AI handle structure, copy, and iteration.',
     },

@@ -227,7 +227,7 @@ export function AutopilotDepthIllustration() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
         <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,0.6)]" />
 
-        {/* Vibey at bottom */}
+        {/* ROAS at bottom */}
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex items-end justify-center">
           <motion.div
             initial={{ y: 60, opacity: 0 }}
@@ -237,7 +237,7 @@ export function AutopilotDepthIllustration() {
           >
             <img
               src="/images/autopilot/Title.png"
-              alt="Vibey CEO"
+              alt="Pixel"
               className="h-full w-full object-contain object-bottom drop-shadow-[0_-10px_20px_rgba(168,85,247,0.3)]"
             />
           </motion.div>
@@ -497,7 +497,7 @@ export function AutopilotDepthIllustration() {
         </motion.div>
       </div>
 
-      {/* Foreground: Vibey Sitting — desktop only (mobile has its own smaller version) */}
+      {/* Foreground: ROAS Sitting — desktop only (mobile has its own smaller version) */}
       <div className="pointer-events-none absolute inset-0 hidden items-end justify-center md:flex">
         <motion.div
           initial={{ y: 100, opacity: 0 }}
@@ -507,7 +507,7 @@ export function AutopilotDepthIllustration() {
         >
           <img
             src="/images/autopilot/Title.png"
-            alt="Vibey CEO Watching Screen"
+            alt="Pixel watching campaign activity"
             className="h-full w-full object-contain object-bottom drop-shadow-[0_-20px_40px_rgba(168,85,247,0.3)]"
           />
           <div className="absolute bottom-[20%] left-1/2 -z-10 h-64 w-64 -translate-x-1/2 rounded-full bg-purple-500/20 blur-[100px]" />

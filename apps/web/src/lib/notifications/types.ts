@@ -41,10 +41,11 @@ export interface UserNotification {
   created_at: string
 }
 
-export type InboxView = 'primary' | 'other' | 'later' | 'cleared' | 'all'
+export type InboxView = 'primary' | 'system' | 'other' | 'later' | 'cleared' | 'all'
 
 export type InboxTriageCounts = {
   primary: number
+  system: number
   other: number
   later: number
   cleared: number

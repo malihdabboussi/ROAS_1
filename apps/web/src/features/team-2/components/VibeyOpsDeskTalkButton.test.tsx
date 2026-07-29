@@ -34,7 +34,7 @@ describe('VibeyOpsDeskTalkButton', () => {
     seedComposer.mockClear()
   })
 
-  it('seeds sidebar chat so Vibey opens an Ops Desk check-in', () => {
+  it('seeds sidebar chat so Pixel opens an Ops Desk check-in', () => {
     render(
       <VibeyOpsDeskTalkButton
         awarenessContext="[Team Ops Context]"
@@ -42,7 +42,7 @@ describe('VibeyOpsDeskTalkButton', () => {
         summary={summary}
       />,
     )
-    fireEvent.click(screen.getByRole('button', { name: /talk to vibey/i }))
+    fireEvent.click(screen.getByRole('button', { name: /talk to pixel/i }))
     expect(seedComposer).toHaveBeenCalledTimes(1)
     const detail = seedComposer.mock.calls[0]?.[0]
     expect(detail.agentKey).toBe('vibey')
