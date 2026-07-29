@@ -3,7 +3,7 @@ import {
   type ChatModelSettings,
 } from '@/lib/chat/chat-model-settings'
 
-const SYSTEM_LIKE_EXACT = new Set(['atlas', 'vibey', 'hr', 'viktor'])
+const SYSTEM_LIKE_EXACT = new Set(['atlas', 'vibey', 'hr', 'viktor', 'delegator'])
 
 export const SYSTEM_LIKE_AGENT_KEYS = {
   has(key: string): boolean {

@@ -145,3 +145,43 @@ Why: Image feedback such as removing an object or fixing clipped text needs an e
 Impact: Users can mark the precise image area, describe each requested change, and create a non-destructive edited version through the existing image-generation and history flow.
 
 Files: `apps/web/src/components/media/MediaImageMarkupCanvas.tsx`, `apps/web/src/components/media/media-image-markup.ts`, `apps/web/src/components/media/index.ts`, `apps/web/src/features/studio/components/preview/ShellMediaArtifactViewer.tsx`, `apps/web/src/features/studio/components/preview/ShellMediaImageActions.tsx`, focused tests, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-07-29 13:16] - [FEATURE]
+
+What: Reframed Delegation Desk packets as a private work queue of individual work items and optional multi-item work groups, added explicit holding-tank and delegation lifecycle views, and routed generated task cards into the existing right-side task detail panel instead of navigating away from the current screen.
+
+Why: A packet did not clearly communicate what was created or where it lived, and task cards opened through generic Space navigation rather than the canonical task dock.
+
+Impact: Promises, action items, and suggested work can remain unassigned and even unmapped while they are organized, given deadlines, grouped into subtasks, and later delegated. Opening a generated task preserves the current page and exposes the normal task detail experience on the right.
+
+Files: `apps/api/src/modules/space-templates/data/space-template-catalog-delegation-desk.ts`, `apps/web/src/components/artifacts/artifact-inline-preview-card/`, `apps/web/src/components/shell/ShellTaskArtifactViewerAdapter.tsx`, `apps/web/src/features/spaces/services/delegation-intake.service.ts`, `apps/web/src/features/studio/components/`, `docker/agents/vibey/skills/delegation-desk/SKILL.md`, `supabase/migrations/20260729170000_upgrade_delegation_desk_work_queue.sql`, `scripts/roas/migration-order.txt`, `documentation/features/spaces-automation.md`, `documentation/features/page-grader-mcp-bridge.md`, `documentation/frontend-shared-surfaces.md`
+
+## [2026-07-29 14:08] - [FEATURE]
+
+What: Added Delegation Desk as a permanent Home menu destination immediately below My Tasks, and extracted a shared open-or-create service used by both navigation and bulk delegation intake.
+
+Why: The full delegation holding tank existed only after the first bulk delegation action, leaving no stable place to review, organize, and dispatch outstanding work.
+
+Impact: Every organization can open its complete private Delegation Desk directly. The first visit provisions it once; later visits reuse the same desk and preserve its holding-tank, review, deadline, and delegation views.
+
+Files: `apps/web/src/components/layout/sidebar/SidebarHomeFlyout.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqFlyouts.tsx`, `apps/web/src/features/spaces/services/delegation-desk.service.ts`, `apps/web/src/features/spaces/services/delegation-intake.service.ts`, focused tests, delegation messages, `documentation/features/spaces-automation.md`
+
+## [2026-07-29 14:58] - [STYLE]
+
+What: Explicitly left-aligned the Delegation Desk button label in the Home flyout.
+
+Why: Browser button alignment centered the label even though the leading icon aligned with the other Home menu rows.
+
+Impact: The Delegation Desk icon and label now align consistently with every other Home destination.
+
+Files: `apps/web/src/components/layout/sidebar/SidebarHomeFlyout.tsx`, `apps/web/src/components/layout/sidebar/SidebarHomeFlyout.test.tsx`
+
+## [2026-07-29 15:42] - [FEATURE]
+
+What: Added Delegator as a protected system agent dedicated to delegation, installed its database-backed Delegation Desk skill and runtime identity, routed Delegation Desk intake to it, and retained Pixel's existing delegation capability.
+
+Why: Delegation was available only as one of Pixel's broad capabilities, so there was no focused agent surface where every conversation defaults to intake clarification, human-first owner resolution, safe dispatch, and receipt-backed tracking.
+
+Impact: The ROAS organization gets a visible Delegator agent that can be opened directly from Team → Agents or the chat selector. Delegator owns Desk processing with narrow read/context and task permissions, while campaign mutation, Brain writes, skill editing, and unapproved external actions remain blocked. New organizations also receive the protected agent during core-agent provisioning.
+
+Files: `docker/agents/templates/delegator/`, `supabase/migrations/20260729174500_seed_delegator_system_agent.sql`, `scripts/seed-system-agents.ts`, `packages/agent-policy/src/`, `apps/agent-api/src/modules/`, `apps/api/src/modules/org/services/org.service.ts`, `apps/api/src/modules/agent-teams/services/agent-policy-action-decision.service.ts`, `apps/api/src/modules/missions/lib/system-agent-keys.ts`, `apps/api/src/modules/space-templates/data/`, `apps/web/src/lib/agents/`, `documentation/features/spaces-automation.md`, `.docs/plans/agent-follow-up-work.md, `scripts/arch/loc-allowlist.json`

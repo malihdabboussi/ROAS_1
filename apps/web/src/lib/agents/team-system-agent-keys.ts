@@ -4,6 +4,7 @@ export const TEAM2_SYSTEM_AGENT_KEYS = new Set([
   'brain_scholar',
   'atlas',
   'loop',
+  'delegator',
   'viktor',
 ])
 

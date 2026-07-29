@@ -2,7 +2,7 @@
 /**
  * scripts/seed-system-agents.ts
  *
- * Engineering-only seeder for system agents (atlas, vibey, hr, viktor).
+ * Engineering-only seeder for system agents (atlas, vibey, hr, viktor, delegator).
  *
  * Reads source-of-truth markdown from `docker/agents/templates/...` and
  * `docker/agents/vibey/` and upserts them into the canonical (NULL,NULL)
@@ -44,6 +44,7 @@ const SYSTEM_AGENT_SOURCES: SystemAgentSource[] = [
   { agentKey: 'vibey', templateDir: 'docker/agents/vibey' },
   { agentKey: 'hr', templateDir: 'docker/agents/templates/hr' },
   { agentKey: 'viktor', templateDir: 'docker/agents/templates/widget_builder' },
+  { agentKey: 'delegator', templateDir: 'docker/agents/templates/delegator' },
 ]
 
 const DEFINITION_FILES = ['AGENTS.md', 'IDENTITY.md', 'ROLE.md', 'SOUL.md', 'TOOLS.md']

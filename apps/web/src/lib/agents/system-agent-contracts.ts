@@ -10,6 +10,7 @@ export const PROTECTED_SYSTEM_AGENT_KEYS = new Set([
   'brain_scholar',
   'atlas',
   'loop',
+  'delegator',
 ])
 
 export const SYSTEM_AGENT_KEYS = new Set([
@@ -115,6 +116,22 @@ export const WEB_SYSTEM_AGENT_CONTRACTS: Record<string, WebSystemAgentContract> 
       'use_mcp',
     ],
   },
+  delegator: {
+    platformDomains: [
+      'read_campaign',
+      'read_marketing_artifacts',
+      'read_space_context',
+      'read_contacts',
+      'manage_tasks_missions',
+      'use_integrations',
+      'read_brain_personal',
+      'read_brain_agent',
+      'read_brain_company',
+      'read_brain_customer',
+      'communicate',
+      'use_mcp',
+    ],
+  },
 }
 
 const GATEWAY_SCOPED_AGENT_ID_PATTERN =
@@ -151,6 +168,7 @@ export const SKILL_WRITE_LOCKED_KEYS = new Set([
   'widget_builder',
   'atlas',
   'brain_scholar',
+  'delegator',
 ])
 
 export function isSkillWriteLockedAgent(agentKey: string | null | undefined): boolean {

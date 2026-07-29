@@ -25,7 +25,14 @@ export const SYSTEM_AGENT_FIXED_KEYS: Record<string, string> = {
   brain_scholar: 'atlas',
 }
 
-export const SYSTEM_AGENT_KEYS = new Set(['vibey', 'viktor', 'atlas', 'brain_scholar', 'hr'])
+export const SYSTEM_AGENT_KEYS = new Set([
+  'vibey',
+  'viktor',
+  'atlas',
+  'brain_scholar',
+  'hr',
+  'delegator',
+])
 
 /** Template keys that resolve to a system agent. Used by repository write-path
  * locks (e.g. `upsertTemplateSkill`) to refuse seeding per-user clones for
@@ -37,6 +44,7 @@ export const SYSTEM_TEMPLATE_KEYS = new Set([
   'viktor',
   'brain_scholar',
   'widget_builder',
+  'delegator',
 ])
 
 /** Agents whose SKILLS specifically cannot be written (created / updated / deleted)
@@ -48,6 +56,7 @@ export const SKILL_WRITE_LOCKED_KEYS = new Set([
   'widget_builder',
   'atlas',
   'brain_scholar',
+  'delegator',
 ])
 
 export type SystemAgentField =

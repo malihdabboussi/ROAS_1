@@ -9,6 +9,7 @@ import {
   Music2,
   Video,
 } from 'lucide-react'
+import { openArtifactInShell } from '@/lib/artifacts'
 import type { ArtifactNodeType } from '@/lib/chat/attached-artifact'
 import { openMediaAssetInApp } from '@/lib/media/open-media-asset-in-app'
 import { useResilientImageSrc } from '@/lib/media/use-resilient-image-src'
@@ -163,6 +164,17 @@ function describeOutput(block: FinalOutputBlock): {
 
 function openDefaultOutput(block: FinalOutputBlock) {
   if (block.type === 'artifact_preview') {
+    if (block.artifactType === 'task' && block.spaceId) {
+      openArtifactInShell({
+        id: block.artifactId,
+        entityId: block.artifactId,
+        entityTable: 'space_items',
+        spaceId: block.spaceId,
+        title: block.name,
+        type: 'task',
+      })
+      return
+    }
     window.dispatchEvent(
       new CustomEvent('vibey-open-artifact', {
         detail: {

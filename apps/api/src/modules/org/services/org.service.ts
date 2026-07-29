@@ -99,6 +99,18 @@ export class OrgService {
         model_id: 'auto',
       },
     },
+    {
+      agent_key: 'delegator',
+      name: 'Delegator',
+      role: 'Delegation Manager',
+      level: 'system',
+      config: {
+        capability_profile: 'system_delegation',
+        capability_domain: 'operations',
+        platform_managed: true,
+        model_id: 'auto',
+      },
+    },
   ] as const
 
   private async seedCoreAgents(orgId: string, userId: string): Promise<void> {

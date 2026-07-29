@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { DELEGATION_DESK_TEMPLATES } from '../space-template-catalog-delegation-desk'
 
 describe('Delegation Desk space template', () => {
-  it('keeps raw intake private from dispatched work through explicit workflow states', () => {
+  it('keeps captured work in a private holding tank until it is ready to delegate', () => {
     const [template] = DELEGATION_DESK_TEMPLATES
 
     expect(template).toMatchObject({
@@ -14,9 +14,17 @@ describe('Delegation Desk space template', () => {
           expect.objectContaining({
             id: 'status',
             options: expect.arrayContaining([
-              expect.objectContaining({ id: 'inbox' }),
-              expect.objectContaining({ id: 'ready_review' }),
-              expect.objectContaining({ id: 'dispatched' }),
+              expect.objectContaining({ id: 'inbox', label: 'Holding tank' }),
+              expect.objectContaining({ id: 'ready_review', label: 'Ready to delegate' }),
+              expect.objectContaining({ id: 'dispatched', label: 'Delegated' }),
+              expect.objectContaining({ id: 'done', label: 'Done' }),
+            ]),
+          }),
+          expect.objectContaining({
+            id: 'intake_type',
+            options: expect.arrayContaining([
+              expect.objectContaining({ id: 'work_item', label: 'Work item' }),
+              expect.objectContaining({ id: 'work_group', label: 'Work group' }),
             ]),
           }),
           expect.objectContaining({
@@ -32,7 +40,7 @@ describe('Delegation Desk space template', () => {
     })
   })
 
-  it('hands only new top-level inbox items to Pixel for consolidation', () => {
+  it('hands only new top-level holding-tank items to Delegator for planning', () => {
     const [template] = DELEGATION_DESK_TEMPLATES
     const [automation] = template?.automations ?? []
 
@@ -42,12 +50,12 @@ describe('Delegation Desk space template', () => {
       actions: [
         expect.objectContaining({
           type: 'send_to_agent',
-          agent_key: 'vibey',
+          agent_key: 'delegator',
           output_type: 'none',
         }),
       ],
     })
-    expect(JSON.stringify(automation)).toMatch(/delegation packet/i)
+    expect(JSON.stringify(automation)).toMatch(/work items/i)
     expect(JSON.stringify(automation)).toMatch(/do not assign raw intake/i)
   })
 })

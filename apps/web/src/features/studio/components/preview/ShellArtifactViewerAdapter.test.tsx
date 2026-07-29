@@ -34,6 +34,18 @@ vi.mock('@/components/spaces/SpaceDocEditorPanelAdapter', () => ({
   SpaceDocEditorPanelAdapter: () => <div data-testid="canonical-space-editor" />,
 }))
 
+vi.mock('@/components/shell/ShellTaskArtifactViewerAdapter', () => ({
+  ShellTaskArtifactViewerAdapter: ({
+    target,
+  }: {
+    target: { entityId?: string; id: string; spaceId?: string }
+  }) => (
+    <div data-testid="canonical-task-panel">
+      {target.spaceId}:{target.entityId || target.id}
+    </div>
+  ),
+}))
+
 vi.mock('./ShellMediaArtifactViewer', () => ({
   ShellMediaArtifactViewer: ({ target }: { target: ShellArtifactViewerTarget }) => (
     <div data-testid="media-studio">
@@ -64,6 +76,27 @@ describe('ShellArtifactViewerAdapter', () => {
 
     await waitFor(() => expect(screen.getByTestId('canonical-space-editor')).toBeTruthy())
     expect(screen.queryByTestId('lightweight-preview')).toBeNull()
+  })
+
+  it('renders created tasks in the canonical right-side task panel', async () => {
+    useShellStore.setState({
+      artifactViewer: {
+        width: 480,
+        target: {
+          id: 'task-1',
+          entityId: 'task-1',
+          entityTable: 'space_items',
+          spaceId: 'delegation-desk-1',
+          title: 'Review the captured work',
+          type: 'task',
+        },
+      },
+    })
+
+    render(<ShellArtifactViewerAdapter />)
+
+    await waitFor(() => expect(screen.getByTestId('canonical-task-panel')).toBeTruthy())
+    expect(screen.getByText('delegation-desk-1:task-1')).toBeTruthy()
   })
 
   it('opens the image studio when a chat image has no mounted Space consumer', async () => {

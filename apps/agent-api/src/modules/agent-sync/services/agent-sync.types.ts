@@ -97,6 +97,7 @@ export const SYSTEM_AGENT_KEYS_FALLBACK = new Set<string>([
   'viktor',
   'brain_scholar',
   'widget_builder',
+  'delegator',
 ])
 
 /** USER.md is generated from `profiles` during sync, not from agent_definitions rows. */

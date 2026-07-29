@@ -93,6 +93,7 @@ const SKILL_WRITE_LOCKED_SYSTEM_AGENT_KEYS = new Set([
   'brain_scholar',
   'viktor',
   'widget_builder',
+  'delegator',
 ])
 
 function isSkillWriteLockedSystemAgent(agentKey: string): boolean {
@@ -107,7 +108,12 @@ function resolveProtectedSystemAgentRecord(agentKey: string): ArtifactAgentRecor
   const contract = getSystemAgentContract(agentKey)
   if (!contract) return null
   const capabilityProfile = contract.roleDefaultKey
-  const capabilityDomain = capabilityProfile === 'system_flows' ? 'flows' : 'management'
+  const capabilityDomain =
+    capabilityProfile === 'system_flows'
+      ? 'flows'
+      : capabilityProfile === 'system_delegation'
+        ? 'operations'
+        : 'management'
   return {
     agent_key: contract.agentKey,
     level: 'system',

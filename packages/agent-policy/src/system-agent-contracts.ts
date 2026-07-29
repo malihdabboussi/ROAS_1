@@ -1,9 +1,21 @@
 import type { Domain } from './domains.js'
 import type { RoleDefaultKey } from './role-defaults.js'
 
-export type ProtectedSystemAgentKey = 'vibey' | 'atlas' | 'brain_scholar' | 'hr' | 'loop'
+export type ProtectedSystemAgentKey =
+  | 'vibey'
+  | 'atlas'
+  | 'brain_scholar'
+  | 'hr'
+  | 'loop'
+  | 'delegator'
 export type LegacySystemAgentKey = 'viktor' | 'widget_builder'
-export type SystemAgentContractKind = 'vibey' | 'atlas' | 'hr' | 'atlas_alias' | 'flows'
+export type SystemAgentContractKind =
+  | 'vibey'
+  | 'atlas'
+  | 'hr'
+  | 'atlas_alias'
+  | 'flows'
+  | 'delegation'
 
 export interface SystemAgentContract {
   agentKey: ProtectedSystemAgentKey
@@ -15,7 +27,14 @@ export interface SystemAgentContract {
   platformDomains: readonly Domain[]
 }
 
-export const SYSTEM_AGENT_KEYS = ['vibey', 'atlas', 'brain_scholar', 'hr', 'loop'] as const
+export const SYSTEM_AGENT_KEYS = [
+  'vibey',
+  'atlas',
+  'brain_scholar',
+  'hr',
+  'loop',
+  'delegator',
+] as const
 
 export const LEGACY_SYSTEM_AGENT_KEYS = ['viktor', 'widget_builder'] as const
 
@@ -24,6 +43,7 @@ export const SKILL_WRITE_LOCKED_SYSTEM_AGENT_KEYS = [
   'brain_scholar',
   'viktor',
   'widget_builder',
+  'delegator',
 ] as const
 
 export const SYSTEM_AGENT_CONTRACTS = {
@@ -141,6 +161,27 @@ export const SYSTEM_AGENT_CONTRACTS = {
       'use_mcp',
     ],
   },
+  delegator: {
+    agentKey: 'delegator',
+    kind: 'delegation',
+    displayName: 'Delegator',
+    roleDefaultKey: 'system_delegation',
+    protected: true,
+    platformDomains: [
+      'read_campaign',
+      'read_marketing_artifacts',
+      'read_space_context',
+      'read_contacts',
+      'manage_tasks_missions',
+      'use_integrations',
+      'read_brain_personal',
+      'read_brain_agent',
+      'read_brain_company',
+      'read_brain_customer',
+      'communicate',
+      'use_mcp',
+    ],
+  },
 } as const satisfies Record<ProtectedSystemAgentKey, SystemAgentContract>
 
 export function normalizeAgentKey(agentKey: string): string {
@@ -173,6 +214,10 @@ export function isHrAgent(agentKey: string): boolean {
 
 export function isLoopAgent(agentKey: string): boolean {
   return normalizeAgentKey(agentKey) === 'loop'
+}
+
+export function isDelegatorAgent(agentKey: string): boolean {
+  return normalizeAgentKey(agentKey) === 'delegator'
 }
 
 export function isProtectedSystemAgent(agentKey: string): agentKey is ProtectedSystemAgentKey {

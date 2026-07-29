@@ -205,6 +205,22 @@ describe('@vibey/agent-policy role defaults', () => {
       'communicate',
       'use_mcp',
     ])
+    expect(ROLE_TO_DOMAINS.system_delegation).toEqual([
+      'read_campaign',
+      'read_marketing_artifacts',
+      'read_space_context',
+      'read_contacts',
+      'manage_tasks_missions',
+      'use_integrations',
+      'read_brain_personal',
+      'read_brain_agent',
+      'read_brain_company',
+      'read_brain_customer',
+      'communicate',
+      'use_mcp',
+    ])
+    expect(ROLE_TO_DOMAINS.system_delegation).not.toContain('edit_campaign')
+    expect(ROLE_TO_DOMAINS.system_delegation).not.toContain('write_brain')
     expect(ROLE_TO_DOMAINS.system_builder).not.toContain('code_projects')
     expect(ROLE_TO_DOMAINS.vibey_ceo).not.toContain('code_projects')
     expect(ROLE_TO_DOMAINS.vibey_ceo).toContain('edit_campaign')
@@ -355,7 +371,7 @@ describe('@vibey/agent-policy action contracts', () => {
       domain: 'read_space_context',
       family: 'space.context',
       operation: 'search',
-      sharedOwners: ['vibey', 'loop', 'managed'],
+      sharedOwners: ['vibey', 'loop', 'delegator', 'managed'],
       userPolicyAddable: true,
       requiresExplicitUserIntent: false,
       schemaRef: 'ACTION_SCHEMAS.search_space_context',
@@ -370,7 +386,7 @@ describe('@vibey/agent-policy action contracts', () => {
         domain: 'manage_tasks_missions',
         family: 'task',
         operation,
-        sharedOwners: ['vibey', 'loop', 'managed'],
+        sharedOwners: ['vibey', 'loop', 'delegator', 'managed'],
         userPolicyAddable: true,
         requiresExplicitUserIntent: true,
         schemaRef: `ACTION_SCHEMAS.${action}`,
@@ -690,6 +706,7 @@ describe('@vibey/agent-policy system agent contracts', () => {
       'isVibeyAgent',
       'isHrAgent',
       'isLoopAgent',
+      'isDelegatorAgent',
       'isSkillWriteLockedSystemAgent',
       'getSystemAgentContract',
     ]) {
@@ -697,7 +714,7 @@ describe('@vibey/agent-policy system agent contracts', () => {
     }
   })
 
-  it('classifies Vibey, Atlas, BrainScholar, and HR without expanding legacy builders', () => {
+  it('classifies protected system agents without expanding legacy builders', () => {
     const isProtectedSystemAgent = (Policy as Record<string, unknown>).isProtectedSystemAgent as (
       agentKey: string,
     ) => boolean
@@ -709,6 +726,9 @@ describe('@vibey/agent-policy system agent contracts', () => {
     ) => boolean
     const isHrAgent = (Policy as Record<string, unknown>).isHrAgent as (agentKey: string) => boolean
     const isLoopAgent = (Policy as Record<string, unknown>).isLoopAgent as (
+      agentKey: string,
+    ) => boolean
+    const isDelegatorAgent = (Policy as Record<string, unknown>).isDelegatorAgent as (
       agentKey: string,
     ) => boolean
     const isSkillWriteLockedSystemAgent = (Policy as Record<string, unknown>)
@@ -723,12 +743,15 @@ describe('@vibey/agent-policy system agent contracts', () => {
     expect(isHrAgent('hr')).toBe(true)
     expect(isProtectedSystemAgent('loop')).toBe(true)
     expect(isLoopAgent('loop')).toBe(true)
+    expect(isProtectedSystemAgent('delegator')).toBe(true)
+    expect(isDelegatorAgent('delegator')).toBe(true)
     expect(isSkillWriteLockedSystemAgent('hr')).toBe(false)
     expect(isSkillWriteLockedSystemAgent('vibey')).toBe(false)
     expect(isSkillWriteLockedSystemAgent('atlas')).toBe(true)
     expect(isSkillWriteLockedSystemAgent('brain_scholar')).toBe(true)
     expect(isSkillWriteLockedSystemAgent('viktor')).toBe(true)
     expect(isSkillWriteLockedSystemAgent('widget_builder')).toBe(true)
+    expect(isSkillWriteLockedSystemAgent('delegator')).toBe(true)
 
     expect(isProtectedSystemAgent('viktor')).toBe(false)
     expect(isProtectedSystemAgent('widget_builder')).toBe(false)

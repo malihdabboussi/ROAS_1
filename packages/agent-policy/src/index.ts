@@ -76,6 +76,7 @@ export {
   canonicalAgentKey,
   getSystemAgentContract,
   isAtlasLikeAgent,
+  isDelegatorAgent,
   isHrAgent,
   isLegacySystemBuilderAgent,
   isProtectedSystemAgent,

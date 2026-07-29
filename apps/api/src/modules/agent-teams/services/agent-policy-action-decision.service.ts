@@ -3,6 +3,7 @@ import {
   ACTION_TO_DOMAIN,
   getActionContract,
   isAtlasLikeAgent,
+  isDelegatorAgent,
   isDomain,
   isHrAgent,
   isLegacySystemBuilderAgent,
@@ -137,19 +138,21 @@ export class AgentPolicyActionDecisionService {
 
   private agentMatchesOwner(
     agentKey: string,
-    owner: 'vibey' | 'atlas' | 'hr' | 'loop' | 'managed',
+    owner: 'vibey' | 'atlas' | 'hr' | 'loop' | 'delegator' | 'managed',
   ): boolean {
     if (owner === 'vibey') return isVibeyAgent(agentKey)
     if (owner === 'atlas') return isAtlasLikeAgent(agentKey)
     if (owner === 'hr') return isHrAgent(agentKey)
     if (owner === 'loop') return isLoopAgentKey(agentKey)
+    if (owner === 'delegator') return isDelegatorAgent(agentKey)
     return (
       !isProtectedSystemAgent(agentKey) &&
       !isLegacySystemBuilderAgent(agentKey) &&
       !isVibeyAgent(agentKey) &&
       !isAtlasLikeAgent(agentKey) &&
       !isHrAgent(agentKey) &&
-      !isLoopAgentKey(agentKey)
+      !isLoopAgentKey(agentKey) &&
+      !isDelegatorAgent(agentKey)
     )
   }
 
