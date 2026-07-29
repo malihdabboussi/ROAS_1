@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Activity, FolderGit2, Layers3, Workflow } from 'lucide-react'
+import { FolderGit2, Layers3, Workflow } from 'lucide-react'
 import { AvatarAccountMenuPanel } from '@/components/layout/AvatarAccountMenuPanel'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { cn } from '@/lib/utils/cn'
@@ -93,37 +93,23 @@ export function SidebarHqMoreFlyoutBody({
   return (
     <>
       {showProjects ? (
-        <>
-          <Link
-            href="/admin/ai-usage"
-            data-hub-dock-navigate
-            onClick={onNavigate}
-            className={cn(
-              'hub-dock-flyout-row',
-              c.pathname.startsWith('/admin/ai-usage') && 'hub-dock-flyout-row-active',
-            )}
-          >
-            <Activity />
-            <span className="min-w-0 flex-1 truncate">AI usage</span>
-          </Link>
-          <div
-            className={cn(
-              'hub-dock-flyout-row',
-              c.pathname.startsWith('/projects') && 'hub-dock-flyout-row-active',
-            )}
-            onMouseEnter={(e) => openSub('projects', e.currentTarget.getBoundingClientRect())}
-            onMouseLeave={(e) => {
-              const related = e.relatedTarget
-              if (related instanceof Element && related.closest('[data-hub-dock-flyout-nested]')) {
-                return
-              }
-              scheduleClose()
-            }}
-          >
-            <FolderGit2 />
-            <span className="min-w-0 flex-1 truncate">Projects</span>
-          </div>
-        </>
+        <div
+          className={cn(
+            'hub-dock-flyout-row',
+            c.pathname.startsWith('/projects') && 'hub-dock-flyout-row-active',
+          )}
+          onMouseEnter={(e) => openSub('projects', e.currentTarget.getBoundingClientRect())}
+          onMouseLeave={(e) => {
+            const related = e.relatedTarget
+            if (related instanceof Element && related.closest('[data-hub-dock-flyout-nested]')) {
+              return
+            }
+            scheduleClose()
+          }}
+        >
+          <FolderGit2 />
+          <span className="min-w-0 flex-1 truncate">Projects</span>
+        </div>
       ) : null}
 
       <Link

@@ -106,6 +106,16 @@ Impact: Open chats now remain open on the same conversation across page changes 
 
 Files: `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/shell/use-shell-store.test.ts`, `documentation/features/claude-chatgpt-shell.md`
 
+## 2026-07-29 13:25 - [STYLE]
+
+What: Removed AI Usage from the shared main-menu More flyout.
+
+Why: AI Usage should no longer be presented as a primary navigation option.
+
+Impact: The option is absent from both main-menu presentations, while the admin usage page remains available by direct URL.
+
+Files: `apps/web/src/components/layout/sidebar/SidebarHqMoreFlyoutBody.tsx`
+
 ## [2026-07-29 13:46] - [FIX]
 
 What: Replaced Agenda meeting dismissal with a persisted minimize and restore interaction. Minimized meetings remain in the calendar as compact rows with struck-through times and titles plus a clear minimized state.
