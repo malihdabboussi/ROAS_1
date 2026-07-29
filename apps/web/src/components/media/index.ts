@@ -35,6 +35,8 @@ export * from './MediaPickerMetaPanel'
 export * from './aspect-ratio-menu'
 export * from './MediaGenerateComposer'
 export * from './MediaImageEditComposer'
+export * from './MediaImageMarkupCanvas'
+export * from './media-image-markup'
 export * from './media-image-generation-types'
 export * from './MediaGenerateModal'
 export {

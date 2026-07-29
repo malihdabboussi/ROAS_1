@@ -135,3 +135,13 @@ Why: Conversational ad generation could interpret a generic “yes” as permiss
 Impact: Builder selections remain authoritative, explicit chat choices skip redundant questions, and ambiguous chat requests must select a production direction before any image or deterministic static-ad render begins.
 
 Files: `apps/web/src/components/chat/ClarificationCard.test.tsx`, `supabase/migrations/20260729173000_static_ad_chat_selection_gate.sql`, `scripts/roas/migration-order.txt`, `documentation/features/missions.md`
+
+## [2026-07-29 14:04] - [FEATURE]
+
+What: Added image markup mode to the shared artifact viewer with pen and pin tools, per-mark feedback, undo/clear controls, and location-aware edit instructions.
+
+Why: Image feedback such as removing an object or fixing clipped text needs an exact visual target instead of relying on whole-image prose.
+
+Impact: Users can mark the precise image area, describe each requested change, and create a non-destructive edited version through the existing image-generation and history flow.
+
+Files: `apps/web/src/components/media/MediaImageMarkupCanvas.tsx`, `apps/web/src/components/media/media-image-markup.ts`, `apps/web/src/components/media/index.ts`, `apps/web/src/features/studio/components/preview/ShellMediaArtifactViewer.tsx`, `apps/web/src/features/studio/components/preview/ShellMediaImageActions.tsx`, focused tests, `documentation/features/claude-chatgpt-shell.md`

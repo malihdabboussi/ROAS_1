@@ -5,7 +5,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
-import { MediaImageEditComposerView, useMediaImageEditController } from '@/components/media'
+import {
+  buildImageMarkupPrompt,
+  MediaImageEditComposerView,
+  MediaImageMarkupCanvas,
+  useMediaImageEditController,
+  type ImageMarkupAnnotation,
+} from '@/components/media'
 import { isShellWorkspaceRoute } from '@/components/shell/shell-route-policy'
 import { ShellArtifactViewerPanel } from '@/components/shell/ShellArtifactViewerPanel'
 import { useShellOpenIn } from '@/components/shell/ShellOpenInProvider'
@@ -19,6 +25,7 @@ import {
   downloadMediaTarget,
   ShellMediaActionsMenu,
   ShellMediaAspectRatioAction,
+  ShellMediaMarkupAction,
 } from './ShellMediaImageActions'
 
 function targetAttachment(target: ShellArtifactViewerTarget): DocumentAttachment | null {
@@ -68,6 +75,7 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
   const openArtifactViewer = useShellStore((state) => state.openArtifactViewer)
   const { targets: openTargets, setFocusMedia } = useShellOpenIn()
   const [resolvedAsset, setResolvedAsset] = useState<MediaAsset | null>(null)
+  const [markupActive, setMarkupActive] = useState(false)
 
   const activeTarget = useMemo<ShellArtifactViewerTarget>(() => {
     if (!resolvedAsset) return target
@@ -99,15 +107,26 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
     spaceId: activeTarget.spaceId,
     campaignId: activeTarget.campaignId,
     conversationId: activeTarget.conversationId,
-    onGenerated: ({ assetId, url }) =>
+    onGenerated: ({ assetId, url }) => {
+      setMarkupActive(false)
       openArtifactViewer({
         ...activeTarget,
         id: assetId,
         mediaAssetId: assetId,
         fileUrl: url,
         title: 'Edited image',
-      }),
+      })
+    },
   })
+
+  const applyMarkup = useCallback(
+    (annotations: ImageMarkupAnnotation[]) => {
+      const prompt = buildImageMarkupPrompt(annotations, editor.prompt)
+      if (!prompt) return
+      void editor.generate({ prompt })
+    },
+    [editor.generate, editor.prompt],
+  )
 
   useEffect(() => {
     setFocusMedia(
@@ -151,6 +170,13 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
   const actions = (
     <>
       {activeTarget.type === 'image' ? <ShellMediaAspectRatioAction editor={editor} /> : null}
+      {activeTarget.type === 'image' ? (
+        <ShellMediaMarkupAction
+          active={markupActive}
+          disabled={!activeTarget.fileUrl || editor.isGenerating}
+          onToggle={() => setMarkupActive((active) => !active)}
+        />
+      ) : null}
       <button
         type="button"
         disabled={!activeTarget.fileUrl}
@@ -207,10 +233,12 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
             ) : activeTarget.type === 'audio' && activeTarget.fileUrl ? (
               <audio src={activeTarget.fileUrl} controls className="w-full" />
             ) : activeTarget.fileUrl ? (
-              <img
+              <MediaImageMarkupCanvas
                 src={activeTarget.fileUrl}
                 alt={activeTarget.title}
-                className="max-h-full max-w-full object-contain"
+                active={markupActive}
+                applying={editor.isGenerating}
+                onApply={applyMarkup}
               />
             ) : (
               <p className="body-3 text-muted-foreground">No preview available</p>
