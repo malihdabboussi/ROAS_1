@@ -185,3 +185,13 @@ Why: Delegation was available only as one of Pixel's broad capabilities, so ther
 Impact: The ROAS organization gets a visible Delegator agent that can be opened directly from Team → Agents or the chat selector. Delegator owns Desk processing with narrow read/context and task permissions, while campaign mutation, Brain writes, skill editing, and unapproved external actions remain blocked. New organizations also receive the protected agent during core-agent provisioning.
 
 Files: `docker/agents/templates/delegator/`, `supabase/migrations/20260729174500_seed_delegator_system_agent.sql`, `scripts/seed-system-agents.ts`, `packages/agent-policy/src/`, `apps/agent-api/src/modules/`, `apps/api/src/modules/org/services/org.service.ts`, `apps/api/src/modules/agent-teams/services/agent-policy-action-decision.service.ts`, `apps/api/src/modules/missions/lib/system-agent-keys.ts`, `apps/api/src/modules/space-templates/data/`, `apps/web/src/lib/agents/`, `documentation/features/spaces-automation.md`, `.docs/plans/agent-follow-up-work.md, `scripts/arch/loc-allowlist.json`
+
+## [2026-07-29 16:10] - [FIX]
+
+What: Fixed Delegator production seed to install for every org that already has Pixel, replace system definition rows safely, and remove the hardcoded non-ROAS org id.
+
+Why: The first seed used an ON CONFLICT target that could not collapse NULL-org definition rows and targeted an org UUID that does not exist in ROAS production, so Team → Agents never received an org-scoped Delegator.
+
+Impact: ROAS now has exactly one active org Delegator with five definition files and Delegation Desk skill; future applies are idempotent.
+
+Files: `supabase/migrations/20260729174500_seed_delegator_system_agent.sql`, `supabase/migrations/20260729180000_repair_delegator_org_seed_and_defs.sql`, `scripts/roas/migration-order.txt`

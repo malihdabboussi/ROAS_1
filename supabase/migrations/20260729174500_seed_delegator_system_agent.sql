@@ -62,7 +62,7 @@ SET
   is_active = true,
   updated_at = now()
 WHERE user_id IS NULL
-  AND org_id = '699e3530-881c-4653-b507-4c4b5993538f'::uuid
+  AND org_id IS NOT NULL
   AND agent_key = 'delegator';
 
 INSERT INTO public.agents_registry (
@@ -80,7 +80,7 @@ INSERT INTO public.agents_registry (
 )
 SELECT
   NULL,
-  '699e3530-881c-4653-b507-4c4b5993538f'::uuid,
+  o.id,
   'delegator',
   'Delegator',
   'Delegation Manager',
@@ -90,18 +90,28 @@ SELECT
   '{"capability_profile":"system_delegation","capability_domain":"operations","platform_managed":true,"model_id":"auto"}'::jsonb,
   true,
   true
+FROM public.organizations o
 WHERE EXISTS (
   SELECT 1
-  FROM public.organizations
-  WHERE id = '699e3530-881c-4653-b507-4c4b5993538f'::uuid
+  FROM public.agents_registry vibey
+  WHERE vibey.org_id = o.id
+    AND vibey.user_id IS NULL
+    AND vibey.agent_key = 'vibey'
 )
 AND NOT EXISTS (
   SELECT 1
-  FROM public.agents_registry
-  WHERE user_id IS NULL
-    AND org_id = '699e3530-881c-4653-b507-4c4b5993538f'::uuid
-    AND agent_key = 'delegator'
+  FROM public.agents_registry existing
+  WHERE existing.org_id = o.id
+    AND existing.user_id IS NULL
+    AND existing.agent_key = 'delegator'
 );
+
+-- System definition rows use NULL org_id/user_id. The org unique index does not
+-- collapse those rows, so replace rather than ON CONFLICT upsert.
+DELETE FROM public.agent_definitions
+WHERE agent_key = 'delegator'
+  AND user_id IS NULL
+  AND org_id IS NULL;
 
 INSERT INTO public.agent_definitions (
   agent_key,
@@ -196,12 +206,7 @@ $tools$,
     NULL,
     NULL,
     'system'
-  )
-ON CONFLICT (agent_key, file_name) WHERE user_id IS NULL AND org_id IS NULL
-DO UPDATE SET
-  content = EXCLUDED.content,
-  source = EXCLUDED.source,
-  updated_at = now();
+  );
 
 INSERT INTO public.agent_skills (
   agent_key,
@@ -307,7 +312,7 @@ $skill$,
   NULL,
   NULL
 )
-ON CONFLICT (agent_key, skill_key) WHERE user_id IS NULL AND org_id IS NULL
+ON CONFLICT (agent_key, skill_key) WHERE user_id IS NULL
 DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
