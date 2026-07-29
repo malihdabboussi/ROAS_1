@@ -236,6 +236,11 @@ export const WORK_SURFACE_LABELS: Record<GlobalWorkSurface, string> = {
 
 /** Mid-conversation campaign+brain soft prompt — not at chat start. */
 export const CAMPAIGN_BRAIN_NUDGE_MIN_USER_TURNS = 3
+export const CAMPAIGN_BRAIN_NUDGE_MESSAGES = {
+  prompt: 'This chat seems useful. Save it to a campaign',
+  actionLabel: 'Save this chat to a campaign',
+  dismissLabel: 'Dismiss campaign suggestion',
+} as const
 
 export function countUserMessageTurns(messages: ReadonlyArray<{ role?: string | null }>): number {
   return messages.filter((message) => message.role === 'user').length
@@ -243,6 +248,7 @@ export function countUserMessageTurns(messages: ReadonlyArray<{ role?: string | 
 
 export function shouldOfferCampaignBrainNudge(input: {
   surface: GlobalWorkSurface
+  campaignId?: string | null
   spaceId?: string | null
   userTurnCount: number
   minUserTurns?: number
@@ -250,6 +256,7 @@ export function shouldOfferCampaignBrainNudge(input: {
 }): boolean {
   if (input.dismissed) return false
   if (input.surface !== 'general') return false
+  if (typeof input.campaignId === 'string' && input.campaignId.trim().length > 0) return false
   if (typeof input.spaceId === 'string' && input.spaceId.trim().length > 0) return false
   const minTurns = input.minUserTurns ?? CAMPAIGN_BRAIN_NUDGE_MIN_USER_TURNS
   return input.userTurnCount >= minTurns

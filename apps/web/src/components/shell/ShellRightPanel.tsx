@@ -1,8 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
-import { ConversationScopePicker } from '@/components/conversations'
+import {
+  ConversationScopePicker,
+  type ConversationScopePickerHandle,
+} from '@/components/conversations'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import type { Conversation } from '@/lib/conversations'
 import { cn } from '@/lib/utils/cn'
@@ -40,6 +43,11 @@ export function ShellRightPanel({
   const tab = useShellStore((s) => s.rightPanel.tab)
   const setRightPanelOpen = useShellStore((s) => s.setRightPanelOpen)
   const setRightPanelTab = useShellStore((s) => s.setRightPanelTab)
+  const conversationScopePickerRequestNonce = useShellStore(
+    (s) => s.conversationScopePickerRequestNonce,
+  )
+  const scopePickerRef = useRef<ConversationScopePickerHandle>(null)
+  const lastHandledScopePickerRequestRef = useRef(0)
   const messages = useChatStore((s) =>
     conversationId ? (s.messagesByConversation[conversationId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES,
   )
@@ -50,6 +58,20 @@ export function ShellRightPanel({
   useEffect(() => {
     if (open && !conversationId && tab !== 'tasks') setRightPanelTab('tasks')
   }, [conversationId, open, setRightPanelTab, tab])
+
+  useEffect(() => {
+    if (
+      !mounted ||
+      !open ||
+      !scopeVisible ||
+      conversationScopePickerRequestNonce <= lastHandledScopePickerRequestRef.current
+    ) {
+      return
+    }
+
+    lastHandledScopePickerRequestRef.current = conversationScopePickerRequestNonce
+    scopePickerRef.current?.openMenuFromBanner()
+  }, [conversationScopePickerRequestNonce, mounted, open, scopeVisible])
 
   if (!mounted) return null
 
@@ -68,6 +90,7 @@ export function ShellRightPanel({
             Campaign & space
           </p>
           <ConversationScopePicker
+            ref={scopePickerRef}
             conversation={conversation}
             campaignId={campaignId}
             spaceId={spaceId}

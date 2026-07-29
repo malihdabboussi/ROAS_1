@@ -46,6 +46,13 @@ describe('campaign brain nudge eligibility', () => {
     ).toBe(false)
     expect(
       shouldOfferCampaignBrainNudge({
+        surface: 'general',
+        campaignId: 'campaign-1',
+        userTurnCount: 10,
+      }),
+    ).toBe(false)
+    expect(
+      shouldOfferCampaignBrainNudge({
         surface: 'spaces',
         userTurnCount: 10,
       }),

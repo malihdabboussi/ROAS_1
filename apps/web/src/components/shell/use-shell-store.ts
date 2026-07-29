@@ -98,6 +98,7 @@ interface ShellStore {
   /** Page work area (Space dock, Brain, Inbox, …) visible; false = chat full width. */
   workAreaOpen: boolean
   rightPanel: ShellRightPanelState
+  conversationScopePickerRequestNonce: number
   artifactViewer: ShellArtifactViewerState
   recentArtifactTargets: ShellArtifactViewerTarget[]
   recentWorkAreaPages: ShellWorkAreaPageTarget[]
@@ -127,6 +128,7 @@ interface ShellStore {
   toggleRightPanel: () => void
   setRightPanelTab: (tab: ShellRightPanelTab) => void
   openRightPanelSurface: (tab: ShellRightPanelTab) => void
+  requestConversationScopePicker: () => void
   openArtifactViewer: (target: ShellArtifactViewerTarget) => void
   closeArtifactViewer: () => void
   setArtifactViewerWidth: (width: number) => void
@@ -159,6 +161,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     open: false,
     tab: 'tasks',
   },
+  conversationScopePickerRequestNonce: 0,
   artifactViewer: {
     target: null,
     width: 480,
@@ -301,6 +304,14 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     writePersisted({ rightPanelOpen: true, rightPanelTab: tab })
     set((s) => ({
       rightPanel: { open: true, tab },
+      artifactViewer: { ...s.artifactViewer, target: null },
+    }))
+  },
+  requestConversationScopePicker: () => {
+    writePersisted({ rightPanelOpen: true })
+    set((s) => ({
+      conversationScopePickerRequestNonce: s.conversationScopePickerRequestNonce + 1,
+      rightPanel: { ...s.rightPanel, open: true },
       artifactViewer: { ...s.artifactViewer, target: null },
     }))
   },

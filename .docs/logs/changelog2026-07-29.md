@@ -65,3 +65,13 @@ Why: Scoped chats were asking for context they already had, the fallback was dif
 Impact: Quick production starts from the correct linked Space, unscoped launches remain easy to target, chat and work content resize without overlap, and generated image cards open their actual asset viewer.
 
 Files: `apps/web/src/features/spaces/components/playbooks/`, `apps/web/src/components/shell/`, `apps/web/src/features/spaces/hooks/use-space-open-media-event.ts`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `documentation/features/missions.md`, `documentation/features/claude-chatgpt-shell.md`
+
+## 2026-07-29 13:12 - [FIX]
+
+What: Replaced the large in-chat campaign save form with a compact dismissible suggestion that opens the existing Campaign & Space picker in the right summary panel.
+
+Why: The old form duplicated the canonical scope picker, consumed too much chat space, and appeared even when the conversation or visible screen had already linked campaign context.
+
+Impact: Unscoped chats get one lightweight guide into the established workflow, while campaign- or Space-linked chats no longer receive a redundant prompt.
+
+Files: `apps/web/src/components/global-chat/components/ChatCampaignBrainNudge.tsx`, `apps/web/src/components/global-chat/config/work-context.config.ts`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/components/shell/use-shell-store.ts`, focused tests, `documentation/features/claude-chatgpt-shell.md`

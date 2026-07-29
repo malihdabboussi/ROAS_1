@@ -3,8 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ShellRightPanel } from './ShellRightPanel'
 
 const mocks = vi.hoisted(() => ({
+  openScopePicker: vi.fn(),
   shellState: {
     rightPanel: { open: true, tab: 'tasks' as const },
+    conversationScopePickerRequestNonce: 0,
     setRightPanelOpen: vi.fn(),
     setRightPanelTab: vi.fn(),
   },
@@ -24,9 +26,15 @@ vi.mock('@/features/studio/store/use-chat-store', () => ({
   ) => selector({ messagesByConversation: mocks.messagesByConversation }),
 }))
 
-vi.mock('@/components/conversations', () => ({
-  ConversationScopePicker: () => <div data-testid="scope-picker">Scope</div>,
-}))
+vi.mock('@/components/conversations', async () => {
+  const { forwardRef, useImperativeHandle } = await import('react')
+  return {
+    ConversationScopePicker: forwardRef(function MockConversationScopePicker(_props, ref) {
+      useImperativeHandle(ref, () => ({ openMenuFromBanner: mocks.openScopePicker }))
+      return <div data-testid="scope-picker">Scope</div>
+    }),
+  }
+})
 
 vi.mock('./ShellRightPanelTasks', () => ({
   ShellRightPanelTasks: ({ conversationId }: { conversationId: string | null }) => (
@@ -48,6 +56,7 @@ describe('ShellRightPanel', () => {
   beforeEach(() => {
     mocks.shellState.rightPanel.open = true
     mocks.shellState.rightPanel.tab = 'tasks'
+    mocks.shellState.conversationScopePickerRequestNonce = 0
     vi.clearAllMocks()
   })
 
@@ -100,5 +109,13 @@ describe('ShellRightPanel', () => {
 
     await waitFor(() => expect(panel).toHaveClass('translate-x-full'))
     expect(panel).not.toHaveClass('-translate-x-full')
+  })
+
+  it('opens the campaign and space picker when the guidance prompt requests it', async () => {
+    mocks.shellState.conversationScopePickerRequestNonce = 1
+
+    render(<ShellRightPanel conversationId="conversation-1" showScope />)
+
+    await waitFor(() => expect(mocks.openScopePicker).toHaveBeenCalledTimes(1))
   })
 })
