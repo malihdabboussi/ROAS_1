@@ -89,6 +89,7 @@ export class MeetingWorkspaceRepository {
         source: 'calendar',
         confidence: 1,
         confirmation_state: 'confirmed',
+        metadata: {},
       },
     ]
     if (input.participantEmails.length > 0) {
@@ -134,6 +135,7 @@ export class MeetingWorkspaceRepository {
         source: 'crm',
         confidence: 1,
         confirmation_state: 'confirmed',
+        metadata: {},
       })
     }
 

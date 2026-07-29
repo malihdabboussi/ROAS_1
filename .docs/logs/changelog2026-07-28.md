@@ -156,3 +156,13 @@ Why: Persistent meeting chat could select an Opus context tier rejected by the r
 Impact: Meeting chat now completes and persists in production. Historical transcripts can be repaired in bounded pages without duplicate meetings, recaps, provider actions, or AI-generated task floods; unavailable recordings cannot block older pages.
 
 Files: `supabase/migrations/20260728204000_align_model_strategy_context_tiers.sql`, `apps/agent-api/src/modules/chat/services/model-strategy-capability-contract.test.ts`, `apps/api/src/modules/integrations/fathom/controllers/fathom-meetings.controller.ts`, `apps/api/src/modules/integrations/fathom/fathom.module.ts`, `apps/api/src/modules/integrations/fathom/services/fathom-meeting-workspace-backfill.service.ts`, `apps/api/src/modules/integrations/fathom/services/fathom-meeting-workspace-backfill.service.test.ts`, `apps/api/src/modules/meetings/repositories/meeting-recording-backfill.repository.ts`, `apps/api/src/modules/meetings/meetings.module.ts`, and `documentation/features/meeting-follow-up-slack.md`.
+
+## [2026-07-28 20:17] - [FIX]
+
+What: Ensured every generated meeting context link carries an explicit metadata object during bulk persistence.
+
+Why: PostgREST represented omitted metadata fields as null in mixed bulk upserts, violating the meeting context table's non-null contract and stopping historical transcript repair.
+
+Impact: Canonical meeting ingestion and transcript repair can persist linked spaces and campaigns without failing before recording and transcript deliverables are updated.
+
+Files: `apps/api/src/modules/meetings/repositories/meeting-workspace.repository.ts`, `apps/api/src/modules/meetings/repositories/meeting-workspace.repository.test.ts`.
