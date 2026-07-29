@@ -85,7 +85,9 @@ describe('ChatCompletionSideEffectsService', () => {
     service.runDetached(input as never)
 
     await vi.waitFor(() => expect(credits.processUsage).toHaveBeenCalledTimes(1))
-    expect(input.logger.log).toHaveBeenCalledWith(expect.stringContaining('"total_cost_usd":0.03'))
+    expect(input.logger.log).toHaveBeenCalledWith(
+      expect.stringContaining('"total_cost_usd":0.03'),
+    )
     expect(input.logger.log).toHaveBeenCalledWith(
       expect.stringContaining('"priced_generation_ids":["gen-research","gen-write"]'),
     )

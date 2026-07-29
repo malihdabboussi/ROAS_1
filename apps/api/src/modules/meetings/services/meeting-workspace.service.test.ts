@@ -36,10 +36,14 @@ describe('MeetingWorkspaceService', () => {
       orgId: null,
     })
 
-    expect(stateRepository.updateWorkspace).toHaveBeenCalledWith(expect.anything(), 'meeting-1', {
-      phase: 'complete',
-      conversation_id: 'conversation-1',
-    })
+    expect(stateRepository.updateWorkspace).toHaveBeenCalledWith(
+      expect.anything(),
+      'meeting-1',
+      {
+        phase: 'complete',
+        conversation_id: 'conversation-1',
+      },
+    )
     expect(conversations.createConversation).not.toHaveBeenCalled()
   })
 })

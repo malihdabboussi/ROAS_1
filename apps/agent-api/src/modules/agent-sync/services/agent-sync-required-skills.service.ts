@@ -25,7 +25,10 @@ export class AgentSyncRequiredSkillsService {
       orgId: input.orgId,
       skillKeys,
     })
-    const skillDenySet = await ctx.loadSkillDenySet(input.orgId ? null : input.userId, input.orgId)
+    const skillDenySet = await ctx.loadSkillDenySet(
+      input.orgId ? null : input.userId,
+      input.orgId,
+    )
     const skillRows = runtimeSkillScope.skills.filter(
       (row) => !skillDenySet.has(`${row.agent_key}:${row.skill_key}`),
     )
