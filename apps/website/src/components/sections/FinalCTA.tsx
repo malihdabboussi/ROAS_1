@@ -54,7 +54,7 @@ export function FinalCTA() {
           </p>
 
           <WaitlistAwareLink
-            href="https://app.vibey.im/register"
+            href="https://app.vibey.im/login"
             className="glow-emerald animate-glow-pulse bg-emerald-accent text-on-emerald body-1 group inline-flex items-center gap-2 rounded-xl px-10 py-5 font-bold transition-all hover:brightness-110"
           >
             Get Early Access

@@ -346,7 +346,7 @@ export function Hero(props: { teamPreviewAgents?: { imageUrl: string; label: str
 
   const handleSend = useCallback(() => {
     if (!message.trim()) return
-    window.location.href = 'https://app.vibey.im/register'
+    window.location.href = 'https://app.vibey.im/login'
   }, [message])
 
   const handleKeyDown = useCallback(
@@ -414,14 +414,14 @@ export function Hero(props: { teamPreviewAgents?: { imageUrl: string; label: str
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        onClick={() => { window.location.href = 'https://app.vibey.im/register' }}
+                        onClick={() => { window.location.href = 'https://app.vibey.im/login' }}
                         className="button-glass-neutral flex h-8 w-8 items-center justify-center rounded-full transition-all"
                       >
                         <Paperclip className="h-3.5 w-3.5" />
                       </button>
                       <button
                         type="button"
-                        onClick={() => { window.location.href = 'https://app.vibey.im/register' }}
+                        onClick={() => { window.location.href = 'https://app.vibey.im/login' }}
                         className="button-glass-neutral flex h-8 items-center gap-1 rounded-full px-2 transition-all"
                       >
                         <Settings2 className="h-3.5 w-3.5" />
@@ -455,7 +455,7 @@ export function Hero(props: { teamPreviewAgents?: { imageUrl: string; label: str
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        onClick={() => { window.location.href = 'https://app.vibey.im/register' }}
+                        onClick={() => { window.location.href = 'https://app.vibey.im/login' }}
                         className="button-glass-neutral flex h-8 w-8 items-center justify-center rounded-full transition-all"
                       >
                         <Mic className="h-3.5 w-3.5" />
@@ -480,7 +480,7 @@ export function Hero(props: { teamPreviewAgents?: { imageUrl: string; label: str
               <div className="rounded-b-spacing-4 pt-spacing-6 bg-color-surface relative z-0 mx-4 -mt-3 flex items-center justify-between border-t-0 px-4 pb-2.5 shadow-sm">
                 <button
                   type="button"
-                  onClick={() => { window.location.href = 'https://app.vibey.im/register' }}
+                  onClick={() => { window.location.href = 'https://app.vibey.im/login' }}
                   className="text-color-muted body-4 flex items-center gap-1.5 transition-colors hover:text-white"
                 >
                   <FolderKanban className="h-3 w-3" />

@@ -355,7 +355,7 @@ export function PricingPreview() {
                   </ul>
 
                   <a
-                    href="https://app.vibey.im/register"
+                    href="https://app.vibey.im/login"
                     className={`body-3 block w-full rounded-xl py-3 text-center font-semibold transition-all ${
                       plan.highlighted
                         ? 'button-glass-secondary'

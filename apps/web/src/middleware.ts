@@ -86,10 +86,9 @@ export async function middleware(request: NextRequest) {
   const isOnboardingPage = request.nextUrl.pathname === ONBOARDING_PATH
   const isNoOrgAccessPage = request.nextUrl.pathname === NO_ORG_ACCESS_PATH
   const isSettingUpPage = request.nextUrl.pathname === '/setting-up'
-  if (
-    process.env.NEXT_PUBLIC_WAITLIST_MODE === 'true' &&
-    request.nextUrl.pathname === '/register'
-  ) {
+  // Flip to false (and redeploy) to reopen public /register
+  const publicSignupsClosed = process.env.NEXT_PUBLIC_WAITLIST_MODE !== 'false'
+  if (publicSignupsClosed && request.nextUrl.pathname === '/register') {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

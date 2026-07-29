@@ -26,15 +26,9 @@ export default function SharedLayout({ children }: { children: React.ReactNode }
         <div className="gap-spacing-2 flex items-center">
           <Link
             href="/login"
-            className="button-glass-neutral body-3 px-spacing-4 py-spacing-2 rounded-md"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/register"
             className="button-glass-primary body-3 px-spacing-4 py-spacing-2 rounded-md"
           >
-            Sign up
+            Sign in
           </Link>
         </div>
       </header>

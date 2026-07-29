@@ -252,7 +252,7 @@ export function Navbar() {
             Log in
           </a>
           <a
-            href="https://app.vibey.im/register"
+            href="https://app.vibey.im/login"
             className="chip-glass-emerald body-3 rounded-lg px-4 py-1.5 font-semibold"
           >
             Get Early Access
@@ -342,7 +342,7 @@ export function Navbar() {
                 Log in
               </a>
               <a
-                href="https://app.vibey.im/register"
+                href="https://app.vibey.im/login"
                 onClick={() => setMenuOpen(false)}
                 className="chip-glass-emerald block w-full rounded-lg py-3 text-center font-semibold"
               >

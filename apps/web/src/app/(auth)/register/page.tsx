@@ -15,7 +15,8 @@ import { createClient } from '@/lib/supabase/client'
 import { resolveAuthSignupErrorMessage } from '../config/auth-toast-errors.config'
 
 const LAST_PROVIDER_KEY = 'vibey-last-auth-provider'
-const WAITLIST_MODE = process.env.NEXT_PUBLIC_WAITLIST_MODE === 'true'
+// Public signups closed unless explicitly re-enabled with NEXT_PUBLIC_WAITLIST_MODE=false
+const WAITLIST_MODE = process.env.NEXT_PUBLIC_WAITLIST_MODE !== 'false'
 
 const SIGNUP_QUOTES = [
   'Start building with your AI team.',
@@ -41,7 +42,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (WAITLIST_MODE) {
-      router.replace('/invite')
+      router.replace('/login')
     }
   }, [router])
 

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { resolveAuthRegisterError } from '../config/auth-errors.config'
+import { AUTH_ERROR_MESSAGES, resolveAuthRegisterError } from '../config/auth-errors.config'
 import { AuthRepository } from '../repositories/auth.repository'
 
 @Injectable()
@@ -9,6 +9,11 @@ export class AuthService {
   constructor(private readonly repository: AuthRepository) {}
 
   async register(email: string, password: string) {
+    // Public signups closed unless explicitly re-enabled with NEXT_PUBLIC_WAITLIST_MODE=false
+    if (process.env.NEXT_PUBLIC_WAITLIST_MODE !== 'false') {
+      return { error: AUTH_ERROR_MESSAGES.PUBLIC_SIGNUP_CLOSED, status: 403 as const }
+    }
+
     const { data, error } = await this.repository.createUser(email, password)
 
     if (error) {

@@ -8,7 +8,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL!
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL!
 
 type Step = 'email' | 'password'
-type Mode = 'login' | 'register'
 
 interface AuthModalProps {
   open: boolean
@@ -68,7 +67,6 @@ const GOOGLE_SVG = (
 
 export function AuthModal({ open, onClose, pendingMessage }: AuthModalProps) {
   const [step, setStep] = useState<Step>('email')
-  const [mode, setMode] = useState<Mode>('register')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -136,7 +134,7 @@ export function AuthModal({ open, onClose, pendingMessage }: AuthModalProps) {
     setLoading(true)
 
     try {
-      const res = await fetch(`${API_URL}/api/auth/${mode === 'register' ? 'register' : 'login'}`, {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -145,12 +143,6 @@ export function AuthModal({ open, onClose, pendingMessage }: AuthModalProps) {
       const data = await res.json()
 
       if (data.error) {
-        if (data.statusCode === 409) {
-          setMode('login')
-          setError('Account exists. Enter your password to sign in.')
-          setLoading(false)
-          return
-        }
         setError(data.error)
         setLoading(false)
         return
@@ -169,7 +161,7 @@ export function AuthModal({ open, onClose, pendingMessage }: AuthModalProps) {
       setError('Could not connect. Try again.')
       setLoading(false)
     }
-  }, [email, password, mode, messageParam])
+  }, [email, password, messageParam])
 
   const onForgotPassword = useCallback(async () => {
     setForgotStatus(null)
@@ -234,9 +226,7 @@ export function AuthModal({ open, onClose, pendingMessage }: AuthModalProps) {
               ? 'Check your email'
               : showForgot
                 ? 'Reset your password'
-                : mode === 'register'
-                  ? 'Create your account'
-                  : 'Welcome back'}
+                : 'Welcome back'}
           </h2>
           <p className="text-color-muted body-3 mt-1">
             {confirmEmail
@@ -323,21 +313,7 @@ export function AuthModal({ open, onClose, pendingMessage }: AuthModalProps) {
             </form>
 
             <p className="text-color-muted body-4 pt-2 text-center">
-              {mode === 'register' ? (
-                <>
-                  Already have an account?{' '}
-                  <button onClick={() => setMode('login')} className="text-white underline">
-                    Sign in
-                  </button>
-                </>
-              ) : (
-                <>
-                  No account yet?{' '}
-                  <button onClick={() => setMode('register')} className="text-white underline">
-                    Create one
-                  </button>
-                </>
-              )}
+              Public sign-ups are closed. Sign in if you already have an account.
             </p>
           </div>
         ) : showForgot ? (
@@ -398,27 +374,19 @@ export function AuthModal({ open, onClose, pendingMessage }: AuthModalProps) {
               className="body-3 w-full rounded-xl px-4 py-3 font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
               style={GLASS.buttonGlassGreen}
             >
-              {loading
-                ? mode === 'register'
-                  ? 'Creating account…'
-                  : 'Signing in…'
-                : mode === 'register'
-                  ? 'Create account'
-                  : 'Sign in'}
+              {loading ? 'Signing in…' : 'Sign in'}
             </button>
-            {mode === 'login' && (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowForgot(true)
-                  setForgotStatus(null)
-                  setForgotError(null)
-                }}
-                className="text-color-muted body-4 w-full pt-1 text-center transition-colors hover:text-white"
-              >
-                Forgot password?
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                setShowForgot(true)
+                setForgotStatus(null)
+                setForgotError(null)
+              }}
+              className="text-color-muted body-4 w-full pt-1 text-center transition-colors hover:text-white"
+            >
+              Forgot password?
+            </button>
           </form>
         )}
       </div>

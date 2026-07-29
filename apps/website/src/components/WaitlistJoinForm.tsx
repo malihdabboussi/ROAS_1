@@ -2,7 +2,7 @@
 
 import { SiteLogo } from '@/components/SiteLogo'
 
-const APP_REGISTER_URL = 'https://app.vibey.im/register'
+const APP_LOGIN_URL = 'https://app.vibey.im/login'
 
 export function WaitlistJoinForm({
   onDone,
@@ -23,7 +23,7 @@ export function WaitlistJoinForm({
       <p className="body-3 mb-6 text-white/40">Cancel anytime. Billed monthly via Stripe.</p>
 
       <a
-        href={APP_REGISTER_URL}
+        href={APP_LOGIN_URL}
         className="body-3 mb-4 inline-block w-full rounded-xl px-4 py-3 font-semibold transition-opacity hover:opacity-90"
         style={{
           background:

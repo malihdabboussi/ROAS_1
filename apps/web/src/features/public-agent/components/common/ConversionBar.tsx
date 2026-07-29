@@ -16,7 +16,7 @@ export function ConversionBar() {
       </p>
       <div className="flex shrink-0 items-center gap-2">
         <a
-          href={`${resolveMarketingSiteUrl()}/register`}
+          href={`${resolveMarketingSiteUrl()}/login`}
           target="_blank"
           rel="noopener noreferrer"
           className="body-4 rounded-full bg-white/10 px-3.5 py-1 font-medium text-white transition-colors hover:bg-white/20"

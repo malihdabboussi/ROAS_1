@@ -2,6 +2,8 @@
 export const AUTH_ERROR_MESSAGES = {
   REGISTER_FAILED: "I couldn't finish creating your account. Try again in a moment.",
   ACCOUNT_EXISTS: 'An account with this email already exists.',
+  PUBLIC_SIGNUP_CLOSED:
+    'Public sign-ups are closed right now. Sign in if you already have an account, or use an invite.',
 } as const
 
 /** Supabase/backend error pattern -> auth error key. First match wins. */

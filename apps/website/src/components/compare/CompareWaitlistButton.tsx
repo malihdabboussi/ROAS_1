@@ -9,7 +9,7 @@ export function CompareWaitlistButton(props: {
 }) {
   return (
     <a
-      href="https://app.vibey.im/register"
+      href="https://app.vibey.im/login"
       className={props.className}
     >
       {props.children ?? 'Get Early Access'}

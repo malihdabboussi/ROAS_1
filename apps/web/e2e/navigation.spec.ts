@@ -38,24 +38,18 @@ test.describe('Dashboard Navigation', () => {
     })
   })
 
-  test('login page has links to register and forgot password', async ({ page }) => {
+  test('login page has forgot password link and no public signup link', async ({ page }) => {
     await page.goto('/login')
-    await expect(page.getByRole('link', { name: /Create account/i })).toHaveAttribute(
-      'href',
-      '/register',
-    )
+    await expect(page.getByRole('link', { name: /Create account/i })).toHaveCount(0)
     await expect(page.getByRole('link', { name: /Forgot password/i })).toHaveAttribute(
       'href',
       '/forgot-password',
     )
   })
 
-  test('register page links back to login', async ({ page }) => {
+  test('register page redirects to login while public signups are closed', async ({ page }) => {
     await page.goto('/register')
-    await expect(page.getByRole('link', { name: /Already have an account/i })).toHaveAttribute(
-      'href',
-      '/login',
-    )
+    await expect(page).toHaveURL(/\/login/)
   })
 
   test('unauthenticated user is redirected to login from dashboard', async ({ page }) => {

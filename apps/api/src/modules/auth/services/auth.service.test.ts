@@ -12,6 +12,28 @@ describe('AuthService', () => {
     createClient.mockReset()
     process.env.SUPABASE_URL = 'https://supabase.example'
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
+    process.env.NEXT_PUBLIC_WAITLIST_MODE = 'false'
+  })
+
+  it('rejects public registration when waitlist mode is on', async () => {
+    process.env.NEXT_PUBLIC_WAITLIST_MODE = 'true'
+    createClient.mockReturnValue({
+      auth: {
+        admin: {
+          createUser: vi.fn(),
+        },
+        signInWithPassword: vi.fn(),
+      },
+    })
+    const { AuthRepository } = await import('../repositories/auth.repository')
+    const { AuthService } = await import('./auth.service')
+    const service = new AuthService(new AuthRepository())
+
+    await expect(service.register('user@example.com', 'password1')).resolves.toEqual({
+      error:
+        'Public sign-ups are closed right now. Sign in if you already have an account, or use an invite.',
+      status: 403,
+    })
   })
 
   it('maps duplicate registration errors to 409', async () => {

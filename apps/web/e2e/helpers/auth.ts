@@ -22,12 +22,10 @@ export async function loginViaUI(page: Page, email: string, password: string) {
 
 /**
  * Register a new user via the UI.
+ * Public /register is closed; prefer invite flows for new accounts.
  */
-export async function registerViaUI(page: Page, email: string, password: string) {
-  await page.goto('/register')
-  await page.getByPlaceholder('you@domain.com').fill(email)
-  await page.getByPlaceholder('Password').fill(password)
-  await page.getByRole('button', { name: 'Create account' }).click()
+export async function registerViaUI(_page: Page, _email: string, _password: string) {
+  throw new Error('Public sign-up is closed. Use an invite link or admin-created account.')
 }
 
 /**

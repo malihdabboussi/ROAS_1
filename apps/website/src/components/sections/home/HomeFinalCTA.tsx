@@ -20,7 +20,7 @@ export function HomeFinalCTA() {
             where the work actually moves.
           </p>
           <a
-            href="https://app.vibey.im/register"
+            href="https://app.vibey.im/login"
             className="chip-glass-emerald body-2 mt-2 inline-flex items-center gap-2 rounded-xl px-8 py-4 font-semibold"
           >
             Get Early Access

@@ -84,7 +84,7 @@ export function CompareHeroSection(props: {
               ))}
             </ul>
             <a
-              href="https://app.vibey.im/register"
+              href="https://app.vibey.im/login"
               className="chip-glass-emerald body-3 inline-flex items-center justify-center rounded-xl px-8 py-3 font-semibold"
             >
               Get Early Access

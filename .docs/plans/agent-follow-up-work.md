@@ -1,3 +1,15 @@
+## 2026-07-29 - [OPS] Set NEXT_PUBLIC_WAITLIST_MODE=true on Vercel (web + api + website)
+
+Status: Open
+
+Found while: Closing public sign-ups
+
+Evidence: Code defaults closed when env is unset/true (`!== 'false'`), and local/secrets templates are true, but production Vercel env was not updated this session (no Vercel token / no env MCP tool). If production still has `NEXT_PUBLIC_WAITLIST_MODE=false`, public `/register` stays open after deploy until that value is changed or removed.
+
+Needed work: Set `NEXT_PUBLIC_WAITLIST_MODE=true` (or remove an explicit `false`) on `roas-web`, `roas-api`, and the website project for Production/Preview, then redeploy.
+
+Reason not done now: No credentialed Vercel env write path available in this session.
+
 ## 2026-07-28 - [OPS] supa-project skill documents stale production Supabase ref
 
 Status: Open

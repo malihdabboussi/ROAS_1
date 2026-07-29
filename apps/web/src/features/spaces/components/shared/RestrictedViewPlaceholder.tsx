@@ -11,15 +11,9 @@ export function RestrictedViewPlaceholder(props: { viewLabel?: string }) {
         <div className="mt-spacing-6 gap-spacing-2 flex flex-wrap items-center justify-center">
           <Link
             href="/login"
-            className="button-glass-neutral body-3 px-spacing-4 py-spacing-2 rounded-md"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/register"
             className="button-glass-primary body-3 px-spacing-4 py-spacing-2 rounded-md"
           >
-            Sign up
+            Sign in
           </Link>
         </div>
       </div>

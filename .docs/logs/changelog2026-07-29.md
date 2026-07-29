@@ -1,5 +1,16 @@
 # Changelog - July 29, 2026
 
+
+## 2026-07-29 12:05 - [FIX]
+
+What: Closed public sign-ups for now — `/register` redirects to login, API `POST /auth/register` rejects new accounts, Sign up CTAs removed/retargeted to login, marketing register links point to login, and AuthModal is login-only.
+
+Why: Public registration needed to be blocked temporarily while keeping invite-based onboarding (`/invite`, `/join`, org invite tokens) available.
+
+Impact: New users cannot create accounts via public register UI or API. Existing users can still sign in. Reopen by setting `NEXT_PUBLIC_WAITLIST_MODE=false` and redeploying.
+
+Files: `apps/web/src/middleware.ts`, `apps/web/src/app/(auth)/register/page.tsx`, `apps/web/src/app/shared/layout.tsx`, `apps/web/src/features/spaces/components/shared/RestrictedViewPlaceholder.tsx`, `apps/web/src/features/public-agent/components/common/ConversionBar.tsx`, `apps/api/src/modules/auth/services/auth.service.ts`, `apps/api/src/modules/auth/config/auth-errors.config.ts`, `apps/website/src/components/*`, `apps/web/e2e/*`, env templates
+
 ## 2026-07-29 10:25 - [FEATURE]
 
 What: Made every agenda call open the curated meeting workspace directly, added scheduled workspace creation/reuse for future calendar calls, connected the workspace to the existing main shell chat, and placed live notes and call snippets into that same conversation timeline.

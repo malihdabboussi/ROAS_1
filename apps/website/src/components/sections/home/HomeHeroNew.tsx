@@ -38,7 +38,7 @@ export function HomeHeroNew() {
 
           <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
             <a
-              href="https://app.vibey.im/register"
+              href="https://app.vibey.im/login"
               className="chip-glass-emerald body-3 inline-flex items-center gap-2 rounded-xl px-6 py-3 font-semibold"
             >
               Get Early Access
