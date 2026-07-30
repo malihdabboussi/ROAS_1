@@ -9363,3 +9363,19 @@ Evidence: The shared action documentation registry remains above the 600 LOC mod
 Needed work: Split action documentation and contracts into domain-owned modules while preserving generated action indexes and policy exports.
 
 Reason not done now: The oversized registries are pre-existing shared infrastructure; decomposing unrelated action families would broaden this meeting-retrieval fix.
+## 2026-07-30 — Static ad production form owners near component limit
+
+Status: Open
+
+Found while: Adding deterministic chat routing and visual Static Ad Production choices.
+
+Files:
+
+- `apps/web/src/features/spaces/components/StaticAdProductionFields.tsx` (357 LOC; near the 400 LOC component limit)
+- `apps/web/src/features/spaces/components/ads-research/StaticAdProductionLauncher.tsx` (336 LOC; near the 400 LOC component limit)
+
+Evidence: Both components remain within the hard limit, but each combines selection, count/copy state, validation, and rendering. This change reused one shared visual preview and changed only the in-scope selection behavior.
+
+Needed work: Extract state-neutral field groups and selection helpers into feature-owned components without creating a second production contract.
+
+Reason not done now: The requested fix is behavior-sensitive and already shares the canonical format configuration and preview component; restructuring both launch surfaces would broaden the regression surface.

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Check } from 'lucide-react'
+import { StaticAdChoicePreview } from '@/components/artifacts'
 
 interface ClarificationOption {
   id: string
@@ -44,6 +45,7 @@ function ChoiceOptionRow({
           {option.description && (
             <div className="body-3 text-muted-foreground mt-0.5">{option.description}</div>
           )}
+          <StaticAdChoicePreview choiceId={option.id} />
         </div>
         <div
           className={`body-3 rounded-spacing-1 flex h-6 w-6 flex-shrink-0 items-center justify-center font-medium ${isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
@@ -85,6 +87,7 @@ function MultiChoiceOptionRow({
           {option.description && (
             <div className="body-3 text-muted-foreground mt-0.5">{option.description}</div>
           )}
+          <StaticAdChoicePreview choiceId={option.id} />
         </div>
       </div>
     </button>

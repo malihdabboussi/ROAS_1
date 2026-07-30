@@ -89,6 +89,7 @@ export function StaticAdProductionLauncher({
     setSubmitting(true)
     try {
       const payload = buildStaticAdProductionMissionPayload({
+        productionMode: 'static_ad_book',
         selectedFormatIds,
         quantity,
         aspectRatio,

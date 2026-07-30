@@ -41,6 +41,8 @@ describe('QuickMissionsHubModal', () => {
     expect(screen.getByRole('button', { name: /Static ad book/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Write for me' })).toHaveClass('button-glass-primary')
 
+    fireEvent.click(screen.getByRole('button', { name: /Static ad book/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^Myth vs. system/i }))
     fireEvent.change(screen.getByLabelText('Offer and audience context'), {
       target: { value: 'A course for agency owners.' },
     })

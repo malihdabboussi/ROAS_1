@@ -1,6 +1,7 @@
 'use client'
 
 import { Check, Circle } from 'lucide-react'
+import { StaticAdChoicePreview } from '@/components/artifacts'
 import { cn } from '@/lib/utils/cn'
 import { STATIC_AD_FORMATS, STATIC_AD_PRODUCTION_MODES } from '../config/static-ad-formats.config'
 import { StaticAdFormatSelector } from './ads-research/StaticAdFormatSelector'
@@ -13,9 +14,9 @@ import {
 const MAX_OUTPUTS = 10
 
 export const EMPTY_STATIC_AD_FIELDS: StaticAdProductionKickoffFields = {
-  productionMode: 'static_ad_book',
-  selectedFormatIds: ['myth_vs_system'],
-  formatVariationCounts: { myth_vs_system: 1 },
+  productionMode: undefined,
+  selectedFormatIds: [],
+  formatVariationCounts: {},
   quantity: 1,
   aspectRatio: '4:5',
   copyMode: 'write_for_me',
@@ -27,7 +28,8 @@ export const EMPTY_STATIC_AD_FIELDS: StaticAdProductionKickoffFields = {
 }
 
 export function isStaticAdProductionValid(fields: StaticAdProductionKickoffFields): boolean {
-  const mode = fields.productionMode ?? 'static_ad_book'
+  const mode = fields.productionMode
+  if (!mode) return false
   if (mode === 'static_ad_book' && fields.selectedFormatIds.length === 0) return false
   if (fields.copyMode === 'write_for_me') return Boolean(fields.offerContext.trim())
 
@@ -41,7 +43,7 @@ export function StaticAdProductionFields({
   fields: StaticAdProductionKickoffFields
   onChange: (fields: StaticAdProductionKickoffFields) => void
 }) {
-  const mode = fields.productionMode ?? 'static_ad_book'
+  const mode = fields.productionMode
   const finishedAds = getStaticAdOutputCount(fields)
 
   const setMode = (productionMode: StaticAdProductionMode) => {
@@ -50,9 +52,7 @@ export function StaticAdProductionFields({
       productionMode,
       selectedFormatIds:
         productionMode === 'static_ad_book'
-          ? fields.selectedFormatIds.length > 0
-            ? fields.selectedFormatIds
-            : ['myth_vs_system']
+          ? fields.selectedFormatIds
           : [],
       quantity: productionMode === 'static_ad_book' ? finishedAds : fields.quantity,
     })
@@ -122,6 +122,7 @@ export function StaticAdProductionFields({
                 <span>
                   <span className="body-3 text-foreground block font-medium">{option.name}</span>
                   <span className="body-4 text-muted-foreground block">{option.description}</span>
+                  <StaticAdChoicePreview choiceId={option.id} />
                 </span>
               </button>
             )
@@ -160,7 +161,7 @@ export function StaticAdProductionFields({
             Finished ads: <span className="font-semibold">{finishedAds}</span>
           </p>
         </>
-      ) : (
+      ) : mode ? (
         <NumberField
           label="Finished ads"
           value={fields.quantity}
@@ -176,7 +177,7 @@ export function StaticAdProductionFields({
             })
           }
         />
-      )}
+      ) : null}
 
       <ToggleRow
         label="Size"
