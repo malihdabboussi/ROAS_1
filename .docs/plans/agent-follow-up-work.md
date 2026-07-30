@@ -9306,3 +9306,11 @@ Evidence: The existing web service still combines conversation CRUD, optimistic 
 Needed work: Extract browser recovery/continuation orchestration from `chat.service.ts`, and split Redis stream lifecycle from durable runtime-run persistence in `chat-run-event-store.service.ts`.
 
 Reason not done now: This incident required a narrow behavior-locked reliability repair. Decomposing both shared hot paths in the same change would materially expand the regression surface.
+
+## 2026-07-29 — Slack proactive lifecycle (deferred LOC)
+
+- **Feature/app:** slack / Team Intelligence
+- **File:** `apps/api/src/modules/spaces/services/__tests__/slack-team-loop.service.test.ts` (685 LOC)
+- **Evidence:** Already over the 600 LOC guideline; touched for cooling lifecycle coverage.
+- **Needed work:** Split loop service tests by signal kind / delivery lifecycle.
+- **Why not now:** Out of scope for the cooling/recheck ship; tests pass and architecture gate allowlists tests differently.
