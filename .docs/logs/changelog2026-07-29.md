@@ -254,3 +254,13 @@ Why: A failed tool step could leave a run falsely active with no output or termi
 Impact: Healthy long-running work remains connected, abandoned runs stop and resume from saved user context and partial output without a visible duplicate message, and a failed automatic continuation cannot loop. The Continue response button remains only as the final fallback.
 
 Files: `apps/agent-api/src/modules/chat/services/chat-run-event-store.service.ts`, `apps/agent-api/src/modules/chat/services/chat-turn-query.service.ts`, focused backend tests, `apps/web/src/features/studio/services/chat.service.ts`, `apps/web/src/features/studio/services/stream-resilience.ts`, `apps/web/src/features/studio/components/chat/StreamInterruptedBar.tsx`, shared chat status types, focused frontend tests, `documentation/features/chat-stream-recovery.md`
+
+## [2026-07-29 18:00] - [FEATURE]
+
+What: Added a cooling-and-recheck lifecycle for proactive Slack operational alerts, kept post-call recaps immediate, and rebuilt the Shadow Conversations and Channels review surfaces with independently scrollable rails and overflow-safe message content.
+
+Why: Pixel could send an alert after the underlying Slack thread had already been handled, while the Shadow inbox and long channel messages were difficult to review.
+
+Impact: Client-risk alerts wait 15 minutes, unanswered questions wait 30 minutes, and workflow escalations wait 60 minutes before Pixel refreshes the exact source. Resolved findings are dismissed without a message, unavailable sources stay reviewable, external people remain protected, and only unresolved alerts to Active Internal recipients can send. Administrators can review people and their complete Shadow ledgers without page-level scrolling, and long Slack content no longer breaks the Channels layout.
+
+Files: `apps/api/src/modules/spaces/services/slack-team-signal-delivery.service.ts`, `apps/api/src/modules/spaces/services/slack-team-loop.service.ts`, `apps/api/src/modules/spaces/repositories/slack-team-loop.repository.ts`, `apps/api/src/modules/slack/services/slack-signal-resolution.service.ts`, `apps/api/src/modules/slack/slack.module.ts`, `apps/api/src/modules/spaces/spaces.module.ts`, focused backend tests, `apps/web/src/features/team-2/components/people/SlackShadowConversationView.tsx`, `apps/web/src/features/team-2/components/people/SlackShadowInbox.tsx`, `apps/web/src/features/team-2/components/people/SlackChannelsView.tsx`, focused frontend tests, `documentation/features/spaces-automation.md`

@@ -7,6 +7,8 @@ import type { SlackDiscoveredPerson, SlackShadowAction } from '../../services/sl
 interface SlackShadowInboxProps {
   actions: SlackShadowAction[]
   peopleById: Map<string, SlackDiscoveredPerson>
+  title?: string
+  description?: string
   onOpenPerson: (person: SlackDiscoveredPerson) => void
   onReview: (id: string, status: 'approved' | 'dismissed') => void
   onSend: (id: string) => void
@@ -15,20 +17,22 @@ interface SlackShadowInboxProps {
 export function SlackShadowInbox({
   actions,
   peopleById,
+  title = 'Shadow inbox',
+  description,
   onOpenPerson,
   onReview,
   onSend,
 }: SlackShadowInboxProps) {
   return (
-    <section className="surface-card border-border scroll-mt-spacing-6 rounded-spacing-4 border">
+    <section className="surface-card border-border scroll-mt-spacing-6 rounded-spacing-4 min-w-0 overflow-hidden border">
       <div className="border-border p-spacing-4 border-b">
         <div className="gap-spacing-2 flex items-center">
           <Workflow className="icon-sm text-primary" />
-          <h2 className="body-2 text-foreground font-semibold">Shadow inbox</h2>
+          <h2 className="body-2 text-foreground min-w-0 truncate font-semibold">{title}</h2>
         </div>
         <p className="body-4 text-muted-foreground mt-spacing-1">
-          {SLACK_PEOPLE_MESSAGES.SHADOW_SAFETY} Open the person to see this ledger beside the real
-          Slack conversation.
+          {description ??
+            `${SLACK_PEOPLE_MESSAGES.SHADOW_SAFETY} Open the person to see this ledger beside the real Slack conversation.`}
         </p>
       </div>
       {actions.length === 0 ? (
@@ -41,7 +45,7 @@ export function SlackShadowInbox({
             const person = peopleById.get(action.target_member_id ?? '')
             const isPostCall = action.metadata?.source === 'meeting_follow_up_assignee_reminder'
             return (
-              <article key={action.id} className="p-spacing-4">
+              <article key={action.id} className="p-spacing-4 min-w-0 overflow-hidden">
                 <div className="gap-spacing-3 flex items-center justify-between">
                   {person ? (
                     <button
@@ -66,11 +70,13 @@ export function SlackShadowInbox({
                     ) : null}
                   </div>
                 ) : null}
-                <p className="body-3 text-foreground mt-spacing-2 whitespace-pre-wrap">
+                <p className="body-3 text-foreground mt-spacing-2 min-w-0 whitespace-pre-wrap break-words">
                   {action.proposed_content}
                 </p>
                 {action.rationale ? (
-                  <p className="body-4 text-muted-foreground mt-spacing-2">{action.rationale}</p>
+                  <p className="body-4 text-muted-foreground mt-spacing-2 min-w-0 break-words">
+                    {action.rationale}
+                  </p>
                 ) : null}
                 {action.status === 'proposed' ? (
                   <div className="mt-spacing-3 gap-spacing-2 flex flex-wrap">

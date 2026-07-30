@@ -165,8 +165,8 @@ export function SlackChannelsView({
         </div>
       ) : null}
 
-      <div className="grid min-h-0 flex-1 lg:grid-cols-3">
-        <aside className="border-border flex min-h-0 flex-col border-r lg:col-span-1">
+      <div className="grid min-h-0 min-w-0 flex-1 overflow-hidden lg:grid-cols-3">
+        <aside className="border-border flex min-h-0 min-w-0 flex-col overflow-hidden border-r lg:col-span-1">
           <div className="border-border p-spacing-3 border-b">
             <h2 className="body-3 text-foreground font-semibold">Channels</h2>
             <p className="body-4 text-muted-foreground mt-spacing-1">
@@ -227,7 +227,7 @@ export function SlackChannelsView({
           </div>
         </aside>
 
-        <div className="relative flex min-h-0 flex-col lg:col-span-2">
+        <div className="relative flex min-h-0 min-w-0 flex-col overflow-hidden lg:col-span-2">
           {!selectedChannelId ? (
             <div className="p-spacing-6 flex flex-1 flex-col items-center justify-center text-center">
               <Hash className="icon-lg text-primary" />
@@ -255,7 +255,7 @@ export function SlackChannelsView({
               <div
                 ref={scrollRef}
                 onScroll={handleScroll}
-                className="p-spacing-4 gap-spacing-3 flex min-h-0 flex-1 flex-col overflow-y-auto"
+                className="p-spacing-4 gap-spacing-3 flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden"
               >
                 {(activity?.messages ?? []).length === 0 ? (
                   <p className="body-3 text-muted-foreground m-auto">No visible messages yet.</p>
@@ -265,16 +265,18 @@ export function SlackChannelsView({
                       key={message.ts}
                       className={
                         message.direction === 'outbound'
-                          ? 'surface-card border-primary p-spacing-3 rounded-spacing-3 mr-spacing-8 self-start border'
-                          : 'bg-secondary p-spacing-3 rounded-spacing-3 ml-spacing-8 self-end'
+                          ? 'surface-card border-primary p-spacing-3 rounded-spacing-3 mr-spacing-8 min-w-0 max-w-full self-start overflow-hidden border'
+                          : 'bg-secondary p-spacing-3 rounded-spacing-3 ml-spacing-8 min-w-0 max-w-full self-end overflow-hidden'
                       }
                     >
-                      <div className="body-4 text-muted-foreground gap-spacing-2 flex items-center">
-                        <span className="font-medium">{message.sender_name}</span>
+                      <div className="body-4 text-muted-foreground gap-spacing-2 flex min-w-0 flex-wrap items-center">
+                        <span className="min-w-0 break-words font-medium">
+                          {message.sender_name}
+                        </span>
                         <time>{slackTimestamp(message.ts)}</time>
                         {message.is_thread_reply ? <span>Thread reply</span> : null}
                       </div>
-                      <p className="body-3 text-foreground mt-spacing-1 whitespace-pre-wrap">
+                      <p className="body-3 text-foreground mt-spacing-1 min-w-0 whitespace-pre-wrap break-all">
                         {message.text}
                       </p>
                     </article>
