@@ -182,7 +182,7 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
           id: 'call_kind',
           name: 'Call Kind',
           options: expect.arrayContaining([
-            expect.objectContaining({ id: 'private' }),
+            expect.objectContaining({ id: 'private', label: 'Personal' }),
             expect.objectContaining({ id: 'team' }),
             expect.objectContaining({ id: 'executive' }),
             expect.objectContaining({ id: 'client' }),

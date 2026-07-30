@@ -82,6 +82,7 @@ export interface ChatStatusResponse {
   messageId: string | null
   runId?: string | null
   resumeCursor?: string | null
+  lastEventAt?: string | null
   failureCode?: 'stream_interrupted' | 'context_window_exceeded'
   message?: Message | null
   timelineEvents?: ChatTimelineEvent[]

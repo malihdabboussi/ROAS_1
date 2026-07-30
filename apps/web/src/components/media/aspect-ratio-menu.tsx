@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils/cn'
 /** ChatGPT-style aspect options: name + ratio + shape glyph. */
 export const CHATGPT_STYLE_ASPECT_OPTIONS = [
   { ratio: '1:1', label: 'Square' },
+  { ratio: '4:5', label: 'Portrait ad' },
   { ratio: '3:4', label: 'Portrait' },
   { ratio: '9:16', label: 'Story' },
   { ratio: '4:3', label: 'Landscape' },
@@ -17,6 +18,7 @@ export const ASPECT_RATIO_MENU_WIDTH = 260
 
 const LABEL_BY_RATIO: Record<string, string> = {
   '1:1': 'Square',
+  '4:5': 'Portrait ad',
   '3:4': 'Portrait',
   '2:3': 'Portrait',
   '9:16': 'Story',

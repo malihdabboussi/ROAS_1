@@ -45,6 +45,7 @@ type PersistedShell = {
   rightPanelTab?: ShellRightPanelTab
   workAreaOpen?: boolean
   artifactViewerWidth?: number
+  artifactViewerTarget?: ShellArtifactViewerTarget | null
 }
 
 function readPersisted(): PersistedShell {
@@ -66,6 +67,19 @@ function writePersisted(partial: PersistedShell) {
   } catch {
     /* ignore */
   }
+}
+
+function persistedArtifactTarget(value: unknown): ShellArtifactViewerTarget | null {
+  if (!value || typeof value !== 'object') return null
+  const candidate = value as Partial<ShellArtifactViewerTarget>
+  if (
+    typeof candidate.id !== 'string' ||
+    typeof candidate.title !== 'string' ||
+    typeof candidate.type !== 'string'
+  ) {
+    return null
+  }
+  return candidate as ShellArtifactViewerTarget
 }
 
 const CHAT_DRAWER_WIDTH_MIN = 360
@@ -246,6 +260,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       chatDrawerConversationId: nextConversationId,
       chatDrawerMinimized: false,
       rightPanelOpen: false,
+      artifactViewerTarget: null,
     })
   },
   minimizeChatDrawer: () => {
@@ -271,6 +286,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       chatDrawerConversationId: get().chatDrawer.conversationId,
       chatDrawerMinimized: false,
       rightPanelOpen: false,
+      artifactViewerTarget: null,
     })
   },
   closeChatDrawer: () => {
@@ -317,7 +333,10 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     get().setWorkAreaOpen(!get().workAreaOpen)
   },
   setRightPanelOpen: (open) => {
-    writePersisted({ rightPanelOpen: open })
+    writePersisted({
+      rightPanelOpen: open,
+      ...(open ? { artifactViewerTarget: null } : {}),
+    })
     set((s) => ({
       rightPanel: { ...s.rightPanel, open },
       artifactViewer: open ? { ...s.artifactViewer, target: null } : s.artifactViewer,
@@ -331,14 +350,18 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     set((s) => ({ rightPanel: { ...s.rightPanel, tab } }))
   },
   openRightPanelSurface: (tab) => {
-    writePersisted({ rightPanelOpen: true, rightPanelTab: tab })
+    writePersisted({
+      rightPanelOpen: true,
+      rightPanelTab: tab,
+      artifactViewerTarget: null,
+    })
     set((s) => ({
       rightPanel: { open: true, tab },
       artifactViewer: { ...s.artifactViewer, target: null },
     }))
   },
   requestConversationScopePicker: () => {
-    writePersisted({ rightPanelOpen: true })
+    writePersisted({ rightPanelOpen: true, artifactViewerTarget: null })
     set((s) => ({
       conversationScopePickerRequestNonce: s.conversationScopePickerRequestNonce + 1,
       rightPanel: { ...s.rightPanel, open: true },
@@ -346,7 +369,11 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     }))
   },
   openArtifactViewer: (target) => {
-    writePersisted({ rightPanelOpen: false })
+    writePersisted({
+      rightPanelOpen: false,
+      workAreaOpen: true,
+      artifactViewerTarget: target,
+    })
     set((s) => ({
       artifactViewer: { ...s.artifactViewer, target },
       recentArtifactTargets: [
@@ -356,9 +383,9 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       rightPanel: { ...s.rightPanel, open: false },
       workAreaOpen: true,
     }))
-    writePersisted({ workAreaOpen: true })
   },
   closeArtifactViewer: () => {
+    writePersisted({ artifactViewerTarget: null })
     set((s) => ({ artifactViewer: { ...s.artifactViewer, target: null } }))
   },
   setArtifactViewerWidth: (width) => {
@@ -392,6 +419,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       chatDrawerConversationId: null,
       chatDrawerMinimized: false,
       workAreaOpen: true,
+      artifactViewerTarget: null,
     })
   },
   openFreshChatDrawer: () => {
@@ -412,6 +440,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       chatDrawerConversationId: null,
       chatDrawerMinimized: false,
       rightPanelOpen: false,
+      artifactViewerTarget: null,
     })
   },
   setPageBreadcrumb: (node, owner = null) => {
@@ -443,6 +472,7 @@ export function hydrateShellStoreFromStorage(): void {
     typeof persisted.chatDrawerConversationId === 'string'
       ? persisted.chatDrawerConversationId
       : null
+  const artifactViewerTarget = persistedArtifactTarget(persisted.artifactViewerTarget)
   useShellStore.setState({
     sidebarPinned: persisted.sidebarPinned ?? false,
     menuMode: persistedMenuMode,
@@ -455,13 +485,14 @@ export function hydrateShellStoreFromStorage(): void {
     },
     chatHistoryWidth: clampChatHistoryWidth(persisted.chatHistoryWidth ?? 200),
     chatHistoryCollapsed: persisted.chatHistoryCollapsed ?? false,
-    workAreaOpen: persisted.workAreaOpen ?? true,
+    workAreaOpen: artifactViewerTarget ? true : (persisted.workAreaOpen ?? true),
     rightPanel: {
-      open: persisted.rightPanelOpen ?? false,
+      open: artifactViewerTarget ? false : (persisted.rightPanelOpen ?? false),
       tab: persisted.rightPanelTab ?? 'tasks',
     },
     artifactViewer: {
       ...useShellStore.getState().artifactViewer,
+      target: artifactViewerTarget,
       width: clampArtifactViewerWidth(persisted.artifactViewerWidth ?? 480),
     },
   })

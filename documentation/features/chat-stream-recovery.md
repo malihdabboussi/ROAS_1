@@ -25,7 +25,7 @@ Chat streaming uses Supabase messages as the canonical record and Redis as the l
 15. Before the OpenClaw request, Agent API persists model routing observability to `agent_runtime_runs` and `vb_agent_traces`, including the selected model input, requested/resolved model ids, gateway model id, subscription provider, and normalized model settings.
 16. `POST /api/chat/stop` marks the active Redis/DB run as cancelled, so cancellation works across Agent API and worker instances.
 17. The browser stores `run_id` and the last Redis cursor per conversation.
-18. On refresh or reconnect, the browser checks `/api/chat/status/:conversationId`.
+18. On refresh or reconnect, the browser checks `/api/chat/status/:conversationId`, including the run's last durable agent-event timestamp.
 19. If an active Redis run exists, the browser resumes from `/api/chat/runs/:runId/stream?after={cursor}`.
 20. If Redis is unavailable or expired, the browser falls back to the existing DB polling recovery path.
 21. Provider billing and insufficient-balance failures are classified as `provider_billing` before they reach the web client, so billing exhaustion does not look like a retryable transport interruption.
@@ -43,7 +43,7 @@ Chat streaming uses Supabase messages as the canonical record and Redis as the l
 - Redis is optional for direct mode. Queued mode requires shared Redis because the browser stream reads Redis and mission-worker claims BullMQ jobs from the same Redis.
 - Supabase `messages` remains the source of truth for final assistant content.
 - `vb_message_timeline_events` remains the durable timeline for non-token recovery.
-- Redis-backed SSE events preserve the existing event payload and add `run_id` plus `cursor`.
+- Redis-backed SSE events preserve the existing event payload and add `run_id` plus `cursor`; run metadata records `lastEventAt` whenever a durable event is appended.
 - `run_id` is the assistant `messageId` in the first implementation.
 - Setup/platform events emitted before `message_start` are part of Redis replay.
 - `credit_update` remains live-only because it can arrive after `done`; balance recovery is not part of the active run replay contract.
@@ -84,14 +84,15 @@ Chat streaming uses Supabase messages as the canonical record and Redis as the l
 
 ## Recovery Behavior
 
-The browser tracks raw stream byte activity separately from visible assistant events. If both are silent for more than 60 seconds, the browser aborts the stale local reader, preserves the saved `run_id`/cursor, marks the conversation reconnecting, and starts the existing recovery flow. If heartbeat bytes continue but structured agent events have been silent for 60 seconds, the browser checks the durable run status first. Active runs stay connected; completed, failed, or recoverable runs enter the same reconciliation flow so persisted final content appears without a page refresh.
+The browser tracks raw stream byte activity separately from visible assistant events. If both are silent for more than 60 seconds, the browser aborts the stale local reader, preserves the saved `run_id`/cursor, marks the conversation reconnecting, and starts the existing recovery flow. If heartbeat bytes continue but structured agent events have been silent for 60 seconds, the browser checks both the durable run status and `lastEventAt`. An active run with recent real progress stays connected. An active run whose durable progress is also stale is treated as abandoned instead of being kept alive by transport heartbeats.
 
-Transport failures auto-recover first. Redis resume is attempted for active runs, then DB polling recovery runs if resume cannot complete. If the answer still cannot recover, the interrupted banner shows one `Resume` action. A manual `Resume` refreshes the canonical thread, stops any orphaned active run, and starts one hidden continuation turn grounded in the exact latest visible user request, the partial assistant output already shown, and the original attachments. This prevents a dead queued run from being polled repeatedly and keeps the continuation on the unfinished task.
+Transport failures auto-recover first. Redis resume is attempted for healthy active runs, then DB polling recovery runs if resume cannot complete. An abandoned or explicitly interrupted run is stopped and continued automatically once using a hidden turn grounded in the exact latest visible user request, partial assistant output, and original attachments. The composer shows `Picking up where I left off…` during this recovery even if the old run still has a streaming flag. The automatic continuation is keyed to the visible user turn and cannot loop. Only if that one continuation also fails does the interrupted banner show the manual `Continue response` fallback.
 
 Context-window failures are model failures, not transport failures. OpenClaw owns the recovery loop: it detects overflow, emits structured compaction progress, compacts session history or truncates oversized tool results, then retries the same assistant run without Agent API synthesizing a compact user prompt. If recovery still fails, the gateway emits a failed OpenResponses result with `context_window_exceeded`; Agent API marks the run `failed_recoverable`, and the frontend shows the recoverable context message instead of a fake completed answer. Model overload, model/context settings, workspace billing, provider billing, missing OpenAI Codex subscription auth, missing Claude Subscription auth, and runtime availability failures show specific messages instead of interrupted-answer controls.
 
 ## Decision Log
 
+- 2026-07-29: Added durable run-progress timestamps and one-shot automatic continuation. Heartbeats no longer keep a run healthy after real agent events stop, abandoned runs are cancelled and resumed from saved context automatically, recovery progress stays visible, and manual Continue is now the final fallback instead of the normal path.
 - 2026-07-29: Added durable status reconciliation for heartbeat-only live streams. A proxy connection can remain byte-active after it stops delivering structured agent events; the browser now checks the run after 60 seconds and hydrates a completed persisted answer instead of waiting indefinitely for refresh.
 - 2026-07-28: Split Auto into a low-cost research/tool stage and a single bounded Opus 5 writing stage. Added generation-level settlement reconciliation and cost telemetry so repeated provider calls are visible and already-settled generations cannot be charged again.
 - 2026-07-28: Made manual interrupted-turn recovery deterministic: refresh canonical messages, stop the orphaned run, then continue from the exact user request and partial output while preserving attachments. Automatic Redis/DB reconnect remains the first recovery path.

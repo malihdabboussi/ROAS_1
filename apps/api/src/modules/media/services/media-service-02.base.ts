@@ -38,6 +38,7 @@ const HIDDEN_LIBRARY_CATEGORIES = [
 // rows where category IS NULL (most user uploads have null category).
 // `category.not.in.(...)` alone would also drop NULL rows due to SQL NULL semantics.
 const HIDDEN_CATEGORIES_OR_FILTER = `category.is.null,category.not.in.(${HIDDEN_LIBRARY_CATEGORIES.join(',')})`
+type GeneratedImageSaveInput = GenerateImageInput & { name?: string }
 
 // Org roles permitted to edit any asset in the org (creator can only edit own).
 const EDITOR_ROLES = ['editor', 'admin', 'owner'] as const
@@ -428,7 +429,7 @@ export abstract class MediaServiceBase02 extends MediaServiceBase01 {
   protected async saveGeneratedImage(
     buffer: Buffer,
     mimeType: string,
-    input: GenerateImageInput,
+    input: GeneratedImageSaveInput,
     user: { id: string },
     orgId?: string | null,
   ): Promise<GenerateImageResult> {
@@ -471,7 +472,7 @@ export abstract class MediaServiceBase02 extends MediaServiceBase01 {
     // Create media_assets row
     const { asset, errorMessage: dbErr } = await this.mediaUploadRepository.insertMediaAsset({
       user_id: user.id,
-      name: input.prompt.slice(0, 100),
+      name: input.name?.trim().slice(0, 100) || input.prompt.slice(0, 100),
       original_filename: filename,
       file_path: filePath,
       bucket_name: this.bucket,

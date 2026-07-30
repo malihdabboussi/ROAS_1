@@ -13,6 +13,10 @@ import { CursorApiService } from '../../integrations/cursor/services/cursor-api.
 import { scrapecreatorsCreditsForAction } from '../../integrations/scrapecreators/scrapecreators.constants'
 import { ScrapeCreatorsApiService } from '../../integrations/scrapecreators/services/scrapecreators-api.service'
 import { isContactChannel } from '../../leads/services/contact-identifier.service'
+import {
+  buildMeetingCallIdentity,
+  resolveMeetingCallKind,
+} from '../../meetings/domain/meeting-call-kind'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import {
@@ -22,7 +26,6 @@ import {
 import { SpaceAutomationsRepository } from '../repositories/space-automations.repository'
 import { SpacesRepository } from '../repositories/spaces.repository'
 import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
-import { buildCeoCallIdentity, resolveCeoCallKind } from './fathom-call-kind'
 import {
   resolveFathomAttendeeLabels,
   upsertAttendeeTagOptions,
@@ -419,14 +422,15 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
           .select('email, fathom_aliases, full_name')
           .eq('id', runUserId)
           .maybeSingle()
-        const callIdentity = buildCeoCallIdentity({
+        const callIdentity = buildMeetingCallIdentity({
           email: typeof ownerProfile?.email === 'string' ? ownerProfile.email : null,
           fathomAliases: Array.isArray(ownerProfile?.fathom_aliases)
             ? (ownerProfile.fathom_aliases as string[])
             : null,
           fullName: typeof ownerProfile?.full_name === 'string' ? ownerProfile.full_name : null,
+          internalEmails: [meeting.recordedByEmail],
         })
-        const callKind = resolveCeoCallKind({
+        const callKind = resolveMeetingCallKind({
           identity: callIdentity,
           recordedByEmail: meeting.recordedByEmail,
           attendees: meeting.attendees as FathomAttendeeLike[],
@@ -482,6 +486,7 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
             custom_data: {
               entry_type: 'call',
               call_kind: callKind,
+              call_kind_source: 'automatic',
               ...(meeting.callDate ? { call_date: meeting.callDate } : {}),
               ...(meeting.url ? { recording_url: meeting.url, fathom_url: meeting.url } : {}),
               ...(meeting.summary ? { summary: meeting.summary } : {}),

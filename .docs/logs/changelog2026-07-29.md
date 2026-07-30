@@ -186,6 +186,16 @@ Impact: The ROAS organization gets a visible Delegator agent that can be opened 
 
 Files: `docker/agents/templates/delegator/`, `supabase/migrations/20260729174500_seed_delegator_system_agent.sql`, `scripts/seed-system-agents.ts`, `packages/agent-policy/src/`, `apps/agent-api/src/modules/`, `apps/api/src/modules/org/services/org.service.ts`, `apps/api/src/modules/agent-teams/services/agent-policy-action-decision.service.ts`, `apps/api/src/modules/missions/lib/system-agent-keys.ts`, `apps/api/src/modules/space-templates/data/`, `apps/web/src/lib/agents/`, `documentation/features/spaces-automation.md`, `.docs/plans/agent-follow-up-work.md, `scripts/arch/loc-allowlist.json`
 
+## [2026-07-29 16:03] - [FIX]
+
+What: Persisted and restored the active artifact viewer, retained newly generated versions in the history rail, preserved source image ratios including 4:5, strengthened localized edit instructions, improved generated asset names, and revised markup into a movable multi-mark review workflow with separate Save/Delete and Regenerate actions. Moved Add to chat into the visible viewer toolbar and kept the studio open while attaching.
+
+Why: Refresh returned users to Home, new edits disappeared after thumbnail selection, 4:5 ads were submitted with a 16:9 default, prompts became asset titles, and the original markup panel obscured work while its single Apply action could regenerate before review was complete.
+
+Impact: The studio and its media context survive refresh; version history remains stable; edits retain the source canvas ratio and receive stricter semantic masking guidance; asset titles are readable; multiple annotations can be reviewed safely before one regeneration; and the selected image can be attached to the current chat without navigation.
+
+Files: `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/media/*image*`, `apps/web/src/features/studio/components/preview/ShellMedia*`, `apps/web/src/lib/services/media-api.ts`, `apps/api/src/modules/media/dto/index.ts`, `apps/api/src/modules/media/services/media-service-01.base.ts`, `apps/api/src/modules/media/services/media-service-02.base.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-media-processing-persistence.service.ts`, focused tests, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-07-29 16:10] - [FIX]
 
 What: Fixed Delegator production seed to install for every org that already has Pixel, replace system definition rows safely, and remove the hardcoded non-ROAS org id.
@@ -225,3 +235,22 @@ Why: The previous launch acknowledgement lived only in browser state, so it coul
 Impact: Static and video Quick Missions retain exact playbook, Space, campaign, and chat provenance. Their cards survive refresh, open the exact Mission through the shared artifact router, and callback retries do not create duplicates.
 
 Files: `apps/api/src/modules/conversations/`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/features/spaces/components/StartAdProductionPlaybookFields.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx`, `apps/web/src/features/spaces/config/quick-missions-messages.config.ts`, `apps/web/src/lib/conversations/`, focused tests, `documentation/features/missions.md`
+
+## [2026-07-29 18:02] - [FIX]
+
+What: Replaced the Fathom-only call-kind helper with one canonical meeting classifier, applied it to scheduled calendar creation and Fathom attachment, marked human edits as authoritative, and upgraded every Meetings-style Space/template to Personal, Team, Executive, Client, Partner, and Sales.
+
+Why: Legacy organization Meetings spaces were skipped by personal-dashboard-only migrations, calendar calls stored an unsupported `scheduled` value, and recordings attached to an existing meeting bypassed classification.
+
+Impact: Call kinds render with configured colors in the active Meetings space, new calendar and recorded calls classify consistently using organization identity, richer automatic evidence can refresh automatic classifications, and valid manual choices are preserved.
+
+Files: `apps/api/src/modules/meetings/`, `apps/api/src/modules/spaces/services/space-automation-service-06.base.ts`, `apps/api/src/modules/spaces/services/spaces-service-02.base.ts`, `apps/api/src/modules/spaces/services/spaces-service-03.base.ts`, `apps/api/src/modules/space-templates/data/`, `supabase/migrations/20260729203000_durable_meeting_call_kinds.sql`, `scripts/roas/migration-order.txt`, `documentation/features/meeting-follow-up-slack.md`
+## [2026-07-29 18:03] - [FIX]
+
+What: Added durable last-agent-event timestamps to chat runs, detected heartbeat-only abandoned runs, surfaced automatic recovery progress, and automatically continued the exact unfinished turn once before showing a manual fallback.
+
+Why: A failed tool step could leave a run falsely active with no output or terminal state. Transport heartbeats then kept the browser waiting indefinitely and users had to refresh or type Continue.
+
+Impact: Healthy long-running work remains connected, abandoned runs stop and resume from saved user context and partial output without a visible duplicate message, and a failed automatic continuation cannot loop. The Continue response button remains only as the final fallback.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-run-event-store.service.ts`, `apps/agent-api/src/modules/chat/services/chat-turn-query.service.ts`, focused backend tests, `apps/web/src/features/studio/services/chat.service.ts`, `apps/web/src/features/studio/services/stream-resilience.ts`, `apps/web/src/features/studio/components/chat/StreamInterruptedBar.tsx`, shared chat status types, focused frontend tests, `documentation/features/chat-stream-recovery.md`

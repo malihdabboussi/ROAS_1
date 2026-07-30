@@ -76,6 +76,7 @@ describe('ChatTurnQueryService', () => {
       runId: 'run-1',
       messageId: 'message-1',
       lastCursor: '1-0',
+      lastEventAt: '2026-07-29T18:00:01.000Z',
       error: null,
     })
 
@@ -87,7 +88,10 @@ describe('ChatTurnQueryService', () => {
       'owner',
     )
 
-    expect(result.failureCode).toBeUndefined()
+    expect(result).toMatchObject({
+      failureCode: undefined,
+      lastEventAt: '2026-07-29T18:00:01.000Z',
+    })
   })
 
   it('preserves an active context-window recovery reason', async () => {

@@ -2,6 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { MessagesRepository } from '../../conversations/repositories/messages.repository'
 import { ConversationsService } from '../../conversations/services/conversations.service'
+import {
+  buildMeetingCallIdentity,
+  resolveMeetingCallKind,
+  shouldReplaceMeetingCallKind,
+} from '../domain/meeting-call-kind'
 import { MeetingWorkspaceReadRepository } from '../repositories/meeting-workspace-read.repository'
 import {
   MeetingWorkspaceResolutionRepository,
@@ -31,7 +36,28 @@ export class MeetingWorkspaceService {
     },
   ): Promise<Record<string, unknown>> {
     const orgId = await this.resolutionRepository.findSpaceOrgId(supabase, input.spaceId)
-    const scopedInput = { ...input, orgId }
+    const profile = await this.resolutionRepository.findCallIdentityProfile(
+      supabase,
+      input.userId,
+      orgId,
+    )
+    const identity = buildMeetingCallIdentity({
+      email: profile.email,
+      fathomAliases: profile.fathomAliases,
+      fullName: profile.fullName,
+      internalDomains: profile.internalDomains,
+    })
+    const callKind = resolveMeetingCallKind({
+      identity,
+      recordedByEmail: '',
+      attendees: input.event.attendees,
+      attendeeLabels: input.event.attendees.map(
+        (attendee) => attendee.name?.trim() || attendee.email.trim(),
+      ),
+      titleHint: input.event.title,
+      summary: input.event.description,
+    })
+    const scopedInput = { ...input, orgId, callKind }
     const existing = await this.resolutionRepository.findByCalendarEvent(
       supabase,
       input.spaceId,
@@ -42,6 +68,20 @@ export class MeetingWorkspaceService {
       meetingItemId === null
         ? await this.resolutionRepository.createScheduledMeeting(supabase, scopedInput)
         : { id: meetingItemId, title: input.event.title }
+    if (meetingItemId) {
+      const customData = await this.resolutionRepository.findMeetingItemCustomData(
+        supabase,
+        meetingItemId,
+      )
+      if (shouldReplaceMeetingCallKind(customData)) {
+        await this.resolutionRepository.updateMeetingItemCallKind(
+          supabase,
+          meetingItemId,
+          customData,
+          callKind,
+        )
+      }
+    }
     let resolvedMeetingItemId = String(meeting.id)
     let workspace = existing
     if (!workspace) {

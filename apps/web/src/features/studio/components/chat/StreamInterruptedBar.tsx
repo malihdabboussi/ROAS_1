@@ -13,13 +13,15 @@ import { useChatStore } from '../../store/use-chat-store'
 export function StreamInterruptedBar({ conversationId }: { conversationId: string | null }) {
   const interruptedIds = useChatStore((s) => s.interruptedConversationIds)
   const streamingIds = useChatStore((s) => s.streamingConversationIds)
+  const reconnectingIds = useChatStore((s) => s.reconnectingConversationIds)
 
   const rows = useMemo(() => {
     if (!conversationId) return []
     const isInterrupted = interruptedIds.includes(conversationId)
     const isStreaming = streamingIds.includes(conversationId)
-    return isInterrupted && !isStreaming ? [conversationId] : []
-  }, [interruptedIds, streamingIds, conversationId])
+    const isReconnecting = reconnectingIds.includes(conversationId)
+    return isReconnecting || (isInterrupted && !isStreaming) ? [conversationId] : []
+  }, [interruptedIds, streamingIds, reconnectingIds, conversationId])
 
   if (rows.length === 0) return null
 

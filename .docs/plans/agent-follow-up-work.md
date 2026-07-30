@@ -9275,3 +9275,51 @@ Evidence: The exact Mission card and breadcrumb navigation defects are fixed. Qu
 Needed work: Add one idempotent terminal callback that updates the originating Mission card and posts the final Mission summary/deliverables to the authenticated source conversation. Preserve the same source contract across agent-delegated `create_mission` launches, not only the Quick Missions button. Separately decompose the task-detail host and modal without changing behavior.
 
 Reason not done now: Terminal mission-to-chat delivery changes Agent API action contracts, worker callback behavior, realtime delivery, schema/preflight, and error-circuit coverage. The current polish safely owns Quick Mission launch provenance and receipt persistence without expanding into worker completion semantics.
+
+## 2026-07-29 — Fathom automation base decomposition remains open
+
+Status: Open
+
+Files:
+
+- `apps/api/src/modules/spaces/services/space-automation-service-06.base.ts` (793 LOC; 600-line service limit)
+
+Evidence: The durable call-kind fix only replaced the classifier import and added one automatic-source marker. The pre-existing Fathom webhook orchestration remains above the service limit already recorded in the July 28 meeting decomposition item.
+
+Needed work: Complete the previously identified extraction of Fathom webhook orchestration into a dedicated meeting processor, then remove the superseded block from the generated automation base.
+
+Reason not done now: This change fixes classification behavior across scheduled creation, Fathom attachment, and legacy Space schemas. Restructuring the full webhook processor is behavior-neutral work outside this production data fix.
+
+## 2026-07-29 - [ARCH] Image markup and shell persistence files near or above size guidance
+
+Status: Open
+
+Found while: Fixing artifact refresh persistence, image edit history, ratio fidelity, and multi-mark feedback
+
+Files:
+- `apps/web/src/components/media/MediaImageMarkupCanvas.tsx` (365 LOC; component limit 400, above the 80% extraction threshold)
+- `apps/web/src/components/shell/use-shell-store.ts` (506 LOC; store combines shell domains beyond hook guidance)
+- `apps/api/src/modules/media/services/media-service-01.base.ts` (575 LOC; service limit 600)
+- `apps/api/src/modules/media/services/media-service-02.base.ts` (566 LOC; service limit 600)
+
+Evidence: The markup component now owns canvas input plus a movable feedback editor; the shell store owns persistence for chat, panels, work area, and artifacts; both media service bases are close to the hard service ceiling.
+
+Needed work: Extract the markup feedback card/tool strip, split persisted shell preference serialization from store actions, and continue the numbered media service decomposition without changing their inheritance contract.
+
+Reason not done now: The requested production fixes are covered by narrow behavioral tests; structural extraction would broaden this regression-sensitive change beyond the active bugs.
+## 2026-07-29 - [ARCH] Chat recovery and Redis run-event owners remain oversized
+
+Status: Open
+
+Found while: Adding stale-progress detection and one-shot automatic continuation for abandoned chat runs.
+
+Files:
+
+- `apps/web/src/features/studio/services/chat.service.ts` (2,936 LOC; 600 LOC hard limit)
+- `apps/agent-api/src/modules/chat/services/chat-run-event-store.service.ts` (638 LOC; 600 LOC hard limit)
+
+Evidence: The existing web service still combines conversation CRUD, optimistic messages, live and replay SSE parsing, recovery polling, continuation, and final reconciliation. The run-event store still combines Redis connectivity, locks, run metadata, replay streams, durable persistence, and queue handoff.
+
+Needed work: Extract browser recovery/continuation orchestration from `chat.service.ts`, and split Redis stream lifecycle from durable runtime-run persistence in `chat-run-event-store.service.ts`.
+
+Reason not done now: This incident required a narrow behavior-locked reliability repair. Decomposing both shared hot paths in the same change would materially expand the regression surface.

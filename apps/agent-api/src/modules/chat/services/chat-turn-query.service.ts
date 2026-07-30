@@ -14,6 +14,7 @@ export interface ActiveTurnSnapshot {
   messageId: string | null
   runId?: string | null
   resumeCursor?: string | null
+  lastEventAt?: string | null
   failureCode?: 'stream_interrupted' | 'context_window_exceeded'
   message?: Record<string, unknown> | null
   timelineEvents?: TimelineEventRecord[]
@@ -96,6 +97,7 @@ export class ChatTurnQueryService {
       (typeof durableFailure?.run_id === 'string' ? durableFailure.run_id : null) ??
       messageId
     const resumeCursor = activeRun?.lastCursor ?? null
+    const lastEventAt = activeRun?.lastEventAt ?? null
     const durableFailureCode =
       typeof durableFailure?.error === 'string' &&
       classifyChatStreamError(durableFailure.error) === 'context_window_exceeded'
@@ -110,11 +112,11 @@ export class ChatTurnQueryService {
           : ('stream_interrupted' as const)
         : undefined
     const failureCode = activeFailureCode ?? durableFailureCode
-    if (!messageId) return { active, messageId, failureCode }
+    if (!messageId) return { active, messageId, failureCode, lastEventAt }
 
     const message = await this.messages.findById(supabase, messageId)
     if (!message || (message.conversation_id as string | undefined) !== conversationId) {
-      return { active, messageId, runId, resumeCursor, failureCode }
+      return { active, messageId, runId, resumeCursor, failureCode, lastEventAt }
     }
 
     const timelineEvents = await this.messageTimeline.listEventsForMessage({
@@ -123,6 +125,15 @@ export class ChatTurnQueryService {
       messageId,
     })
 
-    return { active, messageId, runId, resumeCursor, failureCode, message, timelineEvents }
+    return {
+      active,
+      messageId,
+      runId,
+      resumeCursor,
+      failureCode,
+      lastEventAt,
+      message,
+      timelineEvents,
+    }
   }
 }

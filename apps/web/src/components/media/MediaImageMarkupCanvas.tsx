@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from 'react'
-import { MapPin, PenLine, RotateCcw, Trash2, X } from 'lucide-react'
+import { GripVertical, MapPin, PenLine, RotateCcw, Trash2, X } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { cn } from '@/lib/utils/cn'
 import {
@@ -11,6 +11,7 @@ import {
 } from './media-image-markup'
 
 const SVG_SIZE = 1000
+type FeedbackPanelPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 
 function toPoint(event: PointerEvent<SVGSVGElement>): ImageMarkupPoint | null {
   const bounds = event.currentTarget.getBoundingClientRect()
@@ -33,23 +34,30 @@ export function MediaImageMarkupCanvas({
   active,
   applying,
   onApply,
+  onImageDimensions,
 }: {
   src: string
   alt: string
   active: boolean
   applying: boolean
   onApply: (annotations: ImageMarkupAnnotation[]) => void
+  onImageDimensions?: (width: number, height: number) => void
 }) {
   const [tool, setTool] = useState<ImageMarkupKind>('pen')
   const [annotations, setAnnotations] = useState<ImageMarkupAnnotation[]>([])
   const [draftPoints, setDraftPoints] = useState<ImageMarkupPoint[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [feedbackPosition, setFeedbackPosition] =
+    useState<FeedbackPanelPosition>('top-right')
+  const [draggingFeedback, setDraggingFeedback] = useState(false)
   const sequenceRef = useRef(0)
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     setAnnotations([])
     setDraftPoints([])
     setSelectedId(null)
+    setFeedbackPosition('top-right')
   }, [src])
 
   const addAnnotation = useCallback((kind: ImageMarkupKind, points: ImageMarkupPoint[]) => {
@@ -90,10 +98,28 @@ export function MediaImageMarkupCanvas({
   const ready =
     annotations.length > 0 && annotations.every((annotation) => annotation.feedback.trim())
 
+  const moveFeedbackPanel = (clientX: number, clientY: number) => {
+    const bounds = containerRef.current?.getBoundingClientRect()
+    if (!bounds?.width || !bounds.height) return
+    const horizontal = clientX < bounds.left + bounds.width / 2 ? 'left' : 'right'
+    const vertical = clientY < bounds.top + bounds.height / 2 ? 'top' : 'bottom'
+    setFeedbackPosition(`${vertical}-${horizontal}`)
+  }
+
   return (
-    <div className="relative flex h-full max-h-full w-full max-w-full items-center justify-center">
+    <div
+      ref={containerRef}
+      className="relative flex h-full max-h-full w-full max-w-full items-center justify-center"
+    >
       <div className="relative inline-flex max-h-full max-w-full">
-        <img src={src} alt={alt} className="max-h-full max-w-full object-contain" />
+        <img
+          src={src}
+          alt={alt}
+          onLoad={(event) =>
+            onImageDimensions?.(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight)
+          }
+          className="max-h-full max-w-full object-contain"
+        />
         {active ? (
           <svg
             role="application"
@@ -150,7 +176,7 @@ export function MediaImageMarkupCanvas({
 
       {active ? (
         <>
-          <div className="surface-card border-border top-spacing-4 left-spacing-4 p-spacing-2 gap-spacing-1 rounded-spacing-3 z-dropdown absolute flex items-center border shadow-lg">
+          <div className="surface-card border-border top-spacing-4 left-spacing-4 right-spacing-4 p-spacing-2 gap-spacing-1 rounded-spacing-3 z-dropdown absolute flex flex-wrap items-center border shadow-lg">
             <button
               type="button"
               onClick={() => setTool('pen')}
@@ -200,11 +226,64 @@ export function MediaImageMarkupCanvas({
             >
               <Trash2 className="icon-sm" />
             </button>
+            {annotations.map((annotation, index) => (
+              <button
+                key={annotation.id}
+                type="button"
+                onClick={() => setSelectedId(annotation.id)}
+                className={cn(
+                  'button-compact',
+                  annotation.id === selectedId
+                    ? 'button-glass-primary'
+                    : 'button-glass-neutral',
+                )}
+                aria-label={`Edit feedback for annotation ${index + 1}`}
+              >
+                Mark {index + 1}
+              </button>
+            ))}
+            <button
+              type="button"
+              disabled={!ready || applying}
+              onClick={() => onApply(annotations)}
+              className="button-compact button-glass-primary ml-auto disabled:opacity-50"
+              aria-label="Regenerate with marked edits"
+            >
+              {applying ? (
+                <VibeyLoadingOrb state="processing" size="sm" className="gap-0 py-0" />
+              ) : (
+                'Regenerate with edits'
+              )}
+            </button>
           </div>
 
           {selected ? (
-            <div className="surface-card border-border top-spacing-4 right-spacing-4 p-spacing-3 gap-spacing-2 rounded-spacing-3 z-dropdown absolute flex w-72 flex-col border shadow-lg">
-              <div className="gap-spacing-2 flex items-center">
+            <div
+              className={cn(
+                'surface-card border-border p-spacing-3 gap-spacing-2 rounded-spacing-3 z-dropdown absolute flex w-72 flex-col border shadow-lg',
+                feedbackPosition === 'top-left' && 'left-spacing-4 top-spacing-16',
+                feedbackPosition === 'top-right' && 'right-spacing-4 top-spacing-16',
+                feedbackPosition === 'bottom-left' && 'left-spacing-4 bottom-spacing-4',
+                feedbackPosition === 'bottom-right' && 'right-spacing-4 bottom-spacing-4',
+              )}
+            >
+              <div
+                className="gap-spacing-2 flex cursor-grab touch-none items-center active:cursor-grabbing"
+                onPointerDown={(event) => {
+                  event.currentTarget.setPointerCapture?.(event.pointerId)
+                  setDraggingFeedback(true)
+                }}
+                onPointerMove={(event) => {
+                  if (draggingFeedback) moveFeedbackPanel(event.clientX, event.clientY)
+                }}
+                onPointerUp={(event) => {
+                  moveFeedbackPanel(event.clientX, event.clientY)
+                  setDraggingFeedback(false)
+                  event.currentTarget.releasePointerCapture?.(event.pointerId)
+                }}
+                onPointerCancel={() => setDraggingFeedback(false)}
+              >
+                <GripVertical className="icon-sm text-muted-foreground shrink-0" />
                 <p className="body-3 text-foreground flex-1 font-medium">
                   Feedback for mark {selectedIndex + 1}
                 </p>
@@ -252,28 +331,32 @@ export function MediaImageMarkupCanvas({
                 placeholder="What should change here?"
                 className="body-3 text-foreground placeholder:text-muted-foreground border-border bg-background rounded-spacing-2 p-spacing-2 focus:ring-ring w-full resize-none border outline-none focus:ring-2"
               />
-              <button
-                type="button"
-                disabled={!ready || applying}
-                onClick={() => onApply(annotations)}
-                className="button-default button-glass-primary disabled:opacity-50"
-                aria-label="Apply marked edits"
-              >
-                {applying ? (
-                  <VibeyLoadingOrb state="processing" size="sm" className="gap-0 py-0" />
-                ) : (
-                  'Apply marked edits'
-                )}
-              </button>
+              <div className="gap-spacing-2 flex items-center justify-end">
+                <button
+                  type="button"
+                  disabled={applying}
+                  onClick={() => {
+                    setAnnotations((current) =>
+                      current.filter((annotation) => annotation.id !== selected.id),
+                    )
+                    setSelectedId(null)
+                  }}
+                  className="button-compact button-glass-neutral text-destructive disabled:opacity-50"
+                  aria-label={`Delete mark ${selectedIndex + 1}`}
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  disabled={!selected.feedback.trim() || applying}
+                  onClick={() => setSelectedId(null)}
+                  className="button-compact button-glass-primary disabled:opacity-50"
+                  aria-label={`Save mark ${selectedIndex + 1}`}
+                >
+                  Save mark
+                </button>
+              </div>
             </div>
-          ) : annotations.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => setSelectedId(annotations.at(-1)?.id ?? null)}
-              className="button-compact button-glass-neutral top-spacing-4 right-spacing-4 z-dropdown absolute"
-            >
-              {annotations.length} mark{annotations.length === 1 ? '' : 's'}
-            </button>
           ) : null}
         </>
       ) : null}
