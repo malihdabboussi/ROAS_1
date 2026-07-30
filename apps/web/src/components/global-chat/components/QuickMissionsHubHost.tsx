@@ -8,6 +8,7 @@ import {
 import { QUICK_MISSIONS_MESSAGES } from '@/features/spaces/config/quick-missions-messages.config'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
+import { persistQuickMissionReceipt } from '@/lib/conversations'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 
 type QuickMissionClient = {
@@ -42,14 +43,32 @@ export function buildQuickMissionReceipt(
   missionId: string,
   missionTitle: string,
   conversationId: string,
+  spaceId?: string,
 ) {
+  const content = QUICK_MISSIONS_MESSAGES.startedReceipt(missionTitle)
   return {
-    id: `quick-mission-receipt-${missionId}`,
+    id: missionId,
     conversation_id: conversationId,
     role: 'assistant' as const,
-    content: QUICK_MISSIONS_MESSAGES.startedReceipt(missionTitle, missionId),
+    content,
     content_blocks: null,
-    metadata: { quick_mission_receipt: true, mission_id: missionId },
+    metadata: {
+      quick_mission_receipt: true,
+      mission_id: missionId,
+      content_blocks_ordered: [
+        { type: 'text', id: `quick-mission-text-${missionId}`, content },
+        {
+          type: 'artifact_preview',
+          id: `quick-mission-card-${missionId}`,
+          artifactType: 'mission',
+          artifactId: missionId,
+          ...(spaceId ? { spaceId } : {}),
+          name: missionTitle,
+          subtitle: 'Started from this chat',
+          status: 'Started',
+        },
+      ],
+    },
     created_at: new Date().toISOString(),
   }
 }
@@ -118,12 +137,27 @@ export function QuickMissionsHubHost() {
       clients={clients}
       initialPlaybookKey={initialPlaybookKey}
       initialClientSpaceId={initialClientSpaceId}
-      onStarted={(missionId, missionTitle) => {
+      sourceConversationId={activeConversationId}
+      onStarted={async (missionId, missionTitle, spaceId) => {
         if (!activeConversationId) return
-        addMessage(
-          activeConversationId,
-          buildQuickMissionReceipt(missionId, missionTitle, activeConversationId),
-        )
+        try {
+          const persistedReceipt = await persistQuickMissionReceipt(activeConversationId, {
+            mission_id: missionId,
+            mission_title: missionTitle,
+            space_id: spaceId,
+          })
+          addMessage(activeConversationId, {
+            ...buildQuickMissionReceipt(missionId, missionTitle, activeConversationId, spaceId),
+            id: persistedReceipt.id,
+            created_at: persistedReceipt.created_at,
+          })
+        } catch (error) {
+          addMessage(
+            activeConversationId,
+            buildQuickMissionReceipt(missionId, missionTitle, activeConversationId, spaceId),
+          )
+          throw error
+        }
       }}
       onClose={() => {
         setOpen(false)

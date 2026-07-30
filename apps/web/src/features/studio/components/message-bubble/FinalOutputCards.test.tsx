@@ -1,20 +1,26 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FinalOutputCards } from './FinalOutputCards'
 import type { FinalOutputBlock } from './message-bubble.utils'
 
-const { openArtifactInShell } = vi.hoisted(() => ({
-  openArtifactInShell: vi.fn(),
+const { openArtifactPreviewInShell, openDocumentInShell } = vi.hoisted(() => ({
+  openArtifactPreviewInShell: vi.fn(),
+  openDocumentInShell: vi.fn(),
 }))
 
 vi.mock('@/lib/artifacts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/artifacts')>()
-  return { ...actual, openArtifactInShell }
+  return { ...actual, openArtifactPreviewInShell, openDocumentInShell }
 })
 
 afterEach(cleanup)
 
 describe('FinalOutputCards', () => {
+  beforeEach(() => {
+    openArtifactPreviewInShell.mockClear()
+    openDocumentInShell.mockClear()
+  })
+
   it('renders compact full-width output rows', () => {
     const blocks: FinalOutputBlock[] = [
       {
@@ -77,9 +83,7 @@ describe('FinalOutputCards', () => {
     )
   })
 
-  it('opens a created funnel in the in-app artifact workspace', () => {
-    const listener = vi.fn()
-    window.addEventListener('vibey-open-artifact', listener)
+  it('opens a created funnel in its canonical shell preview', () => {
     const blocks: FinalOutputBlock[] = [
       {
         type: 'artifact_preview',
@@ -94,17 +98,12 @@ describe('FinalOutputCards', () => {
     render(<FinalOutputCards blocks={blocks} />)
     fireEvent.click(screen.getByRole('button', { name: /Lead Magnet Funnel/i }))
 
-    expect(listener).toHaveBeenCalledWith(
-      expect.objectContaining({
-        detail: {
-          artifactType: 'funnel',
-          artifactId: 'funnel-1',
-          name: 'Lead Magnet Funnel',
-          spaceId: 'space-1',
-        },
-      }),
-    )
-    window.removeEventListener('vibey-open-artifact', listener)
+    expect(openArtifactPreviewInShell).toHaveBeenCalledWith({
+      artifactType: 'funnel',
+      artifactId: 'funnel-1',
+      name: 'Lead Magnet Funnel',
+      spaceId: 'space-1',
+    })
   })
 
   it('opens created tasks in the right-side task panel without navigating away', () => {
@@ -122,13 +121,34 @@ describe('FinalOutputCards', () => {
     render(<FinalOutputCards blocks={blocks} />)
     fireEvent.click(screen.getByRole('button', { name: /Build Impact Elite GHL workflows/i }))
 
-    expect(openArtifactInShell).toHaveBeenCalledWith({
-      id: 'task-1',
-      entityId: 'task-1',
-      entityTable: 'space_items',
+    expect(openArtifactPreviewInShell).toHaveBeenCalledWith({
+      artifactType: 'task',
+      artifactId: 'task-1',
+      name: 'Build Impact Elite GHL workflows',
       spaceId: 'delegation-desk-1',
-      title: 'Build Impact Elite GHL workflows',
-      type: 'task',
+    })
+  })
+
+  it('opens the exact created mission through the shell mission route', () => {
+    const blocks: FinalOutputBlock[] = [
+      {
+        type: 'artifact_preview',
+        id: 'mission-1',
+        artifactType: 'mission',
+        artifactId: 'mission-1',
+        name: 'Validate Impact Elite message angles',
+        spaceId: 'impact-elite-space',
+      },
+    ]
+
+    render(<FinalOutputCards blocks={blocks} />)
+    fireEvent.click(screen.getByRole('button', { name: /Validate Impact Elite message angles/i }))
+
+    expect(openArtifactPreviewInShell).toHaveBeenCalledWith({
+      artifactType: 'mission',
+      artifactId: 'mission-1',
+      name: 'Validate Impact Elite message angles',
+      spaceId: 'impact-elite-space',
     })
   })
 

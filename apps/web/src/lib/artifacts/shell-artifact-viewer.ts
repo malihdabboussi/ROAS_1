@@ -32,6 +32,28 @@ export function openArtifactInShell(target: ShellArtifactViewerTarget): void {
   )
 }
 
+const PREVIEW_TO_ENTITY_TABLE: Record<ArtifactPreviewType, string> = {
+  offer: 'offers',
+  funnel: 'funnels',
+  avatar: 'avatars',
+  sequence: 'sequences',
+  presentation: 'presentations',
+  ad: 'ads',
+  'ad-set': 'ad_sets',
+  'ad-campaign': 'ad_campaigns',
+  'social-post': 'social_posts',
+  'blog-post': 'blog_posts',
+  email: 'emails',
+  'visual-doc': 'space_items',
+  form: 'forms',
+  task: 'space_items',
+  mission: 'missions',
+  flow: 'space_automations',
+  website: 'funnels',
+  theme: 'themes',
+  'custom-object': 'space_items',
+}
+
 const PREVIEW_TO_DELIVERABLE_TYPE: Record<ArtifactPreviewType, DeliverableType> = {
   offer: 'offer',
   funnel: 'funnel',
@@ -56,6 +78,54 @@ const PREVIEW_TO_DELIVERABLE_TYPE: Record<ArtifactPreviewType, DeliverableType> 
 
 export function artifactPreviewTypeToDeliverableType(type: ArtifactPreviewType): DeliverableType {
   return PREVIEW_TO_DELIVERABLE_TYPE[type]
+}
+
+export function artifactPreviewTypeToEntityTable(type: ArtifactPreviewType): string {
+  return PREVIEW_TO_ENTITY_TABLE[type]
+}
+
+export function openArtifactPreviewInShell(input: {
+  artifactType: ArtifactPreviewType
+  artifactId: string
+  name: string
+  spaceId?: string | null
+}): void {
+  const internalUrl =
+    input.artifactType === 'mission'
+      ? `/home?mission=${encodeURIComponent(input.artifactId)}`
+      : input.artifactType === 'flow'
+        ? `/flows?flow_id=${encodeURIComponent(input.artifactId)}${
+            input.spaceId ? `&space_id=${encodeURIComponent(input.spaceId)}` : ''
+          }`
+        : null
+
+  openArtifactInShell({
+    id: input.artifactId,
+    entityId: input.artifactId,
+    entityTable: artifactPreviewTypeToEntityTable(input.artifactType),
+    internalUrl,
+    spaceId: input.spaceId,
+    title: input.name,
+    type: artifactPreviewTypeToDeliverableType(input.artifactType),
+  })
+}
+
+export function openDocumentInShell(input: {
+  documentId: string
+  title: string
+  spaceId?: string | null
+  spaceItemId?: string | null
+}): void {
+  const entityId = input.spaceItemId || input.documentId
+  if (!entityId) return
+  openArtifactInShell({
+    id: entityId,
+    entityId,
+    entityTable: input.spaceItemId ? 'space_items' : 'conversation_documents',
+    spaceId: input.spaceId,
+    title: input.title,
+    type: 'doc',
+  })
 }
 
 const SELECTION_TO_DELIVERABLE_TYPE: Record<ArtifactPreviewSelection['type'], DeliverableType> = {

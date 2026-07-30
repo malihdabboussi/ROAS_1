@@ -1,5 +1,5 @@
 export const QUICK_MISSIONS_MESSAGES = {
   startedToast: (missionTitle: string) => `${missionTitle} started`,
-  startedReceipt: (missionTitle: string, missionId: string) =>
-    `Quick Mission started: **${missionTitle}**. [Open mission](/mission-control?mission=${encodeURIComponent(missionId)})`,
+  receiptSaveFailed: 'Mission started, but its chat card could not be saved.',
+  startedReceipt: (missionTitle: string) => `Quick Mission started: **${missionTitle}**.`,
 } as const

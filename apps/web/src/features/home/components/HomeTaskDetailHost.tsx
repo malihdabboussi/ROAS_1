@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
@@ -10,6 +9,7 @@ import { StatusEditorModal } from '@/features/spaces/components/StatusEditorModa
 import { TaskDetailModal } from '@/features/spaces/components/task-detail/TaskDetailModal'
 import { YourTurnSubtaskDrawer } from '@/features/spaces/components/your-turn/YourTurnSubtaskDrawer'
 import { useSpaceFieldOptionActions } from '@/features/spaces/hooks/use-space-field-option-actions'
+import { useTaskDetailNavigation } from '@/features/spaces/hooks/use-task-detail-navigation'
 import {
   fetchSpaceById,
   fetchSpaceItem,
@@ -164,7 +164,6 @@ function HomeSpaceTaskDetailHost({
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [statusEditorOpen, setStatusEditorOpen] = useState(false)
   const storeSnapshotRef = useRef<StoreSnapshot | null>(null)
-  const router = useRouter()
 
   const fieldsForUi = useMemo(
     () => (schema?.fields ?? []).filter(isSpaceFieldVisibleInUi),
@@ -315,17 +314,15 @@ function HomeSpaceTaskDetailHost({
 
   const handleViewPatch = useCallback(async (_patch: Partial<ViewDef>) => {}, [])
 
-  const handleOpenConversationById = useCallback(
-    (conversationId: string) => {
-      if (!space) return
-      useSpacesStore.getState().openConversationInSpaceChat(conversationId)
-      useSpacesStore.getState().setChatCollapsed(false)
-      useSpacesStore.getState().setActiveSpace(space.id)
-      router.push(`/spaces?space=${space.id}`)
-      onClose()
-    },
-    [onClose, router, space],
-  )
+  const {
+    openConversationById: handleOpenConversationById,
+    navigateToSpace: handleNavigateToSpace,
+    navigateToView: handleNavigateToView,
+  } = useTaskDetailNavigation({
+    spaceId,
+    activeViewId: activeView?.id ?? null,
+    onClose: handleClose,
+  })
 
   // Must stay above the loading early-return — conditional hooks crash the home shell.
   const statusField = useMemo(
@@ -359,6 +356,8 @@ function HomeSpaceTaskDetailHost({
         roster={roster}
         currentUserId={currentUserId}
         campaignId={space.campaign_id ?? null}
+        onNavigateToSpace={handleNavigateToSpace}
+        onNavigateToView={handleNavigateToView}
         breadcrumbParentCrumb={
           taskHistory.length > 0 && taskHistory[taskHistory.length - 1]
             ? {

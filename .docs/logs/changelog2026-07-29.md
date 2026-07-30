@@ -206,6 +206,36 @@ Impact: ROAS now has exactly one active org Delegator with five definition files
 
 Files: `supabase/migrations/20260729174500_seed_delegator_system_agent.sql`, `supabase/migrations/20260729180000_repair_delegator_org_seed_and_defs.sql`, `scripts/roas/migration-order.txt`
 
+## [2026-07-29 17:45] - [FIX]
+
+What: Routed chat mission output cards to their exact canonical Mission page and made task-detail Space and view breadcrumbs navigate to their real Space destinations.
+
+Why: Mission cards were falling through the generic document viewer and could leave a stale unrelated task on the right, while the visible task location crumbs were non-interactive labels.
+
+Impact: Clicking a Mission card now opens the Mission named on that card. Clicking the Space crumb opens the owning Space, and clicking the view crumb opens the exact Space view.
+
+Files: `apps/web/src/features/studio/components/message-bubble/FinalOutputCards.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `apps/web/src/features/spaces/components/task-detail/TaskDetailHeader.tsx`, `apps/web/src/features/spaces/components/task-detail/TaskDetailModal.tsx`, `apps/web/src/features/spaces/components/modals/SpaceModalsHost.tsx`, `apps/web/src/features/spaces/hooks/use-task-detail-navigation.ts`, `apps/web/src/features/home/components/HomeTaskDetailHost.tsx`, focused tests, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-07-29 18:05] - [FIX]
+
+What: Unified rich chat artifact cards, compact final-output cards, and document cards behind one typed shell destination map covering every emitted artifact type. Added canonical previews for forms, ad sets, ad campaigns, and themes; exact route handling for missions and flows; and Space-editor handling for visual docs and custom objects.
+
+Why: The same artifact could previously open a different or stale component depending on which chat renderer produced the card because three independent click paths mixed the shell viewer with a campaign-local legacy event.
+
+Impact: Chat result cards now open the component belonging to their exact artifact id and type. A table-driven routing suite locks all 19 artifact types, document variants, mission/flow URLs, and shell component selection.
+
+Files: `apps/web/src/lib/artifacts/shell-artifact-viewer.ts`, `apps/web/src/lib/missions/mission-deliverable-from-block.ts`, `apps/web/src/components/artifacts/artifact-inline-preview-card/ArtifactInlinePreviewCard.tsx`, `apps/web/src/features/studio/components/chat/DocumentCard.tsx`, `apps/web/src/features/studio/components/message-bubble/FinalOutputCards.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `apps/web/src/components/deliverables/DeliverableEntityPreviewAdapter.tsx`, focused tests, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-07-29 18:14] - [FIX]
+
+What: Persisted Quick Mission launch receipts in their originating conversations as typed Mission cards, carried the source conversation into mission input, made receipt writes idempotent, and defaulted IG Organic Video to skill-written copy.
+
+Why: The previous launch acknowledgement lived only in browser state, so it could disappear after refresh or conversation switching and the mission lost its durable chat origin.
+
+Impact: Static and video Quick Missions retain exact playbook, Space, campaign, and chat provenance. Their cards survive refresh, open the exact Mission through the shared artifact router, and callback retries do not create duplicates.
+
+Files: `apps/api/src/modules/conversations/`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/features/spaces/components/StartAdProductionPlaybookFields.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx`, `apps/web/src/features/spaces/config/quick-missions-messages.config.ts`, `apps/web/src/lib/conversations/`, focused tests, `documentation/features/missions.md`
+
 ## [2026-07-29 18:02] - [FIX]
 
 What: Replaced the Fathom-only call-kind helper with one canonical meeting classifier, applied it to scheduled calendar creation and Fathom attachment, marked human edits as authoritative, and upgraded every Meetings-style Space/template to Personal, Team, Executive, Client, Partner, and Sales.

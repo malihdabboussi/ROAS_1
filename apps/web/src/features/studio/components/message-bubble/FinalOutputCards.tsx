@@ -9,7 +9,7 @@ import {
   Music2,
   Video,
 } from 'lucide-react'
-import { openArtifactInShell } from '@/lib/artifacts'
+import { openArtifactPreviewInShell, openDocumentInShell } from '@/lib/artifacts'
 import type { ArtifactNodeType } from '@/lib/chat/attached-artifact'
 import { openMediaAssetInApp } from '@/lib/media/open-media-asset-in-app'
 import { useResilientImageSrc } from '@/lib/media/use-resilient-image-src'
@@ -164,46 +164,24 @@ function describeOutput(block: FinalOutputBlock): {
 
 function openDefaultOutput(block: FinalOutputBlock) {
   if (block.type === 'artifact_preview') {
-    if (block.artifactType === 'task' && block.spaceId) {
-      openArtifactInShell({
-        id: block.artifactId,
-        entityId: block.artifactId,
-        entityTable: 'space_items',
-        spaceId: block.spaceId,
-        title: block.name,
-        type: 'task',
-      })
-      return
-    }
-    window.dispatchEvent(
-      new CustomEvent('vibey-open-artifact', {
-        detail: {
-          artifactType: block.artifactType,
-          artifactId: block.artifactId,
-          name: block.name,
-          spaceId: block.spaceId,
-        },
-      }),
-    )
+    openArtifactPreviewInShell({
+      artifactType: block.artifactType,
+      artifactId: block.artifactId,
+      name: block.name,
+      spaceId: block.spaceId,
+    })
     return
   }
 
   if (block.type === 'document_card') {
     const documentId = block.documentId?.trim() ?? ''
     const spaceItemId = block.spaceItemId?.trim() ?? ''
-    if (!documentId && !spaceItemId) return
-    window.dispatchEvent(
-      new CustomEvent('vibey-open-artifact', {
-        detail: {
-          artifactType: spaceItemId ? 'space_doc' : 'document',
-          artifactId: spaceItemId || documentId,
-          documentId,
-          name: block.title,
-          spaceId: block.spaceId,
-          spaceItemId,
-        },
-      }),
-    )
+    openDocumentInShell({
+      documentId,
+      title: block.title,
+      spaceId: block.spaceId,
+      spaceItemId,
+    })
     return
   }
 

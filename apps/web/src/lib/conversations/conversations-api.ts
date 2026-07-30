@@ -67,6 +67,17 @@ export async function fetchMessages(
   )
 }
 
+export async function persistQuickMissionReceipt(
+  conversationId: string,
+  input: {
+    mission_id: string
+    mission_title: string
+    space_id?: string
+  },
+): Promise<Message> {
+  return backendPost<Message>(`/api/conversations/${conversationId}/mission-receipts`, input)
+}
+
 export async function markConversationRead(id: string): Promise<void> {
   if (isPendingConversationId(id)) return
   await backendPost(`/api/conversations/${id}/read`, {})

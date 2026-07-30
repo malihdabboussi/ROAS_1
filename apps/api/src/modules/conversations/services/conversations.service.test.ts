@@ -40,6 +40,16 @@ function createService(
       conversation_id: 'conv-1',
       metadata: { existing: true },
     }),
+    create: vi.fn().mockResolvedValue({
+      id: 'mission-1',
+      conversation_id: 'conv-1',
+      role: 'assistant',
+      content: 'Quick Mission started: **Static Ad Production**.',
+      metadata: {
+        quick_mission_receipt: true,
+        mission_id: 'mission-1',
+      },
+    }),
     update: vi.fn().mockResolvedValue(undefined),
     findUpToMessage: vi.fn().mockResolvedValue([]),
     bulkCreate: vi.fn().mockResolvedValue([]),
@@ -65,7 +75,7 @@ function createService(
     messagesRepo as never,
   )
 
-  return { service, conversationsRepo, messagesRepo, permissionsService }
+  return { service, conversationMessages, conversationsRepo, messagesRepo, permissionsService }
 }
 
 describe('ConversationsService message workflows', () => {
@@ -122,6 +132,81 @@ describe('ConversationsService message workflows', () => {
         content_blocks_ordered: [{ id: 'block-1', confirmed: true }],
       },
     })
+  })
+
+  it('persists one typed mission receipt in the originating conversation', async () => {
+    const { conversationMessages, messagesRepo, permissionsService } = createService({
+      messagesRepo: { findById: vi.fn().mockResolvedValue(null) },
+    })
+
+    await conversationMessages.createMissionReceipt(
+      {} as never,
+      'user-1',
+      'conv-1',
+      {
+        mission_id: 'mission-1',
+        mission_title: 'Static Ad Production',
+        space_id: 'space-1',
+      },
+      'org-1',
+      'editor',
+    )
+
+    expect(permissionsService.assertCanAccessConversation).toHaveBeenCalledWith(
+      {},
+      'user-1',
+      'editor',
+      'conv-1',
+      'edit',
+      'org-1',
+    )
+    expect(messagesRepo.create).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({
+        id: 'mission-1',
+        conversation_id: 'conv-1',
+        role: 'assistant',
+        content: 'Quick Mission started: **Static Ad Production**.',
+        metadata: expect.objectContaining({
+          quick_mission_receipt: true,
+          mission_id: 'mission-1',
+          content_blocks_ordered: expect.arrayContaining([
+            expect.objectContaining({
+              type: 'artifact_preview',
+              artifactType: 'mission',
+              artifactId: 'mission-1',
+              spaceId: 'space-1',
+            }),
+          ]),
+        }),
+      }),
+    )
+  })
+
+  it('returns the existing receipt when the same mission callback is retried', async () => {
+    const existing = {
+      id: 'mission-1',
+      conversation_id: 'conv-1',
+      role: 'assistant',
+      content: 'Quick Mission started: **Static Ad Production**.',
+      metadata: { quick_mission_receipt: true, mission_id: 'mission-1' },
+    }
+    const { conversationMessages, messagesRepo } = createService({
+      messagesRepo: { findById: vi.fn().mockResolvedValue(existing) },
+    })
+
+    await expect(
+      conversationMessages.createMissionReceipt(
+        {} as never,
+        'user-1',
+        'conv-1',
+        { mission_id: 'mission-1', mission_title: 'Static Ad Production' },
+        'org-1',
+        'editor',
+      ),
+    ).resolves.toEqual(existing)
+
+    expect(messagesRepo.create).not.toHaveBeenCalled()
   })
 
   it('forks a conversation with copied messages and source metadata', async () => {

@@ -78,6 +78,7 @@ export function QuickMissionsHubModal({
   clients,
   initialPlaybookKey,
   initialClientSpaceId,
+  sourceConversationId,
   onClose,
   onStarted,
 }: {
@@ -86,8 +87,9 @@ export function QuickMissionsHubModal({
   clients: QuickMissionClientOption[]
   initialPlaybookKey?: string | null
   initialClientSpaceId?: string | null
+  sourceConversationId?: string | null
   onClose: () => void
-  onStarted?: (missionId: string, missionTitle: string) => void
+  onStarted?: (missionId: string, missionTitle: string, spaceId: string) => void | Promise<void>
 }) {
   const [step, setStep] = useState<HubStep>('mission')
   const [selected, setSelected] = useState<QuickMissionCatalogEntry | null>(null)
@@ -136,12 +138,25 @@ export function QuickMissionsHubModal({
       })
       const mission = await createMission({
         ...payload,
+        input: {
+          ...payload.input,
+          ...(sourceConversationId
+            ? {
+                source_conversation_id: sourceConversationId,
+                source_surface: 'chat_quick_mission',
+              }
+            : {}),
+        },
         campaign_id: selectedClient.campaignId,
         space_id: selectedClient.spaceId,
         idempotency_key: `quick-mission-${selected.id}-${crypto.randomUUID()}`,
       })
       toast.success(QUICK_MISSIONS_MESSAGES.startedToast(payload.title))
-      onStarted?.(mission.id, payload.title)
+      try {
+        await onStarted?.(mission.id, payload.title, selectedClient.spaceId)
+      } catch {
+        toast.warning(QUICK_MISSIONS_MESSAGES.receiptSaveFailed)
+      }
       onClose()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : resolveMissionCreateToastMessage(error))

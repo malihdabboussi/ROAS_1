@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef } from 'react'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
 import { DeliverablePreviewBody } from '@/components/deliverables/DeliverablePreviewBody'
@@ -90,6 +90,7 @@ function ShellSpaceDocumentArtifactViewer({ target }: { target: ShellArtifactVie
 
 export function ShellArtifactViewerAdapter() {
   const pathname = usePathname() || '/home'
+  const router = useRouter()
   const target = useShellStore((s) => s.artifactViewer.target)
   const openArtifactViewer = useShellStore((s) => s.openArtifactViewer)
   const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
@@ -143,11 +144,27 @@ export function ShellArtifactViewerAdapter() {
     }
   }, [closeArtifactViewer, pathname])
 
+  useEffect(() => {
+    if (target?.type !== 'mission' && target?.type !== 'flow') return
+    const entityId = target.entityId || target.id
+    const internalUrl =
+      target.internalUrl ||
+      (target.type === 'mission'
+        ? `/home?mission=${encodeURIComponent(entityId)}`
+        : `/flows?flow_id=${encodeURIComponent(entityId)}`)
+    closeArtifactViewer()
+    router.push(internalUrl)
+  }, [closeArtifactViewer, router, target])
+
   if (!target) return null
+  if (target.type === 'mission' || target.type === 'flow') return null
   if (target.type === 'image' || target.type === 'video' || target.type === 'audio') {
     return <ShellMediaArtifactViewer target={target} />
   }
-  if (target.type === 'doc' && target.entityTable === 'space_items') {
+  if (
+    (target.type === 'doc' || target.type === 'visual_doc' || target.type === 'custom_object') &&
+    target.entityTable === 'space_items'
+  ) {
     return <ShellSpaceDocumentArtifactViewer target={target} />
   }
   if (target.type === 'task' && target.entityTable === 'space_items') {

@@ -9259,6 +9259,23 @@ Reason not done now: The requested behavior is complete and covered; the remaini
 - **Needed work:** Split capability allowlists, action docs, and team-brain helpers into dedicated modules.
 - **Why not now:** Out of scope for the Delegator install; only additive profile/key lines were required for the ship.
 
+## 2026-07-29 — Chat mission return bridge and task-detail decomposition
+
+Status: Open
+
+Files:
+
+- `apps/web/src/features/home/components/HomeTaskDetailHost.tsx` (397 LOC; component limit 400 LOC)
+- `apps/web/src/features/spaces/components/task-detail/TaskDetailModal.tsx` (400 LOC; component limit 400 LOC)
+- `apps/agent-api/src/modules/artifacts/services/artifact-missions.service.ts`
+- `apps/api/src/modules/missions/services/mission-internal-callback.base.ts`
+
+Evidence: The exact Mission card and breadcrumb navigation defects are fixed. Quick Missions now persist `source_conversation_id` and an idempotent launch card, but the mission callback still does not update that card or persist terminal output/deliverables into the originating conversation. The inspected older production Mission `05a10495-fd24-4889-bbfc-9062bd7f8717` predates source preservation, has no Space/campaign origin, and remains `pending_approval`. The two touched task-detail owners are also now at or within three lines of the component limit.
+
+Needed work: Add one idempotent terminal callback that updates the originating Mission card and posts the final Mission summary/deliverables to the authenticated source conversation. Preserve the same source contract across agent-delegated `create_mission` launches, not only the Quick Missions button. Separately decompose the task-detail host and modal without changing behavior.
+
+Reason not done now: Terminal mission-to-chat delivery changes Agent API action contracts, worker callback behavior, realtime delivery, schema/preflight, and error-circuit coverage. The current polish safely owns Quick Mission launch provenance and receipt persistence without expanding into worker completion semantics.
+
 ## 2026-07-29 — Fathom automation base decomposition remains open
 
 Status: Open

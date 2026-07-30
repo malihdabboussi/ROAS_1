@@ -11,6 +11,7 @@ import {
   fetchConversationShares,
   fetchMessages,
   markConversationRead,
+  persistQuickMissionReceipt,
   renameConversation,
   setConversationArchived,
   setConversationPinned,
@@ -98,6 +99,31 @@ describe('conversations api', () => {
     await expect(markConversationRead('conversation-1')).resolves.toBeUndefined()
 
     expect(backendPostMock).toHaveBeenCalledWith('/api/conversations/conversation-1/read', {})
+  })
+
+  it('persists a Quick Mission receipt in its originating conversation', async () => {
+    backendPostMock.mockResolvedValue({
+      id: 'mission-1',
+      conversation_id: 'conversation-1',
+      role: 'assistant',
+    })
+
+    await expect(
+      persistQuickMissionReceipt('conversation-1', {
+        mission_id: 'mission-1',
+        mission_title: 'Static Ad Production',
+        space_id: 'space-1',
+      }),
+    ).resolves.toMatchObject({ id: 'mission-1' })
+
+    expect(backendPostMock).toHaveBeenCalledWith(
+      '/api/conversations/conversation-1/mission-receipts',
+      {
+        mission_id: 'mission-1',
+        mission_title: 'Static Ad Production',
+        space_id: 'space-1',
+      },
+    )
   })
 
   it('does not mark pending conversations as read', async () => {

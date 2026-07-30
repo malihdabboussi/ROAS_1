@@ -38,6 +38,8 @@ export function TaskDetailModal({
   roster,
   currentUserId,
   campaignId,
+  onNavigateToSpace,
+  onNavigateToView,
   breadcrumbParentCrumb,
   canGoBack,
   onBack,
@@ -241,7 +243,6 @@ export function TaskDetailModal({
     [setSubtasks, onUpdated],
   )
 
-  /** Per-task Subtasks-panel collapse survives refetches/remounts of `TaskSubtasks` for the open task */
   const [taskSubtasksSectionCollapsedMap, setTaskSubtasksSectionCollapsedMap] = useState<
     Record<string, boolean>
   >({})
@@ -264,6 +265,8 @@ export function TaskDetailModal({
         spaceName={spaceName}
         viewName={viewName}
         viewType={activeView.type ?? null}
+        onNavigateToSpace={onNavigateToSpace}
+        onNavigateToView={onNavigateToView}
         breadcrumbParentCrumb={breadcrumbParentCrumb}
         canGoBack={canGoBack}
         onBack={onBack}

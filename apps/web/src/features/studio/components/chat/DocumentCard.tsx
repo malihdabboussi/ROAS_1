@@ -1,9 +1,8 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
 import type { MouseEvent } from 'react'
 import { Download, FileText } from 'lucide-react'
-import { useCampaignModeOptional } from '../../contexts/CampaignModeContext'
+import { openDocumentInShell } from '@/lib/artifacts'
 import { ARTIFACT_CHAT_PREVIEW_PANE_PX } from './ArtifactAttachments'
 
 interface DocumentCardProps {
@@ -18,10 +17,6 @@ interface DocumentCardProps {
   onDownloadClick?: (e: MouseEvent<HTMLButtonElement>) => void
 }
 
-function spacesDocHref(spaceId: string, spaceItemId: string): string {
-  return `/spaces?space=${encodeURIComponent(spaceId)}&item=${encodeURIComponent(spaceItemId)}`
-}
-
 export function DocumentCard({
   title,
   documentId,
@@ -31,11 +26,6 @@ export function DocumentCard({
   onOpenOverride,
   onDownloadClick,
 }: DocumentCardProps) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const inSpacesUi = (pathname ?? '').startsWith('/spaces')
-  const campaignMode = useCampaignModeOptional()
-
   return (
     <div className="my-spacing-2 group relative w-full max-w-[400px]">
       <button
@@ -45,27 +35,7 @@ export function DocumentCard({
             onOpenOverride()
             return
           }
-          // Prefer the Space Doc deep link whenever dual-write succeeded.
-          if (spaceId && spaceItemId) {
-            router.push(spacesDocHref(spaceId, spaceItemId))
-            return
-          }
-          if (campaignMode && !inSpacesUi) {
-            campaignMode.expandPanel('media')
-            return
-          }
-          window.dispatchEvent(
-            new CustomEvent('vibey-open-artifact', {
-              detail: {
-                artifactType: spaceItemId ? 'space_doc' : 'document',
-                artifactId: spaceItemId ?? documentId,
-                documentId,
-                name: title,
-                spaceId,
-                spaceItemId,
-              },
-            }),
-          )
+          openDocumentInShell({ documentId, title, spaceId, spaceItemId })
         }}
         className="card-glass rounded-spacing-3 hover:bg-hover-subtle w-full cursor-pointer overflow-hidden text-left transition-colors"
       >

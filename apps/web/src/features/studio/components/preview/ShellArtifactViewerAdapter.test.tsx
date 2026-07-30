@@ -5,7 +5,12 @@ import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
 import { VIBEY_OPEN_MEDIA_EVENT } from '@/lib/media/open-media-asset-in-app'
 import { ShellArtifactViewerAdapter } from './ShellArtifactViewerAdapter'
 
-vi.mock('next/navigation', () => ({ usePathname: () => '/chat' }))
+const { routerPush } = vi.hoisted(() => ({ routerPush: vi.fn() }))
+
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/chat',
+  useRouter: () => ({ push: routerPush }),
+}))
 
 vi.mock('@/components/deliverables/deliverable-entity-preview-renderer', () => ({
   renderDeliverableEntityPreview: vi.fn(),
@@ -66,6 +71,7 @@ const target: ShellArtifactViewerTarget = {
 
 describe('ShellArtifactViewerAdapter', () => {
   beforeEach(() => {
+    routerPush.mockClear()
     useShellStore.setState({ artifactViewer: { target, width: 480 } })
   })
 
@@ -97,6 +103,72 @@ describe('ShellArtifactViewerAdapter', () => {
 
     await waitFor(() => expect(screen.getByTestId('canonical-task-panel')).toBeTruthy())
     expect(screen.getByText('delegation-desk-1:task-1')).toBeTruthy()
+  })
+
+  it('navigates an exact mission target instead of rendering it as a document', async () => {
+    useShellStore.setState({
+      artifactViewer: {
+        width: 480,
+        target: {
+          id: 'mission-1',
+          entityId: 'mission-1',
+          entityTable: 'missions',
+          title: 'Validate message angles',
+          type: 'mission',
+          internalUrl: '/home?mission=mission-1',
+        },
+      },
+    })
+
+    render(<ShellArtifactViewerAdapter />)
+
+    await waitFor(() => expect(routerPush).toHaveBeenCalledWith('/home?mission=mission-1'))
+    expect(screen.queryByTestId('lightweight-preview')).toBeNull()
+    expect(useShellStore.getState().artifactViewer.target).toBeNull()
+  })
+
+  it('navigates an exact flow target instead of rendering it as a document', async () => {
+    useShellStore.setState({
+      artifactViewer: {
+        width: 480,
+        target: {
+          id: 'flow-1',
+          entityId: 'flow-1',
+          entityTable: 'space_automations',
+          title: 'Lead follow-up flow',
+          type: 'flow',
+          internalUrl: '/flows?flow_id=flow-1&space_id=space-1',
+        },
+      },
+    })
+
+    render(<ShellArtifactViewerAdapter />)
+
+    await waitFor(() =>
+      expect(routerPush).toHaveBeenCalledWith('/flows?flow_id=flow-1&space_id=space-1'),
+    )
+    expect(screen.queryByTestId('lightweight-preview')).toBeNull()
+  })
+
+  it('renders visual docs and custom objects with the canonical Space editor', async () => {
+    useShellStore.setState({
+      artifactViewer: {
+        width: 480,
+        target: {
+          id: 'visual-doc-1',
+          entityId: 'visual-doc-1',
+          entityTable: 'space_items',
+          spaceId: 'space-1',
+          title: 'Campaign visual',
+          type: 'visual_doc',
+        },
+      },
+    })
+
+    render(<ShellArtifactViewerAdapter />)
+
+    await waitFor(() => expect(screen.getByTestId('canonical-space-editor')).toBeTruthy())
+    expect(screen.queryByTestId('lightweight-preview')).toBeNull()
   })
 
   it('opens the image studio when a chat image has no mounted Space consumer', async () => {
