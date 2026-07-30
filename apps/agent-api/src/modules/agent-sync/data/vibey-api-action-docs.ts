@@ -2470,7 +2470,7 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   delegate_to_agent: {
     section: 'Team',
     description:
-      'Delegates a task to another agent. The target agent uses its tools to complete the work and returns deliverables. Use when the user wants another agent to produce something (e.g. "have the designer create a logo"). If the target agent is not on the team, the backend returns hire suggestions. Required fields: `target_agent_key` (the agent_key of the agent to delegate to, e.g. "developer"), `task_description` (what the agent should do).',
+      'Delegates a task to another agent. The target agent receives bounded evidence from the originating chat, including available Space and campaign identifiers, then uses its tools to complete the work and return deliverables. Preserve relevant source details in `task_description`; do not paste the entire chat. Meeting-dependent delegations must check connected recording sources before claiming a call is unavailable. If the target agent is not on the team, the backend returns hire suggestions. Required fields: `target_agent_key` (the agent_key of the agent to delegate to, e.g. "developer"), `task_description` (what the agent should do).',
     parameters:
       '```json\n{"action":"delegate_to_agent","label":"Delegating to Rex","data":{"target_agent_key":"developer","task_description":"Build a responsive landing page for the Q2 product launch"}}\n```',
   },

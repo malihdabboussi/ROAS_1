@@ -32,3 +32,10 @@ export interface StreamedDelegationResult {
   outputText: string
   toolTurns: A2ATurn[]
 }
+
+export interface DelegationSourceContext {
+  content: string
+  conversationId: string
+  spaceId?: string
+  campaignId?: string
+}

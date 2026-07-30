@@ -5,6 +5,19 @@ import { ArtifactAgentDelegationStreamService } from './artifact-agent-delegatio
 import type { A2ATurn } from './artifact-agent-delegation.types'
 
 export class ArtifactAgentDelegationTaskService {
+  private static readonly MEETING_SOURCE_PATTERN =
+    /\b(call|meeting|recording|transcript|fathom|fireflies|zoom|otter|tldv|tactiq|sembly)\b/i
+  private static readonly UNVERIFIED_MISSING_SOURCE_PATTERN =
+    /\b(cannot|can't|could not|couldn't|unable to|did not|didn't)\b.{0,80}\b(find|locate|access|retrieve)\b|\b(missing|unavailable|not in the workspace)\b|send (?:me )?(?:the )?(?:call|recording|transcript|link)|tell me (?:the )?(?:call )?date/i
+  private static readonly MEETING_SOURCE_TOOLS = new Set([
+    'search_available_integrations',
+    'get_integration',
+    'use_integration',
+    'list_meetings',
+    'list_transcripts',
+    'get_transcript',
+  ])
+
   constructor(
     private readonly repository: ArtifactAgentDelegationRepository,
     private readonly context: ArtifactAgentDelegationContextService,
@@ -192,6 +205,9 @@ export class ArtifactAgentDelegationTaskService {
           : 'Do not delegate to other agents — you are at the maximum delegation depth.',
         campaignId ? `CAMPAIGN_ID=${campaignId}` : '',
         orgId ? `ORG_ID=${orgId}` : '',
+        this.isMeetingDependent(taskDescription)
+          ? 'This task depends on a call or meeting. Before saying the source is missing, check imported Space/Brain evidence and the connected recording provider. For Fathom, list meetings, match by participant/title/date/topic, and fetch the matched transcript. State which source supplied the evidence.'
+          : '',
       ]
         .filter(Boolean)
         .join('\n')
@@ -202,8 +218,15 @@ export class ArtifactAgentDelegationTaskService {
         conversationId !== delegationId ? conversationId : '',
         delegationId,
       )
+      const sourceContext = await this.context.buildDelegationSourceContext(serviceClient, {
+        conversationId: conversationId !== delegationId ? conversationId : '',
+        userId,
+      })
 
       const inputItems: Array<Record<string, unknown>> = []
+      if (sourceContext) {
+        inputItems.push({ type: 'message', role: 'developer', content: sourceContext.content })
+      }
       if (historyContext) {
         inputItems.push({ type: 'message', role: 'developer', content: historyContext })
       }
@@ -213,7 +236,19 @@ export class ArtifactAgentDelegationTaskService {
         model: `openclaw:${gatewayAgentId}`,
         input: inputItems,
         instructions,
-        metadata: { user_id: userId, delegation_id: delegationId },
+        metadata: {
+          user_id: userId,
+          delegation_id: delegationId,
+          ...(sourceContext
+            ? {
+                source_conversation_id: sourceContext.conversationId,
+                ...(sourceContext.spaceId ? { source_space_id: sourceContext.spaceId } : {}),
+                ...(sourceContext.campaignId
+                  ? { source_campaign_id: sourceContext.campaignId }
+                  : {}),
+              }
+            : {}),
+        },
       }
 
       await onProgress?.(
@@ -231,7 +266,7 @@ export class ArtifactAgentDelegationTaskService {
         }),
       )
 
-      const { outputText, toolTurns } = await this.stream.streamDelegation({
+      let { outputText, toolTurns } = await this.stream.streamDelegation({
         gatewayUrl,
         gatewayToken,
         delegationSessionKey,
@@ -243,6 +278,38 @@ export class ArtifactAgentDelegationTaskService {
         delegationId,
         onProgress,
       })
+      if (this.needsMeetingSourceCorrection(taskDescription, outputText, toolTurns)) {
+        const correction =
+          'The previous answer claimed the call was missing without checking a connected recording source. Re-check the originating chat evidence, then check the connected recording provider before concluding the call or transcript is unavailable. For Fathom: discover the integration, list meetings, match by participant/title/date/topic, and fetch the transcript. Do not ask the user for a link or date until those sources have actually been checked.'
+        const retryResult = await this.stream.streamDelegation({
+          gatewayUrl,
+          gatewayToken,
+          delegationSessionKey,
+          gatewayAgentId,
+          body: {
+            ...body,
+            input: [
+              ...inputItems,
+              { type: 'message', role: 'assistant', content: outputText },
+              { type: 'message', role: 'developer', content: correction },
+            ],
+          },
+          targetAgentKey: resolution.agentKey,
+          targetName: resolution.name,
+          targetImage: resolution.imageUrl,
+          delegationId,
+          onProgress,
+        })
+        outputText = retryResult.outputText
+        const retryTurnOffset = toolTurns.length
+        toolTurns = [
+          ...toolTurns,
+          ...retryResult.toolTurns.map((turn) => ({
+            ...turn,
+            turnIndex: turn.turnIndex + retryTurnOffset,
+          })),
+        ]
+      }
 
       const responseTurn: A2ATurn = {
         from: resolution.agentKey,
@@ -329,5 +396,25 @@ export class ArtifactAgentDelegationTaskService {
 
       return { success: false, error: errMsg, delegation_id: delegationId }
     }
+  }
+
+  private isMeetingDependent(taskDescription: string): boolean {
+    return ArtifactAgentDelegationTaskService.MEETING_SOURCE_PATTERN.test(taskDescription)
+  }
+
+  private needsMeetingSourceCorrection(
+    taskDescription: string,
+    outputText: string,
+    toolTurns: A2ATurn[],
+  ): boolean {
+    if (!this.isMeetingDependent(taskDescription)) return false
+    if (!ArtifactAgentDelegationTaskService.UNVERIFIED_MISSING_SOURCE_PATTERN.test(outputText)) {
+      return false
+    }
+    return !toolTurns.some(
+      (turn) =>
+        !!turn.toolName &&
+        ArtifactAgentDelegationTaskService.MEETING_SOURCE_TOOLS.has(turn.toolName),
+    )
   }
 }

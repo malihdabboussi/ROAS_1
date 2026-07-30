@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { ArtifactAgentDelegationRepository } from '../repositories/artifact-agent-delegation.repository'
 import type {
+  DelegationSourceContext,
   TargetResolution,
   TeamMember,
   TemplateOption,
@@ -8,6 +9,8 @@ import type {
 
 export class ArtifactAgentDelegationContextService {
   static readonly MAX_DELEGATION_DEPTH = 3
+  private static readonly SOURCE_MESSAGE_LIMIT = 16
+  private static readonly SOURCE_CONTEXT_CHARACTER_LIMIT = 20_000
 
   constructor(private readonly repository: ArtifactAgentDelegationRepository) {}
 
@@ -216,6 +219,74 @@ export class ArtifactAgentDelegationContextService {
       '',
       'Use this context to understand what you have already done. Reference your past work when relevant.',
     ].join('\n')
+  }
+
+  async buildDelegationSourceContext(
+    serviceClient: SupabaseClient,
+    input: { conversationId: string; userId: string },
+  ): Promise<DelegationSourceContext | null> {
+    if (!input.conversationId) return null
+
+    const { data: conversation } = await this.repository.findDelegationSourceConversation(
+      serviceClient,
+      input,
+    )
+    if (!conversation) return null
+
+    const { data } = await this.repository.listDelegationSourceMessages(serviceClient, {
+      conversationId: input.conversationId,
+      limit: ArtifactAgentDelegationContextService.SOURCE_MESSAGE_LIMIT,
+    })
+    const messages = [...(data ?? [])].reverse()
+    const metadata = conversation.metadata ?? {}
+    const spaceId = this.readMetadataId(metadata, ['space_id', 'spaceId'])
+    const campaignId = this.readMetadataId(metadata, ['campaign_id', 'campaignId'])
+    const scope = [
+      `Conversation: ${conversation.title || conversation.id}`,
+      `Conversation ID: ${conversation.id}`,
+      spaceId ? `Space ID: ${spaceId}` : '',
+      campaignId ? `Campaign ID: ${campaignId}` : '',
+    ].filter(Boolean)
+    const transcript = messages
+      .map((message) => {
+        const role = message.role === 'assistant' ? 'Originating agent' : 'User'
+        return `${role}: ${String(message.content ?? '').trim()}`
+      })
+      .filter((message) => !message.endsWith(': '))
+      .join('\n\n')
+    const header = [
+      '[ORIGINATING CHAT EVIDENCE — authoritative context for this delegation]',
+      ...scope,
+      '',
+    ]
+      .filter((part, index, parts) => part || (index > 0 && parts[index - 1]))
+      .join('\n')
+    const footer =
+      'Use this evidence before searching elsewhere. Preserve referenced task, meeting, Space, campaign, transcript, recording, and document IDs. Do not ask the user for information already present here.'
+    const transcriptLimit = Math.max(
+      0,
+      ArtifactAgentDelegationContextService.SOURCE_CONTEXT_CHARACTER_LIMIT -
+        header.length -
+        footer.length -
+        4,
+    )
+    const boundedTranscript = transcript.slice(-transcriptLimit)
+    const content = [header, boundedTranscript, footer].filter(Boolean).join('\n\n')
+
+    return {
+      content,
+      conversationId: conversation.id,
+      ...(spaceId ? { spaceId } : {}),
+      ...(campaignId ? { campaignId } : {}),
+    }
+  }
+
+  private readMetadataId(metadata: Record<string, unknown>, keys: string[]): string | undefined {
+    for (const key of keys) {
+      const value = metadata[key]
+      if (typeof value === 'string' && value.trim()) return value.trim()
+    }
+    return undefined
   }
 
   async ensureDelegationRuntimeReady(params: {

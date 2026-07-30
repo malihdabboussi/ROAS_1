@@ -49,6 +49,10 @@ function makeQueryClient(
           record.isFilters[key] = value
           return query
         }),
+        in: vi.fn((key: string, value: unknown[]) => {
+          record.filters[`in:${key}`] = value
+          return query
+        }),
         or: vi.fn((filter: string) => {
           record.orFilter = filter
           return query
@@ -112,7 +116,190 @@ function makeTarget(input: {
   }
 }
 
+function makeGatewayClient(responses: string[]) {
+  const requests: Array<Record<string, unknown>> = []
+  let responseIndex = 0
+  return {
+    requests,
+    client: {
+      openResponsesStream: vi.fn(async (request: Record<string, unknown>) => {
+        requests.push(request)
+        const output = responses[responseIndex++] ?? responses.at(-1) ?? ''
+        const encoder = new TextEncoder()
+        const stream = new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(
+              encoder.encode(
+                [
+                  `data: ${JSON.stringify({ type: 'response.output_text.delta', delta: output })}`,
+                  'data: [DONE]',
+                  '',
+                ].join('\n'),
+              ),
+            )
+            controller.close()
+          },
+        })
+        return stream.getReader()
+      }),
+    },
+  }
+}
+
 describe('ArtifactAgentDelegationService', () => {
+  it('passes the originating chat evidence into delegated work', async () => {
+    const user = makeQueryClient((record) => {
+      if (record.table === 'agents_registry' && record.filters.agent_key === 'delegator') {
+        return {
+          data: {
+            agent_key: 'delegator',
+            name: 'Delegator',
+            role: 'Delegation Manager',
+            image_url: null,
+          },
+          error: null,
+        }
+      }
+      if (record.table === 'agents_registry' && record.filters.agent_key === 'caller-agent') {
+        return { data: { image_url: null, role: 'Lead', name: 'Lead Agent' }, error: null }
+      }
+      return { data: null, error: null }
+    })
+    const serviceClient = makeQueryClient((record) => {
+      if (record.table === 'conversations') {
+        return {
+          data: {
+            id: 'conversation-1',
+            title: 'Impact Elite GoHighLevel Workflows',
+            metadata: { space_id: 'space-1', campaign_id: 'campaign-1' },
+          },
+          error: null,
+        }
+      }
+      if (record.table === 'messages') {
+        return {
+          data: [
+            {
+              role: 'assistant',
+              content: 'Created task task-123 with the First 10 Minutes hot-potato workflow.',
+              created_at: '2026-07-29T18:02:00.000Z',
+            },
+            {
+              role: 'user',
+              content: 'Use the July 29 Fathom call for the Impact Elite GHL workflow.',
+              created_at: '2026-07-29T18:01:00.000Z',
+            },
+          ],
+          error: null,
+        }
+      }
+      return { data: null, error: null }
+    })
+    const gateway = makeGatewayClient(['Delegation completed from the supplied call evidence.'])
+    const service = new ArtifactAgentDelegationService({ gatewayClient: gateway.client as any })
+    const handlers = service.getHandlers(
+      makeTarget({
+        userClient: user.client,
+        serviceClient: serviceClient.client,
+        configValues: {
+          OPENCLAW_GATEWAY_URL: 'https://gateway.example.test',
+          OPENCLAW_GATEWAY_TOKEN: 'token',
+        },
+      }),
+    )
+
+    const result = await handlers.delegate_to_agent(
+      {
+        target_agent_key: 'delegator',
+        task_description: 'Delegate the GHL workflow implementation.',
+      },
+      'agent:caller',
+    )
+
+    expect(result).toMatchObject({ success: true, delegation_status: 'completed' })
+    const body = gateway.requests[0]?.body as {
+      input: Array<{ role: string; content: string }>
+      metadata: Record<string, unknown>
+    }
+    expect(body.input[0]).toMatchObject({ role: 'developer' })
+    expect(body.input[0]?.content).toContain('Impact Elite GoHighLevel Workflows')
+    expect(body.input[0]?.content).toContain('task-123')
+    expect(body.input[0]?.content).toContain('space-1')
+    expect(body.input.at(-1)).toEqual({
+      type: 'message',
+      role: 'user',
+      content: 'Delegate the GHL workflow implementation.',
+    })
+    expect(body.metadata).toMatchObject({
+      source_conversation_id: 'conversation-1',
+      source_space_id: 'space-1',
+      source_campaign_id: 'campaign-1',
+    })
+  })
+
+  it('corrects a missing-call response when no recording source was checked', async () => {
+    const user = makeQueryClient((record) => {
+      if (record.table === 'agents_registry' && record.filters.agent_key === 'delegator') {
+        return {
+          data: {
+            agent_key: 'delegator',
+            name: 'Delegator',
+            role: 'Delegation Manager',
+            image_url: null,
+          },
+          error: null,
+        }
+      }
+      if (record.table === 'agents_registry' && record.filters.agent_key === 'caller-agent') {
+        return { data: { image_url: null, role: 'Lead', name: 'Lead Agent' }, error: null }
+      }
+      return { data: null, error: null }
+    })
+    const serviceClient = makeQueryClient((record) => {
+      if (record.table === 'conversations') {
+        return {
+          data: { id: 'conversation-1', title: 'GHL call', metadata: {} },
+          error: null,
+        }
+      }
+      if (record.table === 'messages') return { data: [], error: null }
+      return { data: null, error: null }
+    })
+    const gateway = makeGatewayClient([
+      'I cannot find the July 29 call. Send the recording link.',
+      'I found the call and completed the implementation brief.',
+    ])
+    const service = new ArtifactAgentDelegationService({ gatewayClient: gateway.client as any })
+    const handlers = service.getHandlers(
+      makeTarget({
+        userClient: user.client,
+        serviceClient: serviceClient.client,
+        configValues: {
+          OPENCLAW_GATEWAY_URL: 'https://gateway.example.test',
+          OPENCLAW_GATEWAY_TOKEN: 'token',
+        },
+      }),
+    )
+
+    const result = await handlers.delegate_to_agent(
+      {
+        target_agent_key: 'delegator',
+        task_description: 'Use the July 29 Fathom call to delegate the GHL work.',
+      },
+      'agent:caller',
+    )
+
+    expect(gateway.requests).toHaveLength(2)
+    const retryBody = gateway.requests[1]?.body as {
+      input: Array<{ role: string; content: string }>
+    }
+    expect(retryBody.input.at(-1)?.content).toContain('check the connected recording provider')
+    expect(result).toMatchObject({
+      success: true,
+      response: 'I found the call and completed the implementation brief.',
+    })
+  })
+
   it('allows campaign-scoped delegation to Vibey without campaign membership', async () => {
     const { client, records } = makeQueryClient((record) => {
       if (record.table === 'agents_registry' && record.filters.agent_key === 'vibey') {

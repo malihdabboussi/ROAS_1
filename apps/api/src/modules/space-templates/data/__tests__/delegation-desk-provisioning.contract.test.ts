@@ -72,4 +72,22 @@ describe('Delegation Desk provisioning', () => {
     expect(sql).toMatch(/agent_key = 'delegator'/)
     expect(sql).toMatch(/Pixel retains its delegation-desk skill/)
   })
+
+  it('keeps Delegator meeting retrieval instructions aligned with the production repair', () => {
+    const tools = readFileSync(resolve(root, 'docker/agents/templates/delegator/TOOLS.md'), 'utf8')
+    const sql = readFileSync(
+      resolve(root, 'supabase/migrations/20260730121500_repair_delegator_meeting_retrieval.sql'),
+      'utf8',
+    )
+
+    for (const requiredText of [
+      'search_available_integrations',
+      'list_meetings',
+      'get_transcript',
+      'Do not ask the user for a recording link',
+    ]) {
+      expect(tools).toContain(requiredText)
+      expect(sql).toContain(requiredText)
+    }
+  })
 })

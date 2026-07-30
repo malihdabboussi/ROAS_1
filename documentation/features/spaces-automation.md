@@ -1,6 +1,6 @@
 # Spaces Flows
 
-Last Modified: 2026-07-29
+Last Modified: 2026-07-30
 
 ## Overview
 
@@ -44,7 +44,12 @@ Spaces automations run rules from the `space_automations` table through the sing
   while Delegator owns the focused Desk workflow. Delegator can read the
   organization context needed to route work and can create/update task records,
   but cannot mutate campaigns, write Brain memories, edit skills, or perform
-  external delivery without an approved path.
+  external delivery without an approved path. Direct agent delegation carries a
+  bounded copy of the originating chat evidence plus known Space and campaign
+  identifiers into the target agent. When a delegated task depends on a meeting,
+  the runtime corrects an unsupported “call missing” response and requires the
+  agent to check imported evidence and connected recording providers before
+  asking the user for a transcript, date, or link.
 
 ## Persistence
 
@@ -141,6 +146,10 @@ Spaces automations run rules from the `space_automations` table through the sing
 
 ## Decision Log
 
+- 2026-07-30: Made delegation inherit bounded originating-chat evidence and
+  known Space/campaign scope. Meeting-dependent delegations now receive explicit
+  provider-retrieval guidance and one automatic corrective pass when an agent
+  claims a call is missing without checking a connected recording source.
 - 2026-07-29: Added Delegator as a protected, organization-installed system
   agent dedicated to the Delegation Desk. Pixel retains its delegation ability;
   the Desk's automation now routes to Delegator, which uses human-first

@@ -18,6 +18,16 @@ type DelegationHistoryRow = {
   type: string | null
   created_at: string | null
 }
+type DelegationSourceConversationRow = {
+  id: string
+  title: string | null
+  metadata: Record<string, unknown> | null
+}
+type DelegationSourceMessageRow = {
+  role: string
+  content: string | null
+  created_at: string | null
+}
 
 @Injectable()
 export class ArtifactAgentDelegationRepository {
@@ -123,6 +133,34 @@ export class ArtifactAgentDelegationRepository {
       .order('created_at', { ascending: true })
       .limit(5)) as {
       data: DelegationHistoryRow[] | null
+      error: QueryError | null
+    }
+  }
+
+  async findDelegationSourceConversation(
+    serviceClient: SupabaseClient,
+    input: { conversationId: string; userId: string },
+  ): Promise<QueryResult<DelegationSourceConversationRow>> {
+    return (await serviceClient
+      .from('conversations')
+      .select('id, title, metadata')
+      .eq('id', input.conversationId)
+      .eq('user_id', input.userId)
+      .maybeSingle()) as QueryResult<DelegationSourceConversationRow>
+  }
+
+  async listDelegationSourceMessages(
+    serviceClient: SupabaseClient,
+    input: { conversationId: string; limit: number },
+  ): Promise<{ data: DelegationSourceMessageRow[] | null; error: QueryError | null }> {
+    return (await serviceClient
+      .from('messages')
+      .select('role, content, created_at')
+      .eq('conversation_id', input.conversationId)
+      .in('role', ['user', 'assistant'])
+      .order('created_at', { ascending: false })
+      .limit(input.limit)) as {
+      data: DelegationSourceMessageRow[] | null
       error: QueryError | null
     }
   }

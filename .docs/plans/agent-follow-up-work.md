@@ -9331,3 +9331,19 @@ Reason not done now: This incident required a narrow behavior-locked reliability
 - **Evidence:** Already over the 600 LOC guideline; touched for cooling lifecycle coverage.
 - **Needed work:** Split loop service tests by signal kind / delivery lifecycle.
 - **Why not now:** Out of scope for the cooling/recheck ship; tests pass and architecture gate allowlists tests differently.
+
+## 2026-07-30 — Delegation contract registries remain oversized
+
+Status: Open
+
+Found while: Preserving originating-chat evidence for delegated meeting work and documenting the updated action behavior.
+
+Files:
+
+- `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts` (2,711 LOC)
+
+Evidence: The shared action documentation registry remains above the 600 LOC module limit. The delegation services and repository changed in this fix remain below their applicable limits.
+
+Needed work: Split action documentation and contracts into domain-owned modules while preserving generated action indexes and policy exports.
+
+Reason not done now: The oversized registries are pre-existing shared infrastructure; decomposing unrelated action families would broaden this meeting-retrieval fix.
