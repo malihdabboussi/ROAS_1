@@ -1,4 +1,5 @@
 import { Check, Circle } from 'lucide-react'
+import { StaticAdChoicePreview } from '@/components/artifacts'
 import { cn } from '@/lib/utils/cn'
 import {
   STATIC_AD_FAMILY_LABELS,
@@ -42,6 +43,7 @@ export function StaticAdFormatSelector({
                   <span className="min-w-0">
                     <span className="body-3 text-foreground block font-medium">{format.name}</span>
                     <span className="body-4 text-muted-foreground block">{format.description}</span>
+                    <StaticAdChoicePreview choiceId={format.id} />
                   </span>
                 </button>
               )

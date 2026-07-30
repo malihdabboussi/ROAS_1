@@ -16,6 +16,7 @@ import { ChannelInstructionsService } from './channel-instructions.service'
 import { ChatContextAccountingService } from './chat-context-accounting.service'
 import { ChatDocumentContextService } from './chat-document-context.service'
 import { ChatModelInputService } from './chat-model-input.service'
+import { buildStaticAdChatRoutingInstruction } from './static-ad-chat-routing'
 import type {
   OpenClawInputContentPart,
   OpenClawInputMessage,
@@ -123,6 +124,10 @@ export class ChatGatewayInputService {
 
     const channelGuidance = this.channelInstructions.getForChannel(input.resolvedChannel)
     const supportHardening = this.buildSupportHardening(input.resolvedChannel, input.agentReg)
+    const staticAdRouting = buildStaticAdChatRoutingInstruction(
+      input.latestUserContent,
+      input.resolvedChannel,
+    )
     const instructions = [
       ...(input.hasCampaignAccess ? [`AGENT_TOKEN=${input.agentToken}`] : []),
       ...(input.hasCampaignAccess ? [`USER_ID=${input.userId}`] : []),
@@ -134,6 +139,7 @@ export class ChatGatewayInputService {
       input.teamRosterSummary,
       input.campaignTeamSummary,
       supportHardening,
+      staticAdRouting,
     ]
       .filter(Boolean)
       .join('\n')

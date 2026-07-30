@@ -91,6 +91,9 @@ describe('ClarificationCard', () => {
     expect(screen.getByRole('button', { name: /Validate messaging angles/ })).toHaveTextContent('1')
     expect(screen.getByRole('button', { name: /Image brief/ })).toHaveTextContent('2')
     expect(screen.getByRole('button', { name: /Static ad book/ })).toHaveTextContent('3')
+    expect(screen.getByLabelText('Validate Messaging example')).toBeInTheDocument()
+    expect(screen.getByLabelText('Image Brief example')).toBeInTheDocument()
+    expect(screen.getByLabelText('Static Ad Book example')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /Static ad book/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))

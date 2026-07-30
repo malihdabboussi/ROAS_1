@@ -1,5 +1,15 @@
 # Changelog - July 30, 2026
 
+## 2026-07-30 12:54 - [FIX]
+
+What: Added a turn-level Static Ad Production routing guard, visual examples for chat and Builder choices, and removed the preselected Static Ad Book/Myth vs. System state.
+
+Why: Pixel could ignore the skill's clarification gate, silently choose Myth vs. System, and write copy or attempt rendering before the user selected Validate Messaging, Image Brief, or Static Ad Book.
+
+Impact: Ambiguous Studio requests now require the visual three-lane card, explicit lane requests stay in their selected workflow, non-Studio channels receive equivalent numbered choices, and Quick Missions cannot launch until the user selects a lane and any required format.
+
+Files: `apps/agent-api/src/modules/chat/services/static-ad-chat-routing.ts`, `apps/agent-api/src/modules/chat/services/chat-gateway-input.service.ts`, `apps/web/src/components/artifacts/StaticAdChoicePreview.tsx`, `apps/web/src/components/chat/clarification-card-question-step.tsx`, `apps/web/src/features/spaces/components/StaticAdProductionFields.tsx`, `apps/web/src/features/spaces/components/ads-research/`, `documentation/features/missions.md`, `documentation/frontend-shared-surfaces.md`
+
 ## 2026-07-30 12:16 - [FIX]
 
 **What:** Preserved bounded originating-chat evidence and Space/campaign scope across direct agent delegation, added a corrective provider-verification pass for unsupported missing-call responses, and repaired Delegator's Fathom/meeting retrieval instructions for existing and future runtimes.

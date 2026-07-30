@@ -62,6 +62,8 @@ describe('StartPlaybookModal', () => {
     render(<StartPlaybookModal open submitting={false} onClose={vi.fn()} onStart={onStart} />)
 
     fireEvent.click(screen.getByRole('button', { name: /Static Ad Production/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Static ad book/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^Myth vs. system/i }))
     fireEvent.change(screen.getByLabelText('Offer and audience context'), {
       target: { value: 'Agency owners launching a new campaign.' },
     })
@@ -86,6 +88,7 @@ describe('StartPlaybookModal', () => {
     render(<StartPlaybookModal open submitting={false} onClose={vi.fn()} onStart={onStart} />)
 
     fireEvent.click(screen.getByRole('button', { name: /IG Organic Video/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Use exact copy' }))
     fireEvent.change(screen.getByLabelText('Headline'), {
       target: { value: 'YOUR NEXT CAMPAIGN / SHOULD NOT TAKE / THREE WEEKS' },
     })

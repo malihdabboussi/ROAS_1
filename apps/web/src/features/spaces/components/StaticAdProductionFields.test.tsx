@@ -16,13 +16,14 @@ function Harness() {
 describe('StaticAdProductionFields', () => {
   afterEach(cleanup)
 
-  it('starts in the static-ad-book lane with write-for-me selected', () => {
+  it('starts without silently selecting a production lane or format', () => {
     render(<Harness />)
 
     expect(screen.getByRole('button', { name: /Static ad book/i })).toHaveAttribute(
       'aria-pressed',
-      'true',
+      'false',
     )
+    expect(screen.queryByRole('button', { name: /^Myth vs. system/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Write for me' })).toHaveClass('button-glass-primary')
     expect(screen.getByLabelText('Offer and audience context')).toBeInTheDocument()
   })
@@ -30,21 +31,23 @@ describe('StaticAdProductionFields', () => {
   it('multi-selects formats and defaults each selected format to one variation', () => {
     render(<Harness />)
 
+    fireEvent.click(screen.getByRole('button', { name: /Static ad book/i }))
     fireEvent.click(screen.getByRole('button', { name: /^Chat receipt/i }))
 
-    expect(screen.getByLabelText('Myth vs. system variations')).toHaveValue(1)
     expect(screen.getByLabelText('Chat receipt variations')).toHaveValue(1)
-    expect(screen.getByText('Finished ads:')).toHaveTextContent('Finished ads: 2')
+    expect(screen.getByText('Finished ads:')).toHaveTextContent('Finished ads: 1')
 
     fireEvent.change(screen.getByLabelText('Chat receipt variations'), {
       target: { value: '3' },
     })
-    expect(screen.getByText('Finished ads:')).toHaveTextContent('Finished ads: 4')
+    expect(screen.getByText('Finished ads:')).toHaveTextContent('Finished ads: 3')
   })
 
   it('expands one exact-copy field for every requested variation', () => {
     render(<Harness />)
 
+    fireEvent.click(screen.getByRole('button', { name: /Static ad book/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^Myth vs. system/i }))
     fireEvent.click(screen.getByRole('button', { name: 'Use my exact copy' }))
     fireEvent.change(screen.getByLabelText('Myth vs. system variations'), {
       target: { value: '2' },
@@ -67,6 +70,8 @@ describe('StaticAdProductionFields', () => {
   it('requires every exact-copy variation before allowing launch', () => {
     const fields: StaticAdProductionKickoffFields = {
       ...EMPTY_STATIC_AD_FIELDS,
+      productionMode: 'static_ad_book',
+      selectedFormatIds: ['myth_vs_system'],
       copyMode: 'use_my_copy',
       formatVariationCounts: { myth_vs_system: 2 },
       exactCopyBySelection: { myth_vs_system: ['Ready', ''] },
