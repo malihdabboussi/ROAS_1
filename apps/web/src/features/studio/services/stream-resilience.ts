@@ -24,7 +24,9 @@ async function reconcileHeartbeatOnlyStream(conversationId: string): Promise<voi
     if (
       !status.active ||
       status.failureCode === 'stream_interrupted' ||
-      status.failureCode === 'context_window_exceeded'
+      status.failureCode === 'context_window_exceeded' ||
+      (status.lastEventAt != null &&
+        Date.now() - new Date(status.lastEventAt).getTime() >= STREAM_STALL_TIMEOUT_MS)
     ) {
       await recoverStalledConversation(conversationId)
     }

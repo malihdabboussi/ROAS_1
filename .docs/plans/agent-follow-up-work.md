@@ -9290,3 +9290,19 @@ Evidence: The markup component now owns canvas input plus a movable feedback edi
 Needed work: Extract the markup feedback card/tool strip, split persisted shell preference serialization from store actions, and continue the numbered media service decomposition without changing their inheritance contract.
 
 Reason not done now: The requested production fixes are covered by narrow behavioral tests; structural extraction would broaden this regression-sensitive change beyond the active bugs.
+## 2026-07-29 - [ARCH] Chat recovery and Redis run-event owners remain oversized
+
+Status: Open
+
+Found while: Adding stale-progress detection and one-shot automatic continuation for abandoned chat runs.
+
+Files:
+
+- `apps/web/src/features/studio/services/chat.service.ts` (2,936 LOC; 600 LOC hard limit)
+- `apps/agent-api/src/modules/chat/services/chat-run-event-store.service.ts` (638 LOC; 600 LOC hard limit)
+
+Evidence: The existing web service still combines conversation CRUD, optimistic messages, live and replay SSE parsing, recovery polling, continuation, and final reconciliation. The run-event store still combines Redis connectivity, locks, run metadata, replay streams, durable persistence, and queue handoff.
+
+Needed work: Extract browser recovery/continuation orchestration from `chat.service.ts`, and split Redis stream lifecycle from durable runtime-run persistence in `chat-run-event-store.service.ts`.
+
+Reason not done now: This incident required a narrow behavior-locked reliability repair. Decomposing both shared hot paths in the same change would materially expand the regression surface.

@@ -81,6 +81,7 @@ describe('stream stall resilience', () => {
       active: true,
       messageId: 'assistant-1',
       runId: 'run-1',
+      lastEventAt: new Date(now).toISOString(),
     } as never)
     useChatStore.setState({
       streamingConversationIds: ['conversation-1'],
@@ -99,6 +100,33 @@ describe('stream stall resilience', () => {
       expect(backendGet).toHaveBeenCalledWith('/api/chat/status/conversation-1')
     })
     expect(recoverStalledConversation).not.toHaveBeenCalled()
+  })
+
+  it('recovers a heartbeat-backed run whose durable agent progress is stale', async () => {
+    const now = Date.now()
+    vi.mocked(isStreamActive).mockReturnValue(true)
+    vi.mocked(backendGet).mockResolvedValue({
+      active: true,
+      messageId: 'assistant-1',
+      runId: 'run-1',
+      lastEventAt: new Date(now - STREAM_STALL_TIMEOUT_MS - 1).toISOString(),
+    } as never)
+    useChatStore.setState({
+      streamingConversationIds: ['conversation-1'],
+      reconnectingConversationIds: [],
+      lastAgentEventAtByConversation: {
+        'conversation-1': now - STREAM_STALL_TIMEOUT_MS - 1,
+      },
+      lastStreamActivityAtByConversation: {
+        'conversation-1': now,
+      },
+    })
+
+    handleStreamStalls(now)
+
+    await vi.waitFor(() => {
+      expect(recoverStalledConversation).toHaveBeenCalledWith('conversation-1')
+    })
   })
 
   it('recovers a streaming conversation when the local stream is gone', () => {

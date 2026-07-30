@@ -33,6 +33,7 @@ export interface ChatRunMeta {
   orgId: string | null
   status: ChatRunStatus
   lastCursor: string | null
+  lastEventAt: string
   startedAt: string
   endedAt: string | null
   error: string | null
@@ -226,6 +227,7 @@ export class ChatRunEventStoreService implements OnModuleDestroy {
         orgId: input.orgId ?? '',
         status: 'active',
         lastCursor: '',
+        lastEventAt: now,
         startedAt: now,
         endedAt: '',
         error: '',
@@ -263,7 +265,7 @@ export class ChatRunEventStoreService implements OnModuleDestroy {
     if (!cursor) return null
     await redis
       .multi()
-      .hset(runMetaKey(input.runId), { lastCursor: cursor })
+      .hset(runMetaKey(input.runId), { lastCursor: cursor, lastEventAt: createdAt })
       .expire(streamKey, this.ttlSeconds)
       .expire(runMetaKey(input.runId), this.ttlSeconds)
       .exec()
@@ -614,6 +616,7 @@ export class ChatRunEventStoreService implements OnModuleDestroy {
       orgId: raw.orgId || null,
       status,
       lastCursor: raw.lastCursor || null,
+      lastEventAt: raw.lastEventAt || raw.startedAt,
       startedAt: raw.startedAt,
       endedAt: raw.endedAt || null,
       error: raw.error || null,

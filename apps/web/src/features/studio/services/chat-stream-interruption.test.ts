@@ -354,7 +354,7 @@ describe('chat stream interruption classification', () => {
     expect(useChatStore.getState().interruptedConversationIds).not.toContain('conversation-1')
   })
 
-  it('stops polling as soon as status reports an interrupted bridge', async () => {
+  it('automatically continues as soon as status reports an interrupted bridge', async () => {
     const assistantMessage: Message = {
       id: 'message-1',
       conversation_id: 'conversation-1',
@@ -393,14 +393,92 @@ describe('chat stream interruption classification', () => {
           timelineEvents: [],
         } as never
       }
+      if (url.startsWith('/api/conversations/conversation-1/messages')) {
+        return useChatStore.getState().messagesByConversation['conversation-1'] as never
+      }
       throw new Error(`Unexpected backendGet ${url}`)
     })
+    vi.mocked(backendPost).mockResolvedValue({ stopped: true } as never)
+    vi.mocked(backendFetch).mockResolvedValue(
+      new Response(
+        [
+          'data: {"type":"message_start","message_id":"assistant-2"}',
+          'data: {"type":"content_delta","content":"The likely issue is traffic-message mismatch."}',
+          'data: {"type":"done","message_id":"assistant-2","duration_ms":100}',
+          'data: [DONE]',
+          '',
+        ].join('\n\n'),
+        { status: 200, headers: { 'content-type': 'text/event-stream' } },
+      ),
+    )
     await recoverConversation('conversation-1')
 
-    expect(backendGet).toHaveBeenCalledTimes(1)
-    expect(backendFetch).not.toHaveBeenCalled()
+    expect(backendGet).toHaveBeenCalledWith('/api/chat/status/conversation-1')
+    const chatRequest = vi.mocked(backendFetch).mock.calls.find(([url]) => url === '/api/chat')
+    expect(chatRequest).toBeDefined()
+    const body = JSON.parse(String(chatRequest?.[1]?.body)) as Record<string, unknown>
+    expect(body.hidden).toBe(true)
     expect(useChatStore.getState().streamingConversationIds).not.toContain('conversation-1')
     expect(useChatStore.getState().reconnectingConversationIds).not.toContain('conversation-1')
+    expect(useChatStore.getState().interruptedConversationIds).not.toContain('conversation-1')
+    expect(useChatStore.getState().streamFailureByConversation['conversation-1']).toBeUndefined()
+  })
+
+  it('falls back to one manual Continue action when the automatic continuation also drops', async () => {
+    const messages: Message[] = [
+      {
+        id: 'user-1',
+        conversation_id: 'conversation-1',
+        role: 'user',
+        content: 'Finish the launch recommendation.',
+        content_blocks: null,
+        metadata: {},
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 'assistant-1',
+        conversation_id: 'conversation-1',
+        role: 'assistant',
+        content: 'The first recommendation is',
+        content_blocks: null,
+        metadata: {},
+        created_at: new Date().toISOString(),
+      },
+    ]
+    const store = useChatStore.getState()
+    store.setMessages('conversation-1', messages)
+    store.setConversationStreamFailure(
+      'conversation-1',
+      resolveChatStreamFailure({ code: 'stream_interrupted' }),
+    )
+    vi.mocked(backendGet).mockImplementation(async (url: string) => {
+      if (url.startsWith('/api/chat/status/')) {
+        return {
+          active: true,
+          messageId: 'assistant-1',
+          runId: 'run-1',
+          failureCode: 'stream_interrupted',
+        } as never
+      }
+      return messages as never
+    })
+    vi.mocked(backendPost).mockResolvedValue({ stopped: true } as never)
+    vi.mocked(backendFetch).mockResolvedValue(
+      new Response(
+        [
+          'data: {"type":"message_start","message_id":"assistant-2"}',
+          'data: {"type":"error","code":"stream_interrupted","message":"response was interrupted"}',
+          'data: [DONE]',
+          '',
+        ].join('\n\n'),
+        { status: 200, headers: { 'content-type': 'text/event-stream' } },
+      ),
+    )
+
+    await recoverConversation('conversation-1')
+    await recoverConversation('conversation-1')
+
+    expect(vi.mocked(backendFetch).mock.calls.filter(([url]) => url === '/api/chat')).toHaveLength(1)
     expect(useChatStore.getState().interruptedConversationIds).toContain('conversation-1')
     expect(useChatStore.getState().streamFailureByConversation['conversation-1']?.code).toBe(
       'stream_interrupted',

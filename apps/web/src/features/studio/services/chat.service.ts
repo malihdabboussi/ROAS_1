@@ -947,6 +947,7 @@ export function needsStreamRecovery(messages: Message[]): boolean {
 
 function clearCompletedConversationRecoveryState(conversationId: string): void {
   const store = useChatStore.getState()
+  automaticRecoveryTurnIds.delete(conversationId)
   store.setConversationReconnecting(conversationId, false)
   store.setConversationStreaming(conversationId, false)
   store.setConversationInterrupted(conversationId, false)
@@ -981,6 +982,8 @@ export function shouldSkipStreamRecovery(conversationId: string): boolean {
 }
 
 const activeRecoveries = new Set<string>()
+const activeRecoveryContinuations = new Set<string>()
+const automaticRecoveryTurnIds = new Map<string, string>()
 const recoveryAbortControllers = new Map<string, AbortController>()
 
 function rememberStreamCursor(
@@ -1030,64 +1033,33 @@ export async function recoverStalledConversation(conversationId: string): Promis
     await new Promise((resolve) => setTimeout(resolve, 0))
   }
 
-  await recoverConversation(conversationId)
+  await recoverConversation(conversationId, { stalled: true })
 }
 
 export async function recoverConversation(
   conversationId: string,
-  options: { manual?: boolean } = {},
+  options: { manual?: boolean; stalled?: boolean } = {},
 ): Promise<void> {
-  if (activeRecoveries.has(conversationId)) return
+  if (activeRecoveries.has(conversationId) || activeRecoveryContinuations.has(conversationId)) return
   if (isStreamActive(conversationId)) return
 
   const storeAtStart = useChatStore.getState()
   const failureAtStart = storeAtStart.streamFailureByConversation[conversationId]
+  const continuationFailureCode =
+    failureAtStart?.code === 'stream_interrupted' ||
+    failureAtStart?.code === 'context_window_exceeded'
+      ? failureAtStart.code
+      : null
   const shouldStartContinuation =
-    failureAtStart?.code === 'context_window_exceeded' ||
-    (options.manual === true && failureAtStart?.code === 'stream_interrupted')
-  if (shouldStartContinuation) {
-    // Manual Resume must not poll a known-dead run again. Refresh the canonical
-    // thread, stop any orphaned run, then continue with the exact unfinished task.
-    let resumeMessages = storeAtStart.messagesByConversation[conversationId] ?? []
-    try {
-      const canonicalMessages = await fetchMessages(conversationId)
-      resumeMessages = mergeMessagesPreservingOrderedBlocks(resumeMessages, canonicalMessages)
-      storeAtStart.setMessages(conversationId, resumeMessages)
-    } catch {
-      // The local thread still contains the visible task and partial answer.
-    }
-    const latestAssistant = getLastAssistantMessage(resumeMessages)
-    if (isAssistantTurnComplete(latestAssistant, false)) {
-      clearCompletedConversationRecoveryState(conversationId)
-      return
-    }
-    const resumeContext = buildChatResumeContext(resumeMessages)
-    if (!resumeContext) {
-      throw new Error('Cannot resume without the original user request')
-    }
-    if (failureAtStart?.code === 'stream_interrupted') {
-      await requestStopStream(conversationId)
-    }
-    storeAtStart.setConversationInterrupted(conversationId, false)
-    storeAtStart.setConversationStreamFailure(conversationId, null)
-    storeAtStart.setConversationReconnecting(conversationId, true)
-    try {
-      await sendMessageStreaming({
-        conversation_id: conversationId,
-        ...resumeContext,
-        suppressUserMessage: true,
-      })
-    } catch (error) {
-      const store = useChatStore.getState()
-      store.setConversationInterrupted(conversationId, true)
-      store.setConversationStreamFailure(
-        conversationId,
-        resolveChatStreamFailure({ code: failureAtStart.code }),
-      )
-      throw error
-    } finally {
-      useChatStore.getState().setConversationReconnecting(conversationId, false)
-    }
+    continuationFailureCode === 'context_window_exceeded' ||
+    (options.stalled === true && continuationFailureCode === 'stream_interrupted') ||
+    (options.manual === true && continuationFailureCode === 'stream_interrupted')
+  if (shouldStartContinuation && continuationFailureCode) {
+    await continueInterruptedConversation(
+      conversationId,
+      continuationFailureCode,
+      options.manual === true,
+    )
     return
   }
 
@@ -1157,7 +1129,7 @@ export async function recoverConversation(
               cursor: status.resumeCursor ?? null,
             })
           }
-          markConversationRecoveryRequired(conversationId, status.failureCode)
+          await continueInterruptedConversation(conversationId, status.failureCode, false)
           return
         }
 
@@ -1178,7 +1150,7 @@ export async function recoverConversation(
           }
 
           if (hasKnownInterruption) {
-            markConversationRecoveryRequired(conversationId)
+            await continueInterruptedConversation(conversationId, 'stream_interrupted', false)
             return
           }
 
@@ -1243,7 +1215,7 @@ export async function recoverConversation(
               return
             }
             if (resumed === 'failed') {
-              markConversationRecoveryRequired(conversationId)
+              await continueInterruptedConversation(conversationId, 'stream_interrupted', false)
               return
             }
           } catch {
@@ -1288,15 +1260,7 @@ export async function recoverConversation(
     }
 
     if (!signal.aborted) {
-      store.setConversationReconnecting(conversationId, false)
-      store.setConversationStreaming(conversationId, false)
-      store.setConversationInterrupted(conversationId, true)
-      store.setConversationStreamFailure(
-        conversationId,
-        resolveChatStreamFailure({ code: 'stream_interrupted' }),
-      )
-      store.clearConversationStreamRun(conversationId)
-      store.setIsStreaming(activeControllers.size > 0)
+      await continueInterruptedConversation(conversationId, 'stream_interrupted', false)
     }
   } finally {
     activeRecoveries.delete(conversationId)
@@ -1311,6 +1275,79 @@ export async function recoverConversation(
         }
       }
     }
+  }
+}
+
+async function continueInterruptedConversation(
+  conversationId: string,
+  failureCode: 'stream_interrupted' | 'context_window_exceeded',
+  manual: boolean,
+): Promise<void> {
+  if (activeRecoveryContinuations.has(conversationId)) return
+  activeRecoveryContinuations.add(conversationId)
+  const storeAtStart = useChatStore.getState()
+  try {
+    let resumeMessages = storeAtStart.messagesByConversation[conversationId] ?? []
+    try {
+      const canonicalMessages = await fetchMessages(conversationId)
+      resumeMessages = mergeMessagesPreservingOrderedBlocks(resumeMessages, canonicalMessages)
+      storeAtStart.setMessages(conversationId, resumeMessages)
+    } catch {
+      // The local thread still contains the visible task and partial answer.
+    }
+    const latestAssistant = getLastAssistantMessage(resumeMessages)
+    if (isAssistantTurnComplete(latestAssistant, false)) {
+      clearCompletedConversationRecoveryState(conversationId)
+      return
+    }
+    const visibleUserTurn = [...resumeMessages]
+      .reverse()
+      .find((message) => message.role === 'user' && message.metadata?.hidden !== true)
+    const recoveryTurnId = visibleUserTurn?.id ?? `assistant:${latestAssistant?.id ?? 'unknown'}`
+    if (
+      !manual &&
+      automaticRecoveryTurnIds.get(conversationId) === recoveryTurnId
+    ) {
+      markConversationRecoveryRequired(conversationId, failureCode)
+      return
+    }
+    if (!manual) {
+      automaticRecoveryTurnIds.set(conversationId, recoveryTurnId)
+    }
+    const resumeContext = buildChatResumeContext(resumeMessages)
+    if (!resumeContext) {
+      throw new Error('Cannot resume without the original user request')
+    }
+    if (failureCode === 'stream_interrupted') {
+      await requestStopStream(conversationId)
+    }
+    storeAtStart.setConversationInterrupted(conversationId, false)
+    storeAtStart.setConversationStreamFailure(conversationId, null)
+    storeAtStart.setConversationReconnecting(conversationId, true)
+    try {
+      await sendMessageStreaming({
+        conversation_id: conversationId,
+        ...resumeContext,
+        suppressUserMessage: true,
+      })
+      const recoveryFailure =
+        useChatStore.getState().streamFailureByConversation[conversationId]
+      if (recoveryFailure?.showInterruptedBar) {
+        markConversationRecoveryRequired(conversationId, failureCode)
+      } else {
+        clearCompletedConversationRecoveryState(conversationId)
+      }
+    } catch (error) {
+      markConversationRecoveryRequired(conversationId, failureCode)
+      if (manual) throw error
+    } finally {
+      useChatStore.getState().setConversationReconnecting(conversationId, false)
+    }
+  } catch (error) {
+    markConversationRecoveryRequired(conversationId, failureCode)
+    if (manual) throw error
+  } finally {
+    activeRecoveryContinuations.delete(conversationId)
   }
 }
 
@@ -1985,6 +2022,9 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
   let conversationId: string = hasRealConversation
     ? (params.conversation_id as string)
     : `pending-${Date.now()}`
+  if (showUserMessage) {
+    automaticRecoveryTurnIds.delete(conversationId)
+  }
   const needsConversation = !hasRealConversation
   if (needsConversation && !resolvedCampaignId && !hasActivePersonalScope) {
     const generalCampaign = await ensureGeneralCampaign()

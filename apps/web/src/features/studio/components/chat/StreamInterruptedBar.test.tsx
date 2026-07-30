@@ -46,6 +46,20 @@ describe('StreamInterruptedBar', () => {
     expect(recoverConversation).toHaveBeenCalledWith('conversation-1', { manual: true })
   })
 
+  it('shows automatic recovery progress even while the conversation is still marked streaming', () => {
+    useChatStore.setState({
+      interruptedConversationIds: [],
+      streamingConversationIds: ['conversation-1'],
+      reconnectingConversationIds: ['conversation-1'],
+      streamFailureByConversation: {},
+    })
+
+    render(<StreamInterruptedBar conversationId="conversation-1" />)
+
+    expect(screen.getByText(/picking up where i left off/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /continue response/i })).toBeNull()
+  })
+
   it('keeps recovery available when Continue response cannot recover', async () => {
     vi.mocked(recoverConversation).mockRejectedValueOnce(new Error('resume failed'))
     useChatStore.setState({
