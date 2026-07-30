@@ -153,7 +153,7 @@ export function useMediaImageGeneration({
     if (knownModel?.supportedAspectRatios.length) {
       return knownModel.supportedAspectRatios as CoverAspectRatio[]
     }
-    return ['1:1', '16:9', '9:16', '3:4', '3:2', '4:3'] as CoverAspectRatio[]
+    return ['1:1', '16:9', '9:16', '4:5', '3:4', '3:2', '4:3'] as CoverAspectRatio[]
   }, [selectedModel, selectedModelInfo])
 
   useEffect(() => {

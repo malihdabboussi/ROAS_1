@@ -28,6 +28,7 @@ describe('shell persisted prefs hydration', () => {
       chatHistoryCollapsed: false,
       chatDrawer: { open: false, conversationId: null, width: 420, minimized: false },
       rightPanel: { open: false, tab: 'tasks' },
+      artifactViewer: { target: null, width: 480 },
     })
   })
 
@@ -114,6 +115,27 @@ describe('shell persisted prefs hydration', () => {
       chatDrawerOpen: false,
       chatDrawerConversationId: null,
       chatDrawerMinimized: false,
+    })
+  })
+
+  it('restores the active artifact after a refresh and clears it when explicitly closed', () => {
+    useShellStore.getState().openArtifactViewer(target)
+
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject({
+      artifactViewerTarget: target,
+    })
+
+    useShellStore.setState({
+      artifactViewer: { target: null, width: 480 },
+    })
+    resetShellStoreHydrationForTests()
+    hydrateShellStoreFromStorage()
+
+    expect(useShellStore.getState().artifactViewer.target).toEqual(target)
+
+    useShellStore.getState().closeArtifactViewer()
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject({
+      artifactViewerTarget: null,
     })
   })
 })

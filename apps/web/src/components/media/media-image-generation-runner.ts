@@ -16,7 +16,7 @@ export const FALLBACK_IMAGE_MODELS: ImageGenerationModelMeta[] = [
     name: 'ChatGPT',
     tier: 'pro',
     description: 'OpenAI GPT Image 2 — ChatGPT images (not GPT-5.6 chat).',
-    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:4', '3:2', '4:3'],
+    supportedAspectRatios: ['1:1', '16:9', '9:16', '4:5', '3:4', '3:2', '4:3'],
     defaultAspectRatio: '16:9',
   },
   {
@@ -24,7 +24,7 @@ export const FALLBACK_IMAGE_MODELS: ImageGenerationModelMeta[] = [
     name: 'Nano Banana 2',
     tier: 'free',
     description: 'Best for fast drafts and iteration.',
-    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:4', '3:2', '4:3'],
+    supportedAspectRatios: ['1:1', '16:9', '9:16', '4:5', '3:4', '3:2', '4:3'],
     defaultAspectRatio: '16:9',
   },
   {
@@ -32,7 +32,7 @@ export const FALLBACK_IMAGE_MODELS: ImageGenerationModelMeta[] = [
     name: 'Nano Banana',
     tier: 'pro',
     description: 'Best for polished, final assets.',
-    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:4', '3:2', '4:3'],
+    supportedAspectRatios: ['1:1', '16:9', '9:16', '4:5', '3:4', '3:2', '4:3'],
     defaultAspectRatio: '16:9',
   },
 ]

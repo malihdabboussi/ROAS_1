@@ -1,18 +1,17 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Download } from 'lucide-react'
+import { Download, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import {
   buildImageMarkupPrompt,
+  closestImageAspectRatio,
   MediaImageEditComposerView,
   MediaImageMarkupCanvas,
   useMediaImageEditController,
   type ImageMarkupAnnotation,
 } from '@/components/media'
-import { isShellWorkspaceRoute } from '@/components/shell/shell-route-policy'
 import { ShellArtifactViewerPanel } from '@/components/shell/ShellArtifactViewerPanel'
 import { useShellOpenIn } from '@/components/shell/ShellOpenInProvider'
 import { useShellStore } from '@/components/shell/use-shell-store'
@@ -67,11 +66,7 @@ function viewerTargetFromAsset(
 }
 
 export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactViewerTarget }) {
-  const pathname = usePathname() || '/home'
-  const router = useRouter()
   const seedComposer = useGlobalChatStore((state) => state.seedComposer)
-  const openChatDrawer = useShellStore((state) => state.openChatDrawer)
-  const closeArtifactViewer = useShellStore((state) => state.closeArtifactViewer)
   const openArtifactViewer = useShellStore((state) => state.openArtifactViewer)
   const { targets: openTargets, setFocusMedia } = useShellOpenIn()
   const [resolvedAsset, setResolvedAsset] = useState<MediaAsset | null>(null)
@@ -141,14 +136,12 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
     return () => setFocusMedia(null)
   }, [activeTarget.fileUrl, activeTarget.mediaAssetId, activeTarget.type, setFocusMedia])
 
-  const openInChat = useCallback(() => {
+  const addToChat = useCallback(() => {
     const attachment = targetAttachment(activeTarget)
     if (!attachment) return
-    const conversationId = activeTarget.conversationId || undefined
     seedComposer({
       content: '',
       documents: [attachment],
-      conversationId,
       seedMode: 'attach',
       workContext: {
         surface: activeTarget.spaceId ? 'spaces' : 'general',
@@ -156,15 +149,7 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
         campaignId: activeTarget.campaignId || undefined,
       },
     })
-    closeArtifactViewer()
-    if (isShellWorkspaceRoute(pathname)) {
-      openChatDrawer(conversationId ?? null)
-      return
-    }
-    router.push(
-      conversationId ? `/home?conv=${encodeURIComponent(conversationId)}` : '/home?chat=new',
-    )
-  }, [activeTarget, closeArtifactViewer, openChatDrawer, pathname, router, seedComposer])
+  }, [activeTarget, seedComposer])
 
   const canvaTarget = openTargets.find((entry) => entry.id === 'canva')
   const actions = (
@@ -180,6 +165,16 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
       <button
         type="button"
         disabled={!activeTarget.fileUrl}
+        onClick={addToChat}
+        className="button-compact button-glass-neutral gap-spacing-1 disabled:opacity-50"
+        aria-label="Add image to chat"
+      >
+        <MessageSquare className="icon-sm" />
+        Add to chat
+      </button>
+      <button
+        type="button"
+        disabled={!activeTarget.fileUrl}
         onClick={() => {
           void downloadMediaTarget(activeTarget).catch(() =>
             toast.error(MEDIA_TOAST_ERRORS.DOWNLOAD_FAILED.userMessage),
@@ -192,7 +187,6 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
       </button>
       <ShellMediaActionsMenu
         target={activeTarget}
-        onOpenChat={openInChat}
         onOpenCanva={
           canvaTarget?.onSelect
             ? () => {
@@ -239,6 +233,19 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
                 active={markupActive}
                 applying={editor.isGenerating}
                 onApply={applyMarkup}
+                onImageDimensions={(width, height) => {
+                  const sourceRatio = closestImageAspectRatio(width, height)
+                  if (
+                    sourceRatio &&
+                    editor.supportedAspectRatios.includes(
+                      sourceRatio as (typeof editor.supportedAspectRatios)[number],
+                    )
+                  ) {
+                    editor.setAspectRatio(
+                      sourceRatio as (typeof editor.supportedAspectRatios)[number],
+                    )
+                  }
+                }}
               />
             ) : (
               <p className="body-3 text-muted-foreground">No preview available</p>

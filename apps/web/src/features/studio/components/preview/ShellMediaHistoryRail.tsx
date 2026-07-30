@@ -69,6 +69,16 @@ export function ShellMediaHistoryRail({
     }
   }, [conversationId, spaceId])
 
+  useEffect(() => {
+    if (!resolvedAsset?.public_url) return
+    if (resolvedAsset.asset_type !== 'image' && resolvedAsset.asset_type !== 'video') return
+    setHistory((current) =>
+      current.some((asset) => asset.id === resolvedAsset.id)
+        ? current
+        : [...current, resolvedAsset],
+    )
+  }, [resolvedAsset])
+
   const items = useMemo(() => {
     const seen = new Set<string>()
     return [...history, resolvedAsset].filter((asset): asset is MediaAsset => {

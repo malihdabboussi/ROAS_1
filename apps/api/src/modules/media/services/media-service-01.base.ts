@@ -30,6 +30,20 @@ const REMOTE_MEDIA_FETCH_TIMEOUT_MS = 30_000
 const REMOTE_MEDIA_MAX_REDIRECTS = 3
 const METADATA_HOSTS = new Set(['metadata.google.internal'])
 
+function nextImageEditName(sourceName: string | null): string {
+  const fallback = 'Edited image'
+  const rawName = sourceName?.trim()
+  if (!rawName) return fallback
+  const trimmed = /^processed-render_static_ad-/i.test(rawName) ? 'Static ad' : rawName
+  const numberedEdit = trimmed.match(/^(.*) — Edit (\d+)$/)
+  if (numberedEdit) {
+    const next = Number(numberedEdit[2]) + 1
+    return `${numberedEdit[1]} — Edit ${next}`.slice(0, 100)
+  }
+  if (trimmed.endsWith(' — Edit')) return `${trimmed} 2`.slice(0, 100)
+  return `${trimmed} — Edit`.slice(0, 100)
+}
+
 export abstract class MediaServiceBase01 {
   abstract uploadFile(...args: any[]): any
   abstract getAsset(...args: any[]): any
@@ -260,6 +274,7 @@ export abstract class MediaServiceBase01 {
           category: input.category ?? 'generated',
           tags: input.tags ?? ['ai-edited'],
           model: input.model,
+          name: nextImageEditName(source.sourceName),
         },
         user,
         orgId,
@@ -322,6 +337,7 @@ export abstract class MediaServiceBase01 {
           category: input.category ?? 'generated',
           tags: input.tags ?? ['ai-edited'],
           model: input.model,
+          name: nextImageEditName(source.sourceName),
         },
         user,
         orgId,
@@ -341,9 +357,11 @@ export abstract class MediaServiceBase01 {
   ): Promise<{
     images: Array<{ buffer: Buffer; mimeType: string }>
     conversationId: string | null
+    sourceName: string | null
   }> {
     const images: Array<{ buffer: Buffer; mimeType: string }> = []
     let conversationId: string | null = null
+    let sourceName: string | null = null
 
     if (input.parent_image_asset_id) {
       const asset = await this.getAsset(input.parent_image_asset_id, user, orgId)
@@ -360,6 +378,7 @@ export abstract class MediaServiceBase01 {
         mimeType: asset.mime_type || 'image/png',
       })
       conversationId = asset.conversation_id ?? null
+      sourceName = asset.name ?? null
     } else if (input.parent_image_url) {
       const res = await fetch(input.parent_image_url)
       if (!res.ok) throw new Error(`Failed to fetch parent image: ${res.status}`)
@@ -392,7 +411,7 @@ export abstract class MediaServiceBase01 {
       })
     }
 
-    return { images, conversationId }
+    return { images, conversationId, sourceName }
   }
 
   // ── Upload User File ────────────────────────────────────────────────────

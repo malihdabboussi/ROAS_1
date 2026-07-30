@@ -98,5 +98,6 @@ describe('useMediaImageGeneration', () => {
 
     await waitFor(() => expect(result.current.availableModels).toHaveLength(1))
     expect(result.current.supportedAspectRatios).toContain('3:4')
+    expect(result.current.supportedAspectRatios).toContain('4:5')
   })
 })

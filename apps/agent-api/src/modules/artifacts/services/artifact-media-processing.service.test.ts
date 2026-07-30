@@ -295,6 +295,9 @@ describe('ArtifactMediaProcessingService data access behavior', () => {
     expect(target.mediaAssetRows[0]).toEqual({
       table: 'media_assets',
       payload: expect.objectContaining({
+        name: 'Static ad — Myth vs system — 4:5',
+        width: 1080,
+        height: 1350,
         asset_type: 'image',
         source_model: 'deterministic-renderer',
         tags: ['process-media-render_static_ad'],

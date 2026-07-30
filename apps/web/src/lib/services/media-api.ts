@@ -59,7 +59,7 @@ export interface ImageGenerationModelMeta {
 
 export interface GenerateImageParams {
   prompt: string
-  aspect_ratio?: '1:1' | '16:9' | '9:16' | '3:4' | '3:2' | '4:3'
+  aspect_ratio?: '1:1' | '16:9' | '9:16' | '4:5' | '3:4' | '3:2' | '4:3'
   campaign_id?: string
   space_id?: string
   conversation_id?: string
