@@ -341,7 +341,7 @@ describe('SlackTeamLoopService', () => {
     expect(result).toMatchObject({ channels_observed: 1, messages_observed: 1, proposed: 1 })
   })
 
-  it('routes an external sender finding to internal Signals instead of their conversation', async () => {
+  it('cools an external sender finding before notifying the Active internal owner', async () => {
     const discovered = {
       id: 'member-3',
       platform_id: 'U3',
@@ -357,7 +357,7 @@ describe('SlackTeamLoopService', () => {
       display_name: 'Dylan',
       vibey_user_id: 'owner-1',
       relationship_kind: 'internal',
-      delivery_mode: 'shadow',
+      delivery_mode: 'active',
       person_brain_id: 'brain-owner',
     }
     const peopleRepo = {
@@ -374,6 +374,10 @@ describe('SlackTeamLoopService', () => {
         .fn()
         .mockResolvedValueOnce({ id: 'signal-1', metadata: {} })
         .mockResolvedValueOnce({ id: 'proposal-1', metadata: {} }),
+      reviewShadowAction: vi.fn().mockResolvedValue({ id: 'proposal-1', status: 'approved' }),
+      claimShadowActionForSend: vi.fn().mockResolvedValue({ id: 'proposal-1', status: 'sending' }),
+      markShadowActionSent: vi.fn().mockResolvedValue({ id: 'proposal-1', status: 'sent' }),
+      markShadowActionFailed: vi.fn(),
     }
     const observation = {
       reconcile: vi.fn().mockResolvedValue({
@@ -416,6 +420,10 @@ describe('SlackTeamLoopService', () => {
       ),
     }
     const resolver = senderResolver()
+    const slackTools = {
+      openDm: vi.fn().mockResolvedValue({ channel_id: 'D1' }),
+      sendMessage: vi.fn().mockResolvedValue({ success: true, ts: '1721000100.000200' }),
+    }
     const service = new SlackTeamLoopService(
       peopleRepo as never,
       {
@@ -423,7 +431,7 @@ describe('SlackTeamLoopService', () => {
         hasEvidenceFingerprint: vi.fn().mockResolvedValue(false),
       } as never,
       observation as never,
-      {} as never,
+      slackTools as never,
       gemini as never,
       resolver as never,
     )
@@ -469,10 +477,14 @@ describe('SlackTeamLoopService', () => {
           internal_only: true,
           parent_signal_id: 'signal-1',
           subject_member_id: 'member-3',
+          lifecycle_state: 'cooling',
         }),
       }),
     )
-    expect(result).toMatchObject({ people_discovered: 1, proposed: 2 })
+    expect(slackTools.openDm).not.toHaveBeenCalled()
+    expect(slackTools.sendMessage).not.toHaveBeenCalled()
+    expect(peopleRepo.markShadowActionSent).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ people_discovered: 1, proposed: 2, sent: 0 })
   })
 
   it('compounds an enabled Person Brain while delivery stays in Shadow mode', async () => {
@@ -565,7 +577,7 @@ describe('SlackTeamLoopService', () => {
     expect(result.memories_compounded).toBe(1)
   })
 
-  it('records an Active unanswered-question action as sent', async () => {
+  it('cools an unanswered-question alert while the detector remains in Shadow', async () => {
     const slackPeople = {
       findOrgSlackIntegration: vi.fn().mockResolvedValue({
         user_id: 'owner-1',
@@ -650,22 +662,24 @@ describe('SlackTeamLoopService', () => {
       userId: 'owner-1',
       orgId: 'org-1',
       loopKind: 'unanswered_questions',
-      deliveryMode: 'active',
+      deliveryMode: 'shadow',
       channelIds: ['C1'],
-      personIds: ['3f046d1a-4e0e-4ccc-9ea7-b8c07ab25b43'],
+      personIds: [],
       lookbackMinutes: 60,
       dailyLimit: 10,
     })
 
-    expect(slackPeople.reviewShadowAction).toHaveBeenCalledWith(
+    expect(slackPeople.createShadowAction).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ actionId: 'proposal-1', status: 'approved' }),
+      expect.objectContaining({
+        targetMemberId: '3f046d1a-4e0e-4ccc-9ea7-b8c07ab25b43',
+        metadata: expect.objectContaining({ lifecycle_state: 'cooling' }),
+      }),
     )
-    expect(slackPeople.claimShadowActionForSend).toHaveBeenCalled()
-    expect(slackPeople.markShadowActionSent).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ actionId: 'proposal-1', slackTs: '1721000100.000200' }),
-    )
-    expect(result).toMatchObject({ proposed: 1, sent: 1 })
+    expect(slackPeople.reviewShadowAction).not.toHaveBeenCalled()
+    expect(slackPeople.claimShadowActionForSend).not.toHaveBeenCalled()
+    expect(slackPeople.markShadowActionSent).not.toHaveBeenCalled()
+    expect(slackTools.sendMessage).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ proposed: 1, sent: 0 })
   })
 })
