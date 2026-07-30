@@ -25,3 +25,13 @@ Files:
 - `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`
 - `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`
 - `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.types.ts`
+
+## [2026-07-30 12:44] - [STYLE]
+
+What: Moved the embedded ROAS Portal refresh and new-tab controls to the bottom-right corner, kept the Portal surface full-height, and hid every workspace-menu dock while Portal mode is active.
+
+Why: The ROAS-owned controls and workspace menu were covering Portal-owned navigation and content.
+
+Impact: Portal navigation remains unobstructed while refresh, pop-out, and the top-bar Workspace / Portal switch stay available.
+
+Files: `apps/web/src/components/shell/PageGraderPortalSurface.tsx`, `apps/web/src/components/shell/PageGraderPortalSurface.test.tsx`, `apps/web/src/components/shell/ShellMenuDockLayout.tsx`, `apps/web/src/components/shell/ShellMenuDockLayout.test.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/ShellWorkspace.test.tsx`, `documentation/features/integration-connections.md`

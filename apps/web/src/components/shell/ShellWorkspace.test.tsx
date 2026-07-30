@@ -115,6 +115,9 @@ vi.mock('./PageGraderPortalSurface', () => ({
     <div data-testid="portal-surface" data-active={active ? 'true' : 'false'} />
   ),
 }))
+vi.mock('./ShellSidebarSlot', () => ({
+  ShellSidebarSlot: () => <nav data-testid="workspace-menu">Workspace menu</nav>,
+}))
 vi.mock('./ShellRightPanel', () => ({ ShellRightPanel: () => null }))
 vi.mock('./SpaceWorkDock', () => ({
   SpaceWorkDock: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -180,6 +183,20 @@ describe('ShellWorkspace', () => {
 
     expect(screen.getByTestId('portal-surface')).toHaveAttribute('data-active', 'true')
     expect(screen.getByText('Home dashboard').closest('.hidden')).not.toBeNull()
+  })
+
+  it('does not host the workspace menu on the Portal surface', () => {
+    mocks.params = new Map([['surface', 'portal']])
+    mocks.desktop = true
+    mocks.shellPrefsHydrated = true
+    mocks.menuDock = 'work'
+
+    render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
+
+    expect(screen.queryByTestId('workspace-menu')).toBeNull()
+    expect(screen.getByTestId('portal-surface').parentElement).toHaveClass(
+      'shell-work-area-body-main',
+    )
   })
 
   it('replaces the temporary starting route with the created conversation route', async () => {

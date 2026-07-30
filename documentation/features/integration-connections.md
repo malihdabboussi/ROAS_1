@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 28, 2026 (Team keeps Mine on shared invites + meeting card Join/copy UX)
+Last Modified: July 30, 2026 (Portal view uses unobstructed full-workspace chrome)
 
 ## Data Flow
 
@@ -52,6 +52,7 @@ Last Modified: July 28, 2026 (Team keeps Mine on shared invites + meeting card J
 46. Slack thread replies load the preceding root and replies before invoking Pixel. Pronouns and short confirmations therefore retain proactive-message context without requiring the user to resend a screenshot.
 47. Slack profile refreshes preserve the immutable Slack identity and its existing `person_brain_id`. For organization-managed Person Brains only, an updated Slack display name or avatar refreshes the auto-generated Brain profile without overwriting a custom Brain name or image. Names are never used to merge people, so a renamed internal teammate and a separate external client with the same display name remain distinct.
 48. Creating a Person Brain provisions its durable identity container; it does not replay Slack history by itself. Team → People exposes **Populate brains**, which starts one bounded 90-day backfill across enabled Slack Brain channel mappings. Each channel is fetched once by the existing import runtime and then fanned out to the linked Person Brains, while recurring Team Intelligence continues adding only new, high-confidence facts.
+49. The embedded ROAS Portal uses the full work surface without the workspace menu. Its refresh and new-tab controls sit in the Portal’s bottom-right corner so they do not cover the Portal’s own top-right navigation.
 
 ## Code Examples
 
@@ -120,6 +121,7 @@ Reconnect result:
 
 ## Decision Log
 
+- Portal mode suppresses every workspace-menu dock host while preserving the top-bar Workspace / Portal switch. Portal-owned navigation keeps the top-right corner; ROAS-owned refresh and pop-out controls live at the bottom-right.
 - Meeting detail’s primary CTA is conversational **Prepare with Pixel** (prep beforehand vs live guide), not a silent background prep job. Background `precall-prep/event` still accepts a client event snapshot so Team/non-today calendar ids remain durable when a prep doc is created.
 - Team Agenda calendar inclusion is Directory membership minus `rejected`, not person-link `confirmed`. Sync Directory confirms Directory rows by default; `match_status` remains for Slack/portal linking and reject opt-out. Agenda responses expose `team_coverage` so admins can see pulled users and silent DWD failures without guessing.
 - Fathom reconnect is responsible for reversing its own disconnect side effects. Reactivation is restricted to routes whose stored disable reason exactly matches the Fathom disconnect reason, so reconnect cannot silently enable intentionally disabled automations.

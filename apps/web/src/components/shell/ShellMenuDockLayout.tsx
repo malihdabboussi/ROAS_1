@@ -1,5 +1,6 @@
 'use client'
 
+import { useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { ShellMenuDockDragController } from './ShellMenuDockDragController'
@@ -21,6 +22,8 @@ export function ShellMenuDockLayout({
   sidebar: ReactNode
   children: ReactNode
 }) {
+  const searchParams = useSearchParams()
+  const portalActive = searchParams.get('surface') === 'portal'
   const hydrated = useShellPrefsHydrated()
   const desktop = useMediaQuery('(min-width: 768px)')
   const activeDock = useActiveShellMenuDock()
@@ -38,8 +41,9 @@ export function ShellMenuDockLayout({
   const workAttached = isWorkAttachedDock(dock)
   const hostedOnWork = workAttached && workHostAvailable
   // Frame only hosts far-left (or fallback when work cannot host).
-  const resolvedFrameDock =
-    !desktop || !hydrated
+  const resolvedFrameDock = portalActive
+    ? null
+    : !desktop || !hydrated
       ? 'left'
       : dock === 'left'
         ? 'left'
@@ -61,8 +65,12 @@ export function ShellMenuDockLayout({
           {resolvedFrameDock === 'left' ? <ShellSidebarSlot /> : null}
           <main className="shell-menu-dock-content">{children}</main>
         </div>
-        {dock === 'left' ? <span className="sr-only">Menu docked left of chat</span> : null}
-        {hostedOnWork ? <span className="sr-only">Menu docked on work card</span> : null}
+        {!portalActive && dock === 'left' ? (
+          <span className="sr-only">Menu docked left of chat</span>
+        ) : null}
+        {!portalActive && hostedOnWork ? (
+          <span className="sr-only">Menu docked on work card</span>
+        ) : null}
       </div>
     </ShellSidebarSlotProvider>
   )

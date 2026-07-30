@@ -8,6 +8,13 @@ const mocks = vi.hoisted(() => ({
   workCardHostAvailable: false,
   workCollapsedHostAvailable: false,
   chatOpen: true,
+  portalActive: false,
+}))
+
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => ({
+    get: (key: string) => (key === 'surface' && mocks.portalActive ? 'portal' : null),
+  }),
 }))
 
 vi.mock('@/lib/hooks/use-media-query', () => ({
@@ -60,6 +67,7 @@ describe('ShellMenuDockLayout', () => {
     mocks.workCardHostAvailable = false
     mocks.workCollapsedHostAvailable = false
     mocks.chatOpen = true
+    mocks.portalActive = false
   })
 
   it('mounts the menu on the far left of chat', () => {
@@ -110,5 +118,18 @@ describe('ShellMenuDockLayout', () => {
     )
 
     expect(screen.getByText('Menu').nextElementSibling).toHaveRole('main')
+  })
+
+  it('hides the workspace menu while the Portal surface is active', () => {
+    mocks.portalActive = true
+
+    render(
+      <ShellMenuDockLayout sidebar={<nav>Menu</nav>}>
+        <div>Portal</div>
+      </ShellMenuDockLayout>,
+    )
+
+    expect(screen.queryByText('Menu')).toBeNull()
+    expect(screen.getByText('Portal')).toBeInTheDocument()
   })
 })

@@ -10,12 +10,13 @@ import { ShellArtifactViewerAdapter } from '@/features/studio/components/preview
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils/cn'
+import { PageGraderPortalSurface } from './PageGraderPortalSurface'
 import { isShellHomeRoute, isShellWorkspaceRoute } from './shell-route-policy'
 import { ShellChatDrawer } from './ShellChatDrawer'
 import { ShellNewChatGreeting } from './ShellNewChatGreeting'
-import { PageGraderPortalSurface } from './PageGraderPortalSurface'
 import { ShellSidebarSlot } from './ShellSidebarSlot'
 import { SpaceWorkDock } from './SpaceWorkDock'
+import { useRightEdgePresence } from './use-right-edge-presence'
 import {
   isWorkAttachedDock,
   resolveShellMenuDockForLayout,
@@ -23,7 +24,6 @@ import {
   useShellMenuDock,
 } from './use-shell-menu-dock'
 import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
-import { useRightEdgePresence } from './use-right-edge-presence'
 import { useShellStore } from './use-shell-store'
 
 export function ShellWorkspace({ children }: { children: ReactNode }) {
@@ -123,7 +123,12 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
 
   const showChatDrawer = workAreaCollapsible
   const workColumnPresent =
-    shellPrefsHydrated && desktop && !artifactTarget && !showFullNewChat && !showFullConversation
+    shellPrefsHydrated &&
+    desktop &&
+    !portalActive &&
+    !artifactTarget &&
+    !showFullNewChat &&
+    !showFullConversation
   // During drag, keep work host open so seams stay hittable — layout still uses saved dock.
   const rawWorkAttached =
     isWorkAttachedDock(savedMenuDock) ||
@@ -166,8 +171,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   // Collapsed-right rail only for docks that were already work-attached (not remapped left).
   const hostCollapsedRight =
     hostCollapsedRightBase &&
-    (isWorkAttachedDock(savedMenuDock) ||
-      (dragging && isWorkAttachedDock(candidateMenuDock))) &&
+    (isWorkAttachedDock(savedMenuDock) || (dragging && isWorkAttachedDock(candidateMenuDock))) &&
     workAttached
 
   const workBodyDockClass =
@@ -210,11 +214,16 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
             )}
           >
             {hostInsideWork && menuDock === 'work' ? <ShellSidebarSlot /> : null}
-            <div className={cn(hostInsideWork && 'shell-work-area-body-main')}>{workMain}</div>
+            <div className={cn((hostInsideWork || portalActive) && 'shell-work-area-body-main')}>
+              {workMain}
+            </div>
             {hostInsideWork && menuDock === 'work-right' ? <ShellSidebarSlot /> : null}
           </div>
           {floatTop ? (
-            <div className="shell-menu-dock-float shell-menu-dock-float-top" data-shell-menu-dock="work-top">
+            <div
+              className="shell-menu-dock-float shell-menu-dock-float-top"
+              data-shell-menu-dock="work-top"
+            >
               <ShellSidebarSlot />
             </div>
           ) : null}

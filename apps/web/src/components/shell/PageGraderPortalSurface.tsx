@@ -1,7 +1,7 @@
 'use client'
 
-import { ExternalLink, Loader2, RefreshCw, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ExternalLink, Loader2, RefreshCw, TriangleAlert } from 'lucide-react'
 import { backendPost } from '@/lib/api/backend-client'
 import { cn } from '@/lib/utils/cn'
 
@@ -36,13 +36,10 @@ export function PageGraderPortalSurface({ active }: { active: boolean }) {
     setAuthenticated(false)
     setError(null)
     try {
-      const next = await backendPost<EmbedSession>(
-        '/api/integrations/page-grader/embed-session',
-        {
-          parent_origin: window.location.origin,
-          target_path: '/clients',
-        },
-      )
+      const next = await backendPost<EmbedSession>('/api/integrations/page-grader/embed-session', {
+        parent_origin: window.location.origin,
+        target_path: '/clients',
+      })
       setSession(next)
       setReloadKey((value) => value + 1)
     } catch (caught) {
@@ -105,7 +102,10 @@ export function PageGraderPortalSurface({ active }: { active: boolean }) {
 
   return (
     <section
-      className={cn('relative h-full min-h-0 w-full overflow-hidden bg-background', !active && 'hidden')}
+      className={cn(
+        'bg-background relative h-full min-h-0 w-full overflow-hidden',
+        !active && 'hidden',
+      )}
       aria-hidden={!active}
       data-page-grader-portal
     >
@@ -115,49 +115,51 @@ export function PageGraderPortalSurface({ active }: { active: boolean }) {
           ref={iframeRef}
           src={session.embed_url}
           title="ROAS Portal"
-          className="h-full w-full border-0 bg-background"
+          className="bg-background h-full w-full border-0"
           allow="clipboard-read; clipboard-write; fullscreen"
         />
       ) : null}
 
-      <div className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-md border border-border/80 bg-background/90 p-1 shadow-sm backdrop-blur">
-        <button
-          type="button"
-          title="Refresh Portal"
-          aria-label="Refresh Portal"
-          onClick={retry}
-          className="shell-topbar-icon-btn"
-        >
-          <RefreshCw className="icon-sm" aria-hidden />
-        </button>
-        <button
-          type="button"
-          title="Open Portal in new tab"
-          aria-label="Open Portal in new tab"
-          onClick={openPortal}
-          disabled={!portalOrigin}
-          className="shell-topbar-icon-btn"
-        >
-          <ExternalLink className="icon-sm" aria-hidden />
-        </button>
+      <div className="z-dropdown p-spacing-3 pointer-events-none absolute inset-0 flex items-end justify-end">
+        <div className="gap-spacing-1 rounded-spacing-2 p-spacing-1 border-border/80 bg-background/90 pointer-events-auto flex items-center border shadow-sm backdrop-blur">
+          <button
+            type="button"
+            title="Refresh Portal"
+            aria-label="Refresh Portal"
+            onClick={retry}
+            className="shell-topbar-icon-btn"
+          >
+            <RefreshCw className="icon-sm" aria-hidden />
+          </button>
+          <button
+            type="button"
+            title="Open Portal in new tab"
+            aria-label="Open Portal in new tab"
+            onClick={openPortal}
+            disabled={!portalOrigin}
+            className="shell-topbar-icon-btn"
+          >
+            <ExternalLink className="icon-sm" aria-hidden />
+          </button>
+        </div>
       </div>
 
       {(loading || (!authenticated && session)) && !error ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-background">
+        <div className="bg-background absolute inset-0 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-center">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden />
+            <Loader2 className="text-primary h-6 w-6 animate-spin" aria-hidden />
             <p className="body-3 text-muted-foreground">Opening Portal...</p>
           </div>
         </div>
       ) : null}
 
       {error ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-background p-6">
+        <div className="bg-background absolute inset-0 flex items-center justify-center p-6">
           <div className="flex max-w-sm flex-col items-center gap-3 text-center">
-            <TriangleAlert className="h-7 w-7 text-destructive" aria-hidden />
+            <TriangleAlert className="text-destructive h-7 w-7" aria-hidden />
             <div>
               <h2 className="body-2 font-semibold">Portal connection interrupted</h2>
-              <p className="body-3 mt-1 text-muted-foreground">{error}</p>
+              <p className="body-3 text-muted-foreground mt-1">{error}</p>
             </div>
             <button
               type="button"
