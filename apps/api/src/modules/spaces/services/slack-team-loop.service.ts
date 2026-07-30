@@ -19,6 +19,10 @@ import {
   slackSignalMatchesLoop,
   slackTeamEvidenceMetadata,
 } from './slack-team-loop-evidence'
+import {
+  slackSignalLifecycleMetadata,
+  SlackTeamSignalDeliveryService,
+} from './slack-team-signal-delivery.service'
 
 export type SlackTeamLoopKind =
   | 'brain_compounding'
@@ -73,6 +77,7 @@ export class SlackTeamLoopService {
     private readonly gemini: EmbeddingService,
     private readonly senderResolver: SlackSenderResolverService,
     @Optional() private readonly trainingRules?: SlackSignalTrainingRepository,
+    @Optional() private readonly signalDelivery?: SlackTeamSignalDeliveryService,
   ) {}
 
   async run(input: {
@@ -104,6 +109,7 @@ export class SlackTeamLoopService {
     const slackTeamId =
       typeof integration.metadata.team_id === 'string' ? integration.metadata.team_id : ''
     if (!slackTeamId) return { skipped: true, skipped_reason: 'slack_team_id_missing' }
+    const workflowKey = `slack_team:${input.loopKind}`
 
     let people = (await this.peopleRepo.listPeople(
       input.supabase,
@@ -113,6 +119,16 @@ export class SlackTeamLoopService {
       ? people.filter((person) => input.personIds.includes(person.id))
       : people.filter((person) => person.relationship_kind !== 'ignored')
     let peopleBySlackId = new Map(selectedPeople.map((person) => [person.platform_id, person]))
+    const lifecycle = (await this.signalDelivery?.processCoolingActions({
+      supabase: input.supabase,
+      userId: input.userId,
+      orgId: input.orgId,
+      workflowKey,
+      deliveryMode: input.deliveryMode,
+      personIds: input.personIds,
+      quietHoursActive,
+      people,
+    })) ?? { rechecked: 0, resolved: 0, sent: 0 }
 
     const reconciliation = await this.observation.reconcile({
       supabase: input.supabase,
@@ -203,6 +219,9 @@ export class SlackTeamLoopService {
         channels_observed: reconciliation.channelsReconciled,
         messages_observed: 0,
         proposed: 0,
+        signals_rechecked: lifecycle.rechecked,
+        signals_resolved_before_delivery: lifecycle.resolved,
+        sent: lifecycle.sent,
         quiet_hours_active: quietHoursActive,
         slack_requests: reconciliation.historyRequests + reconciliation.threadRequests + 1,
         events_stored: reconciliation.eventsStored,
@@ -210,7 +229,6 @@ export class SlackTeamLoopService {
       }
     }
 
-    const workflowKey = `slack_team:${input.loopKind}`
     const dayStart = new Date()
     dayStart.setUTCHours(0, 0, 0, 0)
     const usedToday = await this.loopRepo.countActionsSince(input.supabase, {
@@ -269,7 +287,6 @@ export class SlackTeamLoopService {
       (person) => person.vibey_user_id === input.userId && person.relationship_kind === 'internal',
     )
     let proposed = 0
-    let sent = 0
     let memoriesCompounded = 0
     for (const signal of actionableSignals.slice(0, remaining)) {
       if (!slackSignalMatchesLoop(signal.kind, input.loopKind)) continue
@@ -335,6 +352,9 @@ export class SlackTeamLoopService {
           confidence: signal.confidence,
           evidence_fingerprint: evidenceFingerprint,
           delivery_mode: input.deliveryMode,
+          ...(signal.kind === 'unanswered_question' || signal.kind === 'client_risk'
+            ? slackSignalLifecycleMetadata(signal.kind)
+            : {}),
           ...slackTeamEvidenceMetadata({ source, slackTeamId, peopleBySlackId }),
           ...(target && !internalRecipient
             ? {
@@ -348,18 +368,19 @@ export class SlackTeamLoopService {
       })
       proposed += 1
 
-      let activeMessageAction = action
-      let activeMessageRecipient = internalRecipient
-      let activeMessageContent = signal.proposed_content
-      let activeMessageIsSendable =
-        signal.kind === 'unanswered_question' && Boolean(internalRecipient)
-      if (target && !internalRecipient && workspaceOwner && proposed < remaining) {
+      if (
+        signal.kind !== 'brain_memory' &&
+        target &&
+        !internalRecipient &&
+        workspaceOwner &&
+        proposed < remaining
+      ) {
         const internalContent = internalEscalationMessage({
           subject: target,
           channelName: source.channel_name,
           signal,
         })
-        const internalAction = await this.peopleRepo.createShadowAction(input.supabase, {
+        await this.peopleRepo.createShadowAction(input.supabase, {
           orgId: input.orgId,
           userId: input.userId,
           agentKey: 'pixel',
@@ -376,6 +397,7 @@ export class SlackTeamLoopService {
             confidence: signal.confidence,
             evidence_fingerprint: `${evidenceFingerprint}:internal`,
             delivery_mode: input.deliveryMode,
+            ...slackSignalLifecycleMetadata(signal.kind),
             internal_only: true,
             parent_signal_id: action.id,
             subject_member_id: target.id,
@@ -385,60 +407,6 @@ export class SlackTeamLoopService {
           },
         })
         proposed += 1
-        activeMessageAction = internalAction
-        activeMessageRecipient = workspaceOwner
-        activeMessageContent = internalContent
-        activeMessageIsSendable = true
-      }
-
-      if (
-        input.deliveryMode === 'active' &&
-        activeMessageIsSendable &&
-        activeMessageRecipient?.delivery_mode === 'active' &&
-        input.personIds.includes(activeMessageRecipient.id)
-      ) {
-        const approved = await this.peopleRepo.reviewShadowAction(input.supabase, {
-          actionId: activeMessageAction.id,
-          orgId: input.orgId,
-          reviewedBy: input.userId,
-          status: 'approved',
-        })
-        if (!approved) throw new Error('Active Slack loop proposal could not be approved')
-        const claimed = await this.peopleRepo.claimShadowActionForSend(
-          input.supabase,
-          input.orgId,
-          activeMessageAction.id,
-        )
-        if (!claimed) throw new Error('Active Slack loop proposal could not be claimed')
-        try {
-          const dm = await this.slackTools.openDm(input.supabase, input.userId, input.orgId, {
-            slack_user_id: activeMessageRecipient.platform_id,
-          })
-          const delivery = await this.slackTools.sendMessage(
-            input.supabase,
-            input.userId,
-            input.orgId,
-            {
-              channel_id: String(dm.channel_id),
-              text: activeMessageContent,
-            },
-          )
-          await this.peopleRepo.markShadowActionSent(input.supabase, {
-            actionId: activeMessageAction.id,
-            orgId: input.orgId,
-            sentBy: input.userId,
-            slackTs: typeof delivery.ts === 'string' ? delivery.ts : null,
-            metadata: activeMessageAction.metadata,
-          })
-        } catch (cause) {
-          await this.peopleRepo.markShadowActionFailed(
-            input.supabase,
-            input.orgId,
-            activeMessageAction.id,
-          )
-          throw cause
-        }
-        sent += 1
       }
     }
 
@@ -467,7 +435,9 @@ export class SlackTeamLoopService {
       model_total_tokens: analysis.totalTokens,
       provider_cost_usd: analysis.providerCostUsd,
       proposed,
-      sent,
+      signals_rechecked: lifecycle.rechecked,
+      signals_resolved_before_delivery: lifecycle.resolved,
+      sent: lifecycle.sent,
       memories_compounded: memoriesCompounded,
       daily_limit: input.dailyLimit,
       slack_requests: reconciliation.historyRequests + reconciliation.threadRequests + 1,

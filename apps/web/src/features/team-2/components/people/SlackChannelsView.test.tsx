@@ -89,7 +89,7 @@ describe('SlackChannelsView', () => {
         },
         {
           ts: '1721000100.000200',
-          text: 'Please revise the second point.',
+          text: `Please revise the second point. ${'a'.repeat(200)}`,
           sender_name: 'Avery',
           direction: 'inbound',
           thread_ts: '1721000000.000100',
@@ -105,9 +105,9 @@ describe('SlackChannelsView', () => {
     expect(screen.getByText('Here is the proposed follow-up.').closest('article')).toHaveClass(
       'self-start',
     )
-    expect(screen.getByText('Please revise the second point.').closest('article')).toHaveClass(
-      'self-end',
-    )
+    const reply = screen.getByText(/Please revise the second point/)
+    expect(reply.closest('article')).toHaveClass('self-end', 'max-w-full', 'overflow-hidden')
+    expect(reply).toHaveClass('break-all')
     expect(screen.getByText('Thread reply')).toBeVisible()
   })
 })

@@ -1,9 +1,47 @@
 import { createHash } from 'node:crypto'
 import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { SlackShadowAction } from '../../slack/types/slack.types'
 
 @Injectable()
 export class SlackTeamLoopRepository {
+  async listCoolingActions(
+    supabase: SupabaseClient,
+    input: { orgId: string; workflowKey: string; limit?: number },
+  ): Promise<SlackShadowAction[]> {
+    const { data, error } = await supabase
+      .from('slack_shadow_actions')
+      .select('*')
+      .eq('org_id', input.orgId)
+      .eq('workflow_key', input.workflowKey)
+      .eq('status', 'proposed')
+      .contains('metadata', { lifecycle_state: 'cooling' })
+      .order('created_at', { ascending: true })
+      .limit(input.limit ?? 100)
+    if (error) throw new Error(`Failed to load cooling Slack actions: ${error.message}`)
+    return (data as SlackShadowAction[] | null) ?? []
+  }
+
+  async updateActionMetadata(
+    supabase: SupabaseClient,
+    input: {
+      actionId: string
+      orgId: string
+      metadata: Record<string, unknown>
+    },
+  ): Promise<SlackShadowAction | null> {
+    const { data, error } = await supabase
+      .from('slack_shadow_actions')
+      .update({ metadata: input.metadata })
+      .eq('id', input.actionId)
+      .eq('org_id', input.orgId)
+      .eq('status', 'proposed')
+      .select('*')
+      .maybeSingle()
+    if (error) throw new Error(`Failed to update Slack action lifecycle: ${error.message}`)
+    return (data as SlackShadowAction | null) ?? null
+  }
+
   async countActionsSince(
     supabase: SupabaseClient,
     input: { orgId: string; workflowKey: string; since: string },

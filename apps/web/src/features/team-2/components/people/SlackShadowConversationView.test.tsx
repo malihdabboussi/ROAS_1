@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { SlackDiscoveredPerson, SlackShadowAction } from '../../services/slack-people.service'
 import { SlackShadowConversationView } from './SlackShadowConversationView'
 
@@ -7,6 +7,11 @@ const person = {
   id: 'person-1',
   display_name: 'Carol Garcia',
   delivery_mode: 'shadow',
+} as SlackDiscoveredPerson
+const secondPerson = {
+  id: 'person-2',
+  display_name: 'Aaron Mckeague',
+  delivery_mode: 'active',
 } as SlackDiscoveredPerson
 
 const action = (overrides: Partial<SlackShadowAction>): SlackShadowAction =>
@@ -26,6 +31,8 @@ const action = (overrides: Partial<SlackShadowAction>): SlackShadowAction =>
     created_at: '2026-07-22T12:00:00.000Z',
     ...overrides,
   }) as SlackShadowAction
+
+afterEach(cleanup)
 
 describe('SlackShadowConversationView', () => {
   it('keeps team signals out of person conversations and routes them to Signals', () => {
@@ -56,5 +63,44 @@ describe('SlackShadowConversationView', () => {
     expect(screen.getByText('1 team signal needs routing')).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Review Signals' }))
     expect(onOpenSignals).toHaveBeenCalledTimes(1)
+  })
+
+  it('filters the proposal ledger by person and opens their full conversation', () => {
+    const onOpenPerson = vi.fn()
+
+    render(
+      <SlackShadowConversationView
+        actions={[
+          action({ id: 'carol-action', proposed_content: 'Carol should review the client risk.' }),
+          action({
+            id: 'aaron-action',
+            target_member_id: secondPerson.id,
+            proposed_content: 'Aaron should review the campaign pacing.',
+          }),
+        ]}
+        peopleById={
+          new Map([
+            [person.id, person],
+            [secondPerson.id, secondPerson],
+          ])
+        }
+        onBack={vi.fn()}
+        onOpenPerson={onOpenPerson}
+        onOpenSignals={vi.fn()}
+        onReview={vi.fn()}
+        onSend={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Carol should review the client risk.')).toBeVisible()
+    expect(screen.getByText('Aaron should review the campaign pacing.')).toBeVisible()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Carol Garcia, 1 proposal' }))
+
+    expect(screen.getByText('Carol should review the client risk.')).toBeVisible()
+    expect(screen.queryByText('Aaron should review the campaign pacing.')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open conversation' }))
+    expect(onOpenPerson).toHaveBeenCalledWith(person)
   })
 })

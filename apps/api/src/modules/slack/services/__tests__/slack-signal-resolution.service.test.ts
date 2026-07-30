@@ -88,4 +88,37 @@ describe('SlackSignalResolutionService', () => {
     expect(result.resolution.resolved).toBe(true)
     expect(result.resolution.reason).toContain('white_check_mark')
   })
+
+  it('refreshes a person-targeted proposal before delivery', async () => {
+    const signal = {
+      id: 'proposal-1',
+      target_member_id: 'member-1',
+      source_channel_id: 'C1',
+      source_message_ts: '100.1',
+      metadata: { source_thread_ts: '100.1', lifecycle_state: 'cooling' },
+    }
+    const service = new SlackSignalResolutionService(
+      {
+        listShadowActions: vi.fn().mockResolvedValue([signal]),
+        findOrgSlackIntegration: vi.fn().mockResolvedValue({ access_token: 'xoxb' }),
+      } as never,
+      {
+        conversationsRepliesAll: vi
+          .fn()
+          .mockResolvedValue([{ ts: '100.1', user: 'UCLIENT', text: 'Can someone help?' }]),
+      } as never,
+      {
+        updateSignalMetadata: vi
+          .fn()
+          .mockImplementation((_client, input) =>
+            Promise.resolve({ ...signal, metadata: input.metadata }),
+          ),
+      } as never,
+    )
+
+    const result = await service.refresh({} as never, 'org-1', 'proposal-1')
+
+    expect(result.action.target_member_id).toBe('member-1')
+    expect(result.resolution.resolved).toBe(false)
+  })
 })
