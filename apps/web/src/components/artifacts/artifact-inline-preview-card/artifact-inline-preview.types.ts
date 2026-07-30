@@ -17,6 +17,6 @@ export interface ArtifactInlinePreviewCardProps {
   imageUrl?: string
   videoUrl?: string
   status?: string
-  /** Channel / embedded contexts: opens deliverable modal instead of vibey-open-artifact */
+  /** Channel / embedded contexts: opens the caller's deliverable preview instead of the shell. */
   openPreviewOverride?: () => void
 }

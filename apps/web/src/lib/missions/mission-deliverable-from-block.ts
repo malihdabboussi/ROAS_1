@@ -1,53 +1,9 @@
+import {
+  artifactPreviewTypeToDeliverableType,
+  artifactPreviewTypeToEntityTable,
+} from '@/lib/artifacts/shell-artifact-viewer'
 import type { MessageContentBlock } from '@/lib/chat/message-content-blocks'
 import type { MissionDeliverable } from './mission-types'
-
-const CHANNEL_ARTIFACT_TO_MISSION_TYPE: Record<string, MissionDeliverable['type']> = {
-  offer: 'offer',
-  funnel: 'funnel',
-  avatar: 'avatar',
-  sequence: 'sequence',
-  presentation: 'presentation',
-  ad: 'ad',
-  'ad-set': 'ad_set',
-  'ad-campaign': 'ad_campaign',
-  'social-post': 'social_post',
-  'blog-post': 'blog_post',
-  email: 'email',
-  'visual-doc': 'visual_doc',
-  form: 'form',
-  task: 'task',
-  mission: 'mission',
-  flow: 'flow',
-  website: 'website',
-  theme: 'theme',
-  'custom-object': 'custom_object',
-  document: 'doc',
-  project: 'file',
-  widget: 'file',
-}
-
-const ENTITY_TABLE_FOR_ARTIFACT: Record<string, string> = {
-  offer: 'offers',
-  funnel: 'funnels',
-  avatar: 'avatars',
-  sequence: 'sequences',
-  presentation: 'presentations',
-  ad: 'ads',
-  'ad-set': 'ad_sets',
-  'ad-campaign': 'ad_campaigns',
-  'social-post': 'social_posts',
-  'blog-post': 'blog_posts',
-  email: 'emails',
-  'visual-doc': 'space_items',
-  form: 'forms',
-  task: 'space_items',
-  mission: 'missions',
-  flow: 'space_automations',
-  website: 'funnels',
-  theme: 'themes',
-  'custom-object': 'space_items',
-  document: 'conversation_documents',
-}
 
 export type ChannelSourceForDeliverable = {
   messageId: string
@@ -134,7 +90,7 @@ export function missionDeliverableFromContentBlock(
     const aType = block.artifactType
     const imageUrl = block.imageUrl?.trim() ?? ''
     const videoUrl = block.videoUrl?.trim() ?? ''
-    let missionType = CHANNEL_ARTIFACT_TO_MISSION_TYPE[aType] ?? 'file'
+    let missionType = artifactPreviewTypeToDeliverableType(aType)
     let file_url: string | null = null
     if (imageUrl) {
       missionType = 'image'
@@ -157,7 +113,7 @@ export function missionDeliverableFromContentBlock(
       title: artifactTitle,
       file_url,
       entity_id: block.artifactId,
-      entity_table: ENTITY_TABLE_FOR_ARTIFACT[aType] ?? null,
+      entity_table: artifactPreviewTypeToEntityTable(aType),
     }
   }
 

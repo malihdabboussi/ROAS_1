@@ -205,3 +205,13 @@ Why: Mission cards were falling through the generic document viewer and could le
 Impact: Clicking a Mission card now opens the Mission named on that card. Clicking the Space crumb opens the owning Space, and clicking the view crumb opens the exact Space view.
 
 Files: `apps/web/src/features/studio/components/message-bubble/FinalOutputCards.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `apps/web/src/features/spaces/components/task-detail/TaskDetailHeader.tsx`, `apps/web/src/features/spaces/components/task-detail/TaskDetailModal.tsx`, `apps/web/src/features/spaces/components/modals/SpaceModalsHost.tsx`, `apps/web/src/features/spaces/hooks/use-task-detail-navigation.ts`, `apps/web/src/features/home/components/HomeTaskDetailHost.tsx`, focused tests, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-07-29 18:05] - [FIX]
+
+What: Unified rich chat artifact cards, compact final-output cards, and document cards behind one typed shell destination map covering every emitted artifact type. Added canonical previews for forms, ad sets, ad campaigns, and themes; exact route handling for missions and flows; and Space-editor handling for visual docs and custom objects.
+
+Why: The same artifact could previously open a different or stale component depending on which chat renderer produced the card because three independent click paths mixed the shell viewer with a campaign-local legacy event.
+
+Impact: Chat result cards now open the component belonging to their exact artifact id and type. A table-driven routing suite locks all 19 artifact types, document variants, mission/flow URLs, and shell component selection.
+
+Files: `apps/web/src/lib/artifacts/shell-artifact-viewer.ts`, `apps/web/src/lib/missions/mission-deliverable-from-block.ts`, `apps/web/src/components/artifacts/artifact-inline-preview-card/ArtifactInlinePreviewCard.tsx`, `apps/web/src/features/studio/components/chat/DocumentCard.tsx`, `apps/web/src/features/studio/components/message-bubble/FinalOutputCards.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `apps/web/src/components/deliverables/DeliverableEntityPreviewAdapter.tsx`, focused tests, `documentation/features/claude-chatgpt-shell.md`

@@ -1,6 +1,6 @@
 'use client'
 
-import { openArtifactInShell } from '@/lib/artifacts'
+import { openArtifactPreviewInShell } from '@/lib/artifacts'
 import { AdArtifactInlinePreview } from './AdArtifactInlinePreview'
 import type { ArtifactInlinePreviewCardProps } from './artifact-inline-preview.types'
 import { AvatarArtifactInlinePreview } from './AvatarArtifactInlinePreview'
@@ -36,22 +36,7 @@ export function ArtifactInlinePreviewCard({
       openPreviewOverride()
       return
     }
-    if (artifactType === 'task' && spaceId) {
-      openArtifactInShell({
-        id: artifactId,
-        entityId: artifactId,
-        entityTable: 'space_items',
-        spaceId,
-        title: name,
-        type: 'task',
-      })
-      return
-    }
-    window.dispatchEvent(
-      new CustomEvent('vibey-open-artifact', {
-        detail: { artifactType, artifactId, name, spaceId },
-      }),
-    )
+    openArtifactPreviewInShell({ artifactType, artifactId, name, spaceId })
   }
 
   if (artifactType === 'avatar') {
