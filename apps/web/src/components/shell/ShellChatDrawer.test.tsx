@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ShellChatDrawer } from './ShellChatDrawer'
@@ -15,7 +15,12 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/components/global-chat/containers/GlobalChatPanel', () => ({
-  GlobalChatPanel: () => <div>Chat panel</div>,
+  GlobalChatPanel: ({ headerLeadingAction }: { headerLeadingAction?: ReactNode }) => (
+    <div>
+      {headerLeadingAction}
+      <div>Chat panel</div>
+    </div>
+  ),
 }))
 
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
@@ -281,7 +286,7 @@ describe('ShellChatDrawer', () => {
     expect(useShellStore.getState().chatHistoryCollapsed).toBe(false)
   })
 
-  it('removes the collapsed history rail and restores history from the chat column', () => {
+  it('shows only a purple history icon in the chat header when history is collapsed', () => {
     useShellStore.setState({
       chatDrawer: {
         open: true,
@@ -294,10 +299,11 @@ describe('ShellChatDrawer', () => {
 
     const { container } = render(<ShellChatDrawer />)
     expect(container.querySelector('.shell-chat-history-restore')).toBeNull()
-    expect(container.querySelector('[data-shell-chat-history-restore]')).not.toBeNull()
-    expect(screen.getByRole('button', { name: 'Show chat history' })).toHaveTextContent(
-      'Show chat history',
-    )
+    expect(container.querySelector('[data-shell-chat-history-restore]')).toBeNull()
+    const restoreHistory = screen.getByRole('button', { name: 'Show chat history' })
+    expect(restoreHistory).toHaveClass('btn-icon-bare')
+    expect(restoreHistory.querySelector('svg')).toHaveClass('nav-glass-text-purple')
+    expect(restoreHistory).toHaveTextContent('')
     expect(screen.getByText('Chat panel')).toBeInTheDocument()
   })
 

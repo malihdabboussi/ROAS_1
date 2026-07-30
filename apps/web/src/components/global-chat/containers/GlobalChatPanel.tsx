@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { SpaceVibeyChatPanel } from '@/features/spaces/components/chat/SpaceVibeyChatPanel'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
@@ -16,10 +16,12 @@ export function GlobalChatPanel({
   shellSidebarChrome = false,
   onCollapseChat,
   presentation = 'compact',
+  headerLeadingAction,
 }: {
   shellSidebarChrome?: boolean
   onCollapseChat?: () => void
   presentation?: 'full' | 'compact'
+  headerLeadingAction?: ReactNode
 } = {}) {
   const pathname = usePathname() ?? ''
   const workContext = useGlobalChatStore((s) => s.workContext)
@@ -105,6 +107,7 @@ export function GlobalChatPanel({
           }
           shellSidebarChrome={shellSidebarChrome}
           headerLayout={presentation}
+          headerLeadingAction={headerLeadingAction}
           composerContextSlot={<GlobalChatComposerFooter />}
           onCollapseChat={onCollapseChat ?? (() => setCollapsed(true))}
         />

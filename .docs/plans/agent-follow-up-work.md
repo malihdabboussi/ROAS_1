@@ -9324,6 +9324,22 @@ Needed work: Extract browser recovery/continuation orchestration from `chat.serv
 
 Reason not done now: This incident required a narrow behavior-locked reliability repair. Decomposing both shared hot paths in the same change would materially expand the regression surface.
 
+## 2026-07-30 — Chat panel header composition remains oversized
+
+Status: Open
+
+Found while: Moving the collapsed chat-history restore action into the shared chat header.
+
+Files:
+
+- `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` (2500 LOC; component limit 400 LOC)
+
+Evidence: The panel already owns conversation, voice, specialized artifact modes, runtime synchronization, and header composition. This scoped change adds only an optional leading header slot, while the pre-existing component remains far above the frontend component limit and is already tracked for phased decomposition.
+
+Needed work: Continue extracting behavior-locked chat orchestration and header/body composition into focused components and hooks without changing the shared chat runtime contract.
+
+Reason not done now: Decomposing this active shared chat owner would materially expand a narrowly requested visual adjustment.
+
 ## 2026-07-29 — Slack proactive lifecycle (deferred LOC)
 
 - **Feature/app:** slack / Team Intelligence

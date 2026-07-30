@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ChevronRight, History } from 'lucide-react'
+import { History } from 'lucide-react'
 import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatPanel'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { ResizableDivider } from '@/components/layout/ResizableDivider'
@@ -218,25 +218,23 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
             </>
           ) : null}
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-            {historyCollapsed ? (
-              <div
-                className="border-border px-spacing-3 py-spacing-2 flex shrink-0 border-b"
-                data-shell-chat-history-restore
-              >
-                <button
-                  type="button"
-                  onClick={() => setChatHistoryCollapsed(false)}
-                  className="button-glass-purple body-3 gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex items-center rounded-lg font-medium"
-                  aria-label="Show chat history"
-                  title="Show chat history"
-                >
-                  <History className="icon-sm" aria-hidden />
-                  <span>Show chat history</span>
-                  <ChevronRight className="icon-xs" aria-hidden />
-                </button>
-              </div>
-            ) : null}
-            <GlobalChatPanel shellSidebarChrome onCollapseChat={() => minimizeChatDrawer()} />
+            <GlobalChatPanel
+              shellSidebarChrome
+              onCollapseChat={() => minimizeChatDrawer()}
+              headerLeadingAction={
+                historyCollapsed ? (
+                  <button
+                    type="button"
+                    onClick={() => setChatHistoryCollapsed(false)}
+                    className="btn-icon-bare"
+                    aria-label="Show chat history"
+                    title="Show chat history"
+                  >
+                    <History className="icon-sm nav-glass-text-purple" aria-hidden />
+                  </button>
+                ) : undefined
+              }
+            />
           </div>
         </div>
       </div>

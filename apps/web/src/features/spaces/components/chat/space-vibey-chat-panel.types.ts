@@ -24,6 +24,7 @@ export interface SpaceVibeyChatPanelProps {
   /** Agent picker + history chrome live in the shell Chat sidebar. */
   shellSidebarChrome?: boolean
   headerLayout?: 'full' | 'compact'
+  headerLeadingAction?: ReactNode
   composerContextSlot?: ReactNode
   preferredConversationId?: string | null
   awarenessContextOverride?: string

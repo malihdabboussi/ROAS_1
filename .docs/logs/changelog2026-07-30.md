@@ -9,3 +9,19 @@
 **Impact:** Delegated meeting work can reuse the source chat's known task and call details, retrieve the matching provider transcript, and no longer asks users to resend a recording before accessible evidence sources have been checked.
 
 **Files:** `apps/agent-api/src/modules/artifacts/`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `apps/api/src/modules/space-templates/data/__tests__/delegation-desk-provisioning.contract.test.ts`, `docker/agents/templates/delegator/TOOLS.md`, `supabase/migrations/20260730121500_repair_delegator_meeting_retrieval.sql`, `documentation/features/spaces-automation.md`
+
+## 2026-07-30 12:25 - [STYLE]
+
+What: Replaced the collapsed chat-history restore rail with a purple, icon-only history control in the chat header's top-left corner.
+
+Why: Keep the collapsed chat surface clean and visually balance the existing top-right close control.
+
+Impact: Collapsing chat history no longer adds a bordered row or text label; the accessible history action remains available in the chat header and restores the rail when selected.
+
+Files:
+
+- `apps/web/src/components/shell/ShellChatDrawer.tsx`
+- `apps/web/src/components/shell/ShellChatDrawer.test.tsx`
+- `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`
+- `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`
+- `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.types.ts`

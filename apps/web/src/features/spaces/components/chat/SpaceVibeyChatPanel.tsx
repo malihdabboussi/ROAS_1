@@ -180,6 +180,7 @@ export function SpaceVibeyChatPanel({
   onCollapseChat,
   shellSidebarChrome = false,
   headerLayout = 'compact',
+  headerLeadingAction,
   composerContextSlot,
   preferredConversationId,
   awarenessContextOverride,
@@ -2053,6 +2054,9 @@ export function SpaceVibeyChatPanel({
     <div className="pt-spacing-2 pb-spacing-1 relative shrink-0 px-3 md:px-4">
       <div className="mx-auto w-full max-w-3xl">
         <div className="min-h-spacing-10 gap-spacing-2 flex items-center">
+          {headerLeadingAction ? (
+            <div className="flex shrink-0 items-center">{headerLeadingAction}</div>
+          ) : null}
           {messages.length > 0 || isLoadingMessages || voiceActive ? (
             <div className="flex shrink-0 items-center">{renderAgentPicker()}</div>
           ) : null}
