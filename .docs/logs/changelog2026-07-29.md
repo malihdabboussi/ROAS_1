@@ -195,3 +195,13 @@ Why: The first seed used an ON CONFLICT target that could not collapse NULL-org 
 Impact: ROAS now has exactly one active org Delegator with five definition files and Delegation Desk skill; future applies are idempotent.
 
 Files: `supabase/migrations/20260729174500_seed_delegator_system_agent.sql`, `supabase/migrations/20260729180000_repair_delegator_org_seed_and_defs.sql`, `scripts/roas/migration-order.txt`
+
+## [2026-07-29 18:02] - [FIX]
+
+What: Replaced the Fathom-only call-kind helper with one canonical meeting classifier, applied it to scheduled calendar creation and Fathom attachment, marked human edits as authoritative, and upgraded every Meetings-style Space/template to Personal, Team, Executive, Client, Partner, and Sales.
+
+Why: Legacy organization Meetings spaces were skipped by personal-dashboard-only migrations, calendar calls stored an unsupported `scheduled` value, and recordings attached to an existing meeting bypassed classification.
+
+Impact: Call kinds render with configured colors in the active Meetings space, new calendar and recorded calls classify consistently using organization identity, richer automatic evidence can refresh automatic classifications, and valid manual choices are preserved.
+
+Files: `apps/api/src/modules/meetings/`, `apps/api/src/modules/spaces/services/space-automation-service-06.base.ts`, `apps/api/src/modules/spaces/services/spaces-service-02.base.ts`, `apps/api/src/modules/spaces/services/spaces-service-03.base.ts`, `apps/api/src/modules/space-templates/data/`, `supabase/migrations/20260729203000_durable_meeting_call_kinds.sql`, `scripts/roas/migration-order.txt`, `documentation/features/meeting-follow-up-slack.md`

@@ -150,6 +150,17 @@ describe('MeetingSourceIngestionService', () => {
     }
     const resolutionRepository = {
       findByMeetingItem: vi.fn().mockResolvedValue(null),
+      findMeetingItemCustomData: vi.fn().mockResolvedValue({
+        entry_type: 'call',
+        call_kind: 'scheduled',
+      }),
+      findCallIdentityProfile: vi.fn().mockResolvedValue({
+        email: 'dylan@dylanvanas.com',
+        fathomAliases: [],
+        fullName: 'Dylan Vanas',
+        internalDomains: ['dylanvanas.com'],
+      }),
+      updateMeetingItemCallKind: vi.fn().mockResolvedValue(undefined),
     }
     const service = new MeetingSourceIngestionService(
       repository as never,
@@ -217,6 +228,12 @@ describe('MeetingSourceIngestionService', () => {
       expect.anything(),
       'meeting-1',
       'source-1',
+    )
+    expect(resolutionRepository.updateMeetingItemCallKind).toHaveBeenCalledWith(
+      expect.anything(),
+      'meeting-1',
+      expect.objectContaining({ call_kind: 'scheduled' }),
+      'client',
     )
     expect(recaps.upsertRecap).toHaveBeenCalledWith(
       expect.anything(),

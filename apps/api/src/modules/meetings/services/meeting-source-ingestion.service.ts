@@ -2,6 +2,11 @@ import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveMeetingActionAssignees } from '../domain/meeting-assignee-identity'
 import {
+  buildMeetingCallIdentity,
+  resolveMeetingCallKind,
+  shouldReplaceMeetingCallKind,
+} from '../domain/meeting-call-kind'
+import {
   reconcileMeetingRecordings,
   type MeetingRecordingCandidate,
 } from '../domain/meeting-recording-reconciliation'
@@ -113,6 +118,7 @@ export class MeetingSourceIngestionService {
     recap_doc_item_id: string
   }> {
     const source = normalizeFathomMeetingSource(input.event)
+    await this.syncAutomaticCallKind(supabase, input, source)
     const existingWorkspace = await this.resolutionRepository.findByMeetingItem(
       supabase,
       input.meetingItemId,
@@ -202,6 +208,45 @@ export class MeetingSourceIngestionService {
       recap_doc_item_id: recapDocItemId,
     }
   }
+
+  private async syncAutomaticCallKind(
+    supabase: SupabaseClient,
+    input: IngestFathomSourceInput,
+    source: ReturnType<typeof normalizeFathomMeetingSource>,
+  ): Promise<void> {
+    const customData = await this.resolutionRepository.findMeetingItemCustomData(
+      supabase,
+      input.meetingItemId,
+    )
+    if (!shouldReplaceMeetingCallKind(customData)) return
+
+    const profile = await this.resolutionRepository.findCallIdentityProfile(
+      supabase,
+      input.userId,
+      input.orgId,
+    )
+    const identity = buildMeetingCallIdentity({
+      email: profile.email,
+      fathomAliases: profile.fathomAliases,
+      fullName: profile.fullName,
+      internalDomains: profile.internalDomains,
+      internalEmails: [recordedByEmail(input.event)],
+    })
+    const callKind = resolveMeetingCallKind({
+      identity,
+      recordedByEmail: recordedByEmail(input.event),
+      attendees: source.participantEmails.map((email) => ({ email })),
+      attendeeLabels: attendeeLabels(input.event),
+      titleHint: source.title,
+      summary: source.providerSummary,
+    })
+    await this.resolutionRepository.updateMeetingItemCallKind(
+      supabase,
+      input.meetingItemId,
+      customData,
+      callKind,
+    )
+  }
 }
 
 function scheduledRowToCandidate(row: Record<string, unknown>): MeetingRecordingCandidate {
@@ -272,4 +317,30 @@ function record(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {}
+}
+
+function recordedByEmail(event: Record<string, unknown>): string {
+  return (
+    text(event.recorded_by_email) ??
+    text(record(event.recorded_by).email) ??
+    ''
+  )
+}
+
+function attendeeLabels(event: Record<string, unknown>): string[] {
+  const labels = new Set<string>()
+  for (const key of ['calendar_invitees', 'attendees', 'invitees', 'shared_with']) {
+    const rows = event[key]
+    if (!Array.isArray(rows)) continue
+    for (const row of rows) {
+      const person = record(row)
+      const label =
+        text(person.name) ??
+        text(person.display_name) ??
+        text(person.matched_speaker_display_name) ??
+        text(person.email)
+      if (label) labels.add(label)
+    }
+  }
+  return [...labels]
 }

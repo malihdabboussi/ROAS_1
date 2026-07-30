@@ -12,6 +12,7 @@ import { resolveScopedOrgId } from '@vibey/api-shared'
 import { CreditsService } from '../../billing/services/credits.service'
 import { extractUrlsFromHtml } from '../../link-preview/lib/extract-urls'
 import { LinkPreviewService } from '../../link-preview/services/link-preview.service'
+import { markManualMeetingCallKind } from '../../meetings/domain/meeting-call-kind'
 import { SpaceRetrievalIndexService } from '../../space-retrieval/services/space-retrieval-index.service'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import type {
@@ -377,7 +378,7 @@ export abstract class SpacesServiceBase03 extends SpacesServiceBase02 {
         if (update.payload.custom_data !== undefined) {
           payload.custom_data = {
             ...((oldItem.custom_data ?? {}) as Record<string, unknown>),
-            ...(update.payload.custom_data ?? {}),
+            ...markManualMeetingCallKind(update.payload.custom_data ?? {}),
           }
         }
         return this.repo.updateItemPrepared(

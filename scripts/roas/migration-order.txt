@@ -763,3 +763,4 @@
 20260729173000_static_ad_chat_selection_gate.sql
 20260729174500_seed_delegator_system_agent.sql
 20260729180000_repair_delegator_org_seed_and_defs.sql
+20260729203000_durable_meeting_call_kinds.sql

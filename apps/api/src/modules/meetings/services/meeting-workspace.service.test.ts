@@ -58,6 +58,12 @@ describe('MeetingWorkspaceService', () => {
     }
     const resolutionRepository = {
       findSpaceOrgId: vi.fn().mockResolvedValue(null),
+      findCallIdentityProfile: vi.fn().mockResolvedValue({
+        email: 'owner@roas.co',
+        fathomAliases: [],
+        fullName: 'Owner',
+        internalDomains: ['roas.co'],
+      }),
       findByCalendarEvent: vi.fn().mockResolvedValue(null),
       createScheduledMeeting: vi.fn().mockResolvedValue({
         id: 'meeting-1',
@@ -107,7 +113,10 @@ describe('MeetingWorkspaceService', () => {
       meeting_item_id: 'meeting-1',
       conversation_id: 'conversation-1',
     })
-    expect(resolutionRepository.createScheduledMeeting).toHaveBeenCalled()
+    expect(resolutionRepository.createScheduledMeeting).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ callKind: 'client' }),
+    )
     expect(repository.upsertParticipantContextLinks).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ participantEmails: ['client@example.com'] }),
@@ -121,6 +130,12 @@ describe('MeetingWorkspaceService', () => {
     }
     const resolutionRepository = {
       findSpaceOrgId: vi.fn().mockResolvedValue(null),
+      findCallIdentityProfile: vi.fn().mockResolvedValue({
+        email: 'owner@roas.co',
+        fathomAliases: [],
+        fullName: 'Owner',
+        internalDomains: ['roas.co'],
+      }),
       findByCalendarEvent: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce({
         meeting_item_id: 'meeting-winner',
         phase: 'scheduled',

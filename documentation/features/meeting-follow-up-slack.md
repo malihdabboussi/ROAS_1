@@ -21,6 +21,7 @@ The canonical post-call path is now meeting-first rather than automation-task-fi
 11. When Fathom later publishes the recording, calendar/start/title/participant reconciliation attaches it to the scheduled workspace when the match is unambiguous instead of creating a duplicate call.
 12. The next meeting can point back through `next_meeting_item_id`; unresolved confirmed/in-progress/rolled-forward commitments are surfaced before the next call.
 13. Scheduled workspace resolution accepts timezone-aware calendar timestamps and normalizes them to UTC before persistence, so Google Calendar offsets remain chronologically comparable during later Fathom reconciliation.
+14. Scheduled and Fathom meetings share one call-kind classifier: Personal, Team, Executive, Client, Partner, and Sales. Organization member email domains distinguish teammates from external attendees. Automatic classifications can refresh as richer recording evidence arrives, while a valid human selection is marked manual and remains authoritative.
 
 The default `Fathom Meeting Log` automation no longer runs `send_to_agent`, `agent_suggest_tasks`, or Slack-confirm actions. The migration removes those steps from installed rules with that exact template name. Custom Fathom automations are preserved. Slack delivery remains an explicit downstream workflow, not an automatic side effect of ingesting a recording.
 
@@ -285,6 +286,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 | `apps/web/src/features/team-2/components/people/SlackTeamSignalsView.tsx`                        | Team signals selectable list + approve/dismiss detail pane                  |
 | `apps/api/src/modules/spaces/services/__tests__/meeting-follow-up-slack-confirm.service.test.ts` | Unit tests                                                                  |
 | `apps/api/src/modules/spaces/services/space-automation.service.ts`                               | Executes `request_slack_follow_up_confirm`                                  |
+| `apps/api/src/modules/meetings/domain/meeting-call-kind.ts`                                     | Canonical scheduled/Fathom call-kind taxonomy and classifier                |
 | `apps/api/src/modules/spaces/services/slack-team-loop.service.ts`                                | Observes Slack, analyzes signals, writes proposals/memories/sends           |
 | `apps/api/src/modules/spaces/services/slack-team-loop-analysis.ts`                               | Bounded schema-constrained analyzer and token accounting                    |
 | `apps/api/src/modules/slack/integrations/slack-api-integration-core.base.ts`                     | Paginates the complete Slack channel directory                              |
@@ -387,6 +389,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-28:** Production model capability tiers must cover every context window emitted by Auto chat routing. Contract tests enumerate full-task and staged-chat routes so meeting chat cannot select a context tier rejected by the runtime registry.
 - **2026-07-29:** Meeting workspaces never render a second chat surface. Opening a meeting attaches its canonical conversation and meeting-aware context to the existing shell chat; live notes and call snippets are stored as typed meeting records and mirrored into that same conversation.
 - **2026-07-29:** Calendar timestamps with explicit timezone offsets are accepted at scheduled-workspace resolution and normalized to UTC before they are stored.
+- **2026-07-29:** Every Space with a `call_kind` field receives the complete Personal/Team/Executive/Client/Partner/Sales option set, including legacy organization Meetings spaces. Calendar creation and Fathom attachment use one classifier; automatic results may refresh, but manual selections win.
 
 ## Related
 

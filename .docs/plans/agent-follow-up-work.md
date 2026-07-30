@@ -9258,3 +9258,17 @@ Reason not done now: The requested behavior is complete and covered; the remaini
 - **Evidence:** Touched for `system_delegation` / Delegator wiring; already far over or at the 600 LOC service/guide limit.
 - **Needed work:** Split capability allowlists, action docs, and team-brain helpers into dedicated modules.
 - **Why not now:** Out of scope for the Delegator install; only additive profile/key lines were required for the ship.
+
+## 2026-07-29 — Fathom automation base decomposition remains open
+
+Status: Open
+
+Files:
+
+- `apps/api/src/modules/spaces/services/space-automation-service-06.base.ts` (793 LOC; 600-line service limit)
+
+Evidence: The durable call-kind fix only replaced the classifier import and added one automatic-source marker. The pre-existing Fathom webhook orchestration remains above the service limit already recorded in the July 28 meeting decomposition item.
+
+Needed work: Complete the previously identified extraction of Fathom webhook orchestration into a dedicated meeting processor, then remove the superseded block from the generated automation base.
+
+Reason not done now: This change fixes classification behavior across scheduled creation, Fathom attachment, and legacy Space schemas. Restructuring the full webhook processor is behavior-neutral work outside this production data fix.

@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { MeetingCallKind } from '../domain/meeting-call-kind'
 
 export type ScheduledMeetingEvent = {
   calendarEventId: string
@@ -11,6 +12,13 @@ export type ScheduledMeetingEvent = {
   videoUrl?: string | null
   htmlLink?: string | null
   attendees: Array<{ email: string; name?: string | null }>
+}
+
+export type MeetingCallIdentityProfile = {
+  email: string | null
+  fathomAliases: string[]
+  fullName: string | null
+  internalDomains: string[]
 }
 
 @Injectable()
@@ -60,6 +68,7 @@ export class MeetingWorkspaceResolutionRepository {
       userId: string
       orgId: string | null
       event: ScheduledMeetingEvent
+      callKind: MeetingCallKind
     },
   ): Promise<Record<string, unknown>> {
     const participantEmails = input.event.attendees
@@ -80,7 +89,8 @@ export class MeetingWorkspaceResolutionRepository {
         source: 'calendar',
         custom_data: {
           entry_type: 'call',
-          call_kind: 'scheduled',
+          call_kind: input.callKind,
+          call_kind_source: 'automatic',
           calendar_event_id: input.event.calendarEventId,
           call_date: input.event.start,
           call_end: input.event.end,
@@ -95,6 +105,91 @@ export class MeetingWorkspaceResolutionRepository {
       .single()
     if (error) throw new BadRequestException(error.message)
     return data as Record<string, unknown>
+  }
+
+  async findCallIdentityProfile(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null,
+  ): Promise<MeetingCallIdentityProfile> {
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('email, fathom_aliases, full_name')
+      .eq('id', userId)
+      .maybeSingle()
+    if (profileError) throw new BadRequestException(profileError.message)
+
+    const internalDomains = new Set<string>()
+    if (orgId) {
+      const { data: members, error: membersError } = await supabase
+        .from('org_members')
+        .select('user_id')
+        .eq('org_id', orgId)
+        .eq('status', 'active')
+        .limit(500)
+      if (membersError) throw new BadRequestException(membersError.message)
+      const memberIds = (members ?? []).map((member) => String(member.user_id)).filter(Boolean)
+      if (memberIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('email')
+          .in('id', memberIds)
+        if (profilesError) throw new BadRequestException(profilesError.message)
+        for (const memberProfile of profiles ?? []) {
+          const domain = emailDomain(memberProfile.email)
+          if (domain && !PUBLIC_EMAIL_DOMAINS.has(domain)) internalDomains.add(domain)
+        }
+      }
+    }
+
+    return {
+      email: nullableText(profile?.email),
+      fathomAliases: Array.isArray(profile?.fathom_aliases)
+        ? profile.fathom_aliases.map(String).filter(Boolean)
+        : [],
+      fullName: nullableText(profile?.full_name),
+      internalDomains: [...internalDomains],
+    }
+  }
+
+  async findMeetingItemCustomData(
+    supabase: SupabaseClient,
+    meetingItemId: string,
+  ): Promise<Record<string, unknown>> {
+    const { data, error } = await supabase
+      .from('space_items')
+      .select('custom_data')
+      .eq('id', meetingItemId)
+      .maybeSingle()
+    if (error) throw new BadRequestException(error.message)
+    return record(data?.custom_data)
+  }
+
+  async updateMeetingItemCallKind(
+    supabase: SupabaseClient,
+    meetingItemId: string,
+    customData: Record<string, unknown>,
+    callKind: MeetingCallKind,
+  ): Promise<void> {
+    const externalAutomation = record(customData.external_automation)
+    const nextExternalAutomation =
+      Object.keys(externalAutomation).length > 0
+        ? { ...externalAutomation, call_kind: callKind }
+        : undefined
+    const { error } = await supabase
+      .from('space_items')
+      .update({
+        custom_data: {
+          ...customData,
+          call_kind: callKind,
+          call_kind_source: 'automatic',
+          ...(nextExternalAutomation
+            ? { external_automation: nextExternalAutomation }
+            : {}),
+        },
+      })
+      .eq('id', meetingItemId)
+    if (error) throw new BadRequestException(error.message)
   }
 
   async deleteScheduledMeeting(
@@ -133,4 +228,29 @@ export class MeetingWorkspaceResolutionRepository {
     if (error) throw new BadRequestException(error.message)
     return (data as Record<string, unknown>[]) ?? []
   }
+}
+
+const PUBLIC_EMAIL_DOMAINS = new Set([
+  'gmail.com',
+  'googlemail.com',
+  'outlook.com',
+  'hotmail.com',
+  'icloud.com',
+  'yahoo.com',
+])
+
+function emailDomain(value: unknown): string | null {
+  const email = nullableText(value)?.toLowerCase() ?? ''
+  const at = email.lastIndexOf('@')
+  return at >= 0 ? email.slice(at + 1) : null
+}
+
+function nullableText(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function record(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
 }

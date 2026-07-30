@@ -48,7 +48,7 @@ const fields = [
     type: 'select',
     required: false,
     options: [
-      { id: 'private', label: 'Private', color: 'emerald' },
+      { id: 'private', label: 'Personal', color: 'emerald' },
       { id: 'team', label: 'Team', color: 'violet' },
       { id: 'executive', label: 'Executive', color: 'amber' },
       { id: 'client', label: 'Client', color: 'cyan' },

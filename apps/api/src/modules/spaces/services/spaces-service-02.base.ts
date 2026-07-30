@@ -12,6 +12,7 @@ import { resolveScopedOrgId } from '@vibey/api-shared'
 import { CreditsService } from '../../billing/services/credits.service'
 import { extractUrlsFromHtml } from '../../link-preview/lib/extract-urls'
 import { LinkPreviewService } from '../../link-preview/services/link-preview.service'
+import { markManualMeetingCallKind } from '../../meetings/domain/meeting-call-kind'
 import { SpaceRetrievalIndexService } from '../../space-retrieval/services/space-retrieval-index.service'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import type {
@@ -433,7 +434,21 @@ export abstract class SpacesServiceBase02 extends SpacesServiceBase01 {
     }
 
     await sanitizeAssigneesForWrite(this.repo, supabase, userId, orgId, dto)
-    const updated = await this.repo.updateItem(supabase, userId, spaceId, itemId, dto, orgId)
+    const writeDto =
+      dto.custom_data === undefined
+        ? dto
+        : {
+            ...dto,
+            custom_data: markManualMeetingCallKind(dto.custom_data),
+          }
+    const updated = await this.repo.updateItem(
+      supabase,
+      userId,
+      spaceId,
+      itemId,
+      writeDto,
+      orgId,
+    )
     if (dto.doc_body !== undefined || dto.title !== undefined) {
       const sync = await syncDocEditToConversationDocument(
         this.repo,
