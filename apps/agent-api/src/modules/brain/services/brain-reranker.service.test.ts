@@ -162,7 +162,7 @@ describe('BrainRerankerService', () => {
   it('caps reranker output and preserves low reasoning for relevance judgment', async () => {
     vi.stubEnv('BRAIN_LLM_RERANKER', '1')
     vi.stubEnv('BRAIN_LLM_RERANKER_MODEL', 'google/gemini-3.5-flash')
-    vi.stubEnv('OPENROUTER_API_KEY', 'test-key')
+    vi.stubEnv('OPENROUTER_BACKGROUND_API_KEY', 'background-key')
     const fetchMock = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(
@@ -194,6 +194,9 @@ describe('BrainRerankerService', () => {
     })
 
     const request = fetchMock.mock.calls[0]?.[1]
+    expect(request?.headers).toMatchObject({
+      Authorization: 'Bearer background-key',
+    })
     const payload = JSON.parse(String(request?.body)) as Record<string, unknown>
     expect(payload).toMatchObject({
       max_completion_tokens: 1200,

@@ -16,13 +16,13 @@ const TASKS: TaskType[] = [
 ]
 
 describe('model strategy routing', () => {
-  it('routes Auto tasks to Sonnet 4.6 with bounded context and medium thinking', () => {
+  it('routes Auto tasks to discounted GPT-5.6 Terra with bounded context and medium thinking', () => {
     for (const task of TASKS) {
       expect(resolveModelForStrategy('auto', task)).toEqual({
-        modelId: 'anthropic/claude-sonnet-4.6',
+        modelId: 'openai/gpt-5.6-terra',
         reason: expect.stringMatching(/^auto_/),
         modelSettings: {
-          context_window_tokens: 300_000,
+          context_window_tokens: 272_000,
           reasoning_effort: 'medium',
           speed_mode: 'standard',
         },
@@ -68,7 +68,7 @@ describe('model strategy routing', () => {
     }
   })
 
-  it('uses an economy research pass and a bounded Sonnet writing pass for Auto chat', () => {
+  it('keeps Auto chat on discounted GPT-5.6 Terra for research and writing', () => {
     expect(resolveChatStageModel('auto', 'research')).toEqual({
       modelId: 'openai/gpt-5.6-terra',
       reason: 'auto_chat_research',
@@ -79,10 +79,10 @@ describe('model strategy routing', () => {
       },
     })
     expect(resolveChatStageModel('auto', 'write')).toEqual({
-      modelId: 'anthropic/claude-sonnet-4.6',
+      modelId: 'openai/gpt-5.6-terra',
       reason: 'auto_chat_write',
       modelSettings: {
-        context_window_tokens: 64_000,
+        context_window_tokens: 128_000,
         reasoning_effort: 'medium',
         speed_mode: 'standard',
       },

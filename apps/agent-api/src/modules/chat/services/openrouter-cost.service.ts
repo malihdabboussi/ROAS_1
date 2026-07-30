@@ -44,9 +44,9 @@ export class OpenRouterCostService {
    * Retries with backoff (404 = not indexed yet); window ~2.5 minutes before last attempt.
    */
   async fetchGenerationCost(generationId: string): Promise<number | undefined> {
-    const apiKey = process.env.OPENROUTER_API_KEY
-    if (!apiKey) {
-      this.logger.warn('OPENROUTER_API_KEY not set — cannot fetch generation cost')
+    const apiKeys = this.resolveApiKeys()
+    if (apiKeys.length === 0) {
+      this.logger.warn('No OpenRouter API keys set — cannot fetch generation cost')
       return undefined
     }
 
@@ -59,52 +59,53 @@ export class OpenRouterCostService {
 
     for (let attempt = 0; attempt < this.MAX_RETRIES; attempt++) {
       try {
-        const res = await fetch(
-          `https://openrouter.ai/api/v1/generation?id=${encodeURIComponent(generationId)}`,
-          {
-            headers: { Authorization: `Bearer ${apiKey}` },
-          },
-        )
+        let sawNotFound = false
+        for (const apiKey of apiKeys) {
+          const res = await fetch(
+            `https://openrouter.ai/api/v1/generation?id=${encodeURIComponent(generationId)}`,
+            {
+              headers: { Authorization: `Bearer ${apiKey}` },
+            },
+          )
 
-        if (res.status === 404) {
-          if (attempt < this.MAX_RETRIES - 1) {
-            await this.sleep(this.RETRY_DELAYS[attempt])
+          if (res.status === 404) {
+            sawNotFound = true
             continue
           }
+
+          if (!res.ok) {
+            const bodySnippet = (await res.text()).slice(0, 200)
+            this.logger.warn(
+              `[credit-debug] fetchGenerationCost key lookup failed: generationId=${generationId} status=${res.status} body=${bodySnippet}`,
+            )
+            continue
+          }
+
+          const json = (await res.json()) as { data?: Record<string, unknown> }
+          const d = json.data
+          const cost =
+            (typeof d?.total_cost === 'number' ? d.total_cost : undefined) ??
+            (typeof d?.usage === 'number' ? d.usage : undefined) ??
+            (typeof (d?.usage as Record<string, unknown>)?.cost === 'number'
+              ? ((d?.usage as Record<string, unknown>).cost as number)
+              : undefined)
+
+          if (typeof cost === 'number') {
+            this.logger.debug(`Generation ${generationId} actual cost: $${cost}`)
+            return cost
+          }
+
           this.logger.warn(
-            `[credit-debug] fetchGenerationCost undefined: generationId=${generationId} reason=404_after_retries`,
+            `[credit-debug] fetchGenerationCost undefined: generationId=${generationId} reason=no_cost_field responseKeys=${Object.keys(d ?? {}).join(',')}`,
           )
           return undefined
         }
-
-        if (!res.ok) {
-          const bodySnippet = (await res.text()).slice(0, 200)
-          this.logger.warn(
-            `[credit-debug] fetchGenerationCost undefined: generationId=${generationId} status=${res.status} body=${bodySnippet}`,
-          )
-          if (attempt < this.MAX_RETRIES - 1) {
-            await this.sleep(this.RETRY_DELAYS[attempt])
-            continue
-          }
-          return undefined
+        if (sawNotFound && attempt < this.MAX_RETRIES - 1) {
+          await this.sleep(this.RETRY_DELAYS[attempt])
+          continue
         }
-
-        const json = (await res.json()) as { data?: Record<string, unknown> }
-        const d = json.data
-        const cost =
-          (typeof d?.total_cost === 'number' ? d.total_cost : undefined) ??
-          (typeof d?.usage === 'number' ? d.usage : undefined) ??
-          (typeof (d?.usage as Record<string, unknown>)?.cost === 'number'
-            ? ((d?.usage as Record<string, unknown>).cost as number)
-            : undefined)
-
-        if (typeof cost === 'number') {
-          this.logger.debug(`Generation ${generationId} actual cost: $${cost}`)
-          return cost
-        }
-
         this.logger.warn(
-          `[credit-debug] fetchGenerationCost undefined: generationId=${generationId} reason=no_cost_field responseKeys=${Object.keys(d ?? {}).join(',')}`,
+          `[credit-debug] fetchGenerationCost undefined: generationId=${generationId} reason=not_found_for_configured_keys`,
         )
         return undefined
       } catch (err) {
@@ -121,6 +122,18 @@ export class OpenRouterCostService {
       `[credit-debug] fetchGenerationCost undefined: generationId=${generationId} reason=exhausted_retries`,
     )
     return undefined
+  }
+
+  private resolveApiKeys(): string[] {
+    return [
+      process.env.OPENROUTER_INTERACTIVE_API_KEY,
+      process.env.OPENROUTER_BACKGROUND_API_KEY,
+      process.env.OPENROUTER_MEDIA_API_KEY,
+      process.env.OPENROUTER_API_KEY,
+    ]
+      .map((value) => value?.trim())
+      .filter((value): value is string => Boolean(value))
+      .filter((value, index, all) => all.indexOf(value) === index)
   }
 
   /**

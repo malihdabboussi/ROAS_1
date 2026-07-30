@@ -7,7 +7,7 @@ describe('GeminiImageIntegration image editing', () => {
   it('routes GPT Image edits through OpenRouter with the source images attached', async () => {
     const config = {
       get: vi.fn((key: string) => {
-        if (key === 'OPENROUTER_API_KEY') return 'openrouter-key'
+        if (key === 'OPENROUTER_MEDIA_API_KEY') return 'media-key'
         if (key === 'GEMINI_API_KEY') return 'gemini-key'
         return undefined
       }),

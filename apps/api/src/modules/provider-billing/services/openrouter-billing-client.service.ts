@@ -93,7 +93,7 @@ export class OpenRouterBillingClientService {
   ) {}
 
   async createImage(input: OpenRouterImageInput): Promise<OpenRouterImageResult> {
-    const apiKey = this.getApiKey()
+    const apiKey = this.getApiKey('media')
     const baseAttemptInput = this.buildAttemptInput({
       owner: input.owner,
       feature: input.feature,
@@ -102,7 +102,10 @@ export class OpenRouterBillingClientService {
       serviceType: 'image',
       model: input.model,
       body: {},
-      metadata: input.metadata,
+      metadata: {
+        ...(input.metadata ?? {}),
+        openrouter_key_scope: 'media',
+      },
     })
     baseAttemptInput.metadata = {
       ...(baseAttemptInput.metadata ?? {}),
@@ -247,9 +250,15 @@ export class OpenRouterBillingClientService {
   async createChatCompletion<T extends OpenRouterChatCompletionJson = OpenRouterChatCompletionJson>(
     input: OpenRouterChatCompletionInput,
   ): Promise<OpenRouterChatCompletionResult<T>> {
-    const apiKey = this.getApiKey()
+    const apiKey = this.getApiKey('background')
 
-    const baseAttempt = this.buildAttemptInput(input)
+    const baseAttempt = this.buildAttemptInput({
+      ...input,
+      metadata: {
+        ...(input.metadata ?? {}),
+        openrouter_key_scope: 'background',
+      },
+    })
     await this.settlement.recordAttempt(baseAttempt)
 
     const response = await fetch(OPENROUTER_CHAT_COMPLETIONS_URL, {
@@ -348,10 +357,16 @@ export class OpenRouterBillingClientService {
     }
   }
 
-  private getApiKey(): string {
-    const apiKey = this.config.get<string>('OPENROUTER_API_KEY') || process.env.OPENROUTER_API_KEY
+  private getApiKey(scope: 'background' | 'media'): string {
+    const scopedEnvKey =
+      scope === 'media' ? 'OPENROUTER_MEDIA_API_KEY' : 'OPENROUTER_BACKGROUND_API_KEY'
+    const apiKey =
+      this.config.get<string>(scopedEnvKey) ||
+      process.env[scopedEnvKey] ||
+      this.config.get<string>('OPENROUTER_API_KEY') ||
+      process.env.OPENROUTER_API_KEY
     if (!apiKey) {
-      throw new ServiceUnavailableException('OPENROUTER_API_KEY is not configured')
+      throw new ServiceUnavailableException(`OpenRouter ${scope} API key is not configured`)
     }
     return apiKey
   }

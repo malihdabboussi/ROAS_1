@@ -4,6 +4,28 @@ import { OpenRouterCostService } from './openrouter-cost.service'
 describe('OpenRouterCostService', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
+  })
+
+  it('finds generation cost across workload-specific OpenRouter keys', async () => {
+    vi.stubEnv('OPENROUTER_INTERACTIVE_API_KEY', 'interactive-key')
+    vi.stubEnv('OPENROUTER_BACKGROUND_API_KEY', 'background-key')
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('not found', { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { total_cost: 0.42 } }), { status: 200 }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+    const service = new OpenRouterCostService()
+
+    await expect(service.fetchGenerationCost('gen-background')).resolves.toBe(0.42)
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      headers: { Authorization: 'Bearer interactive-key' },
+    })
+    expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({
+      headers: { Authorization: 'Bearer background-key' },
+    })
   })
 
   it('uses provider-reported cost without requiring a generation id', async () => {

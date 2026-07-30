@@ -266,8 +266,9 @@ export class ArtifactVisualDocService {
       conversationId: string | null
     },
   ): Promise<string> {
-    const apiKey = process.env.OPENROUTER_API_KEY || ''
-    if (!apiKey) throw new Error('OPENROUTER_API_KEY is not configured')
+    const apiKey =
+      process.env.OPENROUTER_MEDIA_API_KEY?.trim() || process.env.OPENROUTER_API_KEY?.trim() || ''
+    if (!apiKey) throw new Error('OpenRouter media API key is not configured')
 
     const model = this.resolveModel(target, input.sessionKey)
     const attemptKey = [

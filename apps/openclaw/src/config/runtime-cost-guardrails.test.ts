@@ -31,11 +31,12 @@ function loadRuntimeConfig(): RuntimeConfig {
 }
 
 describe("production runtime cost guardrails", () => {
-  it("keeps the quality default on Opus 5 with Sonnet 4.6 fallback", () => {
+  it("keeps the runtime default on discounted Terra with Sonnet fallback", () => {
     const model = loadRuntimeConfig().agents?.defaults?.model;
 
-    expect(model?.primary).toBe("openrouter/anthropic/claude-opus-5");
+    expect(model?.primary).toBe("openrouter/openai/gpt-5.6-terra");
     expect(model?.fallbacks?.[0]).toBe("openrouter/anthropic/claude-sonnet-4.6");
+    expect(model?.fallbacks).not.toContain("openrouter/anthropic/claude-opus-5");
   });
 
   it("caps context growth and prunes stale tool results", () => {

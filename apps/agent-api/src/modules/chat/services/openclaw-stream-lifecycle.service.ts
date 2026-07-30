@@ -111,6 +111,7 @@ export class OpenClawStreamLifecycleService {
           agent_id: context.agentId,
           event_source: billingEvent.source,
           generation_stage: billingEvent.stage,
+          openrouter_key_scope: 'interactive',
           ...(billingEvent.metadata ?? {}),
         },
       })

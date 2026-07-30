@@ -22,13 +22,17 @@ export class GeminiImageIntegration {
     private readonly openRouterBilling: OpenRouterBillingClientService,
   ) {
     this.apiKey = this.config.get<string>('GEMINI_API_KEY') || ''
-    this.openRouterConfigured = Boolean(this.config.get<string>('OPENROUTER_API_KEY') || '')
+    this.openRouterConfigured = Boolean(
+      this.config.get<string>('OPENROUTER_MEDIA_API_KEY') ||
+        this.config.get<string>('OPENROUTER_API_KEY') ||
+        '',
+    )
     if (!this.apiKey) {
       this.logger.warn('GEMINI_API_KEY not configured — Gemini image paths will fail')
     }
     if (!this.openRouterConfigured) {
       this.logger.warn(
-        'OPENROUTER_API_KEY not configured — GPT Image 2 and OpenRouter fallback unavailable',
+        'OpenRouter media API key not configured — GPT Image 2 and OpenRouter fallback unavailable',
       )
     }
   }
@@ -55,7 +59,7 @@ export class GeminiImageIntegration {
 
     if (explicit === 'gpt-5.4-image-2') {
       if (!this.openRouterConfigured) {
-        throw new Error('OPENROUTER_API_KEY not configured')
+        throw new Error('OpenRouter media API key not configured')
       }
       this.logger.log(
         `Generating image (user-selected=gpt-5.4-image-2 via OpenRouter): "${prompt.slice(0, 80)}..." [${aspectRatio}]`,
@@ -297,7 +301,7 @@ export class GeminiImageIntegration {
     }
     if (model === 'gpt-5.4-image-2') {
       if (!this.openRouterConfigured) {
-        throw new Error('OPENROUTER_API_KEY not configured')
+        throw new Error('OpenRouter media API key not configured')
       }
       this.logger.log(
         `Editing image (model=${model} via OpenRouter): "${prompt.slice(0, 80)}..." [${aspectRatio}]`,

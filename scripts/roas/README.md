@@ -83,7 +83,17 @@ Fly/Depot uses BuildKit, which reads `.dockerignore` from the build context root
 
 - `AGENT_RUNTIME_MODE=shared` (section 9)
 - `OPENCLAW_GATEWAY_URL=http://127.0.0.1:18789` (in-container gateway, not public URL)
+- `OPENROUTER_INTERACTIVE_API_KEY` for interactive Chat requests
+- `OPENROUTER_BACKGROUND_API_KEY` for Mission and Brain requests
+- `OPENROUTER_MEDIA_API_KEY` for media and image requests
+- `OPENROUTER_API_KEY` remains the temporary fallback while the scoped keys are rolled out
 - **One machine** for shared mode (agent registration is per-machine)
+
+The scoped OpenRouter credentials are injected only for the active request and are
+never persisted in OpenClaw sessions. Section 9 supplies all three scopes to the Fly
+runtime. The API deployment also needs the background and media scopes for direct
+analysis, billing reconciliation, and image calls. Rotate any credential pasted into
+chat before adding it to `roas-secrets.env` or a production provider.
 
 The image build runs OpenClaw's plugin-aware config validation after all runtime
 plugins are installed. An unknown plugin now fails the build before Fly can

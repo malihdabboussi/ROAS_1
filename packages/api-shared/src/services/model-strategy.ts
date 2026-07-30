@@ -30,12 +30,18 @@ export interface ResolvedStrategyModel {
   modelSettings?: StrategyModelSettings
 }
 
-const QUALITY_MODEL_ID = 'anthropic/claude-sonnet-4.6'
+const AUTO_MODEL_ID = 'openai/gpt-5.6-terra'
 const HIGH_STAKES_MODEL_ID = 'anthropic/claude-opus-5'
 const ECONOMY_MODEL_ID = 'openai/gpt-5.6-terra'
 const QUALITY_FALLBACK_MODEL_ID = 'anthropic/claude-sonnet-4.6'
 
-const QUALITY_MODEL_SETTINGS = {
+const AUTO_MODEL_SETTINGS = {
+  context_window_tokens: 272_000,
+  reasoning_effort: 'medium',
+  speed_mode: 'standard',
+} satisfies StrategyModelSettings
+
+const POWER_MODEL_SETTINGS = {
   context_window_tokens: 300_000,
   reasoning_effort: 'medium',
   speed_mode: 'standard',
@@ -54,7 +60,7 @@ const CHAT_RESEARCH_MODEL_SETTINGS = {
 } satisfies StrategyModelSettings
 
 const CHAT_WRITER_MODEL_SETTINGS = {
-  context_window_tokens: 64_000,
+  context_window_tokens: 128_000,
   reasoning_effort: 'medium',
   speed_mode: 'standard',
 } satisfies StrategyModelSettings
@@ -93,42 +99,42 @@ const STRATEGY_MATRIX: Record<ModelStrategy, Record<TaskType, ResolvedStrategyMo
     ),
   },
   auto: {
-    chat: routedModel(QUALITY_MODEL_ID, QUALITY_MODEL_SETTINGS, 'auto_chat'),
-    mission_plan: routedModel(QUALITY_MODEL_ID, QUALITY_MODEL_SETTINGS, 'auto_mission_plan'),
-    mission_execute: routedModel(QUALITY_MODEL_ID, QUALITY_MODEL_SETTINGS, 'auto_mission_execute'),
-    mission_review: routedModel(QUALITY_MODEL_ID, QUALITY_MODEL_SETTINGS, 'auto_mission_review'),
+    chat: routedModel(AUTO_MODEL_ID, AUTO_MODEL_SETTINGS, 'auto_chat'),
+    mission_plan: routedModel(AUTO_MODEL_ID, AUTO_MODEL_SETTINGS, 'auto_mission_plan'),
+    mission_execute: routedModel(AUTO_MODEL_ID, AUTO_MODEL_SETTINGS, 'auto_mission_execute'),
+    mission_review: routedModel(AUTO_MODEL_ID, AUTO_MODEL_SETTINGS, 'auto_mission_review'),
     mission_awareness: routedModel(
-      QUALITY_MODEL_ID,
-      QUALITY_MODEL_SETTINGS,
+      AUTO_MODEL_ID,
+      AUTO_MODEL_SETTINGS,
       'auto_mission_awareness',
     ),
     mission_quality_eval: routedModel(
-      QUALITY_MODEL_ID,
-      QUALITY_MODEL_SETTINGS,
+      AUTO_MODEL_ID,
+      AUTO_MODEL_SETTINGS,
       'auto_mission_quality_eval',
     ),
   },
   'auto:power': {
-    chat: routedModel(HIGH_STAKES_MODEL_ID, QUALITY_MODEL_SETTINGS, 'power_chat'),
-    mission_plan: routedModel(HIGH_STAKES_MODEL_ID, QUALITY_MODEL_SETTINGS, 'power_mission_plan'),
+    chat: routedModel(HIGH_STAKES_MODEL_ID, POWER_MODEL_SETTINGS, 'power_chat'),
+    mission_plan: routedModel(HIGH_STAKES_MODEL_ID, POWER_MODEL_SETTINGS, 'power_mission_plan'),
     mission_execute: routedModel(
       HIGH_STAKES_MODEL_ID,
-      QUALITY_MODEL_SETTINGS,
+      POWER_MODEL_SETTINGS,
       'power_mission_execute',
     ),
     mission_review: routedModel(
       HIGH_STAKES_MODEL_ID,
-      QUALITY_MODEL_SETTINGS,
+      POWER_MODEL_SETTINGS,
       'power_mission_review',
     ),
     mission_awareness: routedModel(
       HIGH_STAKES_MODEL_ID,
-      QUALITY_MODEL_SETTINGS,
+      POWER_MODEL_SETTINGS,
       'power_mission_awareness',
     ),
     mission_quality_eval: routedModel(
       HIGH_STAKES_MODEL_ID,
-      QUALITY_MODEL_SETTINGS,
+      POWER_MODEL_SETTINGS,
       'power_mission_quality_eval',
     ),
   },
@@ -161,7 +167,7 @@ export function resolveChatStageModel(
   }
   return stage === 'research'
     ? routedModel(ECONOMY_MODEL_ID, CHAT_RESEARCH_MODEL_SETTINGS, 'auto_chat_research')
-    : routedModel(QUALITY_MODEL_ID, CHAT_WRITER_MODEL_SETTINGS, 'auto_chat_write')
+    : routedModel(AUTO_MODEL_ID, CHAT_WRITER_MODEL_SETTINGS, 'auto_chat_write')
 }
 
 const FALLBACK_MATRIX: Record<ModelStrategy, Record<TaskType, ResolvedStrategyModel>> = {

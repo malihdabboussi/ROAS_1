@@ -157,6 +157,38 @@ describe('OpenClawGatewayRequestService', () => {
     })
   })
 
+  it('uses the interactive OpenRouter credential only for the current chat request', async () => {
+    vi.stubEnv('OPENROUTER_INTERACTIVE_API_KEY', 'interactive-key')
+    const postResponses = vi.fn().mockResolvedValue(new Response('ok', { status: 200 }))
+    const service = new OpenClawGatewayRequestService(
+      { report: vi.fn() } as never,
+      { resolveRuntimeCredential: vi.fn() } as never,
+      { resolveRuntimeCredential: vi.fn() } as never,
+      { postResponses } as never,
+    )
+
+    const result = await service.openGatewayStream({
+      agentId: 'agent-1',
+      logger: { log: vi.fn(), warn: vi.fn(), error: vi.fn() } as never,
+      logStreamTiming: vi.fn(),
+      options: {
+        input: 'hello',
+        model: 'openai/gpt-5.6-terra',
+        send: vi.fn(async () => undefined),
+        sessionKey: 'session-1',
+        userId: 'user-1',
+      } as never,
+      requestTimeoutMs: 1000,
+      resolvedModel: 'openrouter/openai/gpt-5.6-terra',
+      streamTimingLogsEnabled: false,
+    })
+
+    clearTimeout(result.timeoutHandle)
+    expect(postResponses.mock.calls[0]?.[0]?.payload).toMatchObject({
+      runtime_credentials: [{ provider: 'openrouter', access_token: 'interactive-key' }],
+    })
+  })
+
   it('preserves OpenRouter billing failures from gateway status responses', async () => {
     vi.stubEnv('OPENCLAW_GATEWAY_URL', 'http://gateway.local')
     vi.stubEnv('OPENCLAW_GATEWAY_TOKEN', 'gateway-token')

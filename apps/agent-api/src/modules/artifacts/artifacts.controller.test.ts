@@ -1,5 +1,5 @@
 import { BadRequestException, HttpStatus } from '@nestjs/common'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ArtifactOpenClawProxyController } from './controllers/artifact-openclaw-proxy.controller'
 import { ArtifactsController } from './controllers/artifacts.controller'
 
@@ -49,6 +49,9 @@ function makeController(overrides: Record<string, unknown> = {}) {
 }
 
 describe('ArtifactsController', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
   it('maps failed artifact action results to BadRequestException without dropping the contract', async () => {
     const failure = {
       success: false,
@@ -261,6 +264,43 @@ describe('ArtifactsController', () => {
         orgId: undefined,
         identitySuffix: undefined,
       },
+      {},
+    )
+  })
+
+  it('uses the background OpenRouter credential only for the current mission request', async () => {
+    vi.stubEnv('OPENROUTER_BACKGROUND_API_KEY', 'background-key')
+    const { openClawController, artifactsService } = makeController()
+    const body = {
+      model: 'openrouter/openai/gpt-5.6-terra',
+      metadata: { user_id: 'user-1', agent_key: 'atlas' },
+      input: [],
+    }
+    const res = makeResponse()
+
+    await openClawController.proxyOpenClawResponses(
+      body,
+      'session-1',
+      'gateway-agent',
+      'correlation-1',
+      'mission-1',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      res as never,
+    )
+
+    expect(body).toMatchObject({
+      runtime_credentials: [{ provider: 'openrouter', access_token: 'background-key' }],
+    })
+    expect(artifactsService.proxyOpenClawResponses).toHaveBeenCalledWith(
+      body,
+      'session-1',
+      'gateway-agent',
+      expect.any(Object),
       {},
     )
   })

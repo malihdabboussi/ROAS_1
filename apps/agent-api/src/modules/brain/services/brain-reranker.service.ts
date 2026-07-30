@@ -217,7 +217,9 @@ export class BrainRerankerService {
     prompt: string,
     billing?: BrainRerankerBillingContext,
   ): Promise<string> {
-    const openRouterKey = process.env.OPENROUTER_API_KEY?.trim()
+    const openRouterKey =
+      process.env.OPENROUTER_BACKGROUND_API_KEY?.trim() ||
+      process.env.OPENROUTER_API_KEY?.trim()
     const model = process.env.BRAIN_LLM_RERANKER_MODEL?.trim() || 'deepseek/deepseek-chat-v3.1'
     if (!billing?.userId) {
       throw new Error('Brain LLM reranker requires a customer billing owner')

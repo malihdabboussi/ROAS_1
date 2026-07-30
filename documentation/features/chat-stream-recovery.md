@@ -1,6 +1,6 @@
 # Chat Stream Recovery
 
-Last Modified: 2026-07-29
+Last Modified: 2026-07-30
 
 ## Overview
 
@@ -35,7 +35,7 @@ Chat streaming uses Supabase messages as the canonical record and Redis as the l
 25. Context-window failures are recovered inside OpenClaw. The runner emits `response.compaction` phases, compacts the transcript or truncates oversized tool results, retries the same run, and only returns `context_window_exceeded` if recovery cannot shrink the next model request.
 26. Ordered tool/generation blocks are idempotent by `tool_call_id` or matching active label/action, so replayed or repeated start events update the same visible row instead of rendering duplicate tool calls.
 27. Mission Worker can run the Railway chat autoscaler, which watches BullMQ chat queue pressure and updates the shared Railway Agent API replica count through Railway's GraphQL API.
-28. Auto chat runs in two stages: GPT-5.6 Terra performs bounded retrieval and tool work, then one tool-free Claude Sonnet 4.6 pass writes the user-facing answer from a compact evidence packet. If the writing pass fails, the completed research answer is returned without repeating tools.
+28. Auto chat runs in two stages: discounted GPT-5.6 Terra performs bounded retrieval and tool work, then one tool-free Terra pass writes the user-facing answer from a compact evidence packet. If the writing pass fails, the completed research answer is returned without repeating tools.
 29. Each provider generation keeps its model, stage, provider generation id, token/cache usage, provider cost, and settlement state. Completion accounting charges only generations not already recorded by provider settlement and emits one `chat_generation_cost_v1` record with the full turn cost and generation breakdown.
 
 ## Contracts
@@ -73,7 +73,8 @@ Chat streaming uses Supabase messages as the canonical record and Redis as the l
 - Conversation-level public widget prewarm and Send must join an in-flight agent prewarm or reuse the completed agent cache entry before building conversation-scoped stable context.
 - The default OpenClaw runtime context is capped at 250,000 tokens with safeguard compaction and five-minute stale-tool pruning. A validated per-request context selection can still override that default for work that explicitly needs a different window.
 - Chat response ceilings are 32,768 tokens for standard models, 16,384 for Haiku, and 65,536 for Codex work. These are safety ceilings; they do not change the selected model or reasoning quality.
-- Auto uses GPT-5.6 Terra with low reasoning and a 128,000-token research window for retrieval/tool work, followed by one tool-free Claude Sonnet 4.6 writing pass with medium reasoning and a 64,000-token window. Only the compact evidence packet crosses that boundary. Economy remains GPT-5.6 Terra, explicit Power routes to Opus 5, and Fable 5 is never selected automatically. Sonnet 4.6 remains the stable fallback for provider failures. Sonnet 5 and GPT-5.6 Sol remain certified experimental choices rather than production defaults.
+- Auto uses discounted GPT-5.6 Terra with medium reasoning and a 272,000-token working window. Its staged chat path uses a bounded Terra research/tool pass followed by one tool-free Terra writing pass with a 128,000-token window; only the compact evidence packet crosses that boundary. Economy uses Terra with lower reasoning, explicit Power routes to Opus 5, and Fable 5 is never selected automatically. Sonnet 4.6 remains the stable fallback for provider failures. Sonnet 5 and GPT-5.6 Sol remain certified experimental choices rather than production defaults.
+- OpenRouter credentials are scoped by workload and injected only for the current request: interactive Chat uses the interactive credential, Mission and Brain work uses the background credential, and media/image work uses the media credential. Existing subscription credentials retain precedence, and the legacy OpenRouter credential remains a migration fallback. Runtime credentials are not persisted in sessions, traces, or provider-attempt metadata; billing attempts record only the non-secret credential scope used for later cost reconciliation.
 - OpenClaw bootstrap context is capped at 30,000 characters. Existing five-minute stale-tool pruning, giant tool-result trimming, safeguard compaction, bounded JSON outputs, and tool-free routine Brain analysis remain active.
 - OpenRouter-backed Anthropic requests use the short prompt-cache retention tier. This aligns cache lifetime with five-minute context pruning and avoids paying the higher one-hour cache-write multiplier for inactive sessions.
 - Mission traces persist the resolved gateway model for every run. `pnpm report:model-efficiency -- --days=7` summarizes real run volume, tokens, cost, failures, latency, and directly matched human feedback by model; add `--include-output` for a local review of the ten highest-token output excerpts. `pnpm eval:model-quality` runs the paid curated model benchmark, including Opus 4.6 as a regression baseline.

@@ -38,4 +38,29 @@ describe('ProviderBillingSettlementService output validation', () => {
       }),
     )
   })
+
+  it('selects the workload-specific key before the legacy fallback', () => {
+    const config = {
+      get: vi.fn((key: string) => {
+        if (key === 'OPENROUTER_BACKGROUND_API_KEY') return 'background-key'
+        if (key === 'OPENROUTER_API_KEY') return 'legacy-key'
+        return undefined
+      }),
+    }
+    const service = new ProviderBillingSettlementService(
+      {} as never,
+      {} as never,
+      config as never,
+    )
+
+    const key = (
+      service as unknown as {
+        resolveOpenRouterApiKey(attempt: Record<string, unknown>): string | undefined
+      }
+    ).resolveOpenRouterApiKey({
+      metadata_json: { openrouter_key_scope: 'background' },
+    })
+
+    expect(key).toBe('background-key')
+  })
 })

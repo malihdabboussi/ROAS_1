@@ -11,8 +11,8 @@ import {
 import { formatTokenK } from './chat-input-format'
 
 const CHAT_INPUT_MODEL_STRATEGY_DESCRIPTIONS: Record<ModelStrategyId, string> = {
-  'auto:economy': 'Best for lighter tasks and cost savings',
-  auto: 'Best for balanced quality and cost',
+  'auto:economy': 'Discounted Terra with lighter thinking for routine work',
+  auto: 'Discounted Terra with balanced thinking for everyday work',
   'auto:power': 'Opus 5, 300K context, medium thinking',
 }
 

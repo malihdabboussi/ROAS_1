@@ -24,7 +24,11 @@ function makeService() {
     ),
     settleByIdOrGeneration: vi.fn(async () => attempt({ status: 'settled' })),
   }
-  const config = { get: vi.fn(() => 'openrouter-key') }
+  const config = {
+    get: vi.fn((key: string) =>
+      key === 'OPENROUTER_MEDIA_API_KEY' ? 'media-key' : 'openrouter-key',
+    ),
+  }
   return {
     service: new OpenRouterBillingClientService(config as never, settlement as never),
     settlement,
@@ -66,7 +70,10 @@ describe('OpenRouterBillingClientService image output validation', () => {
     expect(result.buffer.toString()).toBe('image-bytes')
     expect(fetchMock).toHaveBeenCalledWith(
       'https://openrouter.ai/api/v1/images',
-      expect.objectContaining({ method: 'POST' }),
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ Authorization: 'Bearer media-key' }),
+      }),
     )
     expect(settlement.recordOutputValidation).toHaveBeenCalledWith(
       expect.objectContaining({ state: 'validated' }),

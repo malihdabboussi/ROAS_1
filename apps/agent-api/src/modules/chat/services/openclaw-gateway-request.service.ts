@@ -282,6 +282,19 @@ export class OpenClawGatewayRequestService {
       payload.runtime_credentials = [
         { provider: credential.provider, access_token: credential.accessToken },
       ]
+      return
+    }
+
+    const interactiveOpenRouterKey =
+      process.env.OPENROUTER_INTERACTIVE_API_KEY?.trim() ||
+      process.env.OPENROUTER_API_KEY?.trim()
+    if (
+      interactiveOpenRouterKey &&
+      (resolvedModel.startsWith('openrouter/') || resolvedModel.startsWith('openclaw:'))
+    ) {
+      payload.runtime_credentials = [
+        { provider: 'openrouter', access_token: interactiveOpenRouterKey },
+      ]
     }
   }
 

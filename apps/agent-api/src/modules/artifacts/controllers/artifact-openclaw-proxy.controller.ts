@@ -24,6 +24,7 @@ import {
 import { InternalAuthGuard } from '../guards/internal-auth.guard'
 import { ArtifactsService } from '../services/artifacts.service'
 import { MissionContextEnricherService } from '../services/mission-context-enricher.service'
+import { stripOpenRouterPrefixFromSubscriptionModel } from './artifact-openclaw-model-routing'
 
 @Controller('artifacts/openclaw')
 @UseGuards(InternalAuthGuard, ThrottlerGuard)
@@ -157,11 +158,24 @@ export class ArtifactOpenClawProxyController {
       body.runtime_credentials = [
         { provider: credential.provider, access_token: credential.accessToken },
       ]
+      return
+    }
+
+    const backgroundOpenRouterKey =
+      process.env.OPENROUTER_BACKGROUND_API_KEY?.trim() ||
+      process.env.OPENROUTER_API_KEY?.trim()
+    if (
+      backgroundOpenRouterKey &&
+      (resolvedModel.startsWith('openrouter/') || resolvedModel.startsWith('openclaw:'))
+    ) {
+      body.runtime_credentials = [
+        { provider: 'openrouter', access_token: backgroundOpenRouterKey },
+      ]
     }
   }
 
   private resolveSubscriptionGatewayModel(model: string, gatewayAgentId: string): string {
-    const normalized = this.stripOpenRouterPrefixFromSubscriptionModel(model)
+    const normalized = stripOpenRouterPrefixFromSubscriptionModel(model)
     const lower = normalized.toLowerCase()
     if (
       lower.startsWith('openai-codex/') ||
@@ -177,20 +191,5 @@ export class ArtifactOpenClawProxyController {
     }
     if (lower.startsWith('anthropic/claude-')) return normalized
     return model
-  }
-
-  private stripOpenRouterPrefixFromSubscriptionModel(model: string): string {
-    let normalized = model.trim()
-    while (normalized.startsWith('openrouter/openrouter/')) {
-      normalized = normalized.replace(/^openrouter\//, '')
-    }
-    const lower = normalized.toLowerCase()
-    if (lower.startsWith('openrouter/openai-codex/')) {
-      return normalized.slice('openrouter/'.length)
-    }
-    if (lower.startsWith('openrouter/anthropic-subscription/')) {
-      return normalized.slice('openrouter/'.length)
-    }
-    return normalized
   }
 }

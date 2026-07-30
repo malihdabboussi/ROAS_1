@@ -128,10 +128,9 @@ export class ProviderBillingSettlementService {
       return this.settleProviderReportedCost(attempt)
     }
 
-    const apiKey =
-      this.configService.get<string>('OPENROUTER_API_KEY') || process.env.OPENROUTER_API_KEY
+    const apiKey = this.resolveOpenRouterApiKey(attempt)
     if (!apiKey) {
-      await this.markRetryable(attempt, 'OPENROUTER_API_KEY is not configured')
+      await this.markRetryable(attempt, 'OpenRouter API key is not configured for this workload')
       return 'failed'
     }
 
@@ -394,5 +393,24 @@ export class ProviderBillingSettlementService {
     return value && typeof value === 'object' && !Array.isArray(value)
       ? (value as Record<string, unknown>)
       : {}
+  }
+
+  private resolveOpenRouterApiKey(attempt: ProviderBillingAttemptRow): string | undefined {
+    const scope = attempt.metadata_json.openrouter_key_scope
+    const scopedKey =
+      scope === 'interactive'
+        ? 'OPENROUTER_INTERACTIVE_API_KEY'
+        : scope === 'background'
+          ? 'OPENROUTER_BACKGROUND_API_KEY'
+          : scope === 'media'
+            ? 'OPENROUTER_MEDIA_API_KEY'
+            : null
+    if (scopedKey) {
+      const value = this.configService.get<string>(scopedKey) || process.env[scopedKey]
+      if (value?.trim()) return value.trim()
+    }
+    const fallback =
+      this.configService.get<string>('OPENROUTER_API_KEY') || process.env.OPENROUTER_API_KEY
+    return fallback?.trim() || undefined
   }
 }

@@ -12,14 +12,14 @@ describe('model strategies', () => {
       {
         id: 'auto:economy',
         label: 'Economy',
-        description: 'Best for interns and routine tasks',
+        description: 'Discounted Terra with lighter thinking for routine work',
         chipClass: 'chip-glass-green',
         textClass: 'text-chip-strategy-green',
       },
       {
         id: 'auto',
         label: 'Auto',
-        description: 'Best for most team members',
+        description: 'Discounted Terra with balanced thinking for everyday work',
         chipClass: 'chip-glass-blue',
         textClass: 'text-chip-strategy-blue',
       },

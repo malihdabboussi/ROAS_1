@@ -76,6 +76,7 @@ export async function recordLegacyOpenClawProviderAttempts(params: {
           agent_key: params.agentKey,
           streamed: params.streamed,
           workload: params.feature,
+          openrouter_key_scope: 'background',
           legacy_direct_billing_replaced: true,
         },
       }
