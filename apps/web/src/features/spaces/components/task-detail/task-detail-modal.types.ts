@@ -12,6 +12,10 @@ export interface TaskDetailModalProps {
   roster: TeamRosterEntry[]
   currentUserId: string | null
   campaignId: string | null
+  /** Navigate from the breadcrumb to the containing Space. */
+  onNavigateToSpace?: () => void
+  /** Navigate from the breadcrumb to the exact active Space view. */
+  onNavigateToView?: () => void
   /** Parent crumb when viewing a drilled-in subtask (stack from `pushTaskAndOpen` / `openSpaceItemModal`). */
   breadcrumbParentCrumb?: { committedTitle: string; onNavigate: () => void } | null
   /** Show a back arrow on the breadcrumb when this modal was opened from another task. */

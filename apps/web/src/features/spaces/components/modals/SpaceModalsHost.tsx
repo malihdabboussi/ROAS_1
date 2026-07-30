@@ -447,6 +447,8 @@ export function SpaceModalsHost(p: SpaceModalsHostProps) {
           roster={roster}
           currentUserId={currentUserId}
           campaignId={activeSpace?.campaign_id ?? null}
+          onNavigateToSpace={() => setSelectedItem(null)}
+          onNavigateToView={() => setSelectedItem(null)}
           breadcrumbParentCrumb={
             taskHistory.length > 0 && taskHistory[taskHistory.length - 1]
               ? {

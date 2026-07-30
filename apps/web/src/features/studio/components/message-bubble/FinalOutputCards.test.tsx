@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FinalOutputCards } from './FinalOutputCards'
 import type { FinalOutputBlock } from './message-bubble.utils'
 
@@ -15,6 +15,10 @@ vi.mock('@/lib/artifacts', async (importOriginal) => {
 afterEach(cleanup)
 
 describe('FinalOutputCards', () => {
+  beforeEach(() => {
+    openArtifactInShell.mockClear()
+  })
+
   it('renders compact full-width output rows', () => {
     const blocks: FinalOutputBlock[] = [
       {
@@ -129,6 +133,32 @@ describe('FinalOutputCards', () => {
       spaceId: 'delegation-desk-1',
       title: 'Build Impact Elite GHL workflows',
       type: 'task',
+    })
+  })
+
+  it('opens the exact created mission through the shell mission route', () => {
+    const blocks: FinalOutputBlock[] = [
+      {
+        type: 'artifact_preview',
+        id: 'mission-1',
+        artifactType: 'mission',
+        artifactId: 'mission-1',
+        name: 'Validate Impact Elite message angles',
+        spaceId: 'impact-elite-space',
+      },
+    ]
+
+    render(<FinalOutputCards blocks={blocks} />)
+    fireEvent.click(screen.getByRole('button', { name: /Validate Impact Elite message angles/i }))
+
+    expect(openArtifactInShell).toHaveBeenCalledWith({
+      id: 'mission-1',
+      entityId: 'mission-1',
+      entityTable: 'missions',
+      internalUrl: '/home?mission=mission-1',
+      spaceId: 'impact-elite-space',
+      title: 'Validate Impact Elite message angles',
+      type: 'mission',
     })
   })
 

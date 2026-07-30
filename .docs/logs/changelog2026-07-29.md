@@ -195,3 +195,13 @@ Why: The first seed used an ON CONFLICT target that could not collapse NULL-org 
 Impact: ROAS now has exactly one active org Delegator with five definition files and Delegation Desk skill; future applies are idempotent.
 
 Files: `supabase/migrations/20260729174500_seed_delegator_system_agent.sql`, `supabase/migrations/20260729180000_repair_delegator_org_seed_and_defs.sql`, `scripts/roas/migration-order.txt`
+
+## [2026-07-29 17:45] - [FIX]
+
+What: Routed chat mission output cards to their exact canonical Mission page and made task-detail Space and view breadcrumbs navigate to their real Space destinations.
+
+Why: Mission cards were falling through the generic document viewer and could leave a stale unrelated task on the right, while the visible task location crumbs were non-interactive labels.
+
+Impact: Clicking a Mission card now opens the Mission named on that card. Clicking the Space crumb opens the owning Space, and clicking the view crumb opens the exact Space view.
+
+Files: `apps/web/src/features/studio/components/message-bubble/FinalOutputCards.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `apps/web/src/features/spaces/components/task-detail/TaskDetailHeader.tsx`, `apps/web/src/features/spaces/components/task-detail/TaskDetailModal.tsx`, `apps/web/src/features/spaces/components/modals/SpaceModalsHost.tsx`, `apps/web/src/features/spaces/hooks/use-task-detail-navigation.ts`, `apps/web/src/features/home/components/HomeTaskDetailHost.tsx`, focused tests, `documentation/features/claude-chatgpt-shell.md`

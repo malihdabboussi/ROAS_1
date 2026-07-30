@@ -9258,3 +9258,20 @@ Reason not done now: The requested behavior is complete and covered; the remaini
 - **Evidence:** Touched for `system_delegation` / Delegator wiring; already far over or at the 600 LOC service/guide limit.
 - **Needed work:** Split capability allowlists, action docs, and team-brain helpers into dedicated modules.
 - **Why not now:** Out of scope for the Delegator install; only additive profile/key lines were required for the ship.
+
+## 2026-07-29 — Chat mission return bridge and task-detail decomposition
+
+Status: Open
+
+Files:
+
+- `apps/web/src/features/home/components/HomeTaskDetailHost.tsx` (397 LOC; component limit 400 LOC)
+- `apps/web/src/features/spaces/components/task-detail/TaskDetailModal.tsx` (400 LOC; component limit 400 LOC)
+- `apps/agent-api/src/modules/artifacts/services/artifact-missions.service.ts`
+- `apps/api/src/modules/missions/services/mission-internal-callback.base.ts`
+
+Evidence: The exact Mission card and breadcrumb navigation defects are fixed. The inspected production Mission `05a10495-fd24-4889-bbfc-9062bd7f8717` has no Space/campaign origin and remains `pending_approval`, and the mission callback does not persist terminal output into the originating conversation. The two touched task-detail owners are also now at or within three lines of the component limit.
+
+Needed work: Persist an authenticated `source_conversation_id` when chat creates a Mission, preserve the resolved Space/campaign scope across delegated creation, and add one idempotent terminal callback that posts the Mission summary/deliverables to that source conversation. Separately decompose the task-detail host and modal without changing behavior.
+
+Reason not done now: The current fix owns navigation only. A mission-to-chat completion bridge changes Agent API action contracts, Main API message persistence, worker callback behavior, idempotency, and realtime delivery and therefore needs its own schema/preflight/error-circuit test batch rather than being hidden inside a UI routing fix.

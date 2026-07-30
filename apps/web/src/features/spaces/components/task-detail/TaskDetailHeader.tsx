@@ -29,6 +29,8 @@ interface TaskDetailHeaderProps {
   viewName: string | null
   /** Active view type → drives the breadcrumb view icon. */
   viewType?: string | null
+  onNavigateToSpace?: () => void
+  onNavigateToView?: () => void
   /**
    * Immediate parent task in the drill-in stack (open subtask from parent or from views).
    * Shown before the current title; click goes back one level (same stack as Back).
@@ -68,6 +70,8 @@ export function TaskDetailHeader({
   spaceName,
   viewName,
   viewType,
+  onNavigateToSpace,
+  onNavigateToView,
   breadcrumbParentCrumb,
   canGoBack,
   onBack,
@@ -97,19 +101,29 @@ export function TaskDetailHeader({
           </button>
         ) : null}
         {spaceName ? (
-          <span className="gap-spacing-1 flex min-w-0 max-w-[12rem] items-center" title={spaceName}>
+          <button
+            type="button"
+            onClick={onNavigateToSpace}
+            className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground gap-spacing-1 flex min-w-0 max-w-[12rem] items-center rounded transition-colors"
+            title={spaceName}
+          >
             <Box className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <span className="truncate">{spaceName}</span>
-          </span>
+          </button>
         ) : null}
         {spaceName && viewName ? (
           <ChevronRight className="text-muted-foreground/60 h-3 w-3 shrink-0" aria-hidden />
         ) : null}
         {viewName ? (
-          <span className="gap-spacing-1 flex min-w-0 max-w-[10rem] items-center" title={viewName}>
+          <button
+            type="button"
+            onClick={onNavigateToView}
+            className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground gap-spacing-1 flex min-w-0 max-w-[10rem] items-center rounded transition-colors"
+            title={viewName}
+          >
             <ViewIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <span className="truncate">{viewName}</span>
-          </span>
+          </button>
         ) : null}
         {(spaceName || viewName) && (
           <ChevronRight className="text-muted-foreground/60 h-3 w-3 shrink-0" aria-hidden />

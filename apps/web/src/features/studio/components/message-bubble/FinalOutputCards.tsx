@@ -164,6 +164,18 @@ function describeOutput(block: FinalOutputBlock): {
 
 function openDefaultOutput(block: FinalOutputBlock) {
   if (block.type === 'artifact_preview') {
+    if (block.artifactType === 'mission') {
+      openArtifactInShell({
+        id: block.artifactId,
+        entityId: block.artifactId,
+        entityTable: 'missions',
+        internalUrl: `/home?mission=${encodeURIComponent(block.artifactId)}`,
+        spaceId: block.spaceId,
+        title: block.name,
+        type: 'mission',
+      })
+      return
+    }
     if (block.artifactType === 'task' && block.spaceId) {
       openArtifactInShell({
         id: block.artifactId,

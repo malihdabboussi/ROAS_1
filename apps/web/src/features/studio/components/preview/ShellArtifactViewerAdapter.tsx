@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef } from 'react'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
 import { DeliverablePreviewBody } from '@/components/deliverables/DeliverablePreviewBody'
@@ -90,6 +90,7 @@ function ShellSpaceDocumentArtifactViewer({ target }: { target: ShellArtifactVie
 
 export function ShellArtifactViewerAdapter() {
   const pathname = usePathname() || '/home'
+  const router = useRouter()
   const target = useShellStore((s) => s.artifactViewer.target)
   const openArtifactViewer = useShellStore((s) => s.openArtifactViewer)
   const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
@@ -143,7 +144,16 @@ export function ShellArtifactViewerAdapter() {
     }
   }, [closeArtifactViewer, pathname])
 
+  useEffect(() => {
+    if (target?.type !== 'mission') return
+    const missionId = target.entityId || target.id
+    const missionUrl = target.internalUrl || `/home?mission=${encodeURIComponent(missionId)}`
+    closeArtifactViewer()
+    router.push(missionUrl)
+  }, [closeArtifactViewer, router, target])
+
   if (!target) return null
+  if (target.type === 'mission') return null
   if (target.type === 'image' || target.type === 'video' || target.type === 'audio') {
     return <ShellMediaArtifactViewer target={target} />
   }

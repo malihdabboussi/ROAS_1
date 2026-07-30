@@ -4,8 +4,13 @@ import type { YourTurnItem } from '@/features/spaces/services/your-turn.service'
 import { DEFAULT_SPACE_SCHEMA } from '@/features/spaces/types/space-schema'
 import { HomeTaskDetailHost } from './HomeTaskDetailHost'
 
+const { routerPush, taskDetailProps } = vi.hoisted(() => ({
+  routerPush: vi.fn(),
+  taskDetailProps: { current: null as Record<string, unknown> | null },
+}))
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: routerPush }),
 }))
 
 vi.mock('sonner', () => ({
@@ -17,17 +22,14 @@ vi.mock('@/components/vibey/vibey-loading-orb', () => ({
 }))
 
 vi.mock('@/features/spaces/components/task-detail/TaskDetailModal', () => ({
-  TaskDetailModal: ({
-    item,
-    presentation,
-  }: {
-    item: { title: string | null }
-    presentation?: string
-  }) => (
-    <div data-presentation={presentation} data-testid="task-detail-modal">
-      {item.title}
-    </div>
-  ),
+  TaskDetailModal: (props: { item: { title: string | null }; presentation?: string }) => {
+    taskDetailProps.current = props as unknown as Record<string, unknown>
+    return (
+      <div data-presentation={props.presentation} data-testid="task-detail-modal">
+        {props.item.title}
+      </div>
+    )
+  },
 }))
 
 vi.mock('@/features/spaces/components/StatusEditorModal', () => ({
@@ -113,5 +115,19 @@ describe('HomeTaskDetailHost', () => {
       expect(screen.getByTestId('task-detail-modal')).toHaveTextContent('Prep call notes')
     })
     expect(screen.getByTestId('task-detail-modal')).toHaveAttribute('data-presentation', 'panel')
+  })
+
+  it('navigates breadcrumb clicks to the loaded Space and exact view', async () => {
+    const onClose = vi.fn()
+    render(<HomeTaskDetailHost item={spaceItem} onClose={onClose} presentation="panel" />)
+
+    await waitFor(() => expect(taskDetailProps.current).not.toBeNull())
+    ;(taskDetailProps.current?.onNavigateToSpace as (() => void) | undefined)?.()
+    expect(routerPush).toHaveBeenCalledWith('/spaces?space=space-1')
+    ;(taskDetailProps.current?.onNavigateToView as (() => void) | undefined)?.()
+    expect(routerPush).toHaveBeenCalledWith(
+      `/spaces?space=space-1&v=${encodeURIComponent(DEFAULT_SPACE_SCHEMA.views[0]!.id)}`,
+    )
+    expect(onClose).toHaveBeenCalledTimes(2)
   })
 })
