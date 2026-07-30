@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { OrgRole } from '@vibey/api-shared'
+import type { CreateMissionReceiptDto } from '../dto/create-mission-receipt.dto'
 import { ConversationsRepository } from '../repositories/conversations.repository'
 import { MessagesRepository } from '../repositories/messages.repository'
 import { ConversationPermissionsService } from './conversation-permissions.service'
@@ -115,6 +116,68 @@ export class ConversationMessagesService {
     const merged = { ...currentMeta, ...metadataPatch }
     await this.messagesRepo.update(supabase, messageId, { metadata: merged })
     return { success: true }
+  }
+
+  async createMissionReceipt(
+    supabase: SupabaseClient,
+    userId: string,
+    conversationId: string,
+    input: CreateMissionReceiptDto,
+    orgId?: string | null,
+    orgRole?: OrgRole | null,
+  ) {
+    await this.permissionsService.assertCanAccessConversation(
+      supabase,
+      userId,
+      orgRole,
+      conversationId,
+      'edit',
+      orgId,
+    )
+    const conversation = await this.getConversationForRead(supabase, conversationId, userId, orgId)
+    if (!conversation) throw new NotFoundException('Conversation not found')
+
+    const existing = await this.messagesRepo.findById(supabase, input.mission_id)
+    if (existing) {
+      const metadata = this.asRecord(existing.metadata)
+      if (
+        existing.conversation_id === conversationId &&
+        metadata?.quick_mission_receipt === true &&
+        metadata.mission_id === input.mission_id
+      ) {
+        return existing
+      }
+      throw new ConflictException('Mission receipt identifier is already in use')
+    }
+
+    const content = `Quick Mission started: **${input.mission_title}**.`
+    return this.messagesRepo.create(supabase, {
+      id: input.mission_id,
+      conversation_id: conversationId,
+      role: 'assistant',
+      content,
+      metadata: {
+        quick_mission_receipt: true,
+        mission_id: input.mission_id,
+        content_blocks_ordered: [
+          {
+            type: 'text',
+            id: `quick-mission-text-${input.mission_id}`,
+            content,
+          },
+          {
+            type: 'artifact_preview',
+            id: `quick-mission-card-${input.mission_id}`,
+            artifactType: 'mission',
+            artifactId: input.mission_id,
+            ...(input.space_id ? { spaceId: input.space_id } : {}),
+            name: input.mission_title,
+            subtitle: 'Started from this chat',
+            status: 'Started',
+          },
+        ],
+      },
+    })
   }
 
   async forkConversation(

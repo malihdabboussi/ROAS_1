@@ -43,12 +43,21 @@ describe('QuickMissionsHubHost', () => {
   it('builds an assistant receipt linked to the launched mission', () => {
     expect(buildQuickMissionReceipt('mission 1', 'Static Ad Production', 'conversation-1')).toEqual(
       expect.objectContaining({
-        id: 'quick-mission-receipt-mission 1',
+        id: 'mission 1',
         conversation_id: 'conversation-1',
         role: 'assistant',
-        content:
-          'Quick Mission started: **Static Ad Production**. [Open mission](/mission-control?mission=mission%201)',
-        metadata: { quick_mission_receipt: true, mission_id: 'mission 1' },
+        content: 'Quick Mission started: **Static Ad Production**.',
+        metadata: expect.objectContaining({
+          quick_mission_receipt: true,
+          mission_id: 'mission 1',
+          content_blocks_ordered: expect.arrayContaining([
+            expect.objectContaining({
+              type: 'artifact_preview',
+              artifactType: 'mission',
+              artifactId: 'mission 1',
+            }),
+          ]),
+        }),
       }),
     )
   })

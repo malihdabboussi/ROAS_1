@@ -18,7 +18,7 @@ import { isStaticAdProductionValid, StaticAdProductionFields } from './StaticAdP
 export { EMPTY_STATIC_AD_FIELDS } from './StaticAdProductionFields'
 
 export const EMPTY_IG_VIDEO_FIELDS: IgOrganicVideoKickoffFields = {
-  copyMode: 'use_my_copy',
+  copyMode: 'write_for_me',
   sourceStrategy: 'reuse_when_available',
   selectedSceneIds: ['golden-hour-infinity-pool', 'hillside-pool-terrace'],
   pillLine: 'Free Training',

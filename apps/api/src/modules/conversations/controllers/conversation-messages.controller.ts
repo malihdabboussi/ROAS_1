@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
 import { ThrottlerGuard } from '@nestjs/throttler'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
@@ -8,14 +8,23 @@ import {
   OrgContextGuard,
   OrgRoleGuard,
   Supabase,
+  ZodValidationPipe,
   type RequestScope,
 } from '@vibey/api-shared'
+import {
+  CreateMissionReceiptDtoSchema,
+  type CreateMissionReceiptDto,
+} from '../dto/create-mission-receipt.dto'
+import { ConversationMessagesService } from '../services/conversation-messages.service'
 import { ConversationsService } from '../services/conversations.service'
 
 @Controller('conversations')
 @UseGuards(AuthGuard, ThrottlerGuard, OrgContextGuard, OrgRoleGuard)
 export class ConversationMessagesController {
-  constructor(private readonly conversationsService: ConversationsService) {}
+  constructor(
+    private readonly conversationsService: ConversationsService,
+    private readonly conversationMessagesService: ConversationMessagesService,
+  ) {}
 
   @Get(':id/messages')
   async getMessages(
@@ -56,6 +65,24 @@ export class ConversationMessagesController {
       conversationId,
       messageId,
       body.metadata ?? {},
+      scope.orgId,
+      scope.orgRole,
+    )
+  }
+
+  @Post(':id/mission-receipts')
+  async createMissionReceipt(
+    @CurrentUser() user: { id: string; email: string },
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param('id') conversationId: string,
+    @Body(new ZodValidationPipe(CreateMissionReceiptDtoSchema)) body: CreateMissionReceiptDto,
+  ) {
+    return this.conversationMessagesService.createMissionReceipt(
+      supabase,
+      user.id,
+      conversationId,
+      body,
       scope.orgId,
       scope.orgRole,
     )

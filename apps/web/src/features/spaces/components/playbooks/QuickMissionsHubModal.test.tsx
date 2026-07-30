@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createMission } from '@/lib/missions'
 import { QuickMissionsHubModal } from './QuickMissionsHubModal'
@@ -14,6 +14,7 @@ vi.mock('@/lib/missions', () => ({
 
 describe('QuickMissionsHubModal', () => {
   afterEach(() => {
+    cleanup()
     vi.clearAllMocks()
   })
 
@@ -30,6 +31,7 @@ describe('QuickMissionsHubModal', () => {
         ]}
         initialPlaybookKey="static-ad-production"
         initialClientSpaceId="space-1"
+        sourceConversationId="conversation-1"
         onClose={vi.fn()}
         onStarted={onStarted}
       />,
@@ -51,6 +53,8 @@ describe('QuickMissionsHubModal', () => {
           space_id: 'space-1',
           input: {
             playbook_id: 'static-ad-production',
+            source_conversation_id: 'conversation-1',
+            source_surface: 'chat_quick_mission',
             playbook_kickoff: expect.objectContaining({
               production_mode: 'static_ad_book',
               copy_mode: 'write_for_me',
@@ -60,7 +64,7 @@ describe('QuickMissionsHubModal', () => {
         }),
       ),
     )
-    expect(onStarted).toHaveBeenCalledWith('mission-1', 'Static Ad Production')
+    expect(onStarted).toHaveBeenCalledWith('mission-1', 'Static Ad Production', 'space-1')
   })
 
   it('shows a searchable campaign and space picker when the chat is unscoped', () => {
@@ -75,5 +79,45 @@ describe('QuickMissionsHubModal', () => {
 
     expect(screen.getByText('Choose the client campaign.')).toBeInTheDocument()
     expect(screen.getByText('Searchable campaign and space picker')).toBeInTheDocument()
+  })
+
+  it('defaults video production to skill-written copy and preserves its chat source', async () => {
+    vi.mocked(createMission).mockResolvedValue({ id: 'mission-video' } as never)
+
+    render(
+      <QuickMissionsHubModal
+        open
+        clients={[{ spaceId: 'space-1', campaignId: 'campaign-1', title: 'Current Course' }]}
+        initialPlaybookKey="ig-organic-video"
+        initialClientSpaceId="space-1"
+        sourceConversationId="conversation-1"
+        onClose={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Write for me' })).toHaveClass('button-glass-primary')
+    fireEvent.change(screen.getByLabelText('Offer and audience context'), {
+      target: { value: 'A course for agency owners.' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Run mission' }))
+
+    await waitFor(() =>
+      expect(createMission).toHaveBeenCalledWith(
+        expect.objectContaining({
+          campaign_id: 'campaign-1',
+          space_id: 'space-1',
+          input: {
+            playbook_id: 'ig-organic-video-ad',
+            source_conversation_id: 'conversation-1',
+            source_surface: 'chat_quick_mission',
+            playbook_kickoff: expect.objectContaining({
+              copy_mode: 'write_for_me',
+              offer_context: 'A course for agency owners.',
+              selected_scene_ids: ['golden-hour-infinity-pool', 'hillside-pool-terrace'],
+            }),
+          },
+        }),
+      ),
+    )
   })
 })
