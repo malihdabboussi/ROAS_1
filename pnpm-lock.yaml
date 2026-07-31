@@ -1097,6 +1097,34 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.5.0)(jiti@2.6.1)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
+  apps/openrouter-model-scout:
+    dependencies:
+      '@openrouter/agent':
+        specifier: 0.8.0
+        version: 0.8.0
+      zod:
+        specifier: ^4.1.12
+        version: 4.3.6
+    devDependencies:
+      '@types/node':
+        specifier: 25.5.0
+        version: 25.5.0
+      '@typescript-eslint/parser':
+        specifier: ^8.55.0
+        version: 8.55.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
+      eslint:
+        specifier: ^9.18.0
+        version: 9.39.2(jiti@2.6.1)
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vitest:
+        specifier: 2.1.9
+        version: 2.1.9(@types/node@25.5.0)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0)
+
   apps/queue-worker:
     dependencies:
       '@bull-board/api':
@@ -3982,6 +4010,12 @@ packages:
 
   '@open-draft/deferred-promise@2.2.0':
     resolution: {integrity: sha512-CecwLWx3rhxVQF6V4bAgPS5t+So2sTbPgAzafKkVizyi7tlwpcFpdFqq+wqF2OwNBmqFuu6tOyouTuxgpMfzmA==}
+
+  '@openrouter/agent@0.8.0':
+    resolution: {integrity: sha512-QpKy/DgYIWxKfE+sflTFSIze1ubdTcRHmQCbkvGl+j8WEBl48s/ZNaAhsxkrXZimPhs+KVSJh2v3BMY4zSYsKw==}
+
+  '@openrouter/sdk@0.13.67':
+    resolution: {integrity: sha512-kUVaFYA9Xehq67ndTk98i+tRLfYH/F6xSf/WuC8dsukBzcgBvYQydoeKw4Xe+peXG/wOVtDxukWt5SqzhbloKw==}
 
   '@opentelemetry/api-logs@0.207.0':
     resolution: {integrity: sha512-lAb0jQRVyleQQGiuuvCOTDVspc14nx6XJjP4FspJ1sNARo3Regq4ZZbrc3rN4b1TYSuUCvgH+UXUPug4SLOqEQ==}
@@ -16127,6 +16161,15 @@ snapshots:
 
   '@open-draft/deferred-promise@2.2.0': {}
 
+  '@openrouter/agent@0.8.0':
+    dependencies:
+      '@openrouter/sdk': 0.13.67
+      zod: 4.3.6
+
+  '@openrouter/sdk@0.13.67':
+    dependencies:
+      zod: 4.3.6
+
   '@opentelemetry/api-logs@0.207.0':
     dependencies:
       '@opentelemetry/api': 1.9.0
@@ -19465,6 +19508,14 @@ snapshots:
       magic-string: 0.30.21
     optionalDependencies:
       vite: 5.4.21(@types/node@22.19.10)(lightningcss@1.30.2)(terser@5.46.0)
+
+  '@vitest/mocker@2.1.9(vite@5.4.21(@types/node@25.5.0)(lightningcss@1.30.2)(terser@5.46.0))':
+    dependencies:
+      '@vitest/spy': 2.1.9
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
+    optionalDependencies:
+      vite: 5.4.21(@types/node@25.5.0)(lightningcss@1.30.2)(terser@5.46.0)
 
   '@vitest/mocker@2.1.9(vite@5.4.21(@types/node@25.9.0)(lightningcss@1.30.2)(terser@5.46.0))':
     dependencies:
@@ -26783,6 +26834,24 @@ snapshots:
       - supports-color
       - terser
 
+  vite-node@2.1.9(@types/node@25.5.0)(lightningcss@1.30.2)(terser@5.46.0):
+    dependencies:
+      cac: 6.7.14
+      debug: 4.4.3
+      es-module-lexer: 1.7.0
+      pathe: 1.1.2
+      vite: 5.4.21(@types/node@25.5.0)(lightningcss@1.30.2)(terser@5.46.0)
+    transitivePeerDependencies:
+      - '@types/node'
+      - less
+      - lightningcss
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+
   vite-node@2.1.9(@types/node@25.9.0)(lightningcss@1.30.2)(terser@5.46.0):
     dependencies:
       cac: 6.7.14
@@ -26808,6 +26877,17 @@ snapshots:
       rollup: 4.57.1
     optionalDependencies:
       '@types/node': 22.19.10
+      fsevents: 2.3.3
+      lightningcss: 1.30.2
+      terser: 5.46.0
+
+  vite@5.4.21(@types/node@25.5.0)(lightningcss@1.30.2)(terser@5.46.0):
+    dependencies:
+      esbuild: 0.21.5
+      postcss: 8.5.6
+      rollup: 4.57.1
+    optionalDependencies:
+      '@types/node': 25.5.0
       fsevents: 2.3.3
       lightningcss: 1.30.2
       terser: 5.46.0
@@ -26898,6 +26978,42 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.19.10
+      jsdom: 25.0.1
+    transitivePeerDependencies:
+      - less
+      - lightningcss
+      - msw
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+
+  vitest@2.1.9(@types/node@25.5.0)(jsdom@25.0.1)(lightningcss@1.30.2)(terser@5.46.0):
+    dependencies:
+      '@vitest/expect': 2.1.9
+      '@vitest/mocker': 2.1.9(vite@5.4.21(@types/node@25.5.0)(lightningcss@1.30.2)(terser@5.46.0))
+      '@vitest/pretty-format': 2.1.9
+      '@vitest/runner': 2.1.9
+      '@vitest/snapshot': 2.1.9
+      '@vitest/spy': 2.1.9
+      '@vitest/utils': 2.1.9
+      chai: 5.3.3
+      debug: 4.4.3
+      expect-type: 1.3.0
+      magic-string: 0.30.21
+      pathe: 1.1.2
+      std-env: 3.10.0
+      tinybench: 2.9.0
+      tinyexec: 0.3.2
+      tinypool: 1.1.1
+      tinyrainbow: 1.2.0
+      vite: 5.4.21(@types/node@25.5.0)(lightningcss@1.30.2)(terser@5.46.0)
+      vite-node: 2.1.9(@types/node@25.5.0)(lightningcss@1.30.2)(terser@5.46.0)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@types/node': 25.5.0
       jsdom: 25.0.1
     transitivePeerDependencies:
       - less

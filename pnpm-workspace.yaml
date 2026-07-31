@@ -5,6 +5,7 @@ packages:
   - "apps/chrome-extension"
   - "apps/funnels"
   - "apps/openclaw"
+  - "apps/openrouter-model-scout"
   - "apps/queue-worker"
   - "apps/mission-worker"
   - "apps/web"
