@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 30, 2026 (Portal view uses unobstructed full-workspace chrome)
+Last Modified: July 31, 2026 (Pixel Slack team signals deliver as curated digests + thread follow-ups)
 
 ## Data Flow
 
@@ -53,6 +53,7 @@ Last Modified: July 30, 2026 (Portal view uses unobstructed full-workspace chrom
 47. Slack profile refreshes preserve the immutable Slack identity and its existing `person_brain_id`. For organization-managed Person Brains only, an updated Slack display name or avatar refreshes the auto-generated Brain profile without overwriting a custom Brain name or image. Names are never used to merge people, so a renamed internal teammate and a separate external client with the same display name remain distinct.
 48. Creating a Person Brain provisions its durable identity container; it does not replay Slack history by itself. Team → People exposes **Populate brains**, which starts one bounded 90-day backfill across enabled Slack Brain channel mappings. Each channel is fetched once by the existing import runtime and then fanned out to the linked Person Brains, while recurring Team Intelligence continues adding only new, high-confidence facts.
 49. The embedded ROAS Portal uses the full work surface without the workspace menu. Its refresh and new-tab controls sit in the Portal’s bottom-right corner so they do not cover the Portal’s own top-right navigation.
+50. Active Slack Team Intelligence delivery batches due cooling signals per recipient into one curated DM (“here are N things…”) with suggested actions. Follow-ups within 12 hours post as thread replies on that digest root instead of new top-level chats. External findings no longer append the “Pixel will not message the external person” disclaimer; framing is coworker-style (“still needs eyes… Want a reply drafted?”).
 
 ## Code Examples
 
@@ -121,6 +122,7 @@ Reconnect result:
 
 ## Decision Log
 
+- Pixel Team Intelligence Active delivery models Viktor: one curated DM digest per recipient with suggested actions, then thread follow-ups for 12 hours. Per-signal top-level posts and the “Pixel will not message the external person” disclaimer are removed from outbound copy.
 - Portal mode suppresses every workspace-menu dock host while preserving the top-bar Workspace / Portal switch. Portal-owned navigation keeps the top-right corner; ROAS-owned refresh and pop-out controls live at the bottom-right.
 - Meeting detail’s primary CTA is conversational **Prepare with Pixel** (prep beforehand vs live guide), not a silent background prep job. Background `precall-prep/event` still accepts a client event snapshot so Team/non-today calendar ids remain durable when a prep doc is created.
 - Team Agenda calendar inclusion is Directory membership minus `rejected`, not person-link `confirmed`. Sync Directory confirms Directory rows by default; `match_status` remains for Slack/portal linking and reject opt-out. Agenda responses expose `team_coverage` so admins can see pulled users and silent DWD failures without guessing.

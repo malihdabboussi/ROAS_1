@@ -5,6 +5,13 @@ import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.s
 import { SlackSignalResolutionService } from '../../slack/services/slack-signal-resolution.service'
 import type { SlackShadowAction } from '../../slack/types/slack.types'
 import { SlackTeamLoopRepository } from '../repositories/slack-team-loop.repository'
+import {
+  composeDigestMessage,
+  composeThreadFollowUp,
+  signalMessageItemFromAction,
+  SLACK_TEAM_DIGEST_THREAD_HOURS,
+  type SlackTeamSignalMessageItem,
+} from './slack-team-signal-message'
 
 export const SLACK_SIGNAL_COOLING_MINUTES = {
   unanswered_question: 30,
@@ -17,8 +24,16 @@ export type SlackSignalCoolingKind = keyof typeof SLACK_SIGNAL_COOLING_MINUTES
 export type SlackSignalDeliveryPerson = {
   id: string
   platform_id: string
+  display_name?: string
   relationship_kind: string
   delivery_mode: string
+}
+
+type ReadyDelivery = {
+  action: SlackShadowAction
+  recipient: SlackSignalDeliveryPerson
+  checkedAt: string
+  item: SlackTeamSignalMessageItem
 }
 
 export function slackSignalLifecycleMetadata(
@@ -62,7 +77,7 @@ export class SlackTeamSignalDeliveryService {
     const peopleById = new Map(input.people.map((person) => [person.id, person]))
     let rechecked = 0
     let resolved = 0
-    let sent = 0
+    const ready: ReadyDelivery[] = []
 
     for (const candidate of actions) {
       if (!this.isReady(candidate, now)) continue
@@ -98,59 +113,132 @@ export class SlackTeamSignalDeliveryService {
         })
         continue
       }
-      if (!this.canSend(input, candidate, recipient)) {
+      if (!this.canSend(input, candidate, recipient) || !recipient) {
         await this.markReadyForReview(input, refreshed.action, {
           rechecked_at: refreshed.resolution.checked_at,
         })
         continue
       }
 
+      ready.push({
+        action: refreshed.action,
+        recipient,
+        checkedAt: refreshed.resolution.checked_at,
+        item: signalMessageItemFromAction({
+          proposedContent: refreshed.action.proposed_content,
+          metadata: refreshed.action.metadata,
+        }),
+      })
+    }
+
+    let sent = 0
+    const byRecipient = new Map<string, ReadyDelivery[]>()
+    for (const entry of ready) {
+      const group = byRecipient.get(entry.recipient.id) ?? []
+      group.push(entry)
+      byRecipient.set(entry.recipient.id, group)
+    }
+
+    for (const [, group] of byRecipient) {
+      sent += await this.deliverRecipientBatch(input, group, now)
+    }
+
+    return { rechecked, resolved, sent }
+  }
+
+  private async deliverRecipientBatch(
+    input: {
+      supabase: SupabaseClient
+      userId: string
+      orgId: string
+      workflowKey: string
+    },
+    group: ReadyDelivery[],
+    now: Date,
+  ): Promise<number> {
+    if (group.length === 0) return 0
+    const recipient = group[0]!.recipient
+    const claimed: ReadyDelivery[] = []
+    for (const entry of group) {
       const approved = await this.people.reviewShadowAction(input.supabase, {
-        actionId: candidate.id,
+        actionId: entry.action.id,
         orgId: input.orgId,
         reviewedBy: input.userId,
         status: 'approved',
       })
       if (!approved) continue
-      const claimed = await this.people.claimShadowActionForSend(
+      const next = await this.people.claimShadowActionForSend(
         input.supabase,
         input.orgId,
-        candidate.id,
+        entry.action.id,
       )
-      if (!claimed) continue
-      try {
-        const dm = await this.slackTools.openDm(input.supabase, input.userId, input.orgId, {
-          slack_user_id: recipient?.platform_id ?? '',
-        })
-        const delivery = await this.slackTools.sendMessage(
-          input.supabase,
-          input.userId,
-          input.orgId,
-          {
-            channel_id: String(dm.channel_id),
-            text: candidate.proposed_content,
-          },
-        )
+      if (!next) continue
+      claimed.push(entry)
+    }
+    if (claimed.length === 0) return 0
+
+    const sinceIso = new Date(
+      now.getTime() - SLACK_TEAM_DIGEST_THREAD_HOURS * 60 * 60 * 1000,
+    ).toISOString()
+    const existingRoot = await this.loops.findRecentDigestRoot(input.supabase, {
+      orgId: input.orgId,
+      workflowKey: input.workflowKey,
+      targetMemberId: recipient.id,
+      sinceIso,
+    })
+
+    try {
+      const dm = await this.slackTools.openDm(input.supabase, input.userId, input.orgId, {
+        slack_user_id: recipient.platform_id,
+      })
+      const channelId = String(dm.channel_id)
+      const items = claimed.map((entry) => entry.item)
+      const composeOptions = {
+        recipientName: recipient.display_name || recipient.platform_id,
+        now,
+      }
+      const text = existingRoot
+        ? composeThreadFollowUp(items, composeOptions)
+        : composeDigestMessage(items, composeOptions)
+      const delivery = await this.slackTools.sendMessage(
+        input.supabase,
+        input.userId,
+        input.orgId,
+        {
+          channel_id: channelId,
+          text,
+          ...(existingRoot ? { thread_ts: existingRoot.threadTs } : {}),
+        },
+      )
+      const messageTs = typeof delivery.ts === 'string' ? delivery.ts : null
+      const digestThreadTs = existingRoot?.threadTs ?? messageTs
+      const isRoot = !existingRoot
+
+      for (const entry of claimed) {
         await this.people.markShadowActionSent(input.supabase, {
-          actionId: candidate.id,
+          actionId: entry.action.id,
           orgId: input.orgId,
           sentBy: input.userId,
-          slackTs: typeof delivery.ts === 'string' ? delivery.ts : null,
-          slackChannelId: String(dm.channel_id),
+          slackTs: messageTs,
+          slackChannelId: channelId,
           metadata: {
-            ...refreshed.action.metadata,
+            ...entry.action.metadata,
             lifecycle_state: 'sent',
-            rechecked_at: refreshed.resolution.checked_at,
+            rechecked_at: entry.checkedAt,
+            digest_is_root: isRoot,
+            digest_thread_ts: digestThreadTs,
+            digest_item_count: claimed.length,
+            delivery_style: isRoot ? 'compiled_digest' : 'thread_follow_up',
           },
         })
-        sent += 1
-      } catch (cause) {
-        await this.people.markShadowActionFailed(input.supabase, input.orgId, candidate.id)
-        throw cause
       }
+      return claimed.length
+    } catch (cause) {
+      for (const entry of claimed) {
+        await this.people.markShadowActionFailed(input.supabase, input.orgId, entry.action.id)
+      }
+      throw cause
     }
-
-    return { rechecked, resolved, sent }
   }
 
   private async markReadyForReview(

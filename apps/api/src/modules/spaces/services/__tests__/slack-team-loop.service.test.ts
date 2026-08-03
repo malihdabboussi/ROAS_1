@@ -472,7 +472,9 @@ describe('SlackTeamLoopService', () => {
       expect.objectContaining({
         targetMemberId: 'member-owner',
         actionKind: 'message',
-        proposedContent: expect.stringContaining('Casey Client raised'),
+        proposedContent: expect.stringMatching(
+          /Casey Client had a question in #client-alpha[\s\S]*want a reply drafted for you\?/i,
+        ),
         metadata: expect.objectContaining({
           internal_only: true,
           parent_signal_id: 'signal-1',
@@ -481,6 +483,9 @@ describe('SlackTeamLoopService', () => {
         }),
       }),
     )
+    const proposed = String(peopleRepo.createShadowAction.mock.calls[1]?.[1]?.proposedContent ?? '')
+    expect(proposed).toMatch(/Hey Dylan/)
+    expect(proposed).not.toContain('Pixel will not message the external person')
     expect(slackTools.openDm).not.toHaveBeenCalled()
     expect(slackTools.sendMessage).not.toHaveBeenCalled()
     expect(peopleRepo.markShadowActionSent).not.toHaveBeenCalled()
