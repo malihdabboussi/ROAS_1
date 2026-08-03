@@ -9379,3 +9379,15 @@ Evidence: Both components remain within the hard limit, but each combines select
 Needed work: Extract state-neutral field groups and selection helpers into feature-owned components without creating a second production contract.
 
 Reason not done now: The requested fix is behavior-sensitive and already shares the canonical format configuration and preview component; restructuring both launch surfaces would broaden the regression surface.
+
+## 2026-07-31 - [FEATURE] Pixel Slack digest UX — remaining polish
+
+Status: Open
+
+Found while: Rewriting Slack Team Intelligence delivery to match Viktor-style digests
+
+Evidence: Delivery now batches and threads in code, but (1) local/prod API must be restarted/redeployed before Active sends use the new composer; (2) Slack App Home → History still lists thread replies as cards even when they share a parent — DM view is the curated surface; (3) suggested actions are text CTAs only (no Slack button/block actions wired yet).
+
+Needed work: Restart/redeploy API; optionally add Block Kit action buttons + interactive handlers for “draft reply”; optionally collapse History UX with Slack `chat.update` on digest root when appending items.
+
+Reason not done now: Out of requested delivery-copy/threading scope; needs Slack interactivity wiring and deploy.

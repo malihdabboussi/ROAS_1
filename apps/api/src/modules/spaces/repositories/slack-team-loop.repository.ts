@@ -42,6 +42,44 @@ export class SlackTeamLoopRepository {
     return (data as SlackShadowAction | null) ?? null
   }
 
+  async findRecentDigestRoot(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      workflowKey: string
+      targetMemberId: string
+      sinceIso: string
+    },
+  ): Promise<{ channelId: string; threadTs: string } | null> {
+    const { data, error } = await supabase
+      .from('slack_shadow_actions')
+      .select('metadata,sent_at')
+      .eq('org_id', input.orgId)
+      .eq('workflow_key', input.workflowKey)
+      .eq('target_member_id', input.targetMemberId)
+      .eq('status', 'sent')
+      .contains('metadata', { digest_is_root: true })
+      .gte('sent_at', input.sinceIso)
+      .order('sent_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (error) throw new Error(`Failed to load Slack digest root: ${error.message}`)
+    const metadata =
+      data && typeof data.metadata === 'object' && data.metadata !== null
+        ? (data.metadata as Record<string, unknown>)
+        : null
+    const channelId =
+      typeof metadata?.slack_channel_id === 'string' ? metadata.slack_channel_id.trim() : ''
+    const threadTs =
+      typeof metadata?.digest_thread_ts === 'string'
+        ? metadata.digest_thread_ts.trim()
+        : typeof metadata?.slack_message_ts === 'string'
+          ? metadata.slack_message_ts.trim()
+          : ''
+    if (!channelId || !threadTs) return null
+    return { channelId, threadTs }
+  }
+
   async countActionsSince(
     supabase: SupabaseClient,
     input: { orgId: string; workflowKey: string; since: string },

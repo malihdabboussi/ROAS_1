@@ -23,6 +23,7 @@ import {
   slackSignalLifecycleMetadata,
   SlackTeamSignalDeliveryService,
 } from './slack-team-signal-delivery.service'
+import { composeInternalEscalation } from './slack-team-signal-message'
 
 export type SlackTeamLoopKind =
   | 'brain_compounding'
@@ -37,13 +38,17 @@ function internalEscalationMessage(input: {
   subject: SlackTeamPerson
   channelName: string
   signal: SlackTeamSignal
+  recipientName?: string
 }): string {
-  const finding = input.signal.proposed_content.trim()
-  return [
-    `${input.subject.display_name} raised a ${input.signal.kind.replaceAll('_', ' ')} in #${input.channelName}:`,
-    finding,
-    'Review the source and coordinate the response internally. Pixel will not message the external person.',
-  ].join('\n\n')
+  return composeInternalEscalation(
+    {
+      subjectName: input.subject.display_name,
+      channelName: input.channelName,
+      kind: input.signal.kind,
+      finding: input.signal.proposed_content.trim(),
+    },
+    { recipientName: input.recipientName },
+  )
 }
 
 export function isWithinSlackTeamLoopQuietHours(now: Date, quietHours?: QuietHours): boolean {
@@ -379,6 +384,7 @@ export class SlackTeamLoopService {
           subject: target,
           channelName: source.channel_name,
           signal,
+          recipientName: workspaceOwner.display_name,
         })
         await this.peopleRepo.createShadowAction(input.supabase, {
           orgId: input.orgId,

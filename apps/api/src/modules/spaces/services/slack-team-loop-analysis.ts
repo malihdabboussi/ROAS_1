@@ -104,6 +104,7 @@ export async function analyzeSlackTeamMessages(input: {
       'Messages with the same thread value are one Slack thread. A question is answered when a later human reply in that thread addresses it; never flag that as unanswered.',
       'client_risk: an explicit blocker, missed commitment, dissatisfaction, or delivery risk.',
       'Never propose messaging an external or ignored person. For a signal about them, write an internal finding for the team to review.',
+      'proposed_content must be the finding only: concrete, human, and free of system disclaimers like "Pixel will not message". Do not write the delivery framing; delivery adds that later.',
       'For every signal, copy the exact channel id and source timestamp from its bracket.',
       'Return only JSON: {"signals":[{"kind":"brain_memory|workflow_discovery|unanswered_question|client_risk","target_slack_user_id":"string or null","target_channel_id":"string","source_message_ts":"string","proposed_content":"string","rationale":"string","brain_memory":"string or null","confidence":0.0}]}',
       input.instructions ? `Additional admin instructions: ${input.instructions}` : '',
