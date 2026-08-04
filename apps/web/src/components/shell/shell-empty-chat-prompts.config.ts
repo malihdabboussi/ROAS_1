@@ -1,17 +1,10 @@
 import type { LucideIcon } from 'lucide-react'
 import {
-  Calendar,
   CheckSquare,
   FileText,
-  Flag,
   Image,
   Infinity,
-  LineChart,
-  Pencil,
-  PlusCircle,
   Presentation,
-  ScrollText,
-  Search,
   Telescope,
   Users,
 } from 'lucide-react'
@@ -20,10 +13,10 @@ import {
 export const SHELL_EMPTY_CHAT_PLACEHOLDER = 'Ask, create, search, @ to mention…'
 
 /**
- * Verb intents above the composer — how to approach the ask.
- * Distinct from capability chips (what to deliver) under the hero.
+ * Single quick-start row above the empty-chat composer.
+ * One curated set — not duplicated under the hero or as a second pill row.
  */
-export interface ShellEmptyChatAction {
+export interface ShellEmptyChatQuickStart {
   id: string
   label: string
   icon: LucideIcon
@@ -32,86 +25,7 @@ export interface ShellEmptyChatAction {
   systemContext: string
 }
 
-export const SHELL_EMPTY_CHAT_ACTIONS: ShellEmptyChatAction[] = [
-  {
-    id: 'find',
-    label: 'Find',
-    icon: Search,
-    iconName: 'search',
-    prompt: 'Find ',
-    systemContext:
-      'QUICK ACTION — FIND: Treat this as a retrieval request. Search the current Space and accessible workspace records with search_space_context, then use the relevant read/list actions for exact matches. Search Brain context when the request concerns stored knowledge. Return concrete matches with their native links or IDs. Do not create or modify records unless the user explicitly asks.',
-  },
-  {
-    id: 'research',
-    label: 'Research',
-    icon: Telescope,
-    iconName: 'telescope',
-    prompt: 'Research ',
-    systemContext:
-      'QUICK ACTION — RESEARCH: Produce evidence-backed research, not a generic answer. Search accessible Brain and Space context first when relevant, then use web_search and web_fetch for current external facts. Cite the sources you actually opened, distinguish sourced facts from inference, and do not invent receipts. Create a saved deliverable only when the user asks for one.',
-  },
-  {
-    id: 'create',
-    label: 'Create',
-    icon: PlusCircle,
-    iconName: 'plus-circle',
-    prompt: 'Create ',
-    systemContext:
-      'QUICK ACTION — CREATE: Deliver the requested native result instead of only describing it. Choose the matching action from the requested object: create_task for work, create_docx for a document, create_presentation for slides, generate_image for an image, or the matching native artifact action for other supported outputs. Ask one concise question only when a required decision cannot be inferred. Report completion only after a successful tool receipt.',
-  },
-  {
-    id: 'edit',
-    label: 'Edit',
-    icon: Pencil,
-    iconName: 'pencil',
-    prompt: 'Edit ',
-    systemContext:
-      'QUICK ACTION — EDIT: Update the referenced or currently selected native object in place. Read it first, preserve unrelated content, and use its matching update action. If no target can be resolved from the message, attachments, selected artifact, or current Space, ask which item to edit. Do not create a duplicate as a substitute for an update, and report success only after a tool receipt.',
-  },
-  {
-    id: 'analyze',
-    label: 'Analyze',
-    icon: LineChart,
-    iconName: 'line-chart',
-    prompt: 'Analyze ',
-    systemContext:
-      'QUICK ACTION — ANALYZE: Inspect the relevant live records, artifact, Brain context, or connected source before drawing conclusions. Explain the strongest findings, evidence, risks, and next actions. Keep this read-only unless the user explicitly requests changes; do not claim an analysis was performed without reading the underlying data.',
-  },
-  {
-    id: 'prioritize',
-    label: 'Prioritize',
-    icon: Flag,
-    iconName: 'flag',
-    prompt: 'Prioritize ',
-    systemContext:
-      'QUICK ACTION — PRIORITIZE: Load the relevant tasks or work items before ranking them. Prioritize using urgency, impact, dependencies, effort, and due dates, and explain the top choices briefly. If the user asks to apply the ranking, read the target Space schema and persist valid priority updates with update_task; otherwise return a recommendation without mutating records.',
-  },
-  {
-    id: 'schedule',
-    label: 'Schedule',
-    icon: Calendar,
-    iconName: 'calendar',
-    prompt: 'Schedule ',
-    systemContext:
-      'QUICK ACTION — SCHEDULE: Turn the request into a real scheduled object. Use create_calendar_event for a timed Google or Outlook event and create_task or update_task with dates for Space work. Resolve the connected provider and timezone; ask only for missing time, duration, attendees, or destination that cannot be inferred. Never say something is scheduled until the write action returns a successful receipt.',
-  },
-]
-
-/**
- * Deliverable / capability starters under the empty-state hero.
- * Click seeds the composer; clearing the composer restores the scroller.
- */
-export interface ShellEmptyChatCapability {
-  id: string
-  label: string
-  icon: LucideIcon
-  iconName: string
-  prompt: string
-  systemContext: string
-}
-
-export const SHELL_EMPTY_CHAT_CAPABILITIES: ShellEmptyChatCapability[] = [
+export const SHELL_EMPTY_CHAT_QUICK_STARTS: ShellEmptyChatQuickStart[] = [
   {
     id: 'deep-search',
     label: 'Deep Search',
@@ -149,15 +63,6 @@ export const SHELL_EMPTY_CHAT_CAPABILITIES: ShellEmptyChatCapability[] = [
       'QUICK ACTION — SLIDES: Create a native editable presentation with create_presentation. Use the current campaign theme and available research or attachments, build a coherent slide narrative, and return the presentation artifact from the successful tool receipt. Do not stop at an outline unless the user specifically asks for an outline.',
   },
   {
-    id: 'report',
-    label: 'Report',
-    icon: ScrollText,
-    iconName: 'scroll-text',
-    prompt: 'Create a sourced report about ',
-    systemContext:
-      'QUICK ACTION — REPORT: Research the subject with the relevant live Space, Brain, integration, and web tools, then create a native report with create_docx. Separate sourced facts from recommendations and include the source links actually used. Return the document artifact after the successful create receipt rather than only pasting a report into chat.',
-  },
-  {
     id: 'doc',
     label: 'Doc',
     icon: FileText,
@@ -186,4 +91,4 @@ export const SHELL_EMPTY_CHAT_CAPABILITIES: ShellEmptyChatCapability[] = [
   },
 ]
 
-export type ShellChatQuickStart = ShellEmptyChatAction | ShellEmptyChatCapability
+export type ShellChatQuickStart = ShellEmptyChatQuickStart

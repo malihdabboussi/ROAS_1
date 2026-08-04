@@ -1,28 +1,7 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { SpaceChatAgentEmptyState } from './SpaceChatAgentEmptyState'
-
-vi.mock('@/components/shell/ShellEmptyChatCapabilityScroller', () => ({
-  ShellEmptyChatCapabilityScroller: ({
-    onSelect,
-  }: {
-    onSelect: (quickStart: { id: string; prompt: string; systemContext: string }) => void
-  }) => (
-    <button
-      type="button"
-      onClick={() =>
-        onSelect({
-          id: 'image',
-          prompt: 'Generate an image of ',
-          systemContext: 'QUICK ACTION: Generate with generate_image.',
-        })
-      }
-    >
-      Image
-    </button>
-  ),
-}))
 
 const agent = {
   participant_id: 'agent:vibey',
@@ -77,22 +56,9 @@ describe('SpaceChatAgentEmptyState', () => {
     expect(container.querySelector('img')).toBeNull()
   })
 
-  it('renders capability scroller when enabled', () => {
-    const onSelectCapability = vi.fn()
-    render(
-      <SpaceChatAgentEmptyState
-        agent={agent}
-        showCapabilities
-        onSelectCapability={onSelectCapability}
-      />,
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'Image' }))
-    expect(onSelectCapability).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'image',
-        prompt: 'Generate an image of ',
-        systemContext: expect.stringContaining('generate_image'),
-      }),
-    )
+  it('does not render quick starts under the hero', () => {
+    render(<SpaceChatAgentEmptyState agent={agent} />)
+    expect(screen.queryByRole('group', { name: 'Quick starts' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Deep Search' })).not.toBeInTheDocument()
   })
 })

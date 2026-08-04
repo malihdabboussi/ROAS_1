@@ -39,4 +39,6 @@ export type SlackObservationChannelSetting = SlackObservationCursor & {
   exclusion_reason: string | null
   join_status: 'discovered' | 'joined' | 'observed' | 'excluded' | 'inaccessible'
   join_error: string | null
+  archive_oldest_ts: string | null
+  archive_backfilled_at: string | null
 }

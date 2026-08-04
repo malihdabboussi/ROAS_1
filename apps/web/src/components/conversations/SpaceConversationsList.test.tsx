@@ -31,19 +31,21 @@ vi.mock('./ConversationActionsMenu', () => ({
 const nowIso = () => new Date().toISOString()
 
 function conversation(overrides: Partial<Conversation> & { id: string }): Conversation {
-  const { id, ...rest } = overrides
+  const activityAt = overrides.last_message_at ?? overrides.updated_at ?? nowIso()
   return {
-    id,
     user_id: 'user-1',
     campaign_id: null,
     title: 'Untitled',
     agent_id: 'vibey',
     status: 'active',
     metadata: {},
-    created_at: nowIso(),
-    updated_at: nowIso(),
     effective_level: 'admin',
-    ...rest,
+    ...overrides,
+    id: overrides.id,
+    created_at: overrides.created_at ?? activityAt,
+    updated_at: overrides.updated_at ?? activityAt,
+    last_message_at:
+      overrides.last_message_at !== undefined ? overrides.last_message_at : activityAt,
   }
 }
 

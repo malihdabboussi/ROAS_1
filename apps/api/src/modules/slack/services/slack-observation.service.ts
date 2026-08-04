@@ -80,11 +80,7 @@ export class SlackObservationService {
     let channelsInaccessible = 0
     for (const channel of available) {
       const setting = settingsByChannel.get(channel.id)
-      if (
-        setting?.is_excluded ||
-        channel.is_im ||
-        channel.is_member !== false
-      ) {
+      if (setting?.is_excluded || channel.is_im || channel.is_member !== false) {
         continue
       }
       if (channel.is_private) {
@@ -314,6 +310,12 @@ export class SlackObservationService {
       )
       .filter((event): event is SlackObservationEventInput => Boolean(event))
     const stored = await this.repository.upsertEvents(input.supabase, events)
+    await this.repository.markArchiveBackfilled(input.supabase, {
+      orgId: input.orgId,
+      slackTeamId: input.slackTeamId,
+      channelId: input.channelId,
+      oldestTs: input.periodStartTs,
+    })
     return { historyRequests: 1, threadRequests, eventsStored: stored.inserted }
   }
 

@@ -8,6 +8,7 @@ import {
   formatCompactRelativeTime,
   getAgentInitial,
   getConversationAgentDisplay,
+  getConversationLastActivityAt,
   needsGeneratedConversationTitle,
   resolveConversationActivity,
   stripLegacySpacesConversationTitle,
@@ -217,11 +218,12 @@ export function SpaceConversationRow({
     resolvedLeadingIcon === 'status' ||
     (resolvedLeadingIcon === 'logo' && source !== 'slack' && source !== 'telegram')
   const showSeparateActivity = activity !== 'idle' && !leadingRendersActivity
-  const relativeAge = formatCompactRelativeTime(conversation.updated_at)
+  const activityAt = getConversationLastActivityAt(conversation)
+  const relativeAge = formatCompactRelativeTime(activityAt)
   return (
     <div
       onContextMenu={(event) => onOpenContextMenu(event, conversation.id)}
-      title={conversation.updated_at}
+      title={activityAt}
       className={cn(
         'group/conversation px-spacing-1 py-spacing-1 gap-spacing-2 rounded-spacing-3 relative flex items-center transition-colors',
         divided && 'border-border rounded-none border-b',
@@ -268,7 +270,7 @@ export function SpaceConversationRow({
         <button
           type="button"
           onClick={() => onSelectConversation(conversation.id)}
-          className="min-w-0 flex-1 text-left"
+          className="min-h-8 min-w-0 flex-1 text-left md:min-h-0"
         >
           <div className="gap-spacing-1 flex min-w-0 items-center">
             {pinned ? <Pin className="text-muted-foreground icon-xs shrink-0" /> : null}
@@ -283,24 +285,28 @@ export function SpaceConversationRow({
       <span
         className={cn(
           'relative flex shrink-0 items-center justify-end',
-          showUpdatedAt ? 'w-spacing-20 h-6' : 'w-spacing-10 h-6',
+          showUpdatedAt
+            ? 'w-spacing-20 min-h-8 md:h-6 md:min-h-0'
+            : 'w-spacing-10 min-h-8 md:h-6 md:min-h-0',
         )}
       >
         <span
           className={cn(
             'text-muted-foreground tabular-nums transition-opacity',
             showUpdatedAt ? 'body-4' : 'typo-caption',
-            menuOpen ? 'opacity-0' : 'group-hover/conversation:opacity-0',
+            menuOpen ? 'opacity-0' : 'hidden md:inline md:group-hover/conversation:opacity-0',
           )}
         >
-          {showUpdatedAt ? formatConversationUpdatedAt(conversation.updated_at) : relativeAge}
+          {showUpdatedAt ? formatConversationUpdatedAt(activityAt) : relativeAge}
         </span>
         <button
           type="button"
           onClick={(event) => onOpenMenu(event, conversation.id)}
           className={cn(
-            'text-muted-foreground hover:text-foreground bg-hover-subtle rounded-spacing-1 absolute inset-y-0 right-0 flex items-center justify-center p-1 transition-opacity',
-            menuOpen ? 'opacity-100' : 'opacity-0 group-hover/conversation:opacity-100',
+            'text-muted-foreground hover:text-foreground bg-hover-subtle rounded-spacing-1 absolute inset-y-0 right-0 flex min-h-8 min-w-8 items-center justify-center p-1 transition-opacity md:min-h-0 md:min-w-0',
+            menuOpen
+              ? 'opacity-100'
+              : 'opacity-100 md:opacity-0 md:group-hover/conversation:opacity-100',
           )}
           aria-label="Conversation actions"
           aria-haspopup="menu"

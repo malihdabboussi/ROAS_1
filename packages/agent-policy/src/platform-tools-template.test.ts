@@ -41,6 +41,12 @@ describe('platform tools template', () => {
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'Never infer a different client from message content',
     )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'A partial search with zero matches is not evidence that the message is absent',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'retry with a narrower channel query or broader terms',
+    )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Connected MCP service such as Page Grader →')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'A funnel, landing page, campaign page, or related fulfillment deliverable',

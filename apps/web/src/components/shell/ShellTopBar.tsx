@@ -72,6 +72,7 @@ export function ShellTopBar() {
   const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
   const pageBreadcrumb = useShellStore((s) => s.pageBreadcrumb)
+  const pageBreadcrumbLabel = useShellStore((s) => s.pageBreadcrumbLabel)
   const recordWorkAreaPage = useShellStore((s) => s.recordWorkAreaPage)
 
   const { targets } = useShellOpenIn()
@@ -87,7 +88,8 @@ export function ShellTopBar() {
   const CrumbIcon = crumb.Icon
   const visiblePageBreadcrumb = pageBreadcrumb
   const showWorkAreaControl = chatDrawerOpen || !workAreaOpen || Boolean(artifactTarget)
-  const currentPage = { id: pathname, title: crumb.label, href: pathname }
+  const pageTitle = pageBreadcrumbLabel?.trim() || crumb.label
+  const currentPage = { id: pathname, title: pageTitle, href: pathname }
   const portalActive = searchParams.get('surface') === 'portal'
 
   // Nav stays icon-rail only — clear any legacy pinned expand.
@@ -156,7 +158,7 @@ export function ShellTopBar() {
         ) : (
           <PanelLeftOpen className="icon-sm" aria-hidden />
         )}
-        <span className="body-3 whitespace-nowrap font-medium">AI Chat</span>
+        <span className="body-3 shell-topbar-ai-label whitespace-nowrap font-medium">AI Chat</span>
       </button>
 
       <button
@@ -206,26 +208,34 @@ export function ShellTopBar() {
         </button>
       </div>
 
-      <div className="ml-auto flex items-center gap-1.5">
-        <ShellOpenInMenu targets={targets} />
+      <div className="shell-topbar-actions ml-auto flex items-center gap-1.5">
+        <div className="shell-topbar-desktop-actions contents">
+          <ShellOpenInMenu targets={targets} />
 
-        <div className="shell-surface-toggle" aria-label="Work surface">
-          <button
-            type="button"
-            aria-pressed={!portalActive}
-            onClick={() => setSurface('workspace')}
-            className={cn('shell-surface-toggle-btn', !portalActive && 'shell-surface-toggle-btn-active')}
-          >
-            Workspace
-          </button>
-          <button
-            type="button"
-            aria-pressed={portalActive}
-            onClick={() => setSurface('portal')}
-            className={cn('shell-surface-toggle-btn', portalActive && 'shell-surface-toggle-btn-active')}
-          >
-            Portal
-          </button>
+          <div className="shell-surface-toggle" aria-label="Work surface">
+            <button
+              type="button"
+              aria-pressed={!portalActive}
+              onClick={() => setSurface('workspace')}
+              className={cn(
+                'shell-surface-toggle-btn',
+                !portalActive && 'shell-surface-toggle-btn-active',
+              )}
+            >
+              Workspace
+            </button>
+            <button
+              type="button"
+              aria-pressed={portalActive}
+              onClick={() => setSurface('portal')}
+              className={cn(
+                'shell-surface-toggle-btn',
+                portalActive && 'shell-surface-toggle-btn-active',
+              )}
+            >
+              Portal
+            </button>
+          </div>
         </div>
 
         {showWorkAreaControl ? <ShellWorkAreaControl currentPage={currentPage} /> : null}

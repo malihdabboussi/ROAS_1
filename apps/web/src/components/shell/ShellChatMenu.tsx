@@ -39,7 +39,13 @@ function historyScopeForAgent(agentKey: string | null) {
   return agentKey === PIXEL_AGENT_KEY ? null : agentKey
 }
 
-export function ShellChatMenu({ onCollapse }: { onCollapse?: () => void }) {
+export function ShellChatMenu({
+  onCollapse,
+  onOpenChat,
+}: {
+  onCollapse?: () => void
+  onOpenChat?: () => void
+}) {
   const pathname = usePathname() ?? '/home'
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -231,8 +237,9 @@ export function ShellChatMenu({ onCollapse }: { onCollapse?: () => void }) {
         router.push('/home')
       }
       openChatDrawer(id)
+      onOpenChat?.()
     },
-    [conversations, openChatDrawer, pathname, router, searchParams],
+    [conversations, onOpenChat, openChatDrawer, pathname, router, searchParams],
   )
 
   const handleNewConversation = useCallback(() => {
@@ -241,7 +248,8 @@ export function ShellChatMenu({ onCollapse }: { onCollapse?: () => void }) {
       router.push('/home')
     }
     openFreshChatDrawer()
-  }, [openFreshChatDrawer, pathname, router, searchParams, setActiveConversationId])
+    onOpenChat?.()
+  }, [onOpenChat, openFreshChatDrawer, pathname, router, searchParams, setActiveConversationId])
 
   const openAllChats = useCallback(() => {
     router.push('/chats')
@@ -249,7 +257,6 @@ export function ShellChatMenu({ onCollapse }: { onCollapse?: () => void }) {
 
   const activeConversationId = useChatStore((s) => s.activeConversationId)
   const selectedConversationId = chatDrawer.conversationId ?? activeConversationId ?? null
-
   const filterControls = (
     <div className="gap-spacing-1 flex items-center">
       <ChatHistoryFilterMenu

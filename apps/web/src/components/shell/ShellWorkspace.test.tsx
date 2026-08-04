@@ -96,11 +96,12 @@ vi.mock('@/features/studio/components/preview/ShellArtifactViewerAdapter', () =>
 }))
 
 vi.mock('./ShellChatDrawer', () => ({
-  ShellChatDrawer: ({ expanded }: { expanded?: boolean }) => (
+  ShellChatDrawer: ({ expanded, mobile }: { expanded?: boolean; mobile?: boolean }) => (
     <div
       data-testid="shell-chat-drawer"
       data-shell-chat-drawer
       data-expanded={expanded ? 'true' : 'false'}
+      data-mobile={mobile ? 'true' : 'false'}
     >
       Chat history
       <div>Global chat panel</div>
@@ -248,11 +249,39 @@ describe('ShellWorkspace', () => {
     expect(screen.getByText('Brain page').closest('[aria-hidden="true"]')).not.toBeNull()
   })
 
+  it('shows only the chat surface when the drawer is open on mobile', () => {
+    mocks.pathname = '/brain'
+    mocks.params = new Map()
+    mocks.chatDrawerOpen = true
+
+    render(<ShellWorkspace>Brain page</ShellWorkspace>)
+
+    expect(screen.getByTestId('shell-chat-drawer')).toHaveAttribute('data-expanded', 'true')
+    expect(screen.getByTestId('shell-chat-drawer')).toHaveAttribute('data-mobile', 'true')
+    expect(screen.getByText('Brain page').closest('[data-shell-work-area]')).toHaveClass('hidden')
+  })
+
+  it('gives the mobile working card priority over an open chat drawer', () => {
+    mocks.pathname = '/home'
+    mocks.params = new Map()
+    mocks.chatDrawerOpen = true
+    mocks.artifactTarget = { id: 'image-1' }
+
+    render(<ShellWorkspace>Agenda dashboard</ShellWorkspace>)
+
+    expect(screen.queryByTestId('shell-chat-drawer')).toBeNull()
+    expect(screen.getByText('Artifact editor')).toBeInTheDocument()
+    expect(screen.getByText('Agenda dashboard').closest('[data-shell-work-area]')).toHaveClass(
+      'hidden',
+    )
+  })
+
   it('slides the page surface in from the right without animating the layout track', async () => {
     mocks.pathname = '/brain'
     mocks.params = new Map()
     mocks.workAreaOpen = false
     mocks.chatDrawerOpen = true
+    mocks.desktop = true
 
     const { rerender } = render(<ShellWorkspace>Brain page</ShellWorkspace>)
     const workArea = screen.getByText('Brain page').closest('[data-shell-work-area]')

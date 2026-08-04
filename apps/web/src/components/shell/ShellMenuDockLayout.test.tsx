@@ -132,4 +132,17 @@ describe('ShellMenuDockLayout', () => {
     expect(screen.queryByText('Menu')).toBeNull()
     expect(screen.getByText('Portal')).toBeInTheDocument()
   })
+
+  it('does not reserve a desktop menu rail on mobile', () => {
+    mocks.desktop = false
+
+    render(
+      <ShellMenuDockLayout sidebar={<nav>Menu</nav>}>
+        <div>Workspace</div>
+      </ShellMenuDockLayout>,
+    )
+
+    expect(screen.queryByText('Menu')).toBeNull()
+    expect(screen.getByText('Workspace').closest('main')).toHaveRole('main')
+  })
 })

@@ -227,4 +227,18 @@ describe('shell work area', () => {
 
     expect(useShellStore.getState().recentWorkAreaPages).toEqual([agenda, skills])
   })
+
+  it('stores restore payloads on work-area memory entries', () => {
+    useShellStore.getState().recordWorkAreaPage({
+      id: 'home-meeting:evt-1',
+      title: 'Aaron x Dylan x Nate',
+      href: '/home',
+      restore: { feature: 'home_meeting', data: { id: 'evt-1' } },
+    })
+
+    expect(useShellStore.getState().recentWorkAreaPages[0]?.restore).toEqual({
+      feature: 'home_meeting',
+      data: { id: 'evt-1' },
+    })
+  })
 })

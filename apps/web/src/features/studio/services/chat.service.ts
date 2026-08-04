@@ -1040,7 +1040,8 @@ export async function recoverConversation(
   conversationId: string,
   options: { manual?: boolean; stalled?: boolean } = {},
 ): Promise<void> {
-  if (activeRecoveries.has(conversationId) || activeRecoveryContinuations.has(conversationId)) return
+  if (activeRecoveries.has(conversationId) || activeRecoveryContinuations.has(conversationId))
+    return
   if (isStreamActive(conversationId)) return
 
   const storeAtStart = useChatStore.getState()
@@ -1304,10 +1305,7 @@ async function continueInterruptedConversation(
       .reverse()
       .find((message) => message.role === 'user' && message.metadata?.hidden !== true)
     const recoveryTurnId = visibleUserTurn?.id ?? `assistant:${latestAssistant?.id ?? 'unknown'}`
-    if (
-      !manual &&
-      automaticRecoveryTurnIds.get(conversationId) === recoveryTurnId
-    ) {
+    if (!manual && automaticRecoveryTurnIds.get(conversationId) === recoveryTurnId) {
       markConversationRecoveryRequired(conversationId, failureCode)
       return
     }
@@ -1330,8 +1328,7 @@ async function continueInterruptedConversation(
         ...resumeContext,
         suppressUserMessage: true,
       })
-      const recoveryFailure =
-        useChatStore.getState().streamFailureByConversation[conversationId]
+      const recoveryFailure = useChatStore.getState().streamFailureByConversation[conversationId]
       if (recoveryFailure?.showInterruptedBar) {
         markConversationRecoveryRequired(conversationId, failureCode)
       } else {
@@ -1878,13 +1875,21 @@ export async function fetchLlmModels(): Promise<LlmModelOption[]> {
   return backendGet<LlmModelOption[]>('/api/models')
 }
 
+/** Newest select wins; older in-flight fetches must not clear loading or overwrite active. */
+let selectConversationGeneration = 0
+
 export async function selectConversation(conversationId: string): Promise<void> {
+  const generation = ++selectConversationGeneration
   const store = useChatStore.getState()
   store.setWantsNewConversation(false)
 
+  const isCurrent = () => generation === selectConversationGeneration
+
   // If a stream is active for this conversation, switch immediately (messages are live in store)
   if (isStreamActive(conversationId)) {
+    if (!isCurrent()) return
     store.setActiveConversationId(conversationId)
+    store.setIsLoadingMessages(false)
     return
   }
 
@@ -1901,19 +1906,26 @@ export async function selectConversation(conversationId: string): Promise<void> 
     store.clearConversationStreamUI(conversationId)
   }
 
-  const cachedMessages = store.messagesByConversation[conversationId] ?? []
-  if (cachedMessages.length > 0) {
+  // Empty `[]` is a valid hydrated meeting thread — do not treat it as a cache miss.
+  const hasCachedEntry = Object.prototype.hasOwnProperty.call(
+    store.messagesByConversation,
+    conversationId,
+  )
+  if (hasCachedEntry) {
+    if (!isCurrent()) return
     store.setActiveConversationId(conversationId)
+    store.setIsLoadingMessages(false)
+    const cachedMessages = store.messagesByConversation[conversationId] ?? []
+    if (cachedMessages.length === 0) return
     void (async () => {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
           const msgs = await fetchMessages(conversationId)
-          if (!isStreamActive(conversationId)) {
-            const local = useChatStore.getState().messagesByConversation[conversationId] ?? []
-            useChatStore
-              .getState()
-              .setMessages(conversationId, mergeMessagesPreservingOrderedBlocks(local, msgs))
-          }
+          if (!isCurrent() || isStreamActive(conversationId)) return
+          const local = useChatStore.getState().messagesByConversation[conversationId] ?? []
+          useChatStore
+            .getState()
+            .setMessages(conversationId, mergeMessagesPreservingOrderedBlocks(local, msgs))
           return
         } catch {
           if (attempt === 0) await new Promise((r) => setTimeout(r, 1000))
@@ -1926,13 +1938,18 @@ export async function selectConversation(conversationId: string): Promise<void> 
   store.setIsLoadingMessages(true)
   try {
     const msgs = await fetchMessages(conversationId)
+    if (!isCurrent()) return
     if (!isStreamActive(conversationId)) {
-      const local = store.messagesByConversation[conversationId] ?? []
-      store.setMessages(conversationId, mergeMessagesPreservingOrderedBlocks(local, msgs))
+      const local = useChatStore.getState().messagesByConversation[conversationId] ?? []
+      useChatStore
+        .getState()
+        .setMessages(conversationId, mergeMessagesPreservingOrderedBlocks(local, msgs))
     }
-    store.setActiveConversationId(conversationId)
+    useChatStore.getState().setActiveConversationId(conversationId)
   } finally {
-    store.setIsLoadingMessages(false)
+    if (isCurrent()) {
+      useChatStore.getState().setIsLoadingMessages(false)
+    }
   }
 }
 
@@ -2093,8 +2110,13 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
       created_at: new Date().toISOString(),
     }
     store.addMessage(conversationId, userMsg)
+    const activityAt = new Date().toISOString()
     if (hasRealConversation) {
       store.promoteConversation(conversationId)
+      store.updateConversation(conversationId, {
+        last_message_at: activityAt,
+        updated_at: activityAt,
+      })
     }
     // Title from first message immediately — do not wait for stream success
     // (failed/errored sends previously left "New Conversation" → "Untitled").
@@ -2104,7 +2126,8 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
       if (earlyTitle && isPlaceholderConversationTitle(existing?.title)) {
         store.updateConversation(conversationId, {
           title: earlyTitle,
-          updated_at: new Date().toISOString(),
+          last_message_at: activityAt,
+          updated_at: activityAt,
         })
         if (hasRealConversation) {
           void backendPatch(`/api/conversations/${conversationId}`, { title: earlyTitle })

@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 31, 2026 (Pixel Slack team signals deliver as curated digests + thread follow-ups)
+Last Modified: August 4, 2026 (historical Slack evidence retrieval and clean signal digests)
 
 ## Data Flow
 
@@ -54,6 +54,8 @@ Last Modified: July 31, 2026 (Pixel Slack team signals deliver as curated digest
 48. Creating a Person Brain provisions its durable identity container; it does not replay Slack history by itself. Team → People exposes **Populate brains**, which starts one bounded 90-day backfill across enabled Slack Brain channel mappings. Each channel is fetched once by the existing import runtime and then fanned out to the linked Person Brains, while recurring Team Intelligence continues adding only new, high-confidence facts.
 49. The embedded ROAS Portal uses the full work surface without the workspace menu. Its refresh and new-tab controls sit in the Portal’s bottom-right corner so they do not cover the Portal’s own top-right navigation.
 50. Active Slack Team Intelligence delivery batches due cooling signals per recipient into one curated DM (“here are N things…”) with suggested actions. Follow-ups within 12 hours post as thread replies on that digest root instead of new top-level chats. External findings no longer append the “Pixel will not message the external person” disclaimer; framing is coworker-style (“still needs eyes… Want a reply drafted?”).
+51. Native Slack message search uses the installing user's full Slack search token when available. Bot-token fallback is evidence-aware: an explicitly named channel is paginated across a 120-day window, relevant thread replies are expanded, partial keyword matches are ranked, and the response declares complete or partial coverage. Pixel must broaden or narrow a partial zero-result search before claiming the source is unavailable.
+52. Team Intelligence stores the analyzer's clean finding separately from its human-friendly Shadow preview. Digest and thread-follow-up delivery compose from that clean finding, preventing greetings, narrative wrappers, and suggested actions from being nested or repeated.
 
 ## Code Examples
 
@@ -122,6 +124,7 @@ Reconnect result:
 
 ## Decision Log
 
+- 2026-08-04: Replaced Pixel's 40-message bot-token Slack fallback with bounded historical named-channel retrieval, thread expansion, relevance ranking, and explicit coverage. Team Intelligence delivery now composes from a stored clean finding so compiled digests cannot recursively repeat their framing or CTA.
 - Pixel Team Intelligence Active delivery models Viktor: one curated DM digest per recipient with suggested actions, then thread follow-ups for 12 hours. Per-signal top-level posts and the “Pixel will not message the external person” disclaimer are removed from outbound copy.
 - Portal mode suppresses every workspace-menu dock host while preserving the top-bar Workspace / Portal switch. Portal-owned navigation keeps the top-right corner; ROAS-owned refresh and pop-out controls live at the bottom-right.
 - Meeting detail’s primary CTA is conversational **Prepare with Pixel** (prep beforehand vs live guide), not a silent background prep job. Background `precall-prep/event` still accepts a client event snapshot so Team/non-today calendar ids remain durable when a prep doc is created.
@@ -180,4 +183,7 @@ Reconnect result:
 - Blaze owns Paid Ads performance review. Analysis handoffs carry selected campaign snapshots and never invoke the Meta publishing selector; lead-generation campaigns are judged by their actual result type and cost per result rather than purchase ROAS alone.
 - Page Grader Client Intel packages sync into mapped ROAS campaign brains via deterministic dual-write (not Atlas LLM). Continuous sync is hybrid: PG webhook push + ROAS hourly catch-up + manual Re-sync; skip when package `content_hash` is unchanged.
 - Slack Person Brain backfill is limited to enabled, explicitly mapped channels. It does not read DM history or silently attach a Slack identity to a portal user. Portal teammates continue routing to their canonical User Brain; Slack-only people route to their managed Person Brain.
+- Slack agent history is date-aware and cursor-paginated. Results include source permalinks and explicit complete/partial coverage so a bounded zero-result page cannot be treated as proof of absence.
+- Bot-token Slack retrieval uses the durable observation ledger as a searchable archive for named channels. It backfills missing requested coverage, refreshes stale coverage, searches stored messages and thread replies, and falls back to live history if the archive path is unavailable.
+- Slack Settings exposes whether a connection has full native search, historical fallback, or needs reconnecting for `search:read`.
 - Home Agenda related-call matching is exclusive: time overlap (±45m) + exact email overlap (or strong title confidence), then a sole near-start (±10m) fallback for AI-titled / email-poor Fathom rows. A shared organizer email alone must never attach another person's recording when title confidence is weak and multiple invites compete. Related open uses Fathom `recording_url` or `/spaces?space=&item=`; never the legacy `/spaces/:id/:item` page path.

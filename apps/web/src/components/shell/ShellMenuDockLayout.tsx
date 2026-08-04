@@ -43,13 +43,15 @@ export function ShellMenuDockLayout({
   // Frame only hosts far-left (or fallback when work cannot host).
   const resolvedFrameDock = portalActive
     ? null
-    : !desktop || !hydrated
-      ? 'left'
-      : dock === 'left'
+    : !desktop
+      ? null
+      : !hydrated
         ? 'left'
-        : workAttached && !hostedOnWork
+        : dock === 'left'
           ? 'left'
-          : null
+          : workAttached && !hostedOnWork
+            ? 'left'
+            : null
   const frameAttr = hostedOnWork ? dock : (resolvedFrameDock ?? 'left')
 
   return (

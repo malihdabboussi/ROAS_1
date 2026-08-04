@@ -34,6 +34,7 @@ const mocks = vi.hoisted(() => ({
     recordWorkAreaPage: vi.fn(),
     setMenuMode: vi.fn(),
     pageBreadcrumb: null as ReactNode | null,
+    pageBreadcrumbLabel: null as string | null,
   },
 }))
 
@@ -95,6 +96,7 @@ describe('ShellTopBar', () => {
     mocks.params = new URLSearchParams()
     mocks.shellState.sidebarPinned = false
     mocks.shellState.pageBreadcrumb = null
+    mocks.shellState.pageBreadcrumbLabel = null
     mocks.shellState.chatDrawer = { open: false }
     mocks.shellState.workAreaOpen = true
     mocks.shellState.artifactViewer = { target: null }
@@ -115,6 +117,10 @@ describe('ShellTopBar', () => {
     expect(aiChatButton).toBeInTheDocument()
     expect(aiChatButton.querySelector('.lucide-panel-left-open')).toBeInTheDocument()
     expect(screen.getByText('AI Chat')).toBeInTheDocument()
+    expect(screen.getByText('AI Chat')).toHaveClass('shell-topbar-ai-label')
+    expect(screen.getByLabelText('Work surface').parentElement).toHaveClass(
+      'shell-topbar-desktop-actions',
+    )
   })
 
   it('hides the work-area control until chat creates something to collapse', () => {

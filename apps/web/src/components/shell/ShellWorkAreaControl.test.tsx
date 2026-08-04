@@ -46,14 +46,42 @@ describe('ShellWorkAreaControl', () => {
   })
 
   it('names recent pages and restores a selected page', () => {
+    const meeting = {
+      id: 'home-meeting:google:evt-1',
+      title: 'Aaron x Dylan x Nate',
+      href: '/home',
+      restore: {
+        feature: 'home_meeting',
+        data: { id: 'evt-1', title: 'Aaron x Dylan x Nate' },
+      },
+    }
+    useShellStore.setState({
+      workAreaOpen: true,
+      artifactViewer: { target, width: 480 },
+      recentArtifactTargets: [target],
+      recentWorkAreaPages: [currentPage, meeting, previousPage],
+      pendingWorkRestore: null,
+    })
     render(<ShellWorkAreaControl currentPage={currentPage} />)
 
     fireEvent.mouseEnter(screen.getByRole('button', { name: 'Collapse page — chat full screen' }))
     expect(screen.getByRole('menu', { name: 'Recent work surfaces' })).toHaveClass('w-spacing-64')
     expect(screen.getByRole('menuitem', { name: 'Agenda' })).toHaveClass('text-left')
+    expect(screen.getByRole('menuitem', { name: 'Aaron x Dylan x Nate' })).toBeInTheDocument()
     expect(screen.getByRole('menuitem', { name: 'Skills' })).toBeInTheDocument()
     expect(screen.getByRole('menuitem', { name: 'Campaign image' })).toBeInTheDocument()
 
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Aaron x Dylan x Nate' }))
+    expect(useShellStore.getState().artifactViewer.target).toBeNull()
+    expect(useShellStore.getState().workAreaOpen).toBe(true)
+    expect(useShellStore.getState().pendingWorkRestore).toEqual(meeting.restore)
+    expect(push).not.toHaveBeenCalled()
+  })
+
+  it('navigates to a different named page from history', () => {
+    render(<ShellWorkAreaControl currentPage={currentPage} />)
+
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Collapse page — chat full screen' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Skills' }))
     expect(useShellStore.getState().artifactViewer.target).toBeNull()
     expect(useShellStore.getState().workAreaOpen).toBe(true)

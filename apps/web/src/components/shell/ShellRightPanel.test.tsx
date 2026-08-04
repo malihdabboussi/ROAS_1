@@ -4,15 +4,22 @@ import { ShellRightPanel } from './ShellRightPanel'
 
 const mocks = vi.hoisted(() => ({
   openScopePicker: vi.fn(),
+  routerPush: vi.fn(),
   shellState: {
     rightPanel: { open: true, tab: 'tasks' as const },
     conversationScopePickerRequestNonce: 0,
     setRightPanelOpen: vi.fn(),
     setRightPanelTab: vi.fn(),
+    setWorkAreaOpen: vi.fn(),
+    closeArtifactViewer: vi.fn(),
   },
   messagesByConversation: {
     'conversation-1': [{ id: 'message-1' }],
   },
+}))
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mocks.routerPush }),
 }))
 
 vi.mock('./use-shell-store', () => ({

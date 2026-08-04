@@ -2,16 +2,20 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { Conversation, Message } from '@/lib/conversations/conversation.types'
 import {
   buildSpaceChatConversationUrl,
+  bumpSpaceVibeyChatPanelLoadEpoch,
   conversationBelongsToChannel,
   conversationBelongsToSpace,
   conversationNeedsMessageHydration,
   DEFAULT_SPACE_CHAT_AGENT_KEY,
   getConversationAgentKey,
   isHomeChatSeedPending,
+  isSpaceVibeyChatPanelLoadCurrent,
   mergeConversationLists,
   messageHasTaskMutation,
   readHomeChatSeedForSpace,
+  resetSpaceVibeyChatPanelLoadEpochForTests,
   resolvePendingConversationSelection,
+  resolvePostLoadConversationSelection,
   resolvePreferredConversationOpenId,
   resolveSpaceChatAutoFocusTarget,
   resolveSpaceChatScope,
@@ -217,19 +221,91 @@ describe('space ROAS chat panel logic', () => {
     expect(resolvePreferredConversationOpenId({})).toBeNull()
   })
 
-  it('hydrates when active id is set but messages are missing', () => {
+  it('does not wipe an external or store selection after list load', () => {
+    const ids = new Set(['stored-1', 'store-active'])
+    expect(
+      resolvePostLoadConversationSelection({
+        chatRailIntentIsNew: false,
+        preferredOpenId: 'preferred-1',
+        storeActiveConversationId: 'store-active',
+        storedValidConversationId: 'stored-1',
+        conversationIdsInList: ids,
+      }),
+    ).toEqual({ action: 'select', conversationId: 'preferred-1' })
+
+    expect(
+      resolvePostLoadConversationSelection({
+        chatRailIntentIsNew: true,
+        preferredOpenId: null,
+        storeActiveConversationId: 'store-active',
+        storedValidConversationId: 'stored-1',
+        conversationIdsInList: ids,
+      }),
+    ).toEqual({ action: 'clear' })
+
+    expect(
+      resolvePostLoadConversationSelection({
+        chatRailIntentIsNew: false,
+        preferredOpenId: null,
+        storeActiveConversationId: 'store-active',
+        storedValidConversationId: 'stored-1',
+        conversationIdsInList: ids,
+      }),
+    ).toEqual({ action: 'select', conversationId: 'store-active' })
+
+    expect(
+      resolvePostLoadConversationSelection({
+        chatRailIntentIsNew: false,
+        preferredOpenId: null,
+        storeActiveConversationId: null,
+        storedValidConversationId: 'stored-1',
+        conversationIdsInList: ids,
+      }),
+    ).toEqual({ action: 'select', conversationId: 'stored-1' })
+
+    expect(
+      resolvePostLoadConversationSelection({
+        chatRailIntentIsNew: false,
+        preferredOpenId: null,
+        storeActiveConversationId: 'orphan-active',
+        storedValidConversationId: null,
+        conversationIdsInList: ids,
+      }),
+    ).toEqual({ action: 'select', conversationId: 'orphan-active' })
+
+    expect(
+      resolvePostLoadConversationSelection({
+        chatRailIntentIsNew: false,
+        preferredOpenId: null,
+        storeActiveConversationId: null,
+        storedValidConversationId: null,
+        conversationIdsInList: ids,
+      }),
+    ).toEqual({ action: 'clear' })
+  })
+
+  it('invalidates conversation list loads across panel remounts', () => {
+    resetSpaceVibeyChatPanelLoadEpochForTests()
+    const first = bumpSpaceVibeyChatPanelLoadEpoch()
+    expect(isSpaceVibeyChatPanelLoadCurrent(first)).toBe(true)
+    bumpSpaceVibeyChatPanelLoadEpoch()
+    expect(isSpaceVibeyChatPanelLoadCurrent(first)).toBe(false)
+  })
+
+  it('hydrates only when the conversation has no message cache entry', () => {
     expect(
       conversationNeedsMessageHydration('conv-1', {
         activeConversationId: 'conv-1',
         messagesByConversation: {},
       }),
     ).toBe(true)
+    // Empty meeting threads are valid — `[]` means already fetched.
     expect(
       conversationNeedsMessageHydration('conv-1', {
         activeConversationId: 'conv-1',
         messagesByConversation: { 'conv-1': [] },
       }),
-    ).toBe(true)
+    ).toBe(false)
     expect(
       conversationNeedsMessageHydration('conv-1', {
         activeConversationId: 'conv-1',
@@ -241,7 +317,7 @@ describe('space ROAS chat panel logic', () => {
         activeConversationId: 'other',
         messagesByConversation: { 'conv-1': [{ length: 1 }] },
       }),
-    ).toBe(true)
+    ).toBe(false)
   })
 
   it('waits for a pending shell conversation to exist before resolving its agent', () => {

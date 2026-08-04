@@ -16,7 +16,7 @@ export class SlackObservationRepository {
     const { data, error } = await supabase
       .from('slack_observation_channels')
       .select(
-        'channel_id, channel_name, is_private, is_member, is_excluded, exclusion_reason, join_status, join_error, last_message_ts, last_reconciled_at',
+        'channel_id, channel_name, is_private, is_member, is_excluded, exclusion_reason, join_status, join_error, last_message_ts, last_reconciled_at, archive_oldest_ts, archive_backfilled_at',
       )
       .eq('org_id', input.orgId)
       .eq('slack_team_id', input.slackTeamId)
@@ -144,6 +144,24 @@ export class SlackObservationRepository {
       .eq('slack_team_id', input.slackTeamId)
       .eq('channel_id', input.channelId)
     if (error) throw new Error(`Failed to mark Slack channel reconciled: ${error.message}`)
+  }
+
+  async markArchiveBackfilled(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      slackTeamId: string
+      channelId: string
+      oldestTs: string
+    },
+  ): Promise<void> {
+    const { error } = await supabase.rpc('mark_slack_archive_backfilled', {
+      p_org_id: input.orgId,
+      p_slack_team_id: input.slackTeamId,
+      p_channel_id: input.channelId,
+      p_oldest_ts: input.oldestTs,
+    })
+    if (error) throw new Error(`Failed to mark Slack archive coverage: ${error.message}`)
   }
 
   async updateChannelExclusion(

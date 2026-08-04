@@ -1,3 +1,4 @@
+import { getConversationLastActivityAt } from './conversation-last-activity'
 import type { Conversation } from './conversation.types'
 
 export interface ConversationAgentDisplay {
@@ -70,10 +71,7 @@ export function isConversationArchived(conversation: Conversation): boolean {
   return conversation.status === 'archived'
 }
 
-export function getConversationSection(
-  updatedAtIso: string,
-  pinned: boolean,
-): ConversationSection {
+export function getConversationSection(updatedAtIso: string, pinned: boolean): ConversationSection {
   if (pinned) return 'pinned'
   const updatedAt = new Date(updatedAtIso)
   if (Number.isNaN(updatedAt.getTime())) return 'older'
@@ -105,7 +103,9 @@ export function groupConversationsBySection(
     archived: [],
   }
   const sorted = [...conversations].sort(
-    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+    (a, b) =>
+      new Date(getConversationLastActivityAt(b)).getTime() -
+      new Date(getConversationLastActivityAt(a)).getTime(),
   )
   for (const conversation of sorted) {
     if (isConversationArchived(conversation)) {
@@ -113,7 +113,7 @@ export function groupConversationsBySection(
       continue
     }
     const section = getConversationSection(
-      conversation.updated_at,
+      getConversationLastActivityAt(conversation),
       isConversationPinned(conversation),
     )
     grouped[section].push(conversation)

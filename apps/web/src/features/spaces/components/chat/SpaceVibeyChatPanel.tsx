@@ -24,7 +24,7 @@ import {
   type GlobalChatVoiceStartDetail,
 } from '@/components/global-chat/store/use-global-chat-store'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
-import { ShellEmptyChatActionPills } from '@/components/shell/ShellEmptyChatActionPills'
+import { ShellEmptyChatQuickStartPills } from '@/components/shell/ShellEmptyChatQuickStartPills'
 import { ShellRightPanel } from '@/components/shell/ShellRightPanel'
 import { useShellChatQuickStart } from '@/components/shell/use-shell-chat-quick-start'
 import { useShellStore } from '@/components/shell/use-shell-store'
@@ -129,16 +129,20 @@ import {
 } from './space-vibey-chat-panel.constants'
 import {
   buildSpaceChatConversationUrl,
+  bumpSpaceVibeyChatPanelLoadEpoch,
   conversationBelongsToChannel,
   conversationBelongsToSpace,
   conversationNeedsMessageHydration,
   DEFAULT_SPACE_CHAT_AGENT_KEY,
   getConversationAgentKey,
+  getSpaceVibeyChatPanelLoadEpoch,
   HOME_CHAT_SEED_STORAGE_KEY,
   isHomeChatSeedPending,
+  isSpaceVibeyChatPanelLoadCurrent,
   mergeConversationLists,
   readHomeChatSeedForSpace,
   resolvePendingConversationSelection,
+  resolvePostLoadConversationSelection,
   resolvePreferredConversationOpenId,
   resolveSpaceChatAutoFocusTarget,
   resolveSpaceChatScope,
@@ -321,8 +325,7 @@ export function SpaceVibeyChatPanel({
   const lastUserPromptHeightRef = useRef(0)
   const setTextRef = useRef<((text: string) => void) | null>(null)
   const composerMirrorRef = useRef('')
-  const [composerHasText, setComposerHasText] = useState(false)
-  const quickStart = useShellChatQuickStart(setTextRef, setComposerHasText)
+  const quickStart = useShellChatQuickStart(setTextRef, () => undefined)
   const previousMessageCountRef = useRef(0)
   const isProgrammaticScrollRef = useRef(false)
   const initialHydrationRef = useRef<string | null>(null)
@@ -336,6 +339,17 @@ export function SpaceVibeyChatPanel({
   useEffect(() => {
     homeSeedConsumedRef.current = false
   }, [chatScopeStorageId])
+
+  // Invalidate in-flight list loads when this panel instance unmounts/remounts.
+  // Instance seq refs alone cannot stop orphaned completions from wiping the global store.
+  useEffect(() => {
+    const epoch = bumpSpaceVibeyChatPanelLoadEpoch()
+    return () => {
+      if (getSpaceVibeyChatPanelLoadEpoch() === epoch) {
+        bumpSpaceVibeyChatPanelLoadEpoch()
+      }
+    }
+  }, [])
 
   // Reset local state from the new scope cache before syncing it.
   const conversationsScopeRef = useRef(chatScopeStorageId)
@@ -709,6 +723,7 @@ export function SpaceVibeyChatPanel({
         return
       }
 
+      const epochAtStart = getSpaceVibeyChatPanelLoadEpoch()
       const seq = ++loadConversationsSeqRef.current
       // Only show the loading state when there's nothing cached to paint —
       // otherwise this is a background revalidation of visible rows.
@@ -737,47 +752,28 @@ export function SpaceVibeyChatPanel({
         if (scopeResult.status === 'rejected' && legacyResult.status === 'rejected') {
           throw scopeResult.reason
         }
-        if (seq !== loadConversationsSeqRef.current) {
-          return
-        }
+        // Remount/unmount invalidates epoch; newer same-instance loads bump seq.
+        if (!isSpaceVibeyChatPanelLoadCurrent(epochAtStart)) return
+        if (seq !== loadConversationsSeqRef.current) return
         lastConversationsLoadSigRef.current = loadSignature
         const list = mergeConversationLists(scopeList, legacyList)
         list.forEach((c) => useChatStore.getState().addConversation(c))
         setConversations(list)
 
-        // Shell pen / green New: do not revive the last stored thread after a fresh-chat request.
-        // If the drawer already targets a conversation, a stale "new" intent must not wipe the pane
-        // while history still highlights that row.
-        if (useSpacesStore.getState().chatRailIntent === 'new') {
-          const drawerConversationId = shellSidebarChrome
-            ? useShellStore.getState().chatDrawer.conversationId
-            : null
-          if (!drawerConversationId) {
-            setSelectedConversationId(null)
-            persistActiveConversationId(chatScopeStorageId, null, activeAgentKey)
-            useChatStore.getState().setActiveConversationId(null)
-            return
-          }
-          useSpacesStore.getState().setChatRailIntent(null)
-        }
-
+        const drawerConversationId = shellSidebarChrome
+          ? useShellStore.getState().chatDrawer.conversationId
+          : null
         const preferredOpenId = resolvePreferredConversationOpenId({
           pendingOpenConversationId:
-            preferredConversationId ?? useSpacesStore.getState().pendingOpenConversationId,
-          shellDrawerConversationId: shellSidebarChrome
-            ? useShellStore.getState().chatDrawer.conversationId
-            : null,
+            preferredConversationId ??
+            useGlobalChatStore.getState().meetingContext?.conversationId ??
+            useSpacesStore.getState().pendingOpenConversationId,
+          shellDrawerConversationId: drawerConversationId,
         })
-        if (preferredOpenId) {
-          setSelectedConversationId(preferredOpenId)
-          persistActiveConversationId(chatScopeStorageId, preferredOpenId, activeAgentKey)
-          if (useSpacesStore.getState().pendingOpenConversationId) {
-            useSpacesStore.getState().clearPendingOpenConversation()
-          }
-          if (conversationNeedsMessageHydration(preferredOpenId, useChatStore.getState())) {
-            void selectConversation(preferredOpenId)
-          }
-          return
+
+        const chatRailIntentIsNew = useSpacesStore.getState().chatRailIntent === 'new'
+        if (chatRailIntentIsNew && preferredOpenId) {
+          useSpacesStore.getState().setChatRailIntent(null)
         }
 
         const stored = readStoredAgentConversationId(chatScopeStorageId, activeAgentKey)
@@ -789,12 +785,25 @@ export function SpaceVibeyChatPanel({
               getConversationAgentKey(conversation) === activeAgentKey,
           ),
         )
+        const selection = resolvePostLoadConversationSelection({
+          chatRailIntentIsNew: chatRailIntentIsNew && !preferredOpenId,
+          preferredOpenId,
+          storeActiveConversationId: useChatStore.getState().activeConversationId,
+          storedValidConversationId: storedValid ? stored : null,
+          conversationIdsInList: new Set(list.map((conversation) => conversation.id)),
+        })
 
-        if (storedValid && stored) {
-          setSelectedConversationId(stored)
-          persistActiveConversationId(chatScopeStorageId, stored, activeAgentKey)
-          if (conversationNeedsMessageHydration(stored, useChatStore.getState())) {
-            await selectConversation(stored)
+        if (selection.action === 'select') {
+          if (useSpacesStore.getState().pendingOpenConversationId) {
+            useSpacesStore.getState().clearPendingOpenConversation()
+          }
+          setSelectedConversationId(selection.conversationId)
+          persistActiveConversationId(chatScopeStorageId, selection.conversationId, activeAgentKey)
+          useChatStore.getState().setActiveConversationId(selection.conversationId)
+          if (
+            conversationNeedsMessageHydration(selection.conversationId, useChatStore.getState())
+          ) {
+            void selectConversation(selection.conversationId)
           }
           return
         }
@@ -803,7 +812,10 @@ export function SpaceVibeyChatPanel({
         persistActiveConversationId(chatScopeStorageId, null, activeAgentKey)
         useChatStore.getState().setActiveConversationId(null)
       } finally {
-        if (seq === loadConversationsSeqRef.current) {
+        if (
+          isSpaceVibeyChatPanelLoadCurrent(epochAtStart) &&
+          seq === loadConversationsSeqRef.current
+        ) {
           setConversationsLoading(false)
         }
       }
@@ -826,6 +838,40 @@ export function SpaceVibeyChatPanel({
     void loadConversations()
   }, [loadConversations])
 
+  // Meeting / task open paths set preferredConversationId before (or without) list hydration.
+  // Do not wait for loadConversations — it can early-return on roster/scope and leave a blank Pixel pane
+  // while the shell store already has activeConversationId stamped.
+  useEffect(() => {
+    if (!preferredConversationId) return
+    const conversation =
+      resolvePendingConversationSelection(conversations, preferredConversationId) ??
+      resolvePendingConversationSelection(
+        useChatStore.getState().conversations,
+        preferredConversationId,
+      )
+    if (conversation) {
+      setConversations((current) => {
+        if (current.some((row) => row.id === conversation.id)) return current
+        return mergeConversationLists(current, [conversation])
+      })
+    }
+    // Unknown meeting threads default to vibey — never inherit a leftover Delegator filter.
+    const conversationAgentKey = conversation
+      ? getConversationAgentKey(conversation)
+      : DEFAULT_SPACE_CHAT_AGENT_KEY
+    setDraftAgentKey(conversationAgentKey)
+    useGlobalChatStore.getState().setActiveAgentKey(conversationAgentKey)
+    if (selectedConversationId !== preferredConversationId) {
+      setSelectedConversationId(preferredConversationId)
+      persistActiveConversationId(chatScopeStorageId, preferredConversationId, conversationAgentKey)
+      useChatStore.getState().setActiveConversationId(preferredConversationId)
+    }
+    if (conversationNeedsMessageHydration(preferredConversationId, useChatStore.getState())) {
+      void selectConversation(preferredConversationId)
+    }
+    setMode('chat')
+  }, [preferredConversationId, selectedConversationId, conversations, chatScopeStorageId])
+
   useEffect(() => {
     if (!pendingOpenConversationId || conversationsLoading) return
     const conversationId = pendingOpenConversationId
@@ -833,16 +879,22 @@ export function SpaceVibeyChatPanel({
       resolvePendingConversationSelection(conversations, conversationId) ??
       resolvePendingConversationSelection(useChatStore.getState().conversations, conversationId)
     if (conversation) {
-      setConversations((current) => mergeConversationLists(current, [conversation]))
+      setConversations((current) => {
+        if (current.some((row) => row.id === conversation.id)) return current
+        return mergeConversationLists(current, [conversation])
+      })
     }
     clearPendingOpenConversation()
     const conversationAgentKey = conversation
       ? getConversationAgentKey(conversation)
-      : activeAgentKey
+      : DEFAULT_SPACE_CHAT_AGENT_KEY
     setDraftAgentKey(conversationAgentKey)
+    useGlobalChatStore.getState().setActiveAgentKey(conversationAgentKey)
     setSelectedConversationId(conversationId)
     persistActiveConversationId(chatScopeStorageId, conversationId, conversationAgentKey)
-    void selectConversation(conversationId)
+    if (conversationNeedsMessageHydration(conversationId, useChatStore.getState())) {
+      void selectConversation(conversationId)
+    }
     setMode('chat')
   }, [
     pendingOpenConversationId,
@@ -850,7 +902,6 @@ export function SpaceVibeyChatPanel({
     conversations,
     chatScopeStorageId,
     clearPendingOpenConversation,
-    activeAgentKey,
   ])
 
   // Keep shell drawer conversation id in sync so pen restore reopens this thread.
@@ -1821,13 +1872,19 @@ export function SpaceVibeyChatPanel({
       const drawerConversationId = shellSidebarChrome
         ? useShellStore.getState().chatDrawer.conversationId
         : null
-      // Drawer already has a target thread — do not clear the panel underneath it.
-      if (!drawerConversationId) void handleNewConversation()
+      // Drawer / meeting preferred thread already targets a conversation — do not wipe it.
+      if (!drawerConversationId && !preferredConversationId) void handleNewConversation()
     } else if (chatRailIntent === 'list') {
       setMode('conversations')
     }
     setChatRailIntent(null)
-  }, [chatRailIntent, handleNewConversation, setChatRailIntent, shellSidebarChrome])
+  }, [
+    chatRailIntent,
+    handleNewConversation,
+    preferredConversationId,
+    setChatRailIntent,
+    shellSidebarChrome,
+  ])
 
   const applyGlobalChatSeed = useCallback(
     async (seed: GlobalChatSeedDetail) => {
@@ -2147,8 +2204,6 @@ export function SpaceVibeyChatPanel({
                       {messages.length === 0 && !isLoadingMessages ? (
                         <SpaceChatAgentEmptyState
                           agent={emptyStateAgent}
-                          showCapabilities={!composerHasText}
-                          onSelectCapability={quickStart.selectQuickStart}
                           agentPicker={renderAgentPicker('hero')}
                         />
                       ) : null}
@@ -2348,7 +2403,7 @@ export function SpaceVibeyChatPanel({
                       {messages.length === 0 &&
                       !isLoadingMessages &&
                       !selectedConversationReadOnly ? (
-                        <ShellEmptyChatActionPills onSelect={quickStart.selectQuickStart} />
+                        <ShellEmptyChatQuickStartPills onSelect={quickStart.selectQuickStart} />
                       ) : null}
                       <ComposerInputStack
                         stackActive={isStreaming && !selectedConversationReadOnly}

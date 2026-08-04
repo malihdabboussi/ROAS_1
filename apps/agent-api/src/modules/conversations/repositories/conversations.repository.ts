@@ -38,7 +38,8 @@ export class ConversationsRepository {
         .from('conversations')
         .select('*')
         .eq('user_id', userId)
-        .order('updated_at', { ascending: false })
+        .order('last_message_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
         .order('id', { ascending: false })
 
       if (filters?.orgId !== undefined) {

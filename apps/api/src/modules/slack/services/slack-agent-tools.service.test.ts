@@ -48,15 +48,19 @@ describe('SlackAgentToolsService searchMessages', () => {
         { id: 'C1', name: 'client-christian' },
         { id: 'C2', name: 'general' },
       ]),
-      getChannelHistory: vi.fn().mockImplementation(async (_token: string, channelId: string) => {
-        if (channelId === 'C1') {
-          return [
-            { text: 'Webinar update posted for Christian', user: 'U1', ts: '1.1' },
-            { text: 'Unrelated note', user: 'U2', ts: '1.0' },
-          ]
-        }
-        return [{ text: 'hello', user: 'U3', ts: '2.0' }]
-      }),
+      getChannelHistorySince: vi
+        .fn()
+        .mockImplementation(async (_token: string, channelId: string) => {
+          if (channelId === 'C1') {
+            return [
+              { text: 'Webinar update posted for Christian', user: 'U1', ts: '1.1' },
+              { text: 'Unrelated note', user: 'U2', ts: '1.0' },
+            ]
+          }
+          return [{ text: 'hello', user: 'U3', ts: '2.0' }]
+        }),
+      getChannelHistory: vi.fn(),
+      conversationsRepliesAll: vi.fn(),
     }
     const slackRepo = {
       getIntegration: vi.fn().mockResolvedValue({
@@ -109,6 +113,11 @@ describe('SlackAgentToolsService searchMessages', () => {
     )
     expect(slackApi.listConversations).not.toHaveBeenCalled()
     expect(result.search_mode).toBe('search_messages')
+    expect(result.coverage).toEqual({
+      status: 'complete',
+      results_returned: 1,
+      total_available: 1,
+    })
   })
 })
 
@@ -142,6 +151,13 @@ describe('SlackAgentToolsService getChannelHistory', () => {
       },
       identity_verified: true,
       messages: [{ text: 'new VSL redirect', user: 'U1', ts: '1.1' }],
+      coverage: {
+        status: 'complete',
+        oldest: null,
+        latest: null,
+        next_cursor: null,
+        has_more: false,
+      },
     })
   })
 })

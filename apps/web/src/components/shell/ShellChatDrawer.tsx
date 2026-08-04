@@ -20,7 +20,13 @@ const DRAWER_COLLAPSE_EDGE_TOLERANCE = 24
 const HISTORY_COLLAPSE_THRESHOLD = 96
 const RIGHT_PANEL_WIDTH = 288
 
-export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
+export function ShellChatDrawer({
+  expanded = false,
+  mobile = false,
+}: {
+  expanded?: boolean
+  mobile?: boolean
+}) {
   const open = useShellStore((s) => s.chatDrawer.open)
   const width = useShellStore((s) => s.chatDrawer.width)
   const conversationId = useShellStore((s) => s.chatDrawer.conversationId)
@@ -202,22 +208,33 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
           {!historyCollapsed ? (
             <>
               <div
-                className="shell-chat-drawer-menu"
-                style={{ width: `${historyWidth}px` }}
+                className={cn('shell-chat-drawer-menu', mobile && 'w-full')}
+                style={mobile ? undefined : { width: `${historyWidth}px` }}
                 data-shell-chat-history
               >
-                <ShellChatMenu onCollapse={() => setChatHistoryCollapsed(true)} />
+                <ShellChatMenu
+                  onCollapse={() => setChatHistoryCollapsed(true)}
+                  onOpenChat={mobile ? () => setChatHistoryCollapsed(true) : undefined}
+                />
               </div>
-              <ResizableDivider
-                onMouseDown={handleHistoryMouseDown}
-                isDragging={isHistoryDragging}
-                compact
-                showGrip={false}
-                ariaLabel="Resize chat history"
-              />
+              {!mobile ? (
+                <ResizableDivider
+                  onMouseDown={handleHistoryMouseDown}
+                  isDragging={isHistoryDragging}
+                  compact
+                  showGrip={false}
+                  ariaLabel="Resize chat history"
+                />
+              ) : null}
             </>
           ) : null}
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div
+            className={cn(
+              'min-h-0 min-w-0 flex-1 flex-col overflow-hidden',
+              mobile && !historyCollapsed ? 'hidden' : 'flex',
+            )}
+            aria-hidden={mobile && !historyCollapsed}
+          >
             <GlobalChatPanel
               shellSidebarChrome
               onCollapseChat={() => minimizeChatDrawer()}
@@ -238,7 +255,7 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
           </div>
         </div>
       </div>
-      {!expanded ? (
+      {!expanded && !mobile ? (
         <ResizableDivider
           onMouseDown={handleMouseDown}
           isDragging={isDragging}
