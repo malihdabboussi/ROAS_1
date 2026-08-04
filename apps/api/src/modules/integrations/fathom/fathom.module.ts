@@ -11,6 +11,7 @@ import { FathomController } from './controllers/fathom.controller'
 import { FathomIntegration } from './integrations/fathom.integration'
 import { FathomRepository } from './repositories/fathom.repository'
 import { FathomApiService } from './services/fathom-api.service'
+import { FathomMeetingWorkspaceAttachService } from './services/fathom-meeting-workspace-attach.service'
 import { FathomMeetingWorkspaceBackfillService } from './services/fathom-meeting-workspace-backfill.service'
 import { FathomOAuthService } from './services/fathom-oauth.service'
 import { FathomWebhookService } from './services/fathom-webhook.service'
@@ -30,9 +31,15 @@ import { FathomWebhookService } from './services/fathom-webhook.service'
     FathomRepository,
     FathomOAuthService,
     FathomApiService,
+    FathomMeetingWorkspaceAttachService,
     FathomMeetingWorkspaceBackfillService,
     FathomWebhookService,
   ],
-  exports: [FathomIntegration, FathomOAuthService, FathomApiService],
+  exports: [
+    FathomIntegration,
+    FathomOAuthService,
+    FathomApiService,
+    FathomMeetingWorkspaceAttachService,
+  ],
 })
 export class FathomModule {}

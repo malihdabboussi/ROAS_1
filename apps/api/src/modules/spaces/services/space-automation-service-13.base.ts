@@ -13,6 +13,7 @@ import { CursorApiService } from '../../integrations/cursor/services/cursor-api.
 import { scrapecreatorsCreditsForAction } from '../../integrations/scrapecreators/scrapecreators.constants'
 import { ScrapeCreatorsApiService } from '../../integrations/scrapecreators/services/scrapecreators-api.service'
 import { isContactChannel } from '../../leads/services/contact-identifier.service'
+import { isFollowUpSpaceItem } from '../../meetings/domain/meeting-follow-up-actions'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import {
@@ -22,6 +23,7 @@ import {
 import { SpaceAutomationsRepository } from '../repositories/space-automations.repository'
 import { SpacesRepository } from '../repositories/spaces.repository'
 import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
+import { findExistingFollowUpForSuggestedTask } from './agent-suggest-follow-up-match'
 import {
   enrichSuggestedFollowUp,
   followUpOwnerTagLabel,
@@ -448,7 +450,33 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
     const actionItems = Array.isArray(event.action_items)
       ? (event.action_items as FathomActionItemLike[])
       : []
+    // Empty Fathom list → ingest already mirrored nothing; do not invent follow_ups.
+    if (
+      event.type === 'external_fathom_recording_ready' &&
+      Array.isArray(event.action_items) &&
+      event.action_items.length === 0
+    ) {
+      return { skipped: true, reason: 'fathom_action_items_empty', suggestion_count: 0 }
+    }
+
+    let existingFollowUps: Record<string, unknown>[] = []
+    if (ctx.itemId) {
+      const { data: followUpRows, error: followUpError } = await ctx.supabase
+        .from('space_items')
+        .select('id, title, source, status, custom_data, description, due_date, priority')
+        .eq('space_id', ctx.spaceId)
+        .or(`parent_item_id.eq.${ctx.itemId},custom_data->>source_call_item_id.eq.${ctx.itemId}`)
+      if (followUpError) throw new Error(followUpError.message)
+      existingFollowUps = ((followUpRows as Record<string, unknown>[]) ?? []).filter((row) =>
+        isFollowUpSpaceItem(row),
+      )
+    }
+
     const createdIds: string[] = []
+    const fathomMeetingId =
+      typeof event.meeting_id === 'string' && event.meeting_id.trim()
+        ? event.meeting_id.trim()
+        : null
     for (const [index, raw] of rawTasks.slice(0, maxSuggestions).entries()) {
       const task = this.objectRecord(raw)
       const rawTitle = String(task.title ?? '')
@@ -523,6 +551,98 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
         }
       }
 
+      const providerSourceKey =
+        fathomMeetingId &&
+        enriched.source_action_index != null &&
+        Number.isInteger(enriched.source_action_index)
+          ? `fathom:${fathomMeetingId}:action:${enriched.source_action_index}`
+          : null
+      const customData: Record<string, unknown> = {
+        entry_type: 'follow_up',
+        ...(ownerAttendeeIds.length > 0 ? { attendees: ownerAttendeeIds } : {}),
+        ...(ctx.itemId
+          ? {
+              source_call_item_id: ctx.itemId,
+              ...(sourceCallTitle ? { source_call: sourceCallTitle } : {}),
+            }
+          : {}),
+        ...(providerSourceKey
+          ? { provider_source_key: providerSourceKey, provider: 'fathom' }
+          : {}),
+        suggestion_origin: {
+          ...(ctx.itemId ? { rule_trigger_item_id: ctx.itemId } : {}),
+          trigger_type: String(event.type ?? ''),
+          fathom_meeting_id: fathomMeetingId,
+          agent_key: agentKey,
+          suggestion_index: index,
+          source_action_index: enriched.source_action_index,
+          source_action_key:
+            enriched.source_action_index === null
+              ? null
+              : (providerSourceKey ??
+                `${String(event.meeting_id ?? 'meeting')}:${enriched.source_action_index}`),
+          source_action: 'agent_suggest_tasks',
+        },
+        ...(enriched.assignee_email || groundedAssigneeName
+          ? {
+              ...(enriched.assignee_email
+                ? { suggested_assignee_email: enriched.assignee_email }
+                : {}),
+              ...(groundedAssigneeName ? { suggested_assignee_name: groundedAssigneeName } : {}),
+              ...(groundedTitle.grounded && groundedTitle.matched
+                ? {
+                    suggested_title_grounded_from: rawTitle,
+                    suggested_title_portal_person: groundedTitle.matched.label,
+                  }
+                : {}),
+              ...(assignee
+                ? {}
+                : enriched.assignee_email && isInternalAssigneeEmail(enriched.assignee_email)
+                  ? { suggested_assignee_unresolved: true }
+                  : enriched.assignee_email
+                    ? { suggested_assignee_external: true }
+                    : {}),
+            }
+          : {}),
+      }
+
+      const existingMatch = findExistingFollowUpForSuggestedTask({
+        existingFollowUps,
+        title,
+        meetingId: fathomMeetingId,
+        sourceActionIndex: enriched.source_action_index,
+      })
+      if (existingMatch?.id) {
+        const updated = (await this.repo.updateItem(
+          ctx.supabase,
+          ownerUserId,
+          ctx.spaceId,
+          String(existingMatch.id),
+          {
+            title,
+            ...(description ? { description } : {}),
+            ...(enriched.due_date ? { due_date: enriched.due_date } : {}),
+            priority: enriched.priority,
+            ...(assignee
+              ? {
+                  assignee_type: assignee.assignee_type,
+                  assignee_id: assignee.assignee_id,
+                  assignees: assignee.assignees,
+                }
+              : {}),
+            custom_data: customData,
+          } as never,
+          ctx.orgId,
+        )) as Record<string, unknown>
+        createdIds.push(String(updated.id ?? existingMatch.id))
+        existingFollowUps = existingFollowUps.map((row) =>
+          String(row.id) === String(existingMatch.id)
+            ? { ...row, ...updated, custom_data: customData }
+            : row,
+        )
+        continue
+      }
+
       const created = (await this.repo.createItem(
         ctx.supabase,
         ownerUserId,
@@ -542,57 +662,12 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
             : {}),
           source: 'agent_suggested',
           ...(ctx.itemId ? { parent_item_id: ctx.itemId } : {}),
-          custom_data: {
-            entry_type: 'follow_up',
-            ...(ownerAttendeeIds.length > 0 ? { attendees: ownerAttendeeIds } : {}),
-            ...(ctx.itemId
-              ? {
-                  source_call_item_id: ctx.itemId,
-                  ...(sourceCallTitle ? { source_call: sourceCallTitle } : {}),
-                }
-              : {}),
-            suggestion_origin: {
-              ...(ctx.itemId ? { rule_trigger_item_id: ctx.itemId } : {}),
-              trigger_type: String(event.type ?? ''),
-              fathom_meeting_id:
-                typeof event.meeting_id === 'string' && event.meeting_id ? event.meeting_id : null,
-              agent_key: agentKey,
-              suggestion_index: index,
-              source_action_index: enriched.source_action_index,
-              source_action_key:
-                enriched.source_action_index === null
-                  ? null
-                  : `${String(event.meeting_id ?? 'meeting')}:${enriched.source_action_index}`,
-              source_action: 'agent_suggest_tasks',
-            },
-            ...(enriched.assignee_email || groundedAssigneeName
-              ? {
-                  ...(enriched.assignee_email
-                    ? { suggested_assignee_email: enriched.assignee_email }
-                    : {}),
-                  ...(groundedAssigneeName
-                    ? { suggested_assignee_name: groundedAssigneeName }
-                    : {}),
-                  ...(groundedTitle.grounded && groundedTitle.matched
-                    ? {
-                        suggested_title_grounded_from: rawTitle,
-                        suggested_title_portal_person: groundedTitle.matched.label,
-                      }
-                    : {}),
-                  ...(assignee
-                    ? {}
-                    : enriched.assignee_email && isInternalAssigneeEmail(enriched.assignee_email)
-                      ? { suggested_assignee_unresolved: true }
-                      : enriched.assignee_email
-                        ? { suggested_assignee_external: true }
-                        : {}),
-                }
-              : {}),
-          },
+          custom_data: customData,
         },
         ctx.orgId,
       )) as Record<string, unknown>
       createdIds.push(String(created.id))
+      existingFollowUps = [...existingFollowUps, created]
     }
 
     if (createdIds.length > 0 && ctx.itemId) {

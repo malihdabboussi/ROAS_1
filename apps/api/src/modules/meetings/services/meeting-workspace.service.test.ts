@@ -65,6 +65,7 @@ describe('MeetingWorkspaceService', () => {
         internalDomains: ['roas.co'],
       }),
       findByCalendarEvent: vi.fn().mockResolvedValue(null),
+      findBestExistingCallForEvent: vi.fn().mockResolvedValue(null),
       createScheduledMeeting: vi.fn().mockResolvedValue({
         id: 'meeting-1',
         title: 'Client review',
@@ -113,6 +114,7 @@ describe('MeetingWorkspaceService', () => {
       meeting_item_id: 'meeting-1',
       conversation_id: 'conversation-1',
     })
+    expect(resolutionRepository.findBestExistingCallForEvent).toHaveBeenCalled()
     expect(resolutionRepository.createScheduledMeeting).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ callKind: 'client' }),
@@ -120,6 +122,85 @@ describe('MeetingWorkspaceService', () => {
     expect(repository.upsertParticipantContextLinks).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ participantEmails: ['client@example.com'] }),
+    )
+  })
+
+  it('reuses an existing Fathom Meetings call instead of creating a calendar stub', async () => {
+    const repository = {
+      upsertWorkspace: vi.fn().mockResolvedValue({
+        meeting_item_id: 'fathom-call-1',
+        phase: 'scheduled',
+        conversation_id: null,
+      }),
+      upsertParticipantContextLinks: vi.fn().mockResolvedValue(undefined),
+    }
+    const resolutionRepository = {
+      findSpaceOrgId: vi.fn().mockResolvedValue(null),
+      findCallIdentityProfile: vi.fn().mockResolvedValue({
+        email: 'owner@roas.co',
+        fathomAliases: [],
+        fullName: 'Owner',
+        internalDomains: ['roas.co'],
+      }),
+      findByCalendarEvent: vi.fn().mockResolvedValue(null),
+      findBestExistingCallForEvent: vi.fn().mockResolvedValue({
+        id: 'fathom-call-1',
+        title: 'Leadership alignment on account manager workflow',
+        source: 'fathom',
+        custom_data: {
+          entry_type: 'call',
+          recording_url: 'https://fathom.video/calls/1',
+          external_automation: { provider: 'fathom', meeting_id: '170082749' },
+        },
+      }),
+      findMeetingItemCustomData: vi.fn().mockResolvedValue({
+        entry_type: 'call',
+        call_kind: 'team',
+        call_kind_source: 'manual',
+      }),
+      updateMeetingItemCallKind: vi.fn().mockResolvedValue(undefined),
+      createScheduledMeeting: vi.fn(),
+    }
+    const stateRepository = {
+      updateWorkspace: vi.fn().mockResolvedValue({
+        meeting_item_id: 'fathom-call-1',
+        phase: 'scheduled',
+        conversation_id: 'conversation-1',
+      }),
+    }
+    const conversations = {
+      createConversation: vi.fn().mockResolvedValue({ id: 'conversation-1' }),
+    }
+    const service = new MeetingWorkspaceService(
+      repository as never,
+      resolutionRepository as never,
+      {} as never,
+      stateRepository as never,
+      conversations as never,
+      { create: vi.fn() } as never,
+    )
+
+    const result = await service.resolveScheduledMeeting({} as never, {
+      spaceId: 'space-1',
+      userId: 'user-1',
+      orgId: null,
+      event: {
+        calendarEventId: 'google:aaron',
+        title: 'AARON X DYLAN X NATE',
+        start: '2026-08-04T17:00:00.000Z',
+        end: '2026-08-04T17:30:00.000Z',
+        attendees: [],
+      },
+    })
+
+    expect(result.meeting_item_id).toBe('fathom-call-1')
+    expect(resolutionRepository.createScheduledMeeting).not.toHaveBeenCalled()
+    expect(repository.upsertWorkspace).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        meetingItemId: 'fathom-call-1',
+        calendarEventId: 'google:aaron',
+      }),
     )
   })
 
@@ -141,6 +222,7 @@ describe('MeetingWorkspaceService', () => {
         phase: 'scheduled',
         conversation_id: 'conversation-winner',
       }),
+      findBestExistingCallForEvent: vi.fn().mockResolvedValue(null),
       createScheduledMeeting: vi.fn().mockResolvedValue({
         id: 'meeting-orphan',
         title: 'Client review',
@@ -246,5 +328,55 @@ describe('MeetingWorkspaceService', () => {
       conversation_id: 'conversation-1',
       message_id: 'message-1',
     })
+  })
+
+  it('creates a manual action item without changing call phase', async () => {
+    const created = {
+      id: 'action-1',
+      title: 'Send recap to Nate',
+      source_type: 'manual',
+      status: 'confirmed',
+    }
+    const readRepository = {
+      getWorkspaceBundle: vi.fn().mockResolvedValue({
+        meeting: { id: 'meeting-1', title: 'Strategy call' },
+        workspace: {
+          meeting_item_id: 'meeting-1',
+          phase: 'live',
+          conversation_id: 'conversation-1',
+        },
+      }),
+    }
+    const stateRepository = {
+      createManualAction: vi.fn().mockResolvedValue(created),
+    }
+    const service = new MeetingWorkspaceService(
+      {} as never,
+      {} as never,
+      readRepository as never,
+      stateRepository as never,
+      { createConversation: vi.fn() } as never,
+      { create: vi.fn() } as never,
+    )
+
+    const result = await service.createManualAction({} as never, {
+      spaceId: 'space-1',
+      meetingItemId: 'meeting-1',
+      userId: 'user-1',
+      orgId: 'org-1',
+      title: 'Send recap to Nate',
+    })
+
+    expect(stateRepository.createManualAction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        meetingItemId: 'meeting-1',
+        spaceId: 'space-1',
+        userId: 'user-1',
+        orgId: 'org-1',
+        title: 'Send recap to Nate',
+      }),
+    )
+    expect(result).toEqual(created)
   })
 })

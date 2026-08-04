@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-07-29
+**Last Modified:** 2026-08-04 (Fathom→follow_up ingest + grounded agent_suggest restore)
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` uses those same stored drafts, sends account-manager reminders only to people classified Internal and individually set Active, and keeps the client-facing recap in the admin approval thread.
 
@@ -11,19 +11,19 @@ The canonical post-call path is now meeting-first rather than automation-task-fi
 1. A durable Fathom event claim enters `processing`; a failed attempt is reclaimable instead of being permanently treated as a duplicate.
 2. Recording reconciliation attaches a short pre-call, main call, or other fragment to one canonical meeting when calendar identity matches or start/title/participant evidence is unambiguous.
 3. Every provider recording is stored in `meeting_recordings`. Every supplied transcript becomes its own complete child document deliverable.
-4. Exact Fathom action items are stored in `meeting_actions` with provider evidence. Canonical profile/CRM identity resolves display names and IDs, while original provider assignee text remains in evidence.
+4. Exact Fathom action items are stored in `meeting_actions` with provider evidence **and** mirrored into `follow_up` space_items (Programs Action items / Home). Canonical profile/CRM identity resolves display names and IDs, while original provider assignee text remains in evidence. Operators can also add manual follow-ups from the workspace **+** control during the call; titles cross-reference so Fathom later merges instead of duplicating.
 5. A unified recap document refreshes from every attached provider summary and all exact provider actions. The longest/evidence-richest source is marked primary, but supplemental recordings remain visible.
 6. Attendee contacts plus the owning Space and campaign become typed `meeting_context_links`. Context can guide prep and chat without rewriting provider evidence.
 7. The curated meeting workspace exposes agenda/prep, recordings, transcript and recap deliverables, action items, live notes/snippets, and prior unresolved commitments in one read model.
 8. Clicking a linked call opens the curated workspace directly. Clicking a future calendar call creates or reuses one scheduled call item and workspace, so its agenda, chat, notes, and later recording share the same meeting identity.
 9. Every workspace has one persistent meeting conversation. The connected chat is the far-left workspace surface before, during, and after the call; it is not a separate Meeting AI island.
 10. Live notes and pasted call snippets are stored both as typed meeting snippets and as entries in that same conversation. They appear in the chat timeline without being executed as AI instructions.
-11. When Fathom later publishes the recording, calendar/start/title/participant reconciliation attaches it to the scheduled workspace when the match is unambiguous instead of creating a duplicate call.
+11. When Fathom later publishes the recording, calendar/start/title/participant reconciliation attaches it to the scheduled workspace when the match is unambiguous instead of creating a duplicate call. Operators can also manually link a Fathom recording from the workspace Recordings **+** picker (`POST /api/integrations/fathom/attach-to-meeting`), which force-ingests onto the open meeting.
 12. The next meeting can point back through `next_meeting_item_id`; unresolved confirmed/in-progress/rolled-forward commitments are surfaced before the next call.
 13. Scheduled workspace resolution accepts timezone-aware calendar timestamps and normalizes them to UTC before persistence, so Google Calendar offsets remain chronologically comparable during later Fathom reconciliation.
 14. Scheduled and Fathom meetings share one call-kind classifier: Personal, Team, Executive, Client, Partner, and Sales. Organization member email domains distinguish teammates from external attendees. Automatic classifications can refresh as richer recording evidence arrives, while a valid human selection is marked manual and remains authoritative.
 
-The default `Fathom Meeting Log` automation no longer runs `send_to_agent`, `agent_suggest_tasks`, or Slack-confirm actions. The migration removes those steps from installed rules with that exact template name. Custom Fathom automations are preserved. Slack delivery remains an explicit downstream workflow, not an automatic side effect of ingesting a recording.
+Exact Fathom `action_items` are mirrored into Meetings `follow_up` space_items on ingest (Programs Action items + Home). When the webhook payload has zero actions, we refetch the meeting once from Fathom; if still empty we do not invent tasks from the transcript. The default `Fathom Meeting Log` automation runs lifecycle status updates plus grounded `agent_suggest_tasks` (enrich assignees/due/priority onto those follow_ups — never invent when `action_items` is empty). Slack confirm remains an explicit downstream workflow, not an automatic side effect of ingest.
 
 Legacy Fathom call rows are backfilled into workspaces and recording sources. Existing full transcript text is copied into a transcript deliverable without deleting the original call data. Historical recording rows that predate transcript persistence can be repaired through the authenticated, cursor-paginated transcript backfill endpoint. It refetches the original Fathom transcript and reuses canonical meeting ingestion, so retries update the existing recording, recap, and provider actions without creating duplicate meetings or task floods.
 
@@ -60,13 +60,16 @@ Legacy Fathom call rows are backfilled into workspaces and recording sources. Ex
 ```text
 Fathom recording ready (my_recordings OR shared_team_recordings)
   → webhook resolves owner by webhook secret
+  → if action_items empty: one Fathom list refetch (still empty → stay empty; no transcript invention)
   → optional transcript hydrate via Fathom API if payload omitted it
   → cursor-paginated transcript repair for historical rows that omitted transcript payloads
   → choose one canonical matching Meetings route (organization route wins an equal match)
   → one canonical Meetings item
   → one or more meeting_recordings + complete transcript deliverables
-  → exact provider actions + canonical identity mapping
+  → exact provider actions in meeting_actions + mirrored follow_up space_items (UI Action items)
+  → canonical identity mapping; manual + merges by normalized title
   → unified recap refreshed across every attached recording
+  → Fathom Meeting Log: processing → needs_follow_up → grounded agent_suggest_tasks (enrich only)
   → optional explicit Slack delivery workflow
   → Pixel + post-call-delivery skill drafts once
   → store the exact recap in the Shadow ledger
@@ -286,7 +289,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 | `apps/web/src/features/team-2/components/people/SlackTeamSignalsView.tsx`                        | Team signals selectable list + approve/dismiss detail pane                  |
 | `apps/api/src/modules/spaces/services/__tests__/meeting-follow-up-slack-confirm.service.test.ts` | Unit tests                                                                  |
 | `apps/api/src/modules/spaces/services/space-automation.service.ts`                               | Executes `request_slack_follow_up_confirm`                                  |
-| `apps/api/src/modules/meetings/domain/meeting-call-kind.ts`                                     | Canonical scheduled/Fathom call-kind taxonomy and classifier                |
+| `apps/api/src/modules/meetings/domain/meeting-call-kind.ts`                                      | Canonical scheduled/Fathom call-kind taxonomy and classifier                |
 | `apps/api/src/modules/spaces/services/slack-team-loop.service.ts`                                | Observes Slack, analyzes signals, writes proposals/memories/sends           |
 | `apps/api/src/modules/spaces/services/slack-team-loop-analysis.ts`                               | Bounded schema-constrained analyzer and token accounting                    |
 | `apps/api/src/modules/slack/integrations/slack-api-integration-core.base.ts`                     | Paginates the complete Slack channel directory                              |
@@ -306,22 +309,25 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 
 ### Template / catalog / capabilities
 
-| Path                                                                                     | Role                                                                |
-| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `apps/api/src/modules/space-templates/data/space-template-catalog-personal-dashboard.ts` | Default Fathom Meeting Log performs lifecycle updates only          |
-| `apps/api/src/modules/space-templates/data/__tests__/space-template-catalog.test.ts`     | Protects template action ordering and defaults                      |
-| `packages/api-shared/src/types/flow-capabilities.ts`                                     | Capability surface                                                  |
-| `apps/web/src/features/spaces/types/space-schema.ts`                                     | Frontend action type                                                |
-| `apps/web/src/features/spaces/components/automations/automation-catalog.ts`              | Catalog entry                                                       |
-| `apps/web/src/lib/flows/flow-builder-canvas.utils.ts`                                    | Flow canvas                                                         |
-| `apps/web/src/lib/flows/automation-flow-step-summary.utils.ts`                           | Step summary                                                        |
-| `apps/web/src/lib/flows/automation-publishable.ts`                                       | Publishability                                                      |
-| `apps/api/src/modules/spaces/data/space-automation-template-catalog-team.ts`             | Unified Slack Team Intelligence template                            |
-| `apps/api/src/modules/slack/services/slack-observation.service.ts`                       | Webhook capture, reconciliation, threads, cursors, backfill batches |
-| `apps/api/src/modules/slack/repositories/slack-observation.repository.ts`                | Shared observation ledger persistence                               |
-| `supabase/migrations/20260721100000_slack_observation_ledger.sql`                        | Ledger, channel/member index, and cursors                           |
-| `supabase/migrations/20260721101000_unify_slack_team_observation_loop.sql`               | Consolidates four scanners into one Shadow loop                     |
-| `supabase/migrations/20260722230500_accelerate_slack_team_intelligence.sql`              | Moves installed unified analyzers to a five-minute cursor cadence   |
+| Path                                                                                     | Role                                                                   |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `apps/api/src/modules/space-templates/data/space-template-catalog-personal-dashboard.ts` | Default Fathom Meeting Log: lifecycle + grounded `agent_suggest_tasks` |
+| `apps/api/src/modules/meetings/domain/upsert-provider-follow-ups.ts`                     | Plans ingest mirror of provider actions → follow_up space_items        |
+| `apps/api/src/modules/meetings/services/meeting-source-ingestion.service.ts`             | After `meeting_actions`, upserts matching follow_ups                   |
+| `apps/api/src/modules/integrations/fathom/services/fathom-webhook.service.ts`            | One list refetch when webhook `action_items` is empty                  |
+| `apps/api/src/modules/space-templates/data/__tests__/space-template-catalog.test.ts`     | Protects template action ordering and defaults                         |
+| `packages/api-shared/src/types/flow-capabilities.ts`                                     | Capability surface                                                     |
+| `apps/web/src/features/spaces/types/space-schema.ts`                                     | Frontend action type                                                   |
+| `apps/web/src/features/spaces/components/automations/automation-catalog.ts`              | Catalog entry                                                          |
+| `apps/web/src/lib/flows/flow-builder-canvas.utils.ts`                                    | Flow canvas                                                            |
+| `apps/web/src/lib/flows/automation-flow-step-summary.utils.ts`                           | Step summary                                                           |
+| `apps/web/src/lib/flows/automation-publishable.ts`                                       | Publishability                                                         |
+| `apps/api/src/modules/spaces/data/space-automation-template-catalog-team.ts`             | Unified Slack Team Intelligence template                               |
+| `apps/api/src/modules/slack/services/slack-observation.service.ts`                       | Webhook capture, reconciliation, threads, cursors, backfill batches    |
+| `apps/api/src/modules/slack/repositories/slack-observation.repository.ts`                | Shared observation ledger persistence                                  |
+| `supabase/migrations/20260721100000_slack_observation_ledger.sql`                        | Ledger, channel/member index, and cursors                              |
+| `supabase/migrations/20260721101000_unify_slack_team_observation_loop.sql`               | Consolidates four scanners into one Shadow loop                        |
+| `supabase/migrations/20260722230500_accelerate_slack_team_intelligence.sql`              | Moves installed unified analyzers to a five-minute cursor cadence      |
 
 ### Docs / logs
 
@@ -388,6 +394,17 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-28:** Historical Fathom recordings missing transcript deliverables are repaired in bounded cursor pages through the same canonical ingestion service. Unavailable recordings cannot block older pages, and successful replays remain idempotent.
 - **2026-07-28:** Production model capability tiers must cover every context window emitted by Auto chat routing. Contract tests enumerate full-task and staged-chat routes so meeting chat cannot select a context tier rejected by the runtime registry.
 - **2026-07-29:** Meeting workspaces never render a second chat surface. Opening a meeting attaches its canonical conversation and meeting-aware context to the existing shell chat; live notes and call snippets are stored as typed meeting records and mirrored into that same conversation.
+- **2026-08-04:** Open meeting renders the curated workspace in the shell work area (right card), not a fullscreen modal, so the linked meeting conversation stays visible in the left shell chat.
+- **2026-08-04:** Live notes/snippets are entered in the linked meeting chat only; the duplicate capture field was removed from the meeting workspace panel.
+- **2026-08-04:** While a meeting is live, the primary control is End call (not Rejoin). Live-chat awareness asks the agent for short brain-dump replies unless the user explicitly asks for guidance.
+- **2026-08-04:** Action items header includes **+** → inline composer → `POST /api/spaces/:spaceId/meetings/:meetingItemId/actions` creating `source_type: manual` rows so commitments can be captured throughout the call without waiting on Fathom.
+- **2026-08-04:** Manual and Fathom/provider action items are cross-referenced by normalized title/text. Adding a live duplicate returns the existing row; recording ingest merges into a matching live row instead of inserting a second action.
+- **2026-08-04:** Meeting workspace chrome links to the owning Space and (when mapped) Campaign from the header and a Linked sidebar section.
+- **2026-08-04:** Recordings sidebar **+** opens a Fathom picker; selecting a call attaches it to the open meeting via `POST /api/integrations/fathom/attach-to-meeting` (transcript/summary fetched when missing, then canonical ingest).
+- **2026-08-04:** Meeting chat awareness includes recording status. When none are linked, Pixel is steered to Fathom list/transcript for action items and to the Recordings **+** picker — not a vague “check now” wait loop.
+- **2026-08-04:** Exact Fathom actions are source of truth for Action items. Ingest mirrors them into `follow_up` space_items (Programs + Home). When the webhook sends 0 actions, refetch once from Fathom; if still empty, leave the list empty — never invent from transcript. Manual **+** cross-references/merges by normalized title.
+- **2026-08-04:** Default / live `Fathom Meeting Log` again includes grounded `agent_suggest_tasks` after lifecycle status steps. Suggest enrichs existing follow_ups (assignee/due/priority via `source_action_index` / provider key / title); empty `action_items` → `{tasks:[]}`. Attach-to-existing-call also runs this automation after ingest.
+- **2026-08-04:** Phase 3 gap repair: Meetings space calls with provider `meeting_actions` and 0 follow_ups were one-shot synced (14 follow_ups). Prod verification: recent calls with N actions have N follow_ups; calls with 0 stay at 0; live automation `ef3975a7-…` enabled with suggest-tasks.
 - **2026-07-29:** Calendar timestamps with explicit timezone offsets are accepted at scheduled-workspace resolution and normalized to UTC before they are stored.
 - **2026-07-29:** Every Space with a `call_kind` field receives the complete Personal/Team/Executive/Client/Partner/Sales option set, including legacy organization Meetings spaces. Calendar creation and Fathom attachment use one classifier; automatic results may refresh, but manual selections win.
 

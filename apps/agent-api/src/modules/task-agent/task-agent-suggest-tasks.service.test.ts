@@ -79,4 +79,21 @@ describe('TaskAgentService.suggestTasks', () => {
 
     expect(result.tasks).toEqual([])
   })
+
+  it('returns no tasks when Fathom action_items is an empty array', async () => {
+    const { service, openClaw } = buildService(
+      JSON.stringify({ tasks: [{ title: 'Invented from transcript', priority: 'high' }] }),
+    )
+
+    const result = await service.suggestTasks({
+      space_id: 'space_1',
+      owner_user_id: 'user_1',
+      org_id: null,
+      max_suggestions: 10,
+      payload: { summary: 'Call summary', action_items: [] },
+    })
+
+    expect(result.tasks).toEqual([])
+    expect(openClaw.streamCompletion).not.toHaveBeenCalled()
+  })
 })

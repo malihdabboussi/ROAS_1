@@ -141,7 +141,7 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
     expect(actionTypes).not.toContain('create_task')
     expect(actionTypes).toContain('change_status')
     expect(actionTypes).not.toContain('send_to_agent')
-    expect(actionTypes).not.toContain('agent_suggest_tasks')
+    expect(actionTypes).toContain('agent_suggest_tasks')
     expect(actionTypes).not.toContain('request_slack_follow_up_confirm')
     expect(dashboard?.schema.fields).toEqual(
       expect.arrayContaining([

@@ -1,10 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type {
-  CanonicalMeetingAssignee,
-  MeetingAssigneeCandidate,
-} from '../domain/meeting-assignee-identity'
-import type { FathomMeetingSource, FathomSourceAction } from '../providers/fathom-meeting-source'
+import type { MeetingAssigneeCandidate } from '../domain/meeting-assignee-identity'
+import type { FathomMeetingSource } from '../providers/fathom-meeting-source'
 
 type MeetingScope = {
   meetingItemId: string
@@ -250,50 +247,6 @@ export class MeetingWorkspaceRepository {
       .update({ transcript_doc_item_id: transcriptDocItemId })
       .eq('id', recordingId)
     if (error) throw new BadRequestException(error.message)
-  }
-
-  async upsertProviderActions(
-    supabase: SupabaseClient,
-    input: MeetingScope & {
-      recordingId: string
-      actions: FathomSourceAction[]
-      assignees: Map<string, CanonicalMeetingAssignee>
-    },
-  ): Promise<string[]> {
-    if (input.actions.length === 0) return []
-    const payload = input.actions.map((action) => {
-      const assignee = input.assignees.get(action.sourceKey) ?? null
-      return {
-        meeting_item_id: input.meetingItemId,
-        space_id: input.spaceId,
-        user_id: input.userId,
-        org_id: input.orgId,
-        source_recording_id: input.recordingId,
-        source_type: 'provider',
-        source_key: action.sourceKey,
-        source_text: action.sourceText,
-        title: action.sourceText.slice(0, 1000),
-        status: action.completed ? 'resolved' : 'confirmed',
-        canonical_assignee_type: assignee?.type ?? null,
-        canonical_assignee_id: assignee?.id ?? null,
-        canonical_assignee_name: assignee?.name ?? action.assigneeName,
-        canonical_assignee_email: assignee?.email ?? action.assigneeEmail,
-        evidence: {
-          recording_timestamp: action.recordingTimestamp,
-          recording_playback_url: action.recordingPlaybackUrl,
-          provider: 'fathom',
-          provider_assignee_name: action.assigneeName,
-          provider_assignee_email: action.assigneeEmail,
-          user_generated: action.userGenerated,
-        },
-      }
-    })
-    const { data, error } = await supabase
-      .from('meeting_actions')
-      .upsert(payload, { onConflict: 'meeting_item_id,source_key' })
-      .select('id')
-    if (error) throw new BadRequestException(error.message)
-    return (data ?? []).map((row) => String(row.id))
   }
 
   async listAssigneeCandidates(

@@ -37,7 +37,14 @@ export type FathomMeetingSource = {
 }
 
 export function normalizeFathomMeetingSource(event: Record<string, unknown>): FathomMeetingSource {
-  const externalRecordingId = firstText(event.recording_id, event.id, event.call_id)
+  // Fathom / Composio payloads often send ids as numbers; meeting_id is the
+  // stable recording key when recording_id is absent on webhook events.
+  const externalRecordingId = firstText(
+    event.recording_id,
+    event.id,
+    event.call_id,
+    event.meeting_id,
+  )
   if (!externalRecordingId) throw new Error('Fathom recording id is required')
 
   const scheduledStart = normalizedIso(event.scheduled_start_time)
@@ -197,9 +204,12 @@ function httpUrl(value: unknown): string | null {
 
 function firstText(...values: unknown[]): string | null {
   for (const value of values) {
-    if (typeof value !== 'string') continue
-    const trimmed = value.trim()
-    if (trimmed) return trimmed
+    if (typeof value === 'string') {
+      const trimmed = value.trim()
+      if (trimmed) return trimmed
+      continue
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value)
   }
   return null
 }
