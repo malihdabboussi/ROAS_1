@@ -52,6 +52,8 @@ export interface SpaceChatScope {
 interface ConversationListLike extends ConversationScopeLike {
   id: string
   updated_at: string
+  created_at?: string
+  last_message_at?: string | null
 }
 
 interface MessageMutationLike {
@@ -215,9 +217,11 @@ export function mergeConversationLists<T extends ConversationListLike>(...lists:
       byId.set(conversation.id, { ...byId.get(conversation.id), ...conversation } as T)
     }
   }
-  return Array.from(byId.values()).sort(
-    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
-  )
+  return Array.from(byId.values()).sort((a, b) => {
+    const aAt = a.last_message_at ?? a.created_at ?? a.updated_at
+    const bAt = b.last_message_at ?? b.created_at ?? b.updated_at
+    return new Date(bAt).getTime() - new Date(aAt).getTime()
+  })
 }
 
 export function resolvePendingConversationSelection<T extends ConversationListLike>(
@@ -298,9 +302,61 @@ export function resolvePreferredConversationOpenId(input: {
   return null
 }
 
+/** Module epoch so remounted panels invalidate in-flight list loads (instance seq refs cannot). */
+let spaceVibeyChatPanelLoadEpoch = 0
+
+export function bumpSpaceVibeyChatPanelLoadEpoch(): number {
+  spaceVibeyChatPanelLoadEpoch += 1
+  return spaceVibeyChatPanelLoadEpoch
+}
+
+export function getSpaceVibeyChatPanelLoadEpoch(): number {
+  return spaceVibeyChatPanelLoadEpoch
+}
+
+export function isSpaceVibeyChatPanelLoadCurrent(epochAtStart: number): boolean {
+  return epochAtStart === spaceVibeyChatPanelLoadEpoch
+}
+
+/** Test-only: keep unit tests deterministic across files. */
+export function resetSpaceVibeyChatPanelLoadEpochForTests(): void {
+  spaceVibeyChatPanelLoadEpoch = 0
+}
+
+/**
+ * After conversation list fetch, pick what the panel should show.
+ * Prefer explicit open targets and the live store/shell selection over wiping to a blank new chat.
+ */
+export function resolvePostLoadConversationSelection(input: {
+  chatRailIntentIsNew: boolean
+  preferredOpenId: string | null
+  storeActiveConversationId: string | null
+  storedValidConversationId: string | null
+  conversationIdsInList: ReadonlySet<string>
+}): { action: 'select'; conversationId: string } | { action: 'clear' } {
+  const preferred = input.preferredOpenId?.trim() || null
+  if (preferred) return { action: 'select', conversationId: preferred }
+
+  if (input.chatRailIntentIsNew) return { action: 'clear' }
+
+  const storeActive = input.storeActiveConversationId?.trim() || null
+  if (storeActive && input.conversationIdsInList.has(storeActive)) {
+    return { action: 'select', conversationId: storeActive }
+  }
+
+  const stored = input.storedValidConversationId?.trim() || null
+  if (stored) return { action: 'select', conversationId: stored }
+
+  // Shell/meeting may have stamped an id that is not in this scope list yet — still keep it.
+  if (storeActive) return { action: 'select', conversationId: storeActive }
+
+  return { action: 'clear' }
+}
+
 /**
  * `activeConversationId` alone does not mean messages are in the store.
- * Shell stamps active before fetch; skipping hydrate on that match leaves an empty Pixel pane.
+ * Shell stamps active before fetch; skipping hydrate when the key is missing leaves an empty pane.
+ * An existing cache entry — including `[]` for a legitimately empty meeting thread — means hydrated.
  */
 export function conversationNeedsMessageHydration(
   conversationId: string,
@@ -309,7 +365,5 @@ export function conversationNeedsMessageHydration(
     messagesByConversation: Record<string, { length: number } | undefined>
   },
 ): boolean {
-  if (state.activeConversationId !== conversationId) return true
-  const cached = state.messagesByConversation[conversationId]
-  return !cached || cached.length === 0
+  return !Object.prototype.hasOwnProperty.call(state.messagesByConversation, conversationId)
 }

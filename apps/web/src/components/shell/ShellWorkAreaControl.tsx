@@ -21,6 +21,7 @@ export function ShellWorkAreaControl({ currentPage }: ShellWorkAreaControlProps)
   const recentPages = useShellStore((state) => state.recentWorkAreaPages)
   const openArtifactViewer = useShellStore((state) => state.openArtifactViewer)
   const closeArtifactViewer = useShellStore((state) => state.closeArtifactViewer)
+  const setPendingWorkRestore = useShellStore((state) => state.setPendingWorkRestore)
   const pageTargets = [currentPage, ...recentPages.filter((target) => target.id !== currentPage.id)]
 
   return (
@@ -55,6 +56,7 @@ export function ShellWorkAreaControl({ currentPage }: ShellWorkAreaControlProps)
               onClick={() => {
                 closeArtifactViewer()
                 setWorkAreaOpen(true)
+                setPendingWorkRestore(target.restore ?? null)
                 if (target.href !== currentPage.href) router.push(target.href)
                 setHistoryOpen(false)
               }}

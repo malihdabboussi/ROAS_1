@@ -2,8 +2,6 @@
 
 import type { ReactNode } from 'react'
 import { Bot } from 'lucide-react'
-import type { ShellChatQuickStart } from '@/components/shell/shell-empty-chat-prompts.config'
-import { ShellEmptyChatCapabilityScroller } from '@/components/shell/ShellEmptyChatCapabilityScroller'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 
 const DEFAULT_SPACE_CHAT_AGENT_KEY = 'vibey'
@@ -30,23 +28,15 @@ function buildSpaceChatAgentGreeting(agent: TeamRosterEntry): string {
 
 interface SpaceChatAgentEmptyStateProps {
   agent: TeamRosterEntry
-  /** When true, show capability chips under the hero (hidden once composer has text). */
-  showCapabilities?: boolean
-  onSelectCapability?: (quickStart: ShellChatQuickStart) => void
   agentPicker?: ReactNode
 }
 
-export function SpaceChatAgentEmptyState({
-  agent,
-  showCapabilities = false,
-  onSelectCapability,
-  agentPicker,
-}: SpaceChatAgentEmptyStateProps) {
+export function SpaceChatAgentEmptyState({ agent, agentPicker }: SpaceChatAgentEmptyStateProps) {
   const heroTitle = agent.display_name
   const heroAvatar = agent.avatar_url
   const showAgentRole =
     agent.agent_key !== DEFAULT_SPACE_CHAT_AGENT_KEY && Boolean(agent.role_label)
-  // Default agent (Pixel) keeps the hero to name + capabilities — no long greeting.
+  // Default agent (Pixel) keeps the hero to name only — quick starts live above the composer.
   const greeting =
     agent.agent_key === DEFAULT_SPACE_CHAT_AGENT_KEY ? null : buildSpaceChatAgentGreeting(agent)
 
@@ -71,11 +61,6 @@ export function SpaceChatAgentEmptyState({
       ) : null}
       {greeting ? (
         <p className="body-3 text-muted-foreground mt-spacing-4 max-w-md text-center">{greeting}</p>
-      ) : null}
-      {showCapabilities && onSelectCapability ? (
-        <div className="mt-spacing-6 w-full max-w-3xl">
-          <ShellEmptyChatCapabilityScroller onSelect={onSelectCapability} />
-        </div>
       ) : null}
     </div>
   )

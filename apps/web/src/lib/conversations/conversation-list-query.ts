@@ -1,3 +1,4 @@
+import { getConversationLastActivityAt } from './conversation-last-activity'
 import {
   getConversationAgentKey,
   getConversationSection,
@@ -66,10 +67,10 @@ export function matchesChatHistoryFilters(
   }
 
   if (filters.lastActivity !== 'all') {
-    const updatedAt = new Date(conversation.updated_at).getTime()
-    if (Number.isNaN(updatedAt)) return false
+    const activityAt = new Date(getConversationLastActivityAt(conversation)).getTime()
+    if (Number.isNaN(activityAt)) return false
     const days = Number(filters.lastActivity.replace('d', ''))
-    if (now.getTime() - updatedAt > days * MS_DAY) return false
+    if (now.getTime() - activityAt > days * MS_DAY) return false
   }
 
   return true
@@ -87,7 +88,9 @@ export function filterConversationsForHistory(
 
 function sortNewestFirst(conversations: Conversation[]): Conversation[] {
   return [...conversations].sort(
-    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+    (a, b) =>
+      new Date(getConversationLastActivityAt(b)).getTime() -
+      new Date(getConversationLastActivityAt(a)).getTime(),
   )
 }
 
@@ -174,7 +177,7 @@ function groupsFromMap(
 function groupByDate(conversations: Conversation[], now: Date): ConversationListGroup[] {
   const map = new Map<string, Conversation[]>()
   for (const conversation of sortNewestFirst(conversations)) {
-    pushIntoMap(map, localDayKey(conversation.updated_at, now), conversation)
+    pushIntoMap(map, localDayKey(getConversationLastActivityAt(conversation), now), conversation)
   }
   // Preserve newest-day-first order from sorted iteration.
   const order: string[] = []
@@ -195,7 +198,7 @@ function groupByLegacyDateBuckets(conversations: Conversation[]): ConversationLi
       continue
     }
     const section = getConversationSection(
-      conversation.updated_at,
+      getConversationLastActivityAt(conversation),
       isConversationPinned(conversation),
     )
     pushIntoMap(buckets, section, conversation)

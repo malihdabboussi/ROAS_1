@@ -48,6 +48,9 @@ export type SlackDeleteMessageDto = z.infer<typeof SlackDeleteMessageDtoSchema>
 export const SlackChannelHistoryQuerySchema = z.object({
   channel_id: z.string().min(1),
   limit: z.coerce.number().int().positive().max(200).optional(),
+  oldest: z.string().min(1).optional(),
+  latest: z.string().min(1).optional(),
+  cursor: z.string().min(1).optional(),
 })
 export type SlackChannelHistoryQuery = z.infer<typeof SlackChannelHistoryQuerySchema>
 

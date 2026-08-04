@@ -26,10 +26,17 @@ export type ShellArtifactViewerState = {
   width: number
 }
 
+export type ShellWorkAreaRestore = {
+  feature: string
+  data: unknown
+}
+
 export type ShellWorkAreaPageTarget = {
   id: string
   title: string
   href: string
+  /** Feature-owned payload so the memory menu can reopen the exact surface. */
+  restore?: ShellWorkAreaRestore
 }
 
 type PersistedShell = {
@@ -124,6 +131,8 @@ interface ShellStore {
   sidebarFlyoutCloseEpoch: number
   pageBreadcrumb: ReactNode | null
   pageBreadcrumbOwner: object | null
+  pageBreadcrumbLabel: string | null
+  pendingWorkRestore: ShellWorkAreaRestore | null
 
   setSidebarPinned: (pinned: boolean) => void
   toggleSidebarPinned: () => void
@@ -154,7 +163,9 @@ interface ShellStore {
   /** Fresh chat in the docked left drawer (workspace routes); stays on current page. */
   openFreshChatDrawer: () => void
   bumpSidebarFlyoutClose: () => void
-  setPageBreadcrumb: (node: ReactNode | null, owner?: object | null) => void
+  setPageBreadcrumb: (node: ReactNode | null, owner?: object | null, label?: string | null) => void
+  setPendingWorkRestore: (restore: ShellWorkAreaRestore | null) => void
+  consumePendingWorkRestore: (feature: string) => ShellWorkAreaRestore | null
 }
 
 const PEEK_CLOSE_DEFAULT_MS = 450
@@ -189,6 +200,8 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   sidebarFlyoutCloseEpoch: 0,
   pageBreadcrumb: null,
   pageBreadcrumbOwner: null,
+  pageBreadcrumbLabel: null,
+  pendingWorkRestore: null,
 
   bumpSidebarFlyoutClose: () => {
     set((s) => ({ sidebarFlyoutCloseEpoch: s.sidebarFlyoutCloseEpoch + 1 }))
@@ -396,7 +409,12 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   recordWorkAreaPage: (target) => {
     set((s) => ({
       recentWorkAreaPages: [
-        target,
+        {
+          id: target.id,
+          title: target.title.trim() || target.href,
+          href: target.href,
+          ...(target.restore ? { restore: target.restore } : {}),
+        },
         ...s.recentWorkAreaPages.filter((entry) => entry.id !== target.id),
       ].slice(0, 8),
     }))
@@ -443,14 +461,28 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       artifactViewerTarget: null,
     })
   },
-  setPageBreadcrumb: (node, owner = null) => {
+  setPageBreadcrumb: (node, owner = null, label = null) => {
     if (node === null) {
       const currentOwner = get().pageBreadcrumbOwner
       if (owner != null && currentOwner != null && currentOwner !== owner) return
-      set({ pageBreadcrumb: null, pageBreadcrumbOwner: null })
+      set({ pageBreadcrumb: null, pageBreadcrumbOwner: null, pageBreadcrumbLabel: null })
       return
     }
-    set({ pageBreadcrumb: node, pageBreadcrumbOwner: owner })
+    const trimmed = typeof label === 'string' ? label.trim() : ''
+    set({
+      pageBreadcrumb: node,
+      pageBreadcrumbOwner: owner,
+      pageBreadcrumbLabel: trimmed || null,
+    })
+  },
+  setPendingWorkRestore: (restore) => {
+    set({ pendingWorkRestore: restore })
+  },
+  consumePendingWorkRestore: (feature) => {
+    const pending = get().pendingWorkRestore
+    if (!pending || pending.feature !== feature) return null
+    set({ pendingWorkRestore: null })
+    return pending
   },
 }))
 

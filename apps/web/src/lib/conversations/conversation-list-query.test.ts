@@ -7,18 +7,20 @@ import {
 import type { Conversation } from './conversation.types'
 
 function conversation(overrides: Partial<Conversation> & { id: string }): Conversation {
-  const { id, ...rest } = overrides
+  const updatedAt = overrides.updated_at ?? '2026-06-23T12:00:00.000Z'
   return {
-    id,
     user_id: 'user-1',
     campaign_id: null,
     title: null,
     agent_id: 'vibey',
     status: 'active',
     metadata: {},
-    created_at: '2026-06-23T12:00:00.000Z',
-    updated_at: '2026-06-23T12:00:00.000Z',
-    ...rest,
+    ...overrides,
+    id: overrides.id,
+    created_at: overrides.created_at ?? updatedAt,
+    updated_at: updatedAt,
+    last_message_at:
+      overrides.last_message_at !== undefined ? overrides.last_message_at : updatedAt,
   }
 }
 

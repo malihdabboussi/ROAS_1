@@ -7,7 +7,7 @@ export const SLACK_LEGACY_CAPABILITIES: LegacyCapabilityRow[] = [
     execution_mode: 'legacy',
     display_name: 'Search Slack Messages',
     description:
-      'Search for messages across the Slack workspace. Results are scoped to channels the Vibey bot can see.',
+      'Search Slack with native full search when authorized and bounded historical channel retrieval otherwise. Named-channel fallback searches up to 120 days, expands threads, and returns complete or partial coverage. A partial zero-match result is not proof that a message is absent.',
     parameters: {
       query: { type: 'string', required: true },
       count: { type: 'number' },
@@ -137,10 +137,13 @@ export const SLACK_LEGACY_CAPABILITIES: LegacyCapabilityRow[] = [
     execution_mode: 'legacy',
     display_name: 'Get Slack Channel History',
     description:
-      'Fetch recent messages plus the canonical Slack channel identity. Treat the returned channel id/name as authoritative; never infer a different channel or client from message content.',
+      'Fetch a date-bounded, cursor-paginated page of messages with permalinks and canonical Slack channel identity. Continue while coverage.has_more is true. Treat the returned channel id/name as authoritative.',
     parameters: {
       channel_id: { type: 'string', required: true },
       limit: { type: 'number' },
+      oldest: { type: 'string' },
+      latest: { type: 'string' },
+      cursor: { type: 'string' },
     },
     examples: [],
     metadata: {},

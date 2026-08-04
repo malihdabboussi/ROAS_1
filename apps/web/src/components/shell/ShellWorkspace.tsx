@@ -110,6 +110,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     true,
   )
   const workAreaCollapsed = workAreaCollapsible && !workAreaMounted
+  const mobileChatVisible = !desktop && chatDrawerOpen && !artifactTarget
   let homeOrDefaultMain: ReactNode = children
   if (showFullNewChat) {
     homeOrDefaultMain = <ShellNewChatGreeting />
@@ -194,14 +195,16 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <div className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden">
-        {showChatDrawer ? <ShellChatDrawer expanded={workAreaCollapsed} /> : null}
+        {showChatDrawer && (desktop || !artifactTarget) ? (
+          <ShellChatDrawer expanded={workAreaCollapsed || mobileChatVisible} mobile={!desktop} />
+        ) : null}
 
         <div
           className={cn(
-            artifactTarget ? 'hidden' : 'shell-work-area',
+            artifactTarget || mobileChatVisible ? 'hidden' : 'shell-work-area',
             !artifactTarget && workAreaCollapsed && 'shell-work-area-collapsed',
           )}
-          aria-hidden={!workAreaVisible || Boolean(artifactTarget)}
+          aria-hidden={!workAreaVisible || Boolean(artifactTarget) || mobileChatVisible}
           data-shell-work-area
         >
           <div

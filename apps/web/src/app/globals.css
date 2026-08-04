@@ -2122,6 +2122,12 @@ html.dark .input-glass:focus {
   border-radius: var(--spacing-2);
   white-space: nowrap;
 }
+@media (max-width: 767px) {
+  .button-compact,
+  .pill--sm {
+    min-height: var(--spacing-8);
+  }
+}
 .button-default {
   display: inline-flex;
   align-items: center;
@@ -4381,7 +4387,6 @@ html.dark .btn-icon-glass:hover {
 .btn-icon-bare-sm:hover {
   color: var(--color-foreground);
 }
-
 /* Icon Button Glass Active State (Blue Glass) */
 .btn-icon-glass--active {
   background: linear-gradient(
@@ -7818,6 +7823,13 @@ html.dark .pill--active {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
   color: var(--color-foreground);
 }
+@media (max-width: 767px) {
+  .btn-icon-bare-sm,
+  .btn-icon-glass-sm {
+    width: var(--spacing-8);
+    height: var(--spacing-8);
+  }
+}
 html.dark .btn-icon-glass-sm {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -10944,6 +10956,37 @@ html.dark .chat-markdown-code-block__shadow {
   letter-spacing: 0.02em;
   color: var(--color-muted-foreground);
 }
+@media (max-width: 767px) {
+  .shell-topbar {
+    gap: var(--spacing-2);
+    padding-inline: var(--spacing-2);
+  }
+  .shell-topbar > button:first-child {
+    width: var(--spacing-8);
+    padding-inline: 0;
+  }
+  .shell-topbar-ai-label,
+  .shell-topbar-icon-btn,
+  .shell-topbar-divider,
+  .shell-topbar-crumb,
+  .shell-topbar-desktop-actions {
+    display: none;
+  }
+  .shell-topbar-center-unit {
+    position: static;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    flex: 1 1 auto;
+    transform: none;
+  }
+  .shell-topbar-search-btn {
+    min-height: var(--spacing-8);
+  }
+  .shell-topbar-actions {
+    margin-left: 0;
+  }
+}
 .shell-chat-history-search {
   display: flex;
   min-width: 0;
@@ -10966,25 +11009,6 @@ html.dark .chat-markdown-code-block__shadow {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
-}
-.shell-empty-capability-chip {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: var(--spacing-1);
-  border: none;
-  background: transparent;
-  padding: var(--spacing-1) var(--spacing-1);
-  color: var(--color-primary);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  line-height: 1.2;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: color 0.12s ease;
-}
-.shell-empty-capability-chip:hover {
-  color: var(--color-primary-hover);
 }
 /* AI chat drawer — one width transition owns the open/close motion. */
 .shell-chat-drawer {

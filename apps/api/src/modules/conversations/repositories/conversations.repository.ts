@@ -53,7 +53,8 @@ export class ConversationsRepository {
         .from('conversations')
         .select('*')
         .eq('user_id', userId)
-        .order('updated_at', { ascending: false })
+        .order('last_message_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
         .order('id', { ascending: false })
 
       if (filters?.listAllOrgs) {
@@ -154,7 +155,8 @@ export class ConversationsRepository {
         .eq('org_id', orgId)
         .in('id', conversationIds)
         .neq('user_id', userId)
-        .order('updated_at', { ascending: false })
+        .order('last_message_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
         .order('id', { ascending: false })
 
       if (error) throw new Error(`DB error: ${error.message}`)

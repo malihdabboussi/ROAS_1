@@ -11,6 +11,7 @@ import { SlackRuntimeRepository } from '../repositories/slack-runtime.repository
 import { SlackRepository } from '../repositories/slack.repository'
 import type { SlackEventEnvelope, SlackWorkspaceChannel } from '../types/slack.types'
 import { SlackAccessControlService } from './slack-access-control.service'
+import { getSlackSearchCapability } from './slack-search-capability'
 import { SlackEventsBase } from './slack-service-events.base'
 
 @Injectable()
@@ -400,7 +401,6 @@ export class SlackService extends SlackEventsBase {
   }
 
   // Status / channel management
-
   async getStatus(supabase: SupabaseClient, userId: string, orgId?: string | null) {
     const integration = await this.slackRepo.getIntegration(supabase, userId, orgId)
     if (!integration?.access_token) {
@@ -414,6 +414,7 @@ export class SlackService extends SlackEventsBase {
       teamName: typeof metadata.team_name === 'string' ? metadata.team_name : null,
       teamId: typeof metadata.team_id === 'string' ? metadata.team_id : null,
       connectedAt: typeof metadata.connected_at === 'string' ? metadata.connected_at : null,
+      searchCapability: getSlackSearchCapability(metadata),
     }
   }
 

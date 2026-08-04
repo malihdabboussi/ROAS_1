@@ -1,8 +1,36 @@
 import type { SlackApiPostMessageResponse, SlackHistoryMessage } from '../types/slack.types'
-import { SLACK_API_BASE, throwSlackError } from './slack-api-integration.shared'
 import { SlackApiIntegrationUsersBase } from './slack-api-integration-users.base'
+import { SLACK_API_BASE, throwSlackError } from './slack-api-integration.shared'
 
 export abstract class SlackApiIntegrationHistorySearchBase extends SlackApiIntegrationUsersBase {
+  async getChannelHistoryPage(
+    botToken: string,
+    channelId: string,
+    opts: { limit?: number; oldest?: string; latest?: string; cursor?: string } = {},
+  ): Promise<{ messages: SlackHistoryMessage[]; nextCursor: string | null; hasMore: boolean }> {
+    const params = new URLSearchParams({ channel: channelId, limit: String(opts.limit ?? 10) })
+    if (opts.oldest) params.set('oldest', opts.oldest)
+    if (opts.latest) params.set('latest', opts.latest)
+    if (opts.cursor) params.set('cursor', opts.cursor)
+    const res = await fetch(`${SLACK_API_BASE}/conversations.history?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${botToken}` },
+    })
+    const json = (await res.json()) as {
+      ok: boolean
+      error?: string
+      has_more?: boolean
+      messages?: Array<Record<string, unknown>>
+      response_metadata?: { next_cursor?: string }
+    }
+    if (!json.ok) throwSlackError(json.error, 'Slack conversations.history failed')
+    const nextCursor = json.response_metadata?.next_cursor?.trim() || null
+    return {
+      messages: (json.messages ?? []) as SlackHistoryMessage[],
+      nextCursor,
+      hasMore: Boolean(json.has_more || nextCursor),
+    }
+  }
+
   async getChannelHistory(
     botToken: string,
     channelId: string,
@@ -53,6 +81,23 @@ export abstract class SlackApiIntegrationHistorySearchBase extends SlackApiInteg
       cursor = json.response_metadata?.next_cursor || undefined
     } while (cursor)
     return messages
+  }
+
+  async getPermalink(
+    botToken: string,
+    channelId: string,
+    messageTs: string,
+  ): Promise<string | null> {
+    const params = new URLSearchParams({ channel: channelId, message_ts: messageTs })
+    const res = await fetch(`${SLACK_API_BASE}/chat.getPermalink?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${botToken}` },
+    })
+    const json = (await res.json()) as { ok: boolean; error?: string; permalink?: string }
+    if (!json.ok) {
+      this.logger.warn(`chat.getPermalink failed for ${channelId}:${messageTs}: ${json.error}`)
+      return null
+    }
+    return json.permalink?.trim() || null
   }
 
   async searchMessages(

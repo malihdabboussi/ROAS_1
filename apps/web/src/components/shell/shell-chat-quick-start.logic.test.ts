@@ -3,9 +3,9 @@ import {
   buildShellQuickStartSendContext,
   shellQuickStartMatchesComposer,
 } from './shell-chat-quick-start.logic'
-import { SHELL_EMPTY_CHAT_CAPABILITIES } from './shell-empty-chat-prompts.config'
+import { SHELL_EMPTY_CHAT_QUICK_STARTS } from './shell-empty-chat-prompts.config'
 
-const imageQuickStart = SHELL_EMPTY_CHAT_CAPABILITIES.find((item) => item.id === 'image')!
+const imageQuickStart = SHELL_EMPTY_CHAT_QUICK_STARTS.find((item) => item.id === 'image')!
 
 describe('shell chat quick-start lifecycle', () => {
   it('keeps routing active while the user completes the seeded request', () => {

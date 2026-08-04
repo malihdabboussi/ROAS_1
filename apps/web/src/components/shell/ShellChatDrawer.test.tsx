@@ -66,11 +66,20 @@ vi.mock('@/components/layout/ResizableDivider', () => ({
 }))
 
 vi.mock('./ShellChatMenu', () => ({
-  ShellChatMenu: ({ onCollapse }: { onCollapse?: () => void }) => (
+  ShellChatMenu: ({
+    onCollapse,
+    onOpenChat,
+  }: {
+    onCollapse?: () => void
+    onOpenChat?: () => void
+  }) => (
     <div>
       Chat history
       <button type="button" onClick={onCollapse}>
         Collapse history
+      </button>
+      <button type="button" onClick={onOpenChat}>
+        Open conversation
       </button>
     </div>
   ),
@@ -168,6 +177,36 @@ describe('ShellChatDrawer', () => {
     expect(screen.getByText('Chat history')).toBeInTheDocument()
     expect(screen.getByText('Chat panel')).toBeInTheDocument()
     expect(container.querySelector('[data-expanded="true"]')).not.toBeNull()
+  })
+
+  it('isolates history from chat on mobile and switches views after selection', () => {
+    useShellStore.setState({
+      chatDrawer: {
+        open: true,
+        conversationId: 'conversation-1',
+        width: 420,
+        minimized: false,
+      },
+    })
+
+    const { container } = render(<ShellChatDrawer expanded mobile />)
+
+    expect(screen.getByText('Chat history')).toBeInTheDocument()
+    expect(screen.getByText('Chat panel').closest('[aria-hidden]')).toHaveClass('hidden')
+    expect(screen.getByText('Chat panel').closest('[aria-hidden]')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    )
+    expect(screen.queryByRole('button', { name: 'Resize chat history' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Resize AI chat drawer' })).toBeNull()
+    expect(container.querySelector('[data-shell-chat-history]')).toHaveClass('w-full')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open conversation' }))
+
+    expect(screen.queryByText('Chat history')).toBeNull()
+    expect(screen.getByText('Chat panel')).toBeInTheDocument()
+    expect(screen.getByText('Chat panel').closest('[aria-hidden]')).toHaveClass('flex')
+    expect(screen.getByRole('button', { name: 'Show chat history' })).toBeInTheDocument()
   })
 
   it('adds the work summary as a third column instead of overlaying chat', () => {

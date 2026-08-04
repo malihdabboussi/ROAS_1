@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import {
   ConversationScopePicker,
@@ -39,14 +40,25 @@ export function ShellRightPanel({
   onConversationUpdated?: (conversation: Conversation) => void
   onScopeChanged?: (scope: { campaignId: string | null; spaceId: string | null }) => void
 }) {
+  const router = useRouter()
   const open = useShellStore((s) => s.rightPanel.open)
   const tab = useShellStore((s) => s.rightPanel.tab)
   const setRightPanelOpen = useShellStore((s) => s.setRightPanelOpen)
   const setRightPanelTab = useShellStore((s) => s.setRightPanelTab)
+  const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
+  const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
   const conversationScopePickerRequestNonce = useShellStore(
     (s) => s.conversationScopePickerRequestNonce,
   )
   const scopePickerRef = useRef<ConversationScopePickerHandle>(null)
+  const handleOpenCampaign = useCallback(
+    (nextCampaignId: string) => {
+      closeArtifactViewer()
+      setWorkAreaOpen(true)
+      router.push(`/campaigns/${nextCampaignId}`)
+    },
+    [closeArtifactViewer, router, setWorkAreaOpen],
+  )
   const lastHandledScopePickerRequestRef = useRef(0)
   const messages = useChatStore((s) =>
     conversationId ? (s.messagesByConversation[conversationId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES,
@@ -101,6 +113,7 @@ export function ShellRightPanel({
               showLabel
               onConversationUpdated={onConversationUpdated}
               onScopeChanged={onScopeChanged}
+              onOpenCampaign={handleOpenCampaign}
             />
           </div>
         ) : (

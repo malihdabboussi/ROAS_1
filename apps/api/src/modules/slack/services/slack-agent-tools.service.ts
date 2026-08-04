@@ -3,12 +3,15 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   UnauthorizedException,
 } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { buildExternalAssetRef } from '@vibey/api-shared'
 import { isSlackAuthError, SlackApiIntegration } from '../integrations/slack-api.integration'
 import { SlackRepository } from '../repositories/slack.repository'
+import { SlackArchiveSearchService } from './slack-archive-search.service'
+import { searchSlackChannelHistory } from './slack-channel-history-search'
 
 /**
  * SlackAgentToolsService — executes agent-callable Slack actions using the Vibey bot token.
@@ -29,6 +32,7 @@ export class SlackAgentToolsService {
   constructor(
     private readonly slackApi: SlackApiIntegration,
     private readonly slackRepo: SlackRepository,
+    @Optional() private readonly archiveSearch?: SlackArchiveSearchService,
   ) {}
 
   private async resolveBotToken(
@@ -44,7 +48,7 @@ export class SlackAgentToolsService {
     supabase: SupabaseClient,
     userId: string,
     orgId?: string | null,
-  ): Promise<{ botToken: string; userToken: string | null }> {
+  ): Promise<{ botToken: string; userToken: string | null; teamId: string | null }> {
     const integration = await this.slackRepo.getIntegration(supabase, userId, orgId)
     if (!integration?.access_token) {
       throw new NotFoundException(
@@ -59,82 +63,13 @@ export class SlackAgentToolsService {
       typeof metadata.user_access_token === 'string' && metadata.user_access_token.trim()
         ? metadata.user_access_token.trim()
         : null
-    return { botToken: integration.access_token, userToken }
+    const teamId = typeof metadata.team_id === 'string' ? metadata.team_id.trim() || null : null
+    return { botToken: integration.access_token, userToken, teamId }
   }
 
   private isNotAllowedTokenTypeError(error: unknown): boolean {
     const message = error instanceof Error ? error.message : String(error)
     return /not_allowed_token_type/i.test(message)
-  }
-
-  /**
-   * Bot-token fallback when search.messages is unavailable.
-   * Scans channel history the bot can read (optionally filtered by in:#channel).
-   */
-  private async searchMessagesViaChannelHistory(
-    botToken: string,
-    query: string,
-    count = 20,
-  ): Promise<{
-    ok: boolean
-    search_mode: 'channel_history_fallback'
-    messages: {
-      total: number
-      matches: Array<{
-        text?: string
-        user?: string
-        ts?: string
-        channel?: { id?: string; name?: string }
-      }>
-    }
-  }> {
-    const inMatch = query.match(/\bin:#?([a-z0-9_-]+)\b/i)
-    const terms = query
-      .replace(/\bin:#?[a-z0-9_-]+\b/gi, ' ')
-      .toLowerCase()
-      .split(/\s+/)
-      .map((t) => t.trim())
-      .filter((t) => t.length >= 2)
-
-    let channels = await this.slackApi.listConversations(botToken)
-    if (inMatch?.[1]) {
-      const needle = inMatch[1].toLowerCase()
-      channels = channels.filter(
-        (c) => c.id.toLowerCase() === needle || c.name.toLowerCase() === needle,
-      )
-    } else {
-      channels = channels.slice(0, 30)
-    }
-
-    const matches: Array<{
-      text?: string
-      user?: string
-      ts?: string
-      channel?: { id?: string; name?: string }
-    }> = []
-
-    for (const channel of channels) {
-      const history = await this.slackApi.getChannelHistory(botToken, channel.id, 40)
-      for (const message of history) {
-        const text = typeof message.text === 'string' ? message.text : ''
-        const haystack = text.toLowerCase()
-        if (terms.length > 0 && !terms.every((term) => haystack.includes(term))) continue
-        matches.push({
-          text,
-          user: typeof message.user === 'string' ? message.user : undefined,
-          ts: typeof message.ts === 'string' ? message.ts : undefined,
-          channel: { id: channel.id, name: channel.name },
-        })
-        if (matches.length >= count) break
-      }
-      if (matches.length >= count) break
-    }
-
-    return {
-      ok: true,
-      search_mode: 'channel_history_fallback',
-      messages: { total: matches.length, matches },
-    }
   }
 
   private async runWithSlackAuthMapping<T>(
@@ -173,7 +108,7 @@ export class SlackAgentToolsService {
     },
   ) {
     if (!params.query?.trim()) throw new BadRequestException('query is required')
-    const { botToken, userToken } = await this.resolveTokens(supabase, userId, orgId)
+    const { botToken, userToken, teamId } = await this.resolveTokens(supabase, userId, orgId)
     const count = params.count ?? 20
 
     if (userToken) {
@@ -186,7 +121,18 @@ export class SlackAgentToolsService {
             cursor: params.cursor,
           }),
         )
-        return { success: true, search_mode: 'search_messages', ...result }
+        const returned = result.messages?.matches?.length ?? 0
+        const total = result.messages?.total ?? result.messages?.paging?.total ?? returned
+        return {
+          success: true,
+          search_mode: 'search_messages',
+          coverage: {
+            status: returned >= total ? 'complete' : 'partial',
+            results_returned: returned,
+            total_available: total,
+          },
+          ...result,
+        }
       } catch (error) {
         if (!this.isNotAllowedTokenTypeError(error)) throw error
         this.logger.warn(
@@ -195,9 +141,29 @@ export class SlackAgentToolsService {
       }
     }
 
+    const archive = await this.archiveSearch
+      ?.search({
+        supabase,
+        orgId,
+        slackTeamId: teamId,
+        botToken,
+        query: params.query,
+        count,
+      })
+      .catch((error) => {
+        this.logger.warn(`Slack archive search unavailable; using live history fallback: ${error}`)
+        return null
+      })
+    if (archive) return { success: true, ...archive }
+
     // Existing installs only have a bot token — search.messages always fails for xoxb.
     const fallback = await this.runWithSlackAuthMapping(supabase, userId, orgId, () =>
-      this.searchMessagesViaChannelHistory(botToken, params.query, count),
+      searchSlackChannelHistory({
+        slackApi: this.slackApi,
+        botToken,
+        query: params.query,
+        count,
+      }),
     )
     return { success: true, ...fallback }
   }
@@ -339,15 +305,38 @@ export class SlackAgentToolsService {
     supabase: SupabaseClient,
     userId: string,
     orgId: string | null | undefined,
-    params: { channel_id: string; limit?: number },
+    params: {
+      channel_id: string
+      limit?: number
+      oldest?: string
+      latest?: string
+      cursor?: string
+    },
   ) {
     if (!params.channel_id?.trim()) throw new BadRequestException('channel_id is required')
     const botToken = await this.resolveBotToken(supabase, userId, orgId)
     const channelId = params.channel_id.trim()
-    const [channels, messages] = await Promise.all([
+    const historyPage = this.slackApi.getChannelHistoryPage
+      ? this.slackApi.getChannelHistoryPage(botToken, channelId, {
+          limit: params.limit ?? 10,
+          oldest: params.oldest,
+          latest: params.latest,
+          cursor: params.cursor,
+        })
+      : this.slackApi
+          .getChannelHistory(botToken, channelId, params.limit ?? 10)
+          .then((messages) => ({ messages, nextCursor: null, hasMore: false }))
+    const [channels, page] = await Promise.all([
       this.slackApi.listConversations(botToken),
-      this.slackApi.getChannelHistory(botToken, channelId, params.limit ?? 10),
+      historyPage,
     ])
+    const messages = await Promise.all(
+      page.messages.map(async (message) => {
+        if (!message.ts) return message
+        const permalink = await this.slackApi.getPermalink?.(botToken, channelId, message.ts)
+        return permalink ? { ...message, permalink } : message
+      }),
+    )
     const matchedChannel = channels.find((channel) => channel.id === channelId)
     const channel = {
       id: channelId,
@@ -364,6 +353,13 @@ export class SlackAgentToolsService {
       channel,
       messages,
       identity_verified: matchedChannel !== undefined,
+      coverage: {
+        status: page.hasMore ? 'partial' : 'complete',
+        oldest: params.oldest ?? null,
+        latest: params.latest ?? null,
+        next_cursor: page.nextCursor,
+        has_more: page.hasMore,
+      },
     }
   }
 
