@@ -21,3 +21,10 @@ Why: Blocked `roas-web` production deploy after meeting board merge.
 Impact: Unblocks app.roas.io deploy of the shell Meeting Workspace board.
 Files: `MeetingWorkspaceContextLinks.tsx`
 
+## [2026-08-05 14:20] - [FIX]
+
+What: Wrapped meeting recordings `onLinked` so hydrate returns void (prod TS).
+Why: `roas-web` deploy failed assigning `Promise<MeetingWorkspaceBundle>` to `Promise<void>`.
+Impact: Unblocks Meeting Workspace board production deploy.
+Files: `MeetingWorkspaceDialog.tsx`
+
