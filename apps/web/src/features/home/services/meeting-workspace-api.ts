@@ -15,11 +15,26 @@ export type MeetingRecording = {
   id: string
   title: string
   provider: string
+  external_recording_id?: string | null
   recording_url: string | null
   duration_seconds: number | null
   is_primary: boolean
   provider_summary: string | null
   transcript_doc_item_id: string | null
+}
+
+export type FathomRecordingCandidate = {
+  id?: string | number
+  recording_id?: string | number
+  call_id?: string | number
+  title: string
+  meeting_title?: string
+  url?: string
+  created_at?: string
+  recording_start_time?: string
+  scheduled_start_time?: string
+  calendar_invitees?: Array<{ name?: string | null; email?: string | null } | null>
+  recorded_by?: { name?: string | null; email?: string | null } | null
 }
 
 export type MeetingAction = {
@@ -38,12 +53,6 @@ export type MeetingSnippet = {
   text: string
   source_label: string | null
   created_at: string
-}
-
-export type MeetingSnippetResult = {
-  snippet: MeetingSnippet
-  conversation_id: string
-  message_id: string
 }
 
 export type ResolvedMeetingWorkspace = {
@@ -90,16 +99,9 @@ export function startMeetingCall(spaceId: string, meetingItemId: string) {
   return backendPost<MeetingWorkspaceRecord>(`${path(spaceId, meetingItemId)}/start`, {})
 }
 
-export function addMeetingSnippet(
-  spaceId: string,
-  meetingItemId: string,
-  text: string,
-  sourceType: 'observation' | 'call_quote',
-) {
-  return backendPost<MeetingSnippetResult>(`${path(spaceId, meetingItemId)}/snippets`, {
-    source_type: sourceType,
-    text,
-    source_label: sourceType === 'call_quote' ? 'Call snippet' : 'Live note',
+export function endMeetingCall(spaceId: string, meetingItemId: string) {
+  return backendPatch<MeetingWorkspaceRecord>(`${path(spaceId, meetingItemId)}/phase`, {
+    phase: 'processing',
   })
 }
 
@@ -131,5 +133,33 @@ export function updateMeetingActionStatus(
 ) {
   return backendPatch<MeetingAction>(`${path(spaceId, meetingItemId)}/actions/${actionId}`, {
     status,
+  })
+}
+
+export function createMeetingAction(
+  spaceId: string,
+  meetingItemId: string,
+  input: { title: string; assigneeName?: string | null },
+) {
+  return backendPost<MeetingAction>(`${path(spaceId, meetingItemId)}/actions`, {
+    title: input.title,
+    assignee_name: input.assigneeName ?? null,
+  })
+}
+
+export function linkMeetingRecording(
+  spaceId: string,
+  meetingItemId: string,
+  meeting: FathomRecordingCandidate,
+) {
+  return backendPost<{
+    success: boolean
+    recording_id: string
+    primary_recording_id: string
+    meeting_item_id: string
+  }>('/api/integrations/fathom/attach-to-meeting', {
+    space_id: spaceId,
+    meeting_item_id: meetingItemId,
+    meeting,
   })
 }

@@ -6,47 +6,44 @@ import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 
 const ENTRY_TRANSITION = { type: 'spring', stiffness: 380, damping: 32, mass: 0.7 } as const
 
+/**
+ * Minimized agenda rows collapse to a thin restoreable line — no title, no strikethrough.
+ * Calendar eventColor is intentional (third-party calendar identity), same as expanded rows.
+ */
 export function AgendaMinimizedEventEntry({
   ev,
-  accountLabel,
-  eventColor,
   onRestore,
 }: {
   ev: CalendarAgendaEvent
+  /** Kept for call-site compatibility with expanded agenda rows. */
   accountLabel: string
+  /** Kept for call-site compatibility; minimized rows use a token hairline. */
   eventColor: string
   onRestore?: () => void
 }) {
+  const label = `Restore minimized meeting: ${ev.title}`
+
   return (
     <motion.div
       layout
       transition={ENTRY_TRANSITION}
-      className="hover:bg-hover-subtle flex items-center gap-2 rounded-lg px-2 py-2 transition-colors"
+      className="gap-spacing-2 px-spacing-2 py-spacing-1 group flex items-center"
     >
-      <span
-        className="h-6 w-1 shrink-0 rounded-full"
-        style={{ background: eventColor }}
-        aria-hidden
-      />
-      <span className="typo-caption text-muted-foreground w-14 shrink-0 line-through">
-        {ev.all_day
-          ? 'All day'
-          : new Date(ev.start).toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-      </span>
-      <div className="min-w-0 flex-1">
-        <span className="body-3 text-muted-foreground block truncate font-medium line-through">
-          {ev.title}
-        </span>
-        {accountLabel ? (
-          <span className="typo-caption text-muted-foreground block truncate line-through">
-            {accountLabel}
-          </span>
-        ) : null}
-      </div>
-      <span className="badge-glass badge-glass-muted typo-caption shrink-0">Minimized</span>
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation()
+          onRestore?.()
+        }}
+        className="hover:bg-hover-subtle rounded-spacing-2 px-spacing-1 flex min-h-4 min-w-0 flex-1 items-center"
+        aria-label={label}
+        title={label}
+      >
+        <span
+          className="bg-border group-hover:bg-muted-foreground block h-0.5 w-full rounded-full transition-colors"
+          aria-hidden
+        />
+      </button>
       {onRestore ? (
         <button
           type="button"
@@ -54,8 +51,8 @@ export function AgendaMinimizedEventEntry({
             event.stopPropagation()
             onRestore()
           }}
-          className="btn-icon-bare"
-          aria-label="Restore meeting"
+          className="btn-icon-bare opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
+          aria-label={label}
           title="Restore meeting"
         >
           <RotateCcw className="icon-sm" aria-hidden />

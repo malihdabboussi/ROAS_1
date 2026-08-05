@@ -6,8 +6,13 @@ export const HOME_TOAST_ERRORS = {
   PREP_START_FAILED: { userMessage: 'Could not start pre-call prep.' },
   MEETING_WORKSPACE_LOAD_FAILED: { userMessage: 'Could not load the meeting workspace.' },
   MEETING_START_FAILED: { userMessage: 'Could not start the meeting workspace.' },
-  MEETING_NOTE_SAVE_FAILED: { userMessage: 'Could not save that meeting note.' },
+  MEETING_END_FAILED: { userMessage: 'Could not end the call.' },
   MEETING_ACTION_UPDATE_FAILED: { userMessage: 'Could not update that action item.' },
+  MEETING_ACTION_CREATE_FAILED: { userMessage: 'Could not add that action item.' },
+  MEETING_RECORDINGS_LOAD_FAILED: {
+    userMessage: 'Could not load Fathom recordings — check the connection and try again.',
+  },
+  MEETING_RECORDING_LINK_FAILED: { userMessage: 'Could not link that recording.' },
   MEETINGS_SPACE_REQUIRED: {
     userMessage: 'Open or create your Meetings space first, then try prep again.',
   },
@@ -17,4 +22,10 @@ export const HOME_TOAST_SUCCESS = {
   LINK_COPIED: { userMessage: 'Link copied.' },
   PREP_STARTED: { userMessage: 'Pre-call prep started.' },
   MEETING_STARTED: { userMessage: 'Meeting workspace is live.' },
+  MEETING_ENDED: { userMessage: 'Call ended. Keep dumping notes in chat anytime.' },
+  MEETING_ACTION_CREATED: { userMessage: 'Action item locked in.' },
+  MEETING_ACTION_ALREADY_EXISTS: {
+    userMessage: 'Already on the list — no duplicate added.',
+  },
+  MEETING_RECORDING_LINKED: { userMessage: 'Recording linked to this meeting.' },
 } as const
