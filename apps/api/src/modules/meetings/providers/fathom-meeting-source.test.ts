@@ -91,4 +91,21 @@ describe('Fathom meeting source normalization', () => {
 
     expect(source.durationSeconds).toBeNull()
   })
+
+  it('accepts numeric recording ids and meeting_id fallbacks from webhook payloads', () => {
+    const byNumber = normalizeFathomMeetingSource({
+      recording_id: 170082749,
+      title: 'Impromptu Zoom Meeting',
+      url: 'https://fathom.video/calls/170082749',
+    })
+    expect(byNumber.externalRecordingId).toBe('170082749')
+
+    const byMeetingId = normalizeFathomMeetingSource({
+      meeting_id: 170082749,
+      title: 'Impromptu Zoom Meeting',
+      url: 'https://fathom.video/calls/170082749',
+    })
+    expect(byMeetingId.externalRecordingId).toBe('170082749')
+    expect(byMeetingId.providerMeetingId).toBe('170082749')
+  })
 })

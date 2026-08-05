@@ -1,5 +1,26 @@
 # Changelog - August 04, 2026
 
+## [2026-08-04 16:46] - [REFACTOR]
+
+What: Extracted `upsertProviderActions` into `meeting-provider-actions.repository.ts` so the meetings workspace repository stays under the 400 LOC gate.
+Why: Pre-commit architecture check blocked the Fathom follow_up ingest commit.
+Impact: Same merge/dedupe behavior; ingestion injects the new repository.
+Files: `meeting-provider-actions.repository.ts`, `meeting-workspace.repository.ts`, `meeting-source-ingestion.service.ts`, `meetings.module.ts`, tests
+
+## [2026-08-04 16:34] - [DOCS]
+
+What: Closed action-item Phases 4–5 documentation and verification. Product loop, file map, and Decision log now state ingest→follow_up + grounded `agent_suggest_tasks` (no invent). Prod data check: N Fathom actions ↔ N follow_ups; 0↔0; live Meetings automation has suggest-tasks. Domain/catalog unit tests green (9).
+Why: Phases 4–5 were the remaining plan items after Phase 1–3 code/data work.
+Impact: Contract locked in docs/tests. New webhook path still needs `api.roas.io` deploy for ingest bridge + empty-action refetch to run in production.
+Files: `meeting-follow-up-slack.md`, focused tests, changelog
+
+## [2026-08-04 16:31] - [FIX]
+
+What: Restored Fathom action items onto Programs/Home follow_ups. Ingest now mirrors exact provider actions into `follow_up` space_items (merging manual rows by title). Webhook does one list refetch when `action_items` is empty (no transcript invention). Live **Fathom Meeting Log** again runs grounded `agent_suggest_tasks` (enrich only; empty Fathom → empty tasks). Existing-call attach also runs that automation. Backfilled 14 follow_ups from the last 14 days of `meeting_actions`.
+Why: Jul 28 stripped suggest-tasks and left actions only in `meeting_actions` while Aug 4 UI reads follow_ups — Action items looked empty despite live Fathom payloads.
+Impact: Hard-refresh Programs → Action items (1DS weekly already shows 5). New webhooks need API deploy for ingest bridge + refetch; live automation rule is already updated in prod.
+Files: `upsert-provider-follow-ups.ts`, `meeting-workspace-state.repository.ts`, `meeting-source-ingestion.service.ts`, `fathom-webhook.service.ts`, `space-automation-service-06/13.base.ts`, `agent-suggest-follow-up-match.ts`, `task-agent-suggestions.service.ts`, Personal Dashboard template, `meeting-follow-up-slack.md`, tests; prod automation `ef3975a7-…` + data backfill
+
 ## [2026-08-04 16:19] - [FIX]
 
 What: Completed the authenticated mobile shell and reachable-route pass. The shell top bar now collapses desktop-only controls into a full-width phone search row, the desktop HQ rail no longer reserves 72px on mobile, compact controls and pills meet the 32px phone interaction floor, chat rows expose full-height selection/action targets on touch, and artifact view toggles use phone-safe sizing.
@@ -225,3 +246,10 @@ What: Added permalinked, date-aware, cursor-paginated Slack history; exposed ful
 Why: Live Slack search is unavailable on bot-token-only installations, and recent-history scans cannot reliably recover links or decisions from months of workspace history.
 Impact: Pixel can search durable historical Slack evidence with verifiable source links, while users can see whether their Slack connection has native full search or is operating through the historical fallback.
 Files: `slack-api-integration-history-search.base.ts`, `slack-agent-tools.service.ts`, `slack-archive-search.service.ts`, `slack-observation.service.ts`, `slack-observation.repository.ts`, Slack DTO/capability contracts, Settings integration UI, migrations, tests, `integration-connections.md`
+
+## [2026-08-04 16:31] - [FIX]
+
+What: Replaced narrow-screen wrapping in the Flows, Brain, Agents, Teams, and shared Space-view toolbars with a single non-wrapping horizontal control strip. Flows now converts its fixed desktop category rail into a horizontal mobile navigation strip, and both mobile contracts have regression coverage.
+Why: The wrapped toolbar and permanently visible 220px Flows rail squeezed loop content into roughly 150px even though the document itself did not overflow.
+Impact: Toolbars stay aligned and scroll horizontally. Flows navigation remains available above a full-width loop list, so names, states, triggers, and actions remain readable on phones.
+Files: `FlowsBrowseHub.tsx`, `FlowsBrowseHub.test.tsx`, `FlowsToolbar.tsx`, `FlowsToolbar.test.tsx`, `BrainHomeToolbar.tsx`, `Team2Toolbar.tsx`, `TeamsToolbar.tsx`, `ToolbarShell.tsx`, `agent-follow-up-work.md`

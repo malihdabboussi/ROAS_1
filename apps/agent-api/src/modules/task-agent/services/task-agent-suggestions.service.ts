@@ -196,6 +196,18 @@ export class TaskAgentSuggestionsService {
   }
 
   async suggestTasks(payload: SuggestTasksPayload): Promise<{ tasks: SuggestedTask[] }> {
+    const triggerPayload =
+      payload.payload && typeof payload.payload === 'object' && !Array.isArray(payload.payload)
+        ? (payload.payload as Record<string, unknown>)
+        : {}
+    const actionItems = Array.isArray(triggerPayload.action_items)
+      ? triggerPayload.action_items
+      : null
+    // Empty Fathom action_items → do not invent from transcript/summary.
+    if (actionItems && actionItems.length === 0) {
+      return { tasks: [] }
+    }
+
     const maxSuggestions = Math.min(
       20,
       Math.max(1, Math.floor(Number(payload.max_suggestions ?? 10) || 10)),
@@ -228,7 +240,8 @@ export class TaskAgentSuggestionsService {
       'Return JSON only. Do not include markdown fences or commentary.',
       `Return at most ${maxSuggestions} tasks.`,
       'Each task must be concrete, actionable, and based only on the payload.',
-      'Prefer payload.action_items when present — turn each into a task when possible.',
+      'When payload.action_items is a non-empty array: create exactly one task per action item. Do not add extras from the transcript or summary.',
+      'When payload.action_items is missing: you may suggest a few tasks from the summary only.',
       'For every task derived from payload.action_items, preserve its zero-based array position in source_action_index.',
       'Always set priority (not everything medium): urgent/high when ASAP/today/blocker/this week; low for nice-to-have/FYI.',
       'Set due_date to ISO-8601 when the payload has a deadline/due date; otherwise "".',
@@ -271,7 +284,21 @@ export class TaskAgentSuggestionsService {
       channel: 'studio',
       disableResponseFilter: true,
     })
-    return { tasks: parseSuggestedTasks(content || result.content || '', maxSuggestions) }
+    const parsed = parseSuggestedTasks(content || result.content || '', maxSuggestions)
+    if (!actionItems || actionItems.length === 0) {
+      return { tasks: parsed }
+    }
+    // When Fathom supplied action_items, keep only grounded tasks (no invented extras).
+    const seenIndexes = new Set<number>()
+    return {
+      tasks: parsed.filter((task) => {
+        const index = task.source_action_index
+        if (typeof index !== 'number' || index < 0 || index >= actionItems.length) return false
+        if (seenIndexes.has(index)) return false
+        seenIndexes.add(index)
+        return true
+      }),
+    }
   }
 }
 

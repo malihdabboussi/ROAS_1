@@ -1,3 +1,131 @@
+## 2026-08-04 - [ARCH] Space automation bases 06/13 over LOC after Fathom follow-up restore
+
+Status: Open
+Found while: Restoring Fathom→follow_up bridge + agent_suggest enrich path
+Files:
+
+- `apps/api/src/modules/spaces/services/space-automation-service-06.base.ts` (835 LOC)
+- `apps/api/src/modules/spaces/services/space-automation-service-13.base.ts` (802 LOC)
+  Evidence: Existing-call automation enqueue + suggest upsert landed in already-oversized bases (limit 600).
+  Needed work: Extract Fathom route + agent_suggest_tasks into dedicated services.
+  Deferred because: In-scope was restoring action-item flow; full split not requested.
+
+## 2026-08-04 - [OPS] Deploy API for Fathom follow_up ingest + webhook action-item refetch
+
+Status: Open
+Found while: Completing action-item Phases 4–5
+Files:
+
+- `meeting-source-ingestion.service.ts`, `fathom-webhook.service.ts`, automation bases, agent-api suggest-tasks
+  Evidence: Phase 3 backfill + live automation are in prod; Phase 5 data acceptance passes on existing rows. Ingest mirror + empty-action refetch + attach-path automation enqueue are local-only until `roas-api` / `api.roas.io` deploy. Working tree also has unrelated branch changes — deploy should ship a deliberate commit, not a dirty mixed tree.
+  Needed work: Commit the action-item API slice (or full ready branch), deploy `apps/api` (+ agent-api if suggest enrich ships from there), smoke next Fathom webhook.
+  Deferred because: Production deploy from an unclean multi-feature working tree is unsafe without an explicit commit/deploy ask.
+
+## 2026-08-04 - [UX] App-wide document open should use shell viewer, not Space navigation
+
+Status: Open
+Found while: Meeting Workspace attachments now call `openDocumentInShell`
+Files:
+
+- Space item grids / All Meetings document rows / other `buildSpaceItemHref` document clicks
+  Evidence: User asked for documents to pop/slide open everywhere; only meeting attachments were converted this turn.
+  Needed work: Route document-type space item opens through `openDocumentInShell` / artifact viewer instead of `?item=` space navigation.
+  Deferred because: Scoped fix landed for the Meeting Workspace path that was reported.
+
+## 2026-08-04 - [DATA] This Impromptu call has no Fathom action items to show
+
+Status: Open
+Found while: Meeting Workspace UI consolidation (Leadership alignment / Impromptu)
+Files:
+
+- Fathom recording `170082749` / meeting item with transcript + recap attachments
+  Evidence: Earlier prod check showed 0 Fathom `action_items` on that recording; UI correctly shows Action items 0.
+  Needed work: Optional AI extraction from transcript/recap when provider actions are empty, or re-pull Fathom if actions appear later.
+  Deferred because: Not a UI miss — provider payload had no actions.
+
+## 2026-08-04 - [ARCH] SpaceVibeyChatPanel / chat.service still far over LOC limits
+
+Status: Open
+Found while: Fixing meeting-open chat stuck on Loading / Delegator filter
+Files:
+
+- `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` (2553 LOC)
+- `apps/web/src/features/studio/services/chat.service.ts` (2961 LOC)
+  Evidence: Preferred-open + selectConversation hardening landed in already-oversized files; project architecture component/service limits are well exceeded.
+  Needed work: Extract meeting/preferred-open effects and selectConversation into focused modules.
+  Deferred because: In-scope fix was the open-path race/filter; full split was out of scope.
+
+## 2026-08-04 - [DATA] Duplicate Fathom call row after AARON calendar stub
+
+Status: Open
+Found while: Relinking Impromptu 170082749 onto AARON X DYLAN X NATE after ingest fix
+Files:
+
+- `space_items` `fac4b11a-…` (Leadership alignment…) vs `3042dda0-…` (AARON calendar/fathom)
+  Evidence: Near-start reconcile created a separate Fathom call; recording was moved onto AARON; AI-titled duplicate call may still appear in All Meetings.
+  Needed work: Prefer attaching Fathom to existing calendar stubs in the wider near-start window, then soft-hide/merge orphan AI-titled duplicates.
+  Deferred because: User needed the AARON recording linked now; full merge UX is adjacent.
+
+## 2026-08-04 - [ARCH] Agenda Fathom sync still needs web production deploy
+
+Status: Open
+Found while: Wiring agenda-canonical Fathom link into meeting workspace Recordings
+Files:
+
+- `apps/web/src/features/home/lib/sync-agenda-fathom-recording.ts`
+- `apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx` (395 LOC; component limit 400)
+- `apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts` (630 LOC; over 600)
+  Evidence: Local web has agenda→workspace sync; production web may not until deploy. Dialog is at component LOC ceiling; precall service remains over service limit.
+  Needed work: Deploy web (or confirm users stay on local). Split MeetingWorkspaceDialog sections further if it grows; extract precall related/Fathom builders (already logged).
+  Deferred because: API path + local sync fix the reported detach; web prod deploy was not requested in this turn.
+
+## 2026-08-04 - [UX] Work-area memory does not yet restore selected Space items
+
+Status: Open
+Found while: Making top-right work-area memory labels specific (meeting + campaign/space)
+Files:
+
+- `apps/web/src/components/shell/ShellWorkAreaControl.tsx`
+- `apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx`
+  Evidence: Memory now stores `Campaign / Space` and restorable agenda meetings. Opening a specific Space task/doc still only reopens the Space route, not the selected item modal.
+  Needed work: Record selected Space item title + `?item=` (or pending restore) when a detail is open, and reopen on memory select.
+  Deferred because: User ask was met for agenda meetings and campaign/space naming; item-level restore is adjacent depth.
+
+## 2026-08-04 - [ARCH] Team/Studio chat panels still use instance-local load seq (same wipe class)
+
+Status: Open
+Found while: Fixing stale conversation reload wipe on SpaceVibeyChatPanel remounts
+Files:
+
+- `apps/web/src/features/team-2/components/hr-side-chat/useTeamHrConversationActions.ts`
+- `apps/web/src/features/team/components/AgentChatPanel.tsx`
+  Evidence: Both still gate async conversation loads with component `useRef` seq only. Space shell chat now uses module epoch + `resolvePostLoadConversationSelection`; these surfaces can still clear `activeConversationId` after remount.
+  Needed work: Apply the same mount-epoch + preserve-store-active selection pattern (or shared helper) to Team HR and Agent chat loaders.
+  Deferred because: User report centered on shell/global chat; Team/Studio panels were adjacent debt found during the fix.
+
+## 2026-08-04 - [ARCH] Meeting open still lacks ensure-conversation for scheduled/processing
+
+Status: Open
+Found while: Fixing blank new chat when opening live meeting workspace
+Files:
+
+- `apps/api/src/modules/meetings/services/meeting-workspace.service.ts` (`getWorkspace`)
+- `apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx` (hydrate)
+  Evidence: `getWorkspace` only reads; ensure runs on resolve/start/snippet. Frontend now calls `startMeetingCall` only for missing conversation on `live`/`complete` (startCall would force `live` on scheduled/processing).
+  Needed work: Add a phase-preserving ensure-conversation path on get/hydrate for scheduled + processing rows missing `conversation_id`.
+  Deferred because: User bug was blank chat with an existing live meeting link; GlobalChatPanel preferred-id gate was the primary cause.
+
+## 2026-08-04 - [API] Meeting snippets endpoint has no web client after note-field removal
+
+Status: Open
+Found while: Removing Live notes & snippets UI from meeting workspace
+Files:
+
+- `apps/api/src/modules/meetings/` snippet routes / `POST .../snippets`
+  Evidence: Web no longer calls `addMeetingSnippet`; typed `meeting_snippets` rows may still be written elsewhere or remain for future agent tooling.
+  Needed work: Confirm whether chat messages alone are the product surface and deprecate/remove the snippets write path, or wire chat paste → snippet ingestion if typed records are still required.
+  Deferred because: User asked only to remove the duplicate UI field; backend contract change is out of scope.
+
 ## 2026-07-29 - [OPS] Set NEXT_PUBLIC_WAITLIST_MODE=true on Vercel (web + api + website)
 
 Status: Open
@@ -9380,14 +9508,110 @@ Needed work: Extract state-neutral field groups and selection helpers into featu
 
 Reason not done now: The requested fix is behavior-sensitive and already shares the canonical format configuration and preview component; restructuring both launch surfaces would broaden the regression surface.
 
-## 2026-07-31 - [FEATURE] Pixel Slack digest UX — remaining polish
+## 2026-08-04 - [ARCH] meetings-precall-prep.service over service LOC limit
 
 Status: Open
 
+Found while: Fixing false Fathom agenda badges vs empty meeting Recordings.
+
+Evidence: `apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts` is 655 LOC (service limit 600).
+
+Needed work: Extract `enrichAgendaRelatedCalls` (+ calendar_event_id matching / Fathom unmatched filter) into a dedicated helper/service file.
+
+Reason not done now: In-scope fix was agenda truthfulness + recording hydrate; full extract would broaden the diff.
+
+## 2026-08-04 - [FIX] Deploy fathom attach-to-meeting to api.roas.io
+
+Status: Open
+
+Found while: Debugging Recordings + “Could not link that recording” on local web pointed at production API.
+
+Evidence: Local Nest (`localhost:3001`) returns 401 for `POST /api/integrations/fathom/attach-to-meeting` (route exists). Production `api.roas.io` returns 404 `Cannot POST`. Local web was using `BACKEND_URL=https://api.roas.io`; temporarily pointed at localhost for feature work. Also added open-time hydrate that depends on the same local attach/ingest path.
+
+Needed work: Ship attach + hydrate routes with the next `roas-api` production deploy, then optionally restore web `.env.local` to `api.roas.io` if desired.
+
+Reason not done now: User needs linking to work immediately on local; deploy/commit not requested in this turn.
+
+## 2026-07-31 - [FEATURE] Pixel Slack digest UX — remaining polish
+
+Status: Partially done (deployed 2026-08-03)
+
 Found while: Rewriting Slack Team Intelligence delivery to match Viktor-style digests
 
-Evidence: Delivery now batches and threads in code, but (1) local/prod API must be restarted/redeployed before Active sends use the new composer; (2) Slack App Home → History still lists thread replies as cards even when they share a parent — DM view is the curated surface; (3) suggested actions are text CTAs only (no Slack button/block actions wired yet).
+Evidence: Digest code merged in PR #79 and `roas-api` production is on `e25d403b` (`api.roas.io` 200). Remaining: (1) Slack App Home → History still lists thread replies as cards even when they share a parent — DM view is the curated surface; (2) suggested actions are text CTAs only (no Slack button/block actions wired yet). Also discovered `roas-api` Ignored Build Step was `exit 0` (cleared during deploy).
 
-Needed work: Restart/redeploy API; optionally add Block Kit action buttons + interactive handlers for “draft reply”; optionally collapse History UX with Slack `chat.update` on digest root when appending items.
+Needed work: Optionally add Block Kit action buttons + interactive handlers for “draft reply”; optionally collapse History UX with Slack `chat.update` on digest root when appending items.
 
-Reason not done now: Out of requested delivery-copy/threading scope; needs Slack interactivity wiring and deploy.
+Reason not done now: Out of requested delivery-copy/threading/deploy scope; needs Slack interactivity wiring.
+
+## 2026-08-04 - [REFACTOR] Settings integrations file-size debt
+
+Status: Open
+
+Found while: Adding Slack full-search / historical-fallback visibility.
+
+Evidence: `apps/web/src/features/settings/components/settings-content/useIntegrations.ts` is 888 LOC and `ConnectedIntegrationCard.tsx` is 582 LOC, above the 400-line component/hook guideline. The files were already over limit before this scoped status addition.
+
+Needed work: Extract provider status merging from `useIntegrations` and split connection-row status/actions from `ConnectedIntegrationCard` without changing Settings behavior.
+
+Reason not done now: The requested work is Slack retrieval and one status indicator; restructuring the complete multi-provider Settings surface would materially broaden the change.
+
+## 2026-08-04 - [REFACTOR] Shell chat history component over component LOC limit
+
+Status: Open
+
+Found while: Isolating the mobile work, history, chat, and working-card surfaces.
+
+Evidence: `apps/web/src/components/shell/ShellChatMenu.tsx` is 400 LOC, at the component guideline's hard limit. The file was 399 LOC before this change and already combines history loading, automatic title upgrades, filtering, mutations, navigation, and rendering.
+
+Needed work: Extract the conversation-history data and mutation orchestration into a shell-owned hook while keeping `ShellChatMenu` as the shared shell renderer.
+
+Reason not done now: The requested mobile fix only adds a view-transition callback; restructuring history data behavior would broaden the regression surface beyond responsive isolation.
+
+## 2026-08-04 - [REFACTOR] Direct join page near component LOC limit
+
+Status: Open
+
+Found while: Expanding mobile tap targets throughout the public authentication flows.
+
+Evidence: `apps/web/src/app/(auth)/join/page.tsx` is 370 LOC, above the 320 LOC proactive-decomposition threshold and near the 400 LOC component limit. It combines invite validation, OAuth, email signup, resend behavior, invalid/loading states, and the full form UI.
+
+Needed work: Extract the provider buttons and email signup form into auth-owned presentational components while keeping invite and redirect orchestration in the page.
+
+Reason not done now: The mobile change only adjusts existing interaction areas; restructuring authentication behavior would add unrelated risk to this responsive batch.
+
+## 2026-08-04 - [REFACTOR] Artifact library component near LOC limit
+
+Status: Open
+
+Found while: Raising the artifact library's mobile view-toggle targets.
+
+Evidence: `apps/web/src/features/artifacts/components/GlobalArtifactsPage.tsx` is 368 LOC, above the 320 LOC proactive-decomposition threshold and near the 400 LOC component limit. It owns fetching, filtering, source-menu state, list rendering, and card rendering.
+
+Needed work: Extract props-driven artifact filter controls plus list/card result renderers while retaining data orchestration in `GlobalArtifactsPage`.
+
+Reason not done now: The requested mobile fix only changes existing toggle sizing; decomposing the artifact library would broaden the regression surface.
+
+## 2026-08-04 - [REFACTOR] Conversation rows near proactive LOC threshold
+
+Status: Open
+
+Found while: Expanding chat history row and action hit areas for touch.
+
+Evidence: `apps/web/src/components/conversations/SpaceConversationRows.tsx` is 319 LOC, effectively at the 320 LOC proactive-decomposition threshold and combines title animation, activity formatting, avatar rendering, and row interaction behavior.
+
+Needed work: Extract title/activity display helpers into props-driven conversation-row subcomponents without changing the shared conversation contract.
+
+Reason not done now: The touch-target correction is localized; restructuring shared chat-history rendering would add unrelated risk.
+
+## 2026-08-04 - [REFACTOR] Dense mobile toolbar components near LOC limits
+
+Status: Open
+
+Found while: Converting dense mobile toolbars to one horizontal control strip and restoring full-width Flows content.
+
+Evidence: `apps/web/src/features/team-2/components/Team2Toolbar.tsx` is 377 LOC, above the 320 LOC proactive-decomposition threshold. `apps/web/src/features/flows/components/FlowsBrowseHub.tsx` is 319 LOC, effectively at that threshold. The former combines every agent filter/action group; the latter combines template loading, installation, navigation, filtering, and panel rendering.
+
+Needed work: Extract props-driven toolbar groups from `Team2Toolbar` and responsive library navigation/template cards from `FlowsBrowseHub`, retaining their existing state contracts.
+
+Reason not done now: The requested work is responsive layout correction; decomposing both behavior-heavy components would broaden the regression surface.

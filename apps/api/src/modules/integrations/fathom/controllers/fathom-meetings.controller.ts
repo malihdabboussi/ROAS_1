@@ -11,20 +11,30 @@ import {
   UseGuards,
 } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { z } from 'zod'
 import {
   AuthGuard,
   CurrentUser,
   OrgContext,
   OrgContextGuard,
   OrgRoleGuard,
+  RequireOrgRole,
   Supabase,
+  ZodValidationPipe,
   type RequestScope,
 } from '@vibey/api-shared'
 import { BrainImportJobsService } from '../../../brain/services/brain-import-jobs.service'
 import type { MeetingRecordingBackfillCursor } from '../../../meetings/repositories/meeting-recording-backfill.repository'
 import { ListFathomMeetingsSchema } from '../dto/fathom.dto'
 import { FathomApiService } from '../services/fathom-api.service'
+import { FathomMeetingWorkspaceAttachService } from '../services/fathom-meeting-workspace-attach.service'
 import { FathomMeetingWorkspaceBackfillService } from '../services/fathom-meeting-workspace-backfill.service'
+
+const AttachToMeetingSchema = z.object({
+  space_id: z.string().uuid(),
+  meeting_item_id: z.string().uuid(),
+  meeting: z.record(z.unknown()),
+})
 
 @Controller('integrations/fathom')
 export class FathomMeetingsController {
@@ -32,6 +42,7 @@ export class FathomMeetingsController {
     private readonly api: FathomApiService,
     private readonly importJobs: BrainImportJobsService,
     private readonly meetingBackfill: FathomMeetingWorkspaceBackfillService,
+    private readonly meetingAttach: FathomMeetingWorkspaceAttachService,
   ) {}
 
   @Get('meetings')
@@ -95,6 +106,25 @@ export class FathomMeetingsController {
       scope.orgId ?? null,
     )
     return { success: true, ...queued }
+  }
+
+  @Post('attach-to-meeting')
+  @UseGuards(AuthGuard, OrgContextGuard, OrgRoleGuard)
+  @RequireOrgRole('editor')
+  async attachToMeeting(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Body(new ZodValidationPipe(AttachToMeetingSchema)) body: z.infer<typeof AttachToMeetingSchema>,
+  ) {
+    const result = await this.meetingAttach.attachRecording(supabase, {
+      spaceId: body.space_id,
+      meetingItemId: body.meeting_item_id,
+      userId: user.id,
+      orgId: scope.orgId ?? null,
+      meeting: body.meeting,
+    })
+    return { success: true, ...result }
   }
 
   @Post('meetings/backfill-transcripts')

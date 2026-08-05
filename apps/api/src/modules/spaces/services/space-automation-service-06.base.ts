@@ -393,6 +393,44 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
               event,
             })
           }
+          // Same enrichment path as new calls (agent_suggest_tasks upserts onto ingest follow_ups).
+          const existingTriggerEvent: TriggerEvent = {
+            type: 'external_fathom_recording_ready',
+            title: meeting.title,
+            recorded_by_email: meeting.recordedByEmail,
+            meeting_id: meeting.meetingId,
+            summary: meeting.summary,
+            transcript_text: meeting.transcriptText,
+            transcript_entries: meeting.transcriptEntries,
+            transcript: meeting.transcript,
+            action_items: meeting.actionItems,
+            attendees: meeting.attendees,
+            url: meeting.url,
+            fathom_owner_user_id: userId,
+            meeting_workspace_actions_authoritative: false,
+          }
+          const queuedExisting = await this.enqueueAutomationRuntimeJob(
+            automationId,
+            existingTriggerEvent,
+            {
+              supabase,
+              userId: runUserId,
+              orgId,
+              spaceId,
+              itemId: String(existingCall.id),
+              depth: 0,
+            },
+          )
+          if (!queuedExisting) {
+            await this.executeAutomationById(automationId, existingTriggerEvent, {
+              supabase,
+              userId: runUserId,
+              orgId,
+              spaceId,
+              itemId: String(existingCall.id),
+              depth: 0,
+            })
+          }
           this.logger.log(
             `Attached Fathom recording ${meeting.meetingId} to meeting ${String(existingCall.id)} on space ${spaceId}`,
           )
@@ -594,7 +632,10 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
           attendees: meeting.attendees,
           url: meeting.url,
           fathom_owner_user_id: userId,
-          meeting_workspace_actions_authoritative: Boolean(this.meetingSourceIngestion),
+          // Keep Meetings-space follow_up space_items as the shared action-item
+          // surface (Home Meeting Workspace links to those same rows). Do not
+          // suppress agent_suggest_tasks just because meeting_actions ingest exists.
+          meeting_workspace_actions_authoritative: false,
         }
 
         const queued = await this.enqueueAutomationRuntimeJob(automationId, fathomTriggerEvent, {

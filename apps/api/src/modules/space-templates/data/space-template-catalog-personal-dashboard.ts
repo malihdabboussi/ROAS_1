@@ -241,6 +241,14 @@ const fathomMeetingLog: SpaceTemplateAutomationSeed = {
   actions: [
     { type: 'change_status', status: 'processing' },
     { type: 'change_status', status: 'needs_follow_up' },
+    // Enrich exact Fathom action_items into follow_ups — do not invent when empty.
+    {
+      type: 'agent_suggest_tasks',
+      agent_key: 'vibey',
+      max_suggestions: 25,
+      instructions:
+        'Only turn payload.action_items into tasks. If action_items is empty, return {"tasks":[]}. Do not invent tasks from the transcript or summary.',
+    },
   ],
   sort_order: 2,
 }

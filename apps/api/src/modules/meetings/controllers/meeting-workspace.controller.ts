@@ -42,6 +42,10 @@ const ActionPatchSchema = z
     resolution: z.record(z.unknown()).optional(),
   })
   .refine((value) => Object.keys(value).length > 0)
+const ActionCreateSchema = z.object({
+  title: z.string().trim().min(1).max(1000),
+  assignee_name: z.string().trim().max(500).nullable().optional(),
+})
 
 @Controller('spaces/:spaceId/meetings/:meetingItemId')
 @UseGuards(AuthGuard, ThrottlerGuard, OrgContextGuard, OrgRoleGuard)
@@ -51,11 +55,17 @@ export class MeetingWorkspaceController {
   @Get()
   @RequireOrgRole('viewer')
   getWorkspace(
+    @CurrentUser() user: { id: string },
     @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
     @Param(new ZodValidationPipe(MeetingParamsSchema))
     params: z.infer<typeof MeetingParamsSchema>,
   ) {
-    return this.meetings.getWorkspace(supabase, params)
+    return this.meetings.getWorkspace(supabase, {
+      ...params,
+      userId: user.id,
+      orgId: scope.orgId,
+    })
   }
 
   @Post('start')
@@ -104,6 +114,25 @@ export class MeetingWorkspaceController {
       sourceRecordingId: body.source_recording_id,
       occurredAt: body.occurred_at,
       sourceLabel: body.source_label,
+    })
+  }
+
+  @Post('actions')
+  @RequireOrgRole('editor')
+  createAction(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param(new ZodValidationPipe(MeetingParamsSchema))
+    params: z.infer<typeof MeetingParamsSchema>,
+    @Body(new ZodValidationPipe(ActionCreateSchema)) body: z.infer<typeof ActionCreateSchema>,
+  ) {
+    return this.meetings.createManualAction(supabase, {
+      ...params,
+      userId: user.id,
+      orgId: scope.orgId,
+      title: body.title,
+      assigneeName: body.assignee_name,
     })
   }
 

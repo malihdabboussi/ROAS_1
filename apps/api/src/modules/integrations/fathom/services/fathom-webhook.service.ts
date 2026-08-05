@@ -122,6 +122,8 @@ export class FathomWebhookService {
     // Only learn owner alternate emails — never absorb teammate recorded_by hosts
     // (shared_team_recordings), or every Team call would be labeled Personal.
     await this.captureFathomAlias(userId, (event as any).recorded_by)
+    // Webhooks often arrive before action_items are filled — one list refetch.
+    await this.ensureActionItemsOnEvent(userId, event, meetingId)
     // Meetings call rows must still land for shared_team recordings even when
     // Fathom omits transcript from the webhook body (Slack follow-up is downstream).
     const spaceRoute = await this.processSpaceAutomationRoute(userId, event)
@@ -154,6 +156,49 @@ export class FathomWebhookService {
    * include_transcript=true. Fetch via API when possible; return whether the
    * event now has a non-empty transcript array.
    */
+  /**
+   * When the webhook payload has no action_items, pull the meeting once from
+   * Fathom list API. Do not invent actions from transcript if still empty.
+   */
+  private async ensureActionItemsOnEvent(
+    userId: string,
+    event: Record<string, unknown>,
+    meetingId: string,
+  ): Promise<void> {
+    const existing = Array.isArray(event.action_items) ? event.action_items : []
+    if (existing.length > 0) return
+
+    const recordingId = this.resolveRecordingId(event, meetingId)
+    if (!recordingId) return
+
+    try {
+      const admin = this.repository.getServiceClient()
+      const page = await this.api.listMeetings(admin, userId)
+      const match = (page.items ?? []).find((row) => {
+        const ids = [row.recording_id, row.id, row.call_id]
+          .filter((value) => value != null && value !== '')
+          .map((value) => String(value))
+        return ids.includes(recordingId) || ids.includes(meetingId)
+      })
+      const fetched = Array.isArray(match?.action_items) ? match.action_items : []
+      if (fetched.length === 0) {
+        this.logger.warn(
+          `[FATHOM-DEBUG] Action-items refetch still empty for recording ${recordingId}`,
+        )
+        return
+      }
+      event.action_items = fetched
+      this.logger.warn(
+        `[FATHOM-DEBUG] Action-items refetch filled ${fetched.length} items for recording ${recordingId}`,
+      )
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      this.logger.warn(
+        `[FATHOM-DEBUG] Action-items refetch failed for recording ${recordingId}: ${msg}`,
+      )
+    }
+  }
+
   private async ensureTranscriptOnEvent(
     userId: string,
     event: Record<string, unknown>,

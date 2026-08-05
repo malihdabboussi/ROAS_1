@@ -29,8 +29,10 @@ describe('MeetingSourceIngestionService', () => {
     }
     const service = new MeetingSourceIngestionService(
       repository as never,
+      { upsertProviderActions: vi.fn() } as never,
       resolutionRepository as never,
       {} as never,
+      { upsertProviderFollowUps: vi.fn().mockResolvedValue([]) } as never,
     )
 
     const result = await service.findMatchingMeetingItem({} as never, {
@@ -86,8 +88,10 @@ describe('MeetingSourceIngestionService', () => {
     }
     const service = new MeetingSourceIngestionService(
       repository as never,
+      { upsertProviderActions: vi.fn() } as never,
       resolutionRepository as never,
       {} as never,
+      { upsertProviderFollowUps: vi.fn().mockResolvedValue([]) } as never,
     )
 
     const result = await service.findMatchingMeetingItem({} as never, {
@@ -119,7 +123,6 @@ describe('MeetingSourceIngestionService', () => {
           email: 'dylan@dylanvanas.com',
         },
       ]),
-      upsertProviderActions: vi.fn().mockResolvedValue(['action-1']),
       listRecordings: vi.fn().mockResolvedValue([
         {
           id: 'source-1',
@@ -161,11 +164,17 @@ describe('MeetingSourceIngestionService', () => {
         internalDomains: ['dylanvanas.com'],
       }),
       updateMeetingItemCallKind: vi.fn().mockResolvedValue(undefined),
+      updateMeetingItemFathomRecording: vi.fn().mockResolvedValue(undefined),
+    }
+    const providerActions = {
+      upsertProviderActions: vi.fn().mockResolvedValue(['action-1']),
     }
     const service = new MeetingSourceIngestionService(
       repository as never,
+      providerActions as never,
       resolutionRepository as never,
       recaps as never,
+      { upsertProviderFollowUps: vi.fn().mockResolvedValue(['fu-1']) } as never,
     )
 
     const result = await service.ingestFathomSource({} as never, {
@@ -209,7 +218,7 @@ describe('MeetingSourceIngestionService', () => {
       expect.anything(),
       expect.objectContaining({ meetingItemId: 'meeting-1', phase: 'complete' }),
     )
-    expect(repository.upsertProviderActions).toHaveBeenCalledWith(
+    expect(providerActions.upsertProviderActions).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         meetingItemId: 'meeting-1',
@@ -234,6 +243,12 @@ describe('MeetingSourceIngestionService', () => {
       'meeting-1',
       expect.objectContaining({ call_kind: 'scheduled' }),
       'client',
+    )
+    expect(resolutionRepository.updateMeetingItemFathomRecording).toHaveBeenCalledWith(
+      expect.anything(),
+      'meeting-1',
+      expect.objectContaining({ entry_type: 'call' }),
+      expect.objectContaining({ externalRecordingId: 'rec-1' }),
     )
     expect(recaps.upsertRecap).toHaveBeenCalledWith(
       expect.anything(),
@@ -263,8 +278,10 @@ describe('MeetingSourceIngestionService', () => {
     }
     const service = new MeetingSourceIngestionService(
       repository as never,
+      { upsertProviderActions: vi.fn() } as never,
       resolutionRepository as never,
       {} as never,
+      { upsertProviderFollowUps: vi.fn().mockResolvedValue([]) } as never,
     )
 
     const result = await service.findMatchingMeetingItem({} as never, {

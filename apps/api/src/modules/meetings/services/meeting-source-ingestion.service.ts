@@ -15,8 +15,10 @@ import {
   normalizeFathomMeetingSource,
   renderFathomTranscriptDocument,
 } from '../providers/fathom-meeting-source'
+import { MeetingProviderActionsRepository } from '../repositories/meeting-provider-actions.repository'
 import { MeetingRecapRepository } from '../repositories/meeting-recap.repository'
 import { MeetingWorkspaceResolutionRepository } from '../repositories/meeting-workspace-resolution.repository'
+import { MeetingWorkspaceStateRepository } from '../repositories/meeting-workspace-state.repository'
 import { MeetingWorkspaceRepository } from '../repositories/meeting-workspace.repository'
 
 type IngestFathomSourceInput = {
@@ -32,8 +34,10 @@ type IngestFathomSourceInput = {
 export class MeetingSourceIngestionService {
   constructor(
     private readonly repository: MeetingWorkspaceRepository,
+    private readonly providerActions: MeetingProviderActionsRepository,
     private readonly resolutionRepository: MeetingWorkspaceResolutionRepository,
     private readonly recaps: MeetingRecapRepository,
+    private readonly stateRepository: MeetingWorkspaceStateRepository,
   ) {}
 
   async findMatchingMeetingItem(
@@ -119,6 +123,7 @@ export class MeetingSourceIngestionService {
   }> {
     const source = normalizeFathomMeetingSource(input.event)
     await this.syncAutomaticCallKind(supabase, input, source)
+    await this.syncCallItemFathomRecording(supabase, input, source)
     const existingWorkspace = await this.resolutionRepository.findByMeetingItem(
       supabase,
       input.meetingItemId,
@@ -159,11 +164,17 @@ export class MeetingSourceIngestionService {
       userId: input.userId,
       orgId: input.orgId,
     })
-    const providerActionIds = await this.repository.upsertProviderActions(supabase, {
+    const providerActionIds = await this.providerActions.upsertProviderActions(supabase, {
       ...scope,
       recordingId,
       actions: source.actions,
       assignees: resolveMeetingActionAssignees(source.actions, assigneeCandidates),
+    })
+    // Canonical Action items UI reads follow_up space_items — mirror exact Fathom actions there.
+    await this.stateRepository.upsertProviderFollowUps(supabase, {
+      ...scope,
+      actions: source.actions,
+      meetingTitle: source.title,
     })
     const recordings = await this.repository.listRecordings(supabase, input.meetingItemId)
     const candidates = recordings.map(toCandidate)
@@ -247,6 +258,27 @@ export class MeetingSourceIngestionService {
       callKind,
     )
   }
+
+  private async syncCallItemFathomRecording(
+    supabase: SupabaseClient,
+    input: IngestFathomSourceInput,
+    source: ReturnType<typeof normalizeFathomMeetingSource>,
+  ): Promise<void> {
+    const customData = await this.resolutionRepository.findMeetingItemCustomData(
+      supabase,
+      input.meetingItemId,
+    )
+    await this.resolutionRepository.updateMeetingItemFathomRecording(
+      supabase,
+      input.meetingItemId,
+      customData,
+      {
+        recordingUrl: source.recordingUrl,
+        externalRecordingId: source.externalRecordingId,
+        providerMeetingId: source.providerMeetingId,
+      },
+    )
+  }
 }
 
 function scheduledRowToCandidate(row: Record<string, unknown>): MeetingRecordingCandidate {
@@ -320,11 +352,7 @@ function record(value: unknown): Record<string, unknown> {
 }
 
 function recordedByEmail(event: Record<string, unknown>): string {
-  return (
-    text(event.recorded_by_email) ??
-    text(record(event.recorded_by).email) ??
-    ''
-  )
+  return text(event.recorded_by_email) ?? text(record(event.recorded_by).email) ?? ''
 }
 
 function attendeeLabels(event: Record<string, unknown>): string[] {
