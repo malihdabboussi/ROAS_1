@@ -78,10 +78,13 @@ export function MeetingWorkspaceContextLinks({
   useEffect(() => {
     let cancelled = false
     const rows = linkedSpaceKey
-      ? linkedSpaceKey.split('|').map((entry) => {
-          const [id, ...labelParts] = entry.split(':')
-          return { id, label: labelParts.join(':') || 'Space' }
-        })
+      ? linkedSpaceKey
+          .split('|')
+          .map((entry) => {
+            const [rawId = '', ...labelParts] = entry.split(':')
+            return { id: rawId, label: labelParts.join(':') || 'Space' }
+          })
+          .filter((space) => space.id.length > 0)
       : []
     const next: Record<string, string> = {}
     const pending = rows.map(async (space) => {
