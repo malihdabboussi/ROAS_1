@@ -35,3 +35,10 @@ Why: `roas-web` prod compile failed on meeting Fathom sync after board merge.
 Impact: Unblocks Meeting Workspace board deploy to app.roas.io.
 Files: `calendar-api.ts`, `AgendaMinimizedEventEntry.test.tsx`
 
+## [2026-08-05 14:28] - [FIX]
+
+What: Added `last_message_at` to studio `Conversation` type used by chat store updates.
+Why: Production `roas-web` typecheck fails after chat last-activity wrote that field without updating the studio type.
+Impact: Unblocks Meeting Workspace board web deploy.
+Files: `apps/web/src/features/studio/types/index.ts`
+

@@ -126,6 +126,8 @@ export interface Conversation {
   metadata: Record<string, unknown>
   created_at: string
   updated_at: string
+  /** Latest message timestamp; drives history age/sort. Not bumped by open/title/pin/scope. */
+  last_message_at?: string | null
   default_model_id?: string | null
   forked_from?: { conversation_id: string; message_id: string; forked_at: string } | null
   creator?: ConversationCreator | null
