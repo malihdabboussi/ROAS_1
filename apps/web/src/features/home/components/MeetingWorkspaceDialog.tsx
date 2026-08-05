@@ -384,7 +384,9 @@ export function MeetingWorkspaceDialog({
             spaceId={spaceId}
             meetingItemId={meetingItemId}
             recordings={bundle?.recordings ?? []}
-            onLinked={hydrateWorkspace}
+            onLinked={() => {
+              void hydrateWorkspace()
+            }}
           />
         </div>
       </main>
