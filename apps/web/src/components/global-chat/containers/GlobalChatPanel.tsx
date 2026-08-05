@@ -9,6 +9,7 @@ import { ChatCampaignBrainNudge } from '../components/ChatCampaignBrainNudge'
 import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendation'
 import { GlobalChatComposerFooter } from '../components/GlobalChatComposerFooter'
 import { QuickMissionsHubHost } from '../components/QuickMissionsHubHost'
+import { resolveMeetingChatPanel } from '../lib/resolve-meeting-chat-panel'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 import { useStickyGlobalChatPanelHost } from './global-chat-panel-host'
 
@@ -47,8 +48,14 @@ export function GlobalChatPanel({
     activeSpaceCampaignId: activeSpace?.campaign_id ?? null,
     workContext,
   })
-  const meetingContext =
-    storedMeetingContext?.conversationId === activeConversationId ? storedMeetingContext : null
+  const {
+    meetingContext,
+    preferredConversationId,
+    awarenessContext: meetingAwarenessContext,
+  } = resolveMeetingChatPanel({
+    storedMeetingContext,
+    activeConversationId,
+  })
   const spaceId = meetingContext?.spaceId ?? host.spaceId
   const awarenessSurface = meetingContext
     ? 'spaces'
@@ -63,9 +70,7 @@ export function GlobalChatPanel({
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <SpaceVibeyChatPanel
           key={
-            meetingContext
-              ? `meeting:${meetingContext.conversationId ?? spaceId}:${meetingContext.timelineVersion ?? 0}`
-              : host.panelKey
+            meetingContext ? `meeting:${meetingContext.conversationId ?? spaceId}` : host.panelKey
           }
           chatSurface={awarenessSurface}
           spaceId={spaceId}
@@ -77,8 +82,8 @@ export function GlobalChatPanel({
           campaignName={
             awarenessSurface === 'spaces' && isSpacesRoute ? (activeSpace?.title ?? null) : null
           }
-          preferredConversationId={meetingContext?.conversationId}
-          awarenessContextOverride={meetingContext?.awarenessContext}
+          preferredConversationId={preferredConversationId}
+          awarenessContextOverride={meetingAwarenessContext}
           brainContext={
             awarenessSurface === 'brain' && workContext.brainAwarenessContext
               ? {

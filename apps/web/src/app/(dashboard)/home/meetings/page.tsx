@@ -5,6 +5,7 @@ import { HomeMeetingDetailHost } from '@/features/home/components/HomeMeetingDet
 import { HomeTaskDetailHost } from '@/features/home/components/HomeTaskDetailHost'
 import { useHomeFeedOpen } from '@/features/home/hooks/use-home-feed-open'
 import { useHomeMeetingActions } from '@/features/home/hooks/use-home-meeting-actions'
+import { useHomeMeetingWorkRestore } from '@/features/home/hooks/use-home-meeting-work-restore'
 
 export default function HomeMeetingsPage() {
   const {
@@ -22,12 +23,19 @@ export default function HomeMeetingsPage() {
     openYourTurnItem,
     openYourTurnItemFromMeeting,
   })
+  useHomeMeetingWorkRestore(openMeetingEvent)
 
   return (
     <>
       <main className="flex min-h-0 flex-1 overflow-hidden">
         <h1 className="sr-only">MEETINGS</h1>
-        {activeYourTurnItem ? (
+        {activeMeetingEvent ? (
+          <HomeMeetingDetailHost
+            event={activeMeetingEvent}
+            onClose={closeMeetingEvent}
+            onOpenPrep={openMeetingPrep}
+          />
+        ) : activeYourTurnItem ? (
           <HomeTaskDetailHost
             item={activeYourTurnItem}
             presentation="panel"
@@ -42,13 +50,6 @@ export default function HomeMeetingsPage() {
           />
         )}
       </main>
-      {activeMeetingEvent ? (
-        <HomeMeetingDetailHost
-          event={activeMeetingEvent}
-          onClose={closeMeetingEvent}
-          onOpenPrep={openMeetingPrep}
-        />
-      ) : null}
     </>
   )
 }

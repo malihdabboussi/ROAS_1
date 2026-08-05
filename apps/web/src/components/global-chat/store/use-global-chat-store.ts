@@ -81,6 +81,7 @@ interface GlobalChatStore {
   requestAgentSwitch: (agentKey: string) => void
   setWorkContext: (patch: Partial<GlobalWorkContext>) => void
   attachMeetingContext: (context: GlobalMeetingChatContext) => void
+  clearMeetingContext: () => void
   setSuggestedWorkContext: (ctx: GlobalWorkContext | null) => void
   syncRouteContext: (pathname: string) => void
   loadRoster: () => Promise<void>
@@ -130,9 +131,10 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
 
   setRailIntent: (intent) => {
     set({ railIntent: intent })
-    if (intent === 'new' || intent === 'list') {
-      useSpacesStore.getState().setChatRailIntent(intent === 'new' ? 'new' : 'list')
-    }
+    // Keep Spaces rail intent in sync, including clears (meeting open cancels a stale "new").
+    useSpacesStore
+      .getState()
+      .setChatRailIntent(intent === 'new' ? 'new' : intent === 'list' ? 'list' : null)
   },
 
   setActiveAgentKey: (agentKey) => {
@@ -158,7 +160,24 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
     set({ workContext: next })
   },
 
-  attachMeetingContext: (meetingContext) => set({ meetingContext }),
+  attachMeetingContext: (meetingContext) => {
+    // Meeting threads are Vibey-scoped; keep the agent filter off Delegator/etc.
+    const nextWork = mergeAttachedWorkContext(get().workContext, {
+      surface: 'spaces',
+      spaceId: meetingContext.spaceId,
+    })
+    writePersistedGlobalChat({
+      workContext: nextWork,
+      activeAgentKey: GLOBAL_CHAT_DEFAULT_AGENT,
+    })
+    set({
+      meetingContext,
+      workContext: nextWork,
+      activeAgentKey: GLOBAL_CHAT_DEFAULT_AGENT,
+    })
+  },
+
+  clearMeetingContext: () => set({ meetingContext: null }),
 
   setSuggestedWorkContext: (ctx) => set({ suggestedWorkContext: ctx }),
 

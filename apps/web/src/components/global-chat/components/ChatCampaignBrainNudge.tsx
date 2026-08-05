@@ -19,6 +19,7 @@ import { useGlobalChatStore } from '../store/use-global-chat-store'
 
 export function ChatCampaignBrainNudge() {
   const workContext = useGlobalChatStore((state) => state.workContext)
+  const meetingContext = useGlobalChatStore((state) => state.meetingContext)
   const activeConversationId = useChatStore((state) => state.activeConversationId)
   const activeConversation = useChatStore((state) =>
     state.conversations.find((conversation) => conversation.id === state.activeConversationId),
@@ -53,14 +54,16 @@ export function ChatCampaignBrainNudge() {
       : null
   const dismissed =
     Boolean(activeConversationId) && dismissedIds.includes(activeConversationId ?? '')
-  const eligible = shouldOfferCampaignBrainNudge({
-    surface: workContext.surface,
-    campaignId: workContext.campaignId ?? persistedClientCampaignId,
-    spaceId: workContext.spaceId ?? persistedSpaceId,
-    userTurnCount,
-    minUserTurns: CAMPAIGN_BRAIN_NUDGE_MIN_USER_TURNS,
-    dismissed,
-  })
+  const eligible =
+    !meetingContext &&
+    shouldOfferCampaignBrainNudge({
+      surface: workContext.surface,
+      campaignId: workContext.campaignId ?? persistedClientCampaignId,
+      spaceId: workContext.spaceId ?? persistedSpaceId,
+      userTurnCount,
+      minUserTurns: CAMPAIGN_BRAIN_NUDGE_MIN_USER_TURNS,
+      dismissed,
+    })
 
   if (!eligible || !activeConversationId || activeConversationId.startsWith('pending-')) {
     return null

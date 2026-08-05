@@ -10,6 +10,7 @@ import { HomeTaskDetailHost } from '@/features/home/components/HomeTaskDetailHos
 import { HomeDashboardVisualProvider } from '@/features/home/context/home-dashboard-visual-context'
 import { useHomeFeedOpen } from '@/features/home/hooks/use-home-feed-open'
 import { useHomeMeetingActions } from '@/features/home/hooks/use-home-meeting-actions'
+import { useHomeMeetingWorkRestore } from '@/features/home/hooks/use-home-meeting-work-restore'
 import { prefetchOrgCampaigns } from '@/features/home/lib/home-feed-campaign-cache'
 import { MissionDetailModal } from '@/features/mission-control/components/dialogs/MissionDetailModal'
 import { useOrgStore } from '@/features/org/store/use-org-store'
@@ -59,11 +60,18 @@ export function HomeDashboardContent() {
     openYourTurnItem,
     openYourTurnItemFromMeeting,
   })
+  useHomeMeetingWorkRestore(openMeetingEvent)
 
   return (
     <HomeDashboardVisualProvider variant="v4">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {activeYourTurnItem ? (
+        {activeMeetingEvent ? (
+          <HomeMeetingDetailHost
+            event={activeMeetingEvent}
+            onClose={closeMeetingEvent}
+            onOpenPrep={openMeetingPrep}
+          />
+        ) : activeYourTurnItem ? (
           <HomeTaskDetailHost
             item={activeYourTurnItem}
             presentation="panel"
@@ -98,14 +106,6 @@ export function HomeDashboardContent() {
           mission={selectedMission}
           onClose={closeMission}
           onUpdated={handleFeedsUpdated}
-        />
-      ) : null}
-
-      {activeMeetingEvent ? (
-        <HomeMeetingDetailHost
-          event={activeMeetingEvent}
-          onClose={closeMeetingEvent}
-          onOpenPrep={openMeetingPrep}
         />
       ) : null}
     </HomeDashboardVisualProvider>

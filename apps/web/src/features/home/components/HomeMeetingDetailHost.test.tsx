@@ -1,11 +1,17 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { useShellStore } from '@/components/shell/use-shell-store'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { HomeMeetingDetailHost } from './HomeMeetingDetailHost'
 
 const mocks = vi.hoisted(() => ({
   resolveMeetingsSpaceId: vi.fn(),
   resolveScheduledMeeting: vi.fn(),
+  pathname: '/home',
+}))
+
+vi.mock('next/navigation', () => ({
+  usePathname: () => mocks.pathname,
 }))
 
 vi.mock('@/features/home/lib/resolve-meetings-space-id', () => ({
@@ -28,9 +34,9 @@ vi.mock('@/features/home/components/MeetingWorkspaceDialog', () => ({
     fallbackTitle: string
     joinUrl: string | null
   }) => (
-    <div role="dialog" aria-label={`${fallbackTitle} meeting workspace`}>
+    <section aria-label={`${fallbackTitle} meeting workspace`}>
       {spaceId}:{meetingItemId}:{joinUrl}
-    </div>
+    </section>
   ),
 }))
 
@@ -58,6 +64,7 @@ describe('HomeMeetingDetailHost', () => {
   afterEach(() => {
     cleanup()
     vi.clearAllMocks()
+    useShellStore.setState({ recentWorkAreaPages: [], pendingWorkRestore: null })
   })
 
   it('opens a linked call directly in the curated meeting workspace', () => {
@@ -79,9 +86,16 @@ describe('HomeMeetingDetailHost', () => {
     )
 
     expect(
-      screen.getByRole('dialog', { name: 'Nate X Dylan BOW Huddle meeting workspace' }),
+      screen.getByRole('region', { name: 'Nate X Dylan BOW Huddle meeting workspace' }),
     ).toHaveTextContent('space-1:call-1')
     expect(mocks.resolveScheduledMeeting).not.toHaveBeenCalled()
+    expect(useShellStore.getState().recentWorkAreaPages[0]).toEqual(
+      expect.objectContaining({
+        id: 'home-meeting:google_calendar:evt-1',
+        title: 'Nate X Dylan BOW Huddle',
+        href: '/home',
+      }),
+    )
   })
 
   it('creates or reuses a scheduled workspace before opening a future call', async () => {
@@ -97,7 +111,7 @@ describe('HomeMeetingDetailHost', () => {
     expect(screen.getByText('Getting your meeting space ready...')).toBeInTheDocument()
     await waitFor(() => {
       expect(
-        screen.getByRole('dialog', { name: 'Nate X Dylan BOW Huddle meeting workspace' }),
+        screen.getByRole('region', { name: 'Nate X Dylan BOW Huddle meeting workspace' }),
       ).toHaveTextContent('meetings-space:scheduled-call:https://us06web.zoom.us/j/123')
     })
     expect(mocks.resolveScheduledMeeting).toHaveBeenCalledWith('meetings-space', baseEvent)
