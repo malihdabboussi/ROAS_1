@@ -161,6 +161,41 @@ describe('SlackObservationService', () => {
     expect(result).toMatchObject({ channelsListed: 1, channelsReconciled: 0, historyRequests: 0 })
   })
 
+  it('normalizes ISO period bounds before archive backfill and coverage mark', async () => {
+    const repository = {
+      upsertEvents: vi.fn().mockResolvedValue({ inserted: 1, duplicates: 0 }),
+      markArchiveBackfilled: vi.fn().mockResolvedValue(undefined),
+    }
+    const slackApi = {
+      getChannelHistorySince: vi
+        .fn()
+        .mockResolvedValue([{ ts: '1785869700.000001', user: 'U1', text: 'Archive hit' }]),
+      conversationsRepliesAll: vi.fn(),
+    }
+    const service = new SlackObservationService(repository as never, slackApi as never)
+
+    await service.backfillChannelPeriod({
+      supabase: {} as never,
+      orgId: 'org-1',
+      slackTeamId: 'T1',
+      botToken: 'xoxb-test',
+      channelId: 'C1',
+      channelName: 'client',
+      periodStartTs: '2026-08-04T18:53:39.445+00:00',
+      periodEndTs: '2026-08-05T22:56:26.752Z',
+    })
+
+    expect(slackApi.getChannelHistorySince).toHaveBeenCalledWith(
+      'xoxb-test',
+      'C1',
+      '1785869619.000000',
+    )
+    expect(repository.markArchiveBackfilled).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ oldestTs: '1785869619.000000' }),
+    )
+  })
+
   it('joins public channels, excludes configured channels, and reconciles joined history', async () => {
     const repository = {
       upsertChannels: vi.fn().mockResolvedValue(undefined),

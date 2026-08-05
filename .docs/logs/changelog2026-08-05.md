@@ -42,3 +42,10 @@ Why: Production `roas-web` typecheck fails after chat last-activity wrote that f
 Impact: Unblocks Meeting Workspace board web deploy.
 Files: `apps/web/src/features/studio/types/index.ts`
 
+
+## [2026-08-05 16:02] - [FIX]
+
+What: Fixed Slack brain import archive coverage failing when period timestamps were ISO strings — hardened `mark_slack_archive_backfilled` to normalize Slack ts, cleaned 25 polluted `archive_oldest_ts` rows, rewrote retry job payloads, and made queue-worker + observation backfill normalize before mark/API calls.
+Why: Queue-worker Slack sync enqueued ISO `last_synced_at`/`created_at` values; the RPC short-circuited on NULL and stored ISO, then later casts failed (`invalid input syntax for type numeric`).
+Impact: Prod toast `Import failed: Failed to mark Slack archive coverage` unblocked; retry jobs already succeeding after DB repair. Code path still needs API + queue-worker deploy for defense in depth.
+Files: `normalize-slack-timestamp.ts` (api + queue-worker), `slack-sync.service.ts`, `slack-observation.service.ts`, `slack-observation.repository.ts`, `brain-import-jobs-enqueue.base.ts`, `20260805230000_normalize_slack_archive_oldest_ts.sql`, tests

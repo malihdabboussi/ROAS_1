@@ -9615,3 +9615,15 @@ Evidence: `apps/web/src/features/team-2/components/Team2Toolbar.tsx` is 377 LOC,
 Needed work: Extract props-driven toolbar groups from `Team2Toolbar` and responsive library navigation/template cards from `FlowsBrowseHub`, retaining their existing state contracts.
 
 Reason not done now: The requested work is responsive layout correction; decomposing both behavior-heavy components would broaden the regression surface.
+
+## 2026-08-05 - [OPS] Deploy Slack archive timestamp normalize (API + queue-worker)
+
+Status: Open
+Found while: Fixing prod Slack import archive coverage numeric cast
+Files:
+
+- `apps/api` observation/backfill normalize path
+- `apps/queue-worker` slack-sync enqueue normalize
+  Evidence: Prod DB RPC + data repair already applied; jobs succeeding. App code still on branch `fix/slack-archive-coverage-numeric-ts` until commit/deploy.
+  Needed work: Commit/push/PR, deploy `roas-api` and queue-worker so new enqueues never write ISO again even without SQL normalize.
+  Deferred because: User has not asked to commit or deploy yet.
