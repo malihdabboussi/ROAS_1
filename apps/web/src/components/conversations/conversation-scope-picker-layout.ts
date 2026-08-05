@@ -24,6 +24,8 @@ export interface ConversationScopePickerProps {
   compact?: boolean
   onConversationUpdated?: (conversation: Conversation) => void
   onScopeChanged?: (scope: { campaignId: string | null; spaceId: string | null }) => void
+  /** Opens the linked campaign in the work area (pop-out control). */
+  onOpenCampaign?: (campaignId: string) => void
   bannerAnchorRef?: RefObject<HTMLButtonElement | null>
 }
 

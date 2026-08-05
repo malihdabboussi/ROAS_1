@@ -229,4 +229,30 @@ describe('ConversationScopePicker', () => {
     expect(await screen.findByLabelText('Roadmap')).toBeTruthy()
     expect(screen.queryByLabelText('Launch campaign / Roadmap')).toBeNull()
   })
+
+  it('opens the linked campaign from the pop-out control', async () => {
+    mocks.useOrgStore.mockImplementation((selector: (state: { activeOrgId: string }) => unknown) =>
+      selector({ activeOrgId: 'org-1' }),
+    )
+    mocks.useCampaignCacheVersion.mockReturnValue(0)
+    mocks.getCachedCampaigns.mockReturnValue(campaigns)
+    mocks.prefetchOrgCampaigns.mockResolvedValue(campaigns)
+    mocks.fetchSpaces.mockResolvedValue([{ id: 'space-1', title: 'Roadmap' }])
+    const onOpenCampaign = vi.fn()
+
+    render(
+      <ConversationScopePicker
+        conversation={{
+          ...conversation,
+          campaign_id: 'campaign-1',
+          metadata: { space_id: 'space-1' },
+        }}
+        showLabel
+        onOpenCampaign={onOpenCampaign}
+      />,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Open campaign' }))
+    expect(onOpenCampaign).toHaveBeenCalledWith('campaign-1')
+  })
 })

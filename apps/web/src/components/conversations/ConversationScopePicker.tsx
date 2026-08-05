@@ -39,8 +39,8 @@ export type { ConversationScopePickerHandle } from './conversation-scope-picker-
 export const ConversationScopePicker = forwardRef<
   ConversationScopePickerHandle,
   ConversationScopePickerProps
->(function ConversationScopePicker(
-  {
+>(function ConversationScopePicker(props, ref) {
+  const {
     conversation,
     campaignId,
     spaceId,
@@ -48,10 +48,9 @@ export const ConversationScopePicker = forwardRef<
     compact = false,
     onConversationUpdated,
     onScopeChanged,
+    onOpenCampaign,
     bannerAnchorRef,
-  },
-  ref,
-) {
+  } = props
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const cacheVersion = useCampaignCacheVersion()
   const [open, setOpen] = useState(false)
@@ -383,6 +382,12 @@ export const ConversationScopePicker = forwardRef<
         showLabel={showLabel}
         compact={compact}
         tooltipLabel={label}
+        campaignId={selectedCampaignId}
+        onOpenCampaign={
+          selectedCampaignId && onOpenCampaign
+            ? () => onOpenCampaign(selectedCampaignId)
+            : undefined
+        }
         onToggle={() =>
           setOpen((prev) => {
             const next = !prev
