@@ -30,6 +30,8 @@ export type CalendarAgendaRelatedCall = {
   summary?: string | null
   has_transcript?: boolean
   recording_url: string | null
+  /** Fathom recording id when Agenda already resolved/linked the call. */
+  external_recording_id?: string | null
   follow_ups: CalendarAgendaRelatedFollowUp[]
 }
 

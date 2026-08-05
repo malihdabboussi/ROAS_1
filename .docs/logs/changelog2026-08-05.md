@@ -28,3 +28,10 @@ Why: `roas-web` deploy failed assigning `Promise<MeetingWorkspaceBundle>` to `Pr
 Impact: Unblocks Meeting Workspace board production deploy.
 Files: `MeetingWorkspaceDialog.tsx`
 
+## [2026-08-05 14:26] - [FIX]
+
+What: Added `external_recording_id` to `CalendarAgendaRelatedCall` and completed Agenda minimized-entry test fixture fields.
+Why: `roas-web` prod compile failed on meeting Fathom sync after board merge.
+Impact: Unblocks Meeting Workspace board deploy to app.roas.io.
+Files: `calendar-api.ts`, `AgendaMinimizedEventEntry.test.tsx`
+
