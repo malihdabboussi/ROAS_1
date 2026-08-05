@@ -14,3 +14,10 @@ Why: Meeting board PR merged but Vercel web deploy failed on that missing prop (
 Impact: Unblocks `app.roas.io` deploy of the Meeting Workspace board.
 Files: `ConversationScopePicker.tsx`, `ConversationScopeTrigger.tsx`, `conversation-scope-picker-layout.ts`, tests
 
+## [2026-08-05 14:16] - [FIX]
+
+What: Fixed MeetingWorkspaceContextLinks TypeScript index error (`id` from split could be undefined).
+Why: Blocked `roas-web` production deploy after meeting board merge.
+Impact: Unblocks app.roas.io deploy of the shell Meeting Workspace board.
+Files: `MeetingWorkspaceContextLinks.tsx`
+
