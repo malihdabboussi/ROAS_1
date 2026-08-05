@@ -4,6 +4,7 @@ import { SlackApiIntegration } from '../integrations/slack-api.integration'
 import { SlackObservationRepository } from '../repositories/slack-observation.repository'
 import type { SlackObservationEventInput } from '../types/slack-observation.types'
 import type { SlackEventEnvelope, SlackHistoryMessage } from '../types/slack.types'
+import { normalizeSlackTimestamp } from '../utils/normalize-slack-timestamp'
 
 type SlackMessageEvent = NonNullable<SlackEventEnvelope['event']>
 const RECONCILIATION_INTERVAL_MS = 60 * 60 * 1000
@@ -275,15 +276,17 @@ export class SlackObservationService {
     periodStartTs: string
     periodEndTs: string
   }): Promise<{ historyRequests: number; threadRequests: number; eventsStored: number }> {
+    const periodStartTs = normalizeSlackTimestamp(input.periodStartTs)
+    const periodEndTs = normalizeSlackTimestamp(input.periodEndTs)
     const roots = await this.slackApi.getChannelHistorySince(
       input.botToken,
       input.channelId,
-      input.periodStartTs,
+      periodStartTs,
     )
     const messages = new Map<string, SlackHistoryMessage>()
     let threadRequests = 0
     for (const root of roots) {
-      if (root.ts && Number(root.ts) <= Number(input.periodEndTs)) messages.set(root.ts, root)
+      if (root.ts && Number(root.ts) <= Number(periodEndTs)) messages.set(root.ts, root)
       if (Number(root.reply_count ?? 0) <= 0 || !root.ts) continue
       const replies = await this.slackApi.conversationsRepliesAll(
         input.botToken,
@@ -292,7 +295,7 @@ export class SlackObservationService {
       )
       threadRequests += 1
       for (const reply of replies) {
-        if (reply.ts && Number(reply.ts) <= Number(input.periodEndTs)) {
+        if (reply.ts && Number(reply.ts) <= Number(periodEndTs)) {
           messages.set(reply.ts, reply)
         }
       }
@@ -314,7 +317,7 @@ export class SlackObservationService {
       orgId: input.orgId,
       slackTeamId: input.slackTeamId,
       channelId: input.channelId,
-      oldestTs: input.periodStartTs,
+      oldestTs: periodStartTs,
     })
     return { historyRequests: 1, threadRequests, eventsStored: stored.inserted }
   }
@@ -327,7 +330,11 @@ export class SlackObservationService {
     periodStartTs: string
     periodEndTs: string
   }): Promise<SlackHistoryMessage[][]> {
-    const events = await this.repository.listEventsBetween(input.supabase, input)
+    const events = await this.repository.listEventsBetween(input.supabase, {
+      ...input,
+      periodStartTs: normalizeSlackTimestamp(input.periodStartTs),
+      periodEndTs: normalizeSlackTimestamp(input.periodEndTs),
+    })
     const threads = new Map<string, SlackHistoryMessage[]>()
     for (const event of events) {
       const threadKey = event.thread_ts || event.message_ts

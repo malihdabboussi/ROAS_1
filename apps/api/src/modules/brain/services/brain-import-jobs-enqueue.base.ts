@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { AssetRef } from '@vibey/api-shared'
+import { normalizeSlackTimestamp } from '../../slack/utils/normalize-slack-timestamp'
 import { BrainImportJobsRuntimeBase } from './brain-import-jobs-runtime.base'
 import type { SlackForkTarget } from './brain-import-jobs.types'
 
@@ -282,8 +283,8 @@ export abstract class BrainImportJobsEnqueueBase extends BrainImportJobsRuntimeB
     orgId?: string | null,
     fork?: SlackForkTarget,
   ) {
-    const normalizedPeriodStartTs = this.normalizeSlackTimestamp(periodStartTs)
-    const normalizedPeriodEndTs = this.normalizeSlackTimestamp(periodEndTs)
+    const normalizedPeriodStartTs = normalizeSlackTimestamp(periodStartTs)
+    const normalizedPeriodEndTs = normalizeSlackTimestamp(periodEndTs)
     const payload: Record<string, unknown> = {
       mappingId: mapping.id,
       mappingUserId: mapping.user_id,
@@ -322,13 +323,5 @@ export abstract class BrainImportJobsEnqueueBase extends BrainImportJobsRuntimeB
       ? `Slack #${mapping.slack_channel_name} ${fork.kind} fork`
       : `Slack #${mapping.slack_channel_name} ${mapping.cadence}`
     return this.enqueueJob(effectiveUserId, jobType, title, dedupeKey, payload, orgId)
-  }
-
-  private normalizeSlackTimestamp(value: string): string {
-    const trimmed = value.trim()
-    if (/^\d+(\.\d+)?$/.test(trimmed)) return trimmed
-    const millis = Date.parse(trimmed)
-    if (!Number.isFinite(millis)) throw new Error('Slack import period is not a valid timestamp')
-    return `${Math.floor(millis / 1000)}.000000`
   }
 }

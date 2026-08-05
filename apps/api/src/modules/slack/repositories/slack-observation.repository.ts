@@ -6,6 +6,7 @@ import type {
   SlackObservationEventInput,
   SlackObservationMessage,
 } from '../types/slack-observation.types'
+import { normalizeSlackTimestamp } from '../utils/normalize-slack-timestamp'
 
 @Injectable()
 export class SlackObservationRepository {
@@ -159,7 +160,7 @@ export class SlackObservationRepository {
       p_org_id: input.orgId,
       p_slack_team_id: input.slackTeamId,
       p_channel_id: input.channelId,
-      p_oldest_ts: input.oldestTs,
+      p_oldest_ts: normalizeSlackTimestamp(input.oldestTs),
     })
     if (error) throw new Error(`Failed to mark Slack archive coverage: ${error.message}`)
   }

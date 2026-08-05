@@ -1,6 +1,7 @@
 import { Injectable, Logger, Optional } from '@nestjs/common'
 import { DatabaseService } from '../../../lib/services/database.service'
 import { QueueLoggerService } from '../../logger'
+import { normalizeSlackTimestamp } from '../utils/normalize-slack-timestamp'
 
 type SlackBrainMapping = {
   id: string
@@ -59,7 +60,8 @@ export class SlackSyncService {
         if (!integration?.access_token) continue
         const metadata = (integration.metadata ?? {}) as Record<string, unknown>
         if (metadata.slack_brain_auto_ingest === false) continue
-        const periodStart = mapping.last_synced_at ?? mapping.created_at
+        const periodStart = normalizeSlackTimestamp(mapping.last_synced_at ?? mapping.created_at)
+        const periodEnd = normalizeSlackTimestamp(now.toISOString())
         const dedupeKey = `slack:${mapping.id}:${periodStart}`
         const existing = await supabase
           .from('brain_import_jobs')
@@ -87,7 +89,7 @@ export class SlackSyncService {
             channelName: mapping.slack_channel_name,
             teamId: mapping.slack_team_id,
             periodStartTs: periodStart,
-            periodEndTs: now.toISOString(),
+            periodEndTs: periodEnd,
             targetKind: mapping.target_kind,
             targetCampaignId: mapping.target_campaign_id,
             targetBrainId: mapping.target_brain_id,
