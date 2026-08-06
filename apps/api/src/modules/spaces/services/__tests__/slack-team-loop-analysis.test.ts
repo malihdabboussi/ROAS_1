@@ -63,6 +63,18 @@ describe('analyzeSlackTeamMessages', () => {
     expect(prompt).toContain('Write proposed_content in second person')
     expect(prompt).toContain('you stepped in')
     expect(prompt).toContain('concrete dates, owners, amounts')
+    expect(prompt).toContain('personal_moment')
+    expect(prompt).toContain('multiple independent human messages')
+  })
+
+  it('keeps personal_moment out of the EOD briefing selection path', () => {
+    const selected = selectSlackTeamBriefingSignals([
+      signal('personal_moment', 0.99, '1'),
+      signal('team_win', 0.9, '2'),
+      signal('decision', 0.88, '3'),
+    ])
+    expect(selected.map((item) => item.kind)).toEqual(['decision', 'team_win'])
+    expect(selected.some((item) => item.kind === 'personal_moment')).toBe(false)
   })
 
   it('enforces briefing diversity and caps unanswered questions after model analysis', () => {

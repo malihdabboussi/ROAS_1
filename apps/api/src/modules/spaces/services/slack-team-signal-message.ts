@@ -7,6 +7,7 @@ export type SlackTeamSignalMessageKind =
   | 'important_update'
   | 'decision'
   | 'strategic_opportunity'
+  | 'personal_moment'
   | string
 
 export type SlackTeamSignalMessageItem = {
@@ -57,6 +58,8 @@ export function suggestedActionFor(kind: SlackTeamSignalMessageKind): string {
       return 'Want me to help move the next step forward?'
     case 'strategic_opportunity':
       return 'Want me to take the first pass on it?'
+    case 'personal_moment':
+      return 'If anything needs picking up so you can actually log off, say the word.'
     default:
       return 'Want me to draft a next step for you?'
   }
@@ -78,6 +81,8 @@ function signalLabel(kind: SlackTeamSignalMessageKind): string {
       return 'Decision'
     case 'strategic_opportunity':
       return 'Opportunity'
+    case 'personal_moment':
+      return 'Personal'
     default:
       return 'Noted'
   }

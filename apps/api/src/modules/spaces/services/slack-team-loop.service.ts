@@ -21,6 +21,12 @@ import {
   slackTeamEvidenceMetadata,
 } from './slack-team-loop-evidence'
 import {
+  personalMomentDateKey,
+  personalMomentDedupeKey,
+  validatePersonalMomentEvidence,
+} from './slack-team-personal-moment'
+import { proposePersonalMomentAction } from './slack-team-personal-moment-propose'
+import {
   slackSignalLifecycleMetadata,
   SlackTeamSignalDeliveryService,
 } from './slack-team-signal-delivery.service'
@@ -297,13 +303,17 @@ export class SlackTeamLoopService {
     const verifiedSignals = analysis.signals.flatMap((signal) => {
       const source = evidenceBySource.get(`${signal.target_channel_id}:${signal.source_message_ts}`)
       if (!source || source.user === 'PIXEL_BOT') return []
+      const personalSubject =
+        signal.kind === 'personal_moment' && signal.target_slack_user_id?.trim()
+          ? signal.target_slack_user_id.trim()
+          : null
       return [
         {
           ...signal,
           target_slack_user_id:
             OWNER_BRIEFING_SIGNAL_KINDS.has(signal.kind) && workspaceOwner
               ? workspaceOwner.platform_id
-              : source.user,
+              : (personalSubject ?? source.user),
         },
       ]
     })
@@ -316,11 +326,36 @@ export class SlackTeamLoopService {
     )
     const suppressedByThread = confidentSignals.length - threadCheckedSignals.length
     const memories = threadCheckedSignals.filter((signal) => signal.kind === 'brain_memory')
+    const personalMomentCandidates = threadCheckedSignals.filter(
+      (signal) => signal.kind === 'personal_moment',
+    )
     const briefingCandidates = threadCheckedSignals.filter(
-      (signal) => signal.kind !== 'brain_memory',
+      (signal) => signal.kind !== 'brain_memory' && signal.kind !== 'personal_moment',
     )
     const selectedBriefing = selectSlackTeamBriefingSignals(briefingCandidates)
-    const actionableSignals = [...memories, ...selectedBriefing]
+    const validatedPersonalMoments = personalMomentCandidates.flatMap((signal) => {
+      const subject = signal.target_slack_user_id
+        ? peopleBySlackId.get(signal.target_slack_user_id)
+        : undefined
+      const subjectNames = subject
+        ? [subject.display_name, subject.display_name.split(/\s+/)[0] || ''].filter(Boolean)
+        : []
+      const validated = validatePersonalMomentEvidence({
+        signal,
+        messages: observed,
+        subjectNames,
+        peopleBySlackId,
+      })
+      if (!validated.ok) return []
+      return [{ signal: { ...signal, confidence: validated.confidence }, validated }]
+    })
+    const suppressedPersonalMoments =
+      personalMomentCandidates.length - validatedPersonalMoments.length
+    const actionableSignals = [
+      ...memories,
+      ...selectedBriefing,
+      ...validatedPersonalMoments.map((entry) => entry.signal),
+    ]
     const suppressedByBriefing = briefingCandidates.length - selectedBriefing.length
     let proposed = 0
     let memoriesCompounded = 0
@@ -332,17 +367,34 @@ export class SlackTeamLoopService {
         ? peopleBySlackId.get(signal.target_slack_user_id)
         : undefined
       const internalRecipient = target?.relationship_kind === 'internal' ? target : undefined
-      const evidenceFingerprint = createHash('sha256')
-        .update(
-          [
-            input.orgId,
-            input.loopKind,
-            signal.kind,
-            signal.target_channel_id,
-            signal.source_message_ts,
-          ].join(':'),
-        )
-        .digest('hex')
+      const personalValidated =
+        signal.kind === 'personal_moment'
+          ? validatedPersonalMoments.find(
+              (entry) =>
+                entry.signal.target_channel_id === signal.target_channel_id &&
+                entry.signal.source_message_ts === signal.source_message_ts &&
+                entry.signal.target_slack_user_id === signal.target_slack_user_id,
+            )?.validated
+          : undefined
+      const evidenceFingerprint =
+        signal.kind === 'personal_moment' && personalValidated && personalValidated.ok
+          ? personalMomentDedupeKey({
+              orgId: input.orgId,
+              subjectSlackUserId: personalValidated.subjectSlackUserId,
+              eventType: personalValidated.eventType,
+              dateKey: personalMomentDateKey(new Date()),
+            })
+          : createHash('sha256')
+              .update(
+                [
+                  input.orgId,
+                  input.loopKind,
+                  signal.kind,
+                  signal.target_channel_id,
+                  signal.source_message_ts,
+                ].join(':'),
+              )
+              .digest('hex')
       if (signal.kind === 'brain_memory' && target?.person_brain_id && signal.brain_memory) {
         const result = await this.loopRepo.insertPersonMemory(input.supabase, {
           brainId: target.person_brain_id,
@@ -367,6 +419,32 @@ export class SlackTeamLoopService {
           evidenceFingerprint,
         })
       ) {
+        continue
+      }
+
+      if (signal.kind === 'personal_moment') {
+        if (!personalValidated?.ok || !internalRecipient) continue
+        await proposePersonalMomentAction({
+          supabase: input.supabase,
+          userId: input.userId,
+          orgId: input.orgId,
+          workflowKey,
+          loopKind: input.loopKind,
+          deliveryMode: input.deliveryMode,
+          slackTeamId,
+          evidenceFingerprint,
+          signal,
+          source,
+          internalRecipient,
+          validated: personalValidated,
+          observed,
+          peopleBySlackId,
+          searchMessages: (supabase, userId, orgId, params) =>
+            this.slackTools.searchMessages(supabase, userId, orgId, params),
+          createShadowAction: (supabase, payload) =>
+            this.peopleRepo.createShadowAction(supabase, payload as never),
+        })
+        proposed += 1
         continue
       }
 
@@ -408,6 +486,7 @@ export class SlackTeamLoopService {
 
       if (
         signal.kind !== 'brain_memory' &&
+        signal.kind !== 'personal_moment' &&
         target &&
         !internalRecipient &&
         workspaceOwner &&
@@ -470,6 +549,9 @@ export class SlackTeamLoopService {
       signals_rejected_low_confidence: rejectedLowConfidence,
       signals_suppressed_by_thread: suppressedByThread,
       signals_suppressed_by_briefing: suppressedByBriefing,
+      personal_moments_detected: personalMomentCandidates.length,
+      personal_moments_validated: validatedPersonalMoments.length,
+      personal_moments_suppressed: suppressedPersonalMoments,
       model_calls: analysis.modelCalls,
       model_input_tokens: analysis.inputTokens,
       model_output_tokens: analysis.outputTokens,

@@ -36,4 +36,27 @@ describe('slack-digest-reply-context', () => {
     expect(formatted).toContain('almost 3x ROAS')
     expect(formatted).toContain('Prefer concrete dates')
   })
+
+  it('recovers stored personal_moment source evidence for follow-up questions', () => {
+    const items = digestEvidenceItemsFromActions([
+      {
+        proposed_content: 'Happy birthday note',
+        metadata: {
+          signal_kind: 'personal_moment',
+          signal_finding:
+            'The #hello-everyone thread is a pretty good reflection of the culture you built.',
+          source_channel_name: 'hello-everyone',
+          source_message_text: 'Happy birthday Dylan',
+          personal_moment_evidence: [
+            { text: 'Happy birthday Dylan! 🎉' },
+            { text: 'HBD Dylan — the old ad still holds up' },
+          ],
+        },
+      },
+    ])
+    const formatted = formatTeamIntelligenceDigestEvidence(items)
+    expect(items[0]?.sourceText).toContain('Happy birthday Dylan! 🎉')
+    expect(items[0]?.sourceText).toContain('old ad still holds up')
+    expect(formatted).toContain('(personal_moment)')
+  })
 })

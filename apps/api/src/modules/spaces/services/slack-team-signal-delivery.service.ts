@@ -6,6 +6,12 @@ import { SlackSignalResolutionService } from '../../slack/services/slack-signal-
 import type { SlackShadowAction } from '../../slack/types/slack.types'
 import { SlackTeamLoopRepository } from '../repositories/slack-team-loop.repository'
 import {
+  composePersonalMomentMessage,
+  filterBrainDetailsFromSlackCopy,
+  isPersonalMomentEventType,
+  PERSONAL_MOMENT_COOLING_MINUTES,
+} from './slack-team-personal-moment'
+import {
   composeDigestMessage,
   composeThreadFollowUp,
   signalMessageItemFromAction,
@@ -21,6 +27,7 @@ export const SLACK_SIGNAL_COOLING_MINUTES = {
   important_update: 60,
   decision: 60,
   strategic_opportunity: 60,
+  personal_moment: PERSONAL_MOMENT_COOLING_MINUTES,
 } as const
 
 export type SlackSignalCoolingKind = keyof typeof SLACK_SIGNAL_COOLING_MINUTES
@@ -131,9 +138,12 @@ export class SlackTeamSignalDeliveryService {
         })
         continue
       }
-      if (!this.canSend(input, candidate, recipient) || !recipient) {
+      if (!this.canSend(input, candidate, recipient, kind) || !recipient) {
         await this.markReadyForReview(input, refreshed.action, {
           rechecked_at: refreshed.resolution.checked_at,
+          ...(kind === 'personal_moment' && input.deliveryMode === 'shadow'
+            ? { personal_moment_shadow_only: true }
+            : {}),
         })
         continue
       }
@@ -150,8 +160,19 @@ export class SlackTeamSignalDeliveryService {
     }
 
     let sent = 0
+    const personalMoments = ready.filter(
+      (entry) => String(entry.action.metadata.signal_kind ?? '') === 'personal_moment',
+    )
+    const digestReady = ready.filter(
+      (entry) => String(entry.action.metadata.signal_kind ?? '') !== 'personal_moment',
+    )
+
+    for (const entry of personalMoments) {
+      sent += await this.deliverPersonalMoment(input, entry, now)
+    }
+
     const byRecipient = new Map<string, ReadyDelivery[]>()
-    for (const entry of ready) {
+    for (const entry of digestReady) {
       const group = byRecipient.get(entry.recipient.id) ?? []
       group.push(entry)
       byRecipient.set(entry.recipient.id, group)
@@ -162,6 +183,93 @@ export class SlackTeamSignalDeliveryService {
     }
 
     return { rechecked, resolved, sent }
+  }
+
+  private async deliverPersonalMoment(
+    input: {
+      supabase: SupabaseClient
+      userId: string
+      orgId: string
+      workflowKey: string
+    },
+    entry: ReadyDelivery,
+    now: Date,
+  ): Promise<number> {
+    const approved = await this.people.reviewShadowAction(input.supabase, {
+      actionId: entry.action.id,
+      orgId: input.orgId,
+      reviewedBy: input.userId,
+      status: 'approved',
+    })
+    if (!approved) return 0
+    const claimed = await this.people.claimShadowActionForSend(
+      input.supabase,
+      input.orgId,
+      entry.action.id,
+    )
+    if (!claimed) return 0
+
+    const eventTypeRaw = entry.action.metadata.moment_event_type
+    const eventType = isPersonalMomentEventType(eventTypeRaw) ? eventTypeRaw : 'personal_milestone'
+    const finding =
+      typeof entry.action.metadata.signal_finding === 'string' &&
+      entry.action.metadata.signal_finding.trim()
+        ? entry.action.metadata.signal_finding
+        : entry.action.proposed_content
+    const historical =
+      typeof entry.action.metadata.personal_moment_historical_connection === 'string'
+        ? entry.action.metadata.personal_moment_historical_connection
+        : null
+    const channelName =
+      typeof entry.action.metadata.source_channel_name === 'string'
+        ? entry.action.metadata.source_channel_name
+        : entry.item.channelName
+    const text = filterBrainDetailsFromSlackCopy(
+      composePersonalMomentMessage({
+        recipientName: entry.recipient.display_name || entry.recipient.platform_id,
+        eventType,
+        channelName,
+        finding,
+        historicalConnection: historical,
+      }),
+    )
+
+    try {
+      const dm = await this.slackTools.openDm(input.supabase, input.userId, input.orgId, {
+        slack_user_id: entry.recipient.platform_id,
+      })
+      const channelId = String(dm.channel_id)
+      const delivery = await this.slackTools.sendMessage(
+        input.supabase,
+        input.userId,
+        input.orgId,
+        {
+          channel_id: channelId,
+          text,
+        },
+      )
+      const messageTs = typeof delivery.ts === 'string' ? delivery.ts : null
+      await this.people.markShadowActionSent(input.supabase, {
+        actionId: entry.action.id,
+        orgId: input.orgId,
+        sentBy: input.userId,
+        slackTs: messageTs,
+        slackChannelId: channelId,
+        metadata: {
+          ...entry.action.metadata,
+          lifecycle_state: 'sent',
+          rechecked_at: entry.checkedAt,
+          digest_is_root: true,
+          digest_thread_ts: messageTs,
+          digest_item_count: 1,
+          delivery_style: 'personal_moment',
+        },
+      })
+      return 1
+    } catch (cause) {
+      await this.people.markShadowActionFailed(input.supabase, input.orgId, entry.action.id)
+      throw cause
+    }
   }
 
   private async deliverRecipientBatch(
@@ -291,6 +399,7 @@ export class SlackTeamSignalDeliveryService {
     },
     action: SlackShadowAction,
     recipient?: SlackSignalDeliveryPerson,
+    kind = '',
   ): boolean {
     if (
       input.quietHoursActive ||
@@ -299,6 +408,10 @@ export class SlackTeamSignalDeliveryService {
       recipient.delivery_mode !== 'active'
     ) {
       return false
+    }
+    // Personal moments are Active-only: Shadow keeps a reviewable proposal.
+    if (kind === 'personal_moment') {
+      return input.deliveryMode === 'active' && input.personIds.includes(recipient.id)
     }
     return input.deliveryMode === 'shadow' || input.personIds.includes(recipient.id)
   }

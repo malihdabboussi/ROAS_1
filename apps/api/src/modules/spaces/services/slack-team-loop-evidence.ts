@@ -18,6 +18,7 @@ type SlackSignalKind =
   | 'important_update'
   | 'decision'
   | 'strategic_opportunity'
+  | 'personal_moment'
 
 type SlackLoopKind =
   | 'brain_compounding'

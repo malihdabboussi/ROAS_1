@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: August 4, 2026 (context-aware Slack team briefings)
+Last Modified: August 6, 2026 (personal_moment outreach + context-aware Slack team briefings)
 
 ## Data Flow
 
@@ -58,6 +58,7 @@ Last Modified: August 4, 2026 (context-aware Slack team briefings)
 52. Team Intelligence stores the analyzer's clean finding separately from its human-friendly Shadow preview. Digest and thread-follow-up delivery compose from that clean finding, preventing greetings, narrative wrappers, and suggested actions from being nested or repeated.
 53. Pixel's Slack voice uses one shared teammate-style contract for live agent replies and deterministic Team Intelligence digests. Replies lead naturally, use contractions, reserve emoji and bold formatting for useful moments, avoid repetitive em-dash phrasing, and ask for a next step only when it helps. Existing agent workspaces receive the refreshed Slack guidance through runtime reconciliation.
 54. Team Intelligence ranks a maximum of five meaningful signals per observation window using business impact, urgency, novelty, confidence, and actionability. Its briefing can surface team wins, material progress, decisions, strategic opportunities, client risks, useful workflows, or a genuinely important unanswered question. The analyzer receives the workspace owner's identity as the briefing audience; a deterministic post-analysis selector deduplicates source evidence and permits at most one unanswered question. Person Brain memories remain outside that five-item human briefing limit.
+55. `personal_moment` is a separate Active-only outreach path for high-confidence public personal/team moments. It cools briefly, dedupes by recipient + event type + date, may include one clearly related historical Slack callback, stores source evidence for follow-ups, and sends a bespoke standalone DM rather than joining the numbered EOD digest. Shadow keeps the proposal reviewable without sending.
 
 ## Code Examples
 

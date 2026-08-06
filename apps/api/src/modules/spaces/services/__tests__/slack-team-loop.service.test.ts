@@ -473,7 +473,7 @@ describe('SlackTeamLoopService', () => {
         targetMemberId: 'member-owner',
         actionKind: 'message',
         proposedContent: expect.stringMatching(
-          /Casey Client had a question in #client-alpha[\s\S]*want a reply drafted for you\?/i,
+          /Casey Client in #client-alpha[\s\S]*want a reply drafted for you\?/i,
         ),
         metadata: expect.objectContaining({
           internal_only: true,

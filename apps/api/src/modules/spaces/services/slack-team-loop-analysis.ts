@@ -10,6 +10,7 @@ export type SlackTeamSignal = {
     | 'important_update'
     | 'decision'
     | 'strategic_opportunity'
+    | 'personal_moment'
   target_slack_user_id: string | null
   target_channel_id: string
   source_message_ts: string
@@ -17,6 +18,10 @@ export type SlackTeamSignal = {
   rationale: string
   brain_memory: string | null
   confidence: number
+  /** personal_moment only: birthday | work_anniversary | promotion | personal_milestone | team_recognition | cultural_moment */
+  moment_event_type?: string | null
+  /** personal_moment only: additional corroborating message timestamps */
+  evidence_message_tss?: string[] | null
 }
 
 export type SlackTeamPerson = {
@@ -53,7 +58,7 @@ export function selectSlackTeamBriefingSignals(
   limit = 5,
 ): SlackTeamSignal[] {
   const ranked = signals
-    .filter((signal) => signal.kind !== 'brain_memory')
+    .filter((signal) => signal.kind !== 'brain_memory' && signal.kind !== 'personal_moment')
     .sort((left, right) => {
       const priority =
         (BRIEFING_KIND_PRIORITY[right.kind] ?? 0) - (BRIEFING_KIND_PRIORITY[left.kind] ?? 0)
@@ -93,6 +98,7 @@ const SLACK_TEAM_ANALYSIS_SCHEMA = {
               'important_update',
               'decision',
               'strategic_opportunity',
+              'personal_moment',
             ],
           },
           target_slack_user_id: { type: 'string', nullable: true },
@@ -102,6 +108,12 @@ const SLACK_TEAM_ANALYSIS_SCHEMA = {
           rationale: { type: 'string' },
           brain_memory: { type: 'string', nullable: true },
           confidence: { type: 'number', minimum: 0, maximum: 1 },
+          moment_event_type: { type: 'string', nullable: true },
+          evidence_message_tss: {
+            type: 'array',
+            nullable: true,
+            items: { type: 'string' },
+          },
         },
         required: [
           'kind',
@@ -168,14 +180,18 @@ export async function analyzeSlackTeamMessages(input: {
       'Messages with the same thread value are one Slack thread. A question is answered when a later human reply in that thread addresses it; never flag that as unanswered.',
       'client_risk: an explicit blocker, missed commitment, dissatisfaction, or delivery risk that still needs attention.',
       'If later messages in the same thread (or clear follow-up in the window) show the risk or question was already acknowledged, mitigated, or owned, do not emit that signal. Already-handled items are not briefing-worthy.',
-      'team_win: a concrete result, milestone, or meaningful positive momentum worth recognizing.',
+      'team_win: a concrete business result, launch, revenue milestone, or meaningful positive momentum worth recognizing. Not a personal life celebration.',
       'important_update: material progress or a changed situation the recipient should know, even when no reply is needed.',
       'decision: a consequential decision, commitment, owner, deadline, or settled direction worth preserving.',
       'strategic_opportunity: an evidence-backed next move or connection with meaningful upside, not a generic suggestion.',
-      'Never propose messaging an external or ignored person. For a signal about them, write an internal finding for the team to review.',
-      'proposed_content must be a self-contained, concrete briefing insight. Include the result or development, why it matters, and the useful next move only when one is supported. Do not add a greeting, generic filler, or system disclaimer.',
+      'personal_moment: a high-confidence public personal/team human moment about an Internal person — birthday, work anniversary, promotion, major personal/professional milestone, strong team-wide recognition, or meaningful cultural/team moment.',
+      'For personal_moment: require multiple independent human messages OR one unambiguous explicit source (e.g. "Happy birthday Dylan"). Vague "have a great day" is never enough. If evidence conflicts on who/what, omit the signal.',
+      'For personal_moment: set target_slack_user_id to the Internal person the moment is about (not the well-wishers). Set moment_event_type. List corroborating message timestamps in evidence_message_tss. proposed_content is a short standalone teammate note body (no greeting, no numbered digest) that may optionally connect one clearly related historical public Slack detail.',
+      'Never use private Brain facts in personal_moment proposed_content. Never DM external or ignored people for personal_moment.',
+      'Never propose messaging an external or ignored person. For a non-personal signal about them, write an internal finding for the team to review.',
+      'proposed_content for briefing kinds must be a self-contained, concrete briefing insight. Include the result or development, why it matters, and the useful next move only when one is supported. Do not add a greeting, generic filler, or system disclaimer.',
       'For every signal, copy the exact channel id and source timestamp from its bracket.',
-      'Return only JSON: {"signals":[{"kind":"brain_memory|workflow_discovery|unanswered_question|client_risk|team_win|important_update|decision|strategic_opportunity","target_slack_user_id":"string or null","target_channel_id":"string","source_message_ts":"string","proposed_content":"string","rationale":"string","brain_memory":"string or null","confidence":0.0}]}',
+      'Return only JSON: {"signals":[{"kind":"brain_memory|workflow_discovery|unanswered_question|client_risk|team_win|important_update|decision|strategic_opportunity|personal_moment","target_slack_user_id":"string or null","target_channel_id":"string","source_message_ts":"string","proposed_content":"string","rationale":"string","brain_memory":"string or null","confidence":0.0,"moment_event_type":"birthday|work_anniversary|promotion|personal_milestone|team_recognition|cultural_moment|null","evidence_message_tss":["string"]|null}]}',
       input.instructions ? `Additional admin instructions: ${input.instructions}` : '',
       '',
       transcript,
