@@ -114,3 +114,11 @@ Impact: Agents with role-default personal brain access preload/search Dylan in o
 Files: `chat-stable-turn-context.service.ts`, `chat-prewarm-context.service.ts`, `channel-agent.service.ts`, `task-agent.service.ts`, `is-retryable-agent-failure.ts`, loc-allowlist, access-context + channel/task mocks, `chat-stable-turn-context.user-brain-access.test.ts`
 
 
+
+## [2026-08-05 21:56] - [ARCH]
+
+What: Merged PR #97 and deployed personal brain role-default access gate to Fly `roas-runtimes` (agent-api).
+Why: Production Pixel still false-denied USER BRAIN preload until agent-api used `canAgentUseCapability`.
+Impact: Org-chat agents with role-default personal brain access (e.g. vibey) can preload/search Dylan without a team grant. Hard refresh recommended.
+Files: deploy `roas-runtimes` image `deployment-01KZAPMKD0NQ6FE0E1R50C4NXM`; merge `7b0291ce`
+
