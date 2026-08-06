@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  addressFindingToRecipient,
   composeDigestMessage,
   composeGreeting,
   composeInternalEscalation,
@@ -12,6 +13,30 @@ import {
 } from '../slack-team-signal-message'
 
 describe('slack-team-signal-message', () => {
+  it('rewrites the recipient to second person in findings', () => {
+    expect(
+      addressFindingToRecipient(
+        "Dylan stepped in to clarify Dylan's plan with Bryce.",
+        'Dylan Vanas',
+      ),
+    ).toBe('you stepped in to clarify your plan with Bryce.')
+
+    const message = composeDigestMessage(
+      [
+        {
+          subjectName: 'Bryce - Unit Bravo',
+          channelName: 'roas-pascalzone',
+          kind: 'client_risk',
+          finding:
+            'Spencer paused campaigns. Dylan stepped in to clarify the $1,497 maintenance plan.',
+        },
+      ],
+      { recipientName: 'Dylan Vanas', now: new Date('2026-08-05T19:30:00.000-07:00') },
+    )
+    expect(message).toMatch(/you stepped in to clarify the \$1,497 maintenance plan/i)
+    expect(message).not.toContain('Dylan stepped in')
+  })
+
   it('strips the legacy disclaimer and raised-header when extracting a finding', () => {
     const content = [
       'Georgette raised a workflow discovery in #video-editing:',

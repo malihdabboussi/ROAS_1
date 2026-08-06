@@ -77,3 +77,10 @@ Why: Briefing lived only in stash; Wednesday Pixel digests still ran the old ale
 Impact: Next Active Team Intelligence EOD/digest runs use the new briefing path.
 Files: deploy only (`roas-api` → `api.roas.io`)
 
+## [2026-08-05 20:32] - [FIX]
+
+What: Team Intelligence briefings address the recipient in second person ("you stepped in" / "your plan") via prompt guidance plus deterministic name rewrite at compose time.
+Why: EOD copy said "Dylan stepped in" when Dylan was the actor reading the DM.
+Impact: Digests/thread follow-ups rewrite the recipient's display/first name to you/your; model is also instructed to write that way. Manual-run footer was never part of production delivery.
+Files: `slack-team-signal-message.ts`, `slack-team-loop-analysis.ts`, focused tests
+
