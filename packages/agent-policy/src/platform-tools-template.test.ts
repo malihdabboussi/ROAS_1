@@ -87,6 +87,10 @@ describe('platform tools template', () => {
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('return one concise result after the work finishes')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING)
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('like a sharp, friendly teammate')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Use one fitting emoji occasionally')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('strings of em dashes')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Hey Dylan 👋')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Slack does not reliably render Markdown tables')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Date — Spend: $328')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(PLATFORM_TOOLS_MEDIA_ROUTING_HEADING)
@@ -218,5 +222,29 @@ Keep this.`
     expect(repaired).toContain('## Custom Rules')
     expect(repaired).toContain('Keep this.')
     expect(repaired.split(PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING)).toHaveLength(2)
+  })
+
+  it('replaces stale Slack formatting guidance for existing agents', () => {
+    const oldContent = `# TOOLS.md
+
+## Runtime Operating Layers
+
+These layers exist to help the user get faster, more accurate work without repeating context or watching you stumble through avoidable tool errors.
+
+### Slack Output Formatting
+
+Slack does not reliably render Markdown tables. Use bullets.
+
+For unclear, destructive, publish/send, or expensive actions:
+- Ask a focused clarification.`
+
+    const repaired = ensurePlatformToolsRuntimeGuidance(oldContent)
+    const second = ensurePlatformToolsRuntimeGuidance(repaired)
+
+    expect(repaired).not.toContain('Use bullets.')
+    expect(repaired).toContain('like a sharp, friendly teammate')
+    expect(repaired).toContain('Use one fitting emoji occasionally')
+    expect(repaired.split(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING)).toHaveLength(2)
+    expect(second).toBe(repaired)
   })
 })

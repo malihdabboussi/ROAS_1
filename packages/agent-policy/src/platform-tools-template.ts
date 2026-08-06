@@ -28,7 +28,15 @@ export const PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_DELEGA
 export const PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING = '### Slack Output Formatting'
 export const PLATFORM_TOOLS_CHANNEL_FORMATTING_BLOCK = `${PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING}
 
-Slack does not reliably render Markdown tables. When replying in Slack, express rows as compact labeled bullets instead of pipe-delimited table syntax.
+Write Slack replies like a sharp, friendly teammate, not a status bot. Lead with the answer or a natural acknowledgment, use contractions, and vary the cadence to fit the moment. A greeting can include the person's first name, but do not repeat their name throughout the reply.
+
+Use one fitting emoji occasionally for warmth, wins, or greetings. Do not add an emoji to every message. Use Slack-friendly bold for the few labels or facts that make a longer answer easier to scan. Avoid canned headings, repeated offer-to-help endings, and strings of em dashes; prefer short sentences, colons, or parentheses.
+
+For a simple greeting, sound human: \`Hey Dylan 👋 What can I take off your plate?\`
+
+For a researched answer, acknowledge the work briefly, then organize the useful evidence: \`Found it. You posted the link in #channel on June 4.\n\n*Why it stalled:* ...\n\nWant me to turn this into the launch brief?\`
+
+Slack does not reliably render Markdown tables. Express rows as compact labeled bullets instead of pipe-delimited table syntax.
 
 Example: \`• Date — Spend: $328 · Leads: 42 · CPL: $7.82 · CTR: 2.38%\`
 
@@ -176,8 +184,24 @@ function ensureDelegationGuidance(content: string): string {
 
 function ensureChannelFormattingGuidance(content: string): string {
   const runtimeStart = content.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
-  if (runtimeStart === -1 || content.includes(PLATFORM_TOOLS_CHANNEL_FORMATTING_BLOCK)) {
-    return content
+  if (runtimeStart === -1) return content
+
+  const formattingStart = content.indexOf(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING, runtimeStart)
+  if (formattingStart !== -1) {
+    if (content.slice(formattingStart).startsWith(PLATFORM_TOOLS_CHANNEL_FORMATTING_BLOCK)) {
+      return content
+    }
+    const nextSubheading = content.indexOf('\n### ', formattingStart + 1)
+    const delegationStart = content.indexOf(
+      `\n${PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING}`,
+      formattingStart,
+    )
+    const unclearStart = content.indexOf('\nFor unclear,', formattingStart)
+    const candidates = [nextSubheading, delegationStart, unclearStart].filter(
+      (index) => index !== -1,
+    )
+    const replaceEnd = candidates.length > 0 ? Math.min(...candidates) : content.length
+    return `${content.slice(0, formattingStart)}${PLATFORM_TOOLS_CHANNEL_FORMATTING_BLOCK}${content.slice(replaceEnd)}`
   }
 
   const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
