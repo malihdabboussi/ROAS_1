@@ -102,8 +102,14 @@ export class CampaignContextService {
       const agentSettings = (config.agent_settings ?? {}) as Record<string, unknown>
       const themeId = typeof agentSettings.theme_id === 'string' ? agentSettings.theme_id : ''
       if (!themeId) {
-        this.textCache.set(cacheKey, { resolvedAt: Date.now(), text: 'ACTIVE_THEME: none' })
-        return 'ACTIVE_THEME: none'
+        const noneSummary = [
+          'ACTIVE_THEME: none',
+          'BRANDING_GATE: No campaign Theme/branding is linked.',
+          'Before generate_image, create_ad, process_media creatives, or any branded visual: ask the user whether branding exists for this company/campaign (or offer to pull branding from a website / create a Theme).',
+          'Do not invent brand colors, logos, headshots, or image style. Only proceed after the user confirms branding or explicitly asks to continue without it.',
+        ].join('\n')
+        this.textCache.set(cacheKey, { resolvedAt: Date.now(), text: noneSummary })
+        return noneSummary
       }
 
       const themeTable = await this.getThemeTableName()
@@ -114,7 +120,10 @@ export class CampaignContextService {
       )
       if (themeError) throw themeError
       if (!theme) {
-        const unresolved = `ACTIVE_THEME: unresolved (${themeId})`
+        const unresolved = [
+          `ACTIVE_THEME: unresolved (${themeId})`,
+          'BRANDING_GATE: Theme id is set but could not be loaded. Ask the user whether branding exists for this campaign before generating branded images or creatives.',
+        ].join('\n')
         this.textCache.set(cacheKey, { resolvedAt: Date.now(), text: unresolved })
         return unresolved
       }
@@ -123,7 +132,10 @@ export class CampaignContextService {
       const isSystem = row.is_system === true
       const ownerId = typeof row.user_id === 'string' ? row.user_id : null
       if (!isSystem && ownerId && ownerId !== userId) {
-        const unresolved = `ACTIVE_THEME: unresolved (${themeId})`
+        const unresolved = [
+          `ACTIVE_THEME: unresolved (${themeId})`,
+          'BRANDING_GATE: Theme id is set but could not be loaded. Ask the user whether branding exists for this campaign before generating branded images or creatives.',
+        ].join('\n')
         this.textCache.set(cacheKey, { resolvedAt: Date.now(), text: unresolved })
         return unresolved
       }
@@ -239,6 +251,7 @@ export class CampaignContextService {
         voiceLine ? `- voice: ${voiceLine}` : null,
         imageStylePrompt ? `- image_style_prompt: ${imageStylePrompt}` : null,
         logoUrl ? `- logo_url: ${logoUrl}` : null,
+        'BRANDING_GATE: Before the first branded image/ad/creative in this conversation, briefly confirm with the user that this Theme is the branding to use. Then apply its colors, fonts, logo, headshots, product images, and image_style_prompt on every generate_image / create_ad / branded visual.',
       ].filter(Boolean)
 
       if (headshotImages.length > 0) {

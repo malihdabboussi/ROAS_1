@@ -79,6 +79,7 @@ function describeOutput(block: FinalOutputBlock): {
   nodeType: ArtifactNodeType
   imageUrl?: string
   videoUrl?: string
+  mediaAssetId?: string
   icon: ReactNode
 } {
   if (block.type === 'artifact_preview') {
@@ -130,6 +131,7 @@ function describeOutput(block: FinalOutputBlock): {
       nodeType,
       imageUrl: block.kind === 'image' ? block.url : undefined,
       videoUrl: block.kind === 'video' ? block.url : undefined,
+      mediaAssetId: block.mediaAssetId,
       icon:
         block.kind === 'video' ? (
           <Video className="icon-sm shrink-0" />
@@ -214,18 +216,23 @@ function openDefaultOutput(block: FinalOutputBlock) {
 function FinalOutputThumb({
   imageUrl,
   videoUrl,
+  mediaAssetId,
   subtitle,
   icon,
   isDocumentSnippet,
 }: {
   imageUrl?: string
   videoUrl?: string
+  mediaAssetId?: string
   subtitle?: string
   icon: ReactNode
   isDocumentSnippet: boolean
 }) {
-  const resilient = useResilientImageSrc(imageUrl ?? '')
+  const resilient = useResilientImageSrc(imageUrl ?? '', { mediaAssetId })
   if (imageUrl) {
+    if (resilient.loadState === 'error') {
+      return <span className="text-muted-foreground">{icon}</span>
+    }
     return (
       <img
         src={resilient.imgSrc}
@@ -289,6 +296,7 @@ export function FinalOutputCards({
               <FinalOutputThumb
                 imageUrl={output.imageUrl}
                 videoUrl={output.videoUrl}
+                mediaAssetId={output.mediaAssetId}
                 subtitle={output.subtitle}
                 icon={output.icon}
                 isDocumentSnippet={block.type === 'document_card'}

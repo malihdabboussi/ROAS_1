@@ -112,6 +112,11 @@ function buildImportantPatterns(sections: Set<string>, availableActions: Set<str
       `**Theme auto-resolution**: \`create_funnel\`, \`create_presentation\`, and \`create_ad\` automatically pull the campaign's theme. Pass explicit \`theme_id\` only when overriding. Don't invent fallback colors/fonts when a campaign theme exists.`,
     )
   }
+  if (sections.has('Media') || sections.has('Ads')) {
+    patterns.push(
+      `**Branding before creatives**: Read \`ACTIVE_THEME\` / \`BRANDING_GATE\` in campaign context before \`generate_image\`, \`create_ad\`, or branded \`process_media\` creatives. If Theme is none/unavailable, ask whether branding exists (or offer to pull/create a Theme) and wait — do not invent brand colors, logos, or style. If a Theme is present, confirm it is the right branding on the first branded visual in the conversation, then use that Theme for every subsequent image/creative.`,
+    )
+  }
 
   if (sections.has('Funnels') || sections.has('Website')) {
     patterns.push(

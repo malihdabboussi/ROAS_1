@@ -23,12 +23,11 @@ describe('CampaignContextService', () => {
     const repository = makeCampaignRepository()
     const service = new CampaignContextService({ client: {} } as any, repository as any)
 
-    await expect(service.buildThemeSummary('user-1', 'campaign-1', null)).resolves.toBe(
-      'ACTIVE_THEME: none',
-    )
-    await expect(service.buildThemeSummary('user-1', 'campaign-1', null)).resolves.toBe(
-      'ACTIVE_THEME: none',
-    )
+    const noneSummary = await service.buildThemeSummary('user-1', 'campaign-1', null)
+    expect(noneSummary).toContain('ACTIVE_THEME: none')
+    expect(noneSummary).toContain('BRANDING_GATE:')
+    expect(noneSummary).toContain('ask the user whether branding exists')
+    await expect(service.buildThemeSummary('user-1', 'campaign-1', null)).resolves.toBe(noneSummary)
     expect(repository.findCampaignConfig).toHaveBeenCalledTimes(1)
 
     service.bustCampaignContextCache({ userId: 'user-1', orgId: null, campaignId: 'campaign-1' })
@@ -38,18 +37,12 @@ describe('CampaignContextService', () => {
 
   it('builds campaign summaries from repository asset rows', async () => {
     const repository = makeCampaignRepository({
-      listOffers: vi.fn(async () => [
-        { id: 'offer-1', name: 'Offer', processing_status: 'ready' },
-      ]),
+      listOffers: vi.fn(async () => [{ id: 'offer-1', name: 'Offer', processing_status: 'ready' }]),
       listFunnels: vi.fn(async () => [
         { id: 'funnel-1', name: 'Funnel', status: 'published', funnel_type: 'leadgen' },
       ]),
-      listLeadMagnets: vi.fn(async () => [
-        { id: 'deck-1', name: 'Deck', status: 'draft' },
-      ]),
-      listSequences: vi.fn(async () => [
-        { id: 'sequence-1', name: 'Sequence', status: 'active' },
-      ]),
+      listLeadMagnets: vi.fn(async () => [{ id: 'deck-1', name: 'Deck', status: 'draft' }]),
+      listSequences: vi.fn(async () => [{ id: 'sequence-1', name: 'Sequence', status: 'active' }]),
       listAdCampaigns: vi.fn(async () => [
         {
           id: 'ad-1',
@@ -60,9 +53,7 @@ describe('CampaignContextService', () => {
           metadata: { meta_instagram_user_id: 'ig-1' },
         },
       ]),
-      listAvatars: vi.fn(async () => [
-        { id: 'avatar-1', name: 'Avatar', avatar_type: 'buyer' },
-      ]),
+      listAvatars: vi.fn(async () => [{ id: 'avatar-1', name: 'Avatar', avatar_type: 'buyer' }]),
     })
     const client = {}
     const service = new CampaignContextService({ client } as any, repository as any)

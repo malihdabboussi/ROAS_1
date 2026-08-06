@@ -24,7 +24,9 @@ function GeneratedImageComponent({
   mediaAssetId,
   spaceId,
 }: GeneratedImageProps) {
-  const { loadState, imgSrc, onLoad, onError, retry } = useResilientImageSrc(url)
+  const { loadState, imgSrc, onLoad, onError, retry } = useResilientImageSrc(url, {
+    mediaAssetId,
+  })
   const aspectClass = resolveAspectClass(aspectRatio)
 
   const handleOpen = useCallback(() => {
@@ -58,6 +60,10 @@ function GeneratedImageComponent({
       window.open(url, '_blank', 'noopener,noreferrer')
     })()
   }, [mediaAssetId, prompt, spaceId, url])
+
+  if (!url?.trim()) {
+    return null
+  }
 
   return (
     <div className="my-spacing-3 w-full max-w-sm overflow-hidden">

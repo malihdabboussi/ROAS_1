@@ -22,6 +22,19 @@ describe('vibey-api skill generator', () => {
     expect(output).toContain('search or read Space/document sources before Brain')
   })
 
+  it('teaches branding confirmation before image and ad creatives', () => {
+    const { skillMd, referenceFiles } = generateScopedVibeyApiSkill(
+      new Set(['generate_image', 'create_ad']),
+      'marketing',
+    )
+    const media = referenceFiles['references/media.md'] ?? ''
+
+    expect(skillMd).toContain('Branding before creatives')
+    expect(skillMd).toContain('ACTIVE_THEME')
+    expect(skillMd).toContain('BRANDING_GATE')
+    expect(media).toMatch(/Branding gate/i)
+  })
+
   it('frames presentation creation as fixed-stage HTML bundles', () => {
     const { skillMd } = generateScopedVibeyApiSkill(
       new Set(['create_presentation', 'read_presentation_file']),

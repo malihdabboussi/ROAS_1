@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { AlertCircle } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { useResilientImageSrc } from '@/lib/media/use-resilient-image-src'
 import { listAssets, type MediaAsset } from '@/lib/services/media-api'
 import { cn } from '@/lib/utils/cn'
 
@@ -14,6 +16,10 @@ interface ShellMediaHistoryRailProps {
 }
 
 function MediaThumb({ asset }: { asset: MediaAsset }) {
+  const resilient = useResilientImageSrc(asset.public_url ?? '', {
+    mediaAssetId: asset.id,
+  })
+
   if (asset.asset_type === 'video' && asset.public_url) {
     return (
       <video
@@ -25,7 +31,36 @@ function MediaThumb({ asset }: { asset: MediaAsset }) {
       />
     )
   }
-  return <img src={asset.public_url!} alt="" className="h-full w-full object-cover" />
+
+  if (resilient.loadState === 'error') {
+    return (
+      <button
+        type="button"
+        className="bg-secondary text-destructive flex h-full w-full flex-col items-center justify-center gap-1 p-1"
+        onClick={(event) => {
+          event.stopPropagation()
+          resilient.retry()
+        }}
+        aria-label={`Retry loading ${asset.name}`}
+      >
+        <AlertCircle className="h-3.5 w-3.5" aria-hidden />
+        <span className="text-[9px] leading-tight">Retry</span>
+      </button>
+    )
+  }
+
+  return (
+    <img
+      src={resilient.imgSrc}
+      alt=""
+      className={cn(
+        'h-full w-full object-cover transition-opacity',
+        resilient.loadState === 'loaded' ? 'opacity-100' : 'opacity-0',
+      )}
+      onLoad={resilient.onLoad}
+      onError={resilient.onError}
+    />
+  )
 }
 
 export function ShellMediaHistoryRail({
