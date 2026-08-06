@@ -9618,12 +9618,12 @@ Reason not done now: The requested work is responsive layout correction; decompo
 
 ## 2026-08-05 - [OPS] Deploy Slack archive timestamp normalize (API + queue-worker)
 
-Status: Open
+Status: Done
 Found while: Fixing prod Slack import archive coverage numeric cast
 Files:
 
 - `apps/api` observation/backfill normalize path
 - `apps/queue-worker` slack-sync enqueue normalize
-  Evidence: Prod DB RPC + data repair already applied; jobs succeeding. App code still on branch `fix/slack-archive-coverage-numeric-ts` until commit/deploy.
-  Needed work: Commit/push/PR, deploy `roas-api` and queue-worker so new enqueues never write ISO again even without SQL normalize.
-  Deferred because: User has not asked to commit or deploy yet.
+  Evidence: PR #88 merged (`923424ba`); Railway queue-worker success; Vercel `roas-api` READY `dpl_4bscLBybkFouUXESDnewxnxPssWA` aliased to `api.roas.io`.
+  Needed work: None.
+  Deferred because: Completed.
