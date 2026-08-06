@@ -98,3 +98,10 @@ Why: Asking for the MYK webinar date after an EOD digest only saw the summary, s
 Impact: Production digest follow-ups can answer concrete facts from stored source posts; weaker summary-only refusals are blocked by policy.
 Files: `slack-digest-reply-context.ts`, `slack-digest-reply-context.service.ts`, `slack-inbound-thread-enrichment.service.ts`, `slack-digest-evidence.repository.ts`, `slack.service.ts`, `slack.module.ts`, analysis + policy + tests
 
+
+## [2026-08-05 21:05] - [ARCH]
+
+What: Merged PR #94 and deployed personal User Brain org-chat resolve to Fly `roas-runtimes` (agent-api).
+Why: Production Pixel/Atlas still could not resolve Dylan while in org workspace until agent-api ran the fix.
+Impact: Org-chat personal brain preload/`search_user_brain` should work now. Same chat is fine after refresh; hard refresh recommended.
+Files: deploy `roas-runtimes` image `deployment-01KZAKGD15WDM915ZFTK2E4GPX`; merge `95799422`
