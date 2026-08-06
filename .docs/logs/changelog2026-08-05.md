@@ -49,3 +49,10 @@ What: Fixed Slack brain import archive coverage failing when period timestamps w
 Why: Queue-worker Slack sync enqueued ISO `last_synced_at`/`created_at` values; the RPC short-circuited on NULL and stored ISO, then later casts failed (`invalid input syntax for type numeric`).
 Impact: Prod toast `Import failed: Failed to mark Slack archive coverage` unblocked; retry jobs already succeeding after DB repair. Code path still needs API + queue-worker deploy for defense in depth.
 Files: `normalize-slack-timestamp.ts` (api + queue-worker), `slack-sync.service.ts`, `slack-observation.service.ts`, `slack-observation.repository.ts`, `brain-import-jobs-enqueue.base.ts`, `20260805230000_normalize_slack_archive_oldest_ts.sql`, tests
+
+## [2026-08-05 17:02] - [OPS]
+
+What: Merged PR #88 and deployed Slack archive timestamp normalize to production — `roas-api` (`dpl_4bscLBybkFouUXESDnewxnxPssWA` → `api.roas.io`) and Railway `queue-worker` (commit status success).
+Why: Durable code-path fix for ISO→Slack-ts enqueue/backfill after the earlier prod DB repair.
+Impact: New Slack brain sync jobs enqueue numeric period bounds; API backfill/mark also normalize ISO payloads.
+Files: Vercel `roas-api`; Railway `roas-workers` / `queue-worker`; PR #88 (`24997360` / merge `923424ba`)
