@@ -63,3 +63,10 @@ Why: Prod EOD was still the old unanswered/risk alert queue (stash never pushed)
 Impact: Next Active EOD/digest runs prefer a varied business briefing over an unanswered-message list. Requires `roas-api` deploy.
 Files: `slack-team-loop-analysis.ts`, `slack-team-loop-evidence.ts`, `slack-team-loop.service.ts`, `slack-team-signal-delivery.service.ts`, `slack-team-signal-message.ts`, Team Intelligence template, docs, focused tests
 
+## [2026-08-05 20:12] - [FIX]
+
+What: Analysis prompt now skips client_risk / unanswered_question when later in-window follow-up shows the item was already acknowledged, mitigated, or owned.
+Why: Spencer-style dissatisfaction still surfaced at EOD even when the team had already handled it.
+Impact: Next digest analysis should emit fewer stale risk/question signals; thread reply/✅ resolution still applies at send time.
+Files: `apps/api/src/modules/spaces/services/slack-team-loop-analysis.ts`
+
