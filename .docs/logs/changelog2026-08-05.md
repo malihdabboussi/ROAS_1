@@ -91,3 +91,10 @@ Why: Chat retrieval filtered default user brains by current org, so Pixel/Atlas 
 Impact: With `brain_access:personal`, org-chat preload and `search_user_brain` (no brain_id) find the owner's personal default brain. Requires `agent-api` deploy.
 Files: `brain-retrieval-access.repository.ts`, `brain-context.repository.ts`, `brain-retrieval.service.test.ts`
 
+## [2026-08-05 20:59] - [FIX]
+
+What: Pixel digest thread replies now receive Team Intelligence source evidence; findings keep concrete dates; policy requires evidence/search before refusing digest questions.
+Why: Asking for the MYK webinar date after an EOD digest only saw the summary, so Pixel declined instead of answering from source Slack.
+Impact: Production digest follow-ups can answer concrete facts from stored source posts; weaker summary-only refusals are blocked by policy.
+Files: `slack-digest-reply-context.ts`, `slack-digest-reply-context.service.ts`, `slack-inbound-thread-enrichment.service.ts`, `slack-digest-evidence.repository.ts`, `slack.service.ts`, `slack.module.ts`, analysis + policy + tests
+

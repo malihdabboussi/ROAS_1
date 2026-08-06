@@ -55,26 +55,20 @@ export class SlackService extends SlackEventsBase {
     const slackUserId = String(event.user ?? '').trim()
     let nextEvent = event
     if (channelId && threadTs && text && slackUserId) {
-      const { MeetingFollowUpSlackConfirmService } =
-        await import('../../spaces/services/meeting-follow-up-slack-confirm.service')
-      const confirm = this.moduleRef.get(MeetingFollowUpSlackConfirmService, { strict: false })
-      if (
-        confirm &&
-        (await confirm.handleThreadReply({ channelId, threadTs, text, slackUserId }))
-      ) {
-        return
-      }
-      if (confirm) {
-        const prefix = await confirm.resolveAssigneeReminderThreadPrefix({
+      const { SlackInboundThreadEnrichmentService } =
+        await import('./slack-inbound-thread-enrichment.service')
+      const enricher = this.moduleRef.get(SlackInboundThreadEnrichmentService, { strict: false })
+      if (enricher) {
+        const enriched = await enricher.enrich({
+          supabase: this.getServiceRoleClient(),
+          teamId,
           channelId,
           threadTs,
+          text,
+          slackUserId,
         })
-        if (prefix) {
-          nextEvent = {
-            ...event,
-            text: `${prefix}\n\n${text}`,
-          }
-        }
+        if (enriched.handled) return
+        if (enriched.text !== text) nextEvent = { ...event, text: enriched.text }
       }
     }
     await super.handleMessageEvent(teamId, nextEvent)

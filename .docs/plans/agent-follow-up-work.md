@@ -1,3 +1,15 @@
+## 2026-08-05 - [ARCH] SlackService near 600 LOC after digest reply enrichment
+
+Status: Open
+
+Found while: Digest thread reply source-evidence injection
+
+Evidence: Enrichment extracted to `SlackInboundThreadEnrichmentService` / `SlackDigestReplyContextService`; `slack.service.ts` remains near the 600 LOC service limit.
+
+Needed work: Continue splitting SlackService observation/reaction handlers into focused collaborators.
+
+Reason not done now: In-scope digest follow-up grounding shipped with extracted helpers.
+
 ## 2026-07-29 - [OPS] Set NEXT_PUBLIC_WAITLIST_MODE=true on Vercel (web + api + website)
 
 Status: Open
