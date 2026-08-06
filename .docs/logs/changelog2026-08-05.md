@@ -105,3 +105,12 @@ What: Merged PR #94 and deployed personal User Brain org-chat resolve to Fly `ro
 Why: Production Pixel/Atlas still could not resolve Dylan while in org workspace until agent-api ran the fix.
 Impact: Org-chat personal brain preload/`search_user_brain` should work now. Same chat is fine after refresh; hard refresh recommended.
 Files: deploy `roas-runtimes` image `deployment-01KZAKGD15WDM915ZFTK2E4GPX`; merge `95799422`
+
+## [2026-08-05 21:40] - [FIX]
+
+What: Chat/channel/task personal User Brain access now uses `canAgentUseCapability` (role defaults) instead of only `effective.has('brain_access:personal')`; extracted `isRetryableAgentFailure` from task-agent to stay under the LOC allowlist.
+Why: Org team grants often omit personal brain while vibey still has `read_brain_personal`, so Pixel skipped USER BRAIN preload and disabled `search_user_brain` even after org_id resolve was fixed.
+Impact: Agents with role-default personal brain access preload/search Dylan in org chat without a team grant. Requires agent-api deploy.
+Files: `chat-stable-turn-context.service.ts`, `chat-prewarm-context.service.ts`, `channel-agent.service.ts`, `task-agent.service.ts`, `is-retryable-agent-failure.ts`, loc-allowlist, access-context + channel/task mocks, `chat-stable-turn-context.user-brain-access.test.ts`
+
+

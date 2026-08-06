@@ -1,15 +1,15 @@
 import { BadRequestException, Injectable, type Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import {
-  isModelStrategy,
-  resolveModelForStrategy,
-  type ChatScopeKind,
-} from '@vibey/api-shared'
+import { isModelStrategy, resolveModelForStrategy, type ChatScopeKind } from '@vibey/api-shared'
 import type { ResolvedAgentPolicy } from '../../agent-policy/agent-policy.types'
 import { AgentPolicyService } from '../../agent-policy/services/agent-policy.service'
 import { AgentRuntimeReadinessService } from '../../agent-sync/services/agent-runtime-readiness.service'
 import { AgentRuntimeService } from '../../shared/services/agent-runtime.service'
 import { ChatContextRepository } from '../repositories/chat-context.repository'
+import {
+  applyChannelPrincipalBrainPolicy,
+  type ChannelPrincipalUser,
+} from './chat-channel-principal'
 import {
   ChatModelInputService,
   type ChatModelSettings,
@@ -17,10 +17,6 @@ import {
   type ValidatedModelSettings,
 } from './chat-model-input.service'
 import type { ChatStablePrewarmContext } from './chat-prewarm-context.service'
-import {
-  applyChannelPrincipalBrainPolicy,
-  type ChannelPrincipalUser,
-} from './chat-channel-principal'
 
 export interface ChatStableTurnContext {
   conversationCampaignId: string | undefined
@@ -145,8 +141,7 @@ export class ChatStableTurnContextService {
       agentConfig = prewarmedStableContext.agentConfig
       useWikiContext = prewarmedStableContext.useWikiContext
     } else {
-      conversationCampaignId =
-        (conversation?.campaign_id as string | null | undefined) ?? undefined
+      conversationCampaignId = (conversation?.campaign_id as string | null | undefined) ?? undefined
       conversationAgentId = (conversation?.agent_id as string | null | undefined) ?? undefined
       resolvedCampaignId =
         hasMessageCampaignScope && (spaceId || scopeKind === 'personal' || scopeKind === 'campaign')
@@ -201,7 +196,13 @@ export class ChatStableTurnContextService {
         await sendSetupStatus('Checking agent access')
         resolvedPolicy = await this.agentPolicy.resolveAgentPolicy(resolvedAgentId, policyScope)
         hasCampaignAccess = resolvedPolicy.effective.has('campaign_context:*')
-        userBrainAccess = resolvedPolicy.effective.has('brain_access:personal')
+        // Role defaults (e.g. vibey read_brain_personal), not only team effective grants.
+        userBrainAccess = await this.agentPolicy.canAgentUseCapability(
+          resolvedAgentId,
+          'brain_access',
+          'personal',
+          policyScope,
+        )
       } catch (err) {
         logger.warn(`policy resolve failed for ${resolvedAgentId}: ${err}`)
       }

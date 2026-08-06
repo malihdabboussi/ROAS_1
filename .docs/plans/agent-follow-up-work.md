@@ -9419,3 +9419,22 @@ Evidence: The service coordinates observation, sender resolution, analysis, evid
 Needed work: Extract verified-signal routing and Shadow action creation into a focused service while preserving the observation cursor and evidence fingerprint contracts.
 
 Reason not done now: Splitting the orchestration service would broaden a behavior-sensitive EOD relevance fix; the touched service remains below its hard limit.
+
+## 2026-08-05 — Personal brain access gate: pre-existing service LOC overages
+
+Status: Open
+
+Found while: Aligning `userBrainAccess` with `canAgentUseCapability` for role-default personal brain.
+
+Files:
+
+- `apps/agent-api/src/modules/channel-agent/services/channel-agent.service.ts` (627 LOC; over 600 service limit)
+- `apps/agent-api/src/modules/task-agent/services/task-agent.service.ts` (623 LOC; over 600 service limit; allowlist shrunk 630→623 after extracting retry helper)
+- `apps/agent-api/src/modules/chat/services/chat-prewarm-context.service.ts` (590 LOC; near 600 service limit)
+
+Evidence: Access gate swap was small; LOC overages pre-existed. Retry helper extract only cleared the allowlist growth gate.
+
+Needed work: Extract policy/access resolution helpers shared by chat stable, prewarm, channel-agent, and task-agent; optionally share `isRetryableAgentFailure` with channel-agent's private copy.
+
+Reason not done now: Out of scope for the false-deny fix; splitting orchestration would broaden regression surface.
+

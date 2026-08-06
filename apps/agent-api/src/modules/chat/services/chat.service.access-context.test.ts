@@ -163,6 +163,7 @@ describe('ChatService access context', () => {
           grants: [],
           overrides: { allow_extra: [], deny: [] },
         })),
+        canAgentUseCapability: vi.fn(async () => false),
       } as any,
     )
 
@@ -285,6 +286,7 @@ describe('ChatService access context', () => {
           grants: [],
           overrides: { allow_extra: [], deny: [] },
         })),
+        canAgentUseCapability: vi.fn(async () => false),
       } as any,
     )
 
@@ -421,6 +423,7 @@ describe('ChatService access context', () => {
           grants: [],
           overrides: { allow_extra: [], deny: [] },
         })),
+        canAgentUseCapability: vi.fn(async () => false),
       } as any,
     )
 
@@ -520,6 +523,7 @@ describe('ChatService access context', () => {
           grants: [],
           overrides: { allow_extra: [], deny: [] },
         })),
+        canAgentUseCapability: vi.fn(async () => false),
       } as any,
     )
 
@@ -712,6 +716,12 @@ function makePrewarmHarness() {
       overrides: { allow_extra: [], deny: [] },
       teamId: null,
     })),
+    canAgentUseCapability: vi.fn(async (_agentKey: string, kind: string, id: string) => {
+      if (kind === 'brain_access' && id === 'personal') return true
+      if (kind === 'campaign_context') return true
+      if (kind === 'channel') return true
+      return false
+    }),
     canExecuteAction: vi.fn(async () => ({ allowed: true })),
   }
   const prewarmCache = new ChatPrewarmCacheService()
