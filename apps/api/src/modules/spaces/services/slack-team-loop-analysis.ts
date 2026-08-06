@@ -1,7 +1,15 @@
 import { EmbeddingService } from '../../brain/services/embedding.service'
 
 export type SlackTeamSignal = {
-  kind: 'brain_memory' | 'workflow_discovery' | 'unanswered_question' | 'client_risk'
+  kind:
+    | 'brain_memory'
+    | 'workflow_discovery'
+    | 'unanswered_question'
+    | 'client_risk'
+    | 'team_win'
+    | 'important_update'
+    | 'decision'
+    | 'strategic_opportunity'
   target_slack_user_id: string | null
   target_channel_id: string
   source_message_ts: string
@@ -30,6 +38,42 @@ type SlackTeamMessage = {
   text: string
 }
 
+const BRIEFING_KIND_PRIORITY: Partial<Record<SlackTeamSignal['kind'], number>> = {
+  client_risk: 100,
+  decision: 90,
+  strategic_opportunity: 80,
+  team_win: 70,
+  important_update: 60,
+  workflow_discovery: 50,
+  unanswered_question: 40,
+}
+
+export function selectSlackTeamBriefingSignals(
+  signals: SlackTeamSignal[],
+  limit = 5,
+): SlackTeamSignal[] {
+  const ranked = signals
+    .filter((signal) => signal.kind !== 'brain_memory')
+    .sort((left, right) => {
+      const priority =
+        (BRIEFING_KIND_PRIORITY[right.kind] ?? 0) - (BRIEFING_KIND_PRIORITY[left.kind] ?? 0)
+      return priority || right.confidence - left.confidence
+    })
+  const selected: SlackTeamSignal[] = []
+  const evidence = new Set<string>()
+  let unansweredQuestions = 0
+  for (const signal of ranked) {
+    if (selected.length >= limit) break
+    if (signal.kind === 'unanswered_question' && unansweredQuestions >= 1) continue
+    const evidenceKey = `${signal.target_channel_id}:${signal.source_message_ts}`
+    if (evidence.has(evidenceKey)) continue
+    selected.push(signal)
+    evidence.add(evidenceKey)
+    if (signal.kind === 'unanswered_question') unansweredQuestions += 1
+  }
+  return selected
+}
+
 const SLACK_TEAM_ANALYSIS_SCHEMA = {
   type: 'object',
   properties: {
@@ -40,7 +84,16 @@ const SLACK_TEAM_ANALYSIS_SCHEMA = {
         properties: {
           kind: {
             type: 'string',
-            enum: ['brain_memory', 'workflow_discovery', 'unanswered_question', 'client_risk'],
+            enum: [
+              'brain_memory',
+              'workflow_discovery',
+              'unanswered_question',
+              'client_risk',
+              'team_win',
+              'important_update',
+              'decision',
+              'strategic_opportunity',
+            ],
           },
           target_slack_user_id: { type: 'string', nullable: true },
           target_channel_id: { type: 'string' },
@@ -75,6 +128,7 @@ export async function analyzeSlackTeamMessages(input: {
   messages: SlackTeamMessage[]
   people: SlackTeamPerson[]
   maxSignals: number
+  briefingRecipient?: { displayName: string; role: string }
 }) {
   const signals: SlackTeamSignal[] = []
   let modelCalls = 0
@@ -94,19 +148,29 @@ export async function analyzeSlackTeamMessages(input: {
       )
       .join('\n')
     const prompt = [
-      'Analyze recent Slack messages for a proactive team agent.',
-      `Requested loop: ${input.loopKind}. Return at most ${remaining} high-confidence signals.`,
+      'Analyze recent Slack messages as an executive teammate preparing a relevance-ranked briefing.',
+      `Requested loop: ${input.loopKind}. Return zero to ${remaining} high-confidence signals.`,
+      input.briefingRecipient
+        ? `The briefing recipient is ${input.briefingRecipient.displayName} (${input.briefingRecipient.role}). Prioritize what helps this person understand the business and take the right next step.`
+        : '',
       'Only use explicit evidence in the messages. Do not infer private facts or invent commitments.',
+      'Select what is most useful to the recipient, ranked by business impact, urgency, novelty, confidence, and actionability.',
+      'Prefer a small, varied briefing over a list of similar alerts. Do not force an unanswered question into the briefing; include one only when it is genuinely among the most important items.',
+      'When the evidence supports it, connect related messages into one concise insight that explains why the development matters. Never combine unrelated claims.',
       'Pixel (bot) messages are reply context only. Never create a Person Brain fact about Pixel or target PIXEL_BOT.',
       'brain_memory: a durable fact about the named speaker that belongs in their Person Brain.',
       'workflow_discovery: a repeated manual process with a concrete automation proposal.',
       'unanswered_question: a direct question that appears unanswered in the supplied window.',
       'Messages with the same thread value are one Slack thread. A question is answered when a later human reply in that thread addresses it; never flag that as unanswered.',
       'client_risk: an explicit blocker, missed commitment, dissatisfaction, or delivery risk.',
+      'team_win: a concrete result, milestone, or meaningful positive momentum worth recognizing.',
+      'important_update: material progress or a changed situation the recipient should know, even when no reply is needed.',
+      'decision: a consequential decision, commitment, owner, deadline, or settled direction worth preserving.',
+      'strategic_opportunity: an evidence-backed next move or connection with meaningful upside, not a generic suggestion.',
       'Never propose messaging an external or ignored person. For a signal about them, write an internal finding for the team to review.',
-      'proposed_content must be the finding only: concrete, human, and free of system disclaimers like "Pixel will not message". Do not write the delivery framing; delivery adds that later.',
+      'proposed_content must be a self-contained, concrete briefing insight. Include the result or development, why it matters, and the useful next move only when one is supported. Do not add a greeting, generic filler, or system disclaimer.',
       'For every signal, copy the exact channel id and source timestamp from its bracket.',
-      'Return only JSON: {"signals":[{"kind":"brain_memory|workflow_discovery|unanswered_question|client_risk","target_slack_user_id":"string or null","target_channel_id":"string","source_message_ts":"string","proposed_content":"string","rationale":"string","brain_memory":"string or null","confidence":0.0}]}',
+      'Return only JSON: {"signals":[{"kind":"brain_memory|workflow_discovery|unanswered_question|client_risk|team_win|important_update|decision|strategic_opportunity","target_slack_user_id":"string or null","target_channel_id":"string","source_message_ts":"string","proposed_content":"string","rationale":"string","brain_memory":"string or null","confidence":0.0}]}',
       input.instructions ? `Additional admin instructions: ${input.instructions}` : '',
       '',
       transcript,

@@ -53,7 +53,7 @@ export const TEAM_AUTOMATION_TEMPLATES: SpaceAutomationTemplateSeed[] = [
     key: 'slack-team-observation',
     title: 'Slack Team Intelligence',
     description:
-      'Observes Slack once, then routes Person Brain facts, workflow opportunities, unanswered questions, and client risks into reviewable Shadow proposals.',
+      'Observes Slack once, then ranks the most useful wins, decisions, updates, opportunities, risks, questions, workflows, and Person Brain facts into reviewable Shadow proposals.',
     kind: 'all',
     order: 600,
   }),

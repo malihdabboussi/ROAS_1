@@ -10,6 +10,7 @@ import { SlackSenderResolverService } from '../../slack/services/slack-sender-re
 import { SlackTeamLoopRepository } from '../repositories/slack-team-loop.repository'
 import {
   analyzeSlackTeamMessages,
+  selectSlackTeamBriefingSignals,
   type SlackTeamPerson,
   type SlackTeamSignal,
 } from './slack-team-loop-analysis'
@@ -33,6 +34,13 @@ export type SlackTeamLoopKind =
   | 'all'
 
 type QuietHours = { start: string; end: string; timezone: string }
+
+const OWNER_BRIEFING_SIGNAL_KINDS = new Set<SlackTeamSignal['kind']>([
+  'team_win',
+  'important_update',
+  'decision',
+  'strategic_opportunity',
+])
 
 function internalEscalationMessage(input: {
   subject: SlackTeamPerson
@@ -254,6 +262,9 @@ export class SlackTeamLoopService {
     const savedRules = this.trainingRules
       ? await this.trainingRules.listEnabledRules(input.supabase, input.orgId)
       : []
+    const workspaceOwner = people.find(
+      (person) => person.vibey_user_id === input.userId && person.relationship_kind === 'internal',
+    )
     const analysis = await analyzeSlackTeamMessages({
       gemini: this.gemini,
       userId: input.userId,
@@ -270,6 +281,14 @@ export class SlackTeamLoopService {
       messages: observed,
       people: selectedPeople,
       maxSignals: remaining,
+      ...(workspaceOwner
+        ? {
+            briefingRecipient: {
+              displayName: workspaceOwner.display_name,
+              role: 'workspace owner',
+            },
+          }
+        : {}),
     })
 
     const evidenceBySource = new Map(
@@ -278,19 +297,31 @@ export class SlackTeamLoopService {
     const verifiedSignals = analysis.signals.flatMap((signal) => {
       const source = evidenceBySource.get(`${signal.target_channel_id}:${signal.source_message_ts}`)
       if (!source || source.user === 'PIXEL_BOT') return []
-      return [{ ...signal, target_slack_user_id: source.user }]
+      return [
+        {
+          ...signal,
+          target_slack_user_id:
+            OWNER_BRIEFING_SIGNAL_KINDS.has(signal.kind) && workspaceOwner
+              ? workspaceOwner.platform_id
+              : source.user,
+        },
+      ]
     })
     const rejectedWithoutEvidence = analysis.signals.length - verifiedSignals.length
     const confidentSignals = verifiedSignals.filter((signal) => signal.confidence >= 0.8)
     const rejectedLowConfidence = verifiedSignals.length - confidentSignals.length
-    const actionableSignals = confidentSignals.filter(
+    const threadCheckedSignals = confidentSignals.filter(
       (signal) =>
         signal.kind !== 'unanswered_question' || !slackSignalHasLaterHumanReply(signal, observed),
     )
-    const suppressedByThread = confidentSignals.length - actionableSignals.length
-    const workspaceOwner = people.find(
-      (person) => person.vibey_user_id === input.userId && person.relationship_kind === 'internal',
+    const suppressedByThread = confidentSignals.length - threadCheckedSignals.length
+    const memories = threadCheckedSignals.filter((signal) => signal.kind === 'brain_memory')
+    const briefingCandidates = threadCheckedSignals.filter(
+      (signal) => signal.kind !== 'brain_memory',
     )
+    const selectedBriefing = selectSlackTeamBriefingSignals(briefingCandidates)
+    const actionableSignals = [...memories, ...selectedBriefing]
+    const suppressedByBriefing = briefingCandidates.length - selectedBriefing.length
     let proposed = 0
     let memoriesCompounded = 0
     for (const signal of actionableSignals.slice(0, remaining)) {
@@ -345,7 +376,10 @@ export class SlackTeamLoopService {
         agentKey: 'pixel',
         targetMemberId: internalRecipient?.id ?? null,
         actionKind:
-          signal.kind === 'unanswered_question' && internalRecipient ? 'message' : 'workflow',
+          internalRecipient &&
+          (signal.kind === 'unanswered_question' || OWNER_BRIEFING_SIGNAL_KINDS.has(signal.kind))
+            ? 'message'
+            : 'workflow',
         proposedContent: resolveSlackIdentityText(signal.proposed_content, peopleBySlackId),
         rationale: resolveSlackIdentityText(signal.rationale, peopleBySlackId),
         sourceChannelId: signal.target_channel_id,
@@ -354,12 +388,11 @@ export class SlackTeamLoopService {
         metadata: {
           loop_kind: input.loopKind,
           signal_kind: signal.kind,
+          signal_finding: resolveSlackIdentityText(signal.proposed_content, peopleBySlackId),
           confidence: signal.confidence,
           evidence_fingerprint: evidenceFingerprint,
           delivery_mode: input.deliveryMode,
-          ...(signal.kind === 'unanswered_question' || signal.kind === 'client_risk'
-            ? slackSignalLifecycleMetadata(signal.kind)
-            : {}),
+          ...slackSignalLifecycleMetadata(signal.kind),
           ...slackTeamEvidenceMetadata({ source, slackTeamId, peopleBySlackId }),
           ...(target && !internalRecipient
             ? {
@@ -400,6 +433,7 @@ export class SlackTeamLoopService {
           metadata: {
             loop_kind: input.loopKind,
             signal_kind: signal.kind,
+            signal_finding: resolveSlackIdentityText(signal.proposed_content, peopleBySlackId),
             confidence: signal.confidence,
             evidence_fingerprint: `${evidenceFingerprint}:internal`,
             delivery_mode: input.deliveryMode,
@@ -435,6 +469,7 @@ export class SlackTeamLoopService {
       signals_rejected_missing_evidence: rejectedWithoutEvidence,
       signals_rejected_low_confidence: rejectedLowConfidence,
       signals_suppressed_by_thread: suppressedByThread,
+      signals_suppressed_by_briefing: suppressedByBriefing,
       model_calls: analysis.modelCalls,
       model_input_tokens: analysis.inputTokens,
       model_output_tokens: analysis.outputTokens,

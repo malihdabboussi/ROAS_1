@@ -39,6 +39,58 @@ const activeInternalPerson = {
 }
 
 describe('SlackTeamSignalDeliveryService', () => {
+  it('delivers contextual briefing signals without treating replies as resolution', async () => {
+    const update = {
+      ...coolingAction,
+      metadata: {
+        ...coolingAction.metadata,
+        signal_kind: 'team_win',
+        signal_finding: 'The Shawn webinar crossed $150K and set a new client milestone.',
+      },
+    }
+    const people = {
+      reviewShadowAction: vi.fn().mockResolvedValue({ ...update, status: 'approved' }),
+      claimShadowActionForSend: vi.fn().mockResolvedValue({ ...update, status: 'sending' }),
+      markShadowActionSent: vi.fn().mockResolvedValue({ ...update, status: 'sent' }),
+      markShadowActionFailed: vi.fn(),
+    }
+    const loops = {
+      listCoolingActions: vi.fn().mockResolvedValue([update]),
+      updateActionMetadata: vi.fn(),
+      findRecentDigestRoot: vi.fn().mockResolvedValue(null),
+    }
+    const slackTools = {
+      openDm: vi.fn().mockResolvedValue({ channel_id: 'D1' }),
+      sendMessage: vi.fn().mockResolvedValue({ ts: '201.1' }),
+    }
+    const resolution = { refresh: vi.fn() }
+    const service = new SlackTeamSignalDeliveryService(
+      people as never,
+      loops as never,
+      slackTools as never,
+      resolution as never,
+    )
+
+    await service.processCoolingActions({
+      supabase: {} as never,
+      userId: 'owner-1',
+      orgId: 'org-1',
+      workflowKey: 'slack_team:all',
+      deliveryMode: 'shadow',
+      personIds: [],
+      quietHoursActive: false,
+      people: [activeInternalPerson] as never,
+      now: new Date('2026-07-29T17:31:00.000Z'),
+    })
+
+    expect(resolution.refresh).not.toHaveBeenCalled()
+    const sentText = String(slackTools.sendMessage.mock.calls[0]?.[3]?.text ?? '')
+    expect(sentText).toMatch(/Shawn webinar crossed \$150K/i)
+    expect(sentText).toContain('Win')
+    expect(sentText).not.toContain('still need eyes')
+    expect(sentText).not.toContain('Want a reply drafted')
+  })
+
   it('sends a compiled contextual digest instead of the raw proposed_content', async () => {
     const people = {
       reviewShadowAction: vi.fn().mockResolvedValue({ ...coolingAction, status: 'approved' }),
@@ -103,7 +155,8 @@ describe('SlackTeamSignalDeliveryService', () => {
       channel_id: 'D1',
       text: expected,
     })
-    expect(expected).toContain('Casey Client had a question')
+    expect(expected).toContain('*Casey Client in #client-alpha*')
+    expect(expected).toContain('Asked:')
     expect(expected).not.toContain('Pixel will not message the external person')
     expect(people.markShadowActionSent).toHaveBeenCalledWith(
       expect.anything(),
@@ -185,10 +238,11 @@ describe('SlackTeamSignalDeliveryService', () => {
     expect(slackTools.sendMessage).toHaveBeenCalledTimes(1)
     const sentText = String(slackTools.sendMessage.mock.calls[0]?.[3]?.text ?? '')
     expect(sentText).toMatch(/^(Hey|Morning) Dylan/)
-    expect(sentText).toContain('1. Casey Client had a question in #')
-    expect(sentText).toContain('2. Yasir Khan had a question in #')
-    expect(sentText).toContain('had a question in #')
+    expect(sentText).toContain('1. *Casey Client in #client-alpha*')
+    expect(sentText).toContain('2. *Yasir Khan in #')
+    expect(sentText).toContain('Asked:')
     expect(sentText).not.toContain('Yasir Khan — unanswered question in #')
+    expect(sentText).not.toContain('had a question in #')
     expect(people.markShadowActionSent).toHaveBeenCalledTimes(2)
     expect(result).toEqual({ rechecked: 2, resolved: 0, sent: 2 })
   })

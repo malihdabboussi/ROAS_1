@@ -3,6 +3,10 @@ export type SlackTeamSignalMessageKind =
   | 'workflow_discovery'
   | 'client_risk'
   | 'brain_memory'
+  | 'team_win'
+  | 'important_update'
+  | 'decision'
+  | 'strategic_opportunity'
   | string
 
 export type SlackTeamSignalMessageItem = {
@@ -45,8 +49,37 @@ export function suggestedActionFor(kind: SlackTeamSignalMessageKind): string {
       return 'Want me to turn that into a short automation proposal for the team?'
     case 'client_risk':
       return 'Want me to draft an internal status note or client reply?'
+    case 'team_win':
+      return 'Worth sharing with the team or turning into a quick win recap?'
+    case 'decision':
+      return 'Want me to turn that into a clear owner and next-step note?'
+    case 'important_update':
+      return 'Want me to help move the next step forward?'
+    case 'strategic_opportunity':
+      return 'Want me to take the first pass on it?'
     default:
       return 'Want me to draft a next step for you?'
+  }
+}
+
+function signalLabel(kind: SlackTeamSignalMessageKind): string {
+  switch (kind) {
+    case 'unanswered_question':
+      return 'Asked'
+    case 'workflow_discovery':
+      return 'Flagged'
+    case 'client_risk':
+      return 'Needs eyes'
+    case 'team_win':
+      return 'Win 🎉'
+    case 'important_update':
+      return 'Update'
+    case 'decision':
+      return 'Decision'
+    case 'strategic_opportunity':
+      return 'Opportunity'
+    default:
+      return 'Noted'
   }
 }
 
@@ -87,10 +120,7 @@ export function extractSignalFinding(proposedContent: string): string {
   return bodyParts.join('\n\n').trim()
 }
 
-export function composeGreeting(
-  recipientName: string | undefined,
-  now = new Date(),
-): string {
+export function composeGreeting(recipientName: string | undefined, now = new Date()): string {
   const first = firstNameFromDisplay(recipientName || 'there')
   const weekday = new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
@@ -104,21 +134,26 @@ export function composeGreeting(
     }).format(now),
   )
   const variants = [
-    `Hey ${first}, hope you're having a good ${weekday}.`,
-    `Hey ${first} — quick flag for you.`,
+    weekday === 'Friday'
+      ? `Happy Friday ${first} 🎉 Here is what stood out today.`
+      : `Hey ${first} 👋 Here is what stood out today.`,
+    `Hey ${first} 👋 A few useful things surfaced today.`,
     hour < 12
-      ? `Morning ${first} — a couple things popped up.`
+      ? `Morning ${first} 👋 Here is the latest team pulse.`
       : hour < 17
-        ? `Hey ${first}, catching you mid-${weekday}.`
-        : `Hey ${first} — wrapping ${weekday} with a quick flag.`,
-    `Hey ${first}, wanted to surface a couple things while they're still open.`,
+        ? `Hey ${first} 👋 Here is the latest team pulse.`
+        : `Hey ${first} 👋 Here is what mattered most on ${weekday}.`,
+    `Hey ${first} 👋 I pulled together the most useful updates from today.`,
   ]
   const index = (now.getUTCDate() + now.getUTCHours()) % variants.length
   return variants[index]!
 }
 
 export function embedFindingClause(finding: string): string {
-  const cleaned = extractSignalFinding(finding).replace(/\s+/g, ' ').trim().replace(/[.?!]+$/g, '')
+  const cleaned = extractSignalFinding(finding)
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[.?!]+$/g, '')
   if (!cleaned) return 'this'
   return cleaned.charAt(0).toLowerCase() + cleaned.slice(1)
 }
@@ -127,19 +162,7 @@ export function composeNarrativeItem(item: SlackTeamSignalMessageItem): string {
   const channel = channelLabel(item.channelName)
   const findingClause = embedFindingClause(item.finding)
   const subject = item.subjectName.trim() || 'Someone'
-  const cta = suggestedActionFor(item.kind)
-  const ctaLower = `${cta.charAt(0).toLowerCase()}${cta.slice(1)}`
-
-  switch (item.kind) {
-    case 'workflow_discovery':
-      return `There was something ${subject} flagged in ${channel}. They mentioned ${findingClause} — it might need your feedback. ${cta}`
-    case 'unanswered_question':
-      return `${subject} had a question in ${channel}. They posted asking specifically about ${findingClause}. Didn't see a response yet — ${ctaLower}`
-    case 'client_risk':
-      return `${subject} raised a risk signal in ${channel}: ${findingClause}. Might need eyes soon — ${ctaLower}`
-    default:
-      return `Something from ${subject} in ${channel} stood out: ${findingClause}. ${cta}`
-  }
+  return `*${subject} in ${channel}*\n${signalLabel(item.kind)}: ${findingClause}.`
 }
 
 export function composeInternalEscalation(
@@ -149,6 +172,7 @@ export function composeInternalEscalation(
   return [
     composeGreeting(options.recipientName, options.now),
     composeNarrativeItem(input),
+    suggestedActionFor(input.kind),
   ].join('\n\n')
 }
 
@@ -164,7 +188,7 @@ export function composeDigestMessage(
   return [
     composeGreeting(options.recipientName, options.now),
     body,
-    'Say the word on any of these and I will take the next step.',
+    'Want me to take the first pass on any of these?',
   ].join('\n\n')
 }
 
@@ -176,8 +200,9 @@ export function composeThreadFollowUp(
   const first = firstNameFromDisplay(options.recipientName || 'there')
   if (items.length === 1) {
     return [
-      `One more for you, ${first} — still open as of now:`,
+      `One more for you, ${first} 👋 This is still open:`,
       composeNarrativeItem(items[0]!),
+      suggestedActionFor(items[0]!.kind),
     ].join('\n\n')
   }
   return [
@@ -208,10 +233,22 @@ export function signalMessageItemFromAction(input: {
     typeof input.metadata.signal_kind === 'string' && input.metadata.signal_kind.trim()
       ? input.metadata.signal_kind.trim()
       : 'signal'
+  const storedFinding =
+    typeof input.metadata.signal_finding === 'string' && input.metadata.signal_finding.trim()
+      ? input.metadata.signal_finding.trim()
+      : null
+  const sourceMessage =
+    typeof input.metadata.source_message_text === 'string' &&
+    input.metadata.source_message_text.trim()
+      ? input.metadata.source_message_text.trim()
+      : null
   return {
     subjectName,
     channelName,
     kind,
-    finding: extractSignalFinding(input.proposedContent),
+    finding:
+      storedFinding ??
+      (kind === 'unanswered_question' || kind === 'client_risk' ? sourceMessage : null) ??
+      extractSignalFinding(input.proposedContent),
   }
 }

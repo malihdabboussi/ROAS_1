@@ -56,3 +56,10 @@ What: Merged PR #88 and deployed Slack archive timestamp normalize to production
 Why: Durable code-path fix for ISO→Slack-ts enqueue/backfill after the earlier prod DB repair.
 Impact: New Slack brain sync jobs enqueue numeric period bounds; API backfill/mark also normalize ISO payloads.
 Files: Vercel `roas-api`; Railway `roas-workers` / `queue-worker`; PR #88 (`24997360` / merge `923424ba`)
+## [2026-08-05 20:08] - [FEATURE]
+
+What: Shipped the stashed Slack Team Intelligence relevance-ranked EOD briefing (wins/decisions/updates/risks/questions), warmer digest voice, and briefing selection caps. Analysis now skips risks/questions that already look handled in-window; unanswered/client_risk still re-check thread replies/✅ before send.
+Why: Prod EOD was still the old unanswered/risk alert queue (stash never pushed). Wednesday digests looked like random open threads, including already-handled risks.
+Impact: Next Active EOD/digest runs prefer a varied business briefing over an unanswered-message list. Requires `roas-api` deploy.
+Files: `slack-team-loop-analysis.ts`, `slack-team-loop-evidence.ts`, `slack-team-loop.service.ts`, `slack-team-signal-delivery.service.ts`, `slack-team-signal-message.ts`, Team Intelligence template, docs, focused tests
+
