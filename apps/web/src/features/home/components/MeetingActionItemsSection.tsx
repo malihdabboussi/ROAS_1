@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Check, Plus } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   HOME_TOAST_ERRORS,
@@ -113,17 +113,16 @@ export function MeetingActionItemsSection({
   return (
     <section className="gap-spacing-3 flex flex-col">
       <div className="gap-spacing-2 flex items-center justify-between">
-        <h2 className="body-3 text-foreground font-semibold">Action items</h2>
+        <h2 className="body-3 text-foreground font-semibold">Action items ({actions.length})</h2>
         <div className="gap-spacing-2 flex items-center">
-          <span className="badge-glass badge-glass-muted">{actions.length}</span>
           <button
             type="button"
             onClick={() => setComposing(true)}
-            className="btn-icon-bare"
+            className="button-compact button-glass-neutral"
             aria-label="Add action item"
             title="Add action item"
           >
-            <Plus className="icon-sm" aria-hidden />
+            Add action
           </button>
         </div>
       </div>
@@ -174,9 +173,7 @@ export function MeetingActionItemsSection({
         <ActionRow key={action.id} action={action} onToggle={onToggle} />
       ))}
       {!loading && actions.length === 0 && !composing ? (
-        <p className="body-4 text-muted-foreground">
-          No action items yet. Hit + to capture one during the call.
-        </p>
+        <p className="body-4 text-muted-foreground">No action items yet.</p>
       ) : null}
     </section>
   )

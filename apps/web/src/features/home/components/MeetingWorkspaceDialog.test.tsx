@@ -123,9 +123,6 @@ describe('MeetingWorkspaceDialog', () => {
         }),
       )
     })
-    const spaceLink = screen.getByRole('link', { name: 'Meetings' })
-    expect(spaceLink).toHaveAttribute('href', '/spaces?space=space-1')
-    expect(screen.getByRole('link', { name: /Campaign|ROAS/ })).toBeInTheDocument()
     expect(
       screen.getByRole('region', { name: 'Strategy call meeting workspace' }),
     ).toBeInTheDocument()
@@ -190,5 +187,27 @@ describe('MeetingWorkspaceDialog', () => {
       expect(mocks.endMeetingCall).toHaveBeenCalledWith('space-1', 'meeting-1')
       expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
     })
+  })
+
+  it('shows a completed state instead of Start call after the calendar meeting ends', async () => {
+    mocks.fetchMeetingWorkspace.mockReset()
+    mocks.fetchMeetingWorkspace.mockResolvedValue(baseBundle)
+
+    render(
+      <MeetingWorkspaceDialog
+        spaceId="space-1"
+        meetingItemId="meeting-1"
+        joinUrl={null}
+        meetingStart="2020-01-01T10:00:00.000Z"
+        meetingEnd="2020-01-01T10:30:00.000Z"
+        fallbackTitle="Past strategy call"
+        onBack={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+
+    await waitFor(() => expect(screen.getByText('Call complete')).toBeInTheDocument())
+    expect(screen.queryByRole('button', { name: 'Start call' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
   })
 })

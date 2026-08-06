@@ -2,6 +2,10 @@
 
 import dynamic from 'next/dynamic'
 import { useState, type RefObject } from 'react'
+import {
+  isMeetingCallItem,
+  ShellMeetingWorkspaceAdapter,
+} from '@/components/shell/ShellMeetingWorkspaceAdapter'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import { useOrgStore } from '@/features/org/store/use-org-store'
@@ -15,7 +19,6 @@ import { CategoryEditorModal } from '../CategoryEditorModal'
 import type { ContactsViewHandle } from '../contacts/ContactsView'
 import { StatusEditorModal } from '../StatusEditorModal'
 
-/** Shown while a heavy modal chunk loads after the user already asked to open it. */
 function ModalChunkLoading() {
   return (
     <div className="fixed inset-0 z-[50] flex items-center justify-center">
@@ -24,13 +27,6 @@ function ModalChunkLoading() {
   )
 }
 
-function NullLoading() {
-  return null
-}
-
-// Heavy modal stacks are loaded on demand so TipTap/ProseMirror, the customize
-// sub-views, automations flows, the task-detail stack and the contacts import
-// dialogs stay out of the /spaces route-entry chunk (perf-optimize pattern 7).
 const DocEditorPanel = dynamic(
   () => import('../docs/DocEditorPanel').then((mod) => mod.DocEditorPanel),
   { loading: ModalChunkLoading },
@@ -41,48 +37,47 @@ const TaskDetailModal = dynamic(
 )
 const AutomationsPanel = dynamic(
   () => import('../automations/AutomationsPanel').then((mod) => mod.AutomationsPanel),
-  { loading: NullLoading },
+  { loading: () => null },
 )
 const CustomizeViewPanel = dynamic(
   () => import('../CustomizeViewPanel').then((mod) => mod.CustomizeViewPanel),
-  { loading: NullLoading },
+  { loading: () => null },
 )
 const ShareModal = dynamic(() => import('../ShareModal').then((mod) => mod.ShareModal), {
-  loading: NullLoading,
+  loading: () => null,
 })
 const ViewShareModal = dynamic(
   () => import('../ViewShareModal').then((mod) => mod.ViewShareModal),
-  { loading: NullLoading },
+  { loading: () => null },
 )
 const ContactsSegmentPanel = dynamic(
   () => import('../contacts/ContactsSegmentPanel').then((mod) => mod.ContactsSegmentPanel),
-  { loading: NullLoading },
+  { loading: () => null },
 )
 const AllContactsAddManualDialog = dynamic(
   () =>
     import('@/features/studio/components/preview/AllContactsAddManualDialog').then(
-      (mod) => mod.AllContactsAddManualDialog,
+      (m) => m.AllContactsAddManualDialog,
     ),
-  { loading: NullLoading },
+  { loading: () => null },
 )
 const AllContactsImportCsvDialog = dynamic(
   () =>
     import('@/features/studio/components/preview/AllContactsImportCsvDialog').then(
-      (mod) => mod.AllContactsImportCsvDialog,
+      (m) => m.AllContactsImportCsvDialog,
     ),
-  { loading: NullLoading },
+  { loading: () => null },
 )
 const AllContactsImportGhlDialog = dynamic(
-  () =>
-    import('@/components/contacts').then((mod) => mod.AllContactsImportGhlDialog),
-  { loading: NullLoading },
+  () => import('@/components/contacts').then((m) => m.AllContactsImportGhlDialog),
+  { loading: () => null },
 )
 const AllContactsImportAcDialog = dynamic(
   () =>
     import('@/features/studio/components/preview/AllContactsImportAcDialog').then(
-      (mod) => mod.AllContactsImportAcDialog,
+      (m) => m.AllContactsImportAcDialog,
     ),
-  { loading: NullLoading },
+  { loading: () => null },
 )
 
 /**
@@ -437,7 +432,9 @@ export function SpaceModalsHost(p: SpaceModalsHostProps) {
         />
       )}
 
-      {selectedItem && (
+      {selectedItem && isMeetingCallItem(selectedItem) ? (
+        <ShellMeetingWorkspaceAdapter item={selectedItem} onClose={() => setSelectedItem(null)} />
+      ) : selectedItem ? (
         <TaskDetailModal
           item={selectedItem}
           allFields={fieldsForUi}
@@ -472,7 +469,7 @@ export function SpaceModalsHost(p: SpaceModalsHostProps) {
           onDeleteOption={handleDeleteFieldOption}
           onTagCustomSwatchesChange={handleTagCustomSwatchesChange}
         />
-      )}
+      ) : null}
 
       {shareMounted ? (
         <ShareModal
@@ -495,9 +492,7 @@ export function SpaceModalsHost(p: SpaceModalsHostProps) {
           activeViewName={activeView?.name ?? null}
           canManageSharing={isOrgContext() ? hasMinRole('admin') : true}
           programPrivacyNotice={
-            spaceProgramPrivacy.restricted
-              ? { programName: spaceProgramPrivacy.programName }
-              : null
+            spaceProgramPrivacy.restricted ? { programName: spaceProgramPrivacy.programName } : null
           }
           onSpacePatch={(patch: Partial<Space>) => {
             useSpacesStore.setState((s) => ({

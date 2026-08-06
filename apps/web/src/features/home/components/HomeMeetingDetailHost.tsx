@@ -102,6 +102,8 @@ export function HomeMeetingDetailHost({
           meetingItemId={target.meeting_item_id}
           agendaEvent={event}
           joinUrl={resolveMeetingJoinUrl(event)}
+          meetingStart={event.start}
+          meetingEnd={event.end}
           fallbackTitle={event.title}
           onBack={onClose}
           onClose={onClose}

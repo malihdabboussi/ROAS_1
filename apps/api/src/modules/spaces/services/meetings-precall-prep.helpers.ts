@@ -297,6 +297,8 @@ export function toAgendaRelatedCall(input: {
 
 /** Pad around the calendar event when deciding whether a Fathom call_date overlaps. */
 export const RELATED_CALL_TIME_PAD_MS = 45 * 60 * 1000
+/** Maximum same-day shift accepted only when attendee and title signals agree. */
+export const RELATED_CALL_RESCHEDULE_PAD_MS = 4 * 60 * 60 * 1000
 /**
  * When title/attendee signals are weak (AI Fathom titles, missing emails), attach a call
  * only if exactly one calendar event starts within this window of call_date.
@@ -487,8 +489,6 @@ export function scoreRelatedCallMatch(
     attendees?: unknown
   },
 ): number {
-  if (!callOverlapsEventWindow(call.call_date, event.start, event.end)) return 0
-
   const eventEmails = eventAttendeeEmails(event)
   const callEmails = extractEmailsFromAttendeeTags(call.attendees)
   let emailHits = 0
@@ -497,6 +497,17 @@ export function scoreRelatedCallMatch(
   }
 
   const titleSim = relatedCallTitleSimilarity(event.title, String(call.title ?? ''))
+  const overlapsScheduledWindow = callOverlapsEventWindow(call.call_date, event.start, event.end)
+  const overlapsRescheduleWindow = callOverlapsEventWindow(
+    call.call_date,
+    event.start,
+    event.end,
+    RELATED_CALL_RESCHEDULE_PAD_MS,
+  )
+  const stronglyIdentifiedReschedule =
+    overlapsRescheduleWindow &&
+    ((emailHits >= 2 && titleSim >= 0.2) || (emailHits >= 1 && titleSim >= 0.55))
+  if (!overlapsScheduledWindow && !stronglyIdentifiedReschedule) return 0
 
   // Shared organizer alone must not glue unrelated meetings together.
   if (eventEmails.size >= 2 && emailHits < 2 && titleSim < RELATED_CALL_TITLE_MIN) return 0

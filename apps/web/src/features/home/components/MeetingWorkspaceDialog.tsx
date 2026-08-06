@@ -1,14 +1,14 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Play, Square, X } from 'lucide-react'
+import { ExternalLink, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { MeetingActionItemsSection } from '@/features/home/components/MeetingActionItemsSection'
+import { MeetingCallStatusSection } from '@/features/home/components/MeetingCallStatusSection'
 import { MeetingRecordingsSection } from '@/features/home/components/MeetingRecordingsSection'
 import { MeetingWorkspaceAttachments } from '@/features/home/components/MeetingWorkspaceAttachments'
-import { MeetingWorkspaceContextLinks } from '@/features/home/components/MeetingWorkspaceContextLinks'
 import {
   HOME_TOAST_ERRORS,
   HOME_TOAST_SUCCESS,
@@ -30,7 +30,7 @@ function SectionTitle({ children, count }: { children: string; count?: number })
     <div className="flex items-center justify-between">
       <h2 className="body-3 text-foreground font-semibold">{children}</h2>
       {typeof count === 'number' ? (
-        <span className="badge-glass badge-glass-muted">{count}</span>
+        <span className="body-4 text-muted-foreground">{count}</span>
       ) : null}
     </div>
   )
@@ -43,11 +43,28 @@ function phaseBadgeLabel(phase: string | undefined, isPostCall: boolean): string
   return 'Ready'
 }
 
+function agendaText(value: string | null | undefined): string {
+  const source = value?.trim()
+  if (!source) return 'No agenda has been added yet.'
+  if (!/<[a-z][\s\S]*>/i.test(source) && !/&(?:nbsp|lt|gt|amp);/i.test(source)) return source
+  if (typeof document === 'undefined') {
+    return source
+      .replace(/<br\s*\/?\s*>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .trim()
+  }
+  const node = document.createElement('div')
+  node.innerHTML = source.replace(/<br\s*\/?\s*>/gi, '\n')
+  return (node.textContent ?? '').replace(/\n{3,}/g, '\n\n').trim()
+}
+
 export function MeetingWorkspaceDialog({
   spaceId,
   meetingItemId,
   agendaEvent,
   joinUrl,
+  meetingStart,
+  meetingEnd,
   fallbackTitle,
   onBack,
   onClose,
@@ -58,6 +75,8 @@ export function MeetingWorkspaceDialog({
   /** Agenda card that opened this workspace — carries the linked Fathom identity. */
   agendaEvent?: CalendarAgendaEvent | null
   joinUrl: string | null
+  meetingStart?: string | null
+  meetingEnd?: string | null
   fallbackTitle: string
   onBack: () => void
   onClose: () => void
@@ -119,7 +138,12 @@ export function MeetingWorkspaceDialog({
   const title = bundle?.meeting.title?.trim() || fallbackTitle
   const phase = bundle?.workspace?.phase
   const isLive = phase === 'live'
-  const isPostCall = phase === 'complete' && (bundle?.recordings.length ?? 0) > 0
+  const meetingEndMs = meetingEnd ? new Date(meetingEnd).getTime() : NaN
+  const meetingStartMs = meetingStart ? new Date(meetingStart).getTime() : NaN
+  const hasEnded = Number.isFinite(meetingEndMs) && meetingEndMs < Date.now()
+  const hasStarted = Number.isFinite(meetingStartMs) && meetingStartMs <= Date.now()
+  const isPostCall =
+    phase === 'complete' || hasEnded || (hasStarted && (bundle?.recordings.length ?? 0) > 0)
   const awarenessContext = useMemo(() => {
     if (!bundle) return ''
     return buildMeetingAwarenessContext({
@@ -256,7 +280,6 @@ export function MeetingWorkspaceDialog({
             connected meeting conversation in the main chat.
           </p>
         </div>
-        <MeetingWorkspaceContextLinks spaceId={spaceId} contextLinks={bundle?.context_links} />
         <span className={`badge-glass ${isLive ? 'badge-glass-green' : 'badge-glass-muted'}`}>
           {phaseBadgeLabel(phase, isPostCall)}
         </span>
@@ -272,122 +295,91 @@ export function MeetingWorkspaceDialog({
 
       <main className="p-spacing-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="gap-spacing-4 mx-auto flex w-full max-w-3xl flex-col">
-          <section className="section-card gap-spacing-4 p-spacing-4 flex items-center justify-between">
-            <div className="min-w-0 flex-1">
-              <p className="body-3 text-foreground font-semibold">
-                {isLive
-                  ? 'Call in progress'
-                  : phase === 'processing'
-                    ? 'Call ended'
-                    : isPostCall
-                      ? 'Post-call workspace'
-                      : 'Ready when you are'}
+          <MeetingCallStatusSection
+            phase={phase}
+            isLive={isLive}
+            isPostCall={isPostCall}
+            hasRecording={Boolean(bundle?.recordings.length)}
+            joinUrl={joinUrl}
+            starting={starting}
+            ending={ending}
+            onStart={() => void startCall()}
+            onEnd={() => void endCall()}
+            onContinue={focusMeetingChat}
+          />
+
+          <section className="section-card overflow-hidden">
+            <div className="gap-spacing-2 p-spacing-4 flex flex-col">
+              <SectionTitle>Agenda & prep</SectionTitle>
+              <p className="body-4 text-muted-foreground whitespace-pre-wrap">
+                {agendaText(agendaEvent?.description ?? bundle?.meeting.description)}
               </p>
-              <p className="body-4 text-muted-foreground mt-spacing-1">
-                {isLive
-                  ? 'Dump notes in chat. End the call when you wrap.'
-                  : phase === 'processing'
-                    ? 'Recording still catching up — keep chatting anytime.'
-                    : isPostCall
-                      ? 'Continue the same conversation with every recap, note, and transcript.'
-                      : 'Start the call without losing your agenda, chat, or follow-ups.'}
-              </p>
-              {isLive && joinUrl ? (
+              {joinUrl ? (
                 <a
                   href={joinUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="typo-caption text-primary mt-spacing-2 inline-flex"
+                  className="body-4 text-primary gap-spacing-1 inline-flex items-center self-start"
                 >
-                  Open call link
+                  Meeting link <ExternalLink className="icon-xs" aria-hidden />
                 </a>
               ) : null}
+              {onOpenPrep ? (
+                <button
+                  type="button"
+                  onClick={onOpenPrep}
+                  className="button-compact button-glass-neutral self-start"
+                >
+                  Open agenda prep
+                </button>
+              ) : null}
             </div>
-            {isLive ? (
-              <button
-                type="button"
-                onClick={endCall}
-                disabled={ending}
-                className="button-default button-glass-destructive gap-spacing-2 inline-flex shrink-0 items-center disabled:opacity-50"
-              >
-                <Square className="icon-sm" aria-hidden />
-                {ending ? 'Ending…' : 'End call'}
-              </button>
-            ) : phase === 'processing' || isPostCall ? (
-              <button
-                type="button"
-                onClick={focusMeetingChat}
-                className="button-default button-glass-neutral gap-spacing-2 inline-flex shrink-0 items-center"
-              >
-                Continue in chat
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={startCall}
-                disabled={starting}
-                className="button-default button-glass-primary gap-spacing-2 inline-flex shrink-0 items-center disabled:opacity-50"
-              >
-                <Play className="icon-sm" aria-hidden />
-                {starting ? 'Opening…' : 'Start call'}
-              </button>
-            )}
-          </section>
 
-          <section className="section-card gap-spacing-2 p-spacing-4 flex flex-col">
-            <SectionTitle>Agenda & prep</SectionTitle>
-            <p className="body-4 text-muted-foreground whitespace-pre-wrap">
-              {bundle?.meeting.description || 'No agenda has been added yet.'}
-            </p>
-            {onOpenPrep ? (
-              <button
-                type="button"
-                onClick={onOpenPrep}
-                className="button-compact button-glass-neutral self-start"
-              >
-                Open agenda prep
-              </button>
-            ) : null}
-          </section>
-
-          {bundle?.continuity.unresolved_commitments.length ? (
-            <section className="section-card rounded-spacing-3 p-spacing-4">
-              <SectionTitle count={bundle.continuity.unresolved_commitments.length}>
-                Open loops
-              </SectionTitle>
-              <div className="mt-spacing-3 gap-spacing-2 flex flex-col">
-                {bundle.continuity.unresolved_commitments.map((action) => (
-                  <p key={action.id} className="body-3 text-foreground">
-                    {action.title}
-                  </p>
-                ))}
+            {bundle?.continuity.unresolved_commitments.length ? (
+              <div className="border-border p-spacing-4 border-t">
+                <SectionTitle count={bundle.continuity.unresolved_commitments.length}>
+                  Open loops
+                </SectionTitle>
+                <div className="mt-spacing-3 gap-spacing-2 flex flex-col">
+                  {bundle.continuity.unresolved_commitments.map((action) => (
+                    <p key={action.id} className="body-3 text-foreground">
+                      {action.title}
+                    </p>
+                  ))}
+                </div>
               </div>
-            </section>
-          ) : null}
+            ) : null}
 
-          <MeetingActionItemsSection
-            spaceId={spaceId}
-            meetingItemId={meetingItemId}
-            actions={bundle?.actions ?? []}
-            loading={loading}
-            onToggle={toggleAction}
-            onCreated={handleActionCreated}
-          />
+            <div className="border-border p-spacing-4 border-t">
+              <MeetingActionItemsSection
+                spaceId={spaceId}
+                meetingItemId={meetingItemId}
+                actions={bundle?.actions ?? []}
+                loading={loading}
+                onToggle={toggleAction}
+                onCreated={handleActionCreated}
+              />
+            </div>
 
-          <MeetingWorkspaceAttachments
-            spaceId={spaceId}
-            deliverables={bundle?.deliverables ?? []}
-            loading={loading}
-          />
+            <div className="border-border p-spacing-4 border-t">
+              <MeetingWorkspaceAttachments
+                spaceId={spaceId}
+                deliverables={bundle?.deliverables ?? []}
+                loading={loading}
+              />
+            </div>
 
-          <MeetingRecordingsSection
-            spaceId={spaceId}
-            meetingItemId={meetingItemId}
-            recordings={bundle?.recordings ?? []}
-            onLinked={() => {
-              void hydrateWorkspace()
-            }}
-          />
+            <div className="border-border p-spacing-4 border-t">
+              <MeetingRecordingsSection
+                spaceId={spaceId}
+                meetingItemId={meetingItemId}
+                recordings={bundle?.recordings ?? []}
+                onLinked={() => {
+                  void hydrateWorkspace()
+                }}
+              />
+            </div>
+          </section>
         </div>
       </main>
     </section>

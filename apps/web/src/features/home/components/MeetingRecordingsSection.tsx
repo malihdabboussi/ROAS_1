@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Check, ExternalLink, Plus, Radio } from 'lucide-react'
+import { Check, ExternalLink, Radio } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   HOME_TOAST_ERRORS,
@@ -13,6 +13,7 @@ import {
   type FathomRecordingCandidate,
   type MeetingRecording,
 } from '@/features/home/services/meeting-workspace-api'
+import { openDocumentInShell } from '@/lib/artifacts'
 import { listFathomMeetings } from '@/lib/brain'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
@@ -120,17 +121,16 @@ export function MeetingRecordingsSection({
   return (
     <section className="gap-spacing-2 flex flex-col">
       <div className="flex items-center justify-between">
-        <h2 className="body-3 text-foreground font-semibold">Recordings</h2>
+        <h2 className="body-3 text-foreground font-semibold">Recordings ({recordings.length})</h2>
         <div className="gap-spacing-2 flex items-center">
-          <span className="badge-glass badge-glass-muted">{recordings.length}</span>
           <button
             type="button"
             onClick={() => setPicking((open) => !open)}
-            className="btn-icon-bare"
+            className="button-compact button-glass-neutral"
             aria-label={picking ? 'Close recording picker' : 'Link a call recording'}
             aria-expanded={picking}
           >
-            <Plus className="icon-xs" aria-hidden />
+            {picking ? 'Close' : 'Link recording'}
           </button>
         </div>
       </div>
@@ -212,13 +212,27 @@ export function MeetingRecordingsSection({
               Open recording <ExternalLink className="icon-xs" />
             </a>
           ) : null}
+          {recording.transcript_doc_item_id ? (
+            <button
+              type="button"
+              onClick={() =>
+                openDocumentInShell({
+                  documentId: recording.transcript_doc_item_id!,
+                  spaceItemId: recording.transcript_doc_item_id!,
+                  spaceId,
+                  title: `Transcript — ${recording.title}`,
+                })
+              }
+              className="button-compact button-glass-neutral mt-spacing-2"
+            >
+              Open transcript
+            </button>
+          ) : null}
         </div>
       ))}
 
       {!picking && recordings.length === 0 ? (
-        <p className="body-4 text-muted-foreground">
-          No recordings yet. Hit + to select a Fathom call.
-        </p>
+        <p className="body-4 text-muted-foreground">No recording linked yet.</p>
       ) : null}
     </section>
   )

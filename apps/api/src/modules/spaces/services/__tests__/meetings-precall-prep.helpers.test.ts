@@ -218,6 +218,31 @@ describe('meetings-precall-prep.helpers', () => {
     expect(assigned.get('other')).toBe('other-call')
   })
 
+  it('matches a clearly identified call that was pushed later the same day', () => {
+    expect(
+      scoreRelatedCallMatch(
+        {
+          id: 'calendar-john',
+          title: 'Dylan Vanas and John Hyland | Zoom Call',
+          start: '2026-08-05T21:30:00.000Z',
+          end: '2026-08-05T22:00:00.000Z',
+          all_day: false,
+          video_url: null,
+          location: null,
+          attendees: [
+            { email: 'dylan@example.com', name: 'Dylan' },
+            { email: 'john@example.com', name: 'John' },
+          ],
+        },
+        {
+          title: 'Dylan and John Zoom call',
+          call_date: '2026-08-06T00:00:00.000Z',
+          attendees: ['dylan@example.com', 'john@example.com'],
+        },
+      ),
+    ).toBeGreaterThan(0)
+  })
+
   it('parses Fathom attendee slugs into emails', () => {
     expect(emailFromAttendeeSlug('att_dylan_dylanvanas_com')).toBe('dylan@dylanvanas.com')
     expect(emailFromAttendeeSlug('att_speaker_1')).toBeNull()

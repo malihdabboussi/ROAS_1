@@ -9,7 +9,7 @@ function SectionTitle({ children, count }: { children: string; count?: number })
     <div className="flex items-center justify-between">
       <h2 className="body-3 text-foreground font-semibold">{children}</h2>
       {typeof count === 'number' ? (
-        <span className="badge-glass badge-glass-muted">{count}</span>
+        <span className="body-4 text-muted-foreground">{count}</span>
       ) : null}
     </div>
   )

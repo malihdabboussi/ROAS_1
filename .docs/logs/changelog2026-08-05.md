@@ -122,3 +122,10 @@ Why: Production Pixel still false-denied USER BRAIN preload until agent-api used
 Impact: Org-chat agents with role-default personal brain access (e.g. vibey) can preload/search Dylan without a team grant. Hard refresh recommended.
 Files: deploy `roas-runtimes` image `deployment-01KZAPMKD0NQ6FE0E1R50C4NXM`; merge `7b0291ce`
 
+
+## [2026-08-05 23:58] - [FIX]
+
+What: Unified meeting entry points on the meeting workspace, restored full Fathom payload enrichment before ingestion, added high-confidence same-day reschedule matching, made completed calendar meetings time-aware, decoded calendar HTML agenda text, and simplified the meeting detail sections and controls.
+Why: Agenda could show a linked Fathom call while the workspace had no recording/actions, past meetings still offered Start call, Meetings board rows opened generic task detail, and raw calendar HTML plus offset count/icon controls made the detail view difficult to use.
+Impact: Agenda and Meetings board calls now open the same review workspace; ID-only Fathom links retain provider action items; clearly identified calls moved by up to four hours reconnect; ended calls show review state; agenda, actions, attachments, and recordings use one simpler container.
+Files: `fathom-meeting-workspace-attach.service.ts`, `fathom-meeting-workspace-attach.service.test.ts`, `meetings-precall-prep.helpers.ts`, `meetings-precall-prep.helpers.test.ts`, `MeetingWorkspaceDialog.tsx`, `MeetingWorkspaceDialog.test.tsx`, `MeetingCallStatusSection.tsx`, `MeetingActionItemsSection.tsx`, `MeetingRecordingsSection.tsx`, `MeetingWorkspaceAttachments.tsx`, `HomeMeetingDetailHost.tsx`, `ShellMeetingWorkspaceAdapter.tsx`, `SpaceModalsHost.tsx`, `frontend-shared-surfaces.md`

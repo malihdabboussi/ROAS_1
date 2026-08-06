@@ -4,6 +4,15 @@ import { FathomMeetingWorkspaceAttachService } from './fathom-meeting-workspace-
 describe('FathomMeetingWorkspaceAttachService', () => {
   it('attaches a selected Fathom recording to the target meeting workspace', async () => {
     const api = {
+      listMeetings: vi.fn().mockResolvedValue({
+        items: [
+          {
+            recording_id: 'fathom-99',
+            title: 'Aaron x Dylan x Nate',
+            action_items: [{ description: 'Send the follow-up' }],
+          },
+        ],
+      }),
       getRecordingTranscript: vi.fn().mockResolvedValue({
         transcript: [{ speaker: { display_name: 'Dylan' }, text: 'Hello', timestamp: '00:00' }],
       }),
@@ -56,6 +65,7 @@ describe('FathomMeetingWorkspaceAttachService', () => {
         orgId: 'org-1',
         event: expect.objectContaining({
           recording_id: 'fathom-99',
+          action_items: [{ description: 'Send the follow-up' }],
           transcript: [{ speaker: { display_name: 'Dylan' }, text: 'Hello', timestamp: '00:00' }],
           default_summary: { template_name: 'default', markdown_formatted: '## Recap' },
         }),
