@@ -17,6 +17,7 @@ import { SlackWebhookController } from './controllers/slack-webhook.controller'
 import { SlackController } from './controllers/slack.controller'
 import { SlackApiIntegration } from './integrations/slack-api.integration'
 import { SlackBrainMappingRepository } from './repositories/slack-brain-mapping.repository'
+import { SlackDigestEvidenceRepository } from './repositories/slack-digest-evidence.repository'
 import { SlackObservationRepository } from './repositories/slack-observation.repository'
 import { SlackPeopleBrainRepository } from './repositories/slack-people-brain.repository'
 import { SlackPeopleIndexRepository } from './repositories/slack-people-index.repository'
@@ -29,6 +30,8 @@ import { SlackAgentToolsService } from './services/slack-agent-tools.service'
 import { SlackArchiveSearchService } from './services/slack-archive-search.service'
 import { SlackBrainMappingService } from './services/slack-brain-mapping.service'
 import { SlackChannelCoverageService } from './services/slack-channel-coverage.service'
+import { SlackDigestReplyContextService } from './services/slack-digest-reply-context.service'
+import { SlackInboundThreadEnrichmentService } from './services/slack-inbound-thread-enrichment.service'
 import { SlackObservationService } from './services/slack-observation.service'
 import { SlackPeopleService } from './services/slack-people.service'
 import { SlackSenderResolverService } from './services/slack-sender-resolver.service'
@@ -69,6 +72,9 @@ import { SlackService } from './services/slack.service'
     SlackPeopleRepository,
     SlackPeopleBrainRepository,
     SlackSignalTrainingRepository,
+    SlackDigestEvidenceRepository,
+    SlackDigestReplyContextService,
+    SlackInboundThreadEnrichmentService,
     SlackApiIntegration,
   ],
   exports: [

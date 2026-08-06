@@ -160,6 +160,7 @@ export async function analyzeSlackTeamMessages(input: {
       'Select what is most useful to the recipient, ranked by business impact, urgency, novelty, confidence, and actionability.',
       'Prefer a small, varied briefing over a list of similar alerts. Do not force an unanswered question into the briefing; include one only when it is genuinely among the most important items.',
       'When the evidence supports it, connect related messages into one concise insight that explains why the development matters. Never combine unrelated claims.',
+      'When the source includes concrete dates, owners, amounts, ROAS figures, or next scheduled dates, include those specifics in proposed_content.',
       'Pixel (bot) messages are reply context only. Never create a Person Brain fact about Pixel or target PIXEL_BOT.',
       'brain_memory: a durable fact about the named speaker that belongs in their Person Brain.',
       'workflow_discovery: a repeated manual process with a concrete automation proposal.',

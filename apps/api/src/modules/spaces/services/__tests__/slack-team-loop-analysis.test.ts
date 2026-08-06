@@ -62,6 +62,7 @@ describe('analyzeSlackTeamMessages', () => {
     expect(prompt).toContain('Dylan (workspace owner)')
     expect(prompt).toContain('Write proposed_content in second person')
     expect(prompt).toContain('you stepped in')
+    expect(prompt).toContain('concrete dates, owners, amounts')
   })
 
   it('enforces briefing diversity and caps unanswered questions after model analysis', () => {

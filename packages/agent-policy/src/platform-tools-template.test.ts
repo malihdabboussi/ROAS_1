@@ -45,6 +45,9 @@ describe('platform tools template', () => {
       'A partial search with zero matches is not evidence that the message is absent',
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'When the user asks about a Team Intelligence digest item you posted',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'retry with a narrower channel query or broader terms',
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Connected MCP service such as Page Grader →')
