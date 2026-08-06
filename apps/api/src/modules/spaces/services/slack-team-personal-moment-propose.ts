@@ -11,7 +11,10 @@ import {
 } from './slack-team-personal-moment'
 import { slackSignalLifecycleMetadata } from './slack-team-signal-delivery.service'
 
-type ObservedMessage = PersonalMomentEvidenceMessage & { channel_name: string }
+type ObservedMessage = PersonalMomentEvidenceMessage & {
+  channel_name: string
+  thread_ts: string | null
+}
 
 export async function proposePersonalMomentAction(input: {
   supabase: SupabaseClient

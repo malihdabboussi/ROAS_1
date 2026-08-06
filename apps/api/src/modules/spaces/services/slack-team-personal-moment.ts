@@ -13,6 +13,7 @@ export type PersonalMomentEvidenceMessage = {
   channel_id: string
   channel_name: string
   ts: string
+  thread_ts?: string | null
   user: string
   text: string
 }

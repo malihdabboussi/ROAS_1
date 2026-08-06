@@ -486,7 +486,6 @@ export class SlackTeamLoopService {
 
       if (
         signal.kind !== 'brain_memory' &&
-        signal.kind !== 'personal_moment' &&
         target &&
         !internalRecipient &&
         workspaceOwner &&
