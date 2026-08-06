@@ -47,11 +47,11 @@ export function TeamDetailMembersSidebar({
   const teamKind = team?.team_kind ?? 'mixed'
 
   return (
-    <aside className="gap-spacing-3 p-spacing-3 flex min-h-0 w-72 shrink-0 flex-col overflow-y-auto">
+    <aside className="gap-spacing-3 p-spacing-3 h-spacing-48 flex min-h-0 w-full shrink-0 flex-row overflow-x-auto md:h-auto md:w-72 md:flex-col md:overflow-y-auto md:overflow-x-hidden">
       {teamKind !== 'agent' ? (
         <div
           ref={addMemberCardRef}
-          className="surface-card border-subtle rounded-spacing-3 flex max-h-[40%] min-h-0 flex-col overflow-hidden border"
+          className="surface-card border-subtle rounded-spacing-3 w-spacing-64 flex min-h-0 shrink-0 flex-col overflow-hidden border md:max-h-[40%] md:w-auto"
         >
           <div className="gap-spacing-2 px-spacing-3 py-spacing-2 flex shrink-0 items-center justify-between">
             <span className="body-4 text-muted-foreground font-medium uppercase tracking-wide">
@@ -151,7 +151,7 @@ export function TeamDetailMembersSidebar({
       {teamKind === 'agent' || teamKind === 'mixed' ? (
         <div
           ref={addAgentCardRef}
-          className="surface-card border-subtle rounded-spacing-3 flex shrink-0 flex-col overflow-hidden border"
+          className="surface-card border-subtle rounded-spacing-3 w-spacing-64 flex shrink-0 flex-col overflow-hidden border md:w-auto"
         >
           <div className="gap-spacing-2 px-spacing-3 py-spacing-2 flex shrink-0 items-center justify-between">
             <span className="body-4 text-muted-foreground font-medium uppercase tracking-wide">

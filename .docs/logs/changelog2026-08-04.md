@@ -253,3 +253,10 @@ What: Replaced narrow-screen wrapping in the Flows, Brain, Agents, Teams, and sh
 Why: The wrapped toolbar and permanently visible 220px Flows rail squeezed loop content into roughly 150px even though the document itself did not overflow.
 Impact: Toolbars stay aligned and scroll horizontally. Flows navigation remains available above a full-width loop list, so names, states, triggers, and actions remain readable on phones.
 Files: `FlowsBrowseHub.tsx`, `FlowsBrowseHub.test.tsx`, `FlowsToolbar.tsx`, `FlowsToolbar.test.tsx`, `BrainHomeToolbar.tsx`, `Team2Toolbar.tsx`, `TeamsToolbar.tsx`, `ToolbarShell.tsx`, `agent-follow-up-work.md`
+
+## [2026-08-04 17:58] - [FIX]
+
+What: Optimized remaining dense shared web surfaces for mobile with stacked or horizontal navigation rails, single-row scrollable toolbars, and compact responsive data rows.
+Why: Desktop fixed-width rails, wrapped controls, and dense columns were competing for narrow phone widths and making content unreadable.
+Impact: Mobile users retain compact navigation and horizontally scrollable controls; desktop layouts retain their existing split views. SpaceItemsContainer isolated-panel mobile swap deferred (LOC allowlist).
+Files: Space channel/template/media/ads research views, shared `ToolbarShell.tsx`, Flows browse/toolbar, Brain and Team toolbars/detail views, focused tests

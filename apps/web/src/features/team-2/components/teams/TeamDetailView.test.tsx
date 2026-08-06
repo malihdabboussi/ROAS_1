@@ -323,6 +323,9 @@ describe('TeamDetailView', () => {
       expect(screen.getByText('Growth Team')).toBeTruthy()
       expect(screen.getByText('Sefy')).toBeTruthy()
       expect(screen.getByText('Atlas')).toBeTruthy()
+      const membersSidebar = screen.getByText('Sefy').closest('aside')
+      expect(membersSidebar).toHaveClass('h-spacing-48', 'w-full', 'md:w-72')
+      expect(membersSidebar?.parentElement).toHaveClass('flex-col', 'md:flex-row')
       expect(mocks.backendGet).toHaveBeenCalledWith('/api/org/org-1/members')
       expect(mocks.fetchMissions).toHaveBeenCalledWith({ limit: 200 })
 

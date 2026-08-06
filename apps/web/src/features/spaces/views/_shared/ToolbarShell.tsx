@@ -30,7 +30,7 @@ export function ToolbarShell({
   return (
     <>
       <div
-        className={`flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 ${
+        className={`scrollbar-hide flex w-full min-w-0 flex-nowrap items-center justify-between gap-2 overflow-x-auto ${
           contactsDetailLayout || artifactDetailLayout
             ? 'pb-spacing-1 px-spacing-2 pt-2'
             : channelsLayout

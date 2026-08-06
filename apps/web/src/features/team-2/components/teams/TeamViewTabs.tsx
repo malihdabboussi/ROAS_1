@@ -47,7 +47,7 @@ export function TeamViewTabs({ active, onChange, trailing }: TeamViewTabsProps) 
         })}
       </div>
       {trailing ? (
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">{trailing}</div>
+        <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1">{trailing}</div>
       ) : null}
     </div>
   )

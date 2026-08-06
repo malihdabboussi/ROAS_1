@@ -60,4 +60,11 @@ describe('FlowsToolbar', () => {
     expect(props.onSearchChange).toHaveBeenCalledWith('')
     expect(props.onSearchOpenChange).toHaveBeenCalledWith(false)
   })
+
+  it('keeps all controls in one horizontally scrollable row', () => {
+    renderToolbar()
+
+    const toolbar = screen.getByRole('button', { name: 'Grid view' }).closest('.scrollbar-hide')
+    expect(toolbar).toHaveClass('flex-nowrap', 'overflow-x-auto')
+  })
 })

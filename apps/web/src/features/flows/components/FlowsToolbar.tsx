@@ -115,8 +115,8 @@ export function FlowsToolbar({
   )
 
   return (
-    <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 px-3 py-2">
-      <div className="flex min-w-0 shrink flex-wrap items-center gap-1">
+    <div className="scrollbar-hide flex w-full min-w-0 flex-nowrap items-center justify-between gap-2 overflow-x-auto px-3 py-2">
+      <div className="flex min-w-0 shrink flex-nowrap items-center gap-1">
         <FlowsGroupByButton
           groupBy={groupBy}
           btnRef={groupByBtnRef}
@@ -167,7 +167,7 @@ export function FlowsToolbar({
         </Tooltip>
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+      <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1">
         {searchOpen ? (
           <label className="relative block w-40">
             <Search className="icon-left-center icon-sm text-muted-foreground pointer-events-none" />

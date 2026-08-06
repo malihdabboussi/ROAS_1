@@ -57,8 +57,8 @@ export function TeamsToolbar({
   const activeGroupLabel = groupBy === 'none' ? null : GROUP_BY_LABELS[groupBy]
 
   return (
-    <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1">
-      <div className="flex min-w-0 shrink flex-wrap items-center gap-1">
+    <div className="scrollbar-hide flex w-full min-w-0 flex-nowrap items-center justify-between gap-2 overflow-x-auto">
+      <div className="flex min-w-0 shrink flex-nowrap items-center gap-1">
         <Tooltip label="Group by" side="bottom">
           <span ref={groupByBtnRef} className="inline-flex shrink-0 items-center">
             <button
@@ -118,7 +118,7 @@ export function TeamsToolbar({
         </Tooltip>
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+      <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1">
         <div className="flex h-7 shrink-0 items-center justify-center">
           <AnimatePresence mode="popLayout" initial={false}>
             {searchOpen ? (

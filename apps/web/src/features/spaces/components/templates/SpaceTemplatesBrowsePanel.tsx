@@ -95,7 +95,7 @@ export function SpaceTemplatesBrowsePanel({
   const tree = (
     <div className="z-modal-dialog-root z-modal-layer-3 fixed inset-0 flex items-center justify-center">
       <div className="z-modal-dialog-backdrop-fill" onClick={onClose} role="presentation" />
-      <div className="surface-card border-border z-modal-content rounded-spacing-4 relative mx-4 flex h-[92vh] w-full max-w-7xl flex-col overflow-hidden border shadow-lg">
+      <div className="surface-card border-border z-modal-content rounded-spacing-4 relative mx-3 flex h-[92vh] w-full max-w-7xl flex-col overflow-hidden border shadow-lg md:mx-4">
         <div className="px-spacing-6 py-spacing-4 flex shrink-0 items-center justify-between">
           <span className="gap-spacing-2 body-2 text-foreground flex items-center font-semibold">
             <LayoutGrid className="icon-lg text-muted-foreground" />
@@ -108,15 +108,15 @@ export function SpaceTemplatesBrowsePanel({
           </div>
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-[220px_minmax(0,1fr)] overflow-hidden">
-          <div className="p-spacing-2 min-h-0">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:grid md:grid-cols-[220px_minmax(0,1fr)]">
+          <div className="p-spacing-2 shrink-0 overflow-hidden md:min-h-0">
             <SpaceTemplatesNav
               templateNavFilter={templateNavFilter}
               onTemplateNavFilter={setTemplateNavFilter}
               templates={templates}
             />
           </div>
-          <div className="p-spacing-2 pl-spacing-4 min-h-0 overflow-y-auto">
+          <div className="p-spacing-2 md:pl-spacing-4 min-h-0 overflow-y-auto">
             {loading ? (
               <div className="py-spacing-8 flex min-h-[200px] flex-col items-center justify-center">
                 <VibeyLoadingOrb text="Loading templates…" state="processing" size="md" />
@@ -126,7 +126,7 @@ export function SpaceTemplatesBrowsePanel({
                 <p className="body-3 text-muted-foreground">No templates in this category.</p>
               </div>
             ) : (
-              <div className="gap-spacing-3 grid grid-cols-2">
+              <div className="gap-spacing-3 grid grid-cols-1 sm:grid-cols-2">
                 {visibleTemplates.map((template) => (
                   <button
                     key={template.slug}

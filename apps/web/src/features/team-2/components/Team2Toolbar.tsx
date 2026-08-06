@@ -228,9 +228,9 @@ export function Team2Toolbar({
   )
 
   return (
-    <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1">
+    <div className="scrollbar-hide flex w-full min-w-0 flex-nowrap items-center justify-between gap-2 overflow-x-auto">
       {/* Left: group by · view toggle */}
-      <div className="flex min-w-0 shrink flex-wrap items-center gap-1">
+      <div className="flex min-w-0 shrink flex-nowrap items-center gap-1">
         <Team2GroupByButton
           groupBy={groupBy}
           btnRef={groupByBtnRef}
@@ -280,7 +280,7 @@ export function Team2Toolbar({
       </div>
 
       {/* Right: search · filters · new agent */}
-      <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+      <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1">
         {/* Search */}
         <div className="flex h-7 shrink-0 items-center justify-center">
           <AnimatePresence mode="popLayout" initial={false}>

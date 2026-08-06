@@ -37,8 +37,8 @@ import type {
   AutomationTemplateTriggerGroup,
 } from '@/lib/flows/automation-templates'
 import { FLOWS_UI } from '@/lib/flows/flows-ui-labels'
-import type { FlowsBrowseSection } from '../types/flows-page.types'
 import { cn } from '@/lib/utils/cn'
+import type { FlowsBrowseSection } from '../types/flows-page.types'
 import { FlowBrowseTemplatesMockup, FlowEmptyState } from './FlowEmptyMockups'
 
 const TEMPLATE_NAV_HIDE_EMPTY_SECTIONS = new Set(['Connected apps', 'Internal triggers'])
@@ -81,7 +81,7 @@ function LibraryNavButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'nav-glass-hover-purple body-3 rounded-spacing-2 py-spacing-1 gap-spacing-2 px-spacing-3 flex w-full items-center text-left transition-all',
+        'nav-glass-hover-purple body-3 rounded-spacing-2 py-spacing-1 gap-spacing-2 px-spacing-3 flex w-max shrink-0 items-center text-left transition-all md:w-full',
         selected ? 'nav-glass-selected-purple nav-glass-text-purple' : 'text-muted-foreground',
       )}
     >
@@ -211,14 +211,14 @@ export function FlowsBrowseHub({
     )
 
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-[220px_minmax(0,1fr)] overflow-hidden">
-      <aside className="border-border bg-muted/10 rounded-spacing-3 m-3 mr-0 flex min-h-0 flex-col overflow-hidden border">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:grid md:grid-cols-[220px_minmax(0,1fr)]">
+      <aside className="border-border bg-muted/10 rounded-spacing-3 h-spacing-36 m-3 mb-0 flex min-h-0 flex-row overflow-x-auto border md:mr-0 md:h-auto md:flex-col md:overflow-hidden">
         <div className="p-spacing-2 shrink-0">
           <button
             type="button"
             onClick={onCreateBlank}
             disabled={!spaceId}
-            className="badge-glass badge-glass-green body-3 rounded-spacing-2 gap-spacing-2 px-spacing-3 py-spacing-2 flex w-full items-center justify-center font-semibold transition-opacity hover:opacity-90"
+            className="badge-glass badge-glass-green body-3 rounded-spacing-2 gap-spacing-2 px-spacing-3 py-spacing-2 flex w-max items-center justify-center font-semibold transition-opacity hover:opacity-90 md:w-full"
             aria-label={FLOWS_UI.addFlow}
             title={!spaceId ? FLOWS_UI.selectSpaceForBrowse : undefined}
           >
@@ -226,8 +226,8 @@ export function FlowsBrowseHub({
             {FLOWS_UI.addFlow}
           </button>
         </div>
-        <div className="scrollbar-hide gap-spacing-4 p-spacing-2 flex min-h-0 flex-1 flex-col overflow-y-auto pt-0">
-          <div>
+        <div className="scrollbar-hide gap-spacing-2 p-spacing-2 md:gap-spacing-4 flex min-h-0 flex-1 flex-row overflow-x-auto md:flex-col md:overflow-y-auto md:pt-0">
+          <div className="flex shrink-0 items-center md:block">
             <LibraryNavButton
               selected={section === 'my-loops'}
               label={FLOWS_UI.myLoopsLabel}
@@ -242,7 +242,7 @@ export function FlowsBrowseHub({
             />
           </div>
 
-          <div className="border-border border-t" />
+          <div className="border-border hidden border-t md:block" />
 
           {TEMPLATE_NAV_SECTIONS.map((navSection, sectionIndex) => {
             const visibleItems = navSection.items.filter((item) => {
@@ -251,14 +251,16 @@ export function FlowsBrowseHub({
             })
             if (visibleItems.length === 0) return null
             return (
-              <div key={navSection.title}>
-                {sectionIndex > 0 ? <div className="border-border mb-spacing-3 border-t" /> : null}
-                <div className="px-spacing-3 pb-spacing-1 pt-spacing-1">
+              <div key={navSection.title} className="flex shrink-0 items-center md:block">
+                {sectionIndex > 0 ? (
+                  <div className="border-border mb-spacing-3 hidden border-t md:block" />
+                ) : null}
+                <div className="px-spacing-3 pb-spacing-1 pt-spacing-1 hidden md:block">
                   <span className="typo-section-label text-muted-foreground">
                     {navSection.title === 'Discover' ? 'Templates' : navSection.title}
                   </span>
                 </div>
-                <div>
+                <div className="flex items-center md:block">
                   {navSection.title === 'Discover' ? (
                     <LibraryNavButton
                       selected={section === 'my-templates'}
@@ -277,7 +279,7 @@ export function FlowsBrowseHub({
                         type="button"
                         onClick={() => selectTemplates(item.id)}
                         className={cn(
-                          'nav-glass-hover-purple body-3 rounded-spacing-2 py-spacing-1 gap-spacing-2 px-spacing-3 flex w-full items-center justify-between text-left transition-all',
+                          'nav-glass-hover-purple body-3 rounded-spacing-2 py-spacing-1 gap-spacing-2 px-spacing-3 flex w-max shrink-0 items-center justify-between text-left transition-all md:w-full',
                           selected
                             ? 'nav-glass-selected-purple nav-glass-text-purple'
                             : 'text-muted-foreground',
@@ -302,7 +304,7 @@ export function FlowsBrowseHub({
             )
           })}
         </div>
-        <div className="border-border p-spacing-2 shrink-0 border-t">
+        <div className="border-border p-spacing-2 shrink-0 border-l md:border-l-0 md:border-t">
           <LibraryNavButton
             selected={section === 'webhooks'}
             label="Webhooks"

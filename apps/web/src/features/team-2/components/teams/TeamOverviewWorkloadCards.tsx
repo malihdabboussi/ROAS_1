@@ -7,8 +7,8 @@ import type {
   TeamOverviewAgentWindow,
   TeamOverviewPayload,
 } from '../../services/team-overview.service'
-import { AgentAvatar, CardHeader, CardShell, EmptyHint, Legend } from './TeamOverviewShared'
 import { pct, ROLE } from './team-overview-utils'
+import { AgentAvatar, CardHeader, CardShell, EmptyHint, Legend } from './TeamOverviewShared'
 
 export function WorkloadByAgentCard({
   agents,
@@ -46,9 +46,9 @@ export function WorkloadByAgentCard({
             <Link
               key={r.agent_key}
               href={`/team?agent=${encodeURIComponent(r.agent_key)}`}
-              className="hover:bg-hover-subtle gap-spacing-3 rounded-spacing-2 px-spacing-2 py-spacing-1 grid grid-cols-[180px_minmax(0,1fr)_160px] items-center transition-colors"
+              className="hover:bg-hover-subtle gap-spacing-3 rounded-spacing-2 px-spacing-2 py-spacing-1 grid grid-cols-[minmax(0,1fr)_auto] items-center transition-colors md:grid-cols-[180px_minmax(0,1fr)_160px]"
             >
-              <span className="gap-spacing-2 flex min-w-0 items-center">
+              <span className="gap-spacing-2 row-start-1 flex min-w-0 items-center md:row-start-auto">
                 <AgentAvatar agent={r.agent} size="md" />
                 <span className="flex min-w-0 flex-col">
                   <span className="body-3 text-foreground truncate font-medium">
@@ -57,7 +57,7 @@ export function WorkloadByAgentCard({
                   <span className="body-4 text-muted-foreground capitalize">{r.agent.status}</span>
                 </span>
               </span>
-              <div className="flex h-2 w-full overflow-hidden rounded-full bg-[var(--color-hover-subtle)]">
+              <div className="col-span-2 row-start-2 flex h-2 w-full overflow-hidden rounded-full bg-[var(--color-hover-subtle)] md:col-span-1 md:row-start-auto">
                 {r.completed > 0 ? (
                   <span
                     className={cn('h-full', 'bar-glass-green')}
@@ -83,7 +83,7 @@ export function WorkloadByAgentCard({
                   />
                 ) : null}
               </div>
-              <div className="grid shrink-0 grid-cols-3 items-center justify-items-end">
+              <div className="row-start-1 grid shrink-0 grid-cols-3 items-center justify-items-end md:row-start-auto">
                 <Stat label="done" value={r.completed} color={ROLE.done} />
                 <Stat label="live" value={r.live_active} color={ROLE.active} />
                 <Stat
@@ -154,7 +154,11 @@ export function CoverageByCampaignCard({
   )
 }
 
-export function CoverageByChannelCard({ rows }: { rows: TeamOverviewPayload['coverage']['by_channel'] }) {
+export function CoverageByChannelCard({
+  rows,
+}: {
+  rows: TeamOverviewPayload['coverage']['by_channel']
+}) {
   const max = Math.max(1, ...rows.map((r) => r.posts))
   return (
     <CardShell className="gap-spacing-3">

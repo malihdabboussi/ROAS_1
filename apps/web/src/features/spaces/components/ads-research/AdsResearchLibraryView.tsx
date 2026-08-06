@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { getAdsResearchConfig } from '../../lib/ads-research-group-by'
 import {
   deleteSavedAdSearch,
@@ -78,6 +79,7 @@ function spaceItemToAdResult(item: SpaceItem): AdSearchResultItem | null {
 }
 
 export function AdsResearchLibraryView({ view, items, spaceId }: AdsResearchLibraryViewProps) {
+  const desktop = useMediaQuery('(min-width: 768px)')
   const refresh = useSpacesStore((s) => s.refresh)
   const adsConfig = getAdsResearchConfig(view)
   const [nav, setNav] = useState<AdsResearchNav>({
@@ -159,10 +161,10 @@ export function AdsResearchLibraryView({ view, items, spaceId }: AdsResearchLibr
       : 'none'
 
   return (
-    <div className="gap-spacing-2 pl-spacing-3 flex flex-1 overflow-hidden">
+    <div className="gap-spacing-2 pl-spacing-3 flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
       <div
-        className="pb-spacing-3 relative flex h-full min-h-0 shrink-0 flex-col overflow-hidden"
-        style={{ width: `${RESEARCH_SIDEBAR_WIDTH_PX}px` }}
+        className="pb-spacing-3 h-spacing-36 relative flex min-h-0 w-full shrink-0 flex-col overflow-hidden md:h-full md:w-auto"
+        style={desktop ? { width: `${RESEARCH_SIDEBAR_WIDTH_PX}px` } : undefined}
       >
         <div className="card-glass flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border-0">
           <AdsResearchSidebar

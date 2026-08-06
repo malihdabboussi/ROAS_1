@@ -5,7 +5,8 @@ import { RxDoubleArrowLeft, RxDoubleArrowRight } from 'react-icons/rx'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Lock, MoreHorizontal } from 'lucide-react'
 import { ChannelIcon, ChannelListActionsHost } from '@/components/channels'
-import { useChannelUnread, useChannels, type Channel } from '@/lib/channels'
+import { useChannels, useChannelUnread, type Channel } from '@/lib/channels'
+import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils/cn'
 
 /** Matches `globals.css` --spacing-60 / `w-spacing-60` (expanded rail). */
@@ -24,8 +25,7 @@ const innerPresenceTransition = {
   ease: [0.4, 0, 0.2, 1] as const,
 }
 
-const GROUP_HEADER_CLS =
-  'px-spacing-2 pb-1 pt-1 typo-section-label text-muted-foreground'
+const GROUP_HEADER_CLS = 'px-spacing-2 pb-1 pt-1 typo-section-label text-muted-foreground'
 
 export function SpaceChannelsSidebar({
   channelIds,
@@ -44,6 +44,7 @@ export function SpaceChannelsSidebar({
 }) {
   const { channels, updateChannel } = useChannels()
   const { markRead } = useChannelUnread()
+  const desktop = useMediaQuery('(min-width: 768px)')
   const liveChannelsById = useMemo(() => {
     const map = new Map(channelsById)
     for (const channel of channels) {
@@ -106,7 +107,7 @@ export function SpaceChannelsSidebar({
                   cancelRename()
                 }
               }}
-              className="body-3 min-w-0 flex-1 rounded-md border border-primary bg-background px-1.5 py-0.5 text-foreground outline-none"
+              className="body-3 border-primary bg-background text-foreground min-w-0 flex-1 rounded-md border px-1.5 py-0.5 outline-none"
             />
           </div>
         ) : (
@@ -183,20 +184,26 @@ export function SpaceChannelsSidebar({
     setRenameDraft('')
   }
 
+  const railCollapsed = desktop && collapsed
+
   return (
     <>
       <motion.aside
         initial={false}
         animate={{
-          width: collapsed ? CHANNELS_RAIL_COLLAPSED_PX : CHANNELS_RAIL_EXPANDED_PX,
+          width: desktop
+            ? railCollapsed
+              ? CHANNELS_RAIL_COLLAPSED_PX
+              : CHANNELS_RAIL_EXPANDED_PX
+            : '100%',
         }}
         transition={railWidthTransition}
-        className="border-border bg-background rounded-spacing-4 flex min-h-0 min-w-0 shrink-0 flex-col overflow-hidden border"
+        className="border-border bg-background rounded-spacing-4 h-spacing-36 flex min-h-0 min-w-0 shrink-0 flex-col overflow-hidden border md:h-auto"
         aria-label="Channels"
       >
         <div className="relative flex min-h-0 min-w-0 flex-1">
           <AnimatePresence mode="sync" initial={false}>
-            {collapsed ? (
+            {railCollapsed ? (
               <motion.div
                 key="collapsed"
                 className="gap-spacing-2 py-spacing-3 absolute inset-0 flex min-h-0 min-w-0 flex-col items-center overflow-hidden"
@@ -276,7 +283,7 @@ export function SpaceChannelsSidebar({
                     <button
                       type="button"
                       onClick={() => setCollapsed(true)}
-                      className="text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 flex shrink-0 items-center justify-center transition-colors"
+                      className="text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 hidden shrink-0 items-center justify-center transition-colors md:flex"
                       aria-label="Collapse channels sidebar"
                       title="Collapse channels sidebar"
                     >

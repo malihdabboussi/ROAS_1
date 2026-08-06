@@ -108,4 +108,30 @@ describe('FlowsBrowseHub', () => {
 
     expect(screen.getByText('Webhooks panel')).toBeTruthy()
   })
+
+  it('uses a horizontal category rail on mobile and a desktop sidebar', () => {
+    vi.mocked(fetchAutomationTemplates).mockResolvedValue([])
+
+    const { container } = render(
+      <FlowsBrowseHub
+        section="my-loops"
+        onSectionChange={vi.fn()}
+        spaceId="space-1"
+        onInstalled={vi.fn()}
+        onCreateBlank={vi.fn()}
+        myLoopsPanel={<div>My loops panel</div>}
+        myTemplatesPanel={<div>My templates panel</div>}
+        historyPanel={<div>History panel</div>}
+        webhooksPanel={<div>Webhooks panel</div>}
+      />,
+    )
+
+    expect(container.firstElementChild).toHaveClass('flex-col', 'md:grid')
+    expect(container.querySelector('aside')).toHaveClass(
+      'h-spacing-36',
+      'flex-row',
+      'overflow-x-auto',
+      'md:flex-col',
+    )
+  })
 })

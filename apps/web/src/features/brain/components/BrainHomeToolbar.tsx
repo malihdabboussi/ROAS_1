@@ -40,8 +40,8 @@ export function BrainHomeToolbar({
   onTrain: () => void
 }) {
   return (
-    <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1">
-      <div className="flex min-w-0 shrink flex-wrap items-center gap-1">
+    <div className="scrollbar-hide flex w-full min-w-0 flex-nowrap items-center justify-between gap-2 overflow-x-auto">
+      <div className="flex min-w-0 shrink flex-nowrap items-center gap-1">
         <Team2FilterDropdown
           label="Status"
           options={[...STATUS_OPTIONS]}
@@ -57,7 +57,7 @@ export function BrainHomeToolbar({
         />
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+      <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1">
         {searchOpen ? (
           <input
             autoFocus

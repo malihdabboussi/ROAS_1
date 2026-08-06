@@ -185,8 +185,8 @@ export function MediaImageWorkspace({
   openInCanvaRef.current = openInCanva
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
-      <aside className="border-border gap-spacing-2 p-spacing-2 flex w-20 shrink-0 flex-col overflow-y-auto border-r">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:flex-row">
+      <aside className="border-border gap-spacing-2 p-spacing-2 h-spacing-20 flex w-full shrink-0 flex-row overflow-x-auto border-b md:h-auto md:w-20 md:flex-col md:overflow-y-auto md:overflow-x-hidden md:border-b-0 md:border-r">
         <p className="typo-caption text-muted-foreground px-spacing-1">History</p>
         {historyLoading ? (
           <div className="py-spacing-4 flex justify-center">
@@ -201,7 +201,7 @@ export function MediaImageWorkspace({
                 type="button"
                 onClick={() => setMediaQuery(row.id)}
                 className={cn(
-                  'rounded-spacing-2 border-border relative aspect-square w-full overflow-hidden border',
+                  'rounded-spacing-2 border-border h-spacing-12 w-spacing-12 relative shrink-0 overflow-hidden border md:h-auto md:w-full md:shrink',
                   active
                     ? 'border-primary ring-primary/30 ring-2'
                     : 'hover:border-muted-foreground/50',
@@ -220,7 +220,7 @@ export function MediaImageWorkspace({
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="gap-spacing-2 px-spacing-4 py-spacing-3 z-dropdown relative flex shrink-0 flex-wrap items-center justify-end">
+        <div className="gap-spacing-2 px-spacing-4 py-spacing-3 z-dropdown relative flex shrink-0 flex-nowrap items-center justify-end overflow-x-auto">
           <button
             type="button"
             onClick={openInChat}
