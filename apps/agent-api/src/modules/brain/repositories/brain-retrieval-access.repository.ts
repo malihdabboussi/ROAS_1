@@ -22,14 +22,16 @@ export class BrainRetrievalAccessRepository {
     supabase: SupabaseClient,
     input: { userId: string; orgId?: string | null },
   ): Promise<BrainRetrievalBrainRow | null> {
-    let query = supabase
+    // Personal default User Brains are always org_id IS NULL (see personal-vs-org.md).
+    // Chat orgId must not filter them — org workspace still reads the owner's private brain.
+    void input.orgId
+    const { data, error } = (await supabase
       .from('ns_brains')
       .select(BRAIN_COLUMNS)
       .eq('owner_id', input.userId)
       .eq('is_default', true)
       .eq('scope', 'user')
-    query = input.orgId ? query.eq('org_id', input.orgId) : query.is('org_id', null)
-    const { data, error } = (await query
+      .is('org_id', null)
       .order('created_at', { ascending: true })
       .limit(1)
       .maybeSingle()) as MaybeResult<BrainRetrievalBrainRow>
@@ -41,10 +43,7 @@ export class BrainRetrievalAccessRepository {
     supabase: SupabaseClient,
     input: { agentKey: string; userId: string; orgId?: string | null },
   ): Promise<BrainRetrievalBrainRow | null> {
-    let query = supabase
-      .from('ns_brains')
-      .select(BRAIN_COLUMNS)
-      .eq('agent_id', input.agentKey)
+    let query = supabase.from('ns_brains').select(BRAIN_COLUMNS).eq('agent_id', input.agentKey)
     query = input.orgId ? query.eq('org_id', input.orgId) : query.eq('owner_id', input.userId)
     const { data, error } = (await query.maybeSingle()) as MaybeResult<BrainRetrievalBrainRow>
     if (error) throw new Error(`Failed to resolve agent brain: ${error.message}`)
