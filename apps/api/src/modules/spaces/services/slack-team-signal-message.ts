@@ -149,8 +149,28 @@ export function composeGreeting(recipientName: string | undefined, now = new Dat
   return variants[index]!
 }
 
-export function embedFindingClause(finding: string): string {
-  const cleaned = extractSignalFinding(finding)
+export function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/** Rewrite the recipient's name to second person in briefing copy ("Dylan stepped in" → "you stepped in"). */
+export function addressFindingToRecipient(finding: string, recipientName?: string): string {
+  const trimmedName = recipientName?.trim()
+  if (!trimmedName || !finding.trim()) return finding
+  const aliases = [...new Set([trimmedName, firstNameFromDisplay(trimmedName)].filter(Boolean))]
+    .filter((alias) => alias.length >= 2)
+    .sort((left, right) => right.length - left.length)
+  let out = finding
+  for (const alias of aliases) {
+    const escaped = escapeRegExp(alias)
+    out = out.replace(new RegExp(`\\b${escaped}'s\\b`, 'gi'), 'your')
+    out = out.replace(new RegExp(`\\b${escaped}\\b`, 'gi'), 'you')
+  }
+  return out
+}
+
+export function embedFindingClause(finding: string, recipientName?: string): string {
+  const cleaned = addressFindingToRecipient(extractSignalFinding(finding), recipientName)
     .replace(/\s+/g, ' ')
     .trim()
     .replace(/[.?!]+$/g, '')
@@ -158,9 +178,12 @@ export function embedFindingClause(finding: string): string {
   return cleaned.charAt(0).toLowerCase() + cleaned.slice(1)
 }
 
-export function composeNarrativeItem(item: SlackTeamSignalMessageItem): string {
+export function composeNarrativeItem(
+  item: SlackTeamSignalMessageItem,
+  options: SlackTeamSignalComposeOptions = {},
+): string {
   const channel = channelLabel(item.channelName)
-  const findingClause = embedFindingClause(item.finding)
+  const findingClause = embedFindingClause(item.finding, options.recipientName)
   const subject = item.subjectName.trim() || 'Someone'
   return `*${subject} in ${channel}*\n${signalLabel(item.kind)}: ${findingClause}.`
 }
@@ -171,7 +194,7 @@ export function composeInternalEscalation(
 ): string {
   return [
     composeGreeting(options.recipientName, options.now),
-    composeNarrativeItem(input),
+    composeNarrativeItem(input, options),
     suggestedActionFor(input.kind),
   ].join('\n\n')
 }
@@ -183,7 +206,7 @@ export function composeDigestMessage(
   if (items.length === 0) return ''
   if (items.length === 1) return composeInternalEscalation(items[0]!, options)
   const body = items
-    .map((item, index) => `${index + 1}. ${composeNarrativeItem(item)}`)
+    .map((item, index) => `${index + 1}. ${composeNarrativeItem(item, options)}`)
     .join('\n\n')
   return [
     composeGreeting(options.recipientName, options.now),
@@ -201,13 +224,13 @@ export function composeThreadFollowUp(
   if (items.length === 1) {
     return [
       `One more for you, ${first} 👋 This is still open:`,
-      composeNarrativeItem(items[0]!),
+      composeNarrativeItem(items[0]!, options),
       suggestedActionFor(items[0]!.kind),
     ].join('\n\n')
   }
   return [
     `A couple more for you, ${first}:`,
-    items.map((item, index) => `${index + 1}. ${composeNarrativeItem(item)}`).join('\n\n'),
+    items.map((item, index) => `${index + 1}. ${composeNarrativeItem(item, options)}`).join('\n\n'),
     'Want me to draft replies or next steps on any of these?',
   ].join('\n\n')
 }
