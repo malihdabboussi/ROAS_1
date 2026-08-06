@@ -56,6 +56,7 @@ describe('analyzeSlackTeamMessages', () => {
     expect(prompt).toContain('decision')
     expect(prompt).toContain('strategic_opportunity')
     expect(prompt).toContain('Do not force an unanswered question into the briefing')
+    expect(prompt).toContain('Already-handled items are not briefing-worthy')
     expect(prompt).toContain('connect related messages')
     expect(prompt).toContain('business impact')
     expect(prompt).toContain('Dylan (workspace owner)')

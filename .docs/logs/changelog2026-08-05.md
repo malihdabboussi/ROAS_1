@@ -70,3 +70,10 @@ Why: Spencer-style dissatisfaction still surfaced at EOD even when the team had 
 Impact: Next digest analysis should emit fewer stale risk/question signals; thread reply/✅ resolution still applies at send time.
 Files: `apps/api/src/modules/spaces/services/slack-team-loop-analysis.ts`
 
+## [2026-08-05 20:19] - [ARCH]
+
+What: Production-deployed Slack EOD relevance briefing + already-handled skip to `api.roas.io` (`dpl_CDt7ASmqjEjyTjM3jjTbabY387Bt`).
+Why: Briefing lived only in stash; Wednesday Pixel digests still ran the old alert queue.
+Impact: Next Active Team Intelligence EOD/digest runs use the new briefing path.
+Files: deploy only (`roas-api` → `api.roas.io`)
+
