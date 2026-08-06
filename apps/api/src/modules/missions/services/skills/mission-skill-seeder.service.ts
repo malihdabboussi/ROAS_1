@@ -249,7 +249,10 @@ Before saving any skill:
     },
   ]
 
-  private static readonly UNIVERSAL_LIBRARY_SKILL_KEYS = ['dylans-super-voice']
+  private static readonly UNIVERSAL_LIBRARY_SKILL_KEYS = [
+    'dylans-super-voice',
+    'instagram-carousel',
+  ]
 
   async cloneSelectedSkills(
     supabase: SupabaseClient,

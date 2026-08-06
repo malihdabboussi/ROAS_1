@@ -1,5 +1,6 @@
 'use client'
 
+import { Tooltip } from '@/components/ui/tooltip'
 import type { SlashItem, SlashItemSection } from './slash-command-types'
 
 const TAB_ORDER: SlashItemSection[] = ['actions', 'skills']
@@ -61,9 +62,8 @@ export function SlashCommandTabbedMenu({
           <div className="py-spacing-1">
             {items.map((item, idx) => {
               const Icon = item.icon
-              return (
+              const row = (
                 <button
-                  key={item.id}
                   type="button"
                   onMouseDown={(e) => {
                     e.preventDefault()
@@ -88,6 +88,25 @@ export function SlashCommandTabbedMenu({
                     ) : null}
                   </span>
                 </button>
+              )
+              if (!item.description?.trim()) {
+                return (
+                  <div key={item.id} className="w-full">
+                    {row}
+                  </div>
+                )
+              }
+              return (
+                <Tooltip
+                  key={item.id}
+                  label={item.description}
+                  side="right"
+                  wide
+                  delayMs={180}
+                  triggerClassName="block w-full"
+                >
+                  {row}
+                </Tooltip>
               )
             })}
           </div>

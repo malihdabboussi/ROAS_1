@@ -2812,7 +2812,7 @@ html.dark .checkbox-glass-green:indeterminate {
 }
 .tooltip-portal-bubble-wide,
 .tooltip.tooltip-wide::after {
-  max-width: 320px;
+  max-width: min(28rem, 92vw);
   white-space: normal;
   text-align: left;
   word-break: break-word;

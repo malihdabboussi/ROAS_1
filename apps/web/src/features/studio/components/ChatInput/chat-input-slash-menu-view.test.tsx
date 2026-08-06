@@ -110,6 +110,40 @@ describe('SlashCommandMenuView', () => {
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'skill-1' }))
   })
 
+  it('keeps the full skill description available for hover preview', () => {
+    const longDescription =
+      'Writes complete Instagram carousels built as a chain of open loops, from a provided concept.'
+    const skill = slashItem({
+      id: 'skill-carousel',
+      key: 'instagram-carousel',
+      description: longDescription,
+      type: 'skill',
+    })
+    render(
+      <SlashCommandMenuView
+        layout={layout({
+          skillItems: [skill],
+          skillVisible: [skill],
+          workflowItems: [],
+          workflowVisible: [],
+          visibleFlat: [skill],
+          showWorkflowMore: false,
+          workflowMoreCount: 0,
+        })}
+        slashItemsCount={1}
+        slashHighlight={0}
+        onSelect={vi.fn()}
+        onHighlight={vi.fn()}
+        onShowMorePlaybooks={vi.fn()}
+        onShowMoreSkills={vi.fn()}
+        onShowMoreWorkflows={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('/instagram-carousel')).toBeTruthy()
+    expect(screen.getByText(longDescription).className).toContain('line-clamp-1')
+  })
+
   it('delegates show-more actions by section', () => {
     const onShowMoreWorkflows = vi.fn()
     render(

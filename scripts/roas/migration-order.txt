@@ -764,3 +764,4 @@
 20260729174500_seed_delegator_system_agent.sql
 20260729180000_repair_delegator_org_seed_and_defs.sql
 20260729203000_durable_meeting_call_kinds.sql
+20260806010000_universal_instagram_carousel_skill.sql

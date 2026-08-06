@@ -52,7 +52,7 @@ function createService(overrides: Record<string, unknown> = {}) {
 }
 
 describe('MissionSkillSeederService', () => {
-  it('seeds Dylan Super Voice as a universal default from the skill library', async () => {
+  it('seeds Dylan Super Voice and Instagram Carousel as universal defaults from the skill library', async () => {
     const skillSeederRepository = {
       listLibrarySkills: vi.fn().mockResolvedValue({
         rows: [
@@ -61,6 +61,12 @@ describe('MissionSkillSeederService', () => {
             name: "Dylan's Super Voice",
             description: 'Master voice for human-facing writing',
             markdown_content: "# Dylan's Super Voice",
+          },
+          {
+            skill_key: 'instagram-carousel',
+            name: 'Instagram Carousel',
+            description: 'Writes complete Instagram carousels',
+            markdown_content: '# Instagram Carousel',
           },
         ],
       }),
@@ -73,6 +79,7 @@ describe('MissionSkillSeederService', () => {
 
     expect(skillSeederRepository.listLibrarySkills).toHaveBeenCalledWith(supabase, [
       'dylans-super-voice',
+      'instagram-carousel',
     ])
     expect(missionsRepository.internalUpsertAgentSkill).toHaveBeenCalledWith(
       supabase,
@@ -83,6 +90,17 @@ describe('MissionSkillSeederService', () => {
       "Dylan's Super Voice",
       'Master voice for human-facing writing',
       "# Dylan's Super Voice",
+      'default',
+    )
+    expect(missionsRepository.internalUpsertAgentSkill).toHaveBeenCalledWith(
+      supabase,
+      'user-1',
+      'org-1',
+      'agent-1',
+      'instagram-carousel',
+      'Instagram Carousel',
+      'Writes complete Instagram carousels',
+      '# Instagram Carousel',
       'default',
     )
   })

@@ -1,3 +1,4 @@
+import { Tooltip } from '@/components/ui/tooltip'
 import type { SlashItem } from './chat-input-slash-menu'
 
 export interface SlashMenuLayout {
@@ -146,9 +147,8 @@ function SlashCommandSection({
       </span>
       {items.map((item) => {
         const idx = flatIndexById.get(item.id) ?? 0
-        return (
+        const row = (
           <button
-            key={item.id}
             type="button"
             onMouseDown={(e) => {
               e.preventDefault()
@@ -162,6 +162,25 @@ function SlashCommandSection({
             <span className="body-3 text-foreground font-medium">/{item.key}</span>
             <span className="body-4 text-muted-foreground line-clamp-1">{item.description}</span>
           </button>
+        )
+        if (!item.description.trim()) {
+          return (
+            <div key={item.id} className="w-full">
+              {row}
+            </div>
+          )
+        }
+        return (
+          <Tooltip
+            key={item.id}
+            label={item.description}
+            side="right"
+            wide
+            delayMs={180}
+            triggerClassName="block w-full"
+          >
+            {row}
+          </Tooltip>
         )
       })}
       {showMore && (
