@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: August 4, 2026 (historical Slack evidence retrieval and clean signal digests)
+Last Modified: August 4, 2026 (context-aware Slack team briefings)
 
 ## Data Flow
 
@@ -56,6 +56,8 @@ Last Modified: August 4, 2026 (historical Slack evidence retrieval and clean sig
 50. Active Slack Team Intelligence delivery batches due cooling signals per recipient into one curated DM (“here are N things…”) with suggested actions. Follow-ups within 12 hours post as thread replies on that digest root instead of new top-level chats. External findings no longer append the “Pixel will not message the external person” disclaimer; framing is coworker-style (“still needs eyes… Want a reply drafted?”).
 51. Native Slack message search uses the installing user's full Slack search token when available. Bot-token fallback is evidence-aware: an explicitly named channel is paginated across a 120-day window, relevant thread replies are expanded, partial keyword matches are ranked, and the response declares complete or partial coverage. Pixel must broaden or narrow a partial zero-result search before claiming the source is unavailable.
 52. Team Intelligence stores the analyzer's clean finding separately from its human-friendly Shadow preview. Digest and thread-follow-up delivery compose from that clean finding, preventing greetings, narrative wrappers, and suggested actions from being nested or repeated.
+53. Pixel's Slack voice uses one shared teammate-style contract for live agent replies and deterministic Team Intelligence digests. Replies lead naturally, use contractions, reserve emoji and bold formatting for useful moments, avoid repetitive em-dash phrasing, and ask for a next step only when it helps. Existing agent workspaces receive the refreshed Slack guidance through runtime reconciliation.
+54. Team Intelligence ranks a maximum of five meaningful signals per observation window using business impact, urgency, novelty, confidence, and actionability. Its briefing can surface team wins, material progress, decisions, strategic opportunities, client risks, useful workflows, or a genuinely important unanswered question. The analyzer receives the workspace owner's identity as the briefing audience; a deterministic post-analysis selector deduplicates source evidence and permits at most one unanswered question. Person Brain memories remain outside that five-item human briefing limit.
 
 ## Code Examples
 
@@ -124,8 +126,9 @@ Reconnect result:
 
 ## Decision Log
 
-- 2026-08-04: Replaced Pixel's 40-message bot-token Slack fallback with bounded historical named-channel retrieval, thread expansion, relevance ranking, and explicit coverage. Team Intelligence delivery now composes from a stored clean finding so compiled digests cannot recursively repeat their framing or CTA.
+- 2026-08-04: Replaced Pixel's 40-message bot-token Slack fallback with bounded historical named-channel retrieval, thread expansion, relevance ranking, and explicit coverage. Team Intelligence stores a clean finding for new actions and uses the original source message for queued legacy questions/risks, so compiled digests cannot recursively repeat their framing or CTA.
 - Pixel Team Intelligence Active delivery models Viktor: one curated DM digest per recipient with suggested actions, then thread follow-ups for 12 hours. Per-signal top-level posts and the “Pixel will not message the external person” disclaimer are removed from outbound copy.
+- 2026-08-04: Replaced unanswered-message-first Team Intelligence analysis with a relevance-ranked briefing contract. Pixel can now recognize wins, important updates, decisions, and strategic opportunities, route those executive signals to the workspace owner, and deliver them without incorrectly treating later thread replies as resolution.
 - Portal mode suppresses every workspace-menu dock host while preserving the top-bar Workspace / Portal switch. Portal-owned navigation keeps the top-right corner; ROAS-owned refresh and pop-out controls live at the bottom-right.
 - Meeting detail’s primary CTA is conversational **Prepare with Pixel** (prep beforehand vs live guide), not a silent background prep job. Background `precall-prep/event` still accepts a client event snapshot so Team/non-today calendar ids remain durable when a prep doc is created.
 - Team Agenda calendar inclusion is Directory membership minus `rejected`, not person-link `confirmed`. Sync Directory confirms Directory rows by default; `match_status` remains for Slack/portal linking and reject opt-out. Agenda responses expose `team_coverage` so admins can see pulled users and silent DWD failures without guessing.

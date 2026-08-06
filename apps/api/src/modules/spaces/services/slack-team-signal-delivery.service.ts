@@ -17,6 +17,10 @@ export const SLACK_SIGNAL_COOLING_MINUTES = {
   unanswered_question: 30,
   client_risk: 15,
   workflow_discovery: 60,
+  team_win: 60,
+  important_update: 60,
+  decision: 60,
+  strategic_opportunity: 60,
 } as const
 
 export type SlackSignalCoolingKind = keyof typeof SLACK_SIGNAL_COOLING_MINUTES
@@ -81,8 +85,22 @@ export class SlackTeamSignalDeliveryService {
 
     for (const candidate of actions) {
       if (!this.isReady(candidate, now)) continue
-      const refreshed = await this.resolution.refresh(input.supabase, input.orgId, candidate.id)
-      rechecked += 1
+      const kind = String(candidate.metadata.signal_kind ?? '')
+      const needsResolutionCheck = kind === 'unanswered_question' || kind === 'client_risk'
+      const refreshed = needsResolutionCheck
+        ? await this.resolution.refresh(input.supabase, input.orgId, candidate.id)
+        : {
+            action: candidate,
+            resolution: {
+              resolved: false,
+              source_available: true,
+              reason: 'Contextual briefing signals do not expire when a thread receives a reply.',
+              checked_at: now.toISOString(),
+              reply_count: 0,
+              reaction_count: 0,
+            },
+          }
+      if (needsResolutionCheck) rechecked += 1
       if (refreshed.resolution.resolved) {
         await this.loops.updateActionMetadata(input.supabase, {
           actionId: candidate.id,

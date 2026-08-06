@@ -9,7 +9,15 @@ export type SlackTeamEvidenceMessage = {
   text: string
 }
 
-type SlackSignalKind = 'brain_memory' | 'workflow_discovery' | 'unanswered_question' | 'client_risk'
+type SlackSignalKind =
+  | 'brain_memory'
+  | 'workflow_discovery'
+  | 'unanswered_question'
+  | 'client_risk'
+  | 'team_win'
+  | 'important_update'
+  | 'decision'
+  | 'strategic_opportunity'
 
 type SlackLoopKind =
   | 'brain_compounding'
