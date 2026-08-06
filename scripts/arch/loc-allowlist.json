@@ -447,7 +447,7 @@
     "apps/agent-api/src/modules/task-agent/services/task-agent.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 630
+      "lines": 623
     },
     "apps/web/src/features/settings/components/settings-content/ConnectedIntegrationCard.tsx": {
       "kind": "web-component",

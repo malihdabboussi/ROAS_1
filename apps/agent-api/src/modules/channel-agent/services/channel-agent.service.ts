@@ -1,12 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common'
 import { randomUUID } from 'crypto'
+import { Injectable, Logger } from '@nestjs/common'
 import {
   buildAgentAccessSummary,
   buildDisabledNativeActions,
   buildEnabledToolkits,
 } from '../../agent-policy/agent-access-summary'
-import { AgentPolicyService } from '../../agent-policy/services/agent-policy.service'
 import type { ResolvedAgentPolicy } from '../../agent-policy/agent-policy.types'
+import { AgentPolicyService } from '../../agent-policy/services/agent-policy.service'
 import { AgentRuntimeReadinessService } from '../../agent-sync/services/agent-runtime-readiness.service'
 import {
   CAMPAIGN_CONTEXT_POLICY_ACTIONS,
@@ -232,7 +232,12 @@ export class ChannelAgentService {
       try {
         resolvedPolicy = await this.agentPolicy.resolveAgentPolicy(runtime.agentKey, policyScope)
         hasCampaignAccess = resolvedPolicy.effective.has('campaign_context:*')
-        userBrainAccess = resolvedPolicy.effective.has('brain_access:personal')
+        userBrainAccess = await this.agentPolicy.canAgentUseCapability(
+          runtime.agentKey,
+          'brain_access',
+          'personal',
+          policyScope,
+        )
       } catch (err) {
         this.logger.warn(`Channel agent policy resolve failed: ${err}`)
       }
@@ -537,10 +542,9 @@ export class ChannelAgentService {
           llmInput: messagesInputForTrace,
           llmOutput: result.llmOutput,
           terminalStatus: 'done',
-          userVisibleOutcome: [
-            ...recoveryEvents,
-            ...(result.recoveryEvents ?? []),
-          ].some((event) => event.status === 'recovered')
+          userVisibleOutcome: [...recoveryEvents, ...(result.recoveryEvents ?? [])].some(
+            (event) => event.status === 'recovered',
+          )
             ? 'recovered_output'
             : 'output_visible',
           recoveryStatus: [...recoveryEvents, ...(result.recoveryEvents ?? [])].some(

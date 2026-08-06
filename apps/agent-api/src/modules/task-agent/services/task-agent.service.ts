@@ -21,6 +21,7 @@ import {
 } from '../../chat/services/openclaw-proxy.service'
 import { TracingService } from '../../chat/services/tracing.service'
 import { AgentRuntimeService } from '../../shared/services/agent-runtime.service'
+import { isRetryableAgentFailure } from '../is-retryable-agent-failure'
 import { TaskAgentRepository } from '../repositories/task-agent.repository'
 import {
   openClawInputToTrace,
@@ -179,7 +180,12 @@ export class TaskAgentService {
       try {
         resolvedPolicy = await this.agentPolicy.resolveAgentPolicy(runtime.agentKey, policyScope)
         hasCampaignAccess = resolvedPolicy.effective.has('campaign_context:*')
-        userBrainAccess = resolvedPolicy.effective.has('brain_access:personal')
+        userBrainAccess = await this.agentPolicy.canAgentUseCapability(
+          runtime.agentKey,
+          'brain_access',
+          'personal',
+          policyScope,
+        )
       } catch (err) {
         this.logger.warn(`Task agent policy resolve failed: ${err}`)
       }
@@ -433,7 +439,7 @@ export class TaskAgentService {
         strictDisabledNativeActions: collaborationDisabled,
       })
 
-      if (result.failed && this.isRetryableFailure(result.failed) && !result.content.trim()) {
+      if (result.failed && isRetryableAgentFailure(result.failed) && !result.content.trim()) {
         const retryReason = result.failed
         this.logger.warn(
           `Task agent retrying: agent=${agent_key} item=${item_id} reason=${result.failed}`,
@@ -615,22 +621,5 @@ export class TaskAgentService {
       unregisterCancel()
       clearTimeout(timeoutHandle)
     }
-  }
-
-  private isRetryableFailure(failed: string | undefined): boolean {
-    if (!failed) return false
-    const msg = failed.toLowerCase()
-    return (
-      msg.includes('stream_stalled') ||
-      msg.includes('overloaded') ||
-      msg.includes('rate limit') ||
-      msg.includes('too many requests') ||
-      msg.includes('service unavailable') ||
-      msg.includes('session store lock') ||
-      msg.includes('timeout waiting for session') ||
-      msg.includes('gateway connection') ||
-      msg.includes('fetch failed') ||
-      msg.includes('econnrefused')
-    )
   }
 }

@@ -313,7 +313,13 @@ export class ChatPrewarmContextService {
       try {
         resolvedPolicy = await this.agentPolicy.resolveAgentPolicy(resolvedAgentId, policyScope)
         hasCampaignAccess = resolvedPolicy.effective.has('campaign_context:*')
-        userBrainAccess = resolvedPolicy.effective.has('brain_access:personal')
+        // Role defaults (e.g. vibey read_brain_personal), not only team effective grants.
+        userBrainAccess = await this.agentPolicy.canAgentUseCapability(
+          resolvedAgentId,
+          'brain_access',
+          'personal',
+          policyScope,
+        )
       } catch (err) {
         logger.warn(`policy resolve failed for ${resolvedAgentId}: ${err}`)
       }

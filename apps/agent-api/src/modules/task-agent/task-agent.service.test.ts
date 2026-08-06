@@ -68,6 +68,7 @@ describe('TaskAgentService', () => {
           grants: [],
           overrides: { allow_extra: [], deny: [] },
         })),
+        canAgentUseCapability: vi.fn(async () => false),
       } as any,
     )
 
