@@ -644,23 +644,111 @@ describe('BrainRetrievalService', () => {
     }
   })
 
-  it('resolves org-scoped default user brain when orgId is present', async () => {
+  it('searches personal default user brain in org chat without brain_id', async () => {
+    const personalBrain = {
+      id: 'brain-personal',
+      owner_id: 'user-1',
+      org_id: null,
+      scope: 'user',
+      agent_id: null,
+      created_by: 'user-1',
+    }
+    let brainsQuery: ReturnType<typeof makeQuery> | undefined
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === 'ns_brains') {
+          brainsQuery = makeQuery(table, [], personalBrain)
+          return brainsQuery
+        }
+        if (table === 'brain_shares') return makeQuery(table, [], null)
+        if (table === 'agent_team_members') return makeQuery(table, [])
+        return makeQuery(table, [])
+      }),
+      rpc: vi.fn(async (name: string) => {
+        if (name === 'search_ns_memories_lexical') {
+          return {
+            data: [
+              {
+                id: 'mem-webinar',
+                brain_id: 'brain-personal',
+                content: 'Founder webinars convert when proof leads the narrative.',
+                memory_type: 'framework',
+                significance: 0.9,
+                confidence: 0.9,
+                metadata: {},
+                lexical_rank: 1,
+              },
+            ],
+            error: null,
+          }
+        }
+        return { data: [], error: null }
+      }),
+    }
+    const userClient = {
+      rpc: vi.fn(async () => ({ data: true, error: null })),
+    }
+    const service = new BrainRetrievalService({ getEmbedding: vi.fn(async () => null) } as any)
+
+    const result = await service.search({
+      supabase: supabase as any,
+      userClient: userClient as any,
+      family: 'user',
+      query: 'webinar strategy for my offer',
+      userId: 'user-1',
+      orgId: 'org-1',
+      requiredAccess: 'query',
+      limit: 10,
+    })
+
+    expect(brainsQuery?.is).toHaveBeenCalledWith('org_id', null)
+    expect(brainsQuery?.eq).not.toHaveBeenCalledWith('org_id', 'org-1')
+    expect(userClient.rpc).toHaveBeenCalledWith('can_access_brain', {
+      p_brain_id: 'brain-personal',
+      p_min_level: 'query',
+    })
+    expect(result.results).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'mem-webinar',
+          brain_id: 'brain-personal',
+          kind: 'memory',
+        }),
+      ]),
+    )
+  })
+
+  it('resolves personal default user brain when orgId is present', async () => {
     const eq = vi.fn(function (this: unknown) {
+      return chain
+    })
+    const is = vi.fn(function (this: unknown) {
       return chain
     })
     const chain: Record<string, unknown> = {}
     chain.select = vi.fn(() => chain)
     chain.eq = eq
-    chain.is = vi.fn(() => chain)
+    chain.is = is
     chain.order = vi.fn(() => chain)
     chain.limit = vi.fn(() => chain)
-    chain.maybeSingle = vi.fn(async () => ({ data: { id: 'brain-org-user' }, error: null }))
+    chain.maybeSingle = vi.fn(async () => ({
+      data: {
+        id: 'brain-personal-user',
+        owner_id: 'user-1',
+        org_id: null,
+        scope: 'user',
+        agent_id: null,
+        created_by: null,
+      },
+      error: null,
+    }))
     const supabase = { from: vi.fn(() => chain) }
     const service = new BrainRetrievalService({ getEmbedding: vi.fn() } as any)
 
     const brainId = await service.resolveUserBrainId(supabase as any, 'user-1', 'org-1')
 
-    expect(brainId).toBe('brain-org-user')
-    expect(eq).toHaveBeenCalledWith('org_id', 'org-1')
+    expect(brainId).toBe('brain-personal-user')
+    expect(is).toHaveBeenCalledWith('org_id', null)
+    expect(eq).not.toHaveBeenCalledWith('org_id', 'org-1')
   })
 })

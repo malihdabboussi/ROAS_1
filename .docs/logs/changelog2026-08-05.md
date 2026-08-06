@@ -84,3 +84,10 @@ Why: EOD copy said "Dylan stepped in" when Dylan was the actor reading the DM.
 Impact: Digests/thread follow-ups rewrite the recipient's display/first name to you/your; model is also instructed to write that way. Manual-run footer was never part of production delivery.
 Files: `slack-team-signal-message.ts`, `slack-team-loop-analysis.ts`, focused tests
 
+## [2026-08-05 20:33] - [FIX]
+
+What: Org-chat personal User Brain resolve now always uses `org_id IS NULL` (Dylan stays private; company/campaign scoping unchanged).
+Why: Chat retrieval filtered default user brains by current org, so Pixel/Atlas got company context but missed the personal brain in org workspace.
+Impact: With `brain_access:personal`, org-chat preload and `search_user_brain` (no brain_id) find the owner's personal default brain. Requires `agent-api` deploy.
+Files: `brain-retrieval-access.repository.ts`, `brain-context.repository.ts`, `brain-retrieval.service.test.ts`
+

@@ -80,14 +80,17 @@ export class BrainContextRepository {
     supabase: SupabaseClient,
     input: { userId: string; orgId?: string | null },
   ): Promise<MaybeResult<{ id: string }>> {
-    let query = supabase
+    // Personal default User Brains are always org_id IS NULL (see personal-vs-org.md).
+    // Chat orgId must not filter them — org workspace still reads the owner's private brain.
+    void input.orgId
+    return (await supabase
       .from('ns_brains')
       .select('id')
       .eq('owner_id', input.userId)
       .eq('is_default', true)
       .eq('scope', 'user')
-    query = input.orgId ? query.eq('org_id', input.orgId) : query.is('org_id', null)
-    return (await query.maybeSingle()) as MaybeResult<{ id: string }>
+      .is('org_id', null)
+      .maybeSingle()) as MaybeResult<{ id: string }>
   }
 
   async findBrainCortexFlag(
