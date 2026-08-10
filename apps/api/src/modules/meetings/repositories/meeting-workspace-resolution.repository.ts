@@ -314,7 +314,7 @@ export class MeetingWorkspaceResolutionRepository {
     })
     if (byCalendar) return byCalendar
 
-    const candidates = await this.listScheduledMeetingCandidates(supabase, {
+    const candidates = await this.listMeetingCandidates(supabase, {
       spaceId: input.spaceId,
       userId: input.userId,
       anchorAt: input.start,
