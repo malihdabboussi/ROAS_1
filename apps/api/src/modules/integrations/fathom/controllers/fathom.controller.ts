@@ -19,9 +19,14 @@ import {
   OrgContextGuard,
   OrgRoleGuard,
   Supabase,
+  ZodValidationPipe,
   type RequestScope,
 } from '@vibey/api-shared'
-import { StartFathomConnectSchema } from '../dto/fathom.dto'
+import {
+  StartFathomConnectSchema,
+  UpdateFathomAgendaExclusionSchema,
+  type UpdateFathomAgendaExclusionDto,
+} from '../dto/fathom.dto'
 import { FathomOAuthService, type FathomAutoIngestSettings } from '../services/fathom-oauth.service'
 
 @Controller('integrations/fathom')
@@ -54,6 +59,28 @@ export class FathomController {
       billingOrgId: body.billingOrgId ?? null,
     })
     return { success: true, ...settings }
+  }
+
+  @Get('settings/agenda-exclusion')
+  @UseGuards(AuthGuard, OrgContextGuard, OrgRoleGuard)
+  async listAgendaExclusions(
+    @Supabase() supabase: SupabaseClient,
+    @CurrentUser() user: { id: string },
+  ) {
+    const exclusions = await this.oauth.listAgendaExclusions(supabase, user.id)
+    return { success: true, exclusions }
+  }
+
+  @Post('settings/agenda-exclusion')
+  @UseGuards(AuthGuard, OrgContextGuard, OrgRoleGuard)
+  async updateAgendaExclusion(
+    @Supabase() supabase: SupabaseClient,
+    @CurrentUser() user: { id: string },
+    @Body(new ZodValidationPipe(UpdateFathomAgendaExclusionSchema))
+    body: UpdateFathomAgendaExclusionDto,
+  ) {
+    await this.oauth.updateAgendaExclusion(supabase, user.id, body)
+    return { success: true }
   }
 
   @Post('ensure-meetings-space')

@@ -125,6 +125,16 @@ export function resolveScheduledMeeting(
   })
 }
 
+export function createInstantMeeting(
+  spaceId: string,
+  input: { title: string; attendeeEmails: string[] },
+): Promise<ResolvedMeetingWorkspace> {
+  return backendPost(`/api/spaces/${spaceId}/meetings/instant`, {
+    title: input.title,
+    attendee_emails: input.attendeeEmails,
+  })
+}
+
 export function updateMeetingActionStatus(
   spaceId: string,
   meetingItemId: string,

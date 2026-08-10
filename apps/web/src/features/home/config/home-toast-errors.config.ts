@@ -2,11 +2,18 @@ export const HOME_TOAST_ERRORS = {
   MISSION_NOT_FOUND: { userMessage: 'Mission not found.' },
   SEND_MESSAGE_FAILED: { userMessage: 'Could not send message — try again.' },
   CALENDAR_LOAD_FAILED: { userMessage: 'Failed to load calendar — try again.' },
+  AGENDA_MINIMIZE_FAILED: { userMessage: 'Could not hide that meeting — try again.' },
+  AGENDA_RESTORE_FAILED: { userMessage: 'Could not restore that meeting — try again.' },
+  AGENDA_SETTINGS_LOAD_FAILED: {
+    userMessage: 'Could not sync hidden meetings — try refreshing.',
+  },
   DUPLICATE_CONVERSATION_FAILED: { userMessage: 'Could not duplicate conversation.' },
   PREP_START_FAILED: { userMessage: 'Could not start pre-call prep.' },
   MEETING_WORKSPACE_LOAD_FAILED: { userMessage: 'Could not load the meeting workspace.' },
   MEETING_START_FAILED: { userMessage: 'Could not start the meeting workspace.' },
   MEETING_END_FAILED: { userMessage: 'Could not end the call.' },
+  INSTANT_MEETING_CREATE_FAILED: { userMessage: 'Could not start the impromptu call.' },
+  MEETING_NOTE_SAVE_FAILED: { userMessage: 'Could not save that meeting note.' },
   MEETING_ACTION_UPDATE_FAILED: { userMessage: 'Could not update that action item.' },
   MEETING_ACTION_CREATE_FAILED: { userMessage: 'Could not add that action item.' },
   MEETING_RECORDINGS_LOAD_FAILED: {

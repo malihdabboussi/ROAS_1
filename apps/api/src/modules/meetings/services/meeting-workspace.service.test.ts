@@ -204,6 +204,69 @@ describe('MeetingWorkspaceService', () => {
     )
   })
 
+  it('creates a live impromptu workspace and its persistent conversation', async () => {
+    const repository = {
+      upsertWorkspace: vi.fn().mockResolvedValue({
+        meeting_item_id: 'meeting-instant',
+        phase: 'live',
+        conversation_id: null,
+      }),
+      upsertParticipantContextLinks: vi.fn().mockResolvedValue(undefined),
+    }
+    const resolutionRepository = {
+      findSpaceOrgId: vi.fn().mockResolvedValue(null),
+      createInstantMeeting: vi.fn().mockResolvedValue({
+        id: 'meeting-instant',
+        title: 'Client strategy call',
+      }),
+    }
+    const stateRepository = {
+      updateWorkspace: vi.fn().mockResolvedValue({
+        meeting_item_id: 'meeting-instant',
+        phase: 'live',
+        conversation_id: 'conversation-instant',
+      }),
+    }
+    const conversations = {
+      createConversation: vi.fn().mockResolvedValue({ id: 'conversation-instant' }),
+    }
+    const service = new MeetingWorkspaceService(
+      repository as never,
+      resolutionRepository as never,
+      {} as never,
+      stateRepository as never,
+      conversations as never,
+      { create: vi.fn() } as never,
+    )
+
+    const result = await service.createInstantMeeting({} as never, {
+      spaceId: 'space-1',
+      userId: 'user-1',
+      orgId: null,
+      title: 'Client strategy call',
+      attendeeEmails: ['client@example.com'],
+    })
+
+    expect(result).toEqual({
+      space_id: 'space-1',
+      meeting_item_id: 'meeting-instant',
+      conversation_id: 'conversation-instant',
+    })
+    expect(repository.upsertWorkspace).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        meetingItemId: 'meeting-instant',
+        calendarEventId: null,
+        phase: 'live',
+        liveStartedAt: expect.any(String),
+      }),
+    )
+    expect(repository.upsertParticipantContextLinks).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ participantEmails: ['client@example.com'] }),
+    )
+  })
+
   it('reuses the winning scheduled workspace when two opens race', async () => {
     const repository = {
       upsertWorkspace: vi.fn().mockRejectedValue(new Error('calendar event conflict')),

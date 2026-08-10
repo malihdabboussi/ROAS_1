@@ -58,14 +58,11 @@ export class MeetingSourceIngestionService {
       const exactMeetingItemId = text(exactScheduled?.meeting_item_id)
       if (exactMeetingItemId) return exactMeetingItemId
     }
-    const scheduledCandidates = await this.resolutionRepository.listScheduledMeetingCandidates(
-      supabase,
-      {
-        spaceId: input.spaceId,
-        userId: input.userId,
-        anchorAt: source.scheduledStart ?? source.recordingStart,
-      },
-    )
+    const scheduledCandidates = await this.resolutionRepository.listMeetingCandidates(supabase, {
+      spaceId: input.spaceId,
+      userId: input.userId,
+      anchorAt: source.scheduledStart ?? source.recordingStart,
+    })
     const scheduledMatches = scheduledCandidates.filter((row) => {
       const result = reconcileMeetingRecordings(scheduledRowToCandidate(row), [
         sourceToCandidate(source),

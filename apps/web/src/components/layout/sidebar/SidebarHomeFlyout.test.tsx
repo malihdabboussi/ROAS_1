@@ -1,27 +1,8 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
 import type { Space } from '@/features/spaces/types'
 import type { SidebarCampaignRow } from './sidebar-types'
 import { SidebarHomeFlyout } from './SidebarHomeFlyout'
-
-const mocks = vi.hoisted(() => ({
-  push: vi.fn(),
-  ensureDelegationDesk: vi.fn(),
-}))
-
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mocks.push }),
-}))
-
-vi.mock('@/features/spaces/services/delegation-desk.service', () => ({
-  ensureDelegationDesk: mocks.ensureDelegationDesk,
-  findDelegationDesk: (spaces: Space[]) =>
-    spaces.find((space) =>
-      Boolean(
-        (space.schema as typeof space.schema & { delegation_desk?: boolean }).delegation_desk,
-      ),
-    ) ?? null,
-}))
 
 const favoriteCampaign: SidebarCampaignRow = {
   id: 'campaign-1',
@@ -44,9 +25,6 @@ const favoriteSpace = {
 
 describe('SidebarHomeFlyout', () => {
   afterEach(cleanup)
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
 
   it('renders every Home destination and marks the nested route active', () => {
     render(<SidebarHomeFlyout pathname="/home/meetings" />)
@@ -86,23 +64,11 @@ describe('SidebarHomeFlyout', () => {
     )
   })
 
-  it('always exposes the complete Delegation Desk and opens the existing desk', async () => {
-    const desk = {
-      id: 'desk-1',
-      title: 'Delegation Desk',
-      schema: { delegation_desk: true },
-    } as unknown as Space
-    mocks.ensureDelegationDesk.mockResolvedValue({ desk, createdDesk: false })
+  it('opens Delegation Desk as its own Home destination', () => {
+    render(<SidebarHomeFlyout pathname="/home/delegation-desk" />)
 
-    render(<SidebarHomeFlyout pathname="/home/my-tasks" spaces={[desk]} />)
-
-    const delegationDeskButton = screen.getByRole('button', { name: 'Delegation Desk' })
-    expect(delegationDeskButton).toHaveClass('text-left')
-    fireEvent.click(delegationDeskButton)
-
-    await waitFor(() => {
-      expect(mocks.ensureDelegationDesk).toHaveBeenCalledWith([desk])
-      expect(mocks.push).toHaveBeenCalledWith('/spaces?space=desk-1')
-    })
+    const delegationDeskLink = screen.getByRole('link', { name: 'Delegation Desk' })
+    expect(delegationDeskLink).toHaveAttribute('href', '/home/delegation-desk')
+    expect(delegationDeskLink).toHaveClass('hub-dock-flyout-row-active')
   })
 })

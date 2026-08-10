@@ -154,6 +154,55 @@ export class MeetingWorkspaceService {
     }
   }
 
+  async createInstantMeeting(
+    supabase: SupabaseClient,
+    input: {
+      spaceId: string
+      userId: string
+      orgId: string | null
+      title: string
+      attendeeEmails: string[]
+    },
+  ): Promise<Record<string, unknown>> {
+    const orgId = await this.resolutionRepository.findSpaceOrgId(supabase, input.spaceId)
+    const startedAt = new Date().toISOString()
+    const meeting = await this.resolutionRepository.createInstantMeeting(supabase, {
+      ...input,
+      orgId,
+      startedAt,
+    })
+    const meetingItemId = String(meeting.id)
+    const workspace = await this.repository.upsertWorkspace(supabase, {
+      meetingItemId,
+      spaceId: input.spaceId,
+      userId: input.userId,
+      orgId,
+      calendarEventId: null,
+      phase: 'live',
+      liveStartedAt: startedAt,
+    })
+    await this.repository.upsertParticipantContextLinks(supabase, {
+      meetingItemId,
+      spaceId: input.spaceId,
+      userId: input.userId,
+      orgId,
+      participantEmails: input.attendeeEmails,
+    })
+    const conversationId = await this.ensureConversation(supabase, {
+      meetingItemId,
+      spaceId: input.spaceId,
+      userId: input.userId,
+      orgId,
+      title: String(meeting.title ?? input.title),
+      workspace,
+    })
+    return {
+      space_id: input.spaceId,
+      meeting_item_id: meetingItemId,
+      conversation_id: conversationId,
+    }
+  }
+
   async requireMeeting(
     supabase: SupabaseClient,
     input: { spaceId: string; meetingItemId: string },

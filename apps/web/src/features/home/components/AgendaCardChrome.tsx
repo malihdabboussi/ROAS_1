@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutList,
+  Video,
 } from 'lucide-react'
 import { AgendaCardCoverageMenu } from '@/features/home/components/AgendaCardCoverageMenu'
 import { AgendaEmptyIllustration } from '@/features/home/components/AgendaEmptyIllustration'
@@ -61,6 +62,7 @@ export function AgendaCardHeader(props: {
   view: AgendaView
   setView: (v: AgendaView) => void
   teamCoverage: TeamAgendaCoverage | null
+  onStartInstantMeeting: () => void
 }) {
   const {
     showAgendaSurface,
@@ -73,6 +75,7 @@ export function AgendaCardHeader(props: {
     view,
     setView,
     teamCoverage,
+    onStartInstantMeeting,
   } = props
 
   return (
@@ -81,66 +84,77 @@ export function AgendaCardHeader(props: {
         <CalendarClock className="text-icon h-4 w-4 shrink-0" />
         <span className="agenda-card-title">Agenda</span>
       </div>
-      {showAgendaSurface && (
-        <div className="flex flex-wrap items-center justify-end gap-1">
-          {showTeamToggle ? (
-            <div className="bg-secondary rounded-spacing-2 p-spacing-0-5 mr-spacing-1 flex">
-              {(['personal', 'team'] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setAgendaScope(s)}
-                  className={`button-compact ${
-                    agendaScope === s
-                      ? 'nav-glass-selected-purple text-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {s === 'personal' ? 'Mine' : 'Team'}
-                </button>
-              ))}
-            </div>
-          ) : null}
-          <AgendaCardCoverageMenu
-            coverage={teamCoverage}
-            visible={showTeamToggle && agendaScope === 'team'}
-          />
-          {bothConnected && agendaScope === 'personal' && (
-            <div className="bg-secondary rounded-spacing-2 p-spacing-0-5 mr-spacing-1 flex">
-              {(['all', 'google_calendar', 'outlook'] as const).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setProvider(p)}
-                  className={`button-compact ${
-                    provider === p
-                      ? 'nav-glass-selected-purple text-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {p === 'all' ? 'All' : p === 'google_calendar' ? 'Google' : 'Outlook'}
-                </button>
-              ))}
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={() => setView('list')}
-            className={`btn-icon-glass ${view === 'list' ? 'btn-icon-glass--active' : 'text-muted-foreground hover:text-foreground'}`}
-            aria-label="List view"
-          >
-            <LayoutList className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setView('board')}
-            className={`btn-icon-glass ${view === 'board' ? 'btn-icon-glass--active' : 'text-muted-foreground hover:text-foreground'}`}
-            aria-label="Calendar views"
-          >
-            <CalendarDays className="h-4 w-4" />
-          </button>
-        </div>
-      )}
+      <div className="flex flex-wrap items-center justify-end gap-1">
+        <button
+          type="button"
+          onClick={onStartInstantMeeting}
+          className="button-compact button-glass-primary gap-spacing-1 inline-flex items-center"
+          aria-label="Start impromptu call"
+        >
+          <Video className="icon-xs" aria-hidden />
+          <span className="hidden sm:inline">New call</span>
+        </button>
+        {showAgendaSurface ? (
+          <>
+            {showTeamToggle ? (
+              <div className="bg-secondary rounded-spacing-2 p-spacing-0-5 mr-spacing-1 flex">
+                {(['personal', 'team'] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setAgendaScope(s)}
+                    className={`button-compact ${
+                      agendaScope === s
+                        ? 'nav-glass-selected-purple text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {s === 'personal' ? 'Mine' : 'Team'}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            <AgendaCardCoverageMenu
+              coverage={teamCoverage}
+              visible={showTeamToggle && agendaScope === 'team'}
+            />
+            {bothConnected && agendaScope === 'personal' && (
+              <div className="bg-secondary rounded-spacing-2 p-spacing-0-5 mr-spacing-1 flex">
+                {(['all', 'google_calendar', 'outlook'] as const).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setProvider(p)}
+                    className={`button-compact ${
+                      provider === p
+                        ? 'nav-glass-selected-purple text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {p === 'all' ? 'All' : p === 'google_calendar' ? 'Google' : 'Outlook'}
+                  </button>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setView('list')}
+              className={`btn-icon-glass ${view === 'list' ? 'btn-icon-glass--active' : 'text-muted-foreground hover:text-foreground'}`}
+              aria-label="List view"
+            >
+              <LayoutList className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setView('board')}
+              className={`btn-icon-glass ${view === 'board' ? 'btn-icon-glass--active' : 'text-muted-foreground hover:text-foreground'}`}
+              aria-label="Calendar views"
+            >
+              <CalendarDays className="h-4 w-4" />
+            </button>
+          </>
+        ) : null}
+      </div>
     </div>
   )
 }

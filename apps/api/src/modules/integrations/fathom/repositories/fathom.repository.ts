@@ -114,6 +114,28 @@ export class FathomRepository {
       throw new BadRequestException(`Failed to update Fathom auto-ingest: ${error.message}`)
   }
 
+  async getRequestProfilePreferences(
+    client: SupabaseClient,
+    userId: string,
+  ): Promise<Record<string, unknown>> {
+    const { data, error } = await client
+      .from('profiles')
+      .select('preferences')
+      .eq('id', userId)
+      .maybeSingle()
+    if (error) throw new BadRequestException(`Failed to load Agenda settings: ${error.message}`)
+    return (data?.preferences as Record<string, unknown>) ?? {}
+  }
+
+  async updateRequestProfilePreferences(
+    client: SupabaseClient,
+    userId: string,
+    preferences: Record<string, unknown>,
+  ): Promise<void> {
+    const { error } = await client.from('profiles').update({ preferences }).eq('id', userId)
+    if (error) throw new BadRequestException(`Failed to update Agenda settings: ${error.message}`)
+  }
+
   async getLatestIntegrationId(
     client: SupabaseClient,
     userId: string,
@@ -218,6 +240,15 @@ export class FathomRepository {
       .eq('status', 'connected')
       .maybeSingle()
     return (data?.metadata as Record<string, unknown>) ?? {}
+  }
+
+  async getProfilePreferences(userId: string): Promise<Record<string, unknown>> {
+    const { data } = await this.serviceClient.client
+      .from('profiles')
+      .select('preferences')
+      .eq('id', userId)
+      .maybeSingle()
+    return (data?.preferences as Record<string, unknown>) ?? {}
   }
 
   async listConnectedWebhookRows(): Promise<Array<{ user_id: string; metadata: unknown }>> {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   assignRelatedCallsExclusive,
   assignSoleNearStartRelatedCalls,
-  buildFathomAgendaEvent,
+  buildMeetingAgendaEvent,
   callDateInAgendaWindow,
   emailFromAttendeeSlug,
   isEligiblePrecallEvent,
@@ -280,7 +280,7 @@ describe('meetings-precall-prep.helpers', () => {
   })
 
   it('builds a Fathom-only agenda row for unmatched calls', () => {
-    const row = buildFathomAgendaEvent({
+    const row = buildMeetingAgendaEvent({
       spaceId: 'space-1',
       callItemId: 'call-1',
       title: 'Weekly sync',
@@ -296,6 +296,22 @@ describe('meetings-precall-prep.helpers', () => {
     expect(row.related.has_transcript).toBe(true)
     expect(row.video_label).toBe('Fathom')
     expect(new Date(row.end).getTime()).toBeGreaterThan(new Date(row.start).getTime())
+  })
+
+  it('builds a Meetings agenda row before an impromptu call receives its recording', () => {
+    const row = buildMeetingAgendaEvent({
+      spaceId: 'space-1',
+      callItemId: 'call-instant',
+      title: 'Impromptu call',
+      callDate: '2026-07-30T17:00:00.000Z',
+      source: 'manual',
+      recordingUrl: null,
+    })
+
+    expect(row.source).toBe('manual')
+    expect(row.id).toBe('meeting:call-instant')
+    expect(row.account_label).toBe('Meetings')
+    expect(row.video_label).toBeNull()
   })
 
   it('filters call dates to the agenda window', () => {

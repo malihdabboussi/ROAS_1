@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { ScheduledMeetingSchema } from './meeting-workspace-resolution.controller'
+import {
+  InstantMeetingSchema,
+  ScheduledMeetingSchema,
+} from './meeting-workspace-resolution.controller'
 
 const scheduledMeeting = {
   calendar_event_id: 'google:event-1',
@@ -24,5 +27,26 @@ describe('ScheduledMeetingSchema', () => {
         start: '2026-07-29T11:00:00',
       }),
     ).toThrow()
+  })
+})
+
+describe('InstantMeetingSchema', () => {
+  it('accepts a titled impromptu call with optional participant emails', () => {
+    expect(
+      InstantMeetingSchema.parse({
+        title: 'Client strategy call',
+        attendee_emails: ['client@example.com'],
+      }),
+    ).toEqual({
+      title: 'Client strategy call',
+      attendee_emails: ['client@example.com'],
+    })
+  })
+
+  it('defaults the title and participants for a one-click call', () => {
+    expect(InstantMeetingSchema.parse({})).toEqual({
+      title: 'Impromptu call',
+      attendee_emails: [],
+    })
   })
 })

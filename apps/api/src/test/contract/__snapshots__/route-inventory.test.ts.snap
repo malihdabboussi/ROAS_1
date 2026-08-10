@@ -2671,6 +2671,14 @@ exports[`API route inventory contract > matches the committed method + path inve
     "path": "/api/integrations/fathom/recordings/:recordingId/transcript",
   },
   {
+    "method": "GET",
+    "path": "/api/integrations/fathom/settings/agenda-exclusion",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fathom/settings/agenda-exclusion",
+  },
+  {
     "method": "POST",
     "path": "/api/integrations/fathom/settings/auto-ingest",
   },

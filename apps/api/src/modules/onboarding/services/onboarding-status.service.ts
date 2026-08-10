@@ -83,7 +83,7 @@ export class OnboardingStatusService {
           userId,
           {
             archetype: 'ceo',
-            name: 'Vibey',
+            name: 'Pixel',
             style: 'balanced',
             avatar_mode: 'animation',
           },

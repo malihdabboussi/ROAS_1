@@ -36,6 +36,36 @@ Files:
 - `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`
 - `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.types.ts`
 
+## [2026-07-30 09:59] - [FIX]
+
+What: Replaced minimized Agenda meeting details with a thin restore-only divider. Persisted each minimized occurrence into the owner’s profile preferences and added an early webhook exclusion gate that stops transcript retrieval, Brain import, Meetings automation, and Page Grader sync until the occurrence is restored.
+
+Why: Minimized events still showed struck-through titles, times, and account details, while their state existed only in browser storage and could not stop backend Fathom processing.
+
+Impact: Minimized meetings are visually hidden but recoverable from the Agenda, and the matching Fathom recording is not processed. A failed server sync rolls back the visual state so the UI never claims a meeting is excluded when the processor cannot honor it.
+
+Files: `apps/web/src/features/home/components/AgendaCard.tsx`, `apps/web/src/features/home/components/AgendaCardEventEntry.tsx`, `apps/web/src/features/home/components/AgendaMinimizedEventEntry.tsx`, `apps/web/src/features/home/components/AgendaCardEventEntry.test.tsx`, `apps/web/src/features/home/config/home-toast-errors.config.ts`, `apps/web/src/features/home/services/agenda-minimize.service.ts`, `apps/web/src/features/home/services/agenda-minimize.service.test.ts`, `apps/api/src/modules/integrations/fathom/controllers/fathom.controller.ts`, `apps/api/src/modules/integrations/fathom/controllers/__tests__/fathom.controller.test.ts`, `apps/api/src/modules/integrations/fathom/dto/fathom.dto.ts`, `apps/api/src/modules/integrations/fathom/repositories/fathom.repository.ts`, `apps/api/src/modules/integrations/fathom/services/fathom-agenda-exclusions.ts`, `apps/api/src/modules/integrations/fathom/services/fathom-agenda-exclusions.test.ts`, `apps/api/src/modules/integrations/fathom/services/fathom-oauth.service.ts`, `apps/api/src/modules/integrations/fathom/services/fathom-webhook.service.ts`, `apps/api/src/test/contract/__snapshots__/route-inventory.test.ts.snap`, `documentation/features/integration-connections.md`
+
+## [2026-07-30 11:17] - [FEATURE]
+
+What: Replaced the Delegation Desk sidebar action that opened the generic Spaces hierarchy with a dedicated Home route and inbox-style workspace. Added direct brain-dump capture, an Outstanding queue across unfinished lifecycle stages, Holding/Ready/Delegated/Done filters, search, refresh, and existing task-panel opening.
+
+Why: Delegation Desk is a private intake and organization surface, not a child list under General. Users need a friendly place to dump rough work before Delegator prepares or assigns it.
+
+Impact: Home → Delegation Desk now stays in its own workspace. It continues using the same private Delegation Desk Space and automation, provisions that Space on first use, and keeps work visible as it moves from raw intake through delegation and completion.
+
+Files: `apps/web/src/app/(dashboard)/home/delegation-desk/page.tsx`, `apps/web/src/components/layout/sidebar/SidebarHomeFlyout.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqFlyouts.tsx`, `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/features/home/components/HomeShell.tsx`, `apps/web/src/features/spaces/config/delegation-messages.config.ts`, `apps/web/src/features/spaces/containers/DelegationDeskWorkspace.tsx`, `apps/web/src/features/spaces/lib/delegation-desk-view.ts`, `apps/web/src/features/spaces/services/delegation-desk.service.ts`, focused tests, `documentation/features/spaces-automation.md`
+
+## [2026-07-30 11:34] - [FEATURE]
+
+What: Added a Home Agenda **New call** workflow that creates a live impromptu meeting workspace with a persistent chat, notes, optional participant matching context, and an immediate Agenda placeholder. Extended meeting-source reconciliation so a later Fathom recording attaches its transcript, recap, and action items to that same workspace.
+
+Why: Scheduled calendar calls could open the canonical meeting workspace before a call, but unscheduled calls had no pre-call identity. Fathom therefore had nothing durable to enrich after an impromptu call.
+
+Impact: Users can start working from the meeting workspace before an unscheduled call begins, keep live notes and Pixel context in one place, and receive the Fathom recording and outputs in that same meeting afterward instead of a duplicate call row.
+
+Files: `apps/web/src/features/home/components/{AgendaCard,AgendaCardChrome,HomeInstantMeetingHost}.tsx`, `apps/web/src/features/home/services/meeting-workspace-api.ts`, Home message/test files, `apps/web/src/lib/services/calendar-api.ts`, `apps/api/src/modules/meetings`, `apps/api/src/modules/spaces/services/meetings-precall-prep.{helpers,service}.ts`, focused tests, `documentation/features/integration-connections.md`
+
 ## [2026-07-30 12:44] - [STYLE]
 
 What: Moved the embedded ROAS Portal refresh and new-tab controls to the bottom-right corner, kept the Portal surface full-height, and hid every workspace-menu dock while Portal mode is active.

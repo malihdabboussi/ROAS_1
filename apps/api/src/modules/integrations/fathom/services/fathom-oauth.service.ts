@@ -6,9 +6,15 @@ import type { RequestScope } from '@vibey/api-shared'
 import { SpaceTemplatesService } from '../../../space-templates/services/space-templates.service'
 import { MeetingsPrecallPrepService } from '../../../spaces/services/meetings-precall-prep.service'
 import { SpaceAutomationService } from '../../../spaces/services/space-automation.service'
+import type { UpdateFathomAgendaExclusionDto } from '../dto/fathom.dto'
 import { FathomIntegration } from '../integrations/fathom.integration'
 import { FathomRepository } from '../repositories/fathom.repository'
 import type { FathomOAuthTokenResponse, FathomUserIntegration } from '../types/fathom.types'
+import {
+  AGENDA_EXCLUSIONS_PREFERENCE_KEY,
+  readFathomAgendaExclusions,
+  updateFathomAgendaExclusions,
+} from './fathom-agenda-exclusions'
 
 type StatePayload = {
   userId: string
@@ -230,6 +236,28 @@ export class FathomOAuthService {
       auto_ingest_billing_org_id: nextSettings.billingOrgId,
     })
     return nextSettings
+  }
+
+  async updateAgendaExclusion(
+    supabase: SupabaseClient,
+    userId: string,
+    input: UpdateFathomAgendaExclusionDto,
+  ): Promise<void> {
+    const preferences = await this.repo.getRequestProfilePreferences(supabase, userId)
+    const exclusions = updateFathomAgendaExclusions(
+      readFathomAgendaExclusions(preferences),
+      input.event,
+      input.minimized,
+    )
+    await this.repo.updateRequestProfilePreferences(supabase, userId, {
+      ...preferences,
+      [AGENDA_EXCLUSIONS_PREFERENCE_KEY]: exclusions,
+    })
+  }
+
+  async listAgendaExclusions(supabase: SupabaseClient, userId: string) {
+    const preferences = await this.repo.getRequestProfilePreferences(supabase, userId)
+    return readFathomAgendaExclusions(preferences)
   }
 
   async ensureMeetingsSpace(

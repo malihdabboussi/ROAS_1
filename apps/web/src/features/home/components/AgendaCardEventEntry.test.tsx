@@ -39,7 +39,7 @@ describe('AgendaEventEntry', () => {
     expect(onMinimizedChange).toHaveBeenCalledWith(true)
   })
 
-  it('renders a compact retained row and restores it', () => {
+  it('hides minimized meeting details behind a thin restore row', () => {
     const onMinimizedChange = vi.fn()
 
     render(
@@ -54,8 +54,8 @@ describe('AgendaEventEntry', () => {
       />,
     )
 
-    expect(screen.getByText('Minimized')).toBeTruthy()
-    expect(screen.getByText('Campaign review')).toHaveClass('line-through')
+    expect(screen.queryByText('Minimized')).toBeNull()
+    expect(screen.queryByText('Campaign review')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Restore meeting' }))
     expect(onMinimizedChange).toHaveBeenCalledWith(false)
   })

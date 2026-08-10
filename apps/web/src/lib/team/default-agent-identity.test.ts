@@ -24,6 +24,12 @@ describe('normalizeDefaultAgentIdentity', () => {
     expect(result.avatar_url).toBe(DEFAULT_AGENT_AVATAR_URL)
   })
 
+  it('also normalizes seeded names with a role suffix', () => {
+    const result = normalizeDefaultAgentIdentity({ ...base, display_name: 'Vibey · CEO' })
+    expect(result.display_name).toBe(DEFAULT_AGENT_DISPLAY_NAME)
+    expect(result.avatar_url).toBe(DEFAULT_AGENT_AVATAR_URL)
+  })
+
   it('respects orgs that customized the agent name', () => {
     const result = normalizeDefaultAgentIdentity({ ...base, display_name: 'Nova' })
     expect(result.display_name).toBe('Nova')

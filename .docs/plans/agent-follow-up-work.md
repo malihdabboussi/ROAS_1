@@ -9438,3 +9438,63 @@ Needed work: Extract policy/access resolution helpers shared by chat stable, pre
 
 Reason not done now: Out of scope for the false-deny fix; splitting orchestration would broaden regression surface.
 
+
+## 2026-07-30 — Agenda and Fathom minimize-path decomposition
+
+Status: Open
+
+Files:
+
+- `apps/web/src/features/home/components/AgendaCard.tsx` (323 LOC; component limit 400 LOC)
+- `apps/web/src/features/home/components/AgendaCardEventEntry.tsx` (365 LOC; component limit 400 LOC)
+- `apps/api/src/modules/integrations/fathom/services/fathom-oauth.service.ts` (502 LOC; service limit 600 LOC)
+
+Evidence: The Agenda card and Fathom OAuth service are above 80% of their limits, and the Agenda row component is above 90% of its component limit after the narrow minimize-exclusion integration.
+
+Needed work: Extract minimize persistence orchestration from the Agenda card, extract the attendee control and event presentation variants from the Agenda row, and separate Fathom connection lifecycle from user-controlled ingestion settings.
+
+Reason not done now: Both extractions are behavior-neutral architecture work beyond the requested minimize UI and processor exclusion.
+
+## 2026-07-30 — API route inventory snapshot drift
+
+Status: Open
+
+Files:
+
+- `apps/api/src/test/contract/__snapshots__/route-inventory.test.ts.snap`
+
+Evidence: The focused route inventory test reports hundreds of pre-existing routes missing from the committed snapshot across unrelated integrations, billing, missions, programs, and Spaces. The new Fathom agenda-exclusion route was added to the snapshot, but regenerating the entire inventory would absorb unrelated concurrent work.
+
+Needed work: Regenerate and review the complete API route inventory in the branch that owns the outstanding API surfaces.
+
+Reason not done now: The unrelated route additions are outside this Agenda/Fathom fix and belong to other active work.
+
+## 2026-07-30 — Sidebar Home flyout host decomposition
+
+Status: Open
+
+Files:
+
+- `apps/web/src/components/layout/sidebar/SidebarHqFlyouts.tsx` (346 LOC; component limit 400 LOC)
+
+Evidence: The shared flyout host is above 85% of the component limit. The Delegation Desk change only removed one obsolete prop from its Home flyout call site; the file already coordinates Home, Team, Brain, Programs, and More panels.
+
+Needed work: Extract panel-specific flyout bodies or the shared hover-panel lifecycle into focused siblings without changing dock, pin, close, and placement behavior.
+
+Reason not done now: Decomposing every sidebar flyout is behavior-neutral shared-shell work outside the dedicated Delegation Desk route.
+
+## 2026-07-30 — Impromptu meeting Agenda boundary decomposition
+
+Status: Open
+
+Files:
+
+- `apps/api/src/modules/spaces/services/meetings-precall-prep.helpers.ts` (634 LOC; pre-existing over the shared-helper limit)
+- `apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts` (631 LOC; pre-existing over the 600 LOC service limit)
+- `apps/web/src/features/home/components/AgendaCard.tsx` (344 LOC; above the 80% component threshold)
+
+Evidence: The instant-call change only generalized the existing unmatched-call Agenda builder and added one workspace host to Agenda. The two backend files were already logged over limit, and Agenda was already near its component threshold before this workflow.
+
+Needed work: Extract Agenda call enrichment/query mapping from the pre-call service and move Agenda modal orchestration into a focused container without changing calendar/Fathom identity behavior.
+
+Reason not done now: The requested impromptu call path is complete and covered by focused tests; decomposing the broader scheduled-call and enrichment pipeline is behavior-neutral pre-existing architecture work.

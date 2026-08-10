@@ -49,9 +49,12 @@ export class MeetingWorkspaceRepository {
     input: MeetingScope & {
       calendarEventId: string | null
       phase?: 'scheduled' | 'live' | 'processing' | 'complete'
+      liveStartedAt?: string | null
     },
   ): Promise<Record<string, unknown>> {
     const phase = input.phase ? { phase: input.phase } : {}
+    const liveStartedAt =
+      input.liveStartedAt !== undefined ? { live_started_at: input.liveStartedAt } : {}
     const { data, error } = await supabase
       .from('meeting_workspaces')
       .upsert(
@@ -62,6 +65,7 @@ export class MeetingWorkspaceRepository {
           org_id: input.orgId,
           calendar_event_id: input.calendarEventId,
           ...phase,
+          ...liveStartedAt,
         },
         { onConflict: 'meeting_item_id' },
       )

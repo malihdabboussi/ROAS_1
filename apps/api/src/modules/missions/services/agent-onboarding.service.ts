@@ -151,7 +151,7 @@ export class AgentOnboardingService {
       userId,
       'vibey',
       {
-        name: 'Vibey',
+        name: 'Pixel',
         role,
         level: 'c_level',
         ...(avatarMode === 'animation' ? { image_url: null } : {}),

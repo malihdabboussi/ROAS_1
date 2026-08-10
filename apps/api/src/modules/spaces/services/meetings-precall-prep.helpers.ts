@@ -416,11 +416,12 @@ function eventAttendeeEmails(event: PrecallAgendaEventLike): Set<string> {
 }
 
 /** Synthetic Agenda row for a Fathom call that did not match a calendar event. */
-export function buildFathomAgendaEvent(input: {
+export function buildMeetingAgendaEvent(input: {
   spaceId: string
   callItemId: string
   title: string
   callDate: string
+  source?: 'fathom' | 'manual'
   recordingUrl: string | null
   summary?: string | null
   hasTranscript?: boolean
@@ -437,8 +438,8 @@ export function buildFathomAgendaEvent(input: {
   html_link: null
   color_id: null
   attendees: []
-  source: typeof FATHOM_AGENDA_SOURCE
-  account_label: 'Fathom'
+  source: typeof FATHOM_AGENDA_SOURCE | 'manual'
+  account_label: 'Fathom' | 'Meetings'
   prep: null
   related: AgendaRelatedCall
 } {
@@ -447,20 +448,21 @@ export function buildFathomAgendaEvent(input: {
   const end = Number.isFinite(startMs)
     ? new Date(startMs + FATHOM_AGENDA_DURATION_MS).toISOString()
     : input.callDate
+  const source = input.source ?? FATHOM_AGENDA_SOURCE
   return {
-    id: `fathom:${input.callItemId}`,
+    id: `${source === 'manual' ? 'meeting' : 'fathom'}:${input.callItemId}`,
     title,
     start: input.callDate,
     end,
     all_day: false,
     location: null,
     video_url: input.recordingUrl,
-    video_label: input.recordingUrl ? 'Fathom' : null,
+    video_label: input.recordingUrl && source === FATHOM_AGENDA_SOURCE ? 'Fathom' : null,
     html_link: null,
     color_id: null,
     attendees: [],
-    source: FATHOM_AGENDA_SOURCE,
-    account_label: 'Fathom',
+    source,
+    account_label: source === 'manual' ? 'Meetings' : 'Fathom',
     prep: null,
     related: {
       space_id: input.spaceId,

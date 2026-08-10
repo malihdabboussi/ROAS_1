@@ -6,9 +6,7 @@ import {
   type BrainHandoffResult,
   type BrainHandoffTarget,
 } from '../../brain/services/brain-handoff.service'
-import {
-  isSystemAgentFieldLocked,
-} from '../lib/system-agent-keys'
+import { isSystemAgentFieldLocked } from '../lib/system-agent-keys'
 import { MissionsRepository } from '../repositories/missions.repository'
 import { MissionAgentGatewayService } from './gateways/mission-agent-gateway.service'
 import { MissionSkillSeederService } from './skills/mission-skill-seeder.service'
@@ -111,7 +109,12 @@ export class AgentManagementService {
     agentKey: string,
     orgId?: string | null,
   ): Promise<void> {
-    const canManage = await this.missionsRepository.canManageAgent(supabase, userId, agentKey, orgId)
+    const canManage = await this.missionsRepository.canManageAgent(
+      supabase,
+      userId,
+      agentKey,
+      orgId,
+    )
     if (!canManage) {
       throw new ForbiddenException('You do not have permission to manage this agent')
     }
@@ -381,7 +384,7 @@ export class AgentManagementService {
       {
         level: 'c_level',
         role,
-        name: 'Vibey',
+        name: 'Pixel',
       },
       orgId,
       'Failed to update Vibey promotion role',
@@ -517,5 +520,4 @@ export class AgentManagementService {
   ): Promise<string | null> {
     return this.missionsRepository.findAgentBrainId(supabase, userId, agentKey, orgId)
   }
-
 }

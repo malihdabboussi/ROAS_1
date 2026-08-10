@@ -35,11 +35,14 @@ Spaces automations run rules from the `space_automations` table through the sing
   AI agents, and leaves unresolved work Ready to delegate. It records a
   destination receipt before marking anything Delegated. Generated work does
   not recursively start another intake run. Home → Delegation Desk is a
-  permanent entry immediately below My Tasks. It opens the organization's
-  existing full desk or provisions it privately on first use, so the holding
-  tank never depends on first running a bulk action. Created task cards open in
-  the canonical right-side task panel, preserving the current page and its
-  context. Delegator is also available under Team → Agents and in the chat agent
+  permanent entry immediately below My Tasks. It opens a dedicated inbox-style
+  Home view instead of navigating into the generic General/Spaces hierarchy.
+  The view provisions the organization's private desk on first use, accepts
+  rough manual brain dumps directly into Holding tank, and defaults to one
+  Outstanding queue spanning every unfinished stage. Holding, Ready, Delegated,
+  and Done filters are available without changing the underlying Space data.
+  Created task cards open in the canonical right-side task panel, preserving the
+  current page and its context. Delegator is also available under Team → Agents and in the chat agent
   selector. Pixel keeps its delegation capability for general conversations,
   while Delegator owns the focused Desk workflow. Delegator can read the
   organization context needed to route work and can create/update task records,
@@ -150,6 +153,11 @@ Spaces automations run rules from the `space_automations` table through the sing
   known Space/campaign scope. Meeting-dependent delegations now receive explicit
   provider-retrieval guidance and one automatic corrective pass when an agent
   claims a call is missing without checking a connected recording source.
+- 2026-07-30: Opened Delegation Desk as its own `/home/delegation-desk`
+  workspace. The former sidebar action that selected a Space and navigated to
+  `/spaces` was removed. The dedicated view keeps the existing private Space as
+  its data source, adds direct rough-thought capture, and presents unfinished
+  work as one inbox-like Outstanding queue with lifecycle filters.
 - 2026-07-29: Added Delegator as a protected, organization-installed system
   agent dedicated to the Delegation Desk. Pixel retains its delegation ability;
   the Desk's automation now routes to Delegator, which uses human-first

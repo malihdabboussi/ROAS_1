@@ -26,8 +26,14 @@ interface SlackPersonConversationProps {
 
 function modeHelp(mode: SlackDeliveryMode): string {
   if (mode === 'off') return 'Turn on Shadow mode before drafting.'
-  if (mode === 'active') return 'Drafts still require approval. Approved drafts can be sent.'
+  if (mode === 'active') {
+    return 'Eligible internal alerts send automatically. Manually drafted messages still require approval.'
+  }
   return 'Drafts stay here for review and cannot send while this person is in Shadow.'
+}
+
+function conversationModeLabel(mode: SlackDeliveryMode): string {
+  return mode === 'active' ? 'Active internal delivery' : 'Shadow conversation'
 }
 
 function formatTimestamp(value: string, slackTimestamp = false): string {
@@ -114,7 +120,7 @@ export function SlackPersonConversation({
               Agent → {person.display_name}
             </h1>
             <p className="body-4 text-muted-foreground mt-spacing-1">
-              Shadow conversation · {modeHelp(person.delivery_mode)}
+              {conversationModeLabel(person.delivery_mode)} · {modeHelp(person.delivery_mode)}
             </p>
           </div>
         </div>
@@ -131,7 +137,7 @@ export function SlackPersonConversation({
         >
           {loading ? (
             <div className="flex flex-1 items-center justify-center">
-              <VibeyLoadingOrb size="sm" text="Opening the Shadow conversation..." />
+              <VibeyLoadingOrb size="sm" text="Opening the conversation..." />
             </div>
           ) : actions.length === 0 && messages.length === 0 ? (
             <div className="p-spacing-6 flex flex-1 flex-col items-center justify-center text-center">

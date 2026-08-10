@@ -18,12 +18,14 @@ describe('AgendaCardChrome', () => {
         view="list"
         setView={vi.fn()}
         teamCoverage={null}
+        onStartInstantMeeting={vi.fn()}
       />,
     )
 
     expect(screen.getByRole('button', { name: 'Mine' })).toHaveClass('button-compact')
     expect(screen.queryByRole('button', { name: 'Prep today' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Ask Pixel about your agenda' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Start impromptu call' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'List view' })).toHaveClass('btn-icon-glass')
     expect(screen.getByRole('button', { name: 'List view' })).toHaveClass('btn-icon-glass--active')
     expect(screen.getByRole('button', { name: 'Calendar views' })).toHaveClass('btn-icon-glass')
@@ -55,6 +57,7 @@ describe('AgendaCardChrome', () => {
           errors: [],
           totals: { directory: 1, pulled: 1, rejected: 0, capped: 0, failed: 0 },
         }}
+        onStartInstantMeeting={vi.fn()}
       />,
     )
 

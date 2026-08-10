@@ -25,7 +25,7 @@ describe('MeetingSourceIngestionService', () => {
     }
     const resolutionRepository = {
       findByCalendarEvent: vi.fn().mockResolvedValue(null),
-      listScheduledMeetingCandidates: vi.fn().mockResolvedValue([]),
+      listMeetingCandidates: vi.fn().mockResolvedValue([]),
     }
     const service = new MeetingSourceIngestionService(
       repository as never,
@@ -84,7 +84,7 @@ describe('MeetingSourceIngestionService', () => {
     }
     const resolutionRepository = {
       findByCalendarEvent: vi.fn().mockResolvedValue(null),
-      listScheduledMeetingCandidates: vi.fn().mockResolvedValue([]),
+      listMeetingCandidates: vi.fn().mockResolvedValue([]),
     }
     const service = new MeetingSourceIngestionService(
       repository as never,
@@ -263,7 +263,7 @@ describe('MeetingSourceIngestionService', () => {
     const repository = { listCandidateRecordings: vi.fn().mockResolvedValue([]) }
     const resolutionRepository = {
       findByCalendarEvent: vi.fn().mockResolvedValue(null),
-      listScheduledMeetingCandidates: vi.fn().mockResolvedValue([
+      listMeetingCandidates: vi.fn().mockResolvedValue([
         {
           id: 'scheduled-meeting',
           title: 'Client strategy call',
@@ -297,5 +297,41 @@ describe('MeetingSourceIngestionService', () => {
     })
 
     expect(result).toBe('scheduled-meeting')
+  })
+
+  it('attaches a Fathom recording to the impromptu workspace opened before the call', async () => {
+    const repository = { listCandidateRecordings: vi.fn().mockResolvedValue([]) }
+    const resolutionRepository = {
+      findByCalendarEvent: vi.fn().mockResolvedValue(null),
+      listMeetingCandidates: vi.fn().mockResolvedValue([
+        {
+          id: 'instant-meeting',
+          title: 'Impromptu call',
+          custom_data: {
+            call_kind: 'impromptu',
+            call_date: '2026-07-30T17:00:00.000Z',
+            participant_emails: ['dylan@example.com'],
+          },
+        },
+      ]),
+    }
+    const service = new MeetingSourceIngestionService(
+      repository as never,
+      resolutionRepository as never,
+      {} as never,
+    )
+
+    const result = await service.findMatchingMeetingItem({} as never, {
+      spaceId: 'space-1',
+      userId: 'user-1',
+      event: {
+        recording_id: 'fathom-instant',
+        title: 'Impromptu Zoom Meeting',
+        recording_start_time: '2026-07-30T17:02:00.000Z',
+        calendar_invitees: [{ email: 'dylan@example.com' }],
+      },
+    })
+
+    expect(result).toBe('instant-meeting')
   })
 })

@@ -9,6 +9,25 @@ export const ListFathomMeetingsSchema = z.object({
   cursor: z.string().optional(),
 })
 
+export const UpdateFathomAgendaExclusionSchema = z.object({
+  minimized: z.boolean(),
+  event: z.object({
+    key: z.string().min(1).max(1000),
+    eventId: z.string().min(1).max(500),
+    title: z.string().min(1).max(1000),
+    start: z
+      .string()
+      .min(1)
+      .refine((value) => !Number.isNaN(Date.parse(value)), {
+        message: 'Valid event start is required',
+      }),
+    source: z.enum(['google_calendar', 'outlook', 'fathom']),
+    accountId: z.string().max(500).nullable(),
+  }),
+})
+
+export type UpdateFathomAgendaExclusionDto = z.infer<typeof UpdateFathomAgendaExclusionSchema>
+
 export const CreateFathomWebhookSchema = z.object({
   destinationUrl: z.string().url(),
   triggeredFor: z

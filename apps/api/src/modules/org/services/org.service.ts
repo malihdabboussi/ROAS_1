@@ -67,7 +67,7 @@ export class OrgService {
   private static readonly CORE_ORG_AGENTS = [
     {
       agent_key: 'vibey',
-      name: 'Vibey',
+      name: 'Pixel',
       role: 'CMO',
       level: 'system',
       config: {

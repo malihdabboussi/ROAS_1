@@ -48,7 +48,7 @@ export type CalendarAgendaEvent = {
   html_link: string | null
   color_id: string | null
   attendees: CalendarAttendee[]
-  source: CalendarProvider | 'fathom'
+  source: CalendarProvider | 'fathom' | 'manual'
   ical_uid?: string | null
   account_id?: string | null
   account_label?: string | null

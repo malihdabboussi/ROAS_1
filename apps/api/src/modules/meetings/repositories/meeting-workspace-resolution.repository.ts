@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { MeetingCallKind } from '../domain/meeting-call-kind'
+import { createInstantMeetingItem } from './create-instant-meeting-item'
 
 export type ScheduledMeetingEvent = {
   calendarEventId: string
@@ -222,6 +223,20 @@ export class MeetingWorkspaceResolutionRepository {
     if (error) throw new BadRequestException(error.message)
   }
 
+  createInstantMeeting(
+    supabase: SupabaseClient,
+    input: {
+      spaceId: string
+      userId: string
+      orgId: string | null
+      title: string
+      attendeeEmails: string[]
+      startedAt: string
+    },
+  ): Promise<Record<string, unknown>> {
+    return createInstantMeetingItem(supabase, input)
+  }
+
   async deleteScheduledMeeting(
     supabase: SupabaseClient,
     meetingItemId: string,
@@ -236,7 +251,7 @@ export class MeetingWorkspaceResolutionRepository {
     if (error) throw new BadRequestException(error.message)
   }
 
-  async listScheduledMeetingCandidates(
+  async listMeetingCandidates(
     supabase: SupabaseClient,
     input: { spaceId: string; userId: string; anchorAt: string | null },
   ): Promise<Record<string, unknown>[]> {
@@ -251,6 +266,7 @@ export class MeetingWorkspaceResolutionRepository {
       .select('id, title, source, custom_data')
       .eq('space_id', input.spaceId)
       .eq('user_id', input.userId)
+      .in('source', ['calendar', 'manual'])
       .eq('custom_data->>entry_type', 'call')
       .gte('custom_data->>call_date', lower)
       .lte('custom_data->>call_date', upper)

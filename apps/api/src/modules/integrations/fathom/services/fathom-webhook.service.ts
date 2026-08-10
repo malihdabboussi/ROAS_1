@@ -5,6 +5,10 @@ import { CustomerBrainService } from '../../../brain/services/customer-brain.ser
 import { SpaceAutomationService } from '../../../spaces/services/space-automation.service'
 import { PageGraderMeetingSyncService } from '../../page-grader/services/page-grader-meeting-sync.service'
 import { FathomRepository } from '../repositories/fathom.repository'
+import {
+  matchesFathomAgendaExclusion,
+  readFathomAgendaExclusions,
+} from './fathom-agenda-exclusions'
 import { FathomApiService } from './fathom-api.service'
 import { buildFathomEnvelope } from './fathom-envelope.adapter'
 import type { FathomAutoIngestSettings } from './fathom-oauth.service'
@@ -79,6 +83,12 @@ export class FathomWebhookService {
     )
     if (!autoIngestSettings.autoIngest) {
       this.logger.warn('[FATHOM-DEBUG] STOPPED: auto-ingest disabled')
+      return
+    }
+
+    const agendaPreferences = await this.repository.getProfilePreferences(userId)
+    if (matchesFathomAgendaExclusion(readFathomAgendaExclusions(agendaPreferences), event)) {
+      this.logger.log('[FATHOM-DEBUG] STOPPED: agenda occurrence is minimized')
       return
     }
 

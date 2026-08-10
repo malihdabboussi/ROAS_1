@@ -40,6 +40,11 @@ export const ScheduledMeetingSchema = z.object({
     .max(500),
 })
 
+export const InstantMeetingSchema = z.object({
+  title: z.string().trim().min(1).max(500).default('Impromptu call'),
+  attendee_emails: z.array(z.string().trim().email().max(500)).max(100).default([]),
+})
+
 @Controller('spaces/:spaceId/meetings')
 @UseGuards(AuthGuard, ThrottlerGuard, OrgContextGuard, OrgRoleGuard)
 export class MeetingWorkspaceResolutionController {
@@ -70,6 +75,25 @@ export class MeetingWorkspaceResolutionController {
         htmlLink: body.html_link,
         attendees: body.attendees,
       },
+    })
+  }
+
+  @Post('instant')
+  @RequireOrgRole('editor')
+  createInstantMeeting(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param(new ZodValidationPipe(ParamsSchema)) params: z.infer<typeof ParamsSchema>,
+    @Body(new ZodValidationPipe(InstantMeetingSchema))
+    body: z.infer<typeof InstantMeetingSchema>,
+  ) {
+    return this.meetings.createInstantMeeting(supabase, {
+      spaceId: params.spaceId,
+      userId: user.id,
+      orgId: scope.orgId,
+      title: body.title,
+      attendeeEmails: body.attendee_emails,
     })
   }
 }

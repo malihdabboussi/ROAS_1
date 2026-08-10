@@ -8,7 +8,7 @@ import { SpacesRepository } from '../repositories/spaces.repository'
 import {
   assignRelatedCallsExclusive,
   assignSoleNearStartRelatedCalls,
-  buildFathomAgendaEvent,
+  buildMeetingAgendaEvent,
   buildPrecallPrompt,
   callDateInAgendaWindow,
   eventFromPrecallSnapshot,
@@ -267,10 +267,10 @@ export class MeetingsPrecallPrepService {
     end: string
   }): Promise<{
     relatedByEventId: Map<string, AgendaRelatedCall>
-    unmatchedFathomEvents: ReturnType<typeof buildFathomAgendaEvent>[]
+    unmatchedFathomEvents: ReturnType<typeof buildMeetingAgendaEvent>[]
   }> {
     const relatedByEventId = new Map<string, AgendaRelatedCall>()
-    const unmatchedFathomEvents: ReturnType<typeof buildFathomAgendaEvent>[] = []
+    const unmatchedFathomEvents: ReturnType<typeof buildMeetingAgendaEvent>[] = []
 
     const spaceId = await this.resolveMeetingsSpaceId(input.supabase, input.userId, input.orgId)
     if (!spaceId) return { relatedByEventId, unmatchedFathomEvents }
@@ -286,7 +286,7 @@ export class MeetingsPrecallPrepService {
 
     const { data: callRows } = await input.supabase
       .from('space_items')
-      .select('id, space_id, title, status, description, custom_data, created_at')
+      .select('id, space_id, title, status, source, description, custom_data, created_at')
       .eq('space_id', spaceId)
       .eq('custom_data->>entry_type', 'call')
       .gte('custom_data->>call_date', matchPadStart)
@@ -298,6 +298,7 @@ export class MeetingsPrecallPrepService {
       id: string
       space_id: string
       title?: string | null
+      source?: string | null
       description?: string | null
       custom_data?: Record<string, unknown> | null
     }>
@@ -378,11 +379,12 @@ export class MeetingsPrecallPrepService {
         followUps: followUpsByCall.get(call.id) ?? [],
       })
       unmatchedFathomEvents.push(
-        buildFathomAgendaEvent({
+        buildMeetingAgendaEvent({
           spaceId: related.space_id,
           callItemId: related.call_item_id,
           title: related.title,
           callDate: callDate!,
+          source: call.source === 'manual' ? 'manual' : 'fathom',
           recordingUrl: related.recording_url,
           summary: related.summary,
           hasTranscript: related.has_transcript,

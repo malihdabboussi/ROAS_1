@@ -46,6 +46,8 @@ describe('FathomController behavior', () => {
     oauth = {
       getStatus: vi.fn(),
       updateAutoIngest: vi.fn(),
+      updateAgendaExclusion: vi.fn(),
+      listAgendaExclusions: vi.fn(),
       ensureMeetingsSpace: vi.fn(),
       getAuthorizationUrl: vi.fn(),
       handleCallback: vi.fn(),
@@ -80,6 +82,7 @@ describe('FathomController behavior', () => {
       getServiceClient: vi.fn(() => ({
         from: (table: string) => adminMock.makeChain(table),
       })),
+      getProfilePreferences: vi.fn().mockResolvedValue({}),
       getFathomAliases: vi.fn().mockResolvedValue([]),
       getProfileIdentity: vi.fn().mockResolvedValue(null),
       updateFathomAliases: vi.fn().mockResolvedValue(null),
@@ -157,6 +160,41 @@ describe('FathomController behavior', () => {
 
     expect(api.getAutoIngestSettings).toHaveBeenCalledWith('user_1')
     expect(importJobs.enqueueFathomMeetingImport).not.toHaveBeenCalled()
+  })
+
+  it('skips every Fathom processing route for a minimized agenda occurrence', async () => {
+    api.resolveUserByWebhookSecret.mockResolvedValue('user_1')
+    api.getAutoIngestSettings.mockResolvedValue({
+      autoIngest: true,
+      billingScope: 'personal',
+      billingOrgId: null,
+    })
+    fathomRepository.getProfilePreferences.mockResolvedValue({
+      agenda_minimized_occurrences: [
+        {
+          key: 'account-1:event-1:2026-07-30T17:00:00.000Z',
+          eventId: 'event-1',
+          title: 'Weekly Campaign Review',
+          start: '2026-07-30T17:00:00.000Z',
+          source: 'google_calendar',
+          accountId: 'account-1',
+        },
+      ],
+    })
+
+    await webhookService.processWebhookAsync(
+      JSON.stringify({
+        id: 'recording-1',
+        title: 'Weekly Campaign Review',
+        scheduled_start_time: '2026-07-30T17:00:00.000Z',
+        transcript: [{ speaker: { display_name: 'A' }, text: 'hello', timestamp: '1' }],
+      }),
+      'whsec_1',
+    )
+
+    expect(importJobs.enqueueFathomMeetingImport).not.toHaveBeenCalled()
+    expect(customerBrain.listEnabledCustomerBrainsForRouting).not.toHaveBeenCalled()
+    expect(spaceAutomation.processFathomRecordingEvent).not.toHaveBeenCalled()
   })
 
   it('ingests transcript when auto-ingest is enabled', async () => {
@@ -563,5 +601,36 @@ describe('FathomController behavior', () => {
       billingScope: 'personal',
       billingOrgId: null,
     })
+  })
+
+  it('persists one Agenda occurrence exclusion through the Fathom settings service', async () => {
+    const supabase = {} as any
+    const body = {
+      minimized: true,
+      event: {
+        key: 'account-1:event-1:2026-07-30T17:00:00.000Z',
+        eventId: 'event-1',
+        title: 'Weekly Campaign Review',
+        start: '2026-07-30T17:00:00.000Z',
+        source: 'google_calendar' as const,
+        accountId: 'account-1',
+      },
+    }
+
+    await expect(
+      controller.updateAgendaExclusion(supabase, { id: 'user_1' }, body),
+    ).resolves.toEqual({ success: true })
+    expect(oauth.updateAgendaExclusion).toHaveBeenCalledWith(supabase, 'user_1', body)
+  })
+
+  it('loads persisted Agenda exclusions for UI reconciliation', async () => {
+    const supabase = {} as any
+    oauth.listAgendaExclusions.mockResolvedValue([{ key: 'occurrence-1' }])
+
+    await expect(controller.listAgendaExclusions(supabase, { id: 'user_1' })).resolves.toEqual({
+      success: true,
+      exclusions: [{ key: 'occurrence-1' }],
+    })
+    expect(oauth.listAgendaExclusions).toHaveBeenCalledWith(supabase, 'user_1')
   })
 })

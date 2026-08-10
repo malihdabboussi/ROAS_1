@@ -136,7 +136,7 @@ export abstract class MissionsRepositoryAgentConfigBase extends MissionsReposito
       user_id: orgId ? null : userId,
       org_id: orgId ?? null,
       agent_key: 'vibey',
-      name: 'Vibey',
+      name: 'Pixel',
       role: 'CMO',
       skills: [],
       status: 'idle',

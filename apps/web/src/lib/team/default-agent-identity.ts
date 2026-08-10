@@ -8,6 +8,14 @@ export const DEFAULT_AGENT_AVATAR_URL = '/pixel-avatar.png'
 /** Legacy default names we still swap to {@link DEFAULT_AGENT_DISPLAY_NAME}. */
 const DEFAULT_AGENT_LEGACY_NAMES = new Set(['vibey', 'roas', 'pixel'])
 
+function isLegacyDefaultDisplayName(displayName: string): boolean {
+  const normalized = displayName.trim().toLowerCase()
+  if (DEFAULT_AGENT_LEGACY_NAMES.has(normalized)) return true
+  // Seeded defaults sometimes include a role suffix, e.g. "Vibey · CEO".
+  const baseName = normalized.split(/\s*[·|-]\s*/)[0]?.trim() ?? normalized
+  return DEFAULT_AGENT_LEGACY_NAMES.has(baseName)
+}
+
 /**
  * Presents the default agent as "Pixel" with the lamp avatar, but only when the
  * org is still on the seeded default identity. Orgs that renamed or re-avatared
@@ -17,7 +25,7 @@ export function normalizeDefaultAgentIdentity<
   T extends { agent_key: string | null; display_name: string; avatar_url: string | null },
 >(entry: T): T {
   if (entry.agent_key !== DEFAULT_AGENT_KEY) return entry
-  if (!DEFAULT_AGENT_LEGACY_NAMES.has(entry.display_name.trim().toLowerCase())) return entry
+  if (!isLegacyDefaultDisplayName(entry.display_name)) return entry
   return {
     ...entry,
     display_name: DEFAULT_AGENT_DISPLAY_NAME,
