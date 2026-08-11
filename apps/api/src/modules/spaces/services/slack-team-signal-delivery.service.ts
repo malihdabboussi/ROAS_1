@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Optional } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SlackPeopleRepository } from '../../slack/repositories/slack-people.repository'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
@@ -18,6 +18,7 @@ import {
   SLACK_TEAM_DIGEST_THREAD_HOURS,
   type SlackTeamSignalMessageItem,
 } from './slack-team-signal-message'
+import { SlackTeamMessageComposerService } from './slack-team-message-composer.service'
 
 export const SLACK_SIGNAL_COOLING_MINUTES = {
   unanswered_question: 30,
@@ -38,6 +39,7 @@ export type SlackSignalDeliveryPerson = {
   display_name?: string
   relationship_kind: string
   delivery_mode: string
+  title?: string
 }
 
 type ReadyDelivery = {
@@ -74,6 +76,7 @@ export class SlackTeamSignalDeliveryService {
     private readonly loops: SlackTeamLoopRepository,
     private readonly slackTools: SlackAgentToolsService,
     private readonly resolution: SlackSignalResolutionService,
+    @Optional() private readonly composer?: SlackTeamMessageComposerService,
   ) {}
 
   async processCoolingActions(input: {
@@ -86,6 +89,7 @@ export class SlackTeamSignalDeliveryService {
     quietHoursActive: boolean
     people: SlackSignalDeliveryPerson[]
     now?: Date
+    timezone?: string
   }): Promise<{
     rechecked: number
     resolved: number
@@ -142,9 +146,7 @@ export class SlackTeamSignalDeliveryService {
         continue
       }
 
-      const recipient = candidate.target_member_id
-        ? peopleById.get(candidate.target_member_id)
-        : undefined
+      const recipient = candidate.target_member_id ? peopleById.get(candidate.target_member_id) : undefined
       if (!refreshed.resolution.source_available) {
         deliveryOutcomes.push(this.outcome(candidate, false, 'source_unavailable'))
         await this.markReadyForReview(input, refreshed.action, {
@@ -175,14 +177,11 @@ export class SlackTeamSignalDeliveryService {
         }),
       })
     }
-
     let sent = 0
     const personalMoments = ready.filter(
       (entry) => String(entry.action.metadata.signal_kind ?? '') === 'personal_moment',
     )
-    const digestReady = ready.filter(
-      (entry) => String(entry.action.metadata.signal_kind ?? '') !== 'personal_moment',
-    )
+    const digestReady = ready.filter((entry) => String(entry.action.metadata.signal_kind ?? '') !== 'personal_moment')
 
     for (const entry of personalMoments) {
       sent += await this.deliverPersonalMoment(input, entry, now)
@@ -219,18 +218,13 @@ export class SlackTeamSignalDeliveryService {
       status: 'approved',
     })
     if (!approved) return 0
-    const claimed = await this.people.claimShadowActionForSend(
-      input.supabase,
-      input.orgId,
-      entry.action.id,
-    )
+    const claimed = await this.people.claimShadowActionForSend(input.supabase, input.orgId, entry.action.id)
     if (!claimed) return 0
 
     const eventTypeRaw = entry.action.metadata.moment_event_type
     const eventType = isPersonalMomentEventType(eventTypeRaw) ? eventTypeRaw : 'personal_milestone'
     const finding =
-      typeof entry.action.metadata.signal_finding === 'string' &&
-      entry.action.metadata.signal_finding.trim()
+      typeof entry.action.metadata.signal_finding === 'string' && entry.action.metadata.signal_finding.trim()
         ? entry.action.metadata.signal_finding
         : entry.action.proposed_content
     const historical =
@@ -256,15 +250,10 @@ export class SlackTeamSignalDeliveryService {
         slack_user_id: entry.recipient.platform_id,
       })
       const channelId = String(dm.channel_id)
-      const delivery = await this.slackTools.sendMessage(
-        input.supabase,
-        input.userId,
-        input.orgId,
-        {
-          channel_id: channelId,
-          text,
-        },
-      )
+      const delivery = await this.slackTools.sendMessage(input.supabase, input.userId, input.orgId, {
+        channel_id: channelId,
+        text,
+      })
       const messageTs = typeof delivery.ts === 'string' ? delivery.ts : null
       await this.people.markShadowActionSent(input.supabase, {
         actionId: entry.action.id,
@@ -295,6 +284,7 @@ export class SlackTeamSignalDeliveryService {
       userId: string
       orgId: string
       workflowKey: string
+      timezone?: string
     },
     group: ReadyDelivery[],
     now: Date,
@@ -310,19 +300,13 @@ export class SlackTeamSignalDeliveryService {
         status: 'approved',
       })
       if (!approved) continue
-      const next = await this.people.claimShadowActionForSend(
-        input.supabase,
-        input.orgId,
-        entry.action.id,
-      )
+      const next = await this.people.claimShadowActionForSend(input.supabase, input.orgId, entry.action.id)
       if (!next) continue
       claimed.push(entry)
     }
     if (claimed.length === 0) return 0
 
-    const sinceIso = new Date(
-      now.getTime() - SLACK_TEAM_DIGEST_THREAD_HOURS * 60 * 60 * 1000,
-    ).toISOString()
+    const sinceIso = new Date(now.getTime() - SLACK_TEAM_DIGEST_THREAD_HOURS * 3_600_000).toISOString()
     const existingRoot = await this.loops.findRecentDigestRoot(input.supabase, {
       orgId: input.orgId,
       workflowKey: input.workflowKey,
@@ -340,19 +324,53 @@ export class SlackTeamSignalDeliveryService {
         recipientName: recipient.display_name || recipient.platform_id,
         now,
       }
-      const text = existingRoot
+      const fallbackText = existingRoot
         ? composeThreadFollowUp(items, composeOptions)
         : composeDigestMessage(items, composeOptions)
-      const delivery = await this.slackTools.sendMessage(
-        input.supabase,
-        input.userId,
-        input.orgId,
-        {
-          channel_id: channelId,
-          text,
-          ...(existingRoot ? { thread_ts: existingRoot.threadTs } : {}),
-        },
-      )
+      const continuity =
+        (await this.loops.listRecentDigestSummaries?.(input.supabase, {
+          orgId: input.orgId,
+          workflowKey: input.workflowKey,
+          targetMemberId: recipient.id,
+          limit: 3,
+        })) ?? []
+      let text = fallbackText
+      let composition: Awaited<ReturnType<SlackTeamMessageComposerService['compose']>> | null = null
+      if (this.composer) {
+        try {
+          composition = await this.composer.compose({
+            userId: input.userId,
+            orgId: input.orgId,
+            recipient: {
+              name: recipient.display_name || recipient.platform_id,
+              role: recipient.title,
+              relationship: recipient.relationship_kind,
+            },
+            signals: claimed.map((entry) => ({
+              kind: String(entry.action.metadata.signal_kind ?? ''),
+              finding: String(entry.action.metadata.signal_finding ?? entry.item.finding),
+              quote: String(entry.action.metadata.source_message_text ?? ''),
+              senderName: String(entry.action.metadata.source_sender_display_name ?? ''),
+              channelName: String(entry.action.metadata.source_channel_name ?? entry.item.channelName),
+              timestamp: String(entry.action.metadata.source_message_ts ?? ''),
+            })),
+            continuity,
+            context: {
+              now,
+              timezone: input.timezone ?? 'America/Los_Angeles',
+              threadFollowUp: Boolean(existingRoot),
+            },
+          })
+          text = composition.text
+        } catch {
+          composition = null
+        }
+      }
+      const delivery = await this.slackTools.sendMessage(input.supabase, input.userId, input.orgId, {
+        channel_id: channelId,
+        text,
+        ...(existingRoot ? { thread_ts: existingRoot.threadTs } : {}),
+      })
       const messageTs = typeof delivery.ts === 'string' ? delivery.ts : null
       const digestThreadTs = existingRoot?.threadTs ?? messageTs
       const isRoot = !existingRoot
@@ -372,6 +390,13 @@ export class SlackTeamSignalDeliveryService {
             digest_thread_ts: digestThreadTs,
             digest_item_count: claimed.length,
             delivery_style: isRoot ? 'compiled_digest' : 'thread_follow_up',
+            delivered_text: text,
+            ...(composition
+              ? {
+                  composition_offers: composition.offers,
+                  composition_usage: composition.usage,
+                }
+              : { composition_fallback: true }),
           },
         })
       }
@@ -401,18 +426,11 @@ export class SlackTeamSignalDeliveryService {
   }
 
   private isReady(action: SlackShadowAction, now: Date): boolean {
-    const eligibleAt =
-      typeof action.metadata.eligible_at === 'string'
-        ? Date.parse(action.metadata.eligible_at)
-        : NaN
+    const eligibleAt = typeof action.metadata.eligible_at === 'string' ? Date.parse(action.metadata.eligible_at) : NaN
     return Number.isFinite(eligibleAt) && eligibleAt <= now.getTime()
   }
 
-  private outcome(
-    action: SlackShadowAction,
-    canSend: boolean,
-    reason: string,
-  ): SlackDeliveryOutcome {
+  private outcome(action: SlackShadowAction, canSend: boolean, reason: string): SlackDeliveryOutcome {
     return {
       action_id: action.id,
       recipient_id: action.target_member_id,

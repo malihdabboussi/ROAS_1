@@ -47,3 +47,13 @@ Why: Pixel's cap reset at UTC midnight during the Pacific workday, and render-on
 Impact: Administrators can run the real Slack Team pipeline without consuming live evidence, compounding Brain memory, counting against the live cap, or delivering a message. Preview proposals remain reviewable/dismissible and are visibly marked.
 
 Files: `apps/api/src/modules/spaces`, `apps/api/src/modules/slack/services`, `apps/web/src/features/spaces`, `apps/web/src/features/team-2`, `documentation/features/spaces-automation.md`, `.docs/plans/agent-follow-up-work.md`.
+
+## [2026-08-10 22:19] - [FEATURE]
+
+What: Extracted Slack signal routing from the team loop, added a shared Pixel Slack voice pack, and composed evidence-grounded proactive briefings with continuity, scoped offers, validation, usage logging, preview rendering, and deterministic fallback.
+
+Why: Pixel's fixed digest copy could not match Viktor's specificity or natural variation, while routing and orchestration had reached the service's planned extraction boundary.
+
+Impact: Preview and eligible internal delivery now use exact source names, channels, quotes, figures, and local-day context without weakening internal-only, confidence, quiet-hour, cap, or evidence safety rails. Model or validation failures preserve the existing deterministic copy.
+
+Files: `packages/agent-policy/src/pixel-slack-voice.ts`, `apps/api/src/modules/spaces/services/slack-team-message-composer.service.ts`, signal routing/delivery services and tests, `documentation/features/spaces-automation.md`.
