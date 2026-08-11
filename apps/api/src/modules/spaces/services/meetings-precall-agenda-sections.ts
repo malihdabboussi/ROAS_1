@@ -79,7 +79,7 @@ export function buildPrecallPrompt(input: {
     '## Wins',
     'Only evidenced progress since the last meeting; connect each win to business impact.',
     '## Campaign notes',
-    'Campaign-by-campaign state, what changed, what we learned, and the recommended next move.',
+    'For every active campaign in the source pack, include its state, dated evidence, what changed or was learned, and a specific recommended next move. Never collapse this to a generic summary.',
     '## Other updates',
     'Decisions needed, strategic questions, client inputs, and material delivery updates.',
     '## Needs / blockers',
@@ -121,7 +121,12 @@ export function parsePrepDocToAgendaSections(body: string): {
     get('Agenda', 'Discussion agenda', 'Meeting agenda') ||
     [talking, approach].filter(Boolean).join('\n\n')
   const wins = get('Wins', 'Progress / wins', 'Progress and wins') || accomplished
-  const campaignNotes = get('Campaign notes', 'Campaign Notes', 'Campaign analysis')
+  const campaignNotes = get(
+    'Campaign notes',
+    'Campaign Notes',
+    'Campaign analysis',
+    'Campaign notes / recommendations',
+  )
   const otherUpdates =
     get('Other updates', 'Other Updates', 'Decisions needed') ||
     [snapshot, openQuestions].filter(Boolean).join('\n\n')

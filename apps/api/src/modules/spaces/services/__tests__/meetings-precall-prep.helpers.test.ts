@@ -405,6 +405,13 @@ Acme weekly
     expect(sections.needs_blockers).toContain('offer approval')
   })
 
+  it('accepts the common campaign recommendations heading variant', () => {
+    const sections = parsePrepDocToAgendaSections(`## Campaign Notes / Recommendations
+- Webinar: 42 leads at $18 CPL from Aug 5–11; hold budget through the event.`)
+
+    expect(sections.campaign_notes).toContain('42 leads at $18 CPL')
+  })
+
   it('parses the rich HTML body produced by save_document', () => {
     const sections =
       parsePrepDocToAgendaSections(`<h2>Agenda</h2><ol><li>Review the lead-quality decline and decide whether to narrow targeting.</li></ol>
