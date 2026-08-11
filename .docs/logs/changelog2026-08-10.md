@@ -107,3 +107,13 @@ Why: Scoped offers needed a zero-plumbing conversion from Slack intent into dura
 Impact: Matching offered rows atomically become accepted with their acceptance path recorded; unrelated reactions and replies continue through existing handlers.
 
 Files: pending-offer acceptance service/repository, Slack reaction and thread-enrichment integration, module wiring, `documentation/features/spaces-automation.md`.
+
+## [2026-08-10 22:47] - [FEATURE]
+
+What: Added accepted-offer runtime fulfillment for recap briefs, case studies, and spend breakdowns, with same-thread acknowledgement/delivery and missed-promise reporting.
+
+Why: Accepted Pixel offers needed to become delivered work without human plumbing or silent promise failure.
+
+Impact: Acceptance acknowledges the exact promise, queues only when a persistent consumer is explicitly enabled, runs inline on Vercel, posts evidence-grounded artifacts to the source thread, records delivery references, and reports overdue work.
+
+Files: Slack offer fulfillment service/repository/tests, pending-offer acceptance, automation runtime processor, composer schema, module wiring, docs.

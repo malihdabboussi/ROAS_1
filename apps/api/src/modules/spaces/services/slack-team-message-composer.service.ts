@@ -37,7 +37,7 @@ const COMPOSITION_SCHEMA = {
       items: {
         type: 'object',
         properties: {
-          kind: { type: 'string' },
+          kind: { type: 'string', enum: ['recap_brief', 'case_study', 'spend_breakdown'] },
           deliverable: { type: 'string' },
           ready_by: { type: 'string' },
         },

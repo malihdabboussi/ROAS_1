@@ -6,11 +6,12 @@ import type { Job } from 'bullmq'
 import { AGENT_RUNTIME_AUTOMATION_QUEUE } from '../../agent-runtime/agent-runtime-queues'
 import { SpaceAutomationRunsRepository } from '../repositories/space-automation-runs.repository'
 import { SpaceAutomationService, type TriggerEvent } from './space-automation.service'
+import { SlackOfferFulfillmentService } from './slack-offer-fulfillment.service'
 
 const AUTOMATION_CONCURRENCY = readPositiveInt(process.env.AGENT_RUNTIME_AUTOMATION_CONCURRENCY, 5)
 
 type AutomationRuntimeJobData = {
-  mode?: 'item' | 'itemless'
+  mode?: 'item' | 'itemless' | 'offer_fulfillment'
   automationId?: string
   event?: TriggerEvent
   userId?: string
@@ -19,6 +20,7 @@ type AutomationRuntimeJobData = {
   itemId?: string
   depth?: number
   afterComplete?: { externalEventId?: unknown; patch?: Record<string, unknown> }
+  offerId?: string
 }
 
 @Processor(AGENT_RUNTIME_AUTOMATION_QUEUE, {
@@ -33,12 +35,17 @@ export class SpaceAutomationRuntimeProcessor extends WorkerHost {
   constructor(
     private readonly automationService: SpaceAutomationService,
     private readonly configService: ConfigService,
+    private readonly offerFulfillment: SlackOfferFulfillmentService,
     private readonly automationRunsRepo: SpaceAutomationRunsRepository = new SpaceAutomationRunsRepository(),
   ) {
     super()
   }
 
   async process(job: Job<AutomationRuntimeJobData>): Promise<void> {
+    if (job.data?.mode === 'offer_fulfillment' && job.data.offerId) {
+      await this.offerFulfillment.fulfill(this.getAdminClient(), job.data.offerId)
+      return
+    }
     const automationId = String(job.data?.automationId ?? '').trim()
     const userId = String(job.data?.userId ?? '').trim()
     const spaceId = String(job.data?.spaceId ?? '').trim()

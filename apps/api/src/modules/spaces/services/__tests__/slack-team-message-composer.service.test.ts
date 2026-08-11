@@ -41,7 +41,7 @@ describe('SlackTeamMessageComposerService', () => {
             text: '*Maya* landed *4.82x ROAS* on *$12,450 spend* in #client-acme.\n\nI can turn the winning variables into a 5-bullet test brief by 2pm PT.',
             offers: [
               {
-                kind: 'test_brief',
+                kind: 'case_study',
                 deliverable: '5-bullet test brief',
                 ready_by: '2pm PT',
               },
@@ -54,7 +54,7 @@ describe('SlackTeamMessageComposerService', () => {
 
     await expect(service.compose(input)).resolves.toMatchObject({
       text: expect.stringContaining('$12,450'),
-      offers: [{ kind: 'test_brief', deliverable: '5-bullet test brief', ready_by: '2pm PT' }],
+      offers: [{ kind: 'case_study', deliverable: '5-bullet test brief', ready_by: '2pm PT' }],
       usage: { totalTokens: 160, providerCostUsd: 0.002 },
     })
   })
