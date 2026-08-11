@@ -19,3 +19,13 @@ Why: Vercel successfully emitted the function but reported non-fatal Express dec
 Impact: The isolated cron function remains behaviorally identical and now compiles without function-local TypeScript diagnostics.
 
 Files: `apps/api/api/space-automation-cron.ts`, `apps/api/src/space-automation-cron-function.test.ts`.
+
+## [2026-08-11 07:15] - [FEATURE]
+
+What: Added a one-time near-context-limit notification to interactive OpenClaw replies when 10% or at most 32,000 tokens remain.
+
+Why: Pixel should give Dylan the same early warning Viktor provides before a long conversation reaches its context ceiling.
+
+Impact: The warning uses only fresh final-call usage, is suppressed for heartbeats and completed compactions, deduplicates per compaction cycle, and rearms after compaction or session reset. Automatic compaction remains unchanged.
+
+Files: OpenClaw context-warning helper/tests, reply runner, session state, chat stream recovery documentation.

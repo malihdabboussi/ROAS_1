@@ -9585,3 +9585,18 @@ Evidence: Pixel production verification showed that registering Nest timers insi
 Needed work: Inventory every API `@Cron` job, document its authoritative persistent host or add a dedicated authenticated Vercel endpoint, and add deployment-level ownership tests that prevent duplicate runners.
 
 Reason not done now: Re-homing unrelated machine, billing, recurrence, MCP, and model-maintenance jobs is broader than the Pixel scheduler outage; the in-scope fix removes their interference without changing their persistent-host behavior.
+
+## 2026-08-11 — OpenClaw reply-runner decomposition
+
+Status: Open
+
+Files:
+
+- `apps/openclaw/src/auto-reply/reply/agent-runner.ts` (542 LOC; above the 500-line soft limit)
+- `apps/openclaw/src/auto-reply/reply/agent-runner.misc.runreplyagent.test.ts` (1,227 LOC; above the 600-line hard limit)
+
+Evidence: The scoped context-warning integration adds one small orchestration hook to the existing reply runner and one regression case to its pre-existing oversized miscellaneous suite. Production code remains under the 600-line hard limit, while the test host was already far above it.
+
+Needed work: Extract final reply decoration/accounting from `agent-runner.ts` and split the miscellaneous runner suite by behavior (usage/context warnings, streaming, provider fallback, and reply suppression).
+
+Reason not done now: The requested change requires the existing post-usage/pre-delivery chokepoint. A broader behavior-neutral runner/test decomposition would materially expand the deployment surface beyond the token-warning feature.

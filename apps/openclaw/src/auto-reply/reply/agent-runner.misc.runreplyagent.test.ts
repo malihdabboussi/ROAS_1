@@ -387,6 +387,67 @@ describe("runReplyAgent auto-compaction token update", () => {
     // totalTokens should use lastCallUsage (55k), not accumulated (75k)
     expect(stored[sessionKey].totalTokens).toBe(55_000);
   });
+
+  it("prepends one context-limit warning per compaction cycle", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-context-warning-run-"));
+    const storePath = path.join(tmp, "sessions.json");
+    const sessionKey = "main";
+    const sessionEntry = {
+      sessionId: "session",
+      updatedAt: Date.now(),
+      compactionCount: 0,
+    };
+    await seedSessionStore({ storePath, sessionKey, entry: sessionEntry });
+
+    runEmbeddedPiAgentMock.mockResolvedValue({
+      payloads: [{ text: "Still working." }],
+      meta: {
+        agentMeta: {
+          usage: { input: 180_000, output: 2_000 },
+          lastCallUsage: { input: 180_000, output: 2_000 },
+        },
+      },
+    });
+    const run = () => {
+      const { typing, sessionCtx, resolvedQueue, followupRun } = createBaseRun({
+        storePath,
+        sessionEntry,
+      });
+      return runReplyAgent({
+        commandBody: "hello",
+        followupRun,
+        queueKey: sessionKey,
+        resolvedQueue,
+        shouldSteer: false,
+        shouldFollowup: false,
+        isActive: false,
+        isStreaming: false,
+        typing,
+        sessionCtx,
+        sessionEntry,
+        sessionStore: { [sessionKey]: sessionEntry },
+        sessionKey,
+        storePath,
+        defaultModel: "anthropic/claude-opus-4-5",
+        agentCfgContextTokens: 200_000,
+        resolvedVerboseLevel: "off",
+        isNewSession: false,
+        blockStreamingEnabled: false,
+        resolvedBlockStreamingBreak: "message_end",
+        shouldInjectGroupIntro: false,
+        typingMode: "instant",
+      });
+    };
+
+    const first = await run();
+    expect(Array.isArray(first) ? first.map((payload) => payload.text) : []).toEqual([
+      "⚠️ Heads-up — this conversation is almost at its context limit (~20k tokens left). I’ll compact automatically to keep going.",
+      "Still working.",
+    ]);
+
+    const second = await run();
+    expect(Array.isArray(second) ? second[0]?.text : second?.text).toBe("Still working.");
+  });
 });
 
 describe("runReplyAgent block streaming", () => {

@@ -9,7 +9,7 @@ import { DEFAULT_CONTEXT_TOKENS } from "../../agents/defaults.js";
 import { resolveModelAuthMode } from "../../agents/model-auth.js";
 import { isCliProvider } from "../../agents/model-selection.js";
 import { queueEmbeddedPiMessage } from "../../agents/pi-embedded.js";
-import { hasNonzeroUsage } from "../../agents/usage.js";
+import { deriveSessionTotalTokens, hasNonzeroUsage } from "../../agents/usage.js";
 import {
   resolveAgentIdFromSessionKey,
   resolveSessionFilePath,
@@ -35,6 +35,7 @@ import { buildReplyPayloads } from "./agent-runner-payloads.js";
 import { appendUsageLine, formatResponseUsageLine } from "./agent-runner-utils.js";
 import { createAudioAsVoiceBuffer, createBlockReplyPipeline } from "./block-reply-pipeline.js";
 import { resolveBlockStreamingCoalescing } from "./block-streaming.js";
+import { claimContextTokenWarning, resolveContextTokenWarning } from "./context-token-warning.js";
 import { createFollowupRunner } from "./followup-runner.js";
 import { enqueueFollowupRun, type FollowupRun, type QueueSettings } from "./queue.js";
 import { createReplyToModeFilterForChannel, resolveReplyToMode } from "./reply-threading.js";
@@ -420,6 +421,21 @@ export async function runReplyAgent(params: {
       return finalizeWithFollowup(undefined, queueKey, runFollowupTurn);
     }
 
+    let contextTokenWarning: string | null = null;
+    if (!isHeartbeat && !autoCompactionCompleted && storePath && sessionKey) {
+      const warning = resolveContextTokenWarning({
+        totalTokens: deriveSessionTotalTokens({
+          usage: runResult.meta.agentMeta?.lastCallUsage,
+          contextTokens: contextTokensUsed,
+          promptTokens,
+        }),
+        contextTokens: contextTokensUsed,
+      });
+      if (warning) {
+        contextTokenWarning = await claimContextTokenWarning({ storePath, sessionKey, warning });
+      }
+    }
+
     await signalTypingIfNeeded(replyPayloads, typingSignals);
 
     if (isDiagnosticsEnabled(cfg) && hasNonzeroUsage(usage)) {
@@ -489,6 +505,9 @@ export async function runReplyAgent(params: {
 
     // If verbose is enabled and this is a new session, prepend a session hint.
     let finalPayloads = replyPayloads;
+    if (contextTokenWarning) {
+      finalPayloads = [{ text: contextTokenWarning }, ...finalPayloads];
+    }
     const verboseEnabled = resolvedVerboseLevel !== "off";
     if (autoCompactionCompleted) {
       const count = await incrementRunCompactionCount({

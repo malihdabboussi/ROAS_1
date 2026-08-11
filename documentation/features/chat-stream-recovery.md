@@ -1,6 +1,6 @@
 # Chat Stream Recovery
 
-Last Modified: 2026-07-30
+Last Modified: 2026-08-11
 
 ## Overview
 
@@ -37,6 +37,7 @@ Chat streaming uses Supabase messages as the canonical record and Redis as the l
 27. Mission Worker can run the Railway chat autoscaler, which watches BullMQ chat queue pressure and updates the shared Railway Agent API replica count through Railway's GraphQL API.
 28. Auto chat runs in two stages: discounted GPT-5.6 Terra performs bounded retrieval and tool work, then one tool-free Terra pass writes the user-facing answer from a compact evidence packet. If the writing pass fails, the completed research answer is returned without repeating tools.
 29. Each provider generation keeps its model, stage, provider generation id, token/cache usage, provider cost, and settlement state. Completion accounting charges only generations not already recorded by provider settlement and emits one `chat_generation_cost_v1` record with the full turn cost and generation breakdown.
+30. After an interactive OpenClaw reply, a fresh context snapshot is compared with the effective context window. When 10% or at most 32,000 tokens remain, the runtime prepends one concise warning and records the current compaction cycle so the same session does not repeat it.
 
 ## Contracts
 
@@ -72,6 +73,7 @@ Chat streaming uses Supabase messages as the canonical record and Redis as the l
 - Public widget agent prewarm is conversation-independent. It may include runtime readiness, model routing, policy, agent registration, user/team/integration summaries, and agent Brain presence, but conversation history, campaign team/theme, and previous images wait for the conversation-level prewarm or Send path.
 - Conversation-level public widget prewarm and Send must join an in-flight agent prewarm or reuse the completed agent cache entry before building conversation-scoped stable context.
 - The default OpenClaw runtime context is capped at 250,000 tokens with safeguard compaction and five-minute stale-tool pruning. A validated per-request context selection can still override that default for work that explicitly needs a different window.
+- Near-context warnings require a fresh final-call usage snapshot, never run for heartbeats, and are deduplicated per compaction cycle. Auto-compaction remains authoritative; a new session or completed compaction rearms the warning.
 - Chat response ceilings are 32,768 tokens for standard models, 16,384 for Haiku, and 65,536 for Codex work. These are safety ceilings; they do not change the selected model or reasoning quality.
 - Auto uses discounted GPT-5.6 Terra with medium reasoning and a 272,000-token working window. Its staged chat path uses a bounded Terra research/tool pass followed by one tool-free Terra writing pass with a 128,000-token window; only the compact evidence packet crosses that boundary. Economy uses Terra with lower reasoning, explicit Power routes to Opus 5, and Fable 5 is never selected automatically. Sonnet 4.6 remains the stable fallback for provider failures. Sonnet 5 and GPT-5.6 Sol remain certified experimental choices rather than production defaults.
 - OpenRouter credentials are scoped by workload and injected only for the current request: interactive Chat uses the interactive credential, Mission and Brain work uses the background credential, and media/image work uses the media credential. Existing subscription credentials retain precedence, and the legacy OpenRouter credential remains a migration fallback. Runtime credentials are not persisted in sessions, traces, or provider-attempt metadata; billing attempts record only the non-secret credential scope used for later cost reconciliation.
@@ -92,8 +94,11 @@ Transport failures auto-recover first. Redis resume is attempted for healthy act
 
 Context-window failures are model failures, not transport failures. OpenClaw owns the recovery loop: it detects overflow, emits structured compaction progress, compacts session history or truncates oversized tool results, then retries the same assistant run without Agent API synthesizing a compact user prompt. If recovery still fails, the gateway emits a failed OpenResponses result with `context_window_exceeded`; Agent API marks the run `failed_recoverable`, and the frontend shows the recoverable context message instead of a fake completed answer. Model overload, model/context settings, workspace billing, provider billing, missing OpenAI Codex subscription auth, missing Claude Subscription auth, and runtime availability failures show specific messages instead of interrupted-answer controls.
 
+Before overflow, interactive channel replies add a one-time heads-up when the fresh context snapshot reaches the near-limit threshold. The warning reports approximate tokens remaining and explains that automatic compaction will keep the conversation moving. It is not a billing-credit alert and cannot be triggered by accumulated or stale usage totals.
+
 ## Decision Log
 
+- 2026-08-11: Added a Viktor-style near-context-limit notification for Pixel and other OpenClaw channel agents. It fires once at 10% remaining (capped at a 32K warning window), ignores stale usage and heartbeats, and rearms only after compaction or session reset.
 - 2026-07-29: Added durable run-progress timestamps and one-shot automatic continuation. Heartbeats no longer keep a run healthy after real agent events stop, abandoned runs are cancelled and resumed from saved context automatically, recovery progress stays visible, and manual Continue is now the final fallback instead of the normal path.
 - 2026-07-29: Added durable status reconciliation for heartbeat-only live streams. A proxy connection can remain byte-active after it stops delivering structured agent events; the browser now checks the run after 60 seconds and hydrates a completed persisted answer instead of waiting indefinitely for refresh.
 - 2026-07-28: Split Auto into a low-cost research/tool stage and a single bounded Opus 5 writing stage. Added generation-level settlement reconciliation and cost telemetry so repeated provider calls are visible and already-settled generations cannot be charged again.
