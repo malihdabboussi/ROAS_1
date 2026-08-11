@@ -16,6 +16,7 @@ import { SlackPeopleController } from './controllers/slack-people.controller'
 import { SlackWebhookController } from './controllers/slack-webhook.controller'
 import { SlackController } from './controllers/slack.controller'
 import { SlackApiIntegration } from './integrations/slack-api.integration'
+import { SlackAutomationHealthRepository } from './repositories/slack-automation-health.repository'
 import { SlackBrainMappingRepository } from './repositories/slack-brain-mapping.repository'
 import { SlackDigestEvidenceRepository } from './repositories/slack-digest-evidence.repository'
 import { SlackObservationRepository } from './repositories/slack-observation.repository'
@@ -28,6 +29,7 @@ import { SlackRepository } from './repositories/slack.repository'
 import { SlackAccessControlService } from './services/slack-access-control.service'
 import { SlackAgentToolsService } from './services/slack-agent-tools.service'
 import { SlackArchiveSearchService } from './services/slack-archive-search.service'
+import { SlackAutomationHealthService } from './services/slack-automation-health.service'
 import { SlackBrainMappingService } from './services/slack-brain-mapping.service'
 import { SlackChannelCoverageService } from './services/slack-channel-coverage.service'
 import { SlackDigestReplyContextService } from './services/slack-digest-reply-context.service'
@@ -55,6 +57,7 @@ import { SlackService } from './services/slack.service'
   providers: [
     SlackService,
     SlackAccessControlService,
+    SlackAutomationHealthService,
     SlackArchiveSearchService,
     SlackAgentToolsService,
     SlackBrainMappingService,
@@ -65,6 +68,7 @@ import { SlackService } from './services/slack.service'
     SlackSignalResolutionService,
     SlackSenderResolverService,
     SlackRepository,
+    SlackAutomationHealthRepository,
     SlackRuntimeRepository,
     SlackBrainMappingRepository,
     SlackObservationRepository,

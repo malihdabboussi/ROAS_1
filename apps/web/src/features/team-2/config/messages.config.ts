@@ -65,6 +65,7 @@ export const SLACK_PEOPLE_MESSAGES = {
   SIGNAL_REFRESH_RESOLVED: 'This signal is resolved.',
   SIGNAL_REFRESH_OPEN: 'This signal still appears open.',
   SIGNAL_REFRESH_ERROR: "Pixel couldn't refresh this signal.",
+  AUTOMATION_HEALTH_ERROR: "Pixel couldn't load the last 24 hours of automation activity.",
   SIGNAL_REVIEW_HELP:
     'Mark reviewed only clears this finding from review. It does not create or send a message. To act on it, tell Pixel who should handle it and create an internal Shadow action plan.',
   CHANNEL_EXCLUSION_SUCCESS: 'Slack channel coverage updated.',

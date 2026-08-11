@@ -9498,3 +9498,17 @@ Evidence: The instant-call change only generalized the existing unmatched-call A
 Needed work: Extract Agenda call enrichment/query mapping from the pre-call service and move Agenda modal orchestration into a focused container without changing calendar/Fathom identity behavior.
 
 Reason not done now: The requested impromptu call path is complete and covered by focused tests; decomposing the broader scheduled-call and enrichment pipeline is behavior-neutral pre-existing architecture work.
+## 2026-08-10 — Pixel observability surface decomposition
+
+Status: Open
+
+Files:
+
+- `apps/api/src/modules/spaces/services/slack-team-signal-delivery.service.ts` (456 LOC; above 90% of the 500-line soft limit)
+- `apps/web/src/features/team-2/components/people/SlackTeamSignalsView.tsx` (384 LOC; above 90% of the 400-line component limit)
+
+Evidence: PR 2 added persisted delivery-gate outcomes and mounted a separately extracted automation-health card. The existing signal-delivery orchestration and signal review screen remain near their limits even after keeping the new admin surface in its own component.
+
+Needed work: Extract the delivery decision evaluator and split the signal evidence/training detail panes into focused siblings without changing safety gates or review behavior.
+
+Reason not done now: The requested PR is behavior-sensitive liveness and observability work; a broader delivery/view decomposition would expand its regression surface and PR 4 already owns the planned signal-routing extraction.

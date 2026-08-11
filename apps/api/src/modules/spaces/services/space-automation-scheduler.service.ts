@@ -1,11 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { ErrorReporter, reportAppError } from '@vibey/api-shared'
 import parser from 'cron-parser'
+import { ErrorReporter, reportAppError } from '@vibey/api-shared'
 import type { ScheduleConfig } from '../dto'
 import { SpaceAutomationRunsRepository } from '../repositories/space-automation-runs.repository'
 import { SpaceAutomationsRepository } from '../repositories/space-automations.repository'
+import { SpaceAutomationLivenessService } from './space-automation-liveness.service'
 import { SpaceAutomationService, type TriggerEvent } from './space-automation.service'
 
 /**
@@ -36,6 +37,7 @@ export class SpaceAutomationSchedulerService {
     private readonly configService: ConfigService,
     private readonly errorReporter: ErrorReporter,
     private readonly automationRunsRepo: SpaceAutomationRunsRepository = new SpaceAutomationRunsRepository(),
+    @Optional() private readonly liveness?: SpaceAutomationLivenessService,
   ) {}
 
   /**
@@ -89,9 +91,7 @@ export class SpaceAutomationSchedulerService {
         await this.processOne(admin, row)
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
-        this.logger.error(
-          `Schedule fire failed for automation ${String(row.id)}: ${message}`,
-        )
+        this.logger.error(`Schedule fire failed for automation ${String(row.id)}: ${message}`)
         reportAppError(
           this.errorReporter,
           {
@@ -147,6 +147,30 @@ export class SpaceAutomationSchedulerService {
       firedAt.toISOString(),
     )
     if (!claimed) return
+
+    const lastFiredAt = Date.parse(String(row.schedule_last_fired_at ?? ''))
+    const intervalMs = next.getTime() - firedAt.getTime()
+    const silentMs = Number.isFinite(lastFiredAt) ? firedAt.getTime() - lastFiredAt : 0
+    const thresholdMs = Math.max(15 * 60_000, intervalMs * 3)
+    if (silentMs > thresholdMs && this.liveness) {
+      const missedFires = Math.max(1, Math.floor(silentMs / Math.max(intervalMs, 60_000)) - 1)
+      try {
+        await this.liveness.reportRevived(admin, {
+          automationId,
+          automationName: String(row.name ?? automationId),
+          userId,
+          orgId,
+          missedFires,
+          now: firedAt,
+        })
+      } catch (err) {
+        this.logger.error(
+          `Schedule liveness alert failed for ${automationId}: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        )
+      }
+    }
 
     const event: TriggerEvent = { type: 'schedule', fired_at: firedAt.toISOString() }
 
@@ -210,10 +234,7 @@ export class SpaceAutomationSchedulerService {
   }
 
   private async reseedMissingNextFireAt(admin: SupabaseClient): Promise<void> {
-    const rows = await this.automationsRepo.findSchedulesMissingNextFire(
-      admin,
-      DUE_BATCH_SIZE,
-    )
+    const rows = await this.automationsRepo.findSchedulesMissingNextFire(admin, DUE_BATCH_SIZE)
     const now = new Date()
     for (const row of rows) {
       const automationId = String(row.id ?? '')

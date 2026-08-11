@@ -19,3 +19,12 @@ Why: Vercel was enqueueing scheduled work to a Railway-private Redis queue with 
 Impact: Pixel completed a fresh production run with 469 observations after the outage. Vercel now executes scheduled automations inline through the authenticated cron endpoint; transient persistence failures remain due for retry; valid enabled schedules self-heal after a null next-fire incident.
 
 Files: `apps/api/src/cron.service.ts`, `apps/api/src/cron.service.test.ts`, `apps/api/src/modules/spaces/services/space-automation-service-01.base.ts`, `apps/api/src/modules/spaces/services/space-automation-service-08.base.ts`, `apps/api/src/modules/spaces/services/space-automation-scheduler.service.ts`, `apps/api/src/modules/spaces/repositories/space-automations.repository.ts`, related tests, `documentation/features/spaces-automation.md`.
+## [2026-08-10 21:06] - [FEATURE]
+
+What: Added daily-deduped schedule recovery notices and Pixel owner DMs, persisted scheduled-run skip reasons and recipient delivery-gate outcomes, and exposed a 24-hour ran/skipped/delivered/held summary in Team Intelligence.
+
+Why: Enabled schedules could recover after a silent period without reporting missed fires, while successful run rows did not explain safety-gate skips or held recipients.
+
+Impact: Administrators can see why Pixel did or did not act without weakening quiet hours, internal-only delivery, allowlists, or person-level Active gates. The migration is included but was not applied to production.
+
+Files: `supabase/migrations/20260811033000_space_automation_liveness_observability.sql`, `apps/api/src/modules/spaces/services/space-automation-liveness.service.ts`, `apps/api/src/modules/spaces/services/space-automation-scheduler.service.ts`, `apps/api/src/modules/spaces/services/space-automation-service-08.base.ts`, `apps/api/src/modules/spaces/services/slack-team-signal-delivery.service.ts`, `apps/api/src/modules/slack/services/slack-automation-health.service.ts`, `apps/web/src/features/team-2/components/people/SlackAutomationHealthCard.tsx`, `documentation/features/spaces-automation.md`

@@ -6,6 +6,7 @@ import { SLACK_PEOPLE_MESSAGES } from '../../config/messages.config'
 import { slackMrkdwnToPlainPreview } from '../../lib/slack-message-markdown'
 import { slackSignalEvidence } from '../../lib/slack-signal-evidence'
 import type { SlackShadowAction } from '../../services/slack-people.service'
+import { SlackAutomationHealthCard } from './SlackAutomationHealthCard'
 
 interface SlackTeamSignalsViewProps {
   actions: SlackShadowAction[]
@@ -84,6 +85,8 @@ export function SlackTeamSignalsView({
           </header>
         </div>
       </div>
+
+      <SlackAutomationHealthCard />
 
       <section className="surface-card border-border rounded-spacing-4 flex min-h-0 flex-1 overflow-hidden border">
         <aside className="border-border w-spacing-80 flex min-w-0 shrink-0 flex-col border-r">
