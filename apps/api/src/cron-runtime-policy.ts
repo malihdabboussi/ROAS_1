@@ -1,5 +1,5 @@
 export function shouldEnableInProcessScheduling(
-  env: Pick<NodeJS.ProcessEnv, 'VERCEL'> = process.env,
+  vercel: string | undefined = process.env.VERCEL,
 ): boolean {
-  return env.VERCEL !== '1'
+  return vercel !== '1'
 }
