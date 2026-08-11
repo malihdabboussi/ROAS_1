@@ -17,6 +17,23 @@ export class SlackInboundThreadEnrichmentService {
     text: string
     slackUserId: string
   }): Promise<{ handled: boolean; text: string }> {
+    const { SlackPendingOfferAcceptanceService } =
+      await import('../../spaces/services/slack-pending-offer-acceptance.service')
+    const offerAcceptance = this.moduleRef.get(SlackPendingOfferAcceptanceService, {
+      strict: false,
+    })
+    if (
+      offerAcceptance &&
+      (await offerAcceptance.handleThreadReply({
+        supabase: input.supabase,
+        teamId: input.teamId,
+        channelId: input.channelId,
+        threadTs: input.threadTs,
+        text: input.text,
+      }))
+    ) {
+      return { handled: true, text: input.text }
+    }
     const { MeetingFollowUpSlackConfirmService } =
       await import('../../spaces/services/meeting-follow-up-slack-confirm.service')
     const confirm = this.moduleRef.get(MeetingFollowUpSlackConfirmService, { strict: false })
