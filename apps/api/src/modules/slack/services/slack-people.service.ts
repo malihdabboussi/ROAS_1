@@ -449,6 +449,9 @@ export class SlackPeopleService {
     if (!orgId) throw new BadRequestException('Shadow Mode requires organization context')
     const action = await this.peopleRepository.findShadowAction(supabase, orgId, actionId)
     if (!action) throw new NotFoundException('Shadow proposal not found')
+    if (action.metadata?.preview === true) {
+      throw new ConflictException('Preview proposals cannot be sent')
+    }
     if (action.status !== 'approved') {
       throw new ConflictException('Approve this proposal before sending it')
     }
@@ -489,11 +492,9 @@ export class SlackPeopleService {
     try {
       const destination =
         typeof action.metadata?.destination === 'string' ? action.metadata.destination : 'dm'
-      const isSourceDestination = [
-        'source_thread',
-        'thread_broadcast',
-        'source_channel',
-      ].includes(destination)
+      const isSourceDestination = ['source_thread', 'thread_broadcast', 'source_channel'].includes(
+        destination,
+      )
       if (isSourceDestination) {
         channelId = action.source_channel_id
       } else {

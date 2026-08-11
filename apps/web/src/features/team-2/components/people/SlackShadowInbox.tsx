@@ -44,6 +44,7 @@ export function SlackShadowInbox({
           {actions.map((action) => {
             const person = peopleById.get(action.target_member_id ?? '')
             const isPostCall = action.metadata?.source === 'meeting_follow_up_assignee_reminder'
+            const isPreview = action.metadata?.preview === true
             return (
               <article key={action.id} className="p-spacing-4 min-w-0 overflow-hidden">
                 <div className="gap-spacing-3 flex items-center justify-between">
@@ -70,6 +71,11 @@ export function SlackShadowInbox({
                     ) : null}
                   </div>
                 ) : null}
+                {isPreview ? (
+                  <div className="mt-spacing-2">
+                    <span className="badge-glass badge-glass-blue body-4">Preview</span>
+                  </div>
+                ) : null}
                 <p className="body-3 text-foreground mt-spacing-2 min-w-0 whitespace-pre-wrap break-words">
                   {action.proposed_content}
                 </p>
@@ -80,13 +86,15 @@ export function SlackShadowInbox({
                 ) : null}
                 {action.status === 'proposed' ? (
                   <div className="mt-spacing-3 gap-spacing-2 flex flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => onReview(action.id, 'approved')}
-                      className="button-compact button-glass-primary"
-                    >
-                      Approve
-                    </button>
+                    {!isPreview ? (
+                      <button
+                        type="button"
+                        onClick={() => onReview(action.id, 'approved')}
+                        className="button-compact button-glass-primary"
+                      >
+                        Approve
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => onReview(action.id, 'dismissed')}
@@ -96,7 +104,7 @@ export function SlackShadowInbox({
                     </button>
                   </div>
                 ) : null}
-                {action.status === 'approved' && action.action_kind === 'message' ? (
+                {!isPreview && action.status === 'approved' && action.action_kind === 'message' ? (
                   person?.delivery_mode === 'active' ? (
                     <button
                       type="button"

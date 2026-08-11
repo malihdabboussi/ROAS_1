@@ -22,12 +22,39 @@ function createController() {
 
   return {
     controller: new SpaceAutomationReadController(
-      {} as never,
+      { previewAutomation: vi.fn(), dryRun: vi.fn() } as never,
       new SpaceAutomationReadService(permissionsService as never) as never,
     ),
     permissionsService,
   }
 }
+
+describe('Space automation preview', () => {
+  it('routes preview=true through the full send-safe preview pipeline without an item', async () => {
+    const automationService = {
+      previewAutomation: vi.fn().mockResolvedValue({ preview: true, action_results: [] }),
+      dryRun: vi.fn(),
+    }
+    const controller = new SpaceAutomationReadController(automationService as never, {} as never)
+
+    await expect(
+      controller.test(
+        { id: 'user-1' },
+        {} as never,
+        { id: 'space-1' },
+        { automationId: 'automation-1' },
+        {},
+        { preview: true },
+        { userId: 'user-1', orgId: 'org-1', orgRole: 'admin' },
+      ),
+    ).resolves.toEqual({ preview: true, action_results: [] })
+    expect(automationService.previewAutomation).toHaveBeenCalledWith(
+      'automation-1',
+      expect.objectContaining({ spaceId: 'space-1', orgId: 'org-1' }),
+    )
+    expect(automationService.dryRun).not.toHaveBeenCalled()
+  })
+})
 
 describe('SpaceAutomationsController direct data routes', () => {
   it('lists Fathom self, org-shared users, and teams with connected members', async () => {

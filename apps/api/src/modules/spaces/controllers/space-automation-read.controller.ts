@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards } from '@nestjs/common'
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common'
 import { ThrottlerGuard } from '@nestjs/throttler'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
@@ -14,9 +25,11 @@ import {
 } from '@vibey/api-shared'
 import {
   AutomationIdParamSchema,
+  PreviewAutomationQuerySchema,
   SpaceIdParamSchema,
   TestAutomationSchema,
   type AutomationIdParam,
+  type PreviewAutomationQuery,
   type SpaceIdParam,
   type TestAutomationDto,
 } from '../dto'
@@ -58,8 +71,18 @@ export class SpaceAutomationReadController {
     @Param(new ZodValidationPipe(SpaceIdParamSchema)) params: SpaceIdParam,
     @Param(new ZodValidationPipe(AutomationIdParamSchema)) aParams: AutomationIdParam,
     @Body(new ZodValidationPipe(TestAutomationSchema)) body: TestAutomationDto,
+    @Query(new ZodValidationPipe(PreviewAutomationQuerySchema)) query: PreviewAutomationQuery,
     @OrgContext() scope: RequestScope,
   ) {
+    if (query.preview) {
+      return this.automationService.previewAutomation(aParams.automationId, {
+        supabase,
+        userId: user.id,
+        orgId: scope.orgId,
+        spaceId: params.id,
+      })
+    }
+    if (!body.item_id) throw new BadRequestException('item_id is required for a dry run')
     return this.automationService.dryRun(aParams.automationId, {
       supabase,
       userId: user.id,

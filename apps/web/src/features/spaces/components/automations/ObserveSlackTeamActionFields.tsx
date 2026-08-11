@@ -112,10 +112,10 @@ export function ObserveSlackTeamActionFields({
             type="number"
             min={1}
             max={100}
-            value={action.daily_limit ?? 10}
+            value={action.daily_limit ?? 40}
             onChange={(event) =>
               onChange({
-                daily_limit: Number(event.target.value || 10),
+                daily_limit: Number(event.target.value || 40),
               } as Partial<ObserveSlackTeamAction>)
             }
             className="body-3 h-spacing-10 rounded-spacing-2 border-border bg-background px-spacing-3 text-foreground w-full border outline-none"

@@ -38,3 +38,12 @@ Why: The production frontend build failed because one component imported a missi
 Impact: Vercel can compile the Home flyout contract again, and rough thoughts entered in Delegation Desk persist as unassigned review-mode Holding tank items.
 
 Files: `apps/web/src/features/spaces/services/delegation-desk.service.ts`, `apps/web/src/features/spaces/services/__tests__/delegation-desk.service.test.ts`, `apps/web/src/components/layout/sidebar/SidebarHqFlyouts.tsx`
+## [2026-08-10 21:31] - [FEATURE]
+
+What: Added timezone-correct Slack Team daily caps, raised default limits to 40, and added a full send-safe manual preview pipeline with isolated cursors/dedupe, Preview-badged admin proposals, and a server-side no-send guard.
+
+Why: Pixel's cap reset at UTC midnight during the Pacific workday, and render-only dry runs could not exercise or review the real analysis/composition path safely.
+
+Impact: Administrators can run the real Slack Team pipeline without consuming live evidence, compounding Brain memory, counting against the live cap, or delivering a message. Preview proposals remain reviewable/dismissible and are visibly marked.
+
+Files: `apps/api/src/modules/spaces`, `apps/api/src/modules/slack/services`, `apps/web/src/features/spaces`, `apps/web/src/features/team-2`, `documentation/features/spaces-automation.md`, `.docs/plans/agent-follow-up-work.md`.

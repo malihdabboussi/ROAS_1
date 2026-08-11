@@ -25,6 +25,7 @@ export async function proposePersonalMomentAction(input: {
   deliveryMode: 'shadow' | 'active'
   slackTeamId: string
   evidenceFingerprint: string
+  preview?: boolean
   signal: {
     proposed_content: string
     rationale: string
@@ -170,6 +171,7 @@ export async function proposePersonalMomentAction(input: {
       confidence: input.validated.confidence,
       evidence_fingerprint: input.evidenceFingerprint,
       delivery_mode: input.deliveryMode,
+      ...(input.preview ? { preview: true, preview_badge: 'Preview' } : {}),
       personal_moment_evidence: input.validated.evidence.map((message) => ({
         channel_id: message.channel_id,
         channel_name: message.channel_name,
