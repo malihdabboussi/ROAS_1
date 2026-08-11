@@ -21,6 +21,8 @@ import {
 import { SlackTeamMessageComposerService } from './slack-team-message-composer.service'
 import { SlackOpenItemsService } from './slack-open-items.service'
 import { SlackPendingOffersService } from './slack-pending-offers.service'
+import type { SlackCadenceConfig } from './slack-team-cadence'
+import { decideSlackDelivery } from './slack-team-delivery-policy'
 
 export const SLACK_SIGNAL_COOLING_MINUTES = {
   unanswered_question: 30,
@@ -94,6 +96,7 @@ export class SlackTeamSignalDeliveryService {
     people: SlackSignalDeliveryPerson[]
     now?: Date
     timezone?: string
+    cadence?: SlackCadenceConfig
   }): Promise<{
     rechecked: number
     resolved: number
@@ -159,9 +162,27 @@ export class SlackTeamSignalDeliveryService {
         })
         continue
       }
-      const sendDecision = this.canSend(input, candidate, recipient, kind)
+      const sendDecision = decideSlackDelivery({
+        ...input,
+        action: candidate,
+        recipient,
+        kind,
+      })
       deliveryOutcomes.push(this.outcome(candidate, sendDecision.canSend, sendDecision.reason))
       if (!sendDecision.canSend || !recipient) {
+        if (sendDecision.reason === 'cadence_deferred' && sendDecision.nextEligibleAt) {
+          await this.loops.updateActionMetadata(input.supabase, {
+            actionId: candidate.id,
+            orgId: input.orgId,
+            metadata: {
+              ...refreshed.action.metadata,
+              lifecycle_state: 'cooling',
+              eligible_at: sendDecision.nextEligibleAt,
+              cadence_deferred_at: now.toISOString(),
+            },
+          })
+          continue
+        }
         await this.markReadyForReview(input, refreshed.action, {
           rechecked_at: refreshed.resolution.checked_at,
           ...(kind === 'personal_moment' && input.deliveryMode === 'shadow'
@@ -461,38 +482,5 @@ export class SlackTeamSignalDeliveryService {
       can_send: canSend,
       reason,
     }
-  }
-
-  private canSend(
-    input: {
-      deliveryMode: 'shadow' | 'active'
-      personIds: string[]
-      quietHoursActive: boolean
-    },
-    action: SlackShadowAction,
-    recipient?: SlackSignalDeliveryPerson,
-    kind = '',
-  ): { canSend: boolean; reason: string } {
-    if (input.quietHoursActive) return { canSend: false, reason: 'quiet_hours' }
-    if (action.action_kind !== 'message') return { canSend: false, reason: 'not_message' }
-    if (!recipient) return { canSend: false, reason: 'recipient_missing' }
-    if (recipient.relationship_kind !== 'internal') {
-      return { canSend: false, reason: 'recipient_not_internal' }
-    }
-    if (recipient.delivery_mode !== 'active') {
-      return { canSend: false, reason: 'recipient_not_active' }
-    }
-    // Personal moments are Active-only: Shadow keeps a reviewable proposal.
-    if (kind === 'personal_moment') {
-      if (input.deliveryMode !== 'active') return { canSend: false, reason: 'flow_shadow' }
-      if (!input.personIds.includes(recipient.id)) {
-        return { canSend: false, reason: 'recipient_not_allowlisted' }
-      }
-      return { canSend: true, reason: 'allowed' }
-    }
-    if (input.deliveryMode !== 'shadow' && !input.personIds.includes(recipient.id)) {
-      return { canSend: false, reason: 'recipient_not_allowlisted' }
-    }
-    return { canSend: true, reason: 'allowed' }
   }
 }

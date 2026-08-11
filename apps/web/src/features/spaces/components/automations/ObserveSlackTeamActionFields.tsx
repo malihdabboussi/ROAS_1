@@ -123,6 +123,26 @@ export function ObserveSlackTeamActionFields({
         </FieldGroup>
       </div>
       <div className="rounded-spacing-2 border-border bg-background px-spacing-3 py-spacing-2 flex items-center justify-between border">
+        <span className="body-3 text-foreground font-medium">Consolidated cadence</span>
+        <input
+          type="checkbox"
+          checked={action.cadence?.enabled === true}
+          onChange={(event) =>
+            onChange({
+              cadence: event.target.checked
+                ? {
+                    enabled: true,
+                    weekdayEodStart: 17,
+                    weekdayEodEnd: 18,
+                    sundayStart: 17,
+                    sundayEnd: 19,
+                  }
+                : { enabled: false },
+            } as Partial<ObserveSlackTeamAction>)
+          }
+        />
+      </div>
+      <div className="rounded-spacing-2 border-border bg-background px-spacing-3 py-spacing-2 flex items-center justify-between border">
         <span className="body-3 text-foreground font-medium">Quiet hours</span>
         <input
           type="checkbox"

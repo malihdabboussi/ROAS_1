@@ -117,3 +117,13 @@ Why: Accepted Pixel offers needed to become delivered work without human plumbin
 Impact: Acceptance acknowledges the exact promise, queues only when a persistent consumer is explicitly enabled, runs inline on Vercel, posts evidence-grounded artifacts to the source thread, records delivery references, and reports overdue work.
 
 Files: Slack offer fulfillment service/repository/tests, pending-offer acceptance, automation runtime processor, composer schema, module wiring, docs.
+
+## [2026-08-10 22:54] - [FEATURE]
+
+What: Added configurable Pixel delivery cadence: weekday EOD consolidation, urgent-only interrupts, high-bar weekends, and a Sunday open-ledger check-in.
+
+Why: Five-minute detection should preserve awareness without creating five-minute message behavior.
+
+Impact: Ordinary work stays cooling until the local 17:00–18:00 digest, urgent work can interrupt, weekend output is rare, and Sunday produces one deduped Monday-readiness check-in from the ledger. Existing deterministic gates still run first.
+
+Files: Slack cadence/delivery-policy services and tests, loop/routing/delivery wiring, automation schema/editor defaults, docs.

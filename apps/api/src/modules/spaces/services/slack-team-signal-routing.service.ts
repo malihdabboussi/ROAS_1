@@ -21,6 +21,11 @@ import { slackSignalLifecycleMetadata } from './slack-team-signal-delivery.servi
 import { composeInternalEscalation } from './slack-team-signal-message'
 import { SlackTeamMessageComposerService } from './slack-team-message-composer.service'
 import { SlackOpenItemsService } from './slack-open-items.service'
+import {
+  isSundayCheckInWindow,
+  slackLocalParts,
+  type SlackCadenceConfig,
+} from './slack-team-cadence'
 
 const OWNER_BRIEFING_SIGNAL_KINDS = new Set<SlackTeamSignal['kind']>([
   'team_win',
@@ -63,6 +68,7 @@ export class SlackTeamSignalRoutingService {
     preview?: boolean
     now: Date
     timezone?: string
+    cadence?: SlackCadenceConfig
     remaining: number
     signals: SlackTeamSignal[]
     validatedPersonalMoments: ValidatedPersonalMoment[]
@@ -76,11 +82,58 @@ export class SlackTeamSignalRoutingService {
     let memoriesCompounded = 0
     if (!input.preview) await this.openItems?.reconcile(input.supabase, input.orgId, input.now)
     if (!input.preview && input.workspaceOwner && this.openItems) {
-      const pack = await this.openItems.continuityPack(input.supabase, {
-        orgId: input.orgId,
-        now: input.now,
-      })
-      const due = [...pack.open, ...pack.resolved].slice(0, input.remaining)
+      const sunday =
+        input.cadence?.enabled === true &&
+        isSundayCheckInWindow(input.now, input.timezone ?? 'America/Los_Angeles', input.cadence)
+      const pack = sunday
+        ? {
+            open: await this.openItems.sundayCheckInPack(input.supabase, {
+              orgId: input.orgId,
+              now: input.now,
+            }),
+            resolved: [],
+          }
+        : await this.openItems.continuityPack(input.supabase, {
+            orgId: input.orgId,
+            now: input.now,
+          })
+      let due = [...pack.open, ...pack.resolved].slice(0, input.remaining)
+      if (sunday && due.length) {
+        const local = slackLocalParts(input.now, input.timezone ?? 'America/Los_Angeles')
+        const fingerprint = `sunday_check_in:${input.orgId}:${local.year}-${local.month}-${local.day}`
+        const exists = await this.loops.hasEvidenceFingerprint(input.supabase, {
+          orgId: input.orgId,
+          evidenceFingerprint: fingerprint,
+        })
+        if (!exists) {
+          await this.people.createShadowAction(input.supabase, {
+            orgId: input.orgId,
+            userId: input.userId,
+            agentKey: 'pixel',
+            targetMemberId: input.workspaceOwner.id,
+            actionKind: 'message',
+            proposedContent: due.map((entry, index) => `${index + 1}. ${entry.text}`).join('\n'),
+            rationale: 'Sunday open-item ledger check-in for Monday readiness.',
+            sourceChannelId: due[0]!.item.channel_id,
+            sourceMessageTs: due[0]!.item.source_message_ts,
+            workflowKey,
+            metadata: {
+              loop_kind: input.loopKind,
+              signal_kind: 'important_update',
+              signal_finding: due.map((entry) => entry.text).join('\n'),
+              evidence_fingerprint: fingerprint,
+              delivery_mode: input.deliveryMode,
+              continuity_resurface: true,
+              sunday_check_in: true,
+              ...slackSignalLifecycleMetadata('important_update', input.now),
+              eligible_at: input.now.toISOString(),
+            },
+          })
+          proposed += 1
+          await this.openItems.markSurfaced(input.supabase, due, input.now)
+        }
+        due = []
+      }
       for (const entry of due) {
         await this.people.createShadowAction(input.supabase, {
           orgId: input.orgId,

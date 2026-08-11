@@ -195,6 +195,15 @@ export const AutomationActionSchema = z.discriminatedUnion('type', [
         timezone: z.string().min(1).max(100),
       })
       .optional(),
+    cadence: z
+      .object({
+        enabled: z.boolean().default(false),
+        weekdayEodStart: z.number().int().min(0).max(23).default(17).optional(),
+        weekdayEodEnd: z.number().int().min(1).max(24).default(18).optional(),
+        sundayStart: z.number().int().min(0).max(23).default(17).optional(),
+        sundayEnd: z.number().int().min(1).max(24).default(19).optional(),
+      })
+      .optional(),
     instructions: z.string().max(4000).optional(),
     continuation: ContinuationSchema,
   }),
