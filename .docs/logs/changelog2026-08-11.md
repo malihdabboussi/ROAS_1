@@ -50,6 +50,16 @@ Impact: Nest can now bootstrap the billing-alert worker and the regression test 
 
 Files: `billing.module.ts`, `billing-credit-alerts.module.test.ts`.
 
+## [2026-08-11 16:25] - [FIX]
+
+What: Granted service-role table privileges for the `billing_credit_slack_alerts` dedupe ledger.
+
+Why: The table's RLS policy allowed service-role access, but PostgreSQL still denied inserts because the base table grant was missing.
+
+Impact: The production alert worker can atomically claim, mark, and retry Pixel credit-threshold Slack notifications.
+
+Files: `20260811162500_billing_credit_slack_alerts_service_grant.sql`.
+
 ## [2026-08-11 14:05] - [FIX]
 
 What: Hardened unified Page Grader meeting agendas so the mapped ROAS campaign agent receives bounded client Brain, meeting, work, and performance context; preserves operator notes; produces a validated six-section screen-share agenda; and writes one retry-safe Google Docs tab.
