@@ -44,6 +44,12 @@ import { StripeService } from './services/stripe.service'
     BillingUserActionsService,
     CreditsGuard,
   ],
-  exports: [CreditsService, StripeService, CreditsGuard, CreditHistoryEnrichmentRepository],
+  exports: [
+    CreditsService,
+    StripeService,
+    CreditsGuard,
+    BillingCreditsRepository,
+    CreditHistoryEnrichmentRepository,
+  ],
 })
 export class BillingModule {}

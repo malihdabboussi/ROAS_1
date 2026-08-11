@@ -40,6 +40,16 @@ Impact: Organization owners with mapped internal Slack identities receive each c
 
 Files: Billing credit alert controller/module/repository/service/tests, Vercel cron/function test, `billing_credit_slack_alerts` migration, OpenClaw warning rollback, chat recovery documentation.
 
+## [2026-08-11 16:15] - [FIX]
+
+What: Exported `BillingCreditsRepository` from `BillingModule` and added a module-metadata regression test for the Pixel credit-alert dependency boundary.
+
+Why: The first production invocation revealed that the separately isolated alert module could not inject the repository even though TypeScript compilation passed.
+
+Impact: Nest can now bootstrap the billing-alert worker and the regression test prevents the required Billing module import/export contract from drifting.
+
+Files: `billing.module.ts`, `billing-credit-alerts.module.test.ts`.
+
 ## [2026-08-11 14:05] - [FIX]
 
 What: Hardened unified Page Grader meeting agendas so the mapped ROAS campaign agent receives bounded client Brain, meeting, work, and performance context; preserves operator notes; produces a validated six-section screen-share agenda; and writes one retry-safe Google Docs tab.
