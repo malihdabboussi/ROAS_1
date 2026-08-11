@@ -91,6 +91,8 @@ import { SlackTeamSignalDeliveryService } from './services/slack-team-signal-del
 import { SlackTeamMessageComposerService } from './services/slack-team-message-composer.service'
 import { SlackOpenItemsRepository } from './repositories/slack-open-items.repository'
 import { SlackOpenItemsService } from './services/slack-open-items.service'
+import { SlackPendingOffersRepository } from './repositories/slack-pending-offers.repository'
+import { SlackPendingOffersService } from './services/slack-pending-offers.service'
 import { SlackTeamSignalRoutingService } from './services/slack-team-signal-routing.service'
 import { SocialResearchAccountSyncService } from './services/social-research-account-sync.service'
 import { SocialResearchFavoritesService } from './services/social-research-favorites.service'
@@ -230,6 +232,8 @@ import { SpacesService } from './services/spaces.service'
     SlackTeamMessageComposerService,
     SlackOpenItemsRepository,
     SlackOpenItemsService,
+    SlackPendingOffersRepository,
+    SlackPendingOffersService,
     SlackTeamSignalRoutingService,
     MeetingsPrecallPrepService,
     MeetingFollowUpSlackConfirmService,

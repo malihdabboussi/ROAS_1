@@ -20,6 +20,7 @@ import {
 } from './slack-team-signal-message'
 import { SlackTeamMessageComposerService } from './slack-team-message-composer.service'
 import { SlackOpenItemsService } from './slack-open-items.service'
+import { SlackPendingOffersService } from './slack-pending-offers.service'
 
 export const SLACK_SIGNAL_COOLING_MINUTES = {
   unanswered_question: 30,
@@ -79,6 +80,7 @@ export class SlackTeamSignalDeliveryService {
     private readonly resolution: SlackSignalResolutionService,
     @Optional() private readonly composer?: SlackTeamMessageComposerService,
     @Optional() private readonly openItems?: SlackOpenItemsService,
+    @Optional() private readonly pendingOffers?: SlackPendingOffersService,
   ) {}
 
   async processCoolingActions(input: {
@@ -409,6 +411,16 @@ export class SlackTeamSignalDeliveryService {
               : { composition_fallback: true }),
           },
         })
+        if (composition?.offers[0]) {
+          await this.pendingOffers?.record(input.supabase, {
+            orgId: input.orgId,
+            recipientPersonId: recipient.id,
+            shadowActionId: entry.action.id,
+            channelId,
+            threadTs: digestThreadTs,
+            offer: composition.offers[0],
+          })
+        }
       }
       await this.openItems?.markSurfaced(input.supabase, continuityEntries, now)
       return claimed.length
