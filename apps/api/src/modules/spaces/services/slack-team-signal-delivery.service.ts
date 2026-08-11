@@ -21,6 +21,7 @@ import {
 import { SlackTeamMessageComposerService } from './slack-team-message-composer.service'
 import { SlackOpenItemsService } from './slack-open-items.service'
 import { SlackPendingOffersService } from './slack-pending-offers.service'
+import { SlackContextStakesService } from './slack-context-stakes.service'
 import type { SlackCadenceConfig } from './slack-team-cadence'
 import { decideSlackDelivery } from './slack-team-delivery-policy'
 
@@ -83,6 +84,7 @@ export class SlackTeamSignalDeliveryService {
     @Optional() private readonly composer?: SlackTeamMessageComposerService,
     @Optional() private readonly openItems?: SlackOpenItemsService,
     @Optional() private readonly pendingOffers?: SlackPendingOffersService,
+    @Optional() private readonly contextStakes?: SlackContextStakesService,
   ) {}
 
   async processCoolingActions(input: {
@@ -367,6 +369,14 @@ export class SlackTeamSignalDeliveryService {
         now,
       })
       const continuityEntries = [...(ledgerContinuity?.open ?? []), ...(ledgerContinuity?.resolved ?? [])]
+      const stakes = await this.contextStakes?.build({
+        supabase: input.supabase,
+        userId: input.userId,
+        orgId: input.orgId,
+        timezone: input.timezone ?? 'America/Los_Angeles',
+        now,
+        items: continuityEntries.map((entry) => entry.item),
+      })
       let text = fallbackText
       let composition: Awaited<ReturnType<SlackTeamMessageComposerService['compose']>> | null = null
       if (this.composer) {
@@ -387,7 +397,7 @@ export class SlackTeamSignalDeliveryService {
               channelName: String(entry.action.metadata.source_channel_name ?? entry.item.channelName),
               timestamp: String(entry.action.metadata.source_message_ts ?? ''),
             })),
-            continuity: [...continuityEntries.map((entry) => entry.text), ...continuity],
+            continuity: [...continuityEntries.map((entry) => entry.text), ...(stakes ?? []), ...continuity],
             context: {
               now,
               timezone: input.timezone ?? 'America/Los_Angeles',

@@ -127,3 +127,13 @@ Why: Five-minute detection should preserve awareness without creating five-minut
 Impact: Ordinary work stays cooling until the local 17:00–18:00 digest, urgent work can interrupt, weekend output is rare, and Sunday produces one deduped Monday-readiness check-in from the ledger. Existing deterministic gates still run first.
 
 Files: Slack cadence/delivery-policy services and tests, loop/routing/delivery wiring, automation schema/editor defaults, docs.
+
+## [2026-08-10 22:59] - [FEATURE]
+
+What: Added client-label joins for upcoming Google Calendar stakes and Fathom-created follow-up state in Pixel's composer context.
+
+Why: Slack topics lacked the timing and meeting-follow-up context that makes an executive digest actionable.
+
+Impact: Matching topics can mention the next relevant event and current call follow-up state, while unlabeled items perform no cross-context lookup and lookup failures retain the Slack/ledger-only fallback.
+
+Files: Slack context-stakes service/tests, signal delivery/module wiring, docs.
