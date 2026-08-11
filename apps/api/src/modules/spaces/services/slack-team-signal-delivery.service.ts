@@ -19,6 +19,7 @@ import {
   type SlackTeamSignalMessageItem,
 } from './slack-team-signal-message'
 import { SlackTeamMessageComposerService } from './slack-team-message-composer.service'
+import { SlackOpenItemsService } from './slack-open-items.service'
 
 export const SLACK_SIGNAL_COOLING_MINUTES = {
   unanswered_question: 30,
@@ -77,6 +78,7 @@ export class SlackTeamSignalDeliveryService {
     private readonly slackTools: SlackAgentToolsService,
     private readonly resolution: SlackSignalResolutionService,
     @Optional() private readonly composer?: SlackTeamMessageComposerService,
+    @Optional() private readonly openItems?: SlackOpenItemsService,
   ) {}
 
   async processCoolingActions(input: {
@@ -337,6 +339,11 @@ export class SlackTeamSignalDeliveryService {
           targetMemberId: recipient.id,
           limit: 3,
         })) ?? []
+      const ledgerContinuity = await this.openItems?.continuityPack(input.supabase, {
+        orgId: input.orgId,
+        now,
+      })
+      const continuityEntries = [...(ledgerContinuity?.open ?? []), ...(ledgerContinuity?.resolved ?? [])]
       let text = fallbackText
       let composition: Awaited<ReturnType<SlackTeamMessageComposerService['compose']>> | null = null
       if (this.composer) {
@@ -357,7 +364,7 @@ export class SlackTeamSignalDeliveryService {
               channelName: String(entry.action.metadata.source_channel_name ?? entry.item.channelName),
               timestamp: String(entry.action.metadata.source_message_ts ?? ''),
             })),
-            continuity,
+            continuity: [...continuityEntries.map((entry) => entry.text), ...continuity],
             context: {
               now,
               timezone: input.timezone ?? 'America/Los_Angeles',
@@ -403,6 +410,7 @@ export class SlackTeamSignalDeliveryService {
           },
         })
       }
+      await this.openItems?.markSurfaced(input.supabase, continuityEntries, now)
       return claimed.length
     } catch (cause) {
       for (const entry of claimed) {

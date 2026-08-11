@@ -75,8 +75,44 @@ export class SlackTeamSignalRoutingService {
     let proposed = 0
     let memoriesCompounded = 0
     if (!input.preview) await this.openItems?.reconcile(input.supabase, input.orgId, input.now)
+    if (!input.preview && input.workspaceOwner && this.openItems) {
+      const pack = await this.openItems.continuityPack(input.supabase, {
+        orgId: input.orgId,
+        now: input.now,
+      })
+      const due = [...pack.open, ...pack.resolved].slice(0, input.remaining)
+      for (const entry of due) {
+        await this.people.createShadowAction(input.supabase, {
+          orgId: input.orgId,
+          userId: input.userId,
+          agentKey: 'pixel',
+          targetMemberId: input.workspaceOwner.id,
+          actionKind: 'message',
+          proposedContent:
+            entry.item.status === 'open' && entry.item.times_surfaced === 3
+              ? `${entry.text}. Going quiet on this unless you want it kept warm.`
+              : entry.text,
+          rationale: 'Cross-day Slack continuity from the open-item ledger.',
+          sourceChannelId: entry.item.channel_id,
+          sourceMessageTs: entry.item.source_message_ts,
+          workflowKey,
+          metadata: {
+            loop_kind: input.loopKind,
+            signal_kind: 'important_update',
+            signal_finding: entry.text,
+            evidence_fingerprint: `open_item:${entry.item.id}:${entry.item.times_surfaced}`,
+            delivery_mode: input.deliveryMode,
+            open_item_id: entry.item.id,
+            continuity_resurface: true,
+            ...slackSignalLifecycleMetadata('important_update', input.now),
+          },
+        })
+        proposed += 1
+      }
+      await this.openItems.markSurfaced(input.supabase, due, input.now)
+    }
 
-    for (const signal of input.signals.slice(0, input.remaining)) {
+    for (const signal of input.signals.slice(0, Math.max(0, input.remaining - proposed))) {
       if (!slackSignalMatchesLoop(signal.kind, input.loopKind)) continue
       const source = input.evidenceBySource.get(
         `${signal.target_channel_id}:${signal.source_message_ts}`,

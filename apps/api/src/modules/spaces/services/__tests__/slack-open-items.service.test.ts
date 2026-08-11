@@ -81,4 +81,58 @@ describe('SlackOpenItemsService', () => {
     )
     expect(items.enforceRetention).toHaveBeenCalled()
   })
+
+  it('resurfaces at 8h, 24h, and 72h with Viktor-style ages and resolves once', async () => {
+    const base = {
+      id: 'item-1',
+      org_id: 'org-1',
+      kind: 'question',
+      subject_person_id: null,
+      client_label: 'Christian Osgood',
+      channel_id: 'C1',
+      source_message_ts: '1.1',
+      summary: 'Christian is waiting on the launch answer',
+      status: 'open',
+      first_seen_at: '2026-08-10T06:00:00.000Z',
+      last_activity_at: '2026-08-10T06:00:00.000Z',
+      times_surfaced: 0,
+      last_surfaced_at: null,
+      resolution_note: null,
+      metadata: {},
+    }
+    const items = { listContinuity: vi.fn().mockResolvedValue([base]) }
+    const service = new SlackOpenItemsService(items as never, {} as never)
+
+    const eightHour = await service.continuityPack({} as never, {
+      orgId: 'org-1',
+      now: new Date('2026-08-10T20:00:00.000Z'),
+    })
+    expect(eightHour.open[0]?.text).toContain('open ~14h')
+
+    items.listContinuity.mockResolvedValueOnce([
+      {
+        ...base,
+        status: 'resolved',
+        metadata: {},
+      },
+    ])
+    const resolved = await service.continuityPack({} as never, {
+      orgId: 'org-1',
+      now: new Date('2026-08-10T20:00:00.000Z'),
+    })
+    expect(resolved.resolved).toHaveLength(1)
+
+    items.listContinuity.mockResolvedValueOnce([
+      {
+        ...base,
+        status: 'resolved',
+        metadata: { resolution_surfaced_at: '2026-08-10T19:00:00.000Z' },
+      },
+    ])
+    const alreadySurfaced = await service.continuityPack({} as never, {
+      orgId: 'org-1',
+      now: new Date('2026-08-10T20:00:00.000Z'),
+    })
+    expect(alreadySurfaced.resolved).toHaveLength(0)
+  })
 })

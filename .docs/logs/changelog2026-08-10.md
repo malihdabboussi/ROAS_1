@@ -77,3 +77,13 @@ Why: Evidence fingerprints prevented duplicates but also erased unanswered work 
 Impact: Questions, risks, and commitments persist across days, resolve from later Slack replies/reactions, retain their source evidence, and remain bounded to 500 open rows per organization with 14-day resolved/stale cleanup.
 
 Files: `supabase/migrations/20260811054500_slack_open_items.sql`, `slack-open-items.repository.ts`, `slack-open-items.service.ts`, signal router/module wiring, tests, `documentation/features/spaces-automation.md`.
+
+## [2026-08-10 22:38] - [FEATURE]
+
+What: Added staged open-item resurfacing and a recipient continuity pack spanning due open work, newly resolved work, and recent Pixel digests.
+
+Why: Permanent evidence dedupe prevented useful cross-day reminders and made Pixel forget its own prior briefings.
+
+Impact: Open work returns at 8h/24h/72h with compact ages, respects an eight-hour cooldown and four-surface cap, emits a terminal going-quiet note, and mentions resolutions once before retiring them from continuity.
+
+Files: Slack open-item repository/service/tests, signal routing and delivery services, `documentation/features/spaces-automation.md`.
