@@ -140,10 +140,10 @@ Files: Slack context-stakes service/tests, signal delivery/module wiring, docs.
 
 ## [2026-08-10 23:28] - [FIX]
 
-What: Disabled Nest in-process timer registration on Vercel while retaining it on persistent hosts.
+What: Disabled Nest in-process timer registration on Vercel while retaining it on persistent hosts, and moved the awaited automation scan out of five-minute maintenance slots.
 
 Why: A Vercel cron request booted every decorated maintenance timer at the same minute; concurrent idle-machine work aborted Supabase connections after Pixel's schedule claim and before its run record.
 
-Impact: The awaited serverless scheduler endpoint runs in isolation, while persistent deployments retain their existing timer behavior. The queue opt-in and all delivery safety gates are unchanged.
+Impact: The awaited serverless scheduler endpoint runs in isolation with at most one minute of pickup latency, while persistent deployments retain their existing timer behavior. The queue opt-in and all delivery safety gates are unchanged.
 
-Files: `apps/api/src/app.module.ts`, cron runtime policy/tests, `documentation/features/spaces-automation.md`.
+Files: `apps/api/src/app.module.ts`, `apps/api/vercel.json`, cron runtime policy/config tests, `documentation/features/spaces-automation.md`.
