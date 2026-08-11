@@ -82,8 +82,6 @@ export type SessionEntry = {
   model?: string;
   contextTokens?: number;
   compactionCount?: number;
-  /** Compaction cycle in which the near-context-limit warning was delivered. */
-  contextTokenWarningCompactionCount?: number;
   memoryFlushAt?: number;
   memoryFlushCompactionCount?: number;
   cliSessionIds?: Record<string, string>;

@@ -30,6 +30,16 @@ Impact: The warning uses only fresh final-call usage, is suppressed for heartbea
 
 Files: OpenClaw context-warning helper/tests, reply runner, session state, chat stream recovery documentation.
 
+## [2026-08-11 15:57] - [FEATURE]
+
+What: Replaced the mistaken conversation-context warning with Pixel Slack DMs at 70%, 90%, and 100% of monthly organization credits. Added a five-minute authenticated cron, canonical balance calculation, owner-to-Slack routing, retry-safe monthly threshold claims, and the production dedupe migration.
+
+Why: The requested Viktor parity behavior concerns account credit exhaustion, not an individual conversation's context window.
+
+Impact: Organization owners with mapped internal Slack identities receive each crossed threshold once per billing period. Failed Slack deliveries release their pending claim for retry; the unrelated OpenClaw context notice and state were removed.
+
+Files: Billing credit alert controller/module/repository/service/tests, Vercel cron/function test, `billing_credit_slack_alerts` migration, OpenClaw warning rollback, chat recovery documentation.
+
 ## [2026-08-11 14:05] - [FIX]
 
 What: Hardened unified Page Grader meeting agendas so the mapped ROAS campaign agent receives bounded client Brain, meeting, work, and performance context; preserves operator notes; produces a validated six-section screen-share agenda; and writes one retry-safe Google Docs tab.

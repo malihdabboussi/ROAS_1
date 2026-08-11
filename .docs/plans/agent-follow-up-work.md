@@ -9592,14 +9592,28 @@ Status: Open
 
 Files:
 
-- `apps/openclaw/src/auto-reply/reply/agent-runner.ts` (542 LOC; above the 500-line soft limit)
-- `apps/openclaw/src/auto-reply/reply/agent-runner.misc.runreplyagent.test.ts` (1,227 LOC; above the 600-line hard limit)
+- `apps/openclaw/src/auto-reply/reply/agent-runner.ts` (523 LOC; above the 500-line soft limit)
+- `apps/openclaw/src/auto-reply/reply/agent-runner.misc.runreplyagent.test.ts` (1,167 LOC; above the 600-line hard limit)
 
-Evidence: The scoped context-warning integration adds one small orchestration hook to the existing reply runner and one regression case to its pre-existing oversized miscellaneous suite. Production code remains under the 600-line hard limit, while the test host was already far above it.
+Evidence: The mistakenly added conversation-context warning was removed after the requirement was clarified as an account-credit Slack alert. The production runner remains above the soft limit and the miscellaneous test host remains above the hard limit due to pre-existing orchestration coverage.
 
-Needed work: Extract final reply decoration/accounting from `agent-runner.ts` and split the miscellaneous runner suite by behavior (usage/context warnings, streaming, provider fallback, and reply suppression).
+Needed work: Extract final reply decoration/accounting from `agent-runner.ts` and split the miscellaneous runner suite by behavior (streaming, provider fallback, and reply suppression).
 
-Reason not done now: The requested change requires the existing post-usage/pre-delivery chokepoint. A broader behavior-neutral runner/test decomposition would materially expand the deployment surface beyond the token-warning feature.
+Reason not done now: The corrected account-credit alert no longer touches this path; decomposing unrelated OpenClaw orchestration would expand the billing-alert deployment surface.
+
+## 2026-08-11 — Billing credit Slack alert feature documentation
+
+Status: Open
+
+Files:
+
+- `documentation/features/` (no existing billing-credit feature document)
+
+Evidence: The new 70/90/100% Pixel Slack alert has schema, cron, service, retry, and dedupe behavior, but repository rules require user approval before creating a new feature document.
+
+Needed work: Create `documentation/features/billing-credit-alerts.md` with the ledger source, threshold calculation, Slack recipient routing, retry/dedupe contract, cron ownership, and decision log.
+
+Reason not done now: No existing billing feature document can be updated, and creating a new one requires explicit approval.
 
 ## 2026-08-11 — Meeting precall service decomposition
 

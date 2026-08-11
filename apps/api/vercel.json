@@ -10,10 +10,14 @@
     },
     "api/space-automation-cron.ts": {
       "maxDuration": 300
+    },
+    "api/billing-credit-alert-cron.ts": {
+      "maxDuration": 300
     }
   },
   "rewrites": [
     { "source": "/cron/space-automations", "destination": "/api/space-automation-cron" },
+    { "source": "/cron/billing-credit-alerts", "destination": "/api/billing-credit-alert-cron" },
     { "source": "/(.*)", "destination": "/api" }
   ],
   "crons": [
@@ -32,6 +36,10 @@
     {
       "path": "/cron/space-automations",
       "schedule": "1-4,6-9,11-14,16-19,21-24,26-29,31-34,36-39,41-44,46-49,51-54,56-59 * * * *"
+    },
+    {
+      "path": "/cron/billing-credit-alerts",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
