@@ -97,3 +97,13 @@ Why: Pixel's scoped offers were visible prose but had no durable acceptance or f
 Impact: Every delivered offer is linked to its recipient, source Shadow action, Slack thread, deliverable kind, exact scope, and 72-hour expiry window.
 
 Files: `supabase/migrations/20260811055500_slack_pending_offers.sql`, pending-offer repository/service/tests, signal delivery/module wiring, `documentation/features/spaces-automation.md`.
+
+## [2026-08-10 22:42] - [FEATURE]
+
+What: Added exact-thread pending-offer acceptance for ✅/👍 reactions and affirmative replies.
+
+Why: Scoped offers needed a zero-plumbing conversion from Slack intent into durable accepted work.
+
+Impact: Matching offered rows atomically become accepted with their acceptance path recorded; unrelated reactions and replies continue through existing handlers.
+
+Files: pending-offer acceptance service/repository, Slack reaction and thread-enrichment integration, module wiring, `documentation/features/spaces-automation.md`.

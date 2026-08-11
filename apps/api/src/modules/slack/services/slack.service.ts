@@ -111,6 +111,24 @@ export class SlackService extends SlackEventsBase {
     )
 
     try {
+      const { SlackPendingOfferAcceptanceService } =
+        await import('../../spaces/services/slack-pending-offer-acceptance.service')
+      const offerAcceptance = this.moduleRef.get(SlackPendingOfferAcceptanceService, {
+        strict: false,
+      })
+      if (
+        offerAcceptance &&
+        (await offerAcceptance.handleReactionAdded({
+          supabase: this.getServiceRoleClient(),
+          teamId,
+          channelId,
+          messageTs,
+          reaction,
+        }))
+      ) {
+        this.logger.log('[TRACE] handleReactionAddedEvent: pending offer accepted')
+        return
+      }
       const { MeetingFollowUpSlackConfirmService } =
         await import('../../spaces/services/meeting-follow-up-slack-confirm.service')
       const confirm = this.moduleRef.get(MeetingFollowUpSlackConfirmService, { strict: false })
