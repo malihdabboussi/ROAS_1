@@ -9569,3 +9569,19 @@ Evidence: PR 6 implements the plan's 14-day resolved/stale cleanup and 500-open-
 Needed work: Fold this table into the broader Slack observation-ledger partitioning/export/deletion governance review when that debt is addressed.
 
 Reason not done now: Partitioning and organization-wide retention administration are broader than the requested bounded Pixel continuity ledger.
+
+## 2026-08-10 — API scheduled-job host ownership
+
+Status: Open
+
+Files:
+
+- `apps/api/src/cron.service.ts`
+- `apps/api/src/modules/mcp/services/mcp-oauth-cleanup.service.ts`
+- `apps/api/vercel.json`
+
+Evidence: Pixel production verification showed that registering Nest timers inside a Vercel serverless invocation races the dedicated awaited cron endpoint. Vercel scheduling is now isolated, while several non-Pixel maintenance timers still rely on a persistent API host.
+
+Needed work: Inventory every API `@Cron` job, document its authoritative persistent host or add a dedicated authenticated Vercel endpoint, and add deployment-level ownership tests that prevent duplicate runners.
+
+Reason not done now: Re-homing unrelated machine, billing, recurrence, MCP, and model-maintenance jobs is broader than the Pixel scheduler outage; the in-scope fix removes their interference without changing their persistent-host behavior.

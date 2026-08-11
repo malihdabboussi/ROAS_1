@@ -137,3 +137,13 @@ Why: Slack topics lacked the timing and meeting-follow-up context that makes an 
 Impact: Matching topics can mention the next relevant event and current call follow-up state, while unlabeled items perform no cross-context lookup and lookup failures retain the Slack/ledger-only fallback.
 
 Files: Slack context-stakes service/tests, signal delivery/module wiring, docs.
+
+## [2026-08-10 23:28] - [FIX]
+
+What: Disabled Nest in-process timer registration on Vercel while retaining it on persistent hosts.
+
+Why: A Vercel cron request booted every decorated maintenance timer at the same minute; concurrent idle-machine work aborted Supabase connections after Pixel's schedule claim and before its run record.
+
+Impact: The awaited serverless scheduler endpoint runs in isolation, while persistent deployments retain their existing timer behavior. The queue opt-in and all delivery safety gates are unchanged.
+
+Files: `apps/api/src/app.module.ts`, cron runtime policy/tests, `documentation/features/spaces-automation.md`.
