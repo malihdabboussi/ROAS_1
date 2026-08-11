@@ -9,6 +9,7 @@ import {
   validateMeetingReadyAgendaSections,
   type PrecallAgendaEventLike,
 } from './meetings-precall-agenda-sections'
+import { buildCampaignNotesFromPrepContext } from './meetings-precall-campaign-notes'
 
 type PageGraderApiLike = {
   listClients: (
@@ -135,7 +136,24 @@ export class MeetingsPrecallDriveAgendaService {
       input.itemId,
     )
     const sections = parsePrepDocToAgendaSections(docBody || '')
-    const contentProblems = validateMeetingReadyAgendaSections(sections)
+    let contentProblems = validateMeetingReadyAgendaSections(sections)
+    if (contentProblems.some((problem) => problem.startsWith('Campaign notes')) && clientId) {
+      try {
+        const context = await this.resolvePageGraderApi().getMeetingPrepContext(
+          input.userId,
+          clientId,
+          input.event.start,
+        )
+        sections.campaign_notes = buildCampaignNotesFromPrepContext(context)
+        contentProblems = validateMeetingReadyAgendaSections(sections)
+      } catch (err) {
+        this.logger.warn(
+          `Campaign notes fallback failed for prep ${input.itemId}: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        )
+      }
+    }
     if (contentProblems.length > 0) {
       throw new BadRequestException(
         `Precall prep is not meeting-ready: ${contentProblems.join('; ')}`,
