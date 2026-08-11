@@ -82,6 +82,38 @@ export type PageGraderMeetingResult = {
   source_url?: string | null
 }
 
+export type PageGraderAgendaSections = {
+  agenda: string
+  performance?: string
+  performance_data?: string
+  wins: string
+  campaign_notes?: string
+  campaignNotes?: string
+  other_updates?: string
+  otherUpdates?: string
+  needs_blockers?: string
+  needsBlockers?: string
+}
+
+export type PageGraderMeetingAgendaWrite = {
+  meeting_date: string
+  sections: PageGraderAgendaSections
+  insert_ad_previews?: boolean
+  roas_prep_item_id?: string | null
+  notes?: string | null
+}
+
+export type PageGraderMeetingAgendaResult = {
+  doc_id: string | null
+  doc_link: string | null
+  tab_id: string | null
+  tab_name: string | null
+  meeting_agenda_id: string | null
+  source?: string | null
+}
+
+export type PageGraderMeetingPrepContext = Record<string, unknown>
+
 export type PageGraderEmbedSession = {
   code: string
   embed_url: string
@@ -296,6 +328,78 @@ export class PageGraderIntegration {
       meeting,
       created: body.created === true,
       unchanged: body.unchanged === true,
+    }
+  }
+
+  async getMeetingPrepContext(
+    baseUrl: string,
+    apiKey: string,
+    clientId: string,
+    meetingDate?: string | null,
+  ): Promise<PageGraderMeetingPrepContext> {
+    const id = clientId.trim()
+    if (!id) throw new BadRequestException('The ROAS Portal client ID is required')
+    const params = new URLSearchParams()
+    if (meetingDate?.trim()) params.set('meeting_date', meetingDate.trim())
+    const qs = params.toString()
+    const url = `${this.normalizeBaseUrl(baseUrl)}/clients/${encodeURIComponent(id)}/meeting-prep-context${qs ? `?${qs}` : ''}`
+    const res = await fetch(url, { headers: this.authHeaders(apiKey) })
+    const text = await res.text().catch(() => '')
+    let body: Record<string, unknown> = {}
+    try {
+      body = text ? (JSON.parse(text) as Record<string, unknown>) : {}
+    } catch {
+      body = { error: text }
+    }
+    if (!res.ok) {
+      const message =
+        typeof body.error === 'string' ? body.error : text || res.statusText || 'Request failed'
+      throw new BadRequestException(
+        `The ROAS Portal meeting prep context failed (${res.status}): ${message}`,
+      )
+    }
+    const pack = body.prep_context
+    if (!pack || typeof pack !== 'object' || Array.isArray(pack)) {
+      throw new BadRequestException('The ROAS Portal meeting prep context was empty')
+    }
+    return pack as PageGraderMeetingPrepContext
+  }
+
+  async writeMeetingAgenda(
+    baseUrl: string,
+    apiKey: string,
+    clientId: string,
+    payload: PageGraderMeetingAgendaWrite,
+  ): Promise<PageGraderMeetingAgendaResult> {
+    const id = clientId.trim()
+    if (!id) throw new BadRequestException('The ROAS Portal client ID is required')
+    const url = `${this.normalizeBaseUrl(baseUrl)}/clients/${encodeURIComponent(id)}/meeting-agenda`
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: this.authHeaders(apiKey),
+      body: JSON.stringify(payload),
+    })
+    const text = await res.text().catch(() => '')
+    let body: Record<string, unknown> = {}
+    try {
+      body = text ? (JSON.parse(text) as Record<string, unknown>) : {}
+    } catch {
+      body = { error: text }
+    }
+    if (!res.ok) {
+      const message =
+        typeof body.error === 'string' ? body.error : text || res.statusText || 'Request failed'
+      throw new BadRequestException(
+        `The ROAS Portal meeting agenda write failed (${res.status}): ${message}`,
+      )
+    }
+    return {
+      doc_id: typeof body.doc_id === 'string' ? body.doc_id : null,
+      doc_link: typeof body.doc_link === 'string' ? body.doc_link : null,
+      tab_id: typeof body.tab_id === 'string' ? body.tab_id : null,
+      tab_name: typeof body.tab_name === 'string' ? body.tab_name : null,
+      meeting_agenda_id: typeof body.meeting_agenda_id === 'string' ? body.meeting_agenda_id : null,
+      source: typeof body.source === 'string' ? body.source : null,
     }
   }
 

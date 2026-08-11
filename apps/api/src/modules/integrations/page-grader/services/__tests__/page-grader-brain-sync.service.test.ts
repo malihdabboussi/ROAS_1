@@ -9,6 +9,8 @@ describe('PageGraderBrainSyncService', () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
+      {} as never,
     )
     await expect(service.processWebhook('{}', '')).rejects.toThrow(/webhook signature/i)
   })
@@ -16,6 +18,8 @@ describe('PageGraderBrainSyncService', () => {
   it('rejects invalid JSON body', async () => {
     const service = new PageGraderBrainSyncService(
       { client: {} } as never,
+      {} as never,
+      {} as never,
       {} as never,
       {} as never,
       {} as never,
@@ -76,6 +80,8 @@ describe('PageGraderBrainSyncService', () => {
     })
     const service = new PageGraderBrainSyncService(
       { client: { from } } as never,
+      {} as never,
+      {} as never,
       {} as never,
       {} as never,
       {} as never,
@@ -158,6 +164,8 @@ describe('PageGraderBrainSyncService', () => {
       pageGrader as never,
       brainImport as never,
       { hasCampaignKnowledge: vi.fn().mockResolvedValue(true) } as never,
+      {} as never,
+      {} as never,
     )
 
     const result = await service.catchUpMappedClients(10)
@@ -211,6 +219,8 @@ describe('PageGraderBrainSyncService', () => {
       pageGrader as never,
       brainImport as never,
       campaignKnowledge as never,
+      {} as never,
+      {} as never,
     )
 
     const result = await service.catchUpMappedClients(10)
@@ -270,6 +280,8 @@ describe('PageGraderBrainSyncService', () => {
       pageGrader as never,
       brainImport as never,
       campaignKnowledge as never,
+      {} as never,
+      {} as never,
     )
 
     const result = await service.catchUpMappedClients(10)

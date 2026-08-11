@@ -359,6 +359,17 @@ export function AgendaEventEntry({
               Prep
             </span>
           ) : null}
+          {ev.prep?.agenda_doc_link ? (
+            <a
+              href={ev.prep.agenda_doc_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="badge-glass badge-glass-cyan typo-caption shrink-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Doc
+            </a>
+          ) : null}
           {ev.video_url ? <Video className="text-muted-foreground h-3.5 w-3.5 shrink-0" /> : null}
           {minimizeButton}
         </motion.div>

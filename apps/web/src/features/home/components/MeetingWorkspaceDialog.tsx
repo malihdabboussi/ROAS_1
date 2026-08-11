@@ -333,6 +333,16 @@ export function MeetingWorkspaceDialog({
                   Open agenda prep
                 </button>
               ) : null}
+              {agendaEvent?.prep?.agenda_doc_link ? (
+                <a
+                  href={agendaEvent.prep.agenda_doc_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="body-4 text-primary gap-spacing-1 inline-flex items-center self-start"
+                >
+                  Open Google agenda <ExternalLink className="icon-xs" aria-hidden />
+                </a>
+              ) : null}
             </div>
 
             {bundle?.continuity.unresolved_commitments.length ? (

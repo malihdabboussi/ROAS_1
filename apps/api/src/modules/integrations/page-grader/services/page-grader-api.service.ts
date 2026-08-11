@@ -223,11 +223,7 @@ export class PageGraderApiService {
     return { assignees }
   }
 
-  async createEmbedSession(
-    userId: string,
-    email: string,
-    dto: CreatePageGraderEmbedSessionDto,
-  ) {
+  async createEmbedSession(userId: string, email: string, dto: CreatePageGraderEmbedSessionDto) {
     const normalizedEmail = email.trim().toLowerCase()
     if (!normalizedEmail) throw new BadRequestException('Your ROAS account has no email address')
     const creds = await this.getCreds(userId)
@@ -304,6 +300,20 @@ export class PageGraderApiService {
   async upsertClientMeeting(userId: string, clientId: string, meeting: PageGraderMeetingUpsert) {
     const creds = await this.getCreds(userId)
     return this.pageGrader.upsertClientMeeting(creds.baseUrl, creds.apiKey, clientId, meeting)
+  }
+
+  async getMeetingPrepContext(userId: string, clientId: string, meetingDate?: string | null) {
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.getMeetingPrepContext(creds.baseUrl, creds.apiKey, clientId, meetingDate)
+  }
+
+  async writeMeetingAgenda(
+    userId: string,
+    clientId: string,
+    payload: import('../integrations/page-grader.integration').PageGraderMeetingAgendaWrite,
+  ) {
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.writeMeetingAgenda(creds.baseUrl, creds.apiKey, clientId, payload)
   }
 
   private async readClientTagMap(

@@ -8,6 +8,8 @@ import {
   isEligiblePrecallEvent,
   localDayBounds,
   mapPrepItemToAgendaLink,
+  matchUniqueClientByEventTitle,
+  parsePrepDocToAgendaSections,
   resolveAgendaCallSummary,
   resolveAgendaHasTranscript,
   resolveAgendaRecordingUrl,
@@ -67,6 +69,8 @@ describe('meetings-precall-prep.helpers', () => {
       space_item_id: 'item-1',
       space_id: 'space-1',
       title: 'Prep — Weekly',
+      agenda_doc_link: null,
+      agenda_tab_id: null,
     })
   })
 
@@ -369,5 +373,47 @@ describe('meetings-precall-prep.helpers', () => {
         custom: {},
       }),
     ).toBe(false)
+  })
+
+  it('parses prep markdown into Drive agenda sections', () => {
+    const sections = parsePrepDocToAgendaSections(`## Snapshot
+Acme weekly
+
+## Talking points
+- Review CPL
+- Creative refresh
+
+## Wins
+- CPL down 12%
+
+## Campaign notes
+- Evergreen scaling
+
+## Other updates
+- New landing page live
+
+## Needs / blockers
+- Need offer approval
+`)
+    expect(sections.agenda).toContain('Review CPL')
+    expect(sections.wins).toContain('CPL down')
+    expect(sections.campaign_notes).toContain('Evergreen')
+    expect(sections.other_updates).toContain('landing page')
+    expect(sections.needs_blockers).toContain('offer approval')
+  })
+
+  it('matches a unique client name in the event title', () => {
+    expect(
+      matchUniqueClientByEventTitle('Acme Corp Weekly Sync', [
+        { id: '1', name: 'Acme Corp' },
+        { id: '2', name: 'Beta Inc' },
+      ]),
+    ).toEqual({ id: '1', name: 'Acme Corp' })
+    expect(
+      matchUniqueClientByEventTitle('Weekly Sync', [
+        { id: '1', name: 'Acme Corp' },
+        { id: '2', name: 'Beta Inc' },
+      ]),
+    ).toBeNull()
   })
 })
