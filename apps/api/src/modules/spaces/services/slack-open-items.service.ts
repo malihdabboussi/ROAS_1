@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SlackSignalResolutionService } from '../../slack/services/slack-signal-resolution.service'
-import { SlackOpenItemsRepository } from '../repositories/slack-open-items.repository'
+import {
+  SlackOpenItemsRepository,
+  type SlackOpenItem,
+} from '../repositories/slack-open-items.repository'
 
 @Injectable()
 export class SlackOpenItemsService {
@@ -63,6 +66,59 @@ export class SlackOpenItemsService {
       orgId,
       new Date(now.getTime() - 14 * 24 * 60 * 60_000).toISOString(),
     )
+  }
+
+  async continuityPack(
+    supabase: SupabaseClient,
+    input: { orgId: string; subjectPersonId?: string; now: Date },
+  ): Promise<{
+    open: Array<{ item: SlackOpenItem; text: string }>
+    resolved: Array<{ item: SlackOpenItem; text: string }>
+  }> {
+    const rows = await this.items.listContinuity(supabase, {
+      orgId: input.orgId,
+      subjectPersonId: input.subjectPersonId,
+      resolvedSince: new Date(input.now.getTime() - 8 * 60 * 60_000).toISOString(),
+    })
+    const open = rows
+      .filter((item) => item.status === 'open' && this.shouldResurface(item, input.now))
+      .map((item) => ({
+        item,
+        text: `${item.summary} (${this.ageLabel(item.first_seen_at, input.now)})`,
+      }))
+    const resolved = rows
+      .filter(
+        (item) =>
+          (item.status === 'answered' || item.status === 'resolved') &&
+          !item.metadata.resolution_surfaced_at,
+      )
+      .map((item) => ({ item, text: `Resolved: ${item.summary}` }))
+    return { open, resolved }
+  }
+
+  async markSurfaced(
+    supabase: SupabaseClient,
+    entries: Array<{ item: SlackOpenItem }>,
+    now: Date,
+  ): Promise<void> {
+    for (const entry of entries) {
+      await this.items.markSurfaced(supabase, entry.item, now.toISOString())
+    }
+  }
+
+  private shouldResurface(item: SlackOpenItem, now: Date): boolean {
+    if (item.times_surfaced >= 4) return false
+    const ageHours = (now.getTime() - Date.parse(item.first_seen_at)) / 3_600_000
+    const threshold = [8, 24, 72, 72][item.times_surfaced] ?? 72
+    if (ageHours < threshold) return false
+    return (
+      !item.last_surfaced_at || now.getTime() - Date.parse(item.last_surfaced_at) >= 8 * 3_600_000
+    )
+  }
+
+  private ageLabel(firstSeenAt: string, now: Date): string {
+    const hours = Math.max(1, Math.round((now.getTime() - Date.parse(firstSeenAt)) / 3_600_000))
+    return hours < 48 ? `open ~${hours}h` : `open ~${Math.round(hours / 24)}d`
   }
 
   private kindFor(

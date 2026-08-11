@@ -72,6 +72,45 @@ export class SlackOpenItemsRepository {
     if (error) throw new Error(`Failed to resolve Slack open item: ${error.message}`)
   }
 
+  async listContinuity(
+    supabase: SupabaseClient,
+    input: { orgId: string; subjectPersonId?: string; resolvedSince: string },
+  ): Promise<SlackOpenItem[]> {
+    let query = supabase
+      .from('slack_open_items')
+      .select('*')
+      .eq('org_id', input.orgId)
+      .or(`status.eq.open,and(status.in.(answered,resolved),updated_at.gte.${input.resolvedSince})`)
+      .order('first_seen_at', { ascending: true })
+      .limit(100)
+    if (input.subjectPersonId) query = query.eq('subject_person_id', input.subjectPersonId)
+    const { data, error } = await query
+    if (error) throw new Error(`Failed to load Slack continuity: ${error.message}`)
+    return (data as SlackOpenItem[] | null) ?? []
+  }
+
+  async markSurfaced(supabase: SupabaseClient, item: SlackOpenItem, nowIso: string): Promise<void> {
+    const nextCount = item.times_surfaced + 1
+    const terminal = item.status === 'open' && nextCount >= 4
+    const { error } = await supabase
+      .from('slack_open_items')
+      .update({
+        times_surfaced: nextCount,
+        last_surfaced_at: nowIso,
+        ...(terminal
+          ? { status: 'stale', resolution_note: 'Going quiet after four surfaces.' }
+          : {}),
+        metadata: {
+          ...item.metadata,
+          ...(item.status === 'answered' || item.status === 'resolved'
+            ? { resolution_surfaced_at: nowIso }
+            : {}),
+        },
+      })
+      .eq('id', item.id)
+    if (error) throw new Error(`Failed to mark Slack continuity surfaced: ${error.message}`)
+  }
+
   async enforceRetention(
     supabase: SupabaseClient,
     orgId: string,
