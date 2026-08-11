@@ -14,24 +14,11 @@ import {
   type SlackTeamPerson,
   type SlackTeamSignal,
 } from './slack-team-loop-analysis'
-import {
-  resolveSlackIdentityText,
-  slackSignalHasLaterHumanReply,
-  slackSignalMatchesLoop,
-  slackTeamEvidenceMetadata,
-} from './slack-team-loop-evidence'
+import { slackSignalHasLaterHumanReply } from './slack-team-loop-evidence'
 import { slackTeamLimitDayStartIso } from './slack-team-loop-time'
-import {
-  personalMomentDateKey,
-  personalMomentDedupeKey,
-  validatePersonalMomentEvidence,
-} from './slack-team-personal-moment'
-import { proposePersonalMomentAction } from './slack-team-personal-moment-propose'
-import {
-  slackSignalLifecycleMetadata,
-  SlackTeamSignalDeliveryService,
-} from './slack-team-signal-delivery.service'
-import { composeInternalEscalation } from './slack-team-signal-message'
+import { validatePersonalMomentEvidence } from './slack-team-personal-moment'
+import { SlackTeamSignalDeliveryService } from './slack-team-signal-delivery.service'
+import { SlackTeamSignalRoutingService } from './slack-team-signal-routing.service'
 
 export type SlackTeamLoopKind =
   | 'brain_compounding'
@@ -42,29 +29,12 @@ export type SlackTeamLoopKind =
 
 type QuietHours = { start: string; end: string; timezone: string }
 
-const OWNER_BRIEFING_SIGNAL_KINDS = new Set<SlackTeamSignal['kind']>([
+export const OWNER_BRIEFING_SIGNAL_KINDS = new Set<SlackTeamSignal['kind']>([
   'team_win',
   'important_update',
   'decision',
   'strategic_opportunity',
 ])
-
-function internalEscalationMessage(input: {
-  subject: SlackTeamPerson
-  channelName: string
-  signal: SlackTeamSignal
-  recipientName?: string
-}): string {
-  return composeInternalEscalation(
-    {
-      subjectName: input.subject.display_name,
-      channelName: input.channelName,
-      kind: input.signal.kind,
-      finding: input.signal.proposed_content.trim(),
-    },
-    { recipientName: input.recipientName },
-  )
-}
 
 export function isWithinSlackTeamLoopQuietHours(now: Date, quietHours?: QuietHours): boolean {
   if (!quietHours) return false
@@ -98,6 +68,7 @@ export class SlackTeamLoopService {
     private readonly senderResolver: SlackSenderResolverService,
     @Optional() private readonly trainingRules?: SlackSignalTrainingRepository,
     @Optional() private readonly signalDelivery?: SlackTeamSignalDeliveryService,
+    @Optional() private readonly signalRouting?: SlackTeamSignalRoutingService,
   ) {}
 
   async run(input: {
@@ -366,184 +337,26 @@ export class SlackTeamLoopService {
       ...validatedPersonalMoments.map((entry) => entry.signal),
     ]
     const suppressedByBriefing = briefingCandidates.length - selectedBriefing.length
-    let proposed = 0
-    let memoriesCompounded = 0
-    for (const signal of actionableSignals.slice(0, remaining)) {
-      if (!slackSignalMatchesLoop(signal.kind, input.loopKind)) continue
-      const source = evidenceBySource.get(`${signal.target_channel_id}:${signal.source_message_ts}`)
-      if (!source) continue
-      const target = signal.target_slack_user_id
-        ? peopleBySlackId.get(signal.target_slack_user_id)
-        : undefined
-      const internalRecipient = target?.relationship_kind === 'internal' ? target : undefined
-      const personalValidated =
-        signal.kind === 'personal_moment'
-          ? validatedPersonalMoments.find(
-              (entry) =>
-                entry.signal.target_channel_id === signal.target_channel_id &&
-                entry.signal.source_message_ts === signal.source_message_ts &&
-                entry.signal.target_slack_user_id === signal.target_slack_user_id,
-            )?.validated
-          : undefined
-      const evidenceFingerprint =
-        signal.kind === 'personal_moment' && personalValidated && personalValidated.ok
-          ? personalMomentDedupeKey({
-              orgId: input.orgId,
-              subjectSlackUserId: personalValidated.subjectSlackUserId,
-              eventType: personalValidated.eventType,
-              dateKey: personalMomentDateKey(now),
-            })
-          : createHash('sha256')
-              .update(
-                [
-                  input.orgId,
-                  input.loopKind,
-                  signal.kind,
-                  signal.target_channel_id,
-                  signal.source_message_ts,
-                ].join(':'),
-              )
-              .digest('hex')
-      const actionEvidenceFingerprint = input.preview
-        ? `${evidenceFingerprint}:preview`
-        : evidenceFingerprint
-      if (signal.kind === 'brain_memory' && target?.person_brain_id && signal.brain_memory) {
-        if (input.preview) continue
-        const result = await this.loopRepo.insertPersonMemory(input.supabase, {
-          brainId: target.person_brain_id,
-          content: signal.brain_memory,
-          speaker: target.display_name,
-          sourceChannelId: signal.target_channel_id,
-          sourceMessageTs: signal.source_message_ts,
-          confidence: signal.confidence,
-          metadata: {
-            source: 'slack_team_loop',
-            evidence_fingerprint: evidenceFingerprint,
-            rationale: signal.rationale,
-          },
-        })
-        if (result.created) memoriesCompounded += 1
-        continue
-      }
-
-      if (
-        await this.loopRepo.hasEvidenceFingerprint(input.supabase, {
-          orgId: input.orgId,
-          evidenceFingerprint: actionEvidenceFingerprint,
-        })
-      ) {
-        continue
-      }
-
-      if (signal.kind === 'personal_moment') {
-        if (!personalValidated?.ok || !internalRecipient) continue
-        await proposePersonalMomentAction({
-          supabase: input.supabase,
-          userId: input.userId,
-          orgId: input.orgId,
-          workflowKey,
-          loopKind: input.loopKind,
-          deliveryMode: input.deliveryMode,
-          slackTeamId,
-          evidenceFingerprint: actionEvidenceFingerprint,
-          preview: input.preview,
-          signal,
-          source,
-          internalRecipient,
-          validated: personalValidated,
-          observed,
-          peopleBySlackId,
-          searchMessages: (supabase, userId, orgId, params) =>
-            this.slackTools.searchMessages(supabase, userId, orgId, params),
-          createShadowAction: (supabase, payload) =>
-            this.peopleRepo.createShadowAction(supabase, payload as never),
-        })
-        proposed += 1
-        continue
-      }
-
-      const action = await this.peopleRepo.createShadowAction(input.supabase, {
-        orgId: input.orgId,
-        userId: input.userId,
-        agentKey: 'pixel',
-        targetMemberId: internalRecipient?.id ?? null,
-        actionKind:
-          internalRecipient &&
-          (signal.kind === 'unanswered_question' || OWNER_BRIEFING_SIGNAL_KINDS.has(signal.kind))
-            ? 'message'
-            : 'workflow',
-        proposedContent: resolveSlackIdentityText(signal.proposed_content, peopleBySlackId),
-        rationale: resolveSlackIdentityText(signal.rationale, peopleBySlackId),
-        sourceChannelId: signal.target_channel_id,
-        sourceMessageTs: signal.source_message_ts,
-        workflowKey,
-        metadata: {
-          loop_kind: input.loopKind,
-          signal_kind: signal.kind,
-          signal_finding: resolveSlackIdentityText(signal.proposed_content, peopleBySlackId),
-          confidence: signal.confidence,
-          evidence_fingerprint: actionEvidenceFingerprint,
-          delivery_mode: input.deliveryMode,
-          ...(input.preview ? { preview: true, preview_badge: 'Preview' } : {}),
-          ...slackSignalLifecycleMetadata(signal.kind),
-          ...slackTeamEvidenceMetadata({ source, slackTeamId, peopleBySlackId }),
-          ...(target && !internalRecipient
-            ? {
-                internal_only: true,
-                subject_member_id: target.id,
-                subject_display_name: target.display_name,
-                subject_relationship_kind: target.relationship_kind,
-              }
-            : {}),
-        },
-      })
-      proposed += 1
-
-      if (
-        signal.kind !== 'brain_memory' &&
-        target &&
-        !internalRecipient &&
-        workspaceOwner &&
-        proposed < remaining
-      ) {
-        const internalContent = internalEscalationMessage({
-          subject: target,
-          channelName: source.channel_name,
-          signal,
-          recipientName: workspaceOwner.display_name,
-        })
-        await this.peopleRepo.createShadowAction(input.supabase, {
-          orgId: input.orgId,
-          userId: input.userId,
-          agentKey: 'pixel',
-          targetMemberId: workspaceOwner.id,
-          actionKind: 'message',
-          proposedContent: resolveSlackIdentityText(internalContent, peopleBySlackId),
-          rationale: `Internal follow-up for a ${target.relationship_kind} Slack signal. Pixel will not message ${target.display_name}.`,
-          sourceChannelId: signal.target_channel_id,
-          sourceMessageTs: signal.source_message_ts,
-          workflowKey,
-          metadata: {
-            loop_kind: input.loopKind,
-            signal_kind: signal.kind,
-            signal_finding: resolveSlackIdentityText(signal.proposed_content, peopleBySlackId),
-            confidence: signal.confidence,
-            evidence_fingerprint: `${evidenceFingerprint}:internal${input.preview ? ':preview' : ''}`,
-            delivery_mode: input.deliveryMode,
-            ...(input.preview ? { preview: true, preview_badge: 'Preview' } : {}),
-            ...slackSignalLifecycleMetadata(signal.kind),
-            internal_only: true,
-            parent_signal_id: action.id,
-            subject_member_id: target.id,
-            subject_display_name: target.display_name,
-            subject_relationship_kind: target.relationship_kind,
-            ...slackTeamEvidenceMetadata({ source, slackTeamId, peopleBySlackId }),
-          },
-        })
-        proposed += 1
-      }
-    }
-
+    const routing =
+      this.signalRouting ??
+      new SlackTeamSignalRoutingService(this.peopleRepo, this.loopRepo, this.slackTools)
+    const { proposed, memoriesCompounded } = await routing.route({
+      supabase: input.supabase,
+      userId: input.userId,
+      orgId: input.orgId,
+      loopKind: input.loopKind,
+      deliveryMode: input.deliveryMode,
+      slackTeamId,
+      preview: input.preview,
+      now,
+      remaining,
+      signals: actionableSignals,
+      validatedPersonalMoments,
+      evidenceBySource,
+      observed,
+      peopleBySlackId,
+      workspaceOwner,
+    })
     if (pendingLastMessageTs) {
       await this.observation.advanceConsumer({
         supabase: input.supabase,
