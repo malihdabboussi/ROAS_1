@@ -5,6 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RequestScope } from '@vibey/api-shared'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import { SpacesRepository } from '../repositories/spaces.repository'
+import { MeetingsPrecallDriveAgendaService } from './meetings-precall-drive-agenda.service'
 import {
   assignRelatedCallsExclusive,
   assignSoleNearStartRelatedCalls,
@@ -67,6 +68,7 @@ export class MeetingsPrecallPrepService {
     private readonly spacesRepo: SpacesRepository,
     private readonly userAgentApi: UserAgentApiService,
     private readonly configService: ConfigService,
+    private readonly driveAgenda: MeetingsPrecallDriveAgendaService,
   ) {}
 
   async resolveMeetingsSpaceId(
@@ -158,6 +160,8 @@ export class MeetingsPrecallPrepService {
     eventSnapshot?: PrecallEventSnapshot | null
     /** When no snapshot, widen agenda lookup around this start instead of only today. */
     eventStartHint?: string | null
+    /** Explicit Page Grader client when triggered from the Portal. */
+    pageGraderClientId?: string | null
   }): Promise<{
     calendar_event_id: string
     space_item_id: string
@@ -211,6 +215,7 @@ export class MeetingsPrecallPrepService {
       spaceId: input.spaceId,
       event,
       refresh: input.refresh !== false,
+      pageGraderClientId: input.pageGraderClientId ?? null,
     })
     return {
       calendar_event_id: event.id,
@@ -219,6 +224,56 @@ export class MeetingsPrecallPrepService {
       status: 'pending',
       kind: outcome.kind,
     }
+  }
+
+  /**
+   * Portal-triggered prep: explicit Page Grader client + synthetic calendar event.
+   */
+  async runForPageGraderClient(input: {
+    supabase: SupabaseClient
+    userId: string
+    orgId: string | null
+    spaceId: string
+    pageGraderClientId: string
+    clientName: string
+    meetingDate: string
+    notes?: string | null
+    refresh?: boolean
+    scope: RequestScope
+  }): Promise<{
+    calendar_event_id: string
+    space_item_id: string
+    title: string
+    status: 'pending' | 'ready' | 'failed'
+    kind: 'created' | 'refreshed' | 'skipped'
+  }> {
+    const meetingMs = new Date(input.meetingDate).getTime()
+    if (!Number.isFinite(meetingMs)) {
+      throw new BadRequestException('meeting_date must be a valid ISO timestamp')
+    }
+    const start = new Date(meetingMs)
+    const end = new Date(meetingMs + 60 * 60 * 1000)
+    const calendarEventId = `pg-agenda:${input.pageGraderClientId}:${start.toISOString()}`
+    const title = `${input.clientName} — Meeting`.slice(0, 200)
+    return this.runForEvent({
+      supabase: input.supabase,
+      userId: input.userId,
+      orgId: input.orgId,
+      spaceId: input.spaceId,
+      calendarEventId,
+      refresh: input.refresh !== false,
+      scope: input.scope,
+      pageGraderClientId: input.pageGraderClientId,
+      eventSnapshot: {
+        title,
+        start: start.toISOString(),
+        end: end.toISOString(),
+        all_day: false,
+        video_url: null,
+        location: input.notes?.trim() || null,
+        attendees: [{ name: input.clientName, email: null }],
+      },
+    })
   }
 
   async enrichAgendaEvents(input: {
@@ -417,6 +472,7 @@ export class MeetingsPrecallPrepService {
     spaceId: string
     event: CalendarAgendaEvent
     refresh: boolean
+    pageGraderClientId?: string | null
   }): Promise<{ kind: 'created' | 'refreshed' | 'skipped'; itemId: string; title: string }> {
     const spaceRow = await this.spacesRepo.findSpaceByIdForAccess(input.supabase, input.spaceId)
     // Write using the space's org (personal Meetings → null), not the request org header.
@@ -441,6 +497,7 @@ export class MeetingsPrecallPrepService {
       prep_status: 'pending',
       call_date: input.event.start,
       attendees: attendeeTags,
+      ...(input.pageGraderClientId ? { page_grader_client_id: input.pageGraderClientId } : {}),
     }
 
     let itemId: string
@@ -488,7 +545,8 @@ export class MeetingsPrecallPrepService {
       kind = 'created'
     }
 
-    await this.invokePrepAgent({
+    const relatedContext = await this.loadRelatedContext(input.supabase, input.spaceId, input.event)
+    await this.driveAgenda.invokePrepAgent({
       supabase: input.supabase,
       userId: input.userId,
       orgId: writeOrgId,
@@ -496,93 +554,31 @@ export class MeetingsPrecallPrepService {
       itemId,
       event: input.event,
       space: spaceRow,
+      pageGraderClientId: input.pageGraderClientId ?? null,
+      relatedContext,
+      internalToken:
+        this.configService.get<string>('INTERNAL_API_TOKEN') ??
+        process.env.INTERNAL_API_TOKEN ??
+        '',
+      userAgentApi: this.userAgentApi,
     })
 
+    void this.driveAgenda
+      .writeDriveAgendaAfterPrep({
+        supabase: input.supabase,
+        userId: input.userId,
+        spaceId: input.spaceId,
+        itemId,
+        event: input.event,
+        pageGraderClientId: input.pageGraderClientId ?? null,
+      })
+      .catch((err) => {
+        this.logger.warn(
+          `Drive agenda write failed for prep ${itemId}: ${err instanceof Error ? err.message : String(err)}`,
+        )
+      })
+
     return { kind, itemId, title }
-  }
-
-  private async invokePrepAgent(input: {
-    supabase: SupabaseClient
-    userId: string
-    orgId: string | null
-    spaceId: string
-    itemId: string
-    event: CalendarAgendaEvent
-    space?: Record<string, unknown> | null
-  }): Promise<void> {
-    const space =
-      input.space ?? (await this.spacesRepo.findSpaceByIdForAccess(input.supabase, input.spaceId))
-    const relatedContext = await this.loadRelatedContext(input.supabase, input.spaceId, input.event)
-    const promptBase = buildPrecallPrompt({ event: input.event, relatedContext })
-    const prompt = [
-      promptBase,
-      '',
-      'Create exactly one Document by calling save_document with this shape:',
-      JSON.stringify(
-        {
-          title: `Prep — ${input.event.title}`.slice(0, 120),
-          body: '<full prep markdown or html>',
-          space_id: input.spaceId,
-          source_item_id: input.itemId,
-          parent_item_id: input.itemId,
-        },
-        null,
-        2,
-      ),
-      '',
-      'After the document is saved, update_task on THIS prep item: set custom field prep_status to ready and status to logged (To action).',
-    ].join('\n')
-
-    const internalToken =
-      this.configService.get<string>('INTERNAL_API_TOKEN') ?? process.env.INTERNAL_API_TOKEN ?? ''
-    if (!internalToken) throw new Error('INTERNAL_API_TOKEN not configured')
-
-    await input.supabase
-      .from('space_items')
-      .update({ task_execution_status: 'running' })
-      .eq('id', input.itemId)
-
-    const response = await this.userAgentApi.invoke(
-      input.userId,
-      '/api/task-agent/invoke',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Internal-Token': internalToken },
-        body: JSON.stringify({
-          item_id: input.itemId,
-          space_id: input.spaceId,
-          agent_key: 'vibey',
-          user_id: input.userId,
-          org_id: input.orgId,
-          campaign_id:
-            space && typeof (space as { campaign_id?: unknown }).campaign_id === 'string'
-              ? (space as { campaign_id: string }).campaign_id
-              : null,
-          prompt,
-          agent_collaboration: 'disabled',
-        }),
-      },
-      {
-        timeoutMs: 600_000,
-        logTag: `precall_prep item=${input.itemId}`,
-      },
-    )
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as Record<string, unknown> | null
-      await input.supabase
-        .from('space_items')
-        .update({
-          custom_data: {
-            entry_type: 'prep',
-            calendar_event_id: input.event.id,
-            prep_status: 'failed',
-            call_date: input.event.start,
-          },
-          task_execution_status: 'failed',
-        })
-        .eq('id', input.itemId)
-      throw new Error(String(body?.error ?? body?.message ?? 'Task agent invocation failed'))
-    }
   }
 
   private async loadRelatedContext(

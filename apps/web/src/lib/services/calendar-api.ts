@@ -13,6 +13,8 @@ export type CalendarAgendaPrep = {
   space_item_id: string
   space_id: string
   title: string | null
+  agenda_doc_link?: string | null
+  agenda_tab_id?: string | null
 }
 
 export type CalendarAgendaRelatedFollowUp = {

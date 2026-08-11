@@ -102,72 +102,13 @@ function localOffsetMsAt(instant: Date, timeZone: string): number {
   return sign * (hours * 60 + minutes) * 60_000
 }
 
-export function buildPrecallPrompt(input: {
-  event: PrecallAgendaEventLike
-  relatedContext?: string
-}): string {
-  const attendees = input.event.attendees
-    .map((a) => a.name?.trim() || a.email?.trim() || 'Unknown')
-    .join(', ')
-  return [
-    'You are preparing the human for an upcoming meeting. Write a concise pre-call prep document.',
-    'CRITICAL RULE: Always draft replies and emails. Never send Slack messages, emails, or DMs.',
-    '',
-    `Meeting: ${input.event.title}`,
-    `When: ${input.event.start} → ${input.event.end}`,
-    `Attendees: ${attendees || 'Unknown'}`,
-    input.event.video_url ? `Join link: ${input.event.video_url}` : '',
-    '',
-    'Document sections (use these headings):',
-    '1) Snapshot — who, purpose, timing',
-    '2) What we accomplished — prior progress / open loops with these people if known',
-    '3) Suggested approach — how to run this call (goals, risks, asks)',
-    '4) Talking points — bullets',
-    '5) Open questions — what still needs an answer',
-    '',
-    input.relatedContext?.trim()
-      ? `Related context from Meetings space:\n${input.relatedContext.trim()}`
-      : 'No prior Meeting notes were attached. Use calendar details and general operating judgment.',
-    '',
-    'Keep it short and CEO-usable (1–2 screens).',
-  ]
-    .filter(Boolean)
-    .join('\n')
-}
-
-export type AgendaPrepLink = {
-  status: 'pending' | 'ready' | 'failed'
-  space_item_id: string
-  space_id: string
-  title: string | null
-}
-
-export function mapPrepItemToAgendaLink(row: {
-  id: string
-  space_id: string
-  title?: string | null
-  custom_data?: Record<string, unknown> | null
-  task_execution_status?: string | null
-}): AgendaPrepLink {
-  const custom = row.custom_data ?? {}
-  const raw = String(custom.prep_status ?? 'pending')
-  let status: AgendaPrepLink['status'] =
-    raw === 'ready' || raw === 'failed' || raw === 'pending' ? raw : 'pending'
-  // Agent runs async after invoke accepts — reconcile stuck pending when execution already failed.
-  const exec = String(row.task_execution_status ?? '').toLowerCase()
-  if (status === 'pending' && (exec === 'failed' || exec === 'cancelled')) {
-    status = 'failed'
-  }
-  if (status === 'pending' && (exec === 'done' || exec === 'completed')) {
-    status = 'ready'
-  }
-  return {
-    status,
-    space_item_id: row.id,
-    space_id: row.space_id,
-    title: row.title ?? null,
-  }
-}
+export {
+  buildPrecallPrompt,
+  mapPrepItemToAgendaLink,
+  matchUniqueClientByEventTitle,
+  parsePrepDocToAgendaSections,
+  type AgendaPrepLink,
+} from './meetings-precall-agenda-sections'
 
 export type AgendaRelatedFollowUp = {
   id: string

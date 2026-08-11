@@ -84,9 +84,7 @@ export const CreatePageGraderEmbedSessionSchema = z.object({
     .optional(),
 })
 
-export type CreatePageGraderEmbedSessionDto = z.infer<
-  typeof CreatePageGraderEmbedSessionSchema
->
+export type CreatePageGraderEmbedSessionDto = z.infer<typeof CreatePageGraderEmbedSessionSchema>
 
 export const PageGraderClientScopeMappingSchema = z.object({
   client_id: z.string().uuid(),
@@ -136,6 +134,16 @@ export const PageGraderWorkStatusWebhookSchema = z.object({
 })
 
 export type PageGraderWorkStatusWebhookDto = z.infer<typeof PageGraderWorkStatusWebhookSchema>
+
+export const PageGraderMeetingAgendaWebhookSchema = z.object({
+  client_id: z.string().uuid(),
+  client_name: z.string().min(1).max(500).optional(),
+  meeting_date: z.string().min(1).max(64),
+  notes: z.string().max(8000).nullable().optional(),
+  refresh: z.boolean().optional(),
+})
+
+export type PageGraderMeetingAgendaWebhookDto = z.infer<typeof PageGraderMeetingAgendaWebhookSchema>
 
 export const SyncPageGraderMeetingSchema = z.object({
   client_ids: z.array(z.string().uuid()).min(1).max(20),

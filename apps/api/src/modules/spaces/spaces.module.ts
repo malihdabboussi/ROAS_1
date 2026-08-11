@@ -56,6 +56,8 @@ import { SpacesSharedListController } from './controllers/spaces-shared-list.con
 import { SpacesStateController } from './controllers/spaces-state.controller'
 import { SpacesController } from './controllers/spaces.controller'
 import { AdsResearchSearchRepository } from './repositories/ads-research-search.repository'
+import { SlackOpenItemsRepository } from './repositories/slack-open-items.repository'
+import { SlackPendingOffersRepository } from './repositories/slack-pending-offers.repository'
 import { SlackTeamLoopRepository } from './repositories/slack-team-loop.repository'
 import { SocialResearchFavoritesRepository } from './repositories/social-research-favorites.repository'
 import { SocialResearchTopicSearchRepository } from './repositories/social-research-topic-search.repository'
@@ -84,18 +86,17 @@ import { SpacesRepository } from './repositories/spaces.repository'
 import { AdsResearchBreakdownService } from './services/ads-research-breakdown.service'
 import { AdsResearchSearchService } from './services/ads-research-search.service'
 import { MeetingFollowUpSlackConfirmService } from './services/meeting-follow-up-slack-confirm.service'
+import { MeetingsPrecallDriveAgendaService } from './services/meetings-precall-drive-agenda.service'
 import { MeetingsPrecallPrepService } from './services/meetings-precall-prep.service'
 import { OrgAutomationFlowsService } from './services/org-automation-flows.service'
-import { SlackTeamLoopService } from './services/slack-team-loop.service'
-import { SlackTeamSignalDeliveryService } from './services/slack-team-signal-delivery.service'
-import { SlackTeamMessageComposerService } from './services/slack-team-message-composer.service'
-import { SlackOpenItemsRepository } from './repositories/slack-open-items.repository'
-import { SlackOpenItemsService } from './services/slack-open-items.service'
-import { SlackPendingOffersRepository } from './repositories/slack-pending-offers.repository'
-import { SlackPendingOffersService } from './services/slack-pending-offers.service'
-import { SlackPendingOfferAcceptanceService } from './services/slack-pending-offer-acceptance.service'
 import { SlackContextStakesService } from './services/slack-context-stakes.service'
 import { SlackOfferFulfillmentService } from './services/slack-offer-fulfillment.service'
+import { SlackOpenItemsService } from './services/slack-open-items.service'
+import { SlackPendingOfferAcceptanceService } from './services/slack-pending-offer-acceptance.service'
+import { SlackPendingOffersService } from './services/slack-pending-offers.service'
+import { SlackTeamLoopService } from './services/slack-team-loop.service'
+import { SlackTeamMessageComposerService } from './services/slack-team-message-composer.service'
+import { SlackTeamSignalDeliveryService } from './services/slack-team-signal-delivery.service'
 import { SlackTeamSignalRoutingService } from './services/slack-team-signal-routing.service'
 import { SocialResearchAccountSyncService } from './services/social-research-account-sync.service'
 import { SocialResearchFavoritesService } from './services/social-research-favorites.service'
@@ -241,6 +242,7 @@ import { SpacesService } from './services/spaces.service'
     SlackContextStakesService,
     SlackOfferFulfillmentService,
     SlackTeamSignalRoutingService,
+    MeetingsPrecallDriveAgendaService,
     MeetingsPrecallPrepService,
     MeetingFollowUpSlackConfirmService,
     SpaceAutomationInternalService,

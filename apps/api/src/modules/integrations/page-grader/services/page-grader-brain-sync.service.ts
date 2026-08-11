@@ -1,8 +1,10 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common'
-import { SupabaseServiceClient } from '@vibey/api-shared'
+import { SupabaseServiceClient, type RequestScope } from '@vibey/api-shared'
+import { MeetingsPrecallPrepService } from '../../../spaces/services/meetings-precall-prep.service'
 import { VaultService } from '../../../vault/services/vault.service'
 import {
+  PageGraderMeetingAgendaWebhookSchema,
   PageGraderWorkStatusWebhookSchema,
   type PageGraderBrainPackageWebhookDto,
 } from '../dto/page-grader.dto'
@@ -36,6 +38,8 @@ export class PageGraderBrainSyncService {
     private readonly pageGrader: PageGraderIntegration,
     private readonly brainImport: PageGraderBrainImportService,
     private readonly repository: PageGraderBrainSyncRepository,
+    private readonly pageGraderApi: PageGraderApiService,
+    private readonly precallPrep: MeetingsPrecallPrepService,
   ) {}
 
   async ensureWebhookSecret(userId: string): Promise<string> {
@@ -184,6 +188,109 @@ export class PageGraderBrainSyncService {
       work_id: payload.work_id,
       status: completed ? 'done' : dismissed ? 'dismissed' : 'delegated',
     }
+  }
+
+  async processMeetingAgendaWebhook(rawBody: string, signature: string) {
+    const secret = signature.trim()
+    if (!secret) throw new UnauthorizedException('Missing webhook signature')
+
+    let raw: unknown
+    try {
+      raw = JSON.parse(rawBody)
+    } catch {
+      throw new BadRequestException('Invalid JSON body')
+    }
+    const parsed = PageGraderMeetingAgendaWebhookSchema.safeParse(raw)
+    if (!parsed.success) throw new BadRequestException('Invalid meeting-agenda payload')
+    const payload = parsed.data
+
+    const mapped = await this.findMappedClientsByWebhookSecret(secret, payload.client_id)
+    const targets =
+      mapped.length > 0
+        ? mapped.map((row) => ({ userId: row.userId, orgId: row.orgId }))
+        : await this.findUsersByWebhookSecret(secret)
+    if (targets.length === 0) {
+      throw new UnauthorizedException('Unknown webhook secret or unmapped client')
+    }
+
+    const results = []
+    for (const row of targets) {
+      results.push(await this.startAgendaPrepForUser(row.userId, row.orgId, payload))
+    }
+    return { success: true, results }
+  }
+
+  private async startAgendaPrepForUser(
+    userId: string,
+    orgId: string | null,
+    payload: {
+      client_id: string
+      client_name?: string
+      meeting_date: string
+      notes?: string | null
+      refresh?: boolean
+    },
+  ) {
+    const supabase = this.svc.client
+    const spaceId = await this.precallPrep.resolveMeetingsSpaceId(supabase, userId, orgId)
+    if (!spaceId) {
+      throw new BadRequestException('No Meetings space found for precall prep')
+    }
+
+    let clientName = payload.client_name?.trim() || ''
+    if (!clientName) {
+      try {
+        const catalog = await this.pageGraderApi.listClients(userId, { all: true })
+        clientName =
+          catalog.clients.find((c) => c.id === payload.client_id)?.name?.trim() || 'Client'
+      } catch {
+        clientName = 'Client'
+      }
+    }
+
+    const scope = {
+      userId,
+      orgId,
+      orgRole: orgId ? ('owner' as const) : null,
+    } as RequestScope
+
+    const result = await this.precallPrep.runForPageGraderClient({
+      supabase,
+      userId,
+      orgId,
+      spaceId,
+      pageGraderClientId: payload.client_id,
+      clientName,
+      meetingDate: payload.meeting_date,
+      notes: payload.notes ?? null,
+      refresh: payload.refresh !== false,
+      scope,
+    })
+    return { user_id: userId, ...result }
+  }
+
+  private async findUsersByWebhookSecret(
+    secret: string,
+  ): Promise<Array<{ userId: string; orgId: string | null }>> {
+    const { data, error } = await this.svc.client
+      .from('user_integrations')
+      .select('user_id, org_id, metadata')
+      .eq('integration_id', PAGE_GRADER_PROVIDER)
+      .eq('status', 'connected')
+    if (error) throw new BadRequestException(error.message)
+    const out: Array<{ userId: string; orgId: string | null }> = []
+    for (const row of data ?? []) {
+      const metadata =
+        row.metadata && typeof row.metadata === 'object'
+          ? (row.metadata as Record<string, unknown>)
+          : {}
+      if (String(metadata.webhook_secret ?? '').trim() !== secret) continue
+      out.push({
+        userId: String(row.user_id),
+        orgId: row.org_id ? String(row.org_id) : null,
+      })
+    }
+    return out
   }
 
   async catchUpMappedClients(limit = 50): Promise<{
