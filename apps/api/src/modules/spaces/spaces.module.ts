@@ -94,6 +94,7 @@ import { SlackOpenItemsService } from './services/slack-open-items.service'
 import { SlackPendingOffersRepository } from './repositories/slack-pending-offers.repository'
 import { SlackPendingOffersService } from './services/slack-pending-offers.service'
 import { SlackPendingOfferAcceptanceService } from './services/slack-pending-offer-acceptance.service'
+import { SlackContextStakesService } from './services/slack-context-stakes.service'
 import { SlackOfferFulfillmentService } from './services/slack-offer-fulfillment.service'
 import { SlackTeamSignalRoutingService } from './services/slack-team-signal-routing.service'
 import { SocialResearchAccountSyncService } from './services/social-research-account-sync.service'
@@ -237,6 +238,7 @@ import { SpacesService } from './services/spaces.service'
     SlackPendingOffersRepository,
     SlackPendingOffersService,
     SlackPendingOfferAcceptanceService,
+    SlackContextStakesService,
     SlackOfferFulfillmentService,
     SlackTeamSignalRoutingService,
     MeetingsPrecallPrepService,
