@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   assignRelatedCallsExclusive,
   assignSoleNearStartRelatedCalls,
+  buildGoogleDocTabLink,
   buildMeetingAgendaEvent,
+  buildPrecallPrompt,
   callDateInAgendaWindow,
   emailFromAttendeeSlug,
   isEligiblePrecallEvent,
@@ -15,6 +17,7 @@ import {
   resolveAgendaRecordingUrl,
   resolvePreferredMeetingsSpaceId,
   scoreRelatedCallMatch,
+  validateMeetingReadyAgendaSections,
 } from '../meetings-precall-prep.helpers'
 
 describe('meetings-precall-prep.helpers', () => {
@@ -400,6 +403,69 @@ Acme weekly
     expect(sections.campaign_notes).toContain('Evergreen')
     expect(sections.other_updates).toContain('landing page')
     expect(sections.needs_blockers).toContain('offer approval')
+  })
+
+  it('parses the rich HTML body produced by save_document', () => {
+    const sections =
+      parsePrepDocToAgendaSections(`<h2>Agenda</h2><ol><li>Review the lead-quality decline and decide whether to narrow targeting.</li></ol>
+<h2>Performance</h2><ul><li>Meta snapshot Aug 3–9: $4,200 spend, 84 leads, $50 CPL; CPL increased 18% week over week.</li></ul>
+<h2>Wins</h2><ul><li>New testimonial creative produced 14 qualified leads.</li></ul>
+<h2>Campaign notes</h2><ul><li>Evergreen prospecting: shift 20% of budget to the testimonial ad.</li></ul>
+<h2>Other updates</h2><ul><li>Decision needed: approve the webinar angle by Friday.</li></ul>
+<h2>Needs / blockers</h2><ul><li>Client — approve webinar angle — Aug 14.</li></ul>`)
+
+    expect(sections.agenda).toContain('lead-quality decline')
+    expect(sections.performance).toContain('$4,200 spend')
+    expect(sections.campaign_notes).toContain('shift 20%')
+    expect(validateMeetingReadyAgendaSections(sections)).toEqual([])
+  })
+
+  it('frames the prep as a screen-share-ready client meeting and preserves operator notes', () => {
+    const prompt = buildPrecallPrompt({
+      event: {
+        id: 'pg-agenda:client-1:2026-08-17T17:00:00.000Z',
+        title: 'Acme — Meeting',
+        start: '2026-08-17T17:00:00.000Z',
+        end: '2026-08-17T18:00:00.000Z',
+        all_day: false,
+        video_url: null,
+        operator_notes: 'Resolve the offer decision and agree the launch owner.',
+        attendees: [{ name: 'Acme' }],
+      },
+      pageGraderClientName: 'Acme',
+      pageGraderContext: '{"latest_meta_performance":{"available":true}}',
+    })
+
+    expect(prompt).toContain('screen-shared with the client')
+    expect(prompt).toContain('Resolve the offer decision')
+    expect(prompt).toContain('## Performance')
+    expect(prompt).toContain('Never mention another client')
+  })
+
+  it('rejects a polished template filled with lazy placeholders', () => {
+    const sections = parsePrepDocToAgendaSections(`## Agenda
+- Review weekly performance
+## Performance
+- See Portal Meta dashboards for the latest week
+## Wins
+- (none captured)
+## Campaign notes
+- (none captured)
+## Other updates
+- Align next steps
+## Needs / blockers
+- Discuss blockers`)
+
+    expect(validateMeetingReadyAgendaSections(sections).length).toBeGreaterThan(0)
+  })
+
+  it('builds a Google Docs native-tab link without duplicating the prefix', () => {
+    expect(
+      buildGoogleDocTabLink(
+        'https://docs.google.com/document/d/doc-id/edit?usp=drivesdk#tab=t.old',
+        't.new-tab',
+      ),
+    ).toBe('https://docs.google.com/document/d/doc-id/edit?usp=drivesdk&tab=t.new-tab')
   })
 
   it('matches a unique client name in the event title', () => {

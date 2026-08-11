@@ -205,11 +205,7 @@ export class PageGraderBrainSyncService {
     const payload = parsed.data
 
     const mapped = await this.findMappedClientsByWebhookSecret(secret, payload.client_id)
-    const targets =
-      mapped.length > 0
-        ? mapped.map((row) => ({ userId: row.userId, orgId: row.orgId }))
-        : await this.findUsersByWebhookSecret(secret)
-    if (targets.length === 0) {
+    if (mapped.length === 0) {
       throw new UnauthorizedException('Unknown webhook secret or unmapped client')
     }
 
@@ -221,8 +217,8 @@ export class PageGraderBrainSyncService {
       status: 'pending' | 'ready' | 'failed'
       kind: 'created' | 'refreshed' | 'skipped'
     }> = []
-    for (const row of targets) {
-      results.push(await this.startAgendaPrepForUser(row.userId, row.orgId, payload))
+    for (const row of mapped) {
+      results.push(await this.startAgendaPrepForUser(row.userId, row.orgId, payload, row.entry))
     }
     return { success: true, results }
   }
@@ -237,6 +233,7 @@ export class PageGraderBrainSyncService {
       notes?: string | null
       refresh?: boolean
     },
+    clientScope: PageGraderClientScopeEntry,
   ) {
     const supabase = this.svc.client
     const spaceId = await this.precallPrep.resolveMeetingsSpaceId(supabase, userId, orgId)
@@ -267,6 +264,7 @@ export class PageGraderBrainSyncService {
       orgId,
       spaceId,
       pageGraderClientId: payload.client_id,
+      pageGraderCampaignId: clientScope.campaign_id,
       clientName,
       meetingDate: payload.meeting_date,
       notes: payload.notes ?? null,
@@ -274,30 +272,6 @@ export class PageGraderBrainSyncService {
       scope,
     })
     return { user_id: userId, ...result }
-  }
-
-  private async findUsersByWebhookSecret(
-    secret: string,
-  ): Promise<Array<{ userId: string; orgId: string | null }>> {
-    const { data, error } = await this.svc.client
-      .from('user_integrations')
-      .select('user_id, org_id, metadata')
-      .eq('integration_id', PAGE_GRADER_PROVIDER)
-      .eq('status', 'connected')
-    if (error) throw new BadRequestException(error.message)
-    const out: Array<{ userId: string; orgId: string | null }> = []
-    for (const row of data ?? []) {
-      const metadata =
-        row.metadata && typeof row.metadata === 'object'
-          ? (row.metadata as Record<string, unknown>)
-          : {}
-      if (String(metadata.webhook_secret ?? '').trim() !== secret) continue
-      out.push({
-        userId: String(row.user_id),
-        orgId: row.org_id ? String(row.org_id) : null,
-      })
-    }
-    return out
   }
 
   async catchUpMappedClients(limit = 50): Promise<{

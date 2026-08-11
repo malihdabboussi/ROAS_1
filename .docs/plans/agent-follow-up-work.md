@@ -9600,3 +9600,18 @@ Evidence: The scoped context-warning integration adds one small orchestration ho
 Needed work: Extract final reply decoration/accounting from `agent-runner.ts` and split the miscellaneous runner suite by behavior (usage/context warnings, streaming, provider fallback, and reply suppression).
 
 Reason not done now: The requested change requires the existing post-usage/pre-delivery chokepoint. A broader behavior-neutral runner/test decomposition would materially expand the deployment surface beyond the token-warning feature.
+
+## 2026-08-11 — Meeting precall service decomposition
+
+Status: Open
+
+Files:
+
+- `apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts` (623 LOC; above the 600-line service limit and below its existing 629-line allowance)
+- `apps/api/src/modules/spaces/services/meetings-precall-prep.helpers.ts` (591 LOC; near the 600-line service-helper limit)
+
+Evidence: The files already had repeated follow-up entries above the size limit before this meeting-agenda hardening. The new related-call lookup was extracted into `meetings-precall-related-context.ts`; the remaining service still exceeds the general limit but does not grow beyond its existing architecture allowance.
+
+Needed work: Extract related-call querying/matching and prep-item persistence into focused collaborators while preserving the public prep service contract and existing Drive-write behavior.
+
+Reason not done now: Decomposing the long-standing calendar/Fathom orchestration would substantially broaden a production correctness fix whose focused tests are already isolated and passing.

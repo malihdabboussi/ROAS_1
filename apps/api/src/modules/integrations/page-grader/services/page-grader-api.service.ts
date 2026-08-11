@@ -81,7 +81,22 @@ export class PageGraderApiService {
       },
     })
 
-    const webhookSecret = `pgwh_${randomBytes(24).toString('hex')}`
+    const { data: existingConnection } = await this.svc.client
+      .from('user_integrations')
+      .select('metadata')
+      .eq('user_id', userId)
+      .eq('integration_id', PAGE_GRADER_PROVIDER)
+      .is('org_id', null)
+      .maybeSingle()
+    const existingMetadata =
+      existingConnection?.metadata && typeof existingConnection.metadata === 'object'
+        ? (existingConnection.metadata as Record<string, unknown>)
+        : {}
+    const existingWebhookSecret =
+      typeof existingMetadata.webhook_secret === 'string'
+        ? existingMetadata.webhook_secret.trim()
+        : ''
+    const webhookSecret = existingWebhookSecret || `pgwh_${randomBytes(24).toString('hex')}`
     const now = new Date().toISOString()
     const baseUrlHost = safeHost(baseUrl)
     await this.connections.upsertConnection(PAGE_GRADER_PROVIDER, userId, {
@@ -94,7 +109,11 @@ export class PageGraderApiService {
       token_expires_at: null,
       connected_at: now,
       error_message: null,
-      metadata: { base_url_host: baseUrlHost, webhook_secret: webhookSecret },
+      metadata: {
+        ...existingMetadata,
+        base_url_host: baseUrlHost,
+        webhook_secret: webhookSecret,
+      },
       connection_label: baseUrlHost,
       updated_at: now,
       scope_mode: 'personal',

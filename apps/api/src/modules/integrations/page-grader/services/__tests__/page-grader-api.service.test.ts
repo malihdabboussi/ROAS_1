@@ -86,6 +86,39 @@ describe('PageGraderApiService.sendWork', () => {
     )
   })
 
+  it('preserves the client scope map and webhook secret when reconnecting', async () => {
+    pageGrader.healthCheck.mockResolvedValue({ ok: true })
+    const existingMetadata = {
+      webhook_secret: 'pgwh_existing',
+      client_scope_map: {
+        'client-1': { campaign_id: 'campaign-1', space_id: 'space-1' },
+      },
+    }
+    const secondEq = {
+      is: vi.fn(() => ({
+        maybeSingle: vi.fn().mockResolvedValue({ data: { metadata: existingMetadata } }),
+      })),
+    }
+    const firstEq = { eq: vi.fn(() => secondEq) }
+    svc.client.from.mockReturnValueOnce({
+      select: vi.fn(() => ({ eq: vi.fn(() => firstEq) })),
+    } as never)
+
+    const result = await service.connect('user-1', 'https://portal.example.com/', 'test-key')
+
+    expect(result.webhook_secret).toBe('pgwh_existing')
+    expect(connections.upsertConnection).toHaveBeenCalledWith(
+      'page_grader',
+      'user-1',
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          webhook_secret: 'pgwh_existing',
+          client_scope_map: existingMetadata.client_scope_map,
+        }),
+      }),
+    )
+  })
+
   it('retries ClickUp via idempotent create when already sent', async () => {
     spaces.getItem.mockResolvedValue({
       id: 'item-1',
@@ -125,6 +158,9 @@ describe('PageGraderApiService.sendWork', () => {
         status: 'skipped_already_sent',
         work_id: 'pg-1',
         work_url: 'https://app.clickup.com/t/abc',
+        clickup_task_id: undefined,
+        clickup_task_url: undefined,
+        assignee_resolution: [],
       },
     ])
   })

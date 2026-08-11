@@ -26,6 +26,7 @@ import {
   type PrecallAgendaEventLike,
   type PrecallEventSnapshot,
 } from './meetings-precall-prep.helpers'
+import { loadPrecallRelatedContext } from './meetings-precall-related-context'
 
 const RELATED_CALL_MATCH_PAD_MS = 36 * 60 * 60 * 1000
 
@@ -162,6 +163,8 @@ export class MeetingsPrecallPrepService {
     eventStartHint?: string | null
     /** Explicit Page Grader client when triggered from the Portal. */
     pageGraderClientId?: string | null
+    /** Mapped ROAS campaign that owns this Page Grader client's Brain. */
+    pageGraderCampaignId?: string | null
   }): Promise<{
     calendar_event_id: string
     space_item_id: string
@@ -216,6 +219,7 @@ export class MeetingsPrecallPrepService {
       event,
       refresh: input.refresh !== false,
       pageGraderClientId: input.pageGraderClientId ?? null,
+      pageGraderCampaignId: input.pageGraderCampaignId ?? null,
     })
     return {
       calendar_event_id: event.id,
@@ -235,6 +239,7 @@ export class MeetingsPrecallPrepService {
     orgId: string | null
     spaceId: string
     pageGraderClientId: string
+    pageGraderCampaignId: string
     clientName: string
     meetingDate: string
     notes?: string | null
@@ -264,13 +269,15 @@ export class MeetingsPrecallPrepService {
       refresh: input.refresh !== false,
       scope: input.scope,
       pageGraderClientId: input.pageGraderClientId,
+      pageGraderCampaignId: input.pageGraderCampaignId,
       eventSnapshot: {
         title,
         start: start.toISOString(),
         end: end.toISOString(),
         all_day: false,
         video_url: null,
-        location: input.notes?.trim() || null,
+        location: null,
+        operator_notes: input.notes?.trim() || null,
         attendees: [{ name: input.clientName, email: null }],
       },
     })
@@ -473,6 +480,7 @@ export class MeetingsPrecallPrepService {
     event: CalendarAgendaEvent
     refresh: boolean
     pageGraderClientId?: string | null
+    pageGraderCampaignId?: string | null
   }): Promise<{ kind: 'created' | 'refreshed' | 'skipped'; itemId: string; title: string }> {
     const spaceRow = await this.spacesRepo.findSpaceByIdForAccess(input.supabase, input.spaceId)
     // Write using the space's org (personal Meetings → null), not the request org header.
@@ -498,6 +506,9 @@ export class MeetingsPrecallPrepService {
       call_date: input.event.start,
       attendees: attendeeTags,
       ...(input.pageGraderClientId ? { page_grader_client_id: input.pageGraderClientId } : {}),
+      ...(input.pageGraderCampaignId
+        ? { page_grader_campaign_id: input.pageGraderCampaignId }
+        : {}),
     }
 
     let itemId: string
@@ -506,10 +517,15 @@ export class MeetingsPrecallPrepService {
     if (existing?.id) {
       itemId = String(existing.id)
       if (!input.refresh) {
-        const status = String(
-          (existing.custom_data as Record<string, unknown> | null)?.prep_status ?? '',
-        )
-        if (status === 'ready' || status === 'pending') {
+        const existingCustom = (existing.custom_data as Record<string, unknown> | null) ?? {}
+        const status = String(existingCustom.prep_status ?? '')
+        const hasDriveAgenda = Boolean(String(existingCustom.agenda_tab_id ?? '').trim())
+        const updatedMs = new Date(String(existing.updated_at ?? '')).getTime()
+        const pendingIsFresh =
+          status === 'pending' &&
+          Number.isFinite(updatedMs) &&
+          Date.now() - updatedMs < 10 * 60 * 1000
+        if ((status === 'ready' && hasDriveAgenda) || pendingIsFresh) {
           return { kind: 'skipped', itemId, title: String(existing.title ?? title) }
         }
       }
@@ -545,7 +561,11 @@ export class MeetingsPrecallPrepService {
       kind = 'created'
     }
 
-    const relatedContext = await this.loadRelatedContext(input.supabase, input.spaceId, input.event)
+    const relatedContext = await loadPrecallRelatedContext(
+      input.supabase,
+      input.spaceId,
+      input.event,
+    )
     await this.driveAgenda.invokePrepAgent({
       supabase: input.supabase,
       userId: input.userId,
@@ -555,6 +575,7 @@ export class MeetingsPrecallPrepService {
       event: input.event,
       space: spaceRow,
       pageGraderClientId: input.pageGraderClientId ?? null,
+      pageGraderCampaignId: input.pageGraderCampaignId ?? null,
       relatedContext,
       internalToken:
         this.configService.get<string>('INTERNAL_API_TOKEN') ??
@@ -572,56 +593,28 @@ export class MeetingsPrecallPrepService {
         event: input.event,
         pageGraderClientId: input.pageGraderClientId ?? null,
       })
-      .catch((err) => {
-        this.logger.warn(
-          `Drive agenda write failed for prep ${itemId}: ${err instanceof Error ? err.message : String(err)}`,
-        )
+      .catch(async (err) => {
+        const message = err instanceof Error ? err.message : String(err)
+        const { data: failedItem } = await input.supabase
+          .from('space_items')
+          .select('custom_data')
+          .eq('id', itemId)
+          .maybeSingle()
+        await input.supabase
+          .from('space_items')
+          .update({
+            custom_data: {
+              ...((failedItem?.custom_data as Record<string, unknown> | null) ?? {}),
+              prep_status: 'failed',
+              agenda_write_status: 'failed',
+              agenda_write_error: message.slice(0, 1000),
+            },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', itemId)
+        this.logger.warn(`Drive agenda write failed for prep ${itemId}: ${message}`)
       })
 
     return { kind, itemId, title }
-  }
-
-  private async loadRelatedContext(
-    supabase: SupabaseClient,
-    spaceId: string,
-    event: CalendarAgendaEvent,
-  ): Promise<string> {
-    const emails = event.attendees
-      .map((a) => a.email?.trim().toLowerCase())
-      .filter((v): v is string => Boolean(v))
-    const { data } = await supabase
-      .from('space_items')
-      .select('title, notes, custom_data, created_at')
-      .eq('space_id', spaceId)
-      .eq('custom_data->>entry_type', 'call')
-      .order('created_at', { ascending: false })
-      .limit(8)
-    const rows = (data ?? []) as Array<{
-      title?: string
-      notes?: string | null
-      custom_data?: Record<string, unknown> | null
-    }>
-    const snippets: string[] = []
-    for (const row of rows) {
-      const attendees = row.custom_data?.attendees
-      const attendeeBlob = Array.isArray(attendees)
-        ? attendees.map((a) => String(a).toLowerCase()).join(' ')
-        : ''
-      const overlap =
-        emails.length === 0 ||
-        emails.some(
-          (email) =>
-            attendeeBlob.includes(email) ||
-            String(row.title ?? '')
-              .toLowerCase()
-              .includes(email.split('@')[0] ?? ''),
-        )
-      if (!overlap && emails.length > 0) continue
-      snippets.push(
-        `- ${row.title ?? 'Untitled call'}${row.notes ? `: ${String(row.notes).slice(0, 280)}` : ''}`,
-      )
-      if (snippets.length >= 3) break
-    }
-    return snippets.join('\n')
   }
 }

@@ -28,6 +28,81 @@ describe('PageGraderBrainSyncService', () => {
     await expect(service.processWebhook('not-json', 'secret')).rejects.toThrow(/Invalid JSON/i)
   })
 
+  it('routes agenda prep through the explicitly mapped client campaign Brain', async () => {
+    const precallPrep = {
+      resolveMeetingsSpaceId: vi.fn().mockResolvedValue('meetings-space'),
+      runForPageGraderClient: vi.fn().mockResolvedValue({
+        calendar_event_id: 'pg-agenda:event',
+        space_item_id: 'prep-1',
+        title: 'Prep — Acme',
+        status: 'pending',
+        kind: 'created',
+      }),
+    }
+    const service = new PageGraderBrainSyncService(
+      { client: {} } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      precallPrep as never,
+    )
+    vi.spyOn(service as never, 'findMappedClientsByWebhookSecret' as never).mockResolvedValue([
+      {
+        userId: 'user-1',
+        orgId: null,
+        clientId: '11111111-1111-1111-1111-111111111111',
+        entry: { campaign_id: 'campaign-client-acme' },
+        webhookSecret: 'whsec',
+      },
+    ] as never)
+
+    await service.processMeetingAgendaWebhook(
+      JSON.stringify({
+        client_id: '11111111-1111-1111-1111-111111111111',
+        client_name: 'Acme',
+        meeting_date: '2026-08-17T17:00:00.000Z',
+        notes: 'Decide the launch owner.',
+      }),
+      'whsec',
+    )
+
+    expect(precallPrep.runForPageGraderClient).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pageGraderClientId: '11111111-1111-1111-1111-111111111111',
+        pageGraderCampaignId: 'campaign-client-acme',
+        notes: 'Decide the launch owner.',
+      }),
+    )
+  })
+
+  it('rejects an agenda request for a client absent from the scope map', async () => {
+    const service = new PageGraderBrainSyncService(
+      { client: {} } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    )
+    vi.spyOn(service as never, 'findMappedClientsByWebhookSecret' as never).mockResolvedValue(
+      [] as never,
+    )
+
+    await expect(
+      service.processMeetingAgendaWebhook(
+        JSON.stringify({
+          client_id: '11111111-1111-1111-1111-111111111111',
+          client_name: 'Unmapped client',
+          meeting_date: '2026-08-17T17:00:00.000Z',
+        }),
+        'whsec',
+      ),
+    ).rejects.toThrow(/unmapped client/i)
+  })
+
   it('writes a completed Page Grader work status back to the ROAS action ledger', async () => {
     const updateEq = vi.fn().mockResolvedValue({ error: null })
     const update = vi.fn(() => ({ eq: updateEq }))

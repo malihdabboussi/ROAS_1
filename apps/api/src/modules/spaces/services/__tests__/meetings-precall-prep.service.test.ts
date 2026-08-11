@@ -16,9 +16,17 @@ function supabaseStub() {
     eq: chain.eq,
     then: terminal.then.bind(terminal),
   }))
+  const selectChain = {
+    eq: vi.fn(),
+    order: vi.fn(),
+    limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+  }
+  selectChain.eq.mockReturnValue(selectChain)
+  selectChain.order.mockReturnValue(selectChain)
   return {
     from: vi.fn(() => ({
       update: vi.fn(() => chain),
+      select: vi.fn(() => selectChain),
     })),
   }
 }
@@ -36,18 +44,21 @@ describe('MeetingsPrecallPrepService.runForEvent', () => {
     const configService = {
       get: vi.fn().mockReturnValue('token'),
     }
+    const driveAgenda = {
+      invokePrepAgent: vi.fn().mockResolvedValue(undefined),
+      writeDriveAgendaAfterPrep: vi.fn().mockResolvedValue(undefined),
+    }
     const service = new MeetingsPrecallPrepService(
       { get: vi.fn() } as never,
       spacesRepo as never,
       userAgentApi as never,
       configService as never,
+      driveAgenda as never,
     )
     const getAgenda = vi.fn()
     vi.spyOn(service as never, 'resolveCalendarService' as never).mockReturnValue({
       getAgenda,
     } as never)
-    vi.spyOn(service as never, 'loadRelatedContext' as never).mockResolvedValue('')
-
     const result = await service.runForEvent({
       supabase: supabaseStub() as never,
       userId: 'user-1',
@@ -57,12 +68,15 @@ describe('MeetingsPrecallPrepService.runForEvent', () => {
       timezone: 'America/Los_Angeles',
       refresh: true,
       scope: { orgId: null } as never,
+      pageGraderClientId: 'client-1',
+      pageGraderCampaignId: 'campaign-1',
       eventSnapshot: {
         title: 'ROAS - Shawn Kaplan',
         start: '2026-07-28T17:00:00.000Z',
         end: '2026-07-28T18:00:00.000Z',
         all_day: false,
         video_url: 'https://us06web.zoom.us/j/1',
+        operator_notes: 'Prioritize the offer decision and next launch milestone.',
         attendees: [
           { email: 'nefi@roas.co', name: 'Nefi' },
           { email: 'shawn.kaplan@ccm.com', name: 'Shawn' },
@@ -74,6 +88,15 @@ describe('MeetingsPrecallPrepService.runForEvent', () => {
     expect(result.calendar_event_id).toBe('workspace:ident:evt-1')
     expect(result.space_item_id).toBe('prep-1')
     expect(spacesRepo.createItem).toHaveBeenCalled()
+    expect(driveAgenda.invokePrepAgent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pageGraderClientId: 'client-1',
+        pageGraderCampaignId: 'campaign-1',
+        event: expect.objectContaining({
+          operator_notes: 'Prioritize the offer decision and next launch milestone.',
+        }),
+      }),
+    )
   })
 
   it('looks up the event around its start day when no snapshot is provided', async () => {
@@ -88,11 +111,16 @@ describe('MeetingsPrecallPrepService.runForEvent', () => {
     const configService = {
       get: vi.fn().mockReturnValue('token'),
     }
+    const driveAgenda = {
+      invokePrepAgent: vi.fn().mockResolvedValue(undefined),
+      writeDriveAgendaAfterPrep: vi.fn().mockResolvedValue(undefined),
+    }
     const service = new MeetingsPrecallPrepService(
       { get: vi.fn() } as never,
       spacesRepo as never,
       userAgentApi as never,
       configService as never,
+      driveAgenda as never,
     )
     const event = {
       id: 'gcal:evt-tomorrow',
@@ -107,8 +135,6 @@ describe('MeetingsPrecallPrepService.runForEvent', () => {
     vi.spyOn(service as never, 'resolveCalendarService' as never).mockReturnValue({
       getAgenda,
     } as never)
-    vi.spyOn(service as never, 'loadRelatedContext' as never).mockResolvedValue('')
-
     const result = await service.runForEvent({
       supabase: supabaseStub() as never,
       userId: 'user-1',

@@ -29,3 +29,13 @@ Why: Pixel should give Dylan the same early warning Viktor provides before a lon
 Impact: The warning uses only fresh final-call usage, is suppressed for heartbeats and completed compactions, deduplicates per compaction cycle, and rearms after compaction or session reset. Automatic compaction remains unchanged.
 
 Files: OpenClaw context-warning helper/tests, reply runner, session state, chat stream recovery documentation.
+
+## [2026-08-11 14:05] - [FIX]
+
+What: Hardened unified Page Grader meeting agendas so the mapped ROAS campaign agent receives bounded client Brain, meeting, work, and performance context; preserves operator notes; produces a validated six-section screen-share agenda; and writes one retry-safe Google Docs tab.
+
+Why: The first live agenda looked polished but contained generic placeholders because rich agent HTML was not parsed, the wrong campaign could be used, Page Grader context was incomplete, and a prep could be marked ready before a useful Drive agenda existed.
+
+Impact: Client-facing agendas now require specific evidence and decisions, reject lazy placeholder output and unmapped clients, avoid unrelated meeting leakage, preserve integration mapping across reconnects, and expose failed Drive writes for retry instead of reporting false success.
+
+Files: `page-grader-api.service.ts`, `page-grader-brain-sync.service.ts`, `meetings-precall-agenda-sections.ts`, `meetings-precall-drive-agenda.service.ts`, `meetings-precall-prep.helpers.ts`, `meetings-precall-prep.service.ts`, `meetings-precall-related-context.ts`, focused tests including cross-client context isolation, `documentation/features/page-grader-campaign-brain-sync.md`.

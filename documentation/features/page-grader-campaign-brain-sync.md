@@ -1,6 +1,6 @@
 # Page Grader Campaign Brain Sync
 
-Last Modified: July 23, 2026
+Last Modified: August 11, 2026
 
 ## Overview
 
@@ -67,22 +67,32 @@ Ambiguous calls are left with `needs_client_mapping` instead of being attached t
 
 Page Grader upserts on the Fathom meeting ID plus client ID, so webhook retries and catch-up runs do not duplicate calls. Deploy the Page Grader migration and `roas-api` function before deploying the ROAS webhook sender.
 
+## Unified precall agenda bridge
+
+Page Grader's **New Agenda** action and eligible ROAS meetings use the same precall-prep pipeline. Page Grader owns the Google Docs template, weekly tab, and Meta ad-preview insertion. ROAS owns the agenda analysis and must use the exact client mapping's campaign Brain; an unmapped Page Grader client is rejected instead of falling back to another user's integration.
+
+The prep agent receives a bounded Page Grader context pack containing cached Meta performance with source range and freshness, recent meeting notes, active campaigns, open fulfillment work, prior agendas, and Client Brain intelligence. Operator notes remain a distinct input. The Drive writer accepts only a substantive six-section result: Agenda, Performance, Wins, Campaign notes, Other updates, and Needs / blockers. Generic placeholders such as “see dashboard,” cross-client material, and an otherwise successful prep without a completed Drive tab are treated as failures that can be retried.
+
+Repeated manual requests use the deterministic Page Grader client and meeting timestamp key. A ready item is skipped only after its Drive tab exists; a stale pending or failed write can run again. Stored document links preserve the raw Google Docs tab identifier in the `tab` query parameter.
+
 ## Code map
 
-| Concern              | Location                                                                                        |
-| -------------------- | ----------------------------------------------------------------------------------------------- |
-| Deterministic ingest | `apps/api/src/modules/brain/services/page-grader-brain-package-ingest.service.ts`               |
-| Brain vector repair  | `page-grader-memory-embedding.service.ts`, `scripts/roas/backfill-campaign-brain-embeddings.py` |
-| Create/import entry  | `page-grader-client-import.service.ts` → `page-grader-brain-import.service.ts`                  |
-| Campaign Spaces      | `page-grader-campaign-space-schema.ts` → `page-grader-client-import.service.ts`                 |
-| Webhook + catch-up   | `page-grader-brain-sync.service.ts`, `page-grader-webhooks.controller.ts`                       |
-| Map clients UI       | `PageGraderClientScopeMapModal.tsx` / `PageGraderClientScopeMapRow.tsx`                         |
-| Brain canvas Re-sync | `CampaignAddInfoImportMenu.tsx` / `CampaignAddInfoPanel.tsx`                                    |
-| PG package + push    | `page-grader/.../roasBrainPackage.ts`, `roasBrainPush.ts`, `scheduled-brain-refresh`            |
-| Fathom meetings      | `page-grader-meeting-sync.service.ts`, `fathom-webhook.service.ts`, Page Grader `roas-api`      |
+| Concern              | Location                                                                                                              |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Deterministic ingest | `apps/api/src/modules/brain/services/page-grader-brain-package-ingest.service.ts`                                     |
+| Brain vector repair  | `page-grader-memory-embedding.service.ts`, `scripts/roas/backfill-campaign-brain-embeddings.py`                       |
+| Create/import entry  | `page-grader-client-import.service.ts` → `page-grader-brain-import.service.ts`                                        |
+| Campaign Spaces      | `page-grader-campaign-space-schema.ts` → `page-grader-client-import.service.ts`                                       |
+| Webhook + catch-up   | `page-grader-brain-sync.service.ts`, `page-grader-webhooks.controller.ts`                                             |
+| Map clients UI       | `PageGraderClientScopeMapModal.tsx` / `PageGraderClientScopeMapRow.tsx`                                               |
+| Brain canvas Re-sync | `CampaignAddInfoImportMenu.tsx` / `CampaignAddInfoPanel.tsx`                                                          |
+| PG package + push    | `page-grader/.../roasBrainPackage.ts`, `roasBrainPush.ts`, `scheduled-brain-refresh`                                  |
+| Fathom meetings      | `page-grader-meeting-sync.service.ts`, `fathom-webhook.service.ts`, Page Grader `roas-api`                            |
+| Precall Drive agenda | `meetings-precall-prep.service.ts`, `meetings-precall-drive-agenda.service.ts`, `meetings-precall-agenda-sections.ts` |
 
 ## Decision Log
 
+- **2026-08-11:** Unified Page Grader manual agendas and ROAS precall prep behind the mapped client campaign. ROAS now supplies validated, client-safe, decision-ready content from bounded Brain, meeting, fulfillment, and cached Meta context; Page Grader remains the Google Docs/ad-preview writer. Missing mappings, lazy placeholder output, cross-client call context, failed Drive writes, and duplicate same-meeting requests no longer silently pass as successful agendas.
 - **2026-07-23:** Page Grader imports had two separate vector stores:
   Campaign Knowledge chunks received embeddings, but their canonical
   `ns_memories` rows did not. Matching package hashes then skipped the importer

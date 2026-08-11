@@ -7,6 +7,7 @@ export type PrecallAgendaEventLike = {
   end: string
   all_day: boolean
   video_url: string | null
+  operator_notes?: string | null
   attendees: Array<{ email?: string | null; name?: string | null }>
 }
 
@@ -64,6 +65,7 @@ export type PrecallEventSnapshot = {
   all_day: boolean
   video_url?: string | null
   location?: string | null
+  operator_notes?: string | null
   attendees?: Array<{ email?: string | null; name?: string | null }>
 }
 
@@ -78,6 +80,7 @@ export function eventFromPrecallSnapshot(
     end: snapshot.end,
     all_day: Boolean(snapshot.all_day),
     video_url: snapshot.video_url?.trim() || null,
+    operator_notes: snapshot.operator_notes?.trim() || null,
     attendees: (snapshot.attendees ?? []).map((a) => ({
       email: a.email ?? null,
       name: a.name ?? null,
@@ -103,10 +106,12 @@ function localOffsetMsAt(instant: Date, timeZone: string): number {
 }
 
 export {
+  buildGoogleDocTabLink,
   buildPrecallPrompt,
   mapPrepItemToAgendaLink,
   matchUniqueClientByEventTitle,
   parsePrepDocToAgendaSections,
+  validateMeetingReadyAgendaSections,
   type AgendaPrepLink,
 } from './meetings-precall-agenda-sections'
 

@@ -2,9 +2,11 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
+  buildGoogleDocTabLink,
   buildPrecallPrompt,
   matchUniqueClientByEventTitle,
   parsePrepDocToAgendaSections,
+  validateMeetingReadyAgendaSections,
   type PrecallAgendaEventLike,
 } from './meetings-precall-agenda-sections'
 
@@ -26,6 +28,7 @@ type PageGraderApiLike = {
       sections: Record<string, string>
       insert_ad_previews?: boolean
       roas_prep_item_id?: string | null
+      notes?: string | null
     },
   ) => Promise<{
     doc_id: string | null
@@ -87,10 +90,36 @@ export class MeetingsPrecallDriveAgendaService {
 
     const { data: item } = await input.supabase
       .from('space_items')
-      .select('id, custom_data')
+      .select('id, custom_data, updated_at')
       .eq('id', input.itemId)
       .maybeSingle()
     const custom = (item?.custom_data ?? {}) as Record<string, unknown>
+    if (typeof custom.agenda_tab_id === 'string' && custom.agenda_tab_id.trim()) {
+      this.logger.log(
+        `Drive agenda already exists for prep ${input.itemId}; skipping duplicate write`,
+      )
+      return
+    }
+    const writeUpdatedMs = new Date(String(item?.updated_at ?? '')).getTime()
+    if (
+      custom.agenda_write_status === 'writing' &&
+      Number.isFinite(writeUpdatedMs) &&
+      Date.now() - writeUpdatedMs < 10 * 60 * 1000
+    ) {
+      this.logger.log(`Drive agenda write already in progress for prep ${input.itemId}`)
+      return
+    }
+    await input.supabase
+      .from('space_items')
+      .update({
+        custom_data: {
+          ...custom,
+          agenda_write_status: 'writing',
+          agenda_write_error: null,
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', input.itemId)
     const clientId =
       (typeof custom.page_grader_client_id === 'string' ? custom.page_grader_client_id : null) ||
       input.pageGraderClientId ||
@@ -106,9 +135,11 @@ export class MeetingsPrecallDriveAgendaService {
       input.itemId,
     )
     const sections = parsePrepDocToAgendaSections(docBody || '')
-    if (!sections.performance) {
-      sections.performance =
-        'See Portal Meta / CRM dashboards for the latest week. Ad previews are inserted below when available.'
+    const contentProblems = validateMeetingReadyAgendaSections(sections)
+    if (contentProblems.length > 0) {
+      throw new BadRequestException(
+        `Precall prep is not meeting-ready: ${contentProblems.join('; ')}`,
+      )
     }
 
     const pageGrader = this.resolvePageGraderApi()
@@ -116,7 +147,7 @@ export class MeetingsPrecallDriveAgendaService {
       meeting_date: input.event.start,
       sections: {
         agenda: sections.agenda,
-        performance: sections.performance,
+        performance: sections.performance!,
         wins: sections.wins,
         campaign_notes: sections.campaign_notes,
         other_updates: sections.other_updates,
@@ -124,11 +155,12 @@ export class MeetingsPrecallDriveAgendaService {
       },
       insert_ad_previews: true,
       roas_prep_item_id: input.itemId,
+      notes: input.event.operator_notes ?? null,
     })
 
     const docLink =
       result.tab_id && result.doc_link
-        ? `${result.doc_link}${result.doc_link.includes('#') ? '' : `#tab=t.${result.tab_id}`}`
+        ? buildGoogleDocTabLink(result.doc_link, result.tab_id)
         : result.doc_link
 
     await input.supabase
@@ -142,6 +174,8 @@ export class MeetingsPrecallDriveAgendaService {
           agenda_tab_id: result.tab_id,
           agenda_tab_name: result.tab_name,
           page_grader_meeting_agenda_id: result.meeting_agenda_id,
+          agenda_write_status: 'ready',
+          agenda_write_error: null,
         },
         updated_at: new Date().toISOString(),
       })
@@ -181,7 +215,7 @@ export class MeetingsPrecallDriveAgendaService {
   ): Promise<string> {
     const { data } = await supabase
       .from('space_items')
-      .select('id, title, notes, description, custom_data')
+      .select('id, title, notes, description, doc_body, custom_data')
       .eq('space_id', spaceId)
       .eq('parent_item_id', parentItemId)
       .order('created_at', { ascending: false })
@@ -191,6 +225,7 @@ export class MeetingsPrecallDriveAgendaService {
       const body =
         (typeof custom.body === 'string' && custom.body) ||
         (typeof custom.content === 'string' && custom.content) ||
+        (typeof row.doc_body === 'string' && row.doc_body) ||
         (typeof row.notes === 'string' && row.notes) ||
         (typeof row.description === 'string' && row.description) ||
         ''
@@ -198,10 +233,10 @@ export class MeetingsPrecallDriveAgendaService {
     }
     const { data: parent } = await supabase
       .from('space_items')
-      .select('notes, description')
+      .select('notes, description, doc_body')
       .eq('id', parentItemId)
       .maybeSingle()
-    return String(parent?.notes ?? parent?.description ?? '')
+    return String(parent?.doc_body ?? parent?.notes ?? parent?.description ?? '')
   }
 
   async invokePrepAgent(input: {
@@ -213,6 +248,7 @@ export class MeetingsPrecallDriveAgendaService {
     event: PrecallAgendaEventLike
     space?: Record<string, unknown> | null
     pageGraderClientId?: string | null
+    pageGraderCampaignId?: string | null
     relatedContext: string
     internalToken: string
     userAgentApi: {
@@ -240,7 +276,7 @@ export class MeetingsPrecallDriveAgendaService {
         )
         const client = (pack.client as { name?: string } | undefined) ?? undefined
         pageGraderClientName = typeof client?.name === 'string' ? client.name : null
-        pageGraderContext = JSON.stringify(pack, null, 2).slice(0, 12_000)
+        pageGraderContext = JSON.stringify(pack, null, 2).slice(0, 30_000)
         const { data: existingItem } = await input.supabase
           .from('space_items')
           .select('custom_data')
@@ -313,9 +349,10 @@ export class MeetingsPrecallDriveAgendaService {
           user_id: input.userId,
           org_id: input.orgId,
           campaign_id:
-            space && typeof (space as { campaign_id?: unknown }).campaign_id === 'string'
+            input.pageGraderCampaignId?.trim() ||
+            (space && typeof (space as { campaign_id?: unknown }).campaign_id === 'string'
               ? (space as { campaign_id: string }).campaign_id
-              : null,
+              : null),
           prompt,
           agent_collaboration: 'disabled',
         }),
