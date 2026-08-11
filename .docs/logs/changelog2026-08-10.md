@@ -57,3 +57,13 @@ Why: Pixel's fixed digest copy could not match Viktor's specificity or natural v
 Impact: Preview and eligible internal delivery now use exact source names, channels, quotes, figures, and local-day context without weakening internal-only, confidence, quiet-hour, cap, or evidence safety rails. Model or validation failures preserve the existing deterministic copy.
 
 Files: `packages/agent-policy/src/pixel-slack-voice.ts`, `apps/api/src/modules/spaces/services/slack-team-message-composer.service.ts`, signal routing/delivery services and tests, `documentation/features/spaces-automation.md`.
+
+## [2026-08-10 22:31] - [FEATURE]
+
+What: Added evidence-woven personal-moment composition, an explicit belated variant after 20 hours, and delivery reuse of the validated preview copy.
+
+Why: Personal moments were safe but still sounded templated and discarded their composed proposal at send time.
+
+Impact: Dylan-first personal outreach can naturally reference one or two public details, says “belated” when appropriate, creates no offers, and still falls back deterministically behind the unchanged evidence validator.
+
+Files: `apps/api/src/modules/spaces/services/slack-team-message-composer.service.ts`, `slack-team-personal-moment-propose.ts`, signal routing/delivery services, tests, `documentation/features/spaces-automation.md`.

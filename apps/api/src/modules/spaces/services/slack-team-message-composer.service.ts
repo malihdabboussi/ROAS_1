@@ -82,7 +82,12 @@ export class SlackTeamMessageComposerService {
     recipient: { name: string; role?: string; relationship: string }
     signals: SlackTeamComposerSignal[]
     continuity: string[]
-    context: { now: Date; timezone: string; threadFollowUp: boolean }
+    context: {
+      now: Date
+      timezone: string
+      threadFollowUp: boolean
+      personalMoment?: { eventType: string; belated: boolean }
+    }
     forbiddenPrivateFacts?: string[]
   }): Promise<SlackTeamComposition> {
     const evidence = [
@@ -96,6 +101,13 @@ export class SlackTeamMessageComposerService {
       context: {
         ...formatDayContext(input.context.now, input.context.timezone),
         thread_follow_up: input.context.threadFollowUp,
+        ...(input.context.personalMoment
+          ? {
+              personal_moment: input.context.personalMoment,
+              personal_moment_contract:
+                'Weave one or two supplied public evidence details naturally. Use no evidence footer and return zero offers. If belated is true, explicitly say belated.',
+            }
+          : {}),
       },
       output_contract: {
         text: 'Final Slack mrkdwn. Use single asterisks for Slack bold.',
@@ -120,7 +132,13 @@ export class SlackTeamMessageComposerService {
           ready_by: String(offer.ready_by ?? '').trim(),
         }))
       : []
-    this.validate({ text, offers, evidence, forbiddenPrivateFacts: input.forbiddenPrivateFacts })
+    this.validate({
+      text,
+      offers,
+      evidence,
+      forbiddenPrivateFacts: input.forbiddenPrivateFacts,
+      personalMoment: Boolean(input.context.personalMoment),
+    })
     this.logger.log(
       `Composed Slack message signals=${input.signals.length} tokens=${completion.usage.totalTokens} cost_usd=${completion.providerCostUsd}`,
     )
@@ -136,6 +154,7 @@ export class SlackTeamMessageComposerService {
     offers: SlackTeamComposerOffer[]
     evidence: string
     forbiddenPrivateFacts?: string[]
+    personalMoment?: boolean
   }): void {
     if (!input.text || input.text.length > 3000) {
       throw new Error('Slack composition failed the length guardrail')
@@ -145,6 +164,9 @@ export class SlackTeamMessageComposerService {
       input.offers.some((offer) => !offer.kind || !offer.deliverable || !offer.ready_by)
     ) {
       throw new Error('Slack composition failed the scoped-offer guardrail')
+    }
+    if (input.personalMoment && input.offers.length > 0) {
+      throw new Error('Slack composition failed the personal-moment offer guardrail')
     }
     if (CANNED_CLOSERS.some((pattern) => pattern.test(input.text))) {
       throw new Error('Slack composition failed the canned-closer guardrail')

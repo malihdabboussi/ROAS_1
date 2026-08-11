@@ -57,6 +57,14 @@ export async function proposePersonalMomentAction(input: {
     supabase: SupabaseClient,
     payload: Record<string, unknown>,
   ) => Promise<unknown>
+  now?: Date
+  timezone?: string
+  composePersonalMoment?: (input: {
+    finding: string
+    evidence: PersonalMomentEvidenceMessage[]
+    eventType: PersonalMomentEventType
+    belated: boolean
+  }) => Promise<{ text: string; usage: Record<string, number> }>
 }): Promise<boolean> {
   const subjectNames = [
     input.internalRecipient.display_name,
@@ -142,7 +150,7 @@ export async function proposePersonalMomentAction(input: {
       : 'That older thread people brought back still holds up, too.'
     : null
   const finding = resolveSlackIdentityText(input.signal.proposed_content, input.peopleBySlackId)
-  const composed = filterBrainDetailsFromSlackCopy(
+  const fallback = filterBrainDetailsFromSlackCopy(
     composePersonalMomentMessage({
       recipientName: input.internalRecipient.display_name,
       eventType: input.validated.eventType,
@@ -151,6 +159,26 @@ export async function proposePersonalMomentAction(input: {
       historicalConnection: historicalLine,
     }),
   )
+  const now = input.now ?? new Date()
+  const sourceMillis = Number(input.source.ts.split('.')[0]) * 1000
+  const belated =
+    Number.isFinite(sourceMillis) && now.getTime() - sourceMillis > 20 * 60 * 60 * 1000
+  let composed = fallback
+  let compositionMetadata: Record<string, unknown> = { composition_fallback: true }
+  if (input.composePersonalMoment) {
+    try {
+      const result = await input.composePersonalMoment({
+        finding,
+        evidence: input.validated.evidence,
+        eventType: input.validated.eventType,
+        belated,
+      })
+      composed = filterBrainDetailsFromSlackCopy(result.text)
+      compositionMetadata = { composition_usage: result.usage, personal_moment_belated: belated }
+    } catch {
+      compositionMetadata = { composition_fallback: true, personal_moment_belated: belated }
+    }
+  }
   await input.createShadowAction(input.supabase, {
     orgId: input.orgId,
     userId: input.userId,
@@ -166,7 +194,7 @@ export async function proposePersonalMomentAction(input: {
       loop_kind: input.loopKind,
       signal_kind: 'personal_moment',
       moment_event_type: input.validated.eventType,
-      moment_date_key: personalMomentDateKey(new Date()),
+      moment_date_key: personalMomentDateKey(now, input.timezone),
       signal_finding: finding,
       confidence: input.validated.confidence,
       evidence_fingerprint: input.evidenceFingerprint,
@@ -182,6 +210,7 @@ export async function proposePersonalMomentAction(input: {
       personal_moment_historical_connection: historicalLine,
       personal_moment_historical_source_text: historical?.text ?? null,
       personal_moment_brain_context_internal: brainContextInternal,
+      ...compositionMetadata,
       ...slackSignalLifecycleMetadata('personal_moment'),
       ...slackTeamEvidenceMetadata({
         source: input.source,

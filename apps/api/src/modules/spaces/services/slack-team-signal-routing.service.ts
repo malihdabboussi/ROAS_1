@@ -153,6 +153,39 @@ export class SlackTeamSignalRoutingService {
             this.slackTools.searchMessages(supabase, userId, orgId, params),
           createShadowAction: (supabase, payload) =>
             this.people.createShadowAction(supabase, payload as never),
+          now: input.now,
+          timezone: input.timezone,
+          ...(this.composer
+            ? {
+                composePersonalMoment: async ({ finding, evidence, eventType, belated }) => {
+                  const composition = await this.composer!.compose({
+                    userId: input.userId,
+                    orgId: input.orgId,
+                    recipient: {
+                      name: internalRecipient.display_name,
+                      relationship: internalRecipient.relationship_kind,
+                    },
+                    signals: evidence.slice(0, 2).map((message) => ({
+                      kind: 'personal_moment',
+                      finding,
+                      quote: message.text,
+                      senderName:
+                        input.peopleBySlackId.get(message.user)?.display_name ?? message.user,
+                      channelName: message.channel_name,
+                      timestamp: message.ts,
+                    })),
+                    continuity: [],
+                    context: {
+                      now: input.now,
+                      timezone: input.timezone ?? 'America/Los_Angeles',
+                      threadFollowUp: false,
+                      personalMoment: { eventType, belated },
+                    },
+                  })
+                  return { text: composition.text, usage: composition.usage }
+                },
+              }
+            : {}),
         })
         proposed += 1
         continue
