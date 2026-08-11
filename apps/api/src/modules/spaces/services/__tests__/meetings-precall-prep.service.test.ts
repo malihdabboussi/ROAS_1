@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import { MeetingsPrecallPrepService } from '../meetings-precall-prep.service'
 
+const { waitUntilMock } = vi.hoisted(() => ({ waitUntilMock: vi.fn() }))
+
+vi.mock('@vercel/functions', () => ({ waitUntil: waitUntilMock }))
+
 function supabaseStub() {
   const terminal = {
     then(onFulfilled: (value: { error: null }) => unknown) {
@@ -97,6 +101,7 @@ describe('MeetingsPrecallPrepService.runForEvent', () => {
         }),
       }),
     )
+    expect(waitUntilMock).toHaveBeenCalledWith(expect.any(Promise))
   })
 
   it('looks up the event around its start day when no snapshot is provided', async () => {

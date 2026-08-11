@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ModuleRef } from '@nestjs/core'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { waitUntil } from '@vercel/functions'
 import type { RequestScope } from '@vibey/api-shared'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import { SpacesRepository } from '../repositories/spaces.repository'
@@ -584,7 +585,7 @@ export class MeetingsPrecallPrepService {
       userAgentApi: this.userAgentApi,
     })
 
-    void this.driveAgenda
+    const agendaWrite = this.driveAgenda
       .writeDriveAgendaAfterPrep({
         supabase: input.supabase,
         userId: input.userId,
@@ -614,6 +615,14 @@ export class MeetingsPrecallPrepService {
           .eq('id', itemId)
         this.logger.warn(`Drive agenda write failed for prep ${itemId}: ${message}`)
       })
+
+    try {
+      waitUntil(agendaWrite)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      this.logger.warn(`waitUntil unavailable for prep ${itemId}: ${message}`)
+      void agendaWrite
+    }
 
     return { kind, itemId, title }
   }
