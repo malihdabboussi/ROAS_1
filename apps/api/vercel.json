@@ -7,9 +7,15 @@
     "api/index.ts": {
       "maxDuration": 300,
       "includeFiles": "{public/**,dist/**,node_modules/@vibey/**,../../packages/@vibey/**,../../docker/agents/templates/**}"
+    },
+    "api/space-automation-cron.ts": {
+      "maxDuration": 300
     }
   },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "rewrites": [
+    { "source": "/cron/space-automations", "destination": "/api/space-automation-cron" },
+    { "source": "/(.*)", "destination": "/api" }
+  ],
   "crons": [
     {
       "path": "/api/machines/idle-check",
@@ -24,7 +30,7 @@
       "schedule": "0 2 * * *"
     },
     {
-      "path": "/api/internal/space-automations/dispatch-due",
+      "path": "/cron/space-automations",
       "schedule": "1-4,6-9,11-14,16-19,21-24,26-29,31-34,36-39,41-44,46-49,51-54,56-59 * * * *"
     }
   ]

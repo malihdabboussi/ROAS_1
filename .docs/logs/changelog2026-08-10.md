@@ -140,10 +140,10 @@ Files: Slack context-stakes service/tests, signal delivery/module wiring, docs.
 
 ## [2026-08-10 23:28] - [FIX]
 
-What: Disabled Nest in-process timer registration on Vercel, moved automation scans out of maintenance slots, and split cron ingress from the normal authenticated execution request.
+What: Disabled Nest in-process timers on Vercel, moved automation scans out of maintenance slots, and moved cron ingress into a standalone function with no Nest/BullMQ imports.
 
-Why: Vercel cron-origin requests consistently reset Supabase connections after Pixel's schedule claim; decorated maintenance timers and same-slot idle-machine work amplified the failure.
+Why: Vercel cron-origin requests initialized the monolith's unreachable Railway-private Redis socket and reset Supabase connections after Pixel's schedule claim; maintenance timers amplified the failure.
 
-Impact: Cron ingress performs no database work and dispatches the existing awaited execution path as a normal serverless request, with at most one minute of pickup latency. Persistent deployments retain their timer behavior; queue opt-in and delivery safety gates are unchanged.
+Impact: Cron ingress imports no application runtime, performs no database/Redis work, and dispatches the existing awaited execution path as a normal request, with at most one minute of pickup latency. Persistent deployments retain their timer behavior; queue opt-in and delivery safety gates are unchanged.
 
 Files: `apps/api/src/app.module.ts`, `apps/api/vercel.json`, cron runtime policy/config tests, `documentation/features/spaces-automation.md`.
