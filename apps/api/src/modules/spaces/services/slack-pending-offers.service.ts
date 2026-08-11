@@ -16,8 +16,14 @@ export class SlackPendingOffersService {
       channelId: string
       threadTs: string | null
       offer: SlackTeamComposerOffer
+      now?: Date
     },
   ): Promise<void> {
+    const now = input.now ?? new Date()
+    const explicitPromise = Date.parse(input.offer.ready_by)
+    const promisedBy = Number.isFinite(explicitPromise)
+      ? new Date(explicitPromise)
+      : new Date(now.getTime() + 24 * 60 * 60_000)
     await this.offers.create(supabase, {
       org_id: input.orgId,
       recipient_person_id: input.recipientPersonId,
@@ -30,11 +36,12 @@ export class SlackPendingOffersService {
         ready_by: input.offer.ready_by,
         promise_by: input.offer.ready_by,
       },
+      promised_by: promisedBy.toISOString(),
     })
     await this.offers.expire(
       supabase,
       input.orgId,
-      new Date(Date.now() - 72 * 60 * 60_000).toISOString(),
+      new Date(now.getTime() - 72 * 60 * 60_000).toISOString(),
     )
   }
 }

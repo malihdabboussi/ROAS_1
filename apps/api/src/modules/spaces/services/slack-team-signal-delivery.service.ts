@@ -419,6 +419,7 @@ export class SlackTeamSignalDeliveryService {
             channelId,
             threadTs: digestThreadTs,
             offer: composition.offers[0],
+            now,
           })
         }
       }

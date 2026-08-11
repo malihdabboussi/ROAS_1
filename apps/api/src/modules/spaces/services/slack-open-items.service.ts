@@ -5,12 +5,15 @@ import {
   SlackOpenItemsRepository,
   type SlackOpenItem,
 } from '../repositories/slack-open-items.repository'
+import { Optional } from '@nestjs/common'
+import { SlackOfferFulfillmentService } from './slack-offer-fulfillment.service'
 
 @Injectable()
 export class SlackOpenItemsService {
   constructor(
     private readonly items: SlackOpenItemsRepository,
     private readonly resolution: SlackSignalResolutionService,
+    @Optional() private readonly offerFulfillment?: SlackOfferFulfillmentService,
   ) {}
 
   async record(
@@ -45,6 +48,7 @@ export class SlackOpenItemsService {
   }
 
   async reconcile(supabase: SupabaseClient, orgId: string, now: Date): Promise<void> {
+    await this.offerFulfillment?.checkMissed(supabase, now)
     const checkedBefore = new Date(now.getTime() - 15 * 60_000).toISOString()
     for (const item of await this.items.listDueForResolution(supabase, orgId, checkedBefore)) {
       const actionId =

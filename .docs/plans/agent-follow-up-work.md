@@ -9533,7 +9533,7 @@ Status: Planned in PR 6
 
 Files:
 
-- `apps/api/src/modules/spaces/services/slack-team-signal-delivery.service.ts` (497 LOC after PR 8 offer persistence; above 99% of the 500-line soft limit)
+- `apps/api/src/modules/spaces/services/slack-team-signal-delivery.service.ts` (498 LOC after PR 10 promise timestamp wiring; above 99% of the 500-line soft limit)
 
 Evidence: PR 4 moved signal routing out first and added the required composer/fallback handoff, continuity lookup, and composition audit metadata. Delivery still owns cooling, resolution, claiming, personal moments, batching, and send persistence.
 
