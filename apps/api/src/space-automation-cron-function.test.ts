@@ -1,11 +1,10 @@
-import type { Request, Response } from 'express'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import handler from '../api/space-automation-cron'
 
 function responseHarness() {
   const json = vi.fn()
   const status = vi.fn().mockReturnValue({ json })
-  return { response: { status } as unknown as Response, status }
+  return { response: { status }, status }
 }
 
 describe('standalone space automation cron ingress', () => {
@@ -21,7 +20,7 @@ describe('standalone space automation cron ingress', () => {
     vi.stubGlobal('fetch', fetchMock)
     const { response, status } = responseHarness()
 
-    await handler({ headers: { authorization: 'Bearer wrong' } } as Request, response)
+    await handler({ headers: { authorization: 'Bearer wrong' } }, response)
 
     expect(status).toHaveBeenCalledWith(401)
     expect(fetchMock).not.toHaveBeenCalled()
@@ -34,7 +33,7 @@ describe('standalone space automation cron ingress', () => {
     vi.stubGlobal('fetch', fetchMock)
     const { response, status } = responseHarness()
 
-    await handler({ headers: { authorization: 'Bearer cron-secret' } } as Request, response)
+    await handler({ headers: { authorization: 'Bearer cron-secret' } }, response)
 
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.example.com/api/internal/space-automations/process-due',

@@ -1,6 +1,12 @@
-import type { Request, Response } from 'express'
+interface CronRequest {
+  headers: { authorization?: string }
+}
 
-export default async function handler(req: Request, res: Response) {
+interface CronResponse {
+  status(code: number): { json(body: Record<string, unknown>): unknown }
+}
+
+export default async function handler(req: CronRequest, res: CronResponse) {
   const cronSecret = process.env.CRON_SECRET
   if (!cronSecret || req.headers.authorization !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ error: 'Unauthorized' })
