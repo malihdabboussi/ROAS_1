@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { Injectable } from '@nestjs/common'
+import { Injectable, Optional } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SlackPeopleRepository } from '../../slack/repositories/slack-people.repository'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
@@ -19,6 +19,7 @@ import {
 import { proposePersonalMomentAction } from './slack-team-personal-moment-propose'
 import { slackSignalLifecycleMetadata } from './slack-team-signal-delivery.service'
 import { composeInternalEscalation } from './slack-team-signal-message'
+import { SlackTeamMessageComposerService } from './slack-team-message-composer.service'
 
 const OWNER_BRIEFING_SIGNAL_KINDS = new Set<SlackTeamSignal['kind']>([
   'team_win',
@@ -47,6 +48,7 @@ export class SlackTeamSignalRoutingService {
     private readonly people: SlackPeopleRepository,
     private readonly loops: SlackTeamLoopRepository,
     private readonly slackTools: SlackAgentToolsService,
+    @Optional() private readonly composer?: SlackTeamMessageComposerService,
   ) {}
 
   async route(input: {
@@ -58,6 +60,7 @@ export class SlackTeamSignalRoutingService {
     slackTeamId: string
     preview?: boolean
     now: Date
+    timezone?: string
     remaining: number
     signals: SlackTeamSignal[]
     validatedPersonalMoments: ValidatedPersonalMoment[]
@@ -155,17 +158,59 @@ export class SlackTeamSignalRoutingService {
         continue
       }
 
+      const actionKind =
+        internalRecipient &&
+        (signal.kind === 'unanswered_question' || OWNER_BRIEFING_SIGNAL_KINDS.has(signal.kind))
+          ? 'message'
+          : 'workflow'
+      const fallbackContent = resolveSlackIdentityText(
+        signal.proposed_content,
+        input.peopleBySlackId,
+      )
+      let proposedContent = fallbackContent
+      let compositionMetadata: Record<string, unknown> = {}
+      if (actionKind === 'message' && internalRecipient && this.composer) {
+        try {
+          const composition = await this.composer.compose({
+            userId: input.userId,
+            orgId: input.orgId,
+            recipient: {
+              name: internalRecipient.display_name,
+              relationship: internalRecipient.relationship_kind,
+            },
+            signals: [
+              {
+                kind: signal.kind,
+                finding: fallbackContent,
+                quote: source.text,
+                senderName: input.peopleBySlackId.get(source.user)?.display_name ?? source.user,
+                channelName: source.channel_name,
+                timestamp: source.ts,
+              },
+            ],
+            continuity: [],
+            context: {
+              now: input.now,
+              timezone: input.timezone ?? 'America/Los_Angeles',
+              threadFollowUp: false,
+            },
+          })
+          proposedContent = composition.text
+          compositionMetadata = {
+            composition_offers: composition.offers,
+            composition_usage: composition.usage,
+          }
+        } catch {
+          compositionMetadata = { composition_fallback: true }
+        }
+      }
       const action = await this.people.createShadowAction(input.supabase, {
         orgId: input.orgId,
         userId: input.userId,
         agentKey: 'pixel',
         targetMemberId: internalRecipient?.id ?? null,
-        actionKind:
-          internalRecipient &&
-          (signal.kind === 'unanswered_question' || OWNER_BRIEFING_SIGNAL_KINDS.has(signal.kind))
-            ? 'message'
-            : 'workflow',
-        proposedContent: resolveSlackIdentityText(signal.proposed_content, input.peopleBySlackId),
+        actionKind,
+        proposedContent,
         rationale: resolveSlackIdentityText(signal.rationale, input.peopleBySlackId),
         sourceChannelId: signal.target_channel_id,
         sourceMessageTs: signal.source_message_ts,
@@ -184,6 +229,7 @@ export class SlackTeamSignalRoutingService {
             slackTeamId: input.slackTeamId,
             peopleBySlackId: input.peopleBySlackId,
           }),
+          ...compositionMetadata,
           ...(target && !internalRecipient
             ? {
                 internal_only: true,

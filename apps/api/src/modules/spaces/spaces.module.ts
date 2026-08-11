@@ -88,6 +88,7 @@ import { MeetingsPrecallPrepService } from './services/meetings-precall-prep.ser
 import { OrgAutomationFlowsService } from './services/org-automation-flows.service'
 import { SlackTeamLoopService } from './services/slack-team-loop.service'
 import { SlackTeamSignalDeliveryService } from './services/slack-team-signal-delivery.service'
+import { SlackTeamMessageComposerService } from './services/slack-team-message-composer.service'
 import { SlackTeamSignalRoutingService } from './services/slack-team-signal-routing.service'
 import { SocialResearchAccountSyncService } from './services/social-research-account-sync.service'
 import { SocialResearchFavoritesService } from './services/social-research-favorites.service'
@@ -224,6 +225,7 @@ import { SpacesService } from './services/spaces.service'
     SpaceAutomationService,
     SlackTeamLoopService,
     SlackTeamSignalDeliveryService,
+    SlackTeamMessageComposerService,
     SlackTeamSignalRoutingService,
     MeetingsPrecallPrepService,
     MeetingFollowUpSlackConfirmService,

@@ -2,6 +2,7 @@ import {
   ACTION_CONTRACT_PROTOCOL_BLOCK,
   prependActionContractProtocol,
 } from './action-contract-protocol.js'
+import { PIXEL_SLACK_VOICE_BLOCK } from './pixel-slack-voice.js'
 
 export const PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING = '## Runtime Operating Layers'
 export const PLATFORM_TOOLS_DATA_GROUNDING_PRINCIPLE =
@@ -40,7 +41,9 @@ Slack does not reliably render Markdown tables. Express rows as compact labeled 
 
 Example: \`• Date — Spend: $328 · Leads: 42 · CPL: $7.82 · CTR: 2.38%\`
 
-Keep real Markdown tables for surfaces that render them, such as portal documents.`
+Keep real Markdown tables for surfaces that render them, such as portal documents.
+
+${PIXEL_SLACK_VOICE_BLOCK}`
 export const PLATFORM_TOOLS_MEDIA_ROUTING_HEADING = '### Image And Video Creation'
 export const PLATFORM_TOOLS_MEDIA_ROUTING_BLOCK = `${PLATFORM_TOOLS_MEDIA_ROUTING_HEADING}
 

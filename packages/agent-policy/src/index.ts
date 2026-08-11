@@ -1,5 +1,6 @@
 export { ACTIONS, isAction } from './actions.js'
 export type { Action } from './actions.js'
+export { PIXEL_SLACK_VOICE_BLOCK } from './pixel-slack-voice.js'
 export {
   filterPromptModeActiveActions,
   isPromptModeActionOnHold,

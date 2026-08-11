@@ -9526,3 +9526,17 @@ Evidence: PR 3 added only a small delegation method for the send-safe Slack prev
 Needed work: Move Slack Team signal routing out of the concrete automation service together with the authoritative PR 4 loop extraction, keeping action execution and preview behavior unchanged.
 
 Reason not done now: PR 4 explicitly begins with the signal-routing extraction; splitting the same boundary twice in adjacent PRs would create unnecessary churn and conflict with the ordered plan.
+
+## 2026-08-10 — Pixel signal delivery composition boundary
+
+Status: Planned in PR 6
+
+Files:
+
+- `apps/api/src/modules/spaces/services/slack-team-signal-delivery.service.ts` (474 LOC; above 90% of the 500-line soft limit)
+
+Evidence: PR 4 moved signal routing out first and added the required composer/fallback handoff, continuity lookup, and composition audit metadata. Delivery still owns cooling, resolution, claiming, personal moments, batching, and send persistence.
+
+Needed work: Extract digest batch composition/evidence mapping alongside the PR 6 continuity-pack work, leaving safety decisions and send claiming in the delivery service.
+
+Reason not done now: The requested composer integration is complete and below the limit; PR 6 is the authoritative phase for the broader continuity boundary.

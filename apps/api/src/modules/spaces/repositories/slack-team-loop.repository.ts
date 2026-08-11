@@ -80,6 +80,33 @@ export class SlackTeamLoopRepository {
     return { channelId, threadTs }
   }
 
+  async listRecentDigestSummaries(
+    supabase: SupabaseClient,
+    input: { orgId: string; workflowKey: string; targetMemberId: string; limit?: number },
+  ): Promise<string[]> {
+    const { data, error } = await supabase
+      .from('slack_shadow_actions')
+      .select('proposed_content,metadata,sent_at')
+      .eq('org_id', input.orgId)
+      .eq('workflow_key', input.workflowKey)
+      .eq('target_member_id', input.targetMemberId)
+      .eq('status', 'sent')
+      .order('sent_at', { ascending: false })
+      .limit(input.limit ?? 3)
+    if (error) throw new Error(`Failed to load Slack digest continuity: ${error.message}`)
+    return (data ?? [])
+      .map((row) => {
+        const metadata =
+          row.metadata && typeof row.metadata === 'object'
+            ? (row.metadata as Record<string, unknown>)
+            : {}
+        return typeof metadata.delivered_text === 'string'
+          ? metadata.delivered_text
+          : String(row.proposed_content ?? '')
+      })
+      .filter(Boolean)
+  }
+
   async countActionsSince(
     supabase: SupabaseClient,
     input: { orgId: string; workflowKey: string; since: string },

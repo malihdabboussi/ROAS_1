@@ -124,6 +124,7 @@ export class SlackTeamLoopService {
           personIds: input.personIds,
           quietHoursActive,
           people,
+          timezone: input.automationTimezone ?? input.quietHours?.timezone,
         })) ?? { rechecked: 0, resolved: 0, sent: 0 })
 
     const reconciliation = await this.observation.reconcile({
@@ -349,6 +350,7 @@ export class SlackTeamLoopService {
       slackTeamId,
       preview: input.preview,
       now,
+      timezone: input.automationTimezone ?? input.quietHours?.timezone,
       remaining,
       signals: actionableSignals,
       validatedPersonalMoments,
