@@ -10,7 +10,7 @@ describe('Vercel cron isolation', () => {
       crons: CronEntry[]
     }
     const scheduler = config.crons.find(
-      (entry) => entry.path === '/api/internal/space-automations/process-due',
+      (entry) => entry.path === '/api/internal/space-automations/dispatch-due',
     )
 
     expect(scheduler?.schedule).toBe(
