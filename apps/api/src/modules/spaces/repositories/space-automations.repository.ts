@@ -179,6 +179,22 @@ export class SpaceAutomationsRepository {
     return !!data
   }
 
+  async claimDailyLivenessAlert(
+    supabase: SupabaseClient,
+    automationId: string,
+    alertDate: string,
+  ): Promise<boolean> {
+    const { data, error } = await supabase
+      .from('space_automations')
+      .update({ schedule_liveness_alerted_on: alertDate })
+      .eq('id', automationId)
+      .or(`schedule_liveness_alerted_on.is.null,schedule_liveness_alerted_on.neq.${alertDate}`)
+      .select('id')
+      .maybeSingle()
+    if (error) throw new BadRequestException(error.message)
+    return Boolean(data)
+  }
+
   /**
    * Return enabled, non-draft automations whose `schedule_next_fire_at` is in
    * the past. Caller is responsible for rolling the column forward after each

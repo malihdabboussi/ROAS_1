@@ -98,6 +98,7 @@ import { SocialResearchTranscriptFallbackService } from './services/social-resea
 import { SocialResearchVideoBreakdownService } from './services/social-research-video-breakdown.service'
 import { SpaceAutomationControllerPolicyService } from './services/space-automation-controller-policy.service'
 import { SpaceAutomationInternalService } from './services/space-automation-internal.service'
+import { SpaceAutomationLivenessService } from './services/space-automation-liveness.service'
 import { SpaceAutomationReadService } from './services/space-automation-read.service'
 import { SpaceAutomationReconcilerService } from './services/space-automation-reconciler.service'
 import { SpaceAutomationRuntimeProcessor } from './services/space-automation-runtime.processor'
@@ -225,6 +226,7 @@ import { SpacesService } from './services/spaces.service'
     MeetingsPrecallPrepService,
     MeetingFollowUpSlackConfirmService,
     SpaceAutomationInternalService,
+    SpaceAutomationLivenessService,
     SpaceAutomationControllerPolicyService,
     SpaceAutomationReconcilerService,
     SpaceAutomationReadService,

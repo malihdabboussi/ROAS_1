@@ -191,7 +191,6 @@ export function SidebarHqFlyouts({
             pathname={c.pathname}
             favoriteCampaigns={favoriteCampaigns}
             favoriteSpaces={favoriteSpaces}
-            spaces={c.sidebarLists}
           />
         </HubDockFlyout>
       ) : null}

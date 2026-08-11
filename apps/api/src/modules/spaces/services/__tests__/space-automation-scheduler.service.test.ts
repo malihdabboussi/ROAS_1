@@ -23,6 +23,7 @@ function buildScheduler(overrides: Record<string, unknown> = {}) {
     findDueSchedules: vi.fn().mockResolvedValue([]),
     claimSchedule: vi.fn().mockResolvedValue(true),
     updateScheduleFields: vi.fn().mockResolvedValue(null),
+    claimDailyLivenessAlert: vi.fn().mockResolvedValue(true),
     ...overrides,
   }
   const automationService = {
@@ -41,6 +42,34 @@ function buildScheduler(overrides: Record<string, unknown> = {}) {
   )
   return { automationService, automationsRepo, service }
 }
+
+describe('SpaceAutomationSchedulerService liveness', () => {
+  it('reports a schedule that was silent for more than three intervals', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-11T03:00:00.000Z'))
+    const { automationsRepo, automationService } = buildScheduler()
+    const liveness = { reportRevived: vi.fn().mockResolvedValue(undefined) }
+    const service = new SpaceAutomationSchedulerService(
+      automationsRepo as never,
+      automationService as never,
+      { get: vi.fn() } as never,
+      { captureException: vi.fn() } as never,
+      { createOptionalServiceRoleClient: vi.fn() } as never,
+      liveness as never,
+    )
+
+    await (service as any).processOne({} as never, {
+      ...baseRow,
+      name: 'Pixel team loop',
+      schedule_last_fired_at: '2026-08-10T21:00:00.000Z',
+    })
+
+    expect(liveness.reportRevived).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ automationId: 'automation-1', missedFires: 5 }),
+    )
+  })
+})
 
 describe('SpaceAutomationSchedulerService runtime routing', () => {
   beforeEach(() => vi.useRealTimers())

@@ -18,6 +18,7 @@ import {
   type SlackChannelExclusionDto,
   type SlackSignalTrainingDto,
 } from '../dto/slack.dto'
+import { SlackAutomationHealthService } from '../services/slack-automation-health.service'
 import { SlackChannelCoverageService } from '../services/slack-channel-coverage.service'
 import { SlackSignalResolutionService } from '../services/slack-signal-resolution.service'
 import { SlackSignalTrainingService } from '../services/slack-signal-training.service'
@@ -30,7 +31,13 @@ export class SlackIntelligenceAdminController {
     private readonly coverage: SlackChannelCoverageService,
     private readonly training: SlackSignalTrainingService,
     private readonly resolution: SlackSignalResolutionService,
+    private readonly automationHealth: SlackAutomationHealthService,
   ) {}
+
+  @Get('automation-health')
+  getAutomationHealth(@Supabase() supabase: SupabaseClient, @OrgContext() scope: RequestScope) {
+    return this.automationHealth.getSummary(supabase, String(scope.orgId))
+  }
 
   @Get('channels/coverage')
   getCoverage(@Supabase() supabase: SupabaseClient, @OrgContext() scope: RequestScope) {

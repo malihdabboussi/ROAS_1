@@ -62,6 +62,7 @@ Spaces automations run rules from the `space_automations` table through the sing
 - `vault_secrets` stores the actual webhook HMAC signing secret under provider `flow_webhook`.
 - `space_webhook_events` stores received JSON payloads, mapped fields, idempotency keys, selected header summaries, processing status, matched automation IDs, and error text while preserving event history after endpoint disable/delete.
 - `space_automation_runs` and `space_external_automation_events` preserve audit history when a rule is deleted by setting `automation_id` to null.
+- Scheduled run rows persist a top-level `skipped_reason` plus per-recipient `delivery_outcomes` (`can_send` and the deterministic gate reason). Team → People → Signals summarizes the last 24 hours as ran, skipped by reason, delivered, and held by reason.
 - `space_automation_run_state`, `space_external_automation_triggers`, and `space_contact_automation_routes` cascade with the rule because they are runtime routing/state rows.
 - `emails` stores draft email artifacts (`subject`, `body`, `space_id`, `source_item_id`, `campaign_id`) and uses the same owner/org RLS model as other campaign artifacts.
 - RLS mirrors Spaces read/update ownership for owners and org admins; API-level `assertCanMutateAutomation` remains the source of truth for edit-level per-rule mutation.
@@ -149,6 +150,7 @@ Spaces automations run rules from the `space_automations` table through the sing
 
 ## Decision Log
 
+- 2026-08-10: Added schedule liveness recovery reporting. When an enabled schedule resumes after silence longer than three expected intervals (with a 15-minute floor), Pixel creates a daily-deduped administrator notification and sends the mapped workspace owner a one-line recovery DM. Run history now stores skip and recipient gate decisions directly, and the Team Intelligence admin surface reports them without weakening quiet hours, internal-only delivery, allowlists, or person-level Active gates.
 - 2026-08-10: Recovered scheduled automation execution after the API enqueued to a BullMQ queue with no deployed consumer. Queue use and in-process polling are now explicit persistent-host opt-ins; Vercel runs scheduled work inline through its authenticated cron endpoint. The scheduler self-heals null next-fire timestamps and only clears a schedule for cron-parse errors, never transient persistence failures.
 - 2026-07-30: Made delegation inherit bounded originating-chat evidence and
   known Space/campaign scope. Meeting-dependent delegations now receive explicit

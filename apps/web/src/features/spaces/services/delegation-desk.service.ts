@@ -1,5 +1,6 @@
-import type { Space } from '../types'
+import type { Space, SpaceItem } from '../types'
 import { instantiateSpaceTemplate } from './space-templates.service'
+import { createSpaceItem } from './spaces.service'
 
 type DelegationDeskSchema = {
   delegation_desk?: boolean
@@ -28,4 +29,29 @@ export async function ensureDelegationDesk(spaces: Space[]): Promise<{
     include_automations: true,
   })
   return { desk, createdDesk: true }
+}
+
+export async function captureDelegationThought(
+  deskId: string,
+  thought: string,
+): Promise<SpaceItem> {
+  const text = thought.trim()
+  if (!text) throw new Error('Add something to the Delegation Desk.')
+
+  return createSpaceItem(deskId, {
+    title: text,
+    description: text,
+    status: 'inbox',
+    priority: null,
+    custom_data: {
+      intake_type: 'work_item',
+      dispatch_mode: 'review',
+      delegation: {
+        version: 1,
+        mode: 'review',
+        source: 'manual',
+        captured_at: new Date().toISOString(),
+      },
+    },
+  })
 }

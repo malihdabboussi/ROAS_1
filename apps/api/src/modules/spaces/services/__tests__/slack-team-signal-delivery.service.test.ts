@@ -171,7 +171,10 @@ describe('SlackTeamSignalDeliveryService', () => {
         }),
       }),
     )
-    expect(result).toEqual({ rechecked: 1, resolved: 0, sent: 1 })
+    expect(result).toEqual(expect.objectContaining({ rechecked: 1, resolved: 0, sent: 1 }))
+    expect(result.delivery_outcomes).toEqual([
+      expect.objectContaining({ can_send: true, reason: 'allowed' }),
+    ])
   })
 
   it('batches multiple due alerts into one compiled digest for the same recipient', async () => {
@@ -244,7 +247,7 @@ describe('SlackTeamSignalDeliveryService', () => {
     expect(sentText).not.toContain('Yasir Khan — unanswered question in #')
     expect(sentText).not.toContain('had a question in #')
     expect(people.markShadowActionSent).toHaveBeenCalledTimes(2)
-    expect(result).toEqual({ rechecked: 2, resolved: 0, sent: 2 })
+    expect(result).toEqual(expect.objectContaining({ rechecked: 2, resolved: 0, sent: 2 }))
   })
 
   it('posts follow-ups into the open digest thread instead of a new top-level chat', async () => {
@@ -375,7 +378,10 @@ describe('SlackTeamSignalDeliveryService', () => {
       expect.objectContaining({ actionId: 'proposal-1', status: 'dismissed' }),
     )
     expect(slackTools.sendMessage).not.toHaveBeenCalled()
-    expect(result).toEqual({ rechecked: 1, resolved: 1, sent: 0 })
+    expect(result).toEqual(expect.objectContaining({ rechecked: 1, resolved: 1, sent: 0 }))
+    expect(result.delivery_outcomes).toEqual([
+      expect.objectContaining({ can_send: false, reason: 'resolved_before_delivery' }),
+    ])
   })
 
   it('keeps an alert reviewable when its Slack source cannot be verified', async () => {

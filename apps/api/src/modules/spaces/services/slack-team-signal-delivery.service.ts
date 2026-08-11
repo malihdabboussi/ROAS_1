@@ -47,6 +47,13 @@ type ReadyDelivery = {
   item: SlackTeamSignalMessageItem
 }
 
+export type SlackDeliveryOutcome = {
+  action_id: string
+  recipient_id: string | null
+  can_send: boolean
+  reason: string
+}
+
 export function slackSignalLifecycleMetadata(
   kind: SlackSignalCoolingKind | 'brain_memory',
   now = new Date(),
@@ -79,7 +86,12 @@ export class SlackTeamSignalDeliveryService {
     quietHoursActive: boolean
     people: SlackSignalDeliveryPerson[]
     now?: Date
-  }): Promise<{ rechecked: number; resolved: number; sent: number }> {
+  }): Promise<{
+    rechecked: number
+    resolved: number
+    sent: number
+    delivery_outcomes: SlackDeliveryOutcome[]
+  }> {
     const now = input.now ?? new Date()
     const actions = await this.loops.listCoolingActions(input.supabase, {
       orgId: input.orgId,
@@ -89,6 +101,7 @@ export class SlackTeamSignalDeliveryService {
     let rechecked = 0
     let resolved = 0
     const ready: ReadyDelivery[] = []
+    const deliveryOutcomes: SlackDeliveryOutcome[] = []
 
     for (const candidate of actions) {
       if (!this.isReady(candidate, now)) continue
@@ -109,6 +122,7 @@ export class SlackTeamSignalDeliveryService {
           }
       if (needsResolutionCheck) rechecked += 1
       if (refreshed.resolution.resolved) {
+        deliveryOutcomes.push(this.outcome(candidate, false, 'resolved_before_delivery'))
         await this.loops.updateActionMetadata(input.supabase, {
           actionId: candidate.id,
           orgId: input.orgId,
@@ -132,13 +146,16 @@ export class SlackTeamSignalDeliveryService {
         ? peopleById.get(candidate.target_member_id)
         : undefined
       if (!refreshed.resolution.source_available) {
+        deliveryOutcomes.push(this.outcome(candidate, false, 'source_unavailable'))
         await this.markReadyForReview(input, refreshed.action, {
           rechecked_at: refreshed.resolution.checked_at,
           recheck_reason: refreshed.resolution.reason,
         })
         continue
       }
-      if (!this.canSend(input, candidate, recipient, kind) || !recipient) {
+      const sendDecision = this.canSend(input, candidate, recipient, kind)
+      deliveryOutcomes.push(this.outcome(candidate, sendDecision.canSend, sendDecision.reason))
+      if (!sendDecision.canSend || !recipient) {
         await this.markReadyForReview(input, refreshed.action, {
           rechecked_at: refreshed.resolution.checked_at,
           ...(kind === 'personal_moment' && input.deliveryMode === 'shadow'
@@ -182,7 +199,7 @@ export class SlackTeamSignalDeliveryService {
       sent += await this.deliverRecipientBatch(input, group, now)
     }
 
-    return { rechecked, resolved, sent }
+    return { rechecked, resolved, sent, delivery_outcomes: deliveryOutcomes }
   }
 
   private async deliverPersonalMoment(
@@ -391,6 +408,19 @@ export class SlackTeamSignalDeliveryService {
     return Number.isFinite(eligibleAt) && eligibleAt <= now.getTime()
   }
 
+  private outcome(
+    action: SlackShadowAction,
+    canSend: boolean,
+    reason: string,
+  ): SlackDeliveryOutcome {
+    return {
+      action_id: action.id,
+      recipient_id: action.target_member_id,
+      can_send: canSend,
+      reason,
+    }
+  }
+
   private canSend(
     input: {
       deliveryMode: 'shadow' | 'active'
@@ -400,19 +430,27 @@ export class SlackTeamSignalDeliveryService {
     action: SlackShadowAction,
     recipient?: SlackSignalDeliveryPerson,
     kind = '',
-  ): boolean {
-    if (
-      input.quietHoursActive ||
-      action.action_kind !== 'message' ||
-      recipient?.relationship_kind !== 'internal' ||
-      recipient.delivery_mode !== 'active'
-    ) {
-      return false
+  ): { canSend: boolean; reason: string } {
+    if (input.quietHoursActive) return { canSend: false, reason: 'quiet_hours' }
+    if (action.action_kind !== 'message') return { canSend: false, reason: 'not_message' }
+    if (!recipient) return { canSend: false, reason: 'recipient_missing' }
+    if (recipient.relationship_kind !== 'internal') {
+      return { canSend: false, reason: 'recipient_not_internal' }
+    }
+    if (recipient.delivery_mode !== 'active') {
+      return { canSend: false, reason: 'recipient_not_active' }
     }
     // Personal moments are Active-only: Shadow keeps a reviewable proposal.
     if (kind === 'personal_moment') {
-      return input.deliveryMode === 'active' && input.personIds.includes(recipient.id)
+      if (input.deliveryMode !== 'active') return { canSend: false, reason: 'flow_shadow' }
+      if (!input.personIds.includes(recipient.id)) {
+        return { canSend: false, reason: 'recipient_not_allowlisted' }
+      }
+      return { canSend: true, reason: 'allowed' }
     }
-    return input.deliveryMode === 'shadow' || input.personIds.includes(recipient.id)
+    if (input.deliveryMode !== 'shadow' && !input.personIds.includes(recipient.id)) {
+      return { canSend: false, reason: 'recipient_not_allowlisted' }
+    }
+    return { canSend: true, reason: 'allowed' }
   }
 }

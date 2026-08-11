@@ -117,6 +117,19 @@ export interface SlackPersonBrainBackfillResult {
   lookback_days: number
 }
 
+export interface SlackAutomationHealth {
+  window_hours: number
+  ran: number
+  skipped: Record<string, number>
+  delivered: number
+  held: Record<string, number>
+  last_run_at: string | null
+}
+
+export function fetchSlackAutomationHealth() {
+  return backendGet<SlackAutomationHealth>('/api/integrations/slack/intelligence/automation-health')
+}
+
 export function fetchSlackPeople() {
   return backendGet<{
     connected: boolean

@@ -457,6 +457,17 @@ export abstract class SpaceAutomationServiceBase08 extends SpaceAutomationServic
     status: 'success' | 'partial' | 'failed',
   ): Promise<void> {
     const hasError = status !== 'success'
+    const actionPayloads = actionsExecuted
+      .map((entry) => entry.result)
+      .filter((result): result is Record<string, unknown> =>
+        Boolean(result && typeof result === 'object'),
+      )
+    const skippedReason = actionPayloads.find(
+      (result) => typeof result.skipped_reason === 'string',
+    )?.skipped_reason
+    const deliveryOutcomes = actionPayloads.flatMap((result) =>
+      Array.isArray(result.delivery_outcomes) ? result.delivery_outcomes : [],
+    )
     try {
       await this.automationRunsRepo.insertRun(ctx.supabase, {
         space_id: ctx.spaceId,
@@ -469,6 +480,8 @@ export abstract class SpaceAutomationServiceBase08 extends SpaceAutomationServic
         status,
         linked_mission_id: null,
         error: hasError ? actionsExecuted.find((a) => a.error)?.error : null,
+        skipped_reason: typeof skippedReason === 'string' ? skippedReason : null,
+        delivery_outcomes: deliveryOutcomes,
       })
     } catch (err) {
       this.logger.error(`Failed to log scheduled automation run: ${err}`)
