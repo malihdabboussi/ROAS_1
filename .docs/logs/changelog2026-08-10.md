@@ -87,3 +87,13 @@ Why: Permanent evidence dedupe prevented useful cross-day reminders and made Pix
 Impact: Open work returns at 8h/24h/72h with compact ages, respects an eight-hour cooldown and four-surface cap, emits a terminal going-quiet note, and mentions resolutions once before retiring them from continuity.
 
 Files: Slack open-item repository/service/tests, signal routing and delivery services, `documentation/features/spaces-automation.md`.
+
+## [2026-08-10 22:40] - [FEATURE]
+
+What: Added the pending-offer ledger and persisted machine-readable composer offers after confirmed Slack delivery.
+
+Why: Pixel's scoped offers were visible prose but had no durable acceptance or fulfillment identity.
+
+Impact: Every delivered offer is linked to its recipient, source Shadow action, Slack thread, deliverable kind, exact scope, and 72-hour expiry window.
+
+Files: `supabase/migrations/20260811055500_slack_pending_offers.sql`, pending-offer repository/service/tests, signal delivery/module wiring, `documentation/features/spaces-automation.md`.
