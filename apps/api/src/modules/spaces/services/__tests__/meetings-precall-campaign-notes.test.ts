@@ -27,4 +27,29 @@ describe('buildCampaignNotesFromPrepContext', () => {
     expect(result).toContain('CPL improved 20.0%')
     expect(result).toContain('Hold through event.')
   })
+
+  it('pairs differently named webinar records and gives held VSL work a specific gate', () => {
+    const result = buildCampaignNotesFromPrepContext({
+      active_campaigns: [
+        { name: 'Master Your Kraft · Webinar', status: 'building' },
+        { name: 'Master Your Kraft · VSL', platform_status: 'on_hold_closed' },
+      ],
+      latest_meta_performance: {
+        performance: {
+          campaigns: [
+            {
+              campaign_name: 'WEBINAR - AUGUST 17 - CBO',
+              current_range: { since: '2026-08-10', until: '2026-08-11' },
+              current: { spend: 159.3, leads: 18, cpl: 8.85 },
+              prior: {},
+            },
+          ],
+        },
+      },
+    })
+
+    expect(result).toContain('18 leads')
+    expect(result).toContain('Name the readiness owner and date')
+    expect(result).toContain('reactivate only after funnel QA')
+  })
 })

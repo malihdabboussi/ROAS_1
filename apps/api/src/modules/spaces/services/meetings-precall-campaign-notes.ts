@@ -12,6 +12,43 @@ const key = (value: unknown) =>
     .trim()
 const money = (value: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
+const CAMPAIGN_TOKENS = ['webinar', 'vsl', 'quiz', 'funnel', 'rentvestor', 'portfolio']
+
+function findMetaRow(campaign: Row, metaRows: Row[]): Row | undefined {
+  const id = text(campaign.id) || text(campaign.campaign_id)
+  const name = key(campaign.name) || key(campaign.campaign_name)
+  const candidates = metaRows.filter((row) => {
+    const rowName = key(row.campaign_name)
+    return (
+      (id && text(row.campaign_id) === id) ||
+      (name && rowName === name) ||
+      CAMPAIGN_TOKENS.some((token) => name.includes(token) && rowName.includes(token))
+    )
+  })
+  return candidates.sort((a, b) => {
+    const aRange = (a.current_range as Row | undefined) ?? {}
+    const bRange = (b.current_range as Row | undefined) ?? {}
+    const byDate = text(bRange.until).localeCompare(text(aRange.until))
+    if (byDate !== 0) return byDate
+    return (
+      (number((b.current as Row | undefined)?.spend) ?? 0) -
+      (number((a.current as Row | undefined)?.spend) ?? 0)
+    )
+  })[0]
+}
+
+function nextMove(campaign: Row, state: string): string {
+  const supplied = text(campaign.next_action)
+  if (supplied) return supplied
+  const normalized = state.toLowerCase()
+  if (normalized.includes('on_hold') || normalized.includes('closed')) {
+    return 'Decide whether to reactivate only after funnel QA, tracking, and the launch owner are confirmed.'
+  }
+  if (normalized.includes('planning') || normalized.includes('building')) {
+    return 'Name the readiness owner and date, then set the initial budget guardrail after final QA.'
+  }
+  return 'Confirm the next budget or creative test using lead quality and the dated performance evidence.'
+}
 
 function evidence(row?: Row): string {
   if (!row) return 'No campaign-level Meta snapshot was supplied.'
@@ -55,19 +92,12 @@ export function buildCampaignNotesFromPrepContext(context: Row): string {
     .slice(0, 10)
     .map((campaign) => {
       const name = text(campaign.name) || text(campaign.campaign_name) || 'Unnamed campaign'
-      const id = text(campaign.id) || text(campaign.campaign_id)
-      const meta = metaRows.find(
-        (row) =>
-          (id && text(row.campaign_id) === id) ||
-          (key(name) && key(row.campaign_name) === key(name)),
-      )
+      const meta = findMetaRow(campaign, metaRows)
       const state =
         [text(campaign.status), text(campaign.platform_status), text(campaign.strategy_status)]
           .filter(Boolean)
           .join(' / ') || 'status not supplied'
-      const next =
-        text(campaign.next_action) ||
-        'Confirm the next budget or creative test using lead quality and the dated performance evidence.'
+      const next = nextMove(campaign, state)
       return `- **${name}** — State: ${state}. Evidence: ${evidence(meta)} What changed / learned: ${learning(meta)} Recommended next move: ${next}`
     })
     .join('\n')
