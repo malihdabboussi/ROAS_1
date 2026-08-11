@@ -20,6 +20,7 @@ import {
   slackSignalMatchesLoop,
   slackTeamEvidenceMetadata,
 } from './slack-team-loop-evidence'
+import { slackTeamLimitDayStartIso } from './slack-team-loop-time'
 import {
   personalMomentDateKey,
   personalMomentDedupeKey,
@@ -109,10 +110,13 @@ export class SlackTeamLoopService {
     personIds: string[]
     lookbackMinutes: number
     dailyLimit: number
+    automationTimezone?: string
+    preview?: boolean
     quietHours?: QuietHours
     instructions?: string
   }): Promise<Record<string, unknown>> {
-    const quietHoursActive = isWithinSlackTeamLoopQuietHours(new Date(), input.quietHours)
+    const now = new Date()
+    const quietHoursActive = isWithinSlackTeamLoopQuietHours(now, input.quietHours)
     if (input.deliveryMode === 'active' && quietHoursActive) {
       return { skipped: true, skipped_reason: 'quiet_hours' }
     }
@@ -138,16 +142,18 @@ export class SlackTeamLoopService {
       ? people.filter((person) => input.personIds.includes(person.id))
       : people.filter((person) => person.relationship_kind !== 'ignored')
     let peopleBySlackId = new Map(selectedPeople.map((person) => [person.platform_id, person]))
-    const lifecycle = (await this.signalDelivery?.processCoolingActions({
-      supabase: input.supabase,
-      userId: input.userId,
-      orgId: input.orgId,
-      workflowKey,
-      deliveryMode: input.deliveryMode,
-      personIds: input.personIds,
-      quietHoursActive,
-      people,
-    })) ?? { rechecked: 0, resolved: 0, sent: 0 }
+    const lifecycle = input.preview
+      ? { rechecked: 0, resolved: 0, sent: 0 }
+      : ((await this.signalDelivery?.processCoolingActions({
+          supabase: input.supabase,
+          userId: input.userId,
+          orgId: input.orgId,
+          workflowKey,
+          deliveryMode: input.deliveryMode,
+          personIds: input.personIds,
+          quietHoursActive,
+          people,
+        })) ?? { rechecked: 0, resolved: 0, sent: 0 })
 
     const reconciliation = await this.observation.reconcile({
       supabase: input.supabase,
@@ -166,7 +172,7 @@ export class SlackTeamLoopService {
       )
       .digest('hex')
       .slice(0, 16)
-    const consumerKey = `slack_team:${scopeFingerprint}`
+    const consumerKey = `slack_team:${scopeFingerprint}${input.preview ? ':preview' : ''}`
     const pending = await this.observation.loadPendingEvents({
       supabase: input.supabase,
       orgId: input.orgId,
@@ -248,13 +254,16 @@ export class SlackTeamLoopService {
       }
     }
 
-    const dayStart = new Date()
-    dayStart.setUTCHours(0, 0, 0, 0)
-    const usedToday = await this.loopRepo.countActionsSince(input.supabase, {
-      orgId: input.orgId,
-      workflowKey,
-      since: dayStart.toISOString(),
-    })
+    const usedToday = input.preview
+      ? 0
+      : await this.loopRepo.countActionsSince(input.supabase, {
+          orgId: input.orgId,
+          workflowKey,
+          since: slackTeamLimitDayStartIso(
+            now,
+            input.automationTimezone ?? input.quietHours?.timezone ?? 'America/Los_Angeles',
+          ),
+        })
     const remaining = Math.max(0, input.dailyLimit - usedToday)
     if (remaining === 0) {
       return {
@@ -382,7 +391,7 @@ export class SlackTeamLoopService {
               orgId: input.orgId,
               subjectSlackUserId: personalValidated.subjectSlackUserId,
               eventType: personalValidated.eventType,
-              dateKey: personalMomentDateKey(new Date()),
+              dateKey: personalMomentDateKey(now),
             })
           : createHash('sha256')
               .update(
@@ -395,7 +404,11 @@ export class SlackTeamLoopService {
                 ].join(':'),
               )
               .digest('hex')
+      const actionEvidenceFingerprint = input.preview
+        ? `${evidenceFingerprint}:preview`
+        : evidenceFingerprint
       if (signal.kind === 'brain_memory' && target?.person_brain_id && signal.brain_memory) {
+        if (input.preview) continue
         const result = await this.loopRepo.insertPersonMemory(input.supabase, {
           brainId: target.person_brain_id,
           content: signal.brain_memory,
@@ -416,7 +429,7 @@ export class SlackTeamLoopService {
       if (
         await this.loopRepo.hasEvidenceFingerprint(input.supabase, {
           orgId: input.orgId,
-          evidenceFingerprint,
+          evidenceFingerprint: actionEvidenceFingerprint,
         })
       ) {
         continue
@@ -432,7 +445,8 @@ export class SlackTeamLoopService {
           loopKind: input.loopKind,
           deliveryMode: input.deliveryMode,
           slackTeamId,
-          evidenceFingerprint,
+          evidenceFingerprint: actionEvidenceFingerprint,
+          preview: input.preview,
           signal,
           source,
           internalRecipient,
@@ -468,8 +482,9 @@ export class SlackTeamLoopService {
           signal_kind: signal.kind,
           signal_finding: resolveSlackIdentityText(signal.proposed_content, peopleBySlackId),
           confidence: signal.confidence,
-          evidence_fingerprint: evidenceFingerprint,
+          evidence_fingerprint: actionEvidenceFingerprint,
           delivery_mode: input.deliveryMode,
+          ...(input.preview ? { preview: true, preview_badge: 'Preview' } : {}),
           ...slackSignalLifecycleMetadata(signal.kind),
           ...slackTeamEvidenceMetadata({ source, slackTeamId, peopleBySlackId }),
           ...(target && !internalRecipient
@@ -513,8 +528,9 @@ export class SlackTeamLoopService {
             signal_kind: signal.kind,
             signal_finding: resolveSlackIdentityText(signal.proposed_content, peopleBySlackId),
             confidence: signal.confidence,
-            evidence_fingerprint: `${evidenceFingerprint}:internal`,
+            evidence_fingerprint: `${evidenceFingerprint}:internal${input.preview ? ':preview' : ''}`,
             delivery_mode: input.deliveryMode,
+            ...(input.preview ? { preview: true, preview_badge: 'Preview' } : {}),
             ...slackSignalLifecycleMetadata(signal.kind),
             internal_only: true,
             parent_signal_id: action.id,

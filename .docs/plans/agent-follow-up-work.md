@@ -9512,3 +9512,17 @@ Evidence: PR 2 added persisted delivery-gate outcomes and mounted a separately e
 Needed work: Extract the delivery decision evaluator and split the signal evidence/training detail panes into focused siblings without changing safety gates or review behavior.
 
 Reason not done now: The requested PR is behavior-sensitive liveness and observability work; a broader delivery/view decomposition would expand its regression surface and PR 4 already owns the planned signal-routing extraction.
+
+## 2026-08-10 — Pixel automation service preview boundary
+
+Status: Planned in PR 4
+
+Files:
+
+- `apps/api/src/modules/spaces/services/space-automation.service.ts` (510 LOC; above the 500-line soft limit)
+
+Evidence: PR 3 added only a small delegation method for the send-safe Slack preview pipeline, while the concrete automation service was already 485 LOC and owns multiple Slack/meeting action adapters.
+
+Needed work: Move Slack Team signal routing out of the concrete automation service together with the authoritative PR 4 loop extraction, keeping action execution and preview behavior unchanged.
+
+Reason not done now: PR 4 explicitly begins with the signal-routing extraction; splitting the same boundary twice in adjacent PRs would create unnecessary churn and conflict with the ordered plan.

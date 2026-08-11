@@ -1249,7 +1249,7 @@ export function defaultAction(type: string): AutomationAction | null {
         channel_ids: [],
         person_ids: [],
         lookback_minutes: 60,
-        daily_limit: 10,
+        daily_limit: 40,
       }
     case 'send_channel_message':
       return { type: 'send_channel_message', channel_id: '', content_template: '' }

@@ -122,6 +122,15 @@ export const TemplateKeyParamSchema = z.object({
 export type TemplateKeyParam = z.infer<typeof TemplateKeyParamSchema>
 
 export const TestAutomationSchema = z.object({
-  item_id: z.string().uuid(),
+  item_id: z.string().uuid().optional(),
 })
 export type TestAutomationDto = z.infer<typeof TestAutomationSchema>
+
+export const PreviewAutomationQuerySchema = z.object({
+  preview: z
+    .enum(['true', 'false'])
+    .transform((value) => value === 'true')
+    .optional()
+    .default('false'),
+})
+export type PreviewAutomationQuery = z.infer<typeof PreviewAutomationQuerySchema>

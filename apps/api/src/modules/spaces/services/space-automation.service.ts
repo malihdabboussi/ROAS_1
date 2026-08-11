@@ -30,6 +30,7 @@ import { MeetingFollowUpSlackConfirmService } from './meeting-follow-up-slack-co
 import { MeetingsPrecallPrepService } from './meetings-precall-prep.service'
 import { SlackTeamLoopService, type SlackTeamLoopKind } from './slack-team-loop.service'
 import { SocialResearchOrchestrationService } from './social-research-orchestration.service'
+import { previewSlackTeamAutomation } from './space-automation-preview'
 import { SpaceAutomationServiceBase19 } from './space-automation-service-19.base'
 import { renderTemplate, type TemplateContext } from './space-automation-template'
 
@@ -421,9 +422,33 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
         ? action.person_ids.filter((value): value is string => typeof value === 'string')
         : [],
       lookbackMinutes: Number(action.lookback_minutes ?? 60),
-      dailyLimit: Number(action.daily_limit ?? 10),
+      dailyLimit: Number(action.daily_limit ?? 40),
+      automationTimezone: String(
+        action.automation_timezone ?? quietHours?.timezone ?? 'America/Los_Angeles',
+      ),
+      preview: action.preview === true,
       quietHours,
       instructions: typeof action.instructions === 'string' ? action.instructions : undefined,
+    })
+  }
+
+  async previewAutomation(
+    automationId: string,
+    ctx: {
+      supabase: SupabaseClient
+      userId: string
+      orgId: string | null
+      spaceId: string
+    },
+  ) {
+    return previewSlackTeamAutomation({
+      findSpace: () => this.repo.findSpaceById(ctx.supabase, ctx.userId, ctx.spaceId, ctx.orgId),
+      findAutomation: () => this.automationsRepo.findById(ctx.supabase, ctx.spaceId, automationId),
+      executeAction: (action, timezone) =>
+        this.execObserveSlackTeam(
+          { ...action, delivery_mode: 'shadow', preview: true, automation_timezone: timezone },
+          ctx,
+        ),
     })
   }
 

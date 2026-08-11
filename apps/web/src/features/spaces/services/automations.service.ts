@@ -5,12 +5,12 @@ import {
   backendPost,
   type BackendFetchOptions,
 } from '@/lib/api/backend-client'
+import { fetchAutomationRuns } from '@/lib/flows/automation-runs-api'
+import type { AutomationRun } from '@/lib/flows/automation-runs-api'
 import {
   fetchAutomationTemplates,
   installAutomationTemplate as installFlowAutomationTemplate,
 } from '@/lib/flows/automation-template-api'
-import { fetchAutomationRuns } from '@/lib/flows/automation-runs-api'
-import type { AutomationRun } from '@/lib/flows/automation-runs-api'
 import type { SpaceAutomation } from '../types/space-schema'
 
 export { fetchAutomationRuns, fetchAutomationTemplates }
@@ -111,10 +111,15 @@ export async function fetchFathomSources(spaceId: string): Promise<FathomSourceO
 export async function testAutomation(
   spaceId: string,
   automationId: string,
-  itemId: string,
-): Promise<{ renderedActions: { type: string; rendered: string }[] }> {
-  return backendPost(`/api/spaces/${spaceId}/automations/${automationId}/test`, {
-    item_id: itemId,
+  itemId?: string,
+  preview = false,
+): Promise<
+  | { renderedActions: { type: string; rendered: string }[] }
+  | { preview: true; action_results: Record<string, unknown>[] }
+> {
+  const query = preview ? '?preview=true' : ''
+  return backendPost(`/api/spaces/${spaceId}/automations/${automationId}/test${query}`, {
+    ...(itemId ? { item_id: itemId } : {}),
   })
 }
 

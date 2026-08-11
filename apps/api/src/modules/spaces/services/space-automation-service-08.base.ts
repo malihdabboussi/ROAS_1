@@ -325,7 +325,12 @@ export abstract class SpaceAutomationServiceBase08 extends SpaceAutomationServic
         )
         targetCtxForActivity = target.ctx
         targetItemForActivity = target.item
-        const result = await this.executeAction(action, target.ctx, target.item, target.templateCtx)
+        const result = await this.executeAction(
+          { ...action, automation_timezone: automation.trigger.timezone },
+          target.ctx,
+          target.item,
+          target.templateCtx,
+        )
         if (
           result &&
           typeof result === 'object' &&

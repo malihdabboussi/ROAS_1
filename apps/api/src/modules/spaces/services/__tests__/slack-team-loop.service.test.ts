@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { slackTeamLimitDayStartIso } from '../slack-team-loop-time'
 import { isWithinSlackTeamLoopQuietHours, SlackTeamLoopService } from '../slack-team-loop.service'
 
 const geminiAnalysis = (signals: Record<string, unknown>[]) => ({
@@ -10,6 +11,15 @@ const geminiAnalysis = (signals: Record<string, unknown>[]) => ({
 const senderResolver = () => ({ resolveSlackSenders: vi.fn().mockResolvedValue(new Map()) })
 
 describe('SlackTeamLoopService', () => {
+  it('starts the daily cap at midnight in the automation timezone', () => {
+    expect(
+      slackTeamLimitDayStartIso(new Date('2026-08-11T02:30:00.000Z'), 'America/Los_Angeles'),
+    ).toBe('2026-08-10T07:00:00.000Z')
+    expect(
+      slackTeamLimitDayStartIso(new Date('2026-12-11T02:30:00.000Z'), 'America/Los_Angeles'),
+    ).toBe('2026-12-10T08:00:00.000Z')
+  })
+
   it('handles quiet-hour windows that cross midnight', () => {
     expect(
       isWithinSlackTeamLoopQuietHours(new Date('2026-07-21T06:30:00.000Z'), {
@@ -212,7 +222,7 @@ describe('SlackTeamLoopService', () => {
     })
   })
 
-  it('creates reviewable Shadow proposals with source evidence', async () => {
+  it('creates reviewable preview proposals without consuming the live cursor or sending', async () => {
     const slackPeople = {
       findOrgSlackIntegration: vi.fn().mockResolvedValue({
         user_id: 'owner-1',
@@ -307,6 +317,8 @@ describe('SlackTeamLoopService', () => {
       personIds: [],
       lookbackMinutes: 60,
       dailyLimit: 10,
+      automationTimezone: 'America/Los_Angeles',
+      preview: true,
     })
 
     expect(slackPeople.createShadowAction).toHaveBeenCalledWith(
@@ -319,6 +331,8 @@ describe('SlackTeamLoopService', () => {
         sourceMessageTs: '1721000000.000100',
         workflowKey: 'slack_team:unanswered_questions',
         metadata: expect.objectContaining({
+          preview: true,
+          preview_badge: 'Preview',
           source_channel_name: 'client-alpha',
           source_sender_display_name: 'Avery',
           source_sender_slack_user_id: 'U1',
@@ -331,8 +345,9 @@ describe('SlackTeamLoopService', () => {
     expect(slackTools.sendMessage).not.toHaveBeenCalled()
     expect(observation.reconcile).toHaveBeenCalledTimes(1)
     expect(observation.loadPendingEvents).toHaveBeenCalledWith(
-      expect.objectContaining({ limit: 250 }),
+      expect.objectContaining({ consumerKey: expect.stringMatching(/:preview$/), limit: 250 }),
     )
+    expect(slackPeople.countLoopActionsSince).not.toHaveBeenCalled()
     const completionOptions = gemini.callGeminiWithUsage.mock.calls[0]?.[3]
     const signalsSchema = completionOptions?.responseSchema?.properties?.signals as
       | Record<string, unknown>

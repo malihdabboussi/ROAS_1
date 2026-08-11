@@ -94,6 +94,7 @@ export {
   CreateAutomationSchema,
   CreateDraftAutomationSchema,
   CreatePublishedAutomationSchema,
+  PreviewAutomationQuerySchema,
   RecentAutomationRunsQuerySchema,
   SpaceAutomationSchema,
   TemplateKeyParamSchema,
@@ -105,6 +106,7 @@ export {
 export type {
   AutomationIdParam,
   CreateAutomationDto,
+  PreviewAutomationQuery,
   RecentAutomationRunsQuery,
   SpaceAutomationDto,
   TemplateKeyParam,

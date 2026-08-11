@@ -187,7 +187,7 @@ export const AutomationActionSchema = z.discriminatedUnion('type', [
     channel_ids: z.array(z.string().min(1)).max(200).optional(),
     person_ids: z.array(z.string().uuid()).max(500).optional(),
     lookback_minutes: z.number().int().min(5).max(1440).default(60).optional(),
-    daily_limit: z.number().int().min(1).max(100).default(10).optional(),
+    daily_limit: z.number().int().min(1).max(100).default(40).optional(),
     quiet_hours: z
       .object({
         start: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),

@@ -532,6 +532,24 @@ describe('SlackPeopleService', () => {
     expect(slackApi.postMessage).not.toHaveBeenCalled()
   })
 
+  it('never sends a preview proposal', async () => {
+    const { service, repository, slackApi } = createService()
+    repository.findShadowAction.mockResolvedValue({
+      id: 'action-1',
+      status: 'approved',
+      action_kind: 'message',
+      proposed_content: 'Preview only',
+      metadata: { preview: true },
+      target: { platform_id: 'U1', delivery_mode: 'active', relationship_kind: 'internal' },
+    })
+
+    await expect(
+      service.sendShadowAction({} as never, 'admin-1', 'org-1', 'action-1'),
+    ).rejects.toThrow('Preview proposals cannot be sent')
+    expect(repository.claimShadowActionForSend).not.toHaveBeenCalled()
+    expect(slackApi.postMessage).not.toHaveBeenCalled()
+  })
+
   it('does not send a workflow or Brain proposal as if it were a Slack message', async () => {
     const { service, repository, slackApi } = createService()
     repository.findShadowAction.mockResolvedValue({
