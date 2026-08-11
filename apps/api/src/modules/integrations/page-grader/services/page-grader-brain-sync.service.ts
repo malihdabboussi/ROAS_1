@@ -213,7 +213,14 @@ export class PageGraderBrainSyncService {
       throw new UnauthorizedException('Unknown webhook secret or unmapped client')
     }
 
-    const results = []
+    const results: Array<{
+      user_id: string
+      calendar_event_id: string
+      space_item_id: string
+      title: string
+      status: 'pending' | 'ready' | 'failed'
+      kind: 'created' | 'refreshed' | 'skipped'
+    }> = []
     for (const row of targets) {
       results.push(await this.startAgendaPrepForUser(row.userId, row.orgId, payload))
     }
