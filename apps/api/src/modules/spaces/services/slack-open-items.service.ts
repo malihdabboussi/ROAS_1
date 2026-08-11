@@ -100,6 +100,22 @@ export class SlackOpenItemsService {
     return { open, resolved }
   }
 
+  async sundayCheckInPack(
+    supabase: SupabaseClient,
+    input: { orgId: string; now: Date },
+  ): Promise<Array<{ item: SlackOpenItem; text: string }>> {
+    const rows = await this.items.listContinuity(supabase, {
+      orgId: input.orgId,
+      resolvedSince: new Date(input.now.getTime() - 8 * 60 * 60_000).toISOString(),
+    })
+    return rows
+      .filter((item) => item.status === 'open')
+      .map((item) => ({
+        item,
+        text: `${item.client_label ? `${item.client_label}: ` : ''}${item.summary} (${this.ageLabel(item.first_seen_at, input.now)})`,
+      }))
+  }
+
   async markSurfaced(
     supabase: SupabaseClient,
     entries: Array<{ item: SlackOpenItem }>,

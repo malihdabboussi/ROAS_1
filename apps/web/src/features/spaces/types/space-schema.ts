@@ -1116,6 +1116,13 @@ export type AutomationAction =
       lookback_minutes?: number
       daily_limit?: number
       quiet_hours?: { start: string; end: string; timezone: string }
+      cadence?: {
+        enabled: boolean
+        weekdayEodStart?: number
+        weekdayEodEnd?: number
+        sundayStart?: number
+        sundayEnd?: number
+      }
       instructions?: string
       continuation?: AutomationContinuation
     }

@@ -29,6 +29,7 @@ import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
 import { MeetingFollowUpSlackConfirmService } from './meeting-follow-up-slack-confirm.service'
 import { MeetingsPrecallPrepService } from './meetings-precall-prep.service'
 import { SlackTeamLoopService, type SlackTeamLoopKind } from './slack-team-loop.service'
+import type { SlackCadenceConfig } from './slack-team-cadence'
 import { SocialResearchOrchestrationService } from './social-research-orchestration.service'
 import { previewSlackTeamAutomation } from './space-automation-preview'
 import { SpaceAutomationServiceBase19 } from './space-automation-service-19.base'
@@ -429,6 +430,10 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
       preview: action.preview === true,
       quietHours,
       instructions: typeof action.instructions === 'string' ? action.instructions : undefined,
+      cadence:
+        action.cadence && typeof action.cadence === 'object'
+          ? (action.cadence as SlackCadenceConfig)
+          : undefined,
     })
   }
 

@@ -19,6 +19,7 @@ import { slackTeamLimitDayStartIso } from './slack-team-loop-time'
 import { validatePersonalMomentEvidence } from './slack-team-personal-moment'
 import { SlackTeamSignalDeliveryService } from './slack-team-signal-delivery.service'
 import { SlackTeamSignalRoutingService } from './slack-team-signal-routing.service'
+import type { SlackCadenceConfig } from './slack-team-cadence'
 
 export type SlackTeamLoopKind =
   | 'brain_compounding'
@@ -85,6 +86,7 @@ export class SlackTeamLoopService {
     preview?: boolean
     quietHours?: QuietHours
     instructions?: string
+    cadence?: SlackCadenceConfig
   }): Promise<Record<string, unknown>> {
     const now = new Date()
     const quietHoursActive = isWithinSlackTeamLoopQuietHours(now, input.quietHours)
@@ -125,6 +127,7 @@ export class SlackTeamLoopService {
           quietHoursActive,
           people,
           timezone: input.automationTimezone ?? input.quietHours?.timezone,
+          cadence: input.cadence,
         })) ?? { rechecked: 0, resolved: 0, sent: 0 })
 
     const reconciliation = await this.observation.reconcile({
@@ -351,6 +354,7 @@ export class SlackTeamLoopService {
       preview: input.preview,
       now,
       timezone: input.automationTimezone ?? input.quietHours?.timezone,
+      cadence: input.cadence,
       remaining,
       signals: actionableSignals,
       validatedPersonalMoments,

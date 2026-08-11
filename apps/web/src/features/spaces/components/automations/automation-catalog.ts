@@ -1250,6 +1250,13 @@ export function defaultAction(type: string): AutomationAction | null {
         person_ids: [],
         lookback_minutes: 60,
         daily_limit: 40,
+        cadence: {
+          enabled: true,
+          weekdayEodStart: 17,
+          weekdayEodEnd: 18,
+          sundayStart: 17,
+          sundayEnd: 19,
+        },
       }
     case 'send_channel_message':
       return { type: 'send_channel_message', channel_id: '', content_template: '' }

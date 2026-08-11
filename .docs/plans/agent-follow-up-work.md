@@ -9533,13 +9533,27 @@ Status: Planned in PR 6
 
 Files:
 
-- `apps/api/src/modules/spaces/services/slack-team-signal-delivery.service.ts` (498 LOC after PR 10 promise timestamp wiring; above 99% of the 500-line soft limit)
+- `apps/api/src/modules/spaces/services/slack-team-signal-delivery.service.ts` (486 LOC after PR 11 extracted delivery policy; above 95% of the 500-line soft limit)
 
 Evidence: PR 4 moved signal routing out first and added the required composer/fallback handoff, continuity lookup, and composition audit metadata. Delivery still owns cooling, resolution, claiming, personal moments, batching, and send persistence.
 
 Needed work: Extract digest batch composition/evidence mapping alongside the PR 6 continuity-pack work, leaving safety decisions and send claiming in the delivery service.
 
 Reason not done now: The requested composer integration is complete and below the limit; PR 6 is the authoritative phase for the broader continuity boundary.
+
+## 2026-08-10 — Pixel routing decomposition after cadence
+
+Status: Open
+
+Files:
+
+- `apps/api/src/modules/spaces/services/slack-team-signal-routing.service.ts` (491 LOC; above 98% of the 500-line soft limit)
+
+Evidence: PR 11 added the plan-owned Sunday ledger proposal path after the earlier verified-signal extraction. The service now owns first-surface, personal-moment, external escalation, cross-day resurface, and Sunday check-in routing.
+
+Needed work: Extract ledger resurface/Sunday proposal creation into a focused continuity-routing service without changing evidence fingerprints or delivery gates.
+
+Reason not done now: The file remains below the limit and the requested cadence behavior is complete; another extraction would broaden the final cadence PR.
 
 ## 2026-08-10 — Slack open-item ledger governance
 
