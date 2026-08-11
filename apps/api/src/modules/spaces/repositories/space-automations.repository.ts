@@ -198,6 +198,20 @@ export class SpaceAutomationsRepository {
     return (data ?? []) as Record<string, unknown>[]
   }
 
+  async findSchedulesMissingNextFire(supabase: SupabaseClient, limit: number) {
+    const { data, error } = await supabase
+      .from('space_automations')
+      .select('*')
+      .eq('enabled', true)
+      .eq('is_draft', false)
+      .eq('trigger->>type', 'schedule')
+      .is('schedule_next_fire_at', null)
+      .order('updated_at', { ascending: true })
+      .limit(limit)
+    if (error) throw new BadRequestException(error.message)
+    return (data ?? []) as Record<string, unknown>[]
+  }
+
   async listPublishedWebhookAutomations(
     supabase: SupabaseClient,
     spaceId: string,

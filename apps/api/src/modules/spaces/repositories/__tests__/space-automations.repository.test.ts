@@ -70,4 +70,25 @@ describe('SpaceAutomationsRepository', () => {
     expect(supabase.from).toHaveBeenCalledWith('space_automations')
     expect(chain.delete).toHaveBeenCalled()
   })
+
+  it('finds only enabled published schedules whose next-fire is null', async () => {
+    const result = { data: [{ id: 'automation-1' }], error: null }
+    const chain: Record<string, any> = {}
+    for (const method of ['select', 'eq', 'is', 'order']) {
+      chain[method] = vi.fn(() => chain)
+    }
+    chain.limit = vi.fn(async () => result)
+    const supabase = { from: vi.fn(() => chain) }
+    const repo = new SpaceAutomationsRepository()
+
+    await expect(repo.findSchedulesMissingNextFire(supabase as never, 50)).resolves.toEqual(
+      result.data,
+    )
+
+    expect(chain.eq).toHaveBeenCalledWith('enabled', true)
+    expect(chain.eq).toHaveBeenCalledWith('is_draft', false)
+    expect(chain.eq).toHaveBeenCalledWith('trigger->>type', 'schedule')
+    expect(chain.is).toHaveBeenCalledWith('schedule_next_fire_at', null)
+    expect(chain.limit).toHaveBeenCalledWith(50)
+  })
 })

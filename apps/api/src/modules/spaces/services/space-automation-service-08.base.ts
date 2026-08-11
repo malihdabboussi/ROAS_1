@@ -291,7 +291,12 @@ export abstract class SpaceAutomationServiceBase08 extends SpaceAutomationServic
       string,
       unknown
     > | null
-    if (!space) return
+    if (!space) {
+      this.logger.error(
+        `Itemless automation "${automation.name}" cannot execute because space ${ctx.spaceId} was not found`,
+      )
+      return
+    }
 
     const triggerCtx: EvalContext = { ...ctx, itemId: '' }
     let currentCtx: EvalContext = { ...ctx, itemId: '' }
