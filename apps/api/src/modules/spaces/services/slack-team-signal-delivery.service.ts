@@ -235,7 +235,7 @@ export class SlackTeamSignalDeliveryService {
       typeof entry.action.metadata.source_channel_name === 'string'
         ? entry.action.metadata.source_channel_name
         : entry.item.channelName
-    const text = filterBrainDetailsFromSlackCopy(
+    const fallbackText = filterBrainDetailsFromSlackCopy(
       composePersonalMomentMessage({
         recipientName: entry.recipient.display_name || entry.recipient.platform_id,
         eventType,
@@ -244,6 +244,9 @@ export class SlackTeamSignalDeliveryService {
         historicalConnection: historical,
       }),
     )
+    const text = entry.action.metadata.composition_usage
+      ? filterBrainDetailsFromSlackCopy(entry.action.proposed_content)
+      : fallbackText
 
     try {
       const dm = await this.slackTools.openDm(input.supabase, input.userId, input.orgId, {

@@ -102,4 +102,61 @@ describe('SlackTeamMessageComposerService', () => {
       await expect(service.compose(input)).rejects.toThrow(/composition/i)
     }
   })
+
+  it('passes the belated personal-moment contract and forbids offers', async () => {
+    const gemini = {
+      callGeminiWithUsage: vi.fn().mockResolvedValue(
+        completion(
+          JSON.stringify({
+            text: 'Belated happy birthday, *Dylan* 🎉 The #hello-everyone thread is a pretty good ROI report on the culture you built.',
+            offers: [],
+          }),
+        ),
+      ),
+    }
+    const service = new SlackTeamMessageComposerService(gemini as never)
+    const result = await service.compose({
+      ...input,
+      signals: [
+        {
+          kind: 'personal_moment',
+          finding: 'The thread reflects the culture Dylan built.',
+          quote: 'Happy birthday Dylan — this team says everything about the culture you built.',
+          senderName: 'Maya',
+          channelName: 'hello-everyone',
+          timestamp: '1786300000.000100',
+        },
+      ],
+      context: {
+        ...input.context,
+        personalMoment: { eventType: 'birthday', belated: true },
+      },
+    })
+
+    expect(result.text).toMatch(/belated happy birthday/i)
+    expect(gemini.callGeminiWithUsage).toHaveBeenCalledWith(
+      expect.stringContaining('"belated":true'),
+      expect.any(String),
+      expect.any(Object),
+      expect.any(Object),
+    )
+
+    gemini.callGeminiWithUsage.mockResolvedValueOnce(
+      completion(
+        JSON.stringify({
+          text: 'Belated happy birthday, *Dylan* 🎉',
+          offers: [{ kind: 'draft', deliverable: 'thank-you', ready_by: '2pm' }],
+        }),
+      ),
+    )
+    await expect(
+      service.compose({
+        ...input,
+        context: {
+          ...input.context,
+          personalMoment: { eventType: 'birthday', belated: true },
+        },
+      }),
+    ).rejects.toThrow(/personal-moment offer/i)
+  })
 })
