@@ -20,6 +20,7 @@ import { proposePersonalMomentAction } from './slack-team-personal-moment-propos
 import { slackSignalLifecycleMetadata } from './slack-team-signal-delivery.service'
 import { composeInternalEscalation } from './slack-team-signal-message'
 import { SlackTeamMessageComposerService } from './slack-team-message-composer.service'
+import { SlackOpenItemsService } from './slack-open-items.service'
 
 const OWNER_BRIEFING_SIGNAL_KINDS = new Set<SlackTeamSignal['kind']>([
   'team_win',
@@ -49,6 +50,7 @@ export class SlackTeamSignalRoutingService {
     private readonly loops: SlackTeamLoopRepository,
     private readonly slackTools: SlackAgentToolsService,
     @Optional() private readonly composer?: SlackTeamMessageComposerService,
+    @Optional() private readonly openItems?: SlackOpenItemsService,
   ) {}
 
   async route(input: {
@@ -72,6 +74,7 @@ export class SlackTeamSignalRoutingService {
     const workflowKey = `slack_team:${input.loopKind}`
     let proposed = 0
     let memoriesCompounded = 0
+    if (!input.preview) await this.openItems?.reconcile(input.supabase, input.orgId, input.now)
 
     for (const signal of input.signals.slice(0, input.remaining)) {
       if (!slackSignalMatchesLoop(signal.kind, input.loopKind)) continue
@@ -273,6 +276,19 @@ export class SlackTeamSignalRoutingService {
             : {}),
         },
       })
+      if (!input.preview) {
+        await this.openItems?.record(input.supabase, {
+          orgId: input.orgId,
+          signalKind: signal.kind,
+          subjectPersonId: target?.id ?? null,
+          clientLabel: target?.display_name ?? null,
+          channelId: signal.target_channel_id,
+          sourceMessageTs: signal.source_message_ts,
+          summary: fallbackContent,
+          shadowActionId: action.id,
+          now: input.now,
+        })
+      }
       proposed += 1
 
       if (target && !internalRecipient && input.workspaceOwner && proposed < input.remaining) {

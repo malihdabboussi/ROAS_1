@@ -9540,3 +9540,18 @@ Evidence: PR 4 moved signal routing out first and added the required composer/fa
 Needed work: Extract digest batch composition/evidence mapping alongside the PR 6 continuity-pack work, leaving safety decisions and send claiming in the delivery service.
 
 Reason not done now: The requested composer integration is complete and below the limit; PR 6 is the authoritative phase for the broader continuity boundary.
+
+## 2026-08-10 — Slack open-item ledger governance
+
+Status: Open
+
+Files:
+
+- `public.slack_open_items`
+- `apps/api/src/modules/spaces/repositories/slack-open-items.repository.ts`
+
+Evidence: PR 6 implements the plan's 14-day resolved/stale cleanup and 500-open-row cap. Open rows are marked stale rather than deleted so the terminal “going quiet” surfacing in PR 7 remains possible.
+
+Needed work: Fold this table into the broader Slack observation-ledger partitioning/export/deletion governance review when that debt is addressed.
+
+Reason not done now: Partitioning and organization-wide retention administration are broader than the requested bounded Pixel continuity ledger.

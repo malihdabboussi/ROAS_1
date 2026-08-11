@@ -67,3 +67,13 @@ Why: Personal moments were safe but still sounded templated and discarded their 
 Impact: Dylan-first personal outreach can naturally reference one or two public details, says “belated” when appropriate, creates no offers, and still falls back deterministically behind the unchanged evidence validator.
 
 Files: `apps/api/src/modules/spaces/services/slack-team-message-composer.service.ts`, `slack-team-personal-moment-propose.ts`, signal routing/delivery services, tests, `documentation/features/spaces-automation.md`.
+
+## [2026-08-10 22:34] - [FEATURE]
+
+What: Added the `slack_open_items` ledger, signal writer, periodic source-thread resolution, and bounded retention.
+
+Why: Evidence fingerprints prevented duplicates but also erased unanswered work from Pixel's memory after the first analysis window.
+
+Impact: Questions, risks, and commitments persist across days, resolve from later Slack replies/reactions, retain their source evidence, and remain bounded to 500 open rows per organization with 14-day resolved/stale cleanup.
+
+Files: `supabase/migrations/20260811054500_slack_open_items.sql`, `slack-open-items.repository.ts`, `slack-open-items.service.ts`, signal router/module wiring, tests, `documentation/features/spaces-automation.md`.
