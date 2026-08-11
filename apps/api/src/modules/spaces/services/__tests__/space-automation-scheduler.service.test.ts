@@ -1,7 +1,50 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SpaceAutomationSchedulerService } from '../space-automation-scheduler.service'
 
+const baseRow = {
+  id: 'automation-1',
+  space_id: 'space-1',
+  user_id: 'user-railway',
+  org_id: null,
+  enabled: true,
+  is_draft: false,
+  trigger: {
+    type: 'schedule',
+    schedule: { mode: 'preset', preset: 'hourly' },
+    timezone: 'UTC',
+  },
+  actions: [{ type: 'create_task', title_template: 'Scheduled task' }],
+  schedule_next_fire_at: '2026-06-08T14:00:00.000Z',
+}
+
+function buildScheduler(overrides: Record<string, unknown> = {}) {
+  const automationsRepo = {
+    findSchedulesMissingNextFire: vi.fn().mockResolvedValue([]),
+    findDueSchedules: vi.fn().mockResolvedValue([]),
+    claimSchedule: vi.fn().mockResolvedValue(true),
+    updateScheduleFields: vi.fn().mockResolvedValue(null),
+    ...overrides,
+  }
+  const automationService = {
+    enqueueAutomationRuntimeJob: vi.fn().mockResolvedValue(false),
+    executeAutomationItemless: vi.fn().mockResolvedValue(undefined),
+  }
+  const configService = { get: vi.fn() }
+  const errorReporter = { captureException: vi.fn() }
+  const automationRunsRepo = { createOptionalServiceRoleClient: vi.fn().mockReturnValue({}) }
+  const service = new SpaceAutomationSchedulerService(
+    automationsRepo as never,
+    automationService as never,
+    configService as never,
+    errorReporter as never,
+    automationRunsRepo as never,
+  )
+  return { automationService, automationsRepo, service }
+}
+
 describe('SpaceAutomationSchedulerService runtime routing', () => {
+  beforeEach(() => vi.useRealTimers())
+
   it('does not pre-wake Fly before scheduled agent actions', async () => {
     const automationsRepo = {
       claimSchedule: vi.fn().mockResolvedValue(true),
@@ -51,5 +94,81 @@ describe('SpaceAutomationSchedulerService runtime routing', () => {
         depth: 0,
       },
     )
+  })
+
+  it('leaves next-fire untouched when rolling forward hits a transient persistence error', async () => {
+    const updateScheduleFields = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('transient network failure'))
+    const { service } = buildScheduler({ updateScheduleFields })
+
+    await expect(
+      (service as any).rollNextFireForward({} as never, baseRow),
+    ).resolves.toBeUndefined()
+
+    expect(updateScheduleFields).toHaveBeenCalledTimes(1)
+    expect(updateScheduleFields).toHaveBeenCalledWith(
+      {},
+      'space-1',
+      'automation-1',
+      expect.objectContaining({ schedule_next_fire_at: expect.any(String) }),
+    )
+    expect(updateScheduleFields).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      { schedule_next_fire_at: null },
+    )
+  })
+
+  it('clears next-fire only when the saved cron cannot be parsed', async () => {
+    const updateScheduleFields = vi.fn().mockResolvedValue(null)
+    const { service } = buildScheduler({ updateScheduleFields })
+    const invalidRow = {
+      ...baseRow,
+      trigger: {
+        type: 'schedule',
+        schedule: { mode: 'custom', cron: 'not a cron' },
+        timezone: 'UTC',
+      },
+    }
+
+    await (service as any).rollNextFireForward({} as never, invalidRow)
+
+    expect(updateScheduleFields).toHaveBeenCalledOnce()
+    expect(updateScheduleFields).toHaveBeenCalledWith({}, 'space-1', 'automation-1', {
+      schedule_next_fire_at: null,
+    })
+  })
+
+  it('self-heals enabled schedule rows whose next-fire is null', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-11T03:20:00.000Z'))
+    const missingRow = { ...baseRow, schedule_next_fire_at: null }
+    const findSchedulesMissingNextFire = vi.fn().mockResolvedValue([missingRow])
+    const updateScheduleFields = vi.fn().mockResolvedValue(null)
+    const { automationsRepo, service } = buildScheduler({
+      findSchedulesMissingNextFire,
+      updateScheduleFields,
+    })
+
+    await service.processDueSchedules()
+
+    expect(findSchedulesMissingNextFire).toHaveBeenCalledWith({}, 50)
+    expect(updateScheduleFields).toHaveBeenCalledWith({}, 'space-1', 'automation-1', {
+      schedule_next_fire_at: '2026-08-11T04:00:00.000Z',
+    })
+    expect(automationsRepo.findDueSchedules).toHaveBeenCalledOnce()
+  })
+
+  it('continues scanning due schedules when the repair query transiently fails', async () => {
+    const findSchedulesMissingNextFire = vi
+      .fn()
+      .mockRejectedValue(new Error('transient repair query failure'))
+    const { automationsRepo, service } = buildScheduler({ findSchedulesMissingNextFire })
+
+    await service.processDueSchedules()
+
+    expect(automationsRepo.findDueSchedules).toHaveBeenCalledOnce()
   })
 })

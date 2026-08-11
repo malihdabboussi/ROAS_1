@@ -508,7 +508,12 @@ export abstract class SpaceAutomationServiceBase01 {
   }
 
   protected shouldUseAutomationQueue(): boolean {
-    return !!this.automationQueue && process.env.AGENT_RUNTIME_AUTOMATION_QUEUE_DISABLED !== '1'
+    return (
+      !!this.automationQueue &&
+      process.env.AGENT_RUNTIME_AUTOMATION_QUEUE_ENABLED === '1' &&
+      process.env.VERCEL !== '1' &&
+      process.env.AGENT_RUNTIME_AUTOMATION_QUEUE_DISABLED !== '1'
+    )
   }
 
   async enqueueAutomationRuntimeJob(
@@ -518,6 +523,7 @@ export abstract class SpaceAutomationServiceBase01 {
     mode: 'item' | 'itemless' = 'item',
     afterComplete?: { externalEventId: unknown; patch: Record<string, unknown> },
   ): Promise<boolean> {
+    if (!this.shouldUseAutomationQueue()) return false
     if (!this.automationQueue) return false
     await this.automationQueue.add(
       'automation-run',
