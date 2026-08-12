@@ -87,3 +87,11 @@ What: Recovered the Campaign Client Ops Desk plan and reference screenshots, plu
 Why: The lost-work audit found these as the only copies on otherwise stale source branches.
 
 Impact: Documentation only; no runtime behavior changes.
+
+## [2026-08-12 15:47] - [FIX]
+
+What: Added the idempotent migration allowing `needs_reconnect` in `user_integrations.status`, registered it in migration order, and added its regression test.
+
+Why: Production already contains the constraint change, but the repository migration chain did not.
+
+Impact: Chain parity only; no production SQL required for this merge.

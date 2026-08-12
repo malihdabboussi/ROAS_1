@@ -38384,3 +38384,7 @@ Status: Closes most of "2026-08-11 — Video create P1 deferred items"
 ## 2026-08-12 — repo-wide architecture gate after symlink crash fix
 
 The full gate now exposes a pre-existing LOC/allowlist and cross-feature import backlog that was hidden by the dangling-symlink crash. A separate decision is needed to rebaseline or burn down that debt before enabling full-mode CI. Agent API mock and snapshot drift reproduced on main also remains separate follow-up work.
+
+## 2026-08-12 — user_integrations needs_reconnect constraint parity
+
+Production already allowed `needs_reconnect` out of band; the repository now carries the idempotent migration. A broader live-versus-chain constraint audit remains follow-up work.

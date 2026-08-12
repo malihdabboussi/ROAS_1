@@ -776,3 +776,4 @@
 20260812111000_media_assets_video_metadata.sql
 20260812150000_media_generation_jobs_completion_claim.sql
 20260812170000_meeting_natural_key_dedupe.sql
+20260812180000_allow_integration_needs_reconnect_status.sql
