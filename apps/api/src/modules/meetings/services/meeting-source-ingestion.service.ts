@@ -1,5 +1,12 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger, Optional } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { EmbeddingService } from '../../brain/services/embedding.service'
+import {
+  applyFathomActionRefinement,
+  buildFathomActionRefinementPrompt,
+  FATHOM_ACTION_REFINEMENT_SCHEMA,
+  FATHOM_ACTION_REFINEMENT_SYSTEM_PROMPT,
+} from '../domain/fathom-action-refinement'
 import { resolveMeetingActionAssignees } from '../domain/meeting-assignee-identity'
 import {
   buildMeetingCallIdentity,
@@ -14,6 +21,8 @@ import { renderUnifiedMeetingRecap } from '../domain/meeting-unified-recap'
 import {
   normalizeFathomMeetingSource,
   renderFathomTranscriptDocument,
+  type FathomMeetingSource,
+  type FathomSourceAction,
 } from '../providers/fathom-meeting-source'
 import { MeetingProviderActionsRepository } from '../repositories/meeting-provider-actions.repository'
 import { MeetingRecapRepository } from '../repositories/meeting-recap.repository'
@@ -32,13 +41,53 @@ type IngestFathomSourceInput = {
 
 @Injectable()
 export class MeetingSourceIngestionService {
+  private readonly logger = new Logger(MeetingSourceIngestionService.name)
+
   constructor(
     private readonly repository: MeetingWorkspaceRepository,
     private readonly providerActions: MeetingProviderActionsRepository,
     private readonly resolutionRepository: MeetingWorkspaceResolutionRepository,
     private readonly recaps: MeetingRecapRepository,
     private readonly stateRepository: MeetingWorkspaceStateRepository,
+    @Optional() private readonly embeddingService?: EmbeddingService,
   ) {}
+
+  /**
+   * LLM judgment pass over raw Fathom actions (see fathom-action-refinement).
+   * Any failure or missing LLM config falls back to the raw list — ingestion
+   * must never depend on the model being available.
+   */
+  private async refineSourceActions(
+    source: FathomMeetingSource,
+    input: { userId: string; orgId: string | null },
+  ): Promise<FathomSourceAction[]> {
+    if (source.actions.length === 0 || !this.embeddingService) return source.actions
+    try {
+      const completion = await this.embeddingService.callGeminiWithUsage(
+        buildFathomActionRefinementPrompt({
+          actions: source.actions,
+          transcript: source.transcript,
+          providerSummary: source.providerSummary,
+          meetingTitle: source.title,
+          meetingStart: source.scheduledStart ?? source.recordingStart,
+        }),
+        FATHOM_ACTION_REFINEMENT_SYSTEM_PROMPT,
+        { userId: input.userId, orgId: input.orgId },
+        {
+          maxOutputTokens: 4096,
+          responseSchema: FATHOM_ACTION_REFINEMENT_SCHEMA as unknown as Record<string, unknown>,
+        },
+      )
+      return applyFathomActionRefinement(source.actions, JSON.parse(completion.text))
+    } catch (err) {
+      this.logger.warn(
+        `Fathom action refinement failed; using raw actions: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      )
+      return source.actions
+    }
+  }
 
   async findMatchingMeetingItem(
     supabase: SupabaseClient,
@@ -161,16 +210,21 @@ export class MeetingSourceIngestionService {
       userId: input.userId,
       orgId: input.orgId,
     })
+    const refinedActions = await this.refineSourceActions(source, {
+      userId: input.userId,
+      orgId: input.orgId,
+    })
     const providerActionIds = await this.providerActions.upsertProviderActions(supabase, {
       ...scope,
       recordingId,
-      actions: source.actions,
-      assignees: resolveMeetingActionAssignees(source.actions, assigneeCandidates),
+      actions: refinedActions,
+      assignees: resolveMeetingActionAssignees(refinedActions, assigneeCandidates),
     })
-    // Canonical Action items UI reads follow_up space_items — mirror exact Fathom actions there.
+    // Canonical Action items UI reads follow_up space_items — refined
+    // commitments land there; raw Fathom items stay archived on the recording.
     await this.stateRepository.upsertProviderFollowUps(supabase, {
       ...scope,
-      actions: source.actions,
+      actions: refinedActions,
       meetingTitle: source.title,
     })
     const recordings = await this.repository.listRecordings(supabase, input.meetingItemId)
