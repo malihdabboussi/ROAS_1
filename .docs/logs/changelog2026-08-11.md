@@ -385,3 +385,84 @@ Why: Dylan locked the video workstream decisions: one Video entry that triages i
 Impact: Users can start any video flavor from the empty chat quick starts; agent-generated videos reliably land in the current space's media library; the video-only Media view can seed video generation with aspect control and first-frame reference; rail rows are recognizable as video.
 
 Files: apps/web/src/components/shell/shell-empty-chat-prompts.config.ts, apps/web/src/components/shell/ShellEmptyChatPrompts.test.tsx, apps/web/src/components/shell/ShellRightPanelFiles.tsx, apps/web/src/components/media/MediaGenerateComposer.tsx, apps/web/src/features/spaces/views/media/media-view-presentation.ts, apps/web/src/features/spaces/views/media/media-view-presentation.test.ts, apps/web/src/features/spaces/views/media/SpaceMediaView.tsx, apps/agent-api/src/modules/artifacts/services/artifact-action-additional-schemas.ts, apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-generate.service.ts, apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-generate.service.test.ts, apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-jobs.service.ts, apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-status.service.ts, apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-status.service.test.ts, apps/agent-api/src/modules/artifacts/repositories/artifact-media-jobs.repository.ts, apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts, supabase/migrations/20260811210000_media_generation_jobs_space_id.sql
+# Changelog - August 11, 2026
+
+## [2026-08-11 00:25] - [FIX]
+
+What: Moved Vercel automation cron ingress into a standalone function that imports neither Nest nor BullMQ/Redis, then forwards to the authenticated scheduler execution endpoint.
+
+Why: The cron-origin invocation initialized the monolith's unreachable Railway-private Redis socket and reset Supabase connections after Pixel's schedule claim.
+
+Impact: Scheduled execution enters through a dependency-free function and runs through the already-verified normal serverless path. Compare-and-swap claims, inline fallback, run logging, quiet hours, allowlists, cadence, and caps remain unchanged.
+
+Files: `apps/api/api/space-automation-cron.ts`, standalone function/config tests, `apps/api/vercel.json`, scheduler controller cleanup, documentation.
+
+## [2026-08-11 00:40] - [FIX]
+
+What: Replaced the standalone cron ingress's Express type dependency with its minimal request/response contract.
+
+Why: Vercel successfully emitted the function but reported non-fatal Express declaration diagnostics while compiling it.
+
+Impact: The isolated cron function remains behaviorally identical and now compiles without function-local TypeScript diagnostics.
+
+Files: `apps/api/api/space-automation-cron.ts`, `apps/api/src/space-automation-cron-function.test.ts`.
+
+## [2026-08-11 07:15] - [FEATURE]
+
+What: Added a one-time near-context-limit notification to interactive OpenClaw replies when 10% or at most 32,000 tokens remain.
+
+Why: Pixel should give Dylan the same early warning Viktor provides before a long conversation reaches its context ceiling.
+
+Impact: The warning uses only fresh final-call usage, is suppressed for heartbeats and completed compactions, deduplicates per compaction cycle, and rearms after compaction or session reset. Automatic compaction remains unchanged.
+
+Files: OpenClaw context-warning helper/tests, reply runner, session state, chat stream recovery documentation.
+
+## [2026-08-11 15:57] - [FEATURE]
+
+What: Replaced the mistaken conversation-context warning with Pixel Slack DMs at 70%, 90%, and 100% of monthly organization credits. Added a five-minute authenticated cron, canonical balance calculation, owner-to-Slack routing, retry-safe monthly threshold claims, and the production dedupe migration.
+
+Why: The requested Viktor parity behavior concerns account credit exhaustion, not an individual conversation's context window.
+
+Impact: Organization owners with mapped internal Slack identities receive each crossed threshold once per billing period. Failed Slack deliveries release their pending claim for retry; the unrelated OpenClaw context notice and state were removed.
+
+Files: Billing credit alert controller/module/repository/service/tests, Vercel cron/function test, `billing_credit_slack_alerts` migration, OpenClaw warning rollback, chat recovery documentation.
+
+## [2026-08-11 16:15] - [FIX]
+
+What: Exported `BillingCreditsRepository` from `BillingModule` and added a module-metadata regression test for the Pixel credit-alert dependency boundary.
+
+Why: The first production invocation revealed that the separately isolated alert module could not inject the repository even though TypeScript compilation passed.
+
+Impact: Nest can now bootstrap the billing-alert worker and the regression test prevents the required Billing module import/export contract from drifting.
+
+Files: `billing.module.ts`, `billing-credit-alerts.module.test.ts`.
+
+## [2026-08-11 16:25] - [FIX]
+
+What: Granted service-role table privileges for the `billing_credit_slack_alerts` dedupe ledger.
+
+Why: The table's RLS policy allowed service-role access, but PostgreSQL still denied inserts because the base table grant was missing.
+
+Impact: The production alert worker can atomically claim, mark, and retry Pixel credit-threshold Slack notifications.
+
+Files: `20260811162500_billing_credit_slack_alerts_service_grant.sql`.
+
+## [2026-08-11 14:05] - [FIX]
+
+What: Hardened unified Page Grader meeting agendas so the mapped ROAS campaign agent receives bounded client Brain, meeting, work, and performance context; preserves operator notes; produces a validated six-section screen-share agenda; and writes one retry-safe Google Docs tab.
+
+Why: The first live agenda looked polished but contained generic placeholders because rich agent HTML was not parsed, the wrong campaign could be used, Page Grader context was incomplete, and a prep could be marked ready before a useful Drive agenda existed.
+
+Impact: Client-facing agendas now require specific evidence and decisions, reject lazy placeholder output and unmapped clients, avoid unrelated meeting leakage, preserve integration mapping across reconnects, and expose failed Drive writes for retry instead of reporting false success.
+
+Files: `page-grader-api.service.ts`, `page-grader-brain-sync.service.ts`, `meetings-precall-agenda-sections.ts`, `meetings-precall-drive-agenda.service.ts`, `meetings-precall-prep.helpers.ts`, `meetings-precall-prep.service.ts`, `meetings-precall-related-context.ts`, focused tests including cross-client context isolation, `documentation/features/page-grader-campaign-brain-sync.md`.
+
+## [2026-08-11 20:31] - [FIX]
+
+What: Stabilized the Simple chat shell across full-screen page restoration, history navigation, Home new-chat creation, artifact/right-panel restoration, meeting-linked conversation permissions, and conversation-change height/state synchronization.
+
+Why: Page controls could be hidden with the work surface, history and New Chat could reopen stale conversations, artifact closure could leave the right surface empty, and unconditional state mirroring or inaccessible legacy meeting chats could crash React during meeting navigation.
+
+Impact: Full-screen chat retains a visible Show page action, new and selected chats stay canonical, the summary/right surface restores predictably, and Meetings remains usable without render loops or fatal optional-chat permission errors.
+
+Files: `apps/web/src/components/shell/*`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer*`, `apps/web/src/features/composer/pasted-text/use-pasted-text-blocks*`, `apps/web/src/features/spaces/components/chat/SpaceChatHeaderActions*`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/spaces/components/chat/observed-height*`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-*`, `apps/web/src/features/studio/services/chat.service.ts`, `apps/web/src/features/studio/services/conversation-load-errors*`, `apps/web/src/features/studio/store/use-chat-store.ts`, `documentation/features/claude-chatgpt-shell.md`.
