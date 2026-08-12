@@ -53,6 +53,13 @@ function titleTokenSet(title: string): Set<string> {
   )
 }
 
+function fathomIdentityToken(title: string): string | null {
+  for (const token of titleTokenSet(title)) {
+    if (/\d/.test(token)) return token
+  }
+  return null
+}
+
 export function agendaTitleSimilarity(a: string, b: string): number {
   const left = titleTokenSet(a)
   const right = titleTokenSet(b)
@@ -79,6 +86,12 @@ export function agendaDedupeLookupKeys(event: AgendaDedupeEvent): string[] {
 
   const title = normalizeAgendaTitle(event.title)
   if (title) keys.push(`title:${event.start}|${event.end}|${title}`)
+  const fathomToken = event.source === 'fathom' ? fathomIdentityToken(event.title) : null
+  if (fathomToken) {
+    keys.push(
+      `fathom-slot:${startMinuteKey(event.start)}|${startMinuteKey(event.end)}|${fathomToken}`,
+    )
+  }
   return keys
 }
 
@@ -301,13 +314,13 @@ function mergeAgendaEvents(
   if (!kept.description && other.description) kept.description = other.description
   if (!kept.color_id && other.color_id) kept.color_id = other.color_id
 
-  // Keep calendar join links; only borrow Fathom recording when the invite has no video.
-  if (kept.source !== 'fathom') {
+  // Fathom URLs are recordings, never live join links. They stay in related.recording_url.
+  if (kept.source !== 'fathom' && other.source !== 'fathom') {
     if (!kept.video_url && other.video_url) {
       kept.video_url = other.video_url
       kept.video_label = other.video_label ?? kept.video_label
     }
-  } else if (other.video_url) {
+  } else if (kept.source === 'fathom' && other.source !== 'fathom' && other.video_url) {
     kept.video_url = other.video_url
     kept.video_label = other.video_label ?? kept.video_label
   }

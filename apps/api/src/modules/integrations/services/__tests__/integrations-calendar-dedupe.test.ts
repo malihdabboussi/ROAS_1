@@ -114,6 +114,69 @@ describe('integrations-calendar-dedupe', () => {
     expect(deduped[0]?.video_url).toBe('https://zoom.us/j/1')
   })
 
+  it('keeps a Fathom recording out of the live calendar join-link field', () => {
+    const deduped = dedupeCalendarAgendaEvents([
+      event({
+        id: 'google:samin',
+        title: 'Dylan Vanas and samin | Zoom Call',
+        start: '2026-08-11T17:00:00.000Z',
+        end: '2026-08-11T17:30:00.000Z',
+      }),
+      event({
+        id: 'fathom:samin',
+        title: 'Dylan Vanas webinar growth consultation',
+        start: '2026-08-11T17:02:00.000Z',
+        end: '2026-08-11T17:32:00.000Z',
+        source: 'fathom',
+        video_url: 'https://fathom.video/share/samin',
+        video_label: 'Fathom',
+        related: {
+          space_id: 'meetings',
+          call_item_id: 'samin-call',
+          title: 'Dylan Vanas webinar growth consultation',
+          summary: null,
+          has_transcript: true,
+          recording_url: 'https://fathom.video/share/samin',
+          follow_ups: [],
+        },
+      }),
+    ])
+
+    expect(deduped).toHaveLength(1)
+    expect(deduped[0]?.source).toBe('google_calendar')
+    expect(deduped[0]?.video_url).toBeNull()
+    expect(deduped[0]?.video_label).toBeNull()
+    expect(deduped[0]?.related?.recording_url).toBe('https://fathom.video/share/samin')
+  })
+
+  it('collapses duplicate same-minute Fathom rows with different generated titles', () => {
+    const deduped = dedupeCalendarAgendaEvents([
+      event({
+        id: 'fathom:1ds-a',
+        title: '1DS community growth strategy session',
+        source: 'fathom',
+        start: '2026-08-11T22:01:04.000Z',
+        end: '2026-08-11T22:31:04.000Z',
+      }),
+      event({
+        id: 'fathom:1ds-b',
+        title: '1DS community offer and growth review',
+        source: 'fathom',
+        start: '2026-08-11T22:01:38.000Z',
+        end: '2026-08-11T22:31:38.000Z',
+      }),
+      event({
+        id: 'fathom:1ds-c',
+        title: '1DS team pricing and growth strategy',
+        source: 'fathom',
+        start: '2026-08-11T22:01:52.000Z',
+        end: '2026-08-11T22:31:52.000Z',
+      }),
+    ])
+
+    expect(deduped).toHaveLength(1)
+  })
+
   it('merges teammate calendar + Fathom Mine row and prefers teammate label', () => {
     const deduped = dedupeTeamAgendaEvents([
       event({

@@ -21,7 +21,6 @@ export function DashboardFrame({ sidebar, children }: { sidebar: ReactNode; chil
     <Suspense
       fallback={
         <div className="shell-menu-dock-frame">
-          <div className="shell-topbar" />
           <div className="shell-menu-dock-body">
             {sidebar}
             <main className="shell-menu-dock-content">{children}</main>

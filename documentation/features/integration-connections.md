@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: August 11, 2026 (restored full Google Calendar event payloads)
+Last Modified: August 11, 2026 (canonical Mine/Team meeting and recording rows)
 
 ## Data Flow
 
@@ -61,6 +61,7 @@ Last Modified: August 11, 2026 (restored full Google Calendar event payloads)
 55. `personal_moment` is a separate Active-only outreach path for high-confidence public personal/team moments. It cools briefly, dedupes by recipient + event type + date, may include one clearly related historical Slack callback, stores source evidence for follow-ups, and sends a bespoke standalone DM rather than joining the numbered EOD digest. Shadow keeps the proposal reviewable without sending.
 56. Personal Google Calendar Agenda uses Composio's unified `GOOGLECALENDAR_EVENTS_LIST_ALL_CALENDARS` action for the requested time window. It no longer truncates the calendar list at 15 or silently falls back to `primary`; account failures remain visible to Agenda, and Team continues merging the caller's complete Mine result.
 57. Fathom list and attachment flows resolve one canonical purpose-first title for generic provider names such as “Impromptu Call.” Explicit Fathom `action_items` remain authoritative; when Fathom returns none but its summary has a `Next Steps` section, those provider-authored steps are normalized into canonical meeting follow-ups with their stated owners.
+58. Mine Agenda enumerates only calendar connections owned by the caller, even inside an organization; teammate Workspace calendars remain Team-only. Calendar invites stay canonical when Fathom enriches them: the live provider URL remains the join link, the Fathom URL remains `related.recording_url`, same-minute duplicate Fathom rows with the same meeting identity collapse, and only the next unfinished calendar invite can render as the expanded hero.
 
 ## Code Examples
 
@@ -162,6 +163,7 @@ Reconnect result:
 - Integration execution should fail before side effects when the agent uses an unavailable action slug, omits capability-required params, or the Composio connection is not ready for agent use.
 - Google Calendar agenda uses the provider's unified all-calendars event action for each connected account with its snake-case time filters and `response_detail: full`; compact responses are not agenda data because they omit the event array. The loader does not use a capped calendar list or a silent `primary` fallback.
 - Personal and Team Agenda collapse the same invite across calendars/accounts using Google `iCalUID` / Outlook uid, shared video link + start, normalized title, near-duplicate title similarity / shared attendees within ±10m, and Fathom-only rows onto a unique calendar invite that begins no more than 35 minutes after (or 10 minutes before) the recording. The calendar row wins; Fathom contributes `related` / recording. Team labels keep Mine first when the caller’s calendar also has the invite, then teammate names.
+- Mine account enumeration is ownership-gated by `user_integrations.user_id`; organization visibility does not turn a teammate-owned `org_shared` calendar row into Mine. A Fathom recording is never copied into `video_url` on a calendar row, and the Agenda hero is reserved for the next unfinished non-Fathom event.
 - OAuth callback fallback lands on `/home` (settings is a modal), not `/settings`.
 - Canva documents and presentations use native Design Import rather than flattening the whole artifact into an image. Standard docs become DOCX, visual docs become high-resolution PDF, and presentations become PPTX with editable text, shapes, and embedded images where the source format allows it.
 - A Slack identity is not automatically a platform account. `channel_members` is the durable provider identity; `vibey_user_id` links a managed teammate, `person_brain_id` links an organization-managed User Brain, `contact_id` may link external/customer context, and an unmatched row remains a ghost profile.

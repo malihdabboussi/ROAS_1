@@ -9612,3 +9612,19 @@ Reason not done now: The requested shell work used small composition props; rest
 - Evidence: 598 LOC after keeping meeting-specific duplicate cleanup outside the service; the backend limit is 600 LOC.
 - Needed work: Continue extracting an existing conversation responsibility, such as sharing/pass-off orchestration or title management, into its focused service without changing controller contracts.
 - Why deferred: The requested meeting duplication fix now complies with the hard limit and its meeting-specific behavior was already extracted; decomposing an unrelated established workflow would widen this production deployment.
+
+## 2026-08-11 — Calendar service decomposition
+
+- Feature/app: API calendar integrations
+- File: `apps/api/src/modules/integrations/services/integrations-calendar.service.ts`
+- Evidence: 740 LOC after the Mine ownership boundary fix; the backend service limit is 600 LOC. The file already exceeded the limit and combines agenda orchestration, calendar mutations, connection lookup, and provider response parsing.
+- Needed work: Extract Google/Outlook response parsing and account-resolution orchestration into focused integration services while preserving the existing controller contract.
+- Why deferred: The requested fix changes only which already-scoped connection rows qualify for Mine. Decomposing all provider parsing in the same production incident would materially widen the regression surface.
+
+## 2026-08-11 — Agenda event entry decomposition
+
+- Feature/app: Web Meetings Agenda
+- File: `apps/web/src/features/home/components/AgendaCardEventEntry.tsx`
+- Evidence: 368 LOC, above the 300 LOC frontend component limit; it owns attendee popover behavior plus compact, expanded, and minimized event rendering.
+- Needed work: Extract the attendee control and expanded/compact bodies into focused components without changing the canonical event action contract.
+- Why deferred: The in-scope change only makes row selection optional after removing arbitrary past-row expansion; a structural UI refactor would add unrelated visual risk.

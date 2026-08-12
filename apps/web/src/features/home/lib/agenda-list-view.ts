@@ -135,7 +135,7 @@ export function pickNextAgendaEvent(
   nowTick: number,
 ): CalendarAgendaEvent | null {
   const upcoming = events
-    .filter((ev) => new Date(ev.end).getTime() > nowTick)
+    .filter((ev) => ev.source !== 'fathom' && new Date(ev.end).getTime() > nowTick)
     .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
   return upcoming[0] ?? null
 }

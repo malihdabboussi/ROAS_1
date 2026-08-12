@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   dayKeyInTimeZone,
@@ -119,15 +119,6 @@ export function AgendaCard({
   }, [isToday, visibleEvents, minimizedKeys, nowTick, timezone, todayDayKey])
   const nextEventKey = nextEvent ? eventKey(nextEvent) : null
   const tomorrowKey = useMemo(() => tomorrowDayKey(nowTick, timezone), [nowTick, timezone])
-  const [selectedEventKey, setSelectedEventKey] = useState<string | null>(null)
-
-  useEffect(() => {
-    setSelectedEventKey((curr) => {
-      if (curr && visibleEvents.some((ev) => eventKey(ev) === curr)) return curr
-      return nextEventKey ?? (visibleEvents[0] ? eventKey(visibleEvents[0]) : null)
-    })
-  }, [visibleEvents, nextEventKey])
-
   const dividerDayKeys = useMemo(
     () =>
       range === 'week' || range === 'month' ? enumerateDayKeysInNavRange(day, range, timezone) : [],
@@ -234,8 +225,6 @@ export function AgendaCard({
             isToday={isToday}
             nextEvent={nextEvent}
             nextEventKey={nextEventKey}
-            selectedEventKey={selectedEventKey}
-            setSelectedEventKey={setSelectedEventKey}
             range={range}
             tomorrowKey={tomorrowKey}
             dividerDayKeys={dividerDayKeys}

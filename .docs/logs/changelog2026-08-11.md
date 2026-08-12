@@ -171,3 +171,13 @@ Why: The fallback could render its placeholder header at the same time as the ne
 Impact: The workspace is now the sole owner of route chrome during loading, so Inbox and other dashboard routes render one top bar from the first visible frame. The shell regression suite passes 30 tests, and the local web type-check and focused lint are clean.
 
 Files: `apps/web/src/app/(dashboard)/dashboard-frame.client.tsx`, `apps/web/src/app/(dashboard)/dashboard-frame.client.test.tsx`
+
+## [2026-08-11 18:20] - [FIX]
+
+What: Canonicalized Mine and Team meeting rows: Mine now loads caller-owned calendar connections only, calendar invites retain their live join URL when enriched by Fathom, same-minute duplicate Fathom recordings with the same meeting identity collapse, and only the next unfinished calendar invite can expand as the Agenda hero.
+
+Why: Organization-shared teammate connections leaked into Mine, Fathom recording URLs could be presented as live meeting links, duplicate recording rows could survive with generated titles, and a no-upcoming fallback expanded the first past recording.
+
+Impact: Mine and Team have clear ownership boundaries, live calls and recordings use the correct actions, repeated 1DS recordings collapse, and past recordings remain compact instead of appearing as the next call.
+
+Files: `apps/api/src/modules/integrations/services/integrations-calendar-connections.ts`, `apps/api/src/modules/integrations/services/integrations-calendar-dedupe.ts`, `apps/api/src/modules/integrations/services/integrations-calendar.service.ts`, `apps/api/src/modules/integrations/services/__tests__/integrations-calendar-connections.test.ts`, `apps/api/src/modules/integrations/services/__tests__/integrations-calendar-dedupe.test.ts`, `apps/web/src/features/home/components/AgendaCard.tsx`, `apps/web/src/features/home/components/AgendaCardListBody.tsx`, `apps/web/src/features/home/components/AgendaCardEventEntry.tsx`, `apps/web/src/features/home/lib/agenda-list-view.ts`, `apps/web/src/features/home/lib/agenda-list-view.test.ts`, `documentation/features/integration-connections.md`

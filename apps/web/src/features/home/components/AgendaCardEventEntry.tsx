@@ -189,7 +189,7 @@ export function AgendaEventEntry({
   isExpanded: boolean
   isNextHero?: boolean
   isMinimized?: boolean
-  onSelect: () => void
+  onSelect?: () => void
   onOpenMeeting?: () => void
   onMinimizedChange?: (minimized: boolean) => void
   nowTick: number
@@ -241,7 +241,7 @@ export function AgendaEventEntry({
       layout
       transition={ENTRY_TRANSITION}
       onClick={() => {
-        onSelect()
+        onSelect?.()
         openMeeting()
       }}
       className={
@@ -257,7 +257,7 @@ export function AgendaEventEntry({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          onSelect()
+          onSelect?.()
           openMeeting()
         }
       }}
