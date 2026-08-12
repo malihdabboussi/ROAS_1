@@ -99,7 +99,7 @@ export abstract class MediaServiceBase02 extends MediaServiceBase01 {
     }
 
     const assetType = isImage ? 'image' : mimeType.startsWith('video/') ? 'video' : 'document'
-    const folder = isImage ? 'images' : 'documents'
+    const folder = isImage ? 'images' : assetType === 'video' ? 'videos' : 'documents'
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
     const filePath = `${user.id}/${folder}/${filename}`
 

@@ -53,4 +53,38 @@ export class ArtifactMediaJobsRepository {
       .update(input.updates)
       .eq('id', input.jobId)) as { error: QueryError | null }
   }
+
+  async findStaleMediaJobs(
+    supabase: SupabaseClient,
+    input: { assetType: 'image' | 'video'; createdBeforeIso: string; limit: number },
+  ): Promise<{ data: Array<Record<string, unknown>> | null; error: QueryError | null }> {
+    return (await supabase
+      .from('media_generation_jobs')
+      .select('id, user_id, campaign_id, space_id, provider, provider_job_id, status, created_at')
+      .eq('asset_type', input.assetType)
+      .in('status', ['starting', 'processing'])
+      .lt('created_at', input.createdBeforeIso)
+      .order('created_at', { ascending: true })
+      .limit(input.limit)) as {
+      data: Array<Record<string, unknown>> | null
+      error: QueryError | null
+    }
+  }
+
+  /** Claims a job for one sweep pass; returns no rows when another sweep holds the claim. */
+  async claimMediaJobForSweep(
+    supabase: SupabaseClient,
+    input: { jobId: string; nowIso: string; resweepBeforeIso: string },
+  ): Promise<{ data: Array<Record<string, unknown>> | null; error: QueryError | null }> {
+    return (await supabase
+      .from('media_generation_jobs')
+      .update({ last_swept_at: input.nowIso })
+      .eq('id', input.jobId)
+      .in('status', ['starting', 'processing'])
+      .or(`last_swept_at.is.null,last_swept_at.lt.${input.resweepBeforeIso}`)
+      .select('id')) as {
+      data: Array<Record<string, unknown>> | null
+      error: QueryError | null
+    }
+  }
 }

@@ -38348,3 +38348,14 @@ Evidence: 692/601/599/530/722 LOC vs 400 web-component limit (pre-existing sizes
 Needed work: split each into panel + field subcomponents when next touched.
 
 Reason not done now: pure moves; splitting during the lift would obscure the diff and risk behavior drift.
+
+## 2026-08-12 — Video create P2 closes P1 deferrals
+
+Status: Closes most of "2026-08-11 — Video create P1 deferred items"
+
+- G5 (stale video jobs): CLOSED — ArtifactMediaJobsSweeperService (agent-api, @nestjs/schedule cron every 5 min) re-drives abandoned jobs through getVideoStatus with a service-role target; >24h non-terminal jobs are failed.
+- G6 (provider CHECK): CLOSED — was already fixed by supabase/migrations/027_media_generation_jobs_google_provider.sql; the P1 inventory missed it. No change needed.
+- G7 (upload folder): CLOSED — apps/api/src/modules/media/services/media-service-02.base.ts now stores video uploads under videos/.
+- Video metadata: CLOSED — media_assets gains duration_seconds + poster_url (migration 20260812111000); posters extracted at upload; Global Artifacts uses them.
+- STILL OPEN: decomposing the 600-LOC artifact-legacy-media-generate.service.ts (unchanged in P2).
+- NEW (small): Space Media video cards and the shell media viewer still render <video preload="metadata"> as their own thumbnails; they could use poster_url now that it exists (P3 polish alongside the template strip).

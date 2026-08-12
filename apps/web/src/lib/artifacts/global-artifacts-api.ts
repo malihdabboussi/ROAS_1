@@ -215,7 +215,12 @@ function mapMedia(
     category: mediaCategory(asset),
     contextLabel: label,
     sourceKind: mediaSourceKind(asset),
-    thumbnailUrl: asset.asset_type === 'image' ? asset.public_url : null,
+    thumbnailUrl:
+      asset.asset_type === 'image'
+        ? asset.public_url
+        : asset.asset_type === 'video'
+          ? (asset.poster_url ?? null)
+          : null,
     updatedAt: asset.created_at,
     viewer: {
       id: asset.id,

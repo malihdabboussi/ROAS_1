@@ -184,6 +184,7 @@ export class ArtifactLegacyMediaStatusService {
         statusOrgIdForUpload,
         effectiveSpaceId,
         conversationIdForSpace,
+        Number(job.duration_seconds ?? 0) || null,
       )
 
       if (!upload.success) {
@@ -349,6 +350,9 @@ export class ArtifactLegacyMediaStatusService {
           googleOrgIdForUpload,
           effectiveSpaceId,
           conversationIdForSpace,
+          undefined,
+          undefined,
+          Number(job.duration_seconds ?? 0) || null,
         )
       } else if (uri) {
         upload = await this.uploadService.uploadMediaFromUrl(
@@ -362,6 +366,7 @@ export class ArtifactLegacyMediaStatusService {
           googleOrgIdForUpload,
           effectiveSpaceId,
           conversationIdForSpace,
+          Number(job.duration_seconds ?? 0) || null,
         )
       } else {
         upload = { success: false, error: 'No output from Google video generation' }
