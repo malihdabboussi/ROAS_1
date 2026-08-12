@@ -12,6 +12,26 @@ const LEGACY_DEFAULTS = [
 const RAW_OPENERS =
   /^(hi|hey|hello|yo|sup|all right|alright|ok|okay|so|can you|could you|do we|do you|let me|please|thanks|thank you|hrey)\b/i
 
+type ConversationTitleRecord = {
+  title?: string | null
+  metadata?: Record<string, unknown> | null
+}
+
+export function isMeetingConversation(
+  conversation: Pick<ConversationTitleRecord, 'metadata'>,
+): boolean {
+  const metadata = conversation.metadata
+  if (!metadata) return false
+  return metadata.context_type === 'meeting' || Boolean(metadata.meeting_item_id)
+}
+
+/** User-facing title without prefixes that are already represented by row iconography. */
+export function getConversationDisplayTitle(conversation: ConversationTitleRecord): string {
+  const title = stripLegacySpacesConversationTitle(conversation.title)
+  if (!isMeetingConversation(conversation)) return title
+  return title.replace(/^meeting\s*[—–-]\s*/i, '').trim()
+}
+
 /** Strip auto-generated/legacy default titles in conversation UI. */
 export function stripLegacySpacesConversationTitle(raw: string | null | undefined): string {
   const title = (raw ?? '').trim()

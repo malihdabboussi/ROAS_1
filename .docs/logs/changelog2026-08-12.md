@@ -1,5 +1,15 @@
 # Changelog - [August 12, 2026]
 
+## [2026-08-12 14:45] - [FIX]
+
+What: Released meeting-bound chat context when a different history conversation is selected, made meeting attachment select its canonical conversation atomically, removed the obsolete bulk history auto-title requester, deduplicated meeting history by `meeting_item_id`, and added persistent meeting/calendar versus regular-chat markers. New meeting conversations now store their actual title without the redundant `Meeting —` prefix, while legacy rows are normalized at display time.
+
+Why: A closed or hidden meeting workspace could keep forcing its preferred conversation after the user selected another chat, producing React maximum-update-depth failures. The retired history auto-titler also issued batches of unsupported `/auto-title` requests, and duplicate meeting rows plus title prefixes made meeting and regular chats difficult to distinguish.
+
+Impact: History navigation no longer snaps back to the meeting thread, console request storms stop, duplicate meeting chats collapse to their newest row, and Recents clearly identifies meeting-backed conversations without sacrificing readable titles.
+
+Files: `apps/web/src/components/global-chat/`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/components/conversations/`, `apps/web/src/lib/conversations/`, `apps/api/src/modules/meetings/services/meeting-workspace.service.ts`, `documentation/features/claude-chatgpt-shell.md`, `documentation/frontend-shared-surfaces.md`.
+
 ## [2026-08-12 09:15] - [FEATURE]
 
 What: Video pipeline P2 hardening — background sweeper (agent-api cron, every 5 min) that resolves video generation jobs abandoned by their polling agent through the same getVideoStatus completion path with a service-role target (claim column last_swept_at prevents double-processing; non-terminal jobs older than 24h are marked failed); generated video assets now persist duration_seconds and a first-frame poster (poster_url, extracted via ffmpeg at upload time, best-effort); Global Artifacts shows video poster thumbnails; uploaded videos are stored under the videos/ storage folder instead of documents/.

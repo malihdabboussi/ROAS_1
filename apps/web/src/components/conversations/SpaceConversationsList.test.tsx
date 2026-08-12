@@ -233,6 +233,30 @@ describe('SpaceConversationsList', () => {
     expect(screen.getByText('now')).toBeInTheDocument()
   })
 
+  it('marks meeting chats without repeating the legacy title prefix', () => {
+    render(
+      <SpaceConversationsList
+        {...baseProps({
+          conversations: [
+            conversation({
+              id: 'meeting-1',
+              title: 'Meeting — Client launch review',
+              metadata: { context_type: 'meeting', meeting_item_id: 'item-1' },
+            }),
+            conversation({ id: 'chat-1', title: 'Post-call recap' }),
+          ],
+          showConversationTypeIcon: true,
+          leadingIcon: 'none',
+        })}
+      />,
+    )
+
+    expect(screen.getByText('Client launch review')).toBeInTheDocument()
+    expect(screen.queryByText('Meeting — Client launch review')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Meeting conversation')).toBeInTheDocument()
+    expect(screen.getByLabelText('Chat conversation')).toBeInTheDocument()
+  })
+
   it('adds compact sidebar gutters without the full list top gap', () => {
     const { container } = render(
       <SpaceConversationsList
@@ -248,10 +272,7 @@ describe('SpaceConversationsList', () => {
       'px-spacing-2',
       'pb-spacing-1',
     )
-    expect(container.querySelector('.overflow-y-auto')).toHaveClass(
-      'px-spacing-2',
-      'py-spacing-1',
-    )
+    expect(container.querySelector('.overflow-y-auto')).toHaveClass('px-spacing-2', 'py-spacing-1')
   })
 
   it('opens compact search on its own row below the Recents toolbar', () => {

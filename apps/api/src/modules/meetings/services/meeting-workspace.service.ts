@@ -477,7 +477,7 @@ export class MeetingWorkspaceService {
       input.userId,
       {
         id: buildMeetingConversationId(input.meetingItemId),
-        title: `Meeting — ${input.title}`.slice(0, 500),
+        title: input.title.slice(0, 500),
         metadata: {
           context_type: 'meeting',
           meeting_item_id: input.meetingItemId,

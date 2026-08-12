@@ -177,6 +177,8 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
       workContext: nextWork,
       activeAgentKey: GLOBAL_CHAT_DEFAULT_AGENT,
     })
+    // Select first so consumers never observe a meeting context paired with a stale chat.
+    useChatStore.getState().setActiveConversationId(meetingContext.conversationId)
     set({
       meetingContext,
       workContext: nextWork,
@@ -187,7 +189,6 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
   continueMeetingConversation: (meetingContext) => {
     get().attachMeetingContext(meetingContext)
     get().setRailIntent(null)
-    useChatStore.getState().setActiveConversationId(meetingContext.conversationId)
     get().expandAndFocus({ railIntent: null })
   },
 
