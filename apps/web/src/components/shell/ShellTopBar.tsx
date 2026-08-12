@@ -98,7 +98,15 @@ export function ShellTopBar() {
   const visiblePageBreadcrumb = pageBreadcrumb
   const showWorkAreaControl = chatDrawerOpen || !workAreaOpen || Boolean(artifactTarget)
   const pageTitle = pageBreadcrumbLabel?.trim() || conversationTitle || crumb.label || 'Home'
-  const currentPage = { id: pathname, title: pageTitle, href: pathname }
+  // Keep identifying params (conv, meeting, space, …) in the page identity so
+  // reopening a remembered surface restores the exact view, not the bare route.
+  // Transient params never identify a surface.
+  const pageParams = new URLSearchParams(searchParams.toString())
+  pageParams.delete('chat')
+  pageParams.delete('surface')
+  const pageQuery = pageParams.toString()
+  const pagePath = pageQuery ? `${pathname}?${pageQuery}` : pathname
+  const currentPage = { id: pagePath, title: pageTitle, href: pagePath }
   const portalActive = searchParams.get('surface') === 'portal'
 
   // Nav stays icon-rail only — clear any legacy pinned expand.

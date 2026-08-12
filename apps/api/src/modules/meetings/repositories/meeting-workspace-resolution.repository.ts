@@ -39,6 +39,16 @@ export class MeetingWorkspaceResolutionRepository {
     return typeof data?.org_id === 'string' ? data.org_id : null
   }
 
+  async findSpaceCampaignId(supabase: SupabaseClient, spaceId: string): Promise<string | null> {
+    const { data, error } = await supabase
+      .from('spaces')
+      .select('campaign_id')
+      .eq('id', spaceId)
+      .maybeSingle()
+    if (error) throw new BadRequestException(error.message)
+    return typeof data?.campaign_id === 'string' ? data.campaign_id : null
+  }
+
   async findByCalendarEvent(
     supabase: SupabaseClient,
     spaceId: string,

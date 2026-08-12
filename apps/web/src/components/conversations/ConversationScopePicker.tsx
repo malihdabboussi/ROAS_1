@@ -12,10 +12,8 @@ import {
 import { createPortal } from 'react-dom'
 import { Check, ChevronRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
-import { campaignListCacheKey, fetchCampaigns, type Campaign } from '@/lib/campaigns'
 import { assignConversationScope, CONVERSATION_ACTIONS_TOAST_ERRORS } from '@/lib/conversations'
-import { getCachedCampaigns, prefetchOrgCampaigns, useCampaignCacheVersion } from '@/lib/home'
+import { useCampaignCacheVersion } from '@/lib/home'
 import { useOrgStore } from '@/lib/org'
 import { fetchSpaces } from '@/lib/spaces'
 import { positionFloatingMenuFromAnchorRect } from '@/lib/ui'
@@ -33,6 +31,10 @@ import {
   type ConversationScopeSpace,
 } from './conversation-scope-picker-layout'
 import { ConversationScopeTrigger } from './ConversationScopeTrigger'
+import {
+  useConversationScopeCampaigns,
+  useConversationScopeFallbackSpace,
+} from './use-conversation-scope-data'
 
 export type { ConversationScopePickerHandle } from './conversation-scope-picker-layout'
 
@@ -59,7 +61,7 @@ export const ConversationScopePicker = forwardRef<
     campaign: ConversationScopeMenuGeom
     spaces: ConversationScopeMenuGeom | null
   } | null>(null)
-  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const campaigns = useConversationScopeCampaigns(activeOrgId, cacheVersion)
   const [activeCampaignId, setActiveCampaignId] = useState<string | null>(null)
   const [spacesByCampaign, setSpacesByCampaign] = useState<
     Record<string, ConversationScopeSpace[]>
@@ -87,33 +89,6 @@ export const ConversationScopePicker = forwardRef<
   useEffect(() => {
     if (!open) setActiveCampaignId(null)
   }, [open])
-  useEffect(() => {
-    let cancelled = false
-    if (activeOrgId) {
-      const cached = getCachedCampaigns(activeOrgId)
-      if (cached) setCampaigns(cached)
-      void prefetchOrgCampaigns(activeOrgId)
-        .then((rows) => {
-          if (!cancelled) setCampaigns(rows)
-        })
-        .catch(() => {
-          if (!cancelled) setCampaigns(cached ?? [])
-        })
-    } else {
-      void cachedFetch(campaignListCacheKey(null), () => fetchCampaigns({ orgId: null }), {
-        ttlMs: 60_000,
-      })
-        .then((rows) => {
-          if (!cancelled) setCampaigns(rows)
-        })
-        .catch(() => {
-          if (!cancelled) setCampaigns([])
-        })
-    }
-    return () => {
-      cancelled = true
-    }
-  }, [activeOrgId, cacheVersion])
   const measureMenus = useCallback(() => {
     if (!open || !mounted) return
     const fromBanner = openFromBannerRef.current
@@ -213,10 +188,19 @@ export const ConversationScopePicker = forwardRef<
   const generalCampaign = campaigns.find((campaign) => campaign.config?.system_kind === 'general')
 
   const selectedSpaceId = conversation ? readConversationSpaceId(conversation) : (spaceId ?? null)
-  const selectedSpace = findConversationScopeSpace(spacesByCampaign, selectedSpaceId)
+  const fallbackSpace = useConversationScopeFallbackSpace({
+    activeOrgId,
+    selectedCampaignId,
+    selectedSpaceId,
+    spacesByCampaign,
+  })
+  const selectedSpace =
+    findConversationScopeSpace(spacesByCampaign, selectedSpaceId) ?? fallbackSpace
 
   const label = selectedSpace
-    ? `${selectedCampaign?.name ?? 'Campaign'} / ${selectedSpace.title}`
+    ? selectedCampaign
+      ? `${selectedCampaign.name} / ${selectedSpace.title}`
+      : selectedSpace.title
     : (selectedCampaign?.name ?? (selectedSpaceId ? 'Space' : 'General'))
   const displayLabel = compact
     ? (selectedSpace?.title ?? selectedCampaign?.name ?? (selectedSpaceId ? 'Space' : 'General'))

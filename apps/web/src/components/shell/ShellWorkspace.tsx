@@ -41,6 +41,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const requestNewChat = useShellStore((s) => s.requestNewChat)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
   const setRightPanelOpen = useShellStore((s) => s.setRightPanelOpen)
+  const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
   const artifactTarget = useShellStore((s) => s.artifactViewer.target)
   const previousArtifactTargetRef = useRef(artifactTarget)
   const recentWorkAreaPages = useShellStore((s) => s.recentWorkAreaPages)
@@ -135,9 +136,13 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     previousArtifactTargetRef.current = artifactTarget
     if (artifactClosed && showFullConversation) setRightPanelOpen(true)
   }, [artifactTarget, setRightPanelOpen, showFullConversation])
+  // Compare routes without their query — '/home?conv=…' entries are full
+  // chats, not pages that can sit beside the current conversation.
   const fullConversationRestoreTarget = showFullConversation
-    ? (recentWorkAreaPages.find((target) => target.href !== pathname && target.href !== '/home') ??
-      null)
+    ? (recentWorkAreaPages.find((target) => {
+        const targetPath = target.href.split('?')[0]
+        return targetPath !== pathname && targetPath !== '/home'
+      }) ?? null)
     : null
 
   const restorePageBesideFullConversation = () => {
@@ -155,25 +160,29 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     homeOrDefaultMain = (
       <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
         <GlobalChatPanel shellSidebarChrome presentation="full" />
-        <div className="p-spacing-3 z-dropdown absolute right-0 top-0">
-          <button
-            type="button"
-            onClick={restorePageBesideFullConversation}
-            disabled={!fullConversationRestoreTarget}
-            className={cn(
-              'shell-topbar-icon-btn',
-              !fullConversationRestoreTarget && 'shell-topbar-icon-btn-disabled',
-            )}
-            aria-label="Show page"
-            title={
-              fullConversationRestoreTarget
-                ? `Show ${fullConversationRestoreTarget.title}`
-                : 'No recent page to show'
-            }
-          >
-            <PanelRightOpen aria-hidden />
-          </button>
-        </div>
+        {/* The summary panel opens in this corner — never stack the restore
+            control over its header controls. */}
+        {rightPanelOpen ? null : (
+          <div className="p-spacing-3 z-dropdown absolute right-0 top-0">
+            <button
+              type="button"
+              onClick={restorePageBesideFullConversation}
+              disabled={!fullConversationRestoreTarget}
+              className={cn(
+                'shell-topbar-icon-btn',
+                !fullConversationRestoreTarget && 'shell-topbar-icon-btn-disabled',
+              )}
+              aria-label="Show page"
+              title={
+                fullConversationRestoreTarget
+                  ? `Show ${fullConversationRestoreTarget.title}`
+                  : 'No recent page to show'
+              }
+            >
+              <PanelRightOpen aria-hidden />
+            </button>
+          </div>
+        )}
       </div>
     )
   }
@@ -322,7 +331,10 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
           </div>
         ) : null}
 
-        {workAreaCollapsed && !hostCollapsedRight ? (
+        {/* Simple mode hides the global top bar's page control with the work
+            card, so it needs this floating restore control. Advanced mode
+            always shows the top-bar control — a second icon here is a dupe. */}
+        {workAreaCollapsed && !hostCollapsedRight && !rightPanelOpen && menuStyle === 'simple' ? (
           <div className="p-spacing-3 z-dropdown absolute right-0 top-0">
             <button
               type="button"

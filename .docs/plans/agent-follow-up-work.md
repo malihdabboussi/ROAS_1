@@ -38421,3 +38421,9 @@ Production already allowed `needs_reconnect` out of band; the repository now car
   Reason not done now: out of scope for the merge feature; restructuring would bury the reviewed diff.
 - apps/api/src/test/contract/route-inventory.test.ts snapshot is stale on main (contains no /api/spaces/:spaceId/meetings* routes at all) and fails identically on a clean checkout; the new POST /api/spaces/:spaceId/meetings/merge route widens that existing diff by one line. Needs the already-logged repo-wide snapshot rebaseline rather than a partial update here.
 - documentation/features has no meetings feature doc to update; WIP spec written to .docs/features/meeting-merge.md. Creating documentation/features/meetings.md needs user approval per AGENTS §7.
+
+## 2026-08-12 — Shell recents / meeting restore / summary bubble
+
+- Several touched shell components remain near or above their existing architecture limits; the PR keeps new restore and summary logic in focused hooks/tests where possible.
+- Needed work: continue decomposing the grandfathered shell workspace/drawer hosts before adding another major shell behavior.
+- Reason not done now: the release change is a focused recovery of reviewed routing, scope, overlay, and summary behavior; a broad shell refactor would materially expand risk.

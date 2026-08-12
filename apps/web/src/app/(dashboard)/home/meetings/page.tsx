@@ -24,7 +24,7 @@ export default function HomeMeetingsPage() {
     openYourTurnItem,
     openYourTurnItemFromMeeting,
   })
-  useHomeMeetingWorkRestore(openMeetingEvent)
+  useHomeMeetingWorkRestore(openMeetingEvent, activeMeetingEvent)
 
   return (
     <>

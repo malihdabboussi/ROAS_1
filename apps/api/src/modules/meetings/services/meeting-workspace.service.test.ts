@@ -110,6 +110,7 @@ describe('MeetingWorkspaceService', () => {
     }
     const resolutionRepository = {
       findSpaceOrgId: vi.fn().mockResolvedValue(null),
+      findSpaceCampaignId: vi.fn().mockResolvedValue('campaign-1'),
       findCallIdentityProfile: vi.fn().mockResolvedValue({
         email: 'owner@roas.co',
         fathomAliases: [],
@@ -181,6 +182,8 @@ describe('MeetingWorkspaceService', () => {
       expect.objectContaining({
         id: buildMeetingConversationId('meeting-1'),
         title: 'Client review',
+        campaign_id: 'campaign-1',
+        metadata: expect.objectContaining({ space_id: 'space-1' }),
       }),
       null,
     )
@@ -262,6 +265,7 @@ describe('MeetingWorkspaceService', () => {
     }
     const resolutionRepository = {
       findSpaceOrgId: vi.fn().mockResolvedValue(null),
+      findSpaceCampaignId: vi.fn().mockResolvedValue(null),
       findCallIdentityProfile: vi.fn().mockResolvedValue({
         email: 'owner@roas.co',
         fathomAliases: [],
@@ -327,6 +331,7 @@ describe('MeetingWorkspaceService', () => {
     }
     const resolutionRepository = {
       findSpaceOrgId: vi.fn().mockResolvedValue(null),
+      findSpaceCampaignId: vi.fn().mockResolvedValue(null),
       findCallIdentityProfile: vi.fn().mockResolvedValue({
         email: 'owner@roas.co',
         fathomAliases: [],
@@ -406,6 +411,7 @@ describe('MeetingWorkspaceService', () => {
     }
     const resolutionRepository = {
       findSpaceOrgId: vi.fn().mockResolvedValue(null),
+      findSpaceCampaignId: vi.fn().mockResolvedValue(null),
       createInstantMeeting: vi.fn().mockResolvedValue({
         id: 'meeting-instant',
         title: 'Client strategy call',

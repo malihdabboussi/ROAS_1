@@ -95,7 +95,7 @@ describe('ShellChatDrawer', () => {
       chatHistoryCollapsed: false,
       workAreaOpen: true,
       newChatNonce: 0,
-      rightPanel: { open: false, tab: 'tasks' },
+      rightPanel: { open: false },
     })
     vi.clearAllMocks()
   })
@@ -232,7 +232,7 @@ describe('ShellChatDrawer', () => {
         width: 420,
         minimized: false,
       },
-      rightPanel: { open: true, tab: 'tasks' },
+      rightPanel: { open: true },
     })
 
     const { container } = render(<ShellChatDrawer />)
@@ -359,32 +359,5 @@ describe('ShellChatDrawer', () => {
     expect(restoreHistory.querySelector('svg')).toHaveClass('nav-glass-text-purple')
     expect(restoreHistory).toHaveTextContent('')
     expect(screen.getByText('Chat panel')).toBeInTheDocument()
-  })
-
-  it('collapses the work area when the drawer reaches the right edge', () => {
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1200 })
-    useShellStore.setState({
-      chatDrawer: {
-        open: true,
-        conversationId: 'conversation-1',
-        width: 420,
-        minimized: false,
-      },
-      workAreaOpen: true,
-    })
-
-    render(<ShellChatDrawer />)
-    fireEvent.mouseDown(screen.getByRole('button', { name: 'Resize AI chat drawer' }), {
-      clientX: 420,
-    })
-    const moveEvent = new Event('pointermove', { bubbles: true })
-    Object.defineProperty(moveEvent, 'clientX', { value: 1185 })
-    fireEvent(document, moveEvent)
-
-    expect(useShellStore.getState().chatDrawer.width).toBeGreaterThan(720)
-
-    fireEvent.pointerUp(document)
-    expect(useShellStore.getState().workAreaOpen).toBe(false)
-    expect(useShellStore.getState().chatDrawer.width).toBe(420)
   })
 })

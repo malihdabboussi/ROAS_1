@@ -472,12 +472,16 @@ export class MeetingWorkspaceService {
   ): Promise<string> {
     const existingConversationId = text(input.workspace.conversation_id)
     if (existingConversationId) return existingConversationId
+    // Stamp the space's campaign so the chat's scope picker can resolve the
+    // space title (it looks spaces up campaign-first).
+    const campaignId = await this.resolutionRepository.findSpaceCampaignId(supabase, input.spaceId)
     const conversation = await this.conversations.createConversation(
       supabase,
       input.userId,
       {
         id: buildMeetingConversationId(input.meetingItemId),
         title: input.title.slice(0, 500),
+        ...(campaignId ? { campaign_id: campaignId } : {}),
         metadata: {
           context_type: 'meeting',
           meeting_item_id: input.meetingItemId,

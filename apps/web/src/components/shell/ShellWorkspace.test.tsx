@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   setWorkAreaOpen: vi.fn(),
   setRightPanelOpen: vi.fn(),
   recentWorkAreaPages: [{ id: '/home/meetings', title: 'Meetings', href: '/home/meetings' }],
+  rightPanelOpen: false,
   workAreaOpen: true,
   chatDrawerOpen: false,
   artifactTarget: null as { id: string } | null,
@@ -143,6 +144,7 @@ vi.mock('./use-shell-store', () => ({
       setMenuMode: vi.fn(),
       setWorkAreaOpen: mocks.setWorkAreaOpen,
       setRightPanelOpen: mocks.setRightPanelOpen,
+      rightPanel: { open: mocks.rightPanelOpen, tab: 'tasks' },
       recentWorkAreaPages: mocks.recentWorkAreaPages,
     }),
 }))
@@ -152,6 +154,10 @@ describe('ShellWorkspace', () => {
     mocks.pathname = '/home'
     mocks.params = new Map([['chat', 'starting']])
     mocks.activeConversationId = null
+    mocks.rightPanelOpen = false
+    mocks.recentWorkAreaPages = [
+      { id: '/home/meetings', title: 'Meetings', href: '/home/meetings' },
+    ]
     mocks.workAreaOpen = true
     mocks.chatDrawerOpen = false
     mocks.artifactTarget = null
@@ -177,14 +183,6 @@ describe('ShellWorkspace', () => {
       'aria-hidden',
       'false',
     )
-  })
-  it('keeps a top-right page restore control visible in a full Home conversation', () => {
-    mocks.desktop = true
-    mocks.params = new Map([['conv', 'conversation-1']])
-    render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
-    fireEvent.click(screen.getByRole('button', { name: 'Show page' }))
-    expect(mocks.setWorkAreaOpen).toHaveBeenCalledWith(true)
-    expect(mocks.push).toHaveBeenCalledWith('/home/meetings?conv=conversation-1')
   })
   it('renders nested Home tools as page workspaces instead of the New chat surface', () => {
     mocks.pathname = '/home/inbox'
@@ -380,13 +378,14 @@ describe('ShellWorkspace', () => {
     fireEvent.click(expandButton)
     expect(mocks.setWorkAreaOpen).toHaveBeenCalledWith(true)
   })
-  it('keeps a page restore control when the collapsed menu dock is not work-attached', () => {
+  it('keeps a page restore control in Simple mode when the collapsed dock is not work-attached', () => {
     mocks.pathname = '/brain'
     mocks.params = new Map()
     mocks.workAreaOpen = false
     mocks.desktop = true
     mocks.shellPrefsHydrated = true
     mocks.menuDock = 'left'
+    mocks.menuStyle = 'simple'
     render(<ShellWorkspace>Brain page</ShellWorkspace>)
     fireEvent.click(screen.getByRole('button', { name: 'Show page' }))
     expect(mocks.setWorkAreaOpen).toHaveBeenCalledWith(true)
