@@ -69,3 +69,13 @@ Why: The first live agenda looked polished but contained generic placeholders be
 Impact: Client-facing agendas now require specific evidence and decisions, reject lazy placeholder output and unmapped clients, avoid unrelated meeting leakage, preserve integration mapping across reconnects, and expose failed Drive writes for retry instead of reporting false success.
 
 Files: `page-grader-api.service.ts`, `page-grader-brain-sync.service.ts`, `meetings-precall-agenda-sections.ts`, `meetings-precall-drive-agenda.service.ts`, `meetings-precall-prep.helpers.ts`, `meetings-precall-prep.service.ts`, `meetings-precall-related-context.ts`, focused tests including cross-client context isolation, `documentation/features/page-grader-campaign-brain-sync.md`.
+
+## [2026-08-11 21:07] - [FIX]
+
+What: Added `compile_webinar_launch_bible` to the PromptMode backend plugin `SUPPORTED_ACTIONS` list in `docker/tools/vibey-backend/index.ts`, placed after `get_mission_deliverables` to match the backend DTO ordering.
+
+Why: The action is active and agent-facing everywhere else (backend `VALID_ACTIONS`, artifact capability policy, action registry handler, agent-policy actions/registry, vibey-api action docs) but was missing from the plugin list, so the drift test "keeps PromptMode backend plugin actions aligned with active backend actions" in `apps/agent-api/src/modules/shared/vibey-backend-plugin.test.ts` failed on main.
+
+Impact: Drift test suite is green again (10/10 in `vibey-backend-plugin.test.ts`); PromptMode agents can now invoke `compile_webinar_launch_bible` through the backend plugin as the rest of the action surface already intended.
+
+Files: docker/tools/vibey-backend/index.ts

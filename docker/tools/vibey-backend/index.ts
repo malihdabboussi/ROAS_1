@@ -257,6 +257,7 @@ const SUPPORTED_ACTIONS = [
   'get_mission_plan',
   'get_mission_logs',
   'get_mission_deliverables',
+  'compile_webinar_launch_bible',
   'update_mission',
   'add_mission_comment',
   'list_mission_subtasks',
