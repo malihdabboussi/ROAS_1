@@ -9,7 +9,7 @@ type PlusSubmenuId = Exclude<ComposerPlusSubmenu, null>
 function createOptions() {
   const plusSubmenuAnchorRefs = {
     current: {
-      agent: null,
+      create: null,
       files: null,
       attach: null,
       integrations: null,
@@ -48,7 +48,7 @@ function createOptions() {
     onLocalUpload: vi.fn(),
     onDrive: vi.fn(),
     onDropbox: vi.fn(),
-    onGenerateImage: vi.fn(),
+    onSelectCreateItem: vi.fn(),
     onCloseMenu: vi.fn(),
     onOpenAtMenu: vi.fn(),
     handleToggleAgent: vi.fn(),

@@ -1,17 +1,77 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Boxes, FileText, ImageIcon } from 'lucide-react'
+import {
+  AudioLines,
+  Boxes,
+  Clapperboard,
+  FileText,
+  Filter,
+  Globe,
+  ImageIcon,
+  Mail,
+  Megaphone,
+  Presentation,
+  Share2,
+  Tag,
+  UserRound,
+  type LucideIcon,
+} from 'lucide-react'
 import {
   fetchConversationDocuments,
   openArtifactInShell,
   type ConversationDocument,
+  type ShellArtifactViewerTarget,
 } from '@/lib/artifacts'
 import { isArtifactDocumentType, type Message } from '@/lib/conversations'
 import type { DeliverableType } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
 import { extractConversationFileRows, type ConversationFileRow } from './shell-conversation-summary'
+import {
+  fileRowMeta,
+  fileRowSubtitle,
+  groupFileRowsByDay,
+  type FileRowMeta,
+} from './shell-right-panel-files.logic'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
+
+const ARTIFACT_TYPE_ICONS: Record<string, LucideIcon> = {
+  offer: Tag,
+  avatar: UserRound,
+  funnel: Filter,
+  presentation: Presentation,
+  sequence: Mail,
+  email: Mail,
+  website: Globe,
+  ad: Megaphone,
+  social_post: Share2,
+  image_upload: ImageIcon,
+}
+
+const ATTACHMENT_KIND_ICONS: Record<string, LucideIcon> = {
+  image: ImageIcon,
+  video: Clapperboard,
+  audio: AudioLines,
+  file: FileText,
+}
+
+function rowIcon(kind: string, artifactType?: string | null): LucideIcon {
+  const normalizedType = artifactType?.trim().toLowerCase() ?? ''
+  if (normalizedType) return ARTIFACT_TYPE_ICONS[normalizedType] ?? Boxes
+  return ATTACHMENT_KIND_ICONS[kind] ?? FileText
+}
+
+interface FilesDisplayRow {
+  key: string
+  title: string
+  createdAt: string
+  meta: FileRowMeta
+  icon: LucideIcon
+  /** Image preview shown instead of the icon tile (and as the hero cover). */
+  thumbnailUrl: string | null
+  canOpen: boolean
+  open: ShellArtifactViewerTarget
+}
 
 function documentFileUrl(document: ConversationDocument): string | null {
   const value = document.content?.file_url
@@ -26,9 +86,107 @@ function documentTargetType(document: ConversationDocument): DeliverableType {
   return document.document_type === 'pdf' ? 'pdf' : 'file'
 }
 
-function messageTargetType(row: ConversationFileRow): DeliverableType {
-  if (row.kind === 'artifact') return (row.entityType as DeliverableType | null) ?? 'file'
-  return row.kind
+function documentDisplayRow(
+  document: ConversationDocument,
+  conversationId: string,
+): FilesDisplayRow {
+  const fileUrl = documentFileUrl(document)
+  const title = document.title?.trim() || 'Untitled file'
+  return {
+    key: `document:${document.id}`,
+    title,
+    createdAt: document.created_at,
+    meta: fileRowMeta('file', document.document_type),
+    icon: rowIcon('file', document.document_type),
+    thumbnailUrl: document.document_type === 'image_upload' ? fileUrl : null,
+    canOpen: true,
+    open: {
+      id: document.id,
+      title,
+      type: documentTargetType(document),
+      entityId: document.resource_id ?? document.id,
+      entityTable: document.resource_id ? null : 'conversation_documents',
+      conversationId,
+      campaignId: document.campaign_id,
+      fileUrl,
+      mimeType: document.document_type === 'pdf' ? 'application/pdf' : null,
+      contextLabel: 'Chat',
+    },
+  }
+}
+
+function messageDisplayRow(row: ConversationFileRow, conversationId: string): FilesDisplayRow {
+  const artifactType = row.kind === 'artifact' ? row.entityType : null
+  return {
+    key: row.id,
+    title: row.title,
+    createdAt: row.createdAt,
+    meta: fileRowMeta(row.kind, artifactType),
+    icon: rowIcon(row.kind, artifactType),
+    thumbnailUrl: row.kind === 'image' ? row.fileUrl : null,
+    canOpen: Boolean(row.fileUrl || row.entityId),
+    open: {
+      id: row.id,
+      title: row.title,
+      type:
+        row.kind === 'artifact' ? ((row.entityType as DeliverableType | null) ?? 'file') : row.kind,
+      entityId: row.entityId,
+      conversationId,
+      fileUrl: row.fileUrl,
+      mimeType: row.mimeType,
+      mediaAssetId: row.mediaAssetId,
+      contextLabel: 'Chat',
+    },
+  }
+}
+
+function FileRowButton({ row, hero }: { row: FilesDisplayRow; hero: boolean }) {
+  const Icon = row.icon
+  const subtitle = fileRowSubtitle(row.meta.label, row.createdAt)
+  if (hero && row.thumbnailUrl) {
+    return (
+      <button
+        type="button"
+        onClick={() => openArtifactInShell(row.open)}
+        className="border-border hover:bg-hover-subtle block w-full overflow-hidden rounded-xl border text-left"
+      >
+        {}
+        <img src={row.thumbnailUrl} alt="" className="h-24 w-full object-cover" />
+        <span className="px-spacing-2 py-spacing-2 block">
+          <span className="body-3 text-foreground block truncate font-medium">{row.title}</span>
+          <span className="typo-xs text-muted-foreground block truncate">{subtitle}</span>
+        </span>
+      </button>
+    )
+  }
+  return (
+    <button
+      type="button"
+      disabled={!row.canOpen}
+      onClick={() => openArtifactInShell(row.open)}
+      className={cn(
+        'gap-spacing-2 px-spacing-2 py-spacing-2 flex w-full items-center rounded-lg text-left',
+        row.canOpen ? 'hover:bg-hover-subtle' : 'cursor-default',
+      )}
+    >
+      {row.thumbnailUrl ? (
+        <img src={row.thumbnailUrl} alt="" className="size-8 shrink-0 rounded-md object-cover" />
+      ) : (
+        <span
+          className={cn(
+            'flex size-8 shrink-0 items-center justify-center rounded-md',
+            row.meta.glassClass,
+          )}
+        >
+          <Icon className="icon-sm" aria-hidden />
+        </span>
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="body-3 text-foreground block truncate">{row.title}</span>
+        <span className="typo-xs text-muted-foreground block truncate">{subtitle}</span>
+      </span>
+    </button>
+  )
 }
 
 export function ShellRightPanelFiles({
@@ -70,7 +228,24 @@ export function ShellRightPanelFiles({
     }
   }, [conversationId])
 
-  const empty = !loading && documents.length === 0 && messageRows.length === 0
+  const groups = useMemo(() => {
+    const rows = [
+      ...documents.map((document) => documentDisplayRow(document, conversationId)),
+      ...messageRows.map((row) => messageDisplayRow(row, conversationId)),
+    ]
+    return groupFileRowsByDay(rows)
+  }, [conversationId, documents, messageRows])
+
+  const heroKey = useMemo(() => {
+    for (const group of groups) {
+      for (const row of group.rows) {
+        if (row.thumbnailUrl && row.canOpen) return row.key
+      }
+    }
+    return null
+  }, [groups])
+
+  const empty = !loading && groups.length === 0
 
   return (
     <div className="space-y-spacing-3">
@@ -86,74 +261,20 @@ export function ShellRightPanelFiles({
         <p className="body-3 text-muted-foreground">{SHELL_RIGHT_PANEL_MESSAGES.chatFilesEmpty}</p>
       ) : null}
 
-      <ul className="space-y-spacing-1">
-        {documents.map((document) => {
-          const artifact = isArtifactDocumentType(document.document_type)
-          const Icon =
-            document.document_type === 'image_upload' ? ImageIcon : artifact ? Boxes : FileText
-          const fileUrl = documentFileUrl(document)
-          return (
-            <li key={`document:${document.id}`}>
-              <button
-                type="button"
-                onClick={() =>
-                  openArtifactInShell({
-                    id: document.id,
-                    title: document.title?.trim() || 'Untitled file',
-                    type: documentTargetType(document),
-                    entityId: document.resource_id ?? document.id,
-                    entityTable: document.resource_id ? null : 'conversation_documents',
-                    conversationId,
-                    campaignId: document.campaign_id,
-                    fileUrl,
-                    mimeType: document.document_type === 'pdf' ? 'application/pdf' : null,
-                    contextLabel: 'Chat',
-                  })
-                }
-                className="body-3 text-foreground hover:bg-hover-subtle gap-spacing-2 px-spacing-2 py-spacing-2 flex w-full items-center rounded-lg text-left"
-              >
-                <Icon className="icon-sm text-muted-foreground shrink-0" aria-hidden />
-                <span className="min-w-0 flex-1 truncate">
-                  {document.title?.trim() || 'Untitled file'}
-                </span>
-              </button>
-            </li>
-          )
-        })}
-
-        {messageRows.map((row) => {
-          const Icon = row.kind === 'image' ? ImageIcon : row.kind === 'artifact' ? Boxes : FileText
-          const canOpen = Boolean(row.fileUrl || row.entityId)
-          return (
-            <li key={row.id}>
-              <button
-                type="button"
-                disabled={!canOpen}
-                onClick={() =>
-                  openArtifactInShell({
-                    id: row.id,
-                    title: row.title,
-                    type: messageTargetType(row),
-                    entityId: row.entityId,
-                    conversationId,
-                    fileUrl: row.fileUrl,
-                    mimeType: row.mimeType,
-                    mediaAssetId: row.mediaAssetId,
-                    contextLabel: 'Chat',
-                  })
-                }
-                className={cn(
-                  'body-3 text-foreground gap-spacing-2 px-spacing-2 py-spacing-2 flex w-full items-center rounded-lg text-left',
-                  canOpen ? 'hover:bg-hover-subtle' : 'cursor-default',
-                )}
-              >
-                <Icon className="icon-sm text-muted-foreground shrink-0" aria-hidden />
-                <span className="min-w-0 flex-1 truncate">{row.title}</span>
-              </button>
-            </li>
-          )
-        })}
-      </ul>
+      {groups.map((group) => (
+        <section key={group.label} aria-label={group.label}>
+          <p className="typo-caption text-muted-foreground px-spacing-2 pb-spacing-1 font-medium uppercase tracking-wide">
+            {group.label}
+          </p>
+          <ul className="space-y-spacing-1">
+            {group.rows.map((row) => (
+              <li key={row.key}>
+                <FileRowButton row={row} hero={row.key === heroKey} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
     </div>
   )
 }

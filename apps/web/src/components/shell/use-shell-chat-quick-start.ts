@@ -20,6 +20,11 @@ export function useShellChatQuickStart(
     [setTextRef],
   )
 
+  /** Arm the chip/systemContext without touching composer text (seeded externally). */
+  const armQuickStart = useCallback((quickStart: ShellChatQuickStart) => {
+    setActiveQuickStart(quickStart)
+  }, [])
+
   const handleComposerValueChange = useCallback(
     (next: string) => {
       setActiveQuickStart((current) => {
@@ -42,6 +47,7 @@ export function useShellChatQuickStart(
 
   return {
     activeCapabilityChip,
+    armQuickStart,
     buildSendContext,
     clearQuickStart: () => setActiveQuickStart(null),
     handleComposerValueChange,

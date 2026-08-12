@@ -4,10 +4,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
-import {
-  DRAFT_CARD_USE_EVENT,
-  type DraftCardUseDetail,
-} from '@/features/studio/components/message-bubble/draft-versions.utils'
 import { ChatInput } from '@/components/chat/ChatInputAdapter'
 import { ChatTurnChangeDivider } from '@/components/chat/ChatTurnChangeDivider'
 import { ComposerActiveRunTipCard } from '@/components/chat/ComposerActiveRunTipCard'
@@ -27,6 +23,7 @@ import {
   type GlobalChatSeedDetail,
   type GlobalChatVoiceStartDetail,
 } from '@/components/global-chat/store/use-global-chat-store'
+import { findShellCreateMenuItem } from '@/components/shell/shell-create-menu.config'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
 import { ShellEmptyChatQuickStartPills } from '@/components/shell/ShellEmptyChatQuickStartPills'
 import { ShellRightPanel } from '@/components/shell/ShellRightPanel'
@@ -164,7 +161,6 @@ import { SpaceChatSubPanel } from './SpaceChatSubPanel'
 import { SpaceUndoButton } from './SpaceUndoButton'
 import type { SpaceVoiceRunTask } from './SpaceVoiceRunsView'
 import { SpaceVoiceSessionView } from './SpaceVoiceSessionView'
-import { resolveObservedHeight } from './observed-height'
 import { stripLegacySpacesConversationTitle } from './strip-legacy-spaces-conversation-title'
 
 type ChatMode = SpaceChatMode
@@ -323,11 +319,6 @@ export function SpaceVibeyChatPanel({
   const uiSelectedArtifact = useActiveArtifactSelectionSignal()
   const focusedArtifactRef = useRef<FocusedArtifact | null>(null)
   const lastAutoFocusKeyRef = useRef<string | null>(null)
-  // Preferred conversation is applied once per value. Re-forcing on every
-  // divergence fights the post-load/drawer sync effects over the selection
-  // (infinite yank → "Maximum update depth exceeded") and also made it
-  // impossible to switch away from a meeting thread while its workspace is open.
-  const lastAppliedPreferredConversationRef = useRef<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const lastUserPromptRef = useRef<HTMLDivElement>(null)
@@ -335,7 +326,8 @@ export function SpaceVibeyChatPanel({
   const lastUserPromptHeightRef = useRef(0)
   const setTextRef = useRef<((text: string) => void) | null>(null)
   const composerMirrorRef = useRef('')
-  const quickStart = useShellChatQuickStart(setTextRef)
+  const quickStart = useShellChatQuickStart(setTextRef, () => undefined)
+  const { armQuickStart } = quickStart
   const previousMessageCountRef = useRef(0)
   const isProgrammaticScrollRef = useRef(false)
   const initialHydrationRef = useRef<string | null>(null)
@@ -435,9 +427,8 @@ export function SpaceVibeyChatPanel({
     spaceId: string | null
   } | null>(null)
   useEffect(() => {
-    if (scopeOverride === null) return
     setScopeOverride(null)
-  }, [chatScopeStorageId, scopeOverride, selectedConversationId])
+  }, [chatScopeStorageId, selectedConversationId])
   const effectiveScope = resolveSpaceChatScope(
     selectedConversation,
     { campaignId, spaceId: spaceId ?? null },
@@ -632,10 +623,8 @@ export function SpaceVibeyChatPanel({
     const el = scrollRef.current
     if (!el) return
     const applyHeight = (h: number) => {
-      const nextHeight = resolveObservedHeight(spacerHeightRef.current, h)
-      if (nextHeight === null) return
-      spacerHeightRef.current = nextHeight
-      setSpacerHeight(nextHeight)
+      setSpacerHeight(h)
+      spacerHeightRef.current = h
     }
     const ro = new ResizeObserver(([entry]) => {
       if (entry) applyHeight(entry.contentRect.height)
@@ -651,10 +640,8 @@ export function SpaceVibeyChatPanel({
     const ro = new ResizeObserver(([entry]) => {
       if (entry) {
         const h = entry.borderBoxSize[0]?.blockSize ?? entry.contentRect.height
-        const nextHeight = resolveObservedHeight(lastUserPromptHeightRef.current, h)
-        if (nextHeight === null) return
-        lastUserPromptHeightRef.current = nextHeight
-        setLastUserPromptHeight(nextHeight)
+        setLastUserPromptHeight(h)
+        lastUserPromptHeightRef.current = h
       }
     })
     ro.observe(el)
@@ -857,12 +844,7 @@ export function SpaceVibeyChatPanel({
   // Do not wait for loadConversations — it can early-return on roster/scope and leave a blank Pixel pane
   // while the shell store already has activeConversationId stamped.
   useEffect(() => {
-    if (!preferredConversationId) {
-      lastAppliedPreferredConversationRef.current = null
-      return
-    }
-    if (lastAppliedPreferredConversationRef.current === preferredConversationId) return
-    lastAppliedPreferredConversationRef.current = preferredConversationId
+    if (!preferredConversationId) return
     const conversation =
       resolvePendingConversationSelection(conversations, preferredConversationId) ??
       resolvePendingConversationSelection(
@@ -934,20 +916,6 @@ export function SpaceVibeyChatPanel({
     useShellStore.getState().openChatDrawer(selectedConversationId)
   }, [selectedConversationId, shellSidebarChrome])
 
-  // Remount recovery: a work-context flip changes this panel's key AFTER the open
-  // path consumed pendingOpenConversationId, and the fresh instance's list load can
-  // early-return on roster/scope — leaving a blank pane while the chat store still
-  // has the active conversation stamped. Adopt it instead of showing nothing.
-  const storeActiveConversationId = useChatStore((s) => s.activeConversationId)
-  useEffect(() => {
-    if (selectedConversationId || !storeActiveConversationId) return
-    if (useSpacesStore.getState().chatRailIntent === 'new') return
-    setSelectedConversationId(storeActiveConversationId)
-    if (conversationNeedsMessageHydration(storeActiveConversationId, useChatStore.getState())) {
-      void selectConversation(storeActiveConversationId)
-    }
-  }, [selectedConversationId, storeActiveConversationId])
-
   useEffect(() => {
     const handleArtifactFocus = (event: Event) => {
       const detail = (event as CustomEvent).detail as FocusedArtifact | undefined
@@ -973,18 +941,6 @@ export function SpaceVibeyChatPanel({
       new CustomEvent('space:focus-view-type', { detail: { view_type: target.viewType } }),
     )
   }, [messages])
-
-  // Draft cards' "use in composer" arrow drops the (possibly edited) draft
-  // text into this panel's composer without sending.
-  useEffect(() => {
-    const onDraftUse = (event: Event) => {
-      const text = (event as CustomEvent<DraftCardUseDetail>).detail?.text?.trim()
-      if (!text) return
-      setComposerRestore({ text, nonce: crypto.randomUUID() })
-    }
-    window.addEventListener(DRAFT_CARD_USE_EVENT, onDraftUse)
-    return () => window.removeEventListener(DRAFT_CARD_USE_EVENT, onDraftUse)
-  }, [])
 
   const buildContextForSend = useCallback(() => {
     if (awarenessContextOverride?.trim()) return awarenessContextOverride.trim()
@@ -1964,6 +1920,10 @@ export function SpaceVibeyChatPanel({
           documents,
           nonce: crypto.randomUUID(),
         })
+        if (seed.quickStartId) {
+          const createItem = findShellCreateMenuItem(seed.quickStartId)
+          if (createItem) armQuickStart(createItem)
+        }
         return
       }
 
@@ -1982,6 +1942,7 @@ export function SpaceVibeyChatPanel({
       activeAgentKey,
       conversationsLoading,
       handleAgentChange,
+      armQuickStart,
       handleNewConversation,
       isChannelScope,
       sendWithToast,
@@ -2129,15 +2090,6 @@ export function SpaceVibeyChatPanel({
 
   const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
   const toggleRightPanel = useShellStore((s) => s.toggleRightPanel)
-  const openRightPanelSurface = useShellStore((s) => s.openRightPanelSurface)
-  const autoOpenedSummaryConversationRef = useRef<string | null>(null)
-
-  useEffect(() => {
-    if (headerLayout !== 'full' || !selectedConversationId) return
-    if (autoOpenedSummaryConversationRef.current === selectedConversationId) return
-    autoOpenedSummaryConversationRef.current = selectedConversationId
-    openRightPanelSurface('files')
-  }, [headerLayout, openRightPanelSurface, selectedConversationId])
 
   const chatHeaderActions = (
     <SpaceChatHeaderActions
@@ -2486,6 +2438,7 @@ export function SpaceVibeyChatPanel({
                           onComposerValueChange={quickStart.handleComposerValueChange}
                           activeCapabilityChip={quickStart.activeCapabilityChip}
                           onClearCapabilityChip={quickStart.clearQuickStart}
+                          onCreateMenuSelect={quickStart.selectQuickStart}
                           onEnqueue={editingQueueItemId ? undefined : handleEnqueue}
                           composerFooterAfterIntegrationsSlot={composerContextSlot}
                           onSendNow={handleQueueSendNowNext}

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { ShellCreateMenuItem } from '@/components/shell/shell-create-menu.config'
 import type { ChatModelSettings } from '@/features/studio/services/chat.service'
 import type { ChatScopeKind, DocumentAttachment, MessageReference } from '../../types'
 import type { AttachedArtifact } from '../chat/ArtifactAttachments'
@@ -47,6 +48,12 @@ export interface ChatInputProps {
   activeCapabilityChip?: { label: string; icon: string } | null
   /** Clear selected capability chip. */
   onClearCapabilityChip?: () => void
+  /**
+   * Handles a "+ Create" menu pick. Wire to the surface's quick-start hook so
+   * the item's systemContext rides the send; without it the composer only
+   * seeds the item's prompt text.
+   */
+  onCreateMenuSelect?: (item: ShellCreateMenuItem) => void
   /** Compact mode - tighter padding for in-chat composer. */
   compact?: boolean
   campaignId?: string

@@ -42,6 +42,11 @@ export interface GlobalChatSeedDetail {
   conversationId?: string
   /** `attach` puts docs on the composer without sending; default sends. */
   seedMode?: 'send' | 'attach'
+  /**
+   * Create-menu item id (shell-create-menu.config). On attach the panel arms
+   * the matching quick start so its systemContext rides the eventual send.
+   */
+  quickStartId?: string
   model?: string
   documents?: unknown[]
   artifacts?: unknown[]

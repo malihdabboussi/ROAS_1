@@ -47,7 +47,7 @@ describe('useChatInputPlusController', () => {
     plusSubmenuRef = createRef<HTMLDivElement>()
     plusSubmenuAnchorRefs = {
       current: {
-        agent: null,
+        create: null,
         files: null,
         attach: null,
         integrations: null,
@@ -76,7 +76,6 @@ describe('useChatInputPlusController', () => {
       updatePlusSubmenuPosition: vi.fn(),
       closePlusMenu,
       togglePlusMenu: vi.fn(),
-      openPlusMenu: vi.fn(),
       cancelPlusSubmenuClose: vi.fn(),
       schedulePlusSubmenuClose: vi.fn(),
       openPlusSubmenu: openPlusSubmenuPosition,
@@ -99,7 +98,6 @@ describe('useChatInputPlusController', () => {
       handleSkillToggle: vi.fn(),
       handleAccessToggle: vi.fn(),
       handleConnectIntegration: vi.fn(),
-      loadIntegrationOverview: vi.fn().mockResolvedValue(undefined),
     })
 
     mockUseChatInputCloudAttach.mockReturnValue({
@@ -136,7 +134,7 @@ describe('useChatInputPlusController', () => {
         handleFileSelect,
         allSlashItems,
         onOpenAtMenu: handleComposerOpenAtMenu,
-        onGenerateImage: vi.fn(),
+        onSelectCreateItem: vi.fn(),
       }),
     )
 
