@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  Suspense,
   useEffect,
   useMemo,
   useState,
@@ -9,15 +10,16 @@ import {
   type SetStateAction,
 } from 'react'
 import { useShellStore } from '@/components/shell/use-shell-store'
+import { dispatchBrainAddAgentModal } from '@/features/brain/lib/brain-agent-modal.events'
 import { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
-import { useOrgStore } from '@/features/org/store/use-org-store'
-import { loadProgramsCached, type Program } from '@/lib/programs'
 import { HubDockFlyout } from './HubDockFlyout'
-import { SidebarFavoritesFlyout } from './SidebarFavoritesFlyout'
+import { SidebarBrainNavLinks } from './SidebarBrainFlyout'
+import { SidebarHomeFlyout } from './SidebarHomeFlyout'
 import { SidebarHqMoreFlyoutBody } from './SidebarHqMoreFlyoutBody'
 import { ProgramRowsSkeleton } from './SidebarHqSpacesBucketList'
 import { SidebarHqSpacesGroupedList } from './SidebarHqSpacesGroupedList'
 import { SidebarProgramsCreateMenu, type ProgramsCreateAction } from './SidebarProgramsCreateMenu'
+import { SidebarTeam2Flyout } from './SidebarTeam2Flyout'
 import type { SidebarControllerReturn } from './useSidebarController'
 
 function railTriggerRect(panelId: string): DOMRect | null {
@@ -70,40 +72,21 @@ export function SidebarHqFlyouts({
   const [anchor, setAnchor] = useState<DOMRect | null>(null)
   const [subOpen, setSubOpen] = useState(false)
   const [createMenuAnchor, setCreateMenuAnchor] = useState<DOMRect | null>(null)
-  const [programs, setPrograms] = useState<Program[]>([])
   const flyoutCloseEpoch = useShellStore((s) => s.sidebarFlyoutCloseEpoch)
-  const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const favoriteCampaigns = useMemo(
-    () => c.manageCampaigns.filter((campaign) => campaign.isFavorite),
+    () => c.manageCampaigns.filter((campaign) => campaign.isFavorite || campaign.isPinned),
     [c.manageCampaigns],
   )
   const favoriteSpaces = useMemo(
     () => c.sidebarLists.filter((space) => spaceUserState.favoriteIds.has(space.id)),
     [c.sidebarLists, spaceUserState.favoriteIds],
   )
-  const favoritePrograms = useMemo(
-    () => programs.filter((program) => program.is_favorite),
-    [programs],
-  )
-
-  useEffect(() => {
-    let cancelled = false
-    const load = () => {
-      void loadProgramsCached(activeOrgId).then((rows) => {
-        if (!cancelled) setPrograms(rows)
-      })
-    }
-    load()
-    window.addEventListener('roas:programs-changed', load)
-    return () => {
-      cancelled = true
-      window.removeEventListener('roas:programs-changed', load)
-    }
-  }, [activeOrgId])
 
   const hoverPanel =
     showHover && !c.isPanelClosing
-      ? c.activeManagePanel === 'favorites' ||
+      ? c.activeManagePanel === 'team2' ||
+        c.activeManagePanel === 'home' ||
+        c.activeManagePanel === 'brain' ||
         c.activeManagePanel === 'spaces' ||
         c.activeManagePanel === 'more'
         ? c.activeManagePanel
@@ -192,10 +175,10 @@ export function SidebarHqFlyouts({
 
   return (
     <>
-      {hoverPanel === 'favorites' && anchor ? (
+      {hoverPanel === 'home' && anchor ? (
         <HubDockFlyout
           anchor={anchor}
-          title="Favorites"
+          title="Home"
           onEnter={clearSpacesFlyoutCloseTimer}
           onLeave={() => {
             if (!pinned) scheduleSpacesFlyoutClose()
@@ -204,12 +187,77 @@ export function SidebarHqFlyouts({
           pinned={pinned}
           onPinnedChange={setPinned}
         >
-          <SidebarFavoritesFlyout
-            favoritePrograms={favoritePrograms}
+          <SidebarHomeFlyout
+            pathname={c.pathname}
             favoriteCampaigns={favoriteCampaigns}
             favoriteSpaces={favoriteSpaces}
-            onToggleCampaignFavorite={(campaign) => void c.toggleFavoriteCampaign(campaign.id)}
           />
+        </HubDockFlyout>
+      ) : null}
+
+      {hoverPanel === 'team2' && anchor ? (
+        <HubDockFlyout
+          anchor={anchor}
+          title="Team"
+          onEnter={clearSpacesFlyoutCloseTimer}
+          onLeave={() => {
+            if (!pinned) scheduleSpacesFlyoutClose()
+          }}
+          onClose={closeHover}
+          pinned={pinned}
+          onPinnedChange={setPinned}
+          headerActions={[
+            {
+              kind: 'plus',
+              title: 'New agent',
+              onClick: () => {
+                closeHover()
+                c.router.push('/team')
+              },
+            },
+          ]}
+        >
+          <SidebarTeam2Flyout pathname={c.pathname} />
+        </HubDockFlyout>
+      ) : null}
+
+      {hoverPanel === 'brain' && anchor ? (
+        <HubDockFlyout
+          anchor={anchor}
+          title="Brain"
+          onEnter={clearSpacesFlyoutCloseTimer}
+          onLeave={() => {
+            if (!pinned) scheduleSpacesFlyoutClose()
+          }}
+          onClose={closeHover}
+          pinned={pinned}
+          onPinnedChange={setPinned}
+          headerActions={[
+            {
+              kind: 'search',
+              title: 'Search brains',
+              onClick: () => {
+                closeHover()
+                c.router.push('/brain')
+              },
+            },
+            {
+              kind: 'plus',
+              title: 'Add knowledge',
+              onClick: () => {
+                closeHover()
+                dispatchBrainAddAgentModal()
+              },
+            },
+          ]}
+        >
+          <Suspense
+            fallback={
+              <p className="body-3 text-muted-foreground px-3 py-6 text-center">Loading…</p>
+            }
+          >
+            <SidebarBrainNavLinks onNavigate={closeHover} />
+          </Suspense>
         </HubDockFlyout>
       ) : null}
 
