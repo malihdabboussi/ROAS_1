@@ -1,5 +1,5 @@
-import type { RefObject } from 'react'
-import type { ShellCreateMenuItem } from '@/components/shell/shell-create-menu.config'
+import { useCallback, type RefObject } from 'react'
+import type { ChatInputPlusMenuAgentPickerConfig } from './chat-input-plus-menu-agent.types'
 import type { ChatInputPlusMenuSpacePickerConfig } from './chat-input-plus-menu-space.types'
 import type { SlashItem } from './chat-input-slash-menu'
 import { useChatInputCloudAttach } from './use-chat-input-cloud-attach'
@@ -14,8 +14,9 @@ interface UseChatInputPlusControllerOptions {
   handleFileSelect: (files: File[] | FileList) => void | Promise<void>
   allSlashItems: SlashItem[]
   onOpenAtMenu: () => void
-  onSelectCreateItem: (item: ShellCreateMenuItem) => void
+  onGenerateImage: () => void
   plusMenuSpacePicker?: ChatInputPlusMenuSpacePickerConfig
+  plusMenuAgentPicker?: ChatInputPlusMenuAgentPickerConfig
 }
 
 export function useChatInputPlusController({
@@ -25,8 +26,9 @@ export function useChatInputPlusController({
   handleFileSelect,
   allSlashItems,
   onOpenAtMenu,
-  onSelectCreateItem,
+  onGenerateImage,
   plusMenuSpacePicker,
+  plusMenuAgentPicker,
 }: UseChatInputPlusControllerOptions) {
   const {
     plusMenuOpen,
@@ -42,6 +44,7 @@ export function useChatInputPlusController({
     plusSubmenuAnchorRefs,
     closePlusMenu,
     togglePlusMenu,
+    openPlusMenu: openPlusMenuPosition,
     cancelPlusSubmenuClose,
     schedulePlusSubmenuClose,
     openPlusSubmenu: openPlusSubmenuPosition,
@@ -59,6 +62,7 @@ export function useChatInputPlusController({
     composerPolicyPending,
     composerAccessReadOnly,
     suggestedUnconnected,
+    loadIntegrationOverview,
     openPlusSubmenu,
     handleToggleAgent,
     handleSkillToggle,
@@ -68,6 +72,14 @@ export function useChatInputPlusController({
     agentKey,
     openPlusSubmenuPosition,
   })
+
+  const openPlusMenu = useCallback(
+    (submenu?: Parameters<typeof openPlusMenuPosition>[0]) => {
+      openPlusMenuPosition(submenu)
+      if (submenu === 'integrations') loadIntegrationOverview()
+    },
+    [loadIntegrationOverview, openPlusMenuPosition],
+  )
 
   const {
     showDrivePicker,
@@ -110,7 +122,7 @@ export function useChatInputPlusController({
     onLocalUpload: handleFileButtonClick,
     onDrive: openDrive,
     onDropbox: openDropbox,
-    onSelectCreateItem,
+    onGenerateImage,
     onCloseMenu: closePlusMenu,
     onOpenAtMenu,
     handleToggleAgent,
@@ -120,6 +132,7 @@ export function useChatInputPlusController({
     onShowInfoCard: showPlusInfoCard,
     onClearInfoCard: clearPlusInfoCard,
     spacePicker: plusMenuSpacePicker ?? null,
+    agentPicker: plusMenuAgentPicker ?? null,
   })
 
   return {
@@ -130,6 +143,9 @@ export function useChatInputPlusController({
     plusMenuRef,
     plusSubmenuRef,
     togglePlusMenu,
+    openPlusMenu,
+    connectedProviders,
+    loadIntegrationOverview,
     plusMenuProps,
     showDrivePicker,
     setShowDrivePicker,

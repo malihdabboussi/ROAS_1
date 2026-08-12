@@ -1419,7 +1419,7 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
     ],
     examples: [
       {
-        description: 'Find a previous brand-reputation chat.',
+        intent: 'Find a previous brand-reputation chat.',
         data: { query: 'Wholesale Universe brand reputation', limit: 10 },
       },
     ],

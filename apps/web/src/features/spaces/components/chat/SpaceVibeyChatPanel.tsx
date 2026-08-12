@@ -326,7 +326,7 @@ export function SpaceVibeyChatPanel({
   const lastUserPromptHeightRef = useRef(0)
   const setTextRef = useRef<((text: string) => void) | null>(null)
   const composerMirrorRef = useRef('')
-  const quickStart = useShellChatQuickStart(setTextRef, () => undefined)
+  const quickStart = useShellChatQuickStart(setTextRef)
   const { armQuickStart } = quickStart
   const previousMessageCountRef = useRef(0)
   const isProgrammaticScrollRef = useRef(false)
@@ -2438,7 +2438,6 @@ export function SpaceVibeyChatPanel({
                           onComposerValueChange={quickStart.handleComposerValueChange}
                           activeCapabilityChip={quickStart.activeCapabilityChip}
                           onClearCapabilityChip={quickStart.clearQuickStart}
-                          onCreateMenuSelect={quickStart.selectQuickStart}
                           onEnqueue={editingQueueItemId ? undefined : handleEnqueue}
                           composerFooterAfterIntegrationsSlot={composerContextSlot}
                           onSendNow={handleQueueSendNowNext}

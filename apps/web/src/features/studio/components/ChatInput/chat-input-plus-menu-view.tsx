@@ -10,9 +10,9 @@ import {
   Globe,
   Grid,
   HardDrive,
+  ImagePlus,
   Loader2,
   Paperclip,
-  Plus,
   Puzzle,
   Settings2,
   ShieldCheck,
@@ -21,8 +21,6 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { CloudAttachMenuItems } from '@/components/media/CloudAttachMenuItems'
-import type { ShellCreateMenuItem } from '@/components/shell/shell-create-menu.config'
-import { ShellCreateMenuPanel } from '@/components/shell/ShellCreateMenuPanel'
 import Switch from '@/components/ui/forms/switch'
 import type { StudioAtMenuTabId } from './chat-input-at-mentions'
 import { INTEGRATION_ICONS, INTEGRATION_NAMES } from './chat-input-constants'
@@ -96,7 +94,7 @@ export interface ChatInputPlusMenuViewProps {
   onLocalUpload: () => void
   onDrive: () => void
   onDropbox: () => void
-  onSelectCreateItem: (item: ShellCreateMenuItem) => void
+  onGenerateImage: () => void
   onCloseMenu: () => void
   onOpenAtMenu: (tab: StudioAtMenuTabId) => void
   onToggleAgent: (provider: string, enabled: boolean) => void
@@ -133,7 +131,7 @@ export function ChatInputPlusMenuView({
   onLocalUpload,
   onDrive,
   onDropbox,
-  onSelectCreateItem,
+  onGenerateImage,
   onCloseMenu,
   onOpenAtMenu,
   onToggleAgent,
@@ -161,14 +159,15 @@ export function ChatInputPlusMenuView({
         onMouseLeave={onScheduleSubmenuClose}
       >
         <button
-          ref={(node) => onSubmenuAnchorNode('create', node)}
           type="button"
-          onMouseEnter={() => onOpenSubmenu('create')}
+          onClick={() => {
+            onCloseMenu()
+            onGenerateImage()
+          }}
           className="body-3 text-foreground hover:bg-hover-subtle px-spacing-3 py-spacing-2 gap-spacing-2 flex w-full items-center text-left transition-colors"
         >
-          <Plus className="icon-sm text-muted-foreground shrink-0" />
-          <span className="min-w-0 flex-1 truncate">Create</span>
-          <ChevronRight className="icon-xs text-muted-foreground shrink-0" />
+          <ImagePlus className="icon-sm text-muted-foreground shrink-0" />
+          <span className="min-w-0 flex-1 truncate">Generate image</span>
         </button>
         {menuItems.map((item) => {
           const Icon = item.icon
@@ -196,12 +195,6 @@ export function ChatInputPlusMenuView({
           onMouseEnter={onCancelSubmenuClose}
           onMouseLeave={onScheduleSubmenuClose}
         >
-          {submenu === 'create' ? (
-            <ShellCreateMenuPanel
-              onSelectCreateItem={onSelectCreateItem}
-              onCloseMenu={onCloseMenu}
-            />
-          ) : null}
           {submenu === 'space' && spacePicker ? (
             <ChatInputPlusMenuSpacePanel spacePicker={spacePicker} onCloseMenu={onCloseMenu} />
           ) : null}

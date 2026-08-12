@@ -56,7 +56,6 @@ export function ChatInput({
   onComposerValueChange,
   activeCapabilityChip,
   onClearCapabilityChip,
-  onCreateMenuSelect,
   compact = false,
   campaignId,
   spaceId,
@@ -290,9 +289,8 @@ export function ChatInput({
     handleFileSelect,
     allSlashItems,
     onOpenAtMenu: handleComposerOpenAtMenu,
-    onSelectCreateItem: (item) => {
-      if (onCreateMenuSelect) onCreateMenuSelect(item)
-      else setText(item.prompt)
+    onGenerateImage: () => {
+      setText('Generate an image: ')
     },
     plusMenuSpacePicker,
     plusMenuAgentPicker,

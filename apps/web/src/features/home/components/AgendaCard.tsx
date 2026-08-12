@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   dayKeyInTimeZone,
@@ -14,6 +14,7 @@ import {
   AgendaCardRangeNav,
 } from '@/features/home/components/AgendaCardChrome'
 import { AgendaCardListBody } from '@/features/home/components/AgendaCardListBody'
+import { HomeInstantMeetingHost } from '@/features/home/components/HomeInstantMeetingHost'
 import { useAgendaCardData } from '@/features/home/hooks/use-agenda-card-data'
 import {
   agendaEventMinimizeKey,
@@ -45,6 +46,7 @@ export function AgendaCard({
   presentation?: 'card' | 'page'
 } = {}) {
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
+  const [instantMeetingOpen, setInstantMeetingOpen] = useState(false)
   const {
     view,
     setView,
@@ -191,6 +193,7 @@ export function AgendaCard({
         view={view}
         setView={setView}
         teamCoverage={teamCoverage}
+        onStartInstantMeeting={() => setInstantMeetingOpen(true)}
       />
 
       {showAgendaSurface && view === 'list' ? (
@@ -248,6 +251,12 @@ export function AgendaCard({
           />
         )}
       </div>
+
+      <HomeInstantMeetingHost
+        open={instantMeetingOpen}
+        onOpenChange={setInstantMeetingOpen}
+        onCreated={() => undefined}
+      />
 
     </div>
   )
