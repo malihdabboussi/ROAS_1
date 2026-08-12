@@ -49,3 +49,13 @@ Why: Replace-don't-accumulate — the bespoke menu's only consumer (MeetingActio
 Impact: No behavior change; dead code removed.
 
 Files: apps/web/src/features/home/components/MeetingActionMoveMenu.tsx (deleted), .docs/plans/agent-follow-up-work.md
+
+## [2026-08-12 12:09] - [FIX]
+
+What: Atomic completion ownership for video generation jobs. Added completion_claimed_at/_by and billing_recorded_at to media_generation_jobs (migration 20260812150000). Every terminal transition in getVideoStatus (success completion, provider failure/cancel) and the sweeper's 24h expiry now first wins a single-UPDATE atomic claim (retakable after 10 minutes for crash recovery); losing callers reload and return the canonical result or processing. Credit debits are gated by a never-expiring one-shot billing_recorded_at flip; the hasProviderUsageEvent lookup remains only as a legacy pre-check. Consolidated the duplicated replicate/google billing blocks into recordVideoBillingOnce/resolveVideoRate.
+
+Why: Release blocker on PR #139 — the sweeper claimed jobs via last_swept_at, but a late agent poll took no claim, so a poll racing a sweep after provider success could double-upload assets/posters, double-debit credits (check-then-insert usage-event lookup is not atomic), and double-update the job.
+
+Impact: Exactly one caller performs upload, poster creation, billing, and the terminal job update under any poll/sweep concurrency; billing is at-most-once even across stale-claim crash retries; provider failure, transient errors, and 24h expiry semantics unchanged. Covered by 13 new completion-ownership tests (both providers), 2 repository claim-shape tests, and 2 new sweeper expiry tests.
+
+Files: supabase/migrations/20260812150000_media_generation_jobs_completion_claim.sql, scripts/roas/migration-order.txt, apps/agent-api/src/modules/artifacts/repositories/artifact-media-jobs.repository.ts (+ .test.ts), apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-jobs.service.ts, apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-status.service.ts (+ .completion.test.ts), apps/agent-api/src/modules/artifacts/services/artifact-media-jobs-sweeper.service.ts (+ .test.ts), .docs/plans/video-create-workstream-plan.md

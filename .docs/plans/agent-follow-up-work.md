@@ -38359,3 +38359,12 @@ Status: Closes most of "2026-08-11 — Video create P1 deferred items"
 - Video metadata: CLOSED — media_assets gains duration_seconds + poster_url (migration 20260812111000); posters extracted at upload; Global Artifacts uses them.
 - STILL OPEN: decomposing the 600-LOC artifact-legacy-media-generate.service.ts (unchanged in P2).
 - NEW (small): Space Media video cards and the shell media viewer still render <video preload="metadata"> as their own thumbnails; they could use poster_url now that it exists (P3 polish alongside the template strip).
+
+## 2026-08-12 — Video P2 completion-ownership fix (agent-api artifacts)
+
+- File: apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-status.service.ts
+  Evidence: 597/600 LOC after the completion-claim + billing consolidation (was 513; the consolidation of the two provider billing blocks offset most of the claim additions).
+  Needed work: split getVideoStatus's replicate/google provider branches into per-provider private handlers or a small provider-status service before the next feature touches this file.
+  Reason not done now: out of scope for the release-blocking race fix; a structural split would obscure the concurrency diff under review in PR #139.
+- Repo-wide: pnpm architecture:check crashes on every machine with ENOENT stat on apps/openclaw/src/canvas-host/a2ui/test-link-1782116645255-348bba5dc9fbd.txt — a git-tracked symlink to /Users/2fun/... (nonexistent elsewhere). Staged mode works (pre-commit passed, 10 files checked). Needs the symlink removed and/or check-loc.mjs hardened against broken symlinks. Spawned as a separate task.
+- Pre-existing on origin/main: 10 agent-api test files / 17 tests fail identically on main and this branch (agent-runtime-skill-scope, artifact-document-files, artifact-legacy-runtime-core, artifacts.service.dispatch, artifacts.service.rbac{,.integrations-media}, credits.service, chat.service.access-context, openclaw-proxy, route-inventory). Unrelated to the video work; needs its own triage.
