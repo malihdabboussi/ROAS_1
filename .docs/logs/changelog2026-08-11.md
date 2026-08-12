@@ -39,3 +39,13 @@ Why: The first live agenda looked polished but contained generic placeholders be
 Impact: Client-facing agendas now require specific evidence and decisions, reject lazy placeholder output and unmapped clients, avoid unrelated meeting leakage, preserve integration mapping across reconnects, and expose failed Drive writes for retry instead of reporting false success.
 
 Files: `page-grader-api.service.ts`, `page-grader-brain-sync.service.ts`, `meetings-precall-agenda-sections.ts`, `meetings-precall-drive-agenda.service.ts`, `meetings-precall-prep.helpers.ts`, `meetings-precall-prep.service.ts`, `meetings-precall-related-context.ts`, focused tests including cross-client context isolation, `documentation/features/page-grader-campaign-brain-sync.md`.
+
+## [2026-08-11 16:15] - [FIX]
+
+What: Replaced the timed, analyst-style meeting prep contract with a seven-section client-facing agenda designed for a two-minute account-manager scan. Added completed-work and next-week sections, plain-language campaign notes, strict rejection of internal source caveats and meeting theatre, and a fixed compact Google Docs order with native checklist topics.
+
+Why: The first live agenda was five pages, exposed missing-source language, used mechanical labels and prompts, and could not be confidently screen-shared with a client.
+
+Impact: New agendas are concise, favorable but evidence-based, per-campaign where data exists, grounded in campaign Brain and meeting context, and usable without manual cleanup before the call.
+
+Files: `meetings-precall-agenda-sections.ts`, `meetings-precall-campaign-notes.ts`, `meetings-precall-drive-agenda.service.ts`, focused agenda tests, Page Grader agenda document contract/writer, `documentation/features/page-grader-campaign-brain-sync.md`.

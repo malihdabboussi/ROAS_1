@@ -379,12 +379,18 @@ describe('meetings-precall-prep.helpers', () => {
   })
 
   it('parses prep markdown into Drive agenda sections', () => {
-    const sections = parsePrepDocToAgendaSections(`## Snapshot
-Acme weekly
+    const sections = parsePrepDocToAgendaSections(`## What's on the agenda?
+- Review lead quality
+- Review new creative
 
-## Talking points
-- Review CPL
-- Creative refresh
+## What we worked on this week
+- Launched the new landing page
+
+## What we're working on next week
+- Launch the approved creative test
+
+## Raw performance data
+- Funnel: 59 leads at $11.88 CPL
 
 ## Wins
 - CPL down 12%
@@ -392,16 +398,15 @@ Acme weekly
 ## Campaign notes
 - Evergreen scaling
 
-## Other updates
-- New landing page live
-
 ## Needs / blockers
 - Need offer approval
 `)
-    expect(sections.agenda).toContain('Review CPL')
+    expect(sections.agenda).toContain('Review lead quality')
+    expect(sections.this_week).toContain('landing page')
+    expect(sections.next_week).toContain('creative test')
+    expect(sections.performance).toContain('59 leads')
     expect(sections.wins).toContain('CPL down')
     expect(sections.campaign_notes).toContain('Evergreen')
-    expect(sections.other_updates).toContain('landing page')
     expect(sections.needs_blockers).toContain('offer approval')
   })
 
@@ -414,14 +419,15 @@ Acme weekly
 
   it('parses the rich HTML body produced by save_document', () => {
     const sections =
-      parsePrepDocToAgendaSections(`<h2>Agenda</h2><ol><li>Review the lead-quality decline and decide whether to narrow targeting.</li></ol>
+      parsePrepDocToAgendaSections(`<h2>What's on the agenda?</h2><ol><li>Review lead quality and targeting.</li></ol>
+<h2>What we worked on this week</h2><ul><li>Launched the new testimonial creative.</li></ul>
+<h2>What we're working on next week</h2><ul><li>Scale the winning testimonial creative.</li></ul>
 <h2>Performance</h2><ul><li>Meta snapshot Aug 3–9: $4,200 spend, 84 leads, $50 CPL; CPL increased 18% week over week.</li></ul>
 <h2>Wins</h2><ul><li>New testimonial creative produced 14 qualified leads.</li></ul>
 <h2>Campaign notes</h2><ul><li>Evergreen prospecting: shift 20% of budget to the testimonial ad.</li></ul>
-<h2>Other updates</h2><ul><li>Decision needed: approve the webinar angle by Friday.</li></ul>
 <h2>Needs / blockers</h2><ul><li>Client — approve webinar angle — Aug 14.</li></ul>`)
 
-    expect(sections.agenda).toContain('lead-quality decline')
+    expect(sections.agenda).toContain('lead quality and targeting')
     expect(sections.performance).toContain('$4,200 spend')
     expect(sections.campaign_notes).toContain('shift 20%')
     expect(validateMeetingReadyAgendaSections(sections)).toEqual([])
@@ -445,25 +451,52 @@ Acme weekly
 
     expect(prompt).toContain('screen-shared with the client')
     expect(prompt).toContain('Resolve the offer decision')
-    expect(prompt).toContain('## Performance')
+    expect(prompt).toContain("## What's on the agenda?")
+    expect(prompt).toContain('## What we worked on this week')
+    expect(prompt).toContain("## What we're working on next week")
+    expect(prompt).toContain('Do not add timestamps')
     expect(prompt).toContain('Never mention another client')
+    expect(prompt).not.toContain('say exactly which source is unavailable')
   })
 
   it('rejects a polished template filled with lazy placeholders', () => {
-    const sections = parsePrepDocToAgendaSections(`## Agenda
-- Review weekly performance
+    const sections = parsePrepDocToAgendaSections(`## What's on the agenda?
+- 0–5 minutes: Review weekly performance
+## What we worked on this week
+- No current CRM source was supplied
+## What we're working on next week
+- Lock commitments and measurement
 ## Performance
 - See Portal Meta dashboards for the latest week
 ## Wins
 - (none captured)
 ## Campaign notes
 - (none captured)
-## Other updates
-- Align next steps
 ## Needs / blockers
 - Discuss blockers`)
 
     expect(validateMeetingReadyAgendaSections(sections).length).toBeGreaterThan(0)
+  })
+
+  it('accepts a concise client-ready agenda without source caveats or meeting theatre', () => {
+    const sections = parsePrepDocToAgendaSections(`## What's on the agenda?
+- Weekly progress recap
+- Campaign performance
+- Next week's priorities
+## What we worked on this week
+- Launched three new static ads into the established funnel campaign.
+## What we're working on next week
+- Review early creative results and move budget toward the strongest ads.
+## Raw performance data
+- Established funnel: 59 leads at $11.88 CPL on $700.92 spend.
+## Wins
+- Lead costs stayed stable while the account produced 193 leads.
+## Campaign notes / recommendations
+- Keep the established funnel running and introduce the approved creative before scaling.
+## Needs / blockers
+- Creative approval is the only item needed to keep testing on schedule.`)
+
+    expect(validateMeetingReadyAgendaSections(sections)).toEqual([])
   })
 
   it('builds a Google Docs native-tab link without duplicating the prefix', () => {

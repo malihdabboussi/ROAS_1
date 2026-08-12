@@ -42,16 +42,16 @@ function nextMove(campaign: Row, state: string): string {
   if (supplied) return supplied
   const normalized = state.toLowerCase()
   if (normalized.includes('on_hold') || normalized.includes('closed')) {
-    return 'Decide whether to reactivate only after funnel QA, tracking, and the launch owner are confirmed.'
+    return 'Keep this on hold until funnel QA and tracking are complete.'
   }
   if (normalized.includes('planning') || normalized.includes('building')) {
-    return 'Name the readiness owner and date, then set the initial budget guardrail after final QA.'
+    return 'Complete final QA before launch, then begin with a controlled test budget.'
   }
-  return 'Confirm the next budget or creative test using lead quality and the dated performance evidence.'
+  return 'Keep the campaign active while we review lead quality and the next creative test.'
 }
 
 function evidence(row?: Row): string {
-  if (!row) return 'No campaign-level Meta snapshot was supplied.'
+  if (!row) return ''
   const current = (row.current as Row | undefined) ?? {}
   const range = (row.current_range as Row | undefined) ?? {}
   const parts = [
@@ -61,11 +61,11 @@ function evidence(row?: Row): string {
     number(current.ctr) !== null ? `link CTR ${number(current.ctr)!.toFixed(2)}%` : '',
   ].filter(Boolean)
   const date = [text(range.since), text(range.until)].filter(Boolean).join('–')
-  return `${date ? `${date}: ` : ''}${parts.join(', ') || 'No reported delivery metrics.'}`
+  return `${date ? `${date}: ` : ''}${parts.join(', ')}`
 }
 
 function learning(row?: Row): string {
-  if (!row) return 'Use the meeting to confirm whether this campaign is live and measurable.'
+  if (!row) return ''
   const current = (row.current as Row | undefined) ?? {}
   const prior = (row.prior as Row | undefined) ?? {}
   const currentCpl = number(current.cpl)
@@ -75,9 +75,9 @@ function learning(row?: Row): string {
     return `CPL ${change <= 0 ? 'improved' : 'increased'} ${Math.abs(change).toFixed(1)}% versus the prior available period.`
   }
   if ((number(current.spend) ?? 0) > 0 && (number(current.leads) ?? 0) === 0) {
-    return 'Spend is present without reported leads, so the conversion path needs diagnosis.'
+    return 'The campaign spent without generating a reported lead, so we are reviewing the conversion path.'
   }
-  return 'The source does not contain enough prior-period data for a reliable trend claim.'
+  return ''
 }
 
 export function buildCampaignNotesFromPrepContext(context: Row): string {
@@ -93,12 +93,16 @@ export function buildCampaignNotesFromPrepContext(context: Row): string {
     .map((campaign) => {
       const name = text(campaign.name) || text(campaign.campaign_name) || 'Unnamed campaign'
       const meta = findMetaRow(campaign, metaRows)
-      const state =
-        [text(campaign.status), text(campaign.platform_status), text(campaign.strategy_status)]
-          .filter(Boolean)
-          .join(' / ') || 'status not supplied'
+      const state = [
+        text(campaign.status),
+        text(campaign.platform_status),
+        text(campaign.strategy_status),
+      ]
+        .filter(Boolean)
+        .join(' / ')
       const next = nextMove(campaign, state)
-      return `- **${name}** — State: ${state}. Evidence: ${evidence(meta)} What changed / learned: ${learning(meta)} Recommended next move: ${next}`
+      const details = [evidence(meta), learning(meta), next].filter(Boolean).join(' ')
+      return `- **${name}** — ${details}`
     })
     .join('\n')
 }
