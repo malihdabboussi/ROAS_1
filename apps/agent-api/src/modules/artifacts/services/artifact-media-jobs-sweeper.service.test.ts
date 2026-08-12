@@ -6,6 +6,7 @@ const HOUR_MS = 60 * 60 * 1000
 function makeService(overrides: {
   jobs?: Array<Record<string, unknown>>
   claimResult?: Array<Record<string, unknown>>
+  completionClaimResult?: Array<Record<string, unknown>>
   statusResult?: Record<string, unknown>
 }) {
   const config = { get: vi.fn(() => '') }
@@ -20,6 +21,10 @@ function makeService(overrides: {
     findStaleMediaJobs: vi.fn(async () => ({ data: overrides.jobs ?? [], error: null })),
     claimMediaJobForSweep: vi.fn(async () => ({
       data: overrides.claimResult ?? [{ id: 'job-1' }],
+      error: null,
+    })),
+    claimMediaJobCompletion: vi.fn(async () => ({
+      data: overrides.completionClaimResult ?? [{ id: 'job-1' }],
       error: null,
     })),
     updateMediaJob: vi.fn(async () => ({ error: null })),
@@ -88,6 +93,10 @@ describe('ArtifactMediaJobsSweeperService', () => {
     const summary = await service.sweepStaleVideoJobs()
 
     expect(summary).toEqual({ checked: 1, resolved: 0, failed: 1 })
+    expect(repository.claimMediaJobCompletion).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ jobId: 'job-1' }),
+    )
     expect(repository.updateMediaJob).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
@@ -95,6 +104,19 @@ describe('ArtifactMediaJobsSweeperService', () => {
         updates: expect.objectContaining({ status: 'failed' }),
       }),
     )
+  })
+
+  it('does not expire a job whose completion claim is held by another worker', async () => {
+    const { service, repository } = makeService({
+      jobs: [staleJob({ created_at: new Date(Date.now() - 25 * HOUR_MS).toISOString() })],
+      statusResult: { success: true, status: 'processing' },
+      completionClaimResult: [],
+    })
+
+    const summary = await service.sweepStaleVideoJobs()
+
+    expect(summary).toEqual({ checked: 1, resolved: 0, failed: 0 })
+    expect(repository.updateMediaJob).not.toHaveBeenCalled()
   })
 
   it('leaves a young still-processing job alone', async () => {

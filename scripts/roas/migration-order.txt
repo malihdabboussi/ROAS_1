@@ -774,3 +774,4 @@
 20260811210000_media_generation_jobs_space_id.sql
 20260812110000_media_generation_jobs_sweeper.sql
 20260812111000_media_assets_video_metadata.sql
+20260812150000_media_generation_jobs_completion_claim.sql

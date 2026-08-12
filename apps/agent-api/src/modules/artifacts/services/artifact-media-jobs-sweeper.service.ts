@@ -5,7 +5,10 @@ import { Cron, CronExpression } from '@nestjs/schedule'
 import { SupabaseServiceClient } from '@vibey/api-shared'
 import { CreditsService } from '../../billing/services/credits.service'
 import { ArtifactMediaJobsRepository } from '../repositories/artifact-media-jobs.repository'
-import { ArtifactLegacyMediaStatusService } from './artifact-legacy-media-status.service'
+import {
+  ArtifactLegacyMediaStatusService,
+  COMPLETION_CLAIM_TIMEOUT_MINUTES,
+} from './artifact-legacy-media-status.service'
 
 /** Jobs younger than this are still the polling agent's responsibility. */
 const STALE_AFTER_MINUTES = 10
@@ -113,8 +116,7 @@ export class ArtifactMediaJobsSweeperService {
       // unless it has exceeded the fail-after window.
       if (result?.success === false && result.status) return 'failed'
       if (expired) {
-        await this.failExpiredJob(jobId)
-        return 'failed'
+        return (await this.failExpiredJob(jobId)) ? 'failed' : 'skipped'
       }
       return 'skipped'
     } catch (err) {
@@ -122,14 +124,35 @@ export class ArtifactMediaJobsSweeperService {
         `[MediaSweep] Sweep failed for job ${jobId}: ${err instanceof Error ? err.message : err}`,
       )
       if (expired) {
-        await this.failExpiredJob(jobId)
-        return 'failed'
+        return (await this.failExpiredJob(jobId)) ? 'failed' : 'skipped'
       }
       return 'skipped'
     }
   }
 
-  private async failExpiredJob(jobId: string): Promise<void> {
+  /**
+   * Expires a job that never produced a provider result. Marking a job failed
+   * is a terminal completion side effect, so it goes through the same atomic
+   * completion claim as getVideoStatus — a poll that is mid-completion holds
+   * the claim and the expiry backs off.
+   */
+  private async failExpiredJob(jobId: string): Promise<boolean> {
+    const nowMs = Date.now()
+    const { data: claimed, error: claimError } = await this.repository.claimMediaJobCompletion(
+      this.svc.client,
+      {
+        jobId,
+        claimedBy: 'media-sweeper-expiry',
+        nowIso: new Date(nowMs).toISOString(),
+        staleBeforeIso: new Date(nowMs - COMPLETION_CLAIM_TIMEOUT_MINUTES * 60_000).toISOString(),
+      },
+    )
+    if (claimError) {
+      this.logger.error(`[MediaSweep] Expiry claim failed for job ${jobId}: ${claimError.message}`)
+      return false
+    }
+    if (!claimed?.length) return false
+
     const { error } = await this.repository.updateMediaJob(this.svc.client, {
       jobId,
       updates: {
@@ -139,7 +162,9 @@ export class ArtifactMediaJobsSweeperService {
     })
     if (error) {
       this.logger.error(`[MediaSweep] Failed to expire job ${jobId}: ${error.message}`)
+      return false
     }
+    return true
   }
 
   /**

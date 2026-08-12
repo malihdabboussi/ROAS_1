@@ -33,6 +33,33 @@ export class ArtifactLegacyMediaJobsService {
     return Array.isArray(data) && data.length > 0
   }
 
+  /** True when this caller won completion ownership of the job. */
+  async claimMediaJobCompletion(
+    supabase: SupabaseClient,
+    input: { jobId: string; claimedBy: string; staleBeforeIso: string },
+  ): Promise<boolean> {
+    const { data, error } = await this.repository.claimMediaJobCompletion(supabase, {
+      jobId: input.jobId,
+      claimedBy: input.claimedBy,
+      nowIso: new Date().toISOString(),
+      staleBeforeIso: input.staleBeforeIso,
+    })
+
+    if (error) throw error
+    return Array.isArray(data) && data.length > 0
+  }
+
+  /** True when this caller won the one-shot billing flip for the job. */
+  async claimMediaJobBilling(supabase: SupabaseClient, input: { jobId: string }): Promise<boolean> {
+    const { data, error } = await this.repository.claimMediaJobBilling(supabase, {
+      jobId: input.jobId,
+      nowIso: new Date().toISOString(),
+    })
+
+    if (error) throw error
+    return Array.isArray(data) && data.length > 0
+  }
+
   async createMediaJob(
     supabase: SupabaseClient,
     job: {
