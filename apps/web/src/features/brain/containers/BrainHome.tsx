@@ -2,9 +2,11 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { ShareModal } from '@/components/org'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { BRAIN_TOAST_ERRORS } from '@/features/brain/config/brain-toast-errors.config'
 import { useBrainScopeMenuActions } from '@/features/brain/hooks/use-brain-scope-menu-actions'
 import {
   useBrainScopeNavOptions,
@@ -144,27 +146,35 @@ export default function BrainHome() {
     let cancelled = false
     setHealthLoading(true)
     void (async () => {
-      const [healthMap, knowledgeStats] = await Promise.all([
-        fetchBrainHealthBatch(brainIds),
-        fetchKnowledgeGraphStatsBatch({ campaignIds }).catch(
-          () =>
-            ({ spaces: {}, campaigns: {} }) as {
-              spaces: Record<string, KnowledgeGraphStats>
-              campaigns: Record<string, KnowledgeGraphStats>
-            },
-        ),
-      ])
-      if (cancelled) return
-      const knowledgeMap = new Map<string, KnowledgeGraphStats>()
-      for (const option of scopeOptions) {
-        if (option.scopeType === 'campaign_knowledge' && option.campaignId) {
-          const stats = knowledgeStats.campaigns[option.campaignId]
-          if (stats) knowledgeMap.set(option.id, stats)
+      try {
+        const [healthMap, knowledgeStats] = await Promise.all([
+          fetchBrainHealthBatch(brainIds),
+          fetchKnowledgeGraphStatsBatch({ campaignIds }).catch(
+            () =>
+              ({ spaces: {}, campaigns: {} }) as {
+                spaces: Record<string, KnowledgeGraphStats>
+                campaigns: Record<string, KnowledgeGraphStats>
+              },
+          ),
+        ])
+        if (cancelled) return
+        const knowledgeMap = new Map<string, KnowledgeGraphStats>()
+        for (const option of scopeOptions) {
+          if (option.scopeType === 'campaign_knowledge' && option.campaignId) {
+            const stats = knowledgeStats.campaigns[option.campaignId]
+            if (stats) knowledgeMap.set(option.id, stats)
+          }
         }
+        setHealthByBrainId(healthMap)
+        setKnowledgeStatsByScopeId(knowledgeMap)
+      } catch {
+        if (cancelled) return
+        setHealthByBrainId(new Map())
+        setKnowledgeStatsByScopeId(new Map())
+        toast.error(BRAIN_TOAST_ERRORS.HEALTH_BATCH_FAILED.userMessage)
+      } finally {
+        if (!cancelled) setHealthLoading(false)
       }
-      setHealthByBrainId(healthMap)
-      setKnowledgeStatsByScopeId(knowledgeMap)
-      setHealthLoading(false)
     })()
     return () => {
       cancelled = true

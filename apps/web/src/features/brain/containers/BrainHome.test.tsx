@@ -21,6 +21,13 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => mocks.searchParams,
 }))
 
+vi.mock('sonner', () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
+}))
+
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
   useGlobalChatStore: Object.assign(
     (selector: (state: { setWorkContext: typeof mocks.setWorkContext }) => unknown) =>
@@ -220,5 +227,16 @@ describe('BrainHome', () => {
     expect(screen.queryByText('Add agent brain')).not.toBeNull()
     expect(screen.queryByText('1 agent ready')).not.toBeNull()
     expect(onRender.mock.calls.length).toBeLessThan(18)
+  })
+
+  it('clears Loading status when health batch fails', async () => {
+    mocks.fetchBrainHealthBatch.mockRejectedValue(new Error('timeout'))
+
+    render(<BrainHome />)
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading')).toBeNull()
+    })
+    expect(screen.getAllByText('Never trained').length).toBeGreaterThan(0)
   })
 })
