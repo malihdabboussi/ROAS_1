@@ -67,11 +67,17 @@ export class MeetingWorkspaceService {
       summary: input.event.description,
     })
     const scopedInput = { ...input, orgId, callKind }
-    const existing = await this.resolutionRepository.findByCalendarEvent(
+    const icalUid = text(input.event.icalUid)
+    // Agenda row ids are UI-synthetic and flip between providers/accounts, so the
+    // stable ical_uid natural key resolves the workspace when the id changed.
+    let existing = await this.resolutionRepository.findByCalendarEvent(
       supabase,
       input.spaceId,
       input.event.calendarEventId,
     )
+    if (!existing && icalUid) {
+      existing = await this.resolutionRepository.findByIcalUid(supabase, input.spaceId, icalUid)
+    }
     let meetingItemId = text(existing?.meeting_item_id)
     // Link to an existing Meetings call (Fathom or prior stub) before creating a
     // second calendar-sourced row for the same invite.
@@ -81,6 +87,7 @@ export class MeetingWorkspaceService {
         spaceId: input.spaceId,
         userId: input.userId,
         calendarEventId: input.event.calendarEventId,
+        icalUid,
         title: input.event.title,
         start: input.event.start,
       })
@@ -117,14 +124,22 @@ export class MeetingWorkspaceService {
           userId: input.userId,
           orgId,
           calendarEventId: input.event.calendarEventId,
+          icalUid,
           phase: 'scheduled',
         })
       } catch (error) {
-        const racedWorkspace = await this.resolutionRepository.findByCalendarEvent(
+        let racedWorkspace = await this.resolutionRepository.findByCalendarEvent(
           supabase,
           input.spaceId,
           input.event.calendarEventId,
         )
+        if (!racedWorkspace && icalUid) {
+          racedWorkspace = await this.resolutionRepository.findByIcalUid(
+            supabase,
+            input.spaceId,
+            icalUid,
+          )
+        }
         const racedMeetingItemId = text(racedWorkspace?.meeting_item_id)
         if (!racedWorkspace || !racedMeetingItemId) throw error
         await this.resolutionRepository.deleteScheduledMeeting(
@@ -236,11 +251,16 @@ export class MeetingWorkspaceService {
     const linkedConversationId = text(record(workspace.workspace).conversation_id)
     if (input.userId && linkedConversationId) {
       try {
+        const duplicateMeetingItemIds = await this.findDuplicateCallItemIds(supabase, {
+          spaceId: input.spaceId,
+          meetingItemId: input.meetingItemId,
+          meeting: record(workspace.meeting),
+        })
         await this.deduplication?.archiveDuplicates(supabase, {
           userId: input.userId,
           meetingItemId: input.meetingItemId,
           keepConversationId: linkedConversationId,
-          orgId: input.orgId,
+          duplicateMeetingItemIds,
         })
       } catch (error) {
         this.logger.warn(
@@ -375,6 +395,25 @@ export class MeetingWorkspaceService {
   ): Promise<Record<string, unknown>> {
     await this.getWorkspace(supabase, input)
     return this.stateRepository.createManualAction(supabase, input)
+  }
+
+  /** Sibling call items sharing this meeting's natural keys (cross-item dup chats). */
+  private async findDuplicateCallItemIds(
+    supabase: SupabaseClient,
+    input: { spaceId: string; meetingItemId: string; meeting: Record<string, unknown> },
+  ): Promise<string[]> {
+    const custom = record(input.meeting.custom_data)
+    const icalUid = text(custom.ical_uid)
+    const fathomMeetingId = text(String(record(custom.external_automation).meeting_id ?? ''))
+    const calendarEventId = text(custom.calendar_event_id)
+    if (!icalUid && !fathomMeetingId && !calendarEventId) return []
+    return this.resolutionRepository.listDuplicateCallItemIds(supabase, {
+      spaceId: input.spaceId,
+      meetingItemId: input.meetingItemId,
+      icalUid,
+      fathomMeetingId,
+      calendarEventId,
+    })
   }
 
   private async hydrateMissingRecording(

@@ -38368,3 +38368,15 @@ Status: Closes most of "2026-08-11 — Video create P1 deferred items"
   Reason not done now: out of scope for the release-blocking race fix; a structural split would obscure the concurrency diff under review in PR #139.
 - Repo-wide: pnpm architecture:check crashes on every machine with ENOENT stat on apps/openclaw/src/canvas-host/a2ui/test-link-1782116645255-348bba5dc9fbd.txt — a git-tracked symlink to /Users/2fun/... (nonexistent elsewhere). Staged mode works (pre-commit passed, 10 files checked). Needs the symlink removed and/or check-loc.mjs hardened against broken symlinks. Spawned as a separate task.
 - Pre-existing on origin/main: 10 agent-api test files / 17 tests fail identically on main and this branch (agent-runtime-skill-scope, artifact-document-files, artifact-legacy-runtime-core, artifacts.service.dispatch, artifacts.service.rbac{,.integrations-media}, credits.service, chat.service.access-context, openclaw-proxy, route-inventory). Unrelated to the video work; needs its own triage.
+
+## 2026-08-12 — Meeting natural-key dedupe (Home/Meetings, apps/api)
+
+- File: apps/api/src/modules/meetings/services/meeting-workspace.service.ts
+  Evidence: 542/600 LOC after the ical_uid resolution flow + sibling-duplicate lookup (was 504) — past the 480 proactive-extraction mark.
+  Needed work: extract the resolveScheduledMeeting flow (natural-key lookup + race recovery) into a dedicated resolution service or domain helper next time this file is touched.
+  Reason not done now: a structural split would obscure the dedupe fix under review; the file remains under the hard limit.
+- File: apps/api/src/modules/meetings/repositories/meeting-workspace-resolution.repository.ts
+  Evidence: hit 494 LOC vs the 400 repository gate mid-change; RESOLVED in the same change by extracting MeetingCallMatchingRepository (matching/scoring queries; resolution repo now 365 LOC and delegates so the service/test seam is unchanged).
+- Docs gap: no documentation/features/ doc exists for the meeting workspace feature (resolution contract now includes ical_uid; duplicate-chat archival semantics changed). Needs a new doc, which requires approval per AGENTS.md §7 — ask Dylan whether to create documentation/features/meeting-workspace.md.
+- Data footnote: the migration's Fathom dedupe deletes duplicate call items after re-pointing children; chats that pointed at a deleted duplicate item become unreachable-but-unarchived (they no longer surface in meeting UI). If they clutter chat lists, a one-off archival of meeting conversations whose meeting_item_id no longer exists could follow.
+- Cross-space Fathom duplicates (precedent: 20260724235500) are intentionally NOT merged by the new space-scoped unique index; if prod still holds cross-space duplicates for the same recording, they need targeted cleanup like the precedent migration.
