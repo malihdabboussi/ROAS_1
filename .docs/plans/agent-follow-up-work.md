@@ -38384,3 +38384,15 @@ Status: Closes most of "2026-08-11 — Video create P1 deferred items"
   Needed work: extract enrichAgendaRelatedCalls (calls/follow-ups loading + assignment) into its own service beside meetings-precall-related-calls.ts.
   Reason not done now: pre-existing debt; kept the diff scoped to the recording fixes. Note meetings-precall-prep.helpers.ts itself WAS split in this change (615 → 186 + meetings-precall-related-calls.ts) because this change pushed it over the limit.
 - Docs: no documentation/features doc exists for Home Agenda / meetings agenda enrichment (only meeting-follow-up-slack.md). Behavior changed (recordings now surfaced; external_recording_id populated) — needs a doc, but §7 requires asking before creating a new one.
+
+## 2026-08-12 — Meeting natural-key dedupe (Home/Meetings, apps/api)
+
+- File: apps/api/src/modules/meetings/services/meeting-workspace.service.ts
+  Evidence: 542/600 LOC after the ical_uid resolution flow + sibling-duplicate lookup (was 504) — past the 480 proactive-extraction mark.
+  Needed work: extract the resolveScheduledMeeting flow (natural-key lookup + race recovery) into a dedicated resolution service or domain helper next time this file is touched.
+  Reason not done now: a structural split would obscure the dedupe fix under review; the file remains under the hard limit.
+- File: apps/api/src/modules/meetings/repositories/meeting-workspace-resolution.repository.ts
+  Evidence: hit 494 LOC vs the 400 repository gate mid-change; RESOLVED in the same change by extracting MeetingCallMatchingRepository (matching/scoring queries; resolution repo now 365 LOC and delegates so the service/test seam is unchanged).
+- Docs gap: no documentation/features/ doc exists for the meeting workspace feature (resolution contract now includes ical_uid; duplicate-chat archival semantics changed). Needs a new doc, which requires approval per AGENTS.md §7 — ask Dylan whether to create documentation/features/meeting-workspace.md.
+- Data footnote: the migration's Fathom dedupe deletes duplicate call items after re-pointing children; chats that pointed at a deleted duplicate item become unreachable-but-unarchived (they no longer surface in meeting UI). If they clutter chat lists, a one-off archival of meeting conversations whose meeting_item_id no longer exists could follow.
+- Cross-space Fathom duplicates (precedent: 20260724235500) are intentionally NOT merged by the new space-scoped unique index; if prod still holds cross-space duplicates for the same recording, they need targeted cleanup like the precedent migration.

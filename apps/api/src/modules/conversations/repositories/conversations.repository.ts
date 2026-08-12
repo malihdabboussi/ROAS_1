@@ -224,20 +224,19 @@ export class ConversationsRepository {
     supabase: SupabaseClient,
     input: {
       userId: string
-      meetingItemId: string
+      meetingItemIds: string[]
       keepConversationId: string
-      orgId?: string | null
     },
   ) {
-    let query = supabase
+    // No org predicate: meeting chats are created under the SPACE's org while
+    // requests carry the session org, and meeting item ids are globally unique.
+    const { data, error } = await supabase
       .from('conversations')
       .select('*')
       .eq('user_id', input.userId)
       .eq('metadata->>context_type', 'meeting')
-      .eq('metadata->>meeting_item_id', input.meetingItemId)
+      .in('metadata->>meeting_item_id', input.meetingItemIds)
       .neq('id', input.keepConversationId)
-    query = input.orgId ? query.eq('org_id', input.orgId) : query.is('org_id', null)
-    const { data, error } = await query
     if (error) throw new Error(`DB error: ${error.message}`)
     return data ?? []
   }

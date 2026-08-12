@@ -6,18 +6,23 @@ type DeduplicationInput = {
   userId: string
   meetingItemId: string
   keepConversationId: string
-  orgId?: string | null
+  /** Sibling duplicate call items (same space + natural key) whose chats also merge. */
+  duplicateMeetingItemIds?: string[]
 }
 
 @Injectable()
 export class MeetingConversationDeduplicationService {
   constructor(private readonly conversations: ConversationsRepository) {}
 
-  async archiveDuplicates(
-    supabase: SupabaseClient,
-    input: DeduplicationInput,
-  ): Promise<number> {
-    const duplicates = await this.conversations.findDuplicateMeetingConversations(supabase, input)
+  async archiveDuplicates(supabase: SupabaseClient, input: DeduplicationInput): Promise<number> {
+    const meetingItemIds = [
+      ...new Set([input.meetingItemId, ...(input.duplicateMeetingItemIds ?? [])]),
+    ]
+    const duplicates = await this.conversations.findDuplicateMeetingConversations(supabase, {
+      userId: input.userId,
+      meetingItemIds,
+      keepConversationId: input.keepConversationId,
+    })
     await Promise.all(
       duplicates.map((conversation: Record<string, unknown>) =>
         this.conversations.update(supabase, String(conversation.id), {

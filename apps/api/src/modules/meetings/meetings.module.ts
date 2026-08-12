@@ -3,6 +3,7 @@ import { BrainModule } from '../brain/brain.module'
 import { ConversationsModule } from '../conversations/conversations.module'
 import { MeetingWorkspaceResolutionController } from './controllers/meeting-workspace-resolution.controller'
 import { MeetingWorkspaceController } from './controllers/meeting-workspace.controller'
+import { MeetingCallMatchingRepository } from './repositories/meeting-call-matching.repository'
 import { MeetingProviderActionsRepository } from './repositories/meeting-provider-actions.repository'
 import { MeetingRecapRepository } from './repositories/meeting-recap.repository'
 import { MeetingRecordingBackfillRepository } from './repositories/meeting-recording-backfill.repository'
@@ -20,6 +21,7 @@ import { MeetingWorkspaceService } from './services/meeting-workspace.service'
   providers: [
     MeetingWorkspaceRepository,
     MeetingProviderActionsRepository,
+    MeetingCallMatchingRepository,
     MeetingWorkspaceResolutionRepository,
     MeetingRecordingBackfillRepository,
     MeetingRecapRepository,
