@@ -1,2 +1,1 @@
-export { MonthCalendar } from '@/components/calendar/MonthCalendar'
-export type { MonthCalendarProps } from '@/components/calendar/MonthCalendar'
+export * from '@/components/spaces/cells/date-picker/MonthCalendar'

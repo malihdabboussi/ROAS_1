@@ -2,85 +2,42 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronRight, FolderInput, Globe, Lock } from 'lucide-react'
+import { ChevronRight, Globe, Lock } from 'lucide-react'
 import { toast } from 'sonner'
-import { Tooltip } from '@/components/ui/tooltip'
-import { HOME_TOAST_ERRORS } from '@/features/home/config/home-toast-errors.config'
-import {
-  transferMeetingActionToSpace,
-  type MeetingAction,
-} from '@/features/home/services/meeting-workspace-api'
-import { fetchCampaigns, type Campaign } from '@/lib/campaigns/campaign-api'
-import { fetchPrograms } from '@/lib/programs/programs-api'
-import { fetchSpaces, type SpaceSummary } from '@/lib/spaces'
 import { cn } from '@/lib/utils/cn'
+import {
+  transferItemToSpace,
+  useSpaceMappingGroups,
+  type SpaceMappingSpace,
+} from '@/lib/work-items'
 
 const MENU_WIDTH = 280
 
-type SpaceOption = { id: string; title: string; visibility: 'private' | 'team' }
-type MappingGroup = { campaignId: string; label: string; spaces: SpaceOption[] }
-
-/**
- * Program → campaign → space cascade for relocating an action item. Groups
- * spaces by campaign (campaign rows carry the program name) so picking a
- * destination remaps the item in one move.
- */
-function useMappingGroups(open: boolean, excludeSpaceId: string) {
-  const [groups, setGroups] = useState<MappingGroup[] | null>(null)
-
-  useEffect(() => {
-    if (!open || groups !== null) return
-    let cancelled = false
-    void Promise.all([
-      fetchSpaces<SpaceSummary>().catch(() => [] as SpaceSummary[]),
-      fetchCampaigns().catch(() => [] as Campaign[]),
-      fetchPrograms().catch(() => []),
-    ]).then(([spaces, campaigns, programs]) => {
-      if (cancelled) return
-      const programNameById = new Map(programs.map((program) => [program.id, program.name]))
-      // Same ordering as the space switcher: General campaign first, then A–Z.
-      const ordered = [...campaigns].sort((a, b) => {
-        const aGeneral = (a.config as Record<string, unknown>)?.system_kind === 'general'
-        const bGeneral = (b.config as Record<string, unknown>)?.system_kind === 'general'
-        if (aGeneral !== bGeneral) return aGeneral ? -1 : 1
-        return (a.name ?? '').localeCompare(b.name ?? '')
-      })
-      const next = ordered
-        .map((campaign) => {
-          const programName = campaign.program_id
-            ? programNameById.get(campaign.program_id)
-            : undefined
-          return {
-            campaignId: campaign.id,
-            label: programName ? `${programName} · ${campaign.name}` : campaign.name,
-            spaces: spaces
-              .filter((space) => space.campaign_id === campaign.id && space.id !== excludeSpaceId)
-              .map((space) => ({
-                id: space.id,
-                title: space.title,
-                visibility: space.visibility ?? 'private',
-              })),
-          }
-        })
-        .filter((group) => group.spaces.length > 0)
-      setGroups(next)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [open, groups, excludeSpaceId])
-
-  return groups
+export interface SpaceMappingTriggerProps {
+  ref: React.RefObject<HTMLButtonElement | null>
+  open: boolean
+  toggle: () => void
 }
 
-export function MeetingActionMoveMenu({
-  action,
-  spaceId,
+/**
+ * Program · campaign → space cascade for relocating a space item — the shared
+ * engine behind every mapping control (icon menu, select cell). Picking a
+ * destination remaps the item's program, campaign, and space in one move via
+ * the transfer-to-space endpoint. The trigger render-prop lets each surface
+ * bring its own affordance.
+ */
+export function SpaceMappingPopover({
+  sourceSpaceId,
+  itemId,
   onMoved,
+  errorMessage = 'Could not move that item.',
+  trigger,
 }: {
-  action: MeetingAction
-  spaceId: string
-  onMoved: (action: MeetingAction, destinationTitle: string) => void
+  sourceSpaceId: string
+  itemId: string
+  onMoved: (destination: { id: string; title: string }) => void
+  errorMessage?: string
+  trigger: (props: SpaceMappingTriggerProps) => React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const [moving, setMoving] = useState(false)
@@ -88,7 +45,7 @@ export function MeetingActionMoveMenu({
   const buttonRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
-  const groups = useMappingGroups(open, spaceId)
+  const groups = useSpaceMappingGroups(open, sourceSpaceId)
 
   useEffect(() => {
     const first = groups?.[0]
@@ -129,15 +86,15 @@ export function MeetingActionMoveMenu({
     }
   }, [open])
 
-  const pick = async (space: SpaceOption) => {
+  const pick = async (space: SpaceMappingSpace) => {
     if (moving) return
     setMoving(true)
     try {
-      await transferMeetingActionToSpace(spaceId, action.id, space.id)
+      await transferItemToSpace(sourceSpaceId, itemId, space.id)
       setOpen(false)
-      onMoved(action, space.title)
+      onMoved({ id: space.id, title: space.title })
     } catch {
-      toast.error(HOME_TOAST_ERRORS.MEETING_ACTION_MOVE_FAILED.userMessage)
+      toast.error(errorMessage)
     } finally {
       setMoving(false)
     }
@@ -145,25 +102,11 @@ export function MeetingActionMoveMenu({
 
   return (
     <>
-      <Tooltip label="Map to a client, campaign, or space" side="top">
-        <button
-          ref={buttonRef}
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation()
-            toggle()
-          }}
-          className="btn-icon-bare shrink-0"
-          aria-haspopup="menu"
-          aria-expanded={open}
-          aria-label={`Move ${action.title} to another space`}
-        >
-          <FolderInput className="icon-xs" aria-hidden />
-        </button>
-      </Tooltip>
+      {trigger({ ref: buttonRef, open, toggle })}
       {open && position
-        ? // Portal to body: ancestors of the workspace animate with transforms,
-          // which would re-base position:fixed and throw the menu off-screen.
+        ? // Portal to body: ancestors of dialogs/workspaces animate with
+          // transforms, which would re-base position:fixed and throw the menu
+          // off-screen.
           createPortal(
             <div
               ref={panelRef}

@@ -61,6 +61,11 @@ export type MissionColumnId =
 /** How list/board/mission views show subtasks (toolbar + customize). */
 export type SubtasksDisplayMode = 'collapsed' | 'expanded' | 'separate'
 
+export type DateDisplayFormat = 'relative' | 'date_time' | 'date' | 'time'
+export type DateDisplayFormats = Partial<
+  Record<'start_date' | 'due_date' | 'call_date', DateDisplayFormat>
+>
+
 export interface MissionsConfig {
   group_by?: MissionGroupBy
   group_sort?: 'asc' | 'desc'

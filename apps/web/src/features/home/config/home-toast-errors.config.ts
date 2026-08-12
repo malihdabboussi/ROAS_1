@@ -16,13 +16,13 @@ export const HOME_TOAST_ERRORS = {
   MEETING_NOTE_SAVE_FAILED: { userMessage: 'Could not save that meeting note.' },
   MEETING_ACTION_UPDATE_FAILED: { userMessage: 'Could not update that action item.' },
   MEETING_ACTION_CREATE_FAILED: { userMessage: 'Could not add that action item.' },
+  MEETING_ACTION_MOVE_FAILED: { userMessage: 'Could not move that action item.' },
   MEETING_RECORDINGS_LOAD_FAILED: {
     userMessage: 'Could not load Fathom recordings — check the connection and try again.',
   },
   MEETING_RECORDING_LINK_FAILED: { userMessage: 'Could not link that recording.' },
   MEETING_NOTE_CREATE_FAILED: { userMessage: 'Could not save that note.' },
   MEETING_RENAME_FAILED: { userMessage: 'Could not rename this meeting.' },
-  MEETING_ACTION_MOVE_FAILED: { userMessage: 'Could not move that action item.' },
   MEETINGS_SPACE_REQUIRED: {
     userMessage: 'Open or create your Meetings space first, then try prep again.',
   },

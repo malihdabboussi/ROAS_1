@@ -38330,3 +38330,21 @@ Evidence: Video create-type plan (2026-08-11) gap list G5–G7; generate service
 Needed work: Relax the media_generation_jobs provider CHECK to include 'google'; fix the upload folder branch to use videos/; add a background sweeper for stale video jobs; split generateVideo provider branches out of the legacy generate service.
 
 Reason not done now: P1 scope was chat seeding plus space attribution and rail/composer fixes; these are P2 pipeline-hardening items in the reviewed plan.
+
+## 2026-08-12 — web / shared work-item list (PR #137)
+
+File: apps/web/src/components/spaces/cells/SourceCallCell.tsx
+
+Evidence: imports `useSpacesStore` from `@/features/spaces/store/use-spaces-store` — the only feature dependency left in the shared cells (marked with an inline TODO).
+
+Needed work: inject an items lookup (prop or context) so shared cells are fully feature-free; then the same for SpaceItemRow/ListView when they lift (TaskMenuDropdown/SendTaskToAgentModal as slots).
+
+Reason not done now: phase 1 scope was the mechanical lift with shims; changing SourceCallCell's contract ripples into SpaceCell consumers and belongs with the SpaceItemRow lift.
+
+File: apps/web/src/components/spaces/cells/{DueDateCell,ProgressCell,MultiSelectCell,MediaCell,date-picker/RecurrencePanel}.tsx
+
+Evidence: 692/601/599/530/722 LOC vs 400 web-component limit (pre-existing sizes, grandfathered via loc-allowlist at the new paths).
+
+Needed work: split each into panel + field subcomponents when next touched.
+
+Reason not done now: pure moves; splitting during the lift would obscure the diff and risk behavior drift.

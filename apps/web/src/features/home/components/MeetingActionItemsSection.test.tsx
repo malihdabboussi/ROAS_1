@@ -1,15 +1,23 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { MeetingAction } from '@/features/home/services/meeting-workspace-api'
 import { MeetingActionItemsSection } from './MeetingActionItemsSection'
 
 const mocks = vi.hoisted(() => ({
   createMeetingAction: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
+  transferItemToSpace: vi.fn(),
+  useSpaceMappingGroups: vi.fn(),
 }))
 
 vi.mock('@/features/home/services/meeting-workspace-api', () => ({
   createMeetingAction: mocks.createMeetingAction,
+}))
+
+vi.mock('@/lib/work-items', () => ({
+  transferItemToSpace: mocks.transferItemToSpace,
+  useSpaceMappingGroups: mocks.useSpaceMappingGroups,
 }))
 
 vi.mock('sonner', () => ({
@@ -19,6 +27,19 @@ vi.mock('sonner', () => ({
   },
 }))
 
+function action(overrides: Partial<MeetingAction>): MeetingAction {
+  return {
+    id: 'action-1',
+    title: 'Send recap to Nate',
+    source_type: 'manual',
+    status: 'confirmed',
+    canonical_assignee_name: null,
+    canonical_assignee_email: null,
+    evidence: {},
+    ...overrides,
+  }
+}
+
 describe('MeetingActionItemsSection', () => {
   afterEach(() => {
     cleanup()
@@ -26,15 +47,7 @@ describe('MeetingActionItemsSection', () => {
   })
 
   it('adds a manual action item from the header + control', async () => {
-    mocks.createMeetingAction.mockResolvedValue({
-      id: 'action-1',
-      title: 'Send recap to Nate',
-      source_type: 'manual',
-      status: 'confirmed',
-      canonical_assignee_name: null,
-      canonical_assignee_email: null,
-      evidence: {},
-    })
+    mocks.createMeetingAction.mockResolvedValue(action({}))
     const onCreated = vi.fn()
 
     render(
@@ -72,17 +85,7 @@ describe('MeetingActionItemsSection', () => {
       <MeetingActionItemsSection
         spaceId="space-1"
         meetingItemId="meeting-1"
-        actions={[
-          {
-            id: 'action-1',
-            title: 'Send recap to Nate',
-            source_type: 'provider',
-            status: 'confirmed',
-            canonical_assignee_name: null,
-            canonical_assignee_email: null,
-            evidence: {},
-          },
-        ]}
+        actions={[action({ source_type: 'provider' })]}
         loading={false}
         onToggle={vi.fn()}
         onCreated={onCreated}
@@ -101,5 +104,59 @@ describe('MeetingActionItemsSection', () => {
       expect(onCreated).not.toHaveBeenCalled()
       expect(mocks.toastSuccess).toHaveBeenCalled()
     })
+  })
+
+  it('moves a follow-up action to another space through the shared move menu', async () => {
+    mocks.useSpaceMappingGroups.mockReturnValue([
+      {
+        campaignId: 'campaign-1',
+        label: 'Acme Co · Launch',
+        spaces: [{ id: 'space-2', title: 'Ad Production', visibility: 'team' }],
+      },
+    ])
+    mocks.transferItemToSpace.mockResolvedValue({})
+    const onMoved = vi.fn()
+    const movable = action({ evidence: { origin: 'meetings_space_follow_up' } })
+
+    render(
+      <MeetingActionItemsSection
+        spaceId="space-1"
+        meetingItemId="meeting-1"
+        actions={[movable]}
+        loading={false}
+        onToggle={vi.fn()}
+        onCreated={vi.fn()}
+        onMoved={onMoved}
+      />,
+    )
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Move Send recap to Nate to another space' }),
+    )
+    fireEvent.click(await screen.findByRole('button', { name: /Ad Production/ }))
+
+    await waitFor(() => {
+      expect(mocks.transferItemToSpace).toHaveBeenCalledWith('space-1', 'action-1', 'space-2')
+      expect(onMoved).toHaveBeenCalledWith(expect.objectContaining({ id: 'action-1' }))
+      expect(mocks.toastSuccess).toHaveBeenCalledWith('Moved to Ad Production.')
+    })
+  })
+
+  it('hides the move menu for actions that are not relocatable space items', () => {
+    render(
+      <MeetingActionItemsSection
+        spaceId="space-1"
+        meetingItemId="meeting-1"
+        actions={[action({ evidence: {} })]}
+        loading={false}
+        onToggle={vi.fn()}
+        onCreated={vi.fn()}
+        onMoved={vi.fn()}
+      />,
+    )
+
+    expect(
+      screen.queryByRole('button', { name: 'Move Send recap to Nate to another space' }),
+    ).toBeNull()
   })
 })
