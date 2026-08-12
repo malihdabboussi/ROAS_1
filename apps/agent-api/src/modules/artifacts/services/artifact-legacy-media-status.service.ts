@@ -5,6 +5,7 @@ import { ArtifactLegacyMediaUploadService } from './artifact-legacy-media-upload
 
 /** How long a completion claim is honored before a crashed worker's claim may be retaken. */
 export const COMPLETION_CLAIM_TIMEOUT_MINUTES = 10
+export const BILLING_CLAIM_TIMEOUT_MINUTES = 10
 
 function buildSucceededVideoStatus(
   job: Record<string, unknown>,
@@ -464,61 +465,63 @@ export class ArtifactLegacyMediaStatusService {
     return { success: true, job_id: input.jobId, status: 'processing' }
   }
 
-  /**
-   * Debits video credits at most once per job. The atomic billing flip on the
-   * job row is the authoritative gate (safe under concurrency and stale-claim
-   * retries); the usage-event lookup only covers jobs billed before the flip
-   * column existed. Everything that can throw runs before the flip, so a
-   * crash after it loses the debit rather than ever charging twice.
-   */
   private async recordVideoBillingOnce(
     supabase: Record<string, any>,
     target: Record<string, any>,
     job: Record<string, unknown>,
     input: { provider: 'replicate' | 'google'; userId: string; sessionKey?: string },
   ): Promise<void> {
+    if (job.billing_recorded_at) return
     const providerJobId = String(job.provider_job_id ?? '')
     const legacyCharged = await this.jobsService.hasProviderUsageEvent(
-      supabase as never,
-      input.userId,
-      input.provider,
-      providerJobId,
+      supabase as never, input.userId, input.provider, providerJobId,
     )
-    if (legacyCharged) return
-
+    const jobId = String(job.id)
+    const claimedBy = `${input.provider}:${providerJobId}:${crypto.randomUUID()}`
+    if (legacyCharged) {
+      const won = await this.jobsService.claimMediaJobBilling(supabase as never, {
+        jobId,
+        claimedBy,
+        staleBeforeIso: new Date(Date.now() - BILLING_CLAIM_TIMEOUT_MINUTES * 60_000).toISOString(),
+      })
+      if (won)
+        await this.jobsService.completeMediaJobBilling(supabase as never, { jobId, claimedBy })
+      return
+    }
     const seconds = Number(job.duration_seconds ?? 0)
     if (!Number.isFinite(seconds) || seconds <= 0) {
       throw new Error(`Invalid duration_seconds for video billing: ${String(job.duration_seconds)}`)
     }
     const rate = await this.resolveVideoRate(target, job, input.provider)
-
     const won = await this.jobsService.claimMediaJobBilling(supabase as never, {
-      jobId: String(job.id),
+      jobId,
+      claimedBy,
+      staleBeforeIso: new Date(Date.now() - BILLING_CLAIM_TIMEOUT_MINUTES * 60_000).toISOString(),
     })
-    if (!won) return
-
+    if (!won) throw new Error(`Video billing is already being settled for media job ${jobId}`)
     const conversationId = input.sessionKey ? target.parseConversationId(input.sessionKey) : null
     const orgId = target.resolveOrgId?.(input.sessionKey) as string | null | undefined
-    await target.credits.processFixedCostUsage({
-      userId: input.userId,
-      campaignId: ((job.campaign_id as string | null) ?? undefined) as string | undefined,
-      conversationId: conversationId ?? undefined,
-      orgId: orgId ?? undefined,
-      feature: 'media',
-      action: 'generate_video',
-      provider: input.provider,
-      modelName: rate.model,
-      serviceType: 'video',
-      apiCostUsd: seconds * rate.unitCost,
-      costSource: 'db_pricing',
-      metadata: {
+    try {
+      await target.credits.processFixedCostUsage({
+        userId: input.userId,
+        campaignId: ((job.campaign_id as string | null) ?? undefined) as string | undefined,
+        conversationId: conversationId ?? undefined,
+        orgId: orgId ?? undefined,
+        feature: 'media',
+        action: 'generate_video',
         provider: input.provider,
-        provider_job_id: providerJobId,
-        unit: 'second',
-        quantity: seconds,
-        unit_cost_usd: rate.unitCost,
-      },
-    })
+        modelName: rate.model,
+        serviceType: 'video',
+        apiCostUsd: seconds * rate.unitCost,
+        costSource: 'db_pricing',
+        metadata: { provider: input.provider, provider_job_id: providerJobId,
+          unit: 'second', quantity: seconds, unit_cost_usd: rate.unitCost },
+      })
+      await this.jobsService.completeMediaJobBilling(supabase as never, { jobId, claimedBy })
+    } catch (error) {
+      await this.jobsService.releaseMediaJobBilling(supabase as never, { jobId, claimedBy })
+      throw error
+    }
   }
 
   private async resolveVideoRate(

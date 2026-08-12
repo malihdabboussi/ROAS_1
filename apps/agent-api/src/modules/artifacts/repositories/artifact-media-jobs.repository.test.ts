@@ -55,19 +55,61 @@ describe('ArtifactMediaJobsRepository completion claims', () => {
     ])
   })
 
-  it('claims billing with a one-shot flip of billing_recorded_at', async () => {
+  it('claims billing with a recoverable lease without marking it recorded', async () => {
     const { client, calls } = makeSupabase({ data: [{ id: 'job-1' }], error: null })
     const repository = new ArtifactMediaJobsRepository()
 
     const { data } = await repository.claimMediaJobBilling(client, {
       jobId: 'job-1',
+      claimedBy: 'worker-1',
       nowIso: '2026-08-12T10:00:00.000Z',
+      staleBeforeIso: '2026-08-12T09:50:00.000Z',
     })
 
     expect(data).toEqual([{ id: 'job-1' }])
     expect(calls).toEqual([
-      { method: 'update', args: [{ billing_recorded_at: '2026-08-12T10:00:00.000Z' }] },
+      {
+        method: 'update',
+        args: [
+          {
+            billing_claimed_at: '2026-08-12T10:00:00.000Z',
+            billing_claimed_by: 'worker-1',
+          },
+        ],
+      },
       { method: 'eq', args: ['id', 'job-1'] },
+      { method: 'is', args: ['billing_recorded_at', null] },
+      {
+        method: 'or',
+        args: ['billing_claimed_at.is.null,billing_claimed_at.lt.2026-08-12T09:50:00.000Z'],
+      },
+      { method: 'select', args: ['id'] },
+    ])
+  })
+
+  it('records billing only for the worker holding the lease', async () => {
+    const { client, calls } = makeSupabase({ data: [{ id: 'job-1' }], error: null })
+    const repository = new ArtifactMediaJobsRepository()
+
+    await repository.completeMediaJobBilling(client, {
+      jobId: 'job-1',
+      claimedBy: 'worker-1',
+      nowIso: '2026-08-12T10:01:00.000Z',
+    })
+
+    expect(calls).toEqual([
+      {
+        method: 'update',
+        args: [
+          {
+            billing_recorded_at: '2026-08-12T10:01:00.000Z',
+            billing_claimed_at: null,
+            billing_claimed_by: null,
+          },
+        ],
+      },
+      { method: 'eq', args: ['id', 'job-1'] },
+      { method: 'eq', args: ['billing_claimed_by', 'worker-1'] },
       { method: 'is', args: ['billing_recorded_at', null] },
       { method: 'select', args: ['id'] },
     ])

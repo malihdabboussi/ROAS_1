@@ -12,7 +12,7 @@ export class ArtifactMediaJobsRepository {
     return (await supabase
       .from('media_generation_jobs')
       .select(
-        'id, user_id, campaign_id, space_id, provider, provider_job_id, status, error, media_asset_id, result_url, prompt, model, duration_seconds',
+        'id, user_id, campaign_id, space_id, provider, provider_job_id, status, error, media_asset_id, result_url, prompt, model, duration_seconds, billing_recorded_at',
       )
       .eq('id', input.jobId)
       .eq('user_id', input.userId)
@@ -95,25 +95,53 @@ export class ArtifactMediaJobsRepository {
     }
   }
 
-  /**
-   * One-shot atomic flip that grants the billing side effect to a single
-   * caller for the job's lifetime. Unlike the completion claim it never
-   * expires: a crash after the flip means the debit may be lost, never
-   * charged twice.
-   */
+  /** Acquires a recoverable lease; the durable recorded marker stays untouched. */
   async claimMediaJobBilling(
     supabase: SupabaseClient,
-    input: { jobId: string; nowIso: string },
+    input: { jobId: string; claimedBy: string; nowIso: string; staleBeforeIso: string },
   ): Promise<{ data: Array<Record<string, unknown>> | null; error: QueryError | null }> {
     return (await supabase
       .from('media_generation_jobs')
-      .update({ billing_recorded_at: input.nowIso })
+      .update({ billing_claimed_at: input.nowIso, billing_claimed_by: input.claimedBy })
       .eq('id', input.jobId)
+      .is('billing_recorded_at', null)
+      .or(`billing_claimed_at.is.null,billing_claimed_at.lt.${input.staleBeforeIso}`)
+      .select('id')) as {
+      data: Array<Record<string, unknown>> | null
+      error: QueryError | null
+    }
+  }
+
+  async completeMediaJobBilling(
+    supabase: SupabaseClient,
+    input: { jobId: string; claimedBy: string; nowIso: string },
+  ): Promise<{ data: Array<Record<string, unknown>> | null; error: QueryError | null }> {
+    return (await supabase
+      .from('media_generation_jobs')
+      .update({
+        billing_recorded_at: input.nowIso,
+        billing_claimed_at: null,
+        billing_claimed_by: null,
+      })
+      .eq('id', input.jobId)
+      .eq('billing_claimed_by', input.claimedBy)
       .is('billing_recorded_at', null)
       .select('id')) as {
       data: Array<Record<string, unknown>> | null
       error: QueryError | null
     }
+  }
+
+  async releaseMediaJobBilling(
+    supabase: SupabaseClient,
+    input: { jobId: string; claimedBy: string },
+  ): Promise<{ error: QueryError | null }> {
+    return (await supabase
+      .from('media_generation_jobs')
+      .update({ billing_claimed_at: null, billing_claimed_by: null })
+      .eq('id', input.jobId)
+      .eq('billing_claimed_by', input.claimedBy)
+      .is('billing_recorded_at', null)) as { error: QueryError | null }
   }
 
   /** Claims a job for one sweep pass; returns no rows when another sweep holds the claim. */

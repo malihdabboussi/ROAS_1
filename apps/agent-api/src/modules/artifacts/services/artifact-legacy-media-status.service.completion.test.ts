@@ -26,6 +26,8 @@ function makeJobStore(overrides: Record<string, unknown> = {}) {
     model: 'kling-v3',
     duration_seconds: 5,
     completion_claimed_at: null as string | null,
+    billing_claimed_at: null as string | null,
+    billing_claimed_by: null as string | null,
     billing_recorded_at: null as string | null,
     ...overrides,
   }
@@ -48,10 +50,27 @@ function makeJobStore(overrides: Record<string, unknown> = {}) {
         return true
       },
     ),
-    claimMediaJobBilling: vi.fn(async () => {
+    claimMediaJobBilling: vi.fn(async (_supabase: unknown, input: Record<string, string>) => {
       if (state.billing_recorded_at) return false
-      state.billing_recorded_at = new Date().toISOString()
+      const claimedAt = state.billing_claimed_at
+        ? Date.parse(String(state.billing_claimed_at))
+        : null
+      if (claimedAt !== null && claimedAt >= Date.parse(input.staleBeforeIso)) return false
+      state.billing_claimed_at = new Date().toISOString()
+      state.billing_claimed_by = input.claimedBy
       return true
+    }),
+    completeMediaJobBilling: vi.fn(async (_supabase: unknown, input: Record<string, string>) => {
+      if (state.billing_claimed_by !== input.claimedBy) throw new Error('lost billing lease')
+      state.billing_recorded_at = new Date().toISOString()
+      state.billing_claimed_at = null
+      state.billing_claimed_by = null
+      usageEventExists = true
+    }),
+    releaseMediaJobBilling: vi.fn(async (_supabase: unknown, input: Record<string, string>) => {
+      if (state.billing_claimed_by !== input.claimedBy) return
+      state.billing_claimed_at = null
+      state.billing_claimed_by = null
     }),
     hasProviderUsageEvent: vi.fn(async () => usageEventExists),
     updateMediaJob: vi.fn(
@@ -266,6 +285,61 @@ describe('video completion ownership (replicate)', () => {
 
     expect(result).toEqual(expect.objectContaining({ success: true, status: 'succeeded' }))
     expect(counters.uploads).toBe(1)
+    expect(credits.processFixedCostUsage).toHaveBeenCalledTimes(1)
+    expect(store.state.status).toBe('succeeded')
+  })
+
+  it('releases a failed billing lease so a stale completion retry eventually bills once', async () => {
+    const store = makeJobStore()
+    const { uploadService } = makeUploads()
+    const credits = makeCredits()
+    credits.processFixedCostUsage
+      .mockRejectedValueOnce(new Error('temporary credit service failure'))
+      .mockResolvedValueOnce({ credits: 1, balance: 10, apiCost: 0.5 })
+    const service = makeService(store.jobsService, uploadService)
+    stubReplicate({ id: 'prediction-1', status: 'succeeded', output: ['https://replicate/out.mp4'] })
+
+    await expect(
+      service.getVideoStatus(makeTarget(credits), { job_id: 'job-1' }, 'session-1'),
+    ).rejects.toThrow('temporary credit service failure')
+    expect(store.state.billing_recorded_at).toBeNull()
+    expect(store.state.billing_claimed_at).toBeNull()
+
+    store.state.completion_claimed_at = new Date(Date.now() - 30 * MINUTE_MS).toISOString()
+    const result = (await service.getVideoStatus(
+      makeTarget(credits),
+      { job_id: 'job-1' },
+      'session-1',
+    )) as Record<string, unknown>
+
+    expect(result).toEqual(expect.objectContaining({ success: true, status: 'succeeded' }))
+    expect(credits.processFixedCostUsage).toHaveBeenCalledTimes(2)
+    expect(store.state.billing_recorded_at).toEqual(expect.any(String))
+  })
+
+  it('does not re-debit after billing settled when the final job update crashes', async () => {
+    const store = makeJobStore()
+    const originalUpdate = store.jobsService.updateMediaJob.getMockImplementation()!
+    store.jobsService.updateMediaJob
+      .mockImplementationOnce(async (...args: unknown[]) => {
+        const updates = args[2] as Record<string, unknown>
+        if (updates.status === 'succeeded') throw new Error('database connection reset')
+        return originalUpdate(...(args as [unknown, string, Record<string, unknown>]))
+      })
+      .mockImplementation(originalUpdate)
+    const { uploadService } = makeUploads()
+    const credits = makeCredits()
+    const service = makeService(store.jobsService, uploadService)
+    stubReplicate({ id: 'prediction-1', status: 'succeeded', output: ['https://replicate/out.mp4'] })
+
+    await expect(
+      service.getVideoStatus(makeTarget(credits), { job_id: 'job-1' }, 'session-1'),
+    ).rejects.toThrow('database connection reset')
+    expect(store.state.billing_recorded_at).toEqual(expect.any(String))
+
+    store.state.completion_claimed_at = new Date(Date.now() - 30 * MINUTE_MS).toISOString()
+    await service.getVideoStatus(makeTarget(credits), { job_id: 'job-1' }, 'session-1')
+
     expect(credits.processFixedCostUsage).toHaveBeenCalledTimes(1)
     expect(store.state.status).toBe('succeeded')
   })

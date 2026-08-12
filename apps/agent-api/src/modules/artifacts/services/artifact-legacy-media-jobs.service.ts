@@ -49,15 +49,42 @@ export class ArtifactLegacyMediaJobsService {
     return Array.isArray(data) && data.length > 0
   }
 
-  /** True when this caller won the one-shot billing flip for the job. */
-  async claimMediaJobBilling(supabase: SupabaseClient, input: { jobId: string }): Promise<boolean> {
+  /** True when this caller acquired the recoverable billing lease. */
+  async claimMediaJobBilling(
+    supabase: SupabaseClient,
+    input: { jobId: string; claimedBy: string; staleBeforeIso: string },
+  ): Promise<boolean> {
     const { data, error } = await this.repository.claimMediaJobBilling(supabase, {
       jobId: input.jobId,
+      claimedBy: input.claimedBy,
       nowIso: new Date().toISOString(),
+      staleBeforeIso: input.staleBeforeIso,
     })
 
     if (error) throw error
     return Array.isArray(data) && data.length > 0
+  }
+
+  async completeMediaJobBilling(
+    supabase: SupabaseClient,
+    input: { jobId: string; claimedBy: string },
+  ): Promise<void> {
+    const { data, error } = await this.repository.completeMediaJobBilling(supabase, {
+      ...input,
+      nowIso: new Date().toISOString(),
+    })
+    if (error) throw error
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new Error(`Lost billing lease before settlement was recorded for media job ${input.jobId}`)
+    }
+  }
+
+  async releaseMediaJobBilling(
+    supabase: SupabaseClient,
+    input: { jobId: string; claimedBy: string },
+  ): Promise<void> {
+    const { error } = await this.repository.releaseMediaJobBilling(supabase, input)
+    if (error) throw error
   }
 
   async createMediaJob(
