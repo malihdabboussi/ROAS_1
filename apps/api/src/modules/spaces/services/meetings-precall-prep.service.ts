@@ -12,6 +12,7 @@ import {
   assignSoleNearStartRelatedCalls,
   buildMeetingAgendaEvent,
   buildPrecallPrompt,
+  buildRelatedCallCandidates,
   callDateInAgendaWindow,
   eventFromPrecallSnapshot,
   isEligiblePrecallEvent,
@@ -19,7 +20,6 @@ import {
   localDayWindowAround,
   mapPrepItemToAgendaLink,
   resolvePreferredMeetingsSpaceId,
-  scoreRelatedCallMatch,
   toAgendaFollowUp,
   toAgendaRelatedCall,
   type AgendaPrepLink,
@@ -395,20 +395,9 @@ export class MeetingsPrecallPrepService {
       followUpsByCall.set(sourceId, list)
     }
     const callsById = new Map(calls.map((call) => [call.id, call]))
-    const candidates: Array<{ eventId: string; callId: string; score: number }> = []
-    for (const event of input.events) {
-      for (const call of calls) {
-        const custom = call.custom_data ?? {}
-        const score = scoreRelatedCallMatch(event, {
-          title: call.title,
-          call_date: typeof custom.call_date === 'string' ? custom.call_date : null,
-          attendees: custom.attendees,
-        })
-        if (score <= 0) continue
-        candidates.push({ eventId: event.id, callId: call.id, score })
-      }
-    }
-    const scoredAssigned = assignRelatedCallsExclusive(candidates)
+    const scoredAssigned = assignRelatedCallsExclusive(
+      buildRelatedCallCandidates(input.events, calls),
+    )
     const assigned = assignSoleNearStartRelatedCalls({
       events: input.events,
       calls: calls.map((call) => ({
@@ -449,6 +438,7 @@ export class MeetingsPrecallPrepService {
           callDate: callDate!,
           source: call.source === 'manual' ? 'manual' : 'fathom',
           recordingUrl: related.recording_url,
+          externalRecordingId: related.external_recording_id,
           summary: related.summary,
           hasTranscript: related.has_transcript,
           followUps: related.follow_ups,

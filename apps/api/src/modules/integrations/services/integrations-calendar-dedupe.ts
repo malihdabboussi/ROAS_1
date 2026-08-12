@@ -203,9 +203,7 @@ export function mergeFathomIntoNearStartCalendars(
       const startMs = Date.parse(event.start)
       if (!Number.isFinite(startMs)) return false
       const calendarAfterCallMs = startMs - callMs
-      return (
-        calendarAfterCallMs <= AGENDA_FATHOM_EARLY_START_MS && calendarAfterCallMs >= -nearMs
-      )
+      return calendarAfterCallMs <= AGENDA_FATHOM_EARLY_START_MS && calendarAfterCallMs >= -nearMs
     })
     if (near.length !== 1) {
       keptFathom.push(row)
@@ -307,7 +305,7 @@ function mergeAgendaEvents(
   const other = preferRight ? left : right
 
   if (!kept.ical_uid && other.ical_uid) kept.ical_uid = other.ical_uid
-  if (!kept.related && other.related) kept.related = other.related
+  kept.related = preferRecordingRelated(kept.related, other.related)
   if (!kept.prep && other.prep) kept.prep = other.prep
   if (!kept.html_link && other.html_link) kept.html_link = other.html_link
   if (!kept.location && other.location) kept.location = other.location
@@ -333,6 +331,17 @@ function mergeAgendaEvents(
     kept.account_label = other.account_label
   }
 
+  return kept
+}
+
+/** Duplicate rows can each carry a related call; keep the one holding the recording. */
+function preferRecordingRelated(
+  kept: AgendaDedupeEvent['related'],
+  other: AgendaDedupeEvent['related'],
+): AgendaDedupeEvent['related'] {
+  if (!kept) return other ?? null
+  if (!other) return kept
+  if (!kept.recording_url && other.recording_url) return other
   return kept
 }
 

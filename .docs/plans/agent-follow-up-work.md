@@ -38368,3 +38368,19 @@ Status: Closes most of "2026-08-11 — Video create P1 deferred items"
   Reason not done now: out of scope for the release-blocking race fix; a structural split would obscure the concurrency diff under review in PR #139.
 - Repo-wide: pnpm architecture:check crashes on every machine with ENOENT stat on apps/openclaw/src/canvas-host/a2ui/test-link-1782116645255-348bba5dc9fbd.txt — a git-tracked symlink to /Users/2fun/... (nonexistent elsewhere). Staged mode works (pre-commit passed, 10 files checked). Needs the symlink removed and/or check-loc.mjs hardened against broken symlinks. Spawned as a separate task.
 - Pre-existing on origin/main: 10 agent-api test files / 17 tests fail identically on main and this branch (agent-runtime-skill-scope, artifact-document-files, artifact-legacy-runtime-core, artifacts.service.dispatch, artifacts.service.rbac{,.integrations-media}, credits.service, chat.service.access-context, openclaw-proxy, route-inventory). Unrelated to the video work; needs its own triage.
+
+## 2026-08-12 — Agenda Fathom recording visibility (home / integrations-calendar)
+
+- File: apps/web/src/features/home/components/AgendaCardEventEntry.tsx
+  Evidence: 398/400 LOC after adding the recording links (component limit 400).
+  Needed work: extract the expanded-card action block or the compact row into a subcomponent before the next feature touches this file.
+  Reason not done now: out of scope for the recording-visibility fix; the file was 369 LOC before and the split deserves its own review.
+- File: apps/api/src/modules/integrations/services/integrations-calendar.service.ts
+  Evidence: 732/600 LOC (baseline 736; this change extracted the enrichment block into integrations-calendar-enrichment.ts to shrink it below baseline, but it remains over the 600 hard limit).
+  Needed work: split agenda fetching (Google/Outlook jobs + parsing) from event mutations into separate services.
+  Reason not done now: pre-existing debt; a full structural split would bury this fix's diff.
+- File: apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts
+  Evidence: 619/600 LOC (baseline 629; this change extracted the candidate-scoring loop into buildRelatedCallCandidates to shrink it below baseline, but it remains over the 600 hard limit).
+  Needed work: extract enrichAgendaRelatedCalls (calls/follow-ups loading + assignment) into its own service beside meetings-precall-related-calls.ts.
+  Reason not done now: pre-existing debt; kept the diff scoped to the recording fixes. Note meetings-precall-prep.helpers.ts itself WAS split in this change (615 → 186 + meetings-precall-related-calls.ts) because this change pushed it over the limit.
+- Docs: no documentation/features doc exists for Home Agenda / meetings agenda enrichment (only meeting-follow-up-slack.md). Behavior changed (recordings now surfaced; external_recording_id populated) — needs a doc, but §7 requires asking before creating a new one.

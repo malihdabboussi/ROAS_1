@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common'
 import { describe, expect, it, vi } from 'vitest'
 import { mergeTeamAgendaWithPersonal } from '../integrations-calendar-dedupe'
 import { IntegrationsCalendarService } from '../integrations-calendar.service'
@@ -277,6 +278,37 @@ describe('IntegrationsCalendarService team+Mine merge', () => {
 
     expect(result.events).toHaveLength(1)
     expect(result.events[0]?.account_label).toBe('Mine · Aaron McKeague')
+  })
+})
+
+describe('IntegrationsCalendarService agenda enrichment', () => {
+  it('logs and continues when prep/related enrichment fails', async () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined)
+    const service = new IntegrationsCalendarService(
+      { table: vi.fn() } as never,
+      { executeTool: vi.fn() } as never,
+      { applyScope: vi.fn() } as never,
+      { isTeamAvailable: vi.fn().mockResolvedValue(false) } as never,
+      {
+        enrichAgendaEvents: vi.fn().mockResolvedValue(new Map()),
+        enrichAgendaRelatedCalls: vi.fn().mockRejectedValue(new Error('related query failed')),
+      } as never,
+    )
+    vi.spyOn(
+      service as unknown as { resolveAllConnections: () => Promise<unknown[]> },
+      'resolveAllConnections',
+    ).mockResolvedValue([])
+
+    const result = await service.getAgenda(
+      {} as never,
+      { id: 'user-1' },
+      { orgId: 'org-1' } as never,
+      { start: '2026-07-21T00:00:00.000Z', end: '2026-07-22T00:00:00.000Z' },
+    )
+
+    expect(result.success).toBe(true)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('related query failed'))
+    warn.mockRestore()
   })
 })
 
