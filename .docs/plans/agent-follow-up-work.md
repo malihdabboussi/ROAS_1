@@ -9498,3 +9498,20 @@ Evidence: The instant-call change only generalized the existing unmatched-call A
 Needed work: Extract Agenda call enrichment/query mapping from the pre-call service and move Agenda modal orchestration into a focused container without changing calendar/Fathom identity behavior.
 
 Reason not done now: The requested impromptu call path is complete and covered by focused tests; decomposing the broader scheduled-call and enrichment pipeline is behavior-neutral pre-existing architecture work.
+
+## 2026-08-11 — Video create P1 deferred items
+
+Status: Open
+
+Files:
+
+- `apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-generate.service.ts` (600 LOC; at the 600 LOC service limit after adding space_id pass-through)
+- `supabase/migrations/019_media_generation_jobs.sql` (provider CHECK allows only 'replicate' while the service also inserts 'google' — latent constraint bug, G6)
+- `apps/api/src/modules/media/services/media-service-02.base.ts` (uploaded videos stored under the documents/ storage folder despite correct asset_type, G7)
+- `apps/agent-api` video job lifecycle (no worker/cron/webhook resolves abandoned media_generation_jobs; agent polling only, G5)
+
+Evidence: Video create-type plan (2026-08-11) gap list G5–G7; generate service was 594 LOC before this change.
+
+Needed work: Relax the media_generation_jobs provider CHECK to include 'google'; fix the upload folder branch to use videos/; add a background sweeper for stale video jobs; split generateVideo provider branches out of the legacy generate service.
+
+Reason not done now: P1 scope was chat seeding plus space attribution and rail/composer fixes; these are P2 pipeline-hardening items in the reviewed plan.

@@ -179,44 +179,51 @@ export function SpaceMediaView({
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       {/* Keep composer outside overflow-hidden so Aspect/Model menus are not clipped.
           Drop below modal stacking while the slide-out editor or task modal is open. */}
-      {presentation.showImageComposer ? (
-        <div
-          className={cn(
-            'home-dashboard-v4 relative min-w-0 shrink-0 overflow-visible',
-            mediaId || taskModalOpen ? 'z-0' : 'z-10',
-          )}
-        >
-          <div className="home-dashboard-v4-hero-glow" aria-hidden />
-          <div className="home-dashboard-v4-hero-grid" aria-hidden />
-          <div className="home-dashboard-v4-column home-dashboard-v4-column-media-composer min-w-0">
-            {composerCollapsed ? (
-              <HomeChatHeroToggle
-                collapsed
-                onToggle={toggleComposer}
-                expandLabel="New image"
-                expandAriaLabel="Expand new image composer"
+      <div
+        className={cn(
+          'home-dashboard-v4 relative min-w-0 shrink-0 overflow-visible',
+          mediaId || taskModalOpen ? 'z-0' : 'z-10',
+        )}
+      >
+        <div className="home-dashboard-v4-hero-glow" aria-hidden />
+        <div className="home-dashboard-v4-hero-grid" aria-hidden />
+        <div className="home-dashboard-v4-column home-dashboard-v4-column-media-composer min-w-0">
+          {composerCollapsed ? (
+            <HomeChatHeroToggle
+              collapsed
+              onToggle={toggleComposer}
+              expandLabel={presentation.composerMode === 'video' ? 'New video' : 'New image'}
+              expandAriaLabel={
+                presentation.composerMode === 'video'
+                  ? 'Expand new video composer'
+                  : 'Expand new image composer'
+              }
+            />
+          ) : (
+            <>
+              <MediaGenerateComposer
+                mode={presentation.composerMode}
+                spaceId={spaceId}
+                campaignId={campaignId}
+                onGenerated={() => {
+                  void reload()
+                }}
               />
-            ) : (
-              <>
-                <MediaGenerateComposer
-                  spaceId={spaceId}
-                  campaignId={campaignId}
-                  onGenerated={() => {
-                    void reload()
-                  }}
-                />
-                <HomeChatHeroToggle
-                  collapsed={false}
-                  onToggle={toggleComposer}
-                  expandLabel="New image"
-                  collapseLabel="Minimize"
-                  collapseAriaLabel="Minimize new image composer"
-                />
-              </>
-            )}
-          </div>
+              <HomeChatHeroToggle
+                collapsed={false}
+                onToggle={toggleComposer}
+                expandLabel={presentation.composerMode === 'video' ? 'New video' : 'New image'}
+                collapseLabel="Minimize"
+                collapseAriaLabel={
+                  presentation.composerMode === 'video'
+                    ? 'Minimize new video composer'
+                    : 'Minimize new image composer'
+                }
+              />
+            </>
+          )}
         </div>
-      ) : null}
+      </div>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {loading ? (

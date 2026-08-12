@@ -20,6 +20,8 @@ import type { CoverAspectRatio } from './media-image-generation-types'
 import { useMediaImageGeneration } from './use-media-image-generation'
 
 export interface MediaGenerateComposerProps {
+  /** Which asset type the composer seeds into chat. Defaults to image. */
+  mode?: 'image' | 'video'
   spaceId?: string | null
   campaignId?: string | null
   /** Extra tags stored on generated assets (unused when routing through chat). */
@@ -28,6 +30,39 @@ export interface MediaGenerateComposerProps {
   onGenerated?: (result: { url: string; assetId: string }) => void
   className?: string
   placeholder?: string
+}
+
+const VIDEO_ASPECT_RATIOS = ['16:9', '9:16', '1:1'] as const
+
+function buildGenerateVideoSeedContent(input: {
+  prompt: string
+  aspectRatio: string
+  hasReference: boolean
+  spaceId?: string | null
+  campaignId?: string | null
+}): string {
+  const lines = [
+    `Generate a video using the generate_video tool.`,
+    `Prompt: ${input.prompt}`,
+    `Aspect ratio: ${input.aspectRatio}`,
+  ]
+  if (input.spaceId) {
+    lines.push(
+      `Pass space_id "${input.spaceId}" in generate_video data so the finished video is registered in this space's media library.`,
+    )
+  } else {
+    lines.push(`Save the result into the media library.`)
+  }
+  if (input.campaignId) {
+    lines.push(`campaign_id: ${input.campaignId}`)
+  }
+  if (input.hasReference) {
+    lines.push(`Use the attached image as the first frame (pass its URL as image_url).`)
+  }
+  lines.push(
+    `generate_video is async: after calling it, wait 30 seconds then poll get_video_status with the returned job_id until status is succeeded or failed (max ~5 polls).`,
+  )
+  return lines.join('\n')
 }
 
 function buildGenerateSeedContent(input: {
@@ -70,16 +105,21 @@ function buildGenerateSeedContent(input: {
 }
 
 export function MediaGenerateComposer({
+  mode = 'image',
   spaceId,
   campaignId,
   extraTags,
   onGenerated,
   className,
-  placeholder = 'Describe a new image…',
+  placeholder,
 }: MediaGenerateComposerProps) {
+  const isVideo = mode === 'video'
+  const resolvedPlaceholder =
+    placeholder ?? (isVideo ? 'Describe a new video…' : 'Describe a new image…')
   const [openDropdown, setOpenDropdown] = useState<'model' | 'ratio' | null>(null)
   const [attaching, setAttaching] = useState(false)
   const [sending, setSending] = useState(false)
+  const [videoAspectRatio, setVideoAspectRatio] = useState<string>('16:9')
   const fileRef = useRef<HTMLInputElement>(null)
   const ratioChipRef = useRef<HTMLButtonElement>(null)
   const modelChipRef = useRef<HTMLButtonElement>(null)
@@ -87,7 +127,7 @@ export function MediaGenerateComposer({
   const seedComposer = useGlobalChatStore((s) => s.seedComposer)
 
   const hook = useMediaImageGeneration({
-    open: true,
+    open: !isVideo,
     campaignId,
     spaceId,
     extraTags,
@@ -120,7 +160,8 @@ export function MediaGenerateComposer({
     [upload, campaignId, spaceId, hook, onGenerated],
   )
 
-  const canSubmit = hook.prompt.trim().length > 0 && !sending && !hook.isLoadingModels && !attaching
+  const canSubmit =
+    hook.prompt.trim().length > 0 && !sending && !attaching && (isVideo || !hook.isLoadingModels)
 
   const handleSubmit = useCallback(() => {
     const prompt = hook.prompt.trim()
@@ -141,15 +182,23 @@ export function MediaGenerateComposer({
           : undefined
 
       seedComposer({
-        content: buildGenerateSeedContent({
-          prompt,
-          aspectRatio: hook.aspectRatio,
-          modelId: hook.selectedModel,
-          modelName: hook.selectedModelInfo?.name ?? 'ChatGPT',
-          hasReference: Boolean(hook.referenceAssetId),
-          spaceId,
-          campaignId,
-        }),
+        content: isVideo
+          ? buildGenerateVideoSeedContent({
+              prompt,
+              aspectRatio: videoAspectRatio,
+              hasReference: Boolean(hook.referenceAssetId),
+              spaceId,
+              campaignId,
+            })
+          : buildGenerateSeedContent({
+              prompt,
+              aspectRatio: hook.aspectRatio,
+              modelId: hook.selectedModel,
+              modelName: hook.selectedModelInfo?.name ?? 'ChatGPT',
+              hasReference: Boolean(hook.referenceAssetId),
+              spaceId,
+              campaignId,
+            }),
         documents,
         workContext: {
           surface: 'spaces',
@@ -158,13 +207,15 @@ export function MediaGenerateComposer({
         },
         railIntent: 'new',
       })
-      toast.message('Opening chat to create your image…')
+      toast.message(
+        isVideo ? 'Opening chat to create your video…' : 'Opening chat to create your image…',
+      )
       hook.setPrompt('')
       hook.clearReference()
     } finally {
       setSending(false)
     }
-  }, [campaignId, hook, seedComposer, sending, spaceId])
+  }, [campaignId, hook, isVideo, seedComposer, sending, spaceId, videoAspectRatio])
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -194,7 +245,9 @@ export function MediaGenerateComposer({
               </button>
             </div>
             <p className="body-4 text-muted-foreground">
-              Reference attached — edits will use this image
+              {isVideo
+                ? 'Reference attached — used as the first frame'
+                : 'Reference attached — edits will use this image'}
             </p>
           </div>
         ) : null}
@@ -205,7 +258,9 @@ export function MediaGenerateComposer({
             onChange={(e) => hook.setPrompt(e.target.value)}
             onKeyDown={onKeyDown}
             disabled={sending}
-            placeholder={hook.referenceAssetId ? 'Describe edits…' : placeholder}
+            placeholder={
+              hook.referenceAssetId && !isVideo ? 'Describe edits…' : resolvedPlaceholder
+            }
             rows={2}
             className="body-2 text-foreground placeholder:text-muted-foreground w-full resize-none bg-transparent outline-none disabled:opacity-50"
           />
@@ -237,7 +292,7 @@ export function MediaGenerateComposer({
             <div className="relative">
               <HomeDashboardV4Chip
                 label="Aspect"
-                value={hook.aspectRatio}
+                value={isVideo ? videoAspectRatio : hook.aspectRatio}
                 open={openDropdown === 'ratio'}
                 selected={openDropdown === 'ratio'}
                 innerRef={ratioChipRef}
@@ -250,7 +305,7 @@ export function MediaGenerateComposer({
                 anchorRef={ratioChipRef}
               >
                 <HomeDashboardV4MenuLabel>Aspect ratio</HomeDashboardV4MenuLabel>
-                {hook.supportedAspectRatios.map((r) => (
+                {(isVideo ? VIDEO_ASPECT_RATIOS : hook.supportedAspectRatios).map((r) => (
                   <HomeDashboardV4MenuItem
                     key={r}
                     label={
@@ -260,9 +315,10 @@ export function MediaGenerateComposer({
                         <span className="text-muted-foreground font-normal">{r}</span>
                       </span>
                     }
-                    checked={hook.aspectRatio === r}
+                    checked={(isVideo ? videoAspectRatio : hook.aspectRatio) === r}
                     onClick={() => {
-                      hook.setAspectRatio(r as CoverAspectRatio)
+                      if (isVideo) setVideoAspectRatio(r)
+                      else hook.setAspectRatio(r as CoverAspectRatio)
                       setOpenDropdown(null)
                     }}
                   />
@@ -270,36 +326,38 @@ export function MediaGenerateComposer({
               </HomeDashboardV4Menu>
             </div>
 
-            <div className="relative">
-              <HomeDashboardV4Chip
-                label="Model"
-                value={hook.selectedModelInfo?.name ?? 'ChatGPT'}
-                open={openDropdown === 'model'}
-                selected={openDropdown === 'model'}
-                innerRef={modelChipRef}
-                onClick={() => setOpenDropdown((d) => (d === 'model' ? null : 'model'))}
-              />
-              <HomeDashboardV4Menu
-                open={openDropdown === 'model'}
-                onClose={() => setOpenDropdown(null)}
-                width={300}
-                anchorRef={modelChipRef}
-              >
-                <HomeDashboardV4MenuLabel>Image model</HomeDashboardV4MenuLabel>
-                {hook.availableModels.map((m) => (
-                  <HomeDashboardV4MenuItem
-                    key={m.id}
-                    label={m.name}
-                    sub={m.description}
-                    checked={hook.selectedModel === m.id}
-                    onClick={() => {
-                      hook.setSelectedModel(m.id as ImageGenerationModelIdWeb)
-                      setOpenDropdown(null)
-                    }}
-                  />
-                ))}
-              </HomeDashboardV4Menu>
-            </div>
+            {isVideo ? null : (
+              <div className="relative">
+                <HomeDashboardV4Chip
+                  label="Model"
+                  value={hook.selectedModelInfo?.name ?? 'ChatGPT'}
+                  open={openDropdown === 'model'}
+                  selected={openDropdown === 'model'}
+                  innerRef={modelChipRef}
+                  onClick={() => setOpenDropdown((d) => (d === 'model' ? null : 'model'))}
+                />
+                <HomeDashboardV4Menu
+                  open={openDropdown === 'model'}
+                  onClose={() => setOpenDropdown(null)}
+                  width={300}
+                  anchorRef={modelChipRef}
+                >
+                  <HomeDashboardV4MenuLabel>Image model</HomeDashboardV4MenuLabel>
+                  {hook.availableModels.map((m) => (
+                    <HomeDashboardV4MenuItem
+                      key={m.id}
+                      label={m.name}
+                      sub={m.description}
+                      checked={hook.selectedModel === m.id}
+                      onClick={() => {
+                        hook.setSelectedModel(m.id as ImageGenerationModelIdWeb)
+                        setOpenDropdown(null)
+                      }}
+                    />
+                  ))}
+                </HomeDashboardV4Menu>
+              </div>
+            )}
           </div>
 
           <button

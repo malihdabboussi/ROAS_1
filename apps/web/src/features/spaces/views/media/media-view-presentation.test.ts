@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { resolveMediaViewPresentation } from './media-view-presentation'
 
 describe('resolveMediaViewPresentation', () => {
-  it('keeps image generation out of a dedicated video view', () => {
+  it('seeds video generation in a dedicated video view', () => {
     expect(resolveMediaViewPresentation(['video'])).toEqual({
       collectionTitle: 'Your videos',
       uploadAccept: 'video/*',
       uploadLabel: 'Upload video',
       uploadTooltip: 'Upload videos',
-      showImageComposer: false,
+      composerMode: 'video',
     })
   })
 
@@ -17,7 +17,7 @@ describe('resolveMediaViewPresentation', () => {
       collectionTitle: 'Your images',
       uploadAccept: 'image/*',
       uploadLabel: 'Upload image',
-      showImageComposer: true,
+      composerMode: 'image',
     })
   })
 
@@ -26,11 +26,11 @@ describe('resolveMediaViewPresentation', () => {
       collectionTitle: 'Your media',
       uploadAccept: 'image/*,video/*',
       uploadLabel: 'Upload media',
-      showImageComposer: true,
+      composerMode: 'image',
     })
     expect(resolveMediaViewPresentation(['video', 'image'])).toMatchObject({
       collectionTitle: 'Your media',
-      showImageComposer: true,
+      composerMode: 'image',
     })
   })
 })
