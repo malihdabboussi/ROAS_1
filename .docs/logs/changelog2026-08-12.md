@@ -29,3 +29,13 @@ Why: The consolidated agenda/canvas branch exposed these governed actions, but t
 Impact: Agent capability drift validation covers and exposes the completed conversation-search and canvas workflows.
 
 Files: `docker/tools/vibey-backend/index.ts`
+
+## [2026-08-12 09:12] - [REFACTOR]
+
+What: Deleted `MeetingActionMoveMenu.tsx` (242 lines, zero remaining imports) — fully superseded by the shared `SpaceMoveMenu`/`SpaceMappingPopover` in `@/components/work-items`. Logged the SourceCallCell feature-store TODO and the five grandfathered >400-LOC cells in the follow-up work log.
+
+Why: Replace-don't-accumulate — the bespoke menu's only consumer (MeetingActionItemsSection) now renders the shared cascade.
+
+Impact: No behavior change; dead code removed.
+
+Files: apps/web/src/features/home/components/MeetingActionMoveMenu.tsx (deleted), .docs/plans/agent-follow-up-work.md
