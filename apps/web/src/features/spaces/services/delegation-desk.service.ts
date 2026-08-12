@@ -35,17 +35,21 @@ export async function captureDelegationThought(
   deskId: string,
   thought: string,
 ): Promise<SpaceItem> {
-  const trimmed = thought.trim()
-  const firstLine = trimmed.split('\n', 1)[0] ?? trimmed
-  const title = firstLine.length > 120 ? `${firstLine.slice(0, 117)}...` : firstLine
+  const text = thought.trim()
+  if (!text) throw new Error('Add something to the Delegation Desk.')
+
   return createSpaceItem(deskId, {
-    title,
+    title: text,
+    description: text,
     status: 'inbox',
-    description: trimmed,
+    priority: null,
     custom_data: {
-      intake_type: 'thought',
+      intake_type: 'work_item',
+      dispatch_mode: 'review',
       delegation: {
         version: 1,
+        mode: 'review',
+        source: 'manual',
         captured_at: new Date().toISOString(),
       },
     },

@@ -6,6 +6,7 @@ import { ConversationShareModal } from './ConversationShareModal'
 const mocks = vi.hoisted(() => ({
   deleteConversationShare: vi.fn(),
   fetchConversationShares: vi.fn(),
+  passOffConversationShare: vi.fn(),
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
   upsertConversationShare: vi.fn(),
@@ -84,6 +85,7 @@ vi.mock('@/lib/conversations/conversations-api', async (importOriginal) => {
     ...actual,
     deleteConversationShare: mocks.deleteConversationShare,
     fetchConversationShares: mocks.fetchConversationShares,
+    passOffConversationShare: mocks.passOffConversationShare,
     upsertConversationShare: mocks.upsertConversationShare,
   }
 })
@@ -167,6 +169,15 @@ describe('ConversationShareModal', () => {
   beforeEach(() => {
     mocks.deleteConversationShare.mockResolvedValue({ deleted: true })
     mocks.fetchConversationShares.mockResolvedValue({ effective_level: 'admin', shares: [] })
+    mocks.passOffConversationShare.mockImplementation(
+      async (_conversationId: string, input: { user_id: string; level?: ConversationShareLevel }) =>
+        share({
+          id: `user:${input.user_id}`,
+          entity_type: 'user',
+          entity_id: input.user_id,
+          level: input.level ?? 'view',
+        }),
+    )
     mocks.upsertConversationShare.mockImplementation(
       async (
         _conversationId: string,
@@ -216,9 +227,31 @@ describe('ConversationShareModal', () => {
     expect(onClose).toHaveBeenCalledOnce()
   })
 
-  it('invites a roster member with the selected permission level', async () => {
+  it('passes off to a roster member with a handoff notification by default', async () => {
     const { onSharesChanged } = renderModal()
 
+    fireEvent.change(screen.getByPlaceholderText('Invite by name or email'), {
+      target: { value: 'ada' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Invite' }))
+
+    await waitFor(() =>
+      expect(mocks.passOffConversationShare).toHaveBeenCalledWith('conversation-1', {
+        user_id: 'user-1',
+        level: 'view',
+        note: undefined,
+        notify: true,
+      }),
+    )
+    expect(mocks.upsertConversationShare).not.toHaveBeenCalled()
+    expect(onSharesChanged).toHaveBeenCalledTimes(1)
+    expect(mocks.toastSuccess).toHaveBeenCalledWith('Passed off — teammate notified.')
+  })
+
+  it('invites a roster member without notifying when the handoff toggle is off', async () => {
+    const { onSharesChanged } = renderModal()
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Notify teammate with handoff link' }))
     fireEvent.change(screen.getByPlaceholderText('Invite by name or email'), {
       target: { value: 'ada' },
     })
@@ -229,8 +262,11 @@ describe('ConversationShareModal', () => {
         entity_type: 'user',
         entity_id: 'user-1',
         level: 'view',
+        notify: undefined,
+        note: undefined,
       }),
     )
+    expect(mocks.passOffConversationShare).not.toHaveBeenCalled()
     expect(onSharesChanged).toHaveBeenCalledTimes(1)
     expect(mocks.toastSuccess).toHaveBeenCalledWith('Share updated.')
   })
