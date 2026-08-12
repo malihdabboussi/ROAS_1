@@ -7,7 +7,9 @@ import {
   resolveMeetingCallKind,
   shouldReplaceMeetingCallKind,
 } from '../domain/meeting-call-kind'
+import { buildMeetingConversationId } from '../domain/meeting-conversation-id'
 import { buildFathomEventFromCallItem } from '../providers/build-fathom-event-from-call-item'
+import { resolveCanonicalFathomTitle } from '../providers/fathom-meeting-source'
 import { MeetingWorkspaceReadRepository } from '../repositories/meeting-workspace-read.repository'
 import {
   MeetingWorkspaceResolutionRepository,
@@ -15,6 +17,7 @@ import {
 } from '../repositories/meeting-workspace-resolution.repository'
 import { MeetingWorkspaceStateRepository } from '../repositories/meeting-workspace-state.repository'
 import { MeetingWorkspaceRepository } from '../repositories/meeting-workspace.repository'
+import { MeetingConversationDeduplicationService } from './meeting-conversation-deduplication.service'
 import { MeetingSourceIngestionService } from './meeting-source-ingestion.service'
 
 @Injectable()
@@ -29,6 +32,7 @@ export class MeetingWorkspaceService {
     private readonly conversations: ConversationsService,
     private readonly messages: MessagesRepository,
     @Optional() private readonly ingestion?: MeetingSourceIngestionService,
+    @Optional() private readonly deduplication?: MeetingConversationDeduplicationService,
   ) {}
 
   async resolveScheduledMeeting(
@@ -209,7 +213,7 @@ export class MeetingWorkspaceService {
   ): Promise<Record<string, unknown>> {
     const workspace = await this.readRepository.getWorkspaceBundle(supabase, input)
     if (!workspace) throw new NotFoundException('Meeting not found')
-    return workspace
+    return normalizeWorkspaceDisplayTitles(workspace)
   }
 
   async getWorkspace(
@@ -227,6 +231,23 @@ export class MeetingWorkspaceService {
       const hydrated = await this.hydrateMissingRecording(supabase, input, workspace)
       if (hydrated) {
         workspace = await this.requireMeeting(supabase, input)
+      }
+    }
+    const linkedConversationId = text(record(workspace.workspace).conversation_id)
+    if (input.userId && linkedConversationId) {
+      try {
+        await this.deduplication?.archiveDuplicates(supabase, {
+          userId: input.userId,
+          meetingItemId: input.meetingItemId,
+          keepConversationId: linkedConversationId,
+          orgId: input.orgId,
+        })
+      } catch (error) {
+        this.logger.warn(
+          `Archive duplicate meeting chats failed for ${input.meetingItemId}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        )
       }
     }
     return workspace
@@ -416,6 +437,7 @@ export class MeetingWorkspaceService {
       supabase,
       input.userId,
       {
+        id: buildMeetingConversationId(input.meetingItemId),
         title: `Meeting — ${input.title}`.slice(0, 500),
         metadata: {
           context_type: 'meeting',
@@ -433,10 +455,47 @@ export class MeetingWorkspaceService {
   }
 }
 
+export function normalizeWorkspaceDisplayTitles(
+  workspace: Record<string, unknown>,
+): Record<string, unknown> {
+  const canonicalTitles = new Map<string, string>()
+  const recordings: Array<Record<string, unknown>> = arrayOfRecords(workspace.recordings).map(
+    (recording) => {
+      const title = resolveCanonicalFathomTitle({
+        rawTitle: text(recording.title),
+        summary: text(recording.provider_summary),
+      })
+      const id = text(recording.id)
+      if (id) canonicalTitles.set(id, title)
+      return { ...recording, title }
+    },
+  )
+  const primaryTitle =
+    text(recordings.find((recording) => recording.is_primary === true)?.title) ??
+    text(recordings[0]?.title)
+  const deliverables = arrayOfRecords(workspace.deliverables).map((deliverable) => {
+    const customData = record(deliverable.custom_data)
+    const entryType = text(customData.entry_type)
+    const recordingTitle = canonicalTitles.get(text(customData.meeting_recording_id) ?? '')
+    if (entryType === 'meeting_transcript' && recordingTitle) {
+      return { ...deliverable, title: `Transcript — ${recordingTitle}` }
+    }
+    if (entryType === 'meeting_recap' && primaryTitle) {
+      return { ...deliverable, title: `Meeting recap — ${primaryTitle}` }
+    }
+    return deliverable
+  })
+  return { ...workspace, recordings, deliverables }
+}
+
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {}
+}
+
+function arrayOfRecords(value: unknown): Array<Record<string, unknown>> {
+  return Array.isArray(value) ? value.map(record) : []
 }
 
 function text(value: unknown): string | null {

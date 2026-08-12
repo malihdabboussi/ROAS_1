@@ -32,6 +32,14 @@ export function getRowComposioAccountId(row: Record<string, unknown>): string {
   return String(meta.composio_connected_account_id ?? '').trim()
 }
 
+/** Mine may use any caller-owned calendar connection, but never a teammate-owned row. */
+export function filterCalendarRowsOwnedByUser(
+  rows: Array<Record<string, unknown>>,
+  userId: string,
+): Array<Record<string, unknown>> {
+  return rows.filter((row) => String(row.user_id ?? '') === userId)
+}
+
 export function pickBestCalendarConnectionRow(
   rows: Array<Record<string, unknown>>,
   userId: string,

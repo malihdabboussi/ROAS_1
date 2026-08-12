@@ -1,51 +1,106 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Check } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   HOME_TOAST_ERRORS,
   HOME_TOAST_SUCCESS,
 } from '@/features/home/config/home-toast-errors.config'
+import { MeetingActionMoveMenu } from '@/features/home/components/MeetingActionMoveMenu'
 import {
   createMeetingAction,
   type MeetingAction,
 } from '@/features/home/services/meeting-workspace-api'
 
 function actionSourceLabel(action: MeetingAction): string {
-  if (action.source_type === 'provider') return 'Fathom action item'
-  if (action.source_type === 'manual') return 'Added live'
-  return 'AI suggestion'
+  if (action.source_type === 'provider') return 'Fathom'
+  if (action.source_type === 'manual') return 'Added manually'
+  return 'AI suggested'
+}
+
+/** Only Meetings-space follow_up items are real space items we can relocate. */
+function isMovableAction(action: MeetingAction): boolean {
+  return String(action.evidence?.origin ?? '') === 'meetings_space_follow_up'
 }
 
 function ActionRow({
   action,
+  spaceId,
   onToggle,
+  onMoved,
 }: {
   action: MeetingAction
+  spaceId: string
   onToggle: (action: MeetingAction) => void
+  onMoved: (action: MeetingAction, destinationTitle: string) => void
 }) {
   const resolved = action.status === 'resolved'
+  const openTask = () => {
+    window.dispatchEvent(
+      new CustomEvent('vibey-open-artifact', {
+        detail: {
+          artifactType: 'task',
+          artifactId: action.id,
+          spaceId,
+          name: action.title,
+        },
+      }),
+    )
+  }
   return (
-    <button
-      type="button"
-      onClick={() => onToggle(action)}
-      className="border-border hover:bg-hover-subtle gap-spacing-2 rounded-spacing-2 p-spacing-3 flex w-full items-start border text-left"
-    >
-      <span
-        className={`mt-spacing-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-          resolved ? 'border-primary bg-primary text-primary-foreground' : 'border-border'
-        }`}
+    <li>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={openTask}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            openTask()
+          }
+        }}
+        className="hover:bg-hover-subtle group flex w-full min-w-0 cursor-pointer items-center gap-3 px-3.5 py-3 text-left transition-colors"
       >
-        {resolved ? <Check className="icon-xs" aria-hidden /> : null}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="body-3 text-foreground block">{action.title}</span>
-        <span className="typo-caption text-muted-foreground mt-spacing-1 block">
-          {action.canonical_assignee_name || 'Unassigned'} · {actionSourceLabel(action)}
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            onToggle(action)
+          }}
+          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
+            resolved
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-border hover:border-primary'
+          }`}
+          aria-label={
+            resolved ? `Mark ${action.title} incomplete` : `Mark ${action.title} complete`
+          }
+          aria-pressed={resolved}
+        >
+          {resolved ? <Check className="icon-xs" aria-hidden /> : null}
+        </button>
+        <span className="min-w-0 flex-1">
+          <span
+            className={`body-3 text-foreground block truncate font-medium ${
+              resolved ? 'line-through opacity-60' : ''
+            }`}
+          >
+            {action.title}
+          </span>
+          <span className="typo-caption text-muted-foreground mt-0.5 flex min-w-0 items-center gap-1">
+            <span className="truncate">{action.canonical_assignee_name || 'Unassigned'}</span>
+            <span aria-hidden>·</span>
+            <span className="shrink-0">{actionSourceLabel(action)}</span>
+          </span>
         </span>
-      </span>
-    </button>
+        {isMovableAction(action) ? (
+          <span className="shrink-0 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+            <MeetingActionMoveMenu action={action} spaceId={spaceId} onMoved={onMoved} />
+          </span>
+        ) : null}
+      </div>
+    </li>
   )
 }
 
@@ -56,6 +111,7 @@ export function MeetingActionItemsSection({
   loading,
   onToggle,
   onCreated,
+  onMoved,
 }: {
   spaceId: string
   meetingItemId: string
@@ -63,6 +119,7 @@ export function MeetingActionItemsSection({
   loading: boolean
   onToggle: (action: MeetingAction) => void
   onCreated: (action: MeetingAction) => void
+  onMoved: (action: MeetingAction) => void
 }) {
   const [composing, setComposing] = useState(false)
   const [draft, setDraft] = useState('')
@@ -110,21 +167,27 @@ export function MeetingActionItemsSection({
     }
   }
 
+  const handleMoved = useMemo(
+    () => (action: MeetingAction, destinationTitle: string) => {
+      toast.success(`Moved to ${destinationTitle}.`)
+      onMoved(action)
+    },
+    [onMoved],
+  )
+
   return (
     <section className="gap-spacing-3 flex flex-col">
       <div className="gap-spacing-2 flex items-center justify-between">
         <h2 className="body-3 text-foreground font-semibold">Action items ({actions.length})</h2>
-        <div className="gap-spacing-2 flex items-center">
-          <button
-            type="button"
-            onClick={() => setComposing(true)}
-            className="button-compact button-glass-neutral"
-            aria-label="Add action item"
-            title="Add action item"
-          >
-            Add action
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setComposing(true)}
+          className="button-compact button-glass-neutral"
+          aria-label="Add action item"
+          title="Add action item"
+        >
+          Add action
+        </button>
       </div>
 
       {composing ? (
@@ -169,9 +232,19 @@ export function MeetingActionItemsSection({
         </form>
       ) : null}
 
-      {actions.map((action) => (
-        <ActionRow key={action.id} action={action} onToggle={onToggle} />
-      ))}
+      {actions.length > 0 ? (
+        <ul className="border-border bg-card divide-border rounded-spacing-2 divide-y overflow-hidden border">
+          {actions.map((action) => (
+            <ActionRow
+              key={action.id}
+              action={action}
+              spaceId={spaceId}
+              onToggle={onToggle}
+              onMoved={handleMoved}
+            />
+          ))}
+        </ul>
+      ) : null}
       {!loading && actions.length === 0 && !composing ? (
         <p className="body-4 text-muted-foreground">No action items yet.</p>
       ) : null}

@@ -4,6 +4,7 @@ import { findMatchingMeetingAction } from '../domain/meeting-action-dedupe'
 import {
   isFollowUpSpaceItem,
   mapFollowUpSpaceItemToMeetingAction,
+  meetingActionStatusToFollowUpStatus,
 } from '../domain/meeting-follow-up-actions'
 import { planProviderFollowUpUpserts } from '../domain/upsert-provider-follow-ups'
 import type { FathomSourceAction } from '../providers/fathom-meeting-source'
@@ -74,10 +75,7 @@ export class MeetingWorkspaceStateRepository {
   ): Promise<Record<string, unknown>> {
     const followUp = await this.findFollowUpAction(supabase, input)
     if (followUp) {
-      const nextStatus =
-        String(input.patch.status ?? '') === 'resolved'
-          ? 'done'
-          : String(followUp.status ?? 'logged')
+      const nextStatus = meetingActionStatusToFollowUpStatus(input.patch.status)
       const { data, error } = await supabase
         .from('space_items')
         .update({

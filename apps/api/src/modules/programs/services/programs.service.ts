@@ -8,6 +8,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { OrgRole } from '@vibey/api-shared'
 import type { CreateProgramInput, ProgramRow, UpdateProgramInput } from '../dto/programs.dto'
 import { ProgramsRepository } from '../repositories/programs.repository'
+import { ProgramUserStateRepository } from '../repositories/program-user-state.repository'
 import { ProgramPermissionsService } from './program-permissions.service'
 
 @Injectable()
@@ -15,6 +16,7 @@ export class ProgramsService {
   constructor(
     private readonly programsRepo: ProgramsRepository,
     private readonly programPermissions: ProgramPermissionsService,
+    private readonly programUserStateRepo: ProgramUserStateRepository,
   ) {}
 
   async list(
@@ -39,7 +41,34 @@ export class ProgramsService {
       accessible.map((r) => r.id),
       orgId,
     )
-    return accessible.map((row) => ({ ...row, campaign_count: counts[row.id] ?? 0 }))
+    const userState = await this.programUserStateRepo.list(supabase, userId)
+    const favoriteIds = new Set(
+      userState.filter((row) => row.is_favorite).map((row) => String(row.program_id)),
+    )
+    return accessible.map((row) => ({
+      ...row,
+      campaign_count: counts[row.id] ?? 0,
+      is_favorite: favoriteIds.has(row.id),
+    }))
+  }
+
+  async updateUserState(
+    supabase: SupabaseClient,
+    programId: string,
+    userId: string,
+    isFavorite: boolean,
+    orgRole: OrgRole | null | undefined,
+    orgId?: string | null,
+  ) {
+    await this.programPermissions.assertProgramAccess(
+      supabase,
+      programId,
+      userId,
+      orgRole,
+      'view',
+      orgId,
+    )
+    return this.programUserStateRepo.upsert(supabase, userId, programId, isFavorite)
   }
 
   /**

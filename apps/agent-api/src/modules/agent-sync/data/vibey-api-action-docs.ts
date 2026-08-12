@@ -1724,6 +1724,20 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
     parameters:
       '```json\n{"action":"list_strategy_nodes","label":"Checking strategy notes","data":{}}\n```',
   },
+  get_canvas_board: {
+    section: 'Canvas',
+    description:
+      'Loads the current campaign Canvas revision, editable items, and connectors. Call this immediately before applying Canvas operations.',
+    parameters:
+      '```json\n{"action":"get_canvas_board","label":"Reading the campaign canvas","data":{}}\n```',
+  },
+  apply_canvas_operations: {
+    section: 'Canvas',
+    description:
+      'Creates or edits normalized, editable objects on the campaign Canvas. Use the revision returned by get_canvas_board. Items support sticky_note, text, shape, frame, card, and resource_card; connectors reference item UUIDs.',
+    parameters:
+      '```json\n{"action":"apply_canvas_operations","label":"Building the campaign canvas","data":{"base_revision":0,"operations":[{"op":"create_item","item":{"id":"UUID","kind":"sticky_note","position_x":120,"position_y":160,"content":{"title":"Awareness","text":"Lead magnet traffic"}}}]}}\n```',
+  },
   list_custom_fields: {
     section: 'Offers',
     description: 'Lists custom fields for merge tags and personalization.',
@@ -1964,6 +1978,13 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
       'Lists spaces visible in the current user/org context. Use before task actions when the user names a workspace but does not provide a space_id. Optional general=true lists general spaces outside a campaign. Optional limit controls result count.',
     parameters:
       '```json\n{"action":"list_spaces","label":"Finding your spaces","data":{"limit":20}}\n```\n```json\n{"action":"list_spaces","label":"Finding general spaces","data":{"general":true,"limit":20}}\n```',
+  },
+  search_conversations: {
+    section: 'Tasks',
+    description:
+      'Searches the authenticated user’s active conversation history by title and returns matching conversation ids, summaries, and recent user/assistant excerpts. Use when the user asks to find or recall another chat. Search before asking the user to reconstruct prior context. Results are limited to the current user and organization.',
+    parameters:
+      '```json\n{"action":"search_conversations","label":"Searching your chats","data":{"query":"Wholesale Universe brand reputation","limit":10}}\n```',
   },
   search_space_context: {
     section: 'Tasks',

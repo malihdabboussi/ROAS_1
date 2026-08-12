@@ -28,6 +28,11 @@ export const VIEW_META: Record<
     glassClass: 'badge-glass-blue',
     textClass: 'text-blue-600 dark:text-blue-400',
   },
+  canvas: {
+    defaultIcon: 'panels-top-left',
+    glassClass: 'badge-glass-purple',
+    textClass: 'text-primary',
+  },
   missions: {
     defaultIcon: 'rocket',
     glassClass: 'badge-glass-orange',

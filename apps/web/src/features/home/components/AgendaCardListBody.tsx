@@ -19,8 +19,6 @@ export function AgendaCardListBody(props: {
   isToday: boolean
   nextEvent: CalendarAgendaEvent | null
   nextEventKey: string | null
-  selectedEventKey: string | null
-  setSelectedEventKey: (key: string | null) => void
   range: 'day' | 'week' | 'month'
   tomorrowKey: string
   dividerDayKeys: string[]
@@ -38,8 +36,6 @@ export function AgendaCardListBody(props: {
     isToday,
     nextEvent,
     nextEventKey,
-    selectedEventKey,
-    setSelectedEventKey,
     range,
     tomorrowKey,
     dividerDayKeys,
@@ -73,14 +69,13 @@ export function AgendaCardListBody(props: {
       ? splitTodayAgendaEvents(todayEvents, nowTick, nextEventKey, eventKey)
       : { earlier: [] as CalendarAgendaEvent[], later: [] as CalendarAgendaEvent[] }
 
-  const renderRow = (ev: CalendarAgendaEvent, expanded: boolean) => {
+  const renderRow = (ev: CalendarAgendaEvent) => {
     const isMinimized = minimizedKeys.has(agendaEventMinimizeKey(ev))
     return (
       <AgendaEventEntry
         ev={ev}
-        isExpanded={!isMinimized && expanded}
+        isExpanded={false}
         isMinimized={isMinimized}
-        onSelect={() => setSelectedEventKey(eventKey(ev))}
         onOpenMeeting={() => openAgendaEvent(ev)}
         onMinimizedChange={(minimized) => onMinimizedChange(ev, minimized)}
         nowTick={nowTick}
@@ -110,7 +105,7 @@ export function AgendaCardListBody(props: {
               <p className="typo-caption text-muted-foreground px-1">Earlier today</p>
               <ul className="space-y-1">
                 {earlierToday.map((ev) => (
-                  <li key={eventKey(ev)}>{renderRow(ev, eventKey(ev) === selectedEventKey)}</li>
+                  <li key={eventKey(ev)}>{renderRow(ev)}</li>
                 ))}
               </ul>
             </div>
@@ -121,7 +116,6 @@ export function AgendaCardListBody(props: {
               ev={nextEvent}
               isExpanded
               isNextHero
-              onSelect={() => setSelectedEventKey(nextEventKey)}
               onOpenMeeting={() => openAgendaEvent(nextEvent)}
               onMinimizedChange={(minimized) => onMinimizedChange(nextEvent, minimized)}
               nowTick={nowTick}
@@ -132,7 +126,7 @@ export function AgendaCardListBody(props: {
           {laterToday.length > 0 ? (
             <ul className="space-y-1">
               {laterToday.map((ev) => (
-                <li key={eventKey(ev)}>{renderRow(ev, eventKey(ev) === selectedEventKey)}</li>
+                <li key={eventKey(ev)}>{renderRow(ev)}</li>
               ))}
             </ul>
           ) : null}
@@ -154,7 +148,7 @@ export function AgendaCardListBody(props: {
                   ) : null}
                   <ul className="space-y-1">
                     {dayEvts.map((ev) => (
-                      <li key={eventKey(ev)}>{renderRow(ev, eventKey(ev) === selectedEventKey)}</li>
+                      <li key={eventKey(ev)}>{renderRow(ev)}</li>
                     ))}
                   </ul>
                 </div>
@@ -178,7 +172,7 @@ export function AgendaCardListBody(props: {
                   ) : null}
                   <ul className="space-y-1">
                     {dayEvts.map((ev) => (
-                      <li key={eventKey(ev)}>{renderRow(ev, eventKey(ev) === selectedEventKey)}</li>
+                      <li key={eventKey(ev)}>{renderRow(ev)}</li>
                     ))}
                   </ul>
                 </div>
@@ -188,7 +182,7 @@ export function AgendaCardListBody(props: {
         ) : (
           <ul className="space-y-1">
             {visibleEvents.map((ev) => (
-              <li key={eventKey(ev)}>{renderRow(ev, eventKey(ev) === selectedEventKey)}</li>
+              <li key={eventKey(ev)}>{renderRow(ev)}</li>
             ))}
           </ul>
         )

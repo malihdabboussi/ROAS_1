@@ -7,6 +7,19 @@
 
 These rules apply to any AI agent working in this repository ("you" = the agent). Keep every change scoped to exactly what was asked, and fix root causes rather than symptoms.
 
+## 0. Git workflow (mandatory — read first)
+
+Work only counts when it is pushed to GitHub. Uncommitted files in a local folder are one crash away from gone.
+
+- **Announce yourself.** Your first message of a session states your working folder (`pwd`) and branch (`git branch --show-current`).
+- **Never commit to or push `main`.** `main` changes only through PRs merged on GitHub. No exceptions, including "small" fixes.
+- **New task = fresh branch off fresh main:** `git pull origin main`, then branch `codex/<task>` or `claude/<task>`. Resuming an old task = continue its existing branch (rebase on main if it's stale).
+- **One working copy per agent.** Never edit in a folder another agent is using. Claude Code sessions use worktrees for parallel work.
+- **Push your branch after every finished chunk, and ALWAYS before the session ends.** Pushing a branch is backup, not deployment — it triggers nothing. A session must never end with work that exists only as local uncommitted files.
+- **Only the designated app-runner checkout runs dev servers** (this machine fits exactly one). Agents write code; they don't run the app. To test, the app-runner does `git fetch` + checks out the branch.
+- **Testing several branches together:** create a fresh throwaway branch off main, merge the branches in, test that. Never reuse an old integration branch, and never merge the integration branch itself into main — after testing passes, merge the individual PRs.
+- **If git is broken in your checkout** (hangs, corruption — the 2026-08 Codex checkout has a corrupted object store): make NO git write ops there. Tar your changed files to `~/Downloads/` and report the path.
+
 ## 1. Context before code
 
 - Read the **full** target file plus its imports and consumers before editing — not a partial skim. Trace data: source → transform → destination.

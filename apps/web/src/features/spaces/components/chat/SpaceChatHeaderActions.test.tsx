@@ -89,8 +89,7 @@ describe('SpaceChatHeaderActions', () => {
     expect(onSearchClose).toHaveBeenCalledTimes(1)
   })
 
-  it('uses an X close control in shell chrome', () => {
-    const onCollapse = vi.fn()
+  it('omits the chat close control in full-page shell chrome', () => {
     const onToggleSummary = vi.fn()
 
     render(
@@ -100,7 +99,7 @@ describe('SpaceChatHeaderActions', () => {
         voiceActive={false}
         hasVoiceTasks={false}
         hasRunningVoiceTasks={false}
-        onCollapse={onCollapse}
+        onCollapse={vi.fn()}
         onSearchOpen={vi.fn()}
         onSearchClose={vi.fn()}
         onSearchQueryChange={vi.fn()}
@@ -114,10 +113,9 @@ describe('SpaceChatHeaderActions', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Summary panel' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Close AI Chats' }))
 
     expect(onToggleSummary).toHaveBeenCalledTimes(1)
-    expect(onCollapse).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button', { name: 'Close AI Chats' })).toBeNull()
     expect(screen.queryByLabelText('Collapse Pixel chat')).not.toBeInTheDocument()
   })
 })

@@ -1,9 +1,10 @@
 import { backendDelete, backendGet, backendPatch, backendPost } from '@/lib/api/backend-client'
+import type { ProgramWorkViewId } from '@/lib/work-views'
 
 export type ProgramSystemKind = 'clients' | 'roas_ops' | 'personal'
 export type ProgramVisibility = 'workspace' | 'private' | 'selected'
 export type ProgramShareLevel = 'view' | 'edit'
-export type ProgramWorkView = 'overview' | 'list' | 'board' | 'calendar'
+export type ProgramWorkView = ProgramWorkViewId
 
 export type Program = {
   id: string
@@ -23,6 +24,13 @@ export type Program = {
   deleted_at: string | null
   campaign_count?: number
   effective_level?: ProgramShareLevel | null
+  is_favorite?: boolean
+}
+
+export type ProgramUserState = {
+  program_id: string
+  is_favorite: boolean
+  updated_at: string
 }
 
 export type ProgramShare = {
@@ -77,6 +85,15 @@ export async function updateProgram(
   },
 ): Promise<Program> {
   return backendPatch<Program>(`/api/programs/${encodeURIComponent(id)}`, input)
+}
+
+export async function updateProgramUserState(
+  id: string,
+  isFavorite: boolean,
+): Promise<ProgramUserState> {
+  return backendPatch<ProgramUserState>(`/api/programs/${encodeURIComponent(id)}/user-state`, {
+    is_favorite: isFavorite,
+  })
 }
 
 export async function deleteProgram(id: string): Promise<{ deleted: true }> {

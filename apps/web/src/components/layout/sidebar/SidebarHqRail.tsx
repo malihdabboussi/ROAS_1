@@ -14,6 +14,7 @@ import type { ManagePanelId, ManageRailItem } from './sidebar-types'
 import { SidebarHqHubLogoButton } from './SidebarHqHubLogoButton'
 import type { HubMenuPaneProps } from './SidebarHqHubMenu'
 import type { SidebarControllerReturn } from './useSidebarController'
+import { useOpenDelegationDesk } from './use-open-delegation-desk'
 
 export function SidebarHqRail({
   c,
@@ -68,6 +69,11 @@ export function SidebarHqRail({
     if (href !== '/' && c.pathname.startsWith(`${href}/`)) return
     router.push(href)
   }
+  const openDelegationDesk = useOpenDelegationDesk({
+    router,
+    sidebarSpaces: c.sidebarLists,
+    onClose: closeHoverManageFlyout,
+  })
 
   const closeHubIfOpen = () => {
     if (c.hubMenuOpen || c.hubMenuClosing) c.forceCloseHubMenu()
@@ -250,29 +256,44 @@ export function SidebarHqRail({
                         </Link>
                       )
                     }
-                    if (item.type === 'panel' && item.panelId === 'home') {
+                    if (item.type === 'delegation') {
                       return (
                         <button
                           key={item.id}
                           type="button"
-                          data-hub-rail-trigger="home"
+                          onMouseEnter={closeHoverManageFlyout}
+                          onFocus={closeHoverManageFlyout}
+                          onClick={() => void openDelegationDesk()}
+                          className={railItemClass}
+                          aria-label={item.label}
+                          title={item.label}
+                        >
+                          {iconSpan}
+                          {labelSpan}
+                        </button>
+                      )
+                    }
+                    if (item.type === 'panel' && item.panelId === 'favorites') {
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          data-hub-rail-trigger="favorites"
                           onMouseEnter={() => {
                             clearSpacesFlyoutCloseTimer()
                             c.setIsPanelClosing(false)
-                            c.setActiveManagePanel('home')
+                            c.setActiveManagePanel('favorites')
                           }}
                           onFocus={() => {
                             clearSpacesFlyoutCloseTimer()
                             c.setIsPanelClosing(false)
-                            c.setActiveManagePanel('home')
+                            c.setActiveManagePanel('favorites')
                           }}
                           onClick={() => {
                             closeHubIfOpen()
-                            syncWorkContextForPanel('home')
                             setCollapsed(true)
                             c.setIsPanelClosing(false)
-                            c.setActiveManagePanel('home')
-                            pushIfNeeded(item.href ?? '/home')
+                            c.setActiveManagePanel('favorites')
                           }}
                           className={railItemClass}
                           aria-label={item.label}
@@ -307,72 +328,6 @@ export function SidebarHqRail({
                             if (c.activeManagePanel === 'spaces' && !c.isPanelClosing) {
                               c.setIsPanelClosing(true)
                             }
-                          }}
-                          className={railItemClass}
-                          aria-label={item.label}
-                          title={item.label}
-                        >
-                          {iconSpan}
-                          {labelSpan}
-                        </button>
-                      )
-                    }
-                    if (item.type === 'panel' && item.panelId === 'team2') {
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          data-hub-rail-trigger="team2"
-                          onMouseEnter={() => {
-                            clearSpacesFlyoutCloseTimer()
-                            c.setIsPanelClosing(false)
-                            c.setActiveManagePanel('team2')
-                          }}
-                          onFocus={() => {
-                            clearSpacesFlyoutCloseTimer()
-                            c.setIsPanelClosing(false)
-                            c.setActiveManagePanel('team2')
-                          }}
-                          onClick={() => {
-                            closeHubIfOpen()
-                            syncWorkContextForPanel('team2')
-                            setCollapsed(true)
-                            c.setIsPanelClosing(false)
-                            c.setActiveManagePanel('team2')
-                            pushIfNeeded(item.href ?? '/team')
-                          }}
-                          className={railItemClass}
-                          aria-label={item.label}
-                          title={item.label}
-                        >
-                          {iconSpan}
-                          {labelSpan}
-                        </button>
-                      )
-                    }
-                    if (item.type === 'panel' && item.panelId === 'brain') {
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          data-hub-rail-trigger="brain"
-                          onMouseEnter={() => {
-                            clearSpacesFlyoutCloseTimer()
-                            c.setIsPanelClosing(false)
-                            c.setActiveManagePanel('brain')
-                          }}
-                          onFocus={() => {
-                            clearSpacesFlyoutCloseTimer()
-                            c.setIsPanelClosing(false)
-                            c.setActiveManagePanel('brain')
-                          }}
-                          onClick={() => {
-                            closeHubIfOpen()
-                            syncWorkContextForPanel('brain')
-                            setCollapsed(true)
-                            c.setIsPanelClosing(false)
-                            c.setActiveManagePanel('brain')
-                            pushIfNeeded(item.href ?? '/brain')
                           }}
                           className={railItemClass}
                           aria-label={item.label}

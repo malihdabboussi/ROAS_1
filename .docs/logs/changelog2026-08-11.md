@@ -160,3 +160,186 @@ Why: `ask_clarification` executes locally inside the plugin and is not a backend
 Impact: After merge + agent workspace re-sync, Pixel (and every synced agent) can emit `ask_clarification`; studio drawer and full-page chat render the tappable card (same MessageBubble path), and Slack/Telegram degrade to numbered plain text via the existing proxy conversion. Lifecycle/preflight: the action stays classified plugin-local (hard payload validator lives in the plugin); the capability-source drift test now recognizes plugin-local documented actions.
 
 Files: `docker/tools/vibey-backend/index.ts`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `apps/agent-api/src/modules/agent-sync/services/vibey-api-skill-generator.ts`, `apps/agent-api/src/modules/agent-sync/services/vibey-api-skill-generator.test.ts`, `apps/agent-api/src/modules/agent-sync/services/agent-capability-source-drift.test.ts`, `apps/agent-api/src/modules/shared/vibey-backend-plugin.test.ts`, `apps/agent-api/src/modules/shared/ui-block-extractor.test.ts`, `apps/web/src/features/studio/components/message-bubble/MessageContentBlockSwitchPartB.test.tsx`, `.docs/plans/pixel-next-wave-goal-2026-08-11.md`.
+# Changelog - August 11, 2026
+
+## [2026-08-11 08:27] - [FIX]
+
+What: Separated campaign pinning from per-user favorites in both sidebar variants, wired campaign removal in the HQ favorites flyout, and added regression coverage for pinned Personal and General campaigns.
+
+Why: System campaigns are pinned by design, but the favorites UI incorrectly treated `isPinned` as `isFavorite`, so removing Personal or General either had no visible effect or toggled the favorite state in the wrong direction.
+
+Impact: Personal and General now appear under Favorites only when explicitly favorited, and Remove from favorites updates and removes them correctly.
+
+Files: `apps/web/src/components/layout/sidebar/SidebarSimpleSection.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqFlyouts.tsx`, `apps/web/src/components/layout/sidebar/SidebarSimpleSection.test.tsx`
+
+## [2026-08-11 08:43] - [FEATURE]
+
+What: Added an authenticated `search_conversations` agent action with title search, summaries, bounded recent-message excerpts, hard schema validation, lifecycle/preflight coverage, policy and MCP exposure, generated Vibey API documentation, runtime guidance, and regression tests.
+
+Why: Pixel could see only the current thread and asked users to reconstruct earlier chats even though the product already stored and displayed their conversation history.
+
+Impact: Authorized agents can now find active conversations in the current user and organization scope before asking for repeated context; results remain read-only and bounded.
+
+Files: `apps/agent-api/src/modules/artifacts/repositories/artifact-conversation-search.repository.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-conversation-search.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-conversation-search.service.test.ts`, `apps/agent-api/src/modules/artifacts/services/artifacts.service.ts`, `apps/agent-api/src/modules/artifacts/artifacts.module.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts`, `apps/agent-api/src/modules/artifacts/dtos/artifact-action.dto.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-action.registry.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-capability.policy.ts`, `apps/agent-api/src/modules/agent-sync/services/vibey-api-skill-generator.ts`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `packages/agent-policy/src/actions.ts`, `packages/agent-policy/src/registry.ts`, `packages/agent-policy/src/mcp-catalog.ts`, `packages/agent-policy/src/action-contracts.ts`, `packages/agent-policy/src/platform-tools-template.ts`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-11 14:25] - [FIX]
+
+What: Added a persistent top-right Show page control to full-screen Home conversations. It restores the most recent work page while preserving the active conversation as the attached chat.
+
+Why: Full-screen chat removed the existing work-area relationship, so the normal restore control disappeared and users had no consistent top-right path back to their page.
+
+Impact: Full-screen chat always shows the page control; it restores the last eligible page when available and remains visibly disabled when no page can be restored.
+
+Files: `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/ShellWorkspace.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-11 08:47] - [FIX]
+
+What: Kept the Recents chat history fully scrollable, expanded the Home next-move response from three to twelve actions so its existing See more control can reveal additional suggestions, and defaulted My Tasks to the all-scopes assignment feed.
+
+Why: The suggestion API truncated its response at the same three-item limit used by the collapsed UI, making See more impossible, while My Tasks inherited a personal-only default that excluded organization work assigned to the signed-in user.
+
+Impact: Users can scroll their full recent chat history, reveal additional grounded suggested actions, and see personal plus organization tasks assigned to them when opening My Tasks.
+
+Files: `apps/api/src/modules/home/services/next-moves.service.ts`, `apps/api/src/modules/home/services/next-moves.service.test.ts`, `apps/web/src/features/home/components/HomeFeedScopePicker.tsx`, `apps/web/src/features/home/components/HomeFeedScopePicker.test.tsx`, `apps/web/src/features/home/components/SuggestedNextMoves.test.tsx`
+
+## [2026-08-11 09:20] - [FIX]
+
+What: Made Simple Recents load the signed-in user's conversations across personal and organization scopes, stopped composer agent changes from silently filtering the sidebar, and isolated cached history by scope and agent.
+
+Why: Simple Recents inherited the active composer agent and reused cache keys that did not encode organization scope, so initialization or agent changes could replace current history with an older agent-only list even though every local service used the same database.
+
+Impact: The Simple sidebar now stays on a stable all-chat history unless the user explicitly applies an agent filter, and cached lists cannot leak between personal and organization scopes.
+
+Files: `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/components/shell/ShellChatMenu.test.tsx`, `apps/web/src/components/shell/shell-conversation-cache.ts`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-11 13:55] - [FIX]
+
+What: Corrected the unified Google Calendar agenda request to use the provider's required snake-case time and recurrence fields and request the full response payload that contains the event array.
+
+Why: The all-calendars action received `timeMin`/`timeMax` instead of `time_min`/`time_max` and used its compact response default, which omits detailed events. Accepted Google meetings could therefore disappear from Mine and from Team's merged Mine data while Fathom-only rows still rendered.
+
+Impact: Personal Agenda receives the full set of expanded Google Calendar events for the requested window again, including recurring accepted invitations such as the missing 1DS weekly session. Team inherits the corrected Mine feed.
+
+Files: `apps/api/src/modules/integrations/services/integrations-calendar-google-agenda.ts`, `apps/api/src/modules/integrations/services/__tests__/integrations-calendar-google-agenda.test.ts`, `documentation/features/integration-connections.md`
+
+## [2026-08-11 14:48] - [FIX]
+
+What: Routed Simple-sidebar history rows into the canonical full chat from every page, removed the full-chat close action, restored Outputs / Sources / Tasks after closing a chat artifact, made pasted-block comparison strict-safe, repaired affected mocks, and removed six unused Finder/iCloud conflict copies from the Canvas source tree.
+
+Why: History clicks outside Home still opened the legacy drawer, full chat exposed an action that contradicted its permanent workspace role, closing the artifact editor left the summary closed, and stale duplicate source files prevented a clean web type-check.
+
+Impact: Chat now keeps one stable ChatGPT-style workspace: history opens the selected full conversation, the summary appears by default, artifacts replace it in the right card without replacing chat, closing an artifact returns to the summary, and the web project type-checks cleanly.
+
+Files: `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/components/shell/ShellChatMenu.test.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/ShellWorkspace.test.tsx`, `apps/web/src/components/shell/ShellRightPanel.test.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatHeaderActions.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatHeaderActions.test.tsx`, `apps/web/src/features/composer/pasted-text/use-pasted-text-blocks.ts`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `apps/web/src/components/canvas/**/** 2.ts*`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-11 14:58] - [FIX]
+
+What: Kept a top-right Show page control outside every collapsed work surface, gave the Home surface a non-empty history label, and prevented the Home new-chat transition from routing back to the conversation that was active before New Chat.
+
+Why: Simple/left menu layouts hid the only work-area restore control with the page itself, `/home` produced a blank hover row, and the temporary starting route accepted a stale active conversation id before the new conversation was created.
+
+Impact: Full-screen chat always has a visible page restore path, its hover history names Home correctly, and sending from New Chat remains on the newly created conversation instead of reopening an old one.
+
+Files: `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/ShellWorkspace.test.tsx`, `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/components/shell/ShellTopBar.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-11 15:23] - [FIX]
+
+What: Removed the remaining conversation-switch render loops from pasted-block, quick-start, model-preference, draft, and Space-scope synchronization, and treated inaccessible linked meeting conversations as unavailable background context instead of a page-fatal error.
+
+Why: Opening Meetings or a meeting workspace could oscillate between conversation contexts while several composer effects unconditionally mirrored state. React eventually raised Maximum update depth; an inaccessible legacy meeting conversation could then surface as an uncaught permission rejection.
+
+Impact: Meetings now survives conversation-context changes without nested update crashes, composer state only publishes when values actually differ, and a meeting workspace remains available when its optional historical chat cannot be read. The combined shell and meeting regression suite passes 81 tests and the local web runtime type-check passes.
+
+Files: `apps/web/src/features/composer/pasted-text/use-pasted-text-blocks.ts`, `apps/web/src/features/composer/pasted-text/use-pasted-text-blocks.test.tsx`, `apps/web/src/features/studio/store/use-chat-store.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.test.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-model-prefs.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-draft.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-draft.test.ts`, `apps/web/src/features/studio/services/conversation-load-errors.ts`, `apps/web/src/features/studio/services/conversation-load-errors.test.ts`, `apps/web/src/features/studio/services/chat.service.ts`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-11 15:52] - [FIX]
+
+What: Made chat viewport and sticky-prompt height synchronization normalize measurements and skip unchanged state writes.
+
+Why: The chat panel's `ResizeObserver` and conversation-change effect could repeatedly publish equivalent or subpixel-different heights while the Meetings page switched chat context, causing another Maximum update depth crash.
+
+Impact: Opening Meetings no longer enters the `SpaceVibeyChatPanel.useEffect.applyHeight` render loop. The focused height and chat regression suite passes 24 tests, ESLint passes, and the local web type-check passes.
+
+Files: `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/spaces/components/chat/observed-height.ts`, `apps/web/src/features/spaces/components/chat/observed-height.test.ts`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-11 17:34] - [FIX]
+
+What: Made meeting conversation creation deterministic and idempotent, and added scoped archival cleanup for older unlinked duplicate meeting chats. Deployed the calendar agenda, Program favorites, and meeting conversation fixes to the production API.
+
+Why: Parallel meeting workspace requests could both observe an empty conversation link, create separate chats, and leave one orphaned duplicate in Recents after the workspace linked the other.
+
+Impact: One meeting now resolves to one active conversation even under concurrent requests. Opening an existing linked meeting archives same-meeting orphan chats without deleting their data. Production `api.roas.io` is serving deployment `dpl_GJocN6nhhfyzoc6HxCHggozVG2Bz`.
+
+Files: `apps/api/src/modules/conversations/repositories/conversations.repository.ts`, `apps/api/src/modules/conversations/repositories/conversations.repository.test.ts`, `apps/api/src/modules/conversations/services/conversations.service.ts`, `apps/api/src/modules/conversations/services/conversations.service.test.ts`, `apps/api/src/modules/meetings/domain/meeting-conversation-id.ts`, `apps/api/src/modules/meetings/domain/meeting-conversation-id.test.ts`, `apps/api/src/modules/meetings/services/meeting-conversation-deduplication.service.ts`, `apps/api/src/modules/meetings/services/meeting-conversation-deduplication.service.test.ts`, `apps/api/src/modules/meetings/services/meeting-workspace.service.ts`, `apps/api/src/modules/meetings/services/meeting-workspace.service.test.ts`, `apps/api/src/modules/meetings/meetings.module.ts`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-11 17:48] - [FIX]
+
+What: Added direct client-contract and Simple-sidebar regression coverage for removing Personal and General Program favorites, including the post-refresh state returned by the API.
+
+Why: The favorites failure persisted in the local flow even after the UI wiring changed, so the test boundary needed to prove both the encoded Program request and the refreshed sidebar state rather than only the initial click.
+
+Impact: The verified local runtime now guards the complete remove-favorite path from the context menu through the Program API and refreshed sidebar list.
+
+Files: `apps/web/src/lib/programs/programs-api.test.ts`, `apps/web/src/components/layout/sidebar/SidebarSimpleSection.test.tsx`
+
+## [2026-08-11 17:51] - [FIX]
+
+What: Synchronized the local runtime mirror with the latest full-chat restore and extracted meeting-workspace implementation while retaining the runtime's newer instant-meeting and agenda controls.
+
+Why: The source workspace and the server's runtime mirror had diverged, so several completed fixes were present on main but absent from the app actually running on port 3000.
+
+Impact: The local app now runs the combined implementation: full-chat page restore, editable meeting titles, recordings and attachments first, distinct prep/recap/notes sections, reopenable and movable action items, pre-call quick actions, and impromptu meeting creation. The hot runtime compiles, focused tests pass, and its web type-check and lint are clean.
+
+Files: `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx`, `apps/web/src/features/home/components/MeetingWorkspaceBody.tsx`, `apps/web/src/features/home/components/MeetingActionItemsSection.tsx`, `apps/web/src/features/home/components/MeetingActionMoveMenu.tsx`, `apps/web/src/features/home/components/MeetingRenamableTitle.tsx`, `apps/web/src/features/home/components/MeetingAgendaPrepSection.tsx`, `apps/web/src/features/home/components/MeetingNotesSection.tsx`, `apps/web/src/features/home/components/MeetingPostCallSections.tsx`, `apps/web/src/features/home/components/MeetingCallStatusSection.tsx`, `apps/web/src/features/home/config/meeting-post-call-actions.config.ts`, `apps/web/src/features/home/services/meeting-workspace-api.ts`
+
+## [2026-08-11 17:53] - [STYLE]
+
+What: Moved the shared Deep Search, Task, Image, Slides, Doc, Daily Brief, and Delegate quick actions into the composer overhang, immediately to the right of Choose Space and Plugins, while keeping grounded suggested next moves below the complete composer.
+
+Why: The actions were still rendered above the input even though the requested ChatGPT-style hierarchy placed composer tools inside the lower shelf and smart suggestions beneath it.
+
+Impact: New Chat now has one unified input-plus-shelf container without the detached action row or right-edge overflow, followed by clickable personalized suggestions.
+
+Files: `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`
+
+## [2026-08-11 17:40] - [DOCS]
+What: Added mandatory "0. Git workflow" section to AGENTS.md (branch-per-agent, push-before-session-end, no direct main pushes, app-runner-only dev servers, throwaway integration branches, corrupted-checkout tar fallback). Created missing .claude/CLAUDE.md (@../AGENTS.md import) — it was referenced in AGENTS.md's header comment but never existed, so Claude Code sessions were not loading the protocol. Synced both files to the runtime working copy.
+Why: 12 parallel agents (Codex + Claude) were leaving work as uncommitted files across divergent working copies; pushes from any one copy silently missed the others' work. 51 unmerged codex/* branches on origin.
+Impact: All agents now follow one branch/PR flow; work is always pushed before a session closes.
+Files: AGENTS.md, .claude/CLAUDE.md
+
+## [2026-08-11 17:52] - [STYLE]
+What: Home composer restyled toward a ChatGPT-like layout — quick-start pills (Deep Search, Task, Image, Slides, Doc, Daily Brief, Delegate) moved to a centered row above the input box, bottom shelf reduced to Choose Space + Plugins. Sidebar Recents/Favorites section headers unified (shared uppercase section-label typography, hover-revealed trailing chevron). Profile-row unread-updates dot repositioned onto the avatar corner with a "New updates available" tooltip. Conversation-row hover tooltip now shows a formatted "Last activity …" timestamp instead of the raw ISO string.
+Why: The empty-chat composer felt cluttered with action pills inside the shelf row; sidebar section headers had mismatched styles; the purple profile dot and raw ISO tooltip read as bugs.
+Impact: Cleaner first-run composer, consistent sidebar section headers, self-explanatory update indicator, human-readable recents tooltips.
+Files: apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx, apps/web/src/components/layout/sidebar/SidebarSimpleSection.tsx, apps/web/src/components/layout/sidebar/SidebarSimpleRecents.tsx, apps/web/src/components/layout/AvatarDropdown.tsx, apps/web/src/components/conversations/SpaceConversationRows.tsx
+
+## [2026-08-11 18:00] - [FIX]
+
+What: Restored the repository contracts required by the local Mode C API for instant meeting creation and daily automation-liveness claims.
+
+Why: The accumulated local WIP retained callers for both operations while their service/repository methods were missing, preventing the platform API from compiling and starting locally.
+
+Impact: The local platform API compiles and serves on port 3001 while preserving the surrounding meeting and automation WIP.
+
+Files: `apps/api/src/modules/meetings/services/meeting-workspace.service.ts`, `apps/api/src/modules/spaces/repositories/space-automations.repository.ts`
+
+## [2026-08-11 17:57] - [FIX]
+
+What: Removed the outer dashboard Suspense fallback's placeholder top bar and added a loading-state regression test.
+
+Why: The fallback could render its placeholder header at the same time as the nested workspace rendered the real route header, producing two identical top bars during initial page load.
+
+Impact: The workspace is now the sole owner of route chrome during loading, so Inbox and other dashboard routes render one top bar from the first visible frame. The shell regression suite passes 30 tests, and the local web type-check and focused lint are clean.
+
+Files: `apps/web/src/app/(dashboard)/dashboard-frame.client.tsx`, `apps/web/src/app/(dashboard)/dashboard-frame.client.test.tsx`
+
+## [2026-08-11 18:20] - [FIX]
+
+What: Canonicalized Mine and Team meeting rows: Mine now loads caller-owned calendar connections only, calendar invites retain their live join URL when enriched by Fathom, same-minute duplicate Fathom recordings with the same meeting identity collapse, and only the next unfinished calendar invite can expand as the Agenda hero.
+
+Why: Organization-shared teammate connections leaked into Mine, Fathom recording URLs could be presented as live meeting links, duplicate recording rows could survive with generated titles, and a no-upcoming fallback expanded the first past recording.
+
+Impact: Mine and Team have clear ownership boundaries, live calls and recordings use the correct actions, repeated 1DS recordings collapse, and past recordings remain compact instead of appearing as the next call.
+
+Files: `apps/api/src/modules/integrations/services/integrations-calendar-connections.ts`, `apps/api/src/modules/integrations/services/integrations-calendar-dedupe.ts`, `apps/api/src/modules/integrations/services/integrations-calendar.service.ts`, `apps/api/src/modules/integrations/services/__tests__/integrations-calendar-connections.test.ts`, `apps/api/src/modules/integrations/services/__tests__/integrations-calendar-dedupe.test.ts`, `apps/web/src/features/home/components/AgendaCard.tsx`, `apps/web/src/features/home/components/AgendaCardListBody.tsx`, `apps/web/src/features/home/components/AgendaCardEventEntry.tsx`, `apps/web/src/features/home/lib/agenda-list-view.ts`, `apps/web/src/features/home/lib/agenda-list-view.test.ts`, `documentation/features/integration-connections.md`

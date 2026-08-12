@@ -1,8 +1,8 @@
 'use client'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useRef, type ReactNode } from 'react'
-import { ChevronLeft } from 'lucide-react'
+import { useEffect, useRef, type ReactNode } from 'react'
+import { ChevronLeft, PanelRightOpen } from 'lucide-react'
 import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatPanel'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
@@ -15,6 +15,7 @@ import { isShellHomeRoute, isShellWorkspaceRoute } from './shell-route-policy'
 import { ShellChatDrawer } from './ShellChatDrawer'
 import { ShellNewChatGreeting } from './ShellNewChatGreeting'
 import { ShellSidebarSlot } from './ShellSidebarSlot'
+import { ShellTopBar } from './ShellTopBar'
 import { SpaceWorkDock } from './SpaceWorkDock'
 import { useRightEdgePresence } from './use-right-edge-presence'
 import {
@@ -39,10 +40,14 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const openChatDrawer = useShellStore((s) => s.openChatDrawer)
   const requestNewChat = useShellStore((s) => s.requestNewChat)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
+  const setRightPanelOpen = useShellStore((s) => s.setRightPanelOpen)
   const artifactTarget = useShellStore((s) => s.artifactViewer.target)
+  const previousArtifactTargetRef = useRef(artifactTarget)
+  const recentWorkAreaPages = useShellStore((s) => s.recentWorkAreaPages)
   const shellPrefsHydrated = useShellPrefsHydrated()
   const desktop = useMediaQuery('(min-width: 768px)')
   const savedMenuDock = useShellMenuDock((s) => s.dock)
+  const menuStyle = useShellMenuDock((s) => s.menuStyle)
   const dragging = useShellMenuDock((s) => s.dragging)
   const candidateMenuDock = useShellMenuDock((s) => s.candidate)
   const activeMenuDock = useActiveShellMenuDock()
@@ -54,17 +59,14 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
   const openConversationInSpaceChat = useSpacesStore((s) => s.openConversationInSpaceChat)
 
-  const clearHomeChat = useCallback(() => {
-    setActiveConversationId(null)
-    router.push('/home')
-  }, [router, setActiveConversationId])
-
   useEffect(() => {
     setCollapsed(true)
   }, [pathname, setCollapsed])
 
   const spaceParam = searchParams.get('space')
   const lastRouteKey = useRef<string | null>(null)
+  const previousSimpleChatOpen = useRef(false)
+  const conversationBeforeNewChatRef = useRef<string | null>(null)
   useEffect(() => {
     const routeKey = `${pathname}::${spaceParam ?? ''}`
     if (lastRouteKey.current === null) {
@@ -77,13 +79,25 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   }, [pathname, spaceParam, setWorkAreaOpen])
 
   useEffect(() => {
+    const justOpened = chatDrawerOpen && !previousSimpleChatOpen.current
+    previousSimpleChatOpen.current = chatDrawerOpen
+    if (menuStyle === 'simple' && justOpened && !artifactTarget) setWorkAreaOpen(false)
+  }, [artifactTarget, chatDrawerOpen, menuStyle, setWorkAreaOpen])
+
+  useEffect(() => {
     if (chatParam !== 'new') return
+    conversationBeforeNewChatRef.current = useChatStore.getState().activeConversationId
     requestNewChat()
     setActiveConversationId(null)
   }, [chatParam, requestNewChat, setActiveConversationId])
 
   useEffect(() => {
     if (!convParam) return
+    if (isShellHomeRoute(pathname)) {
+      openConversationInSpaceChat(convParam)
+      setActiveConversationId(convParam)
+      return
+    }
     if (isShellWorkspaceRoute(pathname)) {
       openChatDrawer(convParam)
       return
@@ -94,10 +108,11 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isShellHomeRoute(pathname) || chatParam !== 'starting' || !activeConversationId) return
+    if (activeConversationId === conversationBeforeNewChatRef.current) return
     router.replace(`/home?conv=${encodeURIComponent(activeConversationId)}`)
   }, [activeConversationId, chatParam, pathname, router])
 
-  const showFullNewChat = isShellHomeRoute(pathname) && chatParam === 'new'
+  const showFullNewChat = isShellHomeRoute(pathname) && !convParam && chatParam !== 'starting'
   const showFullConversation =
     isShellHomeRoute(pathname) &&
     (Boolean(convParam) || chatParam === 'starting') &&
@@ -105,19 +120,60 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
 
   const onSpaces = pathname.startsWith('/spaces')
   const workAreaCollapsible = !showFullNewChat && !showFullConversation
+  const workAreaRequestedOpen = workAreaCollapsible ? workAreaOpen : true
   const { mounted: workAreaMounted, visible: workAreaVisible } = useRightEdgePresence(
-    workAreaOpen,
+    workAreaRequestedOpen,
     true,
   )
   const workAreaCollapsed = workAreaCollapsible && !workAreaMounted
-  const mobileChatVisible = !desktop && chatDrawerOpen && !artifactTarget
+  const mobileChatVisible = workAreaCollapsible && !desktop && chatDrawerOpen && !artifactTarget
+  const artifactBesideConversation = Boolean(artifactTarget) && showFullConversation && desktop
+  const artifactReplacesWorkArea = Boolean(artifactTarget) && !artifactBesideConversation
+
+  useEffect(() => {
+    const artifactClosed = previousArtifactTargetRef.current !== null && artifactTarget === null
+    previousArtifactTargetRef.current = artifactTarget
+    if (artifactClosed && showFullConversation) setRightPanelOpen(true)
+  }, [artifactTarget, setRightPanelOpen, showFullConversation])
+  const fullConversationRestoreTarget = showFullConversation
+    ? (recentWorkAreaPages.find((target) => target.href !== pathname && target.href !== '/home') ??
+      null)
+    : null
+
+  const restorePageBesideFullConversation = () => {
+    if (!fullConversationRestoreTarget || !convParam) return
+    const [targetPath, targetQuery = ''] = fullConversationRestoreTarget.href.split('?')
+    const params = new URLSearchParams(targetQuery)
+    params.set('conv', convParam)
+    setWorkAreaOpen(true)
+    router.push(`${targetPath}?${params.toString()}`)
+  }
   let homeOrDefaultMain: ReactNode = children
   if (showFullNewChat) {
     homeOrDefaultMain = <ShellNewChatGreeting />
   } else if (showFullConversation) {
     homeOrDefaultMain = (
-      <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
-        <GlobalChatPanel shellSidebarChrome presentation="full" onCollapseChat={clearHomeChat} />
+      <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
+        <GlobalChatPanel shellSidebarChrome presentation="full" />
+        <div className="p-spacing-3 z-dropdown absolute right-0 top-0">
+          <button
+            type="button"
+            onClick={restorePageBesideFullConversation}
+            disabled={!fullConversationRestoreTarget}
+            className={cn(
+              'shell-topbar-icon-btn',
+              !fullConversationRestoreTarget && 'shell-topbar-icon-btn-disabled',
+            )}
+            aria-label="Show page"
+            title={
+              fullConversationRestoreTarget
+                ? `Show ${fullConversationRestoreTarget.title}`
+                : 'No recent page to show'
+            }
+          >
+            <PanelRightOpen aria-hidden />
+          </button>
+        </div>
       </div>
     )
   }
@@ -163,10 +219,13 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     [setWorkCardHostAvailable, setWorkCollapsedHostAvailable],
   )
 
-  const menuDock = resolveShellMenuDockForLayout(activeMenuDock, {
-    chatOpen: chatDrawerOpen,
-    workHostAvailable: hostInsideWorkBase,
-  })
+  const menuDock =
+    menuStyle === 'simple'
+      ? 'left'
+      : resolveShellMenuDockForLayout(activeMenuDock, {
+          chatOpen: chatDrawerOpen,
+          workHostAvailable: hostInsideWorkBase,
+        })
   const workAttached = isWorkAttachedDock(menuDock)
   const hostInsideWork = hostInsideWorkBase && workAttached
   // Collapsed-right rail only for docks that were already work-attached (not remapped left).
@@ -187,7 +246,15 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const workspaceMain = onSpaces ? <SpaceWorkDock>{children}</SpaceWorkDock> : homeOrDefaultMain
   const workMain = (
     <>
-      <div className={cn('h-full min-h-0 w-full', portalActive && 'hidden')}>{workspaceMain}</div>
+      <div
+        className={cn(
+          'flex h-full min-h-0 w-full flex-col overflow-y-auto overflow-x-hidden',
+          portalActive && 'hidden',
+        )}
+      >
+        {menuStyle === 'simple' ? <ShellTopBar /> : null}
+        {workspaceMain}
+      </div>
       <PageGraderPortalSurface active={portalActive} />
     </>
   )
@@ -201,10 +268,10 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
 
         <div
           className={cn(
-            artifactTarget || mobileChatVisible ? 'hidden' : 'shell-work-area',
+            artifactReplacesWorkArea || mobileChatVisible ? 'hidden' : 'shell-work-area',
             !artifactTarget && workAreaCollapsed && 'shell-work-area-collapsed',
           )}
-          aria-hidden={!workAreaVisible || Boolean(artifactTarget) || mobileChatVisible}
+          aria-hidden={!workAreaVisible || artifactReplacesWorkArea || mobileChatVisible}
           data-shell-work-area
         >
           <div
@@ -217,9 +284,9 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
             )}
           >
             {hostInsideWork && menuDock === 'work' ? <ShellSidebarSlot /> : null}
-            <div className={cn((hostInsideWork || portalActive) && 'shell-work-area-body-main')}>
-              {workMain}
-            </div>
+            {/* Always sized — a bare block here collapses the h-full chain below,
+                leaving chat panes rendered but 0px tall. */}
+            <div className="shell-work-area-body-main">{workMain}</div>
             {hostInsideWork && menuDock === 'work-right' ? <ShellSidebarSlot /> : null}
           </div>
           {floatTop ? (
@@ -255,11 +322,26 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
           </div>
         ) : null}
 
+        {workAreaCollapsed && !hostCollapsedRight ? (
+          <div className="p-spacing-3 z-dropdown absolute right-0 top-0">
+            <button
+              type="button"
+              onClick={() => setWorkAreaOpen(true)}
+              className="shell-topbar-icon-btn"
+              aria-label="Show page"
+              title="Show page"
+            >
+              <PanelRightOpen aria-hidden />
+            </button>
+          </div>
+        ) : null}
+
         <div
           className={cn(
-            'min-w-0 flex-1',
+            'min-w-0',
             artifactTarget && 'flex',
             (!artifactTarget || workAreaCollapsed) && 'hidden',
+            artifactBesideConversation ? 'w-full shrink-0 md:max-w-xl' : 'flex-1',
           )}
         >
           <ShellArtifactViewerAdapter />

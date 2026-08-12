@@ -441,6 +441,17 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
     [...campaignScope, 'node_type'],
     stringType([...campaignScope, 'node_type']),
   ),
+  get_canvas_board: schema([], campaignScope, stringType(campaignScope)),
+  apply_canvas_operations: schema(
+    ['base_revision', 'operations'],
+    ['base_revision', 'operations', 'idempotency_key', ...campaignScope],
+    {
+      base_revision: 'number',
+      operations: 'object_array',
+      idempotency_key: 'string',
+      ...stringType(campaignScope),
+    },
+  ),
   bulk_create_ads: schema(['ads'], ['ads', 'ad_set_id'], {
     ads: 'object_array',
     ad_set_id: 'string',

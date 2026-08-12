@@ -100,6 +100,27 @@ describe('ChatInputPlusMenuView', () => {
     expect(onOpenAtMenu).toHaveBeenCalledWith('media')
   })
 
+  it('selects the active managed agent from the plus menu', () => {
+    const onSelect = vi.fn()
+    const onCloseMenu = vi.fn()
+    renderPlusMenu({
+      submenu: 'agent',
+      agentPicker: {
+        selectedAgentKey: 'vibey',
+        agents: [
+          { key: 'vibey', name: 'Pixel', roleLabel: 'Assistant' },
+          { key: 'delegator', name: 'Delegator', roleLabel: 'Delegation Manager' },
+        ],
+        onSelect,
+      },
+      onCloseMenu,
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Delegator/ }))
+    expect(onSelect).toHaveBeenCalledWith('delegator')
+    expect(onCloseMenu).toHaveBeenCalledTimes(1)
+  })
+
   it('renders integration toggles and connect actions', () => {
     const onToggleAgent = vi.fn()
     const onConnectIntegration = vi.fn()

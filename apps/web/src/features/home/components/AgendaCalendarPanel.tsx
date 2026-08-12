@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useMemo } from 'react'
-import { Video } from 'lucide-react'
 import {
   CalendarBoard,
   getCalendarBoardVisibleWindow,
@@ -115,9 +114,6 @@ function AgendaMonthBar({
           >
             {ctx.compact && event.title.length > 14 ? `${event.title.slice(0, 14)}…` : event.title}
           </span>
-          {raw.video_url ? (
-            <Video className="text-muted-foreground h-3 w-3 shrink-0 self-center" aria-hidden />
-          ) : null}
         </>
       ) : null}
     </div>
@@ -192,7 +188,6 @@ function AgendaMonthHoverBody({ events }: { events: CalendarEvent<CalendarAgenda
                   rel="noopener noreferrer"
                   className="typo-caption text-primary mt-0.5 inline-flex items-center gap-1 hover:underline"
                 >
-                  <Video className="h-3 w-3" />
                   Meeting link
                 </a>
               ) : null}

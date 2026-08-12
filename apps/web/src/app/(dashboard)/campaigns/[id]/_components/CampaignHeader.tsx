@@ -2,7 +2,7 @@
 
 import { AlertTriangle, Check, Loader2 } from 'lucide-react'
 import { IconPicker, type IconColorId } from '@/components/ui/IconPicker'
-import { TabsList, TabsTrigger } from '@/components/ui/navigation/tabs'
+import { HierarchyViewBar } from '@/components/work-views'
 import type { Campaign } from '@/features/studio/types'
 import type { CampaignSaveStatus } from '../_hooks/use-campaign-autosave'
 import type { ToggleableCampaignTabId } from '../_lib/campaign-nav-tabs'
@@ -14,9 +14,9 @@ interface CampaignHeaderProps {
   campaignIcon: string
   campaignIconColor?: string
   /** Visible campaign tabs (excluding Settings), in order, plus Settings last — parent builds this. */
-  navTabs: { value: string; label: string }[]
+  navTabs: { value: string; label: string; icon: string }[]
+  activeTab: string
   onTabChange: (value: string) => void
-  isMobile: boolean
   editingName: boolean
   nameValue: string
   saveStatus: CampaignSaveStatus
@@ -37,8 +37,8 @@ export function CampaignHeader({
   campaignIcon,
   campaignIconColor,
   navTabs,
+  activeTab,
   onTabChange,
-  isMobile,
   editingName,
   nameValue,
   saveStatus,
@@ -53,13 +53,10 @@ export function CampaignHeader({
   visibleTabIds,
   onVisibleTabIdsChange,
 }: CampaignHeaderProps) {
-  const tabs = isMobile
-    ? navTabs.map((t) => (t.value === 'deliverables' ? { ...t, label: 'Artifacts' } : t))
-    : navTabs
-
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex min-w-0 items-center gap-3">
+    <div className="flex flex-col">
+      <div className="gap-spacing-4 px-spacing-4 pb-spacing-3 flex items-center justify-between">
+        <div className="flex min-w-0 items-center gap-3">
         <IconPicker
           value={campaignIcon}
           color={campaignIconColor}
@@ -118,26 +115,19 @@ export function CampaignHeader({
             )}
           </div>
         </div>
+        </div>
       </div>
-
-      <div className="gap-spacing-2 flex shrink-0 items-center">
-        <TabsList variant="liquid" className="min-w-max">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className="px-spacing-4"
-              onClick={() => onTabChange(tab.value)}
-            >
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        <CampaignTabSettingsMenu
-          visibleTabIds={visibleTabIds}
-          onVisibleTabIdsChange={onVisibleTabIdsChange}
-        />
-      </div>
+      <HierarchyViewBar
+        tabs={navTabs.map((tab) => ({ id: tab.value, label: tab.label, icon: tab.icon }))}
+        activeViewId={activeTab}
+        onSelectView={onTabChange}
+        rightSlot={
+          <CampaignTabSettingsMenu
+            visibleTabIds={visibleTabIds}
+            onVisibleTabIdsChange={onVisibleTabIdsChange}
+          />
+        }
+      />
     </div>
   )
 }

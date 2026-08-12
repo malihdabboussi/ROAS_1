@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  filterCalendarRowsOwnedByUser,
   listConnectedCalendarAccounts,
   pickBestCalendarConnectionRow,
 } from '../integrations-calendar-connections'
@@ -54,5 +55,18 @@ describe('integrations-calendar-connections', () => {
       null,
     )
     expect(row?.id).toBe('ui-2')
+  })
+
+  it('keeps Mine limited to calendar connections owned by the caller', () => {
+    const rows = filterCalendarRowsOwnedByUser(
+      [
+        { id: 'mine-personal', user_id: 'user-1', scope_mode: 'personal' },
+        { id: 'mine-shared', user_id: 'user-1', scope_mode: 'org_shared' },
+        { id: 'teammate-shared', user_id: 'user-2', scope_mode: 'org_shared' },
+      ],
+      'user-1',
+    )
+
+    expect(rows.map((row) => row.id)).toEqual(['mine-personal', 'mine-shared'])
   })
 })

@@ -675,6 +675,7 @@ export interface ViewDef {
     | 'channels'
     | 'channel'
     | 'calendar'
+    | 'canvas'
     | 'media'
     | 'form_responses'
     | ReportingViewType

@@ -65,8 +65,6 @@ function getViewIcon(type: string | null | undefined): ComponentType<{ className
 }
 
 export function TaskDetailHeader({
-  committedTitle,
-  liveTitle,
   spaceName,
   viewName,
   viewType,
@@ -79,7 +77,6 @@ export function TaskDetailHeader({
   onClose,
   onOpenMenu,
 }: TaskDetailHeaderProps) {
-  const crumbTaskLabel = (committedTitle || liveTitle).trim() || 'Untitled task'
   const ViewIcon = getViewIcon(viewType)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
 
@@ -125,11 +122,13 @@ export function TaskDetailHeader({
             <span className="truncate">{viewName}</span>
           </button>
         ) : null}
-        {(spaceName || viewName) && (
-          <ChevronRight className="text-muted-foreground/60 h-3 w-3 shrink-0" aria-hidden />
-        )}
+        {/* The trail stops at the task's parent — the task itself is the page
+            title right below, repeating it here just doubles the clutter. */}
         {breadcrumbParentCrumb ? (
           <>
+            {(spaceName || viewName) && (
+              <ChevronRight className="text-muted-foreground/60 h-3 w-3 shrink-0" aria-hidden />
+            )}
             <button
               type="button"
               onClick={breadcrumbParentCrumb.onNavigate}
@@ -141,16 +140,8 @@ export function TaskDetailHeader({
                 {(breadcrumbParentCrumb.committedTitle || 'Parent task').trim() || 'Parent task'}
               </span>
             </button>
-            <ChevronRight className="text-muted-foreground/60 h-3 w-3 shrink-0" aria-hidden />
           </>
         ) : null}
-        <span
-          className="text-foreground gap-spacing-1 flex min-w-0 items-center font-medium"
-          title={crumbTaskLabel}
-        >
-          <Square className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span className="truncate">{crumbTaskLabel}</span>
-        </span>
       </nav>
       <div className="gap-spacing-1 flex shrink-0 items-center">
         {/* Share temporarily hidden — restore by importing { Share2 } and renaming

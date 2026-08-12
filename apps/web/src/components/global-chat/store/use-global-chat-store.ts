@@ -2,6 +2,7 @@
 
 import { create } from 'zustand'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
+import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { fetchTeamRoster, type TeamRosterEntry } from '@/lib/team/team-roster-api'
 import {
@@ -81,6 +82,7 @@ interface GlobalChatStore {
   requestAgentSwitch: (agentKey: string) => void
   setWorkContext: (patch: Partial<GlobalWorkContext>) => void
   attachMeetingContext: (context: GlobalMeetingChatContext) => void
+  continueMeetingConversation: (context: GlobalMeetingChatContext) => void
   clearMeetingContext: () => void
   setSuggestedWorkContext: (ctx: GlobalWorkContext | null) => void
   syncRouteContext: (pathname: string) => void
@@ -175,6 +177,13 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
       workContext: nextWork,
       activeAgentKey: GLOBAL_CHAT_DEFAULT_AGENT,
     })
+  },
+
+  continueMeetingConversation: (meetingContext) => {
+    get().attachMeetingContext(meetingContext)
+    get().setRailIntent(null)
+    useChatStore.getState().setActiveConversationId(meetingContext.conversationId)
+    get().expandAndFocus({ railIntent: null })
   },
 
   clearMeetingContext: () => set({ meetingContext: null }),

@@ -18,6 +18,10 @@ export function ShellChatMenuActiveFilters({
   onAgentKeyChange: (agentKey: string | null) => void
   onFiltersChange: (filters: ChatHistoryFilterState) => void
 }) {
+  const hasActiveFilters =
+    Boolean(historyAgentKey) || filters.type !== 'all' || filters.lastActivity !== 'all'
+  if (!hasActiveFilters) return null
+
   return (
     <div className="gap-spacing-1 px-spacing-1 mt-spacing-2 flex flex-wrap">
       {historyAgentKey ? (

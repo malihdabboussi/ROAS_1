@@ -57,6 +57,11 @@ export const UpdateProgramSchema = z.object({
 })
 export type UpdateProgramInput = z.infer<typeof UpdateProgramSchema>
 
+export const UpdateProgramUserStateSchema = z.object({
+  is_favorite: z.boolean(),
+})
+export type UpdateProgramUserStateInput = z.infer<typeof UpdateProgramUserStateSchema>
+
 export type ProgramSystemKind = 'clients' | 'roas_ops' | 'personal'
 
 export type ProgramRow = {
@@ -77,6 +82,7 @@ export type ProgramRow = {
   deleted_at: string | null
   campaign_count?: number
   effective_level?: ProgramShareLevel | null
+  is_favorite?: boolean
 }
 
 export type ProgramShareRow = {

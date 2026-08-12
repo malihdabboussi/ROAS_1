@@ -1,7 +1,47 @@
 import { describe, expect, it, vi } from 'vitest'
-import { MeetingWorkspaceService } from './meeting-workspace.service'
+import {
+  MeetingWorkspaceService,
+  normalizeWorkspaceDisplayTitles,
+} from './meeting-workspace.service'
+import { buildMeetingConversationId } from '../domain/meeting-conversation-id'
 
 describe('MeetingWorkspaceService', () => {
+  it('normalizes legacy generic Fathom titles across recordings and deliverables', () => {
+    const result = normalizeWorkspaceDisplayTitles({
+      recordings: [
+        {
+          id: 'recording-1',
+          title: 'Impromptu Call',
+          is_primary: true,
+          provider_summary: '## Meeting Purpose\nReview the August campaign launch.',
+        },
+      ],
+      deliverables: [
+        {
+          id: 'transcript-1',
+          title: 'Transcript — Impromptu Call',
+          custom_data: {
+            entry_type: 'meeting_transcript',
+            meeting_recording_id: 'recording-1',
+          },
+        },
+        {
+          id: 'recap-1',
+          title: 'Meeting recap — Impromptu Call',
+          custom_data: { entry_type: 'meeting_recap' },
+        },
+      ],
+    })
+
+    expect(result.recordings).toEqual([
+      expect.objectContaining({ title: 'Review the August campaign launch' }),
+    ])
+    expect(result.deliverables).toEqual([
+      expect.objectContaining({ title: 'Transcript — Review the August campaign launch' }),
+      expect.objectContaining({ title: 'Meeting recap — Review the August campaign launch' }),
+    ])
+  })
+
   it('reopens a completed meeting conversation without marking the call live', async () => {
     const repository = { upsertWorkspace: vi.fn() }
     const resolutionRepository = {}
@@ -22,7 +62,10 @@ describe('MeetingWorkspaceService', () => {
         conversation_id: 'conversation-1',
       }),
     }
-    const conversations = { createConversation: vi.fn() }
+    const conversations = {
+      createConversation: vi.fn(),
+    }
+    const deduplication = { archiveDuplicates: vi.fn().mockResolvedValue(0) }
     const messages = { create: vi.fn() }
     const service = new MeetingWorkspaceService(
       repository as never,
@@ -31,6 +74,8 @@ describe('MeetingWorkspaceService', () => {
       stateRepository as never,
       conversations as never,
       messages as never,
+      undefined,
+      deduplication as never,
     )
 
     await service.startCall({} as never, {
@@ -45,6 +90,13 @@ describe('MeetingWorkspaceService', () => {
       conversation_id: 'conversation-1',
     })
     expect(conversations.createConversation).not.toHaveBeenCalled()
+    expect(deduplication.archiveDuplicates).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        meetingItemId: 'meeting-1',
+        keepConversationId: 'conversation-1',
+      }),
+    )
   })
 
   it('creates one reusable scheduled workspace and its persistent conversation', async () => {
@@ -122,6 +174,12 @@ describe('MeetingWorkspaceService', () => {
     expect(repository.upsertParticipantContextLinks).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ participantEmails: ['client@example.com'] }),
+    )
+    expect(conversations.createConversation).toHaveBeenCalledWith(
+      expect.anything(),
+      'user-1',
+      expect.objectContaining({ id: buildMeetingConversationId('meeting-1') }),
+      null,
     )
   })
 
@@ -297,7 +355,9 @@ describe('MeetingWorkspaceService', () => {
       resolutionRepository as never,
       {} as never,
       {} as never,
-      { createConversation: vi.fn() } as never,
+      {
+        createConversation: vi.fn(),
+      } as never,
       { create: vi.fn() } as never,
     )
 
@@ -352,7 +412,9 @@ describe('MeetingWorkspaceService', () => {
       createSnippet: vi.fn().mockResolvedValue(snippet),
       updateWorkspace: vi.fn(),
     }
-    const conversations = { createConversation: vi.fn() }
+    const conversations = {
+      createConversation: vi.fn(),
+    }
     const messages = { create: vi.fn().mockResolvedValue({ id: 'message-1' }) }
     const service = new MeetingWorkspaceService(
       repository as never,
@@ -418,7 +480,9 @@ describe('MeetingWorkspaceService', () => {
       {} as never,
       readRepository as never,
       stateRepository as never,
-      { createConversation: vi.fn() } as never,
+      {
+        createConversation: vi.fn(),
+      } as never,
       { create: vi.fn() } as never,
     )
 

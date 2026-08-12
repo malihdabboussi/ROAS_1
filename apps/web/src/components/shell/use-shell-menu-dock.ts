@@ -13,6 +13,10 @@ export type { ShellMenuDock, ShellMenuDockWorkRect }
 const STORAGE_KEY = 'vibey.shell.menu-dock.v2'
 const LEGACY_STORAGE_KEY = 'vibey.shell.menu-dock.v1'
 const COMPACT_STORAGE_KEY = 'vibey.shell.menu-compact.v1'
+const STYLE_STORAGE_KEY = 'vibey.shell.menu-style.v1'
+const SIMPLE_WIDTH_STORAGE_KEY = 'vibey.shell.simple-menu-width.v1'
+
+export type ShellMenuStyle = 'simple' | 'advanced'
 
 /** Product default: left of the work card (not frame-left of chat). */
 const DEFAULT_DOCK: ShellMenuDock = 'work'
@@ -33,6 +37,8 @@ type ShellMenuDockStore = {
   dock: ShellMenuDock
   /** Option A: menu contents collapse into the R chip. */
   menuCompact: boolean
+  menuStyle: ShellMenuStyle
+  simpleMenuWidth: number
   dragging: boolean
   candidate: ShellMenuDock
   /** Floating geometry while the rail follows the pointer. */
@@ -43,6 +49,8 @@ type ShellMenuDockStore = {
   workCollapsedHostAvailable: boolean
   setDock: (dock: ShellMenuDock) => void
   setMenuCompact: (compact: boolean) => void
+  setMenuStyle: (style: ShellMenuStyle) => void
+  setSimpleMenuWidth: (width: number) => void
   toggleMenuCompact: () => void
   setWorkCardHostAvailable: (available: boolean) => void
   setWorkCollapsedHostAvailable: (available: boolean) => void
@@ -118,11 +126,35 @@ function persistCompact(compact: boolean): void {
   }
 }
 
+function persistStyle(style: ShellMenuStyle): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(STYLE_STORAGE_KEY, style)
+  } catch {
+    /* optional */
+  }
+}
+
+function clampSimpleMenuWidth(width: number): number {
+  return Math.min(420, Math.max(240, width))
+}
+
+function persistSimpleMenuWidth(width: number): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(SIMPLE_WIDTH_STORAGE_KEY, String(width))
+  } catch {
+    /* optional */
+  }
+}
+
 const EMPTY_LIFT = null as ShellMenuDockLift | null
 
 export const useShellMenuDock = create<ShellMenuDockStore>((set, get) => ({
   dock: DEFAULT_DOCK,
   menuCompact: false,
+  menuStyle: 'simple',
+  simpleMenuWidth: 272,
   dragging: false,
   candidate: DEFAULT_DOCK,
   lift: EMPTY_LIFT,
@@ -135,6 +167,15 @@ export const useShellMenuDock = create<ShellMenuDockStore>((set, get) => ({
   setMenuCompact: (menuCompact) => {
     persistCompact(menuCompact)
     set({ menuCompact })
+  },
+  setMenuStyle: (menuStyle) => {
+    persistStyle(menuStyle)
+    set({ menuStyle })
+  },
+  setSimpleMenuWidth: (width) => {
+    const simpleMenuWidth = clampSimpleMenuWidth(width)
+    persistSimpleMenuWidth(simpleMenuWidth)
+    set({ simpleMenuWidth })
   },
   toggleMenuCompact: () => {
     const next = !get().menuCompact
@@ -191,13 +232,26 @@ export function hydrateShellMenuDockFromStorage(): void {
   const dock = readPersistedDock() ?? DEFAULT_DOCK
   const compactRaw = window.localStorage.getItem(COMPACT_STORAGE_KEY)
   const menuCompact = compactRaw === '1'
+  const styleRaw = window.localStorage.getItem(STYLE_STORAGE_KEY)
+  const menuStyle: ShellMenuStyle = styleRaw === 'advanced' ? 'advanced' : 'simple'
+  const simpleMenuWidth = clampSimpleMenuWidth(
+    Number(window.localStorage.getItem(SIMPLE_WIDTH_STORAGE_KEY)) || 272,
+  )
   if (window.localStorage.getItem(STORAGE_KEY) !== dock) persistDock(dock)
   try {
     window.localStorage.removeItem(LEGACY_STORAGE_KEY)
   } catch {
     /* optional */
   }
-  useShellMenuDock.setState({ dock, candidate: dock, menuCompact, lift: null, dragging: false })
+  useShellMenuDock.setState({
+    dock,
+    candidate: dock,
+    menuCompact,
+    menuStyle,
+    simpleMenuWidth,
+    lift: null,
+    dragging: false,
+  })
 }
 
 export function resetShellMenuDockHydrationForTests(): void {

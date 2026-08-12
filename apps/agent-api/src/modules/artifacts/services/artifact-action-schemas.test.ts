@@ -1678,6 +1678,17 @@ describe('validateActionData', () => {
         }),
       ).toMatch(/include_activity.*boolean/i)
       expect(validateActionData('search_space_context', {})).toMatch(/query.*required/i)
+      expect(validateActionData('search_conversations', {})).toMatch(/query.*required/i)
+      expect(
+        validateActionData('search_conversations', { query: 'brand reputation', limit: 'many' }),
+      ).toMatch(/limit.*number/i)
+      expect(
+        describeActionContract('search_conversations'),
+      ).toMatchObject({
+        action: 'search_conversations',
+        required: ['query'],
+        optional: ['limit'],
+      })
       expect(
         validateActionData('search_space_context', {
           query: 'retainer guardrails',

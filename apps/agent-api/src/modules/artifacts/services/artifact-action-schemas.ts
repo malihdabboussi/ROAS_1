@@ -1402,6 +1402,29 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       scope_override: 'boolean',
     },
   },
+  search_conversations: {
+    required: ['query'],
+    optional: ['limit'],
+    types: { query: 'string', limit: 'number' },
+    descriptions: {
+      query: 'Conversation title phrase to search within the current user and organization.',
+      limit: 'Maximum number of matching conversations to return, from 1 to 20.',
+    },
+    useWhen: [
+      'Find a previous chat by title or topic when the user refers to conversation history outside the current thread.',
+    ],
+    doNotUseWhen: [
+      'Searching Space documents, tasks, missions, or artifacts; use search_space_context.',
+      'Searching external websites or connected communication channels.',
+    ],
+    examples: [
+      {
+        description: 'Find a previous brand-reputation chat.',
+        data: { query: 'Wholesale Universe brand reputation', limit: 10 },
+      },
+    ],
+    strict: true,
+  },
   search_space_context: {
     required: ['query'],
     optional: [

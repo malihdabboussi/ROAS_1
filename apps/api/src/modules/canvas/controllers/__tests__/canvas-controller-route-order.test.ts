@@ -14,6 +14,9 @@ const METHOD_NAMES: Record<number, string> = {
 }
 
 const EXPECTED_CANVAS_ROUTES = [
+  'GET canvas/campaigns/:campaignId/whiteboard -> loadWhiteboard',
+  'POST canvas/campaigns/:campaignId/whiteboard/operations -> applyWhiteboardOperations',
+  'POST canvas/campaigns/:campaignId/whiteboard/undo -> undoWhiteboardOperation',
   'GET canvas/ad-sets/:adSetId -> loadGraph',
   'PATCH canvas/ad-sets/:adSetId -> saveGraph',
   'POST canvas/nodes -> createNode',

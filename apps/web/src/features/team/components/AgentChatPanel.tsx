@@ -90,6 +90,8 @@ import {
 interface AgentChatPanelProps {
   agent: MissionAgent
   modelId?: string
+  /** Force new embedded chat sessions into this campaign scope. */
+  initialCampaignId?: string
   initialSessionId?: string | null
   onSessionChange?: (sessionId: string | null) => void
   /** Parent-owned sidebar lists (Team 2) stay in sync when sessions are created or retitled. */
@@ -152,6 +154,7 @@ interface AgentChatComposerScopeContext {
 export function AgentChatPanel({
   agent,
   modelId,
+  initialCampaignId,
   initialSessionId = null,
   onSessionChange,
   onConversationUpdated,
@@ -369,8 +372,8 @@ export function AgentChatPanel({
   const selectedSession = sessions.find((s) => s.id === selectedSessionId) ?? null
   /** DB may omit campaign_id on older General threads; UI buckets those under General like the sidebar. */
   const activeCampaignId = useMemo(
-    () => resolveActiveCampaignId(selectedSession, generalCampaignId),
-    [selectedSession, generalCampaignId],
+    () => resolveActiveCampaignId(selectedSession, generalCampaignId) ?? initialCampaignId ?? null,
+    [selectedSession, generalCampaignId, initialCampaignId],
   )
   const activeSpaceId = useMemo(() => readConversationSpaceId(selectedSession), [selectedSession])
 
@@ -772,7 +775,8 @@ export function AgentChatPanel({
             assignedCampaigns,
             generalCampaignId,
           }),
-        createAndSelectSession: (campaignId) => createAndSelectSession(campaignId ?? undefined),
+        createAndSelectSession: (campaignId) =>
+          createAndSelectSession(campaignId ?? initialCampaignId ?? undefined),
         getSessions: () => sessionsRef.current,
         getMessages: (conversationId) =>
           useChatStore.getState().messagesByConversation[conversationId] ?? [],
@@ -804,6 +808,7 @@ export function AgentChatPanel({
       activeCampaignId,
       assignedCampaigns,
       generalCampaignId,
+      initialCampaignId,
       selectedSession,
       cancelTeamDraftTimer,
       systemContext,

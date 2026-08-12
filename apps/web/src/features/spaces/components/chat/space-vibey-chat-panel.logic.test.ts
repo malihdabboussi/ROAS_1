@@ -292,20 +292,21 @@ describe('space ROAS chat panel logic', () => {
     expect(isSpaceVibeyChatPanelLoadCurrent(first)).toBe(false)
   })
 
-  it('hydrates only when the conversation has no message cache entry', () => {
+  it('hydrates when the conversation has no cached messages', () => {
     expect(
       conversationNeedsMessageHydration('conv-1', {
         activeConversationId: 'conv-1',
         messagesByConversation: {},
       }),
     ).toBe(true)
-    // Empty meeting threads are valid — `[]` means already fetched.
+    // Empty entries are seeded before any fetch (meeting links, drawer opens) —
+    // they must revalidate or real history stays invisible for the session.
     expect(
       conversationNeedsMessageHydration('conv-1', {
         activeConversationId: 'conv-1',
         messagesByConversation: { 'conv-1': [] },
       }),
-    ).toBe(false)
+    ).toBe(true)
     expect(
       conversationNeedsMessageHydration('conv-1', {
         activeConversationId: 'conv-1',

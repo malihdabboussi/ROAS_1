@@ -220,9 +220,32 @@ export class ConversationsRepository {
     })
   }
 
+  async findDuplicateMeetingConversations(
+    supabase: SupabaseClient,
+    input: {
+      userId: string
+      meetingItemId: string
+      keepConversationId: string
+      orgId?: string | null
+    },
+  ) {
+    let query = supabase
+      .from('conversations')
+      .select('*')
+      .eq('user_id', input.userId)
+      .eq('metadata->>context_type', 'meeting')
+      .eq('metadata->>meeting_item_id', input.meetingItemId)
+      .neq('id', input.keepConversationId)
+    query = input.orgId ? query.eq('org_id', input.orgId) : query.is('org_id', null)
+    const { data, error } = await query
+    if (error) throw new Error(`DB error: ${error.message}`)
+    return data ?? []
+  }
+
   async create(
     supabase: SupabaseClient,
     record: {
+      id?: string
       user_id: string
       title: string
       campaign_id: string | null
@@ -231,6 +254,20 @@ export class ConversationsRepository {
       metadata?: Record<string, unknown>
     },
   ) {
+    if (record.id) {
+      const { data, error } = await supabase
+        .from('conversations')
+        .upsert(record, { onConflict: 'id', ignoreDuplicates: true })
+        .select()
+        .maybeSingle()
+      if (error) throw new Error(`DB error: ${error.message}`)
+      if (data) return data
+
+      const existing = await this.findById(supabase, record.id)
+      if (existing) return existing
+      throw new Error('DB error: deterministic conversation was not persisted')
+    }
+
     const { data, error } = await supabase.from('conversations').insert(record).select().single()
 
     if (error) throw new Error(`DB error: ${error.message}`)

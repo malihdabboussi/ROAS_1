@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   messagesByConversation: {
     'conversation-1': [{ id: 'message-1' }],
   },
+  conversations: [],
 }))
 
 vi.mock('next/navigation', () => ({
@@ -29,8 +30,15 @@ vi.mock('./use-shell-store', () => ({
 
 vi.mock('@/features/studio/store/use-chat-store', () => ({
   useChatStore: (
-    selector: (state: { messagesByConversation: typeof mocks.messagesByConversation }) => unknown,
-  ) => selector({ messagesByConversation: mocks.messagesByConversation }),
+    selector: (state: {
+      messagesByConversation: typeof mocks.messagesByConversation
+      conversations: typeof mocks.conversations
+    }) => unknown,
+  ) =>
+    selector({
+      messagesByConversation: mocks.messagesByConversation,
+      conversations: mocks.conversations,
+    }),
 }))
 
 vi.mock('@/components/conversations', async () => {
@@ -71,7 +79,7 @@ describe('ShellRightPanel', () => {
     render(<ShellRightPanel conversationId={null} />)
 
     expect(await screen.findByRole('tab', { name: 'Tasks' })).toBeInTheDocument()
-    expect(screen.queryByRole('tab', { name: 'Files' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Outputs' })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Sources' })).not.toBeInTheDocument()
     expect(screen.queryByText('Campaign & space')).not.toBeInTheDocument()
     expect(screen.getByTestId('tasks-context')).toHaveTextContent('home')
@@ -87,7 +95,7 @@ describe('ShellRightPanel', () => {
       'aria-selected',
       'true',
     )
-    expect(screen.getByRole('tab', { name: 'Files' })).toHaveAttribute('aria-selected', 'false')
+    expect(screen.getByRole('tab', { name: 'Outputs' })).toHaveAttribute('aria-selected', 'false')
     expect(screen.getByRole('tab', { name: 'Sources' })).toBeInTheDocument()
     expect(screen.getByText('Campaign & space')).toBeInTheDocument()
     expect(screen.getByTestId('scope-picker')).toBeInTheDocument()

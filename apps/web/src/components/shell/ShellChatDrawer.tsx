@@ -11,6 +11,7 @@ import { initConversationTitleAutogen } from '@/features/studio/services/convers
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cn } from '@/lib/utils/cn'
 import { ShellChatMenu } from './ShellChatMenu'
+import { useShellMenuDock } from './use-shell-menu-dock'
 import { useRightEdgePresence } from './use-right-edge-presence'
 import { useShellStore } from './use-shell-store'
 
@@ -28,6 +29,7 @@ export function ShellChatDrawer({
   mobile?: boolean
 }) {
   const open = useShellStore((s) => s.chatDrawer.open)
+  const simpleMenu = useShellMenuDock((s) => s.menuStyle === 'simple')
   const width = useShellStore((s) => s.chatDrawer.width)
   const conversationId = useShellStore((s) => s.chatDrawer.conversationId)
   const historyWidth = useShellStore((s) => s.chatHistoryWidth)
@@ -205,7 +207,7 @@ export function ShellChatDrawer({
           className={cn('shell-chat-drawer-body', expanded && 'shell-chat-drawer-body-expanded')}
           style={bodyStyle}
         >
-          {!historyCollapsed ? (
+          {!simpleMenu && !historyCollapsed ? (
             <>
               <div
                 className={cn('shell-chat-drawer-menu', mobile && 'w-full')}
@@ -231,15 +233,15 @@ export function ShellChatDrawer({
           <div
             className={cn(
               'min-h-0 min-w-0 flex-1 flex-col overflow-hidden',
-              mobile && !historyCollapsed ? 'hidden' : 'flex',
+              mobile && !simpleMenu && !historyCollapsed ? 'hidden' : 'flex',
             )}
-            aria-hidden={mobile && !historyCollapsed}
+            aria-hidden={mobile && !simpleMenu && !historyCollapsed}
           >
             <GlobalChatPanel
               shellSidebarChrome
               onCollapseChat={() => minimizeChatDrawer()}
               headerLeadingAction={
-                historyCollapsed ? (
+                !simpleMenu && historyCollapsed ? (
                   <button
                     type="button"
                     onClick={() => setChatHistoryCollapsed(false)}

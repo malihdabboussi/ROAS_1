@@ -1469,3 +1469,8 @@ Data substrate (DECIDED): YC demo data cloned onto an isolated Supabase test bra
 Non-deterministic responses (timestamps, generated IDs, AI output): the parity differ needs a normalization/ignore list per route. Smallest experiment = run the differ once on an unchanged ref-vs-itself to surface noisy fields. Risk if skipped: false-positive diffs block PRs.
 
 SSE/streaming endpoints (chat): byte-identical diffing does not apply to live streams. Smallest experiment = capture final assembled message + event sequence shape instead of raw stream. Risk if skipped: chat refactors have no usable parity check.
+## 2026-08-10 - Space reporting scroll-boundary batch
+
+- Constrained Campaign, Funnel, Email, Ads, Finance, and Social reporting roots with zero-basis, view-owned vertical scroll regions.
+- Added mounted regression coverage for Campaign Overview and retained the shared shell scroll-boundary coverage.
+- Focused tests passed. Existing cross-feature import violations remain in Campaign Overview, Ads Performance, and Social Reporting and were not expanded into this behavior fix.
