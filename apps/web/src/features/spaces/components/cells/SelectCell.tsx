@@ -1,1 +1,1 @@
-export { SelectCell } from '@/components/ui/forms/SelectCell'
+export * from '@/components/spaces/cells/SelectCell'

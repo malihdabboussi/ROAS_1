@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { SpaceMoveMenu, WorkItemList, WorkItemListRow } from '@/components/work-items'
 import {
   HOME_TOAST_ERRORS,
   HOME_TOAST_SUCCESS,
 } from '@/features/home/config/home-toast-errors.config'
-import { MeetingActionMoveMenu } from '@/features/home/components/MeetingActionMoveMenu'
 import {
   createMeetingAction,
   type MeetingAction,
@@ -49,19 +49,12 @@ function ActionRow({
     )
   }
   return (
-    <li>
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={openTask}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            openTask()
-          }
-        }}
-        className="hover:bg-hover-subtle group flex w-full min-w-0 cursor-pointer items-center gap-3 px-3.5 py-3 text-left transition-colors"
-      >
+    <WorkItemListRow
+      title={action.title}
+      struck={resolved}
+      openLabel={`Open ${action.title}`}
+      onOpen={openTask}
+      leading={
         <button
           type="button"
           onClick={(event) => {
@@ -80,27 +73,27 @@ function ActionRow({
         >
           {resolved ? <Check className="icon-xs" aria-hidden /> : null}
         </button>
-        <span className="min-w-0 flex-1">
-          <span
-            className={`body-3 text-foreground block truncate font-medium ${
-              resolved ? 'line-through opacity-60' : ''
-            }`}
-          >
-            {action.title}
-          </span>
-          <span className="typo-caption text-muted-foreground mt-0.5 flex min-w-0 items-center gap-1">
-            <span className="truncate">{action.canonical_assignee_name || 'Unassigned'}</span>
-            <span aria-hidden>·</span>
-            <span className="shrink-0">{actionSourceLabel(action)}</span>
-          </span>
-        </span>
-        {isMovableAction(action) ? (
-          <span className="shrink-0 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-            <MeetingActionMoveMenu action={action} spaceId={spaceId} onMoved={onMoved} />
-          </span>
-        ) : null}
-      </div>
-    </li>
+      }
+      caption={
+        <>
+          <span className="truncate">{action.canonical_assignee_name || 'Unassigned'}</span>
+          <span aria-hidden>·</span>
+          <span className="shrink-0">{actionSourceLabel(action)}</span>
+        </>
+      }
+      trailing={
+        isMovableAction(action) ? (
+          <SpaceMoveMenu
+            sourceSpaceId={spaceId}
+            itemId={action.id}
+            itemTitle={action.title}
+            errorMessage={HOME_TOAST_ERRORS.MEETING_ACTION_MOVE_FAILED.userMessage}
+            onMoved={(destination) => onMoved(action, destination.title)}
+          />
+        ) : undefined
+      }
+      trailingHoverReveal
+    />
   )
 }
 
@@ -233,7 +226,7 @@ export function MeetingActionItemsSection({
       ) : null}
 
       {actions.length > 0 ? (
-        <ul className="border-border bg-card divide-border rounded-spacing-2 divide-y overflow-hidden border">
+        <WorkItemList>
           {actions.map((action) => (
             <ActionRow
               key={action.id}
@@ -243,7 +236,7 @@ export function MeetingActionItemsSection({
               onMoved={handleMoved}
             />
           ))}
-        </ul>
+        </WorkItemList>
       ) : null}
       {!loading && actions.length === 0 && !composing ? (
         <p className="body-4 text-muted-foreground">No action items yet.</p>

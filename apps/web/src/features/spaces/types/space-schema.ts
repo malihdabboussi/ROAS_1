@@ -1,4 +1,6 @@
 import type {
+  DateDisplayFormat,
+  DateDisplayFormats,
   FieldDef,
   FieldType,
   MissionsConfig,
@@ -7,6 +9,8 @@ import type {
 } from '@/lib/spaces/space-schema-types'
 
 export type {
+  DateDisplayFormat,
+  DateDisplayFormats,
   FieldDef,
   FieldType,
   MissionColumnId,
@@ -28,11 +32,6 @@ export interface SortDef {
   field: string
   dir: 'asc' | 'desc'
 }
-
-export type DateDisplayFormat = 'relative' | 'date_time' | 'date' | 'time'
-export type DateDisplayFormats = Partial<
-  Record<'start_date' | 'due_date' | 'call_date', DateDisplayFormat>
->
 
 /** Platforms supported by the unified Social Research view. */
 export type SocialPlatform = 'instagram' | 'tiktok' | 'youtube' | 'twitter'

@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { Calendar, CheckSquare, Search, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { OptionDot } from '@/components/ui/status/OptionBadge'
 import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { SpaceMappingCell, WorkItemList, WorkItemListRow } from '@/components/work-items'
 import { TasksEmptyIllustration } from '@/features/home/components/HomeEmptyIllustrations'
 import { HomeFeedScopePicker } from '@/features/home/components/HomeFeedScopePicker'
 import { formatHomeShortDate } from '@/features/home/components/HomeListCardShell'
@@ -21,6 +23,7 @@ import {
   type FieldDef,
 } from '@/lib/spaces'
 import { cn } from '@/lib/utils/cn'
+import { useSpaceMappingIndex } from '@/lib/work-items'
 import type { YourTurnItem } from '@/lib/your-turn/types'
 
 function isOverdue(dueAt: string | null, now: Date = new Date()): boolean {
@@ -111,6 +114,11 @@ export function MyTasksPanel({
   presentation?: 'dialog' | 'page'
 }) {
   const [search, setSearch] = useState('')
+  /** Local space overrides for rows relocated through the mapping cell. */
+  const [movedSpaceById, setMovedSpaceById] = useState<
+    Record<string, { id: string; title: string }>
+  >({})
+  const mappingIndex = useSpaceMappingIndex(open || embedded || presentation === 'page')
   const filtered = useMemo(() => filterMyTasksBySearch(items, search), [items, search])
   const groups = useMemo(() => groupMyTasksByDue(filtered), [filtered])
   const spaceIds = useMemo(
@@ -239,7 +247,7 @@ export function MyTasksPanel({
                     {group.items.length}
                   </span>
                 </h2>
-                <ul className="border-border bg-card divide-border rounded-spacing-2 divide-y overflow-hidden border">
+                <WorkItemList>
                   {group.items.map((item) => {
                     const dueForDisplay = item.due_at
                       ? formatHomeShortDate(new Date(item.due_at))
@@ -249,47 +257,67 @@ export function MyTasksPanel({
                       item.space_id != null
                         ? (statusFieldsBySpaceId.get(item.space_id) ?? null)
                         : null
+                    const moved = movedSpaceById[item.id]
+                    const currentSpaceId = moved?.id ?? item.space_id
+                    const mappingEntry = currentSpaceId
+                      ? mappingIndex?.get(currentSpaceId)
+                      : undefined
+                    const mappingLabel = moved?.title ?? mappingEntry?.spaceTitle
+                    const showMappingCell =
+                      item.kind === 'space_item' && currentSpaceId != null && mappingLabel != null
                     return (
-                      <li key={`${item.kind}:${item.id}`}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onOpenChange(false)
-                            void onOpenItem(item)
-                          }}
-                          className="hover:bg-hover-subtle body-3 text-foreground flex w-full min-w-0 items-center gap-3 px-3.5 py-3 text-left transition-colors"
-                        >
-                          <StatusDot item={item} statusField={statusField} />
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate font-medium">{item.title}</span>
-                            {item.preview ? (
-                              <span className="typo-caption text-muted-foreground mt-0.5 block truncate">
-                                {item.preview}
-                              </span>
+                      <WorkItemListRow
+                        key={`${item.kind}:${item.id}`}
+                        title={item.title}
+                        caption={
+                          item.preview ? <span className="truncate">{item.preview}</span> : null
+                        }
+                        leading={<StatusDot item={item} statusField={statusField} />}
+                        trailing={
+                          <span className="flex shrink-0 items-center gap-2">
+                            {showMappingCell ? (
+                              <SpaceMappingCell
+                                sourceSpaceId={currentSpaceId}
+                                itemId={item.id}
+                                itemTitle={item.title}
+                                label={mappingLabel}
+                                pathLabel={mappingEntry?.pathLabel}
+                                onMoved={(destination) => {
+                                  setMovedSpaceById((prev) => ({
+                                    ...prev,
+                                    [item.id]: destination,
+                                  }))
+                                  toast.success(`Moved to ${destination.title}.`)
+                                }}
+                              />
                             ) : null}
+                            <span
+                              className={cn(
+                                'typo-caption flex shrink-0 items-center gap-1 tabular-nums',
+                                dueForDisplay && overdue
+                                  ? 'text-destructive'
+                                  : 'text-muted-foreground',
+                              )}
+                            >
+                              {dueForDisplay ? (
+                                <>
+                                  <Calendar className="h-3 w-3 shrink-0" aria-hidden />
+                                  {dueForDisplay}
+                                </>
+                              ) : (
+                                'No due date'
+                              )}
+                            </span>
                           </span>
-                          <span
-                            className={cn(
-                              'typo-caption flex shrink-0 items-center gap-1 tabular-nums',
-                              dueForDisplay && overdue
-                                ? 'text-destructive'
-                                : 'text-muted-foreground',
-                            )}
-                          >
-                            {dueForDisplay ? (
-                              <>
-                                <Calendar className="h-3 w-3 shrink-0" aria-hidden />
-                                {dueForDisplay}
-                              </>
-                            ) : (
-                              'No due date'
-                            )}
-                          </span>
-                        </button>
-                      </li>
+                        }
+                        onOpen={() => {
+                          onOpenChange(false)
+                          void onOpenItem(item)
+                        }}
+                      />
                     )
                   })}
-                </ul>
+                </WorkItemList>
               </section>
             ))}
           </div>
