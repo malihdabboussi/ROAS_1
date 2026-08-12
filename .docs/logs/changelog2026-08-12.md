@@ -117,3 +117,23 @@ Impact: Edited drafts now round-trip multiline text correctly through Copy and c
 What: Replaced the analyst-style timed agenda with seven client-facing sections and updated the Page Grader contract for this-week/next-week content.
 
 Impact: Generated agendas are concise, screen-share-safe, and omit internal source caveats, minute ranges, and mechanical State/Evidence labels.
+
+## [2026-08-12 16:02] - [FEATURE]
+
+What: Recovered the never-merged Page Grader campaign→Space reconciliation cluster from orphaned branch codex/slack-signal-training (e6afd8f7, ece80b2f, 2a7be8ad, a0ac2a48) onto current main. Every successful brain-package pull now reconciles each Page Grader client_campaign into its own ROAS Space (Overview/Docs/Missions/Calendar/Meta Ads/Funnels views) with a source-linked Campaign Brief doc and Meta account/campaign provenance. Reconciliation is fingerprinted (computePageGraderCampaignSpaceHash stored as client_scope_map.campaign_space_hash) so an unchanged brain hash no longer skips stale Space structure; soft-deleted/archived campaigns are excluded, and generated-only stale Spaces are retired while operator-edited ones are retained. Catch-up accepts ?client_ids= for scoped rollouts. Added read-only rollout audit scripts/roas/audit-page-grader-campaign-spaces.py. User-facing strings aligned to main's "The ROAS Portal" branding.
+
+Why: The 2026-07-22 documentation and decision log described this behavior, but the code only ever existed on codex/slack-signal-training (the slack-signal half of that branch merged; the brain half did not). Main is 3 weeks ahead, so shared files were reconciled hunk-by-hunk (main's mergeClientScopeEntry, ROAS Portal branding, meta-context integration already present).
+
+Impact: Mapped clients get one Space per active Page Grader campaign kept in sync hourly/webhook-driven; no behavior change for unmapped clients. 20 api tests pass across the five touched suites. Skipped from the branch: .vercelignore (main's newer version is authoritative).
+
+Files: apps/api/src/modules/brain/services/page-grader-campaign-space-schema.ts (new), page-grader-campaign-space-sync.ts (new), their __tests__ (new), page-grader-client-import.service.ts (+ test), apps/api/src/modules/integrations/page-grader/services/page-grader-brain-import.service.ts (+ test), page-grader-brain-sync.service.ts (+ test), page-grader-api.helpers.ts, page-grader-api.service.ts, apps/api/src/modules/internal/controllers/internal-page-grader-brain-sync.controller.ts, scripts/roas/audit-page-grader-campaign-spaces.py (new), scripts/roas/README.md, documentation/features/page-grader-campaign-brain-sync.md
+
+## [2026-08-12 16:05] - [FIX]
+
+What: Recovered the Brain Home stuck-on-"Loading" fixes from the same orphaned branch (402d6a6a + surviving half of d73c1430). Ported migration 20260722115000 as 20260812180000_brain_home_health_batch_lite.sql: brain_home_health_batch no longer calls brain_legend_connection_counts per brain (counts ns_memory_connections directly; personal-brain connections_by_type returns {}), appended to scripts/roas/migration-order.txt. BrainHome now clears the Loading state and shows a HEALTH_BATCH_FAILED toast when the health batch fails; fetchBrainHealthBatch tolerates individual failed chunks (throws only if every chunk fails); health-batch chunk size 15→10 in web service and api repository. CampaignOverviewTab workspace clicks deep-link to /spaces?space=<id> instead of bare /spaces (the fetchAllCampaignSpaces half of d73c1430 already landed on main).
+
+Why: Likely-live perf bug — main's newest brain_home_health_batch (20260614111500) still invokes the per-brain legend RPC, which times out at ~20+ Person Brains, 5xxes /api/brain/health/batch, and leaves Brain Home stuck on "Loading" with no error path. Skipped from 402d6a6a: the brainIdsKey/campaignIdsKey effect-dep refactor — main already dedupes refires via the signature-keyed cachedFetch in brain.service.
+
+Impact: Brain Home degrades gracefully on health failures and recovers fully once the migration deploys. Migration NOT applied to prod — deploy migration first, then the api/web build. 3 BrainHome tests and the new CampaignOverviewTab navigation test pass.
+
+Files: supabase/migrations/20260812180000_brain_home_health_batch_lite.sql (new), scripts/roas/migration-order.txt, apps/api/src/modules/brain/repositories/memory-stats.repository.ts, apps/web/src/features/brain/containers/BrainHome.tsx (+ test), apps/web/src/features/brain/services/brain.service.ts, apps/web/src/features/brain/config/brain-toast-errors.config.ts, apps/web/src/app/(dashboard)/campaigns/[id]/_components/tabs/CampaignOverviewTab.tsx (+ new test)
