@@ -404,8 +404,25 @@ export class ArtifactLegacySessionCampaignService {
           return ctx.campaignId
         }
         if (ctx && (ctx.spaceId || ctx.scopeKind === 'personal')) {
-          target.logger.debug('[Campaign] Resolved personal scope from request context')
-          return null
+          if (ctx.spaceId) {
+            const { data: space, error: spaceError } = await this.repository.findSpaceCampaignId(
+              supabase,
+              ctx.spaceId,
+            )
+            if (spaceError) throw spaceError
+            const spaceCampaignId =
+              typeof space?.campaign_id === 'string' && space.campaign_id.trim().length > 0
+                ? space.campaign_id.trim()
+                : null
+            if (spaceCampaignId) {
+              target.logger.debug(
+                `[Campaign] Resolved space campaign from request context: ${spaceCampaignId}`,
+              )
+              return spaceCampaignId
+            }
+          }
+          target.logger.debug('[Campaign] Unscoped context resolved to General campaign')
+          return this.ensureGeneralCampaignId(target, supabase, userId, sessionKey)
         }
       }
     }
