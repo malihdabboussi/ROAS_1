@@ -8,11 +8,13 @@ export function MeetingAgendaPrepSection({
   prep,
   prepDescription,
   joinUrl,
+  agendaDocLink,
   onOpenPrep,
 }: {
   prep: ParsedMeetingPrep
   prepDescription: string | null | undefined
   joinUrl: string | null
+  agendaDocLink?: string | null
   onOpenPrep?: () => void
 }) {
   return (
@@ -37,6 +39,16 @@ export function MeetingAgendaPrepSection({
             className="body-4 text-primary gap-spacing-1 inline-flex items-center"
           >
             Meeting link <ExternalLink className="icon-xs" aria-hidden />
+          </a>
+        ) : null}
+        {agendaDocLink ? (
+          <a
+            href={agendaDocLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="body-4 text-primary gap-spacing-1 inline-flex items-center"
+          >
+            Open Google agenda <ExternalLink className="icon-xs" aria-hidden />
           </a>
         ) : null}
         {prep.meetingId ? (

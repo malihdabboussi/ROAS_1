@@ -3,11 +3,8 @@
 import { useRef, useState } from 'react'
 import { ArrowUp, Copy, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
-import {
-  DRAFT_CARD_USE_EVENT,
-  type DraftCardUseDetail,
-  type DraftVersion,
-} from './draft-versions.utils'
+import { DRAFT_CARD_USE_EVENT, type DraftCardUseDetail } from '@/lib/chat'
+import { type DraftVersion } from './draft-versions.utils'
 
 const VERSION_LETTERS = 'ABCDEFGH'
 

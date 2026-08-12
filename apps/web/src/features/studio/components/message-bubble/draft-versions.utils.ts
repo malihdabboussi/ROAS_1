@@ -68,10 +68,3 @@ export function splitDraftSegments(content: string): DraftContentSegment[] {
 export function hasDraftFence(content: string): boolean {
   return content.includes('```draft')
 }
-
-/** Fired by DraftVersionsCard's "use" action; chat panels put the text in their composer. */
-export const DRAFT_CARD_USE_EVENT = 'chat:draft-card-use'
-
-export interface DraftCardUseDetail {
-  text: string
-}

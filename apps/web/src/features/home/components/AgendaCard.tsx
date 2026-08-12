@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   dayKeyInTimeZone,
@@ -15,17 +16,25 @@ import {
 } from '@/features/home/components/AgendaCardChrome'
 import { AgendaCardListBody } from '@/features/home/components/AgendaCardListBody'
 import { HomeInstantMeetingHost } from '@/features/home/components/HomeInstantMeetingHost'
+import { HOME_TOAST_ERRORS } from '@/features/home/config/home-toast-errors.config'
 import { useAgendaCardData } from '@/features/home/hooks/use-agenda-card-data'
-import {
-  agendaEventMinimizeKey,
-  setAgendaEventMinimized,
-} from '@/features/home/lib/agenda-minimize'
-import { openAgendaEventDetail } from '@/features/home/lib/agenda-open-routing'
 import {
   dedupeAgendaEvents,
   pickNextAgendaEvent,
   tomorrowDayKey,
 } from '@/features/home/lib/agenda-list-view'
+import {
+  agendaEventMinimizeKey,
+  readMinimizedAgendaKeys,
+  setAgendaEventMinimized,
+  writeMinimizedAgendaKeys,
+} from '@/features/home/lib/agenda-minimize'
+import { openAgendaEventDetail } from '@/features/home/lib/agenda-open-routing'
+import {
+  fetchPersistedAgendaMinimizedKeys,
+  persistAgendaEventMinimized,
+} from '@/features/home/services/agenda-minimize.service'
+import { invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { useWorkspaceSettingsModal } from '@/lib/settings/workspace-settings-modal-context'
 import type { YourTurnItem } from '@/lib/your-turn/types'
@@ -47,6 +56,10 @@ export function AgendaCard({
 } = {}) {
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
   const [instantMeetingOpen, setInstantMeetingOpen] = useState(false)
+  // Tracks which keys the server already knows, plus in-flight user intent so a
+  // late fetch/persist response never overwrites a newer local toggle.
+  const serverSyncedMinimizedKeysRef = useRef<Set<string>>(new Set())
+  const minimizedOverridesRef = useRef<Map<string, boolean>>(new Map())
   const {
     view,
     setView,
@@ -74,6 +87,7 @@ export function AgendaCard({
     timezone,
     effectiveScope,
     showTeamToggle,
+    load,
   } = useAgendaCardData()
 
   const anyConnected = connected.google_calendar || connected.outlook
@@ -171,10 +185,68 @@ export function AgendaCard({
 
   const handleMinimizedChange = useCallback(
     (ev: CalendarAgendaEvent, minimized: boolean) => {
+      const key = agendaEventMinimizeKey(ev)
+      minimizedOverridesRef.current.set(key, minimized)
+      if (minimized) serverSyncedMinimizedKeysRef.current.add(key)
+      else serverSyncedMinimizedKeysRef.current.delete(key)
       setMinimizedKeys(setAgendaEventMinimized(ev, minimized))
+      void persistAgendaEventMinimized(ev, minimized).catch(() => {
+        if (minimizedOverridesRef.current.get(key) !== minimized) return
+        minimizedOverridesRef.current.set(key, !minimized)
+        if (minimized) serverSyncedMinimizedKeysRef.current.delete(key)
+        else serverSyncedMinimizedKeysRef.current.add(key)
+        setMinimizedKeys(setAgendaEventMinimized(ev, !minimized))
+        toast.error(
+          minimized
+            ? HOME_TOAST_ERRORS.AGENDA_MINIMIZE_FAILED.userMessage
+            : HOME_TOAST_ERRORS.AGENDA_RESTORE_FAILED.userMessage,
+        )
+      })
     },
     [setMinimizedKeys],
   )
+
+  useEffect(() => {
+    let cancelled = false
+    void fetchPersistedAgendaMinimizedKeys()
+      .then((persistedKeys) => {
+        if (cancelled) return
+        const merged = readMinimizedAgendaKeys()
+        for (const key of persistedKeys) {
+          serverSyncedMinimizedKeysRef.current.add(key)
+          if (minimizedOverridesRef.current.get(key) !== false) merged.add(key)
+        }
+        for (const [key, minimized] of minimizedOverridesRef.current) {
+          if (minimized) merged.add(key)
+          else merged.delete(key)
+        }
+        writeMinimizedAgendaKeys(merged)
+        setMinimizedKeys(merged)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          toast.error(HOME_TOAST_ERRORS.AGENDA_SETTINGS_LOAD_FAILED.userMessage)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [setMinimizedKeys])
+
+  // Back-fill: keys minimized before server persistence existed live only in
+  // localStorage — push them up once so other devices agree.
+  useEffect(() => {
+    for (const event of events) {
+      const key = agendaEventMinimizeKey(event)
+      if (!minimizedKeys.has(key) || serverSyncedMinimizedKeysRef.current.has(key)) continue
+      serverSyncedMinimizedKeysRef.current.add(key)
+      void persistAgendaEventMinimized(event, true).catch(() => {
+        serverSyncedMinimizedKeysRef.current.delete(key)
+        setMinimizedKeys(setAgendaEventMinimized(event, false))
+        toast.error(HOME_TOAST_ERRORS.AGENDA_MINIMIZE_FAILED.userMessage)
+      })
+    }
+  }, [events, minimizedKeys, setMinimizedKeys])
 
   return (
     <div
@@ -255,9 +327,11 @@ export function AgendaCard({
       <HomeInstantMeetingHost
         open={instantMeetingOpen}
         onOpenChange={setInstantMeetingOpen}
-        onCreated={() => undefined}
+        onCreated={() => {
+          invalidateCachedFetch('calendar-agenda:')
+          void load()
+        }}
       />
-
     </div>
   )
 }
