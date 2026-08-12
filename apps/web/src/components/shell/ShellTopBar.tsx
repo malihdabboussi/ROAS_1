@@ -16,6 +16,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Search,
+  SendHorizontal,
   Users,
   Workflow,
 } from 'lucide-react'
@@ -38,6 +39,9 @@ function breadcrumbFromPath(
   if (pathname.startsWith('/home/inbox')) return { label: 'Inbox', Icon: Inbox }
   if (pathname.startsWith('/home/meetings')) return { label: 'Meetings', Icon: CalendarDays }
   if (pathname.startsWith('/home/my-tasks')) return { label: 'My Tasks', Icon: ListChecks }
+  if (pathname.startsWith('/home/delegation-desk')) {
+    return { label: 'Delegation Desk', Icon: SendHorizontal }
+  }
   if (pathname.startsWith('/home/channels')) return { label: 'Channels', Icon: MessageSquare }
   if (pathname.startsWith('/team/skills')) return { label: 'Skills', Icon: Layers3 }
   if (pathname.startsWith('/team/teams')) return { label: 'Teams', Icon: Users }

@@ -202,6 +202,14 @@ describe('ShellTopBar', () => {
     expect(screen.queryByTitle('Section options')).not.toBeInTheDocument()
   })
 
+  it('names the Delegation Desk route in the breadcrumb', () => {
+    mocks.pathname = '/home/delegation-desk'
+
+    render(<ShellTopBar />)
+
+    expect(screen.getByText('Delegation Desk')).toBeInTheDocument()
+  })
+
   it('keeps identifying params in the recorded work-area page id and href', () => {
     mocks.shellState.chatDrawer = { open: true }
     mocks.params = new URLSearchParams('conv=conversation-1')

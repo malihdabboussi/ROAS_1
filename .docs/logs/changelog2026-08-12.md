@@ -167,3 +167,13 @@ Why: Recents could reopen empty chats or broad screens, campaign-less meeting ch
 Impact: Recents restore exact chats and meetings, meeting chats show resolvable Campaign/Space scope and link back to their workspace, summary controls no longer overlap, and artifact resizing preserves a readable work column.
 
 Files: apps/web/src/components/shell, apps/web/src/components/conversations, apps/web/src/features/home, apps/web/src/features/spaces/components/header/SpaceBreadcrumbHeader.tsx, apps/web/src/app/(dashboard)/home, apps/api/src/modules/meetings, documentation/features/claude-chatgpt-shell.md
+
+## [2026-08-12 15:55] - [FIX]
+
+What: Added the missing `/home/delegation-desk` breadcrumb case to ShellTopBar with the matching sidebar icon.
+
+Why: The route rendered a fallback Inbox crumb and recorded mistitled recent-surface entries.
+
+Impact: Delegation Desk names itself correctly in the top bar and remembered work surfaces.
+
+Files: apps/web/src/components/shell/ShellTopBar.tsx (+ test)
