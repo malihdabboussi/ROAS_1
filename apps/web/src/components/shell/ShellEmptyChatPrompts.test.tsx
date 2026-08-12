@@ -17,12 +17,13 @@ describe('shell empty chat prompts', () => {
       'deep-search',
       'task',
       'image',
+      'video',
       'slides',
       'doc',
       'daily-brief',
       'delegate',
     ])
-    expect(SHELL_EMPTY_CHAT_QUICK_STARTS).toHaveLength(7)
+    expect(SHELL_EMPTY_CHAT_QUICK_STARTS).toHaveLength(8)
     expect(
       SHELL_EMPTY_CHAT_QUICK_STARTS.every(
         (quickStart) =>
@@ -58,6 +59,9 @@ describe('shell empty chat prompts', () => {
     expect(byId.get('deep-search')).toMatch(/search_space_context/)
     expect(byId.get('task')).toMatch(/create_task/)
     expect(byId.get('image')).toMatch(/generate_image/)
+    expect(byId.get('video')).toMatch(/generate_video/)
+    expect(byId.get('video')).toMatch(/ig-organic-video-ad/)
+    expect(byId.get('video')).toMatch(/create_mission/)
     expect(byId.get('slides')).toMatch(/create_presentation/)
     expect(byId.get('doc')).toMatch(/create_docx/)
     expect(byId.get('daily-brief')).toMatch(/get_person_briefing/)

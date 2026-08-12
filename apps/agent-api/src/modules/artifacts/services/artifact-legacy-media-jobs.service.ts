@@ -46,6 +46,7 @@ export class ArtifactLegacyMediaJobsService {
       model: string
       aspect_ratio?: string
       duration_seconds?: number
+      space_id?: string | null
     },
   ): Promise<{ id: string }> {
     const { data, error } = await this.repository.createMediaJob(supabase, {
@@ -59,6 +60,7 @@ export class ArtifactLegacyMediaJobsService {
       model: job.model,
       aspect_ratio: job.aspect_ratio ?? null,
       duration_seconds: job.duration_seconds ?? null,
+      space_id: job.space_id ?? null,
     })
 
     if (error) throw error

@@ -416,6 +416,10 @@ export class ArtifactLegacyMediaGenerateService {
       }
     }
 
+    const spaceIdFromInput =
+      typeof input.space_id === 'string' && input.space_id.trim().length > 0
+        ? input.space_id.trim()
+        : null
     const billingModel = isSeedance ? this.mediaProvider.resolveSeedance2BillingModel(input) : model
     const isMissionSession = target.isMissionSessionKey(sessionKey ?? '')
     const missionContext = isMissionSession
@@ -467,6 +471,7 @@ export class ArtifactLegacyMediaGenerateService {
           model: billingModel,
           aspect_ratio: aspectRatio,
           duration_seconds: duration,
+          space_id: spaceIdFromInput,
         })
 
         const baseResponse = {
@@ -555,6 +560,7 @@ export class ArtifactLegacyMediaGenerateService {
       model: this.mediaProvider.GOOGLE_VIDEO_MODEL_ID,
       aspect_ratio: aspectRatio,
       duration_seconds: duration,
+      space_id: spaceIdFromInput,
     })
 
     const baseResponse = {

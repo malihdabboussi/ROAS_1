@@ -57,6 +57,9 @@ export class ArtifactLegacyMediaStatusService {
         ? target.requestContext.get(conversationIdForSpace)
         : null
     const spaceIdFromCtx = (rcSpace?.spaceId as string | null | undefined) ?? null
+    const jobSpaceId =
+      typeof job.space_id === 'string' && job.space_id.trim().length > 0 ? job.space_id : null
+    const effectiveSpaceId = jobSpaceId ?? spaceIdFromCtx
 
     if (job.status === 'succeeded' && job.media_asset_id) {
       if (missionContext) {
@@ -80,7 +83,7 @@ export class ArtifactLegacyMediaStatusService {
         job,
         (job.result_url as string) ?? '',
         String(job.media_asset_id),
-        spaceIdFromCtx,
+        effectiveSpaceId,
       )
     }
 
@@ -179,7 +182,7 @@ export class ArtifactLegacyMediaStatusService {
         (job.prompt as string) ?? '',
         (job.model as string) ?? '',
         statusOrgIdForUpload,
-        spaceIdFromCtx,
+        effectiveSpaceId,
         conversationIdForSpace,
       )
 
@@ -263,7 +266,7 @@ export class ArtifactLegacyMediaStatusService {
         })
       }
 
-      return buildSucceededVideoStatus(job, upload.url ?? '', assetId, spaceIdFromCtx)
+      return buildSucceededVideoStatus(job, upload.url ?? '', assetId, effectiveSpaceId)
     }
 
     if (provider === 'google') {
@@ -344,7 +347,7 @@ export class ArtifactLegacyMediaStatusService {
           (job.prompt as string) ?? '',
           (job.model as string) ?? '',
           googleOrgIdForUpload,
-          spaceIdFromCtx,
+          effectiveSpaceId,
           conversationIdForSpace,
         )
       } else if (uri) {
@@ -357,7 +360,7 @@ export class ArtifactLegacyMediaStatusService {
           (job.prompt as string) ?? '',
           (job.model as string) ?? '',
           googleOrgIdForUpload,
-          spaceIdFromCtx,
+          effectiveSpaceId,
           conversationIdForSpace,
         )
       } else {
@@ -447,7 +450,7 @@ export class ArtifactLegacyMediaStatusService {
         })
       }
 
-      return buildSucceededVideoStatus(job, upload.url ?? '', assetId, spaceIdFromCtx)
+      return buildSucceededVideoStatus(job, upload.url ?? '', assetId, effectiveSpaceId)
     }
 
     return { success: false, error: 'Unsupported provider' }

@@ -12,7 +12,7 @@ export class ArtifactMediaJobsRepository {
     return (await supabase
       .from('media_generation_jobs')
       .select(
-        'id, user_id, campaign_id, provider, provider_job_id, status, media_asset_id, result_url, prompt, model, duration_seconds',
+        'id, user_id, campaign_id, space_id, provider, provider_job_id, status, media_asset_id, result_url, prompt, model, duration_seconds',
       )
       .eq('id', input.jobId)
       .eq('user_id', input.userId)
@@ -38,11 +38,10 @@ export class ArtifactMediaJobsRepository {
     supabase: SupabaseClient,
     payload: Record<string, unknown>,
   ): Promise<{ data: Record<string, unknown> | null; error: QueryError | null }> {
-    return (await supabase
-      .from('media_generation_jobs')
-      .insert(payload)
-      .select('id')
-      .single()) as { data: Record<string, unknown> | null; error: QueryError | null }
+    return (await supabase.from('media_generation_jobs').insert(payload).select('id').single()) as {
+      data: Record<string, unknown> | null
+      error: QueryError | null
+    }
   }
 
   async updateMediaJob(
