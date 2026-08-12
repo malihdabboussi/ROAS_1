@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
+import { ScheduleModule } from '@nestjs/schedule'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { SharedModule } from '@vibey/api-shared'
 import { HealthController } from './health.controller'
+import { resolveAgentApiEnvFilePaths } from './lib/agent-api-env'
 import { AdminSkillBuilderModule } from './modules/admin-skill-builder/admin-skill-builder.module'
 import { AgentPolicyModule } from './modules/agent-policy/agent-policy.module'
 import { AgentSyncModule } from './modules/agent-sync/agent-sync.module'
@@ -20,7 +22,6 @@ import { SessionsModule } from './modules/sessions/sessions.module'
 import { SharedContextModule } from './modules/shared/shared-context.module'
 import { TaskAgentModule } from './modules/task-agent/task-agent.module'
 import { VibeyMcpModule } from './modules/vibey-mcp/vibey-mcp.module'
-import { resolveAgentApiEnvFilePaths } from './lib/agent-api-env'
 
 @Module({
   controllers: [HealthController],
@@ -36,6 +37,7 @@ import { resolveAgentApiEnvFilePaths } from './lib/agent-api-env'
         limit: 100,
       },
     ]),
+    ScheduleModule.forRoot(),
     SharedModule,
     SharedContextModule,
     AgentPolicyModule,

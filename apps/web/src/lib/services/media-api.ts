@@ -31,6 +31,8 @@ export interface MediaAsset {
   description: string | null
   is_public: boolean
   public_url: string | null
+  poster_url?: string | null
+  duration_seconds?: number | null
   source: string | null
   source_model: string | null
   source_prompt: string | null

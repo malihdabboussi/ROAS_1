@@ -43,6 +43,8 @@ export type MediaResult = {
   original_filename: string
   asset_type: string
   public_url: string | null
+  poster_url?: string | null
+  duration_seconds?: number | null
   mime_type: string
   category?: string | null
   source?: string | null

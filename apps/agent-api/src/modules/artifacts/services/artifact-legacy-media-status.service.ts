@@ -3,6 +3,10 @@ import { ArtifactMissionDeliverablesRepository } from '../repositories/artifact-
 import { ArtifactLegacyMediaJobsService } from './artifact-legacy-media-jobs.service'
 import { ArtifactLegacyMediaUploadService } from './artifact-legacy-media-upload.service'
 
+/** How long a completion claim is honored before a crashed worker's claim may be retaken. */
+export const COMPLETION_CLAIM_TIMEOUT_MINUTES = 10
+export const BILLING_CLAIM_TIMEOUT_MINUTES = 10
+
 function buildSucceededVideoStatus(
   job: Record<string, unknown>,
   url: string,
@@ -109,6 +113,10 @@ export class ArtifactLegacyMediaStatusService {
       }
 
       if (prediction.status === 'failed' || prediction.status === 'canceled') {
+        const claimed = await this.claimCompletion(supabase, target, jobId, sessionKey)
+        if (!claimed) {
+          return this.resolveConcurrentCompletion(supabase, { jobId, userId, effectiveSpaceId })
+        }
         await this.jobsService.updateMediaJob(supabase, job.id as string, {
           status: prediction.status === 'canceled' ? 'canceled' : 'failed',
           error: prediction.error ?? 'Video generation failed',
@@ -156,6 +164,14 @@ export class ArtifactLegacyMediaStatusService {
         return { success: true, job_id: job.id, status: prediction.status }
       }
 
+      // Terminal provider success: from here on, every completion side effect
+      // (upload, poster, billing, job update) must run exactly once across
+      // concurrent agent polls and sweeper passes.
+      const claimed = await this.claimCompletion(supabase, target, jobId, sessionKey)
+      if (!claimed) {
+        return this.resolveConcurrentCompletion(supabase, { jobId, userId, effectiveSpaceId })
+      }
+
       const outputUrl = Array.isArray(prediction.output)
         ? (prediction.output[0] as string)
         : (prediction.output as string)
@@ -184,6 +200,7 @@ export class ArtifactLegacyMediaStatusService {
         statusOrgIdForUpload,
         effectiveSpaceId,
         conversationIdForSpace,
+        Number(job.duration_seconds ?? 0) || null,
       )
 
       if (!upload.success) {
@@ -199,48 +216,11 @@ export class ArtifactLegacyMediaStatusService {
           ? String((upload.asset as any).id)
           : null
 
-      const alreadyCharged = await this.jobsService.hasProviderUsageEvent(
-        supabase,
+      await this.recordVideoBillingOnce(supabase, target, job, {
+        provider: 'replicate',
         userId,
-        'replicate',
-        String(job.provider_job_id ?? ''),
-      )
-      if (!alreadyCharged) {
-        const model = String(job.model ?? '')
-        const seconds = Number(job.duration_seconds ?? 0)
-        if (!Number.isFinite(seconds) || seconds <= 0) {
-          throw new Error(
-            `Invalid duration_seconds for video billing: ${String(job.duration_seconds)}`,
-          )
-        }
-        const rate = await target.credits.getUnitCost(model, 'video_seconds')
-        if (rate === null) {
-          throw new Error(`No pricing in DB for video model: ${model}`)
-        }
-        const cost = seconds * rate
-        const conversationId = sessionKey ? target.parseConversationId(sessionKey) : null
-        const statusOrgId = target.resolveOrgId?.(sessionKey) as string | null | undefined
-        await target.credits.processFixedCostUsage({
-          userId,
-          campaignId: ((job.campaign_id as string | null) ?? undefined) as string | undefined,
-          conversationId: conversationId ?? undefined,
-          orgId: statusOrgId ?? undefined,
-          feature: 'media',
-          action: 'generate_video',
-          provider: 'replicate',
-          modelName: model,
-          serviceType: 'video',
-          apiCostUsd: cost,
-          costSource: 'db_pricing',
-          metadata: {
-            provider: 'replicate',
-            provider_job_id: String(job.provider_job_id ?? ''),
-            unit: 'second',
-            quantity: seconds,
-            unit_cost_usd: rate,
-          },
-        })
-      }
+        sessionKey,
+      })
 
       await this.jobsService.updateMediaJob(supabase, job.id as string, {
         status: 'succeeded',
@@ -281,6 +261,10 @@ export class ArtifactLegacyMediaStatusService {
       })
 
       if (operation.error) {
+        const claimed = await this.claimCompletion(supabase, target, jobId, sessionKey)
+        if (!claimed) {
+          return this.resolveConcurrentCompletion(supabase, { jobId, userId, effectiveSpaceId })
+        }
         await this.jobsService.updateMediaJob(supabase, job.id as string, {
           status: 'failed',
           error: JSON.stringify(operation.error).slice(0, 500),
@@ -328,6 +312,12 @@ export class ArtifactLegacyMediaStatusService {
         return { success: true, job_id: job.id, status: 'processing' }
       }
 
+      // Terminal provider success — same exactly-once ownership as replicate.
+      const claimed = await this.claimCompletion(supabase, target, jobId, sessionKey)
+      if (!claimed) {
+        return this.resolveConcurrentCompletion(supabase, { jobId, userId, effectiveSpaceId })
+      }
+
       const v = operation.response?.generatedVideos?.[0]?.video
       const videoBytesB64 = v?.videoBytes ?? ''
       const uri = v?.uri ?? ''
@@ -349,6 +339,9 @@ export class ArtifactLegacyMediaStatusService {
           googleOrgIdForUpload,
           effectiveSpaceId,
           conversationIdForSpace,
+          undefined,
+          undefined,
+          Number(job.duration_seconds ?? 0) || null,
         )
       } else if (uri) {
         upload = await this.uploadService.uploadMediaFromUrl(
@@ -362,6 +355,7 @@ export class ArtifactLegacyMediaStatusService {
           googleOrgIdForUpload,
           effectiveSpaceId,
           conversationIdForSpace,
+          Number(job.duration_seconds ?? 0) || null,
         )
       } else {
         upload = { success: false, error: 'No output from Google video generation' }
@@ -380,51 +374,11 @@ export class ArtifactLegacyMediaStatusService {
           ? String((upload.asset as any).id)
           : null
 
-      const alreadyCharged = await this.jobsService.hasProviderUsageEvent(
-        supabase,
+      await this.recordVideoBillingOnce(supabase, target, job, {
+        provider: 'google',
         userId,
-        'google',
-        String(job.provider_job_id ?? ''),
-      )
-      if (!alreadyCharged) {
-        const seconds = Number(job.duration_seconds ?? 0)
-        if (!Number.isFinite(seconds) || seconds <= 0) {
-          throw new Error(
-            `Invalid duration_seconds for video billing: ${String(job.duration_seconds)}`,
-          )
-        }
-        const googleModelKey = String(job.model ?? this.GOOGLE_VIDEO_MODEL_ID)
-        const googleRate =
-          (await target.credits.getUnitCost(
-            googleModelKey.replace(/-generate-preview$/, '-no-audio'),
-            'video_seconds',
-          )) ??
-          (await target.credits.getUnitCost('veo-3.1-fast-no-audio', 'video_seconds')) ??
-          0.1
-        const cost = seconds * googleRate
-        const conversationId = sessionKey ? target.parseConversationId(sessionKey) : null
-        const googleOrgId = target.resolveOrgId?.(sessionKey) as string | null | undefined
-        await target.credits.processFixedCostUsage({
-          userId,
-          campaignId: ((job.campaign_id as string | null) ?? undefined) as string | undefined,
-          conversationId: conversationId ?? undefined,
-          orgId: googleOrgId ?? undefined,
-          feature: 'media',
-          action: 'generate_video',
-          provider: 'google',
-          modelName: googleModelKey,
-          serviceType: 'video',
-          apiCostUsd: cost,
-          costSource: 'db_pricing',
-          metadata: {
-            provider: 'google',
-            provider_job_id: String(job.provider_job_id ?? ''),
-            unit: 'second',
-            quantity: seconds,
-            unit_cost_usd: googleRate,
-          },
-        })
-      }
+        sessionKey,
+      })
 
       await this.jobsService.updateMediaJob(supabase, job.id as string, {
         status: 'succeeded',
@@ -454,6 +408,144 @@ export class ArtifactLegacyMediaStatusService {
     }
 
     return { success: false, error: 'Unsupported provider' }
+  }
+
+  /**
+   * Acquires exclusive completion ownership for a job whose provider reported
+   * a terminal state. Exactly one concurrent caller (agent poll or sweeper)
+   * wins; a claim older than COMPLETION_CLAIM_TIMEOUT_MINUTES is treated as
+   * abandoned (worker crash) and may be retaken.
+   */
+  private async claimCompletion(
+    supabase: Record<string, any>,
+    target: Record<string, any>,
+    jobId: string,
+    sessionKey?: string,
+  ): Promise<boolean> {
+    const claimedBy = target.parseAgentIdFromSessionKey(sessionKey ?? '') ?? 'agent-poll'
+    const staleBeforeIso = new Date(
+      Date.now() - COMPLETION_CLAIM_TIMEOUT_MINUTES * 60_000,
+    ).toISOString()
+    return this.jobsService.claimMediaJobCompletion(supabase as never, {
+      jobId,
+      claimedBy: String(claimedBy),
+      staleBeforeIso,
+    })
+  }
+
+  /**
+   * Result for a caller that lost the completion claim: the canonical terminal
+   * state if the winner already recorded it, otherwise "processing" while the
+   * winner finishes.
+   */
+  private async resolveConcurrentCompletion(
+    supabase: Record<string, any>,
+    input: { jobId: string; userId: string; effectiveSpaceId: string | null },
+  ) {
+    const reloaded = await this.jobsService.findMediaJobForUser(supabase as never, {
+      jobId: input.jobId,
+      userId: input.userId,
+    })
+    if (reloaded?.status === 'succeeded' && reloaded.media_asset_id) {
+      return buildSucceededVideoStatus(
+        reloaded,
+        (reloaded.result_url as string) ?? '',
+        String(reloaded.media_asset_id),
+        input.effectiveSpaceId,
+      )
+    }
+    if (reloaded?.status === 'failed' || reloaded?.status === 'canceled') {
+      return {
+        success: false,
+        job_id: input.jobId,
+        status: String(reloaded.status),
+        error: String(reloaded.error ?? ''),
+      }
+    }
+    return { success: true, job_id: input.jobId, status: 'processing' }
+  }
+
+  private async recordVideoBillingOnce(
+    supabase: Record<string, any>,
+    target: Record<string, any>,
+    job: Record<string, unknown>,
+    input: { provider: 'replicate' | 'google'; userId: string; sessionKey?: string },
+  ): Promise<void> {
+    if (job.billing_recorded_at) return
+    const providerJobId = String(job.provider_job_id ?? '')
+    const legacyCharged = await this.jobsService.hasProviderUsageEvent(
+      supabase as never, input.userId, input.provider, providerJobId,
+    )
+    const jobId = String(job.id)
+    const claimedBy = `${input.provider}:${providerJobId}:${crypto.randomUUID()}`
+    if (legacyCharged) {
+      const won = await this.jobsService.claimMediaJobBilling(supabase as never, {
+        jobId,
+        claimedBy,
+        staleBeforeIso: new Date(Date.now() - BILLING_CLAIM_TIMEOUT_MINUTES * 60_000).toISOString(),
+      })
+      if (won)
+        await this.jobsService.completeMediaJobBilling(supabase as never, { jobId, claimedBy })
+      return
+    }
+    const seconds = Number(job.duration_seconds ?? 0)
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+      throw new Error(`Invalid duration_seconds for video billing: ${String(job.duration_seconds)}`)
+    }
+    const rate = await this.resolveVideoRate(target, job, input.provider)
+    const won = await this.jobsService.claimMediaJobBilling(supabase as never, {
+      jobId,
+      claimedBy,
+      staleBeforeIso: new Date(Date.now() - BILLING_CLAIM_TIMEOUT_MINUTES * 60_000).toISOString(),
+    })
+    if (!won) throw new Error(`Video billing is already being settled for media job ${jobId}`)
+    const conversationId = input.sessionKey ? target.parseConversationId(input.sessionKey) : null
+    const orgId = target.resolveOrgId?.(input.sessionKey) as string | null | undefined
+    try {
+      await target.credits.processFixedCostUsage({
+        userId: input.userId,
+        campaignId: ((job.campaign_id as string | null) ?? undefined) as string | undefined,
+        conversationId: conversationId ?? undefined,
+        orgId: orgId ?? undefined,
+        feature: 'media',
+        action: 'generate_video',
+        provider: input.provider,
+        modelName: rate.model,
+        serviceType: 'video',
+        apiCostUsd: seconds * rate.unitCost,
+        costSource: 'db_pricing',
+        metadata: { provider: input.provider, provider_job_id: providerJobId,
+          unit: 'second', quantity: seconds, unit_cost_usd: rate.unitCost },
+      })
+      await this.jobsService.completeMediaJobBilling(supabase as never, { jobId, claimedBy })
+    } catch (error) {
+      await this.jobsService.releaseMediaJobBilling(supabase as never, { jobId, claimedBy })
+      throw error
+    }
+  }
+
+  private async resolveVideoRate(
+    target: Record<string, any>,
+    job: Record<string, unknown>,
+    provider: 'replicate' | 'google',
+  ): Promise<{ model: string; unitCost: number }> {
+    if (provider === 'replicate') {
+      const model = String(job.model ?? '')
+      const rate = await target.credits.getUnitCost(model, 'video_seconds')
+      if (rate === null) {
+        throw new Error(`No pricing in DB for video model: ${model}`)
+      }
+      return { model, unitCost: rate }
+    }
+    const googleModelKey = String(job.model ?? this.GOOGLE_VIDEO_MODEL_ID)
+    const googleRate =
+      (await target.credits.getUnitCost(
+        googleModelKey.replace(/-generate-preview$/, '-no-audio'),
+        'video_seconds',
+      )) ??
+      (await target.credits.getUnitCost('veo-3.1-fast-no-audio', 'video_seconds')) ??
+      0.1
+    return { model: googleModelKey, unitCost: googleRate }
   }
 
   async syncMissionVideoDeliverableForJob(
