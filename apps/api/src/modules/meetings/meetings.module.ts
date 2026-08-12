@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { BrainModule } from '../brain/brain.module'
 import { ConversationsModule } from '../conversations/conversations.module'
 import { MeetingWorkspaceResolutionController } from './controllers/meeting-workspace-resolution.controller'
 import { MeetingWorkspaceController } from './controllers/meeting-workspace.controller'
@@ -13,7 +14,7 @@ import { MeetingSourceIngestionService } from './services/meeting-source-ingesti
 import { MeetingWorkspaceService } from './services/meeting-workspace.service'
 
 @Module({
-  imports: [ConversationsModule],
+  imports: [BrainModule, ConversationsModule],
   controllers: [MeetingWorkspaceController, MeetingWorkspaceResolutionController],
   providers: [
     MeetingWorkspaceRepository,

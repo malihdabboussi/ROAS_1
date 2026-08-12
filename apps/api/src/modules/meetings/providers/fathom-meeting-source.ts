@@ -15,6 +15,8 @@ export type FathomSourceAction = {
   completed: boolean
   userGenerated: boolean
   raw: Record<string, unknown>
+  /** Present when the LLM judgment pass rewrote or annotated this action. */
+  refinement?: { original_text: string; why?: string }
 }
 
 export type FathomMeetingSource = {

@@ -59,6 +59,7 @@ export function planProviderFollowUpUpserts(input: {
         user_generated: action.userGenerated,
         cross_referenced_from: 'provider_recording',
       },
+      ...(action.refinement ? { refinement: action.refinement } : {}),
     }
 
     if (byTitle?.id) {
