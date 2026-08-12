@@ -1,10 +1,12 @@
+'use client'
+
 import {
   SHELL_CREATE_MENU_GROUPS,
   type ShellCreateMenuItem,
 } from '@/components/shell/shell-create-menu.config'
 import { cn } from '@/lib/utils/cn'
 
-export function ChatInputPlusMenuCreatePanel({
+export function ShellCreateMenuPanel({
   onSelectCreateItem,
   onCloseMenu,
 }: {

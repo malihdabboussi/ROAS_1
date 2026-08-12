@@ -52,6 +52,14 @@ function fromQuickStart(
   return { ...quickStart, ...overrides }
 }
 
+export function findShellCreateMenuItem(id: string): ShellCreateMenuItem | null {
+  for (const group of SHELL_CREATE_MENU_GROUPS) {
+    const item = group.items.find((entry) => entry.id === id)
+    if (item) return item
+  }
+  return null
+}
+
 export const SHELL_CREATE_MENU_GROUPS: ShellCreateMenuGroup[] = [
   {
     id: 'start-with',

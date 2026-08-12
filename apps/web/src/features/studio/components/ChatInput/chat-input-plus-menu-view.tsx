@@ -22,10 +22,10 @@ import {
 } from 'lucide-react'
 import { CloudAttachMenuItems } from '@/components/media/CloudAttachMenuItems'
 import type { ShellCreateMenuItem } from '@/components/shell/shell-create-menu.config'
+import { ShellCreateMenuPanel } from '@/components/shell/ShellCreateMenuPanel'
 import Switch from '@/components/ui/forms/switch'
 import type { StudioAtMenuTabId } from './chat-input-at-mentions'
 import { INTEGRATION_ICONS, INTEGRATION_NAMES } from './chat-input-constants'
-import { ChatInputPlusMenuCreatePanel } from './chat-input-plus-menu-create-panel'
 import { ChatInputPlusMenuSpacePanel } from './chat-input-plus-menu-space-panel'
 import type { ChatInputPlusMenuSpacePickerConfig } from './chat-input-plus-menu-space.types'
 import {
@@ -192,7 +192,7 @@ export function ChatInputPlusMenuView({
           onMouseLeave={onScheduleSubmenuClose}
         >
           {submenu === 'create' ? (
-            <ChatInputPlusMenuCreatePanel
+            <ShellCreateMenuPanel
               onSelectCreateItem={onSelectCreateItem}
               onCloseMenu={onCloseMenu}
             />

@@ -23,6 +23,7 @@ import {
   type GlobalChatSeedDetail,
   type GlobalChatVoiceStartDetail,
 } from '@/components/global-chat/store/use-global-chat-store'
+import { findShellCreateMenuItem } from '@/components/shell/shell-create-menu.config'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
 import { ShellEmptyChatQuickStartPills } from '@/components/shell/ShellEmptyChatQuickStartPills'
 import { ShellRightPanel } from '@/components/shell/ShellRightPanel'
@@ -326,6 +327,7 @@ export function SpaceVibeyChatPanel({
   const setTextRef = useRef<((text: string) => void) | null>(null)
   const composerMirrorRef = useRef('')
   const quickStart = useShellChatQuickStart(setTextRef, () => undefined)
+  const { armQuickStart } = quickStart
   const previousMessageCountRef = useRef(0)
   const isProgrammaticScrollRef = useRef(false)
   const initialHydrationRef = useRef<string | null>(null)
@@ -1918,6 +1920,10 @@ export function SpaceVibeyChatPanel({
           documents,
           nonce: crypto.randomUUID(),
         })
+        if (seed.quickStartId) {
+          const createItem = findShellCreateMenuItem(seed.quickStartId)
+          if (createItem) armQuickStart(createItem)
+        }
         return
       }
 
@@ -1936,6 +1942,7 @@ export function SpaceVibeyChatPanel({
       activeAgentKey,
       conversationsLoading,
       handleAgentChange,
+      armQuickStart,
       handleNewConversation,
       isChannelScope,
       sendWithToast,

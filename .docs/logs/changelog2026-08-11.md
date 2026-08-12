@@ -1,5 +1,15 @@
 # Changelog - [August 11, 2026]
 
+## [2026-08-11 18:50] - [FEATURE]
+
+What: Added the "+ Create" entry point to the Outputs/right rail. The rail header now has a "+" button opening the same grouped create catalog as the composer plus-menu (shared panel moved to `components/shell/ShellCreateMenuPanel.tsx`). Picking an item seeds the global chat composer without sending via `seedComposer({seedMode:'attach'})`, and a new optional `quickStartId` on `GlobalChatSeedDetail` lets the chat panel arm the matching quick-start capability chip (new `armQuickStart` on the quick-start hook, applied in `SpaceVibeyChatPanel`'s attach path) — so the item's systemContext still targets the exact create action even when creation starts from the rail. Space-scoped rails pass their spaceId in the seed workContext so the right panel consumes it.
+
+Why: Second entry point from the approved create-menu plan — create from the rail, same chat-routed flow, no systemContext loss.
+
+Impact: Rail "+" → dropdown → composer pre-filled with prompt + armed chip. Config gains `findShellCreateMenuItem`; new test file pins item resolution, unique ids, and that every active item has a prompt + QUICK ACTION context.
+
+Files: apps/web/src/components/shell/ShellCreateMenuPanel.tsx (moved from ChatInput/chat-input-plus-menu-create-panel.tsx), ShellRightPanel.tsx, shell-create-menu.config.ts (+ new .test.ts), use-shell-chat-quick-start.ts, components/global-chat/store/use-global-chat-store.ts, features/studio/components/ChatInput/chat-input-plus-menu-view.tsx, features/spaces/components/chat/SpaceVibeyChatPanel.tsx.
+
 ## [2026-08-11 18:22] - [FIX]
 
 What: Unscoped artifact creation no longer dead-ends. In `resolveCampaignId` (agent-api write path), a request context with a space but no campaign now resolves the space's own campaign (new `findSpaceCampaignId` repository lookup on `spaces.campaign_id`), and a personal-scope context falls back to the user's General campaign via the existing `ensureGeneralCampaignId` — instead of returning null and triggering "campaign_id required. Create or select a campaign first." downstream in every create service. The read path (`resolveActiveCampaignIdForContext`) is unchanged and still returns null without touching the database. Also added the missing `space_id` column + partial index to `blog_posts`, `emails`, and `conversation_documents` (migration `20260811190000`) — the last three artifact tables without it, whose create paths already send `space_id` via scope defaults.
