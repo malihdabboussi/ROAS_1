@@ -1,10 +1,10 @@
 # Campaign Client Ops Desk — Diagnosis & Phased Plan
 
-**Status:** Diagnosis complete · Implementation not started  
-**Created:** 2026-08-10  
-**Owner context:** Dylan competitive teardown of a friend’s agency ops product (1DS / IDS OPS) vs Vibey Campaigns + Spaces + Brain + Meetings  
-**Repo:** `dylanvanas1/roas-platform`  
-**Branch baseline:** `origin/main` at plan authoring time  
+**Status:** Diagnosis complete · Implementation not started
+**Created:** 2026-08-10
+**Owner context:** Dylan competitive teardown of a friend’s agency ops product (1DS / IDS OPS) vs Vibey Campaigns + Spaces + Brain + Meetings
+**Repo:** `dylanvanas1/roas-platform`
+**Branch baseline:** `origin/main` at plan authoring time
 
 **Reference screenshots (in-repo):** `.docs/plans/assets/client-ops-desk-reference/`
 
@@ -111,7 +111,7 @@ Spaces are **broader** than his Content (artifacts, ads, CRM, missions, automati
 | `apps/web/src/features/brain/components/CortexMaxDetailPanel.tsx` | Beliefs / perspectives detail |
 | `apps/web/src/app/(dashboard)/brain/page.tsx` | `/brain` entry |
 
-**Exists:** nodes/edges, crystallize, multi-scope brains, campaign_knowledge.  
+**Exists:** nodes/edges, crystallize, multi-scope brains, campaign_knowledge.
 **Missing:** DNA helix metaphor; embedded campaign-desk mode; client right-rail beliefs queue.
 
 ### 2.4 Meetings = Home/personal-first, not campaign desk spine
@@ -125,7 +125,7 @@ Spaces are **broader** than his Content (artifacts, ads, CRM, missions, automati
 | `documentation/features/meeting-follow-up-slack.md` | Slack post-meeting / signals |
 | `documentation/features/space-templates.md` | Fathom → personal Meetings / Personal Dashboard |
 
-**Exists:** rich meeting workspace + chat follow-up path.  
+**Exists:** rich meeting workspace + chat follow-up path.
 **Gap:** not the default “open this client → see their meetings” experience. Org client campaigns do not own a first-class Meetings pane today.
 
 ### 2.5 Shell chat + right panel
@@ -137,7 +137,7 @@ Spaces are **broader** than his Content (artifacts, ads, CRM, missions, automati
 | `apps/web/src/components/shell/SpaceWorkDock.tsx` | Spaces work column |
 | `documentation/frontend-shared-surfaces.md` | Shared chat / Brain surfaces contracts |
 
-**Exists:** mature global chat with campaign/space scope.  
+**Exists:** mature global chat with campaign/space scope.
 **Gap:** right panel is work artifacts for the conversation, not client intel (brief / signals / pending beliefs).
 
 ### 2.6 Signals / convictions / loop (scattered)
