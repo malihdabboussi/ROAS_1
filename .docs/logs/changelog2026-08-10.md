@@ -1,5 +1,15 @@
 # Changelog - August 10, 2026
 
+## [2026-08-10 18:58] - [DOCS]
+
+What: Added Campaign Client Ops Desk diagnosis + phased plan from the 1DS/IDS OPS competitive teardown, with reference screenshots archived in-repo.
+
+Why: Capture observation, Vibey vs competitor differences, what to steal vs protect, and a file-backed build order so another agent can execute from GitHub without the original chat.
+
+Impact: Implementers can start with Phase 1 (Campaign Meetings + follow-up in chat) using exact paths and missing-evidence spikes; no product code changed.
+
+Files: `.docs/plans/campaign-client-ops-desk-2026-08-10.md`, `.docs/plans/assets/client-ops-desk-reference/*`
+
 ## [2026-08-10 09:43] - [FEATURE]
 
 What: Rebased and shipped local Home Agenda WIP onto current `origin/main`: persisted agenda minimize/exclusions (Fathom settings + webhook gate), impromptu instant meetings, Delegation Desk as `/home/delegation-desk`, Pixel legacy-name suffix normalization + seed migration, and Slack Active/Shadow copy polish. Kept main’s OpenClaw model routing and minimized-row UI.

@@ -79,3 +79,11 @@ Why: The captured runtime fixture pointed at a path on another machine and crash
 Impact: The architecture gate now runs to completion and reports the existing backlog instead of crashing. Canvas-host server tests remain green.
 
 Files: apps/openclaw/src/canvas-host/a2ui/test-link-1782116645255-348bba5dc9fbd.txt (deleted), scripts/arch/check-loc.mjs
+
+## [2026-08-12 15:40] - [DOCS]
+
+What: Recovered the Campaign Client Ops Desk plan and reference screenshots, plus the Cursor Cloud environment section in AGENTS.md.
+
+Why: The lost-work audit found these as the only copies on otherwise stale source branches.
+
+Impact: Documentation only; no runtime behavior changes.
