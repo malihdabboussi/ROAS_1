@@ -101,6 +101,19 @@ function ConversationRowTitle({
   )
 }
 
+function formatConversationActivityTooltip(value: string | null): string | undefined {
+  if (!value) return undefined
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return undefined
+  return `Last activity ${date.toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })}`
+}
+
 function formatConversationUpdatedAt(value: string | null): string {
   if (!value) return ''
   const date = new Date(value)
@@ -223,7 +236,7 @@ export function SpaceConversationRow({
   return (
     <div
       onContextMenu={(event) => onOpenContextMenu(event, conversation.id)}
-      title={activityAt}
+      title={formatConversationActivityTooltip(activityAt)}
       className={cn(
         'group/conversation px-spacing-1 py-spacing-1 gap-spacing-2 rounded-spacing-3 relative flex items-center transition-colors',
         divided && 'border-border rounded-none border-b',

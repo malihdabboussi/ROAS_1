@@ -343,6 +343,135 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
     ])
   })
 
+  it('emits a clarification block from the plugin text-envelope result shape', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(321)
+
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'ask_clarification',
+      toolArgs: { data: {} },
+      result: {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              success: true,
+              clarification: {
+                title: 'Choose a direction',
+                introMessage: 'Pick one before I start.',
+                questions: [
+                  {
+                    id: 'direction',
+                    text: 'Which direction should I take?',
+                    type: 'single_choice',
+                    options: [
+                      { id: 'option_a', label: 'Option A', description: 'Why this fits' },
+                      { id: 'option_b', label: 'Option B' },
+                    ],
+                    required: true,
+                  },
+                ],
+              },
+            }),
+          },
+        ],
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      {
+        type: 'clarification',
+        id: 'clarification-321',
+        source: 'ask_clarification',
+        title: 'Choose a direction',
+        introMessage: 'Pick one before I start.',
+        questions: [
+          {
+            id: 'direction',
+            text: 'Which direction should I take?',
+            type: 'single_choice',
+            options: [
+              { id: 'option_a', label: 'Option A', description: 'Why this fits' },
+              { id: 'option_b', label: 'Option B' },
+            ],
+            required: true,
+          },
+        ],
+        status: 'pending',
+      },
+    ])
+  })
+
+  it('emits a clarification block from a plain clarification record result', () => {
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'ask_clarification',
+      toolArgs: { data: {} },
+      result: {
+        success: true,
+        clarification: {
+          title: 'Quick question',
+          questions: [
+            {
+              id: 'q1',
+              text: 'Pick one',
+              type: 'multiple_choice',
+              options: [
+                { id: 'a', label: 'A' },
+                { id: 'b', label: 'B' },
+              ],
+              required: false,
+            },
+          ],
+        },
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      expect.objectContaining({
+        type: 'clarification',
+        source: 'ask_clarification',
+        title: 'Quick question',
+        status: 'pending',
+      }),
+    ])
+  })
+
+  it('suppresses inline cards for flow clarifications rendered in the Flows tab', () => {
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'create_flow_clarification',
+      toolArgs: { data: {} },
+      result: {
+        success: true,
+        render_mode: 'tab',
+        clarification: {
+          title: 'Flow choices',
+          questions: [
+            {
+              id: 'q1',
+              text: 'Pick one',
+              type: 'single_choice',
+              options: [{ id: 'a', label: 'A' }],
+              required: true,
+            },
+          ],
+        },
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([])
+  })
+
   it('emits every registered image from a batch media result', () => {
     const firstId = '11111111-1111-4111-8111-111111111111'
     const secondId = '22222222-2222-4222-8222-222222222222'

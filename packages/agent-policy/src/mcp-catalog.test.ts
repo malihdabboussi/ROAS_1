@@ -105,6 +105,7 @@ describe('MCP catalog', () => {
     expect(toolActions).toContain('get_task')
     expect(toolActions).toContain('get_document')
     expect(toolActions).toContain('search_space_context')
+    expect(toolActions).toContain('search_conversations')
     expect(toolActions).toContain('list_team')
     expect(toolActions).toContain('list_agent_skills')
     expect(toolActions).toContain('create_agent_skill')

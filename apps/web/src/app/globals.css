@@ -7638,6 +7638,53 @@ html.dark .button-glass-green {
   opacity: 1;
 }
 
+/* Neutral glass button — secondary actions (e.g. Open meeting) */
+.button-glass-secondary {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(120, 120, 130, 0.1) 0%,
+    rgba(160, 160, 170, 0.16) 50%,
+    rgba(120, 120, 130, 0.08) 100%
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  color: var(--color-foreground);
+  opacity: 0.85;
+  transition: all 0.3s ease;
+}
+html.dark .button-glass-secondary {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  box-shadow:
+    0 2px 16px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.button-glass-secondary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.button-glass-secondary:hover {
+  opacity: 1;
+}
+.button-glass-secondary:hover::after {
+  opacity: 1;
+}
+
 /* Icon button glass — orange */
 .btn-icon-glass-orange {
   position: relative;

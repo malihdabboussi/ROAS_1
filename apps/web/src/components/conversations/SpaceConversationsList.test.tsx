@@ -233,6 +233,47 @@ describe('SpaceConversationsList', () => {
     expect(screen.getByText('now')).toBeInTheDocument()
   })
 
+  it('adds compact sidebar gutters without the full list top gap', () => {
+    const { container } = render(
+      <SpaceConversationsList
+        {...baseProps({
+          compactHeader: true,
+          compactHeaderTitle: 'Recents',
+          hideHeaderBottomBorder: true,
+        })}
+      />,
+    )
+
+    expect(screen.getByText('Recents').closest('.flex.shrink-0.flex-col')).toHaveClass(
+      'px-spacing-2',
+      'pb-spacing-1',
+    )
+    expect(container.querySelector('.overflow-y-auto')).toHaveClass(
+      'px-spacing-2',
+      'py-spacing-1',
+    )
+  })
+
+  it('opens compact search on its own row below the Recents toolbar', () => {
+    const { container } = render(
+      <SpaceConversationsList
+        {...baseProps({
+          compactHeader: true,
+          compactHeaderTitle: 'Recents',
+          hideHeaderBottomBorder: true,
+        })}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Search conversations' }))
+
+    const search = container.querySelector('[data-compact-conversation-search]')
+    expect(search).toBeInTheDocument()
+    expect(search?.previousElementSibling).toContainElement(screen.getByText('Recents'))
+    expect(screen.getByRole('searchbox', { name: 'Search conversations' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Close search' })).toBeInTheDocument()
+  })
+
   it('can render dated, divided rows for the full chats page', () => {
     render(
       <SpaceConversationsList

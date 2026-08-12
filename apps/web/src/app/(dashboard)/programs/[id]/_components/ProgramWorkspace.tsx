@@ -2,14 +2,13 @@
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { LayoutGrid } from 'lucide-react'
 import { toast } from 'sonner'
+import { CampaignCanvasView, CANVAS_VIEW_MESSAGES } from '@/components/canvas'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
-import { TaskWorkViewContent, WorkViewTabs } from '@/components/work-views'
+import { HierarchyViewBar, TaskWorkViewContent } from '@/components/work-views'
 import { fetchCampaigns, type Campaign } from '@/lib/campaigns'
 import { fetchProgram, updateProgram, type Program } from '@/lib/programs'
 import { buildSpaceItemHref } from '@/lib/spaces/space-item-href'
-import { cn } from '@/lib/utils/cn'
 import {
   normalizeProgramWorkViewId,
   readVisibleProgramWorkViews,
@@ -142,68 +141,83 @@ export function ProgramWorkspace() {
     )
   }
 
-  const taskView = activeView === 'overview' ? 'list' : (activeView as TaskWorkViewId)
+  const taskView =
+    activeView === 'overview' || activeView === 'canvas' ? 'list' : (activeView as TaskWorkViewId)
 
   return (
-    <main className="scrollbar-hide h-full min-h-0 overflow-y-auto">
-      <div className="p-spacing-4 md:p-spacing-6 mx-auto w-full max-w-5xl">
-        <header className="mb-spacing-5 gap-spacing-4 flex flex-wrap items-start justify-between">
+    <main
+      className={
+        activeView === 'canvas'
+          ? 'flex h-full min-h-0 flex-col overflow-hidden'
+          : 'scrollbar-hide h-full min-h-0 overflow-y-auto'
+      }
+    >
+      <div
+        className={
+          activeView === 'canvas'
+            ? 'p-spacing-4 md:p-spacing-6 flex min-h-0 w-full flex-1 flex-col'
+            : 'p-spacing-4 md:p-spacing-6 mx-auto w-full max-w-5xl'
+        }
+      >
+        <header className="px-spacing-4 pb-spacing-3 gap-spacing-4 flex flex-wrap items-start justify-between">
           <div>
             <h1 className="title-h3 text-foreground">{program.name.toUpperCase()}</h1>
             <p className="body-3 text-muted-foreground mt-spacing-1">
               Campaigns, spaces, and work across this Program.
             </p>
           </div>
-          <ProgramViewSettingsMenu
-            visibleViews={visibleViews}
-            onChange={(views) => void saveVisibleViews(views)}
-          />
         </header>
 
-        <nav className="mb-spacing-4 gap-spacing-2 flex flex-wrap items-center">
-          {visibleViews.includes('overview') ? (
-            <button
-              type="button"
-              onClick={() => changeView('overview')}
-              className={cn(
-                'button-compact',
-                activeView === 'overview'
-                  ? 'button-glass-accent text-foreground'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              <LayoutGrid className="icon-sm" />
-              {WORK_VIEW_LABELS.overview}
-            </button>
-          ) : null}
-          {activeView !== 'overview' ? (
-            <WorkViewTabs
-              value={taskView}
-              views={visibleViews.filter(
-                (viewId): viewId is TaskWorkViewId => viewId !== 'overview',
-              )}
-              onChange={(view) => changeView(view)}
-            />
-          ) : (
-            <div className="gap-spacing-1 flex">
-              {visibleViews
-                .filter((viewId): viewId is TaskWorkViewId => viewId !== 'overview')
-                .map((viewId) => (
-                  <button
-                    key={viewId}
-                    type="button"
-                    onClick={() => changeView(viewId)}
-                    className="button-compact text-muted-foreground hover:text-foreground"
-                  >
-                    {WORK_VIEW_LABELS[viewId]}
-                  </button>
-                ))}
-            </div>
-          )}
-        </nav>
+        <div className="mb-spacing-4">
+          <HierarchyViewBar
+            tabs={visibleViews.map((viewId) => ({
+              id: viewId,
+              label: WORK_VIEW_LABELS[viewId],
+              icon:
+                viewId === 'overview'
+                  ? 'layout-grid'
+                  : viewId === 'board'
+                    ? 'columns-3'
+                    : viewId === 'calendar'
+                      ? 'calendar-days'
+                      : viewId === 'canvas'
+                        ? 'panels-top-left'
+                        : 'list',
+            }))}
+            activeViewId={activeView}
+            onSelectView={(viewId) => changeView(viewId as ProgramWorkViewId)}
+            rightSlot={
+              <ProgramViewSettingsMenu
+                visibleViews={visibleViews}
+                onChange={(views) => void saveVisibleViews(views)}
+              />
+            }
+          />
+        </div>
 
         {activeView === 'overview' ? (
           <CampaignsHub focusProgramId={id} embedded />
+        ) : activeView === 'canvas' ? (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="mb-spacing-4 flex justify-end">
+              <ProgramCampaignFilter
+                campaignId={campaignId}
+                campaigns={campaigns}
+                onChange={(nextCampaignId) => {
+                  setCampaignId(nextCampaignId)
+                  updateSearch({ campaign: nextCampaignId })
+                }}
+              />
+            </div>
+            <CampaignCanvasView
+              campaignId={campaignId || null}
+              emptyMessage={
+                campaigns.length === 0
+                  ? CANVAS_VIEW_MESSAGES.programEmpty
+                  : CANVAS_VIEW_MESSAGES.programCampaignRequired
+              }
+            />
+          </div>
         ) : (
           <>
             <div className="mb-spacing-4 flex justify-end">

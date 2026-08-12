@@ -1,15 +1,18 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef } from 'react'
-import { X } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Plus, X } from 'lucide-react'
 import {
   ConversationScopePicker,
   type ConversationScopePickerHandle,
 } from '@/components/conversations'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import type { Conversation } from '@/lib/conversations'
 import { cn } from '@/lib/utils/cn'
+import type { ShellCreateMenuItem } from './shell-create-menu.config'
+import { ShellCreateMenuPanel } from './ShellCreateMenuPanel'
 import { ShellRightPanelFiles } from './ShellRightPanelFiles'
 import { ShellRightPanelSources } from './ShellRightPanelSources'
 import { ShellRightPanelTasks } from './ShellRightPanelTasks'
@@ -60,6 +63,28 @@ export function ShellRightPanel({
     [closeArtifactViewer, router, setWorkAreaOpen],
   )
   const lastHandledScopePickerRequestRef = useRef(0)
+  const [createMenuOpen, setCreateMenuOpen] = useState(false)
+  const createMenuRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!createMenuOpen) return
+    const onPointerDown = (event: PointerEvent) => {
+      if (createMenuRef.current?.contains(event.target as Node)) return
+      setCreateMenuOpen(false)
+    }
+    window.addEventListener('pointerdown', onPointerDown)
+    return () => window.removeEventListener('pointerdown', onPointerDown)
+  }, [createMenuOpen])
+  const handleCreateSelect = useCallback(
+    (item: ShellCreateMenuItem) => {
+      useGlobalChatStore.getState().seedComposer({
+        content: item.prompt,
+        seedMode: 'attach',
+        quickStartId: item.id,
+        workContext: spaceId ? { surface: 'spaces', spaceId } : undefined,
+      })
+    },
+    [spaceId],
+  )
   const messages = useChatStore((s) =>
     conversationId ? (s.messagesByConversation[conversationId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES,
   )
@@ -119,6 +144,26 @@ export function ShellRightPanel({
         ) : (
           <div className="min-w-0 flex-1" />
         )}
+        <div ref={createMenuRef} className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setCreateMenuOpen((prev) => !prev)}
+            className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground p-spacing-1 rounded-lg transition-colors"
+            aria-label="Create"
+            aria-expanded={createMenuOpen}
+            title="Create"
+          >
+            <Plus className="icon-sm" aria-hidden />
+          </button>
+          {createMenuOpen ? (
+            <div className="dropdown-menu-solid z-dropdown py-spacing-1 mt-spacing-1 absolute right-0 top-full max-h-96 w-64 overflow-y-auto">
+              <ShellCreateMenuPanel
+                onSelectCreateItem={handleCreateSelect}
+                onCloseMenu={() => setCreateMenuOpen(false)}
+              />
+            </div>
+          ) : null}
+        </div>
         <button
           type="button"
           onClick={() => setRightPanelOpen(false)}

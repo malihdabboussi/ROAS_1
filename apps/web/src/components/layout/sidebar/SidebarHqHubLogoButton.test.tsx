@@ -44,6 +44,15 @@ describe('SidebarHqHubLogoButton', () => {
     expect(useShellMenuDock.getState().dragging).toBe(false)
   })
 
+  it('reveals the drawer glyph on hover when the R is collapsed', () => {
+    useShellMenuDock.setState({ menuCompact: true })
+    render(<SidebarHqHubLogoButton expanded={false} />)
+
+    const logo = screen.getByRole('button', { name: 'Expand menu' })
+    expect(logo.querySelector('svg')).toHaveClass('group-hover:block')
+    expect(logo.querySelectorAll('img')[0]).toHaveClass('group-hover:hidden')
+  })
+
   it('turns a hold into a dock drag instead of collapse', async () => {
     render(
       <div className="hub-sidebar-shell">

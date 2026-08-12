@@ -7,6 +7,7 @@ import {
   Presentation,
   Telescope,
   Users,
+  Video,
 } from 'lucide-react'
 
 /** Placeholders for empty / new conversations (ClickUp Brain–style). */
@@ -52,6 +53,15 @@ export const SHELL_EMPTY_CHAT_QUICK_STARTS: ShellEmptyChatQuickStart[] = [
     prompt: 'Generate an image of ',
     systemContext:
       'QUICK ACTION — IMAGE: Generate the requested image with generate_image so the user receives a real media asset. Use attached or referenced images as source assets when present and state what to preserve for edits. Infer a sensible aspect ratio from the request when possible; ask only when a missing visual decision would materially change the result. Do not substitute a text-only prompt or mock receipt.',
+  },
+  {
+    id: 'video',
+    label: 'Video',
+    icon: Video,
+    iconName: 'video',
+    prompt: 'Create a video of ',
+    systemContext:
+      'QUICK ACTION — VIDEO: First establish which output the user wants: a single video clip, a produced organic story ad, or a video script. Single clip: call generate_video with the prompt, pass space_id from the current Space so the finished asset registers in Space Media, honor any stated model or aspect ratio, then wait 30 seconds and poll get_video_status with the returned job_id until succeeded or failed (max ~5 polls). Produced organic story ad: gather the kickoff conversationally — industry or scene preference, copy mode (write_for_me or use_my_copy), sticker copy (pill line, headline, highlight phrase, CTA line), and offer context — then call create_mission with playbook_id "ig-organic-video-ad" and the collected fields under input.playbook_kickoff, and return the mission from the tool receipt. Script only: write the script and save it with create_docx. Every path ends in a real tool receipt — do not stop at a text description of a video.',
   },
   {
     id: 'slides',

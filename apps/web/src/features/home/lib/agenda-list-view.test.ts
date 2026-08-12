@@ -33,6 +33,28 @@ describe('agenda-list-view', () => {
     expect(next?.id).toBe('soon')
   })
 
+  it('does not promote a recording-only Fathom row as the next live meeting', () => {
+    const now = Date.parse('2026-08-11T15:00:00.000Z')
+    const next = pickNextAgendaEvent(
+      [
+        ev({
+          id: 'recording',
+          source: 'fathom',
+          start: '2026-08-11T15:30:00.000Z',
+          end: '2026-08-11T16:00:00.000Z',
+        }),
+        ev({
+          id: 'calendar',
+          start: '2026-08-11T16:30:00.000Z',
+          end: '2026-08-11T17:00:00.000Z',
+        }),
+      ],
+      now,
+    )
+
+    expect(next?.id).toBe('calendar')
+  })
+
   it('splits earlier and later today around the next hero', () => {
     const now = Date.parse('2026-07-20T18:00:00.000Z')
     const keyFn = (e: CalendarAgendaEvent) => e.id

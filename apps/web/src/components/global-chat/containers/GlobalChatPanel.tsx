@@ -114,7 +114,11 @@ export function GlobalChatPanel({
           headerLayout={presentation}
           headerLeadingAction={headerLeadingAction}
           composerContextSlot={<GlobalChatComposerFooter />}
-          onCollapseChat={onCollapseChat ?? (() => setCollapsed(true))}
+          onCollapseChat={
+            presentation === 'full'
+              ? onCollapseChat
+              : (onCollapseChat ?? (() => setCollapsed(true)))
+          }
         />
       </div>
       <QuickMissionsHubHost />

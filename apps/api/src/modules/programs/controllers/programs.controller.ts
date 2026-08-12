@@ -26,9 +26,11 @@ import {
   CreateProgramSchema,
   ProgramIdParamSchema,
   UpdateProgramSchema,
+  UpdateProgramUserStateSchema,
   type CreateProgramInput,
   type ProgramIdParam,
   type UpdateProgramInput,
+  type UpdateProgramUserStateInput,
 } from '../dto/programs.dto'
 import { ProgramShareCompatService } from '../services/program-share-compat.service'
 import { ProgramsService } from '../services/programs.service'
@@ -73,6 +75,25 @@ export class ProgramsController {
     @Param(new ZodValidationPipe(ProgramIdParamSchema)) params: ProgramIdParam,
   ) {
     return this.programsService.getById(supabase, params.id, user.id, scope.orgRole, scope.orgId)
+  }
+
+  @Patch(':id/user-state')
+  @RequireOrgRole('viewer')
+  async updateUserState(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param(new ZodValidationPipe(ProgramIdParamSchema)) params: ProgramIdParam,
+    @Body(new ZodValidationPipe(UpdateProgramUserStateSchema)) body: UpdateProgramUserStateInput,
+  ) {
+    return this.programsService.updateUserState(
+      supabase,
+      params.id,
+      user.id,
+      body.is_favorite,
+      scope.orgRole,
+      scope.orgId,
+    )
   }
 
   @Post()

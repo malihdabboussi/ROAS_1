@@ -29,6 +29,7 @@ interface ChatHistoryFilterMenuProps {
   agentOptions?: Array<{ key: string; label: string }>
   onAgentKeyChange?: (agentKey: string | null) => void
   onOpenAllChats?: () => void
+  alwaysShowOpenAllChats?: boolean
   className?: string
 }
 
@@ -52,6 +53,7 @@ export function ChatHistoryFilterMenu({
   agentOptions,
   onAgentKeyChange,
   onOpenAllChats,
+  alwaysShowOpenAllChats,
   className,
 }: ChatHistoryFilterMenuProps) {
   const [open, setOpen] = useState(false)
@@ -110,13 +112,13 @@ export function ChatHistoryFilterMenu({
           onClick={onOpenAllChats}
           className={cn(
             'btn-icon-bare hover:bg-hover-subtle shrink-0 transition-opacity',
-            open
+            open || alwaysShowOpenAllChats
               ? 'opacity-100'
               : 'opacity-0 focus-visible:opacity-100 group-hover/chat-history-header:opacity-100',
           )}
           aria-label="Open all chats"
           title="All chats"
-          tabIndex={open ? 0 : -1}
+          tabIndex={open || alwaysShowOpenAllChats ? 0 : -1}
         >
           <SquareArrowOutUpRight className="icon-sm" aria-hidden />
         </button>

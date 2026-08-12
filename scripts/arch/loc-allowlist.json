@@ -152,7 +152,7 @@
     "apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 2553
+      "lines": 2563
     },
     "apps/web/src/features/spaces/components/contacts/ContactActivityTimeline.tsx": {
       "kind": "web-component",

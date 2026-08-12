@@ -226,6 +226,9 @@ export function UserMessageBubble({
       data-message={messageId}
       className={[
         'card-glass card-glass-user px-spacing-4 py-spacing-2 group relative',
+        // ChatGPT-style: user turns hug their content on the right instead of
+        // stretching a short "hi" into a full-width bar.
+        'ml-auto w-fit min-w-[8rem] max-w-[85%]',
         stickyUser && '!bg-[var(--color-background)]',
         (isEditable || !expanded) && 'cursor-pointer',
       ]

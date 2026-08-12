@@ -24,3 +24,11 @@ export const DailyRecommendationQuerySchema = z.object({
 })
 
 export type DailyRecommendationQuery = z.infer<typeof DailyRecommendationQuerySchema>
+
+export const NextMoveParamsSchema = z.object({
+  id: z.string().uuid(),
+})
+
+export const NextMoveSnoozeBodySchema = z.object({
+  duration: z.enum(['week', 'dismiss']),
+})

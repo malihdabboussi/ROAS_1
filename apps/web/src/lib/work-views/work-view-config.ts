@@ -1,7 +1,7 @@
 export const TASK_WORK_VIEW_IDS = ['list', 'board', 'calendar'] as const
 export type TaskWorkViewId = (typeof TASK_WORK_VIEW_IDS)[number]
 
-export const PROGRAM_WORK_VIEW_IDS = ['overview', ...TASK_WORK_VIEW_IDS] as const
+export const PROGRAM_WORK_VIEW_IDS = ['overview', ...TASK_WORK_VIEW_IDS, 'canvas'] as const
 export type ProgramWorkViewId = (typeof PROGRAM_WORK_VIEW_IDS)[number]
 
 export const DEFAULT_PROGRAM_WORK_VIEWS: ProgramWorkViewId[] = [...PROGRAM_WORK_VIEW_IDS]
@@ -11,6 +11,7 @@ export const WORK_VIEW_LABELS: Record<ProgramWorkViewId, string> = {
   list: 'List',
   board: 'Board',
   calendar: 'Calendar',
+  canvas: 'Canvas',
 }
 
 export function normalizeWorkViewId(value: string): TaskWorkViewId | null {

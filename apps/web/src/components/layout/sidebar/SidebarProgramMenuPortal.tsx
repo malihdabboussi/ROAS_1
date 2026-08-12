@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Copy, Edit2, Plus, Share2, Trash2 } from 'lucide-react'
+import { Copy, Edit2, Plus, Share2, Star, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Program } from '@/lib/programs'
 import { HUB_DOCK_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
@@ -19,6 +19,7 @@ export function SidebarProgramMenuPortal({
   onCreateCampaign,
   onDelete,
   onShare,
+  onToggleFavorite,
 }: {
   program: Program
   anchorRect: SectionMenuAnchorRect
@@ -27,6 +28,7 @@ export function SidebarProgramMenuPortal({
   onCreateCampaign: () => void
   onDelete?: () => void
   onShare?: () => void
+  onToggleFavorite: () => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
@@ -82,6 +84,17 @@ export function SidebarProgramMenuPortal({
       }}
     >
       <div className="gap-spacing-1 px-spacing-1 flex flex-col">
+        <button
+          type="button"
+          className={rowCls}
+          onClick={() => {
+            onToggleFavorite()
+            onClose()
+          }}
+        >
+          <Star className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          {program.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
+        </button>
         {onRename && !isSystem ? (
           <button
             type="button"

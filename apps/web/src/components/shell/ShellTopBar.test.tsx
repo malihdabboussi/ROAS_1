@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ShellTopBar } from './ShellTopBar'
+import { useShellMenuDock } from './use-shell-menu-dock'
 
 const mocks = vi.hoisted(() => ({
   pathname: '/home',
@@ -92,6 +93,7 @@ vi.mock('./use-shell-store', () => ({
 
 describe('ShellTopBar', () => {
   beforeEach(() => {
+    useShellMenuDock.setState({ menuStyle: 'advanced' })
     mocks.pathname = '/home'
     mocks.params = new URLSearchParams()
     mocks.shellState.sidebarPinned = false
@@ -123,6 +125,19 @@ describe('ShellTopBar', () => {
     )
   })
 
+  it('keeps the breadcrumb and persistent work controls in the global bar for Simple mode', () => {
+    useShellMenuDock.setState({ menuStyle: 'simple' })
+
+    render(<ShellTopBar />)
+
+    expect(screen.queryByText('Agenda')).not.toBeInTheDocument()
+    expect(screen.queryByTitle('Search')).not.toBeInTheDocument()
+    expect(screen.queryByText('AI Chat')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Workspace' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Portal' })).toBeInTheDocument()
+    expect(screen.getByTitle('Collapse page — chat full screen')).toBeInTheDocument()
+  })
+
   it('hides the work-area control until chat creates something to collapse', () => {
     for (const route of ['/home', '/brain', '/campaigns', '/projects', '/flows', '/artifacts']) {
       mocks.pathname = route
@@ -141,7 +156,7 @@ describe('ShellTopBar', () => {
     render(<ShellTopBar />)
     expect(screen.getByTitle('Collapse page — chat full screen')).toHaveAttribute(
       'data-page-title',
-      'Agenda',
+      'Home',
     )
     fireEvent.click(screen.getByTitle('Collapse page — chat full screen'))
 

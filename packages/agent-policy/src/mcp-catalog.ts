@@ -205,6 +205,13 @@ export const MCP_V1_TOOL_CATALOG = [
     inputMode: 'action_schema',
   },
   {
+    toolName: 'search_conversations',
+    action: 'search_conversations',
+    requiredScopes: [MCP_BASE_SCOPE, 'read_space_context'],
+    description: 'Search the authenticated user’s Vibey conversation history by title.',
+    inputMode: 'action_schema',
+  },
+  {
     toolName: 'search_space_context',
     action: 'search_space_context',
     requiredScopes: [MCP_BASE_SCOPE, 'read_space_context'],
@@ -664,7 +671,7 @@ export const MCP_PERMISSION_GROUPS = [
       'Search semantic Space context before reading exact documents, tasks, or missions.',
     readScopes: ['read_space_context'],
     writeScopes: [],
-    includedActions: ['search_space_context'],
+    includedActions: ['search_space_context', 'search_conversations'],
   },
   {
     id: 'campaigns',

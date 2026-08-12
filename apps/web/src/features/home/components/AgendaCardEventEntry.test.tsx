@@ -56,7 +56,11 @@ describe('AgendaEventEntry', () => {
 
     expect(screen.queryByText('Minimized')).toBeNull()
     expect(screen.queryByText('Campaign review')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Restore meeting' }))
+    const [restoreRow] = screen.getAllByRole('button', {
+      name: 'Restore minimized meeting: Campaign review',
+    })
+    if (!restoreRow) throw new Error('Restore row not rendered')
+    fireEvent.click(restoreRow)
     expect(onMinimizedChange).toHaveBeenCalledWith(false)
   })
 })

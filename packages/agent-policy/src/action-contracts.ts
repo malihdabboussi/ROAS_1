@@ -15,6 +15,7 @@ export type ActionFamily =
   | 'artifact.blog'
   | 'artifact.social'
   | 'artifact.document'
+  | 'artifact.canvas'
   | 'contact'
   | 'task'
   | 'space.context'
@@ -523,6 +524,22 @@ const EXPLICIT_ACTION_CONTRACTS = {
   get_contact_activity: contactContract('get_contact_activity', 'read'),
   list_contact_communications: contactContract('list_contact_communications', 'read'),
 
+  search_conversations: {
+    family: 'communication',
+    operation: 'search',
+    sharedOwners: ['vibey', 'loop', 'delegator', 'managed'],
+    userPolicyAddable: true,
+    requiresExplicitUserIntent: false,
+    forbiddenUnlessExplicit: false,
+    hideFromArtifactTurns: false,
+    delegateResolution: 'actual_access_lookup',
+    nearMissActions: ['search_space_context', 'list_contact_communications'],
+    skillKeys: ['vibey-api'],
+    schemaRef: 'ACTION_SCHEMAS.search_conversations',
+    userVisibleResult: 'Conversation history search',
+    accessProof: 'canExecuteAction',
+  },
+
   search_space_context: {
     family: 'space.context',
     operation: 'search',
@@ -758,6 +775,38 @@ const EXPLICIT_ACTION_CONTRACTS = {
     skillKeys: ['brain-scholar', 'strategy-modeling', 'vibey-api'],
     schemaRef: 'ACTION_SCHEMAS.create_strategy_node',
     userVisibleResult: 'Strategy model node created',
+    accessProof: 'canExecuteAction',
+  },
+
+  get_canvas_board: {
+    family: 'artifact.canvas',
+    operation: 'read',
+    sharedOwners: ['managed'],
+    userPolicyAddable: true,
+    requiresExplicitUserIntent: false,
+    forbiddenUnlessExplicit: false,
+    hideFromArtifactTurns: false,
+    delegateResolution: 'actual_access_lookup',
+    nearMissActions: ['list_strategy_nodes', 'get_campaign'],
+    skillKeys: ['vibey-api'],
+    schemaRef: 'ACTION_SCHEMAS.get_canvas_board',
+    userVisibleResult: 'Canvas board loaded',
+    accessProof: 'canExecuteAction',
+  },
+
+  apply_canvas_operations: {
+    family: 'artifact.canvas',
+    operation: 'update',
+    sharedOwners: ['managed'],
+    userPolicyAddable: true,
+    requiresExplicitUserIntent: true,
+    forbiddenUnlessExplicit: true,
+    hideFromArtifactTurns: false,
+    delegateResolution: 'actual_access_lookup',
+    nearMissActions: ['create_strategy_node', 'get_canvas_board'],
+    skillKeys: ['vibey-api'],
+    schemaRef: 'ACTION_SCHEMAS.apply_canvas_operations',
+    userVisibleResult: 'Canvas updated with editable items',
     accessProof: 'canExecuteAction',
   },
 

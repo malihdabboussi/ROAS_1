@@ -1,6 +1,6 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import {
   FileText,
   FolderGit2,
@@ -9,7 +9,7 @@ import {
   Music2,
   Video,
 } from 'lucide-react'
-import { openArtifactPreviewInShell, openDocumentInShell } from '@/lib/artifacts'
+import { openArtifactInShell, openArtifactPreviewInShell, openDocumentInShell } from '@/lib/artifacts'
 import type { ArtifactNodeType } from '@/lib/chat/attached-artifact'
 import { openMediaAssetInApp } from '@/lib/media/open-media-asset-in-app'
 import { useResilientImageSrc } from '@/lib/media/use-resilient-image-src'
@@ -204,7 +204,15 @@ function openDefaultOutput(block: FinalOutputBlock) {
     ) {
       return
     }
-    window.open(block.url, '_blank', 'noopener,noreferrer')
+    openArtifactInShell({
+      id: block.id,
+      mediaAssetId: block.mediaAssetId,
+      title: block.title,
+      type: kind,
+      fileUrl: block.url,
+      spaceId: block.spaceId,
+      contextLabel: 'Chat',
+    })
     return
   }
 
@@ -263,11 +271,21 @@ export function FinalOutputCards({
   blocks,
   deliverableSource,
   onOpenDeliverablePreview,
+  autoOpen = false,
 }: {
   blocks: FinalOutputBlock[]
   deliverableSource?: ContentBlockChannelSource | null
   onOpenDeliverablePreview?: (deliverable: MissionDeliverable) => void
+  autoOpen?: boolean
 }) {
+  const autoOpenedBlockRef = useRef<string | null>(null)
+  useEffect(() => {
+    const block = blocks.at(-1)
+    if (!autoOpen || !block || autoOpenedBlockRef.current === block.id) return
+    autoOpenedBlockRef.current = block.id
+    openDefaultOutput(block)
+  }, [autoOpen, blocks])
+
   if (blocks.length === 0) return null
 
   return (

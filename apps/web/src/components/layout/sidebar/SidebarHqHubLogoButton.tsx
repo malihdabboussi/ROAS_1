@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { PanelLeftOpen } from 'lucide-react'
 import {
   shellMenuDockHitAtClientPoint,
   useShellMenuDock,
@@ -81,7 +82,7 @@ export function SidebarHqHubLogoButton({
         if (holdStartedRef.current || useShellMenuDock.getState().dragging) return
         pointerActiveRef.current = false
       }}
-      className="hub-sidebar-logo-button cursor-pointer rounded-lg p-1 transition-all hover:opacity-80"
+      className="hub-sidebar-logo-button group cursor-pointer rounded-lg p-1 transition-all hover:opacity-80"
       aria-label={expanded ? 'Collapse menu' : 'Expand menu'}
       aria-expanded={expanded}
     >
@@ -89,14 +90,20 @@ export function SidebarHqHubLogoButton({
         src="/Logos/roas/icon-white.png"
         alt=""
         draggable={false}
-        className="hidden h-10 w-10 dark:block"
+        className={`hidden h-10 w-10 dark:block ${expanded ? '' : 'group-hover:hidden'}`}
       />
       <img
         src="/Logos/roas/icon-black.png"
         alt=""
         draggable={false}
-        className="h-10 w-10 dark:hidden"
+        className={`h-10 w-10 dark:hidden ${expanded ? '' : 'group-hover:hidden'}`}
       />
+      {!expanded ? (
+        <PanelLeftOpen
+          className="text-muted-foreground icon-sm hidden h-10 w-10 group-hover:block"
+          aria-hidden
+        />
+      ) : null}
     </button>
   )
 }

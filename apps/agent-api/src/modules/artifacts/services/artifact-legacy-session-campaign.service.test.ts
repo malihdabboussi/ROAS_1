@@ -341,6 +341,105 @@ describe('ArtifactLegacySessionCampaignService read-only active context helpers'
   })
 })
 
+describe('ArtifactLegacySessionCampaignService.resolveCampaignId scope fallbacks', () => {
+  const service = new ArtifactLegacySessionCampaignService()
+  const userId = '92ae97d0-447e-497c-8ecf-bbab8382defc'
+  const convId = '84439d84-194f-4d10-af21-b19a9547dba5'
+  const campaignId = '7d561b6b-809d-42a7-b4ac-e6b0c7e13255'
+  const spaceId = '82b24f9b-22f0-4b74-9a77-9c6098589e28'
+  const generalId = '3f0c1a52-9d1e-4f5b-8a34-6a2b9d7c1e00'
+  const key = `agent:vibey:vibey-${userId}-${convId}`
+
+  function makeScopedSupabase(options: { spaceCampaignId?: string | null } = {}) {
+    const queriedTables: string[] = []
+    const supabase = {
+      from: vi.fn((table: string) => {
+        queriedTables.push(table)
+        const chain: any = {
+          select: vi.fn(() => chain),
+          eq: vi.fn(() => chain),
+          neq: vi.fn(() => chain),
+          contains: vi.fn(() => chain),
+          order: vi.fn(() => chain),
+          limit: vi.fn(() => chain),
+          insert: vi.fn(() => chain),
+          update: vi.fn(() => chain),
+          single: vi.fn(async () => ({ data: { id: generalId }, error: null })),
+          maybeSingle: vi.fn(async () => {
+            if (table === 'spaces') {
+              return { data: { campaign_id: options.spaceCampaignId ?? null }, error: null }
+            }
+            if (table === 'campaigns') {
+              return { data: { id: generalId }, error: null }
+            }
+            if (table === 'conversations') {
+              return { data: { campaign_id: null }, error: null }
+            }
+            return { data: null, error: null }
+          }),
+        }
+        return chain
+      }),
+    }
+    return { queriedTables, supabase }
+  }
+
+  function makeScopedTarget(ctx: Record<string, unknown>) {
+    return {
+      logger: { debug: vi.fn(), warn: vi.fn() },
+      requestContext: { get: vi.fn(() => ctx) },
+      resolveOrgId: vi.fn(() => null),
+    }
+  }
+
+  it('resolves personal scope to the General campaign instead of returning null', async () => {
+    const { queriedTables, supabase } = makeScopedSupabase()
+    const target = makeScopedTarget({
+      userId,
+      spaceId: null,
+      campaignId: null,
+      scopeKind: 'personal',
+    })
+
+    await expect(service.resolveCampaignId(target, supabase as any, {}, userId, key)).resolves.toBe(
+      generalId,
+    )
+    expect(queriedTables).toContain('campaigns')
+  })
+
+  it('resolves space scope to the space campaign without touching General', async () => {
+    const { queriedTables, supabase } = makeScopedSupabase({ spaceCampaignId: campaignId })
+    const target = makeScopedTarget({
+      userId,
+      spaceId,
+      campaignId: null,
+      scopeKind: 'shared_space',
+    })
+
+    await expect(service.resolveCampaignId(target, supabase as any, {}, userId, key)).resolves.toBe(
+      campaignId,
+    )
+    expect(queriedTables).toContain('spaces')
+    expect(queriedTables).not.toContain('campaigns')
+  })
+
+  it('falls back to General when the space campaign lookup returns nothing', async () => {
+    const { queriedTables, supabase } = makeScopedSupabase({ spaceCampaignId: null })
+    const target = makeScopedTarget({
+      userId,
+      spaceId,
+      campaignId: null,
+      scopeKind: 'shared_space',
+    })
+
+    await expect(service.resolveCampaignId(target, supabase as any, {}, userId, key)).resolves.toBe(
+      generalId,
+    )
+    expect(queriedTables).toContain('spaces')
+    expect(queriedTables).toContain('campaigns')
+  })
+})
+
 describe('ArtifactLegacySessionCampaignService campaign and theme data access', () => {
   const service = new ArtifactLegacySessionCampaignService()
   const userId = '92ae97d0-447e-497c-8ecf-bbab8382defc'

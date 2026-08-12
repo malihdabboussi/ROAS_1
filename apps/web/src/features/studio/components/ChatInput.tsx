@@ -75,6 +75,9 @@ export function ChatInput({
   spaceComposerListenExternalAttach = false,
   composerFooterAfterIntegrationsSlot,
   plusMenuSpacePicker,
+  plusMenuAgentPicker,
+  openAddMenuRef,
+  onConnectedIntegrationProvidersChange,
   footerWrapperClassName,
 }: ChatInputProps) {
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
@@ -290,7 +293,26 @@ export function ChatInput({
       setText('Generate an image: ')
     },
     plusMenuSpacePicker,
+    plusMenuAgentPicker,
   })
+
+  useEffect(() => {
+    if (!openAddMenuRef) return
+    openAddMenuRef.current = plusController.openPlusMenu
+    return () => {
+      openAddMenuRef.current = null
+    }
+  }, [openAddMenuRef, plusController.openPlusMenu])
+
+  useEffect(() => {
+    if (!onConnectedIntegrationProvidersChange) return
+    plusController.loadIntegrationOverview()
+    onConnectedIntegrationProvidersChange(plusController.connectedProviders)
+  }, [
+    onConnectedIntegrationProvidersChange,
+    plusController.connectedProviders,
+    plusController.loadIntegrationOverview,
+  ])
 
   useChatInputOutsideClose({
     plusMenuOpen: plusController.plusMenuOpen,

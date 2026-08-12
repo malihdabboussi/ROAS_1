@@ -6,6 +6,7 @@ const LEGACY_DEFAULTS = [
   /^team conversation$/i,
   /^slack chat$/i,
   /^untitled conversation$/i,
+  /^channel$/i,
 ]
 
 const RAW_OPENERS =

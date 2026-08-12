@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_PROGRAM_WORK_VIEWS,
+  normalizeProgramWorkViewId,
   normalizeWorkViewId,
   readVisibleProgramWorkViews,
   resolveWorkViewFromSearch,
@@ -10,6 +11,11 @@ describe('work view config', () => {
   it('normalizes supported work views and rejects unknown values', () => {
     expect(normalizeWorkViewId('board')).toBe('board')
     expect(normalizeWorkViewId('unknown')).toBeNull()
+  })
+
+  it('supports Canvas as a Program-level view', () => {
+    expect(normalizeProgramWorkViewId('canvas')).toBe('canvas')
+    expect(DEFAULT_PROGRAM_WORK_VIEWS).toContain('canvas')
   })
 
   it('reads deduplicated Program views in canonical order', () => {

@@ -49,6 +49,7 @@ import { ArtifactChannelContextService } from './artifact-channel-context.servic
 import { ArtifactChannelMembersService } from './artifact-channel-members.service'
 import { ArtifactCompanyCortexService } from './artifact-company-cortex.service'
 import { ArtifactContactsService } from './artifact-contacts.service'
+import { ArtifactConversationSearchService } from './artifact-conversation-search.service'
 import { ArtifactCustomObjectsService } from './artifact-custom-objects.service'
 import { ArtifactCustomerBrainService } from './artifact-customer-brain.service'
 import { ArtifactDocumentsService } from './artifact-documents.service'
@@ -189,6 +190,7 @@ export class ArtifactsService extends LegacyArtifactsService {
       ...new ArtifactThemesService().getHandlers(this as any),
       ...new ArtifactMediaProcessingService().getHandlers(this as any),
       ...new ArtifactContactsService().getHandlers(this as any),
+      ...new ArtifactConversationSearchService().getHandlers(this as any),
       ...new ArtifactTasksService().getHandlers(this as any),
       ...new ArtifactCalendarService().getHandlers(this as any),
       ...new ArtifactSpaceSchemaService().getHandlers(this as any),

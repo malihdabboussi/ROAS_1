@@ -31,6 +31,7 @@ import { ArtifactChannelMembersRepository } from './repositories/artifact-channe
 import { ArtifactCompanyCortexRepository } from './repositories/artifact-company-cortex.repository'
 import { ArtifactContactNotesRepository } from './repositories/artifact-contact-notes.repository'
 import { ArtifactContactTimelineRepository } from './repositories/artifact-contact-timeline.repository'
+import { ArtifactConversationSearchRepository } from './repositories/artifact-conversation-search.repository'
 import { ArtifactContactsRepository } from './repositories/artifact-contacts.repository'
 import { ArtifactCustomObjectsRepository } from './repositories/artifact-custom-objects.repository'
 import { ArtifactCustomerBrainRepository } from './repositories/artifact-customer-brain.repository'
@@ -86,6 +87,7 @@ import { ArtifactBrainSearchActionsService } from './services/artifact-brain-sea
 import { ArtifactBrainTimelineActionsService } from './services/artifact-brain-timeline-actions.service'
 import { ArtifactCampaignThemeService } from './services/artifact-campaign-theme.service'
 import { ArtifactContactsService } from './services/artifact-contacts.service'
+import { ArtifactConversationSearchService } from './services/artifact-conversation-search.service'
 import { ArtifactCustomObjectsService } from './services/artifact-custom-objects.service'
 import { ArtifactDocumentsService } from './services/artifact-documents.service'
 import { ArtifactDocxService } from './services/artifact-docx.service'
@@ -217,6 +219,7 @@ import { MissionContextEnricherService } from './services/mission-context-enrich
     ArtifactMissionApiActionsService,
     ArtifactMissionManagerActionsService,
     ArtifactContactsService,
+    ArtifactConversationSearchService,
     ArtifactTasksService,
     ArtifactSpaceSchemaService,
     ArtifactMediaProcessingService,
@@ -244,6 +247,7 @@ import { MissionContextEnricherService } from './services/mission-context-enrich
     ArtifactCompanyCortexRepository,
     ArtifactContactNotesRepository,
     ArtifactContactTimelineRepository,
+    ArtifactConversationSearchRepository,
     ArtifactContactsRepository,
     ArtifactCustomObjectsRepository,
     ArtifactCustomerBrainRepository,

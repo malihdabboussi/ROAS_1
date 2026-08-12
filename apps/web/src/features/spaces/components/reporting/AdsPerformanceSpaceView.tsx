@@ -24,7 +24,7 @@ export function AdsPerformanceSpaceView({
   const tr = hasCustomDates ? 'all' : (config.time_range ?? '30d')
 
   return (
-    <div className="flex flex-1 flex-col overflow-auto px-4 py-3">
+    <div className="scrollbar-thin flex h-0 min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-4 py-3">
       <AdsPerformanceView
         campaignId={campaignId}
         campaignName={campaignName}

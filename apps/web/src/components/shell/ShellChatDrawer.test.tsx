@@ -2,6 +2,7 @@ import type { MouseEvent, ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ShellChatDrawer } from './ShellChatDrawer'
+import { useShellMenuDock } from './use-shell-menu-dock'
 import { useShellStore } from './use-shell-store'
 
 const ORIGINAL_INNER_WIDTH = window.innerWidth
@@ -87,6 +88,7 @@ vi.mock('./ShellChatMenu', () => ({
 
 describe('ShellChatDrawer', () => {
   beforeEach(() => {
+    useShellMenuDock.setState({ menuStyle: 'advanced' })
     useShellStore.setState({
       chatDrawer: { open: false, conversationId: null, width: 280, minimized: false },
       chatHistoryWidth: 200,
@@ -117,6 +119,19 @@ describe('ShellChatDrawer', () => {
     expect(mocks.setChatRailIntent).toHaveBeenCalledWith('new')
     expect(mocks.setActiveConversationId).toHaveBeenCalledWith(null)
     expect(mocks.openConversationInSpaceChat).not.toHaveBeenCalled()
+  })
+
+  it('uses the left Simple menu as history instead of rendering a duplicate history column', () => {
+    useShellMenuDock.setState({ menuStyle: 'simple' })
+    useShellStore.setState({
+      chatDrawer: { open: true, conversationId: null, width: 420, minimized: false },
+    })
+
+    render(<ShellChatDrawer />)
+
+    expect(screen.queryByText('Chat history')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Show chat history')).not.toBeInTheDocument()
+    expect(screen.getByText('Chat panel')).toBeInTheDocument()
   })
 
   it('restores a known conversation without forcing a fresh thread', () => {

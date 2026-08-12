@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, Minus, Video } from 'lucide-react'
+import { MapPin, Minus } from 'lucide-react'
 import { AgendaMinimizedEventEntry } from '@/features/home/components/AgendaMinimizedEventEntry'
 import type { CalendarAgendaEvent, CalendarAttendee } from '@/lib/services/calendar-api'
 
@@ -189,14 +189,16 @@ export function AgendaEventEntry({
   isExpanded: boolean
   isNextHero?: boolean
   isMinimized?: boolean
-  onSelect: () => void
+  onSelect?: () => void
   onOpenMeeting?: () => void
   onMinimizedChange?: (minimized: boolean) => void
   nowTick: number
   showAccountLabel: boolean
 }) {
   const color = eventColor(ev)
-  const accountLabel = showAccountLabel && ev.account_label ? String(ev.account_label).trim() : ''
+  const rawAccountLabel = showAccountLabel && ev.account_label ? String(ev.account_label).trim() : ''
+  // The Fathom badge already marks the source — a "Fathom" account label would repeat it.
+  const accountLabel = rawAccountLabel.toLowerCase() === 'fathom' ? '' : rawAccountLabel
 
   const minimizeButton = onMinimizedChange ? (
     <button
@@ -239,7 +241,7 @@ export function AgendaEventEntry({
       layout
       transition={ENTRY_TRANSITION}
       onClick={() => {
-        onSelect()
+        onSelect?.()
         openMeeting()
       }}
       className={
@@ -255,7 +257,7 @@ export function AgendaEventEntry({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          onSelect()
+          onSelect?.()
           openMeeting()
         }
       }}
@@ -310,7 +312,6 @@ export function AgendaEventEntry({
                 onClick={(e) => e.stopPropagation()}
                 className="button-glass-green body-3 mt-0 flex w-full items-center justify-center gap-2 rounded-lg py-2 font-semibold"
               >
-                <Video className="h-4 w-4" />
                 {ev.source === 'fathom' ? 'Watch recording' : videoButtonLabel(ev)}
               </a>
             ) : null}
@@ -327,7 +328,7 @@ export function AgendaEventEntry({
             style={{ background: color.border }}
             aria-hidden
           />
-          <span className="typo-caption text-muted-foreground w-14 shrink-0">
+          <span className="typo-caption text-muted-foreground w-16 shrink-0 whitespace-nowrap tabular-nums">
             {ev.all_day
               ? 'All day'
               : new Date(ev.start).toLocaleTimeString('en-US', {
@@ -359,18 +360,6 @@ export function AgendaEventEntry({
               Prep
             </span>
           ) : null}
-          {ev.prep?.agenda_doc_link ? (
-            <a
-              href={ev.prep.agenda_doc_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="badge-glass badge-glass-cyan typo-caption shrink-0"
-              onClick={(e) => e.stopPropagation()}
-            >
-              Doc
-            </a>
-          ) : null}
-          {ev.video_url ? <Video className="text-muted-foreground h-3.5 w-3.5 shrink-0" /> : null}
           {minimizeButton}
         </motion.div>
       )}

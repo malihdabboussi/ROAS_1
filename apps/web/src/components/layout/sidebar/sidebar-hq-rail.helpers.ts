@@ -10,12 +10,14 @@ export function isManageRailItemActive(
     return isActive(item.href)
   }
   if (item.type !== 'panel') return false
-  if (item.panelId === 'home') return pathname === '/home' || pathname.startsWith('/home/')
+  if (item.panelId === 'favorites') return false
   if (item.panelId === 'more') {
     return (
       pathname.startsWith('/projects') ||
       pathname.startsWith('/flows') ||
-      pathname.startsWith('/artifacts')
+      pathname.startsWith('/artifacts') ||
+      pathname.startsWith('/team') ||
+      pathname.startsWith('/brain')
     )
   }
   if (item.panelId === 'spaces') {
@@ -25,8 +27,6 @@ export function isManageRailItemActive(
       pathname.startsWith('/programs')
     )
   }
-  if (item.panelId === 'team2') return pathname.startsWith('/team')
-  if (item.panelId === 'brain') return pathname.startsWith('/brain')
   return false
 }
 
@@ -34,7 +34,5 @@ export function workContextSurfaceForPanel(
   panelId: ManagePanelId,
 ): 'spaces' | 'brain' | 'team' | 'general' {
   if (panelId === 'spaces') return 'spaces'
-  if (panelId === 'brain') return 'brain'
-  if (panelId === 'team2') return 'team'
   return 'general'
 }

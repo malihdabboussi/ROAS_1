@@ -340,6 +340,15 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       })
       return
     }
+    // A surface opening on the right supersedes the summary card — never
+    // leave chat + summary + work area stacked three-wide. Only touch the
+    // rightPanel slice when it is actually open: replacing its identity on
+    // every call re-notifies subscribers and can ping-pong into a render loop.
+    if (get().rightPanel.open) {
+      writePersisted({ workAreaOpen: open, rightPanelOpen: false })
+      set((s) => ({ workAreaOpen: open, rightPanel: { ...s.rightPanel, open: false } }))
+      return
+    }
     set({ workAreaOpen: open })
   },
   toggleWorkAreaOpen: () => {

@@ -10,6 +10,7 @@ import type {
 import { MeetingsPrecallPrepService } from '../../spaces/services/meetings-precall-prep.service'
 import { IntegrationsRepository } from '../repositories/integrations.repository'
 import {
+  filterCalendarRowsOwnedByUser,
   listConnectedCalendarAccounts,
   resolveCalendarConnection,
   toCalendarAccountReceipt,
@@ -463,7 +464,10 @@ export class IntegrationsCalendarService {
     integrationId: CalendarProvider,
   ): Promise<CalendarConnectionRef[]> {
     const scopedRows = await this.listScopedIntegrationRows(supabase, userId, scope, integrationId)
-    return listConnectedCalendarAccounts(scopedRows, integrationId)
+    return listConnectedCalendarAccounts(
+      filterCalendarRowsOwnedByUser(scopedRows, userId),
+      integrationId,
+    )
   }
 
   private async resolveConnection(

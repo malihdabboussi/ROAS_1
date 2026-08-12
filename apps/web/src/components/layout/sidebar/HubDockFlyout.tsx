@@ -42,6 +42,8 @@ type HubDockFlyoutProps = {
   hideHeader?: boolean
   /** Fixed panel width; long names truncate instead of growing the flyout. */
   fixedWidth?: boolean
+  /** Force the panel to open to the trigger's right, independent of a saved dock preference. */
+  placement?: 'dock-aware' | 'right'
   headerActions?: HubDockFlyoutHeaderAction[]
   searchOpen?: boolean
   searchQuery?: string
@@ -85,6 +87,7 @@ export function HubDockFlyout({
   compact = false,
   hideHeader = false,
   fixedWidth = false,
+  placement = 'dock-aware',
   headerActions,
   searchOpen,
   searchQuery,
@@ -109,7 +112,7 @@ export function HubDockFlyout({
         ? Math.max(8, window.innerHeight - height - 8)
         : Math.max(8, window.innerHeight - 48)
 
-    if (!nested && (menuDock === 'work-top' || menuDock === 'work-bottom')) {
+    if (placement === 'dock-aware' && !nested && (menuDock === 'work-top' || menuDock === 'work-bottom')) {
       setLeft(Math.min(Math.max(8, anchor.left), maxLeft))
       setTop(
         menuDock === 'work-top'
@@ -122,7 +125,7 @@ export function HubDockFlyout({
     if (!nested && !compact) {
       setTop(52)
       setLeft(
-        menuDock === 'work-right'
+        placement === 'dock-aware' && menuDock === 'work-right'
           ? Math.max(8, anchor.left - width - offsetPx)
           : Math.min(anchor.right + offsetPx, maxLeft),
       )
@@ -130,13 +133,13 @@ export function HubDockFlyout({
     }
     const nextTop = Math.min(Math.max(8, anchor.top), maxTop)
     let nextLeft =
-      !nested && menuDock === 'work-right'
+      placement === 'dock-aware' && !nested && menuDock === 'work-right'
         ? Math.max(8, anchor.left - width - offsetPx)
         : anchor.right + offsetPx
     if (nextLeft > maxLeft) nextLeft = maxLeft
     setTop(nextTop)
     setLeft(nextLeft)
-  }, [anchor.bottom, anchor.left, anchor.right, anchor.top, compact, menuDock, nested, offsetPx])
+  }, [anchor.bottom, anchor.left, anchor.right, anchor.top, compact, menuDock, nested, offsetPx, placement])
 
   useLayoutEffect(() => {
     reposition()

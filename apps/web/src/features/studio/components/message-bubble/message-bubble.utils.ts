@@ -105,7 +105,7 @@ export function formatDuration(ms: number): string {
   if (totalSeconds < 60) return `${totalSeconds}s`
   const minutes = Math.floor(totalSeconds / 60)
   const seconds = totalSeconds % 60
-  return `${minutes}:${String(seconds).padStart(2, '0')} min`
+  return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`
 }
 
 export type OrderedLayoutBaseSegment =

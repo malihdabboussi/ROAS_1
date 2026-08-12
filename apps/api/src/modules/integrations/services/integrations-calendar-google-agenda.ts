@@ -1,5 +1,3 @@
-import { extractGoogleCalendarIds } from './integrations-calendar-list'
-
 type AgendaEvent = {
   id: string
   title: string
@@ -22,9 +20,7 @@ type ExecuteTool = (
   connectionId: string,
 ) => Promise<unknown>
 
-const MAX_CALENDARS = 15
-
-/** Fetch Google Calendar agenda events across calendars in one connected account. */
+/** Fetch one unified Google Calendar agenda across every visible calendar. */
 export async function fetchGoogleMultiCalendarAgenda(input: {
   executeTool: ExecuteTool
   userId: string
@@ -34,56 +30,27 @@ export async function fetchGoogleMultiCalendarAgenda(input: {
   timezone: string
   parseEvents: (raw: unknown) => AgendaEvent[]
 }): Promise<{ events: AgendaEvent[]; errors: string[] }> {
-  const events: AgendaEvent[] = []
-  const errors: string[] = []
-
-  let calendarIds = ['primary']
   try {
-    const listRaw = await input.executeTool(
-      'GOOGLECALENDAR_LIST_CALENDARS',
+    const raw = await input.executeTool(
+      'GOOGLECALENDAR_EVENTS_LIST_ALL_CALENDARS',
       input.userId,
-      {},
+      {
+        time_min: input.start,
+        time_max: input.end,
+        single_events: true,
+        response_detail: 'full',
+      },
       input.connectionId,
     )
-    calendarIds = extractGoogleCalendarIds(listRaw).slice(0, MAX_CALENDARS)
-  } catch {
-    calendarIds = ['primary']
+    return { events: input.parseEvents(raw), errors: [] }
+  } catch (error) {
+    return {
+      events: [],
+      errors: [
+        error instanceof Error
+          ? `Google Calendar: ${error.message}`
+          : 'Google Calendar fetch failed',
+      ],
+    }
   }
-
-  const results = await Promise.all(
-    calendarIds.map(async (calendarId) => {
-      try {
-        const raw = await input.executeTool(
-          'GOOGLECALENDAR_EVENTS_LIST',
-          input.userId,
-          {
-            calendarId,
-            timeMin: input.start,
-            timeMax: input.end,
-            singleEvents: true,
-            orderBy: 'startTime',
-            timeZone: input.timezone,
-            maxResults: 100,
-          },
-          input.connectionId,
-        )
-        return { events: input.parseEvents(raw), error: null as string | null }
-      } catch (e) {
-        return {
-          events: [] as AgendaEvent[],
-          error:
-            e instanceof Error
-              ? `Google Calendar (${calendarId}): ${e.message}`
-              : `Google Calendar (${calendarId}) fetch failed`,
-        }
-      }
-    }),
-  )
-
-  for (const result of results) {
-    events.push(...result.events)
-    if (result.error) errors.push(result.error)
-  }
-
-  return { events, errors }
 }

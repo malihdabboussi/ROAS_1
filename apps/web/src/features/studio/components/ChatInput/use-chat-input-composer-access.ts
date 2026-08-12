@@ -320,6 +320,7 @@ export function useChatInputComposerAccess({
     composerPolicyPending,
     composerAccessReadOnly,
     suggestedUnconnected,
+    loadIntegrationOverview,
     openPlusSubmenu,
     handleToggleAgent,
     handleSkillToggle,

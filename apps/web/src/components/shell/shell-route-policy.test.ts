@@ -12,4 +12,11 @@ describe('shell route policy', () => {
     expect(isShellWorkspaceRoute('/all-tasks')).toBe(true)
     expect(isShellHomeRoute('/all-tasks')).toBe(false)
   })
+
+  it('only treats the exact home route as the full chat surface', () => {
+    expect(isShellHomeRoute('/home')).toBe(true)
+    expect(isShellHomeRoute('/home/inbox')).toBe(false)
+    expect(isShellHomeRoute('/home/meetings')).toBe(false)
+    expect(isShellHomeRoute('/home/my-tasks')).toBe(false)
+  })
 })
