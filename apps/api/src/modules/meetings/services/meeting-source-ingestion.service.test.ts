@@ -317,8 +317,10 @@ describe('MeetingSourceIngestionService', () => {
     }
     const service = new MeetingSourceIngestionService(
       repository as never,
+      { upsertProviderActions: vi.fn() } as never,
       resolutionRepository as never,
       {} as never,
+      { upsertProviderFollowUps: vi.fn().mockResolvedValue([]) } as never,
     )
 
     const result = await service.findMatchingMeetingItem({} as never, {

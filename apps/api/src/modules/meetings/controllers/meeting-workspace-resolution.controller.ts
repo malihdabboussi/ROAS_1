@@ -23,6 +23,7 @@ const ScheduledMeetingDateTimeSchema = z
 
 export const ScheduledMeetingSchema = z.object({
   calendar_event_id: z.string().trim().min(1).max(2_000),
+  ical_uid: z.string().trim().min(1).max(2_000).nullable().optional(),
   title: z.string().trim().min(1).max(500),
   start: ScheduledMeetingDateTimeSchema,
   end: ScheduledMeetingDateTimeSchema,
@@ -66,6 +67,7 @@ export class MeetingWorkspaceResolutionController {
       orgId: scope.orgId,
       event: {
         calendarEventId: body.calendar_event_id,
+        icalUid: body.ical_uid ?? null,
         title: body.title,
         start: body.start,
         end: body.end,

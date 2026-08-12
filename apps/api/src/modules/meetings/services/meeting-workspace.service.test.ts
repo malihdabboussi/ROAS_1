@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
+import { buildMeetingConversationId } from '../domain/meeting-conversation-id'
 import {
   MeetingWorkspaceService,
   normalizeWorkspaceDisplayTitles,
 } from './meeting-workspace.service'
-import { buildMeetingConversationId } from '../domain/meeting-conversation-id'
 
 describe('MeetingWorkspaceService', () => {
   it('normalizes legacy generic Fathom titles across recordings and deliverables', () => {
@@ -180,6 +180,136 @@ describe('MeetingWorkspaceService', () => {
       'user-1',
       expect.objectContaining({ id: buildMeetingConversationId('meeting-1') }),
       null,
+    )
+  })
+
+  it('reuses the workspace found by ical_uid when the agenda event id flips', async () => {
+    const repository = {
+      upsertWorkspace: vi.fn(),
+      upsertParticipantContextLinks: vi.fn().mockResolvedValue(undefined),
+    }
+    const resolutionRepository = {
+      findSpaceOrgId: vi.fn().mockResolvedValue(null),
+      findCallIdentityProfile: vi.fn().mockResolvedValue({
+        email: 'owner@roas.co',
+        fathomAliases: [],
+        fullName: 'Owner',
+        internalDomains: ['roas.co'],
+      }),
+      findByCalendarEvent: vi.fn().mockResolvedValue(null),
+      findByIcalUid: vi.fn().mockResolvedValue({
+        meeting_item_id: 'meeting-1',
+        phase: 'scheduled',
+        conversation_id: 'conversation-1',
+      }),
+      findBestExistingCallForEvent: vi.fn(),
+      findMeetingItemCustomData: vi.fn().mockResolvedValue({
+        entry_type: 'call',
+        call_kind: 'client',
+        call_kind_source: 'manual',
+      }),
+      createScheduledMeeting: vi.fn(),
+    }
+    const service = new MeetingWorkspaceService(
+      repository as never,
+      resolutionRepository as never,
+      {} as never,
+      {} as never,
+      { createConversation: vi.fn() } as never,
+      { create: vi.fn() } as never,
+    )
+
+    const result = await service.resolveScheduledMeeting({} as never, {
+      spaceId: 'space-1',
+      userId: 'user-1',
+      orgId: null,
+      event: {
+        calendarEventId: 'workspace:person-1:event-1',
+        icalUid: 'uid-1@google.com',
+        title: 'Client review',
+        start: '2026-07-30T17:00:00.000Z',
+        end: '2026-07-30T18:00:00.000Z',
+        attendees: [],
+      },
+    })
+
+    expect(result).toEqual({
+      space_id: 'space-1',
+      meeting_item_id: 'meeting-1',
+      conversation_id: 'conversation-1',
+    })
+    expect(resolutionRepository.findByIcalUid).toHaveBeenCalledWith(
+      expect.anything(),
+      'space-1',
+      'uid-1@google.com',
+    )
+    expect(resolutionRepository.findBestExistingCallForEvent).not.toHaveBeenCalled()
+    expect(resolutionRepository.createScheduledMeeting).not.toHaveBeenCalled()
+    expect(repository.upsertWorkspace).not.toHaveBeenCalled()
+  })
+
+  it('stamps the ical_uid natural key onto a newly created workspace', async () => {
+    const repository = {
+      upsertWorkspace: vi.fn().mockResolvedValue({
+        meeting_item_id: 'meeting-1',
+        phase: 'scheduled',
+        conversation_id: null,
+      }),
+      upsertParticipantContextLinks: vi.fn().mockResolvedValue(undefined),
+    }
+    const resolutionRepository = {
+      findSpaceOrgId: vi.fn().mockResolvedValue(null),
+      findCallIdentityProfile: vi.fn().mockResolvedValue({
+        email: 'owner@roas.co',
+        fathomAliases: [],
+        fullName: 'Owner',
+        internalDomains: ['roas.co'],
+      }),
+      findByCalendarEvent: vi.fn().mockResolvedValue(null),
+      findByIcalUid: vi.fn().mockResolvedValue(null),
+      findBestExistingCallForEvent: vi.fn().mockResolvedValue(null),
+      createScheduledMeeting: vi.fn().mockResolvedValue({
+        id: 'meeting-1',
+        title: 'Client review',
+      }),
+    }
+    const stateRepository = {
+      updateWorkspace: vi.fn().mockResolvedValue({
+        meeting_item_id: 'meeting-1',
+        phase: 'scheduled',
+        conversation_id: 'conversation-1',
+      }),
+    }
+    const service = new MeetingWorkspaceService(
+      repository as never,
+      resolutionRepository as never,
+      {} as never,
+      stateRepository as never,
+      { createConversation: vi.fn().mockResolvedValue({ id: 'conversation-1' }) } as never,
+      { create: vi.fn() } as never,
+    )
+
+    await service.resolveScheduledMeeting({} as never, {
+      spaceId: 'space-1',
+      userId: 'user-1',
+      orgId: null,
+      event: {
+        calendarEventId: 'google:event-1',
+        icalUid: 'uid-1@google.com',
+        title: 'Client review',
+        start: '2026-07-30T17:00:00.000Z',
+        end: '2026-07-30T18:00:00.000Z',
+        attendees: [],
+      },
+    })
+
+    expect(resolutionRepository.findBestExistingCallForEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ icalUid: 'uid-1@google.com' }),
+    )
+    expect(repository.upsertWorkspace).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ icalUid: 'uid-1@google.com' }),
     )
   })
 
@@ -387,6 +517,129 @@ describe('MeetingWorkspaceService', () => {
     expect(repository.upsertParticipantContextLinks).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ meetingItemId: 'meeting-winner' }),
+    )
+  })
+
+  it('recovers the winning workspace by ical_uid when the race lost on the natural key', async () => {
+    const repository = {
+      upsertWorkspace: vi.fn().mockRejectedValue(new Error('ical conflict')),
+      upsertParticipantContextLinks: vi.fn().mockResolvedValue(undefined),
+    }
+    const resolutionRepository = {
+      findSpaceOrgId: vi.fn().mockResolvedValue(null),
+      findCallIdentityProfile: vi.fn().mockResolvedValue({
+        email: 'owner@roas.co',
+        fathomAliases: [],
+        fullName: 'Owner',
+        internalDomains: ['roas.co'],
+      }),
+      findByCalendarEvent: vi.fn().mockResolvedValue(null),
+      findByIcalUid: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce({
+        meeting_item_id: 'meeting-winner',
+        phase: 'scheduled',
+        conversation_id: 'conversation-winner',
+      }),
+      findBestExistingCallForEvent: vi.fn().mockResolvedValue(null),
+      createScheduledMeeting: vi.fn().mockResolvedValue({
+        id: 'meeting-orphan',
+        title: 'Client review',
+      }),
+      deleteScheduledMeeting: vi.fn().mockResolvedValue(undefined),
+    }
+    const service = new MeetingWorkspaceService(
+      repository as never,
+      resolutionRepository as never,
+      {} as never,
+      {} as never,
+      { createConversation: vi.fn() } as never,
+      { create: vi.fn() } as never,
+    )
+
+    const result = await service.resolveScheduledMeeting({} as never, {
+      spaceId: 'space-1',
+      userId: 'user-1',
+      orgId: null,
+      event: {
+        calendarEventId: 'workspace:person-1:event-1',
+        icalUid: 'uid-1@google.com',
+        title: 'Client review',
+        start: '2026-07-30T17:00:00.000Z',
+        end: '2026-07-30T18:00:00.000Z',
+        attendees: [],
+      },
+    })
+
+    expect(result).toEqual({
+      space_id: 'space-1',
+      meeting_item_id: 'meeting-winner',
+      conversation_id: 'conversation-winner',
+    })
+    expect(resolutionRepository.deleteScheduledMeeting).toHaveBeenCalledWith(
+      expect.anything(),
+      'meeting-orphan',
+      'workspace:person-1:event-1',
+    )
+  })
+
+  it('archives chats from sibling duplicate call items sharing a natural key', async () => {
+    const readRepository = {
+      getWorkspaceBundle: vi.fn().mockResolvedValue({
+        meeting: {
+          id: 'meeting-1',
+          title: 'Client review',
+          custom_data: {
+            entry_type: 'call',
+            ical_uid: 'uid-1@google.com',
+            external_automation: { provider: 'fathom', meeting_id: '170082749' },
+          },
+        },
+        workspace: {
+          meeting_item_id: 'meeting-1',
+          phase: 'complete',
+          conversation_id: 'conversation-1',
+        },
+        recordings: [{ id: 'recording-1', title: 'Client review' }],
+      }),
+    }
+    const resolutionRepository = {
+      listDuplicateCallItemIds: vi.fn().mockResolvedValue(['dup-item-1']),
+    }
+    const deduplication = { archiveDuplicates: vi.fn().mockResolvedValue(1) }
+    const service = new MeetingWorkspaceService(
+      {} as never,
+      resolutionRepository as never,
+      readRepository as never,
+      {} as never,
+      { createConversation: vi.fn() } as never,
+      { create: vi.fn() } as never,
+      undefined,
+      deduplication as never,
+    )
+
+    await service.getWorkspace({} as never, {
+      spaceId: 'space-1',
+      meetingItemId: 'meeting-1',
+      userId: 'user-1',
+      orgId: 'org-request-scope',
+    })
+
+    expect(resolutionRepository.listDuplicateCallItemIds).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        spaceId: 'space-1',
+        meetingItemId: 'meeting-1',
+        icalUid: 'uid-1@google.com',
+        fathomMeetingId: '170082749',
+      }),
+    )
+    expect(deduplication.archiveDuplicates).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        userId: 'user-1',
+        meetingItemId: 'meeting-1',
+        keepConversationId: 'conversation-1',
+        duplicateMeetingItemIds: ['dup-item-1'],
+      }),
     )
   })
 

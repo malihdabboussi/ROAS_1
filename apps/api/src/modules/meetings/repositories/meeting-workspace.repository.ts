@@ -48,6 +48,7 @@ export class MeetingWorkspaceRepository {
     supabase: SupabaseClient,
     input: MeetingScope & {
       calendarEventId: string | null
+      icalUid?: string | null
       phase?: 'scheduled' | 'live' | 'processing' | 'complete'
       liveStartedAt?: string | null
     },
@@ -55,6 +56,8 @@ export class MeetingWorkspaceRepository {
     const phase = input.phase ? { phase: input.phase } : {}
     const liveStartedAt =
       input.liveStartedAt !== undefined ? { live_started_at: input.liveStartedAt } : {}
+    // Only write ical_uid when the caller has one; never erase a stored natural key.
+    const icalUid = input.icalUid ? { ical_uid: input.icalUid } : {}
     const { data, error } = await supabase
       .from('meeting_workspaces')
       .upsert(
@@ -64,6 +67,7 @@ export class MeetingWorkspaceRepository {
           user_id: input.userId,
           org_id: input.orgId,
           calendar_event_id: input.calendarEventId,
+          ...icalUid,
           ...phase,
           ...liveStartedAt,
         },

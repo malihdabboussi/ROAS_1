@@ -113,6 +113,8 @@ export function resolveScheduledMeeting(
 ): Promise<ResolvedMeetingWorkspace> {
   return backendPost(`/api/spaces/${spaceId}/meetings/resolve`, {
     calendar_event_id: event.id,
+    // Stable natural key — agenda row ids flip between providers/accounts.
+    ical_uid: event.ical_uid ?? null,
     title: event.title,
     start: event.start,
     end: event.end,
