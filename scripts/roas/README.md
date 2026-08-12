@@ -105,14 +105,15 @@ for diagnostics during startup.
 
 ## Other scripts
 
-| Script                             | Use                                                           |
-| ---------------------------------- | ------------------------------------------------------------- |
-| `apply-fly-secrets.sh`             | Re-import section 9 only                                      |
-| `smoke-deploy.sh`                  | Post-Vercel + optional Fly checks (also runs env-freshness)   |
-| `deploy-railway-workers.sh`        | mission-worker / queue-worker (manual steps)                  |
-| `apply-migrations-resilient.sh`    | ROAS Supabase migrations                                      |
-| `verify-roas-runtime-profiles.sql` | Drift audit — fails if any profile/pool still routes to Vibey |
-| `verify-vercel-env-freshness.sh`   | Guard — confirms critical env vars predate current prod build |
+| Script                                 | Use                                                             |
+| -------------------------------------- | --------------------------------------------------------------- |
+| `apply-fly-secrets.sh`                 | Re-import section 9 only                                        |
+| `smoke-deploy.sh`                      | Post-Vercel + optional Fly checks (also runs env-freshness)     |
+| `deploy-railway-workers.sh`            | mission-worker / queue-worker (manual steps)                    |
+| `apply-migrations-resilient.sh`        | ROAS Supabase migrations                                        |
+| `verify-roas-runtime-profiles.sql`     | Drift audit — fails if any profile/pool still routes to Vibey   |
+| `verify-vercel-env-freshness.sh`       | Guard — confirms critical env vars predate current prod build   |
+| `audit-page-grader-campaign-spaces.py` | Read-only Page Grader mapping, Space, and Meta provenance audit |
 
 The root `.railwayignore` keeps Railway CLI mission-worker uploads aligned with
 the mission-worker Docker build context. Do not remove the other-app exclusions:

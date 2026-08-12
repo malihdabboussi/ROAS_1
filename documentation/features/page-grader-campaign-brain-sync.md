@@ -1,6 +1,6 @@
 # Page Grader Campaign Brain Sync
 
-Last Modified: August 11, 2026
+Last Modified: August 12, 2026
 
 ## Overview
 
@@ -8,7 +8,7 @@ Mapped Page Grader clients sync continuously into ROAS campaign brains. Page Gra
 
 ## Data Flow
 
-1. Operator maps a Page Grader client → ROAS campaign/space in Settings → Integrations → Page Grader → Map clients. An unmapped client creates a canonical **General** Space; later syncs deterministically reuse the Space marked `schema.custom_data.space_role = general`.
+1. Operator maps a Page Grader client → ROAS campaign in Settings → Integrations → Page Grader → Map clients. The ROAS campaign is the client/brand container. An unmapped client creates a canonical **General** Space; later syncs deterministically reuse the Space marked `schema.custom_data.space_role = general`.
 2. **Create & import / Re-sync** pulls `GET /clients/:id/brain-package` and runs **deterministic dual ingest** (no Atlas LLM):
    - Upserts `ns_memories` (+ evidence chunks) on the campaign brain by `content_hash`
    - Embeds any Page Grader `ns_memories` rows whose Brain vector is still
@@ -20,14 +20,19 @@ Mapped Page Grader clients sync continuously into ROAS campaign brains. Page Gra
    - **PG push:** after Client Intel refresh / Send to ROAS-BRAIN, Page Grader POSTs `{ client_id, content_hash }` to `/api/integrations/page-grader/webhooks/brain-package` (`x-page-grader-signature`)
    - **ROAS hourly catch-up:** `POST /api/internal/brain/import-jobs/enqueue-due` and `POST /api/internal/page-grader/brain-sync/catch-up` re-fetch packages for mapped clients and ingest when hash differs
    - **Manual Re-sync:** Map clients row + Brain canvas Import → “Re-sync from Page Grader” (`force: true`)
-4. Unchanged `content_hash` skips package writes only when the mapped campaign
-   already has indexed Campaign Knowledge. It still repairs missing Campaign
-   Brain embeddings before returning. If the campaign is an empty shell,
-   catch-up automatically runs one forced, content-hash-deduplicated repair
-   import. Unmapped clients never create campaigns from catch-up/webhook.
-5. The importer always writes the canonical Space schema (`version`, system `fields`, standard views, and Page Grader provenance). The web reader also normalizes incomplete legacy schemas, and migration `20260719210500_repair_page_grader_general_spaces.sql` repairs previously malformed Page Grader Spaces in place.
-6. New campaigns keep their package `content_hash` empty until deterministic ingest succeeds. Campaign Knowledge rows index with provider concurrency capped at six. Their measured embedding tokens settle in billing batches of 250 rows so internal credits reflect aggregate provider cost plus markup instead of rounding every vector request up to one credit.
-7. Campaign Knowledge graph reads paginate through Supabase's 1,000-row response ceiling up to the graph endpoint's 5,000-object limit. The response continues to use aggregate database stats for true object and connection totals.
+4. Every successful pull reconciles each Page Grader `client_campaign` into its own ROAS Space under the client campaign container. It creates or updates a source-linked **Campaign Brief** doc and carries over the Page Grader Meta ad account and Meta campaign mapping. Campaign Spaces include Overview, Docs, Missions, Calendar, Meta Ads, and Funnels views.
+   - Reconciliation mirrors the Page Grader campaign screen: soft-deleted rows and `archived` campaigns are excluded.
+   - A previously synced inactive Space is deleted only when it still contains generated Page Grader content exclusively. Spaces with operator-added content are retained for review.
+5. Unchanged `content_hash` skips package writes only when the mapped campaign
+   already has indexed Campaign Knowledge **and** the campaign/Meta fingerprint
+   (`campaign_space_hash`) also matches, so operational Space structure cannot
+   become stale behind an unchanged memory hash. It still repairs missing
+   Campaign Brain embeddings before returning. If the campaign is an empty
+   shell, catch-up automatically runs one forced, content-hash-deduplicated
+   repair import. Unmapped clients never create campaigns from catch-up/webhook.
+6. The importer always writes the canonical Space schema (`version`, system `fields`, standard views, and Page Grader provenance). The web reader also normalizes incomplete legacy schemas, and migration `20260719210500_repair_page_grader_general_spaces.sql` repairs previously malformed Page Grader Spaces in place.
+7. New campaigns keep their package `content_hash` empty until deterministic ingest succeeds. Campaign Knowledge rows index with provider concurrency capped at six. Their measured embedding tokens settle in billing batches of 250 rows so internal credits reflect aggregate provider cost plus markup instead of rounding every vector request up to one credit.
+8. Campaign Knowledge graph reads paginate through Supabase's 1,000-row response ceiling up to the graph endpoint's 5,000-object limit. The response continues to use aggregate database stats for true object and connection totals.
 
 ## Package contract
 
@@ -44,6 +49,11 @@ Envelope fields:
 | Pull package  | Existing Page Grader vault API key                                               |
 | Push webhook  | `user_integrations.metadata.webhook_secret` matched to `x-page-grader-signature` |
 | Catch-up cron | Internal auth token                                                              |
+
+Operators can scope a rollout or repair to known Page Grader client IDs with
+`POST /api/internal/page-grader/brain-sync/catch-up?client_ids=id-1,id-2&limit=5`. The default
+hourly call continues to scan all mapped clients and skips matching brain plus campaign/Meta
+fingerprints.
 
 Page Grader env for push: `ROAS_BRAIN_WEBHOOK_URL`, `ROAS_BRAIN_WEBHOOK_SECRET` (must match the connected ROAS user’s webhook secret).
 
@@ -122,6 +132,7 @@ Repeated manual requests use the deterministic Page Grader client and meeting ti
 - **2026-07-22:** Formalized the cross-product hierarchy: Page Grader client = ROAS client campaign container; Page Grader `client_campaign` = ROAS Space. Hourly and webhook-driven pulls now reconcile campaign Spaces and source-linked Campaign Brief docs even when the brain hash is unchanged. Page Grader Meta account/campaign mappings are recorded on the Space schema and brief when available.
 - **2026-07-22:** The Page Grader brain package includes soft-deleted and archived `client_campaigns`, while the Page Grader UI hides them. Space reconciliation now applies the same visibility rule and safely retires generated-only stale Spaces; operator-edited Spaces are never automatically deleted.
 - **2026-07-22:** Added ROAS-owned Fathom meeting delivery into Page Grader Client Meetings. Explicit mappings win, ambiguous calls wait for review, multi-client internal calls can fan out intentionally, and repeated delivery is idempotent.
+- **2026-08-12:** The campaign→Space reconciliation code described by the 2026-07-22 entries had never merged (it was stranded on `codex/slack-signal-training`). Recovered onto main: `page-grader-campaign-space-schema.ts` / `page-grader-campaign-space-sync.ts`, the `campaign_space_hash` fingerprint on `client_scope_map`, catch-up `client_ids` scoping, and the read-only rollout audit script `scripts/roas/audit-page-grader-campaign-spaces.py`.
 
 ## Rollout
 

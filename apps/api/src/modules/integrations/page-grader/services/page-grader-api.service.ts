@@ -278,6 +278,7 @@ export class PageGraderApiService {
       spaceId?: string | null
       spaceTitle?: string | null
       contentHash?: string | null
+      campaignSpaceHash?: string | null
       lastSyncedAt?: string | null
       lastSyncStatus?: string | null
     },
@@ -294,6 +295,10 @@ export class PageGraderApiService {
         ...(input.spaceTitle ? { space_title: input.spaceTitle } : {}),
         content_hash:
           input.contentHash !== undefined ? input.contentHash : (prev?.content_hash ?? null),
+        campaign_space_hash:
+          input.campaignSpaceHash !== undefined
+            ? input.campaignSpaceHash
+            : (prev?.campaign_space_hash ?? null),
         last_synced_at:
           input.lastSyncedAt !== undefined ? input.lastSyncedAt : (prev?.last_synced_at ?? null),
         last_sync_status:

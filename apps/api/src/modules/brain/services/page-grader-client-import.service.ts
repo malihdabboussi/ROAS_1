@@ -7,6 +7,11 @@ import {
   type PageGraderRecord,
 } from './page-grader-brain-package-build'
 import { PageGraderBrainPackageIngestService } from './page-grader-brain-package-ingest.service'
+import type { PageGraderMetaContext } from './page-grader-campaign-space-schema'
+import {
+  computePageGraderCampaignSpaceHash,
+  syncPageGraderCampaignSpaces,
+} from './page-grader-campaign-space-sync'
 import {
   buildPageGraderGeneralSpaceSchema,
   PAGE_GRADER_GENERAL_SPACE_TITLE,
@@ -21,6 +26,7 @@ export type PageGraderClientImportBody = {
   campaignHint?: string
   spaceId?: string
   spaceTitle?: string
+  metaContext?: PageGraderMetaContext | null
 }
 
 @Injectable()
@@ -52,6 +58,10 @@ export class PageGraderClientImportService {
       body.campaignName?.trim() ||
       this.resolveCampaignName(pkg, clientName, body.campaignHint ?? 'multi-family strategy')
     const contentHash = computePageGraderPackageContentHash(pkg)
+    const campaignSpaceHash = computePageGraderCampaignSpaceHash({
+      campaigns: pkg.client_campaigns ?? [],
+      metaContext: body.metaContext,
+    })
     const externalSource = {
       page_grader: {
         client_id: pageGraderClientId || null,
@@ -136,6 +146,7 @@ export class PageGraderClientImportService {
           sourceItems: pkg.source_items?.length ?? 0,
           legacyIntelNotes: pkg.legacy_local_only?.intel_notes?.length ?? 0,
         },
+        campaignSpaceHash,
       }
     }
 
@@ -166,6 +177,16 @@ export class PageGraderClientImportService {
         uniqueClientId,
       }))
 
+    const campaignSpaceSync = await syncPageGraderCampaignSpaces(supabase, {
+      userId,
+      orgId: effectiveOrgId,
+      roasCampaignId: String(campaign.id),
+      clientName,
+      pageGraderClientId,
+      campaigns: pkg.client_campaigns ?? [],
+      metaContext: body.metaContext,
+    })
+
     const ingested = await this.packageIngest.ingestPackage(supabase, {
       userId,
       orgId: effectiveOrgId,
@@ -188,6 +209,9 @@ export class PageGraderClientImportService {
         id: String(space.id),
         title: String(space.title),
       },
+      campaignSpaces: campaignSpaceSync.spaces,
+      campaignSpaceRetired: campaignSpaceSync.retired,
+      campaignSpaceHash,
       brainImport: {
         action: ingested.skippedUnchanged ? 'skipped_unchanged' : 'ingested',
         title: `ROAS Portal Client Intel - ${clientName}`,
