@@ -47,6 +47,7 @@ describe('useChatInputPlusController', () => {
     plusSubmenuRef = createRef<HTMLDivElement>()
     plusSubmenuAnchorRefs = {
       current: {
+        create: null,
         files: null,
         attach: null,
         integrations: null,
@@ -133,7 +134,7 @@ describe('useChatInputPlusController', () => {
         handleFileSelect,
         allSlashItems,
         onOpenAtMenu: handleComposerOpenAtMenu,
-        onGenerateImage: vi.fn(),
+        onSelectCreateItem: vi.fn(),
       }),
     )
 

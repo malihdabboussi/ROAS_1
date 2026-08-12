@@ -1,4 +1,5 @@
 import type { RefObject } from 'react'
+import type { ShellCreateMenuItem } from '@/components/shell/shell-create-menu.config'
 import type { ChatInputPlusMenuSpacePickerConfig } from './chat-input-plus-menu-space.types'
 import type { SlashItem } from './chat-input-slash-menu'
 import { useChatInputCloudAttach } from './use-chat-input-cloud-attach'
@@ -13,7 +14,7 @@ interface UseChatInputPlusControllerOptions {
   handleFileSelect: (files: File[] | FileList) => void | Promise<void>
   allSlashItems: SlashItem[]
   onOpenAtMenu: () => void
-  onGenerateImage: () => void
+  onSelectCreateItem: (item: ShellCreateMenuItem) => void
   plusMenuSpacePicker?: ChatInputPlusMenuSpacePickerConfig
 }
 
@@ -24,7 +25,7 @@ export function useChatInputPlusController({
   handleFileSelect,
   allSlashItems,
   onOpenAtMenu,
-  onGenerateImage,
+  onSelectCreateItem,
   plusMenuSpacePicker,
 }: UseChatInputPlusControllerOptions) {
   const {
@@ -109,7 +110,7 @@ export function useChatInputPlusController({
     onLocalUpload: handleFileButtonClick,
     onDrive: openDrive,
     onDropbox: openDropbox,
-    onGenerateImage,
+    onSelectCreateItem,
     onCloseMenu: closePlusMenu,
     onOpenAtMenu,
     handleToggleAgent,

@@ -8,6 +8,7 @@ export interface AgentToggle {
 }
 
 export type ComposerPlusSubmenu =
+  | 'create'
   | 'space'
   | 'files'
   | 'attach'

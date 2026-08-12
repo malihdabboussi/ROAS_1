@@ -89,7 +89,7 @@ function defaultProps(overrides: Partial<Parameters<typeof ChatInputNormalFooter
       onLocalUpload: vi.fn(),
       onDrive: vi.fn(),
       onDropbox: vi.fn(),
-      onGenerateImage: vi.fn(),
+      onSelectCreateItem: vi.fn(),
       onCloseMenu: vi.fn(),
       onOpenAtMenu: vi.fn(),
       onToggleAgent: vi.fn(),

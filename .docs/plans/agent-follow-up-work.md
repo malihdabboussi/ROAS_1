@@ -9498,3 +9498,39 @@ Evidence: The instant-call change only generalized the existing unmatched-call A
 Needed work: Extract Agenda call enrichment/query mapping from the pre-call service and move Agenda modal orchestration into a focused container without changing calendar/Fathom identity behavior.
 
 Reason not done now: The requested impromptu call path is complete and covered by focused tests; decomposing the broader scheduled-call and enrichment pipeline is behavior-neutral pre-existing architecture work.
+
+## 2026-08-11 — "+ Create" menu P1 scoped deferrals
+
+Status: Open
+
+Feature/app: Create menu (apps/web chat composer) — game plan artifact 569139fd (claude.ai)
+
+Files:
+
+- `apps/web/src/components/shell/ShellRightPanel.tsx` (rail header "+" entry point not added yet)
+- `apps/web/src/components/global-chat/store/use-global-chat-store.ts` (seed detail has no quick-start/systemContext field)
+- `apps/web/src/components/shell/shell-create-menu.config.ts` (Missions entries and Google Docs destination option not represented)
+- `apps/agent-api/src/modules/artifacts/services/artifact-presentations.service.ts` (personal-scope create still errors "campaign_id required" instead of falling back to the General campaign)
+- `supabase` (blog_posts, emails, conversation_documents lack space_id)
+
+Evidence: Approved plan phases P1–P3; this change shipped the composer-plus-menu Create submenu with prompt seeding and systemContext targeting only.
+
+Needed work: (1) rail-header "+" opening the same catalog, seeding via an extended GlobalChatSeedDetail that can carry a quick-start id so systemContext survives the rail path; (2) Missions entries under More wired to the playbook start flow; (3) Google Docs destination choice on Docs & Decks; (4) General-campaign fallback for unscoped creates + space_id migration for the three missing tables; (5) P2 rail redesign and P3 template catalogs per the plan.
+
+Reason not done now: Dylan approved building in phases; P1 scope for this change was the composer Create menu. The remaining items each touch separate surfaces (rail, seed contract, agent-api, migrations) and are staged as the next chunks.
+
+## 2026-08-11 — SpaceVibeyChatPanel allowlist baseline bump
+
+Status: Open
+
+Feature/app: Create menu (apps/web)
+
+Files:
+
+- `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` (2556 LOC; allowlist pin raised 2553 → 2556)
+
+Evidence: Main already carried the file at 2555 LOC against a 2553 pin (stale baseline); wiring `onCreateMenuSelect` added one more line. Prettier rejects the available micro-compressions at this indent depth.
+
+Needed work: Decompose the panel (composer block and empty-state chrome are natural seams) far enough to retire the allowlist entry, then restore a real baseline.
+
+Reason not done now: Decomposing a 2.5k-line container is behavior-neutral architecture work far outside the create-menu change; the one-line growth is recorded here and in the bumped pin.

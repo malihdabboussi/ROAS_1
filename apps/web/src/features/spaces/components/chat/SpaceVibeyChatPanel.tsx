@@ -2431,6 +2431,7 @@ export function SpaceVibeyChatPanel({
                           onComposerValueChange={quickStart.handleComposerValueChange}
                           activeCapabilityChip={quickStart.activeCapabilityChip}
                           onClearCapabilityChip={quickStart.clearQuickStart}
+                          onCreateMenuSelect={quickStart.selectQuickStart}
                           onEnqueue={editingQueueItemId ? undefined : handleEnqueue}
                           composerFooterAfterIntegrationsSlot={composerContextSlot}
                           onSendNow={handleQueueSendNowNext}

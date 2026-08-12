@@ -41,7 +41,7 @@ function renderPlusMenu(overrides: Partial<Parameters<typeof ChatInputPlusMenuVi
     onLocalUpload: vi.fn(),
     onDrive: vi.fn(),
     onDropbox: vi.fn(),
-    onGenerateImage: vi.fn(),
+    onSelectCreateItem: vi.fn(),
     onCloseMenu: vi.fn(),
     onOpenAtMenu: vi.fn(),
     onToggleAgent: vi.fn(),
@@ -56,16 +56,33 @@ function renderPlusMenu(overrides: Partial<Parameters<typeof ChatInputPlusMenuVi
 }
 
 describe('ChatInputPlusMenuView', () => {
-  it('renders Generate image and delegates click through the close path', () => {
+  it('renders the Create row and opens its submenu on hover', () => {
+    const onOpenSubmenu = vi.fn()
+    const onSubmenuAnchorNode = vi.fn()
+    renderPlusMenu({ onOpenSubmenu, onSubmenuAnchorNode })
+
+    expect(onSubmenuAnchorNode).toHaveBeenCalledWith('create', expect.any(HTMLButtonElement))
+    fireEvent.mouseEnter(screen.getByRole('button', { name: /create/i }))
+    expect(onOpenSubmenu).toHaveBeenCalledWith('create')
+  })
+
+  it('delegates create submenu picks through the close path and blocks coming-soon rows', () => {
     const onCloseMenu = vi.fn()
-    const onGenerateImage = vi.fn()
-    renderPlusMenu({ onCloseMenu, onGenerateImage })
+    const onSelectCreateItem = vi.fn()
+    renderPlusMenu({ submenu: 'create', onCloseMenu, onSelectCreateItem })
 
-    expect(screen.getByText('Generate image')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /generate image/i }))
-
+    expect(screen.getByText('Start With')).toBeTruthy()
+    expect(screen.getByText('Docs & Decks')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /^Offer/ }))
     expect(onCloseMenu).toHaveBeenCalledTimes(1)
-    expect(onGenerateImage).toHaveBeenCalledTimes(1)
+    expect(onSelectCreateItem).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'create-offer', prompt: 'Create an offer for ' }),
+    )
+
+    const comingSoon = screen.getByRole('button', { name: /Spreadsheet/ })
+    expect(comingSoon.hasAttribute('disabled')).toBe(true)
+    fireEvent.click(comingSoon)
+    expect(onSelectCreateItem).toHaveBeenCalledTimes(1)
   })
 
   it('renders root menu rows and delegates submenu hover behavior', () => {
@@ -73,7 +90,7 @@ describe('ChatInputPlusMenuView', () => {
     const onSubmenuAnchorNode = vi.fn()
     const { props } = renderPlusMenu({ onOpenSubmenu, onSubmenuAnchorNode })
 
-    expect(screen.getByText('Generate image')).toBeTruthy()
+    expect(screen.getByText('Create')).toBeTruthy()
     expect(screen.getByText('Add photos & files')).toBeTruthy()
     expect(screen.getByText('Attach')).toBeTruthy()
     expect(screen.getByText('Access')).toBeTruthy()
