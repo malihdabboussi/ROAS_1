@@ -71,7 +71,9 @@ Page Grader upserts on the Fathom meeting ID plus client ID, so webhook retries 
 
 Page Grader's **New Agenda** action and eligible ROAS meetings use the same precall-prep pipeline. Page Grader owns the Google Docs template, weekly tab, and Meta ad-preview insertion. ROAS owns the agenda analysis and must use the exact client mapping's campaign Brain; an unmapped Page Grader client is rejected instead of falling back to another user's integration.
 
-The prep agent receives a bounded Page Grader context pack containing cached Meta performance with source range and freshness, recent meeting notes, active campaigns, open fulfillment work, prior agendas, and Client Brain intelligence. Operator notes remain a distinct input. The Drive writer accepts only a substantive six-section result: Agenda, Performance, Wins, Campaign notes, Other updates, and Needs / blockers. Generic placeholders such as “see dashboard,” cross-client material, and an otherwise successful prep without a completed Drive tab are treated as failures that can be retried.
+The prep agent receives a bounded Page Grader context pack containing cached Meta performance, recent meeting notes, active campaigns, open fulfillment work, prior agendas, and Client Brain intelligence. Operator notes remain a distinct input. The Drive writer accepts only a substantive seven-section result in this client-facing order: What's on the agenda, What we worked on this week, What we're working on next week, Raw performance data, Wins, Campaign notes / recommendations, and Needs / blockers. Page Grader keeps the branded template styling, renders the opening topics as native Google Docs checkboxes, and inserts Meta ad previews after the performance section.
+
+The output contract is designed for a two-minute account-manager scan and a live client screen share. It forbids timed run-of-show blocks, internal source or integration caveats, diagnostic prompts, mechanical report labels, blank filler bullets, and generic placeholders such as “see dashboard.” Missing inputs are omitted rather than advertised to the client. A prep without every substantive section or without a completed Drive tab is treated as a retryable failure.
 
 Repeated manual requests use the deterministic Page Grader client and meeting timestamp key. A ready item is skipped only after its Drive tab exists; a stale pending or failed write can run again. Stored document links preserve the raw Google Docs tab identifier in the `tab` query parameter.
 
@@ -92,6 +94,7 @@ Repeated manual requests use the deterministic Page Grader client and meeting ti
 
 ## Decision Log
 
+- **2026-08-11:** Replaced the analyst-style timed precall report with a concise client-facing meeting workspace. The agenda now opens with native checkboxes, separates completed work from next-week priorities, presents raw performance per live campaign, uses plain-English wins and recommendations, and shows only genuine client needs. Internal source availability and preparation gaps can no longer appear in the generated document.
 - **2026-08-11:** Unified Page Grader manual agendas and ROAS precall prep behind the mapped client campaign. ROAS now supplies validated, client-safe, decision-ready content from bounded Brain, meeting, fulfillment, and cached Meta context; Page Grader remains the Google Docs/ad-preview writer. Missing mappings, lazy placeholder output, cross-client call context, failed Drive writes, and duplicate same-meeting requests no longer silently pass as successful agendas.
 - **2026-07-23:** Page Grader imports had two separate vector stores:
   Campaign Knowledge chunks received embeddings, but their canonical

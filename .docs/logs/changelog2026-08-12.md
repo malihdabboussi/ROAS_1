@@ -111,3 +111,9 @@ Impact: Chain parity only; no production SQL required for this merge.
 What: Preserved draft-card newlines, forced rich paste to plain text, restored an edit reset control, and re-enabled spellcheck.
 
 Impact: Edited drafts now round-trip multiline text correctly through Copy and composer insertion and can be restored to their original version.
+
+## [2026-08-12 15:34] - [FIX]
+
+What: Replaced the analyst-style timed agenda with seven client-facing sections and updated the Page Grader contract for this-week/next-week content.
+
+Impact: Generated agendas are concise, screen-share-safe, and omit internal source caveats, minute ranges, and mechanical State/Evidence labels.
