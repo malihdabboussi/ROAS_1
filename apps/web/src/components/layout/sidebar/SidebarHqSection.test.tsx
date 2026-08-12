@@ -1,6 +1,7 @@
 import type { MouseEvent, ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { SidebarHqSection } from './SidebarHqSection'
 import { makeSidebarHqController } from './SidebarHqSection.test-support'
@@ -54,6 +55,7 @@ vi.mock('@/lib/programs', () => ({
   readProgramsLocalCache: vi.fn(() => null),
   createProgram: vi.fn(),
   updateProgram: vi.fn(),
+  updateProgramUserState: vi.fn(),
   deleteProgram: vi.fn(),
 }))
 
@@ -210,9 +212,35 @@ vi.mock('@/lib/utils/open-in-new-tab', () => ({
 }))
 
 describe('SidebarHqSection', () => {
+  beforeEach(() => {
+    useShellMenuDock.setState({ menuStyle: 'advanced', menuCompact: false })
+  })
+
   afterEach(() => {
     cleanup()
     vi.clearAllMocks()
+  })
+
+  it('renders only the requested primary rail destinations before More', () => {
+    const controller = makeSidebarHqController({ mobileDrawerOpen: false })
+
+    render(<SidebarHqSection c={controller} />)
+
+    const primaryLabels = [
+      'Home',
+      'Inbox',
+      'Meetings',
+      'My Tasks',
+      'Delegation Desk',
+      'Favorites',
+      'Programs',
+      'More',
+    ]
+    for (const label of primaryLabels) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument()
+    }
+    expect(screen.queryByLabelText('Team')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Brain')).not.toBeInTheDocument()
   })
 
   it('renders the mobile HQ hub menu drawer', () => {

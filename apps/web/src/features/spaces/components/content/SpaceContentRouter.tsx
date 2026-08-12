@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import type { ReactNode, RefObject } from 'react'
 import { toast } from 'sonner'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { CampaignCanvasView } from '@/components/canvas'
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import { useAccountContextGate } from '@/features/org/store/use-org-store'
 import type { useCloudAttach } from '@/lib/hooks/use-cloud-attach'
@@ -335,7 +336,9 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
 
   return (
     <>
-      {activeView?.type === 'channels' ? (
+      {activeView?.type === 'canvas' ? (
+        <CampaignCanvasView campaignId={activeSpace.campaign_id ?? null} />
+      ) : activeView?.type === 'channels' ? (
         <ChannelsIndexView
           view={activeView}
           spaceId={activeSpace.id}

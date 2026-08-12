@@ -19,6 +19,7 @@ import {
 } from '@/lib/conversations/conversations-api'
 import { stripEmoji } from '@/lib/utils/text'
 import { ChatStreamUserError, resolveChatStreamFailure } from '../config/chat-stream-errors.config'
+import { isConversationUnavailableError } from './conversation-load-errors'
 import {
   assistantHasRenderableText,
   assistantHasVisibleOutput,
@@ -1915,8 +1916,16 @@ export async function selectConversation(conversationId: string): Promise<void> 
     if (!isCurrent()) return
     store.setActiveConversationId(conversationId)
     store.setIsLoadingMessages(false)
-    const cachedMessages = store.messagesByConversation[conversationId] ?? []
-    if (cachedMessages.length === 0) return
+    // Background-revalidate even when the cached entry is `[]` — meeting threads
+    // seed an empty cache on link, and trusting it forever leaves real history
+    // invisible for the rest of the session. Empty entries revalidate at most
+    // once per session so a deleted/empty conversation can't retry-storm.
+    const cachedEmpty = (store.messagesByConversation[conversationId] ?? []).length === 0
+    if (deadConversationIds.has(conversationId)) return
+    if (cachedEmpty) {
+      if (emptyRevalidatedConversationIds.has(conversationId)) return
+      emptyRevalidatedConversationIds.add(conversationId)
+    }
     void (async () => {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
@@ -1927,7 +1936,11 @@ export async function selectConversation(conversationId: string): Promise<void> 
             .getState()
             .setMessages(conversationId, mergeMessagesPreservingOrderedBlocks(local, msgs))
           return
-        } catch {
+        } catch (error) {
+          if (isConversationUnavailableError(error)) {
+            deadConversationIds.add(conversationId)
+            return
+          }
           if (attempt === 0) await new Promise((r) => setTimeout(r, 1000))
         }
       }
@@ -1946,12 +1959,28 @@ export async function selectConversation(conversationId: string): Promise<void> 
         .setMessages(conversationId, mergeMessagesPreservingOrderedBlocks(local, msgs))
     }
     useChatStore.getState().setActiveConversationId(conversationId)
+  } catch (error) {
+    // A stale reference (persisted drawer id, old URL) to a deleted conversation
+    // must fail quietly ONCE — seeding an empty entry plus the tombstone stops
+    // every hydration gate from retrying it forever.
+    deadConversationIds.add(conversationId)
+    emptyRevalidatedConversationIds.add(conversationId)
+    if (isCurrent()) {
+      useChatStore.getState().setMessages(conversationId, [])
+    }
+    if (!isConversationUnavailableError(error)) throw error
   } finally {
     if (isCurrent()) {
       useChatStore.getState().setIsLoadingMessages(false)
     }
   }
 }
+
+/** Conversations that 404'd this session — never re-fetch, never retry. */
+const deadConversationIds = new Set<string>()
+/** Empty cached entries revalidate once per session, not per render pass. */
+const emptyRevalidatedConversationIds = new Set<string>()
+
 
 // ============================================================================
 // Message CRUD (via backend API)

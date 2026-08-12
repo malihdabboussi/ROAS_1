@@ -137,6 +137,7 @@ export function MessageBubbleOrderedBlocks({
             blocks={seg.blocks}
             deliverableSource={deliverableBlockSource}
             onOpenDeliverablePreview={onOpenDeliverablePreview}
+            autoOpen={isBeingWorkedOn}
           />
         )
       }

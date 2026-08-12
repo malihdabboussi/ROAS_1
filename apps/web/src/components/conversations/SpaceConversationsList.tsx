@@ -79,6 +79,9 @@ export interface SpaceConversationsListProps {
   groupBy?: ChatHistoryGroupBy
   campaignNameById?: Record<string, string>
   headerStartSlot?: ReactNode
+  beforeHeaderSlot?: ReactNode
+  compactHeaderTitle?: string
+  compactHeaderTitleClassName?: string
   /** Show a compact updated date at the end of each row. */
   showUpdatedAt?: boolean
   /** Separate rows with a subtle rule instead of card spacing. */
@@ -129,6 +132,9 @@ export function SpaceConversationsList({
   headerEndSlot,
   headerFooterSlot,
   headerStartSlot,
+  beforeHeaderSlot,
+  compactHeaderTitle,
+  compactHeaderTitleClassName,
   groupBy = 'none',
   campaignNameById,
   showUpdatedAt,
@@ -312,6 +318,7 @@ export function SpaceConversationsList({
 
   const expandedList = (
     <div className="flex h-full min-h-0 flex-1 flex-col">
+      {beforeHeaderSlot}
       <SpaceConversationsHeader
         query={query}
         onQueryChange={onQueryChange}
@@ -320,6 +327,8 @@ export function SpaceConversationsList({
         hideBackButton={hideBackButton}
         hideHeaderBottomBorder={hideHeaderBottomBorder}
         compactHeader={compactHeader}
+        compactHeaderTitle={compactHeaderTitle}
+        compactHeaderTitleClassName={compactHeaderTitleClassName}
         compactSearchOpen={compactSearchOpen}
         onCompactSearchOpenChange={setCompactSearchOpen}
         onCollapsedChange={onCollapsedChange}
@@ -334,10 +343,24 @@ export function SpaceConversationsList({
         headerEndSlot={headerEndSlot}
         headerFooterSlot={headerFooterSlot}
       />
-      <div className="py-spacing-3 min-h-0 flex-1 overflow-y-auto">
+      <div
+        className={`min-h-0 flex-1 overflow-y-auto ${compactHeader ? 'px-spacing-2 py-spacing-1' : 'py-spacing-3'}`}
+      >
         {loading ? (
-          <div className="body-4 text-muted-foreground p-spacing-4 text-center">
-            Loading conversations...
+          <div
+            className="gap-spacing-2 px-spacing-1 py-spacing-2 flex flex-col"
+            role="status"
+            aria-label="Loading conversations"
+          >
+            {[82, 64, 91, 73, 58].map((width, index) => (
+              <div key={index} className="gap-spacing-2 px-spacing-1 flex items-center">
+                <div className="bg-secondary icon-sm shrink-0 animate-pulse rounded-full" />
+                <div
+                  className="bg-secondary h-3 animate-pulse rounded"
+                  style={{ width: `${width}%`, animationDelay: `${index * 120}ms` }}
+                />
+              </div>
+            ))}
           </div>
         ) : visible.length === 0 ? (
           <div className="p-spacing-4 text-center">

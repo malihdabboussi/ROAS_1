@@ -72,6 +72,15 @@ export class SpaceAutomationSchedulerService {
     const admin = this.getServiceClient()
     if (!admin) return
 
+    try {
+      await this.reseedMissingNextFireAt(admin)
+    } catch (err) {
+      this.logger.error(
+        `Schedule next-fire repair scan failed; continuing with due rows: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      )
+    }
     const dueRows = await this.automationsRepo.findDueSchedules(admin, new Date(), DUE_BATCH_SIZE)
     if (dueRows.length === 0) return
 
@@ -150,6 +159,9 @@ export class SpaceAutomationSchedulerService {
             'itemless',
           )
         : false
+    this.logger.log(
+      `Claimed schedule for automation ${automationId}; execution=${queued ? 'queue' : 'inline'}`,
+    )
     if (!queued) {
       await this.automationService.executeAutomationItemless(
         row as unknown as Parameters<SpaceAutomationService['executeAutomationItemless']>[0],
@@ -167,14 +179,12 @@ export class SpaceAutomationSchedulerService {
     const spaceId = String(row.space_id ?? '')
     const trigger = row.trigger as Record<string, unknown> | undefined
     if (!automationId || !spaceId || !trigger) return
+    let next: Date
     try {
-      const next = this.computeNextFireAt(trigger, new Date())
-      await this.automationsRepo.updateScheduleFields(admin, spaceId, automationId, {
-        schedule_next_fire_at: next.toISOString(),
-      })
+      next = this.computeNextFireAt(trigger, new Date())
     } catch (err) {
-      // If even the cron expression is unparsable, clear next fire so we stop
-      // re-attempting the row until the user fixes it.
+      // Only an invalid saved schedule disables future fires. Persistence
+      // failures below must leave the existing due timestamp untouched.
       this.logger.warn(
         `Disabling schedule for automation ${automationId}: ${
           err instanceof Error ? err.message : String(err)
@@ -183,6 +193,45 @@ export class SpaceAutomationSchedulerService {
       await this.automationsRepo.updateScheduleFields(admin, spaceId, automationId, {
         schedule_next_fire_at: null,
       })
+      return
+    }
+
+    try {
+      await this.automationsRepo.updateScheduleFields(admin, spaceId, automationId, {
+        schedule_next_fire_at: next.toISOString(),
+      })
+    } catch (err) {
+      this.logger.error(
+        `Failed to persist next fire for automation ${automationId}; leaving it due: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      )
+    }
+  }
+
+  private async reseedMissingNextFireAt(admin: SupabaseClient): Promise<void> {
+    const rows = await this.automationsRepo.findSchedulesMissingNextFire(
+      admin,
+      DUE_BATCH_SIZE,
+    )
+    const now = new Date()
+    for (const row of rows) {
+      const automationId = String(row.id ?? '')
+      const spaceId = String(row.space_id ?? '')
+      if (!automationId || !spaceId) continue
+      try {
+        const next = this.computeInitialNextFireAt(row, now)
+        if (!next) continue
+        await this.automationsRepo.updateScheduleFields(admin, spaceId, automationId, {
+          schedule_next_fire_at: next.toISOString(),
+        })
+      } catch (err) {
+        this.logger.warn(
+          `Could not reseed schedule for automation ${automationId}: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        )
+      }
     }
   }
 

@@ -179,6 +179,22 @@ export class SpaceAutomationsRepository {
     return !!data
   }
 
+  async claimDailyLivenessAlert(
+    supabase: SupabaseClient,
+    automationId: string,
+    alertDate: string,
+  ): Promise<boolean> {
+    const { data, error } = await supabase
+      .from('space_automations')
+      .update({ schedule_liveness_alerted_on: alertDate })
+      .eq('id', automationId)
+      .or(`schedule_liveness_alerted_on.is.null,schedule_liveness_alerted_on.neq.${alertDate}`)
+      .select('id')
+      .maybeSingle()
+    if (error) throw new BadRequestException(error.message)
+    return Boolean(data)
+  }
+
   /**
    * Return enabled, non-draft automations whose `schedule_next_fire_at` is in
    * the past. Caller is responsible for rolling the column forward after each
@@ -193,6 +209,20 @@ export class SpaceAutomationsRepository {
       .not('schedule_next_fire_at', 'is', null)
       .lte('schedule_next_fire_at', now.toISOString())
       .order('schedule_next_fire_at', { ascending: true })
+      .limit(limit)
+    if (error) throw new BadRequestException(error.message)
+    return (data ?? []) as Record<string, unknown>[]
+  }
+
+  async findSchedulesMissingNextFire(supabase: SupabaseClient, limit: number) {
+    const { data, error } = await supabase
+      .from('space_automations')
+      .select('*')
+      .eq('enabled', true)
+      .eq('is_draft', false)
+      .eq('trigger->>type', 'schedule')
+      .is('schedule_next_fire_at', null)
+      .order('updated_at', { ascending: true })
       .limit(limit)
     if (error) throw new BadRequestException(error.message)
     return (data ?? []) as Record<string, unknown>[]

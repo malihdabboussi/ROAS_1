@@ -173,6 +173,45 @@ describe('integrations-calendar-dedupe', () => {
     expect(merged).toHaveLength(3)
   })
 
+  it('merges a uniquely matching calendar invite when Fathom starts up to 35 minutes early', () => {
+    const merged = mergeFathomIntoNearStartCalendars([
+      event({
+        id: 'campaign-review',
+        title: 'ROAS // CAMPAIGN REVIEW',
+        start: '2026-08-10T17:30:00.000Z',
+        end: '2026-08-10T18:00:00.000Z',
+      }),
+      event({
+        id: 'monday-huddle',
+        title: 'ROAS // MONDAY TEAM HUDDLE',
+        start: '2026-08-10T18:00:00.000Z',
+        end: '2026-08-10T19:30:00.000Z',
+      }),
+      event({
+        id: 'fathom:campaign-review',
+        title: 'Team campaign launches and client fixes',
+        start: '2026-08-10T17:01:00.000Z',
+        end: '2026-08-10T18:15:00.000Z',
+        source: 'fathom',
+        related: {
+          space_id: 'meetings',
+          call_item_id: 'campaign-call',
+          title: 'Team campaign launches and client fixes',
+          summary: null,
+          has_transcript: true,
+          recording_url: 'https://fathom.video/share/campaign',
+          follow_ups: [],
+        },
+      }),
+    ])
+
+    expect(merged).toHaveLength(2)
+    expect(merged.find((row) => row.id === 'campaign-review')?.related?.call_item_id).toBe(
+      'campaign-call',
+    )
+    expect(merged.find((row) => row.id === 'monday-huddle')?.related).toBeNull()
+  })
+
   it('collapses personal multi-calendar near-duplicate titles at the same slot', () => {
     const deduped = dedupeCalendarAgendaEvents([
       event({

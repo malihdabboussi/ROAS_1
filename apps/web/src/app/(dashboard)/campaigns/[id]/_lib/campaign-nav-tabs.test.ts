@@ -15,7 +15,12 @@ describe('campaign-nav-tabs', () => {
     expect(DEFAULT_VISIBLE_CAMPAIGN_TABS).toContain('list')
     expect(DEFAULT_VISIBLE_CAMPAIGN_TABS).toContain('board')
     expect(DEFAULT_VISIBLE_CAMPAIGN_TABS).toContain('calendar')
+    expect(DEFAULT_VISIBLE_CAMPAIGN_TABS).toContain('canvas')
     expect(DEFAULT_VISIBLE_CAMPAIGN_TABS).toContain('assets')
+  })
+
+  it('normalizes the campaign canvas view', () => {
+    expect(normalizeCampaignTabId('canvas')).toBe('canvas')
   })
 
   it('normalizes legacy visible_campaign_tabs', () => {

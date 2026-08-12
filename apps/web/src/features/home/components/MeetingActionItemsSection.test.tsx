@@ -45,6 +45,7 @@ describe('MeetingActionItemsSection', () => {
         loading={false}
         onToggle={vi.fn()}
         onCreated={onCreated}
+        onMoved={vi.fn()}
       />,
     )
 
@@ -85,6 +86,7 @@ describe('MeetingActionItemsSection', () => {
         loading={false}
         onToggle={vi.fn()}
         onCreated={onCreated}
+        onMoved={vi.fn()}
       />,
     )
 

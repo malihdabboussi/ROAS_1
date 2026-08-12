@@ -26,6 +26,8 @@ import type { StudioAtMenuTabId } from './chat-input-at-mentions'
 import { INTEGRATION_ICONS, INTEGRATION_NAMES } from './chat-input-constants'
 import { ChatInputPlusMenuSpacePanel } from './chat-input-plus-menu-space-panel'
 import type { ChatInputPlusMenuSpacePickerConfig } from './chat-input-plus-menu-space.types'
+import { ChatInputPlusMenuAgentPanel } from './chat-input-plus-menu-agent-panel'
+import type { ChatInputPlusMenuAgentPickerConfig } from './chat-input-plus-menu-agent.types'
 import {
   COMPOSER_ACCESS_ROWS,
   composerPolicyRowLocked,
@@ -84,6 +86,7 @@ export interface ChatInputPlusMenuViewProps {
   composerPolicyPending: string | null
   accessReadOnly: boolean
   spacePicker?: ChatInputPlusMenuSpacePickerConfig | null
+  agentPicker?: ChatInputPlusMenuAgentPickerConfig | null
   onSubmenuAnchorNode: (id: ComposerPlusSubmenuId, node: HTMLButtonElement | null) => void
   onOpenSubmenu: (submenu: ComposerPlusSubmenuId) => void
   onCancelSubmenuClose: () => void
@@ -120,6 +123,7 @@ export function ChatInputPlusMenuView({
   composerPolicyPending,
   accessReadOnly,
   spacePicker,
+  agentPicker,
   onSubmenuAnchorNode,
   onOpenSubmenu,
   onCancelSubmenuClose,
@@ -139,6 +143,7 @@ export function ChatInputPlusMenuView({
 }: ChatInputPlusMenuViewProps) {
   const skillItems = allSlashItems.filter((item) => item.type === 'skill')
   const menuItems: Array<{ id: ComposerPlusSubmenuId; label: string; icon: LucideIcon }> = [
+    ...(agentPicker ? [{ id: 'agent' as const, label: 'Agent', icon: Bot }] : []),
     ...(spacePicker ? [{ id: 'space' as const, label: 'Space', icon: Grid }] : []),
     ...PLUS_MENU_ITEMS,
   ]
@@ -192,6 +197,9 @@ export function ChatInputPlusMenuView({
         >
           {submenu === 'space' && spacePicker ? (
             <ChatInputPlusMenuSpacePanel spacePicker={spacePicker} onCloseMenu={onCloseMenu} />
+          ) : null}
+          {submenu === 'agent' && agentPicker ? (
+            <ChatInputPlusMenuAgentPanel picker={agentPicker} onCloseMenu={onCloseMenu} />
           ) : null}
           {submenu === 'files' ? (
             <CloudAttachMenuItems

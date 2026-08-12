@@ -7,9 +7,6 @@ import {
   HomeDashboardV4Greeting,
   HomeDashboardV4Shell,
 } from '@/components/home-dashboard-v4/HomeDashboardV4Shell'
-import { HomeTemplateFan } from '@/components/home-dashboard-v4/HomeTemplateFan'
-import { DailyRecommendationStrip } from '@/features/home/components/DailyRecommendationStrip'
-import type { HomeDashboardTemplateId } from '@/features/home/config/home-dashboard-v4.config'
 import { HomeDashboardVisualProvider } from '@/features/home/context/home-dashboard-visual-context'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
@@ -33,7 +30,6 @@ export function ShellNewChatGreeting({
 }) {
   const [firstName, setFirstName] = useState('')
   const [greeting, setGreeting] = useState(daypartGreeting)
-  const [selectedTemplate, setSelectedTemplate] = useState<HomeDashboardTemplateId | null>(null)
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const canManageOrgBilling = useOrgStore((s) => s.hasMinRole('admin'))
   const creditBalance = useChatStore((s) => s.creditBalance)
@@ -47,14 +43,13 @@ export function ShellNewChatGreeting({
       const meta = user.user_metadata as Record<string, unknown> | undefined
       const fullName =
         (meta?.full_name as string) ?? (meta?.name as string) ?? user.email?.split('@')[0] ?? ''
-      setFirstName(fullName.split(' ')[0] ?? fullName)
+      const first = (fullName.split(' ')[0] ?? fullName).trim()
+      setFirstName(first ? `${first[0]?.toUpperCase()}${first.slice(1)}` : '')
     })
   }, [])
 
   // Drawer empty-state is greeting + composer only (shell v4). Home owns
   // templates / "For you" — never dump that chrome into the docked chat column.
-  const showHomeExtras = !inDrawer && !compact
-
   const hero = (
     <>
       <div className={cn(compact && '[&_.home-dashboard-v4-greeting]:text-[19px]')}>
@@ -67,23 +62,9 @@ export function ShellNewChatGreeting({
         </div>
       ) : null}
 
-      <div className={cn('mt-4', compact && 'shell-composer-narrow')}>
-        <HomeDashboardV4Composer
-          selectedTemplate={selectedTemplate}
-          onSelectTemplate={setSelectedTemplate}
-        />
+      <div className={cn('mt-4 flex justify-center', compact && 'shell-composer-narrow')}>
+        <HomeDashboardV4Composer />
       </div>
-
-      {showHomeExtras ? (
-        <>
-          <div className="mt-6">
-            <HomeTemplateFan selected={selectedTemplate} onSelect={setSelectedTemplate} />
-          </div>
-          <div className="mt-6">
-            <DailyRecommendationStrip variant="v4" />
-          </div>
-        </>
-      ) : null}
     </>
   )
 
@@ -106,16 +87,7 @@ export function ShellNewChatGreeting({
 
   return (
     <HomeDashboardVisualProvider variant="v4">
-      <HomeDashboardV4Shell
-        topBar={
-          <>
-            <ShellNewChatAgentBar />
-            <ChatSurfaceRecommendation />
-          </>
-        }
-      >
-        {hero}
-      </HomeDashboardV4Shell>
+      <HomeDashboardV4Shell topBar={<ChatSurfaceRecommendation />}>{hero}</HomeDashboardV4Shell>
     </HomeDashboardVisualProvider>
   )
 }

@@ -66,6 +66,7 @@ Use them in this order:
 ### Default Work Routing
 
 For discovery/context questions:
+- Search conversations when the user refers to a previous chat or asks to find chat history. Do not ask them to reconstruct prior context before searching accessible conversations.
 - Search Space when the answer may live in tasks, docs, missions, artifacts, conversations, or media.
 - Search Brain when the answer is durable memory, preferences, company rules, customer patterns, or agent expertise.
 

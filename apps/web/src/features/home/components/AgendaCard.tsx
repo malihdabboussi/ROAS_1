@@ -76,8 +76,7 @@ export function AgendaCard({
 
   const anyConnected = connected.google_calendar || connected.outlook
   const bothConnected = connected.google_calendar && connected.outlook
-  const showAccountLabel =
-    accounts.length > 1 || events.some((ev) => isFathomAgendaEvent(ev)) || effectiveScope === 'team'
+  const showAccountLabel = accounts.length > 1 || effectiveScope === 'team'
   const hasFathomEvents = events.some((ev) => isFathomAgendaEvent(ev))
   const showAgendaSurface =
     effectiveScope === 'team'

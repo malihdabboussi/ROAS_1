@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   isFollowUpSpaceItem,
   mapFollowUpSpaceItemToMeetingAction,
+  meetingActionStatusToFollowUpStatus,
 } from './meeting-follow-up-actions'
 
 describe('meeting-follow-up-actions', () => {
@@ -44,5 +45,22 @@ describe('meeting-follow-up-actions', () => {
         custom_data: { entry_type: 'call' },
       }),
     ).toBe(false)
+  })
+
+  it('identifies Fathom follow-ups as provider actions', () => {
+    const action = mapFollowUpSpaceItemToMeetingAction({
+      id: 'fu-fathom',
+      title: 'Send the recap',
+      source: 'fathom',
+      status: 'logged',
+      custom_data: { entry_type: 'follow_up' },
+    })
+
+    expect(action).toEqual(expect.objectContaining({ source_type: 'provider' }))
+  })
+
+  it('maps checked and unchecked meeting states to reversible Space task statuses', () => {
+    expect(meetingActionStatusToFollowUpStatus('resolved')).toBe('done')
+    expect(meetingActionStatusToFollowUpStatus('confirmed')).toBe('logged')
   })
 })

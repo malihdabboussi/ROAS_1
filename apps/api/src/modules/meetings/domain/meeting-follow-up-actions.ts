@@ -28,7 +28,9 @@ export function mapFollowUpSpaceItemToMeetingAction(
       ? suggestionOrigin.source_action === 'agent_suggest_tasks'
         ? 'ai'
         : 'provider'
-      : 'manual'
+      : String(item.source ?? '') === 'fathom'
+        ? 'provider'
+        : 'manual'
 
   return {
     id: String(item.id),
@@ -48,6 +50,10 @@ export function mapFollowUpSpaceItemToMeetingAction(
     created_at: item.created_at ?? null,
     updated_at: item.updated_at ?? null,
   }
+}
+
+export function meetingActionStatusToFollowUpStatus(status: unknown): 'done' | 'logged' {
+  return String(status ?? '') === 'resolved' ? 'done' : 'logged'
 }
 
 export function isFollowUpSpaceItem(item: Record<string, unknown>): boolean {

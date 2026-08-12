@@ -113,6 +113,7 @@ export class CronService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async processDueSpaceSchedules() {
+    if (process.env.SPACE_AUTOMATION_IN_PROCESS_CRON_ENABLED !== '1') return
     try {
       await this.spaceAutomationScheduler.processDueSchedules()
     } catch (err) {

@@ -1,3 +1,39 @@
+## 2026-08-11 - [ARCH] Chat model preferences hook is near the component helper limit
+
+Status: Open
+
+Found while: Eliminating Meetings and global-chat maximum-update-depth loops
+
+Evidence: `apps/web/src/features/studio/components/ChatInput/use-chat-input-model-prefs.ts` is 336 LOC after adding value-idempotent conversation/default hydration. The architecture guideline caps frontend hooks/components at 400 LOC, so additional model preference behavior would push this helper into a violation.
+
+Needed work: Split model hydration, option normalization, and debounced persistence into focused helpers with characterization tests before adding further behavior.
+
+Reason not done now: The requested runtime-loop fix is complete and covered; decomposing the broader model preference controller is adjacent architectural work.
+
+## 2026-08-11 - [OPS] Deploy the local API calendar and Program-favorite fixes
+
+Status: Open
+
+Found while: End-to-end local Meetings and ChatGPT-style shell audit
+
+Evidence: The local web app is configured to use `https://api.roas.io`. The local `main` source contains the corrected all-calendar Google provider request and `PATCH /api/programs/:id/user-state`, and their focused service tests pass. The deployed API still returns 404 for the Program user-state route and the live Mine feed still omits the accepted 1DS recurring event. The production `program_user_state` table exists in the authoritative `lhfgtsjetcardinpgouq` project.
+
+Needed work: Deploy the current `apps/api` main source, then verify Personal/General/Client favorite add-remove and the 1DS recurring event in Mine and Team against the deployed endpoint.
+
+Reason not done now: The request was to complete and verify the local main flow; deploying the externally shared API is a separate production mutation and was not authorized.
+
+## 2026-08-11 - [OPS] Refresh local API internal package artifacts
+
+Status: Open
+
+Found while: End-to-end local Meetings and ChatGPT-style shell audit
+
+Evidence: Focused API tests and lint pass, but full API type-check in the local runtime mirror cannot resolve current `@vibey/agent-policy` exports and sees stale `@vibey/api-shared` declarations. The web type-check passes after removing unused Finder/iCloud conflict copies.
+
+Needed work: Refresh/build the local internal package artifacts before the next full API validation run.
+
+Reason not done now: Repository rules prohibit running package builds without explicit user authorization; the changed calendar and Program service paths are covered by focused tests and lint.
+
 ## 2026-08-05 - [ARCH] SlackService near 600 LOC after digest reply enrichment
 
 Status: Open
@@ -9438,3 +9474,141 @@ Needed work: Extract policy/access resolution helpers shared by chat stable, pre
 
 Reason not done now: Out of scope for the false-deny fix; splitting orchestration would broaden regression surface.
 
+## 2026-08-10 — Meeting workspace and Fathom normalization near LOC limits
+
+Status: Open
+
+Found while: Fixing canonical Fathom titles/actions, meeting chat continuation, and complete Agenda calendar coverage.
+
+Files:
+
+- `apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx` (397 LOC; component hard limit 400 LOC)
+- `apps/api/src/modules/meetings/providers/fathom-meeting-source.ts` (349 LOC; integration/provider hard limit 400 LOC)
+
+Evidence: The meeting workspace remains under the hard component limit but has only three lines of headroom. Fathom source normalization now owns provider transcript, title, summary-action, participant, and rendering normalization and is above the 80% extraction threshold.
+
+Needed work: Extract the meeting-chat transition/hydration orchestration into a Home hook and split Fathom summary/title normalization into a focused provider helper while keeping one canonical ingestion contract.
+
+Reason not done now: Both files remain under their hard limits, and structural extraction would broaden this behavior-sensitive production fix beyond the requested regressions.
+
+## 2026-08-10 — Shared Space view owners remain oversized
+
+Status: Open
+
+Found while: Adding Canvas to the shared Campaign, Program, and Space view model.
+
+Files:
+
+- `apps/web/src/features/spaces/components/ViewSwitcher.tsx` (1,331 LOC; component limit 400 LOC)
+- `apps/web/src/features/spaces/components/content/SpaceContentRouter.tsx` (832 LOC; component limit 400 LOC; previously tracked)
+- `apps/web/src/features/spaces/types/space-schema.ts` (1,418 LOC; module limit 600 LOC; previously tracked)
+- `apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx` (393 LOC; component limit 400 LOC)
+
+Evidence: Canvas required one catalog entry, one router branch, one schema union member, and one Campaign tab. The existing owners are already oversized or at the extraction threshold; the new shared Canvas host is 40 LOC.
+
+Needed work: Extract the Space view catalog/editor sections, split Space content routing by view family, separate the schema into focused contracts, and decompose Campaign page tab panels without changing view persistence.
+
+Reason not done now: The requested work is a narrowly scoped view addition. Decomposing all four established owners would materially expand the regression surface.
+## 2026-08-10 - Agenda and shared shell follow-up
+
+- Feature/app: Home Agenda / API integrations
+- File: `apps/web/src/features/home/components/AgendaCardEventEntry.tsx`
+- Evidence: 366 LOC after removing video glyphs; the component is above the 80% warning threshold for the 400 LOC component limit.
+- Needed work: Extract attendee presentation and expanded/compact row bodies into focused Home components without changing agenda interaction behavior.
+- Why deferred: The requested change removes visual noise and repairs shared scrolling; structural extraction would materially widen this behavior-sensitive fix.
+
+- Feature/app: Calendar integrations API
+- File: `apps/api/src/modules/integrations/services/integrations-calendar-dedupe.ts`
+- Evidence: 447 LOC after the early-Fathom reconciliation guard; the file already exceeded the 400 LOC integration/helper limit before this change.
+- Needed work: Extract team payload/coverage merging from event identity and reconciliation helpers, preserving the existing public contracts and characterization tests.
+- Why deferred: Splitting the existing calendar reconciliation module is architecture remediation beyond the requested meeting identity correction.
+
+## 2026-08-10 — Deployed Canvas and Pixel verification
+
+Status: Open
+
+Files:
+
+- deployed Pixel action catalog and DB-backed generated skill (not locally readable)
+
+Evidence: Canvas hooks are now split and within the 300 LOC limit. Source action tests pass for `get_canvas_board` and `apply_canvas_operations`, but the migration and deployed agent skill were not verified against the live database/runtime.
+
+Needed work: Verify the migration, runtime action catalog, and Pixel's generated skill on the deployed environment.
+
+Reason not done now: The local environment has no Supabase management/SQL tool and the available browser session is not authenticated to the local app.
+
+Update (2026-08-10): Both Canvas migrations were transaction-tested, applied, and verified in the canonical `lhfgtsjetcardinpgouq` database. The remaining open work is deployed Pixel action-catalog/generated-skill verification and authenticated end-to-end Pixel execution. Local UI verification currently resolves the production-proxied favorite campaign as `Campaign not found`, while the local API also lacks Redis on port 6379.
+
+Update (2026-08-10 21:17): Local routing was corrected by pointing the web runtime at the local platform API. Authenticated human create/edit/reload/Undo now passes and Pixel chat traces carry the open campaign ID. The remaining proof is the model-to-tool execution on a freshly built/deployed runtime: the current local Nest process resolves a stale compiled `@vibey/agent-policy` artifact that rejects the two new source actions, and the local OpenClaw gateway artifact is absent. Source policy/action tests pass; builds were not run because repository policy requires explicit user approval.
+
+Update (2026-08-10 21:21): Source capability drift is closed, including viewport context, and native resource cards plus Redo are implemented. `useCampaignWhiteboard.ts` is now 281 LOC, above the 80% extraction threshold for the 300 LOC hook limit. Extract resource-node creation into a focused hook before adding further Canvas creation tools; deferred because the file remains below the hard limit and the current addition is cohesive.
+
+## 2026-08-10 — Conversation list owners near component limit
+
+Status: Open
+
+Found while: Consolidating Simple menu navigation and Recents into one left sidebar.
+
+Files:
+
+- `apps/web/src/components/shell/ShellChatMenu.tsx` (400 LOC; component limit 400 LOC)
+- `apps/web/src/components/conversations/SpaceConversationsList.tsx` (398 LOC; component limit 400 LOC)
+
+Evidence: Both canonical conversation owners remain at or immediately below the hard limit after adding props-only composition slots for Simple mode. The Recents end-slot/title-style contract used the remaining `ShellChatMenu` headroom.
+
+Needed work: Extract conversation mutation callbacks from `ShellChatMenu` and extract row/menu orchestration from `SpaceConversationsList` without duplicating chat state or list rendering.
+
+Reason not done now: The requested shell work used small composition props; restructuring the established mutation and row-action paths would materially widen the regression surface.
+## 2026-08-10 — Shell dock flyout extraction
+
+- Feature/app: Web shell navigation
+- File: `apps/web/src/components/layout/sidebar/HubDockFlyout.tsx`
+- Evidence: Shared flyout remains within the 300-line component limit at 285 lines, but is near the limit and owns positioning, pointer continuity, outside-click handling, search chrome, and content rendering.
+- Needed work: Extract flyout position calculation into a focused hook without changing the shared flyout contract.
+- Why deferred: The current request only changes Simple Programs placement; a behavior-neutral shared refactor would expand scope.
+## 2026-08-10 — Shell workspace orchestration extraction
+
+- Feature/app: Web shell workspace
+- File: `apps/web/src/components/shell/ShellWorkspace.tsx`
+- Evidence: The component remains under the 300-line frontend limit at 294 lines, but is near the limit and coordinates chat, work-area, artifact, Portal, responsive, and menu-dock state.
+- Needed work: Extract route synchronization and work-host availability into focused hooks without changing shell behavior.
+- Why deferred: The requested change only removes duplicate header ownership; restructuring the workspace orchestrator would expand scope.
+
+## 2026-08-10 — New-chat composer composition
+
+- Feature/app: Web shell / New chat
+- File: `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`
+- Evidence: 343 LOC after adding Campaign/Space selection, integration state, new-Space creation, prompt suggestions, and send orchestration; this is above the 80% warning threshold for the 400 LOC component limit.
+- Needed work: Extract the target-context loader/selector and send orchestration into focused hooks while keeping the component as the canonical empty-chat composition surface.
+- Why deferred: The file remains below the hard limit, and splitting the newly connected state in the same UI change would widen the regression surface.
+# 2026-08-10 — Hierarchy view navigation
+
+- Feature/app: Web Campaign hierarchy
+- File: `apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx`
+- Evidence: 395 LOC after the shared hierarchy view-strip wiring; the project component limit is 300 LOC and the file already owned campaign data loading, mobile navigation, chart state, all tab content, and the team modal before this change.
+- Needed work: Extract campaign page orchestration and tab-content composition into focused hooks/containers without changing the newly shared hierarchy navigation contract.
+- Deferred because: The current request is the cross-hierarchy view-bar consistency fix; splitting the entire campaign detail page is real pre-existing architecture debt but materially broader than this navigation change.
+
+## 2026-08-10 — API Vitest startup compatibility
+
+- Feature/app: API test infrastructure
+- File: `apps/api/vitest.config.ts` / installed Vite plugin dependency graph
+- Evidence: A focused Programs favorite repository test cannot start because Vitest config loading throws `TypeError: import_unplugin.createUnplugin is not a function` before collecting any test. The same favorite route and canonical RLS mutation were verified directly against the running local API and database.
+- Needed work: Align the installed `unplugin`/Vitest/Vite dependency versions and restore API test collection without changing application behavior.
+- Why deferred: Dependency-infrastructure repair is separate from the requested local shell/favorites flow, and repository policy prohibits running a build without explicit approval.
+
+## 2026-08-11 — Duplicate Canvas source files block web typecheck
+
+- Feature/app: Web Canvas test infrastructure
+- Files: `apps/web/src/components/canvas/hooks/useCampaignWhiteboard 2.ts`, `apps/web/src/components/canvas/lib/whiteboard-graph 2.ts`, `apps/web/src/components/canvas/lib/whiteboard-graph.test 2.ts`, `apps/web/src/components/canvas/services/whiteboard.service 2.ts`
+- Evidence: The full web TypeScript check fails only in these duplicate ` 2.ts` files because they reference removed whiteboard exports and stale response fields.
+- Needed work: Determine whether the duplicate files are recoverable user work or generated debris, then remove or reconcile them with the canonical Canvas implementation.
+- Why deferred: These pre-existing Canvas duplicates are unrelated to the requested Home suggestions and My Tasks behavior, and deleting potentially user-owned files requires separate confirmation.
+
+## 2026-08-11 — Conversation service decomposition headroom
+
+- Feature/app: API conversations
+- File: `apps/api/src/modules/conversations/services/conversations.service.ts`
+- Evidence: 598 LOC after keeping meeting-specific duplicate cleanup outside the service; the backend limit is 600 LOC.
+- Needed work: Continue extracting an existing conversation responsibility, such as sharing/pass-off orchestration or title management, into its focused service without changing controller contracts.
+- Why deferred: The requested meeting duplication fix now complies with the hard limit and its meeting-specific behavior was already extracted; decomposing an unrelated established workflow would widen this production deployment.

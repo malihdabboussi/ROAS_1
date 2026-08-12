@@ -1,19 +1,25 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ExternalLink, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
-import { MeetingActionItemsSection } from '@/features/home/components/MeetingActionItemsSection'
+import type { MeetingPostCallAction } from '@/features/home/config/meeting-post-call-actions.config'
 import { MeetingCallStatusSection } from '@/features/home/components/MeetingCallStatusSection'
-import { MeetingRecordingsSection } from '@/features/home/components/MeetingRecordingsSection'
-import { MeetingWorkspaceAttachments } from '@/features/home/components/MeetingWorkspaceAttachments'
+import { MeetingRenamableTitle } from '@/features/home/components/MeetingRenamableTitle'
+import { MeetingWorkspaceBody } from '@/features/home/components/MeetingWorkspaceBody'
 import {
   HOME_TOAST_ERRORS,
   HOME_TOAST_SUCCESS,
 } from '@/features/home/config/home-toast-errors.config'
 import { buildMeetingAwarenessContext } from '@/features/home/lib/build-meeting-awareness-context'
+import {
+  formatAttendeeSummary,
+  formatMeetingWhen,
+  meetingPhaseBadgeLabel,
+  parseMeetingPrep,
+} from '@/features/home/lib/meeting-workspace-display'
 import { syncAgendaFathomRecordingToWorkspace } from '@/features/home/lib/sync-agenda-fathom-recording'
 import {
   endMeetingCall,
@@ -21,42 +27,12 @@ import {
   startMeetingCall,
   updateMeetingActionStatus,
   type MeetingAction,
+  type MeetingSnippet,
   type MeetingWorkspaceBundle,
 } from '@/features/home/services/meeting-workspace-api'
+import { renameConversation } from '@/lib/conversations/conversations-api'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
-
-function SectionTitle({ children, count }: { children: string; count?: number }) {
-  return (
-    <div className="flex items-center justify-between">
-      <h2 className="body-3 text-foreground font-semibold">{children}</h2>
-      {typeof count === 'number' ? (
-        <span className="body-4 text-muted-foreground">{count}</span>
-      ) : null}
-    </div>
-  )
-}
-
-function phaseBadgeLabel(phase: string | undefined, isPostCall: boolean): string {
-  if (phase === 'live') return 'Live'
-  if (phase === 'processing') return 'Ended'
-  if (isPostCall) return 'Complete'
-  return 'Ready'
-}
-
-function agendaText(value: string | null | undefined): string {
-  const source = value?.trim()
-  if (!source) return 'No agenda has been added yet.'
-  if (!/<[a-z][\s\S]*>/i.test(source) && !/&(?:nbsp|lt|gt|amp);/i.test(source)) return source
-  if (typeof document === 'undefined') {
-    return source
-      .replace(/<br\s*\/?\s*>/gi, '\n')
-      .replace(/<[^>]+>/g, '')
-      .trim()
-  }
-  const node = document.createElement('div')
-  node.innerHTML = source.replace(/<br\s*\/?\s*>/gi, '\n')
-  return (node.textContent ?? '').replace(/\n{3,}/g, '\n\n').trim()
-}
+import { updateSpaceItem } from '@/lib/spaces'
 
 export function MeetingWorkspaceDialog({
   spaceId,
@@ -91,6 +67,9 @@ export function MeetingWorkspaceDialog({
   const openChatDrawer = useShellStore((state) => state.openChatDrawer)
   const setWorkAreaOpen = useShellStore((state) => state.setWorkAreaOpen)
   const setRailIntent = useGlobalChatStore((state) => state.setRailIntent)
+  const continueMeetingConversation = useGlobalChatStore(
+    (state) => state.continueMeetingConversation,
+  )
 
   const hydrateWorkspace = useCallback(async () => {
     let next = await fetchMeetingWorkspace(spaceId, meetingItemId)
@@ -155,6 +134,12 @@ export function MeetingWorkspaceDialog({
   }, [bundle, meetingItemId, spaceId, title])
 
   const conversationId = bundle?.workspace?.conversation_id?.trim() || null
+  const prepDescription =
+    agendaEvent?.description ??
+    (bundle?.meeting.source === 'calendar' ? bundle.meeting.description : null)
+  const prep = useMemo(() => parseMeetingPrep(prepDescription), [prepDescription])
+  const whenLine = formatMeetingWhen(meetingStart, meetingEnd)
+  const attendeeSummary = formatAttendeeSummary(agendaEvent?.attendees)
 
   useEffect(() => {
     setWorkAreaOpen(true)
@@ -205,7 +190,26 @@ export function MeetingWorkspaceDialog({
 
   const focusMeetingChat = () => {
     if (!conversationId) return
+    continueMeetingConversation({
+      spaceId,
+      meetingItemId,
+      conversationId,
+      awarenessContext,
+      timelineVersion: bundle?.snippets.length ?? 0,
+    })
     openChatDrawer(conversationId)
+  }
+
+  const runPostCallAction = (action: MeetingPostCallAction) => {
+    if (!conversationId) return
+    focusMeetingChat()
+    // The chat panel drops seeds whose work context doesn't match its space
+    // scope, so target the meeting's space explicitly.
+    useGlobalChatStore.getState().seedComposer({
+      content: action.prompt,
+      conversationId,
+      workContext: { surface: 'spaces', spaceId },
+    })
   }
 
   const startCall = async () => {
@@ -263,6 +267,40 @@ export function MeetingWorkspaceDialog({
     })
   }
 
+  const handleActionMoved = (action: MeetingAction) => {
+    setBundle((current) =>
+      current
+        ? { ...current, actions: current.actions.filter((row) => row.id !== action.id) }
+        : current,
+    )
+  }
+
+  const handleNoteCreated = (snippet: MeetingSnippet) => {
+    setBundle((current) =>
+      current ? { ...current, snippets: [...current.snippets, snippet] } : current,
+    )
+  }
+
+  const handleRename = async (nextTitle: string) => {
+    try {
+      await updateSpaceItem(spaceId, meetingItemId, { title: nextTitle })
+      setBundle((current) =>
+        current ? { ...current, meeting: { ...current.meeting, title: nextTitle } } : current,
+      )
+      // Keep the linked meeting chat in sync so the rename carries everywhere.
+      if (conversationId) {
+        try {
+          await renameConversation(conversationId, nextTitle)
+        } catch {
+          // Chat title lags behind; the item rename already landed.
+        }
+      }
+      toast.success(HOME_TOAST_SUCCESS.MEETING_RENAMED.userMessage)
+    } catch {
+      toast.error(HOME_TOAST_ERRORS.MEETING_RENAME_FAILED.userMessage)
+    }
+  }
+
   return (
     <section
       aria-label={`${title} meeting workspace`}
@@ -274,14 +312,21 @@ export function MeetingWorkspaceDialog({
         </button>
         <div className="min-w-0 flex-1">
           <p className="typo-caption text-muted-foreground uppercase">Meeting workspace</p>
-          <h1 className="title-h6 text-foreground truncate uppercase">{title}</h1>
+          <MeetingRenamableTitle title={title} onRename={handleRename} />
+          {whenLine || attendeeSummary ? (
+            <p className="body-4 text-muted-foreground mt-spacing-1 truncate">
+              {whenLine}
+              {whenLine && attendeeSummary ? ' · ' : ''}
+              {attendeeSummary}
+            </p>
+          ) : null}
           <p className="sr-only">
             Agenda, recordings, action items, and attachments for this call. Add notes in the
             connected meeting conversation in the main chat.
           </p>
         </div>
         <span className={`badge-glass ${isLive ? 'badge-glass-green' : 'badge-glass-muted'}`}>
-          {phaseBadgeLabel(phase, isPostCall)}
+          {meetingPhaseBadgeLabel(phase, isPostCall)}
         </span>
         <button
           type="button"
@@ -293,7 +338,7 @@ export function MeetingWorkspaceDialog({
         </button>
       </header>
 
-      <main className="p-spacing-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <main className="scrollbar-thin p-spacing-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="gap-spacing-4 mx-auto flex w-full max-w-3xl flex-col">
           <MeetingCallStatusSection
             phase={phase}
@@ -306,80 +351,28 @@ export function MeetingWorkspaceDialog({
             onStart={() => void startCall()}
             onEnd={() => void endCall()}
             onContinue={focusMeetingChat}
+            onPostCallAction={runPostCallAction}
           />
 
-          <section className="section-card overflow-hidden">
-            <div className="gap-spacing-2 p-spacing-4 flex flex-col">
-              <SectionTitle>Agenda & prep</SectionTitle>
-              <p className="body-4 text-muted-foreground whitespace-pre-wrap">
-                {agendaText(agendaEvent?.description ?? bundle?.meeting.description)}
-              </p>
-              {joinUrl ? (
-                <a
-                  href={joinUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="body-4 text-primary gap-spacing-1 inline-flex items-center self-start"
-                >
-                  Meeting link <ExternalLink className="icon-xs" aria-hidden />
-                </a>
-              ) : null}
-              {onOpenPrep ? (
-                <button
-                  type="button"
-                  onClick={onOpenPrep}
-                  className="button-compact button-glass-neutral self-start"
-                >
-                  Open agenda prep
-                </button>
-              ) : null}
-            </div>
-
-            {bundle?.continuity.unresolved_commitments.length ? (
-              <div className="border-border p-spacing-4 border-t">
-                <SectionTitle count={bundle.continuity.unresolved_commitments.length}>
-                  Open loops
-                </SectionTitle>
-                <div className="mt-spacing-3 gap-spacing-2 flex flex-col">
-                  {bundle.continuity.unresolved_commitments.map((action) => (
-                    <p key={action.id} className="body-3 text-foreground">
-                      {action.title}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            <div className="border-border p-spacing-4 border-t">
-              <MeetingActionItemsSection
-                spaceId={spaceId}
-                meetingItemId={meetingItemId}
-                actions={bundle?.actions ?? []}
-                loading={loading}
-                onToggle={toggleAction}
-                onCreated={handleActionCreated}
-              />
-            </div>
-
-            <div className="border-border p-spacing-4 border-t">
-              <MeetingWorkspaceAttachments
-                spaceId={spaceId}
-                deliverables={bundle?.deliverables ?? []}
-                loading={loading}
-              />
-            </div>
-
-            <div className="border-border p-spacing-4 border-t">
-              <MeetingRecordingsSection
-                spaceId={spaceId}
-                meetingItemId={meetingItemId}
-                recordings={bundle?.recordings ?? []}
-                onLinked={() => {
-                  void hydrateWorkspace()
-                }}
-              />
-            </div>
-          </section>
+          <MeetingWorkspaceBody
+            spaceId={spaceId}
+            meetingItemId={meetingItemId}
+            bundle={bundle}
+            loading={loading}
+            isLive={isLive}
+            isPostCall={isPostCall}
+            prep={prep}
+            prepDescription={prepDescription}
+            joinUrl={joinUrl}
+            onOpenPrep={onOpenPrep}
+            onRecordingLinked={() => {
+              void hydrateWorkspace()
+            }}
+            onNoteCreated={handleNoteCreated}
+            onToggleAction={toggleAction}
+            onActionCreated={handleActionCreated}
+            onActionMoved={handleActionMoved}
+          />
         </div>
       </main>
     </section>

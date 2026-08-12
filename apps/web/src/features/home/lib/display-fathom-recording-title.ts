@@ -2,6 +2,7 @@ const GENERIC_FATHOM_TITLE_RE =
   /^(impromptu(?:\s+zoom)?(?:\s+meeting|\s+call)?|untitled(?:\s+meeting)?|zoom meeting|working session(?:\s*[—-].*)?|call \(naming…\))$/i
 
 export type FathomRecordingTitleInput = {
+  canonical_title?: string | null
   title?: string | null
   meeting_title?: string | null
   calendar_invitees?: Array<{ name?: string | null; email?: string | null } | null> | null
@@ -14,6 +15,8 @@ export function isGenericFathomRecordingTitle(title: string): boolean {
 }
 
 export function displayFathomRecordingTitle(meeting: FathomRecordingTitleInput): string {
+  const canonical = String(meeting.canonical_title ?? '').trim()
+  if (canonical) return canonical
   const raw = String(meeting.title || meeting.meeting_title || '').trim()
   if (raw && !isGenericFathomRecordingTitle(raw)) return raw
 

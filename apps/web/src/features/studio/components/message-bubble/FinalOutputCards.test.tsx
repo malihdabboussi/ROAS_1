@@ -106,6 +106,27 @@ describe('FinalOutputCards', () => {
     })
   })
 
+  it('automatically opens a newly created output while the agent is working', () => {
+    const blocks: FinalOutputBlock[] = [
+      {
+        type: 'artifact_preview',
+        id: 'presentation-1',
+        artifactType: 'presentation',
+        artifactId: 'deck-1',
+        name: 'Launch deck',
+      },
+    ]
+
+    render(<FinalOutputCards blocks={blocks} autoOpen />)
+
+    expect(openArtifactPreviewInShell).toHaveBeenCalledWith({
+      artifactType: 'presentation',
+      artifactId: 'deck-1',
+      name: 'Launch deck',
+      spaceId: undefined,
+    })
+  })
+
   it('opens created tasks in the right-side task panel without navigating away', () => {
     const blocks: FinalOutputBlock[] = [
       {

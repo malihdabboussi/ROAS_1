@@ -1,6 +1,6 @@
 # Spaces Flows
 
-Last Modified: 2026-08-06
+Last Modified: 2026-08-10
 
 ## Overview
 
@@ -22,8 +22,8 @@ Spaces automations run rules from the `space_automations` table through the sing
 - Gmail email triggers can add an inbox category filter. The API maps the selected category to Composio's Gmail `query` trigger config, e.g. `in:inbox category:primary`, so Primary / Promotions / Social / Updates / Forums filtering happens before the webhook event reaches the automation route.
 - Send to Agent actions can request `output_type=email_artifact`. The automation prompt gets a `save_email` contract with the active `space_id` and `source_item_id`; the agent tool saves a `public.emails` row and links it to the source task deliverables. A later Send Email action can resolve subject/body from that linked email artifact while recipients stay defined by the automation.
 - Send to Agent can also request document file outputs. `document_artifact` uses `save_document`, `pdf_artifact` uses `create_pdf`, and `docx_artifact` uses `create_docx` with markdown content so the generated Word file stays linked to the active Space/task context. OpenClaw records previewable tool outputs as task artifact output blocks (`artifact_preview`, `media_asset`, document/file, project, widget, and screenshot blocks), and task-agent completion merges those into task activity before scoped DB readback adds any missed Space Docs, Space items, task-linked email drafts, media assets, and known scoped artifact rows. The same blocks power inline task activity previews and the task Deliverables & media section.
-- Vercel calls the CRON_SECRET-protected `/api/internal/space-automations/process-due` endpoint every minute. The endpoint invokes the existing due-schedule scanner; its database compare-and-swap claim prevents duplicate execution when a warm Nest cron and Vercel wakeup overlap. Scheduled agent actions do not pre-wake Fly in the scheduler. `SpaceAutomationService` calls `UserAgentApiService` for agent execution, so shared Railway profiles route to the shared Agent API/OpenClaw runtime and Fly-machine profiles wake through the shared runtime service path when needed.
-- Rule execution now dispatches through `agent-runtime-queue-automation` when the queue is available. Trigger evaluation, scheduled itemless runs, contact-route automations, Fathom fanout, and connected-app webhook runs enqueue automation jobs with `AGENT_RUNTIME_AUTOMATION_CONCURRENCY` worker concurrency. Unit tests and local contexts without a queue keep the inline fallback path.
+- Vercel calls the CRON_SECRET-protected `/api/internal/space-automations/process-due` endpoint every minute. The endpoint invokes the due-schedule scanner; its database compare-and-swap claim prevents duplicate execution. In-process schedule polling is off by default and requires `SPACE_AUTOMATION_IN_PROCESS_CRON_ENABLED=1` on a persistent host, so unrelated Vercel cron requests cannot race the dedicated endpoint. Each scan also repairs enabled published schedule rows whose materialized next-fire is null. Invalid cron expressions remain disabled; transient persistence failures leave the due timestamp untouched for retry. Scheduled agent actions do not pre-wake Fly in the scheduler. `SpaceAutomationService` calls `UserAgentApiService` for agent execution, so shared Railway profiles route to the shared Agent API/OpenClaw runtime and Fly-machine profiles wake through the shared runtime service path when needed.
+- Rule execution dispatches through `agent-runtime-queue-automation` only when a persistent consumer is explicitly enabled with `AGENT_RUNTIME_AUTOMATION_QUEUE_ENABLED=1`; `AGENT_RUNTIME_AUTOMATION_QUEUE_DISABLED=1` remains an emergency override. Vercel always uses the inline path because its serverless API cannot host the persistent BullMQ consumer. Trigger evaluation, scheduled itemless runs, contact-route automations, Fathom fanout, and connected-app webhook runs otherwise enqueue automation jobs with `AGENT_RUNTIME_AUTOMATION_CONCURRENCY` worker concurrency.
 - Flow and Spaces run-history views subscribe to `space_automation_runs` over Supabase Realtime and reload their scoped history after external automation executions, so run history does not depend on reopening the panel.
 - The Delegation Desk template is a private holding tank for commitments,
   action items, promises, and suggested work before assignment. The Spaces bulk
@@ -146,6 +146,7 @@ Spaces automations run rules from the `space_automations` table through the sing
 
 ## Decision Log
 
+- 2026-08-10: Recovered scheduled automation execution after the API enqueued to a BullMQ queue with no deployed consumer. Queue use and in-process polling are now explicit persistent-host opt-ins; Vercel runs scheduled work inline through its authenticated cron endpoint. The scheduler self-heals null next-fire timestamps and only clears a schedule for cron-parse errors, never transient persistence failures.
 - 2026-07-30: Made delegation inherit bounded originating-chat evidence and
   known Space/campaign scope. Meeting-dependent delegations now receive explicit
   provider-retrieval guidance and one automatic corrective pass when an agent

@@ -2,12 +2,10 @@
 
 import { useEffect, useRef, type ReactNode } from 'react'
 import { RxDoubleArrowLeft } from 'react-icons/rx'
-import { motion } from 'framer-motion'
 import { ArrowLeft, Plus, Search, UsersRound, X } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
 const CONVERSATION_ICON_BUTTON_CLASS = 'btn-icon-bare hover:bg-hover-subtle shrink-0'
-
 interface SpaceConversationsHeaderProps {
   query: string
   onQueryChange: (query: string) => void
@@ -30,6 +28,8 @@ interface SpaceConversationsHeaderProps {
   /** Active query constraints shown below the New chat control. */
   headerFooterSlot?: ReactNode
   compactHeader?: boolean
+  compactHeaderTitle?: string
+  compactHeaderTitleClassName?: string
   compactSearchOpen: boolean
   onCompactSearchOpenChange: (open: boolean) => void
   onCollapsedChange?: (collapsed: boolean) => void
@@ -53,6 +53,8 @@ export function SpaceConversationsHeader({
   headerEndSlot,
   headerFooterSlot,
   compactHeader,
+  compactHeaderTitle = 'Conversations',
+  compactHeaderTitleClassName,
   compactSearchOpen,
   onCompactSearchOpenChange,
   onCollapsedChange,
@@ -62,19 +64,21 @@ export function SpaceConversationsHeader({
 }: SpaceConversationsHeaderProps) {
   const showInlineNew = !hideNewButton && !newButtonBelowSearch
   const showBelowNew = !hideNewButton && newButtonBelowSearch
-  const compactSearchRef = useRef<HTMLLabelElement>(null)
-
+  const compactInlineSearchRef = useRef<HTMLLabelElement>(null)
+  const compactSearchRowRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!hideHeaderBottomBorder || !compactSearchOpen) return
     const onPointerDown = (event: MouseEvent) => {
-      if (compactSearchRef.current?.contains(event.target as Node)) return
+      if (
+        compactInlineSearchRef.current?.contains(event.target as Node) ||
+        compactSearchRowRef.current?.contains(event.target as Node)
+      ) return
       onCompactSearchOpenChange(false)
       onQueryChange('')
     }
     document.addEventListener('mousedown', onPointerDown)
     return () => document.removeEventListener('mousedown', onPointerDown)
   }, [compactSearchOpen, hideHeaderBottomBorder, onCompactSearchOpenChange, onQueryChange])
-
   const allAgentsButton = showAllAgentsToggle ? (
     <button
       type="button"
@@ -92,12 +96,11 @@ export function SpaceConversationsHeader({
       <UsersRound className="icon-sm" aria-hidden />
     </button>
   ) : null
-
   const inlineSearch = !hideSearch ? (
     hideHeaderBottomBorder ? (
       compactSearchOpen ? (
         <label
-          ref={compactSearchRef}
+          ref={compactInlineSearchRef}
           className="text-muted-foreground gap-spacing-1 flex min-w-0 flex-1 cursor-text items-center"
         >
           <Search className="icon-sm shrink-0" aria-hidden />
@@ -136,7 +139,6 @@ export function SpaceConversationsHeader({
   ) : searchSlot ? (
     <div className="min-w-0 flex-1">{searchSlot}</div>
   ) : null
-
   const belowSearchNew = showBelowNew ? (
     <button
       type="button"
@@ -149,12 +151,15 @@ export function SpaceConversationsHeader({
       <span>New chat</span>
     </button>
   ) : null
-
   return (
     <div
       className={cn(
         'flex shrink-0 flex-col',
-        hideHeaderBottomBorder ? 'pb-spacing-1' : 'p-spacing-3 border-border border-b',
+        hideHeaderBottomBorder
+          ? compactHeader
+            ? 'px-spacing-2 pb-spacing-1'
+            : 'pb-spacing-1'
+          : 'p-spacing-3 border-border border-b',
       )}
     >
       <div className="gap-spacing-2 flex items-center">
@@ -171,8 +176,14 @@ export function SpaceConversationsHeader({
         ) : null}
         {compactHeader ? (
           <div className="gap-spacing-2 group flex min-w-0 flex-1 items-center">
-            <div className="body-3 text-foreground min-w-0 flex-1 truncate font-semibold">
-              Conversations
+            {headerStartSlot}
+            <div
+              className={cn(
+                'body-3 text-foreground min-w-0 flex-1 truncate font-semibold',
+                compactHeaderTitleClassName,
+              )}
+            >
+              {compactHeaderTitle}
             </div>
             <div
               className={cn(
@@ -183,64 +194,29 @@ export function SpaceConversationsHeader({
               )}
               onClick={(event) => event.stopPropagation()}
             >
-              <button
-                type="button"
-                onClick={() => onCollapsedChange?.(true)}
-                className={CONVERSATION_ICON_BUTTON_CLASS}
-                aria-label="Collapse conversations"
-                title="Collapse conversations"
-              >
-                <RxDoubleArrowLeft className="icon-sm" aria-hidden />
-              </button>
-              {headerStartSlot}
+              {onCollapsedChange ? (
+                <button
+                  type="button"
+                  onClick={() => onCollapsedChange(true)}
+                  className={CONVERSATION_ICON_BUTTON_CLASS}
+                  aria-label="Collapse conversations"
+                  title="Collapse conversations"
+                >
+                  <RxDoubleArrowLeft className="icon-sm" aria-hidden />
+                </button>
+              ) : null}
               {allAgentsButton}
               {headerEndSlot}
-              {!hideSearch ? (
-                <>
-                  <motion.div
-                    initial={false}
-                    animate={{
-                      width: compactSearchOpen ? 180 : 0,
-                      opacity: compactSearchOpen ? 1 : 0,
-                    }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    className="shrink-0 overflow-hidden"
-                  >
-                    <div className="relative w-[180px]">
-                      <input
-                        type="search"
-                        value={query}
-                        onChange={(event) => onQueryChange(event.target.value)}
-                        placeholder="Search..."
-                        className="input-glass body-3 text-foreground h-spacing-8 rounded-spacing-2 py-spacing-1 pl-spacing-3 pr-spacing-8 w-full"
-                        autoFocus={compactSearchOpen}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onCompactSearchOpenChange(false)
-                          onQueryChange('')
-                        }}
-                        className="btn-icon-bare absolute right-1 top-1/2 -translate-y-1/2"
-                        aria-label="Close search"
-                        title="Close search"
-                      >
-                        <X className="icon-sm" aria-hidden />
-                      </button>
-                    </div>
-                  </motion.div>
-                  {!compactSearchOpen ? (
-                    <button
-                      type="button"
-                      onClick={() => onCompactSearchOpenChange(true)}
-                      className={CONVERSATION_ICON_BUTTON_CLASS}
-                      aria-label="Search conversations"
-                      title="Search conversations"
-                    >
-                      <Search className="icon-sm" aria-hidden />
-                    </button>
-                  ) : null}
-                </>
+              {!hideSearch && !compactSearchOpen ? (
+                <button
+                  type="button"
+                  onClick={() => onCompactSearchOpenChange(true)}
+                  className={CONVERSATION_ICON_BUTTON_CLASS}
+                  aria-label="Search conversations"
+                  title="Search conversations"
+                >
+                  <Search className="icon-sm" aria-hidden />
+                </button>
               ) : null}
               {showInlineNew ? (
                 <button
@@ -294,6 +270,36 @@ export function SpaceConversationsHeader({
           </>
         )}
       </div>
+      {compactHeader && compactSearchOpen && !hideSearch ? (
+        <div
+          ref={compactSearchRowRef}
+          data-compact-conversation-search
+          className="mt-spacing-1 relative w-full"
+        >
+          <Search className="icon-left-center text-muted-foreground icon-sm pointer-events-none" aria-hidden />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder="Search conversations"
+            aria-label="Search conversations"
+            className="input-glass body-3 text-foreground placeholder:text-muted-foreground h-spacing-8 rounded-spacing-2 pl-spacing-8 pr-spacing-8 w-full outline-none"
+            autoFocus
+          />
+          <button
+            type="button"
+            onClick={() => {
+              onCompactSearchOpenChange(false)
+              onQueryChange('')
+            }}
+            className="btn-icon-bare absolute right-1 top-1/2 -translate-y-1/2"
+            aria-label="Close search"
+            title="Close search"
+          >
+            <X className="icon-sm" aria-hidden />
+          </button>
+        </div>
+      ) : null}
       {belowSearchNew}
       {headerFooterSlot}
     </div>

@@ -3,6 +3,76 @@ import { ArtifactNotificationsService } from './artifact-notifications.service'
 import { ArtifactStrategyService } from './artifact-strategy.service'
 
 describe('small artifact action data access', () => {
+  it('reads and writes the normalized campaign Canvas for Pixel', async () => {
+    const repository = {
+      canAccessCanvasCampaign: vi.fn(async () => ({ data: true, error: null })),
+      getOrCreateCanvas: vi.fn(async () => ({
+        data: { id: 'board-1', revision: 4 },
+        error: null,
+      })),
+      getCanvasItems: vi.fn(async () => ({ data: [{ id: 'item-1' }], error: null })),
+      getCanvasConnectors: vi.fn(async () => ({ data: [], error: null })),
+      applyCanvasOperations: vi.fn(async () => ({
+        data: { operation_id: 'operation-1', committed_revision: 5 },
+        error: null,
+      })),
+    }
+    const target = {
+      resolveUserId: vi.fn(() => 'user-1'),
+      resolveCampaignId: vi.fn(() => 'campaign-1'),
+      resolveAgentKey: vi.fn(() => 'pixel'),
+      getServiceSupabase: vi.fn(async () => ({})),
+    }
+    const handlers = new ArtifactStrategyService(repository as never).getHandlers(target)
+
+    await expect(handlers.get_canvas_board({}, 'session')).resolves.toMatchObject({
+      success: true,
+      board: { id: 'board-1', revision: 4 },
+      items: [{ id: 'item-1' }],
+    })
+    await expect(
+      handlers.apply_canvas_operations(
+        {
+          base_revision: 4,
+          operations: [{ op: 'create_item', item: { id: 'item-2' } }],
+        },
+        'session',
+      ),
+    ).resolves.toEqual({
+      success: true,
+      operation_id: 'operation-1',
+      committed_revision: 5,
+    })
+    expect(repository.applyCanvasOperations).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({
+        boardId: 'board-1',
+        userId: 'user-1',
+        baseRevision: 4,
+        actorAgentKey: 'pixel',
+      }),
+    )
+  })
+
+  it('does not let the service-role Canvas handler bypass invoking-user access', async () => {
+    const repository = {
+      canAccessCanvasCampaign: vi.fn(async () => ({ data: false, error: null })),
+      getOrCreateCanvas: vi.fn(),
+    }
+    const target = {
+      resolveUserId: vi.fn(() => 'user-1'),
+      resolveCampaignId: vi.fn(() => 'campaign-1'),
+      getServiceSupabase: vi.fn(async () => ({})),
+    }
+    const handlers = new ArtifactStrategyService(repository as never).getHandlers(target)
+
+    await expect(handlers.get_canvas_board({}, 'session')).resolves.toEqual({
+      success: false,
+      error: 'You do not have access to this campaign Canvas.',
+    })
+    expect(repository.getOrCreateCanvas).not.toHaveBeenCalled()
+  })
+
   it('creates and lists strategy nodes', async () => {
     const insertMock = vi.fn()
     const supabase = {

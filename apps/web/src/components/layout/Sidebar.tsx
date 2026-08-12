@@ -18,6 +18,8 @@ import { NewCampaignModal } from './NewCampaignModal'
 import { NewProgramModal } from './NewProgramModal'
 import type { SidebarCampaignRow, SidebarProps } from './sidebar/sidebar-types'
 import { SidebarHqSection } from './sidebar/SidebarHqSection'
+import { SidebarSimpleSection } from './sidebar/SidebarSimpleSection'
+import { SidebarSimpleResizeHandle } from './sidebar/SidebarSimpleResizeHandle'
 import { SidebarStudioFooter } from './sidebar/SidebarStudioFooter'
 import { SidebarStudioHeader } from './sidebar/SidebarStudioHeader'
 import { SidebarStudioSection } from './sidebar/SidebarStudioSection'
@@ -35,12 +37,17 @@ export function Sidebar(props: SidebarProps) {
   const sidebarPeek = shellPrefsHydrated ? sidebarPeekRaw : false
   const activeMenuDock = useActiveShellMenuDock()
   const menuCompact = useShellMenuDock((state) => state.menuCompact)
-  const menuDock = shellPrefsHydrated && desktop ? activeMenuDock : 'left'
+  const menuStyle = useShellMenuDock((state) => state.menuStyle)
+  const simpleMenuWidth = useShellMenuDock((state) => state.simpleMenuWidth)
+  const menuDock =
+    menuStyle === 'simple' ? 'left' : shellPrefsHydrated && desktop ? activeMenuDock : 'left'
   // Menu pin/peek still works while AI chat is open — drawer sits beside the rail.
   const hqDesktopWidth =
     c.sidebarMode === 'hq'
       ? menuCompact
         ? 'md:w-[56px]'
+        : menuStyle === 'simple'
+          ? 'md:w-[272px]'
         : menuDock === 'work-top' || menuDock === 'work-bottom'
           ? 'md:w-auto'
           : sidebarPinned
@@ -98,6 +105,11 @@ export function Sidebar(props: SidebarProps) {
       )}
       <aside
         data-shell-menu-dock={menuDock}
+        style={
+          desktop && c.sidebarMode === 'hq' && menuStyle === 'simple' && !menuCompact
+            ? { width: simpleMenuWidth }
+            : undefined
+        }
         className={`relative flex flex-col transition-all duration-300 ease-in-out ${
           c.sidebarMode === 'hq' ? '' : 'md:!bg-transparent'
         } ${
@@ -108,6 +120,9 @@ export function Sidebar(props: SidebarProps) {
           c.sidebarMode === 'hq' ? 'md:overflow-visible' : 'md:overflow-hidden'
         } ${c.sidebarMode === 'hq' ? hqDesktopWidth : c.desktopWidth}`}
       >
+        {desktop && c.sidebarMode === 'hq' && menuStyle === 'simple' && !menuCompact ? (
+          <SidebarSimpleResizeHandle />
+        ) : null}
         <div
           className={`flex h-full min-h-0 flex-1 flex-col ${
             c.sidebarMode === 'hq' ? 'overflow-visible' : 'overflow-hidden'
@@ -148,6 +163,14 @@ export function Sidebar(props: SidebarProps) {
                 />
               </div>
             </div>
+          ) : menuStyle === 'simple' ? (
+            <SidebarSimpleSection
+              c={c}
+              featureUpdates={{
+                hasUnread: featureUpdatesHasUnread,
+                onOpen: openFeaturePanel,
+              }}
+            />
           ) : (
             <SidebarHqSection
               c={c}

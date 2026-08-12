@@ -296,7 +296,7 @@ export function SocialReportingView({
   const multiPlatform = platforms.length > 1
 
   return (
-    <div className="relative flex min-h-[400px] flex-1 flex-col overflow-auto px-4 py-3">
+    <div className="scrollbar-thin relative flex h-0 min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-4 py-3">
       {initialLoading ? (
         <div className="absolute inset-0 z-10 flex items-center justify-center">
           <VibeyLoadingOrb size="sm" text="Loading social analytics..." />

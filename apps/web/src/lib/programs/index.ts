@@ -6,6 +6,7 @@ export {
   fetchPrograms,
   listProgramShares,
   updateProgram,
+  updateProgramUserState,
   upsertProgramShare,
   type Program,
   type ProgramShare,
@@ -13,6 +14,7 @@ export {
   type ProgramSharesResponse,
   type ProgramSystemKind,
   type ProgramVisibility,
+  type ProgramUserState,
 } from './programs-api'
 export {
   invalidateProgramsListCache,

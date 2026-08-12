@@ -36,6 +36,9 @@ export type FathomMeetingSource = {
   raw: Record<string, unknown>
 }
 
+const GENERIC_FATHOM_TITLE_RE =
+  /^(impromptu(?:\s+zoom)?(?:\s+meeting|\s+call)?|untitled(?:\s+meeting)?|zoom meeting|working session(?:\s*[—-].*)?|call \(naming…\))$/i
+
 export function normalizeFathomMeetingSource(event: Record<string, unknown>): FathomMeetingSource {
   // Fathom / Composio payloads often send ids as numbers; meeting_id is the
   // stable recording key when recording_id is absent on webhook events.
@@ -57,6 +60,9 @@ export function normalizeFathomMeetingSource(event: Record<string, unknown>): Fa
   const defaultSummary = objectRecord(event.default_summary)
   const actionItems = Array.isArray(event.action_items) ? event.action_items : []
   const transcript = normalizeTranscript(event.transcript)
+  const providerSummary =
+    firstText(defaultSummary.markdown_formatted, event.summary, event.summary_text) ?? null
+  const providerActions = normalizeProviderActions(actionItems, externalRecordingId)
 
   return {
     provider: 'fathom',
@@ -67,7 +73,11 @@ export function normalizeFathomMeetingSource(event: Record<string, unknown>): Fa
       objectRecord(event.calendar_event).id,
       objectRecord(event.calendar_invite).id,
     ),
-    title: firstText(event.title, event.meeting_title) ?? 'Untitled Meeting',
+    title: resolveCanonicalFathomTitle({
+      rawTitle: firstText(event.canonical_title, event.title, event.meeting_title),
+      summary: providerSummary,
+      event,
+    }),
     recordingUrl: httpUrl(event.url) ?? httpUrl(event.share_url),
     scheduledStart,
     scheduledEnd,
@@ -75,9 +85,21 @@ export function normalizeFathomMeetingSource(event: Record<string, unknown>): Fa
     recordingEnd,
     durationSeconds: durationSeconds(recordingStart, recordingEnd),
     participantEmails,
-    providerSummary:
-      firstText(defaultSummary.markdown_formatted, event.summary, event.summary_text) ?? null,
-    actions: actionItems.flatMap((raw, index) => {
+    providerSummary,
+    actions:
+      providerActions.length > 0
+        ? providerActions
+        : deriveSummaryActions(providerSummary, externalRecordingId),
+    transcript,
+    raw: event,
+  }
+}
+
+function normalizeProviderActions(
+  actionItems: unknown[],
+  externalRecordingId: string,
+): FathomSourceAction[] {
+  return actionItems.flatMap((raw, index) => {
       const action = objectRecord(raw)
       const sourceText = firstText(action.description, action.title, action.text)
       if (!sourceText) return []
@@ -95,10 +117,107 @@ export function normalizeFathomMeetingSource(event: Record<string, unknown>): Fa
           raw: action,
         },
       ]
-    }),
-    transcript,
-    raw: event,
+    })
+}
+
+export function resolveCanonicalFathomTitle(input: {
+  rawTitle?: string | null
+  summary?: string | null
+  event?: Record<string, unknown>
+}): string {
+  const raw = firstText(input.rawTitle)
+  if (raw && !GENERIC_FATHOM_TITLE_RE.test(raw)) return cleanSentence(raw)
+
+  const purpose = extractSummarySection(input.summary, 'Meeting Purpose')
+    .map(stripMarkdown)
+    .find((line) => line.length >= 8)
+  if (purpose) return cleanSentence(purpose).slice(0, 120)
+
+  const names = collectParticipantNames(input.event ?? {})
+  if (names.length >= 2) return `${names[0]} + ${names[1]} working session`
+  if (names.length === 1) return `${names[0]} working session`
+  return raw || 'Untitled Meeting'
+}
+
+function deriveSummaryActions(
+  summary: string | null,
+  externalRecordingId: string,
+): FathomSourceAction[] {
+  const lines = extractSummarySection(summary, 'Next Steps')
+  const actions: FathomSourceAction[] = []
+  let currentAssignee: string | null = null
+
+  for (const line of lines) {
+    const cleaned = stripMarkdown(line.replace(/^\s*[-*+]\s+/, '')).trim()
+    if (!cleaned) continue
+    const ownerOnly = cleaned.match(/^([^:]{1,80}):$/)
+    if (ownerOnly) {
+      currentAssignee = ownerOnly[1]!.trim()
+      continue
+    }
+    const ownedAction = cleaned.match(/^([^:]{1,80}):\s+(.+)$/)
+    const assigneeName = ownedAction ? ownedAction[1]!.trim() : currentAssignee
+    const sourceText = cleanSentence(ownedAction ? ownedAction[2]! : cleaned)
+    if (!sourceText || sourceText.length < 3) continue
+    const index = actions.length
+    actions.push({
+      sourceKey: `fathom:${externalRecordingId}:summary-action:${index}`,
+      sourceText,
+      assigneeName,
+      assigneeEmail: null,
+      recordingTimestamp: null,
+      recordingPlaybackUrl: null,
+      completed: false,
+      userGenerated: false,
+      raw: { source: 'summary_next_steps', line },
+    })
   }
+  return actions
+}
+
+function extractSummarySection(summary: string | null | undefined, heading: string): string[] {
+  if (!summary?.trim()) return []
+  const lines = summary.split('\n')
+  const start = lines.findIndex((line) => {
+    const normalized = stripMarkdown(line.replace(/^\s*#{1,6}\s*/, '')).trim()
+    return normalized.toLowerCase() === heading.toLowerCase()
+  })
+  if (start < 0) return []
+  const section: string[] = []
+  for (const line of lines.slice(start + 1)) {
+    if (/^\s*#{1,6}\s+/.test(line)) break
+    if (line.trim()) section.push(line)
+  }
+  return section
+}
+
+function stripMarkdown(value: string): string {
+  return value
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/[*_`#]/g, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function cleanSentence(value: string): string {
+  return stripMarkdown(value).replace(/[.!?]+$/g, '').trim()
+}
+
+function collectParticipantNames(event: Record<string, unknown>): string[] {
+  const names: string[] = []
+  for (const key of ['calendar_invitees', 'attendees', 'invitees', 'shared_with']) {
+    const rows = event[key]
+    if (!Array.isArray(rows)) continue
+    for (const row of rows) {
+      const person = objectRecord(row)
+      const name = firstText(person.name, person.display_name)?.split(/\s+/)[0]
+      if (name) names.push(name)
+    }
+  }
+  const recordedBy = firstText(objectRecord(event.recorded_by).name)?.split(/\s+/)[0]
+  if (names.length === 0 && recordedBy) names.push(recordedBy)
+  return [...new Set(names)].slice(0, 2)
 }
 
 export function renderFathomTranscriptDocument(source: FathomMeetingSource): string {

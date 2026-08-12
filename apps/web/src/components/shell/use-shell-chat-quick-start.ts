@@ -9,7 +9,6 @@ import type { ShellChatQuickStart } from './shell-empty-chat-prompts.config'
 
 export function useShellChatQuickStart(
   setTextRef: RefObject<((text: string) => void) | null>,
-  setComposerHasText: (hasText: boolean) => void,
 ) {
   const [activeQuickStart, setActiveQuickStart] = useState<ShellChatQuickStart | null>(null)
 
@@ -23,13 +22,12 @@ export function useShellChatQuickStart(
 
   const handleComposerValueChange = useCallback(
     (next: string) => {
-      setComposerHasText(next.trim().length > 0)
       setActiveQuickStart((current) => {
         if (!current || shellQuickStartMatchesComposer(current, next)) return current
         return null
       })
     },
-    [setComposerHasText],
+    [],
   )
 
   const buildSendContext = useCallback(

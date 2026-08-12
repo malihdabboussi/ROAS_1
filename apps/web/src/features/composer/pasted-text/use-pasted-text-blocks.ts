@@ -24,6 +24,15 @@ function loadBlocks(persistence: PastedTextPersistence): PastedTextBlock[] {
   return loadPastedBlocksFromStorage(persistence.draftKey)
 }
 
+function blocksEqual(a: PastedTextBlock[], b: PastedTextBlock[]): boolean {
+  if (a === b) return true
+  if (a.length !== b.length) return false
+  return a.every((block, index) => {
+    const comparison = b[index]
+    return comparison !== undefined && block.id === comparison.id && block.text === comparison.text
+  })
+}
+
 function persistBlocks(persistence: PastedTextPersistence, blocks: PastedTextBlock[]): void {
   if (persistence.mode === 'zustand') {
     const store = useChatStore.getState()
@@ -49,21 +58,17 @@ export function usePastedTextBlocks(options: {
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null)
   const blocksRef = useRef(blocks)
   blocksRef.current = blocks
-  const mountRef = useRef(true)
+  const loadedContextRef = useRef({ key, enabled })
 
-  useEffect(() => {
-    if (!enabled) {
-      setBlocks([])
-      setEditingBlockId(null)
-      return
+  if (loadedContextRef.current.key !== key || loadedContextRef.current.enabled !== enabled) {
+    loadedContextRef.current = { key, enabled }
+    const next = enabled ? loadBlocks(persistence) : []
+    if (!blocksEqual(blocksRef.current, next)) {
+      blocksRef.current = next
+      setBlocks(next)
     }
-    if (mountRef.current) {
-      mountRef.current = false
-      return
-    }
-    setBlocks(loadBlocks(persistence))
     setEditingBlockId(null)
-  }, [key, enabled])
+  }
 
   useEffect(() => {
     if (!enabled) return

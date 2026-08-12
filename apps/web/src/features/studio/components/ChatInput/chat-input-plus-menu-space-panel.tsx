@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Check, ChevronRight, Grid } from 'lucide-react'
+import { Check, ChevronRight, FolderKanban, Grid, Plus, Search } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { ChatInputPlusMenuSpacePickerConfig } from './chat-input-plus-menu-space.types'
 
@@ -13,22 +13,53 @@ export function ChatInputPlusMenuSpacePanel({
   onCloseMenu: () => void
 }) {
   const [expandedCampaignId, setExpandedCampaignId] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
 
   useEffect(() => {
     const activeCampaignId =
       spacePicker.groups.find((group) =>
         group.spaces.some((space) => space.id === spacePicker.selectedSpaceId),
       )?.campaignId ??
+      spacePicker.selectedCampaignId ??
       spacePicker.groups[0]?.campaignId ??
       null
     setExpandedCampaignId(activeCampaignId)
-  }, [spacePicker.groups, spacePicker.selectedSpaceId])
+  }, [spacePicker.groups, spacePicker.selectedCampaignId, spacePicker.selectedSpaceId])
+
+  const normalizedQuery = query.trim().toLocaleLowerCase()
+  const visibleGroups = normalizedQuery
+    ? spacePicker.groups
+        .map((group) => ({
+          ...group,
+          spaces: group.spaces.filter((space) =>
+            `${group.campaignName} ${space.title}`.toLocaleLowerCase().includes(normalizedQuery),
+          ),
+        }))
+        .filter(
+          (group) =>
+            group.campaignName.toLocaleLowerCase().includes(normalizedQuery) ||
+            group.spaces.length > 0,
+        )
+    : spacePicker.groups
 
   return (
     <>
       <p className="body-4 text-muted-foreground px-spacing-3 pb-spacing-1 pt-spacing-2 font-medium uppercase tracking-wide">
-        Choose a space
+        Choose a campaign or space
       </p>
+      <div className="px-spacing-2 pb-spacing-2">
+        <div className="relative">
+          <Search className="icon-left-center icon-sm text-muted-foreground" aria-hidden />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search campaigns and spaces…"
+            aria-label="Search campaigns and spaces"
+            className="input-glass input-leading body-4 h-spacing-8 rounded-spacing-2 w-full"
+          />
+        </div>
+      </div>
       {!spacePicker.isOrgOnly ? (
         <button
           type="button"
@@ -48,29 +79,42 @@ export function ChatInputPlusMenuSpacePanel({
           {spacePicker.selectedSpaceId === null ? <Check className="icon-sm shrink-0" /> : null}
         </button>
       ) : null}
-      {spacePicker.groups.map((group) => {
-        const expanded = expandedCampaignId === group.campaignId
+      {visibleGroups.map((group) => {
+        const expanded = normalizedQuery.length > 0 || expandedCampaignId === group.campaignId
+        const campaignSelected =
+          spacePicker.selectedCampaignId === group.campaignId && !spacePicker.selectedSpaceId
         return (
           <div key={group.campaignId}>
-            <button
-              type="button"
-              onClick={() =>
-                setExpandedCampaignId((prev) =>
-                  prev === group.campaignId ? null : group.campaignId,
-                )
-              }
-              className="body-3 text-foreground hover:bg-hover-subtle px-spacing-3 py-spacing-2 gap-spacing-2 flex w-full items-center text-left transition-colors"
-            >
-              <ChevronRight
-                className={cn(
-                  'icon-xs text-muted-foreground shrink-0 transition-transform',
-                  expanded && 'rotate-90',
-                )}
-                aria-hidden
-              />
-              <span className="min-w-0 flex-1 truncate font-medium">{group.campaignName}</span>
-              <span className="body-4 text-muted-foreground shrink-0">{group.spaces.length}</span>
-            </button>
+            <div className={cn('flex items-center', campaignSelected && 'bg-primary/10')}>
+              <button
+                type="button"
+                onClick={() => {
+                  spacePicker.onSelectCampaign?.(group.campaignId)
+                  onCloseMenu()
+                }}
+                className="body-3 text-foreground hover:bg-hover-subtle px-spacing-3 py-spacing-2 gap-spacing-2 flex min-w-0 flex-1 items-center text-left transition-colors"
+              >
+                <FolderKanban className="icon-sm text-muted-foreground shrink-0" aria-hidden />
+                <span className="min-w-0 flex-1 truncate font-medium">{group.campaignName}</span>
+                {campaignSelected ? <Check className="icon-sm shrink-0" /> : null}
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setExpandedCampaignId((previous) =>
+                    previous === group.campaignId ? null : group.campaignId,
+                  )
+                }
+                className="text-muted-foreground hover:text-foreground px-spacing-3 py-spacing-2"
+                aria-label={`${expanded ? 'Collapse' : 'Expand'} ${group.campaignName}`}
+                aria-expanded={expanded}
+              >
+                <ChevronRight
+                  className={cn('icon-xs transition-transform', expanded && 'rotate-90')}
+                  aria-hidden
+                />
+              </button>
+            </div>
             {expanded
               ? group.spaces.map((space) => {
                   const isSelected = spacePicker.selectedSpaceId === space.id
@@ -96,6 +140,28 @@ export function ChatInputPlusMenuSpacePanel({
           </div>
         )
       })}
+      {visibleGroups.length === 0 ? (
+        <p className="body-4 text-muted-foreground px-spacing-3 py-spacing-3">
+          No campaigns or spaces found.
+        </p>
+      ) : null}
+      {spacePicker.onCreateSpace ? (
+        <div className="border-border mt-spacing-1 p-spacing-2 border-t">
+          <button
+            type="button"
+            onClick={() => {
+              spacePicker.onCreateSpace?.(
+                expandedCampaignId ?? spacePicker.selectedCampaignId ?? null,
+              )
+              onCloseMenu()
+            }}
+            className="body-3 text-foreground hover:bg-hover-subtle rounded-spacing-2 gap-spacing-2 px-spacing-2 py-spacing-2 flex w-full items-center text-left transition-colors"
+          >
+            <Plus className="icon-sm" aria-hidden />
+            New space
+          </button>
+        </div>
+      ) : null}
     </>
   )
 }

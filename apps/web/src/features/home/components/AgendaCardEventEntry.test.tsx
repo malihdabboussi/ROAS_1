@@ -54,9 +54,24 @@ describe('AgendaEventEntry', () => {
       />,
     )
 
-    expect(screen.getByText('Minimized')).toBeTruthy()
-    expect(screen.getByText('Campaign review')).toHaveClass('line-through')
-    fireEvent.click(screen.getByRole('button', { name: 'Restore meeting' }))
+    expect(screen.queryByText('Campaign review')).toBeNull()
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Restore minimized meeting: Campaign review' })[0]!,
+    )
     expect(onMinimizedChange).toHaveBeenCalledWith(false)
+  })
+
+  it('does not render a camera icon for meetings with video links', () => {
+    const { container } = render(
+      <AgendaEventEntry
+        ev={{ ...EVENT, video_url: 'https://zoom.us/j/123', video_label: 'Zoom' }}
+        isExpanded={false}
+        onSelect={vi.fn()}
+        nowTick={Date.parse('2026-07-29T16:00:00.000Z')}
+        showAccountLabel={false}
+      />,
+    )
+
+    expect(container.querySelector('svg')).toBeNull()
   })
 })

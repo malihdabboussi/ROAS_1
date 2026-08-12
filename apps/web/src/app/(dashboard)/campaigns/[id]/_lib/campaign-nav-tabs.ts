@@ -5,6 +5,7 @@ export const TOGGLEABLE_CAMPAIGN_TAB_IDS = [
   'list',
   'board',
   'calendar',
+  'canvas',
   'assets',
   'knowledge',
   'reporting',
@@ -19,6 +20,7 @@ export const DEFAULT_VISIBLE_CAMPAIGN_TABS: ToggleableCampaignTabId[] = [
   'list',
   'board',
   'calendar',
+  'canvas',
   'assets',
   'knowledge',
   'reporting',
@@ -62,9 +64,22 @@ export const CAMPAIGN_TAB_LABELS: Record<ToggleableCampaignTabId, string> = {
   list: 'List',
   board: 'Board',
   calendar: 'Calendar',
+  canvas: 'Canvas',
   assets: 'Assets',
   knowledge: 'Brand & Knowledge',
   reporting: 'Reporting',
+}
+
+export const CAMPAIGN_TAB_ICONS: Record<ToggleableCampaignTabId, string> = {
+  overview: 'layout-grid',
+  dashboard: 'bar-chart-3',
+  list: 'list',
+  board: 'columns-3',
+  calendar: 'calendar-days',
+  canvas: 'panels-top-left',
+  assets: 'folder-open',
+  knowledge: 'book-open',
+  reporting: 'pie-chart',
 }
 
 export const DEFAULT_CAMPAIGN_TAB: ToggleableCampaignTabId = 'overview'

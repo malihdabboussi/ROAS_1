@@ -21,8 +21,8 @@ export function AvatarDropdown({
   email,
   avatarUrl,
   initials,
-  sidebarCollapsed: _sidebarCollapsed,
-  showLabel: _showLabel = true,
+  sidebarCollapsed,
+  showLabel = true,
   featureUpdates,
 }: AvatarDropdownProps) {
   const [menuOpen, setMenuOpen] = React.useState(false)
@@ -75,19 +75,33 @@ export function AvatarDropdown({
       <button
         ref={triggerRef}
         onClick={() => setMenuOpen(!menuOpen)}
-        className="rounded-spacing-2 relative flex cursor-pointer items-center justify-center p-1 text-[var(--color-muted-foreground)] outline-none transition-colors hover:text-[var(--color-foreground)]"
+        className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground rounded-spacing-2 gap-spacing-2 p-spacing-1 relative flex w-full cursor-pointer items-center text-left outline-none transition-colors"
       >
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={displayName} className="h-8 w-8 rounded-full object-cover" />
-          ) : (
-            <span className="text-sm font-medium text-[var(--color-primary-foreground)]">
-              {initials}
-            </span>
-          )}
+        <div className="relative flex-shrink-0">
+          <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-full">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={displayName}
+                className="h-8 w-8 rounded-full object-cover"
+              />
+            ) : (
+              <span className="text-primary-foreground text-sm font-medium">{initials}</span>
+            )}
+          </div>
+          {featureUpdates?.hasUnread ? (
+            <span
+              className="bg-primary ring-card absolute -right-px -top-px h-2 w-2 rounded-full ring-2"
+              title="New updates available"
+              aria-label="New updates available"
+            />
+          ) : null}
         </div>
-        {featureUpdates?.hasUnread ? (
-          <span className="bg-primary absolute right-0.5 top-0.5 h-2 w-2 rounded-full ring-2 ring-[var(--color-card)]" />
+        {showLabel && !sidebarCollapsed ? (
+          <span className="min-w-0 flex-1">
+            <span className="body-3 text-foreground block truncate font-medium">{displayName}</span>
+            <span className="body-4 text-muted-foreground block truncate">{email}</span>
+          </span>
         ) : null}
       </button>
 

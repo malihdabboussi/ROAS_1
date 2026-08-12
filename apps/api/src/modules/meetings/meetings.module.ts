@@ -9,6 +9,7 @@ import { MeetingWorkspaceReadRepository } from './repositories/meeting-workspace
 import { MeetingWorkspaceResolutionRepository } from './repositories/meeting-workspace-resolution.repository'
 import { MeetingWorkspaceStateRepository } from './repositories/meeting-workspace-state.repository'
 import { MeetingWorkspaceRepository } from './repositories/meeting-workspace.repository'
+import { MeetingConversationDeduplicationService } from './services/meeting-conversation-deduplication.service'
 import { MeetingSourceIngestionService } from './services/meeting-source-ingestion.service'
 import { MeetingWorkspaceService } from './services/meeting-workspace.service'
 
@@ -23,6 +24,7 @@ import { MeetingWorkspaceService } from './services/meeting-workspace.service'
     MeetingRecapRepository,
     MeetingWorkspaceReadRepository,
     MeetingWorkspaceStateRepository,
+    MeetingConversationDeduplicationService,
     MeetingSourceIngestionService,
     MeetingWorkspaceService,
   ],

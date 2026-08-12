@@ -51,6 +51,73 @@ export const NodeIdParamSchema = z.object({
   nodeId: z.string().uuid(),
 })
 
+export const WhiteboardCampaignParamSchema = z.object({
+  campaignId: z.string().uuid(),
+})
+
+const canvasItemKindSchema = z.enum([
+  'sticky_note',
+  'text',
+  'shape',
+  'frame',
+  'card',
+  'resource_card',
+])
+
+const canvasItemSchema = z.object({
+  id: z.string().uuid(),
+  kind: canvasItemKindSchema,
+  position_x: z.number().finite(),
+  position_y: z.number().finite(),
+  width: z.number().positive().max(10000).optional(),
+  height: z.number().positive().max(10000).optional(),
+  rotation: z.number().finite().optional(),
+  z_index: z.number().int().optional(),
+  parent_id: z.string().uuid().nullable().optional(),
+  content: z.record(z.unknown()).optional(),
+  style: z.record(z.unknown()).optional(),
+  resource_type: z.string().max(64).optional(),
+  resource_id: z.string().uuid().optional(),
+  locked: z.boolean().optional(),
+})
+
+const canvasConnectorSchema = z.object({
+  id: z.string().uuid(),
+  source_item_id: z.string().uuid(),
+  target_item_id: z.string().uuid(),
+  source_handle: z.string().max(64).nullable().optional(),
+  target_handle: z.string().max(64).nullable().optional(),
+  label: z.string().max(500).optional(),
+  style: z.record(z.unknown()).optional(),
+})
+
+const canvasOperationSchema = z.discriminatedUnion('op', [
+  z.object({ op: z.literal('create_item'), item: canvasItemSchema }),
+  z.object({
+    op: z.literal('update_item'),
+    item_id: z.string().uuid(),
+    patch: canvasItemSchema.omit({ id: true, kind: true }).partial(),
+  }),
+  z.object({ op: z.literal('delete_item'), item_id: z.string().uuid() }),
+  z.object({ op: z.literal('create_connector'), connector: canvasConnectorSchema }),
+  z.object({ op: z.literal('delete_connector'), connector_id: z.string().uuid() }),
+  z.object({
+    op: z.literal('update_viewport'),
+    viewport: z.object({ x: z.number(), y: z.number(), zoom: z.number().positive().max(10) }),
+  }),
+])
+
+export const ApplyWhiteboardOperationsSchema = z.object({
+  base_revision: z.number().int().nonnegative(),
+  idempotency_key: z.string().min(1).max(200),
+  operations: z.array(canvasOperationSchema).min(1).max(100),
+  actor_agent_key: z.string().min(1).max(64).optional(),
+})
+
+export const UndoWhiteboardOperationSchema = z.object({
+  operation_id: z.string().uuid(),
+})
+
 export const SaveCanvasGraphSchema = z.object({
   graph: reactFlowGraphSchema,
   viewport: reactFlowViewportSchema,
@@ -112,3 +179,6 @@ export type CreateCanvasNodeDto = z.infer<typeof CreateCanvasNodeSchema>
 export type UpdateCanvasNodeDto = z.infer<typeof UpdateCanvasNodeSchema>
 export type DelegateToAgentDto = z.infer<typeof DelegateToAgentSchema>
 export type CanvasNodeActionDto = z.infer<typeof CanvasNodeActionSchema>
+export type WhiteboardCampaignParam = z.infer<typeof WhiteboardCampaignParamSchema>
+export type ApplyWhiteboardOperationsDto = z.infer<typeof ApplyWhiteboardOperationsSchema>
+export type UndoWhiteboardOperationDto = z.infer<typeof UndoWhiteboardOperationSchema>

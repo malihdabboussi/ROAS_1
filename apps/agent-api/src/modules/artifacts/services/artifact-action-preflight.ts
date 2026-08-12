@@ -129,6 +129,11 @@ const ACTION_PREFLIGHT_OVERRIDES: Partial<Record<ArtifactAction, ActionPreflight
     reason:
       'Durable Company Cortex objects require reviewed signal lineage, evidence refs, and retrieval rules before insert.',
   },
+  apply_canvas_operations: {
+    mode: 'static_preflight',
+    reason:
+      'Canvas mutation batches require a valid revision and supported normalized operations before database execution.',
+  },
   dream_inspect_agent: {
     mode: 'static_preflight',
     reason:
@@ -201,6 +206,7 @@ export const ACTION_PREFLIGHTS: Partial<Record<ArtifactAction, ActionPreflightVa
   ingest_customer_brain_link: validateCustomerMemorySourcePreflight,
   propose_company_brain_signal: validateProposeCompanyBrainSignalPreflight,
   create_company_brain_object: validateCreateCompanyBrainObjectPreflight,
+  apply_canvas_operations: validateCanvasOperationsPreflight,
   dream_inspect_agent: validateDreamOpsSessionPreflight,
   dream_search_evidence: validateDreamOpsSessionPreflight,
   dream_propose_skill_create: validateDreamOpsSessionPreflight,
@@ -209,6 +215,34 @@ export const ACTION_PREFLIGHTS: Partial<Record<ArtifactAction, ActionPreflightVa
   dream_propose_agent_file_update: validateDreamOpsSessionPreflight,
   dream_route_out: validateDreamOpsSessionPreflight,
   dream_finish: validateDreamOpsSessionPreflight,
+}
+
+function validateCanvasOperationsPreflight(
+  data: Record<string, unknown>,
+): ActionPreflightFailure | null {
+  if (!Number.isInteger(data.base_revision) || (data.base_revision as number) < 0) {
+    return failure('base_revision must be a non-negative integer.', 'CANVAS_REVISION_INVALID')
+  }
+  if (!Array.isArray(data.operations) || data.operations.length < 1 || data.operations.length > 100) {
+    return failure('operations must contain between 1 and 100 Canvas operations.', 'CANVAS_BATCH_INVALID')
+  }
+  const supported = new Set([
+    'create_item',
+    'update_item',
+    'delete_item',
+    'create_connector',
+    'delete_connector',
+    'update_viewport',
+  ])
+  const invalid = data.operations.find(
+    (operation) =>
+      typeof operation !== 'object' ||
+      operation === null ||
+      !supported.has((operation as Record<string, unknown>).op as string),
+  )
+  return invalid
+    ? failure('Every Canvas operation must use a supported op value.', 'CANVAS_OPERATION_INVALID')
+    : null
 }
 
 export function describeActionPreflightContract(action: string): ActionPreflightCoverage {

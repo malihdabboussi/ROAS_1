@@ -9,12 +9,12 @@ export function SidebarWordmark({ className = '' }: SidebarWordmarkProps) {
       <img
         src="/Logos/roas/wordmark-white.png"
         alt="ROAS"
-        className={`hidden h-8 w-auto dark:block ${className}`}
+        className={`hidden h-5 w-auto dark:block ${className}`}
       />
       <img
         src="/Logos/roas/wordmark-black.png"
         alt="ROAS"
-        className={`h-8 w-auto dark:hidden ${className}`}
+        className={`h-5 w-auto dark:hidden ${className}`}
       />
     </>
   )

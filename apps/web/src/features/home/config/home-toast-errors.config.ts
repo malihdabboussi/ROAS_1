@@ -13,6 +13,9 @@ export const HOME_TOAST_ERRORS = {
     userMessage: 'Could not load Fathom recordings — check the connection and try again.',
   },
   MEETING_RECORDING_LINK_FAILED: { userMessage: 'Could not link that recording.' },
+  MEETING_NOTE_CREATE_FAILED: { userMessage: 'Could not save that note.' },
+  MEETING_RENAME_FAILED: { userMessage: 'Could not rename this meeting.' },
+  MEETING_ACTION_MOVE_FAILED: { userMessage: 'Could not move that action item.' },
   MEETINGS_SPACE_REQUIRED: {
     userMessage: 'Open or create your Meetings space first, then try prep again.',
   },
@@ -28,4 +31,6 @@ export const HOME_TOAST_SUCCESS = {
     userMessage: 'Already on the list — no duplicate added.',
   },
   MEETING_RECORDING_LINKED: { userMessage: 'Recording linked to this meeting.' },
+  MEETING_NOTE_ADDED: { userMessage: 'Note saved to this meeting.' },
+  MEETING_RENAMED: { userMessage: 'Meeting renamed everywhere.' },
 } as const

@@ -1,23 +1,27 @@
 'use client'
 
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronDown, FolderKanban, Plug } from 'lucide-react'
 import { toast } from 'sonner'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
-import { HomeDashboardTemplateChip } from '@/components/home-dashboard-v4/HomeDashboardTemplateChip'
-import {
-  homeDashboardTemplate,
-  type HomeDashboardTemplateId,
-} from '@/features/home/config/home-dashboard-v4.config'
+import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
+import { ShellEmptyChatQuickStartPills } from '@/components/shell/ShellEmptyChatQuickStartPills'
+import { useShellChatQuickStart } from '@/components/shell/use-shell-chat-quick-start'
+import { SuggestedNextMoves } from '@/features/home/components/SuggestedNextMoves'
 import { HOME_TOAST_ERRORS } from '@/features/home/config/home-toast-errors.config'
 import { useOrgStore } from '@/features/org/store/use-org-store'
+import { CreateSpaceModal } from '@/features/spaces/components/CreateSpaceModal'
 import { cachedSpaces, useCachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
 import { normalizeSpaceLegacyViews } from '@/features/spaces/lib/view-customization-merge'
-import { ensureGeneralSpace } from '@/features/spaces/services/spaces.service'
+import { createSpace, ensureGeneralSpace } from '@/features/spaces/services/spaces.service'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { AttachedArtifact } from '@/features/studio/components/chat/ArtifactAttachments'
 import { ChatInput } from '@/features/studio/components/ChatInput'
+import { INTEGRATION_ICONS } from '@/features/studio/components/ChatInput/chat-input-constants'
 import type { ChatInputPlusMenuSpacePickerConfig } from '@/features/studio/components/ChatInput/chat-input-plus-menu-space.types'
+import type { ComposerPlusSubmenu } from '@/features/studio/components/ChatInput/chat-input-policy'
 import { campaignListCacheKey, fetchCampaigns } from '@/features/studio/services/campaign.service'
 import type { ChatModelSettings } from '@/features/studio/services/chat.service'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
@@ -26,23 +30,33 @@ import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { matchesFlowsConceptSpace } from '@/lib/flows/flows-scope-storage'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
-export function HomeDashboardV4Composer({
-  selectedTemplate,
-  onSelectTemplate,
-}: {
-  selectedTemplate: HomeDashboardTemplateId | null
-  onSelectTemplate: (id: HomeDashboardTemplateId | null) => void
-}) {
+export function HomeDashboardV4Composer() {
   const router = useRouter()
   const seedComposer = useGlobalChatStore((s) => s.seedComposer)
+  const clearMeetingContext = useGlobalChatStore((s) => s.clearMeetingContext)
   const activeAgentKey = useGlobalChatStore((s) => s.activeAgentKey)
+  const setActiveAgentKey = useGlobalChatStore((s) => s.setActiveAgentKey)
+  const roster = useGlobalChatStore((s) => s.roster)
+  const loadRoster = useGlobalChatStore((s) => s.loadRoster)
   const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
   const { data: cachedSpaceRows } = useCachedSpaces()
   const spaces = useMemo(() => cachedSpaceRows ?? [], [cachedSpaceRows])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [targetSpaceId, setTargetSpaceId] = useState<string | null>(null)
+  const [targetCampaignId, setTargetCampaignId] = useState<string | null>(null)
+  const [createSpaceCampaignId, setCreateSpaceCampaignId] = useState<string | null | undefined>(
+    undefined,
+  )
+  const [connectedProviders, setConnectedProviders] = useState<string[]>([])
   const [sending, setSending] = useState(false)
+  const setTextRef = useRef<((text: string) => void) | null>(null)
+  const openAddMenuRef = useRef<((submenu?: ComposerPlusSubmenu) => void) | null>(null)
+  const quickStart = useShellChatQuickStart(setTextRef)
   const isOrgOnly = useOrgStore((s) => s.isOrgOnly)
+
+  useEffect(() => {
+    void loadRoster()
+  }, [loadRoster])
 
   useEffect(() => {
     let cancelled = false
@@ -68,20 +82,18 @@ export function HomeDashboardV4Composer({
       (a.name ?? '').localeCompare(b.name ?? ''),
     )
     const ordered: Campaign[] = generalCampaign ? [generalCampaign, ...sortedOthers] : sortedOthers
-    return ordered
-      .map((campaign) => ({
-        campaignId: campaign.id,
-        campaignName: campaign.name,
-        spaces: spaces
-          .filter((s) => s.campaign_id === campaign.id)
-          .sort((a, b) => {
-            const aTime = new Date(a.updated_at ?? a.created_at ?? 0).getTime()
-            const bTime = new Date(b.updated_at ?? b.created_at ?? 0).getTime()
-            return bTime - aTime
-          })
-          .map((space) => ({ id: space.id, title: space.title })),
-      }))
-      .filter((group) => group.spaces.length > 0)
+    return ordered.map((campaign) => ({
+      campaignId: campaign.id,
+      campaignName: campaign.name,
+      spaces: spaces
+        .filter((s) => s.campaign_id === campaign.id)
+        .sort((a, b) => {
+          const aTime = new Date(a.updated_at ?? a.created_at ?? 0).getTime()
+          const bTime = new Date(b.updated_at ?? b.created_at ?? 0).getTime()
+          return bTime - aTime
+        })
+        .map((space) => ({ id: space.id, title: space.title })),
+    }))
   }, [campaigns, spaces])
 
   const defaultGeneralSpace = useMemo(() => {
@@ -107,36 +119,65 @@ export function HomeDashboardV4Composer({
     if (targetSpaceId) {
       return spaces.find((space) => space.id === targetSpaceId)?.title ?? 'Space'
     }
+    if (targetCampaignId) {
+      return campaigns.find((campaign) => campaign.id === targetCampaignId)?.name ?? 'Campaign'
+    }
     if (isOrgOnly) return spaces[0]?.title ?? 'Workspace'
     return defaultGeneralSpace?.title ?? 'New Workspace'
-  }, [defaultGeneralSpace, isOrgOnly, spaces, targetSpaceId])
+  }, [campaigns, defaultGeneralSpace, isOrgOnly, spaces, targetCampaignId, targetSpaceId])
 
   const activeCampaignId = useMemo(() => {
     if (targetSpaceId) {
       return spaces.find((space) => space.id === targetSpaceId)?.campaign_id ?? null
     }
-    return defaultGeneralSpace?.campaign_id ?? null
-  }, [defaultGeneralSpace, spaces, targetSpaceId])
-
-  const committedTemplate = homeDashboardTemplate(selectedTemplate)
-
-  const placeholder = useMemo(() => {
-    if (committedTemplate) return committedTemplate.placeholder
-    return 'Tell Pixel what to do…'
-  }, [committedTemplate])
+    return targetCampaignId ?? defaultGeneralSpace?.campaign_id ?? null
+  }, [defaultGeneralSpace, spaces, targetCampaignId, targetSpaceId])
 
   const plusMenuSpacePicker = useMemo<ChatInputPlusMenuSpacePickerConfig>(
     () => ({
       selectedSpaceId: targetSpaceId,
+      selectedCampaignId: targetCampaignId,
       selectedLabel: targetLabel,
       defaultSpaceTitle: defaultGeneralSpace?.title ?? null,
       isOrgOnly,
       groups: groupedSpaces,
-      onSelect: setTargetSpaceId,
+      onSelect: (spaceId) => {
+        setTargetSpaceId(spaceId)
+        setTargetCampaignId(
+          spaceId ? (spaces.find((space) => space.id === spaceId)?.campaign_id ?? null) : null,
+        )
+      },
+      onSelectCampaign: (campaignId) => {
+        setTargetSpaceId(null)
+        setTargetCampaignId(campaignId)
+      },
+      onCreateSpace: setCreateSpaceCampaignId,
     }),
-    [defaultGeneralSpace?.title, groupedSpaces, isOrgOnly, targetLabel, targetSpaceId],
+    [
+      defaultGeneralSpace?.title,
+      groupedSpaces,
+      isOrgOnly,
+      spaces,
+      targetCampaignId,
+      targetLabel,
+      targetSpaceId,
+    ],
   )
-
+  const agentPicker = useMemo(
+    () => ({
+      selectedAgentKey: activeAgentKey,
+      agents: roster
+        .filter((entry) => entry.kind === 'agent' && Boolean(entry.agent_key?.trim()))
+        .map((entry) => ({
+          key: entry.agent_key!,
+          name: entry.display_name,
+          roleLabel: entry.role_label,
+          avatarUrl: entry.avatar_url,
+        })),
+      onSelect: setActiveAgentKey,
+    }),
+    [activeAgentKey, roster, setActiveAgentKey],
+  )
   const handleSend = useCallback(
     async (
       content: string,
@@ -151,7 +192,7 @@ export function HomeDashboardV4Composer({
       try {
         let targetId: string | null = targetSpaceId
         let targetCampaignId: string | null = activeCampaignId
-        if (!targetId) {
+        if (!targetId && !targetCampaignId) {
           if (isOrgOnly) {
             targetId = spaces[0]?.id ?? null
             targetCampaignId = spaces[0]?.campaign_id ?? null
@@ -173,6 +214,9 @@ export function HomeDashboardV4Composer({
           }
         }
 
+        // A previously opened meeting workspace leaves its context attached;
+        // a fresh chat seeded from Home must not hydrate into that thread.
+        clearMeetingContext()
         setActiveConversationId(null)
         seedComposer({
           content,
@@ -183,13 +227,14 @@ export function HomeDashboardV4Composer({
           model,
           references,
           modelSettings,
-          workContext: targetId
-            ? {
-                surface: 'spaces',
-                spaceId: targetId,
-                campaignId: targetCampaignId,
-              }
-            : { surface: 'general' },
+          workContext:
+            targetId || targetCampaignId
+              ? {
+                  surface: 'spaces',
+                  ...(targetId ? { spaceId: targetId } : {}),
+                  campaignId: targetCampaignId,
+                }
+              : { surface: 'general' },
         })
         router.push('/home?chat=starting')
       } catch (error) {
@@ -201,6 +246,7 @@ export function HomeDashboardV4Composer({
     [
       activeAgentKey,
       activeCampaignId,
+      clearMeetingContext,
       isOrgOnly,
       router,
       seedComposer,
@@ -208,27 +254,98 @@ export function HomeDashboardV4Composer({
       setActiveConversationId,
       spaces,
       targetSpaceId,
+      targetCampaignId,
     ],
   )
 
+  const handleConnectedProvidersChange = useCallback((providers: string[]) => {
+    setConnectedProviders(providers)
+  }, [])
+
   return (
-    <ChatInput
-      onSend={handleSend}
-      disabled={sending}
-      agentKey={activeAgentKey}
-      placeholder={placeholder}
-      draftContextKeyOverride="home-dashboard-v4"
-      spaceId={targetSpaceId}
-      campaignId={activeCampaignId ?? undefined}
-      plusMenuSpacePicker={plusMenuSpacePicker}
-      composerFooterAfterIntegrationsSlot={
-        <HomeDashboardTemplateChip
-          selectedTemplateId={selectedTemplate}
-          onSelectTemplate={onSelectTemplate}
+    <div className="w-full max-w-3xl">
+      <ChatInput
+        onSend={handleSend}
+        disabled={sending}
+        agentKey={activeAgentKey}
+        placeholder={SHELL_EMPTY_CHAT_PLACEHOLDER}
+        draftContextKeyOverride="home-dashboard-v4"
+        spaceId={targetSpaceId}
+        campaignId={activeCampaignId ?? undefined}
+        plusMenuSpacePicker={plusMenuSpacePicker}
+        plusMenuAgentPicker={agentPicker}
+        openAddMenuRef={openAddMenuRef}
+        onConnectedIntegrationProvidersChange={handleConnectedProvidersChange}
+        setTextRef={setTextRef}
+        onComposerValueChange={quickStart.handleComposerValueChange}
+        activeCapabilityChip={quickStart.activeCapabilityChip}
+        onClearCapabilityChip={quickStart.clearQuickStart}
+      />
+      <div className="surface-card border-border mx-spacing-3 p-spacing-2 rounded-b-2xl border-x border-b">
+        <div className="gap-spacing-1 flex min-w-0 flex-wrap items-center">
+          <button
+            type="button"
+            onClick={() => openAddMenuRef.current?.('space')}
+            className="body-4 text-muted-foreground hover:text-foreground hover:bg-hover-subtle rounded-spacing-2 gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex max-w-52 shrink-0 items-center transition-colors"
+            aria-label="Choose Space"
+          >
+            <FolderKanban className="icon-sm shrink-0" aria-hidden />
+            <span className="truncate">
+              {targetSpaceId || targetCampaignId ? targetLabel : 'Choose Space'}
+            </span>
+            <ChevronDown className="icon-xs shrink-0" aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={() => openAddMenuRef.current?.('integrations')}
+            className="body-4 text-muted-foreground hover:text-foreground hover:bg-hover-subtle rounded-spacing-2 gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex shrink-0 items-center transition-colors"
+            aria-label="Plugins and integrations"
+          >
+            <Plug className="icon-sm" aria-hidden />
+            Plugins
+            {connectedProviders
+              .slice(0, 3)
+              .map((provider) =>
+                INTEGRATION_ICONS[provider] ? (
+                  <Image
+                    key={provider}
+                    src={INTEGRATION_ICONS[provider]}
+                    alt=""
+                    width={18}
+                    height={18}
+                    className="rounded-spacing-1"
+                  />
+                ) : null,
+              )}
+          </button>
+          <ShellEmptyChatQuickStartPills
+            onSelect={quickStart.selectQuickStart}
+            variant="shelf"
+          />
+        </div>
+      </div>
+      <div className="mt-spacing-4">
+        <SuggestedNextMoves onSelectPrompt={(prompt) => setTextRef.current?.(prompt)} />
+      </div>
+      {createSpaceCampaignId !== undefined ? (
+        <CreateSpaceModal
+          open
+          onOpenChange={(open) => {
+            if (!open) setCreateSpaceCampaignId(undefined)
+          }}
+          onCreate={async (payload) => {
+            const created = normalizeSpaceLegacyViews(
+              await createSpace({
+                ...payload,
+                ...(createSpaceCampaignId ? { campaign_id: createSpaceCampaignId } : {}),
+              }),
+            )
+            cachedSpaces.mutate((current) => [created, ...(current ?? [])])
+            setTargetSpaceId(created.id)
+            setTargetCampaignId(created.campaign_id ?? null)
+          }}
         />
-      }
-      footerWrapperClassName="home-composer-v4-standard-footer"
-      wrapperClass="home-composer-v4-shell bg-transparent border-0 p-0 overflow-visible"
-    />
+      ) : null}
+    </div>
   )
 }

@@ -11,8 +11,8 @@ import {
   subscribeChatCreditsExhausted,
 } from '@/lib/chat/chat-credit-state'
 import { getOrgScopedKey } from '@/lib/utils/org-storage'
-import { shouldReconnectPersistedAssistant } from '../lib/chat-turn-completion'
 import type { ChatStreamFailure } from '../config/chat-stream-errors.config'
+import { shouldReconnectPersistedAssistant } from '../lib/chat-turn-completion'
 import type {
   ChatStreamRunState,
   Conversation,
@@ -2139,15 +2139,29 @@ export const useChatStore = create<ChatState>()(
         }),
 
       setComposerPastedBlocks: (contextKey, blocks) =>
-        set((state) => ({
-          composerPastedBlocksByContext: {
-            ...state.composerPastedBlocksByContext,
-            [contextKey]: blocks,
-          },
-        })),
+        set((state) => {
+          const current = state.composerPastedBlocksByContext[contextKey]
+          if (
+            current === blocks ||
+            (current?.length === blocks.length &&
+              current.every(
+                (block, index) =>
+                  block.id === blocks[index]?.id && block.text === blocks[index]?.text,
+              ))
+          ) {
+            return state
+          }
+          return {
+            composerPastedBlocksByContext: {
+              ...state.composerPastedBlocksByContext,
+              [contextKey]: blocks,
+            },
+          }
+        }),
 
       clearComposerPastedBlocks: (contextKey) =>
         set((state) => {
+          if (!(contextKey in state.composerPastedBlocksByContext)) return state
           const updated = { ...state.composerPastedBlocksByContext }
           delete updated[contextKey]
           return { composerPastedBlocksByContext: updated }

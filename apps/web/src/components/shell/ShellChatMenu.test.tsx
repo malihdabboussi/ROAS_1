@@ -11,14 +11,17 @@ const mocks = vi.hoisted(() => ({
     metadata: {},
   },
   addConversation: vi.fn(),
+  setActiveConversationId: vi.fn(),
   openChatDrawer: vi.fn(),
+  push: vi.fn(),
+  pathname: '/home',
   openInNewTab: vi.fn(),
   storeConversations: [] as Array<Record<string, unknown>>,
 }))
 
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/home',
-  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => mocks.pathname,
+  useRouter: () => ({ push: mocks.push }),
   useSearchParams: () => new URLSearchParams(),
 }))
 
@@ -96,7 +99,7 @@ vi.mock('@/features/studio/store/use-chat-store', () => ({
   useChatStore: Object.assign(
     (selector: (state: Record<string, unknown>) => unknown) =>
       selector({
-        setActiveConversationId: vi.fn(),
+        setActiveConversationId: mocks.setActiveConversationId,
         conversations: mocks.storeConversations,
         activeConversationId: null,
       }),
@@ -130,6 +133,7 @@ afterEach(() => {
   cleanup()
   vi.clearAllMocks()
   mocks.storeConversations = []
+  mocks.pathname = '/home'
 })
 
 describe('ShellChatMenu', () => {
@@ -140,6 +144,17 @@ describe('ShellChatMenu', () => {
 
     expect(mocks.addConversation).toHaveBeenCalledWith(mocks.conversation)
     expect(mocks.openChatDrawer).toHaveBeenCalledWith('conversation-1')
+  })
+
+  it('opens a Simple-sidebar history conversation in the full chat from any page', () => {
+    mocks.pathname = '/campaigns'
+    render(<ShellChatMenu simpleSidebar />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select conversation' }))
+
+    expect(mocks.setActiveConversationId).toHaveBeenCalledWith('conversation-1')
+    expect(mocks.push).toHaveBeenCalledWith('/home?conv=conversation-1')
+    expect(mocks.openChatDrawer).not.toHaveBeenCalled()
   })
 
   it('opens the real conversation sharing dialog from the conversation menu', () => {
@@ -173,6 +188,12 @@ describe('ShellChatMenu', () => {
     )
 
     fireEvent.click(removeAgentFilter)
+    expect(screen.queryByRole('button', { name: 'Remove Reed filter' })).not.toBeInTheDocument()
+  })
+
+  it('keeps the Simple sidebar on all chats instead of inheriting the active composer agent', () => {
+    render(<ShellChatMenu simpleSidebar />)
+
     expect(screen.queryByRole('button', { name: 'Remove Reed filter' })).not.toBeInTheDocument()
   })
 

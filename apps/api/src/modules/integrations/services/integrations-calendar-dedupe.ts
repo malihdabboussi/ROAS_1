@@ -10,6 +10,8 @@ type DedupeOptions = {
 
 /** Same start within this window can still be one meeting (bot join lag / clock skew). */
 export const AGENDA_NEAR_START_MS = 10 * 60 * 1000
+/** Fathom can be started before a scheduled invite while the prior discussion is still wrapping. */
+export const AGENDA_FATHOM_EARLY_START_MS = 35 * 60 * 1000
 
 export function readGoogleIcalUid(ev: Record<string, unknown>): string | null {
   const v = ev.iCalUID ?? ev.ical_uid
@@ -186,7 +188,11 @@ export function mergeFathomIntoNearStartCalendars(
     }
     const near = [...byId.values()].filter((event) => {
       const startMs = Date.parse(event.start)
-      return Number.isFinite(startMs) && Math.abs(startMs - callMs) <= nearMs
+      if (!Number.isFinite(startMs)) return false
+      const calendarAfterCallMs = startMs - callMs
+      return (
+        calendarAfterCallMs <= AGENDA_FATHOM_EARLY_START_MS && calendarAfterCallMs >= -nearMs
+      )
     })
     if (near.length !== 1) {
       keptFathom.push(row)

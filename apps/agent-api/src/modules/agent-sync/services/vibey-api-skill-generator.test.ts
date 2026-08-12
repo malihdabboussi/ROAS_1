@@ -8,6 +8,7 @@ describe('vibey-api skill generator', () => {
         'list_documents',
         'get_document',
         'read_space_document',
+        'search_conversations',
         'search_space_context',
         'search_brain_context',
       ]),
@@ -18,7 +19,10 @@ describe('vibey-api skill generator', () => {
     expect(skillMd).toContain('Document retrieval before Brain')
     expect(skillMd).toContain('active Space evidence first')
     expect(skillMd).toContain('I already gave you the April follow-up call data')
-    expect(skillMd).toContain('`search_space_context`, `list_documents`, `get_document`')
+    expect(skillMd).toContain(
+      '`search_conversations`, `search_space_context`, `list_documents`, `get_document`',
+    )
+    expect(output).toContain('## search_conversations')
     expect(output).toContain('search or read Space/document sources before Brain')
   })
 

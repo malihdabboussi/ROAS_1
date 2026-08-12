@@ -94,6 +94,7 @@ function buildImportantPatterns(sections: Set<string>, availableActions: Set<str
   const patterns: string[] = []
   const protocolIndex = renderAgentInstructionContractIndexForSkill('vibey-api', availableActions)
   const documentRetrievalActions = [
+    'search_conversations',
     'search_space_context',
     'list_documents',
     'get_document',

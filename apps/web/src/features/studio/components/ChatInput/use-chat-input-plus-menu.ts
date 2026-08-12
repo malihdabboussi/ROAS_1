@@ -24,6 +24,7 @@ export function useChatInputPlusMenu() {
   const plusSubmenuAnchorRefs = useRef<
     Record<Exclude<ComposerPlusSubmenu, null>, HTMLButtonElement | null>
   >({
+    agent: null,
     space: null,
     files: null,
     attach: null,
@@ -94,6 +95,20 @@ export function useChatInputPlusMenu() {
     setPlusSubmenu(null)
     setPlusInfoCard(null)
   }, [])
+
+  const openPlusMenu = useCallback(
+    (submenu?: ComposerPlusSubmenu) => {
+      setPlusMenuOpen(true)
+      setPlusInfoCard(null)
+      if (submenu) {
+        setPlusSubmenu(submenu)
+        requestAnimationFrame(() => updatePlusSubmenuPosition(submenu))
+      } else {
+        setPlusSubmenu(null)
+      }
+    },
+    [updatePlusSubmenuPosition],
+  )
 
   const cancelPlusSubmenuClose = useCallback(() => {
     if (!plusSubmenuCloseTimerRef.current) return
@@ -212,6 +227,7 @@ export function useChatInputPlusMenu() {
     updatePlusSubmenuPosition,
     closePlusMenu,
     togglePlusMenu,
+    openPlusMenu,
     cancelPlusSubmenuClose,
     schedulePlusSubmenuClose,
     openPlusSubmenu,
