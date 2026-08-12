@@ -69,3 +69,13 @@ Why: Persistence keyed on event.id, an unstable agenda-row id (google:/outlook:/
 Impact: Opening the same meeting from any provider/account agenda row resolves to one item and one chat; races on the natural key recover instead of duplicating; existing cross-org duplicate chats now get archived on workspace open. Migration is additive/idempotent (ical indexes start empty; Fathom dedupe merges children before enforcing). NOT applied to prod — PR stays draft; deploy migration first.
 
 Files: apps/web/src/features/home/services/meeting-workspace-api.ts (+ .test.ts), apps/api/src/modules/meetings/controllers/meeting-workspace-resolution.controller.ts (+ .test.ts), apps/api/src/modules/meetings/repositories/meeting-workspace-resolution.repository.ts (+ new .test.ts), apps/api/src/modules/meetings/repositories/meeting-call-matching.repository.ts (new — matching/scoring queries extracted to satisfy the 400-LOC repository gate; resolution repo delegates), apps/api/src/modules/meetings/meetings.module.ts, apps/api/src/modules/meetings/repositories/meeting-workspace.repository.ts, apps/api/src/modules/meetings/services/meeting-workspace.service.ts (+ .test.ts), apps/api/src/modules/meetings/services/meeting-conversation-deduplication.service.ts (+ .test.ts), apps/api/src/modules/meetings/services/meeting-source-ingestion.service.test.ts, apps/api/src/modules/conversations/repositories/conversations.repository.ts (+ .test.ts), supabase/migrations/20260812170000_meeting_natural_key_dedupe.sql, scripts/roas/migration-order.txt
+
+## [2026-08-12 14:10] - [FIX]
+
+What: Removed the tracked dangling OpenClaw canvas-host test symlink and hardened the architecture file walker to skip unstatable entries.
+
+Why: The captured runtime fixture pointed at a path on another machine and crashed `pnpm architecture:check` with ENOENT.
+
+Impact: The architecture gate now runs to completion and reports the existing backlog instead of crashing. Canvas-host server tests remain green.
+
+Files: apps/openclaw/src/canvas-host/a2ui/test-link-1782116645255-348bba5dc9fbd.txt (deleted), scripts/arch/check-loc.mjs

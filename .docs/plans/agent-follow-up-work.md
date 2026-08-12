@@ -38380,3 +38380,7 @@ Status: Closes most of "2026-08-11 — Video create P1 deferred items"
 - Docs gap: no documentation/features/ doc exists for the meeting workspace feature (resolution contract now includes ical_uid; duplicate-chat archival semantics changed). Needs a new doc, which requires approval per AGENTS.md §7 — ask Dylan whether to create documentation/features/meeting-workspace.md.
 - Data footnote: the migration's Fathom dedupe deletes duplicate call items after re-pointing children; chats that pointed at a deleted duplicate item become unreachable-but-unarchived (they no longer surface in meeting UI). If they clutter chat lists, a one-off archival of meeting conversations whose meeting_item_id no longer exists could follow.
 - Cross-space Fathom duplicates (precedent: 20260724235500) are intentionally NOT merged by the new space-scoped unique index; if prod still holds cross-space duplicates for the same recording, they need targeted cleanup like the precedent migration.
+
+## 2026-08-12 — repo-wide architecture gate after symlink crash fix
+
+The full gate now exposes a pre-existing LOC/allowlist and cross-feature import backlog that was hidden by the dangling-symlink crash. A separate decision is needed to rebaseline or burn down that debt before enabling full-mode CI. Agent API mock and snapshot drift reproduced on main also remains separate follow-up work.

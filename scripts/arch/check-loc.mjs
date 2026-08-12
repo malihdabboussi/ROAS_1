@@ -64,7 +64,9 @@ function walk(dir, out) {
   for (const entry of readdirSync(dir)) {
     if (SKIP_DIRS.has(entry)) continue
     const fullPath = resolve(dir, entry)
-    const stat = statSync(fullPath)
+    // throwIfNoEntry keeps broken symlinks from crashing the walk
+    const stat = statSync(fullPath, { throwIfNoEntry: false })
+    if (!stat) continue
     if (stat.isDirectory()) {
       walk(fullPath, out)
       continue
