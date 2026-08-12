@@ -7,6 +7,7 @@ import {
   ON_HOLD_PROMPTMODE_ACTIONS,
   type Action,
 } from '@vibey/agent-policy'
+import { PLUGIN_LOCAL_ACTIONS } from '../../../../../../docker/tools/vibey-backend/index'
 import { VALID_ACTIONS } from '../../artifacts/dtos/artifact-action.dto'
 import { ACTION_SCHEMAS } from '../../artifacts/services/artifact-action-schemas'
 import { ACTION_METHOD_MAP } from '../../artifacts/services/artifact-action.registry'
@@ -31,9 +32,13 @@ describe('agent capability source drift guardrail', () => {
   const validActions = new Set<string>(VALID_ACTIONS)
   const activePolicyActions = new Set<string>(ACTIONS)
 
-  it('keeps generated action docs tied to real backend actions', () => {
+  it('keeps generated action docs tied to real backend or plugin-local actions', () => {
+    // Plugin-local actions (ask_clarification, chat plans) execute inside the
+    // vibey-backend plugin and are documented for agents without being backend
+    // DTO actions.
+    const pluginLocalActions = new Set<string>(PLUGIN_LOCAL_ACTIONS)
     const docsWithoutBackendAction = Object.keys(VIBEY_API_ACTION_DOCS).filter(
-      (action) => !validActions.has(action),
+      (action) => !validActions.has(action) && !pluginLocalActions.has(action),
     )
 
     expect(uniqueSorted(docsWithoutBackendAction)).toEqual([])

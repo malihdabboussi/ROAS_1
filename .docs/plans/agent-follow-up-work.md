@@ -9629,3 +9629,21 @@ Evidence: The files already had repeated follow-up entries above the size limit 
 Needed work: Extract related-call querying/matching and prep-item persistence into focused collaborators while preserving the public prep service contract and existing Drive-write behavior.
 
 Reason not done now: Decomposing the long-standing calendar/Fathom orchestration would substantially broaden a production correctness fix whose focused tests are already isolated and passing.
+
+## 2026-08-11 — Vibey backend plugin drift + oversize files (found during W5 clarification-cards fix)
+
+Status: Open
+
+Files:
+
+- `docker/tools/vibey-backend/index.ts` (1187 LOC; well above the 600-line limit, pre-existing)
+- `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts` (2718 LOC data map, pre-existing)
+- `apps/agent-api/src/modules/agent-sync/services/vibey-api-skill-generator.ts` (594 LOC; near the 600-line limit after adding the ask_clarification documentation injection)
+- `apps/agent-api/src/modules/shared/vibey-backend-plugin.test.ts` (drift test `keeps PromptMode backend plugin actions aligned with active backend actions` fails on origin/main fe9ad3f6: `compile_webinar_launch_bible` is an active backend action missing from the plugin's `SUPPORTED_ACTIONS`)
+- `apps/agent-api/src/modules/agent-sync/services/agent-runtime-skill-scope.service.test.ts` (3 pre-existing failures on origin/main fe9ad3f6: scope-preference assertions expect 'specific' over 'wildcard')
+
+Evidence: Verified via `git stash` + targeted vitest runs on the clean fe9ad3f6 tree — all listed failures reproduce without the W5 changes.
+
+Needed work: (1) Add `compile_webinar_launch_bible` to the plugin `SUPPORTED_ACTIONS` (or put it on hold) so the PromptMode drift test goes green; (2) fix or re-baseline the skill-scope preference tests; (3) decompose the plugin index and consider splitting the action-docs data map per section; keep the skill generator from crossing 600 LOC on its next change.
+
+Reason not done now: All are pre-existing debt outside W5 scope (clarification-card pipeline); the webinar action exposure touches an unrelated capability surface that needs its own context read.

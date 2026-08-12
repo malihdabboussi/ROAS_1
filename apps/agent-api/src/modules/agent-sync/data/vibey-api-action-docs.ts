@@ -2488,6 +2488,13 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
     parameters:
       '```json\n{"action":"brainstorm_agents","label":"Brainstorming Q3 positioning","data":{"agents":["niko","ivy","lux"],"topic":"Q3 product positioning strategy for enterprise segment","rounds":3}}\n```',
   },
+  ask_clarification: {
+    section: 'Communication',
+    description:
+      "Renders an interactive clarification card in studio chat when a request has multiple materially different interpretations and guessing wrong wastes real work. Ask 1-3 focused questions; each question needs `id`, `text`, `type` (`single_choice` or `multiple_choice`), and 2-5 `options` (`id` + `label`, optional `description`). Optional: `title`, `intro_message`, `required` per question (default true). The user's picks come back as the next user message. Do not use it on Slack or Telegram — ask as plain numbered text there. Do not use it for Loop Flow builds (use `create_flow_clarification`).",
+    parameters:
+      '```json\n{"action":"ask_clarification","label":"Clarifying the request","data":{"title":"Quick question","intro_message":"Pick a direction before I start.","questions":[{"id":"direction","text":"Which direction should I take?","type":"single_choice","required":true,"options":[{"id":"option_a","label":"Option A","description":"Why this fits"},{"id":"option_b","label":"Option B"}]}]}}\n```',
+  },
   save_member_note: {
     section: 'Communication',
     description:
