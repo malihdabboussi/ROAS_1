@@ -29,6 +29,15 @@ export type SkillGeneratorDomain =
   | 'flows'
   | 'management'
 
+/**
+ * ask_clarification executes locally inside the vibey-backend plugin, so it is
+ * never part of the policy-derived allowlist — the plugin always exposes it on
+ * the tool schema (see docker/tools/vibey-backend withPluginLocalActions).
+ * Document it for every conversational domain; Loop Flow builders must use
+ * create_flow_clarification instead, so the flows domain stays clean.
+ */
+const PLUGIN_LOCAL_DOCUMENTED_ACTIONS = ['ask_clarification'] as const
+
 function fallbackDoc(action: string): { section: string; description: string; parameters: string } {
   return {
     section: 'General',
@@ -221,6 +230,12 @@ function buildImportantPatterns(sections: Set<string>, availableActions: Set<str
     )
     patterns.push(
       `**Server-owned Flow session**: in \`/flows\`, omit \`session_id\` on continuation actions. The backend attaches the active build session for \`update_flow_plan\`, \`answer_flow_clarification\`, \`validate_flow_plan\`, \`compile_flow_plan\`, and \`evaluate_flow_plan\`.`,
+    )
+  }
+
+  if (availableActions.has('ask_clarification')) {
+    patterns.push(
+      `**Clarify ambiguous requests with a card**: when a request has multiple materially different interpretations and picking wrong wastes real work, call \`ask_clarification\` (1-3 focused questions, 2-5 options each, \`single_choice\` or \`multiple_choice\`). In studio chat it renders a tappable card and the user's picks come back as the next message. On Slack/Telegram do not use it — ask as plain numbered text. For Loop Flow builds use \`create_flow_clarification\` instead.`,
     )
   }
 
@@ -501,8 +516,14 @@ export function generateScopedVibeyApiSkill(
   domain: SkillGeneratorDomain = 'management',
 ): GeneratedSkillOutput {
   const activeAllowedActions = new Set(filterPromptModeActiveActions(allowedActions))
+  const documentedActions = new Set(activeAllowedActions)
+  if (domain !== 'flows') {
+    for (const action of PLUGIN_LOCAL_DOCUMENTED_ACTIONS) {
+      documentedActions.add(action)
+    }
+  }
   const sectionMap = new Map<string, ActionReference[]>()
-  const sortedActions = [...activeAllowedActions].sort((a, b) => a.localeCompare(b))
+  const sortedActions = [...documentedActions].sort((a, b) => a.localeCompare(b))
 
   for (const action of sortedActions) {
     const doc = VIBEY_API_ACTION_DOCS[action] ?? fallbackDoc(action)
@@ -526,8 +547,8 @@ export function generateScopedVibeyApiSkill(
     return `| ${section} | \`references/${slug}.md\` | ${names} |`
   })
 
-  const importantPatterns = buildImportantPatterns(activeSections, activeAllowedActions)
-  const quickStart = buildQuickStartExamples(domain, activeAllowedActions)
+  const importantPatterns = buildImportantPatterns(activeSections, documentedActions)
+  const quickStart = buildQuickStartExamples(domain, documentedActions)
 
   const skillMd = `---
 name: vibey-api
