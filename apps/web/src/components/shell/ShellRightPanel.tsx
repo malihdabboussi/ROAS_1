@@ -156,7 +156,7 @@ export function ShellRightPanel({
             <Plus className="icon-sm" aria-hidden />
           </button>
           {createMenuOpen ? (
-            <div className="dropdown-menu-solid z-dropdown py-spacing-1 mt-spacing-1 absolute right-0 top-full max-h-96 w-72 overflow-y-auto">
+            <div className="dropdown-menu-solid z-dropdown py-spacing-1 mt-spacing-1 absolute right-0 top-full max-h-96 w-64 overflow-y-auto">
               <ShellCreateMenuPanel
                 onSelectCreateItem={handleCreateSelect}
                 onCloseMenu={() => setCreateMenuOpen(false)}
