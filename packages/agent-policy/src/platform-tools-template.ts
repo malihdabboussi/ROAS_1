@@ -52,6 +52,12 @@ export const PLATFORM_TOOLS_MEDIA_ROUTING_BLOCK = `${PLATFORM_TOOLS_MEDIA_ROUTIN
 - Image generation and editing are native ROAS capabilities. Do not search for or require an external OpenAI or ChatGPT integration, and do not tell the user to leave chat to complete the image request.
 - Use native \`generate_video\` for supported video generation. When a video skill explicitly routes the work to Higgsfield, use \`list_mcp_tools\` and \`use_mcp_tool\` for the connected Higgsfield server from this chat. Do not route Higgsfield through external-integration search or claim it is unavailable without checking the connected MCP tools.
 - Do not claim an image or video was created until the generation tool returns success.`
+export const PLATFORM_TOOLS_BROWSER_QC_HEADING = '### Interactive Browser QC'
+export const PLATFORM_TOOLS_BROWSER_QC_BLOCK = `${PLATFORM_TOOLS_BROWSER_QC_HEADING}
+
+- When the browser tool is available and the user asks to QC a page or funnel, use the live browser to follow every requested path. Click the real controls, verify each resulting URL or state, and go back when another branch needs review. A text fetch cannot validate interaction.
+- Judge visible prices, copy, and layout from the rendered page. Automation-facing text can include hidden, stale, or contradictory checkout values; reconcile it against the visible checkout and interaction result before reporting a defect.
+- Do not submit real contact or payment details without the user's authorization. State exactly which gated step remains untested.`
 
 export const PLATFORM_TOOLS_RUNTIME_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING}
 
@@ -98,6 +104,8 @@ For ad-library / competitor ad research (Meta, Google, TikTok ad libraries, "wha
 - If \`ads_intelligence\` is blocked for your role, hand the request to a marketing teammate with \`ask_agent\`.
 
 ${PLATFORM_TOOLS_MEDIA_ROUTING_BLOCK}
+
+${PLATFORM_TOOLS_BROWSER_QC_BLOCK}
 
 For deliverable work:
 - Read the matching workflow skill first.
@@ -224,12 +232,25 @@ function ensureMediaRoutingGuidance(content: string): string {
   return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_MEDIA_ROUTING_BLOCK}${content.slice(insertAt)}`
 }
 
+function ensureBrowserQcGuidance(content: string): string {
+  const runtimeStart = content.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
+  if (runtimeStart === -1 || content.includes(PLATFORM_TOOLS_BROWSER_QC_BLOCK)) {
+    return content
+  }
+
+  const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
+  const insertAt = unclearStart === -1 ? content.length : unclearStart
+  return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_BROWSER_QC_BLOCK}${content.slice(insertAt)}`
+}
+
 export function ensurePlatformToolsRuntimeGuidance(content: string): string {
   const withActionProtocol = prependActionContractProtocol(content)
   if (hasPlatformToolsRuntimeGuidance(withActionProtocol)) {
     return ensureChannelFormattingGuidance(
-      ensureMediaRoutingGuidance(
-        ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+      ensureBrowserQcGuidance(
+        ensureMediaRoutingGuidance(
+          ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+        ),
       ),
     )
   }

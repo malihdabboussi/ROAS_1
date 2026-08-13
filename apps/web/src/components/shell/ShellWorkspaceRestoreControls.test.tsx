@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => ({
   workAreaOpen: true,
   chatDrawerOpen: false,
   artifactTarget: null as { id: string } | null,
+  artifactWidth: 480,
+  setArtifactViewerWidth: vi.fn(),
   desktop: false,
   shellPrefsHydrated: false,
   menuDock: 'left' as 'left' | 'work' | 'work-top' | 'work-bottom' | 'work-right',
@@ -98,6 +100,16 @@ vi.mock('@/features/studio/components/preview/ShellArtifactViewerAdapter', () =>
   ),
 }))
 
+vi.mock('@/components/layout/ResizableDivider', () => ({
+  ResizableDivider: ({
+    ariaLabel,
+    onMouseDown,
+  }: {
+    ariaLabel: string
+    onMouseDown: React.MouseEventHandler
+  }) => <button type="button" aria-label={ariaLabel} onMouseDown={onMouseDown} />,
+}))
+
 vi.mock('./ShellChatDrawer', () => ({
   ShellChatDrawer: ({ expanded, mobile }: { expanded?: boolean; mobile?: boolean }) => (
     <div
@@ -132,7 +144,8 @@ vi.mock('./use-shell-store', () => ({
   useShellStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
       workAreaOpen: mocks.workAreaOpen,
-      artifactViewer: { target: mocks.artifactTarget },
+      artifactViewer: { target: mocks.artifactTarget, width: mocks.artifactWidth },
+      setArtifactViewerWidth: mocks.setArtifactViewerWidth,
       chatDrawer: {
         open: !mocks.workAreaOpen || mocks.chatDrawerOpen,
         conversationId: null,
@@ -161,6 +174,7 @@ describe('ShellWorkspace restore controls', () => {
     mocks.workAreaOpen = true
     mocks.chatDrawerOpen = false
     mocks.artifactTarget = null
+    mocks.artifactWidth = 480
     mocks.desktop = false
     mocks.shellPrefsHydrated = false
     mocks.menuDock = 'left'
@@ -187,14 +201,29 @@ describe('ShellWorkspace restore controls', () => {
     render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
     expect(screen.queryByRole('button', { name: 'Show page' })).toBeNull()
   })
-  it('does not offer a full Home chat entry as the page beside a conversation', () => {
+  it('does not render an inert restore control without a restorable page', () => {
     mocks.desktop = true
     mocks.params = new Map([['conv', 'conversation-1']])
     mocks.recentWorkAreaPages = [
       { id: '/home?conv=conversation-2', title: 'Other chat', href: '/home?conv=conversation-2' },
     ]
     render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
-    expect(screen.getByRole('button', { name: 'Show page' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Show page' })).toBeNull()
+  })
+  it('resizes the universal artifact panel beside a full conversation', () => {
+    mocks.desktop = true
+    mocks.params = new Map([['conv', 'conversation-1']])
+    mocks.artifactTarget = { id: 'document-1' }
+    render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
+
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Resize artifact viewer' }), {
+      clientX: 900,
+    })
+    const pointerMove = new Event('pointermove', { bubbles: true })
+    Object.defineProperty(pointerMove, 'clientX', { value: 820 })
+    fireEvent(document, pointerMove)
+
+    expect(mocks.setArtifactViewerWidth).toHaveBeenCalledWith(560)
   })
   it('hides the collapsed work-area restore control while the summary panel is open', () => {
     mocks.pathname = '/brain'

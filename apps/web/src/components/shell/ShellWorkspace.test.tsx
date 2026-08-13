@@ -1,7 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ShellWorkspace } from './ShellWorkspace'
-
 const mocks = vi.hoisted(() => ({
   pathname: '/home',
   params: new Map<string, string>(),
@@ -19,22 +18,21 @@ const mocks = vi.hoisted(() => ({
   workAreaOpen: true,
   chatDrawerOpen: false,
   artifactTarget: null as { id: string } | null,
+  artifactWidth: 480,
+  setArtifactViewerWidth: vi.fn(),
   desktop: false,
   shellPrefsHydrated: false,
   menuDock: 'left' as 'left' | 'work' | 'work-top' | 'work-bottom' | 'work-right',
   menuStyle: 'advanced' as 'simple' | 'advanced',
 }))
-
 vi.mock('next/navigation', () => ({
   usePathname: () => mocks.pathname,
   useRouter: () => ({ push: mocks.push, replace: mocks.replace }),
   useSearchParams: () => ({ get: (key: string) => mocks.params.get(key) ?? null }),
 }))
-
 vi.mock('@/lib/hooks/use-media-query', () => ({
   useMediaQuery: () => mocks.desktop,
 }))
-
 vi.mock('./use-shell-prefs-hydrated', () => ({
   useShellPrefsHydrated: () => mocks.shellPrefsHydrated,
 }))
@@ -99,6 +97,16 @@ vi.mock('@/features/studio/components/preview/ShellArtifactViewerAdapter', () =>
   ),
 }))
 
+vi.mock('@/components/layout/ResizableDivider', () => ({
+  ResizableDivider: ({
+    ariaLabel,
+    onMouseDown,
+  }: {
+    ariaLabel: string
+    onMouseDown: React.MouseEventHandler
+  }) => <button type="button" aria-label={ariaLabel} onMouseDown={onMouseDown} />,
+}))
+
 vi.mock('./ShellChatDrawer', () => ({
   ShellChatDrawer: ({ expanded, mobile }: { expanded?: boolean; mobile?: boolean }) => (
     <div
@@ -133,7 +141,8 @@ vi.mock('./use-shell-store', () => ({
   useShellStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
       workAreaOpen: mocks.workAreaOpen,
-      artifactViewer: { target: mocks.artifactTarget },
+      artifactViewer: { target: mocks.artifactTarget, width: mocks.artifactWidth },
+      setArtifactViewerWidth: mocks.setArtifactViewerWidth,
       chatDrawer: {
         open: !mocks.workAreaOpen || mocks.chatDrawerOpen,
         conversationId: null,
@@ -162,6 +171,7 @@ describe('ShellWorkspace', () => {
     mocks.workAreaOpen = true
     mocks.chatDrawerOpen = false
     mocks.artifactTarget = null
+    mocks.artifactWidth = 480
     mocks.desktop = false
     mocks.shellPrefsHydrated = false
     mocks.menuDock = 'left'
@@ -347,7 +357,9 @@ describe('ShellWorkspace', () => {
     expect(screen.getByText('Global chat panel').closest('[data-shell-work-area]')).not.toHaveClass(
       'hidden',
     )
-    expect(screen.getByText('Artifact editor').parentElement).toHaveClass('md:max-w-xl', 'shrink-0')
+    expect(screen.getByText('Artifact editor').parentElement).toHaveClass('shrink-0')
+    expect(screen.getByText('Artifact editor').parentElement).toHaveStyle({ width: '480px' })
+    expect(screen.getByRole('button', { name: 'Resize artifact viewer' })).toBeInTheDocument()
   })
   it('restores the conversation summary after its artifact viewer closes', async () => {
     mocks.params = new Map([['conv', 'conversation-123']])

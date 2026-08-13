@@ -56,6 +56,7 @@ describe('OpenClawGatewayService visual review policy', () => {
   it.each([
     { agentKey: 'designer', name: 'Designer' },
     { agentKey: 'lux', name: 'Lux' },
+    { agentKey: 'pixel', name: 'Pixel' },
   ])('enables browser review for canonical $name runtimes', async (input) => {
     const deny = await ensureScopedAgent({ ...input, skills: ['funnel-site-design', 'vibey-api'] })
 

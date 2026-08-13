@@ -11,6 +11,7 @@ import {
 import type { ChatModelSettings, ModelReasoningEffort } from '@/lib/chat/chat-model-settings'
 import {
   isPlaceholderConversationTitle,
+  shouldReaffirmFirstMessageTitle,
   titleFromFirstUserMessage,
 } from '@/lib/conversations/conversation-title'
 import {
@@ -19,7 +20,6 @@ import {
 } from '@/lib/conversations/conversations-api'
 import { stripEmoji } from '@/lib/utils/text'
 import { ChatStreamUserError, resolveChatStreamFailure } from '../config/chat-stream-errors.config'
-import { isConversationUnavailableError } from './conversation-load-errors'
 import {
   assistantHasRenderableText,
   assistantHasVisibleOutput,
@@ -43,6 +43,7 @@ import type {
 } from '../types'
 import { ensureGeneralCampaign } from './campaign.service'
 import { buildChatResumeContext } from './chat-resume-context'
+import { isConversationUnavailableError } from './conversation-load-errors'
 
 export {
   ChatStreamUserError,
@@ -1981,7 +1982,6 @@ const deadConversationIds = new Set<string>()
 /** Empty cached entries revalidate once per session, not per render pass. */
 const emptyRevalidatedConversationIds = new Set<string>()
 
-
 // ============================================================================
 // Message CRUD (via backend API)
 // ============================================================================
@@ -2890,7 +2890,8 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
     const allMessages = store.messagesByConversation[conversationId!] ?? []
     if (allMessages.length <= 2) {
       const title = titleFromFirstUserMessage(params.content, 200)
-      if (title) {
+      const currentTitle = store.conversations.find((row) => row.id === conversationId)?.title
+      if (title && shouldReaffirmFirstMessageTitle(currentTitle)) {
         store.updateConversation(conversationId!, {
           title,
           updated_at: new Date().toISOString(),
@@ -2900,7 +2901,6 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
         }
       }
     }
-
     // Sync store with backend data (replaces optimistic IDs with real ones)
     if (showUserMessage) {
       try {

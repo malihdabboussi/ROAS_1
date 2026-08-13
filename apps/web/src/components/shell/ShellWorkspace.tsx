@@ -1,10 +1,18 @@
 'use client'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useRef, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+} from 'react'
 import { ChevronLeft, PanelRightOpen } from 'lucide-react'
 import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatPanel'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
+import { ResizableDivider } from '@/components/layout/ResizableDivider'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { ShellArtifactViewerAdapter } from '@/features/studio/components/preview/ShellArtifactViewerAdapter'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
@@ -34,7 +42,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const chatParam = searchParams.get('chat')
   const convParam = searchParams.get('conv')
   const portalActive = searchParams.get('surface') === 'portal'
-
   const workAreaOpen = useShellStore((s) => s.workAreaOpen)
   const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
   const openChatDrawer = useShellStore((s) => s.openChatDrawer)
@@ -43,7 +50,12 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const setRightPanelOpen = useShellStore((s) => s.setRightPanelOpen)
   const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
   const artifactTarget = useShellStore((s) => s.artifactViewer.target)
+  const artifactWidth = useShellStore((s) => s.artifactViewer.width)
+  const setArtifactViewerWidth = useShellStore((s) => s.setArtifactViewerWidth)
   const previousArtifactTargetRef = useRef(artifactTarget)
+  const artifactDragStartXRef = useRef(0)
+  const artifactDragStartWidthRef = useRef(artifactWidth)
+  const [artifactDragging, setArtifactDragging] = useState(false)
   const recentWorkAreaPages = useShellStore((s) => s.recentWorkAreaPages)
   const shellPrefsHydrated = useShellPrefsHydrated()
   const desktop = useMediaQuery('(min-width: 768px)')
@@ -54,16 +66,13 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const activeMenuDock = useActiveShellMenuDock()
   const setWorkCardHostAvailable = useShellMenuDock((s) => s.setWorkCardHostAvailable)
   const setWorkCollapsedHostAvailable = useShellMenuDock((s) => s.setWorkCollapsedHostAvailable)
-
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
   const activeConversationId = useChatStore((s) => s.activeConversationId)
   const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
   const openConversationInSpaceChat = useSpacesStore((s) => s.openConversationInSpaceChat)
-
   useEffect(() => {
     setCollapsed(true)
   }, [pathname, setCollapsed])
-
   const spaceParam = searchParams.get('space')
   const lastRouteKey = useRef<string | null>(null)
   const previousSimpleChatOpen = useRef(false)
@@ -131,6 +140,31 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const artifactBesideConversation = Boolean(artifactTarget) && showFullConversation && desktop
   const artifactReplacesWorkArea = Boolean(artifactTarget) && !artifactBesideConversation
 
+  const startArtifactResize = useCallback(
+    (event: ReactMouseEvent) => {
+      event.preventDefault()
+      artifactDragStartXRef.current = event.clientX
+      artifactDragStartWidthRef.current = artifactWidth
+      setArtifactDragging(true)
+    },
+    [artifactWidth],
+  )
+
+  useEffect(() => {
+    if (!artifactDragging) return
+    const onMove = (event: PointerEvent) => {
+      const delta = artifactDragStartXRef.current - event.clientX
+      setArtifactViewerWidth(artifactDragStartWidthRef.current + delta)
+    }
+    const onUp = () => setArtifactDragging(false)
+    document.addEventListener('pointermove', onMove)
+    document.addEventListener('pointerup', onUp)
+    return () => {
+      document.removeEventListener('pointermove', onMove)
+      document.removeEventListener('pointerup', onUp)
+    }
+  }, [artifactDragging, setArtifactViewerWidth])
+
   useEffect(() => {
     const artifactClosed = previousArtifactTargetRef.current !== null && artifactTarget === null
     previousArtifactTargetRef.current = artifactTarget
@@ -162,22 +196,14 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
         <GlobalChatPanel shellSidebarChrome presentation="full" />
         {/* The summary panel opens in this corner — never stack the restore
             control over its header controls. */}
-        {rightPanelOpen ? null : (
+        {rightPanelOpen || !fullConversationRestoreTarget ? null : (
           <div className="p-spacing-3 z-dropdown absolute right-0 top-0">
             <button
               type="button"
               onClick={restorePageBesideFullConversation}
-              disabled={!fullConversationRestoreTarget}
-              className={cn(
-                'shell-topbar-icon-btn',
-                !fullConversationRestoreTarget && 'shell-topbar-icon-btn-disabled',
-              )}
+              className="shell-topbar-icon-btn"
               aria-label="Show page"
-              title={
-                fullConversationRestoreTarget
-                  ? `Show ${fullConversationRestoreTarget.title}`
-                  : 'No recent page to show'
-              }
+              title={`Show ${fullConversationRestoreTarget.title}`}
             >
               <PanelRightOpen aria-hidden />
             </button>
@@ -275,6 +301,15 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
           <ShellChatDrawer expanded={workAreaCollapsed || mobileChatVisible} mobile={!desktop} />
         ) : null}
 
+        {artifactBesideConversation ? (
+          <ResizableDivider
+            onMouseDown={startArtifactResize}
+            isDragging={artifactDragging}
+            compact
+            showGrip={false}
+            ariaLabel="Resize artifact viewer"
+          />
+        ) : null}
         <div
           className={cn(
             artifactReplacesWorkArea || mobileChatVisible ? 'hidden' : 'shell-work-area',
@@ -353,8 +388,9 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
             'min-w-0',
             artifactTarget && 'flex',
             (!artifactTarget || workAreaCollapsed) && 'hidden',
-            artifactBesideConversation ? 'w-full shrink-0 md:max-w-xl' : 'flex-1',
+            artifactBesideConversation ? 'shrink-0' : 'flex-1',
           )}
+          style={artifactBesideConversation ? { width: `${artifactWidth}px` } : undefined}
         >
           <ShellArtifactViewerAdapter />
         </div>

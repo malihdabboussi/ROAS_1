@@ -97,3 +97,8 @@ export function resolveSuggestedConversationTitle(
   if (fromModel && !isPlaceholderConversationTitle(fromModel)) return fromModel
   return titleFromFirstUserMessage(firstUserMessage, Math.min(maxLen, 48))
 }
+
+/** Preserve a curated generated title when the successful turn finishes after title generation. */
+export function shouldReaffirmFirstMessageTitle(raw: string | null | undefined): boolean {
+  return needsGeneratedConversationTitle(raw)
+}

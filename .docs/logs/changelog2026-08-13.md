@@ -29,3 +29,13 @@ Why: Campaign-only seeds cannot match the Space-backed global chat panel, so the
 Impact: Default Home sends now mount the matching General Space panel, create a fresh conversation, and stream the submitted message.
 
 Files: `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`
+
+## [2026-08-13 14:58] - [FIX]
+
+What: Enabled Pixel's interactive browser for full funnel QC; preserved generated chat titles; required real Google Drive actions for Google Doc requests; added a connection preflight to manual Google Docs export; made the universal artifact column resizable; and removed the inert duplicate page-restore control.
+
+Why: Pixel could scrape pages but could not click through JavaScript funnel states, successful turns overwrote concise generated titles with the first prompt, document artifacts were mistaken for Google Docs, disconnected exports opened and immediately closed a blank tab, and the right-side artifact host ignored its persisted width.
+
+Impact: Funnel reviews can traverse buttons and rendered checkout states, Google Docs requests either return a real Drive document or a clear connection instruction, chat titles remain concise, and the bounded left history, chat, and right artifact columns are consistently resizable on desktop.
+
+Files: `packages/agent-policy/src/platform-tools-template.ts`, `packages/agent-policy/src/platform-tools-template.test.ts`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `apps/agent-api/src/modules/shared/services/openclaw-gateway.service.ts`, `apps/agent-api/src/modules/shared/openclaw-gateway.visual-review.test.ts`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/ShellWorkspace.test.tsx`, `apps/web/src/components/shell/ShellWorkspaceRestoreControls.test.tsx`, `apps/web/src/features/spaces/components/docs/editor/DocEditorExportDropdown.tsx`, `apps/web/src/features/spaces/components/docs/editor/DocEditorHeaderActions.test.tsx`, `apps/web/src/features/studio/services/chat.service.ts`, `apps/web/src/lib/config/spaces-toast-errors.config.ts`, `apps/web/src/lib/conversations/conversation-title.ts`, `apps/web/src/lib/conversations/conversation-title.test.ts`, `documentation/features/claude-chatgpt-shell.md`.

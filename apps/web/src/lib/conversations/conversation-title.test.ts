@@ -5,6 +5,7 @@ import {
   isPlaceholderConversationTitle,
   needsGeneratedConversationTitle,
   resolveSuggestedConversationTitle,
+  shouldReaffirmFirstMessageTitle,
   stripLegacySpacesConversationTitle,
   titleFromFirstUserMessage,
 } from './conversation-title'
@@ -72,6 +73,17 @@ describe('resolveSuggestedConversationTitle', () => {
     expect(resolveSuggestedConversationTitle('New conversation', 'Start our check-in now')).toBe(
       'Start our check-in now',
     )
+  })
+})
+
+describe('shouldReaffirmFirstMessageTitle', () => {
+  it('preserves a curated title when the first turn finishes', () => {
+    expect(shouldReaffirmFirstMessageTitle('Funnel Checkout Quality Review')).toBe(false)
+    expect(
+      shouldReaffirmFirstMessageTitle(
+        'i updated the link can you QC the full funnel with a test user',
+      ),
+    ).toBe(true)
   })
 })
 

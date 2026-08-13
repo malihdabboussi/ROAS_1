@@ -3,6 +3,7 @@ import { ACTION_CONTRACT_PROTOCOL_HEADING } from './action-contract-protocol.js'
 import {
   ensurePlatformToolsRuntimeGuidance,
   hasPlatformToolsRuntimeGuidance,
+  PLATFORM_TOOLS_BROWSER_QC_HEADING,
   PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING,
   PLATFORM_TOOLS_DEFAULT_MD,
   PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING,
@@ -94,6 +95,9 @@ describe('platform tools template', () => {
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Slack does not reliably render Markdown tables')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Date — Spend: $328')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(PLATFORM_TOOLS_MEDIA_ROUTING_HEADING)
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(PLATFORM_TOOLS_BROWSER_QC_HEADING)
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Click the real controls')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('hidden, stale, or contradictory checkout values')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'call `generate_image` with that attachment URL as `input_image_url`',
     )
@@ -188,11 +192,13 @@ For unclear, destructive, publish/send, or expensive actions:
     expect(repaired).toContain(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING)
     expect(repaired).toContain('Slack does not reliably render Markdown tables')
     expect(repaired).toContain(PLATFORM_TOOLS_MEDIA_ROUTING_HEADING)
+    expect(repaired).toContain(PLATFORM_TOOLS_BROWSER_QC_HEADING)
     expect(repaired).toContain('call `generate_image`')
     expect(repaired).toContain('Higgsfield')
     expect(repaired.split(PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING)).toHaveLength(2)
     expect(repaired.split(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING)).toHaveLength(2)
     expect(repaired.split(PLATFORM_TOOLS_MEDIA_ROUTING_HEADING)).toHaveLength(2)
+    expect(repaired.split(PLATFORM_TOOLS_BROWSER_QC_HEADING)).toHaveLength(2)
     expect(second).toBe(repaired)
   })
 

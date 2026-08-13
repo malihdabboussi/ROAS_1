@@ -38451,3 +38451,22 @@ Production already allowed `needs_reconnect` out of band; the repository now car
   Evidence: 1001/600 LOC, unchanged in line count; this fix switches the existing automatic channel branch to the complete recap formatter.
   Needed work: extract the admin review-DM and automatic channel-delivery transports into sibling workflow helpers.
   Reason not done now: pre-existing debt already recorded for this workflow; a structural split would obscure the scoped output correction.
+
+## 2026-08-13 — Chat funnel QC, Google Docs export, and artifact resize
+
+- File: apps/web/src/components/shell/ShellWorkspace.tsx
+  Evidence: 400/400 LOC after adding the universal artifact divider; the component was already near its hard component limit.
+  Needed work: extract the full-conversation work/artifact host and its restore control into a focused shell component before the next shell behavior is added.
+  Reason not done now: this change adds one shared resize seam and removes an inert control; a broader shell decomposition would obscure the requested regression fixes.
+- File: apps/web/src/features/studio/services/chat.service.ts
+  Evidence: 2994 LOC, far above the 600 LOC service limit; this change only guards the existing successful-turn title write.
+  Needed work: split turn persistence, stream orchestration, title scheduling, and artifact handling into focused services.
+  Reason not done now: pre-existing architecture debt; restructuring the chat runtime would materially expand the risk of a title-race fix.
+- File: apps/agent-api/src/modules/shared/services/openclaw-gateway.service.ts
+  Evidence: 575/600 LOC after adding Pixel to the existing visual-review browser policy.
+  Needed work: extract agent tool-policy construction before adding another policy family.
+  Reason not done now: the file remains below the hard limit, and the requested change belongs to the existing canonical policy set.
+- File: apps/web/src/features/spaces/components/docs/editor/DocEditorExportDropdown.tsx
+  Evidence: 400/400 LOC after adding the Google Drive connection preflight.
+  Needed work: extract the Google Docs action button and preflight into a focused component before adding another export destination.
+  Reason not done now: the file is within the hard limit, and extracting unrelated export UI would widen this connection-state fix.
