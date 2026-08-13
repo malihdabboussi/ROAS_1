@@ -159,3 +159,13 @@ Why: Three exact-production deployments contained the launcher action, reactive 
 Impact: Blank Home, active, Space, and drawer chats now mount exactly one Mission launcher beside the component that triggers it, while the dashboard shell no longer owns an ineffective detached host.
 
 Files: `apps/web/src/app/(dashboard)/dashboard-shell.tsx`, `apps/web/src/app/(dashboard)/dashboard-shell.test.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.test.tsx`, `documentation/features/missions.md`.
+
+## [2026-08-13 16:39] - [FIX]
+
+What: Consolidated full-chat drawer controls around the Summary panel, moved conversation details beside the clickable rename title, removed the pencil and redundant page drawer, excluded chats and duplicate names from recent work, added destination icons, and changed the composer add glyph to a paperclip.
+
+Why: Full conversations exposed competing drawer controls and a hidden Show page fallback, while recent work repeated chats already available in the left history.
+
+Impact: Full chat has one predictable summary drawer; the three-dot menu sits beside the title, clicking the name renames it, recent work contains unique work surfaces only, and attachments use a recognizable paperclip entry point.
+
+Files: `apps/web/src/components/conversations/ConversationHeaderTitle.tsx`, `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/components/shell/ShellWorkAreaControl.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/features/spaces/components/chat/SpaceChatHeaderActions.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/studio/components/ChatInput/chat-input-normal-footer.tsx`, related tests, `documentation/features/claude-chatgpt-shell.md`.

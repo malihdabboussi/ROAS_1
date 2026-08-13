@@ -2,7 +2,18 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { FileImage, LayoutDashboard, PanelRight } from 'lucide-react'
+import {
+  Brain,
+  CalendarDays,
+  FileImage,
+  FolderGit2,
+  Inbox,
+  LayoutDashboard,
+  ListChecks,
+  PanelRight,
+  Users,
+  Workflow,
+} from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { useShellStore, type ShellWorkAreaPageTarget } from './use-shell-store'
 
@@ -22,7 +33,26 @@ export function ShellWorkAreaControl({ currentPage }: ShellWorkAreaControlProps)
   const openArtifactViewer = useShellStore((state) => state.openArtifactViewer)
   const closeArtifactViewer = useShellStore((state) => state.closeArtifactViewer)
   const setPendingWorkRestore = useShellStore((state) => state.setPendingWorkRestore)
-  const pageTargets = [currentPage, ...recentPages.filter((target) => target.id !== currentPage.id)]
+  const seenPageTitles = new Set<string>()
+  const pageTargets = [currentPage, ...recentPages].filter((target) => {
+    const params = new URLSearchParams(target.href.split('?')[1] ?? '')
+    if (params.has('conv') || target.href.startsWith('/chats')) return false
+    const key = target.title.trim().toLocaleLowerCase()
+    if (seenPageTitles.has(key)) return false
+    seenPageTitles.add(key)
+    return true
+  })
+
+  const pageIcon = (href: string) => {
+    if (href.startsWith('/home/meetings')) return CalendarDays
+    if (href.startsWith('/home/my-tasks')) return ListChecks
+    if (href.startsWith('/home/inbox')) return Inbox
+    if (href.startsWith('/brain')) return Brain
+    if (href.startsWith('/team')) return Users
+    if (href.startsWith('/flows')) return Workflow
+    if (href.startsWith('/projects') || href.startsWith('/programs')) return FolderGit2
+    return LayoutDashboard
+  }
 
   return (
     <div
@@ -48,29 +78,35 @@ export function ShellWorkAreaControl({ currentPage }: ShellWorkAreaControlProps)
           aria-label="Recent work surfaces"
           className="dropdown-menu-solid p-spacing-2 gap-spacing-1 z-dropdown w-spacing-64 absolute right-0 top-full flex flex-col"
         >
-          {pageTargets.map((target) => (
-            <button
-              key={target.id}
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                closeArtifactViewer()
-                setWorkAreaOpen(true)
-                // Entries without a payload must not wipe one set by another
-                // pick that is still in flight toward its landing route.
-                if (target.restore) setPendingWorkRestore(target.restore)
-                if (target.href !== currentPage.href) router.push(target.href)
-                setHistoryOpen(false)
-              }}
-              className={cn(
-                'hub-dock-flyout-row gap-spacing-2 text-left',
-                !activeTarget && target.id === currentPage.id && workAreaOpen && 'bg-hover-subtle',
-              )}
-            >
-              <LayoutDashboard className="icon-sm shrink-0" aria-hidden />
-              <span className="min-w-0 flex-1 truncate">{target.title}</span>
-            </button>
-          ))}
+          {pageTargets.map((target) => {
+            const PageIcon = pageIcon(target.href)
+            return (
+              <button
+                key={target.id}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  closeArtifactViewer()
+                  setWorkAreaOpen(true)
+                  // Entries without a payload must not wipe one set by another
+                  // pick that is still in flight toward its landing route.
+                  if (target.restore) setPendingWorkRestore(target.restore)
+                  if (target.href !== currentPage.href) router.push(target.href)
+                  setHistoryOpen(false)
+                }}
+                className={cn(
+                  'hub-dock-flyout-row gap-spacing-2 text-left',
+                  !activeTarget &&
+                    target.id === currentPage.id &&
+                    workAreaOpen &&
+                    'bg-hover-subtle',
+                )}
+              >
+                <PageIcon className="icon-sm shrink-0" aria-hidden />
+                <span className="min-w-0 flex-1 truncate">{target.title}</span>
+              </button>
+            )
+          })}
           {recentTargets.map((target) => (
             <button
               key={target.id}

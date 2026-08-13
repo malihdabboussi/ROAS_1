@@ -1,5 +1,5 @@
 import type { ReactNode, Ref } from 'react'
-import { Plus } from 'lucide-react'
+import { Paperclip } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import { ChatInputActiveCapabilityChip } from './chat-input-active-capability-chip'
 import { ChatInputContextMeter } from './chat-input-context-meter'
@@ -69,16 +69,16 @@ export function ChatInputNormalFooter({
       className={`flex items-center justify-between ${composerPadX} ${compact ? 'py-spacing-1' : 'py-spacing-2'} ${footerWrapperClassName ?? ''}`}
     >
       <div className="flex items-center gap-1">
-        <Tooltip label="Add">
+        <Tooltip label="Attach">
           <button
             ref={plusButtonRef}
             type="button"
             onClick={onTogglePlusMenu}
             disabled={disabled}
             className="text-muted-foreground hover:text-foreground flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:opacity-30"
-            aria-label="Open add menu"
+            aria-label="Attach"
           >
-            <Plus className="h-4 w-4" />
+            <Paperclip className="h-4 w-4" />
           </button>
         </Tooltip>
 

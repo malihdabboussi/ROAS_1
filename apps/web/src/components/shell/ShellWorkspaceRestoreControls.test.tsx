@@ -187,13 +187,12 @@ describe('ShellWorkspace restore controls', () => {
     vi.clearAllMocks()
     vi.useRealTimers()
   })
-  it('keeps a top-right page restore control visible in a full Home conversation', () => {
+  it('leaves full-conversation page restoration to the summary control', () => {
     mocks.desktop = true
     mocks.params = new Map([['conv', 'conversation-1']])
     render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
-    fireEvent.click(screen.getByRole('button', { name: 'Show page' }))
-    expect(mocks.setWorkAreaOpen).toHaveBeenCalledWith(true)
-    expect(mocks.push).toHaveBeenCalledWith('/home/meetings?conv=conversation-1')
+    expect(screen.queryByRole('button', { name: 'Show page' })).toBeNull()
+    expect(mocks.push).not.toHaveBeenCalled()
   })
 
   it('hides the full-conversation page restore control while the summary panel is open', () => {
