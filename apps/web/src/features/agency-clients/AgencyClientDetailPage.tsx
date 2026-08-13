@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, ExternalLink, FolderKanban } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Pencil } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   fetchAgencyClient,
@@ -10,7 +10,11 @@ import {
   type AgencyClientWorkspace,
 } from '@/lib/agency-clients'
 import { cn } from '@/lib/utils/cn'
+import type { CampaignPatch } from './AgencyCampaignEditPanel'
+import { AgencyClientCampaignsPanel } from './AgencyClientCampaignsPanel'
+import { AgencyClientEditPanel } from './AgencyClientEditPanel'
 import { AgencyClientWorkRows } from './AgencyClientWorkRows'
+import { AGENCY_CLIENT_MESSAGES } from './config/messages.config'
 
 type Tab = 'overview' | 'campaigns' | 'tasks' | 'requests'
 
@@ -19,17 +23,16 @@ function text(row: Record<string, unknown>, key: string) {
 }
 
 function isClosed(status: string) {
-  return ['done', 'complete', 'completed', 'closed', 'cancelled', 'canceled', 'shipped'].includes(
-    status.toLowerCase(),
-  )
-}
-
-function formatDate(value: unknown) {
-  if (typeof value !== 'string' || !value) return 'No date'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-    ? value
-    : date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  return [
+    'done',
+    'complete',
+    'completed',
+    'closed',
+    'cancelled',
+    'canceled',
+    'shipped',
+    'complete / live',
+  ].includes(status.toLowerCase())
 }
 
 export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
@@ -38,12 +41,17 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('overview')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [editingClient, setEditingClient] = useState(false)
+  const [editingCampaignId, setEditingCampaignId] = useState<string | null>(null)
+  const [savedMessage, setSavedMessage] = useState<string | null>(null)
 
   useEffect(() => {
     void fetchAgencyClient(clientId)
       .then(setWorkspace)
       .catch((reason) =>
-        setError(reason instanceof Error ? reason.message : 'Could not load client'),
+        setError(
+          reason instanceof Error ? reason.message : AGENCY_CLIENT_MESSAGES.LOAD_CLIENT_ERROR,
+        ),
       )
       .finally(() => setLoading(false))
   }, [clientId])
@@ -87,7 +95,55 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
         }
       })
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : `Could not update ${kind}`)
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : kind === 'task'
+            ? AGENCY_CLIENT_MESSAGES.UPDATE_TASK_ERROR
+            : AGENCY_CLIENT_MESSAGES.UPDATE_REQUEST_ERROR,
+      )
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const updateClient = async (patch: Record<string, unknown>) => {
+    setUpdatingId(clientId)
+    setError(null)
+    setSavedMessage(null)
+    try {
+      await updateAgencyWorkspaceEntity(clientId, { kind: 'client', patch })
+      const refreshed = await fetchAgencyClient(clientId)
+      setWorkspace(refreshed)
+      setEditingClient(false)
+      setSavedMessage(AGENCY_CLIENT_MESSAGES.SAVED)
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : AGENCY_CLIENT_MESSAGES.UPDATE_CLIENT_ERROR,
+      )
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const updateCampaign = async (campaignId: string, patch: CampaignPatch) => {
+    setUpdatingId(campaignId)
+    setError(null)
+    setSavedMessage(null)
+    try {
+      await updateAgencyWorkspaceEntity(clientId, {
+        kind: 'campaign',
+        entity_id: campaignId,
+        patch,
+      })
+      const refreshed = await fetchAgencyClient(clientId)
+      setWorkspace(refreshed)
+      setEditingCampaignId(null)
+      setSavedMessage(AGENCY_CLIENT_MESSAGES.SAVED)
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : AGENCY_CLIENT_MESSAGES.UPDATE_CAMPAIGN_ERROR,
+      )
     } finally {
       setUpdatingId(null)
     }
@@ -128,13 +184,23 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
         <div className="gap-spacing-4 flex flex-wrap items-start justify-between">
           <div>
             <p className="typo-section-label text-muted-foreground">Client workspace</p>
-            <h1 className="title-h6 text-foreground">{client.display_name || client.name}</h1>
+            <h1 className="title-h6 text-foreground">
+              {(client.display_name || client.name).toUpperCase()}
+            </h1>
             <p className="body-3 text-muted-foreground mt-spacing-1">
               {[client.industry, client.account_manager?.name].filter(Boolean).join(' · ') ||
                 'Agency client'}
             </p>
           </div>
           <div className="gap-spacing-2 flex">
+            <button
+              aria-label="Edit client"
+              type="button"
+              onClick={() => setEditingClient((current) => !current)}
+              className="button-compact button-glass-neutral"
+            >
+              <Pencil className="icon-sm" /> {AGENCY_CLIENT_MESSAGES.EDIT}
+            </button>
             {typeof client.drive_link === 'string' && client.drive_link ? (
               <a
                 href={client.drive_link}
@@ -158,6 +224,25 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
           </div>
         </div>
       </header>
+
+      {error ? (
+        <p className="surface-card body-2 text-destructive rounded-spacing-3 p-spacing-4">
+          {error}
+        </p>
+      ) : null}
+      {savedMessage ? (
+        <p className="surface-card body-3 text-success rounded-spacing-3 p-spacing-4">
+          {savedMessage}
+        </p>
+      ) : null}
+      {editingClient ? (
+        <AgencyClientEditPanel
+          client={client}
+          saving={updatingId === clientId}
+          onCancel={() => setEditingClient(false)}
+          onSave={updateClient}
+        />
+      ) : null}
 
       <nav className="gap-spacing-1 border-border flex border-b" aria-label="Client sections">
         {tabs.map((item) => (
@@ -240,55 +325,15 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
       ) : null}
 
       {tab === 'campaigns' ? (
-        <div className="gap-spacing-3 grid md:grid-cols-2">
-          {workspace.campaigns.map((campaign) => {
-            const spaceId = spaceByCampaign.get(campaign.id)
-            const body = (
-              <>
-                <div className="gap-spacing-3 flex items-start justify-between">
-                  <div>
-                    <h2 className="body-2 text-foreground font-semibold">{campaign.name}</h2>
-                    <p className="body-4 text-muted-foreground capitalize">
-                      {campaign.status || campaign.platform_status}
-                    </p>
-                  </div>
-                  <FolderKanban className="icon-md text-muted-foreground" />
-                </div>
-                <p className="body-3 text-muted-foreground mt-spacing-3 line-clamp-2">
-                  {campaign.campaign_overview ||
-                    campaign.description ||
-                    campaign.next_action ||
-                    'Campaign workspace'}
-                </p>
-                <div className="body-4 text-muted-foreground mt-spacing-4 gap-spacing-4 border-border pt-spacing-3 flex flex-wrap border-t">
-                  <span>Event: {formatDate(campaign.event_date)}</span>
-                  <span>
-                    Budget:{' '}
-                    {campaign.budget_amount != null
-                      ? `${campaign.currency || '$'}${campaign.budget_amount.toLocaleString()}`
-                      : 'Not set'}
-                  </span>
-                </div>
-              </>
-            )
-            return spaceId ? (
-              <Link
-                key={campaign.id}
-                href={`/spaces?space=${spaceId}`}
-                className="surface-card hover:bg-hover-subtle rounded-spacing-3 border-border p-spacing-4 border"
-              >
-                {body}
-              </Link>
-            ) : (
-              <article
-                key={campaign.id}
-                className="surface-card rounded-spacing-3 border-border p-spacing-4 border"
-              >
-                {body}
-              </article>
-            )
-          })}
-        </div>
+        <AgencyClientCampaignsPanel
+          campaigns={workspace.campaigns}
+          spaceByCampaign={spaceByCampaign}
+          editingCampaignId={editingCampaignId}
+          updatingId={updatingId}
+          onEdit={setEditingCampaignId}
+          onCancel={() => setEditingCampaignId(null)}
+          onSave={updateCampaign}
+        />
       ) : null}
 
       {tab === 'tasks' ? (

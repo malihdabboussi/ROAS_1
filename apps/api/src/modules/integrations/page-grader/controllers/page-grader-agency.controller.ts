@@ -85,6 +85,8 @@ export class PageGraderAgencyController {
   @RequireOrgRole('editor')
   async patchEntity(
     @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
     @Param('clientId') clientId: string,
     @Body() body: unknown,
   ) {
@@ -98,7 +100,7 @@ export class PageGraderAgencyController {
     }
     return {
       success: true,
-      result: await this.workspace.patchEntity(user.id, {
+      result: await this.workspace.patchEntity(supabase, user.id, scope, {
         clientId,
         kind: validation.data.kind,
         entityId: validation.data.entity_id,

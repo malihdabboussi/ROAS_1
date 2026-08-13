@@ -50,9 +50,9 @@ export function AgencyClientsPage() {
       <header className="gap-spacing-4 flex flex-wrap items-end justify-between">
         <div>
           <p className="typo-section-label text-muted-foreground">Agency workspace</p>
-          <h1 className="title-h6 text-foreground">Clients</h1>
+          <h1 className="title-h6 text-foreground">CLIENTS</h1>
           <p className="body-3 text-muted-foreground mt-spacing-1">
-            Page Grader clients, campaign work, requests, and Brain context in one view.
+            The ROAS Portal clients, campaign work, requests, and Brain context in one view.
           </p>
         </div>
         <Link href="/client-campaigns" className="button-compact button-glass-neutral">

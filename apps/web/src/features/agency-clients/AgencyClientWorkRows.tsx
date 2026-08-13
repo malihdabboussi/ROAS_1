@@ -1,21 +1,21 @@
 import { CalendarDays, CheckCircle2, CircleAlert } from 'lucide-react'
+import { formatAgencyDate } from './agency-client-format'
 
 function text(row: Record<string, unknown>, key: string) {
   return typeof row[key] === 'string' ? row[key] : ''
 }
 
 function isClosed(status: string) {
-  return ['done', 'complete', 'completed', 'closed', 'cancelled', 'canceled', 'shipped'].includes(
-    status.toLowerCase(),
-  )
-}
-
-function formatDate(value: unknown) {
-  if (typeof value !== 'string' || !value) return 'No date'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-    ? value
-    : date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  return [
+    'done',
+    'complete',
+    'completed',
+    'closed',
+    'cancelled',
+    'canceled',
+    'shipped',
+    'complete / live',
+  ].includes(status.toLowerCase())
 }
 
 export function AgencyClientWorkRows({
@@ -40,6 +40,8 @@ export function AgencyClientWorkRows({
         const status = text(row, 'status') || text(row, 'clickup_status') || 'Open'
         const closed = isClosed(status)
         const entityId = String(row.id)
+        const selectedStatus =
+          kind === 'request' ? requestSelectValue(status) : taskSelectValue(status)
         return (
           <div key={entityId} className="gap-spacing-3 py-spacing-3 flex items-start">
             {closed ? (
@@ -60,29 +62,49 @@ export function AgencyClientWorkRows({
             {row.due_date ? (
               <span className="body-4 text-muted-foreground gap-spacing-1 flex items-center">
                 <CalendarDays className="icon-xs" />
-                {formatDate(row.due_date)}
+                {formatAgencyDate(row.due_date)}
               </span>
             ) : null}
             <select
               aria-label={`Update ${kind} status`}
-              value={
-                closed
-                  ? 'completed'
-                  : status.toLowerCase() === 'in progress'
-                    ? 'in progress'
-                    : 'to do'
-              }
+              value={selectedStatus}
               disabled={updatingId === entityId}
               onChange={(event) => void onStatusChange(kind, entityId, event.target.value)}
               className="h-spacing-7 body-4 bg-secondary text-foreground rounded-spacing-2 border-border px-spacing-2 focus:ring-primary border outline-none focus:ring-1 disabled:opacity-50"
             >
-              <option value="to do">To do</option>
-              <option value="in progress">In progress</option>
-              <option value="completed">Completed</option>
+              {kind === 'request' ? (
+                <>
+                  <option value="pending">Pending</option>
+                  <option value="in_progress">In progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </>
+              ) : (
+                <>
+                  <option value="to do">To do</option>
+                  <option value="in progress / builder">In progress</option>
+                  <option value="complete / live">Complete / live</option>
+                </>
+              )}
             </select>
           </div>
         )
       })}
     </div>
   )
+}
+
+function taskSelectValue(status: string) {
+  if (isClosed(status)) return 'complete / live'
+  return ['in progress', 'in progress / builder'].includes(status.toLowerCase())
+    ? 'in progress / builder'
+    : 'to do'
+}
+
+function requestSelectValue(status: string) {
+  const normalized = status.toLowerCase()
+  if (normalized === 'cancelled' || normalized === 'canceled') return 'cancelled'
+  if (normalized === 'in progress' || normalized === 'in_progress') return 'in_progress'
+  if (isClosed(status)) return 'completed'
+  return 'pending'
 }

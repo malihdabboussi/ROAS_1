@@ -237,3 +237,13 @@ Why: The latest main branch introduced the canonical campaign Space reconciler, 
 Impact: Opening a client now refreshes its Brain package and campaign Spaces through one canonical path; the campaign index reuses existing mappings and triggers the canonical import only when a campaign Space is missing.
 
 Files: apps/api/src/modules/integrations/page-grader/services/page-grader-agency-workspace.service.ts, apps/api/src/modules/integrations/page-grader/services/__tests__/page-grader-agency-workspace.service.test.ts
+
+## [2026-08-12 23:05] - [FIX]
+
+What: Finished the agency workspace edit loop with client and campaign editors, Brain/Space refresh after canonical writes, ROAS-origin task status propagation to ClickUp and the linked Space action item, timezone-safe date-only rendering, and Portal-facing user copy.
+
+Why: Read-only client cards and local-only task updates did not satisfy the two-way agency workflow, and UTC parsing could show campaign events one day early.
+
+Impact: Account managers can maintain client and campaign details from ROAS, task status stays aligned across ROAS, The ROAS Portal, and ClickUp, and campaign dates render consistently in local time without nested interactive controls.
+
+Files: Page Grader agency controller/service; agency client edit components, formatting helpers, message config, focused tests; Page Grader `roas-api` and work-status push helper; `documentation/features/page-grader-campaign-brain-sync.md`.

@@ -157,7 +157,9 @@ export class PageGraderAgencyWorkspaceService {
   }
 
   async patchEntity(
+    supabase: SupabaseClient,
     userId: string,
+    scope: RequestScope,
     input: {
       clientId: string
       kind: 'client' | 'campaign' | 'task' | 'request'
@@ -170,7 +172,21 @@ export class PageGraderAgencyWorkspaceService {
       input.kind === 'client'
         ? `/clients/${clientId}`
         : `/clients/${clientId}/${input.kind === 'campaign' ? 'campaigns' : `${input.kind}s`}/${encodeURIComponent(input.entityId ?? '')}`
-    return this.api.updateWorkspaceEntity(userId, path, input.patch)
+    const mutation = await this.api.updateWorkspaceEntity(userId, path, input.patch)
+    if (input.kind === 'task' || input.kind === 'request') {
+      return { mutation, brain_sync: null }
+    }
+    const pushed = recordValue(mutation.roas_push).pushed === true
+    if (pushed) {
+      return { mutation, brain_sync: { status: 'webhook_dispatched' } }
+    }
+    const brainSync = await this.brainImport.importClientBrain(
+      supabase,
+      userId,
+      { client_id: input.clientId },
+      scope.orgId,
+    )
+    return { mutation, brain_sync: brainSync }
   }
 
   private async loadCampaignSpaceMappings(

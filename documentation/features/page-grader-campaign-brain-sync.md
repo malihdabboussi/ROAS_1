@@ -53,7 +53,7 @@ ROAS now presents the shared agency hierarchy directly:
 
 The agency list bootstraps unmapped clients through the existing deterministic Brain import. This creates or reuses the ROAS client campaign container, General Space, campaign Brain, and scope mapping before reconciling campaign Spaces. The existing SSO embed is retained for Page Grader-only workflows.
 
-Shared client, campaign, task, and request edits use explicit allowlisted Page Grader write-through routes. Existing Page Grader → ROAS Brain/webhook/catch-up sync and ROAS → Page Grader work creation remain in place, so the two products do not create competing canonical copies.
+Shared client, campaign, task, and request edits use explicit allowlisted Page Grader write-through routes. Client and campaign writes dispatch the existing Brain webhook, with a direct ROAS import fallback when the webhook is unavailable. ROAS-origin task status changes also update the linked ClickUp task and return through the signed work-status webhook to the originating ROAS Space action item. Existing ROAS → Page Grader work creation remains in place, so the two products do not create competing canonical copies.
 
 ## Auth
 
@@ -121,6 +121,7 @@ Repeated manual requests use the deterministic Page Grader client and meeting ti
 ## Decision Log
 
 - **2026-08-12:** Added first-class agency Clients and Client Campaigns navigation. Page Grader clients are projected as ROAS client campaign containers; Page Grader client campaigns are stable ROAS Spaces. Missing clients bootstrap through deterministic Brain import, campaign Spaces carry source IDs, and shared client/campaign/task/request changes write through the Page Grader API.
+- **2026-08-12:** Completed the agency workspace write loop. Client and campaign edits now refresh Brain and canonical campaign Spaces; ROAS-origin task status updates propagate through Page Grader to ClickUp and back to the linked ROAS action item; edit controls, date-only rendering, and Portal-facing labels were hardened for production use.
 - **2026-08-11:** Replaced the analyst-style timed precall report with a concise client-facing meeting workspace. The agenda now opens with native checkboxes, separates completed work from next-week priorities, presents raw performance per live campaign, uses plain-English wins and recommendations, and shows only genuine client needs. Internal source availability and preparation gaps can no longer appear in the generated document.
 - **2026-08-11:** Unified Page Grader manual agendas and ROAS precall prep behind the mapped client campaign. ROAS now supplies validated, client-safe, decision-ready content from bounded Brain, meeting, fulfillment, and cached Meta context; Page Grader remains the Google Docs/ad-preview writer. Missing mappings, lazy placeholder output, cross-client call context, failed Drive writes, and duplicate same-meeting requests no longer silently pass as successful agendas.
 - **2026-07-23:** Page Grader imports had two separate vector stores:

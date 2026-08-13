@@ -6,6 +6,7 @@ import { CalendarDays, FolderKanban, Search } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { fetchAgencyClientCampaigns, type AgencyClientCampaign } from '@/lib/agency-clients'
 import { cn } from '@/lib/utils/cn'
+import { formatAgencyBudget, formatAgencyDate } from './agency-client-format'
 
 type ViewMode = 'all' | 'client'
 
@@ -48,9 +49,9 @@ export function ClientCampaignsPage() {
     <main className="gap-spacing-6 p-spacing-8 mx-auto flex w-full max-w-7xl flex-col">
       <header>
         <p className="typo-section-label text-muted-foreground">Agency workspace</p>
-        <h1 className="title-h6 text-foreground">Client Campaigns</h1>
+        <h1 className="title-h6 text-foreground">CLIENT CAMPAIGNS</h1>
         <p className="body-3 text-muted-foreground mt-spacing-1">
-          Campaigns from Page Grader, mapped to ROAS Spaces.
+          Client campaigns from The ROAS Portal, mapped to ROAS Spaces.
         </p>
       </header>
       <div className="surface-card gap-spacing-2 rounded-spacing-3 border-border p-spacing-3 flex flex-wrap items-center border">
@@ -109,16 +110,14 @@ export function ClientCampaignsPage() {
                       </div>
                       <span className="body-3 text-muted-foreground gap-spacing-1 flex items-center">
                         <CalendarDays className="icon-xs" />
-                        {campaign.event_date
-                          ? new Date(campaign.event_date).toLocaleDateString()
-                          : campaign.start_date
-                            ? new Date(campaign.start_date).toLocaleDateString()
-                            : 'Not set'}
+                        {formatAgencyDate(campaign.event_date || campaign.start_date)}
                       </span>
                       <span className="body-3 text-muted-foreground">
-                        {campaign.budget_amount != null
-                          ? `${campaign.currency || '$'}${campaign.budget_amount.toLocaleString()}${campaign.budget_type ? ` / ${campaign.budget_type}` : ''}`
-                          : 'Not set'}
+                        {formatAgencyBudget(
+                          campaign.budget_amount,
+                          campaign.currency,
+                          campaign.budget_type,
+                        )}
                       </span>
                       <span className="body-3 text-muted-foreground capitalize">
                         {campaign.status || campaign.platform_status}
