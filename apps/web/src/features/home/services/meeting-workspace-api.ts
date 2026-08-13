@@ -1,5 +1,6 @@
 import { backendGet, backendPatch, backendPost } from '@/lib/api/backend-client'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
+import { updateSpaceItem } from '@/lib/spaces/spaces-api'
 
 export type MeetingWorkspaceRecord = {
   meeting_item_id: string
@@ -46,6 +47,8 @@ export type MeetingAction = {
   canonical_assignee_name: string | null
   canonical_assignee_email: string | null
   evidence: Record<string, unknown>
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 export type MeetingSnippet = {
@@ -205,6 +208,35 @@ export function updateMeetingActionStatus(
   })
 }
 
+/** Toggle a canonical Meetings task, falling back to the legacy action API. */
+export async function toggleMeetingActionStatus(
+  spaceId: string,
+  meetingItemId: string,
+  action: MeetingAction,
+): Promise<MeetingAction> {
+  const status = action.status === 'resolved' ? 'confirmed' : 'resolved'
+  if (String(action.evidence?.origin ?? '') !== 'meetings_space_follow_up') {
+    return updateMeetingActionStatus(spaceId, meetingItemId, action.id, status)
+  }
+
+  const completedAt = status === 'resolved' ? new Date().toISOString() : null
+  const updated = await updateSpaceItem(spaceId, action.id, {
+    status: status === 'resolved' ? 'done' : 'logged',
+    custom_data: {
+      completion_origin: status === 'resolved' ? { kind: 'user', completed_at: completedAt } : null,
+    },
+  })
+  return {
+    ...action,
+    status,
+    updated_at: updated.updated_at,
+    evidence: {
+      ...action.evidence,
+      completion_origin: status === 'resolved' ? { kind: 'user', completed_at: completedAt } : null,
+    },
+  }
+}
+
 export function createMeetingAction(
   spaceId: string,
   meetingItemId: string,
@@ -233,11 +265,11 @@ export function addMeetingSnippet(
   meetingItemId: string,
   input: { text: string; sourceLabel?: string | null },
 ) {
-  return backendPost<MeetingSnippet>(`${path(spaceId, meetingItemId)}/snippets`, {
+  return backendPost<{ snippet: MeetingSnippet }>(`${path(spaceId, meetingItemId)}/snippets`, {
     source_type: 'observation',
     text: input.text,
     source_label: input.sourceLabel ?? null,
-  })
+  }).then((response) => response.snippet)
 }
 
 export function linkMeetingRecording(

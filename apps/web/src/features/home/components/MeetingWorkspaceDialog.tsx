@@ -25,7 +25,7 @@ import {
   endMeetingCall,
   fetchMeetingWorkspace,
   startMeetingCall,
-  updateMeetingActionStatus,
+  toggleMeetingActionStatus,
   type MeetingAction,
   type MeetingSnippet,
   type MeetingWorkspaceBundle,
@@ -240,9 +240,8 @@ export function MeetingWorkspaceDialog({
   }
 
   const toggleAction = async (action: MeetingAction) => {
-    const status = action.status === 'resolved' ? 'confirmed' : 'resolved'
     try {
-      const updated = await updateMeetingActionStatus(spaceId, meetingItemId, action.id, status)
+      const updated = await toggleMeetingActionStatus(spaceId, meetingItemId, action)
       setBundle((current) =>
         current
           ? {

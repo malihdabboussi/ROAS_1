@@ -57,6 +57,7 @@ export function planProviderFollowUpUpserts(input: {
         recording_timestamp: action.recordingTimestamp,
         recording_playback_url: action.recordingPlaybackUrl,
         user_generated: action.userGenerated,
+        completed_in_provider: action.completed,
         cross_referenced_from: 'provider_recording',
       },
       ...(action.refinement ? { refinement: action.refinement } : {}),

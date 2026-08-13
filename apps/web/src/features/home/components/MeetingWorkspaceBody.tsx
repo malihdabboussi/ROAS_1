@@ -1,5 +1,6 @@
 'use client'
 
+import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { MeetingActionItemsSection } from '@/features/home/components/MeetingActionItemsSection'
 import { MeetingAgendaPrepSection } from '@/features/home/components/MeetingAgendaPrepSection'
 import { MeetingNotesSection } from '@/features/home/components/MeetingNotesSection'
@@ -63,6 +64,21 @@ export function MeetingWorkspaceBody({
   onActionCreated: (action: MeetingAction) => void
   onActionMoved: (action: MeetingAction) => void
 }) {
+  if (loading) {
+    return (
+      <div
+        role="status"
+        aria-label="Loading meeting workspace"
+        className="section-card py-spacing-12 flex min-h-72 flex-col items-center justify-center"
+      >
+        <VibeyLoadingOrb text="Loading meeting details…" state="processing" size="md" />
+        <p className="body-4 text-muted-foreground mt-spacing-3 text-center">
+          Connecting the recording, recap, notes, and action items.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <>
       <section className="section-card overflow-hidden">

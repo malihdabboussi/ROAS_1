@@ -1,14 +1,30 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
-import { fetchMeetingWorkspaceEvent, resolveScheduledMeeting } from './meeting-workspace-api'
+import {
+  addMeetingSnippet,
+  fetchMeetingWorkspaceEvent,
+  resolveScheduledMeeting,
+  toggleMeetingActionStatus,
+} from './meeting-workspace-api'
 
-const mocks = vi.hoisted(() => ({ backendGet: vi.fn(), backendPost: vi.fn() }))
+const mocks = vi.hoisted(() => ({
+  backendGet: vi.fn(),
+  backendPatch: vi.fn(),
+  backendPost: vi.fn(),
+  updateSpaceItem: vi.fn(),
+}))
 
 vi.mock('@/lib/api/backend-client', () => ({
   backendGet: mocks.backendGet,
-  backendPatch: vi.fn(),
+  backendPatch: mocks.backendPatch,
   backendPost: mocks.backendPost,
 }))
+
+vi.mock('@/lib/spaces/spaces-api', () => ({ updateSpaceItem: mocks.updateSpaceItem }))
+
+beforeEach(() => {
+  for (const mock of Object.values(mocks)) mock.mockReset()
+})
 
 const baseEvent: CalendarAgendaEvent = {
   id: 'workspace:person-1:event-1',
@@ -100,5 +116,49 @@ describe('fetchMeetingWorkspaceEvent', () => {
       }),
     )
     expect(mocks.backendGet).toHaveBeenCalledWith('/api/spaces/space-1/meetings/call-9')
+  })
+})
+
+describe('meeting workspace API', () => {
+  it('unwraps a newly saved note so the UI can render it immediately', async () => {
+    const snippet = {
+      id: 'note-1',
+      source_type: 'observation',
+      text: 'Deck: https://docs.google.com/presentation/d/example',
+      source_label: null,
+      created_at: '2026-08-13T20:00:00.000Z',
+    }
+    mocks.backendPost.mockResolvedValue({
+      snippet,
+      conversation_id: 'conversation-1',
+      message_id: 'message-1',
+    })
+
+    await expect(
+      addMeetingSnippet('space-1', 'meeting-1', { text: snippet.text }),
+    ).resolves.toEqual(snippet)
+  })
+
+  it('updates a mirrored follow-up through the canonical task endpoint', async () => {
+    mocks.updateSpaceItem.mockResolvedValue({ updated_at: '2026-08-13T20:00:00.000Z' })
+    const action = {
+      id: 'task-1',
+      title: 'Send notes',
+      source_type: 'provider' as const,
+      status: 'confirmed',
+      canonical_assignee_name: 'Dylan',
+      canonical_assignee_email: null,
+      evidence: { origin: 'meetings_space_follow_up' },
+    }
+
+    const result = await toggleMeetingActionStatus('space-1', 'meeting-1', action)
+
+    expect(mocks.updateSpaceItem).toHaveBeenCalledWith(
+      'space-1',
+      'task-1',
+      expect.objectContaining({ status: 'done' }),
+    )
+    expect(result.status).toBe('resolved')
+    expect(result.evidence.completion_origin).toEqual(expect.objectContaining({ kind: 'user' }))
   })
 })

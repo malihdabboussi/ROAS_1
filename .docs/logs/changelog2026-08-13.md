@@ -129,3 +129,11 @@ Why: Sidebar navigation could restore an unrelated conversation because multiple
 Impact: Navigation keeps the currently open chat, offers the destination screen's remembered chat without forcing a switch, and starts fresh when the open pane has no conversation. Space, Campaign, and channel chat scopes remain independent.
 
 Files: `apps/web/src/components/shell/shell-screen-chat.config.ts`, `apps/web/src/components/shell/use-shell-store.screen-chat.ts`, `apps/web/src/components/shell/use-shell-workspace-screen-chat.ts`, `apps/web/src/components/shell/ShellScreenChatPrompt.tsx`, `apps/web/src/components/shell/ShellChatDrawer.tsx`, `apps/web/src/components/shell/use-shell-store.ts`, related shell tests, `documentation/features/claude-chatgpt-shell.md`.
+## Meeting workspace hydration and follow-up quality
+
+- Kept the meeting workspace in a visible loading state until recordings, recap, notes, and action items finish hydrating.
+- Routed mirrored meeting follow-ups through the canonical Space task mutation and recorded completion provenance.
+- Distinguished user-completed tasks from tasks reported complete by Fathom.
+- Fixed newly added meeting notes returning a response wrapper instead of the saved note, and rendered relevant links immediately.
+- Repaired provider Markdown embedded inside saved recap HTML and stripped Markdown emphasis from plain-text recap drafts.
+- Updated recap and follow-up prompts to produce a useful first draft without stalling on missing dates.

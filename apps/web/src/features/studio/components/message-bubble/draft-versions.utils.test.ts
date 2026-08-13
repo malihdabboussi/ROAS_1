@@ -61,4 +61,27 @@ describe('splitDraftSegments', () => {
     expect(hasDraftFence(content)).toBe(false)
     expect(splitDraftSegments(content)).toEqual([{ kind: 'markdown', markdown: content }])
   })
+
+  it('turns markdown-styled draft copy into send-ready plain text', () => {
+    const content = [
+      '```draft Clear and direct',
+      '✅ **Done:** Dylan sent the notes.',
+      '',
+      '**Before Monday**',
+      '- **Nate:** Finish the deck by **Friday EOD**.',
+      '```',
+    ].join('\n')
+
+    expect(splitDraftSegments(content)).toEqual([
+      {
+        kind: 'draft',
+        versions: [
+          {
+            label: 'Clear and direct',
+            text: '✅ Done: Dylan sent the notes.\n\nBefore Monday\n- Nate: Finish the deck by Friday EOD.',
+          },
+        ],
+      },
+    ])
+  })
 })
