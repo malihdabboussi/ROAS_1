@@ -362,3 +362,12 @@ Why: Production still runs the pre-branch Create/Mission UI, and the Image reque
 Impact: Reviewers have exact mission ids and a clear post-deploy smoke requirement for the shared Create row, Mission workspace, and remaining creation outputs.
 
 Files: .docs/plans/chat-create-capability-drift-audit.md
+## [2026-08-12 22:06] - [FEATURE]
+
+What: Navigation-aware chat pane. Navigating between left-sidebar screens (Inbox, Meetings, My Tasks, Delegation Desk, Team, Brain, Programs, etc.) no longer swaps or resurrects an unrelated conversation in the docked chat drawer. With a chat open, the pane keeps it and shows a small dismissible "Switch to your last <Screen> chat?" banner when the target screen has a different last chat. With no chat open, the pane starts a fresh screen-scoped chat instead of hydrating a previous conversation. Conversations are stamped to the screen they were opened on (persisted per-screen map in `vibey.shell.v1`); space, campaign, and channel routes keep their existing scoped chat hosts and are excluded.
+
+Why: Clicking a sidebar screen reopened some previous unrelated chat because all `/home/*` and workspace screens share one `'general'` chat scope, the panel never remounts between them, and persisted last-conversation state re-hydrated across navigations. Dylan decided the navigation contract on 2026-08-12.
+
+Impact: The open chat is never yanked away by navigation; unrelated chats stop reappearing; each screen accumulates its own "last chat" that can be offered non-blockingly. No new CSS (reuses `chat-surface-rec-banner` tokens/utilities).
+
+Files: apps/web/src/components/shell/shell-screen-chat.config.ts (+test), apps/web/src/components/shell/use-shell-store.screen-chat.ts, apps/web/src/components/shell/use-shell-store.ts (+test), apps/web/src/components/shell/ShellScreenChatPrompt.tsx (+test), apps/web/src/components/shell/ShellWorkspace.tsx, apps/web/src/components/shell/ShellChatDrawer.tsx, apps/web/src/components/shell/ShellWorkspaceScreenChat.test.tsx, apps/web/src/components/shell/ShellWorkspace.test.tsx, apps/web/src/components/shell/ShellWorkspaceRestoreControls.test.tsx

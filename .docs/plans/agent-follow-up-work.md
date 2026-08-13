@@ -38509,3 +38509,9 @@ Production already allowed `needs_reconnect` out of band; the repository now car
   Evidence: 285 LOC after adding the floating mini-player, near the 300-line component ceiling.
   Needed work: move `SpaceVoiceMiniPlayer` into its own component before adding further voice controls.
   Reason not done now: the player is small and tightly coupled to the same session controls; a separate file was not needed for this scoped change.
+## 2026-08-12 — Navigation-aware chat pane (apps/web shell)
+
+- File: apps/web/src/components/shell/use-shell-store.ts — 539 LOC after this change (531 before; new screen-chat state lives in the extracted use-shell-store.screen-chat.ts slice, so the net add here is +8). Past the ~500 proactive-extraction guidance, under the 600 hard cap.
+  Needed work: the next store addition should extract another slice (artifact viewer or chat-drawer geometry are self-contained candidates) following the use-shell-store.screen-chat.ts pattern.
+  Reason not done now: pre-existing size; a broad store split is out of scope for this feature and would bury the reviewed diff.
+- ShellWorkspace.test.tsx / ShellWorkspaceRestoreControls.test.tsx / ShellWorkspaceScreenChat.test.tsx each duplicate the same ~140-line vi.mock scaffold for ShellWorkspace. A shared test harness module would remove the triplication next time a fourth ShellWorkspace test file is needed.

@@ -11,6 +11,7 @@ import { initConversationTitleAutogen } from '@/features/studio/services/convers
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cn } from '@/lib/utils/cn'
 import { ShellChatMenu } from './ShellChatMenu'
+import { ShellScreenChatPrompt } from './ShellScreenChatPrompt'
 import { useRightEdgePresence } from './use-right-edge-presence'
 import { useShellMenuDock } from './use-shell-menu-dock'
 import { useShellStore } from './use-shell-store'
@@ -261,6 +262,7 @@ export function ShellChatDrawer({
             )}
             aria-hidden={mobile && !simpleMenu && !historyCollapsed}
           >
+            <ShellScreenChatPrompt />
             <GlobalChatPanel
               shellSidebarChrome
               onCollapseChat={() => minimizeChatDrawer()}

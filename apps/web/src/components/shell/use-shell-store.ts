@@ -3,6 +3,11 @@
 import type { ReactNode } from 'react'
 import { create } from 'zustand'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
+import {
+  createShellScreenChatSlice,
+  sanitizeScreenConversations,
+  type ShellScreenChatSlice,
+} from './use-shell-store.screen-chat'
 
 const STORAGE_KEY = 'vibey.shell.v1'
 
@@ -50,6 +55,7 @@ type PersistedShell = {
   workAreaOpen?: boolean
   artifactViewerWidth?: number
   artifactViewerTarget?: ShellArtifactViewerTarget | null
+  screenConversations?: Record<string, string>
 }
 
 function readPersisted(): PersistedShell {
@@ -109,7 +115,7 @@ function clampArtifactViewerWidth(width: number): number {
   return Math.min(ARTIFACT_VIEWER_WIDTH_MAX, Math.max(ARTIFACT_VIEWER_WIDTH_MIN, width))
 }
 
-interface ShellStore {
+interface ShellStore extends ShellScreenChatSlice {
   sidebarPinned: boolean
   sidebarPeek: boolean
   menuMode: ShellMenuMode
@@ -190,6 +196,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   },
   recentArtifactTargets: [],
   recentWorkAreaPages: [],
+  ...createShellScreenChatSlice(set, get, writePersisted),
   newChatNonce: 0,
   sidebarFlyoutCloseEpoch: 0,
   pageBreadcrumb: null,
@@ -511,6 +518,7 @@ export function hydrateShellStoreFromStorage(): void {
     },
     chatHistoryWidth: clampChatHistoryWidth(persisted.chatHistoryWidth ?? 200),
     chatHistoryCollapsed: persisted.chatHistoryCollapsed ?? false,
+    lastConversationByScreen: sanitizeScreenConversations(persisted.screenConversations),
     workAreaOpen: artifactViewerTarget ? true : (persisted.workAreaOpen ?? true),
     rightPanel: {
       open: artifactViewerTarget ? false : (persisted.rightPanelOpen ?? false),

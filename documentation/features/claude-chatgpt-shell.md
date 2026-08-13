@@ -24,6 +24,7 @@ The history list has its own persisted drag width and collapse state. Dragging i
 34. Pixel and other authorized agents can use the read-only `search_conversations` action when a user refers to another chat. The action searches active conversation titles inside the resolved user and organization scope and returns bounded recent user/assistant excerpts, summaries, and conversation ids. It must be attempted before asking the user to reconstruct accessible chat history.
 35. Full-screen chat always renders a top-right **Show page** control outside the collapsible work surface, regardless of menu dock. For a full Home conversation, it restores the most recent eligible work page while preserving the active conversation; for a collapsed page workspace, it restores that mounted page directly. `/home` is recorded as **Home**, never as a blank hover-history row.
 36. Meeting workspaces derive a deterministic conversation UUID from the meeting item id. Concurrent workspace hydration or start requests therefore upsert the same chat instead of creating parallel Recents rows. Opening a linked meeting also archives any older unlinked conversations with the same user, organization, and meeting metadata; the linked conversation remains active and the archived copies remain recoverable.
+37. Navigation between left-sidebar screens is chat-preserving. `ShellWorkspace` resolves the target through `shell-screen-chat.config.ts`: an open drawer conversation is kept, while a dismissible prompt offers the target screen's different remembered chat. An open pane without a conversation starts fresh instead of restoring unrelated history. Conversations are remembered per screen in `vibey.shell.v1`; Space, Campaign, and channel routes retain their existing scoped chat hosts.
 
 ## Key files
 
@@ -67,6 +68,8 @@ The history list has its own persisted drag width and collapse state. Dragging i
 - Program, Campaign, and Space context is selected through a Program → Campaign → Space tree.
 - Programs, campaigns, and spaces are ordered case-insensitively from A to Z by default in shared selectors; user-managed board ordering remains unchanged.
 - Chat work context keeps high-level Brain, Team, and Flows selection while providing direct navigation into each detailed workspace. Meetings navigates to the meeting workspace.
+
+- **2026-08-12:** Sidebar navigation must never replace an open chat. It may offer the target screen's remembered conversation non-blockingly; an empty pane starts fresh. The association stays shell-local and does not extend the conversation API or compete with Space/channel scope ownership.
 
 - **2026-08-11:** Cross-chat recall uses a dedicated authenticated, read-only action rather than broadening current-thread context. Search is scoped by the resolved user and organization, matches active conversation titles, and returns only bounded excerpts needed to identify the thread.
 - **2026-08-11:** Full-screen Home chat keeps the page-restore control visible in the top-right corner. Restoring a recent page preserves the conversation id so chat transitions back to the attached drawer instead of losing the current thread.
