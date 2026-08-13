@@ -165,10 +165,11 @@ export class MeetingsPrecallDriveAgendaService {
       meeting_date: input.event.start,
       sections: {
         agenda: sections.agenda,
+        this_week: sections.this_week,
+        next_week: sections.next_week,
         performance: sections.performance!,
         wins: sections.wins,
         campaign_notes: sections.campaign_notes,
-        other_updates: sections.other_updates,
         needs_blockers: sections.needs_blockers,
       },
       insert_ad_previews: true,

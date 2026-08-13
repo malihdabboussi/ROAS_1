@@ -26,6 +26,9 @@ describe('buildCampaignNotesFromPrepContext', () => {
     expect(result).toContain('25 leads')
     expect(result).toContain('CPL improved 20.0%')
     expect(result).toContain('Hold through event.')
+    expect(result).not.toContain('State:')
+    expect(result).not.toContain('Evidence:')
+    expect(result).not.toContain('Recommended next move:')
   })
 
   it('pairs differently named webinar records and gives held VSL work a specific gate', () => {
@@ -49,7 +52,17 @@ describe('buildCampaignNotesFromPrepContext', () => {
     })
 
     expect(result).toContain('18 leads')
-    expect(result).toContain('Name the readiness owner and date')
-    expect(result).toContain('reactivate only after funnel QA')
+    expect(result).toContain('Complete final QA before launch')
+    expect(result).toContain('Keep this on hold until funnel QA')
+  })
+
+  it('does not expose missing data plumbing in client-facing campaign notes', () => {
+    const result = buildCampaignNotesFromPrepContext({
+      active_campaigns: [{ name: 'Creative Test', status: 'active' }],
+      latest_meta_performance: { performance: { campaigns: [] } },
+    })
+
+    expect(result).toContain('Creative Test')
+    expect(result).not.toMatch(/not supplied|source|snapshot|diagnos/i)
   })
 })
