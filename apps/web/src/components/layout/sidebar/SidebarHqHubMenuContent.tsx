@@ -10,7 +10,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react'
-import { Brain, ChevronDown, Inbox, ListChecks, Users } from 'lucide-react'
+import { Brain, BriefcaseBusiness, ChevronDown, Inbox, ListChecks, Users } from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import type { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
@@ -155,6 +155,24 @@ export function SidebarHqHubMenuContent({
             setWorkContext({ surface: 'general' })
             handleNavigate()
           }}
+          onHover={() => scheduleClose()}
+        />
+
+        <SidebarHqHubMenuNavRow
+          href="/clients"
+          active={c.pathname.startsWith('/clients')}
+          icon={<Users />}
+          label="Clients"
+          onNavigate={handleNavigate}
+          onHover={() => scheduleClose()}
+        />
+
+        <SidebarHqHubMenuNavRow
+          href="/client-campaigns"
+          active={c.pathname.startsWith('/client-campaigns')}
+          icon={<BriefcaseBusiness />}
+          label="Client Campaigns"
+          onNavigate={handleNavigate}
           onHover={() => scheduleClose()}
         />
 

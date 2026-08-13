@@ -4,6 +4,41 @@ export type PageGraderClient = {
   id: string
   name: string
   status: string
+  display_name?: string
+  pipeline_stage?: string
+  website_url?: string | null
+  logo_url?: string | null
+  industry?: string | null
+  overview?: string | null
+  happy_factor?: number | null
+  account_manager?: { id: string; name: string; email: string | null } | null
+  counts?: { campaigns: number; open_tasks: number; open_requests: number }
+  [key: string]: unknown
+}
+
+export type PageGraderClientCampaign = {
+  id: string
+  client_id: string
+  name: string
+  status: string | null
+  platform_status: string
+  start_date: string | null
+  end_date: string | null
+  event_date: string | null
+  budget_amount: number | null
+  budget_type: string | null
+  currency: string | null
+  next_action: string | null
+  clients?: Record<string, unknown>
+  [key: string]: unknown
+}
+
+export type PageGraderClientWorkspace = {
+  client: PageGraderClient & Record<string, unknown>
+  campaigns: PageGraderClientCampaign[]
+  tasks: Array<Record<string, unknown>>
+  requests: Array<Record<string, unknown>>
+  provenance: { source: 'page_grader'; generated_at: string }
 }
 
 export type PageGraderWorkResult = {
@@ -168,6 +203,73 @@ export class PageGraderIntegration {
     }
     const body = (await res.json()) as { clients?: PageGraderClient[] }
     return Array.isArray(body.clients) ? body.clients : []
+  }
+
+  async getClientWorkspace(
+    baseUrl: string,
+    apiKey: string,
+    clientId: string,
+  ): Promise<PageGraderClientWorkspace> {
+    const url = `${this.normalizeBaseUrl(baseUrl)}/clients/${encodeURIComponent(clientId)}/workspace`
+    const body = await this.requestJson(baseUrl, apiKey, url, 'GET')
+    const workspace = body.workspace
+    if (!workspace || typeof workspace !== 'object' || Array.isArray(workspace)) {
+      throw new BadRequestException('The ROAS Portal client workspace response was invalid')
+    }
+    return workspace as PageGraderClientWorkspace
+  }
+
+  async listClientCampaigns(
+    baseUrl: string,
+    apiKey: string,
+    opts?: { q?: string; clientId?: string; limit?: number; offset?: number },
+  ): Promise<PageGraderClientCampaign[]> {
+    const params = new URLSearchParams()
+    if (opts?.q?.trim()) params.set('q', opts.q.trim())
+    if (opts?.clientId?.trim()) params.set('client_id', opts.clientId.trim())
+    if (opts?.limit) params.set('limit', String(opts.limit))
+    if (opts?.offset) params.set('offset', String(opts.offset))
+    const url = `${this.normalizeBaseUrl(baseUrl)}/client-campaigns${params.size ? `?${params}` : ''}`
+    const body = await this.requestJson(baseUrl, apiKey, url, 'GET')
+    return Array.isArray(body.campaigns) ? (body.campaigns as PageGraderClientCampaign[]) : []
+  }
+
+  async updateWorkspaceEntity(
+    baseUrl: string,
+    apiKey: string,
+    path: string,
+    patch: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    const url = `${this.normalizeBaseUrl(baseUrl)}${path}`
+    return this.requestJson(baseUrl, apiKey, url, 'PATCH', patch)
+  }
+
+  private async requestJson(
+    _baseUrl: string,
+    apiKey: string,
+    url: string,
+    method: 'GET' | 'PATCH',
+    body?: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    const res = await fetch(url, {
+      method,
+      headers: this.authHeaders(apiKey),
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    })
+    const text = await res.text().catch(() => '')
+    let parsed: Record<string, unknown> = {}
+    try {
+      parsed = text ? (JSON.parse(text) as Record<string, unknown>) : {}
+    } catch {
+      parsed = { error: text }
+    }
+    if (!res.ok) {
+      const message = typeof parsed.error === 'string' ? parsed.error : text || res.statusText
+      throw new BadRequestException(
+        `The ROAS Portal workspace request failed (${res.status}): ${message}`,
+      )
+    }
+    return parsed
   }
 
   async listTaskTypes(baseUrl: string, apiKey: string): Promise<PageGraderTaskType[]> {
