@@ -87,6 +87,7 @@ export class SlackObservationRepository {
   async upsertEvents(
     supabase: SupabaseClient,
     events: SlackObservationEventInput[],
+    options: { replaceDuplicates?: boolean } = {},
   ): Promise<{ inserted: number; duplicates: number }> {
     if (events.length === 0) return { inserted: 0, duplicates: 0 }
     const { data, error } = await supabase
@@ -107,7 +108,7 @@ export class SlackObservationRepository {
         })),
         {
           onConflict: 'org_id,slack_team_id,channel_id,message_ts',
-          ignoreDuplicates: true,
+          ignoreDuplicates: options.replaceDuplicates !== true,
         },
       )
       .select('id')
@@ -220,7 +221,7 @@ export class SlackObservationRepository {
     let query = supabase
       .from('slack_observation_events')
       .select(
-        'channel_id, channel_name, message_ts, thread_ts, sender_slack_user_id, text, is_bot, observed_at',
+        'channel_id, channel_name, message_ts, thread_ts, sender_slack_user_id, text, is_bot, observed_at, metadata',
       )
       .eq('org_id', input.orgId)
       .eq('slack_team_id', input.slackTeamId)
@@ -249,7 +250,7 @@ export class SlackObservationRepository {
     const { data, error } = await supabase
       .from('slack_observation_events')
       .select(
-        'channel_id, channel_name, message_ts, thread_ts, sender_slack_user_id, text, is_bot, observed_at',
+        'channel_id, channel_name, message_ts, thread_ts, sender_slack_user_id, text, is_bot, observed_at, metadata',
       )
       .eq('org_id', input.orgId)
       .eq('slack_team_id', input.slackTeamId)

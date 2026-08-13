@@ -50,6 +50,30 @@ describe('page-grader-brain-package-build', () => {
     expect(a).toBe(b)
   })
 
+  it('ingests recent Page Grader Slack messages as channel knowledge', () => {
+    const withSlack = {
+      ...pkg,
+      slack_messages: [
+        {
+          slack_ts: '1786640400.123456',
+          author: 'Bryce',
+          date: '2026-08-13T11:00:00.000Z',
+          text: 'The webinar ads are still not live.',
+        },
+      ],
+    }
+    const sources = buildPageGraderSourceMemories(withSlack, 'client-1')
+    const slack = sources.find((memory) => memory.source_type === 'page_grader_slack')
+    expect(slack).toMatchObject({
+      source_id: '1786640400.123456',
+      source_title: 'Slack — Bryce — 2026-08-13T11:00:00.000Z',
+      metadata: expect.objectContaining({ needs_roas_extraction: true }),
+    })
+    expect(computePageGraderPackageContentHash(withSlack)).not.toBe(
+      computePageGraderPackageContentHash(pkg),
+    )
+  })
+
   it('maps Page Grader memory provenance to Campaign Knowledge source types', () => {
     expect(
       resolvePageGraderKnowledgeSourceType({

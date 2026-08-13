@@ -21,7 +21,7 @@ import {
 import { PageGraderApiService } from './page-grader-api.service'
 import { PageGraderBrainImportService } from './page-grader-brain-import.service'
 
-type MappedClientRow = {
+export type MappedClientRow = {
   userId: string
   orgId: string | null
   clientId: string
@@ -541,6 +541,16 @@ export class PageGraderBrainSyncService {
     }
 
     return resolved
+  }
+
+  async authorizeWebhookClient(secret: string, clientId: string): Promise<MappedClientRow[]> {
+    const normalizedSecret = secret.trim()
+    if (!normalizedSecret) throw new UnauthorizedException('Missing webhook signature')
+    const mapped = await this.findMappedClientsByWebhookSecret(normalizedSecret, clientId)
+    if (mapped.length === 0) {
+      throw new UnauthorizedException('Unknown webhook secret or unmapped client')
+    }
+    return mapped
   }
 }
 

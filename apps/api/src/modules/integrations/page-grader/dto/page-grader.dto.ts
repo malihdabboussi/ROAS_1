@@ -160,6 +160,29 @@ export const PageGraderBrainPackageWebhookSchema = z.object({
 
 export type PageGraderBrainPackageWebhookDto = z.infer<typeof PageGraderBrainPackageWebhookSchema>
 
+export const PageGraderSlackMessageSchema = z.object({
+  ts: z.string().regex(/^\d{10,}(?:\.\d+)?$/, 'ts must be a Slack timestamp'),
+  thread_ts: z
+    .string()
+    .regex(/^\d{10,}(?:\.\d+)?$/)
+    .nullable()
+    .optional(),
+  sender_slack_user_id: z.string().min(1).max(80).nullable().optional(),
+  author_name: z.string().min(1).max(300).nullable().optional(),
+  text: z.string().min(1).max(40_000),
+  is_bot: z.boolean().optional().default(false),
+  date: z.string().datetime().optional(),
+})
+
+export const PageGraderSlackMessagesWebhookSchema = z.object({
+  client_id: z.string().uuid(),
+  client_name: z.string().min(1).max(500),
+  channel_id: z.string().min(1).max(80),
+  channel_name: z.string().min(1).max(300).nullable().optional(),
+  synced_at: z.string().datetime().optional(),
+  messages: z.array(PageGraderSlackMessageSchema).min(1).max(100),
+})
+
 export const PageGraderWorkStatusWebhookSchema = z.object({
   client_id: z.string().uuid(),
   space_item_id: z.string().uuid(),

@@ -1,4 +1,4 @@
-export type SlackObservationSource = 'webhook' | 'reconciliation' | 'backfill'
+export type SlackObservationSource = 'webhook' | 'reconciliation' | 'backfill' | 'page_grader'
 
 export type SlackObservationEventInput = {
   orgId: string
@@ -23,6 +23,7 @@ export type SlackObservationMessage = {
   text: string
   is_bot: boolean
   observed_at: string
+  metadata: Record<string, unknown>
 }
 
 export type SlackObservationCursor = {

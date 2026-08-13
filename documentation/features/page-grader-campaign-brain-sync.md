@@ -20,6 +20,7 @@ Mapped Page Grader clients sync continuously into ROAS campaign brains. Page Gra
    - **PG push:** after Client Intel refresh / Send to ROAS-BRAIN, Page Grader POSTs `{ client_id, content_hash }` to `/api/integrations/page-grader/webhooks/brain-package` (`x-page-grader-signature`)
    - **ROAS hourly catch-up:** `POST /api/internal/brain/import-jobs/enqueue-due` and `POST /api/internal/page-grader/brain-sync/catch-up` re-fetch packages for mapped clients and ingest when hash differs
    - **Manual Re-sync:** Map clients row + Brain canvas Import → “Re-sync from Page Grader” (`force: true`)
+   - **Slack event handoff:** Page Grader's ten-minute Slack source sync POSTs active-client messages to `/api/integrations/page-grader/webhooks/slack-messages`. ROAS authenticates the existing client mapping, upserts by workspace + channel + Slack timestamp into `slack_observation_events`, and attaches deterministic client/campaign metadata before Pixel analyzes it. Native ROAS Slack capture and Page Grader delivery therefore converge on one event instead of creating two signals.
 4. Every successful pull reconciles each Page Grader `client_campaign` into its own ROAS Space under the client campaign container. It creates or updates a source-linked **Campaign Brief** doc and carries over the Page Grader Meta ad account and Meta campaign mapping. Campaign Spaces include Overview, Docs, Missions, Calendar, Meta Ads, and Funnels views.
    - Reconciliation mirrors the Page Grader campaign screen: soft-deleted rows and `archived` campaigns are excluded.
    - A previously synced inactive Space is deleted only when it still contains generated Page Grader content exclusively. Spaces with operator-added content are retained for review.
@@ -71,6 +72,8 @@ catch-up reconciles campaign Spaces and stamps the new fingerprint without repea
 Brain ingestion pipeline.
 
 Page Grader env for push: `ROAS_BRAIN_WEBHOOK_URL`, `ROAS_BRAIN_WEBHOOK_SECRET` (must match the connected ROAS user’s webhook secret).
+
+`ROAS_SLACK_INGEST_WEBHOOK_URL` is optional. When omitted, Page Grader derives the Slack endpoint by replacing `/brain-package` in `ROAS_BRAIN_WEBHOOK_URL` with `/slack-messages`. Recent Page Grader Slack messages are also included in the Brain package as `page_grader_slack` channel knowledge, so the event loop gets immediate evidence while campaign Brain retains durable context. Closed or archived Page Grader clients are excluded before either handoff.
 
 ## Post-call work bridge
 

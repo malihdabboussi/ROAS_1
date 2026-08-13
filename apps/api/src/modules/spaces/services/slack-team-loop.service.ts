@@ -8,18 +8,19 @@ import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.s
 import { SlackObservationService } from '../../slack/services/slack-observation.service'
 import { SlackSenderResolverService } from '../../slack/services/slack-sender-resolver.service'
 import { SlackTeamLoopRepository } from '../repositories/slack-team-loop.repository'
+import type { SlackCadenceConfig } from './slack-team-cadence'
 import {
   analyzeSlackTeamMessages,
   selectSlackTeamBriefingSignals,
   type SlackTeamPerson,
   type SlackTeamSignal,
 } from './slack-team-loop-analysis'
+import { formatSlackObservationText } from './slack-team-loop-context'
 import { slackSignalHasLaterHumanReply } from './slack-team-loop-evidence'
 import { slackTeamLimitDayStartIso } from './slack-team-loop-time'
 import { validatePersonalMomentEvidence } from './slack-team-personal-moment'
 import { SlackTeamSignalDeliveryService } from './slack-team-signal-delivery.service'
 import { SlackTeamSignalRoutingService } from './slack-team-signal-routing.service'
-import type { SlackCadenceConfig } from './slack-team-cadence'
 
 export type SlackTeamLoopKind =
   | 'brain_compounding'
@@ -197,7 +198,7 @@ export class SlackTeamLoopService {
         user: message.is_bot
           ? 'PIXEL_BOT'
           : String(message.sender_slack_user_id ?? 'UNKNOWN_SENDER'),
-        text: message.text.trim(),
+        text: formatSlackObservationText(message),
       }))
     const pendingLastMessageTs = pending.events.reduce(
       (latest, message) =>

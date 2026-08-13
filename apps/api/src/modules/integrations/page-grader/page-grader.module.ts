@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { BrainModule } from '../../brain/brain.module'
 import { McpModule } from '../../mcp/mcp.module'
+import { SlackModule } from '../../slack/slack.module'
 import { SpacesModule } from '../../spaces/spaces.module'
 import { IntegrationConnectionsRepository } from '../repositories/integration-connections.repository'
 import { PageGraderAgencyController } from './controllers/page-grader-agency.controller'
@@ -19,9 +20,10 @@ import { PageGraderMcpBootstrapService } from './services/page-grader-mcp-bootst
 import { PageGraderMcpRegistrationService } from './services/page-grader-mcp-registration.service'
 import { PageGraderMeetingSyncService } from './services/page-grader-meeting-sync.service'
 import { PageGraderSendWorkService } from './services/page-grader-send-work.service'
+import { PageGraderSlackIngestService } from './services/page-grader-slack-ingest.service'
 
 @Module({
-  imports: [ConfigModule, SpacesModule, BrainModule, McpModule],
+  imports: [ConfigModule, SpacesModule, BrainModule, McpModule, SlackModule],
   controllers: [
     PageGraderAgencyController,
     PageGraderController,
@@ -37,6 +39,7 @@ import { PageGraderSendWorkService } from './services/page-grader-send-work.serv
     PageGraderBrainImportService,
     PageGraderBrainSyncService,
     PageGraderMeetingSyncService,
+    PageGraderSlackIngestService,
     PageGraderMcpBootstrapService,
     PageGraderMcpRegistrationService,
     PageGraderBrainSyncRepository,
