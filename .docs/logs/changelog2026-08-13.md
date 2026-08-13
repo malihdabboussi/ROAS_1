@@ -99,3 +99,13 @@ Why: Live voice content rendered against the left edge, blocked navigation back 
 Impact: Voice transcripts now occupy the central chat column, an active call can remain connected while the user works in the chat, and the first transient session-affinity failure recovers without user action.
 
 Files: `apps/web/src/features/brain/hooks/use-brain-live-session.ts`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVoiceLiveTranscript.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVoiceSessionView.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVoiceSessionView.test.tsx`
+
+## [2026-08-13 15:56] - [FIX]
+
+What: Anchored the Home composer’s focused Choose Space and Plugins panels to the shelf buttons that opened them.
+
+Why: The focused panels were correctly scoped after the composer cleanup, but they still calculated their position from the separate `+` trigger.
+
+Impact: Each shelf shortcut now opens its panel beside the clicked control while the standard `+` catalog remains unchanged.
+
+Files: `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/features/studio/components/ChatInput/chat-input.types.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-plus-menu.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-plus-controller.ts`, related tests.

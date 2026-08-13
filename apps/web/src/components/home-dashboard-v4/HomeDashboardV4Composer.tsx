@@ -50,7 +50,9 @@ export function HomeDashboardV4Composer() {
   const [connectedProviders, setConnectedProviders] = useState<string[]>([])
   const [sending, setSending] = useState(false)
   const setTextRef = useRef<((text: string) => void) | null>(null)
-  const openAddMenuRef = useRef<((submenu?: ComposerPlusSubmenu) => void) | null>(null)
+  const openAddMenuRef = useRef<
+    ((submenu?: ComposerPlusSubmenu, anchor?: HTMLElement) => void) | null
+  >(null)
   const quickStart = useShellChatQuickStart(setTextRef)
   const isOrgOnly = useOrgStore((s) => s.isOrgOnly)
 
@@ -286,7 +288,7 @@ export function HomeDashboardV4Composer() {
         <div className="gap-spacing-1 flex min-w-0 flex-wrap items-center">
           <button
             type="button"
-            onClick={() => openAddMenuRef.current?.('space')}
+            onClick={(event) => openAddMenuRef.current?.('space', event.currentTarget)}
             className="body-4 text-muted-foreground hover:text-foreground hover:bg-hover-subtle rounded-spacing-2 gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex max-w-52 shrink-0 items-center transition-colors"
             aria-label="Choose Space"
           >
@@ -298,7 +300,7 @@ export function HomeDashboardV4Composer() {
           </button>
           <button
             type="button"
-            onClick={() => openAddMenuRef.current?.('integrations')}
+            onClick={(event) => openAddMenuRef.current?.('integrations', event.currentTarget)}
             className="body-4 text-muted-foreground hover:text-foreground hover:bg-hover-subtle rounded-spacing-2 gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex shrink-0 items-center transition-colors"
             aria-label="Plugins and integrations"
           >

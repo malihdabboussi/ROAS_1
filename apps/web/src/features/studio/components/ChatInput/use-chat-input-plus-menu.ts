@@ -33,6 +33,7 @@ export function useChatInputPlusMenu() {
     skills: null,
     access: null,
   })
+  const externalSubmenuAnchorRef = useRef<HTMLElement | null>(null)
   const plusSubmenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const updatePlusMenuPosition = useCallback(() => {
@@ -56,7 +57,8 @@ export function useChatInputPlusMenu() {
   }, [])
 
   const updatePlusSubmenuPosition = useCallback((submenu: Exclude<ComposerPlusSubmenu, null>) => {
-    const anchor = plusSubmenuAnchorRefs.current[submenu] ?? plusButtonRef.current
+    const externalAnchor = externalSubmenuAnchorRef.current
+    const anchor = externalAnchor ?? plusSubmenuAnchorRefs.current[submenu] ?? plusButtonRef.current
     if (!anchor) return
     const rect = anchor.getBoundingClientRect()
     const menuWidth =
@@ -68,6 +70,16 @@ export function useChatInputPlusMenu() {
       measured && measured > 0 ? measured : fallbackHeight,
       window.innerHeight - VIEWPORT_MARGIN * 2,
     )
+    if (externalAnchor) {
+      const { top, left } = positionFloatingMenuFromAnchorRect(rect, {
+        menuWidth,
+        menuHeight,
+        gap: PLUS_MENU_GAP,
+        viewportMargin: VIEWPORT_MARGIN,
+      })
+      setPlusSubmenuPos((prev) => (prev.top === top && prev.left === left ? prev : { top, left }))
+      return
+    }
     const openRight =
       rect.right + PLUS_SUBMENU_GAP + menuWidth + VIEWPORT_MARGIN <= window.innerWidth
     const left = openRight
@@ -90,6 +102,7 @@ export function useChatInputPlusMenu() {
     setPlusMenuRootVisible(true)
     setPlusSubmenu(null)
     setPlusInfoCard(null)
+    externalSubmenuAnchorRef.current = null
   }, [])
 
   const togglePlusMenu = useCallback(() => {
@@ -97,10 +110,12 @@ export function useChatInputPlusMenu() {
     setPlusMenuRootVisible(true)
     setPlusSubmenu(null)
     setPlusInfoCard(null)
+    externalSubmenuAnchorRef.current = null
   }, [])
 
   const openPlusMenu = useCallback(
-    (submenu?: ComposerPlusSubmenu) => {
+    (submenu?: ComposerPlusSubmenu, anchor?: HTMLElement) => {
+      externalSubmenuAnchorRef.current = submenu && anchor ? anchor : null
       setPlusMenuOpen(true)
       setPlusMenuRootVisible(!submenu)
       setPlusInfoCard(null)
