@@ -103,8 +103,7 @@ export function ShellRightPanel({
     if (!linkedMeeting) return
     closeArtifactViewer()
     setWorkAreaOpen(true)
-    // The meetings route resolves this id against agenda call items.
-    router.push(homeMeetingHref({ id: linkedMeeting.meetingItemId }))
+    router.push(homeMeetingHref({ id: linkedMeeting.meetingItemId }, linkedMeeting.spaceId))
   }, [closeArtifactViewer, linkedMeeting, router, setWorkAreaOpen])
   const { mounted, visible } = useRightEdgePresence(open)
   const scopeVisible = showScope && Boolean(conversationId)

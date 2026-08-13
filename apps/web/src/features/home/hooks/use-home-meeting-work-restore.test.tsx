@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => {
     // effects that key on it and hides ordering bugs.
     router: { replace },
     fetchCalendarAgenda: vi.fn(),
+    fetchMeetingWorkspaceEvent: vi.fn(),
   }
 })
 
@@ -35,6 +36,10 @@ vi.mock('@/lib/cache/keyed-fetch-cache', () => ({
 
 vi.mock('@/lib/services/calendar-api', () => ({
   fetchCalendarAgenda: (...args: unknown[]) => mocks.fetchCalendarAgenda(...args),
+}))
+
+vi.mock('@/features/home/services/meeting-workspace-api', () => ({
+  fetchMeetingWorkspaceEvent: (...args: unknown[]) => mocks.fetchMeetingWorkspaceEvent(...args),
 }))
 
 const event: CalendarAgendaEvent = {
@@ -59,6 +64,7 @@ describe('useHomeMeetingWorkRestore', () => {
     mocks.pathname = '/home/meetings'
     mocks.params = new URLSearchParams()
     mocks.fetchCalendarAgenda.mockResolvedValue({ success: true, events: [] })
+    mocks.fetchMeetingWorkspaceEvent.mockResolvedValue(event)
     useShellStore.setState({ pendingWorkRestore: null })
     vi.clearAllMocks()
   })
@@ -134,6 +140,29 @@ describe('useHomeMeetingWorkRestore', () => {
 
     await waitFor(() => expect(open).toHaveBeenCalledWith(event))
     expect(mocks.replace).not.toHaveBeenCalled()
+  })
+
+  it('resolves a linked meeting directly from its space instead of the current agenda window', async () => {
+    const linkedEvent = {
+      ...event,
+      id: 'call-9',
+      related: {
+        space_id: 'space-1',
+        call_item_id: 'call-9',
+        title: 'Support huddle',
+        recording_url: null,
+        follow_ups: [],
+      },
+    }
+    mocks.params = new URLSearchParams('meeting=call-9&space=space-1')
+    mocks.fetchMeetingWorkspaceEvent.mockResolvedValue(linkedEvent)
+    const open = vi.fn()
+
+    renderHook(() => useHomeMeetingWorkRestore(open, null))
+
+    await waitFor(() => expect(open).toHaveBeenCalledWith(linkedEvent))
+    expect(mocks.fetchMeetingWorkspaceEvent).toHaveBeenCalledWith('space-1', 'call-9')
+    expect(mocks.fetchCalendarAgenda).not.toHaveBeenCalled()
   })
 
   it('strips an unresolvable meeting param instead of looping', async () => {

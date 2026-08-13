@@ -247,3 +247,53 @@ Why: Read-only client cards and local-only task updates did not satisfy the two-
 Impact: Account managers can maintain client and campaign details from ROAS, task status stays aligned across ROAS, The ROAS Portal, and ClickUp, and campaign dates render consistently in local time without nested interactive controls.
 
 Files: Page Grader agency controller/service; agency client edit components, formatting helpers, message config, focused tests; Page Grader `roas-api` and work-status push helper; `documentation/features/page-grader-campaign-brain-sync.md`.
+
+## [2026-08-12 22:34] - [FIX]
+
+What: Made meeting-conversation workspace links preserve the owning Space ID and restore the persisted meeting directly from its workspace bundle.
+
+Why: Links previously discarded the Space ID and searched only the current calendar window, so older recorded meetings could remain stuck while the app could not rediscover their call item.
+
+Impact: Opening a meeting workspace from a restored conversation now targets the exact persisted meeting and remains durable across direct navigation or refresh; normal agenda links keep their existing calendar restore path.
+
+Files: apps/web/src/components/shell/ShellRightPanel.tsx, apps/web/src/features/home/components/HomeMeetingDetailHost.tsx, apps/web/src/features/home/hooks/use-home-meeting-work-restore.ts, apps/web/src/features/home/lib/home-meeting-work-restore.ts, apps/web/src/features/home/services/meeting-workspace-api.ts, focused tests
+
+## [2026-08-12 22:52] - [FIX]
+
+What: Removed duplicate meeting-chat discovery and archival from the meeting workspace GET path.
+
+Why: Opening a persisted meeting synchronously scanned JSON natural keys and mutated duplicate conversations before returning the workspace; the production query took roughly 12 seconds and could leave the meeting screen unresolved. Duplicate cleanup already runs in the meeting merge workflow.
+
+Impact: Meeting workspaces return their stored bundle without an unrelated maintenance job blocking the user-facing read, while explicit meeting merge/ingestion flows retain duplicate-chat cleanup.
+
+Files: apps/api/src/modules/meetings/services/meeting-workspace.service.ts, apps/api/src/modules/meetings/services/meeting-workspace.service.test.ts
+
+## [2026-08-12 22:15] - [FIX]
+
+What: Restored Pixel's post-call workflow to the Fathom Meeting Log in Shadow mode and added an explicit Client-only execution scope across automation schemas, runtime gating, UI configuration, and existing production automation migration.
+
+Why: The meeting-workspace migration removed the old post-call action while preserving the drafting service, leaving completed calls unprocessed; the restored path must exclude internal and personal calls before Pixel or Slack runs.
+
+Impact: Canonical Client calls produce grounded, Brain-aware recap and action-item proposals in Shadow. Personal, Team, Executive, Partner, Sales, and unclassified calls record a scope mismatch and send nothing. Channel posting remains disabled pending review.
+
+Files: apps/api/src/modules/space-templates, apps/api/src/modules/spaces, apps/web/src/features/spaces, packages/api-shared/src/types/flow-capabilities.ts, supabase/migrations/20260813053000_restore_client_post_call_pixel_shadow.sql, documentation/features/meeting-follow-up-slack.md
+
+## [2026-08-12 22:20] - [FIX]
+
+What: Corrected meeting-kind precedence for mostly-external client calls and expanded Pixel post-call grounding to load the portal agenda, canonical recap, transcript documents, and Brain context.
+
+Why: Production client calls were mislabeled when their summaries discussed sales, and the dedicated post-call draft path previously received only the call row and follow-up records instead of the complete meeting workspace and Brain context.
+
+Impact: Explicit prospect/demo and partner titles retain their categories; ordinary client reviews remain Client even when sales is discussed. Pixel drafts now use the same agenda, recap, transcript, and durable context visible in the portal.
+
+Files: apps/api/src/modules/meetings/domain/meeting-call-kind.ts, apps/agent-api/src/modules/task-agent/repositories/task-agent.repository.ts, apps/agent-api/src/modules/task-agent/services/task-agent-suggestions.service.ts, focused tests, documentation/features/meeting-follow-up-slack.md
+
+## [2026-08-12 22:27] - [FEATURE]
+
+What: Added a separate fail-closed channel-delivery control to Pixel's client post-call action, preconfigured the internal recap channel, exposed the setting in Flow configuration, and covered the explicit automatic-send path.
+
+Why: Review recaps must reach Slack DMs during testing without allowing the production Flow to post into `#roas-call-recaps-internal` before approval.
+
+Impact: Shadow remains send-free, Active defaults to the existing review DM, and the recap channel can receive Pixel's stored draft only after an administrator deliberately switches channel delivery to Automatic.
+
+Files: apps/api/src/modules/spaces, apps/api/src/modules/space-templates, apps/web/src/features/spaces, packages/api-shared/src/types/flow-capabilities.ts, supabase/migrations/20260813053000_restore_client_post_call_pixel_shadow.sql, documentation/features/meeting-follow-up-slack.md
