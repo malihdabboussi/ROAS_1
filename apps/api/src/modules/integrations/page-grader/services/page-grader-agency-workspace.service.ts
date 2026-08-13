@@ -18,6 +18,14 @@ type CampaignSpaceMapping = {
   space_title: string
 }
 
+type BrainImportResult = {
+  campaignSpaces?: Array<{
+    page_grader_campaign_id?: unknown
+    space_id?: unknown
+    title?: unknown
+  }>
+}
+
 @Injectable()
 export class PageGraderAgencyWorkspaceService {
   constructor(
@@ -78,29 +86,19 @@ export class PageGraderAgencyWorkspaceService {
 
   async getClient(supabase: SupabaseClient, userId: string, scope: RequestScope, clientId: string) {
     const workspace = await this.api.getClientWorkspace(userId, clientId)
-    let scopeMap = await this.api.getClientScopeMap(userId)
-    if (!scopeMap[clientId]) {
-      await this.brainImport.importClientBrain(
-        supabase,
-        userId,
-        {
-          client_id: clientId,
-          campaignName: workspace.client.display_name || workspace.client.name,
-        },
-        scope.orgId,
-      )
-      scopeMap = await this.api.getClientScopeMap(userId)
-    }
-    const mapping = scopeMap[clientId]
-    if (!mapping) throw new BadRequestException('The client could not be mapped into ROAS')
-    const campaignSpaces = await this.reconcileCampaignSpaces(
+    const imported = await this.brainImport.importClientBrain(
       supabase,
       userId,
-      scope.orgId ?? null,
-      mapping,
-      workspace.campaigns,
-      clientId,
+      {
+        client_id: clientId,
+        campaignName: workspace.client.display_name || workspace.client.name,
+      },
+      scope.orgId,
     )
+    const scopeMap = await this.api.getClientScopeMap(userId)
+    const mapping = scopeMap[clientId]
+    if (!mapping) throw new BadRequestException('The client could not be mapped into ROAS')
+    const campaignSpaces = readImportedCampaignSpaces(imported)
     return { ...workspace, mapping, campaign_spaces: campaignSpaces }
   }
 
@@ -125,24 +123,31 @@ export class PageGraderAgencyWorkspaceService {
     const output: Array<PageGraderClientCampaign & { roas_space_id: string | null }> = []
     for (const [clientId, rows] of grouped) {
       let mapping = scopeMap[clientId]
+      let spaces: CampaignSpaceMapping[] = []
       if (!mapping) {
-        await this.brainImport.importClientBrain(
+        const imported = await this.brainImport.importClientBrain(
           supabase,
           userId,
           { client_id: clientId },
           scope.orgId,
         )
+        spaces = readImportedCampaignSpaces(imported)
         mapping = (await this.api.getClientScopeMap(userId))[clientId]
       }
       if (!mapping) continue
-      const spaces = await this.reconcileCampaignSpaces(
-        supabase,
-        userId,
-        scope.orgId ?? null,
-        mapping,
-        rows,
-        clientId,
-      )
+      if (spaces.length === 0) {
+        spaces = await this.loadCampaignSpaceMappings(supabase, mapping)
+      }
+      const knownIds = new Set(spaces.map((row) => row.page_grader_campaign_id))
+      if (rows.some((row) => !knownIds.has(row.id))) {
+        const imported = await this.brainImport.importClientBrain(
+          supabase,
+          userId,
+          { client_id: clientId },
+          scope.orgId,
+        )
+        spaces = readImportedCampaignSpaces(imported)
+      }
       const byExternalId = new Map(spaces.map((row) => [row.page_grader_campaign_id, row.space_id]))
       output.push(
         ...rows.map((row) => ({ ...row, roas_space_id: byExternalId.get(row.id) ?? null })),
@@ -168,13 +173,9 @@ export class PageGraderAgencyWorkspaceService {
     return this.api.updateWorkspaceEntity(userId, path, input.patch)
   }
 
-  private async reconcileCampaignSpaces(
+  private async loadCampaignSpaceMappings(
     supabase: SupabaseClient,
-    userId: string,
-    orgId: string | null,
     mapping: ClientScope,
-    campaigns: PageGraderClientCampaign[],
-    clientId: string,
   ): Promise<CampaignSpaceMapping[]> {
     const { data: existing, error } = await supabase
       .from('spaces')
@@ -183,80 +184,20 @@ export class PageGraderAgencyWorkspaceService {
       .is('deleted_at', null)
     if (error)
       throw new BadRequestException(`Could not load client campaign Spaces: ${error.message}`)
-    const byExternalId = new Map<
-      string,
-      { id: string; title: string; schema: Record<string, unknown> }
-    >()
+    const mappings: CampaignSpaceMapping[] = []
     for (const row of existing ?? []) {
       const schema = recordValue(row.schema)
       const customData = recordValue(schema.custom_data)
       const externalId = stringValue(customData.page_grader_campaign_id)
       if (externalId) {
-        byExternalId.set(externalId, {
-          id: String(row.id),
-          title: String(row.title),
-          schema,
+        mappings.push({
+          page_grader_campaign_id: externalId,
+          space_id: String(row.id),
+          space_title: String(row.title),
         })
       }
     }
-
-    const resolved: CampaignSpaceMapping[] = []
-    for (const campaign of campaigns) {
-      const found = byExternalId.get(campaign.id)
-      if (found) {
-        const nextSchema = mergeClientCampaignSpaceSchema(found.schema, clientId, campaign)
-        const description =
-          stringValue(campaign.campaign_overview, campaign.description) ||
-          'Client Campaign synced from Page Grader.'
-        const { error: updateError } = await supabase
-          .from('spaces')
-          .update({
-            title: campaign.name,
-            description,
-            schema: nextSchema,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', found.id)
-        if (updateError) {
-          throw new BadRequestException(
-            `Could not refresh client campaign Space: ${updateError.message}`,
-          )
-        }
-        resolved.push({
-          page_grader_campaign_id: campaign.id,
-          space_id: found.id,
-          space_title: campaign.name,
-        })
-        continue
-      }
-      const { data: created, error: createError } = await supabase
-        .from('spaces')
-        .insert({
-          user_id: userId,
-          org_id: orgId,
-          campaign_id: mapping.campaign_id,
-          title: campaign.name,
-          description:
-            stringValue(campaign.campaign_overview, campaign.description) ||
-            `Client Campaign synced from Page Grader.`,
-          visibility: orgId ? 'team' : 'private',
-          is_template: false,
-          schema: buildClientCampaignSpaceSchema(clientId, campaign),
-        })
-        .select('id, title')
-        .single()
-      if (createError) {
-        throw new BadRequestException(
-          `Could not create client campaign Space: ${createError.message}`,
-        )
-      }
-      resolved.push({
-        page_grader_campaign_id: campaign.id,
-        space_id: String(created.id),
-        space_title: String(created.title),
-      })
-    }
-    return resolved
+    return mappings
   }
 
   private async loadMappedEntities(supabase: SupabaseClient, mappings: ClientScope[]) {
@@ -279,57 +220,22 @@ export class PageGraderAgencyWorkspaceService {
   }
 }
 
-function buildClientCampaignSpaceSchema(clientId: string, campaign: PageGraderClientCampaign) {
-  return {
-    version: 1,
-    icon: 'megaphone',
-    fields: [
-      { id: 'title', name: 'Name', type: 'text', system: true, required: true },
-      { id: 'status', name: 'Status', type: 'select', system: true, required: true },
-      { id: 'priority', name: 'Priority', type: 'select', system: true, required: true },
-      { id: 'assignee', name: 'Assignee', type: 'assignee', system: true },
-      { id: 'due_date', name: 'Due Date', type: 'date', system: true },
-      { id: 'event_date', name: 'Event Date', type: 'date' },
-      { id: 'budget', name: 'Budget', type: 'number' },
-      { id: 'tags', name: 'Tags', type: 'multi_select', system: true, options: [] },
-    ],
-    views: [
-      { id: 'campaign-overview', type: 'campaign_overview', name: 'Overview' },
-      { id: 'list', type: 'list', name: 'Work' },
-      { id: 'calendar', type: 'calendar', name: 'Calendar' },
-      { id: 'docs', type: 'docs', name: 'Docs' },
-    ],
-    custom_data: {
-      source: 'page_grader',
-      space_role: 'client_campaign',
-      page_grader_client_id: clientId,
-      page_grader_campaign_id: campaign.id,
-      campaign_status: campaign.status,
-      event_date: campaign.event_date,
-      budget_amount: campaign.budget_amount,
-      budget_type: campaign.budget_type,
-      currency: campaign.currency,
-      last_synced_at: new Date().toISOString(),
-    },
-  }
-}
-
-function mergeClientCampaignSpaceSchema(
-  schema: Record<string, unknown>,
-  clientId: string,
-  campaign: PageGraderClientCampaign,
-) {
-  const canonical = buildClientCampaignSpaceSchema(clientId, campaign)
-  return {
-    ...canonical,
-    ...schema,
-    fields: Array.isArray(schema.fields) ? schema.fields : canonical.fields,
-    views: Array.isArray(schema.views) ? schema.views : canonical.views,
-    custom_data: {
-      ...recordValue(schema.custom_data),
-      ...canonical.custom_data,
-    },
-  }
+function readImportedCampaignSpaces(value: unknown): CampaignSpaceMapping[] {
+  if (!value || typeof value !== 'object') return []
+  const spaces = (value as BrainImportResult).campaignSpaces
+  if (!Array.isArray(spaces)) return []
+  return spaces.flatMap((row) => {
+    const campaignId = stringValue(row.page_grader_campaign_id)
+    const spaceId = stringValue(row.space_id)
+    if (!campaignId || !spaceId) return []
+    return [
+      {
+        page_grader_campaign_id: campaignId,
+        space_id: spaceId,
+        space_title: stringValue(row.title) || 'Client Campaign',
+      },
+    ]
+  })
 }
 
 function recordValue(value: unknown): Record<string, unknown> {

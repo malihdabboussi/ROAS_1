@@ -77,4 +77,48 @@ describe('PageGraderAgencyWorkspaceService', () => {
       { status: 'completed' },
     )
   })
+
+  it('uses the canonical Brain import to refresh client campaign Spaces', async () => {
+    const api = {
+      getClientWorkspace: vi.fn().mockResolvedValue({
+        client: { id: 'client-1', name: 'Clogged Club' },
+        campaigns: [{ id: 'page-grader-campaign-1', name: 'Launch' }],
+      }),
+      getClientScopeMap: vi.fn().mockResolvedValue({
+        'client-1': { campaign_id: 'roas-campaign-1', space_id: 'space-general' },
+      }),
+    }
+    const brainImport = {
+      importClientBrain: vi.fn().mockResolvedValue({
+        campaignSpaces: [
+          {
+            page_grader_campaign_id: 'page-grader-campaign-1',
+            space_id: 'space-campaign-1',
+            title: 'Launch',
+          },
+        ],
+      }),
+    }
+    const service = new PageGraderAgencyWorkspaceService(api as never, brainImport as never)
+    const result = await service.getClient(
+      {} as never,
+      'user-1',
+      { orgId: 'org-1' } as never,
+      'client-1',
+    )
+
+    expect(brainImport.importClientBrain).toHaveBeenCalledWith(
+      {},
+      'user-1',
+      { client_id: 'client-1', campaignName: 'Clogged Club' },
+      'org-1',
+    )
+    expect(result.campaign_spaces).toEqual([
+      {
+        page_grader_campaign_id: 'page-grader-campaign-1',
+        space_id: 'space-campaign-1',
+        space_title: 'Launch',
+      },
+    ])
+  })
 })

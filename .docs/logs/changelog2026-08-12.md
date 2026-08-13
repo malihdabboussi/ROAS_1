@@ -227,3 +227,13 @@ Why: The five-client production rollout finished Space reconciliation but Vercel
 Impact: Campaign/Meta-only drift completes within the API request window while changed or empty Brain content still follows the full repair path.
 
 Files: apps/api/src/modules/brain/services/page-grader-client-import.service.ts, apps/api/src/modules/integrations/page-grader/services/page-grader-brain-import.service.ts, apps/api/src/modules/integrations/page-grader/services/page-grader-brain-sync.service.ts, focused tests, documentation/features/page-grader-campaign-brain-sync.md
+
+## [2026-08-12 22:29] - [FIX]
+
+What: Routed the agency client and Client Campaigns views through the existing Page Grader Brain import campaign-Space synchronizer and removed the duplicate Space creation/schema path.
+
+Why: The latest main branch introduced the canonical campaign Space reconciler, so retaining a second writer in the new workspace could produce inconsistent schemas, miss campaign briefs, and handle archived campaigns differently.
+
+Impact: Opening a client now refreshes its Brain package and campaign Spaces through one canonical path; the campaign index reuses existing mappings and triggers the canonical import only when a campaign Space is missing.
+
+Files: apps/api/src/modules/integrations/page-grader/services/page-grader-agency-workspace.service.ts, apps/api/src/modules/integrations/page-grader/services/__tests__/page-grader-agency-workspace.service.test.ts
