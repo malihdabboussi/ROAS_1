@@ -183,22 +183,49 @@ export class PageGraderAgencyWorkspaceService {
       .is('deleted_at', null)
     if (error)
       throw new BadRequestException(`Could not load client campaign Spaces: ${error.message}`)
-    const byExternalId = new Map<string, { id: string; title: string }>()
+    const byExternalId = new Map<
+      string,
+      { id: string; title: string; schema: Record<string, unknown> }
+    >()
     for (const row of existing ?? []) {
       const schema = recordValue(row.schema)
       const customData = recordValue(schema.custom_data)
       const externalId = stringValue(customData.page_grader_campaign_id)
-      if (externalId) byExternalId.set(externalId, { id: String(row.id), title: String(row.title) })
+      if (externalId) {
+        byExternalId.set(externalId, {
+          id: String(row.id),
+          title: String(row.title),
+          schema,
+        })
+      }
     }
 
     const resolved: CampaignSpaceMapping[] = []
     for (const campaign of campaigns) {
       const found = byExternalId.get(campaign.id)
       if (found) {
+        const nextSchema = mergeClientCampaignSpaceSchema(found.schema, clientId, campaign)
+        const description =
+          stringValue(campaign.campaign_overview, campaign.description) ||
+          'Client Campaign synced from Page Grader.'
+        const { error: updateError } = await supabase
+          .from('spaces')
+          .update({
+            title: campaign.name,
+            description,
+            schema: nextSchema,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', found.id)
+        if (updateError) {
+          throw new BadRequestException(
+            `Could not refresh client campaign Space: ${updateError.message}`,
+          )
+        }
         resolved.push({
           page_grader_campaign_id: campaign.id,
           space_id: found.id,
-          space_title: found.title,
+          space_title: campaign.name,
         })
         continue
       }
@@ -283,6 +310,24 @@ function buildClientCampaignSpaceSchema(clientId: string, campaign: PageGraderCl
       budget_type: campaign.budget_type,
       currency: campaign.currency,
       last_synced_at: new Date().toISOString(),
+    },
+  }
+}
+
+function mergeClientCampaignSpaceSchema(
+  schema: Record<string, unknown>,
+  clientId: string,
+  campaign: PageGraderClientCampaign,
+) {
+  const canonical = buildClientCampaignSpaceSchema(clientId, campaign)
+  return {
+    ...canonical,
+    ...schema,
+    fields: Array.isArray(schema.fields) ? schema.fields : canonical.fields,
+    views: Array.isArray(schema.views) ? schema.views : canonical.views,
+    custom_data: {
+      ...recordValue(schema.custom_data),
+      ...canonical.custom_data,
     },
   }
 }

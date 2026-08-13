@@ -2,17 +2,15 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import {
-  ArrowLeft,
-  CalendarDays,
-  CheckCircle2,
-  CircleAlert,
-  ExternalLink,
-  FolderKanban,
-} from 'lucide-react'
+import { ArrowLeft, ExternalLink, FolderKanban } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
-import { fetchAgencyClient, type AgencyClientWorkspace } from '@/lib/agency-clients'
+import {
+  fetchAgencyClient,
+  updateAgencyWorkspaceEntity,
+  type AgencyClientWorkspace,
+} from '@/lib/agency-clients'
 import { cn } from '@/lib/utils/cn'
+import { AgencyClientWorkRows } from './AgencyClientWorkRows'
 
 type Tab = 'overview' | 'campaigns' | 'tasks' | 'requests'
 
@@ -39,6 +37,7 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('overview')
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   useEffect(() => {
     void fetchAgencyClient(clientId)
@@ -67,6 +66,32 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
       ),
     [workspace],
   )
+
+  const updateStatus = async (kind: 'task' | 'request', entityId: string, status: string) => {
+    if (!workspace) return
+    setUpdatingId(entityId)
+    try {
+      await updateAgencyWorkspaceEntity(clientId, {
+        kind,
+        entity_id: entityId,
+        patch: { status },
+      })
+      setWorkspace((current) => {
+        if (!current) return current
+        const key = kind === 'task' ? 'tasks' : 'requests'
+        return {
+          ...current,
+          [key]: current[key].map((row) =>
+            String(row.id) === entityId ? { ...row, status } : row,
+          ),
+        }
+      })
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : `Could not update ${kind}`)
+    } finally {
+      setUpdatingId(null)
+    }
+  }
 
   if (loading)
     return (
@@ -204,7 +229,12 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
                 View all tasks
               </button>
             </div>
-            <WorkRows rows={openTasks.slice(0, 5)} kind="task" />
+            <AgencyClientWorkRows
+              rows={openTasks.slice(0, 5)}
+              kind="task"
+              updatingId={updatingId}
+              onStatusChange={updateStatus}
+            />
           </section>
         </div>
       ) : null}
@@ -263,12 +293,22 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
 
       {tab === 'tasks' ? (
         <section className="surface-card rounded-spacing-3 border-border p-spacing-5 border">
-          <WorkRows rows={workspace.tasks} kind="task" />
+          <AgencyClientWorkRows
+            rows={workspace.tasks}
+            kind="task"
+            updatingId={updatingId}
+            onStatusChange={updateStatus}
+          />
         </section>
       ) : null}
       {tab === 'requests' ? (
         <section className="surface-card rounded-spacing-3 border-border p-spacing-5 border">
-          <WorkRows rows={workspace.requests} kind="request" />
+          <AgencyClientWorkRows
+            rows={workspace.requests}
+            kind="request"
+            updatingId={updatingId}
+            onStatusChange={updateStatus}
+          />
         </section>
       ) : null}
     </main>
@@ -289,52 +329,6 @@ function Info({ label, value }: { label: string; value: string }) {
     <div>
       <dt className="body-4 text-muted-foreground">{label}</dt>
       <dd className="text-foreground capitalize">{value}</dd>
-    </div>
-  )
-}
-
-function WorkRows({
-  rows,
-  kind,
-}: {
-  rows: Array<Record<string, unknown>>
-  kind: 'task' | 'request'
-}) {
-  if (rows.length === 0)
-    return (
-      <p className="body-3 text-muted-foreground py-spacing-5 text-center">No {kind}s to show.</p>
-    )
-  return (
-    <div className="mt-spacing-3 divide-border divide-y">
-      {rows.map((row) => {
-        const status = text(row, 'status') || text(row, 'clickup_status') || 'Open'
-        const closed = isClosed(status)
-        return (
-          <div key={String(row.id)} className="gap-spacing-3 py-spacing-3 flex items-start">
-            {closed ? (
-              <CheckCircle2 className="icon-md text-success mt-spacing-1 shrink-0" />
-            ) : (
-              <CircleAlert className="icon-md text-muted-foreground mt-spacing-1 shrink-0" />
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="body-3 text-foreground font-medium">
-                {text(row, kind === 'task' ? 'task_description' : 'title') || 'Untitled'}
-              </p>
-              <p className="body-4 text-muted-foreground mt-spacing-1">
-                {[status, text(row, 'assignee_name') || text(row, 'assigned_to_name')]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </p>
-            </div>
-            {row.due_date ? (
-              <span className="body-4 text-muted-foreground gap-spacing-1 flex items-center">
-                <CalendarDays className="icon-xs" />
-                {formatDate(row.due_date)}
-              </span>
-            ) : null}
-          </div>
-        )
-      })}
     </div>
   )
 }

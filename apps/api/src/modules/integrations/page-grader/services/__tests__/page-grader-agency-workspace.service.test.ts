@@ -61,4 +61,20 @@ describe('PageGraderAgencyWorkspaceService', () => {
       { event_date: '2026-09-01' },
     )
   })
+
+  it('writes task status updates to the canonical Page Grader path', async () => {
+    const api = { updateWorkspaceEntity: vi.fn().mockResolvedValue({ task: { id: 'task-1' } }) }
+    const service = new PageGraderAgencyWorkspaceService(api as never, {} as never)
+    await service.patchEntity('user-1', {
+      clientId: 'client-1',
+      kind: 'task',
+      entityId: 'task-1',
+      patch: { status: 'completed' },
+    })
+    expect(api.updateWorkspaceEntity).toHaveBeenCalledWith(
+      'user-1',
+      '/clients/client-1/tasks/task-1',
+      { status: 'completed' },
+    )
+  })
 })
