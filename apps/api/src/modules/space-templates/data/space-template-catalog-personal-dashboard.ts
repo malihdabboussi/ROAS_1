@@ -249,6 +249,15 @@ const fathomMeetingLog: SpaceTemplateAutomationSeed = {
       instructions:
         'Only turn payload.action_items into tasks. If action_items is empty, return {"tasks":[]}. Do not invent tasks from the transcript or summary.',
     },
+    {
+      type: 'request_slack_follow_up_confirm',
+      meeting_scope: 'client',
+      delivery_mode: 'shadow',
+      channel_delivery: 'disabled',
+      destination_channel_id: 'C0BN7P2BWRM',
+      dm_email: 'dylan@dylanvanas.com',
+      confirm_reaction: 'white_check_mark',
+    },
   ],
   sort_order: 2,
 }

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { AgentRuntimeReadinessService } from '../../agent-sync/services/agent-runtime-readiness.service'
+import { BrainContextService } from '../../brain/services/brain-context.service'
 import type { OpenClawInputMessage, SendFn } from '../../chat/services/openclaw-proxy.service'
 import { OpenClawProxyService } from '../../chat/services/openclaw-proxy.service'
 import { AgentRuntimeService } from '../../shared/services/agent-runtime.service'
@@ -57,6 +58,7 @@ export class TaskAgentSuggestionsService {
     private readonly agentRuntime: AgentRuntimeService,
     private readonly runtimeReadiness: AgentRuntimeReadinessService,
     private readonly inputService?: TaskAgentInputService,
+    private readonly brainContext?: BrainContextService,
   ) {}
 
   async draftPostCall(payload: PostCallDraftPayload): Promise<{ draft: PostCallDraft }> {
@@ -94,6 +96,30 @@ export class TaskAgentSuggestionsService {
       orgId: payload.org_id ?? undefined,
     })
     const skillContext = this.inputService?.buildSlashSkillContext(skills) ?? ''
+    const call = asRecord(payload.payload.call)
+    const meetingItemId = stringValue(call.id)
+    const meetingContext = meetingItemId
+      ? await this.repository.loadPostCallMeetingContext(meetingItemId, payload.space_id)
+      : null
+    const groundingQuery = [
+      stringValue(call.title),
+      stringValue(call.description),
+      JSON.stringify(payload.payload.follow_ups ?? []),
+    ]
+      .filter(Boolean)
+      .join('\n')
+    const brainSummary = this.brainContext
+      ? await this.brainContext
+          .buildFullContext(
+            payload.owner_user_id,
+            runtime.agentKey,
+            groundingQuery,
+            payload.org_id,
+            false,
+            true,
+          )
+          .catch(() => '')
+      : ''
     const instructions = [
       skillContext,
       'Return JSON only. Do not include markdown fences or commentary.',
@@ -106,14 +132,43 @@ export class TaskAgentSuggestionsService {
     const send: SendFn = async (type, data) => {
       if (type === 'content_delta' && typeof data.content === 'string') content += data.content
     }
-    const result = await this.openClaw.streamCompletion({
-      input: [
+    const input: OpenClawInputMessage[] = [
+      ...(meetingContext
+        ? [
+            {
+              type: 'message' as const,
+              role: 'user' as const,
+              content: `[PORTAL MEETING CONTEXT]\n${JSON.stringify(meetingContext, null, 2)}`,
+            },
+            {
+              type: 'message' as const,
+              role: 'assistant' as const,
+              content: 'Portal agenda, recap, and transcript context received.',
+            },
+          ]
+        : []),
+      ...(brainSummary
+        ? [
+            {
+              type: 'message' as const,
+              role: 'user' as const,
+              content: `[BRAIN CONTEXT]\n${brainSummary}`,
+            },
+            {
+              type: 'message' as const,
+              role: 'assistant' as const,
+              content: 'Brain context received.',
+            },
+          ]
+        : []),
         {
           type: 'message',
           role: 'user',
           content: JSON.stringify({ payload: payload.payload }, null, 2),
         },
-      ],
+      ]
+    const result = await this.openClaw.streamCompletion({
+      input,
       instructions,
       send,
       agentId: runtime.gatewayAgentId,
@@ -300,6 +355,16 @@ export class TaskAgentSuggestionsService {
       }),
     }
   }
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
+}
+
+function stringValue(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
 }
 
 function parseSuggestedMeetingTitle(raw: string): string | null {

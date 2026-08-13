@@ -211,6 +211,65 @@ describe('MeetingFollowUpSlackConfirmService', () => {
     })
   })
 
+  it('posts directly to the configured recap channel only when automatic delivery is explicit', async () => {
+    repo.findItemsByIds.mockResolvedValue([])
+    repo.findItemById.mockResolvedValue({
+      id: 'call-client',
+      title: 'Client weekly sync',
+      custom_data: { fathom_url: 'https://fathom.video/calls/client-sync' },
+    })
+    slackTools.sendMessage.mockResolvedValue({ success: true, ts: '1710000000.000300' })
+    repo.updateItem.mockResolvedValue({})
+
+    const result = await service.requestConfirm({
+      supabase: {} as never,
+      userId: 'user-1',
+      orgId: 'org-1',
+      spaceId: 'space-1',
+      callItemId: 'call-client',
+      callTitle: 'Client weekly sync',
+      suggestionIds: [],
+      deliveryMode: 'active',
+      channelDelivery: 'automatic',
+      destinationChannelId: 'C0BN7P2BWRM',
+    })
+
+    expect(slackTools.findUserByEmail).not.toHaveBeenCalled()
+    expect(slackTools.openDm).not.toHaveBeenCalled()
+    expect(slackTools.sendMessage).toHaveBeenCalledWith(
+      expect.anything(),
+      'user-1',
+      'org-1',
+      expect.objectContaining({
+        channel_id: 'C0BN7P2BWRM',
+        text: expect.stringMatching(/Call report[\s\S]*Good connecting today/),
+      }),
+    )
+    expect(slackTools.sendMessage.mock.calls[0][3].text).not.toContain('Proposed shareable recap')
+    expect(repo.updateItem).toHaveBeenCalledWith(
+      expect.anything(),
+      'user-1',
+      'space-1',
+      'call-client',
+      expect.objectContaining({
+        custom_data: expect.objectContaining({
+          slack_follow_up_confirm: expect.objectContaining({
+            status: 'approved',
+            channel_delivery: 'automatic',
+            channel_id: 'C0BN7P2BWRM',
+            message_ts: '1710000000.000300',
+          }),
+        }),
+      }),
+      'org-1',
+    )
+    expect(result).toMatchObject({
+      sent: true,
+      channel_delivery: 'automatic',
+      channel_id: 'C0BN7P2BWRM',
+    })
+  })
+
   it('creates one Shadow message proposal per matched assignee', async () => {
     repo.findItemsByIds.mockResolvedValue([
       {

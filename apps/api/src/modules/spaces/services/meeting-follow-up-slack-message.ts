@@ -272,13 +272,13 @@ export function buildConfirmMessage(input: {
 export function buildProposedShareableRecapMessage(input: {
   shareableDraft: string
   fathomUrl?: string | null
+  proposed?: boolean
 }): string {
   const draft = stripTrailingRecordingFooter(markdownLinksToSlack(input.shareableDraft.trim()))
   if (!draft) return ''
   const fathomUrl = String(input.fathomUrl ?? '').trim()
   return [
-    '*Proposed shareable recap*',
-    '',
+    ...(input.proposed === false ? [] : ['*Proposed shareable recap*', '']),
     ...(fathomUrl ? [`<${fathomUrl}|Call report>`, ''] : []),
     draft,
   ].join('\n')

@@ -131,15 +131,21 @@ export function resolveMeetingCallKind(input: {
   titleHint?: string | null
   summary?: string | null
 }): MeetingCallKind {
-  const blob = `${String(input.titleHint ?? '')}\n${String(input.summary ?? '')}`
+  const title = String(input.titleHint ?? '')
+  const blob = `${title}\n${String(input.summary ?? '')}`
   const { external, known } = countExternalAttendees(input.attendees, input.identity)
   const mostlyExternal = known > 0 && external / known >= 0.5
   const ownerPresent = ownerOnCall(input)
   const participantCount = Math.max(known, input.attendees.length, input.attendeeLabels.length)
 
+  // The title expresses the meeting's purpose more reliably than transcript
+  // discussion. Client reviews routinely discuss sales and partnerships; those
+  // words in the summary must not turn a client attendee into a prospect/vendor.
+  if (SALES_RE.test(title) && external > 0) return 'sales'
+  if (external > 0 && PARTNER_RE.test(title)) return 'partner'
+  if (external > 0 && (CLIENT_RE.test(blob) || mostlyExternal)) return 'client'
   if (SALES_RE.test(blob) && external > 0) return 'sales'
   if (external > 0 && PARTNER_RE.test(blob)) return 'partner'
-  if (external > 0 && (CLIENT_RE.test(blob) || mostlyExternal)) return 'client'
   if (EXECUTIVE_RE.test(blob)) return 'executive'
   if (ownerPresent && (participantCount <= 1 || PRIVATE_RE.test(blob))) return 'private'
   return 'team'
