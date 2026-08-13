@@ -188,16 +188,17 @@ export function HomeDashboardV4Composer() {
       if (sending) return
       setSending(true)
       try {
-        let targetId: string | null = targetSpaceId
-        let targetCampaignId: string | null = activeCampaignId
-        if (!targetId && !targetCampaignId) {
+        let targetId: string | null =
+          targetSpaceId ?? (targetCampaignId ? null : (defaultGeneralSpace?.id ?? null))
+        let resolvedCampaignId: string | null = activeCampaignId
+        if (!targetId && !resolvedCampaignId) {
           if (isOrgOnly) {
             targetId = spaces[0]?.id ?? null
-            targetCampaignId = spaces[0]?.campaign_id ?? null
+            resolvedCampaignId = spaces[0]?.campaign_id ?? null
           } else {
             const generalSpace = normalizeSpaceLegacyViews(await ensureGeneralSpace())
             targetId = generalSpace.id
-            targetCampaignId = generalSpace.campaign_id ?? null
+            resolvedCampaignId = generalSpace.campaign_id ?? null
             cachedSpaces.mutate((prev) => {
               const current = prev ?? []
               return current.some((space) => space.id === generalSpace.id)
@@ -225,11 +226,11 @@ export function HomeDashboardV4Composer() {
           references,
           modelSettings,
           workContext:
-            targetId || targetCampaignId
+            targetId || resolvedCampaignId
               ? {
                   surface: 'spaces',
                   ...(targetId ? { spaceId: targetId } : {}),
-                  campaignId: targetCampaignId,
+                  campaignId: resolvedCampaignId,
                 }
               : { surface: 'general' },
         })
@@ -244,6 +245,7 @@ export function HomeDashboardV4Composer() {
       activeAgentKey,
       activeCampaignId,
       clearMeetingContext,
+      defaultGeneralSpace?.id,
       isOrgOnly,
       router,
       seedComposer,
