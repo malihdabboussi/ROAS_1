@@ -1,4 +1,5 @@
 import { Controller, Logger, Post, Req, Res } from '@nestjs/common'
+import { waitUntil } from '@vercel/functions'
 import type { Request, Response } from 'express'
 import { PageGraderBrainSyncService } from '../services/page-grader-brain-sync.service'
 
@@ -17,8 +18,26 @@ export class PageGraderWebhooksController {
     ).trim()
 
     try {
-      const result = await this.sync.processWebhook(rawBody, signature)
-      res.status(200).json(result)
+      const { clientId, work } = await this.sync.beginWebhookProcessing(rawBody, signature)
+      res.status(202).json({ success: true, status: 'accepted', client_id: clientId })
+
+      const tracked = work.catch((error) =>
+        this.logger.warn(
+          `Page Grader brain-package processing failed for ${clientId}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        ),
+      )
+      try {
+        waitUntil(tracked)
+      } catch (error) {
+        this.logger.warn(
+          `waitUntil unavailable for Page Grader client ${clientId}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        )
+        void tracked
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       this.logger.warn(`Page Grader brain-package webhook failed: ${message}`)

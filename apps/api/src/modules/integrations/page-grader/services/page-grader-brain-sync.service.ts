@@ -79,6 +79,15 @@ export class PageGraderBrainSyncService {
   }
 
   async processWebhook(rawBody: string, signature: string) {
+    const { work } = await this.beginWebhookProcessing(rawBody, signature)
+    return work
+  }
+
+  /**
+   * Validate the Page Grader connection before acknowledging the webhook, then
+   * expose the expensive client bootstrap/Brain ingest as background work.
+   */
+  async beginWebhookProcessing(rawBody: string, signature: string) {
     const secret = signature.trim()
     if (!secret) throw new UnauthorizedException('Missing webhook signature')
 
@@ -90,20 +99,38 @@ export class PageGraderBrainSyncService {
     }
     if (!payload?.client_id) throw new BadRequestException('client_id is required')
 
-    const mapped = await this.findOrBootstrapClientsByWebhookSecret(secret, payload.client_id)
+    const connections = (await this.listConnectedPageGraderRows()).filter(
+      (row) => row.webhookSecret === secret,
+    )
+    if (connections.length === 0) throw new UnauthorizedException('Unknown webhook secret')
+
+    const work = this.processBrainPackagePayload(payload, secret, connections)
+    return { clientId: payload.client_id, work }
+  }
+
+  private async processBrainPackagePayload(
+    payload: PageGraderBrainPackageWebhookDto,
+    secret: string,
+    connections: ConnectedPageGraderRow[],
+  ) {
+    const mapped = await this.findOrBootstrapClientsByWebhookSecret(
+      secret,
+      payload.client_id,
+      undefined,
+      connections,
+    )
     if (mapped.length === 0) {
       throw new UnauthorizedException('Unknown webhook secret or unmapped client')
     }
 
-    const results: unknown[] = []
-    for (const row of mapped) {
-      results.push(
-        await this.syncMappedClient(row, {
+    const results = await Promise.all(
+      mapped.map((row) =>
+        this.syncMappedClient(row, {
           force: payload.force === true,
           expectedHash: payload.content_hash,
         }),
-      )
-    }
+      ),
+    )
     return { success: true, results }
   }
 
@@ -464,10 +491,11 @@ export class PageGraderBrainSyncService {
     secret: string,
     clientId: string,
     clientName?: string,
+    prefetchedConnections?: ConnectedPageGraderRow[],
   ): Promise<MappedClientRow[]> {
-    const connections = (await this.listConnectedPageGraderRows()).filter(
-      (row) => row.webhookSecret === secret,
-    )
+    const connections = (
+      prefetchedConnections ?? (await this.listConnectedPageGraderRows())
+    ).filter((row) => row.webhookSecret === secret)
     const resolved: MappedClientRow[] = []
 
     for (const connection of connections) {
