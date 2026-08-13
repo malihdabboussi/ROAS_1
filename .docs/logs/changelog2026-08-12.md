@@ -1,5 +1,15 @@
 # Changelog - [August 12, 2026]
 
+## [2026-08-12 22:15] - [FEATURE]
+
+What: Added first-class Clients and Client Campaigns workspaces to ROAS Platform, backed by an expanded Page Grader agency contract. Clients default to pipeline-stage grouping with an account-manager alternative, open into a concise overview/campaign/task/request card, and automatically bootstrap missing ROAS campaign/Brain mappings. Page Grader client campaigns reconcile to stable ROAS Spaces and appear in both all-campaign and by-client views.
+
+Why: Agency operators need Page Grader's client context and fulfillment work inside ROAS without switching through the embedded portal or maintaining duplicate client records.
+
+Impact: Page Grader remains authoritative for client, campaign, task, and request fields; ROAS remains authoritative for the mapped campaign container, Space experience, and Brain. Shared status updates write through Page Grader, existing Spaces refresh from current campaign fields, existing Brain/webhook sync continues, unmapped clients such as Clogged Club provision on first agency load, and SSO remains available.
+
+Files: Page Grader `roas-api`; ROAS Page Grader integration/controller/agency workspace service; Clients and Client Campaigns routes, navigation, API client, focused tests; `documentation/features/page-grader-campaign-brain-sync.md`.
+
 ## [2026-08-12 14:45] - [FIX]
 
 What: Released meeting-bound chat context when a different history conversation is selected, made meeting attachment select its canonical conversation atomically, removed the obsolete bulk history auto-title requester, deduplicated meeting history by `meeting_item_id`, and added persistent meeting/calendar versus regular-chat markers. New meeting conversations now store their actual title without the redundant `Meeting —` prefix, while legacy rows are normalized at display time.
@@ -217,6 +227,26 @@ Why: The five-client production rollout finished Space reconciliation but Vercel
 Impact: Campaign/Meta-only drift completes within the API request window while changed or empty Brain content still follows the full repair path.
 
 Files: apps/api/src/modules/brain/services/page-grader-client-import.service.ts, apps/api/src/modules/integrations/page-grader/services/page-grader-brain-import.service.ts, apps/api/src/modules/integrations/page-grader/services/page-grader-brain-sync.service.ts, focused tests, documentation/features/page-grader-campaign-brain-sync.md
+
+## [2026-08-12 22:29] - [FIX]
+
+What: Routed the agency client and Client Campaigns views through the existing Page Grader Brain import campaign-Space synchronizer and removed the duplicate Space creation/schema path.
+
+Why: The latest main branch introduced the canonical campaign Space reconciler, so retaining a second writer in the new workspace could produce inconsistent schemas, miss campaign briefs, and handle archived campaigns differently.
+
+Impact: Opening a client now refreshes its Brain package and campaign Spaces through one canonical path; the campaign index reuses existing mappings and triggers the canonical import only when a campaign Space is missing.
+
+Files: apps/api/src/modules/integrations/page-grader/services/page-grader-agency-workspace.service.ts, apps/api/src/modules/integrations/page-grader/services/__tests__/page-grader-agency-workspace.service.test.ts
+
+## [2026-08-12 23:05] - [FIX]
+
+What: Finished the agency workspace edit loop with client and campaign editors, Brain/Space refresh after canonical writes, ROAS-origin task status propagation to ClickUp and the linked Space action item, timezone-safe date-only rendering, and Portal-facing user copy.
+
+Why: Read-only client cards and local-only task updates did not satisfy the two-way agency workflow, and UTC parsing could show campaign events one day early.
+
+Impact: Account managers can maintain client and campaign details from ROAS, task status stays aligned across ROAS, The ROAS Portal, and ClickUp, and campaign dates render consistently in local time without nested interactive controls.
+
+Files: Page Grader agency controller/service; agency client edit components, formatting helpers, message config, focused tests; Page Grader `roas-api` and work-status push helper; `documentation/features/page-grader-campaign-brain-sync.md`.
 
 ## [2026-08-12 22:34] - [FIX]
 

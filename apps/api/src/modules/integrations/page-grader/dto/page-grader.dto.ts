@@ -24,6 +24,33 @@ export const ListPageGraderClientsSchema = z.object({
 
 export type ListPageGraderClientsDto = z.infer<typeof ListPageGraderClientsSchema>
 
+export const ListPageGraderAgencyClientsSchema = z.object({
+  q: z.string().max(200).optional(),
+  sync: z
+    .union([z.literal('true'), z.literal('false'), z.boolean()])
+    .optional()
+    .transform((value) => (typeof value === 'string' ? value === 'true' : value)),
+})
+
+export const ListPageGraderAgencyCampaignsSchema = z.object({
+  q: z.string().max(200).optional(),
+  client_id: z.string().uuid().optional(),
+})
+
+const NullableStringPatch = z.string().max(10_000).nullable()
+const WorkspacePatchSchema = z
+  .record(z.string(), z.unknown())
+  .refine((value) => Object.keys(value).length > 0 && Object.keys(value).length <= 20, {
+    message: 'patch must contain between 1 and 20 fields',
+  })
+
+export const PatchPageGraderWorkspaceEntitySchema = z.object({
+  kind: z.enum(['client', 'campaign', 'task', 'request']),
+  entity_id: z.string().uuid().optional(),
+  patch: WorkspacePatchSchema,
+  note: NullableStringPatch.optional(),
+})
+
 export const PageGraderWorkKindSchema = z.enum(['task', 'task_request'])
 
 export const PageGraderTaskTypeIdSchema = z.enum([

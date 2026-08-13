@@ -69,6 +69,8 @@ export async function middleware(request: NextRequest) {
     '/studio',
     '/dashboard',
     '/campaigns',
+    '/clients',
+    '/client-campaigns',
     '/all-tasks',
     '/brain',
     '/contacts',

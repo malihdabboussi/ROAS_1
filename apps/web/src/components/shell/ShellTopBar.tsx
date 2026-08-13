@@ -47,6 +47,10 @@ function breadcrumbFromPath(
   if (pathname.startsWith('/team/teams')) return { label: 'Teams', Icon: Users }
   if (pathname.startsWith('/team/people')) return { label: 'People', Icon: ContactRound }
   if (pathname.startsWith('/team')) return { label: 'Team', Icon: Users }
+  if (pathname.startsWith('/client-campaigns')) {
+    return { label: 'Client Campaigns', Icon: ListChecks }
+  }
+  if (pathname.startsWith('/clients')) return { label: 'Clients', Icon: ContactRound }
   if (pathname.startsWith('/brain')) return { label: 'Brain', Icon: Brain }
   if (pathname.startsWith('/chats')) return { label: 'Chats', Icon: MessageSquare }
   if (pathname.startsWith('/artifacts')) return { label: 'All Artifacts', Icon: Layers3 }

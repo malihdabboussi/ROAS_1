@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  BriefcaseBusiness,
   CalendarDays,
   CheckSquare,
   Ellipsis,
@@ -9,6 +10,7 @@ import {
   ListChecks,
   SendHorizontal,
   Star,
+  Users,
 } from 'lucide-react'
 import type { ManageRailItem } from './sidebar-types'
 
@@ -19,6 +21,20 @@ export const manageRailItems: ManageRailItem[] = [
     type: 'link',
     href: '/home',
     icon: <House className="icon-md" />,
+  },
+  {
+    id: 'clients',
+    label: 'Clients',
+    type: 'link',
+    href: '/clients',
+    icon: <Users className="icon-md" />,
+  },
+  {
+    id: 'client-campaigns',
+    label: 'Client Campaigns',
+    type: 'link',
+    href: '/client-campaigns',
+    icon: <BriefcaseBusiness className="icon-md" />,
   },
   {
     id: 'inbox',

@@ -42,6 +42,19 @@ Envelope fields:
 - `exported_at` — export timestamp
 - `package_version` — currently `"1"`
 
+## Agency Clients workspace
+
+ROAS now presents the shared agency hierarchy directly:
+
+- **Clients** lists active Page Grader clients and defaults to pipeline-stage grouping. Operators can switch to account-manager grouping and search across clients and managers.
+- **Client detail** is a quick account-manager briefing surface with Page Grader overview and client information plus current ROAS-mapped campaigns, fulfillment tasks, and client requests.
+- **Client Campaigns** lists every non-deleted Page Grader `client_campaign` in an all-campaign view or grouped by client. Date/event, budget, status, and next-action fields remain sourced from Page Grader.
+- A campaign row opens the stable ROAS Space whose `schema.custom_data.page_grader_campaign_id` matches the Page Grader campaign ID.
+
+The agency list bootstraps unmapped clients through the existing deterministic Brain import. This creates or reuses the ROAS client campaign container, General Space, campaign Brain, and scope mapping before reconciling campaign Spaces. The existing SSO embed is retained for Page Grader-only workflows.
+
+Shared client, campaign, task, and request edits use explicit allowlisted Page Grader write-through routes. Client and campaign writes dispatch the existing Brain webhook, with a direct ROAS import fallback when the webhook is unavailable. ROAS-origin task status changes also update the linked ClickUp task and return through the signed work-status webhook to the originating ROAS Space action item. Existing ROAS → Page Grader work creation remains in place, so the two products do not create competing canonical copies.
+
 ## Auth
 
 | Path          | Auth                                                                             |
@@ -91,21 +104,24 @@ Repeated manual requests use the deterministic Page Grader client and meeting ti
 
 ## Code map
 
-| Concern              | Location                                                                                                              |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Deterministic ingest | `apps/api/src/modules/brain/services/page-grader-brain-package-ingest.service.ts`                                     |
-| Brain vector repair  | `page-grader-memory-embedding.service.ts`, `scripts/roas/backfill-campaign-brain-embeddings.py`                       |
-| Create/import entry  | `page-grader-client-import.service.ts` → `page-grader-brain-import.service.ts`                                        |
-| Campaign Spaces      | `page-grader-campaign-space-schema.ts` → `page-grader-client-import.service.ts`                                       |
-| Webhook + catch-up   | `page-grader-brain-sync.service.ts`, `page-grader-webhooks.controller.ts`                                             |
-| Map clients UI       | `PageGraderClientScopeMapModal.tsx` / `PageGraderClientScopeMapRow.tsx`                                               |
-| Brain canvas Re-sync | `CampaignAddInfoImportMenu.tsx` / `CampaignAddInfoPanel.tsx`                                                          |
-| PG package + push    | `page-grader/.../roasBrainPackage.ts`, `roasBrainPush.ts`, `scheduled-brain-refresh`                                  |
-| Fathom meetings      | `page-grader-meeting-sync.service.ts`, `fathom-webhook.service.ts`, Page Grader `roas-api`                            |
-| Precall Drive agenda | `meetings-precall-prep.service.ts`, `meetings-precall-drive-agenda.service.ts`, `meetings-precall-agenda-sections.ts` |
+| Concern                 | Location                                                                                                              |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Deterministic ingest    | `apps/api/src/modules/brain/services/page-grader-brain-package-ingest.service.ts`                                     |
+| Brain vector repair     | `page-grader-memory-embedding.service.ts`, `scripts/roas/backfill-campaign-brain-embeddings.py`                       |
+| Create/import entry     | `page-grader-client-import.service.ts` → `page-grader-brain-import.service.ts`                                        |
+| Campaign Spaces         | `page-grader-campaign-space-schema.ts` → `page-grader-client-import.service.ts`                                       |
+| Webhook + catch-up      | `page-grader-brain-sync.service.ts`, `page-grader-webhooks.controller.ts`                                             |
+| Map clients UI          | `PageGraderClientScopeMapModal.tsx` / `PageGraderClientScopeMapRow.tsx`                                               |
+| Brain canvas Re-sync    | `CampaignAddInfoImportMenu.tsx` / `CampaignAddInfoPanel.tsx`                                                          |
+| PG package + push       | `page-grader/.../roasBrainPackage.ts`, `roasBrainPush.ts`, `scheduled-brain-refresh`                                  |
+| Fathom meetings         | `page-grader-meeting-sync.service.ts`, `fathom-webhook.service.ts`, Page Grader `roas-api`                            |
+| Precall Drive agenda    | `meetings-precall-prep.service.ts`, `meetings-precall-drive-agenda.service.ts`, `meetings-precall-agenda-sections.ts` |
+| Agency client workspace | `page-grader-agency-workspace.service.ts`, `features/agency-clients`, Page Grader `roas-api`                          |
 
 ## Decision Log
 
+- **2026-08-12:** Added first-class agency Clients and Client Campaigns navigation. Page Grader clients are projected as ROAS client campaign containers; Page Grader client campaigns are stable ROAS Spaces. Missing clients bootstrap through deterministic Brain import, campaign Spaces carry source IDs, and shared client/campaign/task/request changes write through the Page Grader API.
+- **2026-08-12:** Completed the agency workspace write loop. Client and campaign edits now refresh Brain and canonical campaign Spaces; ROAS-origin task status updates propagate through Page Grader to ClickUp and back to the linked ROAS action item; edit controls, date-only rendering, and Portal-facing labels were hardened for production use.
 - **2026-08-11:** Replaced the analyst-style timed precall report with a concise client-facing meeting workspace. The agenda now opens with native checkboxes, separates completed work from next-week priorities, presents raw performance per live campaign, uses plain-English wins and recommendations, and shows only genuine client needs. Internal source availability and preparation gaps can no longer appear in the generated document.
 - **2026-08-11:** Unified Page Grader manual agendas and ROAS precall prep behind the mapped client campaign. ROAS now supplies validated, client-safe, decision-ready content from bounded Brain, meeting, fulfillment, and cached Meta context; Page Grader remains the Google Docs/ad-preview writer. Missing mappings, lazy placeholder output, cross-client call context, failed Drive writes, and duplicate same-meeting requests no longer silently pass as successful agendas.
 - **2026-07-23:** Page Grader imports had two separate vector stores:
