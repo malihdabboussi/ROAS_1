@@ -47,7 +47,7 @@ export type AgencyClientWorkspace = {
   campaigns: AgencyClientCampaign[]
   tasks: Array<Record<string, unknown>>
   requests: Array<Record<string, unknown>>
-  mapping: NonNullable<AgencyClient['mapping']>
+  mapping: AgencyClient['mapping']
   campaign_spaces: Array<{
     page_grader_campaign_id: string
     space_id: string
@@ -64,9 +64,9 @@ export async function fetchAgencyClients(search = '', sync = true) {
   )
 }
 
-export async function fetchAgencyClient(clientId: string) {
+export async function fetchAgencyClient(clientId: string, sync = true) {
   const response = await backendGet<{ workspace: AgencyClientWorkspace }>(
-    `/api/integrations/page-grader/agency/clients/${encodeURIComponent(clientId)}`,
+    `/api/integrations/page-grader/agency/clients/${encodeURIComponent(clientId)}?sync=${sync}`,
   )
   return response.workspace
 }

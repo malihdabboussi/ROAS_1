@@ -21,6 +21,7 @@ import {
   type RequestScope,
 } from '@vibey/api-shared'
 import {
+  GetPageGraderAgencyClientSchema,
   ListPageGraderAgencyCampaignsSchema,
   ListPageGraderAgencyClientsSchema,
   PatchPageGraderWorkspaceEntitySchema,
@@ -55,10 +56,15 @@ export class PageGraderAgencyController {
     @Supabase() supabase: SupabaseClient,
     @OrgContext() scope: RequestScope,
     @Param('clientId') clientId: string,
+    @Query() query: Record<string, string | undefined>,
   ) {
+    const validation = GetPageGraderAgencyClientSchema.safeParse(query)
+    if (!validation.success) invalidRequest(validation.error.flatten())
     return {
       success: true,
-      workspace: await this.workspace.getClient(supabase, user.id, scope, clientId),
+      workspace: await this.workspace.getClient(supabase, user.id, scope, clientId, {
+        sync: validation.data.sync,
+      }),
     }
   }
 

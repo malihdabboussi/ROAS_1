@@ -46,14 +46,33 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    void fetchAgencyClient(clientId)
-      .then(setWorkspace)
-      .catch((reason) =>
+    let cancelled = false
+    const load = async () => {
+      try {
+        const initial = await fetchAgencyClient(clientId, false)
+        if (cancelled) return
+        setWorkspace(initial)
+        setLoading(false)
+
+        // Overview, tasks, and requests come directly from Page Grader and should be
+        // usable before a new client's ROAS campaign and Spaces finish reconciling.
+        void fetchAgencyClient(clientId, true)
+          .then((synced) => {
+            if (!cancelled) setWorkspace(synced)
+          })
+          .catch(() => undefined)
+      } catch (reason) {
+        if (cancelled) return
         setError(
           reason instanceof Error ? reason.message : AGENCY_CLIENT_MESSAGES.LOAD_CLIENT_ERROR,
-        ),
-      )
-      .finally(() => setLoading(false))
+        )
+        setLoading(false)
+      }
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
   }, [clientId])
 
   const openTasks = useMemo(

@@ -64,6 +64,29 @@ describe('AgencyClientDetailPage', () => {
 
   afterEach(cleanup)
 
+  it('shows the client workspace before the background Brain mapping pass completes', async () => {
+    const neverFinishes = new Promise<never>(() => undefined)
+    vi.mocked(fetchAgencyClient)
+      .mockResolvedValueOnce({ ...workspace, mapping: null, campaign_spaces: [] } as never)
+      .mockReturnValueOnce(neverFinishes)
+
+    render(<AgencyClientDetailPage clientId="11111111-1111-1111-1111-111111111111" />)
+
+    expect(await screen.findByText('CLOGGED CLUB')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(fetchAgencyClient).toHaveBeenNthCalledWith(
+        1,
+        '11111111-1111-1111-1111-111111111111',
+        false,
+      )
+      expect(fetchAgencyClient).toHaveBeenNthCalledWith(
+        2,
+        '11111111-1111-1111-1111-111111111111',
+        true,
+      )
+    })
+  })
+
   it('writes client edits through Page Grader and refreshes the ROAS workspace', async () => {
     render(<AgencyClientDetailPage clientId="11111111-1111-1111-1111-111111111111" />)
     await screen.findByText('CLOGGED CLUB')
@@ -83,7 +106,7 @@ describe('AgencyClientDetailPage', () => {
         }),
       )
     })
-    expect(fetchAgencyClient).toHaveBeenCalledTimes(2)
+    expect(fetchAgencyClient).toHaveBeenCalledTimes(3)
   })
 
   it('writes campaign edits and refreshes the canonical campaign Space mapping', async () => {
@@ -111,7 +134,7 @@ describe('AgencyClientDetailPage', () => {
         }),
       )
     })
-    expect(fetchAgencyClient).toHaveBeenCalledTimes(2)
+    expect(fetchAgencyClient).toHaveBeenCalledTimes(3)
   })
 
   it('keeps Page Grader request statuses in their native vocabulary', async () => {
