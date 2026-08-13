@@ -109,3 +109,13 @@ Why: The focused panels were correctly scoped after the composer cleanup, but th
 Impact: Each shelf shortcut now opens its panel beside the clicked control while the standard `+` catalog remains unchanged.
 
 Files: `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/features/studio/components/ChatInput/chat-input.types.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-plus-menu.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-plus-controller.ts`, related tests.
+
+## [2026-08-13 16:05] - [FEATURE]
+
+What: Added navigation-aware chat behavior for shared shell screens, including per-screen remembered conversations and a dismissible offer to switch when navigation finds a different prior chat. Removed the inert full-chat page restore control when no valid page exists.
+
+Why: Sidebar navigation could restore an unrelated conversation because multiple screens shared the general chat pane and its persisted conversation state.
+
+Impact: Navigation keeps the currently open chat, offers the destination screen's remembered chat without forcing a switch, and starts fresh when the open pane has no conversation. Space, Campaign, and channel chat scopes remain independent.
+
+Files: `apps/web/src/components/shell/shell-screen-chat.config.ts`, `apps/web/src/components/shell/use-shell-store.screen-chat.ts`, `apps/web/src/components/shell/use-shell-workspace-screen-chat.ts`, `apps/web/src/components/shell/ShellScreenChatPrompt.tsx`, `apps/web/src/components/shell/ShellChatDrawer.tsx`, `apps/web/src/components/shell/use-shell-store.ts`, related shell tests, `documentation/features/claude-chatgpt-shell.md`.

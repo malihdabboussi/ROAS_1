@@ -153,6 +153,8 @@ vi.mock('./use-shell-store', () => ({
       },
       openChatDrawer: vi.fn(),
       minimizeChatDrawer: vi.fn(),
+      handleScreenNavigation: vi.fn(),
+      recordScreenConversation: vi.fn(),
       requestNewChat: vi.fn(),
       setMenuMode: vi.fn(),
       setWorkAreaOpen: mocks.setWorkAreaOpen,

@@ -27,6 +27,7 @@ import {
 } from './use-shell-menu-dock'
 import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
 import { useShellStore } from './use-shell-store'
+import { useShellWorkspaceScreenChat } from './use-shell-workspace-screen-chat'
 
 export function ShellWorkspace({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? '/home'
@@ -66,19 +67,9 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   }, [pathname, setCollapsed])
 
   const spaceParam = searchParams.get('space')
-  const lastRouteKey = useRef<string | null>(null)
   const previousSimpleChatOpen = useRef(false)
   const conversationBeforeNewChatRef = useRef<string | null>(null)
-  useEffect(() => {
-    const routeKey = `${pathname}::${spaceParam ?? ''}`
-    if (lastRouteKey.current === null) {
-      lastRouteKey.current = routeKey
-      return
-    }
-    if (lastRouteKey.current === routeKey) return
-    lastRouteKey.current = routeKey
-    setWorkAreaOpen(true)
-  }, [pathname, spaceParam, setWorkAreaOpen])
+  useShellWorkspaceScreenChat(pathname, spaceParam)
 
   useEffect(() => {
     const justOpened = chatDrawerOpen && !previousSimpleChatOpen.current
@@ -163,27 +154,19 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
         <GlobalChatPanel shellSidebarChrome presentation="full" />
         {/* The summary panel opens in this corner — never stack the restore
             control over its header controls. */}
-        {rightPanelOpen ? null : (
+        {!rightPanelOpen && fullConversationRestoreTarget ? (
           <div className="p-spacing-3 z-dropdown absolute right-0 top-0">
             <button
               type="button"
               onClick={restorePageBesideFullConversation}
-              disabled={!fullConversationRestoreTarget}
-              className={cn(
-                'shell-topbar-icon-btn',
-                !fullConversationRestoreTarget && 'shell-topbar-icon-btn-disabled',
-              )}
+              className="shell-topbar-icon-btn"
               aria-label="Show page"
-              title={
-                fullConversationRestoreTarget
-                  ? `Show ${fullConversationRestoreTarget.title}`
-                  : 'No recent page to show'
-              }
+              title={`Show ${fullConversationRestoreTarget.title}`}
             >
               <PanelRightOpen aria-hidden />
             </button>
           </div>
-        )}
+        ) : null}
       </div>
     )
   }
