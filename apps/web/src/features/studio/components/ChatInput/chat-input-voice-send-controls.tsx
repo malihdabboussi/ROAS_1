@@ -102,26 +102,20 @@ export function ChatInputVoiceSendControls({
     updateMenuPosition()
   }, [clearCloseTimer, liveVoiceAvailable, updateMenuPosition])
 
-  const setDefaultVoiceMode = useCallback(
+  const runVoiceMode = useCallback(
     (mode: ComposerVoiceMode) => {
       setDefaultMode(mode)
       writeComposerVoiceDefault(spaceId, mode)
+      clearCloseTimer()
+      setMenuOpen(false)
       if (mode === 'live' && liveVoiceAvailable) {
-        clearCloseTimer()
-        setMenuOpen(false)
         onVoiceStart?.()
+      } else {
+        onStartRecording()
       }
     },
-    [clearCloseTimer, liveVoiceAvailable, onVoiceStart, spaceId],
+    [clearCloseTimer, liveVoiceAvailable, onStartRecording, onVoiceStart, spaceId],
   )
-
-  const runDefaultVoiceAction = useCallback(() => {
-    if (defaultMode === 'live' && liveVoiceAvailable) {
-      onVoiceStart?.()
-      return
-    }
-    onStartRecording()
-  }, [defaultMode, liveVoiceAvailable, onStartRecording, onVoiceStart])
 
   useLayoutEffect(() => {
     if (!menuOpen) return
@@ -171,7 +165,7 @@ export function ChatInputVoiceSendControls({
           <button
             ref={voiceButtonRef}
             type="button"
-            onClick={runDefaultVoiceAction}
+            onClick={liveVoiceAvailable ? openMenu : onStartRecording}
             disabled={disabled}
             className={voiceButtonClassName}
             aria-label={activeMode === 'live' ? 'Live voice conversation' : 'Voice input'}
@@ -192,7 +186,7 @@ export function ChatInputVoiceSendControls({
                 onMouseLeave={scheduleClose}
               >
                 <p className="body-4 text-muted-foreground px-spacing-3 pb-spacing-1 pt-spacing-1 font-medium uppercase tracking-wide">
-                  Default voice action
+                  Choose voice mode
                 </p>
                 {COMPOSER_VOICE_MODE_OPTIONS.map((option) => {
                   const isDefault = activeMode === option.id
@@ -200,7 +194,7 @@ export function ChatInputVoiceSendControls({
                     <button
                       key={option.id}
                       type="button"
-                      onClick={() => setDefaultVoiceMode(option.id)}
+                      onClick={() => runVoiceMode(option.id)}
                       className={`rounded-spacing-1 body-4 hover:bg-hover-subtle mx-spacing-1 gap-spacing-2 px-spacing-2 py-spacing-1 flex w-[calc(100%-8px)] items-start justify-between text-left transition-all ${
                         isDefault ? 'bg-primary/10' : ''
                       }`}

@@ -55,6 +55,13 @@ The history list has its own persisted drag width and collapse state. Dragging i
 
 ## Decision Log
 
+### 2026-08-13: Keep composer entry points purpose-specific
+
+- The universal `+` menu contains only photos/files, attachments, and integrations.
+- Campaign context is selected through the dedicated Space/context hierarchy instead of the attachment submenu.
+- Home `Choose Space` and `Plugins` triggers open their destination panels directly without also displaying the universal `+` menu.
+- When live voice is available, clicking the microphone opens an explicit choice between voice input and a live conversation.
+
 - **2026-08-11:** Cross-chat recall uses a dedicated authenticated, read-only action rather than broadening current-thread context. Search is scoped by the resolved user and organization, matches active conversation titles, and returns only bounded excerpts needed to identify the thread.
 - **2026-08-11:** Full-screen Home chat keeps the page-restore control visible in the top-right corner. Restoring a recent page preserves the conversation id so chat transitions back to the attached drawer instead of losing the current thread.
 - **2026-08-11:** Composer hydration is value-idempotent across conversation changes. Optional meeting chats that are missing or inaccessible cannot crash the meeting workspace; the meeting data remains usable while the unavailable chat is treated as an empty historical link.

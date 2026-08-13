@@ -14,6 +14,7 @@ const VIEWPORT_MARGIN = 8
 
 export function useChatInputPlusMenu() {
   const [plusMenuOpen, setPlusMenuOpen] = useState(false)
+  const [plusMenuRootVisible, setPlusMenuRootVisible] = useState(true)
   const [plusMenuPos, setPlusMenuPos] = useState({ top: 0, left: 0 })
   const [plusSubmenu, setPlusSubmenu] = useState<ComposerPlusSubmenu>(null)
   const [plusSubmenuPos, setPlusSubmenuPos] = useState({ top: 0, left: 0 })
@@ -55,7 +56,7 @@ export function useChatInputPlusMenu() {
   }, [])
 
   const updatePlusSubmenuPosition = useCallback((submenu: Exclude<ComposerPlusSubmenu, null>) => {
-    const anchor = plusSubmenuAnchorRefs.current[submenu]
+    const anchor = plusSubmenuAnchorRefs.current[submenu] ?? plusButtonRef.current
     if (!anchor) return
     const rect = anchor.getBoundingClientRect()
     const menuWidth =
@@ -86,12 +87,14 @@ export function useChatInputPlusMenu() {
       plusSubmenuCloseTimerRef.current = null
     }
     setPlusMenuOpen(false)
+    setPlusMenuRootVisible(true)
     setPlusSubmenu(null)
     setPlusInfoCard(null)
   }, [])
 
   const togglePlusMenu = useCallback(() => {
     setPlusMenuOpen((prev) => !prev)
+    setPlusMenuRootVisible(true)
     setPlusSubmenu(null)
     setPlusInfoCard(null)
   }, [])
@@ -99,6 +102,7 @@ export function useChatInputPlusMenu() {
   const openPlusMenu = useCallback(
     (submenu?: ComposerPlusSubmenu) => {
       setPlusMenuOpen(true)
+      setPlusMenuRootVisible(!submenu)
       setPlusInfoCard(null)
       if (submenu) {
         setPlusSubmenu(submenu)
@@ -214,6 +218,7 @@ export function useChatInputPlusMenu() {
 
   return {
     plusMenuOpen,
+    plusMenuRootVisible,
     setPlusMenuOpen,
     plusMenuPos,
     plusSubmenu,

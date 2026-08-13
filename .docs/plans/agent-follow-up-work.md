@@ -38470,3 +38470,10 @@ Production already allowed `needs_reconnect` out of band; the repository now car
   Evidence: 400/400 LOC after adding the Google Drive connection preflight.
   Needed work: extract the Google Docs action button and preflight into a focused component before adding another export destination.
   Reason not done now: the file is within the hard limit, and extracting unrelated export UI would widen this connection-state fix.
+# 2026-08-13 — Chat composer plus menu
+
+- Feature/app: Web chat composer
+- File: `apps/web/src/features/studio/components/ChatInput/chat-input-plus-menu-view.tsx`
+- Evidence: 360 lines after this scoped cleanup; the file still contains dormant Skills and Access submenu rendering retained for settings relocation.
+- Needed work: Move Skills and Access policy controls to their dedicated agent/settings surface, then remove the dormant composer submenu contracts and handlers.
+- Reason not done now: This change removes those controls from chat as requested; selecting and changing the owning settings surface is a separate product/settings migration.

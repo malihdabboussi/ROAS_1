@@ -49,3 +49,13 @@ Why: The UI correctly showed Google Drive enabled, but agent discovery treated G
 Impact: Pixel now reuses the enabled Google Drive account, discovers `create_google_doc`, and returns the created document ID/link. If that Drive account is genuinely unavailable, the existing integration repair card is shown instead.
 
 Files: `supabase/migrations/20260813152000_google_drive_agent_doc_capability.sql`, `apps/agent-api/src/modules/shared/utils/integration-id.util.ts`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `apps/agent-api/src/modules/artifacts/services/google-drive-agent-doc-capability.test.ts`, `documentation/features/integration-connections.md`.
+
+## [2026-08-13 15:34] - [FIX]
+
+What: Simplified the universal chat `+` menu to photos/files, attachments, and integrations; removed Campaigns from Attach; made Home's Choose Space and Plugins buttons open their panels directly; and changed the microphone to present voice input versus live conversation before starting.
+
+Why: The composer mixed creation, agent configuration, access policy, and context selection into one menu, dedicated shortcuts reopened that entire menu, and clicking voice input skipped the available mode choice.
+
+Impact: Chat entry points now open focused, viewport-safe panels and users explicitly choose how they want to speak before audio begins.
+
+Files: `apps/web/src/features/studio/components/ChatInput/chat-input-plus-menu-view.tsx`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-plus-menu.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-plus-controller.ts`, `apps/web/src/features/studio/components/ChatInput/chat-input-voice-send-controls.tsx`, related tests, `documentation/features/claude-chatgpt-shell.md`.
