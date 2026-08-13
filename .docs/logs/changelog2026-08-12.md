@@ -218,6 +218,11 @@ Impact: Meeting merge behavior is unchanged, and the production API can compile 
 
 Files: apps/api/src/modules/meetings/controllers/meeting-merge.controller.ts, apps/api/src/modules/meetings/services/meeting-merge.service.ts, apps/api/src/modules/meetings/services/meeting-merge.service.test.ts
 
+## [2026-08-12 21:46] - [FIX]
+What: Changed root .gitignore dependency pattern from `node_modules/` to `node_modules` (no trailing slash).
+Why: The trailing-slash form matches only directories, so symlinks named node_modules (common worktree setup: `ln -s <main>/node_modules node_modules`) were staged by `git add -A` as mode 120000 entries (hit on claude/composer-standalone-panels, 2026-08-12). The repo was previously bitten by a tracked broken symlink crashing architecture:check (PR #141).
+Impact: node_modules symlinks in worktrees are now ignored like directories; verified via scratch symlink + `git check-ignore`. Nested .gitignore files (apps/openclaw, product-video) already used the unslashed form and needed no change.
+Files: .gitignore
 ## [2026-08-12 21:49] - [FIX]
 
 What: Added a Page Grader catch-up fast path that reconciles campaign Spaces and stamps their fingerprint without repeating an unchanged Brain package ingestion.

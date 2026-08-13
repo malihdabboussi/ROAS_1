@@ -1,5 +1,6 @@
 # Dependencies
-node_modules/
+# No trailing slash: must also match symlinks named node_modules (worktree setups)
+node_modules
 .pnpm-store/
 .pnp
 .pnp.js
