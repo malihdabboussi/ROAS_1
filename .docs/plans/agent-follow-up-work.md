@@ -9112,13 +9112,12 @@ Deferred because: Out of Agent C scope (Agent D owns shell polish); share + noti
 
 ## 2026-07-27 - [ARCH] QuickMissionsHubModal near component limit
 
-Status: Open
+Status: Resolved 2026-08-13
 Found while: Agent C feedback — Quick Missions hub; reconfirmed on main integrate
 Files:
-- `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx` (436 LOC; allowlisted)
-Evidence: Hub ships mission/client/context steps in one modal; over preferred 400.
-Needed work: Split step panels (mission / client / context) into sibling files.
-Deferred because: In-scope hub + arch-gate allowlist for main merge; further split not required for the deliverable.
+- `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx` (328 LOC)
+Evidence: Mission/client/context field sections are now split into focused sibling components and the hub is below the 400-line component limit.
+Resolution: Removed the stale architecture debt marker; no further LOC remediation is required for this component.
 
 ## 2026-07-27 - [ARCH] ConversationShareModal over component limit after pass-off
 
@@ -18797,13 +18796,12 @@ Deferred because: Out of Agent C scope (Agent D owns shell polish); share + noti
 
 ## 2026-07-27 - [ARCH] QuickMissionsHubModal near component limit
 
-Status: Open
+Status: Resolved 2026-08-13
 Found while: Agent C feedback — Quick Missions hub; reconfirmed on main integrate
 Files:
-- `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx` (436 LOC; allowlisted)
-Evidence: Hub ships mission/client/context steps in one modal; over preferred 400.
-Needed work: Split step panels (mission / client / context) into sibling files.
-Deferred because: In-scope hub + arch-gate allowlist for main merge; further split not required for the deliverable.
+- `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx` (328 LOC)
+Evidence: Mission/client/context field sections are now split into focused sibling components and the hub is below the 400-line component limit.
+Resolution: Removed the stale architecture debt marker; no further LOC remediation is required for this component.
 
 ## 2026-07-27 - [ARCH] ConversationShareModal over component limit after pass-off
 
@@ -28391,13 +28389,12 @@ Deferred because: Out of Agent C scope (Agent D owns shell polish); share + noti
 
 ## 2026-07-27 - [ARCH] QuickMissionsHubModal near component limit
 
-Status: Open
+Status: Resolved 2026-08-13
 Found while: Agent C feedback — Quick Missions hub; reconfirmed on main integrate
 Files:
-- `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx` (436 LOC; allowlisted)
-Evidence: Hub ships mission/client/context steps in one modal; over preferred 400.
-Needed work: Split step panels (mission / client / context) into sibling files.
-Deferred because: In-scope hub + arch-gate allowlist for main merge; further split not required for the deliverable.
+- `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx` (328 LOC)
+Evidence: Mission/client/context field sections are now split into focused sibling components and the hub is below the 400-line component limit.
+Resolution: Removed the stale architecture debt marker; no further LOC remediation is required for this component.
 
 ## 2026-07-27 - [ARCH] ConversationShareModal over component limit after pass-off
 
@@ -37927,13 +37924,12 @@ Deferred because: Out of Agent C scope (Agent D owns shell polish); share + noti
 
 ## 2026-07-27 - [ARCH] QuickMissionsHubModal near component limit
 
-Status: Open
+Status: Resolved 2026-08-13
 Found while: Agent C feedback — Quick Missions hub; reconfirmed on main integrate
 Files:
-- `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx` (436 LOC; allowlisted)
-Evidence: Hub ships mission/client/context steps in one modal; over preferred 400.
-Needed work: Split step panels (mission / client / context) into sibling files.
-Deferred because: In-scope hub + arch-gate allowlist for main merge; further split not required for the deliverable.
+- `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx` (328 LOC)
+Evidence: Mission/client/context field sections are now split into focused sibling components and the hub is below the 400-line component limit.
+Resolution: Removed the stale architecture debt marker; no further LOC remediation is required for this component.
 
 ## 2026-07-27 - [ARCH] ConversationShareModal over component limit after pass-off
 
@@ -38440,6 +38436,27 @@ Production already allowed `needs_reconnect` out of band; the repository now car
   Evidence: 1001/600 LOC after adding the explicit channel-delivery branch; the file was already 949 LOC before this scoped change.
   Needed work: extract the admin review-DM and automatic channel-delivery transports into sibling workflow helpers before the next post-call delivery feature touches this service.
   Reason not done now: pre-existing debt; a structural split would obscure the fail-closed rollout control and client-call safety review.
+
+## 2026-08-12 — Chat mission multitasking
+
+- `apps/web/src/features/studio/components/message-bubble/FinalOutputCards.tsx` is 391/400 LOC after adding the live Mission status renderer. The next output-card behavior should extract card status/thumb presentation into sibling components before adding more branches.
+- `apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.tsx` is 388/400 LOC and `MissionDetailModalView.tsx` is 337/400 LOC after adding shell-panel presentation. The next Mission-detail behavior should extract the shared controller or desktop shell prop assembly first.
+- `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx` is 342/400 LOC. The next playbook-specific intake should move payload selection or step-state orchestration into a focused hook.
+- Deferred because both files remain within the architecture limit and a broader decomposition would widen this focused mission-launch workflow.
+
+## 2026-08-12 — Mission Worker database transport recovery
+
+- `apps/mission-worker/src/modules/missions/services/missions.outbox-dispatcher.service.ts` is 552/600 LOC after extracting the native-Postgres mission-status check into a private method; it was already 526 LOC before this repair.
+- `apps/mission-worker/src/modules/missions/services/__tests__/mission-tool-access-smoke.test.ts` is 536/600 LOC; this change only updated the stale Power-model assertion, without adding lines.
+- Needed work: extract outbox row claiming/status validation and queue publication into focused collaborators before adding another event family, and split gateway routing smoke cases by runtime-target versus model-routing behavior.
+- Reason not done now: both files remain under the hard limit; a structural split would widen the production transport fix and obscure its regression coverage.
+
+## 2026-08-13 — Chat artifact pane architecture headroom
+
+- `apps/web/src/components/shell/ShellWorkspace.tsx` is 361/400 LOC after moving the artifact viewer, persisted width, and resize divider into `ShellArtifactViewerColumn.tsx`. The next shell layout behavior should extract another ownership boundary before adding branches to the workspace host.
+- `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` remains a grandfathered 2,614-line component. This change kept the new conversation menu and full/compact header layout in focused sibling components, but header state and conversation-action wiring still live in the oversized host.
+- Needed work: continue splitting workspace layout orchestration and extract Space chat header composition/state into a focused controller or header component.
+- Reason not done now: the requested pane placement and interaction fix is covered by focused shell/header tests; a broad chat-host decomposition would materially widen the launch-critical change.
 
 ## 2026-08-13 — Pixel post-call recap section labels (apps/api spaces)
 

@@ -6,4 +6,7 @@ export const SHELL_RIGHT_PANEL_MESSAGES = {
   chatFilesLoading: 'Loading chat files…',
   chatFilesError: 'Chat files could not be loaded.',
   chatSourcesEmpty: 'No sources pulled in yet — attachments and plugin data show up here.',
+  missionLoading: 'Loading mission…',
+  missionLoadError: 'Mission could not be loaded.',
+  missionRetry: 'Try again',
 } as const

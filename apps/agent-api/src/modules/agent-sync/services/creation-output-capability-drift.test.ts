@@ -9,9 +9,15 @@ import { VIBEY_ALLOWED_ACTIONS } from '../../artifacts/services/artifact-capabil
 import { VIBEY_API_ACTION_DOCS } from '../data/vibey-api-action-docs'
 
 const CREATION_OUTPUT_ACTIONS = [
+  'create_offer',
+  'create_avatar',
   'create_funnel',
   'create_website',
   'create_presentation',
+  'create_ad',
+  'create_ad_campaign',
+  'create_sequence',
+  'create_social_post',
   'create_pdf',
   'create_docx',
   'generate_image',

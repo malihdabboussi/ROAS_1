@@ -155,6 +155,28 @@ function createHarness(tableResults: Record<string, QueryResult> = {}) {
 }
 
 describe('MissionLifecycleService', () => {
+  it('returns after the queue write without waiting for noncritical audit writes', async () => {
+    const { service, supabase, missionsRepository, missionOutboxService } = createHarness()
+    const neverSettles = new Promise<never>(() => undefined)
+    missionsRepository.insertMissionLog.mockReturnValueOnce(neverSettles)
+    missionsRepository.touchProfileLastInteraction.mockReturnValueOnce(neverSettles)
+
+    await expect(
+      service.create(supabase, 'user-1', {
+        title: 'Static Ad Production',
+        idempotency_key: 'mission-key-nonblocking',
+      }),
+    ).resolves.toMatchObject({ id: 'mission-1' })
+
+    expect(missionOutboxService.enqueueOutboxEvent).toHaveBeenCalledTimes(1)
+    expect(
+      missionOutboxService.enqueueOutboxEvent.mock.invocationCallOrder[0],
+    ).toBeLessThan(missionsRepository.insertMissionLog.mock.invocationCallOrder[0])
+    expect(
+      missionOutboxService.enqueueOutboxEvent.mock.invocationCallOrder[0],
+    ).toBeLessThan(missionsRepository.touchProfileLastInteraction.mock.invocationCallOrder[0])
+  })
+
   it('creates space missions with the space campaign and requester metadata', async () => {
     const { service, supabase, queries, missionsRepository, missionOutboxService, spacePermissions } =
       createHarness({

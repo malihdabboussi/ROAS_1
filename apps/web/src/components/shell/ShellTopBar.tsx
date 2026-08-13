@@ -80,7 +80,6 @@ export function ShellTopBar() {
   const minimizeChatDrawer = useShellStore((s) => s.minimizeChatDrawer)
   const setSidebarPinned = useShellStore((s) => s.setSidebarPinned)
   const workAreaOpen = useShellStore((s) => s.workAreaOpen)
-  const artifactTarget = useShellStore((s) => s.artifactViewer.target)
   const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
   const pageBreadcrumb = useShellStore((s) => s.pageBreadcrumb)
@@ -104,7 +103,7 @@ export function ShellTopBar() {
       'Conversation'
     : null
   const visiblePageBreadcrumb = pageBreadcrumb
-  const showWorkAreaControl = chatDrawerOpen || !workAreaOpen || Boolean(artifactTarget)
+  const showWorkAreaControl = chatDrawerOpen || !workAreaOpen
   const pageTitle = pageBreadcrumbLabel?.trim() || conversationTitle || crumb.label || 'Home'
   // Keep identifying params (conv, meeting, space, …) in the page identity so
   // reopening a remembered surface restores the exact view, not the bare route.

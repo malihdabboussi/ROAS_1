@@ -134,24 +134,8 @@ export class ConversationMessagesService {
       'edit',
       orgId,
     )
-    const conversation = await this.getConversationForRead(supabase, conversationId, userId, orgId)
-    if (!conversation) throw new NotFoundException('Conversation not found')
-
-    const existing = await this.messagesRepo.findById(supabase, input.mission_id)
-    if (existing) {
-      const metadata = this.asRecord(existing.metadata)
-      if (
-        existing.conversation_id === conversationId &&
-        metadata?.quick_mission_receipt === true &&
-        metadata.mission_id === input.mission_id
-      ) {
-        return existing
-      }
-      throw new ConflictException('Mission receipt identifier is already in use')
-    }
-
     const content = `Quick Mission started: **${input.mission_title}**.`
-    return this.messagesRepo.create(supabase, {
+    const receipt = await this.messagesRepo.createIdempotent(supabase, {
       id: input.mission_id,
       conversation_id: conversationId,
       role: 'assistant',
@@ -178,6 +162,15 @@ export class ConversationMessagesService {
         ],
       },
     })
+    const metadata = this.asRecord(receipt.metadata)
+    if (
+      receipt.conversation_id === conversationId &&
+      metadata?.quick_mission_receipt === true &&
+      metadata.mission_id === input.mission_id
+    ) {
+      return receipt
+    }
+    throw new ConflictException('Mission receipt identifier is already in use')
   }
 
   async forkConversation(

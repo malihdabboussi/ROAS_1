@@ -1,14 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import {
-  QUICK_MISSIONS_OPEN_EVENT,
-  QuickMissionsHubModal,
-} from '@/features/spaces/components/playbooks/QuickMissionsHubModal'
+import { QuickMissionsHubModal } from '@/features/spaces/components/playbooks/QuickMissionsHubModal'
 import { QUICK_MISSIONS_MESSAGES } from '@/features/spaces/config/quick-missions-messages.config'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { persistQuickMissionReceipt } from '@/lib/conversations'
+import { QUICK_MISSIONS_OPEN_EVENT } from '@/lib/missions'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 
 type QuickMissionClient = {

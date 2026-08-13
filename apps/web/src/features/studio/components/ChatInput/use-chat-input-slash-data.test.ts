@@ -1,7 +1,10 @@
 import { type MutableRefObject } from 'react'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { QUICK_MISSION_PLAYBOOKS } from '@/lib/spaces/quick-missions-catalog'
 import { useChatInputSlashData } from './use-chat-input-slash-data'
+
+const PLAYBOOK_IDS = QUICK_MISSION_PLAYBOOKS.map((playbook) => `playbook:${playbook.id}`)
 
 function valueRef(value: string): MutableRefObject<string> {
   return { current: value }
@@ -55,6 +58,7 @@ describe('useChatInputSlashData', () => {
 
     await waitFor(() => {
       expect(result.current.allSlashItems.map((item) => item.id)).toEqual([
+        ...PLAYBOOK_IDS,
         'skill-1',
         'skill-2',
         'workflow-1',
@@ -91,7 +95,11 @@ describe('useChatInputSlashData', () => {
     )
 
     await waitFor(() => {
-      expect(result.current.allSlashItems.map((item) => item.id)).toEqual(['skill-1', 'skill-2'])
+      expect(result.current.allSlashItems.map((item) => item.id)).toEqual([
+        ...PLAYBOOK_IDS,
+        'skill-1',
+        'skill-2',
+      ])
     })
     expect(result.current.slashItems.map((item) => item.id)).toEqual(['skill-1'])
   })

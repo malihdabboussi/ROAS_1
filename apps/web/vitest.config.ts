@@ -32,6 +32,10 @@ export default defineConfig({
         __dirname,
         '../../packages/api-shared/src/sanitize-fathom-summary-markdown.ts',
       ),
+      '@vibey/context-breakdown': path.resolve(
+        __dirname,
+        '../../packages/context-breakdown/src/index.ts',
+      ),
       '@vibey/db': path.resolve(__dirname, '../../packages/db/src'),
     },
   },

@@ -9,7 +9,11 @@
     "baseUrl": "./",
     "paths": {
       "@vibey/api-shared": ["../../packages/api-shared/src"],
-      "@vibey/api-shared/*": ["../../packages/api-shared/src/*"]
+      "@vibey/api-shared/*": ["../../packages/api-shared/src/*"],
+      "@vibey/agent-policy": ["../../packages/agent-policy/src"],
+      "@vibey/agent-policy/*": ["../../packages/agent-policy/src/*"],
+      "@vibey/context-breakdown": ["../../packages/context-breakdown/src"],
+      "@vibey/context-breakdown/*": ["../../packages/context-breakdown/src/*"]
     },
     "sourceMap": true,
     "declaration": true,

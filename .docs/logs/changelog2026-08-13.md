@@ -1,5 +1,25 @@
 # Changelog - August 13, 2026
 
+## 2026-08-13 09:00 - [REFACTOR]
+
+What: Centralized Quick Missions browser events in the missions domain utility and routed empty-chat Mission quick starts through the existing quick-start hook.
+
+Why: Keep Mission launches consistent across Home, Space chat, and the shell Create catalog while removing branch-owned LOC growth from the allowlisted Space chat panel.
+
+Impact: Mission quick starts still open the background-mission picker without seeding composer text; the Space chat panel returns to its architecture-baseline line count.
+
+Files: `apps/web/src/lib/missions/quick-missions-events.ts`, `apps/web/src/lib/missions/index.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.test.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx`, `documentation/utilities/quick-missions-events.md`, `documentation/utilities/README.md`, `.docs/plans/agent-follow-up-work.md`
+
+## 2026-08-13 11:51 - [FIX]
+
+What: Aligned the Chat conversation and artifact panes with one ownership model, added persisted artifact-pane resizing, routed every final-output card into the in-app artifact viewer, moved conversation actions beside the summary toggle, and made the left-side rename pencil hover/focus-only. Repaired the broad web test harness gaps exposed by the verification run.
+
+Why: Mission and creation outputs must remain interactive beside their originating chat without duplicate pane toggles, browser-tab escapes, immovable panels, or stale navigation/test contracts.
+
+Impact: Chat can keep multiple background Missions conversational while their Mission/artifact workspace opens, resizes, expands, collapses, and closes predictably. PDF, DOCX, project, widget, document, media, and typed artifact outputs all use the shell viewer. The complete web test suite now resolves the context workspace package and isolates sidebar data dependencies.
+
+Files: `apps/web/src/components/conversations/ConversationHeaderTitle.tsx`, `apps/web/src/components/conversations/ConversationHeaderTitle.test.tsx`, `apps/web/src/components/conversations/index.ts`, `apps/web/src/components/shell/ShellArtifactViewerColumn.tsx`, `apps/web/src/components/shell/ShellArtifactViewerColumn.test.tsx`, `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`, `apps/web/src/components/shell/ShellArtifactViewerPanel.test.tsx`, `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/components/shell/ShellTopBar.test.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/ShellWorkspace.test.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatHeaderActions.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatHeaderActions.test.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.test.tsx`, `apps/web/src/features/spaces/components/chat/SpaceConversationHeaderMenu.tsx`, `apps/web/src/features/spaces/components/chat/SpaceConversationHeaderMenu.test.tsx`, `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.types.ts`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/studio/components/message-bubble/FinalOutputCards.tsx`, `apps/web/src/features/studio/components/message-bubble/FinalOutputCards.test.tsx`, `apps/web/src/features/studio/components/message-bubble/open-final-output-in-shell.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-slash-data.test.ts`, `apps/web/tests/components.test.tsx`, `apps/web/vitest.config.ts`, `documentation/features/missions.md`, `.docs/plans/agent-follow-up-work.md`
+
 ## [2026-08-13 12:05] - [FIX]
 
 What: Reorganized Pixel's post-call Slack review into bold `Call Summary`, `Action Items`, and `Client Recap Message` sections; renamed the internal Fathom link to `Call Recording`; and kept legacy recording links out of the client-ready draft.

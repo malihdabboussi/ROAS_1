@@ -11,8 +11,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private pgPool: Pool | null = null
   private readonly supabaseFetch = createResilientFetch({
     label: 'mission_worker_db',
-    maxRetries: 3,
-    timeoutMs: 7000,
+    maxRetries: 2,
+    timeoutMs: 60000,
   })
 
   constructor(private readonly configService: ConfigService) {}

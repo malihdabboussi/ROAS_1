@@ -56,6 +56,29 @@ export class MessagesRepository {
     return data
   }
 
+  async createIdempotent(
+    supabase: SupabaseClient,
+    record: {
+      id: string
+      conversation_id: string
+      role: string
+      content: string
+      metadata?: Record<string, unknown>
+    },
+  ) {
+    const { data, error } = await supabase
+      .from('messages')
+      .upsert(record, { onConflict: 'id', ignoreDuplicates: true })
+      .select()
+      .maybeSingle()
+    if (error) throw new Error(`DB error: ${error.message}`)
+    if (data) return data
+
+    const existing = await this.findById(supabase, record.id)
+    if (!existing) throw new Error('DB error: idempotent message was not persisted')
+    return existing
+  }
+
   async update(
     supabase: SupabaseClient,
     id: string,

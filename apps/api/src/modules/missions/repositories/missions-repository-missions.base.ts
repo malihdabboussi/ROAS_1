@@ -42,7 +42,6 @@ export abstract class MissionsRepositoryMissionsBase extends MissionsRepositoryB
   async createMission(supabase: SupabaseClient, input: CreateMissionRecordInput) {
     const { data, error } = await supabase.from('missions').insert(input).select('*').single()
     if (error) throw new Error(`Failed to create mission: ${error.message}`)
-    await this.syncCampaignActiveWork(supabase, input.campaign_id, input.user_id, input.org_id)
     return data
   }
 

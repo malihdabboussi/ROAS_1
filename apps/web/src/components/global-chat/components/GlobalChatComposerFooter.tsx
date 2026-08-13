@@ -2,9 +2,8 @@
 
 import { useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, ChevronRight, Plus, Rocket, X } from 'lucide-react'
+import { Check, ChevronRight, Plus, X } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
-import { dispatchOpenQuickMissions } from '@/features/spaces/components/playbooks/QuickMissionsHubModal'
 import { useCachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
 import {
   WORK_SURFACE_LABELS,
@@ -44,16 +43,6 @@ export function GlobalChatComposerFooter() {
 
   return (
     <div className="gap-spacing-1 flex min-w-0 items-center">
-      <Tooltip label="Quick Missions">
-        <button
-          type="button"
-          onClick={() => dispatchOpenQuickMissions()}
-          className="btn-icon-bare-sm text-muted-foreground hover:text-foreground shrink-0"
-          aria-label="Open Quick Missions"
-        >
-          <Rocket className="icon-xs" aria-hidden />
-        </button>
-      </Tooltip>
       {attachmentLabel ? (
         <>
           <div className="badge-glass badge-glass-sm badge-glass-purple gap-spacing-1 flex min-w-0 items-center font-medium">

@@ -43,6 +43,7 @@ import { MissionDeliverablesGoogleExportService } from './services/mission-deliv
 import { MissionHumanSubtaskService } from './services/mission-human-subtask.service'
 import { MissionInternalService } from './services/mission-internal.service'
 import { MissionLifecycleNativeTxService } from './services/mission-lifecycle-native-tx.service'
+import { MissionCreateCoordinatorService } from './services/mission-create-coordinator.service'
 import { MissionLifecycleService } from './services/mission-lifecycle.service'
 import { MissionListSummaryService } from './services/mission-list-summary.service'
 import { MissionOutboxService } from './services/mission-outbox.service'
@@ -118,6 +119,7 @@ import { WebinarFulfillmentTeamService } from './services/webinar-fulfillment-te
     MissionPermissionsService,
     MissionListSummaryService,
     MissionLifecycleNativeTxService,
+    MissionCreateCoordinatorService,
     MissionLifecycleService,
     MissionInternalService,
     MissionHumanSubtaskService,

@@ -12,6 +12,7 @@ import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils/cn'
 import { PageGraderPortalSurface } from './PageGraderPortalSurface'
 import { isShellHomeRoute, isShellWorkspaceRoute } from './shell-route-policy'
+import { ShellArtifactViewerColumn } from './ShellArtifactViewerColumn'
 import { ShellChatDrawer } from './ShellChatDrawer'
 import { ShellNewChatGreeting } from './ShellNewChatGreeting'
 import { ShellSidebarSlot } from './ShellSidebarSlot'
@@ -348,16 +349,12 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
           </div>
         ) : null}
 
-        <div
-          className={cn(
-            'min-w-0',
-            artifactTarget && 'flex',
-            (!artifactTarget || workAreaCollapsed) && 'hidden',
-            artifactBesideConversation ? 'w-full shrink-0 md:max-w-xl' : 'flex-1',
-          )}
+        <ShellArtifactViewerColumn
+          besideConversation={artifactBesideConversation}
+          visible={Boolean(artifactTarget) && !workAreaCollapsed}
         >
           <ShellArtifactViewerAdapter />
-        </div>
+        </ShellArtifactViewerColumn>
       </div>
     </div>
   )

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ChevronDown, FileText, ImageIcon, Maximize2, X } from 'lucide-react'
+import { ChevronDown, FileText, ImageIcon, Maximize2, Minimize2, X } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
 import { cn } from '@/lib/utils/cn'
@@ -59,16 +59,6 @@ export function ShellArtifactViewerPanel({
       data-shell-artifact-viewer
     >
       <header className="border-border gap-spacing-2 px-spacing-3 py-spacing-2 flex min-h-12 shrink-0 items-center border-b">
-        {expanded ? (
-          <button
-            type="button"
-            onClick={() => setExpanded(false)}
-            aria-label="Collapse artifact viewer"
-            className="btn-icon-bare"
-          >
-            <X className="icon-sm" />
-          </button>
-        ) : null}
         <Icon className="icon-sm text-primary shrink-0" />
         <div className="body-4 min-w-0 flex-1 truncate whitespace-nowrap">
           {target.contextUrl ? (
@@ -123,8 +113,22 @@ export function ShellArtifactViewerPanel({
             ) : null}
           </div>
         ) : null}
-        {!expanded ? (
-          <>
+        <div
+          className="gap-spacing-1 flex shrink-0 items-center"
+          data-testid="artifact-viewer-controls"
+        >
+          {expanded ? (
+            <Tooltip label="Collapse" side="bottom">
+              <button
+                type="button"
+                onClick={() => setExpanded(false)}
+                aria-label="Collapse artifact viewer"
+                className="btn-icon-bare shrink-0"
+              >
+                <Minimize2 className="icon-sm" />
+              </button>
+            </Tooltip>
+          ) : (
             <Tooltip label="Expand" side="bottom">
               <button
                 type="button"
@@ -135,16 +139,16 @@ export function ShellArtifactViewerPanel({
                 <Maximize2 className="icon-sm" />
               </button>
             </Tooltip>
-            <button
-              type="button"
-              onClick={close}
-              aria-label="Close artifact viewer"
-              className="btn-icon-glass text-muted-foreground hover:text-foreground h-7 w-7 shrink-0"
-            >
-              <X className="icon-sm" />
-            </button>
-          </>
-        ) : null}
+          )}
+          <button
+            type="button"
+            onClick={close}
+            aria-label="Close artifact viewer"
+            className="btn-icon-glass text-muted-foreground hover:text-foreground h-7 w-7 shrink-0"
+          >
+            <X className="icon-sm" />
+          </button>
+        </div>
       </header>
       <div className={cn('bg-background min-h-0 flex-1 overflow-y-auto', bodyClassName)}>
         {children}

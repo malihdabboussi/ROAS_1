@@ -39,6 +39,7 @@ export function MissionDetailModal({
   onUpdated,
   elevatedStacking = false,
   initialSubtaskId = null,
+  presentation = 'modal',
 }: MissionDetailModalProps) {
   const [title, setTitle] = useState(mission.title)
   const [description, setDescription] = useState(mission.brief ?? mission.description ?? '')
@@ -300,6 +301,7 @@ export function MissionDetailModal({
   return (
     <MissionDetailModalView
       mission={mission}
+      presentation={presentation}
       liveMission={liveMission}
       title={title}
       setTitle={setTitle}

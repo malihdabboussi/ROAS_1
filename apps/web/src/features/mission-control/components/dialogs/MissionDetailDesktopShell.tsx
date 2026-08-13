@@ -15,6 +15,7 @@ import { SubtaskDetailHeader } from './SubtaskDetailHeader'
 import { SubtasksSection } from './SubtasksSection'
 
 interface MissionDetailDesktopShellProps {
+  presentation?: 'modal' | 'panel'
   shellZ: string
   hideMissionSurface: boolean
   onClose: () => void
@@ -39,6 +40,7 @@ interface MissionDetailDesktopShellProps {
 }
 
 export function MissionDetailDesktopShell({
+  presentation = 'modal',
   shellZ,
   hideMissionSurface,
   onClose,
@@ -91,12 +93,20 @@ export function MissionDetailDesktopShell({
     ) : null
 
   return (
-    <div className={`fixed inset-0 ${shellZ} flex items-center justify-center`}>
-      <div className="bg-modal-overlay absolute inset-0" onClick={onClose} />
+    <div
+      className={
+        presentation === 'panel'
+          ? 'relative flex h-full min-h-0 w-full'
+          : `fixed inset-0 ${shellZ} flex items-center justify-center`
+      }
+    >
+      {presentation === 'modal' ? (
+        <div className="bg-modal-overlay absolute inset-0" onClick={onClose} />
+      ) : null}
 
       <div
         data-testid="mission-detail-surface"
-        className={`surface-card border-border container-modal-3xl rounded-spacing-4 pt-spacing-4 pb-spacing-6 pl-spacing-6 pr-spacing-6 relative z-10 mx-4 flex w-full flex-col overflow-hidden border shadow-xl ${hideMissionSurface ? 'hidden' : ''}`}
+        className={`surface-card border-border pt-spacing-4 pb-spacing-6 pl-spacing-6 pr-spacing-6 relative z-10 flex w-full flex-col overflow-hidden ${presentation === 'panel' ? 'h-full min-h-0' : 'container-modal-3xl rounded-spacing-4 mx-4 border shadow-xl'} ${hideMissionSurface ? 'hidden' : ''}`}
       >
         {selectedSubtask ? (
           <SubtaskDetailHeader

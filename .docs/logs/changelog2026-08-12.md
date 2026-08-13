@@ -302,3 +302,63 @@ Why: Review recaps must reach Slack DMs during testing without allowing the prod
 Impact: Shadow remains send-free, Active defaults to the existing review DM, and the recap channel can receive Pixel's stored draft only after an administrator deliberately switches channel delivery to Automatic.
 
 Files: apps/api/src/modules/spaces, apps/api/src/modules/space-templates, apps/web/src/features/spaces, packages/api-shared/src/types/flow-capabilities.ts, supabase/migrations/20260813053000_restore_client_post_call_pixel_shadow.sql, documentation/features/meeting-follow-up-slack.md
+
+## [2026-08-12 22:14] - [FEATURE]
+
+What: Moved Quick Missions into the Chat Create catalog, removed the separate composer rocket, added a campaign-scoped Client Strategy playbook, surfaced live mission status and output counts in transcript cards and the conversation summary, and embedded the interactive Mission workspace in the right-side shell panel.
+
+Why: Chat-created missions previously launched as disconnected receipts that routed away from the conversation, and the proven pre-call strategy stage could only be run as part of full Webinar Fulfillment.
+
+Impact: Users can start multiple campaign-linked background missions from Create, keep chatting, monitor and reopen each mission from the transcript or summary, answer mission gates/comments in the side panel, and run client strategy without webinar production.
+
+Files: apps/web/src/components/global-chat, apps/web/src/components/shell, apps/web/src/features/mission-control, apps/web/src/features/spaces/components/playbooks, apps/web/src/features/studio/components, apps/web/src/lib/spaces, apps/mission-worker/src/modules/missions/playbooks, documentation/features/missions.md
+
+## [2026-08-12 22:49] - [FIX]
+
+What: Replaced the separate empty-chat Deep Search/Task/media quick-start catalog with the complete active Create catalog on both Home and Space chat, routed Mission from that row into Quick Missions, expanded the cross-surface capability drift guard and explicit creation-action coverage to every active item, added the missing Meta Ads Launch payload test, and taught Mission Worker TypeScript and Vitest to resolve agent-policy and context-breakdown workspace packages from source.
+
+Why: Empty chats and Create exposed divergent actions, while Mission Worker verification could fail before executing its output-contract suite because two workspace packages only published absent dist entrypoints.
+
+Impact: The options above the composer now behave like Create, all thirteen active composer creations have an asserted tool route and clean schema/registry/policy/docs audit, Mission opens the same launcher from either surface, all six Quick Mission payload families have frontend coverage, and the full worker typecheck plus every playbook suite can execute from a source checkout.
+
+Files: apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx, apps/web/src/components/shell, apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx, apps/web/src/features/spaces/components/playbooks/meta-ads-launch.test.ts, apps/agent-api/src/modules/agent-sync/services/creation-output-capability-drift.test.ts, apps/mission-worker/tsconfig.json, apps/mission-worker/vitest.config.ts, documentation/features/missions.md, .docs/plans/chat-create-capability-drift-audit.md
+
+## [2026-08-12 22:56] - [FIX]
+
+What: Repaired stale Agent API creation-path characterizations by adding the required campaign Space lookup chain to document mocks and sending a valid HTML-bundle payload through presentation dispatch tests.
+
+Why: The deeper Create runtime matrix reproduced four failures on clean main: DOCX/PDF tests stopped before persistence after Space ownership resolution was introduced, and presentation dispatch tests stopped at preflight after `files` became mandatory.
+
+Impact: The full focused creation runtime matrix now executes 175 schema, registry dispatch, persistence, output extraction, post-action verification, and capability-drift assertions without hiding those paths behind stale fixtures.
+
+Files: apps/agent-api/src/modules/artifacts/services/artifact-document-files.service.test.ts, apps/agent-api/src/modules/artifacts/services/artifacts.service.dispatch.test.ts
+
+## [2026-08-12 23:13] - [FIX]
+
+What: Raised the Mission Worker Supabase request window from seven to sixty seconds with two bounded retries, routed outbox mission-status validation through native Postgres when available, added regression coverage for slow database responses and direct-pool dispatch checks, and repaired stale worker characterizations for the extracted output-alignment helper, current Power-model route, and Dream Ops ownership of company-dream scheduling. Removed the superseded Brain Ops company-dream janitor test.
+
+Why: A chat-launched Webinar Fulfillment mission reached an active BullMQ worker but remained in `inbox` for roughly 28 minutes; Railway logs showed repeated seven-second Supabase aborts, while an authenticated production probe completed successfully after about 29 seconds. The unchanged worker eventually persisted the full 22-step plan after catching a faster response, confirming that the copied timeout—not the playbook or queue contract—caused the delay. The outbox dispatcher also unnecessarily used HTTP despite a healthy production Postgres pool.
+
+Impact: Slow but viable Supabase requests can complete instead of consuming mission retries, and queue publication no longer depends on PostgREST latency when native Postgres is configured. Focused worker transport and outbox tests pass.
+
+Files: apps/mission-worker/src/lib/services/database.service.ts, apps/mission-worker/src/lib/services/database.service.test.ts, apps/mission-worker/src/modules/missions/services/missions.outbox-dispatcher.service.ts, apps/mission-worker/src/modules/missions/services/__tests__/missions.outbox-dispatcher.service.test.ts, apps/mission-worker/src/modules/missions/services/__tests__/hybrid-context.test.ts, apps/mission-worker/src/modules/missions/services/__tests__/mission-tool-access-smoke.test.ts, apps/mission-worker/src/modules/brain-ops/brain-ops-night-janitor.company-dream.contract.test.ts (removed), documentation/features/missions.md, .docs/plans/chat-create-capability-drift-audit.md
+
+## [2026-08-12 23:32] - [FIX]
+
+What: Reordered the Supabase fallback for mission creation so the plan outbox event is durable immediately after the mission row, removed the irrelevant campaign active-work refresh for new inbox missions, moved audit/profile writes off the response path, extracted creation orchestration into a focused service, made Chat dismiss the launcher while creation continues in the background, and collapsed receipt persistence to one permission read plus one idempotent message upsert.
+
+Why: A live chat-launched Static Ad mission inserted successfully but kept the launcher on `Starting…` for several minutes and had no queue event while a campaign active-work read was stalled. The worker could not plan a mission the API had only partially created.
+
+Impact: Slow noncritical Supabase reads can no longer strand a newly created mission ahead of its worker event. The user can keep chatting or start another mission while scope resolution runs; the durable card appears through two database requests instead of five. Mission status changes and deletion still maintain campaign active-work state. The lifecycle service is back below its 600-line architecture limit.
+
+Files: apps/api/src/modules/missions/services/mission-create-coordinator.service.ts, apps/api/src/modules/missions/services/mission-lifecycle.service.ts, apps/api/src/modules/missions/repositories/missions-repository-missions.base.ts, apps/api/src/modules/missions/missions.module.ts, apps/api/src/modules/conversations/services/conversation-messages.service.ts, apps/api/src/modules/conversations/repositories/messages.repository.ts, apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx, apps/web/src/features/spaces/config/quick-missions-messages.config.ts, focused tests, documentation/features/missions.md
+
+## [2026-08-12 23:52] - [DOCS]
+
+What: Recorded the completed five-playbook production launch matrix, the legacy production composer boundary, the failed menu-driven Image smoke check, and the authenticated app-runner boundary in the Create capability audit.
+
+Why: Production still runs the pre-branch Create/Mission UI, and the Image request ended before persisting a turn or artifact. The audit must distinguish source-backed action coverage from live output proof instead of presenting an interrupted run as a pass.
+
+Impact: Reviewers have exact mission ids and a clear post-deploy smoke requirement for the shared Create row, Mission workspace, and remaining creation outputs.
+
+Files: .docs/plans/chat-create-capability-drift-audit.md

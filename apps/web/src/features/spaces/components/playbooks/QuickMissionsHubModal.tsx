@@ -11,6 +11,7 @@ import {
   EMPTY_STATIC_AD_FIELDS,
   isAdProductionPlaybookValid,
 } from '../StartAdProductionPlaybookFields'
+import { buildClientStrategyMissionPayload } from './client-strategy'
 import {
   buildIgOrganicVideoMissionPayload,
   IG_ORGANIC_VIDEO_PLAYBOOK_ID,
@@ -27,6 +28,7 @@ import {
   type MetaAdsLaunchKickoffFields,
 } from './meta-ads-launch'
 import {
+  CLIENT_STRATEGY_PLAYBOOK_ID,
   findQuickMissionByKey,
   QUICK_MISSION_PLAYBOOKS,
   type QuickMissionCatalogEntry,
@@ -99,7 +101,6 @@ export function QuickMissionsHubModal({
   const [videoFields, setVideoFields] = useState(EMPTY_IG_VIDEO_FIELDS)
   const [meta, setMeta] = useState(EMPTY_META)
   const [audit, setAudit] = useState(EMPTY_AUDIT)
-  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -127,15 +128,16 @@ export function QuickMissionsHubModal({
 
   const runMission = async () => {
     if (!selected || !selectedClient) return
-    setBusy(true)
+    const payload = buildPayload(selected.id, {
+      webinar,
+      staticFields,
+      videoFields,
+      meta,
+      audit,
+    })
+    toast.info(QUICK_MISSIONS_MESSAGES.startingToast(payload.title))
+    onClose()
     try {
-      const payload = buildPayload(selected.id, {
-        webinar,
-        staticFields,
-        videoFields,
-        meta,
-        audit,
-      })
       const mission = await createMission({
         ...payload,
         input: {
@@ -157,15 +159,12 @@ export function QuickMissionsHubModal({
       } catch {
         toast.warning(QUICK_MISSIONS_MESSAGES.receiptSaveFailed)
       }
-      onClose()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : resolveMissionCreateToastMessage(error))
-    } finally {
-      setBusy(false)
     }
   }
 
-  const isBusy = busy || Boolean(submitting)
+  const isBusy = Boolean(submitting)
 
   return (
     <DialogPrimitive.Root
@@ -310,6 +309,9 @@ function buildPayload(
     audit: MetaAdsAuditKickoffFields
   },
 ) {
+  if (playbookId === CLIENT_STRATEGY_PLAYBOOK_ID) {
+    return buildClientStrategyMissionPayload(fields.webinar)
+  }
   if (playbookId === META_ADS_LAUNCH_PLAYBOOK_ID) {
     return buildMetaAdsLaunchMissionPayload(fields.meta)
   }
@@ -323,15 +325,4 @@ function buildPayload(
     return buildIgOrganicVideoMissionPayload(fields.videoFields)
   }
   return buildWebinarFulfillmentMissionPayload(fields.webinar)
-}
-
-export const QUICK_MISSIONS_OPEN_EVENT = 'vibey:open-quick-missions'
-
-export function dispatchOpenQuickMissions(playbookKey?: string) {
-  if (typeof window === 'undefined') return
-  window.dispatchEvent(
-    new CustomEvent(QUICK_MISSIONS_OPEN_EVENT, {
-      detail: { playbookKey: playbookKey ?? null },
-    }),
-  )
 }

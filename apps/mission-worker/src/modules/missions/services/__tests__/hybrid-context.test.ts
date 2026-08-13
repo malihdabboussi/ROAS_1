@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { MissionContextService } from '../context/mission-context.service'
+import { evaluateSubtaskOutputAlignment } from '../phases/mission-execute-helpers'
 import { MissionExecutePhaseService } from '../phases/mission-execute-phase.service'
 
 function createContextService() {
@@ -14,7 +15,9 @@ function createExecuteService(contextService: any) {
   } as any
   const stateRepo = {} as any
   const deliverablesRepo = {} as any
-  const openclawGateway = {} as any
+  const openclawGateway = {
+    assertMissionHasCredits: vi.fn().mockResolvedValue(undefined),
+  } as any
   const jsonService = {
     tryParseJson: vi.fn(),
   } as any
@@ -75,9 +78,7 @@ describe('MissionsService hybrid context helpers', () => {
   })
 
   it('evaluateSubtaskOutputAlignment fails when latest intent is missing', () => {
-    const contextService = createContextService()
-    const service = createExecuteService(contextService)
-    const result = service['evaluateSubtaskOutputAlignment'](
+    const result = evaluateSubtaskOutputAlignment(
       { title: 'Design PDF', status: 'pending' },
       {
         content:
@@ -92,9 +93,7 @@ describe('MissionsService hybrid context helpers', () => {
   })
 
   it('evaluateSubtaskOutputAlignment passes when revision feedback is reflected', () => {
-    const contextService = createContextService()
-    const service = createExecuteService(contextService)
-    const result = service['evaluateSubtaskOutputAlignment'](
+    const result = evaluateSubtaskOutputAlignment(
       {
         title: 'Revise headline',
         status: 'revision',

@@ -1,5 +1,6 @@
 import type { Queue } from 'bullmq'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { mapOutboxEventToJob } from '../missions.outbox-dispatcher.mapping'
 import { MissionsOutboxDispatcherService } from '../missions.outbox-dispatcher.service'
 
 function createPublishSupabaseMock(missionStatus = 'planning') {
@@ -25,7 +26,13 @@ function createService(overrides?: { queue?: Partial<Queue>; pgQuery?: any }) {
     ...(overrides?.queue || {}),
   } as unknown as Queue
 
-  const pgQuery = overrides?.pgQuery || vi.fn().mockResolvedValue({ rows: [], rowCount: 0 })
+  const pgQuery =
+    overrides?.pgQuery ||
+    vi.fn().mockImplementation(async (sql: string) =>
+      sql.includes('SELECT status')
+        ? { rows: [{ status: 'planning' }], rowCount: 1 }
+        : { rows: [], rowCount: 0 },
+    )
 
   const configService = {
     get: vi.fn().mockReturnValue(20),
@@ -51,6 +58,7 @@ function createService(overrides?: { queue?: Partial<Queue>; pgQuery?: any }) {
     ),
     queue,
     pgQuery,
+    databaseService,
   }
 }
 
@@ -60,8 +68,7 @@ describe('MissionsOutboxDispatcherService', () => {
   })
 
   it('maps review request event to review phase job', () => {
-    const { service } = createService()
-    const mapped = (service as any).mapEventToJob({
+    const mapped = mapOutboxEventToJob({
       id: 'evt-1',
       event_type: 'mission.review.requested',
       mission_id: 'm-1',
@@ -70,9 +77,9 @@ describe('MissionsOutboxDispatcherService', () => {
       payload: null,
     })
 
-    expect(mapped.data.phase).toBe('review')
-    expect(mapped.data.missionId).toBe('m-1')
-    expect(mapped.jobId).toContain('evt-1')
+    expect(mapped?.data.phase).toBe('review')
+    expect(mapped?.data.missionId).toBe('m-1')
+    expect(mapped?.jobId).toContain('evt-1')
   })
 
   it('skips queue add when deduped job is active', async () => {
@@ -97,6 +104,29 @@ describe('MissionsOutboxDispatcherService', () => {
     })
 
     expect(queue.add).not.toHaveBeenCalled()
+  })
+
+  it('checks mission dispatchability through the native database pool when available', async () => {
+    const { service, pgQuery, databaseService } = createService()
+
+    await (service as any).publishToQueue({
+      id: 'evt-native-status',
+      event_type: 'mission.plan.requested',
+      mission_id: 'm-1',
+      user_id: 'u-1',
+      org_id: 'o-1',
+      dedupe_key: 'dedupe-native-status',
+      payload: null,
+      attempts: 0,
+      max_attempts: 8,
+    })
+
+    expect(pgQuery).toHaveBeenCalledWith(expect.stringContaining('SELECT status'), [
+      'm-1',
+      'u-1',
+      'o-1',
+    ])
+    expect(databaseService.getClient).not.toHaveBeenCalled()
   })
 
   it.each(['completed', 'failed'])('replaces a terminal %s job before republishing', async (state) => {

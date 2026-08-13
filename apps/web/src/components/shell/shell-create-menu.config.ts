@@ -1,4 +1,3 @@
-import type { LucideIcon } from 'lucide-react'
 import {
   Clapperboard,
   FileText,
@@ -8,6 +7,7 @@ import {
   Mail,
   Megaphone,
   Presentation,
+  Rocket,
   ScrollText,
   Share2,
   Sheet,
@@ -16,10 +16,7 @@ import {
   Target,
   UserRound,
 } from 'lucide-react'
-import {
-  SHELL_EMPTY_CHAT_QUICK_STARTS,
-  type ShellEmptyChatQuickStart,
-} from './shell-empty-chat-prompts.config'
+import type { ShellEmptyChatQuickStart } from './shell-empty-chat-prompts.config'
 
 /**
  * "+ Create" menu catalog: every item is a quick start (prompt seeds the
@@ -27,6 +24,7 @@ import {
  * Dylan's order of operations — offer and avatar first, then production.
  */
 export interface ShellCreateMenuItem extends ShellEmptyChatQuickStart {
+  action?: 'composer' | 'mission'
   /** Muted right-aligned hint, e.g. "what you sell". */
   hint?: string
   /** Icon tile tint — a badge-glass-* utility from globals.css. */
@@ -39,17 +37,6 @@ export interface ShellCreateMenuGroup {
   id: string
   label: string
   items: ShellCreateMenuItem[]
-}
-
-const QUICK_START_BY_ID = new Map(SHELL_EMPTY_CHAT_QUICK_STARTS.map((entry) => [entry.id, entry]))
-
-function fromQuickStart(
-  id: string,
-  overrides: Partial<ShellCreateMenuItem> & { label: string; icon: LucideIcon; glassClass: string },
-): ShellCreateMenuItem {
-  const quickStart = QUICK_START_BY_ID.get(id)
-  if (!quickStart) throw new Error(`Unknown quick start id: ${id}`)
-  return { ...quickStart, ...overrides }
 }
 
 export function findShellCreateMenuItem(id: string): ShellCreateMenuItem | null {
@@ -65,6 +52,17 @@ export const SHELL_CREATE_MENU_GROUPS: ShellCreateMenuGroup[] = [
     id: 'start-with',
     label: 'Start With',
     items: [
+      {
+        id: 'create-mission',
+        label: 'Mission',
+        icon: Rocket,
+        iconName: 'rocket',
+        glassClass: 'badge-glass-purple',
+        hint: 'background work',
+        action: 'mission',
+        prompt: '',
+        systemContext: '',
+      },
       {
         id: 'create-offer',
         label: 'Offer',
@@ -93,20 +91,26 @@ export const SHELL_CREATE_MENU_GROUPS: ShellCreateMenuGroup[] = [
     id: 'docs-decks',
     label: 'Docs & Decks',
     items: [
-      fromQuickStart('doc', {
+      {
         id: 'create-document',
         label: 'Document',
         icon: FileText,
         iconName: 'file-text',
         glassClass: 'badge-glass-blue',
-      }),
-      fromQuickStart('slides', {
+        prompt: 'Create a document about ',
+        systemContext:
+          'QUICK ACTION — DOC: Create a native editable document with create_docx using the current Space or campaign context when available. Produce complete, usable content with a clear title and structure. Return the created document artifact from the tool receipt; do not provide only a chat draft unless the user asks for text only.',
+      },
+      {
         id: 'create-presentation',
         label: 'Presentation',
         icon: Presentation,
         iconName: 'presentation',
         glassClass: 'badge-glass-orange',
-      }),
+        prompt: 'Create a presentation about ',
+        systemContext:
+          'QUICK ACTION — PRESENTATION: Create a native editable presentation with create_presentation. Use the current campaign theme and available research or attachments, build a coherent slide narrative, and return the presentation artifact from the successful tool receipt. Do not stop at an outline unless the user specifically asks for an outline.',
+      },
     ],
   },
   {
@@ -162,13 +166,16 @@ export const SHELL_CREATE_MENU_GROUPS: ShellCreateMenuGroup[] = [
     id: 'media',
     label: 'Media',
     items: [
-      fromQuickStart('image', {
+      {
         id: 'create-image',
         label: 'Image',
         icon: Image,
         iconName: 'image',
         glassClass: 'badge-glass-yellow',
-      }),
+        prompt: 'Generate an image of ',
+        systemContext:
+          'QUICK ACTION — IMAGE: Generate the requested image with generate_image so the user receives a real media asset. Use attached or referenced images as source assets when present and state what to preserve for edits. Infer a sensible aspect ratio from the request when possible; ask only when a missing visual decision would materially change the result. Do not substitute a text-only prompt or mock receipt.',
+      },
       {
         id: 'create-video',
         label: 'Video',
@@ -238,3 +245,8 @@ export const SHELL_CREATE_MENU_GROUPS: ShellCreateMenuGroup[] = [
     ],
   },
 ]
+
+/** The exact active Create catalog rendered above an empty chat composer. */
+export const SHELL_CREATE_QUICK_STARTS = SHELL_CREATE_MENU_GROUPS.flatMap((group) =>
+  group.items.filter((item) => !item.comingSoon),
+)

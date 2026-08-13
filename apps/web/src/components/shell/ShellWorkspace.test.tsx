@@ -19,6 +19,8 @@ const mocks = vi.hoisted(() => ({
   workAreaOpen: true,
   chatDrawerOpen: false,
   artifactTarget: null as { id: string } | null,
+  artifactWidth: 480,
+  setArtifactViewerWidth: vi.fn(),
   desktop: false,
   shellPrefsHydrated: false,
   menuDock: 'left' as 'left' | 'work' | 'work-top' | 'work-bottom' | 'work-right',
@@ -133,7 +135,8 @@ vi.mock('./use-shell-store', () => ({
   useShellStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
       workAreaOpen: mocks.workAreaOpen,
-      artifactViewer: { target: mocks.artifactTarget },
+      artifactViewer: { target: mocks.artifactTarget, width: mocks.artifactWidth },
+      setArtifactViewerWidth: mocks.setArtifactViewerWidth,
       chatDrawer: {
         open: !mocks.workAreaOpen || mocks.chatDrawerOpen,
         conversationId: null,
@@ -347,7 +350,8 @@ describe('ShellWorkspace', () => {
     expect(screen.getByText('Global chat panel').closest('[data-shell-work-area]')).not.toHaveClass(
       'hidden',
     )
-    expect(screen.getByText('Artifact editor').parentElement).toHaveClass('md:max-w-xl', 'shrink-0')
+    expect(screen.getByTestId('shell-artifact-viewer-column')).toHaveClass('shrink-0')
+    expect(screen.getByTestId('shell-artifact-viewer-column')).toHaveStyle({ width: '480px' })
   })
   it('restores the conversation summary after its artifact viewer closes', async () => {
     mocks.params = new Map([['conv', 'conversation-123']])

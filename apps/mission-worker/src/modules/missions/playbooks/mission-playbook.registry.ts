@@ -1,5 +1,9 @@
 import { ADS_RESEARCH_PLAYBOOK_ID, expandAdsResearchPlaybook } from './ads-research.playbook'
 import {
+  CLIENT_STRATEGY_PLAYBOOK_ID,
+  expandClientStrategyPlaybook,
+} from './client-strategy.playbook'
+import {
   expandIgOrganicVideoAdPlaybook,
   IG_ORGANIC_VIDEO_AD_PLAYBOOK_ID,
 } from './ig-organic-video-ad.playbook'
@@ -40,6 +44,7 @@ export function resolveMissionPlaybookId(
 export function expandMissionPlaybook(
   input: MissionPlaybookExpandInput,
 ): MissionPlaybookPlanResult | null {
+  if (input.playbookId === CLIENT_STRATEGY_PLAYBOOK_ID) return expandClientStrategyPlaybook(input)
   if (input.playbookId === WEBINAR_FULFILLMENT_PLAYBOOK_ID)
     return expandWebinarFulfillmentPlaybook(input)
   if (input.playbookId === META_ADS_LAUNCH_PLAYBOOK_ID) return expandMetaAdsLaunchPlaybook(input)
