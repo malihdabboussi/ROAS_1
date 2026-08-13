@@ -59,3 +59,13 @@ Why: The composer mixed creation, agent configuration, access policy, and contex
 Impact: Chat entry points now open focused, viewport-safe panels and users explicitly choose how they want to speak before audio begins.
 
 Files: `apps/web/src/features/studio/components/ChatInput/chat-input-plus-menu-view.tsx`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-plus-menu.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-plus-controller.ts`, `apps/web/src/features/studio/components/ChatInput/chat-input-voice-send-controls.tsx`, related tests, `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-08-13 15:43] - [FIX]
+
+What: Added Program → Campaign → Space trees to Home and chat context selectors, changed shared program/campaign/space picker ordering to case-insensitive A–Z, and added direct detailed-workspace navigation for Programs, Brain, Team, Flows, and Meetings.
+
+Why: Flat campaign/space lists produced indistinguishable `General` rows, selection order varied by surface, and high-level work context rows did not provide a clear route into their detailed workspace.
+
+Impact: Scope selection now preserves its hierarchy, behaves consistently across shared chat, flow, mission, relocation, conversation, campaign hub, and sidebar selectors, and provides predictable detailed navigation.
+
+Files: `apps/web/src/components/global-chat/components/GlobalChatComposerFooter.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, shared space/campaign/program grouping utilities and selectors, related tests, `documentation/features/claude-chatgpt-shell.md`.

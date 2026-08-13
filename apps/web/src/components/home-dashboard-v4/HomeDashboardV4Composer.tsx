@@ -27,6 +27,7 @@ import type { ChatModelSettings } from '@/features/studio/services/chat.service'
 import type { Campaign, DocumentAttachment, MessageReference } from '@/features/studio/types'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { matchesFlowsConceptSpace } from '@/lib/flows/flows-scope-storage'
+import { fetchPrograms, type Program } from '@/lib/programs'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
 export function HomeDashboardV4Composer() {
@@ -40,6 +41,7 @@ export function HomeDashboardV4Composer() {
   const { data: cachedSpaceRows } = useCachedSpaces()
   const spaces = useMemo(() => cachedSpaceRows ?? [], [cachedSpaceRows])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [programs, setPrograms] = useState<Program[]>([])
   const [targetSpaceId, setTargetSpaceId] = useState<string | null>(null)
   const [targetCampaignId, setTargetCampaignId] = useState<string | null>(null)
   const [createSpaceCampaignId, setCreateSpaceCampaignId] = useState<string | null | undefined>(
@@ -58,9 +60,15 @@ export function HomeDashboardV4Composer() {
 
   useEffect(() => {
     let cancelled = false
-    void cachedFetch(campaignListCacheKey(), fetchCampaigns, { ttlMs: 60_000 })
-      .then((campaignRows) => {
-        if (!cancelled) setCampaigns(campaignRows as Campaign[])
+    void Promise.all([
+      cachedFetch(campaignListCacheKey(), fetchCampaigns, { ttlMs: 60_000 }),
+      fetchPrograms(),
+    ])
+      .then(([campaignRows, programRows]) => {
+        if (!cancelled) {
+          setCampaigns(campaignRows as Campaign[])
+          setPrograms(programRows)
+        }
       })
       .catch(() => {
         if (!cancelled) setCampaigns([])
@@ -71,28 +79,22 @@ export function HomeDashboardV4Composer() {
   }, [])
 
   const groupedSpaces = useMemo(() => {
-    const generalCampaign =
-      campaigns.find(
-        (c) => (c.config as Record<string, unknown> | undefined)?.system_kind === 'general',
-      ) ?? null
-    const otherCampaigns = campaigns.filter((c) => c.id !== generalCampaign?.id)
-    const sortedOthers = [...otherCampaigns].sort((a, b) =>
-      (a.name ?? '').localeCompare(b.name ?? ''),
-    )
-    const ordered: Campaign[] = generalCampaign ? [generalCampaign, ...sortedOthers] : sortedOthers
-    return ordered.map((campaign) => ({
-      campaignId: campaign.id,
-      campaignName: campaign.name,
-      spaces: spaces
-        .filter((s) => s.campaign_id === campaign.id)
-        .sort((a, b) => {
-          const aTime = new Date(a.updated_at ?? a.created_at ?? 0).getTime()
-          const bTime = new Date(b.updated_at ?? b.created_at ?? 0).getTime()
-          return bTime - aTime
-        })
-        .map((space) => ({ id: space.id, title: space.title })),
-    }))
-  }, [campaigns, spaces])
+    const programNameById = new Map(programs.map((program) => [program.id, program.name]))
+    return [...campaigns]
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+      .map((campaign) => ({
+        programId: campaign.program_id ?? null,
+        programName: campaign.program_id
+          ? (programNameById.get(campaign.program_id) ?? 'General')
+          : 'General',
+        campaignId: campaign.id,
+        campaignName: campaign.name,
+        spaces: spaces
+          .filter((s) => s.campaign_id === campaign.id)
+          .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
+          .map((space) => ({ id: space.id, title: space.title })),
+      }))
+  }, [campaigns, programs, spaces])
 
   const defaultGeneralSpace = useMemo(() => {
     const generalCampaignId =

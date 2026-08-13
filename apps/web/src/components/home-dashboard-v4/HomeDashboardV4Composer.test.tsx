@@ -113,6 +113,10 @@ vi.mock('@/lib/flows/flows-scope-storage', () => ({
   matchesFlowsConceptSpace: () => false,
 }))
 
+vi.mock('@/lib/programs', () => ({
+  fetchPrograms: vi.fn(() => Promise.resolve([])),
+}))
+
 describe('HomeDashboardV4Composer', () => {
   beforeEach(() => {
     vi.clearAllMocks()

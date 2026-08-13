@@ -29,12 +29,16 @@ export function groupSidebarCampaignsByProgram(
   }
 
   const groups: SidebarProgramCampaignGroup[] = []
-  for (const program of [...programs].sort((a, b) => a.sort_order - b.sort_order)) {
+  for (const program of [...programs].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+  )) {
     groups.push({
       key: program.id,
       label: program.name,
       program,
-      campaigns: buckets.get(program.id) ?? [],
+      campaigns: [...(buckets.get(program.id) ?? [])].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+      ),
     })
     buckets.delete(program.id)
   }
@@ -50,9 +54,11 @@ export function groupSidebarCampaignsByProgram(
         key: SIDEBAR_UNGROUPED_PROGRAM_KEY,
         label: 'General',
         program: null,
-        campaigns: ungrouped,
+        campaigns: ungrouped.sort((a, b) =>
+          a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+        ),
       })
     }
   }
-  return groups
+  return groups.sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }))
 }

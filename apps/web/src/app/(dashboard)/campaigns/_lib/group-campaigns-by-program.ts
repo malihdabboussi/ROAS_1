@@ -39,7 +39,9 @@ export function groupCampaignsByProgram(
 
   const groups: ProgramCampaignGroup[] = []
 
-  for (const program of [...programs].sort((a, b) => a.sort_order - b.sort_order)) {
+  for (const program of [...programs].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+  )) {
     const list = buckets.get(program.id) ?? []
     groups.push({
       key: program.id,
@@ -67,8 +69,7 @@ export function groupCampaignsByProgram(
       campaigns: ungrouped.sort(campaignSort),
     })
   }
-
-  return groups
+  return groups.sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }))
 }
 
 export function defaultOrgProgramId(programs: Program[]): string | null {

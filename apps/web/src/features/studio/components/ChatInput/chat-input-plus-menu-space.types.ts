@@ -4,6 +4,8 @@ export interface ChatInputPlusMenuSpaceOption {
 }
 
 export interface ChatInputPlusMenuSpaceGroup {
+  programId: string | null
+  programName: string
   campaignId: string
   campaignName: string
   spaces: ChatInputPlusMenuSpaceOption[]

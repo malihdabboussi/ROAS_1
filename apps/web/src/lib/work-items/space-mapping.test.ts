@@ -30,10 +30,11 @@ function space(overrides: Partial<SpaceSummary>): SpaceSummary {
 }
 
 describe('buildSpaceMappingGroups', () => {
-  it('orders the General campaign first, then remaining campaigns A–Z', () => {
+  it('orders campaigns and their spaces A–Z without special-casing General', () => {
     const groups = buildSpaceMappingGroups(
       [
-        space({ id: 's-a', campaign_id: 'c-alpha' }),
+        space({ id: 's-a', campaign_id: 'c-alpha', title: 'Zulu space' }),
+        space({ id: 's-a-2', campaign_id: 'c-alpha', title: 'Alpha space' }),
         space({ id: 's-z', campaign_id: 'c-zulu' }),
         space({ id: 's-g', campaign_id: 'c-general' }),
       ],
@@ -44,7 +45,8 @@ describe('buildSpaceMappingGroups', () => {
       ],
       [],
     )
-    expect(groups.map((g) => g.campaignId)).toEqual(['c-general', 'c-alpha', 'c-zulu'])
+    expect(groups.map((g) => g.campaignId)).toEqual(['c-alpha', 'c-general', 'c-zulu'])
+    expect(groups[0]?.spaces.map((item) => item.title)).toEqual(['Alpha space', 'Zulu space'])
   })
 
   it('prefixes the campaign label with its program name', () => {

@@ -6,7 +6,7 @@ import { positionFloatingMenuFromAnchorRect } from '@/lib/ui/floating-menu-ancho
 
 const WORK_MENU_WIDTH = 200
 const WORK_MENU_HEIGHT_CAP = 280
-const SPACE_SUBMENU_WIDTH = 220
+const SPACE_SUBMENU_WIDTH = 320
 const SPACE_SUBMENU_HEIGHT_CAP = 320
 const VIEWPORT_MARGIN = 8
 const HOVER_CLOSE_MS = 150

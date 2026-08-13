@@ -21,11 +21,7 @@ function campaign(id: string, name: string, config: Record<string, unknown> = {}
   }
 }
 
-function space(
-  id: string,
-  campaignId: string,
-  level?: 'view' | 'edit' | 'admin',
-): Space {
+function space(id: string, campaignId: string, level?: 'view' | 'edit' | 'admin'): Space {
   return {
     id,
     title: id,
@@ -36,7 +32,7 @@ function space(
 }
 
 describe('group-other-spaces-by-campaign', () => {
-  it('orders general first, groups writable spaces, and excludes the current space', () => {
+  it('orders campaigns A–Z, groups writable spaces, and excludes the current space', () => {
     const campaigns = [
       campaign('beta', 'Beta'),
       campaign('general', 'General', { system_kind: 'general' }),
@@ -51,17 +47,17 @@ describe('group-other-spaces-by-campaign', () => {
     ]
 
     expect(orderCampaignsForSpacePicker(campaigns).map((c) => c.id)).toEqual([
-      'general',
       'alpha',
       'beta',
+      'general',
     ])
 
     const groups = groupOtherSpacesByCampaign(spaces, campaigns, 'source')
 
     expect(groups.map((group) => [group.campaign.id, group.spaces.map((s) => s.id)])).toEqual([
-      ['general', ['general-edit']],
       ['alpha', ['alpha-admin']],
       ['beta', ['beta-edit']],
+      ['general', ['general-edit']],
     ])
     expect(countOtherSpaces(groups)).toBe(3)
   })

@@ -40,10 +40,11 @@ function program(partial: Partial<Program> & { id: string; name: string }): Prog
 }
 
 describe('groupCampaignsByProgram', () => {
-  it('groups by program_id and sorts programs by sort_order', () => {
+  it('groups by program_id and sorts programs alphabetically', () => {
     const programs = [
       program({ id: 'p-ops', name: 'ROAS Ops', system_kind: 'roas_ops', sort_order: 2 }),
       program({ id: 'p-clients', name: 'Clients', system_kind: 'clients', sort_order: 1 }),
+      program({ id: 'p-alpha', name: 'Alpha', sort_order: 99 }),
     ]
     const campaigns = [
       campaign({ id: 'c1', name: 'Zebra', program_id: 'p-clients' }),
@@ -52,8 +53,8 @@ describe('groupCampaignsByProgram', () => {
     ]
 
     const groups = groupCampaignsByProgram(campaigns, programs)
-    expect(groups.map((g) => g.label)).toEqual(['Clients', 'ROAS Ops', 'General'])
-    expect(groups[0]?.campaigns.map((c) => c.id)).toEqual(['c1'])
+    expect(groups.map((g) => g.label)).toEqual(['Alpha', 'Clients', 'General', 'ROAS Ops'])
+    expect(groups[1]?.campaigns.map((c) => c.id)).toEqual(['c1'])
     expect(groups[2]?.key).toBe(UNGROUPED_PROGRAM_KEY)
   })
 

@@ -28,17 +28,11 @@ export function toWritableSpaceOption(space: Space): WritableSpaceOption {
   }
 }
 
-/** Same campaign ordering as home / space switcher: General first, then A–Z. */
+/** Default picker ordering is case-insensitive A–Z. */
 export function orderCampaignsForSpacePicker(campaigns: Campaign[]): Campaign[] {
-  const generalCampaign =
-    campaigns.find(
-      (c) => (c.config as Record<string, unknown> | undefined)?.system_kind === 'general',
-    ) ?? null
-  const otherCampaigns = campaigns.filter((c) => c.id !== generalCampaign?.id)
-  const sortedOthers = [...otherCampaigns].sort((a, b) =>
-    (a.name ?? '').localeCompare(b.name ?? ''),
+  return [...campaigns].sort((a, b) =>
+    (a.name ?? '').localeCompare(b.name ?? '', undefined, { sensitivity: 'base' }),
   )
-  return generalCampaign ? [generalCampaign, ...sortedOthers] : sortedOthers
 }
 
 export function groupOtherSpacesByCampaign(
@@ -54,7 +48,9 @@ export function groupOtherSpacesByCampaign(
   return orderCampaignsForSpacePicker(campaigns)
     .map((campaign) => ({
       campaign,
-      spaces: other.filter((sp) => sp.campaign_id === campaign.id),
+      spaces: other
+        .filter((sp) => sp.campaign_id === campaign.id)
+        .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })),
     }))
     .filter((group) => group.spaces.length > 0)
 }

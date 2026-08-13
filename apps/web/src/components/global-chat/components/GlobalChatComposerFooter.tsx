@@ -1,11 +1,16 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, ChevronRight, Plus, Rocket, X } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import { dispatchOpenQuickMissions } from '@/features/spaces/components/playbooks/QuickMissionsHubModal'
 import { useCachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
+import { ChatInputPlusMenuSpacePanel } from '@/features/studio/components/ChatInput/chat-input-plus-menu-space-panel'
+import type { ChatInputPlusMenuSpacePickerConfig } from '@/features/studio/components/ChatInput/chat-input-plus-menu-space.types'
+import { fetchCampaigns, type Campaign } from '@/lib/campaigns'
+import { fetchPrograms, type Program } from '@/lib/programs'
 import {
   WORK_SURFACE_LABELS,
   workContextAttachmentDescription,
@@ -16,16 +21,75 @@ import { useGlobalChatStore } from '../store/use-global-chat-store'
 import { useGlobalChatWorkContextMenu } from './use-global-chat-work-context-menu'
 
 const WORK_MENU_WIDTH = 200
-const SPACE_SUBMENU_WIDTH = 220
+const SPACE_SUBMENU_WIDTH = 320
 
 export function GlobalChatComposerFooter() {
+  const router = useRouter()
   const workContext = useGlobalChatStore((s) => s.workContext)
   const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
   const activeAgentKey = useGlobalChatStore((s) => s.activeAgentKey)
   const roster = useGlobalChatStore((s) => s.roster)
   const { data: spaceRows } = useCachedSpaces()
   const spaces = useMemo(() => spaceRows ?? [], [spaceRows])
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [programs, setPrograms] = useState<Program[]>([])
   const menu = useGlobalChatWorkContextMenu()
+
+  useEffect(() => {
+    if (!menu.open) return
+    let cancelled = false
+    void Promise.all([fetchCampaigns(), fetchPrograms()])
+      .then(([campaignRows, programRows]) => {
+        if (!cancelled) {
+          setCampaigns(campaignRows)
+          setPrograms(programRows)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCampaigns([])
+          setPrograms([])
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [menu.open])
+
+  const spacePicker = useMemo<ChatInputPlusMenuSpacePickerConfig>(() => {
+    const programNameById = new Map(programs.map((program) => [program.id, program.name]))
+    return {
+      selectedCampaignId: workContext.campaignId ?? null,
+      selectedSpaceId: workContext.spaceId ?? null,
+      selectedLabel: 'Choose context',
+      defaultSpaceTitle: null,
+      isOrgOnly: true,
+      groups: [...campaigns]
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+        .map((campaign) => ({
+          programId: campaign.program_id ?? null,
+          programName: campaign.program_id
+            ? (programNameById.get(campaign.program_id) ?? 'General')
+            : 'General',
+          campaignId: campaign.id,
+          campaignName: campaign.name,
+          spaces: spaces
+            .filter((space) => space.campaign_id === campaign.id)
+            .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
+            .map((space) => ({ id: space.id, title: space.title })),
+        })),
+      onSelect: (spaceId) => {
+        const space = spaces.find((row) => row.id === spaceId)
+        setWorkContext({
+          surface: 'spaces',
+          spaceId,
+          campaignId: space?.campaign_id ?? null,
+        })
+      },
+      onSelectCampaign: (campaignId) =>
+        setWorkContext({ surface: 'spaces', campaignId, spaceId: null }),
+    }
+  }, [campaigns, programs, setWorkContext, spaces, workContext.campaignId, workContext.spaceId])
 
   const surfaces = (Object.keys(WORK_SURFACE_LABELS) as GlobalWorkSurface[]).filter(
     (surface) => surface !== 'general',
@@ -41,6 +105,12 @@ export function GlobalChatComposerFooter() {
   })
 
   const portalTarget = typeof document === 'undefined' ? null : document.body
+  const surfaceRoutes: Partial<Record<GlobalWorkSurface, string>> = {
+    spaces: '/campaigns',
+    brain: '/brain',
+    team: '/team',
+    flows: '/flows',
+  }
 
   return (
     <div className="gap-spacing-1 flex min-w-0 items-center">
@@ -170,12 +240,33 @@ export function GlobalChatComposerFooter() {
                       <span className="truncate font-medium">{WORK_SURFACE_LABELS[surface]}</span>
                       {isSelected ? <Check className="h-3.5 w-3.5 shrink-0" /> : null}
                     </button>
-                    {isSpaces ? (
-                      <ChevronRight className="text-muted-foreground ml-spacing-1 h-3.5 w-3.5 shrink-0" />
+                    {surfaceRoutes[surface] ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          menu.close()
+                          router.push(surfaceRoutes[surface]!)
+                        }}
+                        className="text-muted-foreground hover:text-foreground ml-spacing-1 p-spacing-1 shrink-0"
+                        aria-label={`Open ${WORK_SURFACE_LABELS[surface]}`}
+                      >
+                        <ChevronRight className="icon-xs" aria-hidden />
+                      </button>
                     ) : null}
                   </div>
                 )
               })}
+              <button
+                type="button"
+                onClick={() => {
+                  menu.close()
+                  router.push('/home/meetings')
+                }}
+                className="rounded-spacing-1 body-4 text-foreground hover:bg-hover-subtle mx-spacing-1 px-spacing-2 py-spacing-1 flex w-[calc(100%-8px)] items-center justify-between text-left transition-all"
+              >
+                <span className="truncate font-medium">Meetings</span>
+                <ChevronRight className="icon-xs text-muted-foreground shrink-0" aria-hidden />
+              </button>
             </div>,
             portalTarget,
           )
@@ -195,33 +286,7 @@ export function GlobalChatComposerFooter() {
               onMouseEnter={menu.clearSpacesCloseTimer}
               onMouseLeave={menu.scheduleSpacesSubmenuClose}
             >
-              <p className="body-4 text-muted-foreground px-spacing-3 pb-spacing-1 pt-spacing-1 font-medium uppercase tracking-wide">
-                Space
-              </p>
-              {spaces.map((space) => {
-                const isSelected =
-                  workContext.surface === 'spaces' && workContext.spaceId === space.id
-                return (
-                  <button
-                    key={space.id}
-                    type="button"
-                    onClick={() => {
-                      setWorkContext({
-                        surface: 'spaces',
-                        spaceId: space.id,
-                        campaignId: space.campaign_id ?? null,
-                      })
-                      menu.close()
-                    }}
-                    className={`rounded-spacing-1 body-4 hover:bg-hover-subtle mx-spacing-1 px-spacing-2 py-spacing-1 flex w-[calc(100%-8px)] items-center justify-between text-left transition-all ${
-                      isSelected ? 'bg-primary/10' : ''
-                    }`}
-                  >
-                    <span className="text-foreground truncate font-medium">{space.title}</span>
-                    {isSelected ? <Check className="h-3.5 w-3.5 shrink-0" /> : null}
-                  </button>
-                )
-              })}
+              <ChatInputPlusMenuSpacePanel spacePicker={spacePicker} onCloseMenu={menu.close} />
             </div>,
             portalTarget,
           )
