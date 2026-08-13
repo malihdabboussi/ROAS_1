@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   pathname: '/home',
   openInNewTab: vi.fn(),
   storeConversations: [] as Array<Record<string, unknown>>,
+  clearMeetingContext: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -84,6 +85,10 @@ vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
         },
       ],
       loadRoster: vi.fn(),
+      meetingContext: {
+        conversationId: 'meeting-conversation',
+      },
+      clearMeetingContext: mocks.clearMeetingContext,
     }),
 }))
 
@@ -144,6 +149,7 @@ describe('ShellChatMenu', () => {
 
     expect(mocks.addConversation).toHaveBeenCalledWith(mocks.conversation)
     expect(mocks.openChatDrawer).toHaveBeenCalledWith('conversation-1')
+    expect(mocks.clearMeetingContext).toHaveBeenCalledOnce()
   })
 
   it('opens a Simple-sidebar history conversation in the full chat from any page', () => {

@@ -1,11 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import {
+  getConversationDisplayTitle,
+  isMeetingConversation,
   isPlaceholderConversationTitle,
   needsGeneratedConversationTitle,
   resolveSuggestedConversationTitle,
   stripLegacySpacesConversationTitle,
   titleFromFirstUserMessage,
 } from './conversation-title'
+
+const meetingConversation = {
+  title: 'Meeting — Client launch review',
+  metadata: { context_type: 'meeting', meeting_item_id: 'meeting-1' },
+}
 
 describe('stripLegacySpacesConversationTitle', () => {
   it('hides legacy default conversation titles', () => {
@@ -18,6 +25,20 @@ describe('stripLegacySpacesConversationTitle', () => {
 
   it('keeps user-authored titles', () => {
     expect(stripLegacySpacesConversationTitle('Launch plan')).toBe('Launch plan')
+  })
+})
+
+describe('meeting conversation titles', () => {
+  it('identifies meeting threads from their canonical metadata', () => {
+    expect(isMeetingConversation(meetingConversation)).toBe(true)
+    expect(isMeetingConversation({ metadata: {} })).toBe(false)
+  })
+
+  it('hides the legacy Meeting prefix only for meeting threads', () => {
+    expect(getConversationDisplayTitle(meetingConversation)).toBe('Client launch review')
+    expect(
+      getConversationDisplayTitle({ title: 'Meeting — Notes', metadata: { context_type: 'chat' } }),
+    ).toBe('Meeting — Notes')
   })
 })
 

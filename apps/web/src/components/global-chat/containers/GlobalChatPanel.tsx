@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useMemo, type ReactNode } from 'react'
+import { useEffect, useMemo, type ReactNode } from 'react'
 import { SpaceVibeyChatPanel } from '@/features/spaces/components/chat/SpaceVibeyChatPanel'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
@@ -28,6 +28,7 @@ export function GlobalChatPanel({
   const workContext = useGlobalChatStore((s) => s.workContext)
   const storedMeetingContext = useGlobalChatStore((s) => s.meetingContext)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
+  const clearMeetingContext = useGlobalChatStore((s) => s.clearMeetingContext)
   const activeConversationId = useChatStore((s) => s.activeConversationId)
   const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
   const spaces = useSpacesStore((s) => s.spaces)
@@ -56,6 +57,15 @@ export function GlobalChatPanel({
     storedMeetingContext,
     activeConversationId,
   })
+  useEffect(() => {
+    if (
+      storedMeetingContext &&
+      activeConversationId &&
+      activeConversationId !== storedMeetingContext.conversationId
+    ) {
+      clearMeetingContext()
+    }
+  }, [activeConversationId, clearMeetingContext, storedMeetingContext])
   const spaceId = meetingContext?.spaceId ?? host.spaceId
   const awarenessSurface = meetingContext
     ? 'spaces'

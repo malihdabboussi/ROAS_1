@@ -178,7 +178,10 @@ describe('MeetingWorkspaceService', () => {
     expect(conversations.createConversation).toHaveBeenCalledWith(
       expect.anything(),
       'user-1',
-      expect.objectContaining({ id: buildMeetingConversationId('meeting-1') }),
+      expect.objectContaining({
+        id: buildMeetingConversationId('meeting-1'),
+        title: 'Client review',
+      }),
       null,
     )
   })

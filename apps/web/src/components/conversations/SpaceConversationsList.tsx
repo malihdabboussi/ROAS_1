@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { MessageSquare } from 'lucide-react'
 import {
   getConversationAgentDisplay,
+  getConversationDisplayTitle,
   groupConversationsForHistory,
-  stripLegacySpacesConversationTitle,
   type ChatHistoryGroupBy,
   type ChatHistoryLeadingIcon,
   type Conversation,
@@ -39,11 +39,8 @@ export interface SpaceConversationsListProps {
   onShareConversation: (conversation: Conversation) => void
   onBack: () => void
   loading?: boolean
-  /** When true, hide the back arrow (e.g. sidebar embedded beside chat). */
   hideBackButton?: boolean
-  /** When true, no border under the search / New row (Team 2 sidebar). Spaces keeps the default divider. */
   hideHeaderBottomBorder?: boolean
-  /** Opt into the compact icon header used by embedded agent sidebars. */
   compactHeader?: boolean
   /**
    * When true, parent owns width transition + rail swap (see SpacesContainer / Team agent chat).
@@ -52,40 +49,29 @@ export interface SpaceConversationsListProps {
   parentControlsCollapse?: boolean
   collapsed?: boolean
   onCollapsedChange?: (collapsed: boolean) => void
-  /** Opens compact search after parent expands the sidebar (rail search button). */
   openCompactSearch?: boolean
   onOpenCompactSearchConsumed?: () => void
-  /** Hide org-only actions like Copy link in personal accounts. */
   isOrgContext: boolean
-  /** Enables the all-agent conversation toggle in the header. */
   showAllAgentsToggle?: boolean
-  /** When true, rows show the source agent avatar and search includes agent names. */
   allAgentsMode?: boolean
   onAllAgentsModeChange?: (enabled: boolean) => void
-  /** Leading mark on each row (agent / logo / status / none). Overrides allAgentsMode avatar. */
   leadingIcon?: ChatHistoryLeadingIcon
   agentByKey?: Record<string, ConversationAgentDisplay>
   hideNewButton?: boolean
-  /** Render New as a full-width control under the search/filter toolbar. */
   newButtonBelowSearch?: boolean
-  /** When true, omit the inline list search (caller owns search UI). */
   hideSearch?: boolean
-  /** Parent-owned search control shown after agent/filter when `hideSearch` is true. */
   searchSlot?: ReactNode
   headerEndSlot?: ReactNode
-  /** Active query constraints rendered immediately below the New chat control. */
   headerFooterSlot?: ReactNode
-  /** Claude-style list organization. Default: flat (none). */
   groupBy?: ChatHistoryGroupBy
   campaignNameById?: Record<string, string>
   headerStartSlot?: ReactNode
   beforeHeaderSlot?: ReactNode
   compactHeaderTitle?: string
   compactHeaderTitleClassName?: string
-  /** Show a compact updated date at the end of each row. */
   showUpdatedAt?: boolean
-  /** Separate rows with a subtle rule instead of card spacing. */
   dividedRows?: boolean
+  showConversationTypeIcon?: boolean
 }
 
 const INITIAL_SECTION_VISIBLE = 6
@@ -139,6 +125,7 @@ export function SpaceConversationsList({
   campaignNameById,
   showUpdatedAt,
   dividedRows,
+  showConversationTypeIcon,
 }: SpaceConversationsListProps) {
   const [menuConversationId, setMenuConversationId] = useState<string | null>(null)
   const [menuAnchor, setMenuAnchor] = useState<{ top: number; left: number } | null>(null)
@@ -161,8 +148,7 @@ export function SpaceConversationsList({
   const visible = useMemo(() => {
     if (!q) return conversations
     return conversations.filter((conversation) => {
-      const label =
-        stripLegacySpacesConversationTitle(conversation.title) || 'Untitled conversation'
+      const label = getConversationDisplayTitle(conversation) || 'Untitled conversation'
       const agentName = includeAgentInSearch
         ? getConversationAgentDisplay(conversation, agentByKey).name
         : ''
@@ -262,7 +248,7 @@ export function SpaceConversationsList({
 
   const startRename = (conversation: Conversation) => {
     setRenameId(conversation.id)
-    setRenameDraft(stripLegacySpacesConversationTitle(conversation.title))
+    setRenameDraft(getConversationDisplayTitle(conversation))
   }
 
   const submitRename = async () => {
@@ -312,6 +298,7 @@ export function SpaceConversationsList({
         onCancelRename={cancelRename}
         showUpdatedAt={showUpdatedAt}
         divided={dividedRows}
+        showConversationTypeIcon={showConversationTypeIcon}
       />
     )
   }

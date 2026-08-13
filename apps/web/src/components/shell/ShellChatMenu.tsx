@@ -1,5 +1,4 @@
 'use client'
-
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
@@ -29,9 +28,7 @@ import { conversationCacheKey, peekConversationCache } from './shell-conversatio
 import { isShellHomeRoute } from './shell-route-policy'
 import { ShellChatMenuActiveFilters } from './ShellChatMenuActiveFilters'
 import { ShellChatMenuFilterControls } from './ShellChatMenuFilterControls'
-import { useShellConversationAutoTitles } from './use-shell-conversation-auto-titles'
 import { useShellStore } from './use-shell-store'
-
 const PIXEL_AGENT_KEY = 'vibey'
 export function ShellChatMenu({
   onCollapse,
@@ -61,6 +58,8 @@ export function ShellChatMenu({
   const activeAgentKey = useGlobalChatStore((s) => s.activeAgentKey)
   const roster = useGlobalChatStore((s) => s.roster)
   const loadRoster = useGlobalChatStore((s) => s.loadRoster)
+  const meetingContext = useGlobalChatStore((s) => s.meetingContext)
+  const clearMeetingContext = useGlobalChatStore((s) => s.clearMeetingContext)
   const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
   const storeConversations = useChatStore((s) => s.conversations)
   const activeConversationId = useChatStore((s) => s.activeConversationId)
@@ -71,7 +70,6 @@ export function ShellChatMenu({
   const [historyAgentKey, setHistoryAgentKey] = useState<string | null>(() =>
     simpleSidebar || activeAgentKey === PIXEL_AGENT_KEY ? null : activeAgentKey,
   )
-  const allAgentsMode = historyAgentKey === null
   const [listQuery, setListQuery] = useState('')
   const [shareConversation, setShareConversation] = useState<Conversation | null>(null)
   const [campaignNameById, setCampaignNameById] = useState<Record<string, string>>({})
@@ -85,9 +83,7 @@ export function ShellChatMenu({
   }, [loadRoster])
 
   useEffect(() => {
-    setHistoryAgentKey(
-      simpleSidebar || activeAgentKey === PIXEL_AGENT_KEY ? null : activeAgentKey,
-    )
+    setHistoryAgentKey(simpleSidebar || activeAgentKey === PIXEL_AGENT_KEY ? null : activeAgentKey)
   }, [activeAgentKey, simpleSidebar])
   useEffect(() => {
     if (filters.groupBy !== 'campaign') return
@@ -143,7 +139,7 @@ export function ShellChatMenu({
     return map
   }, [chatAgents])
   const agentOptions = useMemo(() => {
-    const options: Array<{ key: string; label: string }> = []
+    const options: { key: string; label: string }[] = []
     for (const agent of chatAgents) {
       const key = agent.agent_key?.trim()
       if (!key) continue
@@ -155,9 +151,8 @@ export function ShellChatMenu({
       return left.label.localeCompare(right.label)
     })
   }, [chatAgents])
-  const selectedHistoryAgent = useMemo(
-    () => chatAgents.find((agent) => agent.agent_key?.trim() === historyAgentKey) ?? null,
-    [chatAgents, historyAgentKey],
+  const selectedHistoryAgent = chatAgents.find(
+    (agent) => agent.agent_key?.trim() === historyAgentKey,
   )
   const reloadConversations = useCallback(async () => {
     const cacheKey = conversationCacheKey(simpleSidebar, historyAgentKey, activeOrgId)
@@ -191,13 +186,13 @@ export function ShellChatMenu({
   useEffect(() => {
     void reloadConversations()
   }, [reloadConversations])
-  useShellConversationAutoTitles(conversations, setConversations)
   const visibleConversations = useMemo(
     () => filterConversationsForHistory(conversations, filters),
     [conversations, filters],
   )
   const openConversation = useCallback(
     (id: string) => {
+      if (meetingContext && meetingContext.conversationId !== id) clearMeetingContext()
       const conversation = conversations.find((row) => row.id === id)
       if (conversation) useChatStore.getState().addConversation(conversation)
       if (simpleSidebar) {
@@ -214,6 +209,8 @@ export function ShellChatMenu({
     },
     [
       conversations,
+      clearMeetingContext,
+      meetingContext,
       onOpenChat,
       openChatDrawer,
       pathname,
@@ -225,6 +222,7 @@ export function ShellChatMenu({
   )
 
   const handleNewConversation = useCallback(() => {
+    if (meetingContext) clearMeetingContext()
     setActiveConversationId(null)
     if (simpleSidebar) {
       router.push('/home')
@@ -238,6 +236,8 @@ export function ShellChatMenu({
     onOpenChat?.()
   }, [
     onOpenChat,
+    clearMeetingContext,
+    meetingContext,
     openFreshChatDrawer,
     pathname,
     router,
@@ -274,7 +274,6 @@ export function ShellChatMenu({
       onFiltersChange={setFilters}
     />
   )
-
   return (
     <>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -367,8 +366,9 @@ export function ShellChatMenu({
           compactHeader={simpleSidebar}
           compactHeaderTitle={simpleSidebar ? 'Recents' : undefined}
           isOrgContext={isOrgContext}
-          allAgentsMode={allAgentsMode}
+          allAgentsMode={historyAgentKey === null}
           leadingIcon={filters.leadingIcon}
+          showConversationTypeIcon={simpleSidebar}
           agentByKey={agentByKey}
           groupBy={filters.groupBy}
           campaignNameById={campaignNameById}

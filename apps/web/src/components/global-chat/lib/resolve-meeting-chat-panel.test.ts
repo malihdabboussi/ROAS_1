@@ -29,6 +29,19 @@ describe('resolveMeetingChatPanel', () => {
     expect(resolved.awarenessContext).toBe('LIVE CALL MODE')
   })
 
+  it('releases meeting context after the user selects another conversation', () => {
+    expect(
+      resolveMeetingChatPanel({
+        storedMeetingContext: stored,
+        activeConversationId: 'conversation-2',
+      }),
+    ).toEqual({
+      meetingContext: null,
+      preferredConversationId: null,
+      awarenessContext: undefined,
+    })
+  })
+
   it('returns empty when no meeting context is attached', () => {
     expect(
       resolveMeetingChatPanel({
