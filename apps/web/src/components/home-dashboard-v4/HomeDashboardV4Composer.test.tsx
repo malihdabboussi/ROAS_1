@@ -10,7 +10,13 @@ const mocks = vi.hoisted(() => ({
   seedComposer: vi.fn(),
   clearMeetingContext: vi.fn(),
   setActiveAgentKey: vi.fn(),
+  isOrgOnly: true,
+  campaignRows: [] as Array<Record<string, unknown>>,
+  ensureGeneralSpace: vi.fn(),
+  toastError: vi.fn(),
 }))
+
+vi.mock('sonner', () => ({ toast: { error: mocks.toastError } }))
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push }),
@@ -59,7 +65,7 @@ vi.mock('@/features/studio/components/ChatInput', () => ({
 
 vi.mock('@/features/org/store/use-org-store', () => ({
   useOrgStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({ isOrgOnly: true }),
+    selector({ isOrgOnly: mocks.isOrgOnly }),
 }))
 
 vi.mock('@/features/spaces/hooks/use-cached-spaces', () => ({
@@ -75,7 +81,7 @@ vi.mock('@/features/spaces/store/use-spaces-store', () => ({
 
 vi.mock('@/features/spaces/services/spaces.service', () => ({
   createSpace: vi.fn(),
-  ensureGeneralSpace: vi.fn(),
+  ensureGeneralSpace: mocks.ensureGeneralSpace,
 }))
 
 vi.mock('@/features/spaces/components/CreateSpaceModal', () => ({
@@ -96,11 +102,11 @@ vi.mock('@/features/spaces/lib/view-customization-merge', () => ({
 
 vi.mock('@/features/studio/services/campaign.service', () => ({
   campaignListCacheKey: () => 'campaigns',
-  fetchCampaigns: vi.fn().mockResolvedValue([]),
+  fetchCampaigns: vi.fn(() => Promise.resolve(mocks.campaignRows)),
 }))
 
 vi.mock('@/lib/cache/keyed-fetch-cache', () => ({
-  cachedFetch: vi.fn().mockResolvedValue([]),
+  cachedFetch: vi.fn((_key: string, loader: () => Promise<unknown>) => loader()),
 }))
 
 vi.mock('@/lib/flows/flows-scope-storage', () => ({
@@ -110,6 +116,13 @@ vi.mock('@/lib/flows/flows-scope-storage', () => ({
 describe('HomeDashboardV4Composer', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.isOrgOnly = true
+    mocks.campaignRows = []
+    mocks.ensureGeneralSpace.mockResolvedValue({
+      id: 'general-space',
+      title: 'General',
+      campaign_id: 'general-campaign',
+    })
   })
 
   afterEach(() => {
@@ -131,6 +144,31 @@ describe('HomeDashboardV4Composer', () => {
         }),
       )
       expect(mocks.push).toHaveBeenCalledWith('/home?chat=starting')
+    })
+  })
+
+  it('targets the default General Space when seeding a Home message', async () => {
+    mocks.isOrgOnly = false
+    mocks.campaignRows = [{ id: 'campaign-1', name: 'General', config: { system_kind: 'general' } }]
+    render(<HomeDashboardV4Composer />)
+
+    await waitFor(() => {
+      expect(mocks.chatInputProps.campaignId).toBe('campaign-1')
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Send test message' }))
+
+    await waitFor(() => {
+      expect(mocks.ensureGeneralSpace).not.toHaveBeenCalled()
+      expect(mocks.toastError).not.toHaveBeenCalled()
+      expect(mocks.seedComposer).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workContext: {
+            surface: 'spaces',
+            spaceId: 'space-1',
+            campaignId: 'campaign-1',
+          },
+        }),
+      )
     })
   })
 
