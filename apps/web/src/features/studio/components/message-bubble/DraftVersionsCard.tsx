@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { ArrowUp, Copy } from 'lucide-react'
+import { ArrowUp, Copy, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   DRAFT_CARD_USE_EVENT,
@@ -20,6 +20,7 @@ const VERSION_LETTERS = 'ABCDEFGH'
 export function DraftVersionsCard({ versions }: { versions: DraftVersion[] }) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [texts, setTexts] = useState(() => versions.map((v) => v.text))
+  const [resetCounts, setResetCounts] = useState(() => versions.map(() => 0))
 
   const active = versions[activeIndex]
   if (!active) return null
@@ -28,6 +29,12 @@ export function DraftVersionsCard({ versions }: { versions: DraftVersion[] }) {
 
   const updateActiveText = (next: string) => {
     setTexts((current) => current.map((t, i) => (i === activeIndex ? next : t)))
+  }
+
+  const resetActive = () => {
+    updateActiveText(active.text)
+    // Bump the remount key so the uncontrolled editable re-renders the original.
+    setResetCounts((current) => current.map((c, i) => (i === activeIndex ? c + 1 : c)))
   }
 
   const copyActive = async () => {
@@ -81,7 +88,7 @@ export function DraftVersionsCard({ versions }: { versions: DraftVersion[] }) {
 
       <div className="p-spacing-4">
         <LiveEditableText
-          key={activeIndex}
+          key={`${activeIndex}:${resetCounts[activeIndex] ?? 0}`}
           initialText={activeText}
           onChange={updateActiveText}
           ariaLabel={`Draft: ${active.label}`}
@@ -90,7 +97,18 @@ export function DraftVersionsCard({ versions }: { versions: DraftVersion[] }) {
 
       <div className="gap-spacing-1 px-spacing-3 pb-spacing-3 flex items-center justify-end">
         {activeEdited ? (
-          <span className="typo-caption text-muted-foreground mr-spacing-2">Edited</span>
+          <>
+            <span className="typo-caption text-muted-foreground">Edited</span>
+            <button
+              type="button"
+              onClick={resetActive}
+              className="btn-icon-bare mr-spacing-2"
+              aria-label={`Reset draft: ${active.label}`}
+              title="Reset to original"
+            >
+              <RotateCcw className="icon-xs" aria-hidden />
+            </button>
+          </>
         ) : null}
         <button
           type="button"
@@ -137,11 +155,79 @@ function LiveEditableText({
       role="textbox"
       aria-multiline="true"
       aria-label={ariaLabel}
-      spellCheck={false}
-      onInput={(event) => onChange(event.currentTarget.textContent ?? '')}
+      onInput={(event) => onChange(readEditableText(event.currentTarget))}
+      onPaste={(event) => {
+        // Force plain text: without this, rich clipboard HTML lands in the DOM
+        // while state (read as text) diverges from what the user sees.
+        event.preventDefault()
+        const text = event.clipboardData.getData('text/plain')
+        if (!text) return
+        const target = event.currentTarget
+        // execCommand keeps the native undo stack and fires input (which syncs
+        // state via onInput); jsdom lacks it, so fall back to Range insertion.
+        if (
+          typeof document.execCommand === 'function' &&
+          document.execCommand('insertText', false, text)
+        ) {
+          return
+        }
+        insertPlainTextAtSelection(target, text)
+        onChange(readEditableText(target))
+      }}
       className="body-3 text-foreground cursor-text whitespace-pre-wrap outline-none"
     >
       {mountText.current}
     </p>
   )
+}
+
+/**
+ * Reads the editable DOM back as plain text with real newlines. textContent
+ * drops line structure: Enter inside contentEditable produces <div>/<br>
+ * children whose text would silently concatenate into one run-on line.
+ * Mirrors innerText semantics (block boundary or <br> → \n, one trailing
+ * placeholder newline stripped) in a jsdom-compatible way.
+ */
+function readEditableText(root: HTMLElement): string {
+  let out = ''
+  const walk = (node: Node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      out += node.textContent ?? ''
+      return
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return
+    const element = node as HTMLElement
+    if (element.tagName === 'BR') {
+      out += '\n'
+      return
+    }
+    if (BLOCK_TAGS.has(element.tagName) && out.length > 0 && !out.endsWith('\n')) {
+      out += '\n'
+    }
+    element.childNodes.forEach(walk)
+  }
+  root.childNodes.forEach(walk)
+  // Browsers keep one placeholder <br> at the end of editable content; like
+  // innerText, that placeholder does not count as a newline.
+  return out.endsWith('\n') ? out.slice(0, -1) : out
+}
+
+const BLOCK_TAGS = new Set(['DIV', 'P', 'LI', 'UL', 'OL', 'BLOCKQUOTE', 'PRE'])
+
+/** Caret-preserving plain-text insert for environments without execCommand. */
+function insertPlainTextAtSelection(root: HTMLElement, text: string) {
+  const doc = root.ownerDocument
+  const selection = doc.defaultView?.getSelection()
+  const node = doc.createTextNode(text)
+  if (selection && selection.rangeCount > 0 && root.contains(selection.anchorNode)) {
+    const range = selection.getRangeAt(0)
+    range.deleteContents()
+    range.insertNode(node)
+    range.setStartAfter(node)
+    range.collapse(true)
+    selection.removeAllRanges()
+    selection.addRange(range)
+  } else {
+    root.appendChild(node)
+  }
 }

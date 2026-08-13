@@ -95,3 +95,9 @@ What: Added the idempotent migration allowing `needs_reconnect` in `user_integra
 Why: Production already contains the constraint change, but the repository migration chain did not.
 
 Impact: Chain parity only; no production SQL required for this merge.
+
+## [2026-08-12 15:48] - [FIX]
+
+What: Preserved draft-card newlines, forced rich paste to plain text, restored an edit reset control, and re-enabled spellcheck.
+
+Impact: Edited drafts now round-trip multiline text correctly through Copy and composer insertion and can be restored to their original version.
