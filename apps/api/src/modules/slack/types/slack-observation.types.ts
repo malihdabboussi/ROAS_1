@@ -1,4 +1,4 @@
-export type SlackObservationSource = 'webhook' | 'reconciliation' | 'backfill' | 'page_grader'
+export type SlackObservationSource = 'webhook' | 'reconciliation' | 'backfill'
 
 export type SlackObservationEventInput = {
   orgId: string

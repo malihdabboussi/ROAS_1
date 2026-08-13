@@ -76,8 +76,9 @@ export class PageGraderSlackIngestService {
         senderSlackUserId: message.sender_slack_user_id ?? null,
         text: message.text.trim(),
         isBot: message.is_bot,
-        source: 'page_grader',
+        source: 'reconciliation',
         metadata: {
+          ingest_source: 'page_grader',
           page_grader_client_id: payload.client_id,
           page_grader_client_name: payload.client_name,
           page_grader_campaign_id: mapping.entry.campaign_id,

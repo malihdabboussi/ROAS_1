@@ -73,8 +73,9 @@ describe('PageGraderSlackIngestService', () => {
           channelId: 'C123',
           channelName: 'client-acme',
           messageTs: '1786640400.123456',
-          source: 'page_grader',
+          source: 'reconciliation',
           metadata: expect.objectContaining({
+            ingest_source: 'page_grader',
             page_grader_client_name: 'Acme',
             page_grader_campaign_id: 'campaign-1',
           }),
