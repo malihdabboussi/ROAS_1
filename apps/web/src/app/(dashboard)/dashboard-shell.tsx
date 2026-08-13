@@ -1,7 +1,6 @@
 'use client'
 
 import { Suspense, type ReactNode } from 'react'
-import { QuickMissionsHubHost } from '@/components/global-chat/components/QuickMissionsHubHost'
 import { ShellWorkspace } from '@/components/shell/ShellWorkspace'
 
 export function DashboardShell({ children }: { children: ReactNode }) {
@@ -14,7 +13,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       >
         <ShellWorkspace>{children}</ShellWorkspace>
       </Suspense>
-      <QuickMissionsHubHost />
     </div>
   )
 }

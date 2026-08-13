@@ -43,6 +43,10 @@ vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
     }),
 }))
 
+vi.mock('@/components/global-chat/components/QuickMissionsHubHost', () => ({
+  QuickMissionsHubHost: () => <div data-testid="home-quick-missions-host" />,
+}))
+
 vi.mock('@/features/studio/store/use-chat-store', () => ({
   useChatStore: vi.fn(),
 }))
@@ -185,6 +189,7 @@ describe('HomeDashboardV4Composer', () => {
   it('uses the standard chat composer chrome and shared empty-chat quick starts', () => {
     render(<HomeDashboardV4Composer />)
 
+    expect(screen.getByTestId('home-quick-missions-host')).toBeInTheDocument()
     const quickStarts = screen.getByRole('group', { name: 'Quick starts' })
     const chooseSpace = screen.getByRole('button', { name: 'Choose Space' })
     const plugins = screen.getByRole('button', { name: 'Plugins and integrations' })

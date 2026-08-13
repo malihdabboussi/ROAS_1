@@ -152,6 +152,16 @@ Files: `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/
 
 ## [2026-08-13 16:39] - [FIX]
 
+What: Moved the Quick Missions host from the outer dashboard shell into the actual blank Home and active global chat surfaces, with explicit ownership tests for both surfaces and the shell.
+
+Why: Three exact-production deployments contained the launcher action, reactive store, modal, and compiled dashboard host, but clicking Mission still produced no dialog. The outer host was compiled without participating in the live interactive chat tree.
+
+Impact: Blank Home, active, Space, and drawer chats now mount exactly one Mission launcher beside the component that triggers it, while the dashboard shell no longer owns an ineffective detached host.
+
+Files: `apps/web/src/app/(dashboard)/dashboard-shell.tsx`, `apps/web/src/app/(dashboard)/dashboard-shell.test.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.test.tsx`, `documentation/features/missions.md`.
+
+## [2026-08-13 16:39] - [FIX]
+
 What: Consolidated full-chat drawer controls around the Summary panel, moved conversation details beside the clickable rename title, removed the pencil and redundant page drawer, excluded chats and duplicate names from recent work, added destination icons, and changed the composer add glyph to a paperclip.
 
 Why: Full conversations exposed competing drawer controls and a hidden Show page fallback, while recent work repeated chats already available in the left history.
