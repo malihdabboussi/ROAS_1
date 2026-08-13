@@ -65,7 +65,6 @@ describe('MeetingWorkspaceService', () => {
     const conversations = {
       createConversation: vi.fn(),
     }
-    const deduplication = { archiveDuplicates: vi.fn().mockResolvedValue(0) }
     const messages = { create: vi.fn() }
     const service = new MeetingWorkspaceService(
       repository as never,
@@ -74,8 +73,6 @@ describe('MeetingWorkspaceService', () => {
       stateRepository as never,
       conversations as never,
       messages as never,
-      undefined,
-      deduplication as never,
     )
 
     await service.startCall({} as never, {
@@ -90,13 +87,6 @@ describe('MeetingWorkspaceService', () => {
       conversation_id: 'conversation-1',
     })
     expect(conversations.createConversation).not.toHaveBeenCalled()
-    expect(deduplication.archiveDuplicates).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        meetingItemId: 'meeting-1',
-        keepConversationId: 'conversation-1',
-      }),
-    )
   })
 
   it('creates one reusable scheduled workspace and its persistent conversation', async () => {
@@ -590,7 +580,7 @@ describe('MeetingWorkspaceService', () => {
     )
   })
 
-  it('archives chats from sibling duplicate call items sharing a natural key', async () => {
+  it('returns a workspace without running duplicate cleanup on the read path', async () => {
     const readRepository = {
       getWorkspaceBundle: vi.fn().mockResolvedValue({
         meeting: {
@@ -613,7 +603,6 @@ describe('MeetingWorkspaceService', () => {
     const resolutionRepository = {
       listDuplicateCallItemIds: vi.fn().mockResolvedValue(['dup-item-1']),
     }
-    const deduplication = { archiveDuplicates: vi.fn().mockResolvedValue(1) }
     const service = new MeetingWorkspaceService(
       {} as never,
       resolutionRepository as never,
@@ -621,8 +610,6 @@ describe('MeetingWorkspaceService', () => {
       {} as never,
       { createConversation: vi.fn() } as never,
       { create: vi.fn() } as never,
-      undefined,
-      deduplication as never,
     )
 
     await service.getWorkspace({} as never, {
@@ -632,24 +619,8 @@ describe('MeetingWorkspaceService', () => {
       orgId: 'org-request-scope',
     })
 
-    expect(resolutionRepository.listDuplicateCallItemIds).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        spaceId: 'space-1',
-        meetingItemId: 'meeting-1',
-        icalUid: 'uid-1@google.com',
-        fathomMeetingId: '170082749',
-      }),
-    )
-    expect(deduplication.archiveDuplicates).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        userId: 'user-1',
-        meetingItemId: 'meeting-1',
-        keepConversationId: 'conversation-1',
-        duplicateMeetingItemIds: ['dup-item-1'],
-      }),
-    )
+    expect(readRepository.getWorkspaceBundle).toHaveBeenCalledTimes(1)
+    expect(resolutionRepository.listDuplicateCallItemIds).not.toHaveBeenCalled()
   })
 
   it('writes a note to both meeting snippets and the same persistent chat', async () => {
