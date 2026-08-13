@@ -38427,3 +38427,9 @@ Production already allowed `needs_reconnect` out of band; the repository now car
 - Several touched shell components remain near or above their existing architecture limits; the PR keeps new restore and summary logic in focused hooks/tests where possible.
 - Needed work: continue decomposing the grandfathered shell workspace/drawer hosts before adding another major shell behavior.
 - Reason not done now: the release change is a focused recovery of reviewed routing, scope, overlay, and summary behavior; a broad shell refactor would materially expand risk.
+
+## 2026-08-12 — Lost-work recovery bundle
+
+- `SpaceVibeyChatPanel.tsx` remains a grandfathered oversized component; selection/remount and observed-height logic are candidates for focused hooks.
+- Agenda minimization persistence should move to a dedicated hook before the next Agenda feature.
+- Deferred because this PR restores reviewed behavior; structural decomposition would widen release risk.

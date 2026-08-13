@@ -121,4 +121,50 @@ describe('AgendaEventEntry', () => {
     fireEvent.click(restoreRow)
     expect(onMinimizedChange).toHaveBeenCalledWith(false)
   })
+
+  it('renders a Doc badge linking to the Google agenda doc when prep has one', () => {
+    render(
+      <AgendaEventEntry
+        ev={{
+          ...EVENT,
+          prep: {
+            status: 'ready',
+            space_item_id: 'item-1',
+            space_id: 'space-1',
+            title: 'Campaign review',
+            agenda_doc_link: 'https://docs.google.com/document/d/agenda-doc',
+          },
+        }}
+        isExpanded={false}
+        onSelect={vi.fn()}
+        nowTick={Date.parse('2026-07-29T16:00:00.000Z')}
+        showAccountLabel={false}
+      />,
+    )
+
+    const docLink = screen.getByRole('link', { name: 'Doc' })
+    expect(docLink.getAttribute('href')).toBe('https://docs.google.com/document/d/agenda-doc')
+  })
+
+  it('does not render a Doc badge when prep has no agenda doc link', () => {
+    render(
+      <AgendaEventEntry
+        ev={{
+          ...EVENT,
+          prep: {
+            status: 'ready',
+            space_item_id: 'item-1',
+            space_id: 'space-1',
+            title: 'Campaign review',
+          },
+        }}
+        isExpanded={false}
+        onSelect={vi.fn()}
+        nowTick={Date.parse('2026-07-29T16:00:00.000Z')}
+        showAccountLabel={false}
+      />,
+    )
+
+    expect(screen.queryByRole('link', { name: 'Doc' })).toBeNull()
+  })
 })

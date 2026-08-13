@@ -145,9 +145,16 @@ describe('HomeDashboardV4Composer', () => {
     const plugins = screen.getByRole('button', { name: 'Plugins and integrations' })
     const shelf = chooseSpace.closest('.surface-card')
     expect(shelf).toContainElement(plugins)
-    expect(shelf).toContainElement(quickStarts)
-    expect(screen.getByRole('button', { name: 'Send test message' }).compareDocumentPosition(shelf!))
-      .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    // Quick-start pills sit above the composer input (ChatGPT-style), not in the shelf.
+    expect(shelf).not.toContainElement(quickStarts)
+    expect(
+      quickStarts.compareDocumentPosition(
+        screen.getByRole('button', { name: 'Send test message' }),
+      ),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(
+      screen.getByRole('button', { name: 'Send test message' }).compareDocumentPosition(shelf!),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     expect(mocks.chatInputProps.placeholder).toBe('Ask, create, search, @ to mention…')
     expect(mocks.chatInputProps.plusMenuAgentPicker).toEqual(
       expect.objectContaining({ selectedAgentKey: 'vibey' }),

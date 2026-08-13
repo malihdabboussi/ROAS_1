@@ -38,6 +38,7 @@ export function MeetingWorkspaceBody({
   prep,
   prepDescription,
   joinUrl,
+  agendaDocLink,
   onOpenPrep,
   onRecordingLinked,
   onNoteCreated,
@@ -54,6 +55,7 @@ export function MeetingWorkspaceBody({
   prep: ParsedMeetingPrep
   prepDescription: string | null | undefined
   joinUrl: string | null
+  agendaDocLink?: string | null
   onOpenPrep?: () => void
   onRecordingLinked: () => void
   onNoteCreated: (snippet: MeetingSnippet) => void
@@ -87,6 +89,7 @@ export function MeetingWorkspaceBody({
           prep={prep}
           prepDescription={prepDescription}
           joinUrl={joinUrl}
+          agendaDocLink={agendaDocLink}
           onOpenPrep={onOpenPrep}
         />
       </section>

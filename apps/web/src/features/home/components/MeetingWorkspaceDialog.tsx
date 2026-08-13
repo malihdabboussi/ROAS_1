@@ -5,7 +5,6 @@ import { X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
-import type { MeetingPostCallAction } from '@/features/home/config/meeting-post-call-actions.config'
 import { MeetingCallStatusSection } from '@/features/home/components/MeetingCallStatusSection'
 import { MeetingRenamableTitle } from '@/features/home/components/MeetingRenamableTitle'
 import { MeetingWorkspaceBody } from '@/features/home/components/MeetingWorkspaceBody'
@@ -13,6 +12,7 @@ import {
   HOME_TOAST_ERRORS,
   HOME_TOAST_SUCCESS,
 } from '@/features/home/config/home-toast-errors.config'
+import type { MeetingPostCallAction } from '@/features/home/config/meeting-post-call-actions.config'
 import { buildMeetingAwarenessContext } from '@/features/home/lib/build-meeting-awareness-context'
 import {
   formatAttendeeSummary,
@@ -364,6 +364,7 @@ export function MeetingWorkspaceDialog({
             prep={prep}
             prepDescription={prepDescription}
             joinUrl={joinUrl}
+            agendaDocLink={agendaEvent?.prep?.agenda_doc_link ?? null}
             onOpenPrep={onOpenPrep}
             onRecordingLinked={() => {
               void hydrateWorkspace()

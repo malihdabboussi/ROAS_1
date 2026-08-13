@@ -187,3 +187,13 @@ Why: The prior move affordance was hidden until hover and showed no current mapp
 Impact: Each movable action row shows where it lives and can be relocated inline; non-Space-item actions are unchanged.
 
 Files: apps/web/src/features/home/components/MeetingActionItemsSection.tsx (+ test), apps/web/src/components/work-items/SpaceMoveMenu.tsx (deleted), apps/web/src/components/work-items/index.ts
+
+## [2026-08-12 15:41] - [FIX]
+
+What: Recovered chat-panel remount stability, persisted Agenda minimization and refresh, Agenda document links, the sidebar Favorites flyout, and Home quick-start placement lost to stale-base clobbers. Moved the draft-card event contract to the shared chat library.
+
+Why: Previously landed helpers and behaviors had lost their callers during later stale-base merges.
+
+Impact: Chat remounts recover, minimized meetings persist, instant calls refresh Agenda, meeting docs and Favorites are reachable, and quick starts retain the current seeded routing behavior above the composer.
+
+Files: apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx, apps/web/src/features/home/components, apps/web/src/components/layout/sidebar/SidebarHqFlyouts.tsx, apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx, apps/web/src/lib/chat, apps/web/src/features/studio/components/message-bubble

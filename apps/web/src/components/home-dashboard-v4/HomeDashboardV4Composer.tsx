@@ -264,6 +264,7 @@ export function HomeDashboardV4Composer() {
 
   return (
     <div className="w-full max-w-3xl">
+      <ShellEmptyChatQuickStartPills onSelect={quickStart.selectQuickStart} />
       <ChatInput
         onSend={handleSend}
         disabled={sending}
@@ -318,10 +319,6 @@ export function HomeDashboardV4Composer() {
                 ) : null,
               )}
           </button>
-          <ShellEmptyChatQuickStartPills
-            onSelect={quickStart.selectQuickStart}
-            variant="shelf"
-          />
         </div>
       </div>
       <div className="mt-spacing-4">
