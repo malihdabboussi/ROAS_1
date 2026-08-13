@@ -247,3 +247,13 @@ Why: The meeting-workspace migration removed the old post-call action while pres
 Impact: Canonical Client calls produce grounded, Brain-aware recap and action-item proposals in Shadow. Personal, Team, Executive, Partner, Sales, and unclassified calls record a scope mismatch and send nothing. Channel posting remains disabled pending review.
 
 Files: apps/api/src/modules/space-templates, apps/api/src/modules/spaces, apps/web/src/features/spaces, packages/api-shared/src/types/flow-capabilities.ts, supabase/migrations/20260813053000_restore_client_post_call_pixel_shadow.sql, documentation/features/meeting-follow-up-slack.md
+
+## [2026-08-12 22:20] - [FIX]
+
+What: Corrected meeting-kind precedence for mostly-external client calls and expanded Pixel post-call grounding to load the portal agenda, canonical recap, transcript documents, and Brain context.
+
+Why: Production client calls were mislabeled when their summaries discussed sales, and the dedicated post-call draft path previously received only the call row and follow-up records instead of the complete meeting workspace and Brain context.
+
+Impact: Explicit prospect/demo and partner titles retain their categories; ordinary client reviews remain Client even when sales is discussed. Pixel drafts now use the same agenda, recap, transcript, and durable context visible in the portal.
+
+Files: apps/api/src/modules/meetings/domain/meeting-call-kind.ts, apps/agent-api/src/modules/task-agent/repositories/task-agent.repository.ts, apps/agent-api/src/modules/task-agent/services/task-agent-suggestions.service.ts, focused tests, documentation/features/meeting-follow-up-slack.md
