@@ -7,6 +7,7 @@ import {
   CopyPlus,
   FolderInput,
   FolderMinus,
+  GitMerge,
   ListTodo,
   Loader2,
   Send,
@@ -26,6 +27,7 @@ import { ConvertPanel } from './ConvertPanel'
 import { CustomFieldsPanel } from './CustomFieldsPanel'
 import { DelegationBulkPanel } from './DelegationBulkPanel'
 import { DeletePanel } from './DeletePanel'
+import { MergeMeetingsPanel } from './MergeMeetingsPanel'
 import { MovePanel } from './MovePanel'
 import type { PanelKey } from './panel-key'
 import { RemoveFromSpacePanel } from './RemoveFromSpacePanel'
@@ -56,7 +58,9 @@ export type BulkActionBarToolbarProps = {
   removeFromSpaceRef: React.RefObject<HTMLButtonElement | null>
   delegationRef: React.RefObject<HTMLButtonElement | null>
   pageGraderRef: React.RefObject<HTMLButtonElement | null>
+  mergeRef: React.RefObject<HTMLButtonElement | null>
   deleteRef: React.RefObject<HTMLButtonElement | null>
+  canMergeMeetings: boolean
   onClearSelection: () => void
   onUpdateItem: (
     id: string,
@@ -78,6 +82,7 @@ export type BulkActionBarToolbarProps = {
   handlePromoteToTasks: () => Promise<void>
   handleDuplicate: () => Promise<void>
   handleDelegationCapture: (mode: DelegationDispatchMode, note: string) => Promise<void>
+  handleMergeMeetings: (survivorItemId: string) => Promise<void>
   handlePageGraderSend: (input: {
     clientId: string
     clientName: string
@@ -122,7 +127,9 @@ export function BulkActionBarToolbar({
   removeFromSpaceRef,
   delegationRef,
   pageGraderRef,
+  mergeRef,
   deleteRef,
+  canMergeMeetings,
   onClearSelection,
   onUpdateItem,
   onEditStatuses,
@@ -140,6 +147,7 @@ export function BulkActionBarToolbar({
   handlePromoteToTasks,
   handleDuplicate,
   handleDelegationCapture,
+  handleMergeMeetings,
   handlePageGraderSend,
   handleDelete,
   handleRemoveFromSpace,
@@ -289,6 +297,28 @@ export function BulkActionBarToolbar({
         <button type="button" className={cn(BTN, 'shrink-0')} onClick={handleDuplicate}>
           <CopyPlus className="h-3.5 w-3.5" /> Duplicate
         </button>
+
+        {canMergeMeetings && (
+          <>
+            <button
+              ref={mergeRef}
+              type="button"
+              className={cn(BTN, 'shrink-0')}
+              onClick={() => toggle('merge')}
+            >
+              <GitMerge className="h-3.5 w-3.5" /> Merge
+            </button>
+            {activePanel === 'merge' && (
+              <MergeMeetingsPanel
+                anchorRef={mergeRef}
+                selectedItems={selectedItems}
+                busy={busy}
+                onMerge={handleMergeMeetings}
+                onClose={closePanel}
+              />
+            )}
+          </>
+        )}
 
         {itemKind !== 'doc' && (
           <>

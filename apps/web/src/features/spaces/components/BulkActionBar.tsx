@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useSpaceCampaignName } from '../hooks/use-space-campaign-name'
+import { canMergeMeetingSelection } from '../lib/meeting-merge'
 import { sendSpaceItemsToPageGrader } from '../services/page-grader-send.service'
 import { ensureGeneralSpace, transferSpaceItem } from '../services/spaces.service'
 import type { SpaceItem } from '../types'
@@ -16,6 +17,7 @@ import { BulkActionBarToolbar } from './bulk-action-bar/BulkActionBarToolbar'
 import type { PanelKey } from './bulk-action-bar/panel-key'
 import type { BulkActionBarProps } from './bulk-action-bar/types'
 import { useDelegationBulkCapture } from './bulk-action-bar/use-delegation-bulk-capture'
+import { useMergeMeetingsBulk } from './bulk-action-bar/use-merge-meetings-bulk'
 import { readFieldValue, toFieldPatch } from './space-item-values'
 
 export type { BulkActionBarProps } from './bulk-action-bar/types'
@@ -54,6 +56,7 @@ export function BulkActionBar({
   const removeFromSpaceRef = useRef<HTMLButtonElement>(null)
   const delegationRef = useRef<HTMLButtonElement>(null)
   const pageGraderRef = useRef<HTMLButtonElement>(null)
+  const mergeRef = useRef<HTMLButtonElement>(null)
   const deleteRef = useRef<HTMLButtonElement>(null)
 
   const selectedItems = useMemo(
@@ -272,6 +275,15 @@ export function BulkActionBar({
     ],
   )
 
+  const canMergeMeetings = itemKind !== 'doc' && canMergeMeetingSelection(selectedItems)
+  const handleMergeMeetings = useMergeMeetingsBulk({
+    selectedItems,
+    closePanel,
+    onClearSelection,
+    onRefresh,
+    setBusy,
+  })
+
   const handleDelegationCapture = useDelegationBulkCapture({
     spaces,
     activeSpace,
@@ -354,7 +366,9 @@ export function BulkActionBar({
       removeFromSpaceRef={removeFromSpaceRef}
       delegationRef={delegationRef}
       pageGraderRef={pageGraderRef}
+      mergeRef={mergeRef}
       deleteRef={deleteRef}
+      canMergeMeetings={canMergeMeetings}
       onClearSelection={onClearSelection}
       onUpdateItem={onUpdateItem}
       onEditStatuses={onEditStatuses}
@@ -372,6 +386,7 @@ export function BulkActionBar({
       handlePromoteToTasks={handlePromoteToTasks}
       handleDuplicate={handleDuplicate}
       handleDelegationCapture={handleDelegationCapture}
+      handleMergeMeetings={handleMergeMeetings}
       handlePageGraderSend={handlePageGraderSend}
       handleDelete={handleDelete}
       handleRemoveFromSpace={handleRemoveFromSpace}

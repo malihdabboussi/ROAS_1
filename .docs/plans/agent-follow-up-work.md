@@ -38413,3 +38413,11 @@ Production already allowed `needs_reconnect` out of band; the repository now car
   Reason not done now: out of scope for a recovery port; a structural split would obscure the recovered diff.
 - Skipped from the orphaned branch (intentional, not debt): .vercelignore rewrite (main's newer CLI-archive-deploy version is authoritative) and 402d6a6a's brainIdsKey/campaignIdsKey effect-dep refactor in BrainHome.tsx (superseded by main's signature-keyed cachedFetch dedupe in brain.service.ts).
 - Deploy order: 20260812180000_brain_home_health_batch_lite.sql must be applied to prod (via scripts/roas/apply-migrations-resilient.sh) before or with the api/web deploy; not applied by this branch.
+
+## 2026-08-12 — Meetings merge (apps/web spaces bulk bar, apps/api meetings)
+
+- apps/web/src/features/spaces/components/BulkActionBar.tsx — 395/400 LOC and apps/web/src/features/spaces/components/bulk-action-bar/BulkActionBarToolbar.tsx — 392/400 LOC after adding the Merge action (kept the merge handler in use-merge-meetings-bulk.ts to stay under).
+  Needed work: the next action added to the bulk bar should first extract the existing handler cluster (move/convert/duplicate) into hooks like use-delegation-bulk-capture/use-merge-meetings-bulk, or move the toolbar's doc/task button groups into subcomponents.
+  Reason not done now: out of scope for the merge feature; restructuring would bury the reviewed diff.
+- apps/api/src/test/contract/route-inventory.test.ts snapshot is stale on main (contains no /api/spaces/:spaceId/meetings* routes at all) and fails identically on a clean checkout; the new POST /api/spaces/:spaceId/meetings/merge route widens that existing diff by one line. Needs the already-logged repo-wide snapshot rebaseline rather than a partial update here.
+- documentation/features has no meetings feature doc to update; WIP spec written to .docs/features/meeting-merge.md. Creating documentation/features/meetings.md needs user approval per AGENTS §7.

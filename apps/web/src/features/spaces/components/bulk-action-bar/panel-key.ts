@@ -6,3 +6,4 @@ export type PanelKey =
   | 'removeFromSpace'
   | 'delegation'
   | 'pageGrader'
+  | 'merge'
