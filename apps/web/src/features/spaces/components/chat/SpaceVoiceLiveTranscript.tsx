@@ -134,7 +134,7 @@ export function SpaceVoiceLiveTranscript({
   }, [turnData, inputTranscript, outputTranscript, state])
 
   return (
-    <div className="flex min-h-0 w-full max-w-md flex-1 flex-col overflow-hidden">
+    <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden">
       <p className="typo-caption text-muted-foreground px-1 pb-2 text-center uppercase">Live transcript</p>
 
       <div className="gap-spacing-2 border-border mb-3 flex flex-col border-b px-1 pb-3">
