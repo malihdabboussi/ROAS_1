@@ -63,6 +63,11 @@ describe('PageGraderSlackIngestService', () => {
       success: true,
       client_id: '11111111-1111-1111-1111-111111111111',
     })
+    expect(brainSync.authorizeWebhookClient).toHaveBeenCalledWith(
+      'whsec',
+      '11111111-1111-1111-1111-111111111111',
+      'Acme',
+    )
     expect(observations.upsertChannels).not.toHaveBeenCalled()
     expect(observations.upsertEvents).toHaveBeenCalledWith(
       client,

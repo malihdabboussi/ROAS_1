@@ -25,7 +25,11 @@ export class PageGraderSlackIngestService {
     const parsed = PageGraderSlackMessagesWebhookSchema.safeParse(raw)
     if (!parsed.success) throw new BadRequestException('Invalid Slack messages payload')
     const payload = parsed.data
-    const mapped = await this.brainSync.authorizeWebhookClient(secret, payload.client_id)
+    const mapped = await this.brainSync.authorizeWebhookClient(
+      secret,
+      payload.client_id,
+      payload.client_name,
+    )
     const results: Array<Record<string, unknown>> = []
 
     for (const mapping of mapped) {

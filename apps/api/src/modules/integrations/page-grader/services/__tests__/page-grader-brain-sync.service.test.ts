@@ -214,6 +214,35 @@ describe('PageGraderBrainSyncService', () => {
     expect(brainImport.importClientBrain).not.toHaveBeenCalled()
   })
 
+  it('bootstraps a signed Slack client before authorizing its ingest', async () => {
+    const service = new PageGraderBrainSyncService(
+      { client: {} } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    )
+    const mapped = [
+      {
+        userId: 'user-1',
+        orgId: 'org-1',
+        clientId: '11111111-1111-1111-1111-111111111111',
+        entry: { campaign_id: 'campaign-1' },
+        webhookSecret: 'whsec',
+      },
+    ]
+    const bootstrap = vi
+      .spyOn(service as never, 'findOrBootstrapClientsByWebhookSecret' as never)
+      .mockResolvedValue(mapped as never)
+
+    await expect(
+      service.authorizeWebhookClient('whsec', '11111111-1111-1111-1111-111111111111', 'Acme'),
+    ).resolves.toEqual(mapped)
+    expect(bootstrap).toHaveBeenCalledWith('whsec', '11111111-1111-1111-1111-111111111111', 'Acme')
+  })
+
   it('writes a completed Page Grader work status back to the ROAS action ledger', async () => {
     const updateEq = vi.fn().mockResolvedValue({ error: null })
     const update = vi.fn(() => ({ eq: updateEq }))

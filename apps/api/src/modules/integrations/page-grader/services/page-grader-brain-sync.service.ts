@@ -555,10 +555,18 @@ export class PageGraderBrainSyncService {
     return resolved
   }
 
-  async authorizeWebhookClient(secret: string, clientId: string): Promise<MappedClientRow[]> {
+  async authorizeWebhookClient(
+    secret: string,
+    clientId: string,
+    clientName?: string,
+  ): Promise<MappedClientRow[]> {
     const normalizedSecret = secret.trim()
     if (!normalizedSecret) throw new UnauthorizedException('Missing webhook signature')
-    const mapped = await this.findMappedClientsByWebhookSecret(normalizedSecret, clientId)
+    const mapped = await this.findOrBootstrapClientsByWebhookSecret(
+      normalizedSecret,
+      clientId,
+      clientName,
+    )
     if (mapped.length === 0) {
       throw new UnauthorizedException('Unknown webhook secret or unmapped client')
     }
