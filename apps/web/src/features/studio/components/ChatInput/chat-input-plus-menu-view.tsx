@@ -8,14 +8,10 @@ import {
   File,
   FolderOpen,
   Globe,
-  Grid,
   HardDrive,
-  ImagePlus,
   Loader2,
   Paperclip,
-  Puzzle,
   Settings2,
-  ShieldCheck,
   Upload,
   UserRound,
   type LucideIcon,
@@ -24,10 +20,10 @@ import { CloudAttachMenuItems } from '@/components/media/CloudAttachMenuItems'
 import Switch from '@/components/ui/forms/switch'
 import type { StudioAtMenuTabId } from './chat-input-at-mentions'
 import { INTEGRATION_ICONS, INTEGRATION_NAMES } from './chat-input-constants'
-import { ChatInputPlusMenuSpacePanel } from './chat-input-plus-menu-space-panel'
-import type { ChatInputPlusMenuSpacePickerConfig } from './chat-input-plus-menu-space.types'
 import { ChatInputPlusMenuAgentPanel } from './chat-input-plus-menu-agent-panel'
 import type { ChatInputPlusMenuAgentPickerConfig } from './chat-input-plus-menu-agent.types'
+import { ChatInputPlusMenuSpacePanel } from './chat-input-plus-menu-space-panel'
+import type { ChatInputPlusMenuSpacePickerConfig } from './chat-input-plus-menu-space.types'
 import {
   COMPOSER_ACCESS_ROWS,
   composerPolicyRowLocked,
@@ -51,8 +47,6 @@ const PLUS_MENU_ITEMS: Array<{
   { id: 'files', label: 'Add photos & files', icon: Paperclip },
   { id: 'attach', label: 'Attach', icon: AtSign },
   { id: 'integrations', label: 'Integrations', icon: Settings2 },
-  { id: 'skills', label: 'Skills', icon: Puzzle },
-  { id: 'access', label: 'Access', icon: ShieldCheck },
 ]
 
 const ATTACH_MENU_ITEMS: Array<{
@@ -65,13 +59,13 @@ const ATTACH_MENU_ITEMS: Array<{
   { id: 'artifacts', label: 'Artifacts', icon: FolderOpen },
   { id: 'media', label: 'Media', icon: File },
   { id: 'missions', label: 'Missions', icon: Bot },
-  { id: 'campaigns', label: 'Campaigns', icon: Globe },
 ]
 
 export interface ChatInputPlusMenuViewProps {
   menuRef?: Ref<HTMLDivElement>
   submenuRef?: Ref<HTMLDivElement>
   menuPosition: FloatingPosition
+  rootMenuVisible?: boolean
   submenu: ComposerPlusSubmenu
   submenuPosition: FloatingPosition
   infoCard: ComposerPlusInfoCard | null
@@ -109,6 +103,7 @@ export function ChatInputPlusMenuView({
   menuRef,
   submenuRef,
   menuPosition,
+  rootMenuVisible = true,
   submenu,
   submenuPosition,
   infoCard,
@@ -131,7 +126,6 @@ export function ChatInputPlusMenuView({
   onLocalUpload,
   onDrive,
   onDropbox,
-  onGenerateImage,
   onCloseMenu,
   onOpenAtMenu,
   onToggleAgent,
@@ -142,50 +136,37 @@ export function ChatInputPlusMenuView({
   onClearInfoCard,
 }: ChatInputPlusMenuViewProps) {
   const skillItems = allSlashItems.filter((item) => item.type === 'skill')
-  const menuItems: Array<{ id: ComposerPlusSubmenuId; label: string; icon: LucideIcon }> = [
-    ...(agentPicker ? [{ id: 'agent' as const, label: 'Agent', icon: Bot }] : []),
-    ...(spacePicker ? [{ id: 'space' as const, label: 'Space', icon: Grid }] : []),
-    ...PLUS_MENU_ITEMS,
-  ]
+  const menuItems = PLUS_MENU_ITEMS
 
   return (
     <>
-      <div
-        ref={menuRef}
-        className="dropdown-menu-solid z-dropdown py-spacing-1 fixed w-56"
-        style={{ top: menuPosition.top, left: menuPosition.left }}
-        onMouseDown={(e) => e.stopPropagation()}
-        onMouseEnter={onCancelSubmenuClose}
-        onMouseLeave={onScheduleSubmenuClose}
-      >
-        <button
-          type="button"
-          onClick={() => {
-            onCloseMenu()
-            onGenerateImage()
-          }}
-          className="body-3 text-foreground hover:bg-hover-subtle px-spacing-3 py-spacing-2 gap-spacing-2 flex w-full items-center text-left transition-colors"
+      {rootMenuVisible ? (
+        <div
+          ref={menuRef}
+          className="dropdown-menu-solid z-dropdown py-spacing-1 fixed w-56"
+          style={{ top: menuPosition.top, left: menuPosition.left }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseEnter={onCancelSubmenuClose}
+          onMouseLeave={onScheduleSubmenuClose}
         >
-          <ImagePlus className="icon-sm text-muted-foreground shrink-0" />
-          <span className="min-w-0 flex-1 truncate">Generate image</span>
-        </button>
-        {menuItems.map((item) => {
-          const Icon = item.icon
-          return (
-            <button
-              key={item.id}
-              ref={(node) => onSubmenuAnchorNode(item.id, node)}
-              type="button"
-              onMouseEnter={() => onOpenSubmenu(item.id)}
-              className="body-3 text-foreground hover:bg-hover-subtle px-spacing-3 py-spacing-2 gap-spacing-2 flex w-full items-center text-left transition-colors"
-            >
-              <Icon className="icon-sm text-muted-foreground shrink-0" />
-              <span className="min-w-0 flex-1 truncate">{item.label}</span>
-              <ChevronRight className="icon-xs text-muted-foreground shrink-0" />
-            </button>
-          )
-        })}
-      </div>
+          {menuItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <button
+                key={item.id}
+                ref={(node) => onSubmenuAnchorNode(item.id, node)}
+                type="button"
+                onMouseEnter={() => onOpenSubmenu(item.id)}
+                className="body-3 text-foreground hover:bg-hover-subtle px-spacing-3 py-spacing-2 gap-spacing-2 flex w-full items-center text-left transition-colors"
+              >
+                <Icon className="icon-sm text-muted-foreground shrink-0" />
+                <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                <ChevronRight className="icon-xs text-muted-foreground shrink-0" />
+              </button>
+            )
+          })}
+        </div>
+      ) : null}
       {submenu ? (
         <div
           ref={submenuRef}

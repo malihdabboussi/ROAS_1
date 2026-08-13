@@ -10,9 +10,21 @@ const spacePicker = {
   isOrgOnly: true,
   groups: [
     {
+      programId: 'program-z',
+      programName: 'Zulu Program',
       campaignId: 'campaign-1',
       campaignName: 'Client Launch',
       spaces: [{ id: 'space-1', title: 'Creative Production' }],
+    },
+    {
+      programId: 'program-a',
+      programName: 'Alpha Program',
+      campaignId: 'campaign-2',
+      campaignName: 'Beta Campaign',
+      spaces: [
+        { id: 'space-z', title: 'Zulu Space' },
+        { id: 'space-a', title: 'Alpha Space' },
+      ],
     },
   ],
   onSelect: vi.fn(),
@@ -36,6 +48,22 @@ describe('ChatInputPlusMenuSpacePanel', () => {
 
     fireEvent.click(screen.getByText('Client Launch').closest('button')!)
     expect(spacePicker.onSelectCampaign).toHaveBeenCalledWith('campaign-1')
+  })
+
+  it('renders the Program to Campaign to Space hierarchy alphabetically', () => {
+    render(<ChatInputPlusMenuSpacePanel spacePicker={spacePicker} onCloseMenu={vi.fn()} />)
+
+    const programButtons = screen.getAllByRole('button', { name: /Program/ })
+    expect(programButtons[0]?.textContent).toContain('Alpha Program')
+    fireEvent.click(programButtons[0]!)
+    fireEvent.click(screen.getByRole('button', { name: /Expand Beta Campaign/ }))
+    const spaceButtons = screen.getAllByRole('button', { name: /Space/ })
+    expect(spaceButtons.map((button) => button.textContent)).toEqual(
+      expect.arrayContaining(['Alpha Space', 'Zulu Space']),
+    )
+    expect(spaceButtons.findIndex((button) => button.textContent === 'Alpha Space')).toBeLessThan(
+      spaceButtons.findIndex((button) => button.textContent === 'Zulu Space'),
+    )
   })
 
   it('offers new-space creation in the selected campaign', () => {

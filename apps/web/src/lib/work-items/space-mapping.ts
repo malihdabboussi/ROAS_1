@@ -17,14 +17,10 @@ export interface SpaceMappingGroup {
   spaces: SpaceMappingSpace[]
 }
 
-function isGeneralCampaign(campaign: Campaign): boolean {
-  return (campaign.config as Record<string, unknown>)?.system_kind === 'general'
-}
-
 /**
  * Groups spaces by campaign (campaign rows carry the program name) so picking a
  * destination remaps an item's program · campaign · space in one move. Same
- * ordering as the space switcher: General campaign first, then A–Z.
+ * ordering as every scope picker: case-insensitive A–Z at each level.
  */
 export function buildSpaceMappingGroups(
   spaces: SpaceSummary[],
@@ -33,12 +29,9 @@ export function buildSpaceMappingGroups(
   excludeSpaceId?: string,
 ): SpaceMappingGroup[] {
   const programNameById = new Map(programs.map((program) => [program.id, program.name]))
-  const ordered = [...campaigns].sort((a, b) => {
-    const aGeneral = isGeneralCampaign(a)
-    const bGeneral = isGeneralCampaign(b)
-    if (aGeneral !== bGeneral) return aGeneral ? -1 : 1
-    return (a.name ?? '').localeCompare(b.name ?? '')
-  })
+  const ordered = [...campaigns].sort((a, b) =>
+    (a.name ?? '').localeCompare(b.name ?? '', undefined, { sensitivity: 'base' }),
+  )
   return ordered
     .map((campaign) => {
       const programName = campaign.program_id ? programNameById.get(campaign.program_id) : undefined
@@ -47,6 +40,7 @@ export function buildSpaceMappingGroups(
         label: programName ? `${programName} · ${campaign.name}` : campaign.name,
         spaces: spaces
           .filter((space) => space.campaign_id === campaign.id && space.id !== excludeSpaceId)
+          .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
           .map((space) => ({
             id: space.id,
             title: space.title,

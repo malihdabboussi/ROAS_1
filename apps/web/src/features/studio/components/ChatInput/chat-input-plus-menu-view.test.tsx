@@ -56,27 +56,19 @@ function renderPlusMenu(overrides: Partial<Parameters<typeof ChatInputPlusMenuVi
 }
 
 describe('ChatInputPlusMenuView', () => {
-  it('renders Generate image and delegates click through the close path', () => {
-    const onCloseMenu = vi.fn()
-    const onGenerateImage = vi.fn()
-    renderPlusMenu({ onCloseMenu, onGenerateImage })
-
-    expect(screen.getByText('Generate image')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /generate image/i }))
-
-    expect(onCloseMenu).toHaveBeenCalledTimes(1)
-    expect(onGenerateImage).toHaveBeenCalledTimes(1)
-  })
-
-  it('renders root menu rows and delegates submenu hover behavior', () => {
+  it('renders only file, attachment, and integration rows in the root menu', () => {
     const onOpenSubmenu = vi.fn()
     const onSubmenuAnchorNode = vi.fn()
     const { props } = renderPlusMenu({ onOpenSubmenu, onSubmenuAnchorNode })
 
-    expect(screen.getByText('Generate image')).toBeTruthy()
     expect(screen.getByText('Add photos & files')).toBeTruthy()
     expect(screen.getByText('Attach')).toBeTruthy()
-    expect(screen.getByText('Access')).toBeTruthy()
+    expect(screen.getByText('Integrations')).toBeTruthy()
+    expect(screen.queryByText('Generate image')).toBeNull()
+    expect(screen.queryByText('Agent')).toBeNull()
+    expect(screen.queryByText('Space')).toBeNull()
+    expect(screen.queryByText('Skills')).toBeNull()
+    expect(screen.queryByText('Access')).toBeNull()
     expect(onSubmenuAnchorNode).toHaveBeenCalledWith('files', expect.any(HTMLButtonElement))
 
     fireEvent.mouseEnter(screen.getByRole('button', { name: /integrations/i }))
@@ -98,6 +90,7 @@ describe('ChatInputPlusMenuView', () => {
 
     expect(onCloseMenu).toHaveBeenCalledTimes(1)
     expect(onOpenAtMenu).toHaveBeenCalledWith('media')
+    expect(screen.queryByRole('button', { name: 'Campaigns' })).toBeNull()
   })
 
   it('selects the active managed agent from the plus menu', () => {

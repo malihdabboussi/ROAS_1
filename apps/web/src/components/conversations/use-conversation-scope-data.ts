@@ -10,6 +10,10 @@ import {
   type ConversationScopeSpace,
 } from './conversation-scope-picker-layout'
 
+function sortCampaigns(rows: Campaign[]): Campaign[] {
+  return [...rows].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+}
+
 /** Campaign list for the scope picker — cache-first, then refreshed. */
 export function useConversationScopeCampaigns(
   activeOrgId: string | null,
@@ -20,20 +24,20 @@ export function useConversationScopeCampaigns(
     let cancelled = false
     if (activeOrgId) {
       const cached = getCachedCampaigns(activeOrgId)
-      if (cached) setCampaigns(cached)
+      if (cached) setCampaigns(sortCampaigns(cached))
       void prefetchOrgCampaigns(activeOrgId)
         .then((rows) => {
-          if (!cancelled) setCampaigns(rows)
+          if (!cancelled) setCampaigns(sortCampaigns(rows))
         })
         .catch(() => {
-          if (!cancelled) setCampaigns(cached ?? [])
+          if (!cancelled) setCampaigns(sortCampaigns(cached ?? []))
         })
     } else {
       void cachedFetch(campaignListCacheKey(null), () => fetchCampaigns({ orgId: null }), {
         ttlMs: 60_000,
       })
         .then((rows) => {
-          if (!cancelled) setCampaigns(rows)
+          if (!cancelled) setCampaigns(sortCampaigns(rows))
         })
         .catch(() => {
           if (!cancelled) setCampaigns([])

@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: August 11, 2026 (canonical Mine/Team meeting and recording rows)
+Last Modified: August 13, 2026 (Drive-backed agent Google Docs creation)
 
 ## Data Flow
 
@@ -62,6 +62,7 @@ Last Modified: August 11, 2026 (canonical Mine/Team meeting and recording rows)
 56. Personal Google Calendar Agenda uses Composio's unified `GOOGLECALENDAR_EVENTS_LIST_ALL_CALENDARS` action for the requested time window. It no longer truncates the calendar list at 15 or silently falls back to `primary`; account failures remain visible to Agenda, and Team continues merging the caller's complete Mine result.
 57. Fathom list and attachment flows resolve one canonical purpose-first title for generic provider names such as “Impromptu Call.” Explicit Fathom `action_items` remain authoritative; when Fathom returns none but its summary has a `Next Steps` section, those provider-authored steps are normalized into canonical meeting follow-ups with their stated owners.
 58. Mine Agenda enumerates only calendar connections owned by the caller, even inside an organization; teammate Workspace calendars remain Team-only. Calendar invites stay canonical when Fathom enriches them: the live provider URL remains the join link, the Fathom URL remains `related.recording_url`, same-minute duplicate Fathom rows with the same meeting identity collapse, and only the next unfinished calendar invite can render as the expanded hero.
+59. Google Docs creation is a capability of the existing `google_drive` connection, not a second OAuth connection. Agent requests for `google_docs`, `google-docs`, or Google Docs normalize to `google_drive`, discover `create_google_doc`, and call the canonical Drive export endpoint with `title` and semantic `html`. A connected Drive creates the document directly; a genuinely unavailable Drive returns the existing repair card instead of a false “Google Docs is disconnected” response.
 
 ## Code Examples
 

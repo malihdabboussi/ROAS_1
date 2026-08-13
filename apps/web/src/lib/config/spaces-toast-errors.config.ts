@@ -82,6 +82,10 @@ export const SPACES_ACTIONS_TOAST_ERRORS = {
   CREATE_GOOGLE_DOC_FAILED: {
     userMessage: "Couldn't create the Google Doc — check your Drive connection and try again.",
   },
+  GOOGLE_DRIVE_NOT_CONNECTED: {
+    userMessage:
+      'Google Drive is not connected. Connect it in Settings → Integrations, then try again.',
+  },
   SAVE_GOOGLE_DOC_LINK_FAILED: {
     userMessage: 'Google Doc created, but its link could not be saved to ROAS.',
   },

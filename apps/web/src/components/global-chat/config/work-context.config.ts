@@ -228,7 +228,7 @@ export function isAgentAllowedForWorkContext(
 
 export const WORK_SURFACE_LABELS: Record<GlobalWorkSurface, string> = {
   general: 'General',
-  spaces: 'Campaigns',
+  spaces: 'Programs',
   brain: 'Brain',
   team: 'Team',
   flows: 'Flows',

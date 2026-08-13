@@ -216,7 +216,12 @@ export const ConversationScopePicker = forwardRef<
         activeOrgId ? { orgId: activeOrgId } : { orgId: null },
       )
         .then((rows) => {
-          setSpacesByCampaign((prev) => ({ ...prev, [campaignId]: rows }))
+          setSpacesByCampaign((prev) => ({
+            ...prev,
+            [campaignId]: [...rows].sort((a, b) =>
+              a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }),
+            ),
+          }))
         })
         .catch(() => {
           setSpacesByCampaign((prev) => ({ ...prev, [campaignId]: [] }))

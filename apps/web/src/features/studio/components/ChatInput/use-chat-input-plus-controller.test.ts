@@ -63,6 +63,7 @@ describe('useChatInputPlusController', () => {
 
     mockUseChatInputPlusMenu.mockReturnValue({
       plusMenuOpen: true,
+      plusMenuRootVisible: true,
       setPlusMenuOpen: vi.fn(),
       plusMenuPos: { top: 10, left: 20 },
       plusSubmenu: 'skills',

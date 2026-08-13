@@ -32,6 +32,7 @@ export function useChatInputPlusController({
 }: UseChatInputPlusControllerOptions) {
   const {
     plusMenuOpen,
+    plusMenuRootVisible,
     setPlusMenuOpen,
     plusMenuPos,
     plusSubmenu,
@@ -98,6 +99,7 @@ export function useChatInputPlusController({
 
   const { plusMenuProps } = useChatInputPlusMenuProps({
     open: plusMenuOpen,
+    rootMenuVisible: plusMenuRootVisible,
     portalTargetRef,
     menuRef: plusMenuRef,
     submenuRef: plusSubmenuRef,

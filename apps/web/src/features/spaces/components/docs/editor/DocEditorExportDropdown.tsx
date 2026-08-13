@@ -1,5 +1,4 @@
 'use client'
-
 import Image from 'next/image'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -9,7 +8,11 @@ import {
   SPACES_ACTIONS_TOAST_ERRORS,
   SPACES_ACTIONS_TOAST_SUCCESS,
 } from '@/features/spaces/config/spaces-toast-errors.config'
-import { createGoogleDocFromHtml, type GoogleDriveFile } from '@/lib/services/google-drive-api'
+import {
+  createGoogleDocFromHtml,
+  getGoogleDriveStatus,
+  type GoogleDriveFile,
+} from '@/lib/services/google-drive-api'
 import { buildSpaceDocExportHtml, googleDocHref } from '@/lib/spaces/space-doc-export'
 import { cn } from '@/lib/utils/cn'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
@@ -23,7 +26,6 @@ import {
   exportSpaceDocVisualPdf,
 } from '../../doc-menu/export-space-doc'
 import { useOpenSpaceDocInCanva } from '../../doc-menu/use-open-space-doc-in-canva'
-
 export function DocEditorExportDropdown({
   title,
   getDocBody,
@@ -63,7 +65,6 @@ export function DocEditorExportDropdown({
   const [exportingDocx, setExportingDocx] = useState(false)
   const [exportingVisualPdf, setExportingVisualPdf] = useState(false)
   const [creatingGoogleDoc, setCreatingGoogleDoc] = useState(false)
-
   const availability = useMemo(
     () =>
       canExportSpaceDoc({
@@ -73,14 +74,12 @@ export function DocEditorExportDropdown({
       }),
     [customData, getDocBody, visualHtml],
   )
-
   const syncBelowMenuPos = useCallback(() => {
     const el = triggerRef.current
     if (!el) return
     const rect = el.getBoundingClientRect()
     setBelowMenuPos({ top: rect.bottom + 4, left: rect.right })
   }, [])
-
   useLayoutEffect(() => {
     if (!open || menuPlacement !== 'below') {
       setBelowMenuPos(null)
@@ -94,7 +93,6 @@ export function DocEditorExportDropdown({
       window.removeEventListener('resize', syncBelowMenuPos)
     }
   }, [open, menuPlacement, syncBelowMenuPos])
-
   useEffect(() => {
     if (!open) return
     const onPointerDown = (e: MouseEvent) => {
@@ -119,11 +117,17 @@ export function DocEditorExportDropdown({
     }
     if (!availability.canExportDocBody || creatingGoogleDoc) return
 
-    const pendingTab = window.open('about:blank', '_blank')
-    if (pendingTab) pendingTab.opener = null
     setCreatingGoogleDoc(true)
     setOpen(false)
+    let pendingTab: Window | null = null
     try {
+      const status = await getGoogleDriveStatus()
+      if (!status.connected) {
+        toast.error(SPACES_ACTIONS_TOAST_ERRORS.GOOGLE_DRIVE_NOT_CONNECTED.userMessage)
+        return
+      }
+      pendingTab = window.open('about:blank', '_blank')
+      if (pendingTab) pendingTab.opener = null
       const result = await createGoogleDocFromHtml(
         resolvedTitle,
         buildSpaceDocExportHtml(resolvedTitle, getDocBody()),

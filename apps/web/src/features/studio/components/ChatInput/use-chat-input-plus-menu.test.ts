@@ -145,4 +145,24 @@ describe('useChatInputPlusMenu', () => {
     expect(result.current.plusSubmenu).toBeNull()
     expect(result.current.plusInfoCard).toBeNull()
   })
+
+  it('hides the root menu when a dedicated submenu is opened externally', () => {
+    const { result } = renderHook(() => useChatInputPlusMenu())
+    result.current.plusButtonRef.current = elementWithRect({
+      top: 500,
+      left: 100,
+      bottom: 532,
+      right: 132,
+    }) as HTMLButtonElement
+
+    act(() => result.current.openPlusMenu('integrations'))
+    act(() => vi.runOnlyPendingTimers())
+
+    expect(result.current.plusMenuOpen).toBe(true)
+    expect(result.current.plusMenuRootVisible).toBe(false)
+    expect(result.current.plusSubmenu).toBe('integrations')
+
+    act(() => result.current.togglePlusMenu())
+    expect(result.current.plusMenuRootVisible).toBe(true)
+  })
 })

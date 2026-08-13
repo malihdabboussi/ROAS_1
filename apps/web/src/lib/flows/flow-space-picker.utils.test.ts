@@ -37,15 +37,15 @@ const campaigns = [
 ] as const
 
 describe('flow-space-picker.utils', () => {
-  it('groups spaces by campaign with general first and other spaces last', () => {
+  it('groups spaces by campaign A–Z with other spaces last', () => {
     const groups = groupFlowSpacesByCampaign(spaces, [...campaigns])
 
     expect(groups.map((group) => group.heading)).toEqual([
-      'Summer campaign',
       'Marketing',
+      'Summer campaign',
       'Other spaces',
     ])
-    expect(groups[0]?.spaces.map((space) => space.id)).toEqual(['space-1'])
+    expect(groups[0]?.spaces.map((space) => space.id)).toEqual(['space-2'])
     expect(groups[2]?.spaces.map((space) => space.id)).toEqual(['space-3'])
   })
 

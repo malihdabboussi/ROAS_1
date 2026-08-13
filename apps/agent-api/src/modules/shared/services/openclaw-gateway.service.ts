@@ -70,7 +70,7 @@ export class OpenClawGatewayService {
     'image',
     'tts',
   ] as const
-  private static readonly VISUAL_REVIEW_AGENT_KEYS = new Set(['designer', 'lux'])
+  private static readonly VISUAL_REVIEW_AGENT_KEYS = new Set(['designer', 'lux', 'pixel'])
 
   private isVisualReviewAgent(agentId: string, role?: string, skills?: string[]): boolean {
     const agentKey = this.parseScopedAgentId(agentId)?.agentKey ?? agentId
