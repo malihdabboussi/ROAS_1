@@ -50,7 +50,7 @@ vi.mock('@/features/studio/store/use-chat-store', () => ({
 vi.mock('@/features/studio/components/ChatInput', () => ({
   ChatInput: (props: {
     onSend: (content: string) => Promise<void>
-    openAddMenuRef?: { current: ((submenu?: string) => void) | null }
+    openAddMenuRef?: { current: ((submenu?: string, anchor?: HTMLElement) => void) | null }
     setTextRef?: { current: ((text: string) => void) | null }
   }) => {
     mocks.chatInputProps = props
@@ -214,8 +214,12 @@ describe('HomeDashboardV4Composer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Choose Space' }))
     fireEvent.click(screen.getByRole('button', { name: 'Plugins and integrations' }))
 
-    expect(mocks.openAddMenu).toHaveBeenNthCalledWith(1, 'space')
-    expect(mocks.openAddMenu).toHaveBeenNthCalledWith(2, 'integrations')
+    expect(mocks.openAddMenu).toHaveBeenNthCalledWith(1, 'space', expect.any(HTMLButtonElement))
+    expect(mocks.openAddMenu).toHaveBeenNthCalledWith(
+      2,
+      'integrations',
+      expect.any(HTMLButtonElement),
+    )
   })
 
   it('fills the shared composer when a suggested move is selected', () => {

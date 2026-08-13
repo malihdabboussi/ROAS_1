@@ -75,8 +75,11 @@ export function useChatInputPlusController({
   })
 
   const openPlusMenu = useCallback(
-    (submenu?: Parameters<typeof openPlusMenuPosition>[0]) => {
-      openPlusMenuPosition(submenu)
+    (
+      submenu?: Parameters<typeof openPlusMenuPosition>[0],
+      anchor?: Parameters<typeof openPlusMenuPosition>[1],
+    ) => {
+      openPlusMenuPosition(submenu, anchor)
       if (submenu === 'integrations') loadIntegrationOverview()
     },
     [loadIntegrationOverview, openPlusMenuPosition],

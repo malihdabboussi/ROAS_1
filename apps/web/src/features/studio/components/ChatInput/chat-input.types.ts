@@ -87,8 +87,10 @@ export interface ChatInputProps {
   plusMenuSpacePicker?: ChatInputPlusMenuSpacePickerConfig
   /** Optional managed-agent picker surfaced in the composer plus menu. */
   plusMenuAgentPicker?: ChatInputPlusMenuAgentPickerConfig
-  /** Lets an outer composer toolbar open the add menu without duplicating it. */
-  openAddMenuRef?: React.MutableRefObject<((submenu?: ComposerPlusSubmenu) => void) | null>
+  /** Lets an outer composer toolbar open a scoped add-menu panel from its own trigger. */
+  openAddMenuRef?: React.MutableRefObject<
+    ((submenu?: ComposerPlusSubmenu, anchor?: HTMLElement) => void) | null
+  >
   /** Reports connected integrations for composer-adjacent integration previews. */
   onConnectedIntegrationProvidersChange?: (providers: string[]) => void
   /** Optional wrapper class for the default composer footer row. */

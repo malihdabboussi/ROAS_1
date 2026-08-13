@@ -165,4 +165,20 @@ describe('useChatInputPlusMenu', () => {
     act(() => result.current.togglePlusMenu())
     expect(result.current.plusMenuRootVisible).toBe(true)
   })
+
+  it('positions a dedicated submenu from its external shelf trigger', () => {
+    const { result } = renderHook(() => useChatInputPlusMenu())
+    const shelfTrigger = elementWithRect({
+      top: 600,
+      left: 300,
+      bottom: 632,
+      right: 420,
+    })
+    result.current.plusSubmenuRef.current = elementWithRect({}, 280) as HTMLDivElement
+
+    act(() => result.current.openPlusMenu('integrations', shelfTrigger))
+    act(() => vi.runOnlyPendingTimers())
+
+    expect(result.current.plusSubmenuPos).toEqual({ top: 318, left: 300 })
+  })
 })
