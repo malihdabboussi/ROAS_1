@@ -4,6 +4,7 @@ import {
   SHELL_CREATE_QUICK_STARTS,
   type ShellCreateMenuItem,
 } from '@/components/shell/shell-create-menu.config'
+import { openQuickMissions } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
 
 export function ShellEmptyChatQuickStartPills({
@@ -32,7 +33,13 @@ export function ShellEmptyChatQuickStartPills({
           <button
             key={quickStart.id}
             type="button"
-            onClick={() => onSelect(quickStart)}
+            onClick={() => {
+              if (quickStart.action === 'mission') {
+                openQuickMissions()
+                return
+              }
+              onSelect(quickStart)
+            }}
             className={cn(
               'body-4 text-muted-foreground hover:text-foreground hover:bg-hover-subtle gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex shrink-0 items-center bg-transparent transition-colors',
               variant === 'shelf' ? 'rounded-spacing-2' : 'border-border rounded-full border',

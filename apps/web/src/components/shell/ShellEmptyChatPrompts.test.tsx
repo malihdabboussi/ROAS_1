@@ -1,23 +1,20 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import {
-  SHELL_CREATE_QUICK_STARTS,
-  SHELL_CREATE_MENU_GROUPS,
-} from './shell-create-menu.config'
+import { useQuickMissionsLauncherStore } from '@/lib/missions'
+import { SHELL_CREATE_MENU_GROUPS, SHELL_CREATE_QUICK_STARTS } from './shell-create-menu.config'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from './shell-empty-chat-prompts.config'
 import { ShellEmptyChatQuickStartPills } from './ShellEmptyChatQuickStartPills'
 
 describe('shell empty chat prompts', () => {
   afterEach(() => {
     cleanup()
+    useQuickMissionsLauncherStore.setState({ open: false, playbookKey: null })
   })
 
   it('exports one curated quick-start catalog above the composer', () => {
     expect(SHELL_EMPTY_CHAT_PLACEHOLDER).toMatch(/Ask, create, search/i)
     expect(SHELL_CREATE_QUICK_STARTS).toEqual(
-      SHELL_CREATE_MENU_GROUPS.flatMap((group) =>
-        group.items.filter((item) => !item.comingSoon),
-      ),
+      SHELL_CREATE_MENU_GROUPS.flatMap((group) => group.items.filter((item) => !item.comingSoon)),
     )
     expect(SHELL_CREATE_QUICK_STARTS.map((item) => item.id)).toContain('create-mission')
     expect(
@@ -31,13 +28,18 @@ describe('shell empty chat prompts', () => {
     ).toBe(true)
   })
 
-  it('selects every quick start with its executable routing context', () => {
+  it('launches Mission directly and sends composer quick starts to the consumer', () => {
     const onSelect = vi.fn()
     render(<ShellEmptyChatQuickStartPills onSelect={onSelect} />)
 
     for (const quickStart of SHELL_CREATE_QUICK_STARTS) {
       fireEvent.click(screen.getByRole('button', { name: quickStart.label }))
-      expect(onSelect).toHaveBeenLastCalledWith(quickStart)
+      if (quickStart.action === 'mission') {
+        expect(useQuickMissionsLauncherStore.getState().open).toBe(true)
+        expect(onSelect).not.toHaveBeenCalled()
+      } else {
+        expect(onSelect).toHaveBeenLastCalledWith(quickStart)
+      }
     }
   })
 

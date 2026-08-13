@@ -139,3 +139,13 @@ Why: Production on the exact deployed commit proved the Mission button dispatche
 Impact: Mission launch requests remain observable until the dashboard host closes them, including from blank Home chats, active-chat Create menus, and preset playbook slash commands.
 
 Files: `apps/web/src/lib/missions/quick-missions-launcher.ts`, `apps/web/src/lib/missions/quick-missions-launcher.test.ts`, `apps/web/src/lib/missions/quick-missions-events.ts`, `apps/web/src/lib/missions/index.ts`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.test.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.test.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-selection-handlers.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-selection-handlers.test.ts`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `documentation/features/missions.md`.
+
+## [2026-08-13 16:30] - [FIX]
+
+What: Moved empty-chat Mission routing into the shared quick-start component itself, removed the replaced Mission branch from the composer-seeding hook, and added a real Quick Missions host/modal integration test.
+
+Why: Production on the durable-launcher deployment still showed the shared Mission pill traversing its generic composer callback without rendering the dialog. The previous tests verified the callback and host separately while mocking the real modal boundary.
+
+Impact: Home and Space empty-chat Mission pills invoke the launcher directly, composer quick starts remain limited to prompt/capability seeding, and regression coverage renders the actual portaled Quick Missions dialog with Client Strategy.
+
+Files: `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/shell/ShellEmptyChatPrompts.test.tsx`, `apps/web/src/components/shell/use-shell-chat-quick-start.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.test.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.integration.test.tsx`, `documentation/features/missions.md`.
