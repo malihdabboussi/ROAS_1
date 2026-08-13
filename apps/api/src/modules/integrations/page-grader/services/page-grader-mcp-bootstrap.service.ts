@@ -27,9 +27,17 @@ export class PageGraderMcpBootstrapService implements OnModuleInit {
     private readonly vault: VaultService,
   ) {}
 
-  async onModuleInit(): Promise<void> {
+  onModuleInit(): void {
     if (process.env.PAGE_GRADER_MCP_AUTO_REGISTER === 'false') return
 
+    // Registration maintenance is best-effort and must never delay API readiness.
+    // This provider is created on every serverless cold start; awaiting Supabase,
+    // Vault, and MCP writes here can keep all routes unavailable until the
+    // platform request times out.
+    void this.bootstrapConnectedRegistrations()
+  }
+
+  private async bootstrapConnectedRegistrations(): Promise<void> {
     try {
       const result = await this.ensureConnectedRegistrations()
       if (result.created > 0 || result.updated > 0 || result.failed > 0) {
