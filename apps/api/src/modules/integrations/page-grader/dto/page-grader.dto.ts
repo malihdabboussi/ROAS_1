@@ -32,6 +32,13 @@ export const ListPageGraderAgencyClientsSchema = z.object({
     .transform((value) => (typeof value === 'string' ? value === 'true' : value)),
 })
 
+export const GetPageGraderAgencyClientSchema = z.object({
+  sync: z
+    .union([z.literal('true'), z.literal('false'), z.boolean()])
+    .optional()
+    .transform((value) => (typeof value === 'string' ? value === 'true' : value)),
+})
+
 export const ListPageGraderAgencyCampaignsSchema = z.object({
   q: z.string().max(200).optional(),
   client_id: z.string().uuid().optional(),

@@ -26,7 +26,10 @@ describe('agency clients API', () => {
   it('loads a client workspace and unwraps it', async () => {
     const workspace = { client: { id: 'client-1' } }
     vi.mocked(backendGet).mockResolvedValue({ workspace })
-    await expect(fetchAgencyClient('client-1')).resolves.toBe(workspace)
+    await expect(fetchAgencyClient('client-1', false)).resolves.toBe(workspace)
+    expect(backendGet).toHaveBeenCalledWith(
+      '/api/integrations/page-grader/agency/clients/client-1?sync=false',
+    )
   })
 
   it('scopes campaign requests by client', async () => {

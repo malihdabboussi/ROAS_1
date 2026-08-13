@@ -84,8 +84,22 @@ export class PageGraderAgencyWorkspaceService {
     }
   }
 
-  async getClient(supabase: SupabaseClient, userId: string, scope: RequestScope, clientId: string) {
+  async getClient(
+    supabase: SupabaseClient,
+    userId: string,
+    scope: RequestScope,
+    clientId: string,
+    opts: { sync?: boolean } = {},
+  ) {
     const workspace = await this.api.getClientWorkspace(userId, clientId)
+    if (opts.sync === false) {
+      const mapping = (await this.api.getClientScopeMap(userId))[clientId] ?? null
+      return {
+        ...workspace,
+        mapping,
+        campaign_spaces: mapping ? await this.loadCampaignSpaceMappings(supabase, mapping) : [],
+      }
+    }
     const imported = await this.brainImport.importClientBrain(
       supabase,
       userId,
