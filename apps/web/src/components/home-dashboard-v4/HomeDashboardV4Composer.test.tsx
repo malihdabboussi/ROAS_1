@@ -10,7 +10,6 @@ const mocks = vi.hoisted(() => ({
   seedComposer: vi.fn(),
   clearMeetingContext: vi.fn(),
   setActiveAgentKey: vi.fn(),
-  setActiveConversationId: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -38,8 +37,7 @@ vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
 }))
 
 vi.mock('@/features/studio/store/use-chat-store', () => ({
-  useChatStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({ setActiveConversationId: mocks.setActiveConversationId }),
+  useChatStore: vi.fn(),
 }))
 
 vi.mock('@/features/studio/components/ChatInput', () => ({
@@ -125,7 +123,6 @@ describe('HomeDashboardV4Composer', () => {
 
     await waitFor(() => {
       expect(mocks.clearMeetingContext).toHaveBeenCalledTimes(1)
-      expect(mocks.setActiveConversationId).toHaveBeenCalledWith(null)
       expect(mocks.seedComposer).toHaveBeenCalledWith(
         expect.objectContaining({
           content: 'Build the launch plan',

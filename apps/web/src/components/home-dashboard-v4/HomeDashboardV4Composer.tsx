@@ -24,7 +24,6 @@ import type { ChatInputPlusMenuSpacePickerConfig } from '@/features/studio/compo
 import type { ComposerPlusSubmenu } from '@/features/studio/components/ChatInput/chat-input-policy'
 import { campaignListCacheKey, fetchCampaigns } from '@/features/studio/services/campaign.service'
 import type { ChatModelSettings } from '@/features/studio/services/chat.service'
-import { useChatStore } from '@/features/studio/store/use-chat-store'
 import type { Campaign, DocumentAttachment, MessageReference } from '@/features/studio/types'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { matchesFlowsConceptSpace } from '@/lib/flows/flows-scope-storage'
@@ -38,7 +37,6 @@ export function HomeDashboardV4Composer() {
   const setActiveAgentKey = useGlobalChatStore((s) => s.setActiveAgentKey)
   const roster = useGlobalChatStore((s) => s.roster)
   const loadRoster = useGlobalChatStore((s) => s.loadRoster)
-  const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
   const { data: cachedSpaceRows } = useCachedSpaces()
   const spaces = useMemo(() => cachedSpaceRows ?? [], [cachedSpaceRows])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -217,7 +215,6 @@ export function HomeDashboardV4Composer() {
         // A previously opened meeting workspace leaves its context attached;
         // a fresh chat seeded from Home must not hydrate into that thread.
         clearMeetingContext()
-        setActiveConversationId(null)
         seedComposer({
           content,
           agentKey: activeAgentKey,
@@ -251,7 +248,6 @@ export function HomeDashboardV4Composer() {
       router,
       seedComposer,
       sending,
-      setActiveConversationId,
       spaces,
       targetSpaceId,
       targetCampaignId,
