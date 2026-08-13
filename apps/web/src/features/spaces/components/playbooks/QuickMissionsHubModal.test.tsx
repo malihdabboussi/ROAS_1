@@ -66,7 +66,12 @@ describe('QuickMissionsHubModal', () => {
         }),
       ),
     )
-    expect(onStarted).toHaveBeenCalledWith('mission-1', 'Static Ad Production', 'space-1')
+    expect(onStarted).toHaveBeenCalledWith(
+      'mission-1',
+      'Static Ad Production',
+      'space-1',
+      'conversation-1',
+    )
   })
 
   it('dismisses the launcher while mission creation continues in the background', async () => {
@@ -102,7 +107,50 @@ describe('QuickMissionsHubModal', () => {
         'mission-background',
         'Webinar Fulfillment',
         'space-1',
+        'conversation-1',
       ),
+    )
+  })
+
+  it('creates a chat source before launching a mission from the blank chat', async () => {
+    vi.mocked(createMission).mockResolvedValue({ id: 'mission-new-chat' } as never)
+    const onResolveSourceConversation = vi.fn(async () => 'conversation-new-chat')
+    const onStarted = vi.fn()
+
+    render(
+      <QuickMissionsHubModal
+        open
+        clients={[{ spaceId: 'space-1', campaignId: 'campaign-1', title: 'Current Course' }]}
+        initialPlaybookKey="webinar-fulfillment"
+        initialClientSpaceId="space-1"
+        onClose={vi.fn()}
+        onResolveSourceConversation={onResolveSourceConversation}
+        onStarted={onStarted}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run mission' }))
+
+    await waitFor(() =>
+      expect(onResolveSourceConversation).toHaveBeenCalledWith({
+        missionTitle: 'Webinar Fulfillment',
+        campaignId: 'campaign-1',
+        spaceId: 'space-1',
+      }),
+    )
+    expect(createMission).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          source_conversation_id: 'conversation-new-chat',
+          source_surface: 'chat_quick_mission',
+        }),
+      }),
+    )
+    expect(onStarted).toHaveBeenCalledWith(
+      'mission-new-chat',
+      'Webinar Fulfillment',
+      'space-1',
+      'conversation-new-chat',
     )
   })
 

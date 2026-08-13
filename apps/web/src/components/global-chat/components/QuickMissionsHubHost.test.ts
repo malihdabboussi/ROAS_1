@@ -2,11 +2,35 @@ import { createElement } from 'react'
 import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
+import { useChatStore } from '@/features/studio/store/use-chat-store'
 import {
   buildQuickMissionReceipt,
   QuickMissionsHubHost,
   resolveQuickMissionDefaultSpaceId,
 } from './QuickMissionsHubHost'
+
+const mocks = vi.hoisted(() => ({
+  createNewConversation: vi.fn(),
+  persistQuickMissionReceipt: vi.fn(),
+  push: vi.fn(),
+  modalProps: null as Record<string, unknown> | null,
+}))
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mocks.push }),
+}))
+
+vi.mock('@/lib/conversations', () => ({
+  createNewConversation: mocks.createNewConversation,
+  persistQuickMissionReceipt: mocks.persistQuickMissionReceipt,
+}))
+
+vi.mock('@/features/spaces/components/playbooks/QuickMissionsHubModal', () => ({
+  QuickMissionsHubModal: (props: Record<string, unknown>) => {
+    mocks.modalProps = props
+    return null
+  },
+}))
 
 const clients = [
   { spaceId: 'space-1', campaignId: 'campaign-1', title: 'Course One' },
@@ -19,6 +43,13 @@ describe('QuickMissionsHubHost', () => {
   afterEach(() => {
     cleanup()
     useSpacesStore.setState({ loadSpaces: originalLoadSpaces })
+    useChatStore.setState({
+      activeConversationId: null,
+      conversations: [],
+      messagesByConversation: {},
+    })
+    vi.clearAllMocks()
+    mocks.modalProps = null
   })
 
   it('prefers attached Space context and falls back to attached conversation campaign', () => {
@@ -72,5 +103,56 @@ describe('QuickMissionsHubHost', () => {
     })
 
     expect(loadSpaces).toHaveBeenCalledOnce()
+  })
+
+  it('creates and opens a conversation before a blank-chat mission starts', async () => {
+    mocks.createNewConversation.mockResolvedValue({ id: 'conversation-new-chat' })
+    mocks.persistQuickMissionReceipt.mockResolvedValue({
+      id: 'receipt-1',
+      created_at: '2026-08-13T20:00:00.000Z',
+    })
+    useSpacesStore.setState({ spaces: [], activeSpaceId: null, loadSpaces: vi.fn() })
+    render(createElement(QuickMissionsHubHost))
+
+    const resolveSourceConversation = mocks.modalProps?.onResolveSourceConversation as (
+      input: Record<string, string>,
+    ) => Promise<string>
+    const onStarted = mocks.modalProps?.onStarted as (
+      missionId: string,
+      missionTitle: string,
+      spaceId: string,
+      sourceConversationId: string,
+    ) => Promise<void>
+
+    let conversationId = ''
+    await act(async () => {
+      conversationId = await resolveSourceConversation({
+        missionTitle: 'Client Strategy',
+        campaignId: 'campaign-1',
+        spaceId: 'space-1',
+      })
+    })
+
+    expect(mocks.createNewConversation).toHaveBeenCalledWith({
+      title: 'Client Strategy',
+      campaign_id: 'campaign-1',
+      metadata: { space_id: 'space-1' },
+    })
+    expect(conversationId).toBe('conversation-new-chat')
+    expect(useChatStore.getState().activeConversationId).toBe('conversation-new-chat')
+    expect(mocks.push).toHaveBeenCalledWith('/home?conv=conversation-new-chat')
+
+    await act(async () => {
+      await onStarted('mission-1', 'Client Strategy', 'space-1', conversationId)
+    })
+
+    expect(mocks.persistQuickMissionReceipt).toHaveBeenCalledWith('conversation-new-chat', {
+      mission_id: 'mission-1',
+      mission_title: 'Client Strategy',
+      space_id: 'space-1',
+    })
+    expect(useChatStore.getState().messagesByConversation['conversation-new-chat']).toEqual([
+      expect.objectContaining({ id: 'receipt-1', conversation_id: 'conversation-new-chat' }),
+    ])
   })
 })

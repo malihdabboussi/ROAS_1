@@ -1,11 +1,12 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { QuickMissionsHubModal } from '@/features/spaces/components/playbooks/QuickMissionsHubModal'
 import { QUICK_MISSIONS_MESSAGES } from '@/features/spaces/config/quick-missions-messages.config'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
-import { persistQuickMissionReceipt } from '@/lib/conversations'
+import { createNewConversation, persistQuickMissionReceipt } from '@/lib/conversations'
 import { QUICK_MISSIONS_OPEN_EVENT } from '@/lib/missions'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 
@@ -72,6 +73,7 @@ export function buildQuickMissionReceipt(
 }
 
 export function QuickMissionsHubHost() {
+  const router = useRouter()
   const spaces = useSpacesStore((s) => s.spaces)
   const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
   const loadSpaces = useSpacesStore((s) => s.loadSpaces)
@@ -84,6 +86,8 @@ export function QuickMissionsHubHost() {
       : null
   })
   const addMessage = useChatStore((s) => s.addMessage)
+  const addConversation = useChatStore((s) => s.addConversation)
+  const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
   const [open, setOpen] = useState(false)
   const [initialPlaybookKey, setInitialPlaybookKey] = useState<string | null>(null)
 
@@ -136,23 +140,37 @@ export function QuickMissionsHubHost() {
       initialPlaybookKey={initialPlaybookKey}
       initialClientSpaceId={initialClientSpaceId}
       sourceConversationId={activeConversationId}
-      onStarted={async (missionId, missionTitle, spaceId) => {
-        if (!activeConversationId) return
+      onResolveSourceConversation={async ({ missionTitle, campaignId, spaceId }) => {
+        const currentConversationId = useChatStore.getState().activeConversationId
+        if (currentConversationId) return currentConversationId
+        const conversation = await createNewConversation({
+          title: missionTitle,
+          campaign_id: campaignId,
+          metadata: { space_id: spaceId },
+        })
+        addConversation(conversation)
+        setActiveConversationId(conversation.id)
+        router.push(`/home?conv=${encodeURIComponent(conversation.id)}`)
+        return conversation.id
+      }}
+      onStarted={async (missionId, missionTitle, spaceId, sourceConversationId) => {
+        const receiptConversationId = sourceConversationId ?? activeConversationId
+        if (!receiptConversationId) return
         try {
-          const persistedReceipt = await persistQuickMissionReceipt(activeConversationId, {
+          const persistedReceipt = await persistQuickMissionReceipt(receiptConversationId, {
             mission_id: missionId,
             mission_title: missionTitle,
             space_id: spaceId,
           })
-          addMessage(activeConversationId, {
-            ...buildQuickMissionReceipt(missionId, missionTitle, activeConversationId, spaceId),
+          addMessage(receiptConversationId, {
+            ...buildQuickMissionReceipt(missionId, missionTitle, receiptConversationId, spaceId),
             id: persistedReceipt.id,
             created_at: persistedReceipt.created_at,
           })
         } catch (error) {
           addMessage(
-            activeConversationId,
-            buildQuickMissionReceipt(missionId, missionTitle, activeConversationId, spaceId),
+            receiptConversationId,
+            buildQuickMissionReceipt(missionId, missionTitle, receiptConversationId, spaceId),
           )
           throw error
         }

@@ -110,6 +110,16 @@ Impact: Each shelf shortcut now opens its panel beside the clicked control while
 
 Files: `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/features/studio/components/ChatInput/chat-input.types.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-plus-menu.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-plus-controller.ts`, related tests.
 
+## [2026-08-13 15:57] - [FIX]
+
+What: Moved the Quick Missions host to the persistent dashboard shell, made blank-chat Mission launches create and open their campaign/Space-scoped conversation before starting background work and saving the Mission receipt, and removed the disabled page-restore control when no restorable page exists.
+
+Why: Production testing showed that the blank Home composer dispatched the Mission event while its only listener lived inside an active conversation panel, so the Mission quick start did nothing before a conversation existed. The post-merge shell matrix also exposed an inert second-pane restore control that contradicted its no-duplicate-control contract.
+
+Impact: Mission works as the first action in a new chat, the created Mission retains its source conversation, the live Mission card appears in that same chat while work continues in the background, and the pane header shows only actionable controls.
+
+Files: `apps/web/src/app/(dashboard)/dashboard-shell.tsx`, `apps/web/src/app/(dashboard)/dashboard-shell.test.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.test.ts`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.test.tsx`, `documentation/features/missions.md`, `.docs/plans/agent-follow-up-work.md`.
+
 ## [2026-08-13 16:05] - [FEATURE]
 
 What: Added navigation-aware chat behavior for shared shell screens, including per-screen remembered conversations and a dismissible offer to switch when navigation finds a different prior chat. Removed the inert full-chat page restore control when no valid page exists.

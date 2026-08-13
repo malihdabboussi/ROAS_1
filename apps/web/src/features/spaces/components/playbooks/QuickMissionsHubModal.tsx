@@ -82,6 +82,7 @@ export function QuickMissionsHubModal({
   initialClientSpaceId,
   sourceConversationId,
   onClose,
+  onResolveSourceConversation,
   onStarted,
 }: {
   open: boolean
@@ -91,7 +92,17 @@ export function QuickMissionsHubModal({
   initialClientSpaceId?: string | null
   sourceConversationId?: string | null
   onClose: () => void
-  onStarted?: (missionId: string, missionTitle: string, spaceId: string) => void | Promise<void>
+  onResolveSourceConversation?: (input: {
+    missionTitle: string
+    campaignId: string
+    spaceId: string
+  }) => Promise<string | null>
+  onStarted?: (
+    missionId: string,
+    missionTitle: string,
+    spaceId: string,
+    sourceConversationId: string | null,
+  ) => void | Promise<void>
 }) {
   const [step, setStep] = useState<HubStep>('mission')
   const [selected, setSelected] = useState<QuickMissionCatalogEntry | null>(null)
@@ -138,13 +149,21 @@ export function QuickMissionsHubModal({
     toast.info(QUICK_MISSIONS_MESSAGES.startingToast(payload.title))
     onClose()
     try {
+      const resolvedSourceConversationId =
+        sourceConversationId ??
+        (await onResolveSourceConversation?.({
+          missionTitle: payload.title,
+          campaignId: selectedClient.campaignId,
+          spaceId: selectedClient.spaceId,
+        })) ??
+        null
       const mission = await createMission({
         ...payload,
         input: {
           ...payload.input,
-          ...(sourceConversationId
+          ...(resolvedSourceConversationId
             ? {
-                source_conversation_id: sourceConversationId,
+                source_conversation_id: resolvedSourceConversationId,
                 source_surface: 'chat_quick_mission',
               }
             : {}),
@@ -155,7 +174,12 @@ export function QuickMissionsHubModal({
       })
       toast.success(QUICK_MISSIONS_MESSAGES.startedToast(payload.title))
       try {
-        await onStarted?.(mission.id, payload.title, selectedClient.spaceId)
+        await onStarted?.(
+          mission.id,
+          payload.title,
+          selectedClient.spaceId,
+          resolvedSourceConversationId,
+        )
       } catch {
         toast.warning(QUICK_MISSIONS_MESSAGES.receiptSaveFailed)
       }

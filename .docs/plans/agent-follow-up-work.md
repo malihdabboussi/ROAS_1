@@ -38509,6 +38509,14 @@ Production already allowed `needs_reconnect` out of band; the repository now car
   Evidence: 285 LOC after adding the floating mini-player, near the 300-line component ceiling.
   Needed work: move `SpaceVoiceMiniPlayer` into its own component before adding further voice controls.
   Reason not done now: the player is small and tightly coupled to the same session controls; a separate file was not needed for this scoped change.
+
+## 2026-08-13 — Blank-chat Mission launch
+
+- File: `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx`
+  Evidence: 352/400 LOC after adding source-conversation resolution for blank-chat launches.
+  Needed work: extract Mission launch orchestration and source-conversation preparation into a focused hook before adding another launcher lifecycle branch.
+  Reason not done now: the component remains under the hard limit, and this production fix keeps the existing catalog, steps, and payload builders unchanged.
+
 ## 2026-08-12 — Navigation-aware chat pane (apps/web shell)
 
 - File: apps/web/src/components/shell/use-shell-store.ts — 539 LOC after this change (531 before; new screen-chat state lives in the extracted use-shell-store.screen-chat.ts slice, so the net add here is +8). Past the ~500 proactive-extraction guidance, under the 600 hard cap.
