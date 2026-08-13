@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, FolderKanban, Plug } from 'lucide-react'
 import { toast } from 'sonner'
+import { QuickMissionsHubHost } from '@/components/global-chat/components/QuickMissionsHubHost'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
 import { ShellEmptyChatQuickStartPills } from '@/components/shell/ShellEmptyChatQuickStartPills'
@@ -266,6 +267,7 @@ export function HomeDashboardV4Composer() {
 
   return (
     <div className="w-full max-w-3xl">
+      <QuickMissionsHubHost />
       <ShellEmptyChatQuickStartPills onSelect={quickStart.selectQuickStart} />
       <ChatInput
         onSend={handleSend}

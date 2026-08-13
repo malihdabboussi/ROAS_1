@@ -8,6 +8,7 @@ import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { ChatCampaignBrainNudge } from '../components/ChatCampaignBrainNudge'
 import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendation'
 import { GlobalChatComposerFooter } from '../components/GlobalChatComposerFooter'
+import { QuickMissionsHubHost } from '../components/QuickMissionsHubHost'
 import { resolveMeetingChatPanel } from '../lib/resolve-meeting-chat-panel'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 import { useStickyGlobalChatPanelHost } from './global-chat-panel-host'
@@ -74,6 +75,7 @@ export function GlobalChatPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <QuickMissionsHubHost />
       <ChatSurfaceRecommendation />
       <ChatCampaignBrainNudge />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
