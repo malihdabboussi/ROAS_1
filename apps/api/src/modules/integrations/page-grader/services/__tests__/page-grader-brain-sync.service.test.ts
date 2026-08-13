@@ -243,6 +243,55 @@ describe('PageGraderBrainSyncService', () => {
     expect(bootstrap).toHaveBeenCalledWith('whsec', '11111111-1111-1111-1111-111111111111', 'Acme')
   })
 
+  it('accepts a catalog-verified Slack client when campaign mapping bootstrap is unavailable', async () => {
+    const pageGraderApi = {
+      listClients: vi.fn().mockResolvedValue({
+        clients: [
+          {
+            id: '11111111-1111-1111-1111-111111111111',
+            name: 'Acme',
+            display_name: 'Acme Client',
+          },
+        ],
+      }),
+    }
+    const service = new PageGraderBrainSyncService(
+      { client: {} } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      pageGraderApi as never,
+      {} as never,
+    )
+    vi.spyOn(service as never, 'findOrBootstrapClientsByWebhookSecret' as never).mockResolvedValue(
+      [] as never,
+    )
+    vi.spyOn(service as never, 'listConnectedPageGraderRows' as never).mockResolvedValue([
+      {
+        userId: 'user-1',
+        orgId: null,
+        metadata: {},
+        webhookSecret: 'whsec',
+      },
+    ] as never)
+
+    await expect(
+      service.authorizeWebhookClient(
+        'whsec',
+        '11111111-1111-1111-1111-111111111111',
+        'Acme Client',
+      ),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        userId: 'user-1',
+        orgId: null,
+        clientId: '11111111-1111-1111-1111-111111111111',
+        entry: { campaign_id: '', campaign_name: 'Acme Client' },
+      }),
+    ])
+  })
+
   it('writes a completed Page Grader work status back to the ROAS action ledger', async () => {
     const updateEq = vi.fn().mockResolvedValue({ error: null })
     const update = vi.fn(() => ({ eq: updateEq }))
