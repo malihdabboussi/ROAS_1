@@ -47,6 +47,19 @@ export class PageGraderApiService {
     return getPageGraderCreds(this.vault, userId)
   }
 
+  async applyQcAction(
+    userId: string,
+    findingId: string,
+    payload: {
+      action: 'acknowledge' | 'resolve' | 'snooze_tomorrow'
+      slack_user_id: string
+      slack_user_name?: string
+    },
+  ) {
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.applyQcAction(creds.baseUrl, creds.apiKey, findingId, payload)
+  }
+
   async connect(userId: string, baseUrl: string, apiKey: string) {
     await this.pageGrader.healthCheck(baseUrl, apiKey)
 

@@ -19,6 +19,7 @@ import { PageGraderBrainSyncService } from './services/page-grader-brain-sync.se
 import { PageGraderMcpBootstrapService } from './services/page-grader-mcp-bootstrap.service'
 import { PageGraderMcpRegistrationService } from './services/page-grader-mcp-registration.service'
 import { PageGraderMeetingSyncService } from './services/page-grader-meeting-sync.service'
+import { PageGraderQcSlackBridgeService } from './services/page-grader-qc-slack-bridge.service'
 import { PageGraderSendWorkService } from './services/page-grader-send-work.service'
 import { PageGraderSlackIngestService } from './services/page-grader-slack-ingest.service'
 
@@ -40,6 +41,7 @@ import { PageGraderSlackIngestService } from './services/page-grader-slack-inges
     PageGraderBrainSyncService,
     PageGraderMeetingSyncService,
     PageGraderSlackIngestService,
+    PageGraderQcSlackBridgeService,
     PageGraderMcpBootstrapService,
     PageGraderMcpRegistrationService,
     PageGraderBrainSyncRepository,

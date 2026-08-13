@@ -10,6 +10,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { buildExternalAssetRef } from '@vibey/api-shared'
 import { isSlackAuthError, SlackApiIntegration } from '../integrations/slack-api.integration'
 import { SlackRepository } from '../repositories/slack.repository'
+import type { SlackBlock } from '../types/slack.types'
 import { SlackArchiveSearchService } from './slack-archive-search.service'
 import { searchSlackChannelHistory } from './slack-channel-history-search'
 
@@ -267,6 +268,38 @@ export class SlackAgentToolsService {
       }),
     )
     return { success: true, ...result }
+  }
+
+  async sendBlockMessageToTarget(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null | undefined,
+    params: {
+      channelId?: string | null
+      slackUserId?: string | null
+      text: string
+      blocks: SlackBlock[]
+    },
+  ) {
+    if (!params.text.trim()) throw new BadRequestException('text is required')
+    const botToken = await this.resolveBotToken(supabase, userId, orgId)
+    const channel =
+      params.channelId?.trim() ||
+      (params.slackUserId?.trim()
+        ? await this.slackApi.openDmChannel(botToken, params.slackUserId.trim())
+        : null)
+    if (!channel) throw new BadRequestException('A Slack channel or user is required')
+    const result = await this.runWithSlackAuthMapping(supabase, userId, orgId, () =>
+      this.slackApi.postBlockMessage(
+        botToken,
+        channel,
+        params.text,
+        params.blocks,
+        undefined,
+        false,
+      ),
+    )
+    return { success: true, channel: result.channel || channel, ts: result.ts || null }
   }
 
   async updateMessage(

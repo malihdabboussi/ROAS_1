@@ -163,6 +163,7 @@ export abstract class SlackApiIntegrationCoreBase {
     fallbackText: string,
     blocks: SlackBlock[],
     threadTs?: string,
+    fallbackToText = true,
   ): Promise<SlackApiPostMessageResponse> {
     const body: Record<string, unknown> = {
       channel: channelId,
@@ -183,6 +184,7 @@ export abstract class SlackApiIntegrationCoreBase {
     })
     const json = (await res.json()) as SlackApiPostMessageResponse
     if (!json.ok) {
+      if (!fallbackToText) throwSlackError(json.error, 'Slack Block Kit delivery failed')
       this.logger.warn(`postBlockMessage failed (${json.error}), falling back to plain text`)
       return this.postMessage(botToken, channelId, fallbackText, threadTs)
     }
