@@ -139,7 +139,7 @@ describe('ChatInputNormalFooter', () => {
     expect(screen.getByText('Send to space')).toBeTruthy()
     expect(screen.getByText('Research web')).toBeTruthy()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open add menu' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Attach' }))
     expect(props.onTogglePlusMenu).toHaveBeenCalledTimes(1)
 
     fireEvent.click(screen.getByRole('button', { name: 'Open context breakdown' }))

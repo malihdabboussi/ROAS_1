@@ -56,6 +56,12 @@ The history list has its own persisted drag width and collapse state. Dragging i
 
 ## Decision Log
 
+### 2026-08-13: Give full-screen chat one right-side drawer owner
+
+- The chat-header Summary panel control is the only right-side drawer control on a full conversation; page restore controls remain limited to actual work-page surfaces.
+- Conversation details sits immediately before the title, and clicking the title itself starts rename without a separate pencil icon.
+- Recent work excludes conversations, deduplicates equivalent named surfaces, and uses destination-specific icons.
+
 ### 2026-08-13: Keep composer entry points purpose-specific
 
 - The universal `+` menu contains only photos/files, attachments, and integrations.

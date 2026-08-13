@@ -71,6 +71,7 @@ export function ShellTopBar() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const conversationId = searchParams.get('conv')
+  const isConversationSurface = Boolean(conversationId)
 
   const shellPrefsHydrated = useShellPrefsHydrated()
   const simpleMenu = useShellMenuDock((state) => state.menuStyle === 'simple')
@@ -122,8 +123,14 @@ export function ShellTopBar() {
   }, [setSidebarPinned])
 
   useEffect(() => {
-    recordWorkAreaPage(currentPage)
-  }, [currentPage.href, currentPage.id, currentPage.title, recordWorkAreaPage])
+    if (!isConversationSurface) recordWorkAreaPage(currentPage)
+  }, [
+    currentPage.href,
+    currentPage.id,
+    currentPage.title,
+    isConversationSurface,
+    recordWorkAreaPage,
+  ])
 
   const histIndex = useRef(0)
   const histMax = useRef(0)
@@ -278,7 +285,7 @@ export function ShellTopBar() {
           </div>
         </div>
 
-        {simpleMenu || showWorkAreaControl ? (
+        {!isConversationSurface && (simpleMenu || showWorkAreaControl) ? (
           <ShellWorkAreaControl currentPage={currentPage} />
         ) : null}
       </div>

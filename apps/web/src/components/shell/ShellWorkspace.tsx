@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, type ReactNode } from 'react'
-import { ChevronLeft, PanelRightOpen } from 'lucide-react'
+import { ChevronLeft, PanelRight } from 'lucide-react'
 import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatPanel'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
@@ -46,7 +46,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
   const artifactTarget = useShellStore((s) => s.artifactViewer.target)
   const previousArtifactTargetRef = useRef(artifactTarget)
-  const recentWorkAreaPages = useShellStore((s) => s.recentWorkAreaPages)
   const shellPrefsHydrated = useShellPrefsHydrated()
   const desktop = useMediaQuery('(min-width: 768px)')
   const savedMenuDock = useShellMenuDock((s) => s.dock)
@@ -128,23 +127,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     previousArtifactTargetRef.current = artifactTarget
     if (artifactClosed && showFullConversation) setRightPanelOpen(true)
   }, [artifactTarget, setRightPanelOpen, showFullConversation])
-  // Compare routes without their query — '/home?conv=…' entries are full
-  // chats, not pages that can sit beside the current conversation.
-  const fullConversationRestoreTarget = showFullConversation
-    ? (recentWorkAreaPages.find((target) => {
-        const targetPath = target.href.split('?')[0]
-        return targetPath !== pathname && targetPath !== '/home'
-      }) ?? null)
-    : null
-
-  const restorePageBesideFullConversation = () => {
-    if (!fullConversationRestoreTarget || !convParam) return
-    const [targetPath, targetQuery = ''] = fullConversationRestoreTarget.href.split('?')
-    const params = new URLSearchParams(targetQuery)
-    params.set('conv', convParam)
-    setWorkAreaOpen(true)
-    router.push(`${targetPath}?${params.toString()}`)
-  }
   let homeOrDefaultMain: ReactNode = children
   if (showFullNewChat) {
     homeOrDefaultMain = <ShellNewChatGreeting />
@@ -152,21 +134,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     homeOrDefaultMain = (
       <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
         <GlobalChatPanel shellSidebarChrome presentation="full" />
-        {/* The summary panel opens in this corner — never stack the restore
-            control over its header controls. */}
-        {!rightPanelOpen && fullConversationRestoreTarget ? (
-          <div className="p-spacing-3 z-dropdown absolute right-0 top-0">
-            <button
-              type="button"
-              onClick={restorePageBesideFullConversation}
-              className="shell-topbar-icon-btn"
-              aria-label="Show page"
-              title={`Show ${fullConversationRestoreTarget.title}`}
-            >
-              <PanelRightOpen aria-hidden />
-            </button>
-          </div>
-        ) : null}
       </div>
     )
   }
@@ -327,7 +294,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
               aria-label="Show page"
               title="Show page"
             >
-              <PanelRightOpen aria-hidden />
+              <PanelRight aria-hidden />
             </button>
           </div>
         ) : null}
