@@ -69,3 +69,13 @@ Why: Flat campaign/space lists produced indistinguishable `General` rows, select
 Impact: Scope selection now preserves its hierarchy, behaves consistently across shared chat, flow, mission, relocation, conversation, campaign hub, and sidebar selectors, and provides predictable detailed navigation.
 
 Files: `apps/web/src/components/global-chat/components/GlobalChatComposerFooter.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, shared space/campaign/program grouping utilities and selectors, related tests, `documentation/features/claude-chatgpt-shell.md`.
+
+## 2026-08-13 15:34 - [FIX]
+
+What: Centered and widened the Spaces live-voice transcript, added minimize/restore controls with a floating in-chat voice player, and transparently retries one newly created session when the WebSocket reports an expired machine-local session.
+
+Why: Live voice content rendered against the left edge, blocked navigation back to the normal chat, and occasionally exposed a transient `Voice session expired` failure that succeeded on manual retry.
+
+Impact: Voice transcripts now occupy the central chat column, an active call can remain connected while the user works in the chat, and the first transient session-affinity failure recovers without user action.
+
+Files: `apps/web/src/features/brain/hooks/use-brain-live-session.ts`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVoiceLiveTranscript.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVoiceSessionView.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVoiceSessionView.test.tsx`

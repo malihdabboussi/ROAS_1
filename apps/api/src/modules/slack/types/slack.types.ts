@@ -127,10 +127,26 @@ export interface SlackMessageAttachment {
 }
 
 export type SlackBlock =
-  | { type: 'header'; text: { type: 'plain_text'; text: string; emoji?: boolean } }
-  | { type: 'section'; text: { type: 'mrkdwn'; text: string } }
+  | {
+      type: 'header'
+      block_id?: string
+      text: { type: 'plain_text'; text: string; emoji?: boolean }
+    }
+  | { type: 'section'; block_id?: string; text: { type: 'mrkdwn'; text: string } }
   | { type: 'divider' }
   | { type: 'context'; elements: Array<{ type: 'mrkdwn'; text: string }> }
+  | {
+      type: 'actions'
+      block_id?: string
+      elements: Array<{
+        type: 'button'
+        action_id: string
+        text: { type: 'plain_text'; text: string; emoji?: boolean }
+        value?: string
+        url?: string
+        style?: 'primary' | 'danger'
+      }>
+    }
   | {
       type: 'image'
       image_url: string

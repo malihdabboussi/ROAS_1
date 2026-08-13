@@ -16,6 +16,7 @@ export type PageGraderPackage = {
   client_strategies?: PageGraderRecord[]
   onboarding_call_notes?: PageGraderRecord[] | PageGraderRecord
   source_items?: PageGraderRecord[]
+  slack_messages?: PageGraderRecord[]
   source_pointers?: PageGraderRecord
   social_links?: PageGraderRecord[]
   intel_summary_hint?: PageGraderRecord | null
@@ -142,6 +143,7 @@ export function computePageGraderPackageContentHash(pkg: PageGraderPackage): str
     client_strategies: pkg.client_strategies ?? [],
     onboarding_call_notes: pkg.onboarding_call_notes ?? [],
     source_items: pkg.source_items ?? [],
+    slack_messages: pkg.slack_messages ?? [],
     source_pointers: pkg.source_pointers ?? null,
     social_links: pkg.social_links ?? [],
     intel_summary_hint: pkg.intel_summary_hint ?? null,
@@ -407,6 +409,36 @@ export function buildPageGraderSourceMemories(
       },
     })
   }
+  for (const message of pkg.slack_messages ?? []) {
+    const content = pageGraderStringValue(message.text)
+    if (!content) continue
+    const slackTs = pageGraderStringValue(message.slack_ts, message.ts)
+    const author = pageGraderStringValue(message.author, message.author_name) || 'Slack participant'
+    const date = pageGraderStringValue(message.date)
+    const sourceId = slackTs || pageGraderSha256(`${author}:${date}:${content}`).slice(0, 24)
+    const title = `Slack — ${author}${date ? ` — ${date}` : ''}`
+    const body = pageGraderTruncate(`${title}\n\n${content}`)
+    out.push({
+      content: body,
+      content_hash: pageGraderSha256(`slack:${pageGraderClientId}:${sourceId}:${body}`),
+      memory_type: 'insight',
+      source_type: 'page_grader_slack',
+      source_id: sourceId,
+      source_title: title.slice(0, 500),
+      confidence: 0.65,
+      significance: 0.6,
+      tags: ['page_grader_source_item', 'slack', 'recent'],
+      metadata: {
+        page_grader_client_id: pageGraderClientId,
+        page_grader_slack_ts: slackTs || null,
+        page_grader_message_date: date || null,
+        ingest_kind: 'slack_message',
+        provisional_source_snapshot: true,
+        needs_roas_extraction: true,
+        destination: 'ROAS-BRAIN',
+      },
+    })
+  }
   return out
 }
 
@@ -437,6 +469,30 @@ export function buildPageGraderEvidenceRows(
         page_grader_client_id: pageGraderClientId,
         page_grader_status: item.status ?? null,
         page_grader_category: item.category ?? null,
+        destination: 'ROAS-BRAIN',
+      },
+    })
+  }
+  for (const message of pkg.slack_messages ?? []) {
+    const content = pageGraderStringValue(message.text)
+    if (!content) continue
+    const slackTs = pageGraderStringValue(message.slack_ts, message.ts)
+    const author = pageGraderStringValue(message.author, message.author_name) || 'Slack participant'
+    const date = pageGraderStringValue(message.date)
+    const sourceId =
+      slackTs || pageGraderSha256(`${pageGraderClientId}:${author}:${date}:${content}`).slice(0, 24)
+    out.push({
+      source_type: 'page_grader_slack',
+      source_id: sourceId,
+      source_title: `Slack — ${author}${date ? ` — ${date}` : ''}`.slice(0, 500),
+      chunk_index: 0,
+      contextual_prefix: `Recent Slack message for Page Grader client ${pageGraderClientId}`,
+      content: pageGraderTruncate(content, 12000),
+      content_hash: pageGraderSha256(`slack-evidence:${pageGraderClientId}:${sourceId}:${content}`),
+      metadata: {
+        page_grader_client_id: pageGraderClientId,
+        page_grader_slack_ts: slackTs || null,
+        page_grader_message_date: date || null,
         destination: 'ROAS-BRAIN',
       },
     })

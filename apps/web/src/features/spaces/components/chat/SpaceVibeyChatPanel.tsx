@@ -162,7 +162,7 @@ import { SpaceChatHeaderActions } from './SpaceChatHeaderActions'
 import { SpaceChatSubPanel } from './SpaceChatSubPanel'
 import { SpaceUndoButton } from './SpaceUndoButton'
 import type { SpaceVoiceRunTask } from './SpaceVoiceRunsView'
-import { SpaceVoiceSessionView } from './SpaceVoiceSessionView'
+import { SpaceVoiceMiniPlayer, SpaceVoiceSessionView } from './SpaceVoiceSessionView'
 import { stripLegacySpacesConversationTitle } from './strip-legacy-spaces-conversation-title'
 
 type ChatMode = SpaceChatMode
@@ -274,6 +274,7 @@ export function SpaceVibeyChatPanel({
     () => useGlobalChatStore.getState().activeAgentKey || DEFAULT_SPACE_CHAT_AGENT_KEY,
   )
   const [voiceActive, setVoiceActive] = useState(false)
+  const [voiceMinimized, setVoiceMinimized] = useState(false)
   const spacesRoster = useSpacesStore((s) => s.roster)
   const spacesRosterLoaded = useSpacesStore((s) => s.rosterLoaded)
   const [spacerHeight, setSpacerHeight] = useState(0)
@@ -1578,6 +1579,7 @@ export function SpaceVibeyChatPanel({
   const handleVoiceEnd = useCallback(() => {
     voiceSession.endSession()
     setVoiceActive(false)
+    setVoiceMinimized(false)
     setMode('chat')
     voiceStartedRef.current = false
 
@@ -2223,7 +2225,7 @@ export function SpaceVibeyChatPanel({
             >
               {chatHeaderBlock}
 
-              {voiceActive ? (
+              {voiceActive && !voiceMinimized ? (
                 <SpaceVoiceSessionView
                   agentName={activeVoiceAgent.display_name}
                   conversationId={selectedConversationId}
@@ -2238,6 +2240,7 @@ export function SpaceVibeyChatPanel({
                   onReconnect={voiceSession.reconnectSession}
                   onToggleMute={voiceSession.toggleMute}
                   onEnd={handleVoiceEnd}
+                  onMinimize={() => setVoiceMinimized(true)}
                 />
               ) : (
                 <>
@@ -2527,6 +2530,16 @@ export function SpaceVibeyChatPanel({
                   </div>
                 </>
               )}
+              {voiceActive && voiceMinimized ? (
+                <SpaceVoiceMiniPlayer
+                  agentName={activeVoiceAgent.display_name}
+                  state={voiceSession.state}
+                  isMuted={voiceSession.isMuted}
+                  onRestore={() => setVoiceMinimized(false)}
+                  onToggleMute={voiceSession.toggleMute}
+                  onEnd={handleVoiceEnd}
+                />
+              ) : null}
             </div>
           }
           subPanel={

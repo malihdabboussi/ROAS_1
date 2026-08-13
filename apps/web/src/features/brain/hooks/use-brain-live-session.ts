@@ -51,6 +51,8 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
   const mountedRef = useRef(true)
   const stateRef = useRef<LiveSessionState>('idle')
   const isMutedRef = useRef(false)
+  const expiredSessionRetryCountRef = useRef(0)
+  const connectSessionRef = useRef<(reconnect: boolean) => Promise<void>>(async () => {})
 
   const delegationStartedThisTurnRef = useRef(false)
   const conversationIdRef = useRef<string | null>(scope?.conversationId ?? null)
@@ -234,6 +236,7 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
 
             switch (msg.type) {
               case 'ready':
+                expiredSessionRetryCountRef.current = 0
                 updateState('listening')
                 void micCaptureRef.current?.resume()
                 micCaptureRef.current?.setWebSocket(ws)
@@ -528,6 +531,15 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
 
         ws.onclose = (event) => {
           if (mountedRef.current && stateRef.current !== 'idle' && stateRef.current !== 'error') {
+            if (event.code === 4002 && expiredSessionRetryCountRef.current === 0) {
+              expiredSessionRetryCountRef.current += 1
+              cleanup()
+              updateState('idle')
+              window.setTimeout(() => {
+                if (mountedRef.current) void connectSessionRef.current(true)
+              }, 0)
+              return
+            }
             const closeMessage = describeBrainLiveWsClose(event.code, event.reason)
             if (closeMessage) {
               setError(closeMessage)
@@ -561,6 +573,8 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
       handleSavedMessage,
     ],
   )
+
+  connectSessionRef.current = connectSession
 
   const startSession = useCallback(() => connectSession(false), [connectSession])
   const reconnectSession = useCallback(() => connectSession(true), [connectSession])

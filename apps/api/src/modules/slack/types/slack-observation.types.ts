@@ -23,6 +23,7 @@ export type SlackObservationMessage = {
   text: string
   is_bot: boolean
   observed_at: string
+  metadata: Record<string, unknown>
 }
 
 export type SlackObservationCursor = {

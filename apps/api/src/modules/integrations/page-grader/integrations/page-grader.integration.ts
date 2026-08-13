@@ -157,6 +157,13 @@ export type PageGraderEmbedSession = {
   expires_at: string
 }
 
+export type PageGraderQcActionResult = {
+  success: true
+  finding_id: string
+  action: 'acknowledge' | 'resolve' | 'snooze_tomorrow'
+  confirmation: string
+}
+
 @Injectable()
 export class PageGraderIntegration {
   private readonly logger = new Logger(PageGraderIntegration.name)
@@ -183,6 +190,36 @@ export class PageGraderIntegration {
       )
     }
     return { ok: true }
+  }
+
+  async applyQcAction(
+    baseUrl: string,
+    apiKey: string,
+    findingId: string,
+    payload: {
+      action: 'acknowledge' | 'resolve' | 'snooze_tomorrow'
+      slack_user_id: string
+      slack_user_name?: string
+    },
+  ): Promise<PageGraderQcActionResult> {
+    const url = `${this.normalizeBaseUrl(baseUrl)}/qc/findings/${encodeURIComponent(findingId)}/actions`
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: this.authHeaders(apiKey),
+      body: JSON.stringify(payload),
+    })
+    const text = await res.text().catch(() => '')
+    let body: Record<string, unknown> = {}
+    try {
+      body = text ? (JSON.parse(text) as Record<string, unknown>) : {}
+    } catch {
+      body = { error: text }
+    }
+    if (!res.ok) {
+      const message = typeof body.error === 'string' ? body.error : text || res.statusText
+      throw new BadRequestException(`Page Grader QC action failed (${res.status}): ${message}`)
+    }
+    return body as PageGraderQcActionResult
   }
 
   async listClients(

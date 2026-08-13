@@ -21,7 +21,7 @@ import {
 import { PageGraderApiService } from './page-grader-api.service'
 import { PageGraderBrainImportService } from './page-grader-brain-import.service'
 
-type MappedClientRow = {
+export type MappedClientRow = {
   userId: string
   orgId: string | null
   clientId: string
@@ -35,6 +35,8 @@ type ConnectedPageGraderRow = {
   metadata: Record<string, unknown>
   webhookSecret: string | null
 }
+
+export type AuthorizedPageGraderConnection = Pick<ConnectedPageGraderRow, 'userId' | 'orgId'>
 
 @Injectable()
 export class PageGraderBrainSyncService {
@@ -76,6 +78,16 @@ export class PageGraderBrainSyncService {
       .eq('integration_id', PAGE_GRADER_PROVIDER)
       .is('org_id', null)
     return secret
+  }
+
+  async authorizeWebhookSecret(signature: string): Promise<AuthorizedPageGraderConnection[]> {
+    const secret = signature.trim()
+    if (!secret) throw new UnauthorizedException('Missing webhook signature')
+    const connections = (await this.listConnectedPageGraderRows()).filter(
+      (row) => row.webhookSecret === secret,
+    )
+    if (connections.length === 0) throw new UnauthorizedException('Unknown webhook secret')
+    return connections.map(({ userId, orgId }) => ({ userId, orgId }))
   }
 
   async processWebhook(rawBody: string, signature: string) {
@@ -541,6 +553,16 @@ export class PageGraderBrainSyncService {
     }
 
     return resolved
+  }
+
+  async authorizeWebhookClient(secret: string, clientId: string): Promise<MappedClientRow[]> {
+    const normalizedSecret = secret.trim()
+    if (!normalizedSecret) throw new UnauthorizedException('Missing webhook signature')
+    const mapped = await this.findMappedClientsByWebhookSecret(normalizedSecret, clientId)
+    if (mapped.length === 0) {
+      throw new UnauthorizedException('Unknown webhook secret or unmapped client')
+    }
+    return mapped
   }
 }
 

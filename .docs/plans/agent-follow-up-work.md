@@ -38477,3 +38477,18 @@ Production already allowed `needs_reconnect` out of band; the repository now car
 - Evidence: 360 lines after this scoped cleanup; the file still contains dormant Skills and Access submenu rendering retained for settings relocation.
 - Needed work: Move Skills and Access policy controls to their dedicated agent/settings surface, then remove the dormant composer submenu contracts and handlers.
 - Reason not done now: This change removes those controls from chat as requested; selecting and changing the owning settings surface is a separate product/settings migration.
+
+## 2026-08-13 — Spaces voice session experience
+
+- File: `apps/web/src/features/brain/hooks/use-brain-live-session.ts`
+  Evidence: 637 LOC after the scoped retry guard, above the 600-line service/hook ceiling and 623 LOC before this change.
+  Needed work: extract WebSocket event handling and connection-attempt lifecycle into focused hooks/helpers before the next live-voice transport feature.
+  Reason not done now: pre-existing structural debt; splitting the entire session transport would materially widen a targeted retry and UI correction.
+- File: `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`
+  Evidence: 2627 LOC after adding minimized-session state and rendering, already 2610 LOC before this change.
+  Needed work: continue decomposing the grandfathered Spaces chat host, including moving voice presentation state into a focused controller.
+  Reason not done now: pre-existing debt; broad panel decomposition is outside the requested live-voice behavior fix.
+- File: `apps/web/src/features/spaces/components/chat/SpaceVoiceSessionView.tsx`
+  Evidence: 285 LOC after adding the floating mini-player, near the 300-line component ceiling.
+  Needed work: move `SpaceVoiceMiniPlayer` into its own component before adding further voice controls.
+  Reason not done now: the player is small and tightly coupled to the same session controls; a separate file was not needed for this scoped change.

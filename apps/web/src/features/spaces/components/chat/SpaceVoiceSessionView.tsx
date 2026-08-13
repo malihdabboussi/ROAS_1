@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react'
-import { Loader2, Mic, MicOff, PhoneOff, RotateCcw } from 'lucide-react'
+import { Loader2, Maximize2, Mic, MicOff, Minimize2, PhoneOff, RotateCcw } from 'lucide-react'
 import type { LiveSessionState } from '@/features/brain/hooks/use-brain-live-session'
 import type { Message } from '@/lib/chat/studio-chat-runtime-adapter'
 import { StatusIndicator } from '@/features/studio/components/chat/StatusIndicator'
@@ -32,6 +32,7 @@ interface SpaceVoiceSessionViewProps {
   onReconnect: () => void
   onToggleMute: () => void
   onEnd: () => void
+  onMinimize?: () => void
 }
 
 function voiceStatusLabel(state: LiveSessionState): string | null {
@@ -61,6 +62,7 @@ export function SpaceVoiceSessionView({
   onReconnect,
   onToggleMute,
   onEnd,
+  onMinimize,
 }: SpaceVoiceSessionViewProps) {
   const [elapsed, setElapsed] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -112,7 +114,18 @@ export function SpaceVoiceSessionView({
   const statusLabel = voiceStatusLabel(state)
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-4">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-4">
+      {onMinimize ? (
+        <button
+          type="button"
+          onClick={onMinimize}
+          className="btn-icon-glass absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full"
+          aria-label="Minimize voice session"
+          title="Minimize voice session"
+        >
+          <Minimize2 className="h-4 w-4" />
+        </button>
+      ) : null}
       <div className="flex shrink-0 flex-col items-center">
         <div className="relative flex h-28 w-28 items-center justify-center">
           <BrainVoiceOrbScene animationState={orbState} audioLevelRef={audioLevelRef} size="mini" />
@@ -160,7 +173,7 @@ export function SpaceVoiceSessionView({
       ) : null}
 
       {conversationId ? (
-        <div className="mt-2 w-full max-w-md shrink-0">
+        <div className="mx-auto mt-2 w-full max-w-md shrink-0">
           <StatusIndicator conversationIdOverride={conversationId} />
         </div>
       ) : null}
@@ -211,6 +224,62 @@ export function SpaceVoiceSessionView({
           </>
         )}
       </div>
+    </div>
+  )
+}
+
+interface SpaceVoiceMiniPlayerProps {
+  agentName: string
+  state: LiveSessionState
+  isMuted: boolean
+  onRestore: () => void
+  onToggleMute: () => void
+  onEnd: () => void
+}
+
+export function SpaceVoiceMiniPlayer({
+  agentName,
+  state,
+  isMuted,
+  onRestore,
+  onToggleMute,
+  onEnd,
+}: SpaceVoiceMiniPlayerProps) {
+  const status = voiceStatusLabel(state) ?? (state === 'connecting' ? 'Connecting' : 'Needs attention')
+
+  return (
+    <div className="card-elevated surface-card absolute bottom-4 right-4 z-20 flex items-center gap-spacing-3 rounded-xl border border-border px-3 py-2 shadow-lg">
+      <button
+        type="button"
+        onClick={onRestore}
+        className="flex min-w-0 items-center gap-spacing-2 text-left"
+        aria-label="Restore voice session"
+      >
+        <span className="bg-destructive h-2.5 w-2.5 shrink-0 animate-pulse rounded-full" />
+        <span className="min-w-0">
+          <span className="body-3 text-foreground block truncate font-medium">{agentName}</span>
+          <span className="body-4 text-muted-foreground block">{status}</span>
+        </span>
+        <Maximize2 className="text-muted-foreground h-4 w-4 shrink-0" />
+      </button>
+      <button
+        type="button"
+        onClick={onToggleMute}
+        className="btn-icon-glass flex h-8 w-8 items-center justify-center rounded-full"
+        aria-label={isMuted ? 'Unmute' : 'Mute'}
+        title={isMuted ? 'Unmute' : 'Mute'}
+      >
+        {isMuted ? <MicOff className="text-destructive h-4 w-4" /> : <Mic className="h-4 w-4" />}
+      </button>
+      <button
+        type="button"
+        onClick={onEnd}
+        className="button-glass-destructive flex h-8 w-8 items-center justify-center rounded-full"
+        aria-label="End voice session"
+        title="End voice session"
+      >
+        <PhoneOff className="h-4 w-4" />
+      </button>
     </div>
   )
 }
