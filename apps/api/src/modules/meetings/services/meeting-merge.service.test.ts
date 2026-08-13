@@ -4,7 +4,7 @@ import { buildMeetingConversationId } from '../domain/meeting-conversation-id'
 import { MeetingMergeService } from './meeting-merge.service'
 
 const SPACE_ID = 'space-1'
-const SCOPE = { spaceId: SPACE_ID, userId: 'user-1', orgId: 'org-1' }
+const SCOPE = { spaceId: SPACE_ID, userId: 'user-1' }
 
 function callRow(id: string, overrides: Record<string, unknown> = {}) {
   return {
@@ -137,13 +137,11 @@ describe('MeetingMergeService', () => {
       userId: 'user-1',
       meetingItemId: 'dup-1',
       keepConversationId,
-      orgId: 'org-1',
     })
     expect(conversationDedup.archiveDuplicates).toHaveBeenCalledWith(supabase, {
       userId: 'user-1',
       meetingItemId: 'dup-2',
       keepConversationId,
-      orgId: 'org-1',
     })
   })
 

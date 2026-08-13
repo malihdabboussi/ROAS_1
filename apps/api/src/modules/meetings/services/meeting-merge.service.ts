@@ -8,7 +8,6 @@ import { MeetingConversationDeduplicationService } from './meeting-conversation-
 export interface MergeMeetingsInput {
   spaceId: string
   userId: string
-  orgId?: string | null
   survivorItemId: string
   duplicateItemIds: string[]
 }
@@ -78,7 +77,6 @@ export class MeetingMergeService {
           userId: input.userId,
           meetingItemId: duplicateId,
           keepConversationId,
-          orgId: input.orgId ?? null,
         })
       } catch {
         // Best-effort: the merge already committed; a failed chat archive must not undo it.
