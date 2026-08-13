@@ -20,6 +20,16 @@ describe('ScheduledMeetingSchema', () => {
     expect(parsed.end).toBe('2026-07-29T18:45:00.000Z')
   })
 
+  it('accepts the stable ical_uid natural key and keeps it optional', () => {
+    expect(
+      ScheduledMeetingSchema.parse({ ...scheduledMeeting, ical_uid: 'uid-1@google.com' }).ical_uid,
+    ).toBe('uid-1@google.com')
+    expect(ScheduledMeetingSchema.parse({ ...scheduledMeeting, ical_uid: null }).ical_uid).toBe(
+      null,
+    )
+    expect(ScheduledMeetingSchema.parse(scheduledMeeting).ical_uid).toBeUndefined()
+  })
+
   it('continues to reject timestamps without timezone information', () => {
     expect(() =>
       ScheduledMeetingSchema.parse({

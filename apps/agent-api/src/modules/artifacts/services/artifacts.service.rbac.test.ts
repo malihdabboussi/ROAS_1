@@ -1131,6 +1131,11 @@ describe('RBAC CRUD consistency', () => {
     expect(isArtifactActionAllowed(marketingEmployee, 'generate_ad_copy').allowed).toBe(true)
   })
 
+  it('Pixel-class marketing employees can read and build the campaign Canvas', () => {
+    expect(isArtifactActionAllowed(marketingEmployee, 'get_canvas_board').allowed).toBe(true)
+    expect(isArtifactActionAllowed(marketingEmployee, 'apply_canvas_operations').allowed).toBe(true)
+  })
+
   it('resolveManagedActionAllowlist includes document CRUD for all domains', () => {
     for (const domain of ['marketing', 'analyst', 'developer'] as const) {
       const allowlist = resolveManagedActionAllowlist(domain, 'employee')

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, Minus, Video } from 'lucide-react'
 import { AgendaMinimizedEventEntry } from '@/features/home/components/AgendaMinimizedEventEntry'
+import { agendaFathomRecordingUrl } from '@/features/home/lib/sync-agenda-fathom-recording'
 import type { CalendarAgendaEvent, CalendarAttendee } from '@/lib/services/calendar-api'
 
 const GCAL_EVENT_COLORS: Record<string, { border: string; bg: string; text: string }> = {
@@ -189,14 +190,21 @@ export function AgendaEventEntry({
   isExpanded: boolean
   isNextHero?: boolean
   isMinimized?: boolean
-  onSelect: () => void
+  onSelect?: () => void
   onOpenMeeting?: () => void
   onMinimizedChange?: (minimized: boolean) => void
   nowTick: number
   showAccountLabel: boolean
 }) {
   const color = eventColor(ev)
-  const accountLabel = showAccountLabel && ev.account_label ? String(ev.account_label).trim() : ''
+  // Fathom URLs live on related.recording_url (or merged video_url); they are
+  // recordings, never live join links.
+  const recordingUrl = agendaFathomRecordingUrl(ev)
+  const joinUrl = ev.video_url && ev.video_url !== recordingUrl ? ev.video_url : null
+  const rawAccountLabel =
+    showAccountLabel && ev.account_label ? String(ev.account_label).trim() : ''
+  // The Fathom badge already marks the source — a "Fathom" account label would repeat it.
+  const accountLabel = rawAccountLabel.toLowerCase() === 'fathom' ? '' : rawAccountLabel
 
   const minimizeButton = onMinimizedChange ? (
     <button
@@ -239,7 +247,7 @@ export function AgendaEventEntry({
       layout
       transition={ENTRY_TRANSITION}
       onClick={() => {
-        onSelect()
+        onSelect?.()
         openMeeting()
       }}
       className={
@@ -255,7 +263,7 @@ export function AgendaEventEntry({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          onSelect()
+          onSelect?.()
           openMeeting()
         }
       }}
@@ -302,16 +310,26 @@ export function AgendaEventEntry({
                 {ev.source === 'fathom' ? 'Open recording' : 'Open meeting'}
               </button>
             ) : null}
-            {ev.video_url ? (
+            {joinUrl ? (
               <a
-                href={ev.video_url}
+                href={joinUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 className="button-glass-green body-3 mt-0 flex w-full items-center justify-center gap-2 rounded-lg py-2 font-semibold"
               >
-                <Video className="h-4 w-4" />
-                {ev.source === 'fathom' ? 'Watch recording' : videoButtonLabel(ev)}
+                {videoButtonLabel(ev)}
+              </a>
+            ) : null}
+            {recordingUrl ? (
+              <a
+                href={recordingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="button-glass-green body-3 mt-0 flex w-full items-center justify-center gap-2 rounded-lg py-2 font-semibold"
+              >
+                Watch recording
               </a>
             ) : null}
           </div>
@@ -327,7 +345,7 @@ export function AgendaEventEntry({
             style={{ background: color.border }}
             aria-hidden
           />
-          <span className="typo-caption text-muted-foreground w-14 shrink-0">
+          <span className="typo-caption text-muted-foreground w-16 shrink-0 whitespace-nowrap tabular-nums">
             {ev.all_day
               ? 'All day'
               : new Date(ev.start).toLocaleTimeString('en-US', {
@@ -345,6 +363,19 @@ export function AgendaEventEntry({
           </div>
           {ev.source === 'fathom' ? (
             <span className="badge-glass badge-glass-cyan typo-caption shrink-0">Fathom</span>
+          ) : null}
+          {recordingUrl ? (
+            <a
+              href={recordingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="btn-icon-bare shrink-0"
+              aria-label="Watch recording"
+              title="Watch recording"
+            >
+              <Video className="icon-sm" aria-hidden />
+            </a>
           ) : null}
           {ev.prep ? (
             <span
@@ -370,7 +401,6 @@ export function AgendaEventEntry({
               Doc
             </a>
           ) : null}
-          {ev.video_url ? <Video className="text-muted-foreground h-3.5 w-3.5 shrink-0" /> : null}
           {minimizeButton}
         </motion.div>
       )}

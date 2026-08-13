@@ -6,6 +6,7 @@ import { HomeTaskDetailHost } from '@/features/home/components/HomeTaskDetailHos
 import { useHomeFeedOpen } from '@/features/home/hooks/use-home-feed-open'
 import { useHomeMeetingActions } from '@/features/home/hooks/use-home-meeting-actions'
 import { useHomeMeetingWorkRestore } from '@/features/home/hooks/use-home-meeting-work-restore'
+import { MeetingsUnifiedSurface } from './MeetingsUnifiedSurface'
 
 export default function HomeMeetingsPage() {
   const {
@@ -23,7 +24,7 @@ export default function HomeMeetingsPage() {
     openYourTurnItem,
     openYourTurnItemFromMeeting,
   })
-  useHomeMeetingWorkRestore(openMeetingEvent)
+  useHomeMeetingWorkRestore(openMeetingEvent, activeMeetingEvent)
 
   return (
     <>
@@ -42,11 +43,15 @@ export default function HomeMeetingsPage() {
             onClose={closeYourTurnItem}
           />
         ) : (
-          <AgendaCard
-            fullHeight
-            presentation="page"
-            onOpenItem={openYourTurnItem}
-            onOpenMeeting={openMeetingEvent}
+          <MeetingsUnifiedSurface
+            agenda={
+              <AgendaCard
+                fullHeight
+                presentation="page"
+                onOpenItem={openYourTurnItem}
+                onOpenMeeting={openMeetingEvent}
+              />
+            }
           />
         )}
       </main>

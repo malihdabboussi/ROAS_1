@@ -114,6 +114,10 @@ export function useChatInputDraft({
         store.clearComposerDraft('new')
       }
     }
+    if (draft === valueRef.current) {
+      resizeTextareaForDraft(textareaRef, draft, scheduleAnimationFrameRef.current)
+      return
+    }
     setValue(draft)
     setDisplayText(draft)
     resizeTextareaForDraft(textareaRef, draft, scheduleAnimationFrameRef.current)

@@ -155,7 +155,7 @@ export function EmailAnalyticsView({
   }))
 
   return (
-    <div className="flex flex-1 flex-col overflow-auto px-4 py-3">
+    <div className="scrollbar-thin flex h-0 min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-4 py-3">
       {initialLoading ? (
         <div className="flex flex-1 items-center justify-center">
           <VibeyLoadingOrb size="sm" text="Loading email data..." />

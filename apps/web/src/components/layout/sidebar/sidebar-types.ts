@@ -9,7 +9,14 @@ export interface SidebarProps {
   avatarUrl?: string | null
 }
 
-export type ManagePanelId = 'home' | 'projects' | 'spaces' | 'team2' | 'brain' | 'more'
+export type ManagePanelId =
+  | 'home'
+  | 'projects'
+  | 'spaces'
+  | 'team2'
+  | 'brain'
+  | 'favorites'
+  | 'more'
 
 export type ManageRailItem = {
   id: string
@@ -23,6 +30,7 @@ export type ManageRailItem = {
       href?: string
     }
   | { type: 'mode-switch' }
+  | { type: 'delegation'; id: string; label: string }
 )
 
 export interface SidebarCampaignRow {

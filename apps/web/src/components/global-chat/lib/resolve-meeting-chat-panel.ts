@@ -22,6 +22,17 @@ export function resolveMeetingChatPanel(input: {
     }
   }
   const preferredConversationId = meetingContext.conversationId.trim() || null
+  if (
+    input.activeConversationId &&
+    preferredConversationId &&
+    input.activeConversationId !== preferredConversationId
+  ) {
+    return {
+      meetingContext: null,
+      preferredConversationId: null,
+      awarenessContext: undefined,
+    }
+  }
   const awarenessReady =
     Boolean(preferredConversationId) && preferredConversationId === input.activeConversationId
   return {

@@ -8,6 +8,7 @@ describe('vibey-api skill generator', () => {
         'list_documents',
         'get_document',
         'read_space_document',
+        'search_conversations',
         'search_space_context',
         'search_brain_context',
       ]),
@@ -18,7 +19,10 @@ describe('vibey-api skill generator', () => {
     expect(skillMd).toContain('Document retrieval before Brain')
     expect(skillMd).toContain('active Space evidence first')
     expect(skillMd).toContain('I already gave you the April follow-up call data')
-    expect(skillMd).toContain('`search_space_context`, `list_documents`, `get_document`')
+    expect(skillMd).toContain(
+      '`search_conversations`, `search_space_context`, `list_documents`, `get_document`',
+    )
+    expect(output).toContain('## search_conversations')
     expect(output).toContain('search or read Space/document sources before Brain')
   })
 
@@ -99,6 +103,30 @@ describe('vibey-api skill generator', () => {
     expect(output).toContain('ad_campaign_id')
     expect(output).toContain('date_preset')
     expect(output).toContain('Never put a Meta numeric ID in campaign_id')
+  })
+
+  it('always documents ask_clarification for conversational domains', () => {
+    const { skillMd, referenceFiles } = generateScopedVibeyApiSkill(
+      new Set(['save_user_memory']),
+      'management',
+    )
+    const communication = referenceFiles['references/communication.md'] ?? ''
+
+    expect(skillMd).toContain('Clarify ambiguous requests with a card')
+    expect(skillMd).toContain('`ask_clarification`')
+    expect(communication).toContain('## ask_clarification')
+    expect(communication).toContain('"type":"single_choice"')
+  })
+
+  it('keeps ask_clarification out of the flows domain skill', () => {
+    const { skillMd, referenceFiles } = generateScopedVibeyApiSkill(
+      new Set(['get_flow_build_context', 'create_flow_clarification', 'create_flow_plan']),
+      'flows',
+    )
+    const output = [skillMd, ...Object.values(referenceFiles)].join('\n')
+
+    expect(output).not.toContain('ask_clarification')
+    expect(output).toContain('create_flow_clarification')
   })
 
   it('teaches exact calendar account selection and organization-wide campaign health scope', () => {

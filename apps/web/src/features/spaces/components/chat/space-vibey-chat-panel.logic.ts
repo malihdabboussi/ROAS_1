@@ -218,8 +218,8 @@ export function mergeConversationLists<T extends ConversationListLike>(...lists:
     }
   }
   return Array.from(byId.values()).sort((a, b) => {
-    const aAt = a.last_message_at ?? a.created_at ?? a.updated_at
-    const bAt = b.last_message_at ?? b.created_at ?? b.updated_at
+    const aAt = a.last_message_at ?? a.updated_at ?? a.created_at
+    const bAt = b.last_message_at ?? b.updated_at ?? b.created_at
     return new Date(bAt).getTime() - new Date(aAt).getTime()
   })
 }
@@ -365,5 +365,9 @@ export function conversationNeedsMessageHydration(
     messagesByConversation: Record<string, { length: number } | undefined>
   },
 ): boolean {
-  return !Object.prototype.hasOwnProperty.call(state.messagesByConversation, conversationId)
+  // An empty entry is not proof of hydration: meeting links and drawer opens
+  // seed `[]` before any fetch, and trusting that left real history invisible.
+  // selectConversation background-revalidates cached entries without flicker.
+  const entry = state.messagesByConversation[conversationId]
+  return !entry || entry.length === 0
 }

@@ -1,17 +1,18 @@
 'use client'
 
 import { useEffect, useRef, useState, type MouseEvent, type RefObject } from 'react'
-import { MoreHorizontal, Pin } from 'lucide-react'
+import { CalendarDays, MoreHorizontal, Pin } from 'lucide-react'
 import { ConversationChannelIcon } from '@/components/chat/ConversationChannelIcon'
 import { Tooltip } from '@/components/ui/tooltip'
 import {
   formatCompactRelativeTime,
   getAgentInitial,
   getConversationAgentDisplay,
+  getConversationDisplayTitle,
   getConversationLastActivityAt,
+  isMeetingConversation,
   needsGeneratedConversationTitle,
   resolveConversationActivity,
-  stripLegacySpacesConversationTitle,
   type ChatHistoryLeadingIcon,
   type Conversation,
   type ConversationActivity,
@@ -54,13 +55,13 @@ function ConversationRowLeadingIcon({
 }
 
 function ConversationRowTitle({
-  rawTitle,
+  conversation,
   emphasized,
 }: {
-  rawTitle: string | null
+  conversation: Conversation
   emphasized: boolean
 }) {
-  const target = stripLegacySpacesConversationTitle(rawTitle) || 'Untitled conversation'
+  const target = getConversationDisplayTitle(conversation) || 'Untitled conversation'
   const [shown, setShown] = useState(target)
   const prevTargetRef = useRef(target)
 
@@ -99,6 +100,54 @@ function ConversationRowTitle({
   return (
     <p className={cn('body-3 truncate', emphasized ? 'font-semibold' : 'font-medium')}>{shown}</p>
   )
+}
+
+function ConversationTypeIndicator({
+  conversation,
+  activity,
+}: {
+  conversation: Conversation
+  activity: ConversationActivity
+}) {
+  const meeting = isMeetingConversation(conversation)
+  const statusClass =
+    activity === 'working'
+      ? 'text-primary'
+      : activity === 'needs_action'
+        ? 'text-warning'
+        : activity === 'unread'
+          ? 'text-info'
+          : 'text-muted-foreground'
+  return (
+    <Tooltip label={meeting ? 'Meeting conversation' : 'Chat conversation'} side="right">
+      <span
+        className="icon-sm relative flex shrink-0 items-center justify-center"
+        aria-label={meeting ? 'Meeting conversation' : 'Chat conversation'}
+      >
+        {activity === 'working' ? (
+          <span className="bg-primary absolute inset-0 animate-ping rounded-full opacity-20" />
+        ) : null}
+        {meeting ? (
+          <CalendarDays className={cn('icon-xs relative', statusClass)} aria-hidden />
+        ) : (
+          <span className={cn('h-2 w-2 rounded-full bg-current', statusClass)} aria-hidden />
+        )}
+      </span>
+    </Tooltip>
+  )
+}
+
+function formatConversationActivityTooltip(value: string | null): string | undefined {
+  if (!value) return undefined
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return undefined
+  return `Last activity ${date.toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })}`
 }
 
 function formatConversationUpdatedAt(value: string | null): string {
@@ -180,6 +229,7 @@ interface SpaceConversationRowProps {
   onCancelRename: () => void
   showUpdatedAt?: boolean
   divided?: boolean
+  showConversationTypeIcon?: boolean
 }
 
 export function SpaceConversationRow({
@@ -203,6 +253,7 @@ export function SpaceConversationRow({
   onCancelRename,
   showUpdatedAt = false,
   divided = false,
+  showConversationTypeIcon = false,
 }: SpaceConversationRowProps) {
   const resolvedLeadingIcon: ChatHistoryLeadingIcon =
     leadingIcon ?? (allAgentsMode ? 'agent' : 'logo')
@@ -223,7 +274,7 @@ export function SpaceConversationRow({
   return (
     <div
       onContextMenu={(event) => onOpenContextMenu(event, conversation.id)}
-      title={activityAt}
+      title={formatConversationActivityTooltip(activityAt)}
       className={cn(
         'group/conversation px-spacing-1 py-spacing-1 gap-spacing-2 rounded-spacing-3 relative flex items-center transition-colors',
         divided && 'border-border rounded-none border-b',
@@ -233,7 +284,11 @@ export function SpaceConversationRow({
         menuOpen && 'bg-hover-subtle text-foreground',
       )}
     >
-      {showSeparateActivity ? <ConversationActivityIndicator activity={activity} /> : null}
+      {showConversationTypeIcon ? (
+        <ConversationTypeIndicator conversation={conversation} activity={activity} />
+      ) : showSeparateActivity ? (
+        <ConversationActivityIndicator activity={activity} />
+      ) : null}
       {showLeadingSlot ? (
         <div
           className={cn(
@@ -275,7 +330,7 @@ export function SpaceConversationRow({
           <div className="gap-spacing-1 flex min-w-0 items-center">
             {pinned ? <Pin className="text-muted-foreground icon-xs shrink-0" /> : null}
             <ConversationRowTitle
-              rawTitle={conversation.title}
+              conversation={conversation}
               emphasized={activity === 'needs_action' || activity === 'unread'}
             />
           </div>

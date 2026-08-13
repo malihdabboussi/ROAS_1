@@ -9,6 +9,7 @@ import {
   fetchPrograms,
   invalidateProgramsListCache,
   updateProgram,
+  updateProgramUserState,
   type Program,
 } from '@/lib/programs'
 import { SidebarDeleteProgramDialog } from './SidebarDeleteProgramDialog'
@@ -50,6 +51,27 @@ export function SidebarProgramOverlays({
           program={programMenuFor.program}
           anchorRect={programMenuFor.anchorRect}
           onClose={() => setProgramMenuFor(null)}
+          onToggleFavorite={() => {
+            const program = programMenuFor.program
+            const next = !program.is_favorite
+            setPrograms((prev) =>
+              prev.map((row) => (row.id === program.id ? { ...row, is_favorite: next } : row)),
+            )
+            void updateProgramUserState(program.id, next)
+              .then(() => {
+                invalidateProgramsListCache(useOrgStore.getState().activeOrgId)
+                window.dispatchEvent(new Event('roas:programs-changed'))
+                toast.success(next ? 'Program added to favorites' : 'Program removed from favorites')
+              })
+              .catch(() => {
+                setPrograms((prev) =>
+                  prev.map((row) =>
+                    row.id === program.id ? { ...row, is_favorite: !next } : row,
+                  ),
+                )
+                toast.error('Could not update Program favorite')
+              })
+          }}
           onRename={
             programMenuFor.program.system_kind
               ? undefined

@@ -187,6 +187,30 @@ describe('useChatInputDraft', () => {
     expect(setDisplayText).not.toHaveBeenCalled()
   })
 
+  it('does not publish an unchanged empty draft when the conversation context changes', () => {
+    const store = draftStore()
+    const setValue = vi.fn()
+    const setDisplayText = vi.fn()
+    const { rerender } = renderHook(
+      ({ draftContextKey }) =>
+        useChatInputDraft(
+          defaultOptions({
+            value: '',
+            draftContextKey,
+            getDraftStore: () => store,
+            setValue,
+            setDisplayText,
+          }),
+        ),
+      { initialProps: { draftContextKey: 'conversation-1' } },
+    )
+
+    rerender({ draftContextKey: 'conversation-2' })
+
+    expect(setValue).not.toHaveBeenCalled()
+    expect(setDisplayText).not.toHaveBeenCalled()
+  })
+
   it('does not save or clear drafts on rerenders caused by new accessor identities', () => {
     const store = draftStore()
     const { rerender, unmount } = renderHook(

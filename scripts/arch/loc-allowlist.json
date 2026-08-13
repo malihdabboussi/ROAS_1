@@ -14,6 +14,11 @@
       "limit": 600,
       "lines": 728
     },
+    "apps/agent-api/src/modules/artifacts/services/artifact-brain-scholar.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 2971
+    },
     "apps/agent-api/src/modules/artifacts/services/artifact-documents.service.ts": {
       "kind": "service",
       "limit": 600,
@@ -49,20 +54,90 @@
       "limit": 600,
       "lines": 2093
     },
-    "apps/web/src/components/layout/AvatarDropdown.tsx": {
-      "kind": "web-component",
+    "apps/agent-api/src/modules/task-agent/services/task-agent.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 623
+    },
+    "apps/api/src/modules/integrations/services/integrations-calendar-dedupe.ts": {
+      "kind": "utility",
+      "limit": 300,
+      "lines": 400
+    },
+    "apps/api/src/modules/integrations/services/integrations-calendar.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 736
+    },
+    "apps/api/src/modules/spaces/repositories/space-items.repository.ts": {
+      "kind": "repository",
       "limit": 400,
-      "lines": 544
+      "lines": 418
+    },
+    "apps/api/src/modules/spaces/services/meetings-precall-prep.helpers.ts": {
+      "kind": "utility",
+      "limit": 300,
+      "lines": 590
+    },
+    "apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 629
+    },
+    "apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 2278
     },
     "apps/web/src/components/conversations/ConversationShareModal.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 418
     },
+    "apps/web/src/components/layout/AvatarDropdown.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 544
+    },
     "apps/web/src/components/layout/sidebar/SidebarStudioSection.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 573
+    },
+    "apps/web/src/components/menus/MoveCopySubmenu.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 678
+    },
+    "apps/web/src/components/spaces/cells/DueDateCell.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 692
+    },
+    "apps/web/src/components/spaces/cells/MediaCell.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 530
+    },
+    "apps/web/src/components/spaces/cells/MultiSelectCell.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 599
+    },
+    "apps/web/src/components/spaces/cells/ProgressCell.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 601
+    },
+    "apps/web/src/components/spaces/cells/date-picker/RecurrencePanel.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 722
+    },
+    "apps/web/src/features/billing/components/CreditPurchaseDialog.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 471
     },
     "apps/web/src/features/brain/components/BrainHome.tsx": {
       "kind": "web-component",
@@ -89,20 +164,20 @@
       "limit": 600,
       "lines": 2400
     },
-    "apps/web/src/features/spaces/components/automations/ActionBuilder.tsx": {
+    "apps/web/src/features/home/components/RecentAgentConversationsCard.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 2122
-    },
-    "apps/web/src/features/spaces/components/automations/PromptTemplateEditor.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 1002
+      "lines": 535
     },
     "apps/web/src/features/mission-control/components/dialogs/DeliverablesCarousel.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 812
+    },
+    "apps/web/src/features/settings/components/settings-content/ConnectedIntegrationCard.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 641
     },
     "apps/web/src/features/settings/components/settings-content/OrgSettingsContent.tsx": {
       "kind": "web-component",
@@ -113,6 +188,11 @@
       "kind": "web-component",
       "limit": 400,
       "lines": 491
+    },
+    "apps/web/src/features/settings/components/settings-content/UsagePageContent.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 743
     },
     "apps/web/src/features/spaces/components/DocsView.tsx": {
       "kind": "web-component",
@@ -144,15 +224,55 @@
       "limit": 400,
       "lines": 736
     },
+    "apps/web/src/features/spaces/components/ViewSwitcher.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1324
+    },
+    "apps/web/src/features/spaces/components/ads-research/AdAnalysisPanel.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1067
+    },
+    "apps/web/src/features/spaces/components/ads-research/AdSearchPanel.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 700
+    },
     "apps/web/src/features/spaces/components/artifacts/ArtifactViews.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 1252
     },
+    "apps/web/src/features/spaces/components/artifacts/paid-ads/PaidAdsStructurePane.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1029
+    },
+    "apps/web/src/features/spaces/components/automations/ActionBuilder.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 2122
+    },
+    "apps/web/src/features/spaces/components/automations/AutomationFlowMap.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 783
+    },
+    "apps/web/src/features/spaces/components/automations/PromptTemplateEditor.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1002
+    },
+    "apps/web/src/features/spaces/components/chat/PresentationDesignChatView.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 582
+    },
     "apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 2553
+      "lines": 2614
     },
     "apps/web/src/features/spaces/components/contacts/ContactActivityTimeline.tsx": {
       "kind": "web-component",
@@ -209,10 +329,40 @@
       "limit": 400,
       "lines": 427
     },
+    "apps/web/src/features/spaces/components/instagram-research/ContentAnalysisModal.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1928
+    },
+    "apps/web/src/features/spaces/components/instagram-research/InstagramResearchList.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 720
+    },
+    "apps/web/src/features/spaces/components/instagram-research/InstagramResearchView.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1110
+    },
     "apps/web/src/features/spaces/components/modals/SpaceModalsHost.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 552
+    },
+    "apps/web/src/features/spaces/components/reporting/shared/ReportingTimeRangeSelector.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 505
+    },
+    "apps/web/src/features/spaces/components/reporting/shared/view-date-range-subview.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 410
+    },
+    "apps/web/src/features/spaces/components/social-research/TopicSearchPanel.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1296
     },
     "apps/web/src/features/spaces/components/task-detail/TaskSubtasks.tsx": {
       "kind": "web-component",
@@ -224,6 +374,11 @@
       "limit": 600,
       "lines": 1481
     },
+    "apps/web/src/features/spaces/services/social-research.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 632
+    },
     "apps/web/src/features/spaces/services/spaces.service.ts": {
       "kind": "service",
       "limit": 600,
@@ -234,6 +389,11 @@
       "limit": 400,
       "lines": 811
     },
+    "apps/web/src/features/spaces/views/contacts/ContactsToolbar.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 406
+    },
     "apps/web/src/features/spaces/views/docs/DocsToolbar.tsx": {
       "kind": "web-component",
       "limit": 400,
@@ -243,6 +403,11 @@
       "kind": "web-component",
       "limit": 400,
       "lines": 5229
+    },
+    "apps/web/src/features/studio/components/message-bubble/MessageContentBlockSwitchPartA.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 425
     },
     "apps/web/src/features/studio/components/preview/AllContactsImportAcDialog.tsx": {
       "kind": "web-component",
@@ -294,121 +459,6 @@
       "limit": 400,
       "lines": 708
     },
-    "apps/web/src/features/team/components/AgentActionsMenu.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 642
-    },
-    "apps/web/src/features/team/components/AgentChatPanel.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 2741
-    },
-    "apps/web/src/components/menus/MoveCopySubmenu.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 678
-    },
-    "apps/web/src/features/billing/components/CreditPurchaseDialog.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 471
-    },
-    "apps/web/src/features/team/containers/WidgetBuilderModal.tsx": {
-      "kind": "web-container",
-      "limit": 600,
-      "lines": 1387
-    },
-    "apps/agent-api/src/modules/artifacts/services/artifact-brain-scholar.service.ts": {
-      "kind": "service",
-      "limit": 600,
-      "lines": 2971
-    },
-    "apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts": {
-      "kind": "service",
-      "limit": 600,
-      "lines": 2278
-    },
-    "apps/web/src/features/home/components/RecentAgentConversationsCard.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 535
-    },
-    "apps/web/src/features/settings/components/settings-content/UsagePageContent.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 743
-    },
-    "apps/web/src/features/spaces/components/ads-research/AdAnalysisPanel.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 1067
-    },
-    "apps/web/src/features/spaces/components/ads-research/AdSearchPanel.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 700
-    },
-    "apps/web/src/features/spaces/components/artifacts/paid-ads/PaidAdsStructurePane.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 1029
-    },
-    "apps/web/src/features/spaces/components/chat/PresentationDesignChatView.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 582
-    },
-    "apps/web/src/features/spaces/components/instagram-research/ContentAnalysisModal.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 1928
-    },
-    "apps/web/src/features/spaces/components/instagram-research/InstagramResearchList.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 720
-    },
-    "apps/web/src/features/spaces/components/instagram-research/InstagramResearchView.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 1110
-    },
-    "apps/web/src/features/spaces/components/reporting/shared/ReportingTimeRangeSelector.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 505
-    },
-    "apps/web/src/features/spaces/components/reporting/shared/view-date-range-subview.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 410
-    },
-    "apps/web/src/features/spaces/components/social-research/TopicSearchPanel.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 1296
-    },
-    "apps/web/src/features/spaces/components/ViewSwitcher.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 1324
-    },
-    "apps/web/src/features/spaces/services/social-research.service.ts": {
-      "kind": "service",
-      "limit": 600,
-      "lines": 632
-    },
-    "apps/web/src/features/spaces/views/contacts/ContactsToolbar.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 406
-    },
-    "apps/web/src/features/studio/components/message-bubble/MessageContentBlockSwitchPartA.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 425
-    },
     "apps/web/src/features/team-2/components/teams/TeamAnalyticsView.tsx": {
       "kind": "web-component",
       "limit": 400,
@@ -419,45 +469,20 @@
       "limit": 400,
       "lines": 1453
     },
-    "apps/api/src/modules/integrations/services/integrations-calendar.service.ts": {
-      "kind": "service",
-      "limit": 600,
-      "lines": 736
-    },
-    "apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts": {
-      "kind": "service",
-      "limit": 600,
-      "lines": 629
-    },
-    "apps/api/src/modules/integrations/services/integrations-calendar-dedupe.ts": {
-      "kind": "utility",
-      "limit": 300,
-      "lines": 400
-    },
-    "apps/api/src/modules/spaces/services/meetings-precall-prep.helpers.ts": {
-      "kind": "utility",
-      "limit": 300,
-      "lines": 590
-    },
-    "apps/api/src/modules/spaces/repositories/space-items.repository.ts": {
-      "kind": "repository",
-      "limit": 400,
-      "lines": 418
-    },
-    "apps/agent-api/src/modules/task-agent/services/task-agent.service.ts": {
-      "kind": "service",
-      "limit": 600,
-      "lines": 623
-    },
-    "apps/web/src/features/settings/components/settings-content/ConnectedIntegrationCard.tsx": {
+    "apps/web/src/features/team/components/AgentActionsMenu.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 641
+      "lines": 642
     },
-    "apps/web/src/features/spaces/components/automations/AutomationFlowMap.tsx": {
+    "apps/web/src/features/team/components/AgentChatPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 783
+      "lines": 2741
+    },
+    "apps/web/src/features/team/containers/WidgetBuilderModal.tsx": {
+      "kind": "web-container",
+      "limit": 600,
+      "lines": 1387
     }
   },
   "webFeatureImports": {

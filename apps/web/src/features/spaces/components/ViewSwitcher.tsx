@@ -149,6 +149,13 @@ const VIEW_CATALOG: { section: string; items: ViewCatalogItem[] }[] = [
         icon: 'calendar-days',
         description: 'Tasks and scheduled social posts by date',
       },
+      {
+        type: 'canvas',
+        label: 'Canvas',
+        icon: 'panels-top-left',
+        description: 'Map campaign assets and their connections',
+        newViewId: 'canvas',
+      },
     ],
   },
   {

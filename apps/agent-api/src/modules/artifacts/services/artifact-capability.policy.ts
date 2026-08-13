@@ -236,7 +236,7 @@ const CAT_BRAIN_CORTEX_READ = new Set<string>([
   'search_company_brain',
 ])
 
-const CAT_SPACE_RETRIEVAL = new Set<string>(['search_space_context'])
+const CAT_SPACE_RETRIEVAL = new Set<string>(['search_space_context', 'search_conversations'])
 
 const CAT_CONTACTS_READ = new Set<string>([
   'list_contacts',
@@ -335,6 +335,7 @@ export const FLOW_ALLOWED_ACTIONS = new Set<string>([
   'get_space_view',
   'list_space_view_items',
   'search_space_context',
+  'search_conversations',
   'list_tasks',
   'get_task',
   'create_space_field',
@@ -390,6 +391,8 @@ const MANAGED_BASELINE_ACTIONS = new Set<string>([
 const MARKETING_EMPLOYEE_ACTIONS = new Set<string>([
   ...MANAGED_BASELINE_ACTIONS,
   ...MISSION_READ_ACTIONS,
+  'get_canvas_board',
+  'apply_canvas_operations',
   'create_offer',
   'update_offer_step',
   'get_offer',

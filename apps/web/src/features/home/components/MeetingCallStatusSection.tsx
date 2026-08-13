@@ -1,6 +1,11 @@
 'use client'
 
 import { Play, Square } from 'lucide-react'
+import {
+  MEETING_POST_CALL_ACTIONS,
+  MEETING_PRE_CALL_ACTIONS,
+  type MeetingPostCallAction,
+} from '@/features/home/config/meeting-post-call-actions.config'
 
 export function MeetingCallStatusSection({
   phase,
@@ -13,6 +18,7 @@ export function MeetingCallStatusSection({
   onStart,
   onEnd,
   onContinue,
+  onPostCallAction,
 }: {
   phase: string | undefined
   isLive: boolean
@@ -24,10 +30,13 @@ export function MeetingCallStatusSection({
   onStart: () => void
   onEnd: () => void
   onContinue: () => void
+  onPostCallAction?: (action: MeetingPostCallAction) => void
 }) {
   const isProcessing = phase === 'processing'
+  const showPostCallActions = (isProcessing || isPostCall) && !isLive && onPostCallAction
+  const showPreCallActions = !isLive && !isProcessing && !isPostCall && onPostCallAction
   return (
-    <section className="border-border gap-spacing-4 py-spacing-3 flex items-center justify-between border-b">
+    <section className="border-border gap-spacing-4 py-spacing-3 flex flex-wrap items-center justify-between border-b">
       <div className="min-w-0 flex-1">
         <p className="body-3 text-foreground font-semibold">
           {isLive
@@ -89,6 +98,26 @@ export function MeetingCallStatusSection({
           {starting ? 'Opening…' : 'Start call'}
         </button>
       )}
+      {showPostCallActions || showPreCallActions ? (
+        <div className="gap-spacing-2 flex w-full flex-wrap items-center">
+          {(showPostCallActions ? MEETING_POST_CALL_ACTIONS : MEETING_PRE_CALL_ACTIONS).map(
+            (action) => {
+              const Icon = action.icon
+              return (
+                <button
+                  key={action.id}
+                  type="button"
+                  onClick={() => onPostCallAction(action)}
+                  className="button-compact button-glass-neutral gap-spacing-1 inline-flex items-center"
+                >
+                  <Icon className="icon-xs" aria-hidden />
+                  {action.label}
+                </button>
+              )
+            },
+          )}
+        </div>
+      ) : null}
     </section>
   )
 }

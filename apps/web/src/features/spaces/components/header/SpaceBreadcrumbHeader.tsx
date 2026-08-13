@@ -98,7 +98,7 @@ export function SpaceBreadcrumbHeader({
 
   return (
     <>
-      <ShellBreadcrumb>{trail}</ShellBreadcrumb>
+      <ShellBreadcrumb label={`${folderLabel} / ${activeSpace.title}`}>{trail}</ShellBreadcrumb>
       {activeSpace.description ? (
         <p className="text-muted-foreground px-4 pb-2 pt-3 text-xs">{activeSpace.description}</p>
       ) : null}

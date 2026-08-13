@@ -2,14 +2,13 @@ import * as fs from 'fs/promises'
 import * as os from 'os'
 import * as path from 'path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import {
+import registerBackendPlugin, {
   getOnHoldActionsForTests,
   getSupportedActionsForTests,
   loadAllowedActions,
   parseAgentIdentityFromSessionKey,
   PLUGIN_LOCAL_ACTIONS,
 } from '../../../../../docker/tools/vibey-backend/index'
-import registerBackendPlugin from '../../../../../docker/tools/vibey-backend/index'
 import { ON_HOLD_PROMPTMODE_ACTIONS } from '../../../../../packages/agent-policy/src/action-lifecycle'
 import { ACTIONS as POLICY_ACTIONS } from '../../../../../packages/agent-policy/src/actions'
 import { MCP_V1_TOOL_CATALOG } from '../../../../../packages/agent-policy/src/mcp-catalog'
@@ -250,6 +249,146 @@ describe('vibey backend plugin workspace policy loading', () => {
     expect(nonHrDream?.parameters?.properties?.action?.enum).not.toContain(
       'dream_propose_skill_update',
     )
+  })
+
+  it('keeps plugin-local actions on the tool schema for scoped allowlists', async () => {
+    let factory:
+      | ((ctx: { sessionKey?: string }) => {
+          parameters?: Record<string, any>
+          execute: (
+            id: string,
+            params: { action: string; label: string; data: Record<string, unknown> },
+          ) => Promise<unknown>
+        })
+      | undefined
+
+    const userId = '19847dc5-a29a-4684-87d0-4cf6560baa10'
+    const actionsPath = path.join(
+      process.env.AGENTS_BASE_DIR!,
+      'users',
+      userId,
+      'vibey',
+      'skills',
+      'vibey-api',
+      'ALLOWED_ACTIONS.json',
+    )
+    await fs.mkdir(path.dirname(actionsPath), { recursive: true })
+    await fs.writeFile(
+      actionsPath,
+      JSON.stringify({ allowed_actions: ['save_user_memory'] }),
+      'utf-8',
+    )
+
+    registerBackendPlugin({
+      config: {
+        plugins: {
+          entries: {
+            'vibey-backend': { config: { backendUrl: 'http://backend.test' } },
+          },
+        },
+      },
+      logger: { info: vi.fn() },
+      registerTool: (toolFactory: typeof factory) => {
+        factory = toolFactory
+      },
+    })
+
+    const tool = factory?.({
+      sessionKey: `agent:user-${userId}-vibey:user-${userId}-vibey-${userId}-00000000-0000-4000-8000-000000000001`,
+    })
+    const actionEnum = tool?.parameters?.properties?.action?.enum as string[]
+
+    expect(actionEnum).toContain('save_user_memory')
+    for (const localAction of PLUGIN_LOCAL_ACTIONS) {
+      expect(actionEnum).toContain(localAction)
+    }
+  })
+
+  it('executes ask_clarification locally for scoped agents without hitting the backend', async () => {
+    let factory:
+      | ((ctx: { sessionKey?: string }) => {
+          execute: (
+            id: string,
+            params: { action: string; label: string; data: Record<string, unknown> },
+          ) => Promise<unknown>
+        })
+      | undefined
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    const userId = '19847dc5-a29a-4684-87d0-4cf6560baa10'
+    const actionsPath = path.join(
+      process.env.AGENTS_BASE_DIR!,
+      'users',
+      userId,
+      'vibey',
+      'skills',
+      'vibey-api',
+      'ALLOWED_ACTIONS.json',
+    )
+    await fs.mkdir(path.dirname(actionsPath), { recursive: true })
+    await fs.writeFile(
+      actionsPath,
+      JSON.stringify({ allowed_actions: ['save_user_memory'] }),
+      'utf-8',
+    )
+
+    registerBackendPlugin({
+      config: {
+        plugins: {
+          entries: {
+            'vibey-backend': { config: { backendUrl: 'http://backend.test' } },
+          },
+        },
+      },
+      logger: { info: vi.fn() },
+      registerTool: (toolFactory: typeof factory) => {
+        factory = toolFactory
+      },
+    })
+
+    const tool = factory?.({
+      sessionKey: `agent:user-${userId}-vibey:user-${userId}-vibey-${userId}-00000000-0000-4000-8000-000000000001`,
+    })
+    const result = (await tool?.execute('call-1', {
+      action: 'ask_clarification',
+      label: 'Clarifying the request',
+      data: {
+        title: 'Choose a direction',
+        intro_message: 'Pick one before I start.',
+        questions: [
+          {
+            id: 'direction',
+            text: 'Which direction should I take?',
+            type: 'single_choice',
+            options: [
+              { id: 'option_a', label: 'Option A' },
+              { id: 'option_b', label: 'Option B' },
+            ],
+            required: true,
+          },
+        ],
+      },
+    })) as { content?: Array<{ type: string; text: string }> }
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    const payload = JSON.parse(result?.content?.[0]?.text ?? '{}') as Record<string, any>
+    expect(payload.success).toBe(true)
+    expect(payload.clarification).toMatchObject({
+      title: 'Choose a direction',
+      introMessage: 'Pick one before I start.',
+      questions: [
+        expect.objectContaining({
+          id: 'direction',
+          type: 'single_choice',
+          required: true,
+          options: [
+            expect.objectContaining({ id: 'option_a', label: 'Option A' }),
+            expect.objectContaining({ id: 'option_b', label: 'Option B' }),
+          ],
+        }),
+      ],
+    })
   })
 
   it('keeps PromptMode backend plugin actions aligned with active backend actions', () => {

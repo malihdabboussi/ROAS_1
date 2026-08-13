@@ -36,6 +36,51 @@ function event(
 }
 
 describe('integrations-calendar-dedupe', () => {
+  it('keeps the recording-bearing related when duplicate rows merge', () => {
+    const stubRelated = {
+      space_id: 'space-1',
+      call_item_id: 'call-stub',
+      title: 'Weekly sync',
+      summary: null,
+      has_transcript: false,
+      recording_url: null,
+      external_recording_id: null,
+      follow_ups: [],
+    }
+    const fathomRelated = {
+      ...stubRelated,
+      call_item_id: 'call-fathom',
+      recording_url: 'https://fathom.video/calls/123',
+      external_recording_id: '987654',
+    }
+
+    const deduped = dedupeCalendarAgendaEvents([
+      event({ id: 'cal-1', title: 'Weekly sync', related: stubRelated }),
+      event({
+        id: 'fathom:call-fathom',
+        title: 'Weekly sync',
+        source: 'fathom',
+        related: fathomRelated,
+      }),
+    ])
+    expect(deduped).toHaveLength(1)
+    expect(deduped[0]?.related?.recording_url).toBe('https://fathom.video/calls/123')
+
+    // Same outcome when the Fathom row arrives first.
+    const reversed = dedupeCalendarAgendaEvents([
+      event({
+        id: 'fathom:call-fathom',
+        title: 'Weekly sync',
+        source: 'fathom',
+        related: fathomRelated,
+      }),
+      event({ id: 'cal-1', title: 'Weekly sync', related: stubRelated }),
+    ])
+    expect(reversed).toHaveLength(1)
+    expect(reversed[0]?.related?.recording_url).toBe('https://fathom.video/calls/123')
+    expect(reversed[0]?.id).toBe('cal-1')
+  })
+
   it('prefers iCalUID for the same meeting across people', () => {
     expect(teamAgendaDedupeKey(event({ id: 'a', ical_uid: 'uid-1', account_label: 'Alex' }))).toBe(
       'ical:uid-1',
@@ -114,6 +159,69 @@ describe('integrations-calendar-dedupe', () => {
     expect(deduped[0]?.video_url).toBe('https://zoom.us/j/1')
   })
 
+  it('keeps a Fathom recording out of the live calendar join-link field', () => {
+    const deduped = dedupeCalendarAgendaEvents([
+      event({
+        id: 'google:samin',
+        title: 'Dylan Vanas and samin | Zoom Call',
+        start: '2026-08-11T17:00:00.000Z',
+        end: '2026-08-11T17:30:00.000Z',
+      }),
+      event({
+        id: 'fathom:samin',
+        title: 'Dylan Vanas webinar growth consultation',
+        start: '2026-08-11T17:02:00.000Z',
+        end: '2026-08-11T17:32:00.000Z',
+        source: 'fathom',
+        video_url: 'https://fathom.video/share/samin',
+        video_label: 'Fathom',
+        related: {
+          space_id: 'meetings',
+          call_item_id: 'samin-call',
+          title: 'Dylan Vanas webinar growth consultation',
+          summary: null,
+          has_transcript: true,
+          recording_url: 'https://fathom.video/share/samin',
+          follow_ups: [],
+        },
+      }),
+    ])
+
+    expect(deduped).toHaveLength(1)
+    expect(deduped[0]?.source).toBe('google_calendar')
+    expect(deduped[0]?.video_url).toBeNull()
+    expect(deduped[0]?.video_label).toBeNull()
+    expect(deduped[0]?.related?.recording_url).toBe('https://fathom.video/share/samin')
+  })
+
+  it('collapses duplicate same-minute Fathom rows with different generated titles', () => {
+    const deduped = dedupeCalendarAgendaEvents([
+      event({
+        id: 'fathom:1ds-a',
+        title: '1DS community growth strategy session',
+        source: 'fathom',
+        start: '2026-08-11T22:01:04.000Z',
+        end: '2026-08-11T22:31:04.000Z',
+      }),
+      event({
+        id: 'fathom:1ds-b',
+        title: '1DS community offer and growth review',
+        source: 'fathom',
+        start: '2026-08-11T22:01:38.000Z',
+        end: '2026-08-11T22:31:38.000Z',
+      }),
+      event({
+        id: 'fathom:1ds-c',
+        title: '1DS team pricing and growth strategy',
+        source: 'fathom',
+        start: '2026-08-11T22:01:52.000Z',
+        end: '2026-08-11T22:31:52.000Z',
+      }),
+    ])
+
+    expect(deduped).toHaveLength(1)
+  })
+
   it('merges teammate calendar + Fathom Mine row and prefers teammate label', () => {
     const deduped = dedupeTeamAgendaEvents([
       event({
@@ -171,6 +279,45 @@ describe('integrations-calendar-dedupe', () => {
     ])
     expect(merged.filter((e) => e.source === 'fathom')).toHaveLength(1)
     expect(merged).toHaveLength(3)
+  })
+
+  it('merges a uniquely matching calendar invite when Fathom starts up to 35 minutes early', () => {
+    const merged = mergeFathomIntoNearStartCalendars([
+      event({
+        id: 'campaign-review',
+        title: 'ROAS // CAMPAIGN REVIEW',
+        start: '2026-08-10T17:30:00.000Z',
+        end: '2026-08-10T18:00:00.000Z',
+      }),
+      event({
+        id: 'monday-huddle',
+        title: 'ROAS // MONDAY TEAM HUDDLE',
+        start: '2026-08-10T18:00:00.000Z',
+        end: '2026-08-10T19:30:00.000Z',
+      }),
+      event({
+        id: 'fathom:campaign-review',
+        title: 'Team campaign launches and client fixes',
+        start: '2026-08-10T17:01:00.000Z',
+        end: '2026-08-10T18:15:00.000Z',
+        source: 'fathom',
+        related: {
+          space_id: 'meetings',
+          call_item_id: 'campaign-call',
+          title: 'Team campaign launches and client fixes',
+          summary: null,
+          has_transcript: true,
+          recording_url: 'https://fathom.video/share/campaign',
+          follow_ups: [],
+        },
+      }),
+    ])
+
+    expect(merged).toHaveLength(2)
+    expect(merged.find((row) => row.id === 'campaign-review')?.related?.call_item_id).toBe(
+      'campaign-call',
+    )
+    expect(merged.find((row) => row.id === 'monday-huddle')?.related).toBeNull()
   })
 
   it('collapses personal multi-calendar near-duplicate titles at the same slot', () => {

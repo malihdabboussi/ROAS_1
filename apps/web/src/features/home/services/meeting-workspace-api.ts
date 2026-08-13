@@ -29,6 +29,7 @@ export type FathomRecordingCandidate = {
   call_id?: string | number
   title: string
   meeting_title?: string
+  canonical_title?: string
   url?: string
   created_at?: string
   recording_start_time?: string
@@ -73,6 +74,7 @@ export type MeetingWorkspaceBundle = {
     id: string
     title: string
     description: string | null
+    source?: string | null
     custom_data: Record<string, unknown> | null
   }
   workspace: MeetingWorkspaceRecord | null
@@ -111,6 +113,8 @@ export function resolveScheduledMeeting(
 ): Promise<ResolvedMeetingWorkspace> {
   return backendPost(`/api/spaces/${spaceId}/meetings/resolve`, {
     calendar_event_id: event.id,
+    // Stable natural key — agenda row ids flip between providers/accounts.
+    ical_uid: event.ical_uid ?? null,
     title: event.title,
     start: event.start,
     end: event.end,
@@ -154,6 +158,30 @@ export function createMeetingAction(
   return backendPost<MeetingAction>(`${path(spaceId, meetingItemId)}/actions`, {
     title: input.title,
     assignee_name: input.assigneeName ?? null,
+  })
+}
+
+/** Relocate a meeting action item (a follow_up space item) into another space. */
+export function transferMeetingActionToSpace(
+  sourceSpaceId: string,
+  itemId: string,
+  targetSpaceId: string,
+) {
+  return backendPost<Record<string, unknown>>(
+    `/api/spaces/${sourceSpaceId}/items/${itemId}/transfer-to-space`,
+    { target_space_id: targetSpaceId, mode: 'move' },
+  )
+}
+
+export function addMeetingSnippet(
+  spaceId: string,
+  meetingItemId: string,
+  input: { text: string; sourceLabel?: string | null },
+) {
+  return backendPost<MeetingSnippet>(`${path(spaceId, meetingItemId)}/snippets`, {
+    source_type: 'observation',
+    text: input.text,
+    source_label: input.sourceLabel ?? null,
   })
 }
 

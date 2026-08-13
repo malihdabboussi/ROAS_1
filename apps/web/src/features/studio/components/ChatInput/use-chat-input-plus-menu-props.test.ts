@@ -9,6 +9,7 @@ type PlusSubmenuId = Exclude<ComposerPlusSubmenu, null>
 function createOptions() {
   const plusSubmenuAnchorRefs = {
     current: {
+      agent: null,
       files: null,
       attach: null,
       integrations: null,

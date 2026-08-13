@@ -5,8 +5,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { ScheduleModule } from '@nestjs/schedule'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { SharedModule } from '@vibey/api-shared'
-import { CronService } from './cron.service'
 import { shouldEnableInProcessScheduling } from './cron-runtime-policy'
+import { CronService } from './cron.service'
 import { HealthController } from './health.controller'
 import { AdminModule } from './modules/admin/admin.module'
 import { AgentFeedbackModule } from './modules/agent-feedback/agent-feedback.module'
@@ -18,6 +18,7 @@ import { AgentTeamsModule } from './modules/agent-teams/agent-teams.module'
 import { AgentsModule } from './modules/agents/agents.module'
 import { ArtifactsModule } from './modules/artifacts/artifacts.module'
 import { AuthModule } from './modules/auth/auth.module'
+import { BillingCreditAlertsModule } from './modules/billing/billing-credit-alerts.module'
 import { BillingModule } from './modules/billing/billing.module'
 import { BrainModule } from './modules/brain/brain.module'
 import { BrowserSessionsModule } from './modules/browser-sessions/browser-sessions.module'
@@ -110,6 +111,7 @@ import { YourTurnModule } from './modules/your-turn/your-turn.module'
     ArtifactsModule,
     AuthModule,
     BillingModule,
+    BillingCreditAlertsModule,
     ConversationsModule,
     ChannelsModule,
     CanvasModule,

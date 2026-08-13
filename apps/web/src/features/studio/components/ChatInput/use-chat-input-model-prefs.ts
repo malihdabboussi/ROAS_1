@@ -9,12 +9,12 @@ import {
 } from '@/features/studio/services/chat.service'
 import { resolveModelDisplayLabel } from '../../lib/subscription-model-options'
 import {
-  MODEL_STRATEGIES,
   applyComposerModelSettings,
   buildModelSettings,
   findContextOption,
   formatModelRowMeta,
   isModelStrategyId,
+  MODEL_STRATEGIES,
   serializeComposerModelPrefs,
   type ComposerModelPrefs,
 } from './chat-input-model-settings'
@@ -48,23 +48,43 @@ export function useChatInputModelPrefs({
   persistConversationPrefs = persistConversationModelPrefs,
   persistDelayMs = 600,
 }: UseChatInputModelPrefsOptions) {
-  const [selectedComposerModel, setSelectedComposerModel] = useState<string | null>(null)
+  const initialSessionPrefs = sessionComposerModelPrefs
+  const [selectedComposerModel, setSelectedComposerModel] = useState<string | null>(
+    () => defaultModel ?? initialSessionPrefs?.model ?? null,
+  )
   const userSelectedComposerModelRef = useRef(false)
-  const hydratedComposerConversationRef = useRef<string | null | undefined>(undefined)
+  const hydratedComposerConversationRef = useRef<string | null>(conversationId)
+  const hydratedDefaultsRef = useRef(
+    serializeComposerModelPrefs(defaultModel, defaultModelSettings),
+  )
   const selectComposerModel = useCallback((modelId: string) => {
     userSelectedComposerModelRef.current = true
     setSelectedComposerModel(modelId)
   }, [])
   const [selectedContextWindowTokens, setSelectedContextWindowTokens] = useState<number | null>(
-    null,
+    () =>
+      defaultModelSettings?.context_window_tokens ??
+      initialSessionPrefs?.contextWindowTokens ??
+      null,
   )
   const [selectedReasoningEffort, setSelectedReasoningEffort] =
-    useState<ModelReasoningEffort | null>(null)
-  const [fastModeEnabled, setFastModeEnabled] = useState(false)
-  const [cortexMaxEnabled, setCortexMaxEnabled] = useState(true)
+    useState<ModelReasoningEffort | null>(
+      () => defaultModelSettings?.reasoning_effort ?? initialSessionPrefs?.reasoningEffort ?? null,
+    )
+  const [fastModeEnabled, setFastModeEnabled] = useState(
+    () => defaultModelSettings?.speed_mode === 'fast' || initialSessionPrefs?.fastMode === true,
+  )
+  const [cortexMaxEnabled, setCortexMaxEnabled] = useState(
+    () => defaultModelSettings?.cortex_max ?? initialSessionPrefs?.cortexMax ?? true,
+  )
 
   useEffect(() => {
     const conversationChanged = hydratedComposerConversationRef.current !== conversationId
+    const defaultsSnapshot = serializeComposerModelPrefs(defaultModel, defaultModelSettings)
+    const defaultsChanged = hydratedDefaultsRef.current !== defaultsSnapshot
+    if (!conversationChanged && !defaultsChanged) return
+
+    hydratedDefaultsRef.current = defaultsSnapshot
     if (conversationChanged) {
       hydratedComposerConversationRef.current = conversationId
       userSelectedComposerModelRef.current = false
@@ -77,6 +97,19 @@ export function useChatInputModelPrefs({
     if (!canHydrateFromDefault) return
 
     if (defaultModel) {
+      const defaultContextWindow = defaultModelSettings?.context_window_tokens ?? null
+      const defaultReasoningEffort = defaultModelSettings?.reasoning_effort ?? null
+      const defaultFastMode = defaultModelSettings?.speed_mode === 'fast'
+      const defaultCortexMax = defaultModelSettings?.cortex_max ?? true
+      if (
+        selectedComposerModel === defaultModel &&
+        selectedContextWindowTokens === defaultContextWindow &&
+        selectedReasoningEffort === defaultReasoningEffort &&
+        fastModeEnabled === defaultFastMode &&
+        cortexMaxEnabled === defaultCortexMax
+      ) {
+        return
+      }
       setSelectedComposerModel(defaultModel)
       applyComposerModelSettings(
         defaultModelSettings,
@@ -89,6 +122,15 @@ export function useChatInputModelPrefs({
     }
 
     if (conversationChanged && sessionComposerModelPrefs?.model) {
+      if (
+        selectedComposerModel === sessionComposerModelPrefs.model &&
+        selectedContextWindowTokens === sessionComposerModelPrefs.contextWindowTokens &&
+        selectedReasoningEffort === sessionComposerModelPrefs.reasoningEffort &&
+        fastModeEnabled === sessionComposerModelPrefs.fastMode &&
+        cortexMaxEnabled === sessionComposerModelPrefs.cortexMax
+      ) {
+        return
+      }
       setSelectedComposerModel(sessionComposerModelPrefs.model)
       setSelectedContextWindowTokens(sessionComposerModelPrefs.contextWindowTokens)
       setSelectedReasoningEffort(sessionComposerModelPrefs.reasoningEffort)
@@ -98,6 +140,15 @@ export function useChatInputModelPrefs({
     }
 
     if (!conversationChanged) return
+    if (
+      selectedComposerModel === null &&
+      selectedContextWindowTokens === null &&
+      selectedReasoningEffort === null &&
+      !fastModeEnabled &&
+      cortexMaxEnabled
+    ) {
+      return
+    }
     setSelectedComposerModel(null)
     applyComposerModelSettings(
       null,
@@ -106,7 +157,16 @@ export function useChatInputModelPrefs({
       setFastModeEnabled,
       setCortexMaxEnabled,
     )
-  }, [conversationId, defaultModel, defaultModelSettings])
+  }, [
+    conversationId,
+    cortexMaxEnabled,
+    defaultModel,
+    defaultModelSettings,
+    fastModeEnabled,
+    selectedComposerModel,
+    selectedContextWindowTokens,
+    selectedReasoningEffort,
+  ])
 
   const inheritedModel =
     typeof defaultModel === 'string' && defaultModel.trim().length > 0
@@ -214,21 +274,45 @@ export function useChatInputModelPrefs({
         ? modelOptionsRef.current.find((row) => row.id === activeModelOptionId)
         : undefined
     if (!option) {
+      if (
+        selectedContextWindowTokens === null &&
+        selectedReasoningEffort === null &&
+        !fastModeEnabled
+      ) {
+        return
+      }
       setSelectedContextWindowTokens(null)
       setSelectedReasoningEffort(null)
       setFastModeEnabled(false)
       return
     }
-    setSelectedContextWindowTokens((prev) =>
-      prev && option.contextOptions.some((entry) => entry.tokens === prev)
-        ? prev
-        : (option.contextOptions[0]?.tokens ?? null),
-    )
-    setSelectedReasoningEffort((prev) =>
-      prev && option.reasoningLevels.includes(prev) ? prev : (option.reasoningLevels[0] ?? 'none'),
-    )
-    setFastModeEnabled((prev) => prev && option.speedModes.includes('fast'))
-  }, [activeModelOptionId, conversationId])
+    const nextContextWindow =
+      selectedContextWindowTokens &&
+      option.contextOptions.some((entry) => entry.tokens === selectedContextWindowTokens)
+        ? selectedContextWindowTokens
+        : (option.contextOptions[0]?.tokens ?? null)
+    const nextReasoningEffort =
+      selectedReasoningEffort && option.reasoningLevels.includes(selectedReasoningEffort)
+        ? selectedReasoningEffort
+        : (option.reasoningLevels[0] ?? 'none')
+    const nextFastMode = fastModeEnabled && option.speedModes.includes('fast')
+    if (
+      selectedContextWindowTokens === nextContextWindow &&
+      selectedReasoningEffort === nextReasoningEffort &&
+      fastModeEnabled === nextFastMode
+    ) {
+      return
+    }
+    setSelectedContextWindowTokens(nextContextWindow)
+    setSelectedReasoningEffort(nextReasoningEffort)
+    setFastModeEnabled(nextFastMode)
+  }, [
+    activeModelOptionId,
+    conversationId,
+    fastModeEnabled,
+    selectedContextWindowTokens,
+    selectedReasoningEffort,
+  ])
 
   return {
     selectedComposerModel,

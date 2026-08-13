@@ -1,6 +1,6 @@
 # Programs
 
-Last Modified: July 25, 2026 (sidebar Program and Space same-list reorder)
+Last Modified: August 10, 2026 (Program favorites and primary navigation)
 
 ## Overview
 
@@ -22,7 +22,9 @@ ROAS org-first system programs: **Clients**, **ROAS Ops**. Personal-account prog
 - `programs.visibility` — `workspace` | `private` | `selected` (default `workspace`)
 - `programs.created_by` — durable Program owner (set on create; nullable for legacy rows)
 - `program_shares` — ACL rows (`entity_type=user`, `level` `view`|`edit`)
+- `program_user_state` — per-user Program favorites
 - `campaigns.program_id` — nullable FK; null = **General** (UI folder; internal key `__ungrouped__`)
+- `campaign_canvases` — one free-form board identity and viewport per Campaign; normalized items, connectors, and operation history inherit campaign access
 - System kinds: `clients`, `roas_ops`, `personal` (unique per scope when set)
 
 Migrations:
@@ -30,15 +32,19 @@ Migrations:
 - `supabase/migrations/20260722130000_programs.sql`
 - `supabase/migrations/20260724190155_program_permissions.sql`
 - `supabase/migrations/20260724204707_programs_insert_returning_rls.sql` — SELECT policy row-local checks so `INSERT…RETURNING` works; INSERT allows org `creator`+
+- `supabase/migrations/20260810130000_program_user_state.sql` — per-user Program favorite state and RLS
+- `supabase/migrations/20260810220000_program_user_state_grants.sql` — grants application roles table access; RLS still limits authenticated users to their own favorite rows
 
 API:
 
 - `GET/POST/PATCH/DELETE /api/programs`
+- `PATCH /api/programs/:id/user-state` with `{ is_favorite }`
 - `GET/POST /api/programs/:id/shares`, `DELETE /api/programs/:id/shares/:shareId`
 - Move campaign: `PATCH /api/campaigns/:id` with `{ program_id }` (requires Program `edit` on the target program; `null` = General)
 - Move space: `PATCH /api/spaces/:id` with `{ campaign_id }` (requires Program `edit` on both the source and destination campaign's Program — see `assertSpaceCampaignMoveAccess`)
 - Reorder programs: `PATCH /api/programs/:id` with `{ sort_order }`
 - Reorder spaces within a campaign: `PATCH /api/spaces/:id` with `{ sort_order }` (`spaces.sort_order`; migration `20260725074000_spaces_sort_order.sql`)
+- Whiteboard: `GET /api/canvas/campaigns/:campaignId/whiteboard`; versioned mutations use `POST /api/canvas/campaigns/:campaignId/whiteboard/operations`
 - Share compat report: `GET /api/programs/share-conflicts` (org admin) — read-only list of space shares overridden by Program privacy
 
 ## Permissions (MVP)
@@ -78,6 +84,10 @@ Roles (API `view`/`edit`, UI Viewer/Editor):
 - Same hub tree scoped to one program (Clients, ROAS Ops, …)
 - Top **New campaign** creates into that program
 - Link back to **All campaigns**
+- Uses the same configurable work-view model as Campaigns: Overview, List, Board, Calendar, and Canvas.
+- **Canvas** opens the selected campaign's persistent free-form whiteboard. Programs with multiple campaigns use the existing campaign filter; an empty Program prompts the user to add a campaign first.
+- Canvas uses versioned item/connector operations, revision-conflict recovery, realtime operation refresh, and batch Undo/Redo. Its Miro-style shell provides Select/Hand modes, sticky notes, text, shapes, cards, frames, connectors, resizing, locking, duplication, multi-select alignment/distribution, keyboard shortcuts, minimap, pan, and zoom. The resource library places funnels, email sequences, ads, presentations, offers, and avatars as editable linked resource cards without copying their source records.
+- Canvas embeds the canonical Pixel chat panel and attaches campaign ID, board ID, revision, viewport, and selected item IDs to every prompt. Pixel uses `get_canvas_board` followed by `apply_canvas_operations`, so prompted funnels, email sequences, and campaign maps are created as the same editable objects humans manipulate. Agent batches refresh in realtime and focus the viewport on their affected bounds. The legacy `create_strategy_node` action remains specific to Workflow and is not a Canvas write path.
 
 ### Sidebar Programs panel (rail flyout + hub menu)
 
@@ -91,7 +101,7 @@ ClickUp Spaces–style **fixed-width** panel (label **Programs**, not Campaigns)
 | Footer       | **+ New Program**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Icon area    | Colored square tile (`badge-glass-*`) from stored `icon_color`, or a stable deterministic palette pick when `icon_color` is empty; icon swaps to chevron on hover; click expands/collapses                                                                                                                                                                                                                                                                                                                                                                                                             |
 | Name         | `body-2` label navigates to program / campaign / space overview; lock icon when `visibility !== workspace`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| Hover ⋯ / +  | Program: Share / Rename / Copy link / New campaign / Delete; Campaign: existing campaign menu + new space; Space: existing space menu                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Hover ⋯ / +  | Program: Add/remove favorite / Share / Rename / Copy link / New campaign / Delete; Campaign: existing campaign menu + new space; Space: existing space menu                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | Layout       | ClickUp-style primary flyout aligned below the top bar, 360px wide and nearly full viewport height; long names truncate with ellipsis. Section hairlines separate All Tasks, the Programs tree, and **+ New Program**.                                                                                                                                                                                                                                                                                                                                                                                 |
 | Expand state | Persisted in `localStorage` (`roas.sidebar.expandedProgramIds`, `expandedSpaceCampaignIds`). Default = collapsed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Drag-reorder | ClickUp-style `@dnd-kit/sortable` + drop targets: **reorder programs** (persist `programs.sort_order`), **reorder spaces** within a campaign (persist `spaces.sort_order`), **move space** onto another campaign, **move campaign** onto another program/General (drag the campaign header row after an 8px pointer threshold — clicks still navigate). Optimistic UI + rollback + error toast; Program `edit` still gates moves server-side. See `sidebar-tree-dnd.tsx` (`resolveSidebarDrop`, `resolveSidebarReorder`). Campaign same-list reorder is not shipped (`campaigns` has no `sort_order`). |
@@ -117,6 +127,12 @@ campaign/program is expanded.
 
 ## Decision Log
 
+- **2026-08-10:** Program favorites require both row-level policies and table privileges. The repair migration grants authenticated/service roles CRUD access to `program_user_state`; per-user RLS remains the authorization boundary.
+- **2026-08-10:** Simple is the default menu style and combines navigation, actual favorite Programs/campaigns/Spaces, Programs, More, and Recents in one sidebar. Programs is a hover-only destination that opens the canonical Programs tree with its existing row menus; only Favorites expands inline. Its collapsed R rail hover-previews the expanded menu. Advanced exposes Home, Inbox, Meetings, My Tasks, Delegation Desk, Favorites, Programs, and More; Team and Brain live under More with their previous nested hover menus. Programs can be favorited per user and appear with campaign/Space favorites.
+- **2026-08-10:** Canvas is a first-class free-form whiteboard across Campaign, Program, and Space navigation. Campaign owns the board record; Program selects one child campaign through its campaign filter, and Space resolves its linked campaign. Workflow remains a separate specialized automation graph.
+- **2026-08-10:** Canvas persistence is normalized into items, connectors, and versioned operation history. Human and Pixel mutations share one transactional RPC; operation batches support optimistic revisions, realtime refresh, and inverse-operation Undo.
+- **2026-08-10:** Canvas exposes native campaign resource cards, inverse-operation Redo, and the live viewport in embedded Pixel context.
+- **2026-08-10:** Space, Campaign, and Program hierarchy pages use the same full-width view-strip pattern. Shared core views keep one visual and interaction contract; Campaign-only Brand & Knowledge and Reporting behavior remains level-owned data rather than a separate navigation implementation.
 - **2026-07-22:** Programs are a ClickUp Space shell; Campaigns stay folders. Create-in-program auto-sets `program_id`. Org-first seed Clients + ROAS Ops; skip personal backfill. Page Grader campaigns backfill into Clients via `config.source = 'page_grader'` / `external_sources.page_grader`.
 - **2026-07-22:** All Tasks rollup ships with My Tasks / All Tasks; space_items only (mission subtasks later).
 - **2026-07-23:** Sidebar Campaigns uses Program → Campaign → Space tree (expand in-menu). Program name opens `/programs/[id]` overview. Nested hover spaces flyout removed from Campaigns dock.

@@ -99,6 +99,26 @@ describe('conversation list query', () => {
     ).toEqual(['active-slack', 'archived'])
   })
 
+  it('keeps only the newest history row for the same meeting', () => {
+    const rows = [
+      conversation({
+        id: 'meeting-old',
+        updated_at: '2026-06-23T09:00:00.000Z',
+        metadata: { context_type: 'meeting', meeting_item_id: 'meeting-1' },
+      }),
+      conversation({
+        id: 'meeting-new',
+        updated_at: '2026-06-23T11:00:00.000Z',
+        metadata: { context_type: 'meeting', meeting_item_id: 'meeting-1' },
+      }),
+      conversation({ id: 'regular-chat' }),
+    ]
+
+    expect(
+      filterConversationsForHistory(rows, DEFAULT_CHAT_HISTORY_FILTERS).map((row) => row.id),
+    ).toEqual(['meeting-new', 'regular-chat'])
+  })
+
   it('soft-caps campaign groups and parks overflow in Other', () => {
     const rows = Array.from({ length: 7 }, (_, index) =>
       conversation({

@@ -11,8 +11,10 @@ import {
   LayoutGrid,
   List,
   Menu,
+  PanelsTopLeft,
   PieChart,
 } from 'lucide-react'
+import { CampaignCanvasView } from '@/components/canvas'
 import { LucideIcon } from '@/components/ui/IconPicker'
 import { Tabs, TabsContent } from '@/components/ui/navigation/tabs'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
@@ -30,6 +32,7 @@ import { useCampaignAutosave } from './_hooks/use-campaign-autosave'
 import { useCampaignDetailData } from './_hooks/use-campaign-detail-data'
 import {
   CAMPAIGN_TAB_LABELS,
+  CAMPAIGN_TAB_ICONS,
   DEFAULT_CAMPAIGN_TAB,
   normalizeCampaignTabId,
   readVisibleCampaignTabs,
@@ -42,6 +45,7 @@ const MOBILE_TAB_ICONS: Partial<Record<ToggleableCampaignTabId, typeof BarChart3
   list: List,
   board: Columns3,
   calendar: CalendarDays,
+  canvas: PanelsTopLeft,
   assets: FolderOpen,
   knowledge: BookOpen,
   reporting: PieChart,
@@ -188,6 +192,7 @@ export default function CampaignDetailPage() {
     return visibleNavIds.map((tabId) => ({
       value: tabId,
       label: CAMPAIGN_TAB_LABELS[tabId],
+      icon: CAMPAIGN_TAB_ICONS[tabId],
     }))
   }, [visibleNavIds])
 
@@ -228,7 +233,13 @@ export default function CampaignDetailPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto px-4 py-4 md:px-6 md:py-6">
+    <div
+      className={
+        activeTab === 'canvas'
+          ? 'flex h-full min-h-0 flex-col overflow-hidden px-4 py-4 md:px-6 md:py-6'
+          : 'h-full overflow-y-auto px-4 py-4 md:px-6 md:py-6'
+      }
+    >
       {isMobile && (
         <div className="mb-3 flex flex-col gap-2 md:hidden">
           <div className="flex items-center gap-3 px-1">
@@ -269,15 +280,19 @@ export default function CampaignDetailPage() {
           </div>
         </div>
       )}
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-spacing-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className={activeTab === 'canvas' ? 'flex min-h-0 flex-1 flex-col' : 'space-y-spacing-6'}
+      >
         {!isMobile && (
           <CampaignHeader
             campaign={detail.campaign}
             campaignIcon={detail.campaignIcon}
             campaignIconColor={detail.campaignIconColor}
             navTabs={headerNavTabs}
+            activeTab={activeTab}
             onTabChange={handleTabChange}
-            isMobile={isMobile}
             editingName={detail.editingName}
             nameValue={detail.nameValue}
             saveStatus={autosave.saveStatus}
@@ -334,6 +349,10 @@ export default function CampaignDetailPage() {
 
         <TabsContent value="calendar" className="animate-tab-enter">
           <CampaignTaskTab campaignId={id} view="calendar" />
+        </TabsContent>
+
+        <TabsContent value="canvas" className="animate-tab-enter flex min-h-0 flex-1">
+          <CampaignCanvasView campaignId={id} />
         </TabsContent>
 
         <TabsContent value="assets" className="animate-tab-enter">

@@ -7,6 +7,19 @@
 
 These rules apply to any AI agent working in this repository ("you" = the agent). Keep every change scoped to exactly what was asked, and fix root causes rather than symptoms.
 
+## 0. Git workflow (mandatory — read first)
+
+Work only counts when it is pushed to GitHub. Uncommitted files in a local folder are one crash away from gone.
+
+- **Announce yourself.** Your first message of a session states your working folder (`pwd`) and branch (`git branch --show-current`).
+- **Never commit to or push `main`.** `main` changes only through PRs merged on GitHub. No exceptions, including "small" fixes.
+- **New task = fresh branch off fresh main:** `git pull origin main`, then branch `codex/<task>` or `claude/<task>`. Resuming an old task = continue its existing branch (rebase on main if it's stale).
+- **One working copy per agent.** Never edit in a folder another agent is using. Claude Code sessions use worktrees for parallel work.
+- **Push your branch after every finished chunk, and ALWAYS before the session ends.** Pushing a branch is backup, not deployment — it triggers nothing. A session must never end with work that exists only as local uncommitted files.
+- **Only the designated app-runner checkout runs dev servers** (this machine fits exactly one). Agents write code; they don't run the app. To test, the app-runner does `git fetch` + checks out the branch.
+- **Testing several branches together:** create a fresh throwaway branch off main, merge the branches in, test that. Never reuse an old integration branch, and never merge the integration branch itself into main — after testing passes, merge the individual PRs.
+- **If git is broken in your checkout** (hangs, corruption — the 2026-08 Codex checkout has a corrupted object store): make NO git write ops there. Tar your changed files to `~/Downloads/` and report the path.
+
 ## 1. Context before code
 
 - Read the **full** target file plus its imports and consumers before editing — not a partial skim. Trace data: source → transform → destination.
@@ -162,3 +175,15 @@ Never patch symptoms. State the symptom, ask "why" until you reach the design de
 ## Checklist (every task)
 
 Context read · matching guideline/skill checked · Vibey context checked when `.vibey/` applies · only requested changes · old code removed (or asked) · root cause fixed · LOC/architecture checked · follow-up work logged if deferred · user-facing errors/messages config checked for feature work · CSS synced web + website · changelog written · docs updated if behavior changed · builds only on explicit request.
+
+## Cursor Cloud specific instructions
+
+Environment context for cloud agents (the startup update script already ran `pnpm install`; Node 22 + pnpm 9.15.4 are pre-provisioned). This section captures only non-obvious startup/run caveats — standard commands live in the root `package.json` scripts and `README.md`.
+
+- **Monorepo shape:** Turborepo + pnpm workspaces. Primary product is `apps/web` (Next.js 16, port 3000). Backend is `apps/api` (NestJS, 3001), agent backend `apps/agent-api` (3003), agent runtime `apps/openclaw` (gateway 18789), plus BullMQ workers (`queue-worker`, `mission-worker`). Focused dev scripts exist (`pnpm dev:app|back|agentapi|agent|admin|website|docs`); prefer these over bare `pnpm dev`.
+- **`pnpm dev` (all apps at once) has a port collision:** `apps/admin` defaults to 3002 and `apps/funnels` hardcodes 3002. Run apps individually (e.g. `pnpm dev:app`) instead of the root `pnpm dev` when you need admin + funnels together.
+- **Running the web app with no secrets:** `apps/web` boots with placeholder Supabase env. The web Supabase browser/server clients fall back to placeholders, but `apps/web/src/middleware.ts` reads `NEXT_PUBLIC_SUPABASE_URL`/`ANON_KEY` via non-null assertions, so those two vars **must be defined** (any value) or every request 500s. Create `apps/web/.env.local` (gitignored) with placeholder `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` plus `BACKEND_URL=http://localhost:3001`, `NEXT_PUBLIC_BACKEND_URL=http://localhost:3001`, `AGENT_BACKEND_URL=http://localhost:3003`. With placeholders the middleware auth checks time out gracefully (4s guard) and public pages (`/login`, `/register`) render; `/` redirects to `/login`.
+- **Real functionality needs real secrets (not in the repo):** login, data, chat, and the agent flow require a real Supabase project (`NEXT_PUBLIC_SUPABASE_URL`/`ANON_KEY`, and for the API `SUPABASE_SERVICE_ROLE_KEY`/`SUPABASE_JWT_SECRET`), Redis (defaults to `localhost:6379` for BullMQ), and an LLM key (`OPENROUTER_API_KEY`, read from `apps/api/.env` by the root `dev:agentapi`/`dev:agent` scripts). There is no `supabase/config.toml`, so `supabase start` is not wired; point at a hosted/staging Supabase instead. Per §8, production DB is only `lhfgtsjetcardinpgouq` — never point local dev writes at production.
+- **`VAULT_ENCRYPTION_KEY` must be byte-identical** in `apps/api/.env` and `apps/agent-api/.env` or token storage breaks (`apps/agent-api/.env.example`).
+- **Lint/test baselines:** `pnpm --filter @vibey/web lint` reports pre-existing violations on clean `main` (mostly `max-lines` and architectural `no-restricted-imports`) — not an env problem. `pnpm --filter @vibey/web test` (vitest) passes ~2395 tests with a small number of pre-existing failures. Scope lint/test to the workspace you touch (`--filter`); running everything through `turbo` is slow and some backend workspaces need secrets to run.
+- **Per-workspace commands:** each app defines `lint`, `test`, `typecheck`, `build`, `dev` in its own `package.json`; use `pnpm --filter <name> <script>`. Do not run `build` unless explicitly asked (§9).

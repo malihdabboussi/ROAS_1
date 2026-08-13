@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { FathomIntegration } from '../integrations/fathom.integration'
 import { FathomRepository } from '../repositories/fathom.repository'
 import type { FathomMeetingList, FathomWebhook } from '../types/fathom.types'
+import { resolveCanonicalFathomTitle } from '../../../meetings/providers/fathom-meeting-source'
 import { FathomOAuthService, type FathomAutoIngestSettings } from './fathom-oauth.service'
 
 const FATHOM_ORG_BILLING_ROLES = ['owner', 'admin', 'creator', 'editor'] as const
@@ -24,14 +25,32 @@ export class FathomApiService {
   ): Promise<FathomMeetingList> {
     let token = await this.oauth.getAccessToken(supabase, userId)
     try {
-      return await this.fathom.listMeetings(token, cursor)
+      return this.withCanonicalTitles(await this.fathom.listMeetings(token, cursor))
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       if (msg.includes('401') && err instanceof BadRequestException) {
         token = await this.oauth.forceRefreshAndGetToken(supabase, userId)
-        return this.fathom.listMeetings(token, cursor)
+        return this.withCanonicalTitles(await this.fathom.listMeetings(token, cursor))
       }
       throw err
+    }
+  }
+
+  private withCanonicalTitles(result: FathomMeetingList): FathomMeetingList {
+    return {
+      ...result,
+      items: result.items.map((meeting) => {
+        const row = meeting as unknown as Record<string, unknown>
+        const summary = row.default_summary as Record<string, unknown> | undefined
+        return {
+          ...meeting,
+          canonical_title: resolveCanonicalFathomTitle({
+            rawTitle: String(row.title ?? row.meeting_title ?? ''),
+            summary: String(summary?.markdown_formatted ?? row.summary ?? ''),
+            event: row,
+          }),
+        }
+      }),
     }
   }
 

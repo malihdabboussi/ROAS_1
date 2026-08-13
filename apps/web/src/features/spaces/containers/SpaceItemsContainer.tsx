@@ -2,7 +2,15 @@
 
 import dynamic from 'next/dynamic'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { toast } from 'sonner'
 import { getIconColor } from '@/components/ui/IconPicker'
 import { useWorkspaceSettingsModal } from '@/features/settings/contexts/WorkspaceSettingsModalContext'
@@ -106,7 +114,13 @@ const MediaImageWorkspacePanelHost = dynamic(
     ),
   { loading: PreviewHostLoading },
 )
-export function SpaceItemsContainer() {
+export type SpaceItemsContainerEmbed = {
+  hideBreadcrumbHeader?: boolean
+  leadingViewId?: string
+  overrideView?: { id: string; content: ReactNode }
+}
+
+export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbed } = {}) {
   const items = useSpacesStore((s) => s.items)
   const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
   const itemsLoadedForSpaceId = useSpacesStore((s) => s.itemsLoadedForSpaceId)
@@ -382,6 +396,14 @@ export function SpaceItemsContainer() {
     canSaveForEveryone,
     canCustomizeViews,
   } = activeViewStuff
+  const orderedVisibleViews = useMemo(() => {
+    if (!embed?.leadingViewId) return visibleViews
+    return [...visibleViews].sort((left, right) => {
+      if (left.id === embed.leadingViewId) return -1
+      if (right.id === embed.leadingViewId) return 1
+      return 0
+    })
+  }, [embed?.leadingViewId, visibleViews])
 
   useSpaceFocusViewTypeEvent(activeSpaceId, setActiveView)
 
@@ -962,6 +984,7 @@ export function SpaceItemsContainer() {
       isArtifactView)
 
   const ToolbarForView = resolveToolbar(activeView?.type)
+  const hasEmbeddedViewOverride = activeView?.id === embed?.overrideView?.id
   const toolbarCtx: SpaceToolbarContext = {
     activeSpace,
     activeView,
@@ -1138,24 +1161,26 @@ export function SpaceItemsContainer() {
             : 'flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--border)]'
         }
       >
-        <SpaceBreadcrumbHeader
-          activeSpace={activeSpace}
-          folderLabel={folderLabel}
-          spaceIconName={spaceIconName}
-          spaceIconColor={spaceIconColor}
-          switcherOpen={switcherOpen}
-          switcherTriggerRef={switcherTriggerRef}
-          onToggleSwitcher={() => setSwitcherOpen((o) => !o)}
-          onOpenAutomations={() => setAutomationsOpen(true)}
-          onOpenShare={
-            activeSpace.space_kind === 'personal_dashboard'
-              ? undefined
-              : () => {
-                  setSpaceShareDualNavigator(false)
-                  setSpaceShareOpen(true)
-                }
-          }
-        />
+        {!embed?.hideBreadcrumbHeader ? (
+          <SpaceBreadcrumbHeader
+            activeSpace={activeSpace}
+            folderLabel={folderLabel}
+            spaceIconName={spaceIconName}
+            spaceIconColor={spaceIconColor}
+            switcherOpen={switcherOpen}
+            switcherTriggerRef={switcherTriggerRef}
+            onToggleSwitcher={() => setSwitcherOpen((o) => !o)}
+            onOpenAutomations={() => setAutomationsOpen(true)}
+            onOpenShare={
+              activeSpace.space_kind === 'personal_dashboard'
+                ? undefined
+                : () => {
+                    setSpaceShareDualNavigator(false)
+                    setSpaceShareOpen(true)
+                  }
+            }
+          />
+        ) : null}
 
         <SpaceSwitcherDropdown
           open={switcherOpen}
@@ -1254,7 +1279,7 @@ export function SpaceItemsContainer() {
         />
 
         <ViewSwitcher
-          views={visibleViews}
+          views={orderedVisibleViews}
           activeViewId={activeView?.id ?? null}
           onSelectView={(viewId) => setActiveView(viewId)}
           hasCampaign={!!activeSpace.campaign_id}
@@ -1293,83 +1318,87 @@ export function SpaceItemsContainer() {
             className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
             data-spaces-preview-dismiss-zone
           >
-            <ToolbarForView ctx={toolbarCtx} />
+            {!hasEmbeddedViewOverride ? <ToolbarForView ctx={toolbarCtx} /> : null}
 
             <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-              <SpaceContentRouter
-                docsDriveGroupBy={docsDriveGroupBy}
-                docsDriveCardSize={docsDriveCardSize}
-                onDocsDriveBrowseActiveChange={setDocsDriveBrowseActive}
-                activeView={activeView}
-                activeSchema={activeSchema}
-                activeSpace={activeSpace}
-                isContactsView={isContactsView}
-                isIgResearchView={isIgResearchView}
-                isTiktokResearchView={isTiktokResearchView}
-                isYoutubeResearchView={isYoutubeResearchView}
-                isTwitterResearchView={isTwitterResearchView}
-                isAllSocialResearchView={isAllSocialResearchView}
-                isAdsResearchView={isAdsResearchView}
-                socialPlatform={socialPlatform}
-                isMissionsView={isMissionsView}
-                isDocsView={isDocsView}
-                isReportingView={isReportingView}
-                items={items}
-                campaignName={campaignName}
-                fieldsById={fieldsById}
-                fieldsForUi={fieldsForUi}
-                visibleFields={visibleFields}
-                roster={roster}
-                currentUserId={currentUserId}
-                filteredRegularItems={filteredRegularItems}
-                docItems={docItems}
-                docsCloud={docsCloud}
-                docsLoading={docsLoading}
-                includeCampaignArtifacts={includeCampaignArtifacts}
-                driveMappingsSyncing={driveMappingsSyncing}
-                hasDriveDocs={hasDriveDocs}
-                artifactPreviewSelection={artifactPreviewSelection}
-                setArtifactPreviewSelection={setArtifactPreviewSelection}
-                contactsSearch={contactsSearch}
-                contactsScope={contactsScope}
-                contactsStatusFilter={contactsStatusFilter}
-                contactsSort={contactsSort}
-                contactsLoading={contactsLoading}
-                activeContactsSegmentId={activeContactsSegmentId}
-                contactCommunicationTab={contactCommunicationTab}
-                spaceToolbarSearch={spaceToolbarSearch}
-                setSpaceToolbarSearch={setSpaceToolbarSearch}
-                financeToolbarSearch={financeToolbarSearch}
-                contactsViewRef={contactsViewRef}
-                missionsViewRef={missionsViewRef}
-                financeOverviewRef={financeOverviewRef}
-                handleViewPatch={handleViewPatch}
-                openCustomizeFromToolbar={openCustomizeFromToolbar}
-                setContactsLoading={setContactsLoading}
-                setContactDetailOpen={setContactDetailOpen}
-                resetContactCommunicationTab={resetContactCommunicationTab}
-                handleContactDetailLayout={handleContactDetailLayout}
-                handleCommunicationLoaded={handleCommunicationLoaded}
-                setArtifactDetailOpen={setArtifactDetailOpen}
-                setArtifactDeepDetail={setArtifactDeepDetail}
-                setMediaDeepDetail={setMediaDeepDetail}
-                taskModalOpen={Boolean(selectedItem)}
-                setReportingToolbarApi={setReportingToolbarApi}
-                setSelectedItem={setSelectedItem}
-                openSpaceItemModal={openSpaceItemFromSelection}
-                setDocEditorItem={setDocEditorItem}
-                reloadCampaignDocs={reloadCampaignDocs}
-                setCategoryEditorOpen={setCategoryEditorOpen}
-                setStatusEditorOpen={setStatusEditorOpen}
-                onUpdateItem={updateItem}
-                onDeleteItem={deleteItem}
-                onPushToAgent={pushToAgent}
-                onCreateOption={handleCreateFieldOption}
-                onUpdateOption={handleUpdateFieldOption}
-                onDeleteOption={handleDeleteFieldOption}
-                onTagCustomSwatchesChange={handleTagCustomSwatchesChange}
-                artifactDeepToolbarExtras={<SaveViewSlot ctx={toolbarCtx} />}
-              />
+              {hasEmbeddedViewOverride ? (
+                embed?.overrideView?.content
+              ) : (
+                <SpaceContentRouter
+                  docsDriveGroupBy={docsDriveGroupBy}
+                  docsDriveCardSize={docsDriveCardSize}
+                  onDocsDriveBrowseActiveChange={setDocsDriveBrowseActive}
+                  activeView={activeView}
+                  activeSchema={activeSchema}
+                  activeSpace={activeSpace}
+                  isContactsView={isContactsView}
+                  isIgResearchView={isIgResearchView}
+                  isTiktokResearchView={isTiktokResearchView}
+                  isYoutubeResearchView={isYoutubeResearchView}
+                  isTwitterResearchView={isTwitterResearchView}
+                  isAllSocialResearchView={isAllSocialResearchView}
+                  isAdsResearchView={isAdsResearchView}
+                  socialPlatform={socialPlatform}
+                  isMissionsView={isMissionsView}
+                  isDocsView={isDocsView}
+                  isReportingView={isReportingView}
+                  items={items}
+                  campaignName={campaignName}
+                  fieldsById={fieldsById}
+                  fieldsForUi={fieldsForUi}
+                  visibleFields={visibleFields}
+                  roster={roster}
+                  currentUserId={currentUserId}
+                  filteredRegularItems={filteredRegularItems}
+                  docItems={docItems}
+                  docsCloud={docsCloud}
+                  docsLoading={docsLoading}
+                  includeCampaignArtifacts={includeCampaignArtifacts}
+                  driveMappingsSyncing={driveMappingsSyncing}
+                  hasDriveDocs={hasDriveDocs}
+                  artifactPreviewSelection={artifactPreviewSelection}
+                  setArtifactPreviewSelection={setArtifactPreviewSelection}
+                  contactsSearch={contactsSearch}
+                  contactsScope={contactsScope}
+                  contactsStatusFilter={contactsStatusFilter}
+                  contactsSort={contactsSort}
+                  contactsLoading={contactsLoading}
+                  activeContactsSegmentId={activeContactsSegmentId}
+                  contactCommunicationTab={contactCommunicationTab}
+                  spaceToolbarSearch={spaceToolbarSearch}
+                  setSpaceToolbarSearch={setSpaceToolbarSearch}
+                  financeToolbarSearch={financeToolbarSearch}
+                  contactsViewRef={contactsViewRef}
+                  missionsViewRef={missionsViewRef}
+                  financeOverviewRef={financeOverviewRef}
+                  handleViewPatch={handleViewPatch}
+                  openCustomizeFromToolbar={openCustomizeFromToolbar}
+                  setContactsLoading={setContactsLoading}
+                  setContactDetailOpen={setContactDetailOpen}
+                  resetContactCommunicationTab={resetContactCommunicationTab}
+                  handleContactDetailLayout={handleContactDetailLayout}
+                  handleCommunicationLoaded={handleCommunicationLoaded}
+                  setArtifactDetailOpen={setArtifactDetailOpen}
+                  setArtifactDeepDetail={setArtifactDeepDetail}
+                  setMediaDeepDetail={setMediaDeepDetail}
+                  taskModalOpen={Boolean(selectedItem)}
+                  setReportingToolbarApi={setReportingToolbarApi}
+                  setSelectedItem={setSelectedItem}
+                  openSpaceItemModal={openSpaceItemFromSelection}
+                  setDocEditorItem={setDocEditorItem}
+                  reloadCampaignDocs={reloadCampaignDocs}
+                  setCategoryEditorOpen={setCategoryEditorOpen}
+                  setStatusEditorOpen={setStatusEditorOpen}
+                  onUpdateItem={updateItem}
+                  onDeleteItem={deleteItem}
+                  onPushToAgent={pushToAgent}
+                  onCreateOption={handleCreateFieldOption}
+                  onUpdateOption={handleUpdateFieldOption}
+                  onDeleteOption={handleDeleteFieldOption}
+                  onTagCustomSwatchesChange={handleTagCustomSwatchesChange}
+                  artifactDeepToolbarExtras={<SaveViewSlot ctx={toolbarCtx} />}
+                />
+              )}
             </div>
           </div>
           {isArtifactView && activeSpace.campaign_id && !usesPaidAdsInlineDetail(activeView) ? (

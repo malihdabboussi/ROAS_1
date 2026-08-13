@@ -176,6 +176,7 @@ export class ConversationsService {
     supabase: SupabaseClient,
     userId: string,
     data: {
+      id?: string
       title?: string
       campaign_id?: string
       agent_id?: string
@@ -205,6 +206,7 @@ export class ConversationsService {
       : baseMetadata
 
     return this.conversationsRepo.create(supabase, {
+      ...(data.id ? { id: data.id } : {}),
       user_id: userId,
       title: data.title ?? 'New Conversation',
       campaign_id: data.campaign_id ?? null,

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProgramsRepository } from '../../repositories/programs.repository'
+import { ProgramUserStateRepository } from '../../repositories/program-user-state.repository'
 import { ProgramPermissionsService } from '../program-permissions.service'
 import { ProgramsService } from '../programs.service'
 
@@ -21,6 +22,10 @@ describe('ProgramsService', () => {
     setVisibility: ReturnType<typeof vi.fn>
   }
   let service: ProgramsService
+  let userStateRepo: {
+    list: ReturnType<typeof vi.fn>
+    upsert: ReturnType<typeof vi.fn>
+  }
 
   beforeEach(() => {
     repo = {
@@ -40,9 +45,14 @@ describe('ProgramsService', () => {
       assertProgramAccess: vi.fn().mockResolvedValue('edit'),
       setVisibility: vi.fn(),
     }
+    userStateRepo = {
+      list: vi.fn().mockResolvedValue([]),
+      upsert: vi.fn(),
+    }
     service = new ProgramsService(
       repo as unknown as ProgramsRepository,
       permissions as unknown as ProgramPermissionsService,
+      userStateRepo as unknown as ProgramUserStateRepository,
     )
   })
 
@@ -67,6 +77,9 @@ describe('ProgramsService', () => {
       },
     ])
     repo.countCampaignsByProgramIds.mockResolvedValue({ p1: 2 })
+    userStateRepo.list.mockResolvedValue([
+      { program_id: 'p1', is_favorite: true, updated_at: '2026-08-10T00:00:00.000Z' },
+    ])
     repo.findPersonalDefaultForUser.mockResolvedValue({
       id: 'personal-prog',
       org_id: 'org-1',
@@ -89,6 +102,23 @@ describe('ProgramsService', () => {
     expect(repo.ensureOrgSystemPrograms).toHaveBeenCalledWith(supabase, 'org-1')
     expect(repo.findPersonalDefaultForUser).toHaveBeenCalledWith(supabase, 'user-1', 'org-1')
     expect(result[0]?.campaign_count).toBe(2)
+    expect(result[0]?.is_favorite).toBe(true)
+  })
+
+  it('favorites an accessible Program for the current user', async () => {
+    userStateRepo.upsert.mockResolvedValue({ program_id: 'p1', is_favorite: true })
+
+    await service.updateUserState(supabase, 'p1', 'user-1', true, 'viewer', 'org-1')
+
+    expect(permissions.assertProgramAccess).toHaveBeenCalledWith(
+      supabase,
+      'p1',
+      'user-1',
+      'viewer',
+      'view',
+      'org-1',
+    )
+    expect(userStateRepo.upsert).toHaveBeenCalledWith(supabase, 'user-1', 'p1', true)
   })
 
   it('ensures a private personal program when missing', async () => {

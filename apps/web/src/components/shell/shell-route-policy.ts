@@ -12,5 +12,5 @@ export function isShellWorkspaceRoute(pathname: string): boolean {
 }
 
 export function isShellHomeRoute(pathname: string): boolean {
-  return pathname === '/home' || pathname.startsWith('/home/')
+  return pathname === '/home'
 }

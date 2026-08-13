@@ -108,4 +108,60 @@ describe('Fathom meeting source normalization', () => {
     expect(byMeetingId.externalRecordingId).toBe('170082749')
     expect(byMeetingId.providerMeetingId).toBe('170082749')
   })
+
+  it('uses one purpose-first title for generic Fathom calls', () => {
+    const source = normalizeFathomMeetingSource({
+      recording_id: 'rec-purpose',
+      title: 'Impromptu Zoom Meeting',
+      default_summary: {
+        markdown_formatted:
+          '## Meeting Purpose\n\n[Align on the new high-ticket offer strategy.](https://fathom.video/share/rec-purpose?timestamp=10)\n\n## Key Takeaways\n\nDetails.',
+      },
+    })
+
+    expect(source.title).toBe('Align on the new high-ticket offer strategy')
+  })
+
+  it('derives evidence-backed actions from summary Next Steps when Fathom omits action_items', () => {
+    const source = normalizeFathomMeetingSource({
+      recording_id: 'rec-next-steps',
+      title: 'Impromptu Call',
+      default_summary: {
+        markdown_formatted: [
+          '## Meeting Purpose',
+          'Plan the launch.',
+          '## Next Steps',
+          '- **Dylan:**',
+          '  - [Create the launch one-pager.](https://fathom.video/share/rec-next-steps?timestamp=20)',
+          '- **Steve:** Send the recording to Dylan.',
+        ].join('\n'),
+      },
+    })
+
+    expect(source.actions).toEqual([
+      expect.objectContaining({
+        sourceKey: 'fathom:rec-next-steps:summary-action:0',
+        sourceText: 'Create the launch one-pager',
+        assigneeName: 'Dylan',
+      }),
+      expect.objectContaining({
+        sourceKey: 'fathom:rec-next-steps:summary-action:1',
+        sourceText: 'Send the recording to Dylan',
+        assigneeName: 'Steve',
+      }),
+    ])
+  })
+
+  it('keeps explicit Fathom action items authoritative over summary fallback', () => {
+    const source = normalizeFathomMeetingSource({
+      recording_id: 'rec-explicit',
+      title: 'Client review',
+      action_items: [{ description: 'Ship the approved page' }],
+      default_summary: { markdown_formatted: '## Next Steps\n- Ignore this fallback item.' },
+    })
+
+    expect(source.actions).toHaveLength(1)
+    expect(source.actions[0]?.sourceText).toBe('Ship the approved page')
+    expect(source.actions[0]?.sourceKey).toBe('fathom:rec-explicit:action:0')
+  })
 })

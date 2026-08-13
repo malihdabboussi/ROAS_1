@@ -257,6 +257,7 @@ const SUPPORTED_ACTIONS = [
   'get_mission_plan',
   'get_mission_logs',
   'get_mission_deliverables',
+  'compile_webinar_launch_bible',
   'update_mission',
   'add_mission_comment',
   'list_mission_subtasks',
@@ -383,7 +384,10 @@ const SUPPORTED_ACTIONS = [
   'create_meta_pixel_event',
   'edit_image',
   'list_canvas_nodes',
+  'get_canvas_board',
+  'apply_canvas_operations',
   'generate_ad_set',
+  'search_conversations',
   'search_space_context',
   'generate_visual_html',
   'list_space_views',
@@ -477,6 +481,25 @@ function parseDreamOpsSessionKey(
     : ''
   if (!agentKey || !userId || !runId || !orgId) return null
   return { agentKey, userId, runId, orgId }
+}
+
+/**
+ * Plugin-local actions (ask_clarification, chat plans) execute inside this
+ * plugin and never reach the backend action policy, so scoped
+ * ALLOWED_ACTIONS.json files — generated from the backend policy — never
+ * contain them. Merge them back so scoped agents keep the interactive chat
+ * surface; text channels stay prompt-gated (channel-action.policy.ts) and the
+ * stream proxy degrades their UI blocks to plain text.
+ */
+export function withPluginLocalActions(actions: readonly string[]): string[] {
+  const merged = [...actions]
+  const seen = new Set(actions)
+  for (const action of PLUGIN_LOCAL_ACTIONS) {
+    if (seen.has(action)) continue
+    seen.add(action)
+    merged.push(action)
+  }
+  return merged
 }
 
 function actionsForSession(actions: readonly string[], sessionKey: string): string[] {
@@ -688,7 +711,10 @@ export default function register(api: any) {
     const scopedActions = agentIdentity
       ? loadAllowedActions(agentIdentity.agentKey, agentIdentity.orgId, agentIdentity.userId)
       : null
-    const effectiveActions = actionsForSession(scopedActions ?? SUPPORTED_ACTIONS, sessionKey)
+    const effectiveActions = actionsForSession(
+      scopedActions ? withPluginLocalActions(scopedActions) : SUPPORTED_ACTIONS,
+      sessionKey,
+    )
 
     return {
       name: 'vibey_backend',

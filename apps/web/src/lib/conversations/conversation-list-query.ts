@@ -81,9 +81,36 @@ export function filterConversationsForHistory(
   filters: ChatHistoryFilterState,
   now: Date = new Date(),
 ): Conversation[] {
-  return conversations.filter((conversation) =>
+  const filtered = conversations.filter((conversation) =>
     matchesChatHistoryFilters(conversation, filters, now),
   )
+  const result: Conversation[] = []
+  const meetingIndexById = new Map<string, number>()
+  for (const conversation of filtered) {
+    const meetingItemId =
+      typeof conversation.metadata?.meeting_item_id === 'string'
+        ? conversation.metadata.meeting_item_id.trim()
+        : ''
+    if (!meetingItemId) {
+      result.push(conversation)
+      continue
+    }
+    const existingIndex = meetingIndexById.get(meetingItemId)
+    if (existingIndex === undefined) {
+      meetingIndexById.set(meetingItemId, result.length)
+      result.push(conversation)
+      continue
+    }
+    const existing = result[existingIndex]
+    if (
+      existing &&
+      new Date(getConversationLastActivityAt(conversation)).getTime() >
+        new Date(getConversationLastActivityAt(existing)).getTime()
+    ) {
+      result[existingIndex] = conversation
+    }
+  }
+  return result
 }
 
 function sortNewestFirst(conversations: Conversation[]): Conversation[] {

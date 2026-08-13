@@ -1,26 +1,21 @@
 'use client'
-
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronLeft } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { ConversationShareModal } from '@/components/conversations'
-import { ChatHistoryFilterMenu } from '@/components/conversations/ChatHistoryFilterMenu'
 import { SpaceConversationsList } from '@/components/conversations/SpaceConversationsListAdapter'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
-import { cachedFetch, invalidateCachedFetch, peekCachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { fetchCampaigns } from '@/lib/campaigns'
 import {
   assignConversationCampaign,
-  autoTitleConversation,
   DEFAULT_CHAT_HISTORY_FILTERS,
   deleteConversation,
   duplicateConversation,
   fetchConversations,
   filterConversationsForHistory,
-  needsGeneratedConversationTitle,
   renameConversation,
   setConversationArchived,
   setConversationPinned,
@@ -29,22 +24,30 @@ import {
   type ConversationAgentDisplay,
 } from '@/lib/conversations'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
+import { conversationCacheKey, peekConversationCache } from './shell-conversation-cache'
 import { isShellHomeRoute } from './shell-route-policy'
 import { ShellChatMenuActiveFilters } from './ShellChatMenuActiveFilters'
+import { ShellChatMenuFilterControls } from './ShellChatMenuFilterControls'
 import { useShellStore } from './use-shell-store'
-
 const PIXEL_AGENT_KEY = 'vibey'
-
-function historyScopeForAgent(agentKey: string | null) {
-  return agentKey === PIXEL_AGENT_KEY ? null : agentKey
-}
-
 export function ShellChatMenu({
   onCollapse,
   onOpenChat,
+  hideNewButton = false,
+  navigationSlot,
+  simpleSidebar = false,
+  compactHeaderStartSlot,
+  compactHeaderEndSlot,
+  compactHeaderTitleClassName,
 }: {
   onCollapse?: () => void
   onOpenChat?: () => void
+  hideNewButton?: boolean
+  navigationSlot?: ReactNode
+  simpleSidebar?: boolean
+  compactHeaderStartSlot?: ReactNode
+  compactHeaderEndSlot?: ReactNode
+  compactHeaderTitleClassName?: string
 }) {
   const pathname = usePathname() ?? '/home'
   const router = useRouter()
@@ -52,40 +55,36 @@ export function ShellChatMenu({
   const openChatDrawer = useShellStore((s) => s.openChatDrawer)
   const openFreshChatDrawer = useShellStore((s) => s.openFreshChatDrawer)
   const chatDrawer = useShellStore((s) => s.chatDrawer)
-
   const activeAgentKey = useGlobalChatStore((s) => s.activeAgentKey)
   const roster = useGlobalChatStore((s) => s.roster)
   const loadRoster = useGlobalChatStore((s) => s.loadRoster)
+  const meetingContext = useGlobalChatStore((s) => s.meetingContext)
+  const clearMeetingContext = useGlobalChatStore((s) => s.clearMeetingContext)
   const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
   const storeConversations = useChatStore((s) => s.conversations)
-
+  const activeConversationId = useChatStore((s) => s.activeConversationId)
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const activeOrgName = useOrgStore((s) => s.getActiveOrg()?.organizations.name ?? 'Workspace')
   const isOrgContext = Boolean(activeOrgId)
-
   const [filters, setFilters] = useState<ChatHistoryFilterState>(DEFAULT_CHAT_HISTORY_FILTERS)
   const [historyAgentKey, setHistoryAgentKey] = useState<string | null>(() =>
-    historyScopeForAgent(activeAgentKey),
+    simpleSidebar || activeAgentKey === PIXEL_AGENT_KEY ? null : activeAgentKey,
   )
-  const allAgentsMode = historyAgentKey === null
   const [listQuery, setListQuery] = useState('')
   const [shareConversation, setShareConversation] = useState<Conversation | null>(null)
   const [campaignNameById, setCampaignNameById] = useState<Record<string, string>>({})
-  const [conversations, setConversations] = useState<Conversation[]>(() => {
-    return peekCachedFetch<Conversation[]>(`shell-conversations:${activeAgentKey}`) ?? []
-  })
-  const [loading, setLoading] = useState(
-    () => peekCachedFetch<Conversation[]>(`shell-conversations:${activeAgentKey}`) === undefined,
+  const initialConversations = peekConversationCache(simpleSidebar, historyAgentKey, activeOrgId)
+  const [conversations, setConversations] = useState<Conversation[]>(
+    () => initialConversations ?? [],
   )
-
+  const [loading, setLoading] = useState(() => initialConversations === undefined)
   useEffect(() => {
     void loadRoster()
   }, [loadRoster])
 
   useEffect(() => {
-    setHistoryAgentKey(historyScopeForAgent(activeAgentKey))
-  }, [activeAgentKey])
-
+    setHistoryAgentKey(simpleSidebar || activeAgentKey === PIXEL_AGENT_KEY ? null : activeAgentKey)
+  }, [activeAgentKey, simpleSidebar])
   useEffect(() => {
     if (filters.groupBy !== 'campaign') return
     let cancelled = false
@@ -127,7 +126,6 @@ export function ShellChatMenu({
     () => roster.filter((entry) => entry.kind === 'agent' && Boolean(entry.agent_key?.trim())),
     [roster],
   )
-
   const agentByKey = useMemo(() => {
     const map: Record<string, ConversationAgentDisplay> = {}
     for (const agent of chatAgents) {
@@ -140,9 +138,8 @@ export function ShellChatMenu({
     }
     return map
   }, [chatAgents])
-
   const agentOptions = useMemo(() => {
-    const options: Array<{ key: string; label: string }> = []
+    const options: { key: string; label: string }[] = []
     for (const agent of chatAgents) {
       const key = agent.agent_key?.trim()
       if (!key) continue
@@ -154,15 +151,12 @@ export function ShellChatMenu({
       return left.label.localeCompare(right.label)
     })
   }, [chatAgents])
-
-  const selectedHistoryAgent = useMemo(
-    () => chatAgents.find((agent) => agent.agent_key?.trim() === historyAgentKey) ?? null,
-    [chatAgents, historyAgentKey],
+  const selectedHistoryAgent = chatAgents.find(
+    (agent) => agent.agent_key?.trim() === historyAgentKey,
   )
-
   const reloadConversations = useCallback(async () => {
-    const cacheKey = `shell-conversations:${historyAgentKey ?? 'all'}`
-    const peeked = peekCachedFetch<Conversation[]>(cacheKey)
+    const cacheKey = conversationCacheKey(simpleSidebar, historyAgentKey, activeOrgId)
+    const peeked = peekConversationCache(simpleSidebar, historyAgentKey, activeOrgId)
     if (peeked) {
       setConversations(peeked)
       setLoading(false)
@@ -172,7 +166,13 @@ export function ShellChatMenu({
     try {
       const rows = await cachedFetch(
         cacheKey,
-        () => fetchConversations(undefined, historyAgentKey),
+        () =>
+          fetchConversations(
+            undefined,
+            historyAgentKey,
+            undefined,
+            simpleSidebar ? { feedScope: 'all' } : undefined,
+          ),
         { ttlMs: 30_000 },
       )
       setConversations(rows)
@@ -181,104 +181,87 @@ export function ShellChatMenu({
     } finally {
       setLoading(false)
     }
-  }, [historyAgentKey])
+  }, [activeOrgId, historyAgentKey, simpleSidebar])
 
   useEffect(() => {
     void reloadConversations()
   }, [reloadConversations])
-
-  const autoTitleAttemptedRef = useRef(new Set<string>())
-
-  // Upgrade raw first-line / "Slack Chat" titles to short AI topic labels (bounded).
-  useEffect(() => {
-    const candidates = conversations
-      .filter(
-        (row) =>
-          needsGeneratedConversationTitle(row.title) && !autoTitleAttemptedRef.current.has(row.id),
-      )
-      .slice(0, 12)
-    if (candidates.length === 0) return
-
-    let cancelled = false
-    const run = async () => {
-      for (const row of candidates) {
-        if (cancelled) return
-        autoTitleAttemptedRef.current.add(row.id)
-        try {
-          const result = await autoTitleConversation(row.id)
-          if (!result.updated || !result.title) continue
-          if (cancelled) return
-          useChatStore.getState().updateConversation(row.id, { title: result.title })
-          setConversations((prev) =>
-            prev.map((c) => (c.id === row.id ? { ...c, title: result.title } : c)),
-          )
-        } catch {
-          // Non-critical — keep the existing title.
-        }
-      }
-      invalidateCachedFetch('shell-conversations:')
-    }
-    void run()
-    return () => {
-      cancelled = true
-    }
-  }, [conversations])
-
   const visibleConversations = useMemo(
     () => filterConversationsForHistory(conversations, filters),
     [conversations, filters],
   )
-
   const openConversation = useCallback(
     (id: string) => {
+      if (meetingContext && meetingContext.conversationId !== id) clearMeetingContext()
       const conversation = conversations.find((row) => row.id === id)
       if (conversation) useChatStore.getState().addConversation(conversation)
+      if (simpleSidebar) {
+        setActiveConversationId(id)
+        router.push(`/home?conv=${encodeURIComponent(id)}`)
+        onOpenChat?.()
+        return
+      }
       if (isShellHomeRoute(pathname) && (searchParams.get('conv') || searchParams.get('chat'))) {
         router.push('/home')
       }
       openChatDrawer(id)
       onOpenChat?.()
     },
-    [conversations, onOpenChat, openChatDrawer, pathname, router, searchParams],
+    [
+      conversations,
+      clearMeetingContext,
+      meetingContext,
+      onOpenChat,
+      openChatDrawer,
+      pathname,
+      router,
+      searchParams,
+      setActiveConversationId,
+      simpleSidebar,
+    ],
   )
 
   const handleNewConversation = useCallback(() => {
+    if (meetingContext) clearMeetingContext()
     setActiveConversationId(null)
+    if (simpleSidebar) {
+      router.push('/home')
+      onOpenChat?.()
+      return
+    }
     if (isShellHomeRoute(pathname) && (searchParams.get('conv') || searchParams.get('chat'))) {
       router.push('/home')
     }
     openFreshChatDrawer()
     onOpenChat?.()
-  }, [onOpenChat, openFreshChatDrawer, pathname, router, searchParams, setActiveConversationId])
+  }, [
+    onOpenChat,
+    clearMeetingContext,
+    meetingContext,
+    openFreshChatDrawer,
+    pathname,
+    router,
+    searchParams,
+    setActiveConversationId,
+    simpleSidebar,
+  ])
 
   const openAllChats = useCallback(() => {
     router.push('/chats')
   }, [router])
 
-  const activeConversationId = useChatStore((s) => s.activeConversationId)
-  const selectedConversationId = chatDrawer.conversationId ?? activeConversationId ?? null
+  const selectedConversationId = chatDrawer.conversationId ?? activeConversationId
   const filterControls = (
-    <div className="gap-spacing-1 flex items-center">
-      <ChatHistoryFilterMenu
-        value={filters}
-        onChange={setFilters}
-        agentKey={historyAgentKey}
-        agentOptions={agentOptions}
-        onAgentKeyChange={setHistoryAgentKey}
-        onOpenAllChats={openAllChats}
-      />
-      {onCollapse ? (
-        <button
-          type="button"
-          onClick={onCollapse}
-          className="nav-glass-text-purple p-spacing-1 hover:text-foreground flex items-center justify-center transition-colors"
-          aria-label="Collapse chat history"
-          title="Collapse chat history"
-        >
-          <ChevronLeft className="icon-xs" aria-hidden />
-        </button>
-      ) : null}
-    </div>
+    <ShellChatMenuFilterControls
+      filters={filters}
+      onFiltersChange={setFilters}
+      historyAgentKey={historyAgentKey}
+      agentOptions={agentOptions}
+      onAgentKeyChange={setHistoryAgentKey}
+      onOpenAllChats={openAllChats}
+      onCollapse={onCollapse}
+      simpleSidebar={simpleSidebar}
+    />
   )
 
   const activeFilters = (
@@ -291,7 +274,6 @@ export function ShellChatMenu({
       onFiltersChange={setFilters}
     />
   )
-
   return (
     <>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -379,14 +361,26 @@ export function ShellChatMenu({
           loading={loading}
           hideBackButton
           hideHeaderBottomBorder
-          newButtonBelowSearch
+          newButtonBelowSearch={!simpleSidebar}
+          hideNewButton={hideNewButton || simpleSidebar}
+          compactHeader={simpleSidebar}
+          compactHeaderTitle={simpleSidebar ? 'Recents' : undefined}
           isOrgContext={isOrgContext}
-          allAgentsMode={allAgentsMode}
+          allAgentsMode={historyAgentKey === null}
           leadingIcon={filters.leadingIcon}
+          showConversationTypeIcon={simpleSidebar}
           agentByKey={agentByKey}
           groupBy={filters.groupBy}
           campaignNameById={campaignNameById}
-          headerEndSlot={filterControls}
+          headerEndSlot={
+            <>
+              {filterControls}
+              {compactHeaderEndSlot}
+            </>
+          }
+          headerStartSlot={compactHeaderStartSlot}
+          compactHeaderTitleClassName={compactHeaderTitleClassName}
+          beforeHeaderSlot={simpleSidebar ? navigationSlot : undefined}
           headerFooterSlot={activeFilters}
         />
       </div>

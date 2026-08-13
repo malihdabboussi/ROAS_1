@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { MessageSquare } from 'lucide-react'
 import {
   getConversationAgentDisplay,
+  getConversationDisplayTitle,
   groupConversationsForHistory,
-  stripLegacySpacesConversationTitle,
   type ChatHistoryGroupBy,
   type ChatHistoryLeadingIcon,
   type Conversation,
@@ -39,11 +39,8 @@ export interface SpaceConversationsListProps {
   onShareConversation: (conversation: Conversation) => void
   onBack: () => void
   loading?: boolean
-  /** When true, hide the back arrow (e.g. sidebar embedded beside chat). */
   hideBackButton?: boolean
-  /** When true, no border under the search / New row (Team 2 sidebar). Spaces keeps the default divider. */
   hideHeaderBottomBorder?: boolean
-  /** Opt into the compact icon header used by embedded agent sidebars. */
   compactHeader?: boolean
   /**
    * When true, parent owns width transition + rail swap (see SpacesContainer / Team agent chat).
@@ -52,37 +49,29 @@ export interface SpaceConversationsListProps {
   parentControlsCollapse?: boolean
   collapsed?: boolean
   onCollapsedChange?: (collapsed: boolean) => void
-  /** Opens compact search after parent expands the sidebar (rail search button). */
   openCompactSearch?: boolean
   onOpenCompactSearchConsumed?: () => void
-  /** Hide org-only actions like Copy link in personal accounts. */
   isOrgContext: boolean
-  /** Enables the all-agent conversation toggle in the header. */
   showAllAgentsToggle?: boolean
-  /** When true, rows show the source agent avatar and search includes agent names. */
   allAgentsMode?: boolean
   onAllAgentsModeChange?: (enabled: boolean) => void
-  /** Leading mark on each row (agent / logo / status / none). Overrides allAgentsMode avatar. */
   leadingIcon?: ChatHistoryLeadingIcon
   agentByKey?: Record<string, ConversationAgentDisplay>
   hideNewButton?: boolean
-  /** Render New as a full-width control under the search/filter toolbar. */
   newButtonBelowSearch?: boolean
-  /** When true, omit the inline list search (caller owns search UI). */
   hideSearch?: boolean
-  /** Parent-owned search control shown after agent/filter when `hideSearch` is true. */
   searchSlot?: ReactNode
   headerEndSlot?: ReactNode
-  /** Active query constraints rendered immediately below the New chat control. */
   headerFooterSlot?: ReactNode
-  /** Claude-style list organization. Default: flat (none). */
   groupBy?: ChatHistoryGroupBy
   campaignNameById?: Record<string, string>
   headerStartSlot?: ReactNode
-  /** Show a compact updated date at the end of each row. */
+  beforeHeaderSlot?: ReactNode
+  compactHeaderTitle?: string
+  compactHeaderTitleClassName?: string
   showUpdatedAt?: boolean
-  /** Separate rows with a subtle rule instead of card spacing. */
   dividedRows?: boolean
+  showConversationTypeIcon?: boolean
 }
 
 const INITIAL_SECTION_VISIBLE = 6
@@ -129,10 +118,14 @@ export function SpaceConversationsList({
   headerEndSlot,
   headerFooterSlot,
   headerStartSlot,
+  beforeHeaderSlot,
+  compactHeaderTitle,
+  compactHeaderTitleClassName,
   groupBy = 'none',
   campaignNameById,
   showUpdatedAt,
   dividedRows,
+  showConversationTypeIcon,
 }: SpaceConversationsListProps) {
   const [menuConversationId, setMenuConversationId] = useState<string | null>(null)
   const [menuAnchor, setMenuAnchor] = useState<{ top: number; left: number } | null>(null)
@@ -155,8 +148,7 @@ export function SpaceConversationsList({
   const visible = useMemo(() => {
     if (!q) return conversations
     return conversations.filter((conversation) => {
-      const label =
-        stripLegacySpacesConversationTitle(conversation.title) || 'Untitled conversation'
+      const label = getConversationDisplayTitle(conversation) || 'Untitled conversation'
       const agentName = includeAgentInSearch
         ? getConversationAgentDisplay(conversation, agentByKey).name
         : ''
@@ -256,7 +248,7 @@ export function SpaceConversationsList({
 
   const startRename = (conversation: Conversation) => {
     setRenameId(conversation.id)
-    setRenameDraft(stripLegacySpacesConversationTitle(conversation.title))
+    setRenameDraft(getConversationDisplayTitle(conversation))
   }
 
   const submitRename = async () => {
@@ -306,12 +298,14 @@ export function SpaceConversationsList({
         onCancelRename={cancelRename}
         showUpdatedAt={showUpdatedAt}
         divided={dividedRows}
+        showConversationTypeIcon={showConversationTypeIcon}
       />
     )
   }
 
   const expandedList = (
     <div className="flex h-full min-h-0 flex-1 flex-col">
+      {beforeHeaderSlot}
       <SpaceConversationsHeader
         query={query}
         onQueryChange={onQueryChange}
@@ -320,6 +314,8 @@ export function SpaceConversationsList({
         hideBackButton={hideBackButton}
         hideHeaderBottomBorder={hideHeaderBottomBorder}
         compactHeader={compactHeader}
+        compactHeaderTitle={compactHeaderTitle}
+        compactHeaderTitleClassName={compactHeaderTitleClassName}
         compactSearchOpen={compactSearchOpen}
         onCompactSearchOpenChange={setCompactSearchOpen}
         onCollapsedChange={onCollapsedChange}
@@ -334,10 +330,24 @@ export function SpaceConversationsList({
         headerEndSlot={headerEndSlot}
         headerFooterSlot={headerFooterSlot}
       />
-      <div className="py-spacing-3 min-h-0 flex-1 overflow-y-auto">
+      <div
+        className={`min-h-0 flex-1 overflow-y-auto ${compactHeader ? 'px-spacing-2 py-spacing-1' : 'py-spacing-3'}`}
+      >
         {loading ? (
-          <div className="body-4 text-muted-foreground p-spacing-4 text-center">
-            Loading conversations...
+          <div
+            className="gap-spacing-2 px-spacing-1 py-spacing-2 flex flex-col"
+            role="status"
+            aria-label="Loading conversations"
+          >
+            {[82, 64, 91, 73, 58].map((width, index) => (
+              <div key={index} className="gap-spacing-2 px-spacing-1 flex items-center">
+                <div className="bg-secondary icon-sm shrink-0 animate-pulse rounded-full" />
+                <div
+                  className="bg-secondary h-3 animate-pulse rounded"
+                  style={{ width: `${width}%`, animationDelay: `${index * 120}ms` }}
+                />
+              </div>
+            ))}
           </div>
         ) : visible.length === 0 ? (
           <div className="p-spacing-4 text-center">

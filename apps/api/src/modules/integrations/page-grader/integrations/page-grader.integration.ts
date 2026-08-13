@@ -119,13 +119,15 @@ export type PageGraderMeetingResult = {
 
 export type PageGraderAgendaSections = {
   agenda: string
+  this_week?: string
+  thisWeek?: string
+  next_week?: string
+  nextWeek?: string
   performance?: string
   performance_data?: string
   wins: string
   campaign_notes?: string
   campaignNotes?: string
-  other_updates?: string
-  otherUpdates?: string
   needs_blockers?: string
   needsBlockers?: string
 }

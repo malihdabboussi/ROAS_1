@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   endMeetingCall: vi.fn(),
   fetchMeetingWorkspace: vi.fn(),
   openChatDrawer: vi.fn(),
+  continueMeetingConversation: vi.fn(),
   openDocumentInShell: vi.fn(),
   setRailIntent: vi.fn(),
   setWorkAreaOpen: vi.fn(),
@@ -36,12 +37,14 @@ vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
       attachMeetingContext: typeof mocks.attachMeetingContext
       clearMeetingContext: typeof mocks.clearMeetingContext
       setRailIntent: typeof mocks.setRailIntent
+      continueMeetingConversation: typeof mocks.continueMeetingConversation
     }) => unknown,
   ) =>
     selector({
       attachMeetingContext: mocks.attachMeetingContext,
       clearMeetingContext: mocks.clearMeetingContext,
       setRailIntent: mocks.setRailIntent,
+      continueMeetingConversation: mocks.continueMeetingConversation,
     }),
 }))
 
@@ -209,5 +212,125 @@ describe('MeetingWorkspaceDialog', () => {
     await waitFor(() => expect(screen.getByText('Call complete')).toBeInTheDocument())
     expect(screen.queryByRole('button', { name: 'Start call' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue in chat' }))
+    expect(mocks.continueMeetingConversation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: 'conversation-1',
+        meetingItemId: 'meeting-1',
+      }),
+    )
+    expect(mocks.openChatDrawer).toHaveBeenLastCalledWith('conversation-1')
+  })
+
+  it('separates calendar prep from post-call recap and keeps recordings first', async () => {
+    mocks.fetchMeetingWorkspace.mockReset()
+    mocks.fetchMeetingWorkspace.mockResolvedValue({
+      ...baseBundle,
+      meeting: {
+        ...baseBundle.meeting,
+        source: 'fathom',
+        description: 'Transcript-derived content must not appear as agenda prep.',
+      },
+      workspace: { ...baseBundle.workspace, phase: 'complete' as const },
+      recordings: [
+        {
+          id: 'recording-1',
+          title: 'Strategy call',
+          provider: 'fathom',
+          recording_url: 'https://fathom.video/calls/1',
+          duration_seconds: 1800,
+          is_primary: true,
+          provider_summary: 'The team agreed on the launch plan.',
+          transcript_doc_item_id: null,
+        },
+      ],
+      snippets: [
+        {
+          id: 'note-1',
+          source_type: 'manual',
+          text: 'Watch campaign pacing on day one.',
+          source_label: 'Dylan',
+          created_at: '2026-08-10T18:00:00.000Z',
+        },
+      ],
+    })
+
+    render(
+      <MeetingWorkspaceDialog
+        spaceId="space-1"
+        meetingItemId="meeting-1"
+        agendaEvent={
+          {
+            id: 'calendar-1',
+            title: 'Strategy call',
+            description: 'Review launch goals before the meeting.',
+            start: '2026-08-10T17:00:00.000Z',
+            end: '2026-08-10T17:30:00.000Z',
+            attendees: [],
+          } as never
+        }
+        joinUrl={null}
+        fallbackTitle="Strategy call"
+        onBack={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+
+    await waitFor(() => expect(screen.getByText('Post-meeting recap')).toBeInTheDocument())
+    expect(screen.getByText('Review launch goals before the meeting.')).toBeInTheDocument()
+    expect(
+      screen.queryByText('Transcript-derived content must not appear as agenda prep.'),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText('The team agreed on the launch plan.')).toBeInTheDocument()
+    expect(screen.getByText('Watch campaign pacing on day one.')).toBeInTheDocument()
+
+    const recordings = screen.getByText('Recordings (1)').closest('section')
+    const agenda = screen.getByText('Agenda & prep').closest('section')
+    expect(recordings?.compareDocumentPosition(agenda!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  it('can reopen a completed Space action item', async () => {
+    const action = {
+      id: 'action-1',
+      title: 'Send the launch recap',
+      source_type: 'provider' as const,
+      status: 'resolved',
+      canonical_assignee_name: 'Dylan',
+      canonical_assignee_email: null,
+      evidence: {},
+    }
+    mocks.fetchMeetingWorkspace.mockReset()
+    mocks.fetchMeetingWorkspace.mockResolvedValue({ ...baseBundle, actions: [action] })
+    mocks.updateMeetingActionStatus.mockResolvedValue({ ...action, status: 'confirmed' })
+
+    render(
+      <MeetingWorkspaceDialog
+        spaceId="space-1"
+        meetingItemId="meeting-1"
+        joinUrl={null}
+        fallbackTitle="Strategy call"
+        onBack={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+
+    const reopen = await screen.findByRole('button', {
+      name: 'Mark Send the launch recap incomplete',
+    })
+    expect(screen.getByText('Fathom')).toBeInTheDocument()
+    fireEvent.click(reopen)
+
+    await waitFor(() => {
+      expect(mocks.updateMeetingActionStatus).toHaveBeenCalledWith(
+        'space-1',
+        'meeting-1',
+        'action-1',
+        'confirmed',
+      )
+      expect(
+        screen.getByRole('button', { name: 'Mark Send the launch recap complete' }),
+      ).toBeInTheDocument()
+    })
   })
 })

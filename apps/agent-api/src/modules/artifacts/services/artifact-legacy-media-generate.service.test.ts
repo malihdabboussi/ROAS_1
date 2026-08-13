@@ -328,6 +328,38 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
     expect(result).toEqual({ deliverable_id: 'deliverable-1' })
   })
 
+  it('persists the requested space_id on the video generation job', async () => {
+    const supabase = makeSupabase()
+    const target = makeTarget(supabase) as Record<string, any>
+    target.replicateApiToken = 'replicate-key'
+    const service = new ArtifactLegacyMediaGenerateService()
+    const createMediaJob = vi.fn(async () => ({ id: 'job-1' }))
+    ;(service as any).jobsService = { createMediaJob }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 'prediction-1', status: 'starting' }),
+    } as unknown as Response)
+
+    const result = await service.generateVideo(
+      target,
+      { prompt: 'A sunrise timelapse', space_id: ' space-9 ', aspect_ratio: '9:16', duration: 5 },
+      'session-1',
+    )
+
+    expect(result).toEqual(
+      expect.objectContaining({ success: true, pending: true, job_id: 'job-1' }),
+    )
+    expect(createMediaJob).toHaveBeenCalledWith(
+      supabase,
+      expect.objectContaining({
+        asset_type: 'video',
+        provider: 'replicate',
+        space_id: 'space-9',
+      }),
+    )
+    fetchMock.mockRestore()
+  })
+
   it('resolves campaign from ad_id chain and injects campaign theme style', async () => {
     const supabase = makeSupabase()
     const target = makeTarget(supabase)

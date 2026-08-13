@@ -161,6 +161,10 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
   const campaignsFlyoutRef = useRef<HTMLDivElement>(null)
   const [agentsFlyout, setAgentsFlyout] = useState(false)
   const agentsFlyoutRef = useRef<HTMLDivElement>(null)
+  // Auto-expand applies once per campaign — `conversations` identity churns on
+  // every store update (incl. streaming), and re-setting a fresh Set each run
+  // feeds a render loop ("Maximum update depth exceeded").
+  const lastAutoExpandedCampaignRef = useRef<string | null>(null)
 
   const [activeManagePanel, setActiveManagePanel] = useState<ManagePanelId | null>(null)
   const [isPanelClosing, setIsPanelClosing] = useState(false)
@@ -206,8 +210,7 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
   // Do not keep a permanent HQ prefetch that refetches on every rail mount.
   const hubSpacesDataEnabled =
     activeManagePanel === 'spaces' || (hubMenuOpen && hubMenuExpandedSections.has('spaces'))
-  const hubProjectsDataEnabled =
-    activeManagePanel === 'projects' || activeManagePanel === 'more' || hubMenuOpen
+  const hubProjectsDataEnabled = activeManagePanel === 'more' || hubMenuOpen
 
   const { data: sidebarProjectsData } = useCachedProjects(hubProjectsDataEnabled)
   const sidebarProjects = sidebarProjectsData ?? []
@@ -258,7 +261,7 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
   }, [])
 
   useEffect(() => {
-    if (activeManagePanel !== 'projects' && activeManagePanel !== 'more') {
+    if (activeManagePanel !== 'more') {
       setIsCreatingProject(false)
       setNewProjectName('')
     }
@@ -393,6 +396,8 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
     if (!campaignId) return
     const row = campaigns.find((c) => c.id === campaignId)
     if (!row) return
+    if (lastAutoExpandedCampaignRef.current === row.id) return
+    lastAutoExpandedCampaignRef.current = row.id
     setActiveCampaign(row.id, row.name, row.icon)
     setExpandedCampaignIds(new Set([campaignId]))
   }, [

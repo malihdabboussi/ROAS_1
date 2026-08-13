@@ -28,16 +28,20 @@ export function ShellMenuDockLayout({
   const desktop = useMediaQuery('(min-width: 768px)')
   const activeDock = useActiveShellMenuDock()
   const dragging = useShellMenuDock((state) => state.dragging)
+  const menuStyle = useShellMenuDock((state) => state.menuStyle)
   const workCardHostAvailable = useShellMenuDock((state) => state.workCardHostAvailable)
   const workCollapsedHostAvailable = useShellMenuDock((state) => state.workCollapsedHostAvailable)
   const chatOpen = useShellStore((state) => state.chatDrawer.open)
   const rawDock = hydrated && desktop ? activeDock : 'left'
   const workHostAvailable = workCardHostAvailable || workCollapsedHostAvailable
   // Remap frame-left onto the work card only when chat is closed and the work card can host.
-  const dock = resolveShellMenuDockForLayout(rawDock, {
-    chatOpen,
-    workHostAvailable: workCardHostAvailable,
-  })
+  const dock =
+    menuStyle === 'simple'
+      ? 'left'
+      : resolveShellMenuDockForLayout(rawDock, {
+          chatOpen,
+          workHostAvailable: workCardHostAvailable,
+        })
   const workAttached = isWorkAttachedDock(dock)
   const hostedOnWork = workAttached && workHostAvailable
   // Frame only hosts far-left (or fallback when work cannot host).
@@ -62,11 +66,20 @@ export function ShellMenuDockLayout({
         data-shell-menu-dock={frameAttr}
         data-shell-menu-dock-dragging={dragging ? 'true' : undefined}
       >
-        <ShellTopBar />
-        <div className="shell-menu-dock-body">
-          {resolvedFrameDock === 'left' ? <ShellSidebarSlot /> : null}
-          <main className="shell-menu-dock-content">{children}</main>
-        </div>
+        {menuStyle === 'simple' && resolvedFrameDock === 'left' ? (
+          <div className="shell-menu-dock-body">
+            <ShellSidebarSlot />
+            <main className="shell-menu-dock-content">{children}</main>
+          </div>
+        ) : (
+          <>
+            {menuStyle !== 'simple' ? <ShellTopBar /> : null}
+            <div className="shell-menu-dock-body">
+              {resolvedFrameDock === 'left' ? <ShellSidebarSlot /> : null}
+              <main className="shell-menu-dock-content">{children}</main>
+            </div>
+          </>
+        )}
         {!portalActive && dock === 'left' ? (
           <span className="sr-only">Menu docked left of chat</span>
         ) : null}

@@ -68,6 +68,20 @@ export class ArtifactLegacySessionCampaignRepository {
     }
   }
 
+  async findSpaceCampaignId(
+    supabase: SupabaseClient,
+    spaceId: string,
+  ): Promise<{ data: Record<string, unknown> | null; error: QueryError | null }> {
+    return (await supabase
+      .from('spaces')
+      .select('campaign_id')
+      .eq('id', spaceId)
+      .maybeSingle()) as {
+      data: Record<string, unknown> | null
+      error: QueryError | null
+    }
+  }
+
   async findGeneralCampaignId(
     supabase: SupabaseClient,
     userId: string,

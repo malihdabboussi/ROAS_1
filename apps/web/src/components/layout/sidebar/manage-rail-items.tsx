@@ -1,14 +1,24 @@
 'use client'
 
-import { Brain, BriefcaseBusiness, Ellipsis, House, ListChecks, Users } from 'lucide-react'
+import {
+  BriefcaseBusiness,
+  CalendarDays,
+  CheckSquare,
+  Ellipsis,
+  House,
+  Inbox,
+  ListChecks,
+  SendHorizontal,
+  Star,
+  Users,
+} from 'lucide-react'
 import type { ManageRailItem } from './sidebar-types'
 
 export const manageRailItems: ManageRailItem[] = [
   {
     id: 'home',
     label: 'Home',
-    type: 'panel',
-    panelId: 'home',
+    type: 'link',
     href: '/home',
     icon: <House className="icon-md" />,
   },
@@ -27,12 +37,38 @@ export const manageRailItems: ManageRailItem[] = [
     icon: <BriefcaseBusiness className="icon-md" />,
   },
   {
-    id: 'team',
-    label: 'Team',
+    id: 'inbox',
+    label: 'Inbox',
+    type: 'link',
+    href: '/home/inbox',
+    icon: <Inbox className="icon-md" />,
+  },
+  {
+    id: 'meetings',
+    label: 'Meetings',
+    type: 'link',
+    href: '/home/meetings',
+    icon: <CalendarDays className="icon-md" />,
+  },
+  {
+    id: 'my-task',
+    label: 'My Tasks',
+    type: 'link',
+    href: '/home/my-tasks',
+    icon: <CheckSquare className="icon-md" />,
+  },
+  {
+    id: 'delegation-desk',
+    label: 'Delegation Desk',
+    type: 'delegation',
+    icon: <SendHorizontal className="icon-md" />,
+  },
+  {
+    id: 'favorites',
+    label: 'Favorites',
     type: 'panel',
-    panelId: 'team2',
-    href: '/team',
-    icon: <Users className="icon-md" />,
+    panelId: 'favorites',
+    icon: <Star className="icon-md" />,
   },
   {
     id: 'spaces',
@@ -40,14 +76,6 @@ export const manageRailItems: ManageRailItem[] = [
     type: 'panel',
     panelId: 'spaces',
     icon: <ListChecks className="icon-md" />,
-  },
-  {
-    id: 'brain',
-    label: 'Brain',
-    type: 'panel',
-    panelId: 'brain',
-    href: '/brain',
-    icon: <Brain className="icon-md" />,
   },
   {
     id: 'more',

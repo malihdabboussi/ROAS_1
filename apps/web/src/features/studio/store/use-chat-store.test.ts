@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getChatCreditsExhausted, setChatCreditsExhausted } from '@/lib/chat/chat-credit-state'
 import { shouldReconnectPersistedAssistant } from '../lib/chat-turn-completion'
 import type { Conversation, Message, MessageContentBlock } from '../types'
@@ -31,10 +31,7 @@ function message(conversationId: string): Message {
   }
 }
 
-function assistantMessage(
-  conversationId: string,
-  overrides: Partial<Message> = {},
-): Message {
+function assistantMessage(conversationId: string, overrides: Partial<Message> = {}): Message {
   return {
     ...message(conversationId),
     id: `assistant-${conversationId}`,
@@ -55,8 +52,20 @@ describe('useChatStore conversation visibility', () => {
       messagesByConversation: {},
       unreadConversationIds: [],
       contextUsageByConversation: {},
+      composerPastedBlocksByContext: {},
       creditsExhausted: false,
     })
+  })
+
+  it('does not publish a store update when clearing missing pasted blocks', () => {
+    const listener = vi.fn()
+    const unsubscribe = useChatStore.subscribe(listener)
+
+    useChatStore.getState().clearComposerPastedBlocks('meeting:missing')
+
+    expect(listener).not.toHaveBeenCalled()
+    expect(useChatStore.getState().composerPastedBlocksByContext).toEqual({})
+    unsubscribe()
   })
 
   it('prunes stale conversations and messages that are not in the authorized list', () => {
@@ -121,9 +130,7 @@ describe('useChatStore conversation visibility', () => {
       .getState()
       .upsertThinkingTranscriptInOrderedBlocks(conversationId, messageId, 'Thought one')
     useChatStore.getState().completeThinkingTranscriptInOrderedBlocks(conversationId, messageId)
-    useChatStore
-      .getState()
-      .appendTextToOrderedBlocks(conversationId, messageId, 'First update')
+    useChatStore.getState().appendTextToOrderedBlocks(conversationId, messageId, 'First update')
     useChatStore
       .getState()
       .upsertThinkingTranscriptInOrderedBlocks(conversationId, messageId, 'Thought two')

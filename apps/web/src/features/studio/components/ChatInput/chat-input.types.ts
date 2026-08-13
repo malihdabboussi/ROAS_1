@@ -2,7 +2,9 @@ import type { ReactNode } from 'react'
 import type { ChatModelSettings } from '@/features/studio/services/chat.service'
 import type { ChatScopeKind, DocumentAttachment, MessageReference } from '../../types'
 import type { AttachedArtifact } from '../chat/ArtifactAttachments'
+import type { ChatInputPlusMenuAgentPickerConfig } from './chat-input-plus-menu-agent.types'
 import type { ChatInputPlusMenuSpacePickerConfig } from './chat-input-plus-menu-space.types'
+import type { ComposerPlusSubmenu } from './chat-input-policy'
 import type { ChatInputSpaceComposerSpaceTask } from './use-chat-input-at-mention-controller'
 
 export interface ChatInputProps {
@@ -83,6 +85,12 @@ export interface ChatInputProps {
   composerFooterAfterIntegrationsSlot?: ReactNode
   /** Optional space picker surfaced in the composer plus menu (Home dashboard). */
   plusMenuSpacePicker?: ChatInputPlusMenuSpacePickerConfig
+  /** Optional managed-agent picker surfaced in the composer plus menu. */
+  plusMenuAgentPicker?: ChatInputPlusMenuAgentPickerConfig
+  /** Lets an outer composer toolbar open the add menu without duplicating it. */
+  openAddMenuRef?: React.MutableRefObject<((submenu?: ComposerPlusSubmenu) => void) | null>
+  /** Reports connected integrations for composer-adjacent integration previews. */
+  onConnectedIntegrationProvidersChange?: (providers: string[]) => void
   /** Optional wrapper class for the default composer footer row. */
   footerWrapperClassName?: string
 }

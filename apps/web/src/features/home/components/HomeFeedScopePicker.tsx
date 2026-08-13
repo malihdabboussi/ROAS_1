@@ -36,12 +36,16 @@ function storageKey(variant: HomeFeedScopePickerVariant): string {
 }
 
 function loadScope(variant: HomeFeedScopePickerVariant): HomeFeedScopeState {
-  if (typeof window === 'undefined') return { ...DEFAULT_HOME_FEED_SCOPE }
+  const defaultScope =
+    variant === 'my_tasks'
+      ? { feedScope: 'all' as const, orgId: null, campaignId: null }
+      : { ...DEFAULT_HOME_FEED_SCOPE }
+  if (typeof window === 'undefined') return defaultScope
   try {
     const raw = window.sessionStorage.getItem(storageKey(variant))
-    return raw ? parseHomeFeedScope(JSON.parse(raw) as unknown) : { ...DEFAULT_HOME_FEED_SCOPE }
+    return raw ? parseHomeFeedScope(JSON.parse(raw) as unknown) : defaultScope
   } catch {
-    return { ...DEFAULT_HOME_FEED_SCOPE }
+    return defaultScope
   }
 }
 

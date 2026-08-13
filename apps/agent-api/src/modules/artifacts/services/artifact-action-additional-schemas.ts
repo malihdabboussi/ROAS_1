@@ -320,12 +320,17 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
     prompt: 'string',
     count: 'number',
   }),
-  generate_video: schema(['prompt'], ['prompt', 'image_url', 'duration_seconds', 'aspect_ratio'], {
-    prompt: 'string',
-    image_url: 'string',
-    duration_seconds: 'number',
-    aspect_ratio: 'string',
-  }),
+  generate_video: schema(
+    ['prompt'],
+    ['prompt', 'image_url', 'duration_seconds', 'aspect_ratio', 'space_id'],
+    {
+      prompt: 'string',
+      image_url: 'string',
+      duration_seconds: 'number',
+      aspect_ratio: 'string',
+      space_id: 'string',
+    },
+  ),
   get_video_status: schema(['job_id'], ['job_id'], stringType(['job_id'])),
   analyze_video: schema(
     [['media_url', 'file_url', 'url', 'video_url']],
@@ -440,6 +445,17 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
     [],
     [...campaignScope, 'node_type'],
     stringType([...campaignScope, 'node_type']),
+  ),
+  get_canvas_board: schema([], campaignScope, stringType(campaignScope)),
+  apply_canvas_operations: schema(
+    ['base_revision', 'operations'],
+    ['base_revision', 'operations', 'idempotency_key', ...campaignScope],
+    {
+      base_revision: 'number',
+      operations: 'object_array',
+      idempotency_key: 'string',
+      ...stringType(campaignScope),
+    },
   ),
   bulk_create_ads: schema(['ads'], ['ads', 'ad_set_id'], {
     ads: 'object_array',

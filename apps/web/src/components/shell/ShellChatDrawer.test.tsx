@@ -2,6 +2,7 @@ import type { MouseEvent, ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ShellChatDrawer } from './ShellChatDrawer'
+import { useShellMenuDock } from './use-shell-menu-dock'
 import { useShellStore } from './use-shell-store'
 
 const ORIGINAL_INNER_WIDTH = window.innerWidth
@@ -87,13 +88,14 @@ vi.mock('./ShellChatMenu', () => ({
 
 describe('ShellChatDrawer', () => {
   beforeEach(() => {
+    useShellMenuDock.setState({ menuStyle: 'advanced' })
     useShellStore.setState({
       chatDrawer: { open: false, conversationId: null, width: 280, minimized: false },
       chatHistoryWidth: 200,
       chatHistoryCollapsed: false,
       workAreaOpen: true,
       newChatNonce: 0,
-      rightPanel: { open: false, tab: 'tasks' },
+      rightPanel: { open: false },
     })
     vi.clearAllMocks()
   })
@@ -117,6 +119,19 @@ describe('ShellChatDrawer', () => {
     expect(mocks.setChatRailIntent).toHaveBeenCalledWith('new')
     expect(mocks.setActiveConversationId).toHaveBeenCalledWith(null)
     expect(mocks.openConversationInSpaceChat).not.toHaveBeenCalled()
+  })
+
+  it('uses the left Simple menu as history instead of rendering a duplicate history column', () => {
+    useShellMenuDock.setState({ menuStyle: 'simple' })
+    useShellStore.setState({
+      chatDrawer: { open: true, conversationId: null, width: 420, minimized: false },
+    })
+
+    render(<ShellChatDrawer />)
+
+    expect(screen.queryByText('Chat history')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Show chat history')).not.toBeInTheDocument()
+    expect(screen.getByText('Chat panel')).toBeInTheDocument()
   })
 
   it('restores a known conversation without forcing a fresh thread', () => {
@@ -217,7 +232,7 @@ describe('ShellChatDrawer', () => {
         width: 420,
         minimized: false,
       },
-      rightPanel: { open: true, tab: 'tasks' },
+      rightPanel: { open: true },
     })
 
     const { container } = render(<ShellChatDrawer />)
@@ -344,32 +359,5 @@ describe('ShellChatDrawer', () => {
     expect(restoreHistory.querySelector('svg')).toHaveClass('nav-glass-text-purple')
     expect(restoreHistory).toHaveTextContent('')
     expect(screen.getByText('Chat panel')).toBeInTheDocument()
-  })
-
-  it('collapses the work area when the drawer reaches the right edge', () => {
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1200 })
-    useShellStore.setState({
-      chatDrawer: {
-        open: true,
-        conversationId: 'conversation-1',
-        width: 420,
-        minimized: false,
-      },
-      workAreaOpen: true,
-    })
-
-    render(<ShellChatDrawer />)
-    fireEvent.mouseDown(screen.getByRole('button', { name: 'Resize AI chat drawer' }), {
-      clientX: 420,
-    })
-    const moveEvent = new Event('pointermove', { bubbles: true })
-    Object.defineProperty(moveEvent, 'clientX', { value: 1185 })
-    fireEvent(document, moveEvent)
-
-    expect(useShellStore.getState().chatDrawer.width).toBeGreaterThan(720)
-
-    fireEvent.pointerUp(document)
-    expect(useShellStore.getState().workAreaOpen).toBe(false)
-    expect(useShellStore.getState().chatDrawer.width).toBe(420)
   })
 })

@@ -32,6 +32,7 @@ import { ArtifactCompanyCortexRepository } from './repositories/artifact-company
 import { ArtifactContactNotesRepository } from './repositories/artifact-contact-notes.repository'
 import { ArtifactContactTimelineRepository } from './repositories/artifact-contact-timeline.repository'
 import { ArtifactContactsRepository } from './repositories/artifact-contacts.repository'
+import { ArtifactConversationSearchRepository } from './repositories/artifact-conversation-search.repository'
 import { ArtifactCustomObjectsRepository } from './repositories/artifact-custom-objects.repository'
 import { ArtifactCustomerBrainRepository } from './repositories/artifact-customer-brain.repository'
 import { ArtifactDocumentFilesRepository } from './repositories/artifact-document-files.repository'
@@ -86,6 +87,7 @@ import { ArtifactBrainSearchActionsService } from './services/artifact-brain-sea
 import { ArtifactBrainTimelineActionsService } from './services/artifact-brain-timeline-actions.service'
 import { ArtifactCampaignThemeService } from './services/artifact-campaign-theme.service'
 import { ArtifactContactsService } from './services/artifact-contacts.service'
+import { ArtifactConversationSearchService } from './services/artifact-conversation-search.service'
 import { ArtifactCustomObjectsService } from './services/artifact-custom-objects.service'
 import { ArtifactDocumentsService } from './services/artifact-documents.service'
 import { ArtifactDocxService } from './services/artifact-docx.service'
@@ -110,6 +112,7 @@ import { ArtifactLegacyRuntimeApiService } from './services/artifact-legacy-runt
 import { ArtifactLegacyRuntimeErrorService } from './services/artifact-legacy-runtime-error.service'
 import { ArtifactLegacyTeamBrainMemoryService } from './services/artifact-legacy-team-brain-memory.service'
 import { ArtifactMcpService } from './services/artifact-mcp.service'
+import { ArtifactMediaJobsSweeperService } from './services/artifact-media-jobs-sweeper.service'
 import { ArtifactMediaProcessingService } from './services/artifact-media-processing.service'
 import { ArtifactMissionApiActionsService } from './services/artifact-mission-api-actions.service'
 import { ArtifactMissionManagerActionsService } from './services/artifact-mission-manager-actions.service'
@@ -190,6 +193,7 @@ import { MissionContextEnricherService } from './services/mission-context-enrich
     ArtifactLegacyTeamBrainMemoryService,
     ArtifactLegacyMetaApiService,
     ArtifactLegacyMediaProviderService,
+    ArtifactMediaJobsSweeperService,
     ArtifactDocumentsService,
     ArtifactEmailsService,
     ArtifactFlowBuilderBlueprintService,
@@ -217,6 +221,7 @@ import { MissionContextEnricherService } from './services/mission-context-enrich
     ArtifactMissionApiActionsService,
     ArtifactMissionManagerActionsService,
     ArtifactContactsService,
+    ArtifactConversationSearchService,
     ArtifactTasksService,
     ArtifactSpaceSchemaService,
     ArtifactMediaProcessingService,
@@ -244,6 +249,7 @@ import { MissionContextEnricherService } from './services/mission-context-enrich
     ArtifactCompanyCortexRepository,
     ArtifactContactNotesRepository,
     ArtifactContactTimelineRepository,
+    ArtifactConversationSearchRepository,
     ArtifactContactsRepository,
     ArtifactCustomObjectsRepository,
     ArtifactCustomerBrainRepository,

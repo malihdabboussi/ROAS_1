@@ -134,6 +134,7 @@ const GLOBAL_SCOPE_ACTIONS = new Set<string>([
 ])
 
 const READ_ONLY_CROSS_SCOPE_ACTIONS = new Set<string>([
+  'search_conversations',
   'list_spaces',
   'get_space',
   'search_space_context',
@@ -504,6 +505,7 @@ export const ACTION_METHOD_MAP: Record<ArtifactAction, string> = {
   analyze_image: 'analyzeImage',
   extract_url_transcript: 'extractUrlTranscript',
   list_spaces: 'listSpaces',
+  search_conversations: 'searchConversations',
   search_space_context: 'searchSpaceContext',
   generate_visual_html: 'generateVisualHtml',
   get_space: 'getSpace',
@@ -681,6 +683,8 @@ export const ACTION_METHOD_MAP: Record<ArtifactAction, string> = {
   resolve_brain_lint: 'resolveBrainLint',
   create_strategy_node: 'createStrategyNode',
   list_strategy_nodes: 'listStrategyNodes',
+  get_canvas_board: 'getCanvasBoard',
+  apply_canvas_operations: 'applyCanvasOperations',
   bulk_create_ads: 'bulkCreateAds',
   generate_ad_copy: 'generateAdCopy',
   get_daily_report_data: 'getDailyReportData',

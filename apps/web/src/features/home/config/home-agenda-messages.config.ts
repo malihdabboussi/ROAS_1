@@ -1,4 +1,9 @@
 export const HOME_AGENDA_MESSAGES = {
+  LOADING_MEETINGS: {
+    key: 'LOADING_MEETINGS',
+    message: 'Loading meetings...',
+    category: 'loading',
+  },
   INSTANT_MEETING_TITLE: {
     key: 'INSTANT_MEETING_TITLE',
     message: 'START AN IMPROMPTU CALL',

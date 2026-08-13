@@ -5,7 +5,8 @@ export interface MediaViewPresentation {
   uploadAccept: string
   uploadLabel: string
   uploadTooltip: string
-  showImageComposer: boolean
+  /** Which generation composer the view shows — video-only filters seed video generation. */
+  composerMode: MediaAssetTypePick
 }
 
 export function resolveMediaViewPresentation(filters: MediaAssetTypePick[]): MediaViewPresentation {
@@ -19,7 +20,7 @@ export function resolveMediaViewPresentation(filters: MediaAssetTypePick[]): Med
       uploadAccept: 'video/*',
       uploadLabel: 'Upload video',
       uploadTooltip: 'Upload videos',
-      showImageComposer: false,
+      composerMode: 'video',
     }
   }
 
@@ -29,7 +30,7 @@ export function resolveMediaViewPresentation(filters: MediaAssetTypePick[]): Med
       uploadAccept: 'image/*',
       uploadLabel: 'Upload image',
       uploadTooltip: 'Upload images',
-      showImageComposer: true,
+      composerMode: 'image',
     }
   }
 
@@ -38,6 +39,6 @@ export function resolveMediaViewPresentation(filters: MediaAssetTypePick[]): Med
     uploadAccept: 'image/*,video/*',
     uploadLabel: 'Upload media',
     uploadTooltip: 'Upload images or videos',
-    showImageComposer: true,
+    composerMode: 'image',
   }
 }

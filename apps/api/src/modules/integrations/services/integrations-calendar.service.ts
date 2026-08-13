@@ -1,4 +1,11 @@
-import { BadRequestException, forwardRef, Inject, Injectable, Optional } from '@nestjs/common'
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  Optional,
+} from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RequestScope } from '@vibey/api-shared'
 import { OrgScopeService } from '@vibey/api-shared'
@@ -10,6 +17,7 @@ import type {
 import { MeetingsPrecallPrepService } from '../../spaces/services/meetings-precall-prep.service'
 import { IntegrationsRepository } from '../repositories/integrations.repository'
 import {
+  filterCalendarRowsOwnedByUser,
   listConnectedCalendarAccounts,
   resolveCalendarConnection,
   toCalendarAccountReceipt,
@@ -21,6 +29,7 @@ import {
   readGoogleIcalUid,
   readOutlookIcalUid,
 } from './integrations-calendar-dedupe'
+import { enrichAgendaWithPrecall } from './integrations-calendar-enrichment'
 import { fetchGoogleMultiCalendarAgenda } from './integrations-calendar-google-agenda'
 import {
   assertCalendarProvider,
@@ -107,6 +116,8 @@ export type CalendarEventMutationResponse = {
 
 @Injectable()
 export class IntegrationsCalendarService {
+  private readonly logger = new Logger(IntegrationsCalendarService.name)
+
   constructor(
     private readonly repository: IntegrationsRepository,
     private readonly composio: ComposioService,
@@ -247,37 +258,19 @@ export class IntegrationsCalendarService {
     uniqueEvents.sort((a, b) => a.start.localeCompare(b.start))
 
     if (this.precallPrep) {
-      try {
-        const [prepMap, relatedResult] = await Promise.all([
-          uniqueEvents.length > 0
-            ? this.precallPrep.enrichAgendaEvents({
-                supabase,
-                userId: user.id,
-                orgId: scope.orgId ?? null,
-                events: uniqueEvents,
-              })
-            : Promise.resolve(new Map()),
-          this.precallPrep.enrichAgendaRelatedCalls({
-            supabase,
-            userId: user.id,
-            orgId: scope.orgId ?? null,
-            events: uniqueEvents,
-            start,
-            end,
-          }),
-        ])
-        for (const event of uniqueEvents) {
-          event.prep = prepMap.get(event.id) ?? null
-          event.related = relatedResult.relatedByEventId.get(event.id) ?? null
-        }
-        for (const fathomEvent of relatedResult.unmatchedFathomEvents) {
-          uniqueEvents.push(fathomEvent as CalendarAgendaEvent)
-        }
-        uniqueEvents = dedupeCalendarAgendaEvents(uniqueEvents)
-        uniqueEvents.sort((a, b) => a.start.localeCompare(b.start))
-      } catch {
-        // Agenda still works without prep / related / Fathom enrichment.
-      }
+      uniqueEvents = await enrichAgendaWithPrecall({
+        precallPrep: this.precallPrep,
+        supabase,
+        userId: user.id,
+        orgId: scope.orgId ?? null,
+        events: uniqueEvents,
+        start,
+        end,
+        dedupe: dedupeCalendarAgendaEvents,
+        logger: this.logger,
+        label: 'Agenda',
+      })
+      uniqueEvents.sort((a, b) => a.start.localeCompare(b.start))
     }
 
     if (errors.length > 0 && uniqueEvents.length === 0) {
@@ -463,7 +456,10 @@ export class IntegrationsCalendarService {
     integrationId: CalendarProvider,
   ): Promise<CalendarConnectionRef[]> {
     const scopedRows = await this.listScopedIntegrationRows(supabase, userId, scope, integrationId)
-    return listConnectedCalendarAccounts(scopedRows, integrationId)
+    return listConnectedCalendarAccounts(
+      filterCalendarRowsOwnedByUser(scopedRows, userId),
+      integrationId,
+    )
   }
 
   private async resolveConnection(

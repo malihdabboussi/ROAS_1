@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Boxes, FileText, ImageIcon } from 'lucide-react'
+import { Boxes, FileText, ImageIcon, Video } from 'lucide-react'
 import {
   fetchConversationDocuments,
   openArtifactInShell,
@@ -122,7 +122,14 @@ export function ShellRightPanelFiles({
         })}
 
         {messageRows.map((row) => {
-          const Icon = row.kind === 'image' ? ImageIcon : row.kind === 'artifact' ? Boxes : FileText
+          const Icon =
+            row.kind === 'image'
+              ? ImageIcon
+              : row.kind === 'video'
+                ? Video
+                : row.kind === 'artifact'
+                  ? Boxes
+                  : FileText
           const canOpen = Boolean(row.fileUrl || row.entityId)
           return (
             <li key={row.id}>

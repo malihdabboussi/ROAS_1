@@ -4,6 +4,10 @@ import { PageGraderClientImportService } from '../../../brain/services/page-grad
 import { VaultService } from '../../../vault/services/vault.service'
 import type { ImportPageGraderClientBrainDto } from '../dto/page-grader.dto'
 import { PageGraderIntegration } from '../integrations/page-grader.integration'
+import type {
+  PageGraderClientPackage,
+  PageGraderMetaContext,
+} from '../integrations/page-grader.integration'
 import { PageGraderApiService } from './page-grader-api.service'
 
 const PROVIDER = 'page_grader'
@@ -33,13 +37,20 @@ export class PageGraderBrainImportService {
     userId: string,
     dto: ImportPageGraderClientBrainDto,
     orgId?: string | null,
+    prefetchedPackage?: PageGraderClientPackage,
+    prefetchedMetaContext?: PageGraderMetaContext | null,
+    options: { skipBrainIngest?: boolean } = {},
   ) {
     const creds = await this.getCreds(userId)
-    const pkg = await this.pageGrader.getClientBrainPackage(
-      creds.baseUrl,
-      creds.apiKey,
-      dto.client_id,
-    )
+    const [pkg, metaContext] = await Promise.all([
+      prefetchedPackage ??
+        this.pageGrader.getClientBrainPackage(creds.baseUrl, creds.apiKey, dto.client_id),
+      prefetchedMetaContext !== undefined
+        ? prefetchedMetaContext
+        : this.pageGrader
+            .getClientMetaContext(creds.baseUrl, creds.apiKey, dto.client_id)
+            .catch(() => null),
+    ])
     const result = await this.clientImport.importPackage(
       supabase,
       userId,
@@ -52,8 +63,10 @@ export class PageGraderBrainImportService {
         campaignHint: dto.campaignHint,
         spaceId: dto.spaceId,
         spaceTitle: dto.spaceTitle,
+        metaContext,
       },
       { userId, orgId: orgId ?? null } as never,
+      options,
     )
 
     if (dto.dryRun) return result
@@ -97,6 +110,8 @@ export class PageGraderBrainImportService {
             : typeof brainImport.status === 'string'
               ? brainImport.status
               : 'succeeded',
+        campaignSpaceHash:
+          typeof result.campaignSpaceHash === 'string' ? result.campaignSpaceHash : null,
       })
     }
 

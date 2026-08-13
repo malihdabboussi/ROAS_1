@@ -27,7 +27,7 @@ describe('shell persisted prefs hydration', () => {
       workAreaOpen: true,
       chatHistoryCollapsed: false,
       chatDrawer: { open: false, conversationId: null, width: 420, minimized: false },
-      rightPanel: { open: false, tab: 'tasks' },
+      rightPanel: { open: false },
       artifactViewer: { target: null, width: 480 },
     })
   })
@@ -146,7 +146,7 @@ describe('shell artifact viewer state', () => {
       artifactViewer: { target: null, width: 480 },
       recentArtifactTargets: [],
       chatDrawer: { open: false, conversationId: null, width: 280, minimized: false },
-      rightPanel: { open: true, tab: 'files' },
+      rightPanel: { open: true },
     })
   })
 
@@ -240,5 +240,23 @@ describe('shell work area', () => {
       feature: 'home_meeting',
       data: { id: 'evt-1' },
     })
+  })
+
+  it('keeps an existing restore payload when the same page is re-recorded without one', () => {
+    const restore = { feature: 'home_meeting', data: { id: 'evt-1' } }
+    useShellStore.getState().recordWorkAreaPage({
+      id: '/home/meetings?meeting=evt-1',
+      title: 'Aaron x Dylan x Nate',
+      href: '/home/meetings?meeting=evt-1',
+      restore,
+    })
+    useShellStore.getState().recordWorkAreaPage({
+      id: '/home/meetings?meeting=evt-1',
+      title: 'Aaron x Dylan x Nate',
+      href: '/home/meetings?meeting=evt-1',
+    })
+
+    expect(useShellStore.getState().recentWorkAreaPages).toHaveLength(1)
+    expect(useShellStore.getState().recentWorkAreaPages[0]?.restore).toEqual(restore)
   })
 })

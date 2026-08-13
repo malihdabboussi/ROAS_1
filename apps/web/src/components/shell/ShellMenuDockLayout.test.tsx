@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   workCollapsedHostAvailable: false,
   chatOpen: true,
   portalActive: false,
+  menuStyle: 'advanced' as 'simple' | 'advanced',
 }))
 
 vi.mock('next/navigation', () => ({
@@ -43,6 +44,7 @@ vi.mock('./use-shell-menu-dock', async () => {
         dragging: boolean
         workCardHostAvailable: boolean
         workCollapsedHostAvailable: boolean
+        menuStyle: 'simple' | 'advanced'
       }) => unknown,
     ) =>
       selector({
@@ -51,6 +53,7 @@ vi.mock('./use-shell-menu-dock', async () => {
         dragging: false,
         workCardHostAvailable: mocks.workCardHostAvailable,
         workCollapsedHostAvailable: mocks.workCollapsedHostAvailable,
+        menuStyle: mocks.menuStyle,
       }),
   }
 })
@@ -68,6 +71,7 @@ describe('ShellMenuDockLayout', () => {
     mocks.workCollapsedHostAvailable = false
     mocks.chatOpen = true
     mocks.portalActive = false
+    mocks.menuStyle = 'advanced'
   })
 
   it('mounts the menu on the far left of chat', () => {
@@ -78,6 +82,18 @@ describe('ShellMenuDockLayout', () => {
     )
 
     expect(container.firstChild).toHaveAttribute('data-shell-menu-dock', 'left')
+    expect(screen.getByText('Menu').nextElementSibling).toHaveRole('main')
+  })
+
+  it('lets the Simple menu and chat own the full-height frame without a global top bar', () => {
+    mocks.menuStyle = 'simple'
+    render(
+      <ShellMenuDockLayout sidebar={<nav>Menu</nav>}>
+        <div>Workspace</div>
+      </ShellMenuDockLayout>,
+    )
+
+    expect(screen.queryByText('Top bar')).not.toBeInTheDocument()
     expect(screen.getByText('Menu').nextElementSibling).toHaveRole('main')
   })
 

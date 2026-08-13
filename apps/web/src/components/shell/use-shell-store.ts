@@ -7,7 +7,6 @@ import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
 const STORAGE_KEY = 'vibey.shell.v1'
 
 export type ShellMenuMode = 'home' | 'work'
-export type ShellRightPanelTab = 'tasks' | 'files' | 'sources'
 
 export type ShellChatDrawerState = {
   open: boolean
@@ -18,7 +17,6 @@ export type ShellChatDrawerState = {
 
 export type ShellRightPanelState = {
   open: boolean
-  tab: ShellRightPanelTab
 }
 
 export type ShellArtifactViewerState = {
@@ -49,7 +47,6 @@ type PersistedShell = {
   chatHistoryWidth?: number
   chatHistoryCollapsed?: boolean
   rightPanelOpen?: boolean
-  rightPanelTab?: ShellRightPanelTab
   workAreaOpen?: boolean
   artifactViewerWidth?: number
   artifactViewerTarget?: ShellArtifactViewerTarget | null
@@ -152,8 +149,6 @@ interface ShellStore {
   toggleWorkAreaOpen: () => void
   setRightPanelOpen: (open: boolean) => void
   toggleRightPanel: () => void
-  setRightPanelTab: (tab: ShellRightPanelTab) => void
-  openRightPanelSurface: (tab: ShellRightPanelTab) => void
   requestConversationScopePicker: () => void
   openArtifactViewer: (target: ShellArtifactViewerTarget) => void
   closeArtifactViewer: () => void
@@ -187,7 +182,6 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   workAreaOpen: true,
   rightPanel: {
     open: false,
-    tab: 'tasks',
   },
   conversationScopePickerRequestNonce: 0,
   artifactViewer: {
@@ -340,6 +334,15 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       })
       return
     }
+    // A surface opening on the right supersedes the summary card — never
+    // leave chat + summary + work area stacked three-wide. Only touch the
+    // rightPanel slice when it is actually open: replacing its identity on
+    // every call re-notifies subscribers and can ping-pong into a render loop.
+    if (get().rightPanel.open) {
+      writePersisted({ workAreaOpen: open, rightPanelOpen: false })
+      set((s) => ({ workAreaOpen: open, rightPanel: { ...s.rightPanel, open: false } }))
+      return
+    }
     set({ workAreaOpen: open })
   },
   toggleWorkAreaOpen: () => {
@@ -357,21 +360,6 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   },
   toggleRightPanel: () => {
     get().setRightPanelOpen(!get().rightPanel.open)
-  },
-  setRightPanelTab: (tab) => {
-    writePersisted({ rightPanelTab: tab })
-    set((s) => ({ rightPanel: { ...s.rightPanel, tab } }))
-  },
-  openRightPanelSurface: (tab) => {
-    writePersisted({
-      rightPanelOpen: true,
-      rightPanelTab: tab,
-      artifactViewerTarget: null,
-    })
-    set((s) => ({
-      rightPanel: { open: true, tab },
-      artifactViewer: { ...s.artifactViewer, target: null },
-    }))
   },
   requestConversationScopePicker: () => {
     writePersisted({ rightPanelOpen: true, artifactViewerTarget: null })
@@ -407,17 +395,23 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     set((s) => ({ artifactViewer: { ...s.artifactViewer, width: clamped } }))
   },
   recordWorkAreaPage: (target) => {
-    set((s) => ({
-      recentWorkAreaPages: [
-        {
-          id: target.id,
-          title: target.title.trim() || target.href,
-          href: target.href,
-          ...(target.restore ? { restore: target.restore } : {}),
-        },
-        ...s.recentWorkAreaPages.filter((entry) => entry.id !== target.id),
-      ].slice(0, 8),
-    }))
+    set((s) => {
+      // A feature host and the top bar can both record the same surface id —
+      // never let the payload-less record drop the host's restore payload.
+      const restore =
+        target.restore ?? s.recentWorkAreaPages.find((entry) => entry.id === target.id)?.restore
+      return {
+        recentWorkAreaPages: [
+          {
+            id: target.id,
+            title: target.title.trim() || target.href,
+            href: target.href,
+            ...(restore ? { restore } : {}),
+          },
+          ...s.recentWorkAreaPages.filter((entry) => entry.id !== target.id),
+        ].slice(0, 8),
+      }
+    })
   },
   requestNewChat: () => {
     set((s) => ({
@@ -520,7 +514,6 @@ export function hydrateShellStoreFromStorage(): void {
     workAreaOpen: artifactViewerTarget ? true : (persisted.workAreaOpen ?? true),
     rightPanel: {
       open: artifactViewerTarget ? false : (persisted.rightPanelOpen ?? false),
-      tab: persisted.rightPanelTab ?? 'tasks',
     },
     artifactViewer: {
       ...useShellStore.getState().artifactViewer,

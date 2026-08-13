@@ -42,11 +42,14 @@ export function MeetingRecordingsSection({
   meetingItemId,
   recordings,
   onLinked,
+  isPostCall = true,
 }: {
   spaceId: string
   meetingItemId: string
   recordings: MeetingRecording[]
   onLinked: () => void | Promise<void>
+  /** Pre-call the empty state is expected, not a gap — soften the copy. */
+  isPostCall?: boolean
 }) {
   const [picking, setPicking] = useState(false)
   const [loadingCandidates, setLoadingCandidates] = useState(false)
@@ -232,7 +235,11 @@ export function MeetingRecordingsSection({
       ))}
 
       {!picking && recordings.length === 0 ? (
-        <p className="body-4 text-muted-foreground">No recording linked yet.</p>
+        <p className="body-4 text-muted-foreground">
+          {isPostCall
+            ? 'No recording linked yet — link one from Fathom.'
+            : 'The recording will land here after the call.'}
+        </p>
       ) : null}
     </section>
   )

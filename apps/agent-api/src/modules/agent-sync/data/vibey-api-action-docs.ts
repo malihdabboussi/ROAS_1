@@ -1724,6 +1724,20 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
     parameters:
       '```json\n{"action":"list_strategy_nodes","label":"Checking strategy notes","data":{}}\n```',
   },
+  get_canvas_board: {
+    section: 'Canvas',
+    description:
+      'Loads the current campaign Canvas revision, editable items, and connectors. Call this immediately before applying Canvas operations.',
+    parameters:
+      '```json\n{"action":"get_canvas_board","label":"Reading the campaign canvas","data":{}}\n```',
+  },
+  apply_canvas_operations: {
+    section: 'Canvas',
+    description:
+      'Creates or edits normalized, editable objects on the campaign Canvas. Use the revision returned by get_canvas_board. Items support sticky_note, text, shape, frame, card, and resource_card; connectors reference item UUIDs.',
+    parameters:
+      '```json\n{"action":"apply_canvas_operations","label":"Building the campaign canvas","data":{"base_revision":0,"operations":[{"op":"create_item","item":{"id":"UUID","kind":"sticky_note","position_x":120,"position_y":160,"content":{"title":"Awareness","text":"Lead magnet traffic"}}}]}}\n```',
+  },
   list_custom_fields: {
     section: 'Offers',
     description: 'Lists custom fields for merge tags and personalization.',
@@ -1857,9 +1871,9 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   generate_video: {
     section: 'Media',
     description:
-      'Starts video generation. Async — after calling, use the wait tool (wait 30s) then poll with get_video_status. Repeat: wait(30) -> get_video_status until status is succeeded or failed. Max ~5 polls (~2.5 min). If still processing after that, inform the user. Available models: veo-3.1-fast (default, general text/image-to-video), seedance-2 (ByteDance Seedance 2.0 on Replicate — multimodal refs, synced audio; requires integer duration 1–15; use reference_video_urls for motion/style — higher per-second credits than text-only), kling-v3 (cinematic + audio/lip-sync, multi-shot), grok-imagine-video (general, video editing), gen-4.5 (premium cinematic), fabric-1.0 (talking head from image + audio, no prompt needed). Pass model in data to select. fabric-1.0 requires image_url + audio_url instead of prompt. seedance-2: do not combine reference_image_urls with image_url/last_frame_url; last_frame_url requires image_url.',
+      "Starts video generation. Async — after calling, use the wait tool (wait 30s) then poll with get_video_status. Repeat: wait(30) -> get_video_status until status is succeeded or failed. Max ~5 polls (~2.5 min). If still processing after that, inform the user. Available models: veo-3.1-fast (default, general text/image-to-video), seedance-2 (ByteDance Seedance 2.0 on Replicate — multimodal refs, synced audio; requires integer duration 1–15; use reference_video_urls for motion/style — higher per-second credits than text-only), kling-v3 (cinematic + audio/lip-sync, multi-shot), grok-imagine-video (general, video editing), gen-4.5 (premium cinematic), fabric-1.0 (talking head from image + audio, no prompt needed). Pass model in data to select. fabric-1.0 requires image_url + audio_url instead of prompt. seedance-2: do not combine reference_image_urls with image_url/last_frame_url; last_frame_url requires image_url. Pass space_id (like generate_image) so the finished video is registered in that space's media library; without it the asset may not appear in Space Media.",
     parameters:
-      '```json\n{"action":"generate_video","label":"Generating your video","data":{"prompt":"...","model":"seedance-2","duration":7,"aspect_ratio":"16:9","resolution":"720p","image_url":"optional first frame","last_frame_url":"optional last frame (requires image_url)","reference_image_urls":["https://..."],"reference_video_urls":["https://..."],"reference_audio_urls":["https://..."],"generate_audio":true,"seed":99}}\n```',
+      '```json\n{"action":"generate_video","label":"Generating your video","data":{"prompt":"...","model":"seedance-2","duration":7,"aspect_ratio":"16:9","resolution":"720p","space_id":"UUID of the current space (recommended)","image_url":"optional first frame","last_frame_url":"optional last frame (requires image_url)","reference_image_urls":["https://..."],"reference_video_urls":["https://..."],"reference_audio_urls":["https://..."],"generate_audio":true,"seed":99}}\n```',
   },
   get_video_status: {
     section: 'Media',
@@ -1964,6 +1978,13 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
       'Lists spaces visible in the current user/org context. Use before task actions when the user names a workspace but does not provide a space_id. Optional general=true lists general spaces outside a campaign. Optional limit controls result count.',
     parameters:
       '```json\n{"action":"list_spaces","label":"Finding your spaces","data":{"limit":20}}\n```\n```json\n{"action":"list_spaces","label":"Finding general spaces","data":{"general":true,"limit":20}}\n```',
+  },
+  search_conversations: {
+    section: 'Tasks',
+    description:
+      'Searches the authenticated user’s active conversation history by title and returns matching conversation ids, summaries, and recent user/assistant excerpts. Use when the user asks to find or recall another chat. Search before asking the user to reconstruct prior context. Results are limited to the current user and organization.',
+    parameters:
+      '```json\n{"action":"search_conversations","label":"Searching your chats","data":{"query":"Wholesale Universe brand reputation","limit":10}}\n```',
   },
   search_space_context: {
     section: 'Tasks',
@@ -2487,6 +2508,13 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
       "Starts a multi-agent brainstorm session. Multiple agents discuss a topic in rounds, building on each other's ideas. Each agent sees all prior contributions and adds new angles. Required fields: `agents` (array of agent_keys in turn order, minimum 2), `topic` (the brainstorm concept/question), `rounds` (number of discussion rounds, default 2, max 5).",
     parameters:
       '```json\n{"action":"brainstorm_agents","label":"Brainstorming Q3 positioning","data":{"agents":["niko","ivy","lux"],"topic":"Q3 product positioning strategy for enterprise segment","rounds":3}}\n```',
+  },
+  ask_clarification: {
+    section: 'Communication',
+    description:
+      "Renders an interactive clarification card in studio chat when a request has multiple materially different interpretations and guessing wrong wastes real work. Ask 1-3 focused questions; each question needs `id`, `text`, `type` (`single_choice` or `multiple_choice`), and 2-5 `options` (`id` + `label`, optional `description`). Optional: `title`, `intro_message`, `required` per question (default true). The user's picks come back as the next user message. Do not use it on Slack or Telegram — ask as plain numbered text there. Do not use it for Loop Flow builds (use `create_flow_clarification`).",
+    parameters:
+      '```json\n{"action":"ask_clarification","label":"Clarifying the request","data":{"title":"Quick question","intro_message":"Pick a direction before I start.","questions":[{"id":"direction","text":"Which direction should I take?","type":"single_choice","required":true,"options":[{"id":"option_a","label":"Option A","description":"Why this fits"},{"id":"option_b","label":"Option B"}]}]}}\n```',
   },
   save_member_note: {
     section: 'Communication',

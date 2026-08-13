@@ -87,4 +87,15 @@ describe('ShellWorkAreaControl', () => {
     expect(useShellStore.getState().workAreaOpen).toBe(true)
     expect(push).toHaveBeenCalledWith('/team/skills')
   })
+
+  it('leaves an in-flight restore payload alone when a payload-less entry is picked', () => {
+    const pending = { feature: 'home_meeting', data: { id: 'evt-1' } }
+    useShellStore.setState({ pendingWorkRestore: pending })
+    render(<ShellWorkAreaControl currentPage={currentPage} />)
+
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Collapse page — chat full screen' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Skills' }))
+
+    expect(useShellStore.getState().pendingWorkRestore).toEqual(pending)
+  })
 })

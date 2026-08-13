@@ -55,6 +55,11 @@ export function AgendaCard({
   presentation?: 'card' | 'page'
 } = {}) {
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
+  const [instantMeetingOpen, setInstantMeetingOpen] = useState(false)
+  // Tracks which keys the server already knows, plus in-flight user intent so a
+  // late fetch/persist response never overwrites a newer local toggle.
+  const serverSyncedMinimizedKeysRef = useRef<Set<string>>(new Set())
+  const minimizedOverridesRef = useRef<Map<string, boolean>>(new Map())
   const {
     view,
     setView,
@@ -87,8 +92,7 @@ export function AgendaCard({
 
   const anyConnected = connected.google_calendar || connected.outlook
   const bothConnected = connected.google_calendar && connected.outlook
-  const showAccountLabel =
-    accounts.length > 1 || events.some((ev) => isFathomAgendaEvent(ev)) || effectiveScope === 'team'
+  const showAccountLabel = accounts.length > 1 || effectiveScope === 'team'
   const hasFathomEvents = events.some((ev) => isFathomAgendaEvent(ev))
   const showAgendaSurface =
     effectiveScope === 'team'
@@ -131,18 +135,6 @@ export function AgendaCard({
   }, [isToday, visibleEvents, minimizedKeys, nowTick, timezone, todayDayKey])
   const nextEventKey = nextEvent ? eventKey(nextEvent) : null
   const tomorrowKey = useMemo(() => tomorrowDayKey(nowTick, timezone), [nowTick, timezone])
-  const [selectedEventKey, setSelectedEventKey] = useState<string | null>(null)
-  const [instantMeetingOpen, setInstantMeetingOpen] = useState(false)
-  const serverSyncedMinimizedKeysRef = useRef<Set<string>>(new Set())
-  const minimizedOverridesRef = useRef<Map<string, boolean>>(new Map())
-
-  useEffect(() => {
-    setSelectedEventKey((curr) => {
-      if (curr && visibleEvents.some((ev) => eventKey(ev) === curr)) return curr
-      return nextEventKey ?? (visibleEvents[0] ? eventKey(visibleEvents[0]) : null)
-    })
-  }, [visibleEvents, nextEventKey])
-
   const dividerDayKeys = useMemo(
     () =>
       range === 'week' || range === 'month' ? enumerateDayKeysInNavRange(day, range, timezone) : [],
@@ -241,6 +233,8 @@ export function AgendaCard({
     }
   }, [setMinimizedKeys])
 
+  // Back-fill: keys minimized before server persistence existed live only in
+  // localStorage — push them up once so other devices agree.
   useEffect(() => {
     for (const event of events) {
       const key = agendaEventMinimizeKey(event)
@@ -306,8 +300,6 @@ export function AgendaCard({
             isToday={isToday}
             nextEvent={nextEvent}
             nextEventKey={nextEventKey}
-            selectedEventKey={selectedEventKey}
-            setSelectedEventKey={setSelectedEventKey}
             range={range}
             tomorrowKey={tomorrowKey}
             dividerDayKeys={dividerDayKeys}
@@ -331,6 +323,7 @@ export function AgendaCard({
           />
         )}
       </div>
+
       <HomeInstantMeetingHost
         open={instantMeetingOpen}
         onOpenChange={setInstantMeetingOpen}

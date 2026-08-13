@@ -10,6 +10,8 @@ type DedupeOptions = {
 
 /** Same start within this window can still be one meeting (bot join lag / clock skew). */
 export const AGENDA_NEAR_START_MS = 10 * 60 * 1000
+/** Fathom can be started before a scheduled invite while the prior discussion is still wrapping. */
+export const AGENDA_FATHOM_EARLY_START_MS = 35 * 60 * 1000
 
 export function readGoogleIcalUid(ev: Record<string, unknown>): string | null {
   const v = ev.iCalUID ?? ev.ical_uid
@@ -51,6 +53,13 @@ function titleTokenSet(title: string): Set<string> {
   )
 }
 
+function fathomIdentityToken(title: string): string | null {
+  for (const token of titleTokenSet(title)) {
+    if (/\d/.test(token)) return token
+  }
+  return null
+}
+
 export function agendaTitleSimilarity(a: string, b: string): number {
   const left = titleTokenSet(a)
   const right = titleTokenSet(b)
@@ -77,6 +86,12 @@ export function agendaDedupeLookupKeys(event: AgendaDedupeEvent): string[] {
 
   const title = normalizeAgendaTitle(event.title)
   if (title) keys.push(`title:${event.start}|${event.end}|${title}`)
+  const fathomToken = event.source === 'fathom' ? fathomIdentityToken(event.title) : null
+  if (fathomToken) {
+    keys.push(
+      `fathom-slot:${startMinuteKey(event.start)}|${startMinuteKey(event.end)}|${fathomToken}`,
+    )
+  }
   return keys
 }
 
@@ -186,7 +201,9 @@ export function mergeFathomIntoNearStartCalendars(
     }
     const near = [...byId.values()].filter((event) => {
       const startMs = Date.parse(event.start)
-      return Number.isFinite(startMs) && Math.abs(startMs - callMs) <= nearMs
+      if (!Number.isFinite(startMs)) return false
+      const calendarAfterCallMs = startMs - callMs
+      return calendarAfterCallMs <= AGENDA_FATHOM_EARLY_START_MS && calendarAfterCallMs >= -nearMs
     })
     if (near.length !== 1) {
       keptFathom.push(row)
@@ -288,20 +305,20 @@ function mergeAgendaEvents(
   const other = preferRight ? left : right
 
   if (!kept.ical_uid && other.ical_uid) kept.ical_uid = other.ical_uid
-  if (!kept.related && other.related) kept.related = other.related
+  kept.related = preferRecordingRelated(kept.related, other.related)
   if (!kept.prep && other.prep) kept.prep = other.prep
   if (!kept.html_link && other.html_link) kept.html_link = other.html_link
   if (!kept.location && other.location) kept.location = other.location
   if (!kept.description && other.description) kept.description = other.description
   if (!kept.color_id && other.color_id) kept.color_id = other.color_id
 
-  // Keep calendar join links; only borrow Fathom recording when the invite has no video.
-  if (kept.source !== 'fathom') {
+  // Fathom URLs are recordings, never live join links. They stay in related.recording_url.
+  if (kept.source !== 'fathom' && other.source !== 'fathom') {
     if (!kept.video_url && other.video_url) {
       kept.video_url = other.video_url
       kept.video_label = other.video_label ?? kept.video_label
     }
-  } else if (other.video_url) {
+  } else if (kept.source === 'fathom' && other.source !== 'fathom' && other.video_url) {
     kept.video_url = other.video_url
     kept.video_label = other.video_label ?? kept.video_label
   }
@@ -314,6 +331,17 @@ function mergeAgendaEvents(
     kept.account_label = other.account_label
   }
 
+  return kept
+}
+
+/** Duplicate rows can each carry a related call; keep the one holding the recording. */
+function preferRecordingRelated(
+  kept: AgendaDedupeEvent['related'],
+  other: AgendaDedupeEvent['related'],
+): AgendaDedupeEvent['related'] {
+  if (!kept) return other ?? null
+  if (!other) return kept
+  if (!kept.recording_url && other.recording_url) return other
   return kept
 }
 

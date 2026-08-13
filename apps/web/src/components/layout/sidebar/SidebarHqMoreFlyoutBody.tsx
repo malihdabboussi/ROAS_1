@@ -2,8 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FolderGit2, Layers3, Workflow } from 'lucide-react'
-import { AvatarAccountMenuPanel } from '@/components/layout/AvatarAccountMenuPanel'
+import { Brain, FolderGit2, Layers3, Users, Workflow } from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { cn } from '@/lib/utils/cn'
 import {
@@ -11,15 +10,15 @@ import {
   HUB_DOCK_SUB_FLYOUT_OFFSET_PX,
   HubDockFlyout,
 } from './HubDockFlyout'
+import { SidebarHqMoreTeamBrainFlyouts } from './SidebarHqMoreTeamBrainFlyouts'
 import type { SidebarControllerReturn } from './useSidebarController'
 
-type SubDock = 'projects' | 'account'
+type SubDock = 'team' | 'brain' | 'projects'
 
-/** Shared More flyout body (Projects + Flows + account) for collapsed rail and expanded menu. */
+/** Shared More flyout body (Projects + Flows) for collapsed rail and expanded menu. Account settings live on the sidebar footer avatar. */
 export function SidebarHqMoreFlyoutBody({
   c,
   showProjects,
-  featureUpdates,
   onNavigate,
   onHoldParentFlyout,
   onReleaseParentFlyout,
@@ -39,7 +38,6 @@ export function SidebarHqMoreFlyoutBody({
   const [subDock, setSubDock] = useState<SubDock | null>(null)
   const [subAnchor, setSubAnchor] = useState<DOMRect | null>(null)
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const accountRowRef = useRef<HTMLDivElement | null>(null)
 
   const clearCreateProject = useCallback(() => {
     c.setIsCreatingProject(false)
@@ -92,6 +90,50 @@ export function SidebarHqMoreFlyoutBody({
 
   return (
     <>
+      <Link
+        href="/team"
+        data-hub-dock-navigate
+        onClick={() => {
+          setWorkContext({ surface: 'team' })
+          onNavigate?.()
+        }}
+        onMouseEnter={(e) => openSub('team', e.currentTarget.getBoundingClientRect())}
+        onMouseLeave={(e) => {
+          const related = e.relatedTarget
+          if (related instanceof Element && related.closest('[data-hub-dock-flyout-nested]')) return
+          scheduleClose()
+        }}
+        className={cn(
+          'hub-dock-flyout-row',
+          c.pathname.startsWith('/team') && 'hub-dock-flyout-row-active',
+        )}
+      >
+        <Users />
+        <span className="min-w-0 flex-1 truncate">Team</span>
+      </Link>
+
+      <Link
+        href="/brain"
+        data-hub-dock-navigate
+        onClick={() => {
+          setWorkContext({ surface: 'brain' })
+          onNavigate?.()
+        }}
+        onMouseEnter={(e) => openSub('brain', e.currentTarget.getBoundingClientRect())}
+        onMouseLeave={(e) => {
+          const related = e.relatedTarget
+          if (related instanceof Element && related.closest('[data-hub-dock-flyout-nested]')) return
+          scheduleClose()
+        }}
+        className={cn(
+          'hub-dock-flyout-row',
+          c.pathname.startsWith('/brain') && 'hub-dock-flyout-row-active',
+        )}
+      >
+        <Brain />
+        <span className="min-w-0 flex-1 truncate">Brain</span>
+      </Link>
+
       {showProjects ? (
         <div
           className={cn(
@@ -144,31 +186,17 @@ export function SidebarHqMoreFlyoutBody({
         <span className="min-w-0 flex-1 truncate">Artifacts</span>
       </Link>
 
-      <div
-        ref={accountRowRef}
-        className="hub-dock-flyout-row"
-        onMouseEnter={(e) => openSub('account', e.currentTarget.getBoundingClientRect())}
-        onMouseLeave={(e) => {
-          const related = e.relatedTarget
-          if (related instanceof Element && related.closest('[data-hub-dock-flyout-nested]')) {
-            return
-          }
-          scheduleClose()
-        }}
-      >
-        <span className="bg-primary text-primary-foreground relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full text-[10px] font-medium">
-          {c.avatarUrl ? (
-            <img src={c.avatarUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            c.initials
-          )}
-          {featureUpdates?.hasUnread ? (
-            <span className="bg-primary absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full ring-1 ring-[var(--color-card)]" />
-          ) : null}
-        </span>
-        <span className="min-w-0 flex-1 truncate">{c.displayName || 'Account'}</span>
-        <span className="text-muted-foreground shrink-0 text-[11px]">Settings</span>
-      </div>
+      <SidebarHqMoreTeamBrainFlyouts
+        subDock={subDock}
+        subAnchor={subAnchor}
+        c={c}
+        clearLeave={clearLeave}
+        scheduleClose={scheduleClose}
+        closeSub={closeSub}
+        onHoldParentFlyout={onHoldParentFlyout}
+        onCloseParentFlyout={onCloseParentFlyout}
+        onNavigate={onNavigate}
+      />
 
       {showProjects && subDock === 'projects' && subAnchor ? (
         <HubDockFlyout
@@ -241,37 +269,6 @@ export function SidebarHqMoreFlyoutBody({
         </HubDockFlyout>
       ) : null}
 
-      {subDock === 'account' && subAnchor ? (
-        <HubDockFlyout
-          anchor={subAnchor}
-          title={c.displayName || 'Account'}
-          nested
-          compact
-          hideHeader
-          offsetPx={HUB_DOCK_SUB_FLYOUT_OFFSET_PX}
-          onEnter={() => {
-            clearLeave()
-            onHoldParentFlyout?.()
-          }}
-          onLeave={scheduleClose}
-          onClose={() => {
-            closeSub()
-            onCloseParentFlyout?.()
-          }}
-        >
-          <div className="w-72 overflow-hidden" data-avatar-dropdown data-hub-dock-keep-open>
-            <AvatarAccountMenuPanel
-              email={c.email ?? ''}
-              featureUpdates={featureUpdates}
-              updatesAnchorRef={accountRowRef}
-              onClose={() => {
-                closeSub()
-                onCloseParentFlyout?.()
-              }}
-            />
-          </div>
-        </HubDockFlyout>
-      ) : null}
     </>
   )
 }

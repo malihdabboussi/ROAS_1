@@ -7,7 +7,9 @@ import {
   resolveMeetingCallKind,
   shouldReplaceMeetingCallKind,
 } from '../domain/meeting-call-kind'
+import { buildMeetingConversationId } from '../domain/meeting-conversation-id'
 import { buildFathomEventFromCallItem } from '../providers/build-fathom-event-from-call-item'
+import { resolveCanonicalFathomTitle } from '../providers/fathom-meeting-source'
 import { MeetingWorkspaceReadRepository } from '../repositories/meeting-workspace-read.repository'
 import {
   MeetingWorkspaceResolutionRepository,
@@ -15,6 +17,7 @@ import {
 } from '../repositories/meeting-workspace-resolution.repository'
 import { MeetingWorkspaceStateRepository } from '../repositories/meeting-workspace-state.repository'
 import { MeetingWorkspaceRepository } from '../repositories/meeting-workspace.repository'
+import { MeetingConversationDeduplicationService } from './meeting-conversation-deduplication.service'
 import { MeetingSourceIngestionService } from './meeting-source-ingestion.service'
 
 @Injectable()
@@ -29,6 +32,7 @@ export class MeetingWorkspaceService {
     private readonly conversations: ConversationsService,
     private readonly messages: MessagesRepository,
     @Optional() private readonly ingestion?: MeetingSourceIngestionService,
+    @Optional() private readonly deduplication?: MeetingConversationDeduplicationService,
   ) {}
 
   async resolveScheduledMeeting(
@@ -63,11 +67,17 @@ export class MeetingWorkspaceService {
       summary: input.event.description,
     })
     const scopedInput = { ...input, orgId, callKind }
-    const existing = await this.resolutionRepository.findByCalendarEvent(
+    const icalUid = text(input.event.icalUid)
+    // Agenda row ids are UI-synthetic and flip between providers/accounts, so the
+    // stable ical_uid natural key resolves the workspace when the id changed.
+    let existing = await this.resolutionRepository.findByCalendarEvent(
       supabase,
       input.spaceId,
       input.event.calendarEventId,
     )
+    if (!existing && icalUid) {
+      existing = await this.resolutionRepository.findByIcalUid(supabase, input.spaceId, icalUid)
+    }
     let meetingItemId = text(existing?.meeting_item_id)
     // Link to an existing Meetings call (Fathom or prior stub) before creating a
     // second calendar-sourced row for the same invite.
@@ -77,6 +87,7 @@ export class MeetingWorkspaceService {
         spaceId: input.spaceId,
         userId: input.userId,
         calendarEventId: input.event.calendarEventId,
+        icalUid,
         title: input.event.title,
         start: input.event.start,
       })
@@ -113,14 +124,22 @@ export class MeetingWorkspaceService {
           userId: input.userId,
           orgId,
           calendarEventId: input.event.calendarEventId,
+          icalUid,
           phase: 'scheduled',
         })
       } catch (error) {
-        const racedWorkspace = await this.resolutionRepository.findByCalendarEvent(
+        let racedWorkspace = await this.resolutionRepository.findByCalendarEvent(
           supabase,
           input.spaceId,
           input.event.calendarEventId,
         )
+        if (!racedWorkspace && icalUid) {
+          racedWorkspace = await this.resolutionRepository.findByIcalUid(
+            supabase,
+            input.spaceId,
+            icalUid,
+          )
+        }
         const racedMeetingItemId = text(racedWorkspace?.meeting_item_id)
         if (!racedWorkspace || !racedMeetingItemId) throw error
         await this.resolutionRepository.deleteScheduledMeeting(
@@ -209,7 +228,7 @@ export class MeetingWorkspaceService {
   ): Promise<Record<string, unknown>> {
     const workspace = await this.readRepository.getWorkspaceBundle(supabase, input)
     if (!workspace) throw new NotFoundException('Meeting not found')
-    return workspace
+    return normalizeWorkspaceDisplayTitles(workspace)
   }
 
   async getWorkspace(
@@ -227,6 +246,28 @@ export class MeetingWorkspaceService {
       const hydrated = await this.hydrateMissingRecording(supabase, input, workspace)
       if (hydrated) {
         workspace = await this.requireMeeting(supabase, input)
+      }
+    }
+    const linkedConversationId = text(record(workspace.workspace).conversation_id)
+    if (input.userId && linkedConversationId) {
+      try {
+        const duplicateMeetingItemIds = await this.findDuplicateCallItemIds(supabase, {
+          spaceId: input.spaceId,
+          meetingItemId: input.meetingItemId,
+          meeting: record(workspace.meeting),
+        })
+        await this.deduplication?.archiveDuplicates(supabase, {
+          userId: input.userId,
+          meetingItemId: input.meetingItemId,
+          keepConversationId: linkedConversationId,
+          duplicateMeetingItemIds,
+        })
+      } catch (error) {
+        this.logger.warn(
+          `Archive duplicate meeting chats failed for ${input.meetingItemId}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        )
       }
     }
     return workspace
@@ -356,6 +397,25 @@ export class MeetingWorkspaceService {
     return this.stateRepository.createManualAction(supabase, input)
   }
 
+  /** Sibling call items sharing this meeting's natural keys (cross-item dup chats). */
+  private async findDuplicateCallItemIds(
+    supabase: SupabaseClient,
+    input: { spaceId: string; meetingItemId: string; meeting: Record<string, unknown> },
+  ): Promise<string[]> {
+    const custom = record(input.meeting.custom_data)
+    const icalUid = text(custom.ical_uid)
+    const fathomMeetingId = text(String(record(custom.external_automation).meeting_id ?? ''))
+    const calendarEventId = text(custom.calendar_event_id)
+    if (!icalUid && !fathomMeetingId && !calendarEventId) return []
+    return this.resolutionRepository.listDuplicateCallItemIds(supabase, {
+      spaceId: input.spaceId,
+      meetingItemId: input.meetingItemId,
+      icalUid,
+      fathomMeetingId,
+      calendarEventId,
+    })
+  }
+
   private async hydrateMissingRecording(
     supabase: SupabaseClient,
     input: {
@@ -412,11 +472,16 @@ export class MeetingWorkspaceService {
   ): Promise<string> {
     const existingConversationId = text(input.workspace.conversation_id)
     if (existingConversationId) return existingConversationId
+    // Stamp the space's campaign so the chat's scope picker can resolve the
+    // space title (it looks spaces up campaign-first).
+    const campaignId = await this.resolutionRepository.findSpaceCampaignId(supabase, input.spaceId)
     const conversation = await this.conversations.createConversation(
       supabase,
       input.userId,
       {
-        title: `Meeting — ${input.title}`.slice(0, 500),
+        id: buildMeetingConversationId(input.meetingItemId),
+        title: input.title.slice(0, 500),
+        ...(campaignId ? { campaign_id: campaignId } : {}),
         metadata: {
           context_type: 'meeting',
           meeting_item_id: input.meetingItemId,
@@ -433,10 +498,47 @@ export class MeetingWorkspaceService {
   }
 }
 
+export function normalizeWorkspaceDisplayTitles(
+  workspace: Record<string, unknown>,
+): Record<string, unknown> {
+  const canonicalTitles = new Map<string, string>()
+  const recordings: Array<Record<string, unknown>> = arrayOfRecords(workspace.recordings).map(
+    (recording) => {
+      const title = resolveCanonicalFathomTitle({
+        rawTitle: text(recording.title),
+        summary: text(recording.provider_summary),
+      })
+      const id = text(recording.id)
+      if (id) canonicalTitles.set(id, title)
+      return { ...recording, title }
+    },
+  )
+  const primaryTitle =
+    text(recordings.find((recording) => recording.is_primary === true)?.title) ??
+    text(recordings[0]?.title)
+  const deliverables = arrayOfRecords(workspace.deliverables).map((deliverable) => {
+    const customData = record(deliverable.custom_data)
+    const entryType = text(customData.entry_type)
+    const recordingTitle = canonicalTitles.get(text(customData.meeting_recording_id) ?? '')
+    if (entryType === 'meeting_transcript' && recordingTitle) {
+      return { ...deliverable, title: `Transcript — ${recordingTitle}` }
+    }
+    if (entryType === 'meeting_recap' && primaryTitle) {
+      return { ...deliverable, title: `Meeting recap — ${primaryTitle}` }
+    }
+    return deliverable
+  })
+  return { ...workspace, recordings, deliverables }
+}
+
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {}
+}
+
+function arrayOfRecords(value: unknown): Array<Record<string, unknown>> {
+  return Array.isArray(value) ? value.map(record) : []
 }
 
 function text(value: unknown): string | null {

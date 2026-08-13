@@ -12,6 +12,7 @@ import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cn } from '@/lib/utils/cn'
 import { ShellChatMenu } from './ShellChatMenu'
 import { useRightEdgePresence } from './use-right-edge-presence'
+import { useShellMenuDock } from './use-shell-menu-dock'
 import { useShellStore } from './use-shell-store'
 
 /** Matches the drawer/HQ-rail transition in globals.css. */
@@ -19,6 +20,10 @@ const DRAWER_SLIDE_MS = 300
 const DRAWER_COLLAPSE_EDGE_TOLERANCE = 24
 const HISTORY_COLLAPSE_THRESHOLD = 96
 const RIGHT_PANEL_WIDTH = 288
+/** Matches ARTIFACT_VIEWER_WIDTH_MIN in use-shell-store — the artifact column stays readable. */
+const ARTIFACT_BESIDE_MIN_WIDTH = 360
+/** Dragging this far past the artifact's stop reads as intent to dismiss it. */
+const ARTIFACT_COLLAPSE_OVERSHOOT = 180
 
 export function ShellChatDrawer({
   expanded = false,
@@ -28,6 +33,7 @@ export function ShellChatDrawer({
   mobile?: boolean
 }) {
   const open = useShellStore((s) => s.chatDrawer.open)
+  const simpleMenu = useShellMenuDock((s) => s.menuStyle === 'simple')
   const width = useShellStore((s) => s.chatDrawer.width)
   const conversationId = useShellStore((s) => s.chatDrawer.conversationId)
   const historyWidth = useShellStore((s) => s.chatHistoryWidth)
@@ -36,6 +42,8 @@ export function ShellChatDrawer({
   const setChatHistoryWidth = useShellStore((s) => s.setChatHistoryWidth)
   const setChatHistoryCollapsed = useShellStore((s) => s.setChatHistoryCollapsed)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
+  const artifactOpenBeside = useShellStore((s) => Boolean(s.artifactViewer.target))
+  const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
   const minimizeChatDrawer = useShellStore((s) => s.minimizeChatDrawer)
   const newChatNonce = useShellStore((s) => s.newChatNonce)
   const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
@@ -55,6 +63,7 @@ export function ShellChatDrawer({
   const dragStartLeft = useRef(0)
   const dragDividerWidth = useRef(0)
   const dragRemainingWidth = useRef(Number.POSITIVE_INFINITY)
+  const dragOvershoot = useRef(Number.NEGATIVE_INFINITY)
   const historyDragStartX = useRef(0)
   const historyDragStartWidth = useRef(historyWidth)
   const historyDragRawWidth = useRef(historyWidth)
@@ -115,6 +124,7 @@ export function ShellChatDrawer({
       dragStartLeft.current = drawerRef.current?.getBoundingClientRect().left ?? 0
       dragDividerWidth.current = e.currentTarget.getBoundingClientRect().width
       dragRemainingWidth.current = Number.POSITIVE_INFINITY
+      dragOvershoot.current = Number.NEGATIVE_INFINITY
     },
     [width],
   )
@@ -138,12 +148,28 @@ export function ShellChatDrawer({
         0,
         window.innerWidth - dragStartLeft.current - dragDividerWidth.current,
       )
-      const nextWidth = Math.min(availableWidth, dragStartWidth.current + delta)
+      // An open artifact keeps a readable column — the drag stops before
+      // crushing it instead of squeezing its content to a sliver.
+      const dragLimit = artifactOpenBeside
+        ? Math.max(0, availableWidth - ARTIFACT_BESIDE_MIN_WIDTH)
+        : availableWidth
+      const rawWidth = dragStartWidth.current + delta
+      const nextWidth = Math.min(dragLimit, rawWidth)
+      dragOvershoot.current = rawWidth - dragLimit
       dragRemainingWidth.current = availableWidth - nextWidth
       setChatDrawerWidth(nextWidth)
     }
     const onUp = () => {
       setIsDragging(false)
+      if (artifactOpenBeside) {
+        // Pushing well past the stop reads as intent: collapse the artifact
+        // away to the right and give the chat back its pre-drag width.
+        if (dragOvershoot.current > ARTIFACT_COLLAPSE_OVERSHOOT) {
+          closeArtifactViewer()
+          setChatDrawerWidth(dragStartWidth.current)
+        }
+        return
+      }
       if (dragRemainingWidth.current > DRAWER_COLLAPSE_EDGE_TOLERANCE) return
       // Reaching the right edge is the drag equivalent of "chat full screen".
       // Keep the prior docked width so showing the page again restores its layout.
@@ -156,7 +182,7 @@ export function ShellChatDrawer({
       document.removeEventListener('pointermove', onMove)
       document.removeEventListener('pointerup', onUp)
     }
-  }, [isDragging, setChatDrawerWidth, setWorkAreaOpen])
+  }, [artifactOpenBeside, closeArtifactViewer, isDragging, setChatDrawerWidth, setWorkAreaOpen])
 
   useEffect(() => {
     if (!isHistoryDragging) return
@@ -205,7 +231,7 @@ export function ShellChatDrawer({
           className={cn('shell-chat-drawer-body', expanded && 'shell-chat-drawer-body-expanded')}
           style={bodyStyle}
         >
-          {!historyCollapsed ? (
+          {!simpleMenu && !historyCollapsed ? (
             <>
               <div
                 className={cn('shell-chat-drawer-menu', mobile && 'w-full')}
@@ -231,15 +257,15 @@ export function ShellChatDrawer({
           <div
             className={cn(
               'min-h-0 min-w-0 flex-1 flex-col overflow-hidden',
-              mobile && !historyCollapsed ? 'hidden' : 'flex',
+              mobile && !simpleMenu && !historyCollapsed ? 'hidden' : 'flex',
             )}
-            aria-hidden={mobile && !historyCollapsed}
+            aria-hidden={mobile && !simpleMenu && !historyCollapsed}
           >
             <GlobalChatPanel
               shellSidebarChrome
               onCollapseChat={() => minimizeChatDrawer()}
               headerLeadingAction={
-                historyCollapsed ? (
+                !simpleMenu && historyCollapsed ? (
                   <button
                     type="button"
                     onClick={() => setChatHistoryCollapsed(false)}

@@ -4,6 +4,7 @@ import {
   forwardRef,
   Inject,
   Injectable,
+  Logger,
   Optional,
 } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -18,10 +19,13 @@ import {
   type TeamAgendaCoverage,
   type TeamAgendaPayload,
 } from './integrations-calendar-dedupe'
+import { enrichAgendaWithPrecall } from './integrations-calendar-enrichment'
 import type { CalendarAgendaEvent } from './integrations-calendar.service'
 
 @Injectable()
 export class IntegrationsCalendarTeamService {
+  private readonly logger = new Logger(IntegrationsCalendarTeamService.name)
+
   constructor(
     private readonly workspaceCalendar: GoogleWorkspaceCalendarService,
     private readonly workspaceApi: GoogleWorkspaceApiService,
@@ -178,37 +182,19 @@ export class IntegrationsCalendarTeamService {
     let uniqueEvents = dedupeTeamAgendaEvents(events)
 
     if (this.precallPrep) {
-      try {
-        const [prepMap, relatedResult] = await Promise.all([
-          uniqueEvents.length > 0
-            ? this.precallPrep.enrichAgendaEvents({
-                supabase,
-                userId: user.id,
-                orgId: scope.orgId ?? null,
-                events: uniqueEvents,
-              })
-            : Promise.resolve(new Map()),
-          this.precallPrep.enrichAgendaRelatedCalls({
-            supabase,
-            userId: user.id,
-            orgId: scope.orgId ?? null,
-            events: uniqueEvents,
-            start,
-            end,
-          }),
-        ])
-        for (const event of uniqueEvents) {
-          event.prep = prepMap.get(event.id) ?? null
-          event.related = relatedResult.relatedByEventId.get(event.id) ?? null
-        }
-        for (const fathomEvent of relatedResult.unmatchedFathomEvents) {
-          uniqueEvents.push(fathomEvent as CalendarAgendaEvent)
-        }
-        // Collapse Fathom-only rows onto nearby teammate calendar invites.
-        uniqueEvents = dedupeTeamAgendaEvents(uniqueEvents)
-      } catch {
-        // Team agenda still works without prep / related / Fathom enrichment.
-      }
+      // Re-dedupe collapses Fathom-only rows onto nearby teammate calendar invites.
+      uniqueEvents = await enrichAgendaWithPrecall({
+        precallPrep: this.precallPrep,
+        supabase,
+        userId: user.id,
+        orgId: scope.orgId ?? null,
+        events: uniqueEvents,
+        start,
+        end,
+        dedupe: dedupeTeamAgendaEvents,
+        logger: this.logger,
+        label: 'Team agenda',
+      })
     }
 
     if (errorLines.length > 0 && uniqueEvents.length === 0) {

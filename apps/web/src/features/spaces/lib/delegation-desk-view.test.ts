@@ -12,13 +12,12 @@ function item(id: string, title: string, status: string): SpaceItem {
 }
 
 describe('delegation desk view', () => {
-  const items = [
-    item('1', 'Loose launch thought', 'inbox'),
-    item('2', 'Prepare the media plan', 'ready_review'),
-    item('3', 'Send assets to the buyer', 'dispatched'),
-    item('4', 'Old completed work', 'done'),
-    { ...item('5', 'Operating notes', 'inbox'), doc_body: '<p>Notes</p>' },
-  ]
+  const looseThought = item('1', 'Loose launch thought', 'inbox')
+  const mediaPlan = item('2', 'Prepare the media plan', 'ready_review')
+  const sentAssets = item('3', 'Send assets to the buyer', 'dispatched')
+  const completedWork = item('4', 'Old completed work', 'done')
+  const operatingDoc = { ...item('5', 'Operating notes', 'inbox'), doc_body: '<p>Notes</p>' }
+  const items = [looseThought, mediaPlan, sentAssets, completedWork, operatingDoc]
 
   it('shows every outstanding stage in the default holding view', () => {
     expect(filterDelegationDeskItems(items, 'outstanding', '').map((row) => row.id)).toEqual([
@@ -39,12 +38,12 @@ describe('delegation desk view', () => {
 
   it('searches titles and descriptions without including docs', () => {
     const withDescription = {
-      ...items[1],
+      ...mediaPlan,
       description: 'Draft the paid social breakdown',
     }
     expect(
       filterDelegationDeskItems(
-        [items[0], withDescription, items[4]],
+        [looseThought, withDescription, operatingDoc],
         'outstanding',
         'paid social',
       ).map((row) => row.id),
