@@ -81,6 +81,26 @@ function createSubject(state: FakeState) {
 }
 
 describe('PageGraderMcpBootstrapService', () => {
+  it('does not block application readiness while registrations are reconciled', async () => {
+    let finish!: () => void
+    const pending = new Promise<void>((resolve) => {
+      finish = resolve
+    })
+    const subject = createSubject({ writes: [] })
+    const ensure = vi
+      .spyOn(subject, 'ensureConnectedRegistrations')
+      .mockImplementation(async () => {
+        await pending
+        return { scanned: 0, created: 0, updated: 0, failed: 0 }
+      })
+
+    expect(subject.onModuleInit()).toBeUndefined()
+    expect(ensure).toHaveBeenCalledTimes(1)
+
+    finish()
+    await pending
+  })
+
   it('creates an agent-enabled registration for an existing connection', async () => {
     const state: FakeState = { writes: [] }
     const result = await createSubject(state).ensureConnectedRegistrations()

@@ -12,7 +12,10 @@ import type {
   UpsertPageGraderClientScopeMapDto,
 } from '../dto/page-grader.dto'
 import { PageGraderIntegration } from '../integrations/page-grader.integration'
-import type { PageGraderMeetingUpsert } from '../integrations/page-grader.integration'
+import type {
+  PageGraderClientWorkspace,
+  PageGraderMeetingUpsert,
+} from '../integrations/page-grader.integration'
 import {
   FALLBACK_PAGE_GRADER_TASK_TYPES,
   getPageGraderCreds,
@@ -221,6 +224,28 @@ export class PageGraderApiService {
       clientId,
     )
     return { meta_context: metaContext }
+  }
+
+  async getClientWorkspace(userId: string, clientId: string): Promise<PageGraderClientWorkspace> {
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.getClientWorkspace(creds.baseUrl, creds.apiKey, clientId)
+  }
+
+  async listClientCampaigns(
+    userId: string,
+    opts?: { q?: string; clientId?: string; limit?: number; offset?: number },
+  ) {
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.listClientCampaigns(creds.baseUrl, creds.apiKey, opts)
+  }
+
+  async updateWorkspaceEntity(userId: string, path: string, patch: Record<string, unknown>) {
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.updateWorkspaceEntity(creds.baseUrl, creds.apiKey, path, patch)
+  }
+
+  async getClientScopeMap(userId: string) {
+    return this.readClientScopeMap(userId)
   }
 
   async listTaskTypes(userId: string) {

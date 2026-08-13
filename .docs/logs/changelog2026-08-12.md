@@ -1,5 +1,15 @@
 # Changelog - [August 12, 2026]
 
+## [2026-08-12 22:15] - [FEATURE]
+
+What: Added first-class Clients and Client Campaigns workspaces to ROAS Platform, backed by an expanded Page Grader agency contract. Clients default to pipeline-stage grouping with an account-manager alternative, open into a concise overview/campaign/task/request card, and automatically bootstrap missing ROAS campaign/Brain mappings. Page Grader client campaigns reconcile to stable ROAS Spaces and appear in both all-campaign and by-client views.
+
+Why: Agency operators need Page Grader's client context and fulfillment work inside ROAS without switching through the embedded portal or maintaining duplicate client records.
+
+Impact: Page Grader remains authoritative for client, campaign, task, and request fields; ROAS remains authoritative for the mapped campaign container, Space experience, and Brain. Shared status updates write through Page Grader, existing Spaces refresh from current campaign fields, existing Brain/webhook sync continues, unmapped clients such as Clogged Club provision on first agency load, and SSO remains available.
+
+Files: Page Grader `roas-api`; ROAS Page Grader integration/controller/agency workspace service; Clients and Client Campaigns routes, navigation, API client, focused tests; `documentation/features/page-grader-campaign-brain-sync.md`.
+
 ## [2026-08-12 14:45] - [FIX]
 
 What: Released meeting-bound chat context when a different history conversation is selected, made meeting attachment select its canonical conversation atomically, removed the obsolete bulk history auto-title requester, deduplicated meeting history by `meeting_item_id`, and added persistent meeting/calendar versus regular-chat markers. New meeting conversations now store their actual title without the redundant `Meeting —` prefix, while legacy rows are normalized at display time.
@@ -213,3 +223,82 @@ What: Changed root .gitignore dependency pattern from `node_modules/` to `node_m
 Why: The trailing-slash form matches only directories, so symlinks named node_modules (common worktree setup: `ln -s <main>/node_modules node_modules`) were staged by `git add -A` as mode 120000 entries (hit on claude/composer-standalone-panels, 2026-08-12). The repo was previously bitten by a tracked broken symlink crashing architecture:check (PR #141).
 Impact: node_modules symlinks in worktrees are now ignored like directories; verified via scratch symlink + `git check-ignore`. Nested .gitignore files (apps/openclaw, product-video) already used the unslashed form and needed no change.
 Files: .gitignore
+## [2026-08-12 21:49] - [FIX]
+
+What: Added a Page Grader catch-up fast path that reconciles campaign Spaces and stamps their fingerprint without repeating an unchanged Brain package ingestion.
+
+Why: The five-client production rollout finished Space reconciliation but Vercel timed out during redundant Brain ingestion before four client mappings could persist `campaign_space_hash`.
+
+Impact: Campaign/Meta-only drift completes within the API request window while changed or empty Brain content still follows the full repair path.
+
+Files: apps/api/src/modules/brain/services/page-grader-client-import.service.ts, apps/api/src/modules/integrations/page-grader/services/page-grader-brain-import.service.ts, apps/api/src/modules/integrations/page-grader/services/page-grader-brain-sync.service.ts, focused tests, documentation/features/page-grader-campaign-brain-sync.md
+
+## [2026-08-12 22:29] - [FIX]
+
+What: Routed the agency client and Client Campaigns views through the existing Page Grader Brain import campaign-Space synchronizer and removed the duplicate Space creation/schema path.
+
+Why: The latest main branch introduced the canonical campaign Space reconciler, so retaining a second writer in the new workspace could produce inconsistent schemas, miss campaign briefs, and handle archived campaigns differently.
+
+Impact: Opening a client now refreshes its Brain package and campaign Spaces through one canonical path; the campaign index reuses existing mappings and triggers the canonical import only when a campaign Space is missing.
+
+Files: apps/api/src/modules/integrations/page-grader/services/page-grader-agency-workspace.service.ts, apps/api/src/modules/integrations/page-grader/services/__tests__/page-grader-agency-workspace.service.test.ts
+
+## [2026-08-12 23:05] - [FIX]
+
+What: Finished the agency workspace edit loop with client and campaign editors, Brain/Space refresh after canonical writes, ROAS-origin task status propagation to ClickUp and the linked Space action item, timezone-safe date-only rendering, and Portal-facing user copy.
+
+Why: Read-only client cards and local-only task updates did not satisfy the two-way agency workflow, and UTC parsing could show campaign events one day early.
+
+Impact: Account managers can maintain client and campaign details from ROAS, task status stays aligned across ROAS, The ROAS Portal, and ClickUp, and campaign dates render consistently in local time without nested interactive controls.
+
+Files: Page Grader agency controller/service; agency client edit components, formatting helpers, message config, focused tests; Page Grader `roas-api` and work-status push helper; `documentation/features/page-grader-campaign-brain-sync.md`.
+
+## [2026-08-12 22:34] - [FIX]
+
+What: Made meeting-conversation workspace links preserve the owning Space ID and restore the persisted meeting directly from its workspace bundle.
+
+Why: Links previously discarded the Space ID and searched only the current calendar window, so older recorded meetings could remain stuck while the app could not rediscover their call item.
+
+Impact: Opening a meeting workspace from a restored conversation now targets the exact persisted meeting and remains durable across direct navigation or refresh; normal agenda links keep their existing calendar restore path.
+
+Files: apps/web/src/components/shell/ShellRightPanel.tsx, apps/web/src/features/home/components/HomeMeetingDetailHost.tsx, apps/web/src/features/home/hooks/use-home-meeting-work-restore.ts, apps/web/src/features/home/lib/home-meeting-work-restore.ts, apps/web/src/features/home/services/meeting-workspace-api.ts, focused tests
+
+## [2026-08-12 22:52] - [FIX]
+
+What: Removed duplicate meeting-chat discovery and archival from the meeting workspace GET path.
+
+Why: Opening a persisted meeting synchronously scanned JSON natural keys and mutated duplicate conversations before returning the workspace; the production query took roughly 12 seconds and could leave the meeting screen unresolved. Duplicate cleanup already runs in the meeting merge workflow.
+
+Impact: Meeting workspaces return their stored bundle without an unrelated maintenance job blocking the user-facing read, while explicit meeting merge/ingestion flows retain duplicate-chat cleanup.
+
+Files: apps/api/src/modules/meetings/services/meeting-workspace.service.ts, apps/api/src/modules/meetings/services/meeting-workspace.service.test.ts
+
+## [2026-08-12 22:15] - [FIX]
+
+What: Restored Pixel's post-call workflow to the Fathom Meeting Log in Shadow mode and added an explicit Client-only execution scope across automation schemas, runtime gating, UI configuration, and existing production automation migration.
+
+Why: The meeting-workspace migration removed the old post-call action while preserving the drafting service, leaving completed calls unprocessed; the restored path must exclude internal and personal calls before Pixel or Slack runs.
+
+Impact: Canonical Client calls produce grounded, Brain-aware recap and action-item proposals in Shadow. Personal, Team, Executive, Partner, Sales, and unclassified calls record a scope mismatch and send nothing. Channel posting remains disabled pending review.
+
+Files: apps/api/src/modules/space-templates, apps/api/src/modules/spaces, apps/web/src/features/spaces, packages/api-shared/src/types/flow-capabilities.ts, supabase/migrations/20260813053000_restore_client_post_call_pixel_shadow.sql, documentation/features/meeting-follow-up-slack.md
+
+## [2026-08-12 22:20] - [FIX]
+
+What: Corrected meeting-kind precedence for mostly-external client calls and expanded Pixel post-call grounding to load the portal agenda, canonical recap, transcript documents, and Brain context.
+
+Why: Production client calls were mislabeled when their summaries discussed sales, and the dedicated post-call draft path previously received only the call row and follow-up records instead of the complete meeting workspace and Brain context.
+
+Impact: Explicit prospect/demo and partner titles retain their categories; ordinary client reviews remain Client even when sales is discussed. Pixel drafts now use the same agenda, recap, transcript, and durable context visible in the portal.
+
+Files: apps/api/src/modules/meetings/domain/meeting-call-kind.ts, apps/agent-api/src/modules/task-agent/repositories/task-agent.repository.ts, apps/agent-api/src/modules/task-agent/services/task-agent-suggestions.service.ts, focused tests, documentation/features/meeting-follow-up-slack.md
+
+## [2026-08-12 22:27] - [FEATURE]
+
+What: Added a separate fail-closed channel-delivery control to Pixel's client post-call action, preconfigured the internal recap channel, exposed the setting in Flow configuration, and covered the explicit automatic-send path.
+
+Why: Review recaps must reach Slack DMs during testing without allowing the production Flow to post into `#roas-call-recaps-internal` before approval.
+
+Impact: Shadow remains send-free, Active defaults to the existing review DM, and the recap channel can receive Pixel's stored draft only after an administrator deliberately switches channel delivery to Automatic.
+
+Files: apps/api/src/modules/spaces, apps/api/src/modules/space-templates, apps/web/src/features/spaces, packages/api-shared/src/types/flow-capabilities.ts, supabase/migrations/20260813053000_restore_client_post_call_pixel_shadow.sql, documentation/features/meeting-follow-up-slack.md

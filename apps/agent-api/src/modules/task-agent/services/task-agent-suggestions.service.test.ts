@@ -33,8 +33,19 @@ describe('TaskAgentSuggestionsService post-call delivery', () => {
         return { content: '' }
       }),
     }
+    const repository = {
+      client: {},
+      loadPostCallMeetingContext: vi.fn().mockResolvedValue({
+        agenda: { title: 'Agenda', body: 'Review webinar performance and decide next test.' },
+        recap: { title: 'Recap', body: 'The team approved the new hook.' },
+        transcripts: [{ title: 'Transcript', body: 'Client: Ship the hook by Friday.' }],
+      }),
+    }
+    const brainContext = {
+      buildFullContext: vi.fn().mockResolvedValue('CLIENT BRAIN: prefers weekly reporting'),
+    }
     const service = new TaskAgentSuggestionsService(
-      { client: {} } as never,
+      repository as never,
       openClaw as never,
       {
         resolveConversationRuntime: vi.fn().mockResolvedValue({
@@ -45,6 +56,7 @@ describe('TaskAgentSuggestionsService post-call delivery', () => {
       } as never,
       runtimeReadiness as never,
       inputService as never,
+      brainContext as never,
     )
 
     await expect(
@@ -52,7 +64,7 @@ describe('TaskAgentSuggestionsService post-call delivery', () => {
         space_id: 'space-1',
         owner_user_id: 'user-1',
         org_id: 'org-1',
-        payload: { call: { title: 'Ops sync' }, follow_ups: [] },
+        payload: { call: { id: 'meeting-1', title: 'Ops sync' }, follow_ups: [] },
       }),
     ).resolves.toEqual({
       draft: {
@@ -74,8 +86,16 @@ describe('TaskAgentSuggestionsService post-call delivery', () => {
       }),
     )
     expect(openClaw.streamCompletion).toHaveBeenCalledWith(
-      expect.objectContaining({ instructions: expect.stringContaining('POST CALL SKILL CONTEXT') }),
+      expect.objectContaining({
+        instructions: expect.stringContaining('POST CALL SKILL CONTEXT'),
+        input: expect.arrayContaining([
+          expect.objectContaining({ content: expect.stringContaining('PORTAL MEETING CONTEXT') }),
+          expect.objectContaining({ content: expect.stringContaining('CLIENT BRAIN') }),
+        ]),
+      }),
     )
+    expect(repository.loadPostCallMeetingContext).toHaveBeenCalledWith('meeting-1', 'space-1')
+    expect(brainContext.buildFullContext).toHaveBeenCalled()
   })
 
   it('fails clearly when the database-backed skill is unavailable', async () => {

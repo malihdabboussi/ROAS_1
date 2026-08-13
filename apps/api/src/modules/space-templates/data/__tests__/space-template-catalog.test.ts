@@ -142,7 +142,14 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
     expect(actionTypes).toContain('change_status')
     expect(actionTypes).not.toContain('send_to_agent')
     expect(actionTypes).toContain('agent_suggest_tasks')
-    expect(actionTypes).not.toContain('request_slack_follow_up_confirm')
+    expect(actionTypes).toContain('request_slack_follow_up_confirm')
+    expect(dashboard?.automations[2]?.actions).toContainEqual(
+      expect.objectContaining({
+        type: 'request_slack_follow_up_confirm',
+        meeting_scope: 'client',
+        delivery_mode: 'shadow',
+      }),
+    )
     expect(dashboard?.schema.fields).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

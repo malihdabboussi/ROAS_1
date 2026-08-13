@@ -97,6 +97,61 @@ export function fetchMeetingWorkspace(spaceId: string, meetingItemId: string) {
   return backendGet<MeetingWorkspaceBundle>(path(spaceId, meetingItemId))
 }
 
+function firstText(...values: unknown[]): string | null {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return null
+}
+
+function meetingSource(value: string | null | undefined): CalendarAgendaEvent['source'] {
+  return value === 'google_calendar' || value === 'outlook' || value === 'fathom' ? value : 'manual'
+}
+
+/** Rebuild the agenda-shaped route payload for a known persisted meeting workspace. */
+export async function fetchMeetingWorkspaceEvent(
+  spaceId: string,
+  meetingItemId: string,
+): Promise<CalendarAgendaEvent> {
+  const bundle = await fetchMeetingWorkspace(spaceId, meetingItemId)
+  const custom = bundle.meeting.custom_data ?? {}
+  const start =
+    firstText(
+      custom.scheduled_start_at,
+      custom.scheduled_start,
+      custom.call_date,
+      custom.recording_start_at,
+      bundle.workspace?.live_started_at,
+    ) ?? new Date().toISOString()
+  const explicitEnd = firstText(custom.scheduled_end_at, custom.scheduled_end, custom.call_end)
+  const primaryRecording = bundle.recordings.find((recording) => recording.is_primary)
+  const durationMs = (primaryRecording?.duration_seconds ?? 3600) * 1000
+  const end = explicitEnd ?? new Date(new Date(start).getTime() + durationMs).toISOString()
+
+  return {
+    id: firstText(custom.calendar_event_id) ?? meetingItemId,
+    title: bundle.meeting.title,
+    start,
+    end,
+    all_day: false,
+    location: firstText(custom.location),
+    description: bundle.meeting.description,
+    video_url: firstText(custom.video_url, custom.meeting_url, custom.join_url),
+    video_label: null,
+    html_link: firstText(custom.html_link),
+    color_id: null,
+    attendees: [],
+    source: meetingSource(bundle.meeting.source),
+    related: {
+      space_id: spaceId,
+      call_item_id: meetingItemId,
+      title: bundle.meeting.title,
+      recording_url: primaryRecording?.recording_url ?? null,
+      follow_ups: [],
+    },
+  }
+}
+
 export function startMeetingCall(spaceId: string, meetingItemId: string) {
   return backendPost<MeetingWorkspaceRecord>(`${path(spaceId, meetingItemId)}/start`, {})
 }

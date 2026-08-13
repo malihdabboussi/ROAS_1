@@ -14,6 +14,16 @@ const DELIVERY_OPTIONS: AutomationSolidOption[] = [
   { value: 'active', label: 'Active · send internal follow-ups' },
 ]
 
+const MEETING_SCOPE_OPTIONS: AutomationSolidOption[] = [
+  { value: 'client', label: 'Client calls only' },
+  { value: 'all', label: 'All completed calls' },
+]
+
+const CHANNEL_DELIVERY_OPTIONS: AutomationSolidOption[] = [
+  { value: 'disabled', label: 'Disabled · review in DMs' },
+  { value: 'automatic', label: 'Automatic · post recap' },
+]
+
 export function AutomationFieldGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="gap-spacing-1 flex flex-col">
@@ -32,6 +42,14 @@ export function PostCallSlackActionFields({
 }) {
   return (
     <div className="space-y-spacing-3">
+      <AutomationFieldGroup label="Calls">
+        <AutomationSolidSelect
+          options={MEETING_SCOPE_OPTIONS}
+          value={action.meeting_scope ?? 'all'}
+          onChange={(meeting_scope) => onChange({ meeting_scope } as Partial<PostCallSlackAction>)}
+          placeholder="Choose call scope"
+        />
+      </AutomationFieldGroup>
       <AutomationFieldGroup label="Mode">
         <AutomationSolidSelect
           options={DELIVERY_OPTIONS}
@@ -45,6 +63,24 @@ export function PostCallSlackActionFields({
         Team Conversations without sending. Active uses the same drafts and sends only to Internal
         people who are also Active. The client recap remains in the approval thread.
       </div>
+      <AutomationFieldGroup label="Recap channel delivery">
+        <AutomationSolidSelect
+          options={CHANNEL_DELIVERY_OPTIONS}
+          value={action.channel_delivery ?? 'disabled'}
+          onChange={(channel_delivery) =>
+            onChange({ channel_delivery } as Partial<PostCallSlackAction>)
+          }
+          placeholder="Choose channel delivery"
+        />
+      </AutomationFieldGroup>
+      <AutomationFieldGroup label="Destination Slack channel ID">
+        <input
+          value={action.destination_channel_id ?? ''}
+          onChange={(event) => onChange({ destination_channel_id: event.target.value })}
+          placeholder="C0BN7P2BWRM"
+          className="body-3 h-spacing-9 rounded-spacing-2 border-border bg-background px-spacing-3 text-foreground placeholder:text-muted-foreground focus:ring-ring w-full border outline-none focus:ring-2"
+        />
+      </AutomationFieldGroup>
       <AutomationFieldGroup label="Review Slack email">
         <input
           type="email"

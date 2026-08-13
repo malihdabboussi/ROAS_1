@@ -32,12 +32,12 @@ export type PageGraderClientImportBody = {
 @Injectable()
 export class PageGraderClientImportService {
   constructor(private readonly packageIngest: PageGraderBrainPackageIngestService) {}
-
   async importPackage(
     supabase: SupabaseClient,
     userId: string,
     body: PageGraderClientImportBody,
     scope: RequestScope,
+    options: { skipBrainIngest?: boolean } = {},
   ) {
     const pkg = body.package
     if (!pkg || typeof pkg !== 'object') {
@@ -187,14 +187,16 @@ export class PageGraderClientImportService {
       metaContext: body.metaContext,
     })
 
-    const ingested = await this.packageIngest.ingestPackage(supabase, {
-      userId,
-      orgId: effectiveOrgId,
-      campaignId: String(campaign.id),
-      spaceId: String(space.id),
-      package: pkg,
-      force: body.force === true,
-    })
+    const ingested = options.skipBrainIngest
+      ? { skippedUnchanged: true, contentHash, memoriesWritten: 0 }
+      : await this.packageIngest.ingestPackage(supabase, {
+          userId,
+          orgId: effectiveOrgId,
+          campaignId: String(campaign.id),
+          spaceId: String(space.id),
+          package: pkg,
+          force: body.force === true,
+        })
     return {
       success: true,
       dryRun: false,

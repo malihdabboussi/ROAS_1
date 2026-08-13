@@ -17,7 +17,6 @@ import {
 } from '../repositories/meeting-workspace-resolution.repository'
 import { MeetingWorkspaceStateRepository } from '../repositories/meeting-workspace-state.repository'
 import { MeetingWorkspaceRepository } from '../repositories/meeting-workspace.repository'
-import { MeetingConversationDeduplicationService } from './meeting-conversation-deduplication.service'
 import { MeetingSourceIngestionService } from './meeting-source-ingestion.service'
 
 @Injectable()
@@ -32,7 +31,6 @@ export class MeetingWorkspaceService {
     private readonly conversations: ConversationsService,
     private readonly messages: MessagesRepository,
     @Optional() private readonly ingestion?: MeetingSourceIngestionService,
-    @Optional() private readonly deduplication?: MeetingConversationDeduplicationService,
   ) {}
 
   async resolveScheduledMeeting(
@@ -248,28 +246,6 @@ export class MeetingWorkspaceService {
         workspace = await this.requireMeeting(supabase, input)
       }
     }
-    const linkedConversationId = text(record(workspace.workspace).conversation_id)
-    if (input.userId && linkedConversationId) {
-      try {
-        const duplicateMeetingItemIds = await this.findDuplicateCallItemIds(supabase, {
-          spaceId: input.spaceId,
-          meetingItemId: input.meetingItemId,
-          meeting: record(workspace.meeting),
-        })
-        await this.deduplication?.archiveDuplicates(supabase, {
-          userId: input.userId,
-          meetingItemId: input.meetingItemId,
-          keepConversationId: linkedConversationId,
-          duplicateMeetingItemIds,
-        })
-      } catch (error) {
-        this.logger.warn(
-          `Archive duplicate meeting chats failed for ${input.meetingItemId}: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
-        )
-      }
-    }
     return workspace
   }
 
@@ -395,25 +371,6 @@ export class MeetingWorkspaceService {
   ): Promise<Record<string, unknown>> {
     await this.getWorkspace(supabase, input)
     return this.stateRepository.createManualAction(supabase, input)
-  }
-
-  /** Sibling call items sharing this meeting's natural keys (cross-item dup chats). */
-  private async findDuplicateCallItemIds(
-    supabase: SupabaseClient,
-    input: { spaceId: string; meetingItemId: string; meeting: Record<string, unknown> },
-  ): Promise<string[]> {
-    const custom = record(input.meeting.custom_data)
-    const icalUid = text(custom.ical_uid)
-    const fathomMeetingId = text(String(record(custom.external_automation).meeting_id ?? ''))
-    const calendarEventId = text(custom.calendar_event_id)
-    if (!icalUid && !fathomMeetingId && !calendarEventId) return []
-    return this.resolutionRepository.listDuplicateCallItemIds(supabase, {
-      spaceId: input.spaceId,
-      meetingItemId: input.meetingItemId,
-      icalUid,
-      fathomMeetingId,
-      calendarEventId,
-    })
   }
 
   private async hydrateMissingRecording(

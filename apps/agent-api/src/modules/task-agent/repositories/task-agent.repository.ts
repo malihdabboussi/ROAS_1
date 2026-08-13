@@ -27,6 +27,48 @@ export class TaskAgentRepository {
       .maybeSingle()
   }
 
+  async loadPostCallMeetingContext(meetingItemId: string, spaceId: string) {
+    const [{ data: workspace }, { data: recordings }] = await Promise.all([
+      this.svc.client
+        .from('meeting_workspaces')
+        .select('agenda_doc_item_id, recap_doc_item_id')
+        .eq('meeting_item_id', meetingItemId)
+        .eq('space_id', spaceId)
+        .maybeSingle(),
+      this.svc.client
+        .from('meeting_recordings')
+        .select('transcript_doc_item_id')
+        .eq('meeting_item_id', meetingItemId)
+        .eq('space_id', spaceId)
+        .order('created_at', { ascending: true }),
+    ])
+    const transcriptIds = (recordings ?? [])
+      .map((row) => String(row.transcript_doc_item_id ?? '').trim())
+      .filter(Boolean)
+    const agendaId = String(workspace?.agenda_doc_item_id ?? '').trim()
+    const recapId = String(workspace?.recap_doc_item_id ?? '').trim()
+    const ids = [...new Set([agendaId, recapId, ...transcriptIds].filter(Boolean))]
+    if (ids.length === 0) return null
+
+    const { data: documents } = await this.svc.client
+      .from('space_items')
+      .select('id, title, doc_body, description')
+      .eq('space_id', spaceId)
+      .in('id', ids)
+    const byId = new Map((documents ?? []).map((row) => [String(row.id), row]))
+    const serialize = (id: string) => {
+      const row = byId.get(id)
+      if (!row) return null
+      const body = String(row.doc_body ?? row.description ?? '').trim()
+      return body ? { title: String(row.title ?? ''), body: body.slice(0, 80000) } : null
+    }
+    return {
+      agenda: serialize(agendaId),
+      recap: serialize(recapId),
+      transcripts: transcriptIds.map(serialize).filter(Boolean).slice(0, 3),
+    }
+  }
+
   async listActivityRows(itemId: string) {
     return this.svc.client
       .from('space_item_activity')

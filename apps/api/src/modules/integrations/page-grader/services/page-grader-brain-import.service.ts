@@ -39,6 +39,7 @@ export class PageGraderBrainImportService {
     orgId?: string | null,
     prefetchedPackage?: PageGraderClientPackage,
     prefetchedMetaContext?: PageGraderMetaContext | null,
+    options: { skipBrainIngest?: boolean } = {},
   ) {
     const creds = await this.getCreds(userId)
     const [pkg, metaContext] = await Promise.all([
@@ -65,6 +66,7 @@ export class PageGraderBrainImportService {
         metaContext,
       },
       { userId, orgId: orgId ?? null } as never,
+      options,
     )
 
     if (dto.dryRun) return result

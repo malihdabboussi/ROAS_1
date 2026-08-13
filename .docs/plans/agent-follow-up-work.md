@@ -38433,3 +38433,10 @@ Production already allowed `needs_reconnect` out of band; the repository now car
 - `SpaceVibeyChatPanel.tsx` remains a grandfathered oversized component; selection/remount and observed-height logic are candidates for focused hooks.
 - Agenda minimization persistence should move to a dedicated hook before the next Agenda feature.
 - Deferred because this PR restores reviewed behavior; structural decomposition would widen release risk.
+
+## 2026-08-12 — Client post-call recap channel gate (apps/api spaces)
+
+- File: apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.workflow.ts
+  Evidence: 1001/600 LOC after adding the explicit channel-delivery branch; the file was already 949 LOC before this scoped change.
+  Needed work: extract the admin review-DM and automatic channel-delivery transports into sibling workflow helpers before the next post-call delivery feature touches this service.
+  Reason not done now: pre-existing debt; a structural split would obscure the fail-closed rollout control and client-call safety review.

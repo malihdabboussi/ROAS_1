@@ -90,6 +90,7 @@ export class TaskAgentService {
         agentRuntime,
         runtimeReadiness,
         this.inputService,
+        this.brainContext,
       )
   }
 

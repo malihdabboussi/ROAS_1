@@ -46,6 +46,7 @@ export class PageGraderController {
     const result = await this.api.getStatus(user.id)
     return { success: true, ...result }
   }
+
   @Post('connect')
   @RequireOrgRole('editor')
   async connect(

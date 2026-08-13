@@ -97,4 +97,37 @@ describe('meeting call-kind classification', () => {
       notes: 'No call kind change',
     })
   })
+
+  it('keeps mostly-external client calls client even when the summary discusses sales', () => {
+    expect(
+      resolveMeetingCallKind({
+        identity,
+        recordedByEmail: 'owner@roas.co',
+        attendees: [
+          { email: 'owner@roas.co' },
+          { email: 'adam@client.com' },
+          { email: 'lucas@client.com' },
+        ],
+        attendeeLabels: ['Owner Person', 'Adam', 'Lucas'],
+        titleHint: 'Adam weekly ROAS and webinar review',
+        summary: 'The team reviewed sales attribution and recent closes.',
+      }),
+    ).toBe('client')
+  })
+
+  it('preserves explicit sales and partner meetings from their titles', () => {
+    const common = {
+      identity,
+      recordedByEmail: 'owner@roas.co',
+      attendees: [
+        { email: 'owner@roas.co' },
+        { email: 'external@example.com' },
+      ],
+      attendeeLabels: ['Owner Person', 'External Person'],
+    }
+    expect(resolveMeetingCallKind({ ...common, titleHint: 'Prospect discovery demo' })).toBe('sales')
+    expect(resolveMeetingCallKind({ ...common, titleHint: 'Vendor partnership review' })).toBe(
+      'partner',
+    )
+  })
 })
