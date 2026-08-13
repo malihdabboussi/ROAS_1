@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   setCollapsed: vi.fn(),
   setActiveConversationId: vi.fn(),
   openConversationInSpaceChat: vi.fn(),
+  requestNewChat: vi.fn(),
   setWorkAreaOpen: vi.fn(),
   setRightPanelOpen: vi.fn(),
   recentWorkAreaPages: [{ id: '/home/meetings', title: 'Meetings', href: '/home/meetings' }],
@@ -140,7 +141,7 @@ vi.mock('./use-shell-store', () => ({
       },
       openChatDrawer: vi.fn(),
       minimizeChatDrawer: vi.fn(),
-      requestNewChat: vi.fn(),
+      requestNewChat: mocks.requestNewChat,
       setMenuMode: vi.fn(),
       setWorkAreaOpen: mocks.setWorkAreaOpen,
       setRightPanelOpen: mocks.setRightPanelOpen,
@@ -237,19 +238,13 @@ describe('ShellWorkspace', () => {
       'shell-work-area-body-main',
     )
   })
-  it('replaces the temporary starting route with the created conversation route', async () => {
-    mocks.activeConversationId = 'conversation-123'
-    render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
-    await waitFor(() => {
-      expect(mocks.replace).toHaveBeenCalledWith('/home?conv=conversation-123')
-    })
-  })
-  it('does not restore the previous conversation while a new Home chat is starting', async () => {
-    mocks.params = new Map([['chat', 'new']])
+  it('does not restore the previous conversation while a Home message starts', async () => {
+    mocks.params = new Map()
     mocks.activeConversationId = 'previous-conversation'
     const { rerender } = render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
     mocks.params = new Map([['chat', 'starting']])
     rerender(<ShellWorkspace>Home dashboard</ShellWorkspace>)
+    expect(mocks.setActiveConversationId).toHaveBeenCalledWith(null)
     expect(mocks.replace).not.toHaveBeenCalled()
     mocks.activeConversationId = 'new-conversation'
     rerender(<ShellWorkspace>Home dashboard</ShellWorkspace>)

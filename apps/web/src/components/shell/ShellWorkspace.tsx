@@ -86,7 +86,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   }, [artifactTarget, chatDrawerOpen, menuStyle, setWorkAreaOpen])
 
   useEffect(() => {
-    if (chatParam !== 'new') return
+    if (chatParam !== 'new' && chatParam !== 'starting') return
     conversationBeforeNewChatRef.current = useChatStore.getState().activeConversationId
     requestNewChat()
     setActiveConversationId(null)
