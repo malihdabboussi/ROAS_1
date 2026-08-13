@@ -164,6 +164,22 @@ export function extractConversationFileRows(messages: Message[]): ConversationFi
 
     for (const block of orderedBlocks(message)) {
       const type = stringField(block, 'type')
+      if (type === 'artifact_preview') {
+        const entityId = stringField(block, 'artifactId')
+        const entityType = stringField(block, 'artifactType')
+        if (!entityId || !entityType) continue
+        push({
+          id: stringField(block, 'id') ?? `${message.id}:artifact:${entityId}`,
+          title: stringField(block, 'name') ?? 'Artifact',
+          kind: 'artifact',
+          fileUrl: null,
+          mimeType: null,
+          mediaAssetId: null,
+          entityId,
+          entityType,
+          createdAt: message.created_at,
+        })
+      }
       if (type === 'pdf_file' || type === 'docx_file') {
         const fileUrl = stringField(block, 'url')
         if (!fileUrl) continue

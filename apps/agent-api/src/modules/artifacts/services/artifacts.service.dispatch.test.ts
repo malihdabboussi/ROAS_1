@@ -11,6 +11,18 @@ const stubMissionsMedia = new ArtifactMissionsMediaService({
 } as any)
 const TEST_CONVERSATION_ID = '11111111-1111-4111-8111-111111111111'
 const TEST_SESSION_KEY = `agent:vibey:user-1:${TEST_CONVERSATION_ID}`
+const VALID_PRESENTATION_DATA = {
+  name: 'Smoke Deck',
+  source_mode: 'html_bundle',
+  entry_file: 'index.html',
+  files: [
+    {
+      path: 'index.html',
+      role: 'entry',
+      content: '<!doctype html><html><body><section>Smoke deck</section></body></html>',
+    },
+  ],
+}
 
 function makeConfigMock(): ConfigService {
   return {
@@ -253,10 +265,9 @@ describe('ArtifactsService action registry characterization', () => {
       success: true,
       id: 'funnel-1',
     })
-    expect(await service.executeAction('create_presentation', {}, 'agent:x:stub')).toEqual({
-      success: true,
-      id: 'lm-1',
-    })
+    expect(
+      await service.executeAction('create_presentation', VALID_PRESENTATION_DATA, 'agent:x:stub'),
+    ).toEqual({ success: true, id: 'lm-1' })
     expect(await service.executeAction('create_pdf', {}, 'agent:x:stub')).toEqual({
       success: true,
       id: 'pdf-1',
@@ -630,7 +641,11 @@ describe('ArtifactsService action registry characterization', () => {
     }
     service.createPresentation = vi.fn(async () => leafContract)
 
-    const result = await service.executeAction('create_presentation', {}, TEST_SESSION_KEY)
+    const result = await service.executeAction(
+      'create_presentation',
+      VALID_PRESENTATION_DATA,
+      TEST_SESSION_KEY,
+    )
 
     expect(result).toBe(leafContract)
     expect(result).toMatchObject({

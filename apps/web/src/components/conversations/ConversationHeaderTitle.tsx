@@ -6,13 +6,19 @@ import { Pencil } from 'lucide-react'
 interface ConversationHeaderTitleProps {
   title: string
   onRename: (title: string) => void | Promise<void>
+  renameRequestNonce?: number
 }
 
-export function ConversationHeaderTitle({ title, onRename }: ConversationHeaderTitleProps) {
+export function ConversationHeaderTitle({
+  title,
+  onRename,
+  renameRequestNonce = 0,
+}: ConversationHeaderTitleProps) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(title)
   const [saving, setSaving] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const handledRenameRequestNonce = useRef(renameRequestNonce)
 
   useEffect(() => {
     if (!editing) setDraft(title)
@@ -23,6 +29,12 @@ export function ConversationHeaderTitle({ title, onRename }: ConversationHeaderT
     inputRef.current?.focus()
     inputRef.current?.select()
   }, [editing])
+
+  useEffect(() => {
+    if (renameRequestNonce === handledRenameRequestNonce.current) return
+    handledRenameRequestNonce.current = renameRequestNonce
+    setEditing(true)
+  }, [renameRequestNonce])
 
   const commitRename = async () => {
     if (saving) return
@@ -69,10 +81,13 @@ export function ConversationHeaderTitle({ title, onRename }: ConversationHeaderT
       onClick={() => setEditing(true)}
       aria-label="Rename conversation"
       title="Rename conversation"
-      className="text-foreground hover:bg-hover-subtle gap-spacing-1 rounded-spacing-2 px-spacing-2 py-spacing-1 body-3 flex min-w-0 flex-1 items-center text-left font-medium transition-colors"
+      className="text-foreground hover:bg-hover-subtle gap-spacing-1 rounded-spacing-2 px-spacing-2 py-spacing-1 body-3 group flex min-w-0 flex-1 items-center text-left font-medium transition-colors"
     >
+      <Pencil
+        className="icon-xs text-muted-foreground shrink-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+        aria-hidden
+      />
       <span className="min-w-0 flex-1 truncate">{title}</span>
-      <Pencil className="icon-xs text-muted-foreground shrink-0" aria-hidden />
     </button>
   )
 }

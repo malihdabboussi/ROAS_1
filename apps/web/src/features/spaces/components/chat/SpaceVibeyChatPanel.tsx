@@ -12,7 +12,7 @@ import { MessageBubble } from '@/components/chat/MessageBubbleAdapter'
 import { MessageQueue } from '@/components/chat/MessageQueue'
 import { PlanStickyTracker } from '@/components/chat/PlanStickyTracker'
 import { VoiceApprovalProvider } from '@/components/chat/VoiceApprovalContext'
-import { ConversationHeaderTitle, ConversationShareModal } from '@/components/conversations'
+import { ConversationShareModal } from '@/components/conversations'
 import { globalChatSeedMatchesPanel } from '@/components/global-chat/lib/global-chat-seed-match'
 import {
   GLOBAL_CHAT_AGENT_SWITCH_EVENT,
@@ -152,29 +152,20 @@ import {
   resolveSpaceChatSeedSendOptions,
   resolveSpaceChatSendAgentKey,
 } from './space-vibey-chat-panel.logic'
-import type { SpaceVibeyChatPanelProps } from './space-vibey-chat-panel.types'
+import type * as ChatPanelTypes from './space-vibey-chat-panel.types'
 import {
   resolveSpaceChatEmptyStateAgent,
   SpaceChatAgentEmptyState,
 } from './SpaceChatAgentEmptyState'
 import { SpaceChatAgentPicker } from './SpaceChatAgentPicker'
 import { SpaceChatHeaderActions } from './SpaceChatHeaderActions'
+import { SpaceChatPanelHeader } from './SpaceChatPanelHeader'
 import { SpaceChatSubPanel } from './SpaceChatSubPanel'
+import { SpaceConversationHeaderMenu } from './SpaceConversationHeaderMenu'
 import { SpaceUndoButton } from './SpaceUndoButton'
 import type { SpaceVoiceRunTask } from './SpaceVoiceRunsView'
 import { SpaceVoiceMiniPlayer, SpaceVoiceSessionView } from './SpaceVoiceSessionView'
 import { stripLegacySpacesConversationTitle } from './strip-legacy-spaces-conversation-title'
-
-type ChatMode = SpaceChatMode
-type ConversationAgentScope = 'active' | 'all'
-type FocusedArtifact = {
-  type: string
-  id: string
-  name: string
-  spaceId?: string
-  docSource?: string
-  docKind?: string
-}
 
 export function SpaceVibeyChatPanel({
   spaceId,
@@ -191,13 +182,13 @@ export function SpaceVibeyChatPanel({
   composerContextSlot,
   preferredConversationId,
   awarenessContextOverride,
-}: SpaceVibeyChatPanelProps) {
+}: ChatPanelTypes.SpaceVibeyChatPanelProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const isChannelScope = Boolean(channelContext?.channelId)
   const chatScopeId = channelContext?.channelId ?? spaceId ?? ''
   const chatScopeStorageId = isChannelScope ? `channel:${chatScopeId}` : chatScopeId || 'general'
-  const [mode, setMode] = useState<ChatMode>('chat')
+  const [mode, setMode] = useState<SpaceChatMode>('chat')
   const presentationCommentsSession = usePresentationCommentsChatStore((s) => s.session)
   const presentationCommentsActive = usePresentationCommentsChatStore((s) => s.commentsChatActive)
   const presentationComments = usePresentationCommentsChatStore((s) => s.comments)
@@ -246,7 +237,7 @@ export function SpaceVibeyChatPanel({
     () => spaceConversationsCache.get(chatScopeStorageId) ?? [],
   )
   const [conversationAgentScope, setConversationAgentScope] =
-    useState<ConversationAgentScope>('active')
+    useState<ChatPanelTypes.ConversationAgentScope>('active')
   const [conversationsLoading, setConversationsLoading] = useState(false)
   const [conversationQuery, setConversationQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -320,7 +311,7 @@ export function SpaceVibeyChatPanel({
   )
   const isOrgContext = activeOrgId !== null
   const uiSelectedArtifact = useActiveArtifactSelectionSignal()
-  const focusedArtifactRef = useRef<FocusedArtifact | null>(null)
+  const focusedArtifactRef = useRef<ChatPanelTypes.FocusedArtifact | null>(null)
   const lastAutoFocusKeyRef = useRef<string | null>(null)
   // Preferred conversation is applied once per value. Re-forcing on every
   // divergence fights the post-load/drawer sync effects over the selection
@@ -950,7 +941,7 @@ export function SpaceVibeyChatPanel({
 
   useEffect(() => {
     const handleArtifactFocus = (event: Event) => {
-      const detail = (event as CustomEvent).detail as FocusedArtifact | undefined
+      const detail = (event as CustomEvent).detail as ChatPanelTypes.FocusedArtifact | undefined
       if (!detail?.id || !detail.type || !detail.name) return
       focusedArtifactRef.current = detail
     }
@@ -2098,7 +2089,7 @@ export function SpaceVibeyChatPanel({
     presentationTweaksSession,
   ])
 
-  const panelMode: ChatMode = resolveSpaceChatPanelMode({
+  const panelMode: SpaceChatMode = resolveSpaceChatPanelMode({
     mode,
     presentationCommentsActive,
     hasPresentationCommentsSession: presentationCommentsSession !== null,
@@ -2136,6 +2127,7 @@ export function SpaceVibeyChatPanel({
   const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
   const toggleRightPanel = useShellStore((s) => s.toggleRightPanel)
   const setRightPanelOpen = useShellStore((s) => s.setRightPanelOpen)
+  const [headerRenameRequestNonce, setHeaderRenameRequestNonce] = useState(0)
   const autoOpenedSummaryConversationRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -2165,32 +2157,40 @@ export function SpaceVibeyChatPanel({
       hideHistoryChrome={shellSidebarChrome}
       summaryOpen={rightPanelOpen}
       onToggleSummary={() => toggleRightPanel()}
+      conversationDetails={
+        headerLayout === 'full' && selectedConversation ? (
+          <SpaceConversationHeaderMenu
+            conversation={selectedConversation}
+            isOrgContext={isOrgContext}
+            onRenameRequested={() => setHeaderRenameRequestNonce((nonce) => nonce + 1)}
+            onCopyConversationLink={handleCopyConversationLink}
+            onCopyConversationId={handleCopyConversationId}
+            onOpenConversationInNewTab={handleOpenConversationInNewTab}
+            onShareConversation={setShareConversation}
+            onTogglePinConversation={handleTogglePinConversation}
+            onToggleArchiveConversation={handleToggleArchiveConversation}
+            onMoveConversation={handleMoveConversation}
+            onDuplicateConversation={handleDuplicateConversation}
+            onDeleteConversation={handleDeleteConversation}
+          />
+        ) : null
+      }
     />
   )
 
   const chatHeaderBlock = (
-    <div className="pt-spacing-2 pb-spacing-1 relative shrink-0 px-3 md:px-4">
-      <div className="mx-auto w-full max-w-3xl">
-        <div className="min-h-spacing-10 gap-spacing-2 flex items-center">
-          {headerLeadingAction ? (
-            <div className="flex shrink-0 items-center">{headerLeadingAction}</div>
-          ) : null}
-          {messages.length > 0 || isLoadingMessages || voiceActive ? (
-            <div className="flex shrink-0 items-center">{renderAgentPicker()}</div>
-          ) : null}
-          {headerLayout === 'full' && sessionTitle && selectedConversationId ? (
-            <ConversationHeaderTitle
-              title={sessionTitle}
-              onRename={(title) => handleRenameConversation(selectedConversationId, title)}
-            />
-          ) : (
-            <div className="min-w-0 flex-1" aria-hidden />
-          )}
-          <div className="flex shrink-0 items-center">{chatHeaderActions}</div>
-        </div>
-      </div>
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-6 translate-y-full bg-gradient-to-b from-[var(--color-background)] to-transparent" />
-    </div>
+    <SpaceChatPanelHeader
+      layout={headerLayout}
+      leadingAction={headerLeadingAction}
+      agentPicker={
+        messages.length > 0 || isLoadingMessages || voiceActive ? renderAgentPicker() : null
+      }
+      title={sessionTitle}
+      conversationId={selectedConversationId}
+      renameRequestNonce={headerRenameRequestNonce}
+      onRename={handleRenameConversation}
+      actions={chatHeaderActions}
+    />
   )
 
   return (

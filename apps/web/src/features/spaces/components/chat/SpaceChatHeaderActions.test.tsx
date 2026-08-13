@@ -109,9 +109,13 @@ describe('SpaceChatHeaderActions', () => {
         hideHistoryChrome
         summaryOpen={false}
         onToggleSummary={onToggleSummary}
+        conversationDetails={<button type="button">Conversation details</button>}
       />,
     )
 
+    const details = screen.getByRole('button', { name: 'Conversation details' })
+    const summary = screen.getByRole('button', { name: 'Summary panel' })
+    expect(details.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Summary panel' }))
 
     expect(onToggleSummary).toHaveBeenCalledTimes(1)

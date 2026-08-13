@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   seedComposer: vi.fn(),
   clearMeetingContext: vi.fn(),
   setActiveAgentKey: vi.fn(),
+  openQuickMissions: vi.fn(),
   isOrgOnly: true,
   campaignRows: [] as Array<Record<string, unknown>>,
   ensureGeneralSpace: vi.fn(),
@@ -86,6 +87,11 @@ vi.mock('@/features/spaces/services/spaces.service', () => ({
 
 vi.mock('@/features/spaces/components/CreateSpaceModal', () => ({
   CreateSpaceModal: () => null,
+}))
+
+vi.mock('@/lib/missions', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/missions')>()),
+  dispatchOpenQuickMissions: mocks.openQuickMissions,
 }))
 
 vi.mock('@/features/home/components/SuggestedNextMoves', () => ({
@@ -218,5 +224,14 @@ describe('HomeDashboardV4Composer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Suggested move' }))
 
     expect(mocks.setText).toHaveBeenCalledWith('Prepare the client brief')
+  })
+
+  it('opens Missions from the canonical Create quick-start row', () => {
+    render(<HomeDashboardV4Composer />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mission' }))
+
+    expect(mocks.openQuickMissions).toHaveBeenCalledTimes(1)
+    expect(mocks.setText).not.toHaveBeenCalled()
   })
 })

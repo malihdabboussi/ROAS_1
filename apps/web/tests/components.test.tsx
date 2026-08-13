@@ -34,6 +34,20 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }))
 
+vi.mock('@/lib/api/backend-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/api/backend-client')>()
+  return { ...actual, backendGet: vi.fn(async () => []) }
+})
+
+vi.mock('@supabase/ssr', () => ({
+  createBrowserClient: () => ({
+    auth: {
+      getSession: vi.fn(async () => ({ data: { session: null } })),
+      refreshSession: vi.fn(async () => ({ data: { session: null } })),
+    },
+  }),
+}))
+
 vi.mock('@/hooks/use-user-role', () => ({
   useUserRole: () => ({ role: 'owner', loading: false }),
 }))
@@ -84,8 +98,7 @@ describe('Sidebar Component', () => {
     )
 
     expect(screen.getAllByText('Programs').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Team').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Brain').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('More').length).toBeGreaterThanOrEqual(1)
   })
 
   it('renders HQ sidebar rail on default pathname (same rail as studio/hq split)', async () => {

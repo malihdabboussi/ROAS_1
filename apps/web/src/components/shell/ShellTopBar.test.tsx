@@ -163,6 +163,14 @@ describe('ShellTopBar', () => {
     expect(mocks.shellState.toggleWorkAreaOpen).toHaveBeenCalledTimes(1)
   })
 
+  it('does not render a second pane toggle just because an artifact viewer is open', () => {
+    mocks.shellState.artifactViewer = { target: { id: 'artifact-1' } }
+
+    render(<ShellTopBar />)
+
+    expect(screen.queryByTitle('Collapse page — chat full screen')).not.toBeInTheDocument()
+  })
+
   it('offers the reverse control once the work area is collapsed', () => {
     mocks.pathname = '/team/skills'
     mocks.shellState.workAreaOpen = false

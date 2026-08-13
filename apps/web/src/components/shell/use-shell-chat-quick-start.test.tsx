@@ -1,6 +1,7 @@
-import { renderHook } from '@testing-library/react'
 import { createRef } from 'react'
-import { describe, expect, it } from 'vitest'
+import { act, renderHook } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import { SHELL_CREATE_QUICK_STARTS } from './shell-create-menu.config'
 import { useShellChatQuickStart } from './use-shell-chat-quick-start'
 
 describe('useShellChatQuickStart', () => {
@@ -12,5 +13,20 @@ describe('useShellChatQuickStart', () => {
     rerender()
 
     expect(result.current.handleComposerValueChange).toBe(initialCallback)
+  })
+
+  it('opens Missions without seeding the composer', () => {
+    const setTextRef = createRef<((text: string) => void) | null>()
+    setTextRef.current = vi.fn()
+    const onOpen = vi.fn()
+    window.addEventListener('vibey:open-quick-missions', onOpen)
+    const { result } = renderHook(() => useShellChatQuickStart(setTextRef))
+    const mission = SHELL_CREATE_QUICK_STARTS.find((item) => item.action === 'mission')!
+
+    act(() => result.current.selectQuickStart(mission))
+
+    expect(onOpen).toHaveBeenCalledTimes(1)
+    expect(setTextRef.current).not.toHaveBeenCalled()
+    window.removeEventListener('vibey:open-quick-missions', onOpen)
   })
 })

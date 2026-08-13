@@ -50,6 +50,16 @@ function createService(
         mission_id: 'mission-1',
       },
     }),
+    createIdempotent: vi.fn().mockResolvedValue({
+      id: 'mission-1',
+      conversation_id: 'conv-1',
+      role: 'assistant',
+      content: 'Quick Mission started: **Static Ad Production**.',
+      metadata: {
+        quick_mission_receipt: true,
+        mission_id: 'mission-1',
+      },
+    }),
     update: vi.fn().mockResolvedValue(undefined),
     findUpToMessage: vi.fn().mockResolvedValue([]),
     bulkCreate: vi.fn().mockResolvedValue([]),
@@ -135,9 +145,8 @@ describe('ConversationsService message workflows', () => {
   })
 
   it('persists one typed mission receipt in the originating conversation', async () => {
-    const { conversationMessages, messagesRepo, permissionsService } = createService({
-      messagesRepo: { findById: vi.fn().mockResolvedValue(null) },
-    })
+    const { conversationMessages, conversationsRepo, messagesRepo, permissionsService } =
+      createService()
 
     await conversationMessages.createMissionReceipt(
       {} as never,
@@ -160,7 +169,8 @@ describe('ConversationsService message workflows', () => {
       'edit',
       'org-1',
     )
-    expect(messagesRepo.create).toHaveBeenCalledWith(
+    expect(conversationsRepo.findByIdOrgScoped).not.toHaveBeenCalled()
+    expect(messagesRepo.createIdempotent).toHaveBeenCalledWith(
       {},
       expect.objectContaining({
         id: 'mission-1',
@@ -192,7 +202,7 @@ describe('ConversationsService message workflows', () => {
       metadata: { quick_mission_receipt: true, mission_id: 'mission-1' },
     }
     const { conversationMessages, messagesRepo } = createService({
-      messagesRepo: { findById: vi.fn().mockResolvedValue(existing) },
+      messagesRepo: { createIdempotent: vi.fn().mockResolvedValue(existing) },
     })
 
     await expect(
@@ -206,7 +216,7 @@ describe('ConversationsService message workflows', () => {
       ),
     ).resolves.toEqual(existing)
 
-    expect(messagesRepo.create).not.toHaveBeenCalled()
+    expect(messagesRepo.findById).not.toHaveBeenCalled()
   })
 
   it('forks a conversation with copied messages and source metadata', async () => {

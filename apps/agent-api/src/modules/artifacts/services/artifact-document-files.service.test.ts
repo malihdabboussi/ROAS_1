@@ -35,6 +35,15 @@ function makeConversationClient(inserted: Array<Record<string, unknown>>) {
         }
         return chain
       }
+      if (table === 'spaces') {
+        const chain: any = {
+          select: vi.fn(() => chain),
+          eq: vi.fn(() => chain),
+          order: vi.fn(() => chain),
+          limit: vi.fn(async () => ({ data: [], error: null })),
+        }
+        return chain
+      }
       return {}
     }),
   }

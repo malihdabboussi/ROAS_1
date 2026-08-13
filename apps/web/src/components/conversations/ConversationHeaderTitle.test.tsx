@@ -31,4 +31,34 @@ describe('ConversationHeaderTitle', () => {
     expect(onRename).not.toHaveBeenCalled()
     expect(screen.getByText('Sales follow-up')).toBeTruthy()
   })
+
+  it('reveals the rename pencil before the title only on hover or keyboard focus', () => {
+    render(<ConversationHeaderTitle title="Sales follow-up" onRename={vi.fn()} />)
+
+    const button = screen.getByRole('button', { name: 'Rename conversation' })
+    const pencil = button.querySelector('.lucide-pencil')
+    const title = screen.getByText('Sales follow-up')
+
+    if (!pencil) throw new Error('Expected the rename pencil to render')
+
+    expect(button).toHaveClass('group')
+    expect(pencil).toHaveClass(
+      'opacity-0',
+      'group-hover:opacity-100',
+      'group-focus-visible:opacity-100',
+    )
+    expect(pencil.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('enters rename mode when the adjacent conversation menu requests it', () => {
+    const { rerender } = render(
+      <ConversationHeaderTitle title="Sales follow-up" onRename={vi.fn()} renameRequestNonce={0} />,
+    )
+
+    rerender(
+      <ConversationHeaderTitle title="Sales follow-up" onRename={vi.fn()} renameRequestNonce={1} />,
+    )
+
+    expect(screen.getByRole('textbox', { name: 'Conversation name' })).toBeInTheDocument()
+  })
 })

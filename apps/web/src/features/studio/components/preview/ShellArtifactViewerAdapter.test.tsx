@@ -51,6 +51,12 @@ vi.mock('@/components/shell/ShellTaskArtifactViewerAdapter', () => ({
   ),
 }))
 
+vi.mock('@/components/shell/ShellMissionArtifactViewerAdapter', () => ({
+  ShellMissionArtifactViewerAdapter: ({ target }: { target: ShellArtifactViewerTarget }) => (
+    <div data-testid="canonical-mission-panel">{target.entityId || target.id}</div>
+  ),
+}))
+
 vi.mock('./ShellMediaArtifactViewer', () => ({
   ShellMediaArtifactViewer: ({ target }: { target: ShellArtifactViewerTarget }) => (
     <div data-testid="media-studio">
@@ -105,7 +111,7 @@ describe('ShellArtifactViewerAdapter', () => {
     expect(screen.getByText('delegation-desk-1:task-1')).toBeTruthy()
   })
 
-  it('navigates an exact mission target instead of rendering it as a document', async () => {
+  it('renders missions in the canonical right-side mission panel', async () => {
     useShellStore.setState({
       artifactViewer: {
         width: 480,
@@ -122,9 +128,10 @@ describe('ShellArtifactViewerAdapter', () => {
 
     render(<ShellArtifactViewerAdapter />)
 
-    await waitFor(() => expect(routerPush).toHaveBeenCalledWith('/home?mission=mission-1'))
+    await waitFor(() => expect(screen.getByTestId('canonical-mission-panel')).toBeTruthy())
+    expect(screen.getByText('mission-1')).toBeTruthy()
     expect(screen.queryByTestId('lightweight-preview')).toBeNull()
-    expect(useShellStore.getState().artifactViewer.target).toBeNull()
+    expect(routerPush).not.toHaveBeenCalled()
   })
 
   it('navigates an exact flow target instead of rendering it as a document', async () => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   FileText,
   FolderGit2,
@@ -9,15 +9,19 @@ import {
   Music2,
   Video,
 } from 'lucide-react'
-import { openArtifactInShell, openArtifactPreviewInShell, openDocumentInShell } from '@/lib/artifacts'
 import type { ArtifactNodeType } from '@/lib/chat/attached-artifact'
-import { openMediaAssetInApp } from '@/lib/media/open-media-asset-in-app'
 import { useResilientImageSrc } from '@/lib/media/use-resilient-image-src'
-import { missionDeliverableFromContentBlock, type MissionDeliverable } from '@/lib/missions'
+import {
+  fetchDeliverablesForMissions,
+  fetchMissionById,
+  missionDeliverableFromContentBlock,
+  type MissionDeliverable,
+} from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
 import { ARTIFACT_GLASS, ARTIFACT_ICON } from '../chat/ArtifactAttachments'
 import type { ContentBlockChannelSource } from './message-bubble.types'
 import type { FinalOutputBlock } from './message-bubble.utils'
+import { openFinalOutputInShell } from './open-final-output-in-shell'
 
 const ARTIFACT_LABELS: Record<string, string> = {
   offer: 'Offer',
@@ -164,63 +168,6 @@ function describeOutput(block: FinalOutputBlock): {
   }
 }
 
-function openDefaultOutput(block: FinalOutputBlock) {
-  if (block.type === 'artifact_preview') {
-    openArtifactPreviewInShell({
-      artifactType: block.artifactType,
-      artifactId: block.artifactId,
-      name: block.name,
-      spaceId: block.spaceId,
-    })
-    return
-  }
-
-  if (block.type === 'document_card') {
-    const documentId = block.documentId?.trim() ?? ''
-    const spaceItemId = block.spaceItemId?.trim() ?? ''
-    openDocumentInShell({
-      documentId,
-      title: block.title,
-      spaceId: block.spaceId,
-      spaceItemId,
-    })
-    return
-  }
-
-  if (block.type === 'media_asset') {
-    const kind =
-      block.kind === 'video' || block.kind === 'audio' || block.kind === 'image'
-        ? block.kind
-        : 'image'
-    if (
-      block.mediaAssetId &&
-      openMediaAssetInApp({
-        mediaAssetId: block.mediaAssetId,
-        title: block.title,
-        spaceId: block.spaceId,
-        kind,
-        fileUrl: block.url,
-      })
-    ) {
-      return
-    }
-    openArtifactInShell({
-      id: block.id,
-      mediaAssetId: block.mediaAssetId,
-      title: block.title,
-      type: kind,
-      fileUrl: block.url,
-      spaceId: block.spaceId,
-      contextLabel: 'Chat',
-    })
-    return
-  }
-
-  if (block.type === 'pdf_file' || block.type === 'docx_file') {
-    window.open(block.url, '_blank', 'noopener,noreferrer')
-  }
-}
-
 function FinalOutputThumb({
   imageUrl,
   videoUrl,
@@ -267,6 +214,43 @@ function FinalOutputThumb({
   return <span className="text-muted-foreground">{icon}</span>
 }
 
+const TERMINAL_MISSION_STATUSES = new Set(['completed', 'done', 'failed', 'error', 'archived'])
+
+function MissionOutputStatus({ missionId, fallback }: { missionId: string; fallback: string }) {
+  const [label, setLabel] = useState(fallback)
+
+  useEffect(() => {
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | null = null
+    const refresh = async () => {
+      try {
+        const [mission, deliverablesByMission] = await Promise.all([
+          fetchMissionById(missionId),
+          fetchDeliverablesForMissions([missionId]),
+        ])
+        if (cancelled) return
+        const outputCount = deliverablesByMission[missionId]?.length ?? 0
+        const status = mission.status.replaceAll('_', ' ')
+        setLabel(
+          `${status}${outputCount > 0 ? ` · ${outputCount} output${outputCount === 1 ? '' : 's'}` : ''}`,
+        )
+        if (!TERMINAL_MISSION_STATUSES.has(mission.status)) {
+          timer = setTimeout(() => void refresh(), 5000)
+        }
+      } catch {
+        if (!cancelled) timer = setTimeout(() => void refresh(), 10000)
+      }
+    }
+    void refresh()
+    return () => {
+      cancelled = true
+      if (timer) clearTimeout(timer)
+    }
+  }, [missionId])
+
+  return <>{label}</>
+}
+
 export function FinalOutputCards({
   blocks,
   deliverableSource,
@@ -283,7 +267,7 @@ export function FinalOutputCards({
     const block = blocks.at(-1)
     if (!autoOpen || !block || autoOpenedBlockRef.current === block.id) return
     autoOpenedBlockRef.current = block.id
-    openDefaultOutput(block)
+    openFinalOutputInShell(block)
   }, [autoOpen, blocks])
 
   if (blocks.length === 0) return null
@@ -306,7 +290,7 @@ export function FinalOutputCards({
                   return
                 }
               }
-              openDefaultOutput(block)
+              openFinalOutputInShell(block)
             }}
             className="card-glass hover:bg-hover-subtle gap-spacing-3 rounded-spacing-3 p-spacing-2 flex w-full items-center text-left transition-colors"
           >
@@ -324,7 +308,11 @@ export function FinalOutputCards({
               <div className="body-3 text-foreground truncate font-semibold">{output.title}</div>
               {output.subtitle ? (
                 <div className="typo-caption text-muted-foreground mt-spacing-1 line-clamp-1">
-                  {output.subtitle}
+                  {block.type === 'artifact_preview' && block.artifactType === 'mission' ? (
+                    <MissionOutputStatus missionId={block.artifactId} fallback={output.subtitle} />
+                  ) : (
+                    output.subtitle
+                  )}
                 </div>
               ) : null}
               <div className="mt-spacing-2 gap-spacing-2 flex min-w-0 items-center">

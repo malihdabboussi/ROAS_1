@@ -74,8 +74,11 @@ describe('ShellArtifactViewerPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Expand artifact viewer' }))
 
     expect(container.querySelector('[data-shell-artifact-viewer]')?.className).toContain('absolute')
-    expect(screen.getByRole('button', { name: 'Collapse artifact viewer' })).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Close artifact viewer' })).toBeNull()
+    const controls = screen.getByTestId('artifact-viewer-controls')
+    const collapse = screen.getByRole('button', { name: 'Collapse artifact viewer' })
+    expect(controls).toContainElement(collapse)
+    expect(collapse.querySelector('.lucide-minimize-2')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Close artifact viewer' })).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Collapse artifact viewer' }))
     expect(container.querySelector('[data-shell-artifact-viewer]')?.className).not.toContain(

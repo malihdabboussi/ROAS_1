@@ -16,6 +16,7 @@ import type { RatingPayload } from './MissionRatingStrip'
 
 export interface MissionDetailModalViewProps {
   mission: Mission
+  presentation: 'modal' | 'panel'
   liveMission: Mission | null
   title: string
   setTitle: (value: string) => void

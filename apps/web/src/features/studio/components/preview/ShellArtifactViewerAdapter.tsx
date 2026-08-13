@@ -6,6 +6,7 @@ import { renderDeliverableEntityPreview } from '@/components/deliverables/delive
 import { DeliverablePreviewBody } from '@/components/deliverables/DeliverablePreviewBody'
 import { useDeliverableEntityContent } from '@/components/deliverables/use-deliverable-entity-content'
 import { ShellArtifactViewerPanel } from '@/components/shell/ShellArtifactViewerPanel'
+import { ShellMissionArtifactViewerAdapter } from '@/components/shell/ShellMissionArtifactViewerAdapter'
 import { ShellTaskArtifactViewerAdapter } from '@/components/shell/ShellTaskArtifactViewerAdapter'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { SpaceDocEditorPanelAdapter } from '@/components/spaces/SpaceDocEditorPanelAdapter'
@@ -145,19 +146,16 @@ export function ShellArtifactViewerAdapter() {
   }, [closeArtifactViewer, pathname])
 
   useEffect(() => {
-    if (target?.type !== 'mission' && target?.type !== 'flow') return
+    if (target?.type !== 'flow') return
     const entityId = target.entityId || target.id
-    const internalUrl =
-      target.internalUrl ||
-      (target.type === 'mission'
-        ? `/home?mission=${encodeURIComponent(entityId)}`
-        : `/flows?flow_id=${encodeURIComponent(entityId)}`)
+    const internalUrl = target.internalUrl || `/flows?flow_id=${encodeURIComponent(entityId)}`
     closeArtifactViewer()
     router.push(internalUrl)
   }, [closeArtifactViewer, router, target])
 
   if (!target) return null
-  if (target.type === 'mission' || target.type === 'flow') return null
+  if (target.type === 'mission') return <ShellMissionArtifactViewerAdapter target={target} />
+  if (target.type === 'flow') return null
   if (target.type === 'image' || target.type === 'video' || target.type === 'audio') {
     return <ShellMediaArtifactViewer target={target} />
   }

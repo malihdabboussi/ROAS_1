@@ -33,6 +33,40 @@ function createSupabase(tableResults: Record<string, QueryResult> = {}) {
 }
 
 describe('MissionsRepository lifecycle helpers', () => {
+  it('creates inbox missions without refreshing campaign active-work state', async () => {
+    const repository = new MissionsRepository()
+    const mission = {
+      id: 'mission-1',
+      user_id: 'user-1',
+      campaign_id: 'campaign-1',
+      status: 'inbox',
+    }
+    const single = vi.fn().mockResolvedValue({ data: mission, error: null })
+    const select = vi.fn(() => ({ single }))
+    const insert = vi.fn(() => ({ select }))
+    const from = vi.fn((table: string) => {
+      if (table !== 'missions') throw new Error(`Unexpected create-time table read: ${table}`)
+      return { insert }
+    })
+    const supabase = { from } as unknown as SupabaseClient
+
+    await expect(
+      repository.createMission(supabase, {
+        user_id: 'user-1',
+        campaign_id: 'campaign-1',
+        title: 'Static Ad Production',
+        status: 'inbox',
+        correlation_id: 'correlation-1',
+        idempotency_key: 'mission-key-1',
+        retry_count: 0,
+        input: {},
+      }),
+    ).resolves.toEqual(mission)
+
+    expect(from).toHaveBeenCalledTimes(1)
+    expect(from).toHaveBeenCalledWith('missions')
+  })
+
   it('loads create-time space and campaign ownership rows', async () => {
     const repository = new MissionsRepository()
     const { supabase, queries } = createSupabase({

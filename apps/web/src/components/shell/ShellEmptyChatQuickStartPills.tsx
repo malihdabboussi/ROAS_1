@@ -1,7 +1,9 @@
 'use client'
 
-import { SHELL_EMPTY_CHAT_QUICK_STARTS } from '@/components/shell/shell-empty-chat-prompts.config'
-import type { ShellChatQuickStart } from '@/components/shell/shell-empty-chat-prompts.config'
+import {
+  SHELL_CREATE_QUICK_STARTS,
+  type ShellCreateMenuItem,
+} from '@/components/shell/shell-create-menu.config'
 import { cn } from '@/lib/utils/cn'
 
 export function ShellEmptyChatQuickStartPills({
@@ -9,7 +11,7 @@ export function ShellEmptyChatQuickStartPills({
   className,
   variant = 'standalone',
 }: {
-  onSelect: (quickStart: ShellChatQuickStart) => void
+  onSelect: (quickStart: ShellCreateMenuItem) => void
   className?: string
   variant?: 'standalone' | 'shelf'
 }) {
@@ -24,7 +26,7 @@ export function ShellEmptyChatQuickStartPills({
       role="group"
       aria-label="Quick starts"
     >
-      {SHELL_EMPTY_CHAT_QUICK_STARTS.map((quickStart) => {
+      {SHELL_CREATE_QUICK_STARTS.map((quickStart) => {
         const Icon = quickStart.icon
         return (
           <button

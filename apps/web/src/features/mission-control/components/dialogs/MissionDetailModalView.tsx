@@ -17,6 +17,7 @@ import {
 
 export function MissionDetailModalView({
   mission,
+  presentation,
   liveMission,
   title,
   setTitle,
@@ -304,32 +305,33 @@ export function MissionDetailModalView({
       : null
   }
 
-  return portalTarget
-    ? createPortal(
-        <MissionDetailDesktopShell
-          shellZ={shellZ}
-          hideMissionSurface={previewDeliverable != null}
-          onClose={onClose}
-          title={title}
-          selectedSubtask={selectedSubtask}
-          subtaskDetailProps={subtaskDetailProps}
-          onBackToMission={() => setSelectedSubtaskId(null)}
-          onTitleChange={setTitle}
-          onOpenMenu={setMenuAnchor}
-          menuAnchor={menuAnchor}
-          menuMission={effectiveMission}
-          onCloseMenu={() => setMenuAnchor(null)}
-          onUpdated={onUpdated}
-          onDelete={onDelete}
-          missionMetaProps={missionMetaProps}
-          subtasksProps={subtasksProps}
-          accessApprovalCard={accessApprovalCard}
-          deliverables={visibleDeliverables}
-          onSelectDeliverable={setPreviewDeliverable}
-          activityTimelineProps={activityTimelineProps}
-          overlayModals={overlayModals}
-        />,
-        portalTarget,
-      )
-    : null
+  const desktopShell = (
+    <MissionDetailDesktopShell
+      presentation={presentation}
+      shellZ={shellZ}
+      hideMissionSurface={previewDeliverable != null}
+      onClose={onClose}
+      title={title}
+      selectedSubtask={selectedSubtask}
+      subtaskDetailProps={subtaskDetailProps}
+      onBackToMission={() => setSelectedSubtaskId(null)}
+      onTitleChange={setTitle}
+      onOpenMenu={setMenuAnchor}
+      menuAnchor={menuAnchor}
+      menuMission={effectiveMission}
+      onCloseMenu={() => setMenuAnchor(null)}
+      onUpdated={onUpdated}
+      onDelete={onDelete}
+      missionMetaProps={missionMetaProps}
+      subtasksProps={subtasksProps}
+      accessApprovalCard={accessApprovalCard}
+      deliverables={visibleDeliverables}
+      onSelectDeliverable={setPreviewDeliverable}
+      activityTimelineProps={activityTimelineProps}
+      overlayModals={overlayModals}
+    />
+  )
+  if (presentation === 'panel') return desktopShell
+
+  return portalTarget ? createPortal(desktopShell, portalTarget) : null
 }

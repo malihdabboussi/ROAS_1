@@ -304,16 +304,7 @@ export class MissionsOutboxDispatcherService implements OnModuleInit, OnModuleDe
       return true
     }
 
-    const supabase = this.databaseService.getClient()
-    const { data: missionRow, error: missionErr } = await supabase
-      .from('missions')
-      .select('status')
-      .eq('id', row.mission_id)
-      .eq('user_id', row.user_id)
-      [row.org_id ? 'eq' : 'is']('org_id', row.org_id ?? null)
-      .maybeSingle()
-    if (missionErr) throw new Error(missionErr.message)
-    const missionStatus = String(missionRow?.status ?? '')
+    const missionStatus = await this.loadMissionStatus(row)
     const allowedStatuses = allowedStatusesForOutboxEvent(row.event_type)
     if (!allowedStatuses.has(missionStatus)) {
       await this.markRetry(row, `Mission status ${missionStatus || 'unknown'} is not dispatchable`)
@@ -392,6 +383,41 @@ export class MissionsOutboxDispatcherService implements OnModuleInit, OnModuleDe
         .catch(() => {})
     }
     return true
+  }
+
+  private async loadMissionStatus(row: OutboxEventRow): Promise<string> {
+    if (this.databaseService.hasPgPool()) {
+      try {
+        const { rows } = await this.databaseService.pgQuery<{ status: string }>(
+          `
+            SELECT status
+            FROM missions
+            WHERE id = $1::uuid
+              AND user_id = $2::uuid
+              AND org_id IS NOT DISTINCT FROM $3::uuid
+            LIMIT 1
+          `,
+          [row.mission_id, row.user_id, row.org_id ?? null],
+        )
+        return String(rows[0]?.status ?? '')
+      } catch (error) {
+        if (this.databaseService.hasPgPool()) throw error
+        this.logger.warn(
+          `Direct Postgres unavailable while checking mission ${row.mission_id}; using Supabase fallback`,
+        )
+      }
+    }
+
+    const supabase = this.databaseService.getClient()
+    const { data: missionRow, error: missionErr } = await supabase
+      .from('missions')
+      .select('status')
+      .eq('id', row.mission_id)
+      .eq('user_id', row.user_id)
+      [row.org_id ? 'eq' : 'is']('org_id', row.org_id ?? null)
+      .maybeSingle()
+    if (missionErr) throw new Error(missionErr.message)
+    return String(missionRow?.status ?? '')
   }
 
   private async markProcessed(outboxId: string) {

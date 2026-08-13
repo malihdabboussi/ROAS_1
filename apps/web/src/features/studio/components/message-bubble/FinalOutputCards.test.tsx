@@ -3,14 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FinalOutputCards } from './FinalOutputCards'
 import type { FinalOutputBlock } from './message-bubble.utils'
 
-const { openArtifactPreviewInShell, openDocumentInShell } = vi.hoisted(() => ({
+const { openArtifactInShell, openArtifactPreviewInShell, openDocumentInShell } = vi.hoisted(() => ({
+  openArtifactInShell: vi.fn(),
   openArtifactPreviewInShell: vi.fn(),
   openDocumentInShell: vi.fn(),
 }))
 
 vi.mock('@/lib/artifacts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/artifacts')>()
-  return { ...actual, openArtifactPreviewInShell, openDocumentInShell }
+  return { ...actual, openArtifactInShell, openArtifactPreviewInShell, openDocumentInShell }
 })
 
 afterEach(cleanup)
@@ -19,6 +20,7 @@ describe('FinalOutputCards', () => {
   beforeEach(() => {
     openArtifactPreviewInShell.mockClear()
     openDocumentInShell.mockClear()
+    openArtifactInShell.mockClear()
   })
 
   it('renders compact full-width output rows', () => {
@@ -203,5 +205,75 @@ describe('FinalOutputCards', () => {
       }),
     )
     window.removeEventListener('vibey-open-media', listener)
+  })
+
+  it.each([
+    {
+      block: {
+        type: 'pdf_file' as const,
+        id: 'pdf-1',
+        url: 'https://cdn.example.com/launch.pdf',
+        label: 'Launch brief',
+      },
+      expected: { type: 'pdf', fileUrl: 'https://cdn.example.com/launch.pdf' },
+    },
+    {
+      block: {
+        type: 'docx_file' as const,
+        id: 'docx-1',
+        url: 'https://cdn.example.com/launch.docx',
+        label: 'Launch plan',
+      },
+      expected: {
+        type: 'file',
+        fileUrl: 'https://cdn.example.com/launch.docx',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      },
+    },
+  ])('opens $block.type outputs in the right artifact pane', ({ block, expected }) => {
+    render(<FinalOutputCards blocks={[block]} />)
+
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(block.label, 'i') }))
+
+    expect(openArtifactInShell).toHaveBeenCalledWith(expect.objectContaining(expected))
+  })
+
+  it('opens project and interactive widget outputs in the right artifact pane', () => {
+    const blocks: FinalOutputBlock[] = [
+      {
+        type: 'project_preview',
+        id: 'project-card-1',
+        project_id: 'project-1',
+        name: 'Launch project',
+        entry_point: 'src/index.ts',
+        files: ['src/index.ts'],
+      },
+      {
+        type: 'widget_preview',
+        id: 'widget-1',
+        name: 'Budget calculator',
+        widget_definition: { type: 'calculator' },
+        data_dependencies: ['spend'],
+      },
+    ]
+
+    render(<FinalOutputCards blocks={blocks} />)
+    fireEvent.click(screen.getByRole('button', { name: /Launch project/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Budget calculator/i }))
+
+    expect(openArtifactInShell).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        id: 'project-1',
+        entityId: 'project-1',
+        entityTable: 'projects',
+        internalUrl: '/projects/project-1',
+        type: 'text',
+      }),
+    )
+    expect(openArtifactInShell).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ id: 'widget-1', type: 'text' }),
+    )
   })
 })

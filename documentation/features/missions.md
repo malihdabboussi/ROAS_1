@@ -1,6 +1,6 @@
 # Missions harness
 
-Last updated: 2026-07-30
+Last updated: 2026-08-13
 
 ## Full subtask workspace
 
@@ -15,6 +15,10 @@ Successful artifact tool receipts persist their `deliverable_id` in the subtask 
 The header displays `Mission > Subtask`. Selecting the Mission breadcrumb returns to the parent without closing the detail shell. On mobile, the back button performs the same level navigation before closing the Mission.
 
 ## Playbook mission views
+
+Chat launches missions from the shared **Create** catalog; the former standalone composer rocket is removed. The empty-chat quick-start row is generated from that same active Create catalog instead of maintaining a second Deep Search/Task/media list, so Mission and every supported creation action seed the identical prompt and tool contract from either entry point. The Create action opens Quick Missions, inherits an attached campaign/Space when available, and otherwise requires the user to choose the campaign and Space before execution. Submitting dismisses the launcher immediately with a background-start toast; mission creation continues asynchronously and inserts the durable receipt when the API returns its id, so a slow scope lookup cannot block the conversation or prevent another mission from being started. Receipt persistence reuses the permission lookup that already proved the conversation exists, then performs a deterministic-id upsert; the happy path therefore requires one permission read and one message write instead of a duplicate conversation read plus separate existence and insert requests. Mission receipts remain in the originating transcript, refresh their persisted Mission status and deliverable count while work continues, and also appear under Outputs in the conversation summary. Selecting either surface opens the interactive Mission workspace in a resizable third pane, so the chat remains available while the user reviews activity, answers human gates, comments, and opens deliverables. The chat's conversation-details menu and summary toggle stay together at the top-right of the second pane; the third pane owns one trailing expand/collapse/close group, with no duplicate shell toggle. Generated documents, PDFs, DOCX files, media, projects, and widgets use the same in-app artifact pane instead of opening browser tabs or becoming inert cards.
+
+The **Client Strategy** playbook is the reusable non-webinar strategy path. It runs the validated opening stages of Webinar Fulfillment—Atlas campaign/Brain context preparation followed by the strategist's pre-call map—and stops before webinar call intake, production, or activation. Its native output is `Client Strategy Map`.
 
 The Missions Space view now has **Mission List** and **Mission Views** surfaces. The list remains the operational table. Mission Views presents supported deterministic playbooks as action-oriented reports using one registry-backed phase contract rather than a custom page per mission.
 
@@ -268,6 +272,8 @@ Database triggers (see `supabase/migrations/20260321194500_mission_harness_task_
 
 **Data flow (summary):** `missions` (worker/API) ↔ `tasks` (UI) via triggers; worker drives `missions` + `mission_subtasks` + `mission_outbox`.
 
+When direct Postgres is unavailable, public mission creation uses the Supabase fallback in a queue-first order: persist the `inbox` mission, immediately persist `mission.plan.requested`, then start the `mission.created` audit log and profile interaction touch as nonblocking writes. Creating an `inbox` mission does not refresh campaign `has_active_work`, because that value is derived only from `in_progress` missions. Status changes and deletion still refresh it. This prevents a slow, noncritical campaign or profile request from leaving the browser on `Starting…` after the mission row exists but before its queue event is durable.
+
 ### Mission step ↔ Space Task sync
 
 Concrete build work can set `publishToTaskList: true` on a Mission step. The persisted `mission_subtasks.publish_to_task_list` flag creates exactly one `space_items` row linked by `linked_mission_subtask_id`; title, status, owner, due date, description, and priority then follow the Mission step automatically. Human-owned linked tasks complete the exact Mission step through the standard human-completion endpoint, while agent-owned task status remains controlled by Mission execution.
@@ -299,7 +305,16 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 If the direct pool hits a transport failure, the worker removes it from service before awaiting shutdown. Concurrent jobs therefore use existing Supabase HTTP fallbacks instead of acquiring a pool that is already ending.
 
+Outbox mission-status validation uses the direct pool when available, keeping queue publication independent of PostgREST latency. The worker's Supabase HTTP fallback allows 60 seconds per request with two retries, matching the API client. This is intentionally longer than the former seven-second window: a production Webinar Fulfillment smoke run reached an active BullMQ consumer while authenticated PostgREST reads took about 29 seconds, so the shorter timeout repeatedly aborted otherwise viable requests and left the mission in `inbox`.
+
 ## Decision Log
+
+- 2026-08-13: Aligned Chat and artifact chrome with the three-pane interaction model: conversation details beside summary, one third-pane control group, persisted drag resizing, hover-only left-side rename affordance, and in-app routing for every final-output card type.
+- 2026-08-12: Moved Quick Missions into Chat Create, removed the duplicate rocket, added the standalone Client Strategy playbook, made mission cards live in the transcript and conversation summary, and opened Mission Details in the right-side work panel without leaving chat.
+- 2026-08-12: Aligned Mission Worker Supabase resilience with the API's 60-second request window and moved outbox mission-status checks to native Postgres when available after a live chat-launched mission reproduced seven-second transport aborts.
+- 2026-08-12: Made Supabase-backed mission creation queue-first, removed the irrelevant create-time campaign active-work refresh, and moved noncritical audit/profile writes off the response path after a live Static Ad launch reproduced a durable mission row with no outbox event and a multi-minute `Starting…` state.
+- 2026-08-12: Made Quick Mission submission dismiss immediately while creation and receipt persistence continue in the background, preserving chat and multi-mission access during slow API scope resolution.
+- 2026-08-12: Collapsed Quick Mission receipt persistence to the existing permission check plus one deterministic-id message upsert, retaining conflict validation without three redundant happy-path database round trips.
 
 - 2026-07-30: Added a turn-level static-ad routing guard, visual choice examples in Chat and Quick Missions, and removed the hidden Myth vs. System default.
 - 2026-07-29: Persisted Chat Quick Mission receipts as idempotent typed Mission cards, recorded the originating conversation in mission input, and aligned video production with the skill-written-copy default.

@@ -54,6 +54,13 @@ describe('shell conversation summary', () => {
           message_references: [{ id: 'mission-1', kind: 'mission', label: 'Proposal mission' }],
           content_blocks_ordered: [
             {
+              type: 'artifact_preview',
+              id: 'mission-card-1',
+              artifactType: 'mission',
+              artifactId: 'mission-1',
+              name: 'Client Strategy',
+            },
+            {
               type: 'media_asset',
               id: 'image-1',
               title: 'Proposal cover',
@@ -68,6 +75,7 @@ describe('shell conversation summary', () => {
     expect(extractConversationFileRows(rows).map((row) => row.title)).toEqual([
       'brief.pdf',
       'Core offer',
+      'Client Strategy',
       'Proposal cover',
     ])
     expect(extractConversationSourceRows(rows).map((row) => row.title)).toEqual([

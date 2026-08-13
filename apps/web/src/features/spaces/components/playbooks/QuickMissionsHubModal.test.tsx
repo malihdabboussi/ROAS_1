@@ -69,6 +69,43 @@ describe('QuickMissionsHubModal', () => {
     expect(onStarted).toHaveBeenCalledWith('mission-1', 'Static Ad Production', 'space-1')
   })
 
+  it('dismisses the launcher while mission creation continues in the background', async () => {
+    let resolveMission: ((mission: { id: string }) => void) | undefined
+    vi.mocked(createMission).mockReturnValue(
+      new Promise((resolve) => {
+        resolveMission = resolve
+      }) as never,
+    )
+    const onClose = vi.fn()
+    const onStarted = vi.fn()
+
+    render(
+      <QuickMissionsHubModal
+        open
+        clients={[{ spaceId: 'space-1', campaignId: 'campaign-1', title: 'Current Course' }]}
+        initialPlaybookKey="webinar-fulfillment"
+        initialClientSpaceId="space-1"
+        sourceConversationId="conversation-1"
+        onClose={onClose}
+        onStarted={onStarted}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run mission' }))
+
+    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(onStarted).not.toHaveBeenCalled()
+
+    resolveMission?.({ id: 'mission-background' })
+    await waitFor(() =>
+      expect(onStarted).toHaveBeenCalledWith(
+        'mission-background',
+        'Webinar Fulfillment',
+        'space-1',
+      ),
+    )
+  })
+
   it('shows a searchable campaign and space picker when the chat is unscoped', () => {
     render(
       <QuickMissionsHubModal
