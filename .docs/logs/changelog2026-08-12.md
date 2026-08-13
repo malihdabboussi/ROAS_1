@@ -257,3 +257,13 @@ Why: Production client calls were mislabeled when their summaries discussed sale
 Impact: Explicit prospect/demo and partner titles retain their categories; ordinary client reviews remain Client even when sales is discussed. Pixel drafts now use the same agenda, recap, transcript, and durable context visible in the portal.
 
 Files: apps/api/src/modules/meetings/domain/meeting-call-kind.ts, apps/agent-api/src/modules/task-agent/repositories/task-agent.repository.ts, apps/agent-api/src/modules/task-agent/services/task-agent-suggestions.service.ts, focused tests, documentation/features/meeting-follow-up-slack.md
+
+## [2026-08-12 22:27] - [FEATURE]
+
+What: Added a separate fail-closed channel-delivery control to Pixel's client post-call action, preconfigured the internal recap channel, exposed the setting in Flow configuration, and covered the explicit automatic-send path.
+
+Why: Review recaps must reach Slack DMs during testing without allowing the production Flow to post into `#roas-call-recaps-internal` before approval.
+
+Impact: Shadow remains send-free, Active defaults to the existing review DM, and the recap channel can receive Pixel's stored draft only after an administrator deliberately switches channel delivery to Automatic.
+
+Files: apps/api/src/modules/spaces, apps/api/src/modules/space-templates, apps/web/src/features/spaces, packages/api-shared/src/types/flow-capabilities.ts, supabase/migrations/20260813053000_restore_client_post_call_pixel_shadow.sql, documentation/features/meeting-follow-up-slack.md

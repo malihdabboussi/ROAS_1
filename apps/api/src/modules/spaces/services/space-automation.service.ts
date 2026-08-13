@@ -29,8 +29,8 @@ import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
 import { MeetingFollowUpSlackConfirmService } from './meeting-follow-up-slack-confirm.service'
 import { MeetingsPrecallPrepService } from './meetings-precall-prep.service'
 import { shouldRunPostCallSlackAction } from './post-call-meeting-scope'
-import { SlackTeamLoopService, type SlackTeamLoopKind } from './slack-team-loop.service'
 import type { SlackCadenceConfig } from './slack-team-cadence'
+import { SlackTeamLoopService, type SlackTeamLoopKind } from './slack-team-loop.service'
 import { SocialResearchOrchestrationService } from './social-research-orchestration.service'
 import { previewSlackTeamAutomation } from './space-automation-preview'
 import { SpaceAutomationServiceBase19 } from './space-automation-service-19.base'
@@ -498,6 +498,11 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
       callTitle: String(item.title ?? ''),
       suggestionIds,
       deliveryMode: action.delivery_mode === 'active' ? 'active' : 'shadow',
+      channelDelivery: action.channel_delivery === 'automatic' ? 'automatic' : 'disabled',
+      destinationChannelId:
+        typeof action.destination_channel_id === 'string'
+          ? action.destination_channel_id
+          : undefined,
       dmEmail: typeof action.dm_email === 'string' ? action.dm_email : undefined,
       confirmReaction:
         typeof action.confirm_reaction === 'string' ? action.confirm_reaction : undefined,

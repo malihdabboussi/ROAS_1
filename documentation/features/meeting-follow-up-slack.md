@@ -52,8 +52,8 @@ Legacy Fathom call rows are backfilled into workspaces and recording sources. Ex
 | Signal action routing                                  | Internal DM, group DM, source thread, thread broadcast, and source channel remain Shadow until approval    |
 | Named campaign Brain routing from Slack                | Explicit client/campaign names override ambient campaign context                                           |
 | Pixel reply completion reactions                       | 👀 while processing; ✅ only after Slack accepts the completed reply                                       |
-| Automatic client-call processing                      | Restored in Shadow; non-client call kinds skip before Pixel drafting                                       |
-| Auto-post to a channel                                 | Disabled pending human review                                                                               |
+| Automatic client-call processing                       | Restored in Shadow; non-client call kinds skip before Pixel drafting                                       |
+| Auto-post to `#roas-call-recaps-internal`              | Implemented behind explicit `channel_delivery=automatic`; installed disabled pending review                |
 | Page Grader dispatch on confirm                        | Fulfillment candidates only; conservative client/assignee resolution                                       |
 
 ## Intended product loop
@@ -114,7 +114,7 @@ The skill is database-first in `agent_skills` and mirrored under `docker/agents/
    Before generation, Agent API loads the meeting workspace's portal agenda, canonical recap, transcript documents, and Pixel's available Brain context. The direct call/follow-up payload remains the final grounding source.
 4. Writes that draft to `slack_shadow_actions` as a `workflow` proposal, linked to the admin's Slack person record when an email match exists.
 5. Creates one Shadow `message` proposal per follow-up assignee matched to an **Internal** Slack person (grouped tasks, friendly reminder tone). Skips unmatched, External, Ignored, and `delivery_mode=off`. IDs are stored on `assignee_shadow_action_ids`.
-6. In `delivery_mode=shadow`, stores the run payload and stops without opening a DM or sending any Slack message. In `delivery_mode=active`, opens the admin review DM, posts the proposed recap in its thread, then approves and sends only account-manager proposals whose person record is also Active.
+6. In `delivery_mode=shadow`, stores the run payload and stops without opening a DM or sending any Slack message. In `delivery_mode=active` with channel delivery disabled, opens the admin review DM, posts the proposed recap in its thread, then approves and sends only account-manager proposals whose person record is also Active. Channel posting is a separate explicit switch: only `delivery_mode=active` plus `channel_delivery=automatic` sends the stored Pixel recap to the configured destination channel. The installed destination is `#roas-call-recaps-internal`, but the switch remains disabled until human approval.
 7. Stores the Shadow or pending payload on the **call** item:
 
    `custom_data.slack_follow_up_confirm = { status, delivery_mode, channel_id, message_ts, space_item_ids, confirm_reaction, assignee_shadow_action_ids?, assignee_sent_action_ids?, ... }`
@@ -415,6 +415,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-29:** Every Space with a `call_kind` field receives the complete Personal/Team/Executive/Client/Partner/Sales option set, including legacy organization Meetings spaces. Calendar creation and Fathom attachment use one classifier; automatic results may refresh, but manual selections win.
 - **2026-08-12:** The live Fathom Meeting Log invokes Pixel's post-call workflow for canonical Client calls only. It starts in Shadow so drafts, action ownership, and Brain-backed context can be reviewed without posting to Slack; channel delivery remains disabled until approval.
 - **2026-08-12:** Call-kind classification now gives explicit sales/demo and partner titles precedence, then treats a mostly-external meeting as Client before inspecting ordinary transcript discussion. Client performance calls can discuss sales or partnerships without being mislabeled. Pixel's post-call draft input now includes the portal agenda, recap, full transcript documents, and Brain context.
+- **2026-08-12:** Channel delivery is an independent fail-closed action setting. The client recap channel ID is preconfigured, but only an explicit change to `channel_delivery=automatic` on an Active flow can post there; the rollout migration leaves it disabled for DM review.
 
 ## Related
 

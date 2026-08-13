@@ -42,6 +42,7 @@ export const DEFAULT_ADMIN_DM_EMAIL = 'dylan@dylanvanas.com'
 export type SlackFollowUpConfirmPayload = {
   status: 'shadow' | 'pending' | 'approved' | 'failed'
   delivery_mode?: 'shadow' | 'active'
+  channel_delivery?: 'disabled' | 'automatic'
   channel_id: string
   message_ts: string
   space_id: string
@@ -111,10 +112,13 @@ export class MeetingFollowUpSlackConfirmService {
     callTitle: string
     suggestionIds: string[]
     deliveryMode?: 'shadow' | 'active'
+    channelDelivery?: 'disabled' | 'automatic'
+    destinationChannelId?: string
     dmEmail?: string
     confirmReaction?: string
   }): Promise<Record<string, unknown>> {
     const deliveryMode = input.deliveryMode === 'active' ? 'active' : 'shadow'
+    const channelDelivery = input.channelDelivery === 'automatic' ? 'automatic' : 'disabled'
     if (deliveryMode === 'active' && !this.slackTools) {
       throw new Error('Slack tools service is not available')
     }
@@ -216,6 +220,7 @@ export class MeetingFollowUpSlackConfirmService {
       const payload: SlackFollowUpConfirmPayload = {
         status: 'shadow',
         delivery_mode: 'shadow',
+        channel_delivery: channelDelivery,
         channel_id: '',
         message_ts: '',
         space_id: input.spaceId,
@@ -249,6 +254,53 @@ export class MeetingFollowUpSlackConfirmService {
 
     const slackTools = this.slackTools
     if (!slackTools) throw new Error('Slack tools service is not available')
+
+    if (channelDelivery === 'automatic') {
+      const destinationChannelId = String(input.destinationChannelId ?? '').trim()
+      if (!destinationChannelId) {
+        throw new Error('Automatic post-call channel delivery requires a destination channel')
+      }
+      const draftText = buildProposedShareableRecapMessage({
+        shareableDraft: draft.message,
+        fathomUrl: resolveFathomUrl(callItem),
+        proposed: false,
+      })
+      const sent = await slackTools.sendMessage(input.supabase, input.userId, slackOrgId, {
+        channel_id: destinationChannelId,
+        text: draftText,
+        unfurl_links: false,
+        unfurl_media: false,
+      })
+      const messageTs = String((sent as { ts?: string }).ts ?? '').trim()
+      if (!messageTs) throw new Error('Slack channel delivery did not return a message ts')
+      const payload: SlackFollowUpConfirmPayload = {
+        status: 'approved',
+        delivery_mode: 'active',
+        channel_delivery: 'automatic',
+        channel_id: destinationChannelId,
+        message_ts: messageTs,
+        space_id: input.spaceId,
+        space_item_ids: followUps.map((item) => String((item as { id: string }).id)),
+        confirm_reaction: confirmReaction,
+        dm_email: dmEmail,
+        requested_at: new Date().toISOString(),
+        approved_at: new Date().toISOString(),
+        draft_message: draft.message,
+        draft_rationale: draft.rationale,
+        draft_context_sources: draft.context_sources,
+        agent_key: 'vibey',
+        skill_key: 'post-call-delivery',
+      }
+      await this.storeConfirmPayload(input, payload)
+      return {
+        delivery_mode: 'active',
+        channel_delivery: 'automatic',
+        sent: true,
+        channel_id: destinationChannelId,
+        message_ts: messageTs,
+        suggestion_count: followUps.length,
+      }
+    }
 
     const lookup = await slackTools.findUserByEmail(input.supabase, input.userId, slackOrgId, {
       email: dmEmail,
@@ -312,6 +364,7 @@ export class MeetingFollowUpSlackConfirmService {
     const payload: SlackFollowUpConfirmPayload = {
       status: 'pending',
       delivery_mode: 'active',
+      channel_delivery: 'disabled',
       channel_id: channelId,
       message_ts: messageTs,
       space_id: input.spaceId,

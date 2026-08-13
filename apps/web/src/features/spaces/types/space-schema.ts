@@ -1098,6 +1098,8 @@ export type AutomationAction =
       type: 'request_slack_follow_up_confirm'
       meeting_scope?: 'all' | 'client'
       delivery_mode?: 'shadow' | 'active'
+      channel_delivery?: 'disabled' | 'automatic'
+      destination_channel_id?: string
       dm_email?: string
       confirm_reaction?: string
       suggestion_ids?: string[]
