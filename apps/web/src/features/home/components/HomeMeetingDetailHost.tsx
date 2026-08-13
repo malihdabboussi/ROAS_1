@@ -79,7 +79,7 @@ export function HomeMeetingDetailHost({
     // The href carries the meeting identity so a remembered surface reopens
     // this exact meeting on the meetings route, never the broad screen. The id
     // matches what the top bar records for the same URL so the entries merge.
-    const href = homeMeetingHref(event)
+    const href = homeMeetingHref(event, event.related?.space_id)
     recordWorkAreaPage({
       id: href,
       title: meetingTitle,

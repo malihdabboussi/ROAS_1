@@ -7,9 +7,11 @@ import { agendaListFetchWindow } from '@/features/home/lib/agenda-fetch-window'
 import {
   agendaEventMatchesMeetingParam,
   HOME_MEETING_PARAM,
+  HOME_MEETING_SPACE_PARAM,
   HOME_MEETING_WORK_RESTORE_FEATURE,
   isCalendarAgendaEventLike,
 } from '@/features/home/lib/home-meeting-work-restore'
+import { fetchMeetingWorkspaceEvent } from '@/features/home/services/meeting-workspace-api'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { useOrgStore } from '@/lib/org'
 import { fetchCalendarAgenda, type CalendarAgendaEvent } from '@/lib/services/calendar-api'
@@ -31,6 +33,7 @@ export function useHomeMeetingWorkRestore(
   const router = useRouter()
   const searchParams = useSearchParams()
   const meetingParam = searchParams.get(HOME_MEETING_PARAM)
+  const meetingSpaceParam = searchParams.get(HOME_MEETING_SPACE_PARAM)
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const activeEventRef = useRef(activeMeetingEvent)
   /** Param currently driving an open — the URL leads and state follows. */
@@ -67,11 +70,17 @@ export function useHomeMeetingWorkRestore(
     const stripParam = () => {
       const params = new URLSearchParams(searchParams.toString())
       params.delete(HOME_MEETING_PARAM)
+      params.delete(HOME_MEETING_SPACE_PARAM)
       const query = params.toString()
       router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
     }
     void (async () => {
       try {
+        if (meetingSpaceParam) {
+          const event = await fetchMeetingWorkspaceEvent(meetingSpaceParam, meetingParam)
+          if (!cancelled) openMeetingEvent(event)
+          return
+        }
         const { fetchStart, fetchEnd } = agendaListFetchWindow(new Date(), 'week')
         const start = fetchStart.toISOString()
         const end = fetchEnd.toISOString()
@@ -103,7 +112,15 @@ export function useHomeMeetingWorkRestore(
     return () => {
       cancelled = true
     }
-  }, [activeOrgId, meetingParam, openMeetingEvent, pathname, router, searchParams])
+  }, [
+    activeOrgId,
+    meetingParam,
+    meetingSpaceParam,
+    openMeetingEvent,
+    pathname,
+    router,
+    searchParams,
+  ])
 
   // Meeting → param. Keeps recorded top-bar surfaces addressable and removes
   // the param when the meeting closes so it cannot reopen itself.
@@ -118,6 +135,7 @@ export function useHomeMeetingWorkRestore(
       if (!meetingParam) return
       const params = new URLSearchParams(searchParams.toString())
       params.delete(HOME_MEETING_PARAM)
+      params.delete(HOME_MEETING_SPACE_PARAM)
       const query = params.toString()
       router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
       return
@@ -125,6 +143,9 @@ export function useHomeMeetingWorkRestore(
     if (meetingParam && agendaEventMatchesMeetingParam(activeMeetingEvent, meetingParam)) return
     const params = new URLSearchParams(searchParams.toString())
     params.set(HOME_MEETING_PARAM, activeMeetingEvent.id)
+    const meetingSpaceId = activeMeetingEvent.related?.space_id
+    if (meetingSpaceId) params.set(HOME_MEETING_SPACE_PARAM, meetingSpaceId)
+    else params.delete(HOME_MEETING_SPACE_PARAM)
     router.replace(`${pathname}?${params.toString()}`, { scroll: false })
   }, [activeMeetingEvent, meetingParam, pathname, router, searchParams])
 }
