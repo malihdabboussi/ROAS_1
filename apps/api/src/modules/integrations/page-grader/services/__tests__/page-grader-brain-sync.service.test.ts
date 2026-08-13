@@ -49,7 +49,7 @@ describe('PageGraderBrainSyncService', () => {
       {} as never,
       precallPrep as never,
     )
-    vi.spyOn(service as never, 'findMappedClientsByWebhookSecret' as never).mockResolvedValue([
+    vi.spyOn(service as never, 'findOrBootstrapClientsByWebhookSecret' as never).mockResolvedValue([
       {
         userId: 'user-1',
         orgId: null,
@@ -88,7 +88,7 @@ describe('PageGraderBrainSyncService', () => {
       {} as never,
       {} as never,
     )
-    vi.spyOn(service as never, 'findMappedClientsByWebhookSecret' as never).mockResolvedValue(
+    vi.spyOn(service as never, 'findOrBootstrapClientsByWebhookSecret' as never).mockResolvedValue(
       [] as never,
     )
 
@@ -102,6 +102,116 @@ describe('PageGraderBrainSyncService', () => {
         'whsec',
       ),
     ).rejects.toThrow(/unmapped client/i)
+  })
+
+  it('bootstraps a valid connected client that is not yet in the scope map', async () => {
+    const connectionRows = [
+      {
+        user_id: 'user-1',
+        org_id: 'org-1',
+        metadata: { webhook_secret: 'whsec', client_scope_map: {} },
+      },
+    ]
+    const query: Record<string, ReturnType<typeof vi.fn>> = {}
+    query.select = vi.fn(() => query)
+    query.eq = vi.fn(() => query)
+    query.eq.mockReturnValueOnce(query).mockResolvedValueOnce({ data: connectionRows, error: null })
+    const svc = { client: { from: vi.fn(() => query) } }
+    const brainImport = { importClientBrain: vi.fn().mockResolvedValue({ success: true }) }
+    const pageGraderApi = {
+      listClients: vi.fn().mockResolvedValue({
+        clients: [
+          {
+            id: '11111111-1111-1111-1111-111111111111',
+            name: 'Clogged Club',
+            display_name: 'Clogged Club',
+          },
+        ],
+      }),
+      getClientScopeMap: vi.fn().mockResolvedValue({
+        '11111111-1111-1111-1111-111111111111': {
+          campaign_id: '22222222-2222-2222-2222-222222222222',
+          space_id: '33333333-3333-3333-3333-333333333333',
+        },
+      }),
+    }
+    const service = new PageGraderBrainSyncService(
+      svc as never,
+      {} as never,
+      {} as never,
+      brainImport as never,
+      {} as never,
+      pageGraderApi as never,
+      {} as never,
+    )
+
+    const result = await (
+      service as unknown as {
+        findOrBootstrapClientsByWebhookSecret(
+          secret: string,
+          clientId: string,
+          clientName?: string,
+        ): Promise<Array<{ clientId: string; entry: { campaign_id: string } }>>
+      }
+    ).findOrBootstrapClientsByWebhookSecret(
+      'whsec',
+      '11111111-1111-1111-1111-111111111111',
+      'Clogged Club',
+    )
+
+    expect(brainImport.importClientBrain).toHaveBeenCalledWith(
+      svc.client,
+      'user-1',
+      {
+        client_id: '11111111-1111-1111-1111-111111111111',
+        campaignName: 'Clogged Club',
+      },
+      'org-1',
+    )
+    expect(result).toEqual([
+      expect.objectContaining({
+        clientId: '11111111-1111-1111-1111-111111111111',
+        entry: expect.objectContaining({
+          campaign_id: '22222222-2222-2222-2222-222222222222',
+        }),
+      }),
+    ])
+  })
+
+  it('does not bootstrap a client UUID absent from the signed connection catalog', async () => {
+    const query: Record<string, ReturnType<typeof vi.fn>> = {}
+    query.select = vi.fn(() => query)
+    query.eq = vi.fn(() => query)
+    query.eq.mockReturnValueOnce(query).mockResolvedValueOnce({
+      data: [
+        {
+          user_id: 'user-1',
+          org_id: null,
+          metadata: { webhook_secret: 'whsec', client_scope_map: {} },
+        },
+      ],
+      error: null,
+    })
+    const brainImport = { importClientBrain: vi.fn() }
+    const pageGraderApi = { listClients: vi.fn().mockResolvedValue({ clients: [] }) }
+    const service = new PageGraderBrainSyncService(
+      { client: { from: vi.fn(() => query) } } as never,
+      {} as never,
+      {} as never,
+      brainImport as never,
+      {} as never,
+      pageGraderApi as never,
+      {} as never,
+    )
+
+    const result = await (
+      service as unknown as {
+        findOrBootstrapClientsByWebhookSecret(secret: string, clientId: string): Promise<unknown[]>
+      }
+    ).findOrBootstrapClientsByWebhookSecret('whsec', '11111111-1111-1111-1111-111111111111')
+
+    expect(result).toEqual([])
+    expect(brainImport.importClientBrain).not.toHaveBeenCalled()
   })
 
   it('writes a completed Page Grader work status back to the ROAS action ledger', async () => {
