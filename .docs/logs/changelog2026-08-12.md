@@ -197,3 +197,13 @@ Why: Previously landed helpers and behaviors had lost their callers during later
 Impact: Chat remounts recover, minimized meetings persist, instant calls refresh Agenda, meeting docs and Favorites are reachable, and quick starts retain the current seeded routing behavior above the composer.
 
 Files: apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx, apps/web/src/features/home/components, apps/web/src/components/layout/sidebar/SidebarHqFlyouts.tsx, apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx, apps/web/src/lib/chat, apps/web/src/features/studio/components/message-bubble
+
+## [2026-08-12 20:11] - [FIX]
+
+What: Removed an unsupported organization argument from meeting conversation deduplication during duplicate meeting merges.
+
+Why: The merge service passed `orgId` to a deduplication contract that intentionally matches globally unique meeting item IDs across organization scopes, causing the production API TypeScript build to fail.
+
+Impact: Meeting merge behavior is unchanged, and the production API can compile with the established deduplication contract.
+
+Files: apps/api/src/modules/meetings/controllers/meeting-merge.controller.ts, apps/api/src/modules/meetings/services/meeting-merge.service.ts, apps/api/src/modules/meetings/services/meeting-merge.service.test.ts

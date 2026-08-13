@@ -5,13 +5,11 @@ import { z } from 'zod'
 import {
   AuthGuard,
   CurrentUser,
-  OrgContext,
   OrgContextGuard,
   OrgRoleGuard,
   RequireOrgRole,
   Supabase,
   ZodValidationPipe,
-  type RequestScope,
 } from '@vibey/api-shared'
 import { MeetingMergeService } from '../services/meeting-merge.service'
 
@@ -38,7 +36,6 @@ export class MeetingMergeController {
   mergeMeetings(
     @CurrentUser() user: { id: string },
     @Supabase() supabase: SupabaseClient,
-    @OrgContext() scope: RequestScope,
     @Param(new ZodValidationPipe(ParamsSchema)) params: z.infer<typeof ParamsSchema>,
     @Body(new ZodValidationPipe(MergeMeetingsSchema))
     body: z.infer<typeof MergeMeetingsSchema>,
@@ -46,7 +43,6 @@ export class MeetingMergeController {
     return this.merge.mergeMeetings(supabase, {
       spaceId: params.spaceId,
       userId: user.id,
-      orgId: scope.orgId,
       survivorItemId: body.survivor_item_id,
       duplicateItemIds: body.duplicate_item_ids,
     })
