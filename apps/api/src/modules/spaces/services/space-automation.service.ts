@@ -28,6 +28,7 @@ import { SpacesRepository } from '../repositories/spaces.repository'
 import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
 import { MeetingFollowUpSlackConfirmService } from './meeting-follow-up-slack-confirm.service'
 import { MeetingsPrecallPrepService } from './meetings-precall-prep.service'
+import { shouldRunPostCallSlackAction } from './post-call-meeting-scope'
 import { SlackTeamLoopService, type SlackTeamLoopKind } from './slack-team-loop.service'
 import type { SlackCadenceConfig } from './slack-team-cadence'
 import { SocialResearchOrchestrationService } from './social-research-orchestration.service'
@@ -471,6 +472,18 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
   ): Promise<Record<string, unknown>> {
     if (!this.meetingFollowUpSlackConfirm) {
       throw new Error('Meeting follow-up Slack confirm service is not available')
+    }
+    if (!shouldRunPostCallSlackAction(action, item)) {
+      const customData =
+        item.custom_data && typeof item.custom_data === 'object'
+          ? (item.custom_data as Record<string, unknown>)
+          : {}
+      return {
+        skipped: true,
+        reason: 'meeting_scope_mismatch',
+        required_call_kind: 'client',
+        actual_call_kind: String(customData.call_kind ?? 'unknown'),
+      }
     }
     const suggestionIds = this.meetingFollowUpSlackConfirm.resolveSuggestionIds(
       action,

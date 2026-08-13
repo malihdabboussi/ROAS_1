@@ -168,6 +168,7 @@ export const AutomationActionSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('request_slack_follow_up_confirm'),
+    meeting_scope: z.enum(['all', 'client']).default('all').optional(),
     delivery_mode: z.enum(['shadow', 'active']).default('shadow').optional(),
     dm_email: z.string().email().optional(),
     confirm_reaction: z.string().min(1).max(80).optional(),

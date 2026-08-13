@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-08-10 (canonical titles + provider-summary action fallback + chat continuation)
+**Last Modified:** 2026-08-12 (automatic client-only Pixel Shadow processing)
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` uses those same stored drafts, sends account-manager reminders only to people classified Internal and individually set Active, and keeps the client-facing recap in the admin approval thread.
 
@@ -52,7 +52,8 @@ Legacy Fathom call rows are backfilled into workspaces and recording sources. Ex
 | Signal action routing                                  | Internal DM, group DM, source thread, thread broadcast, and source channel remain Shadow until approval    |
 | Named campaign Brain routing from Slack                | Explicit client/campaign names override ambient campaign context                                           |
 | Pixel reply completion reactions                       | 👀 while processing; ✅ only after Slack accepts the completed reply                                       |
-| Auto-post to a channel                                 | Not yet                                                                                                    |
+| Automatic client-call processing                      | Restored in Shadow; non-client call kinds skip before Pixel drafting                                       |
+| Auto-post to a channel                                 | Disabled pending human review                                                                               |
 | Page Grader dispatch on confirm                        | Fulfillment candidates only; conservative client/assignee resolution                                       |
 
 ## Intended product loop
@@ -107,7 +108,7 @@ The skill is database-first in `agent_skills` and mirrored under `docker/agents/
 
 ## Data flow
 
-1. **Automation action** `request_slack_follow_up_confirm` runs after `agent_suggest_tasks` (Personal Dashboard Fathom Meeting Log template / live Meetings automation).
+1. **Automation action** `request_slack_follow_up_confirm` runs after `agent_suggest_tasks` (Personal Dashboard Fathom Meeting Log template / live Meetings automation). The action is scoped to canonical `call_kind = client`; Personal, Team, Executive, Partner, Sales, and unclassified calls return a recorded skip and do not invoke Pixel or Slack.
 2. Service resolves suggestion IDs from the action or the latest `agent_suggest_tasks` step.
 3. Calls Agent API `/api/agents/post-call-draft`, explicitly loading `post-call-delivery`, and receives `{ message, rationale, context_sources }`.
 4. Writes that draft to `slack_shadow_actions` as a `workflow` proposal, linked to the admin's Slack person record when an email match exists.
@@ -411,6 +412,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-08-04:** Phase 3 gap repair: Meetings space calls with provider `meeting_actions` and 0 follow_ups were one-shot synced (14 follow_ups). Prod verification: recent calls with N actions have N follow_ups; calls with 0 stay at 0; live automation `ef3975a7-…` enabled with suggest-tasks.
 - **2026-07-29:** Calendar timestamps with explicit timezone offsets are accepted at scheduled-workspace resolution and normalized to UTC before they are stored.
 - **2026-07-29:** Every Space with a `call_kind` field receives the complete Personal/Team/Executive/Client/Partner/Sales option set, including legacy organization Meetings spaces. Calendar creation and Fathom attachment use one classifier; automatic results may refresh, but manual selections win.
+- **2026-08-12:** The live Fathom Meeting Log invokes Pixel's post-call workflow for canonical Client calls only. It starts in Shadow so drafts, action ownership, and Brain-backed context can be reviewed without posting to Slack; channel delivery remains disabled until approval.
 
 ## Related
 

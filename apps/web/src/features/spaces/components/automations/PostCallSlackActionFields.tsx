@@ -14,6 +14,11 @@ const DELIVERY_OPTIONS: AutomationSolidOption[] = [
   { value: 'active', label: 'Active · send internal follow-ups' },
 ]
 
+const MEETING_SCOPE_OPTIONS: AutomationSolidOption[] = [
+  { value: 'client', label: 'Client calls only' },
+  { value: 'all', label: 'All completed calls' },
+]
+
 export function AutomationFieldGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="gap-spacing-1 flex flex-col">
@@ -32,6 +37,16 @@ export function PostCallSlackActionFields({
 }) {
   return (
     <div className="space-y-spacing-3">
+      <AutomationFieldGroup label="Calls">
+        <AutomationSolidSelect
+          options={MEETING_SCOPE_OPTIONS}
+          value={action.meeting_scope ?? 'all'}
+          onChange={(meeting_scope) =>
+            onChange({ meeting_scope } as Partial<PostCallSlackAction>)
+          }
+          placeholder="Choose call scope"
+        />
+      </AutomationFieldGroup>
       <AutomationFieldGroup label="Mode">
         <AutomationSolidSelect
           options={DELIVERY_OPTIONS}

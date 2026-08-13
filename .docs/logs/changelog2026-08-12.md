@@ -237,3 +237,13 @@ Why: Opening a persisted meeting synchronously scanned JSON natural keys and mut
 Impact: Meeting workspaces return their stored bundle without an unrelated maintenance job blocking the user-facing read, while explicit meeting merge/ingestion flows retain duplicate-chat cleanup.
 
 Files: apps/api/src/modules/meetings/services/meeting-workspace.service.ts, apps/api/src/modules/meetings/services/meeting-workspace.service.test.ts
+
+## [2026-08-12 22:15] - [FIX]
+
+What: Restored Pixel's post-call workflow to the Fathom Meeting Log in Shadow mode and added an explicit Client-only execution scope across automation schemas, runtime gating, UI configuration, and existing production automation migration.
+
+Why: The meeting-workspace migration removed the old post-call action while preserving the drafting service, leaving completed calls unprocessed; the restored path must exclude internal and personal calls before Pixel or Slack runs.
+
+Impact: Canonical Client calls produce grounded, Brain-aware recap and action-item proposals in Shadow. Personal, Team, Executive, Partner, Sales, and unclassified calls record a scope mismatch and send nothing. Channel posting remains disabled pending review.
+
+Files: apps/api/src/modules/space-templates, apps/api/src/modules/spaces, apps/web/src/features/spaces, packages/api-shared/src/types/flow-capabilities.ts, supabase/migrations/20260813053000_restore_client_post_call_pixel_shadow.sql, documentation/features/meeting-follow-up-slack.md

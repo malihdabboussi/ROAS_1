@@ -1096,6 +1096,7 @@ export type AutomationAction =
     }
   | {
       type: 'request_slack_follow_up_confirm'
+      meeting_scope?: 'all' | 'client'
       delivery_mode?: 'shadow' | 'active'
       dm_email?: string
       confirm_reaction?: string

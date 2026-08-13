@@ -638,9 +638,10 @@ const ACTIONS: FlowCapability[] = [
     'Post-call Slack follow-up',
     'Processes a completed call into reviewable account-manager drafts. Shadow stores them in Conversations without sending; Active sends only to eligible internal recipients.',
     ['delivery_mode'],
-    ['dm_email', 'confirm_reaction', 'suggestion_ids', 'continuation'],
+    ['meeting_scope', 'dm_email', 'confirm_reaction', 'suggestion_ids', 'continuation'],
     {
       type: 'request_slack_follow_up_confirm',
+      meeting_scope: 'client',
       delivery_mode: 'shadow',
       dm_email: 'dylan@dylanvanas.com',
       confirm_reaction: 'white_check_mark',
