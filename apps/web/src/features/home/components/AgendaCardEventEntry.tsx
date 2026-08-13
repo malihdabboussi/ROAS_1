@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, Minus } from 'lucide-react'
+import { MapPin, Minus, Video } from 'lucide-react'
 import { AgendaMinimizedEventEntry } from '@/features/home/components/AgendaMinimizedEventEntry'
+import { agendaFathomRecordingUrl } from '@/features/home/lib/sync-agenda-fathom-recording'
 import type { CalendarAgendaEvent, CalendarAttendee } from '@/lib/services/calendar-api'
 
 const GCAL_EVENT_COLORS: Record<string, { border: string; bg: string; text: string }> = {
@@ -196,7 +197,12 @@ export function AgendaEventEntry({
   showAccountLabel: boolean
 }) {
   const color = eventColor(ev)
-  const rawAccountLabel = showAccountLabel && ev.account_label ? String(ev.account_label).trim() : ''
+  // Fathom URLs live on related.recording_url (or merged video_url); they are
+  // recordings, never live join links.
+  const recordingUrl = agendaFathomRecordingUrl(ev)
+  const joinUrl = ev.video_url && ev.video_url !== recordingUrl ? ev.video_url : null
+  const rawAccountLabel =
+    showAccountLabel && ev.account_label ? String(ev.account_label).trim() : ''
   // The Fathom badge already marks the source — a "Fathom" account label would repeat it.
   const accountLabel = rawAccountLabel.toLowerCase() === 'fathom' ? '' : rawAccountLabel
 
@@ -304,15 +310,26 @@ export function AgendaEventEntry({
                 {ev.source === 'fathom' ? 'Open recording' : 'Open meeting'}
               </button>
             ) : null}
-            {ev.video_url ? (
+            {joinUrl ? (
               <a
-                href={ev.video_url}
+                href={joinUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 className="button-glass-green body-3 mt-0 flex w-full items-center justify-center gap-2 rounded-lg py-2 font-semibold"
               >
-                {ev.source === 'fathom' ? 'Watch recording' : videoButtonLabel(ev)}
+                {videoButtonLabel(ev)}
+              </a>
+            ) : null}
+            {recordingUrl ? (
+              <a
+                href={recordingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="button-glass-green body-3 mt-0 flex w-full items-center justify-center gap-2 rounded-lg py-2 font-semibold"
+              >
+                Watch recording
               </a>
             ) : null}
           </div>
@@ -346,6 +363,19 @@ export function AgendaEventEntry({
           </div>
           {ev.source === 'fathom' ? (
             <span className="badge-glass badge-glass-cyan typo-caption shrink-0">Fathom</span>
+          ) : null}
+          {recordingUrl ? (
+            <a
+              href={recordingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="btn-icon-bare shrink-0"
+              aria-label="Watch recording"
+              title="Watch recording"
+            >
+              <Video className="icon-sm" aria-hidden />
+            </a>
           ) : null}
           {ev.prep ? (
             <span

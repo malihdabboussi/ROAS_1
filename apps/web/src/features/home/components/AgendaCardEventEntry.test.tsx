@@ -18,8 +18,66 @@ const EVENT = {
   color_id: null,
 } satisfies CalendarAgendaEvent
 
+const RELATED_RECORDING = {
+  space_id: 'space-1',
+  call_item_id: 'call-1',
+  title: 'Campaign review',
+  recording_url: 'https://fathom.video/calls/123',
+  follow_ups: [],
+} satisfies NonNullable<CalendarAgendaEvent['related']>
+
 describe('AgendaEventEntry', () => {
   afterEach(cleanup)
+
+  it('links the Fathom recording from related.recording_url on the expanded card', () => {
+    render(
+      <AgendaEventEntry
+        ev={{ ...EVENT, related: RELATED_RECORDING }}
+        isExpanded
+        nowTick={Date.parse('2026-07-30T16:00:00.000Z')}
+        showAccountLabel={false}
+      />,
+    )
+
+    const link = screen.getByRole('link', { name: 'Watch recording' })
+    expect(link.getAttribute('href')).toBe('https://fathom.video/calls/123')
+  })
+
+  it('keeps the join link when the meeting has both a video link and a recording', () => {
+    render(
+      <AgendaEventEntry
+        ev={{ ...EVENT, video_url: 'https://meet.google.com/xyz', related: RELATED_RECORDING }}
+        isExpanded
+        nowTick={Date.parse('2026-07-29T16:00:00.000Z')}
+        showAccountLabel={false}
+      />,
+    )
+
+    expect(screen.getByRole('link', { name: 'Join meeting' }).getAttribute('href')).toBe(
+      'https://meet.google.com/xyz',
+    )
+    expect(screen.getByRole('link', { name: 'Watch recording' }).getAttribute('href')).toBe(
+      'https://fathom.video/calls/123',
+    )
+  })
+
+  it('shows a recording affordance on compact rows without opening the meeting', () => {
+    const onOpenMeeting = vi.fn()
+    render(
+      <AgendaEventEntry
+        ev={{ ...EVENT, related: RELATED_RECORDING }}
+        isExpanded={false}
+        onOpenMeeting={onOpenMeeting}
+        nowTick={Date.parse('2026-07-30T16:00:00.000Z')}
+        showAccountLabel={false}
+      />,
+    )
+
+    const link = screen.getByRole('link', { name: 'Watch recording' })
+    expect(link.getAttribute('href')).toBe('https://fathom.video/calls/123')
+    fireEvent.click(link)
+    expect(onOpenMeeting).not.toHaveBeenCalled()
+  })
 
   it('uses a minimize control instead of dismissing the meeting', () => {
     const onMinimizedChange = vi.fn()

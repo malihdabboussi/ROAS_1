@@ -36,6 +36,51 @@ function event(
 }
 
 describe('integrations-calendar-dedupe', () => {
+  it('keeps the recording-bearing related when duplicate rows merge', () => {
+    const stubRelated = {
+      space_id: 'space-1',
+      call_item_id: 'call-stub',
+      title: 'Weekly sync',
+      summary: null,
+      has_transcript: false,
+      recording_url: null,
+      external_recording_id: null,
+      follow_ups: [],
+    }
+    const fathomRelated = {
+      ...stubRelated,
+      call_item_id: 'call-fathom',
+      recording_url: 'https://fathom.video/calls/123',
+      external_recording_id: '987654',
+    }
+
+    const deduped = dedupeCalendarAgendaEvents([
+      event({ id: 'cal-1', title: 'Weekly sync', related: stubRelated }),
+      event({
+        id: 'fathom:call-fathom',
+        title: 'Weekly sync',
+        source: 'fathom',
+        related: fathomRelated,
+      }),
+    ])
+    expect(deduped).toHaveLength(1)
+    expect(deduped[0]?.related?.recording_url).toBe('https://fathom.video/calls/123')
+
+    // Same outcome when the Fathom row arrives first.
+    const reversed = dedupeCalendarAgendaEvents([
+      event({
+        id: 'fathom:call-fathom',
+        title: 'Weekly sync',
+        source: 'fathom',
+        related: fathomRelated,
+      }),
+      event({ id: 'cal-1', title: 'Weekly sync', related: stubRelated }),
+    ])
+    expect(reversed).toHaveLength(1)
+    expect(reversed[0]?.related?.recording_url).toBe('https://fathom.video/calls/123')
+    expect(reversed[0]?.id).toBe('cal-1')
+  })
+
   it('prefers iCalUID for the same meeting across people', () => {
     expect(teamAgendaDedupeKey(event({ id: 'a', ical_uid: 'uid-1', account_label: 'Alex' }))).toBe(
       'ical:uid-1',

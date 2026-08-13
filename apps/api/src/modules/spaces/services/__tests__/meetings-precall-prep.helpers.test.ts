@@ -5,6 +5,7 @@ import {
   buildGoogleDocTabLink,
   buildMeetingAgendaEvent,
   buildPrecallPrompt,
+  buildRelatedCallCandidates,
   callDateInAgendaWindow,
   emailFromAttendeeSlug,
   isEligiblePrecallEvent,
@@ -12,11 +13,14 @@ import {
   mapPrepItemToAgendaLink,
   matchUniqueClientByEventTitle,
   parsePrepDocToAgendaSections,
+  RELATED_CALL_RECORDING_BONUS,
   resolveAgendaCallSummary,
+  resolveAgendaExternalRecordingId,
   resolveAgendaHasTranscript,
   resolveAgendaRecordingUrl,
   resolvePreferredMeetingsSpaceId,
   scoreRelatedCallMatch,
+  toAgendaRelatedCall,
   validateMeetingReadyAgendaSections,
 } from '../meetings-precall-prep.helpers'
 
@@ -146,6 +150,116 @@ describe('meetings-precall-prep.helpers', () => {
         attendees: ['other@example.com'],
       }),
     ).toBe(0)
+  })
+
+  it('rewards recording presence only after the match gates pass', () => {
+    const event = {
+      id: 'google:rec',
+      title: 'Nate Tilley & Dylan — Weekly Check-In',
+      start: '2026-07-16T23:00:00.000Z',
+      end: '2026-07-16T23:45:00.000Z',
+      all_day: false,
+      video_url: null,
+      attendees: [
+        { email: 'nate@example.com', name: 'Nate' },
+        { email: 'dylan@dylanvanas.com', name: 'Dylan' },
+      ],
+    }
+    const call = {
+      title: 'Nate Tilley & Dylan — Weekly Check-In',
+      call_date: '2026-07-16T23:05:00.000Z',
+      attendees: ['nate@example.com', 'dylan@dylanvanas.com'],
+    }
+    const withRecording = scoreRelatedCallMatch(event, { ...call, has_recording: true })
+    const withoutRecording = scoreRelatedCallMatch(event, call)
+    expect(withRecording - withoutRecording).toBe(RELATED_CALL_RECORDING_BONUS)
+
+    expect(
+      scoreRelatedCallMatch(event, {
+        title: 'Unrelated',
+        call_date: '2026-07-16T23:05:00.000Z',
+        attendees: ['other@example.com'],
+        has_recording: true,
+      }),
+    ).toBe(0)
+  })
+
+  it('scores the recording-bearing call row above its recording-less duplicate', () => {
+    const event = {
+      id: 'google:dup',
+      title: 'Nate Tilley & Dylan — Weekly Check-In',
+      start: '2026-07-16T23:00:00.000Z',
+      end: '2026-07-16T23:45:00.000Z',
+      all_day: false,
+      video_url: null,
+      attendees: [
+        { email: 'nate@example.com', name: 'Nate' },
+        { email: 'dylan@dylanvanas.com', name: 'Dylan' },
+      ],
+    }
+    const shared = {
+      title: 'Nate Tilley & Dylan — Weekly Check-In',
+      custom_data: {
+        call_date: '2026-07-16T23:05:00.000Z',
+        attendees: ['nate@example.com', 'dylan@dylanvanas.com'],
+      },
+    }
+    const candidates = buildRelatedCallCandidates(
+      [event],
+      [
+        { id: 'call-stub', ...shared },
+        {
+          id: 'call-fathom',
+          ...shared,
+          custom_data: { ...shared.custom_data, recording_url: 'https://fathom.video/calls/123' },
+        },
+      ],
+    )
+    const byCall = new Map(candidates.map((c) => [c.callId, c.score]))
+    expect(byCall.get('call-fathom')!).toBeGreaterThan(byCall.get('call-stub')!)
+  })
+
+  it('populates external_recording_id from external automation metadata', () => {
+    expect(resolveAgendaExternalRecordingId({ external_automation: { meeting_id: 987654 } })).toBe(
+      '987654',
+    )
+    expect(
+      resolveAgendaExternalRecordingId({ external_automation: { meeting_id: ' rec-1 ' } }),
+    ).toBe('rec-1')
+    expect(resolveAgendaExternalRecordingId({ external_automation: {} })).toBeNull()
+    expect(resolveAgendaExternalRecordingId(null)).toBeNull()
+
+    const related = toAgendaRelatedCall({
+      call: {
+        id: 'call-1',
+        space_id: 'space-1',
+        title: 'Weekly sync',
+        custom_data: {
+          recording_url: 'https://fathom.video/calls/123',
+          external_automation: { meeting_id: 987654 },
+        },
+      },
+      followUps: [],
+    })
+    expect(related.external_recording_id).toBe('987654')
+
+    const bare = toAgendaRelatedCall({
+      call: { id: 'call-2', space_id: 'space-1', custom_data: {} },
+      followUps: [],
+    })
+    expect(bare.external_recording_id).toBeNull()
+  })
+
+  it('carries the external recording id onto synthetic agenda rows', () => {
+    const row = buildMeetingAgendaEvent({
+      spaceId: 'space-1',
+      callItemId: 'call-1',
+      title: 'Weekly sync',
+      callDate: '2026-07-16T23:00:00.000Z',
+      recordingUrl: 'https://fathom.video/calls/123',
+      externalRecordingId: '987654',
+    })
+    expect(row.related.external_recording_id).toBe('987654')
   })
 
   it('does not match when only a shared attendee overlaps', () => {
