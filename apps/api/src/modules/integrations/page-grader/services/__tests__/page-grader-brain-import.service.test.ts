@@ -62,6 +62,7 @@ describe('PageGraderBrainImportService', () => {
         }),
       }),
       { userId: 'user-1', orgId: 'org-1' },
+      {},
     )
     expect(api.mergeClientScopeEntry).toHaveBeenCalledWith('user-1', {
       clientId: '11111111-1111-1111-1111-111111111111',

@@ -313,6 +313,73 @@ describe('PageGraderBrainSyncService', () => {
       null,
       expect.objectContaining({ envelope: { content_hash: 'abc123hashvalue' } }),
       null,
+      { skipBrainIngest: false },
+    )
+  })
+
+  it('reconciles campaign Spaces without repeating an unchanged Brain ingest', async () => {
+    const brainImport = {
+      importClientBrain: vi.fn().mockResolvedValue({
+        campaignSpaceHash: 'new-space-hash',
+        brainImport: { skippedUnchanged: true, contentHash: 'abc123hashvalue' },
+      }),
+    }
+    const pageGrader = {
+      getClientBrainPackage: vi.fn().mockResolvedValue({
+        envelope: { content_hash: 'abc123hashvalue' },
+        client_campaigns: [{ id: 'campaign-child-1', name: 'Launch' }],
+      }),
+      getClientMetaContext: vi.fn().mockResolvedValue(null),
+    }
+    const vault = { getSecret: vi.fn().mockResolvedValue('value') }
+    const svc = {
+      client: {
+        from: vi.fn(() => ({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              eq: vi.fn(async () => ({
+                data: [
+                  {
+                    user_id: 'user-1',
+                    org_id: null,
+                    metadata: {
+                      client_scope_map: {
+                        'client-1': {
+                          campaign_id: 'campaign-1',
+                          content_hash: 'abc123hashvalue',
+                          campaign_space_hash: null,
+                        },
+                      },
+                    },
+                  },
+                ],
+                error: null,
+              })),
+            })),
+          })),
+        })),
+      },
+    }
+    const service = new PageGraderBrainSyncService(
+      svc as never,
+      vault as never,
+      pageGrader as never,
+      brainImport as never,
+      { hasCampaignKnowledge: vi.fn().mockResolvedValue(true) } as never,
+      {} as never,
+      {} as never,
+    )
+
+    await service.catchUpMappedClients(1)
+
+    expect(brainImport.importClientBrain).toHaveBeenCalledWith(
+      svc.client,
+      'user-1',
+      expect.objectContaining({ client_id: 'client-1', force: false }),
+      null,
+      expect.any(Object),
+      null,
+      { skipBrainIngest: true },
     )
   })
 
@@ -376,6 +443,7 @@ describe('PageGraderBrainSyncService', () => {
       null,
       expect.objectContaining({ envelope: { content_hash: 'abc123hashvalue' } }),
       null,
+      { skipBrainIngest: false },
     )
   })
 })

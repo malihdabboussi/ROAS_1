@@ -207,3 +207,13 @@ Why: The merge service passed `orgId` to a deduplication contract that intention
 Impact: Meeting merge behavior is unchanged, and the production API can compile with the established deduplication contract.
 
 Files: apps/api/src/modules/meetings/controllers/meeting-merge.controller.ts, apps/api/src/modules/meetings/services/meeting-merge.service.ts, apps/api/src/modules/meetings/services/meeting-merge.service.test.ts
+
+## [2026-08-12 21:49] - [FIX]
+
+What: Added a Page Grader catch-up fast path that reconciles campaign Spaces and stamps their fingerprint without repeating an unchanged Brain package ingestion.
+
+Why: The five-client production rollout finished Space reconciliation but Vercel timed out during redundant Brain ingestion before four client mappings could persist `campaign_space_hash`.
+
+Impact: Campaign/Meta-only drift completes within the API request window while changed or empty Brain content still follows the full repair path.
+
+Files: apps/api/src/modules/brain/services/page-grader-client-import.service.ts, apps/api/src/modules/integrations/page-grader/services/page-grader-brain-import.service.ts, apps/api/src/modules/integrations/page-grader/services/page-grader-brain-sync.service.ts, focused tests, documentation/features/page-grader-campaign-brain-sync.md
