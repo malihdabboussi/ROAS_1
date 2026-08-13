@@ -267,4 +267,47 @@ describe('PageGraderClientImportService', () => {
       space: { action: 'reuse', id: 'org-space-1' },
     })
   })
+
+  it('reconciles campaign Spaces without invoking package ingestion when Brain content matches', async () => {
+    const campaignQuery = createQuery({
+      maybeSingle: {
+        id: 'campaign-1',
+        name: 'Multifamily Strategy',
+        user_id: 'user-1',
+        org_id: 'org-1',
+      },
+    })
+    const spaceQuery = createQuery({
+      maybeSingle: { id: 'space-1', title: 'General', user_id: 'user-1', org_id: 'org-1' },
+      single: { id: 'campaign-space-1', title: 'Multi-Family Strategy' },
+    })
+    const itemQuery = createQuery({ maybeSingle: null })
+    const brainQuery = createQuery({ maybeSingle: { id: 'brain-1' } })
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === 'campaigns') return campaignQuery
+        if (table === 'spaces') return spaceQuery
+        if (table === 'space_items') return itemQuery
+        if (table === 'ns_brains') return brainQuery
+        throw new Error(`Unexpected table ${table}`)
+      }),
+    }
+    const packageIngest = { ingestPackage: vi.fn() }
+    const service = new PageGraderClientImportService(packageIngest as never)
+
+    const result = await service.importPackage(
+      supabase as never,
+      'user-1',
+      { package: christianPackage, campaignId: 'campaign-1', spaceId: 'space-1' },
+      { userId: 'user-1', orgId: 'org-1' } as never,
+      { skipBrainIngest: true },
+    )
+
+    expect(packageIngest.ingestPackage).not.toHaveBeenCalled()
+    expect(result.brainImport).toMatchObject({
+      action: 'skipped_unchanged',
+      status: 'succeeded',
+      skippedUnchanged: true,
+    })
+  })
 })

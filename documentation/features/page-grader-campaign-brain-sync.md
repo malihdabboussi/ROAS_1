@@ -53,7 +53,9 @@ Envelope fields:
 Operators can scope a rollout or repair to known Page Grader client IDs with
 `POST /api/internal/page-grader/brain-sync/catch-up?client_ids=id-1,id-2&limit=5`. The default
 hourly call continues to scan all mapped clients and skips matching brain plus campaign/Meta
-fingerprints.
+fingerprints. When Brain content is already current but the campaign/Meta fingerprint differs,
+catch-up reconciles campaign Spaces and stamps the new fingerprint without repeating the full
+Brain ingestion pipeline.
 
 Page Grader env for push: `ROAS_BRAIN_WEBHOOK_URL`, `ROAS_BRAIN_WEBHOOK_SECRET` (must match the connected ROAS user’s webhook secret).
 
@@ -133,6 +135,7 @@ Repeated manual requests use the deterministic Page Grader client and meeting ti
 - **2026-07-22:** The Page Grader brain package includes soft-deleted and archived `client_campaigns`, while the Page Grader UI hides them. Space reconciliation now applies the same visibility rule and safely retires generated-only stale Spaces; operator-edited Spaces are never automatically deleted.
 - **2026-07-22:** Added ROAS-owned Fathom meeting delivery into Page Grader Client Meetings. Explicit mappings win, ambiguous calls wait for review, multi-client internal calls can fan out intentionally, and repeated delivery is idempotent.
 - **2026-08-12:** The campaign→Space reconciliation code described by the 2026-07-22 entries had never merged (it was stranded on `codex/slack-signal-training`). Recovered onto main: `page-grader-campaign-space-schema.ts` / `page-grader-campaign-space-sync.ts`, the `campaign_space_hash` fingerprint on `client_scope_map`, catch-up `client_ids` scoping, and the read-only rollout audit script `scripts/roas/audit-page-grader-campaign-spaces.py`.
+- **2026-08-12:** Catch-up now uses a reconciliation-only path when Brain content is unchanged and only the campaign/Meta fingerprint differs, preventing redundant ingestion from exhausting the API request window before the fingerprint can be stamped.
 
 ## Rollout
 

@@ -372,6 +372,7 @@ export class PageGraderBrainSyncService {
       row.orgId,
       pkg,
       metaContext,
+      { skipBrainIngest: hashMatches && !campaignSpacesMatch && !repairEmptyImport },
     )
 
     const brainImport =
