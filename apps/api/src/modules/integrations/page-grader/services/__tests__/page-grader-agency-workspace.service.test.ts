@@ -2,6 +2,30 @@ import { describe, expect, it, vi } from 'vitest'
 import { PageGraderAgencyWorkspaceService } from '../page-grader-agency-workspace.service'
 
 describe('PageGraderAgencyWorkspaceService', () => {
+  it('lists unmapped campaigns without waiting for a Brain import when sync is disabled', async () => {
+    const api = {
+      listClientCampaigns: vi.fn().mockResolvedValue([
+        {
+          id: 'campaign-1',
+          client_id: 'client-1',
+          name: 'Launch',
+        },
+      ]),
+      getClientScopeMap: vi.fn().mockResolvedValue({}),
+    }
+    const brainImport = { importClientBrain: vi.fn() }
+    const service = new PageGraderAgencyWorkspaceService(api as never, brainImport as never)
+
+    const result = await service.listCampaigns({} as never, 'user-1', { orgId: 'org-1' } as never, {
+      sync: false,
+    })
+
+    expect(brainImport.importClientBrain).not.toHaveBeenCalled()
+    expect(result.campaigns).toEqual([
+      expect.objectContaining({ id: 'campaign-1', roas_space_id: null }),
+    ])
+  })
+
   it('bootstraps unmapped clients through the Brain import', async () => {
     const api = {
       listClients: vi.fn().mockResolvedValue({

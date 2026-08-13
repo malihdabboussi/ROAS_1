@@ -23,12 +23,31 @@ export function AgencyClientsPage() {
   const [groupMode, setGroupMode] = useState<GroupMode>('pipeline')
 
   useEffect(() => {
-    void fetchAgencyClients('', true)
-      .then((response) => setClients(response.clients))
-      .catch((reason) =>
-        setError(reason instanceof Error ? reason.message : 'Could not load clients'),
-      )
-      .finally(() => setLoading(false))
+    let cancelled = false
+    const load = async () => {
+      try {
+        const response = await fetchAgencyClients('', false)
+        if (cancelled) return
+        setClients(response.clients)
+        setLoading(false)
+
+        // Client cards should never wait for a potentially large Brain import. Reconcile
+        // missing mappings after the canonical Page Grader list is already usable.
+        void fetchAgencyClients('', true)
+          .then((synced) => {
+            if (!cancelled) setClients(synced.clients)
+          })
+          .catch(() => undefined)
+      } catch (reason) {
+        if (cancelled) return
+        setError(reason instanceof Error ? reason.message : 'Could not load clients')
+        setLoading(false)
+      }
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const groups = useMemo(() => {

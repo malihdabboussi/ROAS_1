@@ -45,7 +45,7 @@ export class PageGraderAgencyWorkspaceService {
 
     if (opts.sync !== false) {
       const missing = listed.clients.filter((client) => !scopeMap[client.id])
-      for (const client of missing.slice(0, 50)) {
+      await mapWithConcurrency(missing.slice(0, 50), 8, async (client) => {
         try {
           await this.brainImport.importClientBrain(
             supabase,
@@ -59,7 +59,7 @@ export class PageGraderAgencyWorkspaceService {
             error: error instanceof Error ? error.message : String(error),
           })
         }
-      }
+      })
       scopeMap = await this.api.getClientScopeMap(userId)
     }
 
@@ -106,7 +106,7 @@ export class PageGraderAgencyWorkspaceService {
     supabase: SupabaseClient,
     userId: string,
     scope: RequestScope,
-    opts: { q?: string; clientId?: string },
+    opts: { q?: string; clientId?: string; sync?: boolean },
   ) {
     const campaigns = await this.api.listClientCampaigns(userId, {
       q: opts.q,
@@ -119,41 +119,59 @@ export class PageGraderAgencyWorkspaceService {
       rows.push(campaign)
       grouped.set(campaign.client_id, rows)
     }
-    const scopeMap = await this.api.getClientScopeMap(userId)
-    const output: Array<PageGraderClientCampaign & { roas_space_id: string | null }> = []
-    for (const [clientId, rows] of grouped) {
-      let mapping = scopeMap[clientId]
-      let spaces: CampaignSpaceMapping[] = []
-      if (!mapping) {
-        const imported = await this.brainImport.importClientBrain(
-          supabase,
-          userId,
-          { client_id: clientId },
-          scope.orgId,
-        )
-        spaces = readImportedCampaignSpaces(imported)
-        mapping = (await this.api.getClientScopeMap(userId))[clientId]
+    const entries = [...grouped.entries()]
+    if (opts.sync === false) {
+      return {
+        campaigns: entries.flatMap(([, rows]) =>
+          rows.map((row) => ({ ...row, roas_space_id: null })),
+        ),
       }
-      if (!mapping) continue
-      if (spaces.length === 0) {
-        spaces = await this.loadCampaignSpaceMappings(supabase, mapping)
-      }
-      const knownIds = new Set(spaces.map((row) => row.page_grader_campaign_id))
-      if (rows.some((row) => !knownIds.has(row.id))) {
-        const imported = await this.brainImport.importClientBrain(
-          supabase,
-          userId,
-          { client_id: clientId },
-          scope.orgId,
-        )
-        spaces = readImportedCampaignSpaces(imported)
+    }
+
+    let scopeMap = await this.api.getClientScopeMap(userId)
+    const importedSpaces = new Map<string, CampaignSpaceMapping[]>()
+    await mapWithConcurrency(
+      entries.filter(([clientId]) => !scopeMap[clientId]),
+      8,
+      async ([clientId]) => {
+        try {
+          const imported = await this.brainImport.importClientBrain(
+            supabase,
+            userId,
+            { client_id: clientId },
+            scope.orgId,
+          )
+          importedSpaces.set(clientId, readImportedCampaignSpaces(imported))
+        } catch {
+          // A failed mapping must not hide the Page Grader campaign from the agency view.
+        }
+      },
+    )
+    scopeMap = await this.api.getClientScopeMap(userId)
+
+    const output = await mapWithConcurrency(entries, 8, async ([clientId, rows]) => {
+      const mapping = scopeMap[clientId]
+      if (!mapping) return rows.map((row) => ({ ...row, roas_space_id: null }))
+      let spaces = importedSpaces.get(clientId) ?? []
+      try {
+        if (spaces.length === 0) spaces = await this.loadCampaignSpaceMappings(supabase, mapping)
+        const knownIds = new Set(spaces.map((row) => row.page_grader_campaign_id))
+        if (rows.some((row) => !knownIds.has(row.id))) {
+          const imported = await this.brainImport.importClientBrain(
+            supabase,
+            userId,
+            { client_id: clientId },
+            scope.orgId,
+          )
+          spaces = readImportedCampaignSpaces(imported)
+        }
+      } catch {
+        // Keep the live campaign inventory available even if a Space refresh fails.
       }
       const byExternalId = new Map(spaces.map((row) => [row.page_grader_campaign_id, row.space_id]))
-      output.push(
-        ...rows.map((row) => ({ ...row, roas_space_id: byExternalId.get(row.id) ?? null })),
-      )
-    }
-    return { campaigns: output }
+      return rows.map((row) => ({ ...row, roas_space_id: byExternalId.get(row.id) ?? null }))
+    })
+    return { campaigns: output.flat() }
   }
 
   async patchEntity(
@@ -265,4 +283,21 @@ function stringValue(...values: unknown[]): string {
     if (typeof value === 'string' && value.trim()) return value.trim()
   }
   return ''
+}
+
+async function mapWithConcurrency<T, R>(
+  values: T[],
+  concurrency: number,
+  mapper: (value: T) => Promise<R>,
+): Promise<R[]> {
+  const output = new Array<R>(values.length)
+  let cursor = 0
+  const workers = Array.from({ length: Math.min(concurrency, values.length) }, async () => {
+    while (cursor < values.length) {
+      const index = cursor++
+      output[index] = await mapper(values[index] as T)
+    }
+  })
+  await Promise.all(workers)
+  return output
 }

@@ -18,12 +18,31 @@ export function ClientCampaignsPage() {
   const [view, setView] = useState<ViewMode>('all')
 
   useEffect(() => {
-    void fetchAgencyClientCampaigns()
-      .then((response) => setCampaigns(response.campaigns))
-      .catch((reason) =>
-        setError(reason instanceof Error ? reason.message : 'Could not load campaigns'),
-      )
-      .finally(() => setLoading(false))
+    let cancelled = false
+    const load = async () => {
+      try {
+        const response = await fetchAgencyClientCampaigns(undefined, false)
+        if (cancelled) return
+        setCampaigns(response.campaigns)
+        setLoading(false)
+
+        // Show the Page Grader campaign inventory first, then refresh Space links as
+        // the two-way ROAS mapping pass finishes.
+        void fetchAgencyClientCampaigns(undefined, true)
+          .then((synced) => {
+            if (!cancelled) setCampaigns(synced.campaigns)
+          })
+          .catch(() => undefined)
+      } catch (reason) {
+        if (cancelled) return
+        setError(reason instanceof Error ? reason.message : 'Could not load campaigns')
+        setLoading(false)
+      }
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const filtered = useMemo(

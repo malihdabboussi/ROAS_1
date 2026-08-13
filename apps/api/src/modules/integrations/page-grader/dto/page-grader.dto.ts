@@ -35,6 +35,10 @@ export const ListPageGraderAgencyClientsSchema = z.object({
 export const ListPageGraderAgencyCampaignsSchema = z.object({
   q: z.string().max(200).optional(),
   client_id: z.string().uuid().optional(),
+  sync: z
+    .union([z.literal('true'), z.literal('false'), z.boolean()])
+    .optional()
+    .transform((value) => (typeof value === 'string' ? value === 'true' : value)),
 })
 
 const NullableStringPatch = z.string().max(10_000).nullable()

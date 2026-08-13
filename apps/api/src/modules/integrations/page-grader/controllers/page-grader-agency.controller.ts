@@ -77,6 +77,7 @@ export class PageGraderAgencyController {
       ...(await this.workspace.listCampaigns(supabase, user.id, scope, {
         q: validation.data.q,
         clientId: validation.data.client_id,
+        sync: validation.data.sync,
       })),
     }
   }
