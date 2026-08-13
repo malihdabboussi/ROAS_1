@@ -1,8 +1,9 @@
-import { Controller, Logger, Post, Req, Res } from '@nestjs/common'
+import { Controller, Headers, Logger, Post, Req, Res } from '@nestjs/common'
 import { waitUntil } from '@vercel/functions'
 import type { Request, Response } from 'express'
 import { PageGraderBrainSyncService } from '../services/page-grader-brain-sync.service'
 import { PageGraderSlackIngestService } from '../services/page-grader-slack-ingest.service'
+import { PageGraderQcSlackBridgeService } from '../services/page-grader-qc-slack-bridge.service'
 
 @Controller('integrations/page-grader')
 export class PageGraderWebhooksController {
@@ -11,6 +12,7 @@ export class PageGraderWebhooksController {
   constructor(
     private readonly sync: PageGraderBrainSyncService,
     private readonly slackIngest: PageGraderSlackIngestService,
+    private readonly qcSlack: PageGraderQcSlackBridgeService,
   ) {}
 
   /** Push from Page Grader after Client Intel refresh. Auth: x-page-grader-signature webhook secret. */
@@ -117,6 +119,58 @@ export class PageGraderWebhooksController {
           ? 401
           : 400
       res.status(status).json({ success: false, error: message })
+    }
+  }
+
+  /** Page Grader decides what to flag; ROAS Platform owns Slack delivery. */
+  @Post('webhooks/qc-notification')
+  async receiveQcNotification(@Req() req: Request, @Res() res: Response) {
+    const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? {})
+    const signature = String(
+      req.headers['x-page-grader-signature'] || req.headers['x-webhook-signature'] || '',
+    ).trim()
+    try {
+      const result = await this.qcSlack.deliverNotification(rawBody, signature)
+      res.status(200).json(result)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      this.logger.warn(`Page Grader QC Slack delivery failed: ${message}`)
+      const status = message.toLowerCase().includes('unauthorized') ? 401 : 400
+      res.status(status).json({ success: false, error: message })
+    }
+  }
+
+  /** Slack action callback for ROAS-delivered Page Grader QC messages. */
+  @Post('webhooks/qc-slack-interactions')
+  receiveQcSlackInteraction(
+    @Req() req: Request & { rawBody?: Buffer },
+    @Res() res: Response,
+    @Headers('x-slack-signature') signature: string | undefined,
+    @Headers('x-slack-request-timestamp') timestamp: string | undefined,
+  ) {
+    try {
+      const work = this.qcSlack.beginInteractionProcessing({
+        rawBody: req.rawBody,
+        signature,
+        timestamp,
+      })
+      res.status(200).json({ ok: true })
+      if (work) {
+        const tracked = work.catch((error) =>
+          this.logger.error(
+            `QC Slack action failed: ${error instanceof Error ? error.message : String(error)}`,
+          ),
+        )
+        try {
+          waitUntil(tracked)
+        } catch {
+          void tracked
+        }
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      this.logger.warn(`Rejected QC Slack interaction: ${message}`)
+      res.status(401).json({ ok: false, error: message })
     }
   }
 }

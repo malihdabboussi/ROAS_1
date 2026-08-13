@@ -36,6 +36,8 @@ type ConnectedPageGraderRow = {
   webhookSecret: string | null
 }
 
+export type AuthorizedPageGraderConnection = Pick<ConnectedPageGraderRow, 'userId' | 'orgId'>
+
 @Injectable()
 export class PageGraderBrainSyncService {
   private readonly logger = new Logger(PageGraderBrainSyncService.name)
@@ -76,6 +78,16 @@ export class PageGraderBrainSyncService {
       .eq('integration_id', PAGE_GRADER_PROVIDER)
       .is('org_id', null)
     return secret
+  }
+
+  async authorizeWebhookSecret(signature: string): Promise<AuthorizedPageGraderConnection[]> {
+    const secret = signature.trim()
+    if (!secret) throw new UnauthorizedException('Missing webhook signature')
+    const connections = (await this.listConnectedPageGraderRows()).filter(
+      (row) => row.webhookSecret === secret,
+    )
+    if (connections.length === 0) throw new UnauthorizedException('Unknown webhook secret')
+    return connections.map(({ userId, orgId }) => ({ userId, orgId }))
   }
 
   async processWebhook(rawBody: string, signature: string) {

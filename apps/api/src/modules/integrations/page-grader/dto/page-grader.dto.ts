@@ -206,6 +206,19 @@ export const PageGraderMeetingAgendaWebhookSchema = z.object({
 
 export type PageGraderMeetingAgendaWebhookDto = z.infer<typeof PageGraderMeetingAgendaWebhookSchema>
 
+export const PageGraderQcNotificationWebhookSchema = z.object({
+  notification_id: z.string().min(1).max(4000),
+  admin_slack_user_id: z.string().min(1).max(80).nullable().optional(),
+  admin_slack_channel_id: z.string().min(1).max(80).nullable().optional(),
+  fallback_text: z.string().min(1).max(40_000),
+  blocks: z.array(z.record(z.string(), z.unknown())).min(1).max(50),
+  finding_ids: z.array(z.string().uuid()).min(1).max(50),
+})
+
+export type PageGraderQcNotificationWebhookDto = z.infer<
+  typeof PageGraderQcNotificationWebhookSchema
+>
+
 export const SyncPageGraderMeetingSchema = z.object({
   client_ids: z.array(z.string().uuid()).min(1).max(20),
 })
