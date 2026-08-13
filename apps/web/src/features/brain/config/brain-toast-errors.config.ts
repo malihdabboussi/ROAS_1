@@ -82,6 +82,9 @@ export const BRAIN_TOAST_ERRORS = {
   PAGE_GRADER_RESYNC_FAILED: {
     userMessage: "Couldn't re-sync from The ROAS Portal. Try again.",
   },
+  HEALTH_BATCH_FAILED: {
+    userMessage: "Couldn't load brain status. Try refreshing.",
+  },
 } as const
 
 /** User-facing toast messages for Brain success */

@@ -47,7 +47,7 @@ export async function fetchBrainHealth(
   return backendGet<BrainHealthData>(`/api/brain/health${query}`)
 }
 
-const BRAIN_HEALTH_BATCH_CHUNK_SIZE = 15
+const BRAIN_HEALTH_BATCH_CHUNK_SIZE = 10
 
 export async function fetchBrainHealthBatch(
   brainIds: string[],
@@ -63,17 +63,23 @@ export async function fetchBrainHealthBatch(
     `brain-health-batch:${ids.join(',')}`,
     async () => {
       const merged = new Map<string, BrainHealthData>()
+      let firstError: unknown = null
       for (let i = 0; i < ids.length; i += BRAIN_HEALTH_BATCH_CHUNK_SIZE) {
         const chunk = ids.slice(i, i + BRAIN_HEALTH_BATCH_CHUNK_SIZE)
         const params = new URLSearchParams()
         params.set('brain_ids', chunk.join(','))
-        const res = await backendGet<{ brains: Array<BrainHealthData & { brain_id: string }> }>(
-          `/api/brain/health/batch?${params.toString()}`,
-        )
-        for (const brain of res.brains ?? []) {
-          merged.set(brain.brain_id, brain)
+        try {
+          const res = await backendGet<{ brains: Array<BrainHealthData & { brain_id: string }> }>(
+            `/api/brain/health/batch?${params.toString()}`,
+          )
+          for (const brain of res.brains ?? []) {
+            merged.set(brain.brain_id, brain)
+          }
+        } catch (error) {
+          firstError ??= error
         }
       }
+      if (merged.size === 0 && firstError) throw firstError
       return merged
     },
     { ttlMs: 30_000 },

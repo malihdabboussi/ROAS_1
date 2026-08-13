@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { computePageGraderCampaignSpaceHash } from '../../../../brain/services/page-grader-campaign-space-sync'
 import { PageGraderBrainSyncService } from '../page-grader-brain-sync.service'
 
 describe('PageGraderBrainSyncService', () => {
@@ -193,13 +194,14 @@ describe('PageGraderBrainSyncService', () => {
   })
 
   it('skips catch-up when stored content_hash matches package hash', async () => {
+    const pkg = { envelope: { content_hash: 'abc123hashvalue' }, client_campaigns: [] }
+    const campaignSpaceHash = computePageGraderCampaignSpaceHash({ campaigns: [] })
     const brainImport = {
       importClientBrain: vi.fn(),
     }
     const pageGrader = {
-      getClientBrainPackage: vi.fn().mockResolvedValue({
-        envelope: { content_hash: 'abc123hashvalue' },
-      }),
+      getClientBrainPackage: vi.fn().mockResolvedValue(pkg),
+      getClientMetaContext: vi.fn().mockResolvedValue(null),
     }
     const vault = {
       getSecret: vi.fn().mockResolvedValue('value'),
@@ -220,6 +222,7 @@ describe('PageGraderBrainSyncService', () => {
                         'client-1': {
                           campaign_id: 'campaign-1',
                           content_hash: 'abc123hashvalue',
+                          campaign_space_hash: campaignSpaceHash,
                         },
                       },
                     },
@@ -258,6 +261,7 @@ describe('PageGraderBrainSyncService', () => {
       getClientBrainPackage: vi.fn().mockResolvedValue({
         envelope: { content_hash: 'abc123hashvalue' },
       }),
+      getClientMetaContext: vi.fn().mockResolvedValue(null),
     }
     const vault = { getSecret: vi.fn().mockResolvedValue('value') }
     const svc = {
@@ -307,6 +311,8 @@ describe('PageGraderBrainSyncService', () => {
       'user-1',
       expect.objectContaining({ campaignId: 'campaign-1', force: true }),
       null,
+      expect.objectContaining({ envelope: { content_hash: 'abc123hashvalue' } }),
+      null,
     )
   })
 
@@ -320,6 +326,7 @@ describe('PageGraderBrainSyncService', () => {
       getClientBrainPackage: vi.fn().mockResolvedValue({
         envelope: { content_hash: 'abc123hashvalue' },
       }),
+      getClientMetaContext: vi.fn().mockResolvedValue(null),
     }
     const vault = { getSecret: vi.fn().mockResolvedValue('value') }
     const svc = {
@@ -366,6 +373,8 @@ describe('PageGraderBrainSyncService', () => {
       svc.client,
       'user-1',
       expect.objectContaining({ campaignId: 'campaign-1', force: true }),
+      null,
+      expect.objectContaining({ envelope: { content_hash: 'abc123hashvalue' } }),
       null,
     )
   })

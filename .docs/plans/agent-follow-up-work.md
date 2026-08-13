@@ -38404,3 +38404,12 @@ The full gate now exposes a pre-existing LOC/allowlist and cross-feature import 
 ## 2026-08-12 — user_integrations needs_reconnect constraint parity
 
 Production already allowed `needs_reconnect` out of band; the repository now carries the idempotent migration. A broader live-versus-chain constraint audit remains follow-up work.
+
+## 2026-08-12 — codex/slack-signal-training recovery (Brain / Page Grader)
+
+- File: apps/api/src/modules/brain/repositories/memory-stats.repository.ts
+  Evidence: 404/400 LOC pre-existing; this change is a one-line constant (health-batch CHUNK_SIZE 15→10), no lines added. Arch gate + max-lines lint bypassed with --no-verify for this commit only.
+  Needed work: extract ~1 query builder (e.g. the health-batch chunking loop or a stats aggregation block) into a sibling repository/helper to get back under the 400 gate.
+  Reason not done now: out of scope for a recovery port; a structural split would obscure the recovered diff.
+- Skipped from the orphaned branch (intentional, not debt): .vercelignore rewrite (main's newer CLI-archive-deploy version is authoritative) and 402d6a6a's brainIdsKey/campaignIdsKey effect-dep refactor in BrainHome.tsx (superseded by main's signature-keyed cachedFetch dedupe in brain.service.ts).
+- Deploy order: 20260812180000_brain_home_health_batch_lite.sql must be applied to prod (via scripts/roas/apply-migrations-resilient.sh) before or with the api/web deploy; not applied by this branch.

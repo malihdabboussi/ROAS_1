@@ -10,6 +10,7 @@ export type PageGraderClientScopeEntry = {
   space_id?: string | null
   space_title?: string | null
   content_hash?: string | null
+  campaign_space_hash?: string | null
   last_synced_at?: string | null
   last_sync_status?: string | null
 }
@@ -67,6 +68,12 @@ export function parseClientScopeMap(raw: unknown): Record<string, PageGraderClie
         : row.content_hash === null
           ? null
           : undefined
+    const campaignSpaceHash =
+      typeof row.campaign_space_hash === 'string' && row.campaign_space_hash.trim()
+        ? row.campaign_space_hash.trim()
+        : row.campaign_space_hash === null
+          ? null
+          : undefined
     const lastSyncedAt =
       typeof row.last_synced_at === 'string' && row.last_synced_at.trim()
         ? row.last_synced_at.trim()
@@ -85,6 +92,7 @@ export function parseClientScopeMap(raw: unknown): Record<string, PageGraderClie
       ...(spaceId !== undefined ? { space_id: spaceId } : {}),
       ...(spaceTitle ? { space_title: spaceTitle } : {}),
       ...(contentHash !== undefined ? { content_hash: contentHash } : {}),
+      ...(campaignSpaceHash !== undefined ? { campaign_space_hash: campaignSpaceHash } : {}),
       ...(lastSyncedAt !== undefined ? { last_synced_at: lastSyncedAt } : {}),
       ...(lastSyncStatus !== undefined ? { last_sync_status: lastSyncStatus } : {}),
     }

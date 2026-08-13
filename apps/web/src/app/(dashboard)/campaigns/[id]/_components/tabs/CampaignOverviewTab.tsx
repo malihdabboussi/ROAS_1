@@ -87,7 +87,7 @@ export function CampaignOverviewTab({
       ) as { id?: string } | undefined
       if (docsView?.id) store.setActiveView(docsView.id)
     }
-    router.push('/spaces')
+    router.push(`/spaces?space=${encodeURIComponent(spaceId)}`)
   }
 
   const handleCreateSpace = async () => {

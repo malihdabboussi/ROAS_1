@@ -104,11 +104,13 @@ describe('PageGraderClientImportService', () => {
     const spaceQuery = createQuery({
       single: { id: 'space-1', title: 'Multi-Family Strategy' },
     })
+    const itemQuery = createQuery({ maybeSingle: null })
     const supabase = {
       from: vi.fn((table: string) => {
         if (table === 'campaigns') return campaignQuery
         if (table === 'ns_brains') return brainQuery
         if (table === 'spaces') return spaceQuery
+        if (table === 'space_items') return itemQuery
         throw new Error(`Unexpected table ${table}`)
       }),
     }
@@ -181,6 +183,16 @@ describe('PageGraderClientImportService', () => {
         force: false,
       }),
     )
+    expect(itemQuery.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        space_id: 'space-1',
+        title: 'Campaign Brief',
+        custom_data: expect.objectContaining({
+          _view_type: 'doc',
+          page_grader_campaign_id: 'pg-campaign-1',
+        }),
+      }),
+    )
     expect(result).toMatchObject({
       success: true,
       campaign: { action: 'create', id: 'campaign-1' },
@@ -199,12 +211,15 @@ describe('PageGraderClientImportService', () => {
     const campaignQuery = createQuery({ maybeSingle: orgCampaign })
     const spaceQuery = createQuery({
       maybeSingle: { id: 'org-space-1', title: 'General', user_id: 'user-1', org_id: 'org-1' },
+      single: { id: 'campaign-space-1', title: 'Multi-Family Strategy' },
     })
+    const itemQuery = createQuery({ maybeSingle: null })
     const brainQuery = createQuery({ maybeSingle: { id: 'brain-1' } })
     const supabase = {
       from: vi.fn((table: string) => {
         if (table === 'campaigns') return campaignQuery
         if (table === 'spaces') return spaceQuery
+        if (table === 'space_items') return itemQuery
         if (table === 'ns_brains') return brainQuery
         throw new Error(`Unexpected table ${table}`)
       }),

@@ -358,7 +358,7 @@ export class MemoryStatsRepository {
     const ids = [...new Set(brainIds.map((id) => id.trim()).filter(Boolean))]
     if (ids.length === 0) return []
 
-    const CHUNK_SIZE = 15
+    const CHUNK_SIZE = 10
     const rows: BrainHealthBatchRow[] = []
     for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
       const chunk = ids.slice(i, i + CHUNK_SIZE)

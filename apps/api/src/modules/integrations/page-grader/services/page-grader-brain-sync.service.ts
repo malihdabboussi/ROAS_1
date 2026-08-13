@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common'
 import { SupabaseServiceClient, type RequestScope } from '@vibey/api-shared'
+import { computePageGraderCampaignSpaceHash } from '../../../brain/services/page-grader-campaign-space-sync'
 import { MeetingsPrecallPrepService } from '../../../spaces/services/meetings-precall-prep.service'
 import { VaultService } from '../../../vault/services/vault.service'
 import {
@@ -274,7 +275,10 @@ export class PageGraderBrainSyncService {
     return { user_id: userId, ...result }
   }
 
-  async catchUpMappedClients(limit = 50): Promise<{
+  async catchUpMappedClients(
+    limit = 50,
+    clientIds: string[] = [],
+  ): Promise<{
     success: true
     scanned: number
     synced: number
@@ -282,14 +286,17 @@ export class PageGraderBrainSyncService {
     failed: number
   }> {
     const mapped = await this.listAllMappedClients()
+    const requestedIds = new Set(clientIds.map((value) => value.trim()).filter(Boolean))
+    const selected =
+      requestedIds.size > 0 ? mapped.filter((row) => requestedIds.has(row.clientId)) : mapped
     let synced = 0
     let skipped = 0
     let failed = 0
-    const batch = mapped.slice(0, Math.max(1, Math.min(limit, 200)))
+    const batch = selected.slice(0, Math.max(1, Math.min(limit, 200)))
     for (const row of batch) {
       try {
         const result = await this.syncMappedClient(row, { force: false })
-        if (result.status === 'skipped_unchanged' || result.status === 'skipped_hash_match') {
+        if (result.status === 'skipped_hash_match') {
           skipped += 1
         } else if (result.status === 'failed') {
           failed += 1
@@ -320,7 +327,10 @@ export class PageGraderBrainSyncService {
       return { client_id: row.clientId, status: 'failed' as const, error: 'not_connected' }
     }
 
-    const pkg = await this.pageGrader.getClientBrainPackage(baseUrl, apiKey, row.clientId)
+    const [pkg, metaContext] = await Promise.all([
+      this.pageGrader.getClientBrainPackage(baseUrl, apiKey, row.clientId),
+      this.pageGrader.getClientMetaContext(baseUrl, apiKey, row.clientId).catch(() => null),
+    ])
     const packageHash =
       typeof (pkg as { envelope?: { content_hash?: unknown } })?.envelope?.content_hash === 'string'
         ? String((pkg as { envelope: { content_hash: string } }).envelope.content_hash)
@@ -330,15 +340,21 @@ export class PageGraderBrainSyncService {
       Boolean(row.entry.content_hash) &&
       (row.entry.content_hash === packageHash ||
         Boolean(opts.expectedHash && row.entry.content_hash === opts.expectedHash))
+    const campaignSpaceHash = computePageGraderCampaignSpaceHash({
+      campaigns: Array.isArray(pkg.client_campaigns) ? pkg.client_campaigns : [],
+      metaContext,
+    })
+    const campaignSpacesMatch = row.entry.campaign_space_hash === campaignSpaceHash
     const repairEmptyImport =
       !opts.force &&
       !(await this.repository.hasCampaignKnowledge(this.svc.client, row.entry.campaign_id))
 
-    if (!opts.force && hashMatches && !repairEmptyImport) {
+    if (!opts.force && hashMatches && campaignSpacesMatch && !repairEmptyImport) {
       return {
         client_id: row.clientId,
-        status: 'skipped_unchanged' as const,
+        status: 'skipped_hash_match' as const,
         content_hash: row.entry.content_hash,
+        campaign_space_hash: campaignSpaceHash,
       }
     }
 
@@ -354,6 +370,8 @@ export class PageGraderBrainSyncService {
         spaceTitle: row.entry.space_title ?? undefined,
       },
       row.orgId,
+      pkg,
+      metaContext,
     )
 
     const brainImport =
@@ -367,7 +385,7 @@ export class PageGraderBrainSyncService {
     return {
       client_id: row.clientId,
       status:
-        brainImport.skippedUnchanged === true
+        brainImport.skippedUnchanged === true && hashMatches && !repairEmptyImport
           ? ('skipped_hash_match' as const)
           : ('synced' as const),
       content_hash:

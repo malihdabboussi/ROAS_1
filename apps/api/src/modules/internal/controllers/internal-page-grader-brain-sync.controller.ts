@@ -14,9 +14,13 @@ export class InternalPageGraderBrainSyncController {
   /** Hourly catch-up for mapped Page Grader clients. */
   @Post('page-grader/brain-sync/catch-up')
   @HttpCode(HttpStatus.OK)
-  async catchUp(@Query('limit') limitRaw?: string) {
+  async catchUp(@Query('limit') limitRaw?: string, @Query('client_ids') clientIdsRaw?: string) {
     const limit = Number(limitRaw ?? 50)
-    return this.sync.catchUpMappedClients(Number.isFinite(limit) ? limit : 50)
+    const clientIds = (clientIdsRaw ?? '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean)
+    return this.sync.catchUpMappedClients(Number.isFinite(limit) ? limit : 50, clientIds)
   }
 
   /** Retry and backfill Fathom call rows into mapped Page Grader clients. */
