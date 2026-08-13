@@ -227,3 +227,13 @@ Why: Links previously discarded the Space ID and searched only the current calen
 Impact: Opening a meeting workspace from a restored conversation now targets the exact persisted meeting and remains durable across direct navigation or refresh; normal agenda links keep their existing calendar restore path.
 
 Files: apps/web/src/components/shell/ShellRightPanel.tsx, apps/web/src/features/home/components/HomeMeetingDetailHost.tsx, apps/web/src/features/home/hooks/use-home-meeting-work-restore.ts, apps/web/src/features/home/lib/home-meeting-work-restore.ts, apps/web/src/features/home/services/meeting-workspace-api.ts, focused tests
+
+## [2026-08-12 22:52] - [FIX]
+
+What: Removed duplicate meeting-chat discovery and archival from the meeting workspace GET path.
+
+Why: Opening a persisted meeting synchronously scanned JSON natural keys and mutated duplicate conversations before returning the workspace; the production query took roughly 12 seconds and could leave the meeting screen unresolved. Duplicate cleanup already runs in the meeting merge workflow.
+
+Impact: Meeting workspaces return their stored bundle without an unrelated maintenance job blocking the user-facing read, while explicit meeting merge/ingestion flows retain duplicate-chat cleanup.
+
+Files: apps/api/src/modules/meetings/services/meeting-workspace.service.ts, apps/api/src/modules/meetings/services/meeting-workspace.service.test.ts
