@@ -91,7 +91,7 @@ vi.mock('@/features/spaces/components/CreateSpaceModal', () => ({
 
 vi.mock('@/lib/missions', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/missions')>()),
-  dispatchOpenQuickMissions: mocks.openQuickMissions,
+  openQuickMissions: mocks.openQuickMissions,
 }))
 
 vi.mock('@/features/home/components/SuggestedNextMoves', () => ({

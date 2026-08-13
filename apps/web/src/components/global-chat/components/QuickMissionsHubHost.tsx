@@ -1,13 +1,13 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { QuickMissionsHubModal } from '@/features/spaces/components/playbooks/QuickMissionsHubModal'
 import { QUICK_MISSIONS_MESSAGES } from '@/features/spaces/config/quick-missions-messages.config'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { createNewConversation, persistQuickMissionReceipt } from '@/lib/conversations'
-import { QUICK_MISSIONS_OPEN_EVENT } from '@/lib/missions'
+import { useQuickMissionsLauncherStore } from '@/lib/missions'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 
 type QuickMissionClient = {
@@ -88,18 +88,9 @@ export function QuickMissionsHubHost() {
   const addMessage = useChatStore((s) => s.addMessage)
   const addConversation = useChatStore((s) => s.addConversation)
   const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
-  const [open, setOpen] = useState(false)
-  const [initialPlaybookKey, setInitialPlaybookKey] = useState<string | null>(null)
-
-  useEffect(() => {
-    const onOpen = (event: Event) => {
-      const detail = (event as CustomEvent<{ playbookKey?: string | null }>).detail
-      setInitialPlaybookKey(detail?.playbookKey ?? null)
-      setOpen(true)
-    }
-    window.addEventListener(QUICK_MISSIONS_OPEN_EVENT, onOpen as EventListener)
-    return () => window.removeEventListener(QUICK_MISSIONS_OPEN_EVENT, onOpen as EventListener)
-  }, [])
+  const open = useQuickMissionsLauncherStore((s) => s.open)
+  const initialPlaybookKey = useQuickMissionsLauncherStore((s) => s.playbookKey)
+  const closeLauncher = useQuickMissionsLauncherStore((s) => s.closeLauncher)
 
   useEffect(() => {
     if (open) void loadSpaces()
@@ -176,8 +167,7 @@ export function QuickMissionsHubHost() {
         }
       }}
       onClose={() => {
-        setOpen(false)
-        setInitialPlaybookKey(null)
+        closeLauncher()
       }}
     />
   )

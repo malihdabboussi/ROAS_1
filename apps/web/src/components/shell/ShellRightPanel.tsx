@@ -11,7 +11,7 @@ import { useGlobalChatStore } from '@/components/global-chat/store/use-global-ch
 import { homeMeetingHref } from '@/features/home/lib/home-meeting-work-restore'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import type { Conversation } from '@/lib/conversations'
-import { dispatchOpenQuickMissions } from '@/lib/missions'
+import { openQuickMissions } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
 import type { ShellCreateMenuItem } from './shell-create-menu.config'
 import { ShellCreateMenuPanel } from './ShellCreateMenuPanel'
@@ -69,7 +69,7 @@ export function ShellRightPanel({
   const handleCreateSelect = useCallback(
     (item: ShellCreateMenuItem) => {
       if (item.action === 'mission') {
-        dispatchOpenQuickMissions()
+        openQuickMissions()
         return
       }
       useGlobalChatStore.getState().seedComposer({

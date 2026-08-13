@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import type { Dispatch, RefObject, SetStateAction } from 'react'
+import { openQuickMissions } from '@/lib/missions'
 import type { MessageReference } from '../../types'
 import type { AttachedArtifact } from '../chat/ArtifactAttachments'
 import {
@@ -71,13 +72,7 @@ export function useChatInputSelectionHandlers({
     (item: SlashItem) => {
       if (item.type === 'playbook') {
         setSlashMenuOpen(false)
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(
-            new CustomEvent('vibey:open-quick-missions', {
-              detail: { playbookKey: item.key },
-            }),
-          )
-        }
+        openQuickMissions(item.key)
         return
       }
       const t = textareaRef.current

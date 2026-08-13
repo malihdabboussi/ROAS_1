@@ -3,6 +3,7 @@ import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
+import { openQuickMissions, useQuickMissionsLauncherStore } from '@/lib/missions'
 import {
   buildQuickMissionReceipt,
   QuickMissionsHubHost,
@@ -48,6 +49,7 @@ describe('QuickMissionsHubHost', () => {
       conversations: [],
       messagesByConversation: {},
     })
+    useQuickMissionsLauncherStore.setState({ open: false, playbookKey: null })
     vi.clearAllMocks()
     mocks.modalProps = null
   })
@@ -99,10 +101,11 @@ describe('QuickMissionsHubHost', () => {
     render(createElement(QuickMissionsHubHost))
 
     act(() => {
-      window.dispatchEvent(new CustomEvent('vibey:open-quick-missions'))
+      openQuickMissions()
     })
 
     expect(loadSpaces).toHaveBeenCalledOnce()
+    expect(mocks.modalProps).toMatchObject({ open: true, initialPlaybookKey: null })
   })
 
   it('creates and opens a conversation before a blank-chat mission starts', async () => {

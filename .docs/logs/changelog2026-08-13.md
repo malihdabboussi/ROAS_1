@@ -129,3 +129,13 @@ Why: Sidebar navigation could restore an unrelated conversation because multiple
 Impact: Navigation keeps the currently open chat, offers the destination screen's remembered chat without forcing a switch, and starts fresh when the open pane has no conversation. Space, Campaign, and channel chat scopes remain independent.
 
 Files: `apps/web/src/components/shell/shell-screen-chat.config.ts`, `apps/web/src/components/shell/use-shell-store.screen-chat.ts`, `apps/web/src/components/shell/use-shell-workspace-screen-chat.ts`, `apps/web/src/components/shell/ShellScreenChatPrompt.tsx`, `apps/web/src/components/shell/ShellChatDrawer.tsx`, `apps/web/src/components/shell/use-shell-store.ts`, related shell tests, `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-08-13 16:17] - [FIX]
+
+What: Replaced the one-shot browser event used by Home, chat Create, and slash-command Mission launchers with shared reactive launcher state, and removed the obsolete event implementation.
+
+Why: Production on the exact deployed commit proved the Mission button dispatched successfully while the persistent dashboard host did not observe the event, leaving the launcher closed. Event delivery was inherently lossy across shell mount and navigation timing.
+
+Impact: Mission launch requests remain observable until the dashboard host closes them, including from blank Home chats, active-chat Create menus, and preset playbook slash commands.
+
+Files: `apps/web/src/lib/missions/quick-missions-launcher.ts`, `apps/web/src/lib/missions/quick-missions-launcher.test.ts`, `apps/web/src/lib/missions/quick-missions-events.ts`, `apps/web/src/lib/missions/index.ts`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.test.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.test.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-selection-handlers.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-selection-handlers.test.ts`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `documentation/features/missions.md`.

@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { useQuickMissionsLauncherStore } from '@/lib/missions'
 import type { MessageReference } from '../../types'
 import type { AttachedArtifact } from '../chat/ArtifactAttachments'
 import type { AtMentionItem } from './chat-input-at-mentions'
@@ -66,6 +67,7 @@ describe('useChatInputSelectionHandlers', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals()
+    useQuickMissionsLauncherStore.setState({ open: false, playbookKey: null })
   })
 
   it('selects a slash item by replacing the active slash token and closing the slash menu', () => {
@@ -76,6 +78,27 @@ describe('useChatInputSelectionHandlers', () => {
 
     expect(options.setValue).toHaveBeenCalledWith('please /summarize ')
     expect(options.setSlashMenuOpen).toHaveBeenCalledWith(false)
+  })
+
+  it('opens a playbook through the durable mission launcher state', () => {
+    const options = defaultOptions('/client-strategy')
+    const { result } = renderHook(() => useChatInputSelectionHandlers(options))
+
+    act(() =>
+      result.current.handleSlashSelect({
+        id: 'client-strategy',
+        key: 'client-strategy',
+        name: 'Client Strategy',
+        description: 'Run strategy',
+        type: 'playbook',
+      }),
+    )
+
+    expect(options.setSlashMenuOpen).toHaveBeenCalledWith(false)
+    expect(useQuickMissionsLauncherStore.getState()).toMatchObject({
+      open: true,
+      playbookKey: 'client-strategy',
+    })
   })
 
   it('selects a campaign by restoring the @ token and resetting campaign menu state', () => {
@@ -112,9 +135,7 @@ describe('useChatInputSelectionHandlers', () => {
     expect(referenceUpdater([])).toEqual([
       { kind: 'artifact', id: 'artifact-1', label: 'Offer Brief', type: 'offer' },
     ])
-    expect(artifactUpdater([])).toEqual([
-      { id: 'artifact-1', label: 'Offer Brief', type: 'offer' },
-    ])
+    expect(artifactUpdater([])).toEqual([{ id: 'artifact-1', label: 'Offer Brief', type: 'offer' }])
   })
 
   it('selects a space task mention by attaching the task without adding reference chips', () => {
