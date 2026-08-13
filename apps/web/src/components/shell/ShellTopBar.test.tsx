@@ -202,6 +202,42 @@ describe('ShellTopBar', () => {
     expect(screen.queryByTitle('Section options')).not.toBeInTheDocument()
   })
 
+  it('names the Delegation Desk route in the breadcrumb', () => {
+    mocks.pathname = '/home/delegation-desk'
+
+    render(<ShellTopBar />)
+
+    expect(screen.getByText('Delegation Desk')).toBeInTheDocument()
+  })
+
+  it('keeps identifying params in the recorded work-area page id and href', () => {
+    mocks.shellState.chatDrawer = { open: true }
+    mocks.params = new URLSearchParams('conv=conversation-1')
+
+    render(<ShellTopBar />)
+
+    expect(mocks.shellState.recordWorkAreaPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: '/home?conv=conversation-1',
+        href: '/home?conv=conversation-1',
+      }),
+    )
+  })
+
+  it('drops transient chat and surface params from the recorded page identity', () => {
+    mocks.shellState.chatDrawer = { open: true }
+    mocks.params = new URLSearchParams('chat=starting&surface=portal&meeting=evt-1')
+
+    render(<ShellTopBar />)
+
+    expect(mocks.shellState.recordWorkAreaPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: '/home?meeting=evt-1',
+        href: '/home?meeting=evt-1',
+      }),
+    )
+  })
+
   it('switches between the Workspace and Portal surfaces', () => {
     render(<ShellTopBar />)
 

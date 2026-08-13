@@ -16,6 +16,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Search,
+  SendHorizontal,
   Users,
   Workflow,
 } from 'lucide-react'
@@ -38,6 +39,9 @@ function breadcrumbFromPath(
   if (pathname.startsWith('/home/inbox')) return { label: 'Inbox', Icon: Inbox }
   if (pathname.startsWith('/home/meetings')) return { label: 'Meetings', Icon: CalendarDays }
   if (pathname.startsWith('/home/my-tasks')) return { label: 'My Tasks', Icon: ListChecks }
+  if (pathname.startsWith('/home/delegation-desk')) {
+    return { label: 'Delegation Desk', Icon: SendHorizontal }
+  }
   if (pathname.startsWith('/home/channels')) return { label: 'Channels', Icon: MessageSquare }
   if (pathname.startsWith('/team/skills')) return { label: 'Skills', Icon: Layers3 }
   if (pathname.startsWith('/team/teams')) return { label: 'Teams', Icon: Users }
@@ -98,7 +102,15 @@ export function ShellTopBar() {
   const visiblePageBreadcrumb = pageBreadcrumb
   const showWorkAreaControl = chatDrawerOpen || !workAreaOpen || Boolean(artifactTarget)
   const pageTitle = pageBreadcrumbLabel?.trim() || conversationTitle || crumb.label || 'Home'
-  const currentPage = { id: pathname, title: pageTitle, href: pathname }
+  // Keep identifying params (conv, meeting, space, …) in the page identity so
+  // reopening a remembered surface restores the exact view, not the bare route.
+  // Transient params never identify a surface.
+  const pageParams = new URLSearchParams(searchParams.toString())
+  pageParams.delete('chat')
+  pageParams.delete('surface')
+  const pageQuery = pageParams.toString()
+  const pagePath = pageQuery ? `${pathname}?${pageQuery}` : pathname
+  const currentPage = { id: pagePath, title: pageTitle, href: pagePath }
   const portalActive = searchParams.get('surface') === 'portal'
 
   // Nav stays icon-rail only — clear any legacy pinned expand.

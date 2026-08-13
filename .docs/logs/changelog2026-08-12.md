@@ -157,3 +157,23 @@ Why: The Meetings space accumulated duplicate call rows (calendar/Fathom dedupe 
 Impact: Selecting duplicate meetings in All Meetings now offers Merge with a survivor picker; all child data lands on the survivor atomically; duplicates are deleted. 42 new tests (30 api: domain/service/repository/schema; 12 web: eligibility/ranking/panel).
 
 Files: supabase/migrations/20260812164500_merge_meeting_items.sql, scripts/roas/migration-order.txt, apps/api/src/modules/meetings/{domain/meeting-merge-plan.ts,repositories/meeting-merge.repository.ts,services/meeting-merge.service.ts,controllers/meeting-merge.controller.ts,meetings.module.ts} (+ colocated tests), apps/web/src/features/spaces/{lib/meeting-merge.ts,services/meeting-merge.service.ts,config/meeting-merge-messages.config.ts,components/BulkActionBar.tsx,components/bulk-action-bar/{panel-key.ts,BulkActionBarToolbar.tsx,MergeMeetingsPanel.tsx,use-merge-meetings-bulk.ts}} (+ tests), .docs/features/meeting-merge.md
+
+## [2026-08-12 15:50] - [FIX]
+
+What: Preserved identifying query parameters in recent shell surfaces; restored exact meeting routing and workspace links; removed duplicate overlay controls; stamped meeting conversations with their Space campaign; added direct Space scope lookup; and redesigned the work summary as a floating Outputs/Sources/Tasks bubble.
+
+Why: Recents could reopen empty chats or broad screens, campaign-less meeting chats could not resolve their Space, and stale-base merges had reverted the intended summary presentation.
+
+Impact: Recents restore exact chats and meetings, meeting chats show resolvable Campaign/Space scope and link back to their workspace, summary controls no longer overlap, and artifact resizing preserves a readable work column.
+
+Files: apps/web/src/components/shell, apps/web/src/components/conversations, apps/web/src/features/home, apps/web/src/features/spaces/components/header/SpaceBreadcrumbHeader.tsx, apps/web/src/app/(dashboard)/home, apps/api/src/modules/meetings, documentation/features/claude-chatgpt-shell.md
+
+## [2026-08-12 15:55] - [FIX]
+
+What: Added the missing `/home/delegation-desk` breadcrumb case to ShellTopBar with the matching sidebar icon.
+
+Why: The route rendered a fallback Inbox crumb and recorded mistitled recent-surface entries.
+
+Impact: Delegation Desk names itself correctly in the top bar and remembered work surfaces.
+
+Files: apps/web/src/components/shell/ShellTopBar.tsx (+ test)

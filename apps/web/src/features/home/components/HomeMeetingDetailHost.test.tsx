@@ -91,9 +91,9 @@ describe('HomeMeetingDetailHost', () => {
     expect(mocks.resolveScheduledMeeting).not.toHaveBeenCalled()
     expect(useShellStore.getState().recentWorkAreaPages[0]).toEqual(
       expect.objectContaining({
-        id: 'home-meeting:google_calendar:evt-1',
+        id: '/home/meetings?meeting=evt-1',
         title: 'Nate X Dylan BOW Huddle',
-        href: '/home',
+        href: '/home/meetings?meeting=evt-1',
       }),
     )
   })

@@ -60,7 +60,7 @@ export function HomeDashboardContent() {
     openYourTurnItem,
     openYourTurnItemFromMeeting,
   })
-  useHomeMeetingWorkRestore(openMeetingEvent)
+  useHomeMeetingWorkRestore(openMeetingEvent, activeMeetingEvent)
 
   return (
     <HomeDashboardVisualProvider variant="v4">

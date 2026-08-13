@@ -1,6 +1,5 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { ShellBreadcrumb } from '@/components/shell/ShellBreadcrumb'
@@ -9,7 +8,10 @@ import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { MeetingWorkspaceDialog } from '@/features/home/components/MeetingWorkspaceDialog'
 import { HOME_TOAST_ERRORS } from '@/features/home/config/home-toast-errors.config'
 import { resolveMeetingJoinUrl } from '@/features/home/lib/home-meeting-detail'
-import { HOME_MEETING_WORK_RESTORE_FEATURE } from '@/features/home/lib/home-meeting-work-restore'
+import {
+  HOME_MEETING_WORK_RESTORE_FEATURE,
+  homeMeetingHref,
+} from '@/features/home/lib/home-meeting-work-restore'
 import { resolveMeetingsSpaceId } from '@/features/home/lib/resolve-meetings-space-id'
 import {
   resolveScheduledMeeting,
@@ -27,7 +29,6 @@ export function HomeMeetingDetailHost({
   onClose: () => void
   onOpenPrep: () => void
 }) {
-  const pathname = usePathname() ?? '/home'
   const recordWorkAreaPage = useShellStore((state) => state.recordWorkAreaPage)
   const related = event.related
   const [target, setTarget] = useState<ResolvedMeetingWorkspace | null>(() =>
@@ -75,9 +76,12 @@ export function HomeMeetingDetailHost({
   }, [event, related?.call_item_id, related?.space_id])
 
   useEffect(() => {
-    const href = pathname.startsWith('/home') ? pathname : '/home'
+    // The href carries the meeting identity so a remembered surface reopens
+    // this exact meeting on the meetings route, never the broad screen. The id
+    // matches what the top bar records for the same URL so the entries merge.
+    const href = homeMeetingHref(event)
     recordWorkAreaPage({
-      id: `home-meeting:${event.source}:${event.id}`,
+      id: href,
       title: meetingTitle,
       href,
       restore: {
@@ -85,12 +89,12 @@ export function HomeMeetingDetailHost({
         data: event,
       },
     })
-  }, [event, meetingTitle, pathname, recordWorkAreaPage])
+  }, [event, meetingTitle, recordWorkAreaPage])
 
   if (target) {
     return (
       <>
-        <ShellBreadcrumb>
+        <ShellBreadcrumb label={meetingTitle}>
           <div className="flex min-w-0 items-center gap-1.5 text-sm">
             <span className="text-muted-foreground truncate">Agenda</span>
             <span className="text-muted-foreground/50 select-none">/</span>
@@ -118,7 +122,7 @@ export function HomeMeetingDetailHost({
       aria-label="Preparing meeting workspace"
       className="surface-card border-border flex h-full min-h-0 w-full flex-col border"
     >
-      <ShellBreadcrumb>
+      <ShellBreadcrumb label={meetingTitle}>
         <div className="flex min-w-0 items-center gap-1.5 text-sm">
           <span className="text-muted-foreground truncate">Agenda</span>
           <span className="text-muted-foreground/50 select-none">/</span>

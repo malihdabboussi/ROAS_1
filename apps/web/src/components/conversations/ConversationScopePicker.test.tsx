@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   useCampaignCacheVersion: vi.fn(),
   useOrgStore: vi.fn(),
   fetchSpaces: vi.fn(),
+  fetchSpaceById: vi.fn(),
   fetchCampaigns: vi.fn(),
   assignConversationScope: vi.fn(),
   positionFloatingMenuFromAnchorRect: vi.fn(),
@@ -30,6 +31,7 @@ vi.mock('@/lib/org', () => ({
 
 vi.mock('@/lib/spaces', () => ({
   fetchSpaces: mocks.fetchSpaces,
+  fetchSpaceById: mocks.fetchSpaceById,
 }))
 
 vi.mock('@/lib/campaigns', () => ({
@@ -203,6 +205,31 @@ describe('ConversationScopePicker', () => {
         null,
       )
     })
+  })
+
+  it('resolves a campaign-less space title by direct lookup', async () => {
+    mocks.useOrgStore.mockImplementation((selector: (state: { activeOrgId: string }) => unknown) =>
+      selector({ activeOrgId: 'org-1' }),
+    )
+    mocks.useCampaignCacheVersion.mockReturnValue(0)
+    mocks.getCachedCampaigns.mockReturnValue(campaigns)
+    mocks.prefetchOrgCampaigns.mockResolvedValue(campaigns)
+    mocks.fetchSpaceById.mockResolvedValue({ id: 'space-meetings', title: 'Meetings' })
+
+    render(
+      <ConversationScopePicker
+        conversation={{
+          ...conversation,
+          campaign_id: null,
+          metadata: { space_id: 'space-meetings' },
+        }}
+        onConversationUpdated={vi.fn()}
+        showLabel
+      />,
+    )
+
+    expect(await screen.findByLabelText('Meetings')).toBeInTheDocument()
+    expect(mocks.fetchSpaceById).toHaveBeenCalledWith('space-meetings', { orgId: 'org-1' })
   })
 
   it('shows only the Space name in the compact chat header', async () => {

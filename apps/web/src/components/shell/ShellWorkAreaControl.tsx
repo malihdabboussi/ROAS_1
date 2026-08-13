@@ -56,7 +56,9 @@ export function ShellWorkAreaControl({ currentPage }: ShellWorkAreaControlProps)
               onClick={() => {
                 closeArtifactViewer()
                 setWorkAreaOpen(true)
-                setPendingWorkRestore(target.restore ?? null)
+                // Entries without a payload must not wipe one set by another
+                // pick that is still in flight toward its landing route.
+                if (target.restore) setPendingWorkRestore(target.restore)
                 if (target.href !== currentPage.href) router.push(target.href)
                 setHistoryOpen(false)
               }}
