@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Check } from 'lucide-react'
 import { toast } from 'sonner'
-import { SpaceMoveMenu, WorkItemList, WorkItemListRow } from '@/components/work-items'
+import { SpaceMappingCell, WorkItemList, WorkItemListRow } from '@/components/work-items'
 import {
   HOME_TOAST_ERRORS,
   HOME_TOAST_SUCCESS,
@@ -12,6 +12,7 @@ import {
   createMeetingAction,
   type MeetingAction,
 } from '@/features/home/services/meeting-workspace-api'
+import { useSpaceMappingIndex } from '@/lib/work-items'
 
 function actionSourceLabel(action: MeetingAction): string {
   if (action.source_type === 'provider') return 'Fathom'
@@ -27,11 +28,15 @@ function isMovableAction(action: MeetingAction): boolean {
 function ActionRow({
   action,
   spaceId,
+  mappingLabel,
+  mappingPathLabel,
   onToggle,
   onMoved,
 }: {
   action: MeetingAction
   spaceId: string
+  mappingLabel: string
+  mappingPathLabel?: string
   onToggle: (action: MeetingAction) => void
   onMoved: (action: MeetingAction, destinationTitle: string) => void
 }) {
@@ -83,16 +88,17 @@ function ActionRow({
       }
       trailing={
         isMovableAction(action) ? (
-          <SpaceMoveMenu
+          <SpaceMappingCell
             sourceSpaceId={spaceId}
             itemId={action.id}
             itemTitle={action.title}
+            label={mappingLabel}
+            pathLabel={mappingPathLabel}
             errorMessage={HOME_TOAST_ERRORS.MEETING_ACTION_MOVE_FAILED.userMessage}
             onMoved={(destination) => onMoved(action, destination.title)}
           />
         ) : undefined
       }
-      trailingHoverReveal
     />
   )
 }
@@ -118,6 +124,9 @@ export function MeetingActionItemsSection({
   const [draft, setDraft] = useState('')
   const [saving, setSaving] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const mappingIndex = useSpaceMappingIndex(actions.some(isMovableAction))
+  const mappingEntry = mappingIndex?.get(spaceId)
+  const mappingLabel = mappingEntry?.spaceTitle ?? 'this space'
 
   useEffect(() => {
     if (!composing) return
@@ -232,6 +241,8 @@ export function MeetingActionItemsSection({
               key={action.id}
               action={action}
               spaceId={spaceId}
+              mappingLabel={mappingLabel}
+              mappingPathLabel={mappingEntry?.pathLabel}
               onToggle={onToggle}
               onMoved={handleMoved}
             />

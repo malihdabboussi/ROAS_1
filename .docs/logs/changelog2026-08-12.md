@@ -177,3 +177,13 @@ Why: The route rendered a fallback Inbox crumb and recorded mistitled recent-sur
 Impact: Delegation Desk names itself correctly in the top bar and remembered work surfaces.
 
 Files: apps/web/src/components/shell/ShellTopBar.tsx (+ test)
+
+## [2026-08-12 14:26] - [FEATURE]
+
+What: Meeting workspace action items now show an inline program/campaign/Space mapping cell on every relocatable row, replacing the hover-only move icon. Deleted the superseded SpaceMoveMenu and its barrel export.
+
+Why: The prior move affordance was hidden until hover and showed no current mapping state; meeting actions should use the same shared mapping presentation as My Tasks.
+
+Impact: Each movable action row shows where it lives and can be relocated inline; non-Space-item actions are unchanged.
+
+Files: apps/web/src/features/home/components/MeetingActionItemsSection.tsx (+ test), apps/web/src/components/work-items/SpaceMoveMenu.tsx (deleted), apps/web/src/components/work-items/index.ts

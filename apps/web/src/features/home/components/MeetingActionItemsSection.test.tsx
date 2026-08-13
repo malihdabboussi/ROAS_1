@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   toastError: vi.fn(),
   transferItemToSpace: vi.fn(),
   useSpaceMappingGroups: vi.fn(),
+  useSpaceMappingIndex: vi.fn(),
 }))
 
 vi.mock('@/features/home/services/meeting-workspace-api', () => ({
@@ -18,6 +19,7 @@ vi.mock('@/features/home/services/meeting-workspace-api', () => ({
 vi.mock('@/lib/work-items', () => ({
   transferItemToSpace: mocks.transferItemToSpace,
   useSpaceMappingGroups: mocks.useSpaceMappingGroups,
+  useSpaceMappingIndex: mocks.useSpaceMappingIndex,
 }))
 
 vi.mock('sonner', () => ({
@@ -106,7 +108,10 @@ describe('MeetingActionItemsSection', () => {
     })
   })
 
-  it('moves a follow-up action to another space through the shared move menu', async () => {
+  it('shows the current mapping inline and relocates a follow-up action through the cell', async () => {
+    mocks.useSpaceMappingIndex.mockReturnValue(
+      new Map([['space-1', { spaceTitle: 'Meetings', pathLabel: 'ROAS · General · Meetings' }]]),
+    )
     mocks.useSpaceMappingGroups.mockReturnValue([
       {
         campaignId: 'campaign-1',
@@ -130,9 +135,11 @@ describe('MeetingActionItemsSection', () => {
       />,
     )
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Move Send recap to Nate to another space' }),
-    )
+    const cell = screen.getByRole('button', {
+      name: 'Change mapping for Send recap to Nate — currently in Meetings',
+    })
+    expect(cell.textContent).toContain('Meetings')
+    fireEvent.click(cell)
     fireEvent.click(await screen.findByRole('button', { name: /Ad Production/ }))
 
     await waitFor(() => {
@@ -142,7 +149,33 @@ describe('MeetingActionItemsSection', () => {
     })
   })
 
-  it('hides the move menu for actions that are not relocatable space items', () => {
+  it('falls back to a generic mapping label while the index is loading', () => {
+    mocks.useSpaceMappingIndex.mockReturnValue(null)
+    const movable = action({ evidence: { origin: 'meetings_space_follow_up' } })
+
+    render(
+      <MeetingActionItemsSection
+        spaceId="space-1"
+        meetingItemId="meeting-1"
+        actions={[movable]}
+        loading={false}
+        onToggle={vi.fn()}
+        onCreated={vi.fn()}
+        onMoved={vi.fn()}
+      />,
+    )
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Change mapping for Send recap to Nate — currently in this space',
+      }),
+    ).toBeTruthy()
+  })
+
+  it('hides the mapping cell for actions that are not relocatable space items', () => {
+    mocks.useSpaceMappingIndex.mockReturnValue(
+      new Map([['space-1', { spaceTitle: 'Meetings', pathLabel: 'ROAS · General · Meetings' }]]),
+    )
     render(
       <MeetingActionItemsSection
         spaceId="space-1"
@@ -156,7 +189,7 @@ describe('MeetingActionItemsSection', () => {
     )
 
     expect(
-      screen.queryByRole('button', { name: 'Move Send recap to Nate to another space' }),
+      screen.queryByRole('button', { name: /Change mapping for Send recap to Nate/ }),
     ).toBeNull()
   })
 })
