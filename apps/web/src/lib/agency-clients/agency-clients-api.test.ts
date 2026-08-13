@@ -31,9 +31,9 @@ describe('agency clients API', () => {
 
   it('scopes campaign requests by client', async () => {
     vi.mocked(backendGet).mockResolvedValue({ campaigns: [] })
-    await fetchAgencyClientCampaigns('client 1')
+    await fetchAgencyClientCampaigns('client 1', false)
     expect(backendGet).toHaveBeenCalledWith(
-      '/api/integrations/page-grader/agency/client-campaigns?client_id=client+1',
+      '/api/integrations/page-grader/agency/client-campaigns?client_id=client+1&sync=false',
     )
   })
 

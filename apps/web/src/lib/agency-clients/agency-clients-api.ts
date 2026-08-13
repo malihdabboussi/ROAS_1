@@ -71,9 +71,10 @@ export async function fetchAgencyClient(clientId: string) {
   return response.workspace
 }
 
-export async function fetchAgencyClientCampaigns(clientId?: string) {
+export async function fetchAgencyClientCampaigns(clientId?: string, sync?: boolean) {
   const params = new URLSearchParams()
   if (clientId) params.set('client_id', clientId)
+  if (sync !== undefined) params.set('sync', String(sync))
   const query = params.size ? `?${params}` : ''
   return backendGet<{ campaigns: AgencyClientCampaign[] }>(
     `/api/integrations/page-grader/agency/client-campaigns${query}`,
