@@ -114,7 +114,7 @@ The skill is database-first in `agent_skills` and mirrored under `docker/agents/
    Before generation, Agent API loads the meeting workspace's portal agenda, canonical recap, transcript documents, and Pixel's available Brain context. The direct call/follow-up payload remains the final grounding source.
 4. Writes that draft to `slack_shadow_actions` as a `workflow` proposal, linked to the admin's Slack person record when an email match exists.
 5. Creates one Shadow `message` proposal per follow-up assignee matched to an **Internal** Slack person (grouped tasks, friendly reminder tone). Skips unmatched, External, Ignored, and `delivery_mode=off`. IDs are stored on `assignee_shadow_action_ids`.
-6. In `delivery_mode=shadow`, stores the run payload and stops without opening a DM or sending any Slack message. In `delivery_mode=active` with channel delivery disabled, opens the admin review DM, posts the proposed recap in its thread, then approves and sends only account-manager proposals whose person record is also Active. Channel posting is a separate explicit switch: only `delivery_mode=active` plus `channel_delivery=automatic` sends the stored Pixel recap to the configured destination channel. The installed destination is `#roas-call-recaps-internal`, but the switch remains disabled until human approval.
+6. In `delivery_mode=shadow`, stores the run payload and stops without opening a DM or sending any Slack message. In `delivery_mode=active` with channel delivery disabled, opens the admin review DM, posts the proposed recap in its thread, then approves and sends only account-manager proposals whose person record is also Active. Channel posting is a separate explicit switch: only `delivery_mode=active` plus `channel_delivery=automatic` sends the complete Call Summary → Action Items → Client Recap Message package to the configured destination channel. The installed destination is `#roas-call-recaps-internal`, but the switch remains disabled until human approval.
 7. Stores the Shadow or pending payload on the **call** item:
 
    `custom_data.slack_follow_up_confirm = { status, delivery_mode, channel_id, message_ts, space_item_ids, confirm_reaction, assignee_shadow_action_ids?, assignee_sent_action_ids?, ... }`
@@ -133,17 +133,17 @@ Before approval, a human reply in the review thread is treated as revision feedb
 
 **Review DM (message 1)**
 
-- Short `Call report` Fathom link at the top (no bottom “Open Fathom recording”)
-- Title + purpose + key takeaways
+- Bold `Call Summary` heading with title, purpose, and key takeaways
+- Short `Call Recording` Fathom link after the internal summary (no bottom recording footer)
 - Timestamp jump links use a leading clock label (`31:12` …) then plain takeaway text
-- Proposed action items with `_owner: Name_`
+- Bold `Action Items` heading with `_owner: Name_`
 - Meetings link + ✅ CTA
 - Does **not** embed the client-facing draft (keeps under Slack’s ~4k limit)
 
-**Proposed shareable recap (message 2, threaded under review)**
+**Client recap message (message 2, threaded under review)**
 
-- `Call report` link at the top when available
-- Exact Pixel `draft_message` (trailing “Open the call recording” footers stripped)
+- Bold `Client Recap Message` heading
+- Exact Pixel `draft_message`; legacy leading recording links and trailing recording footers are stripped because the internal review already owns the recording link
 - Link unfurls disabled so Fathom URLs stay compact
 
 **Per-assignee Shadow reminders (People)**

@@ -38440,3 +38440,14 @@ Production already allowed `needs_reconnect` out of band; the repository now car
   Evidence: 1001/600 LOC after adding the explicit channel-delivery branch; the file was already 949 LOC before this scoped change.
   Needed work: extract the admin review-DM and automatic channel-delivery transports into sibling workflow helpers before the next post-call delivery feature touches this service.
   Reason not done now: pre-existing debt; a structural split would obscure the fail-closed rollout control and client-call safety review.
+
+## 2026-08-13 — Pixel post-call recap section labels (apps/api spaces)
+
+- File: apps/api/src/modules/spaces/services/__tests__/meeting-follow-up-slack-confirm.service.test.ts
+  Evidence: 1090 LOC after adding one focused formatter regression (1077 LOC before this change), above the repository's 1000-line test-file target.
+  Needed work: split pure Slack message-builder coverage into `meeting-follow-up-slack-message.test.ts`, leaving workflow orchestration coverage in the existing service test.
+  Reason not done now: pre-existing test organization debt; moving unrelated coverage would widen a label-only production fix.
+- File: apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.workflow.ts
+  Evidence: 1001/600 LOC, unchanged in line count; this fix switches the existing automatic channel branch to the complete recap formatter.
+  Needed work: extract the admin review-DM and automatic channel-delivery transports into sibling workflow helpers.
+  Reason not done now: pre-existing debt already recorded for this workflow; a structural split would obscure the scoped output correction.

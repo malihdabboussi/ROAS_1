@@ -143,13 +143,14 @@ describe('MeetingFollowUpSlackConfirmService', () => {
         channel_id: 'D123',
         unfurl_links: false,
         text: expect.stringMatching(
-          /Call report[\s\S]*Purpose[\s\S]*Align on urgent[\s\S]*Key takeaways[\s\S]*Operational bandwidth[\s\S]*Proposed action items[\s\S]*Ship AM loop — _owner: Dylan_[\s\S]*Fix reporting SoT — _owner: Nate_/,
+          /Call Summary[\s\S]*Purpose[\s\S]*Align on urgent[\s\S]*Key takeaways[\s\S]*Operational bandwidth[\s\S]*Call Recording[\s\S]*Action Items[\s\S]*Ship AM loop — _owner: Dylan_[\s\S]*Fix reporting SoT — _owner: Nate_/,
         ),
       }),
     )
     expect(slackTools.sendMessage.mock.calls[0][3].text).toContain(
-      '<https://fathom.video/calls/753783387|Call report>',
+      '<https://fathom.video/calls/753783387|Call Recording>',
     )
+    expect(slackTools.sendMessage.mock.calls[0][3].text).not.toContain('Call report')
     expect(slackTools.sendMessage.mock.calls[0][3].text).not.toContain('Open Fathom recording')
     expect(slackTools.sendMessage).toHaveBeenNthCalledWith(
       2,
@@ -161,11 +162,12 @@ describe('MeetingFollowUpSlackConfirmService', () => {
         thread_ts: '1710000000.000100',
         unfurl_links: false,
         text: expect.stringMatching(
-          /Proposed shareable recap[\s\S]*Call report[\s\S]*Good connecting today[\s\S]*ship the AM loop/,
+          /Client Recap Message[\s\S]*Good connecting today[\s\S]*ship the AM loop/,
         ),
       }),
     )
-    expect(slackTools.sendMessage.mock.calls[0][3].text).not.toContain('Proposed shareable recap')
+    expect(slackTools.sendMessage.mock.calls[1][3].text).not.toContain('Call report')
+    expect(slackTools.sendMessage.mock.calls[1][3].text).not.toContain('Call Recording')
     expect(slackTools.sendMessage.mock.calls[1][3].text).not.toContain('Open the call recording')
     expect(repo.updateItem).toHaveBeenCalledWith(
       expect.anything(),
@@ -242,7 +244,9 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       'org-1',
       expect.objectContaining({
         channel_id: 'C0BN7P2BWRM',
-        text: expect.stringMatching(/Call report[\s\S]*Good connecting today/),
+        text: expect.stringMatching(
+          /Call Summary[\s\S]*Call Recording[\s\S]*Action Items[\s\S]*No action items proposed[\s\S]*Client Recap Message[\s\S]*Good connecting today/,
+        ),
       }),
     )
     expect(slackTools.sendMessage.mock.calls[0][3].text).not.toContain('Proposed shareable recap')
@@ -1073,5 +1077,16 @@ describe('MeetingFollowUpSlackConfirmService', () => {
     ).toBe(
       '• <https://fathom.video/share/x?timestamp=1872.0|31:12> Webinar Funnel Overhaul: redesign',
     )
+  })
+
+  it('keeps recording links in the internal summary and out of the client recap message', () => {
+    const fathomUrl = 'https://fathom.video/calls/client-sync'
+
+    expect(
+      service.buildProposedShareableRecapMessage({
+        shareableDraft: `<${fathomUrl}|Call report>\n\nGood connecting today.`,
+        fathomUrl,
+      }),
+    ).toBe('*Client Recap Message*\n\nGood connecting today.')
   })
 })

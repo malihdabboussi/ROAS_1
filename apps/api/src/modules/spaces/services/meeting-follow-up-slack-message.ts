@@ -199,6 +199,11 @@ export function stripTrailingRecordingFooter(text: string): string {
     .trim()
 }
 
+/** Remove legacy recording links from the client-ready draft; the review owns that link. */
+export function stripLeadingRecordingLink(text: string): string {
+  return text.replace(/^<[^|>]+\|\s*(?:Call report|Call Recording)\s*>\s*/i, '').trim()
+}
+
 export function resolveFathomUrl(callItem: Record<string, unknown> | null): string | null {
   if (!callItem) return null
   const customData =
@@ -226,13 +231,46 @@ export function buildShareableConfirmReply(input: {
       : ['• No action items proposed.']
 
   return [
-    `*Meeting recap: ${title}*`,
-    ...(fathomUrl ? [`<${fathomUrl}|Call report>`, ''] : ['']),
+    `*Call Summary*`,
+    `*${title}*`,
     ...(brief ? [brief, ''] : []),
-    `*Action items*`,
+    ...(fathomUrl ? [`<${fathomUrl}|Call Recording>`, ''] : []),
+    `*Action Items*`,
     ...lines,
     '',
     `_Copy/forward this recap to a channel or the other attendees. Confirmed in ROAS — not sent to The ROAS Portal yet._`,
+  ].join('\n')
+}
+
+/** Complete internal-channel package: call context, owned work, then client-ready copy. */
+export function buildPostCallChannelMessage(input: {
+  callItem: Record<string, unknown> | null
+  followUps: Array<Record<string, unknown>>
+  shareableDraft: string
+}): string {
+  const title = String(input.callItem?.title ?? 'Meeting').trim() || 'Meeting'
+  const brief = briefMeetingSummary(input.callItem, { includeNextSteps: false })
+  const fathomUrl = resolveFathomUrl(input.callItem)
+  const lines =
+    input.followUps.length > 0
+      ? input.followUps.map((item, index) => formatFollowUpLine(item, index))
+      : ['• No action items proposed.']
+  const draft = stripLeadingRecordingLink(
+    stripTrailingRecordingFooter(markdownLinksToSlack(input.shareableDraft.trim())),
+  )
+
+  return [
+    '*Call Summary*',
+    `*${title}*`,
+    '',
+    ...(brief ? [brief, ''] : []),
+    ...(fathomUrl ? [`<${fathomUrl}|Call Recording>`, ''] : []),
+    '*Action Items*',
+    ...lines,
+    '',
+    '*Client Recap Message*',
+    '',
+    draft,
   ].join('\n')
 }
 
@@ -254,12 +292,12 @@ export function buildConfirmMessage(input: {
       : ['• No action items proposed.']
 
   return [
-    `*Meeting follow-ups ready for review*`,
-    // Recording at top as a short call-report link (saves a bottom “Open Fathom” line).
-    ...(fathomUrl ? [`<${fathomUrl}|Call report>`, `*${title}*`] : [`*${title}*`]),
+    `*Call Summary*`,
+    `*${title}*`,
     '',
     ...(brief ? [brief, ''] : []),
-    `*Proposed action items*`,
+    ...(fathomUrl ? [`<${fathomUrl}|Call Recording>`, ''] : []),
+    `*Action Items*`,
     ...lines,
     '',
     `React with :${input.confirmReaction}: to confirm — I'll post a shareable recap in this thread.`,
@@ -274,12 +312,14 @@ export function buildProposedShareableRecapMessage(input: {
   fathomUrl?: string | null
   proposed?: boolean
 }): string {
-  const draft = stripTrailingRecordingFooter(markdownLinksToSlack(input.shareableDraft.trim()))
+  const draft = stripLeadingRecordingLink(
+    stripTrailingRecordingFooter(markdownLinksToSlack(input.shareableDraft.trim())),
+  )
   if (!draft) return ''
   const fathomUrl = String(input.fathomUrl ?? '').trim()
   return [
-    ...(input.proposed === false ? [] : ['*Proposed shareable recap*', '']),
-    ...(fathomUrl ? [`<${fathomUrl}|Call report>`, ''] : []),
+    ...(input.proposed === false ? [] : ['*Client Recap Message*', '']),
+    ...(input.proposed === false && fathomUrl ? [`<${fathomUrl}|Call Recording>`, ''] : []),
     draft,
   ].join('\n')
 }

@@ -27,6 +27,7 @@ import {
 import {
   briefMeetingSummary,
   buildConfirmMessage,
+  buildPostCallChannelMessage,
   buildProposedShareableRecapMessage,
   buildShareableConfirmReply,
   formatFollowUpLine,
@@ -260,10 +261,10 @@ export class MeetingFollowUpSlackConfirmService {
       if (!destinationChannelId) {
         throw new Error('Automatic post-call channel delivery requires a destination channel')
       }
-      const draftText = buildProposedShareableRecapMessage({
+      const draftText = buildPostCallChannelMessage({
+        callItem,
+        followUps,
         shareableDraft: draft.message,
-        fathomUrl: resolveFathomUrl(callItem),
-        proposed: false,
       })
       const sent = await slackTools.sendMessage(input.supabase, input.userId, slackOrgId, {
         channel_id: destinationChannelId,
