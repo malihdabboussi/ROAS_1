@@ -4,10 +4,16 @@ export const HOME_MEETING_WORK_RESTORE_FEATURE = 'home_meeting' as const
 
 export const HOME_MEETINGS_ROUTE = '/home/meetings'
 export const HOME_MEETING_PARAM = 'meeting'
+export const HOME_MEETING_SPACE_PARAM = 'space'
 
 /** Canonical href for a remembered meeting surface — the id survives in the URL. */
-export function homeMeetingHref(event: Pick<CalendarAgendaEvent, 'id'>): string {
-  return `${HOME_MEETINGS_ROUTE}?${HOME_MEETING_PARAM}=${encodeURIComponent(event.id)}`
+export function homeMeetingHref(
+  event: Pick<CalendarAgendaEvent, 'id'>,
+  spaceId?: string | null,
+): string {
+  const params = new URLSearchParams({ [HOME_MEETING_PARAM]: event.id })
+  if (spaceId) params.set(HOME_MEETING_SPACE_PARAM, spaceId)
+  return `${HOME_MEETINGS_ROUTE}?${params.toString()}`
 }
 
 /** Matches by calendar event id or by the linked Meetings call item id. */

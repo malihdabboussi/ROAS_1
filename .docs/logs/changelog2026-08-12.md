@@ -217,3 +217,13 @@ Why: The five-client production rollout finished Space reconciliation but Vercel
 Impact: Campaign/Meta-only drift completes within the API request window while changed or empty Brain content still follows the full repair path.
 
 Files: apps/api/src/modules/brain/services/page-grader-client-import.service.ts, apps/api/src/modules/integrations/page-grader/services/page-grader-brain-import.service.ts, apps/api/src/modules/integrations/page-grader/services/page-grader-brain-sync.service.ts, focused tests, documentation/features/page-grader-campaign-brain-sync.md
+
+## [2026-08-12 22:34] - [FIX]
+
+What: Made meeting-conversation workspace links preserve the owning Space ID and restore the persisted meeting directly from its workspace bundle.
+
+Why: Links previously discarded the Space ID and searched only the current calendar window, so older recorded meetings could remain stuck while the app could not rediscover their call item.
+
+Impact: Opening a meeting workspace from a restored conversation now targets the exact persisted meeting and remains durable across direct navigation or refresh; normal agenda links keep their existing calendar restore path.
+
+Files: apps/web/src/components/shell/ShellRightPanel.tsx, apps/web/src/features/home/components/HomeMeetingDetailHost.tsx, apps/web/src/features/home/hooks/use-home-meeting-work-restore.ts, apps/web/src/features/home/lib/home-meeting-work-restore.ts, apps/web/src/features/home/services/meeting-workspace-api.ts, focused tests

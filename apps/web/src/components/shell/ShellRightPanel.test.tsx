@@ -174,7 +174,9 @@ describe('ShellRightPanel', () => {
 
     expect(mocks.shellState.closeArtifactViewer).toHaveBeenCalledTimes(1)
     expect(mocks.shellState.setWorkAreaOpen).toHaveBeenCalledWith(true)
-    expect(mocks.routerPush).toHaveBeenCalledWith('/home/meetings?meeting=meeting-item-1')
+    expect(mocks.routerPush).toHaveBeenCalledWith(
+      '/home/meetings?meeting=meeting-item-1&space=space-1',
+    )
   })
 
   it('prefers the live meeting context over conversation metadata', async () => {
@@ -188,7 +190,9 @@ describe('ShellRightPanel', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Open meeting workspace' }))
 
-    expect(mocks.routerPush).toHaveBeenCalledWith('/home/meetings?meeting=meeting-live')
+    expect(mocks.routerPush).toHaveBeenCalledWith(
+      '/home/meetings?meeting=meeting-live&space=space-live',
+    )
   })
 
   it('shows no meeting link for a plain conversation', async () => {
