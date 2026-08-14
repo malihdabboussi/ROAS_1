@@ -207,3 +207,13 @@ Why: Exact-production testing showed the canonical Mission button had the new ex
 Impact: Blank Home Mission launch no longer depends on shared module or React context identity; the click updates state owned by the same composer instance that controls the modal.
 
 Files: `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `documentation/features/missions.md`.
+
+## [2026-08-13 17:08] - [FIX]
+
+What: Changed Agenda list weeks to Monday–Sunday with current-day positioning and earlier-week scrollback, made meeting-to-meeting navigation ignore a stale URL during an explicit selection, replaced leaked Fathom naming placeholders, and added inline task status plus right-side task preview to My Tasks.
+
+Why: Late-week Agenda visits hid prior weekdays, switching between open meeting workspaces could make the old and new meeting effects reopen each other until React crashed, failed title enrichment exposed `Call (naming…)`, and task triage required opening every item as a full work surface.
+
+Impact: The full week remains reviewable in chronological order, meeting switching is stable, generic recordings have a user-facing fallback title, and users can update statuses or inspect task details without losing their task queue.
+
+Files: `apps/web/src/features/home/components/AgendaCard.tsx`, `AgendaCardChrome.tsx`, `AgendaCardListBody.tsx`, `agenda-list-grouping.tsx`, `MyTasksPanel.tsx`, `MyTasksInlineStatus.tsx`, `apps/web/src/features/home/lib/agenda-fetch-window.ts`, `apps/web/src/features/home/hooks/use-home-meeting-work-restore.ts`, Home Meetings/My Tasks page hosts, `apps/api/src/modules/spaces/services/fathom-meeting-title.ts`, `meetings-precall-related-calls.ts`, related tests, `.docs/features/meeting-merge.md`, `documentation/features/claude-chatgpt-shell.md`.

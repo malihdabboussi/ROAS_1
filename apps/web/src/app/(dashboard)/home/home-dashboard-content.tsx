@@ -67,6 +67,7 @@ export function HomeDashboardContent() {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {activeMeetingEvent ? (
           <HomeMeetingDetailHost
+            key={`${activeMeetingEvent.source}:${activeMeetingEvent.id}`}
             event={activeMeetingEvent}
             onClose={closeMeetingEvent}
             onOpenPrep={openMeetingPrep}

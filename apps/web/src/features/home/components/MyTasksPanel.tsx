@@ -4,24 +4,16 @@ import { useEffect, useMemo, useState } from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { Calendar, CheckSquare, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { OptionDot } from '@/components/ui/status/OptionBadge'
-import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { SpaceMappingCell, WorkItemList, WorkItemListRow } from '@/components/work-items'
 import { TasksEmptyIllustration } from '@/features/home/components/HomeEmptyIllustrations'
 import { HomeFeedScopePicker } from '@/features/home/components/HomeFeedScopePicker'
 import { formatHomeShortDate } from '@/features/home/components/HomeListCardShell'
+import { MyTasksInlineStatus } from '@/features/home/components/MyTasksInlineStatus'
 import { filterMyTasksBySearch, groupMyTasksByDue } from '@/features/home/lib/group-my-tasks-by-due'
 import type { HomeFeedScopeState } from '@/features/home/types/home-feed-scope'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
-import { formatNotificationStatusLabel } from '@/lib/notifications'
-import {
-  fetchSpaceById,
-  resolveMissionSubtaskStatusDotColor,
-  resolveStatusDotColorFromId,
-  resolveStatusLabelFromId,
-  type FieldDef,
-} from '@/lib/spaces'
+import { fetchSpaceById, updateSpaceItem, type FieldDef } from '@/lib/spaces'
 import { cn } from '@/lib/utils/cn'
 import { useSpaceMappingIndex } from '@/lib/work-items'
 import type { YourTurnItem } from '@/lib/your-turn/types'
@@ -68,30 +60,6 @@ function useSpaceStatusFieldsBySpaceId(spaceIds: string[]) {
   return fieldsBySpaceId
 }
 
-function StatusDot({
-  item,
-  statusField,
-}: {
-  item: YourTurnItem
-  statusField: FieldDef | null | undefined
-}) {
-  const statusLabel =
-    item.kind === 'mission_subtask'
-      ? formatNotificationStatusLabel(item.status)
-      : resolveStatusLabelFromId(item.status, statusField)
-  const dotColor =
-    item.kind === 'mission_subtask'
-      ? resolveMissionSubtaskStatusDotColor(item.status)
-      : resolveStatusDotColorFromId(item.status, statusField)
-  return (
-    <Tooltip label={statusLabel} side="top">
-      <span className="inline-flex shrink-0">
-        <OptionDot color={dotColor} size="sm" />
-      </span>
-    </Tooltip>
-  )
-}
-
 export function MyTasksPanel({
   open,
   onOpenChange,
@@ -100,6 +68,7 @@ export function MyTasksPanel({
   loading,
   items,
   onOpenItem,
+  onItemsChanged,
   embedded = false,
   presentation = 'dialog',
 }: {
@@ -110,10 +79,12 @@ export function MyTasksPanel({
   loading: boolean
   items: YourTurnItem[]
   onOpenItem: (item: YourTurnItem) => void | Promise<void>
+  onItemsChanged?: () => void | Promise<void>
   embedded?: boolean
   presentation?: 'dialog' | 'page'
 }) {
   const [search, setSearch] = useState('')
+  const [statusByItemId, setStatusByItemId] = useState<Record<string, string>>({})
   /** Local space overrides for rows relocated through the mapping cell. */
   const [movedSpaceById, setMovedSpaceById] = useState<
     Record<string, { id: string; title: string }>
@@ -257,6 +228,7 @@ export function MyTasksPanel({
                       item.space_id != null
                         ? (statusFieldsBySpaceId.get(item.space_id) ?? null)
                         : null
+                    const effectiveStatus = statusByItemId[item.id] ?? item.status
                     const moved = movedSpaceById[item.id]
                     const currentSpaceId = moved?.id ?? item.space_id
                     const mappingEntry = currentSpaceId
@@ -272,7 +244,34 @@ export function MyTasksPanel({
                         caption={
                           item.preview ? <span className="truncate">{item.preview}</span> : null
                         }
-                        leading={<StatusDot item={item} statusField={statusField} />}
+                        leading={
+                          <MyTasksInlineStatus
+                            item={item}
+                            statusField={statusField}
+                            status={effectiveStatus}
+                            onChanged={(nextStatus) => {
+                              if (!item.space_id) return
+                              const previousStatus = effectiveStatus
+                              setStatusByItemId((previous) => ({
+                                ...previous,
+                                [item.id]: nextStatus,
+                              }))
+                              void updateSpaceItem(item.space_id, item.id, {
+                                status: nextStatus,
+                              })
+                                .then(() => {
+                                  void onItemsChanged?.()
+                                })
+                                .catch(() => {
+                                  setStatusByItemId((previous) => ({
+                                    ...previous,
+                                    [item.id]: previousStatus,
+                                  }))
+                                  toast.error('Could not update task status.')
+                                })
+                            }}
+                          />
+                        }
                         trailing={
                           <span className="flex shrink-0 items-center gap-2">
                             {showMappingCell ? (

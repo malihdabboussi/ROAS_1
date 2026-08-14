@@ -6,8 +6,8 @@ import {
   dayKeyInTimeZone,
 } from '@/features/home/components/agenda-list-grouping'
 import { AgendaEventEntry } from '@/features/home/components/AgendaCardEventEntry'
-import { agendaEventMinimizeKey } from '@/features/home/lib/agenda-minimize'
 import { splitTodayAgendaEvents } from '@/features/home/lib/agenda-list-view'
+import { agendaEventMinimizeKey } from '@/features/home/lib/agenda-minimize'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 
 function eventKey(ev: CalendarAgendaEvent) {
@@ -20,9 +20,8 @@ export function AgendaCardListBody(props: {
   nextEvent: CalendarAgendaEvent | null
   nextEventKey: string | null
   range: 'day' | 'week' | 'month'
-  tomorrowKey: string
   dividerDayKeys: string[]
-  skipDividerDayKey: string | null
+  todayDayKey: string
   groupedVisible: Map<string, CalendarAgendaEvent[]>
   nowTick: number
   timezone: string
@@ -37,9 +36,8 @@ export function AgendaCardListBody(props: {
     nextEvent,
     nextEventKey,
     range,
-    tomorrowKey,
     dividerDayKeys,
-    skipDividerDayKey,
+    todayDayKey,
     groupedVisible,
     nowTick,
     timezone,
@@ -51,19 +49,27 @@ export function AgendaCardListBody(props: {
 
   const listRef = useRef<HTMLDivElement>(null)
   const nextAnchorRef = useRef<HTMLDivElement>(null)
+  const todayAnchorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!isToday || !nextEvent || !listRef.current || !nextAnchorRef.current) return
-    // Scroll only the agenda list so earlier-today rows stay above and reachable.
+    if (!isToday || !listRef.current) return
+    const anchor = range === 'day' ? nextAnchorRef.current : todayAnchorRef.current
+    if (!anchor) return
+    // Position the current day at the top while leaving earlier weekdays above
+    // it and reachable by scrolling upward.
     const list = listRef.current
-    const anchor = nextAnchorRef.current
     const top = Math.max(0, anchor.offsetTop - 12)
     list.scrollTop = top
-  }, [isToday, nextEventKey])
+  }, [isToday, nextEventKey, range])
 
-  const todayKey =
-    skipDividerDayKey ?? (isToday ? dayKeyInTimeZone(new Date(nowTick), timezone) : null)
+  const todayKey = isToday ? dayKeyInTimeZone(new Date(nowTick), timezone) : null
   const todayEvents = todayKey ? (groupedVisible.get(todayKey) ?? []) : []
+  const scrollDayKey =
+    todayKey && dividerDayKeys.includes(todayKey)
+      ? todayKey
+      : dividerDayKeys.find(
+          (dayKey) => dayKey >= todayDayKey && (groupedVisible.get(dayKey)?.length ?? 0) > 0,
+        )
   const { earlier: earlierToday, later: laterToday } =
     isToday && nextEvent
       ? splitTodayAgendaEvents(todayEvents, nowTick, nextEventKey, eventKey)
@@ -84,6 +90,38 @@ export function AgendaCardListBody(props: {
     )
   }
 
+  const renderTodayRows = () => (
+    <div className="space-y-1">
+      {earlierToday.length > 0 ? (
+        <ul className="space-y-1">
+          {earlierToday.map((ev) => (
+            <li key={eventKey(ev)}>{renderRow(ev)}</li>
+          ))}
+        </ul>
+      ) : null}
+      {nextEvent ? (
+        <div ref={nextAnchorRef}>
+          <AgendaEventEntry
+            ev={nextEvent}
+            isExpanded
+            isNextHero
+            onOpenMeeting={() => openAgendaEvent(nextEvent)}
+            onMinimizedChange={(minimized) => onMinimizedChange(nextEvent, minimized)}
+            nowTick={nowTick}
+            showAccountLabel={showAccountLabel}
+          />
+        </div>
+      ) : null}
+      {laterToday.length > 0 ? (
+        <ul className="space-y-1">
+          {laterToday.map((ev) => (
+            <li key={eventKey(ev)}>{renderRow(ev)}</li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  )
+
   return (
     <div
       ref={listRef}
@@ -98,87 +136,34 @@ export function AgendaCardListBody(props: {
         </p>
       ) : null}
 
-      {visibleEvents.length > 0 && isToday && nextEvent ? (
-        <div className="space-y-1">
-          {earlierToday.length > 0 ? (
-            <div className="space-y-1">
-              <p className="typo-caption text-muted-foreground px-1">Earlier today</p>
-              <ul className="space-y-1">
-                {earlierToday.map((ev) => (
-                  <li key={eventKey(ev)}>{renderRow(ev)}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          <div ref={nextAnchorRef}>
-            <AgendaEventEntry
-              ev={nextEvent}
-              isExpanded
-              isNextHero
-              onOpenMeeting={() => openAgendaEvent(nextEvent)}
-              onMinimizedChange={(minimized) => onMinimizedChange(nextEvent, minimized)}
-              nowTick={nowTick}
-              showAccountLabel={showAccountLabel}
-            />
-          </div>
-
-          {laterToday.length > 0 ? (
-            <ul className="space-y-1">
-              {laterToday.map((ev) => (
-                <li key={eventKey(ev)}>{renderRow(ev)}</li>
-              ))}
-            </ul>
-          ) : null}
-
-          {(range === 'week' || range === 'month') &&
-          (groupedVisible.get(tomorrowKey)?.length ?? 0) > 0 ? (
-            <AgendaWeekDaySeparator dayKey={tomorrowKey} nowTick={nowTick} timeZone={timezone} />
-          ) : null}
-
-          <div className="space-y-1">
-            {dividerDayKeys.map((dk) => {
-              if (skipDividerDayKey !== null && dk === skipDividerDayKey) return null
-              const dayEvts = groupedVisible.get(dk) ?? []
-              if (!dayEvts.length) return null
-              return (
-                <div key={dk}>
-                  {dk !== tomorrowKey ? (
-                    <AgendaWeekDaySeparator dayKey={dk} nowTick={nowTick} timeZone={timezone} />
-                  ) : null}
-                  <ul className="space-y-1">
-                    {dayEvts.map((ev) => (
-                      <li key={eventKey(ev)}>{renderRow(ev)}</li>
-                    ))}
-                  </ul>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      ) : null}
-
-      {visibleEvents.length > 0 && !(isToday && nextEvent) ? (
+      {visibleEvents.length > 0 ? (
         range === 'week' || range === 'month' ? (
           <div className="space-y-0.5">
             {dividerDayKeys.map((dk) => {
-              const dayEvts = groupedVisible.get(dk)
-              if (!dayEvts?.length) return null
-              const omitDivider = skipDividerDayKey !== null && dk === skipDividerDayKey
+              const dayEvts = groupedVisible.get(dk) ?? []
+              const isCurrentDay = isToday && dk === todayDayKey
+              if (dayEvts.length === 0 && !isCurrentDay) return null
+              const isScrollDay = isToday && dk === scrollDayKey
               return (
-                <div key={dk}>
-                  {!omitDivider ? (
-                    <AgendaWeekDaySeparator dayKey={dk} nowTick={nowTick} timeZone={timezone} />
-                  ) : null}
-                  <ul className="space-y-1">
-                    {dayEvts.map((ev) => (
-                      <li key={eventKey(ev)}>{renderRow(ev)}</li>
-                    ))}
-                  </ul>
+                <div key={dk} ref={isScrollDay ? todayAnchorRef : undefined}>
+                  <AgendaWeekDaySeparator dayKey={dk} nowTick={nowTick} timeZone={timezone} />
+                  {isCurrentDay && nextEvent ? (
+                    renderTodayRows()
+                  ) : dayEvts.length === 0 ? (
+                    <p className="body-3 text-muted-foreground px-3 py-2">No meetings today.</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {dayEvts.map((ev) => (
+                        <li key={eventKey(ev)}>{renderRow(ev)}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )
             })}
           </div>
+        ) : isToday && nextEvent ? (
+          renderTodayRows()
         ) : (
           <ul className="space-y-1">
             {visibleEvents.map((ev) => (

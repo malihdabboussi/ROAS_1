@@ -12,9 +12,25 @@ function endOfDay(d: Date): Date {
   return x
 }
 
+/** Calendar weeks are always Monday through Sunday, independent of today's weekday. */
+export function startOfAgendaWeek(d: Date): Date {
+  const x = startOfDay(d)
+  const daysSinceMonday = (x.getDay() + 6) % 7
+  x.setDate(x.getDate() - daysSinceMonday)
+  return x
+}
+
+export function agendaRangeStartDate(d: Date, range: AgendaDateRange): Date {
+  return range === 'week' ? startOfAgendaWeek(d) : startOfDay(d)
+}
+
 export function agendaRangeEndDate(d: Date, range: AgendaDateRange): Date {
   if (range === 'day') return endOfDay(d)
-  if (range === 'week') return endOfDay(new Date(d.getTime() + 6 * 86400000))
+  if (range === 'week') {
+    const end = startOfAgendaWeek(d)
+    end.setDate(end.getDate() + 6)
+    return endOfDay(end)
+  }
   return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999)
 }
 
@@ -23,7 +39,7 @@ export function agendaListFetchWindow(
   day: Date,
   range: AgendaDateRange,
 ): { fetchStart: Date; fetchEnd: Date; viewStart: Date; viewEnd: Date } {
-  const viewStart = startOfDay(day)
+  const viewStart = agendaRangeStartDate(day, range)
   const viewEnd = agendaRangeEndDate(day, range)
   const monthStart = new Date(day.getFullYear(), day.getMonth(), 1, 0, 0, 0, 0)
   const monthEnd = new Date(day.getFullYear(), day.getMonth() + 1, 0, 23, 59, 59, 999)

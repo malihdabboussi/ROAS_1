@@ -1,19 +1,9 @@
 'use client'
 
-import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { agendaListFetchWindow } from '@/features/home/lib/agenda-fetch-window'
+import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 
 type DateRange = 'day' | 'week' | 'month'
-
-function startOfDay(d: Date): Date {
-  const x = new Date(d)
-  x.setHours(0, 0, 0, 0)
-  return x
-}
-
-function rangeEndDate(d: Date, range: DateRange): Date {
-  return agendaListFetchWindow(d, range).viewEnd
-}
 
 export function dayKeyInTimeZone(dt: Date, timeZone: string): string {
   return new Intl.DateTimeFormat('en-CA', {
@@ -57,12 +47,15 @@ function agendaListDayDividerLabel(dayKey: string, nowTick: number, timeZone: st
 }
 
 /** Anchor uses local navigator dates (`day` state); bucket keys honor `timezone`. */
-export function enumerateDayKeysInNavRange(anchor: Date, range: DateRange, timeZone: string): string[] {
+export function enumerateDayKeysInNavRange(
+  anchor: Date,
+  range: DateRange,
+  timeZone: string,
+): string[] {
   const keys: string[] = []
-  let cur = startOfDay(anchor)
-  const last = rangeEndDate(anchor, range)
-  const endStart = startOfDay(last)
-  while (cur.getTime() <= endStart.getTime()) {
+  const { viewStart, viewEnd } = agendaListFetchWindow(anchor, range)
+  let cur = viewStart
+  while (cur.getTime() <= viewEnd.getTime()) {
     keys.push(dayKeyInTimeZone(cur, timeZone))
     cur = new Date(cur)
     cur.setDate(cur.getDate() + 1)
@@ -106,5 +99,3 @@ export function AgendaWeekDaySeparator({
     </div>
   )
 }
-
-

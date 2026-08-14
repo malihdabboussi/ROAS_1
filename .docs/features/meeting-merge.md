@@ -52,3 +52,15 @@ clear selection, refresh.
 
 Related: duplicate creation is being fixed separately (dedupe natural keys); merge cleans
 up existing duplicates.
+
+## Agenda presentation and routing
+
+The default list range is a calendar week: Monday through Sunday. On the current
+week, the internal list scrolls to the current day (or the next day with events)
+without removing earlier weekdays, so users can scroll upward to review them.
+
+The `meeting` URL parameter restores deep links and browser navigation. Once a
+meeting is already open, an explicit in-page click owns the transition and updates
+the URL; a stale parameter must never reopen the previous meeting while the next
+workspace mounts. Generic Fathom ingestion uses `Recorded call` while enrichment is
+pending and deterministic fallback naming, never a visible `Call (naming…)` state.
