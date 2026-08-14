@@ -1,3 +1,27 @@
+## 2026-08-14 - [FIX] ROAS Slack → Pixel thread context drops files
+
+Status: Open
+
+Found while: Pixel YouTube transcript pull from a Slack thread
+
+Evidence: `buildSlackThreadReplyContext` in `apps/api/src/modules/slack/services/slack-service-conversation.base.ts` copies the last 12 message texts only. OpenClaw Slack hydrates starter files in `apps/openclaw/src/slack/monitor/message-handler/prepare.ts`; the ROAS Slack → Pixel path does not. A video or transcript file on an earlier thread message never reaches Pixel.
+
+Needed work: Hydrate Slack thread file URLs/attachments into the Pixel session context the same way OpenClaw does for starter files, with tests for a URL-only latest message plus a file on an earlier thread message.
+
+Reason not done now: The requested fix is Pixel `extract_url_transcript` using the Social Analysis API for a video URL. Thread file hydration is a separate Slack context gap.
+
+## 2026-08-14 - [FIX] Atlas Slack Brain import red toast
+
+Status: Open
+
+Found while: Pixel transcript failure in chat “Meta Ads Video Script”
+
+Evidence: `BrainImportJobNotifier` toasts `Import failed: ${last_error}` for `slack_period_import` / `campaign_slack_import`. Short threads can be skipped in `formatThreadsAsBlob`, and auth/scope errors (`missing_scope`) can fail the job. This toast is separate from Pixel `extract_url_transcript`.
+
+Needed work: Inspect the production Brain import job row on `lhfgtsjetcardinpgouq`, then either skip empty Slack threads without a red error toast or map scope/auth failures to a clearer user-facing sentence from the brain feature error config.
+
+Reason not done now: The user asked to pull video transcripts through the existing API, not to change Atlas Slack import toast UX.
+
 ## 2026-08-05 - [ARCH] SlackService near 600 LOC after digest reply enrichment
 
 Status: Open
