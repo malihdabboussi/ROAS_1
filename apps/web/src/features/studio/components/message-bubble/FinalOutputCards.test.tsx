@@ -164,7 +164,9 @@ describe('FinalOutputCards', () => {
       },
     ]
 
-    render(<FinalOutputCards blocks={blocks} />)
+    const { container } = render(<FinalOutputCards blocks={blocks} />)
+
+    expect(container.querySelector('.lucide-rocket')).not.toBeNull()
     fireEvent.click(screen.getByRole('button', { name: /Validate Impact Elite message angles/i }))
 
     expect(openArtifactPreviewInShell).toHaveBeenCalledWith({

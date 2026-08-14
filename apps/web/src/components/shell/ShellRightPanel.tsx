@@ -10,7 +10,7 @@ import { useChatStore } from '@/features/studio/store/use-chat-store'
 import type { Conversation } from '@/lib/conversations'
 import { useQuickMissionsLauncher } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
-import { isShellMissionCreateItem, type ShellCreateMenuItem } from './shell-create-menu.config'
+import type { ShellCreateMenuItem } from './shell-create-menu.config'
 import { ShellCreateMenuPanel } from './ShellCreateMenuPanel'
 import { ShellRightPanelConnections } from './ShellRightPanelConnections'
 import { ShellRightPanelFiles } from './ShellRightPanelFiles'
@@ -67,10 +67,6 @@ export function ShellRightPanel({
   const [createOpen, setCreateOpen] = useState(false)
   const handleCreateSelect = useCallback(
     (item: ShellCreateMenuItem) => {
-      if (isShellMissionCreateItem(item)) {
-        openLauncher()
-        return
-      }
       useGlobalChatStore.getState().seedComposer({
         content: item.prompt,
         seedMode: 'attach',
@@ -78,7 +74,7 @@ export function ShellRightPanel({
         workContext: spaceId ? { surface: 'spaces', spaceId } : undefined,
       })
     },
-    [openLauncher, spaceId],
+    [spaceId],
   )
   const messages = useChatStore((s) =>
     conversationId ? (s.messagesByConversation[conversationId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES,
@@ -190,6 +186,7 @@ export function ShellRightPanel({
             </button>
             <ShellCreateMenuPanel
               onSelectCreateItem={handleCreateSelect}
+              onSelectMissionPlaybook={(playbookKey) => openLauncher(playbookKey)}
               onCloseMenu={() => setCreateOpen(false)}
             />
           </div>

@@ -386,7 +386,13 @@ export class ChatReferenceContextService {
     if (conversationRefs.length > 0) {
       const conversationLines = await buildConversationReferenceLines(
         serviceClient,
-        conversationRefs.map((ref) => ({ id: ref.id, label: ref.label })),
+        conversationRefs.map((ref) => ({
+          id: ref.id,
+          label: ref.label,
+          messageId: ref.type?.startsWith('message:')
+            ? ref.type.slice('message:'.length)
+            : undefined,
+        })),
         userId,
         orgId ?? null,
       )

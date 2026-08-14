@@ -43,6 +43,10 @@ describe('AgencyClientsPage', () => {
     render(<AgencyClientsPage />)
 
     expect(await screen.findByText('Clogged Club')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Portal' })).toHaveAttribute(
+      'href',
+      '/clients?surface=portal',
+    )
     expect(screen.queryByText('Loading clients')).not.toBeInTheDocument()
     await waitFor(() => {
       expect(fetchAgencyClients).toHaveBeenNthCalledWith(1, '', false)

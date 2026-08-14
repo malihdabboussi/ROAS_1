@@ -12,7 +12,9 @@ export type ConversationTaskRow = {
 
 export type ConversationFileRow = {
   id: string
+  messageId: string
   title: string
+  subtitle: string | null
   kind: 'artifact' | 'image' | 'video' | 'audio' | 'file'
   fileUrl: string | null
   mimeType: string | null
@@ -134,7 +136,9 @@ export function extractConversationFileRows(messages: Message[]): ConversationFi
       const title = stringField(document, 'filename') ?? 'Attached file'
       push({
         id: `${message.id}:document:${title}`,
+        messageId: message.id,
         title,
+        subtitle: null,
         kind: attachmentKind(document),
         fileUrl,
         mimeType: stringField(document, 'mimeType'),
@@ -151,7 +155,9 @@ export function extractConversationFileRows(messages: Message[]): ConversationFi
       if (!entityId || !entityType) continue
       push({
         id: `${message.id}:artifact:${entityId}`,
+        messageId: message.id,
         title: stringField(artifact, 'label') ?? 'Artifact',
+        subtitle: null,
         kind: 'artifact',
         fileUrl: null,
         mimeType: null,
@@ -170,7 +176,9 @@ export function extractConversationFileRows(messages: Message[]): ConversationFi
         if (!entityId || !entityType) continue
         push({
           id: stringField(block, 'id') ?? `${message.id}:artifact:${entityId}`,
+          messageId: message.id,
           title: stringField(block, 'name') ?? 'Artifact',
+          subtitle: stringField(block, 'subtitle'),
           kind: 'artifact',
           fileUrl: null,
           mimeType: null,
@@ -185,7 +193,9 @@ export function extractConversationFileRows(messages: Message[]): ConversationFi
         if (!fileUrl) continue
         push({
           id: stringField(block, 'id') ?? `${message.id}:${fileUrl}`,
+          messageId: message.id,
           title: stringField(block, 'label') ?? 'Document',
+          subtitle: null,
           kind: 'file',
           fileUrl,
           mimeType:
@@ -204,7 +214,9 @@ export function extractConversationFileRows(messages: Message[]): ConversationFi
         if (!fileUrl || !kind || !['image', 'video', 'audio', 'file'].includes(kind)) continue
         push({
           id: stringField(block, 'id') ?? `${message.id}:${fileUrl}`,
+          messageId: message.id,
           title: stringField(block, 'title') ?? stringField(block, 'fileName') ?? 'Media',
+          subtitle: stringField(block, 'prompt'),
           kind: kind as ConversationFileRow['kind'],
           fileUrl,
           mimeType: stringField(block, 'mimeType'),
@@ -219,7 +231,9 @@ export function extractConversationFileRows(messages: Message[]): ConversationFi
     for (const media of extractMediaFromText(messagePlainText(message))) {
       push({
         id: `${message.id}:media:${media.url}`,
+        messageId: message.id,
         title: media.label ?? 'Media',
+        subtitle: null,
         kind: media.kind,
         fileUrl: media.url,
         mimeType: null,

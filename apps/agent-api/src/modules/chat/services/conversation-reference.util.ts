@@ -15,6 +15,7 @@ export const CONVERSATION_REF_LIMITS = {
 export interface ConversationReferenceInput {
   id: string
   label: string
+  messageId?: string
 }
 
 /**
@@ -46,11 +47,10 @@ export async function buildConversationReferenceLines(
 
     const messageRows = await repository.listConversationReferenceMessages(serviceClient, {
       conversationId: conv.id,
-      limit: CONVERSATION_REF_LIMITS.messages,
+      messageId: ref.messageId,
+      limit: ref.messageId ? 1 : CONVERSATION_REF_LIMITS.messages,
     })
-    const ascending = messageRows
-      .slice()
-      .reverse()
+    const ascending = messageRows.slice().reverse()
 
     const transcriptLines = ascending.map((m) => {
       const content = (m.content ?? '').trim()
@@ -69,6 +69,14 @@ export async function buildConversationReferenceLines(
       truncated = true
     }
     if (truncated) transcriptLines.unshift('[transcript truncated]')
+
+    if (ref.messageId) {
+      lines.push(
+        `- [Referenced message] ${ref.label} (conversation_id: ${conv.id}, message_id: ${ref.messageId}) — use this exact message as the reply target:`,
+      )
+      for (const line of transcriptLines) lines.push(`  ${line}`)
+      continue
+    }
 
     const title = conv.title?.trim() || ref.label || 'Customer conversation'
     lines.push(

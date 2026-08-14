@@ -47,6 +47,10 @@ describe('ClientCampaignsPage', () => {
     render(<ClientCampaignsPage />)
 
     expect(await screen.findByText('Evergreen Leads')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Portal' })).toHaveAttribute(
+      'href',
+      '/client-campaigns?surface=portal',
+    )
     expect(screen.queryByText('Loading campaigns')).not.toBeInTheDocument()
     await waitFor(() => {
       expect(fetchAgencyClientCampaigns).toHaveBeenNthCalledWith(1, undefined, false)

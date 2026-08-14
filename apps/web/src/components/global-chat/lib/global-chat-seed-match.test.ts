@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { globalChatSeedMatchesPanel } from './global-chat-seed-match'
+import { globalChatSeedMatchesPanel, normalizeGlobalChatSeed } from './global-chat-seed-match'
 
 describe('globalChatSeedMatchesPanel', () => {
   it('matches a space-targeted seed to the same panel space', () => {
@@ -36,5 +36,32 @@ describe('globalChatSeedMatchesPanel', () => {
     expect(
       globalChatSeedMatchesPanel({ content: 'hi', workContext: { surface: 'team' } }, 'space-1'),
     ).toBe(false)
+  })
+})
+
+describe('normalizeGlobalChatSeed', () => {
+  it('accepts an empty attach seed when it carries an exact-message reference', () => {
+    expect(
+      normalizeGlobalChatSeed(
+        {
+          content: '',
+          conversationId: 'conversation-1',
+          seedMode: 'attach',
+          references: [{ kind: 'conversation', id: 'conversation-1', type: 'message:assistant-1' }],
+        },
+        undefined,
+      ),
+    ).toEqual(
+      expect.objectContaining({
+        content: '',
+        isAttach: true,
+        seedKey: expect.stringContaining('message:assistant-1'),
+      }),
+    )
+  })
+
+  it('rejects empty seeds with no attachments or references', () => {
+    expect(normalizeGlobalChatSeed({ content: '', seedMode: 'attach' }, undefined)).toBeNull()
+    expect(normalizeGlobalChatSeed({ content: '' }, undefined)).toBeNull()
   })
 })

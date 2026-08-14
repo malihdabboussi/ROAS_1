@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, Copy, Split, ThumbsDown, ThumbsUp, X } from 'lucide-react'
+import { Check, Copy, MessageCircleReply, Split, ThumbsDown, ThumbsUp, X } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import {
   agentTurnFeedbackChipsForThumb,
@@ -22,6 +22,8 @@ interface AgentTurnFeedbackActionsProps {
   canFork?: boolean
   onFork?: () => void | Promise<void>
   forking?: boolean
+  showFeedback?: boolean
+  onReply?: () => void
   className?: string
 }
 
@@ -38,12 +40,15 @@ export function AgentTurnFeedbackActions({
   canFork = false,
   onFork,
   forking = false,
+  showFeedback = true,
+  onReply,
   className,
 }: AgentTurnFeedbackActionsProps) {
   const { feedback, saving, canPersist, save } = useAgentTurnFeedback({
     targetKind,
     targetId,
     sourceSurface,
+    enabled: showFeedback,
   })
   const [copied, setCopied] = useState(false)
   const [popoverOpen, setPopoverOpen] = useState(false)
@@ -268,7 +273,19 @@ export function AgentTurnFeedbackActions({
             </button>
           </Tooltip>
         ) : null}
-        {canPersist ? (
+        {onReply ? (
+          <Tooltip label="Reply to message" side="top" delayMs={150}>
+            <button
+              type="button"
+              aria-label="Reply to message"
+              onClick={onReply}
+              className={actionButtonClass}
+            >
+              <MessageCircleReply className="h-3.5 w-3.5" />
+            </button>
+          </Tooltip>
+        ) : null}
+        {canPersist && showFeedback ? (
           <>
             <Tooltip label="Thumbs up" side="top" delayMs={150}>
               <button
@@ -296,7 +313,9 @@ export function AgentTurnFeedbackActions({
         ) : null}
       </div>
 
-      {typeof document !== 'undefined' && popover ? createPortal(popover, document.body) : null}
+      {showFeedback && typeof document !== 'undefined' && popover
+        ? createPortal(popover, document.body)
+        : null}
     </div>
   )
 }

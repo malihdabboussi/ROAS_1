@@ -3,7 +3,9 @@ import type { MessageReference } from '../../types'
 
 function visibleReferenceChips(references: MessageReference[]): MessageReference[] {
   return references.filter(
-    (ref) => ref.kind !== 'conversation' && (ref.kind !== 'artifact' || ref.campaign_id),
+    (ref) =>
+      (ref.kind !== 'conversation' || ref.type?.startsWith('message:')) &&
+      (ref.kind !== 'artifact' || ref.campaign_id),
   )
 }
 

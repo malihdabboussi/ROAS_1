@@ -54,6 +54,7 @@ describe('QuickMissionsHubModal', () => {
     await waitFor(() =>
       expect(createMission).toHaveBeenCalledWith(
         expect.objectContaining({
+          title: 'Static Ad Production — Current Course',
           campaign_id: 'campaign-1',
           space_id: 'space-1',
           input: {
@@ -71,7 +72,7 @@ describe('QuickMissionsHubModal', () => {
     )
     expect(onStarted).toHaveBeenCalledWith(
       'mission-1',
-      'Static Ad Production',
+      'Static Ad Production — Current Course',
       'space-1',
       'conversation-1',
     )
@@ -109,7 +110,7 @@ describe('QuickMissionsHubModal', () => {
     await waitFor(() =>
       expect(onStarted).toHaveBeenCalledWith(
         'mission-background',
-        'Webinar Fulfillment',
+        'Webinar Fulfillment — Current Course',
         'space-1',
         'conversation-1',
       ),
@@ -138,7 +139,7 @@ describe('QuickMissionsHubModal', () => {
 
     await waitFor(() =>
       expect(onResolveSourceConversation).toHaveBeenCalledWith({
-        missionTitle: 'Webinar Fulfillment',
+        missionTitle: 'Webinar Fulfillment — Current Course',
         campaignId: 'campaign-1',
         spaceId: 'space-1',
       }),
@@ -153,7 +154,7 @@ describe('QuickMissionsHubModal', () => {
     )
     expect(onStarted).toHaveBeenCalledWith(
       'mission-new-chat',
-      'Webinar Fulfillment',
+      'Webinar Fulfillment — Current Course',
       'space-1',
       'conversation-new-chat',
     )
