@@ -7,6 +7,7 @@ import { MissionOpenclawGateway } from '../missions/services/gateways/mission-op
 import { MissionExecBroadcastService } from '../missions/services/mission-exec-broadcast.service'
 import { MissionTracingService } from '../missions/services/mission-tracing.service'
 import { MissionDeliverablesRepository } from '../missions/services/persistence/mission-deliverables.repository'
+import { MissionQualityEvidenceRepository } from '../missions/services/persistence/mission-quality-evidence.repository'
 import { MissionStateRepository } from '../missions/services/persistence/mission-state.repository'
 import { MissionJsonService } from '../missions/services/utils/mission-json.service'
 import { BrainOpsNightJanitorService } from './brain-ops-night-janitor.service'
@@ -67,6 +68,7 @@ import { BRAIN_OPS_QUEUE } from './types'
     AgentSignalService,
     MissionStateRepository,
     MissionDeliverablesRepository,
+    MissionQualityEvidenceRepository,
     MissionJsonService,
     MissionTracingService,
     MissionExecBroadcastService,

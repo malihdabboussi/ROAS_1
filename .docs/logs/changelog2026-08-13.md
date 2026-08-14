@@ -410,3 +410,13 @@ Why: The first production Client Strategy revision reached manager review with v
 Impact: Manager approval now evaluates the current artifact itself and cannot reject a readable Mission document merely because its worker receipt is concise.
 
 Files: `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw.gateway.ts`, `apps/mission-worker/src/modules/missions/services/gateways/mission-quality-eval-context.ts`, `mission-quality-eval-context.test.ts`, `documentation/features/missions.md`.
+
+## [2026-08-13 18:59] - [FIX]
+
+What: Registered Mission canonical-evidence loading in every worker module that constructs `MissionOpenclawGateway`, with a module-metadata regression test for Brain Ops and Dream Ops.
+
+Why: The first Railway image built successfully but crashed at startup because Brain Ops and Dream Ops each construct their own Mission gateway and did not provide its new evidence repository dependency.
+
+Impact: The Mission worker can boot with canonical manager/evaluator evidence available across Mission, Brain Ops, and Dream Ops gateway instances.
+
+Files: `apps/mission-worker/src/modules/brain-ops/brain-ops.module.ts`, `apps/mission-worker/src/modules/dream-ops/dream-ops.module.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-quality-evidence.module.test.ts`.
