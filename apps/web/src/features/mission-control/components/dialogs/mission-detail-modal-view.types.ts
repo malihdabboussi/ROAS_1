@@ -1,4 +1,4 @@
-import type { Dispatch, RefObject, SetStateAction } from 'react'
+import type { Dispatch, ReactNode, RefObject, SetStateAction } from 'react'
 import type { AttachedFile } from '@/components/chat/FileAttachments'
 import type {
   Mission,
@@ -17,6 +17,7 @@ import type { RatingPayload } from './MissionRatingStrip'
 export interface MissionDetailModalViewProps {
   mission: Mission
   presentation: 'modal' | 'panel'
+  headerActions?: ReactNode
   liveMission: Mission | null
   title: string
   setTitle: (value: string) => void

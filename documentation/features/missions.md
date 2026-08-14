@@ -309,6 +309,7 @@ Outbox mission-status validation uses the direct pool when available, keeping qu
 
 ## Decision Log
 
+- 2026-08-13: Added shell-owned Expand/Collapse actions to Mission and subtask headers after production proved the Mission-specific artifact renderer bypassed the shared viewer header and therefore lacked the third-pane expansion control available to other artifacts.
 - 2026-08-13: Made Home Quick Missions derive their source conversation from the visible `?conv=` route after production proved the persisted chat store could retain the prior conversation on blank `/home`, start the worker successfully, and hide the receipt in that stale chat.
 - 2026-08-13: Start-aligned the nonwrapping quick-start row after production geometry proved its centered overflow pushed Mission and Offer beneath the 272px docked menu, so pointer clicks hit Favorites instead.
 - 2026-08-13: Moved client Space loading from Mission-open time to host mount after production showed the opening refresh remounted the composer and reset locally owned dialog state.

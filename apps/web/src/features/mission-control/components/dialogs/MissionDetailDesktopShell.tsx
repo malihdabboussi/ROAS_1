@@ -16,6 +16,7 @@ import { SubtasksSection } from './SubtasksSection'
 
 interface MissionDetailDesktopShellProps {
   presentation?: 'modal' | 'panel'
+  headerActions?: ReactNode
   shellZ: string
   hideMissionSurface: boolean
   onClose: () => void
@@ -41,6 +42,7 @@ interface MissionDetailDesktopShellProps {
 
 export function MissionDetailDesktopShell({
   presentation = 'modal',
+  headerActions,
   shellZ,
   hideMissionSurface,
   onClose,
@@ -114,6 +116,7 @@ export function MissionDetailDesktopShell({
             subtaskTitle={selectedSubtask.title}
             onBack={onBackToMission}
             onClose={onClose}
+            actions={headerActions}
           />
         ) : (
           <MissionDetailHeader
@@ -121,6 +124,7 @@ export function MissionDetailDesktopShell({
             onTitleChange={onTitleChange}
             onClose={onClose}
             onOpenMenu={onOpenMenu}
+            actions={headerActions}
           />
         )}
         {!selectedSubtask && menuAnchor ? (

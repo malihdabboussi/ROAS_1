@@ -1,5 +1,15 @@
 # Changelog - August 13, 2026
 
+## [2026-08-13 18:25] - [FIX]
+
+What: Added the canonical Expand/Collapse control to the Mission artifact pane, kept it available in both parent Mission and subtask headers without adding a duplicate shell header, and normalized the touched Mission title field to the foreground utilities.
+
+Why: Production verification showed Mission cards opened the correct third pane, but the Mission-specific renderer bypassed `ShellArtifactViewerPanel`, leaving only More and Close while documents and other artifacts exposed the requested pane expansion control.
+
+Impact: Background Missions remain interactive beside chat, can expand over the work surface for focused review, collapse back to the resizable third column, and retain the existing close action.
+
+Files: `apps/web/src/components/shell/ShellMissionArtifactViewerAdapter.tsx`, `apps/web/src/components/shell/ShellMissionArtifactViewerAdapter.test.tsx`, Mission detail modal/header/view files, `documentation/features/missions.md`.
+
 ## [2026-08-13 16:52] - [ARCH]
 
 What: Added a unified company/client/campaign `agent_cases` ledger; decoupled complete Slack operational detection from the five-item briefing cap; made EOD refresh source threads before compilation; added one-time hard 24-hour unanswered-ask escalation; and routed Page Grader QC, Proactive Launch, Campaign QC, and Pixel offers through the same scoped lifecycle.
