@@ -160,8 +160,9 @@ export async function analyzeSlackTeamMessages(input: {
       )
       .join('\n')
     const prompt = [
-      'Analyze recent Slack messages as an executive teammate preparing a relevance-ranked briefing.',
-      `Requested loop: ${input.loopKind}. Return zero to ${remaining} high-confidence signals.`,
+      'Analyze recent Slack messages to detect every high-confidence operational signal supported by the supplied window.',
+      `Requested loop: ${input.loopKind}. Return up to ${remaining} high-confidence signals.`,
+      'Delivery ranking happens after detection. Do not omit a credible unanswered question, client risk, commitment, or durable memory merely because another item seems more important.',
       input.briefingRecipient
         ? `The briefing recipient is ${input.briefingRecipient.displayName} (${input.briefingRecipient.role}). Prioritize what helps this person understand the business and take the right next step.`
         : '',
@@ -169,8 +170,7 @@ export async function analyzeSlackTeamMessages(input: {
         ? `Write proposed_content in second person when referring to the recipient. Say "you stepped in" / "your reply" / "you clarified", never "${input.briefingRecipient.displayName} stepped in". Keep other people's names in third person.`
         : '',
       'Only use explicit evidence in the messages. Do not infer private facts or invent commitments.',
-      'Select what is most useful to the recipient, ranked by business impact, urgency, novelty, confidence, and actionability.',
-      'Prefer a small, varied briefing over a list of similar alerts. Do not force an unanswered question into the briefing; include one only when it is genuinely among the most important items.',
+      'For briefing-oriented signals, explain business impact, urgency, novelty, confidence, and actionability so a later selector can rank them.',
       'When the evidence supports it, connect related messages into one concise insight that explains why the development matters. Never combine unrelated claims.',
       'When the source includes concrete dates, owners, amounts, ROAS figures, or next scheduled dates, include those specifics in proposed_content.',
       'Pixel (bot) messages are reply context only. Never create a Person Brain fact about Pixel or target PIXEL_BOT.',

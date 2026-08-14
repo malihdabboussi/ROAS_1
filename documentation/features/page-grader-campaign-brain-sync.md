@@ -1,6 +1,6 @@
 # Page Grader Campaign Brain Sync
 
-Last Modified: August 12, 2026
+Last Modified: August 13, 2026
 
 ## Overview
 
@@ -75,6 +75,10 @@ Page Grader env for push: `ROAS_BRAIN_WEBHOOK_URL`, `ROAS_BRAIN_WEBHOOK_SECRET` 
 
 `ROAS_SLACK_INGEST_WEBHOOK_URL` is optional. When omitted, Page Grader derives the Slack endpoint by replacing `/brain-package` in `ROAS_BRAIN_WEBHOOK_URL` with `/slack-messages`. Recent Page Grader Slack messages are also included in the Brain package as `page_grader_slack` channel knowledge, so the event loop gets immediate evidence while campaign Brain retains durable context. Closed or archived Page Grader clients are excluded before either handoff.
 
+Periodic mapped-channel imports use Atlas separately from the deterministic Page Grader package ingest. Campaign-targeted imports must call `atlas_save_brain_context` with the mapped ROAS `campaign_id`; `save_user_memory` is user-only. Import completion is fail-closed: the runtime reads the final status from both direct text and nested OpenResponses output, and it does not mark the job successful or advance the Slack mapping cursor unless Atlas returns an explicit `JOB_STATUS:completed` or `JOB_STATUS:skipped`. Any failed chunk stops a multi-chunk import at that chunk so retry can resume without silently losing part of the period.
+
+Page Grader QC notifications also enter the unified `agent_cases` ledger before their Slack blocks are sent. Structured findings preserve `quality_control`, `proactive_launch`, or `campaign_quality_control`, resolve the mapped ROAS client campaign and campaign Space when available, and retain the Page Grader finding ID as the idempotent source key. Slack acknowledge, snooze, and resolve interactions update both Page Grader and the same ROAS case, preventing two competing status histories.
+
 ## Post-call work bridge
 
 After a meeting recap is approved, ROAS keeps internal handoffs in its Action Ledger and sends only fulfillment candidates with an unambiguous Page Grader client and assignee. Resolution is per action item: explicit link, unique client-name match, then the meeting Space/campaign mapping as a fallback. The Page Grader work record preserves task type, subtype, source excerpt, meeting links, assignee, and ClickUp IDs.
@@ -123,6 +127,8 @@ Repeated manual requests use the deterministic Page Grader client and meeting ti
 
 ## Decision Log
 
+- **2026-08-13:** Fixed periodic Campaign Brain imports that were falsely recorded as successful after Atlas rejected the user-only save route. Campaign jobs now use the canonical Atlas Brain router with the exact campaign id, nested OpenResponses terminal statuses are parsed, missing status markers fail closed, and failed chunks cannot advance the Slack cursor.
+- **2026-08-13:** Routed QC, Proactive Launch, and Campaign QC notifications into the unified company/client/campaign case ledger before Slack delivery. Finding actions now synchronize back to that case lifecycle.
 - **2026-08-12:** Added first-class agency Clients and Client Campaigns navigation. Page Grader clients are projected as ROAS client campaign containers; Page Grader client campaigns are stable ROAS Spaces. Missing clients bootstrap through deterministic Brain import, campaign Spaces carry source IDs, and shared client/campaign/task/request changes write through the Page Grader API.
 - **2026-08-12:** Completed the agency workspace write loop. Client and campaign edits now refresh Brain and canonical campaign Spaces; ROAS-origin task status updates propagate through Page Grader to ClickUp and back to the linked ROAS action item; edit controls, date-only rendering, and Portal-facing labels were hardened for production use.
 - **2026-08-11:** Replaced the analyst-style timed precall report with a concise client-facing meeting workspace. The agenda now opens with native checkboxes, separates completed work from next-week priorities, presents raw performance per live campaign, uses plain-English wins and recommendations, and shows only genuine client needs. Internal source availability and preparation gaps can no longer appear in the generated document.

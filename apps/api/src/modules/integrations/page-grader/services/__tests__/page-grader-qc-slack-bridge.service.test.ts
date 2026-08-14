@@ -4,15 +4,21 @@ import { PageGraderQcSlackBridgeService } from '../page-grader-qc-slack-bridge.s
 describe('PageGraderQcSlackBridgeService', () => {
   const svc = { client: {} }
   const sync = { authorizeWebhookSecret: vi.fn() }
-  const pageGraderApi = { applyQcAction: vi.fn() }
+  const pageGraderApi = { applyQcAction: vi.fn(), getClientScopeMap: vi.fn() }
   const slackTools = { sendBlockMessageToTarget: vi.fn() }
   const slackApi = { verifyRequestSignature: vi.fn() }
+  const cases = { recordExternal: vi.fn(), applyExternalAction: vi.fn() }
   let service: PageGraderQcSlackBridgeService
 
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.SLACK_SIGNING_SECRET = 'signing-secret'
     sync.authorizeWebhookSecret.mockResolvedValue([{ userId: 'user-1', orgId: 'org-1' }])
+    pageGraderApi.getClientScopeMap.mockResolvedValue({
+      '1960ed48-b7cf-4da3-a745-9f0dc96b2ddb': {
+        campaign_id: '2960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+      },
+    })
     slackTools.sendBlockMessageToTarget.mockResolvedValue({
       success: true,
       channel: 'D123',
@@ -24,6 +30,69 @@ describe('PageGraderQcSlackBridgeService', () => {
       pageGraderApi as never,
       slackTools as never,
       slackApi as never,
+      cases as never,
+    )
+  })
+
+  it('records QC, proactive launch, and campaign QC findings in the unified case ledger', async () => {
+    const findingIds = [
+      '6960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+      '7960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+      '8960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+    ]
+    await service.deliverNotification(
+      JSON.stringify({
+        notification_id: 'qc:batch-1',
+        admin_slack_user_id: 'U123',
+        fallback_text: 'Three client findings need review.',
+        finding_ids: findingIds,
+        findings: [
+          {
+            id: findingIds[0],
+            type: 'quality_control',
+            summary: 'Landing page tracking is incomplete.',
+            client_id: '1960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+            client_name: 'Wholesale Universe',
+          },
+          {
+            id: findingIds[1],
+            type: 'proactive_launch',
+            summary: 'Launch is inside 48 hours without final creative approval.',
+            client_id: '1960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+          },
+          {
+            id: findingIds[2],
+            type: 'campaign_quality_control',
+            summary: 'Webinar replay SMS lacks booking attribution.',
+            client_id: '1960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+            page_grader_campaign_id: '3960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+            severity: 'high',
+          },
+        ],
+        blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'QC findings' } }],
+      }),
+      'pgwh-secret',
+    )
+
+    expect(cases.recordExternal).toHaveBeenCalledTimes(3)
+    expect(cases.recordExternal.mock.calls.map((call) => call[1].caseType)).toEqual([
+      'quality_control',
+      'proactive_launch',
+      'campaign_quality_control',
+    ])
+    expect(cases.recordExternal).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        orgId: 'org-1',
+        sourceKey: findingIds[2],
+        externalClientId: '1960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+        externalCampaignId: '3960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+        campaignId: '2960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+        severity: 'high',
+      }),
+    )
+    expect(cases.recordExternal.mock.invocationCallOrder[2]).toBeLessThan(
+      slackTools.sendBlockMessageToTarget.mock.invocationCallOrder[0],
     )
   })
 
@@ -107,6 +176,12 @@ describe('PageGraderQcSlackBridgeService', () => {
       action: 'snooze_tomorrow',
       slack_user_id: 'U123',
       slack_user_name: 'Dylan',
+    })
+    expect(cases.applyExternalAction).toHaveBeenCalledWith(expect.anything(), {
+      orgId: 'org-1',
+      sourceType: 'page_grader_qc',
+      sourceKey: findingId,
+      action: 'snooze_tomorrow',
     })
     expect(responseFetch).toHaveBeenCalledWith(
       payload.response_url,

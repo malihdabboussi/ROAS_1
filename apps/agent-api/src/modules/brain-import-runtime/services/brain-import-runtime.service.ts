@@ -131,7 +131,7 @@ export class BrainImportRuntimeService {
       const result = await this.callAtlas(execution, chunk, gatewayAgentId)
       lastResponseText = this.extractAtlasResponseText(result)
       const status = this.parseJobStatus(lastResponseText)
-      if (status.status === 'failed' && chunk.total === 1) {
+      if (status.status === 'failed') {
         throw new Error(`Atlas could not process: ${status.reason}`)
       }
       await this.postMainApi(
@@ -233,6 +233,22 @@ export class BrainImportRuntimeService {
     if (typeof result.text === 'string') return result.text
     if (typeof result.message === 'string') return result.message
     if (typeof result.output_text === 'string') return result.output_text
+    const output = Array.isArray(result.output) ? result.output : []
+    const outputText = output
+      .flatMap((item) => {
+        if (!item || typeof item !== 'object') return []
+        const record = item as Record<string, unknown>
+        if (typeof record.text === 'string') return [record.text]
+        if (!Array.isArray(record.content)) return []
+        return record.content.flatMap((part) => {
+          if (!part || typeof part !== 'object') return []
+          const text = (part as Record<string, unknown>).text
+          return typeof text === 'string' ? [text] : []
+        })
+      })
+      .join('\n')
+      .trim()
+    if (outputText) return outputText
     const choices = result.choices as Array<{ message?: { content?: string } }> | undefined
     if (choices?.[0]?.message?.content) return choices[0].message.content
     return JSON.stringify(result)
@@ -242,41 +258,19 @@ export class BrainImportRuntimeService {
     status: 'completed' | 'failed' | 'skipped'
     reason: string
   } {
-    const lines = text.split('\n')
-    for (const line of lines) {
-      const trimmed = line.trim()
-      if (trimmed.startsWith('JOB_STATUS:completed')) {
-        return {
-          status: 'completed',
-          reason:
-            trimmed
-              .slice('JOB_STATUS:completed'.length)
-              .replace(/^[\s—–-]+/, '')
-              .trim() || 'Processed successfully',
-        }
-      }
-      if (trimmed.startsWith('JOB_STATUS:failed')) {
-        return {
-          status: 'failed',
-          reason:
-            trimmed
-              .slice('JOB_STATUS:failed'.length)
-              .replace(/^[\s—–-]+/, '')
-              .trim() || 'Unknown failure',
-        }
-      }
-      if (trimmed.startsWith('JOB_STATUS:skipped')) {
-        return {
-          status: 'skipped',
-          reason:
-            trimmed
-              .slice('JOB_STATUS:skipped'.length)
-              .replace(/^[\s—–-]+/, '')
-              .trim() || 'Skipped',
-        }
-      }
+    const match = text.match(/^\s*JOB_STATUS:(completed|failed|skipped)\b([^\r\n]*)/m)
+    if (match) {
+      const status = match[1] as 'completed' | 'failed' | 'skipped'
+      const reason = match[2].replace(/^[\s—–-]+/, '').trim()
+      const fallbackReason =
+        status === 'completed'
+          ? 'Processed successfully'
+          : status === 'failed'
+            ? 'Unknown failure'
+            : 'Skipped'
+      return { status, reason: reason || fallbackReason }
     }
-    return { status: 'completed', reason: 'Processed (no explicit status tag)' }
+    return { status: 'failed', reason: 'Missing required JOB_STATUS terminal marker' }
   }
 
   private mainApiUrl(): string {

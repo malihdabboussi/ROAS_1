@@ -1,11 +1,10 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Optional } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SlackSignalResolutionService } from '../../slack/services/slack-signal-resolution.service'
 import {
   SlackOpenItemsRepository,
   type SlackOpenItem,
 } from '../repositories/slack-open-items.repository'
-import { Optional } from '@nestjs/common'
 import { SlackOfferFulfillmentService } from './slack-offer-fulfillment.service'
 
 @Injectable()
@@ -16,6 +15,78 @@ export class SlackOpenItemsService {
     @Optional() private readonly offerFulfillment?: SlackOfferFulfillmentService,
   ) {}
 
+  async recordExternal(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      caseType:
+        | 'quality_control'
+        | 'proactive_launch'
+        | 'campaign_quality_control'
+        | 'post_call'
+        | 'offer'
+      sourceType: string
+      sourceKey: string
+      summary: string
+      severity: 'low' | 'normal' | 'high' | 'critical'
+      clientLabel?: string | null
+      externalClientId?: string | null
+      externalCampaignId?: string | null
+      campaignId?: string | null
+      spaceId?: string | null
+      dueAt?: string | null
+      sourceChannelId?: string | null
+      sourceMessageTs?: string | null
+      metadata?: Record<string, unknown>
+      now?: Date
+    },
+  ): Promise<void> {
+    const now = input.now ?? new Date()
+    const nowIso = now.toISOString()
+    const scope = await this.items.resolveExternalScope(supabase, {
+      orgId: input.orgId,
+      campaignId: input.campaignId,
+      spaceId: input.spaceId,
+      externalCampaignId: input.externalCampaignId,
+      clientLabel: input.clientLabel,
+      externalClientId: input.externalClientId,
+    })
+    await this.items.upsert(supabase, {
+      org_id: input.orgId,
+      ...scope,
+      case_type: input.caseType,
+      source_type: input.sourceType,
+      source_key: input.sourceKey,
+      subject_person_id: null,
+      channel_id: input.sourceChannelId ?? input.sourceType,
+      source_message_ts: input.sourceMessageTs ?? input.sourceKey,
+      summary: input.summary,
+      severity: input.severity,
+      first_seen_at: nowIso,
+      last_activity_at: nowIso,
+      due_at: input.dueAt ?? null,
+      breach_notified_at: null,
+      snoozed_until: null,
+      metadata: input.metadata ?? {},
+    })
+  }
+
+  async applyExternalAction(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      sourceType: string
+      sourceKey: string
+      action: 'acknowledge' | 'resolve' | 'snooze_tomorrow'
+      now?: Date
+    },
+  ): Promise<void> {
+    await this.items.applyExternalAction(supabase, {
+      ...input,
+      nowIso: (input.now ?? new Date()).toISOString(),
+    })
+  }
+
   async record(
     supabase: SupabaseClient,
     input: {
@@ -23,27 +94,49 @@ export class SlackOpenItemsService {
       signalKind: string
       subjectPersonId: string | null
       clientLabel: string | null
+      slackTeamId: string
       channelId: string
       sourceMessageTs: string
       summary: string
-      shadowActionId: string
+      shadowActionId?: string | null
+      sourceMetadata?: Record<string, unknown>
       now: Date
     },
   ): Promise<void> {
     const kind = this.kindFor(input.signalKind, input.summary)
     if (!kind) return
     const nowIso = input.now.toISOString()
+    const sourceMetadata = input.sourceMetadata ?? {}
+    const scope = await this.items.resolveSlackScope(supabase, {
+      orgId: input.orgId,
+      channelId: input.channelId,
+      metadata: sourceMetadata,
+    })
     await this.items.upsert(supabase, {
       org_id: input.orgId,
-      kind,
+      ...scope,
+      case_type: kind,
+      source_type: 'slack_message',
+      source_key: `${input.channelId}:${input.sourceMessageTs}`,
       subject_person_id: input.subjectPersonId,
-      client_label: input.clientLabel,
+      client_label: scope.client_label ?? input.clientLabel,
       channel_id: input.channelId,
       source_message_ts: input.sourceMessageTs,
       summary: input.summary,
+      severity: kind === 'client_risk' ? 'high' : 'normal',
       first_seen_at: nowIso,
       last_activity_at: nowIso,
-      metadata: { shadow_action_id: input.shadowActionId },
+      due_at:
+        kind === 'unanswered_ask'
+          ? new Date(input.now.getTime() + 24 * 60 * 60_000).toISOString()
+          : null,
+      breach_notified_at: null,
+      snoozed_until: null,
+      metadata: {
+        ...sourceMetadata,
+        slack_team_id: input.slackTeamId,
+        ...(input.shadowActionId ? { shadow_action_id: input.shadowActionId } : {}),
+      },
     })
   }
 
@@ -51,15 +144,20 @@ export class SlackOpenItemsService {
     await this.offerFulfillment?.checkMissed(supabase, now)
     const checkedBefore = new Date(now.getTime() - 15 * 60_000).toISOString()
     for (const item of await this.items.listDueForResolution(supabase, orgId, checkedBefore)) {
-      const actionId =
-        typeof item.metadata.shadow_action_id === 'string' ? item.metadata.shadow_action_id : ''
-      if (!actionId) continue
       try {
-        const result = await this.resolution.refresh(supabase, orgId, actionId)
+        if (!item.channel_id || !item.source_message_ts) continue
+        const result = await this.resolution.inspectSource(supabase, orgId, {
+          channelId: item.channel_id,
+          sourceMessageTs: item.source_message_ts,
+          threadTs:
+            typeof item.metadata.source_thread_ts === 'string'
+              ? item.metadata.source_thread_ts
+              : null,
+        })
         await this.items.saveResolution(supabase, item, {
-          resolved: result.resolution.resolved,
-          note: result.resolution.reason,
-          checkedAt: result.resolution.checked_at,
+          resolved: result.resolved,
+          note: result.reason,
+          checkedAt: result.checked_at,
         })
       } catch {
         continue
@@ -116,6 +214,31 @@ export class SlackOpenItemsService {
       }))
   }
 
+  async breachPack(
+    supabase: SupabaseClient,
+    input: { orgId: string; now: Date },
+  ): Promise<Array<{ item: SlackOpenItem; text: string }>> {
+    const rows = await this.items.listUnnotifiedBreaches(
+      supabase,
+      input.orgId,
+      input.now.toISOString(),
+    )
+    return rows.map((item) => ({
+      item,
+      text: `${item.client_label ? `${item.client_label}: ` : ''}${item.summary} (${this.ageLabel(item.first_seen_at, input.now)}, 24h response breach)`,
+    }))
+  }
+
+  async markBreached(
+    supabase: SupabaseClient,
+    entries: Array<{ item: SlackOpenItem }>,
+    now: Date,
+  ): Promise<void> {
+    for (const entry of entries) {
+      await this.items.markBreachNotified(supabase, entry.item.id, now.toISOString())
+    }
+  }
+
   async markSurfaced(
     supabase: SupabaseClient,
     entries: Array<{ item: SlackOpenItem }>,
@@ -144,9 +267,9 @@ export class SlackOpenItemsService {
   private kindFor(
     signalKind: string,
     summary: string,
-  ): 'question' | 'client_ask' | 'commitment' | 'risk' | null {
-    if (signalKind === 'unanswered_question') return 'question'
-    if (signalKind === 'client_risk') return 'risk'
+  ): 'unanswered_ask' | 'client_ask' | 'commitment' | 'client_risk' | null {
+    if (signalKind === 'unanswered_question') return 'unanswered_ask'
+    if (signalKind === 'client_risk') return 'client_risk'
     if (
       /\b(i('| a)m|we('| a)re|will|by (?:monday|tuesday|wednesday|thursday|friday|tomorrow|eod))\b/i.test(
         summary,

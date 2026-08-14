@@ -55,14 +55,39 @@ export class SlackSignalResolutionService {
       typeof signal.metadata?.source_thread_ts === 'string'
         ? signal.metadata.source_thread_ts
         : sourceMessageTs
+    const resolution = await this.inspectSource(supabase, orgId, {
+      channelId: sourceChannelId,
+      sourceMessageTs,
+      threadTs,
+    })
+    return this.save(supabase, orgId, signal, resolution)
+  }
+
+  async inspectSource(
+    supabase: SupabaseClient,
+    orgId: string,
+    input: { channelId: string; sourceMessageTs: string; threadTs?: string | null },
+  ): Promise<SlackSignalResolution> {
+    const integration = await this.people.findOrgSlackIntegration(supabase, orgId)
+    if (!integration) {
+      return {
+        resolved: false,
+        source_available: false,
+        reason: 'Source thread is unavailable, so Pixel could not verify this case.',
+        checked_at: new Date().toISOString(),
+        reply_count: 0,
+        reaction_count: 0,
+      }
+    }
+    const threadTs = input.threadTs || input.sourceMessageTs
     const replies = await this.slackApi.conversationsRepliesAll(
       integration.access_token,
-      sourceChannelId,
+      input.channelId,
       threadTs,
     )
-    const source = replies.find((message) => message.ts === sourceMessageTs) ?? replies[0]
+    const source = replies.find((message) => message.ts === input.sourceMessageTs) ?? replies[0]
     const laterHumanReplies = replies.filter((message) =>
-      this.isLaterHumanReply(message, sourceMessageTs, source?.user),
+      this.isLaterHumanReply(message, input.sourceMessageTs, source?.user),
     )
     const reactionCount = (source?.reactions ?? []).reduce(
       (total, reaction) => total + (reaction.count ?? reaction.users?.length ?? 0),
@@ -74,7 +99,7 @@ export class SlackSignalResolutionService {
         (reaction.count ?? reaction.users?.length ?? 0) > 0,
     )
     const resolved = laterHumanReplies.length > 0 || Boolean(resolvedReaction)
-    return this.save(supabase, orgId, signal, {
+    return {
       resolved,
       source_available: true,
       reason: resolved
@@ -85,7 +110,7 @@ export class SlackSignalResolutionService {
       checked_at: new Date().toISOString(),
       reply_count: laterHumanReplies.length,
       reaction_count: reactionCount,
-    })
+    }
   }
 
   private isLaterHumanReply(

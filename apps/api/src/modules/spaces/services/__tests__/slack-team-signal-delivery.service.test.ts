@@ -39,6 +39,76 @@ const activeInternalPerson = {
 }
 
 describe('SlackTeamSignalDeliveryService', () => {
+  it('refreshes open cases and queues hard 24-hour breaches before loading due alerts', async () => {
+    const breachedItem = {
+      id: 'case-1',
+      channel_id: 'C1',
+      source_message_ts: '100.1',
+      first_seen_at: '2026-07-28T17:00:00.000Z',
+    }
+    const people = {
+      createShadowAction: vi.fn().mockResolvedValue({ id: 'breach-action' }),
+    }
+    const loops = {
+      listCoolingActions: vi.fn().mockResolvedValue([]),
+      hasEvidenceFingerprint: vi.fn().mockResolvedValue(false),
+    }
+    const openItems = {
+      reconcile: vi.fn().mockResolvedValue(undefined),
+      breachPack: vi
+        .fn()
+        .mockResolvedValue([
+          { item: breachedItem, text: 'Client question (open ~25h, 24h response breach)' },
+        ]),
+      markBreached: vi.fn().mockResolvedValue(undefined),
+    }
+    const service = new SlackTeamSignalDeliveryService(
+      people as never,
+      loops as never,
+      {} as never,
+      {} as never,
+      undefined,
+      openItems as never,
+    )
+
+    const result = await service.processCoolingActions({
+      supabase: {} as never,
+      userId: 'owner-1',
+      orgId: 'org-1',
+      workflowKey: 'slack_team:all',
+      deliveryMode: 'active',
+      personIds: [],
+      quietHoursActive: false,
+      people: [{ ...activeInternalPerson, vibey_user_id: 'owner-1' }] as never,
+      now: new Date('2026-07-29T18:00:00.000Z'),
+    })
+
+    expect(openItems.reconcile.mock.invocationCallOrder[0]).toBeLessThan(
+      openItems.breachPack.mock.invocationCallOrder[0],
+    )
+    expect(people.createShadowAction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        targetMemberId: 'member-1',
+        proposedContent: expect.stringContaining('24h response breach'),
+        metadata: expect.objectContaining({
+          agent_case_id: 'case-1',
+          hard_24h_breach: true,
+          eligible_at: '2026-07-29T18:00:00.000Z',
+        }),
+      }),
+    )
+    expect(openItems.markBreached).toHaveBeenCalledWith(
+      expect.anything(),
+      [{ item: breachedItem, text: expect.any(String) }],
+      new Date('2026-07-29T18:00:00.000Z'),
+    )
+    expect(people.createShadowAction.mock.invocationCallOrder[0]).toBeLessThan(
+      loops.listCoolingActions.mock.invocationCallOrder[0],
+    )
+    expect(result.breaches_escalated).toBe(1)
+  })
+
   it('delivers contextual briefing signals without treating replies as resolution', async () => {
     const update = {
       ...coolingAction,

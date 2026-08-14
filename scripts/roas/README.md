@@ -114,6 +114,40 @@ for diagnostics during startup.
 | `verify-roas-runtime-profiles.sql`     | Drift audit — fails if any profile/pool still routes to Vibey   |
 | `verify-vercel-env-freshness.sh`       | Guard — confirms critical env vars predate current prod build   |
 | `audit-page-grader-campaign-spaces.py` | Read-only Page Grader mapping, Space, and Meta provenance audit |
+| `audit_slack_brain_pipeline.py`        | Slack capture/import/Brain/index/retrieval audit and gated replay |
+
+### Slack Campaign Brain audit and recovery
+
+Run the pipeline audit against one mapping before and after rollout. It reports
+raw Slack observations, the database job status versus the terminal status
+inside Atlas's response, Campaign Brain memory/embedding coverage, and the
+mapping cursor. Add a probe to execute the same semantic search RPC used by
+Brain retrieval and optionally require an expected phrase in the top ten.
+
+```bash
+python3 scripts/roas/audit_slack_brain_pipeline.py --mapping-id=<mapping-uuid>
+python3 scripts/roas/audit_slack_brain_pipeline.py --mapping-id=<mapping-uuid> \
+  --lexical-query="approved non-sensitive phrase" --expect="expected phrase"
+python3 scripts/roas/audit_slack_brain_pipeline.py --mapping-id=<mapping-uuid> \
+  --probe-query="What did the client ask us to track?" --expect="bookings" \
+  --require-healthy
+```
+
+The lexical probe stays inside Supabase. The semantic probe sends only its query
+text to the configured embedding provider; use it only with an approved,
+non-sensitive test query.
+
+Recovery is read-only unless `--apply` is supplied. Run it only after the
+fail-closed importer is deployed. It requeues at most 25 falsely successful
+jobs at a time, never replays genuine skips, and avoids an existing active job
+with the same dedupe key.
+
+```bash
+python3 scripts/roas/audit_slack_brain_pipeline.py --org-id=<org-uuid> \
+  --repair-poisoned --repair-limit=25
+python3 scripts/roas/audit_slack_brain_pipeline.py --org-id=<org-uuid> \
+  --repair-poisoned --repair-limit=25 --apply --fixed-runtime-deployed
+```
 
 The root `.railwayignore` keeps Railway CLI mission-worker uploads aligned with
 the mission-worker Docker build context. Do not remove the other-app exclusions:
