@@ -91,7 +91,26 @@ export function ShellRightPanelFiles({
     return () => document.removeEventListener('mousedown', handleOutside)
   }, [activeMenuRowId])
 
-  const empty = !loading && documents.length === 0 && messageRows.length === 0
+  const documentKeys = useMemo(() => {
+    const keys = new Set<string>()
+    for (const document of documents) {
+      const fileUrl = documentFileUrl(document)
+      if (fileUrl) keys.add(fileUrl)
+      const title = document.title?.trim()
+      if (title) keys.add(`title:${title}`)
+    }
+    return keys
+  }, [documents])
+  const uniqueMessageRows = useMemo(
+    () =>
+      messageRows.filter((row) => {
+        if (row.fileUrl && documentKeys.has(row.fileUrl)) return false
+        if (documentKeys.has(`title:${row.title}`)) return false
+        return true
+      }),
+    [documentKeys, messageRows],
+  )
+  const empty = !loading && documents.length === 0 && uniqueMessageRows.length === 0
 
   return (
     <div className="space-y-spacing-3">
@@ -142,7 +161,7 @@ export function ShellRightPanelFiles({
           )
         })}
 
-        {messageRows.map((row) => {
+        {uniqueMessageRows.map((row) => {
           const Icon =
             row.entityType === 'mission'
               ? Rocket

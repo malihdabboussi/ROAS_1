@@ -70,7 +70,7 @@ export function ShellRightPanel({
   const handleCreateSelect = useCallback(
     (item: ShellCreateMenuItem) => {
       useGlobalChatStore.getState().seedComposer({
-        content: item.prompt,
+        content: item.typePicker ? '' : item.prompt,
         seedMode: 'attach',
         quickStartId: item.id,
         workContext: spaceId ? { surface: 'spaces', spaceId } : undefined,

@@ -22,6 +22,7 @@ function FunnelPreviewProbe({
     <div>
       <span data-testid="code">{page?.code ?? 'none'}</span>
       <span data-testid="css">{page?.css ?? 'none'}</span>
+      <span data-testid="mode">{page?.sourceMode ?? 'none'}</span>
     </div>
   )
 }
@@ -59,7 +60,28 @@ describe('useFunnelPagePreview', () => {
       expect(screen.getByTestId('code').textContent).toBe('<main>First</main>')
     })
     expect(screen.getByTestId('css').textContent).toBe('.first{}')
+    expect(screen.getByTestId('mode').textContent).toBe('tsx')
     expect(fetchFunnelWithPagesCachedMock).toHaveBeenCalledWith('funnel-1')
+  })
+
+  it('marks HTML documents so cards do not compile them as TSX', async () => {
+    fetchFunnelWithPagesCachedMock.mockResolvedValue({
+      pages: [
+        {
+          id: 'page-1',
+          generated_html: '<!DOCTYPE html><html><body>Hi</body></html>',
+          generated_css: null,
+          source_mode: 'html_bundle',
+          order_index: 1,
+        },
+      ],
+    } as never)
+
+    render(<FunnelPreviewProbe artifactId="funnel-1" />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mode').textContent).toBe('html_bundle')
+    })
   })
 
   it('uses the requested funnel page when one is provided', async () => {

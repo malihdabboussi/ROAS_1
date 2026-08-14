@@ -373,22 +373,16 @@ export function ChatInterface() {
           minimizePanel()
         }
         if (!resolvedCampaignId) {
-          const generalCampaign = await ensureGeneralCampaign()
-          resolvedCampaignId = generalCampaign.id
-          const generalIcon =
-            ((generalCampaign.config as Record<string, unknown>)?.icon as string) ?? 'folder-kanban'
-          setActiveCampaign(generalCampaign.id, generalCampaign.name ?? 'General', generalIcon)
-          minimizePanel()
-          if (
-            activeConversationId &&
-            !activeConversationId.startsWith('pending-') &&
-            conversationCampaignId === null
-          ) {
-            await assignConversationCampaign(activeConversationId, generalCampaign.id)
-            updateConversation(activeConversationId, {
-              campaign_id: generalCampaign.id,
-              updated_at: new Date().toISOString(),
-            })
+          const hasPersistedConversation =
+            Boolean(activeConversationId) && !activeConversationId.startsWith('pending-')
+          if (!hasPersistedConversation) {
+            const generalCampaign = await ensureGeneralCampaign()
+            resolvedCampaignId = generalCampaign.id
+            const generalIcon =
+              ((generalCampaign.config as Record<string, unknown>)?.icon as string) ??
+              'folder-kanban'
+            setActiveCampaign(generalCampaign.id, generalCampaign.name ?? 'General', generalIcon)
+            minimizePanel()
           }
         }
         const highlighted_artifacts: HighlightedArtifact[] | undefined = artifacts?.map((a) => ({
@@ -422,11 +416,9 @@ export function ChatInterface() {
       activeConversationId,
       activeConversationStopping,
       activeCampaignId,
-      conversationCampaignId,
       effectiveCampaignId,
       setActiveCampaign,
       minimizePanel,
-      updateConversation,
       uiSelectedArtifact,
     ],
   )

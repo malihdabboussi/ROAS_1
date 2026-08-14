@@ -7,7 +7,7 @@ export function isFunnelHtmlBundleFullMode(params: {
   currentPageId?: string | null
   pageBundle?: FunnelPageBundle | null
 }): boolean {
-  if (!params.spacesDeepWorkBack || !params.selectedFunnel) return false
+  if (!params.selectedFunnel) return false
   if (params.pageBundle) return true
 
   const pages = params.funnelPages ?? []

@@ -31,6 +31,8 @@ export interface ShellCreateMenuItem extends ShellEmptyChatQuickStart {
   glassClass: string
   /** Rendered disabled with a "Soon" tag; prompt is never seeded. */
   comingSoon?: boolean
+  /** Opens in-chat type cards instead of seeding the composer prompt. */
+  typePicker?: 'funnel' | 'ad' | 'script' | 'sequence' | 'social'
 }
 
 export interface ShellCreateMenuGroup {
@@ -130,6 +132,7 @@ export const SHELL_CREATE_MENU_GROUPS: ShellCreateMenuGroup[] = [
         iconName: 'filter',
         glassClass: 'badge-glass-purple',
         hint: '5 types',
+        typePicker: 'funnel',
         prompt: 'Create a funnel for ',
         systemContext:
           'QUICK ACTION — FUNNEL: Create a real funnel with create_funnel. Confirm the funnel type (lead magnet, call booking, webinar, VSL, or custom) when unclear, build the page flow for that type, and return the created funnel artifact from the tool receipt.',
@@ -141,6 +144,7 @@ export const SHELL_CREATE_MENU_GROUPS: ShellCreateMenuGroup[] = [
         iconName: 'megaphone',
         glassClass: 'badge-glass-red',
         hint: 'creative · copy',
+        typePicker: 'ad',
         prompt: 'Create an ad for ',
         systemContext:
           'QUICK ACTION — AD: Ask whether the user needs ad creative, ad copy, or both, then create the ad with create_ad. Write copy in the client voice, keep identity callouts specific, and return the created ad artifact from the tool receipt.',
@@ -152,6 +156,7 @@ export const SHELL_CREATE_MENU_GROUPS: ShellCreateMenuGroup[] = [
         iconName: 'mail',
         glassClass: 'badge-glass-green',
         prompt: 'Create an email sequence for ',
+        typePicker: 'sequence',
         systemContext:
           'QUICK ACTION — EMAIL SEQUENCE: Create a real sequence with create_sequence. Confirm the flow (webinar pre/post, replay, reactivation, or custom) when unclear, write every email in the client voice, and return the created sequence artifact from the tool receipt.',
       },
@@ -162,6 +167,7 @@ export const SHELL_CREATE_MENU_GROUPS: ShellCreateMenuGroup[] = [
         iconName: 'scroll-text',
         glassClass: 'badge-glass-blue',
         hint: 'Ad · VSL · Social',
+        typePicker: 'script',
         prompt: 'Write a script for ',
         systemContext:
           'QUICK ACTION — SCRIPT: Ask whether this is an ad, VSL, or social script when unclear, then create the script as a native document with create_docx. Structure it hook-first with clear shot or beat directions, and return the created document artifact from the tool receipt.',
@@ -215,6 +221,7 @@ export const SHELL_CREATE_MENU_GROUPS: ShellCreateMenuGroup[] = [
         iconName: 'share-2',
         glassClass: 'badge-glass-orange',
         prompt: 'Create a social post for ',
+        typePicker: 'social',
         systemContext:
           'QUICK ACTION — SOCIAL POST: Create a real social post with create_social_post. Confirm the platform and format (carousel, story, single post) when unclear, write it in the client voice, and return the created post artifact from the tool receipt.',
       },

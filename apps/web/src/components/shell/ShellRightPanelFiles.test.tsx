@@ -117,4 +117,44 @@ describe('ShellRightPanelFiles', () => {
 
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' })
   })
+
+  it('does not list the same chat file twice when documents and messages overlap', async () => {
+    mocks.fetchConversationDocuments.mockResolvedValue([
+      {
+        id: 'document-image',
+        conversation_id: 'conversation-1',
+        campaign_id: null,
+        resource_id: null,
+        document_type: 'image_upload',
+        title: 'image.png',
+        content: { file_url: 'https://cdn.example.com/image.png' },
+        created_at: '2026-08-14T20:00:00.000Z',
+        updated_at: '2026-08-14T20:00:00.000Z',
+      },
+    ])
+    const messages: Message[] = [
+      {
+        id: 'message-1',
+        conversation_id: 'conversation-1',
+        role: 'user',
+        content: null,
+        content_blocks: null,
+        metadata: {
+          documents: [
+            {
+              filename: 'image.png',
+              type: 'image',
+              fileUrl: 'https://cdn.example.com/image.png',
+              mimeType: 'image/png',
+            },
+          ],
+        },
+        created_at: '2026-08-14T19:00:00.000Z',
+      },
+    ]
+
+    render(<ShellRightPanelFiles conversationId="conversation-1" messages={messages} />)
+
+    expect(await screen.findAllByText('image.png')).toHaveLength(1)
+  })
 })

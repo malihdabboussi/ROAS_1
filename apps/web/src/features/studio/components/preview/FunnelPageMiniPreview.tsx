@@ -21,7 +21,6 @@ export function FunnelPageMiniPreview({ srcDoc, title }: FunnelPageMiniPreviewPr
 
   const iframeSrcDoc = useMemo(() => {
     let doc = srcDoc
-    let liveThemeInjected = false
     const themeBits: string[] = []
     if (liveThemeCss) {
       themeBits.push(`<style id="vibey-tweaks-live">${liveThemeCss}</style>`)
@@ -32,35 +31,14 @@ export function FunnelPageMiniPreview({ srcDoc, title }: FunnelPageMiniPreviewPr
       )
     }
     if (themeBits.length > 0) {
-      liveThemeInjected = true
       const injection = themeBits.join('')
       if (doc.includes('</head>')) doc = doc.replace('</head>', `${injection}</head>`)
       else doc = `${injection}${doc}`
     }
-    // #region agent log
-    fetch('http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'bd981c' },
-      body: JSON.stringify({
-        sessionId: 'bd981c',
-        runId: 'post-fix',
-        hypothesisId: 'H1',
-        location: 'FunnelPageMiniPreview.tsx:iframeSrcDoc',
-        message: 'thumbnail srcDoc built',
-        data: {
-          title,
-          liveThemeInjected,
-          cssLen: liveThemeCss?.length ?? null,
-          liveThemeNonce,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {})
-    // #endregion
     const paintScript = buildPresentationThemePaintScript()
     if (doc.includes('</body>')) return doc.replace('</body>', `${paintScript}</body>`)
     return `${doc}${paintScript}`
-  }, [liveThemeCss, liveThemeFontsUrl, liveThemeNonce, srcDoc, title])
+  }, [liveThemeCss, liveThemeFontsUrl, liveThemeNonce, srcDoc])
 
   useLayoutEffect(() => {
     const el = containerRef.current

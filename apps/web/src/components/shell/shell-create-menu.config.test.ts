@@ -10,6 +10,8 @@ describe('shell-create-menu config', () => {
     expect(findShellCreateMenuItem('create-offer')?.prompt).toBe('Create an offer for ')
     expect(findShellCreateMenuItem('create-video')?.systemContext).toContain('generate_video')
     expect(findShellCreateMenuItem('missing-id')).toBeNull()
+    expect(findShellCreateMenuItem('create-funnel')?.typePicker).toBe('funnel')
+    expect(findShellCreateMenuItem('create-ad')?.typePicker).toBe('ad')
   })
 
   it('exposes Missions as a direct Create action', () => {

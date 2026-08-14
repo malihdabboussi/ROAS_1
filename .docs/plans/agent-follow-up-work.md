@@ -1,3 +1,27 @@
+## 2026-08-14 - [ARCH] SpaceVibeyChatPanel still over the feature-container LOC limit
+
+Status: Open
+
+Found while: In-chat create-type picker and funnel designer wiring
+
+Evidence: `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` is 2646 lines (project-architecture container limit is 600). This change only added the type-picker render and seed intercept.
+
+Needed work: Split seed handling, composer chrome, and conversation actions out of the panel container.
+
+Reason not done now: In-scope create-picker and funnel preview fixes did not require a panel split.
+
+## 2026-08-14 - [FIX] Chat campaign still inherits sticky Space context on /programs
+
+Status: Open
+
+Found while: Nick Sakha / Resilient Roots / General campaign jump
+
+Evidence: `resolveGlobalChatPanelHost` keeps a sticky space+campaign host when `workContext.surface` becomes `general`. `/programs/:id` maps to general, so a previously viewed campaign (e.g. Resilient Roots) can remain on an open thread. Send no longer assigns General on persisted chats; new chats can still be born on the sticky campaign. `ConversationScopePicker` "General / Meetings" is General campaign + Meetings space, not a third campaign.
+
+Needed work: Stop inheriting sticky campaign onto new sends from `/programs`, and keep conversation campaign authoritative when the user is only browsing a program.
+
+Reason not done now: Changing sticky-host remount rules would swap the open conversation list while browsing Programs; that is a separate UX decision from the send-to-General and agent force-stick bugs (those two are fixed on this branch).
+
 ## 2026-08-05 - [ARCH] SlackService near 600 LOC after digest reply enrichment
 
 Status: Open
