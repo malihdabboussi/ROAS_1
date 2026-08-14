@@ -20,6 +20,7 @@ import { MissionsSchedulerStateTransitionsService } from './services/missions.sc
 import { MissionsService } from './services/missions.service'
 import { MissionAgentStateService } from './services/persistence/mission-agent-state.service'
 import { MissionDeliverablesRepository } from './services/persistence/mission-deliverables.repository'
+import { MissionQualityEvidenceRepository } from './services/persistence/mission-quality-evidence.repository'
 import { MissionStateRepository } from './services/persistence/mission-state.repository'
 import { MissionCommentDirectiveService } from './services/phases/mission-comment-directive.service'
 import { MissionExecutePhaseService } from './services/phases/mission-execute-phase.service'
@@ -45,6 +46,7 @@ import { MISSIONS_QUEUE } from './types'
     MissionJsonService,
     MissionStateRepository,
     MissionDeliverablesRepository,
+    MissionQualityEvidenceRepository,
     MissionContextService,
     MissionExecBroadcastService,
     MissionOpenclawGateway,

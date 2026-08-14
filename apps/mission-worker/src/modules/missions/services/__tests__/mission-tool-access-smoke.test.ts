@@ -92,6 +92,7 @@ function createService() {
   const contextService = {} as any
   const stateRepo = {} as any
   const deliverablesRepo = {} as any
+  const qualityEvidenceRepo = {} as any
   const jsonService = {} as any
   const missionTracing = {
     startTrace: vi.fn().mockResolvedValue(null),
@@ -105,6 +106,7 @@ function createService() {
     contextService,
     stateRepo,
     deliverablesRepo,
+    qualityEvidenceRepo,
     jsonService,
     missionTracing,
   ) as any
