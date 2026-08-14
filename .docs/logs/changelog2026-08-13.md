@@ -243,3 +243,12 @@ stage names and non-linear paths, while the original examples remain test eviden
 
 Files: `apps/agent-api/src/modules/artifacts/services/campaign-blueprint-operations.ts`, action
 schema/preflight/docs/tests, `apps/web/src/components/canvas/**`, and the implementation plan.
+## [2026-08-13 17:08] - [FIX]
+
+What: Changed Agenda list weeks to Monday–Sunday with current-day positioning and earlier-week scrollback, made meeting-to-meeting navigation ignore a stale URL during an explicit selection, replaced leaked Fathom naming placeholders, and added inline task status plus right-side task preview to My Tasks.
+
+Why: Late-week Agenda visits hid prior weekdays, switching between open meeting workspaces could make the old and new meeting effects reopen each other until React crashed, failed title enrichment exposed `Call (naming…)`, and task triage required opening every item as a full work surface.
+
+Impact: The full week remains reviewable in chronological order, meeting switching is stable, generic recordings have a user-facing fallback title, and users can update statuses or inspect task details without losing their task queue.
+
+Files: `apps/web/src/features/home/components/AgendaCard.tsx`, `AgendaCardChrome.tsx`, `AgendaCardListBody.tsx`, `agenda-list-grouping.tsx`, `MyTasksPanel.tsx`, `MyTasksInlineStatus.tsx`, `apps/web/src/features/home/lib/agenda-fetch-window.ts`, `apps/web/src/features/home/hooks/use-home-meeting-work-restore.ts`, Home Meetings/My Tasks page hosts, `apps/api/src/modules/spaces/services/fathom-meeting-title.ts`, `meetings-precall-related-calls.ts`, related tests, `.docs/features/meeting-merge.md`, `documentation/features/claude-chatgpt-shell.md`.

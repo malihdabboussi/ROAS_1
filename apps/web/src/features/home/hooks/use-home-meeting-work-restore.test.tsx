@@ -200,4 +200,70 @@ describe('useHomeMeetingWorkRestore', () => {
     expect(mocks.replace).toHaveBeenCalledWith('/home/meetings', { scroll: false })
     expect(open).toHaveBeenCalledTimes(0)
   })
+
+  it('lets a newly clicked meeting replace the stale URL meeting without reopening it', () => {
+    mocks.params = new URLSearchParams('meeting=evt-1&space=space-1')
+    const secondEvent = {
+      ...event,
+      id: 'evt-2',
+      title: 'Second meeting',
+      related: {
+        space_id: 'space-2',
+        call_item_id: 'evt-2',
+        title: 'Second meeting',
+        recording_url: null,
+        follow_ups: [],
+      },
+    }
+    const open = vi.fn()
+    const { rerender } = renderHook(
+      ({ active }: { active: CalendarAgendaEvent }) => useHomeMeetingWorkRestore(open, active),
+      { initialProps: { active: event } },
+    )
+
+    rerender({ active: secondEvent })
+
+    expect(open).not.toHaveBeenCalled()
+    expect(mocks.fetchMeetingWorkspaceEvent).not.toHaveBeenCalled()
+    expect(mocks.replace).toHaveBeenLastCalledWith('/home/meetings?meeting=evt-2&space=space-2', {
+      scroll: false,
+    })
+  })
+
+  it('cancels an unresolved URL lookup when the user clicks another meeting', async () => {
+    let resolveLookup: ((value: CalendarAgendaEvent) => void) | undefined
+    mocks.params = new URLSearchParams('meeting=evt-1&space=space-1')
+    mocks.fetchMeetingWorkspaceEvent.mockReturnValue(
+      new Promise<CalendarAgendaEvent>((resolve) => {
+        resolveLookup = resolve
+      }),
+    )
+    const secondEvent = {
+      ...event,
+      id: 'evt-2',
+      title: 'Second meeting',
+      related: {
+        space_id: 'space-2',
+        call_item_id: 'evt-2',
+        title: 'Second meeting',
+        recording_url: null,
+        follow_ups: [],
+      },
+    }
+    const open = vi.fn()
+    const { rerender } = renderHook(
+      ({ active }: { active: CalendarAgendaEvent | null }) =>
+        useHomeMeetingWorkRestore(open, active),
+      { initialProps: { active: null as CalendarAgendaEvent | null } },
+    )
+
+    rerender({ active: secondEvent })
+
+    expect(mocks.replace).toHaveBeenLastCalledWith('/home/meetings?meeting=evt-2&space=space-2', {
+      scroll: false,
+    })
+    resolveLookup?.(event)
+    await waitFor(() => expect(mocks.fetchMeetingWorkspaceEvent).toHaveBeenCalledTimes(1))
+    expect(open).not.toHaveBeenCalled()
+  })
 })

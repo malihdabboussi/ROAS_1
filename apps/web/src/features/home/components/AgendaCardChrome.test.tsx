@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { AgendaCardHeader, AgendaCardRangeNav } from './AgendaCardChrome'
+import { AgendaCardHeader, AgendaCardRangeNav, formatAgendaNavDate } from './AgendaCardChrome'
 
 describe('AgendaCardChrome', () => {
   afterEach(cleanup)
@@ -79,5 +79,9 @@ describe('AgendaCardChrome', () => {
 
     expect(container.innerHTML).not.toContain('text-[11px]')
     expect(container.innerHTML).not.toContain('hover:bg-[var(')
+  })
+
+  it('labels a week from Monday through Sunday even when anchored on Thursday', () => {
+    expect(formatAgendaNavDate(new Date(2026, 7, 13, 12), 'week')).toBe('Aug 10 – 16')
   })
 })
