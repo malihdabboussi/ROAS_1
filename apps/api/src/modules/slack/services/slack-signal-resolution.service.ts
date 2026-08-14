@@ -19,6 +19,8 @@ const RESOLVED_REACTIONS = new Set([
   'heavy_check_mark',
   'ballot_box_with_check',
 ])
+const DIRECT_REPLY_WINDOW_SECONDS = 24 * 60 * 60
+const ADJACENT_QUESTION_WINDOW_SECONDS = 15 * 60
 
 @Injectable()
 export class SlackSignalResolutionService {
@@ -98,19 +100,67 @@ export class SlackSignalResolutionService {
         RESOLVED_REACTIONS.has(reaction.name) &&
         (reaction.count ?? reaction.users?.length ?? 0) > 0,
     )
-    const resolved = laterHumanReplies.length > 0 || Boolean(resolvedReaction)
+    const directChannelReplies =
+      laterHumanReplies.length === 0 &&
+      !resolvedReaction &&
+      threadTs === input.sourceMessageTs &&
+      source
+        ? await this.findDirectChannelReplies(
+            integration.access_token,
+            input.channelId,
+            input.sourceMessageTs,
+            source,
+          )
+        : []
+    const resolved =
+      laterHumanReplies.length > 0 || directChannelReplies.length > 0 || Boolean(resolvedReaction)
+    const replyCount = laterHumanReplies.length + directChannelReplies.length
     return {
       resolved,
       source_available: true,
       reason: resolved
         ? resolvedReaction
           ? `The source message has a :${resolvedReaction.name}: resolution reaction.`
-          : `A later human reply was found in the source thread (${laterHumanReplies.length}).`
-        : 'No later human reply was found in the source thread.',
+          : directChannelReplies.length > 0
+            ? 'A nearby human channel reply was found after the source message.'
+            : `A later human reply was found in the source thread (${laterHumanReplies.length}).`
+        : 'No later human reply was found in the source thread or nearby channel.',
       checked_at: new Date().toISOString(),
-      reply_count: laterHumanReplies.length,
+      reply_count: replyCount,
       reaction_count: reactionCount,
     }
+  }
+
+  private async findDirectChannelReplies(
+    accessToken: string,
+    channelId: string,
+    sourceTs: string,
+    source: SlackHistoryMessage,
+  ): Promise<SlackHistoryMessage[]> {
+    const sourceSeconds = Number(sourceTs)
+    if (!Number.isFinite(sourceSeconds)) return []
+    const history = await this.slackApi.getChannelHistoryPage(accessToken, channelId, {
+      limit: 100,
+      oldest: sourceTs,
+      latest: String(sourceSeconds + DIRECT_REPLY_WINDOW_SECONDS),
+    })
+    const laterHumanMessages = history.messages
+      .filter((message) => this.isLaterHumanReply(message, sourceTs, source.user))
+      .sort((left, right) => Number(left.ts) - Number(right.ts))
+    const mentionedUsers = new Set(
+      [...(source.text ?? '').matchAll(/<@([A-Z0-9]+)>/g)].map((match) => match[1]),
+    )
+    if (mentionedUsers.size > 0) {
+      const addressedReply = laterHumanMessages.find(
+        (message) => message.user && mentionedUsers.has(message.user),
+      )
+      return addressedReply ? [addressedReply] : []
+    }
+    const adjacentReply = laterHumanMessages[0]
+    if (!source.text?.includes('?') || !adjacentReply?.ts) return []
+    return Number(adjacentReply.ts) - sourceSeconds <= ADJACENT_QUESTION_WINDOW_SECONDS
+      ? [adjacentReply]
+      : []
   }
 
   private isLaterHumanReply(

@@ -29,6 +29,7 @@ describe('SlackSignalResolutionService', () => {
         { ts: '100.1', user: 'UCLIENT', text: 'Can someone help?' },
         { ts: '101.1', user: 'UINTERNAL', text: 'Handled.' },
       ]),
+      getChannelHistoryPage: vi.fn(),
     }
     const service = new SlackSignalResolutionService(
       people as never,
@@ -48,6 +49,73 @@ describe('SlackSignalResolutionService', () => {
         }),
       }),
     )
+  })
+
+  it('marks a non-thread question resolved by the next nearby channel reply', async () => {
+    const service = new SlackSignalResolutionService(
+      {
+        findOrgSlackIntegration: vi.fn().mockResolvedValue({ access_token: 'xoxb' }),
+      } as never,
+      {
+        conversationsRepliesAll: vi.fn().mockResolvedValue([
+          {
+            ts: '100.1',
+            user: 'UDYLAN',
+            text: '<@UNATE> what time do you need it for?',
+          },
+        ]),
+        getChannelHistoryPage: vi.fn().mockResolvedValue({
+          messages: [
+            { ts: '107.1', user: 'UNATE', text: 'EOD today preferably.' },
+            {
+              ts: '100.1',
+              user: 'UDYLAN',
+              text: '<@UNATE> what time do you need it for?',
+            },
+          ],
+          nextCursor: null,
+          hasMore: false,
+        }),
+      } as never,
+      {} as never,
+    )
+
+    const result = await service.inspectSource({} as never, 'org-1', {
+      channelId: 'C1',
+      sourceMessageTs: '100.1',
+    })
+
+    expect(result).toMatchObject({
+      resolved: true,
+      reply_count: 1,
+      reason: expect.stringMatching(/channel reply/i),
+    })
+  })
+
+  it('does not treat an unrelated later channel message as a reply', async () => {
+    const service = new SlackSignalResolutionService(
+      {
+        findOrgSlackIntegration: vi.fn().mockResolvedValue({ access_token: 'xoxb' }),
+      } as never,
+      {
+        conversationsRepliesAll: vi.fn().mockResolvedValue([
+          { ts: '100.1', user: 'UDYLAN', text: '<@UNATE> what time do you need it for?' },
+        ]),
+        getChannelHistoryPage: vi.fn().mockResolvedValue({
+          messages: [{ ts: '107.1', user: 'UOTHER', text: 'New creative is ready.' }],
+          nextCursor: null,
+          hasMore: false,
+        }),
+      } as never,
+      {} as never,
+    )
+
+    const result = await service.inspectSource({} as never, 'org-1', {
+      channelId: 'C1',
+      sourceMessageTs: '100.1',
+    })
+
+    expect(result.resolved).toBe(false)
   })
 
   it('marks a signal resolved when the source has a checkmark reaction', async () => {
@@ -106,6 +174,11 @@ describe('SlackSignalResolutionService', () => {
         conversationsRepliesAll: vi
           .fn()
           .mockResolvedValue([{ ts: '100.1', user: 'UCLIENT', text: 'Can someone help?' }]),
+        getChannelHistoryPage: vi.fn().mockResolvedValue({
+          messages: [],
+          nextCursor: null,
+          hasMore: false,
+        }),
       } as never,
       {
         updateSignalMetadata: vi

@@ -272,6 +272,9 @@ export class SlackOpenItemsService {
   ): 'unanswered_ask' | 'client_ask' | 'commitment' | 'client_risk' | null {
     if (signalKind === 'unanswered_question') return 'unanswered_ask'
     if (signalKind === 'client_risk') return 'client_risk'
+    if (/\b(?:done|completed|shipped|launched|live (?:today|now|on))\b/i.test(summary)) {
+      return null
+    }
     if (
       /\b(i('| a)m|we('| a)re|will|by (?:monday|tuesday|wednesday|thursday|friday|tomorrow|eod))\b/i.test(
         summary,

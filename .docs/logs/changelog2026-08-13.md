@@ -460,3 +460,13 @@ Why: Production deployment `dpl_7zTJRg23S9WLeF4x3LceEwBEhgDL` began crashing `/h
 Impact: Persisted Mission viewers can render alongside My Tasks without taking down the page, while users retain the same expand/collapse control as a shell-owned overlay.
 
 Files: `apps/web/src/components/shell/ShellMissionArtifactViewerAdapter.tsx`, `apps/web/src/components/shell/ShellMissionArtifactViewerAdapter.test.tsx`, `apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.tsx`, `apps/web/src/features/mission-control/components/dialogs/MissionDetailModalView.tsx`, `apps/web/src/features/mission-control/components/dialogs/mission-detail-modal-view.types.ts`, `apps/web/src/features/mission-control/components/dialogs/mission-detail-modal-helpers.ts`, `apps/web/src/features/mission-control/components/dialogs/MissionDetailDesktopShell.tsx`, `apps/web/src/features/mission-control/components/dialogs/MissionDetailHeader.tsx`, `apps/web/src/features/mission-control/components/dialogs/SubtaskDetailHeader.tsx`, `apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.test.tsx`.
+
+## [2026-08-13 19:46] - [FIX]
+
+What: Grounded Pixel's EOD Slack recap in current operational state by recognizing nearby non-thread channel answers, refusing to persist mixed completed/pending status recaps as one open commitment, supplying the exact local date to composition, and rejecting vague roadmap language or future claims tied to past dates. Repaired the two exact production cases behind the reported recap as answered/resolved.
+
+Why: Pixel resurfaced an answered design request under the wrong client and changed a Yasir source update that explicitly said the ads were DONE/live on August 11 into “scheduled to go live” after that date.
+
+Impact: The two incorrect items can no longer resurface, answered asks stop resurfacing when teammates respond normally in-channel, composite roadmaps cannot become stale commitments, and unsafe recap prose falls back to deterministic source-grounded text instead of being sent.
+
+Files: `apps/api/src/modules/slack/services/slack-signal-resolution.service.ts`, `apps/api/src/modules/slack/services/__tests__/slack-signal-resolution.service.test.ts`, `apps/api/src/modules/spaces/services/slack-open-items.service.ts`, `apps/api/src/modules/spaces/services/__tests__/slack-open-items.service.test.ts`, `apps/api/src/modules/spaces/services/slack-team-message-composer.service.ts`, `apps/api/src/modules/spaces/services/__tests__/slack-team-message-composer.service.test.ts`, `documentation/features/spaces-automation.md`.
