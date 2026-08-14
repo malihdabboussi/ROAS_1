@@ -4,6 +4,12 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { SlackPeopleRepository } from '../../slack/repositories/slack-people.repository'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
 import { SlackTeamLoopRepository } from '../repositories/slack-team-loop.repository'
+import { SlackOpenItemsService } from './slack-open-items.service'
+import {
+  isSundayCheckInWindow,
+  slackLocalParts,
+  type SlackCadenceConfig,
+} from './slack-team-cadence'
 import type { SlackTeamPerson, SlackTeamSignal } from './slack-team-loop-analysis'
 import {
   resolveSlackIdentityText,
@@ -11,21 +17,15 @@ import {
   slackTeamEvidenceMetadata,
 } from './slack-team-loop-evidence'
 import type { SlackTeamLoopKind } from './slack-team-loop.service'
+import { SlackTeamMessageComposerService } from './slack-team-message-composer.service'
 import {
   personalMomentDateKey,
   personalMomentDedupeKey,
   validatePersonalMomentEvidence,
 } from './slack-team-personal-moment'
 import { proposePersonalMomentAction } from './slack-team-personal-moment-propose'
-import { slackSignalLifecycleMetadata } from './slack-team-signal-delivery.service'
+import { slackSignalLifecycleMetadata } from './slack-team-signal-lifecycle'
 import { composeInternalEscalation } from './slack-team-signal-message'
-import { SlackTeamMessageComposerService } from './slack-team-message-composer.service'
-import { SlackOpenItemsService } from './slack-open-items.service'
-import {
-  isSundayCheckInWindow,
-  slackLocalParts,
-  type SlackCadenceConfig,
-} from './slack-team-cadence'
 
 const OWNER_BRIEFING_SIGNAL_KINDS = new Set<SlackTeamSignal['kind']>([
   'team_win',
@@ -41,6 +41,7 @@ type ObservedMessage = {
   thread_ts: string | null
   user: string
   text: string
+  metadata: Record<string, unknown>
 }
 
 type ValidatedPersonalMoment = {
@@ -71,6 +72,7 @@ export class SlackTeamSignalRoutingService {
     cadence?: SlackCadenceConfig
     remaining: number
     signals: SlackTeamSignal[]
+    caseSignals: SlackTeamSignal[]
     validatedPersonalMoments: ValidatedPersonalMoment[]
     evidenceBySource: Map<string, ObservedMessage>
     observed: ObservedMessage[]
@@ -81,6 +83,34 @@ export class SlackTeamSignalRoutingService {
     let proposed = 0
     let memoriesCompounded = 0
     if (!input.preview) await this.openItems?.reconcile(input.supabase, input.orgId, input.now)
+    if (!input.preview && this.openItems) {
+      for (const signal of input.caseSignals) {
+        const source = input.evidenceBySource.get(
+          `${signal.target_channel_id}:${signal.source_message_ts}`,
+        )
+        if (!source) continue
+        const target = signal.target_slack_user_id
+          ? input.peopleBySlackId.get(signal.target_slack_user_id)
+          : undefined
+        await this.openItems.record(input.supabase, {
+          orgId: input.orgId,
+          signalKind: signal.kind,
+          subjectPersonId: target?.id ?? null,
+          clientLabel: target?.display_name ?? null,
+          slackTeamId: input.slackTeamId,
+          channelId: signal.target_channel_id,
+          sourceMessageTs: signal.source_message_ts,
+          summary: resolveSlackIdentityText(signal.proposed_content, input.peopleBySlackId),
+          sourceMetadata: {
+            ...source.metadata,
+            source_thread_ts: source.thread_ts ?? source.ts,
+            confidence: signal.confidence,
+            signal_rationale: signal.rationale,
+          },
+          now: input.now,
+        })
+      }
+    }
     if (!input.preview && input.workspaceOwner && this.openItems) {
       const sunday =
         input.cadence?.enabled === true &&
@@ -371,10 +401,17 @@ export class SlackTeamSignalRoutingService {
           signalKind: signal.kind,
           subjectPersonId: target?.id ?? null,
           clientLabel: target?.display_name ?? null,
+          slackTeamId: input.slackTeamId,
           channelId: signal.target_channel_id,
           sourceMessageTs: signal.source_message_ts,
           summary: fallbackContent,
           shadowActionId: action.id,
+          sourceMetadata: {
+            ...source.metadata,
+            source_thread_ts: source.thread_ts ?? source.ts,
+            confidence: signal.confidence,
+            signal_rationale: signal.rationale,
+          },
           now: input.now,
         })
       }

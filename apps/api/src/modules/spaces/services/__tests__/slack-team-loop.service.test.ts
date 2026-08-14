@@ -222,6 +222,94 @@ describe('SlackTeamLoopService', () => {
     })
   })
 
+  it('records detected cases even after the human delivery limit is reached', async () => {
+    const peopleRepo = {
+      findOrgSlackIntegration: vi.fn().mockResolvedValue({
+        user_id: 'owner-1',
+        access_token: 'xoxb-test',
+        metadata: { team_id: 'T1' },
+      }),
+      listPeople: vi.fn().mockResolvedValue([
+        {
+          id: 'member-1',
+          platform_id: 'U1',
+          display_name: 'Bonnie',
+          relationship_kind: 'external',
+          delivery_mode: 'off',
+          person_brain_id: null,
+        },
+      ]),
+    }
+    const observation = {
+      reconcile: vi.fn().mockResolvedValue({
+        channelsReconciled: 1,
+        historyRequests: 1,
+        threadRequests: 0,
+        eventsStored: 1,
+        duplicatesSkipped: 0,
+      }),
+      loadPendingEvents: vi.fn().mockResolvedValue({
+        cursor: null,
+        events: [
+          {
+            channel_id: 'C1',
+            channel_name: 'roas-wholesale-universe',
+            message_ts: '1721000000.000100',
+            thread_ts: null,
+            sender_slack_user_id: 'U1',
+            text: 'How many bookings did the webinar replay campaign produce?',
+            is_bot: false,
+            metadata: { roas_campaign_id: 'campaign-1' },
+          },
+        ],
+      }),
+      advanceConsumer: vi.fn(),
+    }
+    const signal = {
+      kind: 'unanswered_question',
+      target_slack_user_id: 'U1',
+      target_channel_id: 'C1',
+      source_message_ts: '1721000000.000100',
+      proposed_content: 'Bonnie is waiting for webinar replay booking attribution.',
+      rationale: 'No answer is present.',
+      brain_memory: null,
+      confidence: 0.95,
+    }
+    const gemini = { callGeminiWithUsage: vi.fn().mockResolvedValue(geminiAnalysis([signal])) }
+    const routing = {
+      route: vi.fn().mockResolvedValue({ proposed: 0, memoriesCompounded: 0 }),
+    }
+    const service = new SlackTeamLoopService(
+      peopleRepo as never,
+      { countActionsSince: vi.fn().mockResolvedValue(10) } as never,
+      observation as never,
+      {} as never,
+      gemini as never,
+      senderResolver() as never,
+      undefined,
+      undefined,
+      routing as never,
+    )
+
+    const result = await service.run({
+      supabase: {} as never,
+      userId: 'owner-1',
+      orgId: 'org-1',
+      loopKind: 'all',
+      deliveryMode: 'shadow',
+      channelIds: [],
+      personIds: [],
+      lookbackMinutes: 30,
+      dailyLimit: 10,
+    })
+
+    expect(routing.route).toHaveBeenCalledWith(
+      expect.objectContaining({ remaining: 0, caseSignals: [expect.objectContaining(signal)] }),
+    )
+    expect(observation.advanceConsumer).toHaveBeenCalled()
+    expect(result).toMatchObject({ delivery_limit_reached: true, proposed: 0 })
+  })
+
   it('creates reviewable preview proposals without consuming the live cursor or sending', async () => {
     const slackPeople = {
       findOrgSlackIntegration: vi.fn().mockResolvedValue({

@@ -63,10 +63,10 @@ These tools ONLY write to the user's default brain. They have no campaign_id or 
 
 ## Write Operations — Campaign Brain
 
-Campaign tools are legacy project-context tools. Use them only when the user explicitly asks to store project-specific knowledge in a campaign. Do not use Campaign Brain as a replacement for Company Cortex.
+Campaign Brain stores durable client-level knowledge shared across that client's Spaces. Do not use it as a replacement for Company Cortex.
 
-- `ingest_campaign_file` — Ingest text content into campaign brain (needs campaignId + title + content)
-- `ingest_campaign_url` — Ingest URL content into campaign brain (needs campaignId + url)
+- `atlas_save_brain_context` — Save campaign knowledge with `target_brain: "campaign"`, `campaign_id`, `content`, and source metadata.
+- Never use `save_user_memory` for campaign knowledge; it writes only to the user's default brain.
 
 ## Write Operations — Agent SK Brain
 

@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Queue } from 'bullmq'
 import { AGENT_RUNTIME_AUTOMATION_QUEUE } from '../../agent-runtime/agent-runtime-queues'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
+import { SlackOpenItemsRepository } from '../repositories/slack-open-items.repository'
 import {
   SlackPendingOffersRepository,
   type SlackPendingOffer,
@@ -17,6 +18,7 @@ export class SlackOfferFulfillmentService {
     private readonly offers: SlackPendingOffersRepository,
     private readonly slack: SlackAgentToolsService,
     @Optional() @InjectQueue(AGENT_RUNTIME_AUTOMATION_QUEUE) private readonly queue?: Queue,
+    @Optional() private readonly cases?: SlackOpenItemsRepository,
   ) {}
 
   async dispatch(supabase: SupabaseClient, offerId: string): Promise<void> {
@@ -69,6 +71,15 @@ export class SlackOfferFulfillmentService {
       text: artifact,
     })
     await this.offers.markDelivered(supabase, offer.id, String(sent.ts ?? offer.thread_ts))
+    if (offer.shadow_action_id) {
+      await this.cases?.applyExternalAction(supabase, {
+        orgId: offer.org_id,
+        sourceType: 'slack_offer',
+        sourceKey: offer.shadow_action_id,
+        action: 'resolve',
+        nowIso: new Date().toISOString(),
+      })
+    }
   }
 
   async checkMissed(supabase: SupabaseClient, now = new Date()): Promise<void> {

@@ -21,7 +21,7 @@ const signal = (
 })
 
 describe('analyzeSlackTeamMessages', () => {
-  it('asks for a relevance-ranked briefing instead of an unanswered-message report', async () => {
+  it('detects the full case inventory before ranking the delivery briefing', async () => {
     const gemini = {
       callGeminiWithUsage: vi.fn().mockResolvedValue({
         text: JSON.stringify({ signals: [] }),
@@ -51,11 +51,13 @@ describe('analyzeSlackTeamMessages', () => {
     })
 
     const prompt = String(gemini.callGeminiWithUsage.mock.calls[0]?.[0] ?? '')
+    expect(prompt).toContain('detect every high-confidence operational signal')
+    expect(prompt).toContain('Delivery ranking happens after detection')
     expect(prompt).toContain('team_win')
     expect(prompt).toContain('important_update')
     expect(prompt).toContain('decision')
     expect(prompt).toContain('strategic_opportunity')
-    expect(prompt).toContain('Do not force an unanswered question into the briefing')
+    expect(prompt).not.toContain('Do not force an unanswered question into the briefing')
     expect(prompt).toContain('Already-handled items are not briefing-worthy')
     expect(prompt).toContain('connect related messages')
     expect(prompt).toContain('business impact')

@@ -180,4 +180,47 @@ describe('BrainImportRuntimeService', () => {
     })
     expect(agentRuntime.resolveGatewayAgentId).toHaveBeenCalledWith('atlas', 'org-1', 'user-1')
   })
+
+  it('reads nested OpenResponses output and fails instead of advancing the job', async () => {
+    const artifacts = {
+      proxyOpenClawResponses: vi.fn(async () => ({
+        output: [
+          {
+            type: 'message',
+            content: [
+              {
+                type: 'output_text',
+                text: 'JOB_STATUS:failed — campaign context was not saved',
+              },
+            ],
+          },
+        ],
+      })),
+    }
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.endsWith('/claim')) {
+        return new Response(JSON.stringify(makeClaimResponse()), { status: 200 })
+      }
+      return new Response(JSON.stringify({ success: true }), { status: 200 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const { agentRuntime, runtimeReadiness } = makeRuntimeDeps()
+    const service = new BrainImportRuntimeService(
+      makeConfig() as never,
+      artifacts as never,
+      agentRuntime as never,
+      runtimeReadiness as never,
+    )
+
+    await expect(service.execute('import-job-1')).resolves.toMatchObject({
+      status: 'failed',
+      message: 'Atlas could not process: campaign context was not saved',
+    })
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toContain(
+      'http://main-api.local/api/internal/brain/import-jobs/import-job-1/fail',
+    )
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain(
+      'http://main-api.local/api/internal/brain/import-jobs/import-job-1/succeed',
+    )
+  })
 })

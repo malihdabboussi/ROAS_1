@@ -9,7 +9,7 @@ import {
   type PersonalMomentEventType,
   type PersonalMomentEvidenceMessage,
 } from './slack-team-personal-moment'
-import { slackSignalLifecycleMetadata } from './slack-team-signal-delivery.service'
+import { slackSignalLifecycleMetadata } from './slack-team-signal-lifecycle'
 
 type ObservedMessage = PersonalMomentEvidenceMessage & {
   channel_name: string

@@ -1,5 +1,15 @@
 # Changelog - August 13, 2026
 
+## [2026-08-13 16:52] - [ARCH]
+
+What: Added a unified company/client/campaign `agent_cases` ledger; decoupled complete Slack operational detection from the five-item briefing cap; made EOD refresh source threads before compilation; added one-time hard 24-hour unanswered-ask escalation; and routed Page Grader QC, Proactive Launch, Campaign QC, and Pixel offers through the same scoped lifecycle.
+
+Why: Slack capture existed, but delivery ranking could permanently discard Bonnie-style client asks, QC producers sent separate messages without shared state, and the Slack-only ledger could not roll work up through the Clients Program, client campaign container, and campaign Spaces.
+
+Impact: Every qualifying Slack ask is retained before delivery selection, resolved threads disappear before EOD, a still-open ask escalates at 24 hours, Page Grader actions synchronize with the shared case, offers resolve when delivered, and the legacy Slack table remains as a rollback copy until production verification is complete.
+
+Files: `supabase/migrations/20260813170000_unified_agent_cases.sql`, Slack Team analysis/routing/delivery/open-item services and repositories, Page Grader Slack ingest and QC bridge, Pixel offer services, focused tests, `documentation/features/spaces-automation.md`, `documentation/features/integration-connections.md`, `documentation/features/page-grader-campaign-brain-sync.md`, `.docs/plans/agent-follow-up-work.md`.
+
 ## 2026-08-13 09:00 - [REFACTOR]
 
 What: Centralized Quick Missions browser events in the missions domain utility and routed empty-chat Mission quick starts through the existing quick-start hook.
@@ -208,6 +218,16 @@ Impact: Blank Home Mission launch no longer depends on shared module or React co
 
 Files: `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `documentation/features/missions.md`.
 
+## [2026-08-13 17:29] - [FIX]
+
+What: Moved empty-chat Mission open state and its controlled modal host into the quick-start component that renders the Mission button, and removed the replaced Home-level host wiring.
+
+Why: Exact-production testing showed that even direct Home composer props did not reach the rendered Mission trigger, while adjacent composer quick starts remained interactive.
+
+Impact: Blank Home and empty active-chat Mission buttons now update and consume state inside the same component instance, with no module, context, or parent callback boundary.
+
+Files: `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/shell/ShellEmptyChatPrompts.test.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `documentation/features/missions.md`.
+
 ## [2026-08-13 17:08] - [FIX]
 
 What: Changed Agenda list weeks to Monday–Sunday with current-day positioning and earlier-week scrollback, made meeting-to-meeting navigation ignore a stale URL during an explicit selection, replaced leaked Fathom naming placeholders, and added inline task status plus right-side task preview to My Tasks.
@@ -217,3 +237,23 @@ Why: Late-week Agenda visits hid prior weekdays, switching between open meeting 
 Impact: The full week remains reviewable in chronological order, meeting switching is stable, generic recordings have a user-facing fallback title, and users can update statuses or inspect task details without losing their task queue.
 
 Files: `apps/web/src/features/home/components/AgendaCard.tsx`, `AgendaCardChrome.tsx`, `AgendaCardListBody.tsx`, `agenda-list-grouping.tsx`, `MyTasksPanel.tsx`, `MyTasksInlineStatus.tsx`, `apps/web/src/features/home/lib/agenda-fetch-window.ts`, `apps/web/src/features/home/hooks/use-home-meeting-work-restore.ts`, Home Meetings/My Tasks page hosts, `apps/api/src/modules/spaces/services/fathom-meeting-title.ts`, `meetings-precall-related-calls.ts`, related tests, `.docs/features/meeting-merge.md`, `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-08-13 17:21] - [FIX]
+
+What: Routed Atlas Campaign Brain imports through `atlas_save_brain_context`, taught Atlas the campaign save contract, parsed nested OpenResponses output on both import runtimes, and made missing or failed terminal statuses fail closed.
+
+Why: Production Slack capture was healthy, but Atlas was told to call the user-only memory action for campaign imports. Atlas reported the rejection inside a nested response envelope; the importer missed that status, marked the job successful, and advanced the Slack cursor without saving recent messages.
+
+Impact: Campaign-targeted Slack and source imports use the mapped client campaign, rejected or malformed runs remain retryable, failed multi-chunk runs stop at the failing chunk, and a Slack mapping cursor advances only after a real completed or intentionally skipped import.
+
+Files: `apps/api/src/modules/brain/services/brain-import-jobs-execution.base.ts`, `apps/api/src/modules/brain/services/__tests__/brain-import-jobs.service.test.ts`, `apps/agent-api/src/modules/brain-import-runtime/services/brain-import-runtime.service.ts`, `apps/agent-api/src/modules/brain-import-runtime/brain-import-runtime.service.test.ts`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `apps/agent-api/src/modules/agent-sync/services/agent-capability-source-drift.test.ts`, `docker/agents/atlas/TOOLS.md`, `docker/agents/atlas/skills/vibey-api/SKILL.md`, `documentation/features/page-grader-campaign-brain-sync.md`.
+
+## [2026-08-13 17:15] - [UTIL]
+
+What: Added a production-locked Slack-to-Campaign-Brain audit that checks capture, mapped import receipts, cursor state, Campaign Brain memories, embedding coverage, and real retrieval RPCs. Added a dry-run-first, bounded replay for falsely successful imports that requires an explicit fixed-runtime deployment assertion, plus the consolidated Pixel architecture and rollout plan.
+
+Why: Production proved that Slack capture could be healthy while the Campaign Brain stayed empty and database jobs claimed success without an exact Atlas terminal receipt. Recovery needed to distinguish poisoned jobs from intentional skips and prevent replay against the old runtime.
+
+Impact: Operators can prove every stage of Slack knowledge flow, fail rollout health when evidence is missing, identify the six exact Wholesale Universe jobs needing post-deploy replay, and recover them without rewinding every mapping or exposing Brain content to an external retrieval provider by default.
+
+Files: `scripts/roas/audit_slack_brain_pipeline.py`, `scripts/roas/test_audit_slack_brain_pipeline.py`, `scripts/roas/README.md`, `.docs/plans/unified-slack-agent-consolidation-2026-08-13.md`.

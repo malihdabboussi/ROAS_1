@@ -134,7 +134,7 @@ describe('BrainImportJobsService', () => {
           },
         }),
         expectPromptIncludes: 'Target brain: campaign',
-        expectPromptIncludesAction: 'save_user_memory',
+        expectPromptIncludesAction: 'atlas_save_brain_context',
         expectCampaignId: 'camp-1',
         expectBrainId: undefined as string | undefined,
       },
@@ -152,7 +152,7 @@ describe('BrainImportJobsService', () => {
           },
         }),
         expectPromptIncludes: 'Target brain: campaign',
-        expectPromptIncludesAction: 'save_user_memory',
+        expectPromptIncludesAction: 'atlas_save_brain_context',
         expectCampaignId: 'camp-f',
         expectBrainId: undefined as string | undefined,
       },
@@ -163,7 +163,7 @@ describe('BrainImportJobsService', () => {
           payload: { campaignId: 'camp-ff', transcriptId: 't1' },
         }),
         expectPromptIncludes: 'Target brain: campaign',
-        expectPromptIncludesAction: 'save_user_memory',
+        expectPromptIncludesAction: 'atlas_save_brain_context',
         expectCampaignId: 'camp-ff',
         expectBrainId: undefined as string | undefined,
       },
@@ -174,7 +174,7 @@ describe('BrainImportJobsService', () => {
           payload: { campaignId: 'camp-u', url: 'https://x.com' },
         }),
         expectPromptIncludes: 'Target brain: campaign',
-        expectPromptIncludesAction: 'save_user_memory',
+        expectPromptIncludesAction: 'atlas_save_brain_context',
         expectCampaignId: 'camp-u',
         expectBrainId: undefined as string | undefined,
       },
@@ -253,6 +253,49 @@ describe('BrainImportJobsService', () => {
       null,
       { lane: 'brain-import:job-1' },
     )
+    expect(callOpenClawForBrainJob.mock.calls[0]?.[2]).toContain('target_brain: "campaign"')
+    expect(callOpenClawForBrainJob.mock.calls[0]?.[2]).toContain('campaign_id: "camp-1"')
+  })
+
+  it('fails closed when OpenResponses reports an Atlas import failure', async () => {
+    const callOpenClawForBrainJob = vi.fn().mockResolvedValue({
+      output: [
+        {
+          type: 'message',
+          content: [
+            {
+              type: 'output_text',
+              text: 'JOB_STATUS:failed — campaign brain save was rejected',
+            },
+          ],
+        },
+      ],
+    })
+    const service = new BrainImportJobsService({ get: vi.fn() } as any)
+    ;(service as any).getGateway = () => ({ callOpenClawForBrainJob })
+
+    await expect(
+      (service as any).executeViaAtlas(
+        baseJob({
+          job_type: 'campaign_file_import',
+          payload: { campaignId: 'camp-1', content: 'Useful campaign context' },
+        }),
+      ),
+    ).rejects.toThrow('Atlas could not process: campaign brain save was rejected')
+  })
+
+  it('fails closed when Atlas omits the required terminal status', async () => {
+    const callOpenClawForBrainJob = vi.fn().mockResolvedValue({
+      output: [{ type: 'message', content: [{ type: 'output_text', text: 'Saved the context.' }] }],
+    })
+    const service = new BrainImportJobsService({ get: vi.fn() } as any)
+    ;(service as any).getGateway = () => ({ callOpenClawForBrainJob })
+
+    await expect(
+      (service as any).executeViaAtlas(
+        baseJob({ job_type: 'document_remember', payload: { content: 'Useful context' } }),
+      ),
+    ).rejects.toThrow('Atlas could not process: Missing required JOB_STATUS terminal marker')
   })
 
   it('runs campaign file jobs through Atlas OpenClaw (no direct CampaignsService path)', async () => {

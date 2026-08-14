@@ -1,11 +1,15 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Optional } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SlackPendingOffersRepository } from '../repositories/slack-pending-offers.repository'
+import { SlackOpenItemsService } from './slack-open-items.service'
 import type { SlackTeamComposerOffer } from './slack-team-message-composer.service'
 
 @Injectable()
 export class SlackPendingOffersService {
-  constructor(private readonly offers: SlackPendingOffersRepository) {}
+  constructor(
+    private readonly offers: SlackPendingOffersRepository,
+    @Optional() private readonly cases?: SlackOpenItemsService,
+  ) {}
 
   async record(
     supabase: SupabaseClient,
@@ -37,6 +41,25 @@ export class SlackPendingOffersService {
         promise_by: input.offer.ready_by,
       },
       promised_by: promisedBy.toISOString(),
+    })
+    await this.cases?.recordExternal(supabase, {
+      orgId: input.orgId,
+      caseType: 'offer',
+      sourceType: 'slack_offer',
+      sourceKey: input.shadowActionId,
+      summary: input.offer.deliverable,
+      severity: 'normal',
+      dueAt: promisedBy.toISOString(),
+      sourceChannelId: input.channelId,
+      sourceMessageTs: input.threadTs,
+      metadata: {
+        recipient_person_id: input.recipientPersonId,
+        shadow_action_id: input.shadowActionId,
+        thread_channel_id: input.channelId,
+        thread_ts: input.threadTs,
+        deliverable_kind: input.offer.kind,
+      },
+      now,
     })
     await this.offers.expire(
       supabase,

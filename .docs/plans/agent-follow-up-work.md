@@ -38534,3 +38534,19 @@ Production already allowed `needs_reconnect` out of band; the repository now car
   Needed work: the next store addition should extract another slice (artifact viewer or chat-drawer geometry are self-contained candidates) following the use-shell-store.screen-chat.ts pattern.
   Reason not done now: pre-existing size; a broad store split is out of scope for this feature and would bury the reviewed diff.
 - ShellWorkspace.test.tsx / ShellWorkspaceRestoreControls.test.tsx / ShellWorkspaceScreenChat.test.tsx each duplicate the same ~140-line vi.mock scaffold for ShellWorkspace. A shared test harness module would remove the triplication next time a fourth ShellWorkspace test file is needed.
+# 2026-08-13 - [ARCH] Retire the rollback Slack open-item table after ledger rollout
+
+Status: Open
+
+Found while: Consolidating Pixel, Page Grader QC, launch monitoring, and unanswered Slack asks into `agent_cases`.
+
+Files:
+
+- `supabase/migrations/20260813170000_unified_agent_cases.sql`
+- `public.slack_open_items`
+
+Evidence: Active API readers and writers move to `public.agent_cases`, while the migration intentionally retains and copies `public.slack_open_items` as a rollback source. Dropping it in the same deploy would remove the simplest rollback path before production observation proves case counts, scope routing, EOD reconciliation, and 24-hour escalation.
+
+Needed work: After at least one stable production retention window, compare legacy and unified counts, confirm no active code or operational query references `slack_open_items`, then remove the legacy table in a dedicated migration.
+
+Reason not done now: Safe rollout requires retaining recoverable state until the unified ledger has been verified in production.

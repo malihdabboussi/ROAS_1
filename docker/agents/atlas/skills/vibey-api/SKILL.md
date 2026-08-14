@@ -31,6 +31,11 @@ Save customer memory (contact_id preferred; use source identity when contact is 
 ```json
 { "action": "save_customer_memory", "label": "Saving customer insight", "data": { "content": "Customer wants weekly rollout summaries.", "memory_type": "preference", "contact_id": "UUID" } }
 ```
+
+Save client-level knowledge to a Campaign Brain:
+```json
+{ "action": "atlas_save_brain_context", "label": "Saving campaign knowledge", "data": { "target_brain": "campaign", "campaign_id": "UUID", "content": "The campaign needs booking attribution before more SMS budget is allocated.", "source_type": "slack_period", "source_title": "Slack #client-channel" } }
+```
 Contactless source-anchored customer signal:
 ```json
 { "action": "save_customer_memory", "label": "Saving customer signal", "data": { "content": "Public widget visitor wants weekly rollout summaries.", "memory_type": "insight", "source_type": "widget_chat", "conversation_id": "UUID", "visitor_id": "visitor_123" } }

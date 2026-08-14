@@ -38,6 +38,8 @@ export const OWNER_BRIEFING_SIGNAL_KINDS = new Set<SlackTeamSignal['kind']>([
   'strategic_opportunity',
 ])
 
+const MAX_DETECTED_SIGNALS_PER_RUN = 40
+
 export function isWithinSlackTeamLoopQuietHours(now: Date, quietHours?: QuietHours): boolean {
   if (!quietHours) return false
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -199,6 +201,7 @@ export class SlackTeamLoopService {
           ? 'PIXEL_BOT'
           : String(message.sender_slack_user_id ?? 'UNKNOWN_SENDER'),
         text: formatSlackObservationText(message),
+        metadata: message.metadata ?? {},
       }))
     const pendingLastMessageTs = pending.events.reduce(
       (latest, message) =>
@@ -241,15 +244,6 @@ export class SlackTeamLoopService {
           ),
         })
     const remaining = Math.max(0, input.dailyLimit - usedToday)
-    if (remaining === 0) {
-      return {
-        channels_observed: reconciliation.channelsReconciled,
-        messages_observed: observed.length,
-        skipped: true,
-        skipped_reason: 'daily_limit',
-      }
-    }
-
     const savedRules = this.trainingRules
       ? await this.trainingRules.listEnabledRules(input.supabase, input.orgId)
       : []
@@ -271,7 +265,7 @@ export class SlackTeamLoopService {
         .join('\n'),
       messages: observed,
       people: selectedPeople,
-      maxSignals: remaining,
+      maxSignals: MAX_DETECTED_SIGNALS_PER_RUN,
       ...(workspaceOwner
         ? {
             briefingRecipient: {
@@ -358,6 +352,7 @@ export class SlackTeamLoopService {
       cadence: input.cadence,
       remaining,
       signals: actionableSignals,
+      caseSignals: threadCheckedSignals,
       validatedPersonalMoments,
       evidenceBySource,
       observed,
@@ -398,6 +393,7 @@ export class SlackTeamLoopService {
       sent: lifecycle.sent,
       memories_compounded: memoriesCompounded,
       daily_limit: input.dailyLimit,
+      delivery_limit_reached: remaining === 0,
       slack_requests: reconciliation.historyRequests + reconciliation.threadRequests + 1,
       events_stored: reconciliation.eventsStored,
       duplicates_skipped: reconciliation.duplicatesSkipped,

@@ -3,6 +3,7 @@ import { SupabaseServiceClient } from '@vibey/api-shared'
 import { SlackApiIntegration } from '../../../slack/integrations/slack-api.integration'
 import { SlackAgentToolsService } from '../../../slack/services/slack-agent-tools.service'
 import type { SlackBlock } from '../../../slack/types/slack.types'
+import { SlackOpenItemsService } from '../../../spaces/services/slack-open-items.service'
 import { PageGraderQcNotificationWebhookSchema } from '../dto/page-grader.dto'
 import { PageGraderApiService } from './page-grader-api.service'
 import { PageGraderBrainSyncService } from './page-grader-brain-sync.service'
@@ -30,6 +31,7 @@ export class PageGraderQcSlackBridgeService {
     private readonly pageGraderApi: PageGraderApiService,
     private readonly slackTools: SlackAgentToolsService,
     private readonly slackApi: SlackApiIntegration,
+    private readonly cases: SlackOpenItemsService,
   ) {}
 
   async deliverNotification(rawBody: string, signature: string) {
@@ -47,6 +49,7 @@ export class PageGraderQcSlackBridgeService {
 
     for (const connection of connections) {
       try {
+        await this.recordCases(connection, payload)
         const blocks = this.bindActionContext(
           payload.blocks,
           new Set(payload.finding_ids),
@@ -181,11 +184,67 @@ export class PageGraderQcSlackBridgeService {
           slack_user_name: payload.user?.name,
         },
       )
+      if (context.page_grader_org_id) {
+        await this.cases.applyExternalAction(this.svc.client, {
+          orgId: context.page_grader_org_id,
+          sourceType: 'page_grader_qc',
+          sourceKey: context.finding_id,
+          action,
+        })
+      }
       await this.respond(payload.response_url, result.confirmation)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       this.logger.warn(`Page Grader QC action failed: ${message}`)
       await this.respond(payload.response_url, `:warning: ${message}`)
+    }
+  }
+
+  private async recordCases(
+    connection: { userId: string; orgId: string | null },
+    payload: ReturnType<typeof PageGraderQcNotificationWebhookSchema.parse>,
+  ): Promise<void> {
+    if (!connection.orgId) return
+    const findings = payload.findings?.length
+      ? payload.findings
+      : payload.finding_ids.map((id) => ({
+          id,
+          type: 'quality_control' as const,
+          summary: payload.fallback_text,
+          client_id: null,
+          client_name: null,
+          page_grader_campaign_id: null,
+          roas_campaign_id: null,
+          roas_space_id: null,
+          severity: 'normal' as const,
+          due_at: null,
+        }))
+    const unknownFinding = findings.find((finding) => !payload.finding_ids.includes(finding.id))
+    if (unknownFinding) {
+      throw new BadRequestException('QC finding details contain an unknown finding')
+    }
+    const scopeMap = await this.pageGraderApi.getClientScopeMap(connection.userId)
+    for (const finding of findings) {
+      const clientId = finding.client_id ?? null
+      const mapped = clientId ? scopeMap[clientId] : null
+      await this.cases.recordExternal(this.svc.client, {
+        orgId: connection.orgId,
+        caseType: finding.type,
+        sourceType: 'page_grader_qc',
+        sourceKey: finding.id,
+        summary: finding.summary,
+        severity: finding.severity ?? 'normal',
+        clientLabel: finding.client_name ?? mapped?.campaign_name ?? null,
+        externalClientId: clientId,
+        externalCampaignId: finding.page_grader_campaign_id ?? null,
+        campaignId: finding.roas_campaign_id ?? mapped?.campaign_id ?? null,
+        spaceId: finding.roas_space_id ?? mapped?.space_id ?? null,
+        dueAt: finding.due_at ?? null,
+        metadata: {
+          notification_id: payload.notification_id,
+          page_grader_user_id: connection.userId,
+        },
+      })
     }
   }
 
