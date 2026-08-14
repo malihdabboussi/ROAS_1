@@ -13,6 +13,13 @@ describe('shell route policy', () => {
     expect(isShellHomeRoute('/all-tasks')).toBe(false)
   })
 
+  it('treats agency clients and campaigns as shell workspace routes', () => {
+    expect(isShellWorkspaceRoute('/clients')).toBe(true)
+    expect(isShellWorkspaceRoute('/clients/client-1')).toBe(true)
+    expect(isShellWorkspaceRoute('/client-campaigns')).toBe(true)
+    expect(isShellWorkspaceRoute('/client-campaigns/campaign-1')).toBe(true)
+  })
+
   it('only treats the exact home route as the full chat surface', () => {
     expect(isShellHomeRoute('/home')).toBe(true)
     expect(isShellHomeRoute('/home/inbox')).toBe(false)

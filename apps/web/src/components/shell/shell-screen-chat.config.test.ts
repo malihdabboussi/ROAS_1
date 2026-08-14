@@ -23,6 +23,14 @@ describe('shellChatScreenForPathname', () => {
       key: 'home:delegation-desk',
       label: 'Delegation Desk',
     })
+    expect(shellChatScreenForPathname('/clients/client-1')).toEqual({
+      key: 'clients',
+      label: 'Clients',
+    })
+    expect(shellChatScreenForPathname('/client-campaigns/campaign-1')).toEqual({
+      key: 'client-campaigns',
+      label: 'Client Campaigns',
+    })
     expect(shellChatScreenForPathname('/brain')).toEqual({ key: 'brain', label: 'Brain' })
     expect(shellChatScreenForPathname('/team/people')).toEqual({ key: 'team', label: 'Team' })
     expect(shellChatScreenForPathname('/programs/program-1')).toEqual({

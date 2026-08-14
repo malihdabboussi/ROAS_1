@@ -18,6 +18,8 @@ const SCREEN_ROUTES: ReadonlyArray<{ prefix: string } & ShellChatScreen> = [
   { prefix: '/home/meetings', key: 'home:meetings', label: 'Meetings' },
   { prefix: '/home/my-tasks', key: 'home:my-tasks', label: 'My Tasks' },
   { prefix: '/home/delegation-desk', key: 'home:delegation-desk', label: 'Delegation Desk' },
+  { prefix: '/client-campaigns', key: 'client-campaigns', label: 'Client Campaigns' },
+  { prefix: '/clients', key: 'clients', label: 'Clients' },
   { prefix: '/team', key: 'team', label: 'Team' },
   { prefix: '/brain', key: 'brain', label: 'Brain' },
   { prefix: '/chats', key: 'chats', label: 'Chats' },

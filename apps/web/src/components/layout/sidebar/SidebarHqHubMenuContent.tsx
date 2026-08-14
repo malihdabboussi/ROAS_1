@@ -163,7 +163,10 @@ export function SidebarHqHubMenuContent({
           active={c.pathname.startsWith('/clients')}
           icon={<Users />}
           label="Clients"
-          onNavigate={handleNavigate}
+          onNavigate={() => {
+            setWorkContext({ surface: 'general' })
+            handleNavigate()
+          }}
           onHover={() => scheduleClose()}
         />
 
@@ -172,7 +175,10 @@ export function SidebarHqHubMenuContent({
           active={c.pathname.startsWith('/client-campaigns')}
           icon={<BriefcaseBusiness />}
           label="Client Campaigns"
-          onNavigate={handleNavigate}
+          onNavigate={() => {
+            setWorkContext({ surface: 'general' })
+            handleNavigate()
+          }}
           onHover={() => scheduleClose()}
         />
 

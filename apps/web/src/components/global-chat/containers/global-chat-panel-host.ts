@@ -15,6 +15,7 @@ export function resolveGlobalChatPanelHost(input: {
   isChannelRoute: boolean
   channelId: string | null
   isSpacesRoute: boolean
+  forceGeneral?: boolean
   activeSpaceId: string | null
   activeSpaceCampaignId: string | null
   workContext: GlobalWorkContext
@@ -25,6 +26,14 @@ export function resolveGlobalChatPanelHost(input: {
   if (input.isChannelRoute && input.channelId) {
     return {
       panelKey: `channel:${input.channelId}`,
+      spaceId: undefined,
+      campaignId: null,
+    }
+  }
+
+  if (input.forceGeneral) {
+    return {
+      panelKey: 'general',
       spaceId: undefined,
       campaignId: null,
     }

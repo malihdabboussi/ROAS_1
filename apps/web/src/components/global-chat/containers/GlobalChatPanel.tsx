@@ -42,10 +42,13 @@ export function GlobalChatPanel({
   const channelId = channelRouteMatch?.[1] ?? workContext.channelId ?? null
   const isChannelRoute = Boolean(channelId && pathname.startsWith('/home/channels/'))
   const isSpacesRoute = pathname.startsWith('/spaces') || pathname.startsWith('/campaigns')
+  const isAgencyWorkspaceRoute =
+    pathname.startsWith('/clients') || pathname.startsWith('/client-campaigns')
   const host = useStickyGlobalChatPanelHost({
     isChannelRoute,
     channelId,
     isSpacesRoute,
+    forceGeneral: isAgencyWorkspaceRoute,
     activeSpaceId,
     activeSpaceCampaignId: activeSpace?.campaign_id ?? null,
     workContext,
@@ -70,7 +73,7 @@ export function GlobalChatPanel({
   const spaceId = meetingContext?.spaceId ?? host.spaceId
   const awarenessSurface = meetingContext
     ? 'spaces'
-    : workContext.surface === 'general'
+    : isAgencyWorkspaceRoute || workContext.surface === 'general'
       ? 'general'
       : workContext.surface
 

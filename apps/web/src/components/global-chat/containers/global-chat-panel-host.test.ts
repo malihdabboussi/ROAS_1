@@ -52,4 +52,27 @@ describe('resolveGlobalChatPanelHost', () => {
       }).panelKey,
     ).toBe('general')
   })
+
+  it('forces a general host on routes that cannot inherit campaign context', () => {
+    expect(
+      resolveGlobalChatPanelHost({
+        isChannelRoute: false,
+        channelId: null,
+        isSpacesRoute: false,
+        forceGeneral: true,
+        activeSpaceId: 'space-2',
+        activeSpaceCampaignId: 'camp-2',
+        workContext: { surface: 'spaces', spaceId: 'space-1', campaignId: 'camp-1' },
+        sticky: {
+          panelKey: 'space:space-1:camp-1',
+          spaceId: 'space-1',
+          campaignId: 'camp-1',
+        },
+      }),
+    ).toEqual({
+      panelKey: 'general',
+      spaceId: undefined,
+      campaignId: null,
+    })
+  })
 })
