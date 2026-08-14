@@ -49,10 +49,13 @@ export function useShellChatQuickStart(setTextRef: RefObject<((text: string) => 
 
   const selectPickerOption = useCallback(
     (option: CreateTypePickerOption) => {
+      if (!pendingPickerItem) return
       applyQuickStart(
         {
-          label: pendingPickerItem?.label ?? option.label,
-          iconName: pendingPickerItem?.iconName ?? 'filter',
+          id: `${pendingPickerItem.id}:${option.id}`,
+          label: pendingPickerItem.label,
+          icon: pendingPickerItem.icon,
+          iconName: pendingPickerItem.iconName,
           prompt: option.prompt,
           systemContext: option.systemContext,
         },

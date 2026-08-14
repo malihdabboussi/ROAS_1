@@ -69,3 +69,13 @@ Why: After a funnel turn, page artifacts disappeared into one summary card; talk
 Impact: Chat keeps each funnel page visible after the answer, and Campaign & space stays put unless the user moves it or the thread had no campaign yet.
 
 Files: `apps/web/src/features/studio/components/message-bubble/message-bubble.utils.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-legacy-session-campaign.service.ts`.
+
+## 2026-08-14 14:15 - [FIX]
+
+What: Funnel preview page order uses `sort_order`, Create type-picker quick starts include `id`/`icon`, and existing-thread send null-checks the conversation id.
+
+Why: The funnel PR preview failed Next typecheck on `FunnelFullPreview`, and local typecheck also failed on the new picker object and persisted-conversation guard.
+
+Impact: Chat funnel preview and Create type cards typecheck so the web deploy can complete.
+
+Files: `apps/web/src/components/deliverables/FunnelFullPreview.tsx`, `apps/web/src/components/shell/use-shell-chat-quick-start.ts`, `apps/web/src/features/studio/components/ChatInterface.tsx`.

@@ -33,10 +33,7 @@ function toPreviewPages(funnel: Funnel): PreviewPage[] {
       sourceMode: page.source_mode ?? 'tsx',
       code: page.generated_html,
       css: page.generated_css,
-      order:
-        typeof (page as { order_index?: unknown }).order_index === 'number'
-          ? (page as { order_index: number }).order_index
-          : (page.sort_order ?? index),
+      order: page.sort_order ?? index,
       raw: page,
     }))
     .sort((a, b) => a.order - b.order)

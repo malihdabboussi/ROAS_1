@@ -374,7 +374,7 @@ export function ChatInterface() {
         }
         if (!resolvedCampaignId) {
           const hasPersistedConversation =
-            Boolean(activeConversationId) && !activeConversationId.startsWith('pending-')
+            activeConversationId != null && !activeConversationId.startsWith('pending-')
           if (!hasPersistedConversation) {
             const generalCampaign = await ensureGeneralCampaign()
             resolvedCampaignId = generalCampaign.id
