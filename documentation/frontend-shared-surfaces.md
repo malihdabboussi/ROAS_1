@@ -1,6 +1,6 @@
 # Frontend Shared Surfaces
 
-Last Modified: 2026-08-10
+Last Modified: 2026-08-14
 
 This registry is the fast lookup for reusable frontend surfaces in `apps/web`. Check it before creating new shared UI, helpers, hooks, API clients, or contracts, and before importing from another feature.
 
@@ -16,7 +16,7 @@ This registry is the fast lookup for reusable frontend surfaces in `apps/web`. C
 
 ## Global Chat Context Contract
 
-- The global chat store owns the context that is actually attached to a conversation. Route changes attach the current Team, Brain, Campaign, or Flows surface; feature containers may then enrich that context with the selected team, Brain scope, Space, or campaign.
+- The global chat store owns the context that is actually attached to a conversation. Route changes write `suggestedWorkContext` and only stamp `workContext` when no conversation is open. Feature containers may enrich that context when the user (or an accepted Pixel suggestion) attaches a team, Brain scope, Space, or campaign.
 - `GlobalChatComposerFooter` renders the attached context as a removable chip above the composer. Removing the chip clears surface-specific awareness data but keeps the open conversation (it does not remount to a blank General thread). The adjacent context menu restores or replaces the attachment.
 - Agent recommendations and the chat runtime must read the same attached store context. They must not infer a different context directly from the current URL, because that would make a visually detached context continue influencing the model.
 - Changing surfaces replaces the old context object instead of merging unrelated Team, Brain, Space, campaign, or channel fields into the new surface.

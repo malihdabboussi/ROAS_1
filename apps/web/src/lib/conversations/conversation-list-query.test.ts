@@ -48,6 +48,25 @@ describe('conversation list query', () => {
     expect(groups[0]?.items.map((row) => row.id)).toEqual(['new', 'old'])
   })
 
+  it('lifts pinned chats above Recents when splitPinned is set', () => {
+    const groups = groupConversationsForHistory(
+      [
+        conversation({
+          id: 'pinned',
+          title: 'ROAS Marketing Strat',
+          metadata: { pinned: true },
+          updated_at: '2026-06-22T12:00:00.000Z',
+        }),
+        conversation({ id: 'recent', updated_at: '2026-06-23T11:00:00.000Z' }),
+      ],
+      { groupBy: 'none', splitPinned: true },
+    )
+
+    expect(groups.map((group) => group.id)).toEqual(['pinned', 'recents'])
+    expect(groups[0]).toMatchObject({ label: 'Pinned', items: [{ id: 'pinned' }] })
+    expect(groups[1]?.items.map((row) => row.id)).toEqual(['recent'])
+  })
+
   it('groups by calendar day when groupBy is date', () => {
     const groups = groupConversationsForHistory(
       [
@@ -142,13 +161,13 @@ describe('conversation list query', () => {
     expect(groups.at(-1)?.items.length).toBeGreaterThanOrEqual(3)
   })
 
-  it('defaults include no leading icons and flat grouping', () => {
+  it('defaults to logo identity icons and flat grouping', () => {
     expect(DEFAULT_CHAT_HISTORY_FILTERS).toMatchObject({
       status: 'active',
       lastActivity: 'all',
       type: 'all',
       groupBy: 'none',
-      leadingIcon: 'none',
+      leadingIcon: 'logo',
     })
   })
 })

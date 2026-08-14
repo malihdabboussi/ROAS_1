@@ -82,6 +82,24 @@ vi.mock('./ShellRightPanelSources', () => ({
   ShellRightPanelSources: () => <div>Chat sources</div>,
 }))
 
+vi.mock('./ShellRightPanelConnections', async () => {
+  const { useImperativeHandle } = await import('react')
+  return {
+    ShellRightPanelConnections: ({
+      pickerRef,
+    }: {
+      pickerRef?: { current: { openMenuFromBanner: () => void } | null }
+    }) => {
+      useImperativeHandle(pickerRef, () => ({ openMenuFromBanner: mocks.openScopePicker }))
+      return (
+        <section aria-label="Connections">
+          <h3>Connections</h3>
+        </section>
+      )
+    },
+  }
+})
+
 describe('ShellRightPanel', () => {
   afterEach(cleanup)
 
@@ -99,21 +117,21 @@ describe('ShellRightPanel', () => {
     expect(await screen.findByRole('heading', { name: 'Tasks' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Outputs' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Sources' })).not.toBeInTheDocument()
-    expect(screen.queryByText('Campaign & space')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Connections' })).not.toBeInTheDocument()
     expect(screen.getByTestId('tasks-context')).toHaveTextContent('home')
 
     fireEvent.click(screen.getByRole('button', { name: 'Close work summary' }))
     expect(mocks.shellState.setRightPanelOpen).toHaveBeenCalledWith(false)
   })
 
-  it('stacks Outputs, Sources, and Tasks sections for an active conversation', async () => {
+  it('stacks Connections, Outputs, Sources, and Tasks sections for an active conversation', async () => {
     render(<ShellRightPanel conversationId="conversation-1" showScope />)
 
     expect(await screen.findByRole('heading', { name: 'Outputs' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Sources' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Tasks' })).toBeInTheDocument()
-    expect(screen.getByText('Campaign & space')).toBeInTheDocument()
-    expect(screen.getByTestId('scope-picker')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Connections' })).toBeInTheDocument()
+    expect(screen.queryByText('Campaign & space')).not.toBeInTheDocument()
     expect(screen.getByTestId('tasks-context')).toHaveTextContent('conversation-1')
     expect(
       within(screen.getByTestId('work-summary-header')).getByRole('button', {

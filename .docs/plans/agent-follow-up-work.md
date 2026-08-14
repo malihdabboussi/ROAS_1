@@ -1,3 +1,20 @@
+## 2026-08-14 - [UI] Chat Connections switcher still two-level; channel icon tokens; rail at LOC limit
+
+Status: Open
+
+Found while: Connections / Choose Space / Recents logos / no-auto-attach slice
+
+Evidence:
+- `ConversationScopePickerMenus` groups campaigns under program headings, then click-opens spaces. It is not a third click-drill of Program → Campaign list → Space list.
+- `ConversationChannelIcon` still uses `text-purple-400` / `text-blue-400` instead of `--color-*` utilities.
+- `SidebarHqRail.tsx` is 399 LOC (component max 400) after the active-conversation work-context guards.
+- `SidebarHqHubMenuContent` / `SidebarHqMoreFlyoutBody` still call `setWorkContext` on destination clicks even when a conversation is open.
+- Composer `+` menu still owns a hover space submenu (`plusMenuSpacePicker`); only the Choose Space shelf button uses the click-stable picker.
+
+Needed work: Optional third-level program drill; tokenize Slack/Telegram icons; split `SidebarHqRail`; skip flyout `setWorkContext` when `activeConversationId` is set; optionally route composer `+` space through the same picker.
+
+Reason not done now: In-scope Connections, Choose Space flash, Recents logos, and conversation-scoped attach shipped without expanding those adjacent surfaces.
+
 ## 2026-08-05 - [ARCH] SlackService near 600 LOC after digest reply enrichment
 
 Status: Open

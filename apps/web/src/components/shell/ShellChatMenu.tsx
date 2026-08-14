@@ -18,13 +18,13 @@ import {
   filterConversationsForHistory,
   renameConversation,
   setConversationArchived,
-  setConversationPinned,
   type ChatHistoryFilterState,
   type Conversation,
   type ConversationAgentDisplay,
 } from '@/lib/conversations'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
 import { conversationCacheKey, peekConversationCache } from './shell-conversation-cache'
+import { persistConversationPinned, mergeStoreConversationRow } from './shell-chat-menu-pin'
 import { isShellHomeRoute } from './shell-route-policy'
 import { ShellChatMenuActiveFilters } from './ShellChatMenuActiveFilters'
 import { ShellChatMenuFilterControls } from './ShellChatMenuFilterControls'
@@ -36,18 +36,12 @@ export function ShellChatMenu({
   hideNewButton = false,
   navigationSlot,
   simpleSidebar = false,
-  compactHeaderStartSlot,
-  compactHeaderEndSlot,
-  compactHeaderTitleClassName,
 }: {
   onCollapse?: () => void
   onOpenChat?: () => void
   hideNewButton?: boolean
   navigationSlot?: ReactNode
   simpleSidebar?: boolean
-  compactHeaderStartSlot?: ReactNode
-  compactHeaderEndSlot?: ReactNode
-  compactHeaderTitleClassName?: string
 }) {
   const pathname = usePathname() ?? '/home'
   const router = useRouter()
@@ -117,7 +111,8 @@ export function ShellChatMenu({
       const insertedRows = scopedStoreRows.filter((row) => !previousIds.has(row.id))
       const mergedRows = prev.map((row) => {
         const storeRow = storeRowById.get(row.id)
-        return storeRow ? { ...row, ...storeRow } : row
+        if (!storeRow) return row
+        return mergeStoreConversationRow(row, storeRow)
       })
       return [...insertedRows, ...mergedRows]
     })
@@ -304,14 +299,12 @@ export function ShellChatMenu({
             )
           }}
           onTogglePinConversation={async (conversationId, pinned) => {
-            const updated = await setConversationPinned(conversationId, pinned)
-            invalidateCachedFetch('shell-conversations:')
-            useChatStore.getState().updateConversation(conversationId, {
-              metadata: updated.metadata,
+            await persistConversationPinned({
+              conversationId,
+              pinned,
+              current: conversations.find((row) => row.id === conversationId),
+              setConversations,
             })
-            setConversations((prev) =>
-              prev.map((c) => (c.id === conversationId ? { ...c, metadata: updated.metadata } : c)),
-            )
           }}
           onToggleArchiveConversation={async (conversationId, archived) => {
             const updated = await setConversationArchived(conversationId, archived)
@@ -368,18 +361,12 @@ export function ShellChatMenu({
           isOrgContext={isOrgContext}
           allAgentsMode={historyAgentKey === null}
           leadingIcon={filters.leadingIcon}
-          showConversationTypeIcon={simpleSidebar}
+          showConversationTypeIcon={false}
           agentByKey={agentByKey}
-          groupBy={filters.groupBy}
+          groupBy={simpleSidebar ? 'none' : filters.groupBy}
           campaignNameById={campaignNameById}
-          headerEndSlot={
-            <>
-              {filterControls}
-              {compactHeaderEndSlot}
-            </>
-          }
-          headerStartSlot={compactHeaderStartSlot}
-          compactHeaderTitleClassName={compactHeaderTitleClassName}
+          splitPinnedSection={simpleSidebar}
+          headerEndSlot={filterControls}
           beforeHeaderSlot={simpleSidebar ? navigationSlot : undefined}
           headerFooterSlot={activeFilters}
         />

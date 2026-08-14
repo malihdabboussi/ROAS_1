@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, FolderKanban, Plug } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  ConversationScopePicker,
+  type ConversationScopePickerHandle,
+} from '@/components/conversations'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
 import { ShellEmptyChatQuickStartPills } from '@/components/shell/ShellEmptyChatQuickStartPills'
@@ -54,6 +58,8 @@ export function HomeDashboardV4Composer() {
   const openAddMenuRef = useRef<
     ((submenu?: ComposerPlusSubmenu, anchor?: HTMLElement) => void) | null
   >(null)
+  const chooseSpaceButtonRef = useRef<HTMLButtonElement>(null)
+  const scopePickerRef = useRef<ConversationScopePickerHandle>(null)
   const quickStart = useShellChatQuickStart(setTextRef)
   const isOrgOnly = useOrgStore((s) => s.isOrgOnly)
 
@@ -289,8 +295,9 @@ export function HomeDashboardV4Composer() {
         <div className="surface-card border-border mx-spacing-3 p-spacing-2 rounded-b-2xl border-x border-b">
           <div className="gap-spacing-1 flex min-w-0 flex-wrap items-center">
             <button
+              ref={chooseSpaceButtonRef}
               type="button"
-              onClick={(event) => openAddMenuRef.current?.('space', event.currentTarget)}
+              onClick={() => scopePickerRef.current?.openMenuFromBanner()}
               className="body-4 text-muted-foreground hover:text-foreground hover:bg-hover-subtle rounded-spacing-2 gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex max-w-52 shrink-0 items-center transition-colors"
               aria-label="Choose Space"
             >
@@ -323,6 +330,18 @@ export function HomeDashboardV4Composer() {
                   ) : null,
                 )}
             </button>
+            <ConversationScopePicker
+              ref={scopePickerRef}
+              conversation={null}
+              campaignId={targetCampaignId}
+              spaceId={targetSpaceId}
+              hideTrigger
+              bannerAnchorRef={chooseSpaceButtonRef}
+              onScopeChanged={(scope) => {
+                setTargetCampaignId(scope.campaignId)
+                setTargetSpaceId(scope.spaceId)
+              }}
+            />
           </div>
         </div>
         <div className="mt-spacing-4">
