@@ -20,6 +20,7 @@ import {
 } from './page-grader-api.helpers'
 import { PageGraderApiService } from './page-grader-api.service'
 import { PageGraderBrainImportService } from './page-grader-brain-import.service'
+import { verifySignedPageGraderSlackClient } from './page-grader-slack-client-authorization'
 
 export type MappedClientRow = {
   userId: string
@@ -555,14 +556,31 @@ export class PageGraderBrainSyncService {
     return resolved
   }
 
-  async authorizeWebhookClient(secret: string, clientId: string): Promise<MappedClientRow[]> {
+  async authorizeWebhookClient(
+    secret: string,
+    clientId: string,
+    clientName?: string,
+  ): Promise<MappedClientRow[]> {
     const normalizedSecret = secret.trim()
     if (!normalizedSecret) throw new UnauthorizedException('Missing webhook signature')
     const mapped = await this.findMappedClientsByWebhookSecret(normalizedSecret, clientId)
-    if (mapped.length === 0) {
-      throw new UnauthorizedException('Unknown webhook secret or unmapped client')
-    }
-    return mapped
+    if (mapped.length > 0) return mapped
+
+    const verified = await verifySignedPageGraderSlackClient({
+      connections: await this.listConnectedPageGraderRows(),
+      secret: normalizedSecret,
+      clientId,
+      clientName,
+      listClients: (userId) => this.pageGraderApi.listClients(userId, { all: true }),
+      onError: (error) =>
+        this.logger.warn(
+          `Could not verify Page Grader Slack client ${clientId}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        ),
+    })
+    if (verified.length > 0) return verified
+    throw new UnauthorizedException('Unknown webhook secret or unmapped client')
   }
 }
 

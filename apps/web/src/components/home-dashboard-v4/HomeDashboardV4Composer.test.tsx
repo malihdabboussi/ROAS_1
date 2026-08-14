@@ -10,7 +10,6 @@ const mocks = vi.hoisted(() => ({
   seedComposer: vi.fn(),
   clearMeetingContext: vi.fn(),
   setActiveAgentKey: vi.fn(),
-  openQuickMissions: vi.fn(),
   isOrgOnly: true,
   campaignRows: [] as Array<Record<string, unknown>>,
   ensureGeneralSpace: vi.fn(),
@@ -41,6 +40,12 @@ vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
       ],
       loadRoster: vi.fn().mockResolvedValue(undefined),
     }),
+}))
+
+vi.mock('@/components/global-chat/components/QuickMissionsHubHost', () => ({
+  QuickMissionsHubHost: ({ open }: { open?: boolean }) => (
+    <div data-testid="home-quick-missions-host">{String(open)}</div>
+  ),
 }))
 
 vi.mock('@/features/studio/store/use-chat-store', () => ({
@@ -87,11 +92,6 @@ vi.mock('@/features/spaces/services/spaces.service', () => ({
 
 vi.mock('@/features/spaces/components/CreateSpaceModal', () => ({
   CreateSpaceModal: () => null,
-}))
-
-vi.mock('@/lib/missions', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/lib/missions')>()),
-  dispatchOpenQuickMissions: mocks.openQuickMissions,
 }))
 
 vi.mock('@/features/home/components/SuggestedNextMoves', () => ({
@@ -185,6 +185,7 @@ describe('HomeDashboardV4Composer', () => {
   it('uses the standard chat composer chrome and shared empty-chat quick starts', () => {
     render(<HomeDashboardV4Composer />)
 
+    expect(screen.getByTestId('home-quick-missions-host')).toBeInTheDocument()
     const quickStarts = screen.getByRole('group', { name: 'Quick starts' })
     const chooseSpace = screen.getByRole('button', { name: 'Choose Space' })
     const plugins = screen.getByRole('button', { name: 'Plugins and integrations' })
@@ -235,7 +236,7 @@ describe('HomeDashboardV4Composer', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Mission' }))
 
-    expect(mocks.openQuickMissions).toHaveBeenCalledTimes(1)
+    expect(screen.getByTestId('home-quick-missions-host')).toHaveTextContent('true')
     expect(mocks.setText).not.toHaveBeenCalled()
   })
 })

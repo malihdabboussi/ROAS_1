@@ -1,5 +1,7 @@
+import { createElement, type ReactNode } from 'react'
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { QuickMissionsLauncherProvider, useQuickMissionsLauncher } from '@/lib/missions'
 import type { MessageReference } from '../../types'
 import type { AttachedArtifact } from '../chat/ArtifactAttachments'
 import type { AtMentionItem } from './chat-input-at-mentions'
@@ -56,6 +58,25 @@ function defaultOptions(text = '') {
   }
 }
 
+let launcher: ReturnType<typeof useQuickMissionsLauncher>
+
+function LauncherCapture({ children }: { children: ReactNode }) {
+  launcher = useQuickMissionsLauncher()
+  return children
+}
+
+function wrapper({ children }: { children: ReactNode }) {
+  return createElement(
+    QuickMissionsLauncherProvider,
+    null,
+    createElement(LauncherCapture, null, children),
+  )
+}
+
+function renderSelectionHandlers(options: ReturnType<typeof defaultOptions>) {
+  return renderHook(() => useChatInputSelectionHandlers(options), { wrapper })
+}
+
 describe('useChatInputSelectionHandlers', () => {
   beforeEach(() => {
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
@@ -70,7 +91,7 @@ describe('useChatInputSelectionHandlers', () => {
 
   it('selects a slash item by replacing the active slash token and closing the slash menu', () => {
     const options = defaultOptions('please /sum')
-    const { result } = renderHook(() => useChatInputSelectionHandlers(options))
+    const { result } = renderSelectionHandlers(options)
 
     act(() => result.current.handleSlashSelect(slashItem()))
 
@@ -78,9 +99,30 @@ describe('useChatInputSelectionHandlers', () => {
     expect(options.setSlashMenuOpen).toHaveBeenCalledWith(false)
   })
 
+  it('opens a playbook through the durable mission launcher state', () => {
+    const options = defaultOptions('/client-strategy')
+    const { result } = renderSelectionHandlers(options)
+
+    act(() =>
+      result.current.handleSlashSelect({
+        id: 'client-strategy',
+        key: 'client-strategy',
+        name: 'Client Strategy',
+        description: 'Run strategy',
+        type: 'playbook',
+      }),
+    )
+
+    expect(options.setSlashMenuOpen).toHaveBeenCalledWith(false)
+    expect(launcher).toMatchObject({
+      open: true,
+      playbookKey: 'client-strategy',
+    })
+  })
+
   it('selects a campaign by restoring the @ token and resetting campaign menu state', () => {
     const options = defaultOptions('open @olympus')
-    const { result } = renderHook(() => useChatInputSelectionHandlers(options))
+    const { result } = renderSelectionHandlers(options)
 
     act(() => result.current.handleCampaignSelect({ id: 'campaign-1', name: 'Olympus' }))
 
@@ -95,7 +137,7 @@ describe('useChatInputSelectionHandlers', () => {
 
   it('selects an artifact mention by closing @ state and appending reference/artifact chips', () => {
     const options = defaultOptions('use @brief')
-    const { result } = renderHook(() => useChatInputSelectionHandlers(options))
+    const { result } = renderSelectionHandlers(options)
 
     act(() => result.current.handleAtSelect(artifactItem()))
 
@@ -112,14 +154,12 @@ describe('useChatInputSelectionHandlers', () => {
     expect(referenceUpdater([])).toEqual([
       { kind: 'artifact', id: 'artifact-1', label: 'Offer Brief', type: 'offer' },
     ])
-    expect(artifactUpdater([])).toEqual([
-      { id: 'artifact-1', label: 'Offer Brief', type: 'offer' },
-    ])
+    expect(artifactUpdater([])).toEqual([{ id: 'artifact-1', label: 'Offer Brief', type: 'offer' }])
   })
 
   it('selects a space task mention by attaching the task without adding reference chips', () => {
     const options = defaultOptions('assign @task')
-    const { result } = renderHook(() => useChatInputSelectionHandlers(options))
+    const { result } = renderSelectionHandlers(options)
 
     act(() =>
       result.current.handleAtSelect(

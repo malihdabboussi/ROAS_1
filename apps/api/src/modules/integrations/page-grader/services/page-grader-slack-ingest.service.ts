@@ -25,27 +25,28 @@ export class PageGraderSlackIngestService {
     const parsed = PageGraderSlackMessagesWebhookSchema.safeParse(raw)
     if (!parsed.success) throw new BadRequestException('Invalid Slack messages payload')
     const payload = parsed.data
-    const mapped = await this.brainSync.authorizeWebhookClient(secret, payload.client_id)
+    const mapped = await this.brainSync.authorizeWebhookClient(
+      secret,
+      payload.client_id,
+      payload.client_name,
+    )
     const results: Array<Record<string, unknown>> = []
 
     for (const mapping of mapped) {
-      if (!mapping.orgId) {
-        results.push({ user_id: mapping.userId, skipped: true, reason: 'organization_required' })
-        continue
-      }
-      const slackTeamId = await this.resolveSlackTeamId(mapping.orgId)
-      if (!slackTeamId) {
+      const destination = await this.resolveSlackDestination(mapping.userId, mapping.orgId)
+      if (!destination) {
         results.push({
           user_id: mapping.userId,
-          org_id: mapping.orgId,
+          org_id: mapping.orgId ?? null,
           skipped: true,
           reason: 'slack_not_connected',
         })
         continue
       }
+      const { orgId, slackTeamId } = destination
 
       const settings = await this.observations.listChannelSettings(this.svc.client, {
-        orgId: mapping.orgId,
+        orgId,
         slackTeamId,
       })
       const existingChannel = settings.find((row) => row.channel_id === payload.channel_id)
@@ -56,7 +57,7 @@ export class PageGraderSlackIngestService {
       if (!existingChannel) {
         await this.observations.upsertChannels(this.svc.client, [
           {
-            orgId: mapping.orgId,
+            orgId,
             slackTeamId,
             channelId: payload.channel_id,
             channelName,
@@ -67,7 +68,7 @@ export class PageGraderSlackIngestService {
       }
 
       const events: SlackObservationEventInput[] = payload.messages.map((message) => ({
-        orgId: mapping.orgId!,
+        orgId,
         slackTeamId,
         channelId: payload.channel_id,
         channelName,
@@ -81,7 +82,7 @@ export class PageGraderSlackIngestService {
           ingest_source: 'page_grader',
           page_grader_client_id: payload.client_id,
           page_grader_client_name: payload.client_name,
-          page_grader_campaign_id: mapping.entry.campaign_id,
+          page_grader_campaign_id: mapping.entry.campaign_id || null,
           page_grader_campaign_name: mapping.entry.campaign_name ?? null,
           page_grader_author_name: message.author_name ?? null,
           page_grader_message_date: message.date ?? null,
@@ -94,7 +95,7 @@ export class PageGraderSlackIngestService {
       })
       results.push({
         user_id: mapping.userId,
-        org_id: mapping.orgId,
+        org_id: orgId,
         slack_team_id: slackTeamId,
         channel_id: payload.channel_id,
         accepted: events.length,
@@ -104,13 +105,19 @@ export class PageGraderSlackIngestService {
     return { success: true, client_id: payload.client_id, results }
   }
 
-  private async resolveSlackTeamId(orgId: string): Promise<string | null> {
-    const { data, error } = await this.svc.client
+  private async resolveSlackDestination(
+    userId: string,
+    mappedOrgId: string | null,
+  ): Promise<{ orgId: string; slackTeamId: string } | null> {
+    let query = this.svc.client
       .from('user_integrations')
-      .select('metadata')
+      .select('org_id, metadata')
       .eq('integration_id', 'slack')
       .eq('status', 'connected')
-      .eq('org_id', orgId)
+    query = mappedOrgId
+      ? query.eq('org_id', mappedOrgId)
+      : query.eq('user_id', userId).not('org_id', 'is', null)
+    const { data, error } = await query
       .order('connected_at', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -119,8 +126,9 @@ export class PageGraderSlackIngestService {
       data?.metadata && typeof data.metadata === 'object'
         ? (data.metadata as Record<string, unknown>)
         : {}
-    return typeof metadata.team_id === 'string' && metadata.team_id.trim()
-      ? metadata.team_id.trim()
-      : null
+    const orgId = mappedOrgId || (typeof data?.org_id === 'string' ? data.org_id.trim() : '')
+    const slackTeamId =
+      typeof metadata.team_id === 'string' && metadata.team_id.trim() ? metadata.team_id.trim() : ''
+    return orgId && slackTeamId ? { orgId, slackTeamId } : null
   }
 }

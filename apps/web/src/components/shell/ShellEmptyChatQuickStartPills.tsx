@@ -1,20 +1,29 @@
 'use client'
 
 import {
+  isShellMissionCreateItem,
   SHELL_CREATE_QUICK_STARTS,
   type ShellCreateMenuItem,
 } from '@/components/shell/shell-create-menu.config'
+import { useQuickMissionsLauncher } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
 
 export function ShellEmptyChatQuickStartPills({
   onSelect,
+  onMission,
+  missionOpen,
   className,
   variant = 'standalone',
 }: {
   onSelect: (quickStart: ShellCreateMenuItem) => void
+  onMission?: () => void
+  missionOpen?: boolean
   className?: string
   variant?: 'standalone' | 'shelf'
 }) {
+  const launcher = useQuickMissionsLauncher()
+  const open = missionOpen ?? launcher.open
+
   return (
     <div
       className={cn(
@@ -28,11 +37,21 @@ export function ShellEmptyChatQuickStartPills({
     >
       {SHELL_CREATE_QUICK_STARTS.map((quickStart) => {
         const Icon = quickStart.icon
+        const isMission = isShellMissionCreateItem(quickStart)
         return (
           <button
             key={quickStart.id}
             type="button"
-            onClick={() => onSelect(quickStart)}
+            onClick={() => {
+              if (isMission) {
+                if (onMission) onMission()
+                else launcher.openLauncher()
+                return
+              }
+              onSelect(quickStart)
+            }}
+            aria-haspopup={isMission ? 'dialog' : undefined}
+            aria-expanded={isMission ? open : undefined}
             className={cn(
               'body-4 text-muted-foreground hover:text-foreground hover:bg-hover-subtle gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex shrink-0 items-center bg-transparent transition-colors',
               variant === 'shelf' ? 'rounded-spacing-2' : 'border-border rounded-full border',

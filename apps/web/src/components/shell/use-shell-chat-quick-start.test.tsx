@@ -15,18 +15,15 @@ describe('useShellChatQuickStart', () => {
     expect(result.current.handleComposerValueChange).toBe(initialCallback)
   })
 
-  it('opens Missions without seeding the composer', () => {
+  it('seeds composer quick starts and exposes their capability context', () => {
     const setTextRef = createRef<((text: string) => void) | null>()
     setTextRef.current = vi.fn()
-    const onOpen = vi.fn()
-    window.addEventListener('vibey:open-quick-missions', onOpen)
     const { result } = renderHook(() => useShellChatQuickStart(setTextRef))
-    const mission = SHELL_CREATE_QUICK_STARTS.find((item) => item.action === 'mission')!
+    const document = SHELL_CREATE_QUICK_STARTS.find((item) => item.id === 'create-document')!
 
-    act(() => result.current.selectQuickStart(mission))
+    act(() => result.current.selectQuickStart(document))
 
-    expect(onOpen).toHaveBeenCalledTimes(1)
-    expect(setTextRef.current).not.toHaveBeenCalled()
-    window.removeEventListener('vibey:open-quick-missions', onOpen)
+    expect(setTextRef.current).toHaveBeenCalledWith(document.prompt)
+    expect(result.current.activeCapabilityChip).toEqual({ label: 'Document', icon: 'file-text' })
   })
 })

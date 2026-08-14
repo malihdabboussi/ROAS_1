@@ -228,6 +228,32 @@ describe('shell work area', () => {
     expect(useShellStore.getState().recentWorkAreaPages).toEqual([agenda, skills])
   })
 
+  it('excludes conversations and deduplicates equivalent named work surfaces', () => {
+    useShellStore.getState().recordWorkAreaPage({
+      id: '/home?conv=conversation-1',
+      title: 'Launch chat',
+      href: '/home?conv=conversation-1',
+    })
+    useShellStore.getState().recordWorkAreaPage({
+      id: '/home/meetings?meeting=evt-1',
+      title: 'Weekly planning',
+      href: '/home/meetings?meeting=evt-1',
+    })
+    useShellStore.getState().recordWorkAreaPage({
+      id: 'home-meeting:evt-1',
+      title: 'Weekly planning',
+      href: '/home/meetings?meeting=evt-1&space=space-1',
+    })
+
+    expect(useShellStore.getState().recentWorkAreaPages).toEqual([
+      {
+        id: 'home-meeting:evt-1',
+        title: 'Weekly planning',
+        href: '/home/meetings?meeting=evt-1&space=space-1',
+      },
+    ])
+  })
+
   it('stores restore payloads on work-area memory entries', () => {
     useShellStore.getState().recordWorkAreaPage({
       id: 'home-meeting:evt-1',

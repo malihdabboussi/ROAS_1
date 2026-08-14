@@ -3,6 +3,7 @@ import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
+import { QuickMissionsLauncherProvider, useQuickMissionsLauncher } from '@/lib/missions'
 import {
   buildQuickMissionReceipt,
   QuickMissionsHubHost,
@@ -36,6 +37,24 @@ const clients = [
   { spaceId: 'space-1', campaignId: 'campaign-1', title: 'Course One' },
   { spaceId: 'space-2', campaignId: 'campaign-2', title: 'Course Two' },
 ]
+
+let launcher: ReturnType<typeof useQuickMissionsLauncher>
+
+function LauncherCapture() {
+  launcher = useQuickMissionsLauncher()
+  return null
+}
+
+function renderHost() {
+  return render(
+    createElement(
+      QuickMissionsLauncherProvider,
+      null,
+      createElement(LauncherCapture),
+      createElement(QuickMissionsHubHost),
+    ),
+  )
+}
 
 describe('QuickMissionsHubHost', () => {
   const originalLoadSpaces = useSpacesStore.getState().loadSpaces
@@ -96,13 +115,14 @@ describe('QuickMissionsHubHost', () => {
   it('loads client Spaces when Quick Missions opens', () => {
     const loadSpaces = vi.fn(async () => undefined)
     useSpacesStore.setState({ spaces: [], activeSpaceId: null, loadSpaces })
-    render(createElement(QuickMissionsHubHost))
+    renderHost()
 
     act(() => {
-      window.dispatchEvent(new CustomEvent('vibey:open-quick-missions'))
+      launcher.openLauncher()
     })
 
     expect(loadSpaces).toHaveBeenCalledOnce()
+    expect(mocks.modalProps).toMatchObject({ open: true, initialPlaybookKey: null })
   })
 
   it('creates and opens a conversation before a blank-chat mission starts', async () => {
@@ -112,7 +132,7 @@ describe('QuickMissionsHubHost', () => {
       created_at: '2026-08-13T20:00:00.000Z',
     })
     useSpacesStore.setState({ spaces: [], activeSpaceId: null, loadSpaces: vi.fn() })
-    render(createElement(QuickMissionsHubHost))
+    renderHost()
 
     const resolveSourceConversation = mocks.modalProps?.onResolveSourceConversation as (
       input: Record<string, string>,

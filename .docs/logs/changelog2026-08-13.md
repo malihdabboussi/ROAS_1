@@ -137,3 +137,73 @@ Files: `apps/web/src/components/shell/shell-screen-chat.config.ts`, `apps/web/sr
 - Fixed newly added meeting notes returning a response wrapper instead of the saved note, and rendered relevant links immediately.
 - Repaired provider Markdown embedded inside saved recap HTML and stripped Markdown emphasis from plain-text recap drafts.
 - Updated recap and follow-up prompts to produce a useful first draft without stalling on missing dates.
+
+## [2026-08-13 16:17] - [FIX]
+
+What: Replaced the one-shot browser event used by Home, chat Create, and slash-command Mission launchers with shared reactive launcher state, and removed the obsolete event implementation.
+
+Why: Production on the exact deployed commit proved the Mission button dispatched successfully while the persistent dashboard host did not observe the event, leaving the launcher closed. Event delivery was inherently lossy across shell mount and navigation timing.
+
+Impact: Mission launch requests remain observable until the dashboard host closes them, including from blank Home chats, active-chat Create menus, and preset playbook slash commands.
+
+Files: `apps/web/src/lib/missions/quick-missions-launcher.ts`, `apps/web/src/lib/missions/quick-missions-launcher.test.ts`, `apps/web/src/lib/missions/quick-missions-events.ts`, `apps/web/src/lib/missions/index.ts`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.test.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.test.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-selection-handlers.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-selection-handlers.test.ts`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `documentation/features/missions.md`.
+
+## [2026-08-13 16:30] - [FIX]
+
+What: Moved empty-chat Mission routing into the shared quick-start component itself, removed the replaced Mission branch from the composer-seeding hook, and added a real Quick Missions host/modal integration test.
+
+Why: Production on the durable-launcher deployment still showed the shared Mission pill traversing its generic composer callback without rendering the dialog. The previous tests verified the callback and host separately while mocking the real modal boundary.
+
+Impact: Home and Space empty-chat Mission pills invoke the launcher directly, composer quick starts remain limited to prompt/capability seeding, and regression coverage renders the actual portaled Quick Missions dialog with Client Strategy.
+
+Files: `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/shell/ShellEmptyChatPrompts.test.tsx`, `apps/web/src/components/shell/use-shell-chat-quick-start.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.test.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.integration.test.tsx`, `documentation/features/missions.md`.
+
+## [2026-08-13 16:39] - [FIX]
+
+What: Moved the Quick Missions host from the outer dashboard shell into the actual blank Home and active global chat surfaces, with explicit ownership tests for both surfaces and the shell.
+
+Why: Three exact-production deployments contained the launcher action, reactive store, modal, and compiled dashboard host, but clicking Mission still produced no dialog. The outer host was compiled without participating in the live interactive chat tree.
+
+Impact: Blank Home, active, Space, and drawer chats now mount exactly one Mission launcher beside the component that triggers it, while the dashboard shell no longer owns an ineffective detached host.
+
+Files: `apps/web/src/app/(dashboard)/dashboard-shell.tsx`, `apps/web/src/app/(dashboard)/dashboard-shell.test.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.test.tsx`, `documentation/features/missions.md`.
+
+## [2026-08-13 16:39] - [FIX]
+
+What: Consolidated full-chat drawer controls around the Summary panel, moved conversation details beside the clickable rename title, removed the pencil and redundant page drawer, excluded chats and duplicate names from recent work, added destination icons, and changed the composer add glyph to a paperclip.
+
+Why: Full conversations exposed competing drawer controls and a hidden Show page fallback, while recent work repeated chats already available in the left history.
+
+Impact: Full chat has one predictable summary drawer; the three-dot menu sits beside the title, clicking the name renames it, recent work contains unique work surfaces only, and attachments use a recognizable paperclip entry point.
+
+Files: `apps/web/src/components/conversations/ConversationHeaderTitle.tsx`, `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/components/shell/ShellWorkAreaControl.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/features/spaces/components/chat/SpaceChatHeaderActions.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/studio/components/ChatInput/chat-input-normal-footer.tsx`, related tests, `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-08-13 17:01] - [FIX]
+
+What: Replaced the module-global Quick Missions launcher singleton with an explicit provider inside the blank Home and active global chat surfaces, and routed quick starts, Create-menu selections, summary Create, and playbook slash commands through that surface-owned state.
+
+Why: Exact-production testing on the merged surface-host deployment proved that ordinary creation quick starts hydrated and changed the composer while Mission's global state transition did not reach the mounted modal consumer.
+
+Impact: Every Mission trigger and its modal host now share one deterministic React tree, with isolated launcher state per chat surface and no dependency on cross-chunk singleton identity.
+
+Files: `apps/web/src/lib/missions/quick-missions-launcher.ts`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-selection-handlers.ts`, related tests, `documentation/features/missions.md`.
+
+## [2026-08-13 17:09] - [FIX]
+
+What: Routed Mission selections through the stable `create-mission` catalog id instead of optional action metadata, and added dialog expansion semantics to the Mission quick-start button.
+
+Why: Exact-production testing on the tree-scoped launcher deployment still showed Mission falling through without a dialog while Document from the same catalog seeded the composer successfully.
+
+Impact: Empty-chat and summary Create surfaces recognize Mission from the canonical catalog identity, while production verification can directly observe whether the launcher state opened through `aria-expanded`.
+
+Files: `apps/web/src/components/shell/shell-create-menu.config.ts`, `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/shell/ShellEmptyChatPrompts.test.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `documentation/features/missions.md`.
+
+## [2026-08-13 17:20] - [FIX]
+
+What: Added controlled open support to the Quick Missions host and passed blank Home's Mission open callback and state directly between the composer, quick-start trigger, and modal host.
+
+Why: Exact-production testing showed the canonical Mission button had the new expansion semantics but stayed `aria-expanded=false` immediately after click, proving its launcher hook resolved to the default context across a Next client-chunk boundary.
+
+Impact: Blank Home Mission launch no longer depends on shared module or React context identity; the click updates state owned by the same composer instance that controls the modal.
+
+Files: `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `documentation/features/missions.md`.
