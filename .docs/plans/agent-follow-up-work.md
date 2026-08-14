@@ -38648,3 +38648,20 @@ Reason not done now: The production timeout fix changes only the two repeat sche
 - Evidence: A production browser request made at 18:18 America/Los_Angeles on August 13 was answered as “Today, Thursday Aug 14” and rendered the meeting time in UTC. The gateway supplies only `CURRENT_DATETIME` as a UTC ISO timestamp and supplies no user/browser timezone.
 - Needed work: carry the authenticated user's effective timezone into Studio chat context and require relative-day labels and calendar display times to use it, with DST-boundary regression coverage.
 - Reason not done now: This task's code change is a scoped task-detail spacing correction; changing the global chat time contract affects every agent and calendar request and requires a separately reviewed frontend-to-gateway contract change.
+## 2026-08-14 - [ARCH] Continue chat composer and panel decomposition
+
+Status: Open
+
+Found while: Adding exact-message Reply restoration and Mission navigation inside chat.
+
+Files:
+
+- `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` (2,628 LOC; unchanged from its allowlisted baseline)
+- `apps/web/src/features/studio/components/ChatInput.tsx` (630 LOC; unchanged from its allowlisted baseline)
+- `apps/agent-api/src/modules/chat/services/chat-reference-context.service.ts` (498 LOC; near the proactive 500 LOC extraction threshold)
+
+Evidence: The scoped change kept the two grandfathered web files at their existing line counts by moving seed normalization and restored-reference state into focused tested helpers. The reference-context service remains under its 600 LOC hard limit but now sits at the proactive extraction threshold.
+
+Needed work: Continue splitting the Space chat host by composer/seed orchestration, split the ChatInput shell from its controller hooks, and extract conversation-reference assembly from `ChatReferenceContextService` behind the existing reference-context contract.
+
+Reason not done now: Those decompositions are real architecture debt but would materially widen the requested Mission/Create/output/reply behavior change; this change adds focused helpers without increasing either allowlisted web file.

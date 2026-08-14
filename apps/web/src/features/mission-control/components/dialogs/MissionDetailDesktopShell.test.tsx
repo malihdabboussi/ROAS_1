@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MissionDetailDesktopShell } from './MissionDetailDesktopShell'
 
 vi.mock('@/components/layout/ResizableDivider', () => ({
@@ -17,7 +17,11 @@ vi.mock('@/components/layout/usePanelResize', () => ({
 vi.mock('../mission-menu/MissionMenuDropdown', () => ({
   MissionMenuDropdown: () => null,
 }))
-vi.mock('./ActivityTimeline', () => ({ ActivityTimeline: () => null }))
+vi.mock('./ActivityTimeline', () => ({
+  ActivityTimeline: ({ title = 'Activity' }: { title?: string }) => (
+    <div data-testid="mission-activity">{title}</div>
+  ),
+}))
 vi.mock('./DeliverablesCarousel', () => ({ DeliverablesCarousel: () => null }))
 vi.mock('./HumanGateReviewPanel', () => ({ HumanGateReviewPanel: () => null }))
 vi.mock('./MissionDetailHeader', () => ({ MissionDetailHeader: () => null }))
@@ -51,6 +55,27 @@ const baseProps = {
 }
 
 describe('MissionDetailDesktopShell', () => {
+  let resizeObserverCallback: ResizeObserverCallback
+
+  beforeEach(() => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class ResizeObserverMock {
+        constructor(callback: ResizeObserverCallback) {
+          resizeObserverCallback = callback
+        }
+        observe() {}
+        disconnect() {}
+        unobserve() {}
+      },
+    )
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+  })
+
   it('hides the mission surface while preserving the deliverable dock', () => {
     const { rerender } = render(<MissionDetailDesktopShell {...baseProps} />)
 
@@ -62,5 +87,26 @@ describe('MissionDetailDesktopShell', () => {
 
     expect(screen.getByTestId('mission-detail-surface').className.split(' ')).toContain('hidden')
     expect(screen.getByTestId('deliverable-dock')).toBeTruthy()
+  })
+
+  it('switches a narrow Mission panel between Overview and Activity instead of crushing both', () => {
+    render(<MissionDetailDesktopShell {...baseProps} presentation="panel" />)
+
+    act(() => {
+      resizeObserverCallback(
+        [{ contentRect: { width: 640 } } as ResizeObserverEntry],
+        {} as ResizeObserver,
+      )
+    })
+
+    expect(screen.getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByTestId('mission-overview')).toBeInTheDocument()
+    expect(screen.queryByTestId('mission-activity')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Activity' }))
+
+    expect(screen.getByRole('button', { name: 'Activity' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByTestId('mission-activity')).toBeInTheDocument()
+    expect(screen.queryByTestId('mission-overview')).toBeNull()
   })
 })

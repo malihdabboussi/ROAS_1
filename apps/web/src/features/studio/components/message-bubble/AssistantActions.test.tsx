@@ -1,5 +1,6 @@
 import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { AssistantActions } from './AssistantActions'
 
 const actionMocks = vi.hoisted(() => ({
@@ -24,6 +25,7 @@ vi.mock('../../services/chat.service', () => ({
 
 afterEach(() => {
   cleanup()
+  useGlobalChatStore.setState({ pendingSeed: null })
   vi.clearAllMocks()
 })
 
@@ -46,9 +48,40 @@ describe('AssistantActions', () => {
         sourceSurface: 'assistant_message',
         content: 'Ready to help',
         canFork: true,
+        showFeedback: false,
+        onReply: expect.any(Function),
       }),
       undefined,
     )
+  })
+
+  it('replies with an exact message reference instead of rating the chat turn', () => {
+    render(
+      <AssistantActions
+        content="Launch the client strategy and keep it running."
+        messageId="33333333-3333-4333-8333-333333333333"
+        conversationId="44444444-4444-4444-8444-444444444444"
+      />,
+    )
+
+    const lastCall = actionMocks.AgentTurnFeedbackActions.mock.calls.at(-1) as
+      | [{ onReply?: () => void; showFeedback?: boolean }]
+      | undefined
+    lastCall?.[0].onReply?.()
+
+    expect(lastCall?.[0].showFeedback).toBe(false)
+    expect(useGlobalChatStore.getState().pendingSeed).toMatchObject({
+      conversationId: '44444444-4444-4444-8444-444444444444',
+      seedMode: 'attach',
+      references: [
+        {
+          kind: 'conversation',
+          id: '44444444-4444-4444-8444-444444444444',
+          type: 'message:33333333-3333-4333-8333-333333333333',
+          label: 'Reply to assistant: Launch the client strategy and keep it running.',
+        },
+      ],
+    })
   })
 
   it('keeps actions visible when pinActions is true', () => {

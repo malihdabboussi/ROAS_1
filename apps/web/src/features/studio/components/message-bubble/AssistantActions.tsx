@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 import { AgentTurnFeedbackActions } from '@/components/chat/AgentTurnFeedbackActions'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { cn } from '@/lib/utils/cn'
 import { forkConversation } from '../../services/chat.service'
 
@@ -27,6 +28,24 @@ export function AssistantActions({
 }) {
   const router = useRouter()
   const [forking, setForking] = useState(false)
+
+  const handleReply = useCallback(() => {
+    if (!conversationId || !messageId) return
+    const excerpt = content.replace(/\s+/g, ' ').trim().slice(0, 160)
+    useGlobalChatStore.getState().seedComposer({
+      content: '',
+      conversationId,
+      seedMode: 'attach',
+      references: [
+        {
+          kind: 'conversation',
+          id: conversationId,
+          type: `message:${messageId}`,
+          label: `Reply to assistant: ${excerpt}`,
+        },
+      ],
+    })
+  }, [content, conversationId, messageId])
 
   const handleFork = useCallback(async () => {
     if (!conversationId || !messageId || conversationId.startsWith('pending-')) return
@@ -64,6 +83,8 @@ export function AssistantActions({
           canFork={canFork}
           onFork={canFork ? handleFork : undefined}
           forking={forking}
+          showFeedback={false}
+          onReply={messageId && conversationId ? handleReply : undefined}
           className="py-0"
         />
       </div>

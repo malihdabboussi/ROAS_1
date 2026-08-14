@@ -13,7 +13,7 @@ import { MessageQueue } from '@/components/chat/MessageQueue'
 import { PlanStickyTracker } from '@/components/chat/PlanStickyTracker'
 import { VoiceApprovalProvider } from '@/components/chat/VoiceApprovalContext'
 import { ConversationShareModal } from '@/components/conversations'
-import { globalChatSeedMatchesPanel } from '@/components/global-chat/lib/global-chat-seed-match'
+import * as globalChatSeed from '@/components/global-chat/lib/global-chat-seed-match'
 import {
   GLOBAL_CHAT_AGENT_SWITCH_EVENT,
   GLOBAL_CHAT_SEED_EVENT,
@@ -256,6 +256,7 @@ export function SpaceVibeyChatPanel({
   const [composerRestore, setComposerRestore] = useState<{
     text: string
     documents?: DocumentAttachment[]
+    references?: MessageReference[]
     nonce: string
   } | null>(null)
   const [editingQueueItemId, setEditingQueueItemId] = useState<string | null>(null)
@@ -1225,7 +1226,7 @@ export function SpaceVibeyChatPanel({
           useChatStore.getState().setCreditsExhausted(true)
           return
         }
-        setComposerRestore({ text: content, documents, nonce: crypto.randomUUID() })
+        setComposerRestore({ text: content, documents, references, nonce: crypto.randomUUID() })
         toast.error(toastMessageForChatSendError(err))
       }
     },
@@ -1927,15 +1928,12 @@ export function SpaceVibeyChatPanel({
   const applyGlobalChatSeed = useCallback(
     async (seed: GlobalChatSeedDetail) => {
       if (isChannelScope || conversationsLoading) return
-      if (!globalChatSeedMatchesPanel(seed, spaceId)) return
-
-      const content = seed.content?.trim() ?? ''
-      const documents = seed.documents as DocumentAttachment[] | undefined
-      const isAttach = seed.seedMode === 'attach'
-      if (!isAttach && !content) return
-      if (isAttach && !content && !(documents && documents.length > 0)) return
-
-      const seedKey = `${spaceId ?? 'general'}:${seed.seedMode ?? 'send'}:${seed.conversationId ?? ''}:${content}:${documents?.map((d) => d.mediaAssetId ?? d.fileUrl).join(',') ?? ''}`
+      if (!globalChatSeed.globalChatSeedMatchesPanel(seed, spaceId)) return
+      const normalized = globalChatSeed.normalizeGlobalChatSeed(seed, spaceId)
+      if (!normalized) return
+      const { content, isAttach, seedKey } = normalized
+      const documents = normalized.documents as DocumentAttachment[] | undefined
+      const references = normalized.references as MessageReference[] | undefined
       if (globalSeedConsumedRef.current === seedKey) return
       globalSeedConsumedRef.current = seedKey
 
@@ -1954,6 +1952,7 @@ export function SpaceVibeyChatPanel({
         setComposerRestore({
           text: content,
           documents,
+          references,
           nonce: crypto.randomUUID(),
         })
         if (seed.quickStartId) {
@@ -2507,6 +2506,7 @@ export function SpaceVibeyChatPanel({
                           }
                           initialValue={composerRestore?.text}
                           initialDocuments={composerRestore?.documents}
+                          initialReferences={composerRestore?.references}
                           restoreNonce={composerRestore?.nonce}
                           campaignId={effectiveCampaignId ?? undefined}
                           spaceId={isChannelScope ? null : effectiveSpaceId}

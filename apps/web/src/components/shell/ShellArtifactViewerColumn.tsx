@@ -54,7 +54,7 @@ export function ShellArtifactViewerColumn({
           }}
           isDragging={isDragging}
           compact
-          showGrip={false}
+          showGrip
           ariaLabel="Resize artifact viewer"
         />
       ) : null}
