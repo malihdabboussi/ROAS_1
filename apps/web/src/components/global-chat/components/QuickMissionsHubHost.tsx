@@ -72,7 +72,15 @@ export function buildQuickMissionReceipt(
   }
 }
 
-export function QuickMissionsHubHost() {
+export function QuickMissionsHubHost({
+  open: controlledOpen,
+  initialPlaybookKey: controlledPlaybookKey,
+  onClose: controlledOnClose,
+}: {
+  open?: boolean
+  initialPlaybookKey?: string | null
+  onClose?: () => void
+} = {}) {
   const router = useRouter()
   const spaces = useSpacesStore((s) => s.spaces)
   const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
@@ -88,7 +96,9 @@ export function QuickMissionsHubHost() {
   const addMessage = useChatStore((s) => s.addMessage)
   const addConversation = useChatStore((s) => s.addConversation)
   const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
-  const { open, playbookKey: initialPlaybookKey, closeLauncher } = useQuickMissionsLauncher()
+  const launcher = useQuickMissionsLauncher()
+  const open = controlledOpen ?? launcher.open
+  const initialPlaybookKey = controlledPlaybookKey ?? launcher.playbookKey
 
   useEffect(() => {
     if (open) void loadSpaces()
@@ -165,7 +175,8 @@ export function QuickMissionsHubHost() {
         }
       }}
       onClose={() => {
-        closeLauncher()
+        if (controlledOpen === undefined) launcher.closeLauncher()
+        controlledOnClose?.()
       }}
     />
   )

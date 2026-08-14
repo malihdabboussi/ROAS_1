@@ -1,6 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { useQuickMissionsLauncher } from '@/lib/missions'
 import { HomeDashboardV4Composer } from './HomeDashboardV4Composer'
 
 const mocks = vi.hoisted(() => ({
@@ -44,10 +43,9 @@ vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
 }))
 
 vi.mock('@/components/global-chat/components/QuickMissionsHubHost', () => ({
-  QuickMissionsHubHost: () => {
-    const { open } = useQuickMissionsLauncher()
-    return <div data-testid="home-quick-missions-host">{String(open)}</div>
-  },
+  QuickMissionsHubHost: ({ open }: { open?: boolean }) => (
+    <div data-testid="home-quick-missions-host">{String(open)}</div>
+  ),
 }))
 
 vi.mock('@/features/studio/store/use-chat-store', () => ({
