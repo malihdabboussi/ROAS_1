@@ -30,7 +30,7 @@ export function ShellEmptyChatQuickStartPills({
         className={cn(
           variant === 'shelf'
             ? 'gap-spacing-1 flex min-w-0 flex-1 flex-wrap items-center justify-end'
-            : 'mb-spacing-2 gap-spacing-2 flex w-full max-w-3xl flex-nowrap items-center justify-center overflow-x-auto',
+            : 'mb-spacing-2 gap-spacing-2 flex w-full max-w-3xl flex-nowrap items-center justify-start overflow-x-auto',
           className,
         )}
         role="group"

@@ -54,7 +54,7 @@ describe('shell empty chat prompts', () => {
   it('renders each quick start once in a single row group', () => {
     render(<ShellEmptyChatQuickStartPills onSelect={vi.fn()} />)
 
-    expect(screen.getByRole('group', { name: 'Quick starts' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Quick starts' })).toHaveClass('justify-start')
     for (const quickStart of SHELL_CREATE_QUICK_STARTS) {
       expect(screen.getAllByRole('button', { name: quickStart.label })).toHaveLength(1)
     }
