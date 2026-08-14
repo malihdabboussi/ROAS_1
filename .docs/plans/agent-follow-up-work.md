@@ -38609,6 +38609,22 @@ Needed work: Split runtime targeting, prompt construction, request streaming, tr
 
 Reason not done now: A full gateway decomposition would materially widen an urgent production retry/review-loop fix and make end-to-end behavioral verification harder to attribute.
 
+## 2026-08-13 - [ARCH] Split Mission execute-phase orchestration
+
+Status: Open
+
+Found while: Pinning revision retries to their canonical Mission deliverable after production Client Strategy verification.
+
+Files:
+
+- `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts`
+
+Evidence: The service is 2,280 LOC after this scoped correction, far beyond the service guideline. Revision prompting and deliverable-reference canonicalization remain small additions inside the existing execution chokepoint, while the reference matcher itself is isolated in `mission-deliverable-reference.ts`.
+
+Needed work: Split execution claiming and leases, prompt assembly, stream checkpoints, output verification, and failure/retry transitions into focused collaborators without changing the Mission lifecycle contract.
+
+Reason not done now: Decomposing the complete execute phase would materially widen an urgent production artifact-integrity repair and make the live Mission verification harder to attribute.
+
 ## 2026-08-13 - [ARCH] Split Brain import runtime lifecycle responsibilities
 
 Status: Open

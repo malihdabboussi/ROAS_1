@@ -4,6 +4,10 @@ import {
   evaluateDeliverableContractRow,
   type DeliverableContractRow,
 } from './mission-deliverable-contract-evaluator'
+import {
+  resolveMissionDeliverableReference,
+  type MissionDeliverableReferenceRow,
+} from './mission-deliverable-reference'
 import { verifyMissionDocumentContent } from './mission-document-content-verifier'
 import type {
   MissionContractVerificationResult,
@@ -40,6 +44,22 @@ export class MissionDeliverablesRepository {
       .maybeSingle()
     if (error) throw error
     return data?.id ? String(data.id) : null
+  }
+
+  async resolveCanonicalDeliverableId(
+    supabase: SupabaseClient,
+    missionId: string,
+    candidateId: string,
+  ): Promise<string | null> {
+    const { data, error } = await supabase
+      .from('mission_deliverables')
+      .select('id, entity_id, metadata')
+      .eq('mission_id', missionId)
+    if (error) throw error
+    return resolveMissionDeliverableReference(
+      (data || []) as MissionDeliverableReferenceRow[],
+      candidateId,
+    )
   }
 
   async getExistingDeliverable(

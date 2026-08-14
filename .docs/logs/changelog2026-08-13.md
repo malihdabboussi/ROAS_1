@@ -520,3 +520,13 @@ Why: The production Client Strategy verification completed a valid document but 
 Impact: Mission progress remains readable during execution and finalization without exposing internal output-contract metadata; ordinary prose progress is unchanged.
 
 Files: `apps/web/src/features/mission-control/components/dialogs/MissionLockedIn.tsx`, `apps/web/src/features/mission-control/components/dialogs/MissionLockedIn.test.ts`, `documentation/features/missions.md`.
+
+## [2026-08-13 21:02] - [FIX]
+
+What: Pinned Mission revision work to the subtask's existing canonical deliverable and canonicalized returned artifact references against deliverables owned by the current Mission.
+
+Why: Production Client Strategy testing showed Atlas revising a standalone Space document and returning its `space_item_id` as the deliverable, while quality review correctly continued reading the unchanged Mission artifact and repeatedly rejected the task.
+
+Impact: Revision prompts identify the exact artifact to update, linked Space document ids resolve back to their Mission deliverable, unrelated document ids cannot replace the subtask output pointer, and quality review sees the same artifact exposed in Mission Deliverables.
+
+Files: `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-revision-artifact.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-revision-artifact.test.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverables.repository.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverable-reference.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverable-reference.test.ts`, `documentation/features/missions.md`.
