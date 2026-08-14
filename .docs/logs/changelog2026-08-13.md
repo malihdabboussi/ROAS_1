@@ -390,3 +390,13 @@ Why: The direct Campaign Brain writer was deployed and fully declared in the act
 Impact: Atlas can invoke the source-preserving, embedding-required Campaign Brain writer during mapped Slack imports without granting that action to any other agent profile.
 
 Files: `apps/agent-api/src/modules/artifacts/services/artifact-capability.policy.ts`, `apps/agent-api/src/modules/artifacts/services/artifacts.service.rbac.test.ts`, `.docs/plans/unified-slack-agent-consolidation-2026-08-13.md`, `documentation/features/page-grader-campaign-brain-sync.md`.
+
+## [2026-08-13 18:52] - [FIX]
+
+What: Made Mission OpenClaw SSE consumption stop on the first completed or failed terminal receipt, and made independent quality evaluation load the canonical contents of Mission artifacts, including the current linked Space document body.
+
+Why: A production Client Strategy run emitted a successful `response.completed` receipt and HTTP 200, but a later transport `terminated` error caused an unnecessary retry. The same run's evaluator received only subtask summaries, could not inspect two valid native documents, and sent both tasks through an unnecessary revision cycle.
+
+Impact: Successful Mission work is no longer reclassified by connection teardown after completion, and quality evaluation scores the actual deliverables instead of self-reported summaries while retaining receipt provenance.
+
+Files: `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw-sse.ts`, `mission-openclaw-sse.test.ts`, `mission-quality-eval-context.ts`, `mission-quality-eval-context.test.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-quality-evidence.repository.ts`, `mission-quality-evidence.repository.test.ts`, `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw.gateway.ts`, `apps/mission-worker/src/modules/missions/missions.module.ts`, `apps/mission-worker/src/modules/missions/services/__tests__/mission-tool-access-smoke.test.ts`, `documentation/features/missions.md`.

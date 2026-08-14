@@ -49,6 +49,7 @@ Recovery behavior:
 - The mission worker runs a stalled-work sweep immediately on startup and then every 30 seconds by default (`MISSIONS_RECOVERY_POLL_MS`). Operational loops and digests remain on the slower `MISSIONS_WATCHDOG_MS` schedule.
 - Queued work and runtime startup have a six-minute lease by default (`MISSIONS_EXECUTION_START_LEASE_TIMEOUT_MS`) to cover queue delay, machine wake, and readiness before the first stream event. The state switches from `starting` to `streaming` on that first event.
 - An active streaming execution lease expires after 90 seconds by default (`MISSIONS_EXECUTION_LEASE_TIMEOUT_MS`). Lease writes are throttled to 15 seconds by default (`MISSIONS_EXECUTION_LEASE_WRITE_MS`).
+- OpenClaw `response.completed` and `response.failed` events are authoritative terminal receipts. The Mission worker stops consuming that SSE response immediately, so a transport teardown after a completed receipt cannot turn successful work into a retry.
 - A transient lease-renewal request failure is tolerated while the last successful write remains inside that 90-second window. The next stream heartbeat retries the renewal; execution aborts only after the safety lease itself expires.
 - Before reclaiming an expired subtask, the worker probes its OpenClaw session. An active session is left alone.
 - Reclaim compares the row's exact `updated_at` value from the stale snapshot. If stream activity renewed it in the meantime, the update affects no rows and no recovery event is queued.
@@ -98,6 +99,7 @@ The contract is carried through the system:
 - **API persistence**: mission plan creation accepts `harness`; subtasks can include `assertionKeys`; persisted subtasks map planner assertion ownership onto DB UUIDs.
 - **Worker execution**: subtask prompts include the assertion keys the worker is responsible for and require `assertion_evidence` in successful JSON output.
 - **Review**: manager subtask review and independent quality eval receive the full harness context and must cite concrete evidence for must assertions before approval.
+- **Canonical review evidence**: independent quality eval loads the current source content for linked Space documents, falling back to the Mission deliverable snapshot or file reference for other artifact types. Subtask receipts remain included for provenance, but summaries no longer stand in for the artifact being scored.
 - **Mission Control UI**: plan detail surfaces context snapshot, assumptions, assertions, coverage, validator plan, and subtask assertion ownership; PDF export includes the same harness data.
 
 This turns mission plans from task lists into validation-backed contracts: the manager can reject a deliverable for wrong evidence mapping even when artifacts exist, and the worker can append corrective validation subtasks without losing assertion context.
@@ -309,6 +311,7 @@ Outbox mission-status validation uses the direct pool when available, keeping qu
 
 ## Decision Log
 
+- 2026-08-13: Made OpenClaw terminal SSE events authoritative and supplied independent quality evaluation with canonical artifact contents after a production Client Strategy run completed both source documents but retried one successful task on a late `terminated` transport error and then scored the documents from summaries alone.
 - 2026-08-13: Added shell-owned Expand/Collapse actions to Mission and subtask headers after production proved the Mission-specific artifact renderer bypassed the shared viewer header and therefore lacked the third-pane expansion control available to other artifacts.
 - 2026-08-13: Made Home Quick Missions derive their source conversation from the visible `?conv=` route after production proved the persisted chat store could retain the prior conversation on blank `/home`, start the worker successfully, and hide the receipt in that stale chat.
 - 2026-08-13: Start-aligned the nonwrapping quick-start row after production geometry proved its centered overflow pushed Mission and Offer beneath the 272px docked menu, so pointer clicks hit Favorites instead.

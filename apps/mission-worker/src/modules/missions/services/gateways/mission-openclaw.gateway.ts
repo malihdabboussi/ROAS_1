@@ -23,10 +23,15 @@ import { AgentRuntimeService } from '../agent-runtime.service'
 import { MissionContextService } from '../context/mission-context.service'
 import { MissionTracingService } from '../mission-tracing.service'
 import { MissionDeliverablesRepository } from '../persistence/mission-deliverables.repository'
+import { MissionQualityEvidenceRepository } from '../persistence/mission-quality-evidence.repository'
 import { MissionStateRepository } from '../persistence/mission-state.repository'
 import { MissionJsonService } from '../utils/mission-json.service'
 import { OpenClawNonRetryableError } from './mission-openclaw-errors'
 import { consumeOpenResponsesSseStream } from './mission-openclaw-sse'
+import {
+  buildMissionQualityDeliverableContext,
+  buildMissionQualityEvalPrompt,
+} from './mission-quality-eval-context'
 
 export type OpenClawExecOptions = {
   abortSignal?: AbortSignal
@@ -175,6 +180,7 @@ export class MissionOpenclawGateway {
     private readonly contextService: MissionContextService,
     private readonly stateRepo: MissionStateRepository,
     private readonly deliverablesRepo: MissionDeliverablesRepository,
+    private readonly qualityEvidenceRepo: MissionQualityEvidenceRepository,
     private readonly jsonService: MissionJsonService,
     private readonly missionTracing: MissionTracingService,
   ) {
@@ -1515,59 +1521,14 @@ If the team is well-suited, omit capability_gap or set exists:false.
       vibeyKey,
     )
 
-    const deliverableContext = subtasks
-      .map((st, i) => {
-        const output = st.output ? JSON.stringify(st.output, null, 2) : '(no output)'
-        return `\n### Deliverable ${i + 1}: ${st.title}\nAssigned to: ${st.assigned_agent_key || 'unknown'}\nOutput:\n${output}`
-      })
-      .join('\n')
+    const qualityEvidence = await this.qualityEvidenceRepo.listForMission(
+      supabase,
+      String(mission.id),
+    )
+    const deliverableContext = buildMissionQualityDeliverableContext(subtasks, qualityEvidence)
     const harnessContext = this.buildMissionHarnessReviewContext(plan)
 
-    const qualityEvalPrompt = [
-      '[MISSION_CONTROL — QUALITY EVALUATION MODE]',
-      'You are Vibey, acting as an independent quality evaluator.',
-      'You are evaluating deliverables for a mission. You did NOT plan or manage this work.',
-      'Judge purely on whether the output serves the mission brief well.',
-      '',
-      'Read skills/mission-quality-evaluator/SKILL.md',
-      '',
-      'STEP 1 — DYNAMIC RUBRIC:',
-      'Read the mission brief below. Generate 3-5 evaluation criteria specific to this type of deliverable.',
-      'For example, a financial report needs: data accuracy, time coverage, insight depth, presentation.',
-      'A website needs: design coherence, copy quality, functional completeness, brand alignment.',
-      '',
-      'STEP 2 — SCORE EACH CRITERION:',
-      'Score each criterion you generated on a 1-10 scale using the behavioral anchors in your evaluator skill.',
-      'Every score MUST cite specific evidence from the deliverable. No score without a receipt.',
-      '',
-      'STEP 3 — VERIFY CLAIMS:',
-      'Extract claims the deliverable makes about itself (e.g. "comprehensive 5-year analysis").',
-      'Verify each claim against the actual content. Flag any unsubstantiated claims.',
-      '',
-      'STEP 4 — VERIFY MISSION HARNESS ASSERTIONS:',
-      'If a mission harness contract is provided, evaluate every must assertion and cite concrete evidence or mark it failed.',
-      '',
-      'STEP 5 — STRENGTHS AND WEAKNESSES:',
-      'List specific strengths and weaknesses with citations. Even excellent work has weaknesses.',
-      '',
-      'Respond with ONLY valid JSON (no markdown, no backticks):',
-      '{',
-      '  "dynamicRubric": [{"criterion": "...", "score": 1-10, "evidence": "..."}],',
-      '  "dimensionScores": {',
-      '    "intent_alignment": 1-10,',
-      '    "craft": 1-10,',
-      '    "originality": 1-10,',
-      '    "brand_coherence": 1-10,',
-      '    "completeness": 1-10',
-      '  },',
-      '  "qualityScore": 1-10,',
-      '  "assertionResults": [{"assertionKey": "...", "passed": true/false, "evidence": "...", "blocking": true/false}],',
-      '  "strengths": ["..."],',
-      '  "weaknesses": ["..."],',
-      '  "claimsVerification": [{"claim": "...", "verified": true/false, "evidence": "..."}],',
-      '  "revisionGuidance": [{"dimension": "...", "score": N, "priority": "high/medium/low", "issue": "...", "revision_guidance": "...", "expected_impact": "..."}]',
-      '}',
-    ].join('\n')
+    const qualityEvalPrompt = buildMissionQualityEvalPrompt()
 
     const taskUserMessage = [
       qualityEvalPrompt,

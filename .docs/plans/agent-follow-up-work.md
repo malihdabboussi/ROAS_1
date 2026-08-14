@@ -38567,3 +38567,19 @@ Evidence: Both files were already far above the 600-line service/test guidance. 
 Needed work: Split capability-category constants and protected-system-agent policies into focused modules, then divide the RBAC suite by profile while retaining shared fixtures.
 
 Reason not done now: A broad policy decomposition would materially widen the production Campaign Brain authorization repair and obscure the one-line root cause.
+
+## 2026-08-13 - [ARCH] Split the Mission OpenClaw gateway
+
+Status: Open
+
+Found while: Preventing completed Mission streams from retrying and supplying canonical artifact evidence to independent quality evaluation.
+
+Files:
+
+- `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw.gateway.ts`
+
+Evidence: The gateway is 2,482 LOC after this scoped change, down from 2,518 but still far beyond the 400-line integration guideline. The new artifact loading is isolated in `mission-quality-evidence.repository.ts` and prompt formatting is isolated in `mission-quality-eval-context.ts`; the gateway change itself is limited to wiring those focused collaborators into the existing quality-eval path.
+
+Needed work: Split runtime targeting, prompt construction, request streaming, trace assembly, and specialized plan/review/evaluation calls into focused gateway collaborators without changing the OpenClaw action contract.
+
+Reason not done now: A full gateway decomposition would materially widen an urgent production retry/review-loop fix and make end-to-end behavioral verification harder to attribute.

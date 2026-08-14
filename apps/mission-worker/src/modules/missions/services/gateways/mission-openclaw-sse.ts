@@ -133,9 +133,14 @@ export async function consumeOpenResponsesSseStream(
         const block = buffer.slice(0, sep)
         buffer = buffer.slice(sep + 2)
         await pumpBlock(block)
+        if (completed) break
+      }
+      if (completed) {
+        await reader.cancel().catch(() => undefined)
+        break
       }
     }
-    if (buffer.trim().length > 0) {
+    if (!completed && buffer.trim().length > 0) {
       await pumpBlock(buffer)
     }
   } finally {
