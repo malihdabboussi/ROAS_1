@@ -88,6 +88,36 @@ describe('AgentRuntimeBrainImportProcessor', () => {
     )
   })
 
+  it('executes Page Grader catch-up jobs through the dedicated hourly endpoint', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: vi.fn(async () => ''),
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+    const processor = new AgentRuntimeBrainImportProcessor(
+      makeConfig() as never,
+      makeWorkerLogger() as never,
+    )
+
+    await processor.process({
+      id: 'page-grader-sweep-1',
+      name: 'page-grader-brain-sync-sweep',
+      data: {},
+    } as never)
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://main-api.local/api/internal/page-grader/brain-sync/catch-up?limit=50',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer internal-token',
+        }),
+        body: '{}',
+      }),
+    )
+  })
+
   it('retries transient Main API enqueue failures before completing the sweep', async () => {
     vi.stubEnv('AGENT_RUNTIME_BRAIN_IMPORT_MAIN_API_MAX_ATTEMPTS', '2')
     vi.stubEnv('AGENT_RUNTIME_BRAIN_IMPORT_MAIN_API_RETRY_DELAY_MS', '1')

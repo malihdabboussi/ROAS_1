@@ -10,15 +10,11 @@ import {
 } from '@nestjs/common'
 import { BrainImportJobsService } from '../../brain/services/brain-import-jobs.service'
 import { InternalAuthGuard } from '../../funnels/guards/internal-auth.guard'
-import { PageGraderBrainSyncService } from '../../integrations/page-grader/services/page-grader-brain-sync.service'
 
 @Controller('internal')
 @UseGuards(InternalAuthGuard)
 export class InternalBrainImportJobsController {
-  constructor(
-    private readonly importJobs: BrainImportJobsService,
-    private readonly pageGraderBrainSync: PageGraderBrainSyncService,
-  ) {}
+  constructor(private readonly importJobs: BrainImportJobsService) {}
 
   /**
    * POST /api/internal/brain/import-jobs/enqueue-due
@@ -27,8 +23,6 @@ export class InternalBrainImportJobsController {
   @HttpCode(HttpStatus.ACCEPTED)
   async enqueueDueBrainImportJobs() {
     await this.importJobs.enqueueDueJobs()
-    // Hourly catch-up for mapped Page Grader → campaign brain sync.
-    await this.pageGraderBrainSync.catchUpMappedClients(50)
     return { success: true }
   }
 

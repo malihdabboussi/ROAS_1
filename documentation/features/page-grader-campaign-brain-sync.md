@@ -18,7 +18,7 @@ Mapped Page Grader clients sync continuously into ROAS campaign brains. Page Gra
    - Records a succeeded `page_grader_brain_sync` job for the Brain processing queue
 3. **Hybrid continuous drivers:**
    - **PG push:** after Client Intel refresh / Send to ROAS-BRAIN, Page Grader POSTs `{ client_id, content_hash }` to `/api/integrations/page-grader/webhooks/brain-package` (`x-page-grader-signature`)
-   - **ROAS hourly catch-up:** `POST /api/internal/brain/import-jobs/enqueue-due` and `POST /api/internal/page-grader/brain-sync/catch-up` re-fetch packages for mapped clients and ingest when hash differs
+   - **ROAS hourly catch-up:** the dedicated `page-grader-brain-sync-sweep` queue job calls `POST /api/internal/page-grader/brain-sync/catch-up`, re-fetches packages for mapped clients, and ingests when hashes differ. The separate three-second Brain import queue sweep only discovers due Brain jobs; it never runs Page Grader synchronization.
    - **Manual Re-sync:** Map clients row + Brain canvas Import → “Re-sync from Page Grader” (`force: true`)
    - **Slack event handoff:** Page Grader's ten-minute Slack source sync POSTs active-client messages to `/api/integrations/page-grader/webhooks/slack-messages`. ROAS authenticates the existing client mapping, upserts by workspace + channel + Slack timestamp into `slack_observation_events`, and attaches deterministic client/campaign metadata plus `ingest_source = page_grader` before Pixel analyzes it. Native ROAS Slack capture and Page Grader delivery therefore converge on one event instead of creating two signals. The handoff uses the existing `reconciliation` ledger source, avoiding a production schema migration.
 4. Every successful pull reconciles each Page Grader `client_campaign` into its own ROAS Space under the client campaign container. It creates or updates a source-linked **Campaign Brief** doc and carries over the Page Grader Meta ad account and Meta campaign mapping. Campaign Spaces include Overview, Docs, Missions, Calendar, Meta Ads, and Funnels views.
@@ -140,6 +140,7 @@ Repeated manual requests use the deterministic Page Grader client and meeting ti
 
 ## Decision Log
 
+- **2026-08-13:** Separated Page Grader's hourly mapped-client catch-up from the three-second Brain import sweep. The frequent enqueue endpoint is now bounded to due-job discovery, preventing overlapping 50-client Page Grader pulls from exhausting the Vercel function window.
 - **2026-08-13:** Replaced the Campaign Brain router's `save_document` fallback with a direct embedded `ns_memories` write. Campaign imports now retain Slack source IDs and temporal fields, verify campaign access, reject General, and fail if retrieval embedding cannot be created.
 - **2026-08-13:** Fixed periodic Campaign Brain imports that were falsely recorded as successful after Atlas rejected the user-only save route. Campaign jobs now use the canonical Atlas Brain router with the exact campaign id, nested OpenResponses terminal statuses are parsed, missing status markers fail closed, and failed chunks cannot advance the Slack cursor.
 - **2026-08-13:** Routed QC, Proactive Launch, and Campaign QC notifications into the unified company/client/campaign case ledger before Slack delivery. Finding actions now synchronize back to that case lifecycle.
