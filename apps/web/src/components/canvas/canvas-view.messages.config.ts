@@ -9,4 +9,5 @@ export const CANVAS_VIEW_MESSAGES = {
   pixelUnavailable: 'Pixel is unavailable for this workspace.',
   resourcesLoading: 'Loading campaign resources...',
   resourcesUnavailable: "Couldn't load campaign resources. Try again.",
+  placeholderHandoffReady: 'This campaign gap is ready for its creation workflow.',
 } as const

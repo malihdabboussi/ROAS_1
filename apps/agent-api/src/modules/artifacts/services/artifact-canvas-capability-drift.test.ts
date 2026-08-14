@@ -1,16 +1,18 @@
-import { getActionContract, isPromptModeActionOnHold } from '@vibey/agent-policy'
 import { describe, expect, it } from 'vitest'
+import { getActionContract, isPromptModeActionOnHold } from '@vibey/agent-policy'
 import { VIBEY_API_ACTION_DOCS } from '../../agent-sync/data/vibey-api-action-docs'
 import { VALID_ACTIONS } from '../dtos/artifact-action.dto'
-import { ACTION_METHOD_MAP } from './artifact-action.registry'
-import {
-  ACTION_PREFLIGHT_COVERAGE,
-  ACTION_PREFLIGHTS,
-} from './artifact-action-preflight'
+import { ACTION_PREFLIGHT_COVERAGE, ACTION_PREFLIGHTS } from './artifact-action-preflight'
 import { ACTION_SCHEMAS } from './artifact-action-schemas'
+import { ACTION_METHOD_MAP } from './artifact-action.registry'
 import { isArtifactActionAllowed, resolveCapabilityPolicy } from './artifact-capability.policy'
 
-const PIXEL_ACTIONS = ['get_canvas_board', 'apply_canvas_operations'] as const
+const PIXEL_ACTIONS = [
+  'get_canvas_board',
+  'build_campaign_blueprint',
+  'complete_canvas_placeholder',
+  'apply_canvas_operations',
+] as const
 const pixelProfile = {
   agent_key: 'pixel',
   role: 'Designer',
@@ -41,5 +43,7 @@ describe('Pixel Canvas capability drift guardrail', () => {
   it('uses semantic preflight validation for Canvas mutation batches', () => {
     expect(ACTION_PREFLIGHT_COVERAGE.apply_canvas_operations.mode).toBe('static_preflight')
     expect(ACTION_PREFLIGHTS.apply_canvas_operations).toBeTypeOf('function')
+    expect(ACTION_PREFLIGHT_COVERAGE.build_campaign_blueprint.mode).toBe('static_preflight')
+    expect(ACTION_PREFLIGHTS.build_campaign_blueprint).toBeTypeOf('function')
   })
 })

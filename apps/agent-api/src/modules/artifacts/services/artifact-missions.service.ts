@@ -14,7 +14,6 @@ import {
 } from './artifact-mission-manager-actions.service'
 import { getActiveSpaceId } from './artifact-space-scope'
 import { ensureSpaceView } from './ensure-space-view'
-
 @Injectable()
 export class ArtifactMissionsService {
   constructor(
@@ -293,13 +292,16 @@ export class ArtifactMissionsService {
     const title = (input.title as string) ?? ''
     if (!title.trim()) return { success: false, error: 'title is required' }
     payload.title = title
+    payload.idempotency_key =
+      typeof input.idempotency_key === 'string' && input.idempotency_key.trim()
+        ? input.idempotency_key.trim()
+        : crypto.randomUUID()
 
     for (const key of [
       'brief',
       'description',
       'priority',
       'assigned_agent_key',
-      'idempotency_key',
       'parent_mission_id',
       'campaign_id',
       'space_id',

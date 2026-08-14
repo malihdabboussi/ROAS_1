@@ -40,13 +40,13 @@ export function WhiteboardToolbar({
   onOpenResources,
 }: WhiteboardToolbarProps) {
   return (
-    <div className="surface-card border-border absolute left-spacing-3 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-spacing-1 rounded-spacing-3 border p-spacing-1 shadow-lg">
+    <div className="surface-card border-border left-spacing-3 gap-spacing-1 rounded-spacing-3 p-spacing-1 absolute top-1/2 z-20 flex -translate-y-1/2 flex-col border shadow-lg">
       {TOOLS.map(({ tool, label, icon: Icon }) => (
         <button
           key={tool}
           type="button"
           className={cn(
-            'button-ghost flex h-10 w-10 items-center justify-center rounded-spacing-2',
+            'button-ghost rounded-spacing-2 flex h-10 w-10 items-center justify-center',
             activeTool === tool && 'button-glass-primary',
           )}
           onClick={() => onToolChange(tool)}
@@ -60,7 +60,7 @@ export function WhiteboardToolbar({
       <div className="border-border border-t" />
       <button
         type="button"
-        className="button-glass-neutral flex h-10 w-10 items-center justify-center rounded-spacing-2"
+        className="button-glass-neutral rounded-spacing-2 flex h-10 w-10 items-center justify-center"
         onClick={onOpenResources}
         title="Campaign resources"
         aria-label="Campaign resources"
@@ -69,7 +69,7 @@ export function WhiteboardToolbar({
       </button>
       <button
         type="button"
-        className="button-glass-primary flex h-10 w-10 items-center justify-center rounded-spacing-2"
+        className="button-glass-primary rounded-spacing-2 flex h-10 w-10 items-center justify-center"
         onClick={onOpenPixel}
         title="Build with Pixel"
         aria-label="Build with Pixel"

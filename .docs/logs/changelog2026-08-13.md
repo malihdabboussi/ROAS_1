@@ -139,3 +139,33 @@ Why: Production on the exact deployed commit proved the Mission button dispatche
 Impact: Mission launch requests remain observable until the dashboard host closes them, including from blank Home chats, active-chat Create menus, and preset playbook slash commands.
 
 Files: `apps/web/src/lib/missions/quick-missions-launcher.ts`, `apps/web/src/lib/missions/quick-missions-launcher.test.ts`, `apps/web/src/lib/missions/quick-missions-events.ts`, `apps/web/src/lib/missions/index.ts`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.test.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.test.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-selection-handlers.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-selection-handlers.test.ts`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `documentation/features/missions.md`.
+
+## [2026-08-13 16:32] - [FEATURE]
+
+What: Added the Visual Campaign Orchestrator plan and the first semantic Canvas slice: deterministic webinar-funnel stage layouts, linked existing/URL asset content, typed missing-asset placeholders, placeholder handoff actions, and empty-Canvas Pixel/resource entry points.
+
+Why: Canvas needs to represent a client's real campaign journey and its missing work, not only generic whiteboard objects.
+
+Impact: Campaign maps can now be expressed as existing normalized Canvas operations without a second persistence model. Placeholder metadata survives editing and exposes Create, Attach, Assign, and Dismiss callbacks for the upcoming governed workflow handoff layer.
+
+Files: `.docs/plans/visual-campaign-orchestrator-plan.md`, `apps/web/src/components/canvas/**`.
+
+## [2026-08-13 17:15] - [FEATURE]
+
+What: Completed the Visual Campaign Orchestrator vertical slice with governed Pixel blueprint and
+placeholder-completion actions, deterministic webinar/VSL/Skool layouts, safe visual URL embeds,
+canonical asset handoffs, campaign-aware Canvas chat prompts, and live proof against Yasir Khan
+Coaching LTD.
+
+Why: A campaign Canvas must be an operational visual map that Pixel can build from real client
+context, not a disconnected workflow label or a static diagram.
+
+Impact: Pixel can now discover Campaign context, build a revisioned Miro-style journey in visible
+batches, represent missing work as actionable gaps, create canonical funnels/sequences/ads/missions,
+and replace those gaps in place with linked ready assets. The live proof covers three campaign styles,
+six visual URL embeds, 19 emails, nine ads, three funnels, and the native webinar fulfillment mission.
+
+Files: `.docs/plans/visual-campaign-orchestrator-plan.md`, `apps/agent-api/src/modules/artifacts/**`,
+`apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `apps/web/src/components/canvas/**`,
+`apps/web/src/features/team/components/AgentChatPanel.tsx`, `docker/tools/vibey-backend/index.ts`,
+`packages/agent-policy/src/**`.

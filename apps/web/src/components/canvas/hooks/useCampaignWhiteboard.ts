@@ -12,22 +12,22 @@ import {
   type Viewport,
 } from '@xyflow/react'
 import { CANVAS_VIEW_MESSAGES } from '../canvas-view.messages.config'
+import { buildUpdatedCanvasContent } from '../lib/canvas-node-content'
 import { createWhiteboardNodeData, hydrateWhiteboardItems } from '../lib/whiteboard-graph'
-import {
-  fetchCampaignWhiteboard,
-} from '../services/whiteboard.service'
-import { useCanvasOperationCommit } from './useCanvasOperationCommit'
-import { useCanvasOperationsRealtime } from './useCanvasOperationsRealtime'
-import { useCanvasSelectionActions } from './useCanvasSelectionActions'
+import { fetchCampaignWhiteboard } from '../services/whiteboard.service'
 import type {
+  CampaignWhiteboardResponse,
   CanvasItemKind,
   CanvasOperation,
-  CampaignWhiteboardResponse,
+  CanvasPlaceholderAction,
   PersistedWhiteboardNodeData,
   WhiteboardEdge,
   WhiteboardNode,
   WhiteboardNodeKind,
 } from '../types/whiteboard.types'
+import { useCanvasOperationCommit } from './useCanvasOperationCommit'
+import { useCanvasOperationsRealtime } from './useCanvasOperationsRealtime'
+import { useCanvasSelectionActions } from './useCanvasSelectionActions'
 
 const CONTENT_SAVE_MS = 700
 const ITEM_KIND: Record<WhiteboardNodeKind, CanvasItemKind> = {
@@ -73,10 +73,7 @@ export function useCampaignWhiteboard(campaignId: string) {
   const updateNodeContent = useCallback(
     (nodeId: string, patch: Partial<PersistedWhiteboardNodeData>) => {
       const current = nodesRef.current.find((node) => node.id === nodeId)
-      const content = {
-        title: patch.title ?? current?.data.title ?? '',
-        text: patch.text ?? current?.data.text ?? '',
-      }
+      const content = buildUpdatedCanvasContent(current?.data, patch)
       setNodes((all) =>
         all.map((node) =>
           node.id === nodeId ? { ...node, data: { ...node.data, ...patch } } : node,
@@ -95,6 +92,28 @@ export function useCampaignWhiteboard(campaignId: string) {
     [commit, setNodes],
   )
 
+  const handlePlaceholderAction = useCallback(
+    (nodeId: string, action: CanvasPlaceholderAction) => {
+      const node = nodesRef.current.find((candidate) => candidate.id === nodeId)
+      if (!node?.data.placeholder) return
+      if (action === 'dismiss') updateNodeContent(nodeId, { status: 'dismissed' })
+      window.dispatchEvent(
+        new CustomEvent('canvas:placeholder-action', {
+          detail: {
+            campaignId,
+            nodeId,
+            action,
+            placeholder: node.data.placeholder,
+            title: node.data.title,
+            stageKey: node.data.stage_key ?? null,
+            blueprintId: node.data.blueprint_id ?? null,
+          },
+        }),
+      )
+    },
+    [campaignId, updateNodeContent],
+  )
+
   const hydrateBoard = useCallback(
     (response: CampaignWhiteboardResponse) => {
       const hydrated = hydrateWhiteboardItems(
@@ -102,11 +121,12 @@ export function useCampaignWhiteboard(campaignId: string) {
         response.connectors,
         updateNodeContent,
         updateNodeSize,
+        handlePlaceholderAction,
       )
       setNodes(hydrated.nodes)
       setEdges(hydrated.edges)
     },
-    [setEdges, setNodes, updateNodeContent, updateNodeSize],
+    [handlePlaceholderAction, setEdges, setNodes, updateNodeContent, updateNodeSize],
   )
   hydrateBoardRef.current = hydrateBoard
 
@@ -179,18 +199,20 @@ export function useCampaignWhiteboard(campaignId: string) {
         resource_id: resource.id,
       }
       setNodes((current) => [...current, { id, type: 'whiteboard', position, data }])
-      commit([{
-        op: 'create_item',
-        item: {
-          id,
-          kind: 'resource_card',
-          position_x: position.x,
-          position_y: position.y,
-          content: { title: data.title, text: data.text },
-          resource_type: resource.type,
-          resource_id: resource.id,
+      commit([
+        {
+          op: 'create_item',
+          item: {
+            id,
+            kind: 'resource_card',
+            position_x: position.x,
+            position_y: position.y,
+            content: { title: data.title, text: data.text },
+            resource_type: resource.type,
+            resource_id: resource.id,
+          },
         },
-      }])
+      ])
     },
     [commit, screenToFlowPosition, setNodes, updateNodeContent, updateNodeSize],
   )

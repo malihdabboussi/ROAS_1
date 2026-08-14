@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Background,
   BackgroundVariant,
@@ -8,7 +9,6 @@ import {
   ReactFlow,
   ReactFlowProvider,
 } from '@xyflow/react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
 import '@xyflow/react/dist/style.css'
 import { AlertCircle, Redo2, Undo2 } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
@@ -16,8 +16,8 @@ import { CANVAS_VIEW_MESSAGES } from './canvas-view.messages.config'
 import { CanvasPixelPanel } from './components/CanvasPixelPanel'
 import { CanvasResourcePicker } from './components/CanvasResourcePicker'
 import { WhiteboardNode } from './components/WhiteboardNode'
-import { WhiteboardToolbar } from './components/WhiteboardToolbar'
 import { WhiteboardSelectionToolbar } from './components/WhiteboardSelectionToolbar'
+import { WhiteboardToolbar } from './components/WhiteboardToolbar'
 import { useCampaignWhiteboard } from './hooks/useCampaignWhiteboard'
 import type { WhiteboardTool } from './types/whiteboard.types'
 
@@ -28,20 +28,62 @@ function WhiteboardCanvasInner({ campaignId }: { campaignId: string }) {
   const [activeTool, setActiveTool] = useState<WhiteboardTool>('select')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [pixelOpen, setPixelOpen] = useState(false)
+  const [pixelComposerSeed, setPixelComposerSeed] = useState<{
+    text: string
+    nonce: string
+  } | null>(null)
   const [resourcesOpen, setResourcesOpen] = useState(false)
   const selectedNodes = useMemo(
     () => whiteboard.nodes.filter((node) => selectedIds.includes(node.id)),
     [selectedIds, whiteboard.nodes],
   )
 
-  const selectTool = useCallback((tool: WhiteboardTool) => {
-    if (['note', 'text', 'shape', 'card', 'frame'].includes(tool)) {
-      whiteboard.addNode(tool as 'note' | 'text' | 'shape' | 'card' | 'frame')
-      setActiveTool('select')
-      return
+  const selectTool = useCallback(
+    (tool: WhiteboardTool) => {
+      if (['note', 'text', 'shape', 'card', 'frame'].includes(tool)) {
+        whiteboard.addNode(tool as 'note' | 'text' | 'shape' | 'card' | 'frame')
+        setActiveTool('select')
+        return
+      }
+      setActiveTool(tool)
+    },
+    [whiteboard],
+  )
+
+  useEffect(() => {
+    const onPlaceholderAction = (event: Event) => {
+      const detail = (
+        event as CustomEvent<{
+          campaignId?: string
+          action?: string
+          title?: string
+          stageKey?: string | null
+          placeholder?: { asset_type?: string; brief?: string; suggested_action?: string }
+        }>
+      ).detail
+      if (detail?.campaignId !== campaignId || detail.action === 'dismiss') return
+      const request = [
+        detail.action === 'attach'
+          ? 'Attach an existing asset to'
+          : detail.action === 'assign'
+            ? 'Create and assign work for'
+            : 'Create',
+        `the Canvas placeholder “${detail.title ?? detail.placeholder?.asset_type ?? 'campaign asset'}”.`,
+        detail.stageKey ? `Campaign stage: ${detail.stageKey}.` : '',
+        detail.placeholder?.brief ?? '',
+        detail.placeholder?.suggested_action
+          ? `Use ${detail.placeholder.suggested_action} when appropriate, then replace this placeholder with the created asset and mark it ready.`
+          : 'After completing it, replace this placeholder with the created asset and mark it ready.',
+      ]
+        .filter(Boolean)
+        .join(' ')
+      setResourcesOpen(false)
+      setPixelOpen(true)
+      setPixelComposerSeed({ text: request, nonce: crypto.randomUUID() })
     }
-    setActiveTool(tool)
-  }, [whiteboard])
+    window.addEventListener('canvas:placeholder-action', onPlaceholderAction)
+    return () => window.removeEventListener('canvas:placeholder-action', onPlaceholderAction)
+  }, [campaignId])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -85,8 +127,14 @@ function WhiteboardCanvasInner({ campaignId }: { campaignId: string }) {
       <WhiteboardToolbar
         activeTool={activeTool}
         onToolChange={selectTool}
-        onOpenPixel={() => { setResourcesOpen(false); setPixelOpen(true) }}
-        onOpenResources={() => { setPixelOpen(false); setResourcesOpen(true) }}
+        onOpenPixel={() => {
+          setResourcesOpen(false)
+          setPixelOpen(true)
+        }}
+        onOpenResources={() => {
+          setPixelOpen(false)
+          setResourcesOpen(true)
+        }}
       />
       <WhiteboardSelectionToolbar
         selectedIds={selectedIds}
@@ -97,13 +145,25 @@ function WhiteboardCanvasInner({ campaignId }: { campaignId: string }) {
         onAlign={whiteboard.alignItems}
         onDistribute={whiteboard.distributeItems}
       />
-      <div className="surface-card border-border absolute bottom-spacing-3 left-spacing-3 z-20 rounded-spacing-2 border px-spacing-3 py-spacing-2 shadow-sm">
-        <div className="flex items-center gap-spacing-2">
-          <button type="button" className="button-ghost flex items-center gap-spacing-1" onClick={() => void whiteboard.undo()} disabled={!whiteboard.canUndo} title="Undo last change">
+      <div className="surface-card border-border bottom-spacing-3 left-spacing-3 rounded-spacing-2 px-spacing-3 py-spacing-2 absolute z-20 border shadow-sm">
+        <div className="gap-spacing-2 flex items-center">
+          <button
+            type="button"
+            className="button-ghost gap-spacing-1 flex items-center"
+            onClick={() => void whiteboard.undo()}
+            disabled={!whiteboard.canUndo}
+            title="Undo last change"
+          >
             <Undo2 className="h-4 w-4" />
             Undo
           </button>
-          <button type="button" className="button-ghost flex items-center gap-spacing-1" onClick={() => void whiteboard.redo()} disabled={!whiteboard.canRedo} title="Redo last change">
+          <button
+            type="button"
+            className="button-ghost gap-spacing-1 flex items-center"
+            onClick={() => void whiteboard.redo()}
+            disabled={!whiteboard.canRedo}
+            title="Redo last change"
+          >
             <Redo2 className="h-4 w-4" />
             Redo
           </button>
@@ -113,13 +173,21 @@ function WhiteboardCanvasInner({ campaignId }: { campaignId: string }) {
         </div>
       </div>
       {whiteboard.error && (
-        <div className="surface-card border-border absolute right-spacing-3 top-spacing-3 z-10 flex items-center gap-spacing-2 rounded-spacing-2 border px-spacing-3 py-spacing-2 shadow-lg">
+        <div className="surface-card border-border right-spacing-3 top-spacing-3 gap-spacing-2 rounded-spacing-2 px-spacing-3 py-spacing-2 absolute z-10 flex items-center border shadow-lg">
           <AlertCircle className="text-destructive h-4 w-4" />
           <span className="body-3 text-muted-foreground">{whiteboard.error}</span>
         </div>
       )}
       {pixelOpen && (
-        <CanvasPixelPanel boardId={whiteboard.boardId} campaignId={campaignId} revision={whiteboard.revision} viewport={whiteboard.viewport} selectedIds={selectedIds} onClose={() => setPixelOpen(false)} />
+        <CanvasPixelPanel
+          boardId={whiteboard.boardId}
+          campaignId={campaignId}
+          revision={whiteboard.revision}
+          viewport={whiteboard.viewport}
+          selectedIds={selectedIds}
+          composerSeed={pixelComposerSeed}
+          onClose={() => setPixelOpen(false)}
+        />
       )}
       {resourcesOpen && (
         <CanvasResourcePicker
@@ -133,11 +201,33 @@ function WhiteboardCanvasInner({ campaignId }: { campaignId: string }) {
       )}
       {whiteboard.nodes.length === 0 && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-          <div className="surface-card border-border rounded-spacing-3 border p-spacing-6 text-center shadow-sm">
-            <p className="title-h6 text-foreground">Start with a blank canvas</p>
+          <div className="surface-card border-border rounded-spacing-3 p-spacing-6 border text-center shadow-sm">
+            <p className="title-h6 text-foreground">Map this campaign visually</p>
             <p className="body-3 text-muted-foreground mt-spacing-1">
-              Add a sticky, text, card, or shape. Drag items anywhere and connect them.
+              Ask Pixel to map a funnel, or add campaign resources and arrange them yourself.
             </p>
+            <div className="mt-spacing-3 gap-spacing-2 pointer-events-auto flex justify-center">
+              <button
+                type="button"
+                className="button-glass-primary"
+                onClick={() => {
+                  setResourcesOpen(false)
+                  setPixelOpen(true)
+                }}
+              >
+                Build with Pixel
+              </button>
+              <button
+                type="button"
+                className="button-glass-neutral"
+                onClick={() => {
+                  setPixelOpen(false)
+                  setResourcesOpen(true)
+                }}
+              >
+                Add existing assets
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -160,7 +250,12 @@ function WhiteboardCanvasInner({ campaignId }: { campaignId: string }) {
         maxZoom={2.5}
       >
         {/* Third-party canvas config reads the canonical theme token directly. */}
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--color-border)" />
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={20}
+          size={1}
+          color="var(--color-border)"
+        />
         <Controls className="card-glass border-border rounded-spacing-2 border" />
         <MiniMap pannable zoomable className="card-glass border-border rounded-spacing-2 border" />
       </ReactFlow>

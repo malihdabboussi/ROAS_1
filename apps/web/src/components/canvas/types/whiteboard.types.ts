@@ -3,6 +3,47 @@ import type { Edge, Node, Viewport } from '@xyflow/react'
 export type WhiteboardNodeKind = 'note' | 'text' | 'card' | 'shape' | 'frame'
 export type WhiteboardTool = 'select' | 'hand' | WhiteboardNodeKind | 'connector'
 export type CanvasItemKind = 'sticky_note' | 'text' | 'shape' | 'frame' | 'card' | 'resource_card'
+export type CampaignBlueprintSemanticType =
+  | 'campaign_stage'
+  | 'existing_asset'
+  | 'external_url'
+  | 'asset_placeholder'
+  | 'campaign_note'
+export type CampaignBlueprintStatus =
+  | 'missing'
+  | 'planned'
+  | 'creating'
+  | 'review'
+  | 'ready'
+  | 'live'
+  | 'dismissed'
+  | 'blocked'
+export type CanvasPlaceholderAction = 'create' | 'attach' | 'assign' | 'dismiss'
+
+export interface CampaignBlueprintSource {
+  kind: 'campaign_resource' | 'url' | 'drive' | 'user_input'
+  label: string
+  url?: string
+}
+
+export interface CampaignBlueprintPlaceholder {
+  asset_type: string
+  brief: string
+  missing_fields?: string[]
+  suggested_action?: string
+}
+
+export interface CampaignBlueprintContent {
+  title?: string
+  text?: string
+  semantic_type?: CampaignBlueprintSemanticType
+  blueprint_id?: string
+  stage_key?: string
+  stage_order?: number
+  status?: CampaignBlueprintStatus
+  source?: CampaignBlueprintSource
+  placeholder?: CampaignBlueprintPlaceholder
+}
 
 export interface PersistedWhiteboardNodeData extends Record<string, unknown> {
   kind: WhiteboardNodeKind
@@ -13,11 +54,19 @@ export interface PersistedWhiteboardNodeData extends Record<string, unknown> {
   locked?: boolean
   width?: number
   height?: number
+  semantic_type?: CampaignBlueprintSemanticType
+  blueprint_id?: string
+  stage_key?: string
+  stage_order?: number
+  status?: CampaignBlueprintStatus
+  source?: CampaignBlueprintSource
+  placeholder?: CampaignBlueprintPlaceholder
 }
 
 export interface WhiteboardNodeData extends PersistedWhiteboardNodeData {
   onContentChange: (nodeId: string, patch: Partial<PersistedWhiteboardNodeData>) => void
   onSizeChange: (nodeId: string, width: number, height: number) => void
+  onPlaceholderAction?: (nodeId: string, action: CanvasPlaceholderAction) => void
 }
 
 export type WhiteboardNode = Node<WhiteboardNodeData, 'whiteboard'>
@@ -34,7 +83,7 @@ export interface CanvasItem {
   rotation: number
   z_index: number
   parent_id: string | null
-  content: { title?: string; text?: string }
+  content: CampaignBlueprintContent
   style: Record<string, unknown>
   resource_type: string | null
   resource_id: string | null

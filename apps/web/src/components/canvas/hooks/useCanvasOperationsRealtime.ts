@@ -41,10 +41,10 @@ export function useCanvasOperationsRealtime({
           const inserted = payload.new as Record<string, unknown>
           const bounds = inserted.affected_bounds
           if (inserted.actor_agent_key && bounds && typeof bounds === 'object') {
-            void fitBounds(
-              bounds as { x: number; y: number; width: number; height: number },
-              { padding: 0.2, duration: 500 },
-            )
+            void fitBounds(bounds as { x: number; y: number; width: number; height: number }, {
+              padding: 0.2,
+              duration: 500,
+            })
           }
           if (refreshTimer) clearTimeout(refreshTimer)
           refreshTimer = setTimeout(() => {

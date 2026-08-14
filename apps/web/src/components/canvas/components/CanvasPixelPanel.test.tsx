@@ -3,8 +3,21 @@ import { describe, expect, it, vi } from 'vitest'
 import { CanvasPixelPanel } from './CanvasPixelPanel'
 
 vi.mock('@/features/team', () => ({
-  AgentChatPanel: ({ systemContext, initialCampaignId }: { systemContext: string; initialCampaignId: string }) => (
-    <div data-testid="pixel-chat" data-context={systemContext} data-campaign-id={initialCampaignId} />
+  AgentChatPanel: ({
+    systemContext,
+    initialCampaignId,
+    composerSeed,
+  }: {
+    systemContext: string
+    initialCampaignId: string
+    composerSeed?: { text: string; nonce: string } | null
+  }) => (
+    <div
+      data-testid="pixel-chat"
+      data-context={systemContext}
+      data-campaign-id={initialCampaignId}
+      data-composer-seed={composerSeed?.text}
+    />
   ),
 }))
 
@@ -33,6 +46,7 @@ describe('CanvasPixelPanel', () => {
         revision={7}
         viewport={{ x: 120, y: 80, zoom: 1.25 }}
         selectedIds={['item-1', 'item-2']}
+        composerSeed={{ text: 'Create the missing reminder sequence.', nonce: 'seed-1' }}
         onClose={vi.fn()}
       />,
     )
@@ -45,6 +59,12 @@ describe('CanvasPixelPanel', () => {
     expect(context).toContain('board_revision=7')
     expect(context).toContain('canvas_viewport={"x":120,"y":80,"zoom":1.25}')
     expect(context).toContain('selected_canvas_item_ids=item-1,item-2')
+    expect(context).toContain('build_campaign_blueprint')
+    expect(context).toContain('playbook_id=webinar-fulfillment')
     expect(context).toContain('do not use create_strategy_node')
+    expect(screen.getByTestId('pixel-chat')).toHaveAttribute(
+      'data-composer-seed',
+      'Create the missing reminder sequence.',
+    )
   })
 })

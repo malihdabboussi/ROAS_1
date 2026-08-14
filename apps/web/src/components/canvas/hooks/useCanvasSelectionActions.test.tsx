@@ -36,14 +36,18 @@ describe('useCanvasSelectionActions', () => {
 
     act(() => result.current.actions.alignItems(['a', 'b', 'c'], 'horizontal'))
     expect(result.current.nodes.map((item) => item.position.y)).toEqual([50, 50, 50])
-    expect(commit).toHaveBeenLastCalledWith(expect.arrayContaining([
-      expect.objectContaining({ op: 'update_item', patch: { position_y: 50 } }),
-    ]))
+    expect(commit).toHaveBeenLastCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ op: 'update_item', patch: { position_y: 50 } }),
+      ]),
+    )
 
     act(() => result.current.actions.distributeItems(['a', 'b', 'c'], 'horizontal'))
     expect(result.current.nodes.map((item) => item.position.x)).toEqual([0, 100, 200])
-    expect(commit).toHaveBeenLastCalledWith(expect.arrayContaining([
-      expect.objectContaining({ op: 'update_item', patch: { position_x: 100 } }),
-    ]))
+    expect(commit).toHaveBeenLastCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ op: 'update_item', patch: { position_x: 100 } }),
+      ]),
+    )
   })
 })

@@ -45,12 +45,9 @@ describe('useCanvasOperationCommit', () => {
 
     await waitFor(() => expect(applyCampaignCanvasOperations).toHaveBeenCalledTimes(2))
     expect(result.current.saveState).toBe('saved')
-    expect(applyCampaignCanvasOperations).toHaveBeenNthCalledWith(
-      2,
-      'campaign-1',
-      3,
-      [{ op: 'delete_item', item_id: 'item-1' }],
-    )
+    expect(applyCampaignCanvasOperations).toHaveBeenNthCalledWith(2, 'campaign-1', 3, [
+      { op: 'delete_item', item_id: 'item-1' },
+    ])
     expect(result.current.canUndo).toBe(true)
     expect(result.current.error).toBeNull()
   })

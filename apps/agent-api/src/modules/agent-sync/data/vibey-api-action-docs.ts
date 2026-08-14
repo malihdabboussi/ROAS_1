@@ -1731,6 +1731,20 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
     parameters:
       '```json\n{"action":"get_canvas_board","label":"Reading the campaign canvas","data":{}}\n```',
   },
+  build_campaign_blueprint: {
+    section: 'Canvas',
+    description:
+      'Builds an editable, laid-out campaign journey on Canvas after client Brain context and existing assets have been checked and blocking questions are resolved. Uses a supported campaign archetype, places known resources and URL previews, and marks missing work as actionable placeholders.',
+    parameters:
+      '```json\n{"action":"build_campaign_blueprint","label":"Building the webinar map","data":{"campaign_type":"webinar","blueprint_id":"fall-webinar","assets":[{"title":"Registration page","stage_key":"registration","url":"https://example.com/register"}],"gaps":[{"title":"Reminder sequence","stage_key":"reminder","asset_type":"sequence","brief":"Create the registration-to-show reminder emails.","suggested_action":"create_sequence"}]}}\n```',
+  },
+  complete_canvas_placeholder: {
+    section: 'Canvas',
+    description:
+      'Replaces one asset_placeholder node with the canonical resource created for it while preserving position, parent stage, style, and Canvas history. Call only after the asset action succeeds.',
+    parameters:
+      '```json\n{"action":"complete_canvas_placeholder","label":"Linking the completed sequence","data":{"node_id":"UUID","title":"Webinar reminder sequence","resource_type":"sequence","resource_id":"UUID","source_label":"Created by Pixel"}}\n```',
+  },
   apply_canvas_operations: {
     section: 'Canvas',
     description:

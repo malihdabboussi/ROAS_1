@@ -367,6 +367,8 @@ export const VALID_ACTIONS = [
   'create_strategy_node',
   'list_strategy_nodes',
   'get_canvas_board',
+  'build_campaign_blueprint',
+  'complete_canvas_placeholder',
   'apply_canvas_operations',
   'bulk_create_ads',
   'generate_ad_copy',

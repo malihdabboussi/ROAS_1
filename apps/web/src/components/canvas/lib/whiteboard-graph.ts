@@ -20,6 +20,7 @@ export function hydrateWhiteboardItems(
   connectors: CanvasConnector[],
   onContentChange: WhiteboardNodeData['onContentChange'],
   onSizeChange: WhiteboardNodeData['onSizeChange'],
+  onPlaceholderAction?: WhiteboardNodeData['onPlaceholderAction'],
 ): { nodes: WhiteboardNode[]; edges: WhiteboardEdge[] } {
   return {
     nodes: items.map((item) => ({
@@ -40,8 +41,10 @@ export function hydrateWhiteboardItems(
         locked: item.locked,
         width: item.width,
         height: item.height,
+        ...item.content,
         onContentChange,
         onSizeChange,
+        onPlaceholderAction,
       },
     })),
     edges: connectors.map((connector) => ({
