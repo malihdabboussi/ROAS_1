@@ -32,12 +32,21 @@ describe('ConversationHeaderTitle', () => {
     expect(screen.getByText('Sales follow-up')).toBeTruthy()
   })
 
-  it('uses the conversation name itself as the rename control without a pencil icon', () => {
+  it('shows the rename pencil before the conversation name on hover or focus', () => {
     render(<ConversationHeaderTitle title="Sales follow-up" onRename={vi.fn()} />)
 
     const button = screen.getByRole('button', { name: 'Rename conversation' })
+    const pencil = button.querySelector('.lucide-pencil')
+    const title = screen.getByText('Sales follow-up')
+
     expect(button).toHaveTextContent('Sales follow-up')
-    expect(button.querySelector('.lucide-pencil')).toBeNull()
+    expect(button).toHaveClass('group')
+    expect(pencil).toHaveClass(
+      'opacity-0',
+      'group-hover:opacity-100',
+      'group-focus-visible:opacity-100',
+    )
+    expect(pencil?.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('enters rename mode when the adjacent conversation menu requests it', () => {

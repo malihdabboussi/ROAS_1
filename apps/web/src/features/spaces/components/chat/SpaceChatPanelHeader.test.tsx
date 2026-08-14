@@ -21,17 +21,14 @@ describe('SpaceChatPanelHeader', () => {
 
     expect(screen.getByText('Pixel')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Rename conversation' })).toBeInTheDocument()
+    const details = screen.getByRole('button', { name: 'Conversation details' })
+    const controls = screen.getByRole('button', { name: 'Conversation controls' })
+
+    expect(details.parentElement).toBe(controls.parentElement)
+    expect(controls.parentElement).toHaveClass('absolute', 'right-spacing-3', 'top-spacing-2')
     expect(
-      screen
-        .getByRole('button', { name: 'Conversation details' })
-        .compareDocumentPosition(screen.getByRole('button', { name: 'Rename conversation' })) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
+      details.compareDocumentPosition(controls) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Conversation controls' }).parentElement).toHaveClass(
-      'absolute',
-      'right-spacing-3',
-      'top-spacing-2',
-    )
   })
 
   it('keeps compact-layout controls inline', () => {

@@ -470,3 +470,13 @@ Why: Pixel resurfaced an answered design request under the wrong client and chan
 Impact: The two incorrect items can no longer resurface, answered asks stop resurfacing when teammates respond normally in-channel, composite roadmaps cannot become stale commitments, and unsafe recap prose falls back to deterministic source-grounded text instead of being sent.
 
 Files: `apps/api/src/modules/slack/services/slack-signal-resolution.service.ts`, `apps/api/src/modules/slack/services/__tests__/slack-signal-resolution.service.test.ts`, `apps/api/src/modules/spaces/services/slack-open-items.service.ts`, `apps/api/src/modules/spaces/services/__tests__/slack-open-items.service.test.ts`, `apps/api/src/modules/spaces/services/slack-team-message-composer.service.ts`, `apps/api/src/modules/spaces/services/__tests__/slack-team-message-composer.service.test.ts`, `documentation/features/spaces-automation.md`.
+
+## [2026-08-13 19:53] - [FIX]
+
+What: Restored the hover-only rename pencil before the conversation title and moved conversation details beside the summary controls in the full chat pane's top-right control group.
+
+Why: A later header simplification regressed the ChatGPT-style placement delivered by the chat Missions work, leaving the three-dot menu beside the agent picker and removing the rename affordance the design requires.
+
+Impact: Full chat headers again keep their pane controls together at the second pane's top-right, reserve enough title space for both controls, and reveal the left-side pencil on title hover or keyboard focus.
+
+Files: `apps/web/src/components/conversations/ConversationHeaderTitle.tsx`, `apps/web/src/components/conversations/ConversationHeaderTitle.test.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.test.tsx`.
