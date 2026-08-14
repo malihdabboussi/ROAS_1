@@ -189,3 +189,13 @@ Why: Exact-production testing on the tree-scoped launcher deployment still showe
 Impact: Empty-chat and summary Create surfaces recognize Mission from the canonical catalog identity, while production verification can directly observe whether the launcher state opened through `aria-expanded`.
 
 Files: `apps/web/src/components/shell/shell-create-menu.config.ts`, `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/shell/ShellEmptyChatPrompts.test.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `documentation/features/missions.md`.
+
+## [2026-08-13 17:20] - [FIX]
+
+What: Added controlled open support to the Quick Missions host and passed blank Home's Mission open callback and state directly between the composer, quick-start trigger, and modal host.
+
+Why: Exact-production testing showed the canonical Mission button had the new expansion semantics but stayed `aria-expanded=false` immediately after click, proving its launcher hook resolved to the default context across a Next client-chunk boundary.
+
+Impact: Blank Home Mission launch no longer depends on shared module or React context identity; the click updates state owned by the same composer instance that controls the modal.
+
+Files: `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `documentation/features/missions.md`.

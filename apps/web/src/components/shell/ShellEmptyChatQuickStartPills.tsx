@@ -10,14 +10,19 @@ import { cn } from '@/lib/utils/cn'
 
 export function ShellEmptyChatQuickStartPills({
   onSelect,
+  onMission,
+  missionOpen,
   className,
   variant = 'standalone',
 }: {
   onSelect: (quickStart: ShellCreateMenuItem) => void
+  onMission?: () => void
+  missionOpen?: boolean
   className?: string
   variant?: 'standalone' | 'shelf'
 }) {
-  const { open, openLauncher } = useQuickMissionsLauncher()
+  const launcher = useQuickMissionsLauncher()
+  const open = missionOpen ?? launcher.open
 
   return (
     <div
@@ -39,7 +44,8 @@ export function ShellEmptyChatQuickStartPills({
             type="button"
             onClick={() => {
               if (isMission) {
-                openLauncher()
+                if (onMission) onMission()
+                else launcher.openLauncher()
                 return
               }
               onSelect(quickStart)

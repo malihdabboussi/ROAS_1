@@ -33,6 +33,7 @@ import { fetchPrograms, type Program } from '@/lib/programs'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
 export function HomeDashboardV4Composer() {
+  const [quickMissionsOpen, setQuickMissionsOpen] = useState(false)
   const router = useRouter()
   const seedComposer = useGlobalChatStore((s) => s.seedComposer)
   const clearMeetingContext = useGlobalChatStore((s) => s.clearMeetingContext)
@@ -269,8 +270,15 @@ export function HomeDashboardV4Composer() {
   return (
     <QuickMissionsLauncherProvider>
       <div className="w-full max-w-3xl">
-        <QuickMissionsHubHost />
-        <ShellEmptyChatQuickStartPills onSelect={quickStart.selectQuickStart} />
+        <QuickMissionsHubHost
+          open={quickMissionsOpen ? true : undefined}
+          onClose={() => setQuickMissionsOpen(false)}
+        />
+        <ShellEmptyChatQuickStartPills
+          onSelect={quickStart.selectQuickStart}
+          onMission={() => setQuickMissionsOpen(true)}
+          missionOpen={quickMissionsOpen}
+        />
         <ChatInput
           onSend={handleSend}
           disabled={sending}
