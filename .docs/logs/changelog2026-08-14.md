@@ -29,3 +29,13 @@ Why: Home chat can host a Space-scoped conversation while the shell panel itself
 Impact: Exact-message Reply references now reach the visible composer even when a Space conversation is opened from the general home shell.
 
 Files: `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`.
+
+## 2026-08-14 11:42 - [FIX]
+
+What: Restored exact-message references directly in the mounted composer when an attach seed targets that composer's conversation id.
+
+Why: Production showed that panel-level seed orchestration could still drop a reference-only Reply handoff even after its Space scope matched; the composer already owns the authoritative conversation id and reference-chip state.
+
+Impact: Reply reliably renders the selected assistant message as a removable composer chip without depending on shell scope or global active-conversation timing.
+
+Files: `apps/web/src/features/studio/components/ChatInput.tsx`, `apps/web/src/features/studio/components/ChatInput/use-restored-message-references.ts`, `apps/web/src/features/studio/components/ChatInput/use-restored-message-references.test.ts`.
