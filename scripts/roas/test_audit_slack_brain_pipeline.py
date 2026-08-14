@@ -25,6 +25,18 @@ class SlackBrainPipelineAuditTest(TestCase):
         }
         self.assertEqual(MODULE.logical_terminal_status(result), "failed")
 
+    def test_json_encoded_nested_failure_overrides_outer_success(self) -> None:
+        result = {
+            "status": "completed",
+            "atlasResponse": '{"output":[{"content":[{"type":"output_text",'
+            '"text":"JOB_STATUS:failed — save rejected"}]}]}',
+        }
+        self.assertEqual(MODULE.logical_terminal_status(result), "failed")
+        self.assertEqual(
+            MODULE.terminal_summary(result),
+            "JOB_STATUS:failed — save rejected",
+        )
+
     def test_reads_completed_and_skipped_markers(self) -> None:
         self.assertEqual(
             MODULE.logical_terminal_status({"atlasResponse": "JOB_STATUS:completed — saved"}),

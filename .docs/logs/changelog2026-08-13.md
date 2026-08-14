@@ -340,3 +340,13 @@ Why: The first bounded production replay returned an honest nested `JOB_STATUS:f
 Impact: A nested Atlas failure can no longer be recorded as a successful import, and platform-mode campaign imports receive the exact tool-and-action contract required to write Slack knowledge into the Campaign Brain.
 
 Files: `apps/api/src/modules/brain/services/brain-import-jobs-execution.base.ts`, `apps/api/src/modules/brain/services/__tests__/brain-import-jobs.service.test.ts`, `apps/agent-api/src/modules/brain-import-runtime/services/brain-import-runtime.service.ts`, `apps/agent-api/src/modules/brain-import-runtime/brain-import-runtime.service.test.ts`, `.docs/plans/unified-slack-agent-consolidation-2026-08-13.md`.
+
+## [2026-08-13 17:56] - [FIX]
+
+What: Made the production Slack Brain audit recursively decode bounded JSON-encoded Atlas receipts before classifying terminal status or selecting recovery candidates.
+
+Why: After the corrected runtime deployment, the audit still reported every replayed row as missing a terminal marker because the actual OpenResponses envelope was stored inside `atlasResponse` as JSON text.
+
+Impact: Recovery now distinguishes real nested failures, completions, and intentional skips before changing any production job state, preventing false replays and false health reports.
+
+Files: `scripts/roas/audit_slack_brain_pipeline.py`, `scripts/roas/test_audit_slack_brain_pipeline.py`, `scripts/roas/README.md`.

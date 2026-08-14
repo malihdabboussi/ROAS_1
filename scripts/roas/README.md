@@ -120,7 +120,7 @@ for diagnostics during startup.
 
 Run the pipeline audit against one mapping before and after rollout. It reports
 raw Slack observations, the database job status versus the terminal status
-inside Atlas's response, Campaign Brain memory/embedding coverage, and the
+inside Atlas's response (including JSON-encoded nested envelopes), Campaign Brain memory/embedding coverage, and the
 mapping cursor. Add a probe to execute the same semantic search RPC used by
 Brain retrieval and optionally require an expected phrase in the top ten.
 

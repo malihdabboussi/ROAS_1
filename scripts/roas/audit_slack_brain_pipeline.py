@@ -53,15 +53,26 @@ def require_production_credentials(env: dict[str, str]) -> tuple[str, str]:
     return base, key
 
 
-def iter_strings(value: Any) -> Iterator[str]:
+def iter_strings(value: Any, depth: int = 0) -> Iterator[str]:
+    if depth > 10:
+        return
     if isinstance(value, str):
+        stripped = value.strip()
+        if len(stripped) > 1 and stripped[0] in "{[":
+            try:
+                decoded = json.loads(stripped)
+            except json.JSONDecodeError:
+                pass
+            else:
+                yield from iter_strings(decoded, depth + 1)
+                return
         yield value
     elif isinstance(value, dict):
         for nested in value.values():
-            yield from iter_strings(nested)
+            yield from iter_strings(nested, depth + 1)
     elif isinstance(value, list):
         for nested in value:
-            yield from iter_strings(nested)
+            yield from iter_strings(nested, depth + 1)
 
 
 def logical_terminal_status(result: Any) -> str:
