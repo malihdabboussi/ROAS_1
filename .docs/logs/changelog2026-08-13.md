@@ -350,3 +350,12 @@ Why: After the corrected runtime deployment, the audit still reported every repl
 Impact: Recovery now distinguishes real nested failures, completions, and intentional skips before changing any production job state, preventing false replays and false health reports.
 
 Files: `scripts/roas/audit_slack_brain_pipeline.py`, `scripts/roas/test_audit_slack_brain_pipeline.py`, `scripts/roas/README.md`.
+## [2026-08-13 18:13] - [FIX]
+
+What: Made Home Quick Missions use the visible `?conv=` route as their source conversation and create a new scoped conversation when the route is blank, even if the persisted chat store still holds the previous conversation id.
+
+Why: Production launched Client Strategy successfully from blank `/home`, but the URL and transcript stayed blank because the mission and receipt were silently attached to a stale hidden conversation retained in client state.
+
+Impact: A mission started as the first action from Home now opens its own chat, records that chat in mission input, and renders its durable receipt in the visible transcript; populated Home chats and non-Home chat surfaces keep their existing source behavior.
+
+Files: `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.test.ts`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.integration.test.tsx`, `documentation/features/missions.md`.

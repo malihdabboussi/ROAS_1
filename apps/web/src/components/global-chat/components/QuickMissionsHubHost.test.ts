@@ -14,11 +14,16 @@ const mocks = vi.hoisted(() => ({
   createNewConversation: vi.fn(),
   persistQuickMissionReceipt: vi.fn(),
   push: vi.fn(),
+  pathname: '/home',
+  routeConversationId: null as string | null,
   modalProps: null as Record<string, unknown> | null,
 }))
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push }),
+  usePathname: () => mocks.pathname,
+  useSearchParams: () =>
+    new URLSearchParams(mocks.routeConversationId ? `conv=${mocks.routeConversationId}` : ''),
 }))
 
 vi.mock('@/lib/conversations', () => ({
@@ -68,6 +73,8 @@ describe('QuickMissionsHubHost', () => {
       messagesByConversation: {},
     })
     vi.clearAllMocks()
+    mocks.pathname = '/home'
+    mocks.routeConversationId = null
     mocks.modalProps = null
   })
 
@@ -177,5 +184,46 @@ describe('QuickMissionsHubHost', () => {
     expect(useChatStore.getState().messagesByConversation['conversation-new-chat']).toEqual([
       expect.objectContaining({ id: 'receipt-1', conversation_id: 'conversation-new-chat' }),
     ])
+  })
+
+  it('ignores a persisted conversation when the visible Home route is blank', async () => {
+    mocks.createNewConversation.mockResolvedValue({ id: 'conversation-visible-chat' })
+    useSpacesStore.setState({ spaces: [], activeSpaceId: null, loadSpaces: vi.fn() })
+    useChatStore.setState({
+      activeConversationId: 'conversation-stale',
+      conversations: [
+        {
+          id: 'conversation-stale',
+          user_id: 'user-1',
+          campaign_id: 'campaign-stale',
+          title: 'Previous chat',
+          agent_id: null,
+          status: 'active',
+          metadata: {},
+          created_at: '2026-08-13T20:00:00.000Z',
+          updated_at: '2026-08-13T20:00:00.000Z',
+        },
+      ],
+    })
+
+    renderHost()
+
+    expect(mocks.modalProps?.sourceConversationId).toBeNull()
+    const resolveSourceConversation = mocks.modalProps?.onResolveSourceConversation as (
+      input: Record<string, string>,
+    ) => Promise<string>
+
+    let conversationId = ''
+    await act(async () => {
+      conversationId = await resolveSourceConversation({
+        missionTitle: 'Client Strategy',
+        campaignId: 'campaign-1',
+        spaceId: 'space-1',
+      })
+    })
+
+    expect(conversationId).toBe('conversation-visible-chat')
+    expect(mocks.createNewConversation).toHaveBeenCalledOnce()
+    expect(mocks.push).toHaveBeenCalledWith('/home?conv=conversation-visible-chat')
   })
 })

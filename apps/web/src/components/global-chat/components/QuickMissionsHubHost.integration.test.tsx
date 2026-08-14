@@ -6,6 +6,8 @@ import { QuickMissionsHubHost } from './QuickMissionsHubHost'
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => '/home',
+  useSearchParams: () => new URLSearchParams(),
 }))
 
 describe('QuickMissionsHubHost integration', () => {

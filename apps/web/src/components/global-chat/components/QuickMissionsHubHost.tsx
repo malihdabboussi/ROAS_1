@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo } from 'react'
 import { QuickMissionsHubModal } from '@/features/spaces/components/playbooks/QuickMissionsHubModal'
 import { QUICK_MISSIONS_MESSAGES } from '@/features/spaces/config/quick-missions-messages.config'
@@ -14,6 +14,18 @@ type QuickMissionClient = {
   spaceId: string
   campaignId: string
   title: string
+}
+
+export function resolveQuickMissionSourceConversationId({
+  pathname,
+  routeConversationId,
+  activeConversationId,
+}: {
+  pathname: string
+  routeConversationId?: string | null
+  activeConversationId?: string | null
+}): string | null {
+  return pathname === '/home' ? (routeConversationId ?? null) : (activeConversationId ?? null)
 }
 
 export function resolveQuickMissionDefaultSpaceId({
@@ -82,15 +94,22 @@ export function QuickMissionsHubHost({
   onClose?: () => void
 } = {}) {
   const router = useRouter()
+  const pathname = usePathname() ?? ''
+  const searchParams = useSearchParams()
   const spaces = useSpacesStore((s) => s.spaces)
   const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
   const loadSpaces = useSpacesStore((s) => s.loadSpaces)
   const workContext = useGlobalChatStore((s) => s.workContext)
   const activeConversationId = useChatStore((s) => s.activeConversationId)
+  const sourceConversationId = resolveQuickMissionSourceConversationId({
+    pathname,
+    routeConversationId: searchParams.get('conv'),
+    activeConversationId,
+  })
   const conversationCampaignId = useChatStore((s) => {
-    const active = s.activeConversationId
-    return active
-      ? s.conversations.find((conversation) => conversation.id === active)?.campaign_id
+    return sourceConversationId
+      ? s.conversations.find((conversation) => conversation.id === sourceConversationId)
+          ?.campaign_id
       : null
   })
   const addMessage = useChatStore((s) => s.addMessage)
@@ -138,10 +157,9 @@ export function QuickMissionsHubHost({
       clients={clients}
       initialPlaybookKey={initialPlaybookKey}
       initialClientSpaceId={initialClientSpaceId}
-      sourceConversationId={activeConversationId}
+      sourceConversationId={sourceConversationId}
       onResolveSourceConversation={async ({ missionTitle, campaignId, spaceId }) => {
-        const currentConversationId = useChatStore.getState().activeConversationId
-        if (currentConversationId) return currentConversationId
+        if (sourceConversationId) return sourceConversationId
         const conversation = await createNewConversation({
           title: missionTitle,
           campaign_id: campaignId,
@@ -152,8 +170,8 @@ export function QuickMissionsHubHost({
         router.push(`/home?conv=${encodeURIComponent(conversation.id)}`)
         return conversation.id
       }}
-      onStarted={async (missionId, missionTitle, spaceId, sourceConversationId) => {
-        const receiptConversationId = sourceConversationId ?? activeConversationId
+      onStarted={async (missionId, missionTitle, spaceId, startedSourceConversationId) => {
+        const receiptConversationId = startedSourceConversationId ?? sourceConversationId
         if (!receiptConversationId) return
         try {
           const persistedReceipt = await persistQuickMissionReceipt(receiptConversationId, {
