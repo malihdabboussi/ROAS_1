@@ -869,7 +869,7 @@ describe('ArtifactsService RBAC', () => {
     expect(service.useIntegration).toHaveBeenCalledTimes(2)
   })
 
-  it('allows list_available_brain_scopes and resolve_agent_brain for atlas system_brain policy', () => {
+  it('allows Brain discovery and routed context saves for atlas system_brain policy', () => {
     const policy = resolveCapabilityPolicy({
       agent_key: 'atlas',
       level: 'employee',
@@ -878,6 +878,7 @@ describe('ArtifactsService RBAC', () => {
     expect(policy).not.toBeNull()
     expect(isArtifactActionAllowed(policy!, 'list_available_brain_scopes').allowed).toBe(true)
     expect(isArtifactActionAllowed(policy!, 'resolve_agent_brain').allowed).toBe(true)
+    expect(isArtifactActionAllowed(policy!, 'atlas_save_brain_context').allowed).toBe(true)
   })
 
   it('blocks removed Campaign Brain actions for atlas system_brain policy', () => {

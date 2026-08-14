@@ -766,6 +766,7 @@ export const BRAIN_SCHOLAR_ALLOWED_ACTIONS = new Set<string>([
   'search_user_brain',
   'search_brain_context',
   'save_user_memory',
+  'atlas_save_brain_context',
   'search_agent_brain',
   'search_campaign_brain',
   'get_brain_stats',

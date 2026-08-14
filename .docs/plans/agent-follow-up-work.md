@@ -38550,3 +38550,20 @@ Evidence: Active API readers and writers move to `public.agent_cases`, while the
 Needed work: After at least one stable production retention window, compare legacy and unified counts, confirm no active code or operational query references `slack_open_items`, then remove the legacy table in a dedicated migration.
 
 Reason not done now: Safe rollout requires retaining recoverable state until the unified ledger has been verified in production.
+
+## 2026-08-13 - [ARCH] Split artifact capability policy and RBAC matrix
+
+Status: Open
+
+Found while: Restoring Atlas Campaign Brain saves for mapped Slack imports.
+
+Files:
+
+- `apps/agent-api/src/modules/artifacts/services/artifact-capability.policy.ts` (1,434 LOC)
+- `apps/agent-api/src/modules/artifacts/services/artifacts.service.rbac.test.ts` (1,627 LOC)
+
+Evidence: Both files were already far above the 600-line service/test guidance. The scoped repair adds one existing action to Atlas's allowlist and one regression assertion without introducing a new policy surface.
+
+Needed work: Split capability-category constants and protected-system-agent policies into focused modules, then divide the RBAC suite by profile while retaining shared fixtures.
+
+Reason not done now: A broad policy decomposition would materially widen the production Campaign Brain authorization repair and obscure the one-line root cause.

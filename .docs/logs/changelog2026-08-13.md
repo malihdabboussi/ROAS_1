@@ -380,3 +380,13 @@ Why: Production launched Client Strategy successfully from blank `/home`, but th
 Impact: A mission started as the first action from Home now opens its own chat, records that chat in mission input, and renders its durable receipt in the visible transcript; populated Home chats and non-Home chat surfaces keep their existing source behavior.
 
 Files: `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.test.ts`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.integration.test.tsx`, `documentation/features/missions.md`.
+
+## [2026-08-13 18:38] - [FIX]
+
+What: Added the existing Atlas-owned `atlas_save_brain_context` action to the system Brain capability allowlist and added regression coverage for its production authorization path.
+
+Why: The direct Campaign Brain writer was deployed and fully declared in the action contract, schema, lifecycle, preflight, MCP catalog, and runtime handler, but Atlas's local capability policy still hid the routed save workflow from chat imports.
+
+Impact: Atlas can invoke the source-preserving, embedding-required Campaign Brain writer during mapped Slack imports without granting that action to any other agent profile.
+
+Files: `apps/agent-api/src/modules/artifacts/services/artifact-capability.policy.ts`, `apps/agent-api/src/modules/artifacts/services/artifacts.service.rbac.test.ts`, `.docs/plans/unified-slack-agent-consolidation-2026-08-13.md`, `documentation/features/page-grader-campaign-brain-sync.md`.

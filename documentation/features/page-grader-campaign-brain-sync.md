@@ -77,6 +77,12 @@ Page Grader env for push: `ROAS_BRAIN_WEBHOOK_URL`, `ROAS_BRAIN_WEBHOOK_SECRET` 
 
 Periodic mapped-channel imports use Atlas separately from the deterministic Page Grader package ingest. Campaign-targeted imports must call `atlas_save_brain_context` with the mapped ROAS `campaign_id`; `save_user_memory` is user-only. The campaign branch writes directly to the mapped `ns_brains` row, preserves Slack source and temporal identity, and requires a retrieval embedding before reporting success; General is not a valid Campaign Brain target. Import completion is fail-closed: the runtime reads the final status from both direct text and nested OpenResponses output, and it does not mark the job successful or advance the Slack mapping cursor unless Atlas returns an explicit `JOB_STATUS:completed` or `JOB_STATUS:skipped`. Any failed chunk stops a multi-chunk import at that chunk so retry can resume without silently losing part of the period.
 
+`atlas_save_brain_context` must remain in Atlas's `system_brain` capability
+allowlist as well as its action contract, schema, lifecycle, preflight, MCP
+catalog, and runtime handler. Capability drift coverage verifies the local
+runtime policy so a declared Campaign Brain write cannot disappear from Atlas's
+available chat workflow.
+
 Page Grader QC notifications also enter the unified `agent_cases` ledger before their Slack blocks are sent. Structured findings preserve `quality_control`, `proactive_launch`, or `campaign_quality_control`, resolve the mapped ROAS client campaign and campaign Space when available, and retain the Page Grader finding ID as the idempotent source key. Slack acknowledge, snooze, and resolve interactions update both Page Grader and the same ROAS case, preventing two competing status histories.
 
 ## Post-call work bridge
