@@ -112,10 +112,13 @@ describe('QuickMissionsHubHost', () => {
     )
   })
 
-  it('loads client Spaces when Quick Missions opens', () => {
+  it('preloads client Spaces before Quick Missions opens', () => {
     const loadSpaces = vi.fn(async () => undefined)
     useSpacesStore.setState({ spaces: [], activeSpaceId: null, loadSpaces })
     renderHost()
+
+    expect(loadSpaces).toHaveBeenCalledOnce()
+    expect(mocks.modalProps).toMatchObject({ open: false, initialPlaybookKey: null })
 
     act(() => {
       launcher.openLauncher()

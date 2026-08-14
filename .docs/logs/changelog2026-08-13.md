@@ -271,6 +271,16 @@ Impact: Blank Home and empty active-chat Mission buttons now update and consume 
 
 Files: `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/shell/ShellEmptyChatPrompts.test.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `documentation/features/missions.md`.
 
+## [2026-08-13 17:42] - [FIX]
+
+What: Preloaded Quick Missions client Spaces when the host mounts instead of starting a Space-store refresh during the opening click.
+
+Why: Production showed locally owned Mission state still collapsed immediately; the open-gated `loadSpaces()` effect was the remaining synchronous side effect capable of remounting the Home composer and resetting that state.
+
+Impact: Space selection data is ready before interaction, and opening Quick Missions is now a side-effect-free state transition that survives production Home rendering.
+
+Files: `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.test.ts`, `documentation/features/missions.md`.
+
 ## [2026-08-13 17:08] - [FIX]
 
 What: Changed Agenda list weeks to Monday–Sunday with current-day positioning and earlier-week scrollback, made meeting-to-meeting navigation ignore a stale URL during an explicit selection, replaced leaked Fathom naming placeholders, and added inline task status plus right-side task preview to My Tasks.

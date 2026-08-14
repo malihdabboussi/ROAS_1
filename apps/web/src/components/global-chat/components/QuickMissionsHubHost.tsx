@@ -101,8 +101,8 @@ export function QuickMissionsHubHost({
   const initialPlaybookKey = controlledPlaybookKey ?? launcher.playbookKey
 
   useEffect(() => {
-    if (open) void loadSpaces()
-  }, [loadSpaces, open])
+    void loadSpaces()
+  }, [loadSpaces])
 
   const clients = useMemo(
     () =>
