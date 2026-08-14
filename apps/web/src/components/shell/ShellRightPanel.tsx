@@ -11,9 +11,9 @@ import { useGlobalChatStore } from '@/components/global-chat/store/use-global-ch
 import { homeMeetingHref } from '@/features/home/lib/home-meeting-work-restore'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import type { Conversation } from '@/lib/conversations'
-import { openQuickMissions } from '@/lib/missions'
+import { useQuickMissionsLauncher } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
-import type { ShellCreateMenuItem } from './shell-create-menu.config'
+import { isShellMissionCreateItem, type ShellCreateMenuItem } from './shell-create-menu.config'
 import { ShellCreateMenuPanel } from './ShellCreateMenuPanel'
 import { ShellRightPanelFiles } from './ShellRightPanelFiles'
 import { ShellRightPanelSources } from './ShellRightPanelSources'
@@ -46,6 +46,7 @@ export function ShellRightPanel({
   onScopeChanged?: (scope: { campaignId: string | null; spaceId: string | null }) => void
 }) {
   const router = useRouter()
+  const { openLauncher } = useQuickMissionsLauncher()
   const open = useShellStore((s) => s.rightPanel.open)
   const setRightPanelOpen = useShellStore((s) => s.setRightPanelOpen)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
@@ -68,8 +69,8 @@ export function ShellRightPanel({
   const [createOpen, setCreateOpen] = useState(false)
   const handleCreateSelect = useCallback(
     (item: ShellCreateMenuItem) => {
-      if (item.action === 'mission') {
-        openQuickMissions()
+      if (isShellMissionCreateItem(item)) {
+        openLauncher()
         return
       }
       useGlobalChatStore.getState().seedComposer({
@@ -79,7 +80,7 @@ export function ShellRightPanel({
         workContext: spaceId ? { surface: 'spaces', spaceId } : undefined,
       })
     },
-    [spaceId],
+    [openLauncher, spaceId],
   )
   const messages = useChatStore((s) =>
     conversationId ? (s.messagesByConversation[conversationId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES,

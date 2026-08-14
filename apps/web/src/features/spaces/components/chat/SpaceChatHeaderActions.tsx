@@ -1,6 +1,5 @@
 'use client'
 
-import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { List, ListTodo, Plus, Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
@@ -22,7 +21,6 @@ interface SpaceChatHeaderActionsProps {
   hideHistoryChrome?: boolean
   summaryOpen?: boolean
   onToggleSummary?: () => void
-  conversationDetails?: ReactNode
 }
 
 export function SpaceChatHeaderActions({
@@ -41,7 +39,6 @@ export function SpaceChatHeaderActions({
   hideHistoryChrome = false,
   summaryOpen = false,
   onToggleSummary,
-  conversationDetails,
 }: SpaceChatHeaderActionsProps) {
   const hoverReveal =
     !hideHistoryChrome &&
@@ -58,7 +55,6 @@ export function SpaceChatHeaderActions({
       )}
       onClick={(e) => e.stopPropagation()}
     >
-      {conversationDetails}
       {onToggleSummary ? (
         <button
           type="button"

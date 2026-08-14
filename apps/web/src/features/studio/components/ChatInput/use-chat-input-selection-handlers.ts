@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import type { Dispatch, RefObject, SetStateAction } from 'react'
-import { openQuickMissions } from '@/lib/missions'
+import { useQuickMissionsLauncher } from '@/lib/missions'
 import type { MessageReference } from '../../types'
 import type { AttachedArtifact } from '../chat/ArtifactAttachments'
 import {
@@ -56,6 +56,7 @@ export function useChatInputSelectionHandlers({
   setAttachedArtifacts,
   attachComposerSpaceTask,
 }: UseChatInputSelectionHandlersOptions) {
+  const { openLauncher } = useQuickMissionsLauncher()
   const focusTextareaAt = useCallback(
     (cursor: number) => {
       requestAnimationFrame(() => {
@@ -72,7 +73,7 @@ export function useChatInputSelectionHandlers({
     (item: SlashItem) => {
       if (item.type === 'playbook') {
         setSlashMenuOpen(false)
-        openQuickMissions(item.key)
+        openLauncher(item.key)
         return
       }
       const t = textareaRef.current
@@ -90,6 +91,7 @@ export function useChatInputSelectionHandlers({
     [
       displayText,
       focusTextareaAt,
+      openLauncher,
       recordingState,
       setDisplayText,
       setSlashMenuOpen,

@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useMemo, useState, type RefObject } from 'react'
-import { openQuickMissions } from '@/lib/missions'
 import {
   buildShellQuickStartSendContext,
   shellQuickStartMatchesComposer,
@@ -14,10 +13,6 @@ export function useShellChatQuickStart(setTextRef: RefObject<((text: string) => 
 
   const selectQuickStart = useCallback(
     (quickStart: ShellCreateMenuItem) => {
-      if (quickStart.action === 'mission') {
-        openQuickMissions()
-        return
-      }
       setActiveQuickStart(quickStart)
       setTextRef.current?.(quickStart.prompt)
     },

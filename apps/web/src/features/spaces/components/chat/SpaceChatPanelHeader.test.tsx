@@ -10,6 +10,7 @@ describe('SpaceChatPanelHeader', () => {
       <SpaceChatPanelHeader
         layout="full"
         agentPicker={<span>Pixel</span>}
+        conversationDetails={<button type="button">Conversation details</button>}
         title="Launch plan"
         conversationId="conversation-1"
         renameRequestNonce={0}
@@ -20,6 +21,12 @@ describe('SpaceChatPanelHeader', () => {
 
     expect(screen.getByText('Pixel')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Rename conversation' })).toBeInTheDocument()
+    expect(
+      screen
+        .getByRole('button', { name: 'Conversation details' })
+        .compareDocumentPosition(screen.getByRole('button', { name: 'Rename conversation' })) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Conversation controls' }).parentElement).toHaveClass(
       'absolute',
       'right-spacing-3',

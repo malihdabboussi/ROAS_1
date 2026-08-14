@@ -1,15 +1,10 @@
 import { createRef } from 'react'
 import { act, renderHook } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { useQuickMissionsLauncherStore } from '@/lib/missions'
+import { describe, expect, it, vi } from 'vitest'
 import { SHELL_CREATE_QUICK_STARTS } from './shell-create-menu.config'
 import { useShellChatQuickStart } from './use-shell-chat-quick-start'
 
 describe('useShellChatQuickStart', () => {
-  afterEach(() => {
-    useQuickMissionsLauncherStore.setState({ open: false, playbookKey: null })
-  })
-
   it('keeps the composer change callback stable across rerenders', () => {
     const setTextRef = createRef<((text: string) => void) | null>()
     const { result, rerender } = renderHook(() => useShellChatQuickStart(setTextRef))
@@ -20,18 +15,15 @@ describe('useShellChatQuickStart', () => {
     expect(result.current.handleComposerValueChange).toBe(initialCallback)
   })
 
-  it('opens Missions without seeding the composer', () => {
+  it('seeds composer quick starts and exposes their capability context', () => {
     const setTextRef = createRef<((text: string) => void) | null>()
     setTextRef.current = vi.fn()
     const { result } = renderHook(() => useShellChatQuickStart(setTextRef))
-    const mission = SHELL_CREATE_QUICK_STARTS.find((item) => item.action === 'mission')!
+    const document = SHELL_CREATE_QUICK_STARTS.find((item) => item.id === 'create-document')!
 
-    act(() => result.current.selectQuickStart(mission))
+    act(() => result.current.selectQuickStart(document))
 
-    expect(useQuickMissionsLauncherStore.getState()).toMatchObject({
-      open: true,
-      playbookKey: null,
-    })
-    expect(setTextRef.current).not.toHaveBeenCalled()
+    expect(setTextRef.current).toHaveBeenCalledWith(document.prompt)
+    expect(result.current.activeCapabilityChip).toEqual({ label: 'Document', icon: 'file-text' })
   })
 })

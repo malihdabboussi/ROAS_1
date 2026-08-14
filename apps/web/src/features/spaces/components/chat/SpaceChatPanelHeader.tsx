@@ -8,6 +8,7 @@ interface SpaceChatPanelHeaderProps {
   layout: 'full' | 'compact'
   leadingAction?: ReactNode
   agentPicker: ReactNode
+  conversationDetails?: ReactNode
   title: string
   conversationId: string | null
   renameRequestNonce: number
@@ -19,6 +20,7 @@ export function SpaceChatPanelHeader({
   layout,
   leadingAction,
   agentPicker,
+  conversationDetails,
   title,
   conversationId,
   renameRequestNonce,
@@ -31,6 +33,9 @@ export function SpaceChatPanelHeader({
         <div className="min-h-spacing-10 gap-spacing-2 flex items-center">
           {leadingAction ? <div className="flex shrink-0 items-center">{leadingAction}</div> : null}
           {agentPicker ? <div className="flex shrink-0 items-center">{agentPicker}</div> : null}
+          {layout === 'full' && conversationDetails ? (
+            <div className="flex shrink-0 items-center">{conversationDetails}</div>
+          ) : null}
           {layout === 'full' && title && conversationId ? (
             <ConversationHeaderTitle
               title={title}

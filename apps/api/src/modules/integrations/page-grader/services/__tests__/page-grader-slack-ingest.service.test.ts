@@ -5,10 +5,11 @@ function slackIntegrationClient() {
   const query: Record<string, ReturnType<typeof vi.fn>> = {}
   query.select = vi.fn(() => query)
   query.eq = vi.fn(() => query)
+  query.not = vi.fn(() => query)
   query.order = vi.fn(() => query)
   query.limit = vi.fn(() => query)
   query.maybeSingle = vi.fn().mockResolvedValue({
-    data: { metadata: { team_id: 'T_ROAS' } },
+    data: { org_id: 'org-1', metadata: { team_id: 'T_ROAS' } },
     error: null,
   })
   return { from: vi.fn(() => query) }
@@ -107,5 +108,45 @@ describe('PageGraderSlackIngestService', () => {
         'whsec',
       ),
     ).rejects.toThrow(/Invalid Slack messages payload/i)
+  })
+
+  it('routes a personal Page Grader mapping through the owner org Slack connection', async () => {
+    const client = slackIntegrationClient()
+    const observations = {
+      listChannelSettings: vi.fn().mockResolvedValue([]),
+      upsertChannels: vi.fn().mockResolvedValue(undefined),
+      upsertEvents: vi.fn().mockResolvedValue({ inserted: 1, duplicates: 0 }),
+    }
+    const service = new PageGraderSlackIngestService(
+      { client } as never,
+      {
+        authorizeWebhookClient: vi.fn().mockResolvedValue([
+          {
+            userId: 'user-1',
+            orgId: null,
+            clientId: '11111111-1111-1111-1111-111111111111',
+            entry: { campaign_id: '', campaign_name: 'Acme' },
+            webhookSecret: 'whsec',
+          },
+        ]),
+      } as never,
+      observations as never,
+    )
+
+    await service.processWebhook(
+      JSON.stringify({
+        client_id: '11111111-1111-1111-1111-111111111111',
+        client_name: 'Acme',
+        channel_id: 'C123',
+        messages: [{ ts: '1786640400.123456', text: 'Launch is waiting on ads.' }],
+      }),
+      'whsec',
+    )
+
+    expect(observations.upsertEvents).toHaveBeenCalledWith(
+      client,
+      [expect.objectContaining({ orgId: 'org-1', slackTeamId: 'T_ROAS' })],
+      { replaceDuplicates: true },
+    )
   })
 })

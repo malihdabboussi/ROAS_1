@@ -2157,26 +2157,26 @@ export function SpaceVibeyChatPanel({
       hideHistoryChrome={shellSidebarChrome}
       summaryOpen={rightPanelOpen}
       onToggleSummary={() => toggleRightPanel()}
-      conversationDetails={
-        headerLayout === 'full' && selectedConversation ? (
-          <SpaceConversationHeaderMenu
-            conversation={selectedConversation}
-            isOrgContext={isOrgContext}
-            onRenameRequested={() => setHeaderRenameRequestNonce((nonce) => nonce + 1)}
-            onCopyConversationLink={handleCopyConversationLink}
-            onCopyConversationId={handleCopyConversationId}
-            onOpenConversationInNewTab={handleOpenConversationInNewTab}
-            onShareConversation={setShareConversation}
-            onTogglePinConversation={handleTogglePinConversation}
-            onToggleArchiveConversation={handleToggleArchiveConversation}
-            onMoveConversation={handleMoveConversation}
-            onDuplicateConversation={handleDuplicateConversation}
-            onDeleteConversation={handleDeleteConversation}
-          />
-        ) : null
-      }
     />
   )
+
+  const conversationDetails =
+    headerLayout === 'full' && selectedConversation ? (
+      <SpaceConversationHeaderMenu
+        conversation={selectedConversation}
+        isOrgContext={isOrgContext}
+        onRenameRequested={() => setHeaderRenameRequestNonce((nonce) => nonce + 1)}
+        onCopyConversationLink={handleCopyConversationLink}
+        onCopyConversationId={handleCopyConversationId}
+        onOpenConversationInNewTab={handleOpenConversationInNewTab}
+        onShareConversation={setShareConversation}
+        onTogglePinConversation={handleTogglePinConversation}
+        onToggleArchiveConversation={handleToggleArchiveConversation}
+        onMoveConversation={handleMoveConversation}
+        onDuplicateConversation={handleDuplicateConversation}
+        onDeleteConversation={handleDeleteConversation}
+      />
+    ) : null
 
   const chatHeaderBlock = (
     <SpaceChatPanelHeader
@@ -2185,6 +2185,7 @@ export function SpaceVibeyChatPanel({
       agentPicker={
         messages.length > 0 || isLoadingMessages || voiceActive ? renderAgentPicker() : null
       }
+      conversationDetails={conversationDetails}
       title={sessionTitle}
       conversationId={selectedConversationId}
       renameRequestNonce={headerRenameRequestNonce}

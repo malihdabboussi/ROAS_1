@@ -218,18 +218,14 @@ describe('ShellTopBar', () => {
     expect(screen.getByText('Delegation Desk')).toBeInTheDocument()
   })
 
-  it('keeps identifying params in the recorded work-area page id and href', () => {
+  it('does not record chats as work-area pages or show their drawer control', () => {
     mocks.shellState.chatDrawer = { open: true }
     mocks.params = new URLSearchParams('conv=conversation-1')
 
     render(<ShellTopBar />)
 
-    expect(mocks.shellState.recordWorkAreaPage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: '/home?conv=conversation-1',
-        href: '/home?conv=conversation-1',
-      }),
-    )
+    expect(mocks.shellState.recordWorkAreaPage).not.toHaveBeenCalled()
+    expect(screen.queryByTitle('Collapse page — chat full screen')).not.toBeInTheDocument()
   })
 
   it('drops transient chat and surface params from the recorded page identity', () => {

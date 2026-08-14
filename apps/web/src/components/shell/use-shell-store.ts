@@ -402,7 +402,10 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     set((s) => ({ artifactViewer: { ...s.artifactViewer, width: clamped } }))
   },
   recordWorkAreaPage: (target) => {
+    if (new URLSearchParams(target.href.split('?')[1] ?? '').has('conv')) return
     set((s) => {
+      const title = target.title.trim() || target.href
+      const titleKey = title.toLocaleLowerCase()
       // A feature host and the top bar can both record the same surface id —
       // never let the payload-less record drop the host's restore payload.
       const restore =
@@ -411,11 +414,14 @@ export const useShellStore = create<ShellStore>((set, get) => ({
         recentWorkAreaPages: [
           {
             id: target.id,
-            title: target.title.trim() || target.href,
+            title,
             href: target.href,
             ...(restore ? { restore } : {}),
           },
-          ...s.recentWorkAreaPages.filter((entry) => entry.id !== target.id),
+          ...s.recentWorkAreaPages.filter(
+            (entry) =>
+              entry.id !== target.id && entry.title.trim().toLocaleLowerCase() !== titleKey,
+          ),
         ].slice(0, 8),
       }
     })

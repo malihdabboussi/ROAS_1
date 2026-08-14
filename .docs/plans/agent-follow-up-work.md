@@ -38517,6 +38517,17 @@ Production already allowed `needs_reconnect` out of band; the repository now car
   Needed work: extract Mission launch orchestration and source-conversation preparation into a focused hook before adding another launcher lifecycle branch.
   Reason not done now: the component remains under the hard limit, and this production fix keeps the existing catalog, steps, and payload builders unchanged.
 
+## 2026-08-13 — Shell drawer consolidation
+
+- File: `apps/web/src/components/shell/ShellWorkspace.tsx`
+  Evidence: 311 LOC after removing the redundant full-chat restore path, above the 300-line component guidance.
+  Needed work: extract the remaining collapsed-work-area restore presentation when the shell layout is next changed.
+  Reason not done now: the file shrank materially in this fix; a broader layout extraction is outside the requested drawer correction.
+- File: `apps/web/src/components/shell/ShellTopBar.tsx`
+  Evidence: 288 LOC after the conversation-surface guard, near the 300-line component guidance.
+  Needed work: extract work-page identity derivation and history/navigation state before adding further top-bar behavior.
+  Reason not done now: the scoped change removes chat-owned controls from the top bar without adding another presentation branch.
+
 ## 2026-08-12 — Navigation-aware chat pane (apps/web shell)
 
 - File: apps/web/src/components/shell/use-shell-store.ts — 539 LOC after this change (531 before; new screen-chat state lives in the extracted use-shell-store.screen-chat.ts slice, so the net add here is +8). Past the ~500 proactive-extraction guidance, under the 600 hard cap.
