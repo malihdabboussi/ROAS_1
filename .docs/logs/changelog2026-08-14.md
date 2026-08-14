@@ -1,5 +1,15 @@
 # Changelog - August 14, 2026
 
+## [2026-08-14 13:55] - [FIX]
+
+What: Re-landed Pixel fill-from-brain and `@` campaign tagging after they were accidentally reverted in #227.
+
+Why: PR #225 was merged during a pull-request number race, then reverted. Pixel still searched form URLs instead of User Brain, and `@` Campaigns still previewed three rows and stayed on People.
+
+Impact: Pixel drafts first-person forms from User Brain; `@` lists and tags every campaign.
+
+Files: `packages/agent-policy/src/first-person-fill.ts`, `packages/agent-policy/src/platform-tools-template.ts`, `apps/agent-api/src/modules/brain/services/brain-context.service.ts`, `apps/agent-api/src/modules/agent-policy/services/agent-policy.service.ts`, `apps/web/src/features/studio/components/ChatInput/*`
+
 ## [2026-08-14 11:20] - [FIX]
 
 What: Chat `@` Campaigns tab now lists every accessible campaign (system campaigns last), typing after `@` jumps to the first tab with matches, and clicking a campaign tags it. The chevron still opens that campaign's artifacts.
