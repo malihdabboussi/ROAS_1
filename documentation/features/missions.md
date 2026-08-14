@@ -99,7 +99,7 @@ The contract is carried through the system:
 - **API persistence**: mission plan creation accepts `harness`; subtasks can include `assertionKeys`; persisted subtasks map planner assertion ownership onto DB UUIDs.
 - **Worker execution**: subtask prompts include the assertion keys the worker is responsible for and require `assertion_evidence` in successful JSON output.
 - **Review**: manager subtask review and independent quality eval receive the full harness context and must cite concrete evidence for must assertions before approval.
-- **Canonical review evidence**: independent quality eval loads the current source content for linked Space documents, falling back to the Mission deliverable snapshot or file reference for other artifact types. Subtask receipts remain included for provenance, but summaries no longer stand in for the artifact being scored.
+- **Canonical review evidence**: manager subtask review and independent quality eval load the current source content for linked Space documents, falling back to the Mission deliverable snapshot or file reference for other artifact types. Subtask receipts remain included for provenance, but summaries no longer stand in for the artifact being scored.
 - **Mission Control UI**: plan detail surfaces context snapshot, assumptions, assertions, coverage, validator plan, and subtask assertion ownership; PDF export includes the same harness data.
 
 This turns mission plans from task lists into validation-backed contracts: the manager can reject a deliverable for wrong evidence mapping even when artifacts exist, and the worker can append corrective validation subtasks without losing assertion context.
@@ -311,7 +311,7 @@ Outbox mission-status validation uses the direct pool when available, keeping qu
 
 ## Decision Log
 
-- 2026-08-13: Made OpenClaw terminal SSE events authoritative and supplied independent quality evaluation with canonical artifact contents after a production Client Strategy run completed both source documents but retried one successful task on a late `terminated` transport error and then scored the documents from summaries alone.
+- 2026-08-13: Made OpenClaw terminal SSE events authoritative and supplied both manager review and independent quality evaluation with canonical artifact contents after a production Client Strategy run completed both source documents but retried one successful task on a late `terminated` transport error and then judged the documents from summaries alone.
 - 2026-08-13: Added shell-owned Expand/Collapse actions to Mission and subtask headers after production proved the Mission-specific artifact renderer bypassed the shared viewer header and therefore lacked the third-pane expansion control available to other artifacts.
 - 2026-08-13: Made Home Quick Missions derive their source conversation from the visible `?conv=` route after production proved the persisted chat store could retain the prior conversation on blank `/home`, start the worker successfully, and hide the receipt in that stale chat.
 - 2026-08-13: Start-aligned the nonwrapping quick-start row after production geometry proved its centered overflow pushed Mission and Offer beneath the 272px docked menu, so pointer clicks hit Favorites instead.

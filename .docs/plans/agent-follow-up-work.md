@@ -38578,7 +38578,7 @@ Files:
 
 - `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw.gateway.ts`
 
-Evidence: The gateway is 2,482 LOC after this scoped change, down from 2,518 but still far beyond the 400-line integration guideline. The new artifact loading is isolated in `mission-quality-evidence.repository.ts` and prompt formatting is isolated in `mission-quality-eval-context.ts`; the gateway change itself is limited to wiring those focused collaborators into the existing quality-eval path.
+Evidence: The gateway is 2,488 LOC after this scoped change, down from 2,518 but still far beyond the 400-line integration guideline. The new artifact loading is isolated in `mission-quality-evidence.repository.ts` and prompt formatting is isolated in `mission-quality-eval-context.ts`; the gateway change itself is limited to wiring those focused collaborators into the existing review paths.
 
 Needed work: Split runtime targeting, prompt construction, request streaming, trace assembly, and specialized plan/review/evaluation calls into focused gateway collaborators without changing the OpenClaw action contract.
 

@@ -29,6 +29,7 @@ import { MissionJsonService } from '../utils/mission-json.service'
 import { OpenClawNonRetryableError } from './mission-openclaw-errors'
 import { consumeOpenResponsesSseStream } from './mission-openclaw-sse'
 import {
+  buildMissionCanonicalArtifactContext,
   buildMissionQualityDeliverableContext,
   buildMissionQualityEvalPrompt,
 } from './mission-quality-eval-context'
@@ -1194,6 +1195,9 @@ If the team is well-suited, omit capability_gap or set exists:false.
       mission,
       managerKey,
     )
+    const canonicalArtifactContext = buildMissionCanonicalArtifactContext(
+      await this.qualityEvidenceRepo.listForMission(supabase, String(mission.id)),
+    )
 
     const subtaskContext = subtasks
       .map((st, i) => {
@@ -1224,6 +1228,7 @@ If the team is well-suited, omit capability_gap or set exists:false.
       '4. Does it harmonize with the ecology — the other pieces and the campaign as a whole?',
       '5. Does it satisfy the mission harness assertions it is responsible for, with evidence?',
       '6. Standard quality: completeness, clarity, accuracy.',
+      'Use the canonical artifact contents below as the deliverable evidence. Do not reject an artifact merely because its subtask output is a summary receipt.',
       '',
       'For rejected subtasks, provide specific feedback referencing which intent layer or assertion key was missed.',
       'Optionally reassign to a different agent.',
@@ -1263,6 +1268,7 @@ If the team is well-suited, omit capability_gap or set exists:false.
       `Priority: ${mission.priority || 'medium'}`,
       harnessContext,
       subtaskContext,
+      canonicalArtifactContext,
       commentsContext,
     ]
       .filter(Boolean)

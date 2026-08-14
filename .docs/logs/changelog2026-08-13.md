@@ -400,3 +400,13 @@ Why: A production Client Strategy run emitted a successful `response.completed` 
 Impact: Successful Mission work is no longer reclassified by connection teardown after completion, and quality evaluation scores the actual deliverables instead of self-reported summaries while retaining receipt provenance.
 
 Files: `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw-sse.ts`, `mission-openclaw-sse.test.ts`, `mission-quality-eval-context.ts`, `mission-quality-eval-context.test.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-quality-evidence.repository.ts`, `mission-quality-evidence.repository.test.ts`, `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw.gateway.ts`, `apps/mission-worker/src/modules/missions/missions.module.ts`, `apps/mission-worker/src/modules/missions/services/__tests__/mission-tool-access-smoke.test.ts`, `documentation/features/missions.md`.
+
+## [2026-08-13 18:57] - [FIX]
+
+What: Added the same canonical Mission artifact packet used by independent quality evaluation to manager subtask review.
+
+Why: The first production Client Strategy revision reached manager review with valid native documents, but the manager saw only summary receipts and rejected both subtasks because their full contents were not present in its review context.
+
+Impact: Manager approval now evaluates the current artifact itself and cannot reject a readable Mission document merely because its worker receipt is concise.
+
+Files: `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw.gateway.ts`, `apps/mission-worker/src/modules/missions/services/gateways/mission-quality-eval-context.ts`, `mission-quality-eval-context.test.ts`, `documentation/features/missions.md`.

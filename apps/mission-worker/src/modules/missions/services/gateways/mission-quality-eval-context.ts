@@ -67,6 +67,12 @@ export function buildMissionQualityDeliverableContext(
     })
     .join('\n\n')
 
+  const artifactContext = buildMissionCanonicalArtifactContext(evidence)
+
+  return [subtaskContext, artifactContext].filter(Boolean).join('\n\n')
+}
+
+export function buildMissionCanonicalArtifactContext(evidence: MissionQualityEvidence[]): string {
   const artifactContext = evidence
     .map(
       (artifact, index) =>
@@ -74,7 +80,5 @@ export function buildMissionQualityDeliverableContext(
     )
     .join('\n\n')
 
-  return [subtaskContext, artifactContext || '### Canonical artifact content\n(none found)']
-    .filter(Boolean)
-    .join('\n\n')
+  return artifactContext || '### Canonical artifact content\n(none found)'
 }
