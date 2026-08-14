@@ -13,7 +13,7 @@ import { useChatStore } from '@/features/studio/store/use-chat-store'
 import type { Conversation } from '@/lib/conversations'
 import { useQuickMissionsLauncher } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
-import type { ShellCreateMenuItem } from './shell-create-menu.config'
+import { isShellMissionCreateItem, type ShellCreateMenuItem } from './shell-create-menu.config'
 import { ShellCreateMenuPanel } from './ShellCreateMenuPanel'
 import { ShellRightPanelFiles } from './ShellRightPanelFiles'
 import { ShellRightPanelSources } from './ShellRightPanelSources'
@@ -69,7 +69,7 @@ export function ShellRightPanel({
   const [createOpen, setCreateOpen] = useState(false)
   const handleCreateSelect = useCallback(
     (item: ShellCreateMenuItem) => {
-      if (item.action === 'mission') {
+      if (isShellMissionCreateItem(item)) {
         openLauncher()
         return
       }
