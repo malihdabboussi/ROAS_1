@@ -100,6 +100,7 @@ The contract is carried through the system:
 - **Worker execution**: subtask prompts include the assertion keys the worker is responsible for and require `assertion_evidence` in successful JSON output.
 - **Review**: manager subtask review and independent quality eval receive the full harness context and must cite concrete evidence for must assertions before approval.
 - **Canonical review evidence**: manager subtask review and independent quality eval load the current source content for linked Space documents, falling back to the Mission deliverable snapshot or file reference for other artifact types. Subtask receipts remain included for provenance, but summaries no longer stand in for the artifact being scored.
+- **Canonical revision target**: a revision prompt names the subtask's existing Mission deliverable id and requires the agent to update that exact artifact. Completion maps linked Space document ids back to their owning Mission deliverable and rejects unrelated Space document ids, so a retry cannot replace the subtask output pointer with a standalone document that review and the Mission Deliverables list cannot see.
 - **Mission Control UI**: plan detail surfaces context snapshot, assumptions, assertions, coverage, validator plan, and subtask assertion ownership; PDF export includes the same harness data.
 
 This turns mission plans from task lists into validation-backed contracts: the manager can reject a deliverable for wrong evidence mapping even when artifacts exist, and the worker can append corrective validation subtasks without losing assertion context.
@@ -311,6 +312,7 @@ Outbox mission-status validation uses the direct pool when available, keeping qu
 
 ## Decision Log
 
+- 2026-08-13: Pinned revision executions to their existing canonical Mission deliverable and canonicalized returned artifact references after production showed an agent correcting an unrelated standalone Space document while the quality evaluator continued reviewing the unchanged Mission artifact.
 - 2026-08-13: Added Client Strategy to guided-playbook team provisioning and required explicit confirmation of the prefilled campaign/Space after production showed the split playbook skipped both safeguards and blocked during planning on an empty campaign team.
 - 2026-08-13: Sanitized structured Mission execution output in the live `Locked in` stream after production verification exposed the agent's internal JSON envelope alongside an otherwise valid Client Strategy document.
 - 2026-08-13: Made OpenClaw terminal SSE events authoritative and supplied both manager review and independent quality evaluation with canonical artifact contents after a production Client Strategy run completed both source documents but retried one successful task on a late `terminated` transport error and then judged the documents from summaries alone.

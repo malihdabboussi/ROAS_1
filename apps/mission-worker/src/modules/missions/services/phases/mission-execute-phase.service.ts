@@ -48,6 +48,10 @@ import {
   type MissionPreflightDomain,
 } from './mission-execute-helpers'
 import { MissionPhaseSupportService } from './mission-phase-support.service'
+import {
+  buildRevisionArtifactContext,
+  resolveCompletedSubtaskDeliverableId,
+} from './mission-revision-artifact'
 
 const HUMAN_SUBTASK_SLA_MS = 48 * 60 * 60 * 1000
 
@@ -738,12 +742,32 @@ export class MissionExecutePhaseService {
         }
       }
 
-      const deliverableId =
-        this.resolveSubtaskDeliverableId(parsedOutput, outputContract) ||
-        (await this.deliverablesRepo.getLatestToolAuthoredDeliverableId(
-          supabase,
-          String(mission.id),
-        ))
+      const outputDeliverableReference = this.resolveSubtaskDeliverableId(
+        parsedOutput,
+        outputContract,
+      )
+      const canonicalOutputDeliverableId = outputDeliverableReference
+        ? await this.deliverablesRepo.resolveCanonicalDeliverableId(
+            supabase,
+            String(mission.id),
+            outputDeliverableReference,
+          )
+        : null
+      const existingDeliverableId =
+        typeof subtask.deliverable_id === 'string' ? subtask.deliverable_id.trim() : null
+      const latestDeliverableId =
+        canonicalOutputDeliverableId || (subtask.status === 'revision' && existingDeliverableId)
+          ? null
+          : await this.deliverablesRepo.getLatestToolAuthoredDeliverableId(
+              supabase,
+              String(mission.id),
+            )
+      const deliverableId = resolveCompletedSubtaskDeliverableId({
+        canonicalOutputDeliverableId,
+        existingDeliverableId,
+        latestDeliverableId,
+        isRevision: subtask.status === 'revision',
+      })
       if (deliverableId) {
         await supabase
           .from('mission_subtasks')
@@ -1274,6 +1298,7 @@ export class MissionExecutePhaseService {
       : ''
     const contractCorrectionContext = buildContractCorrectionContext(subtask.execution_state)
     const assertionContext = this.buildSubtaskAssertionContext(plan, subtask)
+    const revisionArtifactContext = buildRevisionArtifactContext(subtask)
 
     const taskUserMessage = [
       missionControl,
@@ -1282,6 +1307,7 @@ export class MissionExecutePhaseService {
       assertionContext,
       outputContractBlock,
       contractCorrectionContext,
+      revisionArtifactContext,
       guaranteedContext,
       completedActionsContext,
       `Mission: ${mission.title}`,
