@@ -237,7 +237,8 @@ Every AI batch remains reversible through existing Canvas Undo/Redo. If orchestr
 
 The branch now implements the full first vertical slice:
 
-- `build_campaign_blueprint` supports webinar, VSL call-booking, and free Skool community maps;
+- `build_campaign_blueprint` accepts chat-derived stages and optional branches for arbitrary campaign
+  journeys; webinar, VSL call-booking, and free Skool community are proof cases, not templates;
 - `complete_canvas_placeholder` replaces an exact missing node in place with its canonical resource,
   preserving layout, stage membership, style, semantic provenance, and operation history;
 - Pixel's Canvas prompt includes the board revision, viewport, selection, evidence-first discovery
@@ -253,6 +254,10 @@ final board reached revision 29 with 42 items, 22 stage frames, 19 connectors, s
 shared Campaign view strip and Miro-style board rendering. Local mission-worker execution could not
 be expanded because Redis is not running in this checkout; the same webinar playbook's 10 focused
 tests pass and the live mission retains `playbook_id=webinar-fulfillment` for a configured worker.
+
+A fourth proof used a five-day authority challenge leading to cohort enrollment. Pixel supplied its
+seven custom stages and six labeled transitions from the chat plan, plus two URL embeds and six
+typed gaps. This confirmed the action does not depend on the first three campaign shapes.
 
 ## First vertical slice
 

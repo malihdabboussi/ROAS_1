@@ -1734,9 +1734,9 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   build_campaign_blueprint: {
     section: 'Canvas',
     description:
-      'Builds an editable, laid-out campaign journey on Canvas after client Brain context and existing assets have been checked and blocking questions are resolved. Uses a supported campaign archetype, places known resources and URL previews, and marks missing work as actionable placeholders.',
+      'Builds an editable, laid-out campaign journey on Canvas after client Brain context and existing assets have been checked and blocking questions are resolved. Derive the stages and connections from the user conversation; do not choose from templates. Places known resources and URL previews, and marks missing work as actionable placeholders.',
     parameters:
-      '```json\n{"action":"build_campaign_blueprint","label":"Building the webinar map","data":{"campaign_type":"webinar","blueprint_id":"fall-webinar","assets":[{"title":"Registration page","stage_key":"registration","url":"https://example.com/register"}],"gaps":[{"title":"Reminder sequence","stage_key":"reminder","asset_type":"sequence","brief":"Create the registration-to-show reminder emails.","suggested_action":"create_sequence"}]}}\n```',
+      '```json\n{"action":"build_campaign_blueprint","label":"Building the campaign map","data":{"campaign_label":"Five-day challenge launch","blueprint_id":"fall-challenge","stages":[{"key":"traffic","label":"Traffic"},{"key":"signup","label":"Challenge signup"},{"key":"daily","label":"Daily challenge"},{"key":"offer","label":"Enrollment offer"}],"connections":[{"source_stage_key":"traffic","target_stage_key":"signup"},{"source_stage_key":"signup","target_stage_key":"daily"},{"source_stage_key":"daily","target_stage_key":"offer"}],"assets":[{"title":"Challenge signup page","stage_key":"signup","url":"https://example.com/challenge"}],"gaps":[{"title":"Daily challenge emails","stage_key":"daily","asset_type":"sequence","brief":"Create five daily lesson and participation emails.","suggested_action":"create_sequence"}]}}\n```',
   },
   complete_canvas_placeholder: {
     section: 'Canvas',

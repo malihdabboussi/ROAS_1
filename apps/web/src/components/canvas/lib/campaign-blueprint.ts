@@ -156,14 +156,3 @@ export function buildCampaignBlueprintOperations(input: CampaignBlueprintInput):
 
   return operations
 }
-
-export const WEBINAR_BLUEPRINT_STAGES: CampaignBlueprintStage[] = [
-  { key: 'traffic', label: 'Traffic' },
-  { key: 'registration', label: 'Registration' },
-  { key: 'confirmation', label: 'Confirmation' },
-  { key: 'reminder', label: 'Reminder' },
-  { key: 'webinar', label: 'Webinar' },
-  { key: 'offer', label: 'Offer' },
-  { key: 'follow_up', label: 'Follow-up' },
-  { key: 'retargeting', label: 'Retargeting' },
-]

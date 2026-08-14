@@ -448,10 +448,12 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
   ),
   get_canvas_board: schema([], campaignScope, stringType(campaignScope)),
   build_campaign_blueprint: schema(
-    ['campaign_type', 'blueprint_id'],
+    ['campaign_label', 'blueprint_id', 'stages'],
     [
-      'campaign_type',
+      'campaign_label',
       'blueprint_id',
+      'stages',
+      'connections',
       'assets',
       'gaps',
       'origin_x',
@@ -460,8 +462,10 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
       ...campaignScope,
     ],
     {
-      campaign_type: 'string',
+      campaign_label: 'string',
       blueprint_id: 'string',
+      stages: 'object_array',
+      connections: 'object_array',
       assets: 'object_array',
       gaps: 'object_array',
       origin_x: 'number',
@@ -469,7 +473,7 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
       idempotency_key: 'string',
       ...stringType(campaignScope),
     },
-    ['Build a confirmed webinar, VSL call-booking, or free Skool community map on Canvas.'],
+    ['Build a confirmed, chat-derived campaign journey on Canvas.'],
   ),
   complete_canvas_placeholder: schema(
     ['node_id', 'title'],

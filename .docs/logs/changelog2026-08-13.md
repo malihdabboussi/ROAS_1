@@ -228,3 +228,18 @@ Why: Exact-production testing showed the canonical Mission button had the new ex
 Impact: Blank Home Mission launch no longer depends on shared module or React context identity; the click updates state owned by the same composer instance that controls the modal.
 
 Files: `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `documentation/features/missions.md`.
+
+## [2026-08-13 17:25] - [FIX]
+
+What: Removed the webinar, VSL call-booking, and free Skool community campaign archetypes from the
+Canvas product contract and replaced them with chat-derived stages and optional branching
+connections. Added a fourth live five-day-challenge-to-cohort-enrollment proof.
+
+Why: The original three campaign shapes were validation scenarios, not templates users should have
+to choose from.
+
+Impact: Pixel can compose a visual journey for any campaign described in chat, including custom
+stage names and non-linear paths, while the original examples remain test evidence only.
+
+Files: `apps/agent-api/src/modules/artifacts/services/campaign-blueprint-operations.ts`, action
+schema/preflight/docs/tests, `apps/web/src/components/canvas/**`, and the implementation plan.

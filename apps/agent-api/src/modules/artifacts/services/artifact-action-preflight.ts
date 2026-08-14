@@ -267,15 +267,43 @@ function validateCanvasOperationsPreflight(
 function validateCampaignBlueprintPreflight(
   data: Record<string, unknown>,
 ): ActionPreflightFailure | null {
-  const campaignTypes = new Set(['webinar', 'vsl_call_booking', 'free_skool_community'])
-  if (!campaignTypes.has(data.campaign_type as string)) {
+  if (typeof data.campaign_label !== 'string' || data.campaign_label.trim().length === 0) {
     return failure(
-      'campaign_type must be webinar, vsl_call_booking, or free_skool_community.',
-      'CAMPAIGN_BLUEPRINT_TYPE_INVALID',
+      'campaign_label must describe the campaign requested in chat.',
+      'CAMPAIGN_BLUEPRINT_LABEL_INVALID',
     )
   }
   if (typeof data.blueprint_id !== 'string' || data.blueprint_id.trim().length === 0) {
     return failure('blueprint_id must be a non-empty string.', 'CAMPAIGN_BLUEPRINT_ID_INVALID')
+  }
+  const stages = Array.isArray(data.stages) ? data.stages : []
+  if (stages.length < 2 || stages.length > 20) {
+    return failure(
+      'stages must contain between 2 and 20 chat-derived campaign stages.',
+      'CAMPAIGN_BLUEPRINT_STAGES_INVALID',
+    )
+  }
+  const stageKeys = new Set<string>()
+  const invalidStage = stages.find((entry) => {
+    if (typeof entry !== 'object' || entry === null) return true
+    const value = entry as Record<string, unknown>
+    if (
+      typeof value.key !== 'string' ||
+      value.key.trim().length === 0 ||
+      typeof value.label !== 'string' ||
+      value.label.trim().length === 0 ||
+      stageKeys.has(value.key)
+    ) {
+      return true
+    }
+    stageKeys.add(value.key)
+    return false
+  })
+  if (invalidStage) {
+    return failure(
+      'Every campaign blueprint stage requires a unique non-empty key and label.',
+      'CAMPAIGN_BLUEPRINT_STAGE_INVALID',
+    )
   }
   const assets = Array.isArray(data.assets) ? data.assets : []
   const gaps = Array.isArray(data.gaps) ? data.gaps : []
@@ -286,13 +314,30 @@ function validateCampaignBlueprintPreflight(
       typeof value.title !== 'string' ||
       value.title.trim().length === 0 ||
       typeof value.stage_key !== 'string' ||
-      value.stage_key.trim().length === 0
+      !stageKeys.has(value.stage_key)
     )
   })
   if (invalidEntry) {
     return failure(
       'Every campaign blueprint asset and gap requires a non-empty title and stage_key.',
       'CAMPAIGN_BLUEPRINT_ENTRY_INVALID',
+    )
+  }
+  const connections = Array.isArray(data.connections) ? data.connections : []
+  const invalidConnection = connections.find((entry) => {
+    if (typeof entry !== 'object' || entry === null) return true
+    const value = entry as Record<string, unknown>
+    return (
+      typeof value.source_stage_key !== 'string' ||
+      typeof value.target_stage_key !== 'string' ||
+      !stageKeys.has(value.source_stage_key) ||
+      !stageKeys.has(value.target_stage_key)
+    )
+  })
+  if (invalidConnection) {
+    return failure(
+      'Every campaign blueprint connection must reference two declared stage keys.',
+      'CAMPAIGN_BLUEPRINT_CONNECTION_INVALID',
     )
   }
   const invalidGap = gaps.find((entry) => {

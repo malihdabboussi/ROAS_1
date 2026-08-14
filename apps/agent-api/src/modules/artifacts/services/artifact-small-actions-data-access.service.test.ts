@@ -50,8 +50,13 @@ describe('small artifact action data access', () => {
     await expect(
       handlers.build_campaign_blueprint(
         {
-          campaign_type: 'webinar',
+          campaign_label: 'Client webinar',
           blueprint_id: 'client-webinar',
+          stages: [
+            { key: 'traffic', label: 'Traffic' },
+            { key: 'registration', label: 'Registration' },
+            { key: 'reminder', label: 'Reminder' },
+          ],
           assets: [
             {
               title: 'Registration page',
@@ -73,9 +78,9 @@ describe('small artifact action data access', () => {
     ).resolves.toMatchObject({
       success: true,
       blueprint_id: 'client-webinar',
-      campaign_type: 'webinar',
-      item_count: 10,
-      connector_count: 7,
+      campaign_label: 'Client webinar',
+      item_count: 5,
+      connector_count: 2,
       batch_count: 3,
     })
     expect(repository.applyCanvasOperations).toHaveBeenCalledWith(
@@ -93,9 +98,7 @@ describe('small artifact action data access', () => {
         boardId: 'board-1',
         baseRevision: 7,
         idempotencyKey: 'campaign-blueprint:client-webinar:batch:3',
-        operations: expect.arrayContaining([
-          expect.objectContaining({ op: 'create_connector' }),
-        ]),
+        operations: expect.arrayContaining([expect.objectContaining({ op: 'create_connector' })]),
       }),
     )
   })
@@ -294,7 +297,9 @@ describe('small artifact action data access', () => {
     }
     const handlers = new ArtifactNotificationsService().getHandlers(target)
 
-    await expect(handlers.send_user_message({ message: '  Hello user  ' }, 'session')).resolves.toEqual({
+    await expect(
+      handlers.send_user_message({ message: '  Hello user  ' }, 'session'),
+    ).resolves.toEqual({
       success: true,
       channels: { in_app: true },
     })
