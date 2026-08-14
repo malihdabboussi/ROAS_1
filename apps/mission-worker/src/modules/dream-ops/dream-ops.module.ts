@@ -1,5 +1,6 @@
 import { BullModule } from '@nestjs/bullmq'
 import { Module } from '@nestjs/common'
+import { BrainOpsModule } from '../brain-ops/brain-ops.module'
 import { AgentRuntimeService } from '../missions/services/agent-runtime.service'
 import { AgentSignalService } from '../missions/services/agent-signal.service'
 import { MissionContextService } from '../missions/services/context/mission-context.service'
@@ -7,9 +8,9 @@ import { MissionOpenclawGateway } from '../missions/services/gateways/mission-op
 import { MissionExecBroadcastService } from '../missions/services/mission-exec-broadcast.service'
 import { MissionTracingService } from '../missions/services/mission-tracing.service'
 import { MissionDeliverablesRepository } from '../missions/services/persistence/mission-deliverables.repository'
+import { MissionQualityEvidenceRepository } from '../missions/services/persistence/mission-quality-evidence.repository'
 import { MissionStateRepository } from '../missions/services/persistence/mission-state.repository'
 import { MissionJsonService } from '../missions/services/utils/mission-json.service'
-import { BrainOpsModule } from '../brain-ops/brain-ops.module'
 import { AgentLearningDreamCollectorService } from './agent-learning-dream-collector.service'
 import { AgentLearningDreamJaimeService } from './agent-learning-dream-jaime.service'
 import { AgentLearningDreamRunnerService } from './agent-learning-dream-runner.service'
@@ -39,13 +40,7 @@ import { DREAM_OPS_BULL_QUEUE } from './types'
         collector: AgentLearningDreamCollectorService,
         triage: AgentLearningDreamTriageService,
         jaime: AgentLearningDreamJaimeService,
-      ) =>
-        AgentLearningDreamRunnerService.create(
-          repository,
-          collector,
-          triage,
-          jaime,
-        ),
+      ) => AgentLearningDreamRunnerService.create(repository, collector, triage, jaime),
       inject: [
         DreamOpsRepository,
         AgentLearningDreamCollectorService,
@@ -59,6 +54,7 @@ import { DREAM_OPS_BULL_QUEUE } from './types'
     AgentSignalService,
     MissionStateRepository,
     MissionDeliverablesRepository,
+    MissionQualityEvidenceRepository,
     MissionJsonService,
     MissionTracingService,
     MissionExecBroadcastService,
