@@ -200,6 +200,16 @@ Impact: Blank Home Mission launch no longer depends on shared module or React co
 
 Files: `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `documentation/features/missions.md`.
 
+## [2026-08-13 17:29] - [FIX]
+
+What: Moved empty-chat Mission open state and its controlled modal host into the quick-start component that renders the Mission button, and removed the replaced Home-level host wiring.
+
+Why: Exact-production testing showed that even direct Home composer props did not reach the rendered Mission trigger, while adjacent composer quick starts remained interactive.
+
+Impact: Blank Home and empty active-chat Mission buttons now update and consume state inside the same component instance, with no module, context, or parent callback boundary.
+
+Files: `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/shell/ShellEmptyChatPrompts.test.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `documentation/features/missions.md`.
+
 ## [2026-08-13 17:08] - [FIX]
 
 What: Changed Agenda list weeks to Monday–Sunday with current-day positioning and earlier-week scrollback, made meeting-to-meeting navigation ignore a stale URL during an explicit selection, replaced leaked Fathom naming placeholders, and added inline task status plus right-side task preview to My Tasks.
