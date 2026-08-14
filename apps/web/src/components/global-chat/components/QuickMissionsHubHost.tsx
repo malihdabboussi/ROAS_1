@@ -7,7 +7,7 @@ import { QUICK_MISSIONS_MESSAGES } from '@/features/spaces/config/quick-missions
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { createNewConversation, persistQuickMissionReceipt } from '@/lib/conversations'
-import { useQuickMissionsLauncherStore } from '@/lib/missions'
+import { useQuickMissionsLauncher } from '@/lib/missions'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 
 type QuickMissionClient = {
@@ -88,9 +88,7 @@ export function QuickMissionsHubHost() {
   const addMessage = useChatStore((s) => s.addMessage)
   const addConversation = useChatStore((s) => s.addConversation)
   const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
-  const open = useQuickMissionsLauncherStore((s) => s.open)
-  const initialPlaybookKey = useQuickMissionsLauncherStore((s) => s.playbookKey)
-  const closeLauncher = useQuickMissionsLauncherStore((s) => s.closeLauncher)
+  const { open, playbookKey: initialPlaybookKey, closeLauncher } = useQuickMissionsLauncher()
 
   useEffect(() => {
     if (open) void loadSpaces()

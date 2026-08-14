@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { useQuickMissionsLauncher } from '@/lib/missions'
 import { HomeDashboardV4Composer } from './HomeDashboardV4Composer'
 
 const mocks = vi.hoisted(() => ({
@@ -10,7 +11,6 @@ const mocks = vi.hoisted(() => ({
   seedComposer: vi.fn(),
   clearMeetingContext: vi.fn(),
   setActiveAgentKey: vi.fn(),
-  openQuickMissions: vi.fn(),
   isOrgOnly: true,
   campaignRows: [] as Array<Record<string, unknown>>,
   ensureGeneralSpace: vi.fn(),
@@ -44,7 +44,10 @@ vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
 }))
 
 vi.mock('@/components/global-chat/components/QuickMissionsHubHost', () => ({
-  QuickMissionsHubHost: () => <div data-testid="home-quick-missions-host" />,
+  QuickMissionsHubHost: () => {
+    const { open } = useQuickMissionsLauncher()
+    return <div data-testid="home-quick-missions-host">{String(open)}</div>
+  },
 }))
 
 vi.mock('@/features/studio/store/use-chat-store', () => ({
@@ -91,11 +94,6 @@ vi.mock('@/features/spaces/services/spaces.service', () => ({
 
 vi.mock('@/features/spaces/components/CreateSpaceModal', () => ({
   CreateSpaceModal: () => null,
-}))
-
-vi.mock('@/lib/missions', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/lib/missions')>()),
-  openQuickMissions: mocks.openQuickMissions,
 }))
 
 vi.mock('@/features/home/components/SuggestedNextMoves', () => ({
@@ -240,7 +238,7 @@ describe('HomeDashboardV4Composer', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Mission' }))
 
-    expect(mocks.openQuickMissions).toHaveBeenCalledTimes(1)
+    expect(screen.getByTestId('home-quick-missions-host')).toHaveTextContent('true')
     expect(mocks.setText).not.toHaveBeenCalled()
   })
 })

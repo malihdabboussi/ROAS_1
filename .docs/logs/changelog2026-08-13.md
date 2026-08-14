@@ -169,3 +169,13 @@ Why: Full conversations exposed competing drawer controls and a hidden Show page
 Impact: Full chat has one predictable summary drawer; the three-dot menu sits beside the title, clicking the name renames it, recent work contains unique work surfaces only, and attachments use a recognizable paperclip entry point.
 
 Files: `apps/web/src/components/conversations/ConversationHeaderTitle.tsx`, `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/components/shell/ShellWorkAreaControl.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/features/spaces/components/chat/SpaceChatHeaderActions.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/studio/components/ChatInput/chat-input-normal-footer.tsx`, related tests, `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-08-13 17:01] - [FIX]
+
+What: Replaced the module-global Quick Missions launcher singleton with an explicit provider inside the blank Home and active global chat surfaces, and routed quick starts, Create-menu selections, summary Create, and playbook slash commands through that surface-owned state.
+
+Why: Exact-production testing on the merged surface-host deployment proved that ordinary creation quick starts hydrated and changed the composer while Mission's global state transition did not reach the mounted modal consumer.
+
+Impact: Every Mission trigger and its modal host now share one deterministic React tree, with isolated launcher state per chat surface and no dependency on cross-chunk singleton identity.
+
+Files: `apps/web/src/lib/missions/quick-missions-launcher.ts`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-selection-handlers.ts`, related tests, `documentation/features/missions.md`.

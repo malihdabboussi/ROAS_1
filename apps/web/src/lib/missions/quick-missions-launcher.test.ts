@@ -1,15 +1,19 @@
-import { afterEach, describe, expect, it } from 'vitest'
-import { openQuickMissions, useQuickMissionsLauncherStore } from './quick-missions-launcher'
+import { createElement, type ReactNode } from 'react'
+import { act, renderHook } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+import { QuickMissionsLauncherProvider, useQuickMissionsLauncher } from './quick-missions-launcher'
+
+function wrapper({ children }: { children: ReactNode }) {
+  return createElement(QuickMissionsLauncherProvider, null, children)
+}
 
 describe('quick missions launcher', () => {
-  afterEach(() => {
-    useQuickMissionsLauncherStore.setState({ open: false, playbookKey: null })
-  })
+  it('keeps launch state inside the mounted chat surface', () => {
+    const { result } = renderHook(() => useQuickMissionsLauncher(), { wrapper })
 
-  it('keeps an open request available for the host to observe', () => {
-    openQuickMissions('client-strategy')
+    act(() => result.current.openLauncher('client-strategy'))
 
-    expect(useQuickMissionsLauncherStore.getState()).toMatchObject({
+    expect(result.current).toMatchObject({
       open: true,
       playbookKey: 'client-strategy',
     })
