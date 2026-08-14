@@ -1,6 +1,8 @@
 import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { globalChatSeedMatchesPanel } from '@/components/global-chat/lib/global-chat-seed-match'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
+import { useChatStore } from '../../store/use-chat-store'
 import { AssistantActions } from './AssistantActions'
 
 const actionMocks = vi.hoisted(() => ({
@@ -26,6 +28,7 @@ vi.mock('../../services/chat.service', () => ({
 afterEach(() => {
   cleanup()
   useGlobalChatStore.setState({ pendingSeed: null, workContext: { surface: 'general' } })
+  useChatStore.setState({ conversations: [] })
   vi.clearAllMocks()
 })
 
@@ -56,12 +59,21 @@ describe('AssistantActions', () => {
   })
 
   it('replies with an exact message reference instead of rating the chat turn', () => {
-    useGlobalChatStore.setState({
-      workContext: {
-        surface: 'spaces',
-        spaceId: 'space-1',
-        campaignId: 'campaign-1',
-      },
+    useGlobalChatStore.setState({ workContext: { surface: 'general' } })
+    useChatStore.setState({
+      conversations: [
+        {
+          id: '44444444-4444-4444-8444-444444444444',
+          user_id: 'user-1',
+          campaign_id: 'campaign-1',
+          title: 'Client Strategy',
+          agent_id: null,
+          status: 'active',
+          metadata: { space_id: 'space-1' },
+          created_at: '2026-08-14T00:00:00.000Z',
+          updated_at: '2026-08-14T00:00:00.000Z',
+        },
+      ],
     })
     render(
       <AssistantActions
@@ -94,6 +106,9 @@ describe('AssistantActions', () => {
         },
       ],
     })
+    expect(globalChatSeedMatchesPanel(useGlobalChatStore.getState().pendingSeed!, 'space-1')).toBe(
+      true,
+    )
   })
 
   it('keeps actions visible when pinActions is true', () => {

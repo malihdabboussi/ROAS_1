@@ -12,9 +12,9 @@ Files: `apps/web/src/components/shell/*`, `apps/web/src/components/global-chat/l
 
 ## 2026-08-14 10:54 - [FIX]
 
-What: Routed exact-message Reply seeds through the active chat Space/Campaign context so the mounted composer restores the referenced message chip before send.
+What: Routed exact-message Reply seeds through the selected conversation's authoritative Space/Campaign scope so the mounted composer restores the referenced message chip before send.
 
-Why: Production verification showed that contextless Reply seeds were correctly rejected by the Space-scoped chat panel, leaving the composer unchanged.
+Why: Production verification showed that the shell work context could lag the selected conversation, causing the Space-scoped chat panel to reject a Reply seed for the wrong panel.
 
 Impact: Reply now visibly attaches the selected assistant message in the active conversation and sends that exact reference to the agent context pipeline.
 
