@@ -178,7 +178,8 @@ export abstract class BrainImportJobsExecutionBase extends BrainImportJobsEnqueu
     let actionBlock: string
     if (targetBrain === 'campaign') {
       actionBlock = [
-        `ACTION: Use atlas_save_brain_context to save campaign knowledge. REQUIRED fields in data:`,
+        `ACTION: Use the backend action tool exposed by this runtime: campaign_capability in platform mode, or vibey_backend otherwise.`,
+        `Call it with action: "atlas_save_brain_context" to save campaign knowledge. REQUIRED fields in data:`,
         `  - target_brain: "campaign"`,
         `  - campaign_id: "${campaignId ?? ''}"`,
         `  - content: the campaign/client knowledge text (string, minimum 10 characters)`,
@@ -334,29 +335,44 @@ export abstract class BrainImportJobsExecutionBase extends BrainImportJobsEnqueu
   }
 
   private extractAtlasResponseText(result: Record<string, unknown>): string {
-    if (typeof result.content === 'string') return result.content
-    if (typeof result.text === 'string') return result.text
-    if (typeof result.message === 'string') return result.message
-    if (typeof result.output_text === 'string') return result.output_text
-    const output = Array.isArray(result.output) ? result.output : []
-    const outputText = output
-      .flatMap((item) => {
-        if (!item || typeof item !== 'object') return []
-        const record = item as Record<string, unknown>
-        if (typeof record.text === 'string') return [record.text]
-        if (!Array.isArray(record.content)) return []
-        return record.content.flatMap((part) => {
-          if (!part || typeof part !== 'object') return []
-          const text = (part as Record<string, unknown>).text
-          return typeof text === 'string' ? [text] : []
-        })
-      })
-      .join('\n')
-      .trim()
-    if (outputText) return outputText
-    const choices = result.choices as Array<{ message?: { content?: string } }> | undefined
-    if (choices?.[0]?.message?.content) return choices[0].message.content
-    return JSON.stringify(result)
+    return this.extractAtlasResponseValue(result, 0) || JSON.stringify(result)
+  }
+
+  private extractAtlasResponseValue(value: unknown, depth: number): string {
+    if (depth > 10 || value === null || value === undefined) return ''
+    if (typeof value === 'string') {
+      const trimmed = value.trim()
+      if ((trimmed.startsWith('{') || trimmed.startsWith('[')) && trimmed.length > 1) {
+        try {
+          const nested = this.extractAtlasResponseValue(JSON.parse(trimmed), depth + 1)
+          if (nested) return nested
+        } catch {
+          // Plain agent text can begin with JSON-like punctuation.
+        }
+      }
+      return value
+    }
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => this.extractAtlasResponseValue(item, depth + 1))
+        .filter(Boolean)
+        .join('\n')
+        .trim()
+    }
+    if (typeof value !== 'object') return ''
+
+    const record = value as Record<string, unknown>
+    for (const key of ['content', 'text', 'message', 'output_text', 'atlasResponse']) {
+      if (!(key in record)) continue
+      const extracted = this.extractAtlasResponseValue(record[key], depth + 1)
+      if (extracted) return extracted
+    }
+    for (const key of ['output', 'choices']) {
+      if (!(key in record)) continue
+      const extracted = this.extractAtlasResponseValue(record[key], depth + 1)
+      if (extracted) return extracted
+    }
+    return ''
   }
 
   private parseJobStatus(text: string): {

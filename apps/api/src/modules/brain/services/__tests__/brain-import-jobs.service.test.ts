@@ -255,6 +255,10 @@ describe('BrainImportJobsService', () => {
     )
     expect(callOpenClawForBrainJob.mock.calls[0]?.[2]).toContain('target_brain: "campaign"')
     expect(callOpenClawForBrainJob.mock.calls[0]?.[2]).toContain('campaign_id: "camp-1"')
+    expect(callOpenClawForBrainJob.mock.calls[0]?.[2]).toContain('campaign_capability')
+    expect(callOpenClawForBrainJob.mock.calls[0]?.[2]).toContain(
+      'action: "atlas_save_brain_context"',
+    )
   })
 
   it('fails closed when OpenResponses reports an Atlas import failure', async () => {
@@ -282,6 +286,35 @@ describe('BrainImportJobsService', () => {
         }),
       ),
     ).rejects.toThrow('Atlas could not process: campaign brain save was rejected')
+  })
+
+  it('fails closed when OpenResponses is JSON-encoded inside a string field', async () => {
+    const callOpenClawForBrainJob = vi.fn().mockResolvedValue({
+      content: JSON.stringify({
+        output: [
+          {
+            type: 'message',
+            content: [
+              {
+                type: 'output_text',
+                text: 'JOB_STATUS:failed — campaign capability rejected the save',
+              },
+            ],
+          },
+        ],
+      }),
+    })
+    const service = new BrainImportJobsService({ get: vi.fn() } as any)
+    ;(service as any).getGateway = () => ({ callOpenClawForBrainJob })
+
+    await expect(
+      (service as any).executeViaAtlas(
+        baseJob({
+          job_type: 'campaign_file_import',
+          payload: { campaignId: 'camp-1', content: 'Useful campaign context' },
+        }),
+      ),
+    ).rejects.toThrow('Atlas could not process: campaign capability rejected the save')
   })
 
   it('fails closed when Atlas omits the required terminal status', async () => {

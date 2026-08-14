@@ -12,6 +12,7 @@ import argparse
 import json
 import os
 import re
+import urllib.error
 import urllib.parse
 import urllib.request
 from collections.abc import Iterator
@@ -435,32 +436,79 @@ def recover_poisoned_jobs(
     limit: int,
     apply: bool,
 ) -> dict[str, Any]:
-    eligible = [
+    eligible = select_recovery_candidates(jobs, active_keys, limit)
+    candidates = [
+        {
+            "id": str(row["id"]),
+            "dedupe_key": str(row["dedupe_key"]),
+            "period_start_ts": (row.get("payload") or {}).get("periodStartTs"),
+            "period_end_ts": (row.get("payload") or {}).get("periodEndTs"),
+        }
+        for row in eligible
+    ]
+    applied: list[str] = []
+    skipped_conflict: list[str] = []
+    if apply:
+        for row in eligible:
+            job_id = str(row["id"])
+            try:
+                updated = client.patch(
+                    "brain_import_jobs",
+                    {"id": f"eq.{job_id}", "status": "eq.succeeded"},
+                    {
+                        "status": "retry",
+                        "attempts": 0,
+                        "next_attempt_at": datetime.now(timezone.utc).isoformat(),
+                        "last_error": "Recovery replay after fail-closed Campaign Brain importer deployment",
+                        "result": None,
+                        "started_at": None,
+                        "completed_at": None,
+                        "notified_at": None,
+                        "chunks_total": None,
+                        "chunks_completed": 0,
+                    },
+                )
+            except urllib.error.HTTPError as error:
+                if error.code != 409:
+                    raise
+                skipped_conflict.append(job_id)
+                continue
+            if updated:
+                applied.append(job_id)
+            else:
+                skipped_conflict.append(job_id)
+    return {
+        "mode": "applied" if apply else "dry_run",
+        "eligible": len(candidates),
+        "candidates": candidates,
+        "applied_job_ids": applied,
+        "skipped_conflict_job_ids": skipped_conflict,
+    }
+
+
+def select_recovery_candidates(
+    jobs: list[dict[str, Any]], active_keys: set[str], limit: int
+) -> list[dict[str, Any]]:
+    poisoned = [
         row
-        for row in sorted(jobs, key=lambda item: str(item.get("created_at", "")))
+        for row in sorted(
+            jobs, key=lambda item: str(item.get("created_at", "")), reverse=True
+        )
         if row.get("status") == "succeeded"
         and logical_terminal_status(row.get("result")) in {"failed", "missing"}
         and str(row.get("dedupe_key")) not in active_keys
-    ][:limit]
-    ids = [str(row["id"]) for row in eligible]
-    if apply and ids:
-        client.patch(
-            "brain_import_jobs",
-            {"id": f"in.({','.join(ids)})", "status": "eq.succeeded"},
-            {
-                "status": "retry",
-                "attempts": 0,
-                "next_attempt_at": datetime.now(timezone.utc).isoformat(),
-                "last_error": "Recovery replay after fail-closed Campaign Brain importer deployment",
-                "result": None,
-                "started_at": None,
-                "completed_at": None,
-                "notified_at": None,
-                "chunks_total": None,
-                "chunks_completed": 0,
-            },
-        )
-    return {"mode": "applied" if apply else "dry_run", "eligible": len(ids), "job_ids": ids}
+    ]
+    selected: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for row in poisoned:
+        identity = (str(row.get("user_id", "")), str(row.get("dedupe_key", "")))
+        if identity in seen:
+            continue
+        seen.add(identity)
+        selected.append(row)
+        if len(selected) == limit:
+            break
+    return sorted(selected, key=lambda item: str(item.get("created_at", "")))
 
 
 def health_failures(report: dict[str, Any]) -> list[str]:

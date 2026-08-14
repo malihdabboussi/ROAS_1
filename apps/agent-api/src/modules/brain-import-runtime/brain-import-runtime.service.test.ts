@@ -223,4 +223,49 @@ describe('BrainImportRuntimeService', () => {
       'http://main-api.local/api/internal/brain/import-jobs/import-job-1/succeed',
     )
   })
+
+  it('reads JSON-encoded OpenResponses output and fails instead of advancing the job', async () => {
+    const artifacts = {
+      proxyOpenClawResponses: vi.fn(async () => ({
+        content: JSON.stringify({
+          output: [
+            {
+              type: 'message',
+              content: [
+                {
+                  type: 'output_text',
+                  text: 'JOB_STATUS:failed — campaign capability rejected the save',
+                },
+              ],
+            },
+          ],
+        }),
+      })),
+    }
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.endsWith('/claim')) {
+        return new Response(JSON.stringify(makeClaimResponse()), { status: 200 })
+      }
+      return new Response(JSON.stringify({ success: true }), { status: 200 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const { agentRuntime, runtimeReadiness } = makeRuntimeDeps()
+    const service = new BrainImportRuntimeService(
+      makeConfig() as never,
+      artifacts as never,
+      agentRuntime as never,
+      runtimeReadiness as never,
+    )
+
+    await expect(service.execute('import-job-1')).resolves.toMatchObject({
+      status: 'failed',
+      message: 'Atlas could not process: campaign capability rejected the save',
+    })
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toContain(
+      'http://main-api.local/api/internal/brain/import-jobs/import-job-1/fail',
+    )
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain(
+      'http://main-api.local/api/internal/brain/import-jobs/import-job-1/succeed',
+    )
+  })
 })

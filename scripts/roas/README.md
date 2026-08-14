@@ -139,8 +139,9 @@ non-sensitive test query.
 
 Recovery is read-only unless `--apply` is supplied. Run it only after the
 fail-closed importer is deployed. It requeues at most 25 falsely successful
-jobs at a time, never replays genuine skips, and avoids an existing active job
-with the same dedupe key.
+periods at a time, never replays genuine skips, selects only the newest row when
+historical duplicates share a dedupe key, and skips a period if a live import
+wins the race to become active.
 
 ```bash
 python3 scripts/roas/audit_slack_brain_pipeline.py --org-id=<org-uuid> \

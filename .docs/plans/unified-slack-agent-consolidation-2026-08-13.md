@@ -1,7 +1,7 @@
 # Unified Slack Agent Consolidation
 
 Date: 2026-08-13  
-Status: Implemented on feature branches; production rollout pending merge and deploy
+Status: ROAS foundation deployed; bounded Brain recovery validation in progress
 
 ## Product model
 
@@ -81,17 +81,27 @@ semantic probe returned relevant historical Bonnie context. The newer Bonnie
 message is not retrievable because its import never produced a Campaign Brain
 memory, not because capture or vector search is broken.
 
+The first bounded replay exposed two additional runtime contract gaps. Platform
+agents receive `campaign_capability` as the backend action tool, with
+`atlas_save_brain_context` supplied in its `action` field; the original import
+prompt named the action as if it were a standalone tool. The runtime response
+also JSON-encoded its OpenResponses envelope inside a string field. Recovery is
+paused until both runtimes explicitly decode that bounded nested shape and the
+campaign prompt names the exposed wrapper. No broader replay should proceed on
+database success state alone.
+
 ## Rollout sequence
 
-1. Merge and deploy the ROAS importer and unified ledger branch.
-2. Merge and deploy the Page Grader structured QC producer branch.
-3. Apply `20260813170000_unified_agent_cases.sql` through the normal migration path.
+1. Merge and deploy the ROAS importer and unified ledger branch. **Complete.**
+2. Apply `20260813170000_unified_agent_cases.sql` through the normal migration path. **Complete.**
+3. Deploy and verify the JSON-envelope decoder and explicit platform capability-wrapper instructions.
 4. Run `audit_slack_brain_pipeline.py` read-only for the Wholesale Universe mapping.
 5. Replay only the six identified false-success jobs with the explicit fixed-runtime assertion, in a bounded batch.
 6. Wait for the import worker, then rerun the audit and require capture, terminal receipt, Campaign Brain memory, embedding coverage, and retrieval health.
 7. Confirm Bonnie's exact source period created both an `unanswered_ask` case and retrievable Campaign Brain context.
 8. Observe EOD refresh and one 24-hour breach cycle before expanding replay to other mappings.
-9. Keep `slack_open_items` as rollback state until one stable retention window; remove it in a later migration after parity checks.
+9. Merge and deploy the Page Grader structured QC producer branch after Brain recovery passes.
+10. Keep `slack_open_items` as rollback state until one stable retention window; remove it in a later migration after parity checks.
 
 The audit continues to report older credit-exhaustion failures as historical
 backlog, but live health fails only on a new failure within 48 hours. This keeps

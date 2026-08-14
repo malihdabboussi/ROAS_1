@@ -310,3 +310,23 @@ Why: Production proved that Slack capture could be healthy while the Campaign Br
 Impact: Operators can prove every stage of Slack knowledge flow, fail rollout health when evidence is missing, identify the six exact Wholesale Universe jobs needing post-deploy replay, and recover them without rewinding every mapping or exposing Brain content to an external retrieval provider by default.
 
 Files: `scripts/roas/audit_slack_brain_pipeline.py`, `scripts/roas/test_audit_slack_brain_pipeline.py`, `scripts/roas/README.md`, `.docs/plans/unified-slack-agent-consolidation-2026-08-13.md`.
+
+## [2026-08-13 17:38] - [FIX]
+
+What: Made Slack Brain recovery choose only the newest false-success row per user and import-period dedupe key, replay rows individually, and treat a concurrent active import as a safe skip instead of aborting the whole bounded batch.
+
+Why: The first post-deploy recovery write was rejected atomically because historical duplicate success rows would both violate the active-job uniqueness contract when changed to retry.
+
+Impact: No partial replay occurred. A retry batch can now recover independent canonical periods while preserving a newer live import as the winner, and the audit reports the exact Slack period on every candidate.
+
+Files: `scripts/roas/audit_slack_brain_pipeline.py`, `scripts/roas/test_audit_slack_brain_pipeline.py`, `scripts/roas/README.md`.
+
+## [2026-08-13 17:44] - [FIX]
+
+What: Taught both Brain import runtimes to decode bounded JSON-encoded response envelopes recursively, and changed Campaign Brain instructions to invoke `atlas_save_brain_context` through the exposed `campaign_capability` or `vibey_backend` tool.
+
+Why: The first bounded production replay returned an honest nested `JOB_STATUS:failed`, but the envelope was stored as a JSON string and the prompt named a backend action as though it were a standalone runtime tool.
+
+Impact: A nested Atlas failure can no longer be recorded as a successful import, and platform-mode campaign imports receive the exact tool-and-action contract required to write Slack knowledge into the Campaign Brain.
+
+Files: `apps/api/src/modules/brain/services/brain-import-jobs-execution.base.ts`, `apps/api/src/modules/brain/services/__tests__/brain-import-jobs.service.test.ts`, `apps/agent-api/src/modules/brain-import-runtime/services/brain-import-runtime.service.ts`, `apps/agent-api/src/modules/brain-import-runtime/brain-import-runtime.service.test.ts`, `.docs/plans/unified-slack-agent-consolidation-2026-08-13.md`.

@@ -83,6 +83,36 @@ class SlackBrainPipelineAuditTest(TestCase):
         self.assertTrue(result["passed"])
         self.assertEqual(result["lane"], "lexical")
 
+    def test_recovery_selects_only_newest_job_per_user_and_period(self) -> None:
+        jobs = [
+            {
+                "id": "old",
+                "user_id": "user-1",
+                "dedupe_key": "period-1",
+                "status": "succeeded",
+                "result": {"status": "completed"},
+                "created_at": "2026-08-01T00:00:00+00:00",
+            },
+            {
+                "id": "new",
+                "user_id": "user-1",
+                "dedupe_key": "period-1",
+                "status": "succeeded",
+                "result": {"status": "completed"},
+                "created_at": "2026-08-02T00:00:00+00:00",
+            },
+            {
+                "id": "active",
+                "user_id": "user-1",
+                "dedupe_key": "period-2",
+                "status": "succeeded",
+                "result": {"status": "completed"},
+                "created_at": "2026-08-03T00:00:00+00:00",
+            },
+        ]
+        selected = MODULE.select_recovery_candidates(jobs, {"period-2"}, 25)
+        self.assertEqual([row["id"] for row in selected], ["new"])
+
 
 if __name__ == "__main__":
     main()
