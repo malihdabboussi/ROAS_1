@@ -1,7 +1,7 @@
 # Unified Slack Agent Consolidation
 
 Date: 2026-08-13  
-Status: ROAS foundation deployed; bounded Brain recovery validation in progress
+Status: ROAS foundation deployed; direct Campaign Brain writer awaiting deployment
 
 ## Product model
 
@@ -72,9 +72,9 @@ The Wholesale Universe channel audit on 2026-08-13 found:
 - 39 captured Slack observations;
 - the correct mapping, client campaign container, and Campaign Brain;
 - zero channel-specific Slack memories in that Brain;
-- six jobs marked successful without a required terminal receipt;
+- five jobs marked successful with a nested failed terminal receipt and one intentional skip;
 - 38 older failed jobs, sampled failures caused by exhausted credits;
-- six exact false-success jobs eligible for bounded replay after the fixed runtime deploy.
+- four canonical false-success periods eligible for bounded replay after duplicate and intentional-skip filtering.
 
 Historical Slack-derived Campaign Brain memories are embedded and a prior real
 semantic probe returned relevant historical Bonnie context. The newer Bonnie
@@ -87,21 +87,36 @@ agents receive `campaign_capability` as the backend action tool, with
 prompt named the action as if it were a standalone tool. The runtime response
 also JSON-encoded its OpenResponses envelope inside a string field. Recovery is
 paused until both runtimes explicitly decode that bounded nested shape and the
-campaign prompt names the exposed wrapper. No broader replay should proceed on
-database success state alone.
+campaign prompt names the exposed wrapper. Those fixes deployed successfully,
+but the four-period replay exposed the final storage defect: the campaign branch
+inside `atlas_save_brain_context` routed to `save_document`. That route requires
+conversation context, does not create `ns_memories`, and drops the Slack source
+identity. The replacement writes the extracted insight directly to the mapped
+Campaign Brain, preserves source and temporal fields, creates its retrieval
+embedding before success, and rejects General as a target.
+
+The client-ask audit also found that the active five-minute Slack automation
+allows 171 channels but has only Dylan in `person_ids`. The current loop treats
+that list as a source-sender filter, advances its cursor past every other sender,
+and therefore never created Bonnie's `unanswered_ask` case. Expanding analysis
+to every sender in those client channels is a material production-scope change
+and requires explicit approval. Delivery can remain restricted to the existing
+internal recipient allowlist.
 
 ## Rollout sequence
 
 1. Merge and deploy the ROAS importer and unified ledger branch. **Complete.**
 2. Apply `20260813170000_unified_agent_cases.sql` through the normal migration path. **Complete.**
-3. Deploy and verify the JSON-envelope decoder and explicit platform capability-wrapper instructions.
-4. Run `audit_slack_brain_pipeline.py` read-only for the Wholesale Universe mapping.
-5. Replay only the six identified false-success jobs with the explicit fixed-runtime assertion, in a bounded batch.
-6. Wait for the import worker, then rerun the audit and require capture, terminal receipt, Campaign Brain memory, embedding coverage, and retrieval health.
-7. Confirm Bonnie's exact source period created both an `unanswered_ask` case and retrievable Campaign Brain context.
-8. Observe EOD refresh and one 24-hour breach cycle before expanding replay to other mappings.
-9. Merge and deploy the Page Grader structured QC producer branch after Brain recovery passes.
-10. Keep `slack_open_items` as rollback state until one stable retention window; remove it in a later migration after parity checks.
+3. Deploy and verify the JSON-envelope decoder and explicit platform capability-wrapper instructions. **Complete.**
+4. Run `audit_slack_brain_pipeline.py` read-only for the Wholesale Universe mapping. **Complete.**
+5. Replay only the four canonical false-success periods with the explicit fixed-runtime assertion. **Complete; exposed the document-route defect without creating memories.**
+6. Deploy the direct, embedded Campaign Brain writer and replay the same four canonical periods once.
+7. Wait for the import worker, then rerun the audit and require capture, terminal receipt, Campaign Brain memory, embedding coverage, and retrieval health.
+8. Confirm Bonnie's exact source period created retrievable Campaign Brain context.
+9. With explicit approval, analyze all senders in allowlisted client channels, backfill Bonnie's `unanswered_ask`, and verify its due time is exactly 24 hours after the source message.
+10. Observe EOD refresh and one 24-hour breach cycle before expanding replay to other mappings.
+11. Merge and deploy the Page Grader structured QC producer branch after Brain recovery passes.
+12. Keep `slack_open_items` as rollback state until one stable retention window; remove it in a later migration after parity checks.
 
 The audit continues to report older credit-exhaustion failures as historical
 backlog, but live health fails only on a new failure within 48 hours. This keeps

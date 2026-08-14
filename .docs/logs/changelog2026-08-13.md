@@ -350,6 +350,17 @@ Why: After the corrected runtime deployment, the audit still reported every repl
 Impact: Recovery now distinguishes real nested failures, completions, and intentional skips before changing any production job state, preventing false replays and false health reports.
 
 Files: `scripts/roas/audit_slack_brain_pipeline.py`, `scripts/roas/test_audit_slack_brain_pipeline.py`, `scripts/roas/README.md`.
+
+## [2026-08-13 18:12] - [FIX]
+
+What: Replaced the Atlas campaign router's document fallback with a direct Campaign Brain memory write that preserves Slack source/temporal identity and requires an embedding, and anchored unanswered-ask due times to the Slack source timestamp.
+
+Why: The bounded production replay proved Atlas was now choosing the correct wrapper action, but that action still delegated campaign knowledge to `save_document`, which needs conversation context and cannot populate `ns_memories`. Ask breaches were also starting from delayed analysis time instead of the original message time.
+
+Impact: Campaign imports can become source-grounded and intelligently retrievable from the mapped client Brain after deployment, General remains blocked as a client Brain target, failed embeddings fail closed, and the 24-hour response SLA is measured from the actual client ask.
+
+Files: `apps/agent-api/src/modules/artifacts/services/artifact-campaign-brain-context.service.ts`, `artifact-atlas-brain-context.service.ts`, `artifact-brain-scholar.service.test.ts`, `apps/agent-api/src/modules/artifacts/artifacts.module.ts`, `apps/api/src/modules/spaces/services/slack-open-items.service.ts`, `slack-open-items.service.test.ts`, `.docs/plans/unified-slack-agent-consolidation-2026-08-13.md`, `documentation/features/page-grader-campaign-brain-sync.md`.
+
 ## [2026-08-13 18:13] - [FIX]
 
 What: Made Home Quick Missions use the visible `?conv=` route as their source conversation and create a new scoped conversation when the route is blank, even if the persisted chat store still holds the previous conversation id.

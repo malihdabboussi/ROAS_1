@@ -232,7 +232,12 @@ function makeDbTarget(db: Db) {
     parseAgentIdFromSessionKey: vi.fn(() => 'atlas'),
     getUserClient: vi.fn(async () => userClient),
     embeddingService: {
+      computeContentHash: vi.fn(() => 'campaign-content-hash'),
       getEmbedding: vi.fn(async () => [0.1, 0.2, 0.3]),
+    },
+    memoriesRepo: {
+      checkDuplicate: vi.fn(async () => false),
+      create: vi.fn(async (_client, record) => ({ id: 'memory-1', ...record })),
     },
   }
 }
@@ -428,6 +433,140 @@ describe('ArtifactBrainScholarService agent brain access', () => {
       }),
       'agent:atlas:stub',
     )
+  })
+
+  it('writes campaign context directly to the embedded campaign brain with source identity', async () => {
+    const db: Db = {
+      campaigns: [
+        {
+          id: 'campaign-1',
+          name: 'Wholesale Universe',
+          org_id: 'org-1',
+          user_id: 'user-1',
+          config: {},
+        },
+      ],
+      ns_brains: [
+        {
+          id: 'brain-campaign-1',
+          campaign_id: 'campaign-1',
+          org_id: 'org-1',
+          scope: 'campaign',
+        },
+      ],
+    }
+    const target = makeDbTarget(db)
+    const handlers = new ArtifactBrainScholarService().getHandlers(target)
+
+    const result = await handlers.atlas_save_brain_context(
+      {
+        target_brain: 'campaign',
+        campaign_id: 'campaign-1',
+        content: 'The replay campaign needs booking attribution before more SMS budget is used.',
+        intent: 'decision',
+        source_type: 'slack_period',
+        source_id: 'slack:T1:C1:1786042676.000000',
+        source_title: 'Slack #roas-wholesale-universe',
+        occurred_at: '2026-08-06T18:57:56.000Z',
+      },
+      'agent:org-org-1-atlas:atlas-brain-job-1:1::campaign:campaign-1',
+    )
+
+    expect(result).toMatchObject({
+      success: true,
+      target_action: 'save_campaign_brain_context',
+      brain_id: 'brain-campaign-1',
+      memory_id: 'memory-1',
+    })
+    expect(target.embeddingService.getEmbedding).toHaveBeenCalledWith(
+      'The replay campaign needs booking attribution before more SMS budget is used.',
+      {
+        taskType: 'RETRIEVAL_DOCUMENT',
+        billing: { userId: 'user-1', orgId: 'org-1' },
+      },
+    )
+    expect(target.memoriesRepo.checkDuplicate).toHaveBeenCalledWith(
+      target.serviceClient,
+      'campaign-content-hash',
+      undefined,
+      'brain-campaign-1',
+    )
+    expect(target.memoriesRepo.create).toHaveBeenCalledWith(
+      target.serviceClient,
+      expect.objectContaining({
+        brain_id: 'brain-campaign-1',
+        memory_type: 'decision',
+        source_type: 'slack_period',
+        source_id: 'slack:T1:C1:1786042676.000000',
+        source_title: 'Slack #roas-wholesale-universe',
+        embedding: '[0.1,0.2,0.3]',
+        occurred_at: '2026-08-06T18:57:56.000Z',
+      }),
+    )
+  })
+
+  it('rejects General as a Campaign Brain write target', async () => {
+    const db: Db = {
+      campaigns: [
+        {
+          id: 'campaign-general',
+          name: 'General',
+          org_id: 'org-1',
+          user_id: 'user-1',
+          config: { system_kind: 'general' },
+        },
+      ],
+    }
+    const target = makeDbTarget(db)
+    const handlers = new ArtifactBrainScholarService().getHandlers(target)
+
+    const result = await handlers.atlas_save_brain_context(
+      {
+        target_brain: 'campaign',
+        campaign_id: 'campaign-general',
+        content: 'This client-wide decision must not be stored on General.',
+      },
+      'agent:atlas:stub',
+    )
+
+    expect(result).toMatchObject({
+      success: false,
+      error: 'Campaign Brain context cannot be saved to the General campaign.',
+    })
+    expect(target.memoriesRepo.create).not.toHaveBeenCalled()
+  })
+
+  it('fails closed when campaign context cannot be embedded for retrieval', async () => {
+    const db: Db = {
+      campaigns: [
+        {
+          id: 'campaign-1',
+          name: 'Wholesale Universe',
+          org_id: 'org-1',
+          user_id: 'user-1',
+          config: {},
+        },
+      ],
+      ns_brains: [{ id: 'brain-campaign-1', campaign_id: 'campaign-1' }],
+    }
+    const target = makeDbTarget(db)
+    target.embeddingService.getEmbedding.mockResolvedValueOnce(null as never)
+    const handlers = new ArtifactBrainScholarService().getHandlers(target)
+
+    const result = await handlers.atlas_save_brain_context(
+      {
+        target_brain: 'campaign',
+        campaign_id: 'campaign-1',
+        content: 'This insight must be retrievable before the save can succeed.',
+      },
+      'agent:atlas:stub',
+    )
+
+    expect(result).toMatchObject({
+      success: false,
+      error: 'Failed to create Campaign Brain retrieval embedding',
+    })
+    expect(target.memoriesRepo.create).not.toHaveBeenCalled()
   })
 
   it('returns user brain stats from the default brain', async () => {

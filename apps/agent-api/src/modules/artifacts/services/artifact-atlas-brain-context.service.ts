@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { temporalInsertFields } from '@vibey/api-shared'
 import { parseConversationIdFromSessionKey } from './artifact-action.registry'
 import { validateActionPreflight } from './artifact-action-preflight'
+import { ArtifactCampaignBrainContextService } from './artifact-campaign-brain-context.service'
 
 type AgentBrainResolver = (
   target: Record<string, any>,
@@ -11,6 +12,10 @@ type AgentBrainResolver = (
 
 @Injectable()
 export class ArtifactAtlasBrainContextService {
+  constructor(
+    private readonly campaignBrainContext: ArtifactCampaignBrainContextService = new ArtifactCampaignBrainContextService(),
+  ) {}
+
   async saveBrainContext(
     target: Record<string, any>,
     input: Record<string, unknown>,
@@ -183,11 +188,13 @@ export class ArtifactAtlasBrainContextService {
           error: 'campaign_id is required to save campaign context',
         }
       }
-      return this.callRoutedAction(
+      return this.campaignBrainContext.save(
         target,
-        'save_document',
-        { campaign_id: campaignId, title, content, document_type: 'brain_context' },
+        input,
         sessionKey,
+        campaignId,
+        content,
+        title,
       )
     }
 

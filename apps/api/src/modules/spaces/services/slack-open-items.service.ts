@@ -105,7 +105,9 @@ export class SlackOpenItemsService {
   ): Promise<void> {
     const kind = this.kindFor(input.signalKind, input.summary)
     if (!kind) return
-    const nowIso = input.now.toISOString()
+    const sourceDate = new Date(Number(input.sourceMessageTs) * 1000)
+    const firstSeenAt = Number.isFinite(sourceDate.getTime()) ? sourceDate : input.now
+    const firstSeenAtIso = firstSeenAt.toISOString()
     const sourceMetadata = input.sourceMetadata ?? {}
     const scope = await this.items.resolveSlackScope(supabase, {
       orgId: input.orgId,
@@ -124,11 +126,11 @@ export class SlackOpenItemsService {
       source_message_ts: input.sourceMessageTs,
       summary: input.summary,
       severity: kind === 'client_risk' ? 'high' : 'normal',
-      first_seen_at: nowIso,
-      last_activity_at: nowIso,
+      first_seen_at: firstSeenAtIso,
+      last_activity_at: firstSeenAtIso,
       due_at:
         kind === 'unanswered_ask'
-          ? new Date(input.now.getTime() + 24 * 60 * 60_000).toISOString()
+          ? new Date(firstSeenAt.getTime() + 24 * 60 * 60_000).toISOString()
           : null,
       breach_notified_at: null,
       snoozed_until: null,

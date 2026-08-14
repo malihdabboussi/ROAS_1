@@ -23,7 +23,7 @@ describe('SlackOpenItemsService', () => {
       clientLabel: 'Christian Osgood',
       slackTeamId: 'T1',
       channelId: 'C1',
-      sourceMessageTs: '1786400000.001',
+      sourceMessageTs: '1786390000.001',
       now: new Date('2026-08-10T20:00:00Z'),
       sourceMetadata: {
         page_grader_client_id: 'page-grader-client',
@@ -38,7 +38,7 @@ describe('SlackOpenItemsService', () => {
     })
     await service.record({} as never, {
       ...base,
-      sourceMessageTs: '1786400001.001',
+      sourceMessageTs: '1786390001.001',
       signalKind: 'client_risk',
       summary: 'Client is blocked on tracking.',
     })
@@ -49,12 +49,12 @@ describe('SlackOpenItemsService', () => {
       expect.objectContaining({
         case_type: 'unanswered_ask',
         source_type: 'slack_message',
-        source_key: 'C1:1786400000.001',
+        source_key: 'C1:1786390000.001',
         scope_level: 'client',
         program_id: 'program-clients',
         campaign_id: 'campaign-client',
-        due_at: '2026-08-11T20:00:00.000Z',
-        first_seen_at: '2026-08-10T20:00:00.000Z',
+        due_at: '2026-08-11T19:26:40.001Z',
+        first_seen_at: '2026-08-10T19:26:40.001Z',
       }),
     )
     expect(items.upsert).toHaveBeenNthCalledWith(

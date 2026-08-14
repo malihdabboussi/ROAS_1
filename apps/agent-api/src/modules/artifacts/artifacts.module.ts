@@ -85,6 +85,7 @@ import { ArtifactBrainPerspectiveActionsService } from './services/artifact-brai
 import { ArtifactBrainReadActionsService } from './services/artifact-brain-read-actions.service'
 import { ArtifactBrainSearchActionsService } from './services/artifact-brain-search-actions.service'
 import { ArtifactBrainTimelineActionsService } from './services/artifact-brain-timeline-actions.service'
+import { ArtifactCampaignBrainContextService } from './services/artifact-campaign-brain-context.service'
 import { ArtifactCampaignThemeService } from './services/artifact-campaign-theme.service'
 import { ArtifactContactsService } from './services/artifact-contacts.service'
 import { ArtifactConversationSearchService } from './services/artifact-conversation-search.service'
@@ -179,6 +180,7 @@ import { MissionContextEnricherService } from './services/mission-context-enrich
     ArtifactBrainReadActionsService,
     ArtifactBrainSearchActionsService,
     ArtifactBrainTimelineActionsService,
+    ArtifactCampaignBrainContextService,
     ArtifactOffersAdsService,
     ArtifactFunnelFileSupportService,
     ArtifactFunnelPageBundleService,
