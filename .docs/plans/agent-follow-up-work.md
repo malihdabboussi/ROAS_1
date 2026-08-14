@@ -1,3 +1,27 @@
+## 2026-08-14 - [FIX] Slack Brain import fails when the selected period has no messages
+
+Status: Open
+
+Found while: Pixel fill-from-brain and @ mention follow-up
+
+Evidence: UI toast "Import failed: Atlas could not process: The Slack period contains no message content to...". Runtime throws `Atlas could not process: ${reason}` from brain-import job status when Slack import is empty.
+
+Needed work: Return a Vibey empty-period message instead of a failed Atlas import, and skip/no-op when the chosen Slack window has no content.
+
+Reason not done now: Requested work was @ mention campaign tagging plus Pixel User Brain fill; this is a separate Atlas import path.
+
+## 2026-08-14 - [ARCH] BrainContextService is at the 600 LOC service limit
+
+Status: Open
+
+Found while: First-person fill User Brain query rewrite
+
+Evidence: `apps/agent-api/src/modules/brain/services/brain-context.service.ts` is 600 LOC after adding identity-query rewrite for fill-as-me requests. The architecture guideline caps services at 600 LOC.
+
+Needed work: Extract wiki context and timing helpers before adding more retrieval branches.
+
+Reason not done now: The requested fill-from-brain rewrite is a two-line query swap; splitting the service is adjacent debt.
+
 ## 2026-08-05 - [ARCH] SlackService near 600 LOC after digest reply enrichment
 
 Status: Open

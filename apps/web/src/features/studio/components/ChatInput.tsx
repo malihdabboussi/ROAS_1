@@ -433,7 +433,6 @@ export function ChatInput({
     setAtArtifactMoreByType: atMentionController.setAtArtifactMoreByType,
     setAtMediaCollapsedByType: atMentionController.setAtMediaCollapsedByType,
     setAtMediaMoreByType: atMentionController.setAtMediaMoreByType,
-    onCampaignSelect: handleCampaignSelect,
     onAtSelect: handleAtSelect,
     slashMenuOpen,
     slashVisibleItems: slashMenuLayout.visibleFlat,

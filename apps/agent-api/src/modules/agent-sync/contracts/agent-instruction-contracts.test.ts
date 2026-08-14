@@ -103,6 +103,11 @@ describe('agent instruction contracts', () => {
     expect(text).toContain('cross-Brain search only for multiple/all brains')
     expect(text).toContain('curated knowledge pages')
     expect(text).toContain('context is insufficient')
+    expect(text).toContain('first-person fill')
+    expect(text).toContain("do not send that work to Atlas")
+    expect(contract.examples.map((example) => example.userRequest).join('\n')).toContain(
+      'help me fill this out',
+    )
   })
 
   it('defines Skill usage as workflow guidance layered over action contracts', () => {

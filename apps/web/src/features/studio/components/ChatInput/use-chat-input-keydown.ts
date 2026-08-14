@@ -44,7 +44,6 @@ export interface UseChatInputKeyDownOptions {
   setAtArtifactMoreByType: Dispatch<SetStateAction<Record<string, boolean>>>
   setAtMediaCollapsedByType: Dispatch<SetStateAction<Record<string, boolean>>>
   setAtMediaMoreByType: Dispatch<SetStateAction<Record<string, boolean>>>
-  onCampaignSelect: (campaign: { id: string; name: string }) => void
   onAtSelect: (item: AtMentionItem, sourceCampaignId?: string) => void
   slashMenuOpen: boolean
   slashVisibleItems: readonly SlashItem[]
@@ -87,7 +86,6 @@ export function useChatInputKeyDown({
   setAtArtifactMoreByType,
   setAtMediaCollapsedByType,
   setAtMediaMoreByType,
-  onCampaignSelect,
   onAtSelect,
   slashMenuOpen,
   slashVisibleItems,
@@ -138,7 +136,6 @@ export function useChatInputKeyDown({
             setCrossCampaignId(null)
           },
           onAtHighlightChange: setAtHighlight,
-          onCampaignSelect,
           onAtSelect,
           onToggleArtifactCollapsed: (typeKey) =>
             setAtArtifactCollapsedByType((prev) => ({
@@ -216,7 +213,6 @@ export function useChatInputKeyDown({
       hasPastedBlocks,
       mediaRows,
       onAtSelect,
-      onCampaignSelect,
       onSend,
       onSendNow,
       onSlashSelect,
