@@ -71,6 +71,26 @@ describe('AgentTurnFeedbackActions', () => {
     expect(onFork).toHaveBeenCalledTimes(1)
   })
 
+  it('replaces chat feedback controls with Reply when feedback is disabled', () => {
+    const onReply = vi.fn()
+
+    render(
+      <AgentTurnFeedbackActions
+        targetKind="conversation_message"
+        targetId={TARGET_ID}
+        sourceSurface="assistant_message"
+        content="Ready to help"
+        showFeedback={false}
+        onReply={onReply}
+      />,
+    )
+
+    expect(screen.queryByRole('button', { name: /thumbs up/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /thumbs down/i })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /reply to message/i }))
+    expect(onReply).toHaveBeenCalledOnce()
+  })
+
   it('saves a thumb vote immediately and opens the detail popover', async () => {
     apiMocks.lookupAgentTurnFeedback.mockResolvedValueOnce({ feedback: [] })
     apiMocks.saveAgentTurnFeedback.mockResolvedValue({

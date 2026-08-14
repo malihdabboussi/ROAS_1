@@ -7,6 +7,12 @@ afterEach(cleanup)
 
 const references: MessageReference[] = [
   { kind: 'conversation', id: 'conversation-1', label: 'Hidden conversation' },
+  {
+    kind: 'conversation',
+    id: 'conversation-1',
+    label: 'Reply to assistant: Launch the client strategy',
+    type: 'message:assistant-1',
+  },
   { kind: 'artifact', id: 'artifact-local', label: 'Hidden local artifact' },
   { kind: 'artifact', id: 'artifact-cross', label: 'Cross artifact', campaign_id: 'campaign-1' },
   { kind: 'media', id: 'media-1', label: 'Media asset' },
@@ -24,6 +30,7 @@ describe('ChatInputReferenceChips', () => {
     )
 
     expect(screen.queryByText('Hidden conversation')).toBeNull()
+    expect(screen.getByText('Reply to assistant: Launch the client strategy')).toBeTruthy()
     expect(screen.queryByText('Hidden local artifact')).toBeNull()
     expect(screen.getByText('Cross artifact').className).toContain('max-w-36')
     expect(screen.getByText('Media asset')).toBeTruthy()
@@ -47,7 +54,7 @@ describe('ChatInputReferenceChips', () => {
   it('renders nothing when no visible references remain', () => {
     const { container } = render(
       <ChatInputReferenceChips
-        references={[references[0]!, references[1]!]}
+        references={[references[0]!]}
         chipRowClassName="px-spacing-4"
         onRemove={vi.fn()}
       />,

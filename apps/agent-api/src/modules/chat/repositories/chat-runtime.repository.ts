@@ -167,14 +167,14 @@ export class ChatRuntimeRepository {
 
   async listConversationReferenceMessages(
     supabase: SupabaseClient,
-    input: { conversationId: string; limit: number },
+    input: { conversationId: string; messageId?: string; limit: number },
   ): Promise<Array<{ role: string; content: string | null }>> {
-    const { data } = await this.table(supabase, 'messages')
+    let query = this.table(supabase, 'messages')
       .select('id, role, content, created_at')
       .eq('conversation_id', input.conversationId)
       .in('role', ['user', 'assistant'])
-      .order('created_at', { ascending: false })
-      .limit(input.limit)
+    if (input.messageId) query = query.eq('id', input.messageId)
+    const { data } = await query.order('created_at', { ascending: false }).limit(input.limit)
     return (data ?? []) as Array<{ role: string; content: string | null }>
   }
 
