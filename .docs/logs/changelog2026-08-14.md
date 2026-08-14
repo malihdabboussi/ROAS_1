@@ -12,10 +12,10 @@ Files: `apps/web/src/components/shell/*`, `apps/web/src/components/global-chat/l
 
 ## 2026-08-14 10:54 - [FIX]
 
-What: Connected exact-message Reply seeds to the Studio home chat composer and restored the referenced message chip before send.
+What: Routed exact-message Reply seeds through the active chat Space/Campaign context so the mounted composer restores the referenced message chip before send.
 
-Why: Production verification showed that the Reply action dispatched the shared composer event, but the Studio `ChatInterface` did not restore message references from that event.
+Why: Production verification showed that contextless Reply seeds were correctly rejected by the Space-scoped chat panel, leaving the composer unchanged.
 
 Impact: Reply now visibly attaches the selected assistant message in the active conversation and sends that exact reference to the agent context pipeline.
 
-Files: `apps/web/src/features/studio/components/ChatInput/use-restored-message-references.ts`, `apps/web/src/features/studio/components/ChatInput/use-restored-message-references.test.ts`.
+Files: `apps/web/src/features/studio/components/message-bubble/AssistantActions.tsx`, `apps/web/src/features/studio/components/message-bubble/AssistantActions.test.tsx`.

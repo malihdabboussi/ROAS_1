@@ -32,10 +32,12 @@ export function AssistantActions({
   const handleReply = useCallback(() => {
     if (!conversationId || !messageId) return
     const excerpt = content.replace(/\s+/g, ' ').trim().slice(0, 160)
+    const workContext = useGlobalChatStore.getState().workContext
     useGlobalChatStore.getState().seedComposer({
       content: '',
       conversationId,
       seedMode: 'attach',
+      workContext,
       references: [
         {
           kind: 'conversation',

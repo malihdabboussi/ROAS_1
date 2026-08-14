@@ -25,7 +25,7 @@ vi.mock('../../services/chat.service', () => ({
 
 afterEach(() => {
   cleanup()
-  useGlobalChatStore.setState({ pendingSeed: null })
+  useGlobalChatStore.setState({ pendingSeed: null, workContext: { surface: 'general' } })
   vi.clearAllMocks()
 })
 
@@ -56,6 +56,13 @@ describe('AssistantActions', () => {
   })
 
   it('replies with an exact message reference instead of rating the chat turn', () => {
+    useGlobalChatStore.setState({
+      workContext: {
+        surface: 'spaces',
+        spaceId: 'space-1',
+        campaignId: 'campaign-1',
+      },
+    })
     render(
       <AssistantActions
         content="Launch the client strategy and keep it running."
@@ -73,6 +80,11 @@ describe('AssistantActions', () => {
     expect(useGlobalChatStore.getState().pendingSeed).toMatchObject({
       conversationId: '44444444-4444-4444-8444-444444444444',
       seedMode: 'attach',
+      workContext: {
+        surface: 'spaces',
+        spaceId: 'space-1',
+        campaignId: 'campaign-1',
+      },
       references: [
         {
           kind: 'conversation',
