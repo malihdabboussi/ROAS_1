@@ -18,7 +18,7 @@ describe('QuickMissionsHubModal', () => {
     vi.clearAllMocks()
   })
 
-  it('defaults to the contextual client and reports the launched mission to chat wiring', async () => {
+  it('prefills but requires confirmation of the contextual client before mission context', async () => {
     vi.mocked(createMission).mockResolvedValue({ id: 'mission-1' } as never)
     const onStarted = vi.fn()
 
@@ -37,7 +37,10 @@ describe('QuickMissionsHubModal', () => {
       />,
     )
 
-    expect(screen.queryByText('Searchable campaign and space picker')).not.toBeInTheDocument()
+    expect(screen.getByText('Choose the client campaign.')).toBeInTheDocument()
+    expect(screen.getByText('Searchable campaign and space picker')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+
     expect(screen.getByRole('button', { name: /Static ad book/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Write for me' })).toHaveClass('button-glass-primary')
 
@@ -96,6 +99,7 @@ describe('QuickMissionsHubModal', () => {
       />,
     )
 
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
     fireEvent.click(screen.getByRole('button', { name: 'Run mission' }))
 
     expect(onClose).toHaveBeenCalledTimes(1)
@@ -129,6 +133,7 @@ describe('QuickMissionsHubModal', () => {
       />,
     )
 
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
     fireEvent.click(screen.getByRole('button', { name: 'Run mission' }))
 
     await waitFor(() =>
@@ -182,6 +187,7 @@ describe('QuickMissionsHubModal', () => {
       />,
     )
 
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
     expect(screen.getByRole('button', { name: 'Write for me' })).toHaveClass('button-glass-primary')
     fireEvent.change(screen.getByLabelText('Offer and audience context'), {
       target: { value: 'A course for agency owners.' },

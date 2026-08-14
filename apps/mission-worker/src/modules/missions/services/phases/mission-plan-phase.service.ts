@@ -14,6 +14,20 @@ import { UserNotificationEmitterService } from '../user-notification-emitter.ser
 import { MissionJsonService } from '../utils/mission-json.service'
 import { MissionPhaseSupportService } from './mission-phase-support.service'
 
+const AGENCY_TEAM_PLAYBOOK_IDS = new Set([
+  'client-strategy',
+  'webinar-fulfillment',
+  'ads-research',
+  'ig-organic-video-ad',
+  'static-ad-production',
+  'meta-ads-launch',
+  'meta-ads-audit',
+])
+
+export function requiresAgencyTeamEnsure(playbookId: string): boolean {
+  return AGENCY_TEAM_PLAYBOOK_IDS.has(playbookId)
+}
+
 @Injectable()
 export class MissionPlanPhaseService {
   private readonly logger = new Logger(MissionPlanPhaseService.name)
@@ -67,17 +81,7 @@ export class MissionPlanPhaseService {
           : {}
       const playbookIdEarly = resolveMissionPlaybookId(missionInputEarly)
 
-      if (
-        [
-          'webinar-fulfillment',
-          'ads-research',
-          'ig-organic-video-ad',
-          'static-ad-production',
-          'meta-ads-launch',
-          'meta-ads-audit',
-        ].includes(playbookIdEarly) &&
-        mission.campaign_id
-      ) {
+      if (requiresAgencyTeamEnsure(playbookIdEarly) && mission.campaign_id) {
         await this.ensureWebinarFulfillmentTeam(mission, playbookIdEarly)
       }
 

@@ -117,7 +117,7 @@ export function QuickMissionsHubModal({
     if (!open) return
     const preset = initialPlaybookKey ? findQuickMissionByKey(initialPlaybookKey) : null
     setSelected(preset ?? null)
-    setStep(preset ? (initialClientSpaceId ? 'context' : 'client') : 'mission')
+    setStep(preset ? 'client' : 'mission')
     setClientSpaceId(initialClientSpaceId ?? '')
     setWebinar(EMPTY_WEBINAR)
     setStaticFields(EMPTY_STATIC_AD_FIELDS)
@@ -303,7 +303,7 @@ export function QuickMissionsHubModal({
                 }
                 onClick={() => {
                   if (step === 'mission') {
-                    setStep(selectedClient ? 'context' : 'client')
+                    setStep('client')
                     return
                   }
                   if (step === 'client') {

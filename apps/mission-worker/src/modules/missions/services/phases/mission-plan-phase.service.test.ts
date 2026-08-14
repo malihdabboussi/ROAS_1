@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MissionPhaseSupportService } from './mission-phase-support.service'
-import { MissionPlanPhaseService } from './mission-plan-phase.service'
+import { MissionPlanPhaseService, requiresAgencyTeamEnsure } from './mission-plan-phase.service'
 
 describe('MissionPlanPhaseService plan callback', () => {
   const originalFetch = global.fetch
@@ -8,6 +8,10 @@ describe('MissionPlanPhaseService plan callback', () => {
   afterEach(() => {
     global.fetch = originalFetch
     vi.useRealTimers()
+  })
+
+  it('ensures the agency team before planning a client strategy mission', () => {
+    expect(requiresAgencyTeamEnsure('client-strategy')).toBe(true)
   })
 
   it('aborts and rejects a stalled plan callback instead of leaving the mission in Planning', async () => {

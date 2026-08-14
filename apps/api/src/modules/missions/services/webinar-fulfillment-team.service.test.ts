@@ -10,6 +10,7 @@ describe('WebinarFulfillmentTeamService playbook support', () => {
   )
 
   it('provisions the agency roster for every guided agency playbook', () => {
+    expect(service.supportsPlaybook('client-strategy')).toBe(true)
     expect(service.supportsPlaybook('webinar-fulfillment')).toBe(true)
     expect(service.supportsPlaybook('ads-research')).toBe(true)
     expect(service.supportsPlaybook('ig-organic-video-ad')).toBe(true)

@@ -46,7 +46,9 @@ describe('ConversationHeaderTitle', () => {
       'group-hover:opacity-100',
       'group-focus-visible:opacity-100',
     )
-    expect(pencil?.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(
+      pencil && pencil.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
   })
 
   it('enters rename mode when the adjacent conversation menu requests it', () => {
