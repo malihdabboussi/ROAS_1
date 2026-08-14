@@ -48,6 +48,10 @@ describe('shell empty chat prompts', () => {
       fireEvent.click(screen.getByRole('button', { name: quickStart.label }))
       if (quickStart.action === 'mission') {
         expect(screen.getByTestId('mission-open-state')).toHaveTextContent('true')
+        expect(screen.getByRole('button', { name: quickStart.label })).toHaveAttribute(
+          'aria-expanded',
+          'true',
+        )
         expect(onSelect).not.toHaveBeenCalled()
       } else {
         expect(onSelect).toHaveBeenLastCalledWith(quickStart)

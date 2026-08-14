@@ -179,3 +179,13 @@ Why: Exact-production testing on the merged surface-host deployment proved that 
 Impact: Every Mission trigger and its modal host now share one deterministic React tree, with isolated launcher state per chat surface and no dependency on cross-chunk singleton identity.
 
 Files: `apps/web/src/lib/missions/quick-missions-launcher.ts`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-selection-handlers.ts`, related tests, `documentation/features/missions.md`.
+
+## [2026-08-13 17:09] - [FIX]
+
+What: Routed Mission selections through the stable `create-mission` catalog id instead of optional action metadata, and added dialog expansion semantics to the Mission quick-start button.
+
+Why: Exact-production testing on the tree-scoped launcher deployment still showed Mission falling through without a dialog while Document from the same catalog seeded the composer successfully.
+
+Impact: Empty-chat and summary Create surfaces recognize Mission from the canonical catalog identity, while production verification can directly observe whether the launcher state opened through `aria-expanded`.
+
+Files: `apps/web/src/components/shell/shell-create-menu.config.ts`, `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/shell/ShellEmptyChatPrompts.test.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `documentation/features/missions.md`.

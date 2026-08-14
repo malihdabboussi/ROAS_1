@@ -39,6 +39,12 @@ export interface ShellCreateMenuGroup {
   items: ShellCreateMenuItem[]
 }
 
+export const SHELL_MISSION_CREATE_ITEM_ID = 'create-mission'
+
+export function isShellMissionCreateItem(item: Pick<ShellCreateMenuItem, 'id'>) {
+  return item.id === SHELL_MISSION_CREATE_ITEM_ID
+}
+
 export function findShellCreateMenuItem(id: string): ShellCreateMenuItem | null {
   for (const group of SHELL_CREATE_MENU_GROUPS) {
     const item = group.items.find((entry) => entry.id === id)
@@ -53,7 +59,7 @@ export const SHELL_CREATE_MENU_GROUPS: ShellCreateMenuGroup[] = [
     label: 'Start With',
     items: [
       {
-        id: 'create-mission',
+        id: SHELL_MISSION_CREATE_ITEM_ID,
         label: 'Mission',
         icon: Rocket,
         iconName: 'rocket',
