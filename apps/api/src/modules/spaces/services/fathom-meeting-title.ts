@@ -12,7 +12,7 @@ export function stripMeetingTitlePrefix(title: string): string {
     .trim()
 }
 
-export const PROVISIONAL_FATHOM_MEETING_TITLE = 'Call (naming…)'
+export const PROVISIONAL_FATHOM_MEETING_TITLE = 'Recorded call'
 
 /** Provisional title while AI rename runs — never "Meeting:" / "Fathom meeting:". */
 export function provisionalFathomMeetingTitle(rawTitle: string): string {
@@ -47,7 +47,12 @@ export function fallbackCeoMeetingTitle(input: {
   }
 
   const names = (input.attendees ?? [])
-    .map((a) => String(a?.name ?? '').trim().split(/\s+/)[0] ?? '')
+    .map(
+      (a) =>
+        String(a?.name ?? '')
+          .trim()
+          .split(/\s+/)[0] ?? '',
+    )
     .filter(Boolean)
   const unique = [...new Set(names)].slice(0, 2)
   if (unique.length >= 2) {
@@ -56,7 +61,7 @@ export function fallbackCeoMeetingTitle(input: {
   if (unique.length === 1) {
     return sanitizeCeoMeetingTitle(`${unique[0]} personal check-in`)
   }
-  return null
+  return 'Recorded call follow-up'
 }
 
 function extractMeetingPurpose(summary: string): string | null {

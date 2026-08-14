@@ -419,6 +419,19 @@ describe('meetings-precall-prep.helpers', () => {
     expect(new Date(row.end).getTime()).toBeGreaterThan(new Date(row.start).getTime())
   })
 
+  it('replaces legacy provisional naming labels in agenda rows', () => {
+    const row = buildMeetingAgendaEvent({
+      spaceId: 'space-1',
+      callItemId: 'call-naming',
+      title: 'Call (naming…)',
+      callDate: '2026-08-13T16:00:00.000Z',
+      recordingUrl: null,
+    })
+
+    expect(row.title).toBe('Recorded call')
+    expect(row.related.title).toBe('Recorded call')
+  })
+
   it('builds a Meetings agenda row before an impromptu call receives its recording', () => {
     const row = buildMeetingAgendaEvent({
       spaceId: 'space-1',
