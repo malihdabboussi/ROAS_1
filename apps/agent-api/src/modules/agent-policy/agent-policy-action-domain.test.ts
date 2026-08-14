@@ -198,7 +198,6 @@ describe('AgentPolicyService.canExecuteAction', () => {
       'read_space_context',
       'read_brain_personal',
     ])
-    vi.spyOn(service as any, 'isSystemAgent').mockResolvedValue(false)
 
     await expect(
       service.canAgentUseCapability('ivy', 'campaign_context', '*', {
@@ -520,12 +519,6 @@ describe('AgentPolicyService.canExecuteAction', () => {
     await expect(
       service.listAllowedBrainSearchFamilies('vibey', { orgId: 'org-1', userId: null }),
     ).resolves.toEqual(['user', 'agent', 'company', 'customer'])
-    await expect(
-      service.canAgentUseCapability('vibey', 'brain_access', 'personal', {
-        orgId: 'org-1',
-        userId: null,
-      }),
-    ).resolves.toBe(true)
   })
 
   it('allows Atlas and Vibey to propose company cortex signals; blocks managed agents', async () => {

@@ -61,48 +61,8 @@ export function pushMissionItems(items: AtMentionItem[], result: PromiseSettledR
   }
 }
 
-export type CampaignMentionRow = {
-  id: string
-  name: string
-  updatedAt: string
-  isSystem: boolean
-}
-
-function isSystemCampaignConfig(config: unknown): boolean {
-  if (!config || typeof config !== 'object' || Array.isArray(config)) return false
-  const record = config as Record<string, unknown>
-  const systemKind = typeof record.system_kind === 'string' ? record.system_kind : ''
-  return record.isSystem === true || systemKind === 'personal' || systemKind === 'general'
-}
-
-export function asCampaignRows(value: unknown): CampaignMentionRow[] {
-  if (!Array.isArray(value)) return []
-  const rows: CampaignMentionRow[] = []
-  for (const row of value) {
-    if (!row || typeof row !== 'object' || Array.isArray(row)) continue
-    const record = row as {
-      id?: unknown
-      name?: unknown
-      updated_at?: unknown
-      config?: unknown
-    }
-    if (typeof record.id !== 'string' || record.id.length === 0) continue
-    const name = typeof record.name === 'string' ? record.name.trim() : ''
-    rows.push({
-      id: record.id,
-      name: name.length > 0 ? name : 'Untitled',
-      updatedAt: typeof record.updated_at === 'string' ? record.updated_at : '',
-      isSystem: isSystemCampaignConfig(record.config),
-    })
-  }
-  return rows
-}
-
-export function sortCampaignMentionRows(rows: CampaignMentionRow[]): CampaignMentionRow[] {
-  return [...rows].sort((left, right) => {
-    if (left.isSystem !== right.isSystem) return left.isSystem ? 1 : -1
-    return right.updatedAt.localeCompare(left.updatedAt)
-  })
+export function asCampaignRows(value: unknown): Array<{ id: string; name: string | null }> {
+  return Array.isArray(value) ? (value as Array<{ id: string; name: string | null }>) : []
 }
 
 export function sameAtMentionItems(a: AtMentionItem[], b: AtMentionItem[]): boolean {

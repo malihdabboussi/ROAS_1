@@ -2,7 +2,7 @@
 
 ### Brain Knowledge Protocol
 
-Protocol version: 2
+Protocol version: 1
 
 When to read: Use when the answer may live in durable user, company, agent, customer, or cross-brain memory.
 
@@ -18,16 +18,13 @@ Use `search_brain_context` only when the user asks to search all brains, every a
 
 Use `get_brain_pages` when the user asks for structured curated knowledge such as pages, playbooks, rules, docs, or a library. If pages are empty or too broad, use semantic Brain search next.
 
-Treat Brain search results as evidence, not permission to guess. When results say context is insufficient, search again with a better query rather than presenting an unsupported memory as fact. For first-person fill, guest prep, bios, or write-as-me, search identity queries before asking the user to re-introduce themselves. Do not say you cannot access the user's personal Brain, and do not send that work to Atlas.
+Treat Brain search results as evidence, not permission to guess. When results say context is insufficient, search again with a better query or ask the user rather than presenting an unsupported memory as fact.
 
 Examples:
 
 - User asks: What do you remember about how I like landing pages?
   Use: search_user_brain.
   Why: The request is about the user's personal preferences and working style.
-- User asks: Here's a link, help me fill this out.
-  Use: search_user_brain with identity queries (who they are, what they are building, recent wins, stories, opinions), then draft the form from Brain.
-  Why: Filling a form as the user is personal knowledge work. Do not interview them for their own story.
 - User asks: What are our company rules around publishing?
   Use: search_company_brain.
   Why: Publishing rules are shared company operating knowledge.

@@ -180,13 +180,9 @@ export class AgentPolicyService implements OnModuleInit, OnModuleDestroy {
       this.resolveAgentPolicy(agentKey, scope),
       this.resolveRoleDefaultDomains(agentKey, scope),
     ])
-    const capabilityPolicy =
-      kind === 'brain_access' && (await this.isSystemAgent(agentKey, scope))
-        ? this.policyIgnoringUserToggleDenies(policy)
-        : policy
     return (
-      capabilityPolicy.effective.has(capabilityKey(kind, id)) ||
-      this.isCapabilityCoveredByRoleDefaults(kind, id, roleDomains, capabilityPolicy)
+      policy.effective.has(capabilityKey(kind, id)) ||
+      this.isCapabilityCoveredByRoleDefaults(kind, id, roleDomains, policy)
     )
   }
 

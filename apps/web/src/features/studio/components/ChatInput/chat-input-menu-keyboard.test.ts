@@ -50,6 +50,7 @@ function defaultOptions(
     onCloseAtMenu: vi.fn(),
     onExitCrossCampaign: vi.fn(),
     onAtHighlightChange: vi.fn(),
+    onCampaignSelect: vi.fn(),
     onAtSelect: vi.fn(),
     onToggleArtifactCollapsed: vi.fn(),
     onShowAllArtifacts: vi.fn(),
@@ -125,11 +126,7 @@ describe('handleChatInputMenuKeyDown', () => {
 
     expect(handleChatInputMenuKeyDown(campaignOptions)).toBe(true)
     expect(campaignEvent.preventDefault).toHaveBeenCalled()
-    expect(campaignOptions.onAtSelect).toHaveBeenCalledWith({
-      id: 'campaign-b',
-      label: 'Campaign B',
-      section: 'campaign',
-    })
+    expect(campaignOptions.onCampaignSelect).toHaveBeenCalledWith(campaign)
 
     const artifact = atItem('offer-a')
     const artifactRows: StudioArtifactNavRow[] = [

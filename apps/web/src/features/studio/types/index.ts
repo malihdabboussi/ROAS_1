@@ -190,13 +190,7 @@ export interface HighlightedArtifact {
   label: string
 }
 
-export type MessageReferenceKind =
-  | 'artifact'
-  | 'media'
-  | 'mission'
-  | 'conversation'
-  | 'person'
-  | 'campaign'
+export type MessageReferenceKind = 'artifact' | 'media' | 'mission' | 'conversation' | 'person'
 
 export interface MessageReference {
   kind: MessageReferenceKind

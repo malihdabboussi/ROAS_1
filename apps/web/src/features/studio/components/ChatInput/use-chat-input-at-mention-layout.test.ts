@@ -86,53 +86,6 @@ describe('useChatInputAtMentionLayout', () => {
     })
   })
 
-  it('lists every campaign instead of a 3-item preview and switches to Campaigns for campaign-only queries', async () => {
-    const { result } = renderHook((props) => useLayoutHarness(props), {
-      initialProps: defaultOptions({
-        atMenuOpen: true,
-        atQuery: 'plan',
-        atItems: [],
-        otherCampaigns: [
-          { id: 'campaign-2', name: 'Launch Plan' },
-          { id: 'campaign-3', name: 'Other Campaign' },
-          { id: 'campaign-4', name: 'Plan B' },
-          { id: 'campaign-5', name: 'Plan C' },
-        ],
-      }),
-    })
-
-    await waitFor(() => {
-      expect(result.current.layout.atMenuTab).toBe('campaigns')
-    })
-    expect(result.current.layout.atComposerNavSlice).toEqual({
-      kind: 'campaigns',
-      items: [
-        { id: 'campaign-2', name: 'Launch Plan' },
-        { id: 'campaign-4', name: 'Plan B' },
-        { id: 'campaign-5', name: 'Plan C' },
-      ],
-    })
-
-    act(() => result.current.layout.setAtMenuTab('campaigns'))
-    const { result: allResult } = renderHook((props) => useLayoutHarness(props), {
-      initialProps: defaultOptions({
-        atMenuOpen: true,
-        atQuery: '',
-        otherCampaigns: [
-          { id: 'campaign-2', name: 'One' },
-          { id: 'campaign-3', name: 'Two' },
-          { id: 'campaign-4', name: 'Three' },
-          { id: 'campaign-5', name: 'Four' },
-        ],
-      }),
-    })
-    act(() => allResult.current.layout.setAtMenuTab('campaigns'))
-    expect(allResult.current.layout.atComposerNavSlice.kind).toBe('campaigns')
-    if (allResult.current.layout.atComposerNavSlice.kind === 'campaigns') {
-      expect(allResult.current.layout.atComposerNavSlice.items).toHaveLength(4)
-    }
-  })
-
   it('filters campaign matches and switches nav slices by active tab', () => {
     const { result } = renderHook((props) => useLayoutHarness(props), {
       initialProps: defaultOptions({

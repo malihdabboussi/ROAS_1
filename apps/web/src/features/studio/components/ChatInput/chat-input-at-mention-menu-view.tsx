@@ -117,38 +117,19 @@ export const ChatInputAtMentionMenuView = forwardRef<
   ) : navSlice.kind === 'campaigns' ? (
     <div className="py-1">
       {navSlice.items.map((campaign, index) => (
-        <div
+        <button
           key={campaign.id}
-          className={rowCls(index === atHighlight)}
+          type="button"
+          onMouseDown={(event) => preventAndRun(event, () => onCampaignSelect(campaign))}
           onMouseEnter={() => onHighlight(index)}
+          className={rowCls(index === atHighlight)}
         >
-          <button
-            type="button"
-            onMouseDown={(event) =>
-              preventAndRun(event, () =>
-                onAtSelect({
-                  id: campaign.id,
-                  label: campaign.name,
-                  section: 'campaign',
-                }),
-              )
-            }
-            className="gap-spacing-2 flex min-w-0 flex-1 items-center text-left"
-          >
-            <Globe className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-            <span className="body-3 text-foreground min-w-0 flex-1 truncate">
-              {campaign.name}
-            </span>
-          </button>
-          <button
-            type="button"
-            aria-label={`Browse ${campaign.name}`}
-            onMouseDown={(event) => preventAndRun(event, () => onCampaignSelect(campaign))}
-            className="flex h-8 w-8 shrink-0 items-center justify-center"
-          >
-            <ChevronRight aria-hidden className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-          </button>
-        </div>
+          <Globe className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+          <span className="body-3 text-foreground min-w-0 flex-1 truncate">
+            {campaign.name}
+          </span>
+          <ChevronRight aria-hidden className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+        </button>
       ))}
     </div>
   ) : activeTab === 'artifacts' ? (

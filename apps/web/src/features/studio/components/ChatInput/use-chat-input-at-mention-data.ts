@@ -5,7 +5,6 @@ import type { AtMentionItem } from './chat-input-at-mentions'
 import {
   asCampaignRows,
   asEntitySearchResults,
-  sortCampaignMentionRows,
   pushMediaItems,
   pushMissionItems,
   pushNamedArtifacts,
@@ -105,11 +104,10 @@ export function useChatInputAtMentionData({
       if (otherCampaignsLoadedRef.current) return
       otherCampaignsLoadedRef.current = true
       try {
-        const others = sortCampaignMentionRows(
-          asCampaignRows(await fetchJson('/api/campaigns')).filter(
-            (campaign) => campaign.id !== currentCampaignId,
-          ),
-        ).map((campaign) => ({ id: campaign.id, name: campaign.name }))
+        const data = asCampaignRows(await fetchJson('/api/campaigns'))
+        const others = data
+          .filter((campaign) => campaign.id !== currentCampaignId)
+          .map((campaign) => ({ id: campaign.id, name: campaign.name ?? 'Untitled' }))
         setOtherCampaigns((prev) => (sameCampaignRows(prev, others) ? prev : others))
       } catch {
         setOtherCampaigns((prev) => (prev.length === 0 ? prev : []))

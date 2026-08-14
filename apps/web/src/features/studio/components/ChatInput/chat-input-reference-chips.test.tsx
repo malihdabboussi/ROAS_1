@@ -17,7 +17,6 @@ const references: MessageReference[] = [
   { kind: 'artifact', id: 'artifact-cross', label: 'Cross artifact', campaign_id: 'campaign-1' },
   { kind: 'media', id: 'media-1', label: 'Media asset' },
   { kind: 'mission', id: 'mission-1', label: 'Mission item' },
-  { kind: 'campaign', id: 'campaign-ref', label: 'Launch Plan' },
 ]
 
 describe('ChatInputReferenceChips', () => {
@@ -36,7 +35,6 @@ describe('ChatInputReferenceChips', () => {
     expect(screen.getByText('Cross artifact').className).toContain('max-w-36')
     expect(screen.getByText('Media asset')).toBeTruthy()
     expect(screen.getByText('Mission item')).toBeTruthy()
-    expect(screen.getByText('Launch Plan')).toBeTruthy()
   })
 
   it('delegates chip removal with the selected reference', () => {

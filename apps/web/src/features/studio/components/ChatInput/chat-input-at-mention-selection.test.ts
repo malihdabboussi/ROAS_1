@@ -56,21 +56,6 @@ describe('chat-input-at-mention-selection', () => {
     })
   })
 
-  it('builds a campaign mention reference', () => {
-    expect(
-      buildMessageReferenceFromAtMention({
-        id: 'campaign-1',
-        label: 'Launch Plan',
-        section: 'campaign',
-      }),
-    ).toEqual({
-      kind: 'campaign',
-      id: 'campaign-1',
-      label: 'Launch Plan',
-      type: undefined,
-    })
-  })
-
   it('builds a durable person reference for a portal or ghost user', () => {
     expect(
       buildMessageReferenceFromAtMention({

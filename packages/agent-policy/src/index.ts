@@ -14,17 +14,11 @@ export {
   prependActionContractProtocol,
 } from './action-contract-protocol.js'
 export {
-  FIRST_PERSON_FILL_USER_BRAIN_QUERY,
-  isFirstPersonFillRequest,
-  resolveUserBrainSearchQuery,
-} from './first-person-fill.js'
-export {
   ensurePlatformToolsRuntimeGuidance,
   hasPlatformToolsRuntimeGuidance,
   PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK,
   PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING,
   PLATFORM_TOOLS_DEFAULT_MD,
-  PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING,
   PLATFORM_TOOLS_RUNTIME_GUIDANCE_BLOCK,
   PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING,
 } from './platform-tools-template.js'

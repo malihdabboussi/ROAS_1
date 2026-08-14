@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { resolveUserBrainSearchQuery } from '@vibey/agent-policy'
 import { SupabaseServiceClient } from '@vibey/api-shared'
 import type { BrainSearchFamily } from '../../agent-policy/agent-policy.types'
 import { AgentPolicyService } from '../../agent-policy/services/agent-policy.service'
@@ -27,6 +26,7 @@ import { CompanyContextCompilerService } from './company-context-compiler.servic
 import { EmbeddingService } from './embedding.service'
 
 const WIKI_AGENT_KEYS = new Set(['atlas', 'brain_scholar'])
+
 @Injectable()
 export class BrainContextService {
   private readonly logger = new Logger(BrainContextService.name)
@@ -57,7 +57,7 @@ export class BrainContextService {
     orgId?: string | null,
     precomputedEmbedding?: PrecomputedEmbedding,
   ): Promise<string> {
-    const trimmedQuery = resolveUserBrainSearchQuery(query?.trim())
+    const trimmedQuery = query?.trim()
     if (trimmedQuery && this.retrieval) {
       return this.support.buildRetrievalContext({
         retrieval: this.retrieval,
@@ -66,9 +66,7 @@ export class BrainContextService {
         userId,
         orgId,
         query: trimmedQuery,
-        embedding: trimmedQuery === query?.trim()
-          ? this.support.retrievalEmbeddingInput(precomputedEmbedding)
-          : undefined,
+        embedding: this.support.retrievalEmbeddingInput(precomputedEmbedding),
         limit: PRELOAD_RETRIEVAL_LIMIT,
       }).catch((err) => {
         this.logger.warn(`User brain retrieval context failed: ${err}`)

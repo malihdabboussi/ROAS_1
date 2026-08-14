@@ -122,14 +122,7 @@ describe('ChatInputAtMentionMenuView', () => {
     fireEvent.mouseDown(screen.getByRole('button', { name: /back/i }))
     expect(props.onBackFromCrossCampaign).toHaveBeenCalledTimes(1)
 
-    fireEvent.mouseDown(screen.getByRole('button', { name: 'Launch Plan' }))
-    expect(props.onAtSelect).toHaveBeenCalledWith({
-      id: 'campaign-1',
-      label: 'Launch Plan',
-      section: 'campaign',
-    })
-
-    fireEvent.mouseDown(screen.getByRole('button', { name: 'Browse Launch Plan' }))
+    fireEvent.mouseDown(screen.getByRole('button', { name: /launch plan/i }))
     expect(props.onCampaignSelect).toHaveBeenCalledWith({ id: 'campaign-1', name: 'Launch Plan' })
   })
 

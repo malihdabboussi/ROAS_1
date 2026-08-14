@@ -31,6 +31,7 @@ export interface HandleChatInputMenuKeyDownOptions {
   onCloseAtMenu: () => void
   onExitCrossCampaign: () => void
   onAtHighlightChange: (updater: HighlightUpdater) => void
+  onCampaignSelect: (campaign: { id: string; name: string }) => void
   onAtSelect: (item: AtMentionItem, sourceCampaignId?: string) => void
   onToggleArtifactCollapsed: (typeKey: string) => void
   onShowAllArtifacts: (typeKey: string) => void
@@ -57,6 +58,7 @@ export function handleChatInputMenuKeyDown({
   onCloseAtMenu,
   onExitCrossCampaign,
   onAtHighlightChange,
+  onCampaignSelect,
   onAtSelect,
   onToggleArtifactCollapsed,
   onShowAllArtifacts,
@@ -107,6 +109,7 @@ export function handleChatInputMenuKeyDown({
           atNavSlice,
           artifactRows,
           mediaRows,
+          onCampaignSelect,
           onAtSelect,
           onToggleArtifactCollapsed,
           onShowAllArtifacts,
@@ -155,6 +158,7 @@ function selectAtHighlightedRow({
   atNavSlice,
   artifactRows,
   mediaRows,
+  onCampaignSelect,
   onAtSelect,
   onToggleArtifactCollapsed,
   onShowAllArtifacts,
@@ -167,6 +171,7 @@ function selectAtHighlightedRow({
   atNavSlice: ChatInputMenuAtNavSlice
   artifactRows: readonly StudioArtifactNavRow[]
   mediaRows: readonly StudioMediaNavRow[]
+  onCampaignSelect: (campaign: { id: string; name: string }) => void
   onAtSelect: (item: AtMentionItem, sourceCampaignId?: string) => void
   onToggleArtifactCollapsed: (typeKey: string) => void
   onShowAllArtifacts: (typeKey: string) => void
@@ -176,9 +181,7 @@ function selectAtHighlightedRow({
   if (atHighlight < 0) return
   if (atNavSlice.kind === 'campaigns') {
     const row = atNavSlice.items[atHighlight]
-    if (row) {
-      onAtSelect({ id: row.id, label: row.name, section: 'campaign' })
-    }
+    if (row) onCampaignSelect(row)
     return
   }
   const sourceCampaignId = crossCampaignMode ? atNavSlice.crossCampaignId : undefined
