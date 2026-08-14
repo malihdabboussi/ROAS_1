@@ -107,6 +107,30 @@ describe('SlackOpenItemsService', () => {
     expect(items.enforceRetention).toHaveBeenCalled()
   })
 
+  it('does not turn a composite status recap with completed work into one open commitment', async () => {
+    const items = {
+      upsert: vi.fn(),
+      resolveSlackScope: vi.fn(),
+    }
+    const service = new SlackOpenItemsService(items as never, {} as never)
+
+    await service.record({} as never, {
+      orgId: 'org-1',
+      subjectPersonId: null,
+      clientLabel: 'Yasir Khan',
+      slackTeamId: 'T1',
+      channelId: 'C1',
+      sourceMessageTs: '1786482496.057049',
+      signalKind: 'important_update',
+      summary:
+        'DONE - Ads relaunch - Aaron, live today (Aug 11). Video scripts are due by Thursday.',
+      now: new Date('2026-08-13T20:00:00Z'),
+    })
+
+    expect(items.resolveSlackScope).not.toHaveBeenCalled()
+    expect(items.upsert).not.toHaveBeenCalled()
+  })
+
   it('resurfaces at 8h, 24h, and 72h with Viktor-style ages and resolves once', async () => {
     const base = {
       id: 'item-1',

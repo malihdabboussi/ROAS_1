@@ -29,13 +29,10 @@ export function SpaceChatPanelHeader({
 }: SpaceChatPanelHeaderProps) {
   return (
     <div className="pt-spacing-2 pb-spacing-1 relative shrink-0 px-3 md:px-4">
-      <div className={cn('mx-auto w-full max-w-3xl', layout === 'full' && 'pr-spacing-10')}>
+      <div className={cn('mx-auto w-full max-w-3xl', layout === 'full' && 'pr-spacing-20')}>
         <div className="min-h-spacing-10 gap-spacing-2 flex items-center">
           {leadingAction ? <div className="flex shrink-0 items-center">{leadingAction}</div> : null}
           {agentPicker ? <div className="flex shrink-0 items-center">{agentPicker}</div> : null}
-          {layout === 'full' && conversationDetails ? (
-            <div className="flex shrink-0 items-center">{conversationDetails}</div>
-          ) : null}
           {layout === 'full' && title && conversationId ? (
             <ConversationHeaderTitle
               title={title}
@@ -51,7 +48,8 @@ export function SpaceChatPanelHeader({
         </div>
       </div>
       {layout === 'full' ? (
-        <div className="right-spacing-3 top-spacing-2 absolute flex shrink-0 items-center">
+        <div className="right-spacing-3 top-spacing-2 gap-spacing-1 absolute flex shrink-0 items-center">
+          {conversationDetails}
           {actions}
         </div>
       ) : null}

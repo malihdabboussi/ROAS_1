@@ -57,6 +57,12 @@ describe('SlackTeamMessageComposerService', () => {
       offers: [{ kind: 'case_study', deliverable: '5-bullet test brief', ready_by: '2pm PT' }],
       usage: { totalTokens: 160, providerCostUsd: 0.002 },
     })
+    expect(gemini.callGeminiWithUsage).toHaveBeenCalledWith(
+      expect.stringContaining('"local_date":"Monday, August 10, 2026"'),
+      expect.any(String),
+      expect.any(Object),
+      expect.any(Object),
+    )
   })
 
   it('allows natural variation across consecutive compositions', async () => {
@@ -100,6 +106,42 @@ describe('SlackTeamMessageComposerService', () => {
       }
       const service = new SlackTeamMessageComposerService(gemini as never)
       await expect(service.compose(input)).rejects.toThrow(/composition/i)
+    }
+  })
+
+  it('rejects vague roadmap filler and future language tied to a past date', async () => {
+    const unsafeInput = {
+      ...input,
+      signals: [
+        {
+          kind: 'important_update',
+          finding: 'DONE - Ads relaunch - Aaron, live today (August 11).',
+          quote: 'DONE - Ads relaunch - Aaron, live today (August 11).',
+          senderName: 'Maya',
+          channelName: 'roas-yasir-khan',
+          timestamp: '1786482496.057049',
+        },
+      ],
+      context: {
+        ...input.context,
+        now: new Date('2026-08-13T20:00:00.000Z'),
+      },
+    }
+    const invalid = [
+      'We are moving forward with the roadmap.',
+      'The ads are scheduled to go live on August 11.',
+      'The video scripts are due today, Thursday, August 14.',
+    ]
+
+    for (const text of invalid) {
+      const gemini = {
+        callGeminiWithUsage: vi
+          .fn()
+          .mockResolvedValue(completion(JSON.stringify({ text, offers: [] }))),
+      }
+      const service = new SlackTeamMessageComposerService(gemini as never)
+
+      await expect(service.compose(unsafeInput)).rejects.toThrow(/composition/i)
     }
   })
 
