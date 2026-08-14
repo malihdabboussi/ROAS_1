@@ -662,7 +662,7 @@ const ACTIONS: FlowCapability[] = [
     'observe_slack_team',
     'Communication',
     'Observe Slack team',
-    'Observes selected Slack people and channels to compound Person Brains and detect proactive work.',
+    'Analyzes every non-Ignored sender in selected Slack channels for proactive work. person_ids restricts Active delivery, Person Brain compounding, and personal-moment outreach.',
     ['loop_kind', 'delivery_mode'],
     [
       'channel_ids',

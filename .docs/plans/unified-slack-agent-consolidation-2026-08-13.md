@@ -1,7 +1,7 @@
 # Unified Slack Agent Consolidation
 
 Date: 2026-08-13  
-Status: ROAS foundation, direct Campaign Brain writer, and Atlas save policy deployed; persistence-backed completion gate awaiting deployment
+Status: Unified ledger and fail-closed Campaign Brain pipeline deployed; Wholesale recovery healthy; all-sender Slack detection and post-call ledger producer awaiting merge/deploy and post-deploy EOD verification
 
 ## Product model
 
@@ -67,19 +67,24 @@ markers fail closed and must not advance the mapping cursor.
 
 ## Production audit result
 
-The Wholesale Universe channel audit on 2026-08-13 found:
+The Wholesale Universe channel audit on 2026-08-13 initially found:
 
 - 39 captured Slack observations;
 - the correct mapping, client campaign container, and Campaign Brain;
 - zero channel-specific Slack memories in that Brain;
-- five jobs marked successful with a nested failed terminal receipt and one intentional skip;
+- three jobs marked successful with a nested failed terminal receipt and two intentional skips;
 - 38 older failed jobs, sampled failures caused by exhausted credits;
-- four canonical false-success periods eligible for bounded replay after duplicate and intentional-skip filtering.
+- three canonical false-success periods eligible for bounded replay after duplicate and intentional-skip filtering.
 
-Historical Slack-derived Campaign Brain memories are embedded and a prior real
-semantic probe returned relevant historical Bonnie context. The newer Bonnie
-message is not retrievable because its import never produced a Campaign Brain
-memory, not because capture or vector search is broken.
+The bounded replay completed on 2026-08-13. Two valid periods produced four
+exact-source Campaign Brain memories with 100% embedding coverage. The third
+period was confirmed to contain zero captured messages and was terminally
+quarantined as an intentional skip. A Supabase-only semantic RPC returned the
+new Slack memory as the top result with similarity 1.0, and the full audit
+reported healthy with no false successes. Bonnie's operational booking ask
+remains in the case ledger rather than being manufactured into durable Brain
+knowledge; the same replay did persist the related durable decisions about
+replay-webinar budget, show-rate remediation, and new-client workflow safeguards.
 
 The first bounded replay exposed two additional runtime contract gaps. Platform
 agents receive `campaign_capability` as the backend action tool, with
@@ -114,9 +119,23 @@ The client-ask audit also found that the active five-minute Slack automation
 allows 171 channels but has only Dylan in `person_ids`. The current loop treats
 that list as a source-sender filter, advances its cursor past every other sender,
 and therefore never created Bonnie's `unanswered_ask` case. Expanding analysis
-to every sender in those client channels is a material production-scope change
-and requires explicit approval. Delivery can remain restricted to the existing
-internal recipient allowlist.
+to every non-Ignored sender in those client channels is approved and implemented.
+Delivery, Person Brain compounding, and personal-moment outreach remain restricted
+to the existing internal person allowlist. Bonnie's exact ask was backfilled as
+campaign-scoped case `1ad98b3b-7e63-41a9-9248-1f3e664ec213`; its due time is
+exactly 24 hours after the Slack source timestamp. The next five-minute run
+rechecked the source, found no reply, emitted one deduplicated owner breach, and
+marked it surfaced. The all-sender code still requires merge and deployment.
+
+The cross-producer production audit found Slack and offer cases in the unified
+ledger, but no post-call rows. The existing post-call workflow stamped only its
+separate action ledger even though `post_call` was already a reserved case type.
+The workflow now records each proposed follow-up as a Space-scoped `post_call`
+case and resolves it only after human approval or explicit automatic delivery.
+Focused workflow tests prove proposal and resolution behavior. Page Grader's
+structured QC bridge is wired and tested, but no post-migration production QC,
+launch, or campaign notification has yet arrived; no synthetic client alert was
+created merely to manufacture production evidence.
 
 ## Rollout sequence
 
@@ -127,14 +146,15 @@ internal recipient allowlist.
 5. Replay only the four canonical false-success periods with the explicit fixed-runtime assertion. **Complete; exposed the document-route defect without creating memories.**
 6. Deploy the direct, embedded Campaign Brain writer. **Complete.**
 7. Align Atlas's system Brain capability allowlist with its existing routed-save contract and deploy it. **Complete.**
-8. Require persisted, fully embedded source evidence before a claimed Campaign Brain completion can succeed or advance the Slack cursor; deploy through the main API.
-9. Quarantine the verified empty-source period as non-retryable instead of manufacturing a memory or replaying it indefinitely.
-10. Replay only valid periods, then rerun the audit and require capture, terminal receipt, Campaign Brain memory, embedding coverage, and retrieval health.
-11. Confirm Bonnie's exact source period created retrievable Campaign Brain context.
-12. With explicit approval, analyze all senders in allowlisted client channels, backfill Bonnie's `unanswered_ask`, and verify its due time is exactly 24 hours after the source message.
-13. Observe EOD refresh and one 24-hour breach cycle before expanding replay to other mappings.
-14. Merge and deploy the Page Grader structured QC producer branch after Brain recovery passes.
+8. Require persisted, fully embedded source evidence before a claimed Campaign Brain completion can succeed or advance the Slack cursor; deploy through the main API. **Complete.**
+9. Quarantine the verified empty-source period as non-retryable instead of manufacturing a memory or replaying it indefinitely. **Complete.**
+10. Replay only valid periods, then rerun the audit and require capture, terminal receipt, Campaign Brain memory, embedding coverage, and retrieval health. **Complete: four memories, 100% embedded, semantic RPC healthy.**
+11. Confirm the replay-webinar period created retrievable Campaign Brain context. **Complete for durable decisions; Bonnie's transient ask correctly remains an operational case.**
+12. Analyze all non-Ignored senders in allowlisted client channels, backfill Bonnie's `unanswered_ask`, and verify its due time is exactly 24 hours after the source message. **Implemented and backfill verified; code deployment pending.**
+13. Observe EOD refresh and one 24-hour breach cycle before expanding replay to other mappings. **24-hour breach complete; post-fix EOD cycle pending.**
+14. Merge and deploy the Page Grader structured QC producer branch after Brain recovery passes. **Complete.**
 15. Keep `slack_open_items` as rollback state until one stable retention window; remove it in a later migration after parity checks.
+16. Record proposed post-call follow-ups in `agent_cases` and resolve them on approval or explicit automatic delivery. **Implemented and focused tests pass; deployment and first real production event pending.**
 
 The audit continues to report older credit-exhaustion failures as historical
 backlog, but live health fails only on a new failure within 48 hours. This keeps

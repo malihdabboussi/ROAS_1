@@ -114,10 +114,14 @@ export class SlackTeamLoopService {
       input.supabase,
       input.orgId,
     )) as SlackTeamPerson[]
-    let selectedPeople = input.personIds.length
-      ? people.filter((person) => input.personIds.includes(person.id))
-      : people.filter((person) => person.relationship_kind !== 'ignored')
-    let peopleBySlackId = new Map(selectedPeople.map((person) => [person.platform_id, person]))
+    let analyzedPeople = people.filter((person) => person.relationship_kind !== 'ignored')
+    let peopleBySlackId = new Map(analyzedPeople.map((person) => [person.platform_id, person]))
+    let personScopedSlackUserIds = new Set(
+      (input.personIds.length
+        ? people.filter((person) => input.personIds.includes(person.id))
+        : analyzedPeople
+      ).map((person) => person.platform_id),
+    )
     const lifecycle = input.preview
       ? { rechecked: 0, resolved: 0, sent: 0 }
       : ((await this.signalDelivery?.processCoolingActions({
@@ -158,7 +162,7 @@ export class SlackTeamLoopService {
       consumerKey,
       initialLookbackMinutes: input.lookbackMinutes,
       channelIds: input.channelIds,
-      senderSlackUserIds: input.personIds.length > 0 ? [...peopleBySlackId.keys()] : [],
+      senderSlackUserIds: [],
       limit: 250,
     })
     const unknownSenderIds = [
@@ -173,7 +177,7 @@ export class SlackTeamLoopService {
           .map((message) => String(message.sender_slack_user_id)),
       ),
     ]
-    if (unknownSenderIds.length > 0 && input.personIds.length === 0) {
+    if (unknownSenderIds.length > 0) {
       await this.senderResolver.resolveSlackSenders(input.supabase, {
         botToken: integration.access_token,
         userId: input.userId,
@@ -181,16 +185,20 @@ export class SlackTeamLoopService {
         slackUserIds: unknownSenderIds,
       })
       people = (await this.peopleRepo.listPeople(input.supabase, input.orgId)) as SlackTeamPerson[]
-      selectedPeople = people.filter((person) => person.relationship_kind !== 'ignored')
-      peopleBySlackId = new Map(selectedPeople.map((person) => [person.platform_id, person]))
+      analyzedPeople = people.filter((person) => person.relationship_kind !== 'ignored')
+      peopleBySlackId = new Map(analyzedPeople.map((person) => [person.platform_id, person]))
+      personScopedSlackUserIds = new Set(
+        (input.personIds.length
+          ? people.filter((person) => input.personIds.includes(person.id))
+          : analyzedPeople
+        ).map((person) => person.platform_id),
+      )
     }
     const observed = pending.events
       .filter(
         (message) =>
           Boolean(message.text.trim()) &&
-          (message.is_bot ||
-            input.personIds.length === 0 ||
-            peopleBySlackId.has(String(message.sender_slack_user_id))),
+          (message.is_bot || peopleBySlackId.has(String(message.sender_slack_user_id))),
       )
       .map((message) => ({
         channel_id: message.channel_id,
@@ -264,7 +272,7 @@ export class SlackTeamLoopService {
         .filter(Boolean)
         .join('\n'),
       messages: observed,
-      people: selectedPeople,
+      people: analyzedPeople,
       maxSignals: MAX_DETECTED_SIGNALS_PER_RUN,
       ...(workspaceOwner
         ? {
@@ -304,9 +312,19 @@ export class SlackTeamLoopService {
         signal.kind !== 'unanswered_question' || !slackSignalHasLaterHumanReply(signal, observed),
     )
     const suppressedByThread = confidentSignals.length - threadCheckedSignals.length
-    const memories = threadCheckedSignals.filter((signal) => signal.kind === 'brain_memory')
+    const memories = threadCheckedSignals.filter(
+      (signal) =>
+        signal.kind === 'brain_memory' &&
+        Boolean(
+          signal.target_slack_user_id && personScopedSlackUserIds.has(signal.target_slack_user_id),
+        ),
+    )
     const personalMomentCandidates = threadCheckedSignals.filter(
-      (signal) => signal.kind === 'personal_moment',
+      (signal) =>
+        signal.kind === 'personal_moment' &&
+        Boolean(
+          signal.target_slack_user_id && personScopedSlackUserIds.has(signal.target_slack_user_id),
+        ),
     )
     const briefingCandidates = threadCheckedSignals.filter(
       (signal) => signal.kind !== 'brain_memory' && signal.kind !== 'personal_moment',
