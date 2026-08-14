@@ -15,7 +15,7 @@ vi.mock('@/features/spaces/store/use-spaces-store', () => ({
 
 vi.mock('@/features/studio/store/use-chat-store', () => ({
   useChatStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({ activeConversationId: null }),
+    selector({ activeConversationId: null, conversations: [] }),
 }))
 
 vi.mock('../store/use-global-chat-store', () => ({

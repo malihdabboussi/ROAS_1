@@ -10,7 +10,7 @@ import {
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { homeMeetingHref } from '@/features/home/lib/home-meeting-work-restore'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
-import type { Conversation } from '@/lib/conversations'
+import { readMeetingConversationLink, type Conversation } from '@/lib/conversations'
 import { useQuickMissionsLauncher } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
 import { isShellMissionCreateItem, type ShellCreateMenuItem } from './shell-create-menu.config'
@@ -92,15 +92,7 @@ export function ShellRightPanel({
   const conversationMetadata = useChatStore((s) =>
     conversationId ? s.conversations.find((c) => c.id === conversationId)?.metadata : undefined,
   )
-  const metadataMeeting = (() => {
-    const meta = conversationMetadata as
-      | { context_type?: unknown; meeting_item_id?: unknown; space_id?: unknown }
-      | undefined
-    if (!meta || meta.context_type !== 'meeting') return null
-    const meetingItemId = typeof meta.meeting_item_id === 'string' ? meta.meeting_item_id : null
-    const spaceIdFromMeta = typeof meta.space_id === 'string' ? meta.space_id : null
-    return meetingItemId && spaceIdFromMeta ? { meetingItemId, spaceId: spaceIdFromMeta } : null
-  })()
+  const metadataMeeting = readMeetingConversationLink(conversationMetadata)
   const linkedMeeting =
     meetingContext && conversationId && meetingContext.conversationId === conversationId
       ? { spaceId: meetingContext.spaceId, meetingItemId: meetingContext.meetingItemId }

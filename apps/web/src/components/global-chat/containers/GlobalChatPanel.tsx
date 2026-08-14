@@ -10,6 +10,7 @@ import { ChatCampaignBrainNudge } from '../components/ChatCampaignBrainNudge'
 import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendation'
 import { GlobalChatComposerFooter } from '../components/GlobalChatComposerFooter'
 import { QuickMissionsHubHost } from '../components/QuickMissionsHubHost'
+import { useMeetingConversationAwareness } from '../hooks/use-meeting-conversation-awareness'
 import { resolveMeetingChatPanel } from '../lib/resolve-meeting-chat-panel'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 import { useStickyGlobalChatPanelHost } from './global-chat-panel-host'
@@ -61,6 +62,7 @@ export function GlobalChatPanel({
     storedMeetingContext,
     activeConversationId,
   })
+  const conversationAwareness = useMeetingConversationAwareness(activeConversationId)
   useEffect(() => {
     if (
       storedMeetingContext &&
@@ -99,7 +101,7 @@ export function GlobalChatPanel({
               awarenessSurface === 'spaces' && isSpacesRoute ? (activeSpace?.title ?? null) : null
             }
             preferredConversationId={preferredConversationId}
-            awarenessContextOverride={meetingAwarenessContext}
+            awarenessContextOverride={meetingAwarenessContext ?? conversationAwareness}
             brainContext={
               awarenessSurface === 'brain' && workContext.brainAwarenessContext
                 ? {

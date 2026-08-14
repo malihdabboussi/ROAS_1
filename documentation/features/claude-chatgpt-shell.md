@@ -1,6 +1,6 @@
 # Claude/ChatGPT shell (apps/web)
 
-Last Modified: 2026-08-13
+Last Modified: 2026-08-14
 
 ## Overview
 
@@ -76,6 +76,7 @@ The history list has its own persisted drag width and collapse state. Dragging i
 - Chat work context keeps high-level Brain, Team, and Flows selection while providing direct navigation into each detailed workspace. Meetings navigates to the meeting workspace.
 
 - **2026-08-12:** Sidebar navigation must never replace an open chat. It may offer the target screen's remembered conversation non-blockingly; an empty pane starts fresh. The association stays shell-local and does not extend the conversation API or compete with Space/channel scope ownership.
+- **2026-08-14:** Opening a meeting workspace must not replace an open chat. Continue in chat is the only control that selects the meeting's linked conversation.
 
 - **2026-08-11:** Cross-chat recall uses a dedicated authenticated, read-only action rather than broadening current-thread context. Search is scoped by the resolved user and organization, matches active conversation titles, and returns only bounded excerpts needed to identify the thread.
 - **2026-08-11:** Full-screen Home chat keeps the page-restore control visible in the top-right corner. Restoring a recent page preserves the conversation id so chat transitions back to the attached drawer instead of losing the current thread.

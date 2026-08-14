@@ -151,6 +151,7 @@ import {
   resolveSpaceChatScope,
   resolveSpaceChatSeedSendOptions,
   resolveSpaceChatSendAgentKey,
+  resolveSpaceChatSendConversationId,
 } from './space-vibey-chat-panel.logic'
 import type * as ChatPanelTypes from './space-vibey-chat-panel.types'
 import {
@@ -1076,11 +1077,22 @@ export function SpaceVibeyChatPanel({
       references?: MessageReference[],
       modelSettings?: ChatModelSettings,
       extraSystemContext?: string,
-      options?: { forceNewConversation?: boolean; agentKey?: string },
+      options?: { forceNewConversation?: boolean; agentKey?: string; conversationId?: string },
     ) => {
       const forceNew = Boolean(options?.forceNewConversation)
       const sendAgentKey = resolveSpaceChatSendAgentKey(activeAgentKey, options?.agentKey)
-      if (!forceNew && selectedConversationId && isStopping) return
+      const targetConversationId = resolveSpaceChatSendConversationId({
+        forceNew,
+        selectedConversationId,
+        requestedConversationId: options?.conversationId,
+      })
+      if (
+        !forceNew &&
+        targetConversationId &&
+        targetConversationId === selectedConversationId &&
+        isStopping
+      )
+        return
       const systemContext = [
         buildContextForSend(),
         extraSystemContext ?? quickStart.buildSendContext(content),
@@ -1088,12 +1100,17 @@ export function SpaceVibeyChatPanel({
         .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
         .join('\n\n')
       const msgsBefore =
-        (!forceNew && selectedConversationId
-          ? useChatStore.getState().messagesByConversation[selectedConversationId]
+        (!forceNew && targetConversationId
+          ? useChatStore.getState().messagesByConversation[targetConversationId]
           : null) ?? []
       const isFirstMessageInThread = forceNew || msgsBefore.length === 0
 
-      let conversationId = forceNew ? null : selectedConversationId
+      let conversationId = targetConversationId
+      if (conversationId && conversationId !== selectedConversationId) {
+        setSelectedConversationId(conversationId)
+        persistActiveConversationId(chatScopeStorageId, conversationId, sendAgentKey)
+        useChatStore.getState().setActiveConversationId(conversationId)
+      }
       if (!conversationId) {
         const conversation = await createNewConversation({
           agent_id: sendAgentKey,
@@ -1207,7 +1224,7 @@ export function SpaceVibeyChatPanel({
       references?: MessageReference[],
       modelSettings?: ChatModelSettings,
       extraSystemContext?: string,
-      options?: { forceNewConversation?: boolean; agentKey?: string },
+      options?: { forceNewConversation?: boolean; agentKey?: string; conversationId?: string },
     ) => {
       try {
         await spaceSend(
@@ -1945,6 +1962,13 @@ export function SpaceVibeyChatPanel({
 
       if (seed.conversationId) {
         useSpacesStore.getState().openConversationInSpaceChat(seed.conversationId)
+        setSelectedConversationId(seed.conversationId)
+        persistActiveConversationId(
+          chatScopeStorageId,
+          seed.conversationId,
+          seed.agentKey ?? activeAgentKey,
+        )
+        useChatStore.getState().setActiveConversationId(seed.conversationId)
       } else if (seed.railIntent === 'new') {
         handleNewConversation()
       }
@@ -1976,6 +2000,7 @@ export function SpaceVibeyChatPanel({
     },
     [
       activeAgentKey,
+      chatScopeStorageId,
       conversationsLoading,
       handleAgentChange,
       armQuickStart,
@@ -2052,8 +2077,11 @@ export function SpaceVibeyChatPanel({
 
   useEffect(() => {
     if (conversationsLoading) return
-    const pending = useGlobalChatStore.getState().consumePendingSeed()
-    if (pending) void applyGlobalChatSeed(pending)
+    const pending = useGlobalChatStore.getState().pendingSeed
+    if (!pending) return
+    if (!globalChatSeedMatchesPanel(pending, spaceId)) return
+    const consumed = useGlobalChatStore.getState().consumePendingSeed()
+    if (consumed) void applyGlobalChatSeed(consumed)
   }, [applyGlobalChatSeed, conversationsLoading, spaceId])
 
   useEffect(() => {
