@@ -480,3 +480,13 @@ Why: A later header simplification regressed the ChatGPT-style placement deliver
 Impact: Full chat headers again keep their pane controls together at the second pane's top-right, reserve enough title space for both controls, and reveal the left-side pencil on title hover or keyboard focus.
 
 Files: `apps/web/src/components/conversations/ConversationHeaderTitle.tsx`, `apps/web/src/components/conversations/ConversationHeaderTitle.test.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.test.tsx`.
+
+## [2026-08-13 20:09] - [FIX]
+
+What: Added the standalone Client Strategy playbook to the guided agency-team provisioning path, made Chat Quick Missions require confirmation of the prefilled campaign and Space before showing playbook context, and made the rename-pencil ordering assertion strict-null-safe for the web typecheck.
+
+Why: Exact production testing launched Client Strategy from a campaign with no assigned workers; unlike the older guided playbooks, the newly split playbook skipped team provisioning and blocked during planning. The contextual shortcut also bypassed the requested campaign confirmation step.
+
+Impact: Client Strategy now provisions and assigns the standard agency roster before the worker checks campaign staffing, while chat launches keep their contextual default but require an explicit campaign/Space confirmation before mission creation.
+
+Files: `apps/api/src/modules/missions/services/webinar-fulfillment-team.service.ts`, `apps/api/src/modules/missions/services/webinar-fulfillment-team.service.test.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-plan-phase.service.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-plan-phase.service.test.ts`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.test.tsx`, `apps/web/src/components/conversations/ConversationHeaderTitle.test.tsx`, `documentation/features/missions.md`.

@@ -45,6 +45,7 @@ export class WebinarFulfillmentTeamService {
 
   supportsPlaybook(playbookId: string | null | undefined): boolean {
     return [
+      'client-strategy',
       WEBINAR_FULFILLMENT_PLAYBOOK_ID,
       'ads-research',
       'ig-organic-video-ad',
