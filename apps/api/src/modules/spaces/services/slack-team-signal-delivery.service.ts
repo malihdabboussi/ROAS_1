@@ -5,12 +5,18 @@ import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.s
 import { SlackSignalResolutionService } from '../../slack/services/slack-signal-resolution.service'
 import type { SlackShadowAction } from '../../slack/types/slack.types'
 import { SlackTeamLoopRepository } from '../repositories/slack-team-loop.repository'
+import { SlackContextStakesService } from './slack-context-stakes.service'
+import { SlackOpenItemsService } from './slack-open-items.service'
+import { SlackPendingOffersService } from './slack-pending-offers.service'
+import type { SlackCadenceConfig } from './slack-team-cadence'
+import { decideSlackDelivery } from './slack-team-delivery-policy'
+import { SlackTeamMessageComposerService } from './slack-team-message-composer.service'
 import {
   composePersonalMomentMessage,
   filterBrainDetailsFromSlackCopy,
   isPersonalMomentEventType,
-  PERSONAL_MOMENT_COOLING_MINUTES,
 } from './slack-team-personal-moment'
+import { slackSignalLifecycleMetadata } from './slack-team-signal-lifecycle'
 import {
   composeDigestMessage,
   composeThreadFollowUp,
@@ -18,25 +24,6 @@ import {
   SLACK_TEAM_DIGEST_THREAD_HOURS,
   type SlackTeamSignalMessageItem,
 } from './slack-team-signal-message'
-import { SlackTeamMessageComposerService } from './slack-team-message-composer.service'
-import { SlackOpenItemsService } from './slack-open-items.service'
-import { SlackPendingOffersService } from './slack-pending-offers.service'
-import { SlackContextStakesService } from './slack-context-stakes.service'
-import type { SlackCadenceConfig } from './slack-team-cadence'
-import { decideSlackDelivery } from './slack-team-delivery-policy'
-
-export const SLACK_SIGNAL_COOLING_MINUTES = {
-  unanswered_question: 30,
-  client_risk: 15,
-  workflow_discovery: 60,
-  team_win: 60,
-  important_update: 60,
-  decision: 60,
-  strategic_opportunity: 60,
-  personal_moment: PERSONAL_MOMENT_COOLING_MINUTES,
-} as const
-
-export type SlackSignalCoolingKind = keyof typeof SLACK_SIGNAL_COOLING_MINUTES
 
 export type SlackSignalDeliveryPerson = {
   id: string
@@ -44,34 +31,20 @@ export type SlackSignalDeliveryPerson = {
   display_name?: string
   relationship_kind: string
   delivery_mode: string
+  vibey_user_id?: string | null
   title?: string
 }
-
 type ReadyDelivery = {
   action: SlackShadowAction
   recipient: SlackSignalDeliveryPerson
   checkedAt: string
   item: SlackTeamSignalMessageItem
 }
-
 export type SlackDeliveryOutcome = {
   action_id: string
   recipient_id: string | null
   can_send: boolean
   reason: string
-}
-
-export function slackSignalLifecycleMetadata(
-  kind: SlackSignalCoolingKind | 'brain_memory',
-  now = new Date(),
-): Record<string, unknown> {
-  if (!(kind in SLACK_SIGNAL_COOLING_MINUTES)) return {}
-  const coolingMinutes = SLACK_SIGNAL_COOLING_MINUTES[kind as SlackSignalCoolingKind]
-  return {
-    lifecycle_state: 'cooling',
-    cooling_minutes: coolingMinutes,
-    eligible_at: new Date(now.getTime() + coolingMinutes * 60_000).toISOString(),
-  }
 }
 
 @Injectable()
@@ -103,9 +76,12 @@ export class SlackTeamSignalDeliveryService {
     rechecked: number
     resolved: number
     sent: number
+    breaches_escalated: number
     delivery_outcomes: SlackDeliveryOutcome[]
   }> {
     const now = input.now ?? new Date()
+    await this.openItems?.reconcile(input.supabase, input.orgId, now)
+    const breachesEscalated = await this.queueHardBreaches(input, now)
     const actions = await this.loops.listCoolingActions(input.supabase, {
       orgId: input.orgId,
       workflowKey: input.workflowKey,
@@ -155,7 +131,9 @@ export class SlackTeamSignalDeliveryService {
         continue
       }
 
-      const recipient = candidate.target_member_id ? peopleById.get(candidate.target_member_id) : undefined
+      const recipient = candidate.target_member_id
+        ? peopleById.get(candidate.target_member_id)
+        : undefined
       if (!refreshed.resolution.source_available) {
         deliveryOutcomes.push(this.outcome(candidate, false, 'source_unavailable'))
         await this.markReadyForReview(input, refreshed.action, {
@@ -208,7 +186,9 @@ export class SlackTeamSignalDeliveryService {
     const personalMoments = ready.filter(
       (entry) => String(entry.action.metadata.signal_kind ?? '') === 'personal_moment',
     )
-    const digestReady = ready.filter((entry) => String(entry.action.metadata.signal_kind ?? '') !== 'personal_moment')
+    const digestReady = ready.filter(
+      (entry) => String(entry.action.metadata.signal_kind ?? '') !== 'personal_moment',
+    )
 
     for (const entry of personalMoments) {
       sent += await this.deliverPersonalMoment(input, entry, now)
@@ -225,7 +205,72 @@ export class SlackTeamSignalDeliveryService {
       sent += await this.deliverRecipientBatch(input, group, now)
     }
 
-    return { rechecked, resolved, sent, delivery_outcomes: deliveryOutcomes }
+    return {
+      rechecked,
+      resolved,
+      sent,
+      breaches_escalated: breachesEscalated,
+      delivery_outcomes: deliveryOutcomes,
+    }
+  }
+
+  private async queueHardBreaches(
+    input: {
+      supabase: SupabaseClient
+      userId: string
+      orgId: string
+      workflowKey: string
+      deliveryMode: 'shadow' | 'active'
+      people: SlackSignalDeliveryPerson[]
+    },
+    now: Date,
+  ): Promise<number> {
+    if (!this.openItems) return 0
+    const owner = input.people.find(
+      (person) => person.vibey_user_id === input.userId && person.relationship_kind === 'internal',
+    )
+    if (!owner) return 0
+    const breaches = await this.openItems.breachPack(input.supabase, {
+      orgId: input.orgId,
+      now,
+    })
+    const recorded: typeof breaches = []
+    for (const entry of breaches) {
+      const fingerprint = `agent_case_breach:${entry.item.id}`
+      const exists = await this.loops.hasEvidenceFingerprint(input.supabase, {
+        orgId: input.orgId,
+        evidenceFingerprint: fingerprint,
+      })
+      if (exists) {
+        recorded.push(entry)
+        continue
+      }
+      await this.people.createShadowAction(input.supabase, {
+        orgId: input.orgId,
+        userId: input.userId,
+        agentKey: 'pixel',
+        targetMemberId: owner.id,
+        actionKind: 'message',
+        proposedContent: entry.text,
+        rationale: 'Hard 24-hour escalation from the unified agent case ledger.',
+        sourceChannelId: entry.item.channel_id ?? 'agent-cases',
+        sourceMessageTs: entry.item.source_message_ts ?? entry.item.first_seen_at,
+        workflowKey: input.workflowKey,
+        metadata: {
+          signal_kind: 'client_risk',
+          signal_finding: entry.text,
+          agent_case_id: entry.item.id,
+          hard_24h_breach: true,
+          evidence_fingerprint: fingerprint,
+          delivery_mode: input.deliveryMode,
+          ...slackSignalLifecycleMetadata('client_risk', now),
+          eligible_at: now.toISOString(),
+        },
+      })
+      recorded.push(entry)
+    }
+    await this.openItems.markBreached(input.supabase, recorded, now)
+    return recorded.length
   }
 
   private async deliverPersonalMoment(
@@ -245,13 +290,18 @@ export class SlackTeamSignalDeliveryService {
       status: 'approved',
     })
     if (!approved) return 0
-    const claimed = await this.people.claimShadowActionForSend(input.supabase, input.orgId, entry.action.id)
+    const claimed = await this.people.claimShadowActionForSend(
+      input.supabase,
+      input.orgId,
+      entry.action.id,
+    )
     if (!claimed) return 0
 
     const eventTypeRaw = entry.action.metadata.moment_event_type
     const eventType = isPersonalMomentEventType(eventTypeRaw) ? eventTypeRaw : 'personal_milestone'
     const finding =
-      typeof entry.action.metadata.signal_finding === 'string' && entry.action.metadata.signal_finding.trim()
+      typeof entry.action.metadata.signal_finding === 'string' &&
+      entry.action.metadata.signal_finding.trim()
         ? entry.action.metadata.signal_finding
         : entry.action.proposed_content
     const historical =
@@ -280,10 +330,15 @@ export class SlackTeamSignalDeliveryService {
         slack_user_id: entry.recipient.platform_id,
       })
       const channelId = String(dm.channel_id)
-      const delivery = await this.slackTools.sendMessage(input.supabase, input.userId, input.orgId, {
-        channel_id: channelId,
-        text,
-      })
+      const delivery = await this.slackTools.sendMessage(
+        input.supabase,
+        input.userId,
+        input.orgId,
+        {
+          channel_id: channelId,
+          text,
+        },
+      )
       const messageTs = typeof delivery.ts === 'string' ? delivery.ts : null
       await this.people.markShadowActionSent(input.supabase, {
         actionId: entry.action.id,
@@ -330,13 +385,19 @@ export class SlackTeamSignalDeliveryService {
         status: 'approved',
       })
       if (!approved) continue
-      const next = await this.people.claimShadowActionForSend(input.supabase, input.orgId, entry.action.id)
+      const next = await this.people.claimShadowActionForSend(
+        input.supabase,
+        input.orgId,
+        entry.action.id,
+      )
       if (!next) continue
       claimed.push(entry)
     }
     if (claimed.length === 0) return 0
 
-    const sinceIso = new Date(now.getTime() - SLACK_TEAM_DIGEST_THREAD_HOURS * 3_600_000).toISOString()
+    const sinceIso = new Date(
+      now.getTime() - SLACK_TEAM_DIGEST_THREAD_HOURS * 3_600_000,
+    ).toISOString()
     const existingRoot = await this.loops.findRecentDigestRoot(input.supabase, {
       orgId: input.orgId,
       workflowKey: input.workflowKey,
@@ -368,7 +429,10 @@ export class SlackTeamSignalDeliveryService {
         orgId: input.orgId,
         now,
       })
-      const continuityEntries = [...(ledgerContinuity?.open ?? []), ...(ledgerContinuity?.resolved ?? [])]
+      const continuityEntries = [
+        ...(ledgerContinuity?.open ?? []),
+        ...(ledgerContinuity?.resolved ?? []),
+      ]
       const stakes = await this.contextStakes?.build({
         supabase: input.supabase,
         userId: input.userId,
@@ -394,10 +458,16 @@ export class SlackTeamSignalDeliveryService {
               finding: String(entry.action.metadata.signal_finding ?? entry.item.finding),
               quote: String(entry.action.metadata.source_message_text ?? ''),
               senderName: String(entry.action.metadata.source_sender_display_name ?? ''),
-              channelName: String(entry.action.metadata.source_channel_name ?? entry.item.channelName),
+              channelName: String(
+                entry.action.metadata.source_channel_name ?? entry.item.channelName,
+              ),
               timestamp: String(entry.action.metadata.source_message_ts ?? ''),
             })),
-            continuity: [...continuityEntries.map((entry) => entry.text), ...(stakes ?? []), ...continuity],
+            continuity: [
+              ...continuityEntries.map((entry) => entry.text),
+              ...(stakes ?? []),
+              ...continuity,
+            ],
             context: {
               now,
               timezone: input.timezone ?? 'America/Los_Angeles',
@@ -409,11 +479,16 @@ export class SlackTeamSignalDeliveryService {
           composition = null
         }
       }
-      const delivery = await this.slackTools.sendMessage(input.supabase, input.userId, input.orgId, {
-        channel_id: channelId,
-        text,
-        ...(existingRoot ? { thread_ts: existingRoot.threadTs } : {}),
-      })
+      const delivery = await this.slackTools.sendMessage(
+        input.supabase,
+        input.userId,
+        input.orgId,
+        {
+          channel_id: channelId,
+          text,
+          ...(existingRoot ? { thread_ts: existingRoot.threadTs } : {}),
+        },
+      )
       const messageTs = typeof delivery.ts === 'string' ? delivery.ts : null
       const digestThreadTs = existingRoot?.threadTs ?? messageTs
       const isRoot = !existingRoot
@@ -481,11 +556,18 @@ export class SlackTeamSignalDeliveryService {
   }
 
   private isReady(action: SlackShadowAction, now: Date): boolean {
-    const eligibleAt = typeof action.metadata.eligible_at === 'string' ? Date.parse(action.metadata.eligible_at) : NaN
+    const eligibleAt =
+      typeof action.metadata.eligible_at === 'string'
+        ? Date.parse(action.metadata.eligible_at)
+        : NaN
     return Number.isFinite(eligibleAt) && eligibleAt <= now.getTime()
   }
 
-  private outcome(action: SlackShadowAction, canSend: boolean, reason: string): SlackDeliveryOutcome {
+  private outcome(
+    action: SlackShadowAction,
+    canSend: boolean,
+    reason: string,
+  ): SlackDeliveryOutcome {
     return {
       action_id: action.id,
       recipient_id: action.target_member_id,

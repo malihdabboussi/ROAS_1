@@ -7,7 +7,8 @@ describe('SlackPendingOffersService', () => {
       create: vi.fn().mockResolvedValue(undefined),
       expire: vi.fn().mockResolvedValue(undefined),
     }
-    const service = new SlackPendingOffersService(repository as never)
+    const cases = { recordExternal: vi.fn().mockResolvedValue(undefined) }
+    const service = new SlackPendingOffersService(repository as never, cases as never)
     await service.record({} as never, {
       orgId: 'org-1',
       recipientPersonId: 'person-1',
@@ -28,5 +29,14 @@ describe('SlackPendingOffersService', () => {
       }),
     )
     expect(repository.expire).toHaveBeenCalled()
+    expect(cases.recordExternal).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        caseType: 'offer',
+        sourceType: 'slack_offer',
+        sourceKey: 'action-1',
+        summary: 'One-page case study with setup, spend, result, and difference',
+      }),
+    )
   })
 })

@@ -275,6 +275,7 @@ import { SpacesService } from './services/spaces.service'
     SpaceAutomationService,
     MeetingsPrecallPrepService,
     MeetingFollowUpSlackConfirmService,
+    SlackOpenItemsService,
     SpaceAutomationSchedulerService,
     SpaceFlowBuilderService,
     SpaceFlowCapabilityService,

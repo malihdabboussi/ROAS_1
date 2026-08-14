@@ -25,7 +25,13 @@ describe('SlackOfferFulfillmentService', () => {
         markDelivered: vi.fn().mockResolvedValue(undefined),
       }
       const slack = { sendMessage: vi.fn().mockResolvedValue({ ts: '2.2' }) }
-      const service = new SlackOfferFulfillmentService(repository as never, slack as never)
+      const cases = { applyExternalAction: vi.fn().mockResolvedValue(undefined) }
+      const service = new SlackOfferFulfillmentService(
+        repository as never,
+        slack as never,
+        undefined,
+        cases as never,
+      )
 
       await service.fulfill({} as never, 'offer-1')
 
@@ -40,6 +46,14 @@ describe('SlackOfferFulfillmentService', () => {
         }),
       )
       expect(repository.markDelivered).toHaveBeenCalledWith(expect.anything(), 'offer-1', '2.2')
+      expect(cases.applyExternalAction).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          sourceType: 'slack_offer',
+          sourceKey: 'action-1',
+          action: 'resolve',
+        }),
+      )
     },
   )
 

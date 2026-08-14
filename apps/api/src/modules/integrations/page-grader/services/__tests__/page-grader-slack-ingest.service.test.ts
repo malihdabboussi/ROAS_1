@@ -83,7 +83,7 @@ describe('PageGraderSlackIngestService', () => {
           metadata: expect.objectContaining({
             ingest_source: 'page_grader',
             page_grader_client_name: 'Acme',
-            page_grader_campaign_id: 'campaign-1',
+            roas_campaign_id: 'campaign-1',
           }),
         }),
       ],

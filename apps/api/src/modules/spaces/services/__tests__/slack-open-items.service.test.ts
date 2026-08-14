@@ -2,9 +2,17 @@ import { describe, expect, it, vi } from 'vitest'
 import { SlackOpenItemsService } from '../slack-open-items.service'
 
 describe('SlackOpenItemsService', () => {
-  it('writes unanswered questions and client risks without weakening signal gates', async () => {
+  it('writes every detected open ask as a client-scoped case before delivery selection', async () => {
     const items = {
       upsert: vi.fn().mockResolvedValue(undefined),
+      resolveSlackScope: vi.fn().mockResolvedValue({
+        scope_level: 'client',
+        program_id: 'program-clients',
+        campaign_id: 'campaign-client',
+        space_id: null,
+        client_label: 'Wholesale Universe',
+        external_client_id: 'page-grader-client',
+      }),
       listDueForResolution: vi.fn().mockResolvedValue([]),
       enforceRetention: vi.fn().mockResolvedValue(undefined),
     }
@@ -13,10 +21,14 @@ describe('SlackOpenItemsService', () => {
       orgId: 'org-1',
       subjectPersonId: 'person-1',
       clientLabel: 'Christian Osgood',
+      slackTeamId: 'T1',
       channelId: 'C1',
       sourceMessageTs: '1786400000.001',
-      shadowActionId: 'action-1',
       now: new Date('2026-08-10T20:00:00Z'),
+      sourceMetadata: {
+        page_grader_client_id: 'page-grader-client',
+        roas_campaign_id: 'campaign-client',
+      },
     }
 
     await service.record({} as never, {
@@ -34,22 +46,34 @@ describe('SlackOpenItemsService', () => {
     expect(items.upsert).toHaveBeenNthCalledWith(
       1,
       expect.anything(),
-      expect.objectContaining({ kind: 'question', first_seen_at: '2026-08-10T20:00:00.000Z' }),
+      expect.objectContaining({
+        case_type: 'unanswered_ask',
+        source_type: 'slack_message',
+        source_key: 'C1:1786400000.001',
+        scope_level: 'client',
+        program_id: 'program-clients',
+        campaign_id: 'campaign-client',
+        due_at: '2026-08-11T20:00:00.000Z',
+        first_seen_at: '2026-08-10T20:00:00.000Z',
+      }),
     )
     expect(items.upsert).toHaveBeenNthCalledWith(
       2,
       expect.anything(),
-      expect.objectContaining({ kind: 'risk' }),
+      expect.objectContaining({ case_type: 'client_risk' }),
     )
   })
 
   it('rechecks due rows and persists resolved outcomes every fifteen minutes', async () => {
     const item = {
       id: 'item-1',
-      kind: 'question',
+      case_type: 'unanswered_ask',
       status: 'open',
       last_activity_at: '2026-08-09T20:00:00Z',
-      metadata: { shadow_action_id: 'action-1' },
+      org_id: 'org-1',
+      channel_id: 'C1',
+      source_message_ts: '1.1',
+      metadata: {},
     }
     const items = {
       listDueForResolution: vi.fn().mockResolvedValue([item]),
@@ -57,12 +81,13 @@ describe('SlackOpenItemsService', () => {
       enforceRetention: vi.fn().mockResolvedValue(undefined),
     }
     const resolution = {
-      refresh: vi.fn().mockResolvedValue({
-        resolution: {
-          resolved: true,
-          reason: 'A later human reply was found.',
-          checked_at: '2026-08-10T20:00:00.000Z',
-        },
+      inspectSource: vi.fn().mockResolvedValue({
+        resolved: true,
+        source_available: true,
+        reason: 'A later human reply was found.',
+        checked_at: '2026-08-10T20:00:00.000Z',
+        reply_count: 1,
+        reaction_count: 0,
       }),
     }
     const service = new SlackOpenItemsService(items as never, resolution as never)
@@ -86,7 +111,18 @@ describe('SlackOpenItemsService', () => {
     const base = {
       id: 'item-1',
       org_id: 'org-1',
-      kind: 'question',
+      case_type: 'unanswered_ask',
+      source_type: 'slack_message',
+      source_key: 'C1:1.1',
+      scope_level: 'client',
+      program_id: 'program-1',
+      campaign_id: 'campaign-1',
+      space_id: null,
+      external_client_id: 'client-1',
+      severity: 'normal',
+      due_at: '2026-08-11T06:00:00.000Z',
+      breach_notified_at: null,
+      snoozed_until: null,
       subject_person_id: null,
       client_label: 'Christian Osgood',
       channel_id: 'C1',
@@ -134,5 +170,31 @@ describe('SlackOpenItemsService', () => {
       now: new Date('2026-08-10T20:00:00.000Z'),
     })
     expect(alreadySurfaced.resolved).toHaveLength(0)
+  })
+
+  it('surfaces each unresolved 24-hour breach exactly once', async () => {
+    const item = {
+      id: 'case-1',
+      client_label: 'Wholesale Universe',
+      summary: 'Bonnie is waiting for webinar replay booking attribution.',
+      first_seen_at: '2026-08-12T17:00:00.000Z',
+    }
+    const items = {
+      listUnnotifiedBreaches: vi.fn().mockResolvedValue([item]),
+      markBreachNotified: vi.fn().mockResolvedValue(undefined),
+    }
+    const service = new SlackOpenItemsService(items as never, {} as never)
+    const now = new Date('2026-08-13T18:00:00.000Z')
+
+    const breached = await service.breachPack({} as never, { orgId: 'org-1', now })
+    expect(breached[0]?.text).toContain('24h response breach')
+    expect(breached[0]?.text).toContain('Wholesale Universe')
+
+    await service.markBreached({} as never, breached as never, now)
+    expect(items.markBreachNotified).toHaveBeenCalledWith(
+      expect.anything(),
+      'case-1',
+      '2026-08-13T18:00:00.000Z',
+    )
   })
 })

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, FolderKanban, Plug } from 'lucide-react'
 import { toast } from 'sonner'
-import { QuickMissionsHubHost } from '@/components/global-chat/components/QuickMissionsHubHost'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
 import { ShellEmptyChatQuickStartPills } from '@/components/shell/ShellEmptyChatQuickStartPills'
@@ -33,7 +32,6 @@ import { fetchPrograms, type Program } from '@/lib/programs'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
 export function HomeDashboardV4Composer() {
-  const [quickMissionsOpen, setQuickMissionsOpen] = useState(false)
   const router = useRouter()
   const seedComposer = useGlobalChatStore((s) => s.seedComposer)
   const clearMeetingContext = useGlobalChatStore((s) => s.clearMeetingContext)
@@ -270,15 +268,7 @@ export function HomeDashboardV4Composer() {
   return (
     <QuickMissionsLauncherProvider>
       <div className="w-full max-w-3xl">
-        <QuickMissionsHubHost
-          open={quickMissionsOpen ? true : undefined}
-          onClose={() => setQuickMissionsOpen(false)}
-        />
-        <ShellEmptyChatQuickStartPills
-          onSelect={quickStart.selectQuickStart}
-          onMission={() => setQuickMissionsOpen(true)}
-          missionOpen={quickMissionsOpen}
-        />
+        <ShellEmptyChatQuickStartPills onSelect={quickStart.selectQuickStart} />
         <ChatInput
           onSend={handleSend}
           disabled={sending}

@@ -1,23 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { SlackOpenItem } from './slack-open-items.types'
 
-export type SlackOpenItem = {
-  id: string
-  org_id: string
-  kind: 'question' | 'client_ask' | 'commitment' | 'risk'
-  subject_person_id: string | null
-  client_label: string | null
-  channel_id: string
-  source_message_ts: string
-  summary: string
-  status: 'open' | 'answered' | 'resolved' | 'stale'
-  first_seen_at: string
-  last_activity_at: string
-  times_surfaced: number
-  last_surfaced_at: string | null
-  resolution_note: string | null
-  metadata: Record<string, unknown>
-}
+export type { SlackOpenItem } from './slack-open-items.types'
 
 @Injectable()
 export class SlackOpenItemsRepository {
@@ -28,11 +13,172 @@ export class SlackOpenItemsRepository {
       'id' | 'status' | 'times_surfaced' | 'last_surfaced_at' | 'resolution_note'
     >,
   ): Promise<void> {
-    const { error } = await supabase.from('slack_open_items').upsert(input, {
-      onConflict: 'org_id,channel_id,source_message_ts',
-      ignoreDuplicates: false,
-    })
-    if (error) throw new Error(`Failed to upsert Slack open item: ${error.message}`)
+    const { data: existing, error: loadError } = await supabase
+      .from('agent_cases')
+      .select('id, metadata')
+      .eq('org_id', input.org_id)
+      .eq('source_type', input.source_type)
+      .eq('source_key', input.source_key)
+      .maybeSingle()
+    if (loadError) throw new Error(`Failed to load agent case: ${loadError.message}`)
+    if (existing?.id) {
+      const existingMetadata =
+        existing.metadata && typeof existing.metadata === 'object'
+          ? (existing.metadata as Record<string, unknown>)
+          : {}
+      const { error } = await supabase
+        .from('agent_cases')
+        .update({
+          scope_level: input.scope_level,
+          program_id: input.program_id,
+          campaign_id: input.campaign_id,
+          space_id: input.space_id,
+          external_client_id: input.external_client_id,
+          subject_person_id: input.subject_person_id,
+          client_label: input.client_label,
+          summary: input.summary,
+          severity: input.severity,
+          last_activity_at: input.last_activity_at,
+          due_at: input.due_at,
+          metadata: { ...existingMetadata, ...input.metadata },
+        })
+        .eq('id', existing.id)
+      if (error) throw new Error(`Failed to update agent case: ${error.message}`)
+      return
+    }
+    const { error } = await supabase.from('agent_cases').insert(input)
+    if (error) throw new Error(`Failed to create agent case: ${error.message}`)
+  }
+
+  async resolveSlackScope(
+    supabase: SupabaseClient,
+    input: { orgId: string; channelId: string; metadata: Record<string, unknown> },
+  ): Promise<{
+    scope_level: 'company' | 'client' | 'campaign'
+    program_id: string | null
+    campaign_id: string | null
+    space_id: string | null
+    client_label: string | null
+    external_client_id: string | null
+  }> {
+    const metadataCampaignId =
+      this.optionalUuid(input.metadata.roas_campaign_id) ??
+      this.optionalUuid(input.metadata.page_grader_campaign_id)
+    let campaignId = metadataCampaignId
+    if (!campaignId) {
+      const { data, error } = await supabase
+        .from('slack_brain_mappings')
+        .select('target_campaign_id')
+        .eq('org_id', input.orgId)
+        .eq('slack_channel_id', input.channelId)
+        .eq('target_kind', 'campaign')
+        .eq('enabled', true)
+        .not('target_campaign_id', 'is', null)
+        .limit(1)
+        .maybeSingle()
+      if (error) throw new Error(`Failed to resolve Slack case scope: ${error.message}`)
+      campaignId = this.optionalUuid(data?.target_campaign_id)
+    }
+    if (!campaignId) {
+      return {
+        scope_level: 'company',
+        program_id: null,
+        campaign_id: null,
+        space_id: null,
+        client_label: this.optionalString(input.metadata.page_grader_client_name),
+        external_client_id: this.optionalString(input.metadata.page_grader_client_id),
+      }
+    }
+    const { data: campaign, error } = await supabase
+      .from('campaigns')
+      .select('id, name, program_id')
+      .eq('id', campaignId)
+      .eq('org_id', input.orgId)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (error) throw new Error(`Failed to load Slack case campaign: ${error.message}`)
+    return {
+      scope_level: campaign?.id ? 'client' : 'company',
+      program_id: this.optionalUuid(campaign?.program_id),
+      campaign_id: campaign?.id ? String(campaign.id) : null,
+      space_id: this.optionalUuid(input.metadata.roas_space_id),
+      client_label:
+        this.optionalString(input.metadata.page_grader_client_name) ??
+        this.optionalString(campaign?.name),
+      external_client_id: this.optionalString(input.metadata.page_grader_client_id),
+    }
+  }
+
+  async resolveExternalScope(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      campaignId?: string | null
+      spaceId?: string | null
+      externalCampaignId?: string | null
+      clientLabel?: string | null
+      externalClientId?: string | null
+    },
+  ): Promise<{
+    scope_level: 'company' | 'client' | 'campaign'
+    program_id: string | null
+    campaign_id: string | null
+    space_id: string | null
+    client_label: string | null
+    external_client_id: string | null
+  }> {
+    let campaignId = this.optionalUuid(input.campaignId)
+    let spaceId = this.optionalUuid(input.spaceId)
+    if (spaceId && !campaignId) {
+      const { data, error } = await supabase
+        .from('spaces')
+        .select('id, campaign_id')
+        .eq('id', spaceId)
+        .eq('org_id', input.orgId)
+        .is('deleted_at', null)
+        .maybeSingle()
+      if (error) throw new Error(`Failed to resolve external case Space: ${error.message}`)
+      if (!data?.id) spaceId = null
+      campaignId = this.optionalUuid(data?.campaign_id)
+    }
+    if (!spaceId && campaignId && input.externalCampaignId) {
+      const { data, error } = await supabase
+        .from('spaces')
+        .select('id')
+        .eq('campaign_id', campaignId)
+        .eq('schema->custom_data->>page_grader_campaign_id', input.externalCampaignId)
+        .is('deleted_at', null)
+        .limit(1)
+        .maybeSingle()
+      if (error) throw new Error(`Failed to resolve external campaign Space: ${error.message}`)
+      spaceId = this.optionalUuid(data?.id)
+    }
+    if (!campaignId) {
+      return {
+        scope_level: 'company',
+        program_id: null,
+        campaign_id: null,
+        space_id: spaceId,
+        client_label: input.clientLabel ?? null,
+        external_client_id: input.externalClientId ?? null,
+      }
+    }
+    const { data: campaign, error } = await supabase
+      .from('campaigns')
+      .select('id, name, program_id')
+      .eq('id', campaignId)
+      .eq('org_id', input.orgId)
+      .is('deleted_at', null)
+      .maybeSingle()
+    if (error) throw new Error(`Failed to resolve external case campaign: ${error.message}`)
+    return {
+      scope_level: spaceId ? 'campaign' : campaign?.id ? 'client' : 'company',
+      program_id: this.optionalUuid(campaign?.program_id),
+      campaign_id: campaign?.id ? String(campaign.id) : null,
+      space_id: spaceId,
+      client_label: input.clientLabel ?? this.optionalString(campaign?.name),
+      external_client_id: input.externalClientId ?? null,
+    }
   }
 
   async listDueForResolution(
@@ -41,10 +187,11 @@ export class SlackOpenItemsRepository {
     checkedBefore: string,
   ): Promise<SlackOpenItem[]> {
     const { data, error } = await supabase
-      .from('slack_open_items')
+      .from('agent_cases')
       .select('*')
       .eq('org_id', orgId)
       .eq('status', 'open')
+      .eq('source_type', 'slack_message')
       .or(
         `metadata->>resolution_checked_at.is.null,metadata->>resolution_checked_at.lt.${checkedBefore}`,
       )
@@ -60,9 +207,13 @@ export class SlackOpenItemsRepository {
     input: { resolved: boolean; note: string; checkedAt: string },
   ): Promise<void> {
     const { error } = await supabase
-      .from('slack_open_items')
+      .from('agent_cases')
       .update({
-        status: input.resolved ? (item.kind === 'question' ? 'answered' : 'resolved') : 'open',
+        status: input.resolved
+          ? item.case_type === 'unanswered_ask'
+            ? 'answered'
+            : 'resolved'
+          : 'open',
         resolution_note: input.resolved ? input.note : null,
         last_activity_at: input.resolved ? input.checkedAt : item.last_activity_at,
         metadata: { ...item.metadata, resolution_checked_at: input.checkedAt },
@@ -77,7 +228,7 @@ export class SlackOpenItemsRepository {
     input: { orgId: string; subjectPersonId?: string; resolvedSince: string },
   ): Promise<SlackOpenItem[]> {
     let query = supabase
-      .from('slack_open_items')
+      .from('agent_cases')
       .select('*')
       .eq('org_id', input.orgId)
       .or(`status.eq.open,and(status.in.(answered,resolved),updated_at.gte.${input.resolvedSince})`)
@@ -89,11 +240,78 @@ export class SlackOpenItemsRepository {
     return (data as SlackOpenItem[] | null) ?? []
   }
 
+  async listUnnotifiedBreaches(
+    supabase: SupabaseClient,
+    orgId: string,
+    nowIso: string,
+  ): Promise<SlackOpenItem[]> {
+    const { data, error } = await supabase
+      .from('agent_cases')
+      .select('*')
+      .eq('org_id', orgId)
+      .eq('status', 'open')
+      .is('breach_notified_at', null)
+      .not('due_at', 'is', null)
+      .lte('due_at', nowIso)
+      .or(`snoozed_until.is.null,snoozed_until.lte.${nowIso}`)
+      .order('due_at', { ascending: true })
+      .limit(100)
+    if (error) throw new Error(`Failed to load breached agent cases: ${error.message}`)
+    return (data as SlackOpenItem[] | null) ?? []
+  }
+
+  async markBreachNotified(
+    supabase: SupabaseClient,
+    caseId: string,
+    notifiedAt: string,
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('agent_cases')
+      .update({ breach_notified_at: notifiedAt })
+      .eq('id', caseId)
+      .is('breach_notified_at', null)
+    if (error) throw new Error(`Failed to mark agent case breach: ${error.message}`)
+  }
+
+  async applyExternalAction(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      sourceType: string
+      sourceKey: string
+      action: 'acknowledge' | 'resolve' | 'snooze_tomorrow'
+      nowIso: string
+    },
+  ): Promise<void> {
+    const snoozedUntil =
+      input.action === 'snooze_tomorrow'
+        ? new Date(Date.parse(input.nowIso) + 24 * 60 * 60_000).toISOString()
+        : null
+    const { error } = await supabase
+      .from('agent_cases')
+      .update({
+        status:
+          input.action === 'resolve'
+            ? 'resolved'
+            : input.action === 'acknowledge'
+              ? 'acknowledged'
+              : 'snoozed',
+        last_activity_at: input.nowIso,
+        snoozed_until: snoozedUntil,
+        resolution_note:
+          input.action === 'resolve' ? 'Resolved from the Page Grader Slack action.' : null,
+      })
+      .eq('org_id', input.orgId)
+      .eq('source_type', input.sourceType)
+      .eq('source_key', input.sourceKey)
+    if (error) throw new Error(`Failed to update agent case action: ${error.message}`)
+  }
+
   async markSurfaced(supabase: SupabaseClient, item: SlackOpenItem, nowIso: string): Promise<void> {
     const nextCount = item.times_surfaced + 1
     const terminal = item.status === 'open' && nextCount >= 4
     const { error } = await supabase
-      .from('slack_open_items')
+      .from('agent_cases')
       .update({
         times_surfaced: nextCount,
         last_surfaced_at: nowIso,
@@ -117,7 +335,7 @@ export class SlackOpenItemsRepository {
     archiveBefore: string,
   ): Promise<void> {
     const { error: archiveError } = await supabase
-      .from('slack_open_items')
+      .from('agent_cases')
       .delete()
       .eq('org_id', orgId)
       .in('status', ['answered', 'resolved', 'stale'])
@@ -125,7 +343,7 @@ export class SlackOpenItemsRepository {
     if (archiveError) throw new Error(`Failed to archive Slack open items: ${archiveError.message}`)
 
     const { data, error } = await supabase
-      .from('slack_open_items')
+      .from('agent_cases')
       .select('id')
       .eq('org_id', orgId)
       .eq('status', 'open')
@@ -135,10 +353,22 @@ export class SlackOpenItemsRepository {
     const overflow = (data ?? []).map((row) => row.id)
     if (overflow.length) {
       const { error: staleError } = await supabase
-        .from('slack_open_items')
+        .from('agent_cases')
         .update({ status: 'stale', resolution_note: 'Evicted by the 500-open-item retention cap.' })
         .in('id', overflow)
       if (staleError) throw new Error(`Failed to stale Slack open items: ${staleError.message}`)
     }
+  }
+
+  private optionalString(value: unknown): string | null {
+    return typeof value === 'string' && value.trim() ? value.trim() : null
+  }
+
+  private optionalUuid(value: unknown): string | null {
+    const text = this.optionalString(value)
+    return text &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(text)
+      ? text
+      : null
   }
 }

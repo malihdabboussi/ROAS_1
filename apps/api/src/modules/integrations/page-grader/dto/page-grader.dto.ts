@@ -213,6 +213,23 @@ export const PageGraderQcNotificationWebhookSchema = z.object({
   fallback_text: z.string().min(1).max(40_000),
   blocks: z.array(z.record(z.string(), z.unknown())).min(1).max(50),
   finding_ids: z.array(z.string().uuid()).min(1).max(50),
+  findings: z
+    .array(
+      z.object({
+        id: z.string().uuid(),
+        type: z.enum(['quality_control', 'proactive_launch', 'campaign_quality_control']),
+        summary: z.string().min(1).max(40_000),
+        client_id: z.string().uuid().nullable().optional(),
+        client_name: z.string().min(1).max(500).nullable().optional(),
+        page_grader_campaign_id: z.string().uuid().nullable().optional(),
+        roas_campaign_id: z.string().uuid().nullable().optional(),
+        roas_space_id: z.string().uuid().nullable().optional(),
+        severity: z.enum(['low', 'normal', 'high', 'critical']).optional(),
+        due_at: z.string().datetime().nullable().optional(),
+      }),
+    )
+    .max(50)
+    .optional(),
 })
 
 export type PageGraderQcNotificationWebhookDto = z.infer<

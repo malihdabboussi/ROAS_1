@@ -78,6 +78,23 @@ describe('agent capability source drift guardrail', () => {
     }
   })
 
+  it('documents the canonical Atlas campaign Brain save route', () => {
+    const docs = VIBEY_API_ACTION_DOCS.atlas_save_brain_context
+
+    expect(docs.description).toContain('campaign')
+    expect(extractDocExamples('atlas_save_brain_context')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: 'atlas_save_brain_context',
+          data: expect.objectContaining({
+            target_brain: 'campaign',
+            campaign_id: 'UUID',
+          }),
+        }),
+      ]),
+    )
+  })
+
   it('keeps named mission playbooks materializable from agent-facing docs', () => {
     expect(ACTION_SCHEMAS.create_mission?.optional).toContain('playbook_id')
     expect(VIBEY_API_ACTION_DOCS.create_mission.description).toContain('playbook_id')

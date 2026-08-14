@@ -93,7 +93,7 @@ export class SlackPendingOffersRepository {
       metadata.signal_finding,
     ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
     const { data: openItems } = await supabase
-      .from('slack_open_items')
+      .from('agent_cases')
       .select('summary,client_label,status,first_seen_at')
       .eq('org_id', offer.org_id)
       .order('last_activity_at', { ascending: false })
