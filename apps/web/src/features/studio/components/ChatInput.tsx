@@ -133,7 +133,6 @@ export function ChatInput({
     portalTargetRef,
     onOpenWorkspaceModels: () => openWorkspaceSettings('models'),
   })
-
   const {
     slashMenuOpen,
     setSlashMenuOpen,
@@ -158,7 +157,8 @@ export function ChatInput({
     slashHighlight,
     setSlashHighlight,
   })
-  const [attachedReferences, setAttachedReferences] = useRestoredRefs(restoredRefs, restoreNonce)
+  const restoredReferenceState = useRestoredRefs(restoredRefs, restoreNonce, conversationId)
+  const [attachedReferences, setAttachedReferences] = restoredReferenceState
   const { handleArtifactRemove, handleReferenceRemove } = useChatInputAttachmentRemoval({
     setAttachedArtifacts,
     setAttachedReferences,
