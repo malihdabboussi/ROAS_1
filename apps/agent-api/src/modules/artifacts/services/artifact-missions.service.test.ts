@@ -65,15 +65,21 @@ describe('ArtifactMissionsService', () => {
       'mission-session',
     )
 
-    expect(target.mainApiCall).toHaveBeenCalledWith('POST', '/api/missions', 'mission-session', {
-      title: 'IG Organic Story Ad',
-      input: {
-        playbook_id: 'ig-organic-video-ad',
-        playbook_kickoff: {
-          output_count: 1,
+    expect(target.mainApiCall).toHaveBeenCalledWith(
+      'POST',
+      '/api/missions',
+      'mission-session',
+      expect.objectContaining({
+        title: 'IG Organic Story Ad',
+        idempotency_key: expect.any(String),
+        input: {
+          playbook_id: 'ig-organic-video-ad',
+          playbook_kickoff: {
+            output_count: 1,
+          },
         },
-      },
-    })
+      }),
+    )
   })
 
   it('lists mission-session missions with manager visibility and subtask-assignee matches', async () => {

@@ -134,6 +134,16 @@ const ACTION_PREFLIGHT_OVERRIDES: Partial<Record<ArtifactAction, ActionPreflight
     reason:
       'Canvas mutation batches require a valid revision and supported normalized operations before database execution.',
   },
+  build_campaign_blueprint: {
+    mode: 'static_preflight',
+    reason:
+      'Campaign blueprints require a supported archetype and semantically valid assets and placeholders before Canvas execution.',
+  },
+  complete_canvas_placeholder: {
+    mode: 'static_preflight',
+    reason:
+      'Placeholder completion requires a valid Canvas node and a coherent canonical resource reference.',
+  },
   dream_inspect_agent: {
     mode: 'static_preflight',
     reason:
@@ -207,6 +217,8 @@ export const ACTION_PREFLIGHTS: Partial<Record<ArtifactAction, ActionPreflightVa
   propose_company_brain_signal: validateProposeCompanyBrainSignalPreflight,
   create_company_brain_object: validateCreateCompanyBrainObjectPreflight,
   apply_canvas_operations: validateCanvasOperationsPreflight,
+  build_campaign_blueprint: validateCampaignBlueprintPreflight,
+  complete_canvas_placeholder: validateCanvasPlaceholderCompletionPreflight,
   dream_inspect_agent: validateDreamOpsSessionPreflight,
   dream_search_evidence: validateDreamOpsSessionPreflight,
   dream_propose_skill_create: validateDreamOpsSessionPreflight,
@@ -223,8 +235,15 @@ function validateCanvasOperationsPreflight(
   if (!Number.isInteger(data.base_revision) || (data.base_revision as number) < 0) {
     return failure('base_revision must be a non-negative integer.', 'CANVAS_REVISION_INVALID')
   }
-  if (!Array.isArray(data.operations) || data.operations.length < 1 || data.operations.length > 100) {
-    return failure('operations must contain between 1 and 100 Canvas operations.', 'CANVAS_BATCH_INVALID')
+  if (
+    !Array.isArray(data.operations) ||
+    data.operations.length < 1 ||
+    data.operations.length > 100
+  ) {
+    return failure(
+      'operations must contain between 1 and 100 Canvas operations.',
+      'CANVAS_BATCH_INVALID',
+    )
   }
   const supported = new Set([
     'create_item',
@@ -243,6 +262,115 @@ function validateCanvasOperationsPreflight(
   return invalid
     ? failure('Every Canvas operation must use a supported op value.', 'CANVAS_OPERATION_INVALID')
     : null
+}
+
+function validateCampaignBlueprintPreflight(
+  data: Record<string, unknown>,
+): ActionPreflightFailure | null {
+  if (typeof data.campaign_label !== 'string' || data.campaign_label.trim().length === 0) {
+    return failure(
+      'campaign_label must describe the campaign requested in chat.',
+      'CAMPAIGN_BLUEPRINT_LABEL_INVALID',
+    )
+  }
+  if (typeof data.blueprint_id !== 'string' || data.blueprint_id.trim().length === 0) {
+    return failure('blueprint_id must be a non-empty string.', 'CAMPAIGN_BLUEPRINT_ID_INVALID')
+  }
+  const stages = Array.isArray(data.stages) ? data.stages : []
+  if (stages.length < 2 || stages.length > 20) {
+    return failure(
+      'stages must contain between 2 and 20 chat-derived campaign stages.',
+      'CAMPAIGN_BLUEPRINT_STAGES_INVALID',
+    )
+  }
+  const stageKeys = new Set<string>()
+  const invalidStage = stages.find((entry) => {
+    if (typeof entry !== 'object' || entry === null) return true
+    const value = entry as Record<string, unknown>
+    if (
+      typeof value.key !== 'string' ||
+      value.key.trim().length === 0 ||
+      typeof value.label !== 'string' ||
+      value.label.trim().length === 0 ||
+      stageKeys.has(value.key)
+    ) {
+      return true
+    }
+    stageKeys.add(value.key)
+    return false
+  })
+  if (invalidStage) {
+    return failure(
+      'Every campaign blueprint stage requires a unique non-empty key and label.',
+      'CAMPAIGN_BLUEPRINT_STAGE_INVALID',
+    )
+  }
+  const assets = Array.isArray(data.assets) ? data.assets : []
+  const gaps = Array.isArray(data.gaps) ? data.gaps : []
+  const invalidEntry = [...assets, ...gaps].find((entry) => {
+    if (typeof entry !== 'object' || entry === null) return true
+    const value = entry as Record<string, unknown>
+    return (
+      typeof value.title !== 'string' ||
+      value.title.trim().length === 0 ||
+      typeof value.stage_key !== 'string' ||
+      !stageKeys.has(value.stage_key)
+    )
+  })
+  if (invalidEntry) {
+    return failure(
+      'Every campaign blueprint asset and gap requires a non-empty title and stage_key.',
+      'CAMPAIGN_BLUEPRINT_ENTRY_INVALID',
+    )
+  }
+  const connections = Array.isArray(data.connections) ? data.connections : []
+  const invalidConnection = connections.find((entry) => {
+    if (typeof entry !== 'object' || entry === null) return true
+    const value = entry as Record<string, unknown>
+    return (
+      typeof value.source_stage_key !== 'string' ||
+      typeof value.target_stage_key !== 'string' ||
+      !stageKeys.has(value.source_stage_key) ||
+      !stageKeys.has(value.target_stage_key)
+    )
+  })
+  if (invalidConnection) {
+    return failure(
+      'Every campaign blueprint connection must reference two declared stage keys.',
+      'CAMPAIGN_BLUEPRINT_CONNECTION_INVALID',
+    )
+  }
+  const invalidGap = gaps.find((entry) => {
+    const value = entry as Record<string, unknown>
+    return typeof value.asset_type !== 'string' || typeof value.brief !== 'string'
+  })
+  return invalidGap
+    ? failure(
+        'Every campaign blueprint gap requires asset_type and brief.',
+        'CAMPAIGN_BLUEPRINT_GAP_INVALID',
+      )
+    : null
+}
+
+function validateCanvasPlaceholderCompletionPreflight(
+  data: Record<string, unknown>,
+): ActionPreflightFailure | null {
+  if (typeof data.node_id !== 'string' || data.node_id.trim().length === 0) {
+    return failure('node_id must be a non-empty UUID.', 'CANVAS_PLACEHOLDER_NODE_INVALID')
+  }
+  if (typeof data.title !== 'string' || data.title.trim().length === 0) {
+    return failure('title must be a non-empty string.', 'CANVAS_PLACEHOLDER_TITLE_INVALID')
+  }
+  const hasResourceId = typeof data.resource_id === 'string' && data.resource_id.trim().length > 0
+  const hasResourceType =
+    typeof data.resource_type === 'string' && data.resource_type.trim().length > 0
+  if (hasResourceId !== hasResourceType) {
+    return failure(
+      'resource_id and resource_type must be provided together.',
+      'CANVAS_PLACEHOLDER_RESOURCE_INVALID',
+    )
+  }
+  return null
 }
 
 export function describeActionPreflightContract(action: string): ActionPreflightCoverage {

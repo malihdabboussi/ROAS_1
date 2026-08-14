@@ -392,6 +392,8 @@ const MARKETING_EMPLOYEE_ACTIONS = new Set<string>([
   ...MANAGED_BASELINE_ACTIONS,
   ...MISSION_READ_ACTIONS,
   'get_canvas_board',
+  'build_campaign_blueprint',
+  'complete_canvas_placeholder',
   'apply_canvas_operations',
   'create_offer',
   'update_offer_step',

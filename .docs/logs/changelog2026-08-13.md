@@ -158,6 +158,35 @@ Impact: Mission launch requests remain observable until the dashboard host close
 
 Files: `apps/web/src/lib/missions/quick-missions-launcher.ts`, `apps/web/src/lib/missions/quick-missions-launcher.test.ts`, `apps/web/src/lib/missions/quick-missions-events.ts`, `apps/web/src/lib/missions/index.ts`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.test.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.test.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-selection-handlers.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-selection-handlers.test.ts`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `documentation/features/missions.md`.
 
+## [2026-08-13 16:32] - [FEATURE]
+
+What: Added the Visual Campaign Orchestrator plan and the first semantic Canvas slice: deterministic webinar-funnel stage layouts, linked existing/URL asset content, typed missing-asset placeholders, placeholder handoff actions, and empty-Canvas Pixel/resource entry points.
+
+Why: Canvas needs to represent a client's real campaign journey and its missing work, not only generic whiteboard objects.
+
+Impact: Campaign maps can now be expressed as existing normalized Canvas operations without a second persistence model. Placeholder metadata survives editing and exposes Create, Attach, Assign, and Dismiss callbacks for the upcoming governed workflow handoff layer.
+
+Files: `.docs/plans/visual-campaign-orchestrator-plan.md`, `apps/web/src/components/canvas/**`.
+
+## [2026-08-13 17:15] - [FEATURE]
+
+What: Completed the Visual Campaign Orchestrator vertical slice with governed Pixel blueprint and
+placeholder-completion actions, deterministic webinar/VSL/Skool layouts, safe visual URL embeds,
+canonical asset handoffs, campaign-aware Canvas chat prompts, and live proof against Yasir Khan
+Coaching LTD.
+
+Why: A campaign Canvas must be an operational visual map that Pixel can build from real client
+context, not a disconnected workflow label or a static diagram.
+
+Impact: Pixel can now discover Campaign context, build a revisioned Miro-style journey in visible
+batches, represent missing work as actionable gaps, create canonical funnels/sequences/ads/missions,
+and replace those gaps in place with linked ready assets. The live proof covers three campaign styles,
+six visual URL embeds, 19 emails, nine ads, three funnels, and the native webinar fulfillment mission.
+
+Files: `.docs/plans/visual-campaign-orchestrator-plan.md`, `apps/agent-api/src/modules/artifacts/**`,
+`apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `apps/web/src/components/canvas/**`,
+`apps/web/src/features/team/components/AgentChatPanel.tsx`, `docker/tools/vibey-backend/index.ts`,
+`packages/agent-policy/src/**`.
 ## [2026-08-13 16:30] - [FIX]
 
 What: Moved empty-chat Mission routing into the shared quick-start component itself, removed the replaced Mission branch from the composer-seeding hook, and added a real Quick Missions host/modal integration test.
@@ -218,6 +247,20 @@ Impact: Blank Home Mission launch no longer depends on shared module or React co
 
 Files: `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `documentation/features/missions.md`.
 
+## [2026-08-13 17:25] - [FIX]
+
+What: Removed the webinar, VSL call-booking, and free Skool community campaign archetypes from the
+Canvas product contract and replaced them with chat-derived stages and optional branching
+connections. Added a fourth live five-day-challenge-to-cohort-enrollment proof.
+
+Why: The original three campaign shapes were validation scenarios, not templates users should have
+to choose from.
+
+Impact: Pixel can compose a visual journey for any campaign described in chat, including custom
+stage names and non-linear paths, while the original examples remain test evidence only.
+
+Files: `apps/agent-api/src/modules/artifacts/services/campaign-blueprint-operations.ts`, action
+schema/preflight/docs/tests, `apps/web/src/components/canvas/**`, and the implementation plan.
 ## [2026-08-13 17:29] - [FIX]
 
 What: Moved empty-chat Mission open state and its controlled modal host into the quick-start component that renders the Mission button, and removed the replaced Home-level host wiring.

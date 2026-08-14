@@ -1731,6 +1731,20 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
     parameters:
       '```json\n{"action":"get_canvas_board","label":"Reading the campaign canvas","data":{}}\n```',
   },
+  build_campaign_blueprint: {
+    section: 'Canvas',
+    description:
+      'Builds an editable, laid-out campaign journey on Canvas after client Brain context and existing assets have been checked and blocking questions are resolved. Derive the stages and connections from the user conversation; do not choose from templates. Places known resources and URL previews, and marks missing work as actionable placeholders.',
+    parameters:
+      '```json\n{"action":"build_campaign_blueprint","label":"Building the campaign map","data":{"campaign_label":"Five-day challenge launch","blueprint_id":"fall-challenge","stages":[{"key":"traffic","label":"Traffic"},{"key":"signup","label":"Challenge signup"},{"key":"daily","label":"Daily challenge"},{"key":"offer","label":"Enrollment offer"}],"connections":[{"source_stage_key":"traffic","target_stage_key":"signup"},{"source_stage_key":"signup","target_stage_key":"daily"},{"source_stage_key":"daily","target_stage_key":"offer"}],"assets":[{"title":"Challenge signup page","stage_key":"signup","url":"https://example.com/challenge"}],"gaps":[{"title":"Daily challenge emails","stage_key":"daily","asset_type":"sequence","brief":"Create five daily lesson and participation emails.","suggested_action":"create_sequence"}]}}\n```',
+  },
+  complete_canvas_placeholder: {
+    section: 'Canvas',
+    description:
+      'Replaces one asset_placeholder node with the canonical resource created for it while preserving position, parent stage, style, and Canvas history. Call only after the asset action succeeds.',
+    parameters:
+      '```json\n{"action":"complete_canvas_placeholder","label":"Linking the completed sequence","data":{"node_id":"UUID","title":"Webinar reminder sequence","resource_type":"sequence","resource_id":"UUID","source_label":"Created by Pixel"}}\n```',
+  },
   apply_canvas_operations: {
     section: 'Canvas',
     description:

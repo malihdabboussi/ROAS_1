@@ -684,6 +684,8 @@ export const ACTION_METHOD_MAP: Record<ArtifactAction, string> = {
   create_strategy_node: 'createStrategyNode',
   list_strategy_nodes: 'listStrategyNodes',
   get_canvas_board: 'getCanvasBoard',
+  build_campaign_blueprint: 'buildCampaignBlueprint',
+  complete_canvas_placeholder: 'completeCanvasPlaceholder',
   apply_canvas_operations: 'applyCanvasOperations',
   bulk_create_ads: 'bulkCreateAds',
   generate_ad_copy: 'generateAdCopy',

@@ -348,6 +348,8 @@ export const ACTION_TO_DOMAIN = {
   create_strategy_node: 'edit_brain_models',
   list_strategy_nodes: 'edit_brain_models',
   get_canvas_board: 'read_marketing_artifacts',
+  build_campaign_blueprint: 'write_marketing_artifacts',
+  complete_canvas_placeholder: 'write_marketing_artifacts',
   apply_canvas_operations: 'write_marketing_artifacts',
   bulk_create_ads: 'write_marketing_artifacts',
   generate_ad_copy: 'write_marketing_artifacts',

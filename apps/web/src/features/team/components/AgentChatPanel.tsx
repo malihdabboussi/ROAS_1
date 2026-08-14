@@ -9,6 +9,17 @@ import { ResizableDivider } from '@/components/layout/ResizableDivider'
 import { usePanelResize } from '@/components/layout/usePanelResize'
 import type { MissionAgent } from '@/lib/agents'
 import { reportTeamError } from '@/lib/agents'
+import { backendGet } from '@/lib/api/backend-client'
+import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import type { Campaign } from '@/lib/campaigns'
+import {
+  CHAT_TOAST_ERRORS,
+  toastMessageForChatSendError,
+  type AttachedArtifact,
+  type ChatModelSettings,
+} from '@/lib/chat'
+import { resolvePinnedAssistantMessageId } from '@/lib/chat/assistant-message-actions'
+import { useCampaignMode } from '@/lib/chat/campaign-mode-adapter'
 import {
   clearConversationTeamDraft,
   createNewConversation,
@@ -30,23 +41,14 @@ import {
   type DocumentAttachment,
   type MessageReference,
 } from '@/lib/chat/studio-chat-runtime-adapter'
-import { backendGet } from '@/lib/api/backend-client'
-import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
-import type { Campaign } from '@/lib/campaigns'
-import {
-  CHAT_TOAST_ERRORS,
-  toastMessageForChatSendError,
-  type AttachedArtifact,
-  type ChatModelSettings,
-} from '@/lib/chat'
-import { useCampaignMode } from '@/lib/chat/campaign-mode-adapter'
-import { resolvePinnedAssistantMessageId } from '@/lib/chat/assistant-message-actions'
 import { useActiveArtifactSelectionSignal } from '@/lib/chat/use-active-artifact-selection-signal'
 import { reportFreezeEvent } from '@/lib/debug/freeze-diagnostics'
 import { useOrgStore } from '@/lib/org'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils/cn'
 import { getOrgScopedKey } from '@/lib/utils/org-storage'
+import { runAgentChatInitialLoad } from './agent-chat-panel/agent-chat-panel.initial-load'
+import { runAgentChatInitialSessionSyncRetry } from './agent-chat-panel/agent-chat-panel.initial-session-sync'
 import {
   buildAgentChatTurnData,
   EMPTY_MESSAGES,
@@ -58,8 +60,6 @@ import {
   resolvePreferredCampaignWhenGeneral,
   writeSessionMap,
 } from './agent-chat-panel/agent-chat-panel.logic'
-import { runAgentChatInitialLoad } from './agent-chat-panel/agent-chat-panel.initial-load'
-import { runAgentChatInitialSessionSyncRetry } from './agent-chat-panel/agent-chat-panel.initial-session-sync'
 import {
   runAgentChatPendingDeliverableMessage,
   runAgentChatPendingSendMessage,
@@ -71,11 +71,11 @@ import {
   type AgentChatQueueItem,
 } from './agent-chat-panel/agent-chat-panel.queue'
 import { sendAgentChatMessage } from './agent-chat-panel/agent-chat-panel.send'
+import { hydrateSelectedSessionMessages } from './agent-chat-panel/agent-chat-panel.session-selection'
 import { AgentChatMobileCampaignPanel } from './agent-chat-panel/AgentChatMobileCampaignPanel'
 import { AgentChatSetupGate } from './agent-chat-panel/AgentChatSetupGate'
-import { AgentChatVoicePanel } from './agent-chat-panel/AgentChatVoicePanel'
-import { hydrateSelectedSessionMessages } from './agent-chat-panel/agent-chat-panel.session-selection'
 import { AgentChatThread } from './agent-chat-panel/AgentChatThread'
+import { AgentChatVoicePanel } from './agent-chat-panel/AgentChatVoicePanel'
 import { useAgentChatCampaignController } from './agent-chat-panel/use-agent-chat-campaign-controller'
 import { useAgentChatScrollController } from './agent-chat-panel/use-agent-chat-scroll-controller'
 import { useAgentChatSessionLifecycle } from './agent-chat-panel/use-agent-chat-session-lifecycle'
@@ -127,6 +127,8 @@ interface AgentChatPanelProps {
   hideCampaignPanel?: boolean
   /** Optional system context appended to every user-initiated send (e.g. Team 2 Edit feeds HR with target-agent context). */
   systemContext?: string
+  /** External embedded surfaces can place a user-confirmable request in the composer. */
+  composerSeed?: { text: string; nonce: string } | null
   composerStyle?: 'compact' | 'home'
   /**
    * Ops Desk / embedded surfaces: no empty-state hero, no spacer scroll void.
@@ -181,6 +183,7 @@ export function AgentChatPanel({
   hideHeader = false,
   hideCampaignPanel = false,
   systemContext,
+  composerSeed = null,
   composerStyle = 'compact',
   compactLayout = false,
   composerDisabled = false,
@@ -210,6 +213,11 @@ export function AgentChatPanel({
     documents?: DocumentAttachment[]
     nonce: string
   } | null>(null)
+
+  useEffect(() => {
+    if (!composerSeed?.text.trim()) return
+    setComposerRestore({ text: composerSeed.text, nonce: composerSeed.nonce })
+  }, [composerSeed])
   const [voiceActive, setVoiceActive] = useState(false)
   const [agentFilter, setAgentFilter] = useState<Set<string>>(new Set([agent.agent_key]))
   const [searchAllSessions, setSearchAllSessions] = useState<Conversation[] | undefined>(undefined)
@@ -233,10 +241,7 @@ export function AgentChatPanel({
   }, [selectedSessionId])
 
   const reportAgentChatMark = useCallback(
-    (
-      phase: string,
-      context: Record<string, string | number | boolean | null | undefined> = {},
-    ) => {
+    (phase: string, context: Record<string, string | number | boolean | null | undefined> = {}) => {
       reportFreezeEvent('component_mark', {
         component: 'AgentChatPanel',
         phase,
@@ -503,31 +508,30 @@ export function AgentChatPanel({
     cancelTeamDraftTimer,
     clearSessionTitleReveal,
     beginSessionTitleReveal,
-  } =
-    useAgentChatSessionLifecycle({
-      sessions,
-      selectedSessionId,
-      fetchMessagesForSession: (conversationId, options) => fetchMessages(conversationId, options),
-      deleteConversationById: deleteConversation,
-      removeConversation: (conversationId) => {
-        useChatStore.getState().removeConversation(conversationId)
-      },
-      setSessions,
-      setSelectedSessionId,
-      setActiveConversationId: (sessionId) => {
-        useChatStore.getState().setActiveConversationId(sessionId)
-      },
-      selectSession: (sessionId, hydrate) => selectSessionRef.current(sessionId, hydrate),
-      renameConversationById: renameConversation,
-      updateConversation: (conversationId, updates) => {
-        useChatStore.getState().updateConversation(conversationId, updates)
-      },
-      getConversation: (conversationId) =>
-        useChatStore
-          .getState()
-          .conversations.find((conversation) => conversation.id === conversationId),
-      onConversationUpdated,
-    })
+  } = useAgentChatSessionLifecycle({
+    sessions,
+    selectedSessionId,
+    fetchMessagesForSession: (conversationId, options) => fetchMessages(conversationId, options),
+    deleteConversationById: deleteConversation,
+    removeConversation: (conversationId) => {
+      useChatStore.getState().removeConversation(conversationId)
+    },
+    setSessions,
+    setSelectedSessionId,
+    setActiveConversationId: (sessionId) => {
+      useChatStore.getState().setActiveConversationId(sessionId)
+    },
+    selectSession: (sessionId, hydrate) => selectSessionRef.current(sessionId, hydrate),
+    renameConversationById: renameConversation,
+    updateConversation: (conversationId, updates) => {
+      useChatStore.getState().updateConversation(conversationId, updates)
+    },
+    getConversation: (conversationId) =>
+      useChatStore
+        .getState()
+        .conversations.find((conversation) => conversation.id === conversationId),
+    onConversationUpdated,
+  })
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -723,8 +727,7 @@ export function AgentChatPanel({
       agentKey: agent.agent_key,
       initialSessionId,
       knownSessionsCount: sessions.length,
-      fetchConversationsForAgent: (targetAgentKey) =>
-        fetchConversations(undefined, targetAgentKey),
+      fetchConversationsForAgent: (targetAgentKey) => fetchConversations(undefined, targetAgentKey),
       setSessions,
       selectSession: (sessionId, hydrate) => selectSessionRef.current(sessionId, hydrate),
       reportMark: reportAgentChatMark,
@@ -789,7 +792,9 @@ export function AgentChatPanel({
         cancelTeamDraftTimer,
         clearConversationTeamDraft,
         getStoredConversation: (conversationId) =>
-          useChatStore.getState().conversations.find((conversation) => conversation.id === conversationId),
+          useChatStore
+            .getState()
+            .conversations.find((conversation) => conversation.id === conversationId),
         fetchConversationsForAgent: (targetAgentKey) =>
           fetchConversations(undefined, targetAgentKey),
         suggestConversationTitle,
@@ -1164,8 +1169,7 @@ export function AgentChatPanel({
         pendingStrategySessionRef.current = sessionId
       },
       sendMessageStreaming,
-      fetchConversationsForAgent: (targetAgentKey) =>
-        fetchConversations(undefined, targetAgentKey),
+      fetchConversationsForAgent: (targetAgentKey) => fetchConversations(undefined, targetAgentKey),
       setSessions,
       setSelectedSessionId,
       onSessionChange: (sessionId) => onSessionChange?.(sessionId),
@@ -1452,9 +1456,13 @@ export function AgentChatPanel({
             </>
           </AgentChatSetupGate>
         </div>
-        {!compactLayout && !hideCampaignPanel && !isMobile && campaignPanelOpen && activeCampaignId && (
-          <ResizableDivider onMouseDown={handleResizeMouseDown} isDragging={isDragging} compact />
-        )}
+        {!compactLayout &&
+          !hideCampaignPanel &&
+          !isMobile &&
+          campaignPanelOpen &&
+          activeCampaignId && (
+            <ResizableDivider onMouseDown={handleResizeMouseDown} isDragging={isDragging} compact />
+          )}
         {!compactLayout && !hideCampaignPanel && activeCampaignId && !isMobile && (
           <motion.div
             initial={false}

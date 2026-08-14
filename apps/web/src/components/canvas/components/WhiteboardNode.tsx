@@ -3,6 +3,7 @@
 import { Handle, NodeResizer, Position, type NodeProps } from '@xyflow/react'
 import { cn } from '@/lib/utils/cn'
 import type { WhiteboardNode as WhiteboardNodeType } from '../types/whiteboard.types'
+import { CanvasPlaceholderActions } from './CanvasPlaceholderActions'
 
 const HANDLE_POSITIONS = [Position.Top, Position.Right, Position.Bottom, Position.Left]
 
@@ -10,16 +11,19 @@ export function WhiteboardNode({ id, data, selected }: NodeProps<WhiteboardNodeT
   const isText = data.kind === 'text'
   const isShape = data.kind === 'shape'
   const isFrame = data.kind === 'frame'
+  const isPlaceholder = data.semantic_type === 'asset_placeholder'
+  const isExternalUrl = data.semantic_type === 'external_url' && Boolean(data.source?.url)
 
   return (
     <div
       className={cn(
-        'relative h-full min-h-24 w-full min-w-48 rounded-spacing-3 border p-spacing-3 shadow-sm transition-shadow',
+        'rounded-spacing-3 p-spacing-3 relative h-full min-h-24 w-full min-w-48 border shadow-sm transition-shadow',
         data.kind === 'note' ? 'badge-glass-yellow' : 'surface-card border-border',
         isText && 'border-transparent bg-transparent shadow-none',
         isShape && 'flex min-h-32 min-w-56 items-center justify-center rounded-full',
         isFrame && 'border-primary bg-transparent shadow-none',
         selected && 'border-primary shadow-md',
+        isPlaceholder && 'border-primary',
       )}
     >
       <NodeResizer
@@ -46,11 +50,35 @@ export function WhiteboardNode({ id, data, selected }: NodeProps<WhiteboardNodeT
         />
       )}
       {data.resource_type ? (
-        <span className="badge-glass-blue body-4 mb-spacing-2 inline-flex rounded-spacing-2 px-spacing-2 py-spacing-1 capitalize">
+        <span className="badge-glass-blue body-4 mb-spacing-2 rounded-spacing-2 px-spacing-2 py-spacing-1 inline-flex capitalize">
           {data.resource_type.replaceAll('_', ' ')}
         </span>
       ) : null}
-      {!isShape && !isFrame && (
+      {isExternalUrl ? (
+        <div className="nodrag border-border mb-spacing-2 rounded-spacing-2 bg-background overflow-hidden border">
+          <div className="border-border gap-spacing-1 px-spacing-2 py-spacing-1 flex items-center border-b">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <a
+              className="body-4 text-primary ml-spacing-1 min-w-0 flex-1 truncate underline"
+              href={data.source!.url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {data.source!.label || data.source!.url}
+            </a>
+          </div>
+          <iframe
+            className="nowheel pointer-events-none h-36 w-full bg-white"
+            src={data.source!.url}
+            title={`Preview of ${data.title}`}
+            loading="lazy"
+            sandbox="allow-scripts allow-same-origin"
+          />
+        </div>
+      ) : null}
+      {!isShape && !isFrame && !isExternalUrl && (
         <textarea
           className={cn(
             'nodrag nowheel input-glass w-full resize-none border-0 bg-transparent p-0',
@@ -61,6 +89,13 @@ export function WhiteboardNode({ id, data, selected }: NodeProps<WhiteboardNodeT
           onChange={(event) => data.onContentChange(id, { text: event.target.value })}
         />
       )}
+      {isPlaceholder ? (
+        <CanvasPlaceholderActions
+          nodeId={id}
+          disabled={data.status === 'creating'}
+          onAction={data.onPlaceholderAction}
+        />
+      ) : null}
     </div>
   )
 }

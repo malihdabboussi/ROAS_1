@@ -385,6 +385,8 @@ const SUPPORTED_ACTIONS = [
   'edit_image',
   'list_canvas_nodes',
   'get_canvas_board',
+  'build_campaign_blueprint',
+  'complete_canvas_placeholder',
   'apply_canvas_operations',
   'generate_ad_set',
   'search_conversations',

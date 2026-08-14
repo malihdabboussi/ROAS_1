@@ -4,24 +4,28 @@ import { ArtifactStrategyService } from './artifact-strategy.service'
 
 describe('small artifact action data access', () => {
   it('reads and writes the normalized campaign Canvas for Pixel', async () => {
+    let boardRevision = 4
     const repository = {
       canAccessCanvasCampaign: vi.fn(async () => ({ data: true, error: null })),
       getOrCreateCanvas: vi.fn(async () => ({
-        data: { id: 'board-1', revision: 4 },
+        data: { id: 'board-1', revision: boardRevision },
         error: null,
       })),
       getCanvasItems: vi.fn(async () => ({ data: [{ id: 'item-1' }], error: null })),
       getCanvasConnectors: vi.fn(async () => ({ data: [], error: null })),
-      applyCanvasOperations: vi.fn(async () => ({
-        data: { operation_id: 'operation-1', committed_revision: 5 },
-        error: null,
-      })),
+      applyCanvasOperations: vi.fn(async () => {
+        boardRevision += 1
+        return {
+          data: { operation_id: `operation-${boardRevision}`, committed_revision: boardRevision },
+          error: null,
+        }
+      }),
     }
     const target = {
       resolveUserId: vi.fn(() => 'user-1'),
       resolveCampaignId: vi.fn(() => 'campaign-1'),
       resolveAgentKey: vi.fn(() => 'pixel'),
-      getServiceSupabase: vi.fn(async () => ({})),
+      serviceClient: {},
     }
     const handlers = new ArtifactStrategyService(repository as never).getHandlers(target)
 
@@ -40,8 +44,44 @@ describe('small artifact action data access', () => {
       ),
     ).resolves.toEqual({
       success: true,
-      operation_id: 'operation-1',
+      operation_id: 'operation-5',
       committed_revision: 5,
+    })
+    await expect(
+      handlers.build_campaign_blueprint(
+        {
+          campaign_label: 'Client webinar',
+          blueprint_id: 'client-webinar',
+          stages: [
+            { key: 'traffic', label: 'Traffic' },
+            { key: 'registration', label: 'Registration' },
+            { key: 'reminder', label: 'Reminder' },
+          ],
+          assets: [
+            {
+              title: 'Registration page',
+              stage_key: 'registration',
+              url: 'https://example.com/register',
+            },
+          ],
+          gaps: [
+            {
+              title: 'Reminder sequence',
+              stage_key: 'reminder',
+              asset_type: 'sequence',
+              brief: 'Create reminders.',
+            },
+          ],
+        },
+        'session',
+      ),
+    ).resolves.toMatchObject({
+      success: true,
+      blueprint_id: 'client-webinar',
+      campaign_label: 'Client webinar',
+      item_count: 5,
+      connector_count: 2,
+      batch_count: 3,
     })
     expect(repository.applyCanvasOperations).toHaveBeenCalledWith(
       {},
@@ -50,6 +90,15 @@ describe('small artifact action data access', () => {
         userId: 'user-1',
         baseRevision: 4,
         actorAgentKey: 'pixel',
+      }),
+    )
+    expect(repository.applyCanvasOperations).toHaveBeenLastCalledWith(
+      {},
+      expect.objectContaining({
+        boardId: 'board-1',
+        baseRevision: 7,
+        idempotencyKey: 'campaign-blueprint:client-webinar:batch:3',
+        operations: expect.arrayContaining([expect.objectContaining({ op: 'create_connector' })]),
       }),
     )
   })
@@ -62,7 +111,7 @@ describe('small artifact action data access', () => {
     const target = {
       resolveUserId: vi.fn(() => 'user-1'),
       resolveCampaignId: vi.fn(() => 'campaign-1'),
-      getServiceSupabase: vi.fn(async () => ({})),
+      serviceClient: {},
     }
     const handlers = new ArtifactStrategyService(repository as never).getHandlers(target)
 
@@ -71,6 +120,91 @@ describe('small artifact action data access', () => {
       error: 'You do not have access to this campaign Canvas.',
     })
     expect(repository.getOrCreateCanvas).not.toHaveBeenCalled()
+  })
+
+  it('replaces a placeholder in place with the created campaign resource', async () => {
+    const placeholder = {
+      id: 'placeholder-1',
+      kind: 'card',
+      position_x: 28,
+      position_y: 76,
+      width: 264,
+      height: 150,
+      rotation: 0,
+      z_index: 2,
+      parent_id: 'frame-1',
+      content: {
+        title: 'Reminder sequence',
+        semantic_type: 'asset_placeholder',
+        blueprint_id: 'webinar-proof',
+        placeholder: { asset_type: 'sequence', brief: 'Create reminders.' },
+      },
+      style: { backgroundColor: '#fff' },
+      locked: false,
+    }
+    const repository = {
+      canAccessCanvasCampaign: vi.fn(async () => ({ data: true, error: null })),
+      getOrCreateCanvas: vi.fn(async () => ({
+        data: { id: 'board-1', revision: 8 },
+        error: null,
+      })),
+      getCanvasItems: vi.fn(async () => ({ data: [placeholder], error: null })),
+      applyCanvasOperations: vi.fn(async () => ({
+        data: { operation_id: 'operation-9', committed_revision: 9 },
+        error: null,
+      })),
+    }
+    const target = {
+      resolveUserId: vi.fn(() => 'user-1'),
+      resolveCampaignId: vi.fn(() => 'campaign-1'),
+      resolveAgentKey: vi.fn(() => 'pixel'),
+      serviceClient: {},
+    }
+    const handlers = new ArtifactStrategyService(repository as never).getHandlers(target)
+
+    await expect(
+      handlers.complete_canvas_placeholder(
+        {
+          node_id: 'placeholder-1',
+          title: 'Webinar reminder sequence',
+          resource_type: 'sequence',
+          resource_id: 'sequence-1',
+        },
+        'session',
+      ),
+    ).resolves.toMatchObject({
+      success: true,
+      node_id: 'placeholder-1',
+      resource_type: 'sequence',
+      resource_id: 'sequence-1',
+      committed_revision: 9,
+    })
+    expect(repository.applyCanvasOperations).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({
+        boardId: 'board-1',
+        baseRevision: 8,
+        actorAgentKey: 'pixel',
+        operations: [
+          { op: 'delete_item', item_id: 'placeholder-1' },
+          expect.objectContaining({
+            op: 'create_item',
+            item: expect.objectContaining({
+              id: 'placeholder-1',
+              kind: 'resource_card',
+              parent_id: 'frame-1',
+              resource_type: 'sequence',
+              resource_id: 'sequence-1',
+              content: expect.objectContaining({
+                semantic_type: 'existing_asset',
+                status: 'ready',
+                blueprint_id: 'webinar-proof',
+              }),
+            }),
+          }),
+        ],
+      }),
+    )
   })
 
   it('creates and lists strategy nodes', async () => {
@@ -102,7 +236,7 @@ describe('small artifact action data access', () => {
     const target = {
       resolveUserId: vi.fn(() => 'user-1'),
       resolveCampaignId: vi.fn(() => 'campaign-1'),
-      getServiceSupabase: vi.fn(async () => supabase),
+      serviceClient: supabase,
     }
     const handlers = new ArtifactStrategyService().getHandlers(target)
 
@@ -163,7 +297,9 @@ describe('small artifact action data access', () => {
     }
     const handlers = new ArtifactNotificationsService().getHandlers(target)
 
-    await expect(handlers.send_user_message({ message: '  Hello user  ' }, 'session')).resolves.toEqual({
+    await expect(
+      handlers.send_user_message({ message: '  Hello user  ' }, 'session'),
+    ).resolves.toEqual({
       success: true,
       channels: { in_app: true },
     })

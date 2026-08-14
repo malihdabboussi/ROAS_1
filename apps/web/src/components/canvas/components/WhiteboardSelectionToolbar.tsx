@@ -34,29 +34,73 @@ export function WhiteboardSelectionToolbar({
   const LockIcon = allLocked ? Unlock : Lock
 
   return (
-    <div className="surface-card border-border absolute left-1/2 top-spacing-3 z-20 flex -translate-x-1/2 items-center gap-spacing-1 rounded-spacing-3 border p-spacing-1 shadow-lg">
+    <div className="surface-card border-border top-spacing-3 gap-spacing-1 rounded-spacing-3 p-spacing-1 absolute left-1/2 z-20 flex -translate-x-1/2 items-center border shadow-lg">
       <span className="body-4 text-muted-foreground px-spacing-2">
         {selectedIds.length} selected
       </span>
-      <button type="button" className="button-glass-neutral flex h-9 w-9 items-center justify-center" onClick={() => onDuplicate(selectedIds)} title="Duplicate" aria-label="Duplicate selection">
+      <button
+        type="button"
+        className="button-glass-neutral flex h-9 w-9 items-center justify-center"
+        onClick={() => onDuplicate(selectedIds)}
+        title="Duplicate"
+        aria-label="Duplicate selection"
+      >
         <Copy className="h-4 w-4" />
       </button>
-      <button type="button" className="button-glass-neutral flex h-9 w-9 items-center justify-center" onClick={() => onAlign(selectedIds, 'horizontal')} title="Align horizontally" aria-label="Align selection horizontally">
+      <button
+        type="button"
+        className="button-glass-neutral flex h-9 w-9 items-center justify-center"
+        onClick={() => onAlign(selectedIds, 'horizontal')}
+        title="Align horizontally"
+        aria-label="Align selection horizontally"
+      >
         <Rows3 className="h-4 w-4" />
       </button>
-      <button type="button" className="button-glass-neutral flex h-9 w-9 items-center justify-center" onClick={() => onAlign(selectedIds, 'vertical')} title="Align vertically" aria-label="Align selection vertically">
+      <button
+        type="button"
+        className="button-glass-neutral flex h-9 w-9 items-center justify-center"
+        onClick={() => onAlign(selectedIds, 'vertical')}
+        title="Align vertically"
+        aria-label="Align selection vertically"
+      >
         <Columns3 className="h-4 w-4" />
       </button>
-      <button type="button" className="button-glass-neutral flex h-9 w-9 items-center justify-center" onClick={() => onDistribute(selectedIds, 'horizontal')} disabled={selectedIds.length < 3} title="Distribute horizontally" aria-label="Distribute selection horizontally">
+      <button
+        type="button"
+        className="button-glass-neutral flex h-9 w-9 items-center justify-center"
+        onClick={() => onDistribute(selectedIds, 'horizontal')}
+        disabled={selectedIds.length < 3}
+        title="Distribute horizontally"
+        aria-label="Distribute selection horizontally"
+      >
         <AlignHorizontalSpaceAround className="h-4 w-4" />
       </button>
-      <button type="button" className="button-glass-neutral flex h-9 w-9 items-center justify-center" onClick={() => onDistribute(selectedIds, 'vertical')} disabled={selectedIds.length < 3} title="Distribute vertically" aria-label="Distribute selection vertically">
+      <button
+        type="button"
+        className="button-glass-neutral flex h-9 w-9 items-center justify-center"
+        onClick={() => onDistribute(selectedIds, 'vertical')}
+        disabled={selectedIds.length < 3}
+        title="Distribute vertically"
+        aria-label="Distribute selection vertically"
+      >
         <AlignVerticalSpaceAround className="h-4 w-4" />
       </button>
-      <button type="button" className="button-glass-neutral flex h-9 w-9 items-center justify-center" onClick={() => onSetLocked(selectedIds, !allLocked)} title={allLocked ? 'Unlock' : 'Lock'} aria-label={allLocked ? 'Unlock selection' : 'Lock selection'}>
+      <button
+        type="button"
+        className="button-glass-neutral flex h-9 w-9 items-center justify-center"
+        onClick={() => onSetLocked(selectedIds, !allLocked)}
+        title={allLocked ? 'Unlock' : 'Lock'}
+        aria-label={allLocked ? 'Unlock selection' : 'Lock selection'}
+      >
         <LockIcon className="h-4 w-4" />
       </button>
-      <button type="button" className="button-glass-neutral text-destructive flex h-9 w-9 items-center justify-center" onClick={() => onDelete(selectedIds)} title="Delete" aria-label="Delete selection">
+      <button
+        type="button"
+        className="button-glass-neutral text-destructive flex h-9 w-9 items-center justify-center"
+        onClick={() => onDelete(selectedIds)}
+        title="Delete"
+        aria-label="Delete selection"
+      >
         <Trash2 className="h-4 w-4" />
       </button>
     </div>
