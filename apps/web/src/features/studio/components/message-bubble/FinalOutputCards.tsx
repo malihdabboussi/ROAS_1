@@ -7,6 +7,7 @@ import {
   Image as ImageIcon,
   LayoutTemplate,
   Music2,
+  Rocket,
   Video,
 } from 'lucide-react'
 import { MissionArtifactStatus } from '@/components/artifacts'
@@ -98,7 +99,12 @@ function describeOutput(block: FinalOutputBlock): {
       nodeType,
       imageUrl: block.imageUrl,
       videoUrl: block.videoUrl,
-      icon: ARTIFACT_ICON[nodeType] ?? <FileText className="icon-sm shrink-0" />,
+      icon:
+        block.artifactType === 'mission' ? (
+          <Rocket className="icon-sm shrink-0" />
+        ) : (
+          (ARTIFACT_ICON[nodeType] ?? <FileText className="icon-sm shrink-0" />)
+        ),
     }
   }
 
@@ -235,7 +241,10 @@ export function FinalOutputCards({
     <div className="mt-spacing-2 gap-spacing-2 flex flex-col" data-final-output-cards>
       {blocks.map((block) => {
         const output = describeOutput(block)
-        const glassClass = ARTIFACT_GLASS[output.nodeType] ?? 'badge-glass badge-glass-muted'
+        const isMission = block.type === 'artifact_preview' && block.artifactType === 'mission'
+        const glassClass = isMission
+          ? 'badge-glass-purple'
+          : (ARTIFACT_GLASS[output.nodeType] ?? 'badge-glass badge-glass-muted')
 
         return (
           <button
@@ -253,7 +262,12 @@ export function FinalOutputCards({
             }}
             className="card-glass hover:bg-hover-subtle gap-spacing-3 rounded-spacing-3 p-spacing-2 flex w-full items-center text-left transition-colors"
           >
-            <div className="h-spacing-14 w-spacing-16 border-border bg-muted rounded-spacing-2 flex shrink-0 items-center justify-center overflow-hidden border">
+            <div
+              className={cn(
+                'h-spacing-14 w-spacing-16 border-border rounded-spacing-2 flex shrink-0 items-center justify-center overflow-hidden border',
+                isMission ? 'badge-glass-purple' : 'bg-muted',
+              )}
+            >
               <FinalOutputThumb
                 imageUrl={output.imageUrl}
                 videoUrl={output.videoUrl}

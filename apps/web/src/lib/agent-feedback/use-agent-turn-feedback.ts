@@ -19,14 +19,16 @@ export function useAgentTurnFeedback({
   targetKind,
   targetId,
   sourceSurface,
+  enabled = true,
 }: {
   targetKind: AgentTurnFeedbackTargetKind
   targetId: string
   sourceSurface: string
+  enabled?: boolean
 }) {
   const [feedback, setFeedback] = useState<AgentTurnFeedbackRow | null>(null)
   const [pendingSaveCount, setPendingSaveCount] = useState(0)
-  const canPersist = isPersistableAgentFeedbackTarget(targetId)
+  const canPersist = enabled && isPersistableAgentFeedbackTarget(targetId)
   const targetKey = useMemo(() => `${targetKind}:${targetId}`, [targetKind, targetId])
   const feedbackRef = useRef<AgentTurnFeedbackRow | null>(null)
   const activeTargetKeyRef = useRef(targetKey)

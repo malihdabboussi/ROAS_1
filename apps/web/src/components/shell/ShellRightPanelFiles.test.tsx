@@ -66,4 +66,55 @@ describe('ShellRightPanelFiles', () => {
       expect.objectContaining({ id: 'document-1', conversationId: 'conversation-1' }),
     )
   })
+
+  it('distinguishes Mission outputs and can show the exact receipt in chat', async () => {
+    mocks.fetchConversationDocuments.mockResolvedValue([])
+    const scrollIntoView = vi.fn()
+    const messages: Message[] = [
+      {
+        id: 'mission-receipt-1',
+        conversation_id: 'conversation-1',
+        role: 'assistant',
+        content: 'Quick Mission started: Client Strategy — General / Meetings.',
+        content_blocks: null,
+        metadata: {
+          content_blocks_ordered: [
+            {
+              type: 'artifact_preview',
+              id: 'mission-card-1',
+              artifactType: 'mission',
+              artifactId: 'mission-1',
+              name: 'Client Strategy — General / Meetings',
+              subtitle: 'Started from this chat',
+            },
+          ],
+        },
+        created_at: '2026-08-14T05:00:00.000Z',
+      },
+    ]
+
+    render(
+      <>
+        <div
+          data-message-id="mission-receipt-1"
+          ref={(node) => {
+            if (node) node.scrollIntoView = scrollIntoView
+          }}
+        />
+        <ShellRightPanelFiles conversationId="conversation-1" messages={messages} />
+      </>,
+    )
+
+    expect(await screen.findByText('Client Strategy — General / Meetings')).toBeInTheDocument()
+    expect(screen.getByText('Started from this chat')).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Output actions for Client Strategy — General / Meetings',
+      }),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Show in chat' }))
+
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' })
+  })
 })

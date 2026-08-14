@@ -25,6 +25,8 @@ export interface ChatInputProps {
   initialValue?: string
   /** Pre-populate file attachments (used when editing a message that had documents). */
   initialDocuments?: DocumentAttachment[]
+  /** Pre-populate exact message/artifact references, including Reply targets. */
+  initialReferences?: MessageReference[]
   /** When this changes, re-apply `initialValue` and `initialDocuments` into the composer. */
   restoreNonce?: string
   /** Override persisted draft identity when this composer is not the main conversation composer. */

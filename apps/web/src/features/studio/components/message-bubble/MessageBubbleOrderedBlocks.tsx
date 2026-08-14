@@ -24,6 +24,7 @@ import { MessageContentBlockSwitch } from './MessageContentBlockSwitch'
 
 export function MessageBubbleOrderedBlocks({
   message,
+  conversationId,
   content,
   contentBlocksOrdered,
   messageDocuments,
@@ -42,6 +43,7 @@ export function MessageBubbleOrderedBlocks({
   pinAssistantActions = false,
 }: {
   message: Message
+  conversationId: string | null
   content: string
   contentBlocksOrdered: MessageContentBlock[]
   messageDocuments: DocumentAttachment[]
@@ -214,7 +216,7 @@ export function MessageBubbleOrderedBlocks({
         content={content}
         isStreaming={isBeingWorkedOn}
         messageId={message.id}
-        conversationId={message.conversation_id}
+        conversationId={conversationId ?? undefined}
         allowFork={allowFork}
         inlineAction={assistantInlineAction}
         pinActions={pinAssistantActions}

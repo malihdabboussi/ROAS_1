@@ -146,19 +146,21 @@ export function QuickMissionsHubModal({
       meta,
       audit,
     })
-    toast.info(QUICK_MISSIONS_MESSAGES.startingToast(payload.title))
+    const missionTitle = `${payload.title} — ${selectedClient.title}`
+    toast.info(QUICK_MISSIONS_MESSAGES.startingToast(missionTitle))
     onClose()
     try {
       const resolvedSourceConversationId =
         sourceConversationId ??
         (await onResolveSourceConversation?.({
-          missionTitle: payload.title,
+          missionTitle,
           campaignId: selectedClient.campaignId,
           spaceId: selectedClient.spaceId,
         })) ??
         null
       const mission = await createMission({
         ...payload,
+        title: missionTitle,
         input: {
           ...payload.input,
           ...(resolvedSourceConversationId
@@ -172,11 +174,11 @@ export function QuickMissionsHubModal({
         space_id: selectedClient.spaceId,
         idempotency_key: `quick-mission-${selected.id}-${crypto.randomUUID()}`,
       })
-      toast.success(QUICK_MISSIONS_MESSAGES.startedToast(payload.title))
+      toast.success(QUICK_MISSIONS_MESSAGES.startedToast(missionTitle))
       try {
         await onStarted?.(
           mission.id,
-          payload.title,
+          missionTitle,
           selectedClient.spaceId,
           resolvedSourceConversationId,
         )

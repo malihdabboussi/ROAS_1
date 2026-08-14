@@ -59,6 +59,7 @@ describe('shell conversation summary', () => {
               artifactType: 'mission',
               artifactId: 'mission-1',
               name: 'Client Strategy',
+              subtitle: 'General / Meetings · Started from this chat',
             },
             {
               type: 'media_asset',
@@ -78,6 +79,10 @@ describe('shell conversation summary', () => {
       'Client Strategy',
       'Proposal cover',
     ])
+    expect(extractConversationFileRows(rows)[2]).toMatchObject({
+      messageId: 'message-1',
+      subtitle: 'General / Meetings · Started from this chat',
+    })
     expect(extractConversationSourceRows(rows).map((row) => row.title)).toEqual([
       'Proposal mission',
       'Market report',
