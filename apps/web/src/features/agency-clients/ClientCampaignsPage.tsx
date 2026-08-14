@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, FolderKanban, Search } from 'lucide-react'
+import { CalendarDays, FolderKanban, PanelRightOpen, Search } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { fetchAgencyClientCampaigns, type AgencyClientCampaign } from '@/lib/agency-clients'
 import { cn } from '@/lib/utils/cn'
@@ -66,12 +66,20 @@ export function ClientCampaignsPage() {
 
   return (
     <main className="gap-spacing-6 p-spacing-8 mx-auto flex w-full max-w-7xl flex-col">
-      <header>
-        <p className="typo-section-label text-muted-foreground">Agency workspace</p>
-        <h1 className="title-h6 text-foreground">CLIENT CAMPAIGNS</h1>
-        <p className="body-3 text-muted-foreground mt-spacing-1">
-          Client campaigns from The ROAS Portal, mapped to ROAS Spaces.
-        </p>
+      <header className="gap-spacing-4 flex flex-wrap items-end justify-between">
+        <div>
+          <p className="typo-section-label text-muted-foreground">Agency workspace</p>
+          <h1 className="title-h6 text-foreground">CLIENT CAMPAIGNS</h1>
+          <p className="body-3 text-muted-foreground mt-spacing-1">
+            Client campaigns from The ROAS Portal, mapped to ROAS Spaces.
+          </p>
+        </div>
+        <Link
+          href="/client-campaigns?surface=portal"
+          className="button-compact button-glass-purple"
+        >
+          <PanelRightOpen className="icon-sm" /> Portal
+        </Link>
       </header>
       <div className="surface-card gap-spacing-2 rounded-spacing-3 border-border p-spacing-3 flex flex-wrap items-center border">
         <label className="relative min-w-64 flex-1">
