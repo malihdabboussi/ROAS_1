@@ -325,6 +325,7 @@ export abstract class BrainImportJobsRuntimeBase extends BrainImportJobsBase {
     result: Record<string, unknown>,
   ): Promise<void> {
     const admin = this.getAdminClient()
+    await this.assertCampaignSlackImportPersisted(admin, job, result)
     const { error } = await this.runtimeRepository.updateJobForAttempt(
       admin,
       job.id,
@@ -353,6 +354,38 @@ export abstract class BrainImportJobsRuntimeBase extends BrainImportJobsBase {
     ) {
       void this.triggerCrossPollination(job).catch((err) =>
         this.logger.warn(`Cross-pollination analysis failed: ${(err as Error).message}`),
+      )
+    }
+  }
+
+  private async assertCampaignSlackImportPersisted(
+    admin: SupabaseClient,
+    job: BrainImportJobRecord,
+    result: Record<string, unknown>,
+  ): Promise<void> {
+    if (job.job_type !== 'campaign_slack_import' || result.status !== 'completed') return
+    const payload = job.payload as Record<string, unknown>
+    const campaignId = String(payload.targetCampaignId ?? '').trim()
+    const teamId = String(payload.teamId ?? '').trim()
+    const channelId = String(payload.channelId ?? '').trim()
+    const periodStartTs = String(payload.periodStartTs ?? '').trim()
+    if (!campaignId || !teamId || !channelId || !periodStartTs) {
+      throw new Error('Campaign Brain import completion rejected: source identity is incomplete')
+    }
+    const sourceId = `slack:${teamId}:${channelId}:${periodStartTs}`
+    const evidence = await this.runtimeRepository.findCampaignSlackImportEvidence(
+      admin,
+      campaignId,
+      sourceId,
+    )
+    if (!evidence.brainId || evidence.memoryCount === 0) {
+      throw new Error(
+        'Campaign Brain import completion rejected: no persisted Campaign Brain memory matches the Slack source period',
+      )
+    }
+    if (evidence.embeddedCount !== evidence.memoryCount) {
+      throw new Error(
+        'Campaign Brain import completion rejected: Campaign Brain memories are missing retrieval embeddings',
       )
     }
   }

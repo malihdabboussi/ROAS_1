@@ -83,6 +83,13 @@ catalog, and runtime handler. Capability drift coverage verifies the local
 runtime policy so a declared Campaign Brain write cannot disappear from Atlas's
 available chat workflow.
 
+For campaign Slack imports, `JOB_STATUS:completed` is only a claim until the
+main API verifies the exact source period in the mapped Campaign Brain. At
+least one matching `ns_memories` row must exist and every matching row must
+have a retrieval embedding before the job becomes succeeded or the mapping
+cursor advances. A missing row or embedding converts the attempt to the normal
+retry/failure lifecycle even if Atlas's final prose says completed.
+
 Page Grader QC notifications also enter the unified `agent_cases` ledger before their Slack blocks are sent. Structured findings preserve `quality_control`, `proactive_launch`, or `campaign_quality_control`, resolve the mapped ROAS client campaign and campaign Space when available, and retain the Page Grader finding ID as the idempotent source key. Slack acknowledge, snooze, and resolve interactions update both Page Grader and the same ROAS case, preventing two competing status histories.
 
 ## Post-call work bridge

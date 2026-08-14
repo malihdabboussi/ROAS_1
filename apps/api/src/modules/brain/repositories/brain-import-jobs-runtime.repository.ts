@@ -178,6 +178,39 @@ export class BrainImportJobsRuntimeRepository {
     return client.from('slack_brain_mappings').update(update).eq('id', mappingId)
   }
 
+  async findCampaignSlackImportEvidence(
+    client: SupabaseClient,
+    campaignId: string,
+    sourceId: string,
+  ): Promise<{ brainId: string | null; memoryCount: number; embeddedCount: number }> {
+    const { data: brain, error: brainError } = await client
+      .from('ns_brains')
+      .select('id')
+      .eq('campaign_id', campaignId)
+      .maybeSingle()
+    if (brainError) throw new Error(`DB error: ${brainError.message}`)
+    if (!brain?.id) return { brainId: null, memoryCount: 0, embeddedCount: 0 }
+
+    const baseQuery = () =>
+      client
+        .from('ns_memories')
+        .select('id', { count: 'exact', head: true })
+        .eq('brain_id', brain.id)
+        .eq('source_type', 'slack_period')
+        .eq('source_id', sourceId)
+    const [
+      { count: memoryCount, error: memoryError },
+      { count: embeddedCount, error: embeddedError },
+    ] = await Promise.all([baseQuery(), baseQuery().not('embedding', 'is', null)])
+    if (memoryError) throw new Error(`DB error: ${memoryError.message}`)
+    if (embeddedError) throw new Error(`DB error: ${embeddedError.message}`)
+    return {
+      brainId: String(brain.id),
+      memoryCount: memoryCount ?? 0,
+      embeddedCount: embeddedCount ?? 0,
+    }
+  }
+
   async updateChunkTotal(client: SupabaseClient, jobId: string, chunksTotal: number) {
     return client.from('brain_import_jobs').update({ chunks_total: chunksTotal }).eq('id', jobId)
   }

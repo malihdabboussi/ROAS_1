@@ -188,7 +188,8 @@ export abstract class BrainImportJobsExecutionBase extends BrainImportJobsEnqueu
         `  - source_id: "${sourceId}"`,
         `  - source_title: "${sourceTitle}"`,
         temporalInstruction,
-        `Do NOT use save_user_memory for campaign knowledge. It only writes to the user brain.`,
+        `Do not call read_skill, describe_action, or save_user_memory. This prompt contains the complete save contract.`,
+        `Only report JOB_STATUS:completed after the save action returns success: true with memory_id or duplicate: true. If any save is rejected or returns success: false, report JOB_STATUS:failed.`,
       ].join('\n')
     } else if (targetBrain === 'agent') {
       actionBlock = [

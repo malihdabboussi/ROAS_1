@@ -420,3 +420,13 @@ Why: The first Railway image built successfully but crashed at startup because B
 Impact: The Mission worker can boot with canonical manager/evaluator evidence available across Mission, Brain Ops, and Dream Ops gateway instances.
 
 Files: `apps/mission-worker/src/modules/brain-ops/brain-ops.module.ts`, `apps/mission-worker/src/modules/dream-ops/dream-ops.module.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-quality-evidence.module.test.ts`.
+
+## [2026-08-13 18:58] - [FIX]
+
+What: Added a database-backed completion postcondition for campaign Slack imports and strengthened Atlas's campaign prompt to require a successful routed-save receipt.
+
+Why: The first post-policy production replay called the rejected user-memory action, created no Campaign Brain row, and still emitted `JOB_STATUS:completed`, proving model prose alone could not safely advance the import cursor.
+
+Impact: A campaign Slack job can succeed only when the mapped Campaign Brain contains at least one exact-source memory and every matching memory has a retrieval embedding. Missing persistence or indexing now enters the normal retry/failure lifecycle before cursor advancement.
+
+Files: `apps/api/src/modules/brain/repositories/brain-import-jobs-runtime.repository.ts`, `apps/api/src/modules/brain/services/brain-import-jobs-runtime.base.ts`, `apps/api/src/modules/brain/services/brain-import-jobs-execution.base.ts`, `apps/api/src/modules/brain/services/__tests__/brain-import-jobs.service.test.ts`, `.docs/plans/unified-slack-agent-consolidation-2026-08-13.md`, `documentation/features/page-grader-campaign-brain-sync.md`.

@@ -1,7 +1,7 @@
 # Unified Slack Agent Consolidation
 
 Date: 2026-08-13  
-Status: ROAS foundation and direct Campaign Brain writer deployed; Atlas save-policy repair awaiting deployment
+Status: ROAS foundation, direct Campaign Brain writer, and Atlas save policy deployed; persistence-backed completion gate awaiting deployment
 
 ## Product model
 
@@ -100,6 +100,16 @@ preflight, MCP catalog, and runtime handler but absent from Atlas's local system
 Brain capability allowlist. The repair aligns that last allowlist with the
 existing action contract; it does not broaden the action to other agents.
 
+The first production replay after that policy deployment returned
+`JOB_STATUS:completed`, but production logs proved Atlas had called the rejected
+user-memory action and no Campaign Brain row existed. A model terminal marker is
+therefore no longer sufficient for a campaign Slack import. Before success or
+cursor advancement, the API must find at least one memory in the mapped
+Campaign Brain with the exact Slack period source ID and require every matching
+row to have a retrieval embedding. The prompt also forbids skill/describe/user
+memory fallbacks and permits `completed` only after a successful routed-save
+receipt.
+
 The client-ask audit also found that the active five-minute Slack automation
 allows 171 channels but has only Dylan in `person_ids`. The current loop treats
 that list as a source-sender filter, advances its cursor past every other sender,
@@ -116,14 +126,15 @@ internal recipient allowlist.
 4. Run `audit_slack_brain_pipeline.py` read-only for the Wholesale Universe mapping. **Complete.**
 5. Replay only the four canonical false-success periods with the explicit fixed-runtime assertion. **Complete; exposed the document-route defect without creating memories.**
 6. Deploy the direct, embedded Campaign Brain writer. **Complete.**
-7. Align Atlas's system Brain capability allowlist with its existing routed-save contract, deploy it, and replay only the valid canonical periods.
-8. Quarantine the verified empty-source period as non-retryable instead of manufacturing a memory or replaying it indefinitely.
-9. Wait for the import worker, then rerun the audit and require capture, terminal receipt, Campaign Brain memory, embedding coverage, and retrieval health.
-10. Confirm Bonnie's exact source period created retrievable Campaign Brain context.
-11. With explicit approval, analyze all senders in allowlisted client channels, backfill Bonnie's `unanswered_ask`, and verify its due time is exactly 24 hours after the source message.
-12. Observe EOD refresh and one 24-hour breach cycle before expanding replay to other mappings.
-13. Merge and deploy the Page Grader structured QC producer branch after Brain recovery passes.
-14. Keep `slack_open_items` as rollback state until one stable retention window; remove it in a later migration after parity checks.
+7. Align Atlas's system Brain capability allowlist with its existing routed-save contract and deploy it. **Complete.**
+8. Require persisted, fully embedded source evidence before a claimed Campaign Brain completion can succeed or advance the Slack cursor; deploy through the main API.
+9. Quarantine the verified empty-source period as non-retryable instead of manufacturing a memory or replaying it indefinitely.
+10. Replay only valid periods, then rerun the audit and require capture, terminal receipt, Campaign Brain memory, embedding coverage, and retrieval health.
+11. Confirm Bonnie's exact source period created retrievable Campaign Brain context.
+12. With explicit approval, analyze all senders in allowlisted client channels, backfill Bonnie's `unanswered_ask`, and verify its due time is exactly 24 hours after the source message.
+13. Observe EOD refresh and one 24-hour breach cycle before expanding replay to other mappings.
+14. Merge and deploy the Page Grader structured QC producer branch after Brain recovery passes.
+15. Keep `slack_open_items` as rollback state until one stable retention window; remove it in a later migration after parity checks.
 
 The audit continues to report older credit-exhaustion failures as historical
 backlog, but live health fails only on a new failure within 48 hours. This keeps

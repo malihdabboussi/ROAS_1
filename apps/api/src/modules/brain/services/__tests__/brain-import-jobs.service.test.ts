@@ -259,6 +259,102 @@ describe('BrainImportJobsService', () => {
     expect(callOpenClawForBrainJob.mock.calls[0]?.[2]).toContain(
       'action: "atlas_save_brain_context"',
     )
+    expect(callOpenClawForBrainJob.mock.calls[0]?.[2]).toContain(
+      'Do not call read_skill, describe_action, or save_user_memory',
+    )
+    expect(callOpenClawForBrainJob.mock.calls[0]?.[2]).toContain(
+      'Only report JOB_STATUS:completed after the save action returns success: true',
+    )
+  })
+
+  it.each([
+    [0, 0, 'no persisted Campaign Brain memory'],
+    [1, 0, 'Campaign Brain memories are missing retrieval embeddings'],
+  ])(
+    'rejects a completed campaign Slack import with memory=%i embedded=%i',
+    async (memoryCount, embeddedCount, expectedError) => {
+      const runtimeRepository = {
+        getAdminClient: vi.fn(() => ({})),
+        findCampaignSlackImportEvidence: vi.fn(async () => ({
+          brainId: 'brain-1',
+          memoryCount,
+          embeddedCount,
+        })),
+        updateJobForAttempt: vi.fn(async () => ({ error: null })),
+        updateSlackMappingSynced: vi.fn(async () => ({ error: null })),
+      }
+      const service = new BrainImportJobsService(
+        { get: vi.fn() } as any,
+        undefined as any,
+        runtimeRepository as any,
+      )
+      ;(service as any).emitJobNotification = vi.fn(async () => undefined)
+
+      await expect(
+        (service as any).markJobSucceeded(
+          baseJob({
+            job_type: 'campaign_slack_import',
+            payload: {
+              targetCampaignId: 'campaign-1',
+              teamId: 'team-1',
+              channelId: 'channel-1',
+              periodStartTs: '1786042676.000000',
+            },
+          }),
+          { status: 'completed' },
+        ),
+      ).rejects.toThrow(expectedError)
+
+      expect(runtimeRepository.updateJobForAttempt).not.toHaveBeenCalled()
+    },
+  )
+
+  it('accepts a completed campaign Slack import with fully embedded source evidence', async () => {
+    const runtimeRepository = {
+      getAdminClient: vi.fn(() => ({})),
+      findCampaignSlackImportEvidence: vi.fn(async () => ({
+        brainId: 'brain-1',
+        memoryCount: 2,
+        embeddedCount: 2,
+      })),
+      updateJobForAttempt: vi.fn(async () => ({ error: null })),
+      updateSlackMappingSynced: vi.fn(async () => ({ error: null })),
+    }
+    const service = new BrainImportJobsService(
+      { get: vi.fn() } as any,
+      undefined as any,
+      runtimeRepository as any,
+    )
+    ;(service as any).emitJobNotification = vi.fn(async () => undefined)
+
+    await expect(
+      (service as any).markJobSucceeded(
+        baseJob({
+          job_type: 'campaign_slack_import',
+          payload: {
+            mappingId: 'mapping-1',
+            targetCampaignId: 'campaign-1',
+            teamId: 'team-1',
+            channelId: 'channel-1',
+            periodStartTs: '1786042676.000000',
+            periodEndTs: '1786593852.000000',
+          },
+        }),
+        { status: 'completed' },
+      ),
+    ).resolves.toBeUndefined()
+
+    expect(runtimeRepository.updateJobForAttempt).toHaveBeenCalledWith(
+      {},
+      'job-1',
+      1,
+      expect.objectContaining({ status: 'succeeded' }),
+    )
+    expect(runtimeRepository.updateSlackMappingSynced).toHaveBeenCalledWith(
+      {},
+      'mapping-1',
+      expect.objectContaining({ last_message_ts: '1786593852.000000' }),
+    )
   })
 
   it('fails closed when OpenResponses reports an Atlas import failure', async () => {
