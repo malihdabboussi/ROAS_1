@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
@@ -15,8 +14,7 @@ vi.mock('@/lib/missions', () => ({
 
 vi.mock('@/components/missions/MissionDetailModalAdapter', () => ({
   MissionDetailModal: (props: Record<string, unknown>) => (
-    <div data-testid="mission-detail">
-      {props.headerActions as ReactNode}
+    <div data-testid="mission-detail" data-has-header-actions={String('headerActions' in props)}>
       <button type="button" onClick={props.onClose as () => void}>
         Close mission
       </button>
@@ -45,7 +43,10 @@ describe('ShellMissionArtifactViewerAdapter', () => {
   it('expands and collapses Mission details from the Mission header controls', async () => {
     const { container } = render(<ShellMissionArtifactViewerAdapter target={target} />)
 
-    expect(await screen.findByTestId('mission-detail')).toBeTruthy()
+    expect(await screen.findByTestId('mission-detail')).toHaveAttribute(
+      'data-has-header-actions',
+      'false',
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Expand mission viewer' }))
 
     expect(container.querySelector('[data-shell-mission-artifact-viewer]')?.className).toContain(

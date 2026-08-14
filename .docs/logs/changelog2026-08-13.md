@@ -341,6 +341,16 @@ Impact: No partial replay occurred. A retry batch can now recover independent ca
 
 Files: `scripts/roas/audit_slack_brain_pipeline.py`, `scripts/roas/test_audit_slack_brain_pipeline.py`, `scripts/roas/README.md`.
 
+## [2026-08-13 18:20] - [STYLE]
+
+What: Restored the standard left content inset on inline task-detail panels and added regression coverage for the panel presentation.
+
+Why: Opening a task from My Tasks rendered the breadcrumb, title, and task content flush against the split-pane divider even though the modal presentation had the expected spacing.
+
+Impact: Task details opened from My Tasks, Meetings, Inbox, and other inline panel hosts now have a consistent readable left gutter without changing modal spacing.
+
+Files: `apps/web/src/features/spaces/components/task-detail/TaskDetailPresentationShell.tsx`, `apps/web/src/features/spaces/components/task-detail/TaskDetailModal.test.tsx`, `.docs/plans/agent-follow-up-work.md`.
+
 ## [2026-08-13 17:44] - [FIX]
 
 What: Taught both Brain import runtimes to decode bounded JSON-encoded response envelopes recursively, and changed Campaign Brain instructions to invoke `atlas_save_brain_context` through the exposed `campaign_capability` or `vibey_backend` tool.
@@ -440,3 +450,13 @@ Why: Production worker logs showed overlapping Page Grader catch-up requests syn
 Impact: Brain due-job discovery stays fast and bounded, Page Grader retains its intended hourly reconciliation, and repeated external package pulls can no longer saturate the Vercel function window every three seconds.
 
 Files: `apps/api/src/modules/brain/services/brain-import-jobs-runtime.base.ts`, `apps/api/src/modules/brain/services/__tests__/brain-import-sweep-schedule.test.ts`, `apps/api/src/modules/internal/controllers/internal-brain-import-jobs.controller.ts`, `apps/api/src/modules/internal/internal.controller.test.ts`, `apps/mission-worker/src/modules/agent-runtime/processors/agent-runtime-brain-import.processor.ts`, `apps/mission-worker/src/modules/agent-runtime/processors/agent-runtime-brain-import.processor.test.ts`, `documentation/features/page-grader-campaign-brain-sync.md`.
+
+## [2026-08-13 18:49] - [FIX]
+
+What: Kept Mission viewer expansion inside the shell adapter and removed the shell-owned React action element from the Mission detail modal, view, desktop shell, and header prop chain. Strengthened the shell adapter regression test to reject reintroducing that injected prop.
+
+Why: Production deployment `dpl_7zTJRg23S9WLeF4x3LceEwBEhgDL` began crashing `/home/my-tasks` with React error 185 after Mission pane expansion injected a newly created header action through the live Mission activity tree. The original test stubbed that tree and missed the render loop.
+
+Impact: Persisted Mission viewers can render alongside My Tasks without taking down the page, while users retain the same expand/collapse control as a shell-owned overlay.
+
+Files: `apps/web/src/components/shell/ShellMissionArtifactViewerAdapter.tsx`, `apps/web/src/components/shell/ShellMissionArtifactViewerAdapter.test.tsx`, `apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.tsx`, `apps/web/src/features/mission-control/components/dialogs/MissionDetailModalView.tsx`, `apps/web/src/features/mission-control/components/dialogs/mission-detail-modal-view.types.ts`, `apps/web/src/features/mission-control/components/dialogs/mission-detail-modal-helpers.ts`, `apps/web/src/features/mission-control/components/dialogs/MissionDetailDesktopShell.tsx`, `apps/web/src/features/mission-control/components/dialogs/MissionDetailHeader.tsx`, `apps/web/src/features/mission-control/components/dialogs/SubtaskDetailHeader.tsx`, `apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.test.tsx`.

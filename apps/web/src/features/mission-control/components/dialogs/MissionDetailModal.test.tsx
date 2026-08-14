@@ -235,20 +235,6 @@ describe('MissionDetailModal', () => {
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
-  it('renders shell-owned actions in the Mission header', () => {
-    render(
-      <MissionDetailModal
-        mission={mission}
-        presentation="panel"
-        headerActions={<button type="button">Expand mission viewer</button>}
-        onClose={vi.fn()}
-        onUpdated={vi.fn()}
-      />,
-    )
-
-    expect(screen.getByRole('button', { name: 'Expand mission viewer' })).toBeTruthy()
-  })
-
   it('opens a subtask in the full detail shell and navigates back to the mission', () => {
     mocks.useMissionDetailData.mockReturnValue({
       ...mocks.useMissionDetailData(),
@@ -259,9 +245,7 @@ describe('MissionDetailModal', () => {
     render(
       <MissionDetailModal
         mission={mission}
-        presentation="panel"
         initialSubtaskId={subtask.id}
-        headerActions={<button type="button">Expand mission viewer</button>}
         onClose={vi.fn()}
         onUpdated={vi.fn()}
       />,
@@ -270,7 +254,6 @@ describe('MissionDetailModal', () => {
     expect(screen.getByRole('heading', { name: 'Draft launch copy' })).toBeTruthy()
     expect(screen.getByText('Finished copy')).toBeTruthy()
     expect(screen.getByText('Task 1 — Launch copy')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Expand mission viewer' })).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Launch Mission' }))
 

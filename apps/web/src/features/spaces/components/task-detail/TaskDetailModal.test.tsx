@@ -387,7 +387,7 @@ describe('TaskDetailModal', () => {
     const { container } = render(<TaskDetailModal {...props} presentation="panel" />)
 
     expect(await screen.findByTestId('task-detail-header')).toHaveTextContent('Launch task')
-    expect(container.querySelector('[data-dropzone]')).toBeInTheDocument()
+    expect(container.querySelector('[data-dropzone]')).toHaveClass('pl-spacing-6')
     expect(screen.queryByTestId('task-activity')).not.toBeInTheDocument()
   })
 })

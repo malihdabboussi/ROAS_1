@@ -38599,3 +38599,11 @@ Evidence: The service is below the 600-line hard limit but has reached the archi
 Needed work: Extract repeat-job installation and runtime health monitoring into focused collaborators while preserving the existing Brain import lifecycle contract.
 
 Reason not done now: The production timeout fix changes only the two repeat schedules and their routing. Decomposing the full runtime lifecycle in the same deployment would materially widen the launch repair.
+
+## 2026-08-13 — Agency-owner daily agenda timezone
+
+- Feature/app: Agent chat / calendar agenda
+- File: `apps/agent-api/src/modules/chat/services/chat-gateway-input.service.ts`
+- Evidence: A production browser request made at 18:18 America/Los_Angeles on August 13 was answered as “Today, Thursday Aug 14” and rendered the meeting time in UTC. The gateway supplies only `CURRENT_DATETIME` as a UTC ISO timestamp and supplies no user/browser timezone.
+- Needed work: carry the authenticated user's effective timezone into Studio chat context and require relative-day labels and calendar display times to use it, with DST-boundary regression coverage.
+- Reason not done now: This task's code change is a scoped task-detail spacing correction; changing the global chat time contract affects every agent and calendar request and requires a separately reviewed frontend-to-gateway contract change.

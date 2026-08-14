@@ -53,7 +53,7 @@ export function ShellMissionArtifactViewerAdapter({
       </div>
     )
   }
-  const headerActions = expanded ? (
+  const expansionControl = expanded ? (
     <Tooltip label="Collapse" side="bottom">
       <button
         type="button"
@@ -80,15 +80,17 @@ export function ShellMissionArtifactViewerAdapter({
   return (
     <div
       className={cn(
-        'flex h-full min-h-0 w-full',
+        'relative flex h-full min-h-0 w-full',
         expanded && 'z-modal-content absolute inset-0 w-full',
       )}
       data-shell-mission-artifact-viewer
     >
+      <div className="right-spacing-10 top-spacing-4 z-dropdown absolute">
+        {expansionControl}
+      </div>
       <MissionDetailModal
         mission={mission}
         presentation="panel"
-        headerActions={headerActions}
         onClose={close}
         onUpdated={() => void load()}
       />

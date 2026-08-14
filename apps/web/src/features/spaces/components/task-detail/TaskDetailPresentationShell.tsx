@@ -26,7 +26,7 @@ export function TaskDetailPresentationShell({
         data-dropzone
         className={
           isPanel
-            ? 'surface-card flex h-full min-h-0 w-full flex-col overflow-hidden'
+            ? 'surface-card pl-spacing-6 flex h-full min-h-0 w-full flex-col overflow-hidden'
             : 'surface-card border-border container-modal-task-detail rounded-spacing-4 pt-spacing-4 pb-spacing-6 pl-spacing-6 pr-spacing-6 relative z-10 flex flex-col overflow-hidden border shadow-xl'
         }
       >

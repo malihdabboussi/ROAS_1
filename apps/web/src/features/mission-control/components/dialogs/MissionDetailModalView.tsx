@@ -18,7 +18,6 @@ import {
 export function MissionDetailModalView({
   mission,
   presentation,
-  headerActions,
   liveMission,
   title,
   setTitle,
@@ -309,7 +308,6 @@ export function MissionDetailModalView({
   const desktopShell = (
     <MissionDetailDesktopShell
       presentation={presentation}
-      headerActions={headerActions}
       shellZ={shellZ}
       hideMissionSurface={previewDeliverable != null}
       onClose={onClose}

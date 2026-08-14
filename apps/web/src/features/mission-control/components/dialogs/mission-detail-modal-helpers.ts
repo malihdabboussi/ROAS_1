@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import type { Mission, MissionLog, PrdContent, RecommendedHire } from '../../types'
 
 export interface MissionDetailModalProps {
@@ -8,7 +7,6 @@ export interface MissionDetailModalProps {
   elevatedStacking?: boolean
   initialSubtaskId?: string | null
   presentation?: 'modal' | 'panel'
-  headerActions?: ReactNode
 }
 
 export function getMissionDetailDisplayData(prdContent: PrdContent | null, logs: MissionLog[]) {
