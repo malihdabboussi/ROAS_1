@@ -1,9 +1,14 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { QuickMissionsLauncherProvider, useQuickMissionsLauncher } from '@/lib/missions'
 import { SHELL_CREATE_MENU_GROUPS, SHELL_CREATE_QUICK_STARTS } from './shell-create-menu.config'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from './shell-empty-chat-prompts.config'
 import { ShellEmptyChatQuickStartPills } from './ShellEmptyChatQuickStartPills'
+
+vi.mock('@/components/global-chat/components/QuickMissionsHubHost', () => ({
+  QuickMissionsHubHost: ({ open }: { open?: boolean }) => (
+    <div data-testid="quick-missions-host-open">{String(open)}</div>
+  ),
+}))
 
 describe('shell empty chat prompts', () => {
   afterEach(() => {
@@ -29,25 +34,12 @@ describe('shell empty chat prompts', () => {
 
   it('launches Mission directly and sends composer quick starts to the consumer', () => {
     const onSelect = vi.fn()
-    function Harness() {
-      const { open } = useQuickMissionsLauncher()
-      return (
-        <>
-          <div data-testid="mission-open-state">{String(open)}</div>
-          <ShellEmptyChatQuickStartPills onSelect={onSelect} />
-        </>
-      )
-    }
-    render(
-      <QuickMissionsLauncherProvider>
-        <Harness />
-      </QuickMissionsLauncherProvider>,
-    )
+    render(<ShellEmptyChatQuickStartPills onSelect={onSelect} />)
 
     for (const quickStart of SHELL_CREATE_QUICK_STARTS) {
       fireEvent.click(screen.getByRole('button', { name: quickStart.label }))
       if (quickStart.action === 'mission') {
-        expect(screen.getByTestId('mission-open-state')).toHaveTextContent('true')
+        expect(screen.getByTestId('quick-missions-host-open')).toHaveTextContent('true')
         expect(screen.getByRole('button', { name: quickStart.label })).toHaveAttribute(
           'aria-expanded',
           'true',
