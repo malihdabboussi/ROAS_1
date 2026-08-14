@@ -53,7 +53,7 @@ describe('groupCampaignsByProgram', () => {
     ]
 
     const groups = groupCampaignsByProgram(campaigns, programs)
-    expect(groups.map((g) => g.label)).toEqual(['Alpha', 'Clients', 'General', 'ROAS Ops'])
+    expect(groups.map((g) => g.label)).toEqual(['Alpha', 'Client Spaces', 'General', 'ROAS Ops'])
     expect(groups[1]?.campaigns.map((c) => c.id)).toEqual(['c1'])
     expect(groups[2]?.key).toBe(UNGROUPED_PROGRAM_KEY)
   })
@@ -72,7 +72,7 @@ describe('groupCampaignsByProgram', () => {
       program({ id: 'p-ops', name: 'ROAS Ops', system_kind: 'roas_ops', sort_order: 1 }),
     ]
     const groups = groupCampaignsByProgram([], programs)
-    expect(groups.map((g) => g.label)).toEqual(['Clients', 'ROAS Ops'])
+    expect(groups.map((g) => g.label)).toEqual(['Client Spaces', 'ROAS Ops'])
     expect(groups[0]?.campaigns).toEqual([])
   })
 })

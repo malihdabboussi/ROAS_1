@@ -12,7 +12,7 @@ import {
 import { getIconColor, LucideIcon } from '@/components/ui/IconPicker'
 import type { Space } from '@/features/spaces/types'
 import type { Campaign } from '@/lib/campaigns'
-import type { Program } from '@/lib/programs'
+import { programDisplayName, type Program } from '@/lib/programs'
 import { cn } from '@/lib/utils/cn'
 
 function campaignIconName(campaign: Campaign): string {
@@ -205,7 +205,7 @@ export function CampaignsHubCampaignCard({
                         className="body-3 text-foreground hover:bg-hover-subtle flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left"
                       >
                         <FolderInput className="h-4 w-4" />
-                        {program.name}
+                        {programDisplayName(program)}
                       </button>
                     ))}
                     {campaign.program_id ? (

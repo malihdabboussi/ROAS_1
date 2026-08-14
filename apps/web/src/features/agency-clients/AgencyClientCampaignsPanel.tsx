@@ -1,13 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { FolderKanban, Pencil } from 'lucide-react'
+import { FolderKanban, PanelRightOpen, Pencil } from 'lucide-react'
 import type { AgencyClientCampaign } from '@/lib/agency-clients'
 import { formatAgencyBudget, formatAgencyDate } from './agency-client-format'
 import { AgencyCampaignEditPanel, type CampaignPatch } from './AgencyCampaignEditPanel'
 import { AGENCY_CLIENT_MESSAGES } from './config/messages.config'
 
 export function AgencyClientCampaignsPanel({
+  clientId,
   campaigns,
   spaceByCampaign,
   editingCampaignId,
@@ -16,6 +17,7 @@ export function AgencyClientCampaignsPanel({
   onCancel,
   onSave,
 }: {
+  clientId: string
   campaigns: AgencyClientCampaign[]
   spaceByCampaign: Map<string, string>
   editingCampaignId: string | null
@@ -94,14 +96,23 @@ export function AgencyClientCampaignsPanel({
             ) : (
               summary
             )}
-            <button
-              aria-label={`Edit campaign ${campaign.name}`}
-              type="button"
-              onClick={() => onEdit(campaign.id)}
-              className="button-compact button-glass-neutral mt-spacing-3"
-            >
-              <Pencil className="icon-sm" /> {AGENCY_CLIENT_MESSAGES.EDIT}
-            </button>
+            <div className="mt-spacing-3 gap-spacing-2 flex flex-wrap">
+              <button
+                aria-label={`Edit campaign ${campaign.name}`}
+                type="button"
+                onClick={() => onEdit(campaign.id)}
+                className="button-compact button-glass-neutral"
+              >
+                <Pencil className="icon-sm" /> {AGENCY_CLIENT_MESSAGES.EDIT}
+              </button>
+              <Link
+                href={`/clients/${clientId}?surface=portal&portal_path=${encodeURIComponent(`/campaigns/${campaign.id}`)}`}
+                aria-label={`Open ${campaign.name} in Portal`}
+                className="button-compact button-glass-purple"
+              >
+                <PanelRightOpen className="icon-sm" /> Portal
+              </Link>
+            </div>
           </article>
         )
       })}

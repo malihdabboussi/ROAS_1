@@ -226,11 +226,14 @@ describe('ShellWorkspace', () => {
     expect(header.closest('[data-shell-work-area]')).toBeInTheDocument()
     expect(header.parentElement).toContainElement(screen.getByText('Right card page'))
   })
-  it('activates the embedded Portal from the surface query parameter', () => {
+  it('activates Portal from the surface query without replacing the open chat', () => {
+    mocks.pathname = '/clients'
     mocks.params = new Map([['surface', 'portal']])
-    render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
+    mocks.chatDrawerOpen = true
+    render(<ShellWorkspace>Clients page</ShellWorkspace>)
     expect(screen.getByTestId('portal-surface')).toHaveAttribute('data-active', 'true')
-    expect(screen.getByText('New chat greeting').closest('.hidden')).not.toBeNull()
+    expect(mocks.requestNewChat).not.toHaveBeenCalled()
+    expect(screen.getByTestId('shell-chat-drawer')).toBeInTheDocument()
   })
   it('does not host the workspace menu on the Portal surface', () => {
     mocks.params = new Map([['surface', 'portal']])

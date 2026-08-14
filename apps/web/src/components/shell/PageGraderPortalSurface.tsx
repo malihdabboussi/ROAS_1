@@ -1,9 +1,12 @@
 'use client'
 
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ExternalLink, Loader2, RefreshCw, TriangleAlert } from 'lucide-react'
+import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { backendPost } from '@/lib/api/backend-client'
 import { cn } from '@/lib/utils/cn'
+import { portalTargetPathFromRoute } from './portal-target-path'
 
 type EmbedSession = {
   success: true
@@ -13,7 +16,10 @@ type EmbedSession = {
 }
 
 export function PageGraderPortalSurface({ active }: { active: boolean }) {
+  const pathname = usePathname() ?? '/home'
+  const searchParams = useSearchParams()
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const wasActive = useRef(false)
   const [opened, setOpened] = useState(false)
   const [session, setSession] = useState<EmbedSession | null>(null)
   const [currentPath, setCurrentPath] = useState('/clients')
@@ -21,6 +27,16 @@ export function PageGraderPortalSurface({ active }: { active: boolean }) {
   const [authenticated, setAuthenticated] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+
+  const spaces = useSpacesStore((state) => state.spaces)
+  const activeSpaceId = useSpacesStore((state) => state.activeSpaceId)
+  const spaceId = searchParams.get('space') || activeSpaceId
+  const space = useMemo(() => spaces.find((row) => row.id === spaceId) ?? null, [spaceId, spaces])
+  const targetPath = portalTargetPathFromRoute({
+    pathname,
+    portalPath: searchParams.get('portal_path'),
+    space,
+  })
 
   const portalOrigin = useMemo(() => {
     if (!session?.embed_url) return null
@@ -31,14 +47,15 @@ export function PageGraderPortalSurface({ active }: { active: boolean }) {
     }
   }, [session?.embed_url])
 
-  const prepareSession = useCallback(async () => {
+  const prepareSession = useCallback(async (nextPath: string) => {
     setLoading(true)
     setAuthenticated(false)
     setError(null)
+    setCurrentPath(nextPath)
     try {
       const next = await backendPost<EmbedSession>('/api/integrations/page-grader/embed-session', {
         parent_origin: window.location.origin,
-        target_path: '/clients',
+        target_path: nextPath,
       })
       setSession(next)
       setReloadKey((value) => value + 1)
@@ -49,10 +66,15 @@ export function PageGraderPortalSurface({ active }: { active: boolean }) {
   }, [])
 
   useEffect(() => {
-    if (!active) return
+    if (!active) {
+      wasActive.current = false
+      return
+    }
     setOpened(true)
-    if (!session && !loading && !error) void prepareSession()
-  }, [active, error, loading, prepareSession, session])
+    if (wasActive.current) return
+    wasActive.current = true
+    void prepareSession(targetPath)
+  }, [active, prepareSession, targetPath])
 
   useEffect(() => {
     if (!session || !portalOrigin) return
@@ -90,7 +112,7 @@ export function PageGraderPortalSurface({ active }: { active: boolean }) {
   const retry = () => {
     setSession(null)
     setError(null)
-    void prepareSession()
+    void prepareSession(targetPath)
   }
 
   const openPortal = () => {
