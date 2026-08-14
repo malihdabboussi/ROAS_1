@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { ArtifactStrategyRepository } from '../repositories/artifact-strategy.repository'
 import type { ArtifactActionHandler } from './artifact-action.registry'
-import {
-  buildCampaignBlueprintOperations,
-  isCampaignBlueprintType,
-} from './campaign-blueprint-operations'
+import { buildCampaignBlueprintOperations } from './campaign-blueprint-operations'
 
 @Injectable()
 export class ArtifactStrategyService {
@@ -111,20 +108,18 @@ export class ArtifactStrategyService {
   ) {
     const resolved = await this.resolveCanvas(target, data, sessionKey)
     if ('error' in resolved) return { success: false, error: resolved.error }
-    if (!isCampaignBlueprintType(data.campaign_type)) {
-      return {
-        success: false,
-        error: 'campaign_type must be webinar, vsl_call_booking, or free_skool_community.',
-      }
-    }
     const blueprintId = typeof data.blueprint_id === 'string' ? data.blueprint_id.trim() : ''
     if (!blueprintId) return { success: false, error: 'blueprint_id is required.' }
+    const campaignLabel = typeof data.campaign_label === 'string' ? data.campaign_label.trim() : ''
+    if (!campaignLabel) return { success: false, error: 'campaign_label is required.' }
 
     let operations: Array<Record<string, unknown>>
     try {
       operations = buildCampaignBlueprintOperations({
         blueprintId,
-        campaignType: data.campaign_type,
+        campaignLabel,
+        stages: Array.isArray(data.stages) ? (data.stages as never[]) : [],
+        connections: Array.isArray(data.connections) ? (data.connections as never[]) : undefined,
         assets: Array.isArray(data.assets) ? (data.assets as never[]) : [],
         gaps: Array.isArray(data.gaps) ? (data.gaps as never[]) : [],
         originX: typeof data.origin_x === 'number' ? data.origin_x : undefined,
@@ -173,7 +168,7 @@ export class ArtifactStrategyService {
     return {
       success: true,
       blueprint_id: blueprintId,
-      campaign_type: data.campaign_type,
+      campaign_label: campaignLabel,
       item_count: operations.filter((operation) => operation.op === 'create_item').length,
       connector_count: operations.filter((operation) => operation.op === 'create_connector').length,
       batch_count: batches.length,

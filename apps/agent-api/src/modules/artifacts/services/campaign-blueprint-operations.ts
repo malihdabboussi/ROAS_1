@@ -1,13 +1,5 @@
 import { randomUUID } from 'node:crypto'
 
-export const CAMPAIGN_BLUEPRINT_TYPES = [
-  'webinar',
-  'vsl_call_booking',
-  'free_skool_community',
-] as const
-
-export type CampaignBlueprintType = (typeof CAMPAIGN_BLUEPRINT_TYPES)[number]
-
 type BlueprintEntry = {
   title: string
   stage_key: string
@@ -20,50 +12,37 @@ type BlueprintEntry = {
   suggested_action?: string
 }
 
-type BlueprintStage = { key: string; label: string }
+export type BlueprintStage = { key: string; label: string }
 
-const STAGES: Record<CampaignBlueprintType, BlueprintStage[]> = {
-  webinar: [
-    { key: 'traffic', label: 'Traffic' },
-    { key: 'registration', label: 'Registration' },
-    { key: 'confirmation', label: 'Confirmation' },
-    { key: 'reminder', label: 'Reminder sequence' },
-    { key: 'webinar', label: 'Webinar' },
-    { key: 'offer', label: 'Post-webinar offer' },
-    { key: 'follow_up', label: 'Post-webinar sequence' },
-    { key: 'retargeting', label: 'Retargeting' },
-  ],
-  vsl_call_booking: [
-    { key: 'traffic', label: 'Traffic' },
-    { key: 'vsl', label: 'VSL landing page' },
-    { key: 'booking', label: 'Call booking' },
-    { key: 'confirmation', label: 'Confirmation' },
-    { key: 'nurture', label: 'Pre-call nurture' },
-    { key: 'sales_call', label: 'Sales call' },
-    { key: 'follow_up', label: 'Follow-up' },
-  ],
-  free_skool_community: [
-    { key: 'traffic', label: 'Traffic' },
-    { key: 'opt_in', label: 'Community opt-in' },
-    { key: 'confirmation', label: 'Confirmation' },
-    { key: 'onboarding', label: 'Onboarding' },
-    { key: 'community', label: 'Skool community' },
-    { key: 'activation', label: 'Activation' },
-    { key: 'conversion', label: 'Offer conversion' },
-  ],
+export type BlueprintConnection = {
+  source_stage_key: string
+  target_stage_key: string
+  label?: string
 }
 
 const FRAME_WIDTH = 320
 const FRAME_HEIGHT = 620
 const FRAME_GAP = 80
 
-export function isCampaignBlueprintType(value: unknown): value is CampaignBlueprintType {
-  return CAMPAIGN_BLUEPRINT_TYPES.includes(value as CampaignBlueprintType)
+function validateStages(stages: BlueprintStage[]) {
+  if (stages.length < 2 || stages.length > 20) {
+    throw new Error('A campaign blueprint requires between 2 and 20 chat-derived stages.')
+  }
+  const keys = new Set<string>()
+  for (const stage of stages) {
+    if (!stage.key?.trim() || !stage.label?.trim()) {
+      throw new Error('Every campaign blueprint stage requires a key and label.')
+    }
+    if (keys.has(stage.key)) throw new Error(`Duplicate campaign blueprint stage: ${stage.key}`)
+    keys.add(stage.key)
+  }
 }
 
 export function buildCampaignBlueprintOperations(input: {
   blueprintId: string
-  campaignType: CampaignBlueprintType
+  campaignLabel: string
+  stages: BlueprintStage[]
+  connections?: BlueprintConnection[]
   assets: BlueprintEntry[]
   gaps: BlueprintEntry[]
   createId?: () => string
@@ -71,7 +50,8 @@ export function buildCampaignBlueprintOperations(input: {
   originY?: number
 }) {
   const createId = input.createId ?? randomUUID
-  const stages = STAGES[input.campaignType]
+  validateStages(input.stages)
+  const stages = input.stages
   const stageIds = new Map<string, string>()
   const operations: Array<Record<string, unknown>> = []
   const nextItemY = new Map<string, number>()
@@ -94,7 +74,7 @@ export function buildCampaignBlueprintOperations(input: {
           text: '',
           semantic_type: 'campaign_stage',
           blueprint_id: input.blueprintId,
-          campaign_type: input.campaignType,
+          campaign_label: input.campaignLabel,
           stage_key: stage.key,
           stage_order: stageOrder,
           status: 'planned',
@@ -126,7 +106,7 @@ export function buildCampaignBlueprintOperations(input: {
           text: entry.brief ?? entry.label ?? '',
           semantic_type: isGap ? 'asset_placeholder' : isUrl ? 'external_url' : 'existing_asset',
           blueprint_id: input.blueprintId,
-          campaign_type: input.campaignType,
+          campaign_label: input.campaignLabel,
           stage_key: entry.stage_key,
           status: isGap ? 'missing' : 'ready',
           ...(isUrl ? { source: { kind: 'url', url: entry.url, label: entry.label } } : {}),
@@ -149,15 +129,28 @@ export function buildCampaignBlueprintOperations(input: {
   input.assets.forEach((entry) => addEntry(entry, false))
   input.gaps.forEach((entry) => addEntry(entry, true))
 
-  stages.slice(0, -1).forEach((stage, index) => {
-    const nextStage = stages[index + 1]!
+  const connections =
+    input.connections ??
+    stages.slice(0, -1).map((stage, index) => ({
+      source_stage_key: stage.key,
+      target_stage_key: stages[index + 1]!.key,
+      label: 'Customer journey',
+    }))
+  connections.forEach((connection) => {
+    const sourceId = stageIds.get(connection.source_stage_key)
+    const targetId = stageIds.get(connection.target_stage_key)
+    if (!sourceId || !targetId) {
+      throw new Error(
+        `Unknown campaign blueprint connection: ${connection.source_stage_key} → ${connection.target_stage_key}`,
+      )
+    }
     operations.push({
       op: 'create_connector',
       connector: {
         id: createId(),
-        source_item_id: stageIds.get(stage.key),
-        target_item_id: stageIds.get(nextStage.key),
-        label: 'Customer journey',
+        source_item_id: sourceId,
+        target_item_id: targetId,
+        label: connection.label ?? 'Customer journey',
         style: { stroke: '#8b5cf6', stroke_width: 2, end_arrow: true },
       },
     })

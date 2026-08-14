@@ -58,7 +58,7 @@ export function CanvasPixelPanel({
         `canvas_viewport=${JSON.stringify(viewport)}`,
         `selected_canvas_item_ids=${selectedIds.join(',') || 'none'}`,
         'For Canvas requests, inspect campaign context with search_campaign_brain and the relevant list/get artifact actions before building. Ask only questions that block an accurate map.',
-        'For webinar, VSL call-booking, or free Skool community maps, use build_campaign_blueprint after the user confirms the plan. Use get_canvas_board immediately before any later apply_canvas_operations update.',
+        'Use build_campaign_blueprint after the user confirms the plan. Derive campaign_label, stages, branches, and connections from this conversation and client evidence; these are not selectable templates. Use get_canvas_board immediately before any later apply_canvas_operations update.',
         'When the user asks for a campaign, funnel, webinar, launch, or customer-journey map, identify existing assets, supplied URLs, missing assets, and only the questions that block an accurate map.',
         'Represent confirmed assets as linked resource or URL cards and missing assets as clearly labeled placeholders. Never present an assumption as an existing asset.',
         'For a webinar build, use create_mission with playbook_id=webinar-fulfillment for the webinar deliverable when it is missing. Use canonical asset actions such as create_funnel, create_sequence, and create_ad for other confirmed gaps.',
