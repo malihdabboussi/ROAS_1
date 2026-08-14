@@ -510,3 +510,13 @@ Why: Production had Slack and offer cases in the shared ledger, but the post-cal
 Impact: EOD and client/campaign rollups can now see post-call work through the same operational source of truth without treating a Shadow review draft as completed work.
 
 Files: `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.workflow.ts`, `apps/api/src/modules/spaces/services/__tests__/meeting-follow-up-slack-confirm.service.test.ts`, `documentation/features/spaces-automation.md`, `.docs/plans/unified-slack-agent-consolidation-2026-08-13.md`.
+
+## [2026-08-13 20:41] - [FIX]
+
+What: Sanitized structured Mission execution text in the live `Locked in` stream, showing the user-facing content or summary while withholding incomplete JSON and internal artifact/assertion fields.
+
+Why: The production Client Strategy verification completed a valid document but briefly rendered the agent's raw structured completion envelope in the Mission Activity pane.
+
+Impact: Mission progress remains readable during execution and finalization without exposing internal output-contract metadata; ordinary prose progress is unchanged.
+
+Files: `apps/web/src/features/mission-control/components/dialogs/MissionLockedIn.tsx`, `apps/web/src/features/mission-control/components/dialogs/MissionLockedIn.test.ts`, `documentation/features/missions.md`.

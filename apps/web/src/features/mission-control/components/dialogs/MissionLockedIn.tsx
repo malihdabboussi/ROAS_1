@@ -6,8 +6,28 @@ import { ToolBlockInline } from '@/components/chat/ToolBlockInline'
 import type { MessageContentBlock } from '@/lib/chat/message-content-blocks'
 import { useMissionExecStream } from '../../hooks/useMissionExecStream'
 import type { MissionSubtask } from '../../types'
+import { resolveSubtaskOutputDisplay } from './subtask-detail'
 
 const SEARCH_TOOLS = new Set(['web_search', 'web_fetch'])
+
+export function resolveMissionStreamText(value: string): string | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+
+  const fencedMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i)
+  if (trimmed.startsWith('```') && !fencedMatch) return null
+
+  const candidate = fencedMatch?.[1]?.trim() ?? trimmed
+  if (!candidate.startsWith('{')) return trimmed
+
+  try {
+    const parsed = JSON.parse(candidate) as unknown
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
+    return resolveSubtaskOutputDisplay(parsed as Record<string, unknown>)?.body ?? null
+  } catch {
+    return null
+  }
+}
 
 function buildClosedSummary(blocks: MessageContentBlock[]): string {
   let searches = 0
@@ -145,13 +165,14 @@ export function MissionLockedIn({
                 )
               }
               if (block.type === 'text') {
-                if (!block.content.trim()) return null
+                const displayContent = resolveMissionStreamText(block.content)
+                if (!displayContent) return null
                 return (
                   <div
                     key={block.id}
                     className="body-3 text-foreground whitespace-pre-wrap break-words py-0.5 pl-0 pr-3"
                   >
-                    {block.content}
+                    {displayContent}
                   </div>
                 )
               }
