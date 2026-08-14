@@ -9,8 +9,7 @@ import type {
   AgentTurnFeedbackTargetKind,
 } from './types'
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 export function isPersistableAgentFeedbackTarget(targetId: string | null | undefined): boolean {
   return typeof targetId === 'string' && UUID_RE.test(targetId)
@@ -26,7 +25,6 @@ export function useAgentTurnFeedback({
   sourceSurface: string
 }) {
   const [feedback, setFeedback] = useState<AgentTurnFeedbackRow | null>(null)
-  const [loading, setLoading] = useState(false)
   const [pendingSaveCount, setPendingSaveCount] = useState(0)
   const canPersist = isPersistableAgentFeedbackTarget(targetId)
   const targetKey = useMemo(() => `${targetKind}:${targetId}`, [targetKind, targetId])
@@ -37,6 +35,7 @@ export function useAgentTurnFeedback({
   const saving = pendingSaveCount > 0
 
   const setCurrentFeedback = useCallback((next: AgentTurnFeedbackRow | null) => {
+    if (feedbackRef.current === next) return
     feedbackRef.current = next
     setFeedback(next)
   }, [])
@@ -58,14 +57,13 @@ export function useAgentTurnFeedback({
   useEffect(() => {
     activeTargetKeyRef.current = targetKey
     if (!canPersist) {
-      setCurrentFeedback(null)
+      if (feedbackRef.current !== null) setCurrentFeedback(null)
       return
     }
     let cancelled = false
     const lookupTargetKey = targetKey
     const saveSeqAtLookupStart = latestSaveSeqRef.current
-    setCurrentFeedback(null)
-    setLoading(true)
+    if (feedbackRef.current !== null) setCurrentFeedback(null)
     lookupAgentTurnFeedback([{ target_kind: targetKind, target_id: targetId }])
       .then((result) => {
         if (cancelled) return
@@ -79,7 +77,7 @@ export function useAgentTurnFeedback({
           result.feedback.find(
             (row) => row.target_kind === targetKind && row.target_id === targetId,
           ) ?? null
-        setCurrentFeedback(existing)
+        if (feedbackRef.current !== existing) setCurrentFeedback(existing)
       })
       .catch(() => {
         if (
@@ -87,11 +85,8 @@ export function useAgentTurnFeedback({
           activeTargetKeyRef.current === lookupTargetKey &&
           latestSaveSeqRef.current === saveSeqAtLookupStart
         ) {
-          setCurrentFeedback(null)
+          if (feedbackRef.current !== null) setCurrentFeedback(null)
         }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
       })
     return () => {
       cancelled = true
@@ -111,9 +106,7 @@ export function useAgentTurnFeedback({
       const previous = feedbackRef.current
       const tags = input.tags !== undefined ? input.tags : (previous?.tags ?? [])
       const feedback_text =
-        input.feedback_text !== undefined
-          ? input.feedback_text
-          : (previous?.feedback_text ?? null)
+        input.feedback_text !== undefined ? input.feedback_text : (previous?.feedback_text ?? null)
       const optimistic: AgentTurnFeedbackRow = {
         id: previous?.id ?? `optimistic-${targetKey}`,
         target_kind: targetKind,
@@ -162,7 +155,6 @@ export function useAgentTurnFeedback({
 
   return {
     feedback,
-    loading,
     saving,
     canPersist,
     save,
