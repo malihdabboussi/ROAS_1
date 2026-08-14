@@ -28,6 +28,7 @@ import type { ChatModelSettings } from '@/features/studio/services/chat.service'
 import type { Campaign, DocumentAttachment, MessageReference } from '@/features/studio/types'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { matchesFlowsConceptSpace } from '@/lib/flows/flows-scope-storage'
+import { QuickMissionsLauncherProvider } from '@/lib/missions'
 import { fetchPrograms, type Program } from '@/lib/programs'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
@@ -266,87 +267,89 @@ export function HomeDashboardV4Composer() {
   }, [])
 
   return (
-    <div className="w-full max-w-3xl">
-      <QuickMissionsHubHost />
-      <ShellEmptyChatQuickStartPills onSelect={quickStart.selectQuickStart} />
-      <ChatInput
-        onSend={handleSend}
-        disabled={sending}
-        agentKey={activeAgentKey}
-        placeholder={SHELL_EMPTY_CHAT_PLACEHOLDER}
-        draftContextKeyOverride="home-dashboard-v4"
-        spaceId={targetSpaceId}
-        campaignId={activeCampaignId ?? undefined}
-        plusMenuSpacePicker={plusMenuSpacePicker}
-        plusMenuAgentPicker={agentPicker}
-        openAddMenuRef={openAddMenuRef}
-        onConnectedIntegrationProvidersChange={handleConnectedProvidersChange}
-        setTextRef={setTextRef}
-        onComposerValueChange={quickStart.handleComposerValueChange}
-        activeCapabilityChip={quickStart.activeCapabilityChip}
-        onClearCapabilityChip={quickStart.clearQuickStart}
-      />
-      <div className="surface-card border-border mx-spacing-3 p-spacing-2 rounded-b-2xl border-x border-b">
-        <div className="gap-spacing-1 flex min-w-0 flex-wrap items-center">
-          <button
-            type="button"
-            onClick={(event) => openAddMenuRef.current?.('space', event.currentTarget)}
-            className="body-4 text-muted-foreground hover:text-foreground hover:bg-hover-subtle rounded-spacing-2 gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex max-w-52 shrink-0 items-center transition-colors"
-            aria-label="Choose Space"
-          >
-            <FolderKanban className="icon-sm shrink-0" aria-hidden />
-            <span className="truncate">
-              {targetSpaceId || targetCampaignId ? targetLabel : 'Choose Space'}
-            </span>
-            <ChevronDown className="icon-xs shrink-0" aria-hidden />
-          </button>
-          <button
-            type="button"
-            onClick={(event) => openAddMenuRef.current?.('integrations', event.currentTarget)}
-            className="body-4 text-muted-foreground hover:text-foreground hover:bg-hover-subtle rounded-spacing-2 gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex shrink-0 items-center transition-colors"
-            aria-label="Plugins and integrations"
-          >
-            <Plug className="icon-sm" aria-hidden />
-            Plugins
-            {connectedProviders
-              .slice(0, 3)
-              .map((provider) =>
-                INTEGRATION_ICONS[provider] ? (
-                  <Image
-                    key={provider}
-                    src={INTEGRATION_ICONS[provider]}
-                    alt=""
-                    width={18}
-                    height={18}
-                    className="rounded-spacing-1"
-                  />
-                ) : null,
-              )}
-          </button>
-        </div>
-      </div>
-      <div className="mt-spacing-4">
-        <SuggestedNextMoves onSelectPrompt={(prompt) => setTextRef.current?.(prompt)} />
-      </div>
-      {createSpaceCampaignId !== undefined ? (
-        <CreateSpaceModal
-          open
-          onOpenChange={(open) => {
-            if (!open) setCreateSpaceCampaignId(undefined)
-          }}
-          onCreate={async (payload) => {
-            const created = normalizeSpaceLegacyViews(
-              await createSpace({
-                ...payload,
-                ...(createSpaceCampaignId ? { campaign_id: createSpaceCampaignId } : {}),
-              }),
-            )
-            cachedSpaces.mutate((current) => [created, ...(current ?? [])])
-            setTargetSpaceId(created.id)
-            setTargetCampaignId(created.campaign_id ?? null)
-          }}
+    <QuickMissionsLauncherProvider>
+      <div className="w-full max-w-3xl">
+        <QuickMissionsHubHost />
+        <ShellEmptyChatQuickStartPills onSelect={quickStart.selectQuickStart} />
+        <ChatInput
+          onSend={handleSend}
+          disabled={sending}
+          agentKey={activeAgentKey}
+          placeholder={SHELL_EMPTY_CHAT_PLACEHOLDER}
+          draftContextKeyOverride="home-dashboard-v4"
+          spaceId={targetSpaceId}
+          campaignId={activeCampaignId ?? undefined}
+          plusMenuSpacePicker={plusMenuSpacePicker}
+          plusMenuAgentPicker={agentPicker}
+          openAddMenuRef={openAddMenuRef}
+          onConnectedIntegrationProvidersChange={handleConnectedProvidersChange}
+          setTextRef={setTextRef}
+          onComposerValueChange={quickStart.handleComposerValueChange}
+          activeCapabilityChip={quickStart.activeCapabilityChip}
+          onClearCapabilityChip={quickStart.clearQuickStart}
         />
-      ) : null}
-    </div>
+        <div className="surface-card border-border mx-spacing-3 p-spacing-2 rounded-b-2xl border-x border-b">
+          <div className="gap-spacing-1 flex min-w-0 flex-wrap items-center">
+            <button
+              type="button"
+              onClick={(event) => openAddMenuRef.current?.('space', event.currentTarget)}
+              className="body-4 text-muted-foreground hover:text-foreground hover:bg-hover-subtle rounded-spacing-2 gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex max-w-52 shrink-0 items-center transition-colors"
+              aria-label="Choose Space"
+            >
+              <FolderKanban className="icon-sm shrink-0" aria-hidden />
+              <span className="truncate">
+                {targetSpaceId || targetCampaignId ? targetLabel : 'Choose Space'}
+              </span>
+              <ChevronDown className="icon-xs shrink-0" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={(event) => openAddMenuRef.current?.('integrations', event.currentTarget)}
+              className="body-4 text-muted-foreground hover:text-foreground hover:bg-hover-subtle rounded-spacing-2 gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex shrink-0 items-center transition-colors"
+              aria-label="Plugins and integrations"
+            >
+              <Plug className="icon-sm" aria-hidden />
+              Plugins
+              {connectedProviders
+                .slice(0, 3)
+                .map((provider) =>
+                  INTEGRATION_ICONS[provider] ? (
+                    <Image
+                      key={provider}
+                      src={INTEGRATION_ICONS[provider]}
+                      alt=""
+                      width={18}
+                      height={18}
+                      className="rounded-spacing-1"
+                    />
+                  ) : null,
+                )}
+            </button>
+          </div>
+        </div>
+        <div className="mt-spacing-4">
+          <SuggestedNextMoves onSelectPrompt={(prompt) => setTextRef.current?.(prompt)} />
+        </div>
+        {createSpaceCampaignId !== undefined ? (
+          <CreateSpaceModal
+            open
+            onOpenChange={(open) => {
+              if (!open) setCreateSpaceCampaignId(undefined)
+            }}
+            onCreate={async (payload) => {
+              const created = normalizeSpaceLegacyViews(
+                await createSpace({
+                  ...payload,
+                  ...(createSpaceCampaignId ? { campaign_id: createSpaceCampaignId } : {}),
+                }),
+              )
+              cachedSpaces.mutate((current) => [created, ...(current ?? [])])
+              setTargetSpaceId(created.id)
+              setTargetCampaignId(created.campaign_id ?? null)
+            }}
+          />
+        ) : null}
+      </div>
+    </QuickMissionsLauncherProvider>
   )
 }

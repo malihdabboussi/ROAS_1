@@ -4,7 +4,7 @@ import {
   SHELL_CREATE_QUICK_STARTS,
   type ShellCreateMenuItem,
 } from '@/components/shell/shell-create-menu.config'
-import { openQuickMissions } from '@/lib/missions'
+import { useQuickMissionsLauncher } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
 
 export function ShellEmptyChatQuickStartPills({
@@ -16,6 +16,8 @@ export function ShellEmptyChatQuickStartPills({
   className?: string
   variant?: 'standalone' | 'shelf'
 }) {
+  const { openLauncher } = useQuickMissionsLauncher()
+
   return (
     <div
       className={cn(
@@ -35,7 +37,7 @@ export function ShellEmptyChatQuickStartPills({
             type="button"
             onClick={() => {
               if (quickStart.action === 'mission') {
-                openQuickMissions()
+                openLauncher()
                 return
               }
               onSelect(quickStart)

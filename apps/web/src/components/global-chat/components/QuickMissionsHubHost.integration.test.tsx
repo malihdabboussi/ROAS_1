@@ -1,7 +1,7 @@
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
-import { openQuickMissions, useQuickMissionsLauncherStore } from '@/lib/missions'
+import { QuickMissionsLauncherProvider, useQuickMissionsLauncher } from '@/lib/missions'
 import { QuickMissionsHubHost } from './QuickMissionsHubHost'
 
 vi.mock('next/navigation', () => ({
@@ -11,14 +11,28 @@ vi.mock('next/navigation', () => ({
 describe('QuickMissionsHubHost integration', () => {
   afterEach(() => {
     cleanup()
-    useQuickMissionsLauncherStore.setState({ open: false, playbookKey: null })
   })
 
   it('renders the real Quick Missions dialog after a launch request', async () => {
     useSpacesStore.setState({ spaces: [], activeSpaceId: null, loadSpaces: vi.fn() })
-    render(<QuickMissionsHubHost />)
+    function Harness() {
+      const { openLauncher } = useQuickMissionsLauncher()
+      return (
+        <>
+          <button type="button" onClick={() => openLauncher()}>
+            Launch Mission
+          </button>
+          <QuickMissionsHubHost />
+        </>
+      )
+    }
+    render(
+      <QuickMissionsLauncherProvider>
+        <Harness />
+      </QuickMissionsLauncherProvider>,
+    )
 
-    act(() => openQuickMissions())
+    fireEvent.click(screen.getByRole('button', { name: 'Launch Mission' }))
 
     expect(await screen.findByRole('dialog')).toHaveTextContent('Quick Missions')
     expect(screen.getByText('Client Strategy')).toBeInTheDocument()
