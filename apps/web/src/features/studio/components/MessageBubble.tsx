@@ -182,6 +182,7 @@ function MessageBubbleComponent({
     return (
       <MessageBubbleOrderedBlocks
         message={message}
+        conversationId={effectiveConversationId}
         content={content}
         contentBlocksOrdered={contentBlocksOrdered}
         messageDocuments={messageDocuments}
@@ -213,7 +214,7 @@ function MessageBubbleComponent({
           content={content}
           isStreaming={isBeingWorkedOn}
           messageId={message.id}
-          conversationId={message.conversation_id}
+          conversationId={effectiveConversationId ?? undefined}
           allowFork={allowFork}
           inlineAction={assistantInlineAction}
           pinActions={pinAssistantActions}
@@ -267,7 +268,7 @@ function MessageBubbleComponent({
         content={content}
         isStreaming={isBeingWorkedOn}
         messageId={message.id}
-        conversationId={message.conversation_id}
+        conversationId={effectiveConversationId ?? undefined}
         allowFork={allowFork}
         inlineAction={assistantInlineAction}
         pinActions={pinAssistantActions}
