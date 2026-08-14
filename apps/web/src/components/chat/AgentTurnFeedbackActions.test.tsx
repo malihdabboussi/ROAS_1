@@ -14,9 +14,32 @@ const TARGET_ID = '33333333-3333-4333-8333-333333333333'
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  vi.restoreAllMocks()
 })
 
 describe('AgentTurnFeedbackActions', () => {
+  it('mounts a long chat history without an update-depth error', () => {
+    apiMocks.lookupAgentTurnFeedback.mockImplementation(() => new Promise(() => undefined))
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+    render(
+      <>
+        {Array.from({ length: 60 }, (_, index) => (
+          <AgentTurnFeedbackActions
+            key={index}
+            targetKind="conversation_message"
+            targetId={`33333333-3333-4333-8333-${String(index).padStart(12, '0')}`}
+            sourceSurface="studio_chat"
+            content={`Message ${index}`}
+          />
+        ))}
+      </>,
+    )
+
+    expect(consoleError).not.toHaveBeenCalledWith(expect.stringContaining('Maximum update depth'))
+    consoleError.mockRestore()
+  })
+
   it('renders copy, fork, and thumb actions without a menu button', async () => {
     apiMocks.lookupAgentTurnFeedback.mockResolvedValueOnce({ feedback: [] })
     const onFork = vi.fn()
@@ -181,9 +204,7 @@ describe('AgentTurnFeedbackActions', () => {
     fireEvent.click(screen.getByRole('button', { name: /helpful/i }))
     fireEvent.click(saveButton)
 
-    await waitFor(() =>
-      expect(apiMocks.saveAgentTurnFeedback).toHaveBeenCalledTimes(2),
-    )
+    await waitFor(() => expect(apiMocks.saveAgentTurnFeedback).toHaveBeenCalledTimes(2))
     expect(apiMocks.saveAgentTurnFeedback).toHaveBeenLastCalledWith(
       expect.objectContaining({
         tags: ['helpful'],

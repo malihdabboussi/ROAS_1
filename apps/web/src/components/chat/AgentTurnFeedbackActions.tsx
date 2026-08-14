@@ -58,10 +58,25 @@ export function AgentTurnFeedbackActions({
 
   useEffect(() => {
     if (popoverOpen) return
-    setDraftThumb(feedback?.thumbs_up ?? null)
-    setDraftTags(feedback?.tags ?? [])
-    setDraftText(feedback?.feedback_text ?? '')
-  }, [feedback?.feedback_text, feedback?.tags, feedback?.thumbs_up, popoverOpen])
+    const nextThumb = feedback?.thumbs_up ?? null
+    const nextTags = feedback?.tags ?? []
+    const nextText = feedback?.feedback_text ?? ''
+    const tagsMatch =
+      draftTags.length === nextTags.length &&
+      draftTags.every((tag, index) => tag === nextTags[index])
+
+    if (draftThumb !== nextThumb) setDraftThumb(nextThumb)
+    if (!tagsMatch) setDraftTags(nextTags)
+    if (draftText !== nextText) setDraftText(nextText)
+  }, [
+    draftTags,
+    draftText,
+    draftThumb,
+    feedback?.feedback_text,
+    feedback?.tags,
+    feedback?.thumbs_up,
+    popoverOpen,
+  ])
 
   const updatePopoverPosition = useCallback(() => {
     if (!anchorRef.current) return
@@ -178,10 +193,10 @@ export function AgentTurnFeedbackActions({
           width: FEEDBACK_POPOVER_WIDTH,
           maxHeight: popoverMaxHeight,
         }}
-        className="surface-card z-dropdown fixed overflow-y-auto p-spacing-3 rounded-lg border border-border shadow-lg"
+        className="surface-card z-dropdown p-spacing-3 border-border fixed overflow-y-auto rounded-lg border shadow-lg"
       >
         <div className="mb-spacing-2 flex items-center justify-between">
-          <span className="body-4 font-medium text-foreground">Feedback details</span>
+          <span className="body-4 text-foreground font-medium">Feedback details</span>
           <button
             type="button"
             aria-label="Close feedback"
