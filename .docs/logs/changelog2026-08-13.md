@@ -530,3 +530,13 @@ Why: Production Client Strategy testing showed Atlas revising a standalone Space
 Impact: Revision prompts identify the exact artifact to update, linked Space document ids resolve back to their Mission deliverable, unrelated document ids cannot replace the subtask output pointer, and quality review sees the same artifact exposed in Mission Deliverables.
 
 Files: `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-revision-artifact.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-revision-artifact.test.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverables.repository.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverable-reference.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverable-reference.test.ts`, `documentation/features/missions.md`.
+
+## [2026-08-13 21:18] - [FIX]
+
+What: Moved Mission status and output-count polling into the shared artifact card and reused that component from final-output cards.
+
+Why: Production verification showed a completed Client Strategy Mission opening correctly as `Done` while every quick-launch receipt in its chat remained on the static `Started` metadata persisted at launch.
+
+Impact: Inline Mission receipts and final-output cards now refresh from the same Mission and deliverable APIs until a terminal state, so background completion and output counts remain visible directly in chat.
+
+Files: `apps/web/src/components/artifacts/artifact-inline-preview-card/ArtifactInlinePreviewCard.tsx`, `apps/web/src/components/artifacts/artifact-inline-preview-card/ArtifactInlinePreviewCard.test.tsx`, `apps/web/src/components/artifacts/artifact-inline-preview-card/DefaultArtifactInlinePreview.tsx`, `apps/web/src/components/artifacts/artifact-inline-preview-card/MissionArtifactStatus.tsx`, `apps/web/src/components/artifacts/artifact-inline-preview-card/index.ts`, `apps/web/src/features/studio/components/message-bubble/FinalOutputCards.tsx`, `documentation/features/missions.md`.

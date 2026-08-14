@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { FileText } from 'lucide-react'
 import {
   ARTIFACT_GLASS,
@@ -22,7 +23,7 @@ export function DefaultArtifactInlinePreview({
   name: string
   subtitle?: string
   imageUrl?: string
-  status?: string
+  status?: ReactNode
   onClick: () => void
 }) {
   const icon = ICON_MAP[artifactType] ?? <FileText className="icon-sm shrink-0" />
@@ -34,7 +35,7 @@ export function DefaultArtifactInlinePreview({
     <button
       type="button"
       onClick={onClick}
-      className={`${ARTIFACT_INLINE_SHELL_420} flex w-full max-w-full items-center gap-spacing-3 max-md:min-h-[3.5rem] max-md:gap-2 max-md:px-3 max-md:py-2 md:gap-spacing-3 md:p-spacing-3`}
+      className={`${ARTIFACT_INLINE_SHELL_420} gap-spacing-3 md:gap-spacing-3 md:p-spacing-3 flex w-full max-w-full items-center max-md:min-h-[3.5rem] max-md:gap-2 max-md:px-3 max-md:py-2`}
     >
       {imageUrl ? (
         <div className="h-spacing-14 w-spacing-14 border-border bg-muted rounded-spacing-2 shrink-0 overflow-hidden border">
