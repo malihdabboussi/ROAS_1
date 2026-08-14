@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
 import {
   HOME_TOAST_ERRORS,
   HOME_TOAST_SUCCESS,
@@ -59,7 +60,7 @@ export function MeetingNotesSection({
     <section className="gap-spacing-3 flex flex-col">
       <div className="flex items-center justify-between">
         <h2 className="body-3 text-foreground font-semibold">
-          Notes{snippets.length > 0 ? ` (${snippets.length})` : ''}
+          Notes & links{snippets.length > 0 ? ` (${snippets.length})` : ''}
         </h2>
         {!composing ? (
           <button
@@ -95,7 +96,7 @@ export function MeetingNotesSection({
                 void submit()
               }
             }}
-            placeholder="Jot a note for this meeting…"
+            placeholder="Add a note or paste a relevant link…"
             disabled={saving}
             rows={3}
             className="input-glass body-3 rounded-spacing-2 p-spacing-3 w-full resize-y"
@@ -125,7 +126,9 @@ export function MeetingNotesSection({
         <div className="gap-spacing-2 flex flex-col">
           {snippets.map((snippet) => (
             <div key={snippet.id} className="surface-card rounded-spacing-2 p-spacing-3">
-              <p className="body-3 text-foreground whitespace-pre-wrap">{snippet.text}</p>
+              <MarkdownRenderer compact className="body-3 max-w-none break-words">
+                {snippet.text}
+              </MarkdownRenderer>
               {snippet.source_label ? (
                 <p className="typo-caption text-muted-foreground mt-spacing-1">
                   {snippet.source_label}
@@ -136,7 +139,7 @@ export function MeetingNotesSection({
         </div>
       ) : !composing ? (
         <p className="body-4 text-muted-foreground">
-          No notes yet — add one here or dump it in the meeting chat.
+          No notes or links yet — add one here or drop it in the meeting chat.
         </p>
       ) : null}
     </section>

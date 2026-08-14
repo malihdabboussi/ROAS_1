@@ -40,6 +40,14 @@ function unwrapPrefixedMarkdownHtml(text: string): string | null {
   return null
 }
 
+function repairMarkdownParagraphsInHtml(html: string): string {
+  return html.replace(/<p\b[^>]*>([\s\S]*?)<\/p>/gi, (paragraph, inner: string) => {
+    const markdown = stripHtmlToText(inner)
+    if (!looksLikeMarkdown(markdown)) return paragraph
+    return marked.parse(markdown, { async: false, breaks: true }) as string
+  })
+}
+
 /**
  * Space Docs / TipTap expect HTML. Convert markdown when needed.
  * If the string is already real semantic HTML (headings/lists/tables), keep it.
@@ -51,7 +59,7 @@ export function markdownToHtml(text: string | null | undefined): string | null {
   if (!trimmed) return null
 
   if (/<(h[1-6]|ul|ol|li|table|blockquote)\b/i.test(trimmed)) {
-    return text
+    return repairMarkdownParagraphsInHtml(text)
   }
 
   const unwrapped = unwrapPrefixedMarkdownHtml(trimmed)

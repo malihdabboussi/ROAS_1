@@ -192,4 +192,26 @@ describe('MeetingActionItemsSection', () => {
       screen.queryByRole('button', { name: /Change mapping for Send recap to Nate/ }),
     ).toBeNull()
   })
+
+  it('explains provider-reported completion instead of showing an unexplained check', () => {
+    render(
+      <MeetingActionItemsSection
+        spaceId="space-1"
+        meetingItemId="meeting-1"
+        actions={[
+          action({
+            status: 'resolved',
+            source_type: 'provider',
+            evidence: { provider_evidence: { completed_in_provider: true } },
+          }),
+        ]}
+        loading={false}
+        onToggle={vi.fn()}
+        onCreated={vi.fn()}
+        onMoved={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Marked complete in Fathom')).toBeInTheDocument()
+  })
 })
