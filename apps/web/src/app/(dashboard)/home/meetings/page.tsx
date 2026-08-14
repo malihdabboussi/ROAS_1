@@ -32,6 +32,7 @@ export default function HomeMeetingsPage() {
         <h1 className="sr-only">MEETINGS</h1>
         {activeMeetingEvent ? (
           <HomeMeetingDetailHost
+            key={`${activeMeetingEvent.source}:${activeMeetingEvent.id}`}
             event={activeMeetingEvent}
             onClose={closeMeetingEvent}
             onOpenPrep={openMeetingPrep}

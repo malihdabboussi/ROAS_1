@@ -10,17 +10,9 @@ export default function HomeMyTasksPage() {
   const { myTasks } = useHomeCardFeedScopes()
   const feed = useYourTurnFeed(myTasks.scope)
   const { activeYourTurnItem, openYourTurnItem, closeYourTurnItem } = useHomeFeedOpen()
-
   return (
     <main className="flex min-h-0 flex-1">
-      {activeYourTurnItem ? (
-        <HomeTaskDetailHost
-          item={activeYourTurnItem}
-          presentation="panel"
-          onClose={closeYourTurnItem}
-          onUpdated={() => void feed.reload()}
-        />
-      ) : (
+      <div className="min-w-0 flex-1">
         <MyTasksPanel
           presentation="page"
           open
@@ -30,8 +22,19 @@ export default function HomeMyTasksPage() {
           loading={feed.loading}
           items={feed.items}
           onOpenItem={openYourTurnItem}
+          onItemsChanged={feed.reload}
         />
-      )}
+      </div>
+      {activeYourTurnItem ? (
+        <aside className="border-border min-w-0 flex-1 border-l">
+          <HomeTaskDetailHost
+            item={activeYourTurnItem}
+            presentation="panel"
+            onClose={closeYourTurnItem}
+            onUpdated={() => void feed.reload()}
+          />
+        </aside>
+      ) : null}
     </main>
   )
 }

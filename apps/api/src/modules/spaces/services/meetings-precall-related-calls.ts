@@ -297,7 +297,11 @@ export function buildMeetingAgendaEvent(input: {
   prep: null
   related: AgendaRelatedCall
 } {
-  const title = input.title.trim().slice(0, 200) || 'Call'
+  const rawTitle = input.title.trim()
+  const title =
+    !rawTitle || /^call\s*\(naming(?:…|\.\.\.)?\)$/i.test(rawTitle)
+      ? 'Recorded call'
+      : rawTitle.slice(0, 200)
   const startMs = new Date(input.callDate).getTime()
   const end = Number.isFinite(startMs)
     ? new Date(startMs + FATHOM_AGENDA_DURATION_MS).toISOString()

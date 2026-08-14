@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { AgendaCardCoverageMenu } from '@/features/home/components/AgendaCardCoverageMenu'
 import { AgendaEmptyIllustration } from '@/features/home/components/AgendaEmptyIllustration'
+import { startOfAgendaWeek } from '@/features/home/lib/agenda-fetch-window'
 import { getIntegrationLogoPath } from '@/lib/integrations/integration-logo'
 import type { TeamAgendaCoverage } from '@/lib/services/calendar-api'
 
@@ -30,11 +31,13 @@ export function formatAgendaNavDate(d: Date, range: DateRange): string {
   if (range === 'day')
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
   if (range === 'week') {
-    const end = new Date(d.getTime() + 6 * 86400000)
-    const sameMonth = d.getMonth() === end.getMonth()
+    const start = startOfAgendaWeek(d)
+    const end = new Date(start)
+    end.setDate(end.getDate() + 6)
+    const sameMonth = start.getMonth() === end.getMonth()
     if (sameMonth)
-      return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.getDate()}`
-    return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+      return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.getDate()}`
+    return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
   }
   return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 }

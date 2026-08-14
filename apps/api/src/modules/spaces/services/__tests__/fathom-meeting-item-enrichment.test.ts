@@ -140,7 +140,7 @@ describe('fathom-meeting-item-enrichment', () => {
   it('strips Meeting:/Fathom prefixes and sanitizes CEO titles', () => {
     expect(stripMeetingTitlePrefix('Meeting: Weekly client update')).toBe('Weekly client update')
     expect(stripMeetingTitlePrefix('Fathom meeting: Sales call')).toBe('Sales call')
-    expect(provisionalFathomMeetingTitle('Impromptu Zoom Meeting')).toBe('Call (naming…)')
+    expect(provisionalFathomMeetingTitle('Impromptu Zoom Meeting')).toBe('Recorded call')
     expect(provisionalFathomMeetingTitle('Meeting: ROAS - Yasir Khan')).toBe('ROAS - Yasir Khan')
     expect(sanitizeCeoMeetingTitle('Meeting: Sales call — Jason attention')).toBe(
       'Sales call — Jason attention',
@@ -160,5 +160,9 @@ describe('fathom-meeting-item-enrichment', () => {
         attendees: [{ name: 'Dylan Vanas' }],
       }),
     ).toBe('Review weekly wins and set personal goals for the upcoming week')
+  })
+
+  it('never leaves a naming placeholder when no meeting context is available', () => {
+    expect(fallbackCeoMeetingTitle({})).toBe('Recorded call follow-up')
   })
 })

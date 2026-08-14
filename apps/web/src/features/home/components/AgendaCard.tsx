@@ -18,11 +18,7 @@ import { AgendaCardListBody } from '@/features/home/components/AgendaCardListBod
 import { HomeInstantMeetingHost } from '@/features/home/components/HomeInstantMeetingHost'
 import { HOME_TOAST_ERRORS } from '@/features/home/config/home-toast-errors.config'
 import { useAgendaCardData } from '@/features/home/hooks/use-agenda-card-data'
-import {
-  dedupeAgendaEvents,
-  pickNextAgendaEvent,
-  tomorrowDayKey,
-} from '@/features/home/lib/agenda-list-view'
+import { dedupeAgendaEvents, pickNextAgendaEvent } from '@/features/home/lib/agenda-list-view'
 import {
   agendaEventMinimizeKey,
   readMinimizedAgendaKeys,
@@ -134,7 +130,6 @@ export function AgendaCard({
     return pickNextAgendaEvent(todays, nowTick)
   }, [isToday, visibleEvents, minimizedKeys, nowTick, timezone, todayDayKey])
   const nextEventKey = nextEvent ? eventKey(nextEvent) : null
-  const tomorrowKey = useMemo(() => tomorrowDayKey(nowTick, timezone), [nowTick, timezone])
   const dividerDayKeys = useMemo(
     () =>
       range === 'week' || range === 'month' ? enumerateDayKeysInNavRange(day, range, timezone) : [],
@@ -144,14 +139,6 @@ export function AgendaCard({
   const groupedVisible = useMemo(
     () => eventsGroupedByDayKey(visibleEvents, timezone),
     [visibleEvents, timezone],
-  )
-
-  const skipDividerDayKey = useMemo(
-    () =>
-      isToday && (range === 'week' || range === 'month')
-        ? dayKeyInTimeZone(new Date(nowTick), timezone)
-        : null,
-    [isToday, range, nowTick, timezone],
   )
 
   const handleBoardVisibleWindow = useCallback(
@@ -301,9 +288,8 @@ export function AgendaCard({
             nextEvent={nextEvent}
             nextEventKey={nextEventKey}
             range={range}
-            tomorrowKey={tomorrowKey}
             dividerDayKeys={dividerDayKeys}
-            skipDividerDayKey={skipDividerDayKey}
+            todayDayKey={todayDayKey}
             groupedVisible={groupedVisible}
             nowTick={nowTick}
             timezone={timezone}

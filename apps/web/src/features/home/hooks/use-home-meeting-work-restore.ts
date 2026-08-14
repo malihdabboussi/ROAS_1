@@ -34,10 +34,15 @@ export function useHomeMeetingWorkRestore(
   const searchParams = useSearchParams()
   const meetingParam = searchParams.get(HOME_MEETING_PARAM)
   const meetingSpaceParam = searchParams.get(HOME_MEETING_SPACE_PARAM)
+  const searchParamsKey = searchParams.toString()
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const activeEventRef = useRef(activeMeetingEvent)
   /** Param currently driving an open — the URL leads and state follows. */
   const paramInFlightRef = useRef<string | null>(null)
+  /** Last URL identity this mounted surface intentionally handled. */
+  const handledMeetingParamRef = useRef<string | null>(null)
+  /** Invalidates an older async param lookup when a newer local click wins. */
+  const paramRequestSeqRef = useRef(0)
 
   useEffect(() => {
     activeEventRef.current = activeMeetingEvent
@@ -56,19 +61,30 @@ export function useHomeMeetingWorkRestore(
         ? (restore.data as CalendarAgendaEvent)
         : null
     if (!meetingParam) {
+      paramRequestSeqRef.current += 1
       paramInFlightRef.current = null
+      handledMeetingParamRef.current = null
       return
     }
     const active = activeEventRef.current
-    if (active && agendaEventMatchesMeetingParam(active, meetingParam)) return
+    if (active && agendaEventMatchesMeetingParam(active, meetingParam)) {
+      handledMeetingParamRef.current = meetingParam
+      return
+    }
+    // An in-page meeting click updates local state before router.replace can
+    // update the URL. In that short window the old param must not reopen the
+    // prior meeting and fight the new selection in an update-depth loop.
+    if (active && handledMeetingParamRef.current === meetingParam) return
+    handledMeetingParamRef.current = meetingParam
     paramInFlightRef.current = meetingParam
     if (restoredEvent && agendaEventMatchesMeetingParam(restoredEvent, meetingParam)) {
       openMeetingEvent(restoredEvent)
       return
     }
     let cancelled = false
+    const requestSeq = ++paramRequestSeqRef.current
     const stripParam = () => {
-      const params = new URLSearchParams(searchParams.toString())
+      const params = new URLSearchParams(searchParamsKey)
       params.delete(HOME_MEETING_PARAM)
       params.delete(HOME_MEETING_SPACE_PARAM)
       const query = params.toString()
@@ -78,7 +94,7 @@ export function useHomeMeetingWorkRestore(
       try {
         if (meetingSpaceParam) {
           const event = await fetchMeetingWorkspaceEvent(meetingSpaceParam, meetingParam)
-          if (!cancelled) openMeetingEvent(event)
+          if (!cancelled && paramRequestSeqRef.current === requestSeq) openMeetingEvent(event)
           return
         }
         const { fetchStart, fetchEnd } = agendaListFetchWindow(new Date(), 'week')
@@ -99,14 +115,14 @@ export function useHomeMeetingWorkRestore(
             }),
           { ttlMs: AGENDA_CACHE_TTL_MS },
         )
-        if (cancelled) return
+        if (cancelled || paramRequestSeqRef.current !== requestSeq) return
         const match = (res.events ?? []).find((event) =>
           agendaEventMatchesMeetingParam(event, meetingParam),
         )
         if (match) openMeetingEvent(match)
         else stripParam()
       } catch {
-        if (!cancelled) stripParam()
+        if (!cancelled && paramRequestSeqRef.current === requestSeq) stripParam()
       }
     })()
     return () => {
@@ -119,7 +135,7 @@ export function useHomeMeetingWorkRestore(
     openMeetingEvent,
     pathname,
     router,
-    searchParams,
+    searchParamsKey,
   ])
 
   // Meeting → param. Keeps recorded top-bar surfaces addressable and removes
@@ -128,12 +144,18 @@ export function useHomeMeetingWorkRestore(
     if (meetingParam && paramInFlightRef.current === meetingParam) {
       if (activeMeetingEvent && agendaEventMatchesMeetingParam(activeMeetingEvent, meetingParam)) {
         paramInFlightRef.current = null
+        return
       }
-      return
+      if (!activeMeetingEvent) return
+      // A direct in-page click happened while the previous URL lookup was
+      // still resolving. Local intent wins; cancel that stale lookup and let
+      // the selected meeting replace the URL below.
+      paramRequestSeqRef.current += 1
+      paramInFlightRef.current = null
     }
     if (!activeMeetingEvent) {
       if (!meetingParam) return
-      const params = new URLSearchParams(searchParams.toString())
+      const params = new URLSearchParams(searchParamsKey)
       params.delete(HOME_MEETING_PARAM)
       params.delete(HOME_MEETING_SPACE_PARAM)
       const query = params.toString()
@@ -141,11 +163,11 @@ export function useHomeMeetingWorkRestore(
       return
     }
     if (meetingParam && agendaEventMatchesMeetingParam(activeMeetingEvent, meetingParam)) return
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParamsKey)
     params.set(HOME_MEETING_PARAM, activeMeetingEvent.id)
     const meetingSpaceId = activeMeetingEvent.related?.space_id
     if (meetingSpaceId) params.set(HOME_MEETING_SPACE_PARAM, meetingSpaceId)
     else params.delete(HOME_MEETING_SPACE_PARAM)
     router.replace(`${pathname}?${params.toString()}`, { scroll: false })
-  }, [activeMeetingEvent, meetingParam, pathname, router, searchParams])
+  }, [activeMeetingEvent, meetingParam, pathname, router, searchParamsKey])
 }
