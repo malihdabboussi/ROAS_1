@@ -56,6 +56,10 @@ describe('MeetingFollowUpSlackConfirmService', () => {
     reviewShadowAction: vi.fn().mockResolvedValue({ action: { id: 'reviewed' } }),
     sendShadowAction: vi.fn().mockResolvedValue({ action: { id: 'sent', status: 'sent' } }),
   }
+  const cases = {
+    recordExternal: vi.fn(),
+    applyExternalAction: vi.fn(),
+  }
 
   let service: MeetingFollowUpSlackConfirmService
 
@@ -71,6 +75,7 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       userAgentApi as never,
       slackPeopleRepo as never,
       slackPeople as never,
+      cases as never,
     )
   })
 
@@ -211,10 +216,21 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       suggestion_count: 2,
       assignee_shadow_count: 0,
     })
+    expect(cases.recordExternal).toHaveBeenCalledTimes(2)
+    expect(cases.recordExternal).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        caseType: 'post_call',
+        sourceType: 'post_call',
+        sourceKey: 'call-1:fu-1',
+        spaceId: 'space-1',
+        summary: 'Ship AM loop',
+      }),
+    )
   })
 
   it('posts directly to the configured recap channel only when automatic delivery is explicit', async () => {
-    repo.findItemsByIds.mockResolvedValue([])
+    repo.findItemsByIds.mockResolvedValue([{ id: 'fu-auto', title: 'Launch approved ads' }])
     repo.findItemById.mockResolvedValue({
       id: 'call-client',
       title: 'Client weekly sync',
@@ -230,7 +246,7 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       spaceId: 'space-1',
       callItemId: 'call-client',
       callTitle: 'Client weekly sync',
-      suggestionIds: [],
+      suggestionIds: ['fu-auto'],
       deliveryMode: 'active',
       channelDelivery: 'automatic',
       destinationChannelId: 'C0BN7P2BWRM',
@@ -245,7 +261,7 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       expect.objectContaining({
         channel_id: 'C0BN7P2BWRM',
         text: expect.stringMatching(
-          /Call Summary[\s\S]*Call Recording[\s\S]*Action Items[\s\S]*No action items proposed[\s\S]*Client Recap Message[\s\S]*Good connecting today/,
+          /Call Summary[\s\S]*Call Recording[\s\S]*Action Items[\s\S]*Launch approved ads[\s\S]*Client Recap Message[\s\S]*Good connecting today/,
         ),
       }),
     )
@@ -271,6 +287,12 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       sent: true,
       channel_delivery: 'automatic',
       channel_id: 'C0BN7P2BWRM',
+    })
+    expect(cases.applyExternalAction).toHaveBeenCalledWith(expect.anything(), {
+      orgId: 'org-1',
+      sourceType: 'post_call',
+      sourceKey: 'call-client:fu-auto',
+      action: 'resolve',
     })
   })
 
@@ -826,6 +848,12 @@ describe('MeetingFollowUpSlackConfirmService', () => {
         slackChannelId: 'D123',
       }),
     )
+    expect(cases.applyExternalAction).toHaveBeenCalledWith(expect.anything(), {
+      orgId: 'org-1',
+      sourceType: 'post_call',
+      sourceKey: 'call-1:fu-1',
+      action: 'resolve',
+    })
   })
 
   it('delegates a confirmed fulfillment item to its independently resolved Page Grader client', async () => {

@@ -59,8 +59,8 @@ export function ObserveSlackTeamActionFields({
         />
       </FieldGroup>
       <div className="body-3 text-muted-foreground rounded-spacing-2 border-border bg-background px-spacing-3 py-spacing-2 border">
-        Disabling the loop is Off. Shadow observes and creates reviewable proposals. Active may
-        perform only the selected behavior within the limits below.
+        Pixel analyzes every non-Ignored sender in the selected channels. Shadow creates reviewable
+        proposals. Active may notify only the selected people below.
       </div>
       <FieldGroup label="Slack channel IDs">
         <textarea
@@ -77,7 +77,7 @@ export function ObserveSlackTeamActionFields({
           className="body-3 h-spacing-20 rounded-spacing-2 border-border bg-background px-spacing-3 py-spacing-2 text-foreground placeholder:text-muted-foreground w-full resize-none border outline-none"
         />
       </FieldGroup>
-      <FieldGroup label="People record IDs">
+      <FieldGroup label="Delivery & Person Brain record IDs">
         <textarea
           value={(action.person_ids ?? []).join('\n')}
           onChange={(event) =>
@@ -88,7 +88,7 @@ export function ObserveSlackTeamActionFields({
                 .filter(Boolean),
             } as Partial<ObserveSlackTeamAction>)
           }
-          placeholder="One Manage People record ID per line. Leave empty for everyone except Ignored."
+          placeholder="Controls Active recipients, Person Brain updates, and personal moments."
           className="body-3 h-spacing-20 rounded-spacing-2 border-border bg-background px-spacing-3 py-spacing-2 text-foreground placeholder:text-muted-foreground w-full resize-none border outline-none"
         />
       </FieldGroup>

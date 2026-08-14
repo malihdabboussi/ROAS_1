@@ -77,4 +77,11 @@ describe('flow capabilities catalog', () => {
       },
     })
   })
+
+  it('describes Slack sender analysis separately from recipient and Person Brain scope', () => {
+    const capability = getFlowCapability('action.observe_slack_team')
+
+    expect(capability?.description).toContain('every non-Ignored sender')
+    expect(capability?.description).toContain('person_ids restricts Active delivery')
+  })
 })

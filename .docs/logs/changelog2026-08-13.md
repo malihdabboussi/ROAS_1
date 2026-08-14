@@ -490,3 +490,23 @@ Why: Exact production testing launched Client Strategy from a campaign with no a
 Impact: Client Strategy now provisions and assigns the standard agency roster before the worker checks campaign staffing, while chat launches keep their contextual default but require an explicit campaign/Space confirmation before mission creation.
 
 Files: `apps/api/src/modules/missions/services/webinar-fulfillment-team.service.ts`, `apps/api/src/modules/missions/services/webinar-fulfillment-team.service.test.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-plan-phase.service.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-plan-phase.service.test.ts`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.test.tsx`, `apps/web/src/components/conversations/ConversationHeaderTitle.test.tsx`, `documentation/features/missions.md`.
+
+## [2026-08-13 20:13] - [FIX]
+
+What: Separated Slack sender analysis from delivery and Person Brain scope. Pixel now analyzes every non-Ignored sender in selected channels while `person_ids` continues to gate Active recipients, Person Brain compounding, and personal-moment outreach. Recovered the Wholesale Universe Slack-to-Campaign-Brain pipeline, quarantined one verified empty period, and backfilled Bonnie's missed campaign-scoped ask.
+
+Why: The active automation allowed the client channel but used Dylan's sole `person_ids` entry as an ingestion filter, permanently skipping Bonnie before analysis. The Brain audit separately proved capture was healthy while three poisoned imports left no correctly attributed Campaign Brain memories.
+
+Impact: New client asks in allowlisted channels reach the unified case ledger without broadening external delivery. Wholesale Universe now has four exact-source Slack memories with 100% embedding coverage and verified in-database semantic retrieval. Bonnie's missed ask has an exact 24-hour due time, and the five-minute production loop emitted one deduplicated owner breach after confirming no reply.
+
+Files: `apps/api/src/modules/spaces/services/slack-team-loop.service.ts`, `apps/api/src/modules/spaces/services/__tests__/slack-team-loop-sender-scope.service.test.ts`, `apps/web/src/features/spaces/components/automations/ObserveSlackTeamActionFields.tsx`, `packages/api-shared/src/types/flow-capabilities.ts`, `packages/api-shared/src/types/flow-capabilities.test.ts`, `documentation/features/spaces-automation.md`, `.docs/plans/unified-slack-agent-consolidation-2026-08-13.md`.
+
+## [2026-08-13 20:20] - [FIX]
+
+What: Connected proposed post-call follow-ups to the unified `agent_cases` ledger and resolved those cases only after confirmation or explicit automatic channel delivery.
+
+Why: Production had Slack and offer cases in the shared ledger, but the post-call workflow maintained only its separate action ledger even though `post_call` was already a supported unified case type.
+
+Impact: EOD and client/campaign rollups can now see post-call work through the same operational source of truth without treating a Shadow review draft as completed work.
+
+Files: `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.workflow.ts`, `apps/api/src/modules/spaces/services/__tests__/meeting-follow-up-slack-confirm.service.test.ts`, `documentation/features/spaces-automation.md`, `.docs/plans/unified-slack-agent-consolidation-2026-08-13.md`.

@@ -35,6 +35,7 @@ import {
   resolveFathomUrl,
   resolveFollowUpOwner,
 } from './meeting-follow-up-slack-message'
+import { SlackOpenItemsService } from './slack-open-items.service'
 
 export const SLACK_FOLLOW_UP_CONFIRM_KEY = 'slack_follow_up_confirm'
 export const DEFAULT_CONFIRM_REACTION = 'white_check_mark'
@@ -81,6 +82,7 @@ export class MeetingFollowUpSlackConfirmService {
     @Optional() private readonly userAgentApi?: UserAgentApiService,
     @Optional() private readonly slackPeopleRepo?: SlackPeopleRepository,
     @Optional() private readonly slackPeople?: SlackPeopleService,
+    @Optional() private readonly cases?: SlackOpenItemsService,
   ) {}
 
   resolveSuggestionIds(
@@ -153,6 +155,7 @@ export class MeetingFollowUpSlackConfirmService {
           status: 'proposed',
         },
       )
+      await this.recordPostCallCases(input, followUps)
     }
 
     const callItem =
@@ -293,6 +296,7 @@ export class MeetingFollowUpSlackConfirmService {
         skill_key: 'post-call-delivery',
       }
       await this.storeConfirmPayload(input, payload)
+      await this.resolvePostCallCases(input.supabase, input.orgId, input.callItemId, followUps)
       return {
         delivery_mode: 'active',
         channel_delivery: 'automatic',
@@ -699,6 +703,7 @@ export class MeetingFollowUpSlackConfirmService {
         followUps: confirmedFollowUps,
       },
     )
+    await this.resolvePostCallCases(supabase, orgId, pending.callItemId, confirmedFollowUps)
 
     if (this.slackTools) {
       const [callItem, followUps] = await Promise.all([
@@ -764,6 +769,56 @@ export class MeetingFollowUpSlackConfirmService {
     }
 
     return true
+  }
+
+  private async recordPostCallCases(
+    input: {
+      supabase: SupabaseClient
+      orgId: string | null
+      spaceId: string
+      callItemId: string
+    },
+    followUps: Array<Record<string, unknown>>,
+  ): Promise<void> {
+    if (!input.orgId || !this.cases) return
+    for (const followUp of followUps) {
+      const followUpId = String(followUp.id ?? '').trim()
+      if (!followUpId) continue
+      const summary = String(followUp.title ?? followUp.name ?? '').trim() || 'Post-call follow-up'
+      await this.cases.recordExternal(input.supabase, {
+        orgId: input.orgId,
+        caseType: 'post_call',
+        sourceType: 'post_call',
+        sourceKey: `${input.callItemId}:${followUpId}`,
+        summary,
+        severity: 'normal',
+        spaceId: input.spaceId,
+        metadata: {
+          call_item_id: input.callItemId,
+          follow_up_item_id: followUpId,
+          action_ledger_status: 'proposed',
+        },
+      })
+    }
+  }
+
+  private async resolvePostCallCases(
+    supabase: SupabaseClient,
+    orgId: string | null,
+    callItemId: string,
+    followUps: Array<Record<string, unknown>>,
+  ): Promise<void> {
+    if (!orgId || !this.cases) return
+    for (const followUp of followUps) {
+      const followUpId = String(followUp.id ?? '').trim()
+      if (!followUpId) continue
+      await this.cases.applyExternalAction(supabase, {
+        orgId,
+        sourceType: 'post_call',
+        sourceKey: `${callItemId}:${followUpId}`,
+        action: 'resolve',
+      })
+    }
   }
 
   /**

@@ -38469,6 +38469,31 @@ Production already allowed `needs_reconnect` out of band; the repository now car
   Needed work: extract the admin review-DM and automatic channel-delivery transports into sibling workflow helpers.
   Reason not done now: pre-existing debt already recorded for this workflow; a structural split would obscure the scoped output correction.
 
+## 2026-08-13 — Unified post-call case ledger (apps/api spaces)
+
+- File: apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.workflow.ts
+  Evidence: 1057/600 LOC after adding the bounded unified-case persistence seam; the workflow was already 1001 LOC before this task.
+  Needed work: extract case persistence plus the admin-review and automatic-delivery transports into focused collaborators before adding another post-call workflow branch.
+  Reason not done now: the in-scope change closes the missing unified-ledger producer with focused tests; decomposing the full grandfathered workflow would materially broaden the rollout.
+- File: apps/api/src/modules/spaces/services/__tests__/meeting-follow-up-slack-confirm.service.test.ts
+  Evidence: 1114 LOC after adding proposal/resolution assertions, above the repository's 1000-line test target.
+  Needed work: split message-builder and case-ledger workflow coverage into focused test files.
+  Reason not done now: moving unrelated characterization coverage would widen a bounded ledger integration.
+
+## 2026-08-13 — API typecheck blocked by agent-policy export drift
+
+- File: apps/api/src/modules/spaces/services/slack-team-message-composer.service.ts
+  Evidence: `pnpm --filter @vibey/api typecheck` fails because `@vibey/agent-policy` does not export `PIXEL_SLACK_VOICE_BLOCK`; none of the unified sender-scope or post-call ledger changes touch this import.
+  Needed work: reconcile the composer import with the package's public export surface and add a package-boundary regression check.
+  Reason not done now: this is pre-existing, unrelated agent-policy drift; changing Pixel voice policy would broaden the operational-ledger rollout.
+
+## 2026-08-13 — Slack capability catalog remains oversized
+
+- File: packages/api-shared/src/types/flow-capabilities.ts
+  Evidence: 952 LOC after a one-line clarification separating all-sender analysis from `person_ids` delivery/Person Brain scope; the catalog's existing size debt is already documented in earlier entries.
+  Needed work: split capability definitions by trigger/action domain behind the same public lookup contract.
+  Reason not done now: this change corrects one existing capability description and its regression test; restructuring the full catalog would widen the sender-scope rollout.
+
 ## 2026-08-13 — Chat funnel QC, Google Docs export, and artifact resize
 
 - File: apps/web/src/components/shell/ShellWorkspace.tsx
