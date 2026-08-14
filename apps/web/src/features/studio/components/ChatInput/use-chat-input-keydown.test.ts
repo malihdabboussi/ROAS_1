@@ -64,7 +64,6 @@ function defaultOptions(overrides: Partial<UseChatInputKeyDownOptions> = {}) {
     setAtArtifactMoreByType: vi.fn(),
     setAtMediaCollapsedByType: vi.fn(),
     setAtMediaMoreByType: vi.fn(),
-    onCampaignSelect: vi.fn(),
     onAtSelect: vi.fn(),
     slashMenuOpen: false,
     slashVisibleItems: [],

@@ -24,6 +24,11 @@ describe('platform tools template', () => {
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('meeting transcript Fathom Zoom Fireflies')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Do not ask the user to paste a transcript')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('checked call transcripts')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('For first-person fill, guest prep, or write-as-me:')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Never ask the user to re-introduce themselves')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Do not use the form URL as the Brain query')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Never say you cannot access it')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Never send the user to Atlas')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Human teammate →')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Managed AI agent →')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('A bare person name defaults to a human')
@@ -251,6 +256,31 @@ For unclear, destructive, publish/send, or expensive actions:
     expect(repaired).toContain('like a sharp, friendly teammate')
     expect(repaired).toContain('Use one fitting emoji occasionally')
     expect(repaired.split(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING)).toHaveLength(2)
+    expect(second).toBe(repaired)
+  })
+
+  it('adds first-person fill routing to an existing runtime policy', () => {
+    const oldContent = `# TOOLS.md
+
+## Runtime Operating Layers
+
+These layers exist to help the user get faster, more accurate work without repeating context or watching you stumble through avoidable tool errors.
+
+For call, meeting, recording, or transcript retrieval:
+- Do not ask the user to paste a transcript.
+
+For social platform research:
+- Use social_analysis.
+
+For unclear, destructive, publish/send, or expensive actions:
+- Ask a focused clarification.`
+
+    const repaired = ensurePlatformToolsRuntimeGuidance(oldContent)
+    const second = ensurePlatformToolsRuntimeGuidance(repaired)
+
+    expect(repaired).toContain('For first-person fill, guest prep, or write-as-me:')
+    expect(repaired).toContain('Never ask the user to re-introduce themselves')
+    expect(repaired.split('For first-person fill, guest prep, or write-as-me:')).toHaveLength(2)
     expect(second).toBe(repaired)
   })
 })

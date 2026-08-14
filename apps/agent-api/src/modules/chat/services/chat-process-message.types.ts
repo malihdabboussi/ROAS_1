@@ -25,7 +25,7 @@ export interface HighlightedArtifact {
 }
 
 export interface MessageReference {
-  kind: 'artifact' | 'media' | 'mission' | 'conversation' | 'person'
+  kind: 'artifact' | 'media' | 'mission' | 'conversation' | 'person' | 'campaign'
   id: string
   label: string
   type?: string

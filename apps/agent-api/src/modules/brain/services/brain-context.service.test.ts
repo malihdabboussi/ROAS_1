@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { FIRST_PERSON_FILL_USER_BRAIN_QUERY } from '@vibey/agent-policy'
 import { BrainContextService } from './brain-context.service'
 
 function makeQuery(result: unknown) {
@@ -401,5 +402,64 @@ describe('BrainContextService', () => {
     expect(search).toHaveBeenCalledWith(
       expect.objectContaining({ family: 'user', limit: 20, query: 'pricing' }),
     )
+  })
+
+  it('retrieves user brain with identity query for first-person fill requests', async () => {
+    const search = vi.fn(
+      async (input: { family: string; query: string; embedding?: unknown }) => ({
+        success: true,
+        query: input.query,
+        family: input.family,
+        count: 1,
+        context_sufficient: true,
+        sufficiency: {
+          sufficient: true,
+          confidence: 1,
+          reason: '',
+          missing: [],
+          suggested_next_queries: [],
+        },
+        missing: [],
+        suggested_next_queries: [],
+        results: [
+          {
+            id: `${input.family}-hit`,
+            kind: 'memory',
+            title: 'Hit',
+            snippet: 'Snippet',
+            related: [],
+          },
+        ],
+      }),
+    )
+    const retrieval = {
+      search,
+      resolveUserBrainId: vi.fn(async () => 'brain-user'),
+    }
+    const agentPolicy = { canAgentUseCapability: vi.fn(async () => true) }
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === 'user_addons') return makeQuery({ brain_id: 'brain-vibey' })
+        return makeQuery(null)
+      }),
+    }
+    const service = new BrainContextService(
+      { client: supabase } as any,
+      { getEmbedding: vi.fn(async () => [0.1]) } as any,
+      { buildSpotlightContext: vi.fn(), buildBrainSpotlightContext: vi.fn() } as any,
+      { buildCompanyContext: vi.fn(async () => '') } as any,
+      agentPolicy as any,
+      retrieval as any,
+    )
+
+    const userMessage =
+      "Hey, here's a link. I need some help on this, filling this out https://docs.google.com/forms/d/abc"
+    await service.buildFullContext('user-1', 'vibey', userMessage, 'org-1', false, true)
+
+    const userCall = search.mock.calls.find((call) => call[0].family === 'user')?.[0]
+    const companyCall = search.mock.calls.find((call) => call[0].family === 'company')?.[0]
+    expect(userCall?.query).toBe(FIRST_PERSON_FILL_USER_BRAIN_QUERY)
+    expect(companyCall?.query).toBe(userMessage)
+    expect(userCall?.embedding).toBeUndefined()
   })
 })

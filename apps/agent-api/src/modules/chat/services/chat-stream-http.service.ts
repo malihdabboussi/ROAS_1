@@ -43,7 +43,7 @@ export interface ChatMessageBody {
     label: string
   }>
   message_references?: Array<{
-    kind: 'artifact' | 'media' | 'mission' | 'conversation' | 'person'
+    kind: 'artifact' | 'media' | 'mission' | 'conversation' | 'person' | 'campaign'
     id: string
     label: string
     type?: string
