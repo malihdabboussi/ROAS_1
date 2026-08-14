@@ -563,11 +563,7 @@ export class PageGraderBrainSyncService {
   ): Promise<MappedClientRow[]> {
     const normalizedSecret = secret.trim()
     if (!normalizedSecret) throw new UnauthorizedException('Missing webhook signature')
-    const mapped = await this.findOrBootstrapClientsByWebhookSecret(
-      normalizedSecret,
-      clientId,
-      clientName,
-    )
+    const mapped = await this.findMappedClientsByWebhookSecret(normalizedSecret, clientId)
     if (mapped.length > 0) return mapped
 
     const verified = await verifySignedPageGraderSlackClient({

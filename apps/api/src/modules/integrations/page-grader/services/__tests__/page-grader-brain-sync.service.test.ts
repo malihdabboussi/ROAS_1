@@ -214,7 +214,7 @@ describe('PageGraderBrainSyncService', () => {
     expect(brainImport.importClientBrain).not.toHaveBeenCalled()
   })
 
-  it('bootstraps a signed Slack client before authorizing its ingest', async () => {
+  it('uses an existing signed Slack client mapping without a Brain import', async () => {
     const service = new PageGraderBrainSyncService(
       { client: {} } as never,
       {} as never,
@@ -233,14 +233,16 @@ describe('PageGraderBrainSyncService', () => {
         webhookSecret: 'whsec',
       },
     ]
-    const bootstrap = vi
-      .spyOn(service as never, 'findOrBootstrapClientsByWebhookSecret' as never)
+    const findMapped = vi
+      .spyOn(service as never, 'findMappedClientsByWebhookSecret' as never)
       .mockResolvedValue(mapped as never)
+    const bootstrap = vi.spyOn(service as never, 'findOrBootstrapClientsByWebhookSecret' as never)
 
     await expect(
       service.authorizeWebhookClient('whsec', '11111111-1111-1111-1111-111111111111', 'Acme'),
     ).resolves.toEqual(mapped)
-    expect(bootstrap).toHaveBeenCalledWith('whsec', '11111111-1111-1111-1111-111111111111', 'Acme')
+    expect(findMapped).toHaveBeenCalledWith('whsec', '11111111-1111-1111-1111-111111111111')
+    expect(bootstrap).not.toHaveBeenCalled()
   })
 
   it('accepts a catalog-verified Slack client when campaign mapping bootstrap is unavailable', async () => {
@@ -264,7 +266,7 @@ describe('PageGraderBrainSyncService', () => {
       pageGraderApi as never,
       {} as never,
     )
-    vi.spyOn(service as never, 'findOrBootstrapClientsByWebhookSecret' as never).mockResolvedValue(
+    vi.spyOn(service as never, 'findMappedClientsByWebhookSecret' as never).mockResolvedValue(
       [] as never,
     )
     vi.spyOn(service as never, 'listConnectedPageGraderRows' as never).mockResolvedValue([
