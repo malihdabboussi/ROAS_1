@@ -40,6 +40,16 @@ Impact: Reply reliably renders the selected assistant message as a removable com
 
 Files: `apps/web/src/features/studio/components/ChatInput.tsx`, `apps/web/src/features/studio/components/ChatInput/use-restored-message-references.ts`, `apps/web/src/features/studio/components/ChatInput/use-restored-message-references.test.ts`.
 
+## 2026-08-14 11:51 - [FIX]
+
+What: Routed assistant Reply and Fork actions through `MessageBubble`'s effective conversation id, including ordered-block messages.
+
+Why: Space/Home chat already supplies an active conversation override for message rendering, but assistant actions still targeted each stored message row's conversation id, which could differ from the mounted composer.
+
+Impact: Reply seeds target the visible conversation and are accepted by that conversation's composer instead of being silently ignored as belonging to another chat.
+
+Files: `apps/web/src/features/studio/components/MessageBubble.tsx`, `apps/web/src/features/studio/components/MessageBubble.test.tsx`, `apps/web/src/features/studio/components/message-bubble/MessageBubbleOrderedBlocks.tsx`.
+
 ## 2026-08-14 11:55 - [FIX]
 
 What: Create-menu Funnel/Ad/Script/Sequence/Social now open in-chat type cards instead of pasting a prompt; chat funnel previews use the full funnel designer; HTML funnels no longer compile through the TSX mini-iframe; sending no longer silently assigns an existing thread to General.
