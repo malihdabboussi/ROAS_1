@@ -10,18 +10,7 @@ function makeController(importJobs: {
   succeedRuntimeJob: (jobId: string, input: unknown) => Promise<unknown>
   failRuntimeJob: (jobId: string, input: unknown) => Promise<unknown>
 }) {
-  return new InternalBrainImportJobsController(
-    importJobs as never,
-    {
-      catchUpMappedClients: vi.fn(async () => ({
-        success: true,
-        scanned: 0,
-        synced: 0,
-        skipped: 0,
-        failed: 0,
-      })),
-    } as never,
-  )
+  return new (InternalBrainImportJobsController as any)(importJobs)
 }
 
 describe('InternalController brain import runtime routes', () => {

@@ -39,6 +39,7 @@ export abstract class BrainImportJobsRuntimeBase extends BrainImportJobsBase {
     process.env.AGENT_RUNTIME_BRAIN_IMPORT_PER_USER_CONCURRENCY,
     1,
   )
+  private readonly pageGraderCatchUpIntervalMs = 60 * 60 * 1_000
 
   async processDueJobs() {
     await this.enqueueDueJobs()
@@ -171,6 +172,16 @@ export abstract class BrainImportJobsRuntimeBase extends BrainImportJobsBase {
       {
         jobId: 'brain-import-sweep',
         repeat: { every: this.pollIntervalMs },
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    )
+    await this.brainImportQueue.add(
+      'page-grader-brain-sync-sweep',
+      {},
+      {
+        jobId: 'page-grader-brain-sync-sweep',
+        repeat: { every: this.pageGraderCatchUpIntervalMs },
         removeOnComplete: true,
         removeOnFail: true,
       },

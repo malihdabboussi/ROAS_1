@@ -83,6 +83,11 @@ export class AgentRuntimeBrainImportProcessor extends WorkerHost {
         return
       }
 
+      if (job.name === 'page-grader-brain-sync-sweep') {
+        await this.postMainApi('/api/internal/page-grader/brain-sync/catch-up?limit=50', {})
+        return
+      }
+
       if (job.name !== 'brain-import-job') {
         throw new Error(`Unsupported brain import runtime job: ${job.name}`)
       }

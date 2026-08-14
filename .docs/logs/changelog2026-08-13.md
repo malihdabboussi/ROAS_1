@@ -430,3 +430,13 @@ Why: The first post-policy production replay called the rejected user-memory act
 Impact: A campaign Slack job can succeed only when the mapped Campaign Brain contains at least one exact-source memory and every matching memory has a retrieval embedding. Missing persistence or indexing now enters the normal retry/failure lifecycle before cursor advancement.
 
 Files: `apps/api/src/modules/brain/repositories/brain-import-jobs-runtime.repository.ts`, `apps/api/src/modules/brain/services/brain-import-jobs-runtime.base.ts`, `apps/api/src/modules/brain/services/brain-import-jobs-execution.base.ts`, `apps/api/src/modules/brain/services/__tests__/brain-import-jobs.service.test.ts`, `.docs/plans/unified-slack-agent-consolidation-2026-08-13.md`, `documentation/features/page-grader-campaign-brain-sync.md`.
+
+## [2026-08-13 19:25] - [FIX]
+
+What: Removed mapped Page Grader synchronization from the three-second Brain import enqueue endpoint and scheduled it as its own hourly BullMQ job through the existing dedicated catch-up route.
+
+Why: Production worker logs showed overlapping Page Grader catch-up requests synchronously scanning up to 50 external clients until the Vercel API returned `FUNCTION_INVOCATION_TIMEOUT`. The code described the work as hourly but attached it to the Brain sweep's three-second cadence.
+
+Impact: Brain due-job discovery stays fast and bounded, Page Grader retains its intended hourly reconciliation, and repeated external package pulls can no longer saturate the Vercel function window every three seconds.
+
+Files: `apps/api/src/modules/brain/services/brain-import-jobs-runtime.base.ts`, `apps/api/src/modules/brain/services/__tests__/brain-import-sweep-schedule.test.ts`, `apps/api/src/modules/internal/controllers/internal-brain-import-jobs.controller.ts`, `apps/api/src/modules/internal/internal.controller.test.ts`, `apps/mission-worker/src/modules/agent-runtime/processors/agent-runtime-brain-import.processor.ts`, `apps/mission-worker/src/modules/agent-runtime/processors/agent-runtime-brain-import.processor.test.ts`, `documentation/features/page-grader-campaign-brain-sync.md`.

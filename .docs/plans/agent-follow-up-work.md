@@ -38583,3 +38583,19 @@ Evidence: The gateway is 2,488 LOC after this scoped change, down from 2,518 but
 Needed work: Split runtime targeting, prompt construction, request streaming, trace assembly, and specialized plan/review/evaluation calls into focused gateway collaborators without changing the OpenClaw action contract.
 
 Reason not done now: A full gateway decomposition would materially widen an urgent production retry/review-loop fix and make end-to-end behavioral verification harder to attribute.
+
+## 2026-08-13 - [ARCH] Split Brain import runtime lifecycle responsibilities
+
+Status: Open
+
+Found while: Separating Page Grader's hourly reconciliation from the three-second Brain import queue sweep.
+
+Files:
+
+- `apps/api/src/modules/brain/services/brain-import-jobs-runtime.base.ts` (495 LOC)
+
+Evidence: The service is below the 600-line hard limit but has reached the architecture guideline's proactive extraction threshold near 500 LOC. It currently owns queue scheduling, stale-job recovery, runtime claiming, progress transitions, and health monitoring.
+
+Needed work: Extract repeat-job installation and runtime health monitoring into focused collaborators while preserving the existing Brain import lifecycle contract.
+
+Reason not done now: The production timeout fix changes only the two repeat schedules and their routing. Decomposing the full runtime lifecycle in the same deployment would materially widen the launch repair.
