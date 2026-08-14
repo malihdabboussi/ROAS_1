@@ -281,6 +281,16 @@ Impact: Space selection data is ready before interaction, and opening Quick Miss
 
 Files: `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.test.ts`, `documentation/features/missions.md`.
 
+## [2026-08-13 17:55] - [FIX]
+
+What: Start-aligned the nonwrapping empty-chat quick-start row inside its horizontal scroll viewport.
+
+Why: Production geometry showed the 768px container began at x=347, but centering its oversized catalog placed Mission at x=77 beneath the 272px docked menu; the real pointer target was Favorites, while later items such as Document remained clickable.
+
+Impact: Mission, Offer, and every early Create quick start begin inside the work surface and are directly clickable; remaining items continue horizontally through the existing scroll viewport.
+
+Files: `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, `apps/web/src/components/shell/ShellEmptyChatPrompts.test.tsx`, `documentation/features/missions.md`.
+
 ## [2026-08-13 17:08] - [FIX]
 
 What: Changed Agenda list weeks to Monday–Sunday with current-day positioning and earlier-week scrollback, made meeting-to-meeting navigation ignore a stale URL during an explicit selection, replaced leaked Fathom naming placeholders, and added inline task status plus right-side task preview to My Tasks.
