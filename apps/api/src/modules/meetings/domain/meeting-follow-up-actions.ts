@@ -31,6 +31,18 @@ export function mapFollowUpSpaceItemToMeetingAction(
       : String(item.source ?? '') === 'fathom'
         ? 'provider'
         : 'manual'
+  const providerEvidence =
+    custom.provider_evidence &&
+    typeof custom.provider_evidence === 'object' &&
+    !Array.isArray(custom.provider_evidence)
+      ? (custom.provider_evidence as Record<string, unknown>)
+      : {}
+  const completionOrigin =
+    custom.completion_origin &&
+    typeof custom.completion_origin === 'object' &&
+    !Array.isArray(custom.completion_origin)
+      ? (custom.completion_origin as Record<string, unknown>)
+      : null
 
   return {
     id: String(item.id),
@@ -46,6 +58,8 @@ export function mapFollowUpSpaceItemToMeetingAction(
       origin: 'meetings_space_follow_up',
       space_item_id: String(item.id),
       entry_type: 'follow_up',
+      ...(Object.keys(providerEvidence).length > 0 ? { provider_evidence: providerEvidence } : {}),
+      ...(completionOrigin ? { completion_origin: completionOrigin } : {}),
     },
     created_at: item.created_at ?? null,
     updated_at: item.updated_at ?? null,

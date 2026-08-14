@@ -25,6 +25,37 @@ function isMovableAction(action: MeetingAction): boolean {
   return String(action.evidence?.origin ?? '') === 'meetings_space_follow_up'
 }
 
+function completionLabel(action: MeetingAction): string | null {
+  if (action.status !== 'resolved') return null
+  const completion = action.evidence?.completion_origin
+  if (completion && typeof completion === 'object' && !Array.isArray(completion)) {
+    const at = String((completion as Record<string, unknown>).completed_at ?? '').trim()
+    if (at) {
+      const parsed = new Date(at)
+      if (!Number.isNaN(parsed.getTime())) {
+        return `Completed ${new Intl.DateTimeFormat(undefined, {
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        }).format(parsed)}`
+      }
+    }
+    return 'Completed in this task list'
+  }
+  const providerEvidence = action.evidence?.provider_evidence
+  if (
+    action.source_type === 'provider' &&
+    providerEvidence &&
+    typeof providerEvidence === 'object' &&
+    !Array.isArray(providerEvidence) &&
+    (providerEvidence as Record<string, unknown>).completed_in_provider === true
+  ) {
+    return 'Marked complete in Fathom'
+  }
+  return action.updated_at ? 'Completed — open task for activity' : 'Completed'
+}
+
 function ActionRow({
   action,
   spaceId,
@@ -41,6 +72,7 @@ function ActionRow({
   onMoved: (action: MeetingAction, destinationTitle: string) => void
 }) {
   const resolved = action.status === 'resolved'
+  const resolvedLabel = completionLabel(action)
   const openTask = () => {
     window.dispatchEvent(
       new CustomEvent('vibey-open-artifact', {
@@ -84,6 +116,12 @@ function ActionRow({
           <span className="truncate">{action.canonical_assignee_name || 'Unassigned'}</span>
           <span aria-hidden>·</span>
           <span className="shrink-0">{actionSourceLabel(action)}</span>
+          {resolvedLabel ? (
+            <>
+              <span aria-hidden>·</span>
+              <span className="shrink-0">{resolvedLabel}</span>
+            </>
+          ) : null}
         </>
       }
       trailing={

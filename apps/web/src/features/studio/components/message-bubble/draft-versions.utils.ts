@@ -30,6 +30,19 @@ function fallbackLabel(index: number): string {
   return `Version ${VERSION_LETTERS[index] ?? String(index + 1)}`
 }
 
+/** Draft cards are send-ready plain text, so Markdown chrome must not leak into the editor. */
+export function draftMarkdownToPlainText(value: string): string {
+  return value
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\((?:[^()]|\([^)]*\))*\)/g, '$1')
+    .replace(/(^|\s)(?:\*\*|__)(?=\S)/g, '$1')
+    .replace(/(?:\*\*|__)(?=\s|[.,!?;:]|$)/g, '')
+    .replace(/(^|\s)(?:\*|_)(?=\S)/g, '$1')
+    .replace(/(?:\*|_)(?=\s|[.,!?;:]|$)/g, '')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .trim()
+}
+
 export function splitDraftSegments(content: string): DraftContentSegment[] {
   const segments: DraftContentSegment[] = []
   let cursor = 0
@@ -49,7 +62,7 @@ export function splitDraftSegments(content: string): DraftContentSegment[] {
       segments.push({ kind: 'markdown', markdown: between })
     }
     const label = match[1]?.trim() || fallbackLabel(pendingVersions.length)
-    pendingVersions.push({ label, text: (match[2] ?? '').trim() })
+    pendingVersions.push({ label, text: draftMarkdownToPlainText(match[2] ?? '') })
     cursor = match.index + match[0].length
   }
   flushVersions()

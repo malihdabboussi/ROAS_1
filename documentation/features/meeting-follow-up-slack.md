@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-08-12 (automatic client-only Pixel Shadow processing)
+**Last Modified:** 2026-08-13 (workspace hydration + canonical task state + recap formatting)
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` uses those same stored drafts, sends account-manager reminders only to people classified Internal and individually set Active, and keeps the client-facing recap in the admin approval thread.
 
@@ -22,6 +22,10 @@ The canonical post-call path is now meeting-first rather than automation-task-fi
 12. The next meeting can point back through `next_meeting_item_id`; unresolved confirmed/in-progress/rolled-forward commitments are surfaced before the next call.
 13. Scheduled workspace resolution accepts timezone-aware calendar timestamps and normalizes them to UTC before persistence, so Google Calendar offsets remain chronologically comparable during later Fathom reconciliation.
 14. Scheduled and Fathom meetings share one call-kind classifier: Personal, Team, Executive, Client, Partner, and Sales. Organization member email domains distinguish teammates from external attendees. Automatic classifications can refresh as richer recording evidence arrives, while a valid human selection is marked manual and remains authoritative.
+15. The workspace stays in an explicit loading state until its full read model is hydrated, so recordings, recap, notes, and tasks do not briefly appear empty.
+16. Action rows reuse the shared work-item list primitives and mutate mirrored `follow_up` space items through the canonical Space task endpoint. User completion records a timestamped origin; provider completion is labeled only when Fathom supplied completed evidence.
+17. Notes accept relevant links and render them as clickable content immediately after save. Meeting recap documents repair provider Markdown embedded in HTML paragraphs on open, and post-call draft cards normalize Markdown emphasis to plain text.
+18. Recap and follow-up quick actions draft from available meeting evidence immediately. Missing dates are omitted or proposed instead of blocking the first draft with a clarification request.
 
 Exact Fathom `action_items` are mirrored into Meetings `follow_up` space_items on ingest (Programs Action items + Home). When the webhook payload has zero actions, we refetch the meeting once from Fathom; if still empty we do not invent tasks from the transcript. The default `Fathom Meeting Log` automation runs lifecycle status updates plus grounded `agent_suggest_tasks` (enrich assignees/due/priority onto those follow_ups — never invent when `action_items` is empty). Slack confirm remains an explicit downstream workflow, not an automatic side effect of ingest.
 

@@ -31,6 +31,7 @@ describe('planProviderFollowUpUpserts', () => {
           entry_type: 'follow_up',
           provider_source_key: 'fathom:1:action:0',
           suggested_assignee_email: 'nate@roas.co',
+          provider_evidence: expect.objectContaining({ completed_in_provider: false }),
         }),
       }),
     ])

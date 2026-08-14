@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   setRailIntent: vi.fn(),
   setWorkAreaOpen: vi.fn(),
   startMeetingCall: vi.fn(),
+  updateSpaceItem: vi.fn(),
+  toggleMeetingActionStatus: vi.fn(),
   updateMeetingActionStatus: vi.fn(),
 }))
 
@@ -24,6 +26,7 @@ vi.mock('@/features/home/services/meeting-workspace-api', () => ({
   endMeetingCall: mocks.endMeetingCall,
   fetchMeetingWorkspace: mocks.fetchMeetingWorkspace,
   startMeetingCall: mocks.startMeetingCall,
+  toggleMeetingActionStatus: mocks.toggleMeetingActionStatus,
   updateMeetingActionStatus: mocks.updateMeetingActionStatus,
 }))
 
@@ -54,6 +57,7 @@ vi.mock('@/lib/campaigns/campaign-api', () => ({
 
 vi.mock('@/lib/spaces/spaces-api', () => ({
   fetchSpaceById: vi.fn().mockResolvedValue({ id: 'space-1', title: 'Meetings' }),
+  updateSpaceItem: mocks.updateSpaceItem,
 }))
 
 vi.mock('@/components/shell/use-shell-store', () => ({
@@ -97,6 +101,37 @@ describe('MeetingWorkspaceDialog', () => {
   afterEach(() => {
     cleanup()
     for (const mock of Object.values(mocks)) mock.mockClear()
+  })
+
+  it('shows a meeting loader instead of temporary empty workspace sections', async () => {
+    let resolveBundle: ((value: typeof baseBundle) => void) | undefined
+    mocks.fetchMeetingWorkspace.mockReset()
+    mocks.fetchMeetingWorkspace.mockReturnValue(
+      new Promise<typeof baseBundle>((resolve) => {
+        resolveBundle = resolve
+      }),
+    )
+
+    render(
+      <MeetingWorkspaceDialog
+        spaceId="space-1"
+        meetingItemId="meeting-1"
+        joinUrl={null}
+        fallbackTitle="Strategy call"
+        onBack={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('status', { name: 'Loading meeting workspace' })).toBeInTheDocument()
+    expect(screen.queryByText('Recordings (0)')).not.toBeInTheDocument()
+    expect(screen.queryByText('No action items yet.')).not.toBeInTheDocument()
+
+    resolveBundle?.(baseBundle)
+    await waitFor(() => {
+      expect(screen.queryByRole('status', { name: 'Loading meeting workspace' })).toBeNull()
+      expect(screen.getByText('Recordings (0)')).toBeInTheDocument()
+    })
   })
 
   it('opens the persistent meeting conversation in the main shell chat', async () => {
@@ -302,7 +337,7 @@ describe('MeetingWorkspaceDialog', () => {
     }
     mocks.fetchMeetingWorkspace.mockReset()
     mocks.fetchMeetingWorkspace.mockResolvedValue({ ...baseBundle, actions: [action] })
-    mocks.updateMeetingActionStatus.mockResolvedValue({ ...action, status: 'confirmed' })
+    mocks.toggleMeetingActionStatus.mockResolvedValue({ ...action, status: 'confirmed' })
 
     render(
       <MeetingWorkspaceDialog
@@ -322,12 +357,7 @@ describe('MeetingWorkspaceDialog', () => {
     fireEvent.click(reopen)
 
     await waitFor(() => {
-      expect(mocks.updateMeetingActionStatus).toHaveBeenCalledWith(
-        'space-1',
-        'meeting-1',
-        'action-1',
-        'confirmed',
-      )
+      expect(mocks.toggleMeetingActionStatus).toHaveBeenCalledWith('space-1', 'meeting-1', action)
       expect(
         screen.getByRole('button', { name: 'Mark Send the launch recap complete' }),
       ).toBeInTheDocument()
