@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import {
   FileText,
   FolderGit2,
@@ -9,14 +9,10 @@ import {
   Music2,
   Video,
 } from 'lucide-react'
+import { MissionArtifactStatus } from '@/components/artifacts'
 import type { ArtifactNodeType } from '@/lib/chat/attached-artifact'
 import { useResilientImageSrc } from '@/lib/media/use-resilient-image-src'
-import {
-  fetchDeliverablesForMissions,
-  fetchMissionById,
-  missionDeliverableFromContentBlock,
-  type MissionDeliverable,
-} from '@/lib/missions'
+import { missionDeliverableFromContentBlock, type MissionDeliverable } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
 import { ARTIFACT_GLASS, ARTIFACT_ICON } from '../chat/ArtifactAttachments'
 import type { ContentBlockChannelSource } from './message-bubble.types'
@@ -214,43 +210,6 @@ function FinalOutputThumb({
   return <span className="text-muted-foreground">{icon}</span>
 }
 
-const TERMINAL_MISSION_STATUSES = new Set(['completed', 'done', 'failed', 'error', 'archived'])
-
-function MissionOutputStatus({ missionId, fallback }: { missionId: string; fallback: string }) {
-  const [label, setLabel] = useState(fallback)
-
-  useEffect(() => {
-    let cancelled = false
-    let timer: ReturnType<typeof setTimeout> | null = null
-    const refresh = async () => {
-      try {
-        const [mission, deliverablesByMission] = await Promise.all([
-          fetchMissionById(missionId),
-          fetchDeliverablesForMissions([missionId]),
-        ])
-        if (cancelled) return
-        const outputCount = deliverablesByMission[missionId]?.length ?? 0
-        const status = mission.status.replaceAll('_', ' ')
-        setLabel(
-          `${status}${outputCount > 0 ? ` · ${outputCount} output${outputCount === 1 ? '' : 's'}` : ''}`,
-        )
-        if (!TERMINAL_MISSION_STATUSES.has(mission.status)) {
-          timer = setTimeout(() => void refresh(), 5000)
-        }
-      } catch {
-        if (!cancelled) timer = setTimeout(() => void refresh(), 10000)
-      }
-    }
-    void refresh()
-    return () => {
-      cancelled = true
-      if (timer) clearTimeout(timer)
-    }
-  }, [missionId])
-
-  return <>{label}</>
-}
-
 export function FinalOutputCards({
   blocks,
   deliverableSource,
@@ -309,7 +268,10 @@ export function FinalOutputCards({
               {output.subtitle ? (
                 <div className="typo-caption text-muted-foreground mt-spacing-1 line-clamp-1">
                   {block.type === 'artifact_preview' && block.artifactType === 'mission' ? (
-                    <MissionOutputStatus missionId={block.artifactId} fallback={output.subtitle} />
+                    <MissionArtifactStatus
+                      missionId={block.artifactId}
+                      fallback={output.subtitle}
+                    />
                   ) : (
                     output.subtitle
                   )}

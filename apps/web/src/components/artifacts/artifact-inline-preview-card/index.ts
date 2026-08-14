@@ -1,2 +1,6 @@
 export { ArtifactInlinePreviewCard } from './ArtifactInlinePreviewCard'
-export type { ArtifactInlinePreviewCardProps, ArtifactPreviewType } from './artifact-inline-preview.types'
+export { MissionArtifactStatus } from './MissionArtifactStatus'
+export type {
+  ArtifactInlinePreviewCardProps,
+  ArtifactPreviewType,
+} from './artifact-inline-preview.types'

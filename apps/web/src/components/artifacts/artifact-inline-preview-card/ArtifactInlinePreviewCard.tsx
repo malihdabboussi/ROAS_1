@@ -9,6 +9,7 @@ import { DefaultArtifactInlinePreview } from './DefaultArtifactInlinePreview'
 import { EmailPreviewChatCard } from './EmailPreviewChatCard'
 import { EmailSequenceArtifactInlinePreview } from './EmailSequenceArtifactInlinePreview'
 import { FunnelArtifactInlinePreview } from './FunnelArtifactInlinePreview'
+import { MissionArtifactStatus } from './MissionArtifactStatus'
 import { OfferArtifactInlinePreview } from './OfferArtifactInlinePreview'
 import { PresentationArtifactInlinePreview } from './PresentationArtifactInlinePreview'
 import { SocialPostArtifactInlinePreview } from './SocialPostArtifactInlinePreview'
@@ -158,7 +159,13 @@ export function ArtifactInlinePreviewCard({
       name={name}
       subtitle={subtitle}
       imageUrl={imageUrl}
-      status={status}
+      status={
+        artifactType === 'mission' ? (
+          <MissionArtifactStatus missionId={artifactId} fallback={status ?? 'Started'} />
+        ) : (
+          status
+        )
+      }
       onClick={handleClick}
     />
   )
