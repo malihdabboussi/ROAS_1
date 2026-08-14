@@ -49,3 +49,13 @@ Why: Space/Home chat already supplies an active conversation override for messag
 Impact: Reply seeds target the visible conversation and are accepted by that conversation's composer instead of being silently ignored as belonging to another chat.
 
 Files: `apps/web/src/features/studio/components/MessageBubble.tsx`, `apps/web/src/features/studio/components/MessageBubble.test.tsx`, `apps/web/src/features/studio/components/message-bubble/MessageBubbleOrderedBlocks.tsx`.
+
+## 2026-08-14 13:59 - [FIX]
+
+What: Taught Pixel to click through a live funnel, submit a labeled test lead, and inspect the real confirmation page, and turned on the production browser so that path can actually run.
+
+Why: A QC request to register a test lead came back asking for a confirmation URL. The previous browser-QC rule treated any form submit as unauthorized, and the live browser was disabled behind an Instagram-only proxy.
+
+Impact: When someone asks Pixel to QC a funnel and click Register Now, Pixel fills a fake test lead, submits, and reviews the resulting page instead of stopping at fetched HTML.
+
+Files: `packages/agent-policy/src/platform-tools-template.ts`, `packages/agent-policy/src/platform-tools-template.test.ts`, `apps/agent-api/src/modules/shared/openclaw-gateway.visual-review.test.ts`, `apps/agent-api/src/modules/agent-sync/services/pixel-live-page-clickthrough.test.ts`, `supabase/migrations/20260814140000_pixel_live_page_clickthrough.sql`, `docker/openclaw.json`, `docker/supervisord.conf`, `docker/vibey-browser-sidecar.sh`, `docker/BROWSER_NETWORK_ISOLATION.md`, `documentation/features/website-artifacts.md`.

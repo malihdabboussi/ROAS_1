@@ -1,3 +1,27 @@
+## 2026-08-14 - [DOCS] Designer TOOLS.md still forbids the browser it is allowed to use
+
+Status: Open
+
+Found while: Fixing Pixel live-funnel test-lead click-through
+
+Evidence: Canonical Designer/Lux runtimes omit `browser` from the deny list for visual review, but `docker/agents/templates/designer/TOOLS.md` still says "Do NOT use `browser`" and "Do NOT browse URLs via `browser`."
+
+Needed work: Update designer (and other visual-review) TOOLS.md so screenshot critique uses the browser tool instead of `web_fetch`.
+
+Reason not done now: The requested fix is Pixel funnel QC with a test lead. Designer visual-review copy is adjacent and would change a different agent's operating contract.
+
+## 2026-08-14 - [OPS] Instagram-only Squid config is unused after public browser QC
+
+Status: Open
+
+Found while: Fixing Pixel live-funnel test-lead click-through
+
+Evidence: `docker/squid-instagram.conf` still ships in the image, but `docker/vibey-browser-sidecar.sh` no longer starts Squid. The Instagram-only proxy blocked live funnel hosts.
+
+Needed work: Either delete the unused Squid config and Dockerfile copy, or restore it as an optional Instagram-only Chromium profile without making it the default.
+
+Reason not done now: Removing the default proxy was required for Register Now click-through; deleting leftover isolation files is cleanup, not the QC path.
+
 ## 2026-08-05 - [ARCH] SlackService near 600 LOC after digest reply enrichment
 
 Status: Open
