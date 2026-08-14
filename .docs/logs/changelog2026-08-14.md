@@ -19,3 +19,13 @@ Why: Production verification showed that the shell work context could lag the se
 Impact: Reply now visibly attaches the selected assistant message in the active conversation and sends that exact reference to the agent context pipeline.
 
 Files: `apps/web/src/features/studio/components/message-bubble/AssistantActions.tsx`, `apps/web/src/features/studio/components/message-bubble/AssistantActions.test.tsx`.
+
+## 2026-08-14 11:30 - [FIX]
+
+What: Matched global chat seeds against the selected conversation's effective Space scope, the same scope used by the mounted composer.
+
+Why: Home chat can host a Space-scoped conversation while the shell panel itself has no `spaceId`; matching against the shell prop rejected exact-message Reply seeds before the composer could restore them.
+
+Impact: Exact-message Reply references now reach the visible composer even when a Space conversation is opened from the general home shell.
+
+Files: `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`.

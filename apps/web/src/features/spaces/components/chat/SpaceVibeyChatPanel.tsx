@@ -1928,8 +1928,8 @@ export function SpaceVibeyChatPanel({
   const applyGlobalChatSeed = useCallback(
     async (seed: GlobalChatSeedDetail) => {
       if (isChannelScope || conversationsLoading) return
-      if (!globalChatSeed.globalChatSeedMatchesPanel(seed, spaceId)) return
-      const normalized = globalChatSeed.normalizeGlobalChatSeed(seed, spaceId)
+      if (!globalChatSeed.globalChatSeedMatchesPanel(seed, effectiveSpaceId ?? undefined)) return
+      const normalized = globalChatSeed.normalizeGlobalChatSeed(seed, effectiveSpaceId ?? undefined)
       if (!normalized) return
       const { content, isAttach, seedKey } = normalized
       const documents = normalized.documents as DocumentAttachment[] | undefined
@@ -1981,13 +1981,13 @@ export function SpaceVibeyChatPanel({
       handleNewConversation,
       isChannelScope,
       sendWithToast,
-      spaceId,
+      effectiveSpaceId,
     ],
   )
 
   useEffect(() => {
     globalSeedConsumedRef.current = null
-  }, [spaceId])
+  }, [effectiveSpaceId])
 
   useEffect(() => {
     const onSeed = (event: Event) => {
@@ -2053,7 +2053,7 @@ export function SpaceVibeyChatPanel({
     if (conversationsLoading) return
     const pending = useGlobalChatStore.getState().consumePendingSeed()
     if (pending) void applyGlobalChatSeed(pending)
-  }, [applyGlobalChatSeed, conversationsLoading, spaceId])
+  }, [applyGlobalChatSeed, conversationsLoading, effectiveSpaceId])
 
   useEffect(() => {
     const nextMode = resolveSpaceChatSpecialMode({
