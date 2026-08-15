@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { CalendarDays, ChevronLeft, Plus, X } from 'lucide-react'
+import { CalendarDays, Plus } from 'lucide-react'
 import { type ConversationScopePickerHandle } from '@/components/conversations'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { homeMeetingHref } from '@/features/home/lib/home-meeting-work-restore'
@@ -46,7 +46,6 @@ export function ShellRightPanel({
   const router = useRouter()
   const { openLauncher } = useQuickMissionsLauncher()
   const open = useShellStore((s) => s.rightPanel.open)
-  const setRightPanelOpen = useShellStore((s) => s.setRightPanelOpen)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
   const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
   const conversationScopePickerRequestNonce = useShellStore(
@@ -121,7 +120,9 @@ export function ShellRightPanel({
   if (!mounted) return null
 
   return (
-    <div className="p-spacing-2 z-dropdown pointer-events-none absolute right-0 top-0">
+    // Sits below the chat header row so the top-bar summary toggle stays
+    // visible and owns open/close — the card carries no chrome of its own.
+    <div className="px-spacing-2 top-spacing-12 z-dropdown pointer-events-none absolute right-0">
       <aside
         className={cn(
           'dropdown-menu-solid w-spacing-72 pointer-events-auto flex max-h-[70vh] origin-top-right flex-col overflow-hidden transition duration-200 ease-out motion-reduce:transition-none',
@@ -130,30 +131,6 @@ export function ShellRightPanel({
         aria-label="Work summary"
         aria-hidden={!visible}
       >
-        <div
-          className="border-border px-spacing-3 py-spacing-2 gap-spacing-2 flex shrink-0 items-start justify-end border-b"
-          data-testid="work-summary-header"
-        >
-          <button
-            type="button"
-            onClick={() => setCreateOpen((prev) => !prev)}
-            className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground p-spacing-1 shrink-0 rounded-lg transition-colors"
-            aria-label="Create"
-            aria-expanded={createOpen}
-            title="Create"
-          >
-            <Plus className="icon-sm" aria-hidden />
-          </button>
-          <button
-            type="button"
-            onClick={() => setRightPanelOpen(false)}
-            className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground p-spacing-1 shrink-0 rounded-lg transition-colors"
-            aria-label="Close work summary"
-            title="Close work summary"
-          >
-            <X className="icon-sm" aria-hidden />
-          </button>
-        </div>
         {linkedMeeting && !createOpen ? (
           <div className="border-border px-spacing-3 py-spacing-2 shrink-0 border-b">
             <button
@@ -168,18 +145,11 @@ export function ShellRightPanel({
         ) : null}
         {createOpen ? (
           <div className="scrollbar-hide py-spacing-1 min-h-0 flex-1 overflow-y-auto">
-            <button
-              type="button"
-              onClick={() => setCreateOpen(false)}
-              className="body-4 text-muted-foreground hover:text-foreground px-spacing-3 py-spacing-1 gap-spacing-1 flex items-center transition-colors"
-            >
-              <ChevronLeft className="icon-xs" aria-hidden />
-              Back to summary
-            </button>
             <ShellCreateMenuPanel
               onSelectCreateItem={handleCreateSelect}
               onSelectMissionPlaybook={(playbookKey) => openLauncher(playbookKey)}
               onCloseMenu={() => setCreateOpen(false)}
+              onBack={() => setCreateOpen(false)}
             />
           </div>
         ) : (
@@ -198,9 +168,21 @@ export function ShellRightPanel({
                   />
                 ) : null}
                 <section aria-label="Outputs" className="gap-spacing-2 flex flex-col">
-                  <h3 className="typo-caption text-muted-foreground font-medium uppercase tracking-wide">
-                    Outputs
-                  </h3>
+                  <div className="gap-spacing-2 flex items-center">
+                    <h3 className="typo-caption text-muted-foreground min-w-0 flex-1 font-medium uppercase tracking-wide">
+                      Outputs
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setCreateOpen(true)}
+                      className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground p-spacing-1 shrink-0 rounded-lg transition-colors"
+                      aria-label="Create"
+                      aria-expanded={createOpen}
+                      title="Create"
+                    >
+                      <Plus className="icon-sm" aria-hidden />
+                    </button>
+                  </div>
                   <ShellRightPanelFiles conversationId={conversationId} messages={messages} />
                 </section>
                 <section aria-label="Sources" className="gap-spacing-2 flex flex-col">

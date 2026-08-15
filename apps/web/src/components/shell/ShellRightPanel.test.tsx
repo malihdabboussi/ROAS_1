@@ -65,7 +65,16 @@ vi.mock('@/components/conversations', async () => {
 })
 
 vi.mock('./ShellCreateMenuPanel', () => ({
-  ShellCreateMenuPanel: () => <div data-testid="create-catalog">Create catalog</div>,
+  ShellCreateMenuPanel: ({ onBack }: { onBack?: () => void }) => (
+    <div data-testid="create-catalog">
+      {onBack ? (
+        <button type="button" onClick={onBack}>
+          Back
+        </button>
+      ) : null}
+      Create catalog
+    </div>
+  ),
 }))
 
 vi.mock('./ShellRightPanelTasks', () => ({
@@ -119,9 +128,9 @@ describe('ShellRightPanel', () => {
     expect(screen.queryByRole('heading', { name: 'Sources' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Connections' })).not.toBeInTheDocument()
     expect(screen.getByTestId('tasks-context')).toHaveTextContent('home')
-
-    fireEvent.click(screen.getByRole('button', { name: 'Close work summary' }))
-    expect(mocks.shellState.setRightPanelOpen).toHaveBeenCalledWith(false)
+    // No card chrome of its own — the top-bar summary toggle owns open/close.
+    expect(screen.queryByRole('button', { name: 'Close work summary' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Create' })).not.toBeInTheDocument()
   })
 
   it('stacks Connections, Outputs, Sources, and Tasks sections for an active conversation', async () => {
@@ -133,11 +142,9 @@ describe('ShellRightPanel', () => {
     expect(screen.getByRole('heading', { name: 'Connections' })).toBeInTheDocument()
     expect(screen.queryByText('Campaign & space')).not.toBeInTheDocument()
     expect(screen.getByTestId('tasks-context')).toHaveTextContent('conversation-1')
-    expect(
-      within(screen.getByTestId('work-summary-header')).getByRole('button', {
-        name: 'Close work summary',
-      }),
-    ).toBeInTheDocument()
+    // The create entry point rides the Outputs section header.
+    const outputs = screen.getByRole('region', { name: 'Outputs' })
+    expect(within(outputs).getByRole('button', { name: 'Create' })).toBeInTheDocument()
   })
 
   it('renders as a floating bubble that expands down and collapses up', async () => {
@@ -151,7 +158,7 @@ describe('ShellRightPanel', () => {
 
     const panel = await screen.findByRole('complementary', { name: 'Work summary' })
     expect(panel).toHaveClass('dropdown-menu-solid', 'origin-top-right')
-    expect(panel.parentElement).toHaveClass('absolute', 'right-0', 'top-0')
+    expect(panel.parentElement).toHaveClass('absolute', 'right-0', 'top-spacing-12')
     expect(panel).not.toHaveClass('h-full')
     await waitFor(() => expect(panel).toHaveClass('scale-100', 'opacity-100'))
 
@@ -169,7 +176,7 @@ describe('ShellRightPanel', () => {
     expect(screen.getByTestId('create-catalog')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Outputs' })).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to summary' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     expect(screen.queryByTestId('create-catalog')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Outputs' })).toBeInTheDocument()
   })

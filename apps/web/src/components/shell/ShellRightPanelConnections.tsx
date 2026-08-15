@@ -8,6 +8,7 @@ import {
 } from '@/components/conversations'
 import {
   useConversationScopeCampaigns,
+  useConversationScopeFallbackCampaign,
   useConversationScopeFallbackSpace,
 } from '@/components/conversations/use-conversation-scope-data'
 import type { Conversation } from '@/lib/conversations'
@@ -39,7 +40,8 @@ export function ShellRightPanelConnections({
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const cacheVersion = useCampaignCacheVersion()
   const campaigns = useConversationScopeCampaigns(activeOrgId, cacheVersion)
-  const campaign = campaigns.find((row) => row.id === campaignId) ?? null
+  const fallbackCampaign = useConversationScopeFallbackCampaign(campaignId, campaigns)
+  const campaign = campaigns.find((row) => row.id === campaignId) ?? fallbackCampaign
   const space = useConversationScopeFallbackSpace({
     activeOrgId,
     selectedCampaignId: null,
