@@ -21,6 +21,15 @@ export interface UseChatInputAtMentionLayoutOptions {
   setAtHighlight: Dispatch<SetStateAction<number>>
 }
 
+export function firstStudioAtTabWithMatches(
+  tabs: readonly { id: StudioAtMenuTabId }[],
+  counts: Partial<Record<StudioAtMenuTabId, number>>,
+  activeTab: StudioAtMenuTabId,
+): StudioAtMenuTabId {
+  if ((counts[activeTab] ?? 0) > 0) return activeTab
+  return tabs.find((tab) => (counts[tab.id] ?? 0) > 0)?.id ?? activeTab
+}
+
 export function useChatInputAtMentionLayout({
   atItems,
   atQuery,
@@ -59,7 +68,7 @@ export function useChatInputAtMentionLayout({
         ? otherCampaigns.filter((c) =>
             c.name.toLowerCase().includes(atQuery.replace(/_/g, ' ').toLowerCase()),
           )
-        : otherCampaigns.slice(0, 3)
+        : otherCampaigns
     return {
       spaceTaskItems,
       personItems,
@@ -202,6 +211,33 @@ export function useChatInputAtMentionLayout({
     }
     crossCampaignWasOpenRef.current = crossCampaignMode
   }, [crossCampaignMode, atMenuOpen, spaceTaskMentions.length, setAtHighlight])
+
+  useEffect(() => {
+    if (!atMenuOpen || crossCampaignMode) return
+    const query = atQuery.replace(/_/g, ' ').trim()
+    if (query.length === 0) return
+    const {
+      personItems,
+      spaceTaskVisible,
+      artifactItems,
+      mediaItems,
+      missionVisible,
+      campaignMatches,
+    } = atMenuLayout
+    const nextTab = firstStudioAtTabWithMatches(
+      studioAtTabsForMenu,
+      {
+        people: personItems.length,
+        tasks: spaceTaskVisible.length,
+        artifacts: artifactItems.length,
+        media: mediaItems.length,
+        missions: missionVisible.length,
+        campaigns: campaignMatches.length,
+      },
+      atMenuTab,
+    )
+    if (nextTab !== atMenuTab) setAtMenuTab(nextTab)
+  }, [atMenuOpen, atQuery, atMenuLayout, atMenuTab, crossCampaignMode, studioAtTabsForMenu])
 
   useEffect(() => {
     if (!atMenuOpen) return

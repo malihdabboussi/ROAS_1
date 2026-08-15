@@ -1277,7 +1277,7 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   search_user_brain: {
     section: 'Brain',
     description:
-      'Searches the selected/default User Brain with hybrid semantic + lexical retrieval. Results are source-grounded and include result id, brain_id, family, kind, title, snippet/content, source_type/source_id/source_title, scores, match_reasons, evidence_refs, related, metadata, context_sufficient, missing, and suggested_next_queries. If context_sufficient=false, search again with suggested_next_queries or ask the user instead of answering definitively. For structured curated knowledge, prefer get_brain_pages first.',
+      'Searches the selected/default User Brain with hybrid semantic + lexical retrieval. Results are source-grounded and include result id, brain_id, family, kind, title, snippet/content, source_type/source_id/source_title, scores, match_reasons, evidence_refs, related, metadata, context_sufficient, missing, and suggested_next_queries. If context_sufficient=false, search again with suggested_next_queries. For first-person fill, guest prep, or write-as-me, search identity queries (who they are, what they are building, recent wins, stories, opinions) before asking the user to re-introduce themselves. For structured curated knowledge, prefer get_brain_pages first.',
     parameters:
       '```json\n{"action":"search_user_brain","label":"Searching your brain","data":{"query":"webinar follow-up strategy for conversions"}}\n```',
   },

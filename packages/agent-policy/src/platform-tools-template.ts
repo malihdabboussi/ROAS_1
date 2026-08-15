@@ -52,6 +52,15 @@ export const PLATFORM_TOOLS_MEDIA_ROUTING_BLOCK = `${PLATFORM_TOOLS_MEDIA_ROUTIN
 - Image generation and editing are native ROAS capabilities. Do not search for or require an external OpenAI or ChatGPT integration, and do not tell the user to leave chat to complete the image request.
 - Use native \`generate_video\` for supported video generation. When a video skill explicitly routes the work to Higgsfield, use \`list_mcp_tools\` and \`use_mcp_tool\` for the connected Higgsfield server from this chat. Do not route Higgsfield through external-integration search or claim it is unavailable without checking the connected MCP tools.
 - Do not claim an image or video was created until the generation tool returns success.`
+export const PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING =
+  'For first-person fill, guest prep, or write-as-me:'
+export const PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK = `${PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING}
+- Treat "fill this out", "guest prep", "bio", "as me", "on my behalf", and "check my brain" as User Brain identity work, not a blank interview.
+- You can read the user's personal Brain. Never say you cannot access it. Never send the user to Atlas for first-person facts, bios, guest prep, or "what's in my brain."
+- Search User Brain with identity queries: who they are, what they do, what they are building now, recent wins, stories, opinions, offers/plugs. Do not use the form URL as the Brain query.
+- Draft the complete answers from Brain and put the filled form in the reply.
+- Ask only for fields Brain cannot support. Never ask the user to re-introduce themselves or paste bullets for their own story.
+- If this turn's Brain context was marked insufficient, the automatic search likely used the wrong query. Search again with identity queries before asking.`
 export const PLATFORM_TOOLS_BROWSER_QC_HEADING = '### Interactive Browser QC'
 export const PLATFORM_TOOLS_BROWSER_QC_BLOCK = `${PLATFORM_TOOLS_BROWSER_QC_HEADING}
 
@@ -96,6 +105,8 @@ For call, meeting, recording, or transcript retrieval:
 - Do not ask the user to paste a transcript or link until accessible Space, Brain, and recording-provider sources have been checked.
 - Before saying a transcript is unavailable, name the sources checked and the missing selector: provider, date, participant, title, or recording id.
 - Do not say you checked call transcripts unless a provider or imported meeting source was actually checked.
+
+${PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK}
 
 For social platform research (viral content, trending formats, outlier videos, hooks, "what is working on <platform>" — Instagram, YouTube, TikTok, Threads, X, Reddit, Facebook, LinkedIn):
 - Use the \`social_analysis\` integration following the \`social-intel\` skill — it returns actual posts with views and engagement, so results can be ranked by real performance. Always available, no connection step.
@@ -270,13 +281,42 @@ function ensureBrowserQcGuidance(content: string): string {
   return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_BROWSER_QC_BLOCK}${content.slice(insertAt)}`
 }
 
+function ensureFirstPersonFillGuidance(content: string): string {
+  const runtimeStart = content.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
+  if (runtimeStart === -1) return content
+
+  const headingStart = content.indexOf(PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING, runtimeStart)
+  if (headingStart !== -1) {
+    if (content.slice(headingStart).startsWith(PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK)) {
+      return content
+    }
+    const afterHeading = headingStart + PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING.length
+    const rest = content.slice(afterHeading)
+    const nextFor = rest.search(/\nFor [a-z]/)
+    const nextHeading = rest.indexOf('\n### ')
+    const unclear = rest.indexOf('\nFor unclear,')
+    const candidates = [nextFor, nextHeading, unclear].filter((index) => index !== -1)
+    const replaceEnd =
+      candidates.length > 0 ? afterHeading + Math.min(...candidates) : content.length
+    return `${content.slice(0, headingStart)}${PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK}${content.slice(replaceEnd)}`
+  }
+
+  const socialStart = content.indexOf('\nFor social platform research', runtimeStart)
+  const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
+  const insertAt =
+    socialStart !== -1 ? socialStart : unclearStart !== -1 ? unclearStart : content.length
+  return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK}${content.slice(insertAt)}`
+}
+
 export function ensurePlatformToolsRuntimeGuidance(content: string): string {
   const withActionProtocol = prependActionContractProtocol(content)
   if (hasPlatformToolsRuntimeGuidance(withActionProtocol)) {
     return ensureChannelFormattingGuidance(
-      ensureBrowserQcGuidance(
-        ensureMediaRoutingGuidance(
-          ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+      ensureFirstPersonFillGuidance(
+        ensureBrowserQcGuidance(
+          ensureMediaRoutingGuidance(
+            ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+          ),
         ),
       ),
     )
