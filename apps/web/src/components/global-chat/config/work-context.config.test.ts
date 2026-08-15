@@ -62,8 +62,12 @@ describe('work-context.config', () => {
       'Company Brain',
     )
     expect(
-      workContextAttachmentLabel({ surface: 'spaces', spaceId: 'space-1' }, 'Client Delivery'),
-    ).toBe('Client Delivery')
+      workContextAttachmentLabel(
+        { surface: 'spaces', campaignId: 'campaign-1' },
+        null,
+        'Yasir Khan Coaching LTD',
+      ),
+    ).toBe('Yasir Khan Coaching LTD')
     expect(workContextAttachmentLabel({ surface: 'flows' })).toBe('Flows')
     expect(
       workContextAttachmentLabel({

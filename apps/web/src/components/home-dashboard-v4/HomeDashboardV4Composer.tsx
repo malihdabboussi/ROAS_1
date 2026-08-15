@@ -9,6 +9,7 @@ import {
   ConversationScopePicker,
   type ConversationScopePickerHandle,
 } from '@/components/conversations'
+import { conversationScopeDisplayLabel } from '@/components/conversations/conversation-scope-picker-layout'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { CreateTypePickerCard } from '@/components/shell/CreateTypePickerCard'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
@@ -127,14 +128,15 @@ export function HomeDashboardV4Composer() {
   }, [campaigns, spaces])
 
   const targetLabel = useMemo(() => {
-    if (targetSpaceId) {
-      return spaces.find((space) => space.id === targetSpaceId)?.title ?? 'Space'
-    }
-    if (targetCampaignId) {
-      return campaigns.find((campaign) => campaign.id === targetCampaignId)?.name ?? 'Campaign'
-    }
-    if (isOrgOnly) return spaces[0]?.title ?? 'Workspace'
-    return defaultGeneralSpace?.title ?? 'New Workspace'
+    return conversationScopeDisplayLabel({
+      campaignName: campaigns.find((campaign) => campaign.id === targetCampaignId)?.name,
+      spaceTitle: spaces.find((space) => space.id === targetSpaceId)?.title,
+      campaignId: targetCampaignId,
+      spaceId: targetSpaceId,
+      emptyLabel: isOrgOnly
+        ? (spaces[0]?.title ?? 'Workspace')
+        : (defaultGeneralSpace?.title ?? 'New Workspace'),
+    })
   }, [campaigns, defaultGeneralSpace, isOrgOnly, spaces, targetCampaignId, targetSpaceId])
 
   const activeCampaignId = useMemo(() => {
@@ -311,7 +313,7 @@ export function HomeDashboardV4Composer() {
               type="button"
               onClick={() => scopePickerRef.current?.openMenuFromBanner()}
               className="body-4 text-muted-foreground hover:text-foreground hover:bg-hover-subtle rounded-spacing-2 gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex max-w-52 shrink-0 items-center transition-colors"
-              aria-label="Choose Space"
+              aria-label={targetSpaceId || targetCampaignId ? targetLabel : 'Choose Space'}
             >
               <FolderKanban className="icon-sm shrink-0" aria-hidden />
               <span className="truncate">

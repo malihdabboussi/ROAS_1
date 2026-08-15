@@ -19,6 +19,7 @@ import {
   type ChatHistoryTypeFilter,
 } from '@/lib/conversations'
 import { cn } from '@/lib/utils/cn'
+import { ChatHistoryFilterScopeRow } from './ChatHistoryFilterScopeRow'
 
 type SubmenuKey = 'agent' | 'type' | 'status' | 'lastActivity' | 'groupBy' | 'leadingIcon' | null
 
@@ -70,13 +71,16 @@ export function ChatHistoryFilterMenu({
   useEffect(() => {
     if (!open) return
     const onPointerDown = (event: MouseEvent) => {
+      const target = event.target
       if (
-        !rootRef.current?.contains(event.target as Node) &&
-        !refs.floating.current?.contains(event.target as Node)
+        rootRef.current?.contains(target as Node) ||
+        refs.floating.current?.contains(target as Node) ||
+        (target instanceof Element && target.closest('[data-conversation-scope-menu]'))
       ) {
-        setOpen(false)
-        setSubmenu(null)
+        return
       }
+      setOpen(false)
+      setSubmenu(null)
     }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -193,6 +197,8 @@ export function ChatHistoryFilterMenu({
                   <div className="border-border my-1 border-t" />
                 </>
               ) : null}
+
+              <ChatHistoryFilterScopeRow value={value} onChange={onChange} rowClass={rowClass} />
 
               <FilterRow
                 label="Type"

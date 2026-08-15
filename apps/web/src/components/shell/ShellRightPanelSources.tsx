@@ -16,15 +16,14 @@ export function ShellRightPanelSources({ messages }: { messages: Message[] }) {
   }
 
   return (
-    <ul className="space-y-spacing-1">
+    <ul>
       {rows.map((row) => {
+        // Single line: the link icon already says what `kind` said, and the
+        // title carries the only detail worth scanning.
         const content = (
           <>
             <Link2 className="icon-sm text-muted-foreground shrink-0" aria-hidden />
-            <div className="min-w-0 flex-1">
-              <p className="body-3 text-foreground truncate">{row.title}</p>
-              <p className="body-4 text-muted-foreground capitalize">{row.kind}</p>
-            </div>
+            <span className="body-3 text-foreground min-w-0 flex-1 truncate">{row.title}</span>
             {row.href ? (
               <ExternalLink className="icon-sm text-muted-foreground shrink-0" aria-hidden />
             ) : null}
@@ -38,12 +37,16 @@ export function ShellRightPanelSources({ messages }: { messages: Message[] }) {
                 href={row.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:bg-hover-subtle gap-spacing-2 px-spacing-2 py-spacing-2 flex items-center rounded-lg"
+                title={row.title}
+                className="hover:bg-hover-subtle gap-spacing-2 px-spacing-3 py-spacing-1-5 flex items-center rounded-lg transition-colors"
               >
                 {content}
               </a>
             ) : (
-              <div className="gap-spacing-2 px-spacing-2 py-spacing-2 flex items-center rounded-lg">
+              <div
+                title={row.title}
+                className="gap-spacing-2 px-spacing-3 py-spacing-1-5 flex items-center rounded-lg"
+              >
                 {content}
               </div>
             )}

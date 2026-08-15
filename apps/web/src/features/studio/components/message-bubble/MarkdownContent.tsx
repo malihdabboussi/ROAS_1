@@ -1,34 +1,9 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
 import { useTypewriter } from '@/lib/hooks/use-typewriter'
-import { renderChatMarkdown } from '@/lib/utils/chat-markdown.utils'
-import { ChatMarkdownView } from '@/features/studio/components/chat/ChatMarkdownView'
+import { ChatMarkdownDocument } from '@/components/chat/ChatMarkdownDocument'
 import { DraftVersionsCard } from './DraftVersionsCard'
 import { hasDraftFence, splitDraftSegments } from './draft-versions.utils'
-
-function MarkdownHtml({ markdown, streaming }: { markdown: string; streaming: boolean }) {
-  const html = renderChatMarkdown(markdown)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const mermaidPreloaded = useRef(false)
-
-  useEffect(() => {
-    if (mermaidPreloaded.current) return
-    if (!html.includes('mermaid-placeholder')) return
-    mermaidPreloaded.current = true
-    void import('@/components/ui/mermaid-diagram').then(({ preloadMermaid }) => preloadMermaid())
-  }, [html])
-
-  return (
-    <div className="relative">
-      <ChatMarkdownView
-        html={html}
-        containerRef={containerRef}
-        hydrateMermaid={!streaming}
-      />
-    </div>
-  )
-}
 
 export function MarkdownContent({
   content,
@@ -52,12 +27,12 @@ export function MarkdownContent({
           segment.kind === 'draft' ? (
             <DraftVersionsCard key={`draft-${index}`} versions={segment.versions} />
           ) : (
-            <MarkdownHtml key={`md-${index}`} markdown={segment.markdown} streaming={streaming} />
+            <ChatMarkdownDocument key={`md-${index}`} markdown={segment.markdown} />
           ),
         )}
       </>
     )
   }
 
-  return <MarkdownHtml markdown={displayText} streaming={streaming} />
+  return <ChatMarkdownDocument markdown={displayText} />
 }

@@ -42,14 +42,30 @@ function CreateItemRow({ item, onSelect }: { item: ShellCreateMenuItem; onSelect
   )
 }
 
+function BackRow({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="body-4 text-muted-foreground hover:text-foreground px-spacing-3 py-spacing-1 gap-spacing-1 flex items-center transition-colors"
+    >
+      <ChevronLeft className="icon-xs" aria-hidden />
+      Back
+    </button>
+  )
+}
+
 export function ShellCreateMenuPanel({
   onSelectCreateItem,
   onSelectMissionPlaybook,
   onCloseMenu,
+  onBack,
 }: {
   onSelectCreateItem: (item: ShellCreateMenuItem) => void
   onSelectMissionPlaybook: (playbookKey: string) => void
   onCloseMenu: () => void
+  /** Leaves the create catalog back to whatever hosts it (the work summary). */
+  onBack?: () => void
 }) {
   const [view, setView] = useState<CreateMenuView>('create')
   const moreGroup = SHELL_CREATE_MENU_GROUPS.find((group) => group.id === 'more')
@@ -57,14 +73,7 @@ export function ShellCreateMenuPanel({
   if (view === 'missions') {
     return (
       <div>
-        <button
-          type="button"
-          onClick={() => setView('create')}
-          className="body-4 text-muted-foreground hover:text-foreground px-spacing-3 py-spacing-1 gap-spacing-1 flex items-center transition-colors"
-        >
-          <ChevronLeft className="icon-xs" aria-hidden />
-          Back to create
-        </button>
+        <BackRow onClick={() => setView('create')} />
         <p className="typo-caption text-muted-foreground px-spacing-3 pb-spacing-1 pt-spacing-2 font-medium uppercase tracking-wide">
           Missions
         </p>
@@ -96,14 +105,7 @@ export function ShellCreateMenuPanel({
   if (view === 'more') {
     return (
       <div>
-        <button
-          type="button"
-          onClick={() => setView('create')}
-          className="body-4 text-muted-foreground hover:text-foreground px-spacing-3 py-spacing-1 gap-spacing-1 flex items-center transition-colors"
-        >
-          <ChevronLeft className="icon-xs" aria-hidden />
-          Back to create
-        </button>
+        <BackRow onClick={() => setView('create')} />
         <p className="typo-caption text-muted-foreground px-spacing-3 pb-spacing-1 pt-spacing-2 font-medium uppercase tracking-wide">
           More
         </p>
@@ -123,6 +125,7 @@ export function ShellCreateMenuPanel({
 
   return (
     <>
+      {onBack ? <BackRow onClick={onBack} /> : null}
       {SHELL_CREATE_MENU_GROUPS.filter((group) => group.id !== 'more').map((group, groupIndex) => (
         <div key={group.id} className={cn(groupIndex > 0 && 'border-border mt-spacing-1 border-t')}>
           <p className="typo-caption text-muted-foreground px-spacing-3 pb-spacing-1 pt-spacing-2 font-medium uppercase tracking-wide">

@@ -19,7 +19,7 @@ import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { formatWebinarSubtaskTitle } from '@/lib/missions'
 import { updateSubtask } from '../../services/missions.service'
 import type { MissionAgent, MissionSubtask, PrdContent, SubtaskStatus } from '../../types'
-import { formatSubtaskStatusLabel } from '../subtask-status'
+import { formatSubtaskStatusLabel } from '@/lib/missions'
 import {
   formatAgentShortName,
   formatRelativeTime,

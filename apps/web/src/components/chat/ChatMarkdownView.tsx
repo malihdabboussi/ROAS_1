@@ -59,7 +59,7 @@ export function ChatMarkdownView({
   html: string
   className?: string
   containerRef?: RefObject<HTMLDivElement | null>
-  /** When false, skip mermaid hydration (e.g. while streaming). */
+  /** When false, skip leftover innerHTML mermaid placeholders. ChatMarkdownDocument renders diagrams as React nodes instead. */
   hydrateMermaid?: boolean
 }) {
   const internalRef = useRef<HTMLDivElement>(null)
