@@ -1,6 +1,6 @@
 # Page Grader Campaign Brain Sync
 
-Last Modified: August 13, 2026
+Last Modified: August 15, 2026
 
 ## Overview
 
@@ -75,7 +75,7 @@ Page Grader env for push: `ROAS_BRAIN_WEBHOOK_URL`, `ROAS_BRAIN_WEBHOOK_SECRET` 
 
 `ROAS_SLACK_INGEST_WEBHOOK_URL` is optional. When omitted, Page Grader derives the Slack endpoint by replacing `/brain-package` in `ROAS_BRAIN_WEBHOOK_URL` with `/slack-messages`. Recent Page Grader Slack messages are also included in the Brain package as `page_grader_slack` channel knowledge, so the event loop gets immediate evidence while campaign Brain retains durable context. Closed or archived Page Grader clients are excluded before either handoff.
 
-Periodic mapped-channel imports use Atlas separately from the deterministic Page Grader package ingest. Campaign-targeted imports must call `atlas_save_brain_context` with the mapped ROAS `campaign_id`; `save_user_memory` is user-only. The campaign branch writes directly to the mapped `ns_brains` row, preserves Slack source and temporal identity, and requires a retrieval embedding before reporting success; General is not a valid Campaign Brain target. Import completion is fail-closed: the runtime reads the final status from both direct text and nested OpenResponses output, and it does not mark the job successful or advance the Slack mapping cursor unless Atlas returns an explicit `JOB_STATUS:completed` or `JOB_STATUS:skipped`. Any failed chunk stops a multi-chunk import at that chunk so retry can resume without silently losing part of the period.
+Periodic mapped-channel imports use Atlas separately from the deterministic Page Grader package ingest. Campaign-targeted imports must call `atlas_save_brain_context` with the mapped ROAS `campaign_id`; `save_user_memory` is user-only. The campaign branch writes directly to the mapped `ns_brains` row, preserves Slack source and temporal identity, and requires a retrieval embedding before reporting success; General is not a valid Campaign Brain target. Import completion is fail-closed: the runtime reads the final status from both direct text and nested OpenResponses output, and it does not mark the job successful or advance the Slack mapping cursor unless Atlas returns an explicit `JOB_STATUS:completed` or `JOB_STATUS:skipped`. Empty Slack windows never call Atlas; they persist as skipped with a user-facing "nothing to save" toast. Any failed chunk stops a multi-chunk import at that chunk so retry can resume without silently losing part of the period.
 
 `atlas_save_brain_context` must remain in Atlas's `system_brain` capability
 allowlist as well as its action contract, schema, lifecycle, preflight, MCP
@@ -140,6 +140,7 @@ Repeated manual requests use the deterministic Page Grader client and meeting ti
 
 ## Decision Log
 
+- **2026-08-15:** Empty Slack periods are a skip, not an Atlas failure. The import runtime does not call Atlas when the formatted window has no message content, remaps Slack `JOB_STATUS:failed` empty-ingest reasons to skipped, and the Brain toast says there was nothing to save instead of "Atlas could not process/ingest".
 - **2026-08-13:** Separated Page Grader's hourly mapped-client catch-up from the three-second Brain import sweep. The frequent enqueue endpoint is now bounded to due-job discovery, preventing overlapping 50-client Page Grader pulls from exhausting the Vercel function window.
 - **2026-08-13:** Replaced the Campaign Brain router's `save_document` fallback with a direct embedded `ns_memories` write. Campaign imports now retain Slack source IDs and temporal fields, verify campaign access, reject General, and fail if retrieval embedding cannot be created.
 - **2026-08-13:** Fixed periodic Campaign Brain imports that were falsely recorded as successful after Atlas rejected the user-only save route. Campaign jobs now use the canonical Atlas Brain router with the exact campaign id, nested OpenResponses terminal statuses are parsed, missing status markers fail closed, and failed chunks cannot advance the Slack cursor.
