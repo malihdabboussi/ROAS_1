@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
 import { DeliverablePreviewBody } from '@/components/deliverables/DeliverablePreviewBody'
 import { FunnelFullPreview } from '@/components/deliverables/FunnelFullPreview'
+import { PresentationFullPreview } from '@/components/deliverables/PresentationFullPreview'
 import { useDeliverableEntityContent } from '@/components/deliverables/use-deliverable-entity-content'
 import { ShellArtifactViewerPanel } from '@/components/shell/ShellArtifactViewerPanel'
 import { ShellMissionArtifactViewerAdapter } from '@/components/shell/ShellMissionArtifactViewerAdapter'
@@ -54,13 +55,12 @@ function ShellDocumentArtifactViewer({ target }: { target: ShellArtifactViewerTa
   const paper = target.type === 'doc' || target.type === 'text'
 
   return (
-    <ShellArtifactViewerPanel target={target}>
+    <ShellArtifactViewerPanel target={target} bodyClassName={paper ? undefined : 'overflow-hidden'}>
       <div
         className={cn(
-          'mx-auto min-h-full w-full',
-          paper &&
-            'surface-card border-border rounded-spacing-3 my-spacing-4 p-spacing-6 shadow-1 max-w-md border',
-          !paper && 'p-spacing-4',
+          'min-h-full w-full',
+          paper && 'p-spacing-6 mx-auto max-w-3xl',
+          !paper && 'flex min-h-0 flex-1 flex-col overflow-hidden',
         )}
       >
         <DeliverablePreviewBody
@@ -159,6 +159,16 @@ export function ShellArtifactViewerAdapter() {
     return (
       <ShellArtifactViewerPanel target={target} bodyClassName="overflow-hidden">
         <FunnelFullPreview funnelId={target.entityId || target.id} />
+      </ShellArtifactViewerPanel>
+    )
+  }
+  if (target.type === 'presentation') {
+    return (
+      <ShellArtifactViewerPanel target={target} bodyClassName="overflow-hidden">
+        <PresentationFullPreview
+          presentationId={target.entityId || target.id}
+          name={target.title}
+        />
       </ShellArtifactViewerPanel>
     )
   }

@@ -1,12 +1,14 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { ChevronDown, FileText, ImageIcon, Maximize2, Minimize2, X } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
 import { cn } from '@/lib/utils/cn'
+import { ShellArtifactViewerBrowse } from './ShellArtifactViewerBrowse'
 import { useShellStore } from './use-shell-store'
+
+type BrowseView = 'artifact' | 'library' | 'files'
 
 function isMediaTarget(target: ShellArtifactViewerTarget): boolean {
   return target.type === 'image' || target.type === 'video' || target.type === 'audio'
@@ -27,8 +29,14 @@ export function ShellArtifactViewerPanel({
 }) {
   const close = useShellStore((s) => s.closeArtifactViewer)
   const [expanded, setExpanded] = useState(false)
+  const [browse, setBrowse] = useState<BrowseView>('artifact')
   const [openMenu, setOpenMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
+  const contextLabel = target.contextLabel || 'Artifacts'
+
+  useEffect(() => {
+    setBrowse('artifact')
+  }, [target.id])
 
   useEffect(() => {
     if (!openMenu) return
@@ -60,21 +68,46 @@ export function ShellArtifactViewerPanel({
     >
       <header className="border-border gap-spacing-2 px-spacing-3 py-spacing-2 flex min-h-12 shrink-0 items-center border-b">
         <Icon className="icon-sm text-primary shrink-0" />
-        <div className="body-4 min-w-0 flex-1 truncate whitespace-nowrap">
-          {target.contextUrl ? (
-            <Link
-              href={target.contextUrl}
-              onClick={close}
+        <nav
+          className="body-4 min-w-0 flex-1 truncate whitespace-nowrap"
+          aria-label="Artifact path"
+        >
+          <button
+            type="button"
+            onClick={() => setBrowse('library')}
+            aria-current={browse === 'library' ? 'page' : undefined}
+            className={cn(
+              'hover:text-foreground',
+              browse === 'library' ? 'text-foreground font-semibold' : 'text-muted-foreground',
+            )}
+          >
+            {contextLabel}
+          </button>
+          <span className="text-muted-foreground"> / </span>
+          <button
+            type="button"
+            onClick={() => setBrowse('files')}
+            aria-current={browse === 'files' ? 'page' : undefined}
+            className={cn(
+              'hover:text-foreground',
+              browse === 'files' ? 'text-foreground font-semibold' : 'text-muted-foreground',
+            )}
+          >
+            files
+          </button>
+          <span className="text-muted-foreground"> / </span>
+          {browse === 'artifact' ? (
+            <span className="text-foreground font-semibold">{target.title}</span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setBrowse('artifact')}
               className="text-muted-foreground hover:text-foreground"
             >
-              {target.contextLabel || 'Artifacts'}
-            </Link>
-          ) : (
-            <span className="text-muted-foreground">{target.contextLabel || 'Artifacts'}</span>
+              {target.title}
+            </button>
           )}
-          <span className="text-muted-foreground"> / files / </span>
-          <span className="text-foreground font-semibold">{target.title}</span>
-        </div>
+        </nav>
         {actions}
         {openTargets.length === 1 ? (
           <a
@@ -150,8 +183,17 @@ export function ShellArtifactViewerPanel({
           </button>
         </div>
       </header>
-      <div className={cn('bg-background min-h-0 flex-1 overflow-y-auto', bodyClassName)}>
-        {children}
+      <div
+        className={cn(
+          'bg-background min-h-0 flex-1',
+          browse === 'artifact' ? (bodyClassName ?? 'overflow-y-auto') : 'overflow-hidden',
+        )}
+      >
+        {browse === 'artifact' ? (
+          children
+        ) : (
+          <ShellArtifactViewerBrowse view={browse} target={target} />
+        )}
       </div>
     </aside>
   )

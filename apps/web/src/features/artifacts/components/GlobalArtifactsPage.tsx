@@ -61,10 +61,16 @@ function badgeClass(category: GlobalArtifactCategory): string {
   return 'badge-glass-muted'
 }
 
-export function GlobalArtifactsPage() {
+export function GlobalArtifactsPage({
+  embedded = false,
+  initialFilter = 'all',
+}: {
+  embedded?: boolean
+  initialFilter?: ArtifactFilter
+} = {}) {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
-  const [filter, setFilter] = useState<ArtifactFilter>('all')
+  const [filter, setFilter] = useState<ArtifactFilter>(initialFilter)
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('created')
   const [sourceMenuOpen, setSourceMenuOpen] = useState(false)
   const [view, setView] = useState<ArtifactView>('list')
@@ -77,6 +83,10 @@ export function GlobalArtifactsPage() {
     const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 220)
     return () => window.clearTimeout(timer)
   }, [query])
+
+  useEffect(() => {
+    setFilter(initialFilter)
+  }, [initialFilter])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -113,16 +123,23 @@ export function GlobalArtifactsPage() {
 
   return (
     <main className="scrollbar-hide h-full min-h-0 overflow-y-auto overflow-x-hidden">
-      <div className="p-spacing-4 md:p-spacing-6 mx-auto w-full max-w-4xl">
-        <div className="mb-spacing-4">
-          <div className="gap-spacing-2 flex items-center">
-            <Layers3 className="text-muted-foreground h-5 w-5" />
-            <h1 className="title-h3 text-foreground">{ARTIFACT_LIBRARY_MESSAGES.title}</h1>
+      <div
+        className={cn(
+          'w-full',
+          embedded ? 'p-spacing-3' : 'p-spacing-4 md:p-spacing-6 mx-auto max-w-4xl',
+        )}
+      >
+        {embedded ? null : (
+          <div className="mb-spacing-4">
+            <div className="gap-spacing-2 flex items-center">
+              <Layers3 className="text-muted-foreground h-5 w-5" />
+              <h1 className="title-h3 text-foreground">{ARTIFACT_LIBRARY_MESSAGES.title}</h1>
+            </div>
+            <p className="body-3 text-muted-foreground mt-spacing-1">
+              {ARTIFACT_LIBRARY_MESSAGES.subtitle}
+            </p>
           </div>
-          <p className="body-3 text-muted-foreground mt-spacing-1">
-            {ARTIFACT_LIBRARY_MESSAGES.subtitle}
-          </p>
-        </div>
+        )}
 
         <label className="relative block w-full">
           <Search className="icon-left-center icon-sm text-muted-foreground pointer-events-none" />

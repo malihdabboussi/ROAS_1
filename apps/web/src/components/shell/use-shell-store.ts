@@ -4,6 +4,12 @@ import type { ReactNode } from 'react'
 import { create } from 'zustand'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
 import {
+  ARTIFACT_VIEWER_WIDTH_DEFAULT,
+  clampArtifactViewerWidth,
+  hydrateArtifactViewerWidth,
+  resolveOpenedArtifactViewerWidth,
+} from '@/lib/artifacts/artifact-viewer-layout'
+import {
   createShellScreenChatSlice,
   sanitizeScreenConversations,
   type ShellScreenChatSlice,
@@ -96,9 +102,6 @@ const CHAT_DRAWER_WIDTH_MIN = 360
 const CHAT_DRAWER_WIDTH_FALLBACK_MAX = 1920
 const CHAT_HISTORY_WIDTH_MIN = 180
 const CHAT_HISTORY_WIDTH_MAX = 420
-const ARTIFACT_VIEWER_WIDTH_MIN = 360
-const ARTIFACT_VIEWER_WIDTH_MAX = 720
-
 function clampChatDrawerWidth(width: number): number {
   const viewportMax =
     typeof window === 'undefined'
@@ -109,10 +112,6 @@ function clampChatDrawerWidth(width: number): number {
 
 function clampChatHistoryWidth(width: number): number {
   return Math.min(CHAT_HISTORY_WIDTH_MAX, Math.max(CHAT_HISTORY_WIDTH_MIN, width))
-}
-
-function clampArtifactViewerWidth(width: number): number {
-  return Math.min(ARTIFACT_VIEWER_WIDTH_MAX, Math.max(ARTIFACT_VIEWER_WIDTH_MIN, width))
 }
 
 interface ShellStore extends ShellScreenChatSlice {
@@ -192,7 +191,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   conversationScopePickerRequestNonce: 0,
   artifactViewer: {
     target: null,
-    width: 480,
+    width: ARTIFACT_VIEWER_WIDTH_DEFAULT,
   },
   recentArtifactTargets: [],
   recentWorkAreaPages: [],
@@ -377,13 +376,15 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     }))
   },
   openArtifactViewer: (target) => {
+    const width = resolveOpenedArtifactViewerWidth(get().artifactViewer.width, target.type)
     writePersisted({
       rightPanelOpen: false,
       workAreaOpen: true,
       artifactViewerTarget: target,
+      artifactViewerWidth: width,
     })
     set((s) => ({
-      artifactViewer: { ...s.artifactViewer, target },
+      artifactViewer: { ...s.artifactViewer, target, width },
       recentArtifactTargets: [
         target,
         ...s.recentArtifactTargets.filter((entry) => entry.id !== target.id),
@@ -532,7 +533,7 @@ export function hydrateShellStoreFromStorage(): void {
     artifactViewer: {
       ...useShellStore.getState().artifactViewer,
       target: artifactViewerTarget,
-      width: clampArtifactViewerWidth(persisted.artifactViewerWidth ?? 480),
+      width: hydrateArtifactViewerWidth(persisted.artifactViewerWidth),
     },
   })
 }

@@ -29,6 +29,14 @@ vi.mock('@/components/deliverables/DeliverablePreviewBody', () => ({
   DeliverablePreviewBody: () => <div data-testid="lightweight-preview" />,
 }))
 
+vi.mock('@/components/deliverables/FunnelFullPreview', () => ({
+  FunnelFullPreview: () => <div data-testid="canonical-funnel-editor" />,
+}))
+
+vi.mock('@/components/deliverables/PresentationFullPreview', () => ({
+  PresentationFullPreview: () => <div data-testid="canonical-presentation-editor" />,
+}))
+
 vi.mock('@/components/shell/ShellArtifactViewerPanel', () => ({
   ShellArtifactViewerPanel: ({ children }: { children: React.ReactNode }) => (
     <aside>{children}</aside>
@@ -154,6 +162,26 @@ describe('ShellArtifactViewerAdapter', () => {
     await waitFor(() =>
       expect(routerPush).toHaveBeenCalledWith('/flows?flow_id=flow-1&space_id=space-1'),
     )
+    expect(screen.queryByTestId('lightweight-preview')).toBeNull()
+  })
+
+  it('renders presentations with the canonical full editor instead of the lightweight preview', async () => {
+    useShellStore.setState({
+      artifactViewer: {
+        width: 480,
+        target: {
+          id: 'presentation-1',
+          entityId: 'presentation-1',
+          entityTable: 'presentations',
+          title: 'VIP Offer deck',
+          type: 'presentation',
+        },
+      },
+    })
+
+    render(<ShellArtifactViewerAdapter />)
+
+    await waitFor(() => expect(screen.getByTestId('canonical-presentation-editor')).toBeTruthy())
     expect(screen.queryByTestId('lightweight-preview')).toBeNull()
   })
 

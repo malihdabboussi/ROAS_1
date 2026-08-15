@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { ResizableDivider } from '@/components/layout/ResizableDivider'
+import { clampArtifactViewerWidth } from '@/lib/artifacts/artifact-viewer-layout'
 import { cn } from '@/lib/utils/cn'
 import { useShellStore } from './use-shell-store'
 
@@ -17,13 +18,20 @@ export function ShellArtifactViewerColumn({
   const width = useShellStore((state) => state.artifactViewer.width)
   const setArtifactViewerWidth = useShellStore((state) => state.setArtifactViewerWidth)
   const [isDragging, setIsDragging] = useState(false)
+  const columnRef = useRef<HTMLDivElement | null>(null)
   const dragStartX = useRef(0)
   const dragStartWidth = useRef(width)
 
   useEffect(() => {
     if (!isDragging) return
     const onMove = (event: PointerEvent) => {
-      setArtifactViewerWidth(dragStartWidth.current + dragStartX.current - event.clientX)
+      const parentWidth = columnRef.current?.parentElement?.clientWidth
+      setArtifactViewerWidth(
+        clampArtifactViewerWidth(
+          dragStartWidth.current + dragStartX.current - event.clientX,
+          parentWidth,
+        ),
+      )
     }
     const onUp = () => setIsDragging(false)
     document.addEventListener('pointermove', onMove)
@@ -36,6 +44,7 @@ export function ShellArtifactViewerColumn({
 
   return (
     <div
+      ref={columnRef}
       className={cn(
         'min-w-0',
         besideConversation ? 'flex shrink-0' : 'flex flex-1',
