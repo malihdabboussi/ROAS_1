@@ -50,13 +50,15 @@ Needed work: Optional third-level program drill; tokenize Slack/Telegram icons; 
 Reason not done now: In-scope Connections, Choose Space flash, Recents logos, and conversation-scoped attach shipped without expanding those adjacent surfaces.
 ## 2026-08-14 - [FIX] Slack Brain import fails when the selected period has no messages
 
-Status: Open
+Status: Done
 
 Found while: Pixel fill-from-brain and @ mention follow-up
 
 Evidence: UI toast "Import failed: Atlas could not process: The Slack period contains no message content to...". Runtime throws `Atlas could not process: ${reason}` from brain-import job status when Slack import is empty.
 
 Needed work: Return a Vibey empty-period message instead of a failed Atlas import, and skip/no-op when the chosen Slack window has no content.
+
+Done: 2026-08-15 — empty Slack windows skip Atlas, persist as skipped, and toast "Nothing to save from that Slack period." instead of an Atlas ingest error.
 
 Reason not done now: Requested work was @ mention campaign tagging plus Pixel User Brain fill; this is a separate Atlas import path.
 

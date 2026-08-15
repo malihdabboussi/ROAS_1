@@ -9,6 +9,9 @@ export const BRAIN_TOAST_ERRORS = {
   IMPORT_FAILED: {
     userMessage: "Couldn't import. Try again.",
   },
+  SLACK_PERIOD_EMPTY: {
+    userMessage: 'Nothing to save from that Slack period.',
+  },
   ADD_TEXT_FAILED: {
     userMessage: "Couldn't add text. Try again.",
   },
