@@ -3,68 +3,24 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Brain,
-  CalendarDays,
   ChevronLeft,
   ChevronRight,
-  ContactRound,
-  FolderGit2,
-  Inbox,
-  Layers3,
-  ListChecks,
   MessageSquare,
   PanelLeftClose,
   PanelLeftOpen,
   Search,
-  SendHorizontal,
-  Users,
-  Workflow,
 } from 'lucide-react'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { dispatchOpenStudioSearch } from '@/features/studio/utils/open-studio-search-result'
 import { cn } from '@/lib/utils/cn'
+import { breadcrumbFromPath } from './shell-breadcrumb'
 import { ShellOpenInMenu } from './ShellOpenInMenu'
 import { useShellOpenIn } from './ShellOpenInProvider'
 import { ShellWorkAreaControl } from './ShellWorkAreaControl'
 import { useShellMenuDock } from './use-shell-menu-dock'
 import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
 import { useShellStore } from './use-shell-store'
-
-function breadcrumbFromPath(
-  pathname: string,
-  spaceTitle: string | null,
-): { label: string; Icon: typeof Inbox } {
-  if (pathname === '/home') return { label: '', Icon: MessageSquare }
-  if (pathname.startsWith('/home/inbox')) return { label: 'Inbox', Icon: Inbox }
-  if (pathname.startsWith('/home/meetings')) return { label: 'Meetings', Icon: CalendarDays }
-  if (pathname.startsWith('/home/my-tasks')) return { label: 'My Tasks', Icon: ListChecks }
-  if (pathname.startsWith('/home/delegation-desk')) {
-    return { label: 'Delegation Desk', Icon: SendHorizontal }
-  }
-  if (pathname.startsWith('/home/channels')) return { label: 'Channels', Icon: MessageSquare }
-  if (pathname.startsWith('/team/skills')) return { label: 'Skills', Icon: Layers3 }
-  if (pathname.startsWith('/team/teams')) return { label: 'Teams', Icon: Users }
-  if (pathname.startsWith('/team/people')) return { label: 'People', Icon: ContactRound }
-  if (pathname.startsWith('/team')) return { label: 'Team', Icon: Users }
-  if (pathname.startsWith('/client-campaigns')) {
-    return { label: 'Client Campaigns', Icon: ListChecks }
-  }
-  if (pathname.startsWith('/clients')) return { label: 'Clients', Icon: ContactRound }
-  if (pathname.startsWith('/brain')) return { label: 'Brain', Icon: Brain }
-  if (pathname.startsWith('/chats')) return { label: 'Chats', Icon: MessageSquare }
-  if (pathname.startsWith('/artifacts')) return { label: 'All Artifacts', Icon: Layers3 }
-  if (pathname.startsWith('/projects')) return { label: 'Projects', Icon: FolderGit2 }
-  if (pathname.startsWith('/flows')) return { label: 'Flows', Icon: Workflow }
-  if (pathname.startsWith('/campaigns')) return { label: 'Campaigns', Icon: ListChecks }
-  if (pathname.startsWith('/spaces')) {
-    return {
-      label: spaceTitle ? `Campaigns / ${spaceTitle}` : 'Campaigns',
-      Icon: ListChecks,
-    }
-  }
-  return { label: 'Inbox', Icon: Inbox }
-}
 
 export function ShellTopBar() {
   const pathname = usePathname() ?? '/home'
@@ -103,7 +59,7 @@ export function ShellTopBar() {
     : null
   const visiblePageBreadcrumb = pageBreadcrumb
   const showWorkAreaControl = chatDrawerOpen || !workAreaOpen
-  const pageTitle = pageBreadcrumbLabel?.trim() || conversationTitle || crumb.label || 'Home'
+  const pageTitle = pageBreadcrumbLabel?.trim() || crumb.label || conversationTitle || 'Home'
   // Keep identifying params (conv, meeting, space, …) in the page identity so
   // reopening a remembered surface restores the exact view, not the bare route.
   // Transient params never identify a surface.
@@ -214,15 +170,15 @@ export function ShellTopBar() {
           <div className="flex min-w-0 flex-1 items-center overflow-hidden">
             {visiblePageBreadcrumb}
           </div>
-        ) : conversationTitle ? (
-          <>
-            <MessageSquare className="shell-topbar-crumb-icon" aria-hidden />
-            <span className="truncate">{conversationTitle}</span>
-          </>
         ) : crumb.label ? (
           <>
             <CrumbIcon className="shell-topbar-crumb-icon" aria-hidden />
             <span className="truncate">{crumb.label}</span>
+          </>
+        ) : conversationTitle ? (
+          <>
+            <MessageSquare className="shell-topbar-crumb-icon" aria-hidden />
+            <span className="truncate">{conversationTitle}</span>
           </>
         ) : null}
       </div>

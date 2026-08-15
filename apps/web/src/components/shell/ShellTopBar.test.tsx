@@ -213,6 +213,34 @@ describe('ShellTopBar', () => {
     expect(screen.getByText('Delegation Desk')).toBeInTheDocument()
   })
 
+  it('names Clients and Client Campaigns from the active route', () => {
+    mocks.pathname = '/clients'
+    render(<ShellTopBar />)
+    expect(screen.getByText('Clients')).toBeInTheDocument()
+    cleanup()
+
+    mocks.pathname = '/client-campaigns'
+    render(<ShellTopBar />)
+    expect(screen.getByText('Client Campaigns')).toBeInTheDocument()
+  })
+
+  it('names Programs from the route instead of Inbox', () => {
+    mocks.pathname = '/programs/prog-clients'
+    render(<ShellTopBar />)
+    expect(screen.getByText('Programs')).toBeInTheDocument()
+    expect(screen.queryByText('Inbox')).not.toBeInTheDocument()
+  })
+
+  it('keeps the Clients breadcrumb while a chat stays open', () => {
+    mocks.pathname = '/clients'
+    mocks.params = new URLSearchParams('conv=conversation-1')
+    mocks.shellState.chatDrawer = { open: true }
+
+    render(<ShellTopBar />)
+
+    expect(screen.getByText('Clients')).toBeInTheDocument()
+  })
+
   it('does not record chats as work-area pages or show their drawer control', () => {
     mocks.shellState.chatDrawer = { open: true }
     mocks.params = new URLSearchParams('conv=conversation-1')

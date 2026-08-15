@@ -405,33 +405,31 @@ describe('BrainContextService', () => {
   })
 
   it('retrieves user brain with identity query for first-person fill requests', async () => {
-    const search = vi.fn(
-      async (input: { family: string; query: string; embedding?: unknown }) => ({
-        success: true,
-        query: input.query,
-        family: input.family,
-        count: 1,
-        context_sufficient: true,
-        sufficiency: {
-          sufficient: true,
-          confidence: 1,
-          reason: '',
-          missing: [],
-          suggested_next_queries: [],
-        },
+    const search = vi.fn(async (input: { family: string; query: string; embedding?: unknown }) => ({
+      success: true,
+      query: input.query,
+      family: input.family,
+      count: 1,
+      context_sufficient: true,
+      sufficiency: {
+        sufficient: true,
+        confidence: 1,
+        reason: '',
         missing: [],
         suggested_next_queries: [],
-        results: [
-          {
-            id: `${input.family}-hit`,
-            kind: 'memory',
-            title: 'Hit',
-            snippet: 'Snippet',
-            related: [],
-          },
-        ],
-      }),
-    )
+      },
+      missing: [],
+      suggested_next_queries: [],
+      results: [
+        {
+          id: `${input.family}-hit`,
+          kind: 'memory',
+          title: 'Hit',
+          snippet: 'Snippet',
+          related: [],
+        },
+      ],
+    }))
     const retrieval = {
       search,
       resolveUserBrainId: vi.fn(async () => 'brain-user'),

@@ -37,6 +37,8 @@ vi.mock('@/lib/programs', () => ({
   invalidateProgramsListCache: programMocks.invalidateProgramsListCache,
   loadProgramsCached: programMocks.loadProgramsCached,
   updateProgramUserState: programMocks.updateProgramUserState,
+  programDisplayName: (program: { name: string; system_kind?: string | null }) =>
+    program.system_kind === 'clients' ? 'Client Spaces' : program.name,
 }))
 vi.mock('./SidebarHqHubLogoButton', () => ({
   SidebarHqHubLogoButton: () => (
@@ -70,6 +72,11 @@ describe('SidebarSimpleSection', () => {
     expect(screen.getByRole('button', { name: 'Collapse menu' })).toBeInTheDocument()
     expect(screen.queryByText('Search')).not.toBeInTheDocument()
     expect(screen.getByText('My Tasks')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Clients' })).toHaveAttribute('href', '/clients')
+    expect(screen.getByRole('link', { name: 'Client Campaigns' })).toHaveAttribute(
+      'href',
+      '/client-campaigns',
+    )
     expect(screen.getByText('Favorites')).toBeInTheDocument()
     expect(screen.getByText('Programs')).toBeInTheDocument()
     expect(screen.getByText('More')).toBeInTheDocument()
@@ -126,23 +133,23 @@ describe('SidebarSimpleSection', () => {
 
   it('removes a system Program from favorites and persists the user state', async () => {
     const personalProgram = {
-        id: 'program-personal',
-        org_id: null,
-        user_id: 'user-1',
-        name: 'Personal',
-        slug: 'personal',
-        system_kind: 'personal',
-        icon: null,
-        icon_color: null,
-        sort_order: 0,
-        config: {},
-        visibility: 'private',
-        created_by: 'user-1',
-        created_at: '2026-08-11T00:00:00.000Z',
-        updated_at: '2026-08-11T00:00:00.000Z',
-        deleted_at: null,
-        is_favorite: true,
-      }
+      id: 'program-personal',
+      org_id: null,
+      user_id: 'user-1',
+      name: 'Personal',
+      slug: 'personal',
+      system_kind: 'personal',
+      icon: null,
+      icon_color: null,
+      sort_order: 0,
+      config: {},
+      visibility: 'private',
+      created_by: 'user-1',
+      created_at: '2026-08-11T00:00:00.000Z',
+      updated_at: '2026-08-11T00:00:00.000Z',
+      deleted_at: null,
+      is_favorite: true,
+    }
     programMocks.loadProgramsCached
       .mockResolvedValueOnce([personalProgram])
       .mockResolvedValue([{ ...personalProgram, is_favorite: false }])

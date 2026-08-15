@@ -16,6 +16,7 @@ export {
   type ProgramVisibility,
   type ProgramUserState,
 } from './programs-api'
+export { programDisplayName } from './program-display-name'
 export {
   invalidateProgramsListCache,
   loadProgramsCached,

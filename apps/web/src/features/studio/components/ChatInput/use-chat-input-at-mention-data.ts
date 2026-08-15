@@ -5,12 +5,12 @@ import type { AtMentionItem } from './chat-input-at-mentions'
 import {
   asCampaignRows,
   asEntitySearchResults,
-  sortCampaignMentionRows,
   pushMediaItems,
   pushMissionItems,
   pushNamedArtifacts,
   sameAtMentionItems,
   sameCampaignRows,
+  sortCampaignMentionRows,
 } from './use-chat-input-at-mention-data.helpers'
 
 type ChatInputAtMentionFetch = (path: string) => Promise<unknown>

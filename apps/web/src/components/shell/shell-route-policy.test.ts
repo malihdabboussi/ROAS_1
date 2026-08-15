@@ -18,6 +18,7 @@ describe('shell route policy', () => {
     expect(isShellWorkspaceRoute('/clients/client-1')).toBe(true)
     expect(isShellWorkspaceRoute('/client-campaigns')).toBe(true)
     expect(isShellWorkspaceRoute('/client-campaigns/campaign-1')).toBe(true)
+    expect(isShellWorkspaceRoute('/programs/program-1')).toBe(true)
   })
 
   it('only treats the exact home route as the full chat surface', () => {

@@ -8,9 +8,7 @@ import {
 describe('first-person fill query rewrite', () => {
   it('detects fill-this-out, guest prep, and write-as-me requests', () => {
     expect(
-      isFirstPersonFillRequest(
-        "Hey, here's a link. I need some help on this, filling this out",
-      ),
+      isFirstPersonFillRequest("Hey, here's a link. I need some help on this, filling this out"),
     ).toBe(true)
     expect(isFirstPersonFillRequest('Can you fill this out for the podcast?')).toBe(true)
     expect(isFirstPersonFillRequest('Help me with this guest prep form')).toBe(true)

@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  asCampaignRows,
-  sortCampaignMentionRows,
-} from './use-chat-input-at-mention-data.helpers'
+import { asCampaignRows, sortCampaignMentionRows } from './use-chat-input-at-mention-data.helpers'
 
 describe('campaign mention rows', () => {
   it('maps campaign rows, untitled names, and system flags', () => {

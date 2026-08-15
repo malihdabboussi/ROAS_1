@@ -4,7 +4,10 @@ import type {
   StudioArtifactNavRow,
   StudioMediaNavRow,
 } from './chat-input-at-mentions'
-import { handleChatInputMenuKeyDown, type HandleChatInputMenuKeyDownOptions } from './chat-input-menu-keyboard'
+import {
+  handleChatInputMenuKeyDown,
+  type HandleChatInputMenuKeyDownOptions,
+} from './chat-input-menu-keyboard'
 import type { SlashItem } from './chat-input-slash-menu'
 
 function keyboardEvent(key: string, shiftKey = false) {

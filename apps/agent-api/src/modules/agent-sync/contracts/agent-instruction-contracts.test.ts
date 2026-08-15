@@ -104,7 +104,7 @@ describe('agent instruction contracts', () => {
     expect(text).toContain('curated knowledge pages')
     expect(text).toContain('context is insufficient')
     expect(text).toContain('first-person fill')
-    expect(text).toContain("do not send that work to Atlas")
+    expect(text).toContain('do not send that work to Atlas')
     expect(contract.examples.map((example) => example.userRequest).join('\n')).toContain(
       'help me fill this out',
     )

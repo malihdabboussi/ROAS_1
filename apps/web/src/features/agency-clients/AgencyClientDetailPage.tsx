@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, ExternalLink, Pencil } from 'lucide-react'
+import { ExternalLink, PanelRightOpen, Pencil } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   fetchAgencyClient,
@@ -14,6 +14,7 @@ import type { CampaignPatch } from './AgencyCampaignEditPanel'
 import { AgencyClientCampaignsPanel } from './AgencyClientCampaignsPanel'
 import { AgencyClientEditPanel } from './AgencyClientEditPanel'
 import { AgencyClientWorkRows } from './AgencyClientWorkRows'
+import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
 import { AGENCY_CLIENT_MESSAGES } from './config/messages.config'
 
 type Tab = 'overview' | 'campaigns' | 'tasks' | 'requests'
@@ -193,13 +194,13 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
 
   return (
     <main className="gap-spacing-6 p-spacing-8 mx-auto flex w-full max-w-7xl flex-col">
+      <AgencyWorkspaceBreadcrumb
+        items={[
+          { href: '/clients', label: 'Clients' },
+          { label: client.display_name || client.name },
+        ]}
+      />
       <header>
-        <Link
-          href="/clients"
-          className="body-3 text-muted-foreground hover:text-foreground mb-spacing-4 gap-spacing-1 inline-flex items-center"
-        >
-          <ArrowLeft className="icon-sm" /> Clients
-        </Link>
         <div className="gap-spacing-4 flex flex-wrap items-start justify-between">
           <div>
             <p className="typo-section-label text-muted-foreground">Client workspace</p>
@@ -212,6 +213,12 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
             </p>
           </div>
           <div className="gap-spacing-2 flex">
+            <Link
+              href={`/clients/${clientId}?surface=portal`}
+              className="button-compact button-glass-purple"
+            >
+              <PanelRightOpen className="icon-sm" /> Portal
+            </Link>
             <button
               aria-label="Edit client"
               type="button"
@@ -345,6 +352,7 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
 
       {tab === 'campaigns' ? (
         <AgencyClientCampaignsPanel
+          clientId={clientId}
           campaigns={workspace.campaigns}
           spaceByCampaign={spaceByCampaign}
           editingCampaignId={editingCampaignId}

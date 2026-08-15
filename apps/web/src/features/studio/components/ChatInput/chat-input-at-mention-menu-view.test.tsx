@@ -1,11 +1,11 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { ChatInputAtMentionMenuView } from './chat-input-at-mention-menu-view'
 import type {
   AtMentionItem,
   StudioArtifactNavRow,
   StudioMediaNavRow,
 } from './chat-input-at-mentions'
-import { ChatInputAtMentionMenuView } from './chat-input-at-mention-menu-view'
 
 afterEach(cleanup)
 
@@ -19,9 +19,7 @@ function atItem(overrides: Partial<AtMentionItem> = {}): AtMentionItem {
   }
 }
 
-function renderAtMenu(
-  overrides: Partial<Parameters<typeof ChatInputAtMentionMenuView>[0]> = {},
-) {
+function renderAtMenu(overrides: Partial<Parameters<typeof ChatInputAtMentionMenuView>[0]> = {}) {
   const artifact = atItem()
   const media = atItem({
     id: 'media-1',

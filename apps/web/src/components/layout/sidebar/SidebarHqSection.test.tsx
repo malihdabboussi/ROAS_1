@@ -57,6 +57,8 @@ vi.mock('@/lib/programs', () => ({
   updateProgram: vi.fn(),
   updateProgramUserState: vi.fn(),
   deleteProgram: vi.fn(),
+  programDisplayName: (program: { name: string; system_kind?: string | null }) =>
+    program.system_kind === 'clients' ? 'Client Spaces' : program.name,
 }))
 
 vi.mock('@/components/layout/AvatarDropdown', () => ({
@@ -228,6 +230,8 @@ describe('SidebarHqSection', () => {
 
     const primaryLabels = [
       'Home',
+      'Clients',
+      'Client Campaigns',
       'Inbox',
       'Meetings',
       'My Tasks',

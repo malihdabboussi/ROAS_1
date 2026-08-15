@@ -50,6 +50,16 @@ Impact: Users can choose a Mission playbook without leaving Create, distinguish 
 
 Files: `apps/web/src/components/shell/*`, `apps/web/src/components/global-chat/lib/global-chat-seed-match*`, `apps/web/src/components/chat/AgentTurnFeedbackActions*`, `apps/web/src/features/mission-control/components/dialogs/MissionDetailDesktopShell*`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal*`, `apps/web/src/features/studio/components/ChatInput*`, `apps/web/src/features/studio/components/message-bubble/*`, `apps/web/src/lib/agent-feedback/use-agent-turn-feedback.ts`, `apps/agent-api/src/modules/chat/repositories/chat-runtime.repository.ts`, `apps/agent-api/src/modules/chat/services/chat-reference-context.service.ts`, `apps/agent-api/src/modules/chat/services/conversation-reference.util*`, `documentation/features/missions.md`, `documentation/features/claude-chatgpt-shell.md`.
 
+## [2026-08-14 10:50] - [FIX]
+
+What: Unified Clients navigation, breadcrumbs, and Portal context so agency Clients always open the Page Grader-backed `/clients` screen.
+
+Why: Simple-menu Favorites and the system Program named Clients were competing with agency Clients, breadcrumbs fell through to Inbox on `/programs`, and Portal always opened generic `/clients`.
+
+Impact: Clients and Client Campaigns are reachable in Simple and HQ navigation. The system clients Program is labeled Client Spaces. Breadcrumbs follow the active client/campaign route. Portal opens the matching Page Grader client or campaign without replacing the open Pixel chat.
+
+Files: `apps/web/src/components/layout/sidebar/SidebarSimpleSection.tsx`, `apps/web/src/components/layout/sidebar/SidebarFavoritesFlyout.tsx`, `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/components/shell/PageGraderPortalSurface.tsx`, `apps/web/src/components/shell/shell-breadcrumb.ts`, `apps/web/src/components/shell/portal-target-path.ts`, `apps/web/src/lib/programs/program-display-name.ts`, `apps/web/src/features/agency-clients/*`
+
 ## 2026-08-14 10:54 - [FIX]
 
 What: Routed exact-message Reply seeds through the selected conversation's authoritative Space/Campaign scope so the mounted composer restores the referenced message chip before send.
