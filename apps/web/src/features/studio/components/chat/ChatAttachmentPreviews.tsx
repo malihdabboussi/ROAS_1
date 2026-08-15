@@ -2,8 +2,7 @@
 
 import { useMemo } from 'react'
 import { ExternalLink, FileText } from 'lucide-react'
-import { renderChatMarkdown } from '@/lib/utils/chat-markdown.utils'
-import { ChatMarkdownView } from '@/features/studio/components/chat/ChatMarkdownView'
+import { ChatMarkdownDocument } from '@/components/chat/ChatMarkdownDocument'
 import type { DocumentAttachment } from '../../types'
 import {
   attachmentPrimaryUrl,
@@ -233,11 +232,10 @@ function SinglePreview({ doc, compact }: { doc: DocumentAttachment; compact?: bo
         </PreviewChrome>
       )
     }
-    const html = renderChatMarkdown(text)
     return (
       <PreviewChrome compact={compact} filename={doc.filename} kind="markdown">
-        <ChatMarkdownView
-          html={html}
+        <ChatMarkdownDocument
+          markdown={text}
           className={`${compact ? COMPACT_MARKDOWN_OVERRIDES : ''} max-h-36 overflow-auto`}
         />
       </PreviewChrome>

@@ -22,9 +22,35 @@ vi.mock('sonner', () => ({ toast: { error: mocks.toastError } }))
 vi.mock('@/components/conversations', async () => {
   const { forwardRef, useImperativeHandle } = await import('react')
   return {
-    ConversationScopePicker: forwardRef(function MockConversationScopePicker(_props, ref) {
+    ConversationScopePicker: forwardRef(function MockConversationScopePicker(
+      props: {
+        onScopeChanged?: (scope: {
+          campaignId: string | null
+          spaceId: string | null
+          campaignName?: string | null
+          spaceTitle?: string | null
+        }) => void
+      },
+      ref,
+    ) {
       useImperativeHandle(ref, () => ({ openMenuFromBanner: mocks.openScopePicker }))
-      return <div data-testid="choose-space-picker" />
+      return (
+        <div data-testid="choose-space-picker">
+          <button
+            type="button"
+            onClick={() =>
+              props.onScopeChanged?.({
+                campaignId: 'campaign-1',
+                spaceId: null,
+                campaignName: 'Yasir Khan Coaching LTD',
+                spaceTitle: null,
+              })
+            }
+          >
+            Select campaign only
+          </button>
+        </div>
+      )
     }),
   }
 })
@@ -103,6 +129,10 @@ vi.mock('@/features/spaces/services/spaces.service', () => ({
 
 vi.mock('@/features/spaces/components/CreateSpaceModal', () => ({
   CreateSpaceModal: () => null,
+}))
+
+vi.mock('@/components/global-chat/components/ChatComposerTryTip', () => ({
+  ChatComposerTryTip: () => <div data-testid="composer-try-tip" />,
 }))
 
 vi.mock('@/features/home/components/SuggestedNextMoves', () => ({
@@ -197,6 +227,7 @@ describe('HomeDashboardV4Composer', () => {
     render(<HomeDashboardV4Composer />)
 
     expect(screen.getByTestId('home-quick-missions-host')).toBeInTheDocument()
+    expect(screen.getByTestId('composer-try-tip')).toBeInTheDocument()
     const quickStarts = screen.getByRole('group', { name: 'Quick starts' })
     const chooseSpace = screen.getByRole('button', { name: 'Choose Space' })
     const plugins = screen.getByRole('button', { name: 'Plugins and integrations' })
@@ -229,6 +260,16 @@ describe('HomeDashboardV4Composer', () => {
     expect(mocks.openScopePicker).toHaveBeenCalledTimes(1)
     expect(mocks.openAddMenu).not.toHaveBeenCalledWith('space', expect.any(HTMLButtonElement))
     expect(mocks.openAddMenu).toHaveBeenCalledWith('integrations', expect.any(HTMLButtonElement))
+  })
+
+  it('replaces Choose Space with the selected campaign name', async () => {
+    mocks.campaignRows = [{ id: 'campaign-1', name: 'Yasir Khan Coaching LTD' }]
+    render(<HomeDashboardV4Composer />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select campaign only' }))
+
+    expect(await screen.findByRole('button', { name: 'Yasir Khan Coaching LTD' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Choose Space' })).toBeNull()
   })
 
   it('fills the shared composer when a suggested move is selected', () => {

@@ -3,6 +3,33 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_CHAT_HISTORY_FILTERS, type ChatHistoryFilterState } from '@/lib/conversations'
 import { ChatHistoryFilterMenu } from './ChatHistoryFilterMenu'
 
+vi.mock('@/components/conversations/ConversationScopePicker', () => ({
+  ConversationScopePicker: ({
+    onScopeChanged,
+  }: {
+    onScopeChanged?: (scope: {
+      campaignId: string | null
+      spaceId: string | null
+      campaignName?: string | null
+      spaceTitle?: string | null
+    }) => void
+  }) => (
+    <button
+      type="button"
+      onClick={() =>
+        onScopeChanged?.({
+          campaignId: 'campaign-yasir',
+          spaceId: null,
+          campaignName: 'Yasir Khan Coaching LTD',
+          spaceTitle: null,
+        })
+      }
+    >
+      Pick campaign
+    </button>
+  ),
+}))
+
 describe('ChatHistoryFilterMenu', () => {
   afterEach(cleanup)
 
@@ -63,5 +90,26 @@ describe('ChatHistoryFilterMenu', () => {
 
     fireEvent.click(screen.getByRole('menuitem', { name: 'Reset to defaults' }))
     expect(onAgentKeyChange).toHaveBeenLastCalledWith(null)
+  })
+
+  it('lets Recents filter by a campaign without picking a space', () => {
+    const onChange = vi.fn()
+    render(
+      <ChatHistoryFilterMenu
+        value={{ ...DEFAULT_CHAT_HISTORY_FILTERS }}
+        onChange={onChange}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Filter conversations' }))
+    expect(screen.getByRole('menuitem', { name: 'Campaign All' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Pick campaign' }))
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        campaignId: 'campaign-yasir',
+        spaceId: null,
+        scopeLabel: 'Yasir Khan Coaching LTD',
+      }),
+    )
   })
 })

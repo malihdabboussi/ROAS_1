@@ -14,10 +14,10 @@ import {
   Minimize2,
   X,
 } from 'lucide-react'
+import { ChatMarkdownDocument } from '@/components/chat/ChatMarkdownDocument'
 import { VibeyChatOrb } from '@/components/vibey/vibey-chat-orb'
 import { useTypewriter } from '@/lib/hooks/use-typewriter'
 import { renderChatMarkdown } from '@/lib/utils/chat-markdown.utils'
-import { ChatMarkdownView } from '@/features/studio/components/chat/ChatMarkdownView'
 import type { A2ATurn } from '../../types'
 import { parseContent } from '../message-bubble/message-bubble.utils'
 import { PdfCard } from '../message-bubble/PdfCard'
@@ -230,10 +230,9 @@ function A2AMarkdownContent({
   const { displayText } = useTypewriter({ text: content, enabled: streaming })
   const segments = useMemo(() => parseContent(displayText), [displayText])
   const hasInlineMedia = segments.some((segment) => segment.type !== 'text')
-  const html = renderChatMarkdown(displayText)
   if (!displayText.trim()) return null
   if (!hasInlineMedia) {
-    return <ChatMarkdownView html={html} hydrateMermaid={!streaming} />
+    return <ChatMarkdownDocument markdown={displayText} />
   }
   return (
     <div className="gap-spacing-2 flex flex-col">
@@ -241,13 +240,7 @@ function A2AMarkdownContent({
         if (segment.type === 'text') {
           const text = segment.value.trim()
           if (!text) return null
-          return (
-            <ChatMarkdownView
-              key={`text-${idx}`}
-              html={renderChatMarkdown(text)}
-              hydrateMermaid={!streaming}
-            />
-          )
+          return <ChatMarkdownDocument key={`text-${idx}`} markdown={text} />
         }
         if (segment.type === 'video') {
           return <GeneratedVideo key={`video-${idx}`} url={segment.url} prompt={segment.prompt} />

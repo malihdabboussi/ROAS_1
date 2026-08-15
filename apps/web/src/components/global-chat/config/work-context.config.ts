@@ -50,6 +50,7 @@ export function mergeAttachedWorkContext(
 export function workContextAttachmentLabel(
   workContext: GlobalWorkContext,
   spaceTitle?: string | null,
+  campaignName?: string | null,
 ): string | null {
   if (workContext.channelId) {
     return workContext.channelName?.trim() || 'Slack channel'
@@ -57,7 +58,7 @@ export function workContextAttachmentLabel(
 
   switch (workContext.surface) {
     case 'spaces':
-      return spaceTitle?.trim() || WORK_SURFACE_LABELS.spaces
+      return spaceTitle?.trim() || campaignName?.trim() || WORK_SURFACE_LABELS.spaces
     case 'brain':
       return workContext.brainScopeLabel?.trim() || WORK_SURFACE_LABELS.brain
     case 'team':
@@ -73,6 +74,7 @@ export function workContextAttachmentLabel(
 interface WorkContextAttachmentDescriptionOptions {
   activeAgentName?: string | null
   spaceTitle?: string | null
+  campaignName?: string | null
 }
 
 export function workContextAttachmentDescription(
@@ -92,7 +94,7 @@ export function workContextAttachmentDescription(
 
   switch (workContext.surface) {
     case 'spaces': {
-      const label = options.spaceTitle?.trim() || 'Campaigns'
+      const label = options.spaceTitle?.trim() || options.campaignName?.trim() || 'Campaigns'
       return `${label} is attached as the Space or campaign context. The chat can use its work, artifacts, and campaign knowledge.${agentDetail}`
     }
     case 'brain': {

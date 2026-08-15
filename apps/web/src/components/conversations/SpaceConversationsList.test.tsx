@@ -284,6 +284,56 @@ describe('SpaceConversationsList', () => {
     expect(screen.queryByLabelText('Chat conversation')).not.toBeInTheDocument()
   })
 
+  it('pins unread onto Slack and meeting logos instead of indenting the title', () => {
+    render(
+      <SpaceConversationsList
+        {...baseProps({
+          conversations: [
+            conversation({
+              id: 'slack-unread',
+              title: 'Launch thread',
+              is_unread: true,
+              metadata: { source: 'slack' },
+            }),
+            conversation({
+              id: 'meeting-unread',
+              title: 'Client launch review',
+              is_unread: true,
+              metadata: { context_type: 'meeting', meeting_item_id: 'item-1' },
+            }),
+            conversation({
+              id: 'chat-unread',
+              title: 'Post-call recap',
+              is_unread: true,
+            }),
+          ],
+          leadingIcon: 'logo',
+        })}
+      />,
+    )
+
+    const slackRow = screen.getByText('Launch thread').closest('div[title]')
+    const meetingRow = screen.getByText('Client launch review').closest('div[title]')
+    const chatRow = screen.getByText('Post-call recap').closest('div[title]')
+    expect(slackRow).toBeTruthy()
+    expect(meetingRow).toBeTruthy()
+    expect(chatRow).toBeTruthy()
+
+    const slackUnread = slackRow!.querySelector('[aria-label="New activity"]')
+    const meetingUnread = meetingRow!.querySelector('[aria-label="New activity"]')
+    const chatUnread = chatRow!.querySelector('[aria-label="New activity"]')
+    expect(slackUnread).toHaveClass('absolute')
+    expect(meetingUnread).toHaveClass('absolute')
+    expect(chatUnread).toHaveClass('relative')
+    expect(chatUnread).not.toHaveClass('absolute')
+    expect(slackRow!.querySelector('[aria-label="Slack conversation"]')?.parentElement).toContainElement(
+      slackUnread as HTMLElement,
+    )
+    expect(
+      meetingRow!.querySelector('[aria-label="Meeting conversation"]')?.parentElement,
+    ).toContainElement(meetingUnread as HTMLElement)
+  })
+
   it('adds compact sidebar gutters without the full list top gap', () => {
     const { container } = render(
       <SpaceConversationsList
@@ -376,6 +426,7 @@ describe('SpaceConversationsList', () => {
     expect(pinnedHeader.compareDocumentPosition(screen.getByText('ROAS Marketing Strategy'))).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     )
+    expect(screen.getByText('ROAS Marketing Strategy').closest('button')?.querySelector('svg')).toBeNull()
     fireEvent.click(recentsHeader)
     expect(screen.getByText('ROAS Marketing Strategy')).toBeInTheDocument()
     expect(screen.queryByText('Post Call Recap Message')).not.toBeInTheDocument()

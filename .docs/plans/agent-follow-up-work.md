@@ -1,3 +1,27 @@
+## 2026-08-15 - [ARCH] conversation-list-query.ts is over the 400 LOC helper limit
+
+Status: Open
+
+Found while: Recents Filter campaign/space selector
+
+Evidence: `wc -l` reports `apps/web/src/lib/conversations/conversation-list-query.ts` at 427 LOC after adding campaign/space filter matching. It was already over 400 from grouping helpers.
+
+Needed work: Split date grouping and status/campaign/agent grouping out of the query helper.
+
+Reason not done now: The requested Recents Filter campaign row only needed a few matching lines; decomposing this pre-existing overage was out of scope.
+
+## 2026-08-15 - [ARCH] AgentConversationThread remains far over the file LOC limit
+
+Status: Open
+
+Found while: Chat mermaid diagrams stuck on "Rendering diagram…"
+
+Evidence: `wc -l` reports `apps/web/src/features/studio/components/chat/AgentConversationThread.tsx` at 1059 LOC after wiring `ChatMarkdownDocument` into A2A markdown. Architecture cap is 600.
+
+Needed work: Split activity-feed rows, A2A markdown, and dialog chrome out of the thread file.
+
+Reason not done now: The requested fix was mermaid hydration in chat; decomposing this pre-existing oversized file was out of scope.
+
 ## 2026-08-14 - [ARCH] SpaceVibeyChatPanel and chat store remain far over LOC limits
 
 Status: Open
@@ -39,7 +63,7 @@ Status: Open
 Found while: Connections / Choose Space / Recents logos / no-auto-attach slice
 
 Evidence:
-- `ConversationScopePickerMenus` groups campaigns under program headings, then click-opens spaces. It is not a third click-drill of Program → Campaign list → Space list.
+- `ConversationScopePickerMenus` groups campaigns under program headings. Clicking a campaign/client name selects that campaign; the chevron (and hover) still opens nested spaces. It is not a third click-drill of Program → Campaign list → Space list.
 - `ConversationChannelIcon` still uses `text-purple-400` / `text-blue-400` instead of `--color-*` utilities.
 - `SidebarHqRail.tsx` is 399 LOC (component max 400) after the active-conversation work-context guards.
 - `SidebarHqHubMenuContent` / `SidebarHqMoreFlyoutBody` still call `setWorkContext` on destination clicks even when a conversation is open.

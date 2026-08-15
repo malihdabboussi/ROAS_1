@@ -1,9 +1,8 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { ChatMarkdownView } from '@/features/studio/components/chat/ChatMarkdownView'
+import { ChatMarkdownDocument } from '@/components/chat/ChatMarkdownDocument'
 import { useTypewriter } from '@/lib/hooks/use-typewriter'
-import { renderChatMarkdown } from '@/lib/utils/chat-markdown.utils'
 
 interface ToolContentPreviewProps {
   content: string
@@ -13,7 +12,6 @@ interface ToolContentPreviewProps {
 export function ToolContentPreview({ content, isActive }: ToolContentPreviewProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const { displayText } = useTypewriter({ text: content, enabled: isActive })
-  const html = renderChatMarkdown(displayText)
 
   useEffect(() => {
     if (!isActive || !scrollRef.current) return
@@ -28,7 +26,7 @@ export function ToolContentPreview({ content, isActive }: ToolContentPreviewProp
         ref={scrollRef}
         className="max-h-64 min-w-0 overflow-y-auto overflow-x-hidden break-words px-3 py-2"
       >
-        <ChatMarkdownView html={html} />
+        <ChatMarkdownDocument markdown={displayText} />
       </div>
       {isActive && (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-[var(--color-background)] to-transparent" />

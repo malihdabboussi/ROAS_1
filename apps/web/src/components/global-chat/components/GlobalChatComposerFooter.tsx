@@ -1,9 +1,10 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import { useCachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
+import { fetchCampaigns, type Campaign } from '@/lib/campaigns'
 import {
   workContextAttachmentDescription,
   workContextAttachmentLabel,
@@ -21,15 +22,39 @@ export function GlobalChatComposerFooter() {
   const roster = useGlobalChatStore((s) => s.roster)
   const { data: spaceRows } = useCachedSpaces()
   const spaces = useMemo(() => spaceRows ?? [], [spaceRows])
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+
+  useEffect(() => {
+    if (!workContext.campaignId) return
+    let cancelled = false
+    void fetchCampaigns()
+      .then((campaignRows) => {
+        if (!cancelled) setCampaigns(campaignRows)
+      })
+      .catch(() => {
+        if (!cancelled) setCampaigns([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [workContext.campaignId])
 
   const selectedSpaceTitle = spaces.find((space) => space.id === workContext.spaceId)?.title
-  const attachmentLabel = workContextAttachmentLabel(workContext, selectedSpaceTitle)
+  const selectedCampaignName = campaigns.find(
+    (campaign) => campaign.id === workContext.campaignId,
+  )?.name
+  const attachmentLabel = workContextAttachmentLabel(
+    workContext,
+    selectedSpaceTitle,
+    selectedCampaignName,
+  )
   const activeAgentName =
     roster.find((entry) => entry.agent_key === activeAgentKey)?.display_name?.trim() ||
     activeAgentKey
   const attachmentDescription = workContextAttachmentDescription(workContext, {
     activeAgentName,
     spaceTitle: selectedSpaceTitle,
+    campaignName: selectedCampaignName,
   })
 
   if (!attachmentLabel) return null

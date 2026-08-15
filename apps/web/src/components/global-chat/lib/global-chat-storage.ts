@@ -31,6 +31,8 @@ export interface PersistedGlobalChat {
   recDismissedSurfaces?: GlobalWorkSurface[]
   /** Conversation ids where the campaign+brain soft prompt was dismissed. */
   campaignBrainNudgeDismissedConversationIds?: string[]
+  /** Composer "Try" tip ids the user dismissed or already opened as a new task. */
+  tryTipDismissedIds?: string[]
 }
 
 export function readPersistedGlobalChat(): PersistedGlobalChat {
@@ -76,6 +78,20 @@ export function addCampaignBrainNudgeDismissedConversationId(conversationId: str
   if (current.includes(id)) return current
   const next = [...current, id].slice(-50)
   writePersistedGlobalChat({ campaignBrainNudgeDismissedConversationIds: next })
+  return next
+}
+
+export function readTryTipDismissedIds(): string[] {
+  return readPersistedGlobalChat().tryTipDismissedIds ?? []
+}
+
+export function addTryTipDismissedId(tipId: string): string[] {
+  const id = tipId.trim()
+  if (!id) return readTryTipDismissedIds()
+  const current = readTryTipDismissedIds()
+  if (current.includes(id)) return current
+  const next = [...current, id].slice(-50)
+  writePersistedGlobalChat({ tryTipDismissedIds: next })
   return next
 }
 

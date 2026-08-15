@@ -137,10 +137,7 @@ describe('ConversationScopePicker', () => {
       )
 
       fireEvent.click(screen.getByLabelText('General'))
-      const campaignRow = await screen.findByRole('button', { name: /Launch campaign/ })
-      fireEvent.mouseEnter(campaignRow)
-      expect(mocks.fetchSpaces).not.toHaveBeenCalled()
-      fireEvent.click(campaignRow)
+      fireEvent.click(await screen.findByRole('button', { name: 'Show spaces in Launch campaign' }))
 
       await waitFor(() =>
         expect(mocks.fetchSpaces).toHaveBeenCalledWith(
@@ -174,6 +171,52 @@ describe('ConversationScopePicker', () => {
     } finally {
       consoleError.mockRestore()
     }
+  })
+
+  it('assigns a campaign without requiring a nested space', async () => {
+    mocks.useOrgStore.mockImplementation((selector: (state: { activeOrgId: string }) => unknown) =>
+      selector({ activeOrgId: 'org-1' }),
+    )
+    mocks.useCampaignCacheVersion.mockReturnValue(0)
+    mocks.getCachedCampaigns.mockReturnValue(campaigns)
+    mocks.prefetchOrgCampaigns.mockResolvedValue(campaigns)
+    mocks.assignConversationScope.mockResolvedValue({
+      ...conversation,
+      campaign_id: 'campaign-1',
+      metadata: { space_id: null },
+    })
+    mocks.positionFloatingMenuFromAnchorRect.mockReturnValue({ top: 100, left: 120 })
+    const onConversationUpdated = vi.fn()
+    const onScopeChanged = vi.fn()
+
+    render(
+      <ConversationScopePicker
+        conversation={conversation}
+        onConversationUpdated={onConversationUpdated}
+        onScopeChanged={onScopeChanged}
+      />,
+    )
+
+    fireEvent.click(screen.getByLabelText('General'))
+    fireEvent.click(await screen.findByRole('button', { name: 'Launch campaign' }))
+
+    await waitFor(() => {
+      expect(mocks.assignConversationScope).toHaveBeenCalledWith(
+        'conversation-1',
+        'campaign-1',
+        null,
+      )
+    })
+    expect(onScopeChanged).toHaveBeenCalledWith(
+      expect.objectContaining({
+        campaignId: 'campaign-1',
+        spaceId: null,
+        campaignName: 'Launch campaign',
+      }),
+    )
+    expect(onConversationUpdated).toHaveBeenCalledWith(
+      expect.objectContaining({ campaign_id: 'campaign-1' }),
+    )
   })
 
   it('clears a scoped conversation into the General campaign', async () => {
@@ -307,6 +350,6 @@ describe('ConversationScopePicker', () => {
 
     fireEvent.click(screen.getByLabelText('General'))
     expect(await screen.findByText('Growth')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Launch campaign/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Launch campaign' })).toBeInTheDocument()
   })
 })

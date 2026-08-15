@@ -120,64 +120,128 @@ function applyRenderedSvg(container: HTMLElement, svg: string) {
 interface MermaidDiagramProps {
   code: string
   className?: string
+  /** True while the mermaid fence is still streaming closed. */
+  pending?: boolean
 }
 
-export function MermaidDiagram({ code, className }: MermaidDiagramProps) {
+export const MERMAID_DIAGRAM_MESSAGES = {
+  pending: 'Diagram',
+  rendering: 'Rendering diagram…',
+  failed: 'Could not render diagram',
+  retry: 'Try again',
+} as const
+
+export function MermaidDiagram({ code, className, pending = false }: MermaidDiagramProps) {
   const uniqueId = useId().replace(/:/g, '-')
   const containerRef = useRef<HTMLDivElement>(null)
+  const renderGenerationRef = useRef(0)
   const [error, setError] = useState<string | null>(null)
-  const [rendering, setRendering] = useState(true)
+  const [ready, setReady] = useState(false)
 
   const render = useCallback(async () => {
     const trimmed = code.trim()
-    if (!trimmed || !containerRef.current) return
+    if (pending || !trimmed) return
 
-    setRendering(true)
+    const generation = ++renderGenerationRef.current
+    setReady(false)
     setError(null)
 
     try {
       const m = await getMermaid()
       const valid = await parseMermaid(m, trimmed)
-      if (!valid) {
+      if (generation !== renderGenerationRef.current) return
+      if (valid === false) {
         setError('invalid')
-        setRendering(false)
         return
       }
       const diagramId = `mermaid-${uniqueId}-${Date.now()}`
       const { svg } = await renderMermaidDiagram(m, diagramId, trimmed)
-      if (containerRef.current) {
+      if (generation !== renderGenerationRef.current) return
+      const commitSvg = () => {
+        if (generation !== renderGenerationRef.current) return
+        if (!containerRef.current) {
+          setError(MERMAID_DIAGRAM_MESSAGES.failed)
+          return
+        }
         applyRenderedSvg(containerRef.current, svg)
+        setReady(true)
+      }
+      if (containerRef.current) {
+        commitSvg()
+      } else {
+        requestAnimationFrame(commitSvg)
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to render diagram'
+      if (generation !== renderGenerationRef.current) return
+      resetMermaidModuleForRetry()
+      const msg = err instanceof Error ? err.message : MERMAID_DIAGRAM_MESSAGES.failed
       setError(msg)
       if (containerRef.current) {
         containerRef.current.innerHTML = ''
       }
-    } finally {
-      setRendering(false)
     }
-  }, [code, uniqueId])
+  }, [code, pending, uniqueId])
 
   useEffect(() => {
+    if (pending) {
+      renderGenerationRef.current += 1
+      setReady(false)
+      setError(null)
+      return
+    }
     void render()
-  }, [render])
+  }, [pending, render])
 
-  if (error) {
-    return null
+  if (pending || !code.trim()) {
+    return (
+      <div
+        className={[
+          'bg-secondary my-3 flex items-center justify-center gap-2.5 overflow-x-auto rounded-lg p-6',
+          className,
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        <span className="typo-caption text-muted-foreground">{MERMAID_DIAGRAM_MESSAGES.pending}</span>
+      </div>
+    )
   }
+
+  const showLoading = !ready && !error
 
   return (
     <div
       className={[
-        'bg-[var(--color-secondary)]/50 my-3 flex justify-center overflow-x-auto overflow-y-visible rounded-lg p-4 pb-5',
-        rendering && 'min-h-[60px]',
+        'bg-secondary my-3 flex justify-center overflow-x-auto overflow-y-visible rounded-lg p-4 pb-5',
+        (showLoading || error) && 'min-h-[60px]',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
     >
-      <div ref={containerRef} className="[&_svg]:h-auto [&_svg]:max-w-full" />
+      {error ? (
+        <div className="flex flex-col items-center justify-center gap-2">
+          <p className="typo-caption text-muted-foreground">{MERMAID_DIAGRAM_MESSAGES.failed}</p>
+          <button
+            type="button"
+            className="button-compact button-glass-neutral"
+            onClick={() => void render()}
+          >
+            {MERMAID_DIAGRAM_MESSAGES.retry}
+          </button>
+        </div>
+      ) : showLoading ? (
+        <div className="flex items-center justify-center gap-2.5">
+          <span className="mermaid-orb-pulse" />
+          <span className="typo-caption text-muted-foreground">
+            {MERMAID_DIAGRAM_MESSAGES.rendering}
+          </span>
+        </div>
+      ) : null}
+      <div
+        ref={containerRef}
+        className={error || showLoading ? 'hidden' : '[&_svg]:h-auto [&_svg]:max-w-full'}
+      />
     </div>
   )
 }
@@ -195,7 +259,7 @@ async function runMermaidHydratePass(container: HTMLElement) {
 
     try {
       const valid = await parseMermaid(m, decoded)
-      if (!valid) {
+      if (valid === false) {
         markPlaceholderFailed(el)
         continue
       }

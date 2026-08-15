@@ -171,6 +171,42 @@ function decodeUnicodeEscapes(text: string): string {
   return text.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
 }
 
+export type ChatMarkdownSegment =
+  | { kind: 'markdown'; text: string }
+  | { kind: 'mermaid'; code: string; incomplete: boolean }
+
+const MERMAID_FENCE = /(```|~~~)[ \t]*mermaid[ \t]*\r?\n([\s\S]*?)\1/g
+const OPEN_MERMAID_FENCE = /(```|~~~)[ \t]*mermaid[ \t]*\r?\n([\s\S]*)$/
+
+/**
+ * Pull mermaid fences out of chat markdown so diagrams can render as React
+ * nodes instead of innerHTML placeholders that get wiped on every stream tick.
+ */
+export function splitChatMarkdownSegments(text: string): ChatMarkdownSegment[] {
+  const segments: ChatMarkdownSegment[] = []
+  let cursor = 0
+  MERMAID_FENCE.lastIndex = 0
+  for (let match = MERMAID_FENCE.exec(text); match; match = MERMAID_FENCE.exec(text)) {
+    if (match.index > cursor) {
+      segments.push({ kind: 'markdown', text: text.slice(cursor, match.index) })
+    }
+    segments.push({ kind: 'mermaid', code: (match[2] ?? '').trim(), incomplete: false })
+    cursor = match.index + match[0].length
+  }
+
+  const tail = text.slice(cursor)
+  const open = tail.match(OPEN_MERMAID_FENCE)
+  if (open && open.index !== undefined) {
+    const before = tail.slice(0, open.index)
+    if (before) segments.push({ kind: 'markdown', text: before })
+    segments.push({ kind: 'mermaid', code: (open[2] ?? '').trim(), incomplete: true })
+  } else if (tail) {
+    segments.push({ kind: 'markdown', text: tail })
+  }
+
+  return segments.length > 0 ? segments : [{ kind: 'markdown', text }]
+}
+
 /**
  * Render markdown to HTML for chat bubbles (GFM table support included).
  */

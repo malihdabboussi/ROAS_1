@@ -20,6 +20,9 @@ export interface ChatHistoryFilterState {
   type: ChatHistoryTypeFilter
   groupBy: ChatHistoryGroupBy
   leadingIcon: ChatHistoryLeadingIcon
+  campaignId: string | null
+  spaceId: string | null
+  scopeLabel: string | null
 }
 
 export const DEFAULT_CHAT_HISTORY_FILTERS: ChatHistoryFilterState = {
@@ -28,6 +31,9 @@ export const DEFAULT_CHAT_HISTORY_FILTERS: ChatHistoryFilterState = {
   type: 'all',
   groupBy: 'none',
   leadingIcon: 'logo',
+  campaignId: null,
+  spaceId: null,
+  scopeLabel: null,
 }
 
 export interface ConversationListGroup {
@@ -73,6 +79,13 @@ export function matchesChatHistoryFilters(
     if (Number.isNaN(activityAt)) return false
     const days = Number(filters.lastActivity.replace('d', ''))
     if (now.getTime() - activityAt > days * MS_DAY) return false
+  }
+
+  if (filters.campaignId && conversation.campaign_id !== filters.campaignId) return false
+  if (filters.spaceId) {
+    const spaceId =
+      typeof conversation.metadata?.space_id === 'string' ? conversation.metadata.space_id.trim() : ''
+    if (spaceId !== filters.spaceId) return false
   }
 
   return true

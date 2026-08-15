@@ -1,7 +1,7 @@
 'use client'
 
 import { PersistedFileChips } from '@/components/chat/FileAttachments'
-import { ChatMarkdownView } from '@/components/chat/ChatMarkdownView'
+import { ChatMarkdownDocument } from '@/components/chat/ChatMarkdownDocument'
 import {
   GeneratedAudio,
   GeneratedImage,
@@ -13,7 +13,7 @@ import type { MessageContentBlock } from '@/lib/chat/message-content-blocks'
 import { attachmentUrlsToDocuments } from '@/lib/chat/chat-attachment-preview'
 import type { ChannelMessage } from '@/lib/channels'
 import type { MissionDeliverable } from '@/lib/missions'
-import { CHAT_MARKDOWN_CLASSNAME, renderChatMarkdown } from '@/lib/utils/chat-markdown.utils'
+import { CHAT_MARKDOWN_CLASSNAME } from '@/lib/utils/chat-markdown.utils'
 import { ChannelOrderedBlocks } from './ChannelOrderedBlocks'
 import {
   hasVisibleChannelMessageContent,
@@ -89,9 +89,9 @@ export function ChannelMessageBody({
                     )
                   }
                   return (
-                    <ChatMarkdownView
+                    <ChatMarkdownDocument
                       key={`text-${segmentIndex}`}
-                      html={renderChatMarkdown(segment.value)}
+                      markdown={segment.value}
                       className="flex flex-col gap-1 [&_span.channel-mention]:text-primary [&>*]:!my-0 [&_blockquote_p]:!my-0 [&_li>p]:!my-0 [&_li]:leading-normal [&_ol]:space-y-0 [&_p]:!my-0 [&_span.channel-mention]:font-medium [&_ul]:space-y-0"
                     />
                   )
@@ -139,8 +139,8 @@ export function ChannelMessageBody({
                 className={`flex flex-col gap-1 ${CHAT_MARKDOWN_CLASSNAME} [&_span.channel-mention]:text-primary [&>*]:!my-0 [&_blockquote_p]:!my-0 [&_li>p]:!my-0 [&_li]:leading-normal [&_ol]:space-y-0 [&_p]:!my-0 [&_span.channel-mention]:font-medium [&_ul]:space-y-0`}
               />
             ) : (
-              <ChatMarkdownView
-                html={renderChatMarkdown(rawContent)}
+              <ChatMarkdownDocument
+                markdown={rawContent}
                 className="flex flex-col gap-1 [&_span.channel-mention]:text-primary [&>*]:!my-0 [&_blockquote_p]:!my-0 [&_li>p]:!my-0 [&_li]:leading-normal [&_ol]:space-y-0 [&_p]:!my-0 [&_span.channel-mention]:font-medium [&_ul]:space-y-0"
               />
             )}
