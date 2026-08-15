@@ -120,9 +120,6 @@ describe('ShellTopBar', () => {
     expect(aiChatButton.querySelector('.lucide-panel-left-open')).toBeInTheDocument()
     expect(screen.getByText('AI Chat')).toBeInTheDocument()
     expect(screen.getByText('AI Chat')).toHaveClass('shell-topbar-ai-label')
-    expect(screen.getByLabelText('Work surface').parentElement).toHaveClass(
-      'shell-topbar-desktop-actions',
-    )
   })
 
   it('keeps the breadcrumb and persistent work controls in the global bar for Simple mode', () => {
@@ -133,8 +130,6 @@ describe('ShellTopBar', () => {
     expect(screen.queryByText('Agenda')).not.toBeInTheDocument()
     expect(screen.queryByTitle('Search')).not.toBeInTheDocument()
     expect(screen.queryByText('AI Chat')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Workspace' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Portal' })).toBeInTheDocument()
     expect(screen.getByTitle('Collapse page — chat full screen')).toBeInTheDocument()
   })
 
@@ -268,19 +263,5 @@ describe('ShellTopBar', () => {
         href: '/home?meeting=evt-1',
       }),
     )
-  })
-
-  it('switches between the Workspace and Portal surfaces', () => {
-    render(<ShellTopBar />)
-
-    expect(screen.getByRole('button', { name: 'Workspace' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'Portal' }))
-
-    expect(mocks.shellState.setWorkAreaOpen).toHaveBeenCalledWith(true)
-    expect(mocks.shellState.closeArtifactViewer).toHaveBeenCalledTimes(1)
-    expect(mocks.replace).toHaveBeenCalledWith('/home?surface=portal', { scroll: false })
   })
 })

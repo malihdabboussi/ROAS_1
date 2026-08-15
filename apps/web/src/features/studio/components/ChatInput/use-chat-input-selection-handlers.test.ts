@@ -173,4 +173,26 @@ describe('useChatInputSelectionHandlers', () => {
     expect(options.setAttachedReferences).not.toHaveBeenCalled()
     expect(options.setAttachedArtifacts).not.toHaveBeenCalled()
   })
+
+  it('tags a campaign mention as a message reference', () => {
+    const options = defaultOptions('this is for @launch')
+    const { result } = renderSelectionHandlers(options)
+
+    act(() =>
+      result.current.handleAtSelect({
+        id: 'campaign-1',
+        label: 'Launch Plan',
+        section: 'campaign',
+      }),
+    )
+
+    expect(options.setValue).toHaveBeenCalledWith('this is for ')
+    expect(options.setAtMenuOpen).toHaveBeenCalledWith(false)
+    const referenceUpdater = options.setAttachedReferences.mock.calls[0]?.[0] as (
+      references: MessageReference[],
+    ) => MessageReference[]
+    expect(referenceUpdater([])).toEqual([
+      { kind: 'campaign', id: 'campaign-1', label: 'Launch Plan' },
+    ])
+  })
 })

@@ -353,6 +353,19 @@ describe('ChatService context helpers', () => {
     expect(context).toContain('Person Brain: brain-bob')
   })
 
+  it('includes tagged campaign references in the @ context block', async () => {
+    const service = makeReferenceContextService(makeClient({}))
+
+    const context = await service.buildMessageReferencesContext(
+      [{ kind: 'campaign', id: 'campaign-1', label: 'Launch Plan' }],
+      'user-1',
+      'org-1',
+    )
+
+    expect(context).toContain('[Campaign] Launch Plan')
+    expect(context).toContain('id: campaign-1')
+  })
+
   it('resolves a portal teammate reference and validates their default User Brain', async () => {
     const client = makeClient({
       team_roster: [

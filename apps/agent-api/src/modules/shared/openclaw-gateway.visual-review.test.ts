@@ -64,6 +64,17 @@ describe('OpenClawGatewayService visual review policy', () => {
     expect(deny).toContain('exec')
   })
 
+  it('enables browser click-through for Pixel without the design skill', async () => {
+    const deny = await ensureScopedAgent({
+      agentKey: 'pixel',
+      name: 'Pixel',
+      skills: ['vibey-api'],
+    })
+
+    expect(deny).not.toContain('browser')
+    expect(deny).toContain('exec')
+  })
+
   it('enables browser review for a trained custom designer role', async () => {
     const deny = await ensureScopedAgent({
       agentKey: 'creative-director',

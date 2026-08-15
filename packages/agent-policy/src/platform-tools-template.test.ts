@@ -24,6 +24,13 @@ describe('platform tools template', () => {
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('meeting transcript Fathom Zoom Fireflies')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Do not ask the user to paste a transcript')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('checked call transcripts')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'For first-person fill, guest prep, or write-as-me:',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Never ask the user to re-introduce themselves')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Do not use the form URL as the Brain query')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Never say you cannot access it')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Never send the user to Atlas')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Human teammate →')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Managed AI agent →')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('A bare person name defaults to a human')
@@ -96,8 +103,15 @@ describe('platform tools template', () => {
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Date — Spend: $328')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(PLATFORM_TOOLS_MEDIA_ROUTING_HEADING)
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(PLATFORM_TOOLS_BROWSER_QC_HEADING)
-    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Click the real controls')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('click the real controls')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('hidden, stale, or contradictory checkout values')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('registering a test lead')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Register Now')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('qa+{unix}@roas.co')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Do not ask them to send a confirmation URL')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).not.toContain(
+      'State exactly which gated step remains untested',
+    )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'call `generate_image` with that attachment URL as `input_image_url`',
     )
@@ -251,6 +265,58 @@ For unclear, destructive, publish/send, or expensive actions:
     expect(repaired).toContain('like a sharp, friendly teammate')
     expect(repaired).toContain('Use one fitting emoji occasionally')
     expect(repaired.split(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING)).toHaveLength(2)
+    expect(second).toBe(repaired)
+  })
+
+  it('adds first-person fill routing to an existing runtime policy', () => {
+    const oldContent = `# TOOLS.md
+
+## Runtime Operating Layers
+
+These layers exist to help the user get faster, more accurate work without repeating context or watching you stumble through avoidable tool errors.
+
+For call, meeting, recording, or transcript retrieval:
+- Do not ask the user to paste a transcript.
+
+For social platform research:
+- Use social_analysis.
+
+For unclear, destructive, publish/send, or expensive actions:
+- Ask a focused clarification.`
+
+    const repaired = ensurePlatformToolsRuntimeGuidance(oldContent)
+    const second = ensurePlatformToolsRuntimeGuidance(repaired)
+
+    expect(repaired).toContain('For first-person fill, guest prep, or write-as-me:')
+    expect(repaired).toContain('Never ask the user to re-introduce themselves')
+    expect(repaired.split('For first-person fill, guest prep, or write-as-me:')).toHaveLength(2)
+    expect(second).toBe(repaired)
+  })
+
+  it('replaces stale browser QC guidance that refused test-lead submission', () => {
+    const oldContent = `# TOOLS.md
+
+## Runtime Operating Layers
+
+These layers exist to help the user get faster, more accurate work without repeating context or watching you stumble through avoidable tool errors.
+
+### Interactive Browser QC
+
+- When the browser tool is available and the user asks to QC a page or funnel, use the live browser to follow every requested path. Click the real controls, verify each resulting URL or state, and go back when another branch needs review. A text fetch cannot validate interaction.
+- Judge visible prices, copy, and layout from the rendered page. Automation-facing text can include hidden, stale, or contradictory checkout values; reconcile it against the visible checkout and interaction result before reporting a defect.
+- Do not submit real contact or payment details without the user's authorization. State exactly which gated step remains untested.
+
+For unclear, destructive, publish/send, or expensive actions:
+- Ask a focused clarification.`
+
+    const repaired = ensurePlatformToolsRuntimeGuidance(oldContent)
+    const second = ensurePlatformToolsRuntimeGuidance(repaired)
+
+    expect(repaired).not.toContain('State exactly which gated step remains untested')
+    expect(repaired).toContain('registering a test lead')
+    expect(repaired).toContain('Register Now')
+    expect(repaired).toContain('qa+{unix}@roas.co')
+    expect(repaired.split(PLATFORM_TOOLS_BROWSER_QC_HEADING)).toHaveLength(2)
     expect(second).toBe(repaired)
   })
 })

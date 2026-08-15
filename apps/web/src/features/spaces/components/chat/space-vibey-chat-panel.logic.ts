@@ -17,6 +17,7 @@ export type SpaceChatMessageReferenceKind =
   | 'mission'
   | 'conversation'
   | 'person'
+  | 'campaign'
 
 export interface SpaceChatMessageReference {
   kind: SpaceChatMessageReferenceKind

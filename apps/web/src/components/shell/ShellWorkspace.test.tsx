@@ -117,11 +117,6 @@ vi.mock('./ShellChatDrawer', () => ({
 vi.mock('./ShellNewChatGreeting', () => ({
   ShellNewChatGreeting: () => <div>New chat greeting</div>,
 }))
-vi.mock('./PageGraderPortalSurface', () => ({
-  PageGraderPortalSurface: ({ active }: { active: boolean }) => (
-    <div data-testid="portal-surface" data-active={active ? 'true' : 'false'} />
-  ),
-}))
 vi.mock('./ShellSidebarSlot', () => ({
   ShellSidebarSlot: () => <nav data-testid="workspace-menu">Workspace menu</nav>,
 }))
@@ -225,26 +220,6 @@ describe('ShellWorkspace', () => {
     const header = screen.getByText('Work card header')
     expect(header.closest('[data-shell-work-area]')).toBeInTheDocument()
     expect(header.parentElement).toContainElement(screen.getByText('Right card page'))
-  })
-  it('activates Portal from the surface query without replacing the open chat', () => {
-    mocks.pathname = '/clients'
-    mocks.params = new Map([['surface', 'portal']])
-    mocks.chatDrawerOpen = true
-    render(<ShellWorkspace>Clients page</ShellWorkspace>)
-    expect(screen.getByTestId('portal-surface')).toHaveAttribute('data-active', 'true')
-    expect(mocks.requestNewChat).not.toHaveBeenCalled()
-    expect(screen.getByTestId('shell-chat-drawer')).toBeInTheDocument()
-  })
-  it('does not host the workspace menu on the Portal surface', () => {
-    mocks.params = new Map([['surface', 'portal']])
-    mocks.desktop = true
-    mocks.shellPrefsHydrated = true
-    mocks.menuDock = 'work'
-    render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
-    expect(screen.queryByTestId('workspace-menu')).toBeNull()
-    expect(screen.getByTestId('portal-surface').parentElement).toHaveClass(
-      'shell-work-area-body-main',
-    )
   })
   it('does not restore the previous conversation while a Home message starts', async () => {
     mocks.params = new Map()
