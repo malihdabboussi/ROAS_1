@@ -58,9 +58,7 @@ export class ArtifactMissionsMediaTranscriptService {
           await onProgress?.('Fetching YouTube captions')
           const native = await this.youtubeTranscriptClient.fetchNativeTranscript(videoId, lang)
           if (native) {
-            const metadata = includeMetadata
-              ? await this.fetchMetadata(onProgress, url)
-              : null
+            const metadata = includeMetadata ? await this.fetchMetadata(onProgress, url) : null
             return {
               success: true,
               platform,
@@ -109,7 +107,15 @@ export class ArtifactMissionsMediaTranscriptService {
 
       await onProgress?.('Downloading audio from video')
       const audioPath = join(tempRoot, `audio-${randomUUID()}.m4a`)
-      const downloadOk = await this.downloadAudio(target, sessionKey, platform, url, audioPath, attempts, onProgress)
+      const downloadOk = await this.downloadAudio(
+        target,
+        sessionKey,
+        platform,
+        url,
+        audioPath,
+        attempts,
+        onProgress,
+      )
       if (!downloadOk) {
         return this.buildPullFailure(platform, url, attempts)
       }
@@ -298,7 +304,8 @@ export class ArtifactMissionsMediaTranscriptService {
           mode: 'retry_same_payload',
           max_attempts: 1,
           stop_after_same_error: true,
-          reason: 'The Social Analysis transcript pull can succeed on retry even when native captions are blocked.',
+          reason:
+            'The Social Analysis transcript pull can succeed on retry even when native captions are blocked.',
         },
         correction: {
           summary: 'Retry extract_url_transcript once with the same URL.',
