@@ -178,12 +178,22 @@ describe('shell artifact viewer state', () => {
     expect(useShellStore.getState().artifactViewer.target).toBeNull()
   })
 
-  it('clamps the resizable viewer width', () => {
+  it('enforces a minimum artifact width and does not cap growth', () => {
     useShellStore.getState().setArtifactViewerWidth(100)
-    expect(useShellStore.getState().artifactViewer.width).toBe(360)
+    expect(useShellStore.getState().artifactViewer.width).toBe(420)
 
-    useShellStore.getState().setArtifactViewerWidth(1000)
-    expect(useShellStore.getState().artifactViewer.width).toBe(720)
+    useShellStore.getState().setArtifactViewerWidth(1400)
+    expect(useShellStore.getState().artifactViewer.width).toBe(1400)
+
+    useShellStore.getState().setArtifactViewerWidth(2000)
+    expect(useShellStore.getState().artifactViewer.width).toBe(2000)
+  })
+
+  it('opens editors at a usable width instead of the legacy 480 pane', () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1920 })
+    useShellStore.setState({ artifactViewer: { target: null, width: 480 } })
+    useShellStore.getState().openArtifactViewer(target)
+    expect(useShellStore.getState().artifactViewer.width).toBe(960)
   })
 })
 

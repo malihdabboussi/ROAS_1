@@ -1,3 +1,27 @@
+## 2026-08-15 - [UI] Shell artifact viewer still uses lightweight previews for ads, offers, and adjacent entity types
+
+Status: Open
+
+Found while: Home chat side-pane full editors (docs/presentations/funnels/media)
+
+Evidence: `ShellArtifactViewerAdapter` routes presentations to `PresentationFullPreview` and funnels/websites to `FunnelFullPreview`, but remaining entity types (`ad`, `ad_set`, `ad_campaign`, `offer`, `form`, `theme`, `email`, `sequence`, `avatar`, `blog_post`, `social_post`) still fall through `ShellDocumentArtifactViewer` → `DeliverableEntityPreviewAdapter`.
+
+Needed work: Mount the matching canonical editors in the shell column the same way presentations/funnels now do, instead of the cramped deliverable preview adapters.
+
+Reason not done now: The requested side-pane work was docs, decks, funnels, images, and in-pane breadcrumbs; those types already have FullMode/media/doc hosts. Ads/offers need their own editor hosts and campaign ids.
+
+## 2026-08-15 - [DOCS] claude-chatgpt-shell.md contains a concatenated duplicate of the whole feature doc
+
+Status: Open
+
+Found while: Syncing artifact-viewer data-flow items 12–13
+
+Evidence: `documentation/features/claude-chatgpt-shell.md` restarts at line 162 with a second `# Claude/ChatGPT shell` heading and `Last Modified: 2026-08-11`, so Data Flow exists twice.
+
+Needed work: Keep one canonical copy and delete the stale duplicate block.
+
+Reason not done now: Deduping risks dropping unique later bullets; the in-scope change only needed the live item 12 text updated.
+
 ## 2026-08-15 - [ARCH] conversation-list-query.ts is over the 400 LOC helper limit
 
 Status: Open

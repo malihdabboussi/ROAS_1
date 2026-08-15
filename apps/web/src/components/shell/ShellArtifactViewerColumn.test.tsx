@@ -60,6 +60,24 @@ describe('ShellArtifactViewerColumn', () => {
     fireEvent.pointerUp(document)
   })
 
+  it('lets the divider grow past the old 720 maximum', () => {
+    render(
+      <ShellArtifactViewerColumn besideConversation>
+        <div>Artifact body</div>
+      </ShellArtifactViewerColumn>,
+    )
+
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Resize artifact viewer' }), {
+      clientX: 800,
+    })
+    const moveEvent = new Event('pointermove', { bubbles: true })
+    Object.defineProperty(moveEvent, 'clientX', { value: 50 })
+    fireEvent(document, moveEvent)
+
+    expect(useShellStore.getState().artifactViewer.width).toBe(1230)
+    fireEvent.pointerUp(document)
+  })
+
   it('omits the resize divider when the artifact replaces the work area', () => {
     render(
       <ShellArtifactViewerColumn besideConversation={false}>

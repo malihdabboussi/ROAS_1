@@ -9,6 +9,7 @@ import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { selectConversation } from '@/features/studio/services/chat.service'
 import { initConversationTitleAutogen } from '@/features/studio/services/conversation-title-scheduler'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
+import { ARTIFACT_VIEWER_WIDTH_MIN } from '@/lib/artifacts/artifact-viewer-layout'
 import { cn } from '@/lib/utils/cn'
 import { ShellChatMenu } from './ShellChatMenu'
 import { ShellScreenChatPrompt } from './ShellScreenChatPrompt'
@@ -21,8 +22,7 @@ const DRAWER_SLIDE_MS = 300
 const DRAWER_COLLAPSE_EDGE_TOLERANCE = 24
 const HISTORY_COLLAPSE_THRESHOLD = 96
 const RIGHT_PANEL_WIDTH = 288
-/** Matches ARTIFACT_VIEWER_WIDTH_MIN in use-shell-store — the artifact column stays readable. */
-const ARTIFACT_BESIDE_MIN_WIDTH = 360
+const ARTIFACT_BESIDE_MIN_WIDTH = ARTIFACT_VIEWER_WIDTH_MIN
 /** Dragging this far past the artifact's stop reads as intent to dismiss it. */
 const ARTIFACT_COLLAPSE_OVERSHOOT = 180
 

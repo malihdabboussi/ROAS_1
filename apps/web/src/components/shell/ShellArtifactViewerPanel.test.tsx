@@ -1,8 +1,14 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
 import { ShellArtifactViewerPanel } from './ShellArtifactViewerPanel'
 import { useShellStore } from './use-shell-store'
+
+vi.mock('./ShellArtifactViewerBrowse', () => ({
+  ShellArtifactViewerBrowse: ({ view }: { view: string }) => (
+    <div data-testid={`artifact-browse-${view}`} />
+  ),
+}))
 
 const target: ShellArtifactViewerTarget = {
   id: 'doc-1',
@@ -27,12 +33,30 @@ describe('ShellArtifactViewerPanel', () => {
       </ShellArtifactViewerPanel>,
     )
 
-    expect(screen.getByRole('link', { name: 'Q3 Launch' }).getAttribute('href')).toBe(
-      target.contextUrl,
-    )
-    expect(screen.getByText('/ files /')).toBeTruthy()
+    expect(screen.getByRole('navigation', { name: 'Artifact path' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Q3 Launch' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'files' })).toBeTruthy()
     expect(screen.getByText('Launch brief')).toBeTruthy()
     expect(screen.getByText('Existing renderer')).toBeTruthy()
+  })
+
+  it('opens the library and files browsers in the same panel', () => {
+    render(
+      <ShellArtifactViewerPanel target={target}>
+        <div>Existing renderer</div>
+      </ShellArtifactViewerPanel>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Q3 Launch' }))
+    expect(screen.getByTestId('artifact-browse-library')).toBeTruthy()
+    expect(screen.queryByText('Existing renderer')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'files' }))
+    expect(screen.getByTestId('artifact-browse-files')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Launch brief' }))
+    expect(screen.getByText('Existing renderer')).toBeTruthy()
+    expect(screen.queryByTestId('artifact-browse-library')).toBeNull()
   })
 
   it('renders one canonical open target as a direct action and closes through shell state', () => {
@@ -97,7 +121,7 @@ describe('ShellArtifactViewerPanel', () => {
       </ShellArtifactViewerPanel>,
     )
 
-    expect(screen.getByText(/A very long artifact title/).parentElement).toHaveClass(
+    expect(screen.getByRole('navigation', { name: 'Artifact path' })).toHaveClass(
       'min-w-0',
       'flex-1',
       'truncate',

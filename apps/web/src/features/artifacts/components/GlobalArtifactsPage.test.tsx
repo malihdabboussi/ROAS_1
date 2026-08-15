@@ -158,6 +158,13 @@ describe('GlobalArtifactsPage', () => {
     expect(screen.getByTestId('artifact-card-grid')).toBeInTheDocument()
   })
 
+  it('embeds in the shell viewer without the page heading', async () => {
+    render(<GlobalArtifactsPage embedded />)
+
+    expect(await screen.findByText('Webinar registration copy')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'ALL ARTIFACTS' })).toBeNull()
+  })
+
   it('reloads the global results when the search changes', async () => {
     render(<GlobalArtifactsPage />)
 

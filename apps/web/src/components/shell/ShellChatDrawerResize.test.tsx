@@ -1,6 +1,7 @@
 import type { MouseEvent, ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { ARTIFACT_VIEWER_WIDTH_MIN } from '@/lib/artifacts/artifact-viewer-layout'
 import { ShellChatDrawer } from './ShellChatDrawer'
 import { useShellMenuDock } from './use-shell-menu-dock'
 import { useShellStore } from './use-shell-store'
@@ -156,11 +157,13 @@ describe('ShellChatDrawer resize', () => {
       clientX: 420,
     })
     const moveEvent = new Event('pointermove', { bubbles: true })
-    Object.defineProperty(moveEvent, 'clientX', { value: 1000 })
+    // Past the artifact stop, but inside the 180px dismiss overshoot.
+    Object.defineProperty(moveEvent, 'clientX', { value: 900 })
     fireEvent(document, moveEvent)
 
-    // 1200 viewport - 360 artifact minimum = 840 hard stop.
-    expect(useShellStore.getState().chatDrawer.width).toBeLessThanOrEqual(840)
+    expect(useShellStore.getState().chatDrawer.width).toBeLessThanOrEqual(
+      1200 - ARTIFACT_VIEWER_WIDTH_MIN,
+    )
     fireEvent.pointerUp(document)
     expect(useShellStore.getState().artifactViewer.target).not.toBeNull()
   })

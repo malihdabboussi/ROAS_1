@@ -1,5 +1,15 @@
 # Changelog - August 15, 2026
 
+## [2026-08-15 16:20] - [FIX]
+
+What: The Home chat artifact pane now opens the real editors at an editor-sized width, can be dragged past the old 720px cap, and uses its Artifacts / files / title crumbs to browse inside that same right pane.
+
+Why: Opening a document or deck from chat dropped into a cramped lightweight viewer that could not grow with the chat column, so the presentation, designer, image, document, and funnel editors were unusable beside chat.
+
+Impact: Docs, presentations, funnels, and media keep their canonical editors in the side view; the pane has a 420px minimum and no maximum, so chat can shrink as the editor grows; breadcrumb clicks stay on the right instead of navigating away.
+
+Files: `apps/web/src/lib/artifacts/artifact-viewer-layout.ts`, `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/shell/ShellArtifactViewerColumn.tsx`, `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`, `apps/web/src/components/shell/ShellArtifactViewerBrowse.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `apps/web/src/components/deliverables/PresentationFullPreview.tsx`, `apps/web/src/features/artifacts/components/GlobalArtifactsPage.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-15 15:51] - [FEATURE]
 
 What: Recents Filter now uses the same campaign/space picker as chat. Clicking a campaign or client name selects it without a nested Space, and the Filter row plus Choose Space control show that real name instead of "Space".
@@ -102,68 +112,3 @@ Files:
 - apps/web/src/components/shell/ShellRightPanel.tsx
 - apps/web/src/components/shell/ShellRightPanelConnections.tsx
 - apps/web/src/components/shell/ShellRightPanelSources.tsx
-
-## [2026-08-15 11:40] - [FIX]
-
-What: Empty Slack Brain imports now skip Atlas and toast "Nothing to save from that Slack period." instead of "Atlas could not ingest/process".
-
-Why: Formatted Slack windows with no usable messages were still sent to Atlas, which reported failure, and the Brain notifier showed that raw error.
-
-Impact: Empty or chatter-only Slack periods no longer retry as failed imports or show a red Atlas toast.
-
-Files: `packages/api-shared/src/utils/brain-import-job-status.ts`, `apps/api/src/modules/brain/services/brain-import-jobs-execution.base.ts`, `apps/agent-api/src/modules/brain-import-runtime/services/brain-import-runtime.service.ts`, `apps/web/src/features/brain/components/brain-import-job-toast.ts`, `apps/web/src/features/brain/components/BrainImportJobNotifier.tsx`
-
-## [2026-08-15 15:20] - [STYLE]
-
-What: Made the work summary sections collapsible and turned the stack into one banded surface.
-
-- Added `ShellRightPanelSection`, a shared collapsible band. The chevron sits beside the label rather than at the far edge, so the disclosure reads as part of the heading and the right edge stays reserved for the section's own action.
-- Kept the accessible accordion pattern: the `h3` wraps the trigger button, so each section is still reachable by heading navigation as well as by tab, and carries `aria-expanded` / `aria-controls`.
-- Moved horizontal padding off the scroll container and onto each section so dividers run the full card width while content stays inset. That is what makes the four sections read as one surface instead of a column of loose lists.
-- Collapse state is hoisted into `ShellRightPanel`, which returns null while closed but stays mounted — so a section the user collapsed is still collapsed when they reopen the panel.
-- `ShellRightPanelConnections` now renders through the shared section and takes `open` / `onOpenChange`. Its scope picker deliberately renders outside the collapsible body: collapsing must not unmount it, or both the "+" and the shell's open-picker request would break. Adding from a collapsed section expands it first so the new row is not added out of sight.
-- Fixed a broken import introduced in the earlier density pass: `LucideIcon` was being imported from `react` instead of `lucide-react`, which failed typecheck.
-
-Why: The panel's sections were fixed-height lists with no way to fold away the ones you are not using, so a long Tasks list pushed everything else out of reach. Collapsibility is also the structural prerequisite for adding a task-progress section, which needs to coexist with Outputs/Sources/Tasks without making the card unusable.
-
-Impact: Sections fold independently and remember their state; the card sizes to content. No API or data change. 220 shell tests pass, including three new Connections tests and a new collapse test; lint and typecheck clean on the touched files. Verified running locally: collapse, reflow, persistence across panel close/reopen, and no console errors.
-
-Files:
-
-- apps/web/src/components/shell/ShellRightPanelSection.tsx (new)
-- apps/web/src/components/shell/ShellRightPanel.tsx
-- apps/web/src/components/shell/ShellRightPanel.test.tsx
-- apps/web/src/components/shell/ShellRightPanelConnections.tsx
-- apps/web/src/components/shell/ShellRightPanelConnections.test.tsx (new)
-
-## [2026-08-15 16:05] - [FEATURE]
-
-What: Added a Progress section to the work summary showing mission steps and human gates for the current thread.
-
-- New `ShellRightPanelProgress`: lists missions started from this conversation, each expanding to its numbered steps.
-- Steps come from `mission_subtasks` in `sort_order`, numbered by position. Status uses the existing `formatSubtaskStatusLabel`, including the dependency-blocked "Waiting" derivation.
-- Human gates surface as "Your turn". A gate is `assignee_type === 'human'`; it is *currently* holding the mission up when `status === 'awaiting_human'`. There is no `requires_approval` flag in the schema — the assignee is the gate — so `isHumanGateSubtask` / `isBlockingHumanGate` name that rule in one place instead of restating the predicate at each call site.
-- The mission row summarises as `done/total`, or "Your turn" when any step is gated, so a blocked mission reads as blocked without expanding it.
-- Steps are fetched per mission and only on expand. A conversation can start several missions, and loading every step list up front would fire N requests for rows nobody asked to see.
-- Promoted `formatSubtaskStatusLabel` from `features/mission-control/components/subtask-status.ts` to `@/lib/missions`, updating its three importers. The shell cannot import feature internals per `documentation/frontend-shared-surfaces.md`, and copying the mapping would have been a third copy.
-- Added `extractConversationMissionRows`, which reads mission receipts from the thread.
-
-Why: The panel's "Tasks" section shows completed tool calls scraped from message blocks — useful, but it is not mission progress, and mission steps were only visible by leaving the chat for Mission Control. Missions already carry ordered steps, statuses, and human gates; none of it was reachable from the conversation that started them.
-
-Impact: A thread that starts a mission now shows its steps and what is waiting on you, without leaving the chat. Read-only — approving a gate still happens in Mission Control. No API or schema change; uses the existing `GET /api/missions/:id/subtasks`. 324 tests pass across shell, mission-control, and lib/missions, including 9 new tests. Lint and typecheck clean.
-
-Note on scoping: `missions` has no `conversation_id`, so "missions started here" is derived from the receipt messages the chat already writes. This is exact for missions launched from the thread; a mission started elsewhere in the same space will not appear.
-
-Files:
-
-- apps/web/src/components/shell/ShellRightPanelProgress.tsx (new)
-- apps/web/src/components/shell/ShellRightPanelProgress.test.tsx (new)
-- apps/web/src/components/shell/ShellRightPanel.tsx
-- apps/web/src/components/shell/shell-conversation-summary.ts
-- apps/web/src/components/shell/shell-conversation-summary.test.ts
-- apps/web/src/components/shell/shell-right-panel.messages.config.ts
-- apps/web/src/lib/missions/subtask-status.ts (moved from features/mission-control)
-- apps/web/src/lib/missions/index.ts
-- apps/web/src/features/mission-control/components/MissionListCell.tsx
-- apps/web/src/features/mission-control/components/dialogs/SubtaskDetailContent.tsx
-- apps/web/src/features/mission-control/components/dialogs/SubtasksSection.tsx
