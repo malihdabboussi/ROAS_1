@@ -118,6 +118,34 @@ describe('conversation list query', () => {
     ).toEqual(['active-slack', 'archived'])
   })
 
+  it('filters Recents by campaign, and by space when a nested space is selected', () => {
+    const rows = [
+      conversation({ id: 'yasir-general', campaign_id: 'campaign-yasir' }),
+      conversation({
+        id: 'yasir-workshop',
+        campaign_id: 'campaign-yasir',
+        metadata: { space_id: 'space-workshop' },
+      }),
+      conversation({ id: 'other-client', campaign_id: 'campaign-other' }),
+    ]
+
+    expect(
+      filterConversationsForHistory(rows, {
+        ...DEFAULT_CHAT_HISTORY_FILTERS,
+        campaignId: 'campaign-yasir',
+      }).map((row) => row.id),
+    ).toEqual(['yasir-general', 'yasir-workshop'])
+
+    expect(
+      filterConversationsForHistory(rows, {
+        ...DEFAULT_CHAT_HISTORY_FILTERS,
+        campaignId: 'campaign-yasir',
+        spaceId: 'space-workshop',
+        scopeLabel: 'Speak Like a CEO Workshop',
+      }).map((row) => row.id),
+    ).toEqual(['yasir-workshop'])
+  })
+
   it('keeps only the newest history row for the same meeting', () => {
     const rows = [
       conversation({
@@ -168,6 +196,9 @@ describe('conversation list query', () => {
       type: 'all',
       groupBy: 'none',
       leadingIcon: 'logo',
+      campaignId: null,
+      spaceId: null,
+      scopeLabel: null,
     })
   })
 })

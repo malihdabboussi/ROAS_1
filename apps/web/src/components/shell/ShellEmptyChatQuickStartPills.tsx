@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { ChatComposerTryTip } from '@/components/global-chat/components/ChatComposerTryTip'
 import { QuickMissionsHubHost } from '@/components/global-chat/components/QuickMissionsHubHost'
 import {
   isShellMissionCreateItem,
@@ -26,6 +27,7 @@ export function ShellEmptyChatQuickStartPills({
         open={missionOpen ? true : undefined}
         onClose={() => setMissionOpen(false)}
       />
+      {variant === 'standalone' ? <ChatComposerTryTip /> : null}
       <div
         className={cn(
           variant === 'shelf'

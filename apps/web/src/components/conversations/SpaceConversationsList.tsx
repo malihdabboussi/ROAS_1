@@ -5,7 +5,6 @@ import {
   getConversationAgentDisplay,
   getConversationDisplayTitle,
   groupConversationsForHistory,
-  isConversationPinned,
   type ChatHistoryGroupBy,
   type ChatHistoryLeadingIcon,
   type Conversation,
@@ -271,7 +270,6 @@ export function SpaceConversationsList({
 
   const renderConversationRow = (conversation: Conversation, sectionId: string) => {
     const selected = conversation.id === selectedConversationId
-    const pinned = isConversationPinned(conversation)
     const renaming = renameId === conversation.id
     const showSubtitle =
       sectionId === 'today' ||
@@ -284,7 +282,6 @@ export function SpaceConversationsList({
         conversation={conversation}
         section={sectionId}
         selected={selected}
-        pinned={pinned}
         renaming={renaming}
         renameDraft={renameDraft}
         showSubtitle={showSubtitle}

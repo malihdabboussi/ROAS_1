@@ -10,6 +10,10 @@ vi.mock('@/components/global-chat/components/QuickMissionsHubHost', () => ({
   ),
 }))
 
+vi.mock('@/components/global-chat/components/ChatComposerTryTip', () => ({
+  ChatComposerTryTip: () => <div data-testid="composer-try-tip" />,
+}))
+
 describe('shell empty chat prompts', () => {
   afterEach(() => {
     cleanup()
@@ -55,9 +59,16 @@ describe('shell empty chat prompts', () => {
     render(<ShellEmptyChatQuickStartPills onSelect={vi.fn()} />)
 
     expect(screen.getByRole('group', { name: 'Quick starts' })).toHaveClass('justify-start')
+    expect(screen.getByTestId('composer-try-tip')).toBeInTheDocument()
     for (const quickStart of SHELL_CREATE_QUICK_STARTS) {
       expect(screen.getAllByRole('button', { name: quickStart.label })).toHaveLength(1)
     }
+  })
+
+  it('hides the Try tip in the compact shelf', () => {
+    render(<ShellEmptyChatQuickStartPills onSelect={vi.fn()} variant="shelf" />)
+
+    expect(screen.queryByTestId('composer-try-tip')).toBeNull()
   })
 
   it('routes every active composer creation to the canonical tool context', () => {

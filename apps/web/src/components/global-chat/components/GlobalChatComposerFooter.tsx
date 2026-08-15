@@ -35,7 +35,7 @@ export function GlobalChatComposerFooter() {
   const menu = useGlobalChatWorkContextMenu()
 
   useEffect(() => {
-    if (!menu.open) return
+    if (!menu.open && !workContext.campaignId) return
     let cancelled = false
     void Promise.all([fetchCampaigns(), fetchPrograms()])
       .then(([campaignRows, programRows]) => {
@@ -53,7 +53,7 @@ export function GlobalChatComposerFooter() {
     return () => {
       cancelled = true
     }
-  }, [menu.open])
+  }, [menu.open, workContext.campaignId])
 
   const spacePicker = useMemo<ChatInputPlusMenuSpacePickerConfig>(() => {
     const programNameById = new Map(programs.map((program) => [program.id, program.name]))
@@ -94,13 +94,21 @@ export function GlobalChatComposerFooter() {
     (surface) => surface !== 'general',
   )
   const selectedSpaceTitle = spaces.find((space) => space.id === workContext.spaceId)?.title
-  const attachmentLabel = workContextAttachmentLabel(workContext, selectedSpaceTitle)
+  const selectedCampaignName = campaigns.find(
+    (campaign) => campaign.id === workContext.campaignId,
+  )?.name
+  const attachmentLabel = workContextAttachmentLabel(
+    workContext,
+    selectedSpaceTitle,
+    selectedCampaignName,
+  )
   const activeAgentName =
     roster.find((entry) => entry.agent_key === activeAgentKey)?.display_name?.trim() ||
     activeAgentKey
   const attachmentDescription = workContextAttachmentDescription(workContext, {
     activeAgentName,
     spaceTitle: selectedSpaceTitle,
+    campaignName: selectedCampaignName,
   })
 
   const portalTarget = typeof document === 'undefined' ? null : document.body

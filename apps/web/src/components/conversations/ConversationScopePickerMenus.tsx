@@ -21,7 +21,10 @@ export function ConversationScopePickerMenus({
   activeCampaignId,
   loadingCampaignId,
   activeSpaces,
+  allowClear = false,
+  onSelectAll,
   onSelectGeneral,
+  onSelectCampaign,
   onOpenCampaignSpaces,
   onSelectSpace,
 }: {
@@ -38,14 +41,19 @@ export function ConversationScopePickerMenus({
   activeCampaignId: string | null
   loadingCampaignId: string | null
   activeSpaces: ConversationScopeSpace[] | undefined
+  allowClear?: boolean
+  onSelectAll?: () => void
   onSelectGeneral: () => void
-  onOpenCampaignSpaces: (campaignId: string, row: HTMLButtonElement) => void
+  onSelectCampaign: (campaignId: string) => void
+  onOpenCampaignSpaces: (campaignId: string, row: HTMLElement) => void
   onSelectSpace: (campaignId: string, spaceId: string) => void
 }) {
+  const allSelected = allowClear && !selectedCampaignId && !selectedSpaceId
   return (
     <>
       <div
         ref={campaignMenuRef}
+        data-conversation-scope-menu=""
         className="dropdown-menu-solid z-dropdown fixed flex flex-col overflow-hidden py-1"
         style={{
           top: menuLayout?.campaign.top ?? 0,
@@ -56,13 +64,25 @@ export function ConversationScopePickerMenus({
         }}
       >
         <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
+          {allowClear && onSelectAll ? (
+            <button
+              type="button"
+              className="body-3 hover:bg-hover-subtle text-foreground flex w-full items-center gap-2 px-3 py-2 text-left transition-colors"
+              onClick={onSelectAll}
+            >
+              <span className="min-w-0 flex-1 truncate">All</span>
+              {allSelected ? <Check className="icon-xs shrink-0" aria-hidden /> : null}
+            </button>
+          ) : null}
           <button
             type="button"
             className="body-3 hover:bg-hover-subtle text-foreground flex w-full items-center gap-2 px-3 py-2 text-left transition-colors"
             onClick={onSelectGeneral}
           >
             <span className="min-w-0 flex-1 truncate">General</span>
-            {!selectedSpaceId && selectedCampaignId === (generalCampaign?.id ?? null) ? (
+            {!selectedSpaceId &&
+            selectedCampaignId != null &&
+            selectedCampaignId === generalCampaign?.id ? (
               <Check className="icon-xs shrink-0" aria-hidden />
             ) : null}
           </button>
@@ -71,24 +91,15 @@ export function ConversationScopePickerMenus({
               {group.label ? (
                 <p className="hub-menu-section-label !mb-0 px-3 pt-2">{group.label}</p>
               ) : null}
-              {group.campaigns.map((campaign) => {
-                const selected = campaign.id === selectedCampaignId
-                return (
-                  <button
-                    key={campaign.id}
-                    type="button"
-                    className="body-3 hover:bg-hover-subtle text-foreground flex w-full items-center gap-2 px-3 py-2 text-left transition-colors"
-                    onClick={(event) => onOpenCampaignSpaces(campaign.id, event.currentTarget)}
-                    onFocus={(event) => onOpenCampaignSpaces(campaign.id, event.currentTarget)}
-                  >
-                    <span className="min-w-0 flex-1 truncate">
-                      {campaign.name ?? 'Untitled campaign'}
-                    </span>
-                    {selected ? <Check className="icon-xs shrink-0" aria-hidden /> : null}
-                    <ChevronRight className="icon-xs text-muted-foreground shrink-0" aria-hidden />
-                  </button>
-                )
-              })}
+              {group.campaigns.map((campaign) => (
+                <ConversationScopeCampaignRow
+                  key={campaign.id}
+                  campaign={campaign}
+                  selected={campaign.id === selectedCampaignId}
+                  onSelectCampaign={onSelectCampaign}
+                  onOpenCampaignSpaces={onOpenCampaignSpaces}
+                />
+              ))}
             </div>
           ))}
         </div>
@@ -96,6 +107,7 @@ export function ConversationScopePickerMenus({
       {activeCampaignId && menuLayout?.spaces ? (
         <div
           ref={spacesMenuRef}
+          data-conversation-scope-menu=""
           className="dropdown-menu-solid z-dropdown fixed flex flex-col overflow-hidden py-1"
           style={{
             top: menuLayout.spaces.top,
@@ -131,5 +143,50 @@ export function ConversationScopePickerMenus({
         </div>
       ) : null}
     </>
+  )
+}
+
+function ConversationScopeCampaignRow({
+  campaign,
+  selected,
+  onSelectCampaign,
+  onOpenCampaignSpaces,
+}: {
+  campaign: Campaign
+  selected: boolean
+  onSelectCampaign: (campaignId: string) => void
+  onOpenCampaignSpaces: (campaignId: string, row: HTMLElement) => void
+}) {
+  const campaignName = campaign.name ?? 'Untitled campaign'
+  const openSpaces = (row: HTMLElement) => onOpenCampaignSpaces(campaign.id, row)
+  return (
+    <div
+      className="hover:bg-hover-subtle flex w-full items-center"
+      onMouseEnter={(event) => openSpaces(event.currentTarget)}
+    >
+      <button
+        type="button"
+        className="body-3 text-foreground flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left transition-colors"
+        onClick={() => onSelectCampaign(campaign.id)}
+        onFocus={(event) => {
+          const row = event.currentTarget.parentElement
+          if (row) openSpaces(row)
+        }}
+      >
+        <span className="min-w-0 flex-1 truncate">{campaignName}</span>
+        {selected ? <Check className="icon-xs shrink-0" aria-hidden /> : null}
+      </button>
+      <button
+        type="button"
+        className="text-muted-foreground hover:text-foreground px-3 py-2"
+        aria-label={`Show spaces in ${campaignName}`}
+        onClick={(event) => {
+          const row = event.currentTarget.parentElement
+          if (row) openSpaces(row)
+        }}
+      >
+        <ChevronRight className="icon-xs shrink-0" aria-hidden />
+      </button>
+    </div>
   )
 }

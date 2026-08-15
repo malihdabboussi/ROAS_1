@@ -22,6 +22,7 @@ import {
   CONVERSATION_SCOPE_MENU_HEIGHT_MIN,
   CONVERSATION_SCOPE_MENU_WIDTH,
   CONVERSATION_SCOPE_VIEWPORT_MARGIN,
+  conversationScopeDisplayLabel,
   findConversationScopeSpace,
   placeSpacesMenuFromRowRect,
   readConversationSpaceId,
@@ -55,6 +56,7 @@ export const ConversationScopePicker = forwardRef<
     onOpenCampaign,
     bannerAnchorRef,
     hideTrigger = false,
+    allowClear = false,
   } = props
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const cacheVersion = useCampaignCacheVersion()
@@ -76,7 +78,7 @@ export const ConversationScopePicker = forwardRef<
   const openFromBannerRef = useRef(false)
   const campaignMenuRef = useRef<HTMLDivElement>(null)
   const spacesMenuRef = useRef<HTMLDivElement>(null)
-  const [hoverRowEl, setHoverRowEl] = useState<HTMLButtonElement | null>(null)
+  const [hoverRowEl, setHoverRowEl] = useState<HTMLElement | null>(null)
   useImperativeHandle(
     ref,
     () => ({
@@ -201,14 +203,19 @@ export const ConversationScopePicker = forwardRef<
   const selectedSpace =
     findConversationScopeSpace(spacesByCampaign, selectedSpaceId) ?? fallbackSpace
 
+  const selectedName = conversationScopeDisplayLabel({
+    campaignName: selectedCampaign?.name,
+    spaceTitle: selectedSpace?.title,
+    campaignId: selectedCampaignId,
+    spaceId: selectedSpaceId,
+    emptyLabel: allowClear ? 'All' : 'General',
+  })
   const label = selectedSpace
     ? selectedCampaign
       ? `${selectedCampaign.name} / ${selectedSpace.title}`
       : selectedSpace.title
-    : (selectedCampaign?.name ?? (selectedSpaceId ? 'Space' : 'General'))
-  const displayLabel = compact
-    ? (selectedSpace?.title ?? selectedCampaign?.name ?? (selectedSpaceId ? 'Space' : 'General'))
-    : label
+    : selectedName
+  const displayLabel = compact ? selectedName : label
 
   const loadSpacesForCampaign = useCallback(
     (campaignId: string) => {
@@ -255,7 +262,21 @@ export const ConversationScopePicker = forwardRef<
           )
           onConversationUpdated?.(updated)
         }
-        onScopeChanged?.({ campaignId: nextCampaignId, spaceId: nextSpaceId })
+        const campaignName =
+          nextCampaignId == null
+            ? null
+            : (campaigns.find((campaign) => campaign.id === nextCampaignId)?.name ?? null)
+        const spaceTitle =
+          nextSpaceId == null
+            ? null
+            : (findConversationScopeSpace(spacesByCampaign, nextSpaceId)?.title ??
+              (fallbackSpace?.id === nextSpaceId ? fallbackSpace.title : null))
+        onScopeChanged?.({
+          campaignId: nextCampaignId,
+          spaceId: nextSpaceId,
+          campaignName,
+          spaceTitle,
+        })
         setOpen(false)
       } catch (error) {
         console.error('Move conversation scope failed:', error)
@@ -264,7 +285,15 @@ export const ConversationScopePicker = forwardRef<
         setSaving(false)
       }
     },
-    [conversation, onConversationUpdated, onScopeChanged, saving],
+    [
+      campaigns,
+      conversation,
+      fallbackSpace,
+      onConversationUpdated,
+      onScopeChanged,
+      saving,
+      spacesByCampaign,
+    ],
   )
 
   const activeSpaces = activeCampaignId ? spacesByCampaign[activeCampaignId] : undefined
@@ -290,7 +319,10 @@ export const ConversationScopePicker = forwardRef<
         activeCampaignId={activeCampaignId}
         loadingCampaignId={loadingCampaignId}
         activeSpaces={activeSpaces}
+        allowClear={allowClear}
+        onSelectAll={allowClear ? () => void handleSelectScope(null, null) : undefined}
         onSelectGeneral={() => void handleSelectScope(generalCampaign?.id ?? null, null)}
+        onSelectCampaign={(campaignId) => void handleSelectScope(campaignId, null)}
         onOpenCampaignSpaces={(campaignId, row) => {
           setHoverRowEl(row)
           loadSpacesForCampaign(campaignId)

@@ -16,6 +16,13 @@ export interface ConversationScopePickerHandle {
   openMenuFromBanner: () => void
 }
 
+export interface ConversationScopeSelection {
+  campaignId: string | null
+  spaceId: string | null
+  campaignName?: string | null
+  spaceTitle?: string | null
+}
+
 export interface ConversationScopePickerProps {
   conversation: Conversation | null
   campaignId?: string | null
@@ -23,12 +30,31 @@ export interface ConversationScopePickerProps {
   showLabel?: boolean
   compact?: boolean
   onConversationUpdated?: (conversation: Conversation) => void
-  onScopeChanged?: (scope: { campaignId: string | null; spaceId: string | null }) => void
+  onScopeChanged?: (scope: ConversationScopeSelection) => void
   /** Opens the linked campaign in the work area (pop-out control). */
   onOpenCampaign?: (campaignId: string) => void
   bannerAnchorRef?: RefObject<HTMLButtonElement | null>
   /** Render only the menus; the parent owns the visible trigger. */
   hideTrigger?: boolean
+  /** Adds an All row that clears campaign and space. Recents/history filters use this. */
+  allowClear?: boolean
+}
+
+/** Visible name for a selected campaign or space. Never leave a generic Space label when a real name exists. */
+export function conversationScopeDisplayLabel(input: {
+  campaignName?: string | null
+  spaceTitle?: string | null
+  campaignId?: string | null
+  spaceId?: string | null
+  emptyLabel: string
+}): string {
+  const spaceTitle = input.spaceTitle?.trim()
+  if (spaceTitle) return spaceTitle
+  const campaignName = input.campaignName?.trim()
+  if (campaignName) return campaignName
+  if (input.spaceId) return 'Space'
+  if (input.campaignId) return 'Campaign'
+  return input.emptyLabel
 }
 
 export type ConversationScopeMenuGeom = { top: number; left: number; maxHeight: number }

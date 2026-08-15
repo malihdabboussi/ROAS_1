@@ -19,7 +19,10 @@ export function ShellChatMenuActiveFilters({
   onFiltersChange: (filters: ChatHistoryFilterState) => void
 }) {
   const hasActiveFilters =
-    Boolean(historyAgentKey) || filters.type !== 'all' || filters.lastActivity !== 'all'
+    Boolean(historyAgentKey) ||
+    filters.type !== 'all' ||
+    filters.lastActivity !== 'all' ||
+    Boolean(filters.campaignId || filters.spaceId)
   if (!hasActiveFilters) return null
 
   return (
@@ -36,6 +39,16 @@ export function ShellChatMenuActiveFilters({
             .join(' · ')}
           tone="purple"
           onRemove={() => onAgentKeyChange(null)}
+        />
+      ) : null}
+      {filters.campaignId || filters.spaceId ? (
+        <ChatHistoryFilterChip
+          label={filters.scopeLabel?.trim() || 'Campaign'}
+          description={`Campaign: ${filters.scopeLabel?.trim() || 'Campaign'}`}
+          tone="green"
+          onRemove={() =>
+            onFiltersChange({ ...filters, campaignId: null, spaceId: null, scopeLabel: null })
+          }
         />
       ) : null}
       {filters.type !== 'all' ? (

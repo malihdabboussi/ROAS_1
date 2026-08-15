@@ -2,14 +2,13 @@
 
 import { useEffect, useRef, useState, type MouseEvent, type RefObject } from 'react'
 import { CalendarDays, MoreHorizontal, Pin } from 'lucide-react'
-import { ConversationChannelIcon } from '@/components/chat/ConversationChannelIcon'
 import { Tooltip } from '@/components/ui/tooltip'
 import {
+  conversationHasIdentityIcon,
   formatCompactRelativeTime,
-  getAgentInitial,
-  getConversationAgentDisplay,
   getConversationDisplayTitle,
   getConversationLastActivityAt,
+  isConversationPinned,
   isMeetingConversation,
   needsGeneratedConversationTitle,
   resolveConversationActivity,
@@ -20,49 +19,13 @@ import {
 } from '@/lib/conversations'
 import { cn } from '@/lib/utils/cn'
 import { ConversationActivityIndicator } from './ConversationActivityIndicator'
+import { ConversationRowLeadingIcon } from './ConversationRowLeadingIcon'
 
 export interface ConversationRowRuntimeState {
   isRunning: boolean
   phase?: 'idle' | 'thinking' | 'executing' | 'streaming' | 'complete'
   toolLabel?: string | null
   statusMessage?: string | null
-}
-
-function ConversationRowLeadingIcon({
-  conversation,
-  leadingIcon,
-  activity,
-  agentByKey,
-}: {
-  conversation: Conversation
-  leadingIcon: ChatHistoryLeadingIcon
-  activity: ConversationActivity
-  agentByKey?: Record<string, ConversationAgentDisplay>
-}) {
-  if (leadingIcon === 'none') return null
-  if (leadingIcon === 'agent') {
-    return <ConversationAgentAvatar conversation={conversation} agentByKey={agentByKey} />
-  }
-  if (leadingIcon === 'status') {
-    return <ConversationActivityIndicator activity={activity} />
-  }
-  // logo — identity mark in one slot; activity dots stay separate
-  const source = conversation.metadata?.source
-  if (source === 'slack' || source === 'telegram') {
-    return (
-      <span aria-label={source === 'slack' ? 'Slack conversation' : 'Telegram conversation'}>
-        <ConversationChannelIcon metadata={conversation.metadata} />
-      </span>
-    )
-  }
-  if (isMeetingConversation(conversation)) {
-    return (
-      <span aria-label="Meeting conversation">
-        <CalendarDays className="text-muted-foreground icon-xs" aria-hidden />
-      </span>
-    )
-  }
-  return null
 }
 
 function ConversationRowTitle({
@@ -180,29 +143,6 @@ function formatConversationUpdatedAt(value: string | null): string {
   })
 }
 
-function ConversationAgentAvatar({
-  conversation,
-  agentByKey,
-}: {
-  conversation: Conversation
-  agentByKey?: Record<string, ConversationAgentDisplay>
-}) {
-  const agent = getConversationAgentDisplay(conversation, agentByKey)
-  return (
-    <Tooltip label={agent.name} side="right">
-      <span className="border-subtle bg-secondary icon-md flex shrink-0 items-center justify-center overflow-hidden rounded-full">
-        {agent.avatarUrl ? (
-          <img src={agent.avatarUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <span className="typo-xs text-muted-foreground font-semibold">
-            {getAgentInitial(agent.name)}
-          </span>
-        )}
-      </span>
-    </Tooltip>
-  )
-}
-
 function ConversationRowSubtitle({ runtimeState }: { runtimeState?: ConversationRowRuntimeState }) {
   if (!runtimeState?.isRunning) return null
   const phase = runtimeState.phase ?? 'idle'
@@ -221,7 +161,6 @@ interface SpaceConversationRowProps {
   conversation: Conversation
   section: string
   selected: boolean
-  pinned: boolean
   renaming: boolean
   renameDraft: string
   showSubtitle: boolean
@@ -245,8 +184,8 @@ interface SpaceConversationRowProps {
 
 export function SpaceConversationRow({
   conversation,
+  section,
   selected,
-  pinned,
   renaming,
   renameDraft,
   showSubtitle,
@@ -268,7 +207,13 @@ export function SpaceConversationRow({
 }: SpaceConversationRowProps) {
   const resolvedLeadingIcon: ChatHistoryLeadingIcon =
     leadingIcon ?? (allAgentsMode ? 'agent' : 'logo')
-  const showLeadingSlot = resolvedLeadingIcon !== 'none'
+  const hasIdentityIcon =
+    resolvedLeadingIcon === 'agent' ||
+    (resolvedLeadingIcon === 'logo' && conversationHasIdentityIcon(conversation))
+  const showLeadingSlot =
+    resolvedLeadingIcon === 'agent' ||
+    resolvedLeadingIcon === 'status' ||
+    (resolvedLeadingIcon === 'logo' && conversationHasIdentityIcon(conversation))
   const activity = resolveConversationActivity({
     status: conversation.status,
     needsAction: conversation.needs_action,
@@ -276,7 +221,14 @@ export function SpaceConversationRow({
     isUnread: conversation.is_unread,
   })
   const leadingRendersActivity = resolvedLeadingIcon === 'status'
-  const showSeparateActivity = activity !== 'idle' && !leadingRendersActivity
+  const overlayActivityOnIdentity =
+    hasIdentityIcon && activity !== 'idle' && !showConversationTypeIcon
+  const showSeparateActivity =
+    activity !== 'idle' &&
+    !leadingRendersActivity &&
+    !overlayActivityOnIdentity &&
+    !showConversationTypeIcon
+  const showInlinePin = isConversationPinned(conversation) && section !== 'pinned'
   const activityAt = getConversationLastActivityAt(conversation)
   const relativeAge = formatCompactRelativeTime(activityAt)
   return (
@@ -336,7 +288,7 @@ export function SpaceConversationRow({
           className="min-h-8 min-w-0 flex-1 text-left md:min-h-0"
         >
           <div className="gap-spacing-1 flex min-w-0 items-center">
-            {pinned ? <Pin className="text-muted-foreground icon-xs shrink-0" /> : null}
+            {showInlinePin ? <Pin className="text-muted-foreground icon-xs shrink-0" /> : null}
             <ConversationRowTitle
               conversation={conversation}
               emphasized={activity === 'needs_action' || activity === 'unread'}

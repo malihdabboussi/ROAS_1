@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveConversationActivity } from './conversation-activity'
+import { conversationHasIdentityIcon, resolveConversationActivity } from './conversation-activity'
 
 describe('resolveConversationActivity', () => {
   it('uses action, working, unread, then idle priority', () => {
@@ -9,6 +9,15 @@ describe('resolveConversationActivity', () => {
     expect(resolveConversationActivity({ isRunning: true, isUnread: true })).toBe('working')
     expect(resolveConversationActivity({ isUnread: true })).toBe('unread')
     expect(resolveConversationActivity({})).toBe('idle')
+  })
+
+  it('treats Slack, Telegram, and meeting threads as identity-icon rows', () => {
+    expect(conversationHasIdentityIcon({ metadata: { source: 'slack' } })).toBe(true)
+    expect(conversationHasIdentityIcon({ metadata: { source: 'telegram' } })).toBe(true)
+    expect(
+      conversationHasIdentityIcon({ metadata: { context_type: 'meeting', meeting_item_id: 'm1' } }),
+    ).toBe(true)
+    expect(conversationHasIdentityIcon({ metadata: {} })).toBe(false)
   })
 
   it('keeps archived conversations idle', () => {
