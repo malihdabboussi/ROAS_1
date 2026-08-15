@@ -1,15 +1,12 @@
 import { useChatStore } from '@/features/studio/store/use-chat-store'
+import { invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import {
   setConversationPinned,
   withConversationPinned,
   type Conversation,
 } from '@/lib/conversations'
-import { invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 
-export function mergeStoreConversationRow(
-  row: Conversation,
-  storeRow: Conversation,
-): Conversation {
+export function mergeStoreConversationRow(row: Conversation, storeRow: Conversation): Conversation {
   return {
     ...row,
     ...storeRow,

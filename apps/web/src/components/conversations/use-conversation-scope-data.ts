@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { campaignListCacheKey, fetchCampaigns, type Campaign } from '@/lib/campaigns'
 import { getCachedCampaigns, prefetchOrgCampaigns } from '@/lib/home'
-import { fetchSpaceById } from '@/lib/spaces'
 import { fetchPrograms, type Program } from '@/lib/programs'
+import { fetchSpaceById } from '@/lib/spaces'
 import {
   findConversationScopeSpace,
   type ConversationScopeSpace,

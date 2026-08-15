@@ -118,6 +118,35 @@ Impact: Reply seeds target the visible conversation and are accepted by that con
 
 Files: `apps/web/src/features/studio/components/MessageBubble.tsx`, `apps/web/src/features/studio/components/MessageBubble.test.tsx`, `apps/web/src/features/studio/components/message-bubble/MessageBubbleOrderedBlocks.tsx`.
 
+## 2026-08-14 11:55 - [FIX]
+
+What: Create-menu Funnel/Ad/Script/Sequence/Social now open in-chat type cards instead of pasting a prompt; chat funnel previews use the full funnel designer; HTML funnels no longer compile through the TSX mini-iframe; sending no longer silently assigns an existing thread to General.
+
+Why: Clicking Funnel filled the composer with text, the shell viewer clipped funnel pages into a document preview, live HTML-as-TSX iframes were crashing the tab, and unassigned chats jumped to General on send.
+
+Impact: Users pick a funnel type from embedded cards, open the real designer from the summary funnel, Programs/chat lists stay lighter, and existing chats keep their campaign unless the user changes it.
+
+Files: `apps/web/src/components/shell/CreateTypePickerCard.tsx`, `apps/web/src/components/shell/shell-create-type-pickers.ts`, `apps/web/src/components/shell/shell-create-menu.config.ts`, `apps/web/src/components/shell/use-shell-chat-quick-start.ts`, `apps/web/src/components/deliverables/FunnelFullPreview.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `apps/web/src/features/studio/lib/funnel-view-mode.util.ts`, `apps/web/src/lib/artifacts/use-funnel-page-preview.ts`, `apps/web/src/features/studio/components/ChatInterface.tsx`, `apps/web/src/components/shell/ShellRightPanelFiles.tsx`.
+
+## 2026-08-14 13:35 - [FIX]
+
+What: Funnel page cards stay in final outputs instead of collapsing onto the parent funnel id, and agent tools that resolve `campaign_name`/`campaign_id` no longer overwrite an already attached conversation campaign.
+
+Why: After a funnel turn, page artifacts disappeared into one summary card; talking about one campaign could silently rewrite the thread onto another.
+
+Impact: Chat keeps each funnel page visible after the answer, and Campaign & space stays put unless the user moves it or the thread had no campaign yet.
+
+Files: `apps/web/src/features/studio/components/message-bubble/message-bubble.utils.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-legacy-session-campaign.service.ts`.
+
+## 2026-08-14 14:15 - [FIX]
+
+What: Funnel preview page order uses `sort_order`, Create type-picker quick starts include `id`/`icon`, and existing-thread send null-checks the conversation id.
+
+Why: The funnel PR preview failed Next typecheck on `FunnelFullPreview`, and local typecheck also failed on the new picker object and persisted-conversation guard.
+
+Impact: Chat funnel preview and Create type cards typecheck so the web deploy can complete.
+
+Files: `apps/web/src/components/deliverables/FunnelFullPreview.tsx`, `apps/web/src/components/shell/use-shell-chat-quick-start.ts`, `apps/web/src/features/studio/components/ChatInterface.tsx`.
 ## 2026-08-14 13:59 - [FIX]
 
 What: Taught Pixel to click through a live funnel, submit a labeled test lead, and inspect the real confirmation page, and turned on the production browser so that path can actually run.

@@ -16,6 +16,7 @@ import { useCampaignCacheVersion } from '@/lib/home'
 import { useOrgStore } from '@/lib/org'
 import { fetchSpaces } from '@/lib/spaces'
 import { positionFloatingMenuFromAnchorRect } from '@/lib/ui'
+import { groupScopeCampaignsByProgram } from './conversation-scope-groups'
 import {
   CONVERSATION_SCOPE_MENU_HEIGHT_CAP,
   CONVERSATION_SCOPE_MENU_HEIGHT_MIN,
@@ -29,9 +30,8 @@ import {
   type ConversationScopePickerProps,
   type ConversationScopeSpace,
 } from './conversation-scope-picker-layout'
-import { ConversationScopeTrigger } from './ConversationScopeTrigger'
 import { ConversationScopePickerMenus } from './ConversationScopePickerMenus'
-import { groupScopeCampaignsByProgram } from './conversation-scope-groups'
+import { ConversationScopeTrigger } from './ConversationScopeTrigger'
 import {
   useConversationScopeCampaigns,
   useConversationScopeFallbackSpace,

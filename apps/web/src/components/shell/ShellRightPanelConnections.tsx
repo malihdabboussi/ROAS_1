@@ -10,10 +10,10 @@ import {
   useConversationScopeCampaigns,
   useConversationScopeFallbackSpace,
 } from '@/components/conversations/use-conversation-scope-data'
-import { useCampaignCacheVersion } from '@/lib/home'
-import { useOrgStore } from '@/lib/org'
 import type { Conversation } from '@/lib/conversations'
 import { assignConversationScope } from '@/lib/conversations'
+import { useCampaignCacheVersion } from '@/lib/home'
+import { useOrgStore } from '@/lib/org'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
 
 export function ShellRightPanelConnections({
@@ -93,7 +93,9 @@ export function ShellRightPanelConnections({
         </button>
       </div>
       {rows.length === 0 ? (
-        <p className="body-3 text-muted-foreground">{SHELL_RIGHT_PANEL_MESSAGES.connectionsEmpty}</p>
+        <p className="body-3 text-muted-foreground">
+          {SHELL_RIGHT_PANEL_MESSAGES.connectionsEmpty}
+        </p>
       ) : (
         <ul className="space-y-spacing-1">
           {rows.map((row) => (

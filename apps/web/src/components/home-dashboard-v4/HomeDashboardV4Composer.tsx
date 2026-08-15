@@ -10,12 +10,14 @@ import {
   type ConversationScopePickerHandle,
 } from '@/components/conversations'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
+import { CreateTypePickerCard } from '@/components/shell/CreateTypePickerCard'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
 import { ShellEmptyChatQuickStartPills } from '@/components/shell/ShellEmptyChatQuickStartPills'
 import { useShellChatQuickStart } from '@/components/shell/use-shell-chat-quick-start'
 import { SuggestedNextMoves } from '@/features/home/components/SuggestedNextMoves'
 import { HOME_TOAST_ERRORS } from '@/features/home/config/home-toast-errors.config'
 import { useOrgStore } from '@/features/org/store/use-org-store'
+import { FUNNEL_TYPE_PICKER_VISUALS } from '@/features/spaces/components/artifacts/funnels/funnel-type-picker-visuals'
 import { CreateSpaceModal } from '@/features/spaces/components/CreateSpaceModal'
 import { cachedSpaces, useCachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
 import { normalizeSpaceLegacyViews } from '@/features/spaces/lib/view-customization-merge'
@@ -275,6 +277,16 @@ export function HomeDashboardV4Composer() {
     <QuickMissionsLauncherProvider>
       <div className="w-full max-w-3xl">
         <ShellEmptyChatQuickStartPills onSelect={quickStart.selectQuickStart} />
+        {quickStart.pendingPicker ? (
+          <CreateTypePickerCard
+            catalog={quickStart.pendingPicker}
+            visuals={
+              quickStart.pendingPickerId === 'funnel' ? FUNNEL_TYPE_PICKER_VISUALS : undefined
+            }
+            onSelect={quickStart.selectPickerOption}
+            onDismiss={quickStart.clearPicker}
+          />
+        ) : null}
         <ChatInput
           onSend={handleSend}
           disabled={sending}

@@ -18,13 +18,9 @@ export function PinnedConversationSection({
 }) {
   return (
     <div className="px-spacing-3 pb-spacing-1">
-      <ConversationHubSectionHeader
-        label={group.label}
-        expanded={expanded}
-        onToggle={onToggle}
-      />
+      <ConversationHubSectionHeader label={group.label} expanded={expanded} onToggle={onToggle} />
       {expanded ? (
-        <div className="flex flex-col gap-spacing-1">
+        <div className="gap-spacing-1 flex flex-col">
           {group.items.map((conversation) => renderConversationRow(conversation, group.id))}
         </div>
       ) : null}

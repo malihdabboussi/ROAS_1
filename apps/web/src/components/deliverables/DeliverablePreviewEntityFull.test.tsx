@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import type React from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { EntityFullPreview, FunnelFullPreview } from './DeliverablePreviewEntityFull'
 
@@ -16,6 +17,35 @@ vi.mock('@/lib/artifacts', () => ({
 vi.mock('@/features/studio/components/preview/FunnelHtmlPreview', () => ({
   FunnelHtmlPreview: ({ bundle }: { bundle: { page: { id: string } } }) => (
     <div data-testid="funnel-html-preview">{bundle.page.id}</div>
+  ),
+}))
+
+vi.mock('@/features/studio/components/preview/FunnelFullModeShell', () => ({
+  FunnelFullModeShell: ({
+    pages,
+    onPageChange,
+    renderPreview,
+  }: {
+    pages: Array<{ id: string; name: string }>
+    onPageChange: (pageId: string) => void
+    renderPreview: (props: {
+      mode: string
+      onElementSelect: () => void
+      onDrawingEvent: () => void
+    }) => React.ReactNode
+  }) => (
+    <div>
+      {pages.map((page) => (
+        <button key={page.id} type="button" onClick={() => onPageChange(page.id)}>
+          {page.name}
+        </button>
+      ))}
+      {renderPreview({
+        mode: 'preview',
+        onElementSelect: () => undefined,
+        onDrawingEvent: () => undefined,
+      })}
+    </div>
   ),
 }))
 

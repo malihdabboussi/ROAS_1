@@ -67,10 +67,7 @@ export function isConversationPinned(conversation: Conversation): boolean {
   return (metadata as { pinned?: unknown }).pinned === true
 }
 
-export function withConversationPinned(
-  conversation: Conversation,
-  pinned: boolean,
-): Conversation {
+export function withConversationPinned(conversation: Conversation, pinned: boolean): Conversation {
   return {
     ...conversation,
     metadata: { ...conversation.metadata, pinned },

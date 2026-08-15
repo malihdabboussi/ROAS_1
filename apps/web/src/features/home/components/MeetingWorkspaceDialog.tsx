@@ -5,7 +5,6 @@ import { X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
-import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { MeetingCallStatusSection } from '@/features/home/components/MeetingCallStatusSection'
 import { MeetingRenamableTitle } from '@/features/home/components/MeetingRenamableTitle'
 import { MeetingWorkspaceBody } from '@/features/home/components/MeetingWorkspaceBody'
@@ -31,6 +30,7 @@ import {
   type MeetingSnippet,
   type MeetingWorkspaceBundle,
 } from '@/features/home/services/meeting-workspace-api'
+import { useChatStore } from '@/lib/chat/studio-chat-runtime-adapter'
 import { renameConversation } from '@/lib/conversations/conversations-api'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { updateSpaceItem } from '@/lib/spaces'

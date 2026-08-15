@@ -274,7 +274,10 @@ export function SpaceConversationsList({
     const pinned = isConversationPinned(conversation)
     const renaming = renameId === conversation.id
     const showSubtitle =
-      sectionId === 'today' || sectionId === 'pinned' || sectionId === 'recents' || groupBy === 'none'
+      sectionId === 'today' ||
+      sectionId === 'pinned' ||
+      sectionId === 'recents' ||
+      groupBy === 'none'
     return (
       <SpaceConversationRow
         key={conversation.id}

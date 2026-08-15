@@ -23,6 +23,7 @@ import {
   type GlobalChatSeedDetail,
   type GlobalChatVoiceStartDetail,
 } from '@/components/global-chat/store/use-global-chat-store'
+import { CreateTypePickerCard } from '@/components/shell/CreateTypePickerCard'
 import { findShellCreateMenuItem } from '@/components/shell/shell-create-menu.config'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
 import { ShellEmptyChatQuickStartPills } from '@/components/shell/ShellEmptyChatQuickStartPills'
@@ -34,6 +35,7 @@ import {
   useBrainLiveSession,
   type BrainLiveScope,
 } from '@/features/brain/hooks/use-brain-live-session'
+import { FUNNEL_TYPE_PICKER_VISUALS } from '@/features/spaces/components/artifacts/funnels/funnel-type-picker-visuals'
 import { RateLimitCard } from '@/features/studio/components/chat/RateLimitCard'
 import { StatusIndicator } from '@/features/studio/components/chat/StatusIndicator'
 import { StreamInterruptedBar } from '@/features/studio/components/chat/StreamInterruptedBar'
@@ -1949,16 +1951,20 @@ export function SpaceVibeyChatPanel({
       setMode('chat')
 
       if (isAttach) {
+        if (seed.quickStartId) {
+          const createItem = findShellCreateMenuItem(seed.quickStartId)
+          if (createItem?.typePicker) {
+            armQuickStart(createItem)
+            return
+          }
+          if (createItem) armQuickStart(createItem)
+        }
         setComposerRestore({
           text: content,
           documents,
           references,
           nonce: crypto.randomUUID(),
         })
-        if (seed.quickStartId) {
-          const createItem = findShellCreateMenuItem(seed.quickStartId)
-          if (createItem) armQuickStart(createItem)
-        }
         return
       }
 
@@ -2466,6 +2472,18 @@ export function SpaceVibeyChatPanel({
                       !isLoadingMessages &&
                       !selectedConversationReadOnly ? (
                         <ShellEmptyChatQuickStartPills onSelect={quickStart.selectQuickStart} />
+                      ) : null}
+                      {quickStart.pendingPicker ? (
+                        <CreateTypePickerCard
+                          catalog={quickStart.pendingPicker}
+                          visuals={
+                            quickStart.pendingPickerId === 'funnel'
+                              ? FUNNEL_TYPE_PICKER_VISUALS
+                              : undefined
+                          }
+                          onSelect={quickStart.selectPickerOption}
+                          onDismiss={quickStart.clearPicker}
+                        />
                       ) : null}
                       <ComposerInputStack
                         stackActive={isStreaming && !selectedConversationReadOnly}

@@ -177,7 +177,10 @@ function countToolBlocks(blocks: MessageContentBlock[]): number {
 }
 
 function finalOutputBlockKey(block: FinalOutputBlock): string {
-  if (block.type === 'artifact_preview') return `artifact:${block.artifactType}:${block.artifactId}`
+  if (block.type === 'artifact_preview') {
+    const pageKey = block.funnelPageId ? `:page:${block.funnelPageId}` : ''
+    return `artifact:${block.artifactType}:${block.artifactId}${pageKey}`
+  }
   if (block.type === 'document_card') {
     return `document:${block.spaceItemId ?? block.documentId ?? block.id}`
   }

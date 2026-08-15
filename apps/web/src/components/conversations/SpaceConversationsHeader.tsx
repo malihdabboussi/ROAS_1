@@ -76,7 +76,8 @@ export function SpaceConversationsHeader({
       if (
         compactInlineSearchRef.current?.contains(event.target as Node) ||
         compactSearchRowRef.current?.contains(event.target as Node)
-      ) return
+      )
+        return
       onCompactSearchOpenChange(false)
       onQueryChange('')
     }
@@ -307,7 +308,10 @@ export function SpaceConversationsHeader({
           data-compact-conversation-search
           className="mt-spacing-1 relative w-full"
         >
-          <Search className="icon-left-center text-muted-foreground icon-sm pointer-events-none" aria-hidden />
+          <Search
+            className="icon-left-center text-muted-foreground icon-sm pointer-events-none"
+            aria-hidden
+          />
           <input
             type="search"
             value={query}

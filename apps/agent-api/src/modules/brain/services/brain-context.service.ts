@@ -131,17 +131,13 @@ export class BrainContextService {
         parts.push(`- [${m.memory_type}] ${m.content}`)
       }
     }
-
     this.support.appendSnapshotSections(parts, 'USER BRAIN', directSnapshots, graphSnapshots)
-
     if (parts.length === 0) return ''
-
     this.logger.debug(
       `Injected user brain context: ${memories.length} memories, ${directSnapshots.length} direct snapshots, ${graphSnapshots.length} graph snapshots${useSemantic ? ' (semantic+graph)' : ''}`,
     )
     return parts.join('\n')
   }
-
   async buildAgentBrainContext(
     userId: string,
     agentKey: string,
@@ -150,9 +146,7 @@ export class BrainContextService {
     precomputedEmbedding?: PrecomputedEmbedding,
   ): Promise<string> {
     const { brainId } = await this.resolveAgentBrainPresence(userId, agentKey, orgId)
-
     if (!brainId) return ''
-
     const trimmedQuery = query?.trim()
     if (trimmedQuery && this.retrieval) {
       return this.support
@@ -173,14 +167,11 @@ export class BrainContextService {
           return INSUFFICIENT_CONTEXT_STATUS
         })
     }
-
     const useSemantic = !!trimmedQuery
     const billing = { userId, orgId }
-
     let skEntries: SkRow[]
     let directSnapshots: SnapshotRow[]
     let graphSnapshots: SnapshotRow[]
-
     if (useSemantic) {
       const embedding = await this.support.getQueryEmbedding(
         trimmedQuery,
@@ -201,10 +192,8 @@ export class BrainContextService {
             limit: Math.max(SNAPSHOT_LIMIT, 8),
           }),
         ])
-
         const skIds = ((skRes.data ?? []) as Array<{ id: string }>).map((r) => r.id)
         skEntries = skIds.length > 0 ? await this.support.fetchSkWithRecency(skIds, brainId) : []
-
         const semanticSeeds = (
           (snapRes.data ?? []) as Array<{ id: string; similarity: number }>
         ).map((r) => ({ id: r.id, score: Number(r.similarity ?? 0) }))
@@ -220,11 +209,8 @@ export class BrainContextService {
       directSnapshots = await this.support.fetchAgentBrainTopNSnapshots(brainId)
       graphSnapshots = []
     }
-
     skEntries.sort(sortByRecency)
-
     const parts: string[] = []
-
     if (skEntries.length) {
       parts.push('AGENT BRAIN — Specific Knowledge:')
       for (const e of skEntries) {
@@ -232,7 +218,6 @@ export class BrainContextService {
         parts.push(`- [${e.entry_type}]${domainTag} ${e.title}: ${e.content}`)
       }
     }
-
     const spotlightEmbedding = await this.support.resolvePrecomputedEmbedding(precomputedEmbedding)
     const spotlightContext = await this.spotlight.buildBrainSpotlightContext(
       brainId,
@@ -243,17 +228,13 @@ export class BrainContextService {
       spotlightEmbedding,
     )
     if (spotlightContext) parts.unshift(spotlightContext)
-
     this.support.appendSnapshotSections(parts, 'AGENT BRAIN', directSnapshots, graphSnapshots)
-
     if (parts.length === 0) return ''
-
     this.logger.debug(
       `Injected agent brain context for ${agentKey}: ${skEntries.length} SK entries, ${directSnapshots.length} direct snapshots, ${graphSnapshots.length} graph snapshots${useSemantic ? ' (semantic+graph)' : ''}`,
     )
     return parts.join('\n')
   }
-
   async resolveAgentBrainPresence(
     userId: string,
     agentKey: string,

@@ -18,11 +18,9 @@ const mocks = vi.hoisted(() => ({
   toggleMeetingActionStatus: vi.fn(),
   updateMeetingActionStatus: vi.fn(),
 }))
-
 vi.mock('@/lib/artifacts', () => ({
   openDocumentInShell: mocks.openDocumentInShell,
 }))
-
 vi.mock('@/features/home/services/meeting-workspace-api', () => ({
   endMeetingCall: mocks.endMeetingCall,
   fetchMeetingWorkspace: mocks.fetchMeetingWorkspace,
@@ -30,7 +28,6 @@ vi.mock('@/features/home/services/meeting-workspace-api', () => ({
   toggleMeetingActionStatus: mocks.toggleMeetingActionStatus,
   updateMeetingActionStatus: mocks.updateMeetingActionStatus,
 }))
-
 vi.mock('@/features/home/lib/sync-agenda-fathom-recording', () => ({
   syncAgendaFathomRecordingToWorkspace: vi.fn().mockResolvedValue(false),
 }))
@@ -52,7 +49,7 @@ vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
     }),
 }))
 
-vi.mock('@/features/studio/store/use-chat-store', () => ({
+vi.mock('@/lib/chat/studio-chat-runtime-adapter', () => ({
   useChatStore: Object.assign(
     (selector: (state: { activeConversationId: string | null }) => unknown) =>
       selector({ activeConversationId: mocks.activeConversationId }),

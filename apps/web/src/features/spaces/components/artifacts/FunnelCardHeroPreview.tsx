@@ -9,16 +9,17 @@ const FUNNEL_CARD_HERO_H = 'h-44'
 
 export function FunnelCardHeroPreview({ funnelId }: { funnelId: string }) {
   const page = useFunnelPagePreview(funnelId, undefined)
+  const showLiveTsx = Boolean(page?.code && page.sourceMode !== 'html_bundle')
 
   return (
     <div
       className={`relative w-full shrink-0 overflow-hidden border-b border-[var(--border)] bg-[var(--color-hover-subtle)] ${FUNNEL_CARD_HERO_H}`}
     >
-      {page ? (
+      {showLiveTsx && page ? (
         <TsxMiniIframe code={page.code} css={page.css ?? ''} title="Funnel hero preview" />
       ) : (
         <div className="flex h-full items-center justify-center">
-          <LayoutTemplate className="h-6 w-6 animate-pulse text-[var(--color-muted-foreground)]" />
+          <LayoutTemplate className="h-6 w-6 text-[var(--color-muted-foreground)]" />
         </div>
       )}
     </div>

@@ -18,6 +18,7 @@ export function FunnelArtifactInlinePreview({
   onClick: () => void
 }) {
   const page = useFunnelPagePreview(artifactId, funnelPageId)
+  const showLiveTsx = Boolean(page?.code && page.sourceMode !== 'html_bundle')
 
   return (
     <button
@@ -29,11 +30,11 @@ export function FunnelArtifactInlinePreview({
         className="border-border bg-muted relative overflow-hidden border-b"
         style={{ height: ARTIFACT_CHAT_PREVIEW_PANE_PX }}
       >
-        {page ? (
+        {showLiveTsx && page ? (
           <TsxMiniIframe code={page.code} css={page.css} title="Funnel preview" />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <LayoutTemplate className="icon-lg text-muted-foreground animate-pulse" />
+            <LayoutTemplate className="icon-lg text-muted-foreground" />
           </div>
         )}
       </div>

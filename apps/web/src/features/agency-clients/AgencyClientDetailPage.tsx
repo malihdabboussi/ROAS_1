@@ -70,7 +70,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
       cancelled = true
     }
   }, [clientId])
-
   const openTasks = useMemo(
     () =>
       workspace?.tasks.filter(
@@ -89,7 +88,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
       ),
     [workspace],
   )
-
   const updateStatus = async (kind: 'task' | 'request', entityId: string, status: string) => {
     if (!workspace) return
     setUpdatingId(entityId)
@@ -121,7 +119,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
       setUpdatingId(null)
     }
   }
-
   const updateClient = async (patch: Record<string, unknown>) => {
     setUpdatingId(clientId)
     setError(null)
@@ -140,7 +137,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
       setUpdatingId(null)
     }
   }
-
   const updateCampaign = async (campaignId: string, patch: CampaignPatch) => {
     setUpdatingId(campaignId)
     setError(null)
@@ -163,7 +159,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
       setUpdatingId(null)
     }
   }
-
   if (loading)
     return (
       <main className="flex min-h-full items-center justify-center">
@@ -178,7 +173,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
         </p>
       </main>
     )
-
   const client = workspace.client
   const tabs: Array<{ id: Tab; label: string; count?: number }> = [
     { id: 'overview', label: 'Overview' },
@@ -186,7 +180,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
     { id: 'tasks', label: 'Tasks', count: openTasks.length },
     { id: 'requests', label: 'Requests', count: openRequests.length },
   ]
-
   return (
     <main className="gap-spacing-6 p-spacing-8 mx-auto flex w-full max-w-7xl flex-col">
       <AgencyWorkspaceBreadcrumb
@@ -245,7 +238,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
           </div>
         </div>
       </header>
-
       {error ? (
         <p className="surface-card body-2 text-destructive rounded-spacing-3 p-spacing-4">
           {error}

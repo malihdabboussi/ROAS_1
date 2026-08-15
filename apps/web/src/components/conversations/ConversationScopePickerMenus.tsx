@@ -3,9 +3,12 @@
 import type { RefObject } from 'react'
 import { Check, ChevronRight, Loader2 } from 'lucide-react'
 import type { Campaign } from '@/lib/campaigns'
-import { CONVERSATION_SCOPE_MENU_WIDTH } from './conversation-scope-picker-layout'
 import type { ConversationScopeCampaignGroup } from './conversation-scope-groups'
-import type { ConversationScopeMenuGeom, ConversationScopeSpace } from './conversation-scope-picker-layout'
+import { CONVERSATION_SCOPE_MENU_WIDTH } from './conversation-scope-picker-layout'
+import type {
+  ConversationScopeMenuGeom,
+  ConversationScopeSpace,
+} from './conversation-scope-picker-layout'
 
 export function ConversationScopePickerMenus({
   campaignMenuRef,

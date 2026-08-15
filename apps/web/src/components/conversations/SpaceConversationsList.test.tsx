@@ -370,7 +370,9 @@ describe('SpaceConversationsList', () => {
     const recentsHeader = screen.getByRole('button', { name: 'Recents' })
     expect(pinnedHeader).toHaveClass('hub-menu-section-label')
     expect(recentsHeader).toHaveClass('hub-menu-section-label')
-    expect(pinnedHeader.compareDocumentPosition(recentsHeader) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(
+      pinnedHeader.compareDocumentPosition(recentsHeader) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
     expect(pinnedHeader.compareDocumentPosition(screen.getByText('ROAS Marketing Strategy'))).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     )

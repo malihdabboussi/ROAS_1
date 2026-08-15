@@ -1,4 +1,5 @@
 'use client'
+
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
@@ -23,12 +24,13 @@ import {
   type ConversationAgentDisplay,
 } from '@/lib/conversations'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
+import { mergeStoreConversationRow, persistConversationPinned } from './shell-chat-menu-pin'
 import { conversationCacheKey, peekConversationCache } from './shell-conversation-cache'
-import { persistConversationPinned, mergeStoreConversationRow } from './shell-chat-menu-pin'
 import { isShellHomeRoute } from './shell-route-policy'
 import { ShellChatMenuActiveFilters } from './ShellChatMenuActiveFilters'
 import { ShellChatMenuFilterControls } from './ShellChatMenuFilterControls'
 import { useShellStore } from './use-shell-store'
+
 const PIXEL_AGENT_KEY = 'vibey'
 export function ShellChatMenu({
   onCollapse,
