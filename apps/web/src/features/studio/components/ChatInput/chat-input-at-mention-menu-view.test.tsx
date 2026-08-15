@@ -1,11 +1,11 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { ChatInputAtMentionMenuView } from './chat-input-at-mention-menu-view'
 import type {
   AtMentionItem,
   StudioArtifactNavRow,
   StudioMediaNavRow,
 } from './chat-input-at-mentions'
-import { ChatInputAtMentionMenuView } from './chat-input-at-mention-menu-view'
 
 afterEach(cleanup)
 
@@ -19,9 +19,7 @@ function atItem(overrides: Partial<AtMentionItem> = {}): AtMentionItem {
   }
 }
 
-function renderAtMenu(
-  overrides: Partial<Parameters<typeof ChatInputAtMentionMenuView>[0]> = {},
-) {
+function renderAtMenu(overrides: Partial<Parameters<typeof ChatInputAtMentionMenuView>[0]> = {}) {
   const artifact = atItem()
   const media = atItem({
     id: 'media-1',
@@ -122,7 +120,14 @@ describe('ChatInputAtMentionMenuView', () => {
     fireEvent.mouseDown(screen.getByRole('button', { name: /back/i }))
     expect(props.onBackFromCrossCampaign).toHaveBeenCalledTimes(1)
 
-    fireEvent.mouseDown(screen.getByRole('button', { name: /launch plan/i }))
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Launch Plan' }))
+    expect(props.onAtSelect).toHaveBeenCalledWith({
+      id: 'campaign-1',
+      label: 'Launch Plan',
+      section: 'campaign',
+    })
+
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Browse Launch Plan' }))
     expect(props.onCampaignSelect).toHaveBeenCalledWith({ id: 'campaign-1', name: 'Launch Plan' })
   })
 

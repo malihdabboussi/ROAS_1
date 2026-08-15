@@ -13,7 +13,7 @@
     "checkOnStart": false
   },
   "browser": {
-    "enabled": false,
+    "enabled": true,
     "headless": true,
     "noSandbox": true,
     "defaultProfile": "openclaw",

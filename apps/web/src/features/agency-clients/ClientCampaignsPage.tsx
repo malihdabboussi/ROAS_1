@@ -7,6 +7,7 @@ import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { fetchAgencyClientCampaigns, type AgencyClientCampaign } from '@/lib/agency-clients'
 import { cn } from '@/lib/utils/cn'
 import { formatAgencyBudget, formatAgencyDate } from './agency-client-format'
+import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
 
 type ViewMode = 'all' | 'client'
 
@@ -66,6 +67,9 @@ export function ClientCampaignsPage() {
 
   return (
     <main className="gap-spacing-6 p-spacing-8 mx-auto flex w-full max-w-7xl flex-col">
+      <AgencyWorkspaceBreadcrumb
+        items={[{ href: '/clients', label: 'Clients' }, { label: 'Client Campaigns' }]}
+      />
       <header className="gap-spacing-4 flex flex-wrap items-end justify-between">
         <div>
           <p className="typo-section-label text-muted-foreground">Agency workspace</p>
@@ -75,7 +79,7 @@ export function ClientCampaignsPage() {
           </p>
         </div>
         <Link
-          href="/client-campaigns?surface=portal"
+          href="/client-campaigns?surface=portal&portal_path=/campaigns"
           className="button-compact button-glass-purple"
         >
           <PanelRightOpen className="icon-sm" /> Portal
@@ -162,9 +166,13 @@ export function ClientCampaignsPage() {
                       {content}
                     </Link>
                   ) : (
-                    <div key={campaign.id} className={cls}>
+                    <Link
+                      key={campaign.id}
+                      href={`/client-campaigns?surface=portal&portal_path=${encodeURIComponent(`/campaigns/${campaign.id}`)}`}
+                      className={cls}
+                    >
                       {content}
-                    </div>
+                    </Link>
                   )
                 })}
               </div>

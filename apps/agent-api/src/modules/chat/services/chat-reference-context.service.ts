@@ -15,7 +15,7 @@ export interface HighlightedArtifact {
 }
 
 export interface MessageReference {
-  kind: 'artifact' | 'media' | 'mission' | 'conversation' | 'person'
+  kind: 'artifact' | 'media' | 'mission' | 'conversation' | 'person' | 'campaign'
   id: string
   label: string
   type?: string
@@ -323,6 +323,7 @@ export class ChatReferenceContextService {
     const artifactRefs = refs.filter((ref) => ref.kind === 'artifact')
     const conversationRefs = refs.filter((ref) => ref.kind === 'conversation')
     const personRefs = refs.filter((ref) => ref.kind === 'person')
+    const campaignRefs = refs.filter((ref) => ref.kind === 'campaign')
 
     for (const artifact of artifactRefs) {
       const crossNote = artifact.campaign_id ? `, cross-campaign: ${artifact.campaign_id}` : ''
@@ -441,6 +442,10 @@ export class ChatReferenceContextService {
         ].filter(Boolean)
         lines.push(`- [Person] ${name}${details.length ? ` (${details.join(', ')})` : ''}`)
       }
+    }
+
+    for (const ref of campaignRefs) {
+      lines.push(`- [Campaign] ${ref.label} (id: ${ref.id})`)
     }
 
     return lines.join('\n')

@@ -160,7 +160,7 @@ export function SidebarHqHubMenuContent({
 
         <SidebarHqHubMenuNavRow
           href="/clients"
-          active={c.pathname.startsWith('/clients')}
+          active={c.isActive('/clients')}
           icon={<Users />}
           label="Clients"
           onNavigate={() => {
@@ -172,7 +172,7 @@ export function SidebarHqHubMenuContent({
 
         <SidebarHqHubMenuNavRow
           href="/client-campaigns"
-          active={c.pathname.startsWith('/client-campaigns')}
+          active={c.isActive('/client-campaigns')}
           icon={<BriefcaseBusiness />}
           label="Client Campaigns"
           onNavigate={() => {

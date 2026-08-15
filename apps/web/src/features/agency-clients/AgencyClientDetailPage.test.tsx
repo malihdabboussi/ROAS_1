@@ -73,6 +73,10 @@ describe('AgencyClientDetailPage', () => {
     render(<AgencyClientDetailPage clientId="11111111-1111-1111-1111-111111111111" />)
 
     expect(await screen.findByText('CLOGGED CLUB')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Portal' })).toHaveAttribute(
+      'href',
+      '/clients/11111111-1111-1111-1111-111111111111?surface=portal',
+    )
     await waitFor(() => {
       expect(fetchAgencyClient).toHaveBeenNthCalledWith(
         1,
@@ -113,6 +117,10 @@ describe('AgencyClientDetailPage', () => {
     render(<AgencyClientDetailPage clientId="11111111-1111-1111-1111-111111111111" />)
     await screen.findByText('CLOGGED CLUB')
     fireEvent.click(screen.getByRole('button', { name: 'Campaigns 1' }))
+    expect(screen.getByRole('link', { name: 'Open Evergreen leads in Portal' })).toHaveAttribute(
+      'href',
+      '/clients/11111111-1111-1111-1111-111111111111?surface=portal&portal_path=%2Fcampaigns%2F22222222-2222-2222-2222-222222222222',
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Edit campaign Evergreen leads' }))
 
     fireEvent.change(screen.getByLabelText('Budget'), { target: { value: '6500' } })

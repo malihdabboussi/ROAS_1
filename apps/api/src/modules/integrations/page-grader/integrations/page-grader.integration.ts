@@ -151,12 +151,6 @@ export type PageGraderMeetingAgendaResult = {
 
 export type PageGraderMeetingPrepContext = Record<string, unknown>
 
-export type PageGraderEmbedSession = {
-  code: string
-  embed_url: string
-  expires_at: string
-}
-
 export type PageGraderQcActionResult = {
   success: true
   finding_id: string
@@ -358,49 +352,6 @@ export class PageGraderIntegration {
         Boolean(row.id.trim()) &&
         typeof row.name === 'string',
     )
-  }
-
-  async createEmbedSession(
-    baseUrl: string,
-    apiKey: string,
-    input: { email: string; parentOrigin: string; targetPath: string },
-  ): Promise<PageGraderEmbedSession> {
-    const url = `${this.normalizeBaseUrl(baseUrl)}/embed/sessions`
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: this.authHeaders(apiKey),
-      body: JSON.stringify({
-        email: input.email,
-        parent_origin: input.parentOrigin,
-        target_path: input.targetPath,
-      }),
-    })
-    const text = await res.text().catch(() => '')
-    let body: Record<string, unknown> = {}
-    try {
-      body = text ? (JSON.parse(text) as Record<string, unknown>) : {}
-    } catch {
-      body = { error: text }
-    }
-    if (!res.ok) {
-      const message =
-        typeof body.error === 'string' ? body.error : text || res.statusText || 'Request failed'
-      throw new BadRequestException(
-        `The ROAS Portal sign-in could not be prepared (${res.status}): ${message}`,
-      )
-    }
-    if (
-      typeof body.code !== 'string' ||
-      typeof body.embed_url !== 'string' ||
-      typeof body.expires_at !== 'string'
-    ) {
-      throw new BadRequestException('The ROAS Portal returned an invalid sign-in handoff')
-    }
-    return {
-      code: body.code,
-      embed_url: body.embed_url,
-      expires_at: body.expires_at,
-    }
   }
 
   async createWork(

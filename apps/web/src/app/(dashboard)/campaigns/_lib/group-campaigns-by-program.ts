@@ -1,5 +1,5 @@
 import type { Campaign } from '@/lib/campaigns'
-import type { Program } from '@/lib/programs'
+import { programDisplayName, type Program } from '@/lib/programs'
 
 export const UNGROUPED_PROGRAM_KEY = '__ungrouped__'
 
@@ -46,7 +46,7 @@ export function groupCampaignsByProgram(
     groups.push({
       key: program.id,
       program,
-      label: program.name,
+      label: programDisplayName(program),
       sortOrder: program.sort_order,
       campaigns: [...list].sort(campaignSort),
     })

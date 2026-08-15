@@ -120,9 +120,6 @@ describe('ShellTopBar', () => {
     expect(aiChatButton.querySelector('.lucide-panel-left-open')).toBeInTheDocument()
     expect(screen.getByText('AI Chat')).toBeInTheDocument()
     expect(screen.getByText('AI Chat')).toHaveClass('shell-topbar-ai-label')
-    expect(screen.getByLabelText('Work surface').parentElement).toHaveClass(
-      'shell-topbar-desktop-actions',
-    )
   })
 
   it('keeps the breadcrumb and persistent work controls in the global bar for Simple mode', () => {
@@ -133,8 +130,6 @@ describe('ShellTopBar', () => {
     expect(screen.queryByText('Agenda')).not.toBeInTheDocument()
     expect(screen.queryByTitle('Search')).not.toBeInTheDocument()
     expect(screen.queryByText('AI Chat')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Workspace' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Portal' })).toBeInTheDocument()
     expect(screen.getByTitle('Collapse page — chat full screen')).toBeInTheDocument()
   })
 
@@ -218,6 +213,34 @@ describe('ShellTopBar', () => {
     expect(screen.getByText('Delegation Desk')).toBeInTheDocument()
   })
 
+  it('names Clients and Client Campaigns from the active route', () => {
+    mocks.pathname = '/clients'
+    render(<ShellTopBar />)
+    expect(screen.getByText('Clients')).toBeInTheDocument()
+    cleanup()
+
+    mocks.pathname = '/client-campaigns'
+    render(<ShellTopBar />)
+    expect(screen.getByText('Client Campaigns')).toBeInTheDocument()
+  })
+
+  it('names Programs from the route instead of Inbox', () => {
+    mocks.pathname = '/programs/prog-clients'
+    render(<ShellTopBar />)
+    expect(screen.getByText('Programs')).toBeInTheDocument()
+    expect(screen.queryByText('Inbox')).not.toBeInTheDocument()
+  })
+
+  it('keeps the Clients breadcrumb while a chat stays open', () => {
+    mocks.pathname = '/clients'
+    mocks.params = new URLSearchParams('conv=conversation-1')
+    mocks.shellState.chatDrawer = { open: true }
+
+    render(<ShellTopBar />)
+
+    expect(screen.getByText('Clients')).toBeInTheDocument()
+  })
+
   it('does not record chats as work-area pages or show their drawer control', () => {
     mocks.shellState.chatDrawer = { open: true }
     mocks.params = new URLSearchParams('conv=conversation-1')
@@ -240,19 +263,5 @@ describe('ShellTopBar', () => {
         href: '/home?meeting=evt-1',
       }),
     )
-  })
-
-  it('switches between the Workspace and Portal surfaces', () => {
-    render(<ShellTopBar />)
-
-    expect(screen.getByRole('button', { name: 'Workspace' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'Portal' }))
-
-    expect(mocks.shellState.setWorkAreaOpen).toHaveBeenCalledWith(true)
-    expect(mocks.shellState.closeArtifactViewer).toHaveBeenCalledTimes(1)
-    expect(mocks.replace).toHaveBeenCalledWith('/home?surface=portal', { scroll: false })
   })
 })

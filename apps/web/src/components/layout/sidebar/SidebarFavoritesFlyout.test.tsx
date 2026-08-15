@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { SidebarFavoritesFlyout } from './SidebarFavoritesFlyout'
@@ -35,5 +36,26 @@ describe('SidebarFavoritesFlyout', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Remove from favorites' }))
     expect(onToggleCampaignFavorite).toHaveBeenCalledTimes(1)
   })
+
+  it('labels a favorited system Clients Program as Client Spaces and keeps the Program route', () => {
+    render(
+      <SidebarFavoritesFlyout
+        favoritePrograms={[
+          {
+            id: 'prog-clients',
+            name: 'Clients',
+            system_kind: 'clients',
+          } as never,
+        ]}
+        favoriteCampaigns={[]}
+        favoriteSpaces={[]}
+      />,
+    )
+
+    expect(screen.getByRole('link', { name: 'Client Spaces' })).toHaveAttribute(
+      'href',
+      '/programs/prog-clients',
+    )
+    expect(screen.queryByRole('link', { name: 'Clients' })).not.toBeInTheDocument()
+  })
 })
-import type { ComponentProps } from 'react'

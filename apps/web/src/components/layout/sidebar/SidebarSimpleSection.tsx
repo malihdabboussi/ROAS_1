@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  BriefcaseBusiness,
   CalendarDays,
   CheckSquare,
   ChevronLeft,
@@ -15,6 +16,7 @@ import {
   Search,
   SquarePen,
   Star,
+  Users,
 } from 'lucide-react'
 import { ConversationHubSectionHeader } from '@/components/conversations/SpaceConversationSections'
 import { AvatarDropdown } from '@/components/layout/AvatarDropdown'
@@ -42,6 +44,8 @@ const SIMPLE_LINKS = [
   { href: '/home/inbox', label: 'Inbox', icon: Inbox },
   { href: '/home/meetings', label: 'Meetings', icon: CalendarDays },
   { href: '/home/my-tasks', label: 'My Tasks', icon: CheckSquare },
+  { href: '/clients', label: 'Clients', icon: Users },
+  { href: '/client-campaigns', label: 'Client Campaigns', icon: BriefcaseBusiness },
 ] as const
 export function SidebarSimpleSection({
   c,
@@ -118,7 +122,7 @@ export function SidebarSimpleSection({
       <div className="px-spacing-3 py-spacing-1 space-y-0">
         {SIMPLE_LINKS.map((item) => {
           const Icon = item.icon
-          const active = c.pathname.startsWith(item.href)
+          const active = c.isActive(item.href)
           return (
             <Link
               key={item.href}

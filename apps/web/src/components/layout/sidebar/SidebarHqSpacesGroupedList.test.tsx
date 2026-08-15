@@ -94,6 +94,8 @@ vi.mock('@/lib/programs', () => ({
   invalidateProgramsListCache: vi.fn(),
   updateProgram: vi.fn(),
   resolveProgramIconColorId: () => 'purple',
+  programDisplayName: (program: { name: string; system_kind?: string | null }) =>
+    program.system_kind === 'clients' ? 'Client Spaces' : program.name,
 }))
 
 vi.mock('./SidebarHqSpacesMenuLayers', () => ({
@@ -160,7 +162,7 @@ describe('SidebarHqSpacesGroupedList', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByRole('link', { name: 'Clients' }).getAttribute('href')).toBe(
+      expect(screen.getByRole('link', { name: 'Client Spaces' }).getAttribute('href')).toBe(
         '/programs/prog-clients',
       )
     })
