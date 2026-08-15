@@ -6,7 +6,6 @@ import { SlackModule } from '../../slack/slack.module'
 import { SpacesModule } from '../../spaces/spaces.module'
 import { IntegrationConnectionsRepository } from '../repositories/integration-connections.repository'
 import { PageGraderAgencyController } from './controllers/page-grader-agency.controller'
-import { PageGraderEmbedController } from './controllers/page-grader-embed.controller'
 import { PageGraderMeetingController } from './controllers/page-grader-meeting.controller'
 import { PageGraderWebhooksController } from './controllers/page-grader-webhooks.controller'
 import { PageGraderController } from './controllers/page-grader.controller'
@@ -28,7 +27,6 @@ import { PageGraderSlackIngestService } from './services/page-grader-slack-inges
   controllers: [
     PageGraderAgencyController,
     PageGraderController,
-    PageGraderEmbedController,
     PageGraderMeetingController,
     PageGraderWebhooksController,
   ],

@@ -72,9 +72,6 @@ vi.mock('./ShellChatDrawer', () => ({
 vi.mock('./ShellNewChatGreeting', () => ({
   ShellNewChatGreeting: () => <div>New chat greeting</div>,
 }))
-vi.mock('./PageGraderPortalSurface', () => ({
-  PageGraderPortalSurface: () => <div />,
-}))
 vi.mock('./ShellSidebarSlot', () => ({
   ShellSidebarSlot: () => <nav>Workspace menu</nav>,
 }))
