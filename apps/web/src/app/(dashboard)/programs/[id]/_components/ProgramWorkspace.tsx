@@ -4,10 +4,11 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { CampaignCanvasView, CANVAS_VIEW_MESSAGES } from '@/components/canvas'
+import { ShellBreadcrumb } from '@/components/shell/ShellBreadcrumb'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { HierarchyViewBar, TaskWorkViewContent } from '@/components/work-views'
 import { fetchCampaigns, type Campaign } from '@/lib/campaigns'
-import { fetchProgram, updateProgram, type Program } from '@/lib/programs'
+import { fetchProgram, programDisplayName, updateProgram, type Program } from '@/lib/programs'
 import { buildSpaceItemHref } from '@/lib/spaces/space-item-href'
 import {
   normalizeProgramWorkViewId,
@@ -143,6 +144,7 @@ export function ProgramWorkspace() {
 
   const taskView =
     activeView === 'overview' || activeView === 'canvas' ? 'list' : (activeView as TaskWorkViewId)
+  const displayName = programDisplayName(program)
 
   return (
     <main
@@ -152,6 +154,13 @@ export function ProgramWorkspace() {
           : 'scrollbar-hide h-full min-h-0 overflow-y-auto'
       }
     >
+      <ShellBreadcrumb label={`Programs / ${displayName}`}>
+        <nav aria-label="Breadcrumb" className="flex min-w-0 flex-1 items-center overflow-hidden">
+          <span className="text-foreground body-3 truncate font-medium">
+            Programs / {displayName}
+          </span>
+        </nav>
+      </ShellBreadcrumb>
       <div
         className={
           activeView === 'canvas'
@@ -161,9 +170,11 @@ export function ProgramWorkspace() {
       >
         <header className="px-spacing-4 pb-spacing-3 gap-spacing-4 flex flex-wrap items-start justify-between">
           <div>
-            <h1 className="title-h3 text-foreground">{program.name.toUpperCase()}</h1>
+            <h1 className="title-h3 text-foreground">{displayName.toUpperCase()}</h1>
             <p className="body-3 text-muted-foreground mt-spacing-1">
-              Campaigns, spaces, and work across this Program.
+              {program.system_kind === 'clients'
+                ? 'ROAS campaigns and Spaces grouped for agency work. Agency clients themselves live in Clients.'
+                : 'Campaigns, spaces, and work across this Program.'}
             </p>
           </div>
         </header>

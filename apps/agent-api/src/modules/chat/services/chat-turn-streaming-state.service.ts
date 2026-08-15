@@ -52,7 +52,7 @@ interface HighlightedArtifact {
 }
 
 interface MessageReference {
-  kind: 'artifact' | 'media' | 'mission' | 'conversation' | 'person'
+  kind: 'artifact' | 'media' | 'mission' | 'conversation' | 'person' | 'campaign'
   id: string
   label: string
   type?: string
@@ -250,8 +250,7 @@ export class ChatTurnStreamingStateService {
             relationship_kind: input.channelUser.relationship_kind,
             is_connection_owner: input.channelUser.is_connection_owner,
             personal_brain_access: input.channelUser.personal_brain_access,
-            organization_wide_data_access:
-              input.channelUser.organization_wide_data_access,
+            organization_wide_data_access: input.channelUser.organization_wide_data_access,
           }
         : null,
       input.messageScope.space_id,

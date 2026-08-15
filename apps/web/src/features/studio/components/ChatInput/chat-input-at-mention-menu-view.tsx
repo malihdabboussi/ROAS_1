@@ -1,17 +1,17 @@
 import { forwardRef, type CSSProperties, type MouseEvent, type MouseEventHandler } from 'react'
 import { ChevronRight, Globe, Loader2 } from 'lucide-react'
-import {
-  StudioAtMentionLeading,
-  StudioAtMentionTrailingType,
-  StudioAtMoreRowLeadingSpacer,
-  StudioComposerAtTabStrip,
-} from './chat-input-at-menu'
 import type {
   AtMentionItem,
   StudioArtifactNavRow,
   StudioAtMenuTabId,
   StudioMediaNavRow,
 } from './chat-input-at-mentions'
+import {
+  StudioAtMentionLeading,
+  StudioAtMentionTrailingType,
+  StudioAtMoreRowLeadingSpacer,
+  StudioComposerAtTabStrip,
+} from './chat-input-at-menu'
 
 export type ChatInputAtMentionNavSlice =
   | { kind: 'items'; items: AtMentionItem[]; crossCampaignId?: string }
@@ -117,19 +117,36 @@ export const ChatInputAtMentionMenuView = forwardRef<
   ) : navSlice.kind === 'campaigns' ? (
     <div className="py-1">
       {navSlice.items.map((campaign, index) => (
-        <button
+        <div
           key={campaign.id}
-          type="button"
-          onMouseDown={(event) => preventAndRun(event, () => onCampaignSelect(campaign))}
-          onMouseEnter={() => onHighlight(index)}
           className={rowCls(index === atHighlight)}
+          onMouseEnter={() => onHighlight(index)}
         >
-          <Globe className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-          <span className="body-3 text-foreground min-w-0 flex-1 truncate">
-            {campaign.name}
-          </span>
-          <ChevronRight aria-hidden className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-        </button>
+          <button
+            type="button"
+            onMouseDown={(event) =>
+              preventAndRun(event, () =>
+                onAtSelect({
+                  id: campaign.id,
+                  label: campaign.name,
+                  section: 'campaign',
+                }),
+              )
+            }
+            className="gap-spacing-2 flex min-w-0 flex-1 items-center text-left"
+          >
+            <Globe className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+            <span className="body-3 text-foreground min-w-0 flex-1 truncate">{campaign.name}</span>
+          </button>
+          <button
+            type="button"
+            aria-label={`Browse ${campaign.name}`}
+            onMouseDown={(event) => preventAndRun(event, () => onCampaignSelect(campaign))}
+            className="flex h-8 w-8 shrink-0 items-center justify-center"
+          >
+            <ChevronRight aria-hidden className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+          </button>
+        </div>
       ))}
     </div>
   ) : activeTab === 'artifacts' ? (
@@ -196,9 +213,7 @@ export const ChatInputAtMentionMenuView = forwardRef<
             className={`${rowCls(index === atHighlight)} pl-spacing-6`}
           >
             <StudioAtMentionLeading item={nav.item} />
-            <span className="body-3 text-foreground min-w-0 flex-1 truncate">
-              {nav.item.label}
-            </span>
+            <span className="body-3 text-foreground min-w-0 flex-1 truncate">{nav.item.label}</span>
             <StudioAtMentionTrailingType item={nav.item} />
           </button>
         )
@@ -269,9 +284,7 @@ export const ChatInputAtMentionMenuView = forwardRef<
             className={`${rowCls(index === atHighlight)} pl-spacing-6`}
           >
             <StudioAtMentionLeading item={nav.item} />
-            <span className="body-3 text-foreground min-w-0 flex-1 truncate">
-              {nav.item.label}
-            </span>
+            <span className="body-3 text-foreground min-w-0 flex-1 truncate">{nav.item.label}</span>
             <StudioAtMentionTrailingType item={nav.item} />
           </button>
         )
@@ -284,14 +297,14 @@ export const ChatInputAtMentionMenuView = forwardRef<
             <button
               key={`${item.section}:${item.id}`}
               type="button"
-              onMouseDown={(event) => preventAndRun(event, () => onAtSelect(item, sourceCampaignId))}
+              onMouseDown={(event) =>
+                preventAndRun(event, () => onAtSelect(item, sourceCampaignId))
+              }
               onMouseEnter={() => onHighlight(index)}
               className={rowCls(index === atHighlight)}
             >
               <StudioAtMentionLeading item={item} />
-              <span className="body-3 text-foreground min-w-0 flex-1 truncate">
-                {item.label}
-              </span>
+              <span className="body-3 text-foreground min-w-0 flex-1 truncate">{item.label}</span>
               <StudioAtMentionTrailingType item={item} />
             </button>
           ))

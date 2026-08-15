@@ -25,7 +25,12 @@ export function defaultAgentForSurface(surface: GlobalWorkSurface): string {
 }
 
 export function surfaceFromPathname(pathname: string): GlobalWorkSurface {
-  if (pathname.startsWith('/spaces') || pathname.startsWith('/campaigns')) return 'spaces'
+  if (
+    pathname.startsWith('/spaces') ||
+    pathname.startsWith('/campaigns') ||
+    pathname.startsWith('/programs')
+  )
+    return 'spaces'
   if (pathname.startsWith('/brain')) return 'brain'
   if (pathname.startsWith('/team')) return 'team'
   if (pathname.startsWith('/flows')) return 'flows'

@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { Space } from '@/features/spaces/types'
-import type { Program } from '@/lib/programs'
+import { programDisplayName, type Program } from '@/lib/programs'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
 import type { SidebarCampaignRow } from './sidebar-types'
 
@@ -51,7 +51,7 @@ export function SidebarFavoritesFlyout({
   const favorites = [
     ...favoritePrograms.map((program) => ({
       id: `program-${program.id}`,
-      label: program.name,
+      label: programDisplayName(program),
       href: `/programs/${program.id}`,
       icon: FolderKanban,
       onClick: undefined,
@@ -63,9 +63,7 @@ export function SidebarFavoritesFlyout({
       href: `/campaigns/${campaign.id}`,
       icon: Star,
       onClick: undefined,
-      onRemove: onToggleCampaignFavorite
-        ? () => onToggleCampaignFavorite(campaign)
-        : undefined,
+      onRemove: onToggleCampaignFavorite ? () => onToggleCampaignFavorite(campaign) : undefined,
     })),
     ...favoriteSpaces.map((space) => ({
       id: `space-${space.id}`,
@@ -126,7 +124,9 @@ export function SidebarFavoritesFlyout({
                   type="button"
                   className="hub-dock-flyout-row"
                   onClick={() => {
-                    void navigator.clipboard.writeText(`${window.location.origin}${contextItem.href}`)
+                    void navigator.clipboard.writeText(
+                      `${window.location.origin}${contextItem.href}`,
+                    )
                     toast.success('Link copied')
                     setContextItem(null)
                   }}

@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   fetchMeetingWorkspace: vi.fn(),
   openChatDrawer: vi.fn(),
   continueMeetingConversation: vi.fn(),
+  activeConversationId: null as string | null,
   openDocumentInShell: vi.fn(),
   setRailIntent: vi.fn(),
   setWorkAreaOpen: vi.fn(),
@@ -17,11 +18,9 @@ const mocks = vi.hoisted(() => ({
   toggleMeetingActionStatus: vi.fn(),
   updateMeetingActionStatus: vi.fn(),
 }))
-
 vi.mock('@/lib/artifacts', () => ({
   openDocumentInShell: mocks.openDocumentInShell,
 }))
-
 vi.mock('@/features/home/services/meeting-workspace-api', () => ({
   endMeetingCall: mocks.endMeetingCall,
   fetchMeetingWorkspace: mocks.fetchMeetingWorkspace,
@@ -29,7 +28,6 @@ vi.mock('@/features/home/services/meeting-workspace-api', () => ({
   toggleMeetingActionStatus: mocks.toggleMeetingActionStatus,
   updateMeetingActionStatus: mocks.updateMeetingActionStatus,
 }))
-
 vi.mock('@/features/home/lib/sync-agenda-fathom-recording', () => ({
   syncAgendaFathomRecordingToWorkspace: vi.fn().mockResolvedValue(false),
 }))
@@ -49,6 +47,14 @@ vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
       setRailIntent: mocks.setRailIntent,
       continueMeetingConversation: mocks.continueMeetingConversation,
     }),
+}))
+
+vi.mock('@/lib/chat/studio-chat-runtime-adapter', () => ({
+  useChatStore: Object.assign(
+    (selector: (state: { activeConversationId: string | null }) => unknown) =>
+      selector({ activeConversationId: mocks.activeConversationId }),
+    { getState: () => ({ activeConversationId: mocks.activeConversationId }) },
+  ),
 }))
 
 vi.mock('@/lib/campaigns/campaign-api', () => ({
@@ -100,7 +106,10 @@ const baseBundle = {
 describe('MeetingWorkspaceDialog', () => {
   afterEach(() => {
     cleanup()
-    for (const mock of Object.values(mocks)) mock.mockClear()
+    mocks.activeConversationId = null
+    for (const mock of Object.values(mocks)) {
+      if (typeof mock === 'function' && 'mockClear' in mock) mock.mockClear()
+    }
   })
 
   it('shows a meeting loader instead of temporary empty workspace sections', async () => {
@@ -169,6 +178,31 @@ describe('MeetingWorkspaceDialog', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Close meeting workspace' }))
     expect(mocks.clearMeetingContext).toHaveBeenCalled()
+  })
+
+  it('does not steal an unrelated open chat when the meeting workspace mounts', async () => {
+    mocks.activeConversationId = 'other-conversation'
+    mocks.fetchMeetingWorkspace.mockReset()
+    mocks.fetchMeetingWorkspace.mockResolvedValue(baseBundle)
+
+    render(
+      <MeetingWorkspaceDialog
+        spaceId="space-1"
+        meetingItemId="meeting-1"
+        joinUrl={null}
+        fallbackTitle="Strategy call"
+        onBack={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('region', { name: 'Strategy call meeting workspace' }),
+      ).toBeInTheDocument()
+    })
+    expect(mocks.attachMeetingContext).not.toHaveBeenCalled()
+    expect(mocks.openChatDrawer).not.toHaveBeenCalled()
   })
 
   it('ends a live call instead of rejoining', async () => {

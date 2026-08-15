@@ -30,6 +30,7 @@ import {
   type MeetingSnippet,
   type MeetingWorkspaceBundle,
 } from '@/features/home/services/meeting-workspace-api'
+import { useChatStore } from '@/lib/chat/studio-chat-runtime-adapter'
 import { renameConversation } from '@/lib/conversations/conversations-api'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { updateSpaceItem } from '@/lib/spaces'
@@ -67,6 +68,7 @@ export function MeetingWorkspaceDialog({
   const openChatDrawer = useShellStore((state) => state.openChatDrawer)
   const setWorkAreaOpen = useShellStore((state) => state.setWorkAreaOpen)
   const setRailIntent = useGlobalChatStore((state) => state.setRailIntent)
+  const activeConversationId = useChatStore((state) => state.activeConversationId)
   const continueMeetingConversation = useGlobalChatStore(
     (state) => state.continueMeetingConversation,
   )
@@ -147,6 +149,8 @@ export function MeetingWorkspaceDialog({
 
   useEffect(() => {
     if (!conversationId) return
+    // A meeting workspace in the page must not steal an unrelated open chat.
+    if (activeConversationId && activeConversationId !== conversationId) return
     // Attach meeting context (switches agent → vibey + spaces scope) before opening the drawer
     // so the panel does not hydrate under a leftover Delegator filter.
     attachMeetingContext({
@@ -160,6 +164,7 @@ export function MeetingWorkspaceDialog({
     setRailIntent(null)
     openChatDrawer(conversationId)
   }, [
+    activeConversationId,
     attachMeetingContext,
     awarenessContext,
     bundle?.snippets.length,

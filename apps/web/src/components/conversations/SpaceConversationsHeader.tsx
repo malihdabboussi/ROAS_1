@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from 'react'
 import { RxDoubleArrowLeft } from 'react-icons/rx'
-import { ArrowLeft, Plus, Search, UsersRound, X } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronRight, Plus, Search, UsersRound, X } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
 const CONVERSATION_ICON_BUTTON_CLASS = 'btn-icon-bare hover:bg-hover-subtle shrink-0'
@@ -30,6 +30,8 @@ interface SpaceConversationsHeaderProps {
   compactHeader?: boolean
   compactHeaderTitle?: string
   compactHeaderTitleClassName?: string
+  compactHeaderTitleExpanded?: boolean
+  onCompactHeaderTitleClick?: () => void
   compactSearchOpen: boolean
   onCompactSearchOpenChange: (open: boolean) => void
   onCollapsedChange?: (collapsed: boolean) => void
@@ -55,6 +57,8 @@ export function SpaceConversationsHeader({
   compactHeader,
   compactHeaderTitle = 'Conversations',
   compactHeaderTitleClassName,
+  compactHeaderTitleExpanded = true,
+  onCompactHeaderTitleClick,
   compactSearchOpen,
   onCompactSearchOpenChange,
   onCollapsedChange,
@@ -72,7 +76,8 @@ export function SpaceConversationsHeader({
       if (
         compactInlineSearchRef.current?.contains(event.target as Node) ||
         compactSearchRowRef.current?.contains(event.target as Node)
-      ) return
+      )
+        return
       onCompactSearchOpenChange(false)
       onQueryChange('')
     }
@@ -157,7 +162,9 @@ export function SpaceConversationsHeader({
         'flex shrink-0 flex-col',
         hideHeaderBottomBorder
           ? compactHeader
-            ? 'px-spacing-2 pb-spacing-1'
+            ? onCompactHeaderTitleClick
+              ? 'px-spacing-3 pb-spacing-1'
+              : 'px-spacing-2 pb-spacing-1'
             : 'pb-spacing-1'
           : 'p-spacing-3 border-border border-b',
       )}
@@ -177,17 +184,42 @@ export function SpaceConversationsHeader({
         {compactHeader ? (
           <div className="gap-spacing-2 group flex min-w-0 flex-1 items-center">
             {headerStartSlot}
+            {onCompactHeaderTitleClick ? (
+              <button
+                type="button"
+                className={cn(
+                  'hub-menu-section-label gap-spacing-1 group/title !mb-0 flex min-w-0 items-center text-left',
+                  compactHeaderTitleClassName,
+                )}
+                aria-expanded={compactHeaderTitleExpanded}
+                onClick={onCompactHeaderTitleClick}
+              >
+                {compactHeaderTitle}
+                {compactHeaderTitleExpanded ? (
+                  <ChevronDown
+                    className="icon-xs opacity-0 transition-opacity group-focus-within/title:opacity-100 group-hover/title:opacity-100"
+                    aria-hidden
+                  />
+                ) : (
+                  <ChevronRight
+                    className="icon-xs opacity-0 transition-opacity group-focus-within/title:opacity-100 group-hover/title:opacity-100"
+                    aria-hidden
+                  />
+                )}
+              </button>
+            ) : (
+              <div
+                className={cn(
+                  'body-3 text-foreground min-w-0 flex-1 truncate font-semibold',
+                  compactHeaderTitleClassName,
+                )}
+              >
+                {compactHeaderTitle}
+              </div>
+            )}
             <div
               className={cn(
-                'body-3 text-foreground min-w-0 flex-1 truncate font-semibold',
-                compactHeaderTitleClassName,
-              )}
-            >
-              {compactHeaderTitle}
-            </div>
-            <div
-              className={cn(
-                'gap-spacing-0 flex shrink-0 items-center transition-[opacity,transform] duration-200 ease-out',
+                'gap-spacing-0 ml-auto flex shrink-0 items-center transition-[opacity,transform] duration-200 ease-out',
                 compactSearchOpen || hideSearch
                   ? 'pointer-events-auto translate-x-0 opacity-100'
                   : 'pointer-events-none translate-x-4 opacity-0 group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100',
@@ -276,7 +308,10 @@ export function SpaceConversationsHeader({
           data-compact-conversation-search
           className="mt-spacing-1 relative w-full"
         >
-          <Search className="icon-left-center text-muted-foreground icon-sm pointer-events-none" aria-hidden />
+          <Search
+            className="icon-left-center text-muted-foreground icon-sm pointer-events-none"
+            aria-hidden
+          />
           <input
             type="search"
             value={query}

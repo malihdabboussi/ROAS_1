@@ -3,7 +3,7 @@ import { MENU_GROUP_PREVIEW } from './chat-input-constants'
 export interface AtMentionItem {
   id: string
   label: string
-  section: 'artifact' | 'media' | 'mission' | 'space-task' | 'person'
+  section: 'artifact' | 'media' | 'mission' | 'space-task' | 'person' | 'campaign'
   /** Artifact sub-type, media mime_type, mission status label, or space-task status (for filter). */
   type?: string
   /** Public URL for inline thumbnail (media assets). */

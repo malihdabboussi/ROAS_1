@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { MessageSquare } from 'lucide-react'
 import {
   getConversationAgentDisplay,
   getConversationDisplayTitle,
   groupConversationsForHistory,
+  isConversationPinned,
   type ChatHistoryGroupBy,
   type ChatHistoryLeadingIcon,
   type Conversation,
@@ -13,8 +13,9 @@ import {
 } from '@/lib/conversations'
 import { SpaceConversationActionsSurface } from './SpaceConversationActionsSurface'
 import { SpaceConversationRow, type ConversationRowRuntimeState } from './SpaceConversationRows'
-import { SpaceConversationSections } from './SpaceConversationSections'
+import { PinnedConversationSection, SpaceConversationSections } from './SpaceConversationSections'
 import { SpaceConversationsHeader } from './SpaceConversationsHeader'
+import { SpaceConversationsListStatus } from './SpaceConversationsListStatus'
 
 export interface SpaceConversationsListProps {
   conversations: Conversation[]
@@ -72,6 +73,7 @@ export interface SpaceConversationsListProps {
   showUpdatedAt?: boolean
   dividedRows?: boolean
   showConversationTypeIcon?: boolean
+  splitPinnedSection?: boolean
 }
 
 const INITIAL_SECTION_VISIBLE = 6
@@ -126,6 +128,7 @@ export function SpaceConversationsList({
   showUpdatedAt,
   dividedRows,
   showConversationTypeIcon,
+  splitPinnedSection = false,
 }: SpaceConversationsListProps) {
   const [menuConversationId, setMenuConversationId] = useState<string | null>(null)
   const [menuAnchor, setMenuAnchor] = useState<{ top: number; left: number } | null>(null)
@@ -174,8 +177,9 @@ export function SpaceConversationsList({
       agentNameByKey,
       campaignNameById,
       runtimePhaseById,
+      splitPinned: splitPinnedSection,
     })
-  }, [agentByKey, campaignNameById, conversationRuntimeById, groupBy, visible])
+  }, [agentByKey, campaignNameById, conversationRuntimeById, groupBy, splitPinnedSection, visible])
 
   useEffect(() => {
     setSectionVisibleRows({})
@@ -183,7 +187,7 @@ export function SpaceConversationsList({
   }, [q, groupBy])
 
   const rowCapForSection = (section: string, total: number) => {
-    if (groupBy === 'none') return total
+    if (groupBy === 'none' || splitPinnedSection) return total
     const cap = sectionVisibleRows[section] ?? INITIAL_SECTION_VISIBLE
     return Math.min(Math.max(cap, 0), total)
   }
@@ -267,13 +271,13 @@ export function SpaceConversationsList({
 
   const renderConversationRow = (conversation: Conversation, sectionId: string) => {
     const selected = conversation.id === selectedConversationId
-    const pinned = Boolean(
-      conversation.metadata &&
-      typeof conversation.metadata === 'object' &&
-      (conversation.metadata as { pinned?: unknown }).pinned === true,
-    )
+    const pinned = isConversationPinned(conversation)
     const renaming = renameId === conversation.id
-    const showSubtitle = sectionId === 'today' || sectionId === 'pinned' || groupBy === 'none'
+    const showSubtitle =
+      sectionId === 'today' ||
+      sectionId === 'pinned' ||
+      sectionId === 'recents' ||
+      groupBy === 'none'
     return (
       <SpaceConversationRow
         key={conversation.id}
@@ -303,9 +307,21 @@ export function SpaceConversationsList({
     )
   }
 
+  const pinnedGroup = splitPinnedSection ? groups.find((group) => group.id === 'pinned') : null
+  const restGroups = splitPinnedSection ? groups.filter((group) => group.id !== 'pinned') : groups
+  const recentsExpanded = sectionCollapsed.recents !== true
+
   const expandedList = (
     <div className="flex h-full min-h-0 flex-1 flex-col">
       {beforeHeaderSlot}
+      {pinnedGroup ? (
+        <PinnedConversationSection
+          group={pinnedGroup}
+          expanded={sectionCollapsed.pinned !== true}
+          onToggle={() => toggleSectionCollapsed('pinned')}
+          renderConversationRow={renderConversationRow}
+        />
+      ) : null}
       <SpaceConversationsHeader
         query={query}
         onQueryChange={onQueryChange}
@@ -316,6 +332,10 @@ export function SpaceConversationsList({
         compactHeader={compactHeader}
         compactHeaderTitle={compactHeaderTitle}
         compactHeaderTitleClassName={compactHeaderTitleClassName}
+        compactHeaderTitleExpanded={recentsExpanded}
+        onCompactHeaderTitleClick={
+          splitPinnedSection ? () => toggleSectionCollapsed('recents') : undefined
+        }
         compactSearchOpen={compactSearchOpen}
         onCompactSearchOpenChange={setCompactSearchOpen}
         onCollapsedChange={onCollapsedChange}
@@ -330,47 +350,31 @@ export function SpaceConversationsList({
         headerEndSlot={headerEndSlot}
         headerFooterSlot={headerFooterSlot}
       />
-      <div
-        className={`min-h-0 flex-1 overflow-y-auto ${compactHeader ? 'px-spacing-2 py-spacing-1' : 'py-spacing-3'}`}
-      >
-        {loading ? (
-          <div
-            className="gap-spacing-2 px-spacing-1 py-spacing-2 flex flex-col"
-            role="status"
-            aria-label="Loading conversations"
-          >
-            {[82, 64, 91, 73, 58].map((width, index) => (
-              <div key={index} className="gap-spacing-2 px-spacing-1 flex items-center">
-                <div className="bg-secondary icon-sm shrink-0 animate-pulse rounded-full" />
-                <div
-                  className="bg-secondary h-3 animate-pulse rounded"
-                  style={{ width: `${width}%`, animationDelay: `${index * 120}ms` }}
-                />
-              </div>
-            ))}
-          </div>
-        ) : visible.length === 0 ? (
-          <div className="p-spacing-4 text-center">
-            <div className="gap-spacing-1 flex items-center justify-center">
-              <MessageSquare className="text-muted-foreground icon-sm shrink-0" aria-hidden />
-              <p className="body-4 whitespace-nowrap font-semibold">No conversations yet</p>
-            </div>
-            <p className="body-4 text-muted-foreground mt-spacing-1">
-              Start a chat and it will show up here.
-            </p>
-          </div>
-        ) : (
-          <SpaceConversationSections
-            groups={groups}
-            sectionCollapsed={sectionCollapsed}
-            rowCapForSection={rowCapForSection}
-            onToggleSectionCollapsed={toggleSectionCollapsed}
-            onShowMoreInSection={showMoreInSection}
-            renderConversationRow={renderConversationRow}
-            dividedRows={dividedRows}
-          />
-        )}
-      </div>
+      {recentsExpanded ? (
+        <div
+          className={`min-h-0 flex-1 overflow-y-auto ${
+            compactHeader
+              ? splitPinnedSection
+                ? 'px-spacing-3 py-spacing-1'
+                : 'px-spacing-2 py-spacing-1'
+              : 'py-spacing-3'
+          }`}
+        >
+          {loading || visible.length === 0 ? (
+            <SpaceConversationsListStatus loading={Boolean(loading)} />
+          ) : (
+            <SpaceConversationSections
+              groups={restGroups}
+              sectionCollapsed={sectionCollapsed}
+              rowCapForSection={rowCapForSection}
+              onToggleSectionCollapsed={toggleSectionCollapsed}
+              onShowMoreInSection={showMoreInSection}
+              renderConversationRow={renderConversationRow}
+              dividedRows={dividedRows}
+            />
+          )}
+        </div>
+      ) : null}
 
       <SpaceConversationActionsSurface
         menuConversation={menuConversationId !== null ? menuConversation : null}

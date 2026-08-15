@@ -1,24 +1,25 @@
 import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { resolveUserBrainSearchQuery } from '@vibey/agent-policy'
 import { SupabaseServiceClient } from '@vibey/api-shared'
 import type { BrainSearchFamily } from '../../agent-policy/agent-policy.types'
 import { AgentPolicyService } from '../../agent-policy/services/agent-policy.service'
 import { BrainContextRepository } from '../repositories/brain-context.repository'
 import {
+  BrainContextSupportService,
   INSUFFICIENT_CONTEXT_STATUS,
   MEMORY_LIMIT,
   PRELOAD_RETRIEVAL_LIMIT,
   SK_LIMIT,
   SNAPSHOT_LIMIT,
+  sortByRecency,
   WIKI_MATCH_THRESHOLD,
   WIKI_PAGE_LIMIT,
-  BrainContextSupportService,
   type BrainContextTimingMeta,
   type MemoryRow,
   type PrecomputedEmbedding,
   type SkRow,
   type SnapshotRow,
-  sortByRecency,
 } from './brain-context-support.service'
 import { BrainRetrievalService } from './brain-retrieval.service'
 import { BrainSpotlightService } from './brain-spotlight.service'
@@ -26,12 +27,10 @@ import { CompanyContextCompilerService } from './company-context-compiler.servic
 import { EmbeddingService } from './embedding.service'
 
 const WIKI_AGENT_KEYS = new Set(['atlas', 'brain_scholar'])
-
 @Injectable()
 export class BrainContextService {
   private readonly logger = new Logger(BrainContextService.name)
   private readonly supabase: SupabaseClient
-
   constructor(
     private readonly svc: SupabaseServiceClient,
     private readonly embedding: EmbeddingService,
@@ -49,7 +48,6 @@ export class BrainContextService {
   ) {
     this.supabase = svc.client
   }
-
   async buildUserBrainContext(
     userId: string,
     agentKey?: string,
@@ -57,35 +55,36 @@ export class BrainContextService {
     orgId?: string | null,
     precomputedEmbedding?: PrecomputedEmbedding,
   ): Promise<string> {
-    const trimmedQuery = query?.trim()
+    const trimmedQuery = resolveUserBrainSearchQuery(query?.trim())
     if (trimmedQuery && this.retrieval) {
-      return this.support.buildRetrievalContext({
-        retrieval: this.retrieval,
-        family: 'user',
-        heading: 'USER BRAIN — Retrieved Context:',
-        userId,
-        orgId,
-        query: trimmedQuery,
-        embedding: this.support.retrievalEmbeddingInput(precomputedEmbedding),
-        limit: PRELOAD_RETRIEVAL_LIMIT,
-      }).catch((err) => {
-        this.logger.warn(`User brain retrieval context failed: ${err}`)
-        return INSUFFICIENT_CONTEXT_STATUS
-      })
+      return this.support
+        .buildRetrievalContext({
+          retrieval: this.retrieval,
+          family: 'user',
+          heading: 'USER BRAIN — Retrieved Context:',
+          userId,
+          orgId,
+          query: trimmedQuery,
+          embedding:
+            trimmedQuery === query?.trim()
+              ? this.support.retrievalEmbeddingInput(precomputedEmbedding)
+              : undefined,
+          limit: PRELOAD_RETRIEVAL_LIMIT,
+        })
+        .catch((err) => {
+          this.logger.warn(`User brain retrieval context failed: ${err}`)
+          return INSUFFICIENT_CONTEXT_STATUS
+        })
     }
-
     const brainId = this.retrieval
       ? await this.retrieval.resolveUserBrainId(this.supabase, userId, orgId)
       : await this.resolveUserBrainIdLegacy(userId, orgId)
     if (!brainId) return ''
-
     const useSemantic = !!trimmedQuery
     const billing = { userId, orgId }
-
     let memories: MemoryRow[]
     let directSnapshots: SnapshotRow[]
     let graphSnapshots: SnapshotRow[]
-
     if (useSemantic) {
       const embedding = await this.support.getQueryEmbedding(
         trimmedQuery,
@@ -106,11 +105,9 @@ export class BrainContextService {
             limit: Math.max(SNAPSHOT_LIMIT, 8),
           }),
         ])
-
         const memIds = ((memRes.data ?? []) as Array<{ id: string }>).map((r) => r.id)
         memories =
           memIds.length > 0 ? await this.support.fetchMemoriesWithRecency(memIds, brainId) : []
-
         const semanticSeeds = (
           (snapRes.data ?? []) as Array<{ id: string; similarity: number }>
         ).map((r) => ({ id: r.id, score: Number(r.similarity ?? 0) }))
@@ -126,28 +123,21 @@ export class BrainContextService {
       directSnapshots = await this.support.fetchUserBrainTopNSnapshots(brainId)
       graphSnapshots = []
     }
-
     memories.sort(sortByRecency)
-
     const parts: string[] = []
-
     if (memories.length) {
       parts.push('USER BRAIN — Key Memories:')
       for (const m of memories) {
         parts.push(`- [${m.memory_type}] ${m.content}`)
       }
     }
-
     this.support.appendSnapshotSections(parts, 'USER BRAIN', directSnapshots, graphSnapshots)
-
     if (parts.length === 0) return ''
-
     this.logger.debug(
       `Injected user brain context: ${memories.length} memories, ${directSnapshots.length} direct snapshots, ${graphSnapshots.length} graph snapshots${useSemantic ? ' (semantic+graph)' : ''}`,
     )
     return parts.join('\n')
   }
-
   async buildAgentBrainContext(
     userId: string,
     agentKey: string,
@@ -156,35 +146,32 @@ export class BrainContextService {
     precomputedEmbedding?: PrecomputedEmbedding,
   ): Promise<string> {
     const { brainId } = await this.resolveAgentBrainPresence(userId, agentKey, orgId)
-
     if (!brainId) return ''
-
     const trimmedQuery = query?.trim()
     if (trimmedQuery && this.retrieval) {
-      return this.support.buildRetrievalContext({
-        retrieval: this.retrieval,
-        family: 'agent',
-        heading: 'AGENT BRAIN — Retrieved Context:',
-        brainId,
-        userId,
-        orgId,
-        query: trimmedQuery,
-        agentKey,
-        embedding: this.support.retrievalEmbeddingInput(precomputedEmbedding),
-        limit: PRELOAD_RETRIEVAL_LIMIT,
-      }).catch((err) => {
-        this.logger.warn(`Agent brain retrieval context failed: ${err}`)
-        return INSUFFICIENT_CONTEXT_STATUS
-      })
+      return this.support
+        .buildRetrievalContext({
+          retrieval: this.retrieval,
+          family: 'agent',
+          heading: 'AGENT BRAIN — Retrieved Context:',
+          brainId,
+          userId,
+          orgId,
+          query: trimmedQuery,
+          agentKey,
+          embedding: this.support.retrievalEmbeddingInput(precomputedEmbedding),
+          limit: PRELOAD_RETRIEVAL_LIMIT,
+        })
+        .catch((err) => {
+          this.logger.warn(`Agent brain retrieval context failed: ${err}`)
+          return INSUFFICIENT_CONTEXT_STATUS
+        })
     }
-
     const useSemantic = !!trimmedQuery
     const billing = { userId, orgId }
-
     let skEntries: SkRow[]
     let directSnapshots: SnapshotRow[]
     let graphSnapshots: SnapshotRow[]
-
     if (useSemantic) {
       const embedding = await this.support.getQueryEmbedding(
         trimmedQuery,
@@ -205,11 +192,8 @@ export class BrainContextService {
             limit: Math.max(SNAPSHOT_LIMIT, 8),
           }),
         ])
-
         const skIds = ((skRes.data ?? []) as Array<{ id: string }>).map((r) => r.id)
-        skEntries =
-          skIds.length > 0 ? await this.support.fetchSkWithRecency(skIds, brainId) : []
-
+        skEntries = skIds.length > 0 ? await this.support.fetchSkWithRecency(skIds, brainId) : []
         const semanticSeeds = (
           (snapRes.data ?? []) as Array<{ id: string; similarity: number }>
         ).map((r) => ({ id: r.id, score: Number(r.similarity ?? 0) }))
@@ -225,11 +209,8 @@ export class BrainContextService {
       directSnapshots = await this.support.fetchAgentBrainTopNSnapshots(brainId)
       graphSnapshots = []
     }
-
     skEntries.sort(sortByRecency)
-
     const parts: string[] = []
-
     if (skEntries.length) {
       parts.push('AGENT BRAIN — Specific Knowledge:')
       for (const e of skEntries) {
@@ -237,7 +218,6 @@ export class BrainContextService {
         parts.push(`- [${e.entry_type}]${domainTag} ${e.title}: ${e.content}`)
       }
     }
-
     const spotlightEmbedding = await this.support.resolvePrecomputedEmbedding(precomputedEmbedding)
     const spotlightContext = await this.spotlight.buildBrainSpotlightContext(
       brainId,
@@ -248,17 +228,13 @@ export class BrainContextService {
       spotlightEmbedding,
     )
     if (spotlightContext) parts.unshift(spotlightContext)
-
     this.support.appendSnapshotSections(parts, 'AGENT BRAIN', directSnapshots, graphSnapshots)
-
     if (parts.length === 0) return ''
-
     this.logger.debug(
       `Injected agent brain context for ${agentKey}: ${skEntries.length} SK entries, ${directSnapshots.length} direct snapshots, ${graphSnapshots.length} graph snapshots${useSemantic ? ' (semantic+graph)' : ''}`,
     )
     return parts.join('\n')
   }
-
   async resolveAgentBrainPresence(
     userId: string,
     agentKey: string,
@@ -473,9 +449,11 @@ export class BrainContextService {
               'spotlight_context',
               timingMeta,
               () =>
-                this.support.resolvePrecomputedEmbedding(precomputedEmbedding).then((embedding) =>
-                  this.spotlight.buildSpotlightContext(userId, query, orgId, embedding),
-                ),
+                this.support
+                  .resolvePrecomputedEmbedding(precomputedEmbedding)
+                  .then((embedding) =>
+                    this.spotlight.buildSpotlightContext(userId, query, orgId, embedding),
+                  ),
               (value) => this.support.contextStringTiming(value),
             )
           : Promise.resolve(''),
@@ -527,17 +505,19 @@ export class BrainContextService {
               'customer_context',
               timingMeta,
               () =>
-                this.support.buildCustomerBrainContext({
-                  retrieval: this.retrieval,
-                  userId,
-                  query,
-                  orgId,
-                  agentKey,
-                  precomputedEmbedding,
-                }).catch((err) => {
-                  this.logger.warn(`Customer brain context failed: ${err}`)
-                  return ''
-                }),
+                this.support
+                  .buildCustomerBrainContext({
+                    retrieval: this.retrieval,
+                    userId,
+                    query,
+                    orgId,
+                    agentKey,
+                    precomputedEmbedding,
+                  })
+                  .catch((err) => {
+                    this.logger.warn(`Customer brain context failed: ${err}`)
+                    return ''
+                  }),
               (value) => this.support.contextStringTiming(value),
             )
           : Promise.resolve(''),
@@ -588,7 +568,10 @@ export class BrainContextService {
     return setting !== undefined && !['0', 'false', 'off', 'no'].includes(setting.toLowerCase())
   }
 
-  private async resolveUserBrainIdLegacy(userId: string, orgId?: string | null): Promise<string | null> {
+  private async resolveUserBrainIdLegacy(
+    userId: string,
+    orgId?: string | null,
+  ): Promise<string | null> {
     const { data: brain } = await this.repository.findDefaultUserBrainId(this.supabase, {
       userId,
       orgId,

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { campaignListCacheKey, fetchCampaigns, type Campaign } from '@/lib/campaigns'
 import { getCachedCampaigns, prefetchOrgCampaigns } from '@/lib/home'
+import { fetchPrograms, type Program } from '@/lib/programs'
 import { fetchSpaceById } from '@/lib/spaces'
 import {
   findConversationScopeSpace,
@@ -48,6 +49,24 @@ export function useConversationScopeCampaigns(
     }
   }, [activeOrgId, cacheVersion])
   return campaigns
+}
+
+export function useConversationScopePrograms(activeOrgId: string | null): Program[] {
+  const [programs, setPrograms] = useState<Program[]>([])
+  useEffect(() => {
+    let cancelled = false
+    void fetchPrograms()
+      .then((rows) => {
+        if (!cancelled) setPrograms(rows)
+      })
+      .catch(() => {
+        if (!cancelled) setPrograms([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [activeOrgId])
+  return programs
 }
 
 /**

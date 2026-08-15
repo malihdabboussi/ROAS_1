@@ -1,4 +1,4 @@
-import type { Program } from '@/lib/programs'
+import { programDisplayName, type Program } from '@/lib/programs'
 import type { SidebarCampaignRow } from './sidebar-types'
 
 export const SIDEBAR_UNGROUPED_PROGRAM_KEY = '__ungrouped__'
@@ -34,7 +34,7 @@ export function groupSidebarCampaignsByProgram(
   )) {
     groups.push({
       key: program.id,
-      label: program.name,
+      label: programDisplayName(program),
       program,
       campaigns: [...(buckets.get(program.id) ?? [])].sort((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),

@@ -1,5 +1,54 @@
 # Changelog - August 14, 2026
 
+## [2026-08-14 10:30] - [FIX]
+
+What: Split pinned chats into a collapsible Pinned section above Recents, matched Recents/Pinned section labels to Favorites (`hub-menu-section-label` + hover chevron beside the title), and persisted pin metadata through the conversation patch plus live chat-store merges so pinned rows actually leave Recents.
+
+Why: Pinning only showed a pin icon inside the flat Recents list because history grouping was `none`, Recents used a different title class than Favorites, and the Recents chevron sat with far-right utilities. Store merges could also drop `metadata.pinned`.
+
+Impact: Simple sidebar pinning moves the chat into Pinned above Recents. Pinned and Recents collapse independently. Favorites, Pinned, and Recents share the same section typography and hover chevron.
+
+Files: `apps/web/src/lib/conversations/conversation-list-query.ts`, `apps/web/src/lib/conversations/conversation-list-sections.ts`, `apps/web/src/components/conversations/SpaceConversationsList.tsx`, `apps/web/src/components/conversations/SpaceConversationsHeader.tsx`, `apps/web/src/components/conversations/SpaceConversationSections.tsx`, `apps/web/src/components/layout/sidebar/SidebarSimpleRecents.tsx`, `apps/web/src/components/layout/sidebar/SidebarSimpleSection.tsx`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/components/shell/shell-chat-menu-pin.ts`, `documentation/features/claude-chatgpt-shell.md`, `documentation/features/programs.md`.
+## [2026-08-14 13:55] - [FIX]
+
+What: Re-landed Pixel fill-from-brain and `@` campaign tagging after they were accidentally reverted in #227.
+
+Why: PR #225 was merged during a pull-request number race, then reverted. Pixel still searched form URLs instead of User Brain, and `@` Campaigns still previewed three rows and stayed on People.
+
+Impact: Pixel drafts first-person forms from User Brain; `@` lists and tags every campaign.
+
+Files: `packages/agent-policy/src/first-person-fill.ts`, `packages/agent-policy/src/platform-tools-template.ts`, `apps/agent-api/src/modules/brain/services/brain-context.service.ts`, `apps/agent-api/src/modules/agent-policy/services/agent-policy.service.ts`, `apps/web/src/features/studio/components/ChatInput/*`
+
+## [2026-08-14 11:20] - [FIX]
+
+What: Chat `@` Campaigns tab now lists every accessible campaign (system campaigns last), typing after `@` jumps to the first tab with matches, and clicking a campaign tags it. The chevron still opens that campaign's artifacts.
+
+Why: Empty `@` only showed the first three campaigns, so Personal / org-named rows hid real work. Search stayed on People, so campaign names looked missing. Clicking a campaign drilled in instead of tagging it.
+
+Impact: Users can search and tag campaigns from `@`, and still browse another campaign's artifacts from the chevron.
+
+Files: `apps/web/src/features/studio/components/ChatInput/*`, `apps/web/src/features/studio/types/index.ts`, `apps/agent-api/src/modules/chat/services/chat-reference-context.service.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-http.service.ts`
+
+## [2026-08-14 11:00] - [FIX]
+
+What: Pixel first-person fill (guest prep, fill-this-out, check my user brain) now searches User Brain for identity instead of the form URL, and Pixel is no longer told it cannot read personal Brain.
+
+Why: Chat used the last user message as the Brain query, so a Google Form link retrieved nothing useful. ACCESS POLICY also hid `search_user_brain` when org policy denied personal brain for system agents, so Pixel claimed it could not access User Brain and asked for bullets.
+
+Impact: Pixel drafts as the user from User Brain and only asks for true gaps.
+
+Files: `packages/agent-policy/src/first-person-fill.ts`, `packages/agent-policy/src/platform-tools-template.ts`, `apps/agent-api/src/modules/brain/services/brain-context.service.ts`, `apps/agent-api/src/modules/agent-policy/services/agent-policy.service.ts`, `apps/agent-api/src/modules/agent-sync/contracts/agent-instruction-contracts.ts`, `docker/agents/atlas/skills/vibey-api/references/protocols/brain-knowledge-protocol.md`, `apps/agent-api/src/modules/artifacts/services/vibey-api-action-docs.ts`
+
+## [2026-08-14 10:33] - [FIX]
+
+What: Pixel `extract_url_transcript` now pulls YouTube/TikTok/Instagram/X/Facebook transcripts through the main API Social Analysis routes before yt-dlp, and failed pulls no longer tell the agent captions are missing or to ask for a paste.
+
+Why: Native captions and yt-dlp are often blocked on the Fly agent-api host, and the previous ScrapeCreators fallback needed `SCRAPECREATORS_API_KEY` on that host. The key already lives on the main API. Users send a video URL in the app and expect Pixel to pull the transcript.
+
+Impact: After native captions miss, Pixel calls `GET /api/integrations/scrapecreators/.../transcript` via `mainApiCall` (credits charged once on the main API). Direct ScrapeCreators remains a last fallback. Agent docs and the failure contract forbid “captions unavailable” / paste-the-transcript replies after a single miss.
+
+Files: `apps/agent-api/src/modules/artifacts/services/artifact-missions-media-transcript.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-missions-media-transcript-payload.ts`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, transcript unit tests.
+
 ## 2026-08-14 10:35 - [FEATURE]
 
 What: Added in-selector Mission and More submenus to chat Create, context-specific guided Mission names and visual treatment, exact Output-to-chat navigation, responsive Mission/subtask Overview and Activity views, a visible artifact-pane resize grip, and exact-message Reply in place of chat feedback thumbs.
@@ -9,6 +58,25 @@ Why: Mission launches, simultaneous receipts, narrow detail panes, and output/me
 Impact: Users can choose a Mission playbook without leaving Create, distinguish runs by playbook and Space, resize or switch narrow Mission details cleanly, reopen Outputs or locate their receipt, and reply to one assistant message with durable agent context.
 
 Files: `apps/web/src/components/shell/*`, `apps/web/src/components/global-chat/lib/global-chat-seed-match*`, `apps/web/src/components/chat/AgentTurnFeedbackActions*`, `apps/web/src/features/mission-control/components/dialogs/MissionDetailDesktopShell*`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal*`, `apps/web/src/features/studio/components/ChatInput*`, `apps/web/src/features/studio/components/message-bubble/*`, `apps/web/src/lib/agent-feedback/use-agent-turn-feedback.ts`, `apps/agent-api/src/modules/chat/repositories/chat-runtime.repository.ts`, `apps/agent-api/src/modules/chat/services/chat-reference-context.service.ts`, `apps/agent-api/src/modules/chat/services/conversation-reference.util*`, `documentation/features/missions.md`, `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-08-14 10:53] - [FEATURE]
+
+What: Replaced the work-summary Campaign & space header with a Connections section above Outputs, routed Choose Space through the click-stable conversation scope picker (program headings → click campaign → spaces), defaulted Recents identity to Slack/meeting logos, and stopped route/HQ-rail/meeting-workspace background pages from stamping work context onto an already-open chat.
+
+Why: Choose Space opened the composer plus-menu hover submenu and flashed shut; Recents used a generic identity dot; the summary treated scope as a header chip instead of a list section; and navigating Meetings/spaces while a chat was open attached that page to the thread.
+
+Impact: Connections lists linked campaign/space with the same heading/row pattern as Sources/Tasks. New Chat Choose Space stays open until click-outside or Escape. Slack and meeting Recents rows show logos; activity dots stay for unread/work only. An open conversation keeps its own context while the user browses other pages.
+
+Files: `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/components/shell/ShellRightPanelConnections.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/conversations/ConversationScopePicker.tsx`, `apps/web/src/components/conversations/ConversationScopePickerMenus.tsx`, `apps/web/src/components/conversations/conversation-scope-groups.ts`, `apps/web/src/components/conversations/SpaceConversationRows.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqRail.tsx`, `apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx`, `apps/web/src/components/global-chat/store/use-global-chat-store.ts`, `documentation/features/claude-chatgpt-shell.md`, `documentation/frontend-shared-surfaces.md`.
+## [2026-08-14 10:50] - [FIX]
+
+What: Unified Clients navigation, breadcrumbs, and Portal context so agency Clients always open the Page Grader-backed `/clients` screen.
+
+Why: Simple-menu Favorites and the system Program named Clients were competing with agency Clients, breadcrumbs fell through to Inbox on `/programs`, and Portal always opened generic `/clients`.
+
+Impact: Clients and Client Campaigns are reachable in Simple and HQ navigation. The system clients Program is labeled Client Spaces. Breadcrumbs follow the active client/campaign route. Portal opens the matching Page Grader client or campaign without replacing the open Pixel chat.
+
+Files: `apps/web/src/components/layout/sidebar/SidebarSimpleSection.tsx`, `apps/web/src/components/layout/sidebar/SidebarFavoritesFlyout.tsx`, `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/components/shell/PageGraderPortalSurface.tsx`, `apps/web/src/components/shell/shell-breadcrumb.ts`, `apps/web/src/components/shell/portal-target-path.ts`, `apps/web/src/lib/programs/program-display-name.ts`, `apps/web/src/features/agency-clients/*`
 
 ## 2026-08-14 10:54 - [FIX]
 
@@ -79,3 +147,12 @@ Why: The funnel PR preview failed Next typecheck on `FunnelFullPreview`, and loc
 Impact: Chat funnel preview and Create type cards typecheck so the web deploy can complete.
 
 Files: `apps/web/src/components/deliverables/FunnelFullPreview.tsx`, `apps/web/src/components/shell/use-shell-chat-quick-start.ts`, `apps/web/src/features/studio/components/ChatInterface.tsx`.
+## 2026-08-14 13:59 - [FIX]
+
+What: Taught Pixel to click through a live funnel, submit a labeled test lead, and inspect the real confirmation page, and turned on the production browser so that path can actually run.
+
+Why: A QC request to register a test lead came back asking for a confirmation URL. The previous browser-QC rule treated any form submit as unauthorized, and the live browser was disabled behind an Instagram-only proxy.
+
+Impact: When someone asks Pixel to QC a funnel and click Register Now, Pixel fills a fake test lead, submits, and reviews the resulting page instead of stopping at fetched HTML.
+
+Files: `packages/agent-policy/src/platform-tools-template.ts`, `packages/agent-policy/src/platform-tools-template.test.ts`, `apps/agent-api/src/modules/shared/openclaw-gateway.visual-review.test.ts`, `apps/agent-api/src/modules/agent-sync/services/pixel-live-page-clickthrough.test.ts`, `supabase/migrations/20260814140000_pixel_live_page_clickthrough.sql`, `docker/openclaw.json`, `docker/supervisord.conf`, `docker/vibey-browser-sidecar.sh`, `docker/BROWSER_NETWORK_ISOLATION.md`, `documentation/features/website-artifacts.md`.

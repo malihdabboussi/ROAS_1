@@ -1,9 +1,58 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { Conversation, ConversationListGroup } from '@/lib/conversations'
 import { cn } from '@/lib/utils/cn'
+
+export function PinnedConversationSection({
+  group,
+  expanded,
+  onToggle,
+  renderConversationRow,
+}: {
+  group: ConversationListGroup
+  expanded: boolean
+  onToggle: () => void
+  renderConversationRow: (conversation: Conversation, sectionId: string) => ReactNode
+}) {
+  return (
+    <div className="px-spacing-3 pb-spacing-1">
+      <ConversationHubSectionHeader label={group.label} expanded={expanded} onToggle={onToggle} />
+      {expanded ? (
+        <div className="gap-spacing-1 flex flex-col">
+          {group.items.map((conversation) => renderConversationRow(conversation, group.id))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+export function ConversationHubSectionHeader({
+  label,
+  expanded,
+  onToggle,
+}: {
+  label: string
+  expanded: boolean
+  onToggle: () => void
+}) {
+  const Chevron = expanded ? ChevronDown : ChevronRight
+  return (
+    <button
+      type="button"
+      className="hub-menu-section-label gap-spacing-1 group flex w-full items-center text-left"
+      aria-expanded={expanded}
+      onClick={onToggle}
+    >
+      {label}
+      <Chevron
+        className="icon-xs opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+        aria-hidden
+      />
+    </button>
+  )
+}
 
 interface SpaceConversationSectionsProps {
   groups: ConversationListGroup[]
@@ -31,7 +80,7 @@ export function SpaceConversationSections({
     <div className="flex flex-col">
       {groups.map((group, index) => {
         const showHeader = !(hideEmptyLabels && group.label.trim() === '')
-        const collapsed = showHeader && sectionCollapsed[group.id] === true
+        const collapsed = sectionCollapsed[group.id] === true
         const cap = rowCapForSection(group.id, group.items.length)
         const visibleItems = collapsed ? [] : group.items.slice(0, cap)
         const hiddenRemaining = collapsed ? 0 : Math.max(0, group.items.length - cap)

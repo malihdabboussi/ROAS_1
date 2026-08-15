@@ -1,11 +1,5 @@
 import { useCallback } from 'react'
-import type {
-  Dispatch,
-  KeyboardEvent,
-  MutableRefObject,
-  RefObject,
-  SetStateAction,
-} from 'react'
+import type { Dispatch, KeyboardEvent, MutableRefObject, RefObject, SetStateAction } from 'react'
 import { flushSync } from 'react-dom'
 import type {
   AtMentionItem,
@@ -17,10 +11,10 @@ import {
   handleChatInputMenuKeyDown,
   type ChatInputMenuAtNavSlice,
 } from './chat-input-menu-keyboard'
+import type { ChatInputRecordingState } from './chat-input-recording-footer'
 import { handleChatInputShortcutKey } from './chat-input-shortcuts'
 import type { SlashItem } from './chat-input-slash-menu'
 import { getSlashBackspaceTextUpdate } from './chat-input-slash-selection'
-import type { ChatInputRecordingState } from './chat-input-recording-footer'
 
 export interface UseChatInputKeyDownOptions {
   disabled: boolean
@@ -44,7 +38,6 @@ export interface UseChatInputKeyDownOptions {
   setAtArtifactMoreByType: Dispatch<SetStateAction<Record<string, boolean>>>
   setAtMediaCollapsedByType: Dispatch<SetStateAction<Record<string, boolean>>>
   setAtMediaMoreByType: Dispatch<SetStateAction<Record<string, boolean>>>
-  onCampaignSelect: (campaign: { id: string; name: string }) => void
   onAtSelect: (item: AtMentionItem, sourceCampaignId?: string) => void
   slashMenuOpen: boolean
   slashVisibleItems: readonly SlashItem[]
@@ -87,7 +80,6 @@ export function useChatInputKeyDown({
   setAtArtifactMoreByType,
   setAtMediaCollapsedByType,
   setAtMediaMoreByType,
-  onCampaignSelect,
   onAtSelect,
   slashMenuOpen,
   slashVisibleItems,
@@ -138,7 +130,6 @@ export function useChatInputKeyDown({
             setCrossCampaignId(null)
           },
           onAtHighlightChange: setAtHighlight,
-          onCampaignSelect,
           onAtSelect,
           onToggleArtifactCollapsed: (typeKey) =>
             setAtArtifactCollapsedByType((prev) => ({
@@ -216,7 +207,6 @@ export function useChatInputKeyDown({
       hasPastedBlocks,
       mediaRows,
       onAtSelect,
-      onCampaignSelect,
       onSend,
       onSendNow,
       onSlashSelect,
