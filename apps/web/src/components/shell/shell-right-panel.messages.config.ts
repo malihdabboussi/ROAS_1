@@ -10,4 +10,10 @@ export const SHELL_RIGHT_PANEL_MESSAGES = {
   missionLoading: 'Loading mission…',
   missionLoadError: 'Mission could not be loaded.',
   missionRetry: 'Try again',
+  progressEmpty: 'No missions started here yet — run one and its steps show up here.',
+  progressLoading: 'Loading steps…',
+  progressLoadFailed: 'Steps could not be loaded.',
+  progressNoSteps: 'No steps planned yet.',
+  progressYourTurn: 'Your turn',
+  progressGateHint: 'Steps marked "Your turn" wait for you in Mission Control.',
 } as const

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Message } from '@/lib/conversations'
 import {
   extractConversationFileRows,
+  extractConversationMissionRows,
   extractConversationSourceRows,
   extractConversationTaskRows,
 } from './shell-conversation-summary'
@@ -88,4 +89,84 @@ describe('shell conversation summary', () => {
       'Market report',
     ])
   })
+
+  it('extracts missions this conversation started from their receipts', () => {
+    const rows = extractConversationMissionRows([
+      message({
+        id: 'mission-a',
+        created_at: '2026-07-17T20:00:00.000Z',
+        metadata: {
+          quick_mission_receipt: true,
+          mission_id: 'mission-a',
+          content_blocks_ordered: [
+            {
+              type: 'artifact_preview',
+              id: 'card-a',
+              artifactType: 'mission',
+              artifactId: 'mission-a',
+              name: 'Webinar Fulfillment',
+            },
+          ],
+        },
+      }),
+      message({
+        id: 'mission-b',
+        created_at: '2026-07-18T20:00:00.000Z',
+        metadata: {
+          mission_id: 'mission-b',
+          content_blocks_ordered: [
+            {
+              type: 'artifact_preview',
+              id: 'card-b',
+              artifactType: 'mission',
+              artifactId: 'mission-b',
+              name: 'Meta Ads Launch',
+            },
+          ],
+        },
+      }),
+    ])
+
+    // Newest first, matching the other extractors in this file.
+    expect(rows.map((row) => row.title)).toEqual(['Meta Ads Launch', 'Webinar Fulfillment'])
+  })
+
+  it('ignores non-mission artifact previews and user messages', () => {
+    const rows = extractConversationMissionRows([
+      message({
+        metadata: {
+          content_blocks_ordered: [
+            { type: 'artifact_preview', id: 'doc', artifactType: 'document', artifactId: 'doc-1' },
+          ],
+        },
+      }),
+      message({
+        role: 'user',
+        metadata: { mission_id: 'mission-from-user' },
+      }),
+    ])
+
+    expect(rows).toEqual([])
+  })
+
+  it('lists a mission once even when the thread references it repeatedly', () => {
+    const receipt = {
+      content_blocks_ordered: [
+        {
+          type: 'artifact_preview',
+          id: 'card',
+          artifactType: 'mission',
+          artifactId: 'mission-a',
+          name: 'Webinar Fulfillment',
+        },
+      ],
+    }
+    const rows = extractConversationMissionRows([
+      message({ id: 'm1', metadata: receipt }),
+      message({ id: 'm2', metadata: receipt }),
+    ])
+
+    expect(rows).toHaveLength(1)
+  })
+
 })

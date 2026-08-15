@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
 import { MISSION_CONTROL_MESSAGES } from '../../config/messages.config'
 import type { MissionAgent, MissionDeliverable, MissionSubtask } from '../../types'
-import { formatSubtaskStatusLabel } from '../subtask-status'
+import { formatSubtaskStatusLabel } from '@/lib/missions'
 import { formatAgentShortName, formatRelativeTime, subtaskStatusBadgeTone } from './detail-helpers'
 import { HumanGateReviewPanel } from './HumanGateReviewPanel'
 import {

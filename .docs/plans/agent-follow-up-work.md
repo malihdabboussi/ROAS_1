@@ -38815,3 +38815,20 @@ Also noted: "My Tasks" (human to-dos with due dates), the panel's "Tasks" (compl
 Needed work: Add `missions.conversation_id` (or a join table) plus a conversation-scoped list endpoint; thread `profile`/node identity from the browser tool through `ui-block-extractor` into the block types, or proxy openclaw `GET /profiles` through agent-api; promote mission step/gate UI to a shared barrel.
 
 Reason not done now: The panel change in flight is scoped to control consolidation and density. The above are backend/contract changes that need their own review, and the redesign direction is still being agreed with the user.
+
+## 2026-08-15 - [REFACTOR] Duplicate formatSubtaskStatusLabel in mission-control
+
+Status: Open
+
+Found while: Promoting `formatSubtaskStatusLabel` to `@/lib/missions` so the shell's new Progress section could use it without importing feature internals.
+
+Files:
+
+- `apps/web/src/lib/missions/subtask-status.ts` (canonical, moved here)
+- `apps/web/src/features/mission-control/components/dialogs/detail-helpers.tsx` (duplicate at ~line 130)
+
+Evidence: Two near-identical implementations of the same status mapping predate this change. They differ only on bare `pending`: the canonical one returns "Pending" unless `executionStatus === 'queued'`, while the `detail-helpers` copy always returns "Queued". `detail-helpers` is consumed by `ActivityTimelineLogItem.tsx`.
+
+Needed work: Delete the `detail-helpers` copy and re-export the canonical helper, after confirming whether the timeline should read "Pending" or "Queued" for a step with no execution state.
+
+Reason not done now: Collapsing them changes user-visible wording in the mission activity timeline, which is outside the scope of adding the Progress section and deserves its own decision rather than being folded in silently.

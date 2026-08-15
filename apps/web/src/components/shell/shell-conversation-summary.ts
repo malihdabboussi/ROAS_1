@@ -24,6 +24,12 @@ export type ConversationFileRow = {
   createdAt: string
 }
 
+export type ConversationMissionRow = {
+  id: string
+  title: string
+  createdAt: string
+}
+
 export type ConversationSourceRow = {
   id: string
   title: string
@@ -104,6 +110,43 @@ export function extractConversationTaskRows(messages: Message[]): ConversationTa
         state,
         createdAt: message.created_at,
       })
+    })
+  }
+
+  return rows.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+}
+
+/**
+ * Missions this conversation started.
+ *
+ * `missions` has no `conversation_id` column, so the only conversation-scoped
+ * link is the receipt the chat writes when a mission launches: an assistant
+ * message carrying `mission_id`, with an `artifact_preview` block naming it.
+ * Reading the thread is therefore exact — it returns the missions started
+ * here, not every mission in the surrounding space.
+ */
+export function extractConversationMissionRows(messages: Message[]): ConversationMissionRow[] {
+  const rows: ConversationMissionRow[] = []
+  const seen = new Set<string>()
+
+  for (const message of messages) {
+    if (message.role !== 'assistant') continue
+
+    const blocks = orderedBlocks(message)
+    const missionBlock = blocks.find(
+      (block) => block.type === 'artifact_preview' && block.artifactType === 'mission',
+    )
+    const missionId =
+      (missionBlock ? stringField(missionBlock, 'artifactId') : null) ??
+      stringField(message.metadata as UnknownRow, 'mission_id')
+    if (!missionId || seen.has(missionId)) continue
+    seen.add(missionId)
+
+    const blockName = missionBlock ? stringField(missionBlock, 'name') : null
+    rows.push({
+      id: missionId,
+      title: blockName ?? (message.content?.trim() || 'Mission'),
+      createdAt: message.created_at,
     })
   }
 
