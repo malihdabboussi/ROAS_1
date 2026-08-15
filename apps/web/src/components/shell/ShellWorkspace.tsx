@@ -10,7 +10,6 @@ import { ShellArtifactViewerAdapter } from '@/features/studio/components/preview
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils/cn'
-import { PageGraderPortalSurface } from './PageGraderPortalSurface'
 import { isShellHomeRoute, isShellWorkspaceRoute } from './shell-route-policy'
 import { ShellArtifactViewerColumn } from './ShellArtifactViewerColumn'
 import { ShellChatDrawer } from './ShellChatDrawer'
@@ -35,7 +34,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams()
   const chatParam = searchParams.get('chat')
   const convParam = searchParams.get('conv')
-  const portalActive = searchParams.get('surface') === 'portal'
 
   const workAreaOpen = useShellStore((s) => s.workAreaOpen)
   const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
@@ -140,12 +138,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
 
   const showChatDrawer = workAreaCollapsible
   const workColumnPresent =
-    shellPrefsHydrated &&
-    desktop &&
-    !portalActive &&
-    !artifactTarget &&
-    !showFullNewChat &&
-    !showFullConversation
+    shellPrefsHydrated && desktop && !artifactTarget && !showFullNewChat && !showFullConversation
   // During drag, keep work host open so seams stay hittable — layout still uses saved dock.
   const rawWorkAttached =
     isWorkAttachedDock(savedMenuDock) ||
@@ -205,18 +198,10 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
 
   const workspaceMain = onSpaces ? <SpaceWorkDock>{children}</SpaceWorkDock> : homeOrDefaultMain
   const workMain = (
-    <>
-      <div
-        className={cn(
-          'flex h-full min-h-0 w-full flex-col overflow-y-auto overflow-x-hidden',
-          portalActive && 'hidden',
-        )}
-      >
-        {menuStyle === 'simple' ? <ShellTopBar /> : null}
-        {workspaceMain}
-      </div>
-      <PageGraderPortalSurface active={portalActive} />
-    </>
+    <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto overflow-x-hidden">
+      {menuStyle === 'simple' ? <ShellTopBar /> : null}
+      {workspaceMain}
+    </div>
   )
 
   return (

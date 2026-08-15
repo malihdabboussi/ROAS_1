@@ -7,9 +7,22 @@ import { ArtifactMissionsMediaDeepgramClient } from '../integrations/artifact-mi
 import { ArtifactMissionsMediaProcessClient } from '../integrations/artifact-missions-media-process.client'
 import { ArtifactMissionsMediaScrapeCreatorsClient } from '../integrations/artifact-missions-media-scrape-creators.client'
 import { ArtifactMissionsMediaYoutubeTranscriptClient } from '../integrations/artifact-missions-media-youtube-transcript.client'
+import { buildErrorEnvelope } from './artifact-error-classifier'
+import {
+  buildSocialAnalysisTranscriptRoute,
+  extractSocialAnalysisSegments,
+  extractSocialAnalysisTranscriptText,
+} from './artifact-missions-media-transcript-payload'
 import { ArtifactMissionsMediaUsageService } from './artifact-missions-media-usage.service'
 
 type MediaPlatform = 'youtube' | 'tiktok' | 'instagram' | 'x' | 'facebook' | 'unknown'
+type TranscriptAttempt = { method: string; error?: string; used_cookies?: boolean; via?: string }
+type SocialAnalysisHit = {
+  transcript: string
+  segments: Array<{ start: number; end: number; text: string }>
+  actionSlug: string
+  via: 'platform_api' | 'direct'
+}
 
 export class ArtifactMissionsMediaTranscriptService {
   constructor(
@@ -34,137 +47,77 @@ export class ArtifactMissionsMediaTranscriptService {
 
     const lang = String(input.lang ?? 'en').trim()
     const includeMetadata = input.include_metadata !== false
-
     const platform = this.detectPlatform(url)
     const tempRoot = await mkdtemp(join(tmpdir(), 'vibey-url-transcript-'))
+    const attempts: TranscriptAttempt[] = []
 
     try {
-      let metadata: { title: string; duration_seconds: number } | null = null
-      let transcript = ''
-      let segments: Array<{ start: number; end: number; text: string }> = []
-      let source: 'native_captions' | 'ai_transcription' = 'native_captions'
-
       if (platform === 'youtube') {
         const videoId = this.extractYouTubeVideoId(url)
         if (videoId) {
           await onProgress?.('Fetching YouTube captions')
-          const native = await this.tryYouTubeNativeTranscript(videoId, lang)
+          const native = await this.youtubeTranscriptClient.fetchNativeTranscript(videoId, lang)
           if (native) {
-            transcript = native.transcript
-            segments = native.segments
-            source = 'native_captions'
-
-            if (includeMetadata) {
-              await onProgress?.('Fetching video metadata')
-              metadata = await this.processClient.fetchYtDlpMetadata(url)
-            }
+            const metadata = includeMetadata ? await this.fetchMetadata(onProgress, url) : null
             return {
               success: true,
               platform,
               url,
               ...(metadata ? { metadata } : {}),
-              transcript,
-              segments,
-              source,
+              transcript: native.transcript,
+              segments: native.segments,
+              source: 'native_captions',
             }
           }
-        }
-      }
-      await onProgress?.('Downloading audio from video')
-      const audioPath = join(tempRoot, `audio-${randomUUID()}.m4a`)
-      const attempts: Array<{ method: string; error?: string; used_cookies?: boolean }> = []
-      const userCookieFile = await this.resolveYtDlpCookieFile(target, sessionKey, platform)
-      let downloadOk = false
-      let firstError: unknown = null
-
-      if (userCookieFile) {
-        try {
-          await onProgress?.('Downloading audio (with your saved session)')
-          await this.downloadViaYtDlp(url, audioPath, userCookieFile)
-          attempts.push({ method: 'yt-dlp', used_cookies: true })
-          downloadOk = true
-        } catch (dlError) {
-          firstError = dlError
           attempts.push({
-            method: 'yt-dlp',
-            used_cookies: true,
-            error: dlError instanceof Error ? dlError.message : String(dlError),
+            method: 'native_captions',
+            error: 'unavailable or blocked from this host',
           })
         }
       }
 
-      if (!downloadOk) {
-        try {
-          if (userCookieFile) {
-            await onProgress?.('Retrying download without saved session')
-          }
-          await this.downloadViaYtDlp(url, audioPath)
-          attempts.push({ method: 'yt-dlp', used_cookies: false })
-          downloadOk = true
-        } catch (dlError) {
-          firstError = firstError ?? dlError
-          attempts.push({
-            method: 'yt-dlp',
-            used_cookies: false,
-            error: dlError instanceof Error ? dlError.message : String(dlError),
+      const viaSocialAnalysis = await this.transcribeViaSocialAnalysis(
+        target,
+        url,
+        platform,
+        sessionKey,
+        attempts,
+        onProgress,
+      )
+      if (viaSocialAnalysis) {
+        if (viaSocialAnalysis.via === 'direct') {
+          await this.chargeDirectSocialAnalysis(target, sessionKey, viaSocialAnalysis, {
+            url,
+            platform,
           })
         }
-      }
-
-      if (!downloadOk) {
-        const scRoute = this.scrapeCreatorsRouteForPlatform(platform)
-        if (scRoute) {
-          await onProgress?.('yt-dlp failed; falling back to Social Analysis')
-          const viaScrapeCreators = await this.transcribeViaScrapeCreators(url, platform)
-          if (viaScrapeCreators && viaScrapeCreators.transcript.trim().length > 0) {
-            attempts.push({ method: `social_analysis.${viaScrapeCreators.actionSlug}` })
-            if (sessionKey && typeof target.resolveUserId === 'function') {
-              const userId = target.resolveUserId(sessionKey)
-              await this.usage.chargeScrapeCreatorsUsage(target, {
-                userId,
-                sessionKey,
-                actionSlug: viaScrapeCreators.actionSlug,
-                metadata: { url, platform },
-              })
-            }
-            if (includeMetadata) {
-              await onProgress?.('Fetching video metadata')
-              metadata = await this.processClient.fetchYtDlpMetadata(url)
-            }
-            return {
-              success: true,
-              platform,
-              url,
-              ...(metadata ? { metadata } : {}),
-              transcript: viaScrapeCreators.transcript,
-              segments: viaScrapeCreators.segments,
-              source: 'social_analysis',
-              via: 'social_analysis_fallback',
-              attempts,
-            }
-          }
-          attempts.push({
-            method: `social_analysis.${scRoute.actionSlug}`,
-            error: 'no transcript returned (missing API key, rate-limit, or empty response)',
-          })
-        }
-
-        const retryHint =
-          platform === 'instagram' ||
-          platform === 'tiktok' ||
-          platform === 'x' ||
-          platform === 'facebook'
-            ? `yt-dlp is often rate-limited on ${platform}. Social Analysis fallback also failed. Manual options: (a) ask the user to download the media and upload it, then call transcribe_audio with the media_url for audio-only files or analyze_video for video frames; (b) verify the URL is public; (c) ask an admin to confirm the Social Analysis provider is configured.`
-            : `Transcript extraction failed. Manual options: (a) ask the user to download the media and upload it, then call transcribe_audio with the media_url for audio-only files or analyze_video for video frames; (b) verify the URL is public.`
-
+        const metadata = includeMetadata ? await this.fetchMetadata(onProgress, url) : null
         return {
-          success: false,
-          error: 'Transcript extraction failed on all paths',
+          success: true,
           platform,
           url,
+          ...(metadata ? { metadata } : {}),
+          transcript: viaSocialAnalysis.transcript,
+          segments: viaSocialAnalysis.segments,
+          source: 'social_analysis',
+          via: viaSocialAnalysis.via,
           attempts,
-          retry_hint: retryHint,
         }
+      }
+
+      await onProgress?.('Downloading audio from video')
+      const audioPath = join(tempRoot, `audio-${randomUUID()}.m4a`)
+      const downloadOk = await this.downloadAudio(
+        target,
+        sessionKey,
+        platform,
+        url,
+        audioPath,
+        attempts,
+        onProgress,
+      )
+      if (!downloadOk) {
+        return this.buildPullFailure(platform, url, attempts)
       }
 
       const mp3Path = join(tempRoot, 'audio.mp3')
@@ -177,36 +130,27 @@ export class ArtifactMissionsMediaTranscriptService {
 
       await onProgress?.('Transcribing audio')
       const result = await this.deepgramClient.transcribeAudioFile(mp3Path)
-      transcript = result.transcript
-      segments = result.segments
-      source = 'ai_transcription'
       if (sessionKey && typeof target.resolveUserId === 'function') {
-        const userId = target.resolveUserId(sessionKey)
         await this.usage.chargeDeepgramUsage(target, {
-          userId,
+          userId: target.resolveUserId(sessionKey),
           campaignId: null,
           sessionKey,
           action: 'extract_url_transcript',
-          transcript,
-          metadata: {
-            url,
-            platform,
-          },
+          transcript: result.transcript,
+          metadata: { url, platform },
         })
       }
 
-      if (includeMetadata) {
-        await onProgress?.('Fetching video metadata')
-        metadata = await this.processClient.fetchYtDlpMetadata(url)
-      }
+      const metadata = includeMetadata ? await this.fetchMetadata(onProgress, url) : null
       return {
         success: true,
         platform,
         url,
         ...(metadata ? { metadata } : {}),
-        transcript,
-        segments,
-        source,
+        transcript: result.transcript,
+        segments: result.segments,
+        source: 'ai_transcription',
+        attempts,
       }
     } catch (error) {
       return {
@@ -215,6 +159,182 @@ export class ArtifactMissionsMediaTranscriptService {
       }
     } finally {
       await rm(tempRoot, { recursive: true, force: true })
+    }
+  }
+
+  private async fetchMetadata(
+    onProgress: ((message: string) => void | Promise<void>) | undefined,
+    url: string,
+  ) {
+    await onProgress?.('Fetching video metadata')
+    return this.processClient.fetchYtDlpMetadata(url)
+  }
+
+  private async downloadAudio(
+    target: Record<string, any>,
+    sessionKey: string | undefined,
+    platform: MediaPlatform,
+    url: string,
+    audioPath: string,
+    attempts: TranscriptAttempt[],
+    onProgress?: (message: string) => void | Promise<void>,
+  ): Promise<boolean> {
+    const userCookieFile = await this.resolveYtDlpCookieFile(target, sessionKey, platform)
+    if (userCookieFile) {
+      try {
+        await onProgress?.('Downloading audio (with your saved session)')
+        await this.processClient.downloadViaYtDlp(url, audioPath, userCookieFile)
+        attempts.push({ method: 'yt-dlp', used_cookies: true })
+        return true
+      } catch (dlError) {
+        attempts.push({
+          method: 'yt-dlp',
+          used_cookies: true,
+          error: dlError instanceof Error ? dlError.message : String(dlError),
+        })
+      }
+    }
+
+    try {
+      if (userCookieFile) {
+        await onProgress?.('Retrying download without saved session')
+      }
+      await this.processClient.downloadViaYtDlp(url, audioPath)
+      attempts.push({ method: 'yt-dlp', used_cookies: false })
+      return true
+    } catch (dlError) {
+      attempts.push({
+        method: 'yt-dlp',
+        used_cookies: false,
+        error: dlError instanceof Error ? dlError.message : String(dlError),
+      })
+      return false
+    }
+  }
+
+  private async transcribeViaSocialAnalysis(
+    target: Record<string, any>,
+    url: string,
+    platform: MediaPlatform,
+    sessionKey: string | undefined,
+    attempts: TranscriptAttempt[],
+    onProgress?: (message: string) => void | Promise<void>,
+  ): Promise<SocialAnalysisHit | null> {
+    const route = this.scrapeCreatorsRouteForPlatform(platform)
+    if (!route) return null
+
+    await onProgress?.('Pulling transcript via Social Analysis')
+    const http = buildSocialAnalysisTranscriptRoute(route.actionSlug, url)
+    if (http && typeof target.mainApiCall === 'function') {
+      try {
+        const body = await target.mainApiCall(http.method, http.path, sessionKey)
+        const transcript = extractSocialAnalysisTranscriptText(body)
+        if (transcript) {
+          attempts.push({
+            method: `social_analysis.${route.actionSlug}`,
+            via: 'platform_api',
+          })
+          return {
+            transcript,
+            segments: extractSocialAnalysisSegments(body),
+            actionSlug: route.actionSlug,
+            via: 'platform_api',
+          }
+        }
+        attempts.push({
+          method: `social_analysis.${route.actionSlug}`,
+          via: 'platform_api',
+          error: 'empty transcript from Social Analysis API',
+        })
+      } catch (error) {
+        attempts.push({
+          method: `social_analysis.${route.actionSlug}`,
+          via: 'platform_api',
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+    }
+
+    const body = await this.scrapeCreatorsClient.fetchTranscriptBody({
+      url,
+      upstreamPath: route.upstreamPath,
+    })
+    const transcript = extractSocialAnalysisTranscriptText(body)
+    if (transcript) {
+      attempts.push({ method: `social_analysis.${route.actionSlug}`, via: 'direct' })
+      return {
+        transcript,
+        segments: extractSocialAnalysisSegments(body),
+        actionSlug: route.actionSlug,
+        via: 'direct',
+      }
+    }
+    attempts.push({
+      method: `social_analysis.${route.actionSlug}`,
+      via: 'direct',
+      error: 'no transcript returned (missing API key, rate-limit, or empty response)',
+    })
+    return null
+  }
+
+  private async chargeDirectSocialAnalysis(
+    target: Record<string, any>,
+    sessionKey: string | undefined,
+    hit: SocialAnalysisHit,
+    metadata: { url: string; platform: MediaPlatform },
+  ) {
+    if (!sessionKey || typeof target.resolveUserId !== 'function') return
+    await this.usage.chargeScrapeCreatorsUsage(target, {
+      userId: target.resolveUserId(sessionKey),
+      sessionKey,
+      actionSlug: hit.actionSlug,
+      metadata,
+    })
+  }
+
+  private buildPullFailure(platform: MediaPlatform, url: string, attempts: TranscriptAttempt[]) {
+    return {
+      ...buildErrorEnvelope('Could not pull the transcript from this URL.', {
+        errorCode: 'ARTIFACT_URL_TRANSCRIPT_FAILED',
+        errorClass: 'system_fault',
+        workflowClass: 'extract_url_transcript',
+        reliability: 'high_confidence',
+        effectState: 'failed_before_effect',
+        retryPolicy: {
+          mode: 'retry_same_payload',
+          max_attempts: 1,
+          stop_after_same_error: true,
+          reason:
+            'The Social Analysis transcript pull can succeed on retry even when native captions are blocked.',
+        },
+        correction: {
+          summary: 'Retry extract_url_transcript once with the same URL.',
+          next_tool_preference: ['extract_url_transcript'],
+        },
+        fallback: null,
+        agentDiagnosis:
+          'Native captions, the Social Analysis transcript API, and audio download all failed. Captions may still exist; this host could not pull them.',
+        agentInstruction:
+          'Retry extract_url_transcript once with the same URL. Do not tell the user captions are unavailable. Do not ask them to paste or upload a transcript. If the second attempt also fails, say you could not pull the transcript from here and they can try again shortly.',
+        userExplanation: {
+          intent: 'retry_transcript_pull',
+          sentence: 'I could not pull that video transcript just now. I will try once more.',
+        },
+        forbiddenUserFraming: [
+          'captions unavailable',
+          "captions aren't available",
+          'captions are not available',
+          'paste the transcript',
+          'upload the transcript',
+        ],
+        observability: {
+          fingerprint: 'artifact.url_transcript_failed',
+          report_level: 'warn',
+        },
+      }),
+      platform,
+      url,
+      attempts,
     }
   }
 
@@ -293,24 +413,6 @@ export class ArtifactMissionsMediaTranscriptService {
     }
   }
 
-  private async tryYouTubeNativeTranscript(
-    videoId: string,
-    lang: string,
-  ): Promise<{
-    transcript: string
-    segments: Array<{ start: number; end: number; text: string }>
-  } | null> {
-    return this.youtubeTranscriptClient.fetchNativeTranscript(videoId, lang)
-  }
-
-  private async downloadViaYtDlp(
-    url: string,
-    outputPath: string,
-    cookieFile?: string | null,
-  ): Promise<void> {
-    await this.processClient.downloadViaYtDlp(url, outputPath, cookieFile)
-  }
-
   private scrapeCreatorsRouteForPlatform(
     platform: MediaPlatform,
   ): { upstreamPath: string; actionSlug: string } | null {
@@ -342,87 +444,6 @@ export class ArtifactMissionsMediaTranscriptService {
         }
       default:
         return null
-    }
-  }
-
-  private extractScrapeCreatorsTranscriptText(body: unknown): string {
-    if (!body || typeof body !== 'object') return ''
-    const b = body as Record<string, any>
-    const candidates: unknown[] = [
-      b.transcript,
-      b.text,
-      b.caption,
-      b.data?.transcript,
-      b.data?.text,
-      b.data?.caption,
-      b.result?.transcript,
-      b.result?.text,
-    ]
-    for (const c of candidates) {
-      if (typeof c === 'string' && c.trim()) return c
-    }
-    const segmentArrays: unknown[] = [
-      b.segments,
-      b.data?.segments,
-      b.utterances,
-      b.data?.utterances,
-    ]
-    for (const arr of segmentArrays) {
-      if (!Array.isArray(arr)) continue
-      const joined = arr
-        .map((s: any) => (typeof s?.text === 'string' ? s.text : ''))
-        .filter(Boolean)
-        .join(' ')
-        .trim()
-      if (joined) return joined
-    }
-    return ''
-  }
-
-  private extractScrapeCreatorsSegments(
-    body: unknown,
-  ): Array<{ start: number; end: number; text: string }> {
-    if (!body || typeof body !== 'object') return []
-    const b = body as Record<string, any>
-    const raw = Array.isArray(b.segments)
-      ? b.segments
-      : Array.isArray(b.data?.segments)
-        ? b.data.segments
-        : Array.isArray(b.utterances)
-          ? b.utterances
-          : Array.isArray(b.data?.utterances)
-            ? b.data.utterances
-            : []
-    return raw
-      .filter((s: any) => typeof s?.text === 'string' && (s.text as string).trim().length > 0)
-      .map((s: any) => ({
-        start: Number(s.start ?? s.start_time ?? s.startTime ?? 0),
-        end: Number(s.end ?? s.end_time ?? s.endTime ?? 0),
-        text: String(s.text).trim(),
-      }))
-  }
-
-  private async transcribeViaScrapeCreators(
-    url: string,
-    platform: MediaPlatform,
-  ): Promise<{
-    transcript: string
-    segments: Array<{ start: number; end: number; text: string }>
-    actionSlug: string
-  } | null> {
-    const route = this.scrapeCreatorsRouteForPlatform(platform)
-    if (!route) return null
-
-    const body = await this.scrapeCreatorsClient.fetchTranscriptBody({
-      url,
-      upstreamPath: route.upstreamPath,
-    })
-    const transcript = this.extractScrapeCreatorsTranscriptText(body)
-    if (!transcript) return null
-    return {
-      transcript,
-      segments: this.extractScrapeCreatorsSegments(body),
-      actionSlug: route.actionSlug,
     }
   }
 }
