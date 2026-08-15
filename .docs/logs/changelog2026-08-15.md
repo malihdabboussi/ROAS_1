@@ -52,3 +52,26 @@ Files:
 - apps/web/src/components/shell/ShellRightPanel.tsx
 - apps/web/src/components/shell/ShellRightPanelConnections.tsx
 - apps/web/src/components/shell/ShellRightPanelSources.tsx
+
+## [2026-08-15 15:20] - [STYLE]
+
+What: Made the work summary sections collapsible and turned the stack into one banded surface.
+
+- Added `ShellRightPanelSection`, a shared collapsible band. The chevron sits beside the label rather than at the far edge, so the disclosure reads as part of the heading and the right edge stays reserved for the section's own action.
+- Kept the accessible accordion pattern: the `h3` wraps the trigger button, so each section is still reachable by heading navigation as well as by tab, and carries `aria-expanded` / `aria-controls`.
+- Moved horizontal padding off the scroll container and onto each section so dividers run the full card width while content stays inset. That is what makes the four sections read as one surface instead of a column of loose lists.
+- Collapse state is hoisted into `ShellRightPanel`, which returns null while closed but stays mounted — so a section the user collapsed is still collapsed when they reopen the panel.
+- `ShellRightPanelConnections` now renders through the shared section and takes `open` / `onOpenChange`. Its scope picker deliberately renders outside the collapsible body: collapsing must not unmount it, or both the "+" and the shell's open-picker request would break. Adding from a collapsed section expands it first so the new row is not added out of sight.
+- Fixed a broken import introduced in the earlier density pass: `LucideIcon` was being imported from `react` instead of `lucide-react`, which failed typecheck.
+
+Why: The panel's sections were fixed-height lists with no way to fold away the ones you are not using, so a long Tasks list pushed everything else out of reach. Collapsibility is also the structural prerequisite for adding a task-progress section, which needs to coexist with Outputs/Sources/Tasks without making the card unusable.
+
+Impact: Sections fold independently and remember their state; the card sizes to content. No API or data change. 220 shell tests pass, including three new Connections tests and a new collapse test; lint and typecheck clean on the touched files. Verified running locally: collapse, reflow, persistence across panel close/reopen, and no console errors.
+
+Files:
+
+- apps/web/src/components/shell/ShellRightPanelSection.tsx (new)
+- apps/web/src/components/shell/ShellRightPanel.tsx
+- apps/web/src/components/shell/ShellRightPanel.test.tsx
+- apps/web/src/components/shell/ShellRightPanelConnections.tsx
+- apps/web/src/components/shell/ShellRightPanelConnections.test.tsx (new)

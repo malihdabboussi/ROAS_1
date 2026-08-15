@@ -234,4 +234,24 @@ describe('ShellRightPanel', () => {
 
     await waitFor(() => expect(mocks.openScopePicker).toHaveBeenCalledTimes(1))
   })
+
+  it('collapses a section and keeps its action reachable', async () => {
+    render(<ShellRightPanel conversationId="conversation-1" />)
+
+    const outputs = await screen.findByRole('button', { name: 'Outputs' })
+    expect(outputs).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByText('Chat files')).toBeInTheDocument()
+
+    fireEvent.click(outputs)
+
+    expect(outputs).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByText('Chat files')).not.toBeInTheDocument()
+    // The create action rides the header, so collapsing must not hide it.
+    expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument()
+
+    fireEvent.click(outputs)
+    expect(screen.getByText('Chat files')).toBeInTheDocument()
+  })
+
+
 })

@@ -14,12 +14,15 @@ import type { ShellCreateMenuItem } from './shell-create-menu.config'
 import { ShellCreateMenuPanel } from './ShellCreateMenuPanel'
 import { ShellRightPanelConnections } from './ShellRightPanelConnections'
 import { ShellRightPanelFiles } from './ShellRightPanelFiles'
+import { ShellRightPanelSection } from './ShellRightPanelSection'
 import { ShellRightPanelSources } from './ShellRightPanelSources'
 import { ShellRightPanelTasks } from './ShellRightPanelTasks'
 import { useRightEdgePresence } from './use-right-edge-presence'
 import { useShellStore } from './use-shell-store'
 
 const EMPTY_MESSAGES: never[] = []
+
+type ShellRightPanelSectionId = 'connections' | 'outputs' | 'sources' | 'tasks'
 
 /**
  * Work summary as a floating bubble anchored to the chat's top-right corner —
@@ -61,6 +64,28 @@ export function ShellRightPanel({
     [closeArtifactViewer, router, setWorkAreaOpen],
   )
   const lastHandledScopePickerRequestRef = useRef(0)
+  // Collapse state lives here rather than in each section: this component
+  // returns null while the panel is closed but stays mounted, so a section the
+  // user collapsed is still collapsed when they reopen the panel.
+  const [collapsedSections, setCollapsedSections] = useState<Record<ShellRightPanelSectionId, true>>(
+    {} as Record<ShellRightPanelSectionId, true>,
+  )
+  const isSectionOpen = useCallback(
+    (id: ShellRightPanelSectionId) => !collapsedSections[id],
+    [collapsedSections],
+  )
+  const setSectionOpen = useCallback((id: ShellRightPanelSectionId, open: boolean) => {
+    setCollapsedSections((prev) => {
+      const next = { ...prev }
+      if (open) delete next[id]
+      else next[id] = true
+      return next
+    })
+  }, [])
+  const toggleSection = useCallback(
+    (id: ShellRightPanelSectionId) => setSectionOpen(id, Boolean(collapsedSections[id])),
+    [collapsedSections, setSectionOpen],
+  )
   // The create catalog swaps the card body — inside the bubble it can never be
   // clipped by an overflow boundary the way the old rail dropdown was.
   const [createOpen, setCreateOpen] = useState(false)
@@ -153,7 +178,7 @@ export function ShellRightPanel({
             />
           </div>
         ) : (
-          <div className="scrollbar-thin p-spacing-3 gap-spacing-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
             {conversationId ? (
               <>
                 {scopeVisible ? (
@@ -162,16 +187,18 @@ export function ShellRightPanel({
                     campaignId={campaignId}
                     spaceId={spaceId}
                     pickerRef={scopePickerRef}
+                    open={isSectionOpen('connections')}
+                    onOpenChange={(next) => setSectionOpen('connections', next)}
                     onConversationUpdated={onConversationUpdated}
                     onScopeChanged={onScopeChanged}
                     onOpenCampaign={handleOpenCampaign}
                   />
                 ) : null}
-                <section aria-label="Outputs" className="gap-spacing-2 flex flex-col">
-                  <div className="gap-spacing-2 flex items-center">
-                    <h3 className="typo-section-label text-muted-foreground min-w-0 flex-1">
-                      Outputs
-                    </h3>
+                <ShellRightPanelSection
+                  title="Outputs"
+                  open={isSectionOpen('outputs')}
+                  onToggle={() => toggleSection('outputs')}
+                  action={
                     <button
                       type="button"
                       onClick={() => setCreateOpen(true)}
@@ -182,19 +209,26 @@ export function ShellRightPanel({
                     >
                       <Plus className="icon-sm" aria-hidden />
                     </button>
-                  </div>
+                  }
+                >
                   <ShellRightPanelFiles conversationId={conversationId} messages={messages} />
-                </section>
-                <section aria-label="Sources" className="gap-spacing-2 flex flex-col">
-                  <h3 className="typo-section-label text-muted-foreground">Sources</h3>
+                </ShellRightPanelSection>
+                <ShellRightPanelSection
+                  title="Sources"
+                  open={isSectionOpen('sources')}
+                  onToggle={() => toggleSection('sources')}
+                >
                   <ShellRightPanelSources messages={messages} />
-                </section>
+                </ShellRightPanelSection>
               </>
             ) : null}
-            <section aria-label="Tasks" className="gap-spacing-2 flex flex-col">
-              <h3 className="typo-section-label text-muted-foreground">Tasks</h3>
+            <ShellRightPanelSection
+              title="Tasks"
+              open={isSectionOpen('tasks')}
+              onToggle={() => toggleSection('tasks')}
+            >
               <ShellRightPanelTasks conversationId={conversationId} messages={messages} />
-            </section>
+            </ShellRightPanelSection>
           </div>
         )}
       </aside>
