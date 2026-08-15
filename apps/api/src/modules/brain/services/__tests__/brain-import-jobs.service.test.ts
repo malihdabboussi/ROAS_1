@@ -427,6 +427,53 @@ describe('BrainImportJobsService', () => {
     ).rejects.toThrow('Atlas could not process: Missing required JOB_STATUS terminal marker')
   })
 
+  it('skips empty Slack periods without calling Atlas', async () => {
+    const callOpenClawForBrainJob = vi.fn()
+    const service = new BrainImportJobsService({ get: vi.fn() } as any)
+    ;(service as any).getGateway = () => ({ callOpenClawForBrainJob })
+    vi.spyOn(service as any, 'buildMissionInput').mockResolvedValue({
+      targetBrain: 'user',
+      contentType: 'slack_period',
+      title: 'Analyze Slack #sales',
+      input: { content: '' },
+    })
+
+    await expect(
+      (service as any).executeViaAtlas(
+        baseJob({ job_type: 'slack_period_import', title: 'Analyze Slack #sales' }),
+      ),
+    ).resolves.toMatchObject({
+      status: 'skipped',
+      reason: 'Nothing to save from that Slack period.',
+      chunks_processed: 0,
+    })
+    expect(callOpenClawForBrainJob).not.toHaveBeenCalled()
+  })
+
+  it('treats Slack Atlas empty-ingest failures as skipped jobs', async () => {
+    const callOpenClawForBrainJob = vi.fn().mockResolvedValue({
+      content: 'JOB_STATUS:failed — The Slack period contains no message content to ingest',
+    })
+    const service = new BrainImportJobsService({ get: vi.fn() } as any)
+    ;(service as any).getGateway = () => ({ callOpenClawForBrainJob })
+    vi.spyOn(service as any, 'buildMissionInput').mockResolvedValue({
+      targetBrain: 'user',
+      contentType: 'slack_period',
+      title: 'Analyze Slack #sales',
+      input: { content: 'A real Slack digest with enough text to send to Atlas.' },
+    })
+
+    await expect(
+      (service as any).executeViaAtlas(
+        baseJob({ job_type: 'slack_period_import', title: 'Analyze Slack #sales' }),
+      ),
+    ).resolves.toMatchObject({
+      status: 'skipped',
+      reason: 'Nothing to save from that Slack period.',
+    })
+    expect(callOpenClawForBrainJob).toHaveBeenCalled()
+  })
+
   it('runs campaign file jobs through Atlas OpenClaw (no direct CampaignsService path)', async () => {
     const callOpenClawForBrainJob = vi
       .fn()

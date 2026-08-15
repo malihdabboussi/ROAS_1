@@ -11,7 +11,7 @@ function makeConfig() {
   }
 }
 
-function makeClaimResponse() {
+function makeClaimResponse(execution: Record<string, unknown> = {}) {
   return {
     success: true,
     claimed: true,
@@ -32,6 +32,7 @@ function makeClaimResponse() {
       systemPrompt: 'system prompt',
       chunksTotal: 1,
       chunks: [{ index: 0, total: 1, userPrompt: 'user prompt' }],
+      ...execution,
     },
   }
 }
@@ -266,6 +267,97 @@ describe('BrainImportRuntimeService', () => {
     )
     expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain(
       'http://main-api.local/api/internal/brain/import-jobs/import-job-1/succeed',
+    )
+  })
+
+  it('skips empty Slack periods without calling Atlas', async () => {
+    const artifacts = {
+      proxyOpenClawResponses: vi.fn(),
+    }
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.endsWith('/claim')) {
+        return new Response(
+          JSON.stringify(
+            makeClaimResponse({
+              jobType: 'slack_period_import',
+              title: 'Analyze Slack #sales',
+              contentType: 'slack_period',
+              chunksTotal: 0,
+              chunks: [],
+            }),
+          ),
+          { status: 200 },
+        )
+      }
+      return new Response(JSON.stringify({ success: true }), { status: 200 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const { agentRuntime, runtimeReadiness } = makeRuntimeDeps()
+    const service = new BrainImportRuntimeService(
+      makeConfig() as never,
+      artifacts as never,
+      agentRuntime as never,
+      runtimeReadiness as never,
+    )
+
+    await expect(service.execute('import-job-1')).resolves.toMatchObject({
+      type: 'terminal',
+      status: 'done',
+      result: {
+        status: 'skipped',
+        reason: 'Nothing to save from that Slack period.',
+        chunks_processed: 0,
+      },
+    })
+    expect(artifacts.proxyOpenClawResponses).not.toHaveBeenCalled()
+    expect(runtimeReadiness.ensureRuntimeReady).not.toHaveBeenCalled()
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toContain(
+      'http://main-api.local/api/internal/brain/import-jobs/import-job-1/succeed',
+    )
+  })
+
+  it('marks Slack empty-ingest Atlas failures as skipped instead of failed', async () => {
+    const artifacts = {
+      proxyOpenClawResponses: vi.fn(async () => ({
+        content: 'JOB_STATUS:failed — could not ingest',
+      })),
+    }
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.endsWith('/claim')) {
+        return new Response(
+          JSON.stringify(
+            makeClaimResponse({
+              jobType: 'slack_period_import',
+              contentType: 'slack_period',
+            }),
+          ),
+          { status: 200 },
+        )
+      }
+      return new Response(JSON.stringify({ success: true }), { status: 200 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const { agentRuntime, runtimeReadiness } = makeRuntimeDeps()
+    const service = new BrainImportRuntimeService(
+      makeConfig() as never,
+      artifacts as never,
+      agentRuntime as never,
+      runtimeReadiness as never,
+    )
+
+    await expect(service.execute('import-job-1')).resolves.toMatchObject({
+      type: 'terminal',
+      status: 'done',
+      result: {
+        status: 'skipped',
+        reason: 'Nothing to save from that Slack period.',
+      },
+    })
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toContain(
+      'http://main-api.local/api/internal/brain/import-jobs/import-job-1/succeed',
+    )
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain(
+      'http://main-api.local/api/internal/brain/import-jobs/import-job-1/fail',
     )
   })
 })

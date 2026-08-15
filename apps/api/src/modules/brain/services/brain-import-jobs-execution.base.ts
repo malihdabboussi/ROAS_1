@@ -1,3 +1,8 @@
+import {
+  SLACK_EMPTY_PERIOD_SKIP_REASON,
+  interpretAtlasImportJobStatus,
+  isSlackPeriodImportContent,
+} from '@vibey/api-shared'
 import { BrainImportJobsEnqueueBase } from './brain-import-jobs-enqueue.base'
 import { BrainImportJobsBase } from './brain-import-jobs.base'
 import type {
@@ -51,7 +56,10 @@ export abstract class BrainImportJobsExecutionBase extends BrainImportJobsEnqueu
     const sourceId = String(safeInput.sessionKey || safeInput.sourceId || job.id)
 
     const contentText = this.extractContentText(safeInput)
-    const chunks = this.chunkContent(contentText)
+    const chunks =
+      isSlackPeriodImportContent(contentType) && !contentText.trim()
+        ? []
+        : this.chunkContent(contentText)
 
     const systemPrompt = this.buildAtlasSystemPrompt(
       targetBrain,
@@ -118,7 +126,18 @@ export abstract class BrainImportJobsExecutionBase extends BrainImportJobsEnqueu
     const gateway = this.getGateway()
     const execution = await this.buildAtlasExecutionPlan(job)
 
-    let lastResult: Record<string, unknown> = {}
+    if (execution.chunks.length === 0) {
+      if (isSlackPeriodImportContent(execution.contentType)) {
+        return {
+          status: 'skipped',
+          reason: SLACK_EMPTY_PERIOD_SKIP_REASON,
+          chunks_processed: 0,
+          atlasResponse: `JOB_STATUS:skipped — ${SLACK_EMPTY_PERIOD_SKIP_REASON}`,
+        }
+      }
+      throw new Error('Atlas could not process: Missing import content')
+    }
+
     let lastResponseText = ''
 
     for (const chunk of execution.chunks) {
@@ -134,9 +153,8 @@ export abstract class BrainImportJobsExecutionBase extends BrainImportJobsEnqueu
         { lane: execution.lane },
       )
 
-      lastResult = result
       lastResponseText = this.extractAtlasResponseText(result)
-      const jobStatus = this.parseJobStatus(lastResponseText)
+      const jobStatus = this.parseJobStatus(lastResponseText, execution.contentType)
 
       if (jobStatus.status === 'failed') {
         throw new Error(`Atlas could not process: ${jobStatus.reason}`)
@@ -148,7 +166,7 @@ export abstract class BrainImportJobsExecutionBase extends BrainImportJobsEnqueu
       }
     }
 
-    const finalStatus = this.parseJobStatus(lastResponseText)
+    const finalStatus = this.parseJobStatus(lastResponseText, execution.contentType)
     if (finalStatus.status === 'failed') {
       throw new Error(`Atlas could not process: ${finalStatus.reason}`)
     }
@@ -236,6 +254,7 @@ export abstract class BrainImportJobsExecutionBase extends BrainImportJobsEnqueu
           `Slack digest instructions:`,
           `Each line is annotated with sender identity in brackets, e.g. [contact_id=..., role=customer] or [vibey_user=..., role=host]. Use those annotations to decide who is speaking.`,
           `Most Slack threads are operational chatter. Save only meaningful decisions, strategic direction, customer insight, learning, or commitments. Skip logistics, banter, scheduling, and thank-you threads.`,
+          `If this Slack period has no messages or no significant knowledge, report JOB_STATUS:skipped. Do not report JOB_STATUS:failed for empty or chatter-only Slack windows.`,
         ].join('\n')
       : ''
 
@@ -252,7 +271,9 @@ export abstract class BrainImportJobsExecutionBase extends BrainImportJobsEnqueu
       slackNote,
       ``,
       `Analyze the content and extract meaningful knowledge entries. Save each entry using the action above.`,
-      `If the content is missing, empty, or cannot be processed, report it as failed.`,
+      isSlackPeriodImportContent(contentType)
+        ? `If this Slack period is empty or has no significant knowledge, report JOB_STATUS:skipped.`
+        : `If the content is missing, empty, or cannot be processed, report it as failed.`,
       ``,
       `After processing, your FINAL message must start with one of these exact lines:`,
       `JOB_STATUS:completed — followed by a summary`,
@@ -376,35 +397,14 @@ export abstract class BrainImportJobsExecutionBase extends BrainImportJobsEnqueu
     return ''
   }
 
-  private parseJobStatus(text: string): {
+  private parseJobStatus(
+    text: string,
+    contentType: string,
+  ): {
     status: 'completed' | 'failed' | 'skipped'
     reason: string
   } {
-    const match = text.match(/^\s*JOB_STATUS:(completed|failed|skipped)\b([^\r\n]*)/m)
-    if (match) {
-      const status = match[1] as 'completed' | 'failed' | 'skipped'
-      const reason = match[2].replace(/^[\s—–-]+/, '').trim()
-      const fallbackReason =
-        status === 'completed'
-          ? 'Processed successfully'
-          : status === 'failed'
-            ? 'Unknown failure'
-            : 'Skipped'
-      return { status, reason: reason || fallbackReason }
-    }
-
-    const lower = text.toLowerCase()
-    if (
-      lower.includes('nothing to ingest') ||
-      lower.includes('no content') ||
-      lower.includes('transcript is null') ||
-      lower.includes('no transcript') ||
-      lower.includes('skip this')
-    ) {
-      return { status: 'failed', reason: 'Atlas could not find processable content' }
-    }
-
-    return { status: 'failed', reason: 'Missing required JOB_STATUS terminal marker' }
+    return interpretAtlasImportJobStatus(text, contentType)
   }
 
   private async ensureFathomTranscript(
