@@ -144,7 +144,7 @@ export function ShellRightPanel({
           </div>
         ) : null}
         {createOpen ? (
-          <div className="scrollbar-hide py-spacing-1 min-h-0 flex-1 overflow-y-auto">
+          <div className="scrollbar-thin py-spacing-1 min-h-0 flex-1 overflow-y-auto">
             <ShellCreateMenuPanel
               onSelectCreateItem={handleCreateSelect}
               onSelectMissionPlaybook={(playbookKey) => openLauncher(playbookKey)}
@@ -153,7 +153,7 @@ export function ShellRightPanel({
             />
           </div>
         ) : (
-          <div className="scrollbar-hide p-spacing-3 gap-spacing-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <div className="scrollbar-thin p-spacing-3 gap-spacing-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
             {conversationId ? (
               <>
                 {scopeVisible ? (
@@ -169,7 +169,7 @@ export function ShellRightPanel({
                 ) : null}
                 <section aria-label="Outputs" className="gap-spacing-2 flex flex-col">
                   <div className="gap-spacing-2 flex items-center">
-                    <h3 className="typo-caption text-muted-foreground min-w-0 flex-1 font-medium uppercase tracking-wide">
+                    <h3 className="typo-section-label text-muted-foreground min-w-0 flex-1">
                       Outputs
                     </h3>
                     <button
@@ -186,17 +186,13 @@ export function ShellRightPanel({
                   <ShellRightPanelFiles conversationId={conversationId} messages={messages} />
                 </section>
                 <section aria-label="Sources" className="gap-spacing-2 flex flex-col">
-                  <h3 className="typo-caption text-muted-foreground font-medium uppercase tracking-wide">
-                    Sources
-                  </h3>
+                  <h3 className="typo-section-label text-muted-foreground">Sources</h3>
                   <ShellRightPanelSources messages={messages} />
                 </section>
               </>
             ) : null}
             <section aria-label="Tasks" className="gap-spacing-2 flex flex-col">
-              <h3 className="typo-caption text-muted-foreground font-medium uppercase tracking-wide">
-                Tasks
-              </h3>
+              <h3 className="typo-section-label text-muted-foreground">Tasks</h3>
               <ShellRightPanelTasks conversationId={conversationId} messages={messages} />
             </section>
           </div>

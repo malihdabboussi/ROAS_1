@@ -1,7 +1,7 @@
 'use client'
 
-import { useMemo, useRef, type RefObject } from 'react'
-import { FolderKanban, Plus, X } from 'lucide-react'
+import { useMemo, useRef, type LucideIcon, type RefObject } from 'react'
+import { FolderKanban, Layers, Plus, X } from 'lucide-react'
 import {
   ConversationScopePicker,
   type ConversationScopePickerHandle,
@@ -49,19 +49,21 @@ export function ShellRightPanelConnections({
     spacesByCampaign: {},
   })
   const rows = useMemo(() => {
-    const items: Array<{ id: string; title: string; subtitle: string }> = []
+    const items: Array<{ id: string; title: string; type: string; icon: LucideIcon }> = []
     if (campaignId) {
       items.push({
         id: 'campaign',
         title: campaign?.name?.trim() || 'Campaign',
-        subtitle: 'Campaign',
+        type: 'Campaign',
+        icon: FolderKanban,
       })
     }
     if (spaceId) {
       items.push({
         id: 'space',
         title: space?.title?.trim() || 'Space',
-        subtitle: 'Space',
+        type: 'Space',
+        icon: Layers,
       })
     }
     return items
@@ -80,9 +82,7 @@ export function ShellRightPanelConnections({
   return (
     <section aria-label="Connections" className="gap-spacing-2 flex flex-col">
       <div className="gap-spacing-2 flex items-center">
-        <h3 className="typo-caption text-muted-foreground min-w-0 flex-1 font-medium uppercase tracking-wide">
-          Connections
-        </h3>
+        <h3 className="typo-section-label text-muted-foreground min-w-0 flex-1">Connections</h3>
         <button
           ref={addButtonRef}
           type="button"
@@ -99,26 +99,31 @@ export function ShellRightPanelConnections({
           {SHELL_RIGHT_PANEL_MESSAGES.connectionsEmpty}
         </p>
       ) : (
-        <ul className="space-y-spacing-1">
-          {rows.map((row) => (
-            <li key={row.id}>
-              <div className="gap-spacing-2 px-spacing-2 py-spacing-2 flex items-center rounded-lg">
-                <FolderKanban className="icon-sm text-muted-foreground shrink-0" aria-hidden />
-                <div className="min-w-0 flex-1">
-                  <p className="body-3 text-foreground truncate">{row.title}</p>
-                  <p className="body-4 text-muted-foreground">{row.subtitle}</p>
+        <ul>
+          {rows.map((row) => {
+            const Icon = row.icon
+            return (
+              <li key={row.id}>
+                {/* Name left, type right — the type reads as the row's value
+                    instead of a second line that repeats what the icon says. */}
+                <div className="gap-spacing-2 px-spacing-3 py-spacing-1-5 hover:bg-hover-subtle group flex items-center rounded-lg transition-colors">
+                  <Icon className="icon-sm text-muted-foreground shrink-0" aria-hidden />
+                  <span className="body-3 text-foreground min-w-0 flex-1 truncate">
+                    {row.title}
+                  </span>
+                  <span className="body-4 text-muted-foreground shrink-0">{row.type}</span>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-foreground shrink-0 opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100"
+                    aria-label={`Remove ${row.title} connection`}
+                    onClick={() => void clearScope()}
+                  >
+                    <X className="icon-sm" aria-hidden />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="text-muted-foreground hover:text-foreground p-spacing-1 rounded-lg transition-colors"
-                  aria-label={`Remove ${row.title} connection`}
-                  onClick={() => void clearScope()}
-                >
-                  <X className="icon-sm" aria-hidden />
-                </button>
-              </div>
-            </li>
-          ))}
+              </li>
+            )
+          })}
         </ul>
       )}
       <ConversationScopePicker

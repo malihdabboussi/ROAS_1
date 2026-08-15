@@ -31,3 +31,24 @@ Files:
 - apps/web/src/features/spaces/components/chat/SpaceChatHeaderActions.tsx
 - apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.tsx
 - apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.test.tsx
+
+## [2026-08-15 11:40] - [STYLE]
+
+What: Density and rhythm pass on the work summary panel, after reviewing it running locally.
+
+- Section headings now use the canonical `typo-section-label` utility instead of `typo-caption` + manual `uppercase tracking-wide`. The panel was the outlier; 57 other call sites already use the canonical utility.
+- Connections rows collapsed from two lines to one: name on the left, type right-aligned as the row's value, at canonical row padding (`px-spacing-3 py-spacing-1-5`). The old second line just repeated what the icon already said.
+- Campaign and Space rows now carry distinct icons (`FolderKanban` / `Layers`, matching `ConversationScopeTrigger`) rather than both showing a campaign icon.
+- The per-row remove control fades in on hover/focus instead of sitting permanently in every row, using the same opacity pattern as `ShellRightPanelFiles`.
+- Sources rows collapsed to one line; the `kind` subtitle was a constant type word already conveyed by the link icon. Full title preserved as a `title` tooltip since the label truncates.
+- Replaced `scrollbar-hide` with `scrollbar-thin`. `scrollbar-hide` is not defined anywhere in `globals.css` — it was a no-op class.
+
+Why: The first pass removed duplicated controls but left the panel's own typography and row rhythm untouched, so it still read as a stack of loosely related lists rather than one designed surface. Two-line rows whose second line restates the type are the main source of the bulk.
+
+Impact: Panel is materially shorter and scans faster; section labels match the rest of the app. No behavior or API change. 280 tests pass across the shell and chat suites; lint clean.
+
+Files:
+
+- apps/web/src/components/shell/ShellRightPanel.tsx
+- apps/web/src/components/shell/ShellRightPanelConnections.tsx
+- apps/web/src/components/shell/ShellRightPanelSources.tsx
