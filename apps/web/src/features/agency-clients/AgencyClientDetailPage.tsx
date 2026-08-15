@@ -18,11 +18,9 @@ import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
 import { AGENCY_CLIENT_MESSAGES } from './config/messages.config'
 
 type Tab = 'overview' | 'campaigns' | 'tasks' | 'requests'
-
 function text(row: Record<string, unknown>, key: string) {
   return typeof row[key] === 'string' ? row[key] : ''
 }
-
 function isClosed(status: string) {
   return [
     'done',
@@ -35,7 +33,6 @@ function isClosed(status: string) {
     'complete / live',
   ].includes(status.toLowerCase())
 }
-
 export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
   const [workspace, setWorkspace] = useState<AgencyClientWorkspace | null>(null)
   const [loading, setLoading] = useState(true)
@@ -45,7 +42,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
   const [editingClient, setEditingClient] = useState(false)
   const [editingCampaignId, setEditingCampaignId] = useState<string | null>(null)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
-
   useEffect(() => {
     let cancelled = false
     const load = async () => {
@@ -54,7 +50,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
         if (cancelled) return
         setWorkspace(initial)
         setLoading(false)
-
         // Overview, tasks, and requests come directly from Page Grader and should be
         // usable before a new client's ROAS campaign and Spaces finish reconciling.
         void fetchAgencyClient(clientId, true)

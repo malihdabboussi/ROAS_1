@@ -10,7 +10,6 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, ChevronRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { assignConversationScope, CONVERSATION_ACTIONS_TOAST_ERRORS } from '@/lib/conversations'
 import { useCampaignCacheVersion } from '@/lib/home'
@@ -31,9 +30,12 @@ import {
   type ConversationScopeSpace,
 } from './conversation-scope-picker-layout'
 import { ConversationScopeTrigger } from './ConversationScopeTrigger'
+import { ConversationScopePickerMenus } from './ConversationScopePickerMenus'
+import { groupScopeCampaignsByProgram } from './conversation-scope-groups'
 import {
   useConversationScopeCampaigns,
   useConversationScopeFallbackSpace,
+  useConversationScopePrograms,
 } from './use-conversation-scope-data'
 
 export type { ConversationScopePickerHandle } from './conversation-scope-picker-layout'
@@ -52,6 +54,7 @@ export const ConversationScopePicker = forwardRef<
     onScopeChanged,
     onOpenCampaign,
     bannerAnchorRef,
+    hideTrigger = false,
   } = props
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const cacheVersion = useCampaignCacheVersion()
@@ -62,6 +65,7 @@ export const ConversationScopePicker = forwardRef<
     spaces: ConversationScopeMenuGeom | null
   } | null>(null)
   const campaigns = useConversationScopeCampaigns(activeOrgId, cacheVersion)
+  const programs = useConversationScopePrograms(activeOrgId)
   const [activeCampaignId, setActiveCampaignId] = useState<string | null>(null)
   const [spacesByCampaign, setSpacesByCampaign] = useState<
     Record<string, ConversationScopeSpace[]>
@@ -264,127 +268,64 @@ export const ConversationScopePicker = forwardRef<
   )
 
   const activeSpaces = activeCampaignId ? spacesByCampaign[activeCampaignId] : undefined
+  const listedCampaigns = campaigns.filter((campaign) => campaign.id !== generalCampaign?.id)
+  const campaignGroups =
+    programs.length > 0
+      ? groupScopeCampaignsByProgram(listedCampaigns, programs)
+      : [{ key: 'all', label: '', campaigns: listedCampaigns }]
 
   const portalMenus =
     mounted &&
     open &&
     typeof document !== 'undefined' &&
     createPortal(
-      <>
-        <div
-          ref={campaignMenuRef}
-          className="dropdown-menu-solid z-dropdown fixed flex flex-col overflow-hidden py-1"
-          style={{
-            top: menuLayout?.campaign.top ?? 0,
-            left: menuLayout?.campaign.left ?? 0,
-            width: CONVERSATION_SCOPE_MENU_WIDTH,
-            maxHeight: menuLayout?.campaign.maxHeight ?? 420,
-            visibility: menuLayout ? 'visible' : 'hidden',
-          }}
-        >
-          <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
-            <button
-              type="button"
-              className="body-3 hover:bg-hover-subtle text-foreground flex w-full items-center gap-2 px-3 py-2 text-left transition-colors"
-              onClick={() => void handleSelectScope(generalCampaign?.id ?? null, null)}
-            >
-              <span className="min-w-0 flex-1 truncate">General</span>
-              {!selectedSpaceId && selectedCampaignId === (generalCampaign?.id ?? null) ? (
-                <Check className="icon-xs shrink-0" aria-hidden />
-              ) : null}
-            </button>
-            {campaigns.map((campaign) => {
-              if (campaign.id === generalCampaign?.id) return null
-              const selected = campaign.id === selectedCampaignId
-              return (
-                <button
-                  key={campaign.id}
-                  type="button"
-                  className="body-3 hover:bg-hover-subtle text-foreground flex w-full items-center gap-2 px-3 py-2 text-left transition-colors"
-                  onMouseEnter={(e) => {
-                    setHoverRowEl(e.currentTarget)
-                    loadSpacesForCampaign(campaign.id)
-                  }}
-                  onFocus={(e) => {
-                    setHoverRowEl(e.currentTarget)
-                    loadSpacesForCampaign(campaign.id)
-                  }}
-                >
-                  <span className="min-w-0 flex-1 truncate">
-                    {campaign.name ?? 'Untitled campaign'}
-                  </span>
-                  {selected ? <Check className="icon-xs shrink-0" aria-hidden /> : null}
-                  <ChevronRight className="icon-xs text-muted-foreground shrink-0" aria-hidden />
-                </button>
-              )
-            })}
-          </div>
-        </div>
-        {activeCampaignId && menuLayout?.spaces ? (
-          <div
-            ref={spacesMenuRef}
-            className="dropdown-menu-solid z-dropdown fixed flex flex-col overflow-hidden py-1"
-            style={{
-              top: menuLayout.spaces.top,
-              left: menuLayout.spaces.left,
-              width: CONVERSATION_SCOPE_MENU_WIDTH,
-              maxHeight: menuLayout.spaces.maxHeight,
-            }}
-          >
-            {loadingCampaignId === activeCampaignId ? (
-              <div className="body-3 text-muted-foreground flex items-center gap-2 px-3 py-2">
-                <Loader2 className="icon-xs animate-spin" aria-hidden />
-                Loading spaces...
-              </div>
-            ) : activeSpaces && activeSpaces.length > 0 ? (
-              <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
-                {activeSpaces.map((space) => (
-                  <button
-                    key={space.id}
-                    type="button"
-                    className="body-3 hover:bg-hover-subtle text-foreground flex w-full items-center justify-between gap-4 px-3 py-2 text-left transition-colors"
-                    onClick={() => void handleSelectScope(activeCampaignId, space.id)}
-                  >
-                    <span className="min-w-0 flex-1 truncate">{space.title}</span>
-                    {selectedSpaceId === space.id ? (
-                      <Check className="icon-xs shrink-0" aria-hidden />
-                    ) : null}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="body-3 text-muted-foreground px-3 py-2">No spaces here yet</div>
-            )}
-          </div>
-        ) : null}
-      </>,
+      <ConversationScopePickerMenus
+        campaignMenuRef={campaignMenuRef}
+        spacesMenuRef={spacesMenuRef}
+        menuLayout={menuLayout}
+        campaignGroups={campaignGroups}
+        generalCampaign={generalCampaign}
+        selectedCampaignId={selectedCampaignId}
+        selectedSpaceId={selectedSpaceId}
+        activeCampaignId={activeCampaignId}
+        loadingCampaignId={loadingCampaignId}
+        activeSpaces={activeSpaces}
+        onSelectGeneral={() => void handleSelectScope(generalCampaign?.id ?? null, null)}
+        onOpenCampaignSpaces={(campaignId, row) => {
+          setHoverRowEl(row)
+          loadSpacesForCampaign(campaignId)
+        }}
+        onSelectSpace={(campaignId, spaceId) => void handleSelectScope(campaignId, spaceId)}
+      />,
       document.body,
     )
 
   return (
     <div className="relative">
-      <ConversationScopeTrigger
-        buttonRef={buttonRef}
-        label={displayLabel}
-        open={open}
-        saving={saving}
-        showLabel={showLabel}
-        compact={compact}
-        tooltipLabel={label}
-        campaignId={selectedCampaignId}
-        onOpenCampaign={
-          selectedCampaignId && onOpenCampaign
-            ? () => onOpenCampaign(selectedCampaignId)
-            : undefined
-        }
-        onToggle={() =>
-          setOpen((prev) => {
-            const next = !prev
-            if (next) openFromBannerRef.current = false
-            return next
-          })
-        }
-      />
+      {hideTrigger ? null : (
+        <ConversationScopeTrigger
+          buttonRef={buttonRef}
+          label={displayLabel}
+          open={open}
+          saving={saving}
+          showLabel={showLabel}
+          compact={compact}
+          tooltipLabel={label}
+          campaignId={selectedCampaignId}
+          onOpenCampaign={
+            selectedCampaignId && onOpenCampaign
+              ? () => onOpenCampaign(selectedCampaignId)
+              : undefined
+          }
+          onToggle={() =>
+            setOpen((prev) => {
+              const next = !prev
+              if (next) openFromBannerRef.current = false
+              return next
+            })
+          }
+        />
+      )}
       {portalMenus}
     </div>
   )

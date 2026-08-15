@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   fetchSpaces: vi.fn(),
   fetchSpaceById: vi.fn(),
   fetchCampaigns: vi.fn(),
+  fetchPrograms: vi.fn(async () => []),
   assignConversationScope: vi.fn(),
   positionFloatingMenuFromAnchorRect: vi.fn(),
 }))
@@ -32,6 +33,10 @@ vi.mock('@/lib/org', () => ({
 vi.mock('@/lib/spaces', () => ({
   fetchSpaces: mocks.fetchSpaces,
   fetchSpaceById: mocks.fetchSpaceById,
+}))
+
+vi.mock('@/lib/programs', () => ({
+  fetchPrograms: mocks.fetchPrograms,
 }))
 
 vi.mock('@/lib/campaigns', () => ({
@@ -98,6 +103,7 @@ describe('ConversationScopePicker', () => {
   afterEach(() => {
     cleanup()
     vi.clearAllMocks()
+    mocks.fetchPrograms.mockResolvedValue([])
   })
 
   it('loads campaign spaces, assigns scope, and settles without render loops', async () => {
@@ -131,8 +137,10 @@ describe('ConversationScopePicker', () => {
       )
 
       fireEvent.click(screen.getByLabelText('General'))
-      const campaignRow = await screen.findByText('Launch campaign')
+      const campaignRow = await screen.findByRole('button', { name: /Launch campaign/ })
       fireEvent.mouseEnter(campaignRow)
+      expect(mocks.fetchSpaces).not.toHaveBeenCalled()
+      fireEvent.click(campaignRow)
 
       await waitFor(() =>
         expect(mocks.fetchSpaces).toHaveBeenCalledWith(
@@ -281,5 +289,24 @@ describe('ConversationScopePicker', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Open campaign' }))
     expect(onOpenCampaign).toHaveBeenCalledWith('campaign-1')
+  })
+
+  it('groups campaigns under program headings in the click-stable picker', async () => {
+    mocks.useOrgStore.mockImplementation((selector: (state: { activeOrgId: string }) => unknown) =>
+      selector({ activeOrgId: 'org-1' }),
+    )
+    mocks.useCampaignCacheVersion.mockReturnValue(0)
+    mocks.fetchPrograms.mockResolvedValue([{ id: 'program-1', name: 'Growth' }])
+    const programCampaigns = campaigns.map((campaign) =>
+      campaign.id === 'campaign-1' ? { ...campaign, program_id: 'program-1' } : campaign,
+    )
+    mocks.getCachedCampaigns.mockReturnValue(programCampaigns)
+    mocks.prefetchOrgCampaigns.mockResolvedValue(programCampaigns)
+
+    render(<ConversationScopePicker conversation={conversation} />)
+
+    fireEvent.click(screen.getByLabelText('General'))
+    expect(await screen.findByText('Growth')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Launch campaign/ })).toBeInTheDocument()
   })
 })

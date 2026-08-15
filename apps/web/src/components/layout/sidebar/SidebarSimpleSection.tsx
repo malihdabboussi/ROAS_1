@@ -7,7 +7,6 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   CheckSquare,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Ellipsis,
@@ -19,6 +18,7 @@ import {
   Star,
   Users,
 } from 'lucide-react'
+import { ConversationHubSectionHeader } from '@/components/conversations/SpaceConversationSections'
 import { AvatarDropdown } from '@/components/layout/AvatarDropdown'
 import { useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
 import { useOrgStore } from '@/features/org/store/use-org-store'
@@ -139,19 +139,11 @@ export function SidebarSimpleSection({
         })}
       </div>
       <div className="px-spacing-3 pb-spacing-1">
-        <button
-          type="button"
-          className="hub-menu-section-label gap-spacing-1 group flex w-full items-center text-left"
-          aria-expanded={favoritesOpen}
-          onClick={() => setFavoritesOpen((open) => !open)}
-        >
-          Favorites
-          {favoritesOpen ? (
-            <ChevronDown className="icon-xs opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100" />
-          ) : (
-            <ChevronRight className="icon-xs opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100" />
-          )}
-        </button>
+        <ConversationHubSectionHeader
+          label="Favorites"
+          expanded={favoritesOpen}
+          onToggle={() => setFavoritesOpen((open) => !open)}
+        />
         {favoritesOpen ? (
           <SidebarFavoritesFlyout
             favoritePrograms={favoritePrograms}

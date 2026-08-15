@@ -8,6 +8,7 @@ import { surfaceFromPathname } from '@/components/global-chat/config/work-contex
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useActiveShellMenuDock, useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
 import { shellSidebarExpanded, useShellStore } from '@/components/shell/use-shell-store'
+import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cn } from '@/lib/utils/cn'
 import { isManageRailItemActive, workContextSurfaceForPanel } from './sidebar-hq-rail.helpers'
 import type { ManagePanelId, ManageRailItem } from './sidebar-types'
@@ -57,10 +58,12 @@ export function SidebarHqRail({
   }, [shellExpanded, c.hubMenuOpen, c.hubMenuClosing, c.forceCloseHubMenu])
 
   const syncWorkContextForPath = (href: string) => {
+    if (useChatStore.getState().activeConversationId) return
     setWorkContext({ surface: surfaceFromPathname(href) })
   }
 
   const syncWorkContextForPanel = (panelId: ManagePanelId) => {
+    if (useChatStore.getState().activeConversationId) return
     setWorkContext({ surface: workContextSurfaceForPanel(panelId) })
   }
 
@@ -243,7 +246,9 @@ export function SidebarHqRail({
                           onClick={(e) => {
                             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)
                               return
-                            setWorkContext({ surface: 'team' })
+                            if (!useChatStore.getState().activeConversationId) {
+                              setWorkContext({ surface: 'team' })
+                            }
                             setCollapsed(true)
                             c.setActiveManagePanel(null)
                           }}

@@ -257,6 +257,33 @@ describe('SpaceConversationsList', () => {
     expect(screen.getByLabelText('Chat conversation')).toBeInTheDocument()
   })
 
+  it('shows Slack and meeting logos in the identity slot without a generic chat dot', () => {
+    render(
+      <SpaceConversationsList
+        {...baseProps({
+          conversations: [
+            conversation({
+              id: 'slack-1',
+              title: 'Launch thread',
+              metadata: { source: 'slack' },
+            }),
+            conversation({
+              id: 'meeting-1',
+              title: 'Client launch review',
+              metadata: { context_type: 'meeting', meeting_item_id: 'item-1' },
+            }),
+            conversation({ id: 'chat-1', title: 'Post-call recap' }),
+          ],
+          leadingIcon: 'logo',
+        })}
+      />,
+    )
+
+    expect(screen.getByLabelText('Slack conversation')).toBeInTheDocument()
+    expect(screen.getByLabelText('Meeting conversation')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Chat conversation')).not.toBeInTheDocument()
+  })
+
   it('adds compact sidebar gutters without the full list top gap', () => {
     const { container } = render(
       <SpaceConversationsList
@@ -317,5 +344,38 @@ describe('SpaceConversationsList', () => {
       'border-b',
       'rounded-none',
     )
+  })
+
+  it('moves pinned chats into a Pinned section above Recents', () => {
+    render(
+      <SpaceConversationsList
+        {...baseProps({
+          compactHeader: true,
+          compactHeaderTitle: 'Recents',
+          hideHeaderBottomBorder: true,
+          splitPinnedSection: true,
+          conversations: [
+            conversation({
+              id: 'pinned-1',
+              title: 'ROAS Marketing Strategy',
+              metadata: { pinned: true },
+            }),
+            conversation({ id: 'recent-1', title: 'Post Call Recap Message' }),
+          ],
+        })}
+      />,
+    )
+
+    const pinnedHeader = screen.getByRole('button', { name: 'Pinned' })
+    const recentsHeader = screen.getByRole('button', { name: 'Recents' })
+    expect(pinnedHeader).toHaveClass('hub-menu-section-label')
+    expect(recentsHeader).toHaveClass('hub-menu-section-label')
+    expect(pinnedHeader.compareDocumentPosition(recentsHeader) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(pinnedHeader.compareDocumentPosition(screen.getByText('ROAS Marketing Strategy'))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+    fireEvent.click(recentsHeader)
+    expect(screen.getByText('ROAS Marketing Strategy')).toBeInTheDocument()
+    expect(screen.queryByText('Post Call Recap Message')).not.toBeInTheDocument()
   })
 })

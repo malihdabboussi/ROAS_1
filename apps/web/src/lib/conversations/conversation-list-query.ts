@@ -27,7 +27,7 @@ export const DEFAULT_CHAT_HISTORY_FILTERS: ChatHistoryFilterState = {
   lastActivity: 'all',
   type: 'all',
   groupBy: 'none',
-  leadingIcon: 'none',
+  leadingIcon: 'logo',
 }
 
 export interface ConversationListGroup {
@@ -43,6 +43,8 @@ export interface ConversationListGroupOptions {
   /** Cap for campaign/agent/channel sections before remaining rows fall into Other. */
   softCap?: number
   now?: Date
+  /** Lift pinned chats into a Pinned group above the remaining Recents/date groups. */
+  splitPinned?: boolean
 }
 
 const MS_DAY = 24 * 60 * 60 * 1000
@@ -255,6 +257,22 @@ function resolveStatusGroupId(conversation: Conversation, runtimePhase?: string 
   return 'ready'
 }
 
+function partitionPinnedConversations(conversations: Conversation[]): {
+  pinned: Conversation[]
+  rest: Conversation[]
+} {
+  const pinned: Conversation[] = []
+  const rest: Conversation[] = []
+  for (const conversation of conversations) {
+    if (isConversationPinned(conversation) && !isConversationArchived(conversation)) {
+      pinned.push(conversation)
+    } else {
+      rest.push(conversation)
+    }
+  }
+  return { pinned, rest }
+}
+
 export function groupConversationsForHistory(
   conversations: Conversation[],
   options: ConversationListGroupOptions & {
@@ -264,6 +282,22 @@ export function groupConversationsForHistory(
   const now = options.now ?? new Date()
   const softCap = options.softCap ?? 5
   const sorted = sortNewestFirst(conversations)
+
+  if (options.splitPinned) {
+    const { pinned, rest } = partitionPinnedConversations(sorted)
+    const restGroups = groupConversationsForHistory(rest, { ...options, splitPinned: false })
+    if (options.groupBy === 'none') {
+      const groups: ConversationListGroup[] = []
+      if (pinned.length > 0) groups.push({ id: 'pinned', label: 'Pinned', items: pinned })
+      if (rest.length > 0 || groups.length === 0) {
+        groups.push({ id: 'recents', label: '', items: rest })
+      }
+      return groups
+    }
+    return pinned.length > 0
+      ? [{ id: 'pinned', label: 'Pinned', items: pinned }, ...restGroups]
+      : restGroups
+  }
 
   if (options.groupBy === 'none') {
     return sorted.length > 0 ? [{ id: 'all', label: '', items: sorted }] : []

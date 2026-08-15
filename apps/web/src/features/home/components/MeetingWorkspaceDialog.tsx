@@ -5,6 +5,7 @@ import { X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
+import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { MeetingCallStatusSection } from '@/features/home/components/MeetingCallStatusSection'
 import { MeetingRenamableTitle } from '@/features/home/components/MeetingRenamableTitle'
 import { MeetingWorkspaceBody } from '@/features/home/components/MeetingWorkspaceBody'
@@ -67,6 +68,7 @@ export function MeetingWorkspaceDialog({
   const openChatDrawer = useShellStore((state) => state.openChatDrawer)
   const setWorkAreaOpen = useShellStore((state) => state.setWorkAreaOpen)
   const setRailIntent = useGlobalChatStore((state) => state.setRailIntent)
+  const activeConversationId = useChatStore((state) => state.activeConversationId)
   const continueMeetingConversation = useGlobalChatStore(
     (state) => state.continueMeetingConversation,
   )
@@ -147,6 +149,8 @@ export function MeetingWorkspaceDialog({
 
   useEffect(() => {
     if (!conversationId) return
+    // A meeting workspace in the page must not steal an unrelated open chat.
+    if (activeConversationId && activeConversationId !== conversationId) return
     // Attach meeting context (switches agent → vibey + spaces scope) before opening the drawer
     // so the panel does not hydrate under a leftover Delegator filter.
     attachMeetingContext({
@@ -160,6 +164,7 @@ export function MeetingWorkspaceDialog({
     setRailIntent(null)
     openChatDrawer(conversationId)
   }, [
+    activeConversationId,
     attachMeetingContext,
     awarenessContext,
     bundle?.snippets.length,

@@ -46,12 +46,23 @@ function ConversationRowLeadingIcon({
   if (leadingIcon === 'status') {
     return <ConversationActivityIndicator activity={activity} />
   }
-  // logo — channel mark when present; otherwise the current activity state
+  // logo — identity mark in one slot; activity dots stay separate
   const source = conversation.metadata?.source
   if (source === 'slack' || source === 'telegram') {
-    return <ConversationChannelIcon metadata={conversation.metadata} />
+    return (
+      <span aria-label={source === 'slack' ? 'Slack conversation' : 'Telegram conversation'}>
+        <ConversationChannelIcon metadata={conversation.metadata} />
+      </span>
+    )
   }
-  return <ConversationActivityIndicator activity={activity} />
+  if (isMeetingConversation(conversation)) {
+    return (
+      <span aria-label="Meeting conversation">
+        <CalendarDays className="text-muted-foreground icon-xs" aria-hidden />
+      </span>
+    )
+  }
+  return null
 }
 
 function ConversationRowTitle({
@@ -264,10 +275,7 @@ export function SpaceConversationRow({
     isRunning: runtimeState?.isRunning,
     isUnread: conversation.is_unread,
   })
-  const source = conversation.metadata?.source
-  const leadingRendersActivity =
-    resolvedLeadingIcon === 'status' ||
-    (resolvedLeadingIcon === 'logo' && source !== 'slack' && source !== 'telegram')
+  const leadingRendersActivity = resolvedLeadingIcon === 'status'
   const showSeparateActivity = activity !== 'idle' && !leadingRendersActivity
   const activityAt = getConversationLastActivityAt(conversation)
   const relativeAge = formatCompactRelativeTime(activityAt)

@@ -31,7 +31,6 @@ const WIKI_AGENT_KEYS = new Set(['atlas', 'brain_scholar'])
 export class BrainContextService {
   private readonly logger = new Logger(BrainContextService.name)
   private readonly supabase: SupabaseClient
-
   constructor(
     private readonly svc: SupabaseServiceClient,
     private readonly embedding: EmbeddingService,
@@ -49,7 +48,6 @@ export class BrainContextService {
   ) {
     this.supabase = svc.client
   }
-
   async buildUserBrainContext(
     userId: string,
     agentKey?: string,
@@ -78,19 +76,15 @@ export class BrainContextService {
           return INSUFFICIENT_CONTEXT_STATUS
         })
     }
-
     const brainId = this.retrieval
       ? await this.retrieval.resolveUserBrainId(this.supabase, userId, orgId)
       : await this.resolveUserBrainIdLegacy(userId, orgId)
     if (!brainId) return ''
-
     const useSemantic = !!trimmedQuery
     const billing = { userId, orgId }
-
     let memories: MemoryRow[]
     let directSnapshots: SnapshotRow[]
     let graphSnapshots: SnapshotRow[]
-
     if (useSemantic) {
       const embedding = await this.support.getQueryEmbedding(
         trimmedQuery,
@@ -111,11 +105,9 @@ export class BrainContextService {
             limit: Math.max(SNAPSHOT_LIMIT, 8),
           }),
         ])
-
         const memIds = ((memRes.data ?? []) as Array<{ id: string }>).map((r) => r.id)
         memories =
           memIds.length > 0 ? await this.support.fetchMemoriesWithRecency(memIds, brainId) : []
-
         const semanticSeeds = (
           (snapRes.data ?? []) as Array<{ id: string; similarity: number }>
         ).map((r) => ({ id: r.id, score: Number(r.similarity ?? 0) }))
@@ -131,11 +123,8 @@ export class BrainContextService {
       directSnapshots = await this.support.fetchUserBrainTopNSnapshots(brainId)
       graphSnapshots = []
     }
-
     memories.sort(sortByRecency)
-
     const parts: string[] = []
-
     if (memories.length) {
       parts.push('USER BRAIN — Key Memories:')
       for (const m of memories) {
