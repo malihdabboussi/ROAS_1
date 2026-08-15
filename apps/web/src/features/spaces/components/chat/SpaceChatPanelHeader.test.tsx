@@ -20,15 +20,15 @@ describe('SpaceChatPanelHeader', () => {
     )
 
     expect(screen.getByText('Pixel')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Rename conversation' })).toBeInTheDocument()
+    const rename = screen.getByRole('button', { name: 'Rename conversation' })
     const details = screen.getByRole('button', { name: 'Conversation details' })
     const controls = screen.getByRole('button', { name: 'Conversation controls' })
 
-    expect(details.parentElement).toBe(controls.parentElement)
+    // Three-dots menu sits inline next to the agent name, before the title;
+    // only the action cluster is pinned to the top-right of the pane.
+    expect(details.parentElement).not.toBe(controls.parentElement)
+    expect(details.compareDocumentPosition(rename) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(controls.parentElement).toHaveClass('absolute', 'right-spacing-3', 'top-spacing-2')
-    expect(
-      details.compareDocumentPosition(controls) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy()
   })
 
   it('keeps compact-layout controls inline', () => {

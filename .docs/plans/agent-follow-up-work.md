@@ -38789,3 +38789,29 @@ Evidence: The scoped change kept the two grandfathered web files at their existi
 Needed work: Continue splitting the Space chat host by composer/seed orchestration, split the ChatInput shell from its controller hooks, and extract conversation-reference assembly from `ChatReferenceContextService` behind the existing reference-context contract.
 
 Reason not done now: Those decompositions are real architecture debt but would materially widen the requested Mission/Create/output/reply behavior change; this change adds focused helpers without increasing either allowlisted web file.
+
+## 2026-08-15 - [ARCH] Work summary panel: gaps blocking a task-progress redesign
+
+Status: Open
+
+Found while: Reviewing the work summary panel against ChatGPT/Codex and Claude's task panel, which surface task progress (numbered steps), human gates, and live browser sessions as first-class panel sections.
+
+Files:
+
+- `apps/web/src/components/shell/ShellRightPanelTasks.tsx`
+- `apps/web/src/components/shell/shell-conversation-summary.ts`
+- `apps/agent-api/src/modules/shared/ui-block-extractor.ts`
+- `apps/web/src/lib/chat/message-content-blocks.ts`
+- `apps/web/src/features/mission-control/components/dialogs/SubtasksSection.tsx`
+
+Evidence: Mission steps, statuses, human gates, and live progress all already exist server-side (`mission_subtasks` with `sort_order`; `SubtaskStatus`; gate = `assignee_type='human'` blocking at `status='awaiting_human'`; realtime via `useMissionDetailData`). Three gaps block surfacing them in the chat panel:
+
+1. `missions` has `space_id` and `campaign_id` but **no `conversation_id`**, so "missions started from this chat" can only be derived by scanning messages for `metadata.quick_mission_receipt` receipts. There is no conversation-scoped mission endpoint.
+2. Browser automation has a full instance identity in openclaw (`ProfileStatus{name,color,cdpPort,running,tabCount}` via `GET /profiles`, plus node `displayName`), but **none of it reaches the web app**. The `tool` and `browser_screenshot` blocks carry no `profile`, `targetId`, or node field, so the UI cannot label or group by browser instance. Note `apps/agent-api/src/modules/browser-sessions/` is an encrypted per-domain cookie jar, not live sessions — do not conflate.
+3. Existing step/gate UI (`SubtasksSection`, `HumanGateReviewPanel`) lives inside `features/mission-control` and cannot be imported by the shell per `documentation/frontend-shared-surfaces.md`; it needs promoting to a shared domain barrel first (precedent: `@/components/deliverables/DeliverablesCarousel`).
+
+Also noted: "My Tasks" (human to-dos with due dates), the panel's "Tasks" (completed tool events scraped from message blocks), and mission subtasks are three distinct concepts sharing one word. Per-conversation integration state does not exist at all — integrations are user+org scoped, so the composer's Plugins affordance mirrors the account regardless of conversation.
+
+Needed work: Add `missions.conversation_id` (or a join table) plus a conversation-scoped list endpoint; thread `profile`/node identity from the browser tool through `ui-block-extractor` into the block types, or proxy openclaw `GET /profiles` through agent-api; promote mission step/gate UI to a shared barrel.
+
+Reason not done now: The panel change in flight is scoped to control consolidation and density. The above are backend/contract changes that need their own review, and the redesign direction is still being agreed with the user.

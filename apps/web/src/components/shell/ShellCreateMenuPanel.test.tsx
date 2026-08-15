@@ -46,7 +46,7 @@ describe('ShellCreateMenuPanel', () => {
     expect(screen.getByText('Website')).toBeInTheDocument()
     expect(screen.getByText('Social Post')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /Back to create/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     expect(screen.queryByText('Website')).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: /More/i }))
