@@ -75,3 +75,35 @@ Files:
 - apps/web/src/components/shell/ShellRightPanel.test.tsx
 - apps/web/src/components/shell/ShellRightPanelConnections.tsx
 - apps/web/src/components/shell/ShellRightPanelConnections.test.tsx (new)
+
+## [2026-08-15 16:05] - [FEATURE]
+
+What: Added a Progress section to the work summary showing mission steps and human gates for the current thread.
+
+- New `ShellRightPanelProgress`: lists missions started from this conversation, each expanding to its numbered steps.
+- Steps come from `mission_subtasks` in `sort_order`, numbered by position. Status uses the existing `formatSubtaskStatusLabel`, including the dependency-blocked "Waiting" derivation.
+- Human gates surface as "Your turn". A gate is `assignee_type === 'human'`; it is *currently* holding the mission up when `status === 'awaiting_human'`. There is no `requires_approval` flag in the schema — the assignee is the gate — so `isHumanGateSubtask` / `isBlockingHumanGate` name that rule in one place instead of restating the predicate at each call site.
+- The mission row summarises as `done/total`, or "Your turn" when any step is gated, so a blocked mission reads as blocked without expanding it.
+- Steps are fetched per mission and only on expand. A conversation can start several missions, and loading every step list up front would fire N requests for rows nobody asked to see.
+- Promoted `formatSubtaskStatusLabel` from `features/mission-control/components/subtask-status.ts` to `@/lib/missions`, updating its three importers. The shell cannot import feature internals per `documentation/frontend-shared-surfaces.md`, and copying the mapping would have been a third copy.
+- Added `extractConversationMissionRows`, which reads mission receipts from the thread.
+
+Why: The panel's "Tasks" section shows completed tool calls scraped from message blocks — useful, but it is not mission progress, and mission steps were only visible by leaving the chat for Mission Control. Missions already carry ordered steps, statuses, and human gates; none of it was reachable from the conversation that started them.
+
+Impact: A thread that starts a mission now shows its steps and what is waiting on you, without leaving the chat. Read-only — approving a gate still happens in Mission Control. No API or schema change; uses the existing `GET /api/missions/:id/subtasks`. 324 tests pass across shell, mission-control, and lib/missions, including 9 new tests. Lint and typecheck clean.
+
+Note on scoping: `missions` has no `conversation_id`, so "missions started here" is derived from the receipt messages the chat already writes. This is exact for missions launched from the thread; a mission started elsewhere in the same space will not appear.
+
+Files:
+
+- apps/web/src/components/shell/ShellRightPanelProgress.tsx (new)
+- apps/web/src/components/shell/ShellRightPanelProgress.test.tsx (new)
+- apps/web/src/components/shell/ShellRightPanel.tsx
+- apps/web/src/components/shell/shell-conversation-summary.ts
+- apps/web/src/components/shell/shell-conversation-summary.test.ts
+- apps/web/src/components/shell/shell-right-panel.messages.config.ts
+- apps/web/src/lib/missions/subtask-status.ts (moved from features/mission-control)
+- apps/web/src/lib/missions/index.ts
+- apps/web/src/features/mission-control/components/MissionListCell.tsx
+- apps/web/src/features/mission-control/components/dialogs/SubtaskDetailContent.tsx
+- apps/web/src/features/mission-control/components/dialogs/SubtasksSection.tsx

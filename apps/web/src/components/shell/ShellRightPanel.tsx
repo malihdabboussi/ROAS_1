@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarDays, Plus } from 'lucide-react'
 import { type ConversationScopePickerHandle } from '@/components/conversations'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
@@ -10,10 +10,12 @@ import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { readMeetingConversationLink, type Conversation } from '@/lib/conversations'
 import { useQuickMissionsLauncher } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
+import { extractConversationMissionRows } from './shell-conversation-summary'
 import type { ShellCreateMenuItem } from './shell-create-menu.config'
 import { ShellCreateMenuPanel } from './ShellCreateMenuPanel'
 import { ShellRightPanelConnections } from './ShellRightPanelConnections'
 import { ShellRightPanelFiles } from './ShellRightPanelFiles'
+import { ShellRightPanelProgress } from './ShellRightPanelProgress'
 import { ShellRightPanelSection } from './ShellRightPanelSection'
 import { ShellRightPanelSources } from './ShellRightPanelSources'
 import { ShellRightPanelTasks } from './ShellRightPanelTasks'
@@ -22,12 +24,13 @@ import { useShellStore } from './use-shell-store'
 
 const EMPTY_MESSAGES: never[] = []
 
-type ShellRightPanelSectionId = 'connections' | 'outputs' | 'sources' | 'tasks'
+type ShellRightPanelSectionId = 'progress' | 'connections' | 'outputs' | 'sources' | 'tasks'
 
 /**
  * Work summary as a floating bubble anchored to the chat's top-right corner —
  * a content-height card that expands down when opened and collapses back up,
- * with Connections / Outputs / Sources / Tasks stacked as sections.
+ * with Progress / Connections / Outputs / Sources / Tasks stacked as
+ * collapsible sections.
  */
 export function ShellRightPanel({
   conversationId,
@@ -123,6 +126,9 @@ export function ShellRightPanel({
   }, [closeArtifactViewer, linkedMeeting, router, setWorkAreaOpen])
   const { mounted, visible } = useRightEdgePresence(open)
   const scopeVisible = showScope && Boolean(conversationId)
+  // Missions have no conversation_id, so the thread's own receipts are the
+  // conversation-scoped link. See extractConversationMissionRows.
+  const missionRows = useMemo(() => extractConversationMissionRows(messages), [messages])
 
   useEffect(() => {
     if (!open) setCreateOpen(false)
@@ -181,6 +187,15 @@ export function ShellRightPanel({
           <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
             {conversationId ? (
               <>
+                {missionRows.length > 0 ? (
+                  <ShellRightPanelSection
+                    title="Progress"
+                    open={isSectionOpen('progress')}
+                    onToggle={() => toggleSection('progress')}
+                  >
+                    <ShellRightPanelProgress missions={missionRows} />
+                  </ShellRightPanelSection>
+                ) : null}
                 {scopeVisible ? (
                   <ShellRightPanelConnections
                     conversation={conversation}
