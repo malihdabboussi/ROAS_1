@@ -224,8 +224,11 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
     if (channelMatch?.[1]) {
       suggested.channelId = channelMatch[1]
     }
-    get().setWorkContext(suggested)
     set({ suggestedWorkContext: suggested })
+    // Attached context follows the open conversation, not the background page.
+    if (!useChatStore.getState().activeConversationId) {
+      get().setWorkContext(suggested)
+    }
   },
 
   loadRoster: async () => {

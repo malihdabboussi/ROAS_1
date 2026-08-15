@@ -6,6 +6,7 @@ import {
   groupConversationsBySection,
   isConversationArchived,
   isConversationPinned,
+  withConversationPinned,
 } from './conversation-list-sections'
 import type { Conversation } from './conversation.types'
 
@@ -90,6 +91,8 @@ describe('conversation list sections', () => {
     const row = conversation({ id: 'agent-row', agent_id: 'atlas', metadata: { pinned: true } })
 
     expect(isConversationPinned(row)).toBe(true)
+    expect(withConversationPinned(row, false).metadata.pinned).toBe(false)
+    expect(isConversationPinned(withConversationPinned(row, true))).toBe(true)
     expect(isConversationArchived(row)).toBe(false)
     expect(getConversationAgentDisplay(row, { atlas: { name: 'Atlas', avatarUrl: null } })).toEqual(
       { name: 'Atlas', avatarUrl: null },

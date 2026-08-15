@@ -52,12 +52,31 @@ export const PLATFORM_TOOLS_MEDIA_ROUTING_BLOCK = `${PLATFORM_TOOLS_MEDIA_ROUTIN
 - Image generation and editing are native ROAS capabilities. Do not search for or require an external OpenAI or ChatGPT integration, and do not tell the user to leave chat to complete the image request.
 - Use native \`generate_video\` for supported video generation. When a video skill explicitly routes the work to Higgsfield, use \`list_mcp_tools\` and \`use_mcp_tool\` for the connected Higgsfield server from this chat. Do not route Higgsfield through external-integration search or claim it is unavailable without checking the connected MCP tools.
 - Do not claim an image or video was created until the generation tool returns success.`
+export const PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING =
+  'For first-person fill, guest prep, or write-as-me:'
+export const PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK = `${PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING}
+- Treat "fill this out", "guest prep", "bio", "as me", "on my behalf", and "check my brain" as User Brain identity work, not a blank interview.
+- You can read the user's personal Brain. Never say you cannot access it. Never send the user to Atlas for first-person facts, bios, guest prep, or "what's in my brain."
+- Search User Brain with identity queries: who they are, what they do, what they are building now, recent wins, stories, opinions, offers/plugs. Do not use the form URL as the Brain query.
+- Draft the complete answers from Brain and put the filled form in the reply.
+- Ask only for fields Brain cannot support. Never ask the user to re-introduce themselves or paste bullets for their own story.
+- If this turn's Brain context was marked insufficient, the automatic search likely used the wrong query. Search again with identity queries before asking.`
 export const PLATFORM_TOOLS_BROWSER_QC_HEADING = '### Interactive Browser QC'
 export const PLATFORM_TOOLS_BROWSER_QC_BLOCK = `${PLATFORM_TOOLS_BROWSER_QC_HEADING}
 
-- When the browser tool is available and the user asks to QC a page or funnel, use the live browser to follow every requested path. Click the real controls, verify each resulting URL or state, and go back when another branch needs review. A text fetch cannot validate interaction.
-- Judge visible prices, copy, and layout from the rendered page. Automation-facing text can include hidden, stale, or contradictory checkout values; reconcile it against the visible checkout and interaction result before reporting a defect.
-- Do not submit real contact or payment details without the user's authorization. State exactly which gated step remains untested.`
+Clicking a live page, filling a form, registering a test lead, and reviewing the confirmation page require the browser tool. \`web_fetch\` returns text/markdown only — it cannot type, click Register Now, submit, or follow a JavaScript confirmation.
+
+When the browser tool is available and the user asks to QC, click through, register, or fill a live page:
+- Open the URL in the browser, snapshot the visible form, and click the real controls.
+- Fill every required field, then click the visible CTA (Register Now, Submit, Get Access, and similar).
+- Wait for navigation and inspect the actual resulting page. Compare dates, times, and offer copy against the registration page.
+- Judge visible prices, copy, and layout from the rendered page. Automation-facing text can include hidden, stale, or contradictory checkout values; reconcile those against what the user would see.
+
+A request to QC a funnel, click through it, or register a test lead is authorization to submit an obviously fake test identity: name Test Lead, email \`qa+{unix}@roas.co\`, US phone (555) 010-0100. Do not use the user's real identity unless they asked you to fill the form as them. Do not ask them to send a confirmation URL or guess \`/thank-you\` while the submit button was on the page.
+
+When filling a form as the user, retrieve their identity from User Brain first, then type those values into the live form. Do not ask them to paste bullets Brain already holds.
+
+Leave unpaid checkout, card entry, and real purchases untested unless the user explicitly authorizes that step. If the browser tool is missing or blocked, say you could not click through the live page. Do not claim a registration from fetch alone.`
 
 export const PLATFORM_TOOLS_RUNTIME_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING}
 
@@ -86,6 +105,8 @@ For call, meeting, recording, or transcript retrieval:
 - Do not ask the user to paste a transcript or link until accessible Space, Brain, and recording-provider sources have been checked.
 - Before saying a transcript is unavailable, name the sources checked and the missing selector: provider, date, participant, title, or recording id.
 - Do not say you checked call transcripts unless a provider or imported meeting source was actually checked.
+
+${PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK}
 
 For social platform research (viral content, trending formats, outlier videos, hooks, "what is working on <platform>" — Instagram, YouTube, TikTok, Threads, X, Reddit, Facebook, LinkedIn):
 - Use the \`social_analysis\` integration following the \`social-intel\` skill — it returns actual posts with views and engagement, so results can be ranked by real performance. Always available, no connection step.
@@ -234,8 +255,25 @@ function ensureMediaRoutingGuidance(content: string): string {
 
 function ensureBrowserQcGuidance(content: string): string {
   const runtimeStart = content.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
-  if (runtimeStart === -1 || content.includes(PLATFORM_TOOLS_BROWSER_QC_BLOCK)) {
-    return content
+  if (runtimeStart === -1) return content
+
+  const qcStart = content.indexOf(PLATFORM_TOOLS_BROWSER_QC_HEADING, runtimeStart)
+  if (qcStart !== -1) {
+    if (content.slice(qcStart).startsWith(PLATFORM_TOOLS_BROWSER_QC_BLOCK)) {
+      return content
+    }
+    const nextSubheading = content.indexOf('\n### ', qcStart + 1)
+    const delegationStart = content.indexOf(
+      `\n${PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING}`,
+      qcStart,
+    )
+    const unclearStart = content.indexOf('\nFor unclear,', qcStart)
+    const deliverableStart = content.indexOf('\nFor deliverable work:', qcStart)
+    const candidates = [nextSubheading, delegationStart, unclearStart, deliverableStart].filter(
+      (index) => index !== -1,
+    )
+    const replaceEnd = candidates.length > 0 ? Math.min(...candidates) : content.length
+    return `${content.slice(0, qcStart)}${PLATFORM_TOOLS_BROWSER_QC_BLOCK}${content.slice(replaceEnd)}`
   }
 
   const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
@@ -243,13 +281,42 @@ function ensureBrowserQcGuidance(content: string): string {
   return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_BROWSER_QC_BLOCK}${content.slice(insertAt)}`
 }
 
+function ensureFirstPersonFillGuidance(content: string): string {
+  const runtimeStart = content.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
+  if (runtimeStart === -1) return content
+
+  const headingStart = content.indexOf(PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING, runtimeStart)
+  if (headingStart !== -1) {
+    if (content.slice(headingStart).startsWith(PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK)) {
+      return content
+    }
+    const afterHeading = headingStart + PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING.length
+    const rest = content.slice(afterHeading)
+    const nextFor = rest.search(/\nFor [a-z]/)
+    const nextHeading = rest.indexOf('\n### ')
+    const unclear = rest.indexOf('\nFor unclear,')
+    const candidates = [nextFor, nextHeading, unclear].filter((index) => index !== -1)
+    const replaceEnd =
+      candidates.length > 0 ? afterHeading + Math.min(...candidates) : content.length
+    return `${content.slice(0, headingStart)}${PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK}${content.slice(replaceEnd)}`
+  }
+
+  const socialStart = content.indexOf('\nFor social platform research', runtimeStart)
+  const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
+  const insertAt =
+    socialStart !== -1 ? socialStart : unclearStart !== -1 ? unclearStart : content.length
+  return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK}${content.slice(insertAt)}`
+}
+
 export function ensurePlatformToolsRuntimeGuidance(content: string): string {
   const withActionProtocol = prependActionContractProtocol(content)
   if (hasPlatformToolsRuntimeGuidance(withActionProtocol)) {
     return ensureChannelFormattingGuidance(
-      ensureBrowserQcGuidance(
-        ensureMediaRoutingGuidance(
-          ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+      ensureFirstPersonFillGuidance(
+        ensureBrowserQcGuidance(
+          ensureMediaRoutingGuidance(
+            ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+          ),
         ),
       ),
     )

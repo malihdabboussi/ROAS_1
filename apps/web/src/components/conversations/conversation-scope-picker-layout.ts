@@ -27,6 +27,8 @@ export interface ConversationScopePickerProps {
   /** Opens the linked campaign in the work area (pop-out control). */
   onOpenCampaign?: (campaignId: string) => void
   bannerAnchorRef?: RefObject<HTMLButtonElement | null>
+  /** Render only the menus; the parent owns the visible trigger. */
+  hideTrigger?: boolean
 }
 
 export type ConversationScopeMenuGeom = { top: number; left: number; maxHeight: number }

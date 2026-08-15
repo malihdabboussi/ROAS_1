@@ -1,6 +1,6 @@
 # Website Artifacts
 
-Last Modified: 2026-07-25
+Last Modified: 2026-08-14
 
 ## Overview
 
@@ -116,7 +116,7 @@ Context-engineering guidance from `.docs/guidelines/ai/context-engineering.md` a
 3. A fresh designer pass opens the real preview, inspects desktop and mobile screenshots, and returns concrete revisions.
 4. The builder revises and re-checks the acceptance criteria.
 
-The design lane uses `anthropic/claude-opus-4.8`; routine builder execution remains unchanged. Every enabled template that owns `funnel-builder` or `website-builder` receives the design skill, and existing Designer, Lux, and designer-role registry agents are backfilled. Canonical Designer/Lux runtimes may use the browser for visual review; custom designer-role runtimes receive that exception only when they own `funnel-site-design`. All other denied tools remain denied. The old platform-managed `funnel-page-design` skill is retired because it overlaps this workflow; user-authored skill copies and variants are preserved.
+The design lane uses `anthropic/claude-opus-4.8`; routine builder execution remains unchanged. Every enabled template that owns `funnel-builder` or `website-builder` receives the design skill, and existing Designer, Lux, and designer-role registry agents are backfilled. Canonical Designer/Lux runtimes may use the browser for visual review; custom designer-role runtimes receive that exception only when they own `funnel-site-design`. Canonical Pixel may use the same browser to click through a live funnel, submit a labeled test lead, and inspect the confirmation page. All other denied tools remain denied. The old platform-managed `funnel-page-design` skill is retired because it overlaps this workflow; user-authored skill copies and variants are preserved.
 
 The skill rejects effect counting and fabricated conversion pressure as quality proxies. Gradients, glow, motion, card grids, counters, urgency, testimonials, and statistics are used only when the subject and verified inputs justify them.
 
@@ -134,7 +134,8 @@ Design Contracts mark substantive choices as Confirmed, Proposed, or Missing so 
 - `agent-policy.test.ts` covers website action contracts and MCP exposure.
 - `supabase/functions/vibey-artifacts/ownership.test.ts` covers fallback Edge Function owner scoping before page writes.
 - `funnel-site-design-skill-contract.test.ts` covers the canonical skill, current builder-template handoff for future hires, all existing designer-role agents, responsive critique, user-authored copy preservation, legacy retirement, and Opus 4.8 routing.
-- `openclaw-gateway.visual-review.test.ts` covers browser review access for canonical Designer/Lux and trained custom designer-role runtimes while preserving the deny policy for untrained or non-designer agents.
+- `openclaw-gateway.visual-review.test.ts` covers browser review access for canonical Designer/Lux/Pixel and trained custom designer-role runtimes while preserving the deny policy for untrained or non-designer agents.
+- `pixel-live-page-clickthrough.test.ts` covers Pixel's live-funnel test-lead contract and the production browser control path.
 
 ## Decision Log
 
@@ -150,3 +151,4 @@ Design Contracts mark substantive choices as Confirmed, Proposed, or Missing so 
 - **2026-07-17** — Tightened Design Contracts after blind forward-testing. Reason: the first run was visually specific and evidence-safe but allowed provisional fallback typography and arbitrary layout percentages to read as approved decisions and produced a longer-than-needed handoff.
 - **2026-07-24** — Aligned created website/funnel result types and chat destinations. Reason: website rows share funnel storage, but users must still see and open them as Websites while funnel cards continue to route to Funnels.
 - **2026-07-25** — Shortened the full-mode edit/publish loop and made history easier to navigate. Reason: durable primitives existed, but users could not directly edit content or images, see save progress, recognize important versions, or publish a draft without opening a secondary menu.
+- **2026-08-14** — Made Pixel click through a live funnel, submit a labeled test lead, and inspect the real confirmation page. Reason: QC asked Pixel to register a test lead, but the previous browser-QC rule treated any form submit as unauthorized and the production browser could not reach public pages.

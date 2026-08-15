@@ -3,18 +3,16 @@
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { CalendarDays, ChevronLeft, Plus, X } from 'lucide-react'
-import {
-  ConversationScopePicker,
-  type ConversationScopePickerHandle,
-} from '@/components/conversations'
+import { type ConversationScopePickerHandle } from '@/components/conversations'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { homeMeetingHref } from '@/features/home/lib/home-meeting-work-restore'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { readMeetingConversationLink, type Conversation } from '@/lib/conversations'
 import { useQuickMissionsLauncher } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
-import { isShellMissionCreateItem, type ShellCreateMenuItem } from './shell-create-menu.config'
+import type { ShellCreateMenuItem } from './shell-create-menu.config'
 import { ShellCreateMenuPanel } from './ShellCreateMenuPanel'
+import { ShellRightPanelConnections } from './ShellRightPanelConnections'
 import { ShellRightPanelFiles } from './ShellRightPanelFiles'
 import { ShellRightPanelSources } from './ShellRightPanelSources'
 import { ShellRightPanelTasks } from './ShellRightPanelTasks'
@@ -26,7 +24,7 @@ const EMPTY_MESSAGES: never[] = []
 /**
  * Work summary as a floating bubble anchored to the chat's top-right corner —
  * a content-height card that expands down when opened and collapses back up,
- * with Outputs / Sources / Tasks stacked as sections.
+ * with Connections / Outputs / Sources / Tasks stacked as sections.
  */
 export function ShellRightPanel({
   conversationId,
@@ -69,18 +67,14 @@ export function ShellRightPanel({
   const [createOpen, setCreateOpen] = useState(false)
   const handleCreateSelect = useCallback(
     (item: ShellCreateMenuItem) => {
-      if (isShellMissionCreateItem(item)) {
-        openLauncher()
-        return
-      }
       useGlobalChatStore.getState().seedComposer({
-        content: item.prompt,
+        content: item.typePicker ? '' : item.prompt,
         seedMode: 'attach',
         quickStartId: item.id,
         workContext: spaceId ? { surface: 'spaces', spaceId } : undefined,
       })
     },
-    [openLauncher, spaceId],
+    [spaceId],
   )
   const messages = useChatStore((s) =>
     conversationId ? (s.messagesByConversation[conversationId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES,
@@ -137,28 +131,9 @@ export function ShellRightPanel({
         aria-hidden={!visible}
       >
         <div
-          className="border-border px-spacing-3 py-spacing-2 gap-spacing-2 flex shrink-0 items-start border-b"
+          className="border-border px-spacing-3 py-spacing-2 gap-spacing-2 flex shrink-0 items-start justify-end border-b"
           data-testid="work-summary-header"
         >
-          {scopeVisible ? (
-            <div className="gap-spacing-1 flex min-w-0 flex-1 flex-col">
-              <p className="typo-caption text-muted-foreground font-medium uppercase tracking-wide">
-                Campaign & space
-              </p>
-              <ConversationScopePicker
-                ref={scopePickerRef}
-                conversation={conversation}
-                campaignId={campaignId}
-                spaceId={spaceId}
-                showLabel
-                onConversationUpdated={onConversationUpdated}
-                onScopeChanged={onScopeChanged}
-                onOpenCampaign={handleOpenCampaign}
-              />
-            </div>
-          ) : (
-            <div className="min-w-0 flex-1" />
-          )}
           <button
             type="button"
             onClick={() => setCreateOpen((prev) => !prev)}
@@ -203,6 +178,7 @@ export function ShellRightPanel({
             </button>
             <ShellCreateMenuPanel
               onSelectCreateItem={handleCreateSelect}
+              onSelectMissionPlaybook={(playbookKey) => openLauncher(playbookKey)}
               onCloseMenu={() => setCreateOpen(false)}
             />
           </div>
@@ -210,6 +186,17 @@ export function ShellRightPanel({
           <div className="scrollbar-hide p-spacing-3 gap-spacing-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
             {conversationId ? (
               <>
+                {scopeVisible ? (
+                  <ShellRightPanelConnections
+                    conversation={conversation}
+                    campaignId={campaignId}
+                    spaceId={spaceId}
+                    pickerRef={scopePickerRef}
+                    onConversationUpdated={onConversationUpdated}
+                    onScopeChanged={onScopeChanged}
+                    onOpenCampaign={handleOpenCampaign}
+                  />
+                ) : null}
                 <section aria-label="Outputs" className="gap-spacing-2 flex flex-col">
                   <h3 className="typo-caption text-muted-foreground font-medium uppercase tracking-wide">
                     Outputs

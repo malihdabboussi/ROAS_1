@@ -276,7 +276,6 @@ export class ArtifactLegacySessionCampaignService {
     userId: string,
     sessionKey: string | undefined,
     campaignId: string,
-    onlyIfUnset: boolean,
   ): Promise<void> {
     const conversationId = sessionKey ? this.parseConversationId(sessionKey) : null
     if (!conversationId) return
@@ -286,8 +285,7 @@ export class ArtifactLegacySessionCampaignService {
     if (!conversation) return
 
     const currentCampaignId = String(conversation.campaign_id ?? '')
-    if (onlyIfUnset && currentCampaignId) return
-    if (!onlyIfUnset && currentCampaignId === campaignId) return
+    if (currentCampaignId) return
 
     const { error: updateError } = await this.repository.updateConversationCampaign(supabase, {
       conversationId,
@@ -303,7 +301,7 @@ export class ArtifactLegacySessionCampaignService {
     sessionKey: string | undefined,
     campaignId: string,
   ): Promise<void> {
-    await this.attachConversationToCampaign(supabase, userId, sessionKey, campaignId, true)
+    await this.attachConversationToCampaign(supabase, userId, sessionKey, campaignId)
   }
 
   resolveUserId(sessionKey?: string): string {
@@ -366,7 +364,7 @@ export class ArtifactLegacySessionCampaignService {
         if (scopedMissionCampaignId && scopedMissionCampaignId !== explicit) {
           throw new Error('campaign_id does not match mission campaign scope')
         }
-        await this.attachConversationToCampaign(supabase, userId, sessionKey, explicit, false)
+        await this.attachConversationToCampaignIfUnset(supabase, userId, sessionKey, explicit)
         return explicit
       }
     }
@@ -380,7 +378,7 @@ export class ArtifactLegacySessionCampaignService {
         explicitName,
         nameOrgId,
       )
-      await this.attachConversationToCampaign(supabase, userId, sessionKey, campaignId, false)
+      await this.attachConversationToCampaignIfUnset(supabase, userId, sessionKey, campaignId)
       return campaignId
     }
 

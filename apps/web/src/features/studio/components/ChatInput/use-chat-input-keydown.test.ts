@@ -1,6 +1,6 @@
+import type { KeyboardEvent, MutableRefObject, RefObject } from 'react'
 import { renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import type { KeyboardEvent, MutableRefObject, RefObject } from 'react'
 import type { SlashItem } from './chat-input-slash-menu'
 import { useChatInputKeyDown, type UseChatInputKeyDownOptions } from './use-chat-input-keydown'
 
@@ -14,10 +14,7 @@ function slashItem(key = 'brief'): SlashItem {
   }
 }
 
-function keyboardEvent(
-  key: string,
-  overrides: Partial<KeyboardEvent<HTMLTextAreaElement>> = {},
-) {
+function keyboardEvent(key: string, overrides: Partial<KeyboardEvent<HTMLTextAreaElement>> = {}) {
   return {
     key,
     shiftKey: false,
@@ -64,7 +61,6 @@ function defaultOptions(overrides: Partial<UseChatInputKeyDownOptions> = {}) {
     setAtArtifactMoreByType: vi.fn(),
     setAtMediaCollapsedByType: vi.fn(),
     setAtMediaMoreByType: vi.fn(),
-    onCampaignSelect: vi.fn(),
     onAtSelect: vi.fn(),
     slashMenuOpen: false,
     slashVisibleItems: [],

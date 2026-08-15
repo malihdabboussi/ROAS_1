@@ -6,23 +6,61 @@ import {
   shellQuickStartMatchesComposer,
 } from './shell-chat-quick-start.logic'
 import type { ShellCreateMenuItem } from './shell-create-menu.config'
+import { CREATE_TYPE_PICKERS, type CreateTypePickerOption } from './shell-create-type-pickers'
 import type { ShellChatQuickStart } from './shell-empty-chat-prompts.config'
 
 export function useShellChatQuickStart(setTextRef: RefObject<((text: string) => void) | null>) {
   const [activeQuickStart, setActiveQuickStart] = useState<ShellChatQuickStart | null>(null)
+  const [pendingPickerItem, setPendingPickerItem] = useState<ShellCreateMenuItem | null>(null)
 
-  const selectQuickStart = useCallback(
-    (quickStart: ShellCreateMenuItem) => {
+  const applyQuickStart = useCallback(
+    (quickStart: ShellChatQuickStart, prompt: string) => {
+      setPendingPickerItem(null)
       setActiveQuickStart(quickStart)
-      setTextRef.current?.(quickStart.prompt)
+      setTextRef.current?.(prompt)
     },
     [setTextRef],
   )
 
-  /** Arm the chip/systemContext without touching composer text (seeded externally). */
-  const armQuickStart = useCallback((quickStart: ShellChatQuickStart) => {
+  const selectQuickStart = useCallback(
+    (quickStart: ShellCreateMenuItem) => {
+      if (quickStart.typePicker) {
+        setActiveQuickStart(null)
+        setPendingPickerItem(quickStart)
+        return
+      }
+      applyQuickStart(quickStart, quickStart.prompt)
+    },
+    [applyQuickStart],
+  )
+
+  const armQuickStart = useCallback((quickStart: ShellCreateMenuItem | ShellChatQuickStart) => {
+    if ('typePicker' in quickStart && quickStart.typePicker) {
+      setActiveQuickStart(null)
+      setPendingPickerItem(quickStart)
+      return
+    }
+    setPendingPickerItem(null)
     setActiveQuickStart(quickStart)
   }, [])
+
+  const selectPickerOption = useCallback(
+    (option: CreateTypePickerOption) => {
+      if (!pendingPickerItem) return
+      applyQuickStart(
+        {
+          id: `${pendingPickerItem.id}:${option.id}`,
+          label: pendingPickerItem.label,
+          icon: pendingPickerItem.icon,
+          iconName: pendingPickerItem.iconName,
+          prompt: option.prompt,
+          systemContext: option.systemContext,
+        },
+        option.prompt,
+      )
+    },
+    [applyQuickStart, pendingPickerItem],
+  )
 
   const handleComposerValueChange = useCallback((next: string) => {
     setActiveQuickStart((current) => {
@@ -45,8 +83,17 @@ export function useShellChatQuickStart(setTextRef: RefObject<((text: string) => 
     activeCapabilityChip,
     armQuickStart,
     buildSendContext,
-    clearQuickStart: () => setActiveQuickStart(null),
+    clearPicker: () => setPendingPickerItem(null),
+    clearQuickStart: () => {
+      setActiveQuickStart(null)
+      setPendingPickerItem(null)
+    },
     handleComposerValueChange,
+    pendingPicker: pendingPickerItem?.typePicker
+      ? CREATE_TYPE_PICKERS[pendingPickerItem.typePicker]
+      : null,
+    pendingPickerId: pendingPickerItem?.typePicker ?? null,
+    selectPickerOption,
     selectQuickStart,
   }
 }

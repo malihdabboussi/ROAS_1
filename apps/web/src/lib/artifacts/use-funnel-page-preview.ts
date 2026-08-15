@@ -7,9 +7,13 @@ import { fetchFunnelWithPagesCached } from './funnel-preview-api'
 export interface FunnelPagePreview {
   code: string
   css?: string
+  sourceMode: string
 }
 
-type FunnelPreviewPageRow = Pick<FunnelPage, 'id' | 'generated_html' | 'generated_css'> & {
+type FunnelPreviewPageRow = Pick<
+  FunnelPage,
+  'id' | 'generated_html' | 'generated_css' | 'source_mode'
+> & {
   order_index?: unknown
 }
 
@@ -35,9 +39,12 @@ export function useFunnelPagePreview(
           })[0] ?? null)
       if (pageData?.generated_html) {
         if (cancelled) return
+        const html = pageData.generated_html.trimStart().toLowerCase()
+        const looksLikeHtmlDocument = html.startsWith('<!doctype') || html.startsWith('<html')
         setPage({
           code: pageData.generated_html,
           css: pageData.generated_css ?? undefined,
+          sourceMode: pageData.source_mode ?? (looksLikeHtmlDocument ? 'html_bundle' : 'tsx'),
         })
       }
     }

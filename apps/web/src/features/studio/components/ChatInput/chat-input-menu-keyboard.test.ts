@@ -4,7 +4,10 @@ import type {
   StudioArtifactNavRow,
   StudioMediaNavRow,
 } from './chat-input-at-mentions'
-import { handleChatInputMenuKeyDown, type HandleChatInputMenuKeyDownOptions } from './chat-input-menu-keyboard'
+import {
+  handleChatInputMenuKeyDown,
+  type HandleChatInputMenuKeyDownOptions,
+} from './chat-input-menu-keyboard'
 import type { SlashItem } from './chat-input-slash-menu'
 
 function keyboardEvent(key: string, shiftKey = false) {
@@ -50,7 +53,6 @@ function defaultOptions(
     onCloseAtMenu: vi.fn(),
     onExitCrossCampaign: vi.fn(),
     onAtHighlightChange: vi.fn(),
-    onCampaignSelect: vi.fn(),
     onAtSelect: vi.fn(),
     onToggleArtifactCollapsed: vi.fn(),
     onShowAllArtifacts: vi.fn(),
@@ -126,7 +128,11 @@ describe('handleChatInputMenuKeyDown', () => {
 
     expect(handleChatInputMenuKeyDown(campaignOptions)).toBe(true)
     expect(campaignEvent.preventDefault).toHaveBeenCalled()
-    expect(campaignOptions.onCampaignSelect).toHaveBeenCalledWith(campaign)
+    expect(campaignOptions.onAtSelect).toHaveBeenCalledWith({
+      id: 'campaign-b',
+      label: 'Campaign B',
+      section: 'campaign',
+    })
 
     const artifact = atItem('offer-a')
     const artifactRows: StudioArtifactNavRow[] = [

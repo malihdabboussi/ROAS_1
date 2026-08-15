@@ -68,7 +68,6 @@ export function MeetingWorkspaceDialog({
   const continueMeetingConversation = useGlobalChatStore(
     (state) => state.continueMeetingConversation,
   )
-
   const hydrateWorkspace = useCallback(async () => {
     let next = await fetchMeetingWorkspace(spaceId, meetingItemId)
     const phase = next.workspace?.phase
@@ -96,7 +95,6 @@ export function MeetingWorkspaceDialog({
     setBundle(next)
     return next
   }, [agendaEvent, meetingItemId, spaceId])
-
   useEffect(() => {
     let cancelled = false
     setLoading(true)
@@ -111,7 +109,6 @@ export function MeetingWorkspaceDialog({
       cancelled = true
     }
   }, [hydrateWorkspace])
-
   const title = bundle?.meeting.title?.trim() || fallbackTitle
   const phase = bundle?.workspace?.phase
   const isLive = phase === 'live'

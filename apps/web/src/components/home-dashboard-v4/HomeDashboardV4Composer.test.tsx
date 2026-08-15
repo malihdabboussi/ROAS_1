@@ -5,6 +5,7 @@ import { HomeDashboardV4Composer } from './HomeDashboardV4Composer'
 const mocks = vi.hoisted(() => ({
   chatInputProps: {} as Record<string, unknown>,
   openAddMenu: vi.fn(),
+  openScopePicker: vi.fn(),
   setText: vi.fn(),
   push: vi.fn(),
   seedComposer: vi.fn(),
@@ -17,6 +18,16 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('sonner', () => ({ toast: { error: mocks.toastError } }))
+
+vi.mock('@/components/conversations', async () => {
+  const { forwardRef, useImperativeHandle } = await import('react')
+  return {
+    ConversationScopePicker: forwardRef(function MockConversationScopePicker(_props, ref) {
+      useImperativeHandle(ref, () => ({ openMenuFromBanner: mocks.openScopePicker }))
+      return <div data-testid="choose-space-picker" />
+    }),
+  }
+})
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push }),
@@ -209,18 +220,15 @@ describe('HomeDashboardV4Composer', () => {
     expect(mocks.chatInputProps.footerWrapperClassName).toBeUndefined()
   })
 
-  it('opens the shared Space and integrations menus from the composer shelf', () => {
+  it('opens the click-stable Space picker from Choose Space, not the hover plus menu', () => {
     render(<HomeDashboardV4Composer />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Choose Space' }))
     fireEvent.click(screen.getByRole('button', { name: 'Plugins and integrations' }))
 
-    expect(mocks.openAddMenu).toHaveBeenNthCalledWith(1, 'space', expect.any(HTMLButtonElement))
-    expect(mocks.openAddMenu).toHaveBeenNthCalledWith(
-      2,
-      'integrations',
-      expect.any(HTMLButtonElement),
-    )
+    expect(mocks.openScopePicker).toHaveBeenCalledTimes(1)
+    expect(mocks.openAddMenu).not.toHaveBeenCalledWith('space', expect.any(HTMLButtonElement))
+    expect(mocks.openAddMenu).toHaveBeenCalledWith('integrations', expect.any(HTMLButtonElement))
   })
 
   it('fills the shared composer when a suggested move is selected', () => {

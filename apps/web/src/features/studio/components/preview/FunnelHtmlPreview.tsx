@@ -244,14 +244,14 @@ export function FunnelHtmlPreview({
   }, [onDrawingEvent, onElementSelect, onHistoryRequest, onNavigateRequest])
 
   return (
-    <div className="flex h-full w-full justify-center overflow-auto">
+    <div className="flex h-full min-h-0 w-full justify-center overflow-auto">
       <iframe
         ref={iframeRef}
         key={`${bundle.page.id}:${bundle.files.length}:${bundle.shared_files.length}:${bundle.assets.length}:${bundleReloadNonce}`}
         title={title ?? bundle.page.name ?? 'Funnel page'}
         srcDoc={srcDoc}
         sandbox="allow-scripts allow-same-origin"
-        className="h-full border-0"
+        className="h-full min-h-0 border-0"
         style={{ width: VIEWPORT_WIDTHS[viewport] ?? '100%' }}
         data-funnel-preview-iframe
         data-funnel-export-iframe

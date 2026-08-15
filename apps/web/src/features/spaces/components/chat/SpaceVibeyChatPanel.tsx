@@ -13,7 +13,7 @@ import { MessageQueue } from '@/components/chat/MessageQueue'
 import { PlanStickyTracker } from '@/components/chat/PlanStickyTracker'
 import { VoiceApprovalProvider } from '@/components/chat/VoiceApprovalContext'
 import { ConversationShareModal } from '@/components/conversations'
-import { globalChatSeedMatchesPanel } from '@/components/global-chat/lib/global-chat-seed-match'
+import * as globalChatSeed from '@/components/global-chat/lib/global-chat-seed-match'
 import {
   GLOBAL_CHAT_AGENT_SWITCH_EVENT,
   GLOBAL_CHAT_SEED_EVENT,
@@ -23,6 +23,7 @@ import {
   type GlobalChatSeedDetail,
   type GlobalChatVoiceStartDetail,
 } from '@/components/global-chat/store/use-global-chat-store'
+import { CreateTypePickerCard } from '@/components/shell/CreateTypePickerCard'
 import { findShellCreateMenuItem } from '@/components/shell/shell-create-menu.config'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
 import { ShellEmptyChatQuickStartPills } from '@/components/shell/ShellEmptyChatQuickStartPills'
@@ -34,6 +35,7 @@ import {
   useBrainLiveSession,
   type BrainLiveScope,
 } from '@/features/brain/hooks/use-brain-live-session'
+import { FUNNEL_TYPE_PICKER_VISUALS } from '@/features/spaces/components/artifacts/funnels/funnel-type-picker-visuals'
 import { RateLimitCard } from '@/features/studio/components/chat/RateLimitCard'
 import { StatusIndicator } from '@/features/studio/components/chat/StatusIndicator'
 import { StreamInterruptedBar } from '@/features/studio/components/chat/StreamInterruptedBar'
@@ -257,6 +259,7 @@ export function SpaceVibeyChatPanel({
   const [composerRestore, setComposerRestore] = useState<{
     text: string
     documents?: DocumentAttachment[]
+    references?: MessageReference[]
     nonce: string
   } | null>(null)
   const [editingQueueItemId, setEditingQueueItemId] = useState<string | null>(null)
@@ -1242,7 +1245,7 @@ export function SpaceVibeyChatPanel({
           useChatStore.getState().setCreditsExhausted(true)
           return
         }
-        setComposerRestore({ text: content, documents, nonce: crypto.randomUUID() })
+        setComposerRestore({ text: content, documents, references, nonce: crypto.randomUUID() })
         toast.error(toastMessageForChatSendError(err))
       }
     },
@@ -1944,15 +1947,12 @@ export function SpaceVibeyChatPanel({
   const applyGlobalChatSeed = useCallback(
     async (seed: GlobalChatSeedDetail) => {
       if (isChannelScope || conversationsLoading) return
-      if (!globalChatSeedMatchesPanel(seed, spaceId)) return
-
-      const content = seed.content?.trim() ?? ''
-      const documents = seed.documents as DocumentAttachment[] | undefined
-      const isAttach = seed.seedMode === 'attach'
-      if (!isAttach && !content) return
-      if (isAttach && !content && !(documents && documents.length > 0)) return
-
-      const seedKey = `${spaceId ?? 'general'}:${seed.seedMode ?? 'send'}:${seed.conversationId ?? ''}:${content}:${documents?.map((d) => d.mediaAssetId ?? d.fileUrl).join(',') ?? ''}`
+      if (!globalChatSeed.globalChatSeedMatchesPanel(seed, effectiveSpaceId ?? undefined)) return
+      const normalized = globalChatSeed.normalizeGlobalChatSeed(seed, effectiveSpaceId ?? undefined)
+      if (!normalized) return
+      const { content, isAttach, seedKey } = normalized
+      const documents = normalized.documents as DocumentAttachment[] | undefined
+      const references = normalized.references as MessageReference[] | undefined
       if (globalSeedConsumedRef.current === seedKey) return
       globalSeedConsumedRef.current = seedKey
 
@@ -1975,15 +1975,20 @@ export function SpaceVibeyChatPanel({
       setMode('chat')
 
       if (isAttach) {
+        if (seed.quickStartId) {
+          const createItem = findShellCreateMenuItem(seed.quickStartId)
+          if (createItem?.typePicker) {
+            armQuickStart(createItem)
+            return
+          }
+          if (createItem) armQuickStart(createItem)
+        }
         setComposerRestore({
           text: content,
           documents,
+          references,
           nonce: crypto.randomUUID(),
         })
-        if (seed.quickStartId) {
-          const createItem = findShellCreateMenuItem(seed.quickStartId)
-          if (createItem) armQuickStart(createItem)
-        }
         return
       }
 
@@ -2007,13 +2012,13 @@ export function SpaceVibeyChatPanel({
       handleNewConversation,
       isChannelScope,
       sendWithToast,
-      spaceId,
+      effectiveSpaceId,
     ],
   )
 
   useEffect(() => {
     globalSeedConsumedRef.current = null
-  }, [spaceId])
+  }, [effectiveSpaceId])
 
   useEffect(() => {
     const onSeed = (event: Event) => {
@@ -2079,10 +2084,10 @@ export function SpaceVibeyChatPanel({
     if (conversationsLoading) return
     const pending = useGlobalChatStore.getState().pendingSeed
     if (!pending) return
-    if (!globalChatSeedMatchesPanel(pending, spaceId)) return
+    if (!globalChatSeed.globalChatSeedMatchesPanel(pending, effectiveSpaceId ?? undefined)) return
     const consumed = useGlobalChatStore.getState().consumePendingSeed()
     if (consumed) void applyGlobalChatSeed(consumed)
-  }, [applyGlobalChatSeed, conversationsLoading, spaceId])
+  }, [applyGlobalChatSeed, conversationsLoading, effectiveSpaceId])
 
   useEffect(() => {
     const nextMode = resolveSpaceChatSpecialMode({
@@ -2496,6 +2501,18 @@ export function SpaceVibeyChatPanel({
                       !selectedConversationReadOnly ? (
                         <ShellEmptyChatQuickStartPills onSelect={quickStart.selectQuickStart} />
                       ) : null}
+                      {quickStart.pendingPicker ? (
+                        <CreateTypePickerCard
+                          catalog={quickStart.pendingPicker}
+                          visuals={
+                            quickStart.pendingPickerId === 'funnel'
+                              ? FUNNEL_TYPE_PICKER_VISUALS
+                              : undefined
+                          }
+                          onSelect={quickStart.selectPickerOption}
+                          onDismiss={quickStart.clearPicker}
+                        />
+                      ) : null}
                       <ComposerInputStack
                         stackActive={isStreaming && !selectedConversationReadOnly}
                         topSlot={
@@ -2535,6 +2552,7 @@ export function SpaceVibeyChatPanel({
                           }
                           initialValue={composerRestore?.text}
                           initialDocuments={composerRestore?.documents}
+                          initialReferences={composerRestore?.references}
                           restoreNonce={composerRestore?.nonce}
                           campaignId={effectiveCampaignId ?? undefined}
                           spaceId={isChannelScope ? null : effectiveSpaceId}

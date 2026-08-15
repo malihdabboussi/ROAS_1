@@ -668,10 +668,14 @@ describe('ArtifactsService RBAC integrations + media', () => {
       redirect_url: 'https://connect.example/connection-1',
       status: 'INITIATED',
     })
-    expect(service.composioService.initiateConnectedAccount).toHaveBeenCalledWith('user-1', 'auth-1', {
-      callbackUrl: 'https://app.example/callback',
-      allowMultiple: true,
-    })
+    expect(service.composioService.initiateConnectedAccount).toHaveBeenCalledWith(
+      'user-1',
+      'auth-1',
+      {
+        callbackUrl: 'https://app.example/callback',
+        allowMultiple: true,
+      },
+    )
     expect(upsertQuery.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         user_id: 'user-1',
@@ -765,6 +769,67 @@ describe('ArtifactsService RBAC integrations + media', () => {
 
     expect(result).toBe('campaign-q2')
     expect(update).toHaveBeenCalledWith({ campaign_id: 'campaign-q2' })
+  })
+
+  it('does not overwrite an existing conversation campaign from campaign_name', async () => {
+    const service = makeService()
+    const userId = '11111111-1111-1111-1111-111111111111'
+    const conversationId = '22222222-2222-2222-2222-222222222222'
+    const sessionKey = `agent:vibey:vibey-${userId}-${conversationId}`
+
+    const updateEqUser = vi.fn().mockResolvedValue({ error: null })
+    const updateEqId = vi.fn().mockReturnValue({ eq: updateEqUser })
+    const update = vi.fn().mockReturnValue({ eq: updateEqId })
+
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === 'campaigns') {
+          const resolvedData = { data: [{ id: 'campaign-q2', name: 'Q2 Launch' }], error: null }
+          const limitMock = vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              is: vi.fn().mockResolvedValue(resolvedData),
+            }),
+          })
+          const orderMock = vi.fn().mockReturnValue({ limit: limitMock })
+          const ilikeMock = vi.fn().mockReturnValue({ order: orderMock })
+          const neqMock = vi.fn().mockReturnValue({ ilike: ilikeMock })
+          return {
+            select: vi.fn().mockReturnValue({ neq: neqMock }),
+          }
+        }
+        if (table === 'conversations') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  maybeSingle: vi
+                    .fn()
+                    .mockResolvedValue({ data: { campaign_id: 'campaign-existing' }, error: null }),
+                }),
+              }),
+            }),
+            update,
+          }
+        }
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+            }),
+          }),
+        }
+      }),
+    }
+
+    const result = await service.resolveCampaignId(
+      supabase,
+      { campaign_name: 'Q2 Launch' },
+      userId,
+      sessionKey,
+    )
+
+    expect(result).toBe('campaign-q2')
+    expect(update).not.toHaveBeenCalled()
   })
 
   it('returns an explicit ambiguity error for campaign_name with multiple exact matches', async () => {

@@ -5,13 +5,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowDown, Sparkles, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { ComposerInputStack } from '@/components/chat/ComposerInputStack'
-import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
+import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { LucideIcon } from '@/components/ui/IconPicker'
 import type { AnimationState } from '@/components/vibey/animation-states.config'
 import { backendGet } from '@/lib/api/backend-client'
-import { CHAT_TOAST_ERRORS } from '@/lib/chat/chat-toast-errors.config'
 import { resolvePinnedAssistantMessageId } from '@/lib/chat/assistant-message-actions'
+import { CHAT_TOAST_ERRORS } from '@/lib/chat/chat-toast-errors.config'
 import type { MissionDeliverable } from '@/lib/missions'
 import { toastMessageForChatSendError } from '../config/chat-stream-errors.config'
 import { useCampaignMode } from '../contexts/CampaignModeContext'
@@ -373,22 +373,16 @@ export function ChatInterface() {
           minimizePanel()
         }
         if (!resolvedCampaignId) {
-          const generalCampaign = await ensureGeneralCampaign()
-          resolvedCampaignId = generalCampaign.id
-          const generalIcon =
-            ((generalCampaign.config as Record<string, unknown>)?.icon as string) ?? 'folder-kanban'
-          setActiveCampaign(generalCampaign.id, generalCampaign.name ?? 'General', generalIcon)
-          minimizePanel()
-          if (
-            activeConversationId &&
-            !activeConversationId.startsWith('pending-') &&
-            conversationCampaignId === null
-          ) {
-            await assignConversationCampaign(activeConversationId, generalCampaign.id)
-            updateConversation(activeConversationId, {
-              campaign_id: generalCampaign.id,
-              updated_at: new Date().toISOString(),
-            })
+          const hasPersistedConversation =
+            activeConversationId != null && !activeConversationId.startsWith('pending-')
+          if (!hasPersistedConversation) {
+            const generalCampaign = await ensureGeneralCampaign()
+            resolvedCampaignId = generalCampaign.id
+            const generalIcon =
+              ((generalCampaign.config as Record<string, unknown>)?.icon as string) ??
+              'folder-kanban'
+            setActiveCampaign(generalCampaign.id, generalCampaign.name ?? 'General', generalIcon)
+            minimizePanel()
           }
         }
         const highlighted_artifacts: HighlightedArtifact[] | undefined = artifacts?.map((a) => ({
@@ -422,11 +416,9 @@ export function ChatInterface() {
       activeConversationId,
       activeConversationStopping,
       activeCampaignId,
-      conversationCampaignId,
       effectiveCampaignId,
       setActiveCampaign,
       minimizePanel,
-      updateConversation,
       uiSelectedArtifact,
     ],
   )
@@ -1053,9 +1045,7 @@ export function ChatInterface() {
           />
           <ComposerInputStack
             stackActive={isStreaming}
-            topSlot={
-              <ComposerActiveRunTipCard stacked conversationId={activeConversationId} />
-            }
+            topSlot={<ComposerActiveRunTipCard stacked conversationId={activeConversationId} />}
           >
             <ChatInput
               onSend={handleComposerSendWithQueueEdit}

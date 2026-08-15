@@ -540,6 +540,20 @@ describe('ArtifactLegacySessionCampaignService campaign and theme data access', 
     expect(conversationUpdates[0]).toEqual({ campaign_id: campaignId })
   })
 
+  it('does not move an already attached conversation when campaign_id differs', async () => {
+    const existingCampaignId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+    const { conversationUpdates, supabase } = makeSupabase({
+      conversationCampaignId: existingCampaignId,
+    })
+    const target = makeTarget()
+    const key = `agent:vibey:vibey-${userId}-${convId}`
+
+    await expect(
+      service.resolveCampaignId(target, supabase as any, { campaign_id: campaignId }, userId, key),
+    ).resolves.toBe(campaignId)
+    expect(conversationUpdates).toEqual([])
+  })
+
   it('falls back to the conversation campaign for active context reads', async () => {
     const { supabase } = makeSupabase({ conversationCampaignId: campaignId })
     const target = makeTarget()

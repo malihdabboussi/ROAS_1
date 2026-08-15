@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { PastedTextComposerControls, usePastedTextBlocks } from '@/features/composer/pasted-text'
 import { usePresignedUpload } from '@/lib/hooks/use-presigned-upload'
 import { useWorkspaceSettingsModal } from '@/lib/settings/workspace-settings-modal-context'
-import type { MessageReference } from '../types'
 import type { AttachedArtifact } from './chat/ArtifactAttachments'
 import {
   hasChatInputSlashCommand,
@@ -34,6 +33,7 @@ import { useChatInputSlashData } from './ChatInput/use-chat-input-slash-data'
 import { useChatInputSlashLayout } from './ChatInput/use-chat-input-slash-layout'
 import { useChatInputTextAccessors } from './ChatInput/use-chat-input-text-accessors'
 import { useChatInputTextareaController } from './ChatInput/use-chat-input-textarea-controller'
+import { useRestoredRefs } from './ChatInput/use-restored-message-references'
 
 export function ChatInput({
   onSend,
@@ -45,6 +45,7 @@ export function ChatInput({
   placeholder = 'Message Pixel... (@ to tag offers or docs)',
   initialValue,
   initialDocuments,
+  initialReferences: restoredRefs,
   restoreNonce,
   draftContextKeyOverride,
   consumePendingComposerText = true,
@@ -132,7 +133,6 @@ export function ChatInput({
     portalTargetRef,
     onOpenWorkspaceModels: () => openWorkspaceSettings('models'),
   })
-
   const {
     slashMenuOpen,
     setSlashMenuOpen,
@@ -157,8 +157,8 @@ export function ChatInput({
     slashHighlight,
     setSlashHighlight,
   })
-
-  const [attachedReferences, setAttachedReferences] = useState<MessageReference[]>([])
+  const restoredReferenceState = useRestoredRefs(restoredRefs, restoreNonce, conversationId)
+  const [attachedReferences, setAttachedReferences] = restoredReferenceState
   const { handleArtifactRemove, handleReferenceRemove } = useChatInputAttachmentRemoval({
     setAttachedArtifacts,
     setAttachedReferences,
@@ -433,7 +433,6 @@ export function ChatInput({
     setAtArtifactMoreByType: atMentionController.setAtArtifactMoreByType,
     setAtMediaCollapsedByType: atMentionController.setAtMediaCollapsedByType,
     setAtMediaMoreByType: atMentionController.setAtMediaMoreByType,
-    onCampaignSelect: handleCampaignSelect,
     onAtSelect: handleAtSelect,
     slashMenuOpen,
     slashVisibleItems: slashMenuLayout.visibleFlat,

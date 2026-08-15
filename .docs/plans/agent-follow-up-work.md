@@ -9,6 +9,116 @@ Evidence: `wc -l` reports `SpaceVibeyChatPanel.tsx` at 2651 LOC and `use-chat-st
 Needed work: Split send/seed/selection orchestration out of the Space chat panel and decompose the studio chat store.
 
 Reason not done now: The requested fix is a meeting-chat identity bug; decomposing these files is adjacent pre-existing debt.
+## 2026-08-14 - [ARCH] SpaceVibeyChatPanel still over the feature-container LOC limit
+
+Status: Open
+
+Found while: In-chat create-type picker and funnel designer wiring
+
+Evidence: `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` is 2646 lines (project-architecture container limit is 600). This change only added the type-picker render and seed intercept.
+
+Needed work: Split seed handling, composer chrome, and conversation actions out of the panel container.
+
+Reason not done now: In-scope create-picker and funnel preview fixes did not require a panel split.
+
+## 2026-08-14 - [FIX] Chat campaign still inherits sticky Space context on /programs
+
+Status: Open
+
+Found while: Nick Sakha / Resilient Roots / General campaign jump
+
+Evidence: `resolveGlobalChatPanelHost` keeps a sticky space+campaign host when `workContext.surface` becomes `general`. `/programs/:id` maps to general, so a previously viewed campaign (e.g. Resilient Roots) can remain on an open thread. Send no longer assigns General on persisted chats; new chats can still be born on the sticky campaign. `ConversationScopePicker` "General / Meetings" is General campaign + Meetings space, not a third campaign.
+
+Needed work: Stop inheriting sticky campaign onto new sends from `/programs`, and keep conversation campaign authoritative when the user is only browsing a program.
+
+Reason not done now: Changing sticky-host remount rules would swap the open conversation list while browsing Programs; that is a separate UX decision from the send-to-General and agent force-stick bugs (those two are fixed on this branch).
+## 2026-08-14 - [UI] Chat Connections switcher still two-level; channel icon tokens; rail at LOC limit
+
+Status: Open
+
+Found while: Connections / Choose Space / Recents logos / no-auto-attach slice
+
+Evidence:
+- `ConversationScopePickerMenus` groups campaigns under program headings, then click-opens spaces. It is not a third click-drill of Program → Campaign list → Space list.
+- `ConversationChannelIcon` still uses `text-purple-400` / `text-blue-400` instead of `--color-*` utilities.
+- `SidebarHqRail.tsx` is 399 LOC (component max 400) after the active-conversation work-context guards.
+- `SidebarHqHubMenuContent` / `SidebarHqMoreFlyoutBody` still call `setWorkContext` on destination clicks even when a conversation is open.
+- Composer `+` menu still owns a hover space submenu (`plusMenuSpacePicker`); only the Choose Space shelf button uses the click-stable picker.
+
+Needed work: Optional third-level program drill; tokenize Slack/Telegram icons; split `SidebarHqRail`; skip flyout `setWorkContext` when `activeConversationId` is set; optionally route composer `+` space through the same picker.
+
+Reason not done now: In-scope Connections, Choose Space flash, Recents logos, and conversation-scoped attach shipped without expanding those adjacent surfaces.
+## 2026-08-14 - [FIX] Slack Brain import fails when the selected period has no messages
+
+Status: Open
+
+Found while: Pixel fill-from-brain and @ mention follow-up
+
+Evidence: UI toast "Import failed: Atlas could not process: The Slack period contains no message content to...". Runtime throws `Atlas could not process: ${reason}` from brain-import job status when Slack import is empty.
+
+Needed work: Return a Vibey empty-period message instead of a failed Atlas import, and skip/no-op when the chosen Slack window has no content.
+
+Reason not done now: Requested work was @ mention campaign tagging plus Pixel User Brain fill; this is a separate Atlas import path.
+
+## 2026-08-14 - [ARCH] BrainContextService is at the 600 LOC service limit
+
+Status: Open
+
+Found while: First-person fill User Brain query rewrite
+
+Evidence: `apps/agent-api/src/modules/brain/services/brain-context.service.ts` is 600 LOC after adding identity-query rewrite for fill-as-me requests. The architecture guideline caps services at 600 LOC.
+
+Needed work: Extract wiki context and timing helpers before adding more retrieval branches.
+
+Reason not done now: The requested fill-from-brain rewrite is a two-line query swap; splitting the service is adjacent debt.
+
+## 2026-08-14 - [DOCS] Designer TOOLS.md still forbids the browser it is allowed to use
+
+Status: Open
+
+Found while: Fixing Pixel live-funnel test-lead click-through
+
+Evidence: Canonical Designer/Lux runtimes omit `browser` from the deny list for visual review, but `docker/agents/templates/designer/TOOLS.md` still says "Do NOT use `browser`" and "Do NOT browse URLs via `browser`."
+
+Needed work: Update designer (and other visual-review) TOOLS.md so screenshot critique uses the browser tool instead of `web_fetch`.
+
+Reason not done now: The requested fix is Pixel funnel QC with a test lead. Designer visual-review copy is adjacent and would change a different agent's operating contract.
+
+## 2026-08-14 - [OPS] Instagram-only Squid config is unused after public browser QC
+
+Status: Open
+
+Found while: Fixing Pixel live-funnel test-lead click-through
+
+Evidence: `docker/squid-instagram.conf` still ships in the image, but `docker/vibey-browser-sidecar.sh` no longer starts Squid. The Instagram-only proxy blocked live funnel hosts.
+
+Needed work: Either delete the unused Squid config and Dockerfile copy, or restore it as an optional Instagram-only Chromium profile without making it the default.
+
+Reason not done now: Removing the default proxy was required for Register Now click-through; deleting leftover isolation files is cleanup, not the QC path.
+
+## 2026-08-14 - [FIX] ROAS Slack → Pixel thread context drops files
+
+Status: Open
+
+Found while: Pixel YouTube transcript pull from a Slack thread
+
+Evidence: `buildSlackThreadReplyContext` in `apps/api/src/modules/slack/services/slack-service-conversation.base.ts` copies the last 12 message texts only. OpenClaw Slack hydrates starter files in `apps/openclaw/src/slack/monitor/message-handler/prepare.ts`; the ROAS Slack → Pixel path does not. A video or transcript file on an earlier thread message never reaches Pixel.
+
+Needed work: Hydrate Slack thread file URLs/attachments into the Pixel session context the same way OpenClaw does for starter files, with tests for a URL-only latest message plus a file on an earlier thread message.
+
+Reason not done now: The requested fix is Pixel `extract_url_transcript` using the Social Analysis API for a video URL. Thread file hydration is a separate Slack context gap.
+
+## 2026-08-14 - [FIX] Atlas Slack Brain import red toast
+
+Status: Open
+
+Found while: Pixel transcript failure in chat “Meta Ads Video Script”
+
+Evidence: `BrainImportJobNotifier` toasts `Import failed: ${last_error}` for `slack_period_import` / `campaign_slack_import`. Short threads can be skipped in `formatThreadsAsBlob`, and auth/scope errors (`missing_scope`) can fail the job. This toast is separate from Pixel `extract_url_transcript`.
+
+Needed work: Inspect the production Brain import job row on `lhfgtsjetcardinpgouq`, then either skip empty Slack threads without a red error toast or map scope/auth failures to a clearer user-facing sentence from the brain feature error config.
+
+Reason not done now: The user asked to pull video transcripts through the existing API, not to change Atlas Slack import toast UX.
 
 ## 2026-08-05 - [ARCH] SlackService near 600 LOC after digest reply enrichment
 
@@ -38660,3 +38770,20 @@ Reason not done now: The production timeout fix changes only the two repeat sche
 - Evidence: A production browser request made at 18:18 America/Los_Angeles on August 13 was answered as “Today, Thursday Aug 14” and rendered the meeting time in UTC. The gateway supplies only `CURRENT_DATETIME` as a UTC ISO timestamp and supplies no user/browser timezone.
 - Needed work: carry the authenticated user's effective timezone into Studio chat context and require relative-day labels and calendar display times to use it, with DST-boundary regression coverage.
 - Reason not done now: This task's code change is a scoped task-detail spacing correction; changing the global chat time contract affects every agent and calendar request and requires a separately reviewed frontend-to-gateway contract change.
+## 2026-08-14 - [ARCH] Continue chat composer and panel decomposition
+
+Status: Open
+
+Found while: Adding exact-message Reply restoration and Mission navigation inside chat.
+
+Files:
+
+- `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` (2,628 LOC; unchanged from its allowlisted baseline)
+- `apps/web/src/features/studio/components/ChatInput.tsx` (630 LOC; unchanged from its allowlisted baseline)
+- `apps/agent-api/src/modules/chat/services/chat-reference-context.service.ts` (498 LOC; near the proactive 500 LOC extraction threshold)
+
+Evidence: The scoped change kept the two grandfathered web files at their existing line counts by moving seed normalization and restored-reference state into focused tested helpers. The reference-context service remains under its 600 LOC hard limit but now sits at the proactive extraction threshold.
+
+Needed work: Continue splitting the Space chat host by composer/seed orchestration, split the ChatInput shell from its controller hooks, and extract conversation-reference assembly from `ChatReferenceContextService` behind the existing reference-context contract.
+
+Reason not done now: Those decompositions are real architecture debt but would materially widen the requested Mission/Create/output/reply behavior change; this change adds focused helpers without increasing either allowlisted web file.

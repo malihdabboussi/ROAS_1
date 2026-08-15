@@ -259,6 +259,38 @@ describe('extractFinalOutputBlocks', () => {
 
     expect(extractFinalOutputBlocks([first, duplicate, text('answer-1')])).toEqual([first])
   })
+
+  it('keeps funnel pages distinct from each other and the parent funnel', () => {
+    const optIn: MessageContentBlock = {
+      type: 'artifact_preview',
+      id: 'page-preview-1',
+      artifactType: 'funnel',
+      artifactId: 'funnel-1',
+      name: 'Registration',
+      funnelPageId: 'page-1',
+    }
+    const thankYou: MessageContentBlock = {
+      type: 'artifact_preview',
+      id: 'page-preview-2',
+      artifactType: 'funnel',
+      artifactId: 'funnel-1',
+      name: 'Confirmation',
+      funnelPageId: 'page-2',
+    }
+    const funnel: MessageContentBlock = {
+      type: 'artifact_preview',
+      id: 'funnel-preview-1',
+      artifactType: 'funnel',
+      artifactId: 'funnel-1',
+      name: 'Insurance Creators Organic Lead Training',
+    }
+
+    expect(extractFinalOutputBlocks([optIn, thankYou, funnel, optIn])).toEqual([
+      optIn,
+      thankYou,
+      funnel,
+    ])
+  })
 })
 
 describe('coalesceConsecutiveReadTools', () => {

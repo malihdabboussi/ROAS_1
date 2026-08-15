@@ -8,10 +8,19 @@ vi.mock('@/components/layout/ResizableDivider', () => ({
   ResizableDivider: ({
     onMouseDown,
     ariaLabel,
+    showGrip,
   }: {
     onMouseDown: (event: MouseEvent) => void
     ariaLabel?: string
-  }) => <button type="button" aria-label={ariaLabel} onMouseDown={onMouseDown} />,
+    showGrip?: boolean
+  }) => (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      data-show-grip={showGrip}
+      onMouseDown={onMouseDown}
+    />
+  ),
 }))
 
 describe('ShellArtifactViewerColumn', () => {
@@ -35,6 +44,10 @@ describe('ShellArtifactViewerColumn', () => {
 
     const column = screen.getByTestId('shell-artifact-viewer-column')
     expect(column).toHaveStyle({ width: '480px' })
+    expect(screen.getByRole('button', { name: 'Resize artifact viewer' })).toHaveAttribute(
+      'data-show-grip',
+      'true',
+    )
 
     fireEvent.mouseDown(screen.getByRole('button', { name: 'Resize artifact viewer' }), {
       clientX: 800,

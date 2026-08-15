@@ -58,13 +58,14 @@ afterEach(() => {
 })
 
 describe('MessageBubble', () => {
-  it('renders an assistant text message inside the shared voice approval provider without churn', () => {
+  it('routes assistant actions through the active conversation override without churn', () => {
     let commitCount = 0
 
     render(
       <Profiler id="message-bubble" onRender={() => commitCount++}>
         <VoiceApprovalProvider value={vi.fn()}>
           <MessageBubble
+            conversationIdOverride="conversation-active"
             message={
               {
                 id: 'message-1',
@@ -81,7 +82,9 @@ describe('MessageBubble', () => {
     )
 
     expect(screen.queryByText('Ready to help')).not.toBeNull()
-    expect(screen.queryByTestId('assistant-actions')?.textContent).toBe('actions:conversation-1')
+    expect(screen.queryByTestId('assistant-actions')?.textContent).toBe(
+      'actions:conversation-active',
+    )
     expect(commitCount).toBeLessThan(6)
   })
 })

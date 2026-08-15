@@ -3,10 +3,11 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { BriefcaseBusiness, Search, Users } from 'lucide-react'
+import { BriefcaseBusiness, PanelRightOpen, Search, Users } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { fetchAgencyClients, type AgencyClient } from '@/lib/agency-clients'
 import { cn } from '@/lib/utils/cn'
+import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
 
 type GroupMode = 'pipeline' | 'manager'
 
@@ -66,6 +67,7 @@ export function AgencyClientsPage() {
 
   return (
     <main className="gap-spacing-6 p-spacing-8 mx-auto flex w-full max-w-7xl flex-col">
+      <AgencyWorkspaceBreadcrumb items={[{ label: 'Clients' }]} />
       <header className="gap-spacing-4 flex flex-wrap items-end justify-between">
         <div>
           <p className="typo-section-label text-muted-foreground">Agency workspace</p>
@@ -74,9 +76,14 @@ export function AgencyClientsPage() {
             The ROAS Portal clients, campaign work, requests, and Brain context in one view.
           </p>
         </div>
-        <Link href="/client-campaigns" className="button-compact button-glass-neutral">
-          <BriefcaseBusiness className="icon-sm" /> Client Campaigns
-        </Link>
+        <div className="gap-spacing-2 flex items-center">
+          <Link href="/client-campaigns" className="button-compact button-glass-neutral">
+            <BriefcaseBusiness className="icon-sm" /> Client Campaigns
+          </Link>
+          <Link href="/clients?surface=portal" className="button-compact button-glass-purple">
+            <PanelRightOpen className="icon-sm" /> Portal
+          </Link>
+        </div>
       </header>
 
       <div className="surface-card gap-spacing-2 rounded-spacing-3 border-border p-spacing-3 flex flex-wrap items-center border">

@@ -126,11 +126,6 @@ vi.mock('./ShellChatDrawer', () => ({
 vi.mock('./ShellNewChatGreeting', () => ({
   ShellNewChatGreeting: () => <div>New chat greeting</div>,
 }))
-vi.mock('./PageGraderPortalSurface', () => ({
-  PageGraderPortalSurface: ({ active }: { active: boolean }) => (
-    <div data-testid="portal-surface" data-active={active ? 'true' : 'false'} />
-  ),
-}))
 vi.mock('./ShellSidebarSlot', () => ({
   ShellSidebarSlot: () => <nav data-testid="workspace-menu">Workspace menu</nav>,
 }))
