@@ -64,9 +64,19 @@ export const PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK = `${PLATFORM_TOOLS_FIRST_PE
 export const PLATFORM_TOOLS_BROWSER_QC_HEADING = '### Interactive Browser QC'
 export const PLATFORM_TOOLS_BROWSER_QC_BLOCK = `${PLATFORM_TOOLS_BROWSER_QC_HEADING}
 
-- When the browser tool is available and the user asks to QC a page or funnel, use the live browser to follow every requested path. Click the real controls, verify each resulting URL or state, and go back when another branch needs review. A text fetch cannot validate interaction.
-- Judge visible prices, copy, and layout from the rendered page. Automation-facing text can include hidden, stale, or contradictory checkout values; reconcile it against the visible checkout and interaction result before reporting a defect.
-- Do not submit real contact or payment details without the user's authorization. State exactly which gated step remains untested.`
+Clicking a live page, filling a form, registering a test lead, and reviewing the confirmation page require the browser tool. \`web_fetch\` returns text/markdown only — it cannot type, click Register Now, submit, or follow a JavaScript confirmation.
+
+When the browser tool is available and the user asks to QC, click through, register, or fill a live page:
+- Open the URL in the browser, snapshot the visible form, and click the real controls.
+- Fill every required field, then click the visible CTA (Register Now, Submit, Get Access, and similar).
+- Wait for navigation and inspect the actual resulting page. Compare dates, times, and offer copy against the registration page.
+- Judge visible prices, copy, and layout from the rendered page. Automation-facing text can include hidden, stale, or contradictory checkout values; reconcile those against what the user would see.
+
+A request to QC a funnel, click through it, or register a test lead is authorization to submit an obviously fake test identity: name Test Lead, email \`qa+{unix}@roas.co\`, US phone (555) 010-0100. Do not use the user's real identity unless they asked you to fill the form as them. Do not ask them to send a confirmation URL or guess \`/thank-you\` while the submit button was on the page.
+
+When filling a form as the user, retrieve their identity from User Brain first, then type those values into the live form. Do not ask them to paste bullets Brain already holds.
+
+Leave unpaid checkout, card entry, and real purchases untested unless the user explicitly authorizes that step. If the browser tool is missing or blocked, say you could not click through the live page. Do not claim a registration from fetch alone.`
 
 export const PLATFORM_TOOLS_RUNTIME_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING}
 
@@ -245,8 +255,25 @@ function ensureMediaRoutingGuidance(content: string): string {
 
 function ensureBrowserQcGuidance(content: string): string {
   const runtimeStart = content.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
-  if (runtimeStart === -1 || content.includes(PLATFORM_TOOLS_BROWSER_QC_BLOCK)) {
-    return content
+  if (runtimeStart === -1) return content
+
+  const qcStart = content.indexOf(PLATFORM_TOOLS_BROWSER_QC_HEADING, runtimeStart)
+  if (qcStart !== -1) {
+    if (content.slice(qcStart).startsWith(PLATFORM_TOOLS_BROWSER_QC_BLOCK)) {
+      return content
+    }
+    const nextSubheading = content.indexOf('\n### ', qcStart + 1)
+    const delegationStart = content.indexOf(
+      `\n${PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING}`,
+      qcStart,
+    )
+    const unclearStart = content.indexOf('\nFor unclear,', qcStart)
+    const deliverableStart = content.indexOf('\nFor deliverable work:', qcStart)
+    const candidates = [nextSubheading, delegationStart, unclearStart, deliverableStart].filter(
+      (index) => index !== -1,
+    )
+    const replaceEnd = candidates.length > 0 ? Math.min(...candidates) : content.length
+    return `${content.slice(0, qcStart)}${PLATFORM_TOOLS_BROWSER_QC_BLOCK}${content.slice(replaceEnd)}`
   }
 
   const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
