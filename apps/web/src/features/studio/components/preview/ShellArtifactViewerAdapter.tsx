@@ -2,9 +2,9 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef } from 'react'
-import { FunnelFullPreview } from '@/components/deliverables/FunnelFullPreview'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
 import { DeliverablePreviewBody } from '@/components/deliverables/DeliverablePreviewBody'
+import { FunnelFullPreview } from '@/components/deliverables/FunnelFullPreview'
 import { useDeliverableEntityContent } from '@/components/deliverables/use-deliverable-entity-content'
 import { ShellArtifactViewerPanel } from '@/components/shell/ShellArtifactViewerPanel'
 import { ShellMissionArtifactViewerAdapter } from '@/components/shell/ShellMissionArtifactViewerAdapter'

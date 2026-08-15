@@ -69,35 +69,36 @@ export function MeetingCallStatusSection({
           </a>
         ) : null}
       </div>
-      {isLive ? (
-        <button
-          type="button"
-          onClick={onEnd}
-          disabled={ending}
-          className="button-default button-glass-destructive gap-spacing-2 inline-flex shrink-0 items-center disabled:opacity-50"
-        >
-          <Square className="icon-sm" aria-hidden />
-          {ending ? 'Ending…' : 'End call'}
-        </button>
-      ) : isProcessing || isPostCall ? (
+      <div className="gap-spacing-2 flex shrink-0 flex-wrap items-center">
+        {isLive ? (
+          <button
+            type="button"
+            onClick={onEnd}
+            disabled={ending}
+            className="button-default button-glass-destructive gap-spacing-2 inline-flex items-center disabled:opacity-50"
+          >
+            <Square className="icon-sm" aria-hidden />
+            {ending ? 'Ending…' : 'End call'}
+          </button>
+        ) : isProcessing || isPostCall ? null : (
+          <button
+            type="button"
+            onClick={onStart}
+            disabled={starting}
+            className="button-default button-glass-primary gap-spacing-2 inline-flex items-center disabled:opacity-50"
+          >
+            <Play className="icon-sm" aria-hidden />
+            {starting ? 'Opening…' : 'Start call'}
+          </button>
+        )}
         <button
           type="button"
           onClick={onContinue}
-          className="button-default button-glass-neutral gap-spacing-2 inline-flex shrink-0 items-center"
+          className="button-default button-glass-neutral gap-spacing-2 inline-flex items-center"
         >
           Continue in chat
         </button>
-      ) : (
-        <button
-          type="button"
-          onClick={onStart}
-          disabled={starting}
-          className="button-default button-glass-primary gap-spacing-2 inline-flex shrink-0 items-center disabled:opacity-50"
-        >
-          <Play className="icon-sm" aria-hidden />
-          {starting ? 'Opening…' : 'Start call'}
-        </button>
-      )}
+      </div>
       {showPostCallActions || showPreCallActions ? (
         <div className="gap-spacing-2 flex w-full flex-wrap items-center">
           {(showPostCallActions ? MEETING_POST_CALL_ACTIONS : MEETING_PRE_CALL_ACTIONS).map(

@@ -21,6 +21,7 @@ import {
   resolveSpaceChatScope,
   resolveSpaceChatSeedSendOptions,
   resolveSpaceChatSendAgentKey,
+  resolveSpaceChatSendConversationId,
 } from './space-vibey-chat-panel.logic'
 
 function conversation(overrides: Partial<Conversation>): Conversation {
@@ -338,17 +339,35 @@ describe('space ROAS chat panel logic', () => {
     expect(resolveSpaceChatSendAgentKey('vibey', '  blaze  ')).toBe('blaze')
     expect(resolveSpaceChatSendAgentKey('vibey', undefined)).toBe('vibey')
     expect(
-      resolveSpaceChatSeedSendOptions({ agentKey: 'ads_manager', railIntent: 'new' }, 'vibey'),
-    ).toEqual({ forceNewConversation: true, agentKey: 'ads_manager' })
-    expect(
       resolveSpaceChatSeedSendOptions(
         { agentKey: 'ads_manager', conversationId: 'conversation-1' },
         'vibey',
       ),
-    ).toEqual({ forceNewConversation: false, agentKey: 'ads_manager' })
+    ).toEqual({
+      forceNewConversation: false,
+      agentKey: 'ads_manager',
+      conversationId: 'conversation-1',
+    })
+    expect(
+      resolveSpaceChatSeedSendOptions({ agentKey: 'ads_manager', railIntent: 'new' }, 'vibey'),
+    ).toEqual({ forceNewConversation: true, agentKey: 'ads_manager', conversationId: undefined })
     expect(
       resolveSpaceChatSeedSendOptions({ agentKey: 'ads_manager', railIntent: null }, 'vibey'),
-    ).toEqual({ forceNewConversation: true, agentKey: 'ads_manager' })
+    ).toEqual({ forceNewConversation: true, agentKey: 'ads_manager', conversationId: undefined })
+    expect(
+      resolveSpaceChatSendConversationId({
+        forceNew: false,
+        selectedConversationId: 'open-chat',
+        requestedConversationId: 'meeting-chat',
+      }),
+    ).toBe('meeting-chat')
+    expect(
+      resolveSpaceChatSendConversationId({
+        forceNew: true,
+        selectedConversationId: 'open-chat',
+        requestedConversationId: 'meeting-chat',
+      }),
+    ).toBeNull()
   })
 
   it('builds encoded space and channel conversation URLs', () => {

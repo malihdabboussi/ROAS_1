@@ -168,6 +168,18 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
   },
 
   attachMeetingContext: (meetingContext) => {
+    const current = get().meetingContext
+    if (
+      current &&
+      current.spaceId === meetingContext.spaceId &&
+      current.meetingItemId === meetingContext.meetingItemId &&
+      current.conversationId === meetingContext.conversationId &&
+      current.awarenessContext === meetingContext.awarenessContext &&
+      current.timelineVersion === meetingContext.timelineVersion
+    ) {
+      useChatStore.getState().setActiveConversationId(meetingContext.conversationId)
+      return
+    }
     // Meeting threads are Vibey-scoped; keep the agent filter off Delegator/etc.
     const nextWork = mergeAttachedWorkContext(get().workContext, {
       surface: 'spaces',

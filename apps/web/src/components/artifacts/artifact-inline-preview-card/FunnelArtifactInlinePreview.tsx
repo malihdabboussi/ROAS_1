@@ -1,10 +1,10 @@
 'use client'
 
 import { LayoutTemplate } from 'lucide-react'
-import { ARTIFACT_CHAT_PREVIEW_PANE_PX } from '@/lib/chat/artifact-preview-layout'
-import { ARTIFACT_INLINE_SHELL_400 } from './artifact-inline-preview.constants'
 import { TsxMiniIframe } from '@/components/artifacts/TsxMiniIframe'
 import { useFunnelPagePreview } from '@/lib/artifacts/use-funnel-page-preview'
+import { ARTIFACT_CHAT_PREVIEW_PANE_PX } from '@/lib/chat/artifact-preview-layout'
+import { ARTIFACT_INLINE_SHELL_400 } from './artifact-inline-preview.constants'
 
 export function FunnelArtifactInlinePreview({
   artifactId,
@@ -38,7 +38,7 @@ export function FunnelArtifactInlinePreview({
           </div>
         )}
       </div>
-      <div className="gap-spacing-2 flex items-center max-md:px-3 max-md:py-1 md:px-spacing-3 md:py-spacing-2">
+      <div className="gap-spacing-2 md:px-spacing-3 md:py-spacing-2 flex items-center max-md:px-3 max-md:py-1">
         <LayoutTemplate className="icon-sm text-muted-foreground shrink-0" />
         <span className="body-3 text-foreground min-w-0 truncate font-medium">{name}</span>
       </div>

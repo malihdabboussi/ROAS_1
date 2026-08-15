@@ -149,6 +149,17 @@ export function resolveSpaceChatSendAgentKey(
   return requested && requested.length > 0 ? requested : activeAgentKey
 }
 
+export function resolveSpaceChatSendConversationId(input: {
+  forceNew: boolean
+  selectedConversationId: string | null
+  requestedConversationId?: string | null
+}): string | null {
+  if (input.forceNew) return null
+  const requested = input.requestedConversationId?.trim()
+  if (requested) return requested
+  return input.selectedConversationId
+}
+
 export function resolveSpaceChatSeedSendOptions(
   seed: {
     agentKey?: string
@@ -156,12 +167,13 @@ export function resolveSpaceChatSeedSendOptions(
     railIntent?: 'new' | 'list' | 'focus' | null
   },
   activeAgentKey: string,
-): { forceNewConversation: boolean; agentKey?: string } {
+): { forceNewConversation: boolean; agentKey?: string; conversationId?: string } {
   return {
     forceNewConversation:
       seed.railIntent === 'new' ||
       Boolean(seed.agentKey && seed.agentKey !== activeAgentKey && !seed.conversationId),
     agentKey: seed.agentKey,
+    conversationId: seed.conversationId,
   }
 }
 

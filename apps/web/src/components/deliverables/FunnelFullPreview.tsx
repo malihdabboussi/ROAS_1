@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { FunnelFullModeShell } from '@/features/studio/components/preview/FunnelFullModeShell'
 import { FunnelHtmlPreview } from '@/features/studio/components/preview/FunnelHtmlPreview'
 import { SandpackPreview } from '@/features/studio/components/preview/SandpackPreview'
@@ -12,7 +13,6 @@ import {
   type FunnelPage,
   type FunnelPageBundle,
 } from '@/lib/artifacts'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 
 type PreviewPage = {
   id: string

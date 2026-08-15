@@ -668,10 +668,14 @@ describe('ArtifactsService RBAC integrations + media', () => {
       redirect_url: 'https://connect.example/connection-1',
       status: 'INITIATED',
     })
-    expect(service.composioService.initiateConnectedAccount).toHaveBeenCalledWith('user-1', 'auth-1', {
-      callbackUrl: 'https://app.example/callback',
-      allowMultiple: true,
-    })
+    expect(service.composioService.initiateConnectedAccount).toHaveBeenCalledWith(
+      'user-1',
+      'auth-1',
+      {
+        callbackUrl: 'https://app.example/callback',
+        allowMultiple: true,
+      },
+    )
     expect(upsertQuery.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         user_id: 'user-1',

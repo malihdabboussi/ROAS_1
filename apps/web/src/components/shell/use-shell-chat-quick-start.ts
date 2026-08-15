@@ -6,11 +6,8 @@ import {
   shellQuickStartMatchesComposer,
 } from './shell-chat-quick-start.logic'
 import type { ShellCreateMenuItem } from './shell-create-menu.config'
+import { CREATE_TYPE_PICKERS, type CreateTypePickerOption } from './shell-create-type-pickers'
 import type { ShellChatQuickStart } from './shell-empty-chat-prompts.config'
-import {
-  CREATE_TYPE_PICKERS,
-  type CreateTypePickerOption,
-} from './shell-create-type-pickers'
 
 export function useShellChatQuickStart(setTextRef: RefObject<((text: string) => void) | null>) {
   const [activeQuickStart, setActiveQuickStart] = useState<ShellChatQuickStart | null>(null)

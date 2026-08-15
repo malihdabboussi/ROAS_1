@@ -1,3 +1,14 @@
+## 2026-08-14 - [ARCH] SpaceVibeyChatPanel and chat store remain far over LOC limits
+
+Status: Open
+
+Found while: Meeting chat link / Continue-in-chat loop fix
+
+Evidence: `wc -l` reports `SpaceVibeyChatPanel.tsx` at 2651 LOC and `use-chat-store.ts` at 2331 LOC after an in-scope send/selection fix. Both were already over the 600 LOC architecture cap.
+
+Needed work: Split send/seed/selection orchestration out of the Space chat panel and decompose the studio chat store.
+
+Reason not done now: The requested fix is a meeting-chat identity bug; decomposing these files is adjacent pre-existing debt.
 ## 2026-08-14 - [ARCH] SpaceVibeyChatPanel still over the feature-container LOC limit
 
 Status: Open

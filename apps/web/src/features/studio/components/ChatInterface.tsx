@@ -5,13 +5,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowDown, Sparkles, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { ComposerInputStack } from '@/components/chat/ComposerInputStack'
-import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
+import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { LucideIcon } from '@/components/ui/IconPicker'
 import type { AnimationState } from '@/components/vibey/animation-states.config'
 import { backendGet } from '@/lib/api/backend-client'
-import { CHAT_TOAST_ERRORS } from '@/lib/chat/chat-toast-errors.config'
 import { resolvePinnedAssistantMessageId } from '@/lib/chat/assistant-message-actions'
+import { CHAT_TOAST_ERRORS } from '@/lib/chat/chat-toast-errors.config'
 import type { MissionDeliverable } from '@/lib/missions'
 import { toastMessageForChatSendError } from '../config/chat-stream-errors.config'
 import { useCampaignMode } from '../contexts/CampaignModeContext'
@@ -1045,9 +1045,7 @@ export function ChatInterface() {
           />
           <ComposerInputStack
             stackActive={isStreaming}
-            topSlot={
-              <ComposerActiveRunTipCard stacked conversationId={activeConversationId} />
-            }
+            topSlot={<ComposerActiveRunTipCard stacked conversationId={activeConversationId} />}
           >
             <ChatInput
               onSend={handleComposerSendWithQueueEdit}

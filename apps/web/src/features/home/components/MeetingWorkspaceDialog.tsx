@@ -30,7 +30,6 @@ import {
   type MeetingSnippet,
   type MeetingWorkspaceBundle,
 } from '@/features/home/services/meeting-workspace-api'
-import { useChatStore } from '@/lib/chat/studio-chat-runtime-adapter'
 import { renameConversation } from '@/lib/conversations/conversations-api'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { updateSpaceItem } from '@/lib/spaces'
@@ -63,16 +62,12 @@ export function MeetingWorkspaceDialog({
   const [loading, setLoading] = useState(true)
   const [starting, setStarting] = useState(false)
   const [ending, setEnding] = useState(false)
-  const attachMeetingContext = useGlobalChatStore((state) => state.attachMeetingContext)
   const clearMeetingContext = useGlobalChatStore((state) => state.clearMeetingContext)
   const openChatDrawer = useShellStore((state) => state.openChatDrawer)
   const setWorkAreaOpen = useShellStore((state) => state.setWorkAreaOpen)
-  const setRailIntent = useGlobalChatStore((state) => state.setRailIntent)
-  const activeConversationId = useChatStore((state) => state.activeConversationId)
   const continueMeetingConversation = useGlobalChatStore(
     (state) => state.continueMeetingConversation,
   )
-
   const hydrateWorkspace = useCallback(async () => {
     let next = await fetchMeetingWorkspace(spaceId, meetingItemId)
     const phase = next.workspace?.phase
@@ -100,7 +95,6 @@ export function MeetingWorkspaceDialog({
     setBundle(next)
     return next
   }, [agendaEvent, meetingItemId, spaceId])
-
   useEffect(() => {
     let cancelled = false
     setLoading(true)
@@ -115,7 +109,6 @@ export function MeetingWorkspaceDialog({
       cancelled = true
     }
   }, [hydrateWorkspace])
-
   const title = bundle?.meeting.title?.trim() || fallbackTitle
   const phase = bundle?.workspace?.phase
   const isLive = phase === 'live'
@@ -146,34 +139,6 @@ export function MeetingWorkspaceDialog({
   useEffect(() => {
     setWorkAreaOpen(true)
   }, [setWorkAreaOpen])
-
-  useEffect(() => {
-    if (!conversationId) return
-    // A meeting workspace in the page must not steal an unrelated open chat.
-    if (activeConversationId && activeConversationId !== conversationId) return
-    // Attach meeting context (switches agent → vibey + spaces scope) before opening the drawer
-    // so the panel does not hydrate under a leftover Delegator filter.
-    attachMeetingContext({
-      spaceId,
-      meetingItemId,
-      conversationId,
-      awarenessContext,
-      timelineVersion: bundle?.snippets.length ?? 0,
-    })
-    // Cancel a stale "new chat" rail intent so hydration cannot wipe the meeting thread.
-    setRailIntent(null)
-    openChatDrawer(conversationId)
-  }, [
-    activeConversationId,
-    attachMeetingContext,
-    awarenessContext,
-    bundle?.snippets.length,
-    conversationId,
-    meetingItemId,
-    openChatDrawer,
-    setRailIntent,
-    spaceId,
-  ])
 
   const handleClose = useCallback(() => {
     clearMeetingContext()

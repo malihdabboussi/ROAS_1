@@ -46,27 +46,22 @@ export function SidebarHqRail({
   const setMenuCompact = useShellMenuDock((state) => state.setMenuCompact)
   const shellExpanded = shellSidebarExpanded({ sidebarPinned, sidebarPeek })
   const lifting = dragging && lift !== null
-
   // Keep the HQ rail icon-only — never promote the expanded hub menu.
   useEffect(() => {
     setSidebarPinned(false)
     if (c.hubMenuOpen || c.hubMenuClosing) c.forceCloseHubMenu()
   }, [c.hubMenuOpen, c.hubMenuClosing, c.forceCloseHubMenu, setSidebarPinned])
-
   useEffect(() => {
     if (shellExpanded && (c.hubMenuOpen || c.hubMenuClosing)) c.forceCloseHubMenu()
   }, [shellExpanded, c.hubMenuOpen, c.hubMenuClosing, c.forceCloseHubMenu])
-
   const syncWorkContextForPath = (href: string) => {
     if (useChatStore.getState().activeConversationId) return
     setWorkContext({ surface: surfaceFromPathname(href) })
   }
-
   const syncWorkContextForPanel = (panelId: ManagePanelId) => {
     if (useChatStore.getState().activeConversationId) return
     setWorkContext({ surface: workContextSurfaceForPanel(panelId) })
   }
-
   const pushIfNeeded = (href: string) => {
     if (c.pathname === href) return
     if (href !== '/' && c.pathname.startsWith(`${href}/`)) return
@@ -77,7 +72,6 @@ export function SidebarHqRail({
     sidebarSpaces: c.sidebarLists,
     onClose: closeHoverManageFlyout,
   })
-
   const closeHubIfOpen = () => {
     if (c.hubMenuOpen || c.hubMenuClosing) c.forceCloseHubMenu()
     const shell = useShellStore.getState()
@@ -88,7 +82,6 @@ export function SidebarHqRail({
     if (shell.sidebarPeek) shell.setSidebarPeek(false)
     shell.clearSidebarPeekClose()
   }
-
   /** Home always clears chat query params so the dashboard shows. */
   const goHome = () => {
     closeHoverManageFlyout()
@@ -98,12 +91,10 @@ export function SidebarHqRail({
     c.setActiveManagePanel(null)
     router.push('/home')
   }
-
   const isPeeking = false
   // Icon rail only — expanded hub menu is retired.
   const hubExpanded = false
   const iconOnlyDock = menuDock === 'work-top' || menuDock === 'work-bottom'
-
   // Pointer-follow geometry for the lifted rail (not a color — dock drag exception).
   const liftStyle =
     lifting && lift
@@ -114,7 +105,6 @@ export function SidebarHqRail({
           '--shell-menu-lift-height': `${lift.height}px`,
         } as CSSProperties)
       : undefined
-
   return (
     <div
       className={cn(

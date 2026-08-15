@@ -246,7 +246,6 @@ export class BrainContextService {
       orgId,
     })
     let brainId = typeof addon?.brain_id === 'string' && addon.brain_id ? addon.brain_id : null
-
     if (!brainId) {
       const { data: brain } = await this.repository.findAgentBrainId(this.supabase, {
         userId,
@@ -255,10 +254,8 @@ export class BrainContextService {
       })
       brainId = typeof brain?.id === 'string' && brain.id ? brain.id : null
     }
-
     return { hasAgentBrain: brainId != null, brainId }
   }
-
   async buildWikiContext(
     userId: string,
     query?: string,
@@ -269,16 +266,13 @@ export class BrainContextService {
       ? await this.retrieval.resolveUserBrainId(this.supabase, userId, orgId)
       : await this.resolveUserBrainIdLegacy(userId, orgId)
     if (!brainId) return ''
-
     const { data: brainMeta } = await this.repository.findBrainCortexFlag(this.supabase, brainId)
     if (brainMeta?.cortex_max !== true) return ''
-
     const trimmedQuery = query?.trim()
     const billing = { userId, orgId }
     const embedding = trimmedQuery
       ? await this.support.getQueryEmbedding(trimmedQuery, billing, precomputedEmbedding)
       : null
-
     const [capsuleRes, indexRes, searchRes] = await Promise.all([
       this.repository.findCapsuleNarrativePage(this.supabase, brainId),
       this.repository.listNarrativePageIndex(this.supabase, brainId),
@@ -291,7 +285,6 @@ export class BrainContextService {
           })
         : Promise.resolve({ data: null, error: null }),
     ])
-
     const capsule = capsuleRes.data?.content_md ?? null
     const indexPages = (indexRes.data ?? []) as Array<{
       slug: string
@@ -305,16 +298,12 @@ export class BrainContextService {
       content_md: string
       similarity: number
     }>
-
     if (!capsule && indexPages.length === 0 && matchedPages.length === 0) return ''
-
     const parts: string[] = []
-
     if (capsule) {
       parts.push('BRAIN CAPSULE:')
       parts.push(capsule)
     }
-
     if (indexPages.length > 0) {
       parts.push('\nBRAIN LIBRARY INDEX:')
       for (const p of indexPages) {
@@ -322,7 +311,6 @@ export class BrainContextService {
         parts.push(`- [${p.page_type}] ${p.title}${summary}`)
       }
     }
-
     if (matchedPages.length > 0) {
       parts.push('\nRELEVANT PAGES:')
       for (const p of matchedPages) {
@@ -330,13 +318,11 @@ export class BrainContextService {
         parts.push(p.content_md)
       }
     }
-
     this.logger.debug(
       `Injected wiki context: capsule=${!!capsule}, index=${indexPages.length} pages, matched=${matchedPages.length} pages`,
     )
     return parts.join('\n')
   }
-
   async buildFullContext(
     userId: string,
     agentKey?: string,
@@ -385,7 +371,6 @@ export class BrainContextService {
     const canUseCompanyBrain = canUseFamily('company')
     const canUseAgentBrain = !!agentKey && canUseFamily('agent')
     const canUseCustomerBrain = canUseFamily('customer')
-
     const trimmedQuery = query?.trim()
     const timingMeta: BrainContextTimingMeta = {
       userId,
@@ -401,7 +386,6 @@ export class BrainContextService {
       effective_user_brain_access: hasUserBrainAccess,
       allowed_brain_families: allowedFamilies ? Array.from(allowedFamilies) : 'unscoped',
     })
-
     let precomputedEmbedding: Promise<number[] | null> | undefined
     const billing = { userId, orgId }
     if (
@@ -422,10 +406,8 @@ export class BrainContextService {
         }),
       )
     }
-
     const wikiEligible = useWikiContext || (agentKey != null && WIKI_AGENT_KEYS.has(agentKey))
     const useRetrievalContext = !!trimmedQuery && !!this.retrieval
-
     const [companyContext, spotlightContext, userContext, agentContext, customerContext] =
       await Promise.all([
         this.support.timeContextPart(
@@ -522,7 +504,6 @@ export class BrainContextService {
             )
           : Promise.resolve(''),
       ])
-
     const contextParts: string[] = []
     if (companyContext) contextParts.push(companyContext)
     if (spotlightContext) contextParts.push(spotlightContext)

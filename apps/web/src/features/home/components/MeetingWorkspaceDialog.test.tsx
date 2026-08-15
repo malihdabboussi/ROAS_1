@@ -3,15 +3,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MeetingWorkspaceDialog } from './MeetingWorkspaceDialog'
 
 const mocks = vi.hoisted(() => ({
-  attachMeetingContext: vi.fn(),
   clearMeetingContext: vi.fn(),
   endMeetingCall: vi.fn(),
   fetchMeetingWorkspace: vi.fn(),
   openChatDrawer: vi.fn(),
   continueMeetingConversation: vi.fn(),
-  activeConversationId: null as string | null,
   openDocumentInShell: vi.fn(),
-  setRailIntent: vi.fn(),
   setWorkAreaOpen: vi.fn(),
   startMeetingCall: vi.fn(),
   updateSpaceItem: vi.fn(),
@@ -31,41 +28,25 @@ vi.mock('@/features/home/services/meeting-workspace-api', () => ({
 vi.mock('@/features/home/lib/sync-agenda-fathom-recording', () => ({
   syncAgendaFathomRecordingToWorkspace: vi.fn().mockResolvedValue(false),
 }))
-
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
   useGlobalChatStore: (
     selector: (state: {
-      attachMeetingContext: typeof mocks.attachMeetingContext
       clearMeetingContext: typeof mocks.clearMeetingContext
-      setRailIntent: typeof mocks.setRailIntent
       continueMeetingConversation: typeof mocks.continueMeetingConversation
     }) => unknown,
   ) =>
     selector({
-      attachMeetingContext: mocks.attachMeetingContext,
       clearMeetingContext: mocks.clearMeetingContext,
-      setRailIntent: mocks.setRailIntent,
       continueMeetingConversation: mocks.continueMeetingConversation,
     }),
 }))
-
-vi.mock('@/lib/chat/studio-chat-runtime-adapter', () => ({
-  useChatStore: Object.assign(
-    (selector: (state: { activeConversationId: string | null }) => unknown) =>
-      selector({ activeConversationId: mocks.activeConversationId }),
-    { getState: () => ({ activeConversationId: mocks.activeConversationId }) },
-  ),
-}))
-
 vi.mock('@/lib/campaigns/campaign-api', () => ({
   fetchCampaign: vi.fn().mockResolvedValue({ id: 'campaign-1', name: 'ROAS' }),
 }))
-
 vi.mock('@/lib/spaces/spaces-api', () => ({
   fetchSpaceById: vi.fn().mockResolvedValue({ id: 'space-1', title: 'Meetings' }),
   updateSpaceItem: mocks.updateSpaceItem,
 }))
-
 vi.mock('@/components/shell/use-shell-store', () => ({
   useShellStore: (
     selector: (state: {
@@ -106,7 +87,6 @@ const baseBundle = {
 describe('MeetingWorkspaceDialog', () => {
   afterEach(() => {
     cleanup()
-    mocks.activeConversationId = null
     for (const mock of Object.values(mocks)) {
       if (typeof mock === 'function' && 'mockClear' in mock) mock.mockClear()
     }
@@ -143,7 +123,7 @@ describe('MeetingWorkspaceDialog', () => {
     })
   })
 
-  it('opens the persistent meeting conversation in the main shell chat', async () => {
+  it('does not steal the open chat until Continue in chat', async () => {
     mocks.fetchMeetingWorkspace.mockReset()
     mocks.fetchMeetingWorkspace.mockResolvedValue(baseBundle)
 
@@ -159,29 +139,32 @@ describe('MeetingWorkspaceDialog', () => {
     )
 
     await waitFor(() => {
-      expect(mocks.openChatDrawer).toHaveBeenCalledWith('conversation-1')
       expect(mocks.setWorkAreaOpen).toHaveBeenCalledWith(true)
-      expect(mocks.setRailIntent).toHaveBeenCalledWith(null)
-      expect(mocks.attachMeetingContext).toHaveBeenCalledWith(
-        expect.objectContaining({
-          meetingItemId: 'meeting-1',
-          spaceId: 'space-1',
-          conversationId: 'conversation-1',
-        }),
-      )
+      expect(
+        screen.getByRole('region', { name: 'Strategy call meeting workspace' }),
+      ).toBeInTheDocument()
     })
-    expect(
-      screen.getByRole('region', { name: 'Strategy call meeting workspace' }),
-    ).toBeInTheDocument()
+    expect(mocks.openChatDrawer).not.toHaveBeenCalled()
+    expect(mocks.continueMeetingConversation).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: 'Start call' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
     expect(screen.queryByText('Rejoin call')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue in chat' }))
+    expect(mocks.continueMeetingConversation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        meetingItemId: 'meeting-1',
+        spaceId: 'space-1',
+        conversationId: 'conversation-1',
+      }),
+    )
+    expect(mocks.openChatDrawer).toHaveBeenCalledWith('conversation-1')
 
     fireEvent.click(screen.getByRole('button', { name: 'Close meeting workspace' }))
     expect(mocks.clearMeetingContext).toHaveBeenCalled()
   })
 
   it('does not steal an unrelated open chat when the meeting workspace mounts', async () => {
-    mocks.activeConversationId = 'other-conversation'
     mocks.fetchMeetingWorkspace.mockReset()
     mocks.fetchMeetingWorkspace.mockResolvedValue(baseBundle)
 
@@ -201,7 +184,7 @@ describe('MeetingWorkspaceDialog', () => {
         screen.getByRole('region', { name: 'Strategy call meeting workspace' }),
       ).toBeInTheDocument()
     })
-    expect(mocks.attachMeetingContext).not.toHaveBeenCalled()
+    expect(mocks.continueMeetingConversation).not.toHaveBeenCalled()
     expect(mocks.openChatDrawer).not.toHaveBeenCalled()
   })
 
@@ -248,11 +231,8 @@ describe('MeetingWorkspaceDialog', () => {
       'href',
       'https://zoom.example/j/1',
     )
-    expect(mocks.attachMeetingContext).toHaveBeenCalledWith(
-      expect.objectContaining({
-        awarenessContext: expect.stringContaining('LIVE CALL MODE'),
-      }),
-    )
+    expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
+    expect(mocks.continueMeetingConversation).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: 'End call' }))
     await waitFor(() => {

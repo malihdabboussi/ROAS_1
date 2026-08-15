@@ -256,7 +256,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
           onSave={updateClient}
         />
       ) : null}
-
       <nav className="gap-spacing-1 border-border flex border-b" aria-label="Client sections">
         {tabs.map((item) => (
           <button
@@ -279,7 +278,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
           </button>
         ))}
       </nav>
-
       {tab === 'overview' ? (
         <div className="gap-spacing-4 grid lg:grid-cols-3">
           <section className="surface-card rounded-spacing-3 border-border p-spacing-5 border lg:col-span-2">
@@ -336,7 +334,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
           </section>
         </div>
       ) : null}
-
       {tab === 'campaigns' ? (
         <AgencyClientCampaignsPanel
           clientId={clientId}
@@ -349,7 +346,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
           onSave={updateCampaign}
         />
       ) : null}
-
       {tab === 'tasks' ? (
         <section className="surface-card rounded-spacing-3 border-border p-spacing-5 border">
           <AgencyClientWorkRows
@@ -373,7 +369,6 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
     </main>
   )
 }
-
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-secondary rounded-spacing-2 p-spacing-3">
@@ -382,7 +377,6 @@ function Metric({ label, value }: { label: string; value: string }) {
     </div>
   )
 }
-
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>

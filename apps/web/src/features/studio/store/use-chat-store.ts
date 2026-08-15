@@ -772,12 +772,17 @@ export const useChatStore = create<ChatState>()(
         })),
 
       setActiveConversationId: (id) =>
-        set((state) => ({
-          activeConversationId: id,
-          unreadConversationIds: id
-            ? state.unreadConversationIds.filter((uid) => uid !== id)
-            : state.unreadConversationIds,
-        })),
+        set((state) => {
+          if (state.activeConversationId === id) {
+            if (!id || !state.unreadConversationIds.includes(id)) return state
+          }
+          return {
+            activeConversationId: id,
+            unreadConversationIds: id
+              ? state.unreadConversationIds.filter((uid) => uid !== id)
+              : state.unreadConversationIds,
+          }
+        }),
 
       updateConversation: (id, updates) =>
         set((state) => ({

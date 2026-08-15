@@ -26,9 +26,7 @@ describe('useShellChatQuickStart', () => {
     expect(setTextRef.current).not.toHaveBeenCalled()
     expect(result.current.pendingPicker?.title).toBe('What kind of funnel would you like?')
 
-    act(() =>
-      result.current.selectPickerOption(result.current.pendingPicker!.options[0]!),
-    )
+    act(() => result.current.selectPickerOption(result.current.pendingPicker!.options[0]!))
 
     expect(setTextRef.current).toHaveBeenCalledWith('Create a lead magnet funnel for ')
     expect(result.current.pendingPicker).toBeNull()

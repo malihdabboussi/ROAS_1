@@ -22,7 +22,12 @@ export function CreateTypePickerCard({
           <h2 className="title-h6 text-foreground">{catalog.title}</h2>
           <p className="body-3 text-muted-foreground mt-spacing-1">{catalog.intro}</p>
         </div>
-        <button type="button" onClick={onDismiss} className="btn-icon-bare shrink-0" aria-label="Close">
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="btn-icon-bare shrink-0"
+          aria-label="Close"
+        >
           <X className="icon-sm" />
         </button>
       </div>

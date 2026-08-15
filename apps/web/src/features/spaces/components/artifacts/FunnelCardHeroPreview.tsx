@@ -1,8 +1,8 @@
 'use client'
 
 import { LayoutTemplate } from 'lucide-react'
-import { useFunnelPagePreview } from '@/lib/artifacts/use-funnel-page-preview'
 import { TsxMiniIframe } from '@/components/artifacts/TsxMiniIframe'
+import { useFunnelPagePreview } from '@/lib/artifacts/use-funnel-page-preview'
 
 /** Fixed preview strip height for Spaces funnel grid cards (hero = first funnel page TSX/CSS). */
 const FUNNEL_CARD_HERO_H = 'h-44'
