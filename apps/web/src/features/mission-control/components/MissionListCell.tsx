@@ -29,7 +29,7 @@ import {
 import { MissionDeliverableCell } from './MissionDeliverableCell'
 import { AgentCell, AgentsStackCell } from './MissionListAgents'
 import { MissionListProgressCell } from './MissionListProgressCell'
-import { formatSubtaskStatusLabel } from './subtask-status'
+import { formatSubtaskStatusLabel } from '@/lib/missions'
 
 export function MissionTitleText({ text }: { text: string }) {
   return (

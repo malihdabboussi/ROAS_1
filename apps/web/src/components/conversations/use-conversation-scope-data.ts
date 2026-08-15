@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
-import { campaignListCacheKey, fetchCampaigns, type Campaign } from '@/lib/campaigns'
+import { campaignListCacheKey, fetchCampaign, fetchCampaigns, type Campaign } from '@/lib/campaigns'
 import { getCachedCampaigns, prefetchOrgCampaigns } from '@/lib/home'
 import { fetchPrograms, type Program } from '@/lib/programs'
 import { fetchSpaceById } from '@/lib/spaces'
@@ -49,6 +49,37 @@ export function useConversationScopeCampaigns(
     }
   }, [activeOrgId, cacheVersion])
   return campaigns
+}
+
+/**
+ * Direct lookup for the selected campaign when the org campaign list can't
+ * name it (still loading, other org, or unlisted) — scope rows always show
+ * the real campaign name instead of the generic "Campaign" label.
+ */
+export function useConversationScopeFallbackCampaign(
+  selectedCampaignId: string | null,
+  campaigns: Campaign[],
+): Campaign | null {
+  const [fallbackCampaign, setFallbackCampaign] = useState<Campaign | null>(null)
+
+  useEffect(() => {
+    if (!selectedCampaignId) return
+    if (campaigns.some((row) => row.id === selectedCampaignId)) return
+    if (fallbackCampaign?.id === selectedCampaignId) return
+    let cancelled = false
+    void fetchCampaign(selectedCampaignId)
+      .then((campaign) => {
+        if (!cancelled && campaign?.id) setFallbackCampaign(campaign)
+      })
+      .catch(() => {
+        /* keep the generic label when the campaign is unreadable */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [campaigns, fallbackCampaign, selectedCampaignId])
+
+  return fallbackCampaign && fallbackCampaign.id === selectedCampaignId ? fallbackCampaign : null
 }
 
 export function useConversationScopePrograms(activeOrgId: string | null): Program[] {

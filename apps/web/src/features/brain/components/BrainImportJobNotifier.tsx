@@ -6,28 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import {
   acknowledgeImportNotifications,
   listPendingImportNotifications,
-  type BrainImportNotificationJob,
 } from '../services/user-brain-import.service'
-
-function buildSuccessMessage(job: BrainImportNotificationJob): string {
-  const result = (job.result ?? {}) as { memories_created?: number; snapshots_created?: number }
-  const memories = typeof result.memories_created === 'number' ? result.memories_created : null
-  const snapshots = typeof result.snapshots_created === 'number' ? result.snapshots_created : null
-  if (memories != null || snapshots != null) {
-    return `Import done: ${snapshots ?? 0} snapshot(s), ${memories ?? 0} memory(ies)`
-  }
-  return `Import done: ${job.title}`
-}
-
-function buildFailureMessage(job: BrainImportNotificationJob): string {
-  const err = typeof job.last_error === 'string' && job.last_error.trim() ? job.last_error : null
-  return err ? `Import failed: ${err}` : `Import failed: ${job.title}`
-}
-
-function failureToastKey(job: BrainImportNotificationJob): string {
-  const err = typeof job.last_error === 'string' ? job.last_error.trim() : ''
-  return err || `title:${job.title}`
-}
+import { failureToastKey, resolveBrainImportToast } from './brain-import-job-toast'
 
 export function BrainImportJobNotifier() {
   const inFlightRef = useRef(false)
@@ -70,40 +50,45 @@ export function BrainImportJobNotifier() {
       if (!jobs.length) return
 
       const acknowledgedIds: string[] = []
-      const failureGroups = new Map<string, BrainImportNotificationJob[]>()
+      const failureGroups = new Map<string, string[]>()
+      const infoMessages = new Set<string>()
 
       for (const job of jobs) {
-        if (job.status === 'succeeded') {
+        if (job.status !== 'succeeded' && job.status !== 'failed') continue
+        const outcome = resolveBrainImportToast(job)
+        if (job.status === 'succeeded' && outcome.kind === 'success') {
           if (!queueVisibleRef.current) {
-            toast.success(buildSuccessMessage(job))
+            toast.success(outcome.message)
           }
+          acknowledgedIds.push(job.id)
+          continue
+        }
+        if (outcome.kind === 'info') {
+          infoMessages.add(outcome.message)
           acknowledgedIds.push(job.id)
           continue
         }
         if (job.status === 'failed') {
           const key = failureToastKey(job)
           const group = failureGroups.get(key) ?? []
-          group.push(job)
+          group.push(outcome.message)
           failureGroups.set(key, group)
           acknowledgedIds.push(job.id)
         }
       }
 
       if (!queueVisibleRef.current) {
+        for (const message of infoMessages) {
+          toast.info(message)
+        }
         for (const group of failureGroups.values()) {
           const first = group[0]
           if (!first) continue
           if (group.length === 1) {
-            toast.error(buildFailureMessage(first))
+            toast.error(first)
             continue
           }
-          toast.error(
-            `Import failed (${group.length}): ${
-              typeof first.last_error === 'string' && first.last_error.trim()
-                ? first.last_error
-                : first.title
-            }`,
-          )
+          toast.error(`Import failed (${group.length}): ${first.replace(/^Import failed: /, '')}`)
         }
       }
 

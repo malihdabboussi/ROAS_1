@@ -1,0 +1,79 @@
+export const SLACK_EMPTY_PERIOD_SKIP_REASON = 'Nothing to save from that Slack period.'
+
+export type AtlasImportJobStatus = 'completed' | 'failed' | 'skipped'
+
+export type AtlasImportJobStatusResult = {
+  status: AtlasImportJobStatus
+  reason: string
+}
+
+export function isSlackPeriodImportContent(contentType: string): boolean {
+  return contentType.startsWith('slack_period')
+}
+
+export function isEmptySlackIngestReason(reason: string): boolean {
+  const normalized = reason.toLowerCase()
+  return (
+    normalized.includes('no content') ||
+    normalized.includes('nothing to ingest') ||
+    normalized.includes('could not ingest') ||
+    normalized.includes('processable content') ||
+    normalized.includes('no message content') ||
+    normalized.includes('no significant knowledge')
+  )
+}
+
+export function interpretAtlasImportJobStatus(
+  text: string,
+  contentType: string,
+): AtlasImportJobStatusResult {
+  const match = text.match(/^\s*JOB_STATUS:(completed|failed|skipped)\b([^\r\n]*)/m)
+  if (match) {
+    const status = match[1] as AtlasImportJobStatus
+    const reason = match[2].replace(/^[\s—–-]+/, '').trim()
+    const fallbackReason =
+      status === 'completed'
+        ? 'Processed successfully'
+        : status === 'failed'
+          ? 'Unknown failure'
+          : 'Skipped'
+    return coerceSlackEmptyIngestStatus(
+      { status, reason: reason || fallbackReason },
+      contentType,
+    )
+  }
+
+  const lower = text.toLowerCase()
+  const looksEmpty =
+    lower.includes('nothing to ingest') ||
+    lower.includes('no content') ||
+    lower.includes('transcript is null') ||
+    lower.includes('no transcript') ||
+    lower.includes('skip this') ||
+    lower.includes('could not ingest')
+  if (looksEmpty && isSlackPeriodImportContent(contentType)) {
+    return { status: 'skipped', reason: SLACK_EMPTY_PERIOD_SKIP_REASON }
+  }
+  if (looksEmpty) {
+    return { status: 'failed', reason: 'Atlas could not find processable content' }
+  }
+
+  return { status: 'failed', reason: 'Missing required JOB_STATUS terminal marker' }
+}
+
+function coerceSlackEmptyIngestStatus(
+  parsed: AtlasImportJobStatusResult,
+  contentType: string,
+): AtlasImportJobStatusResult {
+  if (
+    parsed.status === 'failed' &&
+    isSlackPeriodImportContent(contentType) &&
+    isEmptySlackIngestReason(parsed.reason)
+  ) {
+    return { status: 'skipped', reason: SLACK_EMPTY_PERIOD_SKIP_REASON }
+  }
+  if (parsed.status === 'skipped' && isSlackPeriodImportContent(contentType)) {
+    return { status: 'skipped', reason: SLACK_EMPTY_PERIOD_SKIP_REASON }
+  }
+  return parsed
+}

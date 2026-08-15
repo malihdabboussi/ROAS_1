@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import {
+  SLACK_EMPTY_PERIOD_SKIP_REASON,
+  interpretAtlasImportJobStatus,
+  isSlackPeriodImportContent,
+} from '@vibey/api-shared'
 import { AgentRuntimeReadinessService } from '../../agent-sync/services/agent-runtime-readiness.service'
 import { ArtifactsService } from '../../artifacts/services/artifacts.service'
 import { AgentRuntimeService } from '../../shared/services/agent-runtime.service'
@@ -111,6 +116,18 @@ export class BrainImportRuntimeService {
   private async executeClaimedPlan(
     execution: BrainImportRuntimeExecutionPayload,
   ): Promise<Record<string, unknown>> {
+    if (execution.chunks.length === 0) {
+      if (isSlackPeriodImportContent(execution.contentType)) {
+        return {
+          status: 'skipped',
+          reason: SLACK_EMPTY_PERIOD_SKIP_REASON,
+          chunks_processed: 0,
+          atlasResponse: `JOB_STATUS:skipped — ${SLACK_EMPTY_PERIOD_SKIP_REASON}`,
+        }
+      }
+      throw new Error('Atlas could not process: Missing import content')
+    }
+
     let lastResponseText = ''
     const gatewayAgentId = this.agentRuntime.resolveGatewayAgentId(
       execution.agentKey,
@@ -118,19 +135,17 @@ export class BrainImportRuntimeService {
       execution.userId,
     )
 
-    if (execution.chunks.length > 0) {
-      await this.runtimeReadiness.ensureRuntimeReady({
-        userId: execution.userId,
-        orgId: execution.orgId,
-        agentKey: execution.agentKey,
-        gatewayAgentId,
-      })
-    }
+    await this.runtimeReadiness.ensureRuntimeReady({
+      userId: execution.userId,
+      orgId: execution.orgId,
+      agentKey: execution.agentKey,
+      gatewayAgentId,
+    })
 
     for (const chunk of execution.chunks) {
       const result = await this.callAtlas(execution, chunk, gatewayAgentId)
       lastResponseText = this.extractAtlasResponseText(result)
-      const status = this.parseJobStatus(lastResponseText)
+      const status = this.parseJobStatus(lastResponseText, execution.contentType)
       if (status.status === 'failed') {
         throw new Error(`Atlas could not process: ${status.reason}`)
       }
@@ -144,7 +159,7 @@ export class BrainImportRuntimeService {
       )
     }
 
-    const finalStatus = this.parseJobStatus(lastResponseText)
+    const finalStatus = this.parseJobStatus(lastResponseText, execution.contentType)
     if (finalStatus.status === 'failed') {
       throw new Error(`Atlas could not process: ${finalStatus.reason}`)
     }
@@ -269,23 +284,14 @@ export class BrainImportRuntimeService {
     return ''
   }
 
-  private parseJobStatus(text: string): {
+  private parseJobStatus(
+    text: string,
+    contentType: string,
+  ): {
     status: 'completed' | 'failed' | 'skipped'
     reason: string
   } {
-    const match = text.match(/^\s*JOB_STATUS:(completed|failed|skipped)\b([^\r\n]*)/m)
-    if (match) {
-      const status = match[1] as 'completed' | 'failed' | 'skipped'
-      const reason = match[2].replace(/^[\s—–-]+/, '').trim()
-      const fallbackReason =
-        status === 'completed'
-          ? 'Processed successfully'
-          : status === 'failed'
-            ? 'Unknown failure'
-            : 'Skipped'
-      return { status, reason: reason || fallbackReason }
-    }
-    return { status: 'failed', reason: 'Missing required JOB_STATUS terminal marker' }
+    return interpretAtlasImportJobStatus(text, contentType)
   }
 
   private mainApiUrl(): string {

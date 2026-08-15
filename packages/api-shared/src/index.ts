@@ -50,6 +50,16 @@ export type { ReportErrorParams } from './services/error-reporter.service'
 export { markAppErrorReported, reportAppError } from './utils/report-app-error'
 export type { ReportedError } from './utils/report-app-error'
 export {
+  SLACK_EMPTY_PERIOD_SKIP_REASON,
+  interpretAtlasImportJobStatus,
+  isEmptySlackIngestReason,
+  isSlackPeriodImportContent,
+} from './utils/brain-import-job-status'
+export type {
+  AtlasImportJobStatus,
+  AtlasImportJobStatusResult,
+} from './utils/brain-import-job-status'
+export {
   AuthError,
   AuthInputError,
   AuthUpstreamUnavailableError,

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Pencil } from 'lucide-react'
 
 interface ConversationHeaderTitleProps {
   title: string
@@ -83,10 +82,6 @@ export function ConversationHeaderTitle({
       title="Rename conversation"
       className="text-foreground hover:bg-hover-subtle gap-spacing-1 rounded-spacing-2 px-spacing-2 py-spacing-1 body-3 group flex min-w-0 flex-1 items-center text-left font-medium transition-colors"
     >
-      <Pencil
-        className="icon-xs text-muted-foreground shrink-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
-        aria-hidden
-      />
       <span className="min-w-0 flex-1 truncate">{title}</span>
     </button>
   )
