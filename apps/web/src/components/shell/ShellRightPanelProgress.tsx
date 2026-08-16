@@ -19,11 +19,26 @@ type SubtaskState = { loading: boolean; rows: MissionSubtask[]; failed: boolean 
 const EMPTY_STATE: SubtaskState = { loading: false, rows: [], failed: false }
 
 function StepIcon({ subtask, blocked }: { subtask: MissionSubtask; blocked: boolean }) {
-  if (isBlockingHumanGate(subtask)) {
-    return <UserRound className="icon-sm text-primary shrink-0" aria-hidden />
-  }
   if (subtask.status === 'done') {
     return <CircleDot className="icon-sm text-primary shrink-0" aria-hidden />
+  }
+  // A human gate is marked as one for the whole run, not only once it starts
+  // blocking — the point of showing a plan is seeing where it will stop for
+  // you before it gets there. Emphasis is reserved for the gate that is
+  // actually holding the mission up now.
+  if (isHumanGateSubtask(subtask)) {
+    return (
+      <UserRound
+        className={cn(
+          'icon-sm shrink-0',
+          isBlockingHumanGate(subtask) ? 'text-primary' : 'text-muted-foreground',
+        )}
+        // Labelled rather than aria-hidden: the icon is the only thing marking
+        // this step as a gate, so hiding it would lose that fact entirely.
+        role="img"
+        aria-label={SHELL_RIGHT_PANEL_MESSAGES.progressGateStepLabel}
+      />
+    )
   }
   if (subtask.status === 'blocked' || subtask.status === 'cancelled') {
     return <CircleSlash className="icon-sm text-destructive shrink-0" aria-hidden />

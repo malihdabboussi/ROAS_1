@@ -15,5 +15,6 @@ export const SHELL_RIGHT_PANEL_MESSAGES = {
   progressLoadFailed: 'Steps could not be loaded.',
   progressNoSteps: 'No steps planned yet.',
   progressYourTurn: 'Your turn',
-  progressGateHint: 'Steps marked "Your turn" wait for you in Mission Control.',
+  progressGateStepLabel: 'Needs your approval',
+  progressGateHint: 'Steps with a person icon pause for your approval in Mission Control.',
 } as const

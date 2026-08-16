@@ -136,4 +136,48 @@ describe('ShellRightPanelProgress', () => {
     const trigger = await screen.findByRole('button', { name: /Webinar Fulfillment/ })
     await waitFor(() => expect(within(trigger).getByText('2/3')).toBeInTheDocument())
   })
+
+  it('marks a human gate before it starts blocking', async () => {
+    mocks.fetchSubtasks.mockResolvedValue([
+      subtask({ id: 's1', title: 'Audit performance', status: 'pending', sort_order: 0 }),
+      subtask({
+        id: 's2',
+        title: 'Gate 1 - Approve optimization actions',
+        status: 'pending',
+        sort_order: 1,
+        depends_on: ['s1'],
+        assignee_type: 'human',
+        assigned_agent_key: null,
+        assigned_user_id: 'user-1',
+      }),
+    ])
+
+    render(<ShellRightPanelProgress missions={missions} />)
+
+    // The gate is still upstream of its dependency, so it is not "Your turn"
+    // yet — but a plan is only useful if you can see where it will stop for
+    // you before it gets there.
+    const gate = await screen.findByRole('img', { name: 'Needs your approval' })
+    expect(gate).toBeInTheDocument()
+    expect(screen.queryByText('Your turn')).not.toBeInTheDocument()
+  })
+
+  it('does not mark a completed gate as still needing approval', async () => {
+    mocks.fetchSubtasks.mockResolvedValue([
+      subtask({
+        id: 's1',
+        title: 'Gate 1 - Approve',
+        status: 'done',
+        assignee_type: 'human',
+        assigned_agent_key: null,
+        assigned_user_id: 'user-1',
+      }),
+    ])
+
+    render(<ShellRightPanelProgress missions={missions} />)
+
+    expect(await screen.findByText('Done')).toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: 'Needs your approval' })).not.toBeInTheDocument()
+  })
+
 })
