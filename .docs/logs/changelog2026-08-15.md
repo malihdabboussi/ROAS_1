@@ -185,3 +185,41 @@ Files:
 - apps/web/src/components/shell/ShellRightPanelProgress.tsx
 - apps/web/src/components/shell/ShellRightPanelProgress.test.tsx
 - apps/web/src/components/shell/shell-right-panel.messages.config.ts
+
+## [2026-08-15 17:55] - [FEATURE]
+
+What: Reworked the work summary's mission section into "Mission Progress" and cleaned up the panel around it.
+
+- Renamed the section to Mission Progress.
+- Added a filter row: a live count plus a Show done / Hide done toggle. "Live" is any mission that has not reached a resting state; `error`/`failed`/`dead_letter` count as live on purpose, since hiding them would hide the ones that most need a person.
+- Mission rows now fetch a summary up front (`fetchMissionById`), which carries status and step counts. That lets the list filter and show `done/total` without expanding anything; steps are still fetched only on expand.
+- Step rows rebuilt as two columns instead of four. The leading badge *replaces* the number when a step has something more specific to say (done, in progress, blocked, human gate), rather than sitting beside it. At the panel's width the old number + icon + title + status layout wrapped every row onto three lines.
+- Strip the authored `Task 1 - ` / `Gate 2 - ` prefix for display via `formatMissionStepTitle`. Against a numbered list the ordinal was said twice and cost the width the actual step name needed. The stored title is untouched and still shown in full on hover.
+- Mission rows carry a timestamp, because missions are named after the playbook that produced them: a thread that ran Client Strategy four times shows four identically named rows. Includes the time, not just the day, since runs sit minutes apart.
+- Missions no longer appear in Outputs. They are not outputs, they produce them, and listing them in both made every run show up twice. Removed the now-dead mission icon branch in `ShellRightPanelFiles`.
+- Connections rows show the name only. The icon already distinguishes a campaign from a space, so the type suffix made every row read "General Campaign".
+- Added `ShellRightPanelEmpty`, one empty state shared by Progress, Outputs, Sources, and Connections: a centred icon over a short message, so an empty section reads as deliberate rather than as a gap.
+- Sections now default to open when they have content and collapsed when they do not, so an empty section costs no height. An explicit toggle always wins over the default, which is why collapsed and expanded are tracked separately rather than derived from one boolean.
+
+Fixes found while verifying against live data:
+
+- The default-expanded mission could land on a mission that then filtered out as done, leaving nothing expanded. The expansion now falls to the first visible mission when its target disappears.
+
+Why: The section showed five identically named rows, duplicated every mission into Outputs, and wrapped each step across three lines, so the one thing it existed to answer — what is running and what is waiting on me — took the longest to find.
+
+Impact: The panel answers that at a glance. Verified against live data: a thread with five missions shows "2 live / Show done (3)" matching the database, the six-step audit renders as six single-line steps with the approval gate marked at position 4, and Outputs no longer repeats the missions. 269 tests pass across shell and lib/missions, including 5 new helper tests and a new section-default test. Lint and typecheck clean.
+
+Note: mission titles come from the playbook, so several runs genuinely share a name. The timestamp disambiguates them in the UI, but naming missions distinctly at creation is the real fix and is logged as follow-up.
+
+Files:
+
+- apps/web/src/components/shell/ShellRightPanelProgress.tsx
+- apps/web/src/components/shell/ShellRightPanelEmpty.tsx (new)
+- apps/web/src/components/shell/ShellRightPanel.tsx
+- apps/web/src/components/shell/ShellRightPanelConnections.tsx
+- apps/web/src/components/shell/ShellRightPanelFiles.tsx
+- apps/web/src/components/shell/ShellRightPanelSources.tsx
+- apps/web/src/components/shell/shell-conversation-summary.ts
+- apps/web/src/components/shell/shell-right-panel.messages.config.ts
+- apps/web/src/lib/missions/mission-step-title.ts (new)
+- apps/web/src/lib/missions/subtask-status.ts

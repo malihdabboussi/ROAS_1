@@ -1,4 +1,15 @@
-import type { MissionSubtask } from './mission-types'
+import type { Mission, MissionSubtask } from './mission-types'
+
+/**
+ * A mission is "live" until it reaches a resting state. `error`/`failed`/
+ * `dead_letter` are terminal for the worker but still need a person, so they
+ * stay live here — hiding them would hide the ones that need attention most.
+ */
+const MISSION_RESTING_STATUSES = new Set(['done', 'archived'])
+
+export function isLiveMission(mission: Pick<Mission, 'status'>): boolean {
+  return !MISSION_RESTING_STATUSES.has(mission.status)
+}
 
 export function formatSubtaskStatusLabel(
   status: string,

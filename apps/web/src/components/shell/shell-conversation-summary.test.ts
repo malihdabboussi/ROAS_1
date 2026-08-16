@@ -77,13 +77,14 @@ describe('shell conversation summary', () => {
     expect(extractConversationFileRows(rows).map((row) => row.title)).toEqual([
       'brief.pdf',
       'Core offer',
-      'Client Strategy',
       'Proposal cover',
     ])
-    expect(extractConversationFileRows(rows)[2]).toMatchObject({
-      messageId: 'message-1',
-      subtitle: 'General / Meetings · Started from this chat',
-    })
+    // Missions are deliberately absent: they are not outputs, they produce
+    // them, and they have their own Mission Progress section.
+    expect(extractConversationFileRows(rows).some((row) => row.entityType === 'mission')).toBe(
+      false,
+    )
+    expect(extractConversationFileRows(rows)[0]).toMatchObject({ messageId: 'message-1' })
     expect(extractConversationSourceRows(rows).map((row) => row.title)).toEqual([
       'Proposal mission',
       'Market report',

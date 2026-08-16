@@ -8,7 +8,7 @@ import {
   ImageIcon,
   LocateFixed,
   MoreHorizontal,
-  Rocket,
+  Sparkles,
   Video,
 } from 'lucide-react'
 import {
@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils/cn'
 import { showConversationMessageInChat } from './shell-chat-message-navigation'
 import { extractConversationFileRows, type ConversationFileRow } from './shell-conversation-summary'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
+import { ShellRightPanelEmpty } from './ShellRightPanelEmpty'
 
 function documentFileUrl(document: ConversationDocument): string | null {
   const value = document.content?.file_url
@@ -123,7 +124,7 @@ export function ShellRightPanelFiles({
         <p className="body-3 text-destructive">{SHELL_RIGHT_PANEL_MESSAGES.chatFilesError}</p>
       ) : null}
       {empty ? (
-        <p className="body-3 text-muted-foreground">{SHELL_RIGHT_PANEL_MESSAGES.chatFilesEmpty}</p>
+        <ShellRightPanelEmpty icon={Sparkles} message={SHELL_RIGHT_PANEL_MESSAGES.chatFilesEmpty} />
       ) : null}
 
       <ul className="space-y-spacing-1">
@@ -162,16 +163,15 @@ export function ShellRightPanelFiles({
         })}
 
         {uniqueMessageRows.map((row) => {
+          // Missions are excluded upstream — they have their own section.
           const Icon =
-            row.entityType === 'mission'
-              ? Rocket
-              : row.kind === 'image'
-                ? ImageIcon
-                : row.kind === 'video'
-                  ? Video
-                  : row.kind === 'artifact'
-                    ? Boxes
-                    : FileText
+            row.kind === 'image'
+              ? ImageIcon
+              : row.kind === 'video'
+                ? Video
+                : row.kind === 'artifact'
+                  ? Boxes
+                  : FileText
           const canOpen = Boolean(row.fileUrl || row.entityId)
           const openRow = () => {
             if (!canOpen) return

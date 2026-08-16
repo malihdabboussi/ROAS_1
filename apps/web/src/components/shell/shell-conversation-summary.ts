@@ -217,6 +217,9 @@ export function extractConversationFileRows(messages: Message[]): ConversationFi
         const entityId = stringField(block, 'artifactId')
         const entityType = stringField(block, 'artifactType')
         if (!entityId || !entityType) continue
+        // Missions are not outputs — they produce them. They have their own
+        // section now, and listing them in both made every run appear twice.
+        if (entityType === 'mission') continue
         push({
           id: stringField(block, 'id') ?? `${message.id}:artifact:${entityId}`,
           messageId: message.id,

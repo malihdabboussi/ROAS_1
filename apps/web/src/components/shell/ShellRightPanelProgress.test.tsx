@@ -1,14 +1,21 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ShellRightPanelProgress } from './ShellRightPanelProgress'
 
-const mocks = vi.hoisted(() => ({ fetchSubtasks: vi.fn() }))
+const mocks = vi.hoisted(() => ({ fetchSubtasks: vi.fn(), fetchMissionById: vi.fn() }))
 
 vi.mock('@/lib/missions', async () => {
   const actual = await vi.importActual<typeof import('@/lib/missions/subtask-status')>(
     '@/lib/missions/subtask-status',
   )
-  return { ...actual, fetchSubtasks: mocks.fetchSubtasks }
+  return {
+    ...actual,
+    ...(await vi.importActual<typeof import('@/lib/missions/mission-step-title')>(
+      '@/lib/missions/mission-step-title',
+    )),
+    fetchSubtasks: mocks.fetchSubtasks,
+    fetchMissionById: mocks.fetchMissionById,
+  }
 })
 
 const subtask = (over: Record<string, unknown>) => ({
@@ -38,6 +45,12 @@ const subtask = (over: Record<string, unknown>) => ({
 const missions = [{ id: 'mission-1', title: 'Webinar Fulfillment', createdAt: '2026-08-15' }]
 
 describe('ShellRightPanelProgress', () => {
+  beforeEach(() => {
+    mocks.fetchMissionById.mockImplementation((id: string) =>
+      Promise.resolve({ id, status: 'in_progress' }),
+    )
+  })
+
   afterEach(() => {
     cleanup()
     vi.clearAllMocks()
