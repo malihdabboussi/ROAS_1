@@ -1,7 +1,7 @@
-import { LeadsRepositoryBase01 } from './leads-repository-01.base'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { deriveConversationChannel } from '../lib/conversation-channel'
+import { LeadsRepositoryBase01 } from './leads-repository-01.base'
 
 function contactActivityValueChanged(before: unknown, after: unknown): boolean {
   if (before === after) return false
@@ -22,7 +22,6 @@ const CONVERSATION_PREVIEW_MESSAGE_LIMIT = 3
 const NOTE_PREVIEW_MAX_LENGTH = 500
 
 export abstract class LeadsRepositoryBase02 extends LeadsRepositoryBase01 {
-
   async findCrmContacts(
     supabase: SupabaseClient,
     opts: {
@@ -303,7 +302,7 @@ export abstract class LeadsRepositoryBase02 extends LeadsRepositoryBase01 {
       let enrichQuery = supabase
         .from('contacts')
         .select(
-          'id, contact_funnel_memberships(funnel_id, last_source_domain, last_page_slug, last_seen_at, funnels(title)), contact_notes(content, created_at)',
+          'id, contact_funnel_memberships(funnel_id, last_source_domain, last_page_slug, last_seen_at, funnels(title:name)), contact_notes(content, created_at)',
         )
         .in('id', contactIds)
         .order('last_seen_at', {
