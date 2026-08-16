@@ -81,12 +81,25 @@ export abstract class SlackConversationBase extends SlackMediaBase {
     botToken: string,
     currentChannelId: string,
     attachments: SlackMessageAttachment[] | undefined,
+    identity?: { orgId?: string | null; slackTeamId?: string | null },
   ): Promise<string> {
     const forwarded = parseSlackForwardedMessage(attachments)
     if (!forwarded) return ''
 
+    const sections = [forwarded.context]
+    if (identity?.orgId && identity.slackTeamId && forwarded.channelId) {
+      const forwardedIdentity = await this.buildSlackAskIdentityBlock(supabase, {
+        orgId: identity.orgId,
+        slackTeamId: identity.slackTeamId,
+        channelId: forwarded.channelId,
+        botToken,
+        channelNameHint: forwarded.context.match(/Channel: #([^\s]+)/)?.[1] ?? null,
+      }).catch(() => '')
+      if (forwardedIdentity) sections.push(forwardedIdentity)
+    }
+
     if (!forwarded.channelId || forwarded.channelId === currentChannelId) {
-      return forwarded.context
+      return sections.join('\n\n')
     }
 
     const channelContext = await this.buildChannelContext(
@@ -94,6 +107,7 @@ export abstract class SlackConversationBase extends SlackMediaBase {
       userId,
       botToken,
       forwarded.channelId,
+      identity,
     ).catch((error) => {
       this.logger.warn(
         `Failed to load forwarded Slack channel ${forwarded.channelId}: ${
@@ -103,7 +117,8 @@ export abstract class SlackConversationBase extends SlackMediaBase {
       return ''
     })
 
-    return channelContext ? `${forwarded.context}\n\n${channelContext}` : forwarded.context
+    if (channelContext) sections.push(channelContext)
+    return sections.join('\n\n')
   }
 
   async pushSlackAwarenessPoint(userId: string, agentKey: string, content: string) {

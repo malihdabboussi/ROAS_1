@@ -1,5 +1,6 @@
 import type { MouseEvent, ReactNode } from 'react'
 import { FolderGit2 } from 'lucide-react'
+import { WorkRequestChatResumeCard } from '@/components/chat/WorkRequestChatResumeCard'
 import { dispatchFlowClarificationAnswer } from '@/features/flows/lib/flow-clarification-ui'
 import { missionDeliverableFromContentBlock } from '@/lib/missions'
 import { extractMarkdownFromDocumentContent } from '../../lib/document-content-markdown'
@@ -179,6 +180,18 @@ export function messageContentBlockPartB(
           replaceUiBlock(block.id, updatedBlock)
           sendOrApprove('Skipped — proceed with your best judgment.')
         }}
+      />
+    )
+  }
+
+  if (block.type === 'work_request') {
+    return (
+      <WorkRequestChatResumeCard
+        key={block.id}
+        title={block.title}
+        reviewUrl={block.reviewUrl}
+        status={block.status}
+        summary={block.summary}
       />
     )
   }

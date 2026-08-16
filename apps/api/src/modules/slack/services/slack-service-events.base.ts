@@ -159,12 +159,24 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       channelOrgId ?? null,
       event.files,
     )
+    if (channelOrgId) {
+      const currentIdentity = await this.buildSlackAskIdentityBlock(serviceSupabase, {
+        orgId: channelOrgId,
+        slackTeamId: teamId,
+        channelId,
+        botToken,
+      }).catch(() => '')
+      if (currentIdentity) {
+        fullMessage = fullMessage ? `${currentIdentity}\n\n${fullMessage}` : currentIdentity
+      }
+    }
     const forwardedContext = await this.buildForwardedMessageContext(
       serviceSupabase,
       userId,
       botToken,
       channelId,
       event.attachments,
+      { orgId: channelOrgId, slackTeamId: teamId },
     )
     if (forwardedContext) {
       fullMessage = fullMessage ? `${fullMessage}\n\n${forwardedContext}` : forwardedContext
@@ -264,6 +276,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       fallback.botToken,
       channelId,
       event.attachments,
+      { orgId: fallback.orgId, slackTeamId: teamId },
     )
 
     const channelContext = await this.buildChannelContext(
@@ -271,6 +284,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       fallback.userId,
       fallback.botToken,
       channelId,
+      { orgId: fallback.orgId, slackTeamId: teamId },
     ).catch((err) => {
       this.logger.warn(`Failed to build channel context: ${err}`)
       return ''

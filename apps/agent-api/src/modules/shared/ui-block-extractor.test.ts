@@ -515,4 +515,40 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
       }),
     ])
   })
+
+  it('emits a work_request chat resume block from Portal fulfillment drafts', () => {
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'use_mcp_tool',
+      toolArgs: {
+        data: {
+          tool_name: 'page_grader_create_fulfillment_request',
+        },
+      },
+      result: {
+        success: true,
+        draft: {
+          draft_id: 'draft-abc',
+          title: 'Launch funnel brief',
+          review_url: 'https://app.roas.io/request-review/token-abc',
+          expires_at: '2026-08-17T00:00:00.000Z',
+          status: 'draft',
+        },
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      {
+        type: 'work_request',
+        id: 'work-request-draft-abc',
+        title: 'Launch funnel brief',
+        reviewUrl: 'https://app.roas.io/request-review/token-abc',
+        draftId: 'draft-abc',
+        status: 'pending',
+      },
+    ])
+  })
 })

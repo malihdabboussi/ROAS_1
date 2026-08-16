@@ -177,6 +177,15 @@ export type MessageContentBlock =
       answers?: Record<string, string | string[]>
     }
   | {
+      type: 'work_request'
+      id: string
+      title: string
+      reviewUrl: string
+      draftId?: string
+      status?: 'pending' | 'submitted'
+      summary?: string
+    }
+  | {
       type: 'widget_preview'
       id: string
       name: string

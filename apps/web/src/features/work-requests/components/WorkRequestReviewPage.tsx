@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   fetchWorkRequestReview,
@@ -12,7 +12,7 @@ import {
 } from '@/lib/work-requests'
 import { WORK_REQUEST_ERRORS } from '../config/errors.config'
 import { WORK_REQUEST_MESSAGES } from '../config/messages.config'
-import { WorkRequestReviewForm } from './WorkRequestReviewForm'
+import { WorkRequestChatFlow } from './WorkRequestChatFlow'
 
 export function WorkRequestReviewPage({ token }: { token: string }) {
   const [review, setReview] = useState<WorkRequestReviewResponse | null>(null)
@@ -37,16 +37,19 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
   const save = async (update: WorkRequestUpdate) => {
     const next = await updateWorkRequestReview(token, update)
     setReview(next)
+    return next
   }
 
   const submit = async (update: WorkRequestUpdate) => {
     const saved = await updateWorkRequestReview(token, update)
     setReview(saved)
-    if (saved.state !== 'draft') return
+    if (saved.state !== 'draft') return saved
     if (saved.draft.missing_fields.length > 0) {
       throw new Error(WORK_REQUEST_ERRORS.FINALIZE_FAILED.userMessage)
     }
-    setReview(await finalizeWorkRequestReview(token))
+    const finalized = await finalizeWorkRequestReview(token)
+    setReview(finalized)
+    return finalized
   }
 
   const askForRefresh = async () => {
@@ -64,12 +67,13 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
 
   return (
     <main className="bg-background text-foreground min-h-dvh">
-      <div className="px-spacing-4 py-spacing-8 mx-auto w-full max-w-4xl">
+      <div className="px-spacing-4 py-spacing-8 mx-auto w-full max-w-2xl">
         <header className="mb-spacing-6 space-y-spacing-2">
           <p className="typo-section-label text-muted-foreground">ROAS SERVICE REQUEST</p>
-          <h1 className="title-h6 text-foreground uppercase">REVIEW YOUR REQUEST</h1>
+          <h1 className="title-h6 text-foreground uppercase">CONTINUE IN CHAT</h1>
           <p className="body-3 text-muted-foreground">
-            Check the context below before ROAS creates the task and sends the fulfillment mirror.
+            Same conversation as Slack or the portal — one step at a time. Reply in the chat or use
+            the cards.
           </p>
         </header>
 
@@ -88,15 +92,13 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
             }
           />
         ) : review?.state === 'draft' ? (
-          <section className="surface-card rounded-spacing-4 p-spacing-4 md:p-spacing-6 border-border border">
-            <WorkRequestReviewForm
-              key={review.draft.id}
-              draft={review.draft}
-              options={review.options}
-              onSave={save}
-              onSubmit={submit}
-            />
-          </section>
+          <WorkRequestChatFlow
+            key={review.draft.id}
+            draft={review.draft}
+            options={review.options}
+            onSave={save}
+            onSubmit={submit}
+          />
         ) : review?.state === 'expired' ? (
           <StateCard
             title={WORK_REQUEST_MESSAGES.expiredTitle}
@@ -184,7 +186,7 @@ function StateCard({
 }: {
   title: string
   body: string
-  action?: React.ReactNode
+  action?: ReactNode
   success?: boolean
 }) {
   return (
@@ -201,7 +203,7 @@ function StateCard({
         >
           {success ? 'Submitted' : 'Service Request'}
         </span>
-        <h1 className="title-h6 uppercase">{title}</h1>
+        <h2 className="title-h6 uppercase">{title}</h2>
         <p className="body-3 text-muted-foreground">{body}</p>
       </div>
       {action}

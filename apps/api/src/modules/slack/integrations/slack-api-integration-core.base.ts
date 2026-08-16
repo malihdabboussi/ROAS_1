@@ -92,6 +92,23 @@ export abstract class SlackApiIntegrationCoreBase {
       }))
   }
 
+  async getConversationName(botToken: string, channelId: string): Promise<string | null> {
+    const res = await fetch(
+      `${SLACK_API_BASE}/conversations.info?channel=${encodeURIComponent(channelId)}`,
+      {
+        headers: { Authorization: `Bearer ${botToken}` },
+      },
+    )
+    const json = (await res.json()) as {
+      ok: boolean
+      error?: string
+      channel?: { name?: string; name_normalized?: string }
+    }
+    if (!json.ok) throwSlackError(json.error, 'Slack conversations.info failed')
+    const name = json.channel?.name || json.channel?.name_normalized
+    return typeof name === 'string' && name.trim() ? name.trim() : null
+  }
+
   async listConversationMembers(botToken: string, channelId: string): Promise<string[]> {
     const members: string[] = []
     let cursor: string | undefined
