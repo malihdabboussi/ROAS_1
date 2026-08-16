@@ -105,12 +105,14 @@ describe('PageGraderClientImportService', () => {
       single: { id: 'space-1', title: 'Multi-Family Strategy' },
     })
     const itemQuery = createQuery({ maybeSingle: null })
+    const strategyQuery = createQuery()
     const supabase = {
       from: vi.fn((table: string) => {
         if (table === 'campaigns') return campaignQuery
         if (table === 'ns_brains') return brainQuery
         if (table === 'spaces') return spaceQuery
         if (table === 'space_items') return itemQuery
+        if (table === 'offers' || table === 'avatars') return strategyQuery
         throw new Error(`Unexpected table ${table}`)
       }),
     }
@@ -215,12 +217,14 @@ describe('PageGraderClientImportService', () => {
     })
     const itemQuery = createQuery({ maybeSingle: null })
     const brainQuery = createQuery({ maybeSingle: { id: 'brain-1' } })
+    const strategyQuery = createQuery()
     const supabase = {
       from: vi.fn((table: string) => {
         if (table === 'campaigns') return campaignQuery
         if (table === 'spaces') return spaceQuery
         if (table === 'space_items') return itemQuery
         if (table === 'ns_brains') return brainQuery
+        if (table === 'offers' || table === 'avatars') return strategyQuery
         throw new Error(`Unexpected table ${table}`)
       }),
     }
@@ -283,12 +287,14 @@ describe('PageGraderClientImportService', () => {
     })
     const itemQuery = createQuery({ maybeSingle: null })
     const brainQuery = createQuery({ maybeSingle: { id: 'brain-1' } })
+    const strategyQuery = createQuery()
     const supabase = {
       from: vi.fn((table: string) => {
         if (table === 'campaigns') return campaignQuery
         if (table === 'spaces') return spaceQuery
         if (table === 'space_items') return itemQuery
         if (table === 'ns_brains') return brainQuery
+        if (table === 'offers' || table === 'avatars') return strategyQuery
         throw new Error(`Unexpected table ${table}`)
       }),
     }

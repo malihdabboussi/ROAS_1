@@ -68,6 +68,7 @@ import { TransferModule } from './modules/transfer/transfer.module'
 import { UsersModule } from './modules/users/users.module'
 import { VaultModule } from './modules/vault/vault.module'
 import { WaitlistModule } from './modules/waitlist/waitlist.module'
+import { WorkRequestsModule } from './modules/work-requests/work-requests.module'
 import { YourTurnModule } from './modules/your-turn/your-turn.module'
 
 @Module({
@@ -160,6 +161,7 @@ import { YourTurnModule } from './modules/your-turn/your-turn.module'
     UsersModule,
     VaultModule,
     WaitlistModule,
+    WorkRequestsModule,
   ],
 })
 export class AppModule {}

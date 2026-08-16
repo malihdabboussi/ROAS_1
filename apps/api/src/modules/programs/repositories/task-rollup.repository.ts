@@ -18,6 +18,8 @@ type SpaceItemRow = {
   id: string
   title: string
   status: string
+  priority: 'low' | 'medium' | 'high' | 'urgent' | null
+  start_date: string | null
   due_date: string | null
   assignee_type: string | null
   assignee_id: string | null
@@ -27,6 +29,14 @@ type SpaceItemRow = {
   updated_at: string | null
   suggestion_state: string | null
   parent_item_id: string | null
+  description: string | null
+  notes: string | null
+  source: 'manual' | 'agent' | 'agent_suggested' | 'template' | 'fathom'
+  linked_mission_id: string | null
+  custom_data: Record<string, unknown> | null
+  org_id: string
+  user_id: string
+  sort_order: number
 }
 
 type ProgramRow = { id: string; name: string }
@@ -80,7 +90,7 @@ export class TaskRollupRepository {
     let query = supabase
       .from('space_items')
       .select(
-        'id, title, status, due_date, assignee_type, assignee_id, assignees, space_id, created_at, updated_at, suggestion_state, parent_item_id',
+        'id, title, status, priority, start_date, due_date, assignee_type, assignee_id, assignees, space_id, description, notes, source, linked_mission_id, custom_data, org_id, user_id, sort_order, created_at, updated_at, suggestion_state, parent_item_id',
       )
       .in('space_id', input.spaceIds)
       .is('parent_item_id', null)
@@ -124,7 +134,14 @@ export class TaskRollupRepository {
         id: item.id,
         title: item.title,
         status: item.status,
+        priority: item.priority,
         due_at: item.due_date,
+        start_date: item.start_date,
+        assignee_type:
+          item.assignee_type === 'human' || item.assignee_type === 'agent'
+            ? item.assignee_type
+            : 'unassigned',
+        assignee_id: item.assignee_id,
         assignee_user_id:
           item.assignee_type === 'human' && item.assignee_id ? item.assignee_id : null,
         assignees,
@@ -135,6 +152,14 @@ export class TaskRollupRepository {
         program_id: programId,
         program_name: program?.name ?? null,
         source_url: `/spaces?space=${encodeURIComponent(item.space_id)}&item=${encodeURIComponent(item.id)}`,
+        description: item.description,
+        notes: item.notes,
+        source: item.source,
+        linked_mission_id: item.linked_mission_id,
+        custom_data: item.custom_data ?? {},
+        org_id: item.org_id,
+        user_id: item.user_id,
+        sort_order: item.sort_order,
         created_at: item.created_at,
         updated_at: item.updated_at,
       }

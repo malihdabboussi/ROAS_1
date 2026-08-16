@@ -1,6 +1,6 @@
-import { AgencyClientDetailPage } from '@/features/agency-clients/AgencyClientDetailPage'
+import { AgencyClientRouteResolver } from '@/features/agency-clients/AgencyClientRouteResolver'
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  return <AgencyClientDetailPage clientId={id} />
+  return <AgencyClientRouteResolver clientId={id} />
 }

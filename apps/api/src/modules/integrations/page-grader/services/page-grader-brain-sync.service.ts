@@ -556,6 +556,7 @@ export class PageGraderBrainSyncService {
     return resolved
   }
 
+  /** Authorize one external client against the signed connection and its canonical scope map. */
   async authorizeWebhookClient(
     secret: string,
     clientId: string,

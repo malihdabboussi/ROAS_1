@@ -459,6 +459,13 @@ function appendSearchParams(target: URL, source: NextRequest): void {
   })
 }
 
+function redactSensitiveRequestPath(value: string): string {
+  return value.replace(
+    /\/api\/work-requests\/review\/[^/?]+/g,
+    '/api/work-requests/review/[redacted]',
+  )
+}
+
 function copyAgentHeaders(baseHeaders: Headers, machineId: string | null): Headers {
   const headers = new Headers(baseHeaders)
   if (machineId) headers.set('fly-force-instance-id', machineId)
@@ -845,6 +852,7 @@ async function proxyRequest(
 ): Promise<Response> {
   const { path } = await params
   const backendPath = `/api/${path.join('/')}`
+  const safeBackendPath = redactSensitiveRequestPath(backendPath)
   const requestId = readRequestHeader(request, 'x-vibey-request-id') ?? randomUUID()
   const parentSpanId =
     readRequestHeader(request, 'x-vibey-parent-span-id') ??
@@ -940,7 +948,7 @@ async function proxyRequest(
       user_id: runtimeLogUserId,
       surface: 'web',
       service: 'next-proxy',
-      route: backendPath,
+      route: safeBackendPath,
       method: request.method,
       event_type,
       stage,
@@ -980,7 +988,7 @@ async function proxyRequest(
       }
 
       console.log(
-        `[PROXY] ${request.method} ${backendPath} → ${url.toString()} (target: ${runtimeSource ?? (targetUrl === AGENT_BACKEND_URL ? 'AGENT' : 'PLATFORM')}, attempt: ${attempt + 1}/${maxAttempts})`,
+        `[PROXY] ${request.method} ${safeBackendPath} → ${redactSensitiveRequestPath(url.toString())} (target: ${runtimeSource ?? (targetUrl === AGENT_BACKEND_URL ? 'AGENT' : 'PLATFORM')}, attempt: ${attempt + 1}/${maxAttempts})`,
       )
 
       runtimeRequestStartedAt = Date.now()
@@ -1068,7 +1076,7 @@ async function proxyRequest(
       throw new Error('Backend unavailable after retries')
     }
 
-    console.log(`[PROXY] ${backendPath} → ${backendRes.status} ${backendRes.statusText}`)
+    console.log(`[PROXY] ${safeBackendPath} → ${backendRes.status} ${backendRes.statusText}`)
 
     // Check if this is an SSE stream
     const contentType = backendRes.headers.get('content-type') ?? ''
@@ -1271,7 +1279,7 @@ async function proxyRequest(
       error_code: 'PROXY_REQUEST_FAILED',
       observability: { error: err instanceof Error ? err.message : String(err) },
     })
-    console.error(`Proxy error for ${backendPath}:`, err)
+    console.error(`Proxy error for ${safeBackendPath}:`, err)
     return NextResponse.json(
       { error: 'Backend unavailable', detail: String(err) },
       { status: 502, headers: withProxyResponseHeaders({}, requestId, proxySpanId) },

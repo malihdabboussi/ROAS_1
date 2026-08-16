@@ -13,11 +13,15 @@
     },
     "api/billing-credit-alert-cron.ts": {
       "maxDuration": 300
+    },
+    "api/work-request-cron.ts": {
+      "maxDuration": 300
     }
   },
   "rewrites": [
     { "source": "/cron/space-automations", "destination": "/api/space-automation-cron" },
     { "source": "/cron/billing-credit-alerts", "destination": "/api/billing-credit-alert-cron" },
+    { "source": "/cron/work-requests", "destination": "/api/work-request-cron" },
     { "source": "/(.*)", "destination": "/api" }
   ],
   "crons": [
@@ -39,6 +43,10 @@
     },
     {
       "path": "/cron/billing-credit-alerts",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/cron/work-requests",
       "schedule": "*/5 * * * *"
     }
   ]

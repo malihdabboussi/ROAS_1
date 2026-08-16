@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
   fetchSpaces: vi.fn(),
   fetchSpaceById: vi.fn(),
   fetchCampaigns: vi.fn(),
-  fetchPrograms: vi.fn(async () => []),
+  fetchPrograms: vi.fn(async (): Promise<Array<{ id: string; name: string }>> => []),
   assignConversationScope: vi.fn(),
   positionFloatingMenuFromAnchorRect: vi.fn(),
 }))

@@ -13,9 +13,25 @@ import {
   syncPageGraderCampaignSpaces,
 } from './page-grader-campaign-space-sync'
 import {
+  jsonBlock,
+  recordList,
+  sanitizePortalBrainValue,
+  stringValue,
+  syncCampaignResourceRegistry,
+  syncCanonicalStrategyEntities,
+  titleCaseWords,
+} from './page-grader-client-strategy-import'
+import {
   buildPageGraderGeneralSpaceSchema,
   PAGE_GRADER_GENERAL_SPACE_TITLE,
 } from './page-grader-general-space-schema'
+
+export {
+  buildPortalResourceRegistry,
+  mapPortalAvatar,
+  mapPortalOffer,
+  sanitizePortalBrainValue,
+} from './page-grader-client-strategy-import'
 
 export type PageGraderClientImportBody = {
   package?: PageGraderPackage
@@ -164,6 +180,7 @@ export class PageGraderClientImportService {
       campaignId: String(campaign.id),
       campaignName: String(campaign.name),
     })
+    await syncCampaignResourceRegistry(supabase, campaign, pkg)
 
     const space =
       existingSpace ??
@@ -185,6 +202,13 @@ export class PageGraderClientImportService {
       pageGraderClientId,
       campaigns: pkg.client_campaigns ?? [],
       metaContext: body.metaContext,
+    })
+    const strategyEntities = await syncCanonicalStrategyEntities(supabase, {
+      userId,
+      orgId: effectiveOrgId,
+      campaignId: String(campaign.id),
+      offers: pkg.client_offers ?? [],
+      avatars: pkg.client_avatars ?? [],
     })
 
     const ingested = options.skipBrainIngest
@@ -214,6 +238,7 @@ export class PageGraderClientImportService {
       campaignSpaces: campaignSpaceSync.spaces,
       campaignSpaceRetired: campaignSpaceSync.retired,
       campaignSpaceHash,
+      strategyEntities,
       brainImport: {
         action: ingested.skippedUnchanged ? 'skipped_unchanged' : 'ingested',
         title: `ROAS Portal Client Intel - ${clientName}`,
@@ -533,13 +558,13 @@ export class PageGraderClientImportService {
       `Exported at: ${stringValue(pkg.envelope?.exported_at) || new Date().toISOString()}`,
       ``,
       `## Client Profile`,
-      jsonBlock(pkg.client),
+      jsonBlock(sanitizePortalBrainValue(pkg.client)),
       ``,
       `## Source Pointers`,
-      jsonBlock(pkg.source_pointers),
+      jsonBlock(sanitizePortalBrainValue(pkg.source_pointers)),
       ``,
       `## Intel Summary Hint`,
-      jsonBlock(pkg.intel_summary_hint),
+      jsonBlock(sanitizePortalBrainValue(pkg.intel_summary_hint)),
     ]
 
     this.appendRecords(lines, 'Client Campaigns', pkg.client_campaigns)
@@ -564,37 +589,10 @@ export class PageGraderClientImportService {
     lines.push('', `## ${heading}`, `Total records in package: ${rows.length}`)
     for (const row of rows.slice(0, limit)) {
       const title = stringValue(row.title, row.name, row.source_title, row.id) || 'Untitled'
-      lines.push('', `### ${title}`, jsonBlock(row))
+      lines.push('', `### ${title}`, jsonBlock(sanitizePortalBrainValue(row)))
     }
     if (rows.length > limit) {
       lines.push('', `Skipped ${rows.length - limit} lower-priority records in this import pass.`)
     }
   }
-}
-
-function stringValue(...values: unknown[]): string {
-  for (const value of values) {
-    if (typeof value === 'string' && value.trim()) return value.trim()
-    if (typeof value === 'number' && Number.isFinite(value)) return String(value)
-  }
-  return ''
-}
-
-function recordList(
-  value: PageGraderRecord | PageGraderRecord[] | undefined,
-): PageGraderRecord[] | undefined {
-  if (Array.isArray(value)) return value
-  return value ? [value] : undefined
-}
-
-function titleCaseWords(value: string): string {
-  return value
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
-}
-
-function jsonBlock(value: unknown): string {
-  return ['```json', JSON.stringify(value ?? null, null, 2), '```'].join('\n')
 }

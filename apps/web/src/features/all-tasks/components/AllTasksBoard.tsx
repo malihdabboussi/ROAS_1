@@ -3,12 +3,12 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { TaskWorkViewContent, WorkViewTabs } from '@/components/work-views'
+import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { AllTasksNativeList } from '@/components/work-views/AllTasksNativeList'
 import { fetchCampaigns, type Campaign } from '@/lib/campaigns'
 import { fetchPrograms, type Program } from '@/lib/programs'
-import { buildSpaceItemHref } from '@/lib/spaces/space-item-href'
-import type { TaskRollupItem, TaskRollupView } from '@/lib/tasks'
-import { resolveWorkViewFromSearch, useTaskRollup, type TaskWorkViewId } from '@/lib/work-views'
+import type { TaskRollupView } from '@/lib/tasks'
+import { useTaskRollup } from '@/lib/work-views'
 import { ALL_TASKS_TOAST_ERRORS } from '../config/all-tasks-toast-errors.config'
 import { AllTasksScopeFilters } from './AllTasksScopeFilters'
 
@@ -17,12 +17,6 @@ export function AllTasksBoard() {
   const searchParams = useSearchParams()
   const [scope, setScope] = useState<TaskRollupView>(
     searchParams.get('scope') === 'all' ? 'all' : 'my',
-  )
-  const [workView, setWorkView] = useState<TaskWorkViewId>(() =>
-    resolveWorkViewFromSearch(
-      { view: searchParams.get('view'), tab: searchParams.get('tab') },
-      'list',
-    ),
   )
   const [programId, setProgramId] = useState(searchParams.get('program') ?? '')
   const [campaignId, setCampaignId] = useState(searchParams.get('campaign') ?? '')
@@ -42,7 +36,7 @@ export function AllTasksBoard() {
     toast.error(ALL_TASKS_TOAST_ERRORS.LOAD_FAILED.userMessage)
   }, [])
 
-  const { items, loading } = useTaskRollup({
+  const { items, loading, reload } = useTaskRollup({
     scope,
     programId: programId || null,
     campaignId: campaignId || null,
@@ -55,12 +49,7 @@ export function AllTasksBoard() {
 
   useEffect(() => {
     const nextScope = searchParams.get('scope') === 'all' ? 'all' : 'my'
-    const nextView = resolveWorkViewFromSearch(
-      { view: searchParams.get('view'), tab: searchParams.get('tab') },
-      'list',
-    )
     setScope(nextScope)
-    setWorkView(nextView)
     setProgramId(searchParams.get('program') ?? '')
     setCampaignId(searchParams.get('campaign') ?? '')
   }, [searchParams])
@@ -79,11 +68,6 @@ export function AllTasksBoard() {
     [router, searchParams],
   )
 
-  useEffect(() => {
-    if (!searchParams.get('tab') || searchParams.get('view')) return
-    updateSearch({ view: workView })
-  }, [searchParams, updateSearch, workView])
-
   const campaignOptions = useMemo(() => {
     if (!programId) return campaigns
     return campaigns.filter((c) => c.program_id === programId)
@@ -91,7 +75,7 @@ export function AllTasksBoard() {
 
   return (
     <div className="h-full min-h-0 overflow-y-auto">
-      <div className="p-spacing-4 md:p-spacing-6 mx-auto w-full max-w-5xl">
+      <div className="p-spacing-4 md:p-spacing-6 w-full">
         <div className="mb-spacing-4">
           <h1 className="title-h3 text-foreground">ALL TASKS</h1>
           <p className="body-3 text-muted-foreground mt-spacing-1">
@@ -99,14 +83,7 @@ export function AllTasksBoard() {
           </p>
         </div>
 
-        <div className="mb-spacing-4 gap-spacing-2 flex flex-wrap items-center justify-between">
-          <WorkViewTabs
-            value={workView}
-            onChange={(nextView) => {
-              setWorkView(nextView)
-              updateSearch({ view: nextView })
-            }}
-          />
+        <div className="mb-spacing-4 gap-spacing-2 flex flex-wrap items-center justify-end">
           <AllTasksScopeFilters
             scope={scope}
             programId={programId}
@@ -132,19 +109,22 @@ export function AllTasksBoard() {
           />
         </div>
 
-        <TaskWorkViewContent
-          view={workView}
-          items={items}
-          loading={loading}
-          emptyMessage={
-            scope === 'my'
-              ? 'Nothing assigned to you in this scope.'
-              : 'No open tasks match these filters.'
-          }
-          onOpenTask={(item: TaskRollupItem) =>
-            router.push(buildSpaceItemHref(item.space_id, item.id))
-          }
-        />
+        {loading ? (
+          <div className="flex min-h-64 items-center justify-center">
+            <VibeyLoadingOrb text="Loading tasks..." state="processing" size="sm" />
+          </div>
+        ) : items.length ? (
+          <AllTasksNativeList items={items} reload={reload} />
+        ) : (
+          <div className="surface-card border-border rounded-spacing-3 p-spacing-6 border text-center">
+            <p className="body-2 text-foreground font-medium">No open tasks</p>
+            <p className="body-3 text-muted-foreground mt-spacing-1">
+              {scope === 'my'
+                ? 'Nothing assigned to you in this scope.'
+                : 'No open tasks match these filters.'}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

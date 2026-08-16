@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Brain, FolderGit2, Layers3, Users, Workflow } from 'lucide-react'
+import { Brain, FolderGit2, Layers3, ListChecks, Users, Workflow } from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { cn } from '@/lib/utils/cn'
 import {
@@ -90,6 +90,25 @@ export function SidebarHqMoreFlyoutBody({
 
   return (
     <>
+      <Link
+        href="/campaigns"
+        data-hub-dock-navigate
+        onClick={() => {
+          setWorkContext({ surface: 'spaces' })
+          onNavigate?.()
+        }}
+        className={cn(
+          'hub-dock-flyout-row',
+          (c.pathname.startsWith('/campaigns') ||
+            c.pathname.startsWith('/spaces') ||
+            c.pathname.startsWith('/programs')) &&
+            'hub-dock-flyout-row-active',
+        )}
+      >
+        <ListChecks />
+        <span className="min-w-0 flex-1 truncate">Programs</span>
+      </Link>
+
       <Link
         href="/team"
         data-hub-dock-navigate
@@ -268,7 +287,6 @@ export function SidebarHqMoreFlyoutBody({
           )}
         </HubDockFlyout>
       ) : null}
-
     </>
   )
 }

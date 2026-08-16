@@ -77,7 +77,11 @@ own that work.
   - Remaining lines: full brief, links, scope, and constraints.
   The portal uses the first line as the task title and the rest as the body.
   Never put the entire brief on one line.
-- Report the created Page Grader record and its current workflow state.
+- A successful Service Request intake result is a draft review link, not an
+  active task. Tell the user the request is ready for review. Never claim a
+  ROAS task or ClickUp task exists until finalization returns the native task
+  identity and the Page Grader receipt confirms the ClickUp mirror.
+- Report the persisted ROAS draft or finalized task and its current workflow state.
 - Do not say a request was delegated or created until the MCP result confirms
   the effect and returns the created record or an equivalent durable result.
   If Page Grader is unavailable, report the blocker instead of describing the

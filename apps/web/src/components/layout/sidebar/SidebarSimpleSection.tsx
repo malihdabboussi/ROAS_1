@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Ellipsis,
   Inbox,
+  ListTodo,
   MessageCircle,
   PanelLeftClose,
   Search,
@@ -35,7 +36,6 @@ import { HUB_DOCK_FLYOUT_LEAVE_MS, HubDockFlyout } from './HubDockFlyout'
 import { SidebarFavoritesFlyout } from './SidebarFavoritesFlyout'
 import { SidebarHqHubLogoButton } from './SidebarHqHubLogoButton'
 import { SidebarHqMoreFlyoutBody } from './SidebarHqMoreFlyoutBody'
-import { SidebarSimpleProgramsMenu } from './SidebarSimpleProgramsMenu'
 import { SidebarSimpleRecents } from './SidebarSimpleRecents'
 import { SidebarWordmark } from './SidebarWordmark'
 import type { SidebarControllerReturn } from './useSidebarController'
@@ -46,6 +46,7 @@ const SIMPLE_LINKS = [
   { href: '/home/my-tasks', label: 'My Tasks', icon: CheckSquare },
   { href: '/clients', label: 'Clients', icon: Users },
   { href: '/client-campaigns', label: 'Client Campaigns', icon: BriefcaseBusiness },
+  { href: '/all-tasks', label: 'All Tasks', icon: ListTodo },
 ] as const
 export function SidebarSimpleSection({
   c,
@@ -164,7 +165,6 @@ export function SidebarSimpleSection({
         ) : null}
       </div>
       <div className="px-spacing-3 pb-spacing-1">
-        <SidebarSimpleProgramsMenu c={c} spaceUserState={spaceUserState} />
         <button
           type="button"
           className="hub-menu-link-row !py-spacing-1 w-full"

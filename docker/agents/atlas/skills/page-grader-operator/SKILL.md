@@ -35,8 +35,8 @@ when strategy or brand interpretation is required, and call out disagreements.
    budget, owner, deadline, or other campaign details.
 8. Save only sourced facts, decisions, and durable preferences as client
    memories. Include source title and source id.
-9. Report the created Page Grader record and current workflow state after a
-   successful action.
+9. Report the persisted ROAS draft or finalized task and current workflow state
+   after a successful action.
 10. "Delegate to PageGrader" means call `list_mcp_tools` and then
    `use_mcp_tool` on the Page Grader MCP server. It does not mean
    `delegate_to_agent`.
@@ -56,6 +56,10 @@ when strategy or brand interpretation is required, and call out disagreements.
     - Remaining lines: full brief, links, scope, and constraints.
     The portal uses the first line as the task title and the rest as the body.
     Never put the entire brief on one line.
+14. A successful Service Request intake result is a draft review link, not an
+    active task. Tell the user the request is ready for review. Never claim a
+    ROAS task or ClickUp task exists until finalization returns the native task
+    identity and the Page Grader receipt confirms the ClickUp mirror.
 
 ## User-facing response
 
