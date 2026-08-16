@@ -70,11 +70,14 @@ describe('PageGraderAgencyWorkspaceService', () => {
     const supabase = {
       from: vi.fn((table: string) => ({
         select: vi.fn(() => ({
-          in: vi.fn(() => ({
-            is: vi.fn().mockResolvedValue({
+          in: vi.fn(() => {
+            const result = {
               data: table === 'campaigns' ? [{ id: 'roas-campaign-1' }] : [{ id: 'space-general' }],
-            }),
-          })),
+              is: vi.fn(),
+            }
+            result.is.mockResolvedValue({ data: result.data })
+            return result
+          }),
         })),
       })),
     }

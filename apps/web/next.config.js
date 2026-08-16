@@ -10,6 +10,20 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   transpilePackages: ['@vibey/ui', '@vibey/db'],
   serverExternalPackages: ['@turbodocx/html-to-docx', 'sharp'],
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lhfgtsjetcardinpgouq.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'mjaxhuehopzbsuhmseeg.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+  },
   turbopack: {
     resolveAlias: {
       pagedjs: pagedjsBundleForTurbo,

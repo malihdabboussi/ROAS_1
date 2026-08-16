@@ -139,9 +139,10 @@ describe('ChannelComposer', () => {
     vi.clearAllMocks()
   })
 
-  it('renders the empty composer and reports visible state without rerender churn', async () => {
+  it('tracks empty and non-empty editor state in the send button', async () => {
     const onVisibleStateChange = vi.fn()
-    const { rerender } = renderComposer({ onVisibleStateChange })
+    const composerHandleRef = { current: null as ChannelComposerHandle | null }
+    renderComposer({ onVisibleStateChange, composerHandleRef })
 
     const sendButton = await screen.findByRole('button', { name: /Send message/i })
     expect((sendButton as HTMLButtonElement).disabled).toBe(true)
@@ -159,20 +160,9 @@ describe('ChannelComposer', () => {
       }),
     )
 
-    rerender(
-      <ChannelComposer
-        channelId="channel-1"
-        members={members}
-        draftStorageKey="channel-composer-test-draft"
-        onSend={vi.fn()}
-        onVisibleStateChange={onVisibleStateChange}
-      />,
-    )
-
-    const rerenderedSendButton = (await screen.findByRole('button', {
-      name: /Send message/i,
-    })) as HTMLButtonElement
-    expect(rerenderedSendButton.disabled).toBe(true)
+    await waitFor(() => expect(composerHandleRef.current).toBeTruthy())
+    composerHandleRef.current?.setContent('<p>Browser QA comment</p>')
+    await waitFor(() => expect(sendButton.disabled).toBe(false))
   })
 
   it('uploads selected files and sends their URLs in the payload', async () => {

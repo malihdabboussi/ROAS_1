@@ -22,32 +22,29 @@ const NOTE_PREVIEW_MAX_LENGTH = 500
 
 export abstract class LeadsRepositoryBase01 {
   // Abstract declarations for methods implemented by later base classes.
-  abstract findCrmContacts(...args: any[]): any;
-  abstract findContactById(...args: any[]): any;
-  abstract findContactEmailTimeline(...args: any[]): any;
-  abstract findContactEmailById(...args: any[]): any;
-  abstract findContactConversations(...args: any[]): any;
-  protected abstract loadAgentRegistryByKey(...args: any[]): any;
-  protected abstract loadAgentNames(...args: any[]): any;
-  abstract linkConversationToContact(...args: any[]): any;
-  abstract updateContact(...args: any[]): any;
-  abstract findCustomerBrainIdsForContact(...args: any[]): any;
-  abstract countCustomerMemoriesForContact(...args: any[]): any;
-  abstract deleteCustomerMemoriesForContact(...args: any[]): any;
-  abstract removeContactFromCustomerAvatars(...args: any[]): any;
-  abstract createUserContact(...args: any[]): any;
-  protected abstract insertContactIdentifierRows(...args: any[]): any;
-  abstract findContactEmailForOwner(...args: any[]): any;
-  abstract importContactsBatch(...args: any[]): any;
-  abstract importContactsToCampaign(...args: any[]): any;
-  abstract findContactActivity(...args: any[]): any;
-  abstract createContactNote(...args: any[]): any;
-  abstract updateContactNote(...args: any[]): any;
-  abstract createLeadSecure(...args: any[]): any;
+  abstract findCrmContacts(...args: any[]): any
+  abstract findContactById(...args: any[]): any
+  abstract findContactEmailTimeline(...args: any[]): any
+  abstract findContactEmailById(...args: any[]): any
+  abstract findContactConversations(...args: any[]): any
+  protected abstract loadAgentRegistryByKey(...args: any[]): any
+  protected abstract loadAgentNames(...args: any[]): any
+  abstract linkConversationToContact(...args: any[]): any
+  abstract updateContact(...args: any[]): any
+  abstract findCustomerBrainIdsForContact(...args: any[]): any
+  abstract countCustomerMemoriesForContact(...args: any[]): any
+  abstract deleteCustomerMemoriesForContact(...args: any[]): any
+  abstract removeContactFromCustomerAvatars(...args: any[]): any
+  abstract createUserContact(...args: any[]): any
+  protected abstract insertContactIdentifierRows(...args: any[]): any
+  abstract findContactEmailForOwner(...args: any[]): any
+  abstract importContactsBatch(...args: any[]): any
+  abstract importContactsToCampaign(...args: any[]): any
+  abstract findContactActivity(...args: any[]): any
+  abstract createContactNote(...args: any[]): any
+  abstract updateContactNote(...args: any[]): any
+  abstract createLeadSecure(...args: any[]): any
   // End generated abstract declarations.
-
-
-
 
   async findByFunnelId(supabase: SupabaseClient, funnelId: string, orgId?: string | null) {
     let query = supabase
@@ -163,7 +160,7 @@ export abstract class LeadsRepositoryBase01 {
   }
 
   async findCrmFunnels(supabase: SupabaseClient, orgId?: string | null) {
-    let query = supabase.from('funnels').select('id, title')
+    let query = supabase.from('funnels').select('id, title:name')
     if (orgId !== undefined) {
       query = orgId === null ? query.is('org_id', null) : query.eq('org_id', orgId)
     }
