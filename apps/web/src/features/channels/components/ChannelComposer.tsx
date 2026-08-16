@@ -225,6 +225,7 @@ export function ChannelComposer({
 
   const triggerSendRef = useRef(async () => {})
   const handleFileSelectRef = useRef<(files: FileList | File[] | null) => void>(() => {})
+  const [editorIsEmpty, setEditorIsEmpty] = useState(true)
 
   const editor = useChannelComposerEditor({
     channelId,
@@ -241,16 +242,14 @@ export function ChannelComposer({
     syncSlashMenu,
     syncEntityMention,
     persistDraftUpdate,
+    onEmptyChange: setEditorIsEmpty,
   })
-
   useEffect(() => {
     setSlashEditor(editor)
   }, [editor, setSlashEditor])
-
   useEffect(() => {
     hydrateDraft(editor)
   }, [editor, hydrateDraft])
-
   useEffect(() => {
     refreshSlashMenu(editor)
   }, [editor, slashSkillItems, refreshSlashMenu])
@@ -296,8 +295,8 @@ export function ChannelComposer({
   const { linkInputOpen, linkUrl, setLinkUrl, toggleLinkInput, closeLinkInput, applyLink } =
     useChannelComposerLink(editor)
 
-  const isEmpty = editor?.isEmpty ?? true
-  const canSend = (!isEmpty || attachedFiles.length > 0 || hasPastedBlocks) && !disabled && !sending
+  const canSend =
+    (!editorIsEmpty || attachedFiles.length > 0 || hasPastedBlocks) && !disabled && !sending
 
   useChannelComposerVisibleState({
     editor,

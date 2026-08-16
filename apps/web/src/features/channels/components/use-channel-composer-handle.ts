@@ -29,7 +29,7 @@ export function useChannelComposerHandle<Payload>({
       getPayload: buildPayload,
       clear: resetComposer,
       setContent: (html: string) => {
-        editor?.commands.setContent(html, { emitUpdate: false })
+        editor?.commands.setContent(html, { emitUpdate: true })
       },
       hasUploadingFiles,
     }

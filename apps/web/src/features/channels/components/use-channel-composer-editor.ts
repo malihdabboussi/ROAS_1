@@ -25,6 +25,7 @@ export function useChannelComposerEditor({
   syncSlashMenu,
   syncEntityMention,
   persistDraftUpdate,
+  onEmptyChange,
 }: {
   channelId: string
   embedded: boolean
@@ -33,15 +34,14 @@ export function useChannelComposerEditor({
   memberMentionExtension: AnyExtension
   hasActiveMemberMention: boolean
   handleFileSelectRef: MutableRefObject<(files: FileList | File[] | null) => void>
-  tryAddFromClipboardRef: MutableRefObject<
-    (data: DataTransfer | null | undefined) => boolean
-  >
+  tryAddFromClipboardRef: MutableRefObject<(data: DataTransfer | null | undefined) => boolean>
   triggerSendRef: MutableRefObject<() => Promise<void> | void>
   handleSlashKeyDown: (event: KeyboardEvent) => boolean
   handleEntityMentionKeyDown: (event: KeyboardEvent) => boolean
   syncSlashMenu: (editor: Editor) => void
   syncEntityMention: (editor: Editor) => void
   persistDraftUpdate: (editor: Editor) => void
+  onEmptyChange: (isEmpty: boolean) => void
 }) {
   return useEditor({
     immediatelyRender: false,
@@ -97,6 +97,7 @@ export function useChannelComposerEditor({
       syncSlashMenu(editor)
       syncEntityMention(editor)
       persistDraftUpdate(editor)
+      onEmptyChange(editor.isEmpty)
     },
   })
 }
