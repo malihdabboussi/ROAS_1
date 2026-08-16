@@ -2,8 +2,10 @@
 
 Use the `Page Grader` MCP server whenever a request depends on Page Grader-only
 client, campaign, fulfillment, meeting, memory, or cached Meta information, or
-asks to build a funnel, landing page, campaign page, or related fulfillment
-deliverable, including when the user names the human who should own that work.
+asks for a client Service Request / fulfillment deliverable of any type
+(design, copy, funnel/landing page, GHL, ad creative, video edit/production,
+or general client work), including when the user says "make a task", "ASAP",
+or names the human who should own that work.
 
 ROAS Brain remains the primary reasoning and long-term knowledge system.
 Page Grader remains authoritative for its portal records. Cross-reference both
@@ -23,10 +25,11 @@ when strategy or brand interpretation is required, and call out disagreements.
    multiple matches, or when the user names a different client.
 2. Prefer the narrowest read tool. Include source dates and Meta snapshot
    freshness in the answer.
-3. Infer Page Grader when the user asks to build a funnel, landing page,
-   campaign page, or related fulfillment deliverable, even when a human owner
-   is named. Pass that person as the Page Grader assignee. Do not require the
-   user to say "Page Grader".
+3. Infer Page Grader for any client Service Request / fulfillment deliverable
+   (design, copy, funnel/landing page, GHL, ad, video, other/general), even
+   when the user says "task" or names a human owner. Pass that person as the
+   Page Grader assignee. Do not require the user to say "Page Grader" or
+   "Service Request".
    In this context, "the portal" means The ROAS Portal fulfillment workflow,
    not permission to generate a native ROAS platform funnel.
 4. Resolve the client and campaign from tools/context before a write.
@@ -54,22 +57,30 @@ when strategy or brand interpretation is required, and call out disagreements.
     confirms a durable effect.
     If The ROAS Portal fulfillment fails, stop instead of replacing it with a
     generic ROAS task, native funnel, different assignee, or different client.
-13. For funnel work, discover the current MCP schema and use
+13. For any Service Request type, discover the current MCP schema and use
     `page_grader_create_fulfillment_request` with the resolved `client_ref`,
-    `task_type:"funnel"`, stable `idempotency_key`, and `assignee_name` when
-    supplied. Format `description` as:
+    matching `task_type` (`design` | `copy` | `funnel` | `ghl` | `ad` |
+    `video` | `other` | `general`), stable `idempotency_key`, and
+    `assignee_name` when supplied. Format `description` as:
     - Line 1: a short title only (≤ ~100 characters; no scope dump).
     - Blank line.
     - Remaining lines: full brief, links, scope, and constraints.
     The portal uses the first line as the task title and the rest as the body.
     Never put the entire brief on one line.
+    Never use native `create_task` for this class of work.
 14. A successful Service Request intake result is a draft review link that
     continues the **same chat** (one step / option at a time — not a separate
-    all-at-once form). Tell the user they can keep answering in this thread, or
-    open “Continue in chat” / the review link to resume the same step flow.
+    all-at-once form). The user-facing reply must include:
+    - the resolved client name
+    - the request title / type
+    - that this is a reviewable draft awaiting confirmation (not a finished task)
+    - the `review_url` as a real openable https link
+    Tell the user they can keep answering in this thread, or open “Continue in
+    chat” / the review link to resume the same step flow.
     Never claim a ROAS task or ClickUp task exists until finalization returns
     the native task identity and the Page Grader receipt confirms the ClickUp
     mirror. After submit, confirmation and task links stay in that same chat.
+    Never reply with a bare "Created: …" native-task style message for intake.
 
 ## User-facing response
 
