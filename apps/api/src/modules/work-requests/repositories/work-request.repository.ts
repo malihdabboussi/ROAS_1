@@ -53,6 +53,33 @@ export type WorkRequestFinalizeResult = {
   task: Record<string, unknown>
 }
 
+type AssigneeProfile = { id: string; full_name: string | null }
+
+function normalizedName(value: string | null | undefined) {
+  return value?.trim().replace(/\s+/g, ' ').toLocaleLowerCase() ?? ''
+}
+
+export function resolveUniqueAssigneeProfileId(profiles: AssigneeProfile[], requestedName: string) {
+  const requested = normalizedName(requestedName)
+  if (!requested) return null
+  const exact = profiles.filter((profile) => normalizedName(profile.full_name) === requested)
+  if (exact.length === 1) return exact[0]?.id ?? null
+  if (exact.length > 1) return null
+
+  const requestedFirstName = requested.split(' ')[0]
+  const compatible = profiles.filter((profile) => {
+    const candidate = normalizedName(profile.full_name)
+    if (!candidate) return false
+    const candidateParts = candidate.split(' ')
+    return (
+      requested.startsWith(`${candidate} `) ||
+      candidate.startsWith(`${requested} `) ||
+      candidateParts[0] === requestedFirstName
+    )
+  })
+  return compatible.length === 1 ? (compatible[0]?.id ?? null) : null
+}
+
 const DRAFT_COLUMNS = [
   'id',
   'owner_user_id',
@@ -243,10 +270,9 @@ export class WorkRequestRepository {
       .from('profiles')
       .select('id, full_name')
       .in('id', userIds)
-      .ilike('full_name', `${name.trim()}%`)
-      .limit(2)
+      .limit(100)
     if (error) throw new Error(`Could not resolve Service Request assignee: ${error.message}`)
-    return data?.length === 1 ? String(data[0]?.id ?? '') || null : null
+    return resolveUniqueAssigneeProfileId((data ?? []) as AssigneeProfile[], name)
   }
 
   async assignTask(taskId: string, userId: string) {

@@ -143,7 +143,6 @@ export class WorkRequestService {
       options: publicWorkRequestOptions(await this.scope.loadScopedOptions(updated)),
     }
   }
-
   async finalizeReview(token: string) {
     const tokenHash = hashWorkRequestReviewToken(token)
     const draft = await this.repository.findByTokenHash(tokenHash)
@@ -153,9 +152,12 @@ export class WorkRequestService {
     if (state === 'revoked') throw new GoneException('Service Request link revoked')
     if (state === 'finalized') {
       let current = draft
-      if (draft.sync_status !== 'synced' && draft.final_space_item_id) {
-        const task = await this.repository.findTask(draft.final_space_item_id)
-        if (task) current = await this.mirrorFinalTask(draft, task)
+      if (draft.final_space_item_id) {
+        const existingTask = await this.repository.findTask(draft.final_space_item_id)
+        if (existingTask) {
+          const task = await this.assignFinalTaskWhenMapped(draft, existingTask)
+          if (draft.sync_status !== 'synced') current = await this.mirrorFinalTask(draft, task)
+        }
       }
       const publicDraft = sanitizeWorkRequestDraft(current)
       return {
@@ -457,9 +459,8 @@ export class WorkRequestService {
         draft.owner_org_id,
         draft.assignee_name,
       )
-      return assigneeId
-        ? await this.repository.assignTask(draft.final_space_item_id, assigneeId)
-        : task
+      if (!assigneeId || String(task.assignee_id ?? '') === assigneeId) return task
+      return await this.repository.assignTask(draft.final_space_item_id, assigneeId)
     } catch {
       // The requested name remains in Work Request provenance and the Page Grader
       // adapter still resolves it for ClickUp. Ambiguous ROAS identities stay unassigned.
