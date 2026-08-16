@@ -22,8 +22,9 @@ vi.mock('next/link', () => ({
 }))
 
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
-  useGlobalChatStore: (selector: (state: { setWorkContext: ReturnType<typeof vi.fn> }) => unknown) =>
-    selector({ setWorkContext: vi.fn() }),
+  useGlobalChatStore: (
+    selector: (state: { setWorkContext: ReturnType<typeof vi.fn> }) => unknown,
+  ) => selector({ setWorkContext: vi.fn() }),
 }))
 
 vi.mock('./SidebarTeam2Flyout', () => ({
@@ -47,6 +48,8 @@ describe('SidebarHqMoreFlyoutBody', () => {
         onSubFlyoutOpenChange={vi.fn()}
       />,
     )
+
+    expect(screen.getByRole('link', { name: 'Programs' })).toHaveAttribute('href', '/campaigns')
 
     fireEvent.mouseEnter(screen.getByRole('link', { name: 'Team' }))
     expect(screen.getByText('Previous Team menu')).toBeInTheDocument()

@@ -1,0 +1,599 @@
+import {
+  BadRequestException,
+  ConflictException,
+  GoneException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import type { SendPageGraderWorkDto } from '../../integrations/page-grader/dto/page-grader.dto'
+import { PageGraderApiService } from '../../integrations/page-grader/services/page-grader-api.service'
+import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
+import type {
+  CreateWorkRequestDraftWebhookDto,
+  RefreshWorkRequestDraftWebhookDto,
+  UpdateWorkRequestDraftDto,
+} from '../dto/work-request.dto'
+import {
+  WorkRequestRepository,
+  type WorkRequestDraftRow,
+} from '../repositories/work-request.repository'
+import {
+  asRecord,
+  buildWorkRequestWebhookResult,
+  generateWorkRequestReviewToken,
+  hashWorkRequestReviewToken,
+  isMissing,
+  publicWorkRequestOptions,
+  safeWorkRequestError,
+  sanitizeWorkRequestDraft,
+  schemaData,
+  stringValue,
+} from './work-request-review-security'
+import { WorkRequestScopeService } from './work-request-scope.service'
+
+@Injectable()
+export class WorkRequestService {
+  constructor(
+    private readonly repository: WorkRequestRepository,
+    private readonly scope: WorkRequestScopeService,
+    private readonly pageGraderApi: PageGraderApiService,
+    private readonly slack: SlackAgentToolsService,
+    private readonly config: ConfigService,
+  ) {}
+  async getReview(token: string) {
+    const draft = await this.repository.findByTokenHash(hashWorkRequestReviewToken(token))
+    if (!draft) return { state: 'invalid' as const }
+    const state = await this.resolveState(draft)
+    if (state !== 'draft') {
+      const publicDraft = sanitizeWorkRequestDraft(draft)
+      return {
+        state,
+        expires_at: draft.review_token_expires_at,
+        final_task_id: draft.final_space_item_id,
+        sync_status: draft.sync_status,
+        task_url: publicDraft.task_url,
+        clickup_url: publicDraft.clickup_url,
+      }
+    }
+    const options = await this.scope.loadScopedOptions(draft)
+    return {
+      state: 'draft' as const,
+      draft: sanitizeWorkRequestDraft(draft),
+      options: publicWorkRequestOptions(options),
+    }
+  }
+  async updateReview(token: string, input: UpdateWorkRequestDraftDto) {
+    const tokenHash = hashWorkRequestReviewToken(token)
+    const draft = await this.requireActiveDraft(tokenHash)
+    const options = await this.scope.loadScopedOptions(draft)
+    const values: Record<string, unknown> = {}
+
+    const selectedClientId = input.client_workspace_id ?? draft.campaign_id
+    const selectedClient = options.clients.find((option) => option.id === selectedClientId)
+    if (!selectedClient) throw new BadRequestException('That client workspace is not available')
+
+    if (input.client_workspace_id !== undefined) {
+      values.campaign_id = selectedClient.id
+      values.page_grader_external_client_id = selectedClient.externalClientId
+      values.routing = {
+        ...asRecord(draft.routing),
+        general_space_id: selectedClient.generalSpaceId,
+      }
+      if (selectedClient.id !== draft.campaign_id && input.campaign_space_id === undefined) {
+        values.campaign_space_id = null
+        values.page_grader_external_campaign_id = null
+        values.routing = { ...asRecord(values.routing), work_scope: 'general' }
+      }
+    }
+
+    if (input.campaign_space_id !== undefined) {
+      if (input.campaign_space_id === null) {
+        values.campaign_space_id = null
+        values.page_grader_external_campaign_id = null
+        values.routing = {
+          ...asRecord(values.routing ?? draft.routing),
+          work_scope: 'general',
+          general_space_id: selectedClient.generalSpaceId,
+        }
+      } else {
+        const selectedSpace = options.spaces.find(
+          (option) =>
+            option.id === input.campaign_space_id && option.clientWorkspaceId === selectedClient.id,
+        )
+        if (!selectedSpace) throw new BadRequestException('That campaign Space is not available')
+        values.campaign_space_id = selectedSpace.id
+        values.page_grader_external_campaign_id = selectedSpace.externalCampaignId
+        values.routing = {
+          ...asRecord(values.routing ?? draft.routing),
+          work_scope: 'campaign',
+          general_space_id: selectedClient.generalSpaceId,
+        }
+      }
+    }
+
+    for (const key of [
+      'request_type',
+      'assignee_name',
+      'title',
+      'description',
+      'priority',
+    ] as const) {
+      if (input[key] !== undefined) values[key] = input[key]
+    }
+    if (input.due_date !== undefined) {
+      values.due_at = input.due_date ? `${input.due_date}T23:59:59.000Z` : null
+    }
+    if (input.assets !== undefined) values.assets = input.assets
+    if (input.dependencies !== undefined) values.dependencies = input.dependencies
+    if (input.structured_fields !== undefined || input.links !== undefined) {
+      values.structured_fields = {
+        ...asRecord(draft.structured_fields),
+        ...(input.structured_fields ?? {}),
+        ...(input.links !== undefined ? { links: input.links } : {}),
+      }
+    }
+
+    const candidate = { ...draft, ...values } as WorkRequestDraftRow
+    values.missing_fields = this.computeMissingFields(candidate)
+    const updated = await this.repository.update(draft.id, values)
+    return {
+      state: 'draft' as const,
+      draft: sanitizeWorkRequestDraft(updated),
+      options: publicWorkRequestOptions(await this.scope.loadScopedOptions(updated)),
+    }
+  }
+
+  async finalizeReview(token: string) {
+    const tokenHash = hashWorkRequestReviewToken(token)
+    const draft = await this.repository.findByTokenHash(tokenHash)
+    if (!draft) throw new NotFoundException('Service Request link not found')
+    const state = await this.resolveState(draft)
+    if (state === 'expired') throw new GoneException('Service Request link expired')
+    if (state === 'revoked') throw new GoneException('Service Request link revoked')
+    if (state === 'finalized') {
+      let current = draft
+      if (draft.sync_status !== 'synced' && draft.final_space_item_id) {
+        const task = await this.repository.findTask(draft.final_space_item_id)
+        if (task) current = await this.mirrorFinalTask(draft, task)
+      }
+      const publicDraft = sanitizeWorkRequestDraft(current)
+      return {
+        state: 'finalized' as const,
+        draft: publicDraft,
+        final_task_id: current.final_space_item_id,
+        sync_status: current.sync_status,
+        task_url: publicDraft.task_url,
+        clickup_url: publicDraft.clickup_url,
+      }
+    }
+    if (draft.missing_fields.length > 0) {
+      throw new BadRequestException('Complete the missing request context before submitting')
+    }
+    await this.validateTargetSpace(draft)
+    const finalized = await this.repository.finalize(tokenHash)
+    finalized.task = await this.assignFinalTaskWhenMapped(finalized.draft, finalized.task)
+    if (finalized.draft.sync_status === 'synced') {
+      const publicDraft = sanitizeWorkRequestDraft(finalized.draft)
+      return {
+        state: 'finalized' as const,
+        draft: publicDraft,
+        final_task_id: finalized.draft.final_space_item_id,
+        sync_status: finalized.draft.sync_status,
+        task_url: publicDraft.task_url,
+        clickup_url: publicDraft.clickup_url,
+      }
+    }
+
+    const mirrored = await this.mirrorFinalTask(finalized.draft, finalized.task)
+    const publicDraft = sanitizeWorkRequestDraft(mirrored)
+    return {
+      state: 'finalized' as const,
+      draft: publicDraft,
+      final_task_id: mirrored.final_space_item_id,
+      sync_status: mirrored.sync_status,
+      task_url: publicDraft.task_url,
+      clickup_url: publicDraft.clickup_url,
+    }
+  }
+
+  async requestPublicRefresh(token: string) {
+    const draft = await this.repository.findByTokenHash(hashWorkRequestReviewToken(token))
+    if (!draft) return { state: 'invalid' as const }
+    if (draft.status === 'finalized') {
+      return { state: 'finalized' as const, final_task_id: draft.final_space_item_id }
+    }
+    return {
+      state: 'refresh_required' as const,
+      message: 'Ask for a fresh Service Request review link in the original conversation.',
+    }
+  }
+
+  async createFromPageGrader(signature: string, input: CreateWorkRequestDraftWebhookDto) {
+    const { mapping, ownerOrgId, generalSpace, campaignSpace } =
+      await this.scope.resolveIntakeScope(
+        signature,
+        input.client_id,
+        input.client_name,
+        input.campaign_id,
+      )
+    const token = generateWorkRequestReviewToken()
+    const issuedAt = new Date()
+    const expiresAt = new Date(issuedAt.getTime() + 24 * 60 * 60 * 1000)
+    const baseValues = {
+      owner_user_id: mapping.userId,
+      owner_org_id: ownerOrgId,
+      campaign_id: mapping.entry.campaign_id,
+      campaign_space_id:
+        input.work_scope === 'campaign' && campaignSpace ? String(campaignSpace.id) : null,
+      page_grader_external_client_id: input.client_id,
+      page_grader_external_campaign_id:
+        input.work_scope === 'campaign' ? (input.campaign_id ?? null) : null,
+      request_type: input.request_type,
+      assignee_name: input.assignee_name,
+      title: input.title,
+      description: input.description ?? null,
+      due_at: input.due_date ? `${input.due_date}T23:59:59.000Z` : null,
+      priority: input.priority,
+      structured_fields: input.structured_fields,
+      required_fields: input.required_fields,
+      assets: input.assets,
+      dependencies: input.dependencies,
+      provenance: input.provenance,
+      requester_metadata: input.requester,
+      routing: {
+        work_scope: input.work_scope,
+        general_space_id: generalSpace ? String(generalSpace.id) : null,
+        connection_org_id: mapping.orgId,
+        origin_page_grader_client_id: input.client_id,
+        page_grader_client_name: input.client_name,
+      },
+      idempotency_key: input.idempotency_key,
+      review_token_hash: hashWorkRequestReviewToken(token),
+      review_token_issued_at: issuedAt.toISOString(),
+      review_token_expires_at: expiresAt.toISOString(),
+    }
+    const candidate = {
+      ...baseValues,
+      missing_fields: [],
+    } as unknown as WorkRequestDraftRow
+    const missing = this.computeMissingFields(candidate)
+
+    let draft = await this.repository.findByIdempotency(
+      mapping.userId,
+      input.client_id,
+      input.idempotency_key,
+    )
+    if (draft) {
+      const replayToken = generateWorkRequestReviewToken()
+      const replayIssuedAt = new Date()
+      draft = await this.reissueToken(
+        draft,
+        replayToken,
+        replayIssuedAt,
+        new Date(replayIssuedAt.getTime() + 24 * 60 * 60 * 1000),
+        `intake-replay:${input.idempotency_key}`,
+        draft.status === 'finalized',
+      )
+      return this.webhookResult(
+        draft,
+        replayToken,
+        draft.status === 'finalized' ? 'finalized' : 'existing',
+      )
+    }
+    try {
+      draft = await this.repository.create({ ...baseValues, missing_fields: [...new Set(missing)] })
+    } catch (error) {
+      if ((error as { code?: string }).code !== '23505') throw error
+      draft = await this.repository.findByIdempotency(
+        mapping.userId,
+        input.client_id,
+        input.idempotency_key,
+      )
+      if (!draft) throw error
+      return this.webhookResult(draft, null, 'existing')
+    }
+    return this.webhookResult(draft, token, 'created')
+  }
+
+  async refreshFromPageGrader(signature: string, input: RefreshWorkRequestDraftWebhookDto) {
+    const mapping = await this.scope.resolveSignedMapping(signature, input.client_id)
+    const draft = await this.repository.findById(input.draft_id)
+    const routing = asRecord(draft?.routing)
+    if (
+      !draft ||
+      draft.owner_user_id !== mapping.userId ||
+      (stringValue(routing.connection_org_id) || null) !== mapping.orgId ||
+      stringValue(routing.origin_page_grader_client_id) !== input.client_id
+    ) {
+      throw new NotFoundException('Service Request draft not found')
+    }
+    const token = generateWorkRequestReviewToken()
+    const issuedAt = new Date()
+    const expiresAt = new Date(issuedAt.getTime() + 24 * 60 * 60 * 1000)
+    const refreshed = await this.reissueToken(
+      draft,
+      token,
+      issuedAt,
+      expiresAt,
+      input.idempotency_key,
+      draft.status === 'finalized',
+    )
+    return this.webhookResult(
+      refreshed,
+      token,
+      draft.token_refresh_idempotency_key === input.idempotency_key
+        ? 'already_refreshed'
+        : draft.status === 'finalized'
+          ? 'finalized'
+          : 'refreshed',
+    )
+  }
+
+  async processDueReminders(limit = 50) {
+    const now = new Date()
+    const [threeHour, oneHour] = await Promise.all([
+      this.repository.listDueThreeHourReminders(
+        new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString(),
+        limit,
+      ),
+      this.repository.listDueOneHourWarnings(
+        new Date(now.getTime() + 60 * 60 * 1000).toISOString(),
+        limit,
+      ),
+    ])
+    let sent = 0
+    for (const draft of threeHour) {
+      sent += await this.deliverReminder(draft, 'reminder_3h_sent_at')
+    }
+    for (const draft of oneHour) {
+      sent += await this.deliverReminder(draft, 'reminder_1h_sent_at')
+    }
+    return { processed: threeHour.length + oneHour.length, sent }
+  }
+
+  async processDueWork(limit = 50) {
+    const [reminders, retries] = await Promise.all([
+      this.processDueReminders(limit),
+      this.processDueSyncRetries(limit),
+    ])
+    return { reminders, retries }
+  }
+
+  private async processDueSyncRetries(limit: number) {
+    const drafts = await this.repository.listDueSyncRetries(new Date().toISOString(), limit)
+    let synced = 0
+    for (const draft of drafts) {
+      if (!draft.final_space_item_id) continue
+      const task = await this.repository.findTask(draft.final_space_item_id)
+      if (!task) {
+        await this.repository.update(draft.id, {
+          sync_status: 'sync_failed',
+          next_retry_at: null,
+          last_error: 'Canonical ROAS task no longer exists',
+        })
+        continue
+      }
+      const updated = await this.mirrorFinalTask(draft, task)
+      if (updated.sync_status === 'synced') synced += 1
+    }
+    return { processed: drafts.length, synced }
+  }
+
+  private async mirrorFinalTask(
+    draft: WorkRequestDraftRow,
+    task: Record<string, unknown>,
+  ): Promise<WorkRequestDraftRow> {
+    const attemptAt = new Date()
+    try {
+      const result = await this.pageGraderApi.sendWork(
+        this.repository.client,
+        draft.owner_user_id,
+        {
+          client_id: draft.page_grader_external_client_id,
+          space_id: String(task.space_id),
+          space_item_ids: [String(task.id)],
+          work_kind: 'task_request',
+          task_type: draft.request_type as SendPageGraderWorkDto['task_type'],
+          due_date: draft.due_at?.slice(0, 10),
+          source_excerpt: draft.description?.slice(0, 4000) || undefined,
+          ...(draft.assignee_name ? { assignee: { name: draft.assignee_name } } : {}),
+          note: `Finalized from ROAS Service Request ${draft.id}.`,
+        },
+        draft.owner_org_id,
+        draft.owner_org_id ? 'owner' : null,
+      )
+      const first = result.results[0]
+      const mirrored = Boolean(result.success && first && first.status !== 'failed')
+      const success = Boolean(mirrored && first?.clickup_task_id)
+      const receiptResults = result.results.map(({ error, ...receipt }) => ({
+        ...receipt,
+        ...(error ? { error: safeWorkRequestError(error) } : {}),
+      }))
+      return this.repository.update(draft.id, {
+        page_grader_receipt: {
+          success: result.success,
+          retryable: !success,
+          results: receiptResults,
+        },
+        clickup_receipt: first
+          ? {
+              task_id: first.clickup_task_id ?? null,
+              task_url: first.clickup_task_url ?? null,
+            }
+          : {},
+        sync_status: success ? 'synced' : mirrored ? 'sync_pending' : 'sync_failed',
+        sync_attempt_count: draft.sync_attempt_count + 1,
+        last_sync_attempt_at: attemptAt.toISOString(),
+        next_retry_at: success
+          ? null
+          : new Date(attemptAt.getTime() + 15 * 60 * 1000).toISOString(),
+        last_error: success
+          ? null
+          : safeWorkRequestError(
+              first?.error ??
+                (mirrored ? 'ClickUp mirror is pending' : 'Page Grader mirror failed'),
+            ),
+      })
+    } catch (error) {
+      return this.repository.update(draft.id, {
+        sync_status: 'sync_failed',
+        sync_attempt_count: draft.sync_attempt_count + 1,
+        last_sync_attempt_at: attemptAt.toISOString(),
+        next_retry_at: new Date(attemptAt.getTime() + 15 * 60 * 1000).toISOString(),
+        last_error: safeWorkRequestError(error),
+        page_grader_receipt: { success: false, retryable: true },
+      })
+    }
+  }
+
+  private async assignFinalTaskWhenMapped(
+    draft: WorkRequestDraftRow,
+    task: Record<string, unknown>,
+  ) {
+    if (!draft.owner_org_id || !draft.assignee_name || !draft.final_space_item_id) return task
+    try {
+      const assigneeId = await this.repository.resolveOrgAssigneeByName(
+        draft.owner_org_id,
+        draft.assignee_name,
+      )
+      return assigneeId
+        ? await this.repository.assignTask(draft.final_space_item_id, assigneeId)
+        : task
+    } catch {
+      // The requested name remains in Work Request provenance and the Page Grader
+      // adapter still resolves it for ClickUp. Ambiguous ROAS identities stay unassigned.
+      return task
+    }
+  }
+
+  private async requireActiveDraft(tokenHash: string): Promise<WorkRequestDraftRow> {
+    const draft = await this.repository.findByTokenHash(tokenHash)
+    if (!draft) throw new NotFoundException('Service Request link not found')
+    const state = await this.resolveState(draft)
+    if (state === 'expired') throw new GoneException('Service Request link expired')
+    if (state === 'revoked') throw new GoneException('Service Request link revoked')
+    if (state === 'finalized') throw new ConflictException('Service Request already submitted')
+    return draft
+  }
+
+  private async resolveState(draft: WorkRequestDraftRow) {
+    if (draft.status === 'finalized') return 'finalized' as const
+    if (draft.status === 'revoked' || draft.review_token_revoked_at) return 'revoked' as const
+    if (draft.status === 'expired' || Date.parse(draft.review_token_expires_at) <= Date.now()) {
+      if (draft.status === 'draft') await this.repository.update(draft.id, { status: 'expired' })
+      return 'expired' as const
+    }
+    return 'draft' as const
+  }
+
+  private computeMissingFields(draft: WorkRequestDraftRow): string[] {
+    const routing = asRecord(draft.routing)
+    const values: Record<string, unknown> = {
+      ...asRecord(draft.structured_fields),
+      title: draft.title,
+      description: draft.description,
+      due_date: draft.due_at,
+      priority: draft.priority,
+      campaign_space_id: draft.campaign_space_id,
+      general_space_id: routing.general_space_id,
+      assets: draft.assets,
+      dependencies: draft.dependencies,
+      links: asRecord(draft.structured_fields).links,
+    }
+    const missing = draft.required_fields.filter((field) => isMissing(values[field]))
+    if (routing.work_scope === 'campaign' && !draft.campaign_space_id) {
+      missing.push('campaign_space_id')
+    }
+    if (routing.work_scope !== 'campaign' && isMissing(routing.general_space_id)) {
+      missing.push('general_space_id')
+    }
+    return [...new Set(missing)]
+  }
+
+  private async validateTargetSpace(draft: WorkRequestDraftRow) {
+    const routing = asRecord(draft.routing)
+    const campaignWork = routing.work_scope === 'campaign'
+    const spaceId = campaignWork ? draft.campaign_space_id : stringValue(routing.general_space_id)
+    if (!spaceId) throw new BadRequestException('Choose a valid destination Space')
+    const space = await this.repository.findSpace(spaceId)
+    const schema = schemaData(space)
+    const scoped =
+      space &&
+      String(space.campaign_id) === draft.campaign_id &&
+      this.scope.isScopedRow(space, draft.owner_user_id, draft.owner_org_id)
+    const validRole = campaignWork
+      ? schema.space_role === 'client_campaign' &&
+        schema.page_grader_campaign_id === draft.page_grader_external_campaign_id
+      : schema.space_role === 'general' &&
+        schema.page_grader_client_id === draft.page_grader_external_client_id
+    if (!scoped || !validRole) throw new BadRequestException('Destination Space is not available')
+  }
+
+  private async reissueToken(
+    draft: WorkRequestDraftRow,
+    token: string,
+    issuedAt: Date,
+    expiresAt: Date,
+    refreshKey: string | null,
+    preserveFinalized = false,
+  ) {
+    return this.repository.update(draft.id, {
+      status: preserveFinalized ? draft.status : 'draft',
+      review_token_hash: hashWorkRequestReviewToken(token),
+      review_token_issued_at: issuedAt.toISOString(),
+      review_token_expires_at: expiresAt.toISOString(),
+      review_token_revoked_at: null,
+      review_token_reissued_at: issuedAt.toISOString(),
+      review_token_version: draft.review_token_version + 1,
+      token_refresh_idempotency_key: refreshKey,
+      reminder_3h_sent_at: null,
+      reminder_1h_sent_at: null,
+    })
+  }
+
+  private webhookResult(draft: WorkRequestDraftRow, token: string | null, state: string) {
+    return buildWorkRequestWebhookResult(
+      draft,
+      token,
+      this.config.get<string>('APP_URL') || 'https://app.roas.io',
+      state,
+    )
+  }
+
+  private async deliverReminder(
+    draft: WorkRequestDraftRow,
+    column: 'reminder_3h_sent_at' | 'reminder_1h_sent_at',
+  ): Promise<number> {
+    const claimedAt = new Date().toISOString()
+    if (!(await this.repository.claimReminder(draft.id, column, claimedAt))) return 0
+    const provenance = asRecord(draft.provenance)
+    const channelId = stringValue(provenance.channel_id)
+    if (!channelId) return 0
+    const text =
+      column === 'reminder_3h_sent_at'
+        ? `Your Service Request draft "${draft.title}" is still waiting for review. Use the secure link from this conversation when you're ready.`
+        : `Your Service Request review link for "${draft.title}" expires in about one hour.`
+    try {
+      await this.slack.sendMessage(
+        this.repository.client,
+        draft.owner_user_id,
+        draft.owner_org_id,
+        {
+          channel_id: channelId,
+          thread_ts: stringValue(provenance.thread_ts) || undefined,
+          text,
+          unfurl_links: false,
+          unfurl_media: false,
+        },
+      )
+      return 1
+    } catch (error) {
+      await this.repository.update(draft.id, {
+        [column]: null,
+        last_error: safeWorkRequestError(error),
+      })
+      return 0
+    }
+  }
+}

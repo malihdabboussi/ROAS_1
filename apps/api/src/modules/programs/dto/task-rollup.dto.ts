@@ -12,7 +12,11 @@ export type TaskRollupItem = {
   id: string
   title: string
   status: string
+  priority: 'low' | 'medium' | 'high' | 'urgent' | null
   due_at: string | null
+  start_date: string | null
+  assignee_type: 'human' | 'agent' | 'unassigned'
+  assignee_id: string | null
   assignee_user_id: string | null
   assignees: Array<{ type: 'human' | 'agent'; id: string }>
   space_id: string
@@ -22,6 +26,14 @@ export type TaskRollupItem = {
   program_id: string | null
   program_name: string | null
   source_url: string
+  description: string | null
+  notes: string | null
+  source: 'manual' | 'agent' | 'agent_suggested' | 'template' | 'fathom'
+  linked_mission_id: string | null
+  custom_data: Record<string, unknown>
+  org_id: string
+  user_id: string
+  sort_order: number
   created_at: string
   updated_at: string | null
 }

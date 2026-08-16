@@ -1,12 +1,12 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { BriefcaseBusiness, PanelRightOpen, Search, Users } from 'lucide-react'
+import { BriefcaseBusiness, PanelRightOpen, Search } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { fetchAgencyClients, type AgencyClient } from '@/lib/agency-clients'
 import { cn } from '@/lib/utils/cn'
+import { AgencyClientsTable } from './AgencyClientsTable'
 import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
 
 type GroupMode = 'pipeline' | 'manager'
@@ -21,7 +21,7 @@ export function AgencyClientsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
-  const [groupMode, setGroupMode] = useState<GroupMode>('pipeline')
+  const [groupMode, setGroupMode] = useState<GroupMode>('manager')
 
   useEffect(() => {
     let cancelled = false
@@ -119,67 +119,7 @@ export function AgencyClientsPage() {
           {error}
         </p>
       ) : null}
-      {!loading && !error ? (
-        <div className="gap-spacing-6 flex flex-col">
-          {groups.map(([label, rows]) => (
-            <section key={label}>
-              <div className="mb-spacing-3 gap-spacing-2 flex items-center">
-                <Users className="icon-sm text-muted-foreground" />
-                <h2 className="body-2 text-foreground font-semibold capitalize">{label}</h2>
-                <span className="body-4 text-muted-foreground">{rows.length}</span>
-              </div>
-              <div className="gap-spacing-3 grid md:grid-cols-2 xl:grid-cols-3">
-                {rows.map((client) => (
-                  <Link
-                    key={client.id}
-                    href={`/clients/${client.id}`}
-                    className="surface-card hover:bg-hover-subtle rounded-spacing-3 border-border p-spacing-4 border transition-colors"
-                  >
-                    <div className="gap-spacing-3 flex items-start">
-                      <div className="bg-secondary h-spacing-10 w-spacing-10 rounded-spacing-2 flex shrink-0 items-center justify-center overflow-hidden">
-                        {client.logo_url ? (
-                          <Image
-                            src={client.logo_url}
-                            alt=""
-                            width={40}
-                            height={40}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span className="body-2 text-foreground font-semibold">
-                            {(client.display_name || client.name).slice(0, 1).toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="body-2 text-foreground truncate font-semibold">
-                          {client.display_name || client.name}
-                        </h3>
-                        <p className="body-4 text-muted-foreground truncate">
-                          {client.account_manager?.name || 'Unassigned'}
-                        </p>
-                      </div>
-                      <span className="body-4 bg-secondary text-muted-foreground rounded-spacing-4 px-spacing-2 py-spacing-1 capitalize">
-                        {client.pipeline_stage || client.status}
-                      </span>
-                    </div>
-                    {client.overview ? (
-                      <p className="body-3 text-muted-foreground mt-spacing-3 line-clamp-2">
-                        {client.overview}
-                      </p>
-                    ) : null}
-                    <div className="body-4 text-muted-foreground mt-spacing-4 gap-spacing-4 border-border pt-spacing-3 flex border-t">
-                      <span>{client.counts?.campaigns ?? 0} campaigns</span>
-                      <span>{client.counts?.open_tasks ?? 0} tasks</span>
-                      <span>{client.counts?.open_requests ?? 0} requests</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      ) : null}
+      {!loading && !error ? <AgencyClientsTable groups={groups} /> : null}
     </main>
   )
 }

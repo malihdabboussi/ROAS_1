@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 const migrationPath = resolve(
   process.cwd(),
-  '../../supabase/migrations/20260812180000_allow_integration_needs_reconnect_status.sql',
+  '../../supabase/migrations/20260812180100_allow_integration_needs_reconnect_status.sql',
 )
 
 const migrationOrderPath = resolve(process.cwd(), '../../scripts/roas/migration-order.txt')
@@ -32,6 +32,6 @@ describe('allow integration needs_reconnect status migration', () => {
   it('is registered in the migration apply order', () => {
     const order = readFileSync(migrationOrderPath, 'utf8')
 
-    expect(order).toContain('20260812180000_allow_integration_needs_reconnect_status.sql')
+    expect(order).toContain('20260812180100_allow_integration_needs_reconnect_status.sql')
   })
 })

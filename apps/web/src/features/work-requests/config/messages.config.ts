@@ -1,0 +1,17 @@
+export const WORK_REQUEST_MESSAGES = {
+  loading: 'Getting your Service Request ready…',
+  invalidTitle: 'LINK UNAVAILABLE',
+  invalidBody: 'This Service Request review link is not valid.',
+  expiredTitle: 'REVIEW LINK EXPIRED',
+  expiredBody: 'Ask for a fresh review link in the original conversation.',
+  revokedTitle: 'REVIEW LINK REPLACED',
+  revokedBody: 'Use the newest review link from the original conversation.',
+  refreshRequiredTitle: 'FRESH LINK NEEDED',
+  refreshRequiredBody: 'I kept the draft safe. Ask for a new secure link in the original thread.',
+  finalizedTitle: 'SERVICE REQUEST SUBMITTED',
+  finalizedBody: 'Your request is now a native ROAS task.',
+  mirrorPending: 'The ROAS task is saved. The ClickUp mirror still needs another try.',
+  saved: 'All set — your draft changes are saved.',
+  saving: 'Saving your changes…',
+  submitting: 'Creating the ROAS task…',
+} as const

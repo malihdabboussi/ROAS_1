@@ -12,6 +12,31 @@ export type AgencyClient = {
   overview?: string | null
   happy_factor?: number | null
   account_manager?: { id: string; name: string; email: string | null } | null
+  drive_link?: string | null
+  slack_channel_url?: string | null
+  clickup_url?: string | null
+  clickup_task_id?: string | null
+  project_tracker_list_id?: string | null
+  form_submitted_at?: string | null
+  has_ai_analysis?: boolean | null
+  slack_invite_status?: string | null
+  ghl_not_needed?: boolean | null
+  ghl_access_granted?: boolean | null
+  ghl_account_status?: string | null
+  ghl_a2p_status?: string | null
+  onboarding_call_completed_at?: string | null
+  latest_slack_message?: string | null
+  latest_slack_message_at?: string | null
+  weekly_update?: {
+    week_start?: string | null
+    status_color?: string | null
+    current_work?: string | null
+    current_progress?: string | null
+    eow_status_color?: string | null
+    eow_what_we_did?: string | null
+    eow_carry_over?: string | null
+    updated_at?: string | null
+  } | null
   counts?: { campaigns: number; open_tasks: number; open_requests: number }
   mapping?: {
     campaign_id: string
@@ -38,7 +63,14 @@ export type AgencyClientCampaign = {
   currency: string | null
   next_action: string | null
   roas_space_id?: string | null
-  clients?: { id: string; name: string; friendly_name?: string | null }
+  clients?: {
+    id: string
+    name: string
+    friendly_name?: string | null
+    assigned_user_id?: string | null
+    assignee_name?: string | null
+    assignee_email?: string | null
+  }
   [key: string]: unknown
 }
 
@@ -47,6 +79,10 @@ export type AgencyClientWorkspace = {
   campaigns: AgencyClientCampaign[]
   tasks: Array<Record<string, unknown>>
   requests: Array<Record<string, unknown>>
+  meetings?: {
+    notes: Array<Record<string, unknown>>
+    agendas: Array<Record<string, unknown>>
+  }
   mapping: AgencyClient['mapping']
   campaign_spaces: Array<{
     page_grader_campaign_id: string

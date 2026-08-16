@@ -18,9 +18,18 @@ import { CampaignCanvasView } from '@/components/canvas'
 import { LucideIcon } from '@/components/ui/IconPicker'
 import { Tabs, TabsContent } from '@/components/ui/navigation/tabs'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import type { CampaignPatch } from '@/features/agency-clients/AgencyCampaignEditPanel'
+import { AgencyClientCampaignsPanel } from '@/features/agency-clients/AgencyClientCampaignsPanel'
+import { AgencyClientMeetingsPanel } from '@/features/agency-clients/AgencyClientMeetingsPanel'
+import { AgencyClientWorkspaceOverview } from '@/features/agency-clients/AgencyClientWorkspaceOverview'
 import { updateCampaign } from '@/features/studio/services/campaign.service'
 import { CampaignTeamManageModal } from '@/features/team/components/CampaignTeamManageModal'
 import { useUserRole } from '@/hooks/use-user-role'
+import {
+  fetchAgencyClient,
+  updateAgencyWorkspaceEntity,
+  type AgencyClientWorkspace,
+} from '@/lib/agency-clients'
 import { CampaignHeader } from './_components/CampaignHeader'
 import { CampaignAssetsTab } from './_components/tabs/CampaignAssetsTab'
 import { CampaignDashboardTab } from './_components/tabs/CampaignDashboardTab'
@@ -31,8 +40,8 @@ import { CampaignTaskTab } from './_components/tabs/CampaignTaskTab'
 import { useCampaignAutosave } from './_hooks/use-campaign-autosave'
 import { useCampaignDetailData } from './_hooks/use-campaign-detail-data'
 import {
-  CAMPAIGN_TAB_LABELS,
   CAMPAIGN_TAB_ICONS,
+  CAMPAIGN_TAB_LABELS,
   DEFAULT_CAMPAIGN_TAB,
   normalizeCampaignTabId,
   readVisibleCampaignTabs,
@@ -50,6 +59,17 @@ const MOBILE_TAB_ICONS: Partial<Record<ToggleableCampaignTabId, typeof BarChart3
   knowledge: BookOpen,
   reporting: PieChart,
 }
+
+const CLIENT_WORKSPACE_NAV_TABS = [
+  { value: 'overview', label: 'Overview', icon: 'layout-grid' },
+  { value: 'dashboard', label: 'Campaigns', icon: 'folder-kanban' },
+  { value: 'list', label: 'Tasks & Requests', icon: 'list' },
+  { value: 'reporting', label: 'Performance', icon: 'pie-chart' },
+  { value: 'calendar', label: 'Meetings', icon: 'calendar-days' },
+  { value: 'knowledge', label: 'Brain', icon: 'brain' },
+] as const
+
+const CLIENT_WORKSPACE_TAB_IDS = new Set<string>(CLIENT_WORKSPACE_NAV_TABS.map((tab) => tab.value))
 
 function resolveTabFromSearch(viewParam: string | null, tabParam: string | null): string {
   const normalized =
@@ -76,6 +96,11 @@ export default function CampaignDetailPage() {
   const [offerPage, setOfferPage] = useState(0)
   const [avatarPage, setAvatarPage] = useState(0)
   const [teamModalOpen, setTeamModalOpen] = useState(false)
+  const [clientWorkspace, setClientWorkspace] = useState<AgencyClientWorkspace | null>(null)
+  const [clientWorkspaceLoading, setClientWorkspaceLoading] = useState(false)
+  const [clientWorkspaceError, setClientWorkspaceError] = useState<string | null>(null)
+  const [editingClientCampaignId, setEditingClientCampaignId] = useState<string | null>(null)
+  const [updatingClientCampaignId, setUpdatingClientCampaignId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!chartDropdownOpen && !timeframeDropdownOpen) return
@@ -124,6 +149,40 @@ export default function CampaignDetailPage() {
     detail.dataReadyRef.current,
   )
 
+  const pageGraderClientId = useMemo(() => {
+    const routeClientId = searchParams.get('client')?.trim()
+    if (routeClientId) return routeClientId
+    const config = recordValue(detail.campaign?.config)
+    const externalSources = recordValue(config.external_sources)
+    return stringValue(recordValue(externalSources.page_grader).client_id)
+  }, [detail.campaign?.config, searchParams])
+  const isClientWorkspace = Boolean(pageGraderClientId)
+
+  useEffect(() => {
+    if (!pageGraderClientId) {
+      setClientWorkspace(null)
+      setClientWorkspaceError(null)
+      return
+    }
+    let cancelled = false
+    setClientWorkspaceLoading(true)
+    setClientWorkspaceError(null)
+    void fetchAgencyClient(pageGraderClientId, false)
+      .then((workspace) => {
+        if (!cancelled) setClientWorkspace(workspace)
+      })
+      .catch((reason) => {
+        if (cancelled) return
+        setClientWorkspaceError(reason instanceof Error ? reason.message : 'Could not load client')
+      })
+      .finally(() => {
+        if (!cancelled) setClientWorkspaceLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [pageGraderClientId])
+
   useEffect(() => {
     const current = resolveTabFromSearch(searchParams.get('view'), searchParams.get('tab'))
     if (searchParams.get('tab') && !searchParams.get('view')) {
@@ -132,6 +191,13 @@ export default function CampaignDetailPage() {
     }
     if (!detail.campaign) {
       setActiveTab(current)
+      return
+    }
+
+    if (isClientWorkspace) {
+      const next = CLIENT_WORKSPACE_TAB_IDS.has(current) ? current : DEFAULT_CAMPAIGN_TAB
+      if (next !== current) handleTabChange(next)
+      else setActiveTab(next)
       return
     }
 
@@ -145,7 +211,7 @@ export default function CampaignDetailPage() {
       return
     }
     setActiveTab(current)
-  }, [detail.campaign, searchParams, handleTabChange])
+  }, [detail.campaign, searchParams, handleTabChange, isClientWorkspace])
 
   const handleThemeChange = useCallback(
     async (themeId: string | null) => {
@@ -188,21 +254,31 @@ export default function CampaignDetailPage() {
     [activeTab, detail.campaign, detail.load, handleTabChange, id],
   )
 
-  const headerNavTabs = useMemo(() => {
-    return visibleNavIds.map((tabId) => ({
-      value: tabId,
-      label: CAMPAIGN_TAB_LABELS[tabId],
-      icon: CAMPAIGN_TAB_ICONS[tabId],
-    }))
-  }, [visibleNavIds])
+  const headerNavTabs = useMemo(
+    () =>
+      isClientWorkspace
+        ? [...CLIENT_WORKSPACE_NAV_TABS]
+        : visibleNavIds.map((tabId) => ({
+            value: tabId,
+            label: CAMPAIGN_TAB_LABELS[tabId],
+            icon: CAMPAIGN_TAB_ICONS[tabId],
+          })),
+    [isClientWorkspace, visibleNavIds],
+  )
 
-  const mobileTabsVisible = useMemo(() => {
-    return visibleNavIds.map((tabId) => ({
-      value: tabId,
-      label: CAMPAIGN_TAB_LABELS[tabId],
-      icon: MOBILE_TAB_ICONS[tabId] ?? LayoutGrid,
-    }))
-  }, [visibleNavIds])
+  const mobileTabsVisible = useMemo(
+    () =>
+      (isClientWorkspace ? CLIENT_WORKSPACE_NAV_TABS : visibleNavIds).map((tab) => {
+        const tabId = typeof tab === 'string' ? tab : tab.value
+        const label = typeof tab === 'string' ? CAMPAIGN_TAB_LABELS[tab] : tab.label
+        return {
+          value: tabId,
+          label,
+          icon: MOBILE_TAB_ICONS[tabId as ToggleableCampaignTabId] ?? LayoutGrid,
+        }
+      }),
+    [isClientWorkspace, visibleNavIds],
+  )
 
   const handleManageTeam = useCallback(() => {
     setTeamModalOpen(true)
@@ -215,6 +291,42 @@ export default function CampaignDetailPage() {
     if (detail.theme) parts.push('brand theme')
     return parts.length > 0 ? parts.join(', ') : ''
   }, [detail.offers.length, detail.avatars.length, detail.theme])
+
+  const clientSpaceByCampaign = useMemo(
+    () =>
+      new Map(
+        clientWorkspace?.campaign_spaces.map((row) => [
+          row.page_grader_campaign_id,
+          row.space_id,
+        ]) ?? [],
+      ),
+    [clientWorkspace],
+  )
+
+  const updateClientCampaign = useCallback(
+    async (clientCampaignId: string, patch: CampaignPatch) => {
+      if (!pageGraderClientId) return
+      setUpdatingClientCampaignId(clientCampaignId)
+      setClientWorkspaceError(null)
+      try {
+        await updateAgencyWorkspaceEntity(pageGraderClientId, {
+          kind: 'campaign',
+          entity_id: clientCampaignId,
+          patch,
+        })
+        const refreshed = await fetchAgencyClient(pageGraderClientId, false)
+        setClientWorkspace(refreshed)
+        setEditingClientCampaignId(null)
+      } catch (reason) {
+        setClientWorkspaceError(
+          reason instanceof Error ? reason.message : 'Could not update client campaign',
+        )
+      } finally {
+        setUpdatingClientCampaignId(null)
+      }
+    },
+    [pageGraderClientId],
+  )
 
   if (detail.loading || roleLoading) {
     return (
@@ -306,37 +418,68 @@ export default function CampaignDetailPage() {
             onRetrySave={autosave.performSave}
             visibleTabIds={visibleNavIds}
             onVisibleTabIdsChange={(tabs) => void handleVisibleTabIdsChange(tabs)}
+            fixedTabs={isClientWorkspace}
           />
         )}
 
         <TabsContent value="overview" className="animate-tab-enter">
-          <CampaignOverviewTab
-            campaignId={id}
-            campaignName={detail.campaign.name}
-            dashboardMissions={detail.dashboardMissions}
-            dashboardAgents={detail.dashboardAgents}
-            campaignTeam={detail.campaignTeam}
-            onOpenTab={(tab) => handleTabChange(tab)}
-            onManageTeam={handleManageTeam}
-          />
+          {isClientWorkspace ? (
+            clientWorkspaceLoading && !clientWorkspace ? (
+              <VibeyLoadingOrb text="Loading client workspace…" state="processing" />
+            ) : clientWorkspaceError && !clientWorkspace ? (
+              <p className="surface-card body-2 text-destructive rounded-spacing-3 p-spacing-4">
+                {clientWorkspaceError}
+              </p>
+            ) : clientWorkspace ? (
+              <AgencyClientWorkspaceOverview
+                campaignId={id}
+                workspace={clientWorkspace}
+                onOpenTasks={() => handleTabChange('list')}
+              />
+            ) : null
+          ) : (
+            <CampaignOverviewTab
+              campaignId={id}
+              campaignName={detail.campaign.name}
+              dashboardMissions={detail.dashboardMissions}
+              dashboardAgents={detail.dashboardAgents}
+              campaignTeam={detail.campaignTeam}
+              onOpenTab={(tab) => handleTabChange(tab)}
+              onManageTeam={handleManageTeam}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="dashboard" className="animate-tab-enter">
-          <CampaignDashboardTab
-            campaignId={id}
-            campaignName={detail.campaign.name}
-            dashboardMissions={detail.dashboardMissions}
-            dashboardAgents={detail.dashboardAgents}
-            onTeamChange={detail.load}
-            completionChartType={completionChartType}
-            setCompletionChartType={setCompletionChartType}
-            chartDropdownOpen={chartDropdownOpen}
-            setChartDropdownOpen={setChartDropdownOpen}
-            completionDays={completionDays}
-            setCompletionDays={setCompletionDays}
-            timeframeDropdownOpen={timeframeDropdownOpen}
-            setTimeframeDropdownOpen={setTimeframeDropdownOpen}
-          />
+          {isClientWorkspace && clientWorkspace && pageGraderClientId ? (
+            <AgencyClientCampaignsPanel
+              clientId={pageGraderClientId}
+              client={clientWorkspace.client}
+              campaigns={clientWorkspace.campaigns}
+              spaceByCampaign={clientSpaceByCampaign}
+              editingCampaignId={editingClientCampaignId}
+              updatingId={updatingClientCampaignId}
+              onEdit={setEditingClientCampaignId}
+              onCancel={() => setEditingClientCampaignId(null)}
+              onSave={updateClientCampaign}
+            />
+          ) : (
+            <CampaignDashboardTab
+              campaignId={id}
+              campaignName={detail.campaign.name}
+              dashboardMissions={detail.dashboardMissions}
+              dashboardAgents={detail.dashboardAgents}
+              onTeamChange={detail.load}
+              completionChartType={completionChartType}
+              setCompletionChartType={setCompletionChartType}
+              chartDropdownOpen={chartDropdownOpen}
+              setChartDropdownOpen={setChartDropdownOpen}
+              completionDays={completionDays}
+              setCompletionDays={setCompletionDays}
+              timeframeDropdownOpen={timeframeDropdownOpen}
+              setTimeframeDropdownOpen={setTimeframeDropdownOpen}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="list" className="animate-tab-enter">
@@ -348,7 +491,11 @@ export default function CampaignDetailPage() {
         </TabsContent>
 
         <TabsContent value="calendar" className="animate-tab-enter">
-          <CampaignTaskTab campaignId={id} view="calendar" />
+          {isClientWorkspace && clientWorkspace ? (
+            <AgencyClientMeetingsPanel campaignId={id} workspace={clientWorkspace} />
+          ) : (
+            <CampaignTaskTab campaignId={id} view="calendar" />
+          )}
         </TabsContent>
 
         <TabsContent value="canvas" className="animate-tab-enter flex min-h-0 flex-1">
@@ -360,19 +507,22 @@ export default function CampaignDetailPage() {
         </TabsContent>
 
         <TabsContent value="knowledge" className="animate-tab-enter">
-          <CampaignKnowledgeTab
-            campaignId={id}
-            offers={detail.offers}
-            avatars={detail.avatars}
-            theme={detail.theme}
-            onThemeChange={handleThemeChange}
-            offerPage={offerPage}
-            setOfferPage={setOfferPage}
-            avatarPage={avatarPage}
-            setAvatarPage={setAvatarPage}
-            dashboardAgents={detail.dashboardAgents}
-            onManageTeam={handleManageTeam}
-          />
+          <div className="gap-spacing-6 flex flex-col">
+            {isClientWorkspace ? <CampaignAssetsTab campaignId={id} /> : null}
+            <CampaignKnowledgeTab
+              campaignId={id}
+              offers={detail.offers}
+              avatars={detail.avatars}
+              theme={detail.theme}
+              onThemeChange={handleThemeChange}
+              offerPage={offerPage}
+              setOfferPage={setOfferPage}
+              avatarPage={avatarPage}
+              setAvatarPage={setAvatarPage}
+              dashboardAgents={detail.dashboardAgents}
+              onManageTeam={handleManageTeam}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="reporting" className="animate-tab-enter min-h-0">
@@ -392,4 +542,14 @@ export default function CampaignDetailPage() {
       />
     </div>
   )
+}
+
+function recordValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
+}
+
+function stringValue(value: unknown) {
+  return typeof value === 'string' ? value.trim() : ''
 }

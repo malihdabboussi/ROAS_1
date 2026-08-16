@@ -1,0 +1,135 @@
+import { createHash, randomBytes } from 'node:crypto'
+import type { WorkRequestDraftRow } from '../repositories/work-request.repository'
+
+export type WorkRequestScopeOption = {
+  id: string
+  name: string
+  externalClientId: string
+  generalSpaceId: string | null
+}
+
+export type WorkRequestSpaceOption = {
+  id: string
+  name: string
+  clientWorkspaceId: string
+  externalCampaignId: string
+}
+
+export function publicWorkRequestOptions(options: {
+  clients: WorkRequestScopeOption[]
+  spaces: WorkRequestSpaceOption[]
+}) {
+  return {
+    client_workspaces: options.clients.map(({ id, name }) => ({ id, name })),
+    campaign_spaces: options.spaces.map(({ id, name, clientWorkspaceId }) => ({
+      id,
+      name,
+      client_workspace_id: clientWorkspaceId,
+    })),
+  }
+}
+
+export function generateWorkRequestReviewToken(): string {
+  return randomBytes(32).toString('base64url')
+}
+
+export function hashWorkRequestReviewToken(token: string): string {
+  return createHash('sha256').update(token, 'utf8').digest('hex')
+}
+
+export function sanitizeWorkRequestDraft(draft: WorkRequestDraftRow) {
+  const structured = asRecord(draft.structured_fields)
+  return {
+    id: draft.id,
+    client_workspace_id: draft.campaign_id,
+    campaign_space_id: draft.campaign_space_id,
+    request_type: draft.request_type,
+    assignee_name: draft.assignee_name,
+    title: draft.title,
+    description: draft.description,
+    due_date: draft.due_at?.slice(0, 10) ?? null,
+    priority: draft.priority,
+    structured_fields: structured,
+    links: Array.isArray(structured.links) ? structured.links : [],
+    required_fields: draft.required_fields,
+    missing_fields: draft.missing_fields,
+    assets: draft.assets,
+    dependencies: draft.dependencies,
+    requester: {
+      name:
+        typeof draft.requester_metadata?.name === 'string' ? draft.requester_metadata.name : null,
+    },
+    status: draft.status,
+    expires_at: draft.review_token_expires_at,
+    final_task_id: draft.final_space_item_id,
+    sync_status: draft.sync_status,
+    task_url: draft.final_space_item_id
+      ? `/spaces?space=${encodeURIComponent(draft.campaign_space_id ?? stringValue(asRecord(draft.routing).general_space_id))}&item=${encodeURIComponent(draft.final_space_item_id)}`
+      : null,
+    clickup_url:
+      typeof draft.clickup_receipt?.task_url === 'string' ? draft.clickup_receipt.task_url : null,
+  }
+}
+
+export function buildWorkRequestWebhookResult(
+  draft: WorkRequestDraftRow,
+  token: string | null,
+  appUrl: string,
+  state: string,
+) {
+  return {
+    draft_id: draft.id,
+    review_url: token ? `${appUrl.replace(/\/+$/, '')}/request-review/${token}` : null,
+    expires_at: draft.review_token_expires_at,
+    status: draft.status,
+    state,
+    client: {
+      id: draft.page_grader_external_client_id,
+      name: stringValue(asRecord(draft.routing).page_grader_client_name) || null,
+    },
+    campaign: draft.page_grader_external_campaign_id
+      ? {
+          id: draft.page_grader_external_campaign_id,
+          name: stringValue(asRecord(draft.routing).page_grader_campaign_name) || null,
+        }
+      : null,
+    missing_fields: draft.missing_fields,
+    replayed: state !== 'created',
+  }
+}
+
+export function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
+}
+
+export function stringValue(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+export function schemaData(value: unknown) {
+  const custom = asRecord(asRecord(asRecord(value).schema).custom_data)
+  return {
+    space_role: stringValue(custom.space_role),
+    page_grader_client_id: stringValue(custom.page_grader_client_id),
+    page_grader_campaign_id: stringValue(custom.page_grader_campaign_id),
+  }
+}
+
+export function isMissing(value: unknown): boolean {
+  return (
+    value == null ||
+    (typeof value === 'string' && !value.trim()) ||
+    (Array.isArray(value) && value.length === 0)
+  )
+}
+
+export function safeWorkRequestError(error: unknown): string {
+  return (error instanceof Error ? error.message : String(error))
+    .replace(
+      /\b(api[_-]?key|authorization|bearer|access[_-]?token|secret|password)(\s*[:=]\s*)[^\s,;]+/gi,
+      '$1$2[redacted]',
+    )
+    .slice(0, 4000)
+}

@@ -2,11 +2,11 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, FolderKanban, PanelRightOpen, Search } from 'lucide-react'
+import { ExternalLink, FolderKanban, PanelRightOpen, Search } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { fetchAgencyClientCampaigns, type AgencyClientCampaign } from '@/lib/agency-clients'
 import { cn } from '@/lib/utils/cn'
-import { formatAgencyBudget, formatAgencyDate } from './agency-client-format'
+import { formatAgencyDate } from './agency-client-format'
 import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
 
 type ViewMode = 'all' | 'client'
@@ -122,63 +122,96 @@ export function ClientCampaignsPage() {
                 <span className="body-4 text-muted-foreground">{rows.length}</span>
               </div>
               <div className="surface-card rounded-spacing-3 border-border overflow-hidden border">
-                <div className="body-4 text-muted-foreground gap-spacing-3 border-border bg-secondary px-spacing-4 py-spacing-2 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] border-b">
-                  <span>Campaign</span>
-                  <span>Date / event</span>
-                  <span>Budget</span>
-                  <span>Status</span>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="body-4 text-muted-foreground border-border bg-secondary border-b text-left">
+                        <th className="px-spacing-4 py-spacing-3 font-medium">Stage</th>
+                        <th className="px-spacing-4 py-spacing-3 font-medium">Campaign Name</th>
+                        <th className="px-spacing-4 py-spacing-3 font-medium">Type</th>
+                        <th className="px-spacing-4 py-spacing-3 font-medium">Created By</th>
+                        <th className="px-spacing-4 py-spacing-3 font-medium">Account Manager</th>
+                        <th className="px-spacing-4 py-spacing-3 font-medium">Client</th>
+                        <th className="px-spacing-4 py-spacing-3 font-medium">Launch Day</th>
+                        <th className="px-spacing-4 py-spacing-3 text-right font-medium">
+                          Options
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((campaign) => {
+                        const clientName =
+                          campaign.clients?.friendly_name || campaign.clients?.name || 'Client'
+                        return (
+                          <tr
+                            key={campaign.id}
+                            className="hover:bg-hover-subtle border-border border-b last:border-b-0"
+                          >
+                            <td className="px-spacing-4 py-spacing-3 align-top">
+                              <span className="body-4 bg-secondary text-muted-foreground px-spacing-2 py-spacing-1 inline-flex whitespace-nowrap rounded-full capitalize">
+                                {readable(campaign.status || campaign.platform_status)}
+                              </span>
+                            </td>
+                            <td className="px-spacing-4 py-spacing-3 align-top">
+                              {campaign.roas_space_id ? (
+                                <Link
+                                  href={`/spaces?space=${encodeURIComponent(campaign.roas_space_id)}`}
+                                  className="body-3 text-foreground hover:text-primary font-medium"
+                                >
+                                  {campaign.name}
+                                </Link>
+                              ) : (
+                                <span className="body-3 text-foreground font-medium">
+                                  {campaign.name}
+                                </span>
+                              )}
+                            </td>
+                            <td className="body-3 text-muted-foreground px-spacing-4 py-spacing-3 whitespace-nowrap align-top capitalize">
+                              {readable(String(campaign.campaign_type || 'Not set'))}
+                            </td>
+                            <td className="body-3 text-muted-foreground px-spacing-4 py-spacing-3 whitespace-nowrap align-top">
+                              {String(campaign.created_by_name || 'Portal')}
+                            </td>
+                            <td className="body-3 text-muted-foreground px-spacing-4 py-spacing-3 whitespace-nowrap align-top">
+                              {campaign.clients?.assignee_name ||
+                                campaign.clients?.assignee_email ||
+                                'Unassigned'}
+                            </td>
+                            <td className="body-3 text-muted-foreground px-spacing-4 py-spacing-3 whitespace-nowrap align-top">
+                              {clientName}
+                            </td>
+                            <td className="body-3 text-muted-foreground px-spacing-4 py-spacing-3 whitespace-nowrap align-top">
+                              {formatAgencyDate(campaign.start_date)}
+                            </td>
+                            <td className="px-spacing-4 py-spacing-3 align-top">
+                              <div className="flex justify-end">
+                                <Link
+                                  href={
+                                    campaign.roas_space_id
+                                      ? `/spaces?space=${encodeURIComponent(campaign.roas_space_id)}`
+                                      : `/client-campaigns?surface=portal&portal_path=${encodeURIComponent(`/campaigns/${campaign.id}`)}`
+                                  }
+                                  aria-label={`Open ${campaign.name}`}
+                                  className="btn-icon-bare hover:bg-hover-subtle text-muted-foreground hover:text-foreground"
+                                >
+                                  <ExternalLink className="icon-sm" />
+                                </Link>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-                {rows.map((campaign) => {
-                  const content = (
-                    <>
-                      <div className="min-w-0">
-                        <p className="body-3 text-foreground truncate font-medium">
-                          {campaign.name}
-                        </p>
-                        <p className="body-4 text-muted-foreground truncate">
-                          {campaign.clients?.friendly_name || campaign.clients?.name || 'Client'}
-                        </p>
-                      </div>
-                      <span className="body-3 text-muted-foreground gap-spacing-1 flex items-center">
-                        <CalendarDays className="icon-xs" />
-                        {formatAgencyDate(campaign.event_date || campaign.start_date)}
-                      </span>
-                      <span className="body-3 text-muted-foreground">
-                        {formatAgencyBudget(
-                          campaign.budget_amount,
-                          campaign.currency,
-                          campaign.budget_type,
-                        )}
-                      </span>
-                      <span className="body-3 text-muted-foreground capitalize">
-                        {campaign.status || campaign.platform_status}
-                      </span>
-                    </>
-                  )
-                  const cls =
-                    'hover:bg-hover-subtle grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-spacing-3 border-b border-border px-spacing-4 py-spacing-3 last:border-b-0'
-                  return campaign.roas_space_id ? (
-                    <Link
-                      key={campaign.id}
-                      href={`/spaces?space=${campaign.roas_space_id}`}
-                      className={cls}
-                    >
-                      {content}
-                    </Link>
-                  ) : (
-                    <Link
-                      key={campaign.id}
-                      href={`/client-campaigns?surface=portal&portal_path=${encodeURIComponent(`/campaigns/${campaign.id}`)}`}
-                      className={cls}
-                    >
-                      {content}
-                    </Link>
-                  )
-                })}
               </div>
             </section>
           ))
         : null}
     </main>
   )
+}
+
+function readable(value: string) {
+  return value.replace(/[_-]/g, ' ').toLowerCase()
 }

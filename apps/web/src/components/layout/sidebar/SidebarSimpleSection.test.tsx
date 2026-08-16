@@ -50,10 +50,6 @@ vi.mock('./SidebarHqHubLogoButton', () => ({
 vi.mock('./SidebarHqMoreFlyoutBody', () => ({
   SidebarHqMoreFlyoutBody: () => <div>More flyout</div>,
 }))
-vi.mock('./SidebarSimpleProgramsMenu', () => ({
-  SidebarSimpleProgramsMenu: () => <button type="button">Programs</button>,
-}))
-
 describe('SidebarSimpleSection', () => {
   beforeEach(() => {
     useShellMenuDock.setState({ menuStyle: 'simple', menuCompact: false })
@@ -64,7 +60,7 @@ describe('SidebarSimpleSection', () => {
 
   afterEach(cleanup)
 
-  it('combines new chat, primary navigation, favorites, Programs, More, and chats', () => {
+  it('combines new chat, primary navigation, favorites, More, and chats', () => {
     render(<SidebarSimpleSection c={makeSidebarHqController()} />)
 
     expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument()
@@ -77,8 +73,8 @@ describe('SidebarSimpleSection', () => {
       'href',
       '/client-campaigns',
     )
+    expect(screen.getByRole('link', { name: 'All Tasks' })).toHaveAttribute('href', '/all-tasks')
     expect(screen.getByText('Favorites')).toBeInTheDocument()
-    expect(screen.getByText('Programs')).toBeInTheDocument()
     expect(screen.getByText('More')).toBeInTheDocument()
     expect(screen.getByText('Chat history')).toBeInTheDocument()
   })
