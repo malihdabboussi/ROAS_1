@@ -66,13 +66,43 @@ describe('McpOAuthService resource normalization', () => {
       redirect_uri: 'cursor://anysphere.cursor-mcp/oauth/callback',
       code_challenge: 'a'.repeat(43),
       code_challenge_method: 'S256',
-      resource: 'https://mcp.vibey.im/',
+      resource: 'https://mcp.roas.io/',
     })
 
     expect(url).toContain('/mcp/consent?')
     expect(insertQuery.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ resource: 'https://mcp.vibey.im' }),
+      expect.objectContaining({ resource: 'https://mcp.roas.io' }),
     )
+  })
+
+  it('rejects the retired Vibey MCP resource URL', async () => {
+    const clientRow = {
+      client_id: 'client-1',
+      client_name: 'Cursor',
+      client_uri: null,
+      logo_uri: null,
+      redirect_uris: ['cursor://anysphere.cursor-mcp/oauth/callback'],
+      is_enabled: true,
+      metadata: {},
+    }
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === 'mcp_oauth_clients') return createQuery({ data: clientRow, error: null })
+        return createQuery({ error: null })
+      }),
+    }
+    const service = createService(supabase)
+
+    await expect(
+      service.startAuthorization({
+        response_type: 'code',
+        client_id: 'client-1',
+        redirect_uri: 'cursor://anysphere.cursor-mcp/oauth/callback',
+        code_challenge: 'a'.repeat(43),
+        code_challenge_method: 'S256',
+        resource: 'https://mcp.vibey.im',
+      }),
+    ).rejects.toThrow(/Invalid resource/i)
   })
 })
 
@@ -100,7 +130,7 @@ describe('McpOAuthService client metadata handling', () => {
         redirect_uri: 'https://client.example/callback',
         code_challenge: 'a'.repeat(43),
         code_challenge_method: 'S256',
-        resource: 'https://mcp.vibey.im',
+        resource: 'https://mcp.roas.io',
       }),
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(fetchSpy).not.toHaveBeenCalled()
@@ -172,7 +202,7 @@ describe('McpOAuthService token replay protection', () => {
       id: 'code-1',
       client_id: 'client-1',
       redirect_uri: 'https://client.example/callback',
-      resource: 'https://mcp.vibey.im',
+      resource: 'https://mcp.roas.io',
       code_challenge: 'challenge',
       consumed_at: null,
       expires_at: new Date(Date.now() + 60_000).toISOString(),
@@ -204,7 +234,7 @@ describe('McpOAuthService token replay protection', () => {
         code: 'code-value',
         redirect_uri: 'https://client.example/callback',
         code_verifier: 'verifier',
-        resource: 'https://mcp.vibey.im',
+        resource: 'https://mcp.roas.io',
       }),
     ).rejects.toThrow(/consumed|invalid/i)
 
@@ -220,7 +250,7 @@ describe('McpOAuthService token replay protection', () => {
       org_id: null,
       consent_id: 'consent-1',
       scopes: ['mcp.v1'],
-      resource: 'https://mcp.vibey.im',
+      resource: 'https://mcp.roas.io',
       revoked_at: null,
       refresh_expires_at: new Date(Date.now() + 60_000).toISOString(),
     }
@@ -243,7 +273,7 @@ describe('McpOAuthService token replay protection', () => {
         grant_type: 'refresh_token',
         client_id: 'client-1',
         refresh_token: 'refresh-token',
-        resource: 'https://mcp.vibey.im',
+        resource: 'https://mcp.roas.io',
       }),
     ).rejects.toThrow(/refresh token|revoked|invalid/i)
 

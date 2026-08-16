@@ -1,5 +1,15 @@
 # Changelog - August 15, 2026
 
+## [2026-08-15 17:34] - [FIX]
+
+What: Pointed MCP OAuth tests at `mcp.roas.io` and added a regression that rejects the retired `mcp.vibey.im` resource URL.
+
+Why: The hosted MCP resource is now `https://mcp.roas.io`, but authorization tests still treated the old Vibey hostname as a valid resource.
+
+Impact: OAuth resource normalization tests match production, and reconnecting with `mcp.vibey.im` is rejected.
+
+Files: `apps/api/src/modules/mcp/mcp-oauth.service.test.ts`
+
 ## [2026-08-15 16:52] - [DOCS]
 
 What: Rebranded the hosted MCP connection guide and smoke matrix from Vibey to ROAS, replacing the retired `mcp.vibey.im` endpoint with `mcp.roas.io` across supported client instructions.
