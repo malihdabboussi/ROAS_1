@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronRight, Circle, CircleCheck, CircleSlash, Rocket, UserRound } from 'lucide-react'
+import { ChevronRight, Circle, CircleCheck, CircleSlash, UserRound } from 'lucide-react'
 import {
   fetchMissionById,
   fetchSubtasks,
@@ -49,8 +49,9 @@ function StepBadge({ subtask, index }: { subtask: MissionSubtask; index: number 
       <span
         className={cn(
           base,
-          isBlockingHumanGate(subtask) ? 'bg-primary text-primary' : 'bg-secondary',
-          isBlockingHumanGate(subtask) ? '' : 'text-muted-foreground',
+          isBlockingHumanGate(subtask)
+            ? 'text-primary'
+            : 'bg-secondary text-muted-foreground',
         )}
         role="img"
         aria-label={SHELL_RIGHT_PANEL_MESSAGES.progressGateStepLabel}
@@ -157,7 +158,7 @@ export function ShellRightPanelProgress({ missions }: { missions: ConversationMi
   }, [expanded, loadSubtasks, subtasksByMission])
 
   if (missions.length === 0) {
-    return <ShellRightPanelEmpty icon={Rocket} message={SHELL_RIGHT_PANEL_MESSAGES.progressEmpty} />
+    return <ShellRightPanelEmpty art="missions" message={SHELL_RIGHT_PANEL_MESSAGES.progressEmpty} />
   }
 
   return (

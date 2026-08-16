@@ -8,7 +8,7 @@ import {
   ImageIcon,
   LocateFixed,
   MoreHorizontal,
-  Sparkles,
+  Rocket,
   Video,
 } from 'lucide-react'
 import {
@@ -124,7 +124,7 @@ export function ShellRightPanelFiles({
         <p className="body-3 text-destructive">{SHELL_RIGHT_PANEL_MESSAGES.chatFilesError}</p>
       ) : null}
       {empty ? (
-        <ShellRightPanelEmpty icon={Sparkles} message={SHELL_RIGHT_PANEL_MESSAGES.chatFilesEmpty} />
+        <ShellRightPanelEmpty art="outputs" message={SHELL_RIGHT_PANEL_MESSAGES.chatFilesEmpty} />
       ) : null}
 
       <ul className="space-y-spacing-1">
@@ -163,15 +163,16 @@ export function ShellRightPanelFiles({
         })}
 
         {uniqueMessageRows.map((row) => {
-          // Missions are excluded upstream — they have their own section.
           const Icon =
-            row.kind === 'image'
-              ? ImageIcon
-              : row.kind === 'video'
-                ? Video
-                : row.kind === 'artifact'
-                  ? Boxes
-                  : FileText
+            row.entityType === 'mission'
+              ? Rocket
+              : row.kind === 'image'
+                ? ImageIcon
+                : row.kind === 'video'
+                  ? Video
+                  : row.kind === 'artifact'
+                    ? Boxes
+                    : FileText
           const canOpen = Boolean(row.fileUrl || row.entityId)
           const openRow = () => {
             if (!canOpen) return

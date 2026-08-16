@@ -11,7 +11,7 @@ export function ShellRightPanelSources({ messages }: { messages: Message[] }) {
   const rows = useMemo(() => extractConversationSourceRows(messages), [messages])
 
   if (rows.length === 0) {
-    return <ShellRightPanelEmpty icon={Link2} message={SHELL_RIGHT_PANEL_MESSAGES.chatSourcesEmpty} />
+    return <ShellRightPanelEmpty art="sources" message={SHELL_RIGHT_PANEL_MESSAGES.chatSourcesEmpty} />
   }
 
   return (

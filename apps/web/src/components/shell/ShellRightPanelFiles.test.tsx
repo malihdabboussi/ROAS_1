@@ -67,7 +67,7 @@ describe('ShellRightPanelFiles', () => {
     )
   })
 
-  it('keeps missions out of Outputs and can show an output receipt in chat', async () => {
+  it('distinguishes Mission outputs and can show the exact receipt in chat', async () => {
     mocks.fetchConversationDocuments.mockResolvedValue([])
     const scrollIntoView = vi.fn()
     const messages: Message[] = [
@@ -87,14 +87,6 @@ describe('ShellRightPanelFiles', () => {
               name: 'Client Strategy — General / Meetings',
               subtitle: 'Started from this chat',
             },
-            {
-              type: 'artifact_preview',
-              id: 'doc-card-1',
-              artifactType: 'document',
-              artifactId: 'document-9',
-              name: 'Strategy one-pager',
-              subtitle: 'Created in this chat',
-            },
           ],
         },
         created_at: '2026-08-14T05:00:00.000Z',
@@ -113,15 +105,12 @@ describe('ShellRightPanelFiles', () => {
       </>,
     )
 
-    // The mission has its own Mission Progress section; listing it here too
-    // made every run show up twice.
-    expect(await screen.findByText('Strategy one-pager')).toBeInTheDocument()
-    expect(screen.queryByText('Client Strategy — General / Meetings')).not.toBeInTheDocument()
-    expect(screen.getByText('Created in this chat')).toBeInTheDocument()
+    expect(await screen.findByText('Client Strategy — General / Meetings')).toBeInTheDocument()
+    expect(screen.getByText('Started from this chat')).toBeInTheDocument()
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Output actions for Strategy one-pager',
+        name: 'Output actions for Client Strategy — General / Meetings',
       }),
     )
     fireEvent.click(screen.getByRole('button', { name: 'Show in chat' }))

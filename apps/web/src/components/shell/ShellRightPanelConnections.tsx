@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useRef, type RefObject } from 'react'
-import { FolderKanban, Layers, Link2, Plus, X, type LucideIcon } from 'lucide-react'
+import { FolderKanban, Layers, Plus, X, type LucideIcon } from 'lucide-react'
 import {
   ConversationScopePicker,
   type ConversationScopePickerHandle,
@@ -111,7 +111,7 @@ export function ShellRightPanelConnections({
       >
         {rows.length === 0 ? (
           <ShellRightPanelEmpty
-            icon={Link2}
+            art="connections"
             message={SHELL_RIGHT_PANEL_MESSAGES.connectionsEmpty}
           />
         ) : (

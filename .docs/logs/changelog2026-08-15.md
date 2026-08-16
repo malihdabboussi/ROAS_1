@@ -223,3 +223,27 @@ Files:
 - apps/web/src/components/shell/shell-right-panel.messages.config.ts
 - apps/web/src/lib/missions/mission-step-title.ts (new)
 - apps/web/src/lib/missions/subtask-status.ts
+
+## [2026-08-15 18:20] - [FIX]
+
+What: Reverted the Outputs change and replaced the icon-based empty states with illustrations.
+
+- Missions appear in Outputs again. The previous entry removed them on the grounds that they are not outputs; that was not wanted. `ShellRightPanelFiles`, `shell-conversation-summary.ts`, and both test files are back to their `main` behaviour, including the rocket icon and the mission-receipt test.
+- `ShellRightPanelEmpty` now renders a per-section illustration instead of an icon in a circle: layered cards at slight angles, a ticked checklist for Mission Progress, a document with a small chart for Outputs, two joined cards for Sources, and two linked cards for Connections.
+- The illustrations take colour entirely from `currentColor`, inherited from the wrapper's `text-muted-foreground`, with opacity separating the layers. No fills, strokes, or palette values are hardcoded, so both themes are correct with no theme branching.
+- Simplified the blocking-gate badge, which was stacking two conflicting background/text class pairs.
+
+Why: Missions in Outputs is wanted behaviour, and the empty states were asked for as illustrations rather than a single glyph.
+
+Impact: Outputs is back to its shipped behaviour; empty sections carry real artwork. 269 tests pass across shell and lib/missions. Lint and typecheck clean.
+
+Note: the illustrations are verified structurally (the SVG renders when an empty section is expanded) but not visually — the browser pane stopped returning screenshots at the end of this pass, so they have not been eyeballed in situ.
+
+Files:
+
+- apps/web/src/components/shell/ShellRightPanelEmpty.tsx
+- apps/web/src/components/shell/ShellRightPanelProgress.tsx
+- apps/web/src/components/shell/ShellRightPanelConnections.tsx
+- apps/web/src/components/shell/ShellRightPanelFiles.tsx
+- apps/web/src/components/shell/ShellRightPanelSources.tsx
+- apps/web/src/components/shell/shell-conversation-summary.ts
