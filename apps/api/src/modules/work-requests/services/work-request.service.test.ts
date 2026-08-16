@@ -125,6 +125,23 @@ describe('WorkRequestService', () => {
     expect(publicDraft.resume_conversation_id).toBeNull()
   })
 
+  it('builds Open ROAS task links with space, item, and owning org', () => {
+    const publicDraft = sanitizeWorkRequestDraft(
+      draft({
+        final_space_item_id: '77777777-7777-7777-7777-777777777777',
+        campaign_space_id: null,
+        owner_org_id: '33333333-3333-3333-3333-333333333333',
+        routing: {
+          work_scope: 'general',
+          general_space_id: '66666666-6666-6666-6666-666666666666',
+        },
+      }),
+    )
+    expect(publicDraft.task_url).toBe(
+      '/spaces?space=66666666-6666-6666-6666-666666666666&item=77777777-7777-7777-7777-777777777777&org=33333333-3333-3333-3333-333333333333',
+    )
+  })
+
   it('exposes a resume conversation id when provenance carries one', () => {
     const publicDraft = sanitizeWorkRequestDraft(
       draft({

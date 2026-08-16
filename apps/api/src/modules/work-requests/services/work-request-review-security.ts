@@ -44,6 +44,20 @@ export function hashWorkRequestReviewToken(token: string): string {
   return createHash('sha256').update(token, 'utf8').digest('hex')
 }
 
+export function buildWorkRequestTaskUrl(draft: WorkRequestDraftRow): string | null {
+  if (!draft.final_space_item_id) return null
+  const spaceId = draft.campaign_space_id ?? stringValue(asRecord(draft.routing).general_space_id)
+  if (!spaceId) return null
+  const params = new URLSearchParams({
+    space: spaceId,
+    item: draft.final_space_item_id,
+  })
+  // Public review links sit outside the dashboard org bootstrap. Include org so
+  // "Open ROAS task" lands in the workspace that owns the Space.
+  if (draft.owner_org_id) params.set('org', draft.owner_org_id)
+  return `/spaces?${params.toString()}`
+}
+
 export function sanitizeWorkRequestDraft(draft: WorkRequestDraftRow) {
   const structured = asRecord(draft.structured_fields)
   return {
@@ -71,9 +85,7 @@ export function sanitizeWorkRequestDraft(draft: WorkRequestDraftRow) {
     final_task_id: draft.final_space_item_id,
     sync_status: draft.sync_status,
     resume_conversation_id: readResumeConversationId(draft.provenance),
-    task_url: draft.final_space_item_id
-      ? `/spaces?space=${encodeURIComponent(draft.campaign_space_id ?? stringValue(asRecord(draft.routing).general_space_id))}&item=${encodeURIComponent(draft.final_space_item_id)}`
-      : null,
+    task_url: buildWorkRequestTaskUrl(draft),
     clickup_url:
       typeof draft.clickup_receipt?.task_url === 'string' ? draft.clickup_receipt.task_url : null,
   }

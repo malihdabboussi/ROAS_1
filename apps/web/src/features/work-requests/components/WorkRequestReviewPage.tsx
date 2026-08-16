@@ -180,7 +180,12 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
               review.task_url || review.clickup_url ? (
                 <div className="gap-spacing-2 flex flex-wrap">
                   {review.task_url ? (
-                    <a href={review.task_url} className="button-default button-glass-primary">
+                    <a
+                      href={review.task_url}
+                      className="button-default button-glass-primary"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       Open ROAS task
                     </a>
                   ) : null}

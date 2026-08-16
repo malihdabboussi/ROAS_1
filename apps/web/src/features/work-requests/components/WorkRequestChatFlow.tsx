@@ -332,7 +332,12 @@ export function WorkRequestChatFlow({
             </p>
             <div className="gap-spacing-2 flex flex-wrap">
               {finalized.task_url ? (
-                <a href={finalized.task_url} className="button-default button-glass-primary">
+                <a
+                  href={finalized.task_url}
+                  className="button-default button-glass-primary"
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   Open ROAS task
                 </a>
               ) : null}
