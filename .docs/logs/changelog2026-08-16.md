@@ -1,5 +1,15 @@
 # Changelog - August 16, 2026
 
+## [2026-08-16 23:48] - [FIX]
+
+What: Service Request chat review now uses a team-member assignee dropdown, on-brand due-date calendar, asset link adder (no `Name | URL` textarea), and drops the dependencies step. Also stopped ClickUp mirrors from duplicating Notes/Source folder/Context/Operator note (no redundant `source_excerpt`, no `notes=description` copy, operator note only via top-level `note`).
+
+Why: ClickUp showed the brief twice, and the review chat still used confusing free-text assignee / native date / dependency fields.
+
+Impact: New reviews ask clearer fields; new finalizations mirror a single ClickUp body. Apply migration `20260816234500_work_request_finalize_notes_dedupe.sql`. Existing ClickUp tasks are unchanged.
+
+Files: work-request chat steps/UI, page-grader send helpers, finalize migration, related tests
+
 ## [2026-08-16 15:38] - [FIX]
 
 What: Broadened Pixel Service Request routing to every fulfillment type (design/copy/funnel/ghl/ad/video/other/general). Policy + vibey/atlas skills now forbid silent `create_task` for client fulfillment and require client name, draft status, and an openable `review_url` in the reply. Added DB migration so live agent skills/TOOLS pick this up.

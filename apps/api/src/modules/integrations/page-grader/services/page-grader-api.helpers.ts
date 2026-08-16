@@ -133,14 +133,14 @@ export function mapRoasPriority(raw: unknown): string {
 export function buildDescription(
   item: Record<string, unknown>,
   parentContext: Record<string, unknown>,
-  note?: string,
 ): string {
   const parts: string[] = []
   const notes = typeof item.notes === 'string' ? item.notes.trim() : ''
   const description = typeof item.description === 'string' ? item.description.trim() : ''
   if (description) parts.push(description)
+  // Skip notes when they are an exact copy of description (legacy finalize
+  // wrote both columns to the same draft brief, which duplicated ClickUp body).
   if (notes && notes !== description) parts.push(notes)
-  if (note?.trim()) parts.push(`Operator note: ${note.trim()}`)
   if (parentContext.parent_meeting_title) {
     parts.push(`From meeting: ${String(parentContext.parent_meeting_title)}`)
   }

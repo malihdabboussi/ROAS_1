@@ -122,6 +122,19 @@ describe('WorkRequestService', () => {
     expect(publicDraft).not.toHaveProperty('routing')
     expect(publicDraft).not.toHaveProperty('owner_user_id')
     expect(publicDraft.requester).toEqual({ name: 'Alex' })
+    expect(publicDraft.resume_conversation_id).toBeNull()
+  })
+
+  it('exposes a resume conversation id when provenance carries one', () => {
+    const publicDraft = sanitizeWorkRequestDraft(
+      draft({
+        provenance: {
+          conversation_id: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+          channel_id: 'C123',
+        },
+      }),
+    )
+    expect(publicDraft.resume_conversation_id).toBe('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee')
   })
 
   it('rejects unknown anonymous update fields', () => {
@@ -196,6 +209,75 @@ describe('WorkRequestService', () => {
       finalDraft.id,
       expect.objectContaining({ sync_status: 'sync_failed' }),
     )
+  })
+
+  it('mirrors finalize without repeating the brief as source_excerpt', async () => {
+    const finalDraft = draft({
+      status: 'finalized',
+      final_space_item_id: '77777777-7777-7777-7777-777777777777',
+      review_token_used_at: '2026-08-16T12:00:00.000Z',
+      sync_status: 'sync_pending',
+      assignee_name: 'Sam Editor',
+      description:
+        'Edit the 12 hook-and-body videos.\n\nSource folder: https://drive.google.com/drive/folders/abc\n\nContext: Next webinar.',
+    })
+    const { service, repository, pageGraderApi } = createService({
+      findByTokenHash: vi.fn().mockResolvedValue(draft()),
+      findSpace: vi.fn().mockResolvedValue({
+        id: '66666666-6666-6666-6666-666666666666',
+        campaign_id: '44444444-4444-4444-4444-444444444444',
+        user_id: '22222222-2222-2222-2222-222222222222',
+        org_id: '33333333-3333-3333-3333-333333333333',
+        deleted_at: null,
+        schema: {
+          custom_data: {
+            space_role: 'general',
+            page_grader_client_id: '55555555-5555-5555-5555-555555555555',
+          },
+        },
+      }),
+      finalize: vi.fn().mockResolvedValue({
+        draft: finalDraft,
+        task: {
+          id: '77777777-7777-7777-7777-777777777777',
+          space_id: '66666666-6666-6666-6666-666666666666',
+        },
+      }),
+      update: vi
+        .fn()
+        .mockImplementation((_id, values) => Promise.resolve({ ...finalDraft, ...values })),
+      resolveOrgAssigneeByName: vi.fn().mockResolvedValue(null),
+    })
+    pageGraderApi.sendWork.mockResolvedValue({
+      success: true,
+      results: [
+        {
+          space_item_id: '77777777-7777-7777-7777-777777777777',
+          status: 'created',
+          clickup_task_id: 'cu-1',
+          clickup_task_url: 'https://app.clickup.com/t/cu-1',
+        },
+      ],
+    })
+
+    await service.finalizeReview(TOKEN)
+
+    expect(pageGraderApi.sendWork).toHaveBeenCalledWith(
+      expect.anything(),
+      finalDraft.owner_user_id,
+      expect.objectContaining({
+        client_id: finalDraft.page_grader_external_client_id,
+        space_item_ids: [finalDraft.final_space_item_id],
+        work_kind: 'task_request',
+        task_type: 'funnel',
+        assignee: { name: 'Sam Editor' },
+        note: `Finalized from ROAS Service Request ${finalDraft.id}.`,
+      }),
+      finalDraft.owner_org_id,
+      'owner',
+    )
+    const payload = pageGraderApi.sendWork.mock.calls[0]?.[2] as Record<string, unknown>
+    expect(payload).not.toHaveProperty('source_excerpt')
   })
 
   it('returns the existing native task for an idempotent finalization replay', async () => {

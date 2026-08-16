@@ -36,7 +36,13 @@ const KNOWN_REQUIRED_FIELDS = new Set([
   'dependencies',
 ])
 
-export type WorkRequestChatStepKind = 'single_choice' | 'text' | 'textarea' | 'date' | 'confirm'
+export type WorkRequestChatStepKind =
+  | 'single_choice'
+  | 'text'
+  | 'textarea'
+  | 'date'
+  | 'assets'
+  | 'confirm'
 
 export type WorkRequestChatStep = {
   id: string
@@ -140,10 +146,20 @@ export function buildWorkRequestChatSteps(
     {
       id: 'assignee_name',
       field: 'assignee_name',
-      kind: 'text',
-      prompt: 'Who should own fulfillment?',
-      hint: 'Optional. Type a name or skip.',
+      kind: (options.team_members?.length ?? 0) > 0 ? 'single_choice' : 'text',
+      prompt: 'Who on the team should own this?',
+      hint:
+        (options.team_members?.length ?? 0) > 0
+          ? 'Pick a teammate, or leave unassigned.'
+          : 'Optional. Enter a teammate name, or skip.',
       required: false,
+      options: [
+        { id: '__unassigned__', label: 'Unassigned' },
+        ...(options.team_members ?? []).map((member) => ({
+          id: member.name,
+          label: member.name,
+        })),
+      ],
     },
     {
       id: 'title',
@@ -192,17 +208,9 @@ export function buildWorkRequestChatSteps(
     {
       id: 'assets',
       field: 'assets',
-      kind: 'textarea',
-      prompt: 'Any assets to attach?',
-      hint: 'One per line: Name | URL. Skip if none.',
-      required: false,
-    },
-    {
-      id: 'dependencies',
-      field: 'dependencies',
-      kind: 'textarea',
-      prompt: 'Any dependencies?',
-      hint: 'One per line: Title | URL (optional). Skip if none.',
+      kind: 'assets',
+      prompt: 'Any source assets or folders?',
+      hint: 'Add Drive/folder links (or any URL). Skip if none.',
       required: false,
     },
     {
@@ -218,6 +226,37 @@ export function buildWorkRequestChatSteps(
   return steps
 }
 
+/** A step is already answered when the draft/answers carry a real value. */
+export function isStepSatisfied(
+  step: WorkRequestChatStep,
+  answers: WorkRequestChatAnswers,
+): boolean {
+  if (step.kind === 'confirm') return false
+  if (step.field === 'campaign_space_id') {
+    // Blank = still on the default "general" bucket — ask unless a Space was chosen.
+    return Boolean(answers.campaign_space_id)
+  }
+  return getAnswerDisplay(step, answers) !== '—'
+}
+
+/** Prefill summary rows the user can edit without re-walking the whole flow. */
+export function listKnownSteps(
+  steps: WorkRequestChatStep[],
+  answers: WorkRequestChatAnswers,
+): WorkRequestChatStep[] {
+  return steps.filter((step) => step.kind !== 'confirm' && isStepSatisfied(step, answers))
+}
+
+/** Only ask for gaps (plus confirm). Satisfied fields stay in the known summary. */
+export function listPendingSteps(
+  steps: WorkRequestChatStep[],
+  answers: WorkRequestChatAnswers,
+): WorkRequestChatStep[] {
+  const gaps = steps.filter((step) => step.kind !== 'confirm' && !isStepSatisfied(step, answers))
+  const confirm = steps.find((step) => step.kind === 'confirm')
+  return confirm ? [...gaps, confirm] : gaps
+}
+
 export function answersToUpdate(answers: WorkRequestChatAnswers): WorkRequestUpdate {
   return {
     client_workspace_id: answers.client_workspace_id,
@@ -230,10 +269,6 @@ export function answersToUpdate(answers: WorkRequestChatAnswers): WorkRequestUpd
     priority: answers.priority,
     links: lines(answers.links),
     assets: pairs(answers.assets).map(({ left, right }) => ({ name: left, url: right })),
-    dependencies: pairs(answers.dependencies, true).map(({ left, right }) => ({
-      title: left,
-      ...(right ? { url: right } : {}),
-    })),
     structured_fields: answers.structured_fields,
   }
 }
@@ -249,6 +284,7 @@ export function getAnswerDisplay(
   }
   if (step.kind === 'single_choice') {
     const raw = String(answers[step.field as keyof WorkRequestChatAnswers] ?? '')
+    if (step.field === 'assignee_name' && !raw) return '—'
     return step.options?.find((option) => option.id === raw)?.label ?? (raw || '—')
   }
   const value = answers[step.field as keyof WorkRequestChatAnswers]
@@ -284,6 +320,12 @@ export function applyStepAnswer(
   }
   if (step.field === 'priority') {
     return { ...answers, priority: value as WorkRequestPriority }
+  }
+  if (step.field === 'assignee_name') {
+    return {
+      ...answers,
+      assignee_name: value === '__unassigned__' ? '' : value,
+    }
   }
   return { ...answers, [step.field]: value } as WorkRequestChatAnswers
 }

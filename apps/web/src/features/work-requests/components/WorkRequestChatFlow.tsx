@@ -1,13 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Check, MessageCircle } from 'lucide-react'
-import type {
-  PublicWorkRequestDraft,
-  WorkRequestOptions,
-  WorkRequestReviewResponse,
-  WorkRequestUpdate,
-} from '@/lib/work-requests'
+import { Check } from 'lucide-react'
 import { WORK_REQUEST_ERRORS } from '../config/errors.config'
 import { WORK_REQUEST_MESSAGES } from '../config/messages.config'
 import {
@@ -15,81 +9,97 @@ import {
   applyStepAnswer,
   buildWorkRequestChatSteps,
   draftToChatAnswers,
+  listKnownSteps,
+  listPendingSteps,
   resolveChoiceFromChat,
   type WorkRequestChatAnswers,
   type WorkRequestChatStep,
 } from '../lib/work-request-chat-steps'
 import {
+  buildWorkRequestChatIntro,
+  buildWorkRequestChatSeedTranscript,
+  readWorkRequestChatStepValue,
+  type WorkRequestChatFinalizedReceipt,
+  type WorkRequestChatFlowProps,
+  type WorkRequestChatTranscriptItem,
+} from './WorkRequestChatFlowHelpers'
+import {
   WorkRequestChatBubble,
   WorkRequestChatConfirmCard,
   WorkRequestChatStepCard,
+  WorkRequestKnownAnswersCard,
 } from './WorkRequestChatFlowParts'
 
-type TranscriptItem =
-  | { id: string; role: 'assistant'; text: string }
-  | { id: string; role: 'user'; text: string }
-  | { id: string; role: 'system'; text: string }
-
-type FinalizedReceipt = {
-  sync_status?: string
-  task_url?: string | null
-  clickup_url?: string | null
-}
-
-type Props = {
-  draft: PublicWorkRequestDraft
-  options: WorkRequestOptions
-  onSave: (update: WorkRequestUpdate) => Promise<WorkRequestReviewResponse>
-  onSubmit: (update: WorkRequestUpdate) => Promise<WorkRequestReviewResponse>
-}
-
-export function WorkRequestChatFlow({ draft, options, onSave, onSubmit }: Props) {
+export function WorkRequestChatFlow({
+  draft,
+  options,
+  presentation = 'page',
+  onSave,
+  onSubmit,
+}: WorkRequestChatFlowProps) {
   const [answers, setAnswers] = useState<WorkRequestChatAnswers>(() => draftToChatAnswers(draft))
   const [stepIndex, setStepIndex] = useState(0)
+  const [editingStepId, setEditingStepId] = useState<string | null>(null)
   const [composer, setComposer] = useState('')
   const [busy, setBusy] = useState<'save' | 'submit' | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [finalized, setFinalized] = useState<FinalizedReceipt | null>(null)
-  const [transcript, setTranscript] = useState<TranscriptItem[]>(() => [
-    {
-      id: 'intro',
-      role: 'assistant',
-      text: 'Let’s finish this Service Request in chat — one step at a time. You can tap a card or type a reply below.',
-    },
-  ])
+  const [finalized, setFinalized] = useState<WorkRequestChatFinalizedReceipt | null>(null)
   const scrollerRef = useRef<HTMLDivElement>(null)
   const draftIdRef = useRef(draft.id)
+  const isPage = presentation === 'page'
 
-  const steps = useMemo(
+  const allSteps = useMemo(
     () => buildWorkRequestChatSteps(draft, options, answers),
     [answers, draft, options],
   )
-  const currentStep = steps[Math.min(stepIndex, steps.length - 1)] as
+  const knownSteps = useMemo(() => listKnownSteps(allSteps, answers), [allSteps, answers])
+  const pendingSteps = useMemo(() => listPendingSteps(allSteps, answers), [allSteps, answers])
+
+  const [transcript, setTranscript] = useState<WorkRequestChatTranscriptItem[]>(() =>
+    buildWorkRequestChatSeedTranscript(draft, options),
+  )
+
+  const currentStep = pendingSteps[Math.min(stepIndex, pendingSteps.length - 1)] as
     | WorkRequestChatStep
     | undefined
-  const isConfirm = currentStep?.kind === 'confirm'
+  const editingStep = editingStepId
+    ? allSteps.find((step) => step.id === editingStepId && step.kind !== 'confirm')
+    : undefined
+  const activeStep = editingStep ?? currentStep
+  const isConfirm = !editingStep && currentStep?.kind === 'confirm'
 
   useEffect(() => {
     if (draftIdRef.current === draft.id) return
     draftIdRef.current = draft.id
-    setAnswers(draftToChatAnswers(draft))
+    const nextAnswers = draftToChatAnswers(draft)
+    const nextAll = buildWorkRequestChatSteps(draft, options, nextAnswers)
+    setAnswers(nextAnswers)
     setStepIndex(0)
+    setEditingStepId(null)
     setFinalized(null)
     setError(null)
     setTranscript([
       {
         id: `intro-${draft.id}`,
         role: 'assistant',
-        text: 'Let’s finish this Service Request in chat — one step at a time. You can tap a card or type a reply below.',
+        text: buildWorkRequestChatIntro(
+          listKnownSteps(nextAll, nextAnswers).length,
+          listPendingSteps(nextAll, nextAnswers).filter((step) => step.kind !== 'confirm').length,
+        ),
       },
     ])
-  }, [draft])
+  }, [draft, options])
+
+  useEffect(() => {
+    if (stepIndex < pendingSteps.length) return
+    setStepIndex(Math.max(0, pendingSteps.length - 1))
+  }, [pendingSteps.length, stepIndex])
 
   useEffect(() => {
     const node = scrollerRef.current
     if (!node || typeof node.scrollTo !== 'function') return
     node.scrollTo({ top: node.scrollHeight, behavior: 'smooth' })
-  }, [transcript, stepIndex, finalized, error])
+  }, [transcript, stepIndex, finalized, error, editingStepId])
 
   const pushUser = (text: string) => {
     setTranscript((items) => [...items, { id: `u-${Date.now()}`, role: 'user', text }])
@@ -99,70 +109,90 @@ export function WorkRequestChatFlow({ draft, options, onSave, onSubmit }: Props)
     setTranscript((items) => [...items, { id: `a-${Date.now()}`, role: 'assistant', text }])
   }
 
-  const advance = (nextAnswers: WorkRequestChatAnswers, label: string) => {
+  const advanceFromPending = (nextAnswers: WorkRequestChatAnswers, label: string) => {
     pushUser(label)
-    const nextSteps = buildWorkRequestChatSteps(draft, options, nextAnswers)
-    const nextIndex = Math.min(stepIndex + 1, nextSteps.length - 1)
+    const nextPending = listPendingSteps(
+      buildWorkRequestChatSteps(draft, options, nextAnswers),
+      nextAnswers,
+    )
+    const nextIndex = Math.min(stepIndex + 1, nextPending.length - 1)
     setAnswers(nextAnswers)
-    setStepIndex(nextIndex)
-    const next = nextSteps[nextIndex]
+    setStepIndex(Math.max(0, nextIndex))
+    setEditingStepId(null)
+    const next = nextPending[nextIndex]
     if (next && next.id !== currentStep?.id) {
-      pushAssistant(next.prompt)
+      pushAssistant(next.kind === 'confirm' ? next.prompt : next.prompt)
     }
+  }
+
+  const commitEdit = (nextAnswers: WorkRequestChatAnswers, label: string) => {
+    pushUser(label)
+    setAnswers(nextAnswers)
+    setEditingStepId(null)
+    pushAssistant('Updated. Continue with what’s left, or edit another detail above.')
   }
 
   const commitChoice = (value: string) => {
-    if (!currentStep || currentStep.kind !== 'single_choice') return
-    const next = applyStepAnswer(answers, currentStep, value)
+    if (!activeStep || activeStep.kind !== 'single_choice') return
+    const next = applyStepAnswer(answers, activeStep, value)
     const label =
-      currentStep.options?.find((option) => option.id === value)?.label ??
+      activeStep.options?.find((option) => option.id === value)?.label ??
       (value || 'General client work')
-    advance(next, label)
+    if (editingStep) {
+      commitEdit(next, label)
+      return
+    }
+    advanceFromPending(next, label)
   }
 
   const commitText = (value: string, skipped = false) => {
-    if (!currentStep || currentStep.kind === 'confirm' || currentStep.kind === 'single_choice')
-      return
-    if (currentStep.required && !value.trim()) {
+    if (!activeStep || activeStep.kind === 'confirm' || activeStep.kind === 'single_choice') return
+    if (activeStep.required && !value.trim()) {
       setError('Please answer this step to continue')
       return
     }
-    const next = applyStepAnswer(answers, currentStep, value)
-    advance(next, skipped ? 'Skipped' : value.trim() || 'Skipped')
+    const next = applyStepAnswer(answers, activeStep, value)
+    const label = skipped ? 'Skipped' : value.trim() || 'Skipped'
+    if (editingStep) {
+      commitEdit(next, label)
+      return
+    }
+    advanceFromPending(next, label)
   }
 
   const handleComposer = () => {
     const text = composer.trim()
-    if (!text || !currentStep || busy || finalized) return
+    if (!text || !activeStep || busy || finalized) return
     setComposer('')
     setError(null)
 
-    if (currentStep.kind === 'confirm') {
+    if (activeStep.kind === 'confirm') {
       pushUser(text)
-      pushAssistant(
-        'Got it. Use Submit when the summary looks right, or say which field to change (for example: “change title”).',
-      )
+      pushAssistant('Got it. Use Submit when the summary looks right, or tap Edit on a field.')
       return
     }
 
-    if (currentStep.kind === 'single_choice') {
-      const matched = resolveChoiceFromChat(currentStep, text)
+    if (activeStep.kind === 'single_choice') {
+      const matched = resolveChoiceFromChat(activeStep, text)
       if (matched === null && text.toLocaleLowerCase() !== 'skip') {
         pushUser(text)
         pushAssistant('Pick one of the options on the card, or type the option name exactly.')
         return
       }
-      if (text.toLocaleLowerCase() === 'skip' && !currentStep.required) {
-        commitChoice(
-          currentStep.options?.[0]?.id === '' ? '' : (currentStep.options?.[0]?.id ?? ''),
-        )
+      if (text.toLocaleLowerCase() === 'skip' && !activeStep.required) {
+        const skipId =
+          activeStep.options?.find((option) => option.id === '__unassigned__' || option.id === '')
+            ?.id ??
+          activeStep.options?.[0]?.id ??
+          ''
+        commitChoice(skipId)
         return
       }
       if (matched !== null) commitChoice(matched)
       return
     }
 
-    if (text.toLocaleLowerCase() === 'skip' && !currentStep.required) {
+    if (text.toLocaleLowerCase() === 'skip' && !activeStep.required) {
       commitText('', true)
       return
     }
@@ -212,13 +242,17 @@ export function WorkRequestChatFlow({ draft, options, onSave, onSubmit }: Props)
   }
 
   return (
-    <div className="border-border bg-background rounded-spacing-4 flex h-[min(78dvh,720px)] flex-col overflow-hidden border">
+    <div
+      className={`bg-background flex flex-col overflow-hidden ${
+        isPage
+          ? 'min-h-dvh'
+          : 'border-border rounded-spacing-3 mt-spacing-3 max-h-[min(70dvh,640px)] border'
+      }`}
+    >
       <header className="border-border gap-spacing-2 px-spacing-4 py-spacing-3 flex items-center border-b">
-        <MessageCircle className="icon-sm text-muted-foreground" />
         <div className="min-w-0 flex-1">
-          <p className="typo-caption text-muted-foreground">SERVICE REQUEST CHAT</p>
-          <p className="body-3 text-foreground truncate font-medium">
-            {draft.title || 'Untitled request'}
+          <p className="body-2 text-foreground truncate font-medium">
+            {draft.title || 'Service Request'}
           </p>
         </div>
         {!finalized && (
@@ -235,24 +269,38 @@ export function WorkRequestChatFlow({ draft, options, onSave, onSubmit }: Props)
 
       <div
         ref={scrollerRef}
-        className="gap-spacing-3 px-spacing-4 py-spacing-4 flex-1 space-y-3 overflow-y-auto"
+        className="gap-spacing-3 px-spacing-4 py-spacing-4 space-y-spacing-3 flex-1 overflow-y-auto"
       >
         {transcript.map((item) => (
           <WorkRequestChatBubble key={item.id} role={item.role} text={item.text} />
         ))}
 
-        {!finalized && currentStep && currentStep.kind !== 'confirm' && (
+        {!finalized && knownSteps.length > 0 && !editingStep && (
+          <WorkRequestKnownAnswersCard
+            steps={knownSteps}
+            answers={answers}
+            busy={busy !== null}
+            onEdit={setEditingStepId}
+          />
+        )}
+
+        {!finalized && activeStep && activeStep.kind !== 'confirm' && (
           <WorkRequestChatStepCard
-            step={currentStep}
-            stepIndex={stepIndex}
-            totalSteps={steps.length}
-            value={
-              typeof currentStep.field === 'string' && currentStep.field.startsWith('structured:')
-                ? (answers.structured_fields[currentStep.field.slice('structured:'.length)] ?? '')
-                : currentStep.field === 'confirm'
-                  ? ''
-                  : String(answers[currentStep.field as keyof WorkRequestChatAnswers] ?? '')
+            step={activeStep}
+            stepIndex={
+              editingStep
+                ? Math.max(
+                    0,
+                    allSteps.findIndex((step) => step.id === activeStep.id),
+                  )
+                : stepIndex
             }
+            totalSteps={
+              editingStep
+                ? allSteps.filter((step) => step.kind !== 'confirm').length
+                : pendingSteps.length
+            }
+            value={readWorkRequestChatStepValue(activeStep, answers)}
             busy={busy !== null}
             onChoice={commitChoice}
             onContinue={(value) => commitText(value)}
@@ -262,11 +310,12 @@ export function WorkRequestChatFlow({ draft, options, onSave, onSubmit }: Props)
 
         {!finalized && isConfirm && (
           <WorkRequestChatConfirmCard
-            steps={steps.filter((step) => step.kind !== 'confirm')}
+            steps={allSteps.filter((step) => step.kind !== 'confirm')}
             answers={answers}
             busy={busy}
             onBack={() => setStepIndex((index) => Math.max(0, index - 1))}
             onSubmit={() => void submitRequest()}
+            onEdit={setEditingStepId}
           />
         )}
 
@@ -320,9 +369,9 @@ export function WorkRequestChatFlow({ draft, options, onSave, onSubmit }: Props)
             value={composer}
             onChange={(event) => setComposer(event.target.value)}
             rows={1}
-            placeholder="Reply in chat…"
+            placeholder="Message Pixel…"
             disabled={busy !== null}
-            className="body-3 rounded-spacing-2 border-border bg-background px-spacing-3 py-spacing-2 focus:ring-ring max-h-28 min-h-[40px] w-full resize-y border outline-none focus:ring-2"
+            className="body-3 input-glass rounded-spacing-2 border-border bg-card px-spacing-3 py-spacing-2 focus:ring-ring max-h-28 min-h-[40px] w-full resize-y border outline-none focus:ring-2"
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault()

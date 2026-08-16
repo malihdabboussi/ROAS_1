@@ -5,6 +5,9 @@ import {
   applyStepAnswer,
   buildWorkRequestChatSteps,
   draftToChatAnswers,
+  isStepSatisfied,
+  listKnownSteps,
+  listPendingSteps,
   resolveChoiceFromChat,
 } from './work-request-chat-steps'
 
@@ -29,6 +32,7 @@ const draft: PublicWorkRequestDraft = {
   expires_at: '2026-08-17T00:00:00.000Z',
   final_task_id: null,
   sync_status: 'not_started',
+  resume_conversation_id: null,
   task_url: null,
   clickup_url: null,
 }
@@ -42,6 +46,10 @@ const options: WorkRequestOptions = {
     { id: 'space-1', name: 'Launch', client_workspace_id: 'ws-1' },
     { id: 'space-2', name: 'Other space', client_workspace_id: 'ws-2' },
   ],
+  team_members: [
+    { id: 'u-1', name: 'Sam Editor' },
+    { id: 'u-2', name: 'Alex Producer' },
+  ],
 }
 
 describe('work-request-chat-steps', () => {
@@ -54,6 +62,47 @@ describe('work-request-chat-steps', () => {
     expect(
       steps.find((step) => step.id === 'campaign_space_id')?.options?.map((o) => o.label),
     ).toEqual(['General client work', 'Launch'])
+  })
+
+  it('treats prefilled draft fields as known and only queues gaps', () => {
+    const answers = draftToChatAnswers(draft)
+    const steps = buildWorkRequestChatSteps(draft, options, answers)
+    const known = listKnownSteps(steps, answers)
+    const pending = listPendingSteps(steps, answers)
+
+    expect(known.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        'client_workspace_id',
+        'request_type',
+        'priority',
+        'title',
+        'description',
+        'due_date',
+        'links',
+      ]),
+    )
+    expect(known.some((step) => step.id === 'campaign_space_id')).toBe(false)
+    expect(isStepSatisfied(steps.find((step) => step.id === 'campaign_space_id')!, answers)).toBe(
+      false,
+    )
+    expect(pending.map((step) => step.id)).toEqual([
+      'campaign_space_id',
+      'assignee_name',
+      'assets',
+      'confirm',
+    ])
+    expect(steps.find((step) => step.id === 'assignee_name')?.kind).toBe('single_choice')
+    expect(steps.find((step) => step.id === 'assets')?.kind).toBe('assets')
+    expect(steps.some((step) => step.id === 'dependencies')).toBe(false)
+  })
+
+  it('maps assignee unassigned choice to an empty name', () => {
+    let answers = draftToChatAnswers(draft)
+    const steps = buildWorkRequestChatSteps(draft, options, answers)
+    const assigneeStep = steps.find((step) => step.id === 'assignee_name')!
+    answers = applyStepAnswer(answers, assigneeStep, '__unassigned__')
+    expect(answers.assignee_name).toBe('')
+    expect(answersToUpdate(answers).assignee_name).toBeNull()
   })
 
   it('resolves free-text choice replies by label', () => {

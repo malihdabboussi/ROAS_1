@@ -1,5 +1,6 @@
 export const WORK_REQUEST_MESSAGES = {
   loading: 'Getting your Service Request ready…',
+  openingChat: 'Opening your chat…',
   invalidTitle: 'LINK UNAVAILABLE',
   invalidBody: 'This Service Request review link is not valid.',
   expiredTitle: 'REVIEW LINK EXPIRED',

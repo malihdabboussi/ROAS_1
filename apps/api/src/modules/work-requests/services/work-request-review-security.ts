@@ -15,9 +15,15 @@ export type WorkRequestSpaceOption = {
   externalCampaignId: string
 }
 
+export type WorkRequestTeamMemberOption = {
+  id: string
+  name: string
+}
+
 export function publicWorkRequestOptions(options: {
   clients: WorkRequestScopeOption[]
   spaces: WorkRequestSpaceOption[]
+  teamMembers?: WorkRequestTeamMemberOption[]
 }) {
   return {
     client_workspaces: options.clients.map(({ id, name }) => ({ id, name })),
@@ -26,6 +32,7 @@ export function publicWorkRequestOptions(options: {
       name,
       client_workspace_id: clientWorkspaceId,
     })),
+    team_members: (options.teamMembers ?? []).map(({ id, name }) => ({ id, name })),
   }
 }
 
@@ -63,12 +70,29 @@ export function sanitizeWorkRequestDraft(draft: WorkRequestDraftRow) {
     expires_at: draft.review_token_expires_at,
     final_task_id: draft.final_space_item_id,
     sync_status: draft.sync_status,
+    resume_conversation_id: readResumeConversationId(draft.provenance),
     task_url: draft.final_space_item_id
       ? `/spaces?space=${encodeURIComponent(draft.campaign_space_id ?? stringValue(asRecord(draft.routing).general_space_id))}&item=${encodeURIComponent(draft.final_space_item_id)}`
       : null,
     clickup_url:
       typeof draft.clickup_receipt?.task_url === 'string' ? draft.clickup_receipt.task_url : null,
   }
+}
+
+/** Safe public resume id for logged-in deep-link into the originating ROAS chat. */
+export function readResumeConversationId(provenance: unknown): string | null {
+  const root = asRecord(provenance)
+  const context = asRecord(root.context)
+  const candidates = [
+    stringValue(root.conversation_id),
+    stringValue(root.conversationId),
+    stringValue(context.conversation_id),
+    stringValue(context.conversationId),
+  ]
+  const match = candidates.find((value) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value),
+  )
+  return match || null
 }
 
 export function buildWorkRequestWebhookResult(
