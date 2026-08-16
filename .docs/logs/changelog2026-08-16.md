@@ -1,5 +1,15 @@
 # Changelog - August 16, 2026
 
+## [2026-08-16 23:53] - [FIX]
+
+What: Service Request “Open ROAS task” links now include the owning `org` query param, and `/spaces/{spaceId}?item=…` Portal-style paths redirect to the canonical `/spaces?space=&item=` route.
+
+Why: Review lives outside the dashboard org bootstrap, so opening a task without `org` could land in the wrong workspace. Portal/ClickUp still emit path-style Space URLs that had no app route.
+
+Impact: New finalize receipts open the correct org Space and deep-link the item; Portal-style Space URLs no longer 404.
+
+Files: `work-request-review-security.ts`, `apps/web/src/app/(dashboard)/spaces/[spaceId]/page.tsx`, `space-item-href.ts`, related tests
+
 ## [2026-08-16 23:51] - [FIX]
 
 What: Service Request client (and other long) choice steps now use a searchable closed dropdown that shows the selected client, with a **Continue** CTA on the step card. Composer **Send** stays the regular chat input action.
