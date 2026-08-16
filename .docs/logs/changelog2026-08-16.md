@@ -1,5 +1,15 @@
 # Changelog - August 16, 2026
 
+## [2026-08-16 23:51] - [FIX]
+
+What: Service Request client (and other long) choice steps now use a searchable closed dropdown that shows the selected client, with a **Continue** CTA on the step card. Composer **Send** stays the regular chat input action.
+
+Why: The open numbered client list forced scrolling to find a preselected client, and Send on the composer felt like the step action.
+
+Impact: Preselected clients appear on the dropdown trigger; Continue advances the step; Send only sends chat replies.
+
+Files: `WorkRequestChatFlowParts.tsx`, `work-request-chat-steps.ts`, related tests
+
 ## [2026-08-16 23:48] - [FIX]
 
 What: Service Request chat review now uses a team-member assignee dropdown, on-brand due-date calendar, asset link adder (no `Name | URL` textarea), and drops the dependencies step. Also stopped ClickUp mirrors from duplicating Notes/Source folder/Context/Operator note (no redundant `source_excerpt`, no `notes=description` copy, operator note only via top-level `note`).
