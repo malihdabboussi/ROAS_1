@@ -131,10 +131,6 @@ vi.mock('@/features/spaces/components/CreateSpaceModal', () => ({
   CreateSpaceModal: () => null,
 }))
 
-vi.mock('@/components/global-chat/components/ChatComposerTryTip', () => ({
-  ChatComposerTryTip: () => <div data-testid="composer-try-tip" />,
-}))
-
 vi.mock('@/features/home/components/SuggestedNextMoves', () => ({
   SuggestedNextMoves: ({ onSelectPrompt }: { onSelectPrompt: (prompt: string) => void }) => (
     <button type="button" onClick={() => onSelectPrompt('Prepare the client brief')}>
@@ -223,23 +219,18 @@ describe('HomeDashboardV4Composer', () => {
     })
   })
 
-  it('uses the standard chat composer chrome and shared empty-chat quick starts', () => {
+  it('uses the standard chat composer chrome without home-screen tips or create chips', () => {
     render(<HomeDashboardV4Composer />)
 
     expect(screen.getByTestId('home-quick-missions-host')).toBeInTheDocument()
-    expect(screen.getByTestId('composer-try-tip')).toBeInTheDocument()
-    const quickStarts = screen.getByRole('group', { name: 'Quick starts' })
+    expect(screen.queryByTestId('composer-try-tip')).toBeNull()
+    expect(screen.queryByRole('group', { name: 'Quick starts' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Mission' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Offer' })).toBeNull()
     const chooseSpace = screen.getByRole('button', { name: 'Choose Space' })
     const plugins = screen.getByRole('button', { name: 'Plugins and integrations' })
     const shelf = chooseSpace.closest('.surface-card')
     expect(shelf).toContainElement(plugins)
-    // Quick-start pills sit above the composer input (ChatGPT-style), not in the shelf.
-    expect(shelf).not.toContainElement(quickStarts)
-    expect(
-      quickStarts.compareDocumentPosition(
-        screen.getByRole('button', { name: 'Send test message' }),
-      ),
-    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     expect(
       screen.getByRole('button', { name: 'Send test message' }).compareDocumentPosition(shelf!),
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
@@ -268,7 +259,9 @@ describe('HomeDashboardV4Composer', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Select campaign only' }))
 
-    expect(await screen.findByRole('button', { name: 'Yasir Khan Coaching LTD' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('button', { name: 'Yasir Khan Coaching LTD' }),
+    ).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Choose Space' })).toBeNull()
   })
 
@@ -278,14 +271,5 @@ describe('HomeDashboardV4Composer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Suggested move' }))
 
     expect(mocks.setText).toHaveBeenCalledWith('Prepare the client brief')
-  })
-
-  it('opens Missions from the canonical Create quick-start row', () => {
-    render(<HomeDashboardV4Composer />)
-
-    fireEvent.click(screen.getByRole('button', { name: 'Mission' }))
-
-    expect(screen.getByTestId('home-quick-missions-host')).toHaveTextContent('true')
-    expect(mocks.setText).not.toHaveBeenCalled()
   })
 })

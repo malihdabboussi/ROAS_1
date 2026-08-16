@@ -5,6 +5,8 @@ export const COMPOSER_TRY_TIP_MESSAGES = {
   dismiss: 'Dismiss tip',
 } as const
 
+export const COMPOSER_TRY_TIP_ROTATE_MS = 12_000
+
 export type ComposerTryTipSeedMode = 'send' | 'attach'
 
 export type ComposerTryTip = {
@@ -31,7 +33,8 @@ export const COMPOSER_TRY_TIPS: readonly ComposerTryTip[] = [
   {
     id: 'slash',
     body: 'Type / in the message box to run a skill or workflow this agent has.',
-    prompt: 'List the skills and workflows I can run with / in this chat, then recommend one to try.',
+    prompt:
+      'List the skills and workflows I can run with / in this chat, then recommend one to try.',
     seedMode: 'send',
   },
   {
@@ -66,16 +69,59 @@ export const COMPOSER_TRY_TIPS: readonly ComposerTryTip[] = [
       'What integrations are connected, and what can I ask you to do with Gmail, Slack, Stripe, or Meta from this chat?',
     seedMode: 'send',
   },
+  {
+    id: 'voice',
+    body: 'Hit ⌘D to dictate, or ⌘S to start a live voice call instead of typing.',
+    prompt: 'Start a voice call so I can brief you out loud instead of typing.',
+    seedMode: 'send',
+  },
+  {
+    id: 'queue',
+    body: 'Keep typing while Pixel replies — your next message queues automatically.',
+    prompt: 'Queue a follow-up after this reply: ',
+    seedMode: 'attach',
+  },
+  {
+    id: 'campaign-mention',
+    body: 'Need an artifact from another campaign? Type @ then open the Campaigns tab.',
+    prompt: 'Show me how to @ mention an artifact from another campaign in this chat.',
+    seedMode: 'send',
+  },
+  {
+    id: 'drop-file',
+    body: 'Drop a file on the chat to attach it, or use the paperclip for Drive and Dropbox.',
+    prompt: 'I am about to attach a file. Tell me the fastest way to get it into this chat.',
+    seedMode: 'send',
+  },
+  {
+    id: 'model',
+    body: 'Pick a different model for one message from the dropdown under the input.',
+    prompt: 'Which model should I use for this next message, and why?',
+    seedMode: 'send',
+  },
+  {
+    id: 'newline',
+    body: 'Shift+Enter adds a new line; Enter sends the message.',
+    prompt: 'Draft a multi-line brief I can send as one message.',
+    seedMode: 'send',
+  },
 ]
 
-const DAY_MS = 86_400_000
+export function composerTryTipRotationSeed(conversationId?: string | null): number {
+  if (!conversationId) return 0
+  let hash = 0
+  for (let i = 0; i < conversationId.length; i += 1) {
+    hash = (hash + conversationId.charCodeAt(i) * (i + 1)) % 10_000
+  }
+  return hash
+}
 
 export function pickComposerTryTip(
   dismissedIds: readonly string[],
-  nowMs: number = Date.now(),
+  rotationIndex: number = 0,
 ): ComposerTryTip | null {
   const remaining = COMPOSER_TRY_TIPS.filter((tip) => !dismissedIds.includes(tip.id))
   if (remaining.length === 0) return null
-  const day = Math.floor(nowMs / DAY_MS)
-  return remaining[day % remaining.length] ?? remaining[0] ?? null
+  const index = ((rotationIndex % remaining.length) + remaining.length) % remaining.length
+  return remaining[index] ?? remaining[0] ?? null
 }

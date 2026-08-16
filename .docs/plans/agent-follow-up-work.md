@@ -1,3 +1,15 @@
+## 2026-08-16 - [ARCH] SpaceVibeyChatPanel remains far over the component LOC limit
+
+Status: Open
+
+Found while: Moving idle Try tips onto active chats and removing Home composer chips
+
+Evidence: `wc -l` reports `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` at 2672 lines, well above the 400 LOC component / 600 LOC container limits.
+
+Needed work: Split composer chrome, seed handling, and conversation list orchestration out of the panel.
+
+Reason not done now: This change only swapped the empty-chat pill row for `ChatComposerTryTip`; decomposing the pre-existing overage was out of scope.
+
 ## 2026-08-15 - [UI] Shell artifact viewer still uses lightweight previews for ads, offers, and adjacent entity types
 
 Status: Open
