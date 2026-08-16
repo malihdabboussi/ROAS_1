@@ -144,8 +144,10 @@ describe('ChannelComposer', () => {
     const composerHandleRef = { current: null as ChannelComposerHandle | null }
     renderComposer({ onVisibleStateChange, composerHandleRef })
 
-    const sendButton = await screen.findByRole('button', { name: /Send message/i })
-    expect((sendButton as HTMLButtonElement).disabled).toBe(true)
+    const sendButton = (await screen.findByRole('button', {
+      name: /Send message/i,
+    })) as HTMLButtonElement
+    expect(sendButton.disabled).toBe(true)
     expect(screen.getByTitle('Bold (⌘B)')).toBeTruthy()
     expect(screen.getByLabelText('Mention entity')).toBeTruthy()
 

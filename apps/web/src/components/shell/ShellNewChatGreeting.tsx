@@ -29,7 +29,7 @@ export function ShellNewChatGreeting({
   inDrawer?: boolean
 }) {
   const [firstName, setFirstName] = useState('')
-  const [greeting, setGreeting] = useState(daypartGreeting)
+  const [greeting, setGreeting] = useState('Hello')
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const canManageOrgBilling = useOrgStore((s) => s.hasMinRole('admin'))
   const creditBalance = useChatStore((s) => s.creditBalance)
