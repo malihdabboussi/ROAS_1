@@ -202,7 +202,7 @@ export function WorkRequestAssetsStep({
           onClick={() => onContinue(serializeAssets(assets))}
           className="button-glass-accent rounded-spacing-2 body-3 px-spacing-4 py-spacing-2 font-medium"
         >
-          Next
+          Continue
         </button>
       </div>
     </div>

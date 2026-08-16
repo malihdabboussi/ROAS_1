@@ -59,6 +59,7 @@ describe('work-request-chat-steps', () => {
     expect(steps[0]?.id).toBe('client_workspace_id')
     expect(steps.at(-1)?.kind).toBe('confirm')
     expect(steps.some((step) => step.kind === 'single_choice')).toBe(true)
+    expect(steps.find((step) => step.id === 'client_workspace_id')?.searchable).toBe(true)
     expect(
       steps.find((step) => step.id === 'campaign_space_id')?.options?.map((o) => o.label),
     ).toEqual(['General client work', 'Launch'])

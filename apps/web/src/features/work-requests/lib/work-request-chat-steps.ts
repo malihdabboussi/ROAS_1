@@ -51,6 +51,8 @@ export type WorkRequestChatStep = {
   prompt: string
   hint?: string
   required: boolean
+  /** Use a searchable closed dropdown instead of an open option list. */
+  searchable?: boolean
   options?: Array<{ id: string; label: string; description?: string }>
 }
 
@@ -110,6 +112,7 @@ export function buildWorkRequestChatSteps(
       kind: 'single_choice',
       prompt: 'Which client workspace is this for?',
       required: true,
+      searchable: true,
       options: options.client_workspaces.map((workspace) => ({
         id: workspace.id,
         label: workspace.name,
@@ -122,6 +125,7 @@ export function buildWorkRequestChatSteps(
       prompt: 'Which Campaign Space should own this?',
       hint: 'Pick a campaign, or keep it on general client work.',
       required: false,
+      searchable: campaignSpaces.length > 6,
       options: [
         { id: '', label: 'General client work' },
         ...campaignSpaces.map((space) => ({ id: space.id, label: space.name })),
@@ -153,6 +157,7 @@ export function buildWorkRequestChatSteps(
           ? 'Pick a teammate, or leave unassigned.'
           : 'Optional. Enter a teammate name, or skip.',
       required: false,
+      searchable: (options.team_members?.length ?? 0) > 6,
       options: [
         { id: '__unassigned__', label: 'Unassigned' },
         ...(options.team_members ?? []).map((member) => ({

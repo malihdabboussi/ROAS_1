@@ -34,6 +34,35 @@ vi.mock('@/components/calendar/MonthCalendar', () => ({
   ),
 }))
 
+vi.mock('@/components/ui/forms/SettingsDropdown', () => ({
+  SettingsDropdown: ({
+    value,
+    options,
+    onChange,
+    placeholder,
+  }: {
+    value: string
+    options: Array<{ value: string; label: string }>
+    onChange: (value: string) => void
+    placeholder?: string
+  }) => (
+    <label>
+      {placeholder}
+      <select
+        aria-label="Searchable choice"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {options.map((option) => (
+          <option key={option.value || 'empty'} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  ),
+}))
+
 describe('WorkRequestReviewPage', () => {
   beforeEach(() => vi.clearAllMocks())
   afterEach(cleanup)
@@ -114,13 +143,63 @@ describe('WorkRequestReviewPage', () => {
     render(<WorkRequestReviewPage token="safe-token" />)
 
     expect(await screen.findByPlaceholderText('Message Pixel…')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument()
     expect(screen.getAllByText('Production review smoke test').length).toBeGreaterThan(0)
     expect(screen.getByText('Already on this request')).toBeInTheDocument()
+    expect(screen.getByText('Test webinar')).toBeInTheDocument()
     expect(screen.getByText('Which Campaign Space should own this?')).toBeInTheDocument()
     expect(screen.queryByText('CONTINUE IN CHAT')).not.toBeInTheDocument()
     expect(screen.queryByText('ROAS SERVICE REQUEST')).not.toBeInTheDocument()
     expect(screen.queryByText('SERVICE REQUEST CHAT')).not.toBeInTheDocument()
     expect(screen.queryByText('Review & Submit')).not.toBeInTheDocument()
     expect(screen.queryByText('Any dependencies?')).not.toBeInTheDocument()
+  })
+
+  it('shows a searchable client dropdown with the selected client and Continue', async () => {
+    vi.mocked(fetchWorkRequestReview).mockResolvedValue({
+      state: 'draft',
+      draft: {
+        id: 'draft-2',
+        client_workspace_id: '',
+        campaign_space_id: null,
+        request_type: 'video',
+        assignee_name: null,
+        title: 'Edit 12 webinar video ads',
+        description: null,
+        due_date: null,
+        priority: 'high',
+        structured_fields: {},
+        links: [],
+        required_fields: ['title', 'description'],
+        missing_fields: ['client_workspace_id', 'description'],
+        assets: [],
+        dependencies: [],
+        requester: { name: null },
+        status: 'draft',
+        expires_at: '2026-08-17T00:00:00.000Z',
+        final_task_id: null,
+        sync_status: 'not_started',
+        resume_conversation_id: null,
+        task_url: null,
+        clickup_url: null,
+      },
+      options: {
+        client_workspaces: [
+          { id: 'ws-a', name: 'Top Level Consulting' },
+          { id: 'ws-b', name: 'Yasir Khan Coaching LTD' },
+          { id: 'ws-c', name: 'Freedom Builderz, Inc' },
+        ],
+        campaign_spaces: [],
+        team_members: [],
+      },
+    })
+
+    render(<WorkRequestReviewPage token="safe-token" />)
+
+    expect(await screen.findByText('Which client workspace is this for?')).toBeInTheDocument()
+    expect(screen.getByLabelText('Searchable choice')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Freedom Builderz, Inc' })).not.toBeInTheDocument()
   })
 })

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { SettingsDropdown } from '@/components/ui/forms/SettingsDropdown'
 import { WORK_REQUEST_MESSAGES } from '../config/messages.config'
 import {
   getAnswerDisplay,
@@ -37,6 +38,45 @@ export function WorkRequestChatBubble({
   )
 }
 
+function StepActions({
+  required,
+  busy,
+  continueDisabled,
+  onSkip,
+  onContinue,
+}: {
+  required: boolean
+  busy: boolean
+  continueDisabled?: boolean
+  onSkip: () => void
+  onContinue: () => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <div>
+        {!required && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onSkip}
+            className="button-glass-neutral rounded-spacing-2 body-3 px-spacing-3 py-spacing-2"
+          >
+            Skip
+          </button>
+        )}
+      </div>
+      <button
+        type="button"
+        disabled={busy || continueDisabled}
+        onClick={onContinue}
+        className="button-glass-accent rounded-spacing-2 body-3 px-spacing-4 py-spacing-2 font-medium disabled:opacity-50"
+      >
+        Continue
+      </button>
+    </div>
+  )
+}
+
 export function WorkRequestChatStepCard({
   step,
   stepIndex,
@@ -59,6 +99,8 @@ export function WorkRequestChatStepCard({
   const [draftValue, setDraftValue] = useState(value)
   useEffect(() => setDraftValue(value), [step.id, value])
 
+  const searchableChoice = step.kind === 'single_choice' && Boolean(step.searchable && step.options)
+
   return (
     <div className="surface-card border-border rounded-spacing-3 space-y-spacing-3 p-spacing-3 border">
       <div className="flex items-start justify-between gap-3">
@@ -74,7 +116,30 @@ export function WorkRequestChatStepCard({
         </span>
       </div>
 
-      {step.kind === 'single_choice' && step.options ? (
+      {searchableChoice && step.options ? (
+        <>
+          <SettingsDropdown
+            value={draftValue}
+            options={step.options.map((option) => ({
+              value: option.id,
+              label: option.label,
+              description: option.description,
+            }))}
+            onChange={setDraftValue}
+            placeholder="Search and select…"
+            searchable
+            disabled={busy}
+            appearance="spaces"
+          />
+          <StepActions
+            required={step.required}
+            busy={busy}
+            continueDisabled={step.required && !draftValue}
+            onSkip={onSkip}
+            onContinue={() => onChoice(draftValue)}
+          />
+        </>
+      ) : step.kind === 'single_choice' && step.options ? (
         <div className="surface-card card-glass rounded-spacing-2 overflow-hidden">
           {step.options.map((option, index) => {
             const selected = value === option.id
@@ -141,28 +206,13 @@ export function WorkRequestChatStepCard({
               className="body-3 rounded-spacing-2 border-border bg-background h-spacing-9 px-spacing-3 focus:ring-ring w-full border outline-none focus:ring-2"
             />
           )}
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              {!step.required && (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={onSkip}
-                  className="button-glass-neutral rounded-spacing-2 body-3 px-spacing-3 py-spacing-2"
-                >
-                  Skip
-                </button>
-              )}
-            </div>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => onContinue(draftValue)}
-              className="button-glass-accent rounded-spacing-2 body-3 px-spacing-4 py-spacing-2 font-medium"
-            >
-              Next
-            </button>
-          </div>
+          <StepActions
+            required={step.required}
+            busy={busy}
+            continueDisabled={step.required && !draftValue.trim()}
+            onSkip={onSkip}
+            onContinue={() => onContinue(draftValue)}
+          />
         </>
       )}
     </div>
