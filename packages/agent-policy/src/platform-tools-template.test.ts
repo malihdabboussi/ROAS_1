@@ -76,11 +76,12 @@ describe('platform tools template', () => {
       'Do not require the user to know or say "Page Grader"',
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
-      'resolve or confirm the client and campaign before creating Page Grader work',
+      'resolve the client and campaign from Slack channel identity',
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'ask only for missing details that block a safe draft',
     )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('do **not** ask the user which client')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Do not route an MCP service through')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('until the tool result confirms the effect')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(

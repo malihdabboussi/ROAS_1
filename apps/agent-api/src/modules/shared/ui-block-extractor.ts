@@ -475,6 +475,41 @@ function buildProjectPreviewBlock(
   ]
 }
 
+/** Service Request drafts from The ROAS Portal MCP → continue in chat, not a form. */
+function buildWorkRequestChatBlock(
+  result: unknown,
+  data: Record<string, unknown>,
+): Array<Record<string, unknown>> {
+  const envelope = parseCampaignToolTextEnvelope(result)
+  const records = [...(envelope ? [envelope] : []), ...collectCandidateRecords(result), data]
+  const nestedDraft = records
+    .map((record) => (isRecord(record.draft) ? record.draft : null))
+    .find(Boolean)
+  if (nestedDraft) records.unshift(nestedDraft)
+
+  const reviewUrl = firstString(records, ['review_url', 'reviewUrl'])
+  if (!reviewUrl || !/^https?:\/\//i.test(reviewUrl)) return []
+  if (!reviewUrl.includes('/request-review/')) return []
+
+  const draftId = firstString(records, ['draft_id', 'draftId', 'id'])
+  const title =
+    firstString(records, ['title', 'name']) ||
+    (typeof data.tool_name === 'string' && data.tool_name.includes('fulfillment')
+      ? 'Service Request ready'
+      : 'Service Request ready')
+
+  return [
+    {
+      type: 'work_request',
+      id: draftId ? `work-request-${draftId}` : `work-request-${Date.now()}`,
+      title,
+      reviewUrl,
+      ...(draftId ? { draftId } : {}),
+      status: 'pending',
+    },
+  ]
+}
+
 function buildActionOutputBlocks(
   action: string,
   result: unknown,
@@ -876,6 +911,11 @@ export function resolveUiBlocksFromToolResult(params: {
         },
       ]
     }
+  }
+
+  if (action === 'use_mcp_tool') {
+    const workRequestBlock = buildWorkRequestChatBlock(result, data)
+    if (workRequestBlock.length > 0) return workRequestBlock
   }
 
   if (

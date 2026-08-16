@@ -2,11 +2,15 @@ import { createHmac } from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { AgentChannel } from '../types/slack.types'
 import {
+  formatSlackAskIdentityContext,
+  type SlackAskClientStamp,
+} from './slack-ask-identity-context'
+import { SlackServiceBase } from './slack-service.base'
+import {
   SUPABASE_USER_ACCESS_TOKEN_KEY,
   SUPABASE_USER_REFRESH_TOKEN_KEY,
   type OAuthStatePayload,
 } from './slack-service.shared'
-import { SlackServiceBase } from './slack-service.base'
 
 export abstract class SlackAuthBase extends SlackServiceBase {
   protected async getChannelAccessToken(
@@ -299,10 +303,29 @@ export abstract class SlackAuthBase extends SlackServiceBase {
     userId: string,
     botToken: string,
     channelId: string,
+    identity?: { orgId?: string | null; slackTeamId?: string | null },
   ): Promise<string> {
+    const sections: string[] = []
+    if (identity?.orgId && identity.slackTeamId) {
+      const identityBlock = await this.buildSlackAskIdentityBlock(supabase, {
+        orgId: identity.orgId,
+        slackTeamId: identity.slackTeamId,
+        channelId,
+        botToken,
+      }).catch((error) => {
+        this.logger.warn(
+          `Failed to build Slack channel identity: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        )
+        return ''
+      })
+      if (identityBlock) sections.push(identityBlock)
+    }
+
     const messages = await this.slackApi.getChannelHistory(botToken, channelId, 10)
     const relevant = messages.filter((m) => !m.bot_id && m.text).reverse()
-    if (relevant.length === 0) return ''
+    if (relevant.length === 0) return sections.join('\n\n')
 
     const userIds = [...new Set(relevant.map((m) => m.user).filter(Boolean))] as string[]
     const nameMap = new Map<string, string>()
@@ -324,7 +347,83 @@ export abstract class SlackAuthBase extends SlackServiceBase {
       })
       lines.push(`@${name}: ${cleanText}`)
     }
-    return lines.join('\n')
+    sections.push(lines.join('\n'))
+    return sections.join('\n\n')
   }
 
+  protected async buildSlackAskIdentityBlock(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      slackTeamId: string
+      channelId: string
+      botToken?: string
+      channelNameHint?: string | null
+    },
+  ): Promise<string> {
+    const stamp = await this.resolveSlackAskClientStamp(supabase, input)
+    if (!stamp) return ''
+    return formatSlackAskIdentityContext(stamp)
+  }
+
+  protected async resolveSlackAskClientStamp(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      slackTeamId: string
+      channelId: string
+      botToken?: string
+      channelNameHint?: string | null
+    },
+  ): Promise<SlackAskClientStamp | null> {
+    const { data: channel } = await supabase
+      .from('slack_observation_channels')
+      .select('channel_name')
+      .eq('org_id', input.orgId)
+      .eq('slack_team_id', input.slackTeamId)
+      .eq('channel_id', input.channelId)
+      .maybeSingle()
+
+    const { data: event } = await supabase
+      .from('slack_observation_events')
+      .select('channel_name, metadata')
+      .eq('org_id', input.orgId)
+      .eq('slack_team_id', input.slackTeamId)
+      .eq('channel_id', input.channelId)
+      .not('metadata->>page_grader_client_id', 'is', null)
+      .order('observed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    const metadata =
+      event?.metadata && typeof event.metadata === 'object' && !Array.isArray(event.metadata)
+        ? (event.metadata as Record<string, unknown>)
+        : {}
+    const asString = (value: unknown) =>
+      typeof value === 'string' && value.trim() ? value.trim() : null
+
+    let channelName =
+      asString(input.channelNameHint) ??
+      asString(channel?.channel_name) ??
+      asString(event?.channel_name)
+
+    if (!channelName && input.botToken) {
+      channelName = await this.slackApi
+        .getConversationName(input.botToken, input.channelId)
+        .catch(() => null)
+    }
+
+    const pageGraderClientId = asString(metadata.page_grader_client_id)
+    const pageGraderClientName = asString(metadata.page_grader_client_name)
+    if (!channelName && !pageGraderClientId && !pageGraderClientName) return null
+
+    return {
+      channelId: input.channelId,
+      channelName,
+      pageGraderClientId,
+      pageGraderClientName,
+      roasCampaignId: asString(metadata.roas_campaign_id),
+      roasCampaignName: asString(metadata.roas_campaign_name),
+    }
+  }
 }

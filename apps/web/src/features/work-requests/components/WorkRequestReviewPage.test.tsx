@@ -55,4 +55,45 @@ describe('WorkRequestReviewPage', () => {
       screen.getByText('The ROAS task is saved. The ClickUp mirror still needs another try.'),
     ).toBeInTheDocument()
   })
+
+  it('opens the chat-native review flow for drafts', async () => {
+    vi.mocked(fetchWorkRequestReview).mockResolvedValue({
+      state: 'draft',
+      draft: {
+        id: 'draft-1',
+        client_workspace_id: 'ws-1',
+        campaign_space_id: null,
+        request_type: 'general',
+        assignee_name: null,
+        title: 'Production review smoke test',
+        description: 'Controlled smoke test',
+        due_date: '2026-08-22',
+        priority: 'medium',
+        structured_fields: {},
+        links: [],
+        required_fields: ['title'],
+        missing_fields: [],
+        assets: [],
+        dependencies: [],
+        requester: { name: null },
+        status: 'draft',
+        expires_at: '2026-08-17T00:00:00.000Z',
+        final_task_id: null,
+        sync_status: 'not_started',
+        task_url: null,
+        clickup_url: null,
+      },
+      options: {
+        client_workspaces: [{ id: 'ws-1', name: 'Test webinar' }],
+        campaign_spaces: [],
+      },
+    })
+
+    render(<WorkRequestReviewPage token="safe-token" />)
+
+    expect(await screen.findByText('CONTINUE IN CHAT')).toBeInTheDocument()
+    expect(screen.getByText('SERVICE REQUEST CHAT')).toBeInTheDocument()
+    expect(screen.getByText('Which client workspace is this for?')).toBeInTheDocument()
+    expect(screen.queryByText('Review & Submit')).not.toBeInTheDocument()
+  })
 })

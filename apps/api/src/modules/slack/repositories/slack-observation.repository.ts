@@ -277,6 +277,63 @@ export class SlackObservationRepository {
     return data?.last_message_ts ? String(data.last_message_ts) : null
   }
 
+  /** Latest Page Grader client/campaign stamp observed for a Slack channel. */
+  async findLatestClientStampForChannel(
+    supabase: SupabaseClient,
+    input: { orgId: string; slackTeamId: string; channelId: string },
+  ): Promise<{
+    channel_name: string | null
+    page_grader_client_id: string | null
+    page_grader_client_name: string | null
+    roas_campaign_id: string | null
+    roas_campaign_name: string | null
+  } | null> {
+    const { data: channel, error: channelError } = await supabase
+      .from('slack_observation_channels')
+      .select('channel_name')
+      .eq('org_id', input.orgId)
+      .eq('slack_team_id', input.slackTeamId)
+      .eq('channel_id', input.channelId)
+      .maybeSingle()
+    if (channelError) {
+      throw new Error(`Failed to load Slack channel setting: ${channelError.message}`)
+    }
+
+    const { data: event, error: eventError } = await supabase
+      .from('slack_observation_events')
+      .select('channel_name, metadata')
+      .eq('org_id', input.orgId)
+      .eq('slack_team_id', input.slackTeamId)
+      .eq('channel_id', input.channelId)
+      .not('metadata->>page_grader_client_id', 'is', null)
+      .order('observed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (eventError) {
+      throw new Error(`Failed to load Slack channel client stamp: ${eventError.message}`)
+    }
+
+    const metadata =
+      event?.metadata && typeof event.metadata === 'object' && !Array.isArray(event.metadata)
+        ? (event.metadata as Record<string, unknown>)
+        : {}
+    const asString = (value: unknown) =>
+      typeof value === 'string' && value.trim() ? value.trim() : null
+
+    const channelName = asString(channel?.channel_name) ?? asString(event?.channel_name) ?? null
+    const pageGraderClientId = asString(metadata.page_grader_client_id)
+    const pageGraderClientName = asString(metadata.page_grader_client_name)
+    if (!channelName && !pageGraderClientId && !pageGraderClientName) return null
+
+    return {
+      channel_name: channelName,
+      page_grader_client_id: pageGraderClientId,
+      page_grader_client_name: pageGraderClientName,
+      roas_campaign_id: asString(metadata.roas_campaign_id),
+      roas_campaign_name: asString(metadata.roas_campaign_name),
+    }
+  }
+
   async advanceConsumerCursor(
     supabase: SupabaseClient,
     input: { orgId: string; slackTeamId: string; consumerKey: string; lastMessageTs: string },
