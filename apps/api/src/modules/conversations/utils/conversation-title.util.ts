@@ -17,7 +17,10 @@ export function isPlaceholderConversationTitle(raw: string | null | undefined): 
   return LEGACY_DEFAULTS.some((re) => re.test(title))
 }
 
-export function needsGeneratedConversationTitle(raw: string | null | undefined): boolean {
+export function needsGeneratedConversationTitle(
+  raw: string | null | undefined,
+  firstUserMessage?: string | null,
+): boolean {
   if (isPlaceholderConversationTitle(raw)) return true
   const title = (raw ?? '').replace(/\s+/g, ' ').trim()
   if (!title) return true
@@ -27,6 +30,10 @@ export function needsGeneratedConversationTitle(raw: string | null | undefined):
   if (title.length >= 48) return true
   if (/^(hi|hey|hello|yo)[\s!.?]*$/i.test(title)) return true
   if (RAW_OPENERS.test(title) && words.length >= 3) return true
+  if (firstUserMessage) {
+    const snippet = titleFromFirstUserMessage(firstUserMessage, 48)
+    if (snippet && title === snippet) return true
+  }
   return false
 }
 
@@ -53,7 +60,34 @@ export function resolveSuggestedConversationTitle(
   firstUserMessage: string,
   maxLen = 60,
 ): string {
+  const fromModel = resolveGeneratedConversationTitle(suggested, maxLen)
+  if (fromModel) return fromModel
+  return titleFromFirstUserMessage(firstUserMessage, Math.min(maxLen, 48))
+}
+
+/** Model title only — never a first-message dump. Used for Slack and similar sources. */
+export function resolveGeneratedConversationTitle(
+  suggested: string | null | undefined,
+  maxLen = 60,
+): string {
   const fromModel = (suggested ?? '').replace(/\s+/g, ' ').trim().slice(0, maxLen)
   if (fromModel && !isPlaceholderConversationTitle(fromModel)) return fromModel
-  return titleFromFirstUserMessage(firstUserMessage, Math.min(maxLen, 48))
+  return ''
+}
+
+/** Slack keeps `Slack Chat` until Gemini returns a topic; other chats may snippet-fallback. */
+export function pickGeneratedConversationTitle(input: {
+  currentTitle: string | null
+  firstMessage: string
+  suggested: string
+  isSlack: boolean
+}): string | null {
+  const generated = input.isSlack
+    ? resolveGeneratedConversationTitle(input.suggested, 60)
+    : resolveSuggestedConversationTitle(input.suggested, input.firstMessage, 60)
+  if (generated && generated !== input.currentTitle) return generated
+  if (input.isSlack) return null
+  const fallback = titleFromFirstUserMessage(input.firstMessage, 48)
+  if (!fallback || fallback === input.currentTitle) return null
+  return fallback
 }

@@ -30,6 +30,7 @@ import { ShellEmptyChatQuickStartPills } from '@/components/shell/ShellEmptyChat
 import { ShellRightPanel } from '@/components/shell/ShellRightPanel'
 import { useShellChatQuickStart } from '@/components/shell/use-shell-chat-quick-start'
 import { useShellStore } from '@/components/shell/use-shell-store'
+import { useSummaryPanelLayout } from '@/components/shell/use-summary-panel-docked'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   useBrainLiveSession,
@@ -182,6 +183,7 @@ export function SpaceVibeyChatPanel({
   shellSidebarChrome = false,
   headerLayout = 'compact',
   headerLeadingAction,
+  headerTrailingAction,
   composerContextSlot,
   preferredConversationId,
   awarenessContextOverride,
@@ -2159,16 +2161,8 @@ export function SpaceVibeyChatPanel({
 
   const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
   const toggleRightPanel = useShellStore((s) => s.toggleRightPanel)
-  const setRightPanelOpen = useShellStore((s) => s.setRightPanelOpen)
   const [headerRenameRequestNonce, setHeaderRenameRequestNonce] = useState(0)
-  const autoOpenedSummaryConversationRef = useRef<string | null>(null)
-
-  useEffect(() => {
-    if (headerLayout !== 'full' || !selectedConversationId) return
-    if (autoOpenedSummaryConversationRef.current === selectedConversationId) return
-    autoOpenedSummaryConversationRef.current = selectedConversationId
-    setRightPanelOpen(true)
-  }, [headerLayout, selectedConversationId, setRightPanelOpen])
+  const summaryDocked = useSummaryPanelLayout(chatPanelRef, selectedConversationId)
 
   const chatHeaderActions = (
     <SpaceChatHeaderActions
@@ -2190,6 +2184,7 @@ export function SpaceVibeyChatPanel({
       hideHistoryChrome={shellSidebarChrome}
       summaryOpen={rightPanelOpen}
       onToggleSummary={() => toggleRightPanel()}
+      pageRestore={headerTrailingAction}
     />
   )
 
@@ -2666,6 +2661,7 @@ export function SpaceVibeyChatPanel({
         campaignId={effectiveCampaignId}
         spaceId={effectiveSpaceId}
         showScope={!isChannelScope}
+        placement={summaryDocked ? 'docked' : 'overlay'}
         onConversationUpdated={handleConversationScopeUpdated}
         onScopeChanged={setScopeOverride}
       />

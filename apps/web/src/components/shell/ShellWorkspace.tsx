@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, type ReactNode } from 'react'
-import { ChevronLeft, PanelRight } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatPanel'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
@@ -41,7 +41,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const requestNewChat = useShellStore((s) => s.requestNewChat)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
   const setRightPanelOpen = useShellStore((s) => s.setRightPanelOpen)
-  const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
+  const summaryPanelDocked = useShellStore((s) => s.summaryPanelDocked)
   const artifactTarget = useShellStore((s) => s.artifactViewer.target)
   const previousArtifactTargetRef = useRef(artifactTarget)
   const shellPrefsHydrated = useShellPrefsHydrated()
@@ -123,8 +123,8 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   useEffect(() => {
     const artifactClosed = previousArtifactTargetRef.current !== null && artifactTarget === null
     previousArtifactTargetRef.current = artifactTarget
-    if (artifactClosed && showFullConversation) setRightPanelOpen(true)
-  }, [artifactTarget, setRightPanelOpen, showFullConversation])
+    if (artifactClosed && showFullConversation && summaryPanelDocked) setRightPanelOpen(true)
+  }, [artifactTarget, setRightPanelOpen, showFullConversation, summaryPanelDocked])
   let homeOrDefaultMain: ReactNode = children
   if (showFullNewChat) {
     homeOrDefaultMain = <ShellNewChatGreeting />
@@ -263,23 +263,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
               title="Show page"
             >
               <ChevronLeft className="icon-sm" aria-hidden />
-            </button>
-          </div>
-        ) : null}
-
-        {/* Simple mode hides the global top bar's page control with the work
-            card, so it needs this floating restore control. Advanced mode
-            always shows the top-bar control — a second icon here is a dupe. */}
-        {workAreaCollapsed && !hostCollapsedRight && !rightPanelOpen && menuStyle === 'simple' ? (
-          <div className="p-spacing-3 z-dropdown absolute right-0 top-0">
-            <button
-              type="button"
-              onClick={() => setWorkAreaOpen(true)}
-              className="shell-topbar-icon-btn"
-              aria-label="Show page"
-              title="Show page"
-            >
-              <PanelRight aria-hidden />
             </button>
           </div>
         ) : null}

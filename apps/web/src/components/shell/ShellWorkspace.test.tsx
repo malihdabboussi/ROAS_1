@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   setRightPanelOpen: vi.fn(),
   recentWorkAreaPages: [{ id: '/home/meetings', title: 'Meetings', href: '/home/meetings' }],
   rightPanelOpen: false,
+  summaryPanelDocked: false,
   workAreaOpen: true,
   chatDrawerOpen: false,
   artifactTarget: null as { id: string } | null,
@@ -146,6 +147,7 @@ vi.mock('./use-shell-store', () => ({
       setWorkAreaOpen: mocks.setWorkAreaOpen,
       setRightPanelOpen: mocks.setRightPanelOpen,
       rightPanel: { open: mocks.rightPanelOpen, tab: 'tasks' },
+      summaryPanelDocked: mocks.summaryPanelDocked,
       recentWorkAreaPages: mocks.recentWorkAreaPages,
     }),
 }))
@@ -156,6 +158,7 @@ describe('ShellWorkspace', () => {
     mocks.params = new Map([['chat', 'starting']])
     mocks.activeConversationId = null
     mocks.rightPanelOpen = false
+    mocks.summaryPanelDocked = false
     mocks.recentWorkAreaPages = [
       { id: '/home/meetings', title: 'Meetings', href: '/home/meetings' },
     ]
@@ -337,6 +340,7 @@ describe('ShellWorkspace', () => {
     mocks.params = new Map([['conv', 'conversation-123']])
     mocks.artifactTarget = { id: 'image-1' }
     mocks.desktop = true
+    mocks.summaryPanelDocked = true
 
     const { rerender } = render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
     mocks.artifactTarget = null
@@ -357,7 +361,7 @@ describe('ShellWorkspace', () => {
     fireEvent.click(expandButton)
     expect(mocks.setWorkAreaOpen).toHaveBeenCalledWith(true)
   })
-  it('keeps a page restore control in Simple mode when the collapsed dock is not work-attached', () => {
+  it('keeps page restore in the chat header instead of floating over the pane', () => {
     mocks.pathname = '/brain'
     mocks.params = new Map()
     mocks.workAreaOpen = false
@@ -366,7 +370,6 @@ describe('ShellWorkspace', () => {
     mocks.menuDock = 'left'
     mocks.menuStyle = 'simple'
     render(<ShellWorkspace>Brain page</ShellWorkspace>)
-    fireEvent.click(screen.getByRole('button', { name: 'Show page' }))
-    expect(mocks.setWorkAreaOpen).toHaveBeenCalledWith(true)
+    expect(screen.queryByRole('button', { name: 'Show page' })).toBeNull()
   })
 })

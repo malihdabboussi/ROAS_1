@@ -16,9 +16,16 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/components/global-chat/containers/GlobalChatPanel', () => ({
-  GlobalChatPanel: ({ headerLeadingAction }: { headerLeadingAction?: ReactNode }) => (
+  GlobalChatPanel: ({
+    headerLeadingAction,
+    headerTrailingAction,
+  }: {
+    headerLeadingAction?: ReactNode
+    headerTrailingAction?: ReactNode
+  }) => (
     <div>
       {headerLeadingAction}
+      {headerTrailingAction}
       <div>Chat panel</div>
     </div>
   ),
@@ -224,7 +231,7 @@ describe('ShellChatDrawer', () => {
     expect(screen.getByRole('button', { name: 'Show chat history' })).toBeInTheDocument()
   })
 
-  it('adds the work summary as a third column instead of overlaying chat', () => {
+  it('keeps the drawer width when the work summary is open so the column can sit inside chat', () => {
     useShellStore.setState({
       chatDrawer: {
         open: true,
@@ -237,9 +244,25 @@ describe('ShellChatDrawer', () => {
 
     const { container } = render(<ShellChatDrawer />)
 
-    expect(container.querySelector('[data-shell-chat-drawer]')).toHaveStyle({ width: '708px' })
-    expect(container.querySelector('.shell-chat-drawer-body')).toHaveStyle({ width: '708px' })
+    expect(container.querySelector('[data-shell-chat-drawer]')).toHaveStyle({ width: '420px' })
+    expect(container.querySelector('.shell-chat-drawer-body')).toHaveStyle({ width: '420px' })
     expect(useShellStore.getState().chatDrawer.width).toBe(420)
+  })
+
+  it('groups the page restore control with chat header actions in expanded Simple chat', () => {
+    useShellMenuDock.setState({ menuStyle: 'simple', dock: 'left' })
+    useShellStore.setState({
+      chatDrawer: {
+        open: true,
+        conversationId: 'conversation-1',
+        width: 420,
+        minimized: false,
+      },
+    })
+
+    render(<ShellChatDrawer expanded />)
+
+    expect(screen.getByRole('button', { name: 'Show page' })).toBeInTheDocument()
   })
 
   it('resizes the chat history rail independently in expanded chat', () => {

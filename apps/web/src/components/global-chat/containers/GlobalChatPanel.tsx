@@ -20,11 +20,13 @@ export function GlobalChatPanel({
   onCollapseChat,
   presentation = 'compact',
   headerLeadingAction,
+  headerTrailingAction,
 }: {
   shellSidebarChrome?: boolean
   onCollapseChat?: () => void
   presentation?: 'full' | 'compact'
   headerLeadingAction?: ReactNode
+  headerTrailingAction?: ReactNode
 } = {}) {
   const pathname = usePathname() ?? ''
   const workContext = useGlobalChatStore((s) => s.workContext)
@@ -131,6 +133,7 @@ export function GlobalChatPanel({
             shellSidebarChrome={shellSidebarChrome}
             headerLayout={presentation}
             headerLeadingAction={headerLeadingAction}
+            headerTrailingAction={headerTrailingAction}
             composerContextSlot={<GlobalChatComposerFooter />}
             onCollapseChat={
               presentation === 'full'

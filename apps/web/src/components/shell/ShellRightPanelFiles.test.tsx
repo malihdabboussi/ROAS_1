@@ -21,6 +21,16 @@ describe('ShellRightPanelFiles', () => {
 
   afterEach(cleanup)
 
+  it('shows a skeleton instead of loading copy while chat files are fetching', () => {
+    mocks.fetchConversationDocuments.mockReturnValue(new Promise(() => undefined))
+
+    render(<ShellRightPanelFiles conversationId="conversation-1" messages={[]} />)
+
+    expect(screen.getByRole('status', { name: 'Loading chat files…' })).toBeInTheDocument()
+    expect(screen.queryByText('Loading chat files…')).not.toBeInTheDocument()
+    expect(screen.queryByText('Nothing made here yet.')).not.toBeInTheDocument()
+  })
+
   it('combines saved conversation artifacts with files attached in chat', async () => {
     mocks.fetchConversationDocuments.mockResolvedValue([
       {

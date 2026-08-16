@@ -1,3 +1,15 @@
+## 2026-08-16 - [ARCH] SpaceVibeyChatPanel still over the container LOC limit after summary dock wiring
+
+Status: Open
+
+Found while: ChatGPT-style summary panel, empty-section collapse, Slack titles
+
+Evidence: `wc -l` reports `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` at 2670 LOC (container limit 600). Dock auto-open was extracted to `use-summary-panel-docked.ts`. `apps/api/src/modules/conversations/services/conversations.service.ts` is 588 LOC after moving title pick into `conversation-title.util.ts`. `apps/web/src/components/shell/use-shell-store.ts` is 554 LOC (hook limit 300) after `summaryPanelDocked`.
+
+Needed work: Split remaining send/seed/header orchestration out of SpaceVibeyChatPanel; decompose the shell store.
+
+Reason not done now: The requested work was summary layout, skeleton loading, and Slack naming; decomposing these pre-existing oversized files was out of scope.
+
 ## 2026-08-15 - [UI] Shell artifact viewer still uses lightweight previews for ads, offers, and adjacent entity types
 
 Status: Open

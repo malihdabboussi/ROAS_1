@@ -11,17 +11,16 @@ import { initConversationTitleAutogen } from '@/features/studio/services/convers
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { ARTIFACT_VIEWER_WIDTH_MIN } from '@/lib/artifacts/artifact-viewer-layout'
 import { cn } from '@/lib/utils/cn'
+import { ShellChatHeaderPageControl } from './ShellChatHeaderPageControl'
 import { ShellChatMenu } from './ShellChatMenu'
 import { ShellScreenChatPrompt } from './ShellScreenChatPrompt'
-import { useRightEdgePresence } from './use-right-edge-presence'
-import { useShellMenuDock } from './use-shell-menu-dock'
+import { isWorkAttachedDock, useShellMenuDock } from './use-shell-menu-dock'
 import { useShellStore } from './use-shell-store'
 
 /** Matches the drawer/HQ-rail transition in globals.css. */
 const DRAWER_SLIDE_MS = 300
 const DRAWER_COLLAPSE_EDGE_TOLERANCE = 24
 const HISTORY_COLLAPSE_THRESHOLD = 96
-const RIGHT_PANEL_WIDTH = 288
 const ARTIFACT_BESIDE_MIN_WIDTH = ARTIFACT_VIEWER_WIDTH_MIN
 /** Dragging this far past the artifact's stop reads as intent to dismiss it. */
 const ARTIFACT_COLLAPSE_OVERSHOOT = 180
@@ -35,6 +34,7 @@ export function ShellChatDrawer({
 }) {
   const open = useShellStore((s) => s.chatDrawer.open)
   const simpleMenu = useShellMenuDock((s) => s.menuStyle === 'simple')
+  const menuDock = useShellMenuDock((s) => s.dock)
   const width = useShellStore((s) => s.chatDrawer.width)
   const conversationId = useShellStore((s) => s.chatDrawer.conversationId)
   const historyWidth = useShellStore((s) => s.chatHistoryWidth)
@@ -47,8 +47,6 @@ export function ShellChatDrawer({
   const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
   const minimizeChatDrawer = useShellStore((s) => s.minimizeChatDrawer)
   const newChatNonce = useShellStore((s) => s.newChatNonce)
-  const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
-  const { mounted: rightPanelMounted } = useRightEdgePresence(rightPanelOpen, rightPanelOpen)
 
   const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
   const openConversationInSpaceChat = useSpacesStore((s) => s.openConversationInSpaceChat)
@@ -209,10 +207,11 @@ export function ShellChatDrawer({
   if (!mounted) return null
 
   // Expanded = page collapsed: history stays, chat fills the freed width.
-  // Docked = fixed width with slide-in animation.
-  const dockedWidth = width + (rightPanelMounted ? RIGHT_PANEL_WIDTH : 0)
-  const drawerWidthStyle = expanded ? undefined : { width: open ? `${dockedWidth}px` : '0px' }
-  const bodyStyle = expanded ? undefined : { width: `${dockedWidth}px` }
+  // Docked = fixed width with slide-in animation. The summary column, when it
+  // fits, lives inside the chat pane instead of widening this drawer.
+  const drawerWidthStyle = expanded ? undefined : { width: open ? `${width}px` : '0px' }
+  const bodyStyle = expanded ? undefined : { width: `${width}px` }
+  const showPageRestore = expanded && simpleMenu && !isWorkAttachedDock(menuDock)
 
   return (
     <>
@@ -266,6 +265,7 @@ export function ShellChatDrawer({
             <GlobalChatPanel
               shellSidebarChrome
               onCollapseChat={() => minimizeChatDrawer()}
+              headerTrailingAction={showPageRestore ? <ShellChatHeaderPageControl /> : undefined}
               headerLeadingAction={
                 !simpleMenu && historyCollapsed ? (
                   <button

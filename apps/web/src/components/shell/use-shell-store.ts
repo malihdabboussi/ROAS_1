@@ -124,6 +124,8 @@ interface ShellStore extends ShellScreenChatSlice {
   /** Page work area (Space dock, Brain, Inbox, …) visible; false = chat full width. */
   workAreaOpen: boolean
   rightPanel: ShellRightPanelState
+  /** True when the chat pane is wide enough for an in-flow summary column. */
+  summaryPanelDocked: boolean
   conversationScopePickerRequestNonce: number
   artifactViewer: ShellArtifactViewerState
   recentArtifactTargets: ShellArtifactViewerTarget[]
@@ -154,6 +156,7 @@ interface ShellStore extends ShellScreenChatSlice {
   toggleWorkAreaOpen: () => void
   setRightPanelOpen: (open: boolean) => void
   toggleRightPanel: () => void
+  setSummaryPanelDocked: (docked: boolean) => void
   requestConversationScopePicker: () => void
   openArtifactViewer: (target: ShellArtifactViewerTarget) => void
   closeArtifactViewer: () => void
@@ -188,6 +191,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   rightPanel: {
     open: false,
   },
+  summaryPanelDocked: false,
   conversationScopePickerRequestNonce: 0,
   artifactViewer: {
     target: null,
@@ -366,6 +370,10 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   },
   toggleRightPanel: () => {
     get().setRightPanelOpen(!get().rightPanel.open)
+  },
+  setSummaryPanelDocked: (docked) => {
+    if (get().summaryPanelDocked === docked) return
+    set({ summaryPanelDocked: docked })
   },
   requestConversationScopePicker: () => {
     writePersisted({ rightPanelOpen: true, artifactViewerTarget: null })
