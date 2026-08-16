@@ -5,14 +5,13 @@ import { ExternalLink, Link2 } from 'lucide-react'
 import type { Message } from '@/lib/conversations'
 import { extractConversationSourceRows } from './shell-conversation-summary'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
+import { ShellRightPanelEmpty } from './ShellRightPanelEmpty'
 
 export function ShellRightPanelSources({ messages }: { messages: Message[] }) {
   const rows = useMemo(() => extractConversationSourceRows(messages), [messages])
 
   if (rows.length === 0) {
-    return (
-      <p className="body-3 text-muted-foreground">{SHELL_RIGHT_PANEL_MESSAGES.chatSourcesEmpty}</p>
-    )
+    return <ShellRightPanelEmpty art="sources" message={SHELL_RIGHT_PANEL_MESSAGES.chatSourcesEmpty} />
   }
 
   return (

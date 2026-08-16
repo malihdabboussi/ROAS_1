@@ -19,7 +19,7 @@ const mocks = vi.hoisted(() => ({
     closeArtifactViewer: vi.fn(),
   },
   messagesByConversation: {
-    'conversation-1': [{ id: 'message-1' }],
+    'conversation-1': [{ id: 'message-1', role: 'assistant', metadata: {}, created_at: '2026-08-15T00:00:00.000Z' }],
   },
   conversations: [] as Array<{ id: string; metadata?: Record<string, unknown> }>,
 }))
@@ -141,10 +141,25 @@ describe('ShellRightPanel', () => {
     expect(screen.getByRole('heading', { name: 'Tasks' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Connections' })).toBeInTheDocument()
     expect(screen.queryByText('Campaign & space')).not.toBeInTheDocument()
-    expect(screen.getByTestId('tasks-context')).toHaveTextContent('conversation-1')
     // The create entry point rides the Outputs section header.
     const outputs = screen.getByRole('region', { name: 'Outputs' })
     expect(within(outputs).getByRole('button', { name: 'Create' })).toBeInTheDocument()
+  })
+
+  it('opens sections that have content and folds away the ones that do not', async () => {
+    render(<ShellRightPanel conversationId="conversation-1" showScope />)
+
+    // This conversation has no tool activity, so Tasks costs no height until
+    // it is asked for; Outputs has content and opens on its own.
+    const tasks = await screen.findByRole('button', { name: 'Tasks' })
+    expect(tasks).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByTestId('tasks-context')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Outputs' })).toHaveAttribute('aria-expanded', 'true')
+
+    // An explicit toggle still wins over the emptiness default.
+    fireEvent.click(tasks)
+    expect(tasks).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByTestId('tasks-context')).toHaveTextContent('conversation-1')
   })
 
   it('renders as a floating bubble that expands down and collapses up', async () => {

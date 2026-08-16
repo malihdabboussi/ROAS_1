@@ -38880,3 +38880,20 @@ Evidence: Two near-identical implementations of the same status mapping predate 
 Needed work: Delete the `detail-helpers` copy and re-export the canonical helper, after confirming whether the timeline should read "Pending" or "Queued" for a step with no execution state.
 
 Reason not done now: Collapsing them changes user-visible wording in the mission activity timeline, which is outside the scope of adding the Progress section and deserves its own decision rather than being folded in silently.
+
+## 2026-08-15 - [FEATURE] Missions are named after their playbook, not their run
+
+Status: Open
+
+Found while: Building the Mission Progress section, where a thread that ran one playbook several times showed several identically named rows.
+
+Files:
+
+- `apps/mission-worker/src/modules/missions/playbooks/`
+- `apps/web/src/lib/spaces/quick-missions-catalog.ts`
+
+Evidence: Four missions started from conversation `1d2d2b2b` are all titled exactly "Client Strategy" in the `missions` table. The title is the playbook name, so it carries no information about the particular run. Newer receipts do better ("Client Strategy — General / Meetings"), but the mission record itself is still the bare playbook name.
+
+Needed work: Name a mission at creation from its run context — playbook plus campaign/space, and a disambiguator when the same playbook runs more than once against the same scope.
+
+Reason not done now: The panel change mitigates this in the UI with a timestamp under each row, but the fix belongs in mission creation, which is worker/API work outside a chat-panel branch.

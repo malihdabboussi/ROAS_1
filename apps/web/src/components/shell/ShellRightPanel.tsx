@@ -10,7 +10,11 @@ import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { readMeetingConversationLink, type Conversation } from '@/lib/conversations'
 import { useQuickMissionsLauncher } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
-import { extractConversationMissionRows } from './shell-conversation-summary'
+import {
+  extractConversationMissionRows,
+  extractConversationSourceRows,
+  extractConversationTaskRows,
+} from './shell-conversation-summary'
 import type { ShellCreateMenuItem } from './shell-create-menu.config'
 import { ShellCreateMenuPanel } from './ShellCreateMenuPanel'
 import { ShellRightPanelConnections } from './ShellRightPanelConnections'
@@ -70,12 +74,23 @@ export function ShellRightPanel({
   // Collapse state lives here rather than in each section: this component
   // returns null while the panel is closed but stays mounted, so a section the
   // user collapsed is still collapsed when they reopen the panel.
-  const [collapsedSections, setCollapsedSections] = useState<Record<ShellRightPanelSectionId, true>>(
-    {} as Record<ShellRightPanelSectionId, true>,
-  )
+  const [collapsedSections, setCollapsedSections] = useState<
+    Partial<Record<ShellRightPanelSectionId, true>>
+  >({})
+  const [expandedSections, setExpandedSections] = useState<
+    Partial<Record<ShellRightPanelSectionId, true>>
+  >({})
+  // A section with nothing in it opens collapsed so it costs no height; one
+  // with content opens expanded. An explicit toggle always wins over the
+  // default, which is why collapsed/expanded are tracked separately rather
+  // than as one boolean seeded from emptiness.
   const isSectionOpen = useCallback(
-    (id: ShellRightPanelSectionId) => !collapsedSections[id],
-    [collapsedSections],
+    (id: ShellRightPanelSectionId, hasContent = true) => {
+      if (collapsedSections[id]) return false
+      if (expandedSections[id]) return true
+      return hasContent
+    },
+    [collapsedSections, expandedSections],
   )
   const setSectionOpen = useCallback((id: ShellRightPanelSectionId, open: boolean) => {
     setCollapsedSections((prev) => {
@@ -84,10 +99,17 @@ export function ShellRightPanel({
       else next[id] = true
       return next
     })
+    setExpandedSections((prev) => {
+      const next = { ...prev }
+      if (open) next[id] = true
+      else delete next[id]
+      return next
+    })
   }, [])
   const toggleSection = useCallback(
-    (id: ShellRightPanelSectionId) => setSectionOpen(id, Boolean(collapsedSections[id])),
-    [collapsedSections, setSectionOpen],
+    (id: ShellRightPanelSectionId, hasContent = true) =>
+      setSectionOpen(id, !isSectionOpen(id, hasContent)),
+    [isSectionOpen, setSectionOpen],
   )
   // The create catalog swaps the card body — inside the bubble it can never be
   // clipped by an overflow boundary the way the old rail dropdown was.
@@ -129,6 +151,14 @@ export function ShellRightPanel({
   // Missions have no conversation_id, so the thread's own receipts are the
   // conversation-scoped link. See extractConversationMissionRows.
   const missionRows = useMemo(() => extractConversationMissionRows(messages), [messages])
+  // Emptiness decides a section's default open state, so each one needs to
+  // know whether it has anything before it renders.
+  const hasSources = useMemo(() => extractConversationSourceRows(messages).length > 0, [messages])
+  const hasTasks = useMemo(
+    () => !conversationId || extractConversationTaskRows(messages).length > 0,
+    [conversationId, messages],
+  )
+  const hasConnections = Boolean(campaignId || spaceId)
 
   useEffect(() => {
     if (!open) setCreateOpen(false)
@@ -189,7 +219,7 @@ export function ShellRightPanel({
               <>
                 {missionRows.length > 0 ? (
                   <ShellRightPanelSection
-                    title="Progress"
+                    title="Mission Progress"
                     open={isSectionOpen('progress')}
                     onToggle={() => toggleSection('progress')}
                   >
@@ -202,7 +232,7 @@ export function ShellRightPanel({
                     campaignId={campaignId}
                     spaceId={spaceId}
                     pickerRef={scopePickerRef}
-                    open={isSectionOpen('connections')}
+                    open={isSectionOpen('connections', hasConnections)}
                     onOpenChange={(next) => setSectionOpen('connections', next)}
                     onConversationUpdated={onConversationUpdated}
                     onScopeChanged={onScopeChanged}
@@ -230,8 +260,8 @@ export function ShellRightPanel({
                 </ShellRightPanelSection>
                 <ShellRightPanelSection
                   title="Sources"
-                  open={isSectionOpen('sources')}
-                  onToggle={() => toggleSection('sources')}
+                  open={isSectionOpen('sources', hasSources)}
+                  onToggle={() => toggleSection('sources', hasSources)}
                 >
                   <ShellRightPanelSources messages={messages} />
                 </ShellRightPanelSection>
@@ -239,8 +269,8 @@ export function ShellRightPanel({
             ) : null}
             <ShellRightPanelSection
               title="Tasks"
-              open={isSectionOpen('tasks')}
-              onToggle={() => toggleSection('tasks')}
+              open={isSectionOpen('tasks', hasTasks)}
+              onToggle={() => toggleSection('tasks', hasTasks)}
             >
               <ShellRightPanelTasks conversationId={conversationId} messages={messages} />
             </ShellRightPanelSection>

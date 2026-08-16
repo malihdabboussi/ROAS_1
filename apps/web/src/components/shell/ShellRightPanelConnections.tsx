@@ -16,6 +16,7 @@ import { assignConversationScope } from '@/lib/conversations'
 import { useCampaignCacheVersion } from '@/lib/home'
 import { useOrgStore } from '@/lib/org'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
+import { ShellRightPanelEmpty } from './ShellRightPanelEmpty'
 import { ShellRightPanelSection } from './ShellRightPanelSection'
 
 export function ShellRightPanelConnections({
@@ -54,12 +55,11 @@ export function ShellRightPanelConnections({
     spacesByCampaign: {},
   })
   const rows = useMemo(() => {
-    const items: Array<{ id: string; title: string; type: string; icon: LucideIcon }> = []
+    const items: Array<{ id: string; title: string; icon: LucideIcon }> = []
     if (campaignId) {
       items.push({
         id: 'campaign',
         title: campaign?.name?.trim() || 'Campaign',
-        type: 'Campaign',
         icon: FolderKanban,
       })
     }
@@ -67,7 +67,6 @@ export function ShellRightPanelConnections({
       items.push({
         id: 'space',
         title: space?.title?.trim() || 'Space',
-        type: 'Space',
         icon: Layers,
       })
     }
@@ -111,9 +110,10 @@ export function ShellRightPanelConnections({
         }
       >
         {rows.length === 0 ? (
-          <p className="body-3 text-muted-foreground">
-            {SHELL_RIGHT_PANEL_MESSAGES.connectionsEmpty}
-          </p>
+          <ShellRightPanelEmpty
+            art="connections"
+            message={SHELL_RIGHT_PANEL_MESSAGES.connectionsEmpty}
+          />
         ) : (
           <ul>
             {rows.map((row) => {
@@ -124,10 +124,12 @@ export function ShellRightPanelConnections({
                       instead of a second line that repeats what the icon says. */}
                   <div className="gap-spacing-2 px-spacing-3 py-spacing-1-5 hover:bg-hover-subtle group flex items-center rounded-lg transition-colors">
                     <Icon className="icon-sm text-muted-foreground shrink-0" aria-hidden />
+                    {/* Name only — the icon already says whether this is a
+                        campaign or a space, so repeating the type as a value
+                        just made every row read "General Campaign". */}
                     <span className="body-3 text-foreground min-w-0 flex-1 truncate">
                       {row.title}
                     </span>
-                    <span className="body-4 text-muted-foreground shrink-0">{row.type}</span>
                     <button
                       type="button"
                       className="text-muted-foreground hover:text-foreground shrink-0 opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100"

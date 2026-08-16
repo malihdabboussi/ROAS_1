@@ -132,3 +132,138 @@ Files:
 - apps/web/src/components/shell/ShellRightPanel.tsx
 - apps/web/src/components/shell/ShellRightPanelConnections.tsx
 - apps/web/src/components/shell/ShellRightPanelSources.tsx
+
+## [2026-08-15 15:20] - [STYLE]
+
+What: Made the work summary sections collapsible and turned the stack into one banded surface.
+
+- Added `ShellRightPanelSection`, a shared collapsible band. The chevron sits beside the label rather than at the far edge, so the disclosure reads as part of the heading and the right edge stays reserved for the section's own action.
+- Kept the accessible accordion pattern: the `h3` wraps the trigger button, so each section is still reachable by heading navigation as well as by tab, and carries `aria-expanded` / `aria-controls`.
+- Moved horizontal padding off the scroll container and onto each section so dividers run the full card width while content stays inset. That is what makes the four sections read as one surface instead of a column of loose lists.
+- Collapse state is hoisted into `ShellRightPanel`, which returns null while closed but stays mounted — so a section the user collapsed is still collapsed when they reopen the panel.
+- `ShellRightPanelConnections` now renders through the shared section and takes `open` / `onOpenChange`. Its scope picker deliberately renders outside the collapsible body: collapsing must not unmount it, or both the "+" and the shell's open-picker request would break. Adding from a collapsed section expands it first so the new row is not added out of sight.
+- Fixed a broken import introduced in the earlier density pass: `LucideIcon` was being imported from `react` instead of `lucide-react`, which failed typecheck.
+
+Why: The panel's sections were fixed-height lists with no way to fold away the ones you are not using, so a long Tasks list pushed everything else out of reach. Collapsibility is also the structural prerequisite for adding a task-progress section, which needs to coexist with Outputs/Sources/Tasks without making the card unusable.
+
+Impact: Sections fold independently and remember their state; the card sizes to content. No API or data change. 220 shell tests pass, including three new Connections tests and a new collapse test; lint and typecheck clean on the touched files. Verified running locally: collapse, reflow, persistence across panel close/reopen, and no console errors.
+
+Files:
+
+- apps/web/src/components/shell/ShellRightPanelSection.tsx (new)
+- apps/web/src/components/shell/ShellRightPanel.tsx
+- apps/web/src/components/shell/ShellRightPanel.test.tsx
+- apps/web/src/components/shell/ShellRightPanelConnections.tsx
+- apps/web/src/components/shell/ShellRightPanelConnections.test.tsx (new)
+
+## [2026-08-15 16:05] - [FEATURE]
+
+What: Added a Progress section to the work summary showing mission steps and human gates for the current thread.
+
+- New `ShellRightPanelProgress`: lists missions started from this conversation, each expanding to its numbered steps.
+- Steps come from `mission_subtasks` in `sort_order`, numbered by position. Status uses the existing `formatSubtaskStatusLabel`, including the dependency-blocked "Waiting" derivation.
+- Human gates surface as "Your turn". A gate is `assignee_type === 'human'`; it is *currently* holding the mission up when `status === 'awaiting_human'`. There is no `requires_approval` flag in the schema — the assignee is the gate — so `isHumanGateSubtask` / `isBlockingHumanGate` name that rule in one place instead of restating the predicate at each call site.
+- The mission row summarises as `done/total`, or "Your turn" when any step is gated, so a blocked mission reads as blocked without expanding it.
+- Steps are fetched per mission and only on expand. A conversation can start several missions, and loading every step list up front would fire N requests for rows nobody asked to see.
+- Promoted `formatSubtaskStatusLabel` from `features/mission-control/components/subtask-status.ts` to `@/lib/missions`, updating its three importers. The shell cannot import feature internals per `documentation/frontend-shared-surfaces.md`, and copying the mapping would have been a third copy.
+- Added `extractConversationMissionRows`, which reads mission receipts from the thread.
+
+Why: The panel's "Tasks" section shows completed tool calls scraped from message blocks — useful, but it is not mission progress, and mission steps were only visible by leaving the chat for Mission Control. Missions already carry ordered steps, statuses, and human gates; none of it was reachable from the conversation that started them.
+
+Impact: A thread that starts a mission now shows its steps and what is waiting on you, without leaving the chat. Read-only — approving a gate still happens in Mission Control. No API or schema change; uses the existing `GET /api/missions/:id/subtasks`. 324 tests pass across shell, mission-control, and lib/missions, including 9 new tests. Lint and typecheck clean.
+
+Note on scoping: `missions` has no `conversation_id`, so "missions started here" is derived from the receipt messages the chat already writes. This is exact for missions launched from the thread; a mission started elsewhere in the same space will not appear.
+
+Files:
+
+- apps/web/src/components/shell/ShellRightPanelProgress.tsx (new)
+- apps/web/src/components/shell/ShellRightPanelProgress.test.tsx (new)
+- apps/web/src/components/shell/ShellRightPanel.tsx
+- apps/web/src/components/shell/shell-conversation-summary.ts
+- apps/web/src/components/shell/shell-conversation-summary.test.ts
+- apps/web/src/components/shell/shell-right-panel.messages.config.ts
+- apps/web/src/lib/missions/subtask-status.ts (moved from features/mission-control)
+- apps/web/src/lib/missions/index.ts
+- apps/web/src/features/mission-control/components/MissionListCell.tsx
+- apps/web/src/features/mission-control/components/dialogs/SubtaskDetailContent.tsx
+- apps/web/src/features/mission-control/components/dialogs/SubtasksSection.tsx
+
+## [2026-08-15 17:20] - [FIX]
+
+What: Mission steps that are human gates are now marked as gates for the whole run, not only once they start blocking.
+
+- `StepIcon` shows the person icon for any step with `assignee_type === 'human'`. Colour emphasis (`text-primary`) is still reserved for the gate that is actually holding the mission up (`status === 'awaiting_human'`), and a completed gate reads as Done.
+- The icon is labelled ("Needs your approval") rather than `aria-hidden`, because it is the only thing marking the step as a gate — hiding it from assistive tech would lose that fact entirely.
+- Reworded the section hint from 'Steps marked "Your turn" wait for you in Mission Control.' to 'Steps with a person icon pause for your approval in Mission Control.' The old wording referred to a marker that was not present when no step was currently blocking.
+
+Why: Found by running a real mission in the browser. The Meta Ads Audit playbook has "Gate 1 - Approve optimization actions" as step 4 of 6, but it rendered identically to every agent step because `isBlockingHumanGate` is false until the mission reaches it. The point of showing a plan is seeing where it will stop for you before it gets there, so gate-ness must be a property of the step, not of its current status.
+
+Impact: A queued mission now shows where it will pause for you. Verified against a live 6-step mission: step 4 carries the person icon while still reading "Waiting". 326 tests pass, including two new ones (gate marked before blocking, completed gate not marked). Lint and typecheck clean.
+
+Files:
+
+- apps/web/src/components/shell/ShellRightPanelProgress.tsx
+- apps/web/src/components/shell/ShellRightPanelProgress.test.tsx
+- apps/web/src/components/shell/shell-right-panel.messages.config.ts
+
+## [2026-08-15 17:55] - [FEATURE]
+
+What: Reworked the work summary's mission section into "Mission Progress" and cleaned up the panel around it.
+
+- Renamed the section to Mission Progress.
+- Added a filter row: a live count plus a Show done / Hide done toggle. "Live" is any mission that has not reached a resting state; `error`/`failed`/`dead_letter` count as live on purpose, since hiding them would hide the ones that most need a person.
+- Mission rows now fetch a summary up front (`fetchMissionById`), which carries status and step counts. That lets the list filter and show `done/total` without expanding anything; steps are still fetched only on expand.
+- Step rows rebuilt as two columns instead of four. The leading badge *replaces* the number when a step has something more specific to say (done, in progress, blocked, human gate), rather than sitting beside it. At the panel's width the old number + icon + title + status layout wrapped every row onto three lines.
+- Strip the authored `Task 1 - ` / `Gate 2 - ` prefix for display via `formatMissionStepTitle`. Against a numbered list the ordinal was said twice and cost the width the actual step name needed. The stored title is untouched and still shown in full on hover.
+- Mission rows carry a timestamp, because missions are named after the playbook that produced them: a thread that ran Client Strategy four times shows four identically named rows. Includes the time, not just the day, since runs sit minutes apart.
+- Missions no longer appear in Outputs. They are not outputs, they produce them, and listing them in both made every run show up twice. Removed the now-dead mission icon branch in `ShellRightPanelFiles`.
+- Connections rows show the name only. The icon already distinguishes a campaign from a space, so the type suffix made every row read "General Campaign".
+- Added `ShellRightPanelEmpty`, one empty state shared by Progress, Outputs, Sources, and Connections: a centred icon over a short message, so an empty section reads as deliberate rather than as a gap.
+- Sections now default to open when they have content and collapsed when they do not, so an empty section costs no height. An explicit toggle always wins over the default, which is why collapsed and expanded are tracked separately rather than derived from one boolean.
+
+Fixes found while verifying against live data:
+
+- The default-expanded mission could land on a mission that then filtered out as done, leaving nothing expanded. The expansion now falls to the first visible mission when its target disappears.
+
+Why: The section showed five identically named rows, duplicated every mission into Outputs, and wrapped each step across three lines, so the one thing it existed to answer — what is running and what is waiting on me — took the longest to find.
+
+Impact: The panel answers that at a glance. Verified against live data: a thread with five missions shows "2 live / Show done (3)" matching the database, the six-step audit renders as six single-line steps with the approval gate marked at position 4, and Outputs no longer repeats the missions. 269 tests pass across shell and lib/missions, including 5 new helper tests and a new section-default test. Lint and typecheck clean.
+
+Note: mission titles come from the playbook, so several runs genuinely share a name. The timestamp disambiguates them in the UI, but naming missions distinctly at creation is the real fix and is logged as follow-up.
+
+Files:
+
+- apps/web/src/components/shell/ShellRightPanelProgress.tsx
+- apps/web/src/components/shell/ShellRightPanelEmpty.tsx (new)
+- apps/web/src/components/shell/ShellRightPanel.tsx
+- apps/web/src/components/shell/ShellRightPanelConnections.tsx
+- apps/web/src/components/shell/ShellRightPanelFiles.tsx
+- apps/web/src/components/shell/ShellRightPanelSources.tsx
+- apps/web/src/components/shell/shell-conversation-summary.ts
+- apps/web/src/components/shell/shell-right-panel.messages.config.ts
+- apps/web/src/lib/missions/mission-step-title.ts (new)
+- apps/web/src/lib/missions/subtask-status.ts
+
+## [2026-08-15 18:20] - [FIX]
+
+What: Reverted the Outputs change and replaced the icon-based empty states with illustrations.
+
+- Missions appear in Outputs again. The previous entry removed them on the grounds that they are not outputs; that was not wanted. `ShellRightPanelFiles`, `shell-conversation-summary.ts`, and both test files are back to their `main` behaviour, including the rocket icon and the mission-receipt test.
+- `ShellRightPanelEmpty` now renders a per-section illustration instead of an icon in a circle: layered cards at slight angles, a ticked checklist for Mission Progress, a document with a small chart for Outputs, two joined cards for Sources, and two linked cards for Connections.
+- The illustrations take colour entirely from `currentColor`, inherited from the wrapper's `text-muted-foreground`, with opacity separating the layers. No fills, strokes, or palette values are hardcoded, so both themes are correct with no theme branching.
+- Simplified the blocking-gate badge, which was stacking two conflicting background/text class pairs.
+
+Why: Missions in Outputs is wanted behaviour, and the empty states were asked for as illustrations rather than a single glyph.
+
+Impact: Outputs is back to its shipped behaviour; empty sections carry real artwork. 269 tests pass across shell and lib/missions. Lint and typecheck clean.
+
+Note: the illustrations are verified structurally (the SVG renders when an empty section is expanded) but not visually — the browser pane stopped returning screenshots at the end of this pass, so they have not been eyeballed in situ.
+
+Files:
+
+- apps/web/src/components/shell/ShellRightPanelEmpty.tsx
+- apps/web/src/components/shell/ShellRightPanelProgress.tsx
+- apps/web/src/components/shell/ShellRightPanelConnections.tsx
+- apps/web/src/components/shell/ShellRightPanelFiles.tsx
+- apps/web/src/components/shell/ShellRightPanelSources.tsx
+- apps/web/src/components/shell/shell-conversation-summary.ts
