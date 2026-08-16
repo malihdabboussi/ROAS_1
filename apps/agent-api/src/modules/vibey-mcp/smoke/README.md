@@ -1,4 +1,4 @@
-# Hosted Vibey MCP Smoke Matrix
+# Hosted ROAS MCP Smoke Matrix
 
 Run these after local OAuth and MCP endpoints are up.
 
@@ -6,14 +6,14 @@ Run these after local OAuth and MCP endpoints are up.
 
 - Cursor MCP client
 - Claude Desktop or Claude web MCP connector, when available
-- MCP Inspector against `https://mcp.vibey.im` or the legacy `/api/mcp` path.
+- MCP Inspector against `https://mcp.roas.io` or the legacy `/api/mcp` path.
 
 ## Required Checks
 
 - Unauthenticated connection discovers OAuth protected resource metadata.
 - Authorization opens `/mcp/consent`.
 - PKCE token exchange succeeds.
-- `tools/list` returns only the v1 Vibey MCP catalog.
+- `tools/list` returns only the v1 ROAS MCP catalog.
 - `describe_vibey_action` succeeds.
 - `search_user_brain` succeeds for a known query.
 - Revoked token rejects.

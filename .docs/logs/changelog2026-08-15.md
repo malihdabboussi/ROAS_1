@@ -1,5 +1,25 @@
 # Changelog - August 15, 2026
 
+## [2026-08-15 17:34] - [FIX]
+
+What: Pointed MCP OAuth tests at `mcp.roas.io` and added a regression that rejects the retired `mcp.vibey.im` resource URL.
+
+Why: The hosted MCP resource is now `https://mcp.roas.io`, but authorization tests still treated the old Vibey hostname as a valid resource.
+
+Impact: OAuth resource normalization tests match production, and reconnecting with `mcp.vibey.im` is rejected.
+
+Files: `apps/api/src/modules/mcp/mcp-oauth.service.test.ts`
+
+## [2026-08-15 16:52] - [DOCS]
+
+What: Rebranded the hosted MCP connection guide and smoke matrix from Vibey to ROAS, replacing the retired `mcp.vibey.im` endpoint with `mcp.roas.io` across supported client instructions.
+
+Why: The ROAS MCP runtime and OAuth issuer are now configured on ROAS production domains, while the published setup guide still directed Claude, ChatGPT, Cursor, and MCP Inspector to the old Vibey application.
+
+Impact: Users and operators now receive the correct ROAS connector name, endpoint, Claude Code command, and hosted smoke target.
+
+Files: `apps/docs/content/integrations/vibey-mcp.mdx`, `apps/agent-api/src/modules/vibey-mcp/smoke/README.md`
+
 ## [2026-08-15 16:20] - [FIX]
 
 What: The Home chat artifact pane now opens the real editors at an editor-sized width, can be dragged past the old 720px cap, and uses its Artifacts / files / title crumbs to browse inside that same right pane.
