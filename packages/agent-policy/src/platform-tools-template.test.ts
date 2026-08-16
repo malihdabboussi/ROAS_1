@@ -60,14 +60,18 @@ describe('platform tools template', () => {
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Connected MCP service such as Page Grader →')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
-      'A funnel, landing page, campaign page, or related fulfillment deliverable',
+      'Any client Service Request / fulfillment deliverable routes to the Page Grader MCP',
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
-      'routes to the Page Grader MCP even when the user names the human owner',
+      'including design, copy, funnel/landing page, GHL, ad creative, video edit/production',
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Put that person in the Page Grader request')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
-      'do not replace Page Grader fulfillment with `create_task`, `list_team`, `list_campaign_team`',
+      'Do **not** replace Service Request intake with `create_task`, `list_team`, `list_campaign_team`',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('the `review_url` as a real openable https link')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'Never say "Created:" for a native task until finalization',
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'Resolve the client and assignee through Page Grader',

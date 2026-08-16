@@ -2,9 +2,10 @@
 
 Use this skill when a Slack or ROAS user asks about a Page Grader client,
 campaign, fulfillment task, client meeting, portal memory, cached Meta
-reporting, or asks to build a funnel, landing page, campaign page, or related
-fulfillment deliverable, including when the user names the human who should
-own that work.
+reporting, or asks for a client Service Request / fulfillment deliverable of
+any type (design, copy, funnel/landing page, GHL, ad creative, video
+edit/production, or general client work), including when the user says "make a
+task", "ASAP", or names the human who should own that work.
 
 ## Source routing
 
@@ -20,6 +21,11 @@ own that work.
 - Resolve a named client across its own ROAS campaign Brain, Page Grader
   client/campaign records, and matching Slack channel context Pixel can access.
   Do not treat absence from the ambient chat campaign as absence from ROAS.
+- When the current or forwarded Slack channel is a client channel (for example
+  `#roas-yasir-khan-coaching-ltd-955`), treat that as the client. Prefer any
+  `[Slack channel identity]` stamp. Otherwise call `page_grader_list_clients`
+  with the channel-name tokens. If exactly one client matches, use it — do not
+  ask which client.
 - For an ambiguous or misspelled client, call
   `page_grader_list_clients` before another client-scoped tool.
 - Cross-reference Page Grader facts with ROAS Brain when interpretation,
@@ -38,11 +44,12 @@ own that work.
 
 ## Taking action
 
-- Infer Page Grader from the requested deliverable. When the user says "I need
-  this funnel built" or asks for a landing page or campaign page, use Page
-  Grader MCP even when the user names the human owner. Do not require the user
-  to know or say "Page Grader".
-- In a funnel-fulfillment request, "the portal" means The ROAS Portal
+- Infer Page Grader from the requested deliverable. When the user asks for
+  design, copy, funnel/landing page, GHL, ad creative, video edit/production,
+  or other client fulfillment — including "make a task" / ASAP phrasing — use
+  Page Grader MCP even when the user names the human owner. Do not require the
+  user to know or say "Page Grader" or "Service Request".
+- In a Service Request / fulfillment request, "the portal" means The ROAS Portal
   fulfillment workflow. Do not generate a native ROAS platform funnel unless
   the user explicitly asks Pixel to build it in the ROAS platform funnel
   builder.
@@ -51,7 +58,7 @@ own that work.
   `Page Grader` server, copy the exact write-tool schema, then call
   `use_mcp_tool`.
 - Do not call `delegate_to_agent` for Page Grader work. A human named in a
-  funnel or page request is the Page Grader fulfillment assignee, not a reason
+  fulfillment request is the Page Grader fulfillment assignee, not a reason
   to switch to a generic ROAS task. Resolve the person with Page Grader and
   pass the canonical name in `assignee_name`.
 - Do not use `list_team`, `list_campaign_team`, `list_agents`,
@@ -68,19 +75,25 @@ own that work.
   audience, launch timing, source assets, budget, owner, or due date.
 - Build an idempotency key from the Slack event or ROAS action identifier so a
   retry cannot create a second campaign or task.
-- For a funnel fulfillment request, discover the current MCP schema and use
+- For any Service Request type, discover the current MCP schema and use
   `page_grader_create_fulfillment_request` with the resolved `client_ref`,
-  `task_type:"funnel"`, a stable `idempotency_key`, and `assignee_name` when
+  matching `task_type` (`design` | `copy` | `funnel` | `ghl` | `ad` | `video` |
+  `other` | `general`), a stable `idempotency_key`, and `assignee_name` when
   the user named an owner. Format `description` as:
   - Line 1: a short title only (≤ ~100 characters; no scope dump).
   - Blank line.
   - Remaining lines: full brief, links, scope, and constraints.
   The portal uses the first line as the task title and the rest as the body.
   Never put the entire brief on one line.
+  Never use native `create_task` for this class of work.
 - A successful Service Request intake result is a draft review link, not an
-  active task. Tell the user the request is ready for review. Never claim a
-  ROAS task or ClickUp task exists until finalization returns the native task
-  identity and the Page Grader receipt confirms the ClickUp mirror.
+  active task. The user-facing reply must include the resolved client name, the
+  request title/type, that this is a reviewable draft awaiting confirmation,
+  and the `review_url` as a real openable https link. Tell the user the request
+  is ready for review in this chat or via that link. Never claim a ROAS task or
+  ClickUp task exists until finalization returns the native task identity and
+  the Page Grader receipt confirms the ClickUp mirror. Never reply with a bare
+  "Created: …" native-task style message for intake.
 - Report the persisted ROAS draft or finalized task and its current workflow state.
 - Do not say a request was delegated or created until the MCP result confirms
   the effect and returns the created record or an equivalent durable result.
@@ -130,3 +143,7 @@ own that work.
   description, create a Page Grader funnel fulfillment request with
   `assignee_name:"Rafay"`, and report the confirmed record. Do not search the
   ambient ROAS campaign team for Rafay.
+- "Need to make a task to edit these videos ASAP" in a client Slack channel →
+  resolve the client from channel identity, create a Service Request draft with
+  `task_type:"video"`, and reply with client name + draft confirmation +
+  openable `review_url`. Do not call native `create_task`.

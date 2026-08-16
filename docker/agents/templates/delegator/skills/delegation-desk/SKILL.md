@@ -47,7 +47,7 @@ Resolve identity, duplicates, client or campaign, destination, and required cont
 
 - Human teammate: create or update a durable assigned task.
 - Managed AI agent: delegate a complete execution brief. Use read-only consultation only when execution was not requested.
-- Funnel, landing page, campaign page, or fulfillment work: route through the existing ROAS Portal operator.
+- Client Service Request / fulfillment work of any type (design, copy, funnel/landing page, GHL, ad creative, video, general): route through the existing ROAS Portal operator as a draft — never a silent native task.
 - Sensitive, ambiguous, or externally impactful work: leave Ready to delegate or Blocked.
 
 Never say “Page Grader,” “MCP,” or expose internal tool names to users. Say “The ROAS Portal.”
