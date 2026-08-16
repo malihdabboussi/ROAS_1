@@ -229,7 +229,6 @@ export class PageGraderAgencyWorkspaceService {
       .from('spaces')
       .select('id, title, schema')
       .eq('campaign_id', mapping.campaign_id)
-      .is('deleted_at', null)
     if (error)
       throw new BadRequestException(`Could not load client campaign Spaces: ${error.message}`)
     const mappings: CampaignSpaceMapping[] = []
@@ -258,7 +257,7 @@ export class PageGraderAgencyWorkspaceService {
         ? supabase.from('campaigns').select('id').in('id', campaignIds).is('deleted_at', null)
         : Promise.resolve({ data: [] }),
       spaceIds.length
-        ? supabase.from('spaces').select('id').in('id', spaceIds).is('deleted_at', null)
+        ? supabase.from('spaces').select('id').in('id', spaceIds)
         : Promise.resolve({ data: [] }),
     ])
     return {

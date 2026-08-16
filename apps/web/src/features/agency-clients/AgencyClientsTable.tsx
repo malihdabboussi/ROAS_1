@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { FolderOpen, Hash, ListTodo, MoreHorizontal } from 'lucide-react'
 import type { AgencyClient } from '@/lib/agency-clients'
 import { formatAgencyDate } from './agency-client-format'
@@ -48,6 +48,7 @@ export function AgencyClientsTable({ groups }: { groups: ClientGroup[] }) {
 }
 
 function AgencyClientRow({ client }: { client: AgencyClient }) {
+  const [logoFailed, setLogoFailed] = useState(false)
   const update = client.weekly_update
   return (
     <tr className="hover:bg-hover-subtle border-border border-b last:border-b-0">
@@ -59,12 +60,14 @@ function AgencyClientRow({ client }: { client: AgencyClient }) {
       <td className="px-spacing-4 py-spacing-3 align-top">
         <Link href={`/clients/${client.id}`} className="gap-spacing-3 flex items-center">
           <span className="bg-secondary h-spacing-9 w-spacing-9 rounded-spacing-2 flex shrink-0 items-center justify-center overflow-hidden">
-            {client.logo_url ? (
+            {client.logo_url && !logoFailed ? (
               <Image
                 src={client.logo_url}
                 alt=""
                 width={36}
                 height={36}
+                unoptimized
+                onError={() => setLogoFailed(true)}
                 className="h-full w-full object-cover"
               />
             ) : (
