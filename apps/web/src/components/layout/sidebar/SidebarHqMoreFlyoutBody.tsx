@@ -4,18 +4,30 @@ import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Brain, FolderGit2, Layers3, ListChecks, Users, Workflow } from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
+import { useOrgStore } from '@/features/org/store/use-org-store'
+import {
+  loadProgramsCached,
+  peekProgramsMemoryCache,
+  readProgramsLocalCache,
+  type Program,
+} from '@/lib/programs'
 import { cn } from '@/lib/utils/cn'
 import {
   HUB_DOCK_SUB_FLYOUT_LEAVE_MS,
   HUB_DOCK_SUB_FLYOUT_OFFSET_PX,
   HubDockFlyout,
 } from './HubDockFlyout'
+import { SidebarHqMoreProgramsFlyout } from './SidebarHqMoreProgramsFlyout'
 import { SidebarHqMoreTeamBrainFlyouts } from './SidebarHqMoreTeamBrainFlyouts'
 import type { SidebarControllerReturn } from './useSidebarController'
 
-type SubDock = 'team' | 'brain' | 'projects'
+type SubDock = 'team' | 'brain' | 'projects' | 'programs'
 
-/** Shared More flyout body (Projects + Flows) for collapsed rail and expanded menu. Account settings live on the sidebar footer avatar. */
+function cachedPrograms(orgId: string | null): Program[] {
+  return peekProgramsMemoryCache(orgId) ?? readProgramsLocalCache(orgId) ?? []
+}
+
+/** Shared More flyout body (Programs + Team + Brain + Projects + Flows). Account settings live on the sidebar footer avatar. */
 export function SidebarHqMoreFlyoutBody({
   c,
   showProjects,
@@ -35,9 +47,21 @@ export function SidebarHqMoreFlyoutBody({
   onCloseParentFlyout?: () => void
 }) {
   const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
+  const activeOrgId = useOrgStore((s) => s.activeOrgId)
+  const [programs, setPrograms] = useState(() => cachedPrograms(activeOrgId))
   const [subDock, setSubDock] = useState<SubDock | null>(null)
   const [subAnchor, setSubAnchor] = useState<DOMRect | null>(null)
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    void loadProgramsCached(activeOrgId).then((rows) => {
+      if (!cancelled) setPrograms(rows)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [activeOrgId])
 
   const clearCreateProject = useCallback(() => {
     c.setIsCreatingProject(false)
@@ -91,11 +115,17 @@ export function SidebarHqMoreFlyoutBody({
   return (
     <>
       <Link
-        href="/campaigns"
+        href="/programs"
         data-hub-dock-navigate
         onClick={() => {
           setWorkContext({ surface: 'spaces' })
           onNavigate?.()
+        }}
+        onMouseEnter={(e) => openSub('programs', e.currentTarget.getBoundingClientRect())}
+        onMouseLeave={(e) => {
+          const related = e.relatedTarget
+          if (related instanceof Element && related.closest('[data-hub-dock-flyout-nested]')) return
+          scheduleClose()
         }}
         className={cn(
           'hub-dock-flyout-row',
@@ -204,6 +234,21 @@ export function SidebarHqMoreFlyoutBody({
         <Layers3 />
         <span className="min-w-0 flex-1 truncate">Artifacts</span>
       </Link>
+
+      {subDock === 'programs' ? (
+        <SidebarHqMoreProgramsFlyout
+          programs={programs}
+          pathname={c.pathname}
+          subAnchor={subAnchor}
+          clearLeave={clearLeave}
+          scheduleClose={scheduleClose}
+          closeSub={closeSub}
+          onHoldParentFlyout={onHoldParentFlyout}
+          onCloseParentFlyout={onCloseParentFlyout}
+          onNavigate={onNavigate}
+          onSelectProgram={() => setWorkContext({ surface: 'spaces' })}
+        />
+      ) : null}
 
       <SidebarHqMoreTeamBrainFlyouts
         subDock={subDock}

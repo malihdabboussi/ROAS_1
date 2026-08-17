@@ -1,15 +1,16 @@
 import type { HubMenuSectionId } from './sidebar-hq-hub-menu.types'
 
 /** Sections open by default when the hub menu expands (Projects stays collapsed). */
-export const HUB_MENU_DEFAULT_EXPANDED_SECTIONS: HubMenuSectionId[] = [
-  'team',
-  'spaces',
-  'brain',
-]
+export const HUB_MENU_DEFAULT_EXPANDED_SECTIONS: HubMenuSectionId[] = ['team', 'spaces', 'brain']
 
 export function hubSectionFromPathname(pathname: string): HubMenuSectionId | null {
   if (pathname.startsWith('/team')) return 'team'
-  if (pathname.startsWith('/spaces') || pathname.startsWith('/campaigns')) return 'spaces'
+  if (
+    pathname.startsWith('/spaces') ||
+    pathname.startsWith('/campaigns') ||
+    pathname.startsWith('/programs')
+  )
+    return 'spaces'
   if (pathname.startsWith('/brain')) return 'brain'
   if (pathname.startsWith('/projects')) return 'projects'
   return null
