@@ -31,4 +31,16 @@ describe('ChatMarkdownDocument', () => {
 
     expect(screen.getByTestId('mermaid-diagram')).toHaveAttribute('data-pending', 'true')
   })
+
+  it('renders html fences as clickable code cards instead of inline blocks', () => {
+    render(
+      <ChatMarkdownDocument
+        markdown={'```html\n<!-- VIP progress -->\n<div class="vip-progress"></div>\n```\nReady.'}
+      />,
+    )
+
+    expect(screen.getByTestId('chat-code-artifact-card')).toHaveTextContent('VIP progress')
+    expect(screen.getByText(/Ready/)).toBeInTheDocument()
+    expect(screen.queryByText('vip-progress')).toBeNull()
+  })
 })

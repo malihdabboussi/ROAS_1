@@ -73,6 +73,12 @@ vi.mock('./ShellMediaArtifactViewer', () => ({
   ),
 }))
 
+vi.mock('@/components/shell/ShellCodeArtifactViewer', () => ({
+  ShellCodeArtifactViewer: ({ target }: { target: ShellArtifactViewerTarget }) => (
+    <div data-testid="code-artifact-viewer">{target.title}</div>
+  ),
+}))
+
 const target: ShellArtifactViewerTarget = {
   id: 'doc-1',
   entityId: 'doc-1',
@@ -246,5 +252,26 @@ describe('ShellArtifactViewerAdapter', () => {
 
     await waitFor(() => expect(screen.getByTestId('media-studio')).toBeTruthy())
     expect(screen.getByText('video:548941d2-dc17-4943-a0d2-37a66e263aa6')).toBeTruthy()
+  })
+
+  it('renders chat html snippets in the code artifact viewer', async () => {
+    useShellStore.setState({
+      artifactViewer: {
+        width: 480,
+        target: {
+          id: 'code:html:1',
+          title: 'VIP progress',
+          type: 'doc',
+          content: '<div class="vip-progress"></div>',
+          mimeType: 'text/html',
+        },
+      },
+    })
+
+    render(<ShellArtifactViewerAdapter />)
+
+    await waitFor(() => expect(screen.getByTestId('code-artifact-viewer')).toBeTruthy())
+    expect(screen.getByText('VIP progress')).toBeTruthy()
+    expect(screen.queryByTestId('lightweight-preview')).toBeNull()
   })
 })
