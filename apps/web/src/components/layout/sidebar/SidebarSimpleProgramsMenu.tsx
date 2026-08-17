@@ -22,9 +22,9 @@ export function SidebarSimpleProgramsMenu({
   const [searchQuery, setSearchQuery] = useState('')
   const [createMenuAnchor, setCreateMenuAnchor] = useState<DOMRect | null>(null)
   const [browsePanelBucket, setBrowsePanelBucket] = useState<string | null>(null)
-  const [createSpaceModalFor, setCreateSpaceModalFor] = useState<{ campaignId: string | null } | null>(
-    null,
-  )
+  const [createSpaceModalFor, setCreateSpaceModalFor] = useState<{
+    campaignId: string | null
+  } | null>(null)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -58,7 +58,7 @@ export function SidebarSimpleProgramsMenu({
         }}
         onMouseLeave={scheduleClose}
         onFocus={(event) => setAnchor(event.currentTarget.getBoundingClientRect())}
-        onClick={() => c.router.push('/campaigns')}
+        onClick={() => c.router.push('/programs')}
       >
         <ListChecks className="icon-sm" aria-hidden />
         <span className="body-2">Programs</span>

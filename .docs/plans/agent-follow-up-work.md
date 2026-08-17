@@ -10,6 +10,18 @@ Needed work: Extract page chrome (`pageBreadcrumb`, `pageHeaderAction`, owners, 
 
 Reason not done now: Requested work was clickable crumbs, title declutter, and Portal placement. A slice extract would touch every shell-store mock without changing product behavior.
 
+## 2026-08-17 - [ARCH] SidebarHqMoreFlyoutBody is over the 80% component extract threshold
+
+Status: Open
+
+Found while: More → Programs hover list and `/programs` overview
+
+Evidence: `wc -l` reports `apps/web/src/components/layout/sidebar/SidebarHqMoreFlyoutBody.tsx` at 337 LOC (component limit 400; extract suggested at 320). Programs hover was extracted to `SidebarHqMoreProgramsFlyout.tsx`; Projects create/list remains inline. `SidebarHqRail.tsx` is 398 LOC after moving `shouldPushRailHref` into helpers.
+
+Needed work: Extract the Projects nested flyout the same way as Programs/Team/Brain. Split remaining HQ rail panel-button rendering.
+
+Reason not done now: Requested work was Programs hover + `/programs` click. Further More-menu decomposition was out of scope.
+
 ## 2026-08-17 - [FEATURE] In-app precall-prep backend still exists after UI removal
 
 Status: Open

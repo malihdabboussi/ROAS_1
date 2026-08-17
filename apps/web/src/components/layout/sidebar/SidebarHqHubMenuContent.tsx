@@ -199,7 +199,7 @@ export function SidebarHqHubMenuContent({
         />
 
         <SidebarHqHubMenuNavRow
-          href="/campaigns"
+          href="/programs"
           active={
             c.pathname.startsWith('/campaigns') ||
             c.pathname.startsWith('/spaces') ||
