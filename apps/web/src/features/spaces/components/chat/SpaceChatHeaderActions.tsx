@@ -50,8 +50,8 @@ export function SpaceChatHeaderActions({
 
   return (
     <div className="gap-spacing-0 flex shrink-0 items-center" onClick={(e) => e.stopPropagation()}>
-      {/* The summary toggle stays pinned in the top bar even while the rest of the
-          cluster hides behind hover — it is the panel's only open/close control. */}
+      {/* Summary stays in the chat title bar. Show page sits here only while the
+          page card is closed; when the page is open it lives on that card. */}
       {onToggleSummary ? (
         <button
           type="button"

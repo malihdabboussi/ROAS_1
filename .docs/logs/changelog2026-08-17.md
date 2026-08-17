@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:33] - [FIX]
+What: Summary stays on the chat title bar. Show page sits beside it only while the work card is closed; when the page is open, the expand/collapse control lives on that card. Recents Filter pins the compact Recents action bar so the portaled menu cannot jump on hover.
+Why: The page control belonged with the open work card so it can expand over chat, while Summary must stay on chat. Hovering a portaled filter row left the Recents hover group, hid the toolbar, and Floating UI re-anchored the menu mid-screen.
+Impact: Closed page = Summary + Show page on chat. Open page = Summary on chat, page control on the work card. Filter stays under the Recents icon.
+Files: `apps/web/src/components/shell/ShellChatDrawer.tsx`, `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/components/conversations/ChatHistoryFilterMenu.tsx`, `apps/web/src/components/conversations/SpaceConversationsHeader.tsx`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 20:33] - [STYLE]
 What: Meeting workspace action items now render through the same All Tasks native list (status, name, priority, assignee, due date, Client Workspace, Campaign Space, Add task).
 Why: The stacked caption + "this space" rows did not match the All Tasks table, so meeting follow-ups felt like a different product.
@@ -28,7 +34,7 @@ Files: `MeetingsUnifiedSurface.tsx`, `AgendaCard.tsx`, `ShellRightPanel.tsx`, `S
 What: Chat working status now types a live line and rotates Cursor-style phrases after a short hold instead of freezing on Brain/tool labels.
 Why: Turns that said they were reading Brain looked stuck even while the agent was still working.
 Impact: Composer chat keeps an animated working line (`Planning next moves...` and similar) while Pixel is thinking or a Brain/tool step sits open.
-Files: `apps/web/src/lib/chat/chat-working-status.ts`, `apps/web/src/lib/chat/use-working-status-label.ts`, `apps/web/src/components/chat/ChatWorkingStatusLabel.tsx`, `apps/web/src/components/chat/TypewriterShimmer.tsx`, `apps/web/src/features/studio/components/chat/StatusIndicator.tsx`, `apps/web/src/features/studio/components/chat/LockedInGroup.tsx`, `apps/web/src/features/studio/components/chat/ThinkingTranscriptBlock.tsx`
+Files: `apps/web/src/lib/chat/chat-working-status.ts`, `apps/web/src/lib/chat/use-working-status-label.ts`, `apps/web/src/components/chat/ChatWorkingStatusLabel.tsx`, `apps/web/src/components/chat/TypewriterShimmer.tsx`, `apps/web/src/features/studio/components/chat/StatusIndicator.tsx`, `apps/web/src/features/studio/components/chat/LockedInGroup.tsx`, `apps/web/src/features/studio/components/chat/ThinkingTranscriptBlock.tsx`>>>>>>> origin/main
 
 ## [2026-08-17 20:05] - [STYLE]
 What: Chat assistant-turn actions now show Reply first, then Copy, then Fork.

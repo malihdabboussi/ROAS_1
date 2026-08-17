@@ -92,13 +92,29 @@ describe('ChatHistoryFilterMenu', () => {
     expect(onAgentKeyChange).toHaveBeenLastCalledWith(null)
   })
 
-  it('lets Recents filter by a campaign without picking a space', () => {
-    const onChange = vi.fn()
+  it('notifies the Recents header when the portaled filter menu opens and closes', () => {
+    const onOpenChange = vi.fn()
     render(
       <ChatHistoryFilterMenu
         value={{ ...DEFAULT_CHAT_HISTORY_FILTERS }}
-        onChange={onChange}
+        onChange={vi.fn()}
+        onOpenChange={onOpenChange}
       />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Filter conversations' }))
+    expect(onOpenChange).toHaveBeenCalledWith(true)
+    expect(screen.getByRole('menu')).toBeInTheDocument()
+
+    fireEvent.mouseDown(document.body)
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+
+  it('lets Recents filter by a campaign without picking a space', () => {
+    const onChange = vi.fn()
+    render(
+      <ChatHistoryFilterMenu value={{ ...DEFAULT_CHAT_HISTORY_FILTERS }} onChange={onChange} />,
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Filter conversations' }))
