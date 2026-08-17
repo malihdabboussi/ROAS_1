@@ -1,3 +1,15 @@
+## 2026-08-17 - [ARCH] use-shell-menu-dock is over the hook LOC limit
+
+Status: Open
+
+Found while: Raising Simple menu drag max to default + 75% and sharing width constants
+
+Evidence: `wc -l` reports `apps/web/src/components/shell/use-shell-menu-dock.ts` at 359 LOC (hook limit 300). It was already 354 on main; this change only exported width constants.
+
+Needed work: Extract persist/hydrate helpers and dock hit-test wrappers so the Zustand store stays under the hook limit.
+
+Reason not done now: Requested work was compact-rail parity, logo-hover collapse, and a wider Simple drag max. Splitting the dock store would touch every dock consumer without changing that UX.
+
 ## 2026-08-17 - [ARCH] SpaceConversationsList.test.tsx already exceeds max-lines
 
 Status: Open
@@ -57,7 +69,6 @@ Evidence: `wc -l` reports `apps/web/src/features/studio/components/chat/LockedIn
 Needed work: Split activity-group labeling / classification from the expand/collapse chrome.
 
 Reason not done now: Requested work was the live working-status animation; extracting the group was out of scope.
-
 ## 2026-08-17 - [ARCH] HomeTaskDetailHost is at the component LOC limit
 
 Status: Open
