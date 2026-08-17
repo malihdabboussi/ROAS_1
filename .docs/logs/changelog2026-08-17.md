@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 21:20] - [FIX]
+What: Service Request review cards now open in the Pixel thread under the review link. Public host keeps one composer. Signed-in `/home?conv=&wr=` hydrates the conversation immediately and seeds messages from the token chat API when the pane would be blank.
+Why: The previous host mounted the finalize flow below the composer (plus a second Message Pixel). Signed-in review redirected to a blank `/home?conv=` pane.
+Impact: Guest and signed-in review show the same Q&A cards in chat; only the real composer remains for talking to Pixel.
+Files: `apps/web/src/features/work-requests/components/WorkRequestReviewChatHost.tsx`, `WorkRequestChatResumeCard.tsx`, `WorkRequestChatFlow.tsx`, `apps/web/src/components/global-chat/hooks/useWorkRequestHomeChatSeed.ts`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`, `documentation/features/page-grader-mcp-bridge.md`
+
 ## [2026-08-17 20:43] - [STYLE]
 What: Meeting workspace header now has Continue in chat instead of the phase badge and close X. After a call ends, Start call sits next to Recap message. Recordings and attachments share one card with looser spacing.
 Why: The header X emptied the work area. The status badge duplicated call-state copy. Accidental End call hid Start call. Recordings and attachments were two tight stacked cards.
@@ -47,6 +53,7 @@ What: Chat working status now types a live line and rotates Cursor-style phrases
 Why: Turns that said they were reading Brain looked stuck even while the agent was still working.
 Impact: Composer chat keeps an animated working line (`Planning next moves...` and similar) while Pixel is thinking or a Brain/tool step sits open.
 Files: `apps/web/src/lib/chat/chat-working-status.ts`, `apps/web/src/lib/chat/use-working-status-label.ts`, `apps/web/src/components/chat/ChatWorkingStatusLabel.tsx`, `apps/web/src/components/chat/TypewriterShimmer.tsx`, `apps/web/src/features/studio/components/chat/StatusIndicator.tsx`, `apps/web/src/features/studio/components/chat/LockedInGroup.tsx`, `apps/web/src/features/studio/components/chat/ThinkingTranscriptBlock.tsx`
+
 
 ## [2026-08-17 20:05] - [STYLE]
 What: Chat assistant-turn actions now show Reply first, then Copy, then Fork.
