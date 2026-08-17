@@ -479,11 +479,19 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
     else set({ loadError: null })
 
     const applySpacesSnapshot = (spaces: Space[]) => {
-      const currentActiveSpaceId = get().activeSpaceId ?? readStoredSpaceId()
-      const hasActive = currentActiveSpaceId
-        ? spaces.some((space) => space.id === currentActiveSpaceId)
+      const urlSpaceId =
+        typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('space')?.trim() || null
+          : null
+      const storedOrCurrent = get().activeSpaceId ?? readStoredSpaceId()
+      // Deep links (`?space=`) win over a stale persisted active space so
+      // loadSpaces cannot yank the URL target to spaces[0] mid-hydration.
+      const preferredActiveSpaceId =
+        urlSpaceId && spaces.some((space) => space.id === urlSpaceId) ? urlSpaceId : storedOrCurrent
+      const hasActive = preferredActiveSpaceId
+        ? spaces.some((space) => space.id === preferredActiveSpaceId)
         : false
-      const nextActiveSpaceId = hasActive ? currentActiveSpaceId : (spaces[0]?.id ?? null)
+      const nextActiveSpaceId = hasActive ? preferredActiveSpaceId : (spaces[0]?.id ?? null)
       persistActiveSpaceId(nextActiveSpaceId)
       const nextActiveSpace = spaces.find((space) => space.id === nextActiveSpaceId) ?? null
       const persistedViewId = nextActiveSpaceId ? readStoredViewId(nextActiveSpaceId) : null

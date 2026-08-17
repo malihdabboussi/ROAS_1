@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { SettingsDropdown } from '@/components/ui/forms/SettingsDropdown'
 import { WORK_REQUEST_MESSAGES } from '../config/messages.config'
 import {
   getAnswerDisplay,
   type WorkRequestChatAnswers,
   type WorkRequestChatStep,
 } from '../lib/work-request-chat-steps'
+import { WorkRequestAssetsStep, WorkRequestDateStep } from './WorkRequestChatFlowInputs'
 
 export type WorkRequestChatTranscriptRole = 'assistant' | 'user' | 'system'
 
@@ -36,6 +38,45 @@ export function WorkRequestChatBubble({
   )
 }
 
+function StepActions({
+  required,
+  busy,
+  continueDisabled,
+  onSkip,
+  onContinue,
+}: {
+  required: boolean
+  busy: boolean
+  continueDisabled?: boolean
+  onSkip: () => void
+  onContinue: () => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <div>
+        {!required && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onSkip}
+            className="button-glass-neutral rounded-spacing-2 body-3 px-spacing-3 py-spacing-2"
+          >
+            Skip
+          </button>
+        )}
+      </div>
+      <button
+        type="button"
+        disabled={busy || continueDisabled}
+        onClick={onContinue}
+        className="button-glass-accent rounded-spacing-2 body-3 px-spacing-4 py-spacing-2 font-medium disabled:opacity-50"
+      >
+        Continue
+      </button>
+    </div>
+  )
+}
+
 export function WorkRequestChatStepCard({
   step,
   stepIndex,
@@ -58,6 +99,8 @@ export function WorkRequestChatStepCard({
   const [draftValue, setDraftValue] = useState(value)
   useEffect(() => setDraftValue(value), [step.id, value])
 
+  const searchableChoice = step.kind === 'single_choice' && Boolean(step.searchable && step.options)
+
   return (
     <div className="surface-card border-border rounded-spacing-3 space-y-spacing-3 p-spacing-3 border">
       <div className="flex items-start justify-between gap-3">
@@ -73,7 +116,30 @@ export function WorkRequestChatStepCard({
         </span>
       </div>
 
-      {step.kind === 'single_choice' && step.options ? (
+      {searchableChoice && step.options ? (
+        <>
+          <SettingsDropdown
+            value={draftValue}
+            options={step.options.map((option) => ({
+              value: option.id,
+              label: option.label,
+              description: option.description,
+            }))}
+            onChange={setDraftValue}
+            placeholder="Search and select…"
+            searchable
+            disabled={busy}
+            appearance="spaces"
+          />
+          <StepActions
+            required={step.required}
+            busy={busy}
+            continueDisabled={step.required && !draftValue}
+            onSkip={onSkip}
+            onContinue={() => onChoice(draftValue)}
+          />
+        </>
+      ) : step.kind === 'single_choice' && step.options ? (
         <div className="surface-card card-glass rounded-spacing-2 overflow-hidden">
           {step.options.map((option, index) => {
             const selected = value === option.id
@@ -105,6 +171,22 @@ export function WorkRequestChatStepCard({
             )
           })}
         </div>
+      ) : step.kind === 'date' ? (
+        <WorkRequestDateStep
+          value={value}
+          busy={busy}
+          required={step.required}
+          onContinue={onContinue}
+          onSkip={onSkip}
+        />
+      ) : step.kind === 'assets' ? (
+        <WorkRequestAssetsStep
+          value={value}
+          busy={busy}
+          required={step.required}
+          onContinue={onContinue}
+          onSkip={onSkip}
+        />
       ) : (
         <>
           {step.kind === 'textarea' ? (
@@ -117,35 +199,20 @@ export function WorkRequestChatStepCard({
             />
           ) : (
             <input
-              type={step.kind === 'date' ? 'date' : 'text'}
+              type="text"
               value={draftValue}
               onChange={(event) => setDraftValue(event.target.value)}
               disabled={busy}
               className="body-3 rounded-spacing-2 border-border bg-background h-spacing-9 px-spacing-3 focus:ring-ring w-full border outline-none focus:ring-2"
             />
           )}
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              {!step.required && (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={onSkip}
-                  className="button-glass-neutral rounded-spacing-2 body-3 px-spacing-3 py-spacing-2"
-                >
-                  Skip
-                </button>
-              )}
-            </div>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => onContinue(draftValue)}
-              className="button-glass-accent rounded-spacing-2 body-3 px-spacing-4 py-spacing-2 font-medium"
-            >
-              Next
-            </button>
-          </div>
+          <StepActions
+            required={step.required}
+            busy={busy}
+            continueDisabled={step.required && !draftValue.trim()}
+            onSkip={onSkip}
+            onContinue={() => onContinue(draftValue)}
+          />
         </>
       )}
     </div>
@@ -158,28 +225,43 @@ export function WorkRequestChatConfirmCard({
   busy,
   onBack,
   onSubmit,
+  onEdit,
 }: {
   steps: WorkRequestChatStep[]
   answers: WorkRequestChatAnswers
   busy: 'save' | 'submit' | null
   onBack: () => void
   onSubmit: () => void
+  onEdit?: (stepId: string) => void
 }) {
   return (
     <div className="surface-card border-border rounded-spacing-3 space-y-spacing-3 p-spacing-3 border">
       <div>
         <p className="body-2 font-medium">Ready to submit this Service Request?</p>
-        <p className="body-3 text-muted-foreground mt-1">
-          Review the answers below, then submit. You can still reply in chat to change something.
+        <p className="body-3 text-muted-foreground mt-spacing-1">
+          Review the answers below, then submit. Tap Edit to change anything.
         </p>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-spacing-2">
         {steps.map((step) => (
-          <div key={step.id} className="body-3 text-muted-foreground flex gap-2">
+          <div
+            key={step.id}
+            className="body-3 text-muted-foreground gap-spacing-2 flex items-center"
+          >
             <span className="text-foreground min-w-0 flex-1 truncate">{step.prompt}</span>
-            <span className="text-success max-w-[50%] shrink-0 truncate font-medium">
+            <span className="text-success max-w-[40%] shrink-0 truncate font-medium">
               {getAnswerDisplay(step, answers)}
             </span>
+            {onEdit ? (
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => onEdit(step.id)}
+                className="button-glass-neutral rounded-spacing-2 body-4 px-spacing-2 py-spacing-1 shrink-0"
+              >
+                Edit
+              </button>
+            ) : null}
           </div>
         ))}
       </div>
@@ -201,6 +283,51 @@ export function WorkRequestChatConfirmCard({
           {busy === 'submit' && <Loader2 className="icon-xs animate-spin" />}
           {busy === 'submit' ? WORK_REQUEST_MESSAGES.submitting : 'Submit request'}
         </button>
+      </div>
+    </div>
+  )
+}
+
+/** Shows values already on the draft with Edit → same step cards. */
+export function WorkRequestKnownAnswersCard({
+  steps,
+  answers,
+  busy,
+  onEdit,
+}: {
+  steps: WorkRequestChatStep[]
+  answers: WorkRequestChatAnswers
+  busy: boolean
+  onEdit: (stepId: string) => void
+}) {
+  if (steps.length === 0) return null
+  return (
+    <div className="surface-card border-border rounded-spacing-3 space-y-spacing-3 p-spacing-3 border">
+      <div>
+        <p className="body-2 font-medium">Already on this request</p>
+        <p className="body-3 text-muted-foreground mt-spacing-1">
+          Edit anything that’s wrong. We’ll only ask for what’s still missing.
+        </p>
+      </div>
+      <div className="space-y-spacing-2">
+        {steps.map((step) => (
+          <div key={step.id} className="gap-spacing-2 flex items-center">
+            <div className="min-w-0 flex-1">
+              <p className="body-3 text-muted-foreground truncate">{step.prompt}</p>
+              <p className="body-2 text-foreground truncate font-medium">
+                {getAnswerDisplay(step, answers)}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onEdit(step.id)}
+              className="button-glass-neutral rounded-spacing-2 body-3 px-spacing-3 py-spacing-1 shrink-0"
+            >
+              Edit
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   )

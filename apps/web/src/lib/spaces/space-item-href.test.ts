@@ -6,8 +6,12 @@ describe('space item href', () => {
     expect(buildSpaceItemHref('space-1', 'item-1')).toBe('/spaces?space=space-1&item=item-1')
   })
 
-  it('parses canonical and legacy Space item links', () => {
+  it('parses canonical, portal, and legacy Space item links', () => {
     expect(parseSpaceItemHref('/spaces?space=space-1&item=item-1')).toEqual({
+      spaceId: 'space-1',
+      itemId: 'item-1',
+    })
+    expect(parseSpaceItemHref('/spaces/space-1?item=item-1')).toEqual({
       spaceId: 'space-1',
       itemId: 'item-1',
     })
@@ -19,6 +23,9 @@ describe('space item href', () => {
 
   it('normalizes old saved links without accepting unrelated routes', () => {
     expect(normalizeSpaceItemHref('/spaces/space-1/item-1')).toBe(
+      '/spaces?space=space-1&item=item-1',
+    )
+    expect(normalizeSpaceItemHref('/spaces/space-1?item=item-1')).toBe(
       '/spaces?space=space-1&item=item-1',
     )
     expect(normalizeSpaceItemHref('/campaigns/campaign-1')).toBeNull()

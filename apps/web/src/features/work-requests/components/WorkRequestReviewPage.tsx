@@ -1,7 +1,9 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { createClient } from '@/lib/supabase/client'
 import {
   fetchWorkRequestReview,
   finalizeWorkRequestReview,
@@ -15,9 +17,11 @@ import { WORK_REQUEST_MESSAGES } from '../config/messages.config'
 import { WorkRequestChatFlow } from './WorkRequestChatFlow'
 
 export function WorkRequestReviewPage({ token }: { token: string }) {
+  const router = useRouter()
   const [review, setReview] = useState<WorkRequestReviewResponse | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [authRedirecting, setAuthRedirecting] = useState(false)
 
   const load = useCallback(async () => {
     setLoadError(null)
@@ -33,6 +37,29 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    if (!review || review.state !== 'draft') return
+    const conversationId = review.draft.resume_conversation_id
+    if (!conversationId) return
+
+    let cancelled = false
+    void (async () => {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (cancelled || !user) return
+      setAuthRedirecting(true)
+      router.replace(
+        `/home?conv=${encodeURIComponent(conversationId)}&wr=${encodeURIComponent(token)}`,
+      )
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [review, router, token])
 
   const save = async (update: WorkRequestUpdate) => {
     const next = await updateWorkRequestReview(token, update)
@@ -65,23 +92,22 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
     }
   }
 
+  if (authRedirecting) {
+    return (
+      <main className="bg-background text-foreground flex min-h-dvh items-center justify-center">
+        <VibeyLoadingOrb size="lg" text={WORK_REQUEST_MESSAGES.openingChat} />
+      </main>
+    )
+  }
+
   return (
     <main className="bg-background text-foreground min-h-dvh">
-      <div className="px-spacing-4 py-spacing-8 mx-auto w-full max-w-2xl">
-        <header className="mb-spacing-6 space-y-spacing-2">
-          <p className="typo-section-label text-muted-foreground">ROAS SERVICE REQUEST</p>
-          <h1 className="title-h6 text-foreground uppercase">CONTINUE IN CHAT</h1>
-          <p className="body-3 text-muted-foreground">
-            Same conversation as Slack or the portal — one step at a time. Reply in the chat or use
-            the cards.
-          </p>
-        </header>
-
-        {!review && !loadError ? (
-          <div className="py-spacing-12 flex items-center justify-center">
-            <VibeyLoadingOrb size="lg" text={WORK_REQUEST_MESSAGES.loading} />
-          </div>
-        ) : loadError ? (
+      {!review && !loadError ? (
+        <div className="flex min-h-dvh items-center justify-center">
+          <VibeyLoadingOrb size="lg" text={WORK_REQUEST_MESSAGES.loading} />
+        </div>
+      ) : loadError ? (
+        <div className="px-spacing-4 py-spacing-8 mx-auto w-full max-w-2xl">
           <StateCard
             title="SOMETHING GOT TANGLED"
             body={loadError}
@@ -91,15 +117,18 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
               </button>
             }
           />
-        ) : review?.state === 'draft' ? (
-          <WorkRequestChatFlow
-            key={review.draft.id}
-            draft={review.draft}
-            options={review.options}
-            onSave={save}
-            onSubmit={submit}
-          />
-        ) : review?.state === 'expired' ? (
+        </div>
+      ) : review?.state === 'draft' ? (
+        <WorkRequestChatFlow
+          key={review.draft.id}
+          draft={review.draft}
+          options={review.options}
+          presentation="page"
+          onSave={save}
+          onSubmit={submit}
+        />
+      ) : review?.state === 'expired' ? (
+        <div className="px-spacing-4 py-spacing-8 mx-auto w-full max-w-2xl">
           <StateCard
             title={WORK_REQUEST_MESSAGES.expiredTitle}
             body={WORK_REQUEST_MESSAGES.expiredBody}
@@ -113,7 +142,9 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
               </button>
             }
           />
-        ) : review?.state === 'revoked' ? (
+        </div>
+      ) : review?.state === 'revoked' ? (
+        <div className="px-spacing-4 py-spacing-8 mx-auto w-full max-w-2xl">
           <StateCard
             title={WORK_REQUEST_MESSAGES.revokedTitle}
             body={WORK_REQUEST_MESSAGES.revokedBody}
@@ -127,12 +158,16 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
               </button>
             }
           />
-        ) : review?.state === 'refresh_required' ? (
+        </div>
+      ) : review?.state === 'refresh_required' ? (
+        <div className="px-spacing-4 py-spacing-8 mx-auto w-full max-w-2xl">
           <StateCard
             title={WORK_REQUEST_MESSAGES.refreshRequiredTitle}
             body={review.message || WORK_REQUEST_MESSAGES.refreshRequiredBody}
           />
-        ) : review?.state === 'finalized' ? (
+        </div>
+      ) : review?.state === 'finalized' ? (
+        <div className="px-spacing-4 py-spacing-8 mx-auto w-full max-w-2xl">
           <StateCard
             success
             title={WORK_REQUEST_MESSAGES.finalizedTitle}
@@ -145,7 +180,12 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
               review.task_url || review.clickup_url ? (
                 <div className="gap-spacing-2 flex flex-wrap">
                   {review.task_url ? (
-                    <a href={review.task_url} className="button-default button-glass-primary">
+                    <a
+                      href={review.task_url}
+                      className="button-default button-glass-primary"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       Open ROAS task
                     </a>
                   ) : null}
@@ -163,17 +203,15 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
               ) : undefined
             }
           />
-        ) : (
+        </div>
+      ) : (
+        <div className="px-spacing-4 py-spacing-8 mx-auto w-full max-w-2xl">
           <StateCard
             title={WORK_REQUEST_MESSAGES.invalidTitle}
             body={WORK_REQUEST_MESSAGES.invalidBody}
           />
-        )}
-
-        <p className="typo-caption text-muted-foreground mt-spacing-6 text-center">
-          Powered by ROAS
-        </p>
-      </div>
+        </div>
+      )}
     </main>
   )
 }
