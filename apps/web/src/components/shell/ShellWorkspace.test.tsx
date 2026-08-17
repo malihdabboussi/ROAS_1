@@ -158,6 +158,9 @@ vi.mock('./use-shell-store', () => ({
       rightPanel: { open: mocks.rightPanelOpen, tab: 'tasks' },
       summaryPanelDocked: mocks.summaryPanelDocked,
       recentWorkAreaPages: mocks.recentWorkAreaPages,
+      syncArtifactViewerForConversation: vi.fn(),
+      artifactPinned: false,
+      toggleArtifactPinned: vi.fn(),
     }),
 }))
 

@@ -19,6 +19,7 @@ import { ShellSidebarSlot } from './ShellSidebarSlot'
 import { ShellTopBar } from './ShellTopBar'
 import { SpaceWorkDock } from './SpaceWorkDock'
 import { useRightEdgePresence } from './use-right-edge-presence'
+import { useShellArtifactConversationSync } from './use-shell-artifact-conversation-sync'
 import {
   isWorkAttachedDock,
   resolveShellMenuDockForLayout,
@@ -68,6 +69,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const previousSimpleChatOpen = useRef(false)
   const conversationBeforeNewChatRef = useRef<string | null>(null)
   useShellWorkspaceScreenChat(pathname, spaceParam)
+  useShellArtifactConversationSync()
 
   const showFullNewChat = isShellHomeRoute(pathname) && !convParam && chatParam !== 'starting'
   const showFullConversation =

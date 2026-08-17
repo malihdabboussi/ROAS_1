@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ChevronDown, FileText, ImageIcon, Maximize2, Minimize2, X } from 'lucide-react'
+import { ChevronDown, FileText, ImageIcon, Maximize2, Minimize2, Pin, X } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
 import { cn } from '@/lib/utils/cn'
@@ -34,6 +34,8 @@ export function ShellArtifactViewerPanel({
   children: ReactNode
 }) {
   const close = useShellStore((s) => s.closeArtifactViewer)
+  const artifactPinned = useShellStore((s) => s.artifactPinned)
+  const toggleArtifactPinned = useShellStore((s) => s.toggleArtifactPinned)
   const [expanded, setExpanded] = useState(false)
   const [browse, setBrowse] = useState<BrowseView>('artifact')
   const [openMenu, setOpenMenu] = useState(false)
@@ -166,6 +168,21 @@ export function ShellArtifactViewerPanel({
           className="gap-spacing-1 flex shrink-0 items-center"
           data-testid="artifact-viewer-controls"
         >
+          <Tooltip
+            label={artifactPinned ? 'Unpin artifact' : 'Pin artifact across chats'}
+            side="bottom"
+          >
+            <button
+              type="button"
+              onClick={toggleArtifactPinned}
+              aria-label={artifactPinned ? 'Unpin artifact' : 'Pin artifact across chats'}
+              aria-pressed={artifactPinned}
+              className={cn('btn-icon-bare shrink-0', artifactPinned && 'text-foreground')}
+              data-testid="artifact-viewer-pin"
+            >
+              <Pin className="icon-sm" />
+            </button>
+          </Tooltip>
           {expanded ? (
             <Tooltip label="Collapse" side="bottom">
               <button

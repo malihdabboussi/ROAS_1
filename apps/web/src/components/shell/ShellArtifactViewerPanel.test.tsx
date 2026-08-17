@@ -21,7 +21,10 @@ const target: ShellArtifactViewerTarget = {
 
 describe('ShellArtifactViewerPanel', () => {
   beforeEach(() => {
-    useShellStore.setState({ artifactViewer: { target, width: 480 } })
+    useShellStore.setState({
+      artifactViewer: { target, width: 480 },
+      artifactPinned: false,
+    })
   })
 
   afterEach(cleanup)
@@ -109,6 +112,19 @@ describe('ShellArtifactViewerPanel', () => {
       'absolute',
     )
     expect(useShellStore.getState().artifactViewer.target).toEqual(target)
+  })
+
+  it('toggles artifact pin from the viewer controls', () => {
+    render(
+      <ShellArtifactViewerPanel target={target}>
+        <div />
+      </ShellArtifactViewerPanel>,
+    )
+
+    fireEvent.click(screen.getByTestId('artifact-viewer-pin'))
+    expect(useShellStore.getState().artifactPinned).toBe(true)
+    fireEvent.click(screen.getByTestId('artifact-viewer-pin'))
+    expect(useShellStore.getState().artifactPinned).toBe(false)
   })
 
   it('gives the title all remaining toolbar space without shrinking controls', () => {
