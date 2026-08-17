@@ -56,6 +56,7 @@ export function agendaRangeDetail(d: Date, r: DateRange): string {
 
 export function AgendaCardHeader(props: {
   showAgendaSurface: boolean
+  hideTitle?: boolean
   bothConnected: boolean
   provider: ProviderFilter
   setProvider: (p: ProviderFilter) => void
@@ -69,6 +70,7 @@ export function AgendaCardHeader(props: {
 }) {
   const {
     showAgendaSurface,
+    hideTitle = false,
     bothConnected,
     provider,
     setProvider,
@@ -83,10 +85,14 @@ export function AgendaCardHeader(props: {
 
   return (
     <div className="agenda-card-header">
-      <div className="flex items-center gap-2">
-        <CalendarClock className="text-icon h-4 w-4 shrink-0" />
-        <span className="agenda-card-title">Agenda</span>
-      </div>
+      {hideTitle ? (
+        <span className="sr-only">Agenda</span>
+      ) : (
+        <div className="flex items-center gap-2">
+          <CalendarClock className="text-icon h-4 w-4 shrink-0" />
+          <span className="agenda-card-title">Agenda</span>
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-end gap-1">
         <button
           type="button"

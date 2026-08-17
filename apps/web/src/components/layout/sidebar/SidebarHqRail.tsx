@@ -10,7 +10,11 @@ import { useActiveShellMenuDock, useShellMenuDock } from '@/components/shell/use
 import { shellSidebarExpanded, useShellStore } from '@/components/shell/use-shell-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cn } from '@/lib/utils/cn'
-import { isManageRailItemActive, workContextSurfaceForPanel } from './sidebar-hq-rail.helpers'
+import {
+  isManageRailItemActive,
+  shouldPushRailHref,
+  workContextSurfaceForPanel,
+} from './sidebar-hq-rail.helpers'
 import type { ManagePanelId, ManageRailItem } from './sidebar-types'
 import { SidebarHqHubLogoButton } from './SidebarHqHubLogoButton'
 import type { HubMenuPaneProps } from './SidebarHqHubMenu'
@@ -46,7 +50,6 @@ export function SidebarHqRail({
   const setMenuCompact = useShellMenuDock((state) => state.setMenuCompact)
   const shellExpanded = shellSidebarExpanded({ sidebarPinned, sidebarPeek })
   const lifting = dragging && lift !== null
-  // Keep the HQ rail icon-only — never promote the expanded hub menu.
   useEffect(() => {
     setSidebarPinned(false)
     if (c.hubMenuOpen || c.hubMenuClosing) c.forceCloseHubMenu()
@@ -63,9 +66,7 @@ export function SidebarHqRail({
     setWorkContext({ surface: workContextSurfaceForPanel(panelId) })
   }
   const pushIfNeeded = (href: string) => {
-    if (c.pathname === href) return
-    if (href !== '/' && c.pathname.startsWith(`${href}/`)) return
-    router.push(href)
+    if (shouldPushRailHref(c.pathname, href)) router.push(href)
   }
   const openDelegationDesk = useOpenDelegationDesk({
     router,
@@ -331,7 +332,7 @@ export function SidebarHqRail({
                               closeHubIfOpen()
                               syncWorkContextForPanel('spaces')
                               setCollapsed(true)
-                              pushIfNeeded('/campaigns')
+                              pushIfNeeded('/programs')
                               if (c.activeManagePanel === 'spaces' && !c.isPanelClosing) {
                                 c.setIsPanelClosing(true)
                               }

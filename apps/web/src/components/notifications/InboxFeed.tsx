@@ -118,13 +118,17 @@ export function InboxFeed({
       }`}
     >
       <header className="border-border px-spacing-5 py-spacing-4 gap-spacing-3 flex flex-wrap items-center border-b">
-        <div className="gap-spacing-2 flex min-w-0 items-center">
-          <Inbox className="icon-md text-muted-foreground shrink-0" aria-hidden />
-          <div className="min-w-0">
-            <h2 className="body-1 text-foreground font-semibold">{INBOX_MESSAGES.TITLE}</h2>
-            <p className="typo-caption text-muted-foreground truncate">{INBOX_MESSAGES.SUBTITLE}</p>
+        {presentation === 'page' ? null : (
+          <div className="gap-spacing-2 flex min-w-0 items-center">
+            <Inbox className="icon-md text-muted-foreground shrink-0" aria-hidden />
+            <div className="min-w-0">
+              <h2 className="body-1 text-foreground font-semibold">{INBOX_MESSAGES.TITLE}</h2>
+              <p className="typo-caption text-muted-foreground truncate">
+                {INBOX_MESSAGES.SUBTITLE}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="gap-spacing-2 ml-auto flex items-center">
           {inbox.counts.primary + inbox.counts.system + inbox.counts.other + inbox.counts.later >

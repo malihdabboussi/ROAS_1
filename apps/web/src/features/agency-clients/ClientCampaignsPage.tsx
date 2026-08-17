@@ -67,24 +67,18 @@ export function ClientCampaignsPage() {
 
   return (
     <main className="gap-spacing-6 p-spacing-8 mx-auto flex w-full max-w-7xl flex-col">
+      <h1 className="sr-only">CLIENT CAMPAIGNS</h1>
       <AgencyWorkspaceBreadcrumb
         items={[{ href: '/clients', label: 'Clients' }, { label: 'Client Campaigns' }]}
+        action={
+          <Link
+            href="/client-campaigns?surface=portal&portal_path=/campaigns"
+            className="button-compact button-glass-purple"
+          >
+            <PanelRightOpen className="icon-sm" /> Portal
+          </Link>
+        }
       />
-      <header className="gap-spacing-4 flex flex-wrap items-end justify-between">
-        <div>
-          <p className="typo-section-label text-muted-foreground">Agency workspace</p>
-          <h1 className="title-h6 text-foreground">CLIENT CAMPAIGNS</h1>
-          <p className="body-3 text-muted-foreground mt-spacing-1">
-            Client campaigns from The ROAS Portal, mapped to ROAS Spaces.
-          </p>
-        </div>
-        <Link
-          href="/client-campaigns?surface=portal&portal_path=/campaigns"
-          className="button-compact button-glass-purple"
-        >
-          <PanelRightOpen className="icon-sm" /> Portal
-        </Link>
-      </header>
       <div className="surface-card gap-spacing-2 rounded-spacing-3 border-border p-spacing-3 flex flex-wrap items-center border">
         <label className="relative min-w-64 flex-1">
           <Search className="icon-sm text-muted-foreground left-spacing-3 absolute top-1/2 -translate-y-1/2" />
