@@ -21,16 +21,29 @@ const migration = readFileSync(
 
 describe('Page Grader human fulfillment routing', () => {
   it('keeps named funnel owners inside Page Grader fulfillment', () => {
-    expect(vibeySkill).toMatch(/use Page\s+Grader MCP even when the user names the human owner/)
+    expect(vibeySkill).toMatch(/use\s+Page Grader MCP even when the user names the human owner/)
     expect(vibeySkill).toContain('pass the canonical name in `assignee_name`')
     expect(vibeySkill).toContain('Do not use `list_team`, `list_campaign_team`')
     expect(vibeySkill).toContain('page_grader_create_fulfillment_request')
     expect(vibeySkill).toContain('assignee_name:"Rafay"')
   })
 
+  it('routes all Service Request types through Portal draft intake', () => {
+    for (const skill of [vibeySkill, atlasSkill]) {
+      expect(skill).toContain('design, copy, funnel')
+      expect(skill).toContain('task_type')
+      expect(skill).toContain('video')
+      expect(skill).toContain('Never use native `create_task`')
+      expect(skill).toContain('resolved client name')
+      expect(skill).toContain('review_url')
+      expect(skill).toContain('openable')
+      expect(skill).toContain('Created:')
+    }
+  })
+
   it('gives Atlas the same specialized fulfillment boundary', () => {
-    expect(atlasSkill).toContain('even when a human owner')
-    expect(atlasSkill).toContain('the Page Grader assignee')
+    expect(atlasSkill).toContain('when the user says "task" or names a human owner')
+    expect(atlasSkill).toContain('Page Grader assignee')
     expect(atlasSkill).toContain('page_grader_create_fulfillment_request')
   })
 
@@ -41,5 +54,19 @@ describe('Page Grader human fulfillment routing', () => {
     expect(migration).toContain('assignee_name:"Rafay"')
     expect(migration).toContain("RAISE EXCEPTION 'Vibey Page Grader human fulfillment routing")
     expect(migration).toContain("RAISE EXCEPTION 'Atlas Page Grader human fulfillment routing")
+  })
+
+  it('persists all-types Service Request intake on both agents', () => {
+    const allTypesMigration = readFileSync(
+      resolve(repoRoot, 'supabase/migrations/20260816224000_service_request_all_types_intake.sql'),
+      'utf8',
+    )
+    expect(allTypesMigration).toContain('## Service Request intake (all types)')
+    expect(allTypesMigration).toContain('design, copy, funnel')
+    expect(allTypesMigration).toContain('Never reply with a bare "Created:')
+    expect(allTypesMigration).toContain("file_name = 'TOOLS.md'")
+    expect(allTypesMigration).toContain(
+      "RAISE EXCEPTION 'Service Request all-types intake was not persisted for both agents'",
+    )
   })
 })
