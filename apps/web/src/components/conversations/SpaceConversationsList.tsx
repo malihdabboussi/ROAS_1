@@ -42,10 +42,7 @@ export interface SpaceConversationsListProps {
   hideBackButton?: boolean
   hideHeaderBottomBorder?: boolean
   compactHeader?: boolean
-  /**
-   * When true, parent owns width transition + rail swap (see SpacesContainer / Team agent chat).
-   * `collapsed` is only used to reset menus/search while the parent panel is collapsed.
-   */
+  /** Parent owns width transition + rail swap; `collapsed` only resets menus/search. */
   parentControlsCollapse?: boolean
   collapsed?: boolean
   onCollapsedChange?: (collapsed: boolean) => void
@@ -63,6 +60,7 @@ export interface SpaceConversationsListProps {
   searchSlot?: ReactNode
   headerEndSlot?: ReactNode
   headerFooterSlot?: ReactNode
+  pinHeaderActions?: boolean
   groupBy?: ChatHistoryGroupBy
   campaignNameById?: Record<string, string>
   headerStartSlot?: ReactNode
@@ -118,6 +116,7 @@ export function SpaceConversationsList({
   searchSlot,
   headerEndSlot,
   headerFooterSlot,
+  pinHeaderActions,
   headerStartSlot,
   beforeHeaderSlot,
   compactHeaderTitle,
@@ -335,6 +334,7 @@ export function SpaceConversationsList({
         }
         compactSearchOpen={compactSearchOpen}
         onCompactSearchOpenChange={setCompactSearchOpen}
+        pinHeaderActions={pinHeaderActions}
         onCollapsedChange={onCollapsedChange}
         showAllAgentsToggle={showAllAgentsToggle}
         allAgentsMode={allAgentsMode}

@@ -35,6 +35,19 @@ vi.mock('@/features/home/components/MeetingAgendaDocEditor', () => ({
     <div data-testid="meeting-agenda-doc" data-item-id={itemId} />
   ),
 }))
+vi.mock('@/components/work-views/AllTasksNativeList', () => ({
+  AllTasksNativeList: ({ items }: { items: Array<{ id: string; title: string }> }) => (
+    <div>
+      {items.map((item) => (
+        <div key={item.id}>{item.title}</div>
+      ))}
+      <button type="button">Add task</button>
+    </div>
+  ),
+}))
+vi.mock('@/lib/work-items', () => ({
+  useSpaceMappingIndex: () => null,
+}))
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => {
   const useGlobalChatStore = Object.assign(
     (
@@ -133,7 +146,7 @@ describe('MeetingWorkspaceDialog', () => {
       expect(screen.queryByRole('status', { name: 'Loading meeting workspace' })).toBeNull()
       expect(screen.getByText('Recordings (0)')).toBeInTheDocument()
     })
-    expect(screen.getByRole('button', { name: 'Add action item' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add task' })).toBeInTheDocument()
     expect(screen.queryByText('No action items yet.')).not.toBeInTheDocument()
   })
 
@@ -353,7 +366,7 @@ describe('MeetingWorkspaceDialog', () => {
     expect(recordings?.compareDocumentPosition(agenda!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
-  it('can reopen a completed Space action item', async () => {
+  it('renders completed Space action items in the All Tasks table', async () => {
     const action = {
       id: 'action-1',
       title: 'Send the launch recap',
@@ -365,7 +378,6 @@ describe('MeetingWorkspaceDialog', () => {
     }
     mocks.fetchMeetingWorkspace.mockReset()
     mocks.fetchMeetingWorkspace.mockResolvedValue({ ...baseBundle, actions: [action] })
-    mocks.toggleMeetingActionStatus.mockResolvedValue({ ...action, status: 'confirmed' })
 
     render(
       <MeetingWorkspaceDialog
@@ -378,17 +390,7 @@ describe('MeetingWorkspaceDialog', () => {
       />,
     )
 
-    const reopen = await screen.findByRole('button', {
-      name: 'Mark Send the launch recap incomplete',
-    })
-    expect(screen.getByText('Fathom')).toBeInTheDocument()
-    fireEvent.click(reopen)
-
-    await waitFor(() => {
-      expect(mocks.toggleMeetingActionStatus).toHaveBeenCalledWith('space-1', 'meeting-1', action)
-      expect(
-        screen.getByRole('button', { name: 'Mark Send the launch recap complete' }),
-      ).toBeInTheDocument()
-    })
+    expect(await screen.findByText('Send the launch recap')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add task' })).toBeInTheDocument()
   })
 })

@@ -13,10 +13,6 @@ vi.mock('next/link', () => ({
   ),
 }))
 
-vi.mock('@/components/vibey/vibey-loading-orb', () => ({
-  VibeyLoadingOrb: () => <span>Loading campaigns</span>,
-}))
-
 vi.mock('@/components/shell/ShellBreadcrumb', () => ({
   ShellBreadcrumb: () => null,
 }))
@@ -61,7 +57,7 @@ describe('ClientCampaignsPage', () => {
       'href',
       '/client-campaigns?surface=portal&portal_path=/campaigns',
     )
-    expect(screen.queryByText('Loading campaigns')).not.toBeInTheDocument()
+    expect(screen.queryByRole('status', { name: 'Loading campaigns...' })).not.toBeInTheDocument()
     await waitFor(() => {
       expect(fetchAgencyClientCampaigns).toHaveBeenNthCalledWith(1, undefined, false)
       expect(fetchAgencyClientCampaigns).toHaveBeenNthCalledWith(2, undefined, true)

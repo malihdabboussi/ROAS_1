@@ -3,12 +3,13 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { AllTasksNativeList } from '@/components/work-views/AllTasksNativeList'
 import { fetchCampaigns, type Campaign } from '@/lib/campaigns'
 import { fetchPrograms, type Program } from '@/lib/programs'
 import type { TaskRollupItem, TaskRollupView } from '@/lib/tasks'
 import { useTaskRollup } from '@/lib/work-views'
+import { ALL_TASKS_MESSAGES } from '../config/all-tasks-messages.config'
 import { ALL_TASKS_TOAST_ERRORS } from '../config/all-tasks-toast-errors.config'
 import { AllTasksScopeFilters } from './AllTasksScopeFilters'
 
@@ -22,7 +23,7 @@ export function AllTasksBoard({
   const router = useRouter()
   const searchParams = useSearchParams()
   const [scope, setScope] = useState<TaskRollupView>(
-    searchParams.get('scope') === 'all' ? 'all' : 'my',
+    searchParams.get('scope') === 'my' ? 'my' : 'all',
   )
   const [programId, setProgramId] = useState(searchParams.get('program') ?? '')
   const [campaignId, setCampaignId] = useState(searchParams.get('campaign') ?? '')
@@ -59,7 +60,7 @@ export function AllTasksBoard({
   }, [reload, reloadToken])
 
   useEffect(() => {
-    const nextScope = searchParams.get('scope') === 'all' ? 'all' : 'my'
+    const nextScope = searchParams.get('scope') === 'my' ? 'my' : 'all'
     setScope(nextScope)
     setProgramId(searchParams.get('program') ?? '')
     setCampaignId(searchParams.get('campaign') ?? '')
@@ -101,7 +102,7 @@ export function AllTasksBoard({
             }))}
             onScopeChange={(nextScope) => {
               setScope(nextScope)
-              updateSearch({ scope: nextScope === 'all' ? 'all' : '' })
+              updateSearch({ scope: nextScope === 'my' ? 'my' : '' })
             }}
             onProgramChange={(nextProgramId) => {
               setProgramId(nextProgramId)
@@ -116,9 +117,7 @@ export function AllTasksBoard({
         </div>
 
         {loading ? (
-          <div className="flex min-h-64 items-center justify-center">
-            <VibeyLoadingOrb text="Loading tasks..." state="processing" size="sm" />
-          </div>
+          <ListSkeleton rows={8} label={ALL_TASKS_MESSAGES.LOADING} />
         ) : items.length ? (
           <AllTasksNativeList items={items} reload={reload} onOpenItem={onOpenItem} />
         ) : (

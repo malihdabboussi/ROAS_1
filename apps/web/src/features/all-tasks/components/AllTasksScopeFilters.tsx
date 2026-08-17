@@ -1,6 +1,7 @@
 'use client'
 
 import { SettingsSelect } from '@/components/ui/forms/SettingsSelect'
+import { ALL_TASKS_MESSAGES } from '@/features/all-tasks/config/all-tasks-messages.config'
 import type { TaskRollupView } from '@/lib/tasks'
 import { cn } from '@/lib/utils/cn'
 
@@ -29,8 +30,8 @@ export function AllTasksScopeFilters({
     <div className="gap-spacing-2 flex flex-wrap items-center">
       <div className="gap-spacing-1 border-border flex rounded-lg border p-1">
         {[
-          { id: 'my' as const, label: 'My Tasks' },
-          { id: 'all' as const, label: 'All Tasks' },
+          { id: 'my' as const, label: ALL_TASKS_MESSAGES.assignedToMe },
+          { id: 'all' as const, label: ALL_TASKS_MESSAGES.allTasks },
         ].map((option) => (
           <button
             key={option.id}

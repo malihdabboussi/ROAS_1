@@ -13,6 +13,7 @@ interface ShellChatMenuFilterControlsProps {
   onOpenAllChats: () => void
   onCollapse?: () => void
   simpleSidebar: boolean
+  onFilterOpenChange?: (open: boolean) => void
 }
 
 export function ShellChatMenuFilterControls({
@@ -24,6 +25,7 @@ export function ShellChatMenuFilterControls({
   onOpenAllChats,
   onCollapse,
   simpleSidebar,
+  onFilterOpenChange,
 }: ShellChatMenuFilterControlsProps) {
   return (
     <div className="gap-spacing-1 flex items-center">
@@ -35,6 +37,7 @@ export function ShellChatMenuFilterControls({
         onAgentKeyChange={onAgentKeyChange}
         onOpenAllChats={onOpenAllChats}
         alwaysShowOpenAllChats={simpleSidebar}
+        onOpenChange={onFilterOpenChange}
       />
       {onCollapse ? (
         <button

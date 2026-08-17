@@ -42,6 +42,7 @@ export function ShellChatDrawer({
   const setChatHistoryWidth = useShellStore((s) => s.setChatHistoryWidth)
   const setChatHistoryCollapsed = useShellStore((s) => s.setChatHistoryCollapsed)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
+  const workAreaOpen = useShellStore((s) => s.workAreaOpen)
   const artifactOpenBeside = useShellStore((s) => Boolean(s.artifactViewer.target))
   const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
   const minimizeChatDrawer = useShellStore((s) => s.minimizeChatDrawer)
@@ -210,7 +211,7 @@ export function ShellChatDrawer({
   // fits, lives inside the chat pane instead of widening this drawer.
   const drawerWidthStyle = expanded ? undefined : { width: open ? `${width}px` : '0px' }
   const bodyStyle = expanded ? undefined : { width: `${width}px` }
-  const showPageControl = simpleMenu && !mobile
+  const showPageControl = simpleMenu && !mobile && !workAreaOpen
 
   return (
     <>
