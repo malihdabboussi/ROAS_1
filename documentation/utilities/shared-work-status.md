@@ -16,7 +16,7 @@ Last Modified: 2026-07-25
 
 ## Consumers
 
-- Home My Tasks modal and full-page view
+- Home My Tasks dashboard card
 - Inbox and notification surfaces
 - Existing Space task status renderers through compatibility exports
 

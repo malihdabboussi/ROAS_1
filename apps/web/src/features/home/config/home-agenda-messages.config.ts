@@ -4,6 +4,21 @@ export const HOME_AGENDA_MESSAGES = {
     message: 'Loading meetings...',
     category: 'loading',
   },
+  LOADING_MEETING_WORKSPACE: {
+    key: 'LOADING_MEETING_WORKSPACE',
+    message: 'Getting your meeting space ready...',
+    category: 'loading',
+  },
+  LOADING_MEETING_DETAILS: {
+    key: 'LOADING_MEETING_DETAILS',
+    message: 'Loading meeting details…',
+    category: 'loading',
+  },
+  LOADING_MY_TASKS: {
+    key: 'LOADING_MY_TASKS',
+    message: 'Loading tasks…',
+    category: 'loading',
+  },
   INSTANT_MEETING_TITLE: {
     key: 'INSTANT_MEETING_TITLE',
     message: 'START AN IMPROMPTU CALL',

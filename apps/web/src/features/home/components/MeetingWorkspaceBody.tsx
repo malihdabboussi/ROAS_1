@@ -1,12 +1,13 @@
 'use client'
 
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { MeetingActionItemsSection } from '@/features/home/components/MeetingActionItemsSection'
 import { MeetingAgendaPrepSection } from '@/features/home/components/MeetingAgendaPrepSection'
 import { MeetingNotesSection } from '@/features/home/components/MeetingNotesSection'
 import { MeetingPostCallSections } from '@/features/home/components/MeetingPostCallSections'
 import { MeetingRecordingsSection } from '@/features/home/components/MeetingRecordingsSection'
 import { MeetingWorkspaceAttachments } from '@/features/home/components/MeetingWorkspaceAttachments'
+import { HOME_AGENDA_MESSAGES } from '@/features/home/config/home-agenda-messages.config'
 import type { ParsedMeetingPrep } from '@/features/home/lib/meeting-workspace-display'
 import type {
   MeetingAction,
@@ -60,15 +61,8 @@ export function MeetingWorkspaceBody({
 }) {
   if (loading) {
     return (
-      <div
-        role="status"
-        aria-label="Loading meeting workspace"
-        className="section-card py-spacing-12 flex min-h-72 flex-col items-center justify-center"
-      >
-        <VibeyLoadingOrb text="Loading meeting details…" state="processing" size="md" />
-        <p className="body-4 text-muted-foreground mt-spacing-3 text-center">
-          Connecting the recording, recap, notes, and action items.
-        </p>
+      <div className="section-card p-spacing-4">
+        <ListSkeleton rows={6} label={HOME_AGENDA_MESSAGES.LOADING_MEETING_DETAILS.message} />
       </div>
     )
   }

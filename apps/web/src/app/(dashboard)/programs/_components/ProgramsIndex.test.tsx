@@ -24,10 +24,6 @@ vi.mock('@/components/shell/ShellBreadcrumb', () => ({
   ShellBreadcrumb: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }))
 
-vi.mock('@/components/vibey/vibey-loading-orb', () => ({
-  VibeyLoadingOrb: ({ text }: { text: string }) => <div>{text}</div>,
-}))
-
 describe('ProgramsIndex', () => {
   beforeEach(() => {
     mocks.fetchPrograms.mockReset()

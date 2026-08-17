@@ -72,6 +72,35 @@ describe('MeetingsUnifiedSurface', () => {
     expect(screen.getByText('Live calendar agenda')).toBeInTheDocument()
   })
 
+  it('shows the agenda immediately instead of a full-page loader', () => {
+    mocks.state.loadSpaces.mockImplementation(() => new Promise(() => undefined))
+    mocks.state.loadRoster.mockImplementation(() => new Promise(() => undefined))
+
+    render(<MeetingsUnifiedSurface agenda={<div>Live calendar agenda</div>} />)
+
+    expect(screen.getByText('Live calendar agenda')).toBeInTheDocument()
+    expect(screen.queryByTestId('space-views')).not.toBeInTheDocument()
+  })
+
+  it('wraps a cached Meetings space on first paint', () => {
+    mocks.state.spaces = [
+      {
+        id: 'meetings-space',
+        title: 'Meetings',
+        schema: { icon: 'video', fields: [{ id: 'entry_type' }] },
+      },
+    ]
+    mocks.state.loadSpaces.mockImplementation(() => new Promise(() => undefined))
+    mocks.state.loadRoster.mockImplementation(() => new Promise(() => undefined))
+
+    render(<MeetingsUnifiedSurface agenda={<div>Live calendar agenda</div>} />)
+
+    expect(screen.getByTestId('space-views')).toBeInTheDocument()
+    expect(screen.getByText('Live calendar agenda')).toBeInTheDocument()
+    expect(mocks.state.setActiveSpace).toHaveBeenCalledWith('meetings-space')
+    expect(mocks.state.setActiveView).toHaveBeenCalledWith('agenda')
+  })
+
   it('keeps the live Agenda available when a Meetings Space has not been created', async () => {
     mocks.state.loadSpaces.mockResolvedValue()
     mocks.state.loadRoster.mockResolvedValue()

@@ -6,6 +6,30 @@ Why: The stacked caption + "this space" rows did not match the All Tasks table, 
 Impact: Opening a meeting shows the All Tasks table for action items. Follow-up priority, assignee, and due date come through the workspace bundle so those columns are real.
 Files: `apps/web/src/features/home/components/MeetingActionItemsSection.tsx`, `apps/web/src/components/work-views/AllTasksNativeList.tsx`, `apps/api/src/modules/meetings/domain/meeting-follow-up-actions.ts`, `documentation/features/meeting-follow-up-slack.md`
 
+## [2026-08-17 20:22] - [FIX]
+What: All Tasks no longer opens as the retired My Tasks screen. The page defaults to every open task, the leftover overlay is gone, and Assigned to me is only a filter.
+Why: #272 redirected `/home/my-tasks`, but `/all-tasks` still selected a My Tasks tab and Home expand still opened the old My Tasks overlay.
+Impact: Sidebar All Tasks shows All Tasks. Home card expand goes to `/all-tasks?scope=my`. There is no My Tasks page or dialog left.
+Files: `apps/web/src/features/all-tasks/components/AllTasksBoard.tsx`, `AllTasksScopeFilters.tsx`, `apps/web/src/features/home/components/HomeCardsGrid.tsx`, `documentation/features/programs.md`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-17 20:20] - [FIX]
+What: Screen navigation no longer closes or forgets the open artifact. HQ rail, Show page history, Open meeting workspace, campaign/space open keep it; explicit close, flow navigate-away, and drag-to-edge collapse still close it.
+Why: Pathname-change and page-pick handlers called `closeArtifactViewer()`, which also forgot the chat’s last artifact, so restoring a chat’s work screen raced the artifact closed.
+Impact: Moving screens keeps the artifact on the pin-like default for that chat. Closing it still means it stays closed until the user opens one again.
+Files: `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `apps/web/src/components/shell/ShellWorkAreaControl.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-17 20:19] - [FIX]
+What: Meetings now skeleton-loads the agenda in place (no centered green orb flash, no duplicate loader). Meeting chats list the meeting workspace inside Connections by name, without an unlink control. Inbox, My Tasks, All Tasks, Programs, Clients, and Client Campaigns use the same list skeleton.
+Why: The Meetings orb started between chat and agenda, then jumped into the agenda body. Open meeting workspace sat above Connections instead of being the named meeting connection.
+Impact: Agenda chrome stays put while meetings load. The meeting workspace is a permanent Connections row; campaign/Space rows stay removable.
+Files: `MeetingsUnifiedSurface.tsx`, `AgendaCard.tsx`, `ShellRightPanel.tsx`, `ShellRightPanelConnections.tsx`, `ListSkeleton.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-17 20:15] - [FIX]
+What: Chat working status now types a live line and rotates Cursor-style phrases after a short hold instead of freezing on Brain/tool labels.
+Why: Turns that said they were reading Brain looked stuck even while the agent was still working.
+Impact: Composer chat keeps an animated working line (`Planning next moves...` and similar) while Pixel is thinking or a Brain/tool step sits open.
+Files: `apps/web/src/lib/chat/chat-working-status.ts`, `apps/web/src/lib/chat/use-working-status-label.ts`, `apps/web/src/components/chat/ChatWorkingStatusLabel.tsx`, `apps/web/src/components/chat/TypewriterShimmer.tsx`, `apps/web/src/features/studio/components/chat/StatusIndicator.tsx`, `apps/web/src/features/studio/components/chat/LockedInGroup.tsx`, `apps/web/src/features/studio/components/chat/ThinkingTranscriptBlock.tsx`
+
 ## [2026-08-17 20:05] - [STYLE]
 What: Chat assistant-turn actions now show Reply first, then Copy, then Fork.
 Why: Reply is the primary next step in a conversation, so it should be the first control you see.
@@ -223,6 +247,12 @@ Why: Preview builds for roas-api and roas-web failed on PR #260.
 Impact: Branch can build and merge/deploy.
 
 Files: `apps/api/src/modules/work-requests/dto/work-request.dto.ts`, `apps/web/src/features/work-requests/components/WorkRequestReviewChatHost.tsx`
+
+## [2026-08-17 20:17] - [DOCS]
+What: Started gangbusters UX audit; logged Session A New Chat findings F-001–F-008, production AUTH block F-009, and confirmed P-ATTACH-01 from live clicks + code.
+Why: User asked to run the audit with browser connected; production Dylan session missing in cloud browser; local pass still yielded Attach/@ IA evidence.
+Impact: Findings file ready; Attach consolidation plan confirmed; remaining surfaces blocked until production sign-in.
+Files: `.docs/plans/ux-gangbusters-findings-2026-08-17.md`
 
 ## [2026-08-17 19:44] - [DOCS]
 What: Added the gangbusters ultra-detailed navigation/UX audit prompt plus a paste-ready kickoff for cloud agents.

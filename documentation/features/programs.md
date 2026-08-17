@@ -1,6 +1,6 @@
 # Programs
 
-Last Modified: August 17, 2026 (All Tasks is the primary task destination; My Tasks page retired)
+Last Modified: August 17, 2026 (All Tasks is the only tasks screen; My Tasks overlay retired)
 
 ## Overview
 
@@ -127,15 +127,16 @@ campaign/program is expanded.
 - Route: `/all-tasks` (primary sidebar destination; Programs panel also links here)
 - Shell breadcrumb: **All Tasks** (path fallback; no duplicate in-page H1)
 - API: `GET /api/tasks/rollup?view=my|all&program_id=&campaign_id=`
-- Tabs: **My Tasks** | **All Tasks**
+- Filters: **Assigned to me** | **All Tasks** (default is All Tasks)
 - Open top-level space tasks only (status not done/archived)
 - Row opens a right-side task card (`HomeTaskDetailHost` panel) and keeps the rollup list mounted. Campaign Tasks list still navigates to `/spaces?space=…&item=…`
-- `/home/my-tasks` redirects to `/all-tasks`. The Home dashboard My Tasks card remains.
+- `/home/my-tasks` redirects to `/all-tasks`. Expanding the Home dashboard My Tasks card opens `/all-tasks?scope=my`.
 - Your Turn remains the personal inbox
 - Rollup filters campaigns by Program access before loading spaces/items
 
 ## Decision Log
 
+- **2026-08-17:** All Tasks is the only tasks screen. Default scope is every open task; **Assigned to me** is a filter. `/home/my-tasks` redirects to `/all-tasks`. Expanding the Home My Tasks card opens `/all-tasks?scope=my` instead of the old overlay.
 - **2026-08-17:** All Tasks is the primary task destination in Simple and Advanced nav. Opening a rollup row keeps the list mounted and shows canonical task detail in a right-side card. `/home/my-tasks` redirects to `/all-tasks`; the Home My Tasks card stays.
 - **2026-08-17:** All Tasks uses the shell breadcrumb **All Tasks** and no longer repeats the H1/subtitle in the page body.
 - **2026-08-17:** More → Programs hover lists all programs. Clicking Programs opens `/programs` instead of `/campaigns`.

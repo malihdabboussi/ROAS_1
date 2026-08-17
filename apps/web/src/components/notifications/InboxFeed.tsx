@@ -5,9 +5,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Archive, Check, CheckCheck, Inbox, Search } from 'lucide-react'
 import { InboxDetailPane } from '@/components/notifications/InboxDetailPane'
 import { InboxListRow } from '@/components/notifications/InboxListRow'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { SettingsSelect } from '@/components/ui/forms/SettingsSelect'
 import { Tooltip } from '@/components/ui/tooltip'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { fetchMissionById } from '@/lib/missions'
 import {
   INBOX_MESSAGES,
@@ -229,8 +229,8 @@ export function InboxFeed({
           }`}
         >
           {inbox.loading ? (
-            <div className="flex h-full min-h-0 items-center justify-center">
-              <VibeyLoadingOrb size="md" text={INBOX_MESSAGES.LOADING} />
+            <div className="px-spacing-4 py-spacing-3">
+              <ListSkeleton rows={8} label={INBOX_MESSAGES.LOADING} />
             </div>
           ) : visibleNotifications.length === 0 ? (
             <div className="gap-spacing-3 px-spacing-6 py-spacing-16 flex h-full min-h-0 flex-col items-center justify-center text-center">

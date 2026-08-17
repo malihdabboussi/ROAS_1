@@ -72,7 +72,7 @@ describe('ShellWorkAreaControl', () => {
     expect(screen.getByRole('menuitem', { name: 'Campaign image' })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('menuitem', { name: 'Aaron x Dylan x Nate' }))
-    expect(useShellStore.getState().artifactViewer.target).toBeNull()
+    expect(useShellStore.getState().artifactViewer.target).toEqual(target)
     expect(useShellStore.getState().workAreaOpen).toBe(true)
     expect(useShellStore.getState().pendingWorkRestore).toEqual(meeting.restore)
     expect(push).not.toHaveBeenCalled()
@@ -83,7 +83,7 @@ describe('ShellWorkAreaControl', () => {
 
     fireEvent.mouseEnter(screen.getByRole('button', { name: 'Collapse page — chat full screen' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Skills' }))
-    expect(useShellStore.getState().artifactViewer.target).toBeNull()
+    expect(useShellStore.getState().artifactViewer.target).toEqual(target)
     expect(useShellStore.getState().workAreaOpen).toBe(true)
     expect(push).toHaveBeenCalledWith('/team/skills')
   })
