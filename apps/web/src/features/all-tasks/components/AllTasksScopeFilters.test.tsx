@@ -21,7 +21,10 @@ describe('AllTasksScopeFilters', () => {
       />,
     )
 
-    expect(screen.getByRole('button', { name: 'My Tasks' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Assigned to me' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
     fireEvent.click(screen.getByRole('button', { name: 'All Tasks' }))
     expect(onScopeChange).toHaveBeenCalledWith('all')
   })

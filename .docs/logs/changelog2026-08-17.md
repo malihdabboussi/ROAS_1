@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:22] - [FIX]
+What: All Tasks no longer opens as the retired My Tasks screen. The page defaults to every open task, the leftover overlay is gone, and Assigned to me is only a filter.
+Why: #272 redirected `/home/my-tasks`, but `/all-tasks` still selected a My Tasks tab and Home expand still opened the old My Tasks overlay.
+Impact: Sidebar All Tasks shows All Tasks. Home card expand goes to `/all-tasks?scope=my`. There is no My Tasks page or dialog left.
+Files: `apps/web/src/features/all-tasks/components/AllTasksBoard.tsx`, `AllTasksScopeFilters.tsx`, `apps/web/src/features/home/components/HomeCardsGrid.tsx`, `documentation/features/programs.md`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 20:20] - [FIX]
 What: Screen navigation no longer closes or forgets the open artifact. HQ rail, Show page history, Open meeting workspace, campaign/space open keep it; explicit close, flow navigate-away, and drag-to-edge collapse still close it.
 Why: Pathname-change and page-pick handlers called `closeArtifactViewer()`, which also forgot the chat’s last artifact, so restoring a chat’s work screen raced the artifact closed.
