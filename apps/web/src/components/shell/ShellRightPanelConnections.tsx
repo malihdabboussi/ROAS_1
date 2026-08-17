@@ -19,6 +19,9 @@ import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
 import { ShellRightPanelEmpty } from './ShellRightPanelEmpty'
 import { ShellRightPanelSection } from './ShellRightPanelSection'
 
+/** Stable empty map — a fresh `{}` each render re-fires the fallback space fetch. */
+const EMPTY_SPACES_BY_CAMPAIGN: Record<string, never> = {}
+
 export function ShellRightPanelConnections({
   conversation,
   campaignId,
@@ -52,7 +55,7 @@ export function ShellRightPanelConnections({
     activeOrgId,
     selectedCampaignId: null,
     selectedSpaceId: spaceId,
-    spacesByCampaign: {},
+    spacesByCampaign: EMPTY_SPACES_BY_CAMPAIGN,
   })
   const rows = useMemo(() => {
     const items: Array<{ id: string; title: string; icon: LucideIcon }> = []
