@@ -130,7 +130,7 @@ Evidence: UI toast "Import failed: Atlas could not process: The Slack period con
 
 Needed work: Return a Vibey empty-period message instead of a failed Atlas import, and skip/no-op when the chosen Slack window has no content.
 
-Done: 2026-08-15 — empty Slack windows skip Atlas, persist as skipped, and toast "Nothing to save from that Slack period." instead of an Atlas ingest error.
+Done: 2026-08-15 — empty Slack windows skip Atlas and persist as skipped instead of an Atlas ingest error. 2026-08-17 — those skips are acknowledged silently; they no longer toast during chat.
 
 Reason not done now: Requested work was @ mention campaign tagging plus Pixel User Brain fill; this is a separate Atlas import path.
 
