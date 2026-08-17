@@ -22,7 +22,6 @@ type WorkAreaConversationPersist = (partial: {
 
 export function createShellWorkAreaConversationSlice(
   set: WorkAreaConversationSet,
-  get: () => WorkAreaConversationHostState,
   persist: WorkAreaConversationPersist,
 ): ShellWorkAreaConversationSlice {
   return {

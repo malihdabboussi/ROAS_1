@@ -20,7 +20,10 @@ const mocks = vi.hoisted(() => ({
   clearMeetingContext: vi.fn(),
   setWorkAreaOpen: vi.fn(),
   setPendingWorkRestore: vi.fn(),
-  lastWorkAreaPageByConversation: {} as Record<string, { href: string; restore?: unknown }>,
+  lastWorkAreaPageByConversation: {} as Record<
+    string,
+    { id: string; title: string; href: string; restore?: unknown }
+  >,
 }))
 
 vi.mock('next/navigation', () => ({
