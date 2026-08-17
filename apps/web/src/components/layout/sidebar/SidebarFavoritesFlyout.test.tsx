@@ -8,6 +8,15 @@ vi.mock('next/link', () => ({
 }))
 
 describe('SidebarFavoritesFlyout', () => {
+  it('renders nothing when there are no favorites', () => {
+    const { container } = render(
+      <SidebarFavoritesFlyout favoritePrograms={[]} favoriteCampaigns={[]} favoriteSpaces={[]} />,
+    )
+
+    expect(container).toBeEmptyDOMElement()
+    expect(screen.queryByText('No favorites yet')).not.toBeInTheDocument()
+  })
+
   it('opens ROAS actions instead of the browser menu on right-click', () => {
     const onToggleCampaignFavorite = vi.fn()
     render(
