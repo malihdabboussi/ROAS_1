@@ -11,6 +11,8 @@ describe('sidebar-hq-hub-menu.utils', () => {
     expect(hubSectionFromPathname('/spaces/abc')).toBe('spaces')
     expect(hubSectionFromPathname('/campaigns')).toBe('spaces')
     expect(hubSectionFromPathname('/campaigns/abc')).toBe('spaces')
+    expect(hubSectionFromPathname('/programs')).toBe('spaces')
+    expect(hubSectionFromPathname('/programs/prog-clients')).toBe('spaces')
     expect(hubSectionFromPathname('/brain')).toBe('brain')
     expect(hubSectionFromPathname('/projects/1')).toBe('projects')
     expect(hubSectionFromPathname('/home')).toBeNull()

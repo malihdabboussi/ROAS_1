@@ -137,7 +137,7 @@ describe('middleware access checks', () => {
     expect(supabaseMockState.getSession).toHaveBeenCalled()
   })
 
-  it.each(['/artifacts', '/flows', '/lists', '/projects/project-1'])(
+  it.each(['/artifacts', '/flows', '/lists', '/projects/project-1', '/programs'])(
     'protects the dashboard route %s',
     async (pathname) => {
       supabaseMockState.getUser.mockResolvedValue({ data: { user: null } })

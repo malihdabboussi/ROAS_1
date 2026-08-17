@@ -1,5 +1,15 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 19:35] - [FIX]
+
+What: More → Programs now lists every program on hover and opens `/programs` on click instead of `/campaigns`.
+
+Why: Programs was wired to the campaigns hub, so the More item skipped the programs overview and had no hover list.
+
+Impact: Clicking Programs opens the programs overview. Hovering it shows the same program list. Each program still opens `/programs/[id]`.
+
+Files: `apps/web/src/components/layout/sidebar/SidebarHqMoreFlyoutBody.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqMoreProgramsFlyout.tsx`, `apps/web/src/app/(dashboard)/programs/page.tsx`, `apps/web/src/app/(dashboard)/programs/_components/ProgramsIndex.tsx`, `apps/web/src/middleware.ts`, `documentation/features/programs.md`
+
 ## [2026-08-17 17:43] - [FEATURE]
 What: Chat now restores the last work screen for that conversation (meeting agenda pops back), and meeting prep is split into Start agenda / Prep for call / Google agenda. Removed the in-app precall-prep Space-item path.
 Why: Switching Recents sent meeting chats to `/home?conv=` so the agenda disappeared; Open agenda prep never worked; Google Doc / Page Grader kickoff was mixed into the same controls as the Space Doc agenda.
