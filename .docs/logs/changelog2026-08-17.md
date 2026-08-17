@@ -7,6 +7,16 @@ Impact: Each user sees their own actions and follow-ups from their meetings. Tea
 Files: `apps/api/src/modules/home/repositories/next-moves.repository.ts`, `apps/api/src/modules/home/repositories/next-moves-audience.ts`, `apps/api/src/modules/home/repositories/next-moves-audience.test.ts`, `documentation/features/claude-chatgpt-shell.md`
 
 ## [2026-08-17 19:49] - [FIX]
+What: Made meeting breadcrumbs clickable (Agenda returns to the list), removed duplicate in-page titles on Inbox / Meetings / My Tasks / All Tasks / Clients / Client Campaigns, moved Portal into the work-card header, and added an All Tasks shell crumb.
+Why: Header already named the page, so repeating H1s cluttered the work area; meeting ancestor crumbs were inert spans; Portal sat beside the page title instead of the top bar; All Tasks had no crumb.
+Impact: Ancestor crumbs navigate; page bodies start at search/filters; Portal is in the header action cluster; `/all-tasks` shows All Tasks in the top bar.
+Files: `apps/web/src/components/shell/ShellHeaderAction.tsx`, `ShellTopBar.tsx`, `shell-breadcrumb.ts`, `use-shell-store.ts`, `HomeMeetingDetailHost.tsx`, `MyTasksPanel.tsx`, `InboxFeed.tsx`, `AgendaCardChrome.tsx`, `AgencyClientsPage.tsx`, `ClientCampaignsPage.tsx`, `AllTasksBoard.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-17 19:35] - [FIX]
+What: More → Programs now lists every program on hover and opens `/programs` on click instead of `/campaigns`.
+Why: Programs was wired to the campaigns hub, so the More item skipped the programs overview and had no hover list.
+Impact: Clicking Programs opens the programs overview. Hovering it shows the same program list. Each program still opens `/programs/[id]`.
+Files: `apps/web/src/components/layout/sidebar/SidebarHqMoreFlyoutBody.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqMoreProgramsFlyout.tsx`, `apps/web/src/app/(dashboard)/programs/page.tsx`, `apps/web/src/app/(dashboard)/programs/_components/ProgramsIndex.tsx`, `apps/web/src/middleware.ts`, `documentation/features/programs.md`
 
 ## [2026-08-17 17:43] - [FEATURE]
 What: Chat now restores the last work screen for that conversation (meeting agenda pops back), and meeting prep is split into Start agenda / Prep for call / Google agenda. Removed the in-app precall-prep Space-item path.
