@@ -42,9 +42,8 @@ export function MeetingWorkspaceBody({
   joinUrl,
   onRecordingLinked,
   onNoteCreated,
-  onToggleAction,
   onActionCreated,
-  onActionMoved,
+  onActionsReload,
 }: {
   spaceId: string
   meetingItemId: string
@@ -57,9 +56,8 @@ export function MeetingWorkspaceBody({
   joinUrl: string | null
   onRecordingLinked: () => void
   onNoteCreated: (snippet: MeetingSnippet) => void
-  onToggleAction: (action: MeetingAction) => void
   onActionCreated: (action: MeetingAction) => void
-  onActionMoved: (action: MeetingAction) => void
+  onActionsReload: () => Promise<void>
 }) {
   if (loading) {
     return (
@@ -138,9 +136,8 @@ export function MeetingWorkspaceBody({
             meetingItemId={meetingItemId}
             actions={bundle?.actions ?? []}
             loading={loading}
-            onToggle={onToggleAction}
             onCreated={onActionCreated}
-            onMoved={onActionMoved}
+            onReload={onActionsReload}
           />
         </div>
       </section>
