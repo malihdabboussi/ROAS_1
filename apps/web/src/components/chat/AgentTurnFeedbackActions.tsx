@@ -249,6 +249,18 @@ export function AgentTurnFeedbackActions({
   return (
     <div className={cn('py-spacing-4', className)}>
       <div ref={anchorRef} className="gap-spacing-1 flex shrink-0 items-center">
+        {onReply ? (
+          <Tooltip label="Reply to message" side="top" delayMs={150}>
+            <button
+              type="button"
+              aria-label="Reply to message"
+              onClick={onReply}
+              className={actionButtonClass}
+            >
+              <MessageCircleReply className="h-3.5 w-3.5" />
+            </button>
+          </Tooltip>
+        ) : null}
         <Tooltip label="Copy message" side="top" delayMs={150}>
           <button
             type="button"
@@ -270,18 +282,6 @@ export function AgentTurnFeedbackActions({
               className={actionButtonClass}
             >
               <Split className="h-3.5 w-3.5" />
-            </button>
-          </Tooltip>
-        ) : null}
-        {onReply ? (
-          <Tooltip label="Reply to message" side="top" delayMs={150}>
-            <button
-              type="button"
-              aria-label="Reply to message"
-              onClick={onReply}
-              className={actionButtonClass}
-            >
-              <MessageCircleReply className="h-3.5 w-3.5" />
             </button>
           </Tooltip>
         ) : null}

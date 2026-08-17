@@ -1,5 +1,12 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:05] - [STYLE]
+What: Chat assistant-turn actions now show Reply first, then Copy, then Fork.
+Why: Reply is the primary next step in a conversation, so it should be the first control you see.
+Impact: Pixel and other agent message action rows lead with Reply; Copy and Fork stay immediately after.
+Files: `apps/web/src/components/chat/AgentTurnFeedbackActions.tsx`, `apps/web/src/components/chat/AgentTurnFeedbackActions.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
+
 ## [2026-08-17 19:49] - [FIX]
 What: Made meeting breadcrumbs clickable (Agenda returns to the list), removed duplicate in-page titles on Inbox / Meetings / My Tasks / All Tasks / Clients / Client Campaigns, moved Portal into the work-card header, and added an All Tasks shell crumb.
 Why: Header already named the page, so repeating H1s cluttered the work area; meeting ancestor crumbs were inert spans; Portal sat beside the page title instead of the top bar; All Tasks had no crumb.
