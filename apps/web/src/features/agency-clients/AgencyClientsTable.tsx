@@ -1,11 +1,34 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState, type ReactNode } from 'react'
 import { FolderOpen, Hash, ListTodo, MoreHorizontal } from 'lucide-react'
 import type { AgencyClient } from '@/lib/agency-clients'
 import { formatAgencyDate } from './agency-client-format'
+import { AGENCY_CLIENT_MESSAGES } from './config/messages.config'
 
 type ClientGroup = readonly [string, AgencyClient[]]
+
+const TABLE_CLASS = 'w-full min-w-0 table-fixed border-collapse'
+const CELL = 'min-w-0 overflow-hidden px-spacing-4 py-spacing-3 align-middle'
+const AVATAR_BOX =
+  'bg-secondary h-spacing-9 w-spacing-9 rounded-spacing-2 flex shrink-0 items-center justify-center overflow-hidden'
+const AVATAR_IMG = 'block h-spacing-9 w-spacing-9 object-cover'
+
+function ClientColgroup() {
+  return (
+    <colgroup>
+      <col className="w-spacing-36" />
+      <col className="w-spacing-64" />
+      <col className="w-spacing-36" />
+      <col />
+      <col />
+      <col />
+      <col className="w-spacing-48" />
+    </colgroup>
+  )
+}
 
 export function AgencyClientsTable({ groups }: { groups: ClientGroup[] }) {
   return (
@@ -22,7 +45,8 @@ export function AgencyClientsTable({ groups }: { groups: ClientGroup[] }) {
             </span>
           </header>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className={TABLE_CLASS}>
+              <ClientColgroup />
               <thead>
                 <tr className="body-4 text-muted-foreground border-border border-b text-left">
                   <th className="px-spacing-4 py-spacing-2 font-medium">Pipe</th>
@@ -48,73 +72,64 @@ export function AgencyClientsTable({ groups }: { groups: ClientGroup[] }) {
 }
 
 function AgencyClientRow({ client }: { client: AgencyClient }) {
-  const [logoFailed, setLogoFailed] = useState(false)
   const update = client.weekly_update
+  const monday = text(update?.current_work)
+  const friday = text(update?.eow_what_we_did)
+  const slack = text(client.latest_slack_message)
+  const slackAt = client.latest_slack_message_at
+    ? formatAgencyDate(client.latest_slack_message_at)
+    : ''
   return (
     <tr className="hover:bg-hover-subtle border-border border-b last:border-b-0">
-      <td className="px-spacing-4 py-spacing-3 align-top">
-        <span className="body-4 bg-secondary text-muted-foreground rounded-spacing-4 px-spacing-2 py-spacing-1 inline-flex whitespace-nowrap capitalize">
+      <td className={CELL}>
+        <span className="body-4 bg-secondary text-muted-foreground rounded-spacing-4 px-spacing-2 py-spacing-1 block max-w-full truncate capitalize">
           {readableStatus(client.pipeline_stage || client.status)}
         </span>
       </td>
-      <td className="px-spacing-4 py-spacing-3 align-top">
-        <Link href={`/clients/${client.id}`} className="gap-spacing-3 flex items-center">
-          <span className="bg-secondary h-spacing-9 w-spacing-9 rounded-spacing-2 flex shrink-0 items-center justify-center overflow-hidden">
-            {client.logo_url && !logoFailed ? (
-              <Image
-                src={client.logo_url}
-                alt=""
-                width={36}
-                height={36}
-                unoptimized
-                onError={() => setLogoFailed(true)}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="body-3 text-foreground font-semibold">
-                {(client.display_name || client.name).slice(0, 1).toUpperCase()}
-              </span>
-            )}
-          </span>
-          <span className="min-w-0">
+      <td className={CELL}>
+        <Link href={`/clients/${client.id}`} className="gap-spacing-3 flex min-w-0 items-center">
+          <ClientAvatar client={client} />
+          <span className="min-w-0 flex-1">
             <span className="body-3 text-foreground block truncate font-medium">
               {client.display_name || client.name}
             </span>
-            <span className="body-4 text-muted-foreground block whitespace-nowrap">
+            <span className="body-4 text-muted-foreground block truncate">
               {client.counts?.campaigns ?? 0} campaigns · {client.counts?.open_tasks ?? 0} open
               tasks
             </span>
           </span>
         </Link>
       </td>
-      <td className="body-3 text-muted-foreground px-spacing-4 py-spacing-3 whitespace-nowrap align-top">
-        {client.account_manager?.name || 'Unassigned'}
+      <td className={`body-3 text-muted-foreground ${CELL}`}>
+        <span className="block truncate">
+          {client.account_manager?.name || AGENCY_CLIENT_MESSAGES.UNASSIGNED}
+        </span>
       </td>
-      <td className="px-spacing-4 py-spacing-3 align-top">
+      <td className={CELL}>
         <UpdateCell
-          primary={text(update?.current_work) || 'Add update'}
-          secondary={text(update?.current_progress)}
+          primary={monday || AGENCY_CLIENT_MESSAGES.ADD_UPDATE}
           tone={text(update?.status_color)}
+          placeholder={!monday}
         />
       </td>
-      <td className="px-spacing-4 py-spacing-3 align-top">
+      <td className={CELL}>
         <UpdateCell
-          primary={text(update?.eow_what_we_did) || 'Add wrap-up'}
-          secondary={text(update?.eow_carry_over)}
+          primary={friday || AGENCY_CLIENT_MESSAGES.ADD_WRAP_UP}
           tone={text(update?.eow_status_color)}
+          placeholder={!friday}
         />
       </td>
-      <td className="px-spacing-4 py-spacing-3 align-top">
-        <p className="body-3 text-foreground line-clamp-2">
-          {text(client.latest_slack_message) || 'No recent updates'}
+      <td className={CELL}>
+        <p
+          className="body-3 text-foreground truncate"
+          title={
+            slackAt ? `${slack || AGENCY_CLIENT_MESSAGES.NO_RECENT_UPDATES} · ${slackAt}` : slack
+          }
+        >
+          {slack || AGENCY_CLIENT_MESSAGES.NO_RECENT_UPDATES}
         </p>
-        {client.latest_slack_message_at ? (
-          <p className="body-4 text-muted-foreground mt-spacing-1">
-            {formatAgencyDate(client.latest_slack_message_at)}
-          </p>
-        ) : null}
       </td>
-      <td className="px-spacing-4 py-spacing-3 align-top">
+      <td className="px-spacing-4 py-spacing-3 align-middle">
         <div className="gap-spacing-1 flex justify-end">
           <ExternalOption href={client.drive_link} label="Open Google Drive">
             <FolderOpen className="icon-sm" />
@@ -138,25 +153,46 @@ function AgencyClientRow({ client }: { client: AgencyClient }) {
   )
 }
 
+function ClientAvatar({ client }: { client: AgencyClient }) {
+  const [logoFailed, setLogoFailed] = useState(false)
+  const name = client.display_name || client.name
+  return (
+    <span className={AVATAR_BOX}>
+      {client.logo_url && !logoFailed ? (
+        <Image
+          src={client.logo_url}
+          alt=""
+          width={36}
+          height={36}
+          unoptimized
+          onError={() => setLogoFailed(true)}
+          className={AVATAR_IMG}
+        />
+      ) : (
+        <span className="body-3 text-foreground font-semibold">
+          {name.slice(0, 1).toUpperCase()}
+        </span>
+      )}
+    </span>
+  )
+}
+
 function UpdateCell({
   primary,
-  secondary,
   tone,
+  placeholder,
 }: {
   primary: string
-  secondary: string
   tone: string
+  placeholder: boolean
 }) {
   return (
-    <div className="gap-spacing-2 flex items-start">
+    <div className="gap-spacing-2 flex min-w-0 items-center">
       <span className={updateDotClass(tone)} aria-hidden />
-      <span className="min-w-0">
-        <span className="body-3 text-foreground line-clamp-2 block">{primary}</span>
-        {secondary ? (
-          <span className="body-4 text-muted-foreground mt-spacing-1 line-clamp-1 block">
-            {secondary}
-          </span>
-        ) : null}
+      <span
+        className={`body-3 min-w-0 truncate ${placeholder ? 'text-muted-foreground' : 'text-foreground'}`}
+      >
+        {primary}
       </span>
     </div>
   )
@@ -196,7 +232,7 @@ function ExternalOption({
 }
 
 function updateDotClass(tone: string) {
-  const base = 'mt-spacing-1 h-2 w-2 rounded-spacing-4 shrink-0'
+  const base = 'icon-2xs rounded-spacing-4 shrink-0'
   if (tone === 'green') return `${base} bg-success`
   if (tone === 'red') return `${base} bg-destructive`
   if (tone === 'yellow') return `${base} bg-warning`

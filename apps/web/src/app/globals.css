@@ -6759,6 +6759,9 @@ html.dark .studio-home-bg-secondary {
 .h-spacing-9 {
   height: var(--spacing-9);
 }
+.w-spacing-9 {
+  width: var(--spacing-9);
+}
 .h-spacing-10 {
   height: var(--spacing-10);
 }

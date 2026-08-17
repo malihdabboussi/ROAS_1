@@ -92,6 +92,8 @@ export function SidebarSimpleSection({
     () => programs.filter((program) => program.is_favorite),
     [programs],
   )
+  const hasFavorites =
+    favoritePrograms.length > 0 || favoriteCampaigns.length > 0 || favoriteSpaces.length > 0
   const clearClose = () => {
     if (!closeTimer.current) return
     clearTimeout(closeTimer.current)
@@ -139,31 +141,33 @@ export function SidebarSimpleSection({
           )
         })}
       </div>
-      <div className="px-spacing-3 pb-spacing-1">
-        <ConversationHubSectionHeader
-          label="Favorites"
-          expanded={favoritesOpen}
-          onToggle={() => setFavoritesOpen((open) => !open)}
-        />
-        {favoritesOpen ? (
-          <SidebarFavoritesFlyout
-            favoritePrograms={favoritePrograms}
-            favoriteCampaigns={favoriteCampaigns}
-            favoriteSpaces={favoriteSpaces}
-            onToggleProgramFavorite={(program) => {
-              setPrograms((current) => current.filter((row) => row.id !== program.id))
-              void updateProgramUserState(program.id, false)
-                .then(() => {
-                  invalidateProgramsListCache(activeOrgId)
-                  window.dispatchEvent(new Event('roas:programs-changed'))
-                })
-                .catch(() => setPrograms((current) => [program, ...current]))
-            }}
-            onToggleCampaignFavorite={(campaign) => void c.toggleFavoriteCampaign(campaign.id)}
-            onToggleSpaceFavorite={(space) => void spaceUserState.toggleFavorite(space.id)}
+      {hasFavorites ? (
+        <div className="px-spacing-3 pb-spacing-1">
+          <ConversationHubSectionHeader
+            label="Favorites"
+            expanded={favoritesOpen}
+            onToggle={() => setFavoritesOpen((open) => !open)}
           />
-        ) : null}
-      </div>
+          {favoritesOpen ? (
+            <SidebarFavoritesFlyout
+              favoritePrograms={favoritePrograms}
+              favoriteCampaigns={favoriteCampaigns}
+              favoriteSpaces={favoriteSpaces}
+              onToggleProgramFavorite={(program) => {
+                setPrograms((current) => current.filter((row) => row.id !== program.id))
+                void updateProgramUserState(program.id, false)
+                  .then(() => {
+                    invalidateProgramsListCache(activeOrgId)
+                    window.dispatchEvent(new Event('roas:programs-changed'))
+                  })
+                  .catch(() => setPrograms((current) => [program, ...current]))
+              }}
+              onToggleCampaignFavorite={(campaign) => void c.toggleFavoriteCampaign(campaign.id)}
+              onToggleSpaceFavorite={(space) => void spaceUserState.toggleFavorite(space.id)}
+            />
+          ) : null}
+        </div>
+      ) : null}
       <div className="px-spacing-3 pb-spacing-1">
         <button
           type="button"

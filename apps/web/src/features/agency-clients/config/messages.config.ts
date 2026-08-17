@@ -11,4 +11,8 @@ export const AGENCY_CLIENT_MESSAGES = {
   EDIT: 'Edit',
   CANCEL: 'Cancel',
   SAVED: 'Saved to The ROAS Portal and refreshed in ROAS.',
+  ADD_UPDATE: 'Add update',
+  ADD_WRAP_UP: 'Add wrap-up',
+  NO_RECENT_UPDATES: 'No recent updates',
+  UNASSIGNED: 'Unassigned',
 } as const
