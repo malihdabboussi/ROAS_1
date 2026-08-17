@@ -5,7 +5,7 @@ import { PanelRight } from 'lucide-react'
 import { isFullHomeConversation, resolveWorkAreaRestoreHref } from './shell-chat-header-page'
 import { useShellStore } from './use-shell-store'
 
-/** Page show/collapse control that sits in the chat header beside the summary toggle. */
+/** Page show/collapse control. Chat header owns it only while the page card is closed. */
 export function ShellChatHeaderPageControl() {
   const pathname = usePathname() ?? '/home'
   const router = useRouter()

@@ -1,5 +1,12 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:33] - [FIX]
+What: Summary stays on the chat title bar. Show page sits beside it only while the work card is closed; when the page is open, the expand/collapse control lives on that card. Recents Filter pins the compact Recents action bar so the portaled menu cannot jump on hover.
+Why: The page control belonged with the open work card so it can expand over chat, while Summary must stay on chat. Hovering a portaled filter row left the Recents hover group, hid the toolbar, and Floating UI re-anchored the menu mid-screen.
+Impact: Closed page = Summary + Show page on chat. Open page = Summary on chat, page control on the work card. Filter stays under the Recents icon.
+Files: `apps/web/src/components/shell/ShellChatDrawer.tsx`, `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/components/conversations/ChatHistoryFilterMenu.tsx`, `apps/web/src/components/conversations/SpaceConversationsHeader.tsx`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
+
 ## [2026-08-17 20:05] - [STYLE]
 What: Chat assistant-turn actions now show Reply first, then Copy, then Fork.
 Why: Reply is the primary next step in a conversation, so it should be the first control you see.

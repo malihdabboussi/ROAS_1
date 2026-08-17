@@ -1,3 +1,27 @@
+## 2026-08-17 - [ARCH] SpaceConversationsList.test.tsx already exceeds max-lines
+
+Status: Open
+
+Found while: Adding Recents Filter pin coverage
+
+Evidence: `wc -l` reports `apps/web/src/components/conversations/SpaceConversationsList.test.tsx` at 434 LOC (eslint max-lines 400). Editing it fails lint-staged.
+
+Needed work: Split compact Recents / Pinned / dated-row cases into a dedicated compact-header test file.
+
+Reason not done now: Pin coverage went into `SpaceConversationsHeader.test.tsx` instead of growing the over-limit list test.
+
+## 2026-08-17 - [ARCH] ShellChatMenu and SpaceConversationsList sit on the component LOC limit
+
+Status: Open
+
+Found while: Pinning Recents actions while Filter is open and moving Show page onto the work card
+
+Evidence: `wc -l` reports `apps/web/src/components/shell/ShellChatMenu.tsx` at 399 LOC and `apps/web/src/components/conversations/SpaceConversationsList.tsx` at 401 LOC (component limit 400). `ChatHistoryFilterMenu.tsx` is 375.
+
+Needed work: Extract Recents filter/header wiring from ShellChatMenu, and split SpaceConversationsList section rendering from the list shell.
+
+Reason not done now: Requested work was control placement and keeping the filter menu anchored. Splitting those files would not change the bug.
+
 ## 2026-08-17 - [ARCH] HomeTaskDetailHost is at the component LOC limit
 
 Status: Open
