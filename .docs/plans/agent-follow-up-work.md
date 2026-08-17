@@ -1,4 +1,16 @@
-## 2026-08-17 - [ARCH] HomeTaskDetailHost is at the component LOC limit
+## 2026-08-17 - [ARCH] LockedInGroup is near the component LOC limit
+
+Status: Open
+
+Found while: Rotating live chat working status so Brain/tool labels do not freeze
+
+Evidence: `wc -l` reports `apps/web/src/features/studio/components/chat/LockedInGroup.tsx` at 348 LOC (component limit 400; extract suggested at 80% / 320).
+
+Needed work: Split activity-group labeling / classification from the expand/collapse chrome.
+
+Reason not done now: Requested work was the live working-status animation; extracting the group was out of scope.
+
+
 
 Status: Open
 
