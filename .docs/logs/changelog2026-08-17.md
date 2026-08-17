@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 17:31] - [FIX]
+What: Connections now shows the specific meeting name (not the Meetings space) and opens that meeting on row click; X still removes. Campaign/Space rows are likewise clickable to open.
+Why: Connections was labeling the host space generically and was not an open affordance for the linked artifact.
+Impact: Meeting chats show the real meeting title in Connections; click opens the meeting workspace; remove stays on X.
+Files: `apps/web/src/components/shell/ShellRightPanelConnections.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/components/shell/ShellRightPanelConnections.test.tsx`, `apps/web/src/components/shell/ShellRightPanel.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 16:47] - [FIX]
 What: Wrapped artifact viewer close handler so `onClick` does not pass a mouse event into `closeArtifactViewer(conversationId?)`.
 Why: Vercel `roas-web` typecheck failed on PR #263.

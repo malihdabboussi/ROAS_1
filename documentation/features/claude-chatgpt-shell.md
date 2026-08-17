@@ -56,6 +56,11 @@ The history list has its own persisted drag width and collapse state. Dragging i
 - `/home?conv=` does not stack a Simple work-card header above the chat title. Show page from that surface opens the drawer for the current chat and restores the last real work page.
 - Opening or closing the summary card must not move those controls or hide Show page.
 
+### 2026-08-17: Connections rows open their artifact; meetings show by name
+
+- A connected meeting shows the specific meeting title (not the generic Meetings space). Clicking the row opens that meeting workspace; **X** still removes the connection.
+- Campaign and Space connection rows are likewise clickable to open that attachment; **X** remains remove-only.
+
 ### 2026-08-16: Connections picker is program-first and searchable by client
 
 - `ConversationScopePicker` defaults to Programs (hover a program to select a campaign). Clients stay in a searchable list; opening a client shows that client's campaigns with General first, then A–Z.

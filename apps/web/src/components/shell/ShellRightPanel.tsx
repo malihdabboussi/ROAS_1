@@ -7,7 +7,11 @@ import { type ConversationScopePickerHandle } from '@/components/conversations'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { homeMeetingHref } from '@/features/home/lib/home-meeting-work-restore'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
-import { readMeetingConversationLink, type Conversation } from '@/lib/conversations'
+import {
+  getConversationDisplayTitle,
+  readMeetingConversationLink,
+  type Conversation,
+} from '@/lib/conversations'
 import { useQuickMissionsLauncher } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
 import {
@@ -136,20 +140,36 @@ export function ShellRightPanel({
   // Prefer the live attach context, but fall back to the conversation's own
   // metadata (stamped at creation) so the link survives workspace close.
   const meetingContext = useGlobalChatStore((s) => s.meetingContext)
-  const conversationMetadata = useChatStore((s) =>
-    conversationId ? s.conversations.find((c) => c.id === conversationId)?.metadata : undefined,
+  const clearMeetingContext = useGlobalChatStore((s) => s.clearMeetingContext)
+  const storeConversation = useChatStore((s) =>
+    conversationId ? (s.conversations.find((c) => c.id === conversationId) ?? null) : null,
   )
-  const metadataMeeting = readMeetingConversationLink(conversationMetadata)
+  const conversationForMeeting = conversation ?? storeConversation
+  const metadataMeeting = readMeetingConversationLink(conversationForMeeting?.metadata)
   const linkedMeeting =
     meetingContext && conversationId && meetingContext.conversationId === conversationId
       ? { spaceId: meetingContext.spaceId, meetingItemId: meetingContext.meetingItemId }
       : metadataMeeting
+  const meetingTitle = linkedMeeting
+    ? getConversationDisplayTitle(conversationForMeeting ?? {}) || 'Meeting'
+    : null
   const handleOpenMeetingWorkspace = useCallback(() => {
     if (!linkedMeeting) return
     closeArtifactViewer()
     setWorkAreaOpen(true)
     router.push(homeMeetingHref({ id: linkedMeeting.meetingItemId }, linkedMeeting.spaceId))
   }, [closeArtifactViewer, linkedMeeting, router, setWorkAreaOpen])
+  const handleOpenSpace = useCallback(
+    (nextSpaceId: string) => {
+      closeArtifactViewer()
+      setWorkAreaOpen(true)
+      router.push(`/spaces?space=${encodeURIComponent(nextSpaceId)}`)
+    },
+    [closeArtifactViewer, router, setWorkAreaOpen],
+  )
+  const handleClearMeeting = useCallback(() => {
+    clearMeetingContext()
+  }, [clearMeetingContext])
   const { mounted, visible } = useRightEdgePresence(open)
   const scopeVisible = showScope && Boolean(conversationId)
   // Missions have no conversation_id, so the thread's own receipts are the
@@ -245,12 +265,17 @@ export function ShellRightPanel({
                     conversation={conversation}
                     campaignId={campaignId}
                     spaceId={spaceId}
+                    linkedMeeting={linkedMeeting}
+                    meetingTitle={meetingTitle}
                     pickerRef={scopePickerRef}
                     open={isSectionOpen('connections', hasConnections)}
                     onOpenChange={(next) => setSectionOpen('connections', next)}
                     onConversationUpdated={onConversationUpdated}
                     onScopeChanged={onScopeChanged}
                     onOpenCampaign={handleOpenCampaign}
+                    onOpenSpace={handleOpenSpace}
+                    onOpenMeeting={handleOpenMeetingWorkspace}
+                    onClearMeeting={handleClearMeeting}
                   />
                 ) : null}
                 <ShellRightPanelSection
