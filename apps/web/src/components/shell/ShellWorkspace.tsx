@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils/cn'
 import { isShellHomeRoute, isShellWorkspaceRoute } from './shell-route-policy'
 import { ShellArtifactViewerColumn } from './ShellArtifactViewerColumn'
 import { ShellChatDrawer } from './ShellChatDrawer'
+import { ShellChatHeaderPageControl } from './ShellChatHeaderPageControl'
 import { ShellNewChatGreeting } from './ShellNewChatGreeting'
 import { ShellSidebarSlot } from './ShellSidebarSlot'
 import { ShellTopBar } from './ShellTopBar'
@@ -68,11 +69,21 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const conversationBeforeNewChatRef = useRef<string | null>(null)
   useShellWorkspaceScreenChat(pathname, spaceParam)
 
+  const showFullNewChat = isShellHomeRoute(pathname) && !convParam && chatParam !== 'starting'
+  const showFullConversation =
+    isShellHomeRoute(pathname) &&
+    (Boolean(convParam) || chatParam === 'starting') &&
+    chatParam !== 'new'
+
   useEffect(() => {
     const justOpened = chatDrawerOpen && !previousSimpleChatOpen.current
     previousSimpleChatOpen.current = chatDrawerOpen
-    if (menuStyle === 'simple' && justOpened && !artifactTarget) setWorkAreaOpen(false)
-  }, [artifactTarget, chatDrawerOpen, menuStyle, setWorkAreaOpen])
+    // Opening chat on a work page collapses that page. Showing the page from a
+    // full Home conversation also opens the drawer — do not undo that restore.
+    if (menuStyle === 'simple' && justOpened && !artifactTarget && !showFullConversation) {
+      setWorkAreaOpen(false)
+    }
+  }, [artifactTarget, chatDrawerOpen, menuStyle, setWorkAreaOpen, showFullConversation])
 
   useEffect(() => {
     if (chatParam !== 'new' && chatParam !== 'starting') return
@@ -102,12 +113,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     router.replace(`/home?conv=${encodeURIComponent(activeConversationId)}`)
   }, [activeConversationId, chatParam, pathname, router])
 
-  const showFullNewChat = isShellHomeRoute(pathname) && !convParam && chatParam !== 'starting'
-  const showFullConversation =
-    isShellHomeRoute(pathname) &&
-    (Boolean(convParam) || chatParam === 'starting') &&
-    chatParam !== 'new'
-
   const onSpaces = pathname.startsWith('/spaces')
   const workAreaCollapsible = !showFullNewChat && !showFullConversation
   const workAreaRequestedOpen = workAreaCollapsible ? workAreaOpen : true
@@ -131,7 +136,11 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   } else if (showFullConversation) {
     homeOrDefaultMain = (
       <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
-        <GlobalChatPanel shellSidebarChrome presentation="full" />
+        <GlobalChatPanel
+          shellSidebarChrome
+          presentation="full"
+          headerTrailingAction={<ShellChatHeaderPageControl />}
+        />
       </div>
     )
   }
@@ -199,7 +208,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const workspaceMain = onSpaces ? <SpaceWorkDock>{children}</SpaceWorkDock> : homeOrDefaultMain
   const workMain = (
     <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto overflow-x-hidden">
-      {menuStyle === 'simple' ? <ShellTopBar /> : null}
+      {menuStyle === 'simple' && !showFullConversation ? <ShellTopBar /> : null}
       {workspaceMain}
     </div>
   )

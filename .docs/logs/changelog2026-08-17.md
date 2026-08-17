@@ -1,5 +1,15 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 04:56] - [FIX]
+
+What: Locked Summary and Show/Collapse page into the conversation title bar on every chat surface, including `/home?conv=`.
+
+Why: Those controls floated under a stacked work-card header, jumped when the summary opened, and Show page disappeared after opening a chat so the page could not be restored.
+
+Impact: One title bar with the chat name. Top-right is always Summary, then Show/Collapse page. `/home?conv=` no longer stacks a Simple header above chat. Show page from that surface opens the drawer and restores the last work page.
+
+Files: `apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.tsx`, `SpaceChatPanelHeader.test.tsx`, `SpaceVibeyChatPanel.tsx`, `apps/web/src/components/shell/ShellChatHeaderPageControl.tsx`, `ShellChatHeaderPageControl.test.tsx`, `shell-chat-header-page.ts`, `shell-chat-header-page.test.ts`, `ShellChatDrawer.tsx`, `ShellChatDrawer.test.tsx`, `ShellWorkspace.tsx`, `ShellWorkspace.test.tsx`, `ShellWorkspaceRestoreControls.test.tsx`, `ShellTopBar.tsx`, `ShellTopBar.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 03:18] - [STYLE]
 
 What: Docked work summary now sits flush under the chat header, and the three-line summary toggle stays in that header's top-right cluster immediately left of Show page.

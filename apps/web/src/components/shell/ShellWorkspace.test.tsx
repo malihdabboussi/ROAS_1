@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ShellWorkspace } from './ShellWorkspace'
@@ -58,9 +59,16 @@ vi.mock('./use-shell-menu-dock', async () => {
 })
 
 vi.mock('@/components/global-chat/containers/GlobalChatPanel', () => ({
-  GlobalChatPanel: ({ onCollapseChat }: { onCollapseChat?: () => void }) => (
+  GlobalChatPanel: ({
+    onCollapseChat,
+    headerTrailingAction,
+  }: {
+    onCollapseChat?: () => void
+    headerTrailingAction?: ReactNode
+  }) => (
     <div>
       Global chat panel
+      {headerTrailingAction}
       {onCollapseChat ? (
         <button type="button" onClick={onCollapseChat}>
           Close full chat
@@ -145,6 +153,7 @@ vi.mock('./use-shell-store', () => ({
       recordScreenConversation: vi.fn(),
       setMenuMode: vi.fn(),
       setWorkAreaOpen: mocks.setWorkAreaOpen,
+      toggleWorkAreaOpen: vi.fn(),
       setRightPanelOpen: mocks.setRightPanelOpen,
       rightPanel: { open: mocks.rightPanelOpen, tab: 'tasks' },
       summaryPanelDocked: mocks.summaryPanelDocked,

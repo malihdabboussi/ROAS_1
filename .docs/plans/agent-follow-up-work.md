@@ -1,3 +1,15 @@
+## 2026-08-17 - [ARCH] SpaceVibeyChatPanel still over the container LOC limit after chat-header controls
+
+Status: Open
+
+Found while: Moving Summary and Show page into one conversation title bar
+
+Evidence: `wc -l` reports `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` at 2674 LOC (container limit 600). This change only removed `reserveSummaryColumn` from the header call.
+
+Needed work: Split remaining send/seed/header orchestration out of SpaceVibeyChatPanel.
+
+Reason not done now: Requested work was header control placement; decomposing the oversized container was out of scope.
+
 ## 2026-08-17 - [ARCH] SpaceVibeyChatPanel still over the container LOC limit after summary header flush
 
 Status: Open

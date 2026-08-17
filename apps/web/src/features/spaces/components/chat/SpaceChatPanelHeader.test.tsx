@@ -5,7 +5,7 @@ import { SpaceChatPanelHeader } from './SpaceChatPanelHeader'
 describe('SpaceChatPanelHeader', () => {
   afterEach(cleanup)
 
-  it('pins full-layout conversation controls to the top-right of the chat pane', () => {
+  it('keeps conversation controls in the header bar with the title', () => {
     render(
       <SpaceChatPanelHeader
         layout="full"
@@ -23,34 +23,17 @@ describe('SpaceChatPanelHeader', () => {
     const rename = screen.getByRole('button', { name: 'Rename conversation' })
     const details = screen.getByRole('button', { name: 'Conversation details' })
     const controls = screen.getByRole('button', { name: 'Conversation controls' })
+    const header = controls.closest('header')
 
-    // Three-dots menu sits inline next to the agent name, before the title;
-    // only the action cluster is pinned to the top-right of the pane.
+    expect(header).toHaveClass('border-b')
+    expect(header).toContainElement(rename)
+    expect(header).toContainElement(controls)
     expect(details.parentElement).not.toBe(controls.parentElement)
-    expect(details.compareDocumentPosition(rename) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(controls.parentElement).toHaveClass('absolute', 'right-spacing-3', 'top-spacing-2')
-  })
-
-  it('parks header actions in the summary column when the card is docked', () => {
-    render(
-      <SpaceChatPanelHeader
-        layout="full"
-        agentPicker={<span>Pixel</span>}
-        title="Launch plan"
-        conversationId="conversation-1"
-        renameRequestNonce={0}
-        onRename={vi.fn()}
-        actions={<button type="button">Summary panel</button>}
-        reserveSummaryColumn
-      />,
-    )
-
-    const controls = screen.getByRole('button', { name: 'Summary panel' })
-    expect(controls.parentElement).toHaveClass('w-spacing-72', 'justify-end')
+    expect(controls.parentElement).toHaveClass('flex', 'shrink-0')
     expect(controls.parentElement).not.toHaveClass('absolute')
   })
 
-  it('keeps compact-layout controls inline', () => {
+  it('keeps compact-layout controls in the same header bar', () => {
     render(
       <SpaceChatPanelHeader
         layout="compact"
@@ -63,10 +46,8 @@ describe('SpaceChatPanelHeader', () => {
       />,
     )
 
-    expect(screen.getByRole('button', { name: 'Conversation controls' }).parentElement).toHaveClass(
-      'absolute',
-      'right-spacing-3',
-      'top-spacing-2',
-    )
+    const controls = screen.getByRole('button', { name: 'Conversation controls' })
+    expect(controls.closest('header')).toHaveClass('border-b')
+    expect(controls.parentElement).not.toHaveClass('absolute')
   })
 })
