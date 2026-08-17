@@ -30,6 +30,16 @@ Impact: New reviews ask clearer fields; new finalizations mirror a single ClickU
 
 Files: work-request chat steps/UI, page-grader send helpers, finalize migration, related tests
 
+## [2026-08-16 23:30] - [STYLE]
+
+What: Removed the Home / New chat Try-tip banner and the Mission/Offer/artifact chip row above the composer. Active chats now show a rotating multi-concept Try-tip catalog (dismiss skips to the next remaining tip). Deleted `ShellEmptyChatQuickStartPills`.
+
+Why: The Home composer was too cluttered, and the same tip stayed pinned on the landing screen instead of alternating useful concepts inside real chats.
+
+Impact: Home stays greeting + input + Choose Space/Plugins. Open conversations get rotating tips. Create actions remain in the + Create menu.
+
+Files: `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/lib/chat/composer-try-tips.ts`, `apps/web/src/components/global-chat/components/ChatComposerTryTip.tsx`, deleted `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, related tests, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-16 15:38] - [FIX]
 
 What: Broadened Pixel Service Request routing to every fulfillment type (design/copy/funnel/ghl/ad/video/other/general). Policy + vibey/atlas skills now forbid silent `create_task` for client fulfillment and require client name, draft status, and an openable `review_url` in the reply. Added DB migration so live agent skills/TOOLS pick this up.

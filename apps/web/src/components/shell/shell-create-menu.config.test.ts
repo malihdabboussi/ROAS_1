@@ -54,7 +54,7 @@ describe('shell-create-menu config', () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 
-  it('uses the exact active Create catalog for empty-chat quick starts', () => {
+  it('uses the exact active Create catalog for the Create menu', () => {
     expect(SHELL_CREATE_QUICK_STARTS).toEqual(
       SHELL_CREATE_MENU_GROUPS.flatMap((group) => group.items.filter((item) => !item.comingSoon)),
     )
