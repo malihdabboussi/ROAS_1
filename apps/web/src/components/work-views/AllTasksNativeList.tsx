@@ -43,9 +43,11 @@ const DEFAULT_ROLLUP_VIEW: ViewDef = {
 export function AllTasksNativeList({
   items,
   reload,
+  onOpenItem,
 }: {
   items: TaskRollupItem[]
   reload: () => Promise<void>
+  onOpenItem?: (item: TaskRollupItem) => void
 }) {
   const router = useRouter()
   const roster = useSpacesStore((state) => state.roster)
@@ -72,7 +74,14 @@ export function AllTasksNativeList({
       activeView={activeView}
       allFields={ROLLUP_FIELDS}
       onViewChange={async (patch) => setActiveView((current) => ({ ...current, ...patch }))}
-      onOpenDetail={(item) => router.push(buildSpaceItemHref(item.space_id, item.id))}
+      onOpenDetail={(item) => {
+        if (onOpenItem) {
+          const row = items.find((entry) => entry.id === item.id)
+          if (row) onOpenItem(row)
+          return
+        }
+        router.push(buildSpaceItemHref(item.space_id, item.id))
+      }}
       onUpdateItem={async (itemId, payload) => {
         const item = spaceItems.find((row) => row.id === itemId)
         if (!item) return

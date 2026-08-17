@@ -27,7 +27,9 @@ export function breadcrumbFromPath(
   if (pathname === '/home') return { label: '', Icon: MessageSquare }
   if (pathname.startsWith('/home/inbox')) return { label: 'Inbox', Icon: Inbox }
   if (pathname.startsWith('/home/meetings')) return { label: 'Meetings', Icon: CalendarDays }
-  if (pathname.startsWith('/home/my-tasks')) return { label: 'My Tasks', Icon: ListChecks }
+  if (pathname.startsWith('/home/my-tasks') || pathname.startsWith('/all-tasks')) {
+    return { label: 'All Tasks', Icon: ListChecks }
+  }
   if (pathname.startsWith('/home/delegation-desk')) {
     return { label: 'Delegation Desk', Icon: SendHorizontal }
   }

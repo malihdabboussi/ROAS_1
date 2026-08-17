@@ -36,7 +36,7 @@ Spaces automations run rules from the `space_automations` table through the sing
   AI agents, and leaves unresolved work Ready to delegate. It records a
   destination receipt before marking anything Delegated. Generated work does
   not recursively start another intake run. Home → Delegation Desk is a
-  permanent entry immediately below My Tasks. It opens the organization's
+  permanent entry immediately below All Tasks. It opens the organization's
   existing full desk or provisions it privately on first use, so the holding
   tank never depends on first running a bulk action. Created task cards open in
   the canonical right-side task panel, preserving the current page and its
