@@ -213,7 +213,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   recentWorkAreaPages: [],
   ...createShellScreenChatSlice(set, get, writePersisted),
   ...createShellArtifactConversationSlice(set, get, writePersisted),
-  ...createShellWorkAreaConversationSlice(set, get, writePersisted),
+  ...createShellWorkAreaConversationSlice(set, writePersisted),
   newChatNonce: 0,
   sidebarFlyoutCloseEpoch: 0,
   pageBreadcrumb: null,

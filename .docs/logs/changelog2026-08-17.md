@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 23:30] - [FIX]
+What: Fixed TypeScript errors that failed every Vercel `roas-web` production build after the meeting-workspace header landed. Meeting action reload now returns `Promise<void>`; review-chat seed maps to the studio message shape; unused Zustand `get` and `noUncheckedIndexedAccess` href split are gone; test fixtures typecheck.
+Why: `next build` typechecks `apps/web` with `strict` + unused locals. #282's `onActionsReload={hydrateWorkspace}` returned a bundle, so production never shipped Continue in chat.
+Impact: `pnpm --filter @vibey/web typecheck` passes. Merging this should let `roas-web` deploy the meeting workspace header to `app.roas.io`.
+Files: `MeetingWorkspaceDialog.tsx`, `work-request-chat-messages.ts`, `shell-work-area-page.ts`, `use-shell-store.work-area-conversation.ts`, `use-shell-store.ts`, `WorkRequestChatResumeCard.test.tsx`, `ShellChatMenu.test.tsx`, `ConversationScopePicker.test.tsx`
+
 ## [2026-08-17 23:16] - [DOCS]
 What: Split the Page Grader unlinked-task follow-up into three required surfaces: merged ROAS platform #284 (create payload), Portal `roas-api` edge function (`POST /work`), and Portal UI Link for existing rows.
 Why: #284 is on main and this repo's API deployed it, but new creates still need the Portal edge function, and "Failed to update campaign" remains Portal UI.

@@ -314,7 +314,9 @@ export function MeetingWorkspaceDialog({
             }}
             onNoteCreated={handleNoteCreated}
             onActionCreated={handleActionCreated}
-            onActionsReload={hydrateWorkspace}
+            onActionsReload={async () => {
+              await hydrateWorkspace()
+            }}
           />
         </div>
       </main>
