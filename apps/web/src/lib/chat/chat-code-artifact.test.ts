@@ -13,8 +13,8 @@ vi.mock('@/lib/artifacts', async () => {
   return {
     ...actual,
     openArtifactInShell: vi.fn(),
-    downloadHTML: vi.fn((html: string, title: string) => `${title}.html`),
-    downloadCSS: vi.fn((css: string, title: string) => `${title}.css`),
+    downloadHTML: vi.fn((_html: string, title: string) => `${title}.html`),
+    downloadCSS: vi.fn((_css: string, title: string) => `${title}.css`),
   }
 })
 

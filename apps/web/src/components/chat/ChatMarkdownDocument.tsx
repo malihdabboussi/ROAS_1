@@ -1,10 +1,19 @@
 'use client'
 
-import { splitChatCodeArtifactSegments } from '@/lib/chat/chat-code-artifact'
-import { renderChatMarkdown, splitChatMarkdownSegments } from '@/lib/utils/chat-markdown.utils'
 import { MermaidDiagram } from '@/components/ui/mermaid-diagram'
+import {
+  splitChatCodeArtifactSegments,
+  type ChatCodeArtifactSegment,
+} from '@/lib/chat/chat-code-artifact'
+import {
+  renderChatMarkdown,
+  splitChatMarkdownSegments,
+  type ChatMarkdownSegment,
+} from '@/lib/utils/chat-markdown.utils'
 import { ChatCodeArtifactCard } from './ChatCodeArtifactCard'
 import { ChatMarkdownView } from './ChatMarkdownView'
+
+type ChatDocumentSegment = ChatMarkdownSegment | Extract<ChatCodeArtifactSegment, { kind: 'code' }>
 
 export function ChatMarkdownDocument({
   markdown,
@@ -13,8 +22,9 @@ export function ChatMarkdownDocument({
   markdown: string
   className?: string
 }) {
-  const segments = splitChatMarkdownSegments(markdown).flatMap((segment) =>
-    segment.kind === 'mermaid' ? [segment] : splitChatCodeArtifactSegments(segment.text),
+  const segments: ChatDocumentSegment[] = splitChatMarkdownSegments(markdown).flatMap(
+    (segment): ChatDocumentSegment[] =>
+      segment.kind === 'mermaid' ? [segment] : splitChatCodeArtifactSegments(segment.text),
   )
 
   return (
