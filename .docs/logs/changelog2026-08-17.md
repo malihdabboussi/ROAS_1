@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 23:16] - [DOCS]
+What: Split the Page Grader unlinked-task follow-up into three required surfaces: merged ROAS platform #284 (create payload), Portal `roas-api` edge function (`POST /work`), and Portal UI Link for existing rows.
+Why: #284 is on main and this repo's API deployed it, but new creates still need the Portal edge function, and "Failed to update campaign" remains Portal UI.
+Impact: Agents must not skip #284 or treat Vercel `roas-api` (`api.roas.io`) as the Portal edge function.
+Files: `.docs/plans/agent-follow-up-work.md`, `documentation/features/page-grader-mcp-bridge.md`
+
 ## [2026-08-17 21:35] - [FIX]
 What: Service Request finalize and Portal send now pass the Page Grader campaign id, mark origin as From Pagegrader, and omit empty assignees so Portal assignment rules can run.
 Why: Finalized Page Grader tasks landed unlinked and unassigned. Send always posted `assignees: []`, which overrode Portal From Pagegrader rules, and never sent `campaign_id`.
