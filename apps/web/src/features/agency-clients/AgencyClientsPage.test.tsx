@@ -17,10 +17,6 @@ vi.mock('next/image', () => ({
   default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => <img {...props} />,
 }))
 
-vi.mock('@/components/vibey/vibey-loading-orb', () => ({
-  VibeyLoadingOrb: () => <span>Loading clients</span>,
-}))
-
 vi.mock('@/components/shell/ShellBreadcrumb', () => ({
   ShellBreadcrumb: () => null,
 }))
@@ -57,7 +53,7 @@ describe('AgencyClientsPage', () => {
       'href',
       '/clients?surface=portal',
     )
-    expect(screen.queryByText('Loading clients')).not.toBeInTheDocument()
+    expect(screen.queryByRole('status', { name: 'Loading clients...' })).not.toBeInTheDocument()
     await waitFor(() => {
       expect(fetchAgencyClients).toHaveBeenNthCalledWith(1, '', false)
       expect(fetchAgencyClients).toHaveBeenNthCalledWith(2, '', true)

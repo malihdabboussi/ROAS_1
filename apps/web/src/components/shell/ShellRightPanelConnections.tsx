@@ -32,6 +32,7 @@ type ConnectionRow = {
   kind: ConnectionRowKind
   title: string
   icon: LucideIcon
+  removable: boolean
   openCampaignId?: string | null
   openSpaceId?: string | null
 }
@@ -50,7 +51,6 @@ export function ShellRightPanelConnections({
   onOpenCampaign,
   onOpenSpace,
   onOpenMeeting,
-  onClearMeeting,
 }: {
   conversation: Conversation | null
   campaignId: string | null
@@ -65,7 +65,6 @@ export function ShellRightPanelConnections({
   onOpenCampaign?: (campaignId: string) => void
   onOpenSpace?: (spaceId: string) => void
   onOpenMeeting?: () => void
-  onClearMeeting?: () => void
 }) {
   const localPickerRef = useRef<ConversationScopePickerHandle>(null)
   const scopePickerRef = pickerRef ?? localPickerRef
@@ -85,10 +84,11 @@ export function ShellRightPanelConnections({
 
   // Meeting chats are scoped to the Meetings space — show the specific meeting
   // name instead of the generic space title, and open that meeting on click.
-  // Require the live scope space to match so clearing Connections hides the row
-  // even when meeting metadata remains on the conversation.
-  const showMeetingRow = Boolean(linkedMeeting && spaceId && spaceId === linkedMeeting.spaceId)
-  const hideMeetingHostSpace = showMeetingRow
+  // The meeting workspace is the main artifact, so it stays linked.
+  const showMeetingRow = Boolean(linkedMeeting)
+  const hideMeetingHostSpace = Boolean(
+    linkedMeeting && spaceId && spaceId === linkedMeeting.spaceId,
+  )
 
   const rows = useMemo((): ConnectionRow[] => {
     const next: ConnectionRow[] = []
@@ -99,6 +99,7 @@ export function ShellRightPanelConnections({
         kind: 'meeting',
         title: meetingTitle?.trim() || 'Meeting',
         icon: CalendarDays,
+        removable: false,
       })
     }
 
@@ -117,6 +118,7 @@ export function ShellRightPanelConnections({
         kind: 'location',
         title,
         icon: locationSpaceId ? Layers : FolderKanban,
+        removable: true,
         openCampaignId: campaignId,
         openSpaceId: locationSpaceId,
       })
@@ -158,7 +160,7 @@ export function ShellRightPanelConnections({
   }
 
   const removeRow = (row: ConnectionRow) => {
-    if (row.kind === 'meeting') onClearMeeting?.()
+    if (!row.removable) return
     void clearScope()
   }
 
@@ -203,7 +205,8 @@ export function ShellRightPanelConnections({
                   : Boolean(row.openCampaignId ? onOpenCampaign : row.openSpaceId && onOpenSpace)
               return (
                 <li key={row.id}>
-                  {/* Click opens the linked artifact; X stays for remove only. */}
+                  {/* Click opens the linked artifact. Campaign/Space rows can be
+                      unlinked; the meeting workspace cannot. */}
                   <div className="gap-spacing-2 px-spacing-3 py-spacing-1-5 hover:bg-hover-subtle group flex items-center rounded-lg transition-colors">
                     {canOpen ? (
                       <button
@@ -225,17 +228,19 @@ export function ShellRightPanelConnections({
                         </span>
                       </>
                     )}
-                    <button
-                      type="button"
-                      className="text-muted-foreground hover:text-foreground shrink-0 opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100"
-                      aria-label={`Remove ${row.title} connection`}
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        removeRow(row)
-                      }}
-                    >
-                      <X className="icon-sm" aria-hidden />
-                    </button>
+                    {row.removable ? (
+                      <button
+                        type="button"
+                        className="text-muted-foreground hover:text-foreground shrink-0 opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100"
+                        aria-label={`Remove ${row.title} connection`}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          removeRow(row)
+                        }}
+                      >
+                        <X className="icon-sm" aria-hidden />
+                      </button>
+                    ) : null}
                   </div>
                 </li>
               )

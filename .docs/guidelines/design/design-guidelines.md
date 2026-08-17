@@ -793,9 +793,17 @@ The canonical "selected" visual is the **purple glass** background. This is the 
 
 ## 18. Loading & error states
 
-### 18.1 Loading — the CSS orb is the only loading state
+### 18.1 Loading — skeleton for content, orb for presence
 
-**Rule:** All loading states use **`VibeyLoadingOrb`** — the pure-CSS animated orb (no canvas, no Three.js, cheap). Always include descriptive text underneath.
+**Rule:** In-place list and page-body fetches use **`ListSkeleton`**. Keep the surrounding chrome (headers, filters, tabs) mounted and pulse bars in the content slot so the layout does not jump. Use `role="status"` and a descriptive `aria-label`.
+
+```tsx
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
+
+<ListSkeleton rows={8} label="Loading meetings..." />
+```
+
+**Rule:** Chat/agent presence, button-row spinners, and blocking modal waits use **`VibeyLoadingOrb`** — the pure-CSS animated orb (no canvas, no Three.js, cheap). Always include descriptive text underneath.
 
 ```tsx
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
@@ -803,26 +811,26 @@ import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 <VibeyLoadingOrb text="Loading your spaces..." />
 ```
 
-The component wraps `VibeyChatOrb` with auto-cycling animation styles (`elastic → trails → constellation → liquid → firefly` every 3 s). Pure `<div>`s + CSS — no GPU canvas.
+The orb wraps `VibeyChatOrb` with auto-cycling animation styles (`elastic → trails → constellation → liquid → firefly` every 3 s). Pure `<div>`s + CSS — no GPU canvas.
 
-**Size variants:**
+**Size variants (orb):**
 
 | Variant | Orb px | Use |
 |---|---:|---|
 | `sm` | 32 | Inline next to a label, button-row spinners |
-| `md` *(default)* | 56 | Section / panel loaders |
-| `lg` | 96 | Full-page route loaders, modal-blocking loads |
+| `md` *(default)* | 56 | Chat/agent presence, blocking modal waits |
+| `lg` | 96 | Blocking full-route waits that are not a list body |
 
 **Examples:**
 
 ```tsx
-{/* Page loader */}
+{/* List / page body — keep chrome, skeleton the content */}
+<ListSkeleton rows={8} label="Loading meetings..." />
+
+{/* Blocking modal wait */}
 <div className="flex h-full items-center justify-center">
   <VibeyLoadingOrb size="lg" text="Loading your spaces..." />
 </div>
-
-{/* Section loader */}
-<VibeyLoadingOrb text="Fetching activity..." />
 
 {/* Inline next to button label */}
 <button className="button-default button-glass-neutral" disabled>

@@ -5,10 +5,13 @@ import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
 import { VIBEY_OPEN_MEDIA_EVENT } from '@/lib/media/open-media-asset-in-app'
 import { ShellArtifactViewerAdapter } from './ShellArtifactViewerAdapter'
 
-const { routerPush } = vi.hoisted(() => ({ routerPush: vi.fn() }))
+const { pathnameState, routerPush } = vi.hoisted(() => ({
+  pathnameState: { current: '/chat' },
+  routerPush: vi.fn(),
+}))
 
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/chat',
+  usePathname: () => pathnameState.current,
   useRouter: () => ({ push: routerPush }),
 }))
 
@@ -91,6 +94,7 @@ const target: ShellArtifactViewerTarget = {
 
 describe('ShellArtifactViewerAdapter', () => {
   beforeEach(() => {
+    pathnameState.current = '/chat'
     routerPush.mockClear()
     useShellStore.setState({ artifactViewer: { target, width: 480 } })
   })
@@ -252,6 +256,23 @@ describe('ShellArtifactViewerAdapter', () => {
 
     await waitFor(() => expect(screen.getByTestId('media-studio')).toBeTruthy())
     expect(screen.getByText('video:548941d2-dc17-4943-a0d2-37a66e263aa6')).toBeTruthy()
+  })
+
+  it('keeps the artifact open when the work screen path changes', async () => {
+    const remembered = { ...target, conversationId: 'conv-1' }
+    useShellStore.setState({
+      artifactViewer: { target: remembered, width: 480 },
+      lastArtifactByConversation: { 'conv-1': remembered },
+    })
+    const { rerender } = render(<ShellArtifactViewerAdapter />)
+    await waitFor(() => expect(screen.getByTestId('canonical-space-editor')).toBeTruthy())
+
+    pathnameState.current = '/home/meetings'
+    rerender(<ShellArtifactViewerAdapter />)
+
+    expect(screen.getByTestId('canonical-space-editor')).toBeTruthy()
+    expect(useShellStore.getState().artifactViewer.target).toEqual(remembered)
+    expect(useShellStore.getState().lastArtifactByConversation['conv-1']).toEqual(remembered)
   })
 
   it('renders chat html snippets in the code artifact viewer', async () => {
