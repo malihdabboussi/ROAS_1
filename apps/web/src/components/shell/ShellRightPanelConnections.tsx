@@ -1,15 +1,18 @@
 'use client'
 
 import { useMemo, useRef, type RefObject } from 'react'
-import { FolderKanban, Layers, Plus, X, type LucideIcon } from 'lucide-react'
+import { FolderKanban, Layers, Plus, X } from 'lucide-react'
 import {
   ConversationScopePicker,
   type ConversationScopePickerHandle,
 } from '@/components/conversations'
+import { programNameForCampaign } from '@/components/conversations/conversation-scope-groups'
+import { conversationScopeDisplayLabel } from '@/components/conversations/conversation-scope-picker-layout'
 import {
   useConversationScopeCampaigns,
   useConversationScopeFallbackCampaign,
   useConversationScopeFallbackSpace,
+  useConversationScopePrograms,
 } from '@/components/conversations/use-conversation-scope-data'
 import type { Conversation } from '@/lib/conversations'
 import { assignConversationScope } from '@/lib/conversations'
@@ -18,6 +21,9 @@ import { useOrgStore } from '@/lib/org'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
 import { ShellRightPanelEmpty } from './ShellRightPanelEmpty'
 import { ShellRightPanelSection } from './ShellRightPanelSection'
+
+/** Stable empty map — a fresh `{}` each render re-fires the fallback space fetch. */
+const EMPTY_SPACES_BY_CAMPAIGN: Record<string, never> = {}
 
 export function ShellRightPanelConnections({
   conversation,
@@ -46,32 +52,33 @@ export function ShellRightPanelConnections({
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const cacheVersion = useCampaignCacheVersion()
   const campaigns = useConversationScopeCampaigns(activeOrgId, cacheVersion)
+  const programs = useConversationScopePrograms(activeOrgId)
   const fallbackCampaign = useConversationScopeFallbackCampaign(campaignId, campaigns)
   const campaign = campaigns.find((row) => row.id === campaignId) ?? fallbackCampaign
   const space = useConversationScopeFallbackSpace({
     activeOrgId,
     selectedCampaignId: null,
     selectedSpaceId: spaceId,
-    spacesByCampaign: {},
+    spacesByCampaign: EMPTY_SPACES_BY_CAMPAIGN,
   })
   const rows = useMemo(() => {
-    const items: Array<{ id: string; title: string; icon: LucideIcon }> = []
-    if (campaignId) {
-      items.push({
-        id: 'campaign',
-        title: campaign?.name?.trim() || 'Campaign',
-        icon: FolderKanban,
-      })
-    }
-    if (spaceId) {
-      items.push({
-        id: 'space',
-        title: space?.title?.trim() || 'Space',
-        icon: Layers,
-      })
-    }
-    return items
-  }, [campaign?.name, campaignId, space?.title, spaceId])
+    if (!campaignId && !spaceId) return []
+    const title = conversationScopeDisplayLabel({
+      campaignName: campaign?.name,
+      spaceTitle: space?.title,
+      programName: programNameForCampaign(campaign, programs),
+      campaignId,
+      spaceId,
+      emptyLabel: 'General',
+    })
+    return [
+      {
+        id: 'location',
+        title,
+        icon: spaceId ? Layers : FolderKanban,
+      },
+    ]
+  }, [campaign, campaignId, programs, space?.title, spaceId])
 
   const clearScope = async () => {
     if (!conversation) {
@@ -124,9 +131,8 @@ export function ShellRightPanelConnections({
                       instead of a second line that repeats what the icon says. */}
                   <div className="gap-spacing-2 px-spacing-3 py-spacing-1-5 hover:bg-hover-subtle group flex items-center rounded-lg transition-colors">
                     <Icon className="icon-sm text-muted-foreground shrink-0" aria-hidden />
-                    {/* Name only — the icon already says whether this is a
-                        campaign or a space, so repeating the type as a value
-                        just made every row read "General Campaign". */}
+                    {/* Location name — General is qualified with its parent so
+                        a Yasir Khan General space is not just "General". */}
                     <span className="body-3 text-foreground min-w-0 flex-1 truncate">
                       {row.title}
                     </span>

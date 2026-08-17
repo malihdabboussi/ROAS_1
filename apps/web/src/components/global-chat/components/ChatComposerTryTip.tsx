@@ -1,23 +1,63 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ComposerTryTipBanner } from '@/components/chat/ComposerTryTipBanner'
 import {
   addTryTipDismissedId,
   readTryTipDismissedIds,
 } from '@/components/global-chat/lib/global-chat-storage'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
-import { pickComposerTryTip } from '@/lib/chat/composer-try-tips'
+import {
+  COMPOSER_TRY_TIP_ROTATE_MS,
+  COMPOSER_TRY_TIPS,
+  composerTryTipRotationSeed,
+  pickComposerTryTip,
+} from '@/lib/chat/composer-try-tips'
 
-export function ChatComposerTryTip({ className }: { className?: string }) {
+function conversationTipKey(conversationId?: string | null) {
+  return conversationId ?? 'new'
+}
+
+export function ChatComposerTryTip({
+  className,
+  conversationId,
+}: {
+  className?: string
+  conversationId?: string | null
+}) {
   const seedComposer = useGlobalChatStore((state) => state.seedComposer)
   const [dismissedIds, setDismissedIds] = useState(readTryTipDismissedIds)
-  const [hidden, setHidden] = useState(false)
-  const tip = pickComposerTryTip(dismissedIds)
+  const hiddenConversationsRef = useRef(new Set<string>())
+  const [, setHiddenVersion] = useState(0)
+  const [rotationIndex, setRotationIndex] = useState(() =>
+    composerTryTipRotationSeed(conversationId),
+  )
+  const tip = pickComposerTryTip(dismissedIds, rotationIndex)
+  const hidden = hiddenConversationsRef.current.has(conversationTipKey(conversationId))
+
+  const hideInConversation = useCallback((id?: string | null) => {
+    hiddenConversationsRef.current.add(conversationTipKey(id))
+    setHiddenVersion((version) => version + 1)
+  }, [])
+
+  useEffect(() => {
+    setRotationIndex(composerTryTipRotationSeed(conversationId))
+  }, [conversationId])
+
+  useEffect(() => {
+    if (hidden || !tip) return
+    const remainingCount = COMPOSER_TRY_TIPS.filter(
+      (item) => !dismissedIds.includes(item.id),
+    ).length
+    if (remainingCount < 2) return
+    const timer = window.setInterval(() => {
+      setRotationIndex((prev) => prev + 1)
+    }, COMPOSER_TRY_TIP_ROTATE_MS)
+    return () => window.clearInterval(timer)
+  }, [dismissedIds, hidden, tip])
 
   const dismiss = useCallback((id: string) => {
     setDismissedIds(addTryTipDismissedId(id))
-    setHidden(true)
   }, [])
 
   if (hidden || !tip) return null
@@ -28,13 +68,17 @@ export function ChatComposerTryTip({ className }: { className?: string }) {
       body={tip.body}
       onTry={() => {
         dismiss(tip.id)
+        hideInConversation(conversationId)
         seedComposer({
           content: tip.prompt,
           railIntent: 'new',
           seedMode: tip.seedMode,
         })
       }}
-      onDismiss={() => dismiss(tip.id)}
+      onDismiss={() => {
+        dismiss(tip.id)
+        hideInConversation(conversationId)
+      }}
     />
   )
 }

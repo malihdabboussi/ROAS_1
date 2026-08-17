@@ -17,14 +17,20 @@ function isMediaTarget(target: ShellArtifactViewerTarget): boolean {
 export function ShellArtifactViewerPanel({
   target,
   actions,
+  leading,
   bodyClassName,
   showOpenTargets = true,
+  titleVariant = 'breadcrumb',
+  languageLabel,
   children,
 }: {
   target: ShellArtifactViewerTarget
   actions?: ReactNode
+  leading?: ReactNode
   bodyClassName?: string
   showOpenTargets?: boolean
+  titleVariant?: 'breadcrumb' | 'plain'
+  languageLabel?: string
   children: ReactNode
 }) {
   const close = useShellStore((s) => s.closeArtifactViewer)
@@ -67,47 +73,57 @@ export function ShellArtifactViewerPanel({
       data-shell-artifact-viewer
     >
       <header className="border-border gap-spacing-2 px-spacing-3 py-spacing-2 flex min-h-12 shrink-0 items-center border-b">
-        <Icon className="icon-sm text-primary shrink-0" />
-        <nav
-          className="body-4 min-w-0 flex-1 truncate whitespace-nowrap"
-          aria-label="Artifact path"
-        >
-          <button
-            type="button"
-            onClick={() => setBrowse('library')}
-            aria-current={browse === 'library' ? 'page' : undefined}
-            className={cn(
-              'hover:text-foreground',
-              browse === 'library' ? 'text-foreground font-semibold' : 'text-muted-foreground',
-            )}
-          >
-            {contextLabel}
-          </button>
-          <span className="text-muted-foreground"> / </span>
-          <button
-            type="button"
-            onClick={() => setBrowse('files')}
-            aria-current={browse === 'files' ? 'page' : undefined}
-            className={cn(
-              'hover:text-foreground',
-              browse === 'files' ? 'text-foreground font-semibold' : 'text-muted-foreground',
-            )}
-          >
-            files
-          </button>
-          <span className="text-muted-foreground"> / </span>
-          {browse === 'artifact' ? (
+        {leading}
+        {titleVariant === 'breadcrumb' ? <Icon className="icon-sm text-primary shrink-0" /> : null}
+        {titleVariant === 'plain' ? (
+          <div className="body-4 min-w-0 flex-1 truncate whitespace-nowrap">
             <span className="text-foreground font-semibold">{target.title}</span>
-          ) : (
+            {languageLabel ? (
+              <span className="text-muted-foreground"> · {languageLabel}</span>
+            ) : null}
+          </div>
+        ) : (
+          <nav
+            className="body-4 min-w-0 flex-1 truncate whitespace-nowrap"
+            aria-label="Artifact path"
+          >
             <button
               type="button"
-              onClick={() => setBrowse('artifact')}
-              className="text-muted-foreground hover:text-foreground"
+              onClick={() => setBrowse('library')}
+              aria-current={browse === 'library' ? 'page' : undefined}
+              className={cn(
+                'hover:text-foreground',
+                browse === 'library' ? 'text-foreground font-semibold' : 'text-muted-foreground',
+              )}
             >
-              {target.title}
+              {contextLabel}
             </button>
-          )}
-        </nav>
+            <span className="text-muted-foreground"> / </span>
+            <button
+              type="button"
+              onClick={() => setBrowse('files')}
+              aria-current={browse === 'files' ? 'page' : undefined}
+              className={cn(
+                'hover:text-foreground',
+                browse === 'files' ? 'text-foreground font-semibold' : 'text-muted-foreground',
+              )}
+            >
+              files
+            </button>
+            <span className="text-muted-foreground"> / </span>
+            {browse === 'artifact' ? (
+              <span className="text-foreground font-semibold">{target.title}</span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setBrowse('artifact')}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                {target.title}
+              </button>
+            )}
+          </nav>
+        )}
         {actions}
         {openTargets.length === 1 ? (
           <a

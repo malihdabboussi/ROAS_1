@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils/cn'
 import type { ConversationMissionRow } from './shell-conversation-summary'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
 import { ShellRightPanelEmpty } from './ShellRightPanelEmpty'
+import { ShellRightPanelSkeleton } from './ShellRightPanelSkeleton'
 
 type SubtaskState = { loading: boolean; rows: MissionSubtask[]; failed: boolean }
 
@@ -49,9 +50,7 @@ function StepBadge({ subtask, index }: { subtask: MissionSubtask; index: number 
       <span
         className={cn(
           base,
-          isBlockingHumanGate(subtask)
-            ? 'text-primary'
-            : 'bg-secondary text-muted-foreground',
+          isBlockingHumanGate(subtask) ? 'text-primary' : 'bg-secondary text-muted-foreground',
         )}
         role="img"
         aria-label={SHELL_RIGHT_PANEL_MESSAGES.progressGateStepLabel}
@@ -158,7 +157,9 @@ export function ShellRightPanelProgress({ missions }: { missions: ConversationMi
   }, [expanded, loadSubtasks, subtasksByMission])
 
   if (missions.length === 0) {
-    return <ShellRightPanelEmpty art="missions" message={SHELL_RIGHT_PANEL_MESSAGES.progressEmpty} />
+    return (
+      <ShellRightPanelEmpty art="missions" message={SHELL_RIGHT_PANEL_MESSAGES.progressEmpty} />
+    )
   }
 
   return (
@@ -250,9 +251,9 @@ function StepList({ state }: { state: SubtaskState }) {
 
   if (state.loading) {
     return (
-      <p className="body-4 text-muted-foreground px-spacing-3 py-spacing-1">
-        {SHELL_RIGHT_PANEL_MESSAGES.progressLoading}
-      </p>
+      <div className="px-spacing-3 py-spacing-1">
+        <ShellRightPanelSkeleton rows={4} label={SHELL_RIGHT_PANEL_MESSAGES.progressLoading} />
+      </div>
     )
   }
   if (state.failed) {

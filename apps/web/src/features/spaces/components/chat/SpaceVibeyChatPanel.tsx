@@ -13,6 +13,7 @@ import { MessageQueue } from '@/components/chat/MessageQueue'
 import { PlanStickyTracker } from '@/components/chat/PlanStickyTracker'
 import { VoiceApprovalProvider } from '@/components/chat/VoiceApprovalContext'
 import { ConversationShareModal } from '@/components/conversations'
+import { ChatComposerTryTip } from '@/components/global-chat/components/ChatComposerTryTip'
 import * as globalChatSeed from '@/components/global-chat/lib/global-chat-seed-match'
 import {
   GLOBAL_CHAT_AGENT_SWITCH_EVENT,
@@ -26,10 +27,10 @@ import {
 import { CreateTypePickerCard } from '@/components/shell/CreateTypePickerCard'
 import { findShellCreateMenuItem } from '@/components/shell/shell-create-menu.config'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
-import { ShellEmptyChatQuickStartPills } from '@/components/shell/ShellEmptyChatQuickStartPills'
 import { ShellRightPanel } from '@/components/shell/ShellRightPanel'
 import { useShellChatQuickStart } from '@/components/shell/use-shell-chat-quick-start'
 import { useShellStore } from '@/components/shell/use-shell-store'
+import { useSummaryPanelLayout } from '@/components/shell/use-summary-panel-docked'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   useBrainLiveSession,
@@ -182,7 +183,7 @@ export function SpaceVibeyChatPanel({
   shellSidebarChrome = false,
   headerLayout = 'compact',
   headerLeadingAction,
-  composerContextSlot,
+  headerTrailingAction,
   preferredConversationId,
   awarenessContextOverride,
 }: ChatPanelTypes.SpaceVibeyChatPanelProps) {
@@ -2159,16 +2160,8 @@ export function SpaceVibeyChatPanel({
 
   const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
   const toggleRightPanel = useShellStore((s) => s.toggleRightPanel)
-  const setRightPanelOpen = useShellStore((s) => s.setRightPanelOpen)
   const [headerRenameRequestNonce, setHeaderRenameRequestNonce] = useState(0)
-  const autoOpenedSummaryConversationRef = useRef<string | null>(null)
-
-  useEffect(() => {
-    if (headerLayout !== 'full' || !selectedConversationId) return
-    if (autoOpenedSummaryConversationRef.current === selectedConversationId) return
-    autoOpenedSummaryConversationRef.current = selectedConversationId
-    setRightPanelOpen(true)
-  }, [headerLayout, selectedConversationId, setRightPanelOpen])
+  const summaryDocked = useSummaryPanelLayout(chatPanelRef, selectedConversationId)
 
   const chatHeaderActions = (
     <SpaceChatHeaderActions
@@ -2190,6 +2183,7 @@ export function SpaceVibeyChatPanel({
       hideHistoryChrome={shellSidebarChrome}
       summaryOpen={rightPanelOpen}
       onToggleSummary={() => toggleRightPanel()}
+      pageRestore={headerTrailingAction}
     />
   )
 
@@ -2496,10 +2490,8 @@ export function SpaceVibeyChatPanel({
                           Read-only. Ask the owner for edit access.
                         </div>
                       ) : null}
-                      {messages.length === 0 &&
-                      !isLoadingMessages &&
-                      !selectedConversationReadOnly ? (
-                        <ShellEmptyChatQuickStartPills onSelect={quickStart.selectQuickStart} />
+                      {!isStreaming && !selectedConversationReadOnly ? (
+                        <ChatComposerTryTip conversationId={selectedConversationId} />
                       ) : null}
                       {quickStart.pendingPicker ? (
                         <CreateTypePickerCard
@@ -2540,7 +2532,6 @@ export function SpaceVibeyChatPanel({
                           activeCapabilityChip={quickStart.activeCapabilityChip}
                           onClearCapabilityChip={quickStart.clearQuickStart}
                           onEnqueue={editingQueueItemId ? undefined : handleEnqueue}
-                          composerFooterAfterIntegrationsSlot={composerContextSlot}
                           onSendNow={handleQueueSendNowNext}
                           queueLength={queue.length}
                           placeholder={
@@ -2666,6 +2657,7 @@ export function SpaceVibeyChatPanel({
         campaignId={effectiveCampaignId}
         spaceId={effectiveSpaceId}
         showScope={!isChannelScope}
+        placement={summaryDocked ? 'docked' : 'overlay'}
         onConversationUpdated={handleConversationScopeUpdated}
         onScopeChanged={setScopeOverride}
       />

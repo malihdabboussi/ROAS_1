@@ -275,6 +275,31 @@ export class WorkRequestRepository {
     return resolveUniqueAssigneeProfileId((data ?? []) as AssigneeProfile[], name)
   }
 
+  async listOrgTeamMembers(orgId: string) {
+    const { data: members, error: membersError } = await this.client
+      .from('org_members')
+      .select('user_id')
+      .eq('org_id', orgId)
+      .eq('status', 'active')
+    if (membersError)
+      throw new Error(`Could not list Service Request team: ${membersError.message}`)
+    const userIds = (members ?? []).map((row) => String(row.user_id)).filter(Boolean)
+    if (userIds.length === 0) return []
+    const { data, error } = await this.client
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', userIds)
+      .order('full_name', { ascending: true })
+      .limit(100)
+    if (error) throw new Error(`Could not list Service Request team: ${error.message}`)
+    return ((data ?? []) as AssigneeProfile[])
+      .map((row) => ({
+        id: String(row.id),
+        name: String(row.full_name ?? '').trim(),
+      }))
+      .filter((row) => row.name.length > 0)
+  }
+
   async assignTask(taskId: string, userId: string) {
     const { data, error } = await this.client
       .from('space_items')

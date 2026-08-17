@@ -10,15 +10,12 @@ import {
   type ConversationScopePickerHandle,
 } from '@/components/conversations'
 import { conversationScopeDisplayLabel } from '@/components/conversations/conversation-scope-picker-layout'
+import { QuickMissionsHubHost } from '@/components/global-chat/components/QuickMissionsHubHost'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
-import { CreateTypePickerCard } from '@/components/shell/CreateTypePickerCard'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
-import { ShellEmptyChatQuickStartPills } from '@/components/shell/ShellEmptyChatQuickStartPills'
-import { useShellChatQuickStart } from '@/components/shell/use-shell-chat-quick-start'
 import { SuggestedNextMoves } from '@/features/home/components/SuggestedNextMoves'
 import { HOME_TOAST_ERRORS } from '@/features/home/config/home-toast-errors.config'
 import { useOrgStore } from '@/features/org/store/use-org-store'
-import { FUNNEL_TYPE_PICKER_VISUALS } from '@/features/spaces/components/artifacts/funnels/funnel-type-picker-visuals'
 import { CreateSpaceModal } from '@/features/spaces/components/CreateSpaceModal'
 import { cachedSpaces, useCachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
 import { normalizeSpaceLegacyViews } from '@/features/spaces/lib/view-customization-merge'
@@ -63,7 +60,6 @@ export function HomeDashboardV4Composer() {
   >(null)
   const chooseSpaceButtonRef = useRef<HTMLButtonElement>(null)
   const scopePickerRef = useRef<ConversationScopePickerHandle>(null)
-  const quickStart = useShellChatQuickStart(setTextRef)
   const isOrgOnly = useOrgStore((s) => s.isOrgOnly)
 
   useEffect(() => {
@@ -128,16 +124,20 @@ export function HomeDashboardV4Composer() {
   }, [campaigns, spaces])
 
   const targetLabel = useMemo(() => {
+    const campaign = campaigns.find((row) => row.id === targetCampaignId)
     return conversationScopeDisplayLabel({
-      campaignName: campaigns.find((campaign) => campaign.id === targetCampaignId)?.name,
+      campaignName: campaign?.name,
       spaceTitle: spaces.find((space) => space.id === targetSpaceId)?.title,
+      programName: campaign?.program_id
+        ? (programs.find((program) => program.id === campaign.program_id)?.name ?? null)
+        : null,
       campaignId: targetCampaignId,
       spaceId: targetSpaceId,
       emptyLabel: isOrgOnly
         ? (spaces[0]?.title ?? 'Workspace')
         : (defaultGeneralSpace?.title ?? 'New Workspace'),
     })
-  }, [campaigns, defaultGeneralSpace, isOrgOnly, spaces, targetCampaignId, targetSpaceId])
+  }, [campaigns, defaultGeneralSpace, isOrgOnly, programs, spaces, targetCampaignId, targetSpaceId])
 
   const activeCampaignId = useMemo(() => {
     if (targetSpaceId) {
@@ -278,17 +278,7 @@ export function HomeDashboardV4Composer() {
   return (
     <QuickMissionsLauncherProvider>
       <div className="w-full max-w-3xl">
-        <ShellEmptyChatQuickStartPills onSelect={quickStart.selectQuickStart} />
-        {quickStart.pendingPicker ? (
-          <CreateTypePickerCard
-            catalog={quickStart.pendingPicker}
-            visuals={
-              quickStart.pendingPickerId === 'funnel' ? FUNNEL_TYPE_PICKER_VISUALS : undefined
-            }
-            onSelect={quickStart.selectPickerOption}
-            onDismiss={quickStart.clearPicker}
-          />
-        ) : null}
+        <QuickMissionsHubHost />
         <ChatInput
           onSend={handleSend}
           disabled={sending}
@@ -302,9 +292,6 @@ export function HomeDashboardV4Composer() {
           openAddMenuRef={openAddMenuRef}
           onConnectedIntegrationProvidersChange={handleConnectedProvidersChange}
           setTextRef={setTextRef}
-          onComposerValueChange={quickStart.handleComposerValueChange}
-          activeCapabilityChip={quickStart.activeCapabilityChip}
-          onClearCapabilityChip={quickStart.clearQuickStart}
         />
         <div className="surface-card border-border mx-spacing-3 p-spacing-2 rounded-b-2xl border-x border-b">
           <div className="gap-spacing-1 flex min-w-0 flex-wrap items-center">

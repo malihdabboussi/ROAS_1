@@ -10,6 +10,42 @@ Needed work: Apply the same `table-fixed` + shared `colgroup` + `min-w-0`/`trunc
 
 Reason not done now: Requested scope was the Clients screen layout only.
 
+## 2026-08-17 - [ARCH] ConversationScopePicker is at the 400 LOC component limit
+
+Status: Open
+
+Found while: Program-first Connections picker with searchable clients
+
+Evidence: `wc -l` reports `apps/web/src/components/conversations/ConversationScopePicker.tsx` at 396 LOC (component cap 400) after submenu/search wiring.
+
+Needed work: Extract menu measurement, space loading, and scope-assign handlers into a hook.
+
+Reason not done now: The requested picker behavior fit in the existing container; splitting mid-change would have mixed the UX rewrite with a structural refactor.
+
+## 2026-08-16 - [ARCH] SpaceVibeyChatPanel still over the container LOC limit after summary dock wiring
+
+Status: Open
+
+Found while: ChatGPT-style summary panel, empty-section collapse, Slack titles
+
+Evidence: `wc -l` reports `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` at 2670 LOC (container limit 600). Dock auto-open was extracted to `use-summary-panel-docked.ts`. `apps/api/src/modules/conversations/services/conversations.service.ts` is 588 LOC after moving title pick into `conversation-title.util.ts`. `apps/web/src/components/shell/use-shell-store.ts` is 554 LOC (hook limit 300) after `summaryPanelDocked`.
+
+Needed work: Split remaining send/seed/header orchestration out of SpaceVibeyChatPanel; decompose the shell store.
+
+Reason not done now: The requested work was summary layout, skeleton loading, and Slack naming; decomposing these pre-existing oversized files was out of scope.
+
+## 2026-08-16 - [ARCH] WorkRequestChatFlow still over 400 LOC component soft limit
+
+Status: Open
+
+Found while: Service Request chat shell + ClickUp mirror dedupe
+
+Evidence: `wc -l` reports `apps/web/src/features/work-requests/components/WorkRequestChatFlow.tsx` at ~441 LOC after known/pending step wiring.
+
+Needed work: Split transcript/commit helpers or presentation chrome out of the container so the file stays under the 400 LOC component soft limit.
+
+Reason not done now: In-scope work was ClickUp body dedupe plus assignee/date/assets UX; further decomposition risked a larger untested refactor in the same pass.
+
 ## 2026-08-15 - [UI] Shell artifact viewer still uses lightweight previews for ads, offers, and adjacent entity types
 
 Status: Open
@@ -118,7 +154,7 @@ Evidence: UI toast "Import failed: Atlas could not process: The Slack period con
 
 Needed work: Return a Vibey empty-period message instead of a failed Atlas import, and skip/no-op when the chosen Slack window has no content.
 
-Done: 2026-08-15 — empty Slack windows skip Atlas, persist as skipped, and toast "Nothing to save from that Slack period." instead of an Atlas ingest error.
+Done: 2026-08-15 — empty Slack windows skip Atlas and persist as skipped instead of an Atlas ingest error. 2026-08-17 — those skips are acknowledged silently; they no longer toast during chat.
 
 Reason not done now: Requested work was @ mention campaign tagging plus Pixel User Brain fill; this is a separate Atlas import path.
 

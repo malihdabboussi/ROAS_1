@@ -10,8 +10,7 @@ import { ConversationsRepository } from '../repositories/conversations.repositor
 import { MessagesRepository } from '../repositories/messages.repository'
 import {
   needsGeneratedConversationTitle,
-  resolveSuggestedConversationTitle,
-  titleFromFirstUserMessage,
+  pickGeneratedConversationTitle,
 } from '../utils/conversation-title.util'
 import {
   ConversationAssetsService,
@@ -559,38 +558,28 @@ export class ConversationsService {
     }
 
     const currentTitle = typeof conversation.title === 'string' ? conversation.title : null
-    if (!needsGeneratedConversationTitle(currentTitle)) {
-      return { title: currentTitle ?? '', updated: false }
-    }
-
     const firstMessage =
       (firstMessageOverride ?? '').trim() ||
       (await this.messagesRepo.findFirstUserMessageContent(supabase, conversationId)) ||
       ''
-    if (!firstMessage) {
+    if (!needsGeneratedConversationTitle(currentTitle, firstMessage) || !firstMessage) {
       return { title: currentTitle ?? '', updated: false }
     }
 
     let suggested = ''
     try {
-      const result = await this.titleSuggestionService.suggestConversationTitle(
-        firstMessage,
-        userId,
-      )
-      suggested = result.title
+      suggested = (await this.titleSuggestionService.suggestConversationTitle(firstMessage, userId))
+        .title
     } catch {
       suggested = ''
     }
 
-    const title = resolveSuggestedConversationTitle(suggested, firstMessage, 60)
-    if (!title || title === currentTitle) {
-      const fallback = titleFromFirstUserMessage(firstMessage, 48)
-      if (!fallback || fallback === currentTitle) {
-        return { title: currentTitle ?? '', updated: false }
-      }
-      await this.conversationsRepo.update(supabase, conversationId, { title: fallback })
-      return { title: fallback, updated: true }
-    }
+    const title = pickGeneratedConversationTitle({
+      currentTitle,
+      firstMessage,
+      suggested,
+    })
+    if (!title) return { title: currentTitle ?? '', updated: false }
 
     await this.conversationsRepo.update(supabase, conversationId, { title })
     return { title, updated: true }

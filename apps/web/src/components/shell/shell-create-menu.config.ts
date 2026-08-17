@@ -259,7 +259,7 @@ export const SHELL_CREATE_MENU_GROUPS: ShellCreateMenuGroup[] = [
   },
 ]
 
-/** The exact active Create catalog rendered above an empty chat composer. */
+/** The exact active Create catalog used by the + Create menu. */
 export const SHELL_CREATE_QUICK_STARTS = SHELL_CREATE_MENU_GROUPS.flatMap((group) =>
   group.items.filter((item) => !item.comingSoon),
 )

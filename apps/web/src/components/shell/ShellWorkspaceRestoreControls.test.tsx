@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   setRightPanelOpen: vi.fn(),
   recentWorkAreaPages: [{ id: '/home/meetings', title: 'Meetings', href: '/home/meetings' }],
   rightPanelOpen: false,
+  summaryPanelDocked: false,
   workAreaOpen: true,
   chatDrawerOpen: false,
   artifactTarget: null as { id: string } | null,
@@ -155,6 +156,7 @@ vi.mock('./use-shell-store', () => ({
       setWorkAreaOpen: mocks.setWorkAreaOpen,
       setRightPanelOpen: mocks.setRightPanelOpen,
       rightPanel: { open: mocks.rightPanelOpen, tab: 'tasks' },
+      summaryPanelDocked: mocks.summaryPanelDocked,
       recentWorkAreaPages: mocks.recentWorkAreaPages,
     }),
 }))
@@ -165,6 +167,7 @@ describe('ShellWorkspace restore controls', () => {
     mocks.params = new Map([['chat', 'starting']])
     mocks.activeConversationId = null
     mocks.rightPanelOpen = false
+    mocks.summaryPanelDocked = false
     mocks.recentWorkAreaPages = [
       { id: '/home/meetings', title: 'Meetings', href: '/home/meetings' },
     ]
@@ -231,6 +234,7 @@ describe('ShellWorkspace restore controls', () => {
     mocks.menuStyle = 'simple'
     mocks.rightPanelOpen = true
     render(<ShellWorkspace>Brain page</ShellWorkspace>)
+    // Page restore lives in the chat header cluster, not as a floating workspace icon.
     expect(screen.queryByRole('button', { name: 'Show page' })).toBeNull()
   })
   it('does not float a duplicate restore icon when the advanced top bar shows one', () => {
