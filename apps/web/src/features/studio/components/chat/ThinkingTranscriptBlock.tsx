@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChatWorkingStatusLabel } from '@/components/chat/ChatWorkingStatusLabel'
 import { useTypewriter } from '@/lib/hooks/use-typewriter'
 
 interface ThinkingTranscriptBlockProps {
@@ -65,15 +66,13 @@ export function ThinkingTranscriptBlock({ content, isActive }: ThinkingTranscrip
         onClick={() => setExpanded(!expanded)}
         className="flex w-full items-center gap-2 pb-0 pl-0 pr-3 pt-2"
       >
-        <span
-          className={`body-3 font-medium ${isActive ? 'text-shimmer-gradient' : 'text-muted-foreground'}`}
-        >
-          {isActive
-            ? 'Thinking...'
-            : durationSec < 3
-              ? 'Thought briefly'
-              : `Thought for ${durationSec}s`}
-        </span>
+        {isActive ? (
+          <ChatWorkingStatusLabel pinned="Thinking..." active />
+        ) : (
+          <span className="body-3 text-muted-foreground font-medium">
+            {durationSec < 3 ? 'Thought briefly' : `Thought for ${durationSec}s`}
+          </span>
+        )}
         {expanded ? (
           <ChevronDown className="text-muted-foreground h-3.5 w-3.5" />
         ) : (

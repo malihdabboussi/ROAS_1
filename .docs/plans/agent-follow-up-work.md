@@ -10,7 +10,7 @@ Needed work: Split AgendaCard data/chrome from the list/calendar body switch, an
 
 Reason not done now: This change only swapped the in-place loading state. Decomposition would be a behavior-neutral refactor.
 
-
+## 2026-08-17 - [ARCH] Remaining work-area lists still use VibeyLoadingOrb
 
 Status: Open
 
@@ -21,6 +21,19 @@ Evidence: Meetings, Inbox, My Tasks, All Tasks, Programs, Clients, Client Campai
 Needed work: Convert remaining primary work-area list/page bodies (Spaces item views, contacts lists, reporting tables, artifact libraries) to `ListSkeleton` with chrome kept mounted. Leave `VibeyLoadingOrb` for chat/agent presence, button-row spinners, and blocking modal waits per design-guidelines §18.1.
 
 Reason not done now: This change fixed the duplicate Meetings flash and the same class of home/work-area lists. Replacing every remaining orb is a separate sweep across Spaces/settings.
+
+## 2026-08-17 - [ARCH] LockedInGroup is near the component LOC limit
+
+Status: Open
+
+Found while: Rotating live chat working status so Brain/tool labels do not freeze
+
+Evidence: `wc -l` reports `apps/web/src/features/studio/components/chat/LockedInGroup.tsx` at 348 LOC (component limit 400; extract suggested at 80% / 320).
+
+Needed work: Split activity-group labeling / classification from the expand/collapse chrome.
+
+Reason not done now: Requested work was the live working-status animation; extracting the group was out of scope.
+
 
 
 
