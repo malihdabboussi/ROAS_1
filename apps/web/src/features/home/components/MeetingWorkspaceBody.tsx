@@ -69,23 +69,22 @@ export function MeetingWorkspaceBody({
 
   return (
     <>
-      <section className="section-card overflow-hidden">
-        <div className="p-spacing-4">
-          <MeetingRecordingsSection
-            spaceId={spaceId}
-            meetingItemId={meetingItemId}
-            recordings={bundle?.recordings ?? []}
-            isPostCall={isPostCall || isLive}
-            onLinked={onRecordingLinked}
-          />
-        </div>
-        <div className="border-border p-spacing-4 border-t">
+      <section className="section-card p-spacing-4">
+        <MeetingRecordingsSection
+          spaceId={spaceId}
+          meetingItemId={meetingItemId}
+          recordings={bundle?.recordings ?? []}
+          isPostCall={isPostCall || isLive}
+          onLinked={onRecordingLinked}
+          attachmentCount={bundle?.deliverables.length ?? 0}
+        >
           <MeetingWorkspaceAttachments
             spaceId={spaceId}
             deliverables={bundle?.deliverables ?? []}
             loading={loading}
+            embedded
           />
-        </div>
+        </MeetingRecordingsSection>
       </section>
 
       <section className="section-card p-spacing-4 gap-spacing-2 flex flex-col">

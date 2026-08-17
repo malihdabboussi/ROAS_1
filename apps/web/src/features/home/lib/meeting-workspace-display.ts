@@ -1,10 +1,3 @@
-export function meetingPhaseBadgeLabel(phase: string | undefined, isPostCall: boolean): string {
-  if (phase === 'live') return 'Live'
-  if (phase === 'processing') return 'Ended'
-  if (isPostCall) return 'Complete'
-  return 'Ready'
-}
-
 function stripHtml(source: string): string {
   if (!/<[a-z][\s\S]*>/i.test(source) && !/&(?:nbsp|lt|gt|amp);/i.test(source)) return source
   if (typeof document === 'undefined') {
@@ -92,7 +85,10 @@ export function parseMeetingPrep(value: string | null | undefined): ParsedMeetin
     kept.push(line)
   }
 
-  const notes = kept.join('\n').replace(/\n{3,}/g, '\n\n').trim()
+  const notes = kept
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
   return { notes, meetingId, passcode, strippedBoilerplate: stripped }
 }
 

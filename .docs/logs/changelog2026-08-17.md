@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:43] - [STYLE]
+What: Meeting workspace header now has Continue in chat instead of the phase badge and close X. After a call ends, Start call sits next to Recap message. Recordings and attachments share one card with looser spacing.
+Why: The header X emptied the work area. The status badge duplicated call-state copy. Accidental End call hid Start call. Recordings and attachments were two tight stacked cards.
+Impact: Back still returns to Agenda. Continue in chat is top-right. You can start the call again after ending it. Recordings, transcripts, and other deliverables sit in one section.
+Files: `apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx`, `MeetingCallStatusSection.tsx`, `MeetingWorkspaceBody.tsx`, `MeetingRecordingsSection.tsx`, `MeetingWorkspaceAttachments.tsx`, `documentation/features/meeting-follow-up-slack.md`
+
 ## [2026-08-17 20:40] - [STYLE]
 What: Simple sidebar collapse now lives on ROAS logo hover, the compact rail matches expanded nav (icons + selected purple on a white `surface-card`), and the expanded Simple menu can be dragged 75% wider than the 272px default (max 476px).
 Why: Compact used Search/Favorites/Chats instead of the real destinations, logo hover flickered because the R and drawer glyph swapped sizes, and the drag max stopped at 420px.
@@ -41,6 +47,7 @@ What: Chat working status now types a live line and rotates Cursor-style phrases
 Why: Turns that said they were reading Brain looked stuck even while the agent was still working.
 Impact: Composer chat keeps an animated working line (`Planning next moves...` and similar) while Pixel is thinking or a Brain/tool step sits open.
 Files: `apps/web/src/lib/chat/chat-working-status.ts`, `apps/web/src/lib/chat/use-working-status-label.ts`, `apps/web/src/components/chat/ChatWorkingStatusLabel.tsx`, `apps/web/src/components/chat/TypewriterShimmer.tsx`, `apps/web/src/features/studio/components/chat/StatusIndicator.tsx`, `apps/web/src/features/studio/components/chat/LockedInGroup.tsx`, `apps/web/src/features/studio/components/chat/ThinkingTranscriptBlock.tsx`
+
 ## [2026-08-17 20:05] - [STYLE]
 What: Chat assistant-turn actions now show Reply first, then Copy, then Fork.
 Why: Reply is the primary next step in a conversation, so it should be the first control you see.
