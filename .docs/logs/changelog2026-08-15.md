@@ -20,6 +20,16 @@ Impact: Users and operators now receive the correct ROAS connector name, endpoin
 
 Files: `apps/docs/content/integrations/vibey-mcp.mdx`, `apps/agent-api/src/modules/vibey-mcp/smoke/README.md`
 
+## [2026-08-15 16:51] - [FEATURE]
+
+What: HTML, CSS, and SVG chat code now renders as a compact clickable card. Opening it shows a right-side artifact pane with Preview/Code, Copy, and Download.
+
+Why: Pixel was dumping full HTML blocks inline in the thread, so the reply was unreadable and there was no way to see how the snippet would look.
+
+Impact: Closed `html`/`css`/`svg` fences (and unlabeled HTML documents) become cards in Pixel, agent, and channel chat. Other languages stay as inline code. Preview renders in a sandboxed iframe.
+
+Files: `apps/web/src/lib/chat/chat-code-artifact.ts`, `apps/web/src/components/chat/ChatCodeArtifactCard.tsx`, `apps/web/src/components/chat/ChatCodeArtifactCopyMenu.tsx`, `apps/web/src/components/chat/ChatMarkdownDocument.tsx`, `apps/web/src/components/shell/ShellCodeArtifactViewer.tsx`, `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `documentation/frontend-shared-surfaces.md`
+
 ## [2026-08-15 16:20] - [FIX]
 
 What: The Home chat artifact pane now opens the real editors at an editor-sized width, can be dragged past the old 720px cap, and uses its Artifacts / files / title crumbs to browse inside that same right pane.
