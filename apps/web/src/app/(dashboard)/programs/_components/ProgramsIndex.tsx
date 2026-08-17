@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { ListChecks } from 'lucide-react'
 import { toast } from 'sonner'
 import { ShellBreadcrumb } from '@/components/shell/ShellBreadcrumb'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { fetchPrograms, programDisplayName, type Program } from '@/lib/programs'
 import { PROGRAMS_INDEX_MESSAGES } from '../_config/programs-index-messages.config'
 
@@ -31,14 +31,6 @@ export function ProgramsIndex() {
     }
   }, [])
 
-  if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <VibeyLoadingOrb text={PROGRAMS_INDEX_MESSAGES.loading} state="processing" size="lg" />
-      </div>
-    )
-  }
-
   return (
     <main className="scrollbar-hide h-full min-h-0 overflow-y-auto">
       <ShellBreadcrumb label="Programs">
@@ -53,7 +45,11 @@ export function ProgramsIndex() {
             {PROGRAMS_INDEX_MESSAGES.subtitle}
           </p>
         </header>
-        {programs.length === 0 ? (
+        {loading ? (
+          <div className="px-spacing-4">
+            <ListSkeleton rows={6} label={PROGRAMS_INDEX_MESSAGES.loading} />
+          </div>
+        ) : programs.length === 0 ? (
           <div className="surface-card border-border rounded-spacing-3 p-spacing-6 border text-center">
             <ListChecks className="icon-lg text-muted-foreground mb-spacing-2 mx-auto" />
             <p className="body-2 text-foreground font-medium">{PROGRAMS_INDEX_MESSAGES.empty}</p>

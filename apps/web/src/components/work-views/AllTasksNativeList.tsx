@@ -44,10 +44,14 @@ export function AllTasksNativeList({
   items,
   reload,
   onOpenItem,
+  onAddItem,
+  persistItem,
 }: {
   items: TaskRollupItem[]
   reload: () => Promise<void>
   onOpenItem?: (item: TaskRollupItem) => void
+  onAddItem?: (title: string) => Promise<void>
+  persistItem?: (item: TaskRollupItem, payload: Partial<SpaceItem>) => Promise<void>
 }) {
   const router = useRouter()
   const roster = useSpacesStore((state) => state.roster)
@@ -84,8 +88,10 @@ export function AllTasksNativeList({
       }}
       onUpdateItem={async (itemId, payload) => {
         const item = spaceItems.find((row) => row.id === itemId)
-        if (!item) return
-        await updateSpaceItem(item.space_id, item.id, payload)
+        const source = items.find((row) => row.id === itemId)
+        if (!item || !source) return
+        if (persistItem) await persistItem(source, payload)
+        else await updateSpaceItem(item.space_id, item.id, payload)
         await reload()
       }}
       onPushToAgent={async (itemId, options) => {
@@ -100,11 +106,26 @@ export function AllTasksNativeList({
         await deleteSpaceItem(item.space_id, item.id)
         await reload()
       }}
-      onAddItemInGroup={async () => {
+      onAddItemInGroup={async (title) => {
+        if (onAddItem) {
+          await onAddItem(title)
+          await reload()
+          return
+        }
         throw new Error('Choose a Campaign Space before adding a task.')
       }}
-      quickAddInactiveAction={() =>
-        toast.info('Open a Campaign Space to add a task in the correct client context.')
+      quickAddOnSubmitItem={
+        onAddItem
+          ? async (title) => {
+              await onAddItem(title)
+              await reload()
+            }
+          : undefined
+      }
+      quickAddInactiveAction={
+        onAddItem
+          ? undefined
+          : () => toast.info('Open a Campaign Space to add a task in the correct client context.')
       }
     />
   )

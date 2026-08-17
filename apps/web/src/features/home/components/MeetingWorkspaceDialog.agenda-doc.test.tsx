@@ -27,6 +27,12 @@ vi.mock('@/features/home/components/MeetingAgendaDocEditor', () => ({
     <div data-testid="meeting-agenda-doc" data-item-id={itemId} />
   ),
 }))
+vi.mock('@/components/work-views/AllTasksNativeList', () => ({
+  AllTasksNativeList: () => <button type="button">Add task</button>,
+}))
+vi.mock('@/lib/work-items', () => ({
+  useSpaceMappingIndex: () => null,
+}))
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => {
   const useGlobalChatStore = Object.assign(
     (

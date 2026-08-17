@@ -129,10 +129,9 @@ describe('ShellRightPanelConnections', () => {
     expect(onOpenMeeting).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps remove on X without opening the meeting', () => {
+  it('keeps the meeting workspace linked without a remove control', () => {
     mocks.space = { id: 'space-meetings', title: 'Meetings' }
     const onOpenMeeting = vi.fn()
-    const onClearMeeting = vi.fn()
     const onScopeChanged = vi.fn()
 
     render(
@@ -145,16 +144,16 @@ describe('ShellRightPanelConnections', () => {
         open
         onOpenChange={vi.fn()}
         onOpenMeeting={onOpenMeeting}
-        onClearMeeting={onClearMeeting}
         onScopeChanged={onScopeChanged}
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Remove Client launch review connection' }))
-
-    expect(onOpenMeeting).not.toHaveBeenCalled()
-    expect(onClearMeeting).toHaveBeenCalledTimes(1)
-    expect(onScopeChanged).toHaveBeenCalledWith({ campaignId: null, spaceId: null })
+    expect(
+      screen.queryByRole('button', { name: 'Remove Client launch review connection' }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Open Client launch review' }))
+    expect(onOpenMeeting).toHaveBeenCalledTimes(1)
+    expect(onScopeChanged).not.toHaveBeenCalled()
   })
 
   it('opens a campaign connection from the row', () => {
@@ -172,6 +171,43 @@ describe('ShellRightPanelConnections', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Yasir VIP Upgrade' }))
     expect(onOpenCampaign).toHaveBeenCalledWith('campaign-1')
+  })
+
+  it('still lets a campaign connection be removed', () => {
+    const onScopeChanged = vi.fn()
+    render(
+      <ShellRightPanelConnections
+        conversation={null}
+        campaignId="campaign-1"
+        spaceId={null}
+        open
+        onOpenChange={vi.fn()}
+        onScopeChanged={onScopeChanged}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Yasir VIP Upgrade connection' }))
+    expect(onScopeChanged).toHaveBeenCalledWith({ campaignId: null, spaceId: null })
+  })
+
+  it('shows the meeting workspace even when no live space id is attached', () => {
+    render(
+      <ShellRightPanelConnections
+        conversation={null}
+        campaignId={null}
+        spaceId={null}
+        linkedMeeting={{ meetingItemId: 'meeting-1', spaceId: 'space-meetings' }}
+        meetingTitle="Client launch review"
+        open
+        onOpenChange={vi.fn()}
+        onOpenMeeting={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Client launch review')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Remove Client launch review connection' }),
+    ).not.toBeInTheDocument()
   })
 
   it('keeps the scope picker mounted while collapsed', () => {

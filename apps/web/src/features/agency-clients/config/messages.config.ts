@@ -1,7 +1,9 @@
 export const AGENCY_CLIENT_MESSAGES = {
   LOAD_CLIENTS_ERROR: 'Could not load clients',
+  LOADING_CLIENTS: 'Loading clients...',
   LOAD_CLIENT_ERROR: 'Could not load client',
   LOAD_CAMPAIGNS_ERROR: 'Could not load campaigns',
+  LOADING_CAMPAIGNS: 'Loading campaigns...',
   UPDATE_CLIENT_ERROR: 'Could not update client details',
   UPDATE_CAMPAIGN_ERROR: 'Could not update campaign',
   UPDATE_TASK_ERROR: 'Could not update task',

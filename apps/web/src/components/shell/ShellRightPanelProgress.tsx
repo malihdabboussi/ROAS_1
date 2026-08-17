@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRight, Circle, CircleCheck, CircleSlash, UserRound } from 'lucide-react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
   fetchMissionById,
   fetchSubtasks,
@@ -19,7 +20,6 @@ import { cn } from '@/lib/utils/cn'
 import type { ConversationMissionRow } from './shell-conversation-summary'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
 import { ShellRightPanelEmpty } from './ShellRightPanelEmpty'
-import { ShellRightPanelSkeleton } from './ShellRightPanelSkeleton'
 
 type SubtaskState = { loading: boolean; rows: MissionSubtask[]; failed: boolean }
 
@@ -252,7 +252,7 @@ function StepList({ state }: { state: SubtaskState }) {
   if (state.loading) {
     return (
       <div className="px-spacing-3 py-spacing-1">
-        <ShellRightPanelSkeleton rows={4} label={SHELL_RIGHT_PANEL_MESSAGES.progressLoading} />
+        <ListSkeleton rows={4} label={SHELL_RIGHT_PANEL_MESSAGES.progressLoading} />
       </div>
     )
   }
