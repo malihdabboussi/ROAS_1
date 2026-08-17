@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 16:47] - [FIX]
+What: Wrapped artifact viewer close handler so `onClick` does not pass a mouse event into `closeArtifactViewer(conversationId?)`.
+Why: Vercel `roas-web` typecheck failed on PR #263.
+Impact: Production web build can complete for artifact pin/restore.
+Files: `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`
+
 ## [2026-08-17 16:38] - [FEATURE]
 What: Shell artifact viewer now restores each chat’s last-open artifact on conversation switch, with an optional pin that keeps the current artifact open while browsing other chats.
 Why: Match ChatGPT/Codex chat↔artifact memory without blocking cross-chat navigation on one artifact.
