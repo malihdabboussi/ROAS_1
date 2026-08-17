@@ -1,8 +1,6 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
-import { HOME_AGENDA_MESSAGES } from '@/features/home/config/home-agenda-messages.config'
 import { rankPersonalMeetingsSpace } from '@/features/home/lib/resolve-meetings-space-id'
 import { SpaceItemsContainer, useSpacesStore } from '@/features/spaces'
 
@@ -19,9 +17,19 @@ function findMeetingsSpaceId(spaces: ReturnType<typeof useSpacesStore.getState>[
   return selectedId
 }
 
+function activateMeetingsSpace(spaceId: string | null) {
+  if (!spaceId) return
+  const store = useSpacesStore.getState()
+  store.setActiveSpace(spaceId)
+  store.setActiveView('agenda')
+}
+
 export function MeetingsUnifiedSurface({ agenda }: { agenda: ReactNode }) {
-  const [initialized, setInitialized] = useState(false)
-  const [meetingsSpaceId, setMeetingsSpaceId] = useState<string | null>(null)
+  const [meetingsSpaceId, setMeetingsSpaceId] = useState<string | null>(() => {
+    const spaceId = findMeetingsSpaceId(useSpacesStore.getState().spaces)
+    activateMeetingsSpace(spaceId)
+    return spaceId
+  })
   const loadSpaces = useSpacesStore((state) => state.loadSpaces)
   const loadRoster = useSpacesStore((state) => state.loadRoster)
 
@@ -29,31 +37,14 @@ export function MeetingsUnifiedSurface({ agenda }: { agenda: ReactNode }) {
     let cancelled = false
     void Promise.all([loadSpaces(), loadRoster()]).then(() => {
       if (cancelled) return
-      const store = useSpacesStore.getState()
-      const spaceId = findMeetingsSpaceId(store.spaces)
-      if (spaceId) {
-        store.setActiveSpace(spaceId)
-        store.setActiveView('agenda')
-      }
+      const spaceId = findMeetingsSpaceId(useSpacesStore.getState().spaces)
+      activateMeetingsSpace(spaceId)
       setMeetingsSpaceId(spaceId)
-      setInitialized(true)
     })
     return () => {
       cancelled = true
     }
   }, [loadRoster, loadSpaces])
-
-  if (!initialized) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <VibeyLoadingOrb
-          state="processing"
-          size="lg"
-          text={HOME_AGENDA_MESSAGES.LOADING_MEETINGS.message}
-        />
-      </div>
-    )
-  }
 
   if (!meetingsSpaceId) {
     return <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">{agenda}</div>

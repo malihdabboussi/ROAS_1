@@ -34,6 +34,8 @@ interface SpaceConversationsHeaderProps {
   onCompactHeaderTitleClick?: () => void
   compactSearchOpen: boolean
   onCompactSearchOpenChange: (open: boolean) => void
+  /** Keep Recents actions visible while a portaled menu (filter) is open. */
+  pinHeaderActions?: boolean
   onCollapsedChange?: (collapsed: boolean) => void
   showAllAgentsToggle?: boolean
   allAgentsMode?: boolean
@@ -61,6 +63,7 @@ export function SpaceConversationsHeader({
   onCompactHeaderTitleClick,
   compactSearchOpen,
   onCompactSearchOpenChange,
+  pinHeaderActions = false,
   onCollapsedChange,
   showAllAgentsToggle,
   allAgentsMode,
@@ -220,7 +223,7 @@ export function SpaceConversationsHeader({
             <div
               className={cn(
                 'gap-spacing-0 ml-auto flex shrink-0 items-center transition-[opacity,transform] duration-200 ease-out',
-                compactSearchOpen || hideSearch
+                compactSearchOpen || hideSearch || pinHeaderActions
                   ? 'pointer-events-auto translate-x-0 opacity-100'
                   : 'pointer-events-none translate-x-4 opacity-0 group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100',
               )}

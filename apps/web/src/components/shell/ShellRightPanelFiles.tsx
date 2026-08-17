@@ -11,6 +11,7 @@ import {
   Rocket,
   Video,
 } from 'lucide-react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
   fetchConversationDocuments,
   openArtifactInShell,
@@ -23,7 +24,6 @@ import { showConversationMessageInChat } from './shell-chat-message-navigation'
 import { extractConversationFileRows, type ConversationFileRow } from './shell-conversation-summary'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
 import { ShellRightPanelEmpty } from './ShellRightPanelEmpty'
-import { ShellRightPanelSkeleton } from './ShellRightPanelSkeleton'
 
 function documentFileUrl(document: ConversationDocument): string | null {
   const value = document.content?.file_url
@@ -117,9 +117,7 @@ export function ShellRightPanelFiles({
 
   return (
     <div className="space-y-spacing-3">
-      {showSkeleton ? (
-        <ShellRightPanelSkeleton label={SHELL_RIGHT_PANEL_MESSAGES.chatFilesLoading} />
-      ) : null}
+      {showSkeleton ? <ListSkeleton label={SHELL_RIGHT_PANEL_MESSAGES.chatFilesLoading} /> : null}
       {loadFailed ? (
         <p className="body-3 text-destructive">{SHELL_RIGHT_PANEL_MESSAGES.chatFilesError}</p>
       ) : null}

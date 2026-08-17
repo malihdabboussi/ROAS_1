@@ -44,6 +44,19 @@ export type MeetingAction = {
   title: string
   source_type: 'provider' | 'ai' | 'manual'
   status: string
+  task_status?: string | null
+  priority?: string | null
+  due_at?: string | null
+  start_date?: string | null
+  assignee_type?: string | null
+  assignee_id?: string | null
+  assignees?: Array<{ type: 'human' | 'agent'; id: string }>
+  org_id?: string | null
+  user_id?: string | null
+  sort_order?: number | null
+  description?: string | null
+  notes?: string | null
+  linked_mission_id?: string | null
   canonical_assignee_name: string | null
   canonical_assignee_email: string | null
   evidence: Record<string, unknown>

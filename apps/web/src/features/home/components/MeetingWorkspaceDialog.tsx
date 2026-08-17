@@ -27,7 +27,6 @@ import {
   endMeetingCall,
   fetchMeetingWorkspace,
   startMeetingCall,
-  toggleMeetingActionStatus,
   type MeetingAction,
   type MeetingSnippet,
   type MeetingWorkspaceBundle,
@@ -215,22 +214,6 @@ export function MeetingWorkspaceDialog({
     }
   }
 
-  const toggleAction = async (action: MeetingAction) => {
-    try {
-      const updated = await toggleMeetingActionStatus(spaceId, meetingItemId, action)
-      setBundle((current) =>
-        current
-          ? {
-              ...current,
-              actions: current.actions.map((row) => (row.id === action.id ? updated : row)),
-            }
-          : current,
-      )
-    } catch {
-      toast.error(HOME_TOAST_ERRORS.MEETING_ACTION_UPDATE_FAILED.userMessage)
-    }
-  }
-
   const handleActionCreated = (action: MeetingAction) => {
     setBundle((current) => {
       if (!current) return current
@@ -240,14 +223,6 @@ export function MeetingWorkspaceDialog({
         actions: [...current.actions, action],
       }
     })
-  }
-
-  const handleActionMoved = (action: MeetingAction) => {
-    setBundle((current) =>
-      current
-        ? { ...current, actions: current.actions.filter((row) => row.id !== action.id) }
-        : current,
-    )
   }
 
   const handleNoteCreated = (snippet: MeetingSnippet) => {
@@ -338,9 +313,8 @@ export function MeetingWorkspaceDialog({
               void hydrateWorkspace()
             }}
             onNoteCreated={handleNoteCreated}
-            onToggleAction={toggleAction}
             onActionCreated={handleActionCreated}
-            onActionMoved={handleActionMoved}
+            onActionsReload={hydrateWorkspace}
           />
         </div>
       </main>

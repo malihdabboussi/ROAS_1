@@ -135,9 +135,20 @@ describe('ShellTopBar', () => {
     expect(screen.getByTitle('Collapse page — chat full screen')).toBeInTheDocument()
   })
 
-  it('hides the Simple work-area control while chat is open so the chat header owns it', () => {
+  it('keeps the Simple work-area control on the page header while the page is open beside chat', () => {
     useShellMenuDock.setState({ menuStyle: 'simple' })
     mocks.shellState.chatDrawer = { open: true }
+    mocks.shellState.workAreaOpen = true
+
+    render(<ShellTopBar />)
+
+    expect(screen.getByTitle('Collapse page — chat full screen')).toBeInTheDocument()
+  })
+
+  it('hides the Simple work-area control while the page is collapsed so the chat header owns Show page', () => {
+    useShellMenuDock.setState({ menuStyle: 'simple' })
+    mocks.shellState.chatDrawer = { open: true }
+    mocks.shellState.workAreaOpen = false
 
     render(<ShellTopBar />)
 
