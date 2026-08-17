@@ -197,3 +197,9 @@ Why: Preview builds for roas-api and roas-web failed on PR #260.
 Impact: Branch can build and merge/deploy.
 
 Files: `apps/api/src/modules/work-requests/dto/work-request.dto.ts`, `apps/web/src/features/work-requests/components/WorkRequestReviewChatHost.tsx`
+
+## [2026-08-17 19:44] - [DOCS]
+What: Added the gangbusters ultra-detailed navigation/UX audit prompt plus a paste-ready kickoff for cloud agents.
+Why: Need a reusable, high-depth click-through protocol (Attach/@ gold example) before running a full-platform menu audit and plan-before-fix loop.
+Impact: Agents can execute exhaustive surface testing with consistent finding cards, stale-state hunts, and a reference Attach consolidation plan.
+Files: `.docs/plans/ux-gangbusters-navigation-audit-prompt.md`, `.docs/plans/ux-gangbusters-audit-kickoff.md`
