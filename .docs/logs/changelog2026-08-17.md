@@ -1,5 +1,17 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 16:47] - [FIX]
+What: Wrapped artifact viewer close handler so `onClick` does not pass a mouse event into `closeArtifactViewer(conversationId?)`.
+Why: Vercel `roas-web` typecheck failed on PR #263.
+Impact: Production web build can complete for artifact pin/restore.
+Files: `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`
+
+## [2026-08-17 16:38] - [FEATURE]
+What: Shell artifact viewer now restores each chat’s last-open artifact on conversation switch, with an optional pin that keeps the current artifact open while browsing other chats.
+Why: Match ChatGPT/Codex chat↔artifact memory without blocking cross-chat navigation on one artifact.
+Impact: Switching chats restores that chat’s artifact by default; pin freezes the panel across switches; summary panel / explicit close still clears and unpins.
+Files: `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/shell/use-shell-store.artifact-conversation.ts`, `apps/web/src/components/shell/shell-artifact-conversation.ts`, `apps/web/src/components/shell/use-shell-artifact-conversation-sync.ts`, `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 05:49] - [FIX]
 What: Guaranteed Service Request review links resume the originating Pixel chat. Agent-api now injects the active session `conversation_id` into Page Grader fulfillment MCP args and stamps the draft via an internal API after create. Review/chat load also backfills from Slack channel+thread provenance when the id was missing, and idempotent create replays merge an incoming conversation id.
 Why: Slack-created drafts still opened the step wizard because provenance lacked `resume_conversation_id`; skill-only stamping was insufficient.

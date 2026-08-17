@@ -145,6 +145,8 @@ describe('shell artifact viewer state', () => {
     useShellStore.setState({
       artifactViewer: { target: null, width: 480 },
       recentArtifactTargets: [],
+      lastArtifactByConversation: {},
+      artifactPinned: false,
       chatDrawer: { open: false, conversationId: null, width: 280, minimized: false },
       rightPanel: { open: true },
     })
@@ -168,11 +170,53 @@ describe('shell artifact viewer state', () => {
     ])
   })
 
-  it('closes the artifact viewer when the summary panel or chat opens', () => {
+  it('closes the artifact viewer when the summary panel opens', () => {
     useShellStore.getState().openArtifactViewer(target)
     useShellStore.getState().setRightPanelOpen(true)
     expect(useShellStore.getState().artifactViewer.target).toBeNull()
+  })
 
+  it('restores each chat’s last artifact when switching conversations', () => {
+    useShellStore.setState({
+      lastArtifactByConversation: {},
+      artifactPinned: false,
+      artifactViewer: { target: null, width: 480 },
+    })
+    useShellStore.getState().openArtifactViewer(target, 'conversation-1')
+    useShellStore
+      .getState()
+      .openArtifactViewer({ ...target, id: 'doc-2', title: 'Second doc' }, 'conversation-2')
+
+    useShellStore.getState().syncArtifactViewerForConversation('conversation-1')
+    expect(useShellStore.getState().artifactViewer.target).toMatchObject({
+      id: 'doc-1',
+      conversationId: 'conversation-1',
+    })
+
+    useShellStore.getState().syncArtifactViewerForConversation('conversation-2')
+    expect(useShellStore.getState().artifactViewer.target).toMatchObject({
+      id: 'doc-2',
+      conversationId: 'conversation-2',
+    })
+  })
+
+  it('keeps a pinned artifact open across chat switches and drawer opens', () => {
+    useShellStore.setState({
+      lastArtifactByConversation: {},
+      artifactPinned: false,
+      artifactViewer: { target: null, width: 480 },
+    })
+    useShellStore.getState().openArtifactViewer(target, 'conversation-1')
+    useShellStore.getState().setArtifactPinned(true)
+
+    useShellStore.getState().syncArtifactViewerForConversation('conversation-2')
+    expect(useShellStore.getState().artifactViewer.target?.id).toBe('doc-1')
+
+    useShellStore.getState().openChatDrawer('conversation-2')
+    expect(useShellStore.getState().artifactViewer.target?.id).toBe('doc-1')
+  })
+
+  it('closes the unpinned artifact when opening a chat with no remembered artifact', () => {
     useShellStore.getState().openArtifactViewer(target)
     useShellStore.getState().openChatDrawer('conversation-1')
     expect(useShellStore.getState().artifactViewer.target).toBeNull()
