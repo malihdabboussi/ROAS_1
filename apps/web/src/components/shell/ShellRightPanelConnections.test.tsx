@@ -4,7 +4,13 @@ import { ShellRightPanelConnections } from './ShellRightPanelConnections'
 
 const mocks = vi.hoisted(() => ({
   openScopePicker: vi.fn(),
-  campaigns: [{ id: 'campaign-1', name: 'Yasir VIP Upgrade' }],
+  campaigns: [{ id: 'campaign-1', name: 'Yasir VIP Upgrade' }] as Array<{
+    id: string
+    name: string
+    program_id?: string | null
+  }>,
+  programs: [] as Array<{ id: string; name: string; system_kind?: string | null }>,
+  space: null as { id: string; title: string } | null,
 }))
 
 vi.mock('@/components/conversations', async () => {
@@ -20,7 +26,8 @@ vi.mock('@/components/conversations', async () => {
 vi.mock('@/components/conversations/use-conversation-scope-data', () => ({
   useConversationScopeCampaigns: () => mocks.campaigns,
   useConversationScopeFallbackCampaign: () => null,
-  useConversationScopeFallbackSpace: () => null,
+  useConversationScopeFallbackSpace: () => mocks.space,
+  useConversationScopePrograms: () => mocks.programs,
 }))
 
 vi.mock('@/lib/conversations', () => ({ assignConversationScope: vi.fn() }))
@@ -34,6 +41,9 @@ describe('ShellRightPanelConnections', () => {
   afterEach(() => {
     cleanup()
     vi.clearAllMocks()
+    mocks.campaigns = [{ id: 'campaign-1', name: 'Yasir VIP Upgrade' }]
+    mocks.programs = []
+    mocks.space = null
   })
 
   const renderPanel = (open: boolean, onOpenChange = vi.fn()) => {
@@ -53,6 +63,23 @@ describe('ShellRightPanelConnections', () => {
     renderPanel(true)
 
     expect(screen.getByText('Yasir VIP Upgrade')).toBeInTheDocument()
+  })
+
+  it('qualifies a General space with the connected campaign', () => {
+    mocks.campaigns = [{ id: 'campaign-1', name: 'Yasir Khan' }]
+    mocks.space = { id: 'space-1', title: 'General' }
+    render(
+      <ShellRightPanelConnections
+        conversation={null}
+        campaignId="campaign-1"
+        spaceId="space-1"
+        open
+        onOpenChange={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Yasir Khan General')).toBeInTheDocument()
+    expect(screen.queryByText('General')).not.toBeInTheDocument()
   })
 
   it('keeps the scope picker mounted while collapsed', () => {

@@ -1,5 +1,6 @@
 import type { Campaign } from '@/lib/campaigns'
-import type { Program } from '@/lib/programs'
+import { programDisplayName, type Program } from '@/lib/programs'
+import { sortGeneralFirst } from './conversation-scope-sort'
 
 export const SCOPE_UNGROUPED_PROGRAM_KEY = '__ungrouped__'
 
@@ -9,13 +10,65 @@ export type ConversationScopeCampaignGroup = {
   campaigns: Campaign[]
 }
 
+export type ConversationScopeProgramRow = {
+  id: string
+  name: string
+  campaigns: Campaign[]
+}
+
+export type ConversationScopeLists = {
+  programs: ConversationScopeProgramRow[]
+  ungroupedCampaigns: Campaign[]
+  clients: Campaign[]
+}
+
+function isClientsProgram(program: Program): boolean {
+  return program.system_kind === 'clients'
+}
+
+export function programNameForCampaign(
+  campaign: Campaign | null | undefined,
+  programs: readonly Program[],
+): string | null {
+  if (!campaign?.program_id) return null
+  const program = programs.find((row) => row.id === campaign.program_id)
+  return program ? programDisplayName(program) : null
+}
+
 export function groupScopeCampaignsByProgram(
   campaigns: Campaign[],
   programs: Program[],
 ): ConversationScopeCampaignGroup[] {
+  const lists = buildConversationScopeLists(campaigns, programs)
+  const groups = lists.programs.map((program) => ({
+    key: program.id,
+    label: program.name,
+    campaigns: program.campaigns,
+  }))
+  if (lists.ungroupedCampaigns.length > 0) {
+    groups.push({
+      key: SCOPE_UNGROUPED_PROGRAM_KEY,
+      label: 'General',
+      campaigns: lists.ungroupedCampaigns,
+    })
+  }
+  return sortGeneralFirst(groups, (group) => group.label)
+}
+
+export function buildConversationScopeLists(
+  campaigns: Campaign[],
+  programs: Program[],
+): ConversationScopeLists {
   const byId = new Map(programs.map((program) => [program.id, program]))
+  const clientsProgram = programs.find(isClientsProgram)
   const buckets = new Map<string, Campaign[]>()
+  const clients: Campaign[] = []
+
   for (const campaign of campaigns) {
+    if (clientsProgram && campaign.program_id === clientsProgram.id) {
+      clients.push(campaign)
+      continue
+    }
     const key =
       campaign.program_id && byId.has(campaign.program_id)
         ? campaign.program_id
@@ -24,34 +77,33 @@ export function groupScopeCampaignsByProgram(
     list.push(campaign)
     buckets.set(key, list)
   }
-  const groups: ConversationScopeCampaignGroup[] = []
-  for (const program of [...programs].sort((a, b) =>
-    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-  )) {
-    const rows = buckets.get(program.id) ?? []
+
+  const programRows: ConversationScopeProgramRow[] = []
+  for (const program of sortGeneralFirst(programs, (row) => programDisplayName(row))) {
+    const rows = isClientsProgram(program) ? clients : (buckets.get(program.id) ?? [])
     if (rows.length === 0) continue
-    groups.push({
-      key: program.id,
-      label: program.name,
-      campaigns: [...rows].sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-      ),
+    programRows.push({
+      id: program.id,
+      name: programDisplayName(program),
+      campaigns: sortGeneralFirst(rows, (row) => row.name),
     })
     buckets.delete(program.id)
   }
+
   const ungrouped = buckets.get(SCOPE_UNGROUPED_PROGRAM_KEY) ?? []
   for (const [key, list] of buckets) {
     if (key === SCOPE_UNGROUPED_PROGRAM_KEY) continue
     ungrouped.push(...list)
   }
-  if (ungrouped.length > 0) {
-    groups.push({
-      key: SCOPE_UNGROUPED_PROGRAM_KEY,
-      label: 'General',
-      campaigns: ungrouped.sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-      ),
-    })
+  return {
+    programs: sortGeneralFirst(programRows, (row) => row.name),
+    ungroupedCampaigns: sortGeneralFirst(ungrouped, (row) => row.name),
+    clients: sortGeneralFirst(clients, (row) => row.name),
   }
-  return groups.sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }))
+}
+
+export function filterScopeClients(clients: Campaign[], query: string): Campaign[] {
+  const needle = query.trim().toLowerCase()
+  if (!needle) return clients
+  return clients.filter((client) => client.name.toLowerCase().includes(needle))
 }

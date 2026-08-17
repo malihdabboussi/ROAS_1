@@ -1,3 +1,15 @@
+## 2026-08-17 - [ARCH] ConversationScopePicker is at the 400 LOC component limit
+
+Status: Open
+
+Found while: Program-first Connections picker with searchable clients
+
+Evidence: `wc -l` reports `apps/web/src/components/conversations/ConversationScopePicker.tsx` at 396 LOC (component cap 400) after submenu/search wiring.
+
+Needed work: Extract menu measurement, space loading, and scope-assign handlers into a hook.
+
+Reason not done now: The requested picker behavior fit in the existing container; splitting mid-change would have mixed the UX rewrite with a structural refactor.
+
 ## 2026-08-16 - [ARCH] SpaceVibeyChatPanel still over the container LOC limit after summary dock wiring
 
 Status: Open

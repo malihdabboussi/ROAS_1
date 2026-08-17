@@ -32,9 +32,6 @@ vi.mock('../components/ChatSurfaceRecommendation', () => ({
   ChatSurfaceRecommendation: () => null,
 }))
 vi.mock('../components/ChatCampaignBrainNudge', () => ({ ChatCampaignBrainNudge: () => null }))
-vi.mock('../components/GlobalChatComposerFooter', () => ({
-  GlobalChatComposerFooter: () => null,
-}))
 vi.mock('../components/QuickMissionsHubHost', () => ({
   QuickMissionsHubHost: () => <div data-testid="active-chat-quick-missions-host" />,
 }))

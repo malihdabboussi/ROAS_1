@@ -1,5 +1,6 @@
 import type { RefObject } from 'react'
 import type { Conversation } from '@/lib/conversations'
+import { qualifyGeneralLocation } from './conversation-scope-sort'
 
 export const CONVERSATION_SCOPE_MENU_WIDTH = 260
 export const CONVERSATION_SCOPE_MENU_HEIGHT_CAP = 520
@@ -21,6 +22,7 @@ export interface ConversationScopeSelection {
   spaceId: string | null
   campaignName?: string | null
   spaceTitle?: string | null
+  programName?: string | null
 }
 
 export interface ConversationScopePickerProps {
@@ -44,13 +46,20 @@ export interface ConversationScopePickerProps {
 export function conversationScopeDisplayLabel(input: {
   campaignName?: string | null
   spaceTitle?: string | null
+  programName?: string | null
   campaignId?: string | null
   spaceId?: string | null
   emptyLabel: string
 }): string {
-  const spaceTitle = input.spaceTitle?.trim()
+  const spaceTitle = qualifyGeneralLocation({
+    leafName: input.spaceTitle,
+    parentName: input.campaignName,
+  })
   if (spaceTitle) return spaceTitle
-  const campaignName = input.campaignName?.trim()
+  const campaignName = qualifyGeneralLocation({
+    leafName: input.campaignName,
+    parentName: input.programName,
+  })
   if (campaignName) return campaignName
   if (input.spaceId) return 'Space'
   if (input.campaignId) return 'Campaign'
