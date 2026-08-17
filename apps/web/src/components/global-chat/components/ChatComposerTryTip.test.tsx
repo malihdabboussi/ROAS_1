@@ -1,6 +1,11 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { COMPOSER_TRY_TIP_MESSAGES, pickComposerTryTip } from '@/lib/chat/composer-try-tips'
+import {
+  COMPOSER_TRY_TIP_MESSAGES,
+  COMPOSER_TRY_TIP_ROTATE_MS,
+  COMPOSER_TRY_TIPS,
+  pickComposerTryTip,
+} from '@/lib/chat/composer-try-tips'
 import { ChatComposerTryTip } from './ChatComposerTryTip'
 
 const mocks = vi.hoisted(() => ({
@@ -25,15 +30,17 @@ vi.mock('@/components/global-chat/lib/global-chat-storage', () => ({
 describe('ChatComposerTryTip', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useRealTimers()
     mocks.dismissedIds = []
   })
 
   afterEach(() => {
     cleanup()
+    vi.useRealTimers()
   })
 
   it('opens the current tip as a new Pixel task', () => {
-    const tip = pickComposerTryTip([])
+    const tip = pickComposerTryTip([], 0)
     expect(tip).not.toBeNull()
     render(<ChatComposerTryTip />)
 
@@ -47,14 +54,34 @@ describe('ChatComposerTryTip', () => {
     expect(mocks.addDismissedId).toHaveBeenCalledWith(tip!.id)
   })
 
-  it('hides after dismiss and does not seed a task', () => {
-    const tip = pickComposerTryTip([])
+  it('advances to the next tip after dismiss instead of hiding the banner', () => {
+    const first = pickComposerTryTip([], 0)
+    const next = pickComposerTryTip([first!.id], 0)
     render(<ChatComposerTryTip />)
 
     fireEvent.click(screen.getByRole('button', { name: COMPOSER_TRY_TIP_MESSAGES.dismiss }))
 
-    expect(mocks.addDismissedId).toHaveBeenCalledWith(tip!.id)
+    expect(mocks.addDismissedId).toHaveBeenCalledWith(first!.id)
     expect(mocks.seedComposer).not.toHaveBeenCalled()
+    expect(screen.getByText(next!.body)).toBeInTheDocument()
+  })
+
+  it('alternates remaining tips on an interval', () => {
+    vi.useFakeTimers()
+    const first = pickComposerTryTip([], 0)
+    const next = pickComposerTryTip([], 1)
+    render(<ChatComposerTryTip />)
+
+    expect(screen.getByText(first!.body)).toBeInTheDocument()
+    act(() => {
+      vi.advanceTimersByTime(COMPOSER_TRY_TIP_ROTATE_MS)
+    })
+    expect(screen.getByText(next!.body)).toBeInTheDocument()
+  })
+
+  it('hides the banner when every tip has been dismissed', () => {
+    mocks.dismissedIds = COMPOSER_TRY_TIPS.map((tip) => tip.id)
+    render(<ChatComposerTryTip />)
     expect(screen.queryByText(COMPOSER_TRY_TIP_MESSAGES.badge)).toBeNull()
   })
 })

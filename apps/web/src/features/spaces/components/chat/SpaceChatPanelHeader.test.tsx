@@ -44,8 +44,10 @@ describe('SpaceChatPanelHeader', () => {
       />,
     )
 
-    expect(
-      screen.getByRole('button', { name: 'Conversation controls' }).parentElement,
-    ).not.toHaveClass('absolute')
+    expect(screen.getByRole('button', { name: 'Conversation controls' }).parentElement).toHaveClass(
+      'absolute',
+      'right-spacing-3',
+      'top-spacing-2',
+    )
   })
 })

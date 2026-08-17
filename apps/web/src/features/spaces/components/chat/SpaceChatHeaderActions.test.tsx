@@ -109,12 +109,18 @@ describe('SpaceChatHeaderActions', () => {
         hideHistoryChrome
         summaryOpen={false}
         onToggleSummary={onToggleSummary}
+        pageRestore={
+          <button type="button" aria-label="Show page">
+            Show page
+          </button>
+        }
       />,
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Summary panel' }))
 
     expect(onToggleSummary).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button', { name: 'Show page' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Close AI Chats' })).toBeNull()
     expect(screen.queryByLabelText('Collapse Pixel chat')).not.toBeInTheDocument()
   })

@@ -23,6 +23,7 @@ import { showConversationMessageInChat } from './shell-chat-message-navigation'
 import { extractConversationFileRows, type ConversationFileRow } from './shell-conversation-summary'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
 import { ShellRightPanelEmpty } from './ShellRightPanelEmpty'
+import { ShellRightPanelSkeleton } from './ShellRightPanelSkeleton'
 
 function documentFileUrl(document: ConversationDocument): string | null {
   const value = document.content?.file_url
@@ -112,13 +113,12 @@ export function ShellRightPanelFiles({
     [documentKeys, messageRows],
   )
   const empty = !loading && documents.length === 0 && uniqueMessageRows.length === 0
+  const showSkeleton = loading && documents.length === 0 && uniqueMessageRows.length === 0
 
   return (
     <div className="space-y-spacing-3">
-      {loading ? (
-        <p className="body-3 text-muted-foreground">
-          {SHELL_RIGHT_PANEL_MESSAGES.chatFilesLoading}
-        </p>
+      {showSkeleton ? (
+        <ShellRightPanelSkeleton label={SHELL_RIGHT_PANEL_MESSAGES.chatFilesLoading} />
       ) : null}
       {loadFailed ? (
         <p className="body-3 text-destructive">{SHELL_RIGHT_PANEL_MESSAGES.chatFilesError}</p>

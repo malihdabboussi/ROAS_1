@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { List, ListTodo, Plus, Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
@@ -21,6 +22,7 @@ interface SpaceChatHeaderActionsProps {
   hideHistoryChrome?: boolean
   summaryOpen?: boolean
   onToggleSummary?: () => void
+  pageRestore?: ReactNode
 }
 
 export function SpaceChatHeaderActions({
@@ -39,6 +41,7 @@ export function SpaceChatHeaderActions({
   hideHistoryChrome = false,
   summaryOpen = false,
   onToggleSummary,
+  pageRestore,
 }: SpaceChatHeaderActionsProps) {
   const hoverReveal =
     !hideHistoryChrome &&
@@ -65,6 +68,7 @@ export function SpaceChatHeaderActions({
           <List className="icon-sm" aria-hidden />
         </button>
       ) : null}
+      {pageRestore}
       <div
         className={cn(
           'gap-spacing-0 flex shrink-0 items-center transition-[opacity,transform] duration-200 ease-out',

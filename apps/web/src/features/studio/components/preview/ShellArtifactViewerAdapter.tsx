@@ -8,11 +8,13 @@ import { FunnelFullPreview } from '@/components/deliverables/FunnelFullPreview'
 import { PresentationFullPreview } from '@/components/deliverables/PresentationFullPreview'
 import { useDeliverableEntityContent } from '@/components/deliverables/use-deliverable-entity-content'
 import { ShellArtifactViewerPanel } from '@/components/shell/ShellArtifactViewerPanel'
+import { ShellCodeArtifactViewer } from '@/components/shell/ShellCodeArtifactViewer'
 import { ShellMissionArtifactViewerAdapter } from '@/components/shell/ShellMissionArtifactViewerAdapter'
 import { ShellTaskArtifactViewerAdapter } from '@/components/shell/ShellTaskArtifactViewerAdapter'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { SpaceDocEditorPanelAdapter } from '@/components/spaces/SpaceDocEditorPanelAdapter'
 import { SHELL_ARTIFACT_OPEN_EVENT, type ShellArtifactViewerTarget } from '@/lib/artifacts'
+import { isShellCodeArtifactTarget } from '@/lib/chat/chat-code-artifact'
 import {
   VIBEY_OPEN_MEDIA_EVENT,
   type VibeyOpenMediaDetail,
@@ -155,6 +157,9 @@ export function ShellArtifactViewerAdapter() {
   }, [closeArtifactViewer, router, target])
 
   if (!target) return null
+  if (isShellCodeArtifactTarget(target)) {
+    return <ShellCodeArtifactViewer target={target} />
+  }
   if (target.type === 'funnel' || target.type === 'website') {
     return (
       <ShellArtifactViewerPanel target={target} bodyClassName="overflow-hidden">

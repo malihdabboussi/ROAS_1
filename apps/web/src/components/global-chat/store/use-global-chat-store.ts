@@ -162,7 +162,21 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
   },
 
   setWorkContext: (patch) => {
-    const next = mergeAttachedWorkContext(get().workContext, patch)
+    const current = get().workContext
+    const next = mergeAttachedWorkContext(current, patch)
+    if (
+      next.surface === current.surface &&
+      next.spaceId === current.spaceId &&
+      next.campaignId === current.campaignId &&
+      next.channelId === current.channelId &&
+      next.channelName === current.channelName &&
+      next.brainScopeId === current.brainScopeId &&
+      next.brainId === current.brainId &&
+      next.brainScopeLabel === current.brainScopeLabel &&
+      next.teamOpsLabel === current.teamOpsLabel
+    ) {
+      return
+    }
     writePersistedGlobalChat({ workContext: next })
     set({ workContext: next })
   },

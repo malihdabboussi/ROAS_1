@@ -132,7 +132,12 @@ export class WorkRequestScopeService {
         },
       ]
     })
-    return { clients, spaces }
+    return { clients, spaces, teamMembers: await this.listTeamMembers(draft.owner_org_id) }
+  }
+
+  private async listTeamMembers(ownerOrgId: string | null) {
+    if (!ownerOrgId) return []
+    return this.repository.listOrgTeamMembers(ownerOrgId)
   }
 
   isScopedRow(row: Record<string, unknown>, ownerUserId: string, ownerOrgId: string | null) {

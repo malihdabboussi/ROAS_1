@@ -1,5 +1,55 @@
 # Changelog - August 16, 2026
 
+## [2026-08-16 23:53] - [FIX]
+
+What: Service Request “Open ROAS task” links now include the owning `org` query param, and `/spaces/{spaceId}?item=…` Portal-style paths redirect to the canonical `/spaces?space=&item=` route.
+
+Why: Review lives outside the dashboard org bootstrap, so opening a task without `org` could land in the wrong workspace. Portal/ClickUp still emit path-style Space URLs that had no app route.
+
+Impact: New finalize receipts open the correct org Space and deep-link the item; Portal-style Space URLs no longer 404.
+
+Files: `work-request-review-security.ts`, `apps/web/src/app/(dashboard)/spaces/[spaceId]/page.tsx`, `space-item-href.ts`, related tests
+
+## [2026-08-16 23:51] - [FIX]
+
+What: Service Request client (and other long) choice steps now use a searchable closed dropdown that shows the selected client, with a **Continue** CTA on the step card. Composer **Send** stays the regular chat input action.
+
+Why: The open numbered client list forced scrolling to find a preselected client, and Send on the composer felt like the step action.
+
+Impact: Preselected clients appear on the dropdown trigger; Continue advances the step; Send only sends chat replies.
+
+Files: `WorkRequestChatFlowParts.tsx`, `work-request-chat-steps.ts`, related tests
+
+## [2026-08-16 23:48] - [FIX]
+
+What: Service Request chat review now uses a team-member assignee dropdown, on-brand due-date calendar, asset link adder (no `Name | URL` textarea), and drops the dependencies step. Also stopped ClickUp mirrors from duplicating Notes/Source folder/Context/Operator note (no redundant `source_excerpt`, no `notes=description` copy, operator note only via top-level `note`).
+
+Why: ClickUp showed the brief twice, and the review chat still used confusing free-text assignee / native date / dependency fields.
+
+Impact: New reviews ask clearer fields; new finalizations mirror a single ClickUp body. Apply migration `20260816234500_work_request_finalize_notes_dedupe.sql`. Existing ClickUp tasks are unchanged.
+
+Files: work-request chat steps/UI, page-grader send helpers, finalize migration, related tests
+
+## [2026-08-16 23:30] - [STYLE]
+
+What: Removed the Home / New chat Try-tip banner and the Mission/Offer/artifact chip row above the composer. Active chats now show a rotating multi-concept Try-tip catalog (dismiss skips to the next remaining tip). Deleted `ShellEmptyChatQuickStartPills`.
+
+Why: The Home composer was too cluttered, and the same tip stayed pinned on the landing screen instead of alternating useful concepts inside real chats.
+
+Impact: Home stays greeting + input + Choose Space/Plugins. Open conversations get rotating tips. Create actions remain in the + Create menu.
+
+Files: `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/lib/chat/composer-try-tips.ts`, `apps/web/src/components/global-chat/components/ChatComposerTryTip.tsx`, deleted `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, related tests, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-16 23:48] - [FIX]
+
+What: ChatGPT-style work summary: empty Outputs/Sources/Tasks/Connections start collapsed; loading uses skeleton bars instead of a Loading label; the panel docks as an in-flow column at ≥1024px chat-pane width and stays closed (header overlay) when narrower; Summary and Show page sit together in the chat header top-right. Slack chats seed as `Slack Chat` and wait for a Gemini topic title instead of using the first message as the Recents name.
+
+Why: Empty sections opened with a loading flash then empty art; Slack Recents rows were first-message dumps; the summary overlaid chat and its toggle sat apart from Show page.
+
+Impact: Wide chats show a right-hand summary column by default. Narrow chats keep it closed until the header toggle. Slack (and other first-message titles) get a short generated topic when Gemini returns one.
+
+Files: `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/components/shell/ShellRightPanelSkeleton.tsx`, `apps/web/src/components/shell/use-summary-panel-docked.ts`, `apps/web/src/components/shell/ShellChatHeaderPageControl.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatHeaderActions.tsx`, `apps/web/src/lib/conversations/conversation-title.ts`, `apps/api/src/modules/slack/services/slack-conversation-title.ts`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-16 15:38] - [FIX]
 
 What: Broadened Pixel Service Request routing to every fulfillment type (design/copy/funnel/ghl/ad/video/other/general). Policy + vibey/atlas skills now forbid silent `create_task` for client fulfillment and require client name, draft status, and an openable `review_url` in the reply. Added DB migration so live agent skills/TOOLS pick this up.

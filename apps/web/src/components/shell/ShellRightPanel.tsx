@@ -11,6 +11,7 @@ import { readMeetingConversationLink, type Conversation } from '@/lib/conversati
 import { useQuickMissionsLauncher } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
 import {
+  extractConversationFileRows,
   extractConversationMissionRows,
   extractConversationSourceRows,
   extractConversationTaskRows,
@@ -30,11 +31,11 @@ const EMPTY_MESSAGES: never[] = []
 
 type ShellRightPanelSectionId = 'progress' | 'connections' | 'outputs' | 'sources' | 'tasks'
 
+export type ShellRightPanelPlacement = 'docked' | 'overlay'
+
 /**
- * Work summary as a floating bubble anchored to the chat's top-right corner —
- * a content-height card that expands down when opened and collapses back up,
- * with Progress / Connections / Outputs / Sources / Tasks stacked as
- * collapsible sections.
+ * Work summary: docked as an in-flow column when the chat pane is wide enough,
+ * otherwise a header-anchored overlay card. Empty sections start collapsed.
  */
 export function ShellRightPanel({
   conversationId,
@@ -42,6 +43,7 @@ export function ShellRightPanel({
   campaignId = null,
   spaceId = null,
   showScope = false,
+  placement = 'overlay',
   onConversationUpdated,
   onScopeChanged,
 }: {
@@ -50,6 +52,7 @@ export function ShellRightPanel({
   campaignId?: string | null
   spaceId?: string | null
   showScope?: boolean
+  placement?: ShellRightPanelPlacement
   onConversationUpdated?: (conversation: Conversation) => void
   onScopeChanged?: (scope: { campaignId: string | null; spaceId: string | null }) => void
 }) {
@@ -154,11 +157,13 @@ export function ShellRightPanel({
   // Emptiness decides a section's default open state, so each one needs to
   // know whether it has anything before it renders.
   const hasSources = useMemo(() => extractConversationSourceRows(messages).length > 0, [messages])
+  const hasOutputs = useMemo(() => extractConversationFileRows(messages).length > 0, [messages])
   const hasTasks = useMemo(
     () => !conversationId || extractConversationTaskRows(messages).length > 0,
     [conversationId, messages],
   )
   const hasConnections = Boolean(campaignId || spaceId)
+  const docked = placement === 'docked'
 
   useEffect(() => {
     if (!open) setCreateOpen(false)
@@ -181,13 +186,21 @@ export function ShellRightPanel({
   if (!mounted) return null
 
   return (
-    // Sits below the chat header row so the top-bar summary toggle stays
-    // visible and owns open/close — the card carries no chrome of its own.
-    <div className="px-spacing-2 top-spacing-12 z-dropdown pointer-events-none absolute right-0">
+    <div
+      className={
+        docked
+          ? 'w-spacing-72 flex h-full shrink-0'
+          : 'px-spacing-2 top-spacing-12 z-dropdown pointer-events-none absolute right-0'
+      }
+      data-summary-placement={placement}
+    >
       <aside
         className={cn(
-          'dropdown-menu-solid w-spacing-72 pointer-events-auto flex max-h-[70vh] origin-top-right flex-col overflow-hidden transition duration-200 ease-out motion-reduce:transition-none',
-          visible ? 'scale-100 opacity-100' : 'scale-95 opacity-0',
+          'flex flex-col overflow-hidden',
+          docked
+            ? 'border-border bg-background h-full min-h-0 w-full border-l'
+            : 'dropdown-menu-solid w-spacing-72 pointer-events-auto max-h-[70vh] origin-top-right transition duration-200 ease-out motion-reduce:transition-none',
+          !docked && (visible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'),
         )}
         aria-label="Work summary"
         aria-hidden={!visible}
@@ -241,8 +254,8 @@ export function ShellRightPanel({
                 ) : null}
                 <ShellRightPanelSection
                   title="Outputs"
-                  open={isSectionOpen('outputs')}
-                  onToggle={() => toggleSection('outputs')}
+                  open={isSectionOpen('outputs', hasOutputs)}
+                  onToggle={() => toggleSection('outputs', hasOutputs)}
                   action={
                     <button
                       type="button"

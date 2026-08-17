@@ -156,7 +156,9 @@ export class PageGraderSendWorkService {
           : await this.resolveAssigneeEmails(item)
 
         const title = String(item.title ?? '').trim() || 'Untitled task'
-        const description = buildDescription(item, parentContext, dto.note)
+        // Operator note stays on the top-level `note` field only. Embedding it
+        // in `work.description` made Portal render "Operator note:" twice.
+        const description = buildDescription(item, parentContext)
         const existingTags = Array.isArray(customData.tags)
           ? customData.tags.filter((t): t is string => typeof t === 'string')
           : []

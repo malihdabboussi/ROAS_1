@@ -19,7 +19,9 @@ const mocks = vi.hoisted(() => ({
     closeArtifactViewer: vi.fn(),
   },
   messagesByConversation: {
-    'conversation-1': [{ id: 'message-1', role: 'assistant', metadata: {}, created_at: '2026-08-15T00:00:00.000Z' }],
+    'conversation-1': [
+      { id: 'message-1', role: 'assistant', metadata: {}, created_at: '2026-08-15T00:00:00.000Z' },
+    ],
   },
   conversations: [] as Array<{ id: string; metadata?: Record<string, unknown> }>,
 }))
@@ -149,12 +151,15 @@ describe('ShellRightPanel', () => {
   it('opens sections that have content and folds away the ones that do not', async () => {
     render(<ShellRightPanel conversationId="conversation-1" showScope />)
 
-    // This conversation has no tool activity, so Tasks costs no height until
-    // it is asked for; Outputs has content and opens on its own.
+    // Empty Outputs / Tasks stay collapsed until they have rows or the user asks.
     const tasks = await screen.findByRole('button', { name: 'Tasks' })
     expect(tasks).toHaveAttribute('aria-expanded', 'false')
     expect(screen.queryByTestId('tasks-context')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Outputs' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: 'Outputs' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    )
+    expect(screen.queryByText('Chat files')).not.toBeInTheDocument()
 
     // An explicit toggle still wins over the emptiness default.
     fireEvent.click(tasks)
@@ -174,6 +179,7 @@ describe('ShellRightPanel', () => {
     const panel = await screen.findByRole('complementary', { name: 'Work summary' })
     expect(panel).toHaveClass('dropdown-menu-solid', 'origin-top-right')
     expect(panel.parentElement).toHaveClass('absolute', 'right-0', 'top-spacing-12')
+    expect(panel.parentElement).toHaveAttribute('data-summary-placement', 'overlay')
     expect(panel).not.toHaveClass('h-full')
     await waitFor(() => expect(panel).toHaveClass('scale-100', 'opacity-100'))
 
@@ -250,10 +256,27 @@ describe('ShellRightPanel', () => {
     await waitFor(() => expect(mocks.openScopePicker).toHaveBeenCalledTimes(1))
   })
 
+  it('docks as an in-flow column instead of overlaying chat when there is room', async () => {
+    render(<ShellRightPanel conversationId="conversation-1" placement="docked" />)
+
+    const panel = await screen.findByRole('complementary', { name: 'Work summary' })
+    expect(panel.parentElement).toHaveAttribute('data-summary-placement', 'docked')
+    expect(panel.parentElement).toHaveClass('w-spacing-72')
+    expect(panel.parentElement).not.toHaveClass('absolute')
+    expect(panel).toHaveClass('h-full', 'border-l')
+    expect(panel).not.toHaveClass('dropdown-menu-solid')
+  })
+
   it('collapses a section and keeps its action reachable', async () => {
     render(<ShellRightPanel conversationId="conversation-1" />)
 
     const outputs = await screen.findByRole('button', { name: 'Outputs' })
+    expect(outputs).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByText('Chat files')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument()
+
+    fireEvent.click(outputs)
+
     expect(outputs).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByText('Chat files')).toBeInTheDocument()
 
@@ -261,12 +284,6 @@ describe('ShellRightPanel', () => {
 
     expect(outputs).toHaveAttribute('aria-expanded', 'false')
     expect(screen.queryByText('Chat files')).not.toBeInTheDocument()
-    // The create action rides the header, so collapsing must not hide it.
     expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument()
-
-    fireEvent.click(outputs)
-    expect(screen.getByText('Chat files')).toBeInTheDocument()
   })
-
-
 })

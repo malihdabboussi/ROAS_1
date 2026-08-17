@@ -48,7 +48,10 @@ export function isPlaceholderConversationTitle(raw: string | null | undefined): 
  * True when the stored title still looks like a raw first-message dump (or a
  * legacy placeholder) rather than a short topic label like Claude/ChatGPT.
  */
-export function needsGeneratedConversationTitle(raw: string | null | undefined): boolean {
+export function needsGeneratedConversationTitle(
+  raw: string | null | undefined,
+  firstUserMessage?: string | null,
+): boolean {
   if (isPlaceholderConversationTitle(raw)) return true
   const title = (raw ?? '').replace(/\s+/g, ' ').trim()
   if (!title) return true
@@ -58,6 +61,10 @@ export function needsGeneratedConversationTitle(raw: string | null | undefined):
   if (title.length >= 48) return true
   if (/^(hi|hey|hello|yo)[\s!.?]*$/i.test(title)) return true
   if (RAW_OPENERS.test(title) && words.length >= 3) return true
+  if (firstUserMessage) {
+    const snippet = titleFromFirstUserMessage(firstUserMessage, 48)
+    if (snippet && title === snippet) return true
+  }
   return false
 }
 
@@ -93,9 +100,19 @@ export function resolveSuggestedConversationTitle(
   firstUserMessage: string,
   maxLen = 60,
 ): string {
+  const fromModel = resolveGeneratedConversationTitle(suggested, maxLen)
+  if (fromModel) return fromModel
+  return titleFromFirstUserMessage(firstUserMessage, Math.min(maxLen, 48))
+}
+
+/** Model title only — never a first-message dump. Used for Slack and similar sources. */
+export function resolveGeneratedConversationTitle(
+  suggested: string | null | undefined,
+  maxLen = 60,
+): string {
   const fromModel = (suggested ?? '').replace(/\s+/g, ' ').trim().slice(0, maxLen)
   if (fromModel && !isPlaceholderConversationTitle(fromModel)) return fromModel
-  return titleFromFirstUserMessage(firstUserMessage, Math.min(maxLen, 48))
+  return ''
 }
 
 /** Preserve a curated generated title when the successful turn finishes after title generation. */
