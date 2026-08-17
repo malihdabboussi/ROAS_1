@@ -1,8 +1,40 @@
-## 2026-08-17 - [FEATURE] In-app precall-prep backend still exists after UI removal
+## 2026-08-17 - [ARCH] HomeTaskDetailHost is at the component LOC limit
 
 Status: Open
 
-Found while: Removing the Home “Open agenda prep” / `useHomeMeetingActions` Space-item path
+Found while: Reusing the My Tasks right-side panel on All Tasks
+
+Evidence: `wc -l` reports `apps/web/src/features/home/components/HomeTaskDetailHost.tsx` at 397 LOC (component limit 400).
+
+Needed work: Extract store snapshot / space hydration helpers from the host so All Tasks and Home can keep sharing it without sitting on the limit.
+
+Reason not done now: All Tasks only composed the existing panel; splitting the host was out of scope.
+
+## 2026-08-17 - [ARCH] use-shell-store is at the store LOC ceiling
+
+Status: Open
+
+Found while: Adding `pageHeaderAction` so Clients/Client Campaigns Portal can live in the work-card header
+
+Evidence: `wc -l` reports `apps/web/src/components/shell/use-shell-store.ts` at 592 LOC (store/service limit 600; extract suggested at 80% / 480). Page breadcrumb + header-action setters now sit inline with drawer/artifact/work-area state.
+
+Needed work: Extract page chrome (`pageBreadcrumb`, `pageHeaderAction`, owners, setters) into `use-shell-store.page-chrome.ts` the same way artifact-conversation and work-area-conversation slices were split.
+
+Reason not done now: Requested work was clickable crumbs, title declutter, and Portal placement. A slice extract would touch every shell-store mock without changing product behavior.
+
+## 2026-08-17 - [ARCH] SidebarHqMoreFlyoutBody is over the 80% component extract threshold
+
+Status: Open
+
+Found while: More → Programs hover list and `/programs` overview
+
+Evidence: `wc -l` reports `apps/web/src/components/layout/sidebar/SidebarHqMoreFlyoutBody.tsx` at 337 LOC (component limit 400; extract suggested at 320). Programs hover was extracted to `SidebarHqMoreProgramsFlyout.tsx`; Projects create/list remains inline. `SidebarHqRail.tsx` is 398 LOC after moving `shouldPushRailHref` into helpers.
+
+Needed work: Extract the Projects nested flyout the same way as Programs/Team/Brain. Split remaining HQ rail panel-button rendering.
+
+Reason not done now: Requested work was Programs hover + `/programs` click. Further More-menu decomposition was out of scope.
+
+## 2026-08-17 - [FEATURE] In-app precall-prep backend still exists after UI removal
 
 Evidence: `runMeetingsPrecallPrepEvent` and `MeetingsPrecallPrepService` remain; automations still expose “Prep today’s calendar meetings”. Home no longer calls the event API.
 

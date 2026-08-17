@@ -13,6 +13,11 @@ describe('breadcrumbFromPath', () => {
     expect(breadcrumbFromPath('/programs/prog-clients', null).label).toBe('Programs')
   })
 
+  it('names All Tasks from the route', () => {
+    expect(breadcrumbFromPath('/all-tasks', null).label).toBe('All Tasks')
+    expect(breadcrumbFromPath('/home/my-tasks', null).label).toBe('All Tasks')
+  })
+
   it('does not label unknown routes as Inbox', () => {
     expect(breadcrumbFromPath('/settings', null).label).toBe('')
   })

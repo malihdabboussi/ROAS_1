@@ -7,12 +7,18 @@ import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { AllTasksNativeList } from '@/components/work-views/AllTasksNativeList'
 import { fetchCampaigns, type Campaign } from '@/lib/campaigns'
 import { fetchPrograms, type Program } from '@/lib/programs'
-import type { TaskRollupView } from '@/lib/tasks'
+import type { TaskRollupItem, TaskRollupView } from '@/lib/tasks'
 import { useTaskRollup } from '@/lib/work-views'
 import { ALL_TASKS_TOAST_ERRORS } from '../config/all-tasks-toast-errors.config'
 import { AllTasksScopeFilters } from './AllTasksScopeFilters'
 
-export function AllTasksBoard() {
+export function AllTasksBoard({
+  onOpenItem,
+  reloadToken,
+}: {
+  onOpenItem?: (item: TaskRollupItem) => void
+  reloadToken?: number
+}) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [scope, setScope] = useState<TaskRollupView>(
@@ -48,6 +54,11 @@ export function AllTasksBoard() {
   }, [loadMeta])
 
   useEffect(() => {
+    if (!reloadToken) return
+    void reload()
+  }, [reload, reloadToken])
+
+  useEffect(() => {
     const nextScope = searchParams.get('scope') === 'all' ? 'all' : 'my'
     setScope(nextScope)
     setProgramId(searchParams.get('program') ?? '')
@@ -74,14 +85,9 @@ export function AllTasksBoard() {
   }, [campaigns, programId])
 
   return (
-    <div className="h-full min-h-0 overflow-y-auto">
+    <div className="h-full min-h-0">
       <div className="p-spacing-4 md:p-spacing-6 w-full">
-        <div className="mb-spacing-4">
-          <h1 className="title-h3 text-foreground">ALL TASKS</h1>
-          <p className="body-3 text-muted-foreground mt-spacing-1">
-            Roll up open space tasks across campaigns. Your Turn stays the personal inbox.
-          </p>
-        </div>
+        <h1 className="sr-only">ALL TASKS</h1>
 
         <div className="mb-spacing-4 gap-spacing-2 flex flex-wrap items-center justify-end">
           <AllTasksScopeFilters
@@ -114,7 +120,7 @@ export function AllTasksBoard() {
             <VibeyLoadingOrb text="Loading tasks..." state="processing" size="sm" />
           </div>
         ) : items.length ? (
-          <AllTasksNativeList items={items} reload={reload} />
+          <AllTasksNativeList items={items} reload={reload} onOpenItem={onOpenItem} />
         ) : (
           <div className="surface-card border-border rounded-spacing-3 p-spacing-6 border text-center">
             <p className="body-2 text-foreground font-medium">No open tasks</p>

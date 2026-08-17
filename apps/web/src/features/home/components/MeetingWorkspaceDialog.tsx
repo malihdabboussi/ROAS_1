@@ -302,7 +302,6 @@ export function MeetingWorkspaceDialog({
           Back
         </button>
         <div className="min-w-0 flex-1">
-          <p className="typo-caption text-muted-foreground uppercase">Meeting workspace</p>
           <MeetingRenamableTitle title={title} onRename={handleRename} />
           {whenLine || attendeeSummary ? (
             <p className="body-4 text-muted-foreground mt-spacing-1 truncate">

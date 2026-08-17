@@ -8,7 +8,7 @@ function homeMobileTitle(pathname: string): string {
   if (pathname === '/home') return 'Home'
   if (pathname === '/home/inbox') return 'Inbox'
   if (pathname === '/home/meetings') return 'Meetings'
-  if (pathname === '/home/my-tasks') return 'My Tasks'
+  if (pathname === '/home/my-tasks') return 'All Tasks'
   if (pathname === '/home/delegation-desk') return 'Delegation Desk'
   if (pathname.startsWith('/home/channels')) return 'Channels'
   return 'Home'

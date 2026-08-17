@@ -67,7 +67,7 @@ describe('SidebarSimpleSection', () => {
     expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Collapse menu' })).toBeInTheDocument()
     expect(screen.queryByText('Search')).not.toBeInTheDocument()
-    expect(screen.getByText('My Tasks')).toBeInTheDocument()
+    expect(screen.getByText('All Tasks')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Clients' })).toHaveAttribute('href', '/clients')
     expect(screen.getByRole('link', { name: 'Client Campaigns' })).toHaveAttribute(
       'href',
@@ -84,11 +84,11 @@ describe('SidebarSimpleSection', () => {
     useShellMenuDock.setState({ menuStyle: 'simple', menuCompact: true })
     const { container } = render(<SidebarSimpleSection c={makeSidebarHqController()} />)
 
-    expect(screen.queryByText('My Tasks')).not.toBeInTheDocument()
+    expect(screen.queryByText('All Tasks')).not.toBeInTheDocument()
     fireEvent.mouseEnter(container.firstElementChild as Element)
-    expect(screen.queryByText('My Tasks')).not.toBeInTheDocument()
+    expect(screen.queryByText('All Tasks')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'ROAS' }))
-    expect(screen.getByText('My Tasks')).toBeInTheDocument()
+    expect(screen.getByText('All Tasks')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Collapse menu' })).toBeInTheDocument()
   })
 

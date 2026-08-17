@@ -45,7 +45,7 @@ export function ShellWorkAreaControl({ currentPage }: ShellWorkAreaControlProps)
 
   const pageIcon = (href: string) => {
     if (href.startsWith('/home/meetings')) return CalendarDays
-    if (href.startsWith('/home/my-tasks')) return ListChecks
+    if (href.startsWith('/home/my-tasks') || href.startsWith('/all-tasks')) return ListChecks
     if (href.startsWith('/home/inbox')) return Inbox
     if (href.startsWith('/brain')) return Brain
     if (href.startsWith('/team')) return Users

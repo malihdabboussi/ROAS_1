@@ -6,7 +6,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   BriefcaseBusiness,
   CalendarDays,
-  CheckSquare,
   ChevronLeft,
   ChevronRight,
   Ellipsis,
@@ -43,10 +42,9 @@ import type { SidebarControllerReturn } from './useSidebarController'
 const SIMPLE_LINKS = [
   { href: '/home/inbox', label: 'Inbox', icon: Inbox },
   { href: '/home/meetings', label: 'Meetings', icon: CalendarDays },
-  { href: '/home/my-tasks', label: 'My Tasks', icon: CheckSquare },
+  { href: '/all-tasks', label: 'All Tasks', icon: ListTodo },
   { href: '/clients', label: 'Clients', icon: Users },
   { href: '/client-campaigns', label: 'Client Campaigns', icon: BriefcaseBusiness },
-  { href: '/all-tasks', label: 'All Tasks', icon: ListTodo },
 ] as const
 export function SidebarSimpleSection({
   c,

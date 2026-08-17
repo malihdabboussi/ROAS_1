@@ -16,7 +16,7 @@ export interface ShellChatScreen {
 const SCREEN_ROUTES: ReadonlyArray<{ prefix: string } & ShellChatScreen> = [
   { prefix: '/home/inbox', key: 'home:inbox', label: 'Inbox' },
   { prefix: '/home/meetings', key: 'home:meetings', label: 'Meetings' },
-  { prefix: '/home/my-tasks', key: 'home:my-tasks', label: 'My Tasks' },
+  { prefix: '/home/my-tasks', key: 'all-tasks', label: 'All Tasks' },
   { prefix: '/home/delegation-desk', key: 'home:delegation-desk', label: 'Delegation Desk' },
   { prefix: '/client-campaigns', key: 'client-campaigns', label: 'Client Campaigns' },
   { prefix: '/clients', key: 'clients', label: 'Clients' },
