@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   openScopePicker: vi.fn(),
   routerPush: vi.fn(),
   seedComposer: vi.fn(),
+  clearMeetingContext: vi.fn(),
   meetingContext: null as {
     spaceId: string
     meetingItemId: string
@@ -23,7 +24,11 @@ const mocks = vi.hoisted(() => ({
       { id: 'message-1', role: 'assistant', metadata: {}, created_at: '2026-08-15T00:00:00.000Z' },
     ],
   },
-  conversations: [] as Array<{ id: string; metadata?: Record<string, unknown> }>,
+  conversations: [] as Array<{
+    id: string
+    title?: string | null
+    metadata?: Record<string, unknown>
+  }>,
 }))
 
 vi.mock('next/navigation', () => ({
@@ -50,8 +55,16 @@ vi.mock('@/features/studio/store/use-chat-store', () => ({
 
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
   useGlobalChatStore: Object.assign(
-    (selector: (state: { meetingContext: typeof mocks.meetingContext }) => unknown) =>
-      selector({ meetingContext: mocks.meetingContext }),
+    (
+      selector: (state: {
+        meetingContext: typeof mocks.meetingContext
+        clearMeetingContext: () => void
+      }) => unknown,
+    ) =>
+      selector({
+        meetingContext: mocks.meetingContext,
+        clearMeetingContext: mocks.clearMeetingContext,
+      }),
     { getState: () => ({ seedComposer: mocks.seedComposer }) },
   ),
 }))

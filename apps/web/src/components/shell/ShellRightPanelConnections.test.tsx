@@ -4,6 +4,7 @@ import { ShellRightPanelConnections } from './ShellRightPanelConnections'
 
 const mocks = vi.hoisted(() => ({
   openScopePicker: vi.fn(),
+  assignConversationScope: vi.fn(),
   campaigns: [{ id: 'campaign-1', name: 'Yasir VIP Upgrade' }] as Array<{
     id: string
     name: string
@@ -30,7 +31,10 @@ vi.mock('@/components/conversations/use-conversation-scope-data', () => ({
   useConversationScopePrograms: () => mocks.programs,
 }))
 
-vi.mock('@/lib/conversations', () => ({ assignConversationScope: vi.fn() }))
+vi.mock('@/lib/conversations', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/conversations')>('@/lib/conversations')
+  return { ...actual, assignConversationScope: mocks.assignConversationScope }
+})
 vi.mock('@/lib/home', () => ({ useCampaignCacheVersion: () => 0 }))
 vi.mock('@/lib/org', () => ({
   useOrgStore: (selector: (state: { activeOrgId: string }) => unknown) =>
@@ -44,6 +48,7 @@ describe('ShellRightPanelConnections', () => {
     mocks.campaigns = [{ id: 'campaign-1', name: 'Yasir VIP Upgrade' }]
     mocks.programs = []
     mocks.space = null
+    mocks.assignConversationScope.mockResolvedValue({ id: 'conversation-1' })
   })
 
   const renderPanel = (open: boolean, onOpenChange = vi.fn()) => {
@@ -80,6 +85,93 @@ describe('ShellRightPanelConnections', () => {
 
     expect(screen.getByText('Yasir Khan General')).toBeInTheDocument()
     expect(screen.queryByText('General')).not.toBeInTheDocument()
+  })
+
+  it('shows the specific meeting name instead of the Meetings space', () => {
+    mocks.space = { id: 'space-meetings', title: 'Meetings' }
+    const onOpenMeeting = vi.fn()
+
+    render(
+      <ShellRightPanelConnections
+        conversation={null}
+        campaignId={null}
+        spaceId="space-meetings"
+        linkedMeeting={{ meetingItemId: 'meeting-1', spaceId: 'space-meetings' }}
+        meetingTitle="Client launch review"
+        open
+        onOpenChange={vi.fn()}
+        onOpenMeeting={onOpenMeeting}
+      />,
+    )
+
+    expect(screen.getByText('Client launch review')).toBeInTheDocument()
+    expect(screen.queryByText('Meetings')).not.toBeInTheDocument()
+  })
+
+  it('opens the meeting when the connection row is clicked', () => {
+    mocks.space = { id: 'space-meetings', title: 'Meetings' }
+    const onOpenMeeting = vi.fn()
+
+    render(
+      <ShellRightPanelConnections
+        conversation={null}
+        campaignId={null}
+        spaceId="space-meetings"
+        linkedMeeting={{ meetingItemId: 'meeting-1', spaceId: 'space-meetings' }}
+        meetingTitle="Client launch review"
+        open
+        onOpenChange={vi.fn()}
+        onOpenMeeting={onOpenMeeting}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Client launch review' }))
+    expect(onOpenMeeting).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps remove on X without opening the meeting', () => {
+    mocks.space = { id: 'space-meetings', title: 'Meetings' }
+    const onOpenMeeting = vi.fn()
+    const onClearMeeting = vi.fn()
+    const onScopeChanged = vi.fn()
+
+    render(
+      <ShellRightPanelConnections
+        conversation={null}
+        campaignId={null}
+        spaceId="space-meetings"
+        linkedMeeting={{ meetingItemId: 'meeting-1', spaceId: 'space-meetings' }}
+        meetingTitle="Client launch review"
+        open
+        onOpenChange={vi.fn()}
+        onOpenMeeting={onOpenMeeting}
+        onClearMeeting={onClearMeeting}
+        onScopeChanged={onScopeChanged}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Client launch review connection' }))
+
+    expect(onOpenMeeting).not.toHaveBeenCalled()
+    expect(onClearMeeting).toHaveBeenCalledTimes(1)
+    expect(onScopeChanged).toHaveBeenCalledWith({ campaignId: null, spaceId: null })
+  })
+
+  it('opens a campaign connection from the row', () => {
+    const onOpenCampaign = vi.fn()
+    render(
+      <ShellRightPanelConnections
+        conversation={null}
+        campaignId="campaign-1"
+        spaceId={null}
+        open
+        onOpenChange={vi.fn()}
+        onOpenCampaign={onOpenCampaign}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Yasir VIP Upgrade' }))
+    expect(onOpenCampaign).toHaveBeenCalledWith('campaign-1')
   })
 
   it('keeps the scope picker mounted while collapsed', () => {

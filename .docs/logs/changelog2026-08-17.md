@@ -6,6 +6,12 @@ Why: Switching Recents sent meeting chats to `/home?conv=` so the agenda disappe
 Impact: Recents and Show page reopen the remembered meeting (or other work page) beside chat; Prep for call seeds the composer; Google agenda opens a linked Doc or seeds a Page Grader Google Doc prompt; Start agenda still writes the right-side Space Doc.
 Files: `apps/web/src/components/shell/shell-work-area-page.ts`, `apps/web/src/components/shell/use-shell-store.work-area-conversation.ts`, `apps/web/src/components/shell/use-shell-artifact-conversation-sync.ts`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/features/home/hooks/use-meeting-workspace-surface.ts`, `apps/web/src/features/home/config/meeting-post-call-actions.config.ts`, `apps/web/src/features/home/components/MeetingAgendaPrepSection.tsx`, `documentation/features/claude-chatgpt-shell.md`
 
+## [2026-08-17 17:31] - [FIX]
+What: Connections now shows the specific meeting name (not the Meetings space) and opens that meeting on row click; X still removes. Campaign/Space rows are likewise clickable to open.
+Why: Connections was labeling the host space generically and was not an open affordance for the linked artifact.
+Impact: Meeting chats show the real meeting title in Connections; click opens the meeting workspace; remove stays on X.
+Files: `apps/web/src/components/shell/ShellRightPanelConnections.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/components/shell/ShellRightPanelConnections.test.tsx`, `apps/web/src/components/shell/ShellRightPanel.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 17:25] - [FIX]
 What: Service Request review links now always show the finalize flow on the public chat host, synthesize a work_request resume card from pasted review URLs in in-app chat, harden MCP UI-block extraction for nested fulfillment results, and pass `/home?conv=` into the chat panel as preferredConversationId so authenticated resume does not open blank.
 Why: Pixel often replied with only a markdown `/request-review/` URL (no work_request UI block), so opening the link looped the same chat with no finalize UI; signed-in redirect to `/home?conv=` could remount an empty Pixel pane.
@@ -19,6 +25,10 @@ Impact: Opening a meeting creates/links `agenda_doc_item_id`; Pixel `update_docu
 Files: `apps/api/src/modules/meetings/repositories/meeting-workspace-agenda.repository.ts`, `apps/api/src/modules/meetings/services/meeting-workspace.service.ts`, `apps/api/src/modules/meetings/repositories/meeting-workspace-read.repository.ts`, `apps/web/src/features/home/components/MeetingAgendaDocEditor.tsx`, `apps/web/src/features/home/components/MeetingAgendaPrepSection.tsx`, `apps/web/src/features/home/components/MeetingActionItemsSection.tsx`, `apps/web/src/features/home/lib/build-meeting-awareness-context.ts`, `apps/web/src/features/home/config/meeting-post-call-actions.config.ts`
 
 ## [2026-08-17 17:12] - [FIX]
+What: Fixed Home Choose Space mapping and picker grouping. Clients are a single folder (not duplicated under Programs as Client Spaces); search placeholder is "Search". Scope attach now clears stale space/campaign ids, campaign-only picks resolve General space, and seeds/host keep the selected campaign so Connections and the agent match the chosen location.
+Why: Selecting a space could leave a prior Power Circle General connection attached, and Pixel asked which campaign despite a Choose Space selection. Picker also listed client campaigns under Programs and again under Clients.
+Impact: Choose Space → send attaches the selected client/program space; Connections shows that location; agent chat receives the campaign/space scope. Picker shows Programs vs Clients folder hierarchy.
+Files: `apps/web/src/components/conversations/conversation-scope-groups.ts`, `ConversationScopePickerMenus.tsx`, `ConversationScopePicker.tsx`, `conversation-scope-picker.messages.config.ts`, `conversation-scope-general-space.ts`, `conversation-scope-select.ts`, `use-conversation-scope-spaces.ts`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/global-chat/config/work-context.config.ts`, `global-chat-seed-match.ts`, `global-chat-panel-host.ts`
 
 ## [2026-08-17 16:47] - [FIX]
 What: Wrapped artifact viewer close handler so `onClick` does not pass a mouse event into `closeArtifactViewer(conversationId?)`.
