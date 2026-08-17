@@ -2218,7 +2218,6 @@ export function SpaceVibeyChatPanel({
       renameRequestNonce={headerRenameRequestNonce}
       onRename={handleRenameConversation}
       actions={chatHeaderActions}
-      reserveSummaryColumn={summaryDocked && rightPanelOpen}
     />
   )
 

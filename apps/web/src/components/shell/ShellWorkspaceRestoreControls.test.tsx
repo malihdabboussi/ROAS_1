@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ShellWorkspace } from './ShellWorkspace'
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   openConversationInSpaceChat: vi.fn(),
   setWorkAreaOpen: vi.fn(),
   setRightPanelOpen: vi.fn(),
+  openChatDrawer: vi.fn(),
   recentWorkAreaPages: [{ id: '/home/meetings', title: 'Meetings', href: '/home/meetings' }],
   rightPanelOpen: false,
   summaryPanelDocked: false,
@@ -57,9 +59,16 @@ vi.mock('./use-shell-menu-dock', async () => {
 })
 
 vi.mock('@/components/global-chat/containers/GlobalChatPanel', () => ({
-  GlobalChatPanel: ({ onCollapseChat }: { onCollapseChat?: () => void }) => (
+  GlobalChatPanel: ({
+    onCollapseChat,
+    headerTrailingAction,
+  }: {
+    onCollapseChat?: () => void
+    headerTrailingAction?: ReactNode
+  }) => (
     <div>
       Global chat panel
+      {headerTrailingAction}
       {onCollapseChat ? (
         <button type="button" onClick={onCollapseChat}>
           Close full chat
@@ -147,13 +156,14 @@ vi.mock('./use-shell-store', () => ({
         conversationId: null,
         width: 420,
       },
-      openChatDrawer: vi.fn(),
+      openChatDrawer: mocks.openChatDrawer,
       minimizeChatDrawer: vi.fn(),
       handleScreenNavigation: vi.fn(),
       recordScreenConversation: vi.fn(),
       requestNewChat: vi.fn(),
       setMenuMode: vi.fn(),
       setWorkAreaOpen: mocks.setWorkAreaOpen,
+      toggleWorkAreaOpen: vi.fn(),
       setRightPanelOpen: mocks.setRightPanelOpen,
       rightPanel: { open: mocks.rightPanelOpen, tab: 'tasks' },
       summaryPanelDocked: mocks.summaryPanelDocked,
@@ -185,29 +195,32 @@ describe('ShellWorkspace restore controls', () => {
     vi.clearAllMocks()
     vi.useRealTimers()
   })
-  it('leaves full-conversation page restoration to the summary control', () => {
+  it('restores the last work page from the full Home conversation header', () => {
     mocks.desktop = true
     mocks.params = new Map([['conv', 'conversation-1']])
     render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
-    expect(screen.queryByRole('button', { name: 'Show page' })).toBeNull()
-    expect(mocks.push).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Show page' }))
+    expect(mocks.openChatDrawer).toHaveBeenCalledWith('conversation-1')
+    expect(mocks.setWorkAreaOpen).toHaveBeenCalledWith(true)
+    expect(mocks.push).toHaveBeenCalledWith('/home/meetings')
   })
 
-  it('hides the full-conversation page restore control while the summary panel is open', () => {
+  it('keeps Show page in the chat header while the summary panel is open', () => {
     mocks.desktop = true
     mocks.params = new Map([['conv', 'conversation-1']])
     mocks.rightPanelOpen = true
     render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
-    expect(screen.queryByRole('button', { name: 'Show page' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Show page' })).toBeInTheDocument()
   })
-  it('does not render an inert restore control without a restorable page', () => {
+  it('still offers Show page when remembered pages are only other chats', () => {
     mocks.desktop = true
     mocks.params = new Map([['conv', 'conversation-1']])
     mocks.recentWorkAreaPages = [
       { id: '/home?conv=conversation-2', title: 'Other chat', href: '/home?conv=conversation-2' },
     ]
     render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
-    expect(screen.queryByRole('button', { name: 'Show page' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Show page' }))
+    expect(mocks.push).toHaveBeenCalledWith('/home/meetings')
   })
   it('resizes the universal artifact panel beside a full conversation', () => {
     mocks.desktop = true
@@ -247,5 +260,24 @@ describe('ShellWorkspace restore controls', () => {
     mocks.menuStyle = 'advanced'
     render(<ShellWorkspace>Brain page</ShellWorkspace>)
     expect(screen.queryByRole('button', { name: 'Show page' })).toBeNull()
+  })
+
+  it('puts Show page in the full Home conversation header and does not stack a work card header', () => {
+    mocks.params = new Map([['conv', 'conversation-123']])
+    mocks.menuStyle = 'simple'
+    render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
+    expect(screen.queryByText('Work card header')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Show page' })).toBeInTheDocument()
+  })
+
+  it('does not auto-collapse the page when chat opens on a full Home conversation', () => {
+    mocks.params = new Map([['conv', 'conversation-1']])
+    mocks.menuStyle = 'simple'
+    mocks.workAreaOpen = true
+    mocks.chatDrawerOpen = false
+    const { rerender } = render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
+    mocks.chatDrawerOpen = true
+    rerender(<ShellWorkspace>Home dashboard</ShellWorkspace>)
+    expect(mocks.setWorkAreaOpen).not.toHaveBeenCalledWith(false)
   })
 })

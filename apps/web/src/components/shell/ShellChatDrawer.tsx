@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils/cn'
 import { ShellChatHeaderPageControl } from './ShellChatHeaderPageControl'
 import { ShellChatMenu } from './ShellChatMenu'
 import { ShellScreenChatPrompt } from './ShellScreenChatPrompt'
-import { isWorkAttachedDock, useShellMenuDock } from './use-shell-menu-dock'
+import { useShellMenuDock } from './use-shell-menu-dock'
 import { useShellStore } from './use-shell-store'
 
 /** Matches the drawer/HQ-rail transition in globals.css. */
@@ -34,7 +34,6 @@ export function ShellChatDrawer({
 }) {
   const open = useShellStore((s) => s.chatDrawer.open)
   const simpleMenu = useShellMenuDock((s) => s.menuStyle === 'simple')
-  const menuDock = useShellMenuDock((s) => s.dock)
   const width = useShellStore((s) => s.chatDrawer.width)
   const conversationId = useShellStore((s) => s.chatDrawer.conversationId)
   const historyWidth = useShellStore((s) => s.chatHistoryWidth)
@@ -211,7 +210,7 @@ export function ShellChatDrawer({
   // fits, lives inside the chat pane instead of widening this drawer.
   const drawerWidthStyle = expanded ? undefined : { width: open ? `${width}px` : '0px' }
   const bodyStyle = expanded ? undefined : { width: `${width}px` }
-  const showPageRestore = expanded && simpleMenu && !isWorkAttachedDock(menuDock)
+  const showPageControl = simpleMenu && !mobile
 
   return (
     <>
@@ -264,8 +263,9 @@ export function ShellChatDrawer({
             <ShellScreenChatPrompt />
             <GlobalChatPanel
               shellSidebarChrome
+              presentation="full"
               onCollapseChat={() => minimizeChatDrawer()}
-              headerTrailingAction={showPageRestore ? <ShellChatHeaderPageControl /> : undefined}
+              headerTrailingAction={showPageControl ? <ShellChatHeaderPageControl /> : undefined}
               headerLeadingAction={
                 !simpleMenu && historyCollapsed ? (
                   <button

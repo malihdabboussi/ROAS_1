@@ -133,6 +133,16 @@ describe('ShellTopBar', () => {
     expect(screen.getByTitle('Collapse page — chat full screen')).toBeInTheDocument()
   })
 
+  it('hides the Simple work-area control while chat is open so the chat header owns it', () => {
+    useShellMenuDock.setState({ menuStyle: 'simple' })
+    mocks.shellState.chatDrawer = { open: true }
+
+    render(<ShellTopBar />)
+
+    expect(screen.queryByTitle('Collapse page — chat full screen')).not.toBeInTheDocument()
+    expect(screen.queryByTitle('Show page')).not.toBeInTheDocument()
+  })
+
   it('hides the work-area control until chat creates something to collapse', () => {
     for (const route of ['/home', '/brain', '/campaigns', '/projects', '/flows', '/artifacts']) {
       mocks.pathname = route

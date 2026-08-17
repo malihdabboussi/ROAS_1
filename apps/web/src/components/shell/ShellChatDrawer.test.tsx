@@ -15,6 +15,12 @@ const mocks = vi.hoisted(() => ({
   selectConversation: vi.fn(),
 }))
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/home/meetings',
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}))
+
 vi.mock('@/components/global-chat/containers/GlobalChatPanel', () => ({
   GlobalChatPanel: ({
     headerLeadingAction,
@@ -249,20 +255,23 @@ describe('ShellChatDrawer', () => {
     expect(useShellStore.getState().chatDrawer.width).toBe(420)
   })
 
-  it('groups the page restore control with chat header actions in expanded Simple chat', () => {
+  it('keeps the page control in the Simple chat header whether the page is open or collapsed', () => {
     useShellMenuDock.setState({ menuStyle: 'simple', dock: 'left' })
-    useShellStore.setState({
-      chatDrawer: {
-        open: true,
-        conversationId: 'conversation-1',
-        width: 420,
-        minimized: false,
-      },
-    })
-
-    render(<ShellChatDrawer expanded />)
-
+    const drawer = {
+      open: true,
+      conversationId: 'conversation-1',
+      width: 420,
+      minimized: false,
+    }
+    useShellStore.setState({ chatDrawer: drawer, workAreaOpen: false })
+    const { rerender } = render(<ShellChatDrawer expanded />)
     expect(screen.getByRole('button', { name: 'Show page' })).toBeInTheDocument()
+
+    useShellStore.setState({ chatDrawer: drawer, workAreaOpen: true })
+    rerender(<ShellChatDrawer />)
+    expect(
+      screen.getByRole('button', { name: 'Collapse page — chat full screen' }),
+    ).toBeInTheDocument()
   })
 
   it('resizes the chat history rail independently in expanded chat', () => {

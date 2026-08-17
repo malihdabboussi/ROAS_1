@@ -203,7 +203,9 @@ export function ShellTopBar() {
           <ShellOpenInMenu targets={targets} />
         </div>
 
-        {!isConversationSurface && (simpleMenu || showWorkAreaControl) ? (
+        {!isConversationSurface &&
+        !(simpleMenu && chatDrawerOpen) &&
+        (simpleMenu || showWorkAreaControl) ? (
           <ShellWorkAreaControl currentPage={currentPage} />
         ) : null}
       </div>
