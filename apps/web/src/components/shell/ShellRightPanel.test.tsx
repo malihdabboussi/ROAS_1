@@ -256,15 +256,15 @@ describe('ShellRightPanel', () => {
     await waitFor(() => expect(mocks.openScopePicker).toHaveBeenCalledTimes(1))
   })
 
-  it('docks as an in-flow column instead of overlaying chat when there is room', async () => {
+  it('docks the same rounded card in-flow instead of a full-height divider column', async () => {
     render(<ShellRightPanel conversationId="conversation-1" placement="docked" />)
 
     const panel = await screen.findByRole('complementary', { name: 'Work summary' })
     expect(panel.parentElement).toHaveAttribute('data-summary-placement', 'docked')
-    expect(panel.parentElement).toHaveClass('w-spacing-72')
+    expect(panel.parentElement).toHaveClass('self-start', 'pt-spacing-12', 'px-spacing-2')
     expect(panel.parentElement).not.toHaveClass('absolute')
-    expect(panel).toHaveClass('h-full', 'border-l')
-    expect(panel).not.toHaveClass('dropdown-menu-solid')
+    expect(panel).toHaveClass('dropdown-menu-solid')
+    expect(panel).not.toHaveClass('h-full', 'border-l')
   })
 
   it('collapses a section and keeps its action reachable', async () => {

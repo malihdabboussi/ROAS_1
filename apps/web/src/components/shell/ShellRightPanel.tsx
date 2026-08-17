@@ -34,8 +34,9 @@ type ShellRightPanelSectionId = 'progress' | 'connections' | 'outputs' | 'source
 export type ShellRightPanelPlacement = 'docked' | 'overlay'
 
 /**
- * Work summary: docked as an in-flow column when the chat pane is wide enough,
- * otherwise a header-anchored overlay card. Empty sections start collapsed.
+ * Work summary: the same rounded overlay card on every width. When the chat
+ * pane is wide enough it sits in-flow on the right so it does not cover the
+ * thread; otherwise it drops from the header toggle.
  */
 export function ShellRightPanel({
   conversationId,
@@ -189,17 +190,17 @@ export function ShellRightPanel({
     <div
       className={
         docked
-          ? 'w-spacing-72 flex h-full shrink-0'
+          ? 'px-spacing-2 pt-spacing-12 pb-spacing-2 max-h-full shrink-0 self-start'
           : 'px-spacing-2 top-spacing-12 z-dropdown pointer-events-none absolute right-0'
       }
       data-summary-placement={placement}
     >
       <aside
         className={cn(
-          'flex flex-col overflow-hidden',
+          'dropdown-menu-solid w-spacing-72 flex flex-col overflow-hidden',
           docked
-            ? 'border-border bg-background h-full min-h-0 w-full border-l'
-            : 'dropdown-menu-solid w-spacing-72 pointer-events-auto max-h-[70vh] origin-top-right transition duration-200 ease-out motion-reduce:transition-none',
+            ? 'max-h-full min-h-0'
+            : 'pointer-events-auto max-h-[70vh] origin-top-right transition duration-200 ease-out motion-reduce:transition-none',
           !docked && (visible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'),
         )}
         aria-label="Work summary"

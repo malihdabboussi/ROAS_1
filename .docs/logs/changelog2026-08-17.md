@@ -10,6 +10,15 @@ Impact: Dismiss removes the banner here. Other chats can still show a remaining 
 
 Files: `apps/web/src/components/global-chat/components/ChatComposerTryTip.tsx`, `apps/web/src/components/global-chat/components/ChatComposerTryTip.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
 
+## [2026-08-17 02:30] - [STYLE]
+
+What: Wide-screen work summary uses the same rounded overlay card as the narrow overlay, inset inside the chat pane, with no full-height divider.
+
+Why: The docked column was flush to the edges with a vertical rule, which did not match the popped-up small-screen card.
+
+Impact: Summary sits off to the side of chat as a contained rounded card on wide panes; overlay behavior on narrow panes is unchanged.
+
+Files: `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/components/shell/ShellRightPanel.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
 ## [2026-08-17 01:30] - [FIX]
 
 What: Empty Slack Brain imports no longer toast "Nothing to save from that Slack period." The notifier still acknowledges those skipped/empty jobs so they do not repeat.
