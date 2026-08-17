@@ -206,8 +206,10 @@ describe('PageGraderApiService.sendWork', () => {
       'test-key',
       expect.objectContaining({
         client_id: '11111111-1111-1111-1111-111111111111',
+        note: 'Build ASAP',
         work: expect.objectContaining({
           title: 'Draft offer page',
+          description: 'Need CTA',
           priority: 'high',
           kind: 'task_request',
           task_type: 'design',
@@ -216,6 +218,10 @@ describe('PageGraderApiService.sendWork', () => {
         }),
       }),
     )
+    const createPayload = pageGrader.createWork.mock.calls[0]?.[2] as {
+      work?: { description?: string }
+    }
+    expect(createPayload.work?.description).not.toContain('Operator note:')
     expect(spaces.updateItem).toHaveBeenCalledWith(
       expect.anything(),
       'user-1',

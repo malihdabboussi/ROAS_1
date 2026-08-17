@@ -41,6 +41,7 @@ export type PublicWorkRequestDraft = {
   expires_at: string
   final_task_id: string | null
   sync_status: string
+  resume_conversation_id: string | null
   task_url: string | null
   clickup_url: string | null
 }
@@ -48,6 +49,7 @@ export type PublicWorkRequestDraft = {
 export type WorkRequestOptions = {
   client_workspaces: Array<{ id: string; name: string }>
   campaign_spaces: Array<{ id: string; name: string; client_workspace_id: string }>
+  team_members?: Array<{ id: string; name: string }>
 }
 
 export type WorkRequestReviewResponse =

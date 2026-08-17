@@ -12,6 +12,8 @@ import { TrainBrainModalHost } from '@/features/brain/components/TrainBrainModal
 import { ImpersonationBanner } from '@/features/impersonation/components/ImpersonationBanner'
 import { CreateOrgDialog } from '@/features/org/components/CreateOrgDialog'
 import { useWorkspaceSettingsModal } from '@/features/settings'
+import { cachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
+import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { CampaignModeProvider } from '@/features/studio/contexts/CampaignModeContext'
 import { dispatchOpenStudioSearch } from '@/features/studio/utils/open-studio-search-result'
 import { installFreezeDiagnostics, reportFreezeEvent } from '@/lib/debug/freeze-diagnostics'
@@ -129,9 +131,21 @@ function OrgBootstrap() {
     }
 
     const { memberships, setActiveOrg } = useOrgStore.getState()
-    if (memberships.some((m) => m.org_id === requestedOrgId)) {
-      setActiveOrg(requestedOrgId)
-    }
+    if (!memberships.some((m) => m.org_id === requestedOrgId)) return
+    setActiveOrg(requestedOrgId)
+    // Drop the previous org's space snapshot so `?space=` deep links resolve
+    // against the owning workspace instead of thrashing on a stale list.
+    cachedSpaces.invalidate()
+    useSpacesStore.setState({
+      spaces: [],
+      activeSpaceId: null,
+      activeViewId: null,
+      items: [],
+      itemsLoadedForSpaceId: null,
+      itemsLoadedForQueryKey: null,
+      loading: true,
+    })
+    void useSpacesStore.getState().loadSpaces()
   }, [activeOrgId, isLoaded, requestedOrgId])
 
   useEffect(() => {
