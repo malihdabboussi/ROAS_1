@@ -2218,6 +2218,7 @@ export function SpaceVibeyChatPanel({
       renameRequestNonce={headerRenameRequestNonce}
       onRename={handleRenameConversation}
       actions={chatHeaderActions}
+      reserveSummaryColumn={summaryDocked && rightPanelOpen}
     />
   )
 
@@ -2252,332 +2253,350 @@ export function SpaceVibeyChatPanel({
               )}
             >
               {chatHeaderBlock}
-
-              {voiceActive && !voiceMinimized ? (
-                <SpaceVoiceSessionView
-                  agentName={activeVoiceAgent.display_name}
-                  conversationId={selectedConversationId}
-                  state={voiceSession.state}
-                  turnData={turnData}
-                  inputTranscript={voiceSession.inputTranscript}
-                  outputTranscript={voiceSession.outputTranscript}
-                  micInputLevelRef={voiceSession.micInputLevelRef}
-                  audioLevelRef={voiceSession.audioLevelRef}
-                  error={voiceSession.error}
-                  isMuted={voiceSession.isMuted}
-                  onReconnect={voiceSession.reconnectSession}
-                  onToggleMute={voiceSession.toggleMute}
-                  onEnd={handleVoiceEnd}
-                  onMinimize={() => setVoiceMinimized(true)}
-                />
-              ) : (
-                <>
-                  <PlanStickyTracker messages={messages} scrollContainerRef={scrollRef} />
-                  <div
-                    ref={scrollRef}
-                    onScroll={handleScroll}
-                    className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 md:px-4"
-                  >
-                    <div
-                      ref={contentRef}
-                      className="mx-auto flex min-h-full w-full max-w-3xl flex-col"
-                    >
-                      {isLoadingMessages && messages.length === 0 && selectedConversationId ? (
-                        <div className="flex flex-1 flex-col items-center justify-center py-24">
-                          <VibeyLoadingOrb
-                            text="Loading conversation…"
-                            state="processing"
-                            size="md"
-                          />
-                        </div>
-                      ) : null}
-                      {messages.length === 0 && !isLoadingMessages ? (
-                        <SpaceChatAgentEmptyState
-                          agent={emptyStateAgent}
-                          agentPicker={renderAgentPicker('hero')}
-                        />
-                      ) : null}
-                      <div className="flex flex-1 flex-col gap-3">
-                        {turnData.leadingMessages.map((m) => (
-                          <div key={m.id} data-message-id={m.id}>
-                            <MessageBubble
-                              message={m}
-                              isStreaming={m.id === streamingMessageId}
-                              isEditable={m.id === lastUserMessageId}
-                              onEditSubmit={
-                                m.id === lastUserMessageId ? handleEditSubmit : undefined
-                              }
-                              conversationIdOverride={selectedConversationId}
-                              knownSkillKeys={knownSkillKeys}
-                              agentKey={activeAgentKey}
-                              campaignId={effectiveCampaignId ?? undefined}
-                              assistantInlineAction={
-                                visibleUndoMessageIds.has(m.id) ? (
-                                  <SpaceUndoButton message={m} />
-                                ) : null
-                              }
-                              pinAssistantActions={m.id === pinnedAssistantMessageId}
-                            />
-                          </div>
-                        ))}
-
-                        {turnData.turns.map((turn, turnIdx) => {
-                          const isLastTurn = turnIdx === turnData.turns.length - 1
-                          const previousTurn = turnData.turns[turnIdx - 1]
-                          return (
-                            <div
-                              key={turn.user.id}
-                              data-turn-id={turn.user.id}
-                              className={cn('relative flex flex-col', isLastTurn && 'flex-1')}
-                            >
-                              <ChatTurnChangeDivider
-                                previousUserMessage={previousTurn?.user ?? null}
-                                userMessage={turn.user}
+              <div className="relative flex min-h-0 min-w-0 flex-1 flex-row overflow-hidden">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                  {voiceActive && !voiceMinimized ? (
+                    <SpaceVoiceSessionView
+                      agentName={activeVoiceAgent.display_name}
+                      conversationId={selectedConversationId}
+                      state={voiceSession.state}
+                      turnData={turnData}
+                      inputTranscript={voiceSession.inputTranscript}
+                      outputTranscript={voiceSession.outputTranscript}
+                      micInputLevelRef={voiceSession.micInputLevelRef}
+                      audioLevelRef={voiceSession.audioLevelRef}
+                      error={voiceSession.error}
+                      isMuted={voiceSession.isMuted}
+                      onReconnect={voiceSession.reconnectSession}
+                      onToggleMute={voiceSession.toggleMute}
+                      onEnd={handleVoiceEnd}
+                      onMinimize={() => setVoiceMinimized(true)}
+                    />
+                  ) : (
+                    <>
+                      <PlanStickyTracker messages={messages} scrollContainerRef={scrollRef} />
+                      <div
+                        ref={scrollRef}
+                        onScroll={handleScroll}
+                        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 md:px-4"
+                      >
+                        <div
+                          ref={contentRef}
+                          className="mx-auto flex min-h-full w-full max-w-3xl flex-col"
+                        >
+                          {isLoadingMessages && messages.length === 0 && selectedConversationId ? (
+                            <div className="flex flex-1 flex-col items-center justify-center py-24">
+                              <VibeyLoadingOrb
+                                text="Loading conversation…"
+                                state="processing"
+                                size="md"
                               />
-                              <div
-                                ref={isLastTurn ? lastUserPromptRef : undefined}
-                                className="sticky top-0 z-10"
-                              >
-                                <div className="surface-bg">
-                                  <MessageBubble
-                                    message={turn.user}
-                                    isStreaming={false}
-                                    stickyUser
-                                    isEditable={turn.user.id === lastUserMessageId}
-                                    onEditSubmit={
-                                      turn.user.id === lastUserMessageId
-                                        ? handleEditSubmit
+                            </div>
+                          ) : null}
+                          {messages.length === 0 && !isLoadingMessages ? (
+                            <SpaceChatAgentEmptyState
+                              agent={emptyStateAgent}
+                              agentPicker={renderAgentPicker('hero')}
+                            />
+                          ) : null}
+                          <div className="flex flex-1 flex-col gap-3">
+                            {turnData.leadingMessages.map((m) => (
+                              <div key={m.id} data-message-id={m.id}>
+                                <MessageBubble
+                                  message={m}
+                                  isStreaming={m.id === streamingMessageId}
+                                  isEditable={m.id === lastUserMessageId}
+                                  onEditSubmit={
+                                    m.id === lastUserMessageId ? handleEditSubmit : undefined
+                                  }
+                                  conversationIdOverride={selectedConversationId}
+                                  knownSkillKeys={knownSkillKeys}
+                                  agentKey={activeAgentKey}
+                                  campaignId={effectiveCampaignId ?? undefined}
+                                  assistantInlineAction={
+                                    visibleUndoMessageIds.has(m.id) ? (
+                                      <SpaceUndoButton message={m} />
+                                    ) : null
+                                  }
+                                  pinAssistantActions={m.id === pinnedAssistantMessageId}
+                                />
+                              </div>
+                            ))}
+
+                            {turnData.turns.map((turn, turnIdx) => {
+                              const isLastTurn = turnIdx === turnData.turns.length - 1
+                              const previousTurn = turnData.turns[turnIdx - 1]
+                              return (
+                                <div
+                                  key={turn.user.id}
+                                  data-turn-id={turn.user.id}
+                                  className={cn('relative flex flex-col', isLastTurn && 'flex-1')}
+                                >
+                                  <ChatTurnChangeDivider
+                                    previousUserMessage={previousTurn?.user ?? null}
+                                    userMessage={turn.user}
+                                  />
+                                  <div
+                                    ref={isLastTurn ? lastUserPromptRef : undefined}
+                                    className="sticky top-0 z-10"
+                                  >
+                                    <div className="surface-bg">
+                                      <MessageBubble
+                                        message={turn.user}
+                                        isStreaming={false}
+                                        stickyUser
+                                        isEditable={turn.user.id === lastUserMessageId}
+                                        onEditSubmit={
+                                          turn.user.id === lastUserMessageId
+                                            ? handleEditSubmit
+                                            : undefined
+                                        }
+                                        conversationIdOverride={selectedConversationId}
+                                        knownSkillKeys={knownSkillKeys}
+                                        agentKey={activeAgentKey}
+                                        campaignId={effectiveCampaignId ?? undefined}
+                                      />
+                                    </div>
+                                    <div className="pointer-events-none h-6 bg-gradient-to-b from-[var(--color-background)] to-transparent" />
+                                  </div>
+
+                                  <div
+                                    className="flex flex-col gap-3"
+                                    style={
+                                      isLastTurn
+                                        ? {
+                                            minHeight: Math.max(
+                                              0,
+                                              spacerHeight - lastUserPromptHeight,
+                                            ),
+                                          }
                                         : undefined
                                     }
-                                    conversationIdOverride={selectedConversationId}
-                                    knownSkillKeys={knownSkillKeys}
-                                    agentKey={activeAgentKey}
-                                    campaignId={effectiveCampaignId ?? undefined}
-                                  />
+                                  >
+                                    {turn.responses.map((m) => (
+                                      <div key={m.id} data-message-id={m.id}>
+                                        <MessageBubble
+                                          message={m}
+                                          isStreaming={m.id === streamingMessageId}
+                                          isEditable={m.id === lastUserMessageId}
+                                          onEditSubmit={
+                                            m.id === lastUserMessageId
+                                              ? handleEditSubmit
+                                              : undefined
+                                          }
+                                          conversationIdOverride={selectedConversationId}
+                                          knownSkillKeys={knownSkillKeys}
+                                          agentKey={activeAgentKey}
+                                          campaignId={effectiveCampaignId ?? undefined}
+                                          assistantInlineAction={
+                                            visibleUndoMessageIds.has(m.id) ? (
+                                              <SpaceUndoButton message={m} />
+                                            ) : null
+                                          }
+                                          pinAssistantActions={m.id === pinnedAssistantMessageId}
+                                        />
+                                      </div>
+                                    ))}
+                                    {isLastTurn ? (
+                                      <div className="mt-1">
+                                        <StatusIndicator
+                                          conversationIdOverride={selectedConversationId}
+                                        />
+                                      </div>
+                                    ) : null}
+                                  </div>
                                 </div>
-                                <div className="pointer-events-none h-6 bg-gradient-to-b from-[var(--color-background)] to-transparent" />
-                              </div>
-
-                              <div
-                                className="flex flex-col gap-3"
-                                style={
-                                  isLastTurn
-                                    ? {
-                                        minHeight: Math.max(0, spacerHeight - lastUserPromptHeight),
-                                      }
-                                    : undefined
-                                }
-                              >
-                                {turn.responses.map((m) => (
-                                  <div key={m.id} data-message-id={m.id}>
-                                    <MessageBubble
-                                      message={m}
-                                      isStreaming={m.id === streamingMessageId}
-                                      isEditable={m.id === lastUserMessageId}
-                                      onEditSubmit={
-                                        m.id === lastUserMessageId ? handleEditSubmit : undefined
-                                      }
-                                      conversationIdOverride={selectedConversationId}
-                                      knownSkillKeys={knownSkillKeys}
-                                      agentKey={activeAgentKey}
-                                      campaignId={effectiveCampaignId ?? undefined}
-                                      assistantInlineAction={
-                                        visibleUndoMessageIds.has(m.id) ? (
-                                          <SpaceUndoButton message={m} />
-                                        ) : null
-                                      }
-                                      pinAssistantActions={m.id === pinnedAssistantMessageId}
-                                    />
-                                  </div>
-                                ))}
-                                {isLastTurn ? (
-                                  <div className="mt-1">
-                                    <StatusIndicator
-                                      conversationIdOverride={selectedConversationId}
-                                    />
-                                  </div>
-                                ) : null}
-                              </div>
-                            </div>
-                          )
-                        })}
+                              )
+                            })}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {creditsLow && !creditsExhausted ? (
-                    <div className="flex items-center justify-center gap-2 bg-amber-500/5 px-4 py-2">
-                      <span className="body-3 text-amber-400">
-                        Running low on credits ({creditsLowRemaining} remaining)
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          window.dispatchEvent(
-                            new CustomEvent('open-account-settings', { detail: 'billing' }),
-                          )
-                        }}
-                        className="body-3 font-medium text-amber-400 underline hover:text-amber-300"
-                      >
-                        Buy more
-                      </button>
-                    </div>
-                  ) : null}
-
-                  {creditsExhausted ? (
-                    <div className="bg-[var(--color-destructive)]/5 flex flex-col items-center gap-3 px-4 py-4">
-                      <p className="body-2 font-medium text-[var(--color-foreground)]">
-                        You&apos;ve run out of credits
-                      </p>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            window.dispatchEvent(new CustomEvent('open-credit-purchase'))
-                            useChatStore.getState().setCreditsExhausted(false)
-                          }}
-                          className="body-2 chip-glass-green rounded-lg px-4 py-2 font-medium transition-opacity hover:opacity-90"
-                        >
-                          Buy More Credits
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            window.dispatchEvent(
-                              new CustomEvent('open-account-settings', { detail: 'billing' }),
-                            )
-                            useChatStore.getState().setCreditsExhausted(false)
-                          }}
-                          className="body-2 chip-glass-neutral rounded-lg px-4 py-2 font-medium transition-colors"
-                        >
-                          Upgrade Plan
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <StreamInterruptedBar conversationId={selectedConversationId} />
-
-                  <div
-                    className={cn(
-                      'relative flex shrink-0 flex-col items-center px-3 pb-3 pt-2 md:px-4',
-                      isStopping && 'opacity-70',
-                    )}
-                  >
-                    {userHasScrolledUp && displayMessages.length > 0 ? (
-                      <div className="pointer-events-none absolute inset-x-0 -top-12 z-10 flex justify-center">
-                        <button
-                          type="button"
-                          onClick={handleScrollToBottom}
-                          className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-card)] shadow-[0_0_12px_4px_rgba(0,0,0,0.4)] transition-all hover:opacity-90"
-                          aria-label="Scroll to latest messages"
-                          title="Scroll to latest"
-                        >
-                          <ArrowDown className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ) : null}
-                    <div className="w-full max-w-3xl">
-                      <RateLimitCard />
-                      <MessageQueue
-                        items={queue}
-                        onRemove={handleQueueRemove}
-                        onSendNow={handleQueueSendNow}
-                        onEdit={handleQueueEdit}
-                      />
-                      {selectedConversationReadOnly ? (
-                        <div className="body-3 text-muted-foreground mb-spacing-2 rounded-spacing-2 px-spacing-3 py-spacing-2 border border-[var(--color-border)] text-center">
-                          Read-only. Ask the owner for edit access.
+                      {creditsLow && !creditsExhausted ? (
+                        <div className="flex items-center justify-center gap-2 bg-amber-500/5 px-4 py-2">
+                          <span className="body-3 text-amber-400">
+                            Running low on credits ({creditsLowRemaining} remaining)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              window.dispatchEvent(
+                                new CustomEvent('open-account-settings', { detail: 'billing' }),
+                              )
+                            }}
+                            className="body-3 font-medium text-amber-400 underline hover:text-amber-300"
+                          >
+                            Buy more
+                          </button>
                         </div>
                       ) : null}
-                      {!isStreaming && !selectedConversationReadOnly ? (
-                        <ChatComposerTryTip conversationId={selectedConversationId} />
+
+                      {creditsExhausted ? (
+                        <div className="bg-[var(--color-destructive)]/5 flex flex-col items-center gap-3 px-4 py-4">
+                          <p className="body-2 font-medium text-[var(--color-foreground)]">
+                            You&apos;ve run out of credits
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                window.dispatchEvent(new CustomEvent('open-credit-purchase'))
+                                useChatStore.getState().setCreditsExhausted(false)
+                              }}
+                              className="body-2 chip-glass-green rounded-lg px-4 py-2 font-medium transition-opacity hover:opacity-90"
+                            >
+                              Buy More Credits
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                window.dispatchEvent(
+                                  new CustomEvent('open-account-settings', { detail: 'billing' }),
+                                )
+                                useChatStore.getState().setCreditsExhausted(false)
+                              }}
+                              className="body-2 chip-glass-neutral rounded-lg px-4 py-2 font-medium transition-colors"
+                            >
+                              Upgrade Plan
+                            </button>
+                          </div>
+                        </div>
                       ) : null}
-                      {quickStart.pendingPicker ? (
-                        <CreateTypePickerCard
-                          catalog={quickStart.pendingPicker}
-                          visuals={
-                            quickStart.pendingPickerId === 'funnel'
-                              ? FUNNEL_TYPE_PICKER_VISUALS
-                              : undefined
-                          }
-                          onSelect={quickStart.selectPickerOption}
-                          onDismiss={quickStart.clearPicker}
-                        />
-                      ) : null}
-                      <ComposerInputStack
-                        stackActive={isStreaming && !selectedConversationReadOnly}
-                        topSlot={
-                          <ComposerActiveRunTipCard
-                            stacked
-                            conversationId={selectedConversationId}
-                            isStreaming={isStreaming}
-                          />
-                        }
+
+                      <StreamInterruptedBar conversationId={selectedConversationId} />
+
+                      <div
+                        className={cn(
+                          'relative flex shrink-0 flex-col items-center px-3 pb-3 pt-2 md:px-4',
+                          isStopping && 'opacity-70',
+                        )}
                       >
-                        <ChatInput
-                          onSend={handleComposerSendWithQueueEdit}
-                          defaultModel={defaultModel}
-                          defaultModelSettings={conversationModelSettings}
-                          campaignModelStrategy={campaignModelStrategy}
-                          disabled={creditsExhausted || selectedConversationReadOnly}
-                          sendDisabled={isStopping}
-                          creditsExhausted={creditsExhausted}
-                          isStreaming={isStreaming}
-                          onStop={handleStop}
-                          conversationId={selectedConversationId}
-                          setTextRef={setTextRef}
-                          composerMirrorRef={composerMirrorRef}
-                          onComposerValueChange={quickStart.handleComposerValueChange}
-                          activeCapabilityChip={quickStart.activeCapabilityChip}
-                          onClearCapabilityChip={quickStart.clearQuickStart}
-                          onEnqueue={editingQueueItemId ? undefined : handleEnqueue}
-                          onSendNow={handleQueueSendNowNext}
-                          queueLength={queue.length}
-                          placeholder={
-                            selectedConversationReadOnly
-                              ? 'Read-only conversation'
-                              : messages.length === 0
-                                ? SHELL_EMPTY_CHAT_PLACEHOLDER
-                                : `Message ${activeAgentName}...`
-                          }
-                          initialValue={composerRestore?.text}
-                          initialDocuments={composerRestore?.documents}
-                          initialReferences={composerRestore?.references}
-                          restoreNonce={composerRestore?.nonce}
-                          campaignId={effectiveCampaignId ?? undefined}
-                          spaceId={isChannelScope ? null : effectiveSpaceId}
-                          scopeKind={
-                            isChannelScope
-                              ? undefined
-                              : effectiveCampaignId
-                                ? 'campaign'
-                                : 'personal'
-                          }
-                          compact
-                          agentKey={activeAgentKey}
-                          dropZoneRef={chatPanelRef}
-                          spaceComposerSpaceTasks={
-                            scopeMatchesVisibleSpace ? spaceComposerSpaceTasks : []
-                          }
-                          spaceComposerListenExternalAttach
-                          onVoiceStart={handleVoiceStart}
-                        />
-                      </ComposerInputStack>
-                    </div>
-                  </div>
-                </>
-              )}
-              {voiceActive && voiceMinimized ? (
-                <SpaceVoiceMiniPlayer
-                  agentName={activeVoiceAgent.display_name}
-                  state={voiceSession.state}
-                  isMuted={voiceSession.isMuted}
-                  onRestore={() => setVoiceMinimized(false)}
-                  onToggleMute={voiceSession.toggleMute}
-                  onEnd={handleVoiceEnd}
+                        {userHasScrolledUp && displayMessages.length > 0 ? (
+                          <div className="pointer-events-none absolute inset-x-0 -top-12 z-10 flex justify-center">
+                            <button
+                              type="button"
+                              onClick={handleScrollToBottom}
+                              className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-card)] shadow-[0_0_12px_4px_rgba(0,0,0,0.4)] transition-all hover:opacity-90"
+                              aria-label="Scroll to latest messages"
+                              title="Scroll to latest"
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : null}
+                        <div className="w-full max-w-3xl">
+                          <RateLimitCard />
+                          <MessageQueue
+                            items={queue}
+                            onRemove={handleQueueRemove}
+                            onSendNow={handleQueueSendNow}
+                            onEdit={handleQueueEdit}
+                          />
+                          {selectedConversationReadOnly ? (
+                            <div className="body-3 text-muted-foreground mb-spacing-2 rounded-spacing-2 px-spacing-3 py-spacing-2 border border-[var(--color-border)] text-center">
+                              Read-only. Ask the owner for edit access.
+                            </div>
+                          ) : null}
+                          {!isStreaming && !selectedConversationReadOnly ? (
+                            <ChatComposerTryTip conversationId={selectedConversationId} />
+                          ) : null}
+                          {quickStart.pendingPicker ? (
+                            <CreateTypePickerCard
+                              catalog={quickStart.pendingPicker}
+                              visuals={
+                                quickStart.pendingPickerId === 'funnel'
+                                  ? FUNNEL_TYPE_PICKER_VISUALS
+                                  : undefined
+                              }
+                              onSelect={quickStart.selectPickerOption}
+                              onDismiss={quickStart.clearPicker}
+                            />
+                          ) : null}
+                          <ComposerInputStack
+                            stackActive={isStreaming && !selectedConversationReadOnly}
+                            topSlot={
+                              <ComposerActiveRunTipCard
+                                stacked
+                                conversationId={selectedConversationId}
+                                isStreaming={isStreaming}
+                              />
+                            }
+                          >
+                            <ChatInput
+                              onSend={handleComposerSendWithQueueEdit}
+                              defaultModel={defaultModel}
+                              defaultModelSettings={conversationModelSettings}
+                              campaignModelStrategy={campaignModelStrategy}
+                              disabled={creditsExhausted || selectedConversationReadOnly}
+                              sendDisabled={isStopping}
+                              creditsExhausted={creditsExhausted}
+                              isStreaming={isStreaming}
+                              onStop={handleStop}
+                              conversationId={selectedConversationId}
+                              setTextRef={setTextRef}
+                              composerMirrorRef={composerMirrorRef}
+                              onComposerValueChange={quickStart.handleComposerValueChange}
+                              activeCapabilityChip={quickStart.activeCapabilityChip}
+                              onClearCapabilityChip={quickStart.clearQuickStart}
+                              onEnqueue={editingQueueItemId ? undefined : handleEnqueue}
+                              onSendNow={handleQueueSendNowNext}
+                              queueLength={queue.length}
+                              placeholder={
+                                selectedConversationReadOnly
+                                  ? 'Read-only conversation'
+                                  : messages.length === 0
+                                    ? SHELL_EMPTY_CHAT_PLACEHOLDER
+                                    : `Message ${activeAgentName}...`
+                              }
+                              initialValue={composerRestore?.text}
+                              initialDocuments={composerRestore?.documents}
+                              initialReferences={composerRestore?.references}
+                              restoreNonce={composerRestore?.nonce}
+                              campaignId={effectiveCampaignId ?? undefined}
+                              spaceId={isChannelScope ? null : effectiveSpaceId}
+                              scopeKind={
+                                isChannelScope
+                                  ? undefined
+                                  : effectiveCampaignId
+                                    ? 'campaign'
+                                    : 'personal'
+                              }
+                              compact
+                              agentKey={activeAgentKey}
+                              dropZoneRef={chatPanelRef}
+                              spaceComposerSpaceTasks={
+                                scopeMatchesVisibleSpace ? spaceComposerSpaceTasks : []
+                              }
+                              spaceComposerListenExternalAttach
+                              onVoiceStart={handleVoiceStart}
+                            />
+                          </ComposerInputStack>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {voiceActive && voiceMinimized ? (
+                    <SpaceVoiceMiniPlayer
+                      agentName={activeVoiceAgent.display_name}
+                      state={voiceSession.state}
+                      isMuted={voiceSession.isMuted}
+                      onRestore={() => setVoiceMinimized(false)}
+                      onToggleMute={voiceSession.toggleMute}
+                      onEnd={handleVoiceEnd}
+                    />
+                  ) : null}
+                </div>
+                <ShellRightPanel
+                  conversationId={selectedConversationId}
+                  conversation={selectedConversation}
+                  campaignId={effectiveCampaignId}
+                  spaceId={effectiveSpaceId}
+                  showScope={!isChannelScope}
+                  placement={summaryDocked ? 'docked' : 'overlay'}
+                  onConversationUpdated={handleConversationScopeUpdated}
+                  onScopeChanged={setScopeOverride}
                 />
-              ) : null}
+              </div>
             </div>
           }
           subPanel={
@@ -2651,16 +2670,6 @@ export function SpaceVibeyChatPanel({
           onSharesChanged={() => void loadConversations({ force: true })}
         />
       ) : null}
-      <ShellRightPanel
-        conversationId={selectedConversationId}
-        conversation={selectedConversation}
-        campaignId={effectiveCampaignId}
-        spaceId={effectiveSpaceId}
-        showScope={!isChannelScope}
-        placement={summaryDocked ? 'docked' : 'overlay'}
-        onConversationUpdated={handleConversationScopeUpdated}
-        onScopeChanged={setScopeOverride}
-      />
     </div>
   )
 }

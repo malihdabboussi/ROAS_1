@@ -1,4 +1,15 @@
-## 2026-08-17 - [UI] Client Campaigns table still uses auto layout
+## 2026-08-17 - [ARCH] SpaceVibeyChatPanel still over the container LOC limit after summary header flush
+
+Status: Open
+
+Found while: Flushing the docked summary card under the chat header and moving the summary toggle into the header top-right cluster
+
+Evidence: `wc -l` reports `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` at 2671 LOC (container limit 600). This change only wrapped the thread + summary in a body row under the existing header.
+
+Needed work: Split remaining send/seed/header orchestration out of SpaceVibeyChatPanel.
+
+Reason not done now: Requested work was header/card alignment; decomposing the oversized container was out of scope.
+
 
 Status: Open
 

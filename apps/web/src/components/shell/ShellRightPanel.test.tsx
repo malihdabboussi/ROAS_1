@@ -178,7 +178,7 @@ describe('ShellRightPanel', () => {
 
     const panel = await screen.findByRole('complementary', { name: 'Work summary' })
     expect(panel).toHaveClass('dropdown-menu-solid', 'origin-top-right')
-    expect(panel.parentElement).toHaveClass('absolute', 'right-0', 'top-spacing-12')
+    expect(panel.parentElement).toHaveClass('absolute', 'right-0', 'top-0')
     expect(panel.parentElement).toHaveAttribute('data-summary-placement', 'overlay')
     expect(panel).not.toHaveClass('h-full')
     await waitFor(() => expect(panel).toHaveClass('scale-100', 'opacity-100'))
@@ -261,7 +261,8 @@ describe('ShellRightPanel', () => {
 
     const panel = await screen.findByRole('complementary', { name: 'Work summary' })
     expect(panel.parentElement).toHaveAttribute('data-summary-placement', 'docked')
-    expect(panel.parentElement).toHaveClass('self-start', 'pt-spacing-12', 'px-spacing-2')
+    expect(panel.parentElement).toHaveClass('self-start', 'px-spacing-2', 'pb-spacing-2')
+    expect(panel.parentElement).not.toHaveClass('pt-spacing-12')
     expect(panel.parentElement).not.toHaveClass('absolute')
     expect(panel).toHaveClass('dropdown-menu-solid')
     expect(panel).not.toHaveClass('h-full', 'border-l')
