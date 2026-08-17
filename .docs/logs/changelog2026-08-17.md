@@ -1,5 +1,15 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 02:30] - [STYLE]
+
+What: Wide-screen work summary uses the same rounded overlay card as the narrow overlay, inset inside the chat pane, with no full-height divider.
+
+Why: The docked column was flush to the edges with a vertical rule, which did not match the popped-up small-screen card.
+
+Impact: Summary sits off to the side of chat as a contained rounded card on wide panes; overlay behavior on narrow panes is unchanged.
+
+Files: `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/components/shell/ShellRightPanel.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 00:45] - [FIX]
 
 What: Fixed the chat HTML artifact PR so `next build` typecheck passes: `ChatMarkdownDocument` now types the mermaid/code/markdown segment union, and unused download mock params are prefixed.
