@@ -53,7 +53,7 @@ export function ChatCodeArtifactCopyMenu({
               onDownload()
               setOpen(false)
             }}
-            className="px-spacing-2 py-spacing-1 body-3 text-foreground hover:bg-hover-subtle flex w-full items-center rounded-spacing-2 text-left"
+            className="px-spacing-2 py-spacing-1 body-3 text-foreground hover:bg-hover-subtle rounded-spacing-2 flex w-full items-center text-left"
           >
             {downloadLabel}
           </button>

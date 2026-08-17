@@ -135,6 +135,8 @@ export const CreateWorkRequestDraftWebhookSchema = z
         thread_ts: readString(source.thread_ts),
         message_ts: readString(source.message_ts),
         source_url: readString(source.source_url),
+        conversation_id:
+          readString(source.conversation_id) || readString(source.conversationId) || undefined,
         context: source,
       },
       requester: {

@@ -74,9 +74,7 @@ export function ShellArtifactViewerPanel({
     >
       <header className="border-border gap-spacing-2 px-spacing-3 py-spacing-2 flex min-h-12 shrink-0 items-center border-b">
         {leading}
-        {titleVariant === 'breadcrumb' ? (
-          <Icon className="icon-sm text-primary shrink-0" />
-        ) : null}
+        {titleVariant === 'breadcrumb' ? <Icon className="icon-sm text-primary shrink-0" /> : null}
         {titleVariant === 'plain' ? (
           <div className="body-4 min-w-0 flex-1 truncate whitespace-nowrap">
             <span className="text-foreground font-semibold">{target.title}</span>

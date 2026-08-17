@@ -45,7 +45,7 @@ export function ChatCodeArtifactCard({
         aria-label={`${CHAT_CODE_ARTIFACT_MESSAGES.TOOLTIP_OPEN.message}: ${title}`}
         data-testid="chat-code-artifact-card"
       >
-        <span className="bg-secondary flex h-spacing-8 w-spacing-8 shrink-0 items-center justify-center rounded-lg">
+        <span className="bg-secondary h-spacing-8 w-spacing-8 flex shrink-0 items-center justify-center rounded-lg">
           <Code className="icon-sm text-muted-foreground" aria-hidden />
         </span>
         <span className="min-w-0 flex-1">

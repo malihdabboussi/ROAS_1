@@ -1,3 +1,15 @@
+## 2026-08-16 - [ARCH] WorkRequestChatFlow still over 400 LOC component soft limit
+
+Status: Open
+
+Found while: Service Request chat shell + ClickUp mirror dedupe
+
+Evidence: `wc -l` reports `apps/web/src/features/work-requests/components/WorkRequestChatFlow.tsx` at ~441 LOC after known/pending step wiring.
+
+Needed work: Split transcript/commit helpers or presentation chrome out of the container so the file stays under the 400 LOC component soft limit.
+
+Reason not done now: In-scope work was ClickUp body dedupe plus assignee/date/assets UX; further decomposition risked a larger untested refactor in the same pass.
+
 ## 2026-08-15 - [UI] Shell artifact viewer still uses lightweight previews for ads, offers, and adjacent entity types
 
 Status: Open

@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react'
 import { Code, Eye } from 'lucide-react'
 import { toast } from 'sonner'
-import { ChatCodeArtifactCopyMenu } from '@/components/chat/ChatCodeArtifactCopyMenu'
 import { CHAT_CODE_ARTIFACT_MESSAGES } from '@/components/chat/chat-code-artifact.messages.config'
+import { ChatCodeArtifactCopyMenu } from '@/components/chat/ChatCodeArtifactCopyMenu'
 import { ShellArtifactViewerPanel } from '@/components/shell/ShellArtifactViewerPanel'
 import { HtmlMiniIframe } from '@/components/ui/HtmlMiniIframe'
 import { Tooltip } from '@/components/ui/tooltip'
@@ -50,7 +50,7 @@ export function ShellCodeArtifactViewer({ target }: { target: ShellArtifactViewe
                 'btn-icon-bare rounded-lg border outline-none focus:outline-none focus-visible:outline-none',
                 mode === 'preview'
                   ? 'card-glass-blue text-foreground'
-                  : 'border-transparent text-muted-foreground hover:bg-hover-subtle',
+                  : 'text-muted-foreground hover:bg-hover-subtle border-transparent',
               )}
             >
               <Eye className="icon-sm" aria-hidden />
@@ -66,7 +66,7 @@ export function ShellCodeArtifactViewer({ target }: { target: ShellArtifactViewe
                 'btn-icon-bare rounded-lg border outline-none focus:outline-none focus-visible:outline-none',
                 mode === 'code'
                   ? 'card-glass-blue text-foreground'
-                  : 'border-transparent text-muted-foreground hover:bg-hover-subtle',
+                  : 'text-muted-foreground hover:bg-hover-subtle border-transparent',
               )}
             >
               <Code className="icon-sm" aria-hidden />

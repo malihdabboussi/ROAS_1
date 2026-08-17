@@ -84,7 +84,10 @@ export function downloadChatCodeArtifact(
   return downloadHTML(toChatCodePreviewSrcDoc(code, language), title)
 }
 
-export function chatCodeArtifactFileName(title: string, language: ChatCodeArtifactLanguage): string {
+export function chatCodeArtifactFileName(
+  title: string,
+  language: ChatCodeArtifactLanguage,
+): string {
   const extension = language === 'css' ? 'css' : language === 'svg' ? 'svg' : 'html'
   return `${sanitizeFilename(title)}.${extension}`
 }

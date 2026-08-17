@@ -1,5 +1,6 @@
 'use client'
 
+import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
@@ -15,6 +16,8 @@ export function SpacesContainer() {
   const ensureDefaultSpace = useSpacesStore((s) => s.ensureDefaultSpace)
   const setActiveSpace = useSpacesStore((s) => s.setActiveSpace)
   const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
+  const searchParams = useSearchParams()
+  const urlSpaceParam = searchParams.get('space')?.trim() || null
   const [creatingDefaultSpace, setCreatingDefaultSpace] = useState(false)
 
   useEffect(() => {
@@ -22,18 +25,20 @@ export function SpacesContainer() {
     void loadRoster()
   }, [loadSpaces, loadRoster])
 
+  const activeCampaignId = spaces.find((space) => space.id === activeSpaceId)?.campaign_id ?? null
+
   useEffect(() => {
     if (!activeSpaceId) return
-    const activeSpace = spaces.find((space) => space.id === activeSpaceId)
     setWorkContext({
       surface: 'spaces',
       spaceId: activeSpaceId,
-      campaignId: activeSpace?.campaign_id ?? null,
+      campaignId: activeCampaignId,
     })
-  }, [activeSpaceId, setWorkContext, spaces])
+  }, [activeCampaignId, activeSpaceId, setWorkContext])
 
   useEffect(() => {
-    if (loading || spaces.length > 0 || creatingDefaultSpace) return
+    // Deep links resolve a specific space; do not race ensure-default into a blank org.
+    if (urlSpaceParam || loading || spaces.length > 0 || creatingDefaultSpace) return
     let cancelled = false
     setCreatingDefaultSpace(true)
     ensureDefaultSpace()
@@ -46,7 +51,14 @@ export function SpacesContainer() {
     return () => {
       cancelled = true
     }
-  }, [creatingDefaultSpace, ensureDefaultSpace, loading, setActiveSpace, spaces.length])
+  }, [
+    creatingDefaultSpace,
+    ensureDefaultSpace,
+    loading,
+    setActiveSpace,
+    spaces.length,
+    urlSpaceParam,
+  ])
 
   // Keep painting when we already have spaces (stale-while-revalidate).
   if ((loading && spaces.length === 0) || creatingDefaultSpace) {

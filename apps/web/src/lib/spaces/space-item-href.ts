@@ -15,6 +15,14 @@ export function parseSpaceItemHref(href: string | null | undefined): SpaceItemRo
     return spaceId && itemId ? { spaceId, itemId } : null
   }
 
+  // Portal-style: /spaces/{spaceId}?item={itemId}
+  const portalMatch = /^\/spaces\/([^/]+)\/?$/.exec(url.pathname)
+  if (portalMatch?.[1]) {
+    const spaceId = decodeURIComponent(portalMatch[1]).trim()
+    const itemId = url.searchParams.get('item')?.trim()
+    if (spaceId && itemId) return { spaceId, itemId }
+  }
+
   const legacyMatch = /^\/spaces\/([^/]+)\/([^/?#]+)/.exec(url.pathname)
   if (!legacyMatch?.[1] || !legacyMatch[2]) return null
   return {
