@@ -65,18 +65,16 @@ export function ShellRightPanel({
   const { openLauncher } = useQuickMissionsLauncher()
   const open = useShellStore((s) => s.rightPanel.open)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
-  const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
   const conversationScopePickerRequestNonce = useShellStore(
     (s) => s.conversationScopePickerRequestNonce,
   )
   const scopePickerRef = useRef<ConversationScopePickerHandle>(null)
   const handleOpenCampaign = useCallback(
     (nextCampaignId: string) => {
-      closeArtifactViewer()
       setWorkAreaOpen(true)
       router.push(`/campaigns/${nextCampaignId}`)
     },
-    [closeArtifactViewer, router, setWorkAreaOpen],
+    [router, setWorkAreaOpen],
   )
   const lastHandledScopePickerRequestRef = useRef(0)
   // Collapse state lives here rather than in each section: this component
@@ -155,17 +153,15 @@ export function ShellRightPanel({
     : null
   const handleOpenMeetingWorkspace = useCallback(() => {
     if (!linkedMeeting) return
-    closeArtifactViewer()
     setWorkAreaOpen(true)
     router.push(homeMeetingHref({ id: linkedMeeting.meetingItemId }, linkedMeeting.spaceId))
-  }, [closeArtifactViewer, linkedMeeting, router, setWorkAreaOpen])
+  }, [linkedMeeting, router, setWorkAreaOpen])
   const handleOpenSpace = useCallback(
     (nextSpaceId: string) => {
-      closeArtifactViewer()
       setWorkAreaOpen(true)
       router.push(`/spaces?space=${encodeURIComponent(nextSpaceId)}`)
     },
-    [closeArtifactViewer, router, setWorkAreaOpen],
+    [router, setWorkAreaOpen],
   )
   const handleClearMeeting = useCallback(() => {
     clearMeetingContext()

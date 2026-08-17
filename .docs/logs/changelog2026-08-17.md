@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:20] - [FIX]
+What: Screen navigation no longer closes or forgets the open artifact. HQ rail, Show page history, Open meeting workspace, campaign/space open keep it; explicit close, flow navigate-away, and drag-to-edge collapse still close it.
+Why: Pathname-change and page-pick handlers called `closeArtifactViewer()`, which also forgot the chat’s last artifact, so restoring a chat’s work screen raced the artifact closed.
+Impact: Moving screens keeps the artifact on the pin-like default for that chat. Closing it still means it stays closed until the user opens one again.
+Files: `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `apps/web/src/components/shell/ShellWorkAreaControl.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 20:05] - [STYLE]
 What: Chat assistant-turn actions now show Reply first, then Copy, then Fork.
 Why: Reply is the primary next step in a conversation, so it should be the first control you see.

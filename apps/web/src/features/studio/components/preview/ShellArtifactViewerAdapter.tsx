@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef } from 'react'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
 import { DeliverablePreviewBody } from '@/components/deliverables/DeliverablePreviewBody'
@@ -94,12 +94,10 @@ function ShellSpaceDocumentArtifactViewer({ target }: { target: ShellArtifactVie
 }
 
 export function ShellArtifactViewerAdapter() {
-  const pathname = usePathname() || '/home'
   const router = useRouter()
   const target = useShellStore((s) => s.artifactViewer.target)
   const openArtifactViewer = useShellStore((s) => s.openArtifactViewer)
   const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
-  const previousPathRef = useRef(pathname)
 
   useEffect(() => {
     const onOpen = (event: Event) => {
@@ -152,13 +150,6 @@ export function ShellArtifactViewerAdapter() {
     window.addEventListener(VIBEY_OPEN_MEDIA_EVENT, onOpenMedia)
     return () => window.removeEventListener(VIBEY_OPEN_MEDIA_EVENT, onOpenMedia)
   }, [openArtifactViewer])
-
-  useEffect(() => {
-    if (previousPathRef.current !== pathname) {
-      previousPathRef.current = pathname
-      closeArtifactViewer()
-    }
-  }, [closeArtifactViewer, pathname])
 
   useEffect(() => {
     if (target?.type !== 'flow') return
