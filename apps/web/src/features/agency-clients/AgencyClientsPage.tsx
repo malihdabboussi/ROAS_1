@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { BriefcaseBusiness, PanelRightOpen, Search } from 'lucide-react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { fetchAgencyClients, type AgencyClient } from '@/lib/agency-clients'
 import { cn } from '@/lib/utils/cn'
 import { AgencyClientsTable } from './AgencyClientsTable'
 import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
+import { AGENCY_CLIENT_MESSAGES } from './config/messages.config'
 
 type GroupMode = 'pipeline' | 'manager'
 
@@ -107,7 +108,7 @@ export function AgencyClientsPage() {
         </Link>
       </div>
 
-      {loading ? <VibeyLoadingOrb /> : null}
+      {loading ? <ListSkeleton rows={8} label={AGENCY_CLIENT_MESSAGES.LOADING_CLIENTS} /> : null}
       {error ? (
         <p className="body-2 text-destructive surface-card rounded-spacing-3 p-spacing-4">
           {error}

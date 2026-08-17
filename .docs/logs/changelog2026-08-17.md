@@ -1,11 +1,16 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:19] - [FIX]
+What: Meetings now skeleton-loads the agenda in place (no centered green orb flash, no duplicate loader). Meeting chats list the meeting workspace inside Connections by name, without an unlink control. Inbox, My Tasks, All Tasks, Programs, Clients, and Client Campaigns use the same list skeleton.
+Why: The Meetings orb started between chat and agenda, then jumped into the agenda body. Open meeting workspace sat above Connections instead of being the named meeting connection.
+Impact: Agenda chrome stays put while meetings load. The meeting workspace is a permanent Connections row; campaign/Space rows stay removable.
+Files: `MeetingsUnifiedSurface.tsx`, `AgendaCard.tsx`, `ShellRightPanel.tsx`, `ShellRightPanelConnections.tsx`, `ListSkeleton.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 20:15] - [FIX]
 What: Chat working status now types a live line and rotates Cursor-style phrases after a short hold instead of freezing on Brain/tool labels.
 Why: Turns that said they were reading Brain looked stuck even while the agent was still working.
 Impact: Composer chat keeps an animated working line (`Planning next moves...` and similar) while Pixel is thinking or a Brain/tool step sits open.
 Files: `apps/web/src/lib/chat/chat-working-status.ts`, `apps/web/src/lib/chat/use-working-status-label.ts`, `apps/web/src/components/chat/ChatWorkingStatusLabel.tsx`, `apps/web/src/components/chat/TypewriterShimmer.tsx`, `apps/web/src/features/studio/components/chat/StatusIndicator.tsx`, `apps/web/src/features/studio/components/chat/LockedInGroup.tsx`, `apps/web/src/features/studio/components/chat/ThinkingTranscriptBlock.tsx`
-
 
 ## [2026-08-17 20:05] - [STYLE]
 What: Chat assistant-turn actions now show Reply first, then Copy, then Fork.

@@ -3,12 +3,13 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { AllTasksNativeList } from '@/components/work-views/AllTasksNativeList'
 import { fetchCampaigns, type Campaign } from '@/lib/campaigns'
 import { fetchPrograms, type Program } from '@/lib/programs'
 import type { TaskRollupItem, TaskRollupView } from '@/lib/tasks'
 import { useTaskRollup } from '@/lib/work-views'
+import { ALL_TASKS_MESSAGES } from '../config/all-tasks-messages.config'
 import { ALL_TASKS_TOAST_ERRORS } from '../config/all-tasks-toast-errors.config'
 import { AllTasksScopeFilters } from './AllTasksScopeFilters'
 
@@ -116,9 +117,7 @@ export function AllTasksBoard({
         </div>
 
         {loading ? (
-          <div className="flex min-h-64 items-center justify-center">
-            <VibeyLoadingOrb text="Loading tasks..." state="processing" size="sm" />
-          </div>
+          <ListSkeleton rows={8} label={ALL_TASKS_MESSAGES.LOADING} />
         ) : items.length ? (
           <AllTasksNativeList items={items} reload={reload} onOpenItem={onOpenItem} />
         ) : (
