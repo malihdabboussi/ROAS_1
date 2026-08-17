@@ -124,16 +124,20 @@ export function HomeDashboardV4Composer() {
   }, [campaigns, spaces])
 
   const targetLabel = useMemo(() => {
+    const campaign = campaigns.find((row) => row.id === targetCampaignId)
     return conversationScopeDisplayLabel({
-      campaignName: campaigns.find((campaign) => campaign.id === targetCampaignId)?.name,
+      campaignName: campaign?.name,
       spaceTitle: spaces.find((space) => space.id === targetSpaceId)?.title,
+      programName: campaign?.program_id
+        ? (programs.find((program) => program.id === campaign.program_id)?.name ?? null)
+        : null,
       campaignId: targetCampaignId,
       spaceId: targetSpaceId,
       emptyLabel: isOrgOnly
         ? (spaces[0]?.title ?? 'Workspace')
         : (defaultGeneralSpace?.title ?? 'New Workspace'),
     })
-  }, [campaigns, defaultGeneralSpace, isOrgOnly, spaces, targetCampaignId, targetSpaceId])
+  }, [campaigns, defaultGeneralSpace, isOrgOnly, programs, spaces, targetCampaignId, targetSpaceId])
 
   const activeCampaignId = useMemo(() => {
     if (targetSpaceId) {

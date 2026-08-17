@@ -200,7 +200,9 @@ export function SidebarHqFlyouts({
 
   return (
     <>
-      {hoverPanel === 'favorites' && anchor ? (
+      {hoverPanel === 'favorites' &&
+      anchor &&
+      (favoritePrograms.length > 0 || favoriteCampaigns.length > 0 || favoriteSpaces.length > 0) ? (
         <HubDockFlyout
           anchor={anchor}
           title="Favorites"

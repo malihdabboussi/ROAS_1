@@ -74,7 +74,8 @@ describe('SidebarSimpleSection', () => {
       '/client-campaigns',
     )
     expect(screen.getByRole('link', { name: 'All Tasks' })).toHaveAttribute('href', '/all-tasks')
-    expect(screen.getByText('Favorites')).toBeInTheDocument()
+    expect(screen.queryByText('Favorites')).not.toBeInTheDocument()
+    expect(screen.queryByText('No favorites yet')).not.toBeInTheDocument()
     expect(screen.getByText('More')).toBeInTheDocument()
     expect(screen.getByText('Chat history')).toBeInTheDocument()
   })
@@ -124,6 +125,7 @@ describe('SidebarSimpleSection', () => {
     )
 
     expect(screen.queryByRole('link', { name: 'Personal' })).not.toBeInTheDocument()
+    expect(screen.getByText('Favorites')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'General' })).toBeInTheDocument()
   })
 
@@ -159,5 +161,6 @@ describe('SidebarSimpleSection', () => {
       expect(programMocks.updateProgramUserState).toHaveBeenCalledWith('program-personal', false)
     })
     expect(screen.queryByRole('link', { name: 'Personal' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Favorites')).not.toBeInTheDocument()
   })
 })

@@ -1,6 +1,6 @@
 # Page Grader Campaign Brain Sync
 
-Last Modified: August 15, 2026
+Last Modified: August 17, 2026
 
 ## Overview
 
@@ -140,7 +140,8 @@ Repeated manual requests use the deterministic Page Grader client and meeting ti
 
 ## Decision Log
 
-- **2026-08-15:** Empty Slack periods are a skip, not an Atlas failure. The import runtime does not call Atlas when the formatted window has no message content, remaps Slack `JOB_STATUS:failed` empty-ingest reasons to skipped, and the Brain toast says there was nothing to save instead of "Atlas could not process/ingest".
+- **2026-08-17:** Empty Slack period skips stay skipped, but they no longer toast. Background channel sync can finish several empty windows in a row; a global info toast for each one interrupted chat. The notifier still acknowledges those jobs so they do not repeat.
+- **2026-08-15:** Empty Slack periods are a skip, not an Atlas failure. The import runtime does not call Atlas when the formatted window has no message content, remaps Slack `JOB_STATUS:failed` empty-ingest reasons to skipped, and no longer surfaces that skip as an Atlas ingest error.
 - **2026-08-13:** Separated Page Grader's hourly mapped-client catch-up from the three-second Brain import sweep. The frequent enqueue endpoint is now bounded to due-job discovery, preventing overlapping 50-client Page Grader pulls from exhausting the Vercel function window.
 - **2026-08-13:** Replaced the Campaign Brain router's `save_document` fallback with a direct embedded `ns_memories` write. Campaign imports now retain Slack source IDs and temporal fields, verify campaign access, reject General, and fail if retrieval embedding cannot be created.
 - **2026-08-13:** Fixed periodic Campaign Brain imports that were falsely recorded as successful after Atlas rejected the user-only save route. Campaign jobs now use the canonical Atlas Brain router with the exact campaign id, nested OpenResponses terminal statuses are parsed, missing status markers fail closed, and failed chunks cannot advance the Slack cursor.

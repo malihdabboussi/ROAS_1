@@ -2,6 +2,29 @@ import { describe, expect, it } from 'vitest'
 import { conversationScopeDisplayLabel } from './conversation-scope-picker-layout'
 
 describe('conversationScopeDisplayLabel', () => {
+  it('qualifies a General space with the campaign name', () => {
+    expect(
+      conversationScopeDisplayLabel({
+        campaignName: 'Yasir Khan',
+        spaceTitle: 'General',
+        campaignId: 'campaign-1',
+        spaceId: 'space-1',
+        emptyLabel: 'All',
+      }),
+    ).toBe('Yasir Khan General')
+  })
+
+  it('qualifies a General campaign with the program name', () => {
+    expect(
+      conversationScopeDisplayLabel({
+        campaignName: 'General',
+        programName: 'Yasir Khan',
+        campaignId: 'campaign-1',
+        emptyLabel: 'All',
+      }),
+    ).toBe('Yasir Khan General')
+  })
+
   it('prefers the space title, then the campaign name, then All', () => {
     expect(
       conversationScopeDisplayLabel({

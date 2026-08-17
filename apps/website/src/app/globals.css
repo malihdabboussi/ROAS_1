@@ -146,6 +146,7 @@ html.dark,
   /* Chat composer parity (matches apps/web ChatInput spacing scale) */
   --spacing-0: 0px;
   --spacing-0-5: 2px;
+  --spacing-9: 36px;
 
   /* Marketing chrome — borders / wells / panels (tweak once, applies across mocks) */
   --border-section: rgba(255, 255, 255, 0.06);
@@ -2255,6 +2256,7 @@ html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollb
   --spacing-5: 20px;
   --spacing-6: 24px;
   --spacing-8: 32px;
+  --spacing-9: 36px;
   --text-xs: 0.625rem;
   --text-sm: 0.75rem;
   --text-md: 0.875rem;
@@ -2744,6 +2746,12 @@ html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollb
 .icon-md {
   width: 20px;
   height: 20px;
+}
+.h-spacing-9 {
+  height: var(--spacing-9, 36px);
+}
+.w-spacing-9 {
+  width: var(--spacing-9, 36px);
 }
 .h-spacing-48 {
   height: 192px;

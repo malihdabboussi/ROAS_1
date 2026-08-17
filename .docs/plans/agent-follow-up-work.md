@@ -1,3 +1,27 @@
+## 2026-08-17 - [UI] Client Campaigns table still uses auto layout
+
+Status: Open
+
+Found while: Agency Clients table layout fix (avatars, wrapping, column alignment)
+
+Evidence: `apps/web/src/features/agency-clients/ClientCampaignsPage.tsx` still uses `table className="w-full border-collapse"` with `align-top` and `whitespace-nowrap` pills, and each client group is its own table, the same pattern that made Clients look broken.
+
+Needed work: Apply the same `table-fixed` + shared `colgroup` + `min-w-0`/`truncate`/`align-middle` contract used in `AgencyClientsTable.tsx`.
+
+Reason not done now: Requested scope was the Clients screen layout only.
+
+## 2026-08-17 - [ARCH] ConversationScopePicker is at the 400 LOC component limit
+
+Status: Open
+
+Found while: Program-first Connections picker with searchable clients
+
+Evidence: `wc -l` reports `apps/web/src/components/conversations/ConversationScopePicker.tsx` at 396 LOC (component cap 400) after submenu/search wiring.
+
+Needed work: Extract menu measurement, space loading, and scope-assign handlers into a hook.
+
+Reason not done now: The requested picker behavior fit in the existing container; splitting mid-change would have mixed the UX rewrite with a structural refactor.
+
 ## 2026-08-16 - [ARCH] SpaceVibeyChatPanel still over the container LOC limit after summary dock wiring
 
 Status: Open
@@ -130,7 +154,7 @@ Evidence: UI toast "Import failed: Atlas could not process: The Slack period con
 
 Needed work: Return a Vibey empty-period message instead of a failed Atlas import, and skip/no-op when the chosen Slack window has no content.
 
-Done: 2026-08-15 — empty Slack windows skip Atlas, persist as skipped, and toast "Nothing to save from that Slack period." instead of an Atlas ingest error.
+Done: 2026-08-15 — empty Slack windows skip Atlas and persist as skipped instead of an Atlas ingest error. 2026-08-17 — those skips are acknowledged silently; they no longer toast during chat.
 
 Reason not done now: Requested work was @ mention campaign tagging plus Pixel User Brain fill; this is a separate Atlas import path.
 

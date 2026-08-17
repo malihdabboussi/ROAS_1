@@ -6,6 +6,7 @@ import {
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react'
@@ -16,7 +17,11 @@ import { useCampaignCacheVersion } from '@/lib/home'
 import { useOrgStore } from '@/lib/org'
 import { fetchSpaces } from '@/lib/spaces'
 import { positionFloatingMenuFromAnchorRect } from '@/lib/ui'
-import { groupScopeCampaignsByProgram } from './conversation-scope-groups'
+import {
+  buildConversationScopeLists,
+  filterScopeClients,
+  programNameForCampaign,
+} from './conversation-scope-groups'
 import {
   CONVERSATION_SCOPE_MENU_HEIGHT_CAP,
   CONVERSATION_SCOPE_MENU_HEIGHT_MIN,
@@ -31,7 +36,11 @@ import {
   type ConversationScopePickerProps,
   type ConversationScopeSpace,
 } from './conversation-scope-picker-layout'
-import { ConversationScopePickerMenus } from './ConversationScopePickerMenus'
+import { isGeneralLabel, sortGeneralFirst } from './conversation-scope-sort'
+import {
+  ConversationScopePickerMenus,
+  type ConversationScopeSubmenu,
+} from './ConversationScopePickerMenus'
 import { ConversationScopeTrigger } from './ConversationScopeTrigger'
 import {
   useConversationScopeCampaigns,
@@ -68,7 +77,8 @@ export const ConversationScopePicker = forwardRef<
   } | null>(null)
   const campaigns = useConversationScopeCampaigns(activeOrgId, cacheVersion)
   const programs = useConversationScopePrograms(activeOrgId)
-  const [activeCampaignId, setActiveCampaignId] = useState<string | null>(null)
+  const [submenu, setSubmenu] = useState<ConversationScopeSubmenu | null>(null)
+  const [clientSearch, setClientSearch] = useState('')
   const [spacesByCampaign, setSpacesByCampaign] = useState<
     Record<string, ConversationScopeSpace[]>
   >({})
@@ -93,7 +103,10 @@ export const ConversationScopePicker = forwardRef<
     setMounted(true)
   }, [])
   useEffect(() => {
-    if (!open) setActiveCampaignId(null)
+    if (!open) {
+      setSubmenu(null)
+      setClientSearch('')
+    }
   }, [open])
   const measureMenus = useCallback(() => {
     if (!open || !mounted) return
@@ -123,7 +136,7 @@ export const ConversationScopePicker = forwardRef<
     const campaignGeom: ConversationScopeMenuGeom = { top: pos.top, left: pos.left, maxHeight }
 
     let spacesGeom: ConversationScopeMenuGeom | null = null
-    if (activeCampaignId && hoverRowEl) {
+    if (submenu && hoverRowEl) {
       const measuredSub = spacesMenuRef.current?.offsetHeight
       const subPlacementH = Math.min(
         CONVERSATION_SCOPE_MENU_HEIGHT_CAP,
@@ -135,7 +148,7 @@ export const ConversationScopePicker = forwardRef<
       spacesGeom = placeSpacesMenuFromRowRect(hoverRowEl.getBoundingClientRect(), subPlacementH)
     }
     setMenuLayout({ campaign: campaignGeom, spaces: spacesGeom })
-  }, [open, mounted, activeCampaignId, hoverRowEl, bannerAnchorRef])
+  }, [open, mounted, submenu, hoverRowEl, bannerAnchorRef])
 
   useLayoutEffect(() => {
     if (!open) {
@@ -149,11 +162,12 @@ export const ConversationScopePicker = forwardRef<
   }, [
     open,
     mounted,
-    activeCampaignId,
+    submenu,
     hoverRowEl,
     measureMenus,
     campaigns.length,
     loadingCampaignId,
+    clientSearch,
   ])
 
   useEffect(() => {
@@ -203,42 +217,40 @@ export const ConversationScopePicker = forwardRef<
   const selectedSpace =
     findConversationScopeSpace(spacesByCampaign, selectedSpaceId) ?? fallbackSpace
 
+  const selectedProgramName = programNameForCampaign(selectedCampaign, programs)
   const selectedName = conversationScopeDisplayLabel({
     campaignName: selectedCampaign?.name,
     spaceTitle: selectedSpace?.title,
+    programName: selectedProgramName,
     campaignId: selectedCampaignId,
     spaceId: selectedSpaceId,
     emptyLabel: allowClear ? 'All' : 'General',
   })
-  const label = selectedSpace
-    ? selectedCampaign
+  const label =
+    selectedSpace && selectedCampaign && !isGeneralLabel(selectedSpace.title)
       ? `${selectedCampaign.name} / ${selectedSpace.title}`
-      : selectedSpace.title
-    : selectedName
+      : selectedName
   const displayLabel = compact ? selectedName : label
 
-  const loadSpacesForCampaign = useCallback(
-    (campaignId: string) => {
-      setActiveCampaignId(campaignId)
-      if (spacesByCampaign[campaignId]) return
-      setLoadingCampaignId(campaignId)
+  const fetchSpacesForCampaign = useCallback(
+    (nextCampaignId: string) => {
+      if (spacesByCampaign[nextCampaignId]) return
+      setLoadingCampaignId(nextCampaignId)
       void fetchSpaces<ConversationScopeSpace>(
-        { campaign_id: campaignId, limit: 50 },
+        { campaign_id: nextCampaignId, limit: 50 },
         activeOrgId ? { orgId: activeOrgId } : { orgId: null },
       )
         .then((rows) => {
           setSpacesByCampaign((prev) => ({
             ...prev,
-            [campaignId]: [...rows].sort((a, b) =>
-              a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }),
-            ),
+            [nextCampaignId]: sortGeneralFirst(rows, (space) => space.title),
           }))
         })
         .catch(() => {
-          setSpacesByCampaign((prev) => ({ ...prev, [campaignId]: [] }))
+          setSpacesByCampaign((prev) => ({ ...prev, [nextCampaignId]: [] }))
         })
         .finally(() => {
-          setLoadingCampaignId((current) => (current === campaignId ? null : current))
+          setLoadingCampaignId((current) => (current === nextCampaignId ? null : current))
         })
     },
     [activeOrgId, spacesByCampaign],
@@ -246,8 +258,8 @@ export const ConversationScopePicker = forwardRef<
 
   useEffect(() => {
     if (!selectedCampaignId || !selectedSpaceId) return
-    loadSpacesForCampaign(selectedCampaignId)
-  }, [selectedCampaignId, selectedSpaceId, loadSpacesForCampaign])
+    fetchSpacesForCampaign(selectedCampaignId)
+  }, [selectedCampaignId, selectedSpaceId, fetchSpacesForCampaign])
 
   const handleSelectScope = useCallback(
     async (nextCampaignId: string | null, nextSpaceId: string | null) => {
@@ -262,10 +274,10 @@ export const ConversationScopePicker = forwardRef<
           )
           onConversationUpdated?.(updated)
         }
-        const campaignName =
+        const nextCampaign =
           nextCampaignId == null
             ? null
-            : (campaigns.find((campaign) => campaign.id === nextCampaignId)?.name ?? null)
+            : (campaigns.find((campaign) => campaign.id === nextCampaignId) ?? null)
         const spaceTitle =
           nextSpaceId == null
             ? null
@@ -274,8 +286,9 @@ export const ConversationScopePicker = forwardRef<
         onScopeChanged?.({
           campaignId: nextCampaignId,
           spaceId: nextSpaceId,
-          campaignName,
+          campaignName: nextCampaign?.name ?? null,
           spaceTitle,
+          programName: programNameForCampaign(nextCampaign, programs),
         })
         setOpen(false)
       } catch (error) {
@@ -291,17 +304,23 @@ export const ConversationScopePicker = forwardRef<
       fallbackSpace,
       onConversationUpdated,
       onScopeChanged,
+      programs,
       saving,
       spacesByCampaign,
     ],
   )
 
-  const activeSpaces = activeCampaignId ? spacesByCampaign[activeCampaignId] : undefined
   const listedCampaigns = campaigns.filter((campaign) => campaign.id !== generalCampaign?.id)
-  const campaignGroups =
-    programs.length > 0
-      ? groupScopeCampaignsByProgram(listedCampaigns, programs)
-      : [{ key: 'all', label: '', campaigns: listedCampaigns }]
+  const scopeLists = useMemo(
+    () => buildConversationScopeLists(listedCampaigns, programs),
+    [listedCampaigns, programs],
+  )
+  const visibleClients = filterScopeClients(scopeLists.clients, clientSearch)
+  const activeSpaces = submenu?.type === 'spaces' ? spacesByCampaign[submenu.campaignId] : undefined
+  const programCampaigns =
+    submenu?.type === 'program'
+      ? (scopeLists.programs.find((program) => program.id === submenu.programId)?.campaigns ?? [])
+      : []
 
   const portalMenus =
     mounted &&
@@ -312,22 +331,34 @@ export const ConversationScopePicker = forwardRef<
         campaignMenuRef={campaignMenuRef}
         spacesMenuRef={spacesMenuRef}
         menuLayout={menuLayout}
-        campaignGroups={campaignGroups}
+        programs={scopeLists.programs}
+        ungroupedCampaigns={scopeLists.ungroupedCampaigns}
+        clients={visibleClients}
+        clientSearch={clientSearch}
+        onClientSearchChange={setClientSearch}
         generalCampaign={generalCampaign}
         selectedCampaignId={selectedCampaignId}
         selectedSpaceId={selectedSpaceId}
-        activeCampaignId={activeCampaignId}
+        submenu={submenu}
         loadingCampaignId={loadingCampaignId}
+        programCampaigns={programCampaigns}
         activeSpaces={activeSpaces}
         allowClear={allowClear}
         onSelectAll={allowClear ? () => void handleSelectScope(null, null) : undefined}
         onSelectGeneral={() => void handleSelectScope(generalCampaign?.id ?? null, null)}
-        onSelectCampaign={(campaignId) => void handleSelectScope(campaignId, null)}
-        onOpenCampaignSpaces={(campaignId, row) => {
+        onSelectCampaign={(nextCampaignId) => void handleSelectScope(nextCampaignId, null)}
+        onOpenProgram={(programId, row) => {
           setHoverRowEl(row)
-          loadSpacesForCampaign(campaignId)
+          setSubmenu({ type: 'program', programId })
         }}
-        onSelectSpace={(campaignId, spaceId) => void handleSelectScope(campaignId, spaceId)}
+        onOpenCampaignSpaces={(nextCampaignId, row) => {
+          setHoverRowEl(row)
+          setSubmenu({ type: 'spaces', campaignId: nextCampaignId })
+          fetchSpacesForCampaign(nextCampaignId)
+        }}
+        onSelectSpace={(nextCampaignId, nextSpaceId) =>
+          void handleSelectScope(nextCampaignId, nextSpaceId)
+        }
       />,
       document.body,
     )

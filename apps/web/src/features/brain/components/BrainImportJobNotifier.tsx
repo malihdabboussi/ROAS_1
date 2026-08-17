@@ -7,7 +7,7 @@ import {
   acknowledgeImportNotifications,
   listPendingImportNotifications,
 } from '../services/user-brain-import.service'
-import { failureToastKey, resolveBrainImportToast } from './brain-import-job-toast'
+import { planBrainImportNotificationToasts } from './brain-import-job-toast'
 
 export function BrainImportJobNotifier() {
   const inFlightRef = useRef(false)
@@ -49,51 +49,15 @@ export function BrainImportJobNotifier() {
       const jobs = await listPendingImportNotifications()
       if (!jobs.length) return
 
-      const acknowledgedIds: string[] = []
-      const failureGroups = new Map<string, string[]>()
-      const infoMessages = new Set<string>()
-
-      for (const job of jobs) {
-        if (job.status !== 'succeeded' && job.status !== 'failed') continue
-        const outcome = resolveBrainImportToast(job)
-        if (job.status === 'succeeded' && outcome.kind === 'success') {
-          if (!queueVisibleRef.current) {
-            toast.success(outcome.message)
-          }
-          acknowledgedIds.push(job.id)
-          continue
-        }
-        if (outcome.kind === 'info') {
-          infoMessages.add(outcome.message)
-          acknowledgedIds.push(job.id)
-          continue
-        }
-        if (job.status === 'failed') {
-          const key = failureToastKey(job)
-          const group = failureGroups.get(key) ?? []
-          group.push(outcome.message)
-          failureGroups.set(key, group)
-          acknowledgedIds.push(job.id)
-        }
-      }
-
+      const plan = planBrainImportNotificationToasts(jobs)
       if (!queueVisibleRef.current) {
-        for (const message of infoMessages) {
-          toast.info(message)
-        }
-        for (const group of failureGroups.values()) {
-          const first = group[0]
-          if (!first) continue
-          if (group.length === 1) {
-            toast.error(first)
-            continue
-          }
-          toast.error(`Import failed (${group.length}): ${first.replace(/^Import failed: /, '')}`)
-        }
+        for (const message of plan.successMessages) toast.success(message)
+        for (const message of plan.infoMessages) toast.info(message)
+        for (const message of plan.errorMessages) toast.error(message)
       }
 
-      if (acknowledgedIds.length) {
-        await acknowledgeImportNotifications(acknowledgedIds)
+      if (plan.acknowledgedIds.length) {
+        await acknowledgeImportNotifications(plan.acknowledgedIds)
       }
     } catch {
       // Keep notifier silent on transient errors.

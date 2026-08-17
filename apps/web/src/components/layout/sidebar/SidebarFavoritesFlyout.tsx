@@ -78,9 +78,7 @@ export function SidebarFavoritesFlyout({
     })),
   ].slice(0, 12)
 
-  if (favorites.length === 0) {
-    return <p className="hub-dock-flyout-row-muted px-2.5 py-1.5">No favorites yet</p>
-  }
+  if (favorites.length === 0) return null
 
   return (
     <nav>
