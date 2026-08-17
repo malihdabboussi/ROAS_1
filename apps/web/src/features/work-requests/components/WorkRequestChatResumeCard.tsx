@@ -33,7 +33,7 @@ export function WorkRequestChatResumeCard({
   const searchParams = useSearchParams()
   const forceOpenToken = useWorkRequestReviewForceOpenToken()
   const token = useMemo(() => extractWorkRequestTokenFromUrl(reviewUrl), [reviewUrl])
-  const autoOpen = Boolean(token && (searchParams.get('wr') === token || forceOpenToken === token))
+  const autoOpen = Boolean(token && searchParams.get('wr') === token)
   const [open, setOpen] = useState(autoOpen)
   const [review, setReview] = useState<WorkRequestReviewResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -44,7 +44,7 @@ export function WorkRequestChatResumeCard({
   }, [autoOpen])
 
   useEffect(() => {
-    if (!open || !token || review) return
+    if (forceOpenToken || !open || !token || review) return
     let cancelled = false
     setLoading(true)
     setError(null)
@@ -65,7 +65,7 @@ export function WorkRequestChatResumeCard({
     return () => {
       cancelled = true
     }
-  }, [open, review, token])
+  }, [forceOpenToken, open, review, token])
 
   const save = async (update: WorkRequestUpdate) => {
     if (!token) throw new Error(WORK_REQUEST_ERRORS.SAVE_FAILED.userMessage)
@@ -86,6 +86,9 @@ export function WorkRequestChatResumeCard({
     setReview(finalized)
     return finalized
   }
+
+  // Public /request-review host already mounts the finalize flow below the thread.
+  if (forceOpenToken) return null
 
   if (status === 'submitted') {
     return (

@@ -2,6 +2,7 @@
 
 import { useMemo, type ReactNode } from 'react'
 import type { MissionDeliverable } from '@/lib/missions'
+import { synthesizeWorkRequestBlocksFromText } from '@/lib/work-requests'
 import type { ImageGeneratedEvent } from '../../store/use-chat-store'
 import type { DocumentAttachment, Message, MessageContentBlock } from '../../types'
 import { BrowserPreviewPanel } from '../chat/BrowserPreviewPanel'
@@ -74,10 +75,17 @@ export function MessageBubbleOrderedBlocks({
     : null
 
   /** Render-only view: merge consecutive `read` tool blocks into one live row that rotates label until a non-read tool starts or streaming ends. Source-of-truth `contentBlocksOrdered` stays intact for callbacks / persistence. */
-  const displayBlocks = useMemo(
-    () => coalesceConsecutiveReadTools(contentBlocksOrdered, isCurrentlyStreaming),
-    [contentBlocksOrdered, isCurrentlyStreaming],
-  )
+  const displayBlocks = useMemo(() => {
+    const withWorkRequest = [
+      ...contentBlocksOrdered,
+      ...(synthesizeWorkRequestBlocksFromText({
+        content,
+        title: typeof message.metadata?.title === 'string' ? message.metadata.title : null,
+        existingBlocks: contentBlocksOrdered,
+      }) as MessageContentBlock[]),
+    ]
+    return coalesceConsecutiveReadTools(withWorkRequest, isCurrentlyStreaming)
+  }, [content, contentBlocksOrdered, isCurrentlyStreaming, message.metadata])
   const storedDurationMs =
     typeof message.metadata?.duration_ms === 'number' ? message.metadata.duration_ms : undefined
 

@@ -84,6 +84,32 @@ describe('work-context.config', () => {
       teamOpsAwarenessContext: 'Updated roster',
     })
   })
+
+  it('clears a stale space when attaching a new spaces campaign without spaceId', () => {
+    expect(
+      mergeAttachedWorkContext(
+        { surface: 'spaces', spaceId: 'power-circle-general', campaignId: 'power-circle' },
+        { surface: 'spaces', campaignId: '1ds-collective' },
+      ),
+    ).toEqual({
+      surface: 'spaces',
+      spaceId: null,
+      campaignId: '1ds-collective',
+    })
+  })
+
+  it('replaces both space and campaign when Home seeds an explicit location', () => {
+    expect(
+      mergeAttachedWorkContext(
+        { surface: 'spaces', spaceId: 'power-circle-general', campaignId: 'power-circle' },
+        { surface: 'spaces', spaceId: '1ds-general', campaignId: '1ds-collective' },
+      ),
+    ).toEqual({
+      surface: 'spaces',
+      spaceId: '1ds-general',
+      campaignId: '1ds-collective',
+    })
+  })
 })
 
 describe('global chat storage key', () => {

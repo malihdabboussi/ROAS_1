@@ -75,4 +75,26 @@ describe('resolveGlobalChatPanelHost', () => {
       campaignId: null,
     })
   })
+
+  it('keeps campaign scope when spaces attach has no spaceId yet', () => {
+    expect(
+      resolveGlobalChatPanelHost({
+        isChannelRoute: false,
+        channelId: null,
+        isSpacesRoute: false,
+        activeSpaceId: null,
+        activeSpaceCampaignId: null,
+        workContext: { surface: 'spaces', campaignId: 'camp-1' },
+        sticky: {
+          panelKey: 'space:stale:camp-stale',
+          spaceId: 'stale-space',
+          campaignId: 'camp-stale',
+        },
+      }),
+    ).toEqual({
+      panelKey: 'campaign:camp-1',
+      spaceId: undefined,
+      campaignId: 'camp-1',
+    })
+  })
 })

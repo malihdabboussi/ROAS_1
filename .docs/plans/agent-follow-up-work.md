@@ -22,6 +22,8 @@ Needed work: Split getWorkspace hydration (recording hydrate + agenda-doc ensure
 
 Reason not done now: In-scope work was agenda-doc ensure + UI; the service was already over the 80% extract hint before this change.
 
+## 2026-08-17 - [ARCH] ui-block-extractor still over utility LOC limit
+
 ## 2026-08-17 - [FEATURE] Page Grader must stamp conversation_id for shared review chat
 
 Status: Done (platform stamp + Slack backfill)

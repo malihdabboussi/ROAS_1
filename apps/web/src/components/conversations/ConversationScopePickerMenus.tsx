@@ -13,6 +13,7 @@ import { CONVERSATION_SCOPE_PICKER_MESSAGES as M } from './conversation-scope-pi
 
 export type ConversationScopeSubmenu =
   | { type: 'program'; programId: string }
+  | { type: 'clients' }
   | { type: 'spaces'; campaignId: string }
 
 export function ConversationScopePickerMenus({
@@ -36,6 +37,7 @@ export function ConversationScopePickerMenus({
   onSelectGeneral,
   onSelectCampaign,
   onOpenProgram,
+  onOpenClients,
   onOpenCampaignSpaces,
   onSelectSpace,
 }: {
@@ -62,13 +64,16 @@ export function ConversationScopePickerMenus({
   onSelectGeneral: () => void
   onSelectCampaign: (campaignId: string) => void
   onOpenProgram: (programId: string, row: HTMLElement) => void
+  onOpenClients: (row: HTMLElement) => void
   onOpenCampaignSpaces: (campaignId: string, row: HTMLElement) => void
   onSelectSpace: (campaignId: string, spaceId: string) => void
 }) {
   const allSelected = allowClear && !selectedCampaignId && !selectedSpaceId
   const searching = clientSearch.trim().length > 0
   const showPrograms = !searching && (programs.length > 0 || ungroupedCampaigns.length > 0)
+  const clientSelected = clients.some((client) => client.id === selectedCampaignId)
   const programSubmenu = submenu?.type === 'program'
+  const clientsSubmenu = submenu?.type === 'clients'
   const spacesSubmenu = submenu?.type === 'spaces'
   const spacesCampaignId = spacesSubmenu ? submenu.campaignId : null
 
@@ -93,9 +98,9 @@ export function ConversationScopePickerMenus({
               type="search"
               value={clientSearch}
               onChange={(event) => onClientSearchChange(event.target.value)}
-              placeholder={M.searchClients}
+              placeholder={M.search}
               className="typo-caption placeholder:text-muted-foreground flex-1 bg-transparent outline-none"
-              aria-label={M.searchClients}
+              aria-label={M.search}
             />
           </div>
         </div>
@@ -138,22 +143,31 @@ export function ConversationScopePickerMenus({
               ))}
             </>
           ) : null}
-          <p className="hub-menu-section-label !mb-0 px-3 pt-2">{M.clients}</p>
-          {clients.length > 0 ? (
-            clients.map((client) => (
-              <ScopeFlyoutRow
-                key={client.id}
-                label={client.name}
-                selected={client.id === selectedCampaignId}
-                ariaLabel={`Show campaigns in ${client.name}`}
-                onHover={(row) => onOpenCampaignSpaces(client.id, row)}
-                onSelect={() => onSelectCampaign(client.id)}
-              />
-            ))
+          {searching ? (
+            <>
+              <p className="hub-menu-section-label !mb-0 px-3 pt-2">{M.clients}</p>
+              {clients.length > 0 ? (
+                clients.map((client) => (
+                  <ScopeFlyoutRow
+                    key={client.id}
+                    label={client.name}
+                    selected={client.id === selectedCampaignId}
+                    ariaLabel={`Show spaces in ${client.name}`}
+                    onHover={(row) => onOpenCampaignSpaces(client.id, row)}
+                    onSelect={() => onSelectCampaign(client.id)}
+                  />
+                ))
+              ) : (
+                <p className="body-3 text-muted-foreground px-3 py-2">{M.noMatchingClients}</p>
+              )}
+            </>
           ) : (
-            <p className="body-3 text-muted-foreground px-3 py-2">
-              {searching ? M.noMatchingClients : M.noCampaigns}
-            </p>
+            <ScopeFlyoutRow
+              label={M.clients}
+              selected={clientSelected}
+              ariaLabel="Show clients"
+              onHover={onOpenClients}
+            />
           )}
         </div>
       </div>
@@ -174,7 +188,25 @@ export function ConversationScopePickerMenus({
               campaigns={programCampaigns}
               selectedCampaignId={selectedCampaignId}
               onSelectCampaign={onSelectCampaign}
+              onOpenCampaignSpaces={onOpenCampaignSpaces}
             />
+          ) : clientsSubmenu ? (
+            clients.length > 0 ? (
+              <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
+                {clients.map((client) => (
+                  <ScopeFlyoutRow
+                    key={client.id}
+                    label={client.name}
+                    selected={client.id === selectedCampaignId}
+                    ariaLabel={`Show spaces in ${client.name}`}
+                    onHover={(row) => onOpenCampaignSpaces(client.id, row)}
+                    onSelect={() => onSelectCampaign(client.id)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="body-3 text-muted-foreground px-3 py-2">{M.noCampaigns}</div>
+            )
           ) : loadingCampaignId === spacesCampaignId ? (
             <div className="body-3 text-muted-foreground flex items-center gap-2 px-3 py-2">
               <Loader2 className="icon-xs animate-spin" aria-hidden />
@@ -205,10 +237,12 @@ function ProgramCampaignList({
   campaigns,
   selectedCampaignId,
   onSelectCampaign,
+  onOpenCampaignSpaces,
 }: {
   campaigns: Campaign[]
   selectedCampaignId: string | null
   onSelectCampaign: (campaignId: string) => void
+  onOpenCampaignSpaces: (campaignId: string, row: HTMLElement) => void
 }) {
   if (campaigns.length === 0) {
     return <div className="body-3 text-muted-foreground px-3 py-2">{M.noCampaigns}</div>
@@ -216,13 +250,13 @@ function ProgramCampaignList({
   return (
     <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
       {campaigns.map((campaign) => (
-        <ScopeTextButton
+        <ScopeCampaignRow
           key={campaign.id}
+          campaign={campaign}
           selected={campaign.id === selectedCampaignId}
-          onClick={() => onSelectCampaign(campaign.id)}
-        >
-          {campaign.name ?? 'Untitled campaign'}
-        </ScopeTextButton>
+          onSelectCampaign={onSelectCampaign}
+          onOpenCampaignSpaces={onOpenCampaignSpaces}
+        />
       ))}
     </div>
   )

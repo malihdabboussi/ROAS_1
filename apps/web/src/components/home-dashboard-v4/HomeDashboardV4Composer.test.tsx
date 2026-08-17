@@ -265,6 +265,29 @@ describe('HomeDashboardV4Composer', () => {
     expect(screen.queryByRole('button', { name: 'Choose Space' })).toBeNull()
   })
 
+  it('seeds campaign scope with an explicit spaceId field so stale spaces clear', async () => {
+    mocks.isOrgOnly = false
+    mocks.campaignRows = [{ id: 'campaign-1', name: 'Yasir Khan Coaching LTD' }]
+    render(<HomeDashboardV4Composer />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select campaign only' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Send test message' }))
+
+    await waitFor(() => {
+      expect(mocks.seedComposer).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workContext: {
+            surface: 'spaces',
+            // Cached mock space is titled Workspace, not General — still pass
+            // spaceId: null explicitly so merge clears any prior attach.
+            spaceId: null,
+            campaignId: 'campaign-1',
+          },
+        }),
+      )
+    })
+  })
+
   it('fills the shared composer when a suggested move is selected', () => {
     render(<HomeDashboardV4Composer />)
 

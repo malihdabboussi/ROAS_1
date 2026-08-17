@@ -231,6 +231,19 @@ export function HomeDashboardV4Composer() {
         // A previously opened meeting workspace leaves its context attached;
         // a fresh chat seeded from Home must not hydrate into that thread.
         clearMeetingContext()
+
+        // Prefer the campaign's General space when Choose Space picked a campaign
+        // without a concrete space — keeps Connections + agent scope aligned.
+        if (!targetId && resolvedCampaignId) {
+          const generalForCampaign =
+            spaces.find(
+              (space) =>
+                space.campaign_id === resolvedCampaignId &&
+                space.title.trim().toLowerCase() === 'general',
+            ) ?? null
+          targetId = generalForCampaign?.id ?? null
+        }
+
         seedComposer({
           content,
           agentKey: activeAgentKey,
@@ -240,11 +253,13 @@ export function HomeDashboardV4Composer() {
           model,
           references,
           modelSettings,
+          // Always pass spaceId (including null) so mergeAttachedWorkContext
+          // clears a stale prior space instead of keeping Power Circle General.
           workContext:
             targetId || resolvedCampaignId
               ? {
                   surface: 'spaces',
-                  ...(targetId ? { spaceId: targetId } : {}),
+                  spaceId: targetId,
                   campaignId: resolvedCampaignId,
                 }
               : { surface: 'general' },

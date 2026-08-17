@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, type ReactNode } from 'react'
 import { SpaceVibeyChatPanel } from '@/features/spaces/components/chat/SpaceVibeyChatPanel'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
@@ -28,6 +28,8 @@ export function GlobalChatPanel({
   headerTrailingAction?: ReactNode
 } = {}) {
   const pathname = usePathname() ?? ''
+  const searchParams = useSearchParams()
+  const routeConversationId = searchParams.get('conv')?.trim() || null
   const workContext = useGlobalChatStore((s) => s.workContext)
   const storedMeetingContext = useGlobalChatStore((s) => s.meetingContext)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
@@ -57,12 +59,16 @@ export function GlobalChatPanel({
   })
   const {
     meetingContext,
-    preferredConversationId,
+    preferredConversationId: meetingPreferredConversationId,
     awarenessContext: meetingAwarenessContext,
   } = resolveMeetingChatPanel({
     storedMeetingContext,
     activeConversationId,
   })
+  // /home?conv= (Service Request resume, Recents deep links) must prefer the URL
+  // conversation even when meeting context is absent — otherwise the panel can
+  // remount blank after pendingOpenConversationId is consumed.
+  const preferredConversationId = meetingPreferredConversationId ?? routeConversationId
   const conversationAwareness = useMeetingConversationAwareness(activeConversationId)
   useEffect(() => {
     if (
