@@ -65,7 +65,7 @@ The history list has its own persisted drag width and collapse state. Dragging i
 ### 2026-08-16: Home composer stays uncluttered; Try tips live in active chats
 
 - Home / New chat no longer shows the idle Try-tip banner or the Mission / Offer / artifact chip row above the input.
-- Active chats show the Try-tip banner and rotate through a multi-concept catalog; dismiss skips to the next remaining tip.
+- Active chats show the Try-tip banner and rotate through a multi-concept catalog. Closing a tip hides the banner in that chat; other chats can still show a remaining tip.
 - Create catalog items remain in the + Create menu. They are not duplicated as chips on Home or above the chat composer.
 
 ### 2026-08-15: Recents Filter can pick a campaign without a Space
@@ -259,6 +259,7 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 
 ## Decision Log
 
+- **2026-08-17:** Closing a composer Try tip hides the banner in that conversation. It does not cycle to the next remaining tip. Other chats can still show a remaining tip.
 - **2026-08-14:** Mission and More choices drill down within Create; Mission launch confirmation remains the campaign/Space boundary. Narrow Mission panes use Overview/Activity, Outputs retain source-message navigation, and assistant Reply uses an exact-message reference instead of chat feedback thumbs.
 - **2026-08-11:** Full-screen chat keeps a top-right Show page control visible outside the collapsible work surface. Restoring a recent page preserves the active conversation instead of losing the current thread.
 - **2026-08-11:** Composer synchronization across conversation changes is value-idempotent. Optional linked meeting chats that are inaccessible are treated as unavailable context rather than crashing the meeting workspace.

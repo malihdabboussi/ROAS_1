@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ComposerTryTipBanner } from '@/components/chat/ComposerTryTipBanner'
 import {
   addTryTipDismissedId,
@@ -14,6 +14,10 @@ import {
   pickComposerTryTip,
 } from '@/lib/chat/composer-try-tips'
 
+function conversationTipKey(conversationId?: string | null) {
+  return conversationId ?? 'new'
+}
+
 export function ChatComposerTryTip({
   className,
   conversationId,
@@ -23,14 +27,20 @@ export function ChatComposerTryTip({
 }) {
   const seedComposer = useGlobalChatStore((state) => state.seedComposer)
   const [dismissedIds, setDismissedIds] = useState(readTryTipDismissedIds)
-  const [hidden, setHidden] = useState(false)
+  const hiddenConversationsRef = useRef(new Set<string>())
+  const [, setHiddenVersion] = useState(0)
   const [rotationIndex, setRotationIndex] = useState(() =>
     composerTryTipRotationSeed(conversationId),
   )
   const tip = pickComposerTryTip(dismissedIds, rotationIndex)
+  const hidden = hiddenConversationsRef.current.has(conversationTipKey(conversationId))
+
+  const hideInConversation = useCallback((id?: string | null) => {
+    hiddenConversationsRef.current.add(conversationTipKey(id))
+    setHiddenVersion((version) => version + 1)
+  }, [])
 
   useEffect(() => {
-    setHidden(false)
     setRotationIndex(composerTryTipRotationSeed(conversationId))
   }, [conversationId])
 
@@ -58,14 +68,17 @@ export function ChatComposerTryTip({
       body={tip.body}
       onTry={() => {
         dismiss(tip.id)
-        setHidden(true)
+        hideInConversation(conversationId)
         seedComposer({
           content: tip.prompt,
           railIntent: 'new',
           seedMode: tip.seedMode,
         })
       }}
-      onDismiss={() => dismiss(tip.id)}
+      onDismiss={() => {
+        dismiss(tip.id)
+        hideInConversation(conversationId)
+      }}
     />
   )
 }

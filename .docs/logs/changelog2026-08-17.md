@@ -1,5 +1,15 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 02:35] - [FIX]
+
+What: Closing a composer Try tip now hides the banner in that chat instead of cycling to the next tip.
+
+Why: The X control was implemented as "skip this tip," so the same conversation immediately showed another banner.
+
+Impact: Dismiss removes the banner here. Other chats can still show a remaining tip. Auto-rotate while a tip is visible is unchanged.
+
+Files: `apps/web/src/components/global-chat/components/ChatComposerTryTip.tsx`, `apps/web/src/components/global-chat/components/ChatComposerTryTip.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 00:45] - [FIX]
 
 What: Fixed the chat HTML artifact PR so `next build` typecheck passes: `ChatMarkdownDocument` now types the mermaid/code/markdown segment union, and unused download mock params are prefixed.
