@@ -8,6 +8,7 @@ import {
   PLATFORM_TOOLS_DEFAULT_MD,
   PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING,
   PLATFORM_TOOLS_MEDIA_ROUTING_HEADING,
+  PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_HEADING,
   PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING,
 } from './platform-tools-template.js'
 
@@ -24,6 +25,10 @@ describe('platform tools template', () => {
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('meeting transcript Fathom Zoom Fireflies')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Do not ask the user to paste a transcript')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('checked call transcripts')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_HEADING)
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Treat messy names as clients first, tone second')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('binds **this** portal conversation')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('A `draft` card with `[brackets]` is invalid')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'For first-person fill, guest prep, or write-as-me:',
     )
@@ -273,6 +278,32 @@ For unclear, destructive, publish/send, or expensive actions:
     expect(second).toBe(repaired)
   })
 
+  it('adds named-client lookup routing to an existing runtime policy', () => {
+    const oldContent = `# TOOLS.md
+
+## Runtime Operating Layers
+
+These layers exist to help the user get faster, more accurate work without repeating context or watching you stumble through avoidable tool errors.
+
+For call, meeting, recording, or transcript retrieval:
+- Do not ask the user to paste a transcript.
+
+For social platform research:
+- Use social_analysis.
+
+For unclear, destructive, publish/send, or expensive actions:
+- Ask a focused clarification.`
+
+    const repaired = ensurePlatformToolsRuntimeGuidance(oldContent)
+    const second = ensurePlatformToolsRuntimeGuidance(repaired)
+
+    expect(repaired).toContain(PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_HEADING)
+    expect(repaired).toContain('Treat messy names as clients first, tone second')
+    expect(repaired).toContain('binds **this** portal conversation')
+    expect(repaired.split(PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_HEADING)).toHaveLength(2)
+    expect(second).toBe(repaired)
+  })
+
   it('adds first-person fill routing to an existing runtime policy', () => {
     const oldContent = `# TOOLS.md
 
@@ -292,6 +323,7 @@ For unclear, destructive, publish/send, or expensive actions:
     const repaired = ensurePlatformToolsRuntimeGuidance(oldContent)
     const second = ensurePlatformToolsRuntimeGuidance(repaired)
 
+    expect(repaired).toContain(PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_HEADING)
     expect(repaired).toContain('For first-person fill, guest prep, or write-as-me:')
     expect(repaired).toContain('Never ask the user to re-introduce themselves')
     expect(repaired.split('For first-person fill, guest prep, or write-as-me:')).toHaveLength(2)

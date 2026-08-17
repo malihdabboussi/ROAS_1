@@ -90,7 +90,7 @@ have a retrieval embedding before the job becomes succeeded or the mapping
 cursor advances. A missing row or embedding converts the attempt to the normal
 retry/failure lifecycle even if Atlas's final prose says completed.
 
-Page Grader QC notifications also enter the unified `agent_cases` ledger before their Slack blocks are sent. Structured findings preserve `quality_control`, `proactive_launch`, or `campaign_quality_control`, resolve the mapped ROAS client campaign and campaign Space when available, and retain the Page Grader finding ID as the idempotent source key. Slack acknowledge, snooze, and resolve interactions update both Page Grader and the same ROAS case, preventing two competing status histories.
+Page Grader QC, Proactive Launch, and Campaign QC notifications enter the unified `agent_cases` ledger before Slack delivery. Structured findings preserve `quality_control`, `proactive_launch`, or `campaign_quality_control`, resolve the mapped ROAS client campaign and campaign Space when available, and retain the Page Grader finding ID as the idempotent source key. The first Slack post for a client is the parent check-in. Later webhooks for the same client reuse that thread: unchanged items stay quiet for eight hours, then Pixel asks in-thread whether anything was finalized. They do not open a new top-level Launch Agent or QC DM. Slack acknowledge, snooze, and resolve still update both Page Grader and the same ROAS case.
 
 ## Post-call work bridge
 
@@ -136,10 +136,12 @@ Repeated manual requests use the deterministic Page Grader client and meeting ti
 | PG package + push       | `page-grader/.../roasBrainPackage.ts`, `roasBrainPush.ts`, `scheduled-brain-refresh`                                  |
 | Fathom meetings         | `page-grader-meeting-sync.service.ts`, `fathom-webhook.service.ts`, Page Grader `roas-api`                            |
 | Precall Drive agenda    | `meetings-precall-prep.service.ts`, `meetings-precall-drive-agenda.service.ts`, `meetings-precall-agenda-sections.ts` |
+| QC / Launch Slack       | `page-grader-qc-slack-bridge.service.ts`, `page-grader-qc-follow-up.ts`                                                |
 | Agency client workspace | `page-grader-agency-workspace.service.ts`, `features/agency-clients`, Page Grader `roas-api`                          |
 
 ## Decision Log
 
+- **2026-08-17:** Pixel QC and Launch Agent check-ins now measure a client once. Repeat Page Grader webhooks for the same client reply in that Slack thread (or stay quiet for eight hours) instead of posting a new hourly CRITICAL DM. Finding IDs can rotate; the parent thread is keyed by client, not finding UUID.
 - **2026-08-17:** Empty Slack period skips stay skipped, but they no longer toast. Background channel sync can finish several empty windows in a row; a global info toast for each one interrupted chat. The notifier still acknowledges those jobs so they do not repeat.
 - **2026-08-15:** Empty Slack periods are a skip, not an Atlas failure. The import runtime does not call Atlas when the formatted window has no message content, remaps Slack `JOB_STATUS:failed` empty-ingest reasons to skipped, and no longer surfaces that skip as an Atlas ingest error.
 - **2026-08-13:** Separated Page Grader's hourly mapped-client catch-up from the three-second Brain import sweep. The frequent enqueue endpoint is now bounded to due-job discovery, preventing overlapping 50-client Page Grader pulls from exhausting the Vercel function window.

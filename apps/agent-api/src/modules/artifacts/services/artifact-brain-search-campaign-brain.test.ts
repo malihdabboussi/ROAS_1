@@ -50,6 +50,7 @@ describe('ArtifactBrainSearchActionsService.searchCampaignBrain', () => {
       resolveOrgId: vi.fn(() => null),
       resolveCampaignId: vi.fn(async () => 'campaign-1'),
       resolveCampaignIdByNameReadOnly: vi.fn(async () => 'campaign-northstar'),
+      bindConversationToNamedCampaign: vi.fn(async () => undefined),
       getUserClient: vi.fn(async () => ({ kind: 'user-client' })),
       serviceClient: { from },
       brainRetrievalService: { search: brainRetrievalSearch },
@@ -110,7 +111,7 @@ describe('ArtifactBrainSearchActionsService.searchCampaignBrain', () => {
     })
   })
 
-  it('resolves any named client without changing the active conversation campaign', async () => {
+  it('binds this conversation when a named client campaign brain is searched', async () => {
     nsBrainsMaybeSingle.mockResolvedValue({ data: { id: 'brain-northstar' }, error: null })
 
     const result = (await service.searchCampaignBrain(
@@ -126,12 +127,30 @@ describe('ArtifactBrainSearchActionsService.searchCampaignBrain', () => {
       null,
     )
     expect(target.resolveCampaignId).not.toHaveBeenCalled()
+    expect(target.bindConversationToNamedCampaign).toHaveBeenCalledWith(
+      target.serviceClient,
+      'user-1',
+      'agent:vibey:conv-1',
+      'campaign-northstar',
+    )
     expect(result).toMatchObject({
       success: true,
       brain_id: 'brain-northstar',
       campaign_id: 'campaign-northstar',
       family: 'campaign',
     })
+  })
+
+  it('does not bind ambient session campaign fallback', async () => {
+    nsBrainsMaybeSingle.mockResolvedValue({ data: { id: 'brain-campaign-1' }, error: null })
+
+    await service.searchCampaignBrain(
+      target,
+      { query: 'offer pricing ICP' },
+      'agent:nate:conv-1',
+    )
+
+    expect(target.bindConversationToNamedCampaign).not.toHaveBeenCalled()
   })
 
   it('rejects non-campaign brain_id', async () => {

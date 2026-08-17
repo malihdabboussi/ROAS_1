@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   hasPlatformToolsRuntimeGuidance,
+  PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_HEADING,
   PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING,
 } from '@vibey/agent-policy'
 import { SupabaseServiceClient } from '@vibey/api-shared'
@@ -320,6 +321,7 @@ export function evaluateToolsContent(params: {
 
   const ok =
     hasPlatformToolsRuntimeGuidance(content) &&
+    content.includes(PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_HEADING) &&
     content.includes('skills/vibey-api/SKILL.md') &&
     content.includes('skills/{skill-key}/SKILL.md')
 

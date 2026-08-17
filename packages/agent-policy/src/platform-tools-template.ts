@@ -54,6 +54,13 @@ export const PLATFORM_TOOLS_MEDIA_ROUTING_BLOCK = `${PLATFORM_TOOLS_MEDIA_ROUTIN
 - Image generation and editing are native ROAS capabilities. Do not search for or require an external OpenAI or ChatGPT integration, and do not tell the user to leave chat to complete the image request.
 - Use native \`generate_video\` for supported video generation. When a video skill explicitly routes the work to Higgsfield, use \`list_mcp_tools\` and \`use_mcp_tool\` for the connected Higgsfield server from this chat. Do not route Higgsfield through external-integration search or claim it is unavailable without checking the connected MCP tools.
 - Do not claim an image or video was created until the generation tool returns success.`
+export const PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_HEADING = 'For a named or misspelled client:'
+export const PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK = `${PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_HEADING}
+- Treat messy names as clients first, tone second. \`Yasir / SPeka lke a ceo\` is Speak Like a CEO. \`Matser yoru kraft\` is Master Your Kraft. Do not hear "like a CEO" as writing style.
+- First action: \`list_campaigns\` or \`search_campaign_brain\` with \`campaign_name\` set to the user's words (try each phrase split by \`/\`). Passing \`campaign_name\` or an explicit \`campaign_id\` binds **this** portal conversation so CONNECTIONS shows that client. It does not lock the whole Slack DM identity.
+- Do not search User Brain, Agent Brain, or file memory first for a named-client fact. Do not ask for a screenshot, date, or dashboard paste until campaign Brain, the client Slack channel, Portal/Page Grader, and Space have been checked.
+- "Nothing linked" means this chat has no campaign yet — not that Slack, Portal, or campaign data does not exist. Resolve and bind, then retrieve.
+- Drafts the user will paste (Monday updates, client recaps, Slack DMs) must be send-ready: real names, real dates, real work. A \`draft\` card with \`[brackets]\` is invalid. Retrieve first. Placeholders only if those sources came back empty, then ask one question — not a Mad Libs card.`
 export const PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING =
   'For first-person fill, guest prep, or write-as-me:'
 export const PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK = `${PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING}
@@ -99,6 +106,8 @@ For discovery/context questions:
 - Search conversations when the user refers to a previous chat or asks to find chat history. Do not ask them to reconstruct prior context before searching accessible conversations.
 - Search Space when the answer may live in tasks, docs, missions, artifacts, conversations, or media.
 - Search Brain when the answer is durable memory, preferences, company rules, customer patterns, or agent expertise.
+
+${PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK}
 
 For call, meeting, recording, or transcript retrieval:
 - Treat phrases like "call", "meeting", "recording", "where I talked to...", and "transcript" as source-retrieval requests; the answer often lives in connected meeting tools, not only Brain.
@@ -283,6 +292,40 @@ function ensureBrowserQcGuidance(content: string): string {
   return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_BROWSER_QC_BLOCK}${content.slice(insertAt)}`
 }
 
+function ensureNamedClientLookupGuidance(content: string): string {
+  const runtimeStart = content.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
+  if (runtimeStart === -1) return content
+
+  const headingStart = content.indexOf(PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_HEADING, runtimeStart)
+  if (headingStart !== -1) {
+    if (content.slice(headingStart).startsWith(PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK)) {
+      return content
+    }
+    const afterHeading = headingStart + PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_HEADING.length
+    const rest = content.slice(afterHeading)
+    const nextFor = rest.search(/\nFor [a-z]/)
+    const nextHeading = rest.indexOf('\n### ')
+    const unclear = rest.indexOf('\nFor unclear,')
+    const candidates = [nextFor, nextHeading, unclear].filter((index) => index !== -1)
+    const replaceEnd =
+      candidates.length > 0 ? afterHeading + Math.min(...candidates) : content.length
+    return `${content.slice(0, headingStart)}${PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK}${content.slice(replaceEnd)}`
+  }
+
+  const callStart = content.indexOf('\nFor call, meeting, recording, or transcript retrieval', runtimeStart)
+  const firstPersonStart = content.indexOf(`\n${PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING}`, runtimeStart)
+  const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
+  const insertAt =
+    callStart !== -1
+      ? callStart
+      : firstPersonStart !== -1
+        ? firstPersonStart
+        : unclearStart !== -1
+          ? unclearStart
+          : content.length
+  return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK}${content.slice(insertAt)}`
+}
+
 function ensureFirstPersonFillGuidance(content: string): string {
   const runtimeStart = content.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
   if (runtimeStart === -1) return content
@@ -315,9 +358,11 @@ export function ensurePlatformToolsRuntimeGuidance(content: string): string {
   if (hasPlatformToolsRuntimeGuidance(withActionProtocol)) {
     return ensureChannelFormattingGuidance(
       ensureFirstPersonFillGuidance(
-        ensureBrowserQcGuidance(
-          ensureMediaRoutingGuidance(
-            ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+        ensureNamedClientLookupGuidance(
+          ensureBrowserQcGuidance(
+            ensureMediaRoutingGuidance(
+              ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+            ),
           ),
         ),
       ),

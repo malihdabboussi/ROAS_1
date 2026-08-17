@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-08-14 (meeting chat stays put until Continue in chat)
+**Last Modified:** 2026-08-17 (named-client lookup binds this portal chat CONNECTIONS)
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` uses those same stored drafts, sends account-manager reminders only to people classified Internal and individually set Active, and keeps the client-facing recap in the admin approval thread.
 
@@ -263,9 +263,11 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - An explicit Slack channel mention or channel ID is authoritative. Channel history returns the canonical channel ID/name with its messages; Pixel must verify that identity before mapping the client and must never substitute a client inferred from message content.
 - Slack replies use compact labeled bullets for row-based data. Markdown tables remain available on portal surfaces, but Pixel's Slack delivery formatter converts any pipe table that slips through before posting.
 - If Dylan names `Asura Group` (or another client/campaign), Pixel must call `search_campaign_brain` with that explicit campaign name/id instead of continuing to query the prior campaign.
-- Cross-campaign Brain reads resolve the named campaign without changing the Slack
-  conversation's active campaign. This prevents one client lookup from leaking into
-  later requests in the same thread.
+- Named `campaign_id` / `campaign_name` on `search_campaign_brain` binds **this**
+  portal conversation so CONNECTIONS shows that client. A Slack DM is a shared
+  Pixel thread for every client; each message already maps to a specific portal
+  chat. Binding does not glue the whole DM identity to one client forever. A new
+  top-level DM starts a new portal chat; in-thread replies reuse the same chat.
 - Human teammate work creates a durable human-assigned task. Managed AI-agent work uses agent delegation. Funnel, landing-page, campaign-page, and related fulfillment requests without a named human/agent infer Page Grader and use its connected MCP tool surface; the user does not need to name the integration.
 - Page Grader writes resolve or confirm the client and campaign first. New campaigns and launches reuse known Brain, Space, and Page Grader context, then ask only for genuinely blocking missing details.
 - Pixel may report delegation success only after the selected tool confirms a durable result.
@@ -421,6 +423,8 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-08-12:** The live Fathom Meeting Log invokes Pixel's post-call workflow for canonical Client calls only. It starts in Shadow so drafts, action ownership, and Brain-backed context can be reviewed without posting to Slack; channel delivery remains disabled until approval.
 - **2026-08-12:** Call-kind classification now gives explicit sales/demo and partner titles precedence, then treats a mostly-external meeting as Client before inspecting ordinary transcript discussion. Client performance calls can discuss sales or partnerships without being mislabeled. Pixel's post-call draft input now includes the portal agenda, recap, full transcript documents, and Brain context.
 - **2026-08-12:** Channel delivery is an independent fail-closed action setting. The client recap channel ID is preconfigured, but only an explicit change to `channel_delivery=automatic` on an Active flow can post there; the rollout migration leaves it disabled for DM review.
+
+- **2026-08-17:** Named `campaign_id` / `campaign_name` on `search_campaign_brain` binds **this** portal conversation so CONNECTIONS shows that client. A Slack DM remains a shared Pixel thread; each message already maps to a specific portal chat. Binding does not glue the whole DM identity to one client forever.
 
 ## Related
 

@@ -288,9 +288,6 @@ export abstract class SlackConversationBase extends SlackMediaBase {
       orgId,
     })
     if (existing) {
-      if (existing.campaign_id) {
-        await this.slackRuntimeRepo.updateConversationCampaign(supabase, existing.id, null)
-      }
       return { id: existing.id, title: existing.title ?? null }
     }
 

@@ -87,6 +87,37 @@ export class SlackOpenItemsService {
     })
   }
 
+  async findQcSlackAnchor(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      sourceType: string
+      caseTypes: string[]
+      sinceIso: string
+      campaignId?: string | null
+      externalClientId?: string | null
+      clientLabel?: string | null
+      sourceKeys?: string[]
+    },
+  ): Promise<SlackOpenItem | null> {
+    return this.items.findQcSlackAnchor(supabase, input)
+  }
+
+  async attachSlackDelivery(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      sourceType: string
+      sourceKeys: string[]
+      channelId: string
+      parentTs: string
+      fingerprint: string
+      followedUpAt: string
+    },
+  ): Promise<void> {
+    await this.items.attachSlackDelivery(supabase, input)
+  }
+
   async record(
     supabase: SupabaseClient,
     input: {

@@ -276,6 +276,7 @@ export class ArtifactLegacySessionCampaignService {
     userId: string,
     sessionKey: string | undefined,
     campaignId: string,
+    overrideExisting: boolean,
   ): Promise<void> {
     const conversationId = sessionKey ? this.parseConversationId(sessionKey) : null
     if (!conversationId) return
@@ -285,7 +286,8 @@ export class ArtifactLegacySessionCampaignService {
     if (!conversation) return
 
     const currentCampaignId = String(conversation.campaign_id ?? '')
-    if (currentCampaignId) return
+    if (currentCampaignId === campaignId) return
+    if (currentCampaignId && !overrideExisting) return
 
     const { error: updateError } = await this.repository.updateConversationCampaign(supabase, {
       conversationId,
@@ -301,7 +303,16 @@ export class ArtifactLegacySessionCampaignService {
     sessionKey: string | undefined,
     campaignId: string,
   ): Promise<void> {
-    await this.attachConversationToCampaign(supabase, userId, sessionKey, campaignId)
+    await this.attachConversationToCampaign(supabase, userId, sessionKey, campaignId, false)
+  }
+
+  async bindConversationToNamedCampaign(
+    supabase: SupabaseClient,
+    userId: string,
+    sessionKey: string | undefined,
+    campaignId: string,
+  ): Promise<void> {
+    await this.attachConversationToCampaign(supabase, userId, sessionKey, campaignId, true)
   }
 
   resolveUserId(sessionKey?: string): string {
