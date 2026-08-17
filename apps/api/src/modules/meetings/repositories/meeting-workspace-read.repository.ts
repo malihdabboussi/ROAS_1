@@ -52,7 +52,9 @@ export class MeetingWorkspaceReadRepository {
           .order('created_at', { ascending: true }),
         supabase
           .from('space_items')
-          .select('id, title, source, status, doc_body, custom_data, created_at, updated_at')
+          .select(
+            'id, title, source, status, priority, assignee_id, assignee_type, assignees, due_date, start_date, user_id, org_id, sort_order, notes, description, linked_mission_id, parent_item_id, doc_body, custom_data, created_at, updated_at',
+          )
           .eq('space_id', input.spaceId)
           .or(
             `parent_item_id.eq.${input.meetingItemId},custom_data->>source_call_item_id.eq.${input.meetingItemId}`,

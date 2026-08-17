@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:33] - [STYLE]
+What: Meeting workspace action items now render through the same All Tasks native list (status, name, priority, assignee, due date, Client Workspace, Campaign Space, Add task).
+Why: The stacked caption + "this space" rows did not match the All Tasks table, so meeting follow-ups felt like a different product.
+Impact: Opening a meeting shows the All Tasks table for action items. Follow-up priority, assignee, and due date come through the workspace bundle so those columns are real.
+Files: `apps/web/src/features/home/components/MeetingActionItemsSection.tsx`, `apps/web/src/components/work-views/AllTasksNativeList.tsx`, `apps/api/src/modules/meetings/domain/meeting-follow-up-actions.ts`, `documentation/features/meeting-follow-up-slack.md`
+
 ## [2026-08-17 20:05] - [STYLE]
 What: Chat assistant-turn actions now show Reply first, then Copy, then Fork.
 Why: Reply is the primary next step in a conversation, so it should be the first control you see.
