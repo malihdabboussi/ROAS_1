@@ -2,10 +2,7 @@
 
 import { Suspense } from 'react'
 import { dispatchBrainAddAgentModal } from '@/features/brain/lib/brain-agent-modal.events'
-import {
-  HUB_DOCK_SUB_FLYOUT_OFFSET_PX,
-  HubDockFlyout,
-} from './HubDockFlyout'
+import { HUB_DOCK_SUB_FLYOUT_OFFSET_PX, HubDockFlyout } from './HubDockFlyout'
 import { SidebarBrainNavLinks } from './SidebarBrainFlyout'
 import { SidebarTeam2Flyout } from './SidebarTeam2Flyout'
 import type { SidebarControllerReturn } from './useSidebarController'
@@ -21,7 +18,7 @@ export function SidebarHqMoreTeamBrainFlyouts({
   onCloseParentFlyout,
   onNavigate,
 }: {
-  subDock: 'team' | 'brain' | 'projects' | 'account' | null
+  subDock: 'team' | 'brain' | 'projects' | 'programs' | 'account' | null
   subAnchor: DOMRect | null
   c: SidebarControllerReturn
   clearLeave: () => void

@@ -60,7 +60,10 @@ describe('InboxFeed', () => {
   it('renders as a full-page, searchable two-pane surface', () => {
     const { container } = render(<InboxFeed presentation="page" />)
 
-    expect(screen.getByRole('heading', { name: 'Inbox' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Inbox' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Everything that needs your attention, sorted and ready.'),
+    ).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /All types/i })).toBeInTheDocument()
     expect(container.querySelector('section')).not.toHaveClass('section-card')
     expect(screen.getByText('Primary')).toBeInTheDocument()
@@ -93,5 +96,13 @@ describe('InboxFeed', () => {
     const { container } = render(<InboxFeed presentation="page" />)
     const panes = container.querySelector('.flex.min-h-0.flex-1.overflow-hidden')
     expect(panes).toBeTruthy()
+  })
+
+  it('keeps the Inbox title on the Home card presentation', () => {
+    render(<InboxFeed />)
+    expect(screen.getByRole('heading', { name: 'Inbox' })).toBeInTheDocument()
+    expect(
+      screen.getByText('Everything that needs your attention, sorted and ready.'),
+    ).toBeInTheDocument()
   })
 })

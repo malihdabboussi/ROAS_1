@@ -87,12 +87,7 @@ export function AllTasksBoard({
   return (
     <div className="h-full min-h-0">
       <div className="p-spacing-4 md:p-spacing-6 w-full">
-        <div className="mb-spacing-4">
-          <h1 className="title-h3 text-foreground">ALL TASKS</h1>
-          <p className="body-3 text-muted-foreground mt-spacing-1">
-            Roll up open space tasks across campaigns. Your Turn stays the personal inbox.
-          </p>
-        </div>
+        <h1 className="sr-only">ALL TASKS</h1>
 
         <div className="mb-spacing-4 gap-spacing-2 flex flex-wrap items-center justify-end">
           <AllTasksScopeFilters

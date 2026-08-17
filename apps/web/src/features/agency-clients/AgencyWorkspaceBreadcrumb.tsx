@@ -1,12 +1,16 @@
 'use client'
 
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import { ShellBreadcrumb } from '@/components/shell/ShellBreadcrumb'
+import { ShellHeaderAction } from '@/components/shell/ShellHeaderAction'
 
 export function AgencyWorkspaceBreadcrumb({
   items,
+  action,
 }: {
   items: Array<{ href?: string; label: string }>
+  action?: ReactNode
 }) {
   const label = items.map((item) => item.label).join(' / ')
   const trail = (
@@ -33,5 +37,10 @@ export function AgencyWorkspaceBreadcrumb({
       })}
     </nav>
   )
-  return <ShellBreadcrumb label={label}>{trail}</ShellBreadcrumb>
+  return (
+    <>
+      <ShellBreadcrumb label={label}>{trail}</ShellBreadcrumb>
+      {action ? <ShellHeaderAction>{action}</ShellHeaderAction> : null}
+    </>
+  )
 }
