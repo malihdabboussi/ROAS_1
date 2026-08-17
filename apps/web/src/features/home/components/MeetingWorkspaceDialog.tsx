@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
@@ -21,7 +20,6 @@ import { buildMeetingAwarenessContext } from '@/features/home/lib/build-meeting-
 import {
   formatAttendeeSummary,
   formatMeetingWhen,
-  meetingPhaseBadgeLabel,
   parseMeetingPrep,
 } from '@/features/home/lib/meeting-workspace-display'
 import { syncAgendaFathomRecordingToWorkspace } from '@/features/home/lib/sync-agenda-fathom-recording'
@@ -47,7 +45,6 @@ export function MeetingWorkspaceDialog({
   meetingEnd,
   fallbackTitle,
   onBack,
-  onClose,
 }: {
   spaceId: string
   meetingItemId: string
@@ -151,23 +148,10 @@ export function MeetingWorkspaceDialog({
     setWorkAreaOpen(true)
   }, [setWorkAreaOpen])
 
-  const handleClose = useCallback(() => {
-    clearMeetingContext()
-    onClose()
-  }, [clearMeetingContext, onClose])
-
   const handleBack = useCallback(() => {
     clearMeetingContext()
     onBack()
   }, [clearMeetingContext, onBack])
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') handleClose()
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [handleClose])
 
   const focusMeetingChat = () => {
     if (!conversationId) return
@@ -315,16 +299,13 @@ export function MeetingWorkspaceDialog({
             connected meeting conversation in the main chat.
           </p>
         </div>
-        <span className={`badge-glass ${isLive ? 'badge-glass-green' : 'badge-glass-muted'}`}>
-          {meetingPhaseBadgeLabel(phase, isPostCall)}
-        </span>
         <button
           type="button"
-          onClick={handleClose}
-          className="btn-icon-bare"
-          aria-label="Close meeting workspace"
+          onClick={focusMeetingChat}
+          disabled={!conversationId}
+          className="button-compact button-glass-neutral disabled:opacity-50"
         >
-          <X className="icon-xs" />
+          Continue in chat
         </button>
       </header>
 
@@ -340,7 +321,6 @@ export function MeetingWorkspaceDialog({
             ending={ending}
             onStart={() => void startCall()}
             onEnd={() => void endCall()}
-            onContinue={focusMeetingChat}
             onPostCallAction={runPostCallAction}
           />
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Check, ExternalLink, Radio } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -43,6 +43,8 @@ export function MeetingRecordingsSection({
   recordings,
   onLinked,
   isPostCall = true,
+  attachmentCount = 0,
+  children,
 }: {
   spaceId: string
   meetingItemId: string
@@ -50,6 +52,8 @@ export function MeetingRecordingsSection({
   onLinked: () => void | Promise<void>
   /** Pre-call the empty state is expected, not a gap — soften the copy. */
   isPostCall?: boolean
+  attachmentCount?: number
+  children?: ReactNode
 }) {
   const [picking, setPicking] = useState(false)
   const [loadingCandidates, setLoadingCandidates] = useState(false)
@@ -122,9 +126,9 @@ export function MeetingRecordingsSection({
   }
 
   return (
-    <section className="gap-spacing-2 flex flex-col">
+    <section className="gap-spacing-4 flex flex-col">
       <div className="flex items-center justify-between">
-        <h2 className="body-3 text-foreground font-semibold">Recordings ({recordings.length})</h2>
+        <h2 className="body-3 text-foreground font-semibold">Recordings & attachments</h2>
         <div className="gap-spacing-2 flex items-center">
           <button
             type="button"
@@ -139,7 +143,7 @@ export function MeetingRecordingsSection({
       </div>
 
       {picking ? (
-        <div className="section-card gap-spacing-2 p-spacing-3 flex flex-col">
+        <div className="border-border gap-spacing-3 rounded-spacing-2 p-spacing-3 flex flex-col border">
           <p className="typo-caption text-muted-foreground">
             Select a Fathom recording to link to this meeting.
           </p>
@@ -149,7 +153,7 @@ export function MeetingRecordingsSection({
           {!loadingCandidates && candidates.length === 0 ? (
             <p className="body-4 text-muted-foreground">No Fathom recordings found.</p>
           ) : null}
-          <div className="gap-spacing-1 flex max-h-64 flex-col overflow-y-auto">
+          <div className="gap-spacing-2 flex max-h-64 flex-col overflow-y-auto">
             {candidates.map((meeting) => {
               const candidateId = recordingCandidateId(meeting)
               if (!candidateId) return null
@@ -163,7 +167,7 @@ export function MeetingRecordingsSection({
                   type="button"
                   disabled={linked || Boolean(linkingId)}
                   onClick={() => void linkCandidate(meeting)}
-                  className="border-border hover:bg-hover-subtle gap-spacing-2 rounded-spacing-2 p-spacing-2 flex w-full items-start border text-left disabled:opacity-60"
+                  className="border-border hover:bg-hover-subtle gap-spacing-2 rounded-spacing-2 p-spacing-3 flex w-full items-start border text-left disabled:opacity-60"
                   aria-label={title}
                 >
                   <span className="mt-spacing-1 shrink-0">
@@ -197,12 +201,15 @@ export function MeetingRecordingsSection({
       ) : null}
 
       {recordings.map((recording) => (
-        <div key={recording.id} className="section-card p-spacing-3">
+        <div
+          key={recording.id}
+          className="border-border gap-spacing-2 rounded-spacing-2 p-spacing-3 flex flex-col border"
+        >
           <div className="gap-spacing-2 flex items-center">
             <Radio className="icon-sm text-primary" aria-hidden />
             <span className="body-4 text-foreground truncate">{recording.title}</span>
           </div>
-          <p className="typo-caption text-muted-foreground mt-spacing-1">
+          <p className="typo-caption text-muted-foreground">
             {recording.is_primary ? 'Primary recording' : 'Supplemental recording'}
           </p>
           {recording.recording_url ? (
@@ -210,7 +217,7 @@ export function MeetingRecordingsSection({
               href={recording.recording_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="typo-caption text-primary mt-spacing-2 gap-spacing-1 inline-flex items-center"
+              className="typo-caption text-primary gap-spacing-1 inline-flex items-center"
             >
               Open recording <ExternalLink className="icon-xs" />
             </a>
@@ -226,7 +233,7 @@ export function MeetingRecordingsSection({
                   title: `Transcript — ${recording.title}`,
                 })
               }
-              className="button-compact button-glass-neutral mt-spacing-2"
+              className="button-compact button-glass-neutral self-start"
             >
               Open transcript
             </button>
@@ -234,11 +241,13 @@ export function MeetingRecordingsSection({
         </div>
       ))}
 
-      {!picking && recordings.length === 0 ? (
+      {children}
+
+      {!picking && recordings.length === 0 && attachmentCount === 0 ? (
         <p className="body-4 text-muted-foreground">
           {isPostCall
-            ? 'No recording linked yet — link one from Fathom.'
-            : 'The recording will land here after the call.'}
+            ? 'No recording or attachments yet — link a Fathom recording.'
+            : 'Recordings and attachments will land here after the call.'}
         </p>
       ) : null}
     </section>
