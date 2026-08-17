@@ -1,5 +1,12 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 19:56] - [FIX]
+What: Home Suggested next moves now keep only the signed-in user's assigned follow-ups and unassigned items from meetings they actually attended.
+Why: The list was org-wide, so teammates saw each other's Fathom follow-ups (for example a Master Your Craft deck action from a team call they were not on). The tooltip said "your meeting" even when they were not an attendee.
+Impact: Each user sees their own actions and follow-ups from their meetings. Teammate-owned items from other people's calls no longer appear under the composer.
+Files: `apps/api/src/modules/home/repositories/next-moves.repository.ts`, `apps/api/src/modules/home/repositories/next-moves-audience.ts`, `apps/api/src/modules/home/repositories/next-moves-audience.test.ts`, `documentation/features/claude-chatgpt-shell.md`
+
+
 ## [2026-08-17 17:43] - [FEATURE]
 What: Chat now restores the last work screen for that conversation (meeting agenda pops back), and meeting prep is split into Start agenda / Prep for call / Google agenda. Removed the in-app precall-prep Space-item path.
 Why: Switching Recents sent meeting chats to `/home?conv=` so the agenda disappeared; Open agenda prep never worked; Google Doc / Page Grader kickoff was mixed into the same controls as the Space Doc agenda.
