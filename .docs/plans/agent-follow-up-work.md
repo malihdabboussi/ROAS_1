@@ -1,14 +1,14 @@
-## 2026-08-17 - [PAGE-GRADER] Portal "Failed to update campaign" Link toast is outside this repo
+## 2026-08-17 - [PAGE-GRADER] Portal Link UI + roas-api edge function still required after #284
 
 Status: Open
 
 Found while: Fixing Service Request tasks that arrived in The ROAS Portal unlinked and unassigned
 
-Evidence: The client Tasks / Requests table "Link" control and the toast "Failed to update campaign" are The ROAS Portal (Page Grader) UI. This repo proxies workspace PATCHes but does not own that Link action. Other non-Page-Grader campaign links in ROAS work.
+Evidence: Three separate surfaces. (1) ROAS platform #284 is merged (`e1d56ff6`) and this repo's API already sends `campaign_id` plus `source.origin: "page_grader"` and omits empty `assignees`. Railway `roas-platform` and Vercel `roas-api` (`api.roas.io`) succeeded for that commit. That Vercel project is NestJS, not the Portal edge function. (2) New Portal rows are created by `POST {baseUrl}/work` against the connected Supabase edge function `/functions/v1/roas-api`. Until that function is deployed to persist campaign id and From Pagegrader origin, new creates can still land unlinked even with #284 live. (3) The client Tasks / Requests "Link" control and "Failed to update campaign" toast are Portal UI. This repo does not own that PATCH.
 
-Needed work: In the Page Grader / roas-api repo, fix PATCH of a fulfillment task's `campaign_id` for ROAS-sourced work (and confirm the toast maps the real error). After deploy, retry Link on the already-created Yasir Khan rows.
+Needed work: Deploy the Portal `roas-api` edge function so `POST /work` applies `campaign_id` and `origin: "page_grader"`. In the Page Grader / Portal repo, fix PATCH of a fulfillment task's `campaign_id` for ROAS-sourced work (and confirm the toast maps the real error). After that deploy, retry Link on already-created Yasir Khan rows. Do not treat #284 as optional; new Service Requests still need this platform payload.
 
-Reason not done now: Page Grader frontend/API is not in this monorepo. This change only fixes create/mirror so new tasks arrive linked and assignment rules can apply.
+Reason not done now: Portal UI and the Supabase `roas-api` edge function are not in this monorepo. #284 only supplies the create payload.
 
 ## 2026-08-17 - [ARCH] WorkRequestChatFlow is at the component LOC limit
 
