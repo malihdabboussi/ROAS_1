@@ -4,6 +4,7 @@ import {
   COMPOSER_TRY_TIP_MESSAGES,
   COMPOSER_TRY_TIP_ROTATE_MS,
   COMPOSER_TRY_TIPS,
+  composerTryTipRotationSeed,
   pickComposerTryTip,
 } from '@/lib/chat/composer-try-tips'
 import { ChatComposerTryTip } from './ChatComposerTryTip'
@@ -54,16 +55,40 @@ describe('ChatComposerTryTip', () => {
     expect(mocks.addDismissedId).toHaveBeenCalledWith(tip!.id)
   })
 
-  it('advances to the next tip after dismiss instead of hiding the banner', () => {
-    const first = pickComposerTryTip([], 0)
-    const next = pickComposerTryTip([first!.id], 0)
-    render(<ChatComposerTryTip />)
+  it('hides the banner after dismiss instead of showing the next tip', () => {
+    const seed = composerTryTipRotationSeed('chat-a')
+    const first = pickComposerTryTip([], seed)
+    const next = pickComposerTryTip([first!.id], seed)
+    render(<ChatComposerTryTip conversationId="chat-a" />)
 
     fireEvent.click(screen.getByRole('button', { name: COMPOSER_TRY_TIP_MESSAGES.dismiss }))
 
     expect(mocks.addDismissedId).toHaveBeenCalledWith(first!.id)
     expect(mocks.seedComposer).not.toHaveBeenCalled()
-    expect(screen.getByText(next!.body)).toBeInTheDocument()
+    expect(screen.queryByText(first!.body)).toBeNull()
+    expect(screen.queryByText(next!.body)).toBeNull()
+  })
+
+  it('still shows a remaining tip in a different chat after dismiss', () => {
+    const { rerender } = render(<ChatComposerTryTip conversationId="chat-a" />)
+
+    fireEvent.click(screen.getByRole('button', { name: COMPOSER_TRY_TIP_MESSAGES.dismiss }))
+    expect(screen.queryByText(COMPOSER_TRY_TIP_MESSAGES.badge)).toBeNull()
+
+    rerender(<ChatComposerTryTip conversationId="chat-b" />)
+    const other = pickComposerTryTip(mocks.dismissedIds, composerTryTipRotationSeed('chat-b'))
+    expect(other).not.toBeNull()
+    expect(screen.getByText(other!.body)).toBeInTheDocument()
+  })
+
+  it('keeps the banner hidden when returning to the dismissed chat', () => {
+    const { rerender } = render(<ChatComposerTryTip conversationId="chat-a" />)
+
+    fireEvent.click(screen.getByRole('button', { name: COMPOSER_TRY_TIP_MESSAGES.dismiss }))
+    rerender(<ChatComposerTryTip conversationId="chat-b" />)
+    rerender(<ChatComposerTryTip conversationId="chat-a" />)
+
+    expect(screen.queryByText(COMPOSER_TRY_TIP_MESSAGES.badge)).toBeNull()
   })
 
   it('alternates remaining tips on an interval', () => {
