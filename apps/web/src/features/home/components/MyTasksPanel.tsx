@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { Calendar, CheckSquare, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { SpaceMappingCell, WorkItemList, WorkItemListRow } from '@/components/work-items'
 import { TasksEmptyIllustration } from '@/features/home/components/HomeEmptyIllustrations'
 import { HomeFeedScopePicker } from '@/features/home/components/HomeFeedScopePicker'
 import { formatHomeShortDate } from '@/features/home/components/HomeListCardShell'
 import { MyTasksInlineStatus } from '@/features/home/components/MyTasksInlineStatus'
+import { HOME_AGENDA_MESSAGES } from '@/features/home/config/home-agenda-messages.config'
 import { filterMyTasksBySearch, groupMyTasksByDue } from '@/features/home/lib/group-my-tasks-by-due'
 import type { HomeFeedScopeState } from '@/features/home/types/home-feed-scope'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
@@ -170,9 +171,7 @@ export function MyTasksPanel({
 
       <div className="px-spacing-4 pb-spacing-5 flex min-h-0 flex-1 flex-col overflow-y-auto">
         {loading ? (
-          <div className="flex flex-1 items-center justify-center py-16">
-            <VibeyLoadingOrb state="processing" size="md" />
-          </div>
+          <ListSkeleton rows={8} label={HOME_AGENDA_MESSAGES.LOADING_MY_TASKS.message} />
         ) : groups.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-16 text-center">
             <TasksEmptyIllustration />

@@ -1,4 +1,28 @@
-## 2026-08-17 - [ARCH] HomeTaskDetailHost is at the component LOC limit
+## 2026-08-17 - [ARCH] AgendaCard and MyTasksPanel sit on the component extract threshold
+
+Status: Open
+
+Found while: Replacing centered Meetings/My Tasks orbs with `ListSkeleton`
+
+Evidence: `wc -l` reports `AgendaCard.tsx` at 321 LOC and `MyTasksPanel.tsx` at 327 LOC (component limit 400; extract suggested at 320).
+
+Needed work: Split AgendaCard data/chrome from the list/calendar body switch, and extract MyTasksPanel search/empty/list into presentational pieces.
+
+Reason not done now: This change only swapped the in-place loading state. Decomposition would be a behavior-neutral refactor.
+
+
+
+Status: Open
+
+Found while: Replacing Meetings duplicate orbs with in-place `ListSkeleton`
+
+Evidence: Meetings, Inbox, My Tasks, All Tasks, Programs, Clients, Client Campaigns, meeting workspace/host, and the summary panel now use `ListSkeleton`. `rg VibeyLoadingOrb apps/web/src` still hits Spaces views (media, contacts, reporting, artifacts), settings modals, Team chat, work-request hosts, and picker/dialog spinners.
+
+Needed work: Convert remaining primary work-area list/page bodies (Spaces item views, contacts lists, reporting tables, artifact libraries) to `ListSkeleton` with chrome kept mounted. Leave `VibeyLoadingOrb` for chat/agent presence, button-row spinners, and blocking modal waits per design-guidelines §18.1.
+
+Reason not done now: This change fixed the duplicate Meetings flash and the same class of home/work-area lists. Replacing every remaining orb is a separate sweep across Spaces/settings.
+
+
 
 Status: Open
 

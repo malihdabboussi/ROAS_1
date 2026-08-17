@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:19] - [FIX]
+What: Meetings now skeleton-loads the agenda in place (no centered green orb flash, no duplicate loader). Meeting chats list the meeting workspace inside Connections by name, without an unlink control. Inbox, My Tasks, All Tasks, Programs, Clients, and Client Campaigns use the same list skeleton.
+Why: The Meetings orb started between chat and agenda, then jumped into the agenda body. Open meeting workspace sat above Connections instead of being the named meeting connection.
+Impact: Agenda chrome stays put while meetings load. The meeting workspace is a permanent Connections row; campaign/Space rows stay removable.
+Files: `MeetingsUnifiedSurface.tsx`, `AgendaCard.tsx`, `ShellRightPanel.tsx`, `ShellRightPanelConnections.tsx`, `ListSkeleton.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 20:01] - [FEATURE]
 What: Retired the dedicated My Tasks page. All Tasks is now the primary task destination, and opening a rollup row keeps the list mounted with the same right-side task card My Tasks used.
 Why: Simple/Advanced nav had both My Tasks and All Tasks, while All Tasks sent people into the Space overlay instead of a side card.

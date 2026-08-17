@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
   dayKeyInTimeZone,
   enumerateDayKeysInNavRange,
@@ -16,6 +16,7 @@ import {
 } from '@/features/home/components/AgendaCardChrome'
 import { AgendaCardListBody } from '@/features/home/components/AgendaCardListBody'
 import { HomeInstantMeetingHost } from '@/features/home/components/HomeInstantMeetingHost'
+import { HOME_AGENDA_MESSAGES } from '@/features/home/config/home-agenda-messages.config'
 import { HOME_TOAST_ERRORS } from '@/features/home/config/home-toast-errors.config'
 import { useAgendaCardData } from '@/features/home/hooks/use-agenda-card-data'
 import { dedupeAgendaEvents, pickNextAgendaEvent } from '@/features/home/lib/agenda-list-view'
@@ -268,9 +269,9 @@ export function AgendaCard({
       ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        {!initialized ? (
-          <div className="flex flex-1 items-center justify-center py-12">
-            <VibeyLoadingOrb state="processing" size="sm" />
+        {!initialized || (showAgendaSurface && loading) ? (
+          <div className="px-spacing-4 py-spacing-3 min-h-0 flex-1 overflow-hidden">
+            <ListSkeleton rows={8} label={HOME_AGENDA_MESSAGES.LOADING_MEETINGS.message} />
           </div>
         ) : !showAgendaSurface ? (
           <AgendaCardDisconnected
@@ -278,10 +279,6 @@ export function AgendaCard({
             openCalendarIntegration={openCalendarIntegration}
             openWorkspaceIntegration={openWorkspaceIntegration}
           />
-        ) : loading ? (
-          <div className="flex flex-1 items-center justify-center py-12">
-            <VibeyLoadingOrb state="processing" size="sm" />
-          </div>
         ) : view === 'list' ? (
           <AgendaCardListBody
             visibleEvents={visibleEvents}
