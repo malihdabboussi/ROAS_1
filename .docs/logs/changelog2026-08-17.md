@@ -6,6 +6,12 @@ Why: Pixel often replied with only a markdown `/request-review/` URL (no work_re
 Impact: Guest review pages show chat + finalize steps; authenticated `/home?conv=&wr=` keeps the conversation selected and shows a resume card from the pasted URL; new fulfillment tool results emit work_request blocks more reliably.
 Files: `apps/web/src/features/work-requests/components/WorkRequestReviewChatHost.tsx`, `WorkRequestChatResumeCard.tsx`, `apps/web/src/lib/work-requests/work-request-resume.ts`, `MessageBubbleOrderedBlocks.tsx`, `GlobalChatPanel.tsx`, `apps/agent-api/src/modules/shared/ui-block-extractor.ts`
 
+## [2026-08-17 17:12] - [FIX]
+What: Fixed Home Choose Space mapping and picker grouping. Clients are a single folder (not duplicated under Programs as Client Spaces); search placeholder is "Search". Scope attach now clears stale space/campaign ids, campaign-only picks resolve General space, and seeds/host keep the selected campaign so Connections and the agent match the chosen location.
+Why: Selecting a space could leave a prior Power Circle General connection attached, and Pixel asked which campaign despite a Choose Space selection. Picker also listed client campaigns under Programs and again under Clients.
+Impact: Choose Space → send attaches the selected client/program space; Connections shows that location; agent chat receives the campaign/space scope. Picker shows Programs vs Clients folder hierarchy.
+Files: `apps/web/src/components/conversations/conversation-scope-groups.ts`, `ConversationScopePickerMenus.tsx`, `ConversationScopePicker.tsx`, `conversation-scope-picker.messages.config.ts`, `conversation-scope-general-space.ts`, `conversation-scope-select.ts`, `use-conversation-scope-spaces.ts`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/global-chat/config/work-context.config.ts`, `global-chat-seed-match.ts`, `global-chat-panel-host.ts`
+
 ## [2026-08-17 16:47] - [FIX]
 What: Wrapped artifact viewer close handler so `onClick` does not pass a mouse event into `closeArtifactViewer(conversationId?)`.
 Why: Vercel `roas-web` typecheck failed on PR #263.
