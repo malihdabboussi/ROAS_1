@@ -138,7 +138,11 @@ describe('HomeMeetingDetailHost', () => {
 
     render(<HomeMeetingDetailHost event={baseEvent} onClose={vi.fn()} />)
 
-    expect(screen.getByText('Getting your meeting space ready...')).toBeInTheDocument()
+    expect(
+      screen.getByRole('status', {
+        name: 'Getting your meeting space ready...',
+      }),
+    ).toBeInTheDocument()
     await waitFor(() => {
       expect(
         screen.getByRole('region', { name: 'Nate X Dylan BOW Huddle meeting workspace' }),

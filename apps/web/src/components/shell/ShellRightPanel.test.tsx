@@ -110,13 +110,25 @@ vi.mock('./ShellRightPanelConnections', async () => {
   return {
     ShellRightPanelConnections: ({
       pickerRef,
+      linkedMeeting,
+      meetingTitle,
+      onOpenMeeting,
     }: {
       pickerRef?: { current: { openMenuFromBanner: () => void } | null }
+      linkedMeeting?: { meetingItemId: string; spaceId: string } | null
+      meetingTitle?: string | null
+      onOpenMeeting?: () => void
     }) => {
       useImperativeHandle(pickerRef, () => ({ openMenuFromBanner: mocks.openScopePicker }))
+      const title = meetingTitle?.trim() || 'Meeting'
       return (
         <section aria-label="Connections">
           <h3>Connections</h3>
+          {linkedMeeting ? (
+            <button type="button" onClick={onOpenMeeting} aria-label={`Open ${title}`}>
+              {title}
+            </button>
+          ) : null}
         </section>
       )
     },
@@ -218,6 +230,7 @@ describe('ShellRightPanel', () => {
     mocks.conversations = [
       {
         id: 'conversation-1',
+        title: 'Client launch review',
         metadata: {
           context_type: 'meeting',
           meeting_item_id: 'meeting-item-1',
@@ -228,7 +241,7 @@ describe('ShellRightPanel', () => {
 
     render(<ShellRightPanel conversationId="conversation-1" />)
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Open meeting workspace' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Client launch review' }))
 
     expect(mocks.shellState.setWorkAreaOpen).toHaveBeenCalledWith(true)
     expect(mocks.routerPush).toHaveBeenCalledWith(
@@ -245,7 +258,7 @@ describe('ShellRightPanel', () => {
 
     render(<ShellRightPanel conversationId="conversation-1" />)
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Open meeting workspace' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Meeting' }))
 
     expect(mocks.routerPush).toHaveBeenCalledWith(
       '/home/meetings?meeting=meeting-live&space=space-live',
@@ -257,6 +270,7 @@ describe('ShellRightPanel', () => {
 
     expect(await screen.findByRole('heading', { name: 'Outputs' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Open meeting workspace' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Connections' })).not.toBeInTheDocument()
   })
 
   it('opens the campaign and space picker when the guidance prompt requests it', async () => {
