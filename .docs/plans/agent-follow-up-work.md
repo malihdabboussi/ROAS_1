@@ -1,3 +1,15 @@
+## 2026-08-17 - [ARCH] use-shell-store is at the store LOC ceiling
+
+Status: Open
+
+Found while: Adding `pageHeaderAction` so Clients/Client Campaigns Portal can live in the work-card header
+
+Evidence: `wc -l` reports `apps/web/src/components/shell/use-shell-store.ts` at 592 LOC (store/service limit 600; extract suggested at 80% / 480). Page breadcrumb + header-action setters now sit inline with drawer/artifact/work-area state.
+
+Needed work: Extract page chrome (`pageBreadcrumb`, `pageHeaderAction`, owners, setters) into `use-shell-store.page-chrome.ts` the same way artifact-conversation and work-area-conversation slices were split.
+
+Reason not done now: Requested work was clickable crumbs, title declutter, and Portal placement. A slice extract would touch every shell-store mock without changing product behavior.
+
 ## 2026-08-17 - [FEATURE] In-app precall-prep backend still exists after UI removal
 
 Status: Open

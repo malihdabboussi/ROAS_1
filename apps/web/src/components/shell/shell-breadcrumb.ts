@@ -8,6 +8,7 @@ import {
   Inbox,
   Layers3,
   ListChecks,
+  ListTodo,
   MessageSquare,
   SendHorizontal,
   Users,
@@ -46,6 +47,7 @@ export function breadcrumbFromPath(
   if (pathname.startsWith('/projects')) return { label: 'Projects', Icon: FolderGit2 }
   if (pathname.startsWith('/flows')) return { label: 'Flows', Icon: Workflow }
   if (pathname.startsWith('/programs')) return { label: 'Programs', Icon: FolderKanban }
+  if (pathname.startsWith('/all-tasks')) return { label: 'All Tasks', Icon: ListTodo }
   if (pathname.startsWith('/campaigns')) return { label: 'Campaigns', Icon: ListChecks }
   if (pathname.startsWith('/spaces')) {
     return {

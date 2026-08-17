@@ -21,6 +21,14 @@ vi.mock('@/components/vibey/vibey-loading-orb', () => ({
   VibeyLoadingOrb: () => <span>Loading clients</span>,
 }))
 
+vi.mock('@/components/shell/ShellBreadcrumb', () => ({
+  ShellBreadcrumb: () => null,
+}))
+
+vi.mock('@/components/shell/ShellHeaderAction', () => ({
+  ShellHeaderAction: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
+
 const client = {
   id: '11111111-1111-1111-1111-111111111111',
   name: 'Clogged Club',
@@ -43,6 +51,8 @@ describe('AgencyClientsPage', () => {
     render(<AgencyClientsPage />)
 
     expect(await screen.findByText('Clogged Club')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'CLIENTS' })).toHaveClass('sr-only')
+    expect(screen.queryByText('Agency workspace')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Portal' })).toHaveAttribute(
       'href',
       '/clients?surface=portal',

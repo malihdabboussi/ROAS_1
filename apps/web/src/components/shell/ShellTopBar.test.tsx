@@ -36,6 +36,7 @@ const mocks = vi.hoisted(() => ({
     setMenuMode: vi.fn(),
     pageBreadcrumb: null as ReactNode | null,
     pageBreadcrumbLabel: null as string | null,
+    pageHeaderAction: null as ReactNode | null,
   },
 }))
 
@@ -99,6 +100,7 @@ describe('ShellTopBar', () => {
     mocks.shellState.sidebarPinned = false
     mocks.shellState.pageBreadcrumb = null
     mocks.shellState.pageBreadcrumbLabel = null
+    mocks.shellState.pageHeaderAction = null
     mocks.shellState.chatDrawer = { open: false }
     mocks.shellState.workAreaOpen = true
     mocks.shellState.artifactViewer = { target: null }
@@ -232,6 +234,18 @@ describe('ShellTopBar', () => {
     mocks.pathname = '/client-campaigns'
     render(<ShellTopBar />)
     expect(screen.getByText('Client Campaigns')).toBeInTheDocument()
+  })
+
+  it('names All Tasks from the route', () => {
+    mocks.pathname = '/all-tasks'
+    render(<ShellTopBar />)
+    expect(screen.getByText('All Tasks')).toBeInTheDocument()
+  })
+
+  it('renders a registered page header action in the top-right cluster', () => {
+    mocks.shellState.pageHeaderAction = <button type="button">Portal</button>
+    render(<ShellTopBar />)
+    expect(screen.getByRole('button', { name: 'Portal' })).toBeInTheDocument()
   })
 
   it('names Programs from the route instead of Inbox', () => {

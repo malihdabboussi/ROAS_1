@@ -146,6 +146,8 @@ interface ShellStore
   pageBreadcrumb: ReactNode | null
   pageBreadcrumbOwner: object | null
   pageBreadcrumbLabel: string | null
+  pageHeaderAction: ReactNode | null
+  pageHeaderActionOwner: object | null
   pendingWorkRestore: ShellWorkAreaRestore | null
 
   setSidebarPinned: (pinned: boolean) => void
@@ -176,6 +178,7 @@ interface ShellStore
   openFreshChatDrawer: () => void
   bumpSidebarFlyoutClose: () => void
   setPageBreadcrumb: (node: ReactNode | null, owner?: object | null, label?: string | null) => void
+  setPageHeaderAction: (node: ReactNode | null, owner?: object | null) => void
   setPendingWorkRestore: (restore: ShellWorkAreaRestore | null) => void
   consumePendingWorkRestore: (feature: string) => ShellWorkAreaRestore | null
 }
@@ -216,6 +219,8 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   pageBreadcrumb: null,
   pageBreadcrumbOwner: null,
   pageBreadcrumbLabel: null,
+  pageHeaderAction: null,
+  pageHeaderActionOwner: null,
   pendingWorkRestore: null,
 
   bumpSidebarFlyoutClose: () => {
@@ -504,6 +509,15 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       pageBreadcrumbOwner: owner,
       pageBreadcrumbLabel: trimmed || null,
     })
+  },
+  setPageHeaderAction: (node, owner = null) => {
+    if (node === null) {
+      const currentOwner = get().pageHeaderActionOwner
+      if (owner != null && currentOwner != null && currentOwner !== owner) return
+      set({ pageHeaderAction: null, pageHeaderActionOwner: null })
+      return
+    }
+    set({ pageHeaderAction: node, pageHeaderActionOwner: owner })
   },
   setPendingWorkRestore: (restore) => {
     set({ pendingWorkRestore: restore })

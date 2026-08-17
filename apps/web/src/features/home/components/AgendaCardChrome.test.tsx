@@ -31,6 +31,28 @@ describe('AgendaCardChrome', () => {
     expect(screen.getByRole('button', { name: 'Calendar views' })).toHaveClass('btn-icon-glass')
   })
 
+  it('hides the redundant Agenda title when the Meetings page already names the view', () => {
+    render(
+      <AgendaCardHeader
+        showAgendaSurface
+        hideTitle
+        bothConnected={false}
+        provider="all"
+        setProvider={vi.fn()}
+        agendaScope="personal"
+        setAgendaScope={vi.fn()}
+        showTeamToggle
+        view="list"
+        setView={vi.fn()}
+        teamCoverage={null}
+        onStartInstantMeeting={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Agenda')).toHaveClass('sr-only')
+    expect(screen.getByRole('button', { name: 'Start impromptu call' })).toBeTruthy()
+  })
+
   it('shows team calendar coverage menu for Team scope', () => {
     render(
       <AgendaCardHeader
