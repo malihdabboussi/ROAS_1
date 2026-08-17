@@ -68,6 +68,7 @@ export function ShellChatMenu({
     simpleSidebar || activeAgentKey === PIXEL_AGENT_KEY ? null : activeAgentKey,
   )
   const [listQuery, setListQuery] = useState('')
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false)
   const [shareConversation, setShareConversation] = useState<Conversation | null>(null)
   const [campaignNameById, setCampaignNameById] = useState<Record<string, string>>({})
   const initialConversations = peekConversationCache(simpleSidebar, historyAgentKey, activeOrgId)
@@ -265,6 +266,7 @@ export function ShellChatMenu({
       onOpenAllChats={openAllChats}
       onCollapse={onCollapse}
       simpleSidebar={simpleSidebar}
+      onFilterOpenChange={setFilterMenuOpen}
     />
   )
 
@@ -376,6 +378,7 @@ export function ShellChatMenu({
           campaignNameById={campaignNameById}
           splitPinnedSection={simpleSidebar}
           headerEndSlot={filterControls}
+          pinHeaderActions={filterMenuOpen}
           beforeHeaderSlot={simpleSidebar ? navigationSlot : undefined}
           headerFooterSlot={activeFilters}
         />

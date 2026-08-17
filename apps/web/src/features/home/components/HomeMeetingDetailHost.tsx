@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { ShellBreadcrumb } from '@/components/shell/ShellBreadcrumb'
 import { useShellStore } from '@/components/shell/use-shell-store'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { MeetingWorkspaceDialog } from '@/features/home/components/MeetingWorkspaceDialog'
+import { HOME_AGENDA_MESSAGES } from '@/features/home/config/home-agenda-messages.config'
 import { HOME_TOAST_ERRORS } from '@/features/home/config/home-toast-errors.config'
 import { resolveMeetingJoinUrl } from '@/features/home/lib/home-meeting-detail'
 import {
@@ -151,22 +152,22 @@ export function HomeMeetingDetailHost({
           <X className="icon-xs" />
         </button>
       </div>
-      <div className="p-spacing-6 flex min-h-0 flex-1 flex-col items-center justify-center">
-        {error ? (
-          <>
-            <p className="body-2 text-foreground text-center">{error}</p>
-            <button
-              type="button"
-              onClick={onClose}
-              className="button-default button-glass-neutral mt-spacing-4"
-            >
-              Close
-            </button>
-          </>
-        ) : (
-          <VibeyLoadingOrb text="Getting your meeting space ready..." />
-        )}
-      </div>
+      {error ? (
+        <div className="p-spacing-6 flex min-h-0 flex-1 flex-col items-center justify-center">
+          <p className="body-2 text-foreground text-center">{error}</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="button-default button-glass-neutral mt-spacing-4"
+          >
+            Close
+          </button>
+        </div>
+      ) : (
+        <div className="px-spacing-4 py-spacing-3 min-h-0 flex-1 overflow-hidden">
+          <ListSkeleton rows={6} label={HOME_AGENDA_MESSAGES.LOADING_MEETING_WORKSPACE.message} />
+        </div>
+      )}
     </section>
   )
 }

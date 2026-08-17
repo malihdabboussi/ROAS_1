@@ -19,37 +19,48 @@ export function MeetingWorkspaceAttachments({
   spaceId,
   deliverables,
   loading,
+  embedded = false,
 }: {
   spaceId: string
   deliverables: MeetingDeliverable[]
   loading: boolean
+  /** Skip the heading and empty copy when this list sits under recordings. */
+  embedded?: boolean
 }) {
+  if (embedded && !loading && deliverables.length === 0) return null
+
+  const items = (
+    <div className="gap-spacing-2 flex flex-col">
+      {deliverables.map((deliverable) => (
+        <button
+          key={deliverable.id}
+          type="button"
+          onClick={() =>
+            openDocumentInShell({
+              documentId: deliverable.id,
+              spaceItemId: deliverable.id,
+              spaceId,
+              title: deliverable.title,
+            })
+          }
+          className="border-border hover:bg-hover-subtle gap-spacing-2 rounded-spacing-2 p-spacing-3 flex w-full items-center border text-left"
+        >
+          <FileText className="icon-sm text-primary shrink-0" aria-hidden />
+          <span className="body-3 text-foreground truncate">{deliverable.title}</span>
+        </button>
+      ))}
+      {!embedded && !loading && deliverables.length === 0 ? (
+        <p className="body-4 text-muted-foreground">No attachments yet.</p>
+      ) : null}
+    </div>
+  )
+
+  if (embedded) return items
+
   return (
     <section className="gap-spacing-3 flex flex-col">
       <SectionTitle count={deliverables.length}>Attachments</SectionTitle>
-      <div className="gap-spacing-2 flex flex-col">
-        {deliverables.map((deliverable) => (
-          <button
-            key={deliverable.id}
-            type="button"
-            onClick={() =>
-              openDocumentInShell({
-                documentId: deliverable.id,
-                spaceItemId: deliverable.id,
-                spaceId,
-                title: deliverable.title,
-              })
-            }
-            className="section-card hover:bg-hover-subtle gap-spacing-2 p-spacing-3 flex w-full items-center text-left"
-          >
-            <FileText className="icon-sm text-primary shrink-0" aria-hidden />
-            <span className="body-3 text-foreground truncate">{deliverable.title}</span>
-          </button>
-        ))}
-        {!loading && deliverables.length === 0 ? (
-          <p className="body-4 text-muted-foreground">No attachments yet.</p>
-        ) : null}
-      </div>
+      {items}
     </section>
   )
 }

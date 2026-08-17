@@ -1,11 +1,11 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { ChevronDown, Plus } from 'lucide-react'
 import { HomeDashboardV4CustomizePopover } from '@/components/home-dashboard-v4/HomeDashboardV4CustomizePopover'
 import { HomeCardRenderer } from '@/features/home/components/cards/HomeCardRenderer'
 import { HomeSortableCardsGrid } from '@/features/home/components/HomeSortableCardsGrid'
-import { MyTasksPanel } from '@/features/home/components/MyTasksPanel'
 import {
   HOME_CARD_DEFINITIONS,
   homeCardDefinition,
@@ -55,6 +55,7 @@ export function HomeCardsGrid({
   onDismiss: (item: YourTurnItem) => void | Promise<void>
   variant?: 'default' | 'v4'
 }) {
+  const router = useRouter()
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const {
     layout,
@@ -67,7 +68,6 @@ export function HomeCardsGrid({
     setCardRows,
   } = useHomeLayout()
   const [addOpen, setAddOpen] = useState(false)
-  const [myTasksPanelOpen, setMyTasksPanelOpen] = useState(false)
 
   const visibleCardIds = useMemo(() => {
     return layout.cardIds.filter((id) => {
@@ -96,7 +96,7 @@ export function HomeCardsGrid({
     approvalItems,
     onOpenItem,
     onOpenMeeting,
-    onExpandMyTasks: () => setMyTasksPanelOpen(true),
+    onExpandMyTasks: () => router.push('/all-tasks?scope=my'),
     onNotificationClick,
     onAccept,
     onDismiss,
@@ -254,16 +254,6 @@ export function HomeCardsGrid({
           )}
         </HomeCustomizeProvider>
       )}
-
-      <MyTasksPanel
-        open={myTasksPanelOpen}
-        onOpenChange={setMyTasksPanelOpen}
-        scope={myTasksScope}
-        updateScope={updateMyTasksScope}
-        loading={myTasksLoading}
-        items={myTasksItems}
-        onOpenItem={onOpenItem}
-      />
     </div>
   )
 }

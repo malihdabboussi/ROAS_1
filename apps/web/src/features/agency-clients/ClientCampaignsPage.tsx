@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { ExternalLink, FolderKanban, PanelRightOpen, Search } from 'lucide-react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { fetchAgencyClientCampaigns, type AgencyClientCampaign } from '@/lib/agency-clients'
 import { cn } from '@/lib/utils/cn'
 import { formatAgencyDate } from './agency-client-format'
 import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
+import { AGENCY_CLIENT_MESSAGES } from './config/messages.config'
 
 type ViewMode = 'all' | 'client'
 
@@ -105,7 +106,7 @@ export function ClientCampaignsPage() {
           ))}
         </div>
       </div>
-      {loading ? <VibeyLoadingOrb /> : null}
+      {loading ? <ListSkeleton rows={8} label={AGENCY_CLIENT_MESSAGES.LOADING_CAMPAIGNS} /> : null}
       {error ? <p className="body-2 text-destructive">{error}</p> : null}
       {!loading && !error
         ? groups.map(([label, rows]) => (

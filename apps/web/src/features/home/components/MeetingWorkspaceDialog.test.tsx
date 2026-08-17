@@ -35,6 +35,19 @@ vi.mock('@/features/home/components/MeetingAgendaDocEditor', () => ({
     <div data-testid="meeting-agenda-doc" data-item-id={itemId} />
   ),
 }))
+vi.mock('@/components/work-views/AllTasksNativeList', () => ({
+  AllTasksNativeList: ({ items }: { items: Array<{ id: string; title: string }> }) => (
+    <div>
+      {items.map((item) => (
+        <div key={item.id}>{item.title}</div>
+      ))}
+      <button type="button">Add task</button>
+    </div>
+  ),
+}))
+vi.mock('@/lib/work-items', () => ({
+  useSpaceMappingIndex: () => null,
+}))
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => {
   const useGlobalChatStore = Object.assign(
     (
@@ -125,16 +138,17 @@ describe('MeetingWorkspaceDialog', () => {
     )
 
     expect(screen.getByRole('status', { name: 'Loading meeting workspace' })).toBeInTheDocument()
-    expect(screen.queryByText('Recordings (0)')).not.toBeInTheDocument()
+    expect(screen.queryByText('Recordings & attachments')).not.toBeInTheDocument()
     expect(screen.queryByText('No action items yet.')).not.toBeInTheDocument()
 
     resolveBundle?.(baseBundle)
     await waitFor(() => {
       expect(screen.queryByRole('status', { name: 'Loading meeting workspace' })).toBeNull()
-      expect(screen.getByText('Recordings (0)')).toBeInTheDocument()
+      expect(screen.getByText('Recordings & attachments')).toBeInTheDocument()
     })
-    expect(screen.getByRole('button', { name: 'Add action item' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add task' })).toBeInTheDocument()
     expect(screen.queryByText('No action items yet.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Attachments')).not.toBeInTheDocument()
   })
 
   it('does not steal the open chat until Continue in chat', async () => {
@@ -162,6 +176,9 @@ describe('MeetingWorkspaceDialog', () => {
     expect(mocks.continueMeetingConversation).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: 'Start call' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Close meeting workspace' }),
+    ).not.toBeInTheDocument()
     expect(screen.queryByText('Rejoin call')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Continue in chat' }))
@@ -173,9 +190,6 @@ describe('MeetingWorkspaceDialog', () => {
       }),
     )
     expect(mocks.openChatDrawer).toHaveBeenCalledWith('conversation-1')
-
-    fireEvent.click(screen.getByRole('button', { name: 'Close meeting workspace' }))
-    expect(mocks.clearMeetingContext).toHaveBeenCalled()
   })
 
   it('does not steal an unrelated open chat when the meeting workspace mounts', async () => {
@@ -252,10 +266,12 @@ describe('MeetingWorkspaceDialog', () => {
     await waitFor(() => {
       expect(mocks.endMeetingCall).toHaveBeenCalledWith('space-1', 'meeting-1')
       expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Start call' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Recap message' })).toBeInTheDocument()
     })
   })
 
-  it('shows a completed state instead of Start call after the calendar meeting ends', async () => {
+  it('keeps Start call next to recap after the calendar meeting ends', async () => {
     mocks.fetchMeetingWorkspace.mockReset()
     mocks.fetchMeetingWorkspace.mockResolvedValue(baseBundle)
 
@@ -273,7 +289,8 @@ describe('MeetingWorkspaceDialog', () => {
     )
 
     await waitFor(() => expect(screen.getByText('Call complete')).toBeInTheDocument())
-    expect(screen.queryByRole('button', { name: 'Start call' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Start call' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Recap message' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Continue in chat' }))
@@ -347,13 +364,14 @@ describe('MeetingWorkspaceDialog', () => {
     ).not.toBeInTheDocument()
     expect(screen.getByText('The team agreed on the launch plan.')).toBeInTheDocument()
     expect(screen.getByText('Watch campaign pacing on day one.')).toBeInTheDocument()
+    expect(screen.queryByText('Attachments')).not.toBeInTheDocument()
 
-    const recordings = screen.getByText('Recordings (1)').closest('section')
+    const recordings = screen.getByText('Recordings & attachments').closest('section')
     const agenda = screen.getByText('Agenda & prep').closest('section')
     expect(recordings?.compareDocumentPosition(agenda!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
-  it('can reopen a completed Space action item', async () => {
+  it('renders completed Space action items in the All Tasks table', async () => {
     const action = {
       id: 'action-1',
       title: 'Send the launch recap',
@@ -365,7 +383,6 @@ describe('MeetingWorkspaceDialog', () => {
     }
     mocks.fetchMeetingWorkspace.mockReset()
     mocks.fetchMeetingWorkspace.mockResolvedValue({ ...baseBundle, actions: [action] })
-    mocks.toggleMeetingActionStatus.mockResolvedValue({ ...action, status: 'confirmed' })
 
     render(
       <MeetingWorkspaceDialog
@@ -378,17 +395,7 @@ describe('MeetingWorkspaceDialog', () => {
       />,
     )
 
-    const reopen = await screen.findByRole('button', {
-      name: 'Mark Send the launch recap incomplete',
-    })
-    expect(screen.getByText('Fathom')).toBeInTheDocument()
-    fireEvent.click(reopen)
-
-    await waitFor(() => {
-      expect(mocks.toggleMeetingActionStatus).toHaveBeenCalledWith('space-1', 'meeting-1', action)
-      expect(
-        screen.getByRole('button', { name: 'Mark Send the launch recap complete' }),
-      ).toBeInTheDocument()
-    })
+    expect(await screen.findByText('Send the launch recap')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add task' })).toBeInTheDocument()
   })
 })
