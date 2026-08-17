@@ -1,3 +1,15 @@
+## 2026-08-17 - [ARCH] ui-block-extractor still over utility LOC limit
+
+Status: Open
+
+Found while: Hardening Service Request work_request UI block extraction from nested MCP fulfillment envelopes
+
+Evidence: `wc -l` reports `apps/agent-api/src/modules/shared/ui-block-extractor.ts` at 1032 LOC (utility limit 300). This change only extended work_request parsing.
+
+Needed work: Split media/artifact/work_request/clarification builders into dedicated modules under `modules/shared/ui-blocks/`.
+
+Reason not done now: In-scope fix was missing finalize UI / empty authenticated resume; full extractor decomposition is adjacent debt.
+
 ## 2026-08-17 - [FEATURE] Page Grader must stamp conversation_id for shared review chat
 
 Status: Done (platform stamp + Slack backfill)

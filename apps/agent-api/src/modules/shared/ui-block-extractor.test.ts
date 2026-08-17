@@ -551,4 +551,48 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
       },
     ])
   })
+
+  it('emits a work_request block from nested MCP text envelopes', () => {
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'campaign_capability',
+      action: 'use_mcp_tool',
+      toolArgs: {
+        data: {
+          tool: 'page_grader_create_fulfillment_request',
+          server_name: 'Page Grader',
+        },
+      },
+      result: {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              success: true,
+              tool_name: 'page_grader_create_fulfillment_request',
+              result: {
+                draft: {
+                  id: 'f40af402-af02-47b8-a6b8-026db3f909a4',
+                  title: 'Redesign testimonial-rich replay sales page',
+                  review_url:
+                    'https://app.roas.io/request-review/2RDu_FR_fTbQhuRfPv9S3zJ7XW0jEE2WzNOLEcSOvBY',
+                },
+              },
+            }),
+          },
+        ],
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      expect.objectContaining({
+        type: 'work_request',
+        title: 'Redesign testimonial-rich replay sales page',
+        reviewUrl: 'https://app.roas.io/request-review/2RDu_FR_fTbQhuRfPv9S3zJ7XW0jEE2WzNOLEcSOvBY',
+        draftId: 'f40af402-af02-47b8-a6b8-026db3f909a4',
+      }),
+    ])
+  })
 })
