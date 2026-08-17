@@ -244,9 +244,7 @@ export function WorkRequestChatFlow({
   return (
     <div
       className={`bg-background flex flex-col overflow-hidden ${
-        isPage
-          ? 'min-h-dvh'
-          : 'border-border rounded-spacing-3 mt-spacing-3 max-h-[min(70dvh,640px)] border'
+        isPage ? 'min-h-dvh' : 'border-border rounded-spacing-3 mt-spacing-3 border'
       }`}
     >
       <header className="border-border gap-spacing-2 px-spacing-4 py-spacing-3 flex items-center border-b">
@@ -362,7 +360,7 @@ export function WorkRequestChatFlow({
         )}
       </div>
 
-      {!finalized && (
+      {!finalized && isPage && (
         <form
           className="border-border gap-spacing-2 px-spacing-4 py-spacing-3 flex items-end border-t"
           onSubmit={(event) => {

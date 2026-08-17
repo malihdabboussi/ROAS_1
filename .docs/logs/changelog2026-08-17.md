@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 21:20] - [FIX]
+What: Service Request review cards now open in the Pixel thread under the review link. Public host keeps one composer. Signed-in `/home?conv=&wr=` hydrates the conversation immediately and seeds messages from the token chat API when the pane would be blank.
+Why: The previous host mounted the finalize flow below the composer (plus a second Message Pixel). Signed-in review redirected to a blank `/home?conv=` pane.
+Impact: Guest and signed-in review show the same Q&A cards in chat; only the real composer remains for talking to Pixel.
+Files: `apps/web/src/features/work-requests/components/WorkRequestReviewChatHost.tsx`, `WorkRequestChatResumeCard.tsx`, `WorkRequestChatFlow.tsx`, `apps/web/src/components/global-chat/hooks/useWorkRequestHomeChatSeed.ts`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`, `documentation/features/page-grader-mcp-bridge.md`
+
 ## [2026-08-17 20:05] - [STYLE]
 What: Chat assistant-turn actions now show Reply first, then Copy, then Fork.
 Why: Reply is the primary next step in a conversation, so it should be the first control you see.

@@ -1,3 +1,15 @@
+## 2026-08-17 - [ARCH] WorkRequestChatFlow is at the component LOC limit
+
+Status: Open
+
+Found while: Moving Service Request finalize cards into the Pixel thread and hiding the inline composer
+
+Evidence: `wc -l` reports `apps/web/src/features/work-requests/components/WorkRequestChatFlow.tsx` at 396 LOC (component limit 400).
+
+Needed work: Extract save/submit + transcript helpers so inline vs page presentation can stay thin.
+
+Reason not done now: Requested work was card placement and a single composer; splitting the flow was out of scope.
+
 ## 2026-08-17 - [ARCH] HomeTaskDetailHost is at the component LOC limit
 
 Status: Open

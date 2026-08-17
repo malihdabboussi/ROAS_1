@@ -5,27 +5,12 @@ import type { MessageContentBlock } from '@/lib/chat'
 import type { Message } from '@/lib/conversations'
 import {
   fetchWorkRequestReviewChat,
+  mapWorkRequestReviewChatMessages,
   sendWorkRequestReviewChatStream,
-  type WorkRequestReviewChatMessage,
 } from '@/lib/work-requests'
 import { WORK_REQUEST_ERRORS } from '../config/errors.config'
 
 export type WorkRequestReviewAgentPhase = 'idle' | 'thinking' | 'executing' | 'streaming'
-
-function mapReviewMessages(
-  conversationId: string,
-  rows: WorkRequestReviewChatMessage[],
-): Message[] {
-  return rows.map((row) => ({
-    id: row.id,
-    conversation_id: conversationId,
-    role: row.role as Message['role'],
-    content: row.content,
-    content_blocks: null,
-    created_at: row.created_at,
-    metadata: (row.metadata ?? {}) as Record<string, unknown>,
-  }))
-}
 
 export function useWorkRequestReviewChat(token: string, enabled: boolean) {
   const [messages, setMessages] = useState<Message[]>([])
@@ -47,7 +32,7 @@ export function useWorkRequestReviewChat(token: string, enabled: boolean) {
     try {
       const payload = await fetchWorkRequestReviewChat(token)
       setConversationId(payload.conversation_id)
-      setMessages(mapReviewMessages(payload.conversation_id, payload.messages))
+      setMessages(mapWorkRequestReviewChatMessages(payload.conversation_id, payload.messages))
     } catch (caught) {
       setUnavailable(true)
       setError(
@@ -226,7 +211,7 @@ export function useWorkRequestReviewChat(token: string, enabled: boolean) {
         )
         const persisted = await fetchWorkRequestReviewChat(token)
         setConversationId(persisted.conversation_id)
-        setMessages(mapReviewMessages(persisted.conversation_id, persisted.messages))
+        setMessages(mapWorkRequestReviewChatMessages(persisted.conversation_id, persisted.messages))
       } catch (caught) {
         if (!controller.signal.aborted) {
           setError(

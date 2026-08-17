@@ -141,3 +141,7 @@ Grader`, `MCP`, tool names, schemas, idempotency keys, or retry mechanics.
   internal post-create stamp). Public `/request-review/:token` resumes that
   same chat host; missing stamps backfill from Slack channel+thread provenance
   when uniquely resolvable.
+- Review finalize cards render **in the Pixel thread** immediately under the
+  pasted `/request-review/` URL (shared `WorkRequestChatResumeCard`). The public
+  host keeps one composer. Signed-in `/home?conv=&wr=` seeds that conversation
+  from the token chat API when the home pane would otherwise stay blank.
