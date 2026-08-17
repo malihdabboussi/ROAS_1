@@ -277,7 +277,7 @@ export abstract class SlackConversationBase extends SlackMediaBase {
     slackChannelId: string,
     slackThreadTs?: string,
     orgId?: string | null,
-    _firstMessage?: string,
+    firstMessage?: string,
   ): Promise<{ id: string; title: string | null }> {
     const existing = await this.slackRuntimeRepo.findSlackConversation(supabase, {
       userId,
@@ -301,7 +301,9 @@ export abstract class SlackConversationBase extends SlackMediaBase {
     }
     if (slackThreadTs) metadata.slack_thread_ts = slackThreadTs
 
-    const seedTitle = 'Slack Chat'
+    const { titleFromFirstUserMessage } =
+      await import('../../conversations/utils/conversation-title.util')
+    const seedTitle = titleFromFirstUserMessage(firstMessage, 48) || null
 
     const insertPayload: Record<string, unknown> = {
       user_id: userId,

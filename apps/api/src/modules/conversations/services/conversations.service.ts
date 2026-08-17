@@ -578,7 +578,6 @@ export class ConversationsService {
       currentTitle,
       firstMessage,
       suggested,
-      isSlack: this.asRecord(conversation.metadata)?.source === 'slack',
     })
     if (!title) return { title: currentTitle ?? '', updated: false }
 

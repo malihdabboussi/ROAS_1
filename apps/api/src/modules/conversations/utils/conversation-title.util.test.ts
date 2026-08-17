@@ -31,21 +31,26 @@ describe('conversation-title.util', () => {
     expect(resolveGeneratedConversationTitle('Budget Check')).toBe('Budget Check')
   })
 
-  it('does not fall back to the first Slack message when Gemini is empty', () => {
+  it('uses the first message until Gemini returns a topic', () => {
     expect(
       pickGeneratedConversationTitle({
         currentTitle: 'Slack Chat',
         firstMessage: 'Fix the slack agent responses',
         suggested: '',
-        isSlack: true,
+      }),
+    ).toBe('Fix the slack agent responses')
+    expect(
+      pickGeneratedConversationTitle({
+        currentTitle: 'Fix the slack agent responses',
+        firstMessage: 'Fix the slack agent responses',
+        suggested: '',
       }),
     ).toBeNull()
     expect(
       pickGeneratedConversationTitle({
-        currentTitle: 'Slack Chat',
+        currentTitle: 'Fix the slack agent responses',
         firstMessage: 'Fix the slack agent responses',
         suggested: 'Slack agent quality',
-        isSlack: true,
       }),
     ).toBe('Slack agent quality')
   })

@@ -75,19 +75,13 @@ export function resolveGeneratedConversationTitle(
   return ''
 }
 
-/** Slack keeps `Slack Chat` until Gemini returns a topic; other chats may snippet-fallback. */
+/** Prefer a Gemini topic; otherwise keep/restore the first-message snippet. */
 export function pickGeneratedConversationTitle(input: {
   currentTitle: string | null
   firstMessage: string
   suggested: string
-  isSlack: boolean
 }): string | null {
-  const generated = input.isSlack
-    ? resolveGeneratedConversationTitle(input.suggested, 60)
-    : resolveSuggestedConversationTitle(input.suggested, input.firstMessage, 60)
-  if (generated && generated !== input.currentTitle) return generated
-  if (input.isSlack) return null
-  const fallback = titleFromFirstUserMessage(input.firstMessage, 48)
-  if (!fallback || fallback === input.currentTitle) return null
-  return fallback
+  const next = resolveSuggestedConversationTitle(input.suggested, input.firstMessage, 60)
+  if (!next || next === input.currentTitle) return null
+  return next
 }

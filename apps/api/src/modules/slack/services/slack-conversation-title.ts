@@ -11,7 +11,7 @@ export async function retitleSlackConversationIfNeeded(input: {
   slackRuntimeRepo: SlackRuntimeRepository
   moduleRef: ModuleRef | null
 }): Promise<void> {
-  const { needsGeneratedConversationTitle, resolveGeneratedConversationTitle } =
+  const { needsGeneratedConversationTitle, resolveSuggestedConversationTitle } =
     await import('../../conversations/utils/conversation-title.util')
   if (!needsGeneratedConversationTitle(input.currentTitle, input.firstMessage)) return
 
@@ -32,7 +32,7 @@ export async function retitleSlackConversationIfNeeded(input: {
     }
   }
 
-  const title = resolveGeneratedConversationTitle(suggested, 60)
+  const title = resolveSuggestedConversationTitle(suggested, input.firstMessage, 60)
   if (!title || title === input.currentTitle) return
   await input.slackRuntimeRepo.updateConversationTitle(input.supabase, input.conversationId, title)
 }

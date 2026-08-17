@@ -2,7 +2,6 @@
 
 import {
   needsGeneratedConversationTitle,
-  resolveGeneratedConversationTitle,
   resolveSuggestedConversationTitle,
 } from '@/lib/conversations/conversation-title'
 import { renameConversation } from '@/lib/conversations/conversations-api'
@@ -15,12 +14,6 @@ let titleAutogenInitialized = false
 
 function isPendingConversationId(id: string | null | undefined): boolean {
   return typeof id === 'string' && id.startsWith('pending-')
-}
-
-function isSlackConversation(
-  conversation: { metadata?: Record<string, unknown> | null } | undefined,
-): boolean {
-  return conversation?.metadata?.source === 'slack'
 }
 
 /** Fire-and-forget Gemini title for the first user turn (Claude/ChatGPT-style sidebar labels). */
@@ -37,10 +30,8 @@ export function scheduleConversationTitleSuggestion(
   void suggestConversationTitle(trimmed)
     .then(async (res) => {
       const existing = useChatStore.getState().conversations.find((c) => c.id === conversationId)
-      const title = isSlackConversation(existing)
-        ? resolveGeneratedConversationTitle(res.title, 60)
-        : resolveSuggestedConversationTitle(res.title, trimmed, 60)
-      if (!title) return
+      const title = resolveSuggestedConversationTitle(res.title, trimmed, 60)
+      if (!title || title === existing?.title) return
       await renameConversation(conversationId, title)
       useChatStore.getState().updateConversation(conversationId, {
         title,
@@ -49,10 +40,9 @@ export function scheduleConversationTitleSuggestion(
     })
     .catch(async () => {
       const existing = useChatStore.getState().conversations.find((c) => c.id === conversationId)
-      if (isSlackConversation(existing)) return
       if (existing && !needsGeneratedConversationTitle(existing.title, trimmed)) return
       const title = resolveSuggestedConversationTitle(null, trimmed, 60)
-      if (!title) return
+      if (!title || title === existing?.title) return
       try {
         await renameConversation(conversationId, title)
         useChatStore.getState().updateConversation(conversationId, {
