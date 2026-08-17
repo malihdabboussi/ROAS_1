@@ -11,11 +11,8 @@ import {
   Ellipsis,
   Inbox,
   ListTodo,
-  MessageCircle,
-  PanelLeftClose,
   Search,
   SquarePen,
-  Star,
   Users,
 } from 'lucide-react'
 import { ConversationHubSectionHeader } from '@/components/conversations/SpaceConversationSections'
@@ -36,7 +33,6 @@ import { SidebarFavoritesFlyout } from './SidebarFavoritesFlyout'
 import { SidebarHqHubLogoButton } from './SidebarHqHubLogoButton'
 import { SidebarHqMoreFlyoutBody } from './SidebarHqMoreFlyoutBody'
 import { SidebarSimpleRecents } from './SidebarSimpleRecents'
-import { SidebarWordmark } from './SidebarWordmark'
 import type { SidebarControllerReturn } from './useSidebarController'
 
 const SIMPLE_LINKS = [
@@ -55,7 +51,6 @@ export function SidebarSimpleSection({
 }) {
   const menuCompact = useShellMenuDock((state) => state.menuCompact)
   const searchParams = useSearchParams()
-  const setMenuCompact = useShellMenuDock((state) => state.setMenuCompact)
   const activeOrgId = useOrgStore((state) => state.activeOrgId)
   const spaceUserState = useSpaceUserState()
   const [programs, setPrograms] = useState<Program[]>([])
@@ -102,6 +97,8 @@ export function SidebarSimpleSection({
     clearClose()
     closeTimer.current = setTimeout(() => setMoreAnchor(null), HUB_DOCK_FLYOUT_LEAVE_MS)
   }
+  const newChatSelected =
+    c.pathname === '/home' && !searchParams?.get('conv') && searchParams?.get('chat') !== 'starting'
   const navigation = (
     <div>
       <div className="px-spacing-3 pb-spacing-1 space-y-0">
@@ -109,14 +106,11 @@ export function SidebarSimpleSection({
           type="button"
           className={cn(
             'hub-menu-link-row !py-spacing-1 w-full',
-            c.pathname === '/home' &&
-              !searchParams?.get('conv') &&
-              searchParams?.get('chat') !== 'starting' &&
-              'nav-glass-selected-purple',
+            newChatSelected && 'nav-glass-selected-purple',
           )}
           onClick={() => c.router.push('/home')}
         >
-          <SquarePen className="icon-sm" aria-hidden />
+          <SquarePen className="icon-sm nav-glass-text-purple" aria-hidden />
           <span className="body-2">New chat</span>
         </button>
       </div>
@@ -187,7 +181,7 @@ export function SidebarSimpleSection({
     <div className="surface-card border-border flex h-full min-h-0 flex-col border-r">
       <div className="px-spacing-3 py-spacing-2 gap-spacing-1 flex items-center">
         <div className="min-w-0 flex-1">
-          <SidebarWordmark className="max-w-full" />
+          <SidebarHqHubLogoButton expanded wordmark />
         </div>
         <button
           type="button"
@@ -197,15 +191,6 @@ export function SidebarSimpleSection({
           title="Search"
         >
           <Search className="icon-sm" aria-hidden />
-        </button>
-        <button
-          type="button"
-          className="btn-icon-bare hover:bg-hover-subtle"
-          onClick={() => setMenuCompact(true)}
-          aria-label="Collapse menu"
-          title="Collapse menu"
-        >
-          <PanelLeftClose className="icon-sm" aria-hidden />
         </button>
         <button
           type="button"
@@ -239,73 +224,92 @@ export function SidebarSimpleSection({
           featureUpdates={featureUpdates}
         />
       </div>
-
-      {moreAnchor ? (
-        <HubDockFlyout
-          anchor={moreAnchor}
-          title="More"
-          compact
-          onEnter={clearClose}
-          onLeave={scheduleClose}
-          onClose={() => setMoreAnchor(null)}
-          leaveSuspended={subOpen}
-        >
-          <SidebarHqMoreFlyoutBody
-            c={c}
-            showProjects={c.isAdmin}
-            featureUpdates={featureUpdates}
-            onNavigate={() => setMoreAnchor(null)}
-            onHoldParentFlyout={clearClose}
-            onReleaseParentFlyout={scheduleClose}
-            onSubFlyoutOpenChange={setSubOpen}
-            onCloseParentFlyout={() => setMoreAnchor(null)}
-          />
-        </HubDockFlyout>
-      ) : null}
     </div>
   )
-  if (!menuCompact) return expandedSidebar
+  const moreFlyout = moreAnchor ? (
+    <HubDockFlyout
+      anchor={moreAnchor}
+      title="More"
+      compact
+      onEnter={clearClose}
+      onLeave={scheduleClose}
+      onClose={() => setMoreAnchor(null)}
+      leaveSuspended={subOpen}
+    >
+      <SidebarHqMoreFlyoutBody
+        c={c}
+        showProjects={c.isAdmin}
+        featureUpdates={featureUpdates}
+        onNavigate={() => setMoreAnchor(null)}
+        onHoldParentFlyout={clearClose}
+        onReleaseParentFlyout={scheduleClose}
+        onSubFlyoutOpenChange={setSubOpen}
+        onCloseParentFlyout={() => setMoreAnchor(null)}
+      />
+    </HubDockFlyout>
+  ) : null
+  if (!menuCompact) {
+    return (
+      <>
+        {expandedSidebar}
+        {moreFlyout}
+      </>
+    )
+  }
   return (
     <div className="relative h-full">
-      <div className="card-glass rounded-spacing-4 gap-spacing-3 py-spacing-3 flex h-full flex-col items-center">
-        <SidebarHqHubLogoButton expanded={false} />
-        <button
-          type="button"
-          className="btn-icon-bare hover:bg-hover-subtle"
-          onClick={() => c.router.push('/home?chat=new')}
-          aria-label="New chat"
-          title="New chat"
-        >
-          <SquarePen className="icon-sm" aria-hidden />
-        </button>
-        <button
-          type="button"
-          className="btn-icon-bare hover:bg-hover-subtle"
-          onClick={() => dispatchOpenStudioSearch()}
-          aria-label="Search conversations"
-          title="Search"
-        >
-          <Search className="icon-sm" aria-hidden />
-        </button>
-        <button
-          type="button"
-          className="btn-icon-bare hover:bg-hover-subtle"
-          onClick={() => setMenuCompact(false)}
-          aria-label="Show favorites"
-          title="Favorites"
-        >
-          <Star className="icon-sm" aria-hidden />
-        </button>
-        <button
-          type="button"
-          className="btn-icon-bare hover:bg-hover-subtle"
-          onClick={() => setMenuCompact(false)}
-          aria-label="Show chats"
-          title="Chats"
-        >
-          <MessageCircle className="icon-sm" aria-hidden />
-        </button>
+      <div className="surface-card border-border flex h-full min-h-0 flex-col border-r">
+        <div className="px-spacing-1 py-spacing-2 flex justify-center">
+          <SidebarHqHubLogoButton expanded={false} />
+        </div>
+        <nav className="px-spacing-1 gap-spacing-1 flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <button
+            type="button"
+            className={cn(
+              'hub-menu-link-row justify-center',
+              newChatSelected && 'nav-glass-selected-purple',
+            )}
+            onClick={() => c.router.push('/home')}
+            aria-label="New chat"
+            title="New chat"
+          >
+            <SquarePen className="icon-sm nav-glass-text-purple" aria-hidden />
+          </button>
+          {SIMPLE_LINKS.map((item) => {
+            const Icon = item.icon
+            const active = c.isActive(item.href)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'hub-menu-link-row justify-center',
+                  active && 'nav-glass-selected-purple',
+                )}
+                aria-label={item.label}
+                title={item.label}
+              >
+                <Icon className="icon-sm" aria-hidden />
+              </Link>
+            )
+          })}
+          <button
+            type="button"
+            className="hub-menu-link-row justify-center"
+            aria-label="More"
+            title="More"
+            aria-expanded={Boolean(moreAnchor)}
+            onClick={(event) => {
+              clearClose()
+              const anchor = event.currentTarget.getBoundingClientRect()
+              setMoreAnchor((current) => (current ? null : anchor))
+            }}
+          >
+            <Ellipsis className="icon-sm" aria-hidden />
+          </button>
+        </nav>
       </div>
+      {moreFlyout}
     </div>
   )
 }

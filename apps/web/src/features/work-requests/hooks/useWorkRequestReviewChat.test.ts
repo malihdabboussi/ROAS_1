@@ -3,10 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchWorkRequestReviewChat, sendWorkRequestReviewChatStream } from '@/lib/work-requests'
 import { useWorkRequestReviewChat } from './useWorkRequestReviewChat'
 
-vi.mock('@/lib/work-requests', () => ({
-  fetchWorkRequestReviewChat: vi.fn(),
-  sendWorkRequestReviewChatStream: vi.fn(),
-}))
+vi.mock('@/lib/work-requests', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/work-requests')>('@/lib/work-requests')
+  return {
+    ...actual,
+    fetchWorkRequestReviewChat: vi.fn(),
+    sendWorkRequestReviewChatStream: vi.fn(),
+  }
+})
 
 describe('useWorkRequestReviewChat', () => {
   beforeEach(() => {

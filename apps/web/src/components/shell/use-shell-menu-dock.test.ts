@@ -103,6 +103,9 @@ describe('shell menu dock', () => {
 
     useShellMenuDock.getState().setSimpleMenuWidth(100)
     expect(useShellMenuDock.getState().simpleMenuWidth).toBe(240)
+
+    useShellMenuDock.getState().setSimpleMenuWidth(900)
+    expect(useShellMenuDock.getState().simpleMenuWidth).toBe(476)
   })
 
   it('prefers work-card edges over the frame when the pointer is on them', () => {

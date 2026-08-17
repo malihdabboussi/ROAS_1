@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom'
+import { autoUpdate, offset, shift, useFloating } from '@floating-ui/react-dom'
 import { Check, ChevronDown, ListFilter, SquareArrowOutUpRight } from 'lucide-react'
 import {
   chatHistoryActivityLabel,
@@ -31,6 +31,7 @@ interface ChatHistoryFilterMenuProps {
   onAgentKeyChange?: (agentKey: string | null) => void
   onOpenAllChats?: () => void
   alwaysShowOpenAllChats?: boolean
+  onOpenChange?: (open: boolean) => void
   className?: string
 }
 
@@ -55,16 +56,25 @@ export function ChatHistoryFilterMenu({
   onAgentKeyChange,
   onOpenAllChats,
   alwaysShowOpenAllChats,
+  onOpenChange,
   className,
 }: ChatHistoryFilterMenuProps) {
   const [open, setOpen] = useState(false)
   const [submenu, setSubmenu] = useState<SubmenuKey>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const menuId = useId()
+  const setMenuOpen = useCallback(
+    (next: boolean) => {
+      setOpen(next)
+      onOpenChange?.(next)
+      if (!next) setSubmenu(null)
+    },
+    [onOpenChange],
+  )
   const { refs, floatingStyles } = useFloating({
     placement: 'bottom-end',
     strategy: 'fixed',
-    middleware: [offset(4), flip({ padding: 8 }), shift({ padding: 8 })],
+    middleware: [offset(4), shift({ padding: 8, mainAxis: false })],
     whileElementsMounted: autoUpdate,
   })
 
@@ -79,13 +89,11 @@ export function ChatHistoryFilterMenu({
       ) {
         return
       }
-      setOpen(false)
-      setSubmenu(null)
+      setMenuOpen(false)
     }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setOpen(false)
-        setSubmenu(null)
+        setMenuOpen(false)
       }
     }
     document.addEventListener('mousedown', onPointerDown)
@@ -94,7 +102,7 @@ export function ChatHistoryFilterMenu({
       document.removeEventListener('mousedown', onPointerDown)
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [open, refs.floating])
+  }, [open, refs.floating, setMenuOpen])
 
   const rowClass =
     'body-3 hover:bg-hover-subtle gap-spacing-3 flex w-full items-center justify-between rounded-spacing-2 px-spacing-3 py-spacing-2 text-left'
@@ -130,10 +138,7 @@ export function ChatHistoryFilterMenu({
       <button
         ref={refs.setReference}
         type="button"
-        onClick={() => {
-          setOpen((prev) => !prev)
-          setSubmenu(null)
-        }}
+        onClick={() => setMenuOpen(!open)}
         className={cn(
           'btn-icon-bare hover:bg-hover-subtle shrink-0',
           open && 'bg-hover-subtle text-foreground',
@@ -299,8 +304,7 @@ export function ChatHistoryFilterMenu({
                 onClick={() => {
                   onChange({ ...DEFAULT_CHAT_HISTORY_FILTERS })
                   onAgentKeyChange?.(null)
-                  setOpen(false)
-                  setSubmenu(null)
+                  setMenuOpen(false)
                 }}
                 className={rowClass}
               >

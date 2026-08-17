@@ -10,6 +10,55 @@ Needed work: In the Page Grader / roas-api repo, fix PATCH of a fulfillment task
 
 Reason not done now: Page Grader frontend/API is not in this monorepo. This change only fixes create/mirror so new tasks arrive linked and assignment rules can apply.
 
+## 2026-08-17 - [ARCH] WorkRequestChatFlow is at the component LOC limit
+
+Status: Open
+
+Found while: Moving Service Request finalize cards into the Pixel thread and hiding the inline composer
+
+Evidence: `wc -l` reports `apps/web/src/features/work-requests/components/WorkRequestChatFlow.tsx` at 396 LOC (component limit 400).
+
+Needed work: Extract save/submit + transcript helpers so inline vs page presentation can stay thin.
+
+Reason not done now: Requested work was card placement and a single composer; splitting the flow was out of scope.
+
+## 2026-08-17 - [ARCH] use-shell-menu-dock is over the hook LOC limit
+
+Status: Open
+
+Found while: Raising Simple menu drag max to default + 75% and sharing width constants
+
+Evidence: `wc -l` reports `apps/web/src/components/shell/use-shell-menu-dock.ts` at 359 LOC (hook limit 300). It was already 354 on main; this change only exported width constants.
+
+Needed work: Extract persist/hydrate helpers and dock hit-test wrappers so the Zustand store stays under the hook limit.
+
+Reason not done now: Requested work was compact-rail parity, logo-hover collapse, and a wider Simple drag max. Splitting the dock store would touch every dock consumer without changing that UX.
+
+## 2026-08-17 - [ARCH] SpaceConversationsList.test.tsx already exceeds max-lines
+
+Status: Open
+
+Found while: Adding Recents Filter pin coverage
+
+Evidence: `wc -l` reports `apps/web/src/components/conversations/SpaceConversationsList.test.tsx` at 434 LOC (eslint max-lines 400). Editing it fails lint-staged.
+
+Needed work: Split compact Recents / Pinned / dated-row cases into a dedicated compact-header test file.
+
+Reason not done now: Pin coverage went into `SpaceConversationsHeader.test.tsx` instead of growing the over-limit list test.
+
+## 2026-08-17 - [ARCH] ShellChatMenu and SpaceConversationsList sit on the component LOC limit
+
+Status: Open
+
+Found while: Pinning Recents actions while Filter is open and moving Show page onto the work card
+
+Evidence: `wc -l` reports `apps/web/src/components/shell/ShellChatMenu.tsx` at 399 LOC and `apps/web/src/components/conversations/SpaceConversationsList.tsx` at 401 LOC (component limit 400). `ChatHistoryFilterMenu.tsx` is 375.
+
+Needed work: Extract Recents filter/header wiring from ShellChatMenu, and split SpaceConversationsList section rendering from the list shell.
+
+Reason not done now: Requested work was control placement and keeping the filter menu anchored. Splitting those files would not change the bug.
+
+
 ## 2026-08-17 - [ARCH] AgendaCard and MyTasksPanel sit on the component extract threshold
 
 Status: Open
@@ -46,8 +95,7 @@ Needed work: Split activity-group labeling / classification from the expand/coll
 
 Reason not done now: Requested work was the live working-status animation; extracting the group was out of scope.
 
-
-
+## 2026-08-17 - [ARCH] HomeTaskDetailHost is at the component LOC limit
 
 Status: Open
 

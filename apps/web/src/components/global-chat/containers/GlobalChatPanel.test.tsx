@@ -38,6 +38,9 @@ vi.mock('../components/ChatCampaignBrainNudge', () => ({ ChatCampaignBrainNudge:
 vi.mock('../components/QuickMissionsHubHost', () => ({
   QuickMissionsHubHost: () => <div data-testid="active-chat-quick-missions-host" />,
 }))
+vi.mock('../hooks/useWorkRequestHomeChatSeed', () => ({
+  useWorkRequestHomeChatSeed: () => undefined,
+}))
 
 describe('GlobalChatPanel', () => {
   it('owns the Mission host beside the mounted active chat surface', () => {

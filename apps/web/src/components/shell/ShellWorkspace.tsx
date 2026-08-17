@@ -7,6 +7,7 @@ import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatP
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { ShellArtifactViewerAdapter } from '@/features/studio/components/preview/ShellArtifactViewerAdapter'
+import { selectConversation } from '@/features/studio/services/chat.service'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils/cn'
@@ -117,6 +118,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     if (isShellHomeRoute(pathname)) {
       openConversationInSpaceChat(convParam)
       setActiveConversationId(convParam)
+      void selectConversation(convParam)
       return
     }
     if (isShellWorkspaceRoute(pathname)) {

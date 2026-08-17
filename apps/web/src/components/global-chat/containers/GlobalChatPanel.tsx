@@ -10,6 +10,7 @@ import { ChatCampaignBrainNudge } from '../components/ChatCampaignBrainNudge'
 import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendation'
 import { QuickMissionsHubHost } from '../components/QuickMissionsHubHost'
 import { useMeetingConversationAwareness } from '../hooks/use-meeting-conversation-awareness'
+import { useWorkRequestHomeChatSeed } from '../hooks/useWorkRequestHomeChatSeed'
 import { resolveMeetingChatPanel } from '../lib/resolve-meeting-chat-panel'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 import { useStickyGlobalChatPanelHost } from './global-chat-panel-host'
@@ -30,6 +31,7 @@ export function GlobalChatPanel({
   const pathname = usePathname() ?? ''
   const searchParams = useSearchParams()
   const routeConversationId = searchParams.get('conv')?.trim() || null
+  useWorkRequestHomeChatSeed()
   const workContext = useGlobalChatStore((s) => s.workContext)
   const storedMeetingContext = useGlobalChatStore((s) => s.meetingContext)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
