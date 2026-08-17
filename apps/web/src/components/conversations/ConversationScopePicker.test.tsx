@@ -1,5 +1,5 @@
 import { createRef, Profiler } from 'react'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Conversation } from '@/lib/conversations'
 import {
@@ -15,7 +15,9 @@ const mocks = vi.hoisted(() => ({
   fetchSpaces: vi.fn(),
   fetchSpaceById: vi.fn(),
   fetchCampaigns: vi.fn(),
-  fetchPrograms: vi.fn(async (): Promise<Array<{ id: string; name: string }>> => []),
+  fetchPrograms: vi.fn(
+    async (): Promise<Array<{ id: string; name: string; system_kind?: string | null }>> => [],
+  ),
   assignConversationScope: vi.fn(),
   positionFloatingMenuFromAnchorRect: vi.fn(),
 }))
@@ -35,9 +37,13 @@ vi.mock('@/lib/spaces', () => ({
   fetchSpaceById: mocks.fetchSpaceById,
 }))
 
-vi.mock('@/lib/programs', () => ({
-  fetchPrograms: mocks.fetchPrograms,
-}))
+vi.mock('@/lib/programs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/programs')>()
+  return {
+    ...actual,
+    fetchPrograms: mocks.fetchPrograms,
+  }
+})
 
 vi.mock('@/lib/campaigns', () => ({
   fetchCampaigns: mocks.fetchCampaigns,
@@ -99,6 +105,15 @@ async function flushAsyncWork() {
   })
 }
 
+function stubPickerCampaigns(rows = campaigns) {
+  mocks.useOrgStore.mockImplementation((selector: (state: { activeOrgId: string }) => unknown) =>
+    selector({ activeOrgId: 'org-1' }),
+  )
+  mocks.useCampaignCacheVersion.mockReturnValue(0)
+  mocks.getCachedCampaigns.mockReturnValue(rows)
+  mocks.prefetchOrgCampaigns.mockResolvedValue(rows)
+}
+
 describe('ConversationScopePicker', () => {
   afterEach(() => {
     cleanup()
@@ -107,12 +122,7 @@ describe('ConversationScopePicker', () => {
   })
 
   it('loads campaign spaces, assigns scope, and settles without render loops', async () => {
-    mocks.useOrgStore.mockImplementation((selector: (state: { activeOrgId: string }) => unknown) =>
-      selector({ activeOrgId: 'org-1' }),
-    )
-    mocks.useCampaignCacheVersion.mockReturnValue(0)
-    mocks.getCachedCampaigns.mockReturnValue(campaigns)
-    mocks.prefetchOrgCampaigns.mockResolvedValue(campaigns)
+    stubPickerCampaigns()
     mocks.fetchSpaces.mockResolvedValue([{ id: 'space-1', title: 'Roadmap' }])
     mocks.assignConversationScope.mockResolvedValue({
       ...conversation,
@@ -174,12 +184,7 @@ describe('ConversationScopePicker', () => {
   })
 
   it('assigns a campaign without requiring a nested space', async () => {
-    mocks.useOrgStore.mockImplementation((selector: (state: { activeOrgId: string }) => unknown) =>
-      selector({ activeOrgId: 'org-1' }),
-    )
-    mocks.useCampaignCacheVersion.mockReturnValue(0)
-    mocks.getCachedCampaigns.mockReturnValue(campaigns)
-    mocks.prefetchOrgCampaigns.mockResolvedValue(campaigns)
+    stubPickerCampaigns()
     mocks.assignConversationScope.mockResolvedValue({
       ...conversation,
       campaign_id: 'campaign-1',
@@ -220,12 +225,7 @@ describe('ConversationScopePicker', () => {
   })
 
   it('clears a scoped conversation into the General campaign', async () => {
-    mocks.useOrgStore.mockImplementation((selector: (state: { activeOrgId: string }) => unknown) =>
-      selector({ activeOrgId: 'org-1' }),
-    )
-    mocks.useCampaignCacheVersion.mockReturnValue(0)
-    mocks.getCachedCampaigns.mockReturnValue(campaigns)
-    mocks.prefetchOrgCampaigns.mockResolvedValue(campaigns)
+    stubPickerCampaigns()
     mocks.fetchSpaces.mockResolvedValue([{ id: 'space-1', title: 'Roadmap' }])
     const scopedConversation = {
       ...conversation,
@@ -259,12 +259,7 @@ describe('ConversationScopePicker', () => {
   })
 
   it('resolves a campaign-less space title by direct lookup', async () => {
-    mocks.useOrgStore.mockImplementation((selector: (state: { activeOrgId: string }) => unknown) =>
-      selector({ activeOrgId: 'org-1' }),
-    )
-    mocks.useCampaignCacheVersion.mockReturnValue(0)
-    mocks.getCachedCampaigns.mockReturnValue(campaigns)
-    mocks.prefetchOrgCampaigns.mockResolvedValue(campaigns)
+    stubPickerCampaigns()
     mocks.fetchSpaceById.mockResolvedValue({ id: 'space-meetings', title: 'Meetings' })
 
     render(
@@ -284,12 +279,7 @@ describe('ConversationScopePicker', () => {
   })
 
   it('shows only the Space name in the compact chat header', async () => {
-    mocks.useOrgStore.mockImplementation((selector: (state: { activeOrgId: string }) => unknown) =>
-      selector({ activeOrgId: 'org-1' }),
-    )
-    mocks.useCampaignCacheVersion.mockReturnValue(0)
-    mocks.getCachedCampaigns.mockReturnValue(campaigns)
-    mocks.prefetchOrgCampaigns.mockResolvedValue(campaigns)
+    stubPickerCampaigns()
     mocks.fetchSpaces.mockResolvedValue([{ id: 'space-1', title: 'Roadmap' }])
 
     render(
@@ -309,12 +299,7 @@ describe('ConversationScopePicker', () => {
   })
 
   it('opens the linked campaign from the pop-out control', async () => {
-    mocks.useOrgStore.mockImplementation((selector: (state: { activeOrgId: string }) => unknown) =>
-      selector({ activeOrgId: 'org-1' }),
-    )
-    mocks.useCampaignCacheVersion.mockReturnValue(0)
-    mocks.getCachedCampaigns.mockReturnValue(campaigns)
-    mocks.prefetchOrgCampaigns.mockResolvedValue(campaigns)
+    stubPickerCampaigns()
     mocks.fetchSpaces.mockResolvedValue([{ id: 'space-1', title: 'Roadmap' }])
     const onOpenCampaign = vi.fn()
 
@@ -335,21 +320,58 @@ describe('ConversationScopePicker', () => {
   })
 
   it('groups campaigns under program headings in the click-stable picker', async () => {
-    mocks.useOrgStore.mockImplementation((selector: (state: { activeOrgId: string }) => unknown) =>
-      selector({ activeOrgId: 'org-1' }),
-    )
-    mocks.useCampaignCacheVersion.mockReturnValue(0)
     mocks.fetchPrograms.mockResolvedValue([{ id: 'program-1', name: 'Growth' }])
-    const programCampaigns = campaigns.map((campaign) =>
-      campaign.id === 'campaign-1' ? { ...campaign, program_id: 'program-1' } : campaign,
+    stubPickerCampaigns(
+      campaigns.map((campaign) =>
+        campaign.id === 'campaign-1' ? { ...campaign, program_id: 'program-1' } : campaign,
+      ),
     )
-    mocks.getCachedCampaigns.mockReturnValue(programCampaigns)
-    mocks.prefetchOrgCampaigns.mockResolvedValue(programCampaigns)
+    mocks.positionFloatingMenuFromAnchorRect.mockReturnValue({ top: 100, left: 120 })
 
     render(<ConversationScopePicker conversation={conversation} />)
 
     fireEvent.click(screen.getByLabelText('General'))
-    expect(await screen.findByText('Growth')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Launch campaign' })).toBeInTheDocument()
+    expect(await screen.findByText('Programs')).toBeInTheDocument()
+    const growth = await screen.findByRole('button', { name: 'Growth' })
+    fireEvent.mouseEnter(growth.parentElement ?? growth)
+    expect(await screen.findByRole('button', { name: 'Launch campaign' })).toBeInTheDocument()
+  })
+
+  it('searches clients and pins General first in a client campaign list', async () => {
+    mocks.fetchPrograms.mockResolvedValue([
+      { id: 'clients', name: 'Clients', system_kind: 'clients' },
+    ])
+    stubPickerCampaigns([
+      campaigns[0],
+      { ...campaigns[1], id: 'client-yasir', name: 'Yasir Khan', program_id: 'clients' },
+      { ...campaigns[1], id: 'client-above', name: 'Above It', program_id: 'clients' },
+    ])
+    mocks.positionFloatingMenuFromAnchorRect.mockReturnValue({ top: 100, left: 120 })
+    mocks.fetchSpaces.mockResolvedValue([
+      { id: 'space-webinar', title: 'Webinar' },
+      { id: 'space-general', title: 'General' },
+    ])
+
+    render(<ConversationScopePicker conversation={conversation} />)
+
+    fireEvent.click(screen.getByLabelText('General'))
+    const search = await screen.findByLabelText('Search clients')
+    fireEvent.change(search, { target: { value: 'yasir' } })
+    expect(await screen.findByRole('button', { name: 'Yasir Khan' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Above It' })).toBeNull()
+
+    fireEvent.mouseEnter(
+      screen.getByRole('button', { name: 'Yasir Khan' }).parentElement ??
+        screen.getByRole('button', { name: 'Yasir Khan' }),
+    )
+    await waitFor(() => expect(mocks.fetchSpaces).toHaveBeenCalled())
+    const menus = document.querySelectorAll('[data-conversation-scope-menu]')
+    const flyout = menus[1]
+    expect(flyout).toBeTruthy()
+    expect(
+      within(flyout as HTMLElement)
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(['General', 'Webinar'])
   })
 })

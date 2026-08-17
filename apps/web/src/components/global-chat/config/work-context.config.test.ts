@@ -6,8 +6,6 @@ import {
   isAgentAllowedForWorkContext,
   mergeAttachedWorkContext,
   surfaceFromPathname,
-  workContextAttachmentDescription,
-  workContextAttachmentLabel,
 } from '../config/work-context.config'
 
 describe('work-context.config', () => {
@@ -54,57 +52,6 @@ describe('work-context.config', () => {
     expect(isAgentAllowedForWorkContext('loop', { surface: 'general' })).toBe(false)
     expect(isAgentAllowedForWorkContext('atlas', { surface: 'brain' })).toBe(true)
     expect(isAgentAllowedForWorkContext('vibey', { surface: 'brain' })).toBe(true)
-  })
-
-  it('labels the exact context attached to chat', () => {
-    expect(workContextAttachmentLabel({ surface: 'team', teamOpsLabel: 'HR' })).toBe('HR')
-    expect(workContextAttachmentLabel({ surface: 'brain', brainScopeLabel: 'Company Brain' })).toBe(
-      'Company Brain',
-    )
-    expect(
-      workContextAttachmentLabel(
-        { surface: 'spaces', campaignId: 'campaign-1' },
-        null,
-        'Yasir Khan Coaching LTD',
-      ),
-    ).toBe('Yasir Khan Coaching LTD')
-    expect(workContextAttachmentLabel({ surface: 'flows' })).toBe('Flows')
-    expect(
-      workContextAttachmentLabel({
-        surface: 'general',
-        channelId: 'channel-1',
-        channelName: 'roas-review',
-      }),
-    ).toBe('roas-review')
-    expect(workContextAttachmentLabel({ surface: 'general' })).toBeNull()
-  })
-
-  it('describes exactly what the attached context contributes', () => {
-    expect(
-      workContextAttachmentDescription(
-        { surface: 'team', teamOpsLabel: 'Team' },
-        { activeAgentName: 'Nate' },
-      ),
-    ).toBe(
-      'Team is attached as the team context. The chat can use team members, roles, status, and relevant team operations. Nate can use this context while answering.',
-    )
-    expect(
-      workContextAttachmentDescription(
-        { surface: 'spaces', spaceId: 'space-1' },
-        { spaceTitle: 'Client Delivery', activeAgentName: 'Reed' },
-      ),
-    ).toBe(
-      'Client Delivery is attached as the Space or campaign context. The chat can use its work, artifacts, and campaign knowledge. Reed can use this context while answering.',
-    )
-    expect(
-      workContextAttachmentDescription({
-        surface: 'general',
-        channelId: 'channel-1',
-        channelName: 'roas-review',
-      }),
-    ).toBe(
-      '#roas-review is attached. The chat can use the channel conversation and available Slack context.',
-    )
   })
 
   it('clears stale context when switching or detaching surfaces', () => {

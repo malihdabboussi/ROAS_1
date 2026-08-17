@@ -16,7 +16,7 @@ export interface GlobalWorkContext {
   brainId?: string | null
   brainScopeLabel?: string | null
   brainAwarenessContext?: string
-  /** Manage Agents Ops Desk label for the work-context chip. */
+  /** Manage Agents Ops Desk label when opening Pixel from Team. */
   teamOpsLabel?: string | null
   /** Live team floor context injected when opening Pixel from Ops Desk. */
   teamOpsAwarenessContext?: string

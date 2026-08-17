@@ -8,7 +8,6 @@ import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { QuickMissionsLauncherProvider } from '@/lib/missions'
 import { ChatCampaignBrainNudge } from '../components/ChatCampaignBrainNudge'
 import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendation'
-import { GlobalChatComposerFooter } from '../components/GlobalChatComposerFooter'
 import { QuickMissionsHubHost } from '../components/QuickMissionsHubHost'
 import { useMeetingConversationAwareness } from '../hooks/use-meeting-conversation-awareness'
 import { resolveMeetingChatPanel } from '../lib/resolve-meeting-chat-panel'
@@ -131,7 +130,6 @@ export function GlobalChatPanel({
             shellSidebarChrome={shellSidebarChrome}
             headerLayout={presentation}
             headerLeadingAction={headerLeadingAction}
-            composerContextSlot={<GlobalChatComposerFooter />}
             onCollapseChat={
               presentation === 'full'
                 ? onCollapseChat

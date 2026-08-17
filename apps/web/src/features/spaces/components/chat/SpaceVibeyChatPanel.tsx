@@ -182,7 +182,6 @@ export function SpaceVibeyChatPanel({
   shellSidebarChrome = false,
   headerLayout = 'compact',
   headerLeadingAction,
-  composerContextSlot,
   preferredConversationId,
   awarenessContextOverride,
 }: ChatPanelTypes.SpaceVibeyChatPanelProps) {
@@ -2540,7 +2539,6 @@ export function SpaceVibeyChatPanel({
                           activeCapabilityChip={quickStart.activeCapabilityChip}
                           onClearCapabilityChip={quickStart.clearQuickStart}
                           onEnqueue={editingQueueItemId ? undefined : handleEnqueue}
-                          composerFooterAfterIntegrationsSlot={composerContextSlot}
                           onSendNow={handleQueueSendNowNext}
                           queueLength={queue.length}
                           placeholder={
