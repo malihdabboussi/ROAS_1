@@ -218,6 +218,12 @@ Impact: Branch can build and merge/deploy.
 
 Files: `apps/api/src/modules/work-requests/dto/work-request.dto.ts`, `apps/web/src/features/work-requests/components/WorkRequestReviewChatHost.tsx`
 
+## [2026-08-17 20:17] - [DOCS]
+What: Started gangbusters UX audit; logged Session A New Chat findings F-001–F-008, production AUTH block F-009, and confirmed P-ATTACH-01 from live clicks + code.
+Why: User asked to run the audit with browser connected; production Dylan session missing in cloud browser; local pass still yielded Attach/@ IA evidence.
+Impact: Findings file ready; Attach consolidation plan confirmed; remaining surfaces blocked until production sign-in.
+Files: `.docs/plans/ux-gangbusters-findings-2026-08-17.md`
+
 ## [2026-08-17 19:44] - [DOCS]
 What: Added the gangbusters ultra-detailed navigation/UX audit prompt plus a paste-ready kickoff for cloud agents.
 Why: Need a reusable, high-depth click-through protocol (Attach/@ gold example) before running a full-platform menu audit and plan-before-fix loop.
