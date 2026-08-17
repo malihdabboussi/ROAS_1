@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:01] - [FEATURE]
+What: Retired the dedicated My Tasks page. All Tasks is now the primary task destination, and opening a rollup row keeps the list mounted with the same right-side task card My Tasks used.
+Why: Simple/Advanced nav had both My Tasks and All Tasks, while All Tasks sent people into the Space overlay instead of a side card.
+Impact: Sidebar and Home flyout go to `/all-tasks`. `/home/my-tasks` redirects there. Campaign Tasks list still opens Space. Home My Tasks card is unchanged.
+Files: `apps/web/src/app/(dashboard)/all-tasks/_components/AllTasksWorkspace.tsx`, `apps/web/src/app/(dashboard)/home/my-tasks/page.tsx`, `apps/web/src/components/work-views/AllTasksNativeList.tsx`, `apps/web/src/features/all-tasks/components/AllTasksBoard.tsx`, `apps/web/src/components/layout/sidebar/SidebarSimpleSection.tsx`, `apps/web/src/components/layout/sidebar/manage-rail-items.tsx`, `documentation/features/programs.md`
+
 ## [2026-08-17 19:56] - [FIX]
 What: Home Suggested next moves now keep only the signed-in user's assigned follow-ups and unassigned items from meetings they actually attended.
 Why: The list was org-wide, so teammates saw each other's Fathom follow-ups (for example a Master Your Craft deck action from a team call they were not on). The tooltip said "your meeting" even when they were not an attendee.

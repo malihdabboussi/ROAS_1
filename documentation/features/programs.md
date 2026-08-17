@@ -1,6 +1,6 @@
 # Programs
 
-Last Modified: August 17, 2026
+Last Modified: August 17, 2026 (All Tasks is the primary task destination; My Tasks page retired)
 
 ## Overview
 
@@ -124,17 +124,19 @@ campaign/program is expanded.
 
 ## All Tasks
 
-- Route: `/all-tasks` (Programs panel + Campaigns hub link; Simple sidebar also lists it)
+- Route: `/all-tasks` (primary sidebar destination; Programs panel also links here)
 - Shell breadcrumb: **All Tasks** (path fallback; no duplicate in-page H1)
 - API: `GET /api/tasks/rollup?view=my|all&program_id=&campaign_id=`
 - Tabs: **My Tasks** | **All Tasks**
 - Open top-level space tasks only (status not done/archived)
-- Row opens `/spaces?space=…&item=…`
+- Row opens a right-side task card (`HomeTaskDetailHost` panel) and keeps the rollup list mounted. Campaign Tasks list still navigates to `/spaces?space=…&item=…`
+- `/home/my-tasks` redirects to `/all-tasks`. The Home dashboard My Tasks card remains.
 - Your Turn remains the personal inbox
 - Rollup filters campaigns by Program access before loading spaces/items
 
 ## Decision Log
 
+- **2026-08-17:** All Tasks is the primary task destination in Simple and Advanced nav. Opening a rollup row keeps the list mounted and shows canonical task detail in a right-side card. `/home/my-tasks` redirects to `/all-tasks`; the Home My Tasks card stays.
 - **2026-08-17:** All Tasks uses the shell breadcrumb **All Tasks** and no longer repeats the H1/subtitle in the page body.
 - **2026-08-17:** More → Programs hover lists all programs. Clicking Programs opens `/programs` instead of `/campaigns`.
 - **2026-08-10:** Program favorites require both row-level policies and table privileges. The repair migration grants authenticated/service roles CRUD access to `program_user_state`; per-user RLS remains the authorization boundary.

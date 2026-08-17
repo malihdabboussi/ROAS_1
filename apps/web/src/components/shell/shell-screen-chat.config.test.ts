@@ -16,8 +16,12 @@ describe('shellChatScreenForPathname', () => {
       label: 'Meetings',
     })
     expect(shellChatScreenForPathname('/home/my-tasks')).toEqual({
-      key: 'home:my-tasks',
-      label: 'My Tasks',
+      key: 'all-tasks',
+      label: 'All Tasks',
+    })
+    expect(shellChatScreenForPathname('/all-tasks')).toEqual({
+      key: 'all-tasks',
+      label: 'All Tasks',
     })
     expect(shellChatScreenForPathname('/home/delegation-desk')).toEqual({
       key: 'home:delegation-desk',

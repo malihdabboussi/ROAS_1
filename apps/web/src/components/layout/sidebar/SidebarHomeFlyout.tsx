@@ -3,10 +3,10 @@
 import Link from 'next/link'
 import {
   CalendarDays,
-  CheckSquare,
   House,
   Inbox,
   LayoutGrid,
+  ListTodo,
   SendHorizontal,
   Star,
 } from 'lucide-react'
@@ -19,7 +19,7 @@ const HOME_LINKS = [
   { href: '/home', label: 'Home', icon: House },
   { href: '/home/inbox', label: 'Inbox', icon: Inbox },
   { href: '/home/meetings', label: 'Meetings', icon: CalendarDays },
-  { href: '/home/my-tasks', label: 'My Tasks', icon: CheckSquare },
+  { href: '/all-tasks', label: 'All Tasks', icon: ListTodo },
   { href: '/home/delegation-desk', label: 'Delegation Desk', icon: SendHorizontal },
 ] as const
 
