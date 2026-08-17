@@ -12,7 +12,10 @@ import {
   HOME_TOAST_ERRORS,
   HOME_TOAST_SUCCESS,
 } from '@/features/home/config/home-toast-errors.config'
-import type { MeetingPostCallAction } from '@/features/home/config/meeting-post-call-actions.config'
+import {
+  startAgendaPrompt,
+  type MeetingPostCallAction,
+} from '@/features/home/config/meeting-post-call-actions.config'
 import { buildMeetingAwarenessContext } from '@/features/home/lib/build-meeting-awareness-context'
 import {
   formatAttendeeSummary,
@@ -175,8 +178,12 @@ export function MeetingWorkspaceDialog({
     focusMeetingChat()
     // The chat panel drops seeds whose work context doesn't match its space
     // scope, so target the meeting's space explicitly.
+    const content =
+      action.id === 'start-agenda'
+        ? startAgendaPrompt(bundle?.workspace?.agenda_doc_item_id)
+        : action.prompt
     useGlobalChatStore.getState().seedComposer({
-      content: action.prompt,
+      content,
       conversationId,
       workContext: { surface: 'spaces', spaceId },
     })

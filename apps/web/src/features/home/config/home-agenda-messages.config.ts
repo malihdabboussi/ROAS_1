@@ -40,4 +40,14 @@ export const HOME_AGENDA_MESSAGES = {
     message: 'Generate pre-call prep for today’s meetings',
     category: 'tooltip',
   },
+  AGENDA_EMPTY: {
+    key: 'AGENDA_EMPTY',
+    message: 'No agenda notes yet — kick one off with Start agenda above',
+    category: 'empty',
+  },
+  ADD_ACTION_ITEM: {
+    key: 'ADD_ACTION_ITEM',
+    message: 'Add action',
+    category: 'button',
+  },
 } as const

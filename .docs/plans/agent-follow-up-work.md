@@ -1,3 +1,15 @@
+## 2026-08-17 - [ARCH] MeetingWorkspaceService is near the service LOC limit
+
+Status: Open
+
+Found while: Linking an editable agenda Space Doc on meeting workspace load
+
+Evidence: `wc -l` reports `apps/api/src/modules/meetings/services/meeting-workspace.service.ts` at 526 LOC (service limit 600; extract suggested at 80% / 480).
+
+Needed work: Split getWorkspace hydration (recording hydrate + agenda-doc ensure) and display-title normalization out of the service.
+
+Reason not done now: In-scope work was agenda-doc ensure + UI; the service was already over the 80% extract hint before this change.
+
 ## 2026-08-17 - [FEATURE] Page Grader must stamp conversation_id for shared review chat
 
 Status: Done (platform stamp + Slack backfill)

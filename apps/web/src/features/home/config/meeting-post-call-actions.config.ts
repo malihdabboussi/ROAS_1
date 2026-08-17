@@ -81,20 +81,30 @@ export const MEETING_POST_CALL_ACTIONS: MeetingPostCallAction[] = [
  * agent has the invite, prior-meeting continuity, and open action items as
  * context.
  */
+export function startAgendaPrompt(agendaDocItemId: string | null | undefined): string {
+  const writeTarget = agendaDocItemId?.trim()
+    ? [
+        `Write the agenda into the meeting agenda Space Doc with update_document using document_id ${agendaDocItemId.trim()} (this is the space_item_id).`,
+        'The user edits that document on the right like a Space Doc. Do not only return a draft fence.',
+      ].join(' ')
+    : 'Return it in a ```draft Agenda``` fence so I can edit it.'
+  return [
+    'Kick off the agenda for this upcoming meeting.',
+    '',
+    'Build it from what you know: the invite, who is attending, open action items from prior calls with these people, and anything unresolved from the last meeting.',
+    '',
+    'Format: 3-6 agenda points max, each as topic — why it matters — decision or outcome we need. Put the highest-stakes item first. Flag anything I should read or prep before the call.',
+    '',
+    writeTarget,
+  ].join('\n')
+}
+
 export const MEETING_PRE_CALL_ACTIONS: MeetingPostCallAction[] = [
   {
     id: 'start-agenda',
     label: 'Start agenda',
     icon: ListChecks,
-    prompt: [
-      'Kick off the agenda for this upcoming meeting.',
-      '',
-      'Build it from what you know: the invite, who is attending, open action items from prior calls with these people, and anything unresolved from the last meeting.',
-      '',
-      'Format: 3-6 agenda points max, each as topic — why it matters — decision or outcome we need. Put the highest-stakes item first. Flag anything I should read or prep before the call.',
-      '',
-      'Return it in a ```draft Agenda``` fence so I can edit it.',
-    ].join('\n'),
+    prompt: startAgendaPrompt(null),
   },
   {
     id: 'agenda-prep-notes',

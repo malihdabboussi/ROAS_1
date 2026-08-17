@@ -105,4 +105,27 @@ describe('buildMeetingAwarenessContext', () => {
     expect(context).toContain('external_id=fathom-99')
     expect(context).not.toContain('Linked recordings: none yet')
   })
+
+  it('steers agenda prep to the editable Space Doc on the right', () => {
+    const context = buildMeetingAwarenessContext({
+      spaceId: 'space-1',
+      meetingItemId: 'meeting-1',
+      title: 'Meeting W/ Nate',
+      bundle: bundle('scheduled', {
+        workspace: {
+          meeting_item_id: 'meeting-1',
+          phase: 'scheduled',
+          conversation_id: 'conversation-1',
+          agenda_doc_item_id: 'agenda-doc-1',
+          notes_doc_item_id: null,
+          recap_doc_item_id: null,
+          live_started_at: null,
+        },
+      }),
+    })
+
+    expect(context).toContain('space_item_id=agenda-doc-1')
+    expect(context).toContain('update_document')
+    expect(context).toContain('Do not only use a draft fence')
+  })
 })

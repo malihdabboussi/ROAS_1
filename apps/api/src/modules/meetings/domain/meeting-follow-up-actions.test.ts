@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   isFollowUpSpaceItem,
+  isMeetingAgendaSpaceItem,
   mapFollowUpSpaceItemToMeetingAction,
   meetingActionStatusToFollowUpStatus,
 } from './meeting-follow-up-actions'
@@ -43,6 +44,21 @@ describe('meeting-follow-up-actions', () => {
       isFollowUpSpaceItem({
         source: 'fathom',
         custom_data: { entry_type: 'call' },
+      }),
+    ).toBe(false)
+  })
+
+  it('keeps meeting agenda docs out of attachments', () => {
+    expect(
+      isMeetingAgendaSpaceItem({
+        source: 'manual',
+        custom_data: { entry_type: 'meeting_agenda' },
+      }),
+    ).toBe(true)
+    expect(
+      isMeetingAgendaSpaceItem({
+        source: 'fathom',
+        custom_data: { entry_type: 'meeting_recap' },
       }),
     ).toBe(false)
   })

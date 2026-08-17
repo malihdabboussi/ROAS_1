@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 17:24] - [FEATURE]
+What: Meeting workspace chat now writes the agenda into an editable Space Doc on the right, and action items always use the shared work-item list with an inline add row.
+Why: "Prep the agenda" only seeded a chat draft fence, so the Agenda & prep card stayed empty; action items used an empty-card + header button instead of the Spaces list UI.
+Impact: Opening a meeting creates/links `agenda_doc_item_id`; Pixel `update_document` updates the right-pane Doc; Start agenda points at that id; action items are a list with a last-row Add action composer.
+Files: `apps/api/src/modules/meetings/repositories/meeting-workspace-agenda.repository.ts`, `apps/api/src/modules/meetings/services/meeting-workspace.service.ts`, `apps/api/src/modules/meetings/repositories/meeting-workspace-read.repository.ts`, `apps/web/src/features/home/components/MeetingAgendaDocEditor.tsx`, `apps/web/src/features/home/components/MeetingAgendaPrepSection.tsx`, `apps/web/src/features/home/components/MeetingActionItemsSection.tsx`, `apps/web/src/features/home/lib/build-meeting-awareness-context.ts`, `apps/web/src/features/home/config/meeting-post-call-actions.config.ts`
+
 ## [2026-08-17 16:47] - [FIX]
 What: Wrapped artifact viewer close handler so `onClick` does not pass a mouse event into `closeArtifactViewer(conversationId?)`.
 Why: Vercel `roas-web` typecheck failed on PR #263.

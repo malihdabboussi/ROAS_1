@@ -623,6 +623,66 @@ describe('MeetingWorkspaceService', () => {
     expect(resolutionRepository.listDuplicateCallItemIds).not.toHaveBeenCalled()
   })
 
+  it('creates a linked agenda Space Doc the first time the workspace is loaded', async () => {
+    const readRepository = {
+      getWorkspaceBundle: vi
+        .fn()
+        .mockResolvedValueOnce({
+          meeting: { id: 'meeting-1', title: 'Strategy call', org_id: 'org-1' },
+          workspace: {
+            meeting_item_id: 'meeting-1',
+            phase: 'scheduled',
+            conversation_id: 'conversation-1',
+            agenda_doc_item_id: null,
+          },
+          recordings: [{ id: 'recording-1' }],
+        })
+        .mockResolvedValueOnce({
+          meeting: { id: 'meeting-1', title: 'Strategy call', org_id: 'org-1' },
+          workspace: {
+            meeting_item_id: 'meeting-1',
+            phase: 'scheduled',
+            conversation_id: 'conversation-1',
+            agenda_doc_item_id: 'agenda-doc-1',
+          },
+          recordings: [{ id: 'recording-1' }],
+        }),
+    }
+    const agendaDocuments = {
+      ensureAgendaDocument: vi.fn().mockResolvedValue('agenda-doc-1'),
+    }
+    const service = new MeetingWorkspaceService(
+      {} as never,
+      {} as never,
+      readRepository as never,
+      {} as never,
+      { createConversation: vi.fn() } as never,
+      { create: vi.fn() } as never,
+      undefined,
+      agendaDocuments as never,
+    )
+
+    const result = await service.getWorkspace({} as never, {
+      spaceId: 'space-1',
+      meetingItemId: 'meeting-1',
+      userId: 'user-1',
+      orgId: 'org-1',
+    })
+
+    expect(agendaDocuments.ensureAgendaDocument).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        meetingItemId: 'meeting-1',
+        spaceId: 'space-1',
+        userId: 'user-1',
+        orgId: 'org-1',
+        title: 'Strategy call',
+      }),
+    )
+    expect(readRepository.getWorkspaceBundle).toHaveBeenCalledTimes(2)
+    expect(record(result.workspace).agenda_doc_item_id).toBe('agenda-doc-1')
+  })
+
   it('writes a note to both meeting snippets and the same persistent chat', async () => {
     const repository = { upsertWorkspace: vi.fn() }
     const resolutionRepository = {}
@@ -740,3 +800,9 @@ describe('MeetingWorkspaceService', () => {
     expect(result).toEqual(created)
   })
 })
+
+function record(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
+}

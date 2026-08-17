@@ -102,6 +102,9 @@ export function MeetingWorkspaceBody({
 
       <section className="section-card p-spacing-4 gap-spacing-2 flex flex-col">
         <MeetingAgendaPrepSection
+          spaceId={spaceId}
+          agendaDocItemId={bundle?.workspace?.agenda_doc_item_id}
+          agendaTitle={bundle?.meeting.title?.trim() || 'Agenda'}
           prep={prep}
           prepDescription={prepDescription}
           joinUrl={joinUrl}
