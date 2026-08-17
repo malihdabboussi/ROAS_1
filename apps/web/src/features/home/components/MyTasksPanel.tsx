@@ -116,37 +116,20 @@ export function MyTasksPanel({
       )}
     >
       <div className="px-spacing-6 pt-spacing-5 pb-spacing-3 shrink-0">
-        <div className="gap-spacing-3 flex items-start justify-between">
-          <div className="min-w-0 flex-1">
-            {embedded || pagePresentation ? (
-              <>
-                <h1 className="title-h6 text-foreground flex items-center gap-2">
-                  <CheckSquare className="text-muted-foreground h-5 w-5 shrink-0" aria-hidden />
-                  MY TASKS
-                </h1>
-                <p className="body-3 text-muted-foreground mt-spacing-1">
-                  Everything assigned to you — grouped by when it’s due.
-                  {totalCount > 0 ? (
-                    <span className="text-muted-foreground"> · {totalCount}</span>
-                  ) : null}
-                </p>
-              </>
-            ) : (
-              <>
-                <DialogPrimitive.Title className="title-h6 text-foreground flex items-center gap-2">
-                  <CheckSquare className="text-muted-foreground h-5 w-5 shrink-0" aria-hidden />
-                  My tasks
-                </DialogPrimitive.Title>
-                <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
-                  Everything assigned to you — grouped by when it’s due.
-                  {totalCount > 0 ? (
-                    <span className="text-muted-foreground"> · {totalCount}</span>
-                  ) : null}
-                </DialogPrimitive.Description>
-              </>
-            )}
-          </div>
-          {!embedded && !pagePresentation ? (
+        {!embedded && !pagePresentation ? (
+          <div className="gap-spacing-3 flex items-start justify-between">
+            <div className="min-w-0 flex-1">
+              <DialogPrimitive.Title className="title-h6 text-foreground flex items-center gap-2">
+                <CheckSquare className="text-muted-foreground h-5 w-5 shrink-0" aria-hidden />
+                My tasks
+              </DialogPrimitive.Title>
+              <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
+                Everything assigned to you — grouped by when it’s due.
+                {totalCount > 0 ? (
+                  <span className="text-muted-foreground"> · {totalCount}</span>
+                ) : null}
+              </DialogPrimitive.Description>
+            </div>
             <button
               type="button"
               onClick={() => onOpenChange(false)}
@@ -155,10 +138,15 @@ export function MyTasksPanel({
             >
               <X className="icon-xs" />
             </button>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
 
-        <div className="mt-spacing-4 gap-spacing-2 flex flex-wrap items-center">
+        <div
+          className={cn(
+            'gap-spacing-2 flex flex-wrap items-center',
+            embedded || pagePresentation ? null : 'mt-spacing-4',
+          )}
+        >
           <div className="relative min-w-0 flex-1">
             <Search
               className="icon-left-center text-muted-foreground pointer-events-none h-3.5 w-3.5"

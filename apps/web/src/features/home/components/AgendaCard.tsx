@@ -243,6 +243,7 @@ export function AgendaCard({
     >
       <AgendaCardHeader
         showAgendaSurface={showAgendaSurface || showTeamToggle}
+        hideTitle={presentation === 'page'}
         bothConnected={bothConnected}
         provider={provider}
         setProvider={setProvider}

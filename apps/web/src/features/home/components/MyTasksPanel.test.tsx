@@ -26,7 +26,10 @@ describe('MyTasksPanel', () => {
       />,
     )
 
-    expect(screen.getByRole('heading', { name: 'MY TASKS' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'MY TASKS' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/Everything assigned to you — grouped by when it’s due/),
+    ).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'All programs' })).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 

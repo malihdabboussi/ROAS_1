@@ -12,6 +12,7 @@ export default function HomeMyTasksPage() {
   const { activeYourTurnItem, openYourTurnItem, closeYourTurnItem } = useHomeFeedOpen()
   return (
     <main className="flex min-h-0 flex-1">
+      <h1 className="sr-only">MY TASKS</h1>
       <div className="min-w-0 flex-1">
         <MyTasksPanel
           presentation="page"

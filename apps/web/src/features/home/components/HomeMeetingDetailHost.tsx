@@ -20,6 +20,30 @@ import {
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
+function MeetingWorkspaceBreadcrumb({
+  title,
+  onAgendaClick,
+}: {
+  title: string
+  onAgendaClick: () => void
+}) {
+  return (
+    <ShellBreadcrumb label={title}>
+      <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
+        <button
+          type="button"
+          onClick={onAgendaClick}
+          className="text-muted-foreground hover:text-foreground truncate"
+        >
+          Agenda
+        </button>
+        <span className="text-muted-foreground/50 select-none">/</span>
+        <span className="text-foreground min-w-0 truncate font-medium">{title}</span>
+      </nav>
+    </ShellBreadcrumb>
+  )
+}
+
 export function HomeMeetingDetailHost({
   event,
   onClose,
@@ -92,13 +116,7 @@ export function HomeMeetingDetailHost({
   if (target) {
     return (
       <>
-        <ShellBreadcrumb label={meetingTitle}>
-          <div className="flex min-w-0 items-center gap-1.5 text-sm">
-            <span className="text-muted-foreground truncate">Agenda</span>
-            <span className="text-muted-foreground/50 select-none">/</span>
-            <span className="text-foreground min-w-0 truncate font-medium">{meetingTitle}</span>
-          </div>
-        </ShellBreadcrumb>
+        <MeetingWorkspaceBreadcrumb title={meetingTitle} onAgendaClick={onClose} />
         <MeetingWorkspaceDialog
           spaceId={target.space_id}
           meetingItemId={target.meeting_item_id}
@@ -119,13 +137,7 @@ export function HomeMeetingDetailHost({
       aria-label="Preparing meeting workspace"
       className="surface-card border-border flex h-full min-h-0 w-full flex-col border"
     >
-      <ShellBreadcrumb label={meetingTitle}>
-        <div className="flex min-w-0 items-center gap-1.5 text-sm">
-          <span className="text-muted-foreground truncate">Agenda</span>
-          <span className="text-muted-foreground/50 select-none">/</span>
-          <span className="text-foreground min-w-0 truncate font-medium">{meetingTitle}</span>
-        </div>
-      </ShellBreadcrumb>
+      <MeetingWorkspaceBreadcrumb title={meetingTitle} onAgendaClick={onClose} />
       <p className="sr-only">
         Creating or reconnecting the workspace and persistent chat for this meeting.
       </p>

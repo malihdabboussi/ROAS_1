@@ -39,6 +39,7 @@ export function ShellTopBar() {
   const workAreaOpen = useShellStore((s) => s.workAreaOpen)
   const pageBreadcrumb = useShellStore((s) => s.pageBreadcrumb)
   const pageBreadcrumbLabel = useShellStore((s) => s.pageBreadcrumbLabel)
+  const pageHeaderAction = useShellStore((s) => s.pageHeaderAction)
   const recordWorkAreaPage = useShellStore((s) => s.recordWorkAreaPage)
 
   const { targets } = useShellOpenIn()
@@ -199,6 +200,7 @@ export function ShellTopBar() {
       ) : null}
 
       <div className="shell-topbar-actions ml-auto flex items-center gap-1.5">
+        {pageHeaderAction}
         <div className="shell-topbar-desktop-actions contents">
           <ShellOpenInMenu targets={targets} />
         </div>

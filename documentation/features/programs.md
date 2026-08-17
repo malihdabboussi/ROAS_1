@@ -124,7 +124,8 @@ campaign/program is expanded.
 
 ## All Tasks
 
-- Route: `/all-tasks` (Programs panel + Campaigns hub link; not a standalone main-sidebar item)
+- Route: `/all-tasks` (Programs panel + Campaigns hub link; Simple sidebar also lists it)
+- Shell breadcrumb: **All Tasks** (path fallback; no duplicate in-page H1)
 - API: `GET /api/tasks/rollup?view=my|all&program_id=&campaign_id=`
 - Tabs: **My Tasks** | **All Tasks**
 - Open top-level space tasks only (status not done/archived)
@@ -134,6 +135,7 @@ campaign/program is expanded.
 
 ## Decision Log
 
+- **2026-08-17:** All Tasks uses the shell breadcrumb **All Tasks** and no longer repeats the H1/subtitle in the page body.
 - **2026-08-17:** More → Programs hover lists all programs. Clicking Programs opens `/programs` instead of `/campaigns`.
 - **2026-08-10:** Program favorites require both row-level policies and table privileges. The repair migration grants authenticated/service roles CRUD access to `program_user_state`; per-user RLS remains the authorization boundary.
 - **2026-08-10:** Simple is the default menu style and combines navigation, actual favorite Programs/campaigns/Spaces, Programs, More, and Recents in one sidebar. Pinned chats sit above Recents as their own collapsible section. Programs is a hover-only destination that opens the canonical Programs tree with its existing row menus; Favorites, Pinned, and Recents expand inline. Its collapsed R rail hover-previews the expanded menu. Advanced exposes Home, Inbox, Meetings, My Tasks, Delegation Desk, Favorites, Programs, and More; Team and Brain live under More with their previous nested hover menus. Programs can be favorited per user and appear with campaign/Space favorites.
