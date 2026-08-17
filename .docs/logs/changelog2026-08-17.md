@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:05] - [STYLE]
+What: Chat assistant-turn actions now show Reply first, then Copy, then Fork.
+Why: Reply is the primary next step in a conversation, so it should be the first control you see.
+Impact: Pixel and other agent message action rows lead with Reply; Copy and Fork stay immediately after.
+Files: `apps/web/src/components/chat/AgentTurnFeedbackActions.tsx`, `apps/web/src/components/chat/AgentTurnFeedbackActions.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 20:01] - [FEATURE]
 What: Retired the dedicated My Tasks page. All Tasks is now the primary task destination, and opening a rollup row keeps the list mounted with the same right-side task card My Tasks used.
 Why: Simple/Advanced nav had both My Tasks and All Tasks, while All Tasks sent people into the Space overlay instead of a side card.
