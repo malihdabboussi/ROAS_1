@@ -37,6 +37,21 @@ describe('globalChatSeedMatchesPanel', () => {
       globalChatSeedMatchesPanel({ content: 'hi', workContext: { surface: 'team' } }, 'space-1'),
     ).toBe(false)
   })
+
+  it('matches a campaign-only spaces seed on the no-space panel', () => {
+    expect(
+      globalChatSeedMatchesPanel(
+        { content: 'hi', workContext: { surface: 'spaces', campaignId: 'camp-1' } },
+        undefined,
+      ),
+    ).toBe(true)
+    expect(
+      globalChatSeedMatchesPanel(
+        { content: 'hi', workContext: { surface: 'spaces', campaignId: 'camp-1' } },
+        'space-1',
+      ),
+    ).toBe(false)
+  })
 })
 
 describe('normalizeGlobalChatSeed', () => {

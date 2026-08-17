@@ -44,6 +44,19 @@ export function mergeAttachedWorkContext(
   if (patch.surface && (patch.surface !== current.surface || patch.surface === 'general')) {
     return { surface: patch.surface, ...patch }
   }
+  // Same-surface spaces attach: omitting spaceId/campaignId must not keep a prior location
+  // (e.g. Home Choose Space campaign-only after a previous Power Circle General attach).
+  if (patch.surface === 'spaces' || (current.surface === 'spaces' && !patch.surface)) {
+    if ('spaceId' in patch || 'campaignId' in patch) {
+      return {
+        ...current,
+        ...patch,
+        surface: 'spaces',
+        spaceId: 'spaceId' in patch ? patch.spaceId : null,
+        campaignId: 'campaignId' in patch ? patch.campaignId : null,
+      }
+    }
+  }
   return { ...current, ...patch }
 }
 
