@@ -11,15 +11,14 @@ import { DEFAULT_HOME_FEED_SCOPE } from '@/lib/home/home-feed-scope'
 import { cn } from '@/lib/utils/cn'
 import { extractConversationTaskRows } from './shell-conversation-summary'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
+import { ShellRightPanelSkeleton } from './ShellRightPanelSkeleton'
 
 function HomeRightPanelTasks() {
   const feed = useYourTurnFeed(DEFAULT_HOME_FEED_SCOPE)
   const { activeYourTurnItem, openYourTurnItem, closeYourTurnItem } = useHomeFeedOpen()
 
   if (feed.loading) {
-    return (
-      <p className="body-3 text-muted-foreground">{SHELL_RIGHT_PANEL_MESSAGES.homeTasksLoading}</p>
-    )
+    return <ShellRightPanelSkeleton label={SHELL_RIGHT_PANEL_MESSAGES.homeTasksLoading} />
   }
 
   if (feed.items.length === 0) {

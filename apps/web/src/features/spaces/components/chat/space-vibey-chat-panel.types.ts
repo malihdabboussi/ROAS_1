@@ -36,6 +36,7 @@ export interface SpaceVibeyChatPanelProps {
   shellSidebarChrome?: boolean
   headerLayout?: 'full' | 'compact'
   headerLeadingAction?: ReactNode
+  headerTrailingAction?: ReactNode
   composerContextSlot?: ReactNode
   preferredConversationId?: string | null
   awarenessContextOverride?: string

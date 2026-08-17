@@ -1,14 +1,14 @@
-## 2026-08-16 - [ARCH] SpaceVibeyChatPanel remains far over the component LOC limit
+## 2026-08-16 - [ARCH] SpaceVibeyChatPanel still over the container LOC limit after summary dock wiring
 
 Status: Open
 
-Found while: Moving idle Try tips onto active chats and removing Home composer chips
+Found while: ChatGPT-style summary panel, empty-section collapse, Slack titles
 
-Evidence: `wc -l` reports `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` at 2672 lines, well above the 400 LOC component / 600 LOC container limits.
+Evidence: `wc -l` reports `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` at 2670 LOC (container limit 600). Dock auto-open was extracted to `use-summary-panel-docked.ts`. `apps/api/src/modules/conversations/services/conversations.service.ts` is 588 LOC after moving title pick into `conversation-title.util.ts`. `apps/web/src/components/shell/use-shell-store.ts` is 554 LOC (hook limit 300) after `summaryPanelDocked`.
 
-Needed work: Split composer chrome, seed handling, and conversation list orchestration out of the panel.
+Needed work: Split remaining send/seed/header orchestration out of SpaceVibeyChatPanel; decompose the shell store.
 
-Reason not done now: This change only swapped the empty-chat pill row for `ChatComposerTryTip`; decomposing the pre-existing overage was out of scope.
+Reason not done now: The requested work was summary layout, skeleton loading, and Slack naming; decomposing these pre-existing oversized files was out of scope.
 
 ## 2026-08-16 - [ARCH] WorkRequestChatFlow still over 400 LOC component soft limit
 

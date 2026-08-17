@@ -4,6 +4,7 @@ import {
   isMeetingConversation,
   isPlaceholderConversationTitle,
   needsGeneratedConversationTitle,
+  resolveGeneratedConversationTitle,
   resolveSuggestedConversationTitle,
   shouldReaffirmFirstMessageTitle,
   stripLegacySpacesConversationTitle,
@@ -76,6 +77,14 @@ describe('resolveSuggestedConversationTitle', () => {
   })
 })
 
+describe('resolveGeneratedConversationTitle', () => {
+  it('returns only a model topic and never a first-message dump', () => {
+    expect(resolveGeneratedConversationTitle('Ops Desk check-in')).toBe('Ops Desk check-in')
+    expect(resolveGeneratedConversationTitle('')).toBe('')
+    expect(resolveGeneratedConversationTitle('Slack Chat')).toBe('')
+  })
+})
+
 describe('shouldReaffirmFirstMessageTitle', () => {
   it('preserves a curated title when the first turn finishes', () => {
     expect(shouldReaffirmFirstMessageTitle('Funnel Checkout Quality Review')).toBe(false)
@@ -104,5 +113,11 @@ describe('needsGeneratedConversationTitle', () => {
       true,
     )
     expect(needsGeneratedConversationTitle('Budget approval')).toBe(false)
+    expect(
+      needsGeneratedConversationTitle(
+        'Fix the slack agent responses',
+        'Fix the slack agent responses',
+      ),
+    ).toBe(true)
   })
 })

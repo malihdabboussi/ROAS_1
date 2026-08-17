@@ -40,6 +40,16 @@ Impact: Home stays greeting + input + Choose Space/Plugins. Open conversations g
 
 Files: `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/lib/chat/composer-try-tips.ts`, `apps/web/src/components/global-chat/components/ChatComposerTryTip.tsx`, deleted `apps/web/src/components/shell/ShellEmptyChatQuickStartPills.tsx`, related tests, `documentation/features/claude-chatgpt-shell.md`
 
+## [2026-08-16 23:48] - [FIX]
+
+What: ChatGPT-style work summary: empty Outputs/Sources/Tasks/Connections start collapsed; loading uses skeleton bars instead of a Loading label; the panel docks as an in-flow column at ≥1024px chat-pane width and stays closed (header overlay) when narrower; Summary and Show page sit together in the chat header top-right. Slack chats seed as `Slack Chat` and wait for a Gemini topic title instead of using the first message as the Recents name.
+
+Why: Empty sections opened with a loading flash then empty art; Slack Recents rows were first-message dumps; the summary overlaid chat and its toggle sat apart from Show page.
+
+Impact: Wide chats show a right-hand summary column by default. Narrow chats keep it closed until the header toggle. Slack (and other first-message titles) get a short generated topic when Gemini returns one.
+
+Files: `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/components/shell/ShellRightPanelSkeleton.tsx`, `apps/web/src/components/shell/use-summary-panel-docked.ts`, `apps/web/src/components/shell/ShellChatHeaderPageControl.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatHeaderActions.tsx`, `apps/web/src/lib/conversations/conversation-title.ts`, `apps/api/src/modules/slack/services/slack-conversation-title.ts`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-16 15:38] - [FIX]
 
 What: Broadened Pixel Service Request routing to every fulfillment type (design/copy/funnel/ghl/ad/video/other/general). Policy + vibey/atlas skills now forbid silent `create_task` for client fulfillment and require client name, draft status, and an openable `review_url` in the reply. Added DB migration so live agent skills/TOOLS pick this up.

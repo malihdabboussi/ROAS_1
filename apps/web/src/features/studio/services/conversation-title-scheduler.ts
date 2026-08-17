@@ -29,8 +29,9 @@ export function scheduleConversationTitleSuggestion(
 
   void suggestConversationTitle(trimmed)
     .then(async (res) => {
+      const existing = useChatStore.getState().conversations.find((c) => c.id === conversationId)
       const title = resolveSuggestedConversationTitle(res.title, trimmed, 60)
-      if (!title) return
+      if (!title || title === existing?.title) return
       await renameConversation(conversationId, title)
       useChatStore.getState().updateConversation(conversationId, {
         title,
@@ -38,10 +39,10 @@ export function scheduleConversationTitleSuggestion(
       })
     })
     .catch(async () => {
-      const title = resolveSuggestedConversationTitle(null, trimmed, 60)
-      if (!title) return
       const existing = useChatStore.getState().conversations.find((c) => c.id === conversationId)
-      if (existing && !needsGeneratedConversationTitle(existing.title)) return
+      if (existing && !needsGeneratedConversationTitle(existing.title, trimmed)) return
+      const title = resolveSuggestedConversationTitle(null, trimmed, 60)
+      if (!title || title === existing?.title) return
       try {
         await renameConversation(conversationId, title)
         useChatStore.getState().updateConversation(conversationId, {
@@ -73,11 +74,10 @@ export function initConversationTitleAutogen(): void {
       userMessageCountByConversation.set(conversationId, userCount)
       if (previous > 0 || userCount < 1) continue
 
-      const existing = conversations.find((row) => row.id === conversationId)
-      if (existing && !needsGeneratedConversationTitle(existing.title)) continue
-
       const firstUser = messages.find((message) => message.role === 'user')
       const content = typeof firstUser?.content === 'string' ? firstUser.content : ''
+      const existing = conversations.find((row) => row.id === conversationId)
+      if (existing && !needsGeneratedConversationTitle(existing.title, content)) continue
       if (content.trim()) scheduleConversationTitleSuggestion(conversationId, content)
     }
   }
