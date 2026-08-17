@@ -15,7 +15,6 @@ import { toast } from 'sonner'
 import { assignConversationScope, CONVERSATION_ACTIONS_TOAST_ERRORS } from '@/lib/conversations'
 import { useCampaignCacheVersion } from '@/lib/home'
 import { useOrgStore } from '@/lib/org'
-import { fetchSpaces } from '@/lib/spaces'
 import { positionFloatingMenuFromAnchorRect } from '@/lib/ui'
 import {
   buildConversationScopeLists,
@@ -34,9 +33,9 @@ import {
   type ConversationScopeMenuGeom,
   type ConversationScopePickerHandle,
   type ConversationScopePickerProps,
-  type ConversationScopeSpace,
 } from './conversation-scope-picker-layout'
-import { isGeneralLabel, sortGeneralFirst } from './conversation-scope-sort'
+import { buildConversationScopeChange } from './conversation-scope-select'
+import { isGeneralLabel } from './conversation-scope-sort'
 import {
   ConversationScopePickerMenus,
   type ConversationScopeSubmenu,
@@ -47,6 +46,7 @@ import {
   useConversationScopeFallbackSpace,
   useConversationScopePrograms,
 } from './use-conversation-scope-data'
+import { useConversationScopeSpaces } from './use-conversation-scope-spaces'
 
 export type { ConversationScopePickerHandle } from './conversation-scope-picker-layout'
 
@@ -79,10 +79,8 @@ export const ConversationScopePicker = forwardRef<
   const programs = useConversationScopePrograms(activeOrgId)
   const [submenu, setSubmenu] = useState<ConversationScopeSubmenu | null>(null)
   const [clientSearch, setClientSearch] = useState('')
-  const [spacesByCampaign, setSpacesByCampaign] = useState<
-    Record<string, ConversationScopeSpace[]>
-  >({})
-  const [loadingCampaignId, setLoadingCampaignId] = useState<string | null>(null)
+  const { spacesByCampaign, loadingCampaignId, fetchSpacesForCampaign, resolveGeneralSpaceId } =
+    useConversationScopeSpaces(activeOrgId)
   const [saving, setSaving] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const openFromBannerRef = useRef(false)
@@ -232,30 +230,6 @@ export const ConversationScopePicker = forwardRef<
       : selectedName
   const displayLabel = compact ? selectedName : label
 
-  const fetchSpacesForCampaign = useCallback(
-    (nextCampaignId: string) => {
-      if (spacesByCampaign[nextCampaignId]) return
-      setLoadingCampaignId(nextCampaignId)
-      void fetchSpaces<ConversationScopeSpace>(
-        { campaign_id: nextCampaignId, limit: 50 },
-        activeOrgId ? { orgId: activeOrgId } : { orgId: null },
-      )
-        .then((rows) => {
-          setSpacesByCampaign((prev) => ({
-            ...prev,
-            [nextCampaignId]: sortGeneralFirst(rows, (space) => space.title),
-          }))
-        })
-        .catch(() => {
-          setSpacesByCampaign((prev) => ({ ...prev, [nextCampaignId]: [] }))
-        })
-        .finally(() => {
-          setLoadingCampaignId((current) => (current === nextCampaignId ? null : current))
-        })
-    },
-    [activeOrgId, spacesByCampaign],
-  )
-
   useEffect(() => {
     if (!selectedCampaignId || !selectedSpaceId) return
     fetchSpacesForCampaign(selectedCampaignId)
@@ -266,30 +240,30 @@ export const ConversationScopePicker = forwardRef<
       if (saving) return
       setSaving(true)
       try {
+        let resolvedSpaceId = nextSpaceId
+        // Campaign-only picks attach that campaign's General space so Connections
+        // and the agent share one concrete location (not a stale prior space).
+        if (nextCampaignId && resolvedSpaceId == null) {
+          resolvedSpaceId = await resolveGeneralSpaceId(nextCampaignId)
+        }
         if (conversation) {
           const updated = await assignConversationScope(
             conversation.id,
             nextCampaignId,
-            nextSpaceId,
+            resolvedSpaceId,
           )
           onConversationUpdated?.(updated)
         }
-        const nextCampaign =
-          nextCampaignId == null
-            ? null
-            : (campaigns.find((campaign) => campaign.id === nextCampaignId) ?? null)
-        const spaceTitle =
-          nextSpaceId == null
-            ? null
-            : (findConversationScopeSpace(spacesByCampaign, nextSpaceId)?.title ??
-              (fallbackSpace?.id === nextSpaceId ? fallbackSpace.title : null))
-        onScopeChanged?.({
-          campaignId: nextCampaignId,
-          spaceId: nextSpaceId,
-          campaignName: nextCampaign?.name ?? null,
-          spaceTitle,
-          programName: programNameForCampaign(nextCampaign, programs),
-        })
+        onScopeChanged?.(
+          buildConversationScopeChange({
+            campaignId: nextCampaignId,
+            spaceId: resolvedSpaceId,
+            campaigns,
+            programs,
+            spacesByCampaign,
+            fallbackSpace,
+          }),
+        )
         setOpen(false)
       } catch (error) {
         console.error('Move conversation scope failed:', error)
@@ -305,6 +279,7 @@ export const ConversationScopePicker = forwardRef<
       onConversationUpdated,
       onScopeChanged,
       programs,
+      resolveGeneralSpaceId,
       saving,
       spacesByCampaign,
     ],
@@ -351,8 +326,14 @@ export const ConversationScopePicker = forwardRef<
           setHoverRowEl(row)
           setSubmenu({ type: 'program', programId })
         }}
-        onOpenCampaignSpaces={(nextCampaignId, row) => {
+        onOpenClients={(row) => {
           setHoverRowEl(row)
+          setSubmenu({ type: 'clients' })
+        }}
+        onOpenCampaignSpaces={(nextCampaignId, row) => {
+          // Keep the Clients-folder anchor when drilling client → spaces so the
+          // flyout does not jump after the client row unmounts.
+          if (submenu?.type !== 'clients') setHoverRowEl(row)
           setSubmenu({ type: 'spaces', campaignId: nextCampaignId })
           fetchSpacesForCampaign(nextCampaignId)
         }}

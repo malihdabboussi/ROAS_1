@@ -78,9 +78,14 @@ export function buildConversationScopeLists(
     buckets.set(key, list)
   }
 
+  // Clients stay in `clients` only — never under Programs as "Client Spaces".
   const programRows: ConversationScopeProgramRow[] = []
   for (const program of sortGeneralFirst(programs, (row) => programDisplayName(row))) {
-    const rows = isClientsProgram(program) ? clients : (buckets.get(program.id) ?? [])
+    if (isClientsProgram(program)) {
+      buckets.delete(program.id)
+      continue
+    }
+    const rows = buckets.get(program.id) ?? []
     if (rows.length === 0) continue
     programRows.push({
       id: program.id,

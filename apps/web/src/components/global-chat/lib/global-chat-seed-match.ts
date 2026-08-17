@@ -6,7 +6,8 @@ export function globalChatSeedMatchesPanel(
 ): boolean {
   const targetSpaceId = seed.workContext?.spaceId?.trim() || null
   if (targetSpaceId) return targetSpaceId === panelSpaceId
-  if (seed.workContext?.surface === 'spaces') return false
+  // Campaign-only spaces attach (no space yet) belongs on the no-space panel.
+  if (seed.workContext?.surface === 'spaces') return !panelSpaceId
   return !panelSpaceId
 }
 

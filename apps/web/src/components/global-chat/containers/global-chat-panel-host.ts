@@ -55,6 +55,15 @@ export function resolveGlobalChatPanelHost(input: {
     }
   }
 
+  // Campaign-only Choose Space / attach: keep campaign on the general panel host.
+  if (workContext.surface === 'spaces' && workContext.campaignId) {
+    return {
+      panelKey: `campaign:${workContext.campaignId}`,
+      spaceId: undefined,
+      campaignId: workContext.campaignId,
+    }
+  }
+
   if (workContext.surface === 'general' && input.sticky?.spaceId) {
     return input.sticky
   }
