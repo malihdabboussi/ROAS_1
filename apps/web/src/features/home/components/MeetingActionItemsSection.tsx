@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Check } from 'lucide-react'
+import { Check, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { SpaceMappingCell, WorkItemList, WorkItemListRow } from '@/components/work-items'
+import { HOME_AGENDA_MESSAGES } from '@/features/home/config/home-agenda-messages.config'
 import {
   HOME_TOAST_ERRORS,
   HOME_TOAST_SUCCESS,
@@ -217,79 +218,78 @@ export function MeetingActionItemsSection({
 
   return (
     <section className="gap-spacing-3 flex flex-col">
-      <div className="gap-spacing-2 flex items-center justify-between">
-        <h2 className="body-3 text-foreground font-semibold">Action items ({actions.length})</h2>
-        <button
-          type="button"
-          onClick={() => setComposing(true)}
-          className="button-compact button-glass-neutral"
-          aria-label="Add action item"
-          title="Add action item"
-        >
-          Add action
-        </button>
-      </div>
+      <h2 className="body-3 text-foreground font-semibold">Action items ({actions.length})</h2>
 
-      {composing ? (
-        <form
-          className="gap-spacing-2 flex items-center"
-          onSubmit={(event) => {
-            event.preventDefault()
-            void submit()
-          }}
-        >
-          <input
-            ref={inputRef}
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') {
-                event.preventDefault()
-                event.stopPropagation()
-                resetComposer()
-              }
-            }}
-            placeholder="What needs to happen?"
-            disabled={saving}
-            className="input-glass input-leading body-3 h-spacing-9 rounded-spacing-2 pr-spacing-3 min-w-0 flex-1"
-            aria-label="New action item"
+      <WorkItemList>
+        {actions.map((action) => (
+          <ActionRow
+            key={action.id}
+            action={action}
+            spaceId={spaceId}
+            mappingLabel={mappingLabel}
+            mappingPathLabel={mappingEntry?.pathLabel}
+            onToggle={onToggle}
+            onMoved={handleMoved}
           />
-          <button
-            type="submit"
-            disabled={saving || !draft.trim()}
-            className="button-compact button-glass-primary disabled:opacity-50"
-          >
-            {saving ? 'Adding…' : 'Add'}
-          </button>
-          <button
-            type="button"
-            onClick={resetComposer}
-            disabled={saving}
-            className="button-compact button-glass-neutral disabled:opacity-50"
-          >
-            Cancel
-          </button>
-        </form>
-      ) : null}
-
-      {actions.length > 0 ? (
-        <WorkItemList>
-          {actions.map((action) => (
-            <ActionRow
-              key={action.id}
-              action={action}
-              spaceId={spaceId}
-              mappingLabel={mappingLabel}
-              mappingPathLabel={mappingEntry?.pathLabel}
-              onToggle={onToggle}
-              onMoved={handleMoved}
-            />
-          ))}
-        </WorkItemList>
-      ) : null}
-      {!loading && actions.length === 0 && !composing ? (
-        <p className="body-4 text-muted-foreground">No action items yet.</p>
-      ) : null}
+        ))}
+        <li>
+          {composing ? (
+            <form
+              className="gap-spacing-2 flex items-center px-3.5 py-3"
+              onSubmit={(event) => {
+                event.preventDefault()
+                void submit()
+              }}
+            >
+              <input
+                ref={inputRef}
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    resetComposer()
+                  }
+                }}
+                placeholder="What needs to happen?"
+                disabled={saving}
+                className="input-glass input-leading body-3 h-spacing-9 rounded-spacing-2 pr-spacing-3 min-w-0 flex-1"
+                aria-label="New action item"
+              />
+              <button
+                type="submit"
+                disabled={saving || !draft.trim()}
+                className="button-compact button-glass-primary disabled:opacity-50"
+              >
+                {saving ? 'Adding…' : 'Add'}
+              </button>
+              <button
+                type="button"
+                onClick={resetComposer}
+                disabled={saving}
+                className="button-compact button-glass-neutral disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setComposing(true)}
+              disabled={loading}
+              className="hover:bg-hover-subtle gap-spacing-2 flex w-full min-w-0 items-center px-3.5 py-3 text-left transition-colors disabled:opacity-50"
+              aria-label="Add action item"
+              title="Add action item"
+            >
+              <Plus className="icon-xs text-muted-foreground shrink-0" aria-hidden />
+              <span className="body-3 text-muted-foreground">
+                {HOME_AGENDA_MESSAGES.ADD_ACTION_ITEM.message}
+              </span>
+            </button>
+          )}
+        </li>
+      </WorkItemList>
     </section>
   )
 }

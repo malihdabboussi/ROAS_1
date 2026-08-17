@@ -71,6 +71,19 @@ export function buildMeetingAwarenessContext(input: {
     actions ? `Action items:\n${actions}` : 'Action items: none yet',
     snippets ? `Chat notes and call snippets:\n${snippets}` : 'Chat notes: none yet',
     contextLinks ? `Linked company context:\n${contextLinks}` : 'Linked company context: none yet',
+    agendaGuidance(input.bundle.workspace?.agenda_doc_item_id),
     'Do not send external messages or create tasks unless the user explicitly asks.',
   ].join('\n\n')
+}
+
+function agendaGuidance(agendaDocItemId: string | null | undefined): string {
+  const id = agendaDocItemId?.trim()
+  if (!id) {
+    return 'No editable agenda Space Doc is linked yet. If they ask to prep or start the agenda, write it in a ```draft Agenda``` fence.'
+  }
+  return [
+    `Editable agenda Space Doc is on the right (space_item_id=${id}).`,
+    'When they ask to prep, start, or write the agenda, update that document with update_document using that id.',
+    'They edit it on the right like a Space Doc. Do not only use a draft fence.',
+  ].join(' ')
 }

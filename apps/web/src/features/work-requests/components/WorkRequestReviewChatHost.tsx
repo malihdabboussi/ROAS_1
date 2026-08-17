@@ -146,6 +146,20 @@ export function WorkRequestReviewChatHost({ token, draft, options, onSave, onSub
               />
             </div>
           </div>
+
+          {/* Always show finalize here — Pixel often only pastes the review URL
+              without a work_request UI block, which previously left a circular link. */}
+          <div className="border-border px-spacing-4 py-spacing-4 md:px-spacing-6 border-t">
+            <div className="mx-auto w-full max-w-3xl">
+              <WorkRequestChatFlow
+                draft={draft}
+                options={options}
+                presentation="inline"
+                onSave={onSave}
+                onSubmit={onSubmit}
+              />
+            </div>
+          </div>
         </div>
       </WorkRequestReviewForceOpenProvider>
     </WorkspaceSettingsModalProvider>

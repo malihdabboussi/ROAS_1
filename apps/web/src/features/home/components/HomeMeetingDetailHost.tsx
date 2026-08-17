@@ -23,11 +23,9 @@ import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 export function HomeMeetingDetailHost({
   event,
   onClose,
-  onOpenPrep,
 }: {
   event: CalendarAgendaEvent
   onClose: () => void
-  onOpenPrep: () => void
 }) {
   const recordWorkAreaPage = useShellStore((state) => state.recordWorkAreaPage)
   const related = event.related
@@ -111,7 +109,6 @@ export function HomeMeetingDetailHost({
           fallbackTitle={event.title}
           onBack={onClose}
           onClose={onClose}
-          onOpenPrep={onOpenPrep}
         />
       </>
     )

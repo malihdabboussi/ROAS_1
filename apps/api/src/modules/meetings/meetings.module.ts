@@ -9,6 +9,7 @@ import { MeetingMergeRepository } from './repositories/meeting-merge.repository'
 import { MeetingProviderActionsRepository } from './repositories/meeting-provider-actions.repository'
 import { MeetingRecapRepository } from './repositories/meeting-recap.repository'
 import { MeetingRecordingBackfillRepository } from './repositories/meeting-recording-backfill.repository'
+import { MeetingWorkspaceAgendaRepository } from './repositories/meeting-workspace-agenda.repository'
 import { MeetingWorkspaceReadRepository } from './repositories/meeting-workspace-read.repository'
 import { MeetingWorkspaceResolutionRepository } from './repositories/meeting-workspace-resolution.repository'
 import { MeetingWorkspaceStateRepository } from './repositories/meeting-workspace-state.repository'
@@ -27,6 +28,7 @@ import { MeetingWorkspaceService } from './services/meeting-workspace.service'
   ],
   providers: [
     MeetingWorkspaceRepository,
+    MeetingWorkspaceAgendaRepository,
     MeetingMergeRepository,
     MeetingMergeService,
     MeetingProviderActionsRepository,

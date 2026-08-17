@@ -8,8 +8,10 @@ const mocks = vi.hoisted(() => ({
   fetchMeetingWorkspace: vi.fn(),
   openChatDrawer: vi.fn(),
   continueMeetingConversation: vi.fn(),
+  seedComposer: vi.fn(),
   openDocumentInShell: vi.fn(),
   setWorkAreaOpen: vi.fn(),
+  recordWorkAreaPage: vi.fn(),
   startMeetingCall: vi.fn(),
   updateSpaceItem: vi.fn(),
   toggleMeetingActionStatus: vi.fn(),
@@ -28,18 +30,31 @@ vi.mock('@/features/home/services/meeting-workspace-api', () => ({
 vi.mock('@/features/home/lib/sync-agenda-fathom-recording', () => ({
   syncAgendaFathomRecordingToWorkspace: vi.fn().mockResolvedValue(false),
 }))
-vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
-  useGlobalChatStore: (
-    selector: (state: {
-      clearMeetingContext: typeof mocks.clearMeetingContext
-      continueMeetingConversation: typeof mocks.continueMeetingConversation
-    }) => unknown,
-  ) =>
-    selector({
-      clearMeetingContext: mocks.clearMeetingContext,
-      continueMeetingConversation: mocks.continueMeetingConversation,
-    }),
+vi.mock('@/features/home/components/MeetingAgendaDocEditor', () => ({
+  MeetingAgendaDocEditor: ({ itemId }: { itemId: string }) => (
+    <div data-testid="meeting-agenda-doc" data-item-id={itemId} />
+  ),
 }))
+vi.mock('@/components/global-chat/store/use-global-chat-store', () => {
+  const useGlobalChatStore = Object.assign(
+    (
+      selector: (state: {
+        clearMeetingContext: typeof mocks.clearMeetingContext
+        continueMeetingConversation: typeof mocks.continueMeetingConversation
+      }) => unknown,
+    ) =>
+      selector({
+        clearMeetingContext: mocks.clearMeetingContext,
+        continueMeetingConversation: mocks.continueMeetingConversation,
+      }),
+    {
+      getState: () => ({
+        seedComposer: mocks.seedComposer,
+      }),
+    },
+  )
+  return { useGlobalChatStore }
+})
 vi.mock('@/lib/campaigns/campaign-api', () => ({
   fetchCampaign: vi.fn().mockResolvedValue({ id: 'campaign-1', name: 'ROAS' }),
 }))
@@ -48,15 +63,12 @@ vi.mock('@/lib/spaces/spaces-api', () => ({
   updateSpaceItem: mocks.updateSpaceItem,
 }))
 vi.mock('@/components/shell/use-shell-store', () => ({
-  useShellStore: (
-    selector: (state: {
-      openChatDrawer: typeof mocks.openChatDrawer
-      setWorkAreaOpen: typeof mocks.setWorkAreaOpen
-    }) => unknown,
-  ) =>
+  useShellStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
       openChatDrawer: mocks.openChatDrawer,
       setWorkAreaOpen: mocks.setWorkAreaOpen,
+      recordWorkAreaPage: mocks.recordWorkAreaPage,
+      chatDrawer: { conversationId: null },
     }),
 }))
 
@@ -121,6 +133,8 @@ describe('MeetingWorkspaceDialog', () => {
       expect(screen.queryByRole('status', { name: 'Loading meeting workspace' })).toBeNull()
       expect(screen.getByText('Recordings (0)')).toBeInTheDocument()
     })
+    expect(screen.getByRole('button', { name: 'Add action item' })).toBeInTheDocument()
+    expect(screen.queryByText('No action items yet.')).not.toBeInTheDocument()
   })
 
   it('does not steal the open chat until Continue in chat', async () => {

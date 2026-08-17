@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   isFollowUpSpaceItem,
+  isMeetingAgendaSpaceItem,
   mapFollowUpSpaceItemToMeetingAction,
 } from '../domain/meeting-follow-up-actions'
 
@@ -77,7 +78,9 @@ export class MeetingWorkspaceReadRepository {
 
     const childRows = (children.data as Record<string, unknown>[]) ?? []
     const followUps = childRows.filter((row) => isFollowUpSpaceItem(row))
-    const deliverables = childRows.filter((row) => !isFollowUpSpaceItem(row))
+    const deliverables = childRows.filter(
+      (row) => !isFollowUpSpaceItem(row) && !isMeetingAgendaSpaceItem(row),
+    )
     // Meetings-space follow_ups are canonical; legacy meeting_actions only fill gaps.
     const actionsFromFollowUps = followUps.map(mapFollowUpSpaceItemToMeetingAction)
     const legacyActionRows = (legacyActions.data as Record<string, unknown>[]) ?? []

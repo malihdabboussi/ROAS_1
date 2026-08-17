@@ -39,8 +39,6 @@ export function MeetingWorkspaceBody({
   prep,
   prepDescription,
   joinUrl,
-  agendaDocLink,
-  onOpenPrep,
   onRecordingLinked,
   onNoteCreated,
   onToggleAction,
@@ -56,8 +54,6 @@ export function MeetingWorkspaceBody({
   prep: ParsedMeetingPrep
   prepDescription: string | null | undefined
   joinUrl: string | null
-  agendaDocLink?: string | null
-  onOpenPrep?: () => void
   onRecordingLinked: () => void
   onNoteCreated: (snippet: MeetingSnippet) => void
   onToggleAction: (action: MeetingAction) => void
@@ -102,11 +98,12 @@ export function MeetingWorkspaceBody({
 
       <section className="section-card p-spacing-4 gap-spacing-2 flex flex-col">
         <MeetingAgendaPrepSection
+          spaceId={spaceId}
+          agendaDocItemId={bundle?.workspace?.agenda_doc_item_id}
+          agendaTitle={bundle?.meeting.title?.trim() || 'Agenda'}
           prep={prep}
           prepDescription={prepDescription}
           joinUrl={joinUrl}
-          agendaDocLink={agendaDocLink}
-          onOpenPrep={onOpenPrep}
         />
       </section>
 
