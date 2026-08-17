@@ -1,14 +1,14 @@
 ## 2026-08-17 - [FEATURE] Page Grader must stamp conversation_id for shared review chat
 
-Status: Open
+Status: Done (platform stamp + Slack backfill)
 
 Found while: Building Service Request shared Pixel chat review host
 
-Evidence: Production draft `5a6ad32b-fe23-4e9d-92be-d0edc114ac7e` (token review link) returns `resume_conversation_id: null`. Without provenance conversation id the new public chat host falls back to the step wizard.
+Evidence: Production draft for review token `rlD58pPCtFksQiYhI4f6_IVlX2CQ1Djkfq_TuO8haHc` returned `resume_conversation_id: null`, so the public host fell back to the step wizard.
 
-Needed work: Ensure Page Grader `create_fulfillment_request` / webhook always includes ROAS `conversation_id` when intake originates from Pixel/Slack-routed ROAS chat; backfill or reissue tokens for drafts missing it when a conversation is known.
+Needed work: ~~Ensure Page Grader create always includes ROAS conversation_id~~ Shipped: agent-api injects session conversation into `page_grader_create_fulfillment_request` args and posts `/api/internal/work-requests/stamp-conversation`; review load/chat backfills from Slack channel+thread provenance when missing.
 
-Reason not done now: Stamping lives in the Page Grader MCP write path (external to this ROAS change). ROAS now accepts top-level `conversation_id` on the create webhook and documents the skill requirement.
+Reason not done now: N/A — completed on `cursor/sr-conversation-stamp-6a50`.
 
 ## 2026-08-17 - [ARCH] SpaceVibeyChatPanel still over the container LOC limit after chat-header controls
 

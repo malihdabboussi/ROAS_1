@@ -17,6 +17,12 @@ import {
   WorkRequestRepository,
   type WorkRequestDraftRow,
 } from '../repositories/work-request.repository'
+import {
+  ensureDraftResumeConversation,
+  loadOwnedConversationId,
+  mergeConversationIntoProvenance,
+  mergeIncomingDraftConversation,
+} from './work-request-conversation-stamp'
 import { mirrorWorkRequestFinalTask } from './work-request-mirror'
 import {
   asRecord,
@@ -25,6 +31,7 @@ import {
   hashWorkRequestReviewToken,
   isMissing,
   publicWorkRequestOptions,
+  readResumeConversationId,
   safeWorkRequestError,
   sanitizeWorkRequestDraft,
   schemaData,
@@ -42,7 +49,7 @@ export class WorkRequestService {
     private readonly config: ConfigService,
   ) {}
   async getReview(token: string) {
-    const draft = await this.repository.findByTokenHash(hashWorkRequestReviewToken(token))
+    let draft = await this.repository.findByTokenHash(hashWorkRequestReviewToken(token))
     if (!draft) return { state: 'invalid' as const }
     const state = await this.resolveState(draft)
     if (state !== 'draft') {
@@ -56,11 +63,52 @@ export class WorkRequestService {
         clickup_url: publicDraft.clickup_url,
       }
     }
+    draft = await ensureDraftResumeConversation({
+      client: this.repository.client,
+      draft,
+      update: (id, values) => this.repository.update(id, values),
+    })
     const options = await this.scope.loadScopedOptions(draft)
     return {
       state: 'draft' as const,
       draft: sanitizeWorkRequestDraft(draft),
       options: publicWorkRequestOptions(options),
+    }
+  }
+
+  /**
+   * Internal: stamp ROAS conversation onto a draft when Page Grader omitted it.
+   * Never overwrites a different conversation already stored on the draft.
+   */
+  async stampConversation(draftId: string, conversationId: string) {
+    const draft = await this.repository.findById(draftId)
+    if (!draft) throw new NotFoundException('Service Request draft not found')
+    const existing = readResumeConversationId(draft.provenance)
+    if (existing === conversationId) {
+      return { stamped: true as const, draft_id: draft.id, conversation_id: conversationId }
+    }
+    if (existing) {
+      return {
+        stamped: false as const,
+        draft_id: draft.id,
+        conversation_id: existing,
+        reason: 'already_set' as const,
+      }
+    }
+    const owned = await loadOwnedConversationId({
+      client: this.repository.client,
+      conversationId,
+      ownerUserId: draft.owner_user_id,
+      ownerOrgId: draft.owner_org_id,
+    })
+    if (!owned) throw new BadRequestException('Conversation is not available for this draft')
+    const updated = await this.repository.update(draft.id, {
+      provenance: mergeConversationIntoProvenance(asRecord(draft.provenance), owned),
+    })
+    return {
+      stamped: true as const,
+      draft_id: updated.id,
+      conversation_id: owned,
     }
   }
   async updateReview(token: string, input: UpdateWorkRequestDraftDto) {
@@ -267,6 +315,12 @@ export class WorkRequestService {
       input.idempotency_key,
     )
     if (draft) {
+      draft = await mergeIncomingDraftConversation({
+        client: this.repository.client,
+        draft,
+        provenance: input.provenance,
+        update: (id, values) => this.repository.update(id, values),
+      })
       const replayToken = generateWorkRequestReviewToken()
       const replayIssuedAt = new Date()
       draft = await this.reissueToken(
@@ -293,6 +347,12 @@ export class WorkRequestService {
         input.idempotency_key,
       )
       if (!draft) throw error
+      draft = await mergeIncomingDraftConversation({
+        client: this.repository.client,
+        draft,
+        provenance: input.provenance,
+        update: (id, values) => this.repository.update(id, values),
+      })
       return this.webhookResult(draft, null, 'existing')
     }
     return this.webhookResult(draft, token, 'created')

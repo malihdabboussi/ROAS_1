@@ -11,6 +11,10 @@ import { UserSessionMintService } from '@vibey/api-shared'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import { WorkRequestRepository } from '../repositories/work-request.repository'
 import {
+  ensureDraftResumeConversation,
+  loadOwnedConversationId,
+} from './work-request-conversation-stamp'
+import {
   asRecord,
   hashWorkRequestReviewToken,
   readResumeConversationId,
@@ -134,7 +138,7 @@ export class WorkRequestChatService {
   }
 
   private async requireActiveReviewConversation(token: string) {
-    const draft = await this.repository.findByTokenHash(hashWorkRequestReviewToken(token))
+    let draft = await this.repository.findByTokenHash(hashWorkRequestReviewToken(token))
     if (!draft) throw new NotFoundException('Service Request link not found')
     if (draft.status === 'finalized') {
       throw new ConflictException('Service Request already submitted')
@@ -148,6 +152,11 @@ export class WorkRequestChatService {
       }
       throw new GoneException('Service Request link expired')
     }
+    draft = await ensureDraftResumeConversation({
+      client: this.repository.client,
+      draft,
+      update: (id, values) => this.repository.update(id, values),
+    })
     const conversationId = readResumeConversationId(draft.provenance)
     if (!conversationId) {
       throw new NotFoundException('Service Request chat is not available for this link')
@@ -160,14 +169,12 @@ export class WorkRequestChatService {
     ownerUserId: string,
     ownerOrgId: string | null,
   ) {
-    let query = this.repository.client
-      .from('conversations')
-      .select('id, user_id, org_id')
-      .eq('id', conversationId)
-      .eq('user_id', ownerUserId)
-    query = ownerOrgId ? query.eq('org_id', ownerOrgId) : query.is('org_id', null)
-    const { data, error } = await query.maybeSingle()
-    if (error) throw new Error(`Could not verify Service Request chat: ${error.message}`)
-    return data
+    const id = await loadOwnedConversationId({
+      client: this.repository.client,
+      conversationId,
+      ownerUserId,
+      ownerOrgId,
+    })
+    return id ? { id } : null
   }
 }
