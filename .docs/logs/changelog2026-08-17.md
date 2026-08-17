@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 19:56] - [FIX]
+What: Home Suggested next moves now keep only the signed-in user's assigned follow-ups and unassigned items from meetings they actually attended.
+Why: The list was org-wide, so teammates saw each other's Fathom follow-ups (for example a Master Your Craft deck action from a team call they were not on). The tooltip said "your meeting" even when they were not an attendee.
+Impact: Each user sees their own actions and follow-ups from their meetings. Teammate-owned items from other people's calls no longer appear under the composer.
+Files: `apps/api/src/modules/home/repositories/next-moves.repository.ts`, `apps/api/src/modules/home/repositories/next-moves-audience.ts`, `apps/api/src/modules/home/repositories/next-moves-audience.test.ts`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 19:49] - [FIX]
 What: Made meeting breadcrumbs clickable (Agenda returns to the list), removed duplicate in-page titles on Inbox / Meetings / My Tasks / All Tasks / Clients / Client Campaigns, moved Portal into the work-card header, and added an All Tasks shell crumb.
 Why: Header already named the page, so repeating H1s cluttered the work area; meeting ancestor crumbs were inert spans; Portal sat beside the page title instead of the top bar; All Tasks had no crumb.
