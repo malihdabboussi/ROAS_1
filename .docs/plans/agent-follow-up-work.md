@@ -1,3 +1,15 @@
+## 2026-08-17 - [FEATURE] Page Grader must stamp conversation_id for shared review chat
+
+Status: Open
+
+Found while: Building Service Request shared Pixel chat review host
+
+Evidence: Production draft `5a6ad32b-fe23-4e9d-92be-d0edc114ac7e` (token review link) returns `resume_conversation_id: null`. Without provenance conversation id the new public chat host falls back to the step wizard.
+
+Needed work: Ensure Page Grader `create_fulfillment_request` / webhook always includes ROAS `conversation_id` when intake originates from Pixel/Slack-routed ROAS chat; backfill or reissue tokens for drafts missing it when a conversation is known.
+
+Reason not done now: Stamping lives in the Page Grader MCP write path (external to this ROAS change). ROAS now accepts top-level `conversation_id` on the create webhook and documents the skill requirement.
+
 ## 2026-08-17 - [ARCH] SpaceVibeyChatPanel still over the container LOC limit after chat-header controls
 
 Status: Open
@@ -22,6 +34,7 @@ Needed work: Split remaining send/seed/header orchestration out of SpaceVibeyCha
 
 Reason not done now: Requested work was header/card alignment; decomposing the oversized container was out of scope.
 
+## 2026-08-17 - [UI] ClientCampaignsPage still uses the old multi-table Clients layout
 
 Status: Open
 

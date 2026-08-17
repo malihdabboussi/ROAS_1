@@ -68,6 +68,9 @@ when strategy or brand interpretation is required, and call out disagreements.
     The portal uses the first line as the task title and the rest as the body.
     Never put the entire brief on one line.
     Never use native `create_task` for this class of work.
+    When this request is created from a ROAS / Pixel conversation, always include
+    that conversation's UUID in `source_context.conversation_id` (or
+    `conversationId`) so the review link resumes the **same** chat session.
 14. A successful Service Request intake result is a draft review link that
     continues the **same chat** (one step / option at a time — not a separate
     all-at-once form). The user-facing reply must include:

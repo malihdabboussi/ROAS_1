@@ -15,6 +15,7 @@ import {
 import { WORK_REQUEST_ERRORS } from '../config/errors.config'
 import { WORK_REQUEST_MESSAGES } from '../config/messages.config'
 import { WorkRequestChatFlow } from './WorkRequestChatFlow'
+import { WorkRequestReviewChatHost } from './WorkRequestReviewChatHost'
 
 export function WorkRequestReviewPage({ token }: { token: string }) {
   const router = useRouter()
@@ -119,14 +120,25 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
           />
         </div>
       ) : review?.state === 'draft' ? (
-        <WorkRequestChatFlow
-          key={review.draft.id}
-          draft={review.draft}
-          options={review.options}
-          presentation="page"
-          onSave={save}
-          onSubmit={submit}
-        />
+        review.draft.resume_conversation_id ? (
+          <WorkRequestReviewChatHost
+            key={review.draft.id}
+            token={token}
+            draft={review.draft}
+            options={review.options}
+            onSave={save}
+            onSubmit={submit}
+          />
+        ) : (
+          <WorkRequestChatFlow
+            key={review.draft.id}
+            draft={review.draft}
+            options={review.options}
+            presentation="page"
+            onSave={save}
+            onSubmit={submit}
+          />
+        )
       ) : review?.state === 'expired' ? (
         <div className="px-spacing-4 py-spacing-8 mx-auto w-full max-w-2xl">
           <StateCard

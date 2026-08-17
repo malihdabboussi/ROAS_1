@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   fetchWorkRequestReview,
+  fetchWorkRequestReviewChat,
   finalizeWorkRequestReview,
   requestWorkRequestRefresh,
 } from './work-request-api'
@@ -59,5 +60,36 @@ describe('public Work Request API', () => {
     await expect(requestWorkRequestRefresh('safe-token')).resolves.toEqual({
       state: 'refresh_required',
     })
+  })
+
+  it('loads the token-scoped review chat bootstrap without auth headers', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          conversation_id: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+          messages: [
+            {
+              id: 'm1',
+              conversation_id: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+              role: 'assistant',
+              content: 'Ready',
+              metadata: {},
+              created_at: '2026-08-17T00:00:00.000Z',
+            },
+          ],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(fetchWorkRequestReviewChat('safe-token')).resolves.toEqual({
+      conversation_id: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+      messages: [expect.objectContaining({ id: 'm1', content: 'Ready' })],
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/proxy/work-requests/review/safe-token/chat',
+      expect.objectContaining({ method: 'GET', cache: 'no-store' }),
+    )
   })
 })

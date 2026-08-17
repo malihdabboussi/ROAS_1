@@ -134,3 +134,107 @@ export function finalizeWorkRequestReview(token: string) {
 export function requestWorkRequestRefresh(token: string) {
   return requestReview(token, 'POST', '/refresh')
 }
+
+export type WorkRequestReviewChatMessage = {
+  id: string
+  conversation_id: string
+  role: string
+  content: string | null
+  metadata: unknown
+  created_at: string
+}
+
+export type WorkRequestReviewChatResponse = {
+  conversation_id: string
+  messages: WorkRequestReviewChatMessage[]
+}
+
+export async function fetchWorkRequestReviewChat(
+  token: string,
+): Promise<WorkRequestReviewChatResponse> {
+  const response = await fetch(
+    `/api/proxy/work-requests/review/${encodeURIComponent(token)}/chat`,
+    { method: 'GET', cache: 'no-store' },
+  )
+  const payload = (await response.json().catch(() => ({}))) as WorkRequestReviewChatResponse & {
+    message?: string
+    error?: string
+  }
+  if (!response.ok) {
+    throw new WorkRequestApiError(
+      payload.message || payload.error || 'The Service Request chat could not be loaded.',
+      response.status,
+    )
+  }
+  return {
+    conversation_id: payload.conversation_id,
+    messages: Array.isArray(payload.messages) ? payload.messages : [],
+  }
+}
+
+function readWorkRequestReviewSseLine(
+  line: string,
+  onEvent: (event: Record<string, unknown>) => void,
+) {
+  if (!line.startsWith('data: ')) return
+  const payload = line.slice(6)
+  if (payload === '[DONE]') return
+  try {
+    onEvent(JSON.parse(payload) as Record<string, unknown>)
+  } catch {
+    // skip malformed lines
+  }
+}
+
+export function flushWorkRequestReviewSseBuffer(
+  buffer: string,
+  onEvent: (event: Record<string, unknown>) => void,
+): string {
+  const lines = buffer.split('\n')
+  const remaining = lines.pop() ?? ''
+  for (const line of lines) readWorkRequestReviewSseLine(line, onEvent)
+  return remaining
+}
+
+export function sendWorkRequestReviewChatStream(
+  token: string,
+  content: string,
+  onEvent: (event: Record<string, unknown>) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const response = await fetch(
+        `/api/proxy/work-requests/review/${encodeURIComponent(token)}/chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'text/event-stream',
+          },
+          body: JSON.stringify({ content }),
+          signal,
+        },
+      )
+      if (!response.ok || !response.body) {
+        reject(new WorkRequestApiError('Chat request failed.', response.status))
+        return
+      }
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        buffer = flushWorkRequestReviewSseBuffer(buffer, onEvent)
+      }
+      buffer += decoder.decode()
+      if (buffer) flushWorkRequestReviewSseBuffer(`${buffer}\n`, onEvent)
+      resolve()
+    } catch (error) {
+      if (signal?.aborted) resolve()
+      else reject(error)
+    }
+  })
+}

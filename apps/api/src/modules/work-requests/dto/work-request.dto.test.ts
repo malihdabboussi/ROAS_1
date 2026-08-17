@@ -50,4 +50,23 @@ describe('CreateWorkRequestDraftWebhookSchema', () => {
       }),
     ).toThrow(/Credential fields are not allowed/)
   })
+
+  it('accepts an explicit top-level conversation_id for review chat resume', () => {
+    expect(
+      CreateWorkRequestDraftWebhookSchema.parse({
+        page_grader_client_id: '11111111-1111-1111-1111-111111111111',
+        page_grader_client_name: 'Example Client',
+        title: 'Resume chat request',
+        body: 'Continue in Pixel',
+        task_type: 'funnel',
+        priority: 'high',
+        conversation_id: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+        idempotency_key: 'roas-mcp:conv-resume',
+      }),
+    ).toMatchObject({
+      provenance: {
+        conversation_id: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+      },
+    })
+  })
 })

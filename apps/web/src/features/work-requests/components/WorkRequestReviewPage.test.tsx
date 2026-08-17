@@ -5,6 +5,7 @@ import { WorkRequestReviewPage } from './WorkRequestReviewPage'
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn(), prefetch: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }))
 
 vi.mock('@/lib/supabase/client', () => ({
@@ -20,10 +21,54 @@ vi.mock('@/lib/work-requests', () => ({
   updateWorkRequestReview: vi.fn(),
   finalizeWorkRequestReview: vi.fn(),
   requestWorkRequestRefresh: vi.fn(),
+  fetchWorkRequestReviewChat: vi.fn(),
+  sendWorkRequestReviewChatStream: vi.fn(),
 }))
 
 vi.mock('@/components/vibey/vibey-loading-orb', () => ({
-  VibeyLoadingOrb: () => <span>Loading request</span>,
+  VibeyLoadingOrb: ({ text }: { text?: string }) => <span>{text || 'Loading request'}</span>,
+}))
+
+vi.mock('@/components/vibey/vibey-chat-orb', () => ({
+  VibeyChatOrb: () => <span>orb</span>,
+}))
+
+vi.mock('@/components/chat/MessageBubbleAdapter', () => ({
+  MessageBubble: ({ message }: { message: { content: string | null } }) => (
+    <div>{message.content}</div>
+  ),
+}))
+
+vi.mock('@/components/chat/ChatInputAdapter', () => ({
+  ChatInput: ({
+    onSend,
+    placeholder,
+  }: {
+    onSend: (content: string) => void
+    placeholder?: string
+  }) => (
+    <div>
+      <input aria-label="composer" placeholder={placeholder} />
+      <button type="button" onClick={() => onSend('hello from review')}>
+        Send message
+      </button>
+    </div>
+  ),
+}))
+
+vi.mock('@/lib/settings/workspace-settings-modal-context', () => ({
+  WorkspaceSettingsModalProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
+
+vi.mock('./WorkRequestReviewChatHost', () => ({
+  WorkRequestReviewChatHost: ({ draft }: { draft: { title: string } }) => (
+    <div>
+      <h1>{draft.title}</h1>
+      <p>Shared conversation chat host</p>
+      <input aria-label="composer" placeholder="Message Pixel…" />
+      <button type="button">Send message</button>
+    </div>
+  ),
 }))
 
 vi.mock('@/components/calendar/MonthCalendar', () => ({
@@ -103,6 +148,52 @@ describe('WorkRequestReviewPage', () => {
     expect(
       screen.getByText('The ROAS task is saved. The ClickUp mirror still needs another try.'),
     ).toBeInTheDocument()
+  })
+
+  it('opens the shared conversation chat host when a resume conversation exists', async () => {
+    vi.mocked(fetchWorkRequestReview).mockResolvedValue({
+      state: 'draft',
+      draft: {
+        id: 'draft-chat-1',
+        client_workspace_id: 'ws-1',
+        campaign_space_id: null,
+        request_type: 'general',
+        assignee_name: null,
+        title: 'Shared chat service request',
+        description: 'Continue in the original Pixel chat',
+        due_date: '2026-08-22',
+        priority: 'medium',
+        structured_fields: {},
+        links: [],
+        required_fields: ['title'],
+        missing_fields: [],
+        assets: [],
+        dependencies: [],
+        requester: { name: null },
+        status: 'draft',
+        expires_at: '2026-08-17T00:00:00.000Z',
+        final_task_id: null,
+        sync_status: 'not_started',
+        resume_conversation_id: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+        task_url: null,
+        clickup_url: null,
+      },
+      options: {
+        client_workspaces: [{ id: 'ws-1', name: 'Test webinar' }],
+        campaign_spaces: [],
+        team_members: [],
+      },
+    })
+
+    render(<WorkRequestReviewPage token="safe-token" />)
+
+    expect(await screen.findByText('Shared conversation chat host')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /shared chat service request/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Message Pixel…')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument()
+    expect(screen.queryByText('Already on this request')).not.toBeInTheDocument()
   })
 
   it('opens the chat-native review flow for drafts', async () => {
