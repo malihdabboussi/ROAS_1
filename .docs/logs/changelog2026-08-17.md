@@ -10,6 +10,16 @@ Impact: Dismiss removes the banner here. Other chats can still show a remaining 
 
 Files: `apps/web/src/components/global-chat/components/ChatComposerTryTip.tsx`, `apps/web/src/components/global-chat/components/ChatComposerTryTip.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
 
+## [2026-08-17 01:30] - [FIX]
+
+What: Empty Slack Brain imports no longer toast "Nothing to save from that Slack period." The notifier still acknowledges those skipped/empty jobs so they do not repeat.
+
+Why: Daily Slack channel sync can finish several empty windows seconds apart. Each one toasted the same info message on top of chat.
+
+Impact: Chat is not interrupted when Slack had nothing to save. Real import successes and real failures still toast.
+
+Files: `apps/web/src/features/brain/components/brain-import-job-toast.ts`, `BrainImportJobNotifier.tsx`, `documentation/features/page-grader-campaign-brain-sync.md`
+
 ## [2026-08-17 00:45] - [FIX]
 
 What: Fixed the chat HTML artifact PR so `next build` typecheck passes: `ChatMarkdownDocument` now types the mermaid/code/markdown segment union, and unused download mock params are prefixed.
