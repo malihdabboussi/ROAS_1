@@ -1,3 +1,15 @@
+## 2026-08-17 - [UI] Client Campaigns table still uses auto layout
+
+Status: Open
+
+Found while: Agency Clients table layout fix (avatars, wrapping, column alignment)
+
+Evidence: `apps/web/src/features/agency-clients/ClientCampaignsPage.tsx` still uses `table className="w-full border-collapse"` with `align-top` and `whitespace-nowrap` pills, and each client group is its own table, the same pattern that made Clients look broken.
+
+Needed work: Apply the same `table-fixed` + shared `colgroup` + `min-w-0`/`truncate`/`align-middle` contract used in `AgencyClientsTable.tsx`.
+
+Reason not done now: Requested scope was the Clients screen layout only.
+
 ## 2026-08-15 - [UI] Shell artifact viewer still uses lightweight previews for ads, offers, and adjacent entity types
 
 Status: Open
