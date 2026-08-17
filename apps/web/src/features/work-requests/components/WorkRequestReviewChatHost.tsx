@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { ChatInput } from '@/components/chat/ChatInputAdapter'
 import { MessageBubble } from '@/components/chat/MessageBubbleAdapter'
+import type { MessageBubbleProps } from '@/components/chat/MessageBubbleAdapter'
 import { VibeyChatOrb } from '@/components/vibey/vibey-chat-orb'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { WorkspaceSettingsModalProvider } from '@/lib/settings/workspace-settings-modal-context'
@@ -93,7 +94,7 @@ export function WorkRequestReviewChatHost({ token, draft, options, onSave, onSub
                 {messages.map((message, index) => (
                   <MessageBubble
                     key={message.id}
-                    message={message}
+                    message={message as MessageBubbleProps['message']}
                     isStreaming={
                       isStreaming && message.role === 'assistant' && index === messages.length - 1
                     }

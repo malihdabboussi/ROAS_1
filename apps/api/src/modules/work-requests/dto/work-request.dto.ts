@@ -109,10 +109,8 @@ export const CreateWorkRequestDraftWebhookSchema = z
   .strict()
   .refine(payloadSize(150_000), 'Draft payload is too large')
   .transform((input) => {
-    const source = {
-      ...input.source_context,
-      ...(input.conversation_id ? { conversation_id: input.conversation_id } : {}),
-    }
+    const source: Record<string, unknown> = { ...input.source_context }
+    if (input.conversation_id) source.conversation_id = input.conversation_id
     const requester = readRecord(source.requester)
     const originalAuthor = readRecord(source.original_author)
     const forwardingUser = readRecord(source.forwarding_user)

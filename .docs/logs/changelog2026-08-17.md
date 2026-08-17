@@ -128,3 +128,13 @@ Why: The pill duplicated Connections; keeping the slot and label helpers would l
 Impact: Chat input no longer has a path to render a campaign/Space contacts pill. Attachment stays in Connections.
 
 Files: `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `space-vibey-chat-panel.types.ts`, `apps/web/src/components/global-chat/config/work-context.config.ts`, `work-context.config.test.ts`
+
+## [2026-08-17 04:50] - [FIX]
+
+What: Fixed Vercel typecheck failures for Service Request shared chat — source_context merge typing in create webhook DTO, and MessageBubble message cast at the public chat host boundary.
+
+Why: Preview builds for roas-api and roas-web failed on PR #260.
+
+Impact: Branch can build and merge/deploy.
+
+Files: `apps/api/src/modules/work-requests/dto/work-request.dto.ts`, `apps/web/src/features/work-requests/components/WorkRequestReviewChatHost.tsx`
