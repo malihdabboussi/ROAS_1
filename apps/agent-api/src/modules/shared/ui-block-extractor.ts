@@ -250,6 +250,7 @@ function collectCandidateRecords(result: unknown): Array<Record<string, unknown>
     for (const key of [
       'result',
       'data',
+      'draft',
       'asset',
       'asset_ref',
       'media',
@@ -487,7 +488,21 @@ function buildWorkRequestChatBlock(
     .find(Boolean)
   if (nestedDraft) records.unshift(nestedDraft)
 
-  const reviewUrl = firstString(records, ['review_url', 'reviewUrl'])
+  let reviewUrl = firstString(records, ['review_url', 'reviewUrl'])
+  if (!reviewUrl) {
+    for (const record of records) {
+      if (!record) continue
+      for (const value of Object.values(record)) {
+        if (typeof value !== 'string' || !value.includes('/request-review/')) continue
+        const match = value.match(/https?:\/\/[^\s"]+\/request-review\/[A-Za-z0-9_-]{20,}/)
+        if (match?.[0]) {
+          reviewUrl = match[0]
+          break
+        }
+      }
+      if (reviewUrl) break
+    }
+  }
   if (!reviewUrl || !/^https?:\/\//i.test(reviewUrl)) return []
   if (!reviewUrl.includes('/request-review/')) return []
 
@@ -496,7 +511,9 @@ function buildWorkRequestChatBlock(
     firstString(records, ['title', 'name']) ||
     (typeof data.tool_name === 'string' && data.tool_name.includes('fulfillment')
       ? 'Service Request ready'
-      : 'Service Request ready')
+      : typeof data.tool === 'string' && data.tool.includes('fulfillment')
+        ? 'Service Request ready'
+        : 'Service Request ready')
 
   return [
     {
@@ -914,6 +931,17 @@ export function resolveUiBlocksFromToolResult(params: {
   }
 
   if (action === 'use_mcp_tool') {
+    const workRequestBlock = buildWorkRequestChatBlock(result, data)
+    if (workRequestBlock.length > 0) return workRequestBlock
+  }
+
+  // Fulfillment creates sometimes land as nested MCP envelopes without a clean
+  // top-level review_url key — still emit the resume card when the tool name matches.
+  const mcpToolName =
+    (typeof data.tool_name === 'string' && data.tool_name) ||
+    (typeof data.tool === 'string' && data.tool) ||
+    ''
+  if (/create_fulfillment_request/i.test(mcpToolName)) {
     const workRequestBlock = buildWorkRequestChatBlock(result, data)
     if (workRequestBlock.length > 0) return workRequestBlock
   }

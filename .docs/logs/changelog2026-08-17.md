@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 17:25] - [FIX]
+What: Service Request review links now always show the finalize flow on the public chat host, synthesize a work_request resume card from pasted review URLs in in-app chat, harden MCP UI-block extraction for nested fulfillment results, and pass `/home?conv=` into the chat panel as preferredConversationId so authenticated resume does not open blank.
+Why: Pixel often replied with only a markdown `/request-review/` URL (no work_request UI block), so opening the link looped the same chat with no finalize UI; signed-in redirect to `/home?conv=` could remount an empty Pixel pane.
+Impact: Guest review pages show chat + finalize steps; authenticated `/home?conv=&wr=` keeps the conversation selected and shows a resume card from the pasted URL; new fulfillment tool results emit work_request blocks more reliably.
+Files: `apps/web/src/features/work-requests/components/WorkRequestReviewChatHost.tsx`, `WorkRequestChatResumeCard.tsx`, `apps/web/src/lib/work-requests/work-request-resume.ts`, `MessageBubbleOrderedBlocks.tsx`, `GlobalChatPanel.tsx`, `apps/agent-api/src/modules/shared/ui-block-extractor.ts`
+
 ## [2026-08-17 16:47] - [FIX]
 What: Wrapped artifact viewer close handler so `onClick` does not pass a mouse event into `closeArtifactViewer(conversationId?)`.
 Why: Vercel `roas-web` typecheck failed on PR #263.
