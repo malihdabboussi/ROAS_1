@@ -154,8 +154,8 @@ export function buildWorkRequestChatSteps(
       prompt: 'Who on the team should own this?',
       hint:
         (options.team_members?.length ?? 0) > 0
-          ? 'Pick a teammate, or leave unassigned.'
-          : 'Optional. Enter a teammate name, or skip.',
+          ? 'Pick a teammate, or leave blank so The ROAS Portal assignment rules apply.'
+          : 'Optional. Enter a teammate name, or skip so Portal assignment rules apply.',
       required: false,
       searchable: (options.team_members?.length ?? 0) > 6,
       options: [

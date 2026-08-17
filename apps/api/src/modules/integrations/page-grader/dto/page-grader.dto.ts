@@ -77,6 +77,10 @@ export const PageGraderTaskTypeIdSchema = z.enum([
 
 export const SendPageGraderWorkSchema = z.object({
   client_id: z.string().uuid(),
+  /** Page Grader campaign id. When omitted, sendWork infers it from the Space or Service Request stamp. */
+  campaign_id: z.string().uuid().optional(),
+  /** Marks Service Request mirrors so Portal can apply From Pagegrader assignment rules. */
+  origin: z.enum(['page_grader', 'roas']).optional(),
   note: z.string().max(4000).optional(),
   /** YYYY-MM-DD — applied to Page Grader due_date and written back to Space item due_date */
   due_date: z

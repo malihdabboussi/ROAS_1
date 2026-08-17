@@ -353,6 +353,7 @@ describe('WorkRequestService', () => {
       finalDraft.owner_user_id,
       expect.objectContaining({
         client_id: finalDraft.page_grader_external_client_id,
+        origin: 'page_grader',
         space_item_ids: [finalDraft.final_space_item_id],
         work_kind: 'task_request',
         task_type: 'funnel',
@@ -364,6 +365,73 @@ describe('WorkRequestService', () => {
     )
     const payload = pageGraderApi.sendWork.mock.calls[0]?.[2] as Record<string, unknown>
     expect(payload).not.toHaveProperty('source_excerpt')
+    expect(payload).not.toHaveProperty('campaign_id')
+  })
+
+  it('mirrors the selected Portal campaign on finalize', async () => {
+    const campaignId = '99999999-9999-9999-9999-999999999999'
+    const campaignDraft = draft({
+      campaign_space_id: '88888888-8888-8888-8888-888888888888',
+      page_grader_external_campaign_id: campaignId,
+      routing: { work_scope: 'campaign', general_space_id: '66666666-6666-6666-6666-666666666666' },
+    })
+    const finalDraft = draft({
+      ...campaignDraft,
+      status: 'finalized',
+      final_space_item_id: '77777777-7777-7777-7777-777777777777',
+      review_token_used_at: '2026-08-16T12:00:00.000Z',
+      sync_status: 'sync_pending',
+    })
+    const { service, pageGraderApi } = createService({
+      findByTokenHash: vi.fn().mockResolvedValue(campaignDraft),
+      findSpace: vi.fn().mockResolvedValue({
+        id: '88888888-8888-8888-8888-888888888888',
+        campaign_id: '44444444-4444-4444-4444-444444444444',
+        user_id: '22222222-2222-2222-2222-222222222222',
+        org_id: '33333333-3333-3333-3333-333333333333',
+        deleted_at: null,
+        schema: {
+          custom_data: {
+            space_role: 'client_campaign',
+            page_grader_campaign_id: campaignId,
+          },
+        },
+      }),
+      finalize: vi.fn().mockResolvedValue({
+        draft: finalDraft,
+        task: {
+          id: '77777777-7777-7777-7777-777777777777',
+          space_id: '88888888-8888-8888-8888-888888888888',
+        },
+      }),
+      update: vi
+        .fn()
+        .mockImplementation((_id, values) => Promise.resolve({ ...finalDraft, ...values })),
+    })
+    pageGraderApi.sendWork.mockResolvedValue({
+      success: true,
+      results: [
+        {
+          space_item_id: '77777777-7777-7777-7777-777777777777',
+          status: 'created',
+          clickup_task_id: 'cu-1',
+          clickup_task_url: 'https://app.clickup.com/t/cu-1',
+        },
+      ],
+    })
+
+    await service.finalizeReview(TOKEN)
+
+    expect(pageGraderApi.sendWork).toHaveBeenCalledWith(
+      expect.anything(),
+      finalDraft.owner_user_id,
+      expect.objectContaining({
+        campaign_id: campaignId,
+        origin: 'page_grader',
+      }),
+      finalDraft.owner_org_id,
+      'owner',
+    )
   })
 
   it('returns the existing native task for an idempotent finalization replay', async () => {

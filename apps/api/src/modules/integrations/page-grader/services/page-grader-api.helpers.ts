@@ -170,3 +170,30 @@ export async function getPageGraderCreds(
   if (!baseUrl || !apiKey) throw new BadRequestException('The ROAS Portal is not connected')
   return { baseUrl, apiKey }
 }
+
+const PAGE_GRADER_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
+}
+
+function asUuid(value: unknown): string | null {
+  return typeof value === 'string' && PAGE_GRADER_UUID_RE.test(value.trim()) ? value.trim() : null
+}
+
+/** Portal campaign id: explicit send arg, then Service Request stamp, then Space schema. */
+export function resolvePageGraderCampaignId(input: {
+  dtoCampaignId?: string | null
+  item?: Record<string, unknown> | null
+  space?: Record<string, unknown> | null
+}): string | null {
+  const fromDto = asUuid(input.dtoCampaignId)
+  if (fromDto) return fromDto
+  const fromItem = asUuid(
+    asRecord(asRecord(input.item?.custom_data).work_request).page_grader_external_campaign_id,
+  )
+  if (fromItem) return fromItem
+  return asUuid(asRecord(asRecord(input.space?.schema).custom_data).page_grader_campaign_id)
+}

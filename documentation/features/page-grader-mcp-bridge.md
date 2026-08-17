@@ -44,7 +44,10 @@ Pixel resolves the named target before choosing an execution path:
   the connected `Page Grader` MCP server even when the user names a human
   owner. Pixel resolves that person through Page Grader and includes them as
   the fulfillment assignee. It does not replace the request with a generic
-  ROAS task or search the ambient campaign team.
+  ROAS task or search the ambient campaign team. When no owner is named,
+  finalize omits assignees so Portal From Pagegrader assignment rules apply.
+  When a campaign is known, intake and finalize send that Page Grader
+  campaign id so the Portal task arrives linked.
 - The user does not need to know or say “Page Grader.”
 - An explicit request to “delegate to PageGrader” follows the same MCP path.
   Pixel lists that server’s live tools, follows the returned write schema, and
