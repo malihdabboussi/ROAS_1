@@ -136,32 +136,44 @@ vi.mock('./SpaceWorkDock', () => ({
 }))
 
 vi.mock('./use-shell-store', () => ({
-  useShellStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({
-      workAreaOpen: mocks.workAreaOpen,
-      artifactViewer: { target: mocks.artifactTarget, width: mocks.artifactWidth },
-      setArtifactViewerWidth: mocks.setArtifactViewerWidth,
-      chatDrawer: {
-        open: !mocks.workAreaOpen || mocks.chatDrawerOpen,
-        conversationId: null,
-        width: 420,
-      },
-      openChatDrawer: vi.fn(),
-      minimizeChatDrawer: vi.fn(),
-      requestNewChat: mocks.requestNewChat,
-      handleScreenNavigation: vi.fn(),
-      recordScreenConversation: vi.fn(),
-      setMenuMode: vi.fn(),
-      setWorkAreaOpen: mocks.setWorkAreaOpen,
-      toggleWorkAreaOpen: vi.fn(),
-      setRightPanelOpen: mocks.setRightPanelOpen,
-      rightPanel: { open: mocks.rightPanelOpen, tab: 'tasks' },
-      summaryPanelDocked: mocks.summaryPanelDocked,
-      recentWorkAreaPages: mocks.recentWorkAreaPages,
-      syncArtifactViewerForConversation: vi.fn(),
-      artifactPinned: false,
-      toggleArtifactPinned: vi.fn(),
-    }),
+  useShellStore: Object.assign(
+    (selector: (state: Record<string, unknown>) => unknown) =>
+      selector({
+        workAreaOpen: mocks.workAreaOpen,
+        artifactViewer: { target: mocks.artifactTarget, width: mocks.artifactWidth },
+        setArtifactViewerWidth: mocks.setArtifactViewerWidth,
+        chatDrawer: {
+          open: !mocks.workAreaOpen || mocks.chatDrawerOpen,
+          conversationId: null,
+          width: 420,
+        },
+        openChatDrawer: vi.fn(),
+        minimizeChatDrawer: vi.fn(),
+        requestNewChat: mocks.requestNewChat,
+        handleScreenNavigation: vi.fn(),
+        recordScreenConversation: vi.fn(),
+        setMenuMode: vi.fn(),
+        setWorkAreaOpen: mocks.setWorkAreaOpen,
+        toggleWorkAreaOpen: vi.fn(),
+        setRightPanelOpen: mocks.setRightPanelOpen,
+        rightPanel: { open: mocks.rightPanelOpen, tab: 'tasks' },
+        summaryPanelDocked: mocks.summaryPanelDocked,
+        recentWorkAreaPages: mocks.recentWorkAreaPages,
+        lastWorkAreaPageByConversation: {},
+        syncArtifactViewerForConversation: vi.fn(),
+        artifactPinned: false,
+        toggleArtifactPinned: vi.fn(),
+        setPendingWorkRestore: vi.fn(),
+      }),
+    {
+      getState: () => ({
+        artifactPinned: false,
+        lastWorkAreaPageByConversation: {},
+        setPendingWorkRestore: vi.fn(),
+        setWorkAreaOpen: mocks.setWorkAreaOpen,
+      }),
+    },
+  ),
 }))
 
 describe('ShellWorkspace', () => {

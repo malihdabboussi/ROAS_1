@@ -1,16 +1,24 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 17:43] - [FEATURE]
+What: Chat now restores the last work screen for that conversation (meeting agenda pops back), and meeting prep is split into Start agenda / Prep for call / Google agenda. Removed the in-app precall-prep Space-item path.
+Why: Switching Recents sent meeting chats to `/home?conv=` so the agenda disappeared; Open agenda prep never worked; Google Doc / Page Grader kickoff was mixed into the same controls as the Space Doc agenda.
+Impact: Recents and Show page reopen the remembered meeting (or other work page) beside chat; Prep for call seeds the composer; Google agenda opens a linked Doc or seeds a Page Grader Google Doc prompt; Start agenda still writes the right-side Space Doc.
+Files: `apps/web/src/components/shell/shell-work-area-page.ts`, `apps/web/src/components/shell/use-shell-store.work-area-conversation.ts`, `apps/web/src/components/shell/use-shell-artifact-conversation-sync.ts`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/features/home/hooks/use-meeting-workspace-surface.ts`, `apps/web/src/features/home/config/meeting-post-call-actions.config.ts`, `apps/web/src/features/home/components/MeetingAgendaPrepSection.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 17:25] - [FIX]
 What: Service Request review links now always show the finalize flow on the public chat host, synthesize a work_request resume card from pasted review URLs in in-app chat, harden MCP UI-block extraction for nested fulfillment results, and pass `/home?conv=` into the chat panel as preferredConversationId so authenticated resume does not open blank.
 Why: Pixel often replied with only a markdown `/request-review/` URL (no work_request UI block), so opening the link looped the same chat with no finalize UI; signed-in redirect to `/home?conv=` could remount an empty Pixel pane.
 Impact: Guest review pages show chat + finalize steps; authenticated `/home?conv=&wr=` keeps the conversation selected and shows a resume card from the pasted URL; new fulfillment tool results emit work_request blocks more reliably.
 Files: `apps/web/src/features/work-requests/components/WorkRequestReviewChatHost.tsx`, `WorkRequestChatResumeCard.tsx`, `apps/web/src/lib/work-requests/work-request-resume.ts`, `MessageBubbleOrderedBlocks.tsx`, `GlobalChatPanel.tsx`, `apps/agent-api/src/modules/shared/ui-block-extractor.ts`
 
+## [2026-08-17 17:24] - [FEATURE]
+What: Meeting workspace chat now writes the agenda into an editable Space Doc on the right, and action items always use the shared work-item list with an inline add row.
+Why: "Prep the agenda" only seeded a chat draft fence, so the Agenda & prep card stayed empty; action items used an empty-card + header button instead of the Spaces list UI.
+Impact: Opening a meeting creates/links `agenda_doc_item_id`; Pixel `update_document` updates the right-pane Doc; Start agenda points at that id; action items are a list with a last-row Add action composer.
+Files: `apps/api/src/modules/meetings/repositories/meeting-workspace-agenda.repository.ts`, `apps/api/src/modules/meetings/services/meeting-workspace.service.ts`, `apps/api/src/modules/meetings/repositories/meeting-workspace-read.repository.ts`, `apps/web/src/features/home/components/MeetingAgendaDocEditor.tsx`, `apps/web/src/features/home/components/MeetingAgendaPrepSection.tsx`, `apps/web/src/features/home/components/MeetingActionItemsSection.tsx`, `apps/web/src/features/home/lib/build-meeting-awareness-context.ts`, `apps/web/src/features/home/config/meeting-post-call-actions.config.ts`
+
 ## [2026-08-17 17:12] - [FIX]
-What: Fixed Home Choose Space mapping and picker grouping. Clients are a single folder (not duplicated under Programs as Client Spaces); search placeholder is "Search". Scope attach now clears stale space/campaign ids, campaign-only picks resolve General space, and seeds/host keep the selected campaign so Connections and the agent match the chosen location.
-Why: Selecting a space could leave a prior Power Circle General connection attached, and Pixel asked which campaign despite a Choose Space selection. Picker also listed client campaigns under Programs and again under Clients.
-Impact: Choose Space → send attaches the selected client/program space; Connections shows that location; agent chat receives the campaign/space scope. Picker shows Programs vs Clients folder hierarchy.
-Files: `apps/web/src/components/conversations/conversation-scope-groups.ts`, `ConversationScopePickerMenus.tsx`, `ConversationScopePicker.tsx`, `conversation-scope-picker.messages.config.ts`, `conversation-scope-general-space.ts`, `conversation-scope-select.ts`, `use-conversation-scope-spaces.ts`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/global-chat/config/work-context.config.ts`, `global-chat-seed-match.ts`, `global-chat-panel-host.ts`
 
 ## [2026-08-17 16:47] - [FIX]
 What: Wrapped artifact viewer close handler so `onClick` does not pass a mouse event into `closeArtifactViewer(conversationId?)`.

@@ -80,6 +80,14 @@ export function isFollowUpSpaceItem(item: Record<string, unknown>): boolean {
   return false
 }
 
+export function isMeetingAgendaSpaceItem(item: Record<string, unknown>): boolean {
+  const custom =
+    item.custom_data && typeof item.custom_data === 'object' && !Array.isArray(item.custom_data)
+      ? (item.custom_data as Record<string, unknown>)
+      : {}
+  return String(custom.entry_type ?? '') === 'meeting_agenda'
+}
+
 function firstText(...values: unknown[]): string | null {
   for (const value of values) {
     if (typeof value === 'string' && value.trim()) return value.trim()

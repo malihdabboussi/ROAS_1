@@ -1,14 +1,28 @@
-## 2026-08-17 - [ARCH] ui-block-extractor still over utility LOC limit
+## 2026-08-17 - [FEATURE] In-app precall-prep backend still exists after UI removal
 
 Status: Open
 
-Found while: Hardening Service Request work_request UI block extraction from nested MCP fulfillment envelopes
+Found while: Removing the Home “Open agenda prep” / `useHomeMeetingActions` Space-item path
 
-Evidence: `wc -l` reports `apps/agent-api/src/modules/shared/ui-block-extractor.ts` at 1032 LOC (utility limit 300). This change only extended work_request parsing.
+Evidence: `runMeetingsPrecallPrepEvent` and `MeetingsPrecallPrepService` remain; automations still expose “Prep today’s calendar meetings”. Home no longer calls the event API.
 
-Needed work: Split media/artifact/work_request/clarification builders into dedicated modules under `modules/shared/ui-blocks/`.
+Needed work: Decide whether calendar enrichment / Drive agenda creation should stay as automation-only, then delete unused Home/API surfaces if the product is chat-prompt + Google Doc link only. `openYourTurnItemFromMeeting` is now unused after the UI removal but was left in `use-home-feed-open.ts` because staging that file fails the cross-feature import gate.
 
-Reason not done now: In-scope fix was missing finalize UI / empty authenticated resume; full extractor decomposition is adjacent debt.
+Reason not done now: Requested work was remove the broken function from the app UI and split Start agenda / Prep for call / Google agenda. Backend/automation deletion is a separate product decision.
+
+## 2026-08-17 - [ARCH] MeetingWorkspaceService is near the service LOC limit
+
+Status: Open
+
+Found while: Linking an editable agenda Space Doc on meeting workspace load
+
+Evidence: `wc -l` reports `apps/api/src/modules/meetings/services/meeting-workspace.service.ts` at 526 LOC (service limit 600; extract suggested at 80% / 480).
+
+Needed work: Split getWorkspace hydration (recording hydrate + agenda-doc ensure) and display-title normalization out of the service.
+
+Reason not done now: In-scope work was agenda-doc ensure + UI; the service was already over the 80% extract hint before this change.
+
+## 2026-08-17 - [ARCH] ui-block-extractor still over utility LOC limit
 
 ## 2026-08-17 - [FEATURE] Page Grader must stamp conversation_id for shared review chat
 

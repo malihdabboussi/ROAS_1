@@ -18,6 +18,9 @@ const mocks = vi.hoisted(() => ({
   openInNewTab: vi.fn(),
   storeConversations: [] as Array<Record<string, unknown>>,
   clearMeetingContext: vi.fn(),
+  setWorkAreaOpen: vi.fn(),
+  setPendingWorkRestore: vi.fn(),
+  lastWorkAreaPageByConversation: {} as Record<string, { href: string; restore?: unknown }>,
 }))
 
 vi.mock('next/navigation', () => ({
@@ -123,15 +126,24 @@ vi.mock('@/lib/utils/open-in-new-tab', () => ({
 }))
 
 vi.mock('./use-shell-store', () => ({
-  useShellStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({
-      openChatDrawer: mocks.openChatDrawer,
-      openFreshChatDrawer: vi.fn(),
-      restoreChatDrawer: vi.fn(),
-      requestNewChat: vi.fn(),
-      setMenuMode: vi.fn(),
-      chatDrawer: { minimized: false, conversationId: null },
-    }),
+  useShellStore: Object.assign(
+    (selector: (state: Record<string, unknown>) => unknown) =>
+      selector({
+        openChatDrawer: mocks.openChatDrawer,
+        openFreshChatDrawer: vi.fn(),
+        restoreChatDrawer: vi.fn(),
+        requestNewChat: vi.fn(),
+        setMenuMode: vi.fn(),
+        chatDrawer: { minimized: false, conversationId: null },
+      }),
+    {
+      getState: () => ({
+        lastWorkAreaPageByConversation: mocks.lastWorkAreaPageByConversation,
+        setPendingWorkRestore: mocks.setPendingWorkRestore,
+        setWorkAreaOpen: mocks.setWorkAreaOpen,
+      }),
+    },
+  ),
 }))
 
 afterEach(() => {
@@ -139,6 +151,7 @@ afterEach(() => {
   vi.clearAllMocks()
   mocks.storeConversations = []
   mocks.pathname = '/home'
+  mocks.lastWorkAreaPageByConversation = {}
 })
 
 describe('ShellChatMenu', () => {
@@ -161,6 +174,30 @@ describe('ShellChatMenu', () => {
     expect(mocks.setActiveConversationId).toHaveBeenCalledWith('conversation-1')
     expect(mocks.push).toHaveBeenCalledWith('/home?conv=conversation-1')
     expect(mocks.openChatDrawer).not.toHaveBeenCalled()
+  })
+
+  it('reopens the remembered meeting workspace for that chat instead of /home?conv=', () => {
+    mocks.pathname = '/campaigns'
+    mocks.lastWorkAreaPageByConversation = {
+      'conversation-1': {
+        id: '/home/meetings?meeting=evt-1',
+        title: 'Strategy call',
+        href: '/home/meetings?meeting=evt-1',
+        restore: { feature: 'home_meeting', data: { id: 'evt-1' } },
+      },
+    }
+    render(<ShellChatMenu simpleSidebar />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select conversation' }))
+
+    expect(mocks.setPendingWorkRestore).toHaveBeenCalledWith({
+      feature: 'home_meeting',
+      data: { id: 'evt-1' },
+    })
+    expect(mocks.setWorkAreaOpen).toHaveBeenCalledWith(true)
+    expect(mocks.openChatDrawer).toHaveBeenCalledWith('conversation-1')
+    expect(mocks.push).toHaveBeenCalledWith('/home/meetings?meeting=evt-1')
+    expect(mocks.setActiveConversationId).not.toHaveBeenCalled()
   })
 
   it('opens the real conversation sharing dialog from the conversation menu', () => {

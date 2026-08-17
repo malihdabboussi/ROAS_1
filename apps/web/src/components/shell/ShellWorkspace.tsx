@@ -45,6 +45,8 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const setRightPanelOpen = useShellStore((s) => s.setRightPanelOpen)
   const summaryPanelDocked = useShellStore((s) => s.summaryPanelDocked)
   const artifactTarget = useShellStore((s) => s.artifactViewer.target)
+  const chatDrawerConversationId = useShellStore((s) => s.chatDrawer.conversationId)
+  const lastWorkAreaPageByConversation = useShellStore((s) => s.lastWorkAreaPageByConversation)
   const previousArtifactTargetRef = useRef(artifactTarget)
   const shellPrefsHydrated = useShellPrefsHydrated()
   const desktop = useMediaQuery('(min-width: 768px)')
@@ -82,10 +84,26 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     previousSimpleChatOpen.current = chatDrawerOpen
     // Opening chat on a work page collapses that page. Showing the page from a
     // full Home conversation also opens the drawer — do not undo that restore.
+    // A chat that last lived on a work surface (meeting agenda, etc.) keeps it.
     if (menuStyle === 'simple' && justOpened && !artifactTarget && !showFullConversation) {
+      const remembered = chatDrawerConversationId
+        ? lastWorkAreaPageByConversation[chatDrawerConversationId]
+        : undefined
+      if (remembered) {
+        setWorkAreaOpen(true)
+        return
+      }
       setWorkAreaOpen(false)
     }
-  }, [artifactTarget, chatDrawerOpen, menuStyle, setWorkAreaOpen, showFullConversation])
+  }, [
+    artifactTarget,
+    chatDrawerConversationId,
+    chatDrawerOpen,
+    lastWorkAreaPageByConversation,
+    menuStyle,
+    setWorkAreaOpen,
+    showFullConversation,
+  ])
 
   useEffect(() => {
     if (chatParam !== 'new' && chatParam !== 'starting') return

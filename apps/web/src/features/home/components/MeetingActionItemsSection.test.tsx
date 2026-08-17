@@ -48,7 +48,7 @@ describe('MeetingActionItemsSection', () => {
     vi.clearAllMocks()
   })
 
-  it('adds a manual action item from the header + control', async () => {
+  it('adds a manual action item from the list add row', async () => {
     mocks.createMeetingAction.mockResolvedValue(action({}))
     const onCreated = vi.fn()
 
@@ -64,6 +64,7 @@ describe('MeetingActionItemsSection', () => {
       />,
     )
 
+    expect(screen.queryByText('No action items yet.')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Add action item' }))
     fireEvent.change(screen.getByRole('textbox', { name: 'New action item' }), {
       target: { value: 'Send recap to Nate' },

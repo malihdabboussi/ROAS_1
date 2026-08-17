@@ -11,6 +11,12 @@ import {
 } from '@/lib/artifacts/artifact-viewer-layout'
 import { sanitizeLastArtifactByConversation } from './shell-artifact-conversation'
 import {
+  rememberWorkAreaPage,
+  sanitizeLastWorkAreaPageByConversation,
+  type ShellWorkAreaPageTarget,
+  type ShellWorkAreaRestore,
+} from './shell-work-area-page'
+import {
   createShellArtifactConversationSlice,
   forgetClosedArtifact,
   rememberOpenArtifact,
@@ -21,6 +27,12 @@ import {
   sanitizeScreenConversations,
   type ShellScreenChatSlice,
 } from './use-shell-store.screen-chat'
+import {
+  createShellWorkAreaConversationSlice,
+  type ShellWorkAreaConversationSlice,
+} from './use-shell-store.work-area-conversation'
+
+export type { ShellWorkAreaPageTarget, ShellWorkAreaRestore }
 
 const STORAGE_KEY = 'vibey.shell.v1'
 
@@ -42,19 +54,6 @@ export type ShellArtifactViewerState = {
   width: number
 }
 
-export type ShellWorkAreaRestore = {
-  feature: string
-  data: unknown
-}
-
-export type ShellWorkAreaPageTarget = {
-  id: string
-  title: string
-  href: string
-  /** Feature-owned payload so the memory menu can reopen the exact surface. */
-  restore?: ShellWorkAreaRestore
-}
-
 type PersistedShell = {
   sidebarPinned?: boolean
   menuMode?: ShellMenuMode
@@ -69,6 +68,7 @@ type PersistedShell = {
   artifactViewerWidth?: number
   artifactViewerTarget?: ShellArtifactViewerTarget | null
   lastArtifactByConversation?: Record<string, ShellArtifactViewerTarget>
+  lastWorkAreaPageByConversation?: Record<string, ShellWorkAreaPageTarget>
   artifactPinned?: boolean
   screenConversations?: Record<string, string>
 }
@@ -123,7 +123,8 @@ function clampChatHistoryWidth(width: number): number {
   return Math.min(CHAT_HISTORY_WIDTH_MAX, Math.max(CHAT_HISTORY_WIDTH_MIN, width))
 }
 
-interface ShellStore extends ShellScreenChatSlice, ShellArtifactConversationSlice {
+interface ShellStore
+  extends ShellScreenChatSlice, ShellArtifactConversationSlice, ShellWorkAreaConversationSlice {
   sidebarPinned: boolean
   sidebarPeek: boolean
   menuMode: ShellMenuMode
@@ -170,7 +171,6 @@ interface ShellStore extends ShellScreenChatSlice, ShellArtifactConversationSlic
   openArtifactViewer: (target: ShellArtifactViewerTarget, conversationId?: string | null) => void
   closeArtifactViewer: (conversationId?: string | null) => void
   setArtifactViewerWidth: (width: number) => void
-  recordWorkAreaPage: (target: ShellWorkAreaPageTarget) => void
   requestNewChat: () => void
   /** Fresh chat in the docked left drawer (workspace routes); stays on current page. */
   openFreshChatDrawer: () => void
@@ -210,6 +210,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   recentWorkAreaPages: [],
   ...createShellScreenChatSlice(set, get, writePersisted),
   ...createShellArtifactConversationSlice(set, get, writePersisted),
+  ...createShellWorkAreaConversationSlice(set, get, writePersisted),
   newChatNonce: 0,
   sidebarFlyoutCloseEpoch: 0,
   pageBreadcrumb: null,
@@ -401,16 +402,24 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       conversationId ?? target.conversationId,
       target,
     )
+    const conversationKey = remembered.target.conversationId
+    const currentPage = get().recentWorkAreaPages[0]
+    const lastWorkAreaPageByConversation =
+      conversationKey && currentPage
+        ? rememberWorkAreaPage(get().lastWorkAreaPageByConversation, conversationKey, currentPage)
+        : get().lastWorkAreaPageByConversation
     writePersisted({
       rightPanelOpen: false,
       workAreaOpen: true,
       artifactViewerTarget: remembered.target,
       artifactViewerWidth: width,
       lastArtifactByConversation: remembered.lastArtifactByConversation,
+      lastWorkAreaPageByConversation,
     })
     set((s) => ({
       artifactViewer: { ...s.artifactViewer, target: remembered.target, width },
       lastArtifactByConversation: remembered.lastArtifactByConversation,
+      lastWorkAreaPageByConversation,
       recentArtifactTargets: [
         remembered.target,
         ...s.recentArtifactTargets.filter((entry) => entry.id !== remembered.target.id),
@@ -441,31 +450,6 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     const clamped = clampArtifactViewerWidth(width)
     writePersisted({ artifactViewerWidth: clamped })
     set((s) => ({ artifactViewer: { ...s.artifactViewer, width: clamped } }))
-  },
-  recordWorkAreaPage: (target) => {
-    if (new URLSearchParams(target.href.split('?')[1] ?? '').has('conv')) return
-    set((s) => {
-      const title = target.title.trim() || target.href
-      const titleKey = title.toLocaleLowerCase()
-      // A feature host and the top bar can both record the same surface id —
-      // never let the payload-less record drop the host's restore payload.
-      const restore =
-        target.restore ?? s.recentWorkAreaPages.find((entry) => entry.id === target.id)?.restore
-      return {
-        recentWorkAreaPages: [
-          {
-            id: target.id,
-            title,
-            href: target.href,
-            ...(restore ? { restore } : {}),
-          },
-          ...s.recentWorkAreaPages.filter(
-            (entry) =>
-              entry.id !== target.id && entry.title.trim().toLocaleLowerCase() !== titleKey,
-          ),
-        ].slice(0, 8),
-      }
-    })
   },
   requestNewChat: () => {
     set((s) => ({
@@ -554,6 +538,9 @@ export function hydrateShellStoreFromStorage(): void {
   const lastArtifactByConversation = sanitizeLastArtifactByConversation(
     persisted.lastArtifactByConversation,
   )
+  const lastWorkAreaPageByConversation = sanitizeLastWorkAreaPageByConversation(
+    persisted.lastWorkAreaPageByConversation,
+  )
   const artifactPinned = persisted.artifactPinned === true
   useShellStore.setState({
     sidebarPinned: persisted.sidebarPinned ?? false,
@@ -569,6 +556,7 @@ export function hydrateShellStoreFromStorage(): void {
     chatHistoryCollapsed: persisted.chatHistoryCollapsed ?? false,
     lastConversationByScreen: sanitizeScreenConversations(persisted.screenConversations),
     lastArtifactByConversation,
+    lastWorkAreaPageByConversation,
     artifactPinned,
     workAreaOpen: artifactViewerTarget ? true : (persisted.workAreaOpen ?? true),
     rightPanel: {

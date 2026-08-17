@@ -24,6 +24,7 @@ import {
   type ConversationAgentDisplay,
 } from '@/lib/conversations'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
+import { historyConversationOpenPlan } from './shell-chat-menu-open'
 import { mergeStoreConversationRow, persistConversationPinned } from './shell-chat-menu-pin'
 import { conversationCacheKey, peekConversationCache } from './shell-conversation-cache'
 import { isShellHomeRoute } from './shell-route-policy'
@@ -192,16 +193,22 @@ export function ShellChatMenu({
       if (meetingContext && meetingContext.conversationId !== id) clearMeetingContext()
       const conversation = conversations.find((row) => row.id === id)
       if (conversation) useChatStore.getState().addConversation(conversation)
-      if (simpleSidebar) {
+      const shell = useShellStore.getState()
+      const plan = historyConversationOpenPlan({
+        conversationId: id,
+        simpleSidebar,
+        rememberedPage: shell.lastWorkAreaPageByConversation[id],
+        pathname,
+        hasHomeConvParam: Boolean(searchParams.get('conv') || searchParams.get('chat')),
+      })
+      if (plan.restore) shell.setPendingWorkRestore(plan.restore)
+      if (plan.openDrawer) {
+        if (plan.href) shell.setWorkAreaOpen(true)
+        openChatDrawer(id)
+      } else {
         setActiveConversationId(id)
-        router.push(`/home?conv=${encodeURIComponent(id)}`)
-        onOpenChat?.()
-        return
       }
-      if (isShellHomeRoute(pathname) && (searchParams.get('conv') || searchParams.get('chat'))) {
-        router.push('/home')
-      }
-      openChatDrawer(id)
+      if (plan.href) router.push(plan.href)
       onOpenChat?.()
     },
     [
