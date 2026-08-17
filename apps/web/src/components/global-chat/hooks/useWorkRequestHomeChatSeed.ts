@@ -21,20 +21,35 @@ export function useWorkRequestHomeChatSeed() {
   useEffect(() => {
     if (!conversationId || !token || cachedCount > 0) return
     let cancelled = false
-    void fetchWorkRequestReviewChat(token)
-      .then((payload) => {
-        if (cancelled || payload.messages.length === 0) return
-        const id = payload.conversation_id || conversationId
-        useChatStore
-          .getState()
-          .setMessages(id, mapWorkRequestReviewChatMessages(id, payload.messages))
-        useChatStore.getState().setActiveConversationId(id)
-      })
-      .catch(() => {
-        // Home still has the normal conversation fetch; token seed is a fallback.
-      })
+    let attempts = 0
+
+    const seed = () => {
+      attempts += 1
+      void fetchWorkRequestReviewChat(token)
+        .then((payload) => {
+          if (cancelled || payload.messages.length === 0) return
+          const id = payload.conversation_id || conversationId
+          const existing = useChatStore.getState().messagesByConversation?.[id]?.length ?? 0
+          if (existing > 0) return
+          useChatStore
+            .getState()
+            .setMessages(id, mapWorkRequestReviewChatMessages(id, payload.messages))
+          useChatStore.getState().setActiveConversationId(id)
+        })
+        .catch(() => {
+          // Retry once — first paint can race auth/session before the token chat API is ready.
+          if (!cancelled && attempts < 2) {
+            window.setTimeout(seed, 400)
+          }
+        })
+    }
+
+    seed()
+    // Second pass after hydration races that briefly leave the pane empty.
+    const retryId = window.setTimeout(seed, 700)
     return () => {
       cancelled = true
+      window.clearTimeout(retryId)
     }
   }, [cachedCount, conversationId, token])
 }

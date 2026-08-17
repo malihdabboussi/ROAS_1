@@ -50,7 +50,13 @@ describe('WorkRequestScopeService', () => {
         },
       ]),
     }
-    const service = new WorkRequestScopeService(repository as never, sync as never)
+    const service = new WorkRequestScopeService(
+      repository as never,
+      sync as never,
+      {
+        listAssignees: vi.fn(),
+      } as never,
+    )
 
     await expect(
       service.resolveIntakeScope('secret', 'client-1', 'Acme', 'external-campaign-1'),
@@ -97,8 +103,22 @@ describe('WorkRequestScopeService', () => {
           },
         },
       ]),
+      listOrgTeamMembers: vi.fn().mockResolvedValue([{ id: 'u-org', name: 'Org Only' }]),
     }
-    const service = new WorkRequestScopeService(repository as never, {} as never)
+    const pageGraderApi = {
+      listAssignees: vi.fn().mockResolvedValue({
+        assignees: [
+          { id: 'pg-1', name: 'Carol Garcia' },
+          { id: 'pg-2', name: 'Dylan' },
+          { id: 'pg-3', name: 'Jaime' },
+        ],
+      }),
+    }
+    const service = new WorkRequestScopeService(
+      repository as never,
+      {} as never,
+      pageGraderApi as never,
+    )
     const draft = {
       owner_user_id: 'user-1',
       owner_org_id: 'org-1',
@@ -122,6 +142,38 @@ describe('WorkRequestScopeService', () => {
           externalCampaignId: 'external-campaign-1',
         },
       ],
+      teamMembers: [
+        { id: 'pg-1', name: 'Carol Garcia' },
+        { id: 'pg-2', name: 'Dylan' },
+        { id: 'pg-3', name: 'Jaime' },
+      ],
+    })
+    expect(repository.listOrgTeamMembers).not.toHaveBeenCalled()
+  })
+
+  it('falls back to org profiles when Portal assignees are unavailable', async () => {
+    const repository = {
+      listConnectionScopeRows: vi.fn().mockResolvedValue([]),
+      listCampaignOptions: vi.fn().mockResolvedValue([]),
+      listSpaceOptions: vi.fn().mockResolvedValue([]),
+      listOrgTeamMembers: vi.fn().mockResolvedValue([{ id: 'u-1', name: 'Carol Garcia' }]),
+    }
+    const pageGraderApi = {
+      listAssignees: vi.fn().mockRejectedValue(new Error('not connected')),
+    }
+    const service = new WorkRequestScopeService(
+      repository as never,
+      {} as never,
+      pageGraderApi as never,
+    )
+    const draft = {
+      owner_user_id: 'user-1',
+      owner_org_id: 'org-1',
+      routing: { connection_org_id: null },
+    } as WorkRequestDraftRow
+
+    await expect(service.loadScopedOptions(draft)).resolves.toMatchObject({
+      teamMembers: [{ id: 'u-1', name: 'Carol Garcia' }],
     })
   })
 })

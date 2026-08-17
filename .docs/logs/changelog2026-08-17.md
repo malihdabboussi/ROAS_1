@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 23:23] - [FIX]
+What: Stop Slack from creating two Service Request drafts for one @Pixel post; review steps use Continue/Back, Portal assignees, Other free-text, and no Message Pixel composer.
+Why: Mapped channels fired both `message` and `app_mention`, so Pixel replied twice with two review links. Choice steps advanced only on click with no Continue/Back, assignee options were ROAS org profiles (not Portal), and Message Pixel sat under the cards.
+Impact: One Slack ask → one draft/link. Review Q&A is button-driven with the Portal roster. Blank `/home?conv=&wr=` seed retries once after hydration races.
+Files: `apps/api/src/modules/slack/services/slack-service-events.base.ts`, `slack-service-auth.base.ts`, `slack-service.base.ts`, `apps/api/src/modules/work-requests/services/work-request-scope.service.ts`, `apps/web/src/features/work-requests/components/WorkRequestChatFlow*.tsx`, `WorkRequestReviewChatHost.tsx`, `apps/web/src/components/global-chat/hooks/useWorkRequestHomeChatSeed.ts`
+
 ## [2026-08-17 21:35] - [FIX]
 What: Service Request finalize and Portal send now pass the Page Grader campaign id, mark origin as From Pagegrader, and omit empty assignees so Portal assignment rules can run.
 Why: Finalized Page Grader tasks landed unlinked and unassigned. Send always posted `assignees: []`, which overrode Portal From Pagegrader rules, and never sent `campaign_id`.

@@ -39,12 +39,14 @@ export function WorkRequestDateStep({
   busy,
   onContinue,
   onSkip,
+  onBack,
   required,
 }: {
   value: string
   busy: boolean
   onContinue: (value: string) => void
   onSkip: () => void
+  onBack?: () => void
   required: boolean
 }) {
   const selected = useMemo(() => parseYmd(value), [value])
@@ -77,8 +79,18 @@ export function WorkRequestDateStep({
           }}
         />
       </div>
-      <div className="flex items-center justify-between gap-2">
-        <div>
+      <div className="gap-spacing-2 flex items-center justify-between">
+        <div className="gap-spacing-2 flex items-center">
+          {onBack ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onBack}
+              className="button-glass-neutral rounded-spacing-2 body-3 px-spacing-3 py-spacing-2"
+            >
+              Back
+            </button>
+          ) : null}
           {!required && (
             <button
               type="button"
@@ -103,12 +115,14 @@ export function WorkRequestAssetsStep({
   busy,
   onContinue,
   onSkip,
+  onBack,
   required,
 }: {
   value: string
   busy: boolean
   onContinue: (value: string) => void
   onSkip: () => void
+  onBack?: () => void
   required: boolean
 }) {
   const [assets, setAssets] = useState(() => parseAssetLines(value))
@@ -183,8 +197,18 @@ export function WorkRequestAssetsStep({
         </button>
       </div>
 
-      <div className="flex items-center justify-between gap-2">
-        <div>
+      <div className="gap-spacing-2 flex items-center justify-between">
+        <div className="gap-spacing-2 flex items-center">
+          {onBack ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onBack}
+              className="button-glass-neutral rounded-spacing-2 body-3 px-spacing-3 py-spacing-2"
+            >
+              Back
+            </button>
+          ) : null}
           {!required && (
             <button
               type="button"

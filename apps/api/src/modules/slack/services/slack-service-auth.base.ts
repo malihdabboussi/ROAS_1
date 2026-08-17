@@ -224,6 +224,23 @@ export abstract class SlackAuthBase extends SlackServiceBase {
     return false
   }
 
+  /** First handler for this Slack post wins; later message/app_mention share the same ts. */
+  protected tryClaimInboundSlackMessage(
+    teamId: string,
+    channelId: string,
+    messageTs: string | undefined,
+  ): boolean {
+    if (!messageTs?.trim()) return true
+    const now = Date.now()
+    for (const [id, ts] of this.inboundMessageClaims.entries()) {
+      if (now - ts > this.inboundMessageClaimTtlMs) this.inboundMessageClaims.delete(id)
+    }
+    const key = `${teamId}:${channelId}:${messageTs.trim()}`
+    if (this.inboundMessageClaims.has(key)) return false
+    this.inboundMessageClaims.set(key, now)
+    return true
+  }
+
   // ---------------------------------------------------------------------------
   // OAuth state encoding
   // ---------------------------------------------------------------------------
