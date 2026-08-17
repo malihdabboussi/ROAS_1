@@ -119,8 +119,12 @@ describe('SpaceChatHeaderActions', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Summary panel' }))
 
+    const summary = screen.getByRole('button', { name: 'Summary panel' })
+    const showPage = screen.getByRole('button', { name: 'Show page' })
+    expect(
+      summary.compareDocumentPosition(showPage) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
     expect(onToggleSummary).toHaveBeenCalledTimes(1)
-    expect(screen.getByRole('button', { name: 'Show page' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Close AI Chats' })).toBeNull()
     expect(screen.queryByLabelText('Collapse Pixel chat')).not.toBeInTheDocument()
   })

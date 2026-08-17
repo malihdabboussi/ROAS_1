@@ -31,6 +31,25 @@ describe('SpaceChatPanelHeader', () => {
     expect(controls.parentElement).toHaveClass('absolute', 'right-spacing-3', 'top-spacing-2')
   })
 
+  it('parks header actions in the summary column when the card is docked', () => {
+    render(
+      <SpaceChatPanelHeader
+        layout="full"
+        agentPicker={<span>Pixel</span>}
+        title="Launch plan"
+        conversationId="conversation-1"
+        renameRequestNonce={0}
+        onRename={vi.fn()}
+        actions={<button type="button">Summary panel</button>}
+        reserveSummaryColumn
+      />,
+    )
+
+    const controls = screen.getByRole('button', { name: 'Summary panel' })
+    expect(controls.parentElement).toHaveClass('w-spacing-72', 'justify-end')
+    expect(controls.parentElement).not.toHaveClass('absolute')
+  })
+
   it('keeps compact-layout controls inline', () => {
     render(
       <SpaceChatPanelHeader

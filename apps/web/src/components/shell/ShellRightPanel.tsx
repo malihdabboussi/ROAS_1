@@ -35,8 +35,8 @@ export type ShellRightPanelPlacement = 'docked' | 'overlay'
 
 /**
  * Work summary: the same rounded overlay card on every width. When the chat
- * pane is wide enough it sits in-flow on the right so it does not cover the
- * thread; otherwise it drops from the header toggle.
+ * pane is wide enough it sits in-flow under the header, flush with that bar;
+ * otherwise it drops from the header toggle over the thread.
  */
 export function ShellRightPanel({
   conversationId,
@@ -190,8 +190,8 @@ export function ShellRightPanel({
     <div
       className={
         docked
-          ? 'px-spacing-2 pt-spacing-12 pb-spacing-2 max-h-full shrink-0 self-start'
-          : 'px-spacing-2 top-spacing-12 z-dropdown pointer-events-none absolute right-0'
+          ? 'px-spacing-2 pb-spacing-2 max-h-full shrink-0 self-start'
+          : 'px-spacing-2 z-dropdown pointer-events-none absolute right-0 top-0'
       }
       data-summary-placement={placement}
     >

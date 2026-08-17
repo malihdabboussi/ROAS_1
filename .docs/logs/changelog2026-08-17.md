@@ -1,5 +1,15 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 03:18] - [STYLE]
+
+What: Docked work summary now sits flush under the chat header, and the three-line summary toggle stays in that header's top-right cluster immediately left of Show page.
+
+Why: The summary was a sibling of the whole thread column, so `pt-spacing-12` left a gap under the header and the toggle sat on the inner edge instead of the pane's top-right.
+
+Impact: Wide panes show one header bar with Summary then Show page at the far right, and the rounded card touching that bar. Narrow overlay still drops from the header over the thread.
+
+Files: `apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.tsx`, `SpaceChatPanelHeader.test.tsx`, `SpaceVibeyChatPanel.tsx`, `SpaceChatHeaderActions.test.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `ShellRightPanel.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 02:35] - [FIX]
 
 What: Closing a composer Try tip now hides the banner in that chat instead of cycling to the next tip.
