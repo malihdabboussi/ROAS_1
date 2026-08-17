@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 17:43] - [FEATURE]
+What: Chat now restores the last work screen for that conversation (meeting agenda pops back), and meeting prep is split into Start agenda / Prep for call / Google agenda. Removed the in-app precall-prep Space-item path.
+Why: Switching Recents sent meeting chats to `/home?conv=` so the agenda disappeared; Open agenda prep never worked; Google Doc / Page Grader kickoff was mixed into the same controls as the Space Doc agenda.
+Impact: Recents and Show page reopen the remembered meeting (or other work page) beside chat; Prep for call seeds the composer; Google agenda opens a linked Doc or seeds a Page Grader Google Doc prompt; Start agenda still writes the right-side Space Doc.
+Files: `apps/web/src/components/shell/shell-work-area-page.ts`, `apps/web/src/components/shell/use-shell-store.work-area-conversation.ts`, `apps/web/src/components/shell/use-shell-artifact-conversation-sync.ts`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/features/home/hooks/use-meeting-workspace-surface.ts`, `apps/web/src/features/home/config/meeting-post-call-actions.config.ts`, `apps/web/src/features/home/components/MeetingAgendaPrepSection.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 17:24] - [FEATURE]
 What: Meeting workspace chat now writes the agenda into an editable Space Doc on the right, and action items always use the shared work-item list with an inline add row.
 Why: "Prep the agenda" only seeded a chat draft fence, so the Agenda & prep card stayed empty; action items used an empty-card + header button instead of the Spaces list UI.

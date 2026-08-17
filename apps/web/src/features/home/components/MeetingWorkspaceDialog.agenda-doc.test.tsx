@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   openChatDrawer: vi.fn(),
   seedComposer: vi.fn(),
   setWorkAreaOpen: vi.fn(),
+  recordWorkAreaPage: vi.fn(),
 }))
 
 vi.mock('@/features/home/services/meeting-workspace-api', () => ({
@@ -47,11 +48,15 @@ vi.mock('@/components/shell/use-shell-store', () => ({
     selector: (state: {
       openChatDrawer: typeof mocks.openChatDrawer
       setWorkAreaOpen: typeof mocks.setWorkAreaOpen
+      recordWorkAreaPage: typeof mocks.recordWorkAreaPage
+      chatDrawer: { conversationId: string | null }
     }) => unknown,
   ) =>
     selector({
       openChatDrawer: mocks.openChatDrawer,
       setWorkAreaOpen: mocks.setWorkAreaOpen,
+      recordWorkAreaPage: mocks.recordWorkAreaPage,
+      chatDrawer: { conversationId: null },
     }),
 }))
 vi.mock('@/lib/spaces/spaces-api', () => ({
@@ -65,25 +70,27 @@ describe('MeetingWorkspaceDialog agenda doc', () => {
     vi.clearAllMocks()
   })
 
+  const scheduledBundle = {
+    meeting: { id: 'meeting-1', title: 'Strategy call', description: null, custom_data: {} },
+    workspace: {
+      meeting_item_id: 'meeting-1',
+      phase: 'scheduled',
+      conversation_id: 'conversation-1',
+      agenda_doc_item_id: 'agenda-doc-1',
+      notes_doc_item_id: null,
+      recap_doc_item_id: null,
+      live_started_at: null,
+    },
+    recordings: [],
+    actions: [],
+    snippets: [],
+    deliverables: [],
+    context_links: [],
+    continuity: { prior_meeting_item_id: null, unresolved_commitments: [] },
+  }
+
   it('seeds Start agenda into chat so Pixel writes the right-side Space Doc', async () => {
-    mocks.fetchMeetingWorkspace.mockResolvedValue({
-      meeting: { id: 'meeting-1', title: 'Strategy call', description: null, custom_data: {} },
-      workspace: {
-        meeting_item_id: 'meeting-1',
-        phase: 'scheduled',
-        conversation_id: 'conversation-1',
-        agenda_doc_item_id: 'agenda-doc-1',
-        notes_doc_item_id: null,
-        recap_doc_item_id: null,
-        live_started_at: null,
-      },
-      recordings: [],
-      actions: [],
-      snippets: [],
-      deliverables: [],
-      context_links: [],
-      continuity: { prior_meeting_item_id: null, unresolved_commitments: [] },
-    })
+    mocks.fetchMeetingWorkspace.mockResolvedValue(scheduledBundle)
 
     render(
       <MeetingWorkspaceDialog
@@ -108,5 +115,86 @@ describe('MeetingWorkspaceDialog agenda doc', () => {
       }),
     )
     expect(mocks.seedComposer.mock.calls[0]?.[0]?.content).toContain('update_document')
+  })
+
+  it('seeds Prep for call into the meeting chat instead of opening a Space prep item', async () => {
+    mocks.fetchMeetingWorkspace.mockResolvedValue(scheduledBundle)
+
+    render(
+      <MeetingWorkspaceDialog
+        spaceId="space-1"
+        meetingItemId="meeting-1"
+        joinUrl={null}
+        fallbackTitle="Strategy call"
+        onBack={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Prep for call' })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Prep for call' }))
+
+    expect(mocks.seedComposer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: 'conversation-1',
+        content: expect.stringContaining('Give me prep notes for this meeting.'),
+      }),
+    )
+    expect(screen.queryByRole('button', { name: 'Open agenda prep' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Agenda & prep notes' })).toBeNull()
+  })
+
+  it('opens a linked Google agenda instead of mixing it into Start agenda', async () => {
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+    mocks.fetchMeetingWorkspace.mockResolvedValue(scheduledBundle)
+
+    render(
+      <MeetingWorkspaceDialog
+        spaceId="space-1"
+        meetingItemId="meeting-1"
+        joinUrl={null}
+        fallbackTitle="Strategy call"
+        agendaEvent={{
+          id: 'evt-1',
+          title: 'Strategy call',
+          start: '2026-08-17T17:00:00.000Z',
+          end: '2026-08-17T17:50:00.000Z',
+          all_day: false,
+          location: null,
+          description: null,
+          video_url: null,
+          video_label: null,
+          html_link: null,
+          color_id: null,
+          account_label: 'Mine',
+          attendees: [],
+          source: 'google_calendar',
+          prep: {
+            status: 'ready',
+            space_id: 'space-1',
+            space_item_id: 'prep-1',
+            title: 'Prep',
+            agenda_doc_link: 'https://docs.google.com/document/d/agenda-doc',
+          },
+        }}
+        onBack={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Google agenda' })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Google agenda' }))
+
+    expect(open).toHaveBeenCalledWith(
+      'https://docs.google.com/document/d/agenda-doc',
+      '_blank',
+      'noopener,noreferrer',
+    )
+    expect(mocks.seedComposer).not.toHaveBeenCalled()
+    open.mockRestore()
   })
 })

@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   seedComposer: vi.fn(),
   openDocumentInShell: vi.fn(),
   setWorkAreaOpen: vi.fn(),
+  recordWorkAreaPage: vi.fn(),
   startMeetingCall: vi.fn(),
   updateSpaceItem: vi.fn(),
   toggleMeetingActionStatus: vi.fn(),
@@ -62,15 +63,12 @@ vi.mock('@/lib/spaces/spaces-api', () => ({
   updateSpaceItem: mocks.updateSpaceItem,
 }))
 vi.mock('@/components/shell/use-shell-store', () => ({
-  useShellStore: (
-    selector: (state: {
-      openChatDrawer: typeof mocks.openChatDrawer
-      setWorkAreaOpen: typeof mocks.setWorkAreaOpen
-    }) => unknown,
-  ) =>
+  useShellStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
       openChatDrawer: mocks.openChatDrawer,
       setWorkAreaOpen: mocks.setWorkAreaOpen,
+      recordWorkAreaPage: mocks.recordWorkAreaPage,
+      chatDrawer: { conversationId: null },
     }),
 }))
 

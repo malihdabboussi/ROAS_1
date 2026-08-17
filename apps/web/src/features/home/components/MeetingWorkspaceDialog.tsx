@@ -16,6 +16,7 @@ import {
   startAgendaPrompt,
   type MeetingPostCallAction,
 } from '@/features/home/config/meeting-post-call-actions.config'
+import { useMeetingWorkspaceSurface } from '@/features/home/hooks/use-meeting-workspace-surface'
 import { buildMeetingAwarenessContext } from '@/features/home/lib/build-meeting-awareness-context'
 import {
   formatAttendeeSummary,
@@ -47,7 +48,6 @@ export function MeetingWorkspaceDialog({
   fallbackTitle,
   onBack,
   onClose,
-  onOpenPrep,
 }: {
   spaceId: string
   meetingItemId: string
@@ -59,7 +59,6 @@ export function MeetingWorkspaceDialog({
   fallbackTitle: string
   onBack: () => void
   onClose: () => void
-  onOpenPrep?: () => void
 }) {
   const [bundle, setBundle] = useState<MeetingWorkspaceBundle | null>(null)
   const [loading, setLoading] = useState(true)
@@ -138,6 +137,15 @@ export function MeetingWorkspaceDialog({
   const prep = useMemo(() => parseMeetingPrep(prepDescription), [prepDescription])
   const whenLine = formatMeetingWhen(meetingStart, meetingEnd)
   const attendeeSummary = formatAttendeeSummary(agendaEvent?.attendees)
+  useMeetingWorkspaceSurface({
+    spaceId,
+    meetingItemId,
+    conversationId,
+    title,
+    agendaEvent,
+    awarenessContext,
+    timelineVersion: bundle?.snippets.length ?? 0,
+  })
 
   useEffect(() => {
     setWorkAreaOpen(true)
@@ -174,6 +182,13 @@ export function MeetingWorkspaceDialog({
   }
 
   const runPostCallAction = (action: MeetingPostCallAction) => {
+    if (action.id === 'google-agenda') {
+      const googleAgendaHref = agendaEvent?.prep?.agenda_doc_link?.trim()
+      if (googleAgendaHref) {
+        window.open(googleAgendaHref, '_blank', 'noopener,noreferrer')
+        return
+      }
+    }
     if (!conversationId) return
     focusMeetingChat()
     // The chat panel drops seeds whose work context doesn't match its space
@@ -340,8 +355,6 @@ export function MeetingWorkspaceDialog({
             prep={prep}
             prepDescription={prepDescription}
             joinUrl={joinUrl}
-            agendaDocLink={agendaEvent?.prep?.agenda_doc_link ?? null}
-            onOpenPrep={onOpenPrep}
             onRecordingLinked={() => {
               void hydrateWorkspace()
             }}

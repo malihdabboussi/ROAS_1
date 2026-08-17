@@ -35,14 +35,9 @@ export const HOME_AGENDA_MESSAGES = {
     message: 'Start workspace',
     category: 'button',
   },
-  PREP_TODAY_TITLE: {
-    key: 'PREP_TODAY_TITLE',
-    message: 'Generate pre-call prep for today’s meetings',
-    category: 'tooltip',
-  },
   AGENDA_EMPTY: {
     key: 'AGENDA_EMPTY',
-    message: 'No agenda notes yet — kick one off with Start agenda above',
+    message: 'No agenda notes yet — kick one off with Start agenda above.',
     category: 'empty',
   },
   ADD_ACTION_ITEM: {

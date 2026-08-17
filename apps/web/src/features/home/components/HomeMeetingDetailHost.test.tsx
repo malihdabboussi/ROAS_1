@@ -81,7 +81,6 @@ describe('HomeMeetingDetailHost', () => {
           },
         }}
         onClose={vi.fn()}
-        onOpenPrep={vi.fn()}
       />,
     )
 
@@ -106,7 +105,7 @@ describe('HomeMeetingDetailHost', () => {
       conversation_id: 'meeting-conversation',
     })
 
-    render(<HomeMeetingDetailHost event={baseEvent} onClose={vi.fn()} onOpenPrep={vi.fn()} />)
+    render(<HomeMeetingDetailHost event={baseEvent} onClose={vi.fn()} />)
 
     expect(screen.getByText('Getting your meeting space ready...')).toBeInTheDocument()
     await waitFor(() => {

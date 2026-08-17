@@ -23,6 +23,8 @@ describe('ShellChatHeaderPageControl', () => {
     useShellStore.setState({
       workAreaOpen: true,
       recentWorkAreaPages: [{ id: 'meetings', title: 'Meetings', href: '/home/meetings' }],
+      lastWorkAreaPageByConversation: {},
+      pendingWorkRestore: null,
       chatDrawer: { open: false, conversationId: null, width: 420, minimized: false },
     })
   })
@@ -54,5 +56,30 @@ describe('ShellChatHeaderPageControl', () => {
     expect(useShellStore.getState().chatDrawer.conversationId).toBe('conversation-1')
     expect(useShellStore.getState().workAreaOpen).toBe(true)
     expect(mocks.push).toHaveBeenCalledWith('/home/meetings')
+  })
+
+  it('prefers the conversation’s remembered meeting page over the global recents list', () => {
+    mocks.pathname = '/home'
+    mocks.conv = 'conversation-1'
+    useShellStore.setState({
+      workAreaOpen: true,
+      lastWorkAreaPageByConversation: {
+        'conversation-1': {
+          id: '/home/meetings?meeting=evt-1',
+          title: 'Strategy call',
+          href: '/home/meetings?meeting=evt-1',
+          restore: { feature: 'home_meeting', data: { id: 'evt-1' } },
+        },
+      },
+    })
+
+    render(<ShellChatHeaderPageControl />)
+    fireEvent.click(screen.getByRole('button', { name: 'Show page' }))
+
+    expect(useShellStore.getState().pendingWorkRestore).toEqual({
+      feature: 'home_meeting',
+      data: { id: 'evt-1' },
+    })
+    expect(mocks.push).toHaveBeenCalledWith('/home/meetings?meeting=evt-1')
   })
 })

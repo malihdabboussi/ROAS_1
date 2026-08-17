@@ -118,6 +118,26 @@ describe('shell persisted prefs hydration', () => {
     })
   })
 
+  it('restores lastWorkAreaPageByConversation after a refresh', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        lastWorkAreaPageByConversation: {
+          'conversation-1': {
+            id: '/home/meetings?meeting=evt-1',
+            title: 'Strategy call',
+            href: '/home/meetings?meeting=evt-1',
+            restore: { feature: 'home_meeting', data: { id: 'evt-1' } },
+          },
+        },
+      }),
+    )
+    hydrateShellStoreFromStorage()
+    expect(useShellStore.getState().lastWorkAreaPageByConversation['conversation-1']?.href).toBe(
+      '/home/meetings?meeting=evt-1',
+    )
+  })
+
   it('restores the active artifact after a refresh and clears it when explicitly closed', () => {
     useShellStore.getState().openArtifactViewer(target)
 
@@ -247,6 +267,7 @@ describe('shell work area', () => {
       workAreaOpen: false,
       chatDrawer: { open: false, conversationId: null, width: 420, minimized: true },
       recentWorkAreaPages: [],
+      lastWorkAreaPageByConversation: {},
     })
   })
 
@@ -338,6 +359,49 @@ describe('shell work area', () => {
 
     expect(useShellStore.getState().recentWorkAreaPages).toHaveLength(1)
     expect(useShellStore.getState().recentWorkAreaPages[0]?.restore).toEqual(restore)
+  })
+
+  it('remembers the work page for the conversation that used it', () => {
+    useShellStore.setState({ lastWorkAreaPageByConversation: {} })
+    useShellStore.getState().recordWorkAreaPage(
+      {
+        id: '/home/meetings?meeting=evt-1',
+        title: 'Strategy call',
+        href: '/home/meetings?meeting=evt-1',
+        restore: { feature: 'home_meeting', data: { id: 'evt-1' } },
+      },
+      'conversation-1',
+    )
+
+    expect(useShellStore.getState().lastWorkAreaPageByConversation['conversation-1']).toMatchObject(
+      {
+        href: '/home/meetings?meeting=evt-1',
+        conversationId: 'conversation-1',
+      },
+    )
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject({
+      lastWorkAreaPageByConversation: {
+        'conversation-1': expect.objectContaining({ href: '/home/meetings?meeting=evt-1' }),
+      },
+    })
+  })
+
+  it('snapshots the current work page when opening an artifact in a chat', () => {
+    useShellStore.setState({
+      lastWorkAreaPageByConversation: {},
+      recentWorkAreaPages: [
+        {
+          id: '/home/meetings?meeting=evt-1',
+          title: 'Strategy call',
+          href: '/home/meetings?meeting=evt-1',
+        },
+      ],
+    })
+    useShellStore.getState().openArtifactViewer(target, 'conversation-1')
+
+    expect(useShellStore.getState().lastWorkAreaPageByConversation['conversation-1']?.href).toBe(
+      '/home/meetings?meeting=evt-1',
+    )
   })
 })
 

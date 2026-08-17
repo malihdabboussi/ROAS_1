@@ -1,5 +1,12 @@
 import type { LucideIcon } from 'lucide-react'
-import { CheckSquare, ClipboardList, ListChecks, MessageSquareText, Send } from 'lucide-react'
+import {
+  CheckSquare,
+  ClipboardList,
+  FileText,
+  ListChecks,
+  MessageSquareText,
+  Send,
+} from 'lucide-react'
 
 /**
  * One-click post-call actions shown in the meeting workspace once a call is
@@ -107,8 +114,8 @@ export const MEETING_PRE_CALL_ACTIONS: MeetingPostCallAction[] = [
     prompt: startAgendaPrompt(null),
   },
   {
-    id: 'agenda-prep-notes',
-    label: 'Agenda & prep notes',
+    id: 'prep-for-call',
+    label: 'Prep for call',
     icon: ClipboardList,
     prompt: [
       'Give me prep notes for this meeting.',
@@ -118,4 +125,21 @@ export const MEETING_PRE_CALL_ACTIONS: MeetingPostCallAction[] = [
       'Keep it scannable — short lines, no fluff. End with a one-line suggested opening for the call.',
     ].join('\n'),
   },
+  {
+    id: 'google-agenda',
+    label: 'Google agenda',
+    icon: FileText,
+    prompt: googleAgendaPrompt(),
+  },
 ]
+
+export function googleAgendaPrompt(): string {
+  return [
+    'Kick off this meeting’s agenda in the Page Grader Google Doc — not the Space Doc on the right.',
+    '',
+    'If a Google agenda is already linked on the calendar invite, open and update that doc.',
+    'Otherwise create or open the Page Grader portal agenda Google Doc for this call.',
+    '',
+    'Keep the Space Doc agenda untouched unless I ask for it.',
+  ].join('\n')
+}

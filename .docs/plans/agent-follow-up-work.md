@@ -1,3 +1,15 @@
+## 2026-08-17 - [FEATURE] In-app precall-prep backend still exists after UI removal
+
+Status: Open
+
+Found while: Removing the Home “Open agenda prep” / `useHomeMeetingActions` Space-item path
+
+Evidence: `runMeetingsPrecallPrepEvent` and `MeetingsPrecallPrepService` remain; automations still expose “Prep today’s calendar meetings”. Home no longer calls the event API.
+
+Needed work: Decide whether calendar enrichment / Drive agenda creation should stay as automation-only, then delete unused Home/API surfaces if the product is chat-prompt + Google Doc link only. `openYourTurnItemFromMeeting` is now unused after the UI removal but was left in `use-home-feed-open.ts` because staging that file fails the cross-feature import gate.
+
+Reason not done now: Requested work was remove the broken function from the app UI and split Start agenda / Prep for call / Google agenda. Backend/automation deletion is a separate product decision.
+
 ## 2026-08-17 - [ARCH] MeetingWorkspaceService is near the service LOC limit
 
 Status: Open
