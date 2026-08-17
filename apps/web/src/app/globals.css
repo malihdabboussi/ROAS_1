@@ -10628,19 +10628,56 @@ html.dark .chat-markdown-code-block__shadow {
   padding-right: 4px;
 }
 .hub-sidebar-logo-button {
+  position: relative;
   display: flex;
   align-items: center;
   max-width: 100%;
 }
+.hub-sidebar-logo-mark {
+  position: relative;
+  display: flex;
+  height: var(--spacing-8);
+  width: var(--spacing-8);
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+.hub-sidebar-logo-mark-wordmark {
+  width: auto;
+  max-width: 9rem;
+}
+.hub-sidebar-logo-face {
+  display: flex;
+  max-height: var(--spacing-5);
+  max-width: 100%;
+  align-items: center;
+  transition: opacity 0.12s ease-out;
+}
 .hub-sidebar-logo-button img {
-  max-height: 32px;
-  height: 32px;
+  max-height: var(--spacing-5);
+  height: var(--spacing-5);
   width: auto;
   max-width: 9rem;
   object-fit: contain;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
+}
+.hub-sidebar-logo-glyph {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease-out;
+}
+.hub-sidebar-logo-button:hover .hub-sidebar-logo-face,
+.hub-sidebar-logo-button:focus-visible .hub-sidebar-logo-face {
+  opacity: 0;
+}
+.hub-sidebar-logo-button:hover .hub-sidebar-logo-glyph,
+.hub-sidebar-logo-button:focus-visible .hub-sidebar-logo-glyph {
+  opacity: 1;
 }
 
 /* Dockable shell menu */
@@ -10726,10 +10763,15 @@ html.dark .chat-markdown-code-block__shadow {
     width: auto;
     padding: 0 var(--spacing-1);
   }
+  .hub-sidebar-shell[data-shell-menu-dock='work-top'] .hub-sidebar-logo-mark,
+  .hub-sidebar-shell[data-shell-menu-dock='work-bottom'] .hub-sidebar-logo-mark {
+    height: var(--spacing-7);
+    width: var(--spacing-7);
+  }
   .hub-sidebar-shell[data-shell-menu-dock='work-top'] .hub-sidebar-logo-button img,
   .hub-sidebar-shell[data-shell-menu-dock='work-bottom'] .hub-sidebar-logo-button img {
-    width: var(--spacing-7);
-    height: var(--spacing-7);
+    width: var(--spacing-5);
+    height: var(--spacing-5);
   }
   .hub-sidebar-shell[data-shell-menu-dock='work-top'] .hub-sidebar-rail-body,
   .hub-sidebar-shell[data-shell-menu-dock='work-bottom'] .hub-sidebar-rail-body {

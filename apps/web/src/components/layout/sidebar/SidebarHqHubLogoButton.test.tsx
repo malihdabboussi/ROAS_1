@@ -44,13 +44,23 @@ describe('SidebarHqHubLogoButton', () => {
     expect(useShellMenuDock.getState().dragging).toBe(false)
   })
 
-  it('reveals the drawer glyph on hover when the R is collapsed', () => {
+  it('reveals the drawer glyph on hover without swapping the logo box', () => {
     useShellMenuDock.setState({ menuCompact: true })
     render(<SidebarHqHubLogoButton expanded={false} />)
 
     const logo = screen.getByRole('button', { name: 'Expand menu' })
-    expect(logo.querySelector('svg')).toHaveClass('group-hover:block')
-    expect(logo.querySelectorAll('img')[0]).toHaveClass('group-hover:hidden')
+    expect(logo.querySelector('.hub-sidebar-logo-mark')).toBeTruthy()
+    expect(logo.querySelector('.hub-sidebar-logo-glyph')).toHaveClass('icon-md')
+    expect(logo.querySelectorAll('img')[0]).toHaveClass('hub-sidebar-logo-face')
+    expect(logo.querySelector('svg')).not.toHaveClass('hidden')
+  })
+
+  it('uses the wordmark in the expanded Simple header', () => {
+    render(<SidebarHqHubLogoButton expanded wordmark />)
+
+    const logo = screen.getByRole('button', { name: 'Collapse menu' })
+    expect(logo.querySelector('.hub-sidebar-logo-mark-wordmark')).toBeTruthy()
+    expect(screen.getAllByAltText('ROAS').length).toBeGreaterThan(0)
   })
 
   it('turns a hold into a dock drag instead of collapse', async () => {

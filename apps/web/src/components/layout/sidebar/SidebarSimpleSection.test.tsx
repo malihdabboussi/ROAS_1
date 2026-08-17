@@ -41,8 +41,12 @@ vi.mock('@/lib/programs', () => ({
     program.system_kind === 'clients' ? 'Client Spaces' : program.name,
 }))
 vi.mock('./SidebarHqHubLogoButton', () => ({
-  SidebarHqHubLogoButton: () => (
-    <button type="button" onClick={() => useShellMenuDock.getState().setMenuCompact(false)}>
+  SidebarHqHubLogoButton: ({ expanded }: { expanded: boolean }) => (
+    <button
+      type="button"
+      aria-label={expanded ? 'Collapse menu' : 'Expand menu'}
+      onClick={() => useShellMenuDock.getState().setMenuCompact(expanded)}
+    >
       ROAS
     </button>
   ),
@@ -64,6 +68,9 @@ describe('SidebarSimpleSection', () => {
     render(<SidebarSimpleSection c={makeSidebarHqController()} />)
 
     expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'New chat' }).querySelector('svg')).toHaveClass(
+      'nav-glass-text-purple',
+    )
     expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Collapse menu' })).toBeInTheDocument()
     expect(screen.queryByText('Search')).not.toBeInTheDocument()
@@ -82,14 +89,29 @@ describe('SidebarSimpleSection', () => {
 
   it('keeps the collapsed rail closed on hover and expands it on click', () => {
     useShellMenuDock.setState({ menuStyle: 'simple', menuCompact: true })
-    const { container } = render(<SidebarSimpleSection c={makeSidebarHqController()} />)
+    const controller = makeSidebarHqController()
+    const { container } = render(<SidebarSimpleSection c={controller} />)
+    const newChat = screen.getByRole('button', { name: 'New chat' })
 
-    expect(screen.queryByText('All Tasks')).not.toBeInTheDocument()
+    expect(newChat.querySelector('svg')).toHaveClass('nav-glass-text-purple')
+    fireEvent.click(newChat)
+    expect(controller.router.push).toHaveBeenCalledWith('/home')
+    expect(screen.getByRole('link', { name: 'Inbox' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Meetings' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'All Tasks' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Clients' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Client Campaigns' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Search' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Show favorites' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Show chats' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Chat history')).not.toBeInTheDocument()
     fireEvent.mouseEnter(container.firstElementChild as Element)
-    expect(screen.queryByText('All Tasks')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'ROAS' }))
-    expect(screen.getByText('All Tasks')).toBeInTheDocument()
+    expect(screen.queryByText('Chat history')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Expand menu' }))
+    expect(screen.getByText('Chat history')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Collapse menu' })).toBeInTheDocument()
+    expect(screen.getByText('All Tasks')).toBeInTheDocument()
   })
 
   it('opens More only after the More row is clicked', () => {

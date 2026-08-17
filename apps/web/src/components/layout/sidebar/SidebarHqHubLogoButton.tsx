@@ -1,19 +1,24 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { PanelLeftOpen } from 'lucide-react'
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import {
   shellMenuDockHitAtClientPoint,
   useShellMenuDock,
 } from '@/components/shell/use-shell-menu-dock'
+import { cn } from '@/lib/utils/cn'
+import { SidebarWordmark } from './SidebarWordmark'
 
 const HOLD_TO_DOCK_MS = 200
 
 export function SidebarHqHubLogoButton({
   expanded,
+  wordmark = false,
 }: {
   /** Whether the HQ menu rail is expanded (not compact). */
   expanded: boolean
+  /** Simple expanded header uses the ROAS wordmark instead of the R chip. */
+  wordmark?: boolean
 }) {
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pointerActiveRef = useRef(false)
@@ -21,6 +26,7 @@ export function SidebarHqHubLogoButton({
   const startDragging = useShellMenuDock((state) => state.startDragging)
   const clearLift = useShellMenuDock((state) => state.clearLift)
   const toggleMenuCompact = useShellMenuDock((state) => state.toggleMenuCompact)
+  const CollapseGlyph = expanded ? PanelLeftClose : PanelLeftOpen
 
   const clearHoldTimer = () => {
     if (holdTimerRef.current === null) return
@@ -82,28 +88,36 @@ export function SidebarHqHubLogoButton({
         if (holdStartedRef.current || useShellMenuDock.getState().dragging) return
         pointerActiveRef.current = false
       }}
-      className="hub-sidebar-logo-button group cursor-pointer rounded-lg p-1 transition-all hover:opacity-80"
+      className="hub-sidebar-logo-button group cursor-pointer rounded-lg p-1"
       aria-label={expanded ? 'Collapse menu' : 'Expand menu'}
       aria-expanded={expanded}
     >
-      <img
-        src="/Logos/roas/icon-white.png"
-        alt=""
-        draggable={false}
-        className={`hidden h-10 w-10 dark:block ${expanded ? '' : 'group-hover:hidden'}`}
-      />
-      <img
-        src="/Logos/roas/icon-black.png"
-        alt=""
-        draggable={false}
-        className={`h-10 w-10 dark:hidden ${expanded ? '' : 'group-hover:hidden'}`}
-      />
-      {!expanded ? (
-        <PanelLeftOpen
-          className="text-muted-foreground icon-sm hidden h-10 w-10 group-hover:block"
+      <span className={cn('hub-sidebar-logo-mark', wordmark && 'hub-sidebar-logo-mark-wordmark')}>
+        {wordmark ? (
+          <span className="hub-sidebar-logo-face">
+            <SidebarWordmark className="max-w-full" />
+          </span>
+        ) : (
+          <>
+            <img
+              src="/Logos/roas/icon-white.png"
+              alt=""
+              draggable={false}
+              className="hub-sidebar-logo-face hidden dark:block"
+            />
+            <img
+              src="/Logos/roas/icon-black.png"
+              alt=""
+              draggable={false}
+              className="hub-sidebar-logo-face dark:hidden"
+            />
+          </>
+        )}
+        <CollapseGlyph
+          className="hub-sidebar-logo-glyph icon-md text-muted-foreground"
           aria-hidden
         />
-      ) : null}
+      </span>
     </button>
   )
 }

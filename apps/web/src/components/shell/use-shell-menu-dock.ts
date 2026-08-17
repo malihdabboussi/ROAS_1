@@ -135,8 +135,13 @@ function persistStyle(style: ShellMenuStyle): void {
   }
 }
 
+export const SIMPLE_MENU_WIDTH_DEFAULT = 272
+export const SIMPLE_MENU_WIDTH_MIN = 240
+/** Default plus 75% — enough extra Recents width without taking the full frame. */
+export const SIMPLE_MENU_WIDTH_MAX = Math.round(SIMPLE_MENU_WIDTH_DEFAULT * 1.75)
+
 function clampSimpleMenuWidth(width: number): number {
-  return Math.min(420, Math.max(240, width))
+  return Math.min(SIMPLE_MENU_WIDTH_MAX, Math.max(SIMPLE_MENU_WIDTH_MIN, width))
 }
 
 function persistSimpleMenuWidth(width: number): void {
@@ -154,7 +159,7 @@ export const useShellMenuDock = create<ShellMenuDockStore>((set, get) => ({
   dock: DEFAULT_DOCK,
   menuCompact: false,
   menuStyle: 'simple',
-  simpleMenuWidth: 272,
+  simpleMenuWidth: SIMPLE_MENU_WIDTH_DEFAULT,
   dragging: false,
   candidate: DEFAULT_DOCK,
   lift: EMPTY_LIFT,
@@ -235,7 +240,7 @@ export function hydrateShellMenuDockFromStorage(): void {
   const styleRaw = window.localStorage.getItem(STYLE_STORAGE_KEY)
   const menuStyle: ShellMenuStyle = styleRaw === 'advanced' ? 'advanced' : 'simple'
   const simpleMenuWidth = clampSimpleMenuWidth(
-    Number(window.localStorage.getItem(SIMPLE_WIDTH_STORAGE_KEY)) || 272,
+    Number(window.localStorage.getItem(SIMPLE_WIDTH_STORAGE_KEY)) || SIMPLE_MENU_WIDTH_DEFAULT,
   )
   if (window.localStorage.getItem(STORAGE_KEY) !== dock) persistDock(dock)
   try {

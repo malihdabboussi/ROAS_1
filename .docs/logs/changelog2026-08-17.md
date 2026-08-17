@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:40] - [STYLE]
+What: Simple sidebar collapse now lives on ROAS logo hover, the compact rail matches expanded nav (icons + selected purple on a white `surface-card`), and the expanded Simple menu can be dragged 75% wider than the 272px default (max 476px).
+Why: Compact used Search/Favorites/Chats instead of the real destinations, logo hover flickered because the R and drawer glyph swapped sizes, and the drag max stopped at 420px.
+Impact: Hovering the wordmark or R reveals collapse/expand without a layout jump. Compact shows New chat, Inbox, Meetings, All Tasks, Clients, Client Campaigns, and More. Recents can be widened without taking the full frame.
+Files: `apps/web/src/components/layout/sidebar/SidebarSimpleSection.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqHubLogoButton.tsx`, `apps/web/src/components/shell/use-shell-menu-dock.ts`, `apps/web/src/app/globals.css`, `apps/website/src/app/globals.css`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 20:05] - [STYLE]
 What: Chat assistant-turn actions now show Reply first, then Copy, then Fork.
 Why: Reply is the primary next step in a conversation, so it should be the first control you see.
