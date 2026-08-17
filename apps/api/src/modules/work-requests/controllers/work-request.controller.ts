@@ -20,11 +20,13 @@ import {
   CreateWorkRequestDraftWebhookSchema,
   RefreshWorkRequestDraftWebhookSchema,
   SendWorkRequestReviewChatSchema,
+  StampWorkRequestConversationSchema,
   UpdateWorkRequestDraftSchema,
   WorkRequestTokenParamSchema,
   type CreateWorkRequestDraftWebhookDto,
   type RefreshWorkRequestDraftWebhookDto,
   type SendWorkRequestReviewChatDto,
+  type StampWorkRequestConversationDto,
   type UpdateWorkRequestDraftDto,
 } from '../dto/work-request.dto'
 import { WorkRequestChatService } from '../services/work-request-chat.service'
@@ -130,5 +132,20 @@ export class WorkRequestController {
       throw new UnauthorizedException('Invalid cron secret')
     }
     return this.workRequests.processDueWork()
+  }
+
+  @Public()
+  @Post('internal/work-requests/stamp-conversation')
+  @HttpCode(HttpStatus.OK)
+  stampConversation(
+    @Headers('authorization') authorization: string | undefined,
+    @Body(new ZodValidationPipe(StampWorkRequestConversationSchema))
+    body: StampWorkRequestConversationDto,
+  ) {
+    const secret = this.config.get<string>('INTERNAL_API_TOKEN') ?? process.env.INTERNAL_API_TOKEN
+    if (!secret || authorization !== `Bearer ${secret}`) {
+      throw new UnauthorizedException('Invalid internal token')
+    }
+    return this.workRequests.stampConversation(body.draft_id, body.conversation_id)
   }
 }

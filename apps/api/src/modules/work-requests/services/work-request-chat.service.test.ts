@@ -110,4 +110,56 @@ describe('WorkRequestChatService', () => {
     repository.findByTokenHash.mockResolvedValue(makeDraft({ provenance: {} }))
     await expect(service.getReviewChat(TOKEN)).rejects.toBeInstanceOf(NotFoundException)
   })
+
+  it('backfills conversation from slack provenance before loading chat', async () => {
+    repository.findByTokenHash.mockResolvedValue(
+      makeDraft({ provenance: { channel_id: 'C123', thread_ts: '123.456' } }),
+    )
+    repository.update.mockResolvedValue(
+      makeDraft({
+        provenance: {
+          channel_id: 'C123',
+          thread_ts: '123.456',
+          conversation_id: CONVERSATION_ID,
+        },
+      }),
+    )
+    const slackChain: {
+      eq: ReturnType<typeof vi.fn>
+      is: ReturnType<typeof vi.fn>
+      limit: ReturnType<typeof vi.fn>
+    } = {
+      eq: vi.fn(() => slackChain),
+      is: vi.fn(() => slackChain),
+      limit: vi.fn().mockResolvedValue({ data: [{ id: CONVERSATION_ID }], error: null }),
+    }
+    const conversationQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: { id: CONVERSATION_ID }, error: null }),
+    }
+    const messagesQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    }
+    let conversationCalls = 0
+    repository.client.from.mockImplementation((table: string) => {
+      if (table === 'messages') return messagesQuery
+      if (table !== 'conversations') throw new Error(`unexpected table ${table}`)
+      conversationCalls += 1
+      if (conversationCalls === 1) {
+        return { select: vi.fn(() => slackChain) }
+      }
+      return conversationQuery
+    })
+
+    await expect(service.getReviewChat(TOKEN)).resolves.toEqual({
+      conversation_id: CONVERSATION_ID,
+      messages: [],
+    })
+    expect(repository.update).toHaveBeenCalled()
+  })
 })

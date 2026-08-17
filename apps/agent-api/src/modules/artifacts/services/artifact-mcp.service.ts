@@ -1,12 +1,23 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { McpConfigService } from '../../mcp/services/mcp-config.service'
 import { McpToolService } from '../../mcp/services/mcp-tool.service'
 import { ArtifactMcpRepository } from '../repositories/artifact-mcp.repository'
-import type { ArtifactActionHandler } from './artifact-action.registry'
+import {
+  parseConversationIdFromSessionKey,
+  type ArtifactActionHandler,
+} from './artifact-action.registry'
 import type { ArtifactCapabilityPolicy } from './artifact-capability.policy'
+import {
+  extractFulfillmentDraftId,
+  isFulfillmentCreateTool,
+  stampConversationIntoFulfillmentArgs,
+  stampDraftConversationViaApi,
+} from './artifact-mcp-fulfillment-stamp'
 
 @Injectable()
 export class ArtifactMcpService {
+  private readonly logger = new Logger(ArtifactMcpService.name)
+
   constructor(
     private readonly mcpConfig: McpConfigService,
     private readonly mcpTool: McpToolService,
@@ -86,7 +97,7 @@ export class ArtifactMcpService {
     const serverName = String(input.server_name ?? '').trim()
     const serverId = String(input.server_id ?? '').trim()
     const toolName = String(input.tool_name ?? input.tool ?? '').trim()
-    const toolArgs = (input.arguments ?? input.args ?? {}) as Record<string, unknown>
+    let toolArgs = (input.arguments ?? input.args ?? {}) as Record<string, unknown>
 
     if (!toolName) return { success: false, error: 'tool_name is required' }
 
@@ -106,6 +117,15 @@ export class ArtifactMcpService {
       return { success: false, error: 'Access denied to this MCP server' }
     }
 
+    const conversationId =
+      typeof target.parseConversationId === 'function'
+        ? ((target.parseConversationId(sessionKey) as string | null) ?? null)
+        : parseConversationIdFromSessionKey(sessionKey)
+    const shouldStampFulfillment = isFulfillmentCreateTool(toolName) && Boolean(conversationId)
+    if (shouldStampFulfillment && conversationId) {
+      toolArgs = stampConversationIntoFulfillmentArgs(toolArgs, conversationId)
+    }
+
     if (onProgress) await onProgress(`Calling ${toolName} on ${server.name}...`)
 
     const authToken = await this.mcpConfig.getAuthToken(supabase, server)
@@ -123,12 +143,28 @@ export class ArtifactMcpService {
       .filter((c) => c.type === 'text')
       .map((c) => c.text)
       .join('\n')
+    const payload = result.structuredContent ?? textContent
+
+    if (shouldStampFulfillment && conversationId) {
+      const draftId = extractFulfillmentDraftId(payload)
+      if (draftId) {
+        const stamped = await stampDraftConversationViaApi({
+          draftId,
+          conversationId,
+        })
+        if (!stamped.ok) {
+          this.logger.warn(
+            `Fulfillment conversation stamp missed draft=${draftId} status=${stamped.status ?? 'n/a'}`,
+          )
+        }
+      }
+    }
 
     return {
       success: true,
       server_name: server.name,
       tool_name: toolName,
-      result: result.structuredContent ?? textContent,
+      result: payload,
     }
   }
 

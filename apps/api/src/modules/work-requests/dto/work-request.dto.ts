@@ -178,6 +178,15 @@ export const SendWorkRequestReviewChatSchema = z
 
 export type SendWorkRequestReviewChatDto = z.infer<typeof SendWorkRequestReviewChatSchema>
 
+export const StampWorkRequestConversationSchema = z
+  .object({
+    draft_id: z.string().uuid(),
+    conversation_id: z.string().uuid(),
+  })
+  .strict()
+
+export type StampWorkRequestConversationDto = z.infer<typeof StampWorkRequestConversationSchema>
+
 function containsCredentialKey(value: unknown): boolean {
   if (Array.isArray(value)) return value.some(containsCredentialKey)
   if (!value || typeof value !== 'object') return false

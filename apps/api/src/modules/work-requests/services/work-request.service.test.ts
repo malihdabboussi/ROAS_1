@@ -154,6 +154,75 @@ describe('WorkRequestService', () => {
     expect(publicDraft.resume_conversation_id).toBe('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee')
   })
 
+  it('stamps a missing conversation onto an owned draft', async () => {
+    const row = draft()
+    const conversationId = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: { id: conversationId },
+      error: null,
+    })
+    const eqOrg = vi.fn(() => ({ maybeSingle }))
+    const eqUser = vi.fn(() => ({ eq: eqOrg }))
+    const eqId = vi.fn(() => ({ eq: eqUser }))
+    const select = vi.fn(() => ({ eq: eqId }))
+    const { service, repository } = createService({
+      findById: vi.fn().mockResolvedValue(row),
+      update: vi.fn().mockImplementation(async (_id: string, values: Record<string, unknown>) => ({
+        ...row,
+        ...values,
+      })),
+      client: {
+        from: vi.fn(() => ({ select })),
+      },
+    })
+
+    await expect(service.stampConversation(row.id, conversationId)).resolves.toEqual({
+      stamped: true,
+      draft_id: row.id,
+      conversation_id: conversationId,
+    })
+    expect(repository.update).toHaveBeenCalledWith(
+      row.id,
+      expect.objectContaining({
+        provenance: expect.objectContaining({ conversation_id: conversationId }),
+      }),
+    )
+  })
+
+  it('backfills resume conversation from slack provenance on getReview', async () => {
+    const row = draft()
+    const conversationId = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
+    const limit = vi.fn().mockResolvedValue({ data: [{ id: conversationId }], error: null })
+    const chain: {
+      eq: ReturnType<typeof vi.fn>
+      is: ReturnType<typeof vi.fn>
+      limit: typeof limit
+    } = {
+      eq: vi.fn(() => chain),
+      is: vi.fn(() => chain),
+      limit,
+    }
+    const { service, repository, scope } = createService({
+      findByTokenHash: vi.fn().mockResolvedValue(row),
+      update: vi.fn().mockImplementation(async (_id: string, values: Record<string, unknown>) => ({
+        ...row,
+        ...values,
+      })),
+      client: {
+        from: vi.fn(() => ({
+          select: vi.fn(() => chain),
+        })),
+      },
+    })
+
+    const result = await service.getReview(TOKEN)
+    expect(result.state).toBe('draft')
+    if (result.state !== 'draft') return
+    expect(result.draft.resume_conversation_id).toBe(conversationId)
+    expect(repository.update).toHaveBeenCalled()
+    expect(scope.loadScopedOptions).toHaveBeenCalled()
+  })
+
   it('rejects unknown anonymous update fields', () => {
     expect(
       UpdateWorkRequestDraftSchema.safeParse({

@@ -1,5 +1,12 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 05:49] - [FIX]
+What: Guaranteed Service Request review links resume the originating Pixel chat. Agent-api now injects the active session `conversation_id` into Page Grader fulfillment MCP args and stamps the draft via an internal API after create. Review/chat load also backfills from Slack channel+thread provenance when the id was missing, and idempotent create replays merge an incoming conversation id.
+Why: Slack-created drafts still opened the step wizard because provenance lacked `resume_conversation_id`; skill-only stamping was insufficient.
+Impact: Existing Slack review links with channel/thread provenance open the shared chat host after API deploy; new Slack/Pixel fulfillment creates stamp the conversation at the platform chokepoint.
+Files: `apps/agent-api/src/modules/artifacts/services/artifact-mcp.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-mcp-fulfillment-stamp.ts`, `apps/api/src/modules/work-requests/services/work-request.service.ts`, `apps/api/src/modules/work-requests/services/work-request-chat.service.ts`, `apps/api/src/modules/work-requests/services/work-request-conversation-stamp.ts`, `apps/api/src/modules/work-requests/controllers/work-request.controller.ts`, `apps/api/src/modules/work-requests/dto/work-request.dto.ts`, `documentation/features/page-grader-mcp-bridge.md`
+
+
 ## [2026-08-17 04:21] - [FEATURE]
 
 What: Public Service Request review links now open the same Pixel conversation chat (MessageBubble + ChatInput) instead of a parallel faux wizard. Added token-scoped GET/POST `/work-requests/review/:token/chat` (bootstrap + SSE send via owner session mint → channel-chat). Logged-in users still deep-link to `/home?conv=&wr=`; anonymous users get the shared chat host with force-open resume/finalize card; wizard remains fallback when no `resume_conversation_id`. Create webhook also accepts top-level `conversation_id`; Page Grader operator skill requires stamping it from ROAS chat.

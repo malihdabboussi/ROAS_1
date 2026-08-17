@@ -1,6 +1,6 @@
 # Page Grader MCP bridge
 
-Last Modified: 2026-07-29
+Last Modified: 2026-08-17
 
 ## Ownership
 
@@ -136,3 +136,8 @@ Grader`, `MCP`, tool names, schemas, idempotency keys, or retry mechanics.
   five automatic team assignments.
 - Urgent Delegation Desk intake dispatches only after duplicate, target, and
   destination checks and stores the confirmed destination receipt.
+- Service Request fulfillment creates from a ROAS / Slack Pixel session stamp
+  that conversation UUID onto the draft (`source_context.conversation_id` plus
+  internal post-create stamp). Public `/request-review/:token` resumes that
+  same chat host; missing stamps backfill from Slack channel+thread provenance
+  when uniquely resolvable.
