@@ -36,8 +36,6 @@ Reason not done now: Requested work was header/card alignment; decomposing the o
 
 ## 2026-08-17 - [UI] ClientCampaignsPage still uses the old multi-table Clients layout
 
-## 2026-08-17 - [UI] ClientCampaignsPage still uses the old multi-table Clients layout
-
 Status: Open
 
 Found while: Agency Clients table layout fix (avatars, wrapping, column alignment)
