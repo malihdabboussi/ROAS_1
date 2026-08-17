@@ -18,7 +18,7 @@ The prototype contains UI that has **no backing in the app today**. Implement th
 | Element | Status | Notes |
 | --- | --- | --- |
 | Sidebar nav (Home, Team, Campaigns/Spaces, Brain, Projects, Flows) | Wired | Existing routes under `app/(dashboard)/` |
-| Home dashboard cards (Agenda, My tasks, Approval queue, Notification feed, Recent conversations) | Wired | Existing `features/home` components (HomeCardsGrid, AgendaCard, MyTasksPanel, RecentAgentConversationsCard) |
+| Home dashboard cards (Agenda, My tasks, Approval queue, Notification feed, Recent conversations) | Wired | Existing `features/home` components (HomeCardsGrid, AgendaCard, MyTasksCard, RecentAgentConversationsCard) |
 | Chat / conversations / space chat | Wired | `GlobalChatLayout`, studio chat components |
 | "Open in ▾" button (top right) | **Phantom** | No export/open-in targets exist. Either omit or stub behind a feature flag until targets exist |
 | Right panel: Tasks / Files / Sources tabs | **Phantom (partially)** | Tasks can bind to the existing my-tasks feed; Files could bind to space deliverables/artifacts; **Sources has no data source** — implement the panel shell + Tasks first, add Files/Sources when data exists |

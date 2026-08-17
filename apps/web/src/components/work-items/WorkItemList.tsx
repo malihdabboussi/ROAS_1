@@ -3,8 +3,8 @@
 import { cn } from '@/lib/utils/cn'
 
 /**
- * The one shared list chrome for work items — meeting action items, My Tasks,
- * and (eventually) space list rows all render inside this same bordered,
+ * The one shared list chrome for work items — meeting action items and
+ * (eventually) space list rows all render inside this same bordered,
  * divided card so lists look identical everywhere.
  */
 export function WorkItemList({

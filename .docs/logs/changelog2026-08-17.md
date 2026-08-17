@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:22] - [FIX]
+What: All Tasks no longer opens as the retired My Tasks screen. The page defaults to every open task, the leftover overlay is gone, and Assigned to me is only a filter.
+Why: #272 redirected `/home/my-tasks`, but `/all-tasks` still selected a My Tasks tab and Home expand still opened the old My Tasks overlay.
+Impact: Sidebar All Tasks shows All Tasks. Home card expand goes to `/all-tasks?scope=my`. There is no My Tasks page or dialog left.
+Files: `apps/web/src/features/all-tasks/components/AllTasksBoard.tsx`, `AllTasksScopeFilters.tsx`, `apps/web/src/features/home/components/HomeCardsGrid.tsx`, `documentation/features/programs.md`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 20:05] - [STYLE]
 What: Chat assistant-turn actions now show Reply first, then Copy, then Fork.
 Why: Reply is the primary next step in a conversation, so it should be the first control you see.
