@@ -1,4 +1,16 @@
-## 2026-08-17 - [FEATURE] In-app precall-prep backend still exists after UI removal
+## 2026-08-17 - [ARCH] HomeTaskDetailHost is at the component LOC limit
+
+Status: Open
+
+Found while: Reusing the My Tasks right-side panel on All Tasks
+
+Evidence: `wc -l` reports `apps/web/src/features/home/components/HomeTaskDetailHost.tsx` at 397 LOC (component limit 400).
+
+Needed work: Extract store snapshot / space hydration helpers from the host so All Tasks and Home can keep sharing it without sitting on the limit.
+
+Reason not done now: All Tasks only composed the existing panel; splitting the host was out of scope.
+
+
 
 Status: Open
 

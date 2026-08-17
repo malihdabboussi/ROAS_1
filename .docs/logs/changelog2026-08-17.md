@@ -1,5 +1,12 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:01] - [FEATURE]
+What: Retired the dedicated My Tasks page. All Tasks is now the primary task destination, and opening a rollup row keeps the list mounted with the same right-side task card My Tasks used.
+Why: Simple/Advanced nav had both My Tasks and All Tasks, while All Tasks sent people into the Space overlay instead of a side card.
+Impact: Sidebar and Home flyout go to `/all-tasks`. `/home/my-tasks` redirects there. Campaign Tasks list still opens Space. Home My Tasks card is unchanged.
+Files: `apps/web/src/app/(dashboard)/all-tasks/_components/AllTasksWorkspace.tsx`, `apps/web/src/app/(dashboard)/home/my-tasks/page.tsx`, `apps/web/src/components/work-views/AllTasksNativeList.tsx`, `apps/web/src/features/all-tasks/components/AllTasksBoard.tsx`, `apps/web/src/components/layout/sidebar/SidebarSimpleSection.tsx`, `apps/web/src/components/layout/sidebar/manage-rail-items.tsx`, `documentation/features/programs.md`
+
+
 ## [2026-08-17 17:43] - [FEATURE]
 What: Chat now restores the last work screen for that conversation (meeting agenda pops back), and meeting prep is split into Start agenda / Prep for call / Google agenda. Removed the in-app precall-prep Space-item path.
 Why: Switching Recents sent meeting chats to `/home?conv=` so the agenda disappeared; Open agenda prep never worked; Google Doc / Page Grader kickoff was mixed into the same controls as the Space Doc agenda.
