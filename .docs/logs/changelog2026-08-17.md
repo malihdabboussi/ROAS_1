@@ -1,5 +1,15 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 04:21] - [FEATURE]
+
+What: Public Service Request review links now open the same Pixel conversation chat (MessageBubble + ChatInput) instead of a parallel faux wizard. Added token-scoped GET/POST `/work-requests/review/:token/chat` (bootstrap + SSE send via owner session mint → channel-chat). Logged-in users still deep-link to `/home?conv=&wr=`; anonymous users get the shared chat host with force-open resume/finalize card; wizard remains fallback when no `resume_conversation_id`. Create webhook also accepts top-level `conversation_id`; Page Grader operator skill requires stamping it from ROAS chat.
+
+Why: Review links must be the same chat session everywhere — same UI, same components, full messaging, finalize in-place.
+
+Impact: Anonymous review is a real conversation when provenance includes conversation id; authenticated review remains in-app chat; finalize UX is the same WorkRequestChatResumeCard/flow inline.
+
+Files: `apps/api/src/modules/work-requests/services/work-request-chat.service.ts`, `apps/api/src/modules/work-requests/controllers/work-request.controller.ts`, `apps/api/src/modules/work-requests/work-requests.module.ts`, `apps/api/src/modules/work-requests/dto/work-request.dto.ts`, `apps/web/src/lib/work-requests/work-request-api.ts`, `apps/web/src/features/work-requests/hooks/useWorkRequestReviewChat.ts`, `apps/web/src/features/work-requests/components/WorkRequestReviewChatHost.tsx`, `apps/web/src/features/work-requests/components/WorkRequestReviewPage.tsx`, `apps/web/src/features/work-requests/components/WorkRequestChatResumeCard.tsx`, `docker/agents/atlas/skills/page-grader-operator/SKILL.md`, `documentation/frontend-shared-surfaces.md`
+
 ## [2026-08-17 04:56] - [FIX]
 
 What: Locked Summary and Show/Collapse page into the conversation title bar on every chat surface, including `/home?conv=`.

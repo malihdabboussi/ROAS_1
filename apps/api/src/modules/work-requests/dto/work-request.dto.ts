@@ -102,12 +102,17 @@ export const CreateWorkRequestDraftWebhookSchema = z
     due_date: DueDateSchema.optional(),
     priority: z.enum(['low', 'normal', 'medium', 'high', 'urgent']).optional().default('normal'),
     source_context: SourceContextSchema.optional().default({}),
+    /** Explicit ROAS conversation to resume from the public review link. */
+    conversation_id: z.string().uuid().optional(),
     idempotency_key: z.string().trim().min(1).max(255),
   })
   .strict()
   .refine(payloadSize(150_000), 'Draft payload is too large')
   .transform((input) => {
-    const source = input.source_context
+    const source = {
+      ...input.source_context,
+      ...(input.conversation_id ? { conversation_id: input.conversation_id } : {}),
+    }
     const requester = readRecord(source.requester)
     const originalAuthor = readRecord(source.original_author)
     const forwardingUser = readRecord(source.forwarding_user)
@@ -166,6 +171,14 @@ export const RefreshWorkRequestDraftWebhookSchema = z
   .strict()
 
 export type RefreshWorkRequestDraftWebhookDto = z.infer<typeof RefreshWorkRequestDraftWebhookSchema>
+
+export const SendWorkRequestReviewChatSchema = z
+  .object({
+    content: z.string().trim().min(1).max(20_000),
+  })
+  .strict()
+
+export type SendWorkRequestReviewChatDto = z.infer<typeof SendWorkRequestReviewChatSchema>
 
 function containsCredentialKey(value: unknown): boolean {
   if (Array.isArray(value)) return value.some(containsCredentialKey)

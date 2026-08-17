@@ -8,21 +8,26 @@ import {
   Param,
   Patch,
   Post,
+  Res,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler'
+import type { Response } from 'express'
 import { AuthGuard, Public, ZodValidationPipe } from '@vibey/api-shared'
 import {
   CreateWorkRequestDraftWebhookSchema,
   RefreshWorkRequestDraftWebhookSchema,
+  SendWorkRequestReviewChatSchema,
   UpdateWorkRequestDraftSchema,
   WorkRequestTokenParamSchema,
   type CreateWorkRequestDraftWebhookDto,
   type RefreshWorkRequestDraftWebhookDto,
+  type SendWorkRequestReviewChatDto,
   type UpdateWorkRequestDraftDto,
 } from '../dto/work-request.dto'
+import { WorkRequestChatService } from '../services/work-request-chat.service'
 import { WorkRequestService } from '../services/work-request.service'
 
 @Controller()
@@ -31,6 +36,7 @@ import { WorkRequestService } from '../services/work-request.service'
 export class WorkRequestController {
   constructor(
     private readonly workRequests: WorkRequestService,
+    private readonly workRequestChat: WorkRequestChatService,
     private readonly config: ConfigService,
   ) {}
 
@@ -38,6 +44,28 @@ export class WorkRequestController {
   @Get('work-requests/review/:token')
   getReview(@Param(new ZodValidationPipe(WorkRequestTokenParamSchema)) params: { token: string }) {
     return this.workRequests.getReview(params.token)
+  }
+
+  @Public()
+  @Get('work-requests/review/:token/chat')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  getReviewChat(
+    @Param(new ZodValidationPipe(WorkRequestTokenParamSchema)) params: { token: string },
+  ) {
+    return this.workRequestChat.getReviewChat(params.token)
+  }
+
+  @Public()
+  @Post('work-requests/review/:token/chat')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  async sendReviewChat(
+    @Param(new ZodValidationPipe(WorkRequestTokenParamSchema)) params: { token: string },
+    @Body(new ZodValidationPipe(SendWorkRequestReviewChatSchema))
+    body: SendWorkRequestReviewChatDto,
+    @Res() res: Response,
+  ) {
+    await this.workRequestChat.streamReviewChat(params.token, body.content, res)
   }
 
   @Public()

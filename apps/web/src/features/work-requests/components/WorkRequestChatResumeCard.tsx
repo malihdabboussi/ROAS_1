@@ -14,6 +14,7 @@ import {
 import { WORK_REQUEST_ERRORS } from '../config/errors.config'
 import { WORK_REQUEST_MESSAGES } from '../config/messages.config'
 import { WorkRequestChatFlow } from './WorkRequestChatFlow'
+import { useWorkRequestReviewForceOpenToken } from './WorkRequestReviewForceOpenContext'
 
 type Props = {
   title: string
@@ -30,8 +31,9 @@ export function WorkRequestChatResumeCard({
   summary,
 }: Props) {
   const searchParams = useSearchParams()
+  const forceOpenToken = useWorkRequestReviewForceOpenToken()
   const token = useMemo(() => extractWorkRequestTokenFromUrl(reviewUrl), [reviewUrl])
-  const autoOpen = Boolean(token && searchParams.get('wr') === token)
+  const autoOpen = Boolean(token && (searchParams.get('wr') === token || forceOpenToken === token))
   const [open, setOpen] = useState(autoOpen)
   const [review, setReview] = useState<WorkRequestReviewResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
