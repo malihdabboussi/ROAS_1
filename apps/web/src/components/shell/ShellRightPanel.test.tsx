@@ -17,7 +17,6 @@ const mocks = vi.hoisted(() => ({
     conversationScopePickerRequestNonce: 0,
     setRightPanelOpen: vi.fn(),
     setWorkAreaOpen: vi.fn(),
-    closeArtifactViewer: vi.fn(),
   },
   messagesByConversation: {
     'conversation-1': [
@@ -244,7 +243,6 @@ describe('ShellRightPanel', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Open Client launch review' }))
 
-    expect(mocks.shellState.closeArtifactViewer).toHaveBeenCalledTimes(1)
     expect(mocks.shellState.setWorkAreaOpen).toHaveBeenCalledWith(true)
     expect(mocks.routerPush).toHaveBeenCalledWith(
       '/home/meetings?meeting=meeting-item-1&space=space-1',

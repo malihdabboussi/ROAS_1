@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 20:20] - [FIX]
+What: Screen navigation no longer closes or forgets the open artifact. HQ rail, Show page history, Open meeting workspace, campaign/space open keep it; explicit close, flow navigate-away, and drag-to-edge collapse still close it.
+Why: Pathname-change and page-pick handlers called `closeArtifactViewer()`, which also forgot the chat’s last artifact, so restoring a chat’s work screen raced the artifact closed.
+Impact: Moving screens keeps the artifact on the pin-like default for that chat. Closing it still means it stays closed until the user opens one again.
+Files: `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `apps/web/src/components/shell/ShellWorkAreaControl.tsx`, `apps/web/src/components/shell/ShellRightPanel.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 20:19] - [FIX]
 What: Meetings now skeleton-loads the agenda in place (no centered green orb flash, no duplicate loader). Meeting chats list the meeting workspace inside Connections by name, without an unlink control. Inbox, My Tasks, All Tasks, Programs, Clients, and Client Campaigns use the same list skeleton.
 Why: The Meetings orb started between chat and agenda, then jumped into the agenda body. Open meeting workspace sat above Connections instead of being the named meeting connection.
