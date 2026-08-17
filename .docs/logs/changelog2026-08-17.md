@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 21:35] - [FIX]
+What: Service Request finalize and Portal send now pass the Page Grader campaign id, mark origin as From Pagegrader, and omit empty assignees so Portal assignment rules can run.
+Why: Finalized Page Grader tasks landed unlinked and unassigned. Send always posted `assignees: []`, which overrode Portal From Pagegrader rules, and never sent `campaign_id`.
+Impact: New Portal tasks from a known campaign arrive linked. Unassigned Service Requests no longer force Unassigned in the Portal. Manual Portal "Link" on already-created rows is still a Portal-side update.
+Files: `apps/api/src/modules/integrations/page-grader/services/page-grader-send-work.service.ts`, `page-grader-api.helpers.ts`, `page-grader.dto.ts`, `apps/api/src/modules/work-requests/services/work-request-mirror.ts`, `apps/web/src/features/work-requests/lib/work-request-chat-steps.ts`, `docker/agents/vibey/skills/page-grader-operator/SKILL.md`, `docker/agents/atlas/skills/page-grader-operator/SKILL.md`, `documentation/features/page-grader-mcp-bridge.md`
+
 ## [2026-08-17 21:20] - [FIX]
 What: Service Request review cards now open in the Pixel thread under the review link. Public host keeps one composer. Signed-in `/home?conv=&wr=` hydrates the conversation immediately and seeds messages from the token chat API when the pane would be blank.
 Why: The previous host mounted the finalize flow below the composer (plus a second Message Pixel). Signed-in review redirected to a blank `/home?conv=` pane.
@@ -23,6 +29,7 @@ What: Summary stays on the chat title bar. Show page sits beside it only while t
 Why: The page control belonged with the open work card so it can expand over chat, while Summary must stay on chat. Hovering a portaled filter row left the Recents hover group, hid the toolbar, and Floating UI re-anchored the menu mid-screen.
 Impact: Closed page = Summary + Show page on chat. Open page = Summary on chat, page control on the work card. Filter stays under the Recents icon.
 Files: `apps/web/src/components/shell/ShellChatDrawer.tsx`, `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/components/conversations/ChatHistoryFilterMenu.tsx`, `apps/web/src/components/conversations/SpaceConversationsHeader.tsx`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 
 ## [2026-08-17 20:33] - [STYLE]
 What: Meeting workspace action items now render through the same All Tasks native list (status, name, priority, assignee, due date, Client Workspace, Campaign Space, Add task).

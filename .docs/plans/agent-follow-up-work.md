@@ -1,3 +1,15 @@
+## 2026-08-17 - [PAGE-GRADER] Portal "Failed to update campaign" Link toast is outside this repo
+
+Status: Open
+
+Found while: Fixing Service Request tasks that arrived in The ROAS Portal unlinked and unassigned
+
+Evidence: The client Tasks / Requests table "Link" control and the toast "Failed to update campaign" are The ROAS Portal (Page Grader) UI. This repo proxies workspace PATCHes but does not own that Link action. Other non-Page-Grader campaign links in ROAS work.
+
+Needed work: In the Page Grader / roas-api repo, fix PATCH of a fulfillment task's `campaign_id` for ROAS-sourced work (and confirm the toast maps the real error). After deploy, retry Link on the already-created Yasir Khan rows.
+
+Reason not done now: Page Grader frontend/API is not in this monorepo. This change only fixes create/mirror so new tasks arrive linked and assignment rules can apply.
+
 ## 2026-08-17 - [ARCH] WorkRequestChatFlow is at the component LOC limit
 
 Status: Open
@@ -45,6 +57,7 @@ Evidence: `wc -l` reports `apps/web/src/components/shell/ShellChatMenu.tsx` at 3
 Needed work: Extract Recents filter/header wiring from ShellChatMenu, and split SpaceConversationsList section rendering from the list shell.
 
 Reason not done now: Requested work was control placement and keeping the filter menu anchored. Splitting those files would not change the bug.
+
 
 ## 2026-08-17 - [ARCH] AgendaCard and MyTasksPanel sit on the component extract threshold
 
