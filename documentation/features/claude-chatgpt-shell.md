@@ -295,6 +295,8 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 
 ## Decision Log
 
+- **2026-08-18:** Draft card **Use in composer** seeds a Claude-style handoff: `I used option B and made some edits. Here it is.` (option letter + edit clause as applicable) followed by the draft body, so Pixel can acknowledge instead of receiving bare copy.
+- **2026-08-18:** Pixel message writing defaults to Power (`auto:power`) and must load `dylans-super-voice` for send-ready drafts ("write this message", Slack/DM/email copy). The skill ships on vibey; TOOLS runtime guidance requires it before drafting.
 - **2026-08-17:** Simple compact rail uses the same destinations and selected-purple styling as the expanded menu (New chat, Inbox, Meetings, All Tasks, Clients, Client Campaigns, More) on a `surface-card` background. Collapse/expand lives only on ROAS logo hover in both states; the logo and drawer glyph share one overlay box so the R no longer flickers. Simple menu width stays 272px by default and can be dragged to 476px (default + 75%).
 - **2026-08-17:** All Tasks is the only tasks screen. It defaults to every open task. Assigned to me is a filter (`?scope=my`), not a separate My Tasks page or overlay. Expanding the Home My Tasks card goes to `/all-tasks?scope=my`.
 - **2026-08-17:** In-place list and page-body loads use `ListSkeleton` (`role="status"`) rather than a centered `VibeyLoadingOrb`. Meetings must not flash a full-work-area orb and then a second agenda-body orb; render Agenda chrome immediately and skeleton the list.
