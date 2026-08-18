@@ -81,3 +81,34 @@ export function splitDraftSegments(content: string): DraftContentSegment[] {
 export function hasDraftFence(content: string): boolean {
   return content.includes('```draft')
 }
+
+/**
+ * Claude-style acknowledgment when sending an edited draft version back into
+ * the chat composer so Pixel can confirm ("Sounds good") rather than
+ * receiving bare copy with no context.
+ */
+export function buildDraftComposerUseText(input: {
+  draftText: string
+  versionIndex: number
+  versionCount: number
+  edited: boolean
+}): string {
+  const draft = input.draftText.trim()
+  if (!draft) return ''
+
+  const letter = VERSION_LETTERS[input.versionIndex]
+  const optionLabel = input.versionCount > 1 && letter ? `option ${letter}` : null
+
+  let lead: string
+  if (optionLabel && input.edited) {
+    lead = `I used ${optionLabel} and made some edits. Here it is.`
+  } else if (optionLabel) {
+    lead = `I used ${optionLabel}. Here it is.`
+  } else if (input.edited) {
+    lead = 'I made some edits. Here it is.'
+  } else {
+    lead = 'Here it is.'
+  }
+
+  return `${lead}\n\n${draft}`
+}

@@ -37,7 +37,6 @@ import type {
 } from '../types'
 import type { AttachedArtifact } from './chat/ArtifactAttachments'
 import { ChatTurnChangeDivider } from './chat/ChatTurnChangeDivider'
-import { ComposerActiveRunTipCard } from './chat/ComposerActiveRunTipCard'
 import { MessageQueue } from './chat/MessageQueue'
 import { RateLimitCard } from './chat/RateLimitCard'
 import { StatusIndicator } from './chat/StatusIndicator'
@@ -1043,10 +1042,7 @@ export function ChatInterface() {
             onSendNow={handleQueueSendNow}
             onEdit={handleQueueEdit}
           />
-          <ComposerInputStack
-            stackActive={isStreaming}
-            topSlot={<ComposerActiveRunTipCard stacked conversationId={activeConversationId} />}
-          >
+          <ComposerInputStack stackActive={false}>
             <ChatInput
               onSend={handleComposerSendWithQueueEdit}
               campaignId={effectiveCampaignId}

@@ -279,7 +279,10 @@ export function progressToolInTimeline(
     i === idx
       ? ({
           ...block,
-          progress: [...block.progress, { id: `tp-${name}-${ts}`, detail, timestamp: ts }],
+          progress: capToolProgressEntries([
+            ...block.progress,
+            { id: `tp-${name}-${ts}`, detail, timestamp: ts },
+          ]),
         } as FlowTimelineBlock)
       : b,
   )
@@ -634,6 +637,22 @@ interface ChatState {
 const PERSISTED_CONVERSATIONS_LIMIT = 100
 const PERSISTED_MESSAGE_HISTORY_CONVERSATIONS = 20
 const PERSISTED_MESSAGES_PER_CONVERSATION = 50
+/** Live heap: keep message arrays only for active/streaming + a few recent chats. */
+const IN_MEMORY_MESSAGE_CONVERSATIONS = 6
+/** Tool progress lines grow every few hundred ms during heavy turns — keep a tail only. */
+export const MAX_TOOL_PROGRESS_ENTRIES = 20
+/** Live tool markdown/JSON previews are uncapped from the backend — cap for renderer RAM. */
+export const MAX_TOOL_PREVIEW_CHARS = 8_000
+
+export function capToolProgressEntries<T>(progress: T[]): T[] {
+  if (progress.length <= MAX_TOOL_PROGRESS_ENTRIES) return progress
+  return progress.slice(progress.length - MAX_TOOL_PROGRESS_ENTRIES)
+}
+
+export function capToolPreviewContent(content: string): string {
+  if (content.length <= MAX_TOOL_PREVIEW_CHARS) return content
+  return content.slice(content.length - MAX_TOOL_PREVIEW_CHARS)
+}
 
 function pickPersistedConversationIds(state: ChatState): Set<string> {
   const keep = new Set<string>()
@@ -641,6 +660,18 @@ function pickPersistedConversationIds(state: ChatState): Set<string> {
     keep.add(c.id)
   }
   if (state.activeConversationId) keep.add(state.activeConversationId)
+  return keep
+}
+
+function pickInMemoryConversationIds(
+  state: Pick<ChatState, 'conversations' | 'activeConversationId' | 'streamingConversationIds'>,
+): Set<string> {
+  const keep = new Set<string>()
+  if (state.activeConversationId) keep.add(state.activeConversationId)
+  for (const id of state.streamingConversationIds) keep.add(id)
+  for (const c of state.conversations.slice(0, IN_MEMORY_MESSAGE_CONVERSATIONS)) {
+    keep.add(c.id)
+  }
   return keep
 }
 
@@ -652,6 +683,36 @@ function capByConversation<T>(source: Record<string, T>, keepIds: Set<string>): 
     }
   }
   return result
+}
+
+function slimOrderedBlocksForPersist(
+  blocks: Array<Record<string, unknown>>,
+): Array<Record<string, unknown>> {
+  return blocks.map((block) => {
+    if (block.type !== 'tool') return block
+    const next: Record<string, unknown> = { ...block }
+    delete next.preview
+    if (Array.isArray(next.progress)) {
+      next.progress = capToolProgressEntries(next.progress as unknown[])
+    }
+    return next
+  })
+}
+
+function slimMessagesForPersist(messages: Message[]): Message[] {
+  return messages.map((message) => {
+    const ordered = message.metadata?.content_blocks_ordered
+    if (!Array.isArray(ordered) || ordered.length === 0) return message
+    return {
+      ...message,
+      metadata: {
+        ...message.metadata,
+        content_blocks_ordered: slimOrderedBlocksForPersist(
+          ordered as Array<Record<string, unknown>>,
+        ),
+      },
+    }
+  })
 }
 
 // ============================================================================
@@ -763,24 +824,78 @@ export const useChatStore = create<ChatState>()(
         })),
 
       removeConversation: (id) =>
-        set((state) => ({
-          conversations: state.conversations.filter((c) => c.id !== id),
-          activeConversationId:
-            state.activeConversationId === id ? null : state.activeConversationId,
-          interruptedConversationIds: state.interruptedConversationIds.filter((i) => i !== id),
-          reconnectingConversationIds: state.reconnectingConversationIds.filter((i) => i !== id),
-        })),
+        set((state) => {
+          const { [id]: _removedMessages, ...messagesByConversation } = state.messagesByConversation
+          const { [id]: _removedStreamUi, ...conversationStreamUI } = state.conversationStreamUI
+          const { [id]: _removedQueue, ...messageQueueByConversation } =
+            state.messageQueueByConversation
+          const { [id]: _removedStreamingMsg, ...streamingMessageIdsByConversation } =
+            state.streamingMessageIdsByConversation
+          const { [id]: _removedRun, ...streamRunsByConversation } = state.streamRunsByConversation
+          const { [id]: _removedFailure, ...streamFailureByConversation } =
+            state.streamFailureByConversation
+          const { [id]: _removedUsage, ...contextUsageByConversation } =
+            state.contextUsageByConversation
+          const { [id]: _removedBreakdown, ...contextBreakdownByConversation } =
+            state.contextBreakdownByConversation
+          const { [id]: _removedEventAt, ...lastAgentEventAtByConversation } =
+            state.lastAgentEventAtByConversation
+          const { [id]: _removedActivityAt, ...lastStreamActivityAtByConversation } =
+            state.lastStreamActivityAtByConversation
+          return {
+            conversations: state.conversations.filter((c) => c.id !== id),
+            activeConversationId:
+              state.activeConversationId === id ? null : state.activeConversationId,
+            messagesByConversation,
+            conversationStreamUI,
+            messageQueueByConversation,
+            streamingMessageIdsByConversation,
+            streamRunsByConversation,
+            streamFailureByConversation,
+            contextUsageByConversation,
+            contextBreakdownByConversation,
+            lastAgentEventAtByConversation,
+            lastStreamActivityAtByConversation,
+            interruptedConversationIds: state.interruptedConversationIds.filter((i) => i !== id),
+            reconnectingConversationIds: state.reconnectingConversationIds.filter((i) => i !== id),
+            streamingConversationIds: state.streamingConversationIds.filter((i) => i !== id),
+            stoppingConversationIds: state.stoppingConversationIds.filter((i) => i !== id),
+            unreadConversationIds: state.unreadConversationIds.filter((i) => i !== id),
+          }
+        }),
 
       setActiveConversationId: (id) =>
         set((state) => {
+          const keepMessageIds = pickInMemoryConversationIds({
+            conversations: state.conversations,
+            activeConversationId: id,
+            streamingConversationIds: state.streamingConversationIds,
+          })
+          const messagesByConversation = capByConversation(
+            state.messagesByConversation,
+            keepMessageIds,
+          )
+          const conversationStreamUI = capByConversation(state.conversationStreamUI, keepMessageIds)
           if (state.activeConversationId === id) {
-            if (!id || !state.unreadConversationIds.includes(id)) return state
+            if (!id || !state.unreadConversationIds.includes(id)) {
+              if (
+                Object.keys(messagesByConversation).length ===
+                  Object.keys(state.messagesByConversation).length &&
+                Object.keys(conversationStreamUI).length ===
+                  Object.keys(state.conversationStreamUI).length
+              ) {
+                return state
+              }
+              return { messagesByConversation, conversationStreamUI }
+            }
           }
           return {
             activeConversationId: id,
             unreadConversationIds: id
               ? state.unreadConversationIds.filter((uid) => uid !== id)
               : state.unreadConversationIds,
+            messagesByConversation,
+            conversationStreamUI,
           }
         }),
 
@@ -1447,14 +1562,14 @@ export const useChatStore = create<ChatState>()(
               : []
             return {
               ...b,
-              progress: [
+              progress: capToolProgressEntries([
                 ...progress,
                 {
                   id: `tp-${toolName}-${ts}-${progress.length}`,
                   detail,
                   timestamp: ts,
                 },
-              ],
+              ]),
             }
           })
           return {
@@ -1786,6 +1901,7 @@ export const useChatStore = create<ChatState>()(
 
       setToolContentPreview: (conversationId, messageId, toolName, content, toolCallId?) =>
         set((state) => {
+          const cappedContent = capToolPreviewContent(content)
           const messages = state.messagesByConversation[conversationId]
           if (!messages) return state
           const msgIdx = messages.findIndex((m) => m.id === messageId)
@@ -1828,7 +1944,7 @@ export const useChatStore = create<ChatState>()(
               state: 'active',
               startedAt: ts,
               ...(toolCallId ? { toolCallId } : {}),
-              preview: content,
+              preview: cappedContent,
             }
             const next = [...existing, fallbackToolBlock]
             return {
@@ -1842,7 +1958,9 @@ export const useChatStore = create<ChatState>()(
               },
             }
           }
-          const next = existing.map((b, i) => (i === targetIdx ? { ...b, preview: content } : b))
+          const next = existing.map((b, i) =>
+            i === targetIdx ? { ...b, preview: cappedContent } : b,
+          )
           return {
             messagesByConversation: {
               ...state.messagesByConversation,
@@ -2199,6 +2317,9 @@ export const useChatStore = create<ChatState>()(
         return {
           getItem: (name) => base.getItem(name),
           setItem: (name, value) => {
+            // Mid-stream writes stringify multi‑MB graphs on every token. Keep the
+            // previous blob and resume persisting when streamingConversationIds clears.
+            if (useChatStore.getState().streamingConversationIds.length > 0) return
             try {
               base.setItem(name, value)
             } catch {
@@ -2217,15 +2338,21 @@ export const useChatStore = create<ChatState>()(
         }
       }),
       partialize: (state) => {
+        // Avoid allocating a huge JSON string while a turn is streaming; setItem
+        // also no-ops so the previous localStorage snapshot stays intact.
+        if (state.streamingConversationIds.length > 0) {
+          return { activeConversationId: state.activeConversationId } as unknown as ChatState
+        }
         const keepIds = pickPersistedConversationIds(state)
         const messagesByConversation: Record<string, Message[]> = {}
         for (const [conversationId, messages] of Object.entries(
           capByConversation(state.messagesByConversation, keepIds),
         )) {
-          messagesByConversation[conversationId] =
+          const capped =
             messages.length > PERSISTED_MESSAGES_PER_CONVERSATION
               ? messages.slice(-PERSISTED_MESSAGES_PER_CONVERSATION)
               : messages
+          messagesByConversation[conversationId] = slimMessagesForPersist(capped)
         }
         return {
           conversations: state.conversations.slice(0, PERSISTED_CONVERSATIONS_LIMIT),
@@ -2296,12 +2423,12 @@ const EMPTY_MESSAGES: Message[] = []
 
 export function useActiveMessages(): Message[] {
   const activeId = useChatStore((s) => s.activeConversationId)
-  const messagesByConversation = useChatStore((s) => s.messagesByConversation)
-  if (!activeId) return EMPTY_MESSAGES
-  const all = messagesByConversation[activeId] ?? EMPTY_MESSAGES
-  if (all.length === 0) return all
-  const visible = all.filter((m) => !(m.metadata as Record<string, unknown>)?.hidden)
-  return visible.length === all.length ? all : visible
+  const messages = useChatStore((s) =>
+    activeId ? (s.messagesByConversation[activeId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES,
+  )
+  if (messages.length === 0) return messages
+  const visible = messages.filter((m) => !(m.metadata as Record<string, unknown>)?.hidden)
+  return visible.length === messages.length ? messages : visible
 }
 
 const EMPTY_QUEUE: QueueItem[] = []
