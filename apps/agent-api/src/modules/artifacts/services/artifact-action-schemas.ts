@@ -3074,6 +3074,7 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       'Search the campaign brain (ns_memories on the campaign-scoped ns_brains row) for client research, onboarding intake, strategy notes, or ROAS-brain package knowledge.',
       'Pre-call strategy, launch briefs, or any work that must use Impact/client knowledge stored on the campaign brain.',
       'Chat is on General but the user named a client campaign — pass campaign_id or campaign_name (cross-scope read is allowed).',
+      'Named campaign_id or campaign_name binds this portal conversation so CONNECTIONS shows that client. It does not lock the whole Slack DM identity.',
     ],
     doNotUseWhen: [
       'Searching an Agent Brain (use search_agent_brain), User Brain (search_user_brain), Customer Brain (search_customer_brain), or Company Brain (search_company_brain).',

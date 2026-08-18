@@ -14,6 +14,9 @@ export abstract class SlackServiceBase {
   protected readonly logger = new Logger('SlackService')
   protected readonly eventDedupe = new Map<string, number>()
   protected readonly eventDedupeTtlMs = 10 * 60 * 1000
+  /** Stops message + app_mention (or redelivery) from running two agent turns for one Slack post. */
+  protected readonly inboundMessageClaims = new Map<string, number>()
+  protected readonly inboundMessageClaimTtlMs = 10 * 60 * 1000
   protected readonly pendingInstalls = new Map<string, PendingInstallTokens>()
   protected readonly tokenRefreshInFlight = new Map<
     string,

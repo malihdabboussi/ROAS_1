@@ -273,6 +273,82 @@ export class SlackOpenItemsRepository {
     if (error) throw new Error(`Failed to mark agent case breach: ${error.message}`)
   }
 
+  async findQcSlackAnchor(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      sourceType: string
+      caseTypes: string[]
+      sinceIso: string
+      campaignId?: string | null
+      externalClientId?: string | null
+      clientLabel?: string | null
+      sourceKeys?: string[]
+    },
+  ): Promise<SlackOpenItem | null> {
+    const { data, error } = await supabase
+      .from('agent_cases')
+      .select('*')
+      .eq('org_id', input.orgId)
+      .eq('source_type', input.sourceType)
+      .in('case_type', input.caseTypes)
+      .in('status', ['open', 'acknowledged', 'snoozed', 'resolved'])
+      .gte('last_activity_at', input.sinceIso)
+      .not('metadata->>slack_parent_ts', 'is', null)
+      .order('first_seen_at', { ascending: true })
+      .limit(200)
+    if (error) throw new Error(`Failed to load QC Slack thread: ${error.message}`)
+    const match = ((data as SlackOpenItem[] | null) ?? []).find((item) => {
+      const parentTs =
+        typeof item.metadata.slack_parent_ts === 'string' ? item.metadata.slack_parent_ts.trim() : ''
+      return parentTs.length > 0 && this.matchesQcSlackScope(item, input)
+    })
+    return match ?? null
+  }
+
+  async attachSlackDelivery(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      sourceType: string
+      sourceKeys: string[]
+      channelId: string
+      parentTs: string
+      fingerprint: string
+      followedUpAt: string
+    },
+  ): Promise<void> {
+    if (!input.sourceKeys.length) return
+    const { data, error } = await supabase
+      .from('agent_cases')
+      .select('id, metadata')
+      .eq('org_id', input.orgId)
+      .eq('source_type', input.sourceType)
+      .in('source_key', input.sourceKeys)
+    if (error) throw new Error(`Failed to load QC Slack delivery cases: ${error.message}`)
+    for (const row of data ?? []) {
+      const existing =
+        row.metadata && typeof row.metadata === 'object'
+          ? (row.metadata as Record<string, unknown>)
+          : {}
+      const { error: updateError } = await supabase
+        .from('agent_cases')
+        .update({
+          channel_id: input.channelId,
+          source_message_ts: input.parentTs,
+          metadata: {
+            ...existing,
+            slack_channel: input.channelId,
+            slack_parent_ts: input.parentTs,
+            slack_finding_fingerprint: input.fingerprint,
+            slack_last_follow_up_at: input.followedUpAt,
+          },
+        })
+        .eq('id', row.id)
+      if (updateError) throw new Error(`Failed to attach QC Slack thread: ${updateError.message}`)
+    }
+  }
+
   async applyExternalAction(
     supabase: SupabaseClient,
     input: {
@@ -358,6 +434,27 @@ export class SlackOpenItemsRepository {
         .in('id', overflow)
       if (staleError) throw new Error(`Failed to stale Slack open items: ${staleError.message}`)
     }
+  }
+
+  private matchesQcSlackScope(
+    item: SlackOpenItem,
+    input: {
+      campaignId?: string | null
+      externalClientId?: string | null
+      clientLabel?: string | null
+      sourceKeys?: string[]
+    },
+  ): boolean {
+    if (input.campaignId && item.campaign_id === input.campaignId) return true
+    if (input.externalClientId && item.external_client_id === input.externalClientId) return true
+    if (
+      input.clientLabel &&
+      item.client_label &&
+      item.client_label.trim().toLowerCase() === input.clientLabel.trim().toLowerCase()
+    ) {
+      return true
+    }
+    return Boolean(input.sourceKeys?.includes(item.source_key))
   }
 
   private optionalString(value: unknown): string | null {

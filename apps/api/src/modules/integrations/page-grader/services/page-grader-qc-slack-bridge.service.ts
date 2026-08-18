@@ -7,6 +7,14 @@ import { SlackOpenItemsService } from '../../../spaces/services/slack-open-items
 import { PageGraderQcNotificationWebhookSchema } from '../dto/page-grader.dto'
 import { PageGraderApiService } from './page-grader-api.service'
 import { PageGraderBrainSyncService } from './page-grader-brain-sync.service'
+import {
+  QC_CASE_TYPES,
+  QC_SLACK_ANCHOR_LOOKBACK_MS,
+  decideQcSlackDelivery,
+  fingerprintFindings,
+  qcSlackAnchorFromCase,
+  uniqueFindingSummaries,
+} from './page-grader-qc-follow-up'
 
 type QcActionContext = {
   source: 'page_grader_qc'
@@ -49,26 +57,8 @@ export class PageGraderQcSlackBridgeService {
 
     for (const connection of connections) {
       try {
-        await this.recordCases(connection, payload)
-        const blocks = this.bindActionContext(
-          payload.blocks,
-          new Set(payload.finding_ids),
-          connection.userId,
-          connection.orgId,
-        )
-        const delivered = await this.slackTools.sendBlockMessageToTarget(
-          this.svc.client,
-          connection.userId,
-          connection.orgId,
-          {
-            // Prefer a fresh DM opened by the ROAS Slack app. A DM channel ID
-            // created by Page Grader's legacy bot may not be writable by ROAS.
-            slackUserId: payload.admin_slack_user_id,
-            channelId: payload.admin_slack_user_id ? null : payload.admin_slack_channel_id,
-            text: payload.fallback_text,
-            blocks,
-          },
-        )
+        const findings = await this.recordCases(connection, payload)
+        const delivered = await this.deliverSlack(connection, payload, findings)
         return {
           success: true,
           notification_id: payload.notification_id,
@@ -200,11 +190,135 @@ export class PageGraderQcSlackBridgeService {
     }
   }
 
+  private async deliverSlack(
+    connection: { userId: string; orgId: string | null },
+    payload: ReturnType<typeof PageGraderQcNotificationWebhookSchema.parse>,
+    findings: Array<{
+      id: string
+      type: string
+      summary: string
+      client_id: string | null
+      client_name: string | null
+      campaignId: string | null
+    }>,
+  ): Promise<{ channel: string | null; ts: string | null }> {
+    const now = new Date()
+    const fingerprint = fingerprintFindings(findings)
+    const clientLabel = findings.find((finding) => finding.client_name)?.client_name ?? null
+    const campaignId = findings.find((finding) => finding.campaignId)?.campaignId ?? null
+    const externalClientId = findings.find((finding) => finding.client_id)?.client_id ?? null
+    const sourceKeys = findings.map((finding) => finding.id)
+    const anchorItem =
+      connection.orgId &&
+      (await this.cases.findQcSlackAnchor(this.svc.client, {
+        orgId: connection.orgId,
+        sourceType: 'page_grader_qc',
+        caseTypes: [...QC_CASE_TYPES],
+        sinceIso: new Date(now.getTime() - QC_SLACK_ANCHOR_LOOKBACK_MS).toISOString(),
+        campaignId,
+        externalClientId,
+        clientLabel,
+        sourceKeys,
+      }))
+    const anchor = anchorItem ? qcSlackAnchorFromCase(anchorItem) : null
+    const decision = decideQcSlackDelivery({
+      now,
+      fingerprint,
+      clientLabel,
+      summaries: uniqueFindingSummaries(findings),
+      anchor,
+    })
+
+    if (decision.mode === 'skip' && anchor) {
+      await this.stampDelivery(connection.orgId, sourceKeys, {
+        channelId: anchor.slack_channel,
+        parentTs: anchor.slack_parent_ts,
+        fingerprint,
+        followedUpAt:
+          anchor.slack_last_follow_up_at ?? anchor.first_seen_at ?? now.toISOString(),
+      })
+      return { channel: anchor.slack_channel, ts: anchor.slack_parent_ts }
+    }
+
+    if (decision.mode === 'thread' && anchor) {
+      const delivered = await this.slackTools.sendMessage(
+        this.svc.client,
+        connection.userId,
+        connection.orgId,
+        {
+          channel_id: anchor.slack_channel,
+          text: decision.text,
+          thread_ts: anchor.slack_parent_ts,
+        },
+      )
+      const channel = delivered.channel || anchor.slack_channel
+      const ts = delivered.ts || anchor.slack_parent_ts
+      await this.stampDelivery(connection.orgId, sourceKeys, {
+        channelId: channel,
+        parentTs: anchor.slack_parent_ts,
+        fingerprint,
+        followedUpAt: now.toISOString(),
+      })
+      return { channel, ts }
+    }
+
+    const blocks = this.bindActionContext(
+      payload.blocks,
+      new Set(payload.finding_ids),
+      connection.userId,
+      connection.orgId,
+    )
+    const delivered = await this.slackTools.sendBlockMessageToTarget(
+      this.svc.client,
+      connection.userId,
+      connection.orgId,
+      {
+        // Prefer a fresh DM opened by the ROAS Slack app. A DM channel ID
+        // created by Page Grader's legacy bot may not be writable by ROAS.
+        slackUserId: payload.admin_slack_user_id,
+        channelId: payload.admin_slack_user_id ? null : payload.admin_slack_channel_id,
+        text: payload.fallback_text,
+        blocks,
+      },
+    )
+    if (delivered.channel && delivered.ts) {
+      await this.stampDelivery(connection.orgId, sourceKeys, {
+        channelId: delivered.channel,
+        parentTs: delivered.ts,
+        fingerprint,
+        followedUpAt: now.toISOString(),
+      })
+    }
+    return { channel: delivered.channel ?? null, ts: delivered.ts ?? null }
+  }
+
+  private async stampDelivery(
+    orgId: string | null,
+    sourceKeys: string[],
+    input: { channelId: string; parentTs: string; fingerprint: string; followedUpAt: string },
+  ): Promise<void> {
+    if (!orgId) return
+    await this.cases.attachSlackDelivery(this.svc.client, {
+      orgId,
+      sourceType: 'page_grader_qc',
+      sourceKeys,
+      ...input,
+    })
+  }
+
   private async recordCases(
     connection: { userId: string; orgId: string | null },
     payload: ReturnType<typeof PageGraderQcNotificationWebhookSchema.parse>,
-  ): Promise<void> {
-    if (!connection.orgId) return
+  ): Promise<
+    Array<{
+      id: string
+      type: string
+      summary: string
+      client_id: string | null
+      client_name: string | null
+      campaignId: string | null
+    }>
+  > {
     const findings = payload.findings?.length
       ? payload.findings
       : payload.finding_ids.map((id) => ({
@@ -224,28 +338,49 @@ export class PageGraderQcSlackBridgeService {
       throw new BadRequestException('QC finding details contain an unknown finding')
     }
     const scopeMap = await this.pageGraderApi.getClientScopeMap(connection.userId)
+    const recorded: Array<{
+      id: string
+      type: string
+      summary: string
+      client_id: string | null
+      client_name: string | null
+      campaignId: string | null
+    }> = []
     for (const finding of findings) {
       const clientId = finding.client_id ?? null
       const mapped = clientId ? scopeMap[clientId] : null
-      await this.cases.recordExternal(this.svc.client, {
-        orgId: connection.orgId,
-        caseType: finding.type,
-        sourceType: 'page_grader_qc',
-        sourceKey: finding.id,
+      const clientName = finding.client_name ?? mapped?.campaign_name ?? null
+      const campaignId = finding.roas_campaign_id ?? mapped?.campaign_id ?? null
+      if (connection.orgId) {
+        await this.cases.recordExternal(this.svc.client, {
+          orgId: connection.orgId,
+          caseType: finding.type,
+          sourceType: 'page_grader_qc',
+          sourceKey: finding.id,
+          summary: finding.summary,
+          severity: finding.severity ?? 'normal',
+          clientLabel: clientName,
+          externalClientId: clientId,
+          externalCampaignId: finding.page_grader_campaign_id ?? null,
+          campaignId,
+          spaceId: finding.roas_space_id ?? mapped?.space_id ?? null,
+          dueAt: finding.due_at ?? null,
+          metadata: {
+            notification_id: payload.notification_id,
+            page_grader_user_id: connection.userId,
+          },
+        })
+      }
+      recorded.push({
+        id: finding.id,
+        type: finding.type,
         summary: finding.summary,
-        severity: finding.severity ?? 'normal',
-        clientLabel: finding.client_name ?? mapped?.campaign_name ?? null,
-        externalClientId: clientId,
-        externalCampaignId: finding.page_grader_campaign_id ?? null,
-        campaignId: finding.roas_campaign_id ?? mapped?.campaign_id ?? null,
-        spaceId: finding.roas_space_id ?? mapped?.space_id ?? null,
-        dueAt: finding.due_at ?? null,
-        metadata: {
-          notification_id: payload.notification_id,
-          page_grader_user_id: connection.userId,
-        },
+        client_id: clientId,
+        client_name: clientName,
+        campaignId,
       })
     }
+    return recorded
   }
 
   private parseActionContext(value: string | undefined): QcActionContext {

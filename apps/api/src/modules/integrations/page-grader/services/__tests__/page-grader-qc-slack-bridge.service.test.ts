@@ -5,9 +5,14 @@ describe('PageGraderQcSlackBridgeService', () => {
   const svc = { client: {} }
   const sync = { authorizeWebhookSecret: vi.fn() }
   const pageGraderApi = { applyQcAction: vi.fn(), getClientScopeMap: vi.fn() }
-  const slackTools = { sendBlockMessageToTarget: vi.fn() }
+  const slackTools = { sendBlockMessageToTarget: vi.fn(), sendMessage: vi.fn() }
   const slackApi = { verifyRequestSignature: vi.fn() }
-  const cases = { recordExternal: vi.fn(), applyExternalAction: vi.fn() }
+  const cases = {
+    recordExternal: vi.fn(),
+    applyExternalAction: vi.fn(),
+    findQcSlackAnchor: vi.fn(),
+    attachSlackDelivery: vi.fn(),
+  }
   let service: PageGraderQcSlackBridgeService
 
   beforeEach(() => {
@@ -19,10 +24,17 @@ describe('PageGraderQcSlackBridgeService', () => {
         campaign_id: '2960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
       },
     })
+    cases.findQcSlackAnchor.mockResolvedValue(null)
+    cases.attachSlackDelivery.mockResolvedValue(undefined)
     slackTools.sendBlockMessageToTarget.mockResolvedValue({
       success: true,
       channel: 'D123',
       ts: '123.456',
+    })
+    slackTools.sendMessage.mockResolvedValue({
+      success: true,
+      channel: 'D123',
+      ts: '789.000',
     })
     service = new PageGraderQcSlackBridgeService(
       svc as never,
@@ -97,6 +109,7 @@ describe('PageGraderQcSlackBridgeService', () => {
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     vi.unstubAllGlobals()
     delete process.env.SLACK_SIGNING_SECRET
   })
@@ -187,5 +200,92 @@ describe('PageGraderQcSlackBridgeService', () => {
       payload.response_url,
       expect.objectContaining({ method: 'POST' }),
     )
+  })
+
+  it('measures a client launch once, then follows up in that thread instead of a new check-in', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-17T12:00:00.000Z'))
+    const clientId = '1960ed48-b7cf-4da3-a745-9f0dc96b2ddb'
+    const firstIds = [
+      'a960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+      'b960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+    ]
+    const laterIds = [
+      'c960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+      'd960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+    ]
+    const body = (findingIds: string[]) =>
+      JSON.stringify({
+        notification_id: `launch:${findingIds[0]}`,
+        admin_slack_user_id: 'U123',
+        fallback_text: 'Launch Agent Check-in',
+        finding_ids: findingIds,
+        findings: [
+          {
+            id: findingIds[0],
+            type: 'proactive_launch',
+            summary: 'Impact Elite Coaching: Copywriting is overdue',
+            client_id: clientId,
+            client_name: 'Impact Elite Coaching',
+          },
+          {
+            id: findingIds[1],
+            type: 'proactive_launch',
+            summary: 'Impact Elite Coaching: Copywriting is overdue',
+            client_id: clientId,
+            client_name: 'Impact Elite Coaching',
+          },
+        ],
+        blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'Launch Agent Check-in' } }],
+      })
+
+    await service.deliverNotification(body(firstIds), 'pgwh-secret')
+    expect(slackTools.sendBlockMessageToTarget).toHaveBeenCalledTimes(1)
+    expect(slackTools.sendMessage).not.toHaveBeenCalled()
+    expect(cases.attachSlackDelivery).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        channelId: 'D123',
+        parentTs: '123.456',
+        sourceKeys: firstIds,
+      }),
+    )
+
+    cases.findQcSlackAnchor.mockResolvedValue({
+      first_seen_at: '2026-08-17T12:00:00.000Z',
+      snoozed_until: null,
+      metadata: {
+        slack_channel: 'D123',
+        slack_parent_ts: '123.456',
+        slack_finding_fingerprint:
+          'proactive_launch:impact elite coaching: copywriting is overdue',
+        slack_last_follow_up_at: '2026-08-17T12:00:00.000Z',
+      },
+    })
+
+    vi.setSystemTime(new Date('2026-08-17T13:00:00.000Z'))
+    await service.deliverNotification(body(laterIds), 'pgwh-secret')
+    expect(slackTools.sendBlockMessageToTarget).toHaveBeenCalledTimes(1)
+    expect(slackTools.sendMessage).not.toHaveBeenCalled()
+    expect(cases.attachSlackDelivery).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        parentTs: '123.456',
+        sourceKeys: laterIds,
+        followedUpAt: '2026-08-17T12:00:00.000Z',
+      }),
+    )
+
+    vi.setSystemTime(new Date('2026-08-17T21:00:00.000Z'))
+    await service.deliverNotification(body(laterIds), 'pgwh-secret')
+    expect(slackTools.sendBlockMessageToTarget).toHaveBeenCalledTimes(1)
+    expect(slackTools.sendMessage).toHaveBeenCalledTimes(1)
+    expect(slackTools.sendMessage.mock.calls[0][3]).toMatchObject({
+      channel_id: 'D123',
+      thread_ts: '123.456',
+    })
+    expect(slackTools.sendMessage.mock.calls[0][3].text).toContain('Impact Elite Coaching')
+    expect(slackTools.sendMessage.mock.calls[0][3].text).toContain('finalized')
+    vi.useRealTimers()
   })
 })

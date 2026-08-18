@@ -1,0 +1,46 @@
+import { describe, expect, it } from 'vitest'
+import {
+  campaignNameLookupQueries,
+  campaignNameSimilarity,
+  canFuzzyMatchCampaignName,
+  pickUniqueFuzzyCampaign,
+} from './campaign-name-match'
+
+describe('campaign-name-match', () => {
+  it('splits messy client labels on slashes', () => {
+    expect(campaignNameLookupQueries('Yasir / SPeka lke a ceo')).toEqual([
+      'Yasir / SPeka lke a ceo',
+      'Yasir',
+      'SPeka lke a ceo',
+    ])
+  })
+
+  it('matches transposition typos to Master Your Kraft and Speak Like a CEO', () => {
+    expect(campaignNameSimilarity('Matser yoru kraft', 'Master Your Kraft')).toBeGreaterThan(0.72)
+    expect(campaignNameSimilarity('SPeka lke a ceo', 'Speak Like a CEO')).toBeGreaterThan(0.72)
+  })
+
+  it('does not fuzzy-match a single short token', () => {
+    expect(canFuzzyMatchCampaignName('Yasir')).toBe(false)
+  })
+
+  it('picks a unique fuzzy campaign from accessible names', () => {
+    const match = pickUniqueFuzzyCampaign(['Matser yoru kraft'], [
+      { id: 'kraft', name: 'Master Your Kraft' },
+      { id: 'speak', name: 'Speak Like a CEO' },
+      { id: 'general', name: 'General' },
+    ])
+    expect(match).toEqual({ id: 'kraft', name: 'Master Your Kraft' })
+  })
+
+  it('uses the client phrase after a slash', () => {
+    const match = pickUniqueFuzzyCampaign(
+      campaignNameLookupQueries('Yasir / SPeka lke a ceo'),
+      [
+        { id: 'kraft', name: 'Master Your Kraft' },
+        { id: 'speak', name: 'Speak Like a CEO' },
+      ],
+    )
+    expect(match).toEqual({ id: 'speak', name: 'Speak Like a CEO' })
+  })
+})

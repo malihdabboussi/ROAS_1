@@ -296,6 +296,20 @@ export class ArtifactsService extends LegacyArtifactsService {
     )
   }
 
+  async bindConversationToNamedCampaign(
+    supabase: SupabaseClient,
+    userId: string,
+    sessionKey: string | undefined,
+    campaignId: string,
+  ): Promise<void> {
+    await this.sessionCampaignService.bindConversationToNamedCampaign(
+      supabase,
+      userId,
+      sessionKey,
+      campaignId,
+    )
+  }
+
   getActionRegistryForTests(): Record<string, ArtifactActionHandler> {
     return this.actionRegistry
   }

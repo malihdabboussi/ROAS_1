@@ -49,7 +49,7 @@ vi.mock('@/components/vibey/vibey-loading-orb', () => ({ VibeyLoadingOrb: () => 
 describe('WorkRequestReviewChatHost', () => {
   afterEach(cleanup)
 
-  it('keeps one composer and does not mount finalize cards below the thread', () => {
+  it('shows the stamped thread without a Message Pixel composer', () => {
     render(
       <WorkRequestReviewChatHost
         token="aseJrZz1ZQeZs9sBv0Adc-AJBg5IcliECGOIO9A5xZc"
@@ -84,8 +84,7 @@ describe('WorkRequestReviewChatHost', () => {
       />,
     )
 
-    expect(screen.getByPlaceholderText('Message Pixel…')).toBeInTheDocument()
-    expect(screen.getAllByPlaceholderText('Message Pixel…')).toHaveLength(1)
+    expect(screen.queryByPlaceholderText('Message Pixel…')).not.toBeInTheDocument()
     expect(screen.queryByText('Already on this request')).not.toBeInTheDocument()
     expect(screen.queryByText('Save draft')).not.toBeInTheDocument()
     expect(screen.getByText(/Review and finalize it here/i)).toBeInTheDocument()

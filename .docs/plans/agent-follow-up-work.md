@@ -1,3 +1,39 @@
+## 2026-08-17 - [FIX] Team Intelligence digest still repeats the same open threads
+
+Status: Open
+
+Found while: Stopping hourly Pixel Launch Agent / QC DMs
+
+Evidence: Pixel posted overlapping client-thread digests at 5:06, 5:11, and 5:31 with the same unanswered items. Launch/QC thread follow-up now lives on `page-grader-qc-slack-bridge.service.ts`; this digest path is `slack-team-loop` cadence. Page Grader still owns whether `quality_control` webhooks fire. Duplicate CRITICAL lines inside one Page Grader block payload are still forwarded on the first post.
+
+Needed work: Deduplicate Team Intelligence digests onto one parent thread with the same measure-once + confirmation follow-up policy. Confirm Page Grader is still emitting `quality_control` webhooks. Optionally dedupe identical summaries inside a single Launch/QC block payload.
+
+Reason not done now: The requested fix was Launch/QC hourly DMs. Digest cadence and the QC producer are separate.
+
+## 2026-08-17 - [FEATURE] Org Pixel still lacks CEO operator skills (voice, weekly update, post-call)
+
+Status: Open
+
+Found while: Making Slack Pixel retrieve-then-draft and bind this portal chat on named-client lookup
+
+Evidence: `UNIVERSAL_LIBRARY_SKILL_KEYS` (`dylans-super-voice`, `instagram-carousel`) skips system agents via `isSystemAgentKey`. Live org Pixel skill list remains ads/carousel/theme. Post-call delivery and meeting Slack follow-up live on Vibey. Slack Pixel browser tool remains denied while TOOLS QC policy names the browser.
+
+Needed work: Assign `dylans-super-voice`, weekly/Monday client-update, and post-call-delivery to org Pixel (not only `agent_key = vibey`); unblock Slack Pixel browser or make Pixel say it cannot click through; keep Lux as the designer.
+
+Reason not done now: This change fixes named lookup, CONNECTIONS bind, fuzzy names, and retrieve-then-draft policy. Skill backfill is a separate agent-sync/seeder change.
+
+## 2026-08-17 - [ARCH] artifact-brain-search-actions.service.ts is near the 600 LOC service cap
+
+Status: Open
+
+Found while: Binding named `search_campaign_brain` lookups to this conversation
+
+Evidence: `wc -l` on `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-actions.service.ts` is ~575 after adding `bindNamedClientConversation`. Service cap is 600.
+
+Needed work: Extract campaign-brain resolve/bind helpers before the next search-family change.
+
+Reason not done now: Bind is a few lines in the existing resolve path; splitting the file was out of scope for the retrieve-then-draft contract.
+
 ## 2026-08-17 - [PAGE-GRADER] Portal Link UI + roas-api edge function still required after #284
 
 Status: Open
@@ -152,6 +188,7 @@ Needed work: Split getWorkspace hydration (recording hydrate + agenda-doc ensure
 Reason not done now: In-scope work was agenda-doc ensure + UI; the service was already over the 80% extract hint before this change.
 
 ## 2026-08-17 - [ARCH] ui-block-extractor still over utility LOC limit
+
 
 ## 2026-08-17 - [FEATURE] Page Grader must stamp conversation_id for shared review chat
 

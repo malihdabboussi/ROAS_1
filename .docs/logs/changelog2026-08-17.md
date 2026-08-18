@@ -6,11 +6,18 @@ Why: `next build` typechecks `apps/web` with `strict` + unused locals. #282's `o
 Impact: `pnpm --filter @vibey/web typecheck` passes. Merging this should let `roas-web` deploy the meeting workspace header to `app.roas.io`.
 Files: `MeetingWorkspaceDialog.tsx`, `work-request-chat-messages.ts`, `shell-work-area-page.ts`, `use-shell-store.work-area-conversation.ts`, `use-shell-store.ts`, `WorkRequestChatResumeCard.test.tsx`, `ShellChatMenu.test.tsx`, `ConversationScopePicker.test.tsx`
 
+## [2026-08-17 23:23] - [FIX]
+What: Stop Slack from creating two Service Request drafts for one @Pixel post; review steps use Continue/Back, Portal assignees, Other free-text, and no Message Pixel composer.
+Why: Mapped channels fired both `message` and `app_mention`, so Pixel replied twice with two review links. Choice steps advanced only on click with no Continue/Back, assignee options were ROAS org profiles (not Portal), and Message Pixel sat under the cards.
+Impact: One Slack ask → one draft/link. Review Q&A is button-driven with the Portal roster. Blank `/home?conv=&wr=` seed retries once after hydration races.
+Files: `apps/api/src/modules/slack/services/slack-service-events.base.ts`, `slack-service-auth.base.ts`, `slack-service.base.ts`, `apps/api/src/modules/work-requests/services/work-request-scope.service.ts`, `apps/web/src/features/work-requests/components/WorkRequestChatFlow*.tsx`, `WorkRequestReviewChatHost.tsx`, `apps/web/src/components/global-chat/hooks/useWorkRequestHomeChatSeed.ts`
+
 ## [2026-08-17 23:16] - [DOCS]
 What: Split the Page Grader unlinked-task follow-up into three required surfaces: merged ROAS platform #284 (create payload), Portal `roas-api` edge function (`POST /work`), and Portal UI Link for existing rows.
 Why: #284 is on main and this repo's API deployed it, but new creates still need the Portal edge function, and "Failed to update campaign" remains Portal UI.
 Impact: Agents must not skip #284 or treat Vercel `roas-api` (`api.roas.io`) as the Portal edge function.
 Files: `.docs/plans/agent-follow-up-work.md`, `documentation/features/page-grader-mcp-bridge.md`
+
 
 ## [2026-08-17 21:35] - [FIX]
 What: Service Request finalize and Portal send now pass the Page Grader campaign id, mark origin as From Pagegrader, and omit empty assignees so Portal assignment rules can run.
@@ -145,6 +152,20 @@ What: Shell artifact viewer now restores each chat’s last-open artifact on con
 Why: Match ChatGPT/Codex chat↔artifact memory without blocking cross-chat navigation on one artifact.
 Impact: Switching chats restores that chat’s artifact by default; pin freezes the panel across switches; summary panel / explicit close still clears and unpins.
 Files: `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/shell/use-shell-store.artifact-conversation.ts`, `apps/web/src/components/shell/shell-artifact-conversation.ts`, `apps/web/src/components/shell/use-shell-artifact-conversation-sync.ts`, `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-17 16:45] - [FIX]
+What: Pixel QC / Launch Agent Slack delivery now measures a client once. The first check-in is the parent DM; later webhooks for the same client stay quiet for 8 hours, then reply in that thread asking if the work was finalized. Finding IDs can rotate without opening a new top-level CRITICAL blast.
+Why: Hourly Launch Agent Check-ins for Impact Elite / The Lab repeated the same overdue tasks as new DMs. That was useful while testing and is noise in production. Viktor-style follow-through lives in one thread.
+Impact: Acknowledge / snooze / resolve buttons on the original message still work. Team Intelligence digest repetition is unchanged. QC still only appears when Page Grader sends a `quality_control` webhook; launch noise was drowning that DM.
+Files: `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-slack-bridge.service.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-follow-up.ts`, `apps/api/src/modules/spaces/repositories/slack-open-items.repository.ts`, `apps/api/src/modules/spaces/services/slack-open-items.service.ts`, `documentation/features/page-grader-campaign-brain-sync.md`
+
+## [2026-08-17 16:33] - [FIX]
+What: Slack Pixel named-client lookup now binds **this** portal conversation so CONNECTIONS shows the client, fuzzy-matches misspelled names (`Matser yoru kraft`, `Yasir / SPeka lke a ceo`), and refuses `[bracket]` Mad Libs drafts until Brain/Slack/Portal/Space were searched. Slack conversation reuse no longer wipes an already-bound campaign.
+Why: "Nothing linked" meant this chat had no campaign, not that client data was missing. Pixel treated messy client names as tone, searched User Brain first, and shipped placeholder Monday updates.
+Impact: Each Slack message still maps to its own portal chat. Naming a client on that chat links CONNECTIONS for that lookup. It does not lock the whole Pixel DM to one client. Existing TOOLS.md is repaired because the named-client heading is now required.
+Files: `packages/agent-policy/src/platform-tools-template.ts`, `apps/agent-api/src/modules/artifacts/services/campaign-name-match.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-actions.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-legacy-session-campaign.service.ts`, `apps/api/src/modules/slack/services/slack-service-conversation.base.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+
 
 ## [2026-08-17 05:49] - [FIX]
 What: Guaranteed Service Request review links resume the originating Pixel chat. Agent-api now injects the active session `conversation_id` into Page Grader fulfillment MCP args and stamps the draft via an internal API after create. Review/chat load also backfills from Slack channel+thread provenance when the id was missing, and idempotent create replays merge an incoming conversation id.

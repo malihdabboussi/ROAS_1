@@ -11,7 +11,6 @@ import {
   draftToChatAnswers,
   listKnownSteps,
   listPendingSteps,
-  resolveChoiceFromChat,
   type WorkRequestChatAnswers,
   type WorkRequestChatStep,
 } from '../lib/work-request-chat-steps'
@@ -23,12 +22,11 @@ import {
   type WorkRequestChatFlowProps,
   type WorkRequestChatTranscriptItem,
 } from './WorkRequestChatFlowHelpers'
+import { WorkRequestChatBubble, WorkRequestChatStepCard } from './WorkRequestChatFlowParts'
 import {
-  WorkRequestChatBubble,
   WorkRequestChatConfirmCard,
-  WorkRequestChatStepCard,
   WorkRequestKnownAnswersCard,
-} from './WorkRequestChatFlowParts'
+} from './WorkRequestChatFlowSummary'
 
 export function WorkRequestChatFlow({
   draft,
@@ -40,7 +38,6 @@ export function WorkRequestChatFlow({
   const [answers, setAnswers] = useState<WorkRequestChatAnswers>(() => draftToChatAnswers(draft))
   const [stepIndex, setStepIndex] = useState(0)
   const [editingStepId, setEditingStepId] = useState<string | null>(null)
-  const [composer, setComposer] = useState('')
   const [busy, setBusy] = useState<'save' | 'submit' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [finalized, setFinalized] = useState<WorkRequestChatFinalizedReceipt | null>(null)
@@ -125,6 +122,15 @@ export function WorkRequestChatFlow({
     }
   }
 
+  const goBack = () => {
+    if (editingStep) {
+      setEditingStepId(null)
+      return
+    }
+    setError(null)
+    setStepIndex((index) => Math.max(0, index - 1))
+  }
+
   const commitEdit = (nextAnswers: WorkRequestChatAnswers, label: string) => {
     pushUser(label)
     setAnswers(nextAnswers)
@@ -158,46 +164,6 @@ export function WorkRequestChatFlow({
       return
     }
     advanceFromPending(next, label)
-  }
-
-  const handleComposer = () => {
-    const text = composer.trim()
-    if (!text || !activeStep || busy || finalized) return
-    setComposer('')
-    setError(null)
-
-    if (activeStep.kind === 'confirm') {
-      pushUser(text)
-      pushAssistant('Got it. Use Submit when the summary looks right, or tap Edit on a field.')
-      return
-    }
-
-    if (activeStep.kind === 'single_choice') {
-      const matched = resolveChoiceFromChat(activeStep, text)
-      if (matched === null && text.toLocaleLowerCase() !== 'skip') {
-        pushUser(text)
-        pushAssistant('Pick one of the options on the card, or type the option name exactly.')
-        return
-      }
-      if (text.toLocaleLowerCase() === 'skip' && !activeStep.required) {
-        const skipId =
-          activeStep.options?.find((option) => option.id === '__unassigned__' || option.id === '')
-            ?.id ??
-          activeStep.options?.[0]?.id ??
-          ''
-        commitChoice(skipId)
-        return
-      }
-      if (matched !== null) commitChoice(matched)
-      return
-    }
-
-    if (text.toLocaleLowerCase() === 'skip' && !activeStep.required) {
-      commitText('', true)
-      return
-    }
-
-    commitText(text)
   }
 
   const saveDraft = async () => {
@@ -303,6 +269,7 @@ export function WorkRequestChatFlow({
             onChoice={commitChoice}
             onContinue={(value) => commitText(value)}
             onSkip={() => commitText('', true)}
+            onBack={goBack}
           />
         )}
 
@@ -311,7 +278,7 @@ export function WorkRequestChatFlow({
             steps={allSteps.filter((step) => step.kind !== 'confirm')}
             answers={answers}
             busy={busy}
-            onBack={() => setStepIndex((index) => Math.max(0, index - 1))}
+            onBack={goBack}
             onSubmit={() => void submitRequest()}
             onEdit={setEditingStepId}
           />
@@ -359,38 +326,6 @@ export function WorkRequestChatFlow({
           </p>
         )}
       </div>
-
-      {!finalized && isPage && (
-        <form
-          className="border-border gap-spacing-2 px-spacing-4 py-spacing-3 flex items-end border-t"
-          onSubmit={(event) => {
-            event.preventDefault()
-            handleComposer()
-          }}
-        >
-          <textarea
-            value={composer}
-            onChange={(event) => setComposer(event.target.value)}
-            rows={1}
-            placeholder="Message Pixel…"
-            disabled={busy !== null}
-            className="body-3 input-glass rounded-spacing-2 border-border bg-card px-spacing-3 py-spacing-2 focus:ring-ring max-h-28 min-h-[40px] w-full resize-y border outline-none focus:ring-2"
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault()
-                handleComposer()
-              }
-            }}
-          />
-          <button
-            type="submit"
-            className="button-glass-accent rounded-spacing-2 body-3 px-spacing-4 py-spacing-2 shrink-0 font-medium disabled:opacity-50"
-            disabled={busy !== null || !composer.trim()}
-          >
-            Send
-          </button>
-        </form>
-      )}
     </div>
   )
 }
