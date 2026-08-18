@@ -10,9 +10,13 @@ const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   seedComposer: vi.fn(),
   clearMeetingContext: vi.fn(),
+  requestNewChat: vi.fn(),
   setActiveAgentKey: vi.fn(),
   isOrgOnly: true,
   campaignRows: [] as Array<Record<string, unknown>>,
+  spaceRows: [{ id: 'space-1', title: 'Workspace', campaign_id: 'campaign-1' }] as Array<
+    Record<string, unknown>
+  >,
   ensureGeneralSpace: vi.fn(),
   toastError: vi.fn(),
 }))
@@ -59,6 +63,12 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push }),
 }))
 
+vi.mock('@/components/shell/use-shell-store', () => ({
+  useShellStore: {
+    getState: () => ({ requestNewChat: mocks.requestNewChat }),
+  },
+}))
+
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
   useGlobalChatStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
@@ -91,7 +101,13 @@ vi.mock('@/features/studio/store/use-chat-store', () => ({
 
 vi.mock('@/features/studio/components/ChatInput', () => ({
   ChatInput: (props: {
-    onSend: (content: string) => Promise<void>
+    onSend: (
+      content: string,
+      documents?: unknown,
+      artifacts?: unknown,
+      model?: string,
+      references?: Array<{ kind: string; id: string; label: string }>,
+    ) => Promise<void>
     openAddMenuRef?: { current: ((submenu?: string, anchor?: HTMLElement) => void) | null }
     setTextRef?: { current: ((text: string) => void) | null }
   }) => {
@@ -99,9 +115,21 @@ vi.mock('@/features/studio/components/ChatInput', () => ({
     if (props.openAddMenuRef) props.openAddMenuRef.current = mocks.openAddMenu
     if (props.setTextRef) props.setTextRef.current = mocks.setText
     return (
-      <button type="button" onClick={() => void props.onSend('Build the launch plan')}>
-        Send test message
-      </button>
+      <>
+        <button type="button" onClick={() => void props.onSend('Build the launch plan')}>
+          Send test message
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            void props.onSend('Talk about 1DS Collective', undefined, undefined, undefined, [
+              { kind: 'campaign', id: '1ds', label: '1DS Collective' },
+            ])
+          }
+        >
+          Send with campaign mention
+        </button>
+      </>
     )
   },
 }))
@@ -114,7 +142,7 @@ vi.mock('@/features/org/store/use-org-store', () => ({
 vi.mock('@/features/spaces/hooks/use-cached-spaces', () => ({
   cachedSpaces: { mutate: vi.fn() },
   useCachedSpaces: () => ({
-    data: [{ id: 'space-1', title: 'Workspace', campaign_id: 'campaign-1' }],
+    data: mocks.spaceRows,
   }),
 }))
 
@@ -165,6 +193,7 @@ describe('HomeDashboardV4Composer', () => {
     vi.clearAllMocks()
     mocks.isOrgOnly = true
     mocks.campaignRows = []
+    mocks.spaceRows = [{ id: 'space-1', title: 'Workspace', campaign_id: 'campaign-1' }]
     mocks.ensureGeneralSpace.mockResolvedValue({
       id: 'general-space',
       title: 'General',
@@ -183,6 +212,7 @@ describe('HomeDashboardV4Composer', () => {
 
     await waitFor(() => {
       expect(mocks.clearMeetingContext).toHaveBeenCalledTimes(1)
+      expect(mocks.requestNewChat).toHaveBeenCalledTimes(1)
       expect(mocks.seedComposer).toHaveBeenCalledWith(
         expect.objectContaining({
           content: 'Build the launch plan',
@@ -194,14 +224,15 @@ describe('HomeDashboardV4Composer', () => {
     })
   })
 
-  it('targets the default General Space when seeding a Home message', async () => {
+  it('does not invent an org Meetings/General space when seeding a Home message', async () => {
     mocks.isOrgOnly = false
     mocks.campaignRows = [{ id: 'campaign-1', name: 'General', config: { system_kind: 'general' } }]
+    mocks.spaceRows = [
+      { id: 'meetings', title: 'Meetings', campaign_id: 'campaign-1' },
+      { id: 'space-1', title: 'Workspace', campaign_id: 'campaign-1' },
+    ]
     render(<HomeDashboardV4Composer />)
 
-    await waitFor(() => {
-      expect(mocks.chatInputProps.campaignId).toBe('campaign-1')
-    })
     fireEvent.click(screen.getByRole('button', { name: 'Send test message' }))
 
     await waitFor(() => {
@@ -209,10 +240,34 @@ describe('HomeDashboardV4Composer', () => {
       expect(mocks.toastError).not.toHaveBeenCalled()
       expect(mocks.seedComposer).toHaveBeenCalledWith(
         expect.objectContaining({
+          workContext: { surface: 'general' },
+        }),
+      )
+    })
+  })
+
+  it('uses an @ campaign mention as the Connection instead of Meetings', async () => {
+    mocks.isOrgOnly = false
+    mocks.campaignRows = [
+      { id: 'general-camp', name: 'General', config: { system_kind: 'general' } },
+      { id: '1ds', name: '1DS Collective' },
+    ]
+    mocks.spaceRows = [
+      { id: 'meetings', title: 'Meetings', campaign_id: 'general-camp' },
+      { id: '1ds-general', title: 'General', campaign_id: '1ds' },
+    ]
+    render(<HomeDashboardV4Composer />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send with campaign mention' }))
+
+    await waitFor(() => {
+      expect(mocks.seedComposer).toHaveBeenCalledWith(
+        expect.objectContaining({
+          references: [{ kind: 'campaign', id: '1ds', label: '1DS Collective' }],
           workContext: {
             surface: 'spaces',
-            spaceId: 'space-1',
-            campaignId: 'campaign-1',
+            campaignId: '1ds',
+            spaceId: '1ds-general',
           },
         }),
       )

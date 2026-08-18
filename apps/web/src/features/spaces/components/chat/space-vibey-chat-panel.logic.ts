@@ -342,17 +342,21 @@ export function resetSpaceVibeyChatPanelLoadEpochForTests(): void {
  */
 export function resolvePostLoadConversationSelection(input: {
   chatRailIntentIsNew: boolean
+  homeChatStarting?: boolean
   preferredOpenId: string | null
   storeActiveConversationId: string | null
   storedValidConversationId: string | null
   conversationIdsInList: ReadonlySet<string>
 }): { action: 'select'; conversationId: string } | { action: 'clear' } {
   const preferred = input.preferredOpenId?.trim() || null
+  const storeActive = input.storeActiveConversationId?.trim() || null
+  if (input.chatRailIntentIsNew || input.homeChatStarting) {
+    // Seed waits until list load finishes, then creates the thread. Restoring
+    // Recents/drawer/store ids here sent the Home message into the old chat.
+    return { action: 'clear' }
+  }
   if (preferred) return { action: 'select', conversationId: preferred }
 
-  if (input.chatRailIntentIsNew) return { action: 'clear' }
-
-  const storeActive = input.storeActiveConversationId?.trim() || null
   if (storeActive && input.conversationIdsInList.has(storeActive)) {
     return { action: 'select', conversationId: storeActive }
   }
