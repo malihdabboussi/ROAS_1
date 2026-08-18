@@ -360,7 +360,11 @@ describe('ConversationScopePicker', () => {
     mocks.positionFloatingMenuFromAnchorRect.mockReturnValue({ top: 100, left: 120 })
     mocks.fetchSpaces.mockResolvedValue([
       { id: 'space-webinar', title: 'Webinar' },
-      { id: 'space-general', title: 'General' },
+      {
+        id: 'space-general',
+        title: 'General',
+        schema: { custom_data: { source: 'page_grader', space_role: 'general' } },
+      },
     ])
 
     render(<ConversationScopePicker conversation={conversation} />)
@@ -383,6 +387,6 @@ describe('ConversationScopePicker', () => {
       within(flyout as HTMLElement)
         .getAllByRole('button')
         .map((button) => button.textContent),
-    ).toEqual(['General', 'Webinar'])
+    ).toEqual(['Webinar'])
   })
 })

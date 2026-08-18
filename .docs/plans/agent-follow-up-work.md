@@ -1,3 +1,39 @@
+## 2026-08-18 - [FIX] Hidden client General item deep-links open client HQ list, not the item modal
+
+Status: Open
+
+Found while: Routing Page Grader client General (`space_role: general`) to `/campaigns/{id}?client=…`
+
+Evidence: `clientOverviewHrefFromSpace(..., { hasItem: true })` adds `view=list`. Agency client HQ list is not wired to open `?item=` the way `/spaces?space=&item=` is.
+
+Needed work: Open the space-item modal (or equivalent) on the client overview list when the hidden General space is the item host, or keep item URLs on `/spaces` until the list tab can host them.
+
+Reason not done now: The requested identity change is hidden-space → client overview. Item-modal wiring on the client HQ list is a separate surface.
+
+## 2026-08-18 - [ARCH] Org General and per-client General are still two different homes
+
+Status: Done (2026-08-18) — not a merge. Page Grader client General (`space_role: general`) is the hidden client overview; `/spaces?space=` for that space opens `/campaigns/{id}?client=…`. Org system General stays the unassigned catch-all.
+
+Found while: Fixing Connections flicker (General ↔ Meetings) and `Campaigns / General` crumbs with no client
+
+Evidence: Org system General (`config.system_kind === 'general'`) is the catch-all HQ (Meetings, Delegation Desk, Personal Dashboard, team slots). Client campaign hubs are a different Page Grader `client_id` campaign (tabs: Overview / Campaigns / Meetings). Clicking a Meetings connection previously opened org General HQ. Client campaign switchers only list Portal-synced campaign spaces (e.g. Webinar + Skool), not a merged client General.
+
+Needed work: Decide whether each client’s General space should be the same record as org General, a child of the client program, or remain split — then migrate existing spaces/docs/team so Connections, breadcrumbs, and the campaign dropdown share one identity.
+
+Reason not done now: Completed as hidden-space routing in `cursor/general-space-identity`.
+
+## 2026-08-18 - [FIX] Opening a Portal campaign space from the client Campaigns tab is slow
+
+Status: Open
+
+Found while: Client Campaigns → campaign row eventually shows `Campaigns / 1DS Collective / campaign` crumbs after a long wait
+
+Evidence: `AgencyClientCampaignsPanel` / campaign-space open goes to `/spaces?space=…` and hydrates the spaces store. Breadcrumbs wait on `fetchAgencyClient` / `fetchProgram` plus campaign list.
+
+Needed work: Prefetch the campaign space (or show the known client/campaign crumb immediately from the table row) so the work card does not sit empty while `/spaces` hydrates.
+
+Reason not done now: The requested bug was Connections opening org General and org General lacking identity copy. Slow space hydration is a separate load-path issue.
+
 ## 2026-08-18 - [ARCH] SpaceCell.tsx is near the 400 LOC component cap
 
 Status: Open
@@ -124,7 +160,7 @@ Status: Open
 
 Found while: Registering clickable Campaigns / client / campaign breadcrumbs
 
-Evidence: `wc -l` on `apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx` is 560 (container cap 600). This change added one breadcrumb mount.
+Evidence: `wc -l` on `apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx` is 561 (container cap 600). This change added `isSystemGeneral` on overview.
 
 Needed work: Extract client-workspace tab wiring and mobile chrome before the next campaign-page change.
 
@@ -144,7 +180,7 @@ Reason not done now: Requested work was the Home Enter / `@` → Connections bug
 
 ## 2026-08-18 - [FIX] Space folder crumbs still show a General campaign name without the client
 
-Status: Open
+Status: Done (2026-08-18) — `spaceBreadcrumbFolderLabel` + `useSpaceCampaignName.folderLabel` now walk past General / Client Spaces to the client/program.
 
 Found while: Adding Campaigns / client / campaign breadcrumbs
 
@@ -152,7 +188,7 @@ Evidence: `SpaceItemsContainer` sets `folderLabel` to `campaignName`, so a Gener
 
 Needed work: Qualify the space folder label with the same ancestor walk used by `conversationScopeDisplayLabel`.
 
-Reason not done now: The opened Connections destination in this bug was the campaign page, which now has client/program crumbs.
+Reason not done now: Completed in `cursor/general-space-identity`.
 
 
 ## 2026-08-18 - [ARCH] SpaceVibeyChatPanel and other chat hosts remain far over LOC limits

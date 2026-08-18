@@ -1,13 +1,15 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { clientOverviewHrefFromSpace } from '@/lib/spaces/page-grader-client-general-space'
 import { useSpacesStore } from '../store/use-spaces-store'
 import { SpaceItemsContainer } from './SpaceItemsContainer'
 
 export function SpacesContainer() {
+  const router = useRouter()
   const loadSpaces = useSpacesStore((s) => s.loadSpaces)
   const loadRoster = useGlobalChatStore((s) => s.loadRoster)
   const loading = useSpacesStore((s) => s.loading)
@@ -19,22 +21,30 @@ export function SpacesContainer() {
   const searchParams = useSearchParams()
   const urlSpaceParam = searchParams.get('space')?.trim() || null
   const [creatingDefaultSpace, setCreatingDefaultSpace] = useState(false)
+  const urlSpace = spaces.find((space) => space.id === urlSpaceParam) ?? null
+  const clientOverviewHref = clientOverviewHrefFromSpace(urlSpace, {
+    hasItem: Boolean(searchParams.get('item')),
+  })
 
   useEffect(() => {
     loadSpaces()
     void loadRoster()
   }, [loadSpaces, loadRoster])
 
+  useEffect(() => {
+    if (clientOverviewHref) router.replace(clientOverviewHref)
+  }, [clientOverviewHref, router])
+
   const activeCampaignId = spaces.find((space) => space.id === activeSpaceId)?.campaign_id ?? null
 
   useEffect(() => {
-    if (!activeSpaceId) return
+    if (!activeSpaceId || clientOverviewHref) return
     setWorkContext({
       surface: 'spaces',
       spaceId: activeSpaceId,
       campaignId: activeCampaignId,
     })
-  }, [activeCampaignId, activeSpaceId, setWorkContext])
+  }, [activeCampaignId, activeSpaceId, clientOverviewHref, setWorkContext])
 
   useEffect(() => {
     // Deep links resolve a specific space; do not race ensure-default into a blank org.
@@ -61,10 +71,14 @@ export function SpacesContainer() {
   ])
 
   // Keep painting when we already have spaces (stale-while-revalidate).
-  if ((loading && spaces.length === 0) || creatingDefaultSpace) {
+  if ((loading && spaces.length === 0) || creatingDefaultSpace || clientOverviewHref) {
     return (
       <div className="flex h-full items-center justify-center">
-        <VibeyLoadingOrb state="processing" size="lg" text="Loading spaces..." />
+        <VibeyLoadingOrb
+          state="processing"
+          size="lg"
+          text={clientOverviewHref ? 'Opening client workspace…' : 'Loading spaces...'}
+        />
       </div>
     )
   }

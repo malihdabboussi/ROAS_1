@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { Space } from '@/features/spaces/types'
 import type { SidebarCampaignRow } from './sidebar-types'
 import { SidebarHqSpacesGroupedList } from './SidebarHqSpacesGroupedList'
 import type { SidebarControllerReturn } from './useSidebarController'
@@ -265,5 +266,79 @@ describe('SidebarHqSpacesGroupedList', () => {
     )
 
     await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(1))
+  })
+
+  it('hides the Page Grader client General space under the client campaign', async () => {
+    const clientCampaign = {
+      ...campaign,
+      id: 'campaign-1ds',
+      name: '1DS Collective',
+      config: { external_sources: { page_grader: { client_id: 'pg-1' } } },
+    } as SidebarCampaignRow
+
+    render(
+      <SidebarHqSpacesGroupedList
+        controller={
+          {
+            setShowNewCampaignModal: vi.fn(),
+            setCreateCampaignProgramId: vi.fn(),
+            setShowNewProgramModal: vi.fn(),
+          } as unknown as SidebarControllerReturn
+        }
+        spaces={
+          [
+            {
+              id: 'space-general',
+              title: 'General',
+              campaign_id: 'campaign-1ds',
+              schema: {
+                custom_data: {
+                  source: 'page_grader',
+                  space_role: 'general',
+                  page_grader_client_id: 'pg-1',
+                },
+              },
+            },
+            {
+              id: 'space-webinar',
+              title: 'Webinar',
+              campaign_id: 'campaign-1ds',
+              schema: { custom_data: { source: 'page_grader', space_role: 'client_campaign' } },
+            },
+          ] as Space[]
+        }
+        campaigns={[clientCampaign]}
+        pathname="/spaces"
+        expandedIds={new Set(['campaign-1ds'])}
+        setExpandedIds={vi.fn()}
+        expandedProgramIds={new Set(['prog-clients'])}
+        setExpandedProgramIds={vi.fn()}
+        onCreateSpace={vi.fn()}
+        isSubmitting={false}
+        creatingName=""
+        setCreatingName={vi.fn()}
+        onOpenBrowseTemplates={vi.fn()}
+        onOpenCreateSpaceModal={vi.fn()}
+        spaceUserState={
+          {
+            favoriteIds: new Set<string>(),
+            hiddenIds: new Set<string>(),
+            isFavorite: vi.fn(() => false),
+            toggleFavorite: vi.fn(),
+            toggleHidden: vi.fn(),
+          } as never
+        }
+        hasMore={false}
+        loadingMore={false}
+        onLoadMore={vi.fn()}
+        flyoutMode
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: '1DS Collective' })).toBeInTheDocument()
+    })
+    expect(screen.getByText('Webinar')).toBeInTheDocument()
+    expect(screen.queryByText('General')).not.toBeInTheDocument()
   })
 })

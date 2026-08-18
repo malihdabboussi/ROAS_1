@@ -109,6 +109,7 @@ describe('ShellRightPanelConnections', () => {
     mocks.campaigns = [{ id: 'campaign-mk', name: 'Master Your Kraft' }]
     mocks.space = { id: 'space-1', title: 'General', campaign_id: 'campaign-mk' }
     const onOpenCampaign = vi.fn()
+    const onOpenSpace = vi.fn()
     render(
       <ShellRightPanelConnections
         conversation={null}
@@ -117,12 +118,14 @@ describe('ShellRightPanelConnections', () => {
         open
         onOpenChange={vi.fn()}
         onOpenCampaign={onOpenCampaign}
+        onOpenSpace={onOpenSpace}
       />,
     )
 
     expect(screen.getByText('Master Your Kraft General')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Open Master Your Kraft General' }))
-    expect(onOpenCampaign).toHaveBeenCalledWith('campaign-mk')
+    expect(onOpenSpace).toHaveBeenCalledWith('space-1')
+    expect(onOpenCampaign).not.toHaveBeenCalled()
   })
 
   it('shows the specific meeting name instead of the Meetings space', () => {
@@ -209,6 +212,46 @@ describe('ShellRightPanelConnections', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Yasir VIP Upgrade' }))
     expect(onOpenCampaign).toHaveBeenCalledWith('campaign-1')
+  })
+
+  it('does not flash the parent General campaign while a space name is loading', () => {
+    mocks.campaigns = [{ id: 'campaign-general', name: 'General' }]
+    mocks.space = null
+    render(
+      <ShellRightPanelConnections
+        conversation={null}
+        campaignId="campaign-general"
+        spaceId="space-meetings"
+        open
+        onOpenChange={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByText('General')).not.toBeInTheDocument()
+    expect(screen.queryByText('Meetings')).not.toBeInTheDocument()
+    expect(screen.queryByText('Nothing linked yet.')).not.toBeInTheDocument()
+  })
+
+  it('opens the connected space instead of its parent General campaign', () => {
+    mocks.campaigns = [{ id: 'campaign-general', name: 'General' }]
+    mocks.space = { id: 'space-meetings', title: 'Meetings', campaign_id: 'campaign-general' }
+    const onOpenCampaign = vi.fn()
+    const onOpenSpace = vi.fn()
+    render(
+      <ShellRightPanelConnections
+        conversation={null}
+        campaignId="campaign-general"
+        spaceId="space-meetings"
+        open
+        onOpenChange={vi.fn()}
+        onOpenCampaign={onOpenCampaign}
+        onOpenSpace={onOpenSpace}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Meetings' }))
+    expect(onOpenSpace).toHaveBeenCalledWith('space-meetings')
+    expect(onOpenCampaign).not.toHaveBeenCalled()
   })
 
   it('still lets a campaign connection be removed', () => {
