@@ -61,6 +61,12 @@ export const PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK = `${PLATFORM_TOOLS_NAMED_
 - Do not search User Brain, Agent Brain, or file memory first for a named-client fact. Do not ask for a screenshot, date, or dashboard paste until campaign Brain, the client Slack channel, Portal/Page Grader, and Space have been checked.
 - "Nothing linked" means this chat has no campaign yet — not that Slack, Portal, or campaign data does not exist. Resolve and bind, then retrieve.
 - Drafts the user will paste (Monday updates, client recaps, Slack DMs) must be send-ready: real names, real dates, real work. A \`draft\` card with \`[brackets]\` is invalid. Retrieve first. Placeholders only if those sources came back empty, then ask one question — not a Mad Libs card.`
+export const PLATFORM_TOOLS_SEND_READY_DRAFTS_HEADING =
+  'For send-ready messages, emails, Slack/DM drafts, or "write this message":'
+export const PLATFORM_TOOLS_SEND_READY_DRAFTS_BLOCK = `${PLATFORM_TOOLS_SEND_READY_DRAFTS_HEADING}
+- Default to Dylan Super Voice. Load \`skills/dylans-super-voice/SKILL.md\` first and use it as the only voice authority for any message, email, Slack/DM, client recap, or outreach draft. If the skill is unavailable, stop and report that the required skill is missing. Do not approximate it from memory or combine it with \`human-written-copy\` or \`dylans-voice\`.
+- Put each variant in a fenced \`\`\`draft <label>\`\`\` block (consecutive fences become one editable version card). Two variants is the sweet spot (full + short). Keep commentary outside the fences.
+- Drafts must be usable as-is: real names, real dates, real work. A \`draft\` card with \`[brackets]\` is invalid until retrieval came back empty.`
 export const PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING =
   'For first-person fill, guest prep, or write-as-me:'
 export const PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK = `${PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING}
@@ -108,6 +114,8 @@ For discovery/context questions:
 - Search Brain when the answer is durable memory, preferences, company rules, customer patterns, or agent expertise.
 
 ${PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK}
+
+${PLATFORM_TOOLS_SEND_READY_DRAFTS_BLOCK}
 
 For call, meeting, recording, or transcript retrieval:
 - Treat phrases like "call", "meeting", "recording", "where I talked to...", and "transcript" as source-retrieval requests; the answer often lives in connected meeting tools, not only Brain.
@@ -312,8 +320,14 @@ function ensureNamedClientLookupGuidance(content: string): string {
     return `${content.slice(0, headingStart)}${PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK}${content.slice(replaceEnd)}`
   }
 
-  const callStart = content.indexOf('\nFor call, meeting, recording, or transcript retrieval', runtimeStart)
-  const firstPersonStart = content.indexOf(`\n${PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING}`, runtimeStart)
+  const callStart = content.indexOf(
+    '\nFor call, meeting, recording, or transcript retrieval',
+    runtimeStart,
+  )
+  const firstPersonStart = content.indexOf(
+    `\n${PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING}`,
+    runtimeStart,
+  )
   const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
   const insertAt =
     callStart !== -1
@@ -324,6 +338,46 @@ function ensureNamedClientLookupGuidance(content: string): string {
           ? unclearStart
           : content.length
   return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK}${content.slice(insertAt)}`
+}
+
+function ensureSendReadyDraftsGuidance(content: string): string {
+  const runtimeStart = content.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
+  if (runtimeStart === -1) return content
+
+  const headingStart = content.indexOf(PLATFORM_TOOLS_SEND_READY_DRAFTS_HEADING, runtimeStart)
+  if (headingStart !== -1) {
+    if (content.slice(headingStart).startsWith(PLATFORM_TOOLS_SEND_READY_DRAFTS_BLOCK)) {
+      return content
+    }
+    const afterHeading = headingStart + PLATFORM_TOOLS_SEND_READY_DRAFTS_HEADING.length
+    const rest = content.slice(afterHeading)
+    const nextFor = rest.search(/\nFor [a-z]/)
+    const nextHeading = rest.indexOf('\n### ')
+    const unclear = rest.indexOf('\nFor unclear,')
+    const candidates = [nextFor, nextHeading, unclear].filter((index) => index !== -1)
+    const replaceEnd =
+      candidates.length > 0 ? afterHeading + Math.min(...candidates) : content.length
+    return `${content.slice(0, headingStart)}${PLATFORM_TOOLS_SEND_READY_DRAFTS_BLOCK}${content.slice(replaceEnd)}`
+  }
+
+  const callStart = content.indexOf(
+    '\nFor call, meeting, recording, or transcript retrieval',
+    runtimeStart,
+  )
+  const firstPersonStart = content.indexOf(
+    `\n${PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING}`,
+    runtimeStart,
+  )
+  const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
+  const insertAt =
+    callStart !== -1
+      ? callStart
+      : firstPersonStart !== -1
+        ? firstPersonStart
+        : unclearStart !== -1
+          ? unclearStart
+          : content.length
+  return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_SEND_READY_DRAFTS_BLOCK}${content.slice(insertAt)}`
 }
 
 function ensureFirstPersonFillGuidance(content: string): string {
@@ -358,10 +412,12 @@ export function ensurePlatformToolsRuntimeGuidance(content: string): string {
   if (hasPlatformToolsRuntimeGuidance(withActionProtocol)) {
     return ensureChannelFormattingGuidance(
       ensureFirstPersonFillGuidance(
-        ensureNamedClientLookupGuidance(
-          ensureBrowserQcGuidance(
-            ensureMediaRoutingGuidance(
-              ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+        ensureSendReadyDraftsGuidance(
+          ensureNamedClientLookupGuidance(
+            ensureBrowserQcGuidance(
+              ensureMediaRoutingGuidance(
+                ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+              ),
             ),
           ),
         ),

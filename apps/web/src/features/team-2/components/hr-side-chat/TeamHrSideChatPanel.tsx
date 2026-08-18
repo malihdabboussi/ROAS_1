@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowDown } from 'lucide-react'
 import {
   ChatPanelSlideStack,
-  ComposerActiveRunTipCard,
   ComposerInputStack,
   MessageQueue,
   PlanStickyTracker,
@@ -251,8 +250,7 @@ export function TeamHrSideChatPanel({
   )
   const selectedConversationLevel = selectedConversation?.effective_level ?? 'admin'
   const selectedConversationReadOnly = selectedConversationLevel === 'view'
-  const showComposerStack =
-    (isStreaming && !selectedConversationReadOnly) || showComposerTopAccessory
+  const showComposerStack = showComposerTopAccessory
 
   const turnData = useMemo(() => groupMessagesIntoTurns(displayMessages), [displayMessages])
 
@@ -599,18 +597,7 @@ export function TeamHrSideChatPanel({
                   ) : null}
                   <ComposerInputStack
                     stackActive={showComposerStack}
-                    topSlot={
-                      <>
-                        {isStreaming && !selectedConversationReadOnly ? (
-                          <ComposerActiveRunTipCard
-                            stacked
-                            conversationId={selectedConversationId}
-                            isStreaming={isStreaming}
-                          />
-                        ) : null}
-                        {showComposerTopAccessory ? composerTopAccessory : null}
-                      </>
-                    }
+                    topSlot={showComposerTopAccessory ? composerTopAccessory : undefined}
                   >
                     <ChatInput
                       onSend={messaging.handleComposerSendWithQueueEdit}

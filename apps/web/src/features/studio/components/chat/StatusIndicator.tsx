@@ -78,7 +78,9 @@ export function StatusIndicator({
       ? (s.streamingMessageIdsByConversation[effectiveConversationId] ?? null)
       : null,
   )
-  const messagesByConversation = useChatStore((s) => s.messagesByConversation)
+  const conversationMessages = useChatStore((s) =>
+    effectiveConversationId ? (s.messagesByConversation[effectiveConversationId] ?? null) : null,
+  )
   const lastAgentEventAt = useChatStore((s) =>
     effectiveConversationId ? (s.lastAgentEventAtByConversation[effectiveConversationId] ?? 0) : 0,
   )
@@ -89,13 +91,12 @@ export function StatusIndicator({
   // When streamingMessageId is set (live SSE), use it directly.
   // When null but conversation is streaming (DB-poll recovery), fall back to the last assistant message.
   const streamingMsg = (() => {
-    if (!effectiveConversationId) return null
-    const msgs = messagesByConversation[effectiveConversationId]
-    if (!msgs) return null
-    if (streamingMessageId) return msgs.find((m) => m.id === streamingMessageId) ?? null
+    if (!effectiveConversationId || !conversationMessages) return null
+    if (streamingMessageId)
+      return conversationMessages.find((m) => m.id === streamingMessageId) ?? null
     if (isStreaming) {
-      for (let i = msgs.length - 1; i >= 0; i--) {
-        if (msgs[i]?.role === 'assistant') return msgs[i] ?? null
+      for (let i = conversationMessages.length - 1; i >= 0; i--) {
+        if (conversationMessages[i]?.role === 'assistant') return conversationMessages[i] ?? null
       }
     }
     return null
@@ -121,10 +122,8 @@ export function StatusIndicator({
     orderedBlocks.some((b) => b.type === 'text' && !!b.content?.trim())
   const streamingTurnLooksComplete = isAssistantTurnComplete(streamingMsg ?? undefined, true)
   const lastAssistantInConversation = (() => {
-    if (!effectiveConversationId) return null
-    const msgs = messagesByConversation[effectiveConversationId]
-    if (!msgs) return null
-    return getLastAssistantMessage(msgs) ?? null
+    if (!conversationMessages) return null
+    return getLastAssistantMessage(conversationMessages) ?? null
   })()
   const lastTurnLooksComplete = isAssistantTurnComplete(
     lastAssistantInConversation ?? undefined,

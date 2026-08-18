@@ -106,10 +106,6 @@ vi.mock('@/components/layout/ResizableDivider', () => ({
   ResizableDivider: () => <div data-testid="resize-divider" />,
 }))
 
-vi.mock('@/components/chat/ComposerActiveRunTipCard', () => ({
-  ComposerActiveRunTipCard: () => <div data-testid="composer-tip" />,
-}))
-
 vi.mock('@/components/chat/MessageQueue', () => ({
   MessageQueue: ({ items }: { items: Array<unknown> }) => (
     <div data-testid="message-queue">Queued {items.length}</div>
@@ -332,15 +328,20 @@ describe('AgentChatPanel', () => {
     mocks.fetchCampaign.mockResolvedValue({ config: {} })
     mocks.fetchConversations.mockResolvedValue([conversation])
     mocks.fetchMessages.mockResolvedValue(messages)
-    mocks.repairAgentSetup.mockResolvedValue({ sync_status: 'ready', reasons: [], agent: buildAgent() })
+    mocks.repairAgentSetup.mockResolvedValue({
+      sync_status: 'ready',
+      reasons: [],
+      agent: buildAgent(),
+    })
     mocks.useCampaignMode.mockReturnValue({
       setActiveCampaign: vi.fn(),
       isPanelMinimized: false,
       expandPanel: vi.fn(),
       activeCampaignName: null,
     })
-    mocks.useOrgStore.mockImplementation((selector: (state: { activeOrgId: string | null }) => unknown) =>
-      selector({ activeOrgId: null }),
+    mocks.useOrgStore.mockImplementation(
+      (selector: (state: { activeOrgId: string | null }) => unknown) =>
+        selector({ activeOrgId: null }),
     )
     mocks.usePanelResize.mockReturnValue({
       chatWidthPercent: 40,
@@ -370,7 +371,9 @@ describe('AgentChatPanel', () => {
         </Profiler>,
       )
 
-      await waitFor(() => expect(mocks.fetchConversations).toHaveBeenCalledWith(undefined, 'agent-alpha'))
+      await waitFor(() =>
+        expect(mocks.fetchConversations).toHaveBeenCalledWith(undefined, 'agent-alpha'),
+      )
       await waitFor(() =>
         expect(mocks.store.setMessages).toHaveBeenCalledWith('conversation-1', messages),
       )
@@ -382,8 +385,12 @@ describe('AgentChatPanel', () => {
       )
       expect(screen.getByPlaceholderText('Message Agent Alpha...')).toBeTruthy()
       expect(screen.getAllByTestId('message-bubble')).toHaveLength(2)
-      expect(screen.getByText('message-user-1:Plan the launch:conversation-1:agent-alpha')).toBeTruthy()
-      expect(screen.getByText('message-assistant-1:Here is the plan:conversation-1:agent-alpha')).toBeTruthy()
+      expect(
+        screen.getByText('message-user-1:Plan the launch:conversation-1:agent-alpha'),
+      ).toBeTruthy()
+      expect(
+        screen.getByText('message-assistant-1:Here is the plan:conversation-1:agent-alpha'),
+      ).toBeTruthy()
       expect(screen.getByTestId('status-indicator').textContent).toBe('conversation-1')
       expect(screen.getByTestId('stream-interrupted').textContent).toBe('conversation-1')
 
@@ -396,5 +403,4 @@ describe('AgentChatPanel', () => {
       consoleError.mockRestore()
     }
   })
-
 })

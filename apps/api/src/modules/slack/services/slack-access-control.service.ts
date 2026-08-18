@@ -5,11 +5,7 @@ import { SlackApiIntegration } from '../integrations/slack-api.integration'
 import { SlackRuntimeRepository } from '../repositories/slack-runtime.repository'
 import type { SlackResolvedSender } from '../types/slack.types'
 import { SlackSenderResolverService } from './slack-sender-resolver.service'
-import {
-  SLACK_ACCESS_CHECK_FAILED_MESSAGE,
-  SLACK_ACCESS_DENIED_MESSAGE,
-  SLACK_CHANNEL_ACCESS_DENIED_MESSAGE,
-} from './slack-service.shared'
+import { SLACK_ACCESS_CHECK_FAILED_MESSAGE, SLACK_ACCESS_DENIED_MESSAGE } from './slack-service.shared'
 
 export interface SlackRequestPrincipal {
   sender: SlackResolvedSender
@@ -23,7 +19,7 @@ export type SlackAccessDecision =
   | { allowed: true; principal: SlackRequestPrincipal }
   | {
       allowed: false
-      reason: 'identity_unavailable' | 'sender_not_internal' | 'channel_not_internal'
+      reason: 'identity_unavailable' | 'sender_not_internal'
     }
 
 interface AuthorizeSlackRequestInput {
@@ -64,11 +60,9 @@ export class SlackAccessControlService {
     if (decision.allowed) return decision.principal
 
     const message =
-      decision.reason === 'channel_not_internal'
-        ? SLACK_CHANNEL_ACCESS_DENIED_MESSAGE
-        : decision.reason === 'identity_unavailable'
-          ? SLACK_ACCESS_CHECK_FAILED_MESSAGE
-          : SLACK_ACCESS_DENIED_MESSAGE
+      decision.reason === 'identity_unavailable'
+        ? SLACK_ACCESS_CHECK_FAILED_MESSAGE
+        : SLACK_ACCESS_DENIED_MESSAGE
     await this.slackApi
       .postMessage(input.botToken, input.channelId, message, input.threadTs)
       .catch((error) => this.logger.error(`Failed to post Slack access feedback: ${error}`))
@@ -81,14 +75,11 @@ export class SlackAccessControlService {
   async authorize(input: AuthorizeSlackRequestInput): Promise<SlackAccessDecision> {
     let resolved: Map<string, SlackResolvedSender>
     try {
-      const memberIds = input.isDirectMessage
-        ? [input.slackUserId]
-        : await this.slackApi.listConversationMembers(input.botToken, input.channelId)
       resolved = await this.senderResolver.resolveSlackSenders(input.supabase, {
         botToken: input.botToken,
         userId: input.ownerUserId,
         orgId: input.orgId,
-        slackUserIds: [...new Set([input.slackUserId, ...memberIds])],
+        slackUserIds: [input.slackUserId],
       })
     } catch (error) {
       this.logger.warn(
@@ -104,18 +95,6 @@ export class SlackAccessControlService {
       input.ownerSlackUserId !== null && input.slackUserId === input.ownerSlackUserId
     if (!sender || sender.isBot || (!isConnectionOwner && sender.relationshipKind !== 'internal')) {
       return { allowed: false, reason: 'sender_not_internal' }
-    }
-
-    if (
-      !input.isDirectMessage &&
-      [...resolved.values()].some(
-        (member) =>
-          !member.isBot &&
-          member.slackUserId !== input.ownerSlackUserId &&
-          member.relationshipKind !== 'internal',
-      )
-    ) {
-      return { allowed: false, reason: 'channel_not_internal' }
     }
 
     const platformUserId = sender.vibeyUserId ?? (isConnectionOwner ? input.ownerUserId : null)

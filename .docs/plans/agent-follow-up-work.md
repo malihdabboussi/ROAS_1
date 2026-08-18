@@ -10,6 +10,103 @@ Needed work: Move `deliverReminder` + `processDueReminders` into a dedicated rem
 
 Reason not done now: The requested change was reminder timing and thread+channel posting; extracting the remaining reminder loop was out of scope.
 
+## 2026-08-17 - [ARCH] slack-service-events.base.ts is over the 600 LOC service cap
+
+Status: Open
+
+Found while: Letting Internal senders use Pixel in group DMs / Slack Connect
+
+Evidence: `wc -l` on `apps/api/src/modules/slack/services/slack-service-events.base.ts` is ~634. This change only switched DM detection to `isSlackDirectConversation`.
+
+Needed work: Split message vs mention vs reaction handlers out of the events base.
+
+Reason not done now: The requested fix was the mixed-member access denial.
+
+## 2026-08-18 - [FEATURE] Org Pixel CEO skills still incomplete (weekly update / post-call); Super Voice + Power shipped
+
+Status: Open (partial)
+
+Found while: Defaulting Pixel message writing to Dylan Super Voice + Power
+
+Evidence: Migration `20260818023000_pixel_super_voice_power_defaults.sql` assigns `dylans-super-voice` to vibey and sets `model_id` to `auto:power`. TOOLS send-ready guidance now requires the skill. Weekly/Monday client-update and post-call-delivery assignment to org Pixel, plus Slack Pixel browser unblock, remain open from the prior CEO-operator follow-up.
+
+Needed work: Assign weekly/Monday client-update and confirm post-call-delivery on org Pixel; unblock Slack Pixel browser or make Pixel say it cannot click through; keep Lux as the designer.
+
+Reason not done now: This change only covers message-writing defaults (voice + Power + draft composer handoff).
+## 2026-08-18 - [ARCH] Chat store still far over LOC; list virtualization + dual content_delta deferred
+
+Status: Open
+
+Found while: Fixing Chrome Aw Snap / OOM on heavy `/home?conv=` Pixel turns
+
+Evidence: `wc -l` on `apps/web/src/features/studio/store/use-chat-store.ts` is ~2461 (store/module caps in project-architecture are far lower). Stream memory bounds (progress/preview caps, mid-stream persist skip, in-memory prune) land in this change. Chat message list still mounts full history without virtualization. Assistant turns still dual-write `content` plus ordered text blocks during `content_delta`. Backend can still emit large uncapped `tool_content_preview` payloads (client now truncates).
+
+Needed work: Split chat store by concern (messages / stream UI / persist). Virtualize ChatInterface message list. Stop dual content_delta writes once render path is ordered-blocks-only. Throttle or truncate tool preview payloads at the agent-api stream source.
+
+Reason not done now: Aw Snap fix targets the highest-impact heap growers without a store mega-refactor or render rewrite in the same change.
+
+## 2026-08-18 - [FIX] Static-ad format/mode terms still scan the full pasted message
+
+Status: Open
+
+Found while: Tightening the static-ad creation matcher so pasted Slack threads do not force the production-type card
+
+Evidence: `buildStaticAdChatRoutingInstruction` now detects creation from the first and last 240 characters of long pastes, but `findExplicitMode` and `STATIC_AD_FORMAT_TERMS` still run on the full normalized text once that gate matches. A wrapping “make ads from this:” plus buried “chat receipt” or “messaging angles” can still lock a lane.
+
+Needed work: Limit explicit mode and format-term matching on long pastes to the same head/tail windows used for creation detection.
+
+Reason not done now: The reported false positive was `selection_required` from distant want/need + ad-account language, which the collocation and window change already stops.
+
+
+## 2026-08-18 - [ARCH] Campaign detail page is over the 80% container budget
+
+Status: Open
+
+Found while: Registering clickable Campaigns / client / campaign breadcrumbs
+
+Evidence: `wc -l` on `apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx` is 560 (container cap 600). This change added one breadcrumb mount.
+
+Needed work: Extract client-workspace tab wiring and mobile chrome before the next campaign-page change.
+
+Reason not done now: Requested work was breadcrumbs on the existing page; splitting the page was out of scope.
+
+## 2026-08-18 - [ARCH] SpaceVibeyChatPanel remains far over the 400 LOC component cap
+
+Status: Open
+
+Found while: Stopping Home New chat from inventing a Meetings connection
+
+Evidence: `wc -l` on `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` is still ~2660 (component cap 400; container cap 600). This change only tightened post-load selection and the new-intent effect.
+
+Needed work: Split host, send, and conversation-list orchestration into dedicated hooks/containers before the next chat-runtime change. Optionally retarget an already-open Meetings thread when the user `@` mentions a campaign in that composer (Home send-time is fixed; in-thread `@` still only becomes a Source). Live Choose Space label from `@` is also unscoped (ChatInput already over 400 LOC).
+
+Reason not done now: Requested work was the Home Enter / `@` → Connections bug. Splitting the panel and growing ChatInput were out of scope.
+
+## 2026-08-18 - [FIX] Space folder crumbs still show a General campaign name without the client
+
+Status: Open
+
+Found while: Adding Campaigns / client / campaign breadcrumbs
+
+Evidence: `SpaceItemsContainer` sets `folderLabel` to `campaignName`, so a General campaign still reads `Campaigns / General / General` in `SpaceBreadcrumbHeader` even after Connections qualifies the same location as `Master Your Kraft General`.
+
+Needed work: Qualify the space folder label with the same ancestor walk used by `conversationScopeDisplayLabel`.
+
+Reason not done now: The opened Connections destination in this bug was the campaign page, which now has client/program crumbs.
+
+
+## 2026-08-18 - [ARCH] SpaceVibeyChatPanel and other chat hosts remain far over LOC limits
+
+Status: Open
+
+Found while: Removing the streaming composer typewriter tip
+
+Evidence: `wc -l` reports `SpaceVibeyChatPanel.tsx` 2664, `ChatInterface.tsx` 1082, `TeamHrSideChatPanel.tsx` 694, `ProjectChatPane.tsx` 591 (container 600 / component 400). This change only deleted the active-run tip slot.
+
+Needed work: Split send/seed/header/composer orchestration out of these chat hosts.
+
+Reason not done now: Requested work was delete the old Tip strip. Decomposing the hosts was out of scope. `ProjectChatPane.tsx` still mounts a no-op Studio `ComposerActiveRunTipCard` because editing that file trips the cross-feature import gate.
+
 ## 2026-08-17 - [FIX] Team Intelligence digest still repeats the same open threads
 
 Status: Open
@@ -24,15 +121,15 @@ Reason not done now: The requested fix was Launch/QC hourly DMs. Digest cadence 
 
 ## 2026-08-17 - [FEATURE] Org Pixel still lacks CEO operator skills (voice, weekly update, post-call)
 
-Status: Open
+Status: Superseded
 
 Found while: Making Slack Pixel retrieve-then-draft and bind this portal chat on named-client lookup
 
 Evidence: `UNIVERSAL_LIBRARY_SKILL_KEYS` (`dylans-super-voice`, `instagram-carousel`) skips system agents via `isSystemAgentKey`. Live org Pixel skill list remains ads/carousel/theme. Post-call delivery and meeting Slack follow-up live on Vibey. Slack Pixel browser tool remains denied while TOOLS QC policy names the browser.
 
-Needed work: Assign `dylans-super-voice`, weekly/Monday client-update, and post-call-delivery to org Pixel (not only `agent_key = vibey`); unblock Slack Pixel browser or make Pixel say it cannot click through; keep Lux as the designer.
+Needed work: See 2026-08-18 partial entry above. `dylans-super-voice` + Power shipped; weekly update / post-call / Slack browser remain.
 
-Reason not done now: This change fixes named lookup, CONNECTIONS bind, fuzzy names, and retrieve-then-draft policy. Skill backfill is a separate agent-sync/seeder change.
+Reason not done now: Superseded by the 2026-08-18 partial entry.
 
 ## 2026-08-17 - [ARCH] artifact-brain-search-actions.service.ts is near the 600 LOC service cap
 

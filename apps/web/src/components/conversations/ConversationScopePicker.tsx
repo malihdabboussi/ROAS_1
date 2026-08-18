@@ -43,6 +43,7 @@ import {
 import { ConversationScopeTrigger } from './ConversationScopeTrigger'
 import {
   useConversationScopeCampaigns,
+  useConversationScopeFallbackCampaign,
   useConversationScopeFallbackSpace,
   useConversationScopePrograms,
 } from './use-conversation-scope-data'
@@ -201,19 +202,21 @@ export const ConversationScopePicker = forwardRef<
     }
   }, [open, bannerAnchorRef])
 
-  const selectedCampaignId = conversation ? conversation.campaign_id : (campaignId ?? null)
-  const selectedCampaign = campaigns.find((campaign) => campaign.id === selectedCampaignId) ?? null
-  const generalCampaign = campaigns.find((campaign) => campaign.config?.system_kind === 'general')
-
+  const selectedCampaignIdFromProps = conversation ? conversation.campaign_id : (campaignId ?? null)
   const selectedSpaceId = conversation ? readConversationSpaceId(conversation) : (spaceId ?? null)
   const fallbackSpace = useConversationScopeFallbackSpace({
     activeOrgId,
-    selectedCampaignId,
+    selectedCampaignId: selectedCampaignIdFromProps,
     selectedSpaceId,
     spacesByCampaign,
   })
   const selectedSpace =
     findConversationScopeSpace(spacesByCampaign, selectedSpaceId) ?? fallbackSpace
+  const selectedCampaignId = selectedCampaignIdFromProps ?? selectedSpace?.campaign_id ?? null
+  const fallbackCampaign = useConversationScopeFallbackCampaign(selectedCampaignId, campaigns)
+  const selectedCampaign =
+    campaigns.find((campaign) => campaign.id === selectedCampaignId) ?? fallbackCampaign
+  const generalCampaign = campaigns.find((campaign) => campaign.config?.system_kind === 'general')
 
   const selectedProgramName = programNameForCampaign(selectedCampaign, programs)
   const selectedName = conversationScopeDisplayLabel({

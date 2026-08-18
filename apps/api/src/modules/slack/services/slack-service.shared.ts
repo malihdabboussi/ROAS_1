@@ -29,10 +29,15 @@ export const GENERIC_SLACK_AGENT_ERROR_MESSAGE =
   "I couldn't process this message. Try again in a moment."
 export const SLACK_ACCESS_DENIED_MESSAGE =
   "You don't have access to Pixel yet. Ask a ROAS admin to update you in Manage People."
-export const SLACK_CHANNEL_ACCESS_DENIED_MESSAGE =
-  "I can't use private ROAS data in this channel. Ask a ROAS admin to review its members."
 export const SLACK_ACCESS_CHECK_FAILED_MESSAGE =
   "I couldn't verify Slack access right now. Try again in a moment."
+
+export function isSlackDirectConversation(
+  channelType: string | undefined,
+  channelId: string,
+): boolean {
+  return channelType === 'im' || channelType === 'mpim' || channelId.startsWith('D')
+}
 
 export const SUPABASE_USER_ACCESS_TOKEN_KEY = 'supabase_user_access_token'
 export const SUPABASE_USER_REFRESH_TOKEN_KEY = 'supabase_user_refresh_token'

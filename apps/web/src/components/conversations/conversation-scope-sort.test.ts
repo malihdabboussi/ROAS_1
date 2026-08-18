@@ -30,5 +30,18 @@ describe('conversation-scope-sort', () => {
       'Roadmap',
     )
     expect(qualifyGeneralLocation({ leafName: 'General', parentName: 'General' })).toBe('General')
+    expect(
+      qualifyGeneralLocation({
+        leafName: 'General',
+        parentName: 'General',
+        ancestors: ['Master Your Kraft'],
+      }),
+    ).toBe('Master Your Kraft General')
+    expect(
+      qualifyGeneralLocation({
+        leafName: 'General',
+        ancestors: ['General', 'Client Spaces', 'Master Your Kraft'],
+      }),
+    ).toBe('Master Your Kraft General')
   })
 })

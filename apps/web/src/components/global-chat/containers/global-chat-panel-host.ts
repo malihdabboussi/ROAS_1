@@ -16,6 +16,7 @@ export function resolveGlobalChatPanelHost(input: {
   channelId: string | null
   isSpacesRoute: boolean
   forceGeneral?: boolean
+  freshChat?: boolean
   activeSpaceId: string | null
   activeSpaceCampaignId: string | null
   workContext: GlobalWorkContext
@@ -64,7 +65,9 @@ export function resolveGlobalChatPanelHost(input: {
     }
   }
 
-  if (workContext.surface === 'general' && input.sticky?.spaceId) {
+  // Home Enter / New chat must not reuse a leftover Meetings (or other) space host.
+  // Detaching a chip on an already-open space chat still keeps sticky.
+  if (workContext.surface === 'general' && input.sticky?.spaceId && !input.freshChat) {
     return input.sticky
   }
 
@@ -79,6 +82,7 @@ export function useStickyGlobalChatPanelHost(
   input: Omit<Parameters<typeof resolveGlobalChatPanelHost>[0], 'sticky'>,
 ): GlobalChatPanelHost {
   const stickyRef = useRef<GlobalChatPanelHost | null>(null)
+  if (input.freshChat) stickyRef.current = null
   const host = resolveGlobalChatPanelHost({ ...input, sticky: stickyRef.current })
   if (host.spaceId || host.panelKey.startsWith('channel:')) {
     stickyRef.current = host
