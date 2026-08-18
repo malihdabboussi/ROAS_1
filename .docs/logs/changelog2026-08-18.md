@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 19:50] - [FEATURE]
+What: Meetings one room — calendar events materialize onto All Meetings rows; Host + Call status; default past+today+tomorrow chip; All Meetings is the default tab (standard task card) and Agenda keeps the specialized card; related calls feed Pixel so last week’s recording is not a Recordings + ask; Prep tab/button gone; impromptu defaults to Team; completing a call runs the existing post-call path.
+Why: Calendar, All Meetings, and the meeting workspace were three homes for one call. Pixel asked users to re-link Fathom that already lived on a related row.
+Impact: Opening Meetings shows All Meetings first. Calendar events become rows without opening the card. Recording landing and Call status Completed both run post-call. Existing Spaces get host/call_status via migration.
+Files: `meeting-item-materialize.service.ts`, `meeting-host.ts`, `meeting-call-status.ts`, `meeting-related-calls.ts`, `space-template-catalog-personal-dashboard.ts`, `20260818194000_meetings_one_room_fields.sql`, `MeetingsUnifiedSurface.tsx`, `MeetingWorkspaceDialog.tsx`, `build-meeting-awareness-context.ts`, `MeetingsCallDateWindowChip.tsx`, `HostCell.tsx`
+
 ## [2026-08-18 18:55] - [FIX]
 What: Declared `fieldRowVariant` on All Meetings `ClientCampaignCell` so SpaceCell can pass the shared kanban/default row variant.
 Why: #304 used `fieldRowVariant` in the cell and forwarded it from `SpaceCell`, but the props type omitted it. `next build` typecheck failed every `roas-web` deploy.

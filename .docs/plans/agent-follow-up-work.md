@@ -1,14 +1,26 @@
-## 2026-08-18 - [ARCH] SpaceCell.tsx is near the 400 LOC component cap
+## 2026-08-18 - [ARCH] MeetingWorkspaceDialog.tsx is near the 400 LOC component cap
 
 Status: Open
 
+Found while: Meetings one-room (status dropdown, related calls, Pixel context)
+
+Evidence: `wc -l` on `apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx` is 375. Cap is 400.
+
+Needed work: Extract hydrate/status/rename handlers into a hook so the dialog only composes sections.
+
+Reason not done now: In-scope work was wiring related calls and call status; splitting the dialog was not required to land the behavior.
+
+## 2026-08-18 - [ARCH] SpaceCell.tsx is near the 400 LOC component cap
+
+Status: Done
+
 Found while: Adding the All Meetings Client / Campaign mapping intercept
 
-Evidence: `wc -l` on `apps/web/src/components/spaces/cells/SpaceCell.tsx` is 380 after a thin `client_campaign` branch. Cap is 400.
+Evidence: Field-id intercepts now live in `SpaceFieldIdCell.tsx`. `SpaceCell.tsx` is 383 after that extract plus Host.
 
-Needed work: Split field-id intercepts (`source_call`, `client_campaign`) into a small dispatcher so the type switch stays the only body.
+Needed work: none for the dispatcher. Still near the cap if more intercepts land.
 
-Reason not done now: The requested work was the mapping cell and Agenda link; extracting the dispatcher was out of scope.
+Reason not done now: Dispatcher shipped with Meetings one-room Host cell.
 
 ## 2026-08-18 - [ARCH] artifact-action-preflight.ts remains over the 600 LOC cap after MCP extract
 

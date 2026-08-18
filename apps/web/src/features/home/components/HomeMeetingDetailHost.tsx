@@ -48,9 +48,11 @@ function MeetingWorkspaceBreadcrumb({
 export function HomeMeetingDetailHost({
   event,
   onClose,
+  onOpenRelated,
 }: {
   event: CalendarAgendaEvent
   onClose: () => void
+  onOpenRelated?: (event: CalendarAgendaEvent) => void
 }) {
   const recordWorkAreaPage = useShellStore((state) => state.recordWorkAreaPage)
   const related = event.related
@@ -128,6 +130,7 @@ export function HomeMeetingDetailHost({
           fallbackTitle={event.title}
           onBack={onClose}
           onClose={onClose}
+          onOpenRelated={onOpenRelated}
         />
       </>
     )

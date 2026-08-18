@@ -136,6 +136,7 @@ export function parseGoogleEventsListResponse(raw: unknown): CalendarAgendaEvent
       html_link: htmlLink,
       color_id: colorId,
       attendees,
+      organizer: readGoogleOrganizer(ev, attendees),
       source: 'google_calendar',
       ical_uid: icalUid,
     })
@@ -234,11 +235,50 @@ export function parseOutlookListEventsResponse(raw: unknown): CalendarAgendaEven
       html_link: htmlLink,
       color_id: colorId,
       attendees,
+      organizer: readOutlookOrganizer(ev),
       source: 'outlook',
       ical_uid: icalUid,
     })
   }
   return out
+}
+
+function readGoogleOrganizer(
+  ev: Record<string, unknown>,
+  _attendees: CalendarAttendee[],
+): CalendarAgendaEvent['organizer'] {
+  const organizer = asRecord(ev.organizer)
+  const email = organizer && typeof organizer.email === 'string' ? organizer.email.trim() : ''
+  if (email) {
+    return {
+      email,
+      name: organizer && typeof organizer.displayName === 'string' ? organizer.displayName : null,
+    }
+  }
+  const rawAttendees = asArray(ev.attendees) ?? []
+  for (const row of rawAttendees) {
+    const record = asRecord(row)
+    if (!record || record.organizer !== true) continue
+    const attendeeEmail = typeof record.email === 'string' ? record.email.trim() : ''
+    if (!attendeeEmail) continue
+    return {
+      email: attendeeEmail,
+      name: typeof record.displayName === 'string' ? record.displayName : null,
+    }
+  }
+  return null
+}
+
+function readOutlookOrganizer(ev: Record<string, unknown>): CalendarAgendaEvent['organizer'] {
+  const organizer = asRecord(ev.organizer)
+  const emailAddress = organizer ? asRecord(organizer.emailAddress) : null
+  const email =
+    emailAddress && typeof emailAddress.address === 'string' ? emailAddress.address.trim() : ''
+  if (!email) return null
+  return {
+    email,
+    name: emailAddress && typeof emailAddress.name === 'string' ? emailAddress.name : null,
+  }
 }
 
 function unwrapComposioPayload(value: unknown): unknown {

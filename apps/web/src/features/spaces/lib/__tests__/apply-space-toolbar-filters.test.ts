@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import type { SpaceItem } from '../../types'
+import type { ViewDef } from '../../types/space-schema'
 import {
   applySpaceToolbarFilters,
   buildDocToolbarSearchHaystack,
@@ -7,8 +9,6 @@ import {
   resolveViewFieldValueFilters,
   viewPromotesFollowUpSubtasks,
 } from '../apply-space-toolbar-filters'
-import type { SpaceItem } from '../../types'
-import type { ViewDef } from '../../types/space-schema'
 
 function item(input: Pick<SpaceItem, 'id' | 'title'> & Partial<SpaceItem>): SpaceItem {
   return {
@@ -107,6 +107,7 @@ describe('field_value_filters', () => {
       type: 'list',
       name: 'All Meetings',
       show_closed_tasks: true,
+      toolbar_call_date_window: 'all',
       // filters omitted — view id fallback must still apply
     } as ViewDef
     expect(resolveViewFieldValueFilters(allMeetings)).toEqual({ entry_type: 'call' })

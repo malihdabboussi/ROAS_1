@@ -33,9 +33,12 @@ describe('post-call Slack meeting scope', () => {
     expect(shouldRunPostCallSlackAction(action, { custom_data: { call_kind: 'client' } })).toBe(
       true,
     )
-    expect(shouldRunPostCallSlackAction(action, { custom_data: { call_kind: 'private' } })).toBe(
-      false,
-    )
+    expect(
+      shouldRunPostCallSlackAction(
+        { type: 'request_slack_follow_up_confirm', meeting_scope: 'client_and_team' },
+        { custom_data: { call_kind: 'impromptu' } },
+      ),
+    ).toBe(true)
   })
 
   it('runs unscoped actions for team but not personal', () => {

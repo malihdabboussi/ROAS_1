@@ -25,4 +25,20 @@ describe('parseGoogleEventsListResponse', () => {
     expect(events.map((event) => event.title)).toEqual(['ROAS x Christian Osgood Weekly Standup'])
     expect(events[0]?.ical_uid).toBe('standup@google.com')
   })
+
+  it('stamps the Google organizer as host identity', () => {
+    const events = parseGoogleEventsListResponse({
+      items: [
+        {
+          id: 'event-1',
+          status: 'confirmed',
+          summary: 'Client review',
+          start: { dateTime: '2026-08-18T16:00:00.000Z' },
+          end: { dateTime: '2026-08-18T16:30:00.000Z' },
+          organizer: { email: 'dylan@roas.co', displayName: 'Dylan' },
+        },
+      ],
+    })
+    expect(events[0]?.organizer).toEqual({ email: 'dylan@roas.co', name: 'Dylan' })
+  })
 })

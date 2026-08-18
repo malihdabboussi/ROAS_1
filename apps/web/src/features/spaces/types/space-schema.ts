@@ -711,6 +711,11 @@ export interface ViewDef {
   toolbar_assigned_to_me?: boolean
   /** Toolbar: filter by assignee roster `participant_id`s. */
   toolbar_filter_assignee_participant_ids?: string[]
+  /**
+   * All Meetings: default `past_through_tomorrow` (all past + today + tomorrow).
+   * `all` shows the rest of the future.
+   */
+  toolbar_call_date_window?: 'past_through_tomorrow' | 'all'
   subtasks_expanded?: boolean
   subtasks_display?: SubtasksDisplayMode
   ig_research_config?: SocialResearchConfig

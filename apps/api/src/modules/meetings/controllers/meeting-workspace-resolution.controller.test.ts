@@ -30,6 +30,15 @@ describe('ScheduledMeetingSchema', () => {
     expect(ScheduledMeetingSchema.parse(scheduledMeeting).ical_uid).toBeUndefined()
   })
 
+  it('accepts an organizer host identity', () => {
+    expect(
+      ScheduledMeetingSchema.parse({
+        ...scheduledMeeting,
+        organizer: { email: 'dylan@roas.co', name: 'Dylan' },
+      }).organizer,
+    ).toEqual({ email: 'dylan@roas.co', name: 'Dylan' })
+  })
+
   it('continues to reject timestamps without timezone information', () => {
     expect(() =>
       ScheduledMeetingSchema.parse({
