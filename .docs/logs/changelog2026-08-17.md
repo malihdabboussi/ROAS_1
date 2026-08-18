@@ -1,5 +1,12 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 18:56] - [FIX]
+What: Auto chat write is Sonnet 4.6 again. Terra still runs the research/tool loop. Power stays Opus 5. Economy stays Terra.
+Why: July 15 Auto was Sonnet 4.6 for the whole turn. Jul 30 `b1d67559` put Auto write on discounted Terra, which is when answers got dumber. Keep the cheap tool loop; restore the July 15 writer.
+Impact: Default Auto answers are written on the July 15 quality model. Tool loops stay on Terra. Missions/non-staged Auto tasks are still Terra (logged as follow-up).
+Files: `packages/api-shared/src/services/model-strategy.ts`, `packages/api-shared/src/services/model-strategy.test.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `apps/web/src/lib/agents/model-strategies.ts`, `apps/web/src/features/studio/components/ChatInput/chat-input-model-settings.ts`, `documentation/features/chat-stream-recovery.md`
+
+
 ## [2026-08-17 23:30] - [FIX]
 What: Fixed TypeScript errors that failed every Vercel `roas-web` production build after the meeting-workspace header landed. Meeting action reload now returns `Promise<void>`; review-chat seed maps to the studio message shape; unused Zustand `get` and `noUncheckedIndexedAccess` href split are gone; test fixtures typecheck.
 Why: `next build` typechecks `apps/web` with `strict` + unused locals. #282's `onActionsReload={hydrateWorkspace}` returned a bundle, so production never shipped Continue in chat.
