@@ -1,19 +1,30 @@
-# Pixel Slack North Star — Resolve, Retrieve, Deliver
+# Pixel Slack North Star — Classify, Retrieve, Deliver
 
-Last Modified: 2026-08-18
+Last Modified: 2026-08-18 (intent-first spine; Viktor keep/expand)
 
 ## Architect Summary
 
-Pixel already has the pieces to answer almost every agency Slack ask: client channel → Portal client stamps, Campaign Brain, The ROAS Portal, tasks, meetings, Meta, Slack search, and Service Request drafts. The product fails when those pieces are not run in a fixed order. Today a Slack ask can land in a group DM or quote, skip the mapped `#roas-*` client, search the wrong Brain, and ask “Andy or Krista?” even though `#roas-1ds-collective-llc-939` is already 1DS Collective.
+Pixel already has the pieces to answer almost every agency Slack ask. The product fails when those pieces are not run in a fixed order. The first version of this plan started the spine at **client resolve**. That is wrong for a large share of real asks. “What’s on my task list?”, “How many calls do I have today?”, and “Give me 5 content ideas from my brain” are not client lookups. Forcing client resolve first wastes tokens and overwrites the retrieve-then-draft work we already shipped to match Viktor.
 
-The North Star: **every Slack request gets a correct, evidence-backed output at the cheapest token path that still looked deep enough.** Assume the answer exists. The only question is whether Pixel resolved the client, retrieved the right stores, and stopped when evidence was sufficient.
+The spine starts by classifying **what the message means**:
 
-This plan does four things:
+1. **Client** — a named or stamped client’s work, performance, Service Request, campaign, or call.
+2. **Team** — across clients or internal ops: at-risk work, digest verify, `#ads-launches`, “what did the team promise.”
+3. **General** — the operator’s own world: my calendar, my tasks, my User Brain, a reminder, rewrite-as-me with no client facts required.
 
-1. Names the Slack and agency processes that already exist in code.
-2. Shows the current Slack → answer path versus the proposed spine.
-3. Turns Dylan’s example asks plus production-stamped client channels into a request catalog (user set + 25 audit-derived) and 10 proposed processes.
-4. Gives file-level build work, stress tests, and risks. It does not invent new tables or actions unless an existing contract is missing.
+Only **client-class** asks then run Client Resolve (N1). Team and general skip Portal client matching.
+
+The North Star is unchanged: **every Slack request gets a correct, evidence-backed output at the cheapest token path that still looked deep enough.** Assume the answer exists. The question is whether Pixel classified the ask, retrieved the right stores for that class, and stopped when evidence was sufficient.
+
+This is an expansion of the Viktor-parity work already on main (voice pack, retrieve-then-draft, CONNECTIONS bind, Team Intelligence composer, `agent_cases`). It does not replace those contracts.
+
+This plan does five things:
+
+1. Names Slack and agency processes that already exist in code — including what is already Viktor-parity.
+2. Shows the current Slack → answer path versus the proposed **classify → (optional client resolve) → retrieve → act** spine.
+3. Turns Dylan’s example asks plus production-stamped client channels into a request catalog and 10 processes, each tagged with ask class.
+4. States what is already shipped so we do not rebuild it.
+5. Gives file-level build work, stress tests, and risks. It does not invent new tables or actions unless an existing contract is missing.
 
 ### Missing evidence (live Slack)
 
@@ -26,6 +37,58 @@ What stands in for that crawl, with sources:
 - Policy and inbound code listed in the Evidence Pack.
 
 **Smallest experiment to finish a live audit:** with production secrets, run a read-only query of `slack_observation_channels` + last-14-day `slack_observation_events` grouped by channel, plus Slack `search.messages` for `@Pixel` in those channels. Risk if skipped: request wording in §8 is grounded in stamps and known incidents, not a fresh 14-day message histogram.
+
+---
+
+## 0. Keep the Viktor work — expand it, do not rebuild it
+
+“Viktor” in this plan is the **Slack coworker Pixel is mapping toward** (evidence-rich retrieve, one digest, follow-through), not the Spaces project agent `widget_builder`.
+
+We are **not** at full Viktor parity. We are past the “rebuild Slack Pixel from scratch” stage. Most of N2–N10 in the first draft of this plan already exist as policy, skills, or loops. The remaining product miss is **skipping** those contracts (wrong Brain, ask-which-client, no quote inherit) and **starting every turn at client resolve**.
+
+### Already shipped (do not overwrite)
+
+| Work | What it is | Where | Status |
+| --- | --- | --- | --- |
+| Retrieve-then-draft | Named/misspelled client → `list_campaigns` / `search_campaign_brain` **before** asking or drafting; no `[bracket]` Mad Libs | PR 288, `PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK` | On main |
+| CONNECTIONS bind | `campaign_name` binds **this** portal chat, not the whole Slack DM | `artifact-brain-search-actions.service.ts`, meeting-follow-up-slack decision 2026-08-17 | On main |
+| Slack channel identity | `[Slack channel identity]` stamp; unique `list_clients` hint; do not ask which client | `slack-ask-identity-context.ts` | On main; **fails on Slack quotes** (1DS) |
+| Service Request routing | Client deliverables → Portal MCP, never `create_task` | `PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK`, page-grader-operator | On main |
+| User Brain vs client Brain | First-person fill / “check my brain” is User Brain, not Campaign Brain | `PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK` | On main — this **is** the general-class path |
+| Meeting retrieval | Call/recording/transcript → Fathom/Fireflies before asking for a paste | platform-tools meeting block | On main |
+| Pixel Slack voice | Shared Viktor-style voice pack for **live replies and** proactive DMs | `PIXEL_SLACK_VOICE_BLOCK` | On main |
+| Team Intelligence composer | LLM digest + one spec-shaped offer; deterministic fallback | `slack-team-message-composer.service.ts` | On main (Viktor plan Phase 1) |
+| Personal moments | Day-of / belated; not mixed into numbered digest | routing + composer | On main |
+| Open-item / cases | `slack_open_items` → unified `agent_cases`; 24h breach, EOD reconcile | Viktor Phase 2 + 2026-08-13 consolidation | Ledger on main; keep `slack_open_items` as rollback |
+| Offer follow-through | Offer → accept → deliverable in-thread (recap / case study / spend) | `slack-pending-offers.service.ts` | On main (Viktor Phase 3) |
+| Cadence | EOD / weekend / Sunday check-in shaping | Team Intelligence delivery | On main (Viktor Phase 4) |
+| One digest + 12h threads | Viktor-style Active DM, not one post per signal | integration-connections | On main; digest **repetition** still logged |
+| QC / Launch one thread | Measure once; later webhooks reply in-thread | `page-grader-qc-follow-up.ts` | On main |
+| Sender-only Slack Connect | Internal sender may use Pixel in mixed/group DM | PR 295 | Production API |
+| SR review reminders | 3h then 22h, thread + broadcast | PR 296 | Draft, not deployed |
+
+Canonical plans this document **extends**: `.docs/plans/pixel-viktor-parity-plan-2026-08-10.md` (Phases 0–4 mostly landed per `pixel-next-wave-goal-2026-08-11.md` W1/W4), `.docs/plans/unified-slack-agent-consolidation-2026-08-13.md` (one `agent_cases` loop), `documentation/features/meeting-follow-up-slack.md` Slack agent roadmap.
+
+### Still not Viktor-parity (real gaps — this plan)
+
+| Gap | Class | What to do |
+| --- | --- | --- |
+| No ask-kind gate | Architecture | Put client / team / general **before** client resolve. Policy blocks exist; the spine and tests do not. |
+| Slack **quote** does not inherit `#roas-*` | Client identity | N1 quote parse — 1DS Andy-vs-Krista. Does not touch retrieve-then-draft. |
+| Pixel still skips retrieve | Behavior | Encode N2 as tool-trace tests on the **existing** named-client + first-person + meeting blocks. Do not write a second TOOLS.md. |
+| Team Intelligence digest still repeats | Proactive | Already in follow-up log. Out of scope for inbound classify. |
+| Org Pixel missing some skills / browser | Runtime | Follow-up log. N7 admits browser absence. |
+| Mixed Slack Connect + client data | Product | R54. Do not loosen External deny. |
+
+### How this maps to Viktor
+
+Viktor in Slack does three things Pixel is already built to do:
+
+1. **Understand the ask** (personal vs team vs a client thread) before searching.
+2. **Look it up** (retrieve-then-draft) instead of interviewing the human.
+3. **Follow through** (one digest, aged open items, offer → artifact).
+
+This plan’s job is (1) as a first-class step, plus quote inherit so (2) runs on the right client. It is not a new Pixel, not a new classifier service, and not a rewrite of the composer, voice pack, CONNECTIONS bind, or Service Request path.
 
 ---
 
@@ -119,139 +182,198 @@ Token waste today: clarifying questions, User Brain first, duplicate searches, t
 
 ---
 
-## 3. Proposed spine (one path, many processes)
+## 3. Proposed spine (classify first, then retrieve)
+
+Client resolve is a **branch**, not the start. The first question is what the message **means**.
 
 ```mermaid
 flowchart TD
   A[Slack request] --> B[Authorize sender]
-  B --> C[Resolve client]
-  C --> C1[1. Slack identity stamp]
-  C1 --> C2[2. Quote / unfurl / archive URL / #channel]
-  C2 --> C3[3. Unique list_clients hint]
-  C3 --> C4[4. Named override if user named a different client]
-  C4 --> D[Bind this chat CONNECTIONS]
-  D --> E[Depth ladder until evidence is enough]
-  E --> E1[Campaign Brain]
-  E --> E2[Portal client + campaigns + fulfillment]
-  E --> E3[Source Slack channel search + thread]
-  E --> E4[Space tasks / launch]
-  E --> E5[Meetings / Fathom]
-  E --> E6[Live Meta / best ads]
-  E --> E7[Company / User Brain only if the ask is that family]
-  E1 --> F{Evidence sufficient?}
-  E2 --> F
-  E3 --> F
-  E4 --> F
-  E5 --> F
-  E6 --> F
-  E7 --> F
-  F -->|no, coverage partial| E
-  F -->|yes| G[Process router]
-  G --> H[Answer / draft / Service Request / Shadow]
-  H --> I[One Slack reply: answer + next step]
+  B --> K{Pixel's own thread?}
+  K -->|digest / SR reminder / QC follow-up| P[Continue that process]
+  K -->|new ask| C[N0 Classify ask kind]
+  C --> C1[Client]
+  C --> C2[Team]
+  C --> C3[General]
+  C1 --> D[N1 Resolve client]
+  D --> D1[stamp / quote / unfurl / #channel]
+  D1 --> D2[unique list_clients]
+  D2 --> D3[named override]
+  D3 --> D4[Bind this chat CONNECTIONS]
+  D4 --> E[Client depth ladder]
+  C2 --> T[Team stores]
+  T --> T1[agent_cases / open work]
+  T --> T2[Company Brain]
+  T --> T3[spaces across clients]
+  T --> T4[Slack search cited channels]
+  C3 --> G[General stores]
+  G --> G1[User Brain]
+  G --> G2[My calendar / my tasks]
+  G --> G3[create_calendar_event]
+  E --> F{Evidence sufficient?}
+  T --> F
+  G --> F
+  P --> F
+  F -->|no, coverage partial| R[Same-class retry, not a different Brain family]
+  R --> F
+  F -->|yes| H[Act: answer / SR / Shadow / calendar / doc]
+  H --> I[One Slack reply]
 ```
 
-**Rule:** Do not ask the human for a fact the platform can know. Ask only on true forks (zero or multiple clients after lookup; publish/spend; missing asset the ladder returned empty).
+### N0 — Ask Kind (before any client lookup)
 
-**Token rule:** One resolve, one bind, one search per store, stop at first sufficient evidence. Do not open User Brain for “what’s 1DS spend.” Do not list every MCP tool narratively.
+Cheap, deterministic signals first. No extra model call. Policy already has the three families as **separate blocks** (`NAMED_CLIENT_LOOKUP`, first-person fill, meeting/calendar, Team Intelligence verify). N0 makes that order unskippable.
+
+| Kind | Meaning | Cheap signals | Then | Do not |
+| --- | --- | --- | --- | --- |
+| **Continuation** | Reply to Pixel’s own digest, SR nudge, or QC thread | Same `thread_ts` as Pixel parent; “approve”; digest “is that still open?” | S5 / S6 / S10 | New SR, new client ask |
+| **Client** | Work, facts, or performance for one client | Quoted/stamped `#roas-*`; named/misspelled client; client-channel + deliverable/performance/update | N1 → client ladder (Brain, Portal, source Slack, tasks, meetings, Meta) | User Brain first; ask Andy vs Krista |
+| **Team** | Across clients or internal ops | “my clients” / “the team” / “all clients” / “at risk”; `#ads-launches` with no client; digest item without a new client name | `agent_cases`, Space tasks, Company Brain, Slack search of cited channels | Bind one Portal client as if it were the whole ask |
+| **General** | Operator’s own world | “my task list”, “my calls today”, “check my brain”, “remind me”, first-person bio/fill with no client | User Brain, calendar, my tasks | `list_clients`, Campaign Brain, CONNECTIONS bind |
+
+Mixed asks (“rewrite this Slack to Yasir about the webinar delay”) are **client** for facts + **general** for voice. Run N1 for Yasir, User Brain only for tone (already PR 288).
+
+Ambiguous after cheap signals: **one** question naming the fork (“this your calendar, or a client?”). Do not default to client.
+
+**Rule:** Do not ask the human for a fact the platform can know. Ask only on true forks (ask kind unclear; zero or multiple clients after client-class lookup; publish/spend; ladder returned empty).
+
+**Token rule:** Classify once (cheap). For client-class: one resolve, one bind, one search per store. For general: do not open Portal. For team: do not bind a single campaign unless they named one. Stop at first sufficient evidence.
 
 ### How stores interact
 
 | Store | When to hit | When not to |
 | --- | --- | --- |
-| Slack channel identity / CONNECTIONS | Always first on Slack | Never treat group DM as the client if a quoted `#roas-*` exists |
+| Ask kind (N0) | Every new Slack ask | Not a second LLM classifier |
+| Slack channel identity / CONNECTIONS | Client-class only, or mixed client+voice | Never treat a group DM as the client if a quoted `#roas-*` exists; never on pure general asks |
 | Campaign Brain | Client package, strategy, webinar, voice, prior decisions | Not for “how many calls do I have today” |
-| Portal MCP | Clients, campaigns, SR status, intel, cached Meta, best ads | Not a replacement for live Meta if user asked “right now” |
-| Slack search / channel history | Quoted thread, “where is the Drive folder”, digest verify | Not instead of Brain for durable strategy |
-| Space tasks | AM risk, my list, launch timeline | Not for Portal fulfillment create |
-| Meetings / Fathom | Promises, recaps, recordings, “last call” | Not for ad spend |
-| Meta | Spend, CPA, on/off track, creatives | Not before client is bound |
-| Company Brain | Agency cadence (Friday notes, launch rules) | Not client offer facts |
-| User Brain | My bio, content ideas, write-as-me | Not client lookup |
-| Customer Brain | Avatar / objections | After client is known |
+| Portal MCP | Client-class clients, campaigns, SR status, intel, cached Meta, best ads | Not a replacement for live Meta if user asked “right now”; not for general calendar |
+| Slack search / channel history | Quoted thread, Drive folder, digest verify | Not instead of Brain for durable strategy |
+| Space tasks | Team AM risk, general “my list”, client launch timeline | Not for Portal fulfillment create |
+| Meetings / Fathom | Client promises/recaps; general “my calls today” | Not for ad spend |
+| Meta | Client spend, CPA, on/off track, creatives | Not before client is bound; not on team/general |
+| Company Brain | Team cadence (Friday notes, launch rules) | Not client offer facts; not User Brain |
+| User Brain | General: my bio, content ideas, write-as-me | Not client lookup |
+| Customer Brain | Client-class avatar / objections | After that client is known |
+| `agent_cases` | Team open asks, 24h breaches, EOD | Not a substitute for Campaign Brain facts |
 | Drive / docs | “Give me a live doc link” | After retrieve, so the doc is not empty brackets |
 
 ---
 
 ## 4. Consolidation for the North Star
 
-Do **not** add a second Pixel. Collapse into three layers that already exist:
+Do **not** add a second Pixel. Do **not** add a classifier microservice. Collapse into four layers that already exist:
 
-1. **Resolve** — extend quote parsing so S2/S3 always fire. Cheap (no model).
-2. **Retrieve ladder** — make the ordered stores in platform-tools a hard protocol (same text already exists, Pixel skips it). Cheap vs wrong answers.
+0. **Classify (N0)** — client vs team vs general vs Pixel-thread continuation. Cheap signals + existing platform-tools blocks. **New as a spine step; not new architecture.**
+1. **Resolve (N1)** — **client-class only.** Extend quote parsing so S2/S3 fire on forwarded quotes. Cheap (no model).
+2. **Retrieve ladder (N2)** — make the ordered stores already in platform-tools a hard protocol (same text exists, Pixel skips it). Different store set per ask kind. Cheap vs wrong answers.
 3. **Act** — one of: answer, Service Request draft, Shadow recap, calendar event, doc, mission. Skills only after retrieve.
 
 Remove / stop:
 
+- Starting every Slack turn at client resolve (this plan’s first-draft miss).
 - Asking which client when stamp or unique hint exists (already policy; enforce with scenario tests + quote fixtures).
 - Native `create_task` for client fulfillment (already forbidden).
 - User Brain / Agent Brain first on named-client facts (already forbidden).
 - Duplicate Slack analysis of empty 5-minute windows (already skipped).
 - Extra “I have full context” acks (fork-chat work elsewhere).
+- Rebuilding the voice pack, composer, CONNECTIONS bind, or Service Request path.
 
-Keep Team Intelligence, QC follow-ups, and Service Request reminders as **outbound** processes. They feed the same Resolve → Retrieve spine when a human replies.
+Keep Team Intelligence, QC follow-ups, and Service Request reminders as **outbound** processes. A human reply on those threads is **Continuation**, not a new client lookup.
+
+What looked “not done” in the first draft of this plan was mostly **already done** as policy/loops (N2 retrieve-then-draft, N6 send-ready drafts, N10 SR routing, N5 meeting retrieval, N9 agenda). The build is: N0 as tests + a short protocol heading, N1 quote inherit, then traces that Pixel cannot skip the existing blocks.
 
 ---
 
 ## 5. Ten proposed processes (from stamps + 1DS + Dylan’s list)
 
-Each process is a named ladder. Existing S1–S14 stay; these are the **product** processes operators should expect.
+Each process is a named ladder. Existing S1–S14 stay; these are the **product** processes operators should expect. **N0 runs first.** N1–N10 only after the matching ask kind.
+
+### N0 — Ask Kind Router
+**Kind:** all new asks
+**Why:** Not every Slack message is a client request. Client-first lookup is the wrong first move for calendar, User Brain, and team-wide risk.
+**Steps:** continuation? → cheap signals (channel, quote, named client, first-person operator phrases, “the team” / “all clients”) → client | team | general. One clarifying question only if still forked.
+**Already exists as:** separate platform-tools blocks. **Missing:** a required first step + fixtures that a general ask must not call `list_clients`.
+**Files:** `platform-tools-template.ts` (short “classify before named-client lookup” heading), scenario matrix: R04/R05/R17 must not contain Portal client resolve; R01/R31 must.
 
 ### N1 — Client Resolve Spine
+**Kind:** client only
 **Why:** 1DS quote in a group DM; S13 internal `#ads-launches` still may ask which client.
 **Steps:** current stamp → parse unfurl **and** “From a thread in #x” / archive URL / `<#C…>` → `list_clients` with channel hint → bind CONNECTIONS → only then ask if 0 or N matches.
+**Does not replace:** PR 288 retrieve-then-draft. Quote inherit feeds that path the right client.
 **Files:** `slack-forwarded-message-context.ts`, `slack-ask-identity-context.ts`, scenario matrix S02/S08/S14 + new quote fixture.
 
 ### N2 — Depth Ladder (retrieve-then-answer)
-**Why:** Policy exists; Pixel still asks for screenshots/dates.
+**Kind:** client (stores differ for team/general — see N0)
+**Why:** Policy exists (PR 288); Pixel still asks for screenshots/dates.
 **Steps:** Campaign Brain → Portal → source Slack channel (until `coverage.complete` or a hit) → Space tasks → meetings if the ask is temporal → Meta if the ask is performance → then answer. Placeholders only if those returned empty.
+**Already exists:** `PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK`. Do not replace that block. Add N0 “classify before this block” + tool-trace tests.
 **Files:** `platform-tools-template.ts` (numbered ladder), page-grader-operator, tests that a mock “which client” reply fails S08.
 
 ### N3 — Performance Pulse
+**Kind:** client
 **Why:** S04, S07, Dylan spend/CPA asks.
-**Steps:** N1 → `search_campaign_brain` light → Portal campaigns → `get_meta_ads_insights` for the named range → Portal best-ads table → 4-bullet Slack pulse (spend, result, CPA, on/off track) + creative links if present.
+**Steps:** N0 client → N1 → `search_campaign_brain` light → Portal campaigns → `get_meta_ads_insights` for the named range → Portal best-ads table → 4-bullet Slack pulse (spend, result, CPA, on/off track) + creative links if present.
 
 ### N4 — Account Manager Risk Sweep
+**Kind:** team
 **Why:** “Open work across my clients, what’s at risk.”
-**Steps:** N1 for each mapped client the user owns (or `list_campaigns`) → Portal open SRs → Space tasks due/overdue → launch dates from Brain/Portal → Slack: at-risk only, by client.
+**Steps:** N0 team → `list_campaigns` / `agent_cases` in scope (no single-client bind unless they named one) → Portal open SRs → Space tasks due/overdue → launch dates from Brain/Portal → Slack: at-risk only, by client.
 
 ### N5 — Call Memory / Promises
+**Kind:** client if a client is named; general if “my calls last week”
 **Why:** “What did we agree / what did I promise.”
-**Steps:** N1 → Fathom list + transcript/action_items → Campaign Brain “decision” query → Slack channel last meeting thread → list owners/dates. Never invent an owner.
+**Steps:** N0 → if client: N1 then Fathom + Campaign Brain “decision” + Slack meeting thread. If general: Fathom last 7d for the caller only. Never invent an owner.
 
 ### N6 — Client Update Writer (SOW / midweek / EOW)
-**Why:** Send-ready updates; policy already bans `[brackets]`.
-**Steps:** N1 → N3 for the time range → N4 open work → Company Brain Friday-note rule → draft in Dylan/Nefi voice from User Brain only for **tone**, not facts.
+**Kind:** client
+**Why:** Send-ready updates; PR 288 already bans `[brackets]`.
+**Steps:** N0 client → N1 → N3 for the time range → N4 open work → Company Brain Friday-note rule → draft in Dylan/Nefi voice from User Brain only for **tone**, not facts.
 
 ### N7 — Launch Asset QC Walk
+**Kind:** client
 **Why:** Dylan QC example; Launch/QC already posts to Slack.
-**Steps:** N1 → Brain + Slack launch channel + tasks for funnel URLs → browser or `web_fetch` → dates/prices vs campaign Brain → findings. If browser missing, say so (do not fake a click-through).
+**Steps:** N0 client → N1 → Brain + Slack launch channel + tasks for funnel URLs → browser or `web_fetch` → dates/prices vs campaign Brain → findings. If browser missing, say so (do not fake a click-through).
 
 ### N8 — Webinar Campaign Planner
+**Kind:** client
 **Why:** Yasir/Impact/Dunamis/Trade webinar work in the scenario matrix.
-**Steps:** N1 → Brain webinar + prior calls (N5) → Portal: campaign exists? → if no, **suggest** draft campaign / SR, do not publish ads → recap topics + open links.
+**Steps:** N0 client → N1 → Brain webinar + prior calls (N5) → Portal: campaign exists? → if no, **suggest** draft campaign / SR, do not publish ads → recap topics + open links.
 
 ### N9 — Meeting Prep / Onboarding
+**Kind:** client if a client is named; general if “prep me for my next call” with no name
 **Why:** Agenda prep + “pre-onboarding form.”
-**Steps:** Calendar event (N1 if client named) → Brain strategy + form if present → if form missing, **ask once** whether to run the pre-call strategy mission → share result. `create_mission` only if they say yes.
+**Steps:** N0 → calendar event → if client-class, N1 + Brain strategy + form; if form missing, **ask once** whether to run the pre-call strategy mission. `create_mission` only if they say yes.
 
 ### N10 — Creative / Fulfillment Router
-**Why:** VSL edit, statics, copy, GHL, video — all SRs.
-**Steps:** N1 (this is the 1DS fix) → retrieve Drive/Slack assets → `page_grader_create_fulfillment_request` with `task_type` + assignee + `conversation_id` → review URL. Never `create_task`.
+**Kind:** client
+**Why:** VSL edit, statics, copy, GHL, video — all SRs. Already S4.
+**Steps:** N0 client → N1 (this is the 1DS fix) → retrieve Drive/Slack assets → `page_grader_create_fulfillment_request` with `task_type` + assignee + `conversation_id` → review URL. Never `create_task`.
+**Already exists:** Service Request policy. Do not add a parallel native-task path.
 
 ---
 
 ## 6. Request catalog
 
-Convention: **General** = operator wording. **Specific** = one real-shaped ask using a stamped client. **Ladder** = agent steps. **Process** = N# / S#.
+Convention: **Kind** = client | team | general | continuation. **General wording** = operator phrasing. **Specific** = one real-shaped ask. **Ladder** always starts with N0. Client-class ladders then run N1. Team/general must not.
+
+| Kind | Examples |
+| --- | --- |
+| Client | R01–R03, R06, R10–R11, R14–R15, R18–R21, R23–R43, R45–R46, R48–R52 |
+| Team | R07, R13, R16, R44, R47, R53 |
+| General | R04, R05, R08 (no client named), R09, R12, R17, R22 |
+| Mixed | R18 (client facts + User Brain tone), R12 (general reminder about a client task — calendar first, client only if they asked to draft the VSL) |
+| Continuation | R48, R55 |
+
+R08 is **general** when they say “my calls last week”; it becomes **client** if they name Yasir. R13 “how many active clients do I have” is **team/portfolio**, not N1 on one client — Portal `list_clients` count, no Campaign Brain.
 
 ### 6.1 Dylan’s set (R01–R30)
 
 **R01 — Campaign performance**
+- Kind: client
 - General: What’s X client’s campaign performance right now?
 - Specific: What’s 1DS Skool campaign performance right now — on track or off, and cost per purchase?
 - Process: N3
-- Ladder: N1 on 1DS (`#roas-1ds-collective-llc-939` / list_clients `1ds collective`) → bind → Portal campaigns named Skool → `get_meta_ads_insights` today/7d → result action purchase → compare to Brain target CPA → four bullets. If Skool campaign missing, say so and list campaigns that **do** exist.
+- Ladder: N0 client → N1 on 1DS (`#roas-1ds-collective-llc-939` / list_clients `1ds collective`) → bind → Portal campaigns named Skool → `get_meta_ads_insights` today/7d → result action purchase → compare to Brain target CPA → four bullets. If Skool campaign missing, say so and list campaigns that **do** exist.
 
 **R02 — Build a campaign for a webinar next week**
 - Specific: Can you build a campaign for Impact Elite to launch a webinar next week?
@@ -264,14 +386,16 @@ Convention: **General** = operator wording. **Specific** = one real-shaped ask u
 - Ladder: N1 Christian → `list_calendar_events` + Fathom title match “onboarding” → return date/time/link. If none, say sources checked.
 
 **R04 — My task list today**
+- Kind: general
 - Specific: What’s on my task list today?
 - Process: A4 (no client)
-- Ladder: `list_spaces` / tasks due today for the Slack user → not Portal SRs unless they also asked clients.
+- Ladder: N0 general → `list_spaces` / tasks due today for the Slack user → not Portal SRs unless they also asked clients. **Forbidden:** `list_clients`, `search_campaign_brain`.
 
 **R05 — Calls today**
+- Kind: general
 - Specific: How many calls do I have today, and when’s the first one?
 - Process: A6
-- Ladder: `get_person_agenda` or `list_calendar_events` for today → count + first start. Mine calendar only.
+- Ladder: N0 general → `get_person_agenda` or `list_calendar_events` for today → count + first start. Mine calendar only. **Forbidden:** Portal client resolve.
 
 **R06 — Prep meeting agenda**
 - Specific: Prep the agenda for the White Picket Fence strategy call.
@@ -279,9 +403,10 @@ Convention: **General** = operator wording. **Specific** = one real-shaped ask u
 - Ladder: N1 WPF → calendar event → Brain + last Fathom + open tasks → write agenda doc (`save_document` or Space doc) → Slack link.
 
 **R07 — Open tasks across my clients**
+- Kind: team
 - Specific: Find all open tasks for my clients across the team, not just mine, and what’s at risk for missing launch.
 - Process: N4
-- Ladder: `list_campaigns` in scope → each: Portal SRs + Space tasks + launch date from Brain → at-risk only.
+- Ladder: N0 team → `list_campaigns` / `agent_cases` in scope → each: Portal SRs + Space tasks + launch date from Brain → at-risk only. Do not bind one client as the whole ask.
 
 **R08 — Outstanding promises from last week’s calls**
 - Specific: Any outstanding promises from my calls last week?
@@ -329,9 +454,10 @@ Convention: **General** = operator wording. **Specific** = one real-shaped ask u
 - Ladder: Same as R07 without “my clients” filter; cap listing to at-risk.
 
 **R17 — Five content ideas from my brain**
+- Kind: general
 - Specific: Check my brain and give me 5 content ideas.
 - Process: A7
-- Ladder: `search_user_brain` identity/offer queries — **not** campaign Brain. Five ideas grounded in memories.
+- Ladder: N0 general → `search_user_brain` identity/offer queries — **not** campaign Brain. Five ideas grounded in memories. **Forbidden:** `list_clients`.
 
 **R18 — Rewrite a client message**
 - Specific: Help me rewrite this Slack message to Yasir about the webinar delay.
@@ -403,6 +529,7 @@ Convention: **General** = operator wording. **Specific** = one real-shaped ask u
 Grounded in `LIVE_CHANNEL_STAMPS`, scenario matrix S01–S15, and the 1DS group-DM quote.
 
 **R31 — Quoted client thread in a group DM (incident)**
+- Kind: client (identity from quote, not from the group DM)
 - General: Need this [deliverable] from that client thread ASAP.
 - Specific: `@Pixel - need this edited VSL style asap` quoting `#roas-1ds-collective-llc-939`.
 - Process: N1 + N10 `video`
@@ -523,38 +650,46 @@ Grounded in `LIVE_CHANNEL_STAMPS`, scenario matrix S01–S15, and the 1DS group-
 
 Extend `PIXEL_SCENARIOS` from prompt-shape tests into **tool-trace tests** (fixture in, ordered actions out). One case per request id above is too many for a single PR; gate in waves.
 
-### Wave 0 — Identity (blocks everything)
-Fixtures: R31 quote-without-unfurl, R33 unfurl, R44 ops channel, R45 unique hint, R46 override, R54 Slack Connect.
-Assert: prompt contains resolved client **or** a single allowed ask; never Andy-vs-Krista when 1DS stamp exists.
-Commands: `pnpm --filter @vibey/api test -- src/modules/slack/services/__tests__/slack-pixel-scenario-matrix.test.ts`
+### Wave 0 — Ask kind + identity (blocks everything)
+Fixtures:
+- General must not resolve a client: R04, R05, R17.
+- Team must not bind one client as the whole ask: R07, R44.
+- Client identity: R31 quote-without-unfurl, R33 unfurl, R45 unique hint, R46 override, R54 Slack Connect.
+Assert: general/team traces do not call `list_clients` / `search_campaign_brain` unless a client was named. Client traces contain resolved client **or** a single allowed ask; never Andy-vs-Krista when 1DS stamp exists.
+Commands: `pnpm --filter @vibey/api test -- src/modules/slack/services/__tests__/slack-pixel-scenario-matrix.test.ts` plus `platform-tools-template.test.ts` classify-before-lookup heading.
 
 ### Wave 1 — Fulfillment
 R32, R34, R37, R39, R42, R43. Assert MCP tool `page_grader_create_fulfillment_request` with `client_ref` / campaign id, `task_type`, `conversation_id`; no `create_task`.
 
 ### Wave 2 — Retrieve
-R01, R20, R35, R38, R49. Assert order: bind/search_campaign_brain before Meta; no User Brain.
+R01, R20, R35, R38, R49. Assert order: bind/search_campaign_brain before Meta; no User Brain. This is **existing PR 288 policy**, not a new retrieve stack.
 
 ### Wave 3 — Meetings / calendar
-R03–R06, R08–R11, R21, R22. Assert Fathom/calendar actions; no invented owners.
+R03–R06, R08–R11, R21, R22. Assert Fathom/calendar actions; no invented owners. Split: R04/R05/R09/R22 stay general (no N1).
 
 ### Wave 4 — AM / updates / QC
-R07, R16, R19, R30, R47, R48. Assert at-risk filter; digest verify searches Slack.
+R07, R16, R19, R30, R47, R48. Assert at-risk filter; digest verify searches Slack. R47/R48 are continuation or team, not a new client resolve unless the item names one.
 
 ### Live harness (after secrets)
 For each Wave 0–1 specific: post in a **private internal test channel** mapped to a non-prod client, or dry-run against observation stamps. Record: tools used, tokens, whether Pixel asked a forbidden question.
 
 Pass/fail for every request:
-- Correct client id from stamp/hint
-- Ladder stores actually called
+- Correct ask kind
+- Correct client id from stamp/hint **only if kind=client**
+- Ladder stores for that kind actually called; forbidden stores not called
 - No forbidden ask
 - Slack reply has the answer or a review URL
-- Token budget: ≤ N tool rounds (propose 8 for retrieve, 12 for SR+retrieve). Tune after Wave 2 traces — **unknown** until measured.
+- Token budget: ≤ N tool rounds (propose 4 for general, 8 for client retrieve, 12 for SR+retrieve). Tune after Wave 2 traces — **unknown** until measured.
 
 ---
 
 ## 8. Implementation plan (file-level)
 
-Recommended approach: **harden Resolve (N1) first** — that is the 1DS class of failure — then encode the Depth Ladder as tests + a short protocol, then add process-specific skills only where the ladder is not enough.
+Recommended approach: **do not rebuild retrieve-then-draft, voice, composer, or Service Request routing.** Add N0 as a required heading + tests. Ship N1 quote inherit for client-class identity (1DS). Then encode the existing Depth Ladder as traces Pixel cannot skip.
+
+0. `packages/agent-policy/src/platform-tools-template.ts`
+   - Change: add a short **Classify before lookup** heading in front of `NAMED_CLIENT_LOOKUP` and first-person fill. Client vs team vs general vs continuation. Keep every existing named-client, SR, and User Brain rule verbatim.
+   - Tests: general phrases (“my task list”, “check my brain”, “how many calls do I have today”) appear in the classify block; named-client block still required.
 
 1. `apps/api/src/modules/slack/services/slack-forwarded-message-context.ts`
    - Change: parse “From a thread in #channel”, archive URLs in text, and quote attachments that lack `is_msg_unfurl`.
@@ -566,24 +701,24 @@ Recommended approach: **harden Resolve (N1) first** — that is the 1DS class of
    - Contract: group DM + 1DS quote → `[Slack channel identity]` for 1DS.
 
 3. `apps/api/src/modules/slack/services/__tests__/slack-pixel-scenario-matrix.test.ts`
-   - Change: add LIVE stamp usage for quote-in-mpim; assert `forbidAskWhichClient` for 1DS.
+   - Change: quote-in-mpim + general/team fixtures; assert `forbidAskWhichClient` for 1DS; assert R04/R17 prompts are not client-stamped as the work to do.
 
-4. `packages/agent-policy/src/platform-tools-template.ts`
-   - Change: Depth Ladder as an ordered list (Brain → Portal → Slack source → tasks → meetings → Meta). Keep existing forbids.
+4. `packages/agent-policy/src/platform-tools-template.ts` (same file as 0)
+   - Change: Depth Ladder as an ordered list for **client-class** (Brain → Portal → Slack source → tasks → meetings → Meta). Keep existing forbids.
    - Tests: `platform-tools-template.test.ts` string contains the ladder and 1DS example.
 
 5. `docker/agents/atlas/skills/page-grader-operator/SKILL.md` + vibey copy
-   - Change: same quote rule; “quoted `#roas-1ds-*` is 1DS.”
+   - Change: same quote rule; “quoted `#roas-1ds-*` is 1DS.” Do not rewrite retrieve-then-draft.
    - Requires agent-sync migration if production skills are DB-backed (same pattern as prior policy migrations).
 
 6. `apps/agent-api/.../artifact-brain-search-actions.service.ts`
    - Change: none unless bind fails on Slack org chats; verify Slack session still binds on `campaign_name`.
    - Tests: existing bind tests; add Slack-org session fixture if missing.
 
-7. Docs: `documentation/features/page-grader-mcp-bridge.md` + `integration-connections.md` — quote inherit + reminder cadence.
+7. Docs: `documentation/features/page-grader-mcp-bridge.md` + `integration-connections.md` — quote inherit + reminder cadence + classify-before-client.
    - Changelog + this plan.
 
-Out of scope until Wave 0 ships: new MCP tools, new DB tables, a separate “process engine” service.
+Out of scope until Wave 0 ships: new MCP tools, new DB tables, a separate “process engine” or “intent classifier” service, any rewrite of `PIXEL_SLACK_VOICE_BLOCK`, the Team Intelligence composer, or CONNECTIONS bind.
 
 ### Data / contract map (N1)
 
@@ -601,30 +736,35 @@ Out of scope until Wave 0 ships: new MCP tools, new DB tables, a separate “pro
 
 | Risk | Management |
 | --- | --- |
+| Forcing client resolve on every Slack ask | N0 first; general/team fixtures forbid `list_clients` |
+| Overwriting PR 288 / voice / composer | Expand policy headings and quote inherit only; no second TOOLS.md or composer |
 | Quote parser false-positives map the wrong `#channel` | Require `roas-` client channel pattern or a resolved observation row; if 0/N clients, ask once |
 | Client data in Slack Connect group DMs with an external present | S14 allows Internal **sender**. Product decision R54: prefer internal channel for Portal data if mixed; do not change fail-closed for External senders |
-| Depth ladder increases tokens | Stop at first sufficient hit; one search per store; skip User Brain on client asks. Measure Wave 2 |
+| Depth ladder increases tokens | Classify first so general asks stay cheap; stop at first sufficient hit; one search per store; skip User Brain on client asks. Measure Wave 2 |
 | Org Pixel missing CEO/webinar skills / browser | Already in follow-up log. N7 must admit browser absence. N8 uses copywriter/ads_manager skills if Pixel lacks them via `ask_agent` **only when those skills are not on Pixel** — do not silently no-op |
 | Live Slack audit not run | Wave 0 fixtures from stamps + R31; live histogram when secrets exist |
-| Mixing this plan into unrelated PRs | Ship N1 on its own branch after PR 296 (reminders) and PR 295 (access) |
+| Mixing this plan into unrelated PRs | Ship N0 policy tests + N1 quote inherit on their own branch after PR 296 (reminders) and PR 295 (access) |
 
 ---
 
 ## 10. Rollout
 
-1. Merge/deploy API N1 (quote inherit) — unblocks 1DS-class asks without waiting for the full ladder.
-2. Policy + skill sync for N2.
-3. Scenario waves 1–4 in CI.
-4. Live audit experiment → adjust R-list wording.
-5. Only then add process-specific skill files if traces show Pixel still skipping N3–N10.
+1. Policy N0 (classify-before-lookup heading + tests) — no runtime identity change.
+2. Merge/deploy API N1 (quote inherit) — unblocks 1DS-class **client** asks without waiting for the full ladder.
+3. Keep existing retrieve-then-draft / voice / composer; add tool-trace tests so Pixel cannot skip them.
+4. Scenario waves 1–4 in CI.
+5. Live audit experiment → adjust R-list wording.
+6. Only then add process-specific skill files if traces show Pixel still skipping N3–N10.
 
-Rollback: revert parser; identity falls back to current-channel stamp (today’s behavior).
+Rollback: revert parser; identity falls back to current-channel stamp (today’s behavior). Revert N0 heading independently if it causes routing confusion — named-client and first-person blocks remain.
 
 ---
 
 ## Quality gate
 
 - User asked for current processes, proposed processes, visual flows, request catalog with general/specific/steps, architecture, risks, stress tests: covered.
+- Spine now starts at ask kind (client / team / general), not client resolve.
+- Viktor-parity work listed as keep/expand, not rebuild.
 - No new APIs invented; actions named from `vibey-api` / Portal skill.
 - Live channel histogram listed as missing evidence.
 - Old code to remove: none until quote parser replaces ad-hoc asking (behavior change, not a deleted module).
