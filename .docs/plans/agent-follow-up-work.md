@@ -1,3 +1,40 @@
+## 2026-08-18 - [ARCH] Campaign detail page is over the 80% container budget
+
+Status: Open
+
+Found while: Registering clickable Campaigns / client / campaign breadcrumbs
+
+Evidence: `wc -l` on `apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx` is 560 (container cap 600). This change added one breadcrumb mount.
+
+Needed work: Extract client-workspace tab wiring and mobile chrome before the next campaign-page change.
+
+Reason not done now: Requested work was breadcrumbs on the existing page; splitting the page was out of scope.
+
+## 2026-08-18 - [ARCH] SpaceVibeyChatPanel remains far over the 400 LOC component cap
+
+Status: Open
+
+Found while: Stopping Home New chat from inventing a Meetings connection
+
+Evidence: `wc -l` on `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` is still ~2660 (component cap 400; container cap 600). This change only tightened post-load selection and the new-intent effect.
+
+Needed work: Split host, send, and conversation-list orchestration into dedicated hooks/containers before the next chat-runtime change. Optionally retarget an already-open Meetings thread when the user `@` mentions a campaign in that composer (Home send-time is fixed; in-thread `@` still only becomes a Source). Live Choose Space label from `@` is also unscoped (ChatInput already over 400 LOC).
+
+Reason not done now: Requested work was the Home Enter / `@` → Connections bug. Splitting the panel and growing ChatInput were out of scope.
+
+## 2026-08-18 - [FIX] Space folder crumbs still show a General campaign name without the client
+
+Status: Open
+
+Found while: Adding Campaigns / client / campaign breadcrumbs
+
+Evidence: `SpaceItemsContainer` sets `folderLabel` to `campaignName`, so a General campaign still reads `Campaigns / General / General` in `SpaceBreadcrumbHeader` even after Connections qualifies the same location as `Master Your Kraft General`.
+
+Needed work: Qualify the space folder label with the same ancestor walk used by `conversationScopeDisplayLabel`.
+
+Reason not done now: The opened Connections destination in this bug was the campaign page, which now has client/program crumbs.
+
+
 ## 2026-08-18 - [ARCH] SpaceVibeyChatPanel and other chat hosts remain far over LOC limits
 
 Status: Open

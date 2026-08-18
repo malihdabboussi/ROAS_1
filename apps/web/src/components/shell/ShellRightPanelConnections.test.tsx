@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
     program_id?: string | null
   }>,
   programs: [] as Array<{ id: string; name: string; system_kind?: string | null }>,
-  space: null as { id: string; title: string } | null,
+  space: null as { id: string; title: string; campaign_id?: string | null } | null,
 }))
 
 vi.mock('@/components/conversations', async () => {
@@ -85,6 +85,44 @@ describe('ShellRightPanelConnections', () => {
 
     expect(screen.getByText('Yasir Khan General')).toBeInTheDocument()
     expect(screen.queryByText('General')).not.toBeInTheDocument()
+  })
+
+  it('qualifies a General space with the client when the campaign is also General', () => {
+    mocks.campaigns = [{ id: 'campaign-1', name: 'General', program_id: 'program-mk' }]
+    mocks.programs = [{ id: 'program-mk', name: 'Master Your Kraft' }]
+    mocks.space = { id: 'space-1', title: 'General' }
+    render(
+      <ShellRightPanelConnections
+        conversation={null}
+        campaignId="campaign-1"
+        spaceId="space-1"
+        open
+        onOpenChange={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Master Your Kraft General')).toBeInTheDocument()
+    expect(screen.queryByText(/^General$/)).not.toBeInTheDocument()
+  })
+
+  it('names a space connection from its parent campaign when campaignId is missing', () => {
+    mocks.campaigns = [{ id: 'campaign-mk', name: 'Master Your Kraft' }]
+    mocks.space = { id: 'space-1', title: 'General', campaign_id: 'campaign-mk' }
+    const onOpenCampaign = vi.fn()
+    render(
+      <ShellRightPanelConnections
+        conversation={null}
+        campaignId={null}
+        spaceId="space-1"
+        open
+        onOpenChange={vi.fn()}
+        onOpenCampaign={onOpenCampaign}
+      />,
+    )
+
+    expect(screen.getByText('Master Your Kraft General')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Open Master Your Kraft General' }))
+    expect(onOpenCampaign).toHaveBeenCalledWith('campaign-mk')
   })
 
   it('shows the specific meeting name instead of the Meetings space', () => {

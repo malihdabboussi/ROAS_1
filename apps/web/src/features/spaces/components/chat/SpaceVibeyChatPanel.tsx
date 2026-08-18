@@ -110,7 +110,6 @@ import {
   resolveSpaceTaskStatusDisplay,
   resolveSpaceTaskStatusDotColor,
 } from '../space-item-values'
-import { buildSpaceAwarenessContext } from './build-space-awareness-context'
 import { ChatPanelSlideStack } from './ChatPanelSlideTransition'
 import { resolveObservedHeight } from './observed-height'
 import {
@@ -169,6 +168,7 @@ import { SpaceUndoButton } from './SpaceUndoButton'
 import type { SpaceVoiceRunTask } from './SpaceVoiceRunsView'
 import { SpaceVoiceMiniPlayer, SpaceVoiceSessionView } from './SpaceVoiceSessionView'
 import { stripLegacySpacesConversationTitle } from './strip-legacy-spaces-conversation-title'
+import { useChatSendAwareness } from './use-chat-send-awareness'
 
 export function SpaceVibeyChatPanel({
   spaceId,
@@ -782,10 +782,7 @@ export function SpaceVibeyChatPanel({
         })
 
         const chatRailIntentIsNew = useSpacesStore.getState().chatRailIntent === 'new'
-        if (chatRailIntentIsNew && preferredOpenId) {
-          useSpacesStore.getState().setChatRailIntent(null)
-        }
-
+        const homeChatStarting = searchParams.get('chat') === 'starting'
         const stored = readStoredAgentConversationId(chatScopeStorageId, activeAgentKey)
         const storedValid = Boolean(
           stored &&
@@ -796,7 +793,8 @@ export function SpaceVibeyChatPanel({
           ),
         )
         const selection = resolvePostLoadConversationSelection({
-          chatRailIntentIsNew: chatRailIntentIsNew && !preferredOpenId,
+          chatRailIntentIsNew,
+          homeChatStarting,
           preferredOpenId,
           storeActiveConversationId: useChatStore.getState().activeConversationId,
           storedValidConversationId: storedValid ? stored : null,
@@ -981,32 +979,21 @@ export function SpaceVibeyChatPanel({
     return () => window.removeEventListener(DRAFT_CARD_USE_EVENT, onDraftUse)
   }, [])
 
-  const buildContextForSend = useCallback(() => {
-    if (awarenessContextOverride?.trim()) return awarenessContextOverride.trim()
-    if (isChannelScope) return channelContext?.awarenessContext ?? ''
-    if (chatSurface === 'brain') return brainContext?.awarenessContext ?? ''
-    if (chatSurface === 'team' && teamOpsContext?.awarenessContext) {
-      return teamOpsContext.awarenessContext
-    }
-    if (chatSurface !== 'spaces') return ''
-    return buildSpaceAwarenessContext({
-      activeViewType: scopeMatchesVisibleSpace ? activeView?.type : undefined,
-      activeViewName: scopeMatchesVisibleSpace ? activeView?.name : undefined,
-      campaignName: scopeMatchesVisibleSpace ? campaignName : undefined,
-      focusedArtifact: scopeMatchesVisibleSpace ? focusedArtifactRef.current : null,
-    })
-  }, [
-    activeView?.name,
-    activeView?.type,
+  const buildContextForSend = useChatSendAwareness({
     awarenessContextOverride,
-    brainContext,
-    campaignName,
-    channelContext,
-    chatSurface,
     isChannelScope,
+    channelAwareness: channelContext?.awarenessContext,
+    chatSurface,
+    brainAwareness: brainContext?.awarenessContext,
+    teamAwareness: teamOpsContext?.awarenessContext,
+    campaignId: effectiveCampaignId,
+    spaceId: effectiveSpaceId,
     scopeMatchesVisibleSpace,
-    teamOpsContext,
-  ])
+    campaignName,
+    activeViewType: activeView?.type,
+    activeViewName: activeView?.name,
+    focusedArtifactRef,
+  })
 
   const lastUserMessageId = findLastEditableUserMessageId(messages, isStreaming)
 
@@ -1927,22 +1914,13 @@ export function SpaceVibeyChatPanel({
   useEffect(() => {
     if (!chatRailIntent) return
     if (chatRailIntent === 'new') {
-      const drawerConversationId = shellSidebarChrome
-        ? useShellStore.getState().chatDrawer.conversationId
-        : null
-      // Drawer / meeting preferred thread already targets a conversation — do not wipe it.
-      if (!drawerConversationId && !preferredConversationId) void handleNewConversation()
+      // Drawer leftover from the previous Recents row must not cancel a Home new send.
+      if (!preferredConversationId) void handleNewConversation()
     } else if (chatRailIntent === 'list') {
       setMode('conversations')
     }
     setChatRailIntent(null)
-  }, [
-    chatRailIntent,
-    handleNewConversation,
-    preferredConversationId,
-    setChatRailIntent,
-    shellSidebarChrome,
-  ])
+  }, [chatRailIntent, handleNewConversation, preferredConversationId, setChatRailIntent])
 
   const applyGlobalChatSeed = useCallback(
     async (seed: GlobalChatSeedDetail) => {
