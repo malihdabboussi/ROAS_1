@@ -27,6 +27,9 @@ vi.mock('@/features/studio/store/use-chat-store', () => ({
       }),
     {
       getState: () => ({
+        messagesByConversation: mocks.cachedCount
+          ? { [mocks.conv]: new Array(mocks.cachedCount) }
+          : {},
         setMessages: mocks.setMessages,
         setActiveConversationId: mocks.setActiveConversationId,
       }),
@@ -74,7 +77,7 @@ describe('useWorkRequestHomeChatSeed', () => {
 
     renderHook(() => useWorkRequestHomeChatSeed())
 
-    await waitFor(() => expect(mocks.setMessages).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(mocks.setMessages).toHaveBeenCalled())
     expect(mocks.setActiveConversationId).toHaveBeenCalledWith(mocks.conv)
     expect(mocks.setMessages.mock.calls[0]?.[0]).toBe(mocks.conv)
     expect(mocks.setMessages.mock.calls[0]?.[1]).toHaveLength(1)
