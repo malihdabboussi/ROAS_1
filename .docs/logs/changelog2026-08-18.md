@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 16:20] - [FIX]
+What: Meetings Agenda Mine now DWD-pulls the signed-in user's Workspace Directory calendar (linked/suggested portal user, not login Gmail first). Team Google Calendar fetches paginate `nextPageToken` (page size 2500, `singleEvents=true`) and pin the caller inside the Directory people cap.
+Why: Mine only listed caller-owned Composio rows, so Dylan's work invites showed under Team (Directory mailbox) and disappeared on Mine. Recurring instances such as ROAS x Christian Osgood Weekly Standup were truncated when a covering-month `events.list` stopped at 250 events with no page token.
+Impact: Mine includes the caller's Workspace calendar. Team no longer drops later recurring instances after the first page, and the signed-in Directory user is not sliced off by alphabetical email order.
+Files: `integrations-calendar.service.ts`, `integrations-calendar-parse.ts`, `integrations-calendar-team.service.ts`, `google-workspace-calendar.service.ts`, `google-workspace-google.client.ts`, `google-workspace-calendar-pages.ts`, `google-workspace-calendar-pull.ts`, `integrations-calendar-workspace-map.ts`, `loc-allowlist.json`, `documentation/features/integration-connections.md`
+
 ## [2026-08-18 16:20] - [DOCS]
 What: Revised the Pixel Slack North Star spine to classify ask kind (client / team / general / Pixel-thread continuation) before any client resolve, and mapped already-shipped Viktor-parity work as keep/expand.
 Why: Not every Slack message is a client request. Starting at client lookup would overwrite retrieve-then-draft, User Brain, and Team Intelligence paths already on main.

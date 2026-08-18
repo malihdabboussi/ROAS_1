@@ -5,6 +5,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
   Optional,
 } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -20,6 +21,11 @@ import {
   type TeamAgendaPayload,
 } from './integrations-calendar-dedupe'
 import { enrichAgendaWithPrecall } from './integrations-calendar-enrichment'
+import {
+  mapWorkspaceEventToAgendaEvent,
+  workspaceIdentityAccount,
+  workspaceIdentityAgendaLabel,
+} from './integrations-calendar-workspace-map'
 import type { CalendarAgendaEvent } from './integrations-calendar.service'
 
 @Injectable()
@@ -87,6 +93,7 @@ export class IntegrationsCalendarTeamService {
       end,
       timezone: query.timezone,
       limit_people: query.limit_people ?? 40,
+      prefer_vibey_user_id: user.id,
     })
 
     const accounts: CalendarConnectionRef[] = []
@@ -96,15 +103,8 @@ export class IntegrationsCalendarTeamService {
     const errors: TeamAgendaCoverage['errors'] = []
 
     for (const person of upcoming.people) {
-      const label =
-        person.identity.display_name?.trim() || person.identity.calendar_email || 'Teammate'
-      accounts.push({
-        userIntegrationId: person.identity.id,
-        composioAccountId: person.identity.calendar_email,
-        label,
-        isDefault: false,
-        provider: 'google_calendar',
-      })
+      const label = workspaceIdentityAgendaLabel(person.identity)
+      accounts.push(workspaceIdentityAccount(person.identity))
       included.push({
         identity_id: person.identity.id,
         email: person.identity.calendar_email,
@@ -124,38 +124,7 @@ export class IntegrationsCalendarTeamService {
         continue
       }
       for (const event of person.events) {
-        const videoUrl = event.video_url
-        let videoLabel: string | null = null
-        if (videoUrl) {
-          if (videoUrl.includes('zoom.us')) videoLabel = 'Zoom'
-          else if (videoUrl.includes('teams.microsoft')) videoLabel = 'Teams'
-          else if (videoUrl.includes('meet.google')) videoLabel = 'Google Meet'
-          else videoLabel = 'Meet'
-        }
-        events.push({
-          id: `workspace:${person.identity.id}:${event.id}`,
-          title: event.title,
-          start: event.start,
-          end: event.end,
-          all_day: event.all_day,
-          location: event.location,
-          description: event.description,
-          video_url: videoUrl,
-          video_label: videoLabel,
-          html_link: event.html_link,
-          color_id: null,
-          attendees: event.attendees.map((attendee) => ({
-            name: attendee.name,
-            email: attendee.email,
-            status: 'unknown' as const,
-          })),
-          source: 'google_calendar',
-          account_id: person.identity.id,
-          account_label: label,
-          prep: null,
-          related: null,
-          ...(event.ical_uid ? { ical_uid: event.ical_uid } : {}),
-        } as CalendarAgendaEvent & { ical_uid?: string | null })
+        events.push(mapWorkspaceEventToAgendaEvent(person.identity, event, label))
       }
     }
 
@@ -216,6 +185,65 @@ export class IntegrationsCalendarTeamService {
       accounts,
       team_available: true,
       team_coverage,
+    }
+  }
+
+  /**
+   * Mine includes the caller's Workspace Directory calendar, not only Composio.
+   * Team already DWD-pulls teammate calendars; without this, Dylan's work invites
+   * appear under Team and disappear on Mine.
+   */
+  async getCallerDirectoryAgenda(
+    supabase: SupabaseClient,
+    user: { id: string; email?: string | null },
+    scope: RequestScope,
+    query: { start: string; end: string; timezone?: string },
+  ): Promise<{
+    events: CalendarAgendaEvent[]
+    accounts: CalendarConnectionRef[]
+    errors: string[]
+  }> {
+    if (!scope.orgId) return { events: [], accounts: [], errors: [] }
+    const status = await this.workspaceApi.getStatus(scope.orgId)
+    if (!status.connected) return { events: [], accounts: [], errors: [] }
+
+    try {
+      const result = await this.workspaceCalendar.getCallerAgenda(supabase, scope, {
+        start: query.start,
+        end: query.end,
+        timezone: query.timezone,
+        email: user.email?.trim() || undefined,
+        vibey_user_id: user.id,
+      })
+      if (!result.identity) {
+        return { events: [], accounts: [], errors: [] }
+      }
+      const identity = result.identity
+      const label = workspaceIdentityAgendaLabel(identity)
+      return {
+        events: result.events.map((event) =>
+          mapWorkspaceEventToAgendaEvent(identity, event, label),
+        ),
+        accounts: [workspaceIdentityAccount(identity)],
+        errors: [],
+      }
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof ForbiddenException ||
+        error instanceof NotFoundException
+      ) {
+        return { events: [], accounts: [], errors: [] }
+      }
+      return {
+        events: [],
+        accounts: [],
+        errors: [
+          error instanceof Error
+            ? `Google Workspace: ${error.message}`
+            : 'Google Workspace calendar fetch failed',
+        ],
+      }
     }
   }
 

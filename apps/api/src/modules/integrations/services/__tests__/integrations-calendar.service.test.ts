@@ -279,6 +279,80 @@ describe('IntegrationsCalendarService team+Mine merge', () => {
     expect(result.events).toHaveLength(1)
     expect(result.events[0]?.account_label).toBe('Mine · Aaron McKeague')
   })
+
+  it('puts the caller Directory calendar onto Mine so work invites are not Team-only', async () => {
+    const teamAgenda = {
+      isTeamAvailable: vi.fn().mockResolvedValue(true),
+      getCallerDirectoryAgenda: vi.fn().mockResolvedValue({
+        events: [
+          {
+            id: 'workspace:dylan:standup',
+            title: 'ROAS x Christian Osgood Weekly Standup',
+            start: '2026-08-18T16:15:00.000Z',
+            end: '2026-08-18T16:30:00.000Z',
+            all_day: false,
+            location: null,
+            video_url: 'https://roas.co/nate',
+            video_label: 'Meet',
+            html_link: null,
+            color_id: null,
+            attendees: [{ name: null, email: 'dylan@dylanvanas.com', status: 'unknown' }],
+            source: 'google_calendar',
+            account_id: 'dylan',
+            account_label: 'Dylan Vanas',
+            prep: null,
+            related: null,
+          },
+        ],
+        accounts: [
+          {
+            userIntegrationId: 'dylan',
+            composioAccountId: 'dylan@roas.co',
+            label: 'Dylan Vanas',
+            isDefault: false,
+            provider: 'google_calendar',
+          },
+        ],
+        errors: [],
+      }),
+    }
+    const service = new IntegrationsCalendarService(
+      { table: vi.fn() } as never,
+      { executeTool: vi.fn() } as never,
+      { applyScope: vi.fn().mockResolvedValue({ data: [] }) } as never,
+      teamAgenda as never,
+    )
+    vi.spyOn(
+      service as unknown as { resolveAllConnections: () => Promise<unknown[]> },
+      'resolveAllConnections',
+    ).mockResolvedValue([])
+
+    const result = await service.getAgenda(
+      {} as never,
+      { id: 'user-dylan', email: 'dylan@dylanvanas.com' },
+      { orgId: 'org-1', orgRole: 'admin' } as never,
+      {
+        start: '2026-08-17T07:00:00.000Z',
+        end: '2026-08-24T07:00:00.000Z',
+        timezone: 'America/Los_Angeles',
+        scope: 'personal',
+      },
+    )
+
+    expect(teamAgenda.getCallerDirectoryAgenda).toHaveBeenCalledWith(
+      expect.anything(),
+      { id: 'user-dylan', email: 'dylan@dylanvanas.com' },
+      expect.objectContaining({ orgId: 'org-1' }),
+      expect.objectContaining({
+        start: '2026-08-17T07:00:00.000Z',
+        end: '2026-08-24T07:00:00.000Z',
+      }),
+    )
+    expect(result.events.map((event) => event.title)).toEqual([
+      'ROAS x Christian Osgood Weekly Standup',
+    ])
+    expect(result.connected.google_calendar).toBe(true)
+  })
 })
 
 describe('IntegrationsCalendarService agenda enrichment', () => {
@@ -288,7 +362,12 @@ describe('IntegrationsCalendarService agenda enrichment', () => {
       { table: vi.fn() } as never,
       { executeTool: vi.fn() } as never,
       { applyScope: vi.fn() } as never,
-      { isTeamAvailable: vi.fn().mockResolvedValue(false) } as never,
+      {
+        isTeamAvailable: vi.fn().mockResolvedValue(false),
+        getCallerDirectoryAgenda: vi
+          .fn()
+          .mockResolvedValue({ events: [], accounts: [], errors: [] }),
+      } as never,
       {
         enrichAgendaEvents: vi.fn().mockResolvedValue(new Map()),
         enrichAgendaRelatedCalls: vi.fn().mockRejectedValue(new Error('related query failed')),

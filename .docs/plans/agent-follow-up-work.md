@@ -1,3 +1,15 @@
+## 2026-08-18 - [FIX] Agenda day dividers can label today as Tomorrow when navigator local dates disagree with the timezone query
+
+Status: Open
+
+Found while: Debugging missing recurring meetings on Agenda week of Aug 17–23
+
+Evidence: `agenda-list-grouping.tsx` `agendaListDayDividerLabel` never says Today; `delta === 1` is Tomorrow. `enumerateDayKeysInNavRange` walks local `setDate` from `agendaListFetchWindow` while event buckets use `dayKeyInTimeZone`. A TZ mismatch can put Aug 18 events under a Tomorrow divider.
+
+Needed work: Bucket and label day keys with the same timezone as the agenda query; add a Today label or keep weekday+date when delta is 0.
+
+Reason not done now: The empty Mine today list was Directory vs Composio, not the divider. Recurring misses were pagination + people-cap.
+
 ## 2026-08-18 - [ARCH] space-schema.ts remains far over the 600 LOC cap
 
 Status: Open

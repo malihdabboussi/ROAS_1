@@ -155,6 +155,11 @@ describe('IntegrationsCalendarTeamService', () => {
       event_count: 1,
     })
     expect(result.team_coverage?.skipped[0]?.reason).toBe('rejected')
+    expect(workspaceCalendar.listOrgUpcoming).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({ prefer_vibey_user_id: 'user-1' }),
+    )
     expect(precallPrep.enrichAgendaRelatedCalls).toHaveBeenCalledWith(
       expect.objectContaining({ orgId: 'org-1' }),
     )
@@ -243,5 +248,71 @@ describe('IntegrationsCalendarTeamService', () => {
       }),
     ])
     expect(result.team_coverage?.totals.failed).toBe(1)
+  })
+
+  it('loads the signed-in Directory calendar for Mine when Workspace is connected', async () => {
+    const workspaceCalendar = {
+      getCallerAgenda: vi.fn().mockResolvedValue({
+        success: true,
+        identity: {
+          id: 'dylan',
+          display_name: 'Dylan Vanas',
+          calendar_email: 'dylan@roas.co',
+          match_status: 'confirmed',
+        },
+        events: [
+          {
+            id: 'weekly',
+            title: 'ROAS x Christian Osgood Weekly Standup',
+            start: '2026-08-18T16:15:00.000Z',
+            end: '2026-08-18T16:30:00.000Z',
+            all_day: false,
+            location: null,
+            description: null,
+            video_url: null,
+            html_link: null,
+            ical_uid: 'standup@google.com',
+            attendees: [{ name: null, email: 'dylan@dylanvanas.com' }],
+            source: 'google_workspace',
+            calendar_email: 'dylan@roas.co',
+          },
+        ],
+      }),
+    }
+    const workspaceApi = {
+      getStatus: vi.fn().mockResolvedValue({ connected: true }),
+    }
+    const service = new IntegrationsCalendarTeamService(
+      workspaceCalendar as never,
+      workspaceApi as never,
+      undefined,
+    )
+
+    const result = await service.getCallerDirectoryAgenda(
+      {} as never,
+      { id: 'user-dylan', email: 'dylan@dylanvanas.com' },
+      { orgId: 'org-1', orgRole: 'admin' } as never,
+      {
+        start: '2026-08-18T07:00:00.000Z',
+        end: '2026-08-19T07:00:00.000Z',
+        timezone: 'America/Los_Angeles',
+      },
+    )
+
+    expect(workspaceCalendar.getCallerAgenda).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ orgId: 'org-1' }),
+      expect.objectContaining({
+        vibey_user_id: 'user-dylan',
+        email: 'dylan@dylanvanas.com',
+      }),
+    )
+    expect(result.events).toEqual([
+      expect.objectContaining({
+        title: 'ROAS x Christian Osgood Weekly Standup',
+        account_label: 'Dylan Vanas',
+        ical_uid: 'standup@google.com',
+      }),
+    ])
   })
 })
