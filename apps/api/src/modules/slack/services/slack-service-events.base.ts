@@ -7,6 +7,7 @@ import {
   MACHINE_UNREACHABLE_SLACK_MESSAGE,
   MACHINE_WAKE_START_SLACK_MESSAGE,
   SLACK_AGENT_STREAM_TIMEOUT_MS,
+  isSlackDirectConversation,
 } from './slack-service.shared'
 
 export abstract class SlackEventsBase extends SlackConversationBase {
@@ -146,7 +147,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       orgId: channelOrgId ?? null,
       slackUserId: event.user,
       channelId,
-      isDirectMessage: event.channel_type === 'im' || channelId.startsWith('D'),
+      isDirectMessage: isSlackDirectConversation(event.channel_type, channelId),
       threadTs: event.thread_ts ?? event.ts,
     })
     if (!principal) return
@@ -273,7 +274,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       orgId: fallback.orgId,
       slackUserId: event.user,
       channelId,
-      isDirectMessage: event.channel_type === 'im' || channelId.startsWith('D'),
+      isDirectMessage: isSlackDirectConversation(event.channel_type, channelId),
       threadTs: event.thread_ts ?? event.ts,
     })
     if (!principal) return

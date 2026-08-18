@@ -1,5 +1,11 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 19:52] - [FIX]
+What: Pixel now authorizes the Slack sender only. Internal people and the installer can use Pixel in group DMs and Slack Connect threads. Linked Slack identities inherit Internal.
+Why: Group DMs scanned every member and treated Slack Connect teammates as external, so Dylan @Pixel in a DM with his partner got "I can't use private ROAS data in this channel" even after mapping both accounts Internal.
+Impact: Internal senders work in mixed/group/Slack Connect chats. External senders still get the Manage People denial. `conversation_documents` fork copy remains separate.
+Files: `slack-access-control.service.ts`, `slack-sender-resolver.service.ts`, `slack-service-events.base.ts`, `slack-service.shared.ts`, `messages.config.ts`, `documentation/features/integration-connections.md`
+
 ## [2026-08-17 23:30] - [FIX]
 What: Fixed TypeScript errors that failed every Vercel `roas-web` production build after the meeting-workspace header landed. Meeting action reload now returns `Promise<void>`; review-chat seed maps to the studio message shape; unused Zustand `get` and `noUncheckedIndexedAccess` href split are gone; test fixtures typecheck.
 Why: `next build` typechecks `apps/web` with `strict` + unused locals. #282's `onActionsReload={hydrateWorkspace}` returned a bundle, so production never shipped Continue in chat.
