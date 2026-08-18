@@ -1,7 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { MeetingCallKind } from '../domain/meeting-call-kind'
+import { callStatusWhenRecordingLands } from '../domain/meeting-call-status'
+import { meetingHostCustomData, shouldStampMeetingHost } from '../domain/meeting-host'
 import { createInstantMeetingItem } from './create-instant-meeting-item'
+import {
+  createScheduledMeetingItem,
+  patchMeetingItemCustomData,
+} from './create-scheduled-meeting-item'
 import { MeetingCallMatchingRepository } from './meeting-call-matching.repository'
 
 export type ScheduledMeetingEvent = {
@@ -16,6 +22,7 @@ export type ScheduledMeetingEvent = {
   videoUrl?: string | null
   htmlLink?: string | null
   attendees: Array<{ email: string; name?: string | null }>
+  organizer?: { email: string; name?: string | null } | null
 }
 
 export type MeetingCallIdentityProfile = {
@@ -92,7 +99,7 @@ export class MeetingWorkspaceResolutionRepository {
     return (data as Record<string, unknown> | null) ?? null
   }
 
-  async createScheduledMeeting(
+  createScheduledMeeting(
     supabase: SupabaseClient,
     input: {
       spaceId: string
@@ -102,50 +109,16 @@ export class MeetingWorkspaceResolutionRepository {
       callKind: MeetingCallKind
     },
   ): Promise<Record<string, unknown>> {
-    const participantEmails = input.event.attendees
-      .map((attendee) => attendee.email.trim().toLowerCase())
-      .filter(Boolean)
-    const attendeeLabels = input.event.attendees
-      .map((attendee) => attendee.name?.trim() || attendee.email.trim())
-      .filter(Boolean)
-    const icalUid = input.event.icalUid?.trim() || null
-    const { data, error } = await supabase
-      .from('space_items')
-      .insert({
-        space_id: input.spaceId,
-        user_id: input.userId,
-        org_id: input.orgId,
-        title: input.event.title.slice(0, 500),
-        description: input.event.description?.trim() || null,
-        status: 'logged',
-        source: 'calendar',
-        custom_data: {
-          entry_type: 'call',
-          call_kind: input.callKind,
-          call_kind_source: 'automatic',
-          calendar_event_id: input.event.calendarEventId,
-          ...(icalUid ? { ical_uid: icalUid } : {}),
-          call_date: input.event.start,
-          call_end: input.event.end,
-          attendees: attendeeLabels,
-          participant_emails: participantEmails,
-          location: input.event.location?.trim() || null,
-          video_url: input.event.videoUrl?.trim() || null,
-          calendar_url: input.event.htmlLink?.trim() || null,
-        },
-      })
-      .select()
-      .single()
-    if (error) {
-      // Idempotent on the ical_uid natural key: a concurrent resolve for the same
-      // invite already created the call, so reuse it instead of duplicating.
-      if (isUniqueViolation(error) && icalUid) {
-        const existing = await this.findCallItemByIcalUid(supabase, input.spaceId, icalUid)
-        if (existing) return existing
-      }
-      throw new BadRequestException(error.message)
-    }
-    return data as Record<string, unknown>
+    return createScheduledMeetingItem(supabase, input)
+  }
+
+  patchMeetingItemCustomData(
+    supabase: SupabaseClient,
+    meetingItemId: string,
+    customData: Record<string, unknown>,
+    patch: Record<string, unknown>,
+  ): Promise<void> {
+    return patchMeetingItemCustomData(supabase, meetingItemId, customData, patch)
   }
 
   findCallItemByIcalUid(
@@ -248,6 +221,7 @@ export class MeetingWorkspaceResolutionRepository {
       recordingUrl: string | null
       externalRecordingId: string
       providerMeetingId: string | null
+      host?: { email: string; name: string } | null
     },
   ): Promise<void> {
     const externalAutomation = {
@@ -255,15 +229,19 @@ export class MeetingWorkspaceResolutionRepository {
       provider: 'fathom',
       meeting_id: input.providerMeetingId ?? input.externalRecordingId,
     }
+    const hostPatch =
+      input.host && shouldStampMeetingHost(customData) ? meetingHostCustomData(input.host) : {}
     const { error } = await supabase
       .from('space_items')
       .update({
         custom_data: {
           ...customData,
           entry_type: customData.entry_type ?? 'call',
+          call_status: callStatusWhenRecordingLands(),
           ...(input.recordingUrl
             ? { recording_url: input.recordingUrl, fathom_url: input.recordingUrl }
             : {}),
+          ...hostPatch,
           external_automation: externalAutomation,
         },
       })
@@ -341,12 +319,6 @@ export class MeetingWorkspaceResolutionRepository {
   ): Promise<string[]> {
     return this.matching.listDuplicateCallItemIds(supabase, input)
   }
-}
-
-function isUniqueViolation(error: unknown): boolean {
-  return Boolean(
-    error && typeof error === 'object' && (error as { code?: unknown }).code === '23505',
-  )
 }
 
 const PUBLIC_EMAIL_DOMAINS = new Set([

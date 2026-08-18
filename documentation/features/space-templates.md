@@ -1,6 +1,6 @@
 # Space Templates
 
-**Last Modified:** 2026-07-20 (Home personal Meetings surface)
+**Last Modified:** 2026-08-18 (Meetings one-room: All Meetings default, host/call_status, Prep view removed, Call completed automation)
 
 ## Overview
 
@@ -15,9 +15,9 @@ Space Templates are a DB-backed catalog of ready-made spaces. Users pick a templ
 
 ## Personal Dashboard
 
-| Slug                 | Title              | Purpose                                                                                                                                                                                                                                                                                                                                                                                                    |
-| -------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `personal-dashboard` | Personal Dashboard | One role-neutral, private daily workspace per active organization member. It combines Today, Priorities, Agenda, Drafts, Notes, People, Missions, meeting preparation, Fathom logs, and follow-up actions. Morning/EOD and Fathom automations install disabled and draft-only. The legacy `ceo-hq` and `meetings` templates remain attached to existing Spaces but are no longer offered for new creation. |
+| Slug                 | Title              | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `personal-dashboard` | Personal Dashboard | One role-neutral, private daily workspace per active organization member. It combines Today, Priorities, Agenda, All Meetings, Drafts, Notes, People, Missions, Fathom logs, and follow-up actions. All Meetings is the default Meetings tab. Morning/EOD, Fathom, and Call completed automations install disabled and draft-only. The legacy `ceo-hq` and `meetings` templates remain attached to existing Spaces but are no longer offered for new creation. |
 
 Active organization membership automatically provisions exactly one `spaces.space_kind = 'personal_dashboard'` row for that member and organization. It is always `visibility = 'private'`, cannot be converted to team visibility, cannot expose public links, cannot be deleted, and rejects Space, view, and email-invite sharing at the database layer. Item rows are coerced to `is_private = true` (never shareable) on insert/update so prep/agent creates that omit privacy fields still succeed. Shared-read RLS policies explicitly exclude it, so organization owners/admins do not receive implicit access.
 
@@ -70,6 +70,7 @@ Home Agenda prep, related call enrichment, and default Home feed scope also read
 - **2026-07-20:** Personal Dashboard item privacy is coerced on insert/update (`is_private=true`) instead of raising, so pre-call prep and agent creates that omit privacy fields succeed. Space/view/item share tables still hard-block dashboard sharing.
 - **2026-07-20:** Home + Fathom Meetings resolve the personal-account dashboard only (`org_id IS NULL`), optionally attached to `system_kind=personal` campaign. Org-scoped Personal Dashboards remain separate per-member org workspaces.
 - **2026-07-20:** Home Agenda merges unmatched personal Meetings `entry_type=call` rows (Fathom) into the calendar window as `source: 'fathom'` events; matched calls stay related attachments on calendar rows.
+- **2026-08-18:** Personal Dashboard All Meetings is the default Meetings view. It stores Host and Call status, hides Priority/Status on that list, defaults the date window to past + today + tomorrow, drops the Prep view, and adds a Call completed automation (call_status → completed) that clones Fathom Meeting Log actions.
 
 ## Regenerating seed SQL
 

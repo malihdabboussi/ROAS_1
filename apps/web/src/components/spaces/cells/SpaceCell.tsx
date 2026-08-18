@@ -17,7 +17,7 @@ import { PhoneCell } from './PhoneCell'
 import { ProgressCell } from './ProgressCell'
 import { RatingCell } from './RatingCell'
 import { SelectCell } from './SelectCell'
-import { SourceCallCell } from './SourceCallCell'
+import { isInterceptedSpaceFieldId, SpaceFieldIdCell } from './SpaceFieldIdCell'
 import { TextCell } from './TextCell'
 // import { DurationCell } from './DurationCell' // duration field disabled for now
 import { TimestampCell } from './TimestampCell'
@@ -57,15 +57,35 @@ export function SpaceCell({
     dateDisplayFormat ??
     (field.id === 'call_date' ? 'date_time' : undefined)
 
-  if (field.id === 'source_call') {
+  if (isInterceptedSpaceFieldId(field.id)) {
     return (
-      <SourceCallCell
+      <SpaceFieldIdCell
         field={field}
         value={value}
         onChange={onChange}
         readonly={readonly}
-        spaceItem={spaceItem}
+        nameAsListOpenTarget={nameAsListOpenTarget}
+        nameListHoverGroup={nameListHoverGroup}
+        listInlineEditActive={listInlineEditActive}
+        onListInlineTitleEditEnd={onListInlineTitleEditEnd}
+        roster={roster}
+        currentUserId={currentUserId}
+        onEditStatuses={onEditStatuses}
+        onEditCategories={onEditCategories}
+        onCreateOption={onCreateOption}
+        onUpdateOption={onUpdateOption}
+        onDeleteOption={onDeleteOption}
+        onTagCustomSwatchesChange={onTagCustomSwatchesChange}
         fieldRowVariant={fieldRowVariant}
+        spaceItem={spaceItem}
+        onItemPatch={onItemPatch}
+        statusField={statusField}
+        onPushToAgent={onPushToAgent}
+        allFields={allFields}
+        openOnMount={openOnMount}
+        bulkInlineEditor={bulkInlineEditor}
+        dateDisplayFormat={dateDisplayFormat}
+        dateDisplayFormats={dateDisplayFormats}
         onOpenDetail={onOpenDetail}
       />
     )

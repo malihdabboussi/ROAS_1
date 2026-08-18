@@ -45,7 +45,7 @@ describe('chat input model settings helpers', () => {
   it('keeps chat input strategy descriptions stable', () => {
     expect(MODEL_STRATEGIES.map((strategy) => [strategy.id, strategy.description])).toEqual([
       ['auto:economy', 'Discounted Terra with lighter thinking for routine work'],
-      ['auto', 'Discounted Terra with balanced thinking for everyday work'],
+      ['auto', 'Terra tools, Sonnet write for everyday work'],
       ['auto:power', 'Opus 5, 300K context, medium thinking'],
     ])
   })

@@ -61,4 +61,24 @@ export const HOME_AGENDA_MESSAGES = {
       'No agenda notes yet. Create one with AI from open action items, launches, and client reports.',
     category: 'empty',
   },
+  RELATED_CALLS: {
+    key: 'RELATED_CALLS',
+    message: 'Related calls',
+    category: 'title',
+  },
+  RELATED_CALL_OPEN: {
+    key: 'RELATED_CALL_OPEN',
+    message: 'Open',
+    category: 'button',
+  },
+  RELATED_CALL_RECORDING: {
+    key: 'RELATED_CALL_RECORDING',
+    message: 'Recording',
+    category: 'button',
+  },
+  GOOGLE_AGENDA: {
+    key: 'GOOGLE_AGENDA',
+    message: 'Google agenda',
+    category: 'button',
+  },
 } as const

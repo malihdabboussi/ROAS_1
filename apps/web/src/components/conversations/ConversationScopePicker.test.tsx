@@ -1,6 +1,7 @@
 import { createRef, Profiler } from 'react'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { Campaign } from '@/lib/campaigns'
 import type { Conversation } from '@/lib/conversations'
 import {
   ConversationScopePicker,
@@ -15,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   fetchSpaces: vi.fn(),
   fetchSpaceById: vi.fn(),
   fetchCampaigns: vi.fn(),
+  fetchCampaign: vi.fn(async (_id: string): Promise<Campaign | null> => null),
   fetchPrograms: vi.fn(
     async (): Promise<Array<{ id: string; name: string; system_kind?: string | null }>> => [],
   ),
@@ -47,6 +49,7 @@ vi.mock('@/lib/programs', async (importOriginal) => {
 
 vi.mock('@/lib/campaigns', () => ({
   fetchCampaigns: mocks.fetchCampaigns,
+  fetchCampaign: mocks.fetchCampaign,
 }))
 
 vi.mock('@/lib/ui', () => ({
@@ -114,6 +117,9 @@ function stubPickerCampaigns(
   mocks.useCampaignCacheVersion.mockReturnValue(0)
   mocks.getCachedCampaigns.mockReturnValue(rows)
   mocks.prefetchOrgCampaigns.mockResolvedValue(rows)
+  mocks.fetchCampaign.mockImplementation(
+    async (id: string) => rows.find((row) => row.id === id) ?? null,
+  )
 }
 
 describe('ConversationScopePicker', () => {
@@ -354,13 +360,17 @@ describe('ConversationScopePicker', () => {
     mocks.positionFloatingMenuFromAnchorRect.mockReturnValue({ top: 100, left: 120 })
     mocks.fetchSpaces.mockResolvedValue([
       { id: 'space-webinar', title: 'Webinar' },
-      { id: 'space-general', title: 'General' },
+      {
+        id: 'space-general',
+        title: 'General',
+        schema: { custom_data: { source: 'page_grader', space_role: 'general' } },
+      },
     ])
 
     render(<ConversationScopePicker conversation={conversation} />)
 
     fireEvent.click(screen.getByLabelText('General'))
-    const search = await screen.findByLabelText('Search clients')
+    const search = await screen.findByLabelText('Search')
     fireEvent.change(search, { target: { value: 'yasir' } })
     expect(await screen.findByRole('button', { name: 'Yasir Khan' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Above It' })).toBeNull()
@@ -377,6 +387,6 @@ describe('ConversationScopePicker', () => {
       within(flyout as HTMLElement)
         .getAllByRole('button')
         .map((button) => button.textContent),
-    ).toEqual(['General', 'Webinar'])
+    ).toEqual(['Webinar'])
   })
 })

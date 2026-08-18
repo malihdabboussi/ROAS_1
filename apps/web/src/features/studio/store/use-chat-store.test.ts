@@ -2,7 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getChatCreditsExhausted, setChatCreditsExhausted } from '@/lib/chat/chat-credit-state'
 import { shouldReconnectPersistedAssistant } from '../lib/chat-turn-completion'
 import type { Conversation, Message, MessageContentBlock } from '../types'
-import { useChatStore } from './use-chat-store'
+import {
+  capToolPreviewContent,
+  MAX_TOOL_PREVIEW_CHARS,
+  MAX_TOOL_PROGRESS_ENTRIES,
+  progressToolInTimeline,
+  startToolInTimeline,
+  useChatStore,
+} from './use-chat-store'
 
 function conversation(id: string): Conversation {
   return {
@@ -194,5 +201,127 @@ describe('useChatStore conversation visibility', () => {
     expect(shouldReconnectPersistedAssistant(assistantMessage('conversation-1'), staleNow)).toBe(
       false,
     )
+  })
+})
+
+describe('useChatStore stream memory bounds', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    setChatCreditsExhausted(false)
+    useChatStore.setState({
+      conversations: [],
+      activeConversationId: null,
+      messagesByConversation: {},
+      conversationStreamUI: {},
+      streamingConversationIds: [],
+      unreadConversationIds: [],
+    })
+  })
+
+  it('caps live tool progress and preview payloads', () => {
+    expect(capToolPreviewContent('x'.repeat(MAX_TOOL_PREVIEW_CHARS + 50))).toHaveLength(
+      MAX_TOOL_PREVIEW_CHARS,
+    )
+
+    let timeline = startToolInTimeline([], 'campaign_capability', 'Working', undefined, 1, 'call-1')
+    for (let i = 0; i < MAX_TOOL_PROGRESS_ENTRIES + 10; i++) {
+      timeline = progressToolInTimeline(
+        timeline,
+        'campaign_capability',
+        `detail-${i}`,
+        i + 2,
+        'call-1',
+      )
+    }
+    const tool = timeline[0]
+    expect(tool?.type).toBe('tool')
+    if (tool?.type === 'tool') {
+      expect(tool.progress).toHaveLength(MAX_TOOL_PROGRESS_ENTRIES)
+      expect(tool.progress[0]?.detail).toBe('detail-10')
+    }
+
+    useChatStore.setState({
+      messagesByConversation: {
+        'conversation-1': [
+          assistantMessage('conversation-1', {
+            id: 'assistant-1',
+            metadata: {
+              content_blocks_ordered: [
+                {
+                  type: 'tool',
+                  id: 'tool-1',
+                  name: 'campaign_capability',
+                  state: 'active',
+                  toolCallId: 'call-1',
+                  progress: [],
+                },
+              ],
+            },
+          }),
+        ],
+      },
+    })
+    useChatStore
+      .getState()
+      .setToolContentPreview(
+        'conversation-1',
+        'assistant-1',
+        'campaign_capability',
+        'p'.repeat(MAX_TOOL_PREVIEW_CHARS + 100),
+        'call-1',
+      )
+    const blocks = useChatStore.getState().messagesByConversation['conversation-1']?.[0]?.metadata
+      ?.content_blocks_ordered as Array<{ preview?: string }>
+    expect(blocks?.[0]?.preview).toHaveLength(MAX_TOOL_PREVIEW_CHARS)
+  })
+
+  it('drops cached messages when a conversation is removed', () => {
+    useChatStore.setState({
+      conversations: [conversation('conversation-1')],
+      activeConversationId: 'conversation-1',
+      messagesByConversation: {
+        'conversation-1': [message('conversation-1')],
+      },
+      conversationStreamUI: {
+        'conversation-1': {
+          agentPhase: 'idle',
+          agentStatusMessage: null,
+          activeTools: [],
+          statusMessages: [],
+          flowTimeline: [],
+          imageGeneratedEvents: [],
+        },
+      },
+      unreadConversationIds: ['conversation-1'],
+    })
+
+    useChatStore.getState().removeConversation('conversation-1')
+
+    const state = useChatStore.getState()
+    expect(state.messagesByConversation['conversation-1']).toBeUndefined()
+    expect(state.conversationStreamUI['conversation-1']).toBeUndefined()
+    expect(state.unreadConversationIds).toEqual([])
+  })
+
+  it('prunes inactive conversation message caches when switching chats', () => {
+    const conversations = Array.from({ length: 10 }, (_, index) =>
+      conversation(`conversation-${index}`),
+    )
+    const messagesByConversation = Object.fromEntries(
+      conversations.map((row) => [row.id, [message(row.id)]]),
+    )
+    useChatStore.setState({
+      conversations,
+      activeConversationId: 'conversation-9',
+      messagesByConversation,
+      streamingConversationIds: [],
+    })
+
+    useChatStore.getState().setActiveConversationId('conversation-0')
+
+    const cached = Object.keys(useChatStore.getState().messagesByConversation).sort()
+    expect(cached).toContain('conversation-0')
+    expect(cached).not.toContain('conversation-9')
+    expect(cached.length).toBeLessThanOrEqual(6)
   })
 })

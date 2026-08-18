@@ -9,17 +9,23 @@ import {
   ConversationScopePicker,
   type ConversationScopePickerHandle,
 } from '@/components/conversations'
+import {
+  campaignIdFromMessageReferences,
+  resolveConversationConnection,
+  workContextFromConnection,
+} from '@/components/conversations/conversation-scope-from-mentions'
 import { conversationScopeDisplayLabel } from '@/components/conversations/conversation-scope-picker-layout'
 import { QuickMissionsHubHost } from '@/components/global-chat/components/QuickMissionsHubHost'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
+import { useShellStore } from '@/components/shell/use-shell-store'
 import { SuggestedNextMoves } from '@/features/home/components/SuggestedNextMoves'
 import { HOME_TOAST_ERRORS } from '@/features/home/config/home-toast-errors.config'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { CreateSpaceModal } from '@/features/spaces/components/CreateSpaceModal'
 import { cachedSpaces, useCachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
 import { normalizeSpaceLegacyViews } from '@/features/spaces/lib/view-customization-merge'
-import { createSpace, ensureGeneralSpace } from '@/features/spaces/services/spaces.service'
+import { createSpace } from '@/features/spaces/services/spaces.service'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { AttachedArtifact } from '@/features/studio/components/chat/ArtifactAttachments'
 import { ChatInput } from '@/features/studio/components/ChatInput'
@@ -143,8 +149,8 @@ export function HomeDashboardV4Composer() {
     if (targetSpaceId) {
       return spaces.find((space) => space.id === targetSpaceId)?.campaign_id ?? null
     }
-    return targetCampaignId ?? defaultGeneralSpace?.campaign_id ?? null
-  }, [defaultGeneralSpace, spaces, targetCampaignId, targetSpaceId])
+    return targetCampaignId
+  }, [spaces, targetCampaignId, targetSpaceId])
 
   const plusMenuSpacePicker = useMemo<ChatInputPlusMenuSpacePickerConfig>(
     () => ({
@@ -203,46 +209,21 @@ export function HomeDashboardV4Composer() {
       if (sending) return
       setSending(true)
       try {
-        let targetId: string | null =
-          targetSpaceId ?? (targetCampaignId ? null : (defaultGeneralSpace?.id ?? null))
-        let resolvedCampaignId: string | null = activeCampaignId
-        if (!targetId && !resolvedCampaignId) {
-          if (isOrgOnly) {
-            targetId = spaces[0]?.id ?? null
-            resolvedCampaignId = spaces[0]?.campaign_id ?? null
-          } else {
-            const generalSpace = normalizeSpaceLegacyViews(await ensureGeneralSpace())
-            targetId = generalSpace.id
-            resolvedCampaignId = generalSpace.campaign_id ?? null
-            cachedSpaces.mutate((prev) => {
-              const current = prev ?? []
-              return current.some((space) => space.id === generalSpace.id)
-                ? current
-                : [generalSpace, ...current]
-            })
-            useSpacesStore.setState((state) => ({
-              spaces: state.spaces.some((space) => space.id === generalSpace.id)
-                ? state.spaces
-                : [generalSpace, ...state.spaces],
-            }))
-          }
-        }
+        const connection = resolveConversationConnection({
+          mentionCampaignId: campaignIdFromMessageReferences(references),
+          chosenCampaignId: targetCampaignId,
+          chosenSpaceId: targetSpaceId,
+          spaces,
+        })
 
         // A previously opened meeting workspace leaves its context attached;
         // a fresh chat seeded from Home must not hydrate into that thread.
         clearMeetingContext()
-
-        // Prefer the campaign's General space when Choose Space picked a campaign
-        // without a concrete space — keeps Connections + agent scope aligned.
-        if (!targetId && resolvedCampaignId) {
-          const generalForCampaign =
-            spaces.find(
-              (space) =>
-                space.campaign_id === resolvedCampaignId &&
-                space.title.trim().toLowerCase() === 'general',
-            ) ?? null
-          targetId = generalForCampaign?.id ?? null
-        }
+        useShellStore.getState().requestNewChat()
+        useSpacesStore.setState({
+          chatRailIntent: 'new',
+          pendingOpenConversationId: null,
+        })
 
         seedComposer({
           content,
@@ -253,16 +234,7 @@ export function HomeDashboardV4Composer() {
           model,
           references,
           modelSettings,
-          // Always pass spaceId (including null) so mergeAttachedWorkContext
-          // clears a stale prior space instead of keeping Power Circle General.
-          workContext:
-            targetId || resolvedCampaignId
-              ? {
-                  surface: 'spaces',
-                  spaceId: targetId,
-                  campaignId: resolvedCampaignId,
-                }
-              : { surface: 'general' },
+          workContext: workContextFromConnection(connection),
         })
         router.push('/home?chat=starting')
       } catch (error) {
@@ -273,10 +245,7 @@ export function HomeDashboardV4Composer() {
     },
     [
       activeAgentKey,
-      activeCampaignId,
       clearMeetingContext,
-      defaultGeneralSpace?.id,
-      isOrgOnly,
       router,
       seedComposer,
       sending,

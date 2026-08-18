@@ -26,9 +26,11 @@ import {
 import { syncAgendaFathomRecordingToWorkspace } from '@/features/home/lib/sync-agenda-fathom-recording'
 import {
   endMeetingCall,
+  fetchMeetingRelatedCalls,
   fetchMeetingWorkspace,
   startMeetingCall,
   type MeetingAction,
+  type MeetingRelatedCall,
   type MeetingSnippet,
   type MeetingWorkspaceBundle,
 } from '@/features/home/services/meeting-workspace-api'
@@ -45,6 +47,7 @@ export function MeetingWorkspaceDialog({
   meetingEnd,
   fallbackTitle,
   onBack,
+  onOpenRelated,
 }: {
   spaceId: string
   meetingItemId: string
@@ -56,11 +59,13 @@ export function MeetingWorkspaceDialog({
   fallbackTitle: string
   onBack: () => void
   onClose: () => void
+  onOpenRelated?: (event: CalendarAgendaEvent) => void
 }) {
   const [bundle, setBundle] = useState<MeetingWorkspaceBundle | null>(null)
   const [loading, setLoading] = useState(true)
   const [starting, setStarting] = useState(false)
   const [ending, setEnding] = useState(false)
+  const [relatedCalls, setRelatedCalls] = useState<MeetingRelatedCall[]>([])
   const clearMeetingContext = useGlobalChatStore((state) => state.clearMeetingContext)
   const openChatDrawer = useShellStore((state) => state.openChatDrawer)
   const setWorkAreaOpen = useShellStore((state) => state.setWorkAreaOpen)
@@ -92,6 +97,11 @@ export function MeetingWorkspaceDialog({
       }
     }
     setBundle(next)
+    try {
+      setRelatedCalls(await fetchMeetingRelatedCalls(spaceId, meetingItemId))
+    } catch {
+      setRelatedCalls([])
+    }
     return next
   }, [agendaEvent, meetingItemId, spaceId])
   useEffect(() => {
@@ -124,8 +134,9 @@ export function MeetingWorkspaceDialog({
       meetingItemId,
       title,
       bundle,
+      relatedCalls,
     })
-  }, [bundle, meetingItemId, spaceId, title])
+  }, [bundle, meetingItemId, relatedCalls, spaceId, title])
 
   const conversationId = bundle?.workspace?.conversation_id?.trim() || null
   const prepDescription =
@@ -199,6 +210,26 @@ export function MeetingWorkspaceDialog({
       toast.error(HOME_TOAST_ERRORS.MEETING_START_FAILED.userMessage)
     } finally {
       setStarting(false)
+    }
+  }
+
+  const setCallStatus = async (status: string | null) => {
+    const custom = { ...(bundle?.meeting.custom_data ?? {}), call_status: status }
+    try {
+      await updateSpaceItem(spaceId, meetingItemId, { custom_data: custom })
+      if (status === 'live') await startCall()
+      else if (status === 'completed') await endCall()
+      else {
+        setBundle((current) =>
+          current ? { ...current, meeting: { ...current.meeting, custom_data: custom } } : current,
+        )
+      }
+    } catch {
+      toast.error(
+        status === 'completed'
+          ? HOME_TOAST_ERRORS.MEETING_END_FAILED.userMessage
+          : HOME_TOAST_ERRORS.MEETING_START_FAILED.userMessage,
+      )
     }
   }
 
@@ -288,15 +319,22 @@ export function MeetingWorkspaceDialog({
       <main className="scrollbar-thin p-spacing-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="gap-spacing-4 mx-auto flex w-full max-w-3xl flex-col">
           <MeetingCallStatusSection
-            phase={phase}
+            callStatus={
+              typeof bundle?.meeting.custom_data?.call_status === 'string'
+                ? bundle.meeting.custom_data.call_status
+                : null
+            }
+            hostLabel={
+              typeof bundle?.meeting.custom_data?.host === 'string'
+                ? bundle.meeting.custom_data.host
+                : null
+            }
             isLive={isLive}
             isPostCall={isPostCall}
             hasRecording={Boolean(bundle?.recordings.length)}
             joinUrl={joinUrl}
-            starting={starting}
-            ending={ending}
-            onStart={() => void startCall()}
-            onEnd={() => void endCall()}
+            saving={starting || ending}
+            onCallStatusChange={(status) => void setCallStatus(status)}
             onPostCallAction={runPostCallAction}
           />
 
@@ -310,6 +348,7 @@ export function MeetingWorkspaceDialog({
             prep={prep}
             prepDescription={prepDescription}
             joinUrl={joinUrl}
+            googleAgendaHref={agendaEvent?.prep?.agenda_doc_link}
             onRecordingLinked={() => {
               void hydrateWorkspace()
             }}
@@ -324,6 +363,8 @@ export function MeetingWorkspaceDialog({
               )
               if (startAgenda) runPostCallAction(startAgenda)
             }}
+            relatedCalls={relatedCalls}
+            onOpenRelated={onOpenRelated}
           />
         </div>
       </main>

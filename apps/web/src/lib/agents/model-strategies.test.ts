@@ -19,7 +19,7 @@ describe('model strategies', () => {
       {
         id: 'auto',
         label: 'Auto',
-        description: 'Discounted Terra with balanced thinking for everyday work',
+        description: 'Terra tools, Sonnet write for everyday work',
         chipClass: 'chip-glass-blue',
         textClass: 'text-chip-strategy-blue',
       },

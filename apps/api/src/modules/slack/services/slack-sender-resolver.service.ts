@@ -144,16 +144,18 @@ export class SlackSenderResolverService {
           : slackUser?.is_restricted || slackUser?.is_ultra_restricted
             ? 'external'
             : (existingIdentity?.relationship_kind ?? 'external')
-      const relationshipKind =
-        existingIdentity?.relationship_source === 'manual'
-          ? existingIdentity.relationship_kind
-          : trustedLinkedIdentity
-            ? trustedLinkedIdentity.relationship_kind
-            : inferredRelationship
+      const relationshipKind = this.resolveRelationshipKind({
+        existingIdentity,
+        trustedLinkedIdentity,
+        inferredRelationship,
+      })
       const relationshipSource =
-        existingIdentity?.relationship_source === 'manual' || trustedLinkedIdentity
+        existingIdentity?.relationship_source === 'manual' &&
+        existingIdentity.relationship_kind === 'ignored'
           ? 'manual'
-          : 'inferred'
+          : relationshipKind === 'internal' || trustedLinkedIdentity
+            ? 'manual'
+            : 'inferred'
       await this.slackRuntimeRepo.upsertResolvedSlackPerson(supabase, {
         user_id: input.userId,
         org_id: input.orgId ?? null,
@@ -332,12 +334,40 @@ export class SlackSenderResolverService {
   ): SlackIdentityState | null {
     const matches = candidates.filter(
       (candidate) =>
-        candidate.relationship_source === 'manual' &&
-        ((identity.vibeyUserId && candidate.vibey_user_id === identity.vibeyUserId) ||
-          (identity.contactId && candidate.contact_id === identity.contactId) ||
-          (identity.personBrainId && candidate.person_brain_id === identity.personBrainId)),
+        (identity.vibeyUserId && candidate.vibey_user_id === identity.vibeyUserId) ||
+        (identity.contactId && candidate.contact_id === identity.contactId) ||
+        (identity.personBrainId && candidate.person_brain_id === identity.personBrainId),
     )
-    const relationshipKinds = new Set(matches.map((candidate) => candidate.relationship_kind))
-    return relationshipKinds.size === 1 ? (matches[0] ?? null) : null
+    if (matches.length === 0) return null
+    return (
+      matches.find((candidate) => candidate.relationship_kind === 'internal') ??
+      matches[0] ??
+      null
+    )
+  }
+
+  private resolveRelationshipKind(input: {
+    existingIdentity: SlackIdentityState | undefined
+    trustedLinkedIdentity: SlackIdentityState | null
+    inferredRelationship: string
+  }): 'internal' | 'external' | 'ignored' {
+    const existing = input.existingIdentity
+    if (existing?.relationship_source === 'manual' && existing.relationship_kind === 'ignored') {
+      return 'ignored'
+    }
+    if (
+      input.inferredRelationship === 'internal' ||
+      input.trustedLinkedIdentity?.relationship_kind === 'internal' ||
+      existing?.relationship_kind === 'internal'
+    ) {
+      return 'internal'
+    }
+    if (existing?.relationship_source === 'manual') {
+      return existing.relationship_kind as 'internal' | 'external' | 'ignored'
+    }
+    if (input.trustedLinkedIdentity) {
+      return input.trustedLinkedIdentity.relationship_kind as 'internal' | 'external' | 'ignored'
+    }
+    return input.inferredRelationship === 'ignored' ? 'ignored' : 'external'
   }
 }

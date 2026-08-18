@@ -19,8 +19,8 @@ import {
   OrgContextGuard,
   OrgRoleGuard,
   Supabase,
-  type RequestScope,
   ZodValidationPipe,
+  type RequestScope,
 } from '@vibey/api-shared'
 import {
   CalendarAgendaQuerySchema,
@@ -44,7 +44,7 @@ export class IntegrationsCalendarController {
   @Get('agenda')
   async getCalendarAgenda(
     @Supabase() supabase: SupabaseClient,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; email?: string | null },
     @OrgContext() scope: RequestScope,
     @Query(new ZodValidationPipe(CalendarAgendaQuerySchema)) query: CalendarAgendaQueryDto,
   ) {
@@ -55,7 +55,7 @@ export class IntegrationsCalendarController {
   @HttpCode(HttpStatus.OK)
   async createCalendarEvent(
     @Supabase() supabase: SupabaseClient,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; email?: string | null },
     @OrgContext() scope: RequestScope,
     @Body(new ZodValidationPipe(CreateCalendarEventSchema)) body: CreateCalendarEventDto,
   ) {
@@ -65,7 +65,7 @@ export class IntegrationsCalendarController {
   @Patch('events/:provider/:eventId')
   async updateCalendarEvent(
     @Supabase() supabase: SupabaseClient,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; email?: string | null },
     @OrgContext() scope: RequestScope,
     @Param(new ZodValidationPipe(CalendarEventParamSchema)) params: CalendarEventParamDto,
     @Body(new ZodValidationPipe(UpdateCalendarEventSchema)) body: UpdateCalendarEventDto,
@@ -77,7 +77,7 @@ export class IntegrationsCalendarController {
   @HttpCode(HttpStatus.OK)
   async deleteCalendarEvent(
     @Supabase() supabase: SupabaseClient,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; email?: string | null },
     @OrgContext() scope: RequestScope,
     @Param(new ZodValidationPipe(CalendarEventParamSchema)) params: CalendarEventParamDto,
     @Query(new ZodValidationPipe(DeleteCalendarEventQuerySchema))

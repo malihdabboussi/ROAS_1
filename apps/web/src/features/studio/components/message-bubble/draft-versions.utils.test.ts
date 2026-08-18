@@ -1,5 +1,44 @@
 import { describe, expect, it } from 'vitest'
-import { hasDraftFence, splitDraftSegments } from './draft-versions.utils'
+import {
+  buildDraftComposerUseText,
+  hasDraftFence,
+  splitDraftSegments,
+} from './draft-versions.utils'
+
+describe('buildDraftComposerUseText', () => {
+  it('names the option and edits when returning a multi-version draft', () => {
+    expect(
+      buildDraftComposerUseText({
+        draftText: 'Short body',
+        versionIndex: 1,
+        versionCount: 2,
+        edited: true,
+      }),
+    ).toBe('I used option B and made some edits. Here it is.\n\nShort body')
+  })
+
+  it('names the option without the edit clause when the draft is pristine', () => {
+    expect(
+      buildDraftComposerUseText({
+        draftText: 'Full body',
+        versionIndex: 0,
+        versionCount: 2,
+        edited: false,
+      }),
+    ).toBe('I used option A. Here it is.\n\nFull body')
+  })
+
+  it('acknowledges edits on a single-version draft', () => {
+    expect(
+      buildDraftComposerUseText({
+        draftText: 'Only body',
+        versionIndex: 0,
+        versionCount: 1,
+        edited: true,
+      }),
+    ).toBe('I made some edits. Here it is.\n\nOnly body')
+  })
+})
 
 describe('splitDraftSegments', () => {
   it('returns a single markdown segment when no draft fences exist', () => {

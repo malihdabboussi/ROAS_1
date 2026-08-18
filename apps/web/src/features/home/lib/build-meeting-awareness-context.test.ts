@@ -79,6 +79,29 @@ describe('buildMeetingAwarenessContext', () => {
     expect(context).toContain('do not say “Fathom isn’t connected”')
   })
 
+  it('uses related All Meetings recordings instead of Recordings + when this call has none', () => {
+    const context = buildMeetingAwarenessContext({
+      spaceId: 'space-1',
+      meetingItemId: 'meeting-1',
+      title: 'Aaron x Dylan x Nate',
+      bundle: bundle('processing'),
+      relatedCalls: [
+        {
+          meeting_item_id: 'meeting-last-week',
+          title: 'Aaron x Dylan x Nate',
+          call_date: '2026-08-11T17:00:00.000Z',
+          recording_url: 'https://fathom.video/calls/88',
+        },
+      ],
+    })
+
+    expect(context).toContain('Related All Meetings recordings (1)')
+    expect(context).toContain('meeting_item_id=meeting-last-week')
+    expect(context).toContain('recording_url=https://fathom.video/calls/88')
+    expect(context).not.toContain('click Recordings + in the right meeting sidebar')
+    expect(context).toContain('Do not ask them to click Recordings + to re-link')
+  })
+
   it('lists linked recordings when present', () => {
     const context = buildMeetingAwarenessContext({
       spaceId: 'space-1',

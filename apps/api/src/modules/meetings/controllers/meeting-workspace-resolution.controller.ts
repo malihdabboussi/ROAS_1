@@ -13,6 +13,7 @@ import {
   ZodValidationPipe,
   type RequestScope,
 } from '@vibey/api-shared'
+import { MeetingItemMaterializeService } from '../services/meeting-item-materialize.service'
 import { MeetingWorkspaceService } from '../services/meeting-workspace.service'
 
 const ParamsSchema = z.object({ spaceId: z.string().uuid() })
@@ -20,6 +21,14 @@ const ScheduledMeetingDateTimeSchema = z
   .string()
   .datetime({ offset: true })
   .transform((value) => new Date(value).toISOString())
+
+const OrganizerSchema = z
+  .object({
+    email: z.string().trim().email().max(500),
+    name: z.string().trim().max(500).nullable().optional(),
+  })
+  .nullable()
+  .optional()
 
 export const ScheduledMeetingSchema = z.object({
   calendar_event_id: z.string().trim().min(1).max(2_000),
@@ -39,6 +48,11 @@ export const ScheduledMeetingSchema = z.object({
       }),
     )
     .max(500),
+  organizer: OrganizerSchema,
+})
+
+export const MaterializeMeetingsSchema = z.object({
+  events: z.array(ScheduledMeetingSchema).max(80),
 })
 
 export const InstantMeetingSchema = z.object({
@@ -49,7 +63,10 @@ export const InstantMeetingSchema = z.object({
 @Controller('spaces/:spaceId/meetings')
 @UseGuards(AuthGuard, ThrottlerGuard, OrgContextGuard, OrgRoleGuard)
 export class MeetingWorkspaceResolutionController {
-  constructor(private readonly meetings: MeetingWorkspaceService) {}
+  constructor(
+    private readonly meetings: MeetingWorkspaceService,
+    private readonly materialize: MeetingItemMaterializeService,
+  ) {}
 
   @Post('resolve')
   @RequireOrgRole('editor')
@@ -76,7 +93,42 @@ export class MeetingWorkspaceResolutionController {
         videoUrl: body.video_url,
         htmlLink: body.html_link,
         attendees: body.attendees,
+        organizer: body.organizer
+          ? { email: body.organizer.email, name: body.organizer.name ?? null }
+          : null,
       },
+    })
+  }
+
+  @Post('materialize')
+  @RequireOrgRole('editor')
+  materializeScheduledMeetings(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param(new ZodValidationPipe(ParamsSchema)) params: z.infer<typeof ParamsSchema>,
+    @Body(new ZodValidationPipe(MaterializeMeetingsSchema))
+    body: z.infer<typeof MaterializeMeetingsSchema>,
+  ) {
+    return this.materialize.materializeScheduledMeetings(supabase, {
+      spaceId: params.spaceId,
+      userId: user.id,
+      orgId: scope.orgId,
+      events: body.events.map((event) => ({
+        calendarEventId: event.calendar_event_id,
+        icalUid: event.ical_uid ?? null,
+        title: event.title,
+        start: event.start,
+        end: event.end,
+        description: event.description,
+        location: event.location,
+        videoUrl: event.video_url,
+        htmlLink: event.html_link,
+        attendees: event.attendees,
+        organizer: event.organizer
+          ? { email: event.organizer.email, name: event.organizer.name ?? null }
+          : null,
+      })),
     })
   }
 

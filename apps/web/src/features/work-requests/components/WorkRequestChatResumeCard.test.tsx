@@ -98,4 +98,37 @@ describe('WorkRequestChatResumeCard', () => {
     expect(screen.queryByPlaceholderText('Message Pixel…')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Continue in chat' })).not.toBeInTheDocument()
   })
+
+  it('shows the created task links after submit instead of treating the link as invalid', async () => {
+    mocks.forceOpenToken = token
+    vi.mocked(fetchWorkRequestReview).mockResolvedValue({
+      state: 'finalized',
+      sync_status: 'synced',
+      task_url: '/spaces?space=space-1&item=task-1',
+      clickup_url: 'https://app.clickup.com/t/abc',
+    })
+
+    render(
+      <WorkRequestChatResumeCard
+        title="Service Request ready"
+        reviewUrl={`https://app.roas.io/request-review/${token}`}
+      />,
+    )
+
+    expect(await screen.findByText('SERVICE REQUEST SUBMITTED')).toBeInTheDocument()
+    expect(
+      screen.getByText('Your request is now a native ROAS task. The ClickUp mirror is confirmed.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open ROAS task' })).toHaveAttribute(
+      'href',
+      '/spaces?space=space-1&item=task-1',
+    )
+    expect(screen.getByRole('link', { name: 'Open ClickUp task' })).toHaveAttribute(
+      'href',
+      'https://app.clickup.com/t/abc',
+    )
+    expect(
+      screen.queryByText('This Service Request review link is not valid.'),
+    ).not.toBeInTheDocument()
+  })
 })

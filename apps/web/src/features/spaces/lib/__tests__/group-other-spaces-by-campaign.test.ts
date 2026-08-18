@@ -61,4 +61,24 @@ describe('group-other-spaces-by-campaign', () => {
     ])
     expect(countOtherSpaces(groups)).toBe(3)
   })
+
+  it('hides a Page Grader client General space from the destination picker', () => {
+    const campaigns = [campaign('client', '1DS Collective')]
+    const spaces = [
+      space('keep', 'client', 'edit'),
+      {
+        ...space('general', 'client', 'edit'),
+        title: 'General',
+        schema: {
+          custom_data: { source: 'page_grader', space_role: 'general' },
+        },
+      } as Space,
+    ]
+
+    expect(
+      groupOtherSpacesByCampaign(spaces, campaigns, 'unrelated').flatMap((group) =>
+        group.spaces.map((row) => row.id),
+      ),
+    ).toEqual(['keep'])
+  })
 })

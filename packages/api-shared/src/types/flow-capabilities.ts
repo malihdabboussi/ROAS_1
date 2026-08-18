@@ -649,7 +649,7 @@ const ACTIONS: FlowCapability[] = [
     ],
     {
       type: 'request_slack_follow_up_confirm',
-      meeting_scope: 'client',
+      meeting_scope: 'client_and_team',
       delivery_mode: 'shadow',
       channel_delivery: 'disabled',
       destination_channel_id: 'C0BN7P2BWRM',

@@ -6,6 +6,14 @@ import { buildContextResponse, type ContextResponseMode } from './artifact-conte
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+function campaignPortalUrl(campaignId: string): string {
+  const base = (process.env.APP_URL || process.env.PUBLIC_APP_URL || 'https://app.roas.io').replace(
+    /\/+$/,
+    '',
+  )
+  return `${base}/campaigns/${campaignId}`
+}
+
 @Injectable()
 export class ArtifactNorthStarService {
   constructor(private readonly northStarRepository = new ArtifactNorthStarRepository()) {}
@@ -119,7 +127,14 @@ export class ArtifactNorthStarService {
     const payload: Record<string, unknown> = { name }
     if (data.campaign_type) payload.campaign_type = data.campaign_type
     if (data.config && typeof data.config === 'object') payload.config = data.config
-    return target.mainApiCall('POST', '/api/campaigns', sessionKey, payload)
+    const created = await target.mainApiCall('POST', '/api/campaigns', sessionKey, payload)
+    if (!this.isRecord(created) || typeof created.id !== 'string' || !created.id.trim()) {
+      return created
+    }
+    return {
+      ...created,
+      url: campaignPortalUrl(created.id),
+    }
   }
 
   private async updateCampaign(
@@ -197,12 +212,14 @@ export class ArtifactNorthStarService {
     if (!agentKey) throw new Error('Failed to resolve agent key from session')
 
     const nsOrgId = target.resolveOrgId?.(sessionKey) as string | null | undefined
-    const { data: current, error: currentError } =
-      await this.northStarRepository.findAgentConfig(target.serviceClient, {
+    const { data: current, error: currentError } = await this.northStarRepository.findAgentConfig(
+      target.serviceClient,
+      {
         userId,
         agentKey,
         orgId: nsOrgId,
-      })
+      },
+    )
     if (currentError) throw new Error(`Failed to load agent config: ${currentError.message}`)
 
     const nextConfig = {

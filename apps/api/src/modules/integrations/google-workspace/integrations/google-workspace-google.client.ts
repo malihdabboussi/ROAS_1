@@ -5,6 +5,7 @@ import type {
   GoogleWorkspaceDirectoryUser,
   GoogleWorkspaceServiceAccount,
 } from '../types/google-workspace.types'
+import { listAllGoogleCalendarEventItems } from './google-workspace-calendar-pages'
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const DIRECTORY_SCOPE = 'https://www.googleapis.com/auth/admin.directory.user.readonly'
@@ -138,30 +139,37 @@ export class GoogleWorkspaceGoogleClient {
     const token = await this.getAccessToken(input.serviceAccount, input.calendarEmail, [
       CALENDAR_SCOPE,
     ])
-    const url = new URL(
-      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(input.calendarEmail)}/events`,
-    )
-    url.searchParams.set('timeMin', input.start)
-    url.searchParams.set('timeMax', input.end)
-    url.searchParams.set('singleEvents', 'true')
-    url.searchParams.set('orderBy', 'startTime')
-    url.searchParams.set('maxResults', '250')
-    if (input.timezone) url.searchParams.set('timeZone', input.timezone)
-
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    const payload = (await response.json().catch(() => ({}))) as {
-      items?: Array<Record<string, unknown>>
-      error?: { message?: string }
-    }
-    if (!response.ok) {
-      throw new BadRequestException(
-        payload.error?.message || `Failed to load calendar for ${input.calendarEmail}`,
+    const items = await listAllGoogleCalendarEventItems(async (pageToken) => {
+      const url = new URL(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(input.calendarEmail)}/events`,
       )
-    }
+      url.searchParams.set('timeMin', input.start)
+      url.searchParams.set('timeMax', input.end)
+      url.searchParams.set('singleEvents', 'true')
+      url.searchParams.set('orderBy', 'startTime')
+      url.searchParams.set('maxResults', '2500')
+      if (input.timezone) url.searchParams.set('timeZone', input.timezone)
+      if (pageToken) url.searchParams.set('pageToken', pageToken)
 
-    return (payload.items ?? []).map((item) => this.mapEvent(item, input.calendarEmail))
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const payload = (await response.json().catch(() => ({}))) as {
+        items?: Array<Record<string, unknown>>
+        nextPageToken?: string
+        error?: { message?: string }
+      }
+      if (!response.ok) {
+        throw new BadRequestException(
+          payload.error?.message || `Failed to load calendar for ${input.calendarEmail}`,
+        )
+      }
+      return payload
+    })
+
+    return items
+      .filter((item) => String(item.status ?? '').toLowerCase() !== 'cancelled')
+      .map((item) => this.mapEvent(item, input.calendarEmail))
   }
 
   private mapEvent(

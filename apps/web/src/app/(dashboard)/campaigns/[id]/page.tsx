@@ -31,6 +31,7 @@ import {
   type AgencyClientWorkspace,
 } from '@/lib/agency-clients'
 import { CampaignHeader } from './_components/CampaignHeader'
+import { CampaignWorkspaceBreadcrumb } from './_components/CampaignWorkspaceBreadcrumb'
 import { CampaignAssetsTab } from './_components/tabs/CampaignAssetsTab'
 import { CampaignDashboardTab } from './_components/tabs/CampaignDashboardTab'
 import { CampaignKnowledgeTab } from './_components/tabs/CampaignKnowledgeTab'
@@ -352,6 +353,10 @@ export default function CampaignDetailPage() {
           : 'h-full overflow-y-auto px-4 py-4 md:px-6 md:py-6'
       }
     >
+      <CampaignWorkspaceBreadcrumb
+        campaign={detail.campaign}
+        client={clientWorkspace?.client ?? null}
+      />
       {isMobile && (
         <div className="mb-3 flex flex-col gap-2 md:hidden">
           <div className="flex items-center gap-3 px-1">
@@ -444,6 +449,7 @@ export default function CampaignDetailPage() {
               dashboardMissions={detail.dashboardMissions}
               dashboardAgents={detail.dashboardAgents}
               campaignTeam={detail.campaignTeam}
+              isSystemGeneral={detail.campaign.config.system_kind === 'general'}
               onOpenTab={(tab) => handleTabChange(tab)}
               onManageTeam={handleManageTeam}
             />

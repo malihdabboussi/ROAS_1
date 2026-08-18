@@ -25,6 +25,8 @@ export const PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_DELEGA
 - For this Page Grader work, resolve the client and campaign from Slack channel identity, Portal records, Brain, and Space before creating Page Grader work. "Resolve" means look it up — not ask the human by default. For a new campaign or launch, use available campaign Brain, Space, Page Grader, and Slack context first, then ask only for missing details that block a safe draft; never invent the offer, objective, audience, launch timing, or source assets.
 - If The ROAS Portal fulfillment fails, stop and report the plain-language blocker. Do not silently fall back to \`create_task\`, \`create_funnel\`, another assignee, or another client.
 - After a successful Service Request draft, the reply must confirm: resolved client name, request title/type, that this is a reviewable draft (not a finished task), and the \`review_url\` as a real openable https link. Next step is the same chat: one question/option at a time (card or reply). Point the user to continue in this thread or open that link — it resumes the same chat step flow, not a separate all-at-once form. Never say "Created:" for a native task until finalization returns the ROAS task identity.
+- A client "portal campaign" / "create a campaign" / "build the campaign" request first calls \`list_mcp_tools\` on the Page Grader server, then uses the exact live campaign-draft write if one exists (names such as \`page_grader_create_campaign_draft\`). Do not invent a tool name. After a successful Portal draft, the reply must include the \`review_url\` as a real openable https link. Follow-up questions belong in that review chat, not as an interview in Slack.
+- Missing VSL, landing page, or creative assets are not create-blockers. Create the campaign first, then add those as campaign tasks. If \`list_mcp_tools\` shows no campaign-draft write, or that write is unavailable, use native \`create_campaign\` (required: name), include the returned \`url\` as an openable https link, and \`create_task\` for the missing launch work. Do not stop after a vague create rejection, and do not replace a successful Portal draft with native \`create_campaign\`.
 - Do not tell the user work was assigned, delegated, or completed until the tool result confirms the effect and identifies the created work or equivalent durable result.
 - Treat Page Grader, MCP, tool names, schemas, idempotency keys, routing, retries, and provider mechanics as internal implementation details. In user-facing replies, call Page Grader "The ROAS Portal" and call the AI platform the "ROAS platform". Never expose the internal name "Page Grader", MCP, tool names, schemas, idempotency keys, routing, retries, or provider mechanics.
 - Do not narrate tool selection or execution between tool calls. Put short progress only in structured tool labels. In chat, return one concise result after the work finishes: what happened, who owns it, the relevant client or campaign, and the next step. If blocked, state one plain-language blocker or ask one focused question.`
@@ -61,6 +63,12 @@ export const PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK = `${PLATFORM_TOOLS_NAMED_
 - Do not search User Brain, Agent Brain, or file memory first for a named-client fact. Do not ask for a screenshot, date, or dashboard paste until campaign Brain, the client Slack channel, Portal/Page Grader, and Space have been checked.
 - "Nothing linked" means this chat has no campaign yet — not that Slack, Portal, or campaign data does not exist. Resolve and bind, then retrieve.
 - Drafts the user will paste (Monday updates, client recaps, Slack DMs) must be send-ready: real names, real dates, real work. A \`draft\` card with \`[brackets]\` is invalid. Retrieve first. Placeholders only if those sources came back empty, then ask one question — not a Mad Libs card.`
+export const PLATFORM_TOOLS_SEND_READY_DRAFTS_HEADING =
+  'For send-ready messages, emails, Slack/DM drafts, or "write this message":'
+export const PLATFORM_TOOLS_SEND_READY_DRAFTS_BLOCK = `${PLATFORM_TOOLS_SEND_READY_DRAFTS_HEADING}
+- Default to Dylan Super Voice. Load \`skills/dylans-super-voice/SKILL.md\` first and use it as the only voice authority for any message, email, Slack/DM, client recap, or outreach draft. If the skill is unavailable, stop and report that the required skill is missing. Do not approximate it from memory or combine it with \`human-written-copy\` or \`dylans-voice\`.
+- Put each variant in a fenced \`\`\`draft <label>\`\`\` block (consecutive fences become one editable version card). Two variants is the sweet spot (full + short). Keep commentary outside the fences.
+- Drafts must be usable as-is: real names, real dates, real work. A \`draft\` card with \`[brackets]\` is invalid until retrieval came back empty.`
 export const PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING =
   'For first-person fill, guest prep, or write-as-me:'
 export const PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK = `${PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING}
@@ -108,6 +116,8 @@ For discovery/context questions:
 - Search Brain when the answer is durable memory, preferences, company rules, customer patterns, or agent expertise.
 
 ${PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK}
+
+${PLATFORM_TOOLS_SEND_READY_DRAFTS_BLOCK}
 
 For call, meeting, recording, or transcript retrieval:
 - Treat phrases like "call", "meeting", "recording", "where I talked to...", and "transcript" as source-retrieval requests; the answer often lives in connected meeting tools, not only Brain.
@@ -312,8 +322,14 @@ function ensureNamedClientLookupGuidance(content: string): string {
     return `${content.slice(0, headingStart)}${PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK}${content.slice(replaceEnd)}`
   }
 
-  const callStart = content.indexOf('\nFor call, meeting, recording, or transcript retrieval', runtimeStart)
-  const firstPersonStart = content.indexOf(`\n${PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING}`, runtimeStart)
+  const callStart = content.indexOf(
+    '\nFor call, meeting, recording, or transcript retrieval',
+    runtimeStart,
+  )
+  const firstPersonStart = content.indexOf(
+    `\n${PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING}`,
+    runtimeStart,
+  )
   const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
   const insertAt =
     callStart !== -1
@@ -324,6 +340,46 @@ function ensureNamedClientLookupGuidance(content: string): string {
           ? unclearStart
           : content.length
   return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK}${content.slice(insertAt)}`
+}
+
+function ensureSendReadyDraftsGuidance(content: string): string {
+  const runtimeStart = content.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
+  if (runtimeStart === -1) return content
+
+  const headingStart = content.indexOf(PLATFORM_TOOLS_SEND_READY_DRAFTS_HEADING, runtimeStart)
+  if (headingStart !== -1) {
+    if (content.slice(headingStart).startsWith(PLATFORM_TOOLS_SEND_READY_DRAFTS_BLOCK)) {
+      return content
+    }
+    const afterHeading = headingStart + PLATFORM_TOOLS_SEND_READY_DRAFTS_HEADING.length
+    const rest = content.slice(afterHeading)
+    const nextFor = rest.search(/\nFor [a-z]/)
+    const nextHeading = rest.indexOf('\n### ')
+    const unclear = rest.indexOf('\nFor unclear,')
+    const candidates = [nextFor, nextHeading, unclear].filter((index) => index !== -1)
+    const replaceEnd =
+      candidates.length > 0 ? afterHeading + Math.min(...candidates) : content.length
+    return `${content.slice(0, headingStart)}${PLATFORM_TOOLS_SEND_READY_DRAFTS_BLOCK}${content.slice(replaceEnd)}`
+  }
+
+  const callStart = content.indexOf(
+    '\nFor call, meeting, recording, or transcript retrieval',
+    runtimeStart,
+  )
+  const firstPersonStart = content.indexOf(
+    `\n${PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING}`,
+    runtimeStart,
+  )
+  const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
+  const insertAt =
+    callStart !== -1
+      ? callStart
+      : firstPersonStart !== -1
+        ? firstPersonStart
+        : unclearStart !== -1
+          ? unclearStart
+          : content.length
+  return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_SEND_READY_DRAFTS_BLOCK}${content.slice(insertAt)}`
 }
 
 function ensureFirstPersonFillGuidance(content: string): string {
@@ -358,10 +414,12 @@ export function ensurePlatformToolsRuntimeGuidance(content: string): string {
   if (hasPlatformToolsRuntimeGuidance(withActionProtocol)) {
     return ensureChannelFormattingGuidance(
       ensureFirstPersonFillGuidance(
-        ensureNamedClientLookupGuidance(
-          ensureBrowserQcGuidance(
-            ensureMediaRoutingGuidance(
-              ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+        ensureSendReadyDraftsGuidance(
+          ensureNamedClientLookupGuidance(
+            ensureBrowserQcGuidance(
+              ensureMediaRoutingGuidance(
+                ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+              ),
             ),
           ),
         ),

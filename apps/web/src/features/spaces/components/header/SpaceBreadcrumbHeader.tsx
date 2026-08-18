@@ -37,7 +37,16 @@ export function SpaceBreadcrumbHeader({
 
   const trail = (
     <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-1.5 text-sm">
+      <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
+        <Link
+          href="/campaigns"
+          className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+        >
+          <span className="max-w-[120px] truncate">Campaigns</span>
+        </Link>
+
+        <span className="text-muted-foreground/50 select-none">/</span>
+
         <Link
           href={folderHref}
           className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
@@ -68,7 +77,7 @@ export function SpaceBreadcrumbHeader({
             className={`text-muted-foreground h-3 w-3 shrink-0 transition-transform ${switcherOpen ? 'rotate-180' : ''}`}
           />
         </button>
-      </div>
+      </nav>
       <div className="flex shrink-0 items-center gap-1">
         <Tooltip label="Flows" side="bottom">
           <span className="inline-flex">
@@ -98,7 +107,9 @@ export function SpaceBreadcrumbHeader({
 
   return (
     <>
-      <ShellBreadcrumb label={`${folderLabel} / ${activeSpace.title}`}>{trail}</ShellBreadcrumb>
+      <ShellBreadcrumb label={`Campaigns / ${folderLabel} / ${activeSpace.title}`}>
+        {trail}
+      </ShellBreadcrumb>
       {activeSpace.description ? (
         <p className="text-muted-foreground px-4 pb-2 pt-3 text-xs">{activeSpace.description}</p>
       ) : null}
