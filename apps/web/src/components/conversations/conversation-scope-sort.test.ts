@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   compareGeneralFirst,
+  firstSpecificAncestor,
   isGeneralLabel,
   qualifyGeneralLocation,
   sortGeneralFirst,
@@ -43,5 +44,12 @@ describe('conversation-scope-sort', () => {
         ancestors: ['General', 'Client Spaces', 'Master Your Kraft'],
       }),
     ).toBe('Master Your Kraft General')
+  })
+
+  it('picks the first specific ancestor for breadcrumb folders', () => {
+    expect(firstSpecificAncestor(['General', 'Client Spaces', '1DS Collective'])).toBe(
+      '1DS Collective',
+    )
+    expect(firstSpecificAncestor(['General', null])).toBeNull()
   })
 })

@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Space } from '@/features/spaces/types'
+import { CAMPAIGN_VIEW_MESSAGES } from '../../_config/campaign-view-messages.config'
 import { CampaignOverviewTab } from './CampaignOverviewTab'
 
 const mocks = vi.hoisted(() => ({
@@ -72,5 +73,24 @@ describe('CampaignOverviewTab', () => {
 
     expect(mocks.setActiveSpace).toHaveBeenCalledWith(generalSpace.id)
     expect(mocks.routerPush).toHaveBeenCalledWith('/spaces?space=sakha%2Fgeneral%20space')
+  })
+
+  it('explains the org General workspace instead of treating it as a client', () => {
+    render(
+      <CampaignOverviewTab
+        campaignId="general-campaign"
+        campaignName="General"
+        dashboardMissions={[]}
+        dashboardAgents={[]}
+        campaignTeam={[]}
+        isSystemGeneral
+        onOpenTab={vi.fn()}
+        onManageTeam={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText(CAMPAIGN_VIEW_MESSAGES.generalWorkspaceIntro)).toBeInTheDocument()
+    expect(screen.getByText(CAMPAIGN_VIEW_MESSAGES.trainKnowledgeTitleGeneral)).toBeInTheDocument()
+    expect(screen.queryByText(CAMPAIGN_VIEW_MESSAGES.trainKnowledgeTitle)).not.toBeInTheDocument()
   })
 })

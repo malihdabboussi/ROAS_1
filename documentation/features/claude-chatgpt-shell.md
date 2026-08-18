@@ -67,7 +67,8 @@ The history list has its own persisted drag width and collapse state. Dragging i
 ### 2026-08-18: Connections names the client; campaign pages have clickable crumbs
 
 - A connected General location walks up past another General campaign to the client or program name (`Master Your Kraft General`), including when only the space id is attached.
-- Opening that connection registers clickable `Campaigns / client / campaign` crumbs. Space headers start with a Campaigns link too.
+- Opening a **space** connection goes to `/spaces?space=…`, except a Page Grader client **General** space, which is hidden and opens the client overview (`/campaigns/{id}?client=…`). Opening a campaign-only connection still goes to `/campaigns/{id}` with clickable `Campaigns / client / campaign` crumbs. Space headers use the client/program as the folder when the parent campaign is named General.
+- The Connections row stays blank while a space name is loading, so it does not flash the parent **General** campaign.
 - Home chats send the attached Connections location into agent awareness so Brain can pull from that client/space, not only when the work area is already on a Space route.
 
 ### 2026-08-17: Meeting workspace is a permanent Connections row
@@ -83,7 +84,7 @@ The history list has its own persisted drag width and collapse state. Dragging i
 ### 2026-08-17: Connections rows open their artifact; meetings show by name
 
 - A connected meeting shows the specific meeting title (not the generic Meetings space). Clicking the row opens that meeting workspace; the meeting row is not removable.
-- Campaign and Space connection rows are likewise clickable to open that attachment; **X** remains remove-only for those rows.
+- Campaign and Space connection rows are likewise clickable to open that attachment (a space opens the space, not its parent campaign); **X** remains remove-only for those rows.
 
 ### 2026-08-17: Artifacts stay open when moving screens
 
@@ -312,7 +313,7 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 - **2026-08-18:** Chrome Aw Snap (error code 5) after heavy Pixel turns is treated as client heap pressure, not a lost reply. Live tool progress is capped to a 20-entry tail, tool previews to 8k chars, inactive conversation message caches prune on chat switch, and Zustand chat persist skips localStorage writes while any conversation is streaming (resume when the stream clears). StatusIndicator and `useActiveMessages` subscribe to one conversation’s messages only.
 
 - **2026-08-18:** Home New chat no longer assigns the newest org General space (often Meetings) when Choose Space is empty. The last `@` campaign mention becomes the Connection. `/home?chat=starting` stays on the new thread and does not reuse a leftover Meetings host.
-- **2026-08-18:** Connections labels walk past a General campaign to the client/program name (`Master Your Kraft General`). Opening a campaign registers clickable `Campaigns / client / campaign` crumbs. Home chats still send that attached location into agent awareness so Brain can pull from Connections.
+- **2026-08-18:** Connections labels walk past a General campaign to the client/program name (`Master Your Kraft General`). A space connection opens `/spaces?space=…`, except a Page Grader client General space, which is the hidden client overview. Space breadcrumbs use the client/program as the folder when that campaign is named General. Org system General HQ copy names it as the unassigned catch-all. Home chats still send that attached location into agent awareness so Brain can pull from Connections.
 - **2026-08-17:** Simple compact rail uses the same destinations and selected-purple styling as the expanded menu (New chat, Inbox, Meetings, All Tasks, Clients, Client Campaigns, More) on a `surface-card` background. Collapse/expand lives only on ROAS logo hover in both states; the logo and drawer glyph share one overlay box so the R no longer flickers. Simple menu width stays 272px by default and can be dragged to 476px (default + 75%).
 - **2026-08-18:** Simple Recents drag sits above the menu (so the handle is actually grabable) and does not animate width while dragging. Expanded ROAS wordmark is left-offset; compact R is centered in the rail.
 - **2026-08-17:** All Tasks is the only tasks screen. It defaults to every open task. Assigned to me is a filter (`?scope=my`), not a separate My Tasks page or overlay. Expanding the Home My Tasks card goes to `/all-tasks?scope=my`.

@@ -9,6 +9,19 @@ function isGenericScopeParent(value: string): boolean {
   return GENERIC_SCOPE_PARENTS.has(value.trim().toLowerCase())
 }
 
+/** First ancestor that is not General / Clients / Client Spaces. */
+export function firstSpecificAncestor(
+  names: Array<string | null | undefined>,
+): string | null {
+  for (const name of names) {
+    const trimmed = name?.trim() ?? ''
+    if (trimmed.length > 0 && !isGeneralLabel(trimmed) && !isGenericScopeParent(trimmed)) {
+      return trimmed
+    }
+  }
+  return null
+}
+
 export function compareGeneralFirst(a: string, b: string): number {
   const aGeneral = isGeneralLabel(a)
   const bGeneral = isGeneralLabel(b)
@@ -30,8 +43,6 @@ export function qualifyGeneralLocation(input: {
   const leafName = input.leafName?.trim()
   if (!leafName) return null
   if (!isGeneralLabel(leafName)) return leafName
-  const parent = [...(input.ancestors ?? []), input.parentName]
-    .map((name) => name?.trim() ?? '')
-    .find((name) => name.length > 0 && !isGeneralLabel(name) && !isGenericScopeParent(name))
+  const parent = firstSpecificAncestor([...(input.ancestors ?? []), input.parentName])
   return parent ? `${parent} General` : leafName
 }
