@@ -1,6 +1,6 @@
 # Pixel Slack North Star — Classify, Retrieve, Deliver (Brain / Agent rework)
 
-Last Modified: 2026-08-18 (§11 consolidated Brain/Agent workstreams; PRs #310/#311 opened)
+Last Modified: 2026-08-18 (§11.10 asset links on Service Requests)
 
 ## Architect Summary
 
@@ -830,6 +830,14 @@ Three structural adjustments to the spine above, so the rest of this section bui
 | Auto write back on Sonnet 4.6 | #310 | open |
 | Forked chat context restore | #311 | open |
 
+### 11.10 Asset links on Service Requests (added 2026-08-18)
+
+- **Incident.** Dylan forwarded a `#roas-christian-osgood` thread containing `MFS_Elite.pdf` to Pixel; Pixel created the SR and the ClickUp task correctly, but the task's "Source PDF and Slack thread" is a **Slack archive URL**. Slack files are gated by workspace/channel membership, so the assignee (Rafay) may not be able to open the actual PDF from the task.
+- **Rule.** When the ask carries assets (Slack file upload, Drive/Docs/Sheets link, Figma, Loom, any URL), the SR / task must carry the **direct asset**, not only the thread: for Slack files, download via the bot token and re-host in ROAS storage (or attach to the SR) and link that; for Drive/Docs, the direct file URL (and flag if not shared org-wide); for other URLs, the URL itself. Keep the Slack thread link as provenance, secondary.
+- **Where.** Same path as N10 / S4: `page_grader_create_fulfillment_request` payload + the ClickUp sync (`_Synced from ROAS portal Workload tracker_`). Slack file download uses the existing `slack-file` handling in `slack-service-events.base.ts` (`event.files`) and forwarded attachments (`slack-forwarded-message-context.ts`).
+- **First step.** Fixture: forwarded message with one Slack PDF + one Drive link → SR `attachments[]` has a ROAS-hosted PDF URL and the Drive URL; ClickUp description lists them under "Assets"; Slack permalink stays under "Source thread". Test both a Slack-native file and a Slack Connect file (different token scope).
+- **Status.** Not started. Sits with N10 / 11.6 in the build order (assets are resolved right after client identity).
+
 ### 11.9 Build order (supersedes §10 sequencing where they differ)
 
 ```text
@@ -837,6 +845,7 @@ merge #310 (Sonnet write) + #311 (fork context)
   → 11.3 prod audit: Brain 500, user-brain population, ingest coverage   ← data, not policy
   → 11.0 telemetry row + N0 stamp in apps/api
   → N1 quote inherit (11.6) after capturing a real payload
+  → 11.10 direct asset links on SRs / ClickUp (Slack file re-host, Drive URLs)
   → 11.2 CONNECTIONS bind from stamp + Campaign Brain preload
   → 11.4 Pixel skill kit + Pixel/Vibey co-migration
   → 11.5 QC producer check
