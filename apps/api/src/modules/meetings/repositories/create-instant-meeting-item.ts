@@ -27,8 +27,8 @@ export async function createInstantMeetingItem(
       source: 'manual',
       custom_data: {
         entry_type: 'call',
-        call_kind: 'impromptu',
-        call_kind_source: 'manual',
+        call_kind: 'team',
+        call_kind_source: 'automatic',
         call_date: input.startedAt,
         attendees: participantEmails,
         participant_emails: participantEmails,

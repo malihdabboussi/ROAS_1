@@ -15,7 +15,9 @@ import { MeetingWorkspaceResolutionRepository } from './repositories/meeting-wor
 import { MeetingWorkspaceStateRepository } from './repositories/meeting-workspace-state.repository'
 import { MeetingWorkspaceRepository } from './repositories/meeting-workspace.repository'
 import { MeetingConversationDeduplicationService } from './services/meeting-conversation-deduplication.service'
+import { MeetingItemMaterializeService } from './services/meeting-item-materialize.service'
 import { MeetingMergeService } from './services/meeting-merge.service'
+import { MeetingRelatedCallsService } from './services/meeting-related-calls.service'
 import { MeetingSourceIngestionService } from './services/meeting-source-ingestion.service'
 import { MeetingWorkspaceService } from './services/meeting-workspace.service'
 
@@ -41,11 +43,14 @@ import { MeetingWorkspaceService } from './services/meeting-workspace.service'
     MeetingConversationDeduplicationService,
     MeetingSourceIngestionService,
     MeetingWorkspaceService,
+    MeetingItemMaterializeService,
+    MeetingRelatedCallsService,
   ],
   exports: [
     MeetingRecordingBackfillRepository,
     MeetingSourceIngestionService,
     MeetingWorkspaceService,
+    MeetingRelatedCallsService,
   ],
 })
 export class MeetingsModule {}

@@ -168,6 +168,19 @@ export async function fetchMeetingWorkspaceEvent(
   }
 }
 
+export type MeetingRelatedCall = {
+  meeting_item_id: string
+  title: string
+  call_date: string | null
+  call_status: string | null
+  recording_url: string | null
+  score: number
+}
+
+export function fetchMeetingRelatedCalls(spaceId: string, meetingItemId: string) {
+  return backendGet<MeetingRelatedCall[]>(`${path(spaceId, meetingItemId)}/related-calls`)
+}
+
 export function startMeetingCall(spaceId: string, meetingItemId: string) {
   return backendPost<MeetingWorkspaceRecord>(`${path(spaceId, meetingItemId)}/start`, {})
 }
@@ -196,6 +209,35 @@ export function resolveScheduledMeeting(
     attendees: event.attendees.map((attendee) => ({
       email: attendee.email,
       name: attendee.name,
+    })),
+    organizer: event.organizer
+      ? { email: event.organizer.email, name: event.organizer.name }
+      : null,
+  })
+}
+
+export function materializeScheduledMeetings(
+  spaceId: string,
+  events: CalendarAgendaEvent[],
+): Promise<{ created: number; linked: number; skipped: number }> {
+  return backendPost(`/api/spaces/${spaceId}/meetings/materialize`, {
+    events: events.map((event) => ({
+      calendar_event_id: event.id,
+      ical_uid: event.ical_uid ?? null,
+      title: event.title,
+      start: event.start,
+      end: event.end,
+      description: event.description ?? null,
+      location: event.location ?? null,
+      video_url: event.video_url,
+      html_link: event.html_link,
+      attendees: event.attendees.map((attendee) => ({
+        email: attendee.email,
+        name: attendee.name,
+      })),
+      organizer: event.organizer
+        ? { email: event.organizer.email, name: event.organizer.name }
+        : null,
     })),
   })
 }

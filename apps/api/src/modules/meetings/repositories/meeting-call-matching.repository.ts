@@ -179,6 +179,33 @@ export class MeetingCallMatchingRepository {
       ),
     ]
   }
+
+  async findCallItemById(
+    supabase: SupabaseClient,
+    meetingItemId: string,
+  ): Promise<Record<string, unknown> | null> {
+    const { data, error } = await supabase
+      .from('space_items')
+      .select('id, title, source, custom_data')
+      .eq('id', meetingItemId)
+      .maybeSingle()
+    if (error) throw new BadRequestException(error.message)
+    return (data as Record<string, unknown> | null) ?? null
+  }
+
+  async listCallItemsForSpace(
+    supabase: SupabaseClient,
+    spaceId: string,
+  ): Promise<Record<string, unknown>[]> {
+    const { data, error } = await supabase
+      .from('space_items')
+      .select('id, title, source, custom_data')
+      .eq('space_id', spaceId)
+      .eq('custom_data->>entry_type', 'call')
+      .limit(200)
+    if (error) throw new BadRequestException(error.message)
+    return (data as Record<string, unknown>[]) ?? []
+  }
 }
 
 function firstText(...values: unknown[]): string | null {

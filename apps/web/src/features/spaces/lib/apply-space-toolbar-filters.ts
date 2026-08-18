@@ -2,6 +2,11 @@ import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { readFieldValue, readItemAssignees } from '../components/space-item-values'
 import type { SpaceItem } from '../types'
 import type { FieldDef, ViewDef } from '../types/space-schema'
+import {
+  isCallDateInPastThroughTomorrow,
+  itemCallDateIso,
+  resolveCallDateWindow,
+} from './meetings-call-date-window'
 
 function normalizeFilterValues(raw: string | string[] | undefined): string[] {
   if (raw == null) return []
@@ -102,11 +107,7 @@ export function itemMatchesFieldValueFilters(
     const value =
       fieldId === 'entry_type' ? resolveSpaceEntryType(item) : readFieldValue(item, fieldId)
     const asString =
-      value == null || value === ''
-        ? null
-        : Array.isArray(value)
-          ? null
-          : String(value)
+      value == null || value === '' ? null : Array.isArray(value) ? null : String(value)
     // Missing / unknown does NOT match All Meetings — only real calls do.
     if (asString == null) return false
     if (!allowed.includes(asString)) return false
@@ -212,6 +213,19 @@ export function applySpaceToolbarFilters(
     out = out.filter((i) => {
       const entries = rosterEntriesForItemAssignees(i, roster)
       return entries.some((entry) => set.has(entry.participant_id))
+    })
+  }
+  if (resolveCallDateWindow(view) === 'past_through_tomorrow') {
+    const visibleCallIds = new Set(
+      out
+        .filter((item) => resolveSpaceEntryType(item) === 'call')
+        .filter((item) => isCallDateInPastThroughTomorrow(itemCallDateIso(item)))
+        .map((item) => item.id),
+    )
+    out = out.filter((item) => {
+      if (resolveSpaceEntryType(item) === 'call') return visibleCallIds.has(item.id)
+      const parentId = resolveFollowUpParentCallId(item)
+      return Boolean(parentId && visibleCallIds.has(parentId))
     })
   }
   const q = searchQuery.trim().toLowerCase()
