@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 13:40] - [FIX]
+What: Service Request Slack follow-ups now reply in the original task thread and also post to the channel. The first reminder is 3 hours after create and says so; the second is 22 hours after create and says the review expires in 2 hours.
+Why: Follow-ups landed as easy-to-miss channel-only posts, and the late nudge still said "about one hour" while firing 1 hour before expiry.
+Impact: New drafts get a 3-hour then 22-hour Slack nudge in-thread and in-channel. Existing drafts already marked `reminder_1h_sent_at` are unchanged.
+Files: `work-request.service.ts`, `work-request-reminders.ts`, `work-request-conversation-stamp.ts`, `work-request.repository.ts`, `slack-agent-tools.service.ts`, `documentation/features/page-grader-mcp-bridge.md`
+
 ## [2026-08-18 02:33] - [FEATURE]
 What: Pixel defaults to Power for chat and always loads Dylan Super Voice for "write this message" / send-ready drafts. Draft card Use in composer now seeds a Claude-style acknowledgment ("I used option B and made some edits. Here it is.") plus the draft body.
 Why: Message writing was weaker without Super Voice, and users were manually switching to Power. After editing a draft version, sending bare copy into chat gave Pixel no context to acknowledge.

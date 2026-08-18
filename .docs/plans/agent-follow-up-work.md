@@ -1,3 +1,15 @@
+## 2026-08-18 - [ARCH] work-request.service.ts is at the 600 LOC service cap
+
+Status: Open
+
+Found while: Threading Service Request Slack follow-ups and moving the late nudge to 22 hours
+
+Evidence: `wc -l` reports `apps/api/src/modules/work-requests/services/work-request.service.ts` at 600. Reminder copy and Slack target selection now live in `work-request-reminders.ts`; process/claim/send still sit in the service.
+
+Needed work: Move `deliverReminder` + `processDueReminders` into a dedicated reminder service so the next draft-lifecycle change does not grow this file.
+
+Reason not done now: The requested change was reminder timing and thread+channel posting; extracting the remaining reminder loop was out of scope.
+
 ## 2026-08-17 - [ARCH] slack-service-events.base.ts is over the 600 LOC service cap
 
 Status: Open
