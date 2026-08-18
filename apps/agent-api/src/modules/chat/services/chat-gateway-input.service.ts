@@ -242,11 +242,6 @@ export class ChatGatewayInputService {
         role: 'user',
         content: input.conversationHistoryBlock,
       })
-      inputArray.push({
-        type: 'message',
-        role: 'assistant',
-        content: 'Conversation history restored. I have full context of our prior work.',
-      })
     }
 
     if (input.dynamicContextParts.length > 0) {

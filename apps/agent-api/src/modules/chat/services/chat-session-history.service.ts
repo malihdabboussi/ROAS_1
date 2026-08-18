@@ -1,4 +1,5 @@
 import { Injectable, type Logger } from '@nestjs/common'
+import { buildConversationHistoryContext } from './chat-session-history.context'
 
 export interface SessionHistoryConfidence {
   dbMessageCount: number
@@ -33,7 +34,7 @@ export class ChatSessionHistoryService {
     input.logger.warn(
       `[SessionIntegrity] context_gap conversationId=${input.conversationId} dbMessages=${dbMsgCount} verifiedMessages=${cachedCount} delta=${dbMsgCount - cachedCount} confidenceAgeMs=${confidenceAgeMs ?? 'none'}`,
     )
-    conversationHistoryBlock = this.buildConversationHistoryContext(input.history)
+    conversationHistoryBlock = buildConversationHistoryContext(input.history)
     if (conversationHistoryBlock) {
       input.logger.warn(
         `[SessionIntegrity] reconstruction_injected conversationId=${input.conversationId} historyChars=${conversationHistoryBlock.length} messageCount=${dbMsgCount}`,
@@ -94,52 +95,5 @@ export class ChatSessionHistoryService {
 
   private countConversationMessages(dbMessages: Record<string, unknown>[]): number {
     return dbMessages.filter((m) => m.role === 'user' || m.role === 'assistant').length
-  }
-
-  private buildConversationHistoryContext(dbMessages: Record<string, unknown>[]): string {
-    const MAX_HISTORY_CHARS = 20_000
-    const MAX_ASSISTANT_PREVIEW = 300
-    const lines: string[] = [
-      '[CONVERSATION_HISTORY]',
-      'The following is a summary of earlier conversation turns that may be missing from the active session. Use this to maintain continuity.',
-      '',
-    ]
-    let totalChars = lines.join('\n').length
-
-    const conversationMsgs = dbMessages.filter((m) => m.role === 'user' || m.role === 'assistant')
-    const entries: string[] = []
-
-    for (const msg of conversationMsgs) {
-      const role = String(msg.role ?? '')
-      const content = String(msg.content ?? '')
-      const roleLabel = role === 'user' ? 'User' : 'Assistant'
-      let entry: string
-
-      if (role === 'user') {
-        entry = `**${roleLabel}:** ${content}`
-      } else {
-        const preview =
-          content.length > MAX_ASSISTANT_PREVIEW
-            ? content.slice(0, MAX_ASSISTANT_PREVIEW) + '...'
-            : content
-        const meta = msg.metadata as Record<string, unknown> | null
-        const toolSteps = Array.isArray(meta?.tool_steps)
-          ? (meta.tool_steps as Array<{ label?: string; name?: string; status?: string }>)
-          : []
-        const toolLabels = toolSteps
-          .filter((s) => s.status === 'completed' && s.label)
-          .map((s) => s.label)
-          .slice(0, 5)
-        const toolLine = toolLabels.length > 0 ? `\n  Tools used: ${toolLabels.join('; ')}` : ''
-        entry = `**${roleLabel}:** ${preview}${toolLine}`
-      }
-
-      if (totalChars + entry.length + 1 > MAX_HISTORY_CHARS) break
-      entries.push(entry)
-      totalChars += entry.length + 1
-    }
-
-    if (entries.length === 0) return ''
-    return lines.join('\n') + entries.join('\n\n')
   }
 }
