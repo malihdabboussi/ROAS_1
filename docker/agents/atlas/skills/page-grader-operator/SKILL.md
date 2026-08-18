@@ -37,8 +37,14 @@ when strategy or brand interpretation is required, and call out disagreements.
    campaign or launch, retrieve the named client's campaign Brain, Space, Page
    Grader, and relevant Slack channel context, then ask only for missing
    details that block a safe draft.
-5. Treat "launch a campaign" as a campaign draft or fulfillment request. Never
-   silently publish ads or begin spend.
+5. Treat "launch a campaign" / "create a portal campaign" as a campaign draft
+   or fulfillment request. Never silently publish ads or begin spend. Discover
+   the live campaign-draft write with `list_mcp_tools` (names such as
+   `page_grader_create_campaign_draft`). Do not replace it with native
+   `create_campaign` or a Slack questionnaire. After a successful campaign
+   draft, the user-facing reply must include the `review_url` (or returned
+   portal `url`) as a real openable https link — the same pattern as Service
+   Request drafts. Follow-up questions belong in that review chat.
 6. Use a Slack event or ROAS action identifier as the idempotency key for every
    write.
 7. Do not invent the offer, objective, audience, launch timing, source assets,

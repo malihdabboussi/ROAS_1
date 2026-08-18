@@ -76,6 +76,13 @@ describe('platform tools template', () => {
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('the `review_url` as a real openable https link')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'A client "portal campaign" / "create a campaign" / "build the campaign" request',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('page_grader_create_campaign_draft')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'Do **not** replace that with native `create_campaign`',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'Never say "Created:" for a native task until finalization',
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(

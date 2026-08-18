@@ -555,6 +555,17 @@ function buildActionOutputBlocks(
       defaultName: 'Form',
     })
   }
+  if (action === 'create_campaign') {
+    return buildArtifactPreviewBlock({
+      artifactType: 'campaign',
+      result,
+      data,
+      idKeys: ['campaign_id', 'campaignId', 'id'],
+      nameKeys: ['name', 'title'],
+      defaultName: 'Campaign',
+      status: firstString([...collectCandidateRecords(result), data], ['status']) || 'draft',
+    })
+  }
   if (action === 'create_task') {
     return buildArtifactPreviewBlock({
       artifactType: 'task',
@@ -941,7 +952,9 @@ export function resolveUiBlocksFromToolResult(params: {
     (typeof data.tool_name === 'string' && data.tool_name) ||
     (typeof data.tool === 'string' && data.tool) ||
     ''
-  if (/create_fulfillment_request/i.test(mcpToolName)) {
+  if (
+    /create_fulfillment_request|create_campaign_draft|create_portal_campaign/i.test(mcpToolName)
+  ) {
     const workRequestBlock = buildWorkRequestChatBlock(result, data)
     if (workRequestBlock.length > 0) return workRequestBlock
   }

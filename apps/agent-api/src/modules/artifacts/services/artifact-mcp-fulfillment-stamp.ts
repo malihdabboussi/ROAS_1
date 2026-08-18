@@ -1,13 +1,15 @@
 /**
  * Platform chokepoint helpers: stamp the active ROAS conversation into Page Grader
- * fulfillment creates so review links resume the same Pixel chat.
+ * fulfillment and campaign-draft creates so review links resume the same Pixel chat.
  */
 
-const FULFILLMENT_CREATE_TOOL_RE = /create_fulfillment_request/i
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
+const PORTAL_DRAFT_CREATE_TOOL_RE =
+  /create_fulfillment_request|create_campaign_draft|create_portal_campaign/i
+
 export function isFulfillmentCreateTool(toolName: string): boolean {
-  return FULFILLMENT_CREATE_TOOL_RE.test(toolName.trim())
+  return PORTAL_DRAFT_CREATE_TOOL_RE.test(toolName.trim())
 }
 
 export function stampConversationIntoFulfillmentArgs(

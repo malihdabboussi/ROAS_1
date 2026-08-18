@@ -802,7 +802,10 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       campaign_type: 'string',
       config: 'object',
     },
-    useWhen: ['Create a new Vibey campaign.'],
+    useWhen: [
+      'Create a new Vibey campaign.',
+      'Return the portal url in the result so the user can open the campaign.',
+    ],
     examples: [
       {
         intent: 'create a lead campaign',
