@@ -1,6 +1,6 @@
-# Pixel Slack North Star — Classify, Retrieve, Deliver
+# Pixel Slack North Star — Classify, Retrieve, Deliver (Brain / Agent rework)
 
-Last Modified: 2026-08-18 (intent-first spine; Viktor keep/expand)
+Last Modified: 2026-08-18 (§11 consolidated Brain/Agent workstreams; PRs #310/#311 opened)
 
 ## Architect Summary
 
@@ -17,6 +17,8 @@ Only **client-class** asks then run Client Resolve (N1). Team and general skip P
 The North Star is unchanged: **every Slack request gets a correct, evidence-backed output at the cheapest token path that still looked deep enough.** Assume the answer exists. The question is whether Pixel classified the ask, retrieved the right stores for that class, and stopped when evidence was sufficient.
 
 This is an expansion of the Viktor-parity work already on main (voice pack, retrieve-then-draft, CONNECTIONS bind, Team Intelligence composer, `agent_cases`). It does not replace those contracts.
+
+This plan is now also the single home for the Brain / Agent rework: §11 folds in Auto-quality regression, CONNECTIONS + Campaign Brain preload, Brain ingestion coverage (incl. the personal Brain 500 and empty user brains), Pixel operator skills, QC health, and the live Slack audit that was never run.
 
 This plan does five things:
 
@@ -65,7 +67,7 @@ We are **not** at full Viktor parity. We are past the “rebuild Slack Pixel fro
 | One digest + 12h threads | Viktor-style Active DM, not one post per signal | integration-connections | On main; digest **repetition** still logged |
 | QC / Launch one thread | Measure once; later webhooks reply in-thread | `page-grader-qc-follow-up.ts` | On main |
 | Sender-only Slack Connect | Internal sender may use Pixel in mixed/group DM | PR 295 | Production API |
-| SR review reminders | 3h then 22h, thread + broadcast | PR 296 | Draft, not deployed |
+| SR review reminders | 3h then 22h, thread + broadcast | PR 296 | Merged |
 
 Canonical plans this document **extends**: `.docs/plans/pixel-viktor-parity-plan-2026-08-10.md` (Phases 0–4 mostly landed per `pixel-next-wave-goal-2026-08-11.md` W1/W4), `.docs/plans/unified-slack-agent-consolidation-2026-08-13.md` (one `agent_cases` loop), `documentation/features/meeting-follow-up-slack.md` Slack agent roadmap.
 
@@ -757,6 +759,92 @@ Out of scope until Wave 0 ships: new MCP tools, new DB tables, a separate “pro
 6. Only then add process-specific skill files if traces show Pixel still skipping N3–N10.
 
 Rollback: revert parser; identity falls back to current-channel stamp (today’s behavior). Revert N0 heading independently if it causes routing confusion — named-client and first-person blocks remain.
+
+---
+
+## 11. Brain / Agent rework — consolidated workstreams (added 2026-08-18)
+
+Everything below was raised in the 2026-08-17/18 Cursor sessions, diagnosed, and then either shipped on a branch that never got a PR, or dropped when the next message arrived. It all serves the same North Star, so it lives here instead of in five separate plans. Each workstream states **what we know**, **what is unknown**, the **smallest first step**, and **status**.
+
+### 11.0 Corrections to §3–§8 (from review 2026-08-18)
+
+Three structural adjustments to the spine above, so the rest of this section builds on the right foundation:
+
+1. **N0 is a per-turn stamp computed in `apps/api`, not only a TOOLS.md heading.** `PLATFORM_TOOLS_DEFAULT_MD` is a static guide synced to the agent; a heading there is still the model classifying itself, which is the "policy exists, Pixel skips it" failure. Compute `[Ask kind: client|team|general|continuation]` from cheap signals (channel stamp, quote presence, first-person phrases, thread parent = Pixel) in `slack-service-events.base.ts` and inject it next to `[Slack channel identity]`. On a **general** ask in a client channel, soften the identity stamp so it stops pushing "what's on my task list" toward Portal. Keep the TOOLS.md heading as the ladder-per-kind the stamp points at.
+2. **Add per-turn telemetry before Wave 2.** Nothing records ask kind, ordered tool calls, tokens, or forbidden-ask flags today. Without a `slack_pixel_turns`-style row (or `slack_observation_events.metadata` extension), §7 pass/fail and the §10 metrics are unmeasurable. This is a prerequisite, not a follow-up.
+3. **Two test tiers, stated honestly.** Prompt-shape unit tests (N0 stamp, N1 parser, identity block) run in CI. True fixture-in → ordered-actions-out traces need the model; run them as a **manual / nightly eval harness** over R01–R55 in a private test channel, scored from the telemetry in (2). Do not pretend the second tier is deterministic CI.
+
+### 11.1 Auto chat quality regression (July cost cut)
+
+- **Known.** July 15 (`19decf25`) Auto was Sonnet 4.6 for the whole turn. Jul 26 `1a5df22c` cut runaway tokens (no model change). Jul 26 `3cfaaa0a` moved Auto to Opus 5 (more expensive). Jul 28 `a6981fd3` split Auto into Terra research + one write pass from a ≤12k-char packet. Jul 29 `41605de0` wrote on Sonnet. **Jul 30 `b1d67559`** put Auto research **and** write on discounted GPT-5.6 Terra — this is the "Brain got dumber" moment; August spend collapse (~$7–20/day) is that commit. Aug 5 made User Brain preload work in org chat.
+- **What it took away.** The writer never sees the live tool loop, only a truncated packet; Terra is worse at picking `search_campaign_brain` on General; a Terra refusal ("couldn't find a saved report") is honest about an empty packet, not an empty Brain.
+- **Fix, status.** Terra tools + **Sonnet 4.6 write**, Power stays Opus 5: **PR #310** (`cursor/auto-sonnet-write`, opened 2026-08-18 — was pushed on 08-17 and never PR'd). Missions / non-staged Auto are still Terra — measure before changing.
+- **Verify after merge.** AI Usage dashboard shows Sonnet on `auto_chat_write`; re-run the "last webinar stats" ask on a bound client chat.
+
+### 11.2 CONNECTIONS binding + Campaign Brain preload
+
+- **Known.** Home / new chat defaults to the General campaign. `search_campaign_brain` auto-injects `CAMPAIGN_ID` when CONNECTIONS is a real client and rejects General. Named lookup (PR 288) binds only when a client is *typed*; "their last webinar" on General never binds. The platform preload (`brain-context.service.ts` → `[BRAIN CONTEXT]`) covers **user / agent / company / customer** families and deliberately excludes campaign — so a bound chat is still one Terra tool-choice away from "I couldn't find it".
+- **Unknown.** Whether implied-client detection (pronoun + recent client mention, channel stamp, Slack thread) can bind safely without wrong-client bleed; the retrieval budget for a campaign preload.
+- **First steps.** (a) Slack: bind CONNECTIONS from the channel stamp / N1 result at turn start, not only after a named tool call. (b) Studio: when CONNECTIONS ≠ General, add Campaign Brain to the preload packet under the same limits as User Brain (`brain-context-support.service.ts`). (c) Fixture: bound-client chat, "what were their last webinar stats" → Campaign Brain hit before any User Brain call.
+- **Status.** Not started. Depends on 11.1 for quality, independent for correctness.
+
+### 11.3 Brain ingestion coverage ("everything should be recognizable by the Brain")
+
+- **Known paths.** Meetings: `apps/api/src/modules/brain/services/meeting-ingestion.service.ts` (Fathom → memories). Conversations: `apps/agent-api/src/modules/brain/services/conversation-processing.service.ts`. Slack: `slack-brain-mapping.service.ts` → Person / Campaign Brain (90-day backfill admin-gated), Slack-managed person brains (`20260720220000_slack_managed_person_brains.sql`). Personal-vs-org routing: `.docs/architecture/personal-vs-org.md`. Semantic-first cross-object search (May 21 spec) is **not shipped**.
+- **Unknown (must audit against production `lhfgtsjetcardinpgouq`).** (1) Are Fathom meetings actually landing as memories per campaign, and how stale? (2) Do tasks / Space docs feed Brain at all — no task→memory ingest path was found. (3) Company Brain: what is in it, who writes to it. (4) **User brains not populating** — is `ensureUserBrain`/default-brain creation running for every org member, and is `conversation-processing` writing to user scope? (5) Personal Brain page **500** — entry points `graph.controller.ts` → `graph.service.ts` → `find_connections_for_brain` / `MEMORY_GRAPH_SELECT`; footer stats work (2,803 memories) so data exists and the graph query/edge build is what fails. Get the API log line for the 500 first.
+- **First steps.** Read-only production audit (memory counts by brain scope × source_type × last 30 days; users with zero user-brain memories; graph endpoint error). Then fix in this order: 500 (visible, likely a query/limit bug) → user-brain population → task/doc ingest gap.
+- **Status.** Not started. Cursor began the 500 trace and was redirected.
+
+### 11.4 Pixel operator skill kit (why Pixel only has carousel/theme skills)
+
+- **Known.** Live org Pixel's skill list is a Lux-shaped snapshot (carousel-designer, theme-builder, ad-builder). Hired agents get `dylans-super-voice` by default; system agents (Pixel) are skipped by the seeder. Post-call delivery + meeting follow-up Slack live on **Vibey**, not Pixel. Nate's launch-brief skills exist but Nate is not hired in this org. Slack Pixel's runtime **denies the browser tool** while TOOLS policy tells it to click through funnels. Most "Pixel" policy migrations only updated `agent_key = vibey`.
+- **Decision (Dylan, 08-17).** Pool as Pixel *modes*, not extra agents: retrieve → then draft / route (Portal SR, Nate, Lux) / do / ask-once. Leave carousel/theme on Lux.
+- **First steps.** (a) Assign to org Pixel: `dylans-super-voice`, post-call-delivery, a weekly/Monday client-update skill, slack-signal-operator; sync. (b) Patch Pixel **and** Vibey together in any TOOLS/skill migration. (c) Either enable browser for Slack Pixel or make N7 say it cannot click through — never fake a QC. (d) Launch brief: Pixel owns the Slack ask, delegates to strategist via `ask_agent`.
+- **Status.** Diagnosed three times, not built. Related: `agent-follow-up-work.md` org-Pixel skill/browser entries.
+
+### 11.5 QC agent health
+
+- **Known.** QC and Launch share one webhook path (`PageGraderQcSlackBridgeService`, `page-grader-qc-follow-up.ts`); Launch was clearly firing hourly; measure-once + in-thread follow-up shipped in PR 288. QC only appears when Page Grader sends a `quality_control` payload.
+- **Unknown.** Whether Page Grader has sent any `quality_control` webhooks recently (producer stopped?) or whether they arrived and were buried under Launch noise.
+- **First step.** Query `agent_cases` for `case_type = 'quality_control'` (last 30 days) and the Page Grader webhook log; if zero, the producer is the bug, not Slack.
+- **Status.** Not investigated.
+
+### 11.6 Slack identity: 1DS "Andy or Krista?" (= N1)
+
+- Already specified in §5 N1 / §8 items 1–3. Adding here for completeness: before writing the parser, **capture the raw `event.attachments`** of a real forwarded thread-reply (log it or replay one into a test channel). The assumption "footer says *From a thread in #…* and no `channel_id`" is unverified; if `channel_id`/`from_url` *were* present, the bug is elsewhere (e.g. attachment stripped for Slack Connect). Also needs a name→`channel_id` lookup in `resolveSlackAskClientStamp` (today keyed by id only).
+- **Product decision still open (R54):** client data in mixed Slack Connect group DMs. Recommendation: Internal sender may ask anywhere; if any External member is present, post Portal/Brain/spend content to the mapped `#roas-*` channel and link it.
+
+### 11.7 Live Slack audit + eval harness (the part of the original ask that was skipped)
+
+- Cursor could not reach production from its VM, so R31–R55 are grounded in `LIVE_CHANNEL_STAMPS` fixtures + the 1DS incident, **not** real channel traffic. This is the "use the app to search thru our slack and audit all the client slack channels" ask.
+- **First step (read-only, prod DB + Slack search token):** `slack_observation_channels` + last-14-day `slack_observation_events` grouped by channel; Slack `search.messages` for `@Pixel`; histogram of ask kinds; adjust R-list wording. Then run the R01–R55 harness in a private test channel and score from 11.0(2) telemetry.
+
+### 11.8 Already shipped from these sessions (do not redo)
+
+| Item | PR | State |
+| --- | --- | --- |
+| Named-client retrieve-then-draft, fuzzy names, per-chat CONNECTIONS bind, Launch/QC measure-once thread | #288 | merged |
+| Internal sender in group DM / Slack Connect | #295 | merged, `api.roas.io` live |
+| SR follow-ups in-thread + channel at 3h / 22h | #296 | merged |
+| North Star plan (client-first, then intent-first) | #297, #301 | merged |
+| Auto write back on Sonnet 4.6 | #310 | open |
+| Forked chat context restore | #311 | open |
+
+### 11.9 Build order (supersedes §10 sequencing where they differ)
+
+```text
+merge #310 (Sonnet write) + #311 (fork context)
+  → 11.3 prod audit: Brain 500, user-brain population, ingest coverage   ← data, not policy
+  → 11.0 telemetry row + N0 stamp in apps/api
+  → N1 quote inherit (11.6) after capturing a real payload
+  → 11.2 CONNECTIONS bind from stamp + Campaign Brain preload
+  → 11.4 Pixel skill kit + Pixel/Vibey co-migration
+  → 11.5 QC producer check
+  → 11.7 live Slack audit → R-list adjust → nightly harness
+  → only then extra process skills (N3–N10) if traces still skip
+```
+
+Each line is its own branch/PR. Nothing here rewrites the voice pack, composer, CONNECTIONS bind mechanics, or the Service Request path.
 
 ---
 

@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 13:17] - [DOCS]
+What: Consolidated the Brain / Agent rework into the Pixel Slack North Star plan (§11): Auto-quality regression (Jul 30 Terra write), CONNECTIONS bind + Campaign Brain preload, Brain ingestion coverage (personal Brain 500, empty user brains, meetings/tasks/Slack → Brain), Pixel operator skill kit, QC producer health, 1DS quote inherit payload capture, live Slack audit + eval harness, and three corrections to the spine (N0 as an `apps/api` stamp, per-turn telemetry, two test tiers). Opened PRs #310 (Sonnet write) and #311 (fork context) for branches Cursor pushed on 08-17 but never PR'd.
+Why: These items were diagnosed across several sessions and then dropped or stranded; one plan with a single build order stops that.
+Impact: Docs only. Build order in §11.9 supersedes §10 sequencing where they differ.
+Files: `.docs/plans/pixel-slack-north-star-2026-08-18.md`
+
 ## [2026-08-18 18:55] - [FIX]
 What: Declared `fieldRowVariant` on All Meetings `ClientCampaignCell` so SpaceCell can pass the shared kanban/default row variant.
 Why: #304 used `fieldRowVariant` in the cell and forwarded it from `SpaceCell`, but the props type omitted it. `next build` typecheck failed every `roas-web` deploy.
