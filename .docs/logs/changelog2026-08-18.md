@@ -1,5 +1,12 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 17:25] - [FIX]
+What: Portal campaign create no longer dies on a guessed MCP tool name. Pixel lists live Page Grader writes, refreshes stale MCP catalogs, and falls back to native `create_campaign` plus tasks when that write is missing. Missing VSL/landing-page assets are campaign tasks, not create-blockers. MCP campaign-draft failures now return a fixable contract instead of an unclassified reject.
+Why: After #298, Pixel tried `page_grader_create_campaign_draft`, the create was rejected before save, and instructions forbade native `create_campaign`, so Master Your Kraft never got a campaign or launch tasks.
+Impact: Slack "create a portal campaign" either posts a Portal `review_url` or a ROAS campaign `url` with tasks for unverified VSL/LP/assets. Retrying the same guessed tool is no longer the only path.
+Files: `artifact-mcp-tool-preflight.ts`, `artifact-mcp-fulfillment-stamp.ts`, `artifact-mcp.service.ts`, `artifact-action-preflight.ts`, `platform-tools-template.ts`, `page-grader-operator/SKILL.md`, `20260818173000_portal_campaign_create_fallback.sql`, `page-grader-mcp-bridge.md`
+
+
 ## [2026-08-18 16:20] - [FIX]
 What: Meetings Agenda Mine now DWD-pulls the signed-in user's Workspace Directory calendar (linked/suggested portal user, not login Gmail first). Team Google Calendar fetches paginate `nextPageToken` (page size 2500, `singleEvents=true`) and pin the caller inside the Directory people cap.
 Why: Mine only listed caller-owned Composio rows, so Dylan's work invites showed under Team (Directory mailbox) and disappeared on Mine. Recurring instances such as ROAS x Christian Osgood Weekly Standup were truncated when a covering-month `events.list` stopped at 250 events with no page token.

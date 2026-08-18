@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   extractFulfillmentDraftId,
+  formatMcpToolCallFailure,
   isFulfillmentCreateTool,
+  isPortalCampaignDraftTool,
+  mcpToolFailureResult,
   stampConversationIntoFulfillmentArgs,
   stampDraftConversationViaApi,
 } from './artifact-mcp-fulfillment-stamp'
@@ -17,6 +20,44 @@ describe('artifact-mcp-fulfillment-stamp', () => {
     expect(isFulfillmentCreateTool('create_portal_campaign')).toBe(true)
     expect(isFulfillmentCreateTool('page_grader_list_clients')).toBe(false)
     expect(isFulfillmentCreateTool('page_grader_list_campaigns')).toBe(false)
+  })
+
+  it('detects portal campaign-draft writes separately from fulfillment', () => {
+    expect(isPortalCampaignDraftTool('page_grader_create_campaign_draft')).toBe(true)
+    expect(isPortalCampaignDraftTool('create_portal_campaign')).toBe(true)
+    expect(isPortalCampaignDraftTool('page_grader_create_fulfillment_request')).toBe(false)
+  })
+
+  it('tells Pixel to native-create when a campaign-draft MCP write fails without a reason', () => {
+    expect(
+      formatMcpToolCallFailure({
+        toolName: 'page_grader_create_campaign_draft',
+        serverName: 'Page Grader',
+      }),
+    ).toMatch(/native create_campaign/)
+    expect(
+      formatMcpToolCallFailure({
+        toolName: 'page_grader_create_fulfillment_request',
+        serverName: 'Page Grader',
+      }),
+    ).not.toMatch(/native create_campaign/)
+  })
+
+  it('returns a fixable campaign-draft contract instead of an unclassified reject', () => {
+    const result = mcpToolFailureResult({
+      toolName: 'page_grader_create_campaign_draft',
+      serverName: 'Page Grader',
+    })
+    expect(result).toMatchObject({
+      success: false,
+      error_code: 'ARTIFACT_MCP_TOOL_FAILED',
+      error_class: 'validation',
+      effect_state: 'failed_before_effect',
+    })
+    expect(result.agent_instruction).toMatch(/native create_campaign/)
+    expect(result.correction).toMatchObject({
+      next_tool_preference: ['list_mcp_tools', 'create_campaign', 'create_task'],
+    })
   })
 
   it('injects conversation_id into top-level and source_context without clobbering', () => {

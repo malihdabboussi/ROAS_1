@@ -147,9 +147,11 @@ Grader`, `MCP`, tool names, schemas, idempotency keys, or retry mechanics.
 - Urgent Delegation Desk intake dispatches only after duplicate, target, and
   destination checks and stores the confirmed destination receipt.
 - Campaign drafts use the same review-link pattern as Service Requests: Pixel
-  creates the Portal campaign draft, then posts an openable `review_url` (or
-  native campaign `url`) instead of interviewing in Slack. Follow-up questions
-  belong in that review chat.
+  creates the Portal campaign draft when that live write exists, then posts an
+  openable `review_url`. If the live catalog has no campaign-draft write, Pixel
+  uses native `create_campaign` and posts the returned `url`. Missing VSL,
+  landing page, or creative assets become campaign tasks instead of blocking
+  create. Follow-up questions belong in that review chat, not a Slack interview.
 - After Service Request submit, the in-thread resume card shows the created
   ROAS / ClickUp task links. A finalized review is not treated as an invalid
   link.

@@ -804,6 +804,7 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
     },
     useWhen: [
       'Create a new Vibey campaign.',
+      'Fall back here when The ROAS Portal has no live campaign-draft write.',
       'Return the portal url in the result so the user can open the campaign.',
     ],
     examples: [
