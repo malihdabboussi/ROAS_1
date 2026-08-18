@@ -5,6 +5,10 @@ import { GoogleWorkspaceGoogleClient } from '../integrations/google-workspace-go
 import { OrgPersonCalendarIdentitiesRepository } from '../repositories/org-person-calendar-identities.repository'
 import { isWorkspaceDirectoryIdentity } from '../types/google-workspace.types'
 import { GoogleWorkspaceApiService } from './google-workspace-api.service'
+import {
+  selectCallerDirectoryIdentity,
+  selectDirectoryIdentitiesForTeamPull,
+} from './google-workspace-calendar-pull'
 import { OrgPersonCalendarIdentitiesService } from './org-person-calendar-identities.service'
 
 export type OrgUpcomingCoverageSkip = {
@@ -63,6 +67,49 @@ export class GoogleWorkspaceCalendarService {
     }
   }
 
+  /**
+   * Caller's Workspace Directory calendar for Mine. Login Gmail is not used first:
+   * Dylan's portal email is often personal while the mailbox is dylan@roas.co.
+   */
+  async getCallerAgenda(
+    _supabase: SupabaseClient,
+    scope: RequestScope,
+    query: {
+      start: string
+      end: string
+      timezone?: string
+      email?: string
+      vibey_user_id?: string
+    },
+  ) {
+    if (!scope.orgId) throw new BadRequestException('Organization context is required')
+    const start = query.start?.trim()
+    const end = query.end?.trim()
+    if (!start || !end) throw new BadRequestException('start and end are required')
+
+    const identities = await this.identitiesRepo.serviceList(scope.orgId)
+    const eligible = identities
+      .filter(isWorkspaceDirectoryIdentity)
+      .filter((row) => row.match_status !== 'rejected')
+    const identity = selectCallerDirectoryIdentity(eligible, {
+      vibeyUserId: query.vibey_user_id,
+      email: query.email,
+    })
+    if (!identity) {
+      return { success: true as const, identity: null, events: [] }
+    }
+
+    const { serviceAccount } = await this.api.loadServiceAccount(scope.orgId)
+    const events = await this.client.listCalendarEvents({
+      serviceAccount,
+      calendarEmail: identity.calendar_email,
+      start,
+      end,
+      timezone: query.timezone,
+    })
+    return { success: true as const, identity, events }
+  }
+
   async listOrgUpcoming(
     _supabase: SupabaseClient,
     scope: RequestScope,
@@ -71,6 +118,7 @@ export class GoogleWorkspaceCalendarService {
       end: string
       timezone?: string
       limit_people?: number
+      prefer_vibey_user_id?: string
     },
   ) {
     if (!scope.orgId) throw new BadRequestException('Organization context is required')
@@ -87,8 +135,11 @@ export class GoogleWorkspaceCalendarService {
     const rejected = directory.filter((row) => row.match_status === 'rejected')
     const eligibleAll = directory.filter((row) => row.match_status !== 'rejected')
     const limit = Math.max(1, Math.min(query.limit_people ?? 40, 50))
-    const eligible = eligibleAll.slice(0, limit)
-    const capped = eligibleAll.slice(limit)
+    const { pulled: eligible, capped } = selectDirectoryIdentitiesForTeamPull(
+      eligibleAll,
+      limit,
+      query.prefer_vibey_user_id,
+    )
 
     const settled = await Promise.all(
       eligible.map(async (identity) => {
