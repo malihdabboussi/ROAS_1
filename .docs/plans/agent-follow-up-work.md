@@ -1,3 +1,27 @@
+## 2026-08-17 - [FIX] Auto missions and non-staged Auto chat still route to Terra
+
+Status: Open
+
+Found while: Restoring Auto chat write to Sonnet 4.6 (July 15 quality)
+
+Evidence: `resolveChatStageModel('auto', 'write')` is Sonnet again. `resolveModelForStrategy('auto', *)` is still `openai/gpt-5.6-terra` from Jul 30 `b1d67559`. Mission Worker and any non-staged Auto chat use that matrix. July 15 Auto used Sonnet for those tasks too.
+
+Needed work: Decide whether missions/awareness/quality-eval should return to Sonnet, stay Terra, or split like chat.
+
+Reason not done now: The confirmed restore was Terra tools + Sonnet write for Auto chat. Changing mission routing is a separate cost/quality decision.
+
+## 2026-08-17 - [FEATURE] Campaign Brain still not in Auto preload; personal Brain graph 500s
+
+Status: Open
+
+Found while: Tracing why Pixel barely uses Brain after the July cost cut
+
+Evidence: `BrainContextService.buildFullContext` preloads user/agent/company/customer only. Campaign Brain is `search_campaign_brain` (CAMPAIGN_ID injects; General rejected). Dylan's personal Brain dock shows 2803 memories while `GET /api/brain/graph` returns Internal server error. Health uses the service client; graph uses the user JWT and loads all connections for the brain.
+
+Needed work: Preload Campaign Brain when CONNECTIONS is not General. Harden graph load (service client after `assertCanViewBrain`, window connections to loaded nodes, truncate content). Meetings/tasks/Slack are not a unified Brain index — Pixel must call those tools; Person Brains stay empty until Slack period import forks run.
+
+Reason not done now: This change restores the July 15 writer. Retrieval and graph view are separate root causes.
+
 ## 2026-08-18 - [ARCH] MeetingWorkspaceDialog.tsx is near the 400 LOC component cap
 
 

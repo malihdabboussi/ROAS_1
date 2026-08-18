@@ -68,7 +68,7 @@ describe('model strategy routing', () => {
     }
   })
 
-  it('keeps Auto chat on discounted GPT-5.6 Terra for research and writing', () => {
+  it('keeps Auto research on discounted Terra and restores Auto writing to Sonnet 4.6', () => {
     expect(resolveChatStageModel('auto', 'research')).toEqual({
       modelId: 'openai/gpt-5.6-terra',
       reason: 'auto_chat_research',
@@ -79,10 +79,10 @@ describe('model strategy routing', () => {
       },
     })
     expect(resolveChatStageModel('auto', 'write')).toEqual({
-      modelId: 'openai/gpt-5.6-terra',
+      modelId: 'anthropic/claude-sonnet-4.6',
       reason: 'auto_chat_write',
       modelSettings: {
-        context_window_tokens: 128_000,
+        context_window_tokens: 64_000,
         reasoning_effort: 'medium',
         speed_mode: 'standard',
       },

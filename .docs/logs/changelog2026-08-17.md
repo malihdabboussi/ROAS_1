@@ -1,11 +1,5 @@
 # Changelog - August 17, 2026
 
-## [2026-08-17 19:52] - [FIX]
-What: Pixel now authorizes the Slack sender only. Internal people and the installer can use Pixel in group DMs and Slack Connect threads. Linked Slack identities inherit Internal.
-Why: Group DMs scanned every member and treated Slack Connect teammates as external, so Dylan @Pixel in a DM with his partner got "I can't use private ROAS data in this channel" even after mapping both accounts Internal.
-Impact: Internal senders work in mixed/group/Slack Connect chats. External senders still get the Manage People denial. `conversation_documents` fork copy remains separate.
-Files: `slack-access-control.service.ts`, `slack-sender-resolver.service.ts`, `slack-service-events.base.ts`, `slack-service.shared.ts`, `messages.config.ts`, `documentation/features/integration-connections.md`
-
 ## [2026-08-17 23:30] - [FIX]
 What: Fixed TypeScript errors that failed every Vercel `roas-web` production build after the meeting-workspace header landed. Meeting action reload now returns `Promise<void>`; review-chat seed maps to the studio message shape; unused Zustand `get` and `noUncheckedIndexedAccess` href split are gone; test fixtures typecheck.
 Why: `next build` typechecks `apps/web` with `strict` + unused locals. #282's `onActionsReload={hydrateWorkspace}` returned a bundle, so production never shipped Continue in chat.
@@ -23,7 +17,6 @@ What: Split the Page Grader unlinked-task follow-up into three required surfaces
 Why: #284 is on main and this repo's API deployed it, but new creates still need the Portal edge function, and "Failed to update campaign" remains Portal UI.
 Impact: Agents must not skip #284 or treat Vercel `roas-api` (`api.roas.io`) as the Portal edge function.
 Files: `.docs/plans/agent-follow-up-work.md`, `documentation/features/page-grader-mcp-bridge.md`
-
 
 ## [2026-08-17 21:35] - [FIX]
 What: Service Request finalize and Portal send now pass the Page Grader campaign id, mark origin as From Pagegrader, and omit empty assignees so Portal assignment rules can run.
@@ -55,7 +48,6 @@ Why: The page control belonged with the open work card so it can expand over cha
 Impact: Closed page = Summary + Show page on chat. Open page = Summary on chat, page control on the work card. Filter stays under the Recents icon.
 Files: `apps/web/src/components/shell/ShellChatDrawer.tsx`, `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/components/conversations/ChatHistoryFilterMenu.tsx`, `apps/web/src/components/conversations/SpaceConversationsHeader.tsx`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `documentation/features/claude-chatgpt-shell.md`
 
-
 ## [2026-08-17 20:33] - [STYLE]
 What: Meeting workspace action items now render through the same All Tasks native list (status, name, priority, assignee, due date, Client Workspace, Campaign Space, Add task).
 Why: The stacked caption + "this space" rows did not match the All Tasks table, so meeting follow-ups felt like a different product.
@@ -80,12 +72,17 @@ Why: The Meetings orb started between chat and agenda, then jumped into the agen
 Impact: Agenda chrome stays put while meetings load. The meeting workspace is a permanent Connections row; campaign/Space rows stay removable.
 Files: `MeetingsUnifiedSurface.tsx`, `AgendaCard.tsx`, `ShellRightPanel.tsx`, `ShellRightPanelConnections.tsx`, `ListSkeleton.tsx`, `documentation/features/claude-chatgpt-shell.md`
 
+## [2026-08-17 20:17] - [DOCS]
+What: Started gangbusters UX audit; logged Session A New Chat findings F-001–F-008, production AUTH block F-009, and confirmed P-ATTACH-01 from live clicks + code.
+Why: User asked to run the audit with browser connected; production Dylan session missing in cloud browser; local pass still yielded Attach/@ IA evidence.
+Impact: Findings file ready; Attach consolidation plan confirmed; remaining surfaces blocked until production sign-in.
+Files: `.docs/plans/ux-gangbusters-findings-2026-08-17.md`
+
 ## [2026-08-17 20:15] - [FIX]
 What: Chat working status now types a live line and rotates Cursor-style phrases after a short hold instead of freezing on Brain/tool labels.
 Why: Turns that said they were reading Brain looked stuck even while the agent was still working.
 Impact: Composer chat keeps an animated working line (`Planning next moves...` and similar) while Pixel is thinking or a Brain/tool step sits open.
 Files: `apps/web/src/lib/chat/chat-working-status.ts`, `apps/web/src/lib/chat/use-working-status-label.ts`, `apps/web/src/components/chat/ChatWorkingStatusLabel.tsx`, `apps/web/src/components/chat/TypewriterShimmer.tsx`, `apps/web/src/features/studio/components/chat/StatusIndicator.tsx`, `apps/web/src/features/studio/components/chat/LockedInGroup.tsx`, `apps/web/src/features/studio/components/chat/ThinkingTranscriptBlock.tsx`
-
 
 ## [2026-08-17 20:05] - [STYLE]
 What: Chat assistant-turn actions now show Reply first, then Copy, then Fork.
@@ -105,17 +102,35 @@ Why: The list was org-wide, so teammates saw each other's Fathom follow-ups (for
 Impact: Each user sees their own actions and follow-ups from their meetings. Teammate-owned items from other people's calls no longer appear under the composer.
 Files: `apps/api/src/modules/home/repositories/next-moves.repository.ts`, `apps/api/src/modules/home/repositories/next-moves-audience.ts`, `apps/api/src/modules/home/repositories/next-moves-audience.test.ts`, `documentation/features/claude-chatgpt-shell.md`
 
+## [2026-08-17 19:52] - [FIX]
+What: Pixel now authorizes the Slack sender only. Internal people and the installer can use Pixel in group DMs and Slack Connect threads. Linked Slack identities inherit Internal.
+Why: Group DMs scanned every member and treated Slack Connect teammates as external, so Dylan @Pixel in a DM with his partner got "I can't use private ROAS data in this channel" even after mapping both accounts Internal.
+Impact: Internal senders work in mixed/group/Slack Connect chats. External senders still get the Manage People denial. `conversation_documents` fork copy remains separate.
+Files: `slack-access-control.service.ts`, `slack-sender-resolver.service.ts`, `slack-service-events.base.ts`, `slack-service.shared.ts`, `messages.config.ts`, `documentation/features/integration-connections.md`
+
 ## [2026-08-17 19:49] - [FIX]
 What: Made meeting breadcrumbs clickable (Agenda returns to the list), removed duplicate in-page titles on Inbox / Meetings / My Tasks / All Tasks / Clients / Client Campaigns, moved Portal into the work-card header, and added an All Tasks shell crumb.
 Why: Header already named the page, so repeating H1s cluttered the work area; meeting ancestor crumbs were inert spans; Portal sat beside the page title instead of the top bar; All Tasks had no crumb.
 Impact: Ancestor crumbs navigate; page bodies start at search/filters; Portal is in the header action cluster; `/all-tasks` shows All Tasks in the top bar.
 Files: `apps/web/src/components/shell/ShellHeaderAction.tsx`, `ShellTopBar.tsx`, `shell-breadcrumb.ts`, `use-shell-store.ts`, `HomeMeetingDetailHost.tsx`, `MyTasksPanel.tsx`, `InboxFeed.tsx`, `AgendaCardChrome.tsx`, `AgencyClientsPage.tsx`, `ClientCampaignsPage.tsx`, `AllTasksBoard.tsx`, `documentation/features/claude-chatgpt-shell.md`
 
+## [2026-08-17 19:44] - [DOCS]
+What: Added the gangbusters ultra-detailed navigation/UX audit prompt plus a paste-ready kickoff for cloud agents.
+Why: Need a reusable, high-depth click-through protocol (Attach/@ gold example) before running a full-platform menu audit and plan-before-fix loop.
+Impact: Agents can execute exhaustive surface testing with consistent finding cards, stale-state hunts, and a reference Attach consolidation plan.
+Files: `.docs/plans/ux-gangbusters-navigation-audit-prompt.md`, `.docs/plans/ux-gangbusters-audit-kickoff.md`
+
 ## [2026-08-17 19:35] - [FIX]
 What: More → Programs now lists every program on hover and opens `/programs` on click instead of `/campaigns`.
 Why: Programs was wired to the campaigns hub, so the More item skipped the programs overview and had no hover list.
 Impact: Clicking Programs opens the programs overview. Hovering it shows the same program list. Each program still opens `/programs/[id]`.
 Files: `apps/web/src/components/layout/sidebar/SidebarHqMoreFlyoutBody.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqMoreProgramsFlyout.tsx`, `apps/web/src/app/(dashboard)/programs/page.tsx`, `apps/web/src/app/(dashboard)/programs/_components/ProgramsIndex.tsx`, `apps/web/src/middleware.ts`, `documentation/features/programs.md`
+
+## [2026-08-17 18:56] - [FIX]
+What: Auto chat write is Sonnet 4.6 again. Terra still runs the research/tool loop. Power stays Opus 5. Economy stays Terra.
+Why: July 15 Auto was Sonnet 4.6 for the whole turn. Jul 30 `b1d67559` put Auto write on discounted Terra, which is when answers got dumber. Keep the cheap tool loop; restore the July 15 writer.
+Impact: Default Auto answers are written on the July 15 quality model. Tool loops stay on Terra. Missions/non-staged Auto tasks are still Terra (logged as follow-up).
+Files: `packages/api-shared/src/services/model-strategy.ts`, `packages/api-shared/src/services/model-strategy.test.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `apps/web/src/lib/agents/model-strategies.ts`, `apps/web/src/features/studio/components/ChatInput/chat-input-model-settings.ts`, `documentation/features/chat-stream-recovery.md`
 
 ## [2026-08-17 17:43] - [FEATURE]
 What: Chat now restores the last work screen for that conversation (meeting agenda pops back), and meeting prep is split into Start agenda / Prep for call / Google agenda. Removed the in-app precall-prep Space-item path.
@@ -153,17 +168,17 @@ Why: Vercel `roas-web` typecheck failed on PR #263.
 Impact: Production web build can complete for artifact pin/restore.
 Files: `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`
 
-## [2026-08-17 16:38] - [FEATURE]
-What: Shell artifact viewer now restores each chat’s last-open artifact on conversation switch, with an optional pin that keeps the current artifact open while browsing other chats.
-Why: Match ChatGPT/Codex chat↔artifact memory without blocking cross-chat navigation on one artifact.
-Impact: Switching chats restores that chat’s artifact by default; pin freezes the panel across switches; summary panel / explicit close still clears and unpins.
-Files: `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/shell/use-shell-store.artifact-conversation.ts`, `apps/web/src/components/shell/shell-artifact-conversation.ts`, `apps/web/src/components/shell/use-shell-artifact-conversation-sync.ts`, `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `documentation/features/claude-chatgpt-shell.md`
-
 ## [2026-08-17 16:45] - [FIX]
 What: Pixel QC / Launch Agent Slack delivery now measures a client once. The first check-in is the parent DM; later webhooks for the same client stay quiet for 8 hours, then reply in that thread asking if the work was finalized. Finding IDs can rotate without opening a new top-level CRITICAL blast.
 Why: Hourly Launch Agent Check-ins for Impact Elite / The Lab repeated the same overdue tasks as new DMs. That was useful while testing and is noise in production. Viktor-style follow-through lives in one thread.
 Impact: Acknowledge / snooze / resolve buttons on the original message still work. Team Intelligence digest repetition is unchanged. QC still only appears when Page Grader sends a `quality_control` webhook; launch noise was drowning that DM.
 Files: `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-slack-bridge.service.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-follow-up.ts`, `apps/api/src/modules/spaces/repositories/slack-open-items.repository.ts`, `apps/api/src/modules/spaces/services/slack-open-items.service.ts`, `documentation/features/page-grader-campaign-brain-sync.md`
+
+## [2026-08-17 16:38] - [FEATURE]
+What: Shell artifact viewer now restores each chat’s last-open artifact on conversation switch, with an optional pin that keeps the current artifact open while browsing other chats.
+Why: Match ChatGPT/Codex chat↔artifact memory without blocking cross-chat navigation on one artifact.
+Impact: Switching chats restores that chat’s artifact by default; pin freezes the panel across switches; summary panel / explicit close still clears and unpins.
+Files: `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/shell/use-shell-store.artifact-conversation.ts`, `apps/web/src/components/shell/shell-artifact-conversation.ts`, `apps/web/src/components/shell/use-shell-artifact-conversation-sync.ts`, `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `documentation/features/claude-chatgpt-shell.md`
 
 ## [2026-08-17 16:33] - [FIX]
 What: Slack Pixel named-client lookup now binds **this** portal conversation so CONNECTIONS shows the client, fuzzy-matches misspelled names (`Matser yoru kraft`, `Yasir / SPeka lke a ceo`), and refuses `[bracket]` Mad Libs drafts until Brain/Slack/Portal/Space were searched. Slack conversation reuse no longer wipes an already-bound campaign.
@@ -171,24 +186,11 @@ Why: "Nothing linked" meant this chat had no campaign, not that client data was 
 Impact: Each Slack message still maps to its own portal chat. Naming a client on that chat links CONNECTIONS for that lookup. It does not lock the whole Pixel DM to one client. Existing TOOLS.md is repaired because the named-client heading is now required.
 Files: `packages/agent-policy/src/platform-tools-template.ts`, `apps/agent-api/src/modules/artifacts/services/campaign-name-match.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-actions.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-legacy-session-campaign.service.ts`, `apps/api/src/modules/slack/services/slack-service-conversation.base.ts`, `documentation/features/meeting-follow-up-slack.md`
 
-
-
 ## [2026-08-17 05:49] - [FIX]
 What: Guaranteed Service Request review links resume the originating Pixel chat. Agent-api now injects the active session `conversation_id` into Page Grader fulfillment MCP args and stamps the draft via an internal API after create. Review/chat load also backfills from Slack channel+thread provenance when the id was missing, and idempotent create replays merge an incoming conversation id.
 Why: Slack-created drafts still opened the step wizard because provenance lacked `resume_conversation_id`; skill-only stamping was insufficient.
 Impact: Existing Slack review links with channel/thread provenance open the shared chat host after API deploy; new Slack/Pixel fulfillment creates stamp the conversation at the platform chokepoint.
 Files: `apps/agent-api/src/modules/artifacts/services/artifact-mcp.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-mcp-fulfillment-stamp.ts`, `apps/api/src/modules/work-requests/services/work-request.service.ts`, `apps/api/src/modules/work-requests/services/work-request-chat.service.ts`, `apps/api/src/modules/work-requests/services/work-request-conversation-stamp.ts`, `apps/api/src/modules/work-requests/controllers/work-request.controller.ts`, `apps/api/src/modules/work-requests/dto/work-request.dto.ts`, `documentation/features/page-grader-mcp-bridge.md`
-
-
-## [2026-08-17 04:21] - [FEATURE]
-
-What: Public Service Request review links now open the same Pixel conversation chat (MessageBubble + ChatInput) instead of a parallel faux wizard. Added token-scoped GET/POST `/work-requests/review/:token/chat` (bootstrap + SSE send via owner session mint → channel-chat). Logged-in users still deep-link to `/home?conv=&wr=`; anonymous users get the shared chat host with force-open resume/finalize card; wizard remains fallback when no `resume_conversation_id`. Create webhook also accepts top-level `conversation_id`; Page Grader operator skill requires stamping it from ROAS chat.
-
-Why: Review links must be the same chat session everywhere — same UI, same components, full messaging, finalize in-place.
-
-Impact: Anonymous review is a real conversation when provenance includes conversation id; authenticated review remains in-app chat; finalize UX is the same WorkRequestChatResumeCard/flow inline.
-
-Files: `apps/api/src/modules/work-requests/services/work-request-chat.service.ts`, `apps/api/src/modules/work-requests/controllers/work-request.controller.ts`, `apps/api/src/modules/work-requests/work-requests.module.ts`, `apps/api/src/modules/work-requests/dto/work-request.dto.ts`, `apps/web/src/lib/work-requests/work-request-api.ts`, `apps/web/src/features/work-requests/hooks/useWorkRequestReviewChat.ts`, `apps/web/src/features/work-requests/components/WorkRequestReviewChatHost.tsx`, `apps/web/src/features/work-requests/components/WorkRequestReviewPage.tsx`, `apps/web/src/features/work-requests/components/WorkRequestChatResumeCard.tsx`, `docker/agents/atlas/skills/page-grader-operator/SKILL.md`, `documentation/frontend-shared-surfaces.md`
 
 ## [2026-08-17 04:56] - [FIX]
 
@@ -199,6 +201,26 @@ Why: Those controls floated under a stacked work-card header, jumped when the su
 Impact: One title bar with the chat name. Top-right is always Summary, then Show/Collapse page. `/home?conv=` no longer stacks a Simple header above chat. Show page from that surface opens the drawer and restores the last work page.
 
 Files: `apps/web/src/features/spaces/components/chat/SpaceChatPanelHeader.tsx`, `SpaceChatPanelHeader.test.tsx`, `SpaceVibeyChatPanel.tsx`, `apps/web/src/components/shell/ShellChatHeaderPageControl.tsx`, `ShellChatHeaderPageControl.test.tsx`, `shell-chat-header-page.ts`, `shell-chat-header-page.test.ts`, `ShellChatDrawer.tsx`, `ShellChatDrawer.test.tsx`, `ShellWorkspace.tsx`, `ShellWorkspace.test.tsx`, `ShellWorkspaceRestoreControls.test.tsx`, `ShellTopBar.tsx`, `ShellTopBar.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-17 04:50] - [FIX]
+
+What: Fixed Vercel typecheck failures for Service Request shared chat — source_context merge typing in create webhook DTO, and MessageBubble message cast at the public chat host boundary.
+
+Why: Preview builds for roas-api and roas-web failed on PR #260.
+
+Impact: Branch can build and merge/deploy.
+
+Files: `apps/api/src/modules/work-requests/dto/work-request.dto.ts`, `apps/web/src/features/work-requests/components/WorkRequestReviewChatHost.tsx`
+
+## [2026-08-17 04:21] - [FEATURE]
+
+What: Public Service Request review links now open the same Pixel conversation chat (MessageBubble + ChatInput) instead of a parallel faux wizard. Added token-scoped GET/POST `/work-requests/review/:token/chat` (bootstrap + SSE send via owner session mint → channel-chat). Logged-in users still deep-link to `/home?conv=&wr=`; anonymous users get the shared chat host with force-open resume/finalize card; wizard remains fallback when no `resume_conversation_id`. Create webhook also accepts top-level `conversation_id`; Page Grader operator skill requires stamping it from ROAS chat.
+
+Why: Review links must be the same chat session everywhere — same UI, same components, full messaging, finalize in-place.
+
+Impact: Anonymous review is a real conversation when provenance includes conversation id; authenticated review remains in-app chat; finalize UX is the same WorkRequestChatResumeCard/flow inline.
+
+Files: `apps/api/src/modules/work-requests/services/work-request-chat.service.ts`, `apps/api/src/modules/work-requests/controllers/work-request.controller.ts`, `apps/api/src/modules/work-requests/work-requests.module.ts`, `apps/api/src/modules/work-requests/dto/work-request.dto.ts`, `apps/web/src/lib/work-requests/work-request-api.ts`, `apps/web/src/features/work-requests/hooks/useWorkRequestReviewChat.ts`, `apps/web/src/features/work-requests/components/WorkRequestReviewChatHost.tsx`, `apps/web/src/features/work-requests/components/WorkRequestReviewPage.tsx`, `apps/web/src/features/work-requests/components/WorkRequestChatResumeCard.tsx`, `docker/agents/atlas/skills/page-grader-operator/SKILL.md`, `documentation/frontend-shared-surfaces.md`
 
 ## [2026-08-17 03:18] - [STYLE]
 
@@ -229,6 +251,7 @@ Why: The docked column was flush to the edges with a vertical rule, which did no
 Impact: Summary sits off to the side of chat as a contained rounded card on wide panes; overlay behavior on narrow panes is unchanged.
 
 Files: `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/components/shell/ShellRightPanel.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-17 01:30] - [FIX]
 
 What: Empty Slack Brain imports no longer toast "Nothing to save from that Slack period." The notifier still acknowledges those skipped/empty jobs so they do not repeat.
@@ -289,16 +312,6 @@ Impact: New Slack chats show the inbound text immediately. Generated topic title
 
 Files: `apps/api/src/modules/slack/services/slack-service-conversation.base.ts`, `apps/api/src/modules/slack/services/slack-conversation-title.ts`, `apps/api/src/modules/conversations/utils/conversation-title.util.ts`, `apps/web/src/features/studio/services/conversation-title-scheduler.ts`, `documentation/features/claude-chatgpt-shell.md`
 
-## [2026-08-17 00:00] - [FIX]
-
-What: Connections / Choose Space / Recents Filter now default to Programs (hover to select a campaign), keep a searchable Clients list, pin General first in every client/campaign list, and label a connected General as `{parent} General`. Removed the composer context chip so Connections is the only attachment control.
-
-Why: The picker started at clients, General was an ambiguous duplicate across ~100 spaces, and the composer pill duplicated Connections.
-
-Impact: Users pick a program or search a client, then select that client's campaigns. A Yasir Khan General connection no longer reads as just General. Chat no longer shows an unrelated context pill.
-
-Files: `apps/web/src/components/conversations/ConversationScopePicker.tsx`, `ConversationScopePickerMenus.tsx`, `conversation-scope-groups.ts`, `conversation-scope-sort.ts`, `conversation-scope-picker-layout.ts`, `apps/web/src/components/shell/ShellRightPanelConnections.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, docs
-
 ## [2026-08-17 00:04] - [REFACTOR]
 
 What: Removed leftover `composerContextSlot` wiring and unused composer-chip label helpers after deleting the chat-input context pill.
@@ -309,24 +322,12 @@ Impact: Chat input no longer has a path to render a campaign/Space contacts pill
 
 Files: `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `space-vibey-chat-panel.types.ts`, `apps/web/src/components/global-chat/config/work-context.config.ts`, `work-context.config.test.ts`
 
-## [2026-08-17 04:50] - [FIX]
+## [2026-08-17 00:00] - [FIX]
 
-What: Fixed Vercel typecheck failures for Service Request shared chat — source_context merge typing in create webhook DTO, and MessageBubble message cast at the public chat host boundary.
+What: Connections / Choose Space / Recents Filter now default to Programs (hover to select a campaign), keep a searchable Clients list, pin General first in every client/campaign list, and label a connected General as `{parent} General`. Removed the composer context chip so Connections is the only attachment control.
 
-Why: Preview builds for roas-api and roas-web failed on PR #260.
+Why: The picker started at clients, General was an ambiguous duplicate across ~100 spaces, and the composer pill duplicated Connections.
 
-Impact: Branch can build and merge/deploy.
+Impact: Users pick a program or search a client, then select that client's campaigns. A Yasir Khan General connection no longer reads as just General. Chat no longer shows an unrelated context pill.
 
-Files: `apps/api/src/modules/work-requests/dto/work-request.dto.ts`, `apps/web/src/features/work-requests/components/WorkRequestReviewChatHost.tsx`
-
-## [2026-08-17 20:17] - [DOCS]
-What: Started gangbusters UX audit; logged Session A New Chat findings F-001–F-008, production AUTH block F-009, and confirmed P-ATTACH-01 from live clicks + code.
-Why: User asked to run the audit with browser connected; production Dylan session missing in cloud browser; local pass still yielded Attach/@ IA evidence.
-Impact: Findings file ready; Attach consolidation plan confirmed; remaining surfaces blocked until production sign-in.
-Files: `.docs/plans/ux-gangbusters-findings-2026-08-17.md`
-
-## [2026-08-17 19:44] - [DOCS]
-What: Added the gangbusters ultra-detailed navigation/UX audit prompt plus a paste-ready kickoff for cloud agents.
-Why: Need a reusable, high-depth click-through protocol (Attach/@ gold example) before running a full-platform menu audit and plan-before-fix loop.
-Impact: Agents can execute exhaustive surface testing with consistent finding cards, stale-state hunts, and a reference Attach consolidation plan.
-Files: `.docs/plans/ux-gangbusters-navigation-audit-prompt.md`, `.docs/plans/ux-gangbusters-audit-kickoff.md`
+Files: `apps/web/src/components/conversations/ConversationScopePicker.tsx`, `ConversationScopePickerMenus.tsx`, `conversation-scope-groups.ts`, `conversation-scope-sort.ts`, `conversation-scope-picker-layout.ts`, `apps/web/src/components/shell/ShellRightPanelConnections.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, docs
