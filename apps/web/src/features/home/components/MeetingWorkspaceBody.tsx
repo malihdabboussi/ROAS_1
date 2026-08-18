@@ -43,6 +43,7 @@ export function MeetingWorkspaceBody({
   onNoteCreated,
   onActionCreated,
   onActionsReload,
+  onCreateAgendaWithAi,
 }: {
   spaceId: string
   meetingItemId: string
@@ -57,6 +58,7 @@ export function MeetingWorkspaceBody({
   onNoteCreated: (snippet: MeetingSnippet) => void
   onActionCreated: (action: MeetingAction) => void
   onActionsReload: () => Promise<void>
+  onCreateAgendaWithAi?: () => void
 }) {
   if (loading) {
     return (
@@ -123,6 +125,7 @@ export function MeetingWorkspaceBody({
           prep={prep}
           prepDescription={prepDescription}
           joinUrl={joinUrl}
+          onCreateWithAi={onCreateAgendaWithAi}
         />
       </section>
 

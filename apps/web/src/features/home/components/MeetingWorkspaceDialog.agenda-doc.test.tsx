@@ -123,6 +123,38 @@ describe('MeetingWorkspaceDialog agenda doc', () => {
     expect(mocks.seedComposer.mock.calls[0]?.[0]?.content).toContain('update_document')
   })
 
+  it('seeds Create with AI from Agenda & prep into the same Space Doc prompt', async () => {
+    mocks.fetchMeetingWorkspace.mockResolvedValue(scheduledBundle)
+
+    render(
+      <MeetingWorkspaceDialog
+        spaceId="space-1"
+        meetingItemId="meeting-1"
+        joinUrl={null}
+        fallbackTitle="Strategy call"
+        onBack={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Create with AI' })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Create with AI' }))
+
+    expect(mocks.seedComposer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: 'conversation-1',
+        content: expect.stringContaining('agenda-doc-1'),
+      }),
+    )
+    const content = String(mocks.seedComposer.mock.calls[0]?.[0]?.content ?? '')
+    expect(content).toContain('update_document')
+    expect(content).toContain('Open action items')
+    expect(content).toContain('Launches')
+    expect(content).toContain('Client reports')
+  })
+
   it('seeds Prep for call into the meeting chat instead of opening a Space prep item', async () => {
     mocks.fetchMeetingWorkspace.mockResolvedValue(scheduledBundle)
 

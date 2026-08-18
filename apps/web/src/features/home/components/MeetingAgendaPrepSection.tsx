@@ -1,5 +1,6 @@
 'use client'
 
+import { Sparkles } from 'lucide-react'
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
 import { MeetingAgendaDocEditor } from '@/features/home/components/MeetingAgendaDocEditor'
 import { HOME_AGENDA_MESSAGES } from '@/features/home/config/home-agenda-messages.config'
@@ -12,6 +13,7 @@ export function MeetingAgendaPrepSection({
   prep,
   prepDescription,
   joinUrl,
+  onCreateWithAi,
 }: {
   spaceId: string
   agendaDocItemId?: string | null
@@ -19,11 +21,24 @@ export function MeetingAgendaPrepSection({
   prep: ParsedMeetingPrep
   prepDescription: string | null | undefined
   joinUrl: string | null
+  onCreateWithAi?: () => void
 }) {
   const hasAgendaDoc = Boolean(agendaDocItemId?.trim())
   return (
     <>
-      <h2 className="body-3 text-foreground font-semibold">Agenda & prep</h2>
+      <div className="gap-spacing-2 flex items-center justify-between">
+        <h2 className="body-3 text-foreground font-semibold">Agenda & prep</h2>
+        {onCreateWithAi ? (
+          <button
+            type="button"
+            onClick={onCreateWithAi}
+            className="button-compact button-glass-primary gap-spacing-1 inline-flex items-center"
+          >
+            <Sparkles className="icon-xs" aria-hidden />
+            {HOME_AGENDA_MESSAGES.CREATE_WITH_AI.message}
+          </button>
+        ) : null}
+      </div>
       {hasAgendaDoc && agendaDocItemId ? (
         <MeetingAgendaDocEditor spaceId={spaceId} itemId={agendaDocItemId} title={agendaTitle} />
       ) : prep.notes ? (

@@ -96,9 +96,16 @@ export function startAgendaPrompt(agendaDocItemId: string | null | undefined): s
       ].join(' ')
     : 'Return it in a ```draft Agenda``` fence so I can edit it.'
   return [
-    'Kick off the agenda for this upcoming meeting.',
+    'Kick off the agenda for this upcoming meeting and put it on the agenda page.',
     '',
-    'Build it from what you know: the invite, who is attending, open action items from prior calls with these people, and anything unresolved from the last meeting.',
+    'Pull in and write onto the agenda, when they exist:',
+    '- Open action items and unresolved commitments from this meeting and the last related meeting',
+    '- Launches, launch dates, and launch deliverables from the linked campaign or Space',
+    '- Client reports, Page Grader / campaign performance, and other client deliverables that should be reviewed on this call',
+    '- Recurring follow-ups, blockers, and decisions the attendees need to make',
+    '',
+    'Also use the invite, who is attending, and anything unresolved from the last meeting.',
+    'Omit a source if it is missing. Do not invent launches, reports, or numbers.',
     '',
     'Format: 3-6 agenda points max, each as topic — why it matters — decision or outcome we need. Put the highest-stakes item first. Flag anything I should read or prep before the call.',
     '',
