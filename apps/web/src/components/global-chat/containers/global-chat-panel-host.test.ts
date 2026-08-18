@@ -20,6 +20,29 @@ describe('resolveGlobalChatPanelHost', () => {
     })
   })
 
+  it('does not keep a leftover Meetings host on a fresh Home chat', () => {
+    expect(
+      resolveGlobalChatPanelHost({
+        isChannelRoute: false,
+        channelId: null,
+        isSpacesRoute: false,
+        freshChat: true,
+        activeSpaceId: null,
+        activeSpaceCampaignId: null,
+        workContext: { surface: 'general' },
+        sticky: {
+          panelKey: 'space:meetings:general-camp',
+          spaceId: 'meetings',
+          campaignId: 'general-camp',
+        },
+      }),
+    ).toEqual({
+      panelKey: 'general',
+      spaceId: undefined,
+      campaignId: null,
+    })
+  })
+
   it('keeps the sticky space host when the user detaches to general', () => {
     const sticky = {
       panelKey: 'space:space-1:camp-1',

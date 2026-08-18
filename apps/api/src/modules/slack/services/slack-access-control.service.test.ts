@@ -238,6 +238,7 @@ describe('SlackAccessControlService', () => {
   })
 
   it('allows an internal Slack Connect person when Manage People classifies every human channel member as internal', async () => {
+    const listConversationMembers = vi.fn().mockResolvedValue(['U_CONNECT', 'U_TEAM', 'B_APP'])
     const resolver = {
       resolveSlackSenders: vi.fn().mockResolvedValue(
         new Map([
@@ -248,9 +249,7 @@ describe('SlackAccessControlService', () => {
       ),
     }
     const service = new SlackAccessControlService(
-      {
-        listConversationMembers: vi.fn().mockResolvedValue(['U_CONNECT', 'U_TEAM', 'B_APP']),
-      } as never,
+      { listConversationMembers } as never,
       resolver as never,
       runtimeRepository() as never,
     )
@@ -267,19 +266,25 @@ describe('SlackAccessControlService', () => {
         isDirectMessage: false,
       }),
     ).resolves.toMatchObject({ allowed: true })
+    expect(listConversationMembers).not.toHaveBeenCalled()
+    expect(resolver.resolveSlackSenders).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({ slackUserIds: ['U_CONNECT'] }),
+    )
   })
 
-  it('denies an otherwise internal sender in a channel containing an external person', async () => {
+  it('allows an internal sender in a group DM that also contains a Slack Connect teammate', async () => {
+    const listConversationMembers = vi.fn()
     const resolver = {
       resolveSlackSenders: vi.fn().mockResolvedValue(
         new Map([
           ['U_INTERNAL', sender()],
-          ['U_CLIENT', sender({ slackUserId: 'U_CLIENT', relationshipKind: 'external' })],
+          ['U_CONNECT', sender({ slackUserId: 'U_CONNECT', relationshipKind: 'external' })],
         ]),
       ),
     }
     const service = new SlackAccessControlService(
-      { listConversationMembers: vi.fn().mockResolvedValue(['U_INTERNAL', 'U_CLIENT']) } as never,
+      { listConversationMembers } as never,
       resolver as never,
       runtimeRepository() as never,
     )
@@ -292,13 +297,11 @@ describe('SlackAccessControlService', () => {
         ownerSlackUserId: 'U_OWNER',
         orgId: 'org-1',
         slackUserId: 'U_INTERNAL',
-        channelId: 'C_CLIENT',
+        channelId: 'G_GROUP_DM',
         isDirectMessage: false,
       }),
-    ).resolves.toEqual({
-      allowed: false,
-      reason: 'channel_not_internal',
-    })
+    ).resolves.toMatchObject({ allowed: true })
+    expect(listConversationMembers).not.toHaveBeenCalled()
   })
 
   it('grants same-organization data access to an explicitly enabled internal member', async () => {

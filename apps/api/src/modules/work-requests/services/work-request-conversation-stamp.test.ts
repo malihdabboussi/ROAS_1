@@ -75,6 +75,15 @@ describe('work-request-conversation-stamp', () => {
     ).toEqual({ channelId: 'C9', threadTs: '9.9' })
   })
 
+  it('uses message_ts as the thread parent when thread_ts is missing', () => {
+    expect(
+      readSlackThreadProvenance({
+        channel_id: 'C123',
+        message_ts: '111.222',
+      }),
+    ).toEqual({ channelId: 'C123', threadTs: '111.222' })
+  })
+
   it('resolves exactly one matching slack conversation', async () => {
     const limit = vi.fn().mockResolvedValue({ data: [{ id: CONV }], error: null })
     const chain: {

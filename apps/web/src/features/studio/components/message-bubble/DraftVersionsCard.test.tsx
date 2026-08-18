@@ -56,7 +56,9 @@ describe('DraftVersionsCard', () => {
       )
 
       fireEvent.click(screen.getByLabelText('Use draft in composer: Full breakdown'))
-      expect(events).toEqual(['Full body, edited'])
+      expect(events).toEqual([
+        'I used option A and made some edits. Here it is.\n\nFull body, edited',
+      ])
     } finally {
       window.removeEventListener('chat:draft-card-use', onUse)
     }
@@ -89,7 +91,9 @@ describe('DraftVersionsCard', () => {
       fireEvent.input(body)
 
       fireEvent.click(screen.getByLabelText('Use draft in composer: Full breakdown'))
-      expect(events).toEqual(['line one\nline two\nline three'])
+      expect(events).toEqual([
+        'I used option A and made some edits. Here it is.\n\nline one\nline two\nline three',
+      ])
 
       fireEvent.click(screen.getByLabelText('Copy draft: Full breakdown'))
       await vi.waitFor(() =>
@@ -99,7 +103,9 @@ describe('DraftVersionsCard', () => {
       body.innerHTML = 'first<br>second<div><br></div><div>after blank</div>'
       fireEvent.input(body)
       fireEvent.click(screen.getByLabelText('Use draft in composer: Full breakdown'))
-      expect(events[1]).toBe('first\nsecond\n\nafter blank')
+      expect(events[1]).toBe(
+        'I used option A and made some edits. Here it is.\n\nfirst\nsecond\n\nafter blank',
+      )
     } finally {
       window.removeEventListener('chat:draft-card-use', onUse)
     }
@@ -134,7 +140,9 @@ describe('DraftVersionsCard', () => {
       expect(screen.getByText('Edited')).toBeTruthy()
 
       fireEvent.click(screen.getByLabelText('Use draft in composer: Full breakdown'))
-      expect(events).toEqual(['Full body pasted line'])
+      expect(events).toEqual([
+        'I used option A and made some edits. Here it is.\n\nFull body pasted line',
+      ])
     } finally {
       window.removeEventListener('chat:draft-card-use', onUse)
     }
@@ -165,7 +173,7 @@ describe('DraftVersionsCard', () => {
         'Full body',
       )
       fireEvent.click(screen.getByLabelText('Use draft in composer: Full breakdown'))
-      expect(events).toEqual(['Full body'])
+      expect(events).toEqual(['I used option A. Here it is.\n\nFull body'])
     } finally {
       window.removeEventListener('chat:draft-card-use', onUse)
     }

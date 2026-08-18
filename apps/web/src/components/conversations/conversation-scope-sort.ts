@@ -1,7 +1,12 @@
 const GENERAL_LABEL = 'general'
+const GENERIC_SCOPE_PARENTS = new Set(['client spaces', 'clients'])
 
 export function isGeneralLabel(value: string | null | undefined): boolean {
   return value?.trim().toLowerCase() === GENERAL_LABEL
+}
+
+function isGenericScopeParent(value: string): boolean {
+  return GENERIC_SCOPE_PARENTS.has(value.trim().toLowerCase())
 }
 
 export function compareGeneralFirst(a: string, b: string): number {
@@ -16,16 +21,17 @@ export function sortGeneralFirst<T>(items: readonly T[], nameOf: (item: T) => st
   return [...items].sort((a, b) => compareGeneralFirst(nameOf(a), nameOf(b)))
 }
 
-/** When the leaf is General, prefix the parent so 100 Generals stay distinguishable. */
+/** When the leaf is General, prefix the first specific ancestor so 100 Generals stay distinguishable. */
 export function qualifyGeneralLocation(input: {
   leafName?: string | null
   parentName?: string | null
+  ancestors?: Array<string | null | undefined>
 }): string | null {
   const leafName = input.leafName?.trim()
   if (!leafName) return null
-  const parentName = input.parentName?.trim()
-  if (isGeneralLabel(leafName) && parentName && !isGeneralLabel(parentName)) {
-    return `${parentName} General`
-  }
-  return leafName
+  if (!isGeneralLabel(leafName)) return leafName
+  const parent = [...(input.ancestors ?? []), input.parentName]
+    .map((name) => name?.trim() ?? '')
+    .find((name) => name.length > 0 && !isGeneralLabel(name) && !isGenericScopeParent(name))
+  return parent ? `${parent} General` : leafName
 }

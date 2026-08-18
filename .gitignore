@@ -78,6 +78,12 @@ docker/agents/vibey/skills/*
 !docker/agents/vibey/skills/page-grader-operator/SKILL.md
 !docker/agents/vibey/skills/slack-signal-operator/
 !docker/agents/vibey/skills/slack-signal-operator/SKILL.md
+!docker/agents/vibey/skills/dylans-super-voice/
+!docker/agents/vibey/skills/dylans-super-voice/SKILL.md
+!docker/agents/vibey/skills/delegation-desk/
+!docker/agents/vibey/skills/delegation-desk/SKILL.md
+!docker/agents/vibey/skills/page-grader-operator/
+!docker/agents/vibey/skills/page-grader-operator/SKILL.md
 !apps/api/src/modules/agents/
 !apps/api/src/modules/agents/**
 !apps/openclaw/src/agents/

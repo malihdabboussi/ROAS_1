@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   fetchSpaces: vi.fn(),
   fetchSpaceById: vi.fn(),
   fetchCampaigns: vi.fn(),
+  fetchCampaign: vi.fn(async () => null),
   fetchPrograms: vi.fn(
     async (): Promise<Array<{ id: string; name: string; system_kind?: string | null }>> => [],
   ),
@@ -47,6 +48,7 @@ vi.mock('@/lib/programs', async (importOriginal) => {
 
 vi.mock('@/lib/campaigns', () => ({
   fetchCampaigns: mocks.fetchCampaigns,
+  fetchCampaign: mocks.fetchCampaign,
 }))
 
 vi.mock('@/lib/ui', () => ({
@@ -114,6 +116,9 @@ function stubPickerCampaigns(
   mocks.useCampaignCacheVersion.mockReturnValue(0)
   mocks.getCachedCampaigns.mockReturnValue(rows)
   mocks.prefetchOrgCampaigns.mockResolvedValue(rows)
+  mocks.fetchCampaign.mockImplementation(
+    async (id: string) => rows.find((row) => row.id === id) ?? null,
+  )
 }
 
 describe('ConversationScopePicker', () => {
@@ -360,7 +365,7 @@ describe('ConversationScopePicker', () => {
     render(<ConversationScopePicker conversation={conversation} />)
 
     fireEvent.click(screen.getByLabelText('General'))
-    const search = await screen.findByLabelText('Search clients')
+    const search = await screen.findByLabelText('Search')
     fireEvent.change(search, { target: { value: 'yasir' } })
     expect(await screen.findByRole('button', { name: 'Yasir Khan' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Above It' })).toBeNull()

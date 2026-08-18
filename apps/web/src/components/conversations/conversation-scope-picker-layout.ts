@@ -11,6 +11,7 @@ export const CONVERSATION_SCOPE_SUBMENU_GAP = 4
 export interface ConversationScopeSpace {
   id: string
   title: string
+  campaign_id?: string | null
 }
 
 export interface ConversationScopePickerHandle {
@@ -53,12 +54,12 @@ export function conversationScopeDisplayLabel(input: {
 }): string {
   const spaceTitle = qualifyGeneralLocation({
     leafName: input.spaceTitle,
-    parentName: input.campaignName,
+    ancestors: [input.campaignName, input.programName],
   })
   if (spaceTitle) return spaceTitle
   const campaignName = qualifyGeneralLocation({
     leafName: input.campaignName,
-    parentName: input.programName,
+    ancestors: [input.programName],
   })
   if (campaignName) return campaignName
   if (input.spaceId) return 'Space'
