@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 15:55] - [DOCS]
+What: Corrected the leftover Data Flow sentence that still said post-call is client-only.
+Why: The live rule is Team + Client run; Personal never enters the bot.
+Impact: Docs match the shipped trigger.
+Files: `documentation/features/meeting-follow-up-slack.md`
+
 ## [2026-08-18 15:50] - [FIX]
 What: Post-call bot now runs Team and Client calls. Personal calls never enter the bot. Team titles (weekly team, launch calendar) stay Team even when Fathom tagged one speaker.
 Why: The live Fathom Meeting Log was client-only, and internal team reviews were auto-labeled Personal, so the bot skipped the calls that should run and treated team work as confidential personal.

@@ -112,7 +112,7 @@ The skill is database-first in `agent_skills` and mirrored under `docker/agents/
 
 ## Data flow
 
-1. **Automation action** `request_slack_follow_up_confirm` runs after `agent_suggest_tasks` (Personal Dashboard Fathom Meeting Log template / live Meetings automation). The action is scoped to canonical `call_kind = client`; Personal, Team, Executive, Partner, Sales, and unclassified calls return a recorded skip and do not invoke Pixel or Slack.
+1. **Automation action** `request_slack_follow_up_confirm` runs after `agent_suggest_tasks` (Personal Dashboard Fathom Meeting Log template / live Meetings automation). The action is scoped to Team and Client (`meeting_scope: client_and_team`). Personal calls never enter the bot, including when scope is `all`. Executive, Partner, Sales, and unclassified calls skip unless scope is `all`.
 2. Service resolves suggestion IDs from the action or the latest `agent_suggest_tasks` step.
 3. Calls Agent API `/api/agents/post-call-draft`, explicitly loading `post-call-delivery`, and receives `{ message, rationale, context_sources }`.
    Before generation, Agent API loads the meeting workspace's portal agenda, canonical recap, transcript documents, and Pixel's available Brain context. The direct call/follow-up payload remains the final grounding source.
