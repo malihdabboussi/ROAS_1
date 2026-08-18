@@ -51,7 +51,6 @@ interface AgentChatThreadProps {
   composerInput: ReactNode
   homeComposerStyle: boolean
   compactLayout?: boolean
-  isStreaming: boolean
   onScroll: () => void
   onScrollToBottom: () => void
   onEditSubmit: (
@@ -98,7 +97,6 @@ export function AgentChatThread({
   composerInput,
   homeComposerStyle,
   compactLayout = false,
-  isStreaming,
   onScroll,
   onScrollToBottom,
   onEditSubmit,
