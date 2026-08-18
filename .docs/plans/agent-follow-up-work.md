@@ -34,6 +34,19 @@ Needed work: Qualify the space folder label with the same ancestor walk used by 
 
 Reason not done now: The opened Connections destination in this bug was the campaign page, which now has client/program crumbs.
 
+
+## 2026-08-18 - [ARCH] SpaceVibeyChatPanel and other chat hosts remain far over LOC limits
+
+Status: Open
+
+Found while: Removing the streaming composer typewriter tip
+
+Evidence: `wc -l` reports `SpaceVibeyChatPanel.tsx` 2664, `ChatInterface.tsx` 1082, `TeamHrSideChatPanel.tsx` 694, `ProjectChatPane.tsx` 591 (container 600 / component 400). This change only deleted the active-run tip slot.
+
+Needed work: Split send/seed/header/composer orchestration out of these chat hosts.
+
+Reason not done now: Requested work was delete the old Tip strip. Decomposing the hosts was out of scope. `ProjectChatPane.tsx` still mounts a no-op Studio `ComposerActiveRunTipCard` because editing that file trips the cross-feature import gate.
+
 ## 2026-08-17 - [FIX] Team Intelligence digest still repeats the same open threads
 
 Status: Open

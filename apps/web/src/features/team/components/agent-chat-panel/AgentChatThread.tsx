@@ -1,17 +1,17 @@
-import type { RefObject, ReactNode } from 'react'
+import type { ReactNode, RefObject } from 'react'
 import { ArrowDown } from 'lucide-react'
-import { ComposerActiveRunTipCard, ComposerInputStack, MessageQueue, PlanStickyTracker } from '@/components/chat'
+import { ComposerInputStack, MessageQueue, PlanStickyTracker } from '@/components/chat'
 import { MessageBubble } from '@/components/chat/MessageBubbleAdapter'
 import { RateLimitCard } from '@/components/chat/RateLimitCardAdapter'
 import { StatusIndicator } from '@/components/chat/StatusIndicatorAdapter'
 import { StreamInterruptedBar } from '@/components/chat/StreamInterruptedBarAdapter'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import type { ChatModelSettings } from '@/lib/chat'
 import type {
   Conversation,
   DocumentAttachment,
   Message,
 } from '@/lib/chat/studio-chat-runtime-adapter'
-import type { ChatModelSettings } from '@/lib/chat'
 import { cn } from '@/lib/utils/cn'
 import { VoiceSessionTasks } from '../voice/VoiceSessionTasks'
 import type { AgentChatTurnData } from './agent-chat-panel.logic'
@@ -130,7 +130,7 @@ export function AgentChatThread({
             )}
           >
             {initializing && messages.length === 0 ? (
-              <div className="flex min-h-0 flex-col items-center justify-center py-spacing-6">
+              <div className="py-spacing-6 flex min-h-0 flex-col items-center justify-center">
                 <VibeyLoadingOrb
                   text={
                     (selectedSession?.metadata as Record<string, unknown> | undefined)
@@ -168,7 +168,10 @@ export function AgentChatThread({
                       data-turn-id={turn.user.id}
                       className={`relative flex flex-col ${isLastTurn && !compactLayout ? 'flex-1' : ''}`}
                     >
-                      <div ref={isLastTurn ? lastUserPromptRef : undefined} className="sticky top-0 z-10">
+                      <div
+                        ref={isLastTurn ? lastUserPromptRef : undefined}
+                        className="sticky top-0 z-10"
+                      >
                         <div className="surface-bg">
                           <MessageBubble
                             message={turn.user}
@@ -241,18 +244,18 @@ export function AgentChatThread({
 
       {!compactLayout && messages.length === 0 && !initializing ? (
         <div className="flex flex-col items-center justify-center py-24">
-          <h1 className="title-h2 text-center text-foreground">WHAT ARE WE BUILDING TODAY?</h1>
+          <h1 className="title-h2 text-foreground text-center">WHAT ARE WE BUILDING TODAY?</h1>
         </div>
       ) : null}
 
       {creditsLow && !creditsExhausted && (
-        <div className="flex items-center justify-center gap-2 bg-warning/10 px-4 py-2">
+        <div className="bg-warning/10 flex items-center justify-center gap-2 px-4 py-2">
           <span className="body-3 text-warning">
             Running low on credits ({creditsLowRemaining} remaining)
           </span>
           <button
             onClick={onBuyMoreCredits}
-            className="body-3 font-medium text-warning underline hover:text-warning"
+            className="body-3 text-warning hover:text-warning font-medium underline"
           >
             Buy more
           </button>
@@ -260,10 +263,8 @@ export function AgentChatThread({
       )}
 
       {creditsExhausted && (
-        <div className="flex flex-col items-center gap-3 bg-destructive/10 px-4 py-4">
-          <p className="body-2 font-medium text-foreground">
-            You&apos;ve run out of credits
-          </p>
+        <div className="bg-destructive/10 flex flex-col items-center gap-3 px-4 py-4">
+          <p className="body-2 text-foreground font-medium">You&apos;ve run out of credits</p>
           <div className="flex gap-2">
             <button
               onClick={onBuyMoreCreditsAfterExhaustion}
@@ -289,7 +290,7 @@ export function AgentChatThread({
             <button
               type="button"
               onClick={onScrollToBottom}
-              className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card shadow-[0_0_12px_4px_rgba(0,0,0,0.4)] transition-all hover:opacity-90"
+              className="border-border bg-card pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full border shadow-[0_0_12px_4px_rgba(0,0,0,0.4)] transition-all hover:opacity-90"
               aria-label="Scroll to latest messages"
               title="Scroll to latest"
             >
@@ -299,18 +300,14 @@ export function AgentChatThread({
         )}
         <div className="w-full max-w-3xl">
           <RateLimitCard />
-          <MessageQueue items={queue} onRemove={onQueueRemove} onSendNow={onQueueSendNow} onEdit={onQueueEdit} />
+          <MessageQueue
+            items={queue}
+            onRemove={onQueueRemove}
+            onSendNow={onQueueSendNow}
+            onEdit={onQueueEdit}
+          />
           {composerTopSlot}
-          <ComposerInputStack
-            stackActive={isStreaming}
-            topSlot={
-              <ComposerActiveRunTipCard
-                stacked
-                conversationId={selectedSessionId}
-                isStreaming={isStreaming}
-              />
-            }
-          >
+          <ComposerInputStack stackActive={false}>
             <div className="relative">
               {composerOverlay}
               {homeComposerStyle ? (

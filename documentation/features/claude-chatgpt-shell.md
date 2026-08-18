@@ -103,10 +103,16 @@ The history list has its own persisted drag width and collapse state. Dragging i
 - Empty Outputs / Sources / Tasks / Connections start collapsed. Expanding a loading section shows a skeleton, not a Loading label, then the empty art or rows.
 - Summary stays in the chat header top-right cluster. Slack chats show the first message until Gemini replaces it with a short topic title.
 
+### 2026-08-18: Streaming typewriter composer tip removed
+
+- The stacked `Tip:` typewriter on the composer while the agent is working is gone (`ComposerActiveRunTipCard`).
+- Active chats keep the dismissible Try-tip banner above the input. Home / New chat stays empty of tips.
+
 ### 2026-08-16: Home composer stays uncluttered; Try tips live in active chats
 
 - Home / New chat no longer shows the idle Try-tip banner or the Mission / Offer / artifact chip row above the input.
 - Active chats show the Try-tip banner and rotate through a multi-concept catalog. Closing a tip hides the banner in that chat; other chats can still show a remaining tip.
+- The old streaming typewriter strip (`Tip: Ask any agent for campaign performance…`) is removed. While the agent is working, the composer has no tip bar.
 - Create catalog items remain in the + Create menu. They are not duplicated as chips on Home or above the chat composer.
 
 ### 2026-08-15: Recents Filter can pick a campaign without a Space
@@ -314,6 +320,7 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 - **2026-08-17:** Meeting pre-call actions are **Start agenda** (Space Doc), **Prep for call** (chat prompt), and **Google agenda** (open the Page Grader Google Doc, or seed a Google Doc prompt). The old in-app precall-prep / Open agenda prep Space-item path is removed from Home.
 - **2026-08-18:** Agenda & prep **Create with AI** seeds the same Start agenda prompt so Pixel writes the agenda Space Doc from open action items, launches, and client reports.
 - **2026-08-17:** Summary stays on the conversation title bar. Show page sits beside it only while the work card is closed (`/home?conv=` included). When the page is open, the expand/collapse page control lives in the work-card header. Recents Filter pins the compact Recents action bar while the portaled menu is open so the menu cannot jump.
+- **2026-08-18:** The streaming typewriter composer tip (`Tip: …`) is removed. Active chats keep only the dismissible Try-tip banner; Home / New chat stays empty of tips.
 - **2026-08-17:** Closing a composer Try tip hides the banner in that conversation. It does not cycle to the next remaining tip. Other chats can still show a remaining tip.
 - **2026-08-14:** Mission and More choices drill down within Create; Mission launch confirmation remains the campaign/Space boundary. Narrow Mission panes use Overview/Activity, Outputs retain source-message navigation, and assistant Reply uses an exact-message reference instead of chat feedback thumbs.
 - **2026-08-11:** Full-screen chat keeps a top-right Show page control visible outside the collapsible work surface. Restoring a recent page preserves the active conversation instead of losing the current thread.

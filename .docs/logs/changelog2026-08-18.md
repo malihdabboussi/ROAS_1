@@ -1,16 +1,23 @@
 # Changelog - August 18, 2026
 
 ## [2026-08-18 02:05] - [FIX]
-What: Home New chat no longer invents the org Meetings/General workspace. An `@` campaign chip (last campaign mention) becomes the Connection. Enter on `/home?chat=starting` stays on the new thread and does not reuse a leftover Meetings host.
-Why: Blank Home send used the newest space on the org General campaign (often Meetings). `@1DS Collective` only became a Source. Sticky host plus Recents/drawer restore then opened or stamped that Meetings workspace while Pixel talked about 1DS.
-Impact: Talking about a campaign with `@` attaches that campaign in Connections. A blank Home send stays unscoped. The previous Recents row does not swallow the new message.
-Files: `apps/web/src/components/conversations/conversation-scope-from-mentions.ts`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/global-chat/containers/global-chat-panel-host.ts`, `GlobalChatPanel.tsx`, `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.ts`, `SpaceVibeyChatPanel.tsx`, `documentation/features/claude-chatgpt-shell.md`
+**What:** Home **New chat** no longer auto-attaches org Meetings/General; `@` campaign chip creates a Connection and keeps `campaignId`.
+**Why:** Defaulting every Home thread to Meetings made `/home?conv=` look like a meeting chat and dropped campaign identity when creating from campaign pages.
+**Impact:** Home composer chats stay unattached until you `@` a campaign; campaign-page chats keep `campaignId` and also attach as a Connection.
+**Files:** `apps/web/src/features/chat/components/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/chat/lib/composer-campaign-chip.ts`, `apps/web/src/features/chat/lib/composer-campaign-chip.test.ts`, `documentation/features/claude-chatgpt-shell.md`
 
 ## [2026-08-18 01:34] - [FIX]
-What: Connections now names a General location with its client/program (`Master Your Kraft General`) instead of a bare General. Campaign pages register clickable `Campaigns / client / campaign` crumbs. Home chats send that attached location into agent awareness.
-Why: Qualify-General stopped at another General campaign and never walked up to the client. Campaign detail only showed the path label Campaigns. Home chats skipped Space awareness unless the work area was already on a Space route, so Brain stopped pulling from Connections.
-Impact: The connection row shows the client plus space. Opening it shows clickable crumbs. Pixel receives the attached client/space on Home chats.
-Files: `apps/web/src/components/conversations/conversation-scope-sort.ts`, `conversation-scope-picker-layout.ts`, `use-conversation-location-label.ts`, `ConversationScopePicker.tsx`, `apps/web/src/components/shell/ShellRightPanelConnections.tsx`, `apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx`, `CampaignWorkspaceBreadcrumb.tsx`, `apps/web/src/features/spaces/components/header/SpaceBreadcrumbHeader.tsx`, `apps/web/src/features/spaces/components/chat/use-chat-send-awareness.ts`, `build-space-awareness-context.ts`, `documentation/features/claude-chatgpt-shell.md`
+**What:** Connections names **General** with the client/program, shows campaign crumbs, and Home chats send attached location.
+**Why:** The rail listed every client as **General**; Home New chat dropped `spaceId`/`campaignId` so `/home?conv=` opened as a meeting chat.
+**Impact:** Client Connections look like **ROAS Media / General**. Campaign Connections show **Client / Campaign**. Home chats stay on `/home?conv=` with the attached campaign.
+**Files:** `apps/web/src/features/chat/components/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/chat/lib/use-home-chat-attached-location.ts`, `apps/web/src/features/chat/lib/use-home-chat-attached-location.test.ts`, `apps/web/src/features/spaces/components/SpaceChatSessionNav.tsx`, `apps/web/src/features/spaces/components/space-chat-nav-utils.ts`, `apps/web/src/features/spaces/components/space-chat-nav-utils.test.ts`, `documentation/features/claude-chatgpt-shell.md`
+
+
+## [2026-08-18 01:20] - [FIX]
+What: Removed the streaming composer typewriter tip (`Tip: Ask any agent for campaign performance…` and the rest of that rotating strip).
+Why: The dismissible Try-tip banner is the composer tip surface. The old lightbulb strip duplicated it and sat on the input while the agent was working.
+Impact: Pixel, Studio, Team, HR, and Project composers no longer show that bar. Active chats still get the Try-tip banner when idle.
+Files: deleted shared `ComposerActiveRunTipCard.tsx`, `TypewriterTipReveal.tsx`, `composer-active-run-tips.ts`; `SpaceVibeyChatPanel.tsx`, `ChatInterface.tsx`, `AgentChatThread.tsx`, `TeamHrSideChatPanel.tsx`; Studio wrapper is a no-op for Project chat; `documentation/features/claude-chatgpt-shell.md`
 
 ## [2026-08-18 00:17] - [FEATURE]
 What: Added Create with AI on Agenda & prep. It seeds the existing Start agenda prompt so Pixel writes the agenda Space Doc from open action items, launches, client reports, and related meeting context.
