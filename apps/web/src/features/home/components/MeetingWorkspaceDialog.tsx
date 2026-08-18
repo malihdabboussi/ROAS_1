@@ -12,6 +12,7 @@ import {
   HOME_TOAST_SUCCESS,
 } from '@/features/home/config/home-toast-errors.config'
 import {
+  MEETING_PRE_CALL_ACTIONS,
   startAgendaPrompt,
   type MeetingPostCallAction,
 } from '@/features/home/config/meeting-post-call-actions.config'
@@ -316,6 +317,12 @@ export function MeetingWorkspaceDialog({
             onActionCreated={handleActionCreated}
             onActionsReload={async () => {
               await hydrateWorkspace()
+            }}
+            onCreateAgendaWithAi={() => {
+              const startAgenda = MEETING_PRE_CALL_ACTIONS.find(
+                (action) => action.id === 'start-agenda',
+              )
+              if (startAgenda) runPostCallAction(startAgenda)
             }}
           />
         </div>

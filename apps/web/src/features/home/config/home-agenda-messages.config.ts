@@ -50,9 +50,15 @@ export const HOME_AGENDA_MESSAGES = {
     message: 'Start workspace',
     category: 'button',
   },
+  CREATE_WITH_AI: {
+    key: 'CREATE_WITH_AI',
+    message: 'Create with AI',
+    category: 'button',
+  },
   AGENDA_EMPTY: {
     key: 'AGENDA_EMPTY',
-    message: 'No agenda notes yet — kick one off with Start agenda above.',
+    message:
+      'No agenda notes yet. Create one with AI from open action items, launches, and client reports.',
     category: 'empty',
   },
 } as const

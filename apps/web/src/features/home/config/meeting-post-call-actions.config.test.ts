@@ -10,6 +10,15 @@ describe('startAgendaPrompt', () => {
     expect(prompt).not.toContain('```draft Agenda```')
   })
 
+  it('asks Pixel to pull open actions, launches, and client reports onto the agenda page', () => {
+    const prompt = startAgendaPrompt('agenda-doc-1')
+    expect(prompt).toContain('put it on the agenda page')
+    expect(prompt).toContain('Open action items')
+    expect(prompt).toContain('Launches')
+    expect(prompt).toContain('Client reports')
+    expect(prompt).toContain('Do not invent launches, reports, or numbers')
+  })
+
   it('falls back to a draft fence when no agenda doc is linked', () => {
     expect(startAgendaPrompt(null)).toContain('```draft Agenda```')
   })
