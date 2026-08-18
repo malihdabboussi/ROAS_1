@@ -1,6 +1,6 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchWorkRequestReview } from '@/lib/work-requests'
+import { fetchWorkRequestReview, type WorkRequestReviewResponse } from '@/lib/work-requests'
 import { WorkRequestChatResumeCard } from './WorkRequestChatResumeCard'
 
 const mocks = vi.hoisted(() => ({
@@ -28,9 +28,9 @@ vi.mock('@/lib/work-requests', async () => {
 
 const token = 'aseJrZz1ZQeZs9sBv0Adc-AJBg5IcliECGOIO9A5xZc'
 
-function draftReview() {
+function draftReview(): WorkRequestReviewResponse {
   return {
-    state: 'draft' as const,
+    state: 'draft',
     draft: {
       id: 'draft-1',
       client_workspace_id: 'ws-1',

@@ -1,10 +1,23 @@
 # Changelog - August 17, 2026
 
+## [2026-08-17 23:30] - [FIX]
+What: Fixed TypeScript errors that failed every Vercel `roas-web` production build after the meeting-workspace header landed. Meeting action reload now returns `Promise<void>`; review-chat seed maps to the studio message shape; unused Zustand `get` and `noUncheckedIndexedAccess` href split are gone; test fixtures typecheck.
+Why: `next build` typechecks `apps/web` with `strict` + unused locals. #282's `onActionsReload={hydrateWorkspace}` returned a bundle, so production never shipped Continue in chat.
+Impact: `pnpm --filter @vibey/web typecheck` passes. Merging this should let `roas-web` deploy the meeting workspace header to `app.roas.io`.
+Files: `MeetingWorkspaceDialog.tsx`, `work-request-chat-messages.ts`, `shell-work-area-page.ts`, `use-shell-store.work-area-conversation.ts`, `use-shell-store.ts`, `WorkRequestChatResumeCard.test.tsx`, `ShellChatMenu.test.tsx`, `ConversationScopePicker.test.tsx`
+
 ## [2026-08-17 23:23] - [FIX]
 What: Stop Slack from creating two Service Request drafts for one @Pixel post; review steps use Continue/Back, Portal assignees, Other free-text, and no Message Pixel composer.
 Why: Mapped channels fired both `message` and `app_mention`, so Pixel replied twice with two review links. Choice steps advanced only on click with no Continue/Back, assignee options were ROAS org profiles (not Portal), and Message Pixel sat under the cards.
 Impact: One Slack ask → one draft/link. Review Q&A is button-driven with the Portal roster. Blank `/home?conv=&wr=` seed retries once after hydration races.
 Files: `apps/api/src/modules/slack/services/slack-service-events.base.ts`, `slack-service-auth.base.ts`, `slack-service.base.ts`, `apps/api/src/modules/work-requests/services/work-request-scope.service.ts`, `apps/web/src/features/work-requests/components/WorkRequestChatFlow*.tsx`, `WorkRequestReviewChatHost.tsx`, `apps/web/src/components/global-chat/hooks/useWorkRequestHomeChatSeed.ts`
+
+## [2026-08-17 23:16] - [DOCS]
+What: Split the Page Grader unlinked-task follow-up into three required surfaces: merged ROAS platform #284 (create payload), Portal `roas-api` edge function (`POST /work`), and Portal UI Link for existing rows.
+Why: #284 is on main and this repo's API deployed it, but new creates still need the Portal edge function, and "Failed to update campaign" remains Portal UI.
+Impact: Agents must not skip #284 or treat Vercel `roas-api` (`api.roas.io`) as the Portal edge function.
+Files: `.docs/plans/agent-follow-up-work.md`, `documentation/features/page-grader-mcp-bridge.md`
+
 
 ## [2026-08-17 21:35] - [FIX]
 What: Service Request finalize and Portal send now pass the Page Grader campaign id, mark origin as From Pagegrader, and omit empty assignees so Portal assignment rules can run.

@@ -47,7 +47,10 @@ Pixel resolves the named target before choosing an execution path:
   ROAS task or search the ambient campaign team. When no owner is named,
   finalize omits assignees so Portal From Pagegrader assignment rules apply.
   When a campaign is known, intake and finalize send that Page Grader
-  campaign id so the Portal task arrives linked.
+  campaign id (`campaign_id`) and `source.origin: "page_grader"` (ROAS
+  platform #284). New Portal rows still require the connected `/functions/v1/roas-api`
+  edge function to persist those fields on `POST /work`. Manual "Link" on
+  already-created rows is Portal UI, not this platform.
 - The user does not need to know or say “Page Grader.”
 - An explicit request to “delegate to PageGrader” follows the same MCP path.
   Pixel lists that server’s live tools, follows the returned write schema, and
@@ -102,7 +105,11 @@ campaign, and the next step—or one plain-language blocker.
 2. Set Page Grader `ROAS_MCP_API_KEY` to the existing Page Grader integration
    key, or rotate both systems to a new dedicated value.
 3. Confirm `ROAS_BRAIN_WEBHOOK_URL` and `ROAS_BRAIN_WEBHOOK_SECRET` remain set.
-4. Deploy ROAS API and agent images.
+4. Deploy ROAS API and agent images. Service Request finalize (#284) must be
+   live so creates send `campaign_id` and `origin: "page_grader"`. Separately
+   deploy the Portal Supabase `roas-api` edge function so `POST /work` stores
+   those fields. Do not confuse that edge function with this repo's Vercel
+   project also named `roas-api` (`api.roas.io`).
 5. Reconnect Page Grader once in ROAS Integrations. The response should show
    `mcp.connection_status=connected` and ten discovered tools.
 6. Confirm the `Page Grader` MCP server is enabled and agent-enabled.

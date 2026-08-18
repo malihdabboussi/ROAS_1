@@ -127,5 +127,5 @@ function normalizeWorkAreaHref(href: string): string {
   const params = new URLSearchParams(query ?? '')
   params.sort()
   const serialized = params.toString()
-  return serialized ? `${path}?${serialized}` : path
+  return serialized ? `${path ?? href}?${serialized}` : (path ?? href)
 }

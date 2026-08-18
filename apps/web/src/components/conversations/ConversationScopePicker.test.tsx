@@ -105,7 +105,9 @@ async function flushAsyncWork() {
   })
 }
 
-function stubPickerCampaigns(rows = campaigns) {
+function stubPickerCampaigns(
+  rows: Array<(typeof campaigns)[number] & { program_id?: string }> = campaigns,
+) {
   mocks.useOrgStore.mockImplementation((selector: (state: { activeOrgId: string }) => unknown) =>
     selector({ activeOrgId: 'org-1' }),
   )
@@ -341,10 +343,13 @@ describe('ConversationScopePicker', () => {
     mocks.fetchPrograms.mockResolvedValue([
       { id: 'clients', name: 'Clients', system_kind: 'clients' },
     ])
+    const generalCampaign = campaigns[0]
+    const launchCampaign = campaigns[1]
+    if (!generalCampaign || !launchCampaign) throw new Error('campaign fixtures required')
     stubPickerCampaigns([
-      campaigns[0],
-      { ...campaigns[1], id: 'client-yasir', name: 'Yasir Khan', program_id: 'clients' },
-      { ...campaigns[1], id: 'client-above', name: 'Above It', program_id: 'clients' },
+      generalCampaign,
+      { ...launchCampaign, id: 'client-yasir', name: 'Yasir Khan', program_id: 'clients' },
+      { ...launchCampaign, id: 'client-above', name: 'Above It', program_id: 'clients' },
     ])
     mocks.positionFloatingMenuFromAnchorRect.mockReturnValue({ top: 100, left: 120 })
     mocks.fetchSpaces.mockResolvedValue([
