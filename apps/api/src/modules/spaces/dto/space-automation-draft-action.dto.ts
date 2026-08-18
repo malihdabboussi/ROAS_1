@@ -162,7 +162,7 @@ export const LooseAutomationActionSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('request_slack_follow_up_confirm'),
-    meeting_scope: z.enum(['all', 'client']).optional(),
+    meeting_scope: z.enum(['all', 'client', 'team', 'client_and_team']).optional(),
     delivery_mode: z.enum(['shadow', 'active']).optional(),
     channel_delivery: z.enum(['disabled', 'automatic']).optional(),
     destination_channel_id: z.string().optional(),

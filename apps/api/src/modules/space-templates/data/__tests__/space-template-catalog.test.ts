@@ -146,7 +146,7 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
     expect(dashboard?.automations[2]?.actions).toContainEqual(
       expect.objectContaining({
         type: 'request_slack_follow_up_confirm',
-        meeting_scope: 'client',
+        meeting_scope: 'client_and_team',
         delivery_mode: 'shadow',
       }),
     )

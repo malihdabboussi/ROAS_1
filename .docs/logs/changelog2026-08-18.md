@@ -6,6 +6,24 @@ Why: Mine only listed caller-owned Composio rows, so Dylan's work invites showed
 Impact: Mine includes the caller's Workspace calendar. Team no longer drops later recurring instances after the first page, and the signed-in Directory user is not sliced off by alphabetical email order.
 Files: `integrations-calendar.service.ts`, `integrations-calendar-parse.ts`, `integrations-calendar-team.service.ts`, `google-workspace-calendar.service.ts`, `google-workspace-google.client.ts`, `google-workspace-calendar-pages.ts`, `google-workspace-calendar-pull.ts`, `integrations-calendar-workspace-map.ts`, `loc-allowlist.json`, `documentation/features/integration-connections.md`
 
+## [2026-08-18 16:20] - [DOCS]
+What: Revised the Pixel Slack North Star spine to classify ask kind (client / team / general / Pixel-thread continuation) before any client resolve, and mapped already-shipped Viktor-parity work as keep/expand.
+Why: Not every Slack message is a client request. Starting at client lookup would overwrite retrieve-then-draft, User Brain, and Team Intelligence paths already on main.
+Impact: Client Resolve (N1) is a client-class branch only. Quote inherit remains the first runtime gap. Voice pack, CONNECTIONS bind, composer, and Service Request routing are explicitly out of rewrite scope.
+Files: `.docs/plans/pixel-slack-north-star-2026-08-18.md`
+
+## [2026-08-18 15:55] - [DOCS]
+What: Corrected the leftover Data Flow sentence that still said post-call is client-only.
+Why: The live rule is Team + Client run; Personal never enters the bot.
+Impact: Docs match the shipped trigger.
+Files: `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-18 15:50] - [FIX]
+What: Post-call bot now runs Team and Client calls. Personal calls never enter the bot. Team titles (weekly team, launch calendar) stay Team even when Fathom tagged one speaker.
+Why: The live Fathom Meeting Log was client-only, and internal team reviews were auto-labeled Personal, so the bot skipped the calls that should run and treated team work as confidential personal.
+Impact: Fathom Meeting Log scope is `client_and_team`. Personal stays off. Existing automatic Team-titled Personal rows are relabeled Team.
+Files: `post-call-meeting-scope.ts`, `meeting-call-kind.ts`, `space-template-catalog-personal-dashboard.ts`, `space-automation-action.dto.ts`, `supabase/migrations/20260818155000_post_call_team_not_personal.sql`, `documentation/features/meeting-follow-up-slack.md`
+
 ## [2026-08-18 15:26] - [FIX]
 What: Unblocked Vercel `roas-web` typecheck after merging #290–#298. Removed leftover unused `isStreaming` on Team `AgentChatThread`. Typed the Connections `fetchCampaign` test mock with the real `(id: string)` arity.
 Why: `next build` typechecks `apps/web` with unused locals. #290 deleted the composer tip that used `isStreaming`; #291 added a one-arg `fetchCampaign` mockImplementation on a zero-arg `vi.fn`. Every production web deploy failed.
