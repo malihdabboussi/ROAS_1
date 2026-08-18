@@ -126,6 +126,12 @@ Why: Programs was wired to the campaigns hub, so the More item skipped the progr
 Impact: Clicking Programs opens the programs overview. Hovering it shows the same program list. Each program still opens `/programs/[id]`.
 Files: `apps/web/src/components/layout/sidebar/SidebarHqMoreFlyoutBody.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqMoreProgramsFlyout.tsx`, `apps/web/src/app/(dashboard)/programs/page.tsx`, `apps/web/src/app/(dashboard)/programs/_components/ProgramsIndex.tsx`, `apps/web/src/middleware.ts`, `documentation/features/programs.md`
 
+## [2026-08-17 19:21] - [FIX]
+What: Forked chats now restore recent turns, attached documents, and named outputs into the empty OpenClaw session instead of a weak oldest-first summary.
+Why: Fork copies the visible thread, but `sessionKey` includes the new conversation id, so Pixel treated "all this" as a blank chat. The old dump kept oldest 20k chars, 300-char assistant previews, and no `metadata.documents`.
+Impact: First message after Fork uses the prior work. `conversation_documents` rows are still not copied onto the fork.
+Files: `chat-session-history.context.ts`, `chat-session-history.service.ts`, `chat-gateway-input.service.ts`, `documentation/features/chat-stream-recovery.md`
+
 ## [2026-08-17 18:56] - [FIX]
 What: Auto chat write is Sonnet 4.6 again. Terra still runs the research/tool loop. Power stays Opus 5. Economy stays Terra.
 Why: July 15 Auto was Sonnet 4.6 for the whole turn. Jul 30 `b1d67559` put Auto write on discounted Terra, which is when answers got dumber. Keep the cheap tool loop; restore the July 15 writer.

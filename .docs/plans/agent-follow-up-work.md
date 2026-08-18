@@ -1,3 +1,14 @@
+## 2026-08-17 - [FIX] Forked chats do not copy conversation_documents
+
+Status: Open
+
+Found while: Restoring Pixel context after Fork of 1DS Collective
+
+Evidence: `forkConversation` copies messages, `campaign_id`, and message `metadata.documents`, but `conversation_documents` stay on the original conversation_id. `loadPreviousImageUrls` and `get_document` by conversation miss those rows. Brain Live still uses a separate oldest-first 20k/300-char dump in `brain-live-instruction.service.ts`.
+
+Needed work: Copy or relink `conversation_documents` on fork. Share the newest-first history helper with Brain Live.
+
+Reason not done now: The user-facing miss was the empty OpenClaw session on the first forked turn; reconstruction from copied messages fixes that path.
 ## 2026-08-17 - [FIX] Auto missions and non-staged Auto chat still route to Terra
 
 Status: Open
