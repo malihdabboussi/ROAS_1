@@ -254,6 +254,7 @@ export class SlackAgentToolsService {
       channel_id: string
       text: string
       thread_ts?: string
+      reply_broadcast?: boolean
       unfurl_links?: boolean
       unfurl_media?: boolean
     },
@@ -265,6 +266,7 @@ export class SlackAgentToolsService {
       this.slackApi.postMessage(botToken, params.channel_id, params.text, params.thread_ts, {
         unfurlLinks: params.unfurl_links,
         unfurlMedia: params.unfurl_media,
+        replyBroadcast: params.reply_broadcast,
       }),
     )
     return { success: true, ...result }

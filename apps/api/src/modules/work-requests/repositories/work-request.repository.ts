@@ -329,7 +329,7 @@ export class WorkRequestRepository {
     return (data ?? []) as unknown as WorkRequestDraftRow[]
   }
 
-  async listDueOneHourWarnings(cutoff: string, limit: number) {
+  async listDueExpiryWarnings(cutoff: string, limit: number) {
     const now = new Date().toISOString()
     const { data, error } = await this.client
       .from('work_request_drafts')

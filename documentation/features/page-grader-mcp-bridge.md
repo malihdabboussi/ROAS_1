@@ -1,6 +1,6 @@
 # Page Grader MCP bridge
 
-Last Modified: 2026-08-17
+Last Modified: 2026-08-18
 
 ## Ownership
 
@@ -162,3 +162,7 @@ Grader`, `MCP`, tool names, schemas, idempotency keys, or retry mechanics.
 - Slack inbound work is claimed once per `(team, channel, message_ts)`. Mapped
   channels skip `app_mention` when the `message` handler already owns the post,
   so one @Pixel ask cannot create two Service Request drafts.
+- Unreviewed Service Request drafts send two Slack follow-ups: 3 hours after
+  the review link is issued, then 22 hours after (2 hours before the 24-hour
+  expiry) with an expiry nudge. Both reply in the original task thread and
+  also post to the channel (`reply_broadcast`).

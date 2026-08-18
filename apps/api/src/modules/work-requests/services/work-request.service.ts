@@ -25,6 +25,12 @@ import {
 } from './work-request-conversation-stamp'
 import { mirrorWorkRequestFinalTask } from './work-request-mirror'
 import {
+  slackReminderSendParams,
+  WORK_REQUEST_EXPIRY_WARNING_MS,
+  WORK_REQUEST_REMINDER_3H_MS,
+  workRequestReminderText,
+} from './work-request-reminders'
+import {
   asRecord,
   buildWorkRequestWebhookResult,
   generateWorkRequestReviewToken,
@@ -394,13 +400,13 @@ export class WorkRequestService {
 
   async processDueReminders(limit = 50) {
     const now = new Date()
-    const [threeHour, oneHour] = await Promise.all([
+    const [threeHour, expiryWarning] = await Promise.all([
       this.repository.listDueThreeHourReminders(
-        new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString(),
+        new Date(now.getTime() - WORK_REQUEST_REMINDER_3H_MS).toISOString(),
         limit,
       ),
-      this.repository.listDueOneHourWarnings(
-        new Date(now.getTime() + 60 * 60 * 1000).toISOString(),
+      this.repository.listDueExpiryWarnings(
+        new Date(now.getTime() + WORK_REQUEST_EXPIRY_WARNING_MS).toISOString(),
         limit,
       ),
     ])
@@ -408,10 +414,10 @@ export class WorkRequestService {
     for (const draft of threeHour) {
       sent += await this.deliverReminder(draft, 'reminder_3h_sent_at')
     }
-    for (const draft of oneHour) {
+    for (const draft of expiryWarning) {
       sent += await this.deliverReminder(draft, 'reminder_1h_sent_at')
     }
-    return { processed: threeHour.length + oneHour.length, sent }
+    return { processed: threeHour.length + expiryWarning.length, sent }
   }
 
   async processDueWork(limit = 50) {
@@ -568,22 +574,16 @@ export class WorkRequestService {
   ): Promise<number> {
     const claimedAt = new Date().toISOString()
     if (!(await this.repository.claimReminder(draft.id, column, claimedAt))) return 0
-    const provenance = asRecord(draft.provenance)
-    const channelId = stringValue(provenance.channel_id)
-    if (!channelId) return 0
-    const text =
-      column === 'reminder_3h_sent_at'
-        ? `Your Service Request draft "${draft.title}" is still waiting for review. Use the secure link from this conversation when you're ready.`
-        : `Your Service Request review link for "${draft.title}" expires in about one hour.`
+    const target = slackReminderSendParams(draft.provenance)
+    if (!target) return 0
     try {
       await this.slack.sendMessage(
         this.repository.client,
         draft.owner_user_id,
         draft.owner_org_id,
         {
-          channel_id: channelId,
-          thread_ts: stringValue(provenance.thread_ts) || undefined,
-          text,
+          ...target,
+          text: workRequestReminderText(column, draft.title),
           unfurl_links: false,
           unfurl_media: false,
         },
