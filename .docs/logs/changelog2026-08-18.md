@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 14:20] - [DOCS]
+What: Wrote the Pixel Slack North Star plan: current vs proposed Slack→answer flow, 14 existing Slack processes, 10 proposed processes, Dylan’s 30 asks plus 25 stamp-derived requests with ladders, and a wave-based stress harness.
+Why: Slack Pixel still asks which client and skips retrieval even when `#roas-*` channels are mapped; we needed one resolve→retrieve→act spine before more skills.
+Impact: Implementation starts with quote/unfurl identity inherit (1DS group-DM class), then depth-ladder tests. Live 14-day Slack histogram is listed as missing evidence until production secrets are in the environment.
+Files: `.docs/plans/pixel-slack-north-star-2026-08-18.md`
+
 ## [2026-08-18 00:17] - [FEATURE]
 What: Added Create with AI on Agenda & prep. It seeds the existing Start agenda prompt so Pixel writes the agenda Space Doc from open action items, launches, client reports, and related meeting context.
 Why: Agenda & prep had an empty or manual doc with no way to generate the agenda in place. Start agenda lived only in the call-status row and did not ask Pixel to pull launches or reports onto the page.
