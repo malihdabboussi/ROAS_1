@@ -1,5 +1,12 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 17:35] - [FEATURE]
+What: All Meetings gained a Client / Campaign column. Operators map a call to a Page Grader client and that client’s campaign without moving the row. Mapped names link to the client and campaign Space; an Agenda link opens that meeting’s workspace. Call Kind stays independent. The same field id upgrades Delegation Desk from free text to the picker.
+Why: Meetings could classify Call Kind but could not tag which client and campaign a call belonged to, so later training and reference had no durable client/campaign label. There was also no explicit Agenda control on the All Meetings row.
+Impact: `custom_data.client_campaign` stores client_id/name, campaign_id/name, and optional roas_space_id. Agents hydrate that mapping on meeting items. Existing All Meetings spaces and the personal-dashboard template show the column after Call Kind.
+Files: `ClientCampaignCell.tsx`, `SpaceCell.tsx`, `client-campaign-mapping.ts`, `use-client-campaign-groups.ts`, `space-template-catalog-personal-dashboard.ts`, `20260818173000_meetings_client_campaign_field.sql`, `artifact-space-item-hydrate.helper.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+
 ## [2026-08-18 16:20] - [FIX]
 What: Meetings Agenda Mine now DWD-pulls the signed-in user's Workspace Directory calendar (linked/suggested portal user, not login Gmail first). Team Google Calendar fetches paginate `nextPageToken` (page size 2500, `singleEvents=true`) and pin the caller inside the Directory people cap.
 Why: Mine only listed caller-owned Composio rows, so Dylan's work invites showed under Team (Directory mailbox) and disappeared on Mine. Recurring instances such as ROAS x Christian Osgood Weekly Standup were truncated when a covering-month `events.list` stopped at 250 events with no page token.
