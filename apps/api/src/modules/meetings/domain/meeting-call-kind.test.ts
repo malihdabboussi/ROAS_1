@@ -42,11 +42,14 @@ describe('meeting call-kind classification', () => {
 
     expect(classify('Personal check-in', [{ email: 'owner@roas.co' }])).toBe('private')
     expect(
-      classify('Weekly team sync', [
-        { email: 'owner@roas.co' },
-        { email: 'nate@roas.co' },
-      ]),
+      classify('Weekly team sync', [{ email: 'owner@roas.co' }, { email: 'nate@roas.co' }]),
     ).toBe('team')
+    expect(classify('Team weekly launch calendar review', [{ email: 'owner@roas.co' }])).toBe(
+      'team',
+    )
+    expect(classify('Define a new role and compensation plan', [{ email: 'owner@roas.co' }])).toBe(
+      'private',
+    )
     expect(
       classify('Executive leadership review', [
         { email: 'owner@roas.co' },
@@ -66,10 +69,7 @@ describe('meeting call-kind classification', () => {
       ]),
     ).toBe('partner')
     expect(
-      classify('Sales discovery demo', [
-        { email: 'owner@roas.co' },
-        { email: 'buyer@acme.com' },
-      ]),
+      classify('Sales discovery demo', [{ email: 'owner@roas.co' }, { email: 'buyer@acme.com' }]),
     ).toBe('sales')
   })
 
@@ -119,13 +119,12 @@ describe('meeting call-kind classification', () => {
     const common = {
       identity,
       recordedByEmail: 'owner@roas.co',
-      attendees: [
-        { email: 'owner@roas.co' },
-        { email: 'external@example.com' },
-      ],
+      attendees: [{ email: 'owner@roas.co' }, { email: 'external@example.com' }],
       attendeeLabels: ['Owner Person', 'External Person'],
     }
-    expect(resolveMeetingCallKind({ ...common, titleHint: 'Prospect discovery demo' })).toBe('sales')
+    expect(resolveMeetingCallKind({ ...common, titleHint: 'Prospect discovery demo' })).toBe(
+      'sales',
+    )
     expect(resolveMeetingCallKind({ ...common, titleHint: 'Vendor partnership review' })).toBe(
       'partner',
     )

@@ -5,13 +5,7 @@
  * is "Personal", which is the user-facing meaning of the category.
  */
 
-export type MeetingCallKind =
-  | 'private'
-  | 'team'
-  | 'executive'
-  | 'client'
-  | 'partner'
-  | 'sales'
+export type MeetingCallKind = 'private' | 'team' | 'executive' | 'client' | 'partner' | 'sales'
 
 export const MEETING_CALL_KIND_OPTIONS: Array<{
   id: MeetingCallKind
@@ -44,10 +38,7 @@ export function isMeetingCallKind(value: unknown): value is MeetingCallKind {
 }
 
 export function shouldReplaceMeetingCallKind(customData: Record<string, unknown>): boolean {
-  return (
-    !isMeetingCallKind(customData.call_kind) ||
-    customData.call_kind_source === 'automatic'
-  )
+  return !isMeetingCallKind(customData.call_kind) || customData.call_kind_source === 'automatic'
 }
 
 export function markManualMeetingCallKind(
@@ -147,7 +138,10 @@ export function resolveMeetingCallKind(input: {
   if (SALES_RE.test(blob) && external > 0) return 'sales'
   if (external > 0 && PARTNER_RE.test(blob)) return 'partner'
   if (EXECUTIVE_RE.test(blob)) return 'executive'
-  if (ownerPresent && (participantCount <= 1 || PRIVATE_RE.test(blob))) return 'private'
+  // Team titles win over a one-speaker Fathom recording so a weekly team
+  // review is not treated as a confidential personal call.
+  if (external === 0 && isTeamMeetingTitle(title)) return 'team'
+  if (ownerPresent && (isPersonalMeetingTitle(title) || participantCount <= 1)) return 'private'
   return 'team'
 }
 
@@ -176,8 +170,7 @@ function isInternalEmail(email: string, identity: MeetingCallIdentity): boolean 
   if (at < 0) return false
   const domain = normalized.slice(at + 1)
   return identity.internalDomains.some(
-    (internalDomain) =>
-      domain === internalDomain || domain.endsWith(`.${internalDomain}`),
+    (internalDomain) => domain === internalDomain || domain.endsWith(`.${internalDomain}`),
   )
 }
 
@@ -231,6 +224,19 @@ const PARTNER_RE = /\b(partner|partnership|vendor|agency|affiliate|integration)\
 const CLIENT_RE =
   /\b(client|customer|account|campaign|coaching|workshop|fulfillment|review|strategy session)\b/i
 const PRIVATE_RE = /\b(private|personal|one[- ]?on[- ]?one|1[: -]?1|check[- ]?in)\b/i
+const TEAM_TITLE_RE =
+  /\b(weekly team|team weekly|team sync|team standup|team stand-up|team meeting|team call|team review|team huddle|standup|stand-up|launch calendar)\b/i
+const TEAM_MEMBER_ONLY_RE = /\bteam members?\b/i
+
+function isTeamMeetingTitle(title: string): boolean {
+  if (TEAM_MEMBER_ONLY_RE.test(title) && !TEAM_TITLE_RE.test(title)) return false
+  return TEAM_TITLE_RE.test(title) || /^\s*team\b/i.test(title)
+}
+
+function isPersonalMeetingTitle(title: string): boolean {
+  return PRIVATE_RE.test(title)
+}
+
 const PUBLIC_EMAIL_DOMAINS = new Set([
   'gmail.com',
   'googlemail.com',

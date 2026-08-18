@@ -1096,7 +1096,7 @@ export type AutomationAction =
     }
   | {
       type: 'request_slack_follow_up_confirm'
-      meeting_scope?: 'all' | 'client'
+      meeting_scope?: 'all' | 'client' | 'team' | 'client_and_team'
       delivery_mode?: 'shadow' | 'active'
       channel_delivery?: 'disabled' | 'automatic'
       destination_channel_id?: string
