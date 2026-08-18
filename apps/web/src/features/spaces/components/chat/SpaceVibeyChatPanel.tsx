@@ -6,7 +6,6 @@ import { ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { ChatInput } from '@/components/chat/ChatInputAdapter'
 import { ChatTurnChangeDivider } from '@/components/chat/ChatTurnChangeDivider'
-import { ComposerActiveRunTipCard } from '@/components/chat/ComposerActiveRunTipCard'
 import { ComposerInputStack } from '@/components/chat/ComposerInputStack'
 import { MessageBubble } from '@/components/chat/MessageBubbleAdapter'
 import { MessageQueue } from '@/components/chat/MessageQueue'
@@ -2511,16 +2510,7 @@ export function SpaceVibeyChatPanel({
                               onDismiss={quickStart.clearPicker}
                             />
                           ) : null}
-                          <ComposerInputStack
-                            stackActive={isStreaming && !selectedConversationReadOnly}
-                            topSlot={
-                              <ComposerActiveRunTipCard
-                                stacked
-                                conversationId={selectedConversationId}
-                                isStreaming={isStreaming}
-                              />
-                            }
-                          >
+                          <ComposerInputStack stackActive={false}>
                             <ChatInput
                               onSend={handleComposerSendWithQueueEdit}
                               defaultModel={defaultModel}

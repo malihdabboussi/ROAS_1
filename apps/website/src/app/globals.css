@@ -2300,7 +2300,6 @@ html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollb
     inset 0 1px 0 var(--color-glass-card-inset-top);
   border-radius: 12px;
 }
-.composer-tip-bubble { width: 100%; padding: var(--spacing-1-5) var(--spacing-2-5); border-radius: var(--spacing-2); background: var(--color-card); border: 1px solid var(--color-border); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); color: var(--color-card-foreground); font-size: var(--text-xs); font-weight: 500; line-height: 1.4; white-space: normal; overflow-wrap: break-word; word-break: normal; text-align: left; }
 .card-glass-user { border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 4px 16px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.15); }
 .text-chat { color: rgba(245, 245, 245, 0.85); }
 .text-chat strong, .text-chat h1, .text-chat h2, .text-chat h3 { color: #f5f5f5; }
