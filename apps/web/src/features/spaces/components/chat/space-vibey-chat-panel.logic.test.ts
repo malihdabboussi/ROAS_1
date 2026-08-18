@@ -237,8 +237,19 @@ describe('space ROAS chat panel logic', () => {
     expect(
       resolvePostLoadConversationSelection({
         chatRailIntentIsNew: true,
-        preferredOpenId: null,
+        preferredOpenId: 'drawer-old',
         storeActiveConversationId: 'store-active',
+        storedValidConversationId: 'stored-1',
+        conversationIdsInList: ids,
+      }),
+    ).toEqual({ action: 'clear' })
+
+    expect(
+      resolvePostLoadConversationSelection({
+        chatRailIntentIsNew: false,
+        homeChatStarting: true,
+        preferredOpenId: 'drawer-old',
+        storeActiveConversationId: 'drawer-old',
         storedValidConversationId: 'stored-1',
         conversationIdsInList: ids,
       }),

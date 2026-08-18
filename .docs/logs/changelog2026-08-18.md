@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 02:05] - [FIX]
+What: Home New chat no longer invents the org Meetings/General workspace. An `@` campaign chip (last campaign mention) becomes the Connection. Enter on `/home?chat=starting` stays on the new thread and does not reuse a leftover Meetings host.
+Why: Blank Home send used the newest space on the org General campaign (often Meetings). `@1DS Collective` only became a Source. Sticky host plus Recents/drawer restore then opened or stamped that Meetings workspace while Pixel talked about 1DS.
+Impact: Talking about a campaign with `@` attaches that campaign in Connections. A blank Home send stays unscoped. The previous Recents row does not swallow the new message.
+Files: `apps/web/src/components/conversations/conversation-scope-from-mentions.ts`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/global-chat/containers/global-chat-panel-host.ts`, `GlobalChatPanel.tsx`, `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.ts`, `SpaceVibeyChatPanel.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-18 01:34] - [FIX]
 What: Connections now names a General location with its client/program (`Master Your Kraft General`) instead of a bare General. Campaign pages register clickable `Campaigns / client / campaign` crumbs. Home chats send that attached location into agent awareness.
 Why: Qualify-General stopped at another General campaign and never walked up to the client. Campaign detail only showed the path label Campaigns. Home chats skipped Space awareness unless the work area was already on a Space route, so Brain stopped pulling from Connections.

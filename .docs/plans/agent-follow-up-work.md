@@ -14,13 +14,13 @@ Reason not done now: Requested work was breadcrumbs on the existing page; splitt
 
 Status: Open
 
-Found while: Making Connections labels walk up to the client/program and sending that location into Home-chat awareness
+Found while: Stopping Home New chat from inventing a Meetings connection
 
-Evidence: `wc -l` on `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` is 2663 after extracting send awareness to `use-chat-send-awareness.ts`. Component cap is 400.
+Evidence: `wc -l` on `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` is still ~2660 (component cap 400; container cap 600). This change only tightened post-load selection and the new-intent effect.
 
-Needed work: Split host, send, and conversation-list orchestration into dedicated hooks/containers before the next chat-runtime change.
+Needed work: Split host, send, and conversation-list orchestration into dedicated hooks/containers before the next chat-runtime change. Optionally retarget an already-open Meetings thread when the user `@` mentions a campaign in that composer (Home send-time is fixed; in-thread `@` still only becomes a Source). Live Choose Space label from `@` is also unscoped (ChatInput already over 400 LOC).
 
-Reason not done now: Requested work was Connections naming, campaign breadcrumbs, and attached-location awareness. Splitting the rest of the panel was out of scope.
+Reason not done now: Requested work was the Home Enter / `@` → Connections bug. Splitting the panel and growing ChatInput were out of scope.
 
 ## 2026-08-18 - [FIX] Space folder crumbs still show a General campaign name without the client
 
