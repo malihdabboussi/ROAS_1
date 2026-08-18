@@ -305,7 +305,7 @@ describe('SidebarHqSpacesGroupedList', () => {
               campaign_id: 'campaign-1ds',
               schema: { custom_data: { source: 'page_grader', space_role: 'client_campaign' } },
             },
-          ] as Space[]
+          ] as unknown as Space[]
         }
         campaigns={[clientCampaign]}
         pathname="/spaces"

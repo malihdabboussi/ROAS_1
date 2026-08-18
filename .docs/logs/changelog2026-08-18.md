@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 21:48] - [FIX]
+What: Unblocked Vercel `roas-web` typecheck after #308/#309. Calendar materialize now calls `cachedFetch(key, fetcher, { ttlMs })`. Removed unused `SpaceItem` import. Test fixtures use `as unknown as Space`.
+Why: `next build` typechecks `apps/web`. The one-room hook passed TTL as the fetcher argument, so agenda events never typed and the cache never actually TTL'd. Incomplete Space casts failed after adding `schema.custom_data`.
+Impact: `pnpm --filter @vibey/web typecheck` passes so `app.roas.io` can ship Meetings one-room and client General routing.
+Files: `use-meetings-calendar-materialize.ts`, `SpaceFieldIdCell.tsx`, `SidebarHqSpacesGroupedList.test.tsx`, `group-other-spaces-by-campaign.test.ts`
+
 ## [2026-08-18 19:50] - [FEATURE]
 What: Meetings one room — calendar events materialize onto All Meetings rows; Host + Call status; default past+today+tomorrow chip; All Meetings is the default tab (standard task card) and Agenda keeps the specialized card; related calls feed Pixel so last week’s recording is not a Recordings + ask; Prep tab/button gone; impromptu defaults to Team; completing a call runs the existing post-call path.
 Why: Calendar, All Meetings, and the meeting workspace were three homes for one call. Pixel asked users to re-link Fathom that already lived on a related row.

@@ -72,7 +72,7 @@ describe('group-other-spaces-by-campaign', () => {
         schema: {
           custom_data: { source: 'page_grader', space_role: 'general' },
         },
-      } as Space,
+      } as unknown as Space,
     ]
 
     expect(
