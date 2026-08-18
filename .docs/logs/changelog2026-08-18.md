@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 18:55] - [FIX]
+What: Declared `fieldRowVariant` on All Meetings `ClientCampaignCell` so SpaceCell can pass the shared kanban/default row variant.
+Why: #304 used `fieldRowVariant` in the cell and forwarded it from `SpaceCell`, but the props type omitted it. `next build` typecheck failed every `roas-web` deploy.
+Impact: `pnpm --filter @vibey/web typecheck` passes so `app.roas.io` can ship #304/#305.
+Files: `ClientCampaignCell.tsx`
+
 ## [2026-08-18 18:46] - [DOCS]
 What: Wrote the Meetings one-room plan: one All Meetings row per call, two doors (standard task card vs specialized meeting card), Live/Completed/No Show/Rescheduled only, related calls so Pixel can read last week’s recording without Recordings +.
 Why: Calendar, All Meetings, and the meeting workspace were three homes. Agenda opening a different card than All Meetings was the intended split; New/Upcoming is unnecessary because date already means upcoming.
