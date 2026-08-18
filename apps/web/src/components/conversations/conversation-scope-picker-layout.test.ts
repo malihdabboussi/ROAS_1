@@ -25,6 +25,32 @@ describe('conversationScopeDisplayLabel', () => {
     ).toBe('Yasir Khan General')
   })
 
+  it('qualifies a General space when the campaign is also General', () => {
+    expect(
+      conversationScopeDisplayLabel({
+        campaignName: 'General',
+        spaceTitle: 'General',
+        programName: 'Master Your Kraft',
+        campaignId: 'campaign-1',
+        spaceId: 'space-1',
+        emptyLabel: 'All',
+      }),
+    ).toBe('Master Your Kraft General')
+  })
+
+  it('does not qualify General with a Client Spaces program label', () => {
+    expect(
+      conversationScopeDisplayLabel({
+        campaignName: 'General',
+        spaceTitle: 'General',
+        programName: 'Client Spaces',
+        campaignId: 'campaign-1',
+        spaceId: 'space-1',
+        emptyLabel: 'All',
+      }),
+    ).toBe('General')
+  })
+
   it('prefers the space title, then the campaign name, then All', () => {
     expect(
       conversationScopeDisplayLabel({

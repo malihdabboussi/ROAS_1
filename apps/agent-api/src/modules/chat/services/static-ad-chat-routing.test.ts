@@ -50,10 +50,7 @@ describe('buildStaticAdChatRoutingInstruction', () => {
   })
 
   it('keeps an explicit Static Ad Book format instead of defaulting', () => {
-    const instruction = buildStaticAdChatRoutingInstruction(
-      'Make two chat receipt ads',
-      'studio',
-    )
+    const instruction = buildStaticAdChatRoutingInstruction('Make two chat receipt ads', 'studio')
 
     expect(instruction).toContain('static_ad_book')
     expect(instruction).toContain('explicitly named')
@@ -74,5 +71,65 @@ describe('buildStaticAdChatRoutingInstruction', () => {
 
     expect(instruction).toContain('plain text')
     expect(instruction).not.toContain('"action":"ask_clarification"')
+  })
+
+  it('still gates when the create verb and ads phrase are five words apart', () => {
+    expect(
+      buildStaticAdChatRoutingInstruction('make one two three four five ads', 'studio'),
+    ).toContain('selection_required')
+    expect(
+      buildStaticAdChatRoutingInstruction('make one two three four five six ads', 'studio'),
+    ).toBe('')
+  })
+
+  it('does not treat ad-account language as a creation request', () => {
+    expect(
+      buildStaticAdChatRoutingInstruction('we need the ad account before Friday', 'studio'),
+    ).toBe('')
+    expect(buildStaticAdChatRoutingInstruction('I need ads manager access', 'studio')).toBe('')
+  })
+
+  it('does not intercept a pasted Slack thread with buried need/ad language', () => {
+    const filler = 'okay circling back on the client thread and next steps. '.repeat(12)
+    const pastedThread = [
+      'Nate: can you look at this thread and tell me what to do',
+      filler,
+      'we need the ad account access sorted before we can help the client',
+      filler,
+      'Dylan: sending the convo now',
+    ].join(' ')
+
+    expect(pastedThread.length).toBeGreaterThan(480)
+    expect(buildStaticAdChatRoutingInstruction(pastedThread, 'studio')).toBe('')
+  })
+
+  it('does not intercept a long paste that only mentions making ads in the middle', () => {
+    const filler = 'okay circling back on the client thread and next steps. '.repeat(12)
+    const pastedThread = [
+      'Nate: can you look at this thread and tell me what to do',
+      filler,
+      'someone asked if we can make some ads later this month',
+      filler,
+      'Dylan: sending the convo now',
+    ].join(' ')
+
+    expect(pastedThread.length).toBeGreaterThan(480)
+    expect(buildStaticAdChatRoutingInstruction(pastedThread, 'studio')).toBe('')
+  })
+
+  it('still gates a long paste that asks to make ads at the start', () => {
+    const filler = 'here is the source thread with client context and extra detail. '.repeat(12)
+    const request = `make ads from this: ${filler}`
+
+    expect(request.length).toBeGreaterThan(480)
+    expect(buildStaticAdChatRoutingInstruction(request, 'studio')).toContain('selection_required')
+  })
+
+  it('still gates a long paste that asks to make ads at the end', () => {
+    const filler = 'here is the source thread with client context and extra detail. '.repeat(12)
+    const request = `${filler} please make ads from this`
+
+    expect(request.length).toBeGreaterThan(480)
+    expect(buildStaticAdChatRoutingInstruction(request, 'studio')).toContain('selection_required')
   })
 })
