@@ -1,3 +1,15 @@
+## 2026-08-18 - [ARCH] space-schema.ts remains far over the 600 LOC cap
+
+Status: Open
+
+Found while: Adding `client_and_team` to post-call `meeting_scope`
+
+Evidence: `wc -l` on `apps/web/src/features/spaces/types/space-schema.ts` is 1427. This change only widened a union.
+
+Needed work: Split Space automation action types out of the mega schema file.
+
+Reason not done now: Post-call Team vs Personal is a one-line type widen; splitting the schema file is a separate refactor.
+
 ## 2026-08-18 - [ARCH] ui-block-extractor.ts is over the 600 LOC service cap
 
 Status: Open
