@@ -3876,6 +3876,26 @@ html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollb
   height: 14px;
   flex-shrink: 0;
 }
+.hub-sidebar-logo-header {
+  display: flex;
+  height: auto;
+  width: 100%;
+  shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2) 0 var(--spacing-1);
+}
+.hub-sidebar-logo-header-start {
+  justify-content: space-between;
+  padding-left: var(--spacing-1);
+  padding-right: var(--spacing-2);
+}
+.hub-sidebar-shell-expanded .hub-sidebar-logo-header {
+  width: auto;
+  justify-content: flex-start;
+  padding-left: var(--spacing-1);
+  padding-right: var(--spacing-1);
+}
 .hub-sidebar-logo-button {
   position: relative;
   display: flex;
@@ -3890,10 +3910,13 @@ html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollb
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 .hub-sidebar-logo-mark-wordmark {
   width: auto;
   max-width: 9rem;
+  overflow: visible;
+  justify-content: flex-start;
 }
 .hub-sidebar-logo-face {
   display: flex;
@@ -3911,6 +3934,17 @@ html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollb
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
+}
+.hub-sidebar-logo-mark:not(.hub-sidebar-logo-mark-wordmark) img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  object-position: center;
+}
+.hub-sidebar-logo-mark-wordmark img {
+  object-position: left center;
 }
 .hub-sidebar-logo-glyph {
   position: absolute;

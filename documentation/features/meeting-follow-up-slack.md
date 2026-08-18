@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-08-18 (post-call runs Team + Client, never Personal; agenda flicker fix; recordings/action-items top row; Create with AI writes Agenda & prep Space Doc; named-client lookup binds this portal chat CONNECTIONS; meeting workspace header Continue in chat)
+**Last Modified:** 2026-08-18 (All Meetings Client / Campaign mapping + Agenda link; post-call runs Team + Client, never Personal; agenda flicker fix; recordings/action-items top row; Create with AI writes Agenda & prep Space Doc; named-client lookup binds this portal chat CONNECTIONS; meeting workspace header Continue in chat)
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` uses those same stored drafts, sends account-manager reminders only to people classified Internal and individually set Active, and keeps the client-facing recap in the admin approval thread.
 
@@ -21,7 +21,7 @@ The canonical post-call path is now meeting-first rather than automation-task-fi
 11. When Fathom later publishes the recording, calendar/start/title/participant reconciliation attaches it to the scheduled workspace when the match is unambiguous instead of creating a duplicate call. Operators can also manually link a Fathom recording from the workspace Recordings & attachments picker (`POST /api/integrations/fathom/attach-to-meeting`), which force-ingests onto the open meeting. Transcript and recap deliverables render in that same card.
 12. The next meeting can point back through `next_meeting_item_id`; unresolved confirmed/in-progress/rolled-forward commitments are surfaced before the next call.
 13. Scheduled workspace resolution accepts timezone-aware calendar timestamps and normalizes them to UTC before persistence, so Google Calendar offsets remain chronologically comparable during later Fathom reconciliation.
-14. Scheduled and Fathom meetings share one call-kind classifier: Personal, Team, Executive, Client, Partner, and Sales. Organization member email domains distinguish teammates from external attendees. Automatic classifications can refresh as richer recording evidence arrives, while a valid human selection is marked manual and remains authoritative.
+14. Scheduled and Fathom meetings share one call-kind classifier: Personal, Team, Executive, Client, Partner, and Sales. Organization member email domains distinguish teammates from external attendees. Automatic classifications can refresh as richer recording evidence arrives, while a valid human selection is marked manual and remains authoritative. All Meetings also stores an optional Client / Campaign mapping on the call (`custom_data.client_campaign`) so operators can tag who the call was for without moving it out of Meetings. The mapped client and campaign names are links; **Agenda** opens that meeting’s workspace.
 15. The workspace stays in an explicit loading state until its full read model is hydrated, so recordings, recap, notes, and tasks do not briefly appear empty.
 16. Action rows reuse the shared work-item list primitives and mutate mirrored `follow_up` space items through the canonical Space task endpoint. User completion records a timestamped origin; provider completion is labeled only when Fathom supplied completed evidence.
 17. Notes accept relevant links and render them as clickable content immediately after save. Meeting recap documents repair provider Markdown embedded in HTML paragraphs on open, and post-call draft cards normalize Markdown emphasis to plain text.
@@ -430,6 +430,8 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-08-12:** Channel delivery is an independent fail-closed action setting. The client recap channel ID is preconfigured, but only an explicit change to `channel_delivery=automatic` on an Active flow can post there; the rollout migration leaves it disabled for DM review.
 
 - **2026-08-17:** Named `campaign_id` / `campaign_name` on `search_campaign_brain` binds **this** portal conversation so CONNECTIONS shows that client. A Slack DM remains a shared Pixel thread; each message already maps to a specific portal chat. Binding does not glue the whole DM identity to one client forever.
+
+- **2026-08-18:** All Meetings has a Client / Campaign column. Mapping tags the call with the Page Grader client and that client’s campaign (`custom_data.client_campaign`) and does not transfer the row. Client and campaign names link to `/clients/{id}` and the campaign Space. An Agenda link opens the same meeting workspace as clicking the call. Call Kind stays independent.
 
 ## Related
 

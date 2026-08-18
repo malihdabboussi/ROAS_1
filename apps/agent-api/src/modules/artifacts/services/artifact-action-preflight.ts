@@ -5,6 +5,7 @@ import {
   parseDreamOpsSessionKey,
 } from './artifact-action.registry'
 import { validateIgStoryRenderPreflight } from './artifact-ig-story-preflight'
+import { validateUseMcpToolPreflight } from './artifact-mcp-tool-preflight'
 import {
   PRESENTATION_ACTION_PREFLIGHT_OVERRIDES,
   PRESENTATION_ACTION_PREFLIGHTS,
@@ -37,7 +38,7 @@ export type ActionPreflightFailure = {
   observability?: Record<string, unknown>
 }
 
-type ActionPreflightContext = {
+export type ActionPreflightContext = {
   host?: Record<string, any>
   sessionKey?: string
   onProgress?: (message: string) => void | Promise<void>
@@ -1076,57 +1077,6 @@ async function validateUseIntegrationPreflight(
   return null
 }
 
-async function validateUseMcpToolPreflight(
-  data: Record<string, unknown>,
-  context?: ActionPreflightContext,
-): Promise<ActionPreflightFailure | null> {
-  const args = data.arguments ?? data.args ?? {}
-  if (!isRecord(args)) return failure('arguments must be an object')
-  const toolName = stringValue(data.tool_name ?? data.tool)
-  if (!toolName) return failure('tool_name is required')
-
-  const host = context?.host
-  const artifactMcpService = host?.artifactMcpService
-  const mcpConfig = artifactMcpService?.mcpConfig
-  const mcpTool = artifactMcpService?.mcpTool
-  const mcpRepository = artifactMcpService?.artifactMcpRepository
-  if (!host || !mcpConfig || !mcpTool || !mcpRepository) return null
-
-  try {
-    const userId = host.resolveUserId(context?.sessionKey)
-    const supabase = await host.getUserClient(userId, context?.sessionKey as string)
-    const projectId = await mcpRepository.findFirstProjectId(supabase)
-    if (!projectId) return failure('No project context')
-
-    const serverName = stringValue(data.server_name)
-    const serverId = stringValue(data.server_id)
-    const server = serverId
-      ? await mcpConfig.getServer(supabase, serverId)
-      : serverName
-        ? await mcpConfig.getServerByName(supabase, projectId, serverName)
-        : null
-    if (!server) return failure('MCP server not found')
-    if (!server.enabled || !server.agent_enabled) return failure('MCP server is disabled')
-
-    const cachedTools = Array.isArray(server.cached_tools) ? server.cached_tools : []
-    const tools =
-      cachedTools.length > 0
-        ? cachedTools
-        : await mcpTool.listTools(server, supabase, await mcpConfig.getAuthToken(supabase, server))
-    const tool = tools.find(
-      (candidate: Record<string, unknown>) => stringValue(candidate.name) === toolName,
-    )
-    if (!tool) return failure(`${toolName} is not available on MCP server ${server.name}`)
-
-    const schemaError = validateJsonSchemaArgs(tool.inputSchema, args)
-    if (schemaError) return failure(schemaError)
-  } catch {
-    return null
-  }
-
-  return null
-}
-
 function isPresent(value: unknown): boolean {
   return !(
     value === undefined ||
@@ -1153,62 +1103,4 @@ function extractRequiredCapabilityParams(value: unknown): string[] {
       .map((entry) => String(entry.name))
   }
   return []
-}
-
-function validateJsonSchemaArgs(schema: unknown, args: Record<string, unknown>): string | null {
-  if (!isRecord(schema)) return null
-  return validateJsonSchemaValue(schema, args, 'arguments')
-}
-
-function validateJsonSchemaValue(
-  schema: Record<string, unknown>,
-  value: unknown,
-  path: string,
-): string | null {
-  const required = Array.isArray(schema.required)
-    ? schema.required.filter((entry): entry is string => typeof entry === 'string')
-    : []
-  if (isRecord(value)) {
-    for (const key of required) {
-      if (!isPresent(value[key])) return `${path}.${key} is required by MCP inputSchema`
-    }
-  }
-
-  const type = Array.isArray(schema.type) ? schema.type[0] : schema.type
-  if (type === 'object' && !isRecord(value)) return `${path} must be an object`
-  if (type === 'array' && !Array.isArray(value)) return `${path} must be an array`
-  if (type === 'string' && typeof value !== 'string') return `${path} must be a string`
-  if (type === 'number' && typeof value !== 'number') return `${path} must be a number`
-  if (type === 'integer' && (!Number.isInteger(value) || typeof value !== 'number')) {
-    return `${path} must be an integer`
-  }
-  if (type === 'boolean' && typeof value !== 'boolean') return `${path} must be a boolean`
-
-  if (Array.isArray(schema.enum) && !schema.enum.includes(value)) {
-    return `${path} must be one of ${schema.enum.map(String).join(', ')}`
-  }
-
-  const properties = isRecord(schema.properties) ? schema.properties : {}
-  if (isRecord(value)) {
-    if (schema.additionalProperties === false) {
-      const unknown = Object.keys(value).find(
-        (key) => !Object.prototype.hasOwnProperty.call(properties, key),
-      )
-      if (unknown) return `${path}.${unknown} is not allowed by MCP inputSchema`
-    }
-    for (const [key, childSchema] of Object.entries(properties)) {
-      if (value[key] === undefined || !isRecord(childSchema)) continue
-      const error = validateJsonSchemaValue(childSchema, value[key], `${path}.${key}`)
-      if (error) return error
-    }
-  }
-
-  if (Array.isArray(value) && isRecord(schema.items)) {
-    for (let index = 0; index < value.length; index += 1) {
-      const error = validateJsonSchemaValue(schema.items, value[index], `${path}[${index}]`)
-      if (error) return error
-    }
-  }
-
-  return null
 }

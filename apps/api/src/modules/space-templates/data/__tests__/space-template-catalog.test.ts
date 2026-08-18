@@ -165,9 +165,9 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: 'all-meetings',
-          column_widths: expect.objectContaining({ attendees: 360 }),
+          column_widths: expect.objectContaining({ attendees: 360, client_campaign: 240 }),
           date_display_formats: expect.objectContaining({ call_date: 'date_time' }),
-          visible_fields: expect.arrayContaining(['call_date', 'call_kind']),
+          visible_fields: expect.arrayContaining(['call_date', 'call_kind', 'client_campaign']),
         }),
         expect.objectContaining({
           id: 'agenda',
@@ -197,6 +197,7 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
             expect.objectContaining({ id: 'sales' }),
           ]),
         }),
+        expect.objectContaining({ id: 'client_campaign', name: 'Client / Campaign', type: 'text' }),
         expect.objectContaining({ id: 'due_date', name: 'Due Date' }),
       ]),
     )

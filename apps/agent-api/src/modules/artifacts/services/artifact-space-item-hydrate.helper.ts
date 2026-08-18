@@ -28,6 +28,26 @@ function isMeetingLikeItem(item: UnknownRecord, custom: UnknownRecord): boolean 
   return asString(automation.provider) === 'fathom'
 }
 
+function readClientCampaign(custom: UnknownRecord): UnknownRecord | null {
+  const raw = custom.client_campaign
+  if (typeof raw === 'string' && raw.trim()) {
+    return { campaign_name: raw.trim() }
+  }
+  const row = asRecord(raw)
+  const campaignName = asString(row.campaign_name)
+  const campaignId = asString(row.campaign_id)
+  const clientName = asString(row.client_name)
+  const clientId = asString(row.client_id)
+  if (!campaignName && !campaignId && !clientName && !clientId) return null
+  return {
+    client_id: clientId,
+    client_name: clientName,
+    campaign_id: campaignId,
+    campaign_name: campaignName,
+    roas_space_id: asString(row.roas_space_id),
+  }
+}
+
 /** Meeting-facing fields for get_space_item so agents can open attached calls. */
 export function buildSpaceItemMeetingHydration(item: UnknownRecord): UnknownRecord | null {
   const custom = asRecord(item.custom_data)
@@ -55,6 +75,7 @@ export function buildSpaceItemMeetingHydration(item: UnknownRecord): UnknownReco
       asString(automation.meeting_id) ??
       asString(automation.recording_id),
     attendees: custom.attendees ?? null,
+    client_campaign: readClientCampaign(custom),
     summary: asString(item.description) ?? asString(custom.summary),
     transcript_text: transcriptText,
     transcript_entries: transcriptEntries,
