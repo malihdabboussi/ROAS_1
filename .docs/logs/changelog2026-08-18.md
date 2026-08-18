@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 18:46] - [DOCS]
+What: Wrote the Meetings one-room plan: one All Meetings row per call, two doors (standard task card vs specialized meeting card), Live/Completed/No Show/Rescheduled only, related calls so Pixel can read last week’s recording without Recordings +.
+Why: Calendar, All Meetings, and the meeting workspace were three homes. Agenda opening a different card than All Meetings was the intended split; New/Upcoming is unnecessary because date already means upcoming.
+Impact: Implementation waits for approval. Mapping PR stays separate. Phase order is materialize rows → status/host/filter → two doors → related calls + Pixel context → both post-call automatics → card/tab cleanup.
+Files: `.docs/plans/meetings-one-room-2026-08-18.md`
+
 ## [2026-08-18 17:40] - [FIX]
 What: Restored Simple sidebar Recents resize, left-offset the expanded ROAS wordmark, and centered the compact R mark in the rail.
 Why: The Recents drag handle sat under the menu and width used a 300ms transition, so dragging did nothing useful. The wordmark lived in a padded flex-1 row so it read centered. Compact R padding plus an unconstrained PNG spilled right of the 56px rail.
