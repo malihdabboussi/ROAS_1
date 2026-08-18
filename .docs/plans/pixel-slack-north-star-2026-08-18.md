@@ -1,6 +1,6 @@
 # Pixel Slack North Star — Classify, Retrieve, Deliver (Brain / Agent rework)
 
-Last Modified: 2026-08-18 (§11.10 asset links on Service Requests)
+Last Modified: 2026-08-18 (§11.10 asset links; §11.11 client context bundle)
 
 ## Architect Summary
 
@@ -838,12 +838,22 @@ Three structural adjustments to the spine above, so the rest of this section bui
 - **First step.** Fixture: forwarded message with one Slack PDF + one Drive link → SR `attachments[]` has a ROAS-hosted PDF URL and the Drive URL; ClickUp description lists them under "Assets"; Slack permalink stays under "Source thread". Test both a Slack-native file and a Slack Connect file (different token scope).
 - **Status.** Not started. Sits with N10 / 11.6 in the build order (assets are resolved right after client identity).
 
+### 11.11 Client Context Bundle + channel-scoped Slack search (added 2026-08-18)
+
+- **Incident.** Pixel DM: "What was stats for Yasir's last webinar on Aug 6." Pixel found the pre-webinar plan in Campaign Brain, could not find Nefi's results post in Slack, and finally said it *could not confirm Yasir's Slack channel* and guessed Impact Elite. `#roas-yasir-khan-coaching-ltd-955` is stamped to Yasir in `slack_observation_channels`.
+- **Root cause (code, not policy).** (1) The channel→client map is only applied *inbound* (`[Slack channel identity]` when posting in the channel); there is **no tool that returns a client's Slack channels**, so from a DM the model cannot know. (2) `search_slack_messages` takes only `query` — no `channel_ids` — so it cannot search one client's channel end-to-end and report coverage. (3) Whether Nefi's post was ever imported into Campaign Brain is the 11.3 ingestion question.
+- **Fix — one deterministic step, not model discovery.** When N1 resolves a client (stamp, quote, name, or bind), `apps/api` builds and injects a **client context bundle**: Portal client id + name, Campaign Brain id, ROAS campaign ids, **Slack channel ids/names**, Drive folder, Space id, last N Fathom meetings. Then: `search_slack_messages` gains `channel_ids` (and `client_id` sugar) and searches those channels first, full history, `coverage.complete|partial`; the identity block lists the channels; 11.2 preload and CONNECTIONS bind read from the same bundle; every N2 ladder step reads the bundle so a new source is one field, not ten prompt edits.
+- **Why this is the class fix.** Every "Pixel didn't look deep enough" report so far (Master Your Kraft, 1DS, Yasir) reduces to *the model had to guess where the client's data lives*. The bundle removes the guess; 11.0 telemetry + 11.7 nightly harness surface the next miss on a scoreboard instead of in Dylan's DMs.
+- **First step.** Bundle builder from existing rows (`slack_observation_channels`, observation event metadata `page_grader_client_id`, campaigns, `ns_brains`, drive mapping); `channel_ids` on `search_slack_messages` with coverage; fixture: DM "Yasir Aug 6 webinar stats" → bundle has `#roas-yasir…` → channel-scoped search → results post found or coverage complete.
+- **Status.** Not started. Build immediately after 11.0.
+
 ### 11.9 Build order (supersedes §10 sequencing where they differ)
 
 ```text
 merge #310 (Sonnet write) + #311 (fork context)
   → 11.3 prod audit: Brain 500, user-brain population, ingest coverage   ← data, not policy
   → 11.0 telemetry row + N0 stamp in apps/api
+  → 11.11 client context bundle + channel-scoped Slack search   ← the class fix
   → N1 quote inherit (11.6) after capturing a real payload
   → 11.10 direct asset links on SRs / ClickUp (Slack file re-host, Drive URLs)
   → 11.2 CONNECTIONS bind from stamp + Campaign Brain preload

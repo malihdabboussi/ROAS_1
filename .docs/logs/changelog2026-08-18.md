@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 15:40] - [DOCS]
+What: Added §11.11 Client Context Bundle + channel-scoped Slack search to the North Star plan, and put it right after telemetry in the build order.
+Why: Pixel could not name Yasir's Slack channel from a DM (no client→channel tool) and could not search that channel end-to-end (`search_slack_messages` has no channel filter). This is the shared root cause behind the Yasir, Master Your Kraft, and 1DS misses.
+Impact: Docs only. Defines the deterministic client bundle every ladder step reads from.
+Files: `.docs/plans/pixel-slack-north-star-2026-08-18.md`
+
 ## [2026-08-18 15:05] - [DOCS]
 What: Added §11.10 to the North Star plan — Service Requests / ClickUp tasks created from forwarded Slack messages must carry direct asset links (re-hosted Slack files, Drive URLs), not only the gated Slack thread URL.
 Why: MFS Elite landing-page SR linked the Slack archive; the assignee may not have channel access to open the PDF.
