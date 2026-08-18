@@ -29,6 +29,7 @@ function isCallItem(item?: SpaceItem): boolean {
 
 type ClientCampaignCellProps = BaseCellProps & {
   spaceItem?: SpaceItem
+  fieldRowVariant?: 'default' | 'kanban'
   onOpenDetail?: (item: SpaceItem) => void
 }
 
