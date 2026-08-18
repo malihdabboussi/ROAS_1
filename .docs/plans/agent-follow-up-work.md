@@ -1,3 +1,16 @@
+## 2026-08-18 - [FIX] Static-ad format/mode terms still scan the full pasted message
+
+Status: Open
+
+Found while: Tightening the static-ad creation matcher so pasted Slack threads do not force the production-type card
+
+Evidence: `buildStaticAdChatRoutingInstruction` now detects creation from the first and last 240 characters of long pastes, but `findExplicitMode` and `STATIC_AD_FORMAT_TERMS` still run on the full normalized text once that gate matches. A wrapping “make ads from this:” plus buried “chat receipt” or “messaging angles” can still lock a lane.
+
+Needed work: Limit explicit mode and format-term matching on long pastes to the same head/tail windows used for creation detection.
+
+Reason not done now: The reported false positive was `selection_required` from distant want/need + ad-account language, which the collocation and window change already stops.
+
+
 ## 2026-08-18 - [ARCH] Campaign detail page is over the 80% container budget
 
 Status: Open
