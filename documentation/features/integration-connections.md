@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: August 13, 2026 (Drive-backed agent Google Docs creation)
+Last Modified: August 17, 2026
 
 ## Data Flow
 
@@ -131,6 +131,7 @@ Reconnect result:
 
 ## Decision Log
 
+- 2026-08-17: Pixel authorizes the sender, not the rest of the conversation. Internal people and the Slack installer can use Pixel in group DMs and Slack Connect threads. Linked Slack Connect/workspace identities inherit Internal. External senders remain denied.
 - 2026-08-04: Replaced Pixel's 40-message bot-token Slack fallback with bounded historical named-channel retrieval, thread expansion, relevance ranking, and explicit coverage. Team Intelligence stores a clean finding for new actions and uses the original source message for queued legacy questions/risks, so compiled digests cannot recursively repeat their framing or CTA.
 - Pixel Team Intelligence Active delivery models Viktor: one curated DM digest per recipient with suggested actions, then thread follow-ups for 12 hours. Per-signal top-level posts and the “Pixel will not message the external person” disclaimer are removed from outbound copy.
 - 2026-08-04: Replaced unanswered-message-first Team Intelligence analysis with a relevance-ranked briefing contract. Pixel can now recognize wins, important updates, decisions, and strategic opportunities, route those executive signals to the workspace owner, and deliver them without incorrectly treating later thread replies as resolution.
@@ -180,7 +181,7 @@ Reconnect result:
 - A People conversation composer writes only to `slack_shadow_actions`; delivery remains a separate approved-and-Active action. Explicit identity mapping is limited to active members of the current organization.
 - A created Person Brain replaces the creation action in the person intelligence panel; portal identity remains a separate optional mapping. The right-side person panel can collapse to a narrow rail and reopen without leaving the conversation.
 - Slack channel membership is display-only discovery context. Only channels visible to the connected bot are shown, and a refresh must preserve every administrator-set `internal`, `external`, or `ignored` classification because manual relationship metadata remains authoritative.
-- Manage People relationship classification is the Slack Pixel authorization source. Internal Slack Connect identities can be manually classified Internal; portal membership is not required. External, Ignored, and unresolved identities receive a short denial. Mixed channels are denied so an Internal sender cannot expose organization context to a client who can see the thread.
+- Manage People relationship classification is the Slack Pixel authorization source. Internal Slack Connect identities can be manually classified Internal; portal membership is not required. External, Ignored, and unresolved senders receive a short denial. An Internal sender (or the Slack installer) may use Pixel in mixed and Slack Connect conversations, including group DMs. Linked Slack identities inherit Internal from the person's portal or Internal account.
 - Slack teammate execution is owner-funded but not owner-impersonated for private memory. The request uses the integration owner's organization/credits, carries the Slack principal through channel context, strips Personal Brain prompt/tool access for non-owners, and rejects Slack calls that omit this principal contract.
 - A forwarded Slack card is context, not ordinary link-preview decoration. Pixel preserves its author, channel, message, links, and source permalink, then reads the referenced channel through the existing Slack connection when authorized. Abbreviated file events must be hydrated through Slack before the file is considered unavailable.
 - Slack conversation creation is one native action for both direct and group DMs. One `slack_user_id` opens a 1:1 DM; `slack_user_ids` opens a group DM and returns resolved participant names with the conversation id. Existing Slack installations must grant `mpim:write` before Pixel can create a new group DM.

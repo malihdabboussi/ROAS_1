@@ -1,3 +1,15 @@
+## 2026-08-17 - [ARCH] slack-service-events.base.ts is over the 600 LOC service cap
+
+Status: Open
+
+Found while: Letting Internal senders use Pixel in group DMs / Slack Connect
+
+Evidence: `wc -l` on `apps/api/src/modules/slack/services/slack-service-events.base.ts` is ~634. This change only switched DM detection to `isSlackDirectConversation`.
+
+Needed work: Split message vs mention vs reaction handlers out of the events base.
+
+Reason not done now: The requested fix was the mixed-member access denial.
+
 ## 2026-08-18 - [FEATURE] Org Pixel CEO skills still incomplete (weekly update / post-call); Super Voice + Power shipped
 
 Status: Open (partial)
