@@ -3,11 +3,11 @@
 import {
   BriefcaseBusiness,
   CalendarDays,
-  CheckSquare,
   Ellipsis,
   House,
   Inbox,
   ListChecks,
+  ListTodo,
   SendHorizontal,
   Star,
   Users,
@@ -51,11 +51,11 @@ export const manageRailItems: ManageRailItem[] = [
     icon: <CalendarDays className="icon-md" />,
   },
   {
-    id: 'my-task',
-    label: 'My Tasks',
+    id: 'all-tasks',
+    label: 'All Tasks',
     type: 'link',
-    href: '/home/my-tasks',
-    icon: <CheckSquare className="icon-md" />,
+    href: '/all-tasks',
+    icon: <ListTodo className="icon-md" />,
   },
   {
     id: 'delegation-desk',

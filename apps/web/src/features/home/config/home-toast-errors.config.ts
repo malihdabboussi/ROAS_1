@@ -8,7 +8,6 @@ export const HOME_TOAST_ERRORS = {
     userMessage: 'Could not sync hidden meetings — try refreshing.',
   },
   DUPLICATE_CONVERSATION_FAILED: { userMessage: 'Could not duplicate conversation.' },
-  PREP_START_FAILED: { userMessage: 'Could not start pre-call prep.' },
   MEETING_WORKSPACE_LOAD_FAILED: { userMessage: 'Could not load the meeting workspace.' },
   MEETING_START_FAILED: { userMessage: 'Could not start the meeting workspace.' },
   MEETING_END_FAILED: { userMessage: 'Could not end the call.' },
@@ -16,7 +15,6 @@ export const HOME_TOAST_ERRORS = {
   MEETING_NOTE_SAVE_FAILED: { userMessage: 'Could not save that meeting note.' },
   MEETING_ACTION_UPDATE_FAILED: { userMessage: 'Could not update that action item.' },
   MEETING_ACTION_CREATE_FAILED: { userMessage: 'Could not add that action item.' },
-  MEETING_ACTION_MOVE_FAILED: { userMessage: 'Could not move that action item.' },
   MEETING_RECORDINGS_LOAD_FAILED: {
     userMessage: 'Could not load Fathom recordings — check the connection and try again.',
   },
@@ -24,13 +22,12 @@ export const HOME_TOAST_ERRORS = {
   MEETING_NOTE_CREATE_FAILED: { userMessage: 'Could not save that note.' },
   MEETING_RENAME_FAILED: { userMessage: 'Could not rename this meeting.' },
   MEETINGS_SPACE_REQUIRED: {
-    userMessage: 'Open or create your Meetings space first, then try prep again.',
+    userMessage: 'Open or create your Meetings space first.',
   },
 } as const
 
 export const HOME_TOAST_SUCCESS = {
   LINK_COPIED: { userMessage: 'Link copied.' },
-  PREP_STARTED: { userMessage: 'Pre-call prep started.' },
   MEETING_STARTED: { userMessage: 'Meeting workspace is live.' },
   MEETING_ENDED: { userMessage: 'Call ended. Keep dumping notes in chat anytime.' },
   MEETING_ACTION_CREATED: { userMessage: 'Action item locked in.' },

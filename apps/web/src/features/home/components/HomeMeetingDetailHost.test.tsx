@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
@@ -64,7 +64,14 @@ describe('HomeMeetingDetailHost', () => {
   afterEach(() => {
     cleanup()
     vi.clearAllMocks()
-    useShellStore.setState({ recentWorkAreaPages: [], pendingWorkRestore: null })
+    useShellStore.setState({
+      recentWorkAreaPages: [],
+      pendingWorkRestore: null,
+      pageBreadcrumb: null,
+      pageBreadcrumbOwner: null,
+      pageHeaderAction: null,
+      pageHeaderActionOwner: null,
+    })
   })
 
   it('opens a linked call directly in the curated meeting workspace', () => {
@@ -81,7 +88,6 @@ describe('HomeMeetingDetailHost', () => {
           },
         }}
         onClose={vi.fn()}
-        onOpenPrep={vi.fn()}
       />,
     )
 
@@ -98,6 +104,30 @@ describe('HomeMeetingDetailHost', () => {
     )
   })
 
+  it('lets Agenda in the breadcrumb close the meeting workspace', () => {
+    const onClose = vi.fn()
+    render(
+      <HomeMeetingDetailHost
+        event={{
+          ...baseEvent,
+          related: {
+            space_id: 'space-1',
+            call_item_id: 'call-1',
+            title: 'Support huddle',
+            recording_url: null,
+            follow_ups: [],
+          },
+        }}
+        onClose={onClose}
+      />,
+    )
+
+    const crumb = useShellStore.getState().pageBreadcrumb
+    render(<>{crumb}</>)
+    fireEvent.click(screen.getByRole('button', { name: 'Agenda' }))
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
   it('creates or reuses a scheduled workspace before opening a future call', async () => {
     mocks.resolveMeetingsSpaceId.mockResolvedValue('meetings-space')
     mocks.resolveScheduledMeeting.mockResolvedValue({
@@ -106,9 +136,13 @@ describe('HomeMeetingDetailHost', () => {
       conversation_id: 'meeting-conversation',
     })
 
-    render(<HomeMeetingDetailHost event={baseEvent} onClose={vi.fn()} onOpenPrep={vi.fn()} />)
+    render(<HomeMeetingDetailHost event={baseEvent} onClose={vi.fn()} />)
 
-    expect(screen.getByText('Getting your meeting space ready...')).toBeInTheDocument()
+    expect(
+      screen.getByRole('status', {
+        name: 'Getting your meeting space ready...',
+      }),
+    ).toBeInTheDocument()
     await waitFor(() => {
       expect(
         screen.getByRole('region', { name: 'Nate X Dylan BOW Huddle meeting workspace' }),

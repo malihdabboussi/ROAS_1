@@ -9,11 +9,30 @@ import {
   hydrateArtifactViewerWidth,
   resolveOpenedArtifactViewerWidth,
 } from '@/lib/artifacts/artifact-viewer-layout'
+import { sanitizeLastArtifactByConversation } from './shell-artifact-conversation'
+import {
+  rememberWorkAreaPage,
+  sanitizeLastWorkAreaPageByConversation,
+  type ShellWorkAreaPageTarget,
+  type ShellWorkAreaRestore,
+} from './shell-work-area-page'
+import {
+  createShellArtifactConversationSlice,
+  forgetClosedArtifact,
+  rememberOpenArtifact,
+  type ShellArtifactConversationSlice,
+} from './use-shell-store.artifact-conversation'
 import {
   createShellScreenChatSlice,
   sanitizeScreenConversations,
   type ShellScreenChatSlice,
 } from './use-shell-store.screen-chat'
+import {
+  createShellWorkAreaConversationSlice,
+  type ShellWorkAreaConversationSlice,
+} from './use-shell-store.work-area-conversation'
+
+export type { ShellWorkAreaPageTarget, ShellWorkAreaRestore }
 
 const STORAGE_KEY = 'vibey.shell.v1'
 
@@ -35,19 +54,6 @@ export type ShellArtifactViewerState = {
   width: number
 }
 
-export type ShellWorkAreaRestore = {
-  feature: string
-  data: unknown
-}
-
-export type ShellWorkAreaPageTarget = {
-  id: string
-  title: string
-  href: string
-  /** Feature-owned payload so the memory menu can reopen the exact surface. */
-  restore?: ShellWorkAreaRestore
-}
-
 type PersistedShell = {
   sidebarPinned?: boolean
   menuMode?: ShellMenuMode
@@ -61,6 +67,9 @@ type PersistedShell = {
   workAreaOpen?: boolean
   artifactViewerWidth?: number
   artifactViewerTarget?: ShellArtifactViewerTarget | null
+  lastArtifactByConversation?: Record<string, ShellArtifactViewerTarget>
+  lastWorkAreaPageByConversation?: Record<string, ShellWorkAreaPageTarget>
+  artifactPinned?: boolean
   screenConversations?: Record<string, string>
 }
 
@@ -114,7 +123,8 @@ function clampChatHistoryWidth(width: number): number {
   return Math.min(CHAT_HISTORY_WIDTH_MAX, Math.max(CHAT_HISTORY_WIDTH_MIN, width))
 }
 
-interface ShellStore extends ShellScreenChatSlice {
+interface ShellStore
+  extends ShellScreenChatSlice, ShellArtifactConversationSlice, ShellWorkAreaConversationSlice {
   sidebarPinned: boolean
   sidebarPeek: boolean
   menuMode: ShellMenuMode
@@ -136,6 +146,8 @@ interface ShellStore extends ShellScreenChatSlice {
   pageBreadcrumb: ReactNode | null
   pageBreadcrumbOwner: object | null
   pageBreadcrumbLabel: string | null
+  pageHeaderAction: ReactNode | null
+  pageHeaderActionOwner: object | null
   pendingWorkRestore: ShellWorkAreaRestore | null
 
   setSidebarPinned: (pinned: boolean) => void
@@ -158,15 +170,15 @@ interface ShellStore extends ShellScreenChatSlice {
   toggleRightPanel: () => void
   setSummaryPanelDocked: (docked: boolean) => void
   requestConversationScopePicker: () => void
-  openArtifactViewer: (target: ShellArtifactViewerTarget) => void
-  closeArtifactViewer: () => void
+  openArtifactViewer: (target: ShellArtifactViewerTarget, conversationId?: string | null) => void
+  closeArtifactViewer: (conversationId?: string | null) => void
   setArtifactViewerWidth: (width: number) => void
-  recordWorkAreaPage: (target: ShellWorkAreaPageTarget) => void
   requestNewChat: () => void
   /** Fresh chat in the docked left drawer (workspace routes); stays on current page. */
   openFreshChatDrawer: () => void
   bumpSidebarFlyoutClose: () => void
   setPageBreadcrumb: (node: ReactNode | null, owner?: object | null, label?: string | null) => void
+  setPageHeaderAction: (node: ReactNode | null, owner?: object | null) => void
   setPendingWorkRestore: (restore: ShellWorkAreaRestore | null) => void
   consumePendingWorkRestore: (feature: string) => ShellWorkAreaRestore | null
 }
@@ -200,11 +212,15 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   recentArtifactTargets: [],
   recentWorkAreaPages: [],
   ...createShellScreenChatSlice(set, get, writePersisted),
+  ...createShellArtifactConversationSlice(set, get, writePersisted),
+  ...createShellWorkAreaConversationSlice(set, writePersisted),
   newChatNonce: 0,
   sidebarFlyoutCloseEpoch: 0,
   pageBreadcrumb: null,
   pageBreadcrumbOwner: null,
   pageBreadcrumbLabel: null,
+  pageHeaderAction: null,
+  pageHeaderActionOwner: null,
   pendingWorkRestore: null,
 
   bumpSidebarFlyoutClose: () => {
@@ -270,15 +286,14 @@ export const useShellStore = create<ShellStore>((set, get) => ({
         conversationId: nextConversationId,
       },
       rightPanel: { ...s.rightPanel, open: false },
-      artifactViewer: { ...s.artifactViewer, target: null },
     }))
     writePersisted({
       chatDrawerOpen: true,
       chatDrawerConversationId: nextConversationId,
       chatDrawerMinimized: false,
       rightPanelOpen: false,
-      artifactViewerTarget: null,
     })
+    get().syncArtifactViewerForConversation(nextConversationId)
   },
   minimizeChatDrawer: () => {
     set((s) => ({
@@ -293,18 +308,18 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     })
   },
   restoreChatDrawer: () => {
+    const conversationId = get().chatDrawer.conversationId
     set((s) => ({
       chatDrawer: { ...s.chatDrawer, open: true, minimized: false },
       rightPanel: { ...s.rightPanel, open: false },
-      artifactViewer: { ...s.artifactViewer, target: null },
     }))
     writePersisted({
       chatDrawerOpen: true,
-      chatDrawerConversationId: get().chatDrawer.conversationId,
+      chatDrawerConversationId: conversationId,
       chatDrawerMinimized: false,
       rightPanelOpen: false,
-      artifactViewerTarget: null,
     })
+    get().syncArtifactViewerForConversation(conversationId)
   },
   closeChatDrawer: () => {
     set((s) => ({
@@ -361,11 +376,12 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   setRightPanelOpen: (open) => {
     writePersisted({
       rightPanelOpen: open,
-      ...(open ? { artifactViewerTarget: null } : {}),
+      ...(open ? { artifactViewerTarget: null, artifactPinned: false } : {}),
     })
     set((s) => ({
       rightPanel: { ...s.rightPanel, open },
       artifactViewer: open ? { ...s.artifactViewer, target: null } : s.artifactViewer,
+      artifactPinned: open ? false : s.artifactPinned,
     }))
   },
   toggleRightPanel: () => {
@@ -376,64 +392,69 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     set({ summaryPanelDocked: docked })
   },
   requestConversationScopePicker: () => {
-    writePersisted({ rightPanelOpen: true, artifactViewerTarget: null })
+    writePersisted({ rightPanelOpen: true, artifactViewerTarget: null, artifactPinned: false })
     set((s) => ({
       conversationScopePickerRequestNonce: s.conversationScopePickerRequestNonce + 1,
       rightPanel: { ...s.rightPanel, open: true },
       artifactViewer: { ...s.artifactViewer, target: null },
+      artifactPinned: false,
     }))
   },
-  openArtifactViewer: (target) => {
+  openArtifactViewer: (target, conversationId) => {
     const width = resolveOpenedArtifactViewerWidth(get().artifactViewer.width, target.type)
+    const remembered = rememberOpenArtifact(
+      get().lastArtifactByConversation,
+      conversationId ?? target.conversationId,
+      target,
+    )
+    const conversationKey = remembered.target.conversationId
+    const currentPage = get().recentWorkAreaPages[0]
+    const lastWorkAreaPageByConversation =
+      conversationKey && currentPage
+        ? rememberWorkAreaPage(get().lastWorkAreaPageByConversation, conversationKey, currentPage)
+        : get().lastWorkAreaPageByConversation
     writePersisted({
       rightPanelOpen: false,
       workAreaOpen: true,
-      artifactViewerTarget: target,
+      artifactViewerTarget: remembered.target,
       artifactViewerWidth: width,
+      lastArtifactByConversation: remembered.lastArtifactByConversation,
+      lastWorkAreaPageByConversation,
     })
     set((s) => ({
-      artifactViewer: { ...s.artifactViewer, target, width },
+      artifactViewer: { ...s.artifactViewer, target: remembered.target, width },
+      lastArtifactByConversation: remembered.lastArtifactByConversation,
+      lastWorkAreaPageByConversation,
       recentArtifactTargets: [
-        target,
-        ...s.recentArtifactTargets.filter((entry) => entry.id !== target.id),
+        remembered.target,
+        ...s.recentArtifactTargets.filter((entry) => entry.id !== remembered.target.id),
       ].slice(0, 6),
       rightPanel: { ...s.rightPanel, open: false },
       workAreaOpen: true,
     }))
   },
-  closeArtifactViewer: () => {
-    writePersisted({ artifactViewerTarget: null })
-    set((s) => ({ artifactViewer: { ...s.artifactViewer, target: null } }))
+  closeArtifactViewer: (conversationId) => {
+    const current = get().artifactViewer.target
+    const lastArtifactByConversation = forgetClosedArtifact(
+      get().lastArtifactByConversation,
+      current,
+      conversationId,
+    )
+    writePersisted({
+      artifactViewerTarget: null,
+      artifactPinned: false,
+      lastArtifactByConversation,
+    })
+    set((s) => ({
+      artifactViewer: { ...s.artifactViewer, target: null },
+      artifactPinned: false,
+      lastArtifactByConversation,
+    }))
   },
   setArtifactViewerWidth: (width) => {
     const clamped = clampArtifactViewerWidth(width)
     writePersisted({ artifactViewerWidth: clamped })
     set((s) => ({ artifactViewer: { ...s.artifactViewer, width: clamped } }))
-  },
-  recordWorkAreaPage: (target) => {
-    if (new URLSearchParams(target.href.split('?')[1] ?? '').has('conv')) return
-    set((s) => {
-      const title = target.title.trim() || target.href
-      const titleKey = title.toLocaleLowerCase()
-      // A feature host and the top bar can both record the same surface id —
-      // never let the payload-less record drop the host's restore payload.
-      const restore =
-        target.restore ?? s.recentWorkAreaPages.find((entry) => entry.id === target.id)?.restore
-      return {
-        recentWorkAreaPages: [
-          {
-            id: target.id,
-            title,
-            href: target.href,
-            ...(restore ? { restore } : {}),
-          },
-          ...s.recentWorkAreaPages.filter(
-            (entry) =>
-              entry.id !== target.id && entry.title.trim().toLocaleLowerCase() !== titleKey,
-          ),
-        ].slice(0, 8),
-      }
-    })
   },
   requestNewChat: () => {
     set((s) => ({
@@ -446,15 +467,14 @@ export const useShellStore = create<ShellStore>((set, get) => ({
         minimized: false,
       },
       workAreaOpen: true,
-      artifactViewer: { ...s.artifactViewer, target: null },
     }))
     writePersisted({
       chatDrawerOpen: false,
       chatDrawerConversationId: null,
       chatDrawerMinimized: false,
       workAreaOpen: true,
-      artifactViewerTarget: null,
     })
+    get().syncArtifactViewerForConversation(null)
   },
   openFreshChatDrawer: () => {
     set((s) => ({
@@ -467,15 +487,14 @@ export const useShellStore = create<ShellStore>((set, get) => ({
         minimized: false,
       },
       rightPanel: { ...s.rightPanel, open: false },
-      artifactViewer: { ...s.artifactViewer, target: null },
     }))
     writePersisted({
       chatDrawerOpen: true,
       chatDrawerConversationId: null,
       chatDrawerMinimized: false,
       rightPanelOpen: false,
-      artifactViewerTarget: null,
     })
+    get().syncArtifactViewerForConversation(null)
   },
   setPageBreadcrumb: (node, owner = null, label = null) => {
     if (node === null) {
@@ -490,6 +509,15 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       pageBreadcrumbOwner: owner,
       pageBreadcrumbLabel: trimmed || null,
     })
+  },
+  setPageHeaderAction: (node, owner = null) => {
+    if (node === null) {
+      const currentOwner = get().pageHeaderActionOwner
+      if (owner != null && currentOwner != null && currentOwner !== owner) return
+      set({ pageHeaderAction: null, pageHeaderActionOwner: null })
+      return
+    }
+    set({ pageHeaderAction: node, pageHeaderActionOwner: owner })
   },
   setPendingWorkRestore: (restore) => {
     set({ pendingWorkRestore: restore })
@@ -521,6 +549,13 @@ export function hydrateShellStoreFromStorage(): void {
       ? persisted.chatDrawerConversationId
       : null
   const artifactViewerTarget = persistedArtifactTarget(persisted.artifactViewerTarget)
+  const lastArtifactByConversation = sanitizeLastArtifactByConversation(
+    persisted.lastArtifactByConversation,
+  )
+  const lastWorkAreaPageByConversation = sanitizeLastWorkAreaPageByConversation(
+    persisted.lastWorkAreaPageByConversation,
+  )
+  const artifactPinned = persisted.artifactPinned === true
   useShellStore.setState({
     sidebarPinned: persisted.sidebarPinned ?? false,
     menuMode: persistedMenuMode,
@@ -534,6 +569,9 @@ export function hydrateShellStoreFromStorage(): void {
     chatHistoryWidth: clampChatHistoryWidth(persisted.chatHistoryWidth ?? 200),
     chatHistoryCollapsed: persisted.chatHistoryCollapsed ?? false,
     lastConversationByScreen: sanitizeScreenConversations(persisted.screenConversations),
+    lastArtifactByConversation,
+    lastWorkAreaPageByConversation,
+    artifactPinned,
     workAreaOpen: artifactViewerTarget ? true : (persisted.workAreaOpen ?? true),
     rightPanel: {
       open: artifactViewerTarget ? false : (persisted.rightPanelOpen ?? false),

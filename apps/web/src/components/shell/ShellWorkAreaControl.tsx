@@ -31,7 +31,6 @@ export function ShellWorkAreaControl({ currentPage }: ShellWorkAreaControlProps)
   const recentTargets = useShellStore((state) => state.recentArtifactTargets)
   const recentPages = useShellStore((state) => state.recentWorkAreaPages)
   const openArtifactViewer = useShellStore((state) => state.openArtifactViewer)
-  const closeArtifactViewer = useShellStore((state) => state.closeArtifactViewer)
   const setPendingWorkRestore = useShellStore((state) => state.setPendingWorkRestore)
   const seenPageTitles = new Set<string>()
   const pageTargets = [currentPage, ...recentPages].filter((target) => {
@@ -45,7 +44,7 @@ export function ShellWorkAreaControl({ currentPage }: ShellWorkAreaControlProps)
 
   const pageIcon = (href: string) => {
     if (href.startsWith('/home/meetings')) return CalendarDays
-    if (href.startsWith('/home/my-tasks')) return ListChecks
+    if (href.startsWith('/home/my-tasks') || href.startsWith('/all-tasks')) return ListChecks
     if (href.startsWith('/home/inbox')) return Inbox
     if (href.startsWith('/brain')) return Brain
     if (href.startsWith('/team')) return Users
@@ -86,7 +85,6 @@ export function ShellWorkAreaControl({ currentPage }: ShellWorkAreaControlProps)
                 type="button"
                 role="menuitem"
                 onClick={() => {
-                  closeArtifactViewer()
                   setWorkAreaOpen(true)
                   // Entries without a payload must not wipe one set by another
                   // pick that is still in flight toward its landing route.

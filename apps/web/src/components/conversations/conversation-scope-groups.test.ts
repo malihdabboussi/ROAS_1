@@ -16,7 +16,7 @@ function program(id: string, name: string, systemKind: Program['system_kind'] = 
 }
 
 describe('buildConversationScopeLists', () => {
-  it('defaults to programs and keeps clients in a searchable list', () => {
+  it('keeps clients only in the Clients folder list, not under Programs', () => {
     const lists = buildConversationScopeLists(
       [
         campaign('c1', 'Launch', 'p1'),
@@ -28,13 +28,8 @@ describe('buildConversationScopeLists', () => {
       [program('p1', 'Growth'), program('clients', 'Clients', 'clients')],
     )
 
-    expect(lists.programs.map((row) => row.name)).toEqual(['Client Spaces', 'Growth'])
-    expect(lists.programs[0]?.campaigns.map((row) => row.name)).toEqual([
-      'General',
-      'Above It',
-      'Yasir Khan',
-    ])
-    expect(lists.programs[1]?.campaigns.map((row) => row.id)).toEqual(['c1'])
+    expect(lists.programs.map((row) => row.name)).toEqual(['Growth'])
+    expect(lists.programs[0]?.campaigns.map((row) => row.id)).toEqual(['c1'])
     expect(lists.ungroupedCampaigns.map((row) => row.id)).toEqual(['c2'])
     expect(lists.clients.map((row) => row.name)).toEqual(['General', 'Above It', 'Yasir Khan'])
   })
@@ -44,6 +39,7 @@ describe('buildConversationScopeLists', () => {
       [campaign('c3', 'Yasir Khan', 'clients'), campaign('c5', 'Above It', 'clients')],
       [program('clients', 'Clients', 'clients')],
     )
+    expect(lists.programs).toEqual([])
     expect(filterScopeClients(lists.clients, 'yasir').map((row) => row.id)).toEqual(['c3'])
   })
 })

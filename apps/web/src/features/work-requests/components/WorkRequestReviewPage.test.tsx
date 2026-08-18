@@ -65,8 +65,6 @@ vi.mock('./WorkRequestReviewChatHost', () => ({
     <div>
       <h1>{draft.title}</h1>
       <p>Shared conversation chat host</p>
-      <input aria-label="composer" placeholder="Message Pixel…" />
-      <button type="button">Send message</button>
     </div>
   ),
 }))
@@ -191,8 +189,7 @@ describe('WorkRequestReviewPage', () => {
     expect(
       screen.getByRole('heading', { name: /shared chat service request/i }),
     ).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Message Pixel…')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Send message' })).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('Message Pixel…')).not.toBeInTheDocument()
     expect(screen.queryByText('Already on this request')).not.toBeInTheDocument()
   })
 
@@ -233,12 +230,13 @@ describe('WorkRequestReviewPage', () => {
 
     render(<WorkRequestReviewPage token="safe-token" />)
 
-    expect(await screen.findByPlaceholderText('Message Pixel…')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument()
+    expect(await screen.findByText('Which Campaign Space should own this?')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('Message Pixel…')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
     expect(screen.getAllByText('Production review smoke test').length).toBeGreaterThan(0)
     expect(screen.getByText('Already on this request')).toBeInTheDocument()
     expect(screen.getByText('Test webinar')).toBeInTheDocument()
-    expect(screen.getByText('Which Campaign Space should own this?')).toBeInTheDocument()
     expect(screen.queryByText('CONTINUE IN CHAT')).not.toBeInTheDocument()
     expect(screen.queryByText('ROAS SERVICE REQUEST')).not.toBeInTheDocument()
     expect(screen.queryByText('SERVICE REQUEST CHAT')).not.toBeInTheDocument()
@@ -290,7 +288,7 @@ describe('WorkRequestReviewPage', () => {
     expect(await screen.findByText('Which client workspace is this for?')).toBeInTheDocument()
     expect(screen.getByLabelText('Searchable choice')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Freedom Builderz, Inc' })).not.toBeInTheDocument()
   })
 })

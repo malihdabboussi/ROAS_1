@@ -9,7 +9,6 @@ import { HomeMeetingDetailHost } from '@/features/home/components/HomeMeetingDet
 import { HomeTaskDetailHost } from '@/features/home/components/HomeTaskDetailHost'
 import { HomeDashboardVisualProvider } from '@/features/home/context/home-dashboard-visual-context'
 import { useHomeFeedOpen } from '@/features/home/hooks/use-home-feed-open'
-import { useHomeMeetingActions } from '@/features/home/hooks/use-home-meeting-actions'
 import { useHomeMeetingWorkRestore } from '@/features/home/hooks/use-home-meeting-work-restore'
 import { prefetchOrgCampaigns } from '@/features/home/lib/home-feed-campaign-cache'
 import { MissionDetailModal } from '@/features/mission-control/components/dialogs/MissionDetailModal'
@@ -23,7 +22,6 @@ export function HomeDashboardContent() {
     activeYourTurnItem,
     activeMeetingEvent,
     openYourTurnItem,
-    openYourTurnItemFromMeeting,
     openMeetingEvent,
     openNotification,
     openMissionById,
@@ -54,12 +52,6 @@ export function HomeDashboardContent() {
     void approvalFeed.reload()
   }, [myTasksFeed, approvalFeed])
 
-  const { openMeetingPrep } = useHomeMeetingActions({
-    activeMeetingEvent,
-    closeMeetingEvent,
-    openYourTurnItem,
-    openYourTurnItemFromMeeting,
-  })
   useHomeMeetingWorkRestore(openMeetingEvent, activeMeetingEvent)
 
   return (
@@ -70,7 +62,6 @@ export function HomeDashboardContent() {
             key={`${activeMeetingEvent.source}:${activeMeetingEvent.id}`}
             event={activeMeetingEvent}
             onClose={closeMeetingEvent}
-            onOpenPrep={openMeetingPrep}
           />
         ) : activeYourTurnItem ? (
           <HomeTaskDetailHost

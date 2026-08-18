@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef } from 'react'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
 import { DeliverablePreviewBody } from '@/components/deliverables/DeliverablePreviewBody'
@@ -13,6 +13,7 @@ import { ShellMissionArtifactViewerAdapter } from '@/components/shell/ShellMissi
 import { ShellTaskArtifactViewerAdapter } from '@/components/shell/ShellTaskArtifactViewerAdapter'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { SpaceDocEditorPanelAdapter } from '@/components/spaces/SpaceDocEditorPanelAdapter'
+import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { SHELL_ARTIFACT_OPEN_EVENT, type ShellArtifactViewerTarget } from '@/lib/artifacts'
 import { isShellCodeArtifactTarget } from '@/lib/chat/chat-code-artifact'
 import {
@@ -93,17 +94,20 @@ function ShellSpaceDocumentArtifactViewer({ target }: { target: ShellArtifactVie
 }
 
 export function ShellArtifactViewerAdapter() {
-  const pathname = usePathname() || '/home'
   const router = useRouter()
   const target = useShellStore((s) => s.artifactViewer.target)
   const openArtifactViewer = useShellStore((s) => s.openArtifactViewer)
   const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
-  const previousPathRef = useRef(pathname)
 
   useEffect(() => {
     const onOpen = (event: Event) => {
       const detail = (event as CustomEvent<ShellArtifactViewerTarget>).detail
-      if (detail?.id && detail.title) openArtifactViewer(detail)
+      if (!detail?.id || !detail.title) return
+      const conversationId =
+        detail.conversationId ??
+        useChatStore.getState().activeConversationId ??
+        useShellStore.getState().chatDrawer.conversationId
+      openArtifactViewer(detail, conversationId)
     }
     window.addEventListener(SHELL_ARTIFACT_OPEN_EVENT, onOpen)
     return () => window.removeEventListener(SHELL_ARTIFACT_OPEN_EVENT, onOpen)
@@ -126,27 +130,26 @@ export function ShellArtifactViewerAdapter() {
             : mediaType === 'audio'
               ? 'Generated audio'
               : 'Generated image'
-        openArtifactViewer({
-          id: detail.mediaAssetId,
-          mediaAssetId: detail.mediaAssetId,
-          title: detail.title?.trim() || fallbackTitle,
-          type: mediaType,
-          fileUrl: detail.fileUrl ?? undefined,
-          mimeType: detail.mimeType ?? undefined,
-          spaceId: detail.spaceId,
-        })
+        const conversationId =
+          useChatStore.getState().activeConversationId ??
+          useShellStore.getState().chatDrawer.conversationId
+        openArtifactViewer(
+          {
+            id: detail.mediaAssetId,
+            mediaAssetId: detail.mediaAssetId,
+            title: detail.title?.trim() || fallbackTitle,
+            type: mediaType,
+            fileUrl: detail.fileUrl ?? undefined,
+            mimeType: detail.mimeType ?? undefined,
+            spaceId: detail.spaceId,
+          },
+          conversationId,
+        )
       })
     }
     window.addEventListener(VIBEY_OPEN_MEDIA_EVENT, onOpenMedia)
     return () => window.removeEventListener(VIBEY_OPEN_MEDIA_EVENT, onOpenMedia)
   }, [openArtifactViewer])
-
-  useEffect(() => {
-    if (previousPathRef.current !== pathname) {
-      previousPathRef.current = pathname
-      closeArtifactViewer()
-    }
-  }, [closeArtifactViewer, pathname])
 
   useEffect(() => {
     if (target?.type !== 'flow') return

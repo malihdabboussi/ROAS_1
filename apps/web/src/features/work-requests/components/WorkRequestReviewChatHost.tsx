@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { ChatInput } from '@/components/chat/ChatInputAdapter'
 import { MessageBubble } from '@/components/chat/MessageBubbleAdapter'
 import type { MessageBubbleProps } from '@/components/chat/MessageBubbleAdapter'
 import { VibeyChatOrb } from '@/components/vibey/vibey-chat-orb'
@@ -36,8 +35,6 @@ export function WorkRequestReviewChatHost({ token, draft, options, onSave, onSub
     agentStatusMessage,
     error,
     unavailable,
-    sendMessage,
-    stopStreaming,
   } = useWorkRequestReviewChat(token, true)
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -130,22 +127,6 @@ export function WorkRequestReviewChatHost({ token, draft, options, onSave, onSub
               </p>
             </div>
           ) : null}
-
-          <div className="border-border px-spacing-4 py-spacing-3 md:px-spacing-6 border-t">
-            <div className="mx-auto w-full max-w-3xl">
-              <ChatInput
-                onSend={(content) => void sendMessage(content)}
-                disabled={isStreaming}
-                isStreaming={isStreaming}
-                onStop={stopStreaming}
-                placeholder="Message Pixel…"
-                conversationId={conversationId}
-                draftContextKeyOverride={`work-request-review:${token}`}
-                consumePendingComposerText={false}
-                compact
-              />
-            </div>
-          </div>
         </div>
       </WorkRequestReviewForceOpenProvider>
     </WorkspaceSettingsModalProvider>

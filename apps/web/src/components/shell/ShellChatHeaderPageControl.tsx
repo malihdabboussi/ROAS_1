@@ -5,17 +5,23 @@ import { PanelRight } from 'lucide-react'
 import { isFullHomeConversation, resolveWorkAreaRestoreHref } from './shell-chat-header-page'
 import { useShellStore } from './use-shell-store'
 
-/** Page show/collapse control that sits in the chat header beside the summary toggle. */
+/** Page show/collapse control. Chat header owns it only while the page card is closed. */
 export function ShellChatHeaderPageControl() {
   const pathname = usePathname() ?? '/home'
   const router = useRouter()
-  const conversationId = useSearchParams().get('conv')
+  const convParam = useSearchParams().get('conv')
   const workAreaOpen = useShellStore((state) => state.workAreaOpen)
   const toggleWorkAreaOpen = useShellStore((state) => state.toggleWorkAreaOpen)
   const setWorkAreaOpen = useShellStore((state) => state.setWorkAreaOpen)
   const openChatDrawer = useShellStore((state) => state.openChatDrawer)
   const recentPages = useShellStore((state) => state.recentWorkAreaPages)
-  const fullHomeConversation = isFullHomeConversation(pathname, conversationId)
+  const lastWorkAreaPageByConversation = useShellStore(
+    (state) => state.lastWorkAreaPageByConversation,
+  )
+  const drawerConversationId = useShellStore((state) => state.chatDrawer.conversationId)
+  const conversationId = convParam ?? drawerConversationId
+  const rememberedPage = conversationId ? lastWorkAreaPageByConversation[conversationId] : undefined
+  const fullHomeConversation = isFullHomeConversation(pathname, convParam)
   const showPage = fullHomeConversation || !workAreaOpen
   const label = showPage ? 'Show page' : 'Collapse page — chat full screen'
 
@@ -24,9 +30,12 @@ export function ShellChatHeaderPageControl() {
       type="button"
       onClick={() => {
         if (fullHomeConversation) {
-          if (conversationId) openChatDrawer(conversationId)
+          if (convParam) openChatDrawer(convParam)
           setWorkAreaOpen(true)
-          router.push(resolveWorkAreaRestoreHref(recentPages))
+          if (rememberedPage?.restore) {
+            useShellStore.getState().setPendingWorkRestore(rememberedPage.restore)
+          }
+          router.push(rememberedPage?.href ?? resolveWorkAreaRestoreHref(recentPages))
           return
         }
         toggleWorkAreaOpen()

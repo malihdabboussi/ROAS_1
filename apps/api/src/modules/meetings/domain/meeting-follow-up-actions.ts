@@ -51,6 +51,19 @@ export function mapFollowUpSpaceItemToMeetingAction(
     source_key: `follow_up:${String(item.id)}`,
     source_text: String(item.title ?? '').trim() || null,
     status: resolved ? 'resolved' : 'confirmed',
+    task_status: String(item.status ?? '').trim() || (resolved ? 'done' : 'logged'),
+    priority: firstText(item.priority),
+    due_at: firstText(item.due_date),
+    start_date: firstText(item.start_date),
+    assignee_type: firstText(item.assignee_type) ?? 'unassigned',
+    assignee_id: firstText(item.assignee_id),
+    assignees: Array.isArray(item.assignees) ? item.assignees : [],
+    org_id: firstText(item.org_id),
+    user_id: firstText(item.user_id),
+    sort_order: typeof item.sort_order === 'number' ? item.sort_order : 0,
+    description: firstText(item.description),
+    notes: firstText(item.notes),
+    linked_mission_id: firstText(item.linked_mission_id),
     canonical_assignee_name: firstText(custom.suggested_assignee_name, item.assignee_name) ?? null,
     canonical_assignee_email:
       firstText(custom.suggested_assignee_email, item.assignee_email) ?? null,
@@ -78,6 +91,14 @@ export function isFollowUpSpaceItem(item: Record<string, unknown>): boolean {
   if (String(custom.entry_type ?? '') === 'follow_up') return true
   if (String(item.source ?? '') === 'agent_suggested') return true
   return false
+}
+
+export function isMeetingAgendaSpaceItem(item: Record<string, unknown>): boolean {
+  const custom =
+    item.custom_data && typeof item.custom_data === 'object' && !Array.isArray(item.custom_data)
+      ? (item.custom_data as Record<string, unknown>)
+      : {}
+  return String(custom.entry_type ?? '') === 'meeting_agenda'
 }
 
 function firstText(...values: unknown[]): string | null {

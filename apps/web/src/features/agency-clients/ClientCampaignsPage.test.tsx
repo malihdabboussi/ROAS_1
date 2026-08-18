@@ -13,8 +13,12 @@ vi.mock('next/link', () => ({
   ),
 }))
 
-vi.mock('@/components/vibey/vibey-loading-orb', () => ({
-  VibeyLoadingOrb: () => <span>Loading campaigns</span>,
+vi.mock('@/components/shell/ShellBreadcrumb', () => ({
+  ShellBreadcrumb: () => null,
+}))
+
+vi.mock('@/components/shell/ShellHeaderAction', () => ({
+  ShellHeaderAction: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
 const campaign = {
@@ -47,11 +51,13 @@ describe('ClientCampaignsPage', () => {
     render(<ClientCampaignsPage />)
 
     expect(await screen.findByText('Evergreen Leads')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'CLIENT CAMPAIGNS' })).toHaveClass('sr-only')
+    expect(screen.queryByText('Agency workspace')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Portal' })).toHaveAttribute(
       'href',
       '/client-campaigns?surface=portal&portal_path=/campaigns',
     )
-    expect(screen.queryByText('Loading campaigns')).not.toBeInTheDocument()
+    expect(screen.queryByRole('status', { name: 'Loading campaigns...' })).not.toBeInTheDocument()
     await waitFor(() => {
       expect(fetchAgencyClientCampaigns).toHaveBeenNthCalledWith(1, undefined, false)
       expect(fetchAgencyClientCampaigns).toHaveBeenNthCalledWith(2, undefined, true)

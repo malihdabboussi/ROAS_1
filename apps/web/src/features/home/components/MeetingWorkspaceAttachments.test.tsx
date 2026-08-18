@@ -38,4 +38,25 @@ describe('MeetingWorkspaceAttachments', () => {
       title: 'Transcript — Leadership',
     })
   })
+
+  it('renders attachment rows without a second heading when embedded', () => {
+    render(
+      <MeetingWorkspaceAttachments
+        spaceId="space-1"
+        loading={false}
+        embedded
+        deliverables={[
+          {
+            id: 'doc-1',
+            title: 'Transcript — Leadership',
+            source: 'fathom',
+            custom_data: {},
+          },
+        ]}
+      />,
+    )
+
+    expect(screen.queryByText('Attachments')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Transcript — Leadership' })).toBeInTheDocument()
+  })
 })

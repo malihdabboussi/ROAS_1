@@ -2,12 +2,16 @@
 
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarDays, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { type ConversationScopePickerHandle } from '@/components/conversations'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { homeMeetingHref } from '@/features/home/lib/home-meeting-work-restore'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
-import { readMeetingConversationLink, type Conversation } from '@/lib/conversations'
+import {
+  getConversationDisplayTitle,
+  readMeetingConversationLink,
+  type Conversation,
+} from '@/lib/conversations'
 import { useQuickMissionsLauncher } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
 import {
@@ -61,18 +65,16 @@ export function ShellRightPanel({
   const { openLauncher } = useQuickMissionsLauncher()
   const open = useShellStore((s) => s.rightPanel.open)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
-  const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
   const conversationScopePickerRequestNonce = useShellStore(
     (s) => s.conversationScopePickerRequestNonce,
   )
   const scopePickerRef = useRef<ConversationScopePickerHandle>(null)
   const handleOpenCampaign = useCallback(
     (nextCampaignId: string) => {
-      closeArtifactViewer()
       setWorkAreaOpen(true)
       router.push(`/campaigns/${nextCampaignId}`)
     },
-    [closeArtifactViewer, router, setWorkAreaOpen],
+    [router, setWorkAreaOpen],
   )
   const lastHandledScopePickerRequestRef = useRef(0)
   // Collapse state lives here rather than in each section: this component
@@ -136,20 +138,30 @@ export function ShellRightPanel({
   // Prefer the live attach context, but fall back to the conversation's own
   // metadata (stamped at creation) so the link survives workspace close.
   const meetingContext = useGlobalChatStore((s) => s.meetingContext)
-  const conversationMetadata = useChatStore((s) =>
-    conversationId ? s.conversations.find((c) => c.id === conversationId)?.metadata : undefined,
+  const storeConversation = useChatStore((s) =>
+    conversationId ? (s.conversations.find((c) => c.id === conversationId) ?? null) : null,
   )
-  const metadataMeeting = readMeetingConversationLink(conversationMetadata)
+  const conversationForMeeting = conversation ?? storeConversation
+  const metadataMeeting = readMeetingConversationLink(conversationForMeeting?.metadata)
   const linkedMeeting =
     meetingContext && conversationId && meetingContext.conversationId === conversationId
       ? { spaceId: meetingContext.spaceId, meetingItemId: meetingContext.meetingItemId }
       : metadataMeeting
+  const meetingTitle = linkedMeeting
+    ? getConversationDisplayTitle(conversationForMeeting ?? {}) || 'Meeting'
+    : null
   const handleOpenMeetingWorkspace = useCallback(() => {
     if (!linkedMeeting) return
-    closeArtifactViewer()
     setWorkAreaOpen(true)
     router.push(homeMeetingHref({ id: linkedMeeting.meetingItemId }, linkedMeeting.spaceId))
-  }, [closeArtifactViewer, linkedMeeting, router, setWorkAreaOpen])
+  }, [linkedMeeting, router, setWorkAreaOpen])
+  const handleOpenSpace = useCallback(
+    (nextSpaceId: string) => {
+      setWorkAreaOpen(true)
+      router.push(`/spaces?space=${encodeURIComponent(nextSpaceId)}`)
+    },
+    [router, setWorkAreaOpen],
+  )
   const { mounted, visible } = useRightEdgePresence(open)
   const scopeVisible = showScope && Boolean(conversationId)
   // Missions have no conversation_id, so the thread's own receipts are the
@@ -163,7 +175,7 @@ export function ShellRightPanel({
     () => !conversationId || extractConversationTaskRows(messages).length > 0,
     [conversationId, messages],
   )
-  const hasConnections = Boolean(campaignId || spaceId)
+  const hasConnections = Boolean(campaignId || spaceId || linkedMeeting)
   const docked = placement === 'docked'
 
   useEffect(() => {
@@ -206,18 +218,6 @@ export function ShellRightPanel({
         aria-label="Work summary"
         aria-hidden={!visible}
       >
-        {linkedMeeting && !createOpen ? (
-          <div className="border-border px-spacing-3 py-spacing-2 shrink-0 border-b">
-            <button
-              type="button"
-              onClick={handleOpenMeetingWorkspace}
-              className="body-4 text-muted-foreground hover:bg-hover-subtle hover:text-foreground gap-spacing-2 px-spacing-2 py-spacing-1 flex w-full items-center rounded-lg text-left transition-colors"
-            >
-              <CalendarDays className="icon-sm shrink-0" aria-hidden />
-              <span className="min-w-0 flex-1 truncate">Open meeting workspace</span>
-            </button>
-          </div>
-        ) : null}
         {createOpen ? (
           <div className="scrollbar-thin py-spacing-1 min-h-0 flex-1 overflow-y-auto">
             <ShellCreateMenuPanel
@@ -240,17 +240,21 @@ export function ShellRightPanel({
                     <ShellRightPanelProgress missions={missionRows} />
                   </ShellRightPanelSection>
                 ) : null}
-                {scopeVisible ? (
+                {scopeVisible || linkedMeeting ? (
                   <ShellRightPanelConnections
                     conversation={conversation}
                     campaignId={campaignId}
                     spaceId={spaceId}
+                    linkedMeeting={linkedMeeting}
+                    meetingTitle={meetingTitle}
                     pickerRef={scopePickerRef}
                     open={isSectionOpen('connections', hasConnections)}
                     onOpenChange={(next) => setSectionOpen('connections', next)}
                     onConversationUpdated={onConversationUpdated}
                     onScopeChanged={onScopeChanged}
                     onOpenCampaign={handleOpenCampaign}
+                    onOpenSpace={handleOpenSpace}
+                    onOpenMeeting={handleOpenMeetingWorkspace}
                   />
                 ) : null}
                 <ShellRightPanelSection

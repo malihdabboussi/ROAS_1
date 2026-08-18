@@ -5,9 +5,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Archive, Check, CheckCheck, Inbox, Search } from 'lucide-react'
 import { InboxDetailPane } from '@/components/notifications/InboxDetailPane'
 import { InboxListRow } from '@/components/notifications/InboxListRow'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { SettingsSelect } from '@/components/ui/forms/SettingsSelect'
 import { Tooltip } from '@/components/ui/tooltip'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { fetchMissionById } from '@/lib/missions'
 import {
   INBOX_MESSAGES,
@@ -118,13 +118,17 @@ export function InboxFeed({
       }`}
     >
       <header className="border-border px-spacing-5 py-spacing-4 gap-spacing-3 flex flex-wrap items-center border-b">
-        <div className="gap-spacing-2 flex min-w-0 items-center">
-          <Inbox className="icon-md text-muted-foreground shrink-0" aria-hidden />
-          <div className="min-w-0">
-            <h2 className="body-1 text-foreground font-semibold">{INBOX_MESSAGES.TITLE}</h2>
-            <p className="typo-caption text-muted-foreground truncate">{INBOX_MESSAGES.SUBTITLE}</p>
+        {presentation === 'page' ? null : (
+          <div className="gap-spacing-2 flex min-w-0 items-center">
+            <Inbox className="icon-md text-muted-foreground shrink-0" aria-hidden />
+            <div className="min-w-0">
+              <h2 className="body-1 text-foreground font-semibold">{INBOX_MESSAGES.TITLE}</h2>
+              <p className="typo-caption text-muted-foreground truncate">
+                {INBOX_MESSAGES.SUBTITLE}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="gap-spacing-2 ml-auto flex items-center">
           {inbox.counts.primary + inbox.counts.system + inbox.counts.other + inbox.counts.later >
@@ -225,8 +229,8 @@ export function InboxFeed({
           }`}
         >
           {inbox.loading ? (
-            <div className="flex h-full min-h-0 items-center justify-center">
-              <VibeyLoadingOrb size="md" text={INBOX_MESSAGES.LOADING} />
+            <div className="px-spacing-4 py-spacing-3">
+              <ListSkeleton rows={8} label={INBOX_MESSAGES.LOADING} />
             </div>
           ) : visibleNotifications.length === 0 ? (
             <div className="gap-spacing-3 px-spacing-6 py-spacing-16 flex h-full min-h-0 flex-col items-center justify-center text-center">

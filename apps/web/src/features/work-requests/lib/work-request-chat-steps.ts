@@ -53,6 +53,8 @@ export type WorkRequestChatStep = {
   required: boolean
   /** Use a searchable closed dropdown instead of an open option list. */
   searchable?: boolean
+  /** Show an Other… row with a free-text input under the options. */
+  allowOther?: boolean
   options?: Array<{ id: string; label: string; description?: string }>
 }
 
@@ -154,10 +156,11 @@ export function buildWorkRequestChatSteps(
       prompt: 'Who on the team should own this?',
       hint:
         (options.team_members?.length ?? 0) > 0
-          ? 'Pick a teammate, or leave unassigned.'
-          : 'Optional. Enter a teammate name, or skip.',
+          ? 'Pick a teammate from The ROAS Portal roster, or leave unassigned so Portal assignment rules apply.'
+          : 'Optional. Enter a teammate name, or skip so Portal assignment rules apply.',
       required: false,
-      searchable: (options.team_members?.length ?? 0) > 6,
+      searchable: (options.team_members?.length ?? 0) > 0,
+      allowOther: (options.team_members?.length ?? 0) > 0,
       options: [
         { id: '__unassigned__', label: 'Unassigned' },
         ...(options.team_members ?? []).map((member) => ({
@@ -223,7 +226,7 @@ export function buildWorkRequestChatSteps(
       field: 'confirm',
       kind: 'confirm',
       prompt: 'Ready to submit this Service Request?',
-      hint: 'Review the answers below, then submit. You can still reply in chat to change something.',
+      hint: 'Review the answers below, then submit. Use Back or Edit to change anything.',
       required: true,
     },
   )

@@ -31,9 +31,7 @@ describe('SidebarHomeFlyout', () => {
 
     expect(screen.getByRole('link', { name: 'Home' }).getAttribute('href')).toBe('/home')
     expect(screen.getByRole('link', { name: 'Inbox' }).getAttribute('href')).toBe('/home/inbox')
-    expect(screen.getByRole('link', { name: 'My Tasks' }).getAttribute('href')).toBe(
-      '/home/my-tasks',
-    )
+    expect(screen.getByRole('link', { name: 'All Tasks' }).getAttribute('href')).toBe('/all-tasks')
     expect(
       screen
         .getByRole('link', { name: 'Meetings' })

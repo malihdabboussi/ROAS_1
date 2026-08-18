@@ -33,7 +33,9 @@ export function WorkRequestChatResumeCard({
   const searchParams = useSearchParams()
   const forceOpenToken = useWorkRequestReviewForceOpenToken()
   const token = useMemo(() => extractWorkRequestTokenFromUrl(reviewUrl), [reviewUrl])
-  const autoOpen = Boolean(token && (searchParams.get('wr') === token || forceOpenToken === token))
+  const autoOpen = Boolean(
+    token && (searchParams.get('wr') === token || (forceOpenToken && forceOpenToken === token)),
+  )
   const [open, setOpen] = useState(autoOpen)
   const [review, setReview] = useState<WorkRequestReviewResponse | null>(null)
   const [error, setError] = useState<string | null>(null)

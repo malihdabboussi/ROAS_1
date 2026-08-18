@@ -248,6 +248,20 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     if (!text && !hasFiles && !hasAttachments) return
 
     const serviceSupabase = this.getServiceRoleClient()
+    // Mapped channels already process the same post via `message`. Skipping the
+    // mention path prevents two Pixel turns and two Service Request drafts.
+    const mappedChannel = await this.slackRepo.findActiveChannelByTeamAndChannel(
+      serviceSupabase,
+      teamId,
+      channelId,
+    )
+    if (mappedChannel) {
+      this.logger.log(
+        `[TRACE] handleAppMentionEvent EXIT: mapped channel owns message path channel=${channelId}`,
+      )
+      return
+    }
+
     const fallback = await this.resolveFallbackRouting(serviceSupabase, teamId)
     if (!fallback) return
 
@@ -361,6 +375,12 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     this.logger.log(
       `[TRACE] processAndReply START: userId=${params.userId} agentKey=${params.agentKey} channel=${params.channelId} message_len=${params.message.length}`,
     )
+    if (!this.tryClaimInboundSlackMessage(params.teamId, params.channelId, params.messageTs)) {
+      this.logger.warn(
+        `[TRACE] processAndReply EXIT: duplicate inbound claim team=${params.teamId} channel=${params.channelId} ts=${params.messageTs}`,
+      )
+      return
+    }
     const canReact = Boolean(params.botToken && params.channelId && params.messageTs)
     if (canReact) {
       await this.slackApi

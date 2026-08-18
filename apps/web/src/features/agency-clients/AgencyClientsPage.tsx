@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { BriefcaseBusiness, PanelRightOpen, Search } from 'lucide-react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { fetchAgencyClients, type AgencyClient } from '@/lib/agency-clients'
 import { cn } from '@/lib/utils/cn'
 import { AgencyClientsTable } from './AgencyClientsTable'
 import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
+import { AGENCY_CLIENT_MESSAGES } from './config/messages.config'
 
 type GroupMode = 'pipeline' | 'manager'
 
@@ -67,24 +68,15 @@ export function AgencyClientsPage() {
 
   return (
     <main className="gap-spacing-6 p-spacing-8 mx-auto flex w-full max-w-7xl flex-col">
-      <AgencyWorkspaceBreadcrumb items={[{ label: 'Clients' }]} />
-      <header className="gap-spacing-4 flex flex-wrap items-end justify-between">
-        <div>
-          <p className="typo-section-label text-muted-foreground">Agency workspace</p>
-          <h1 className="title-h6 text-foreground">CLIENTS</h1>
-          <p className="body-3 text-muted-foreground mt-spacing-1">
-            The ROAS Portal clients, campaign work, requests, and Brain context in one view.
-          </p>
-        </div>
-        <div className="gap-spacing-2 flex items-center">
-          <Link href="/client-campaigns" className="button-compact button-glass-neutral">
-            <BriefcaseBusiness className="icon-sm" /> Client Campaigns
-          </Link>
+      <h1 className="sr-only">CLIENTS</h1>
+      <AgencyWorkspaceBreadcrumb
+        items={[{ label: 'Clients' }]}
+        action={
           <Link href="/clients?surface=portal" className="button-compact button-glass-purple">
             <PanelRightOpen className="icon-sm" /> Portal
           </Link>
-        </div>
-      </header>
+        }
+      />
 
       <div className="surface-card gap-spacing-2 rounded-spacing-3 border-border p-spacing-3 flex flex-wrap items-center border">
         <label className="relative min-w-64 flex-1">
@@ -111,9 +103,12 @@ export function AgencyClientsPage() {
             </button>
           ))}
         </div>
+        <Link href="/client-campaigns" className="button-compact button-glass-neutral">
+          <BriefcaseBusiness className="icon-sm" /> Client Campaigns
+        </Link>
       </div>
 
-      {loading ? <VibeyLoadingOrb /> : null}
+      {loading ? <ListSkeleton rows={8} label={AGENCY_CLIENT_MESSAGES.LOADING_CLIENTS} /> : null}
       {error ? (
         <p className="body-2 text-destructive surface-card rounded-spacing-3 p-spacing-4">
           {error}

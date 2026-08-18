@@ -4,6 +4,21 @@ export const HOME_AGENDA_MESSAGES = {
     message: 'Loading meetings...',
     category: 'loading',
   },
+  LOADING_MEETING_WORKSPACE: {
+    key: 'LOADING_MEETING_WORKSPACE',
+    message: 'Getting your meeting space ready...',
+    category: 'loading',
+  },
+  LOADING_MEETING_DETAILS: {
+    key: 'LOADING_MEETING_DETAILS',
+    message: 'Loading meeting details…',
+    category: 'loading',
+  },
+  LOADING_MY_TASKS: {
+    key: 'LOADING_MY_TASKS',
+    message: 'Loading tasks…',
+    category: 'loading',
+  },
   INSTANT_MEETING_TITLE: {
     key: 'INSTANT_MEETING_TITLE',
     message: 'START AN IMPROMPTU CALL',
@@ -35,9 +50,9 @@ export const HOME_AGENDA_MESSAGES = {
     message: 'Start workspace',
     category: 'button',
   },
-  PREP_TODAY_TITLE: {
-    key: 'PREP_TODAY_TITLE',
-    message: 'Generate pre-call prep for today’s meetings',
-    category: 'tooltip',
+  AGENDA_EMPTY: {
+    key: 'AGENDA_EMPTY',
+    message: 'No agenda notes yet — kick one off with Start agenda above.',
+    category: 'empty',
   },
 } as const

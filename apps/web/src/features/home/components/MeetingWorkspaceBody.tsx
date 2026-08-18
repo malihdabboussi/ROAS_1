@@ -1,12 +1,13 @@
 'use client'
 
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { MeetingActionItemsSection } from '@/features/home/components/MeetingActionItemsSection'
 import { MeetingAgendaPrepSection } from '@/features/home/components/MeetingAgendaPrepSection'
 import { MeetingNotesSection } from '@/features/home/components/MeetingNotesSection'
 import { MeetingPostCallSections } from '@/features/home/components/MeetingPostCallSections'
 import { MeetingRecordingsSection } from '@/features/home/components/MeetingRecordingsSection'
 import { MeetingWorkspaceAttachments } from '@/features/home/components/MeetingWorkspaceAttachments'
+import { HOME_AGENDA_MESSAGES } from '@/features/home/config/home-agenda-messages.config'
 import type { ParsedMeetingPrep } from '@/features/home/lib/meeting-workspace-display'
 import type {
   MeetingAction,
@@ -39,13 +40,10 @@ export function MeetingWorkspaceBody({
   prep,
   prepDescription,
   joinUrl,
-  agendaDocLink,
-  onOpenPrep,
   onRecordingLinked,
   onNoteCreated,
-  onToggleAction,
   onActionCreated,
-  onActionMoved,
+  onActionsReload,
 }: {
   spaceId: string
   meetingItemId: string
@@ -56,57 +54,47 @@ export function MeetingWorkspaceBody({
   prep: ParsedMeetingPrep
   prepDescription: string | null | undefined
   joinUrl: string | null
-  agendaDocLink?: string | null
-  onOpenPrep?: () => void
   onRecordingLinked: () => void
   onNoteCreated: (snippet: MeetingSnippet) => void
-  onToggleAction: (action: MeetingAction) => void
   onActionCreated: (action: MeetingAction) => void
-  onActionMoved: (action: MeetingAction) => void
+  onActionsReload: () => Promise<void>
 }) {
   if (loading) {
     return (
-      <div
-        role="status"
-        aria-label="Loading meeting workspace"
-        className="section-card py-spacing-12 flex min-h-72 flex-col items-center justify-center"
-      >
-        <VibeyLoadingOrb text="Loading meeting details…" state="processing" size="md" />
-        <p className="body-4 text-muted-foreground mt-spacing-3 text-center">
-          Connecting the recording, recap, notes, and action items.
-        </p>
+      <div className="section-card p-spacing-4">
+        <ListSkeleton rows={6} label={HOME_AGENDA_MESSAGES.LOADING_MEETING_DETAILS.message} />
       </div>
     )
   }
 
   return (
     <>
-      <section className="section-card overflow-hidden">
-        <div className="p-spacing-4">
-          <MeetingRecordingsSection
-            spaceId={spaceId}
-            meetingItemId={meetingItemId}
-            recordings={bundle?.recordings ?? []}
-            isPostCall={isPostCall || isLive}
-            onLinked={onRecordingLinked}
-          />
-        </div>
-        <div className="border-border p-spacing-4 border-t">
+      <section className="section-card p-spacing-4">
+        <MeetingRecordingsSection
+          spaceId={spaceId}
+          meetingItemId={meetingItemId}
+          recordings={bundle?.recordings ?? []}
+          isPostCall={isPostCall || isLive}
+          onLinked={onRecordingLinked}
+          attachmentCount={bundle?.deliverables.length ?? 0}
+        >
           <MeetingWorkspaceAttachments
             spaceId={spaceId}
             deliverables={bundle?.deliverables ?? []}
             loading={loading}
+            embedded
           />
-        </div>
+        </MeetingRecordingsSection>
       </section>
 
       <section className="section-card p-spacing-4 gap-spacing-2 flex flex-col">
         <MeetingAgendaPrepSection
+          spaceId={spaceId}
+          agendaDocItemId={bundle?.workspace?.agenda_doc_item_id}
+          agendaTitle={bundle?.meeting.title?.trim() || 'Agenda'}
           prep={prep}
           prepDescription={prepDescription}
           joinUrl={joinUrl}
-          agendaDocLink={agendaDocLink}
-          onOpenPrep={onOpenPrep}
         />
       </section>
 
@@ -147,9 +135,8 @@ export function MeetingWorkspaceBody({
             meetingItemId={meetingItemId}
             actions={bundle?.actions ?? []}
             loading={loading}
-            onToggle={onToggleAction}
             onCreated={onActionCreated}
-            onMoved={onActionMoved}
+            onReload={onActionsReload}
           />
         </div>
       </section>

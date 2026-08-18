@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   setCollapsed: vi.fn(),
   setActiveConversationId: vi.fn(),
   openConversationInSpaceChat: vi.fn(),
+  selectConversation: vi.fn(),
   requestNewChat: vi.fn(),
   setWorkAreaOpen: vi.fn(),
   setRightPanelOpen: vi.fn(),
@@ -35,10 +36,7 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => ({ get: (key: string) => mocks.params.get(key) ?? null }),
 }))
 
-vi.mock('@/lib/hooks/use-media-query', () => ({
-  useMediaQuery: () => mocks.desktop,
-}))
-
+vi.mock('@/lib/hooks/use-media-query', () => ({ useMediaQuery: () => mocks.desktop }))
 vi.mock('./use-shell-prefs-hydrated', () => ({
   useShellPrefsHydrated: () => mocks.shellPrefsHydrated,
 }))
@@ -91,6 +89,9 @@ vi.mock('@/features/spaces/store/use-spaces-store', () => ({
   ) => selector({ openConversationInSpaceChat: mocks.openConversationInSpaceChat }),
 }))
 
+vi.mock('@/features/studio/services/chat.service', () => ({
+  selectConversation: mocks.selectConversation,
+}))
 vi.mock('@/features/studio/store/use-chat-store', () => ({
   useChatStore: Object.assign(
     (selector: (state: Record<string, unknown>) => unknown) =>
@@ -136,29 +137,44 @@ vi.mock('./SpaceWorkDock', () => ({
 }))
 
 vi.mock('./use-shell-store', () => ({
-  useShellStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({
-      workAreaOpen: mocks.workAreaOpen,
-      artifactViewer: { target: mocks.artifactTarget, width: mocks.artifactWidth },
-      setArtifactViewerWidth: mocks.setArtifactViewerWidth,
-      chatDrawer: {
-        open: !mocks.workAreaOpen || mocks.chatDrawerOpen,
-        conversationId: null,
-        width: 420,
-      },
-      openChatDrawer: vi.fn(),
-      minimizeChatDrawer: vi.fn(),
-      requestNewChat: mocks.requestNewChat,
-      handleScreenNavigation: vi.fn(),
-      recordScreenConversation: vi.fn(),
-      setMenuMode: vi.fn(),
-      setWorkAreaOpen: mocks.setWorkAreaOpen,
-      toggleWorkAreaOpen: vi.fn(),
-      setRightPanelOpen: mocks.setRightPanelOpen,
-      rightPanel: { open: mocks.rightPanelOpen, tab: 'tasks' },
-      summaryPanelDocked: mocks.summaryPanelDocked,
-      recentWorkAreaPages: mocks.recentWorkAreaPages,
-    }),
+  useShellStore: Object.assign(
+    (selector: (state: Record<string, unknown>) => unknown) =>
+      selector({
+        workAreaOpen: mocks.workAreaOpen,
+        artifactViewer: { target: mocks.artifactTarget, width: mocks.artifactWidth },
+        setArtifactViewerWidth: mocks.setArtifactViewerWidth,
+        chatDrawer: {
+          open: !mocks.workAreaOpen || mocks.chatDrawerOpen,
+          conversationId: null,
+          width: 420,
+        },
+        openChatDrawer: vi.fn(),
+        minimizeChatDrawer: vi.fn(),
+        requestNewChat: mocks.requestNewChat,
+        handleScreenNavigation: vi.fn(),
+        recordScreenConversation: vi.fn(),
+        setMenuMode: vi.fn(),
+        setWorkAreaOpen: mocks.setWorkAreaOpen,
+        toggleWorkAreaOpen: vi.fn(),
+        setRightPanelOpen: mocks.setRightPanelOpen,
+        rightPanel: { open: mocks.rightPanelOpen, tab: 'tasks' },
+        summaryPanelDocked: mocks.summaryPanelDocked,
+        recentWorkAreaPages: mocks.recentWorkAreaPages,
+        lastWorkAreaPageByConversation: {},
+        syncArtifactViewerForConversation: vi.fn(),
+        artifactPinned: false,
+        toggleArtifactPinned: vi.fn(),
+        setPendingWorkRestore: vi.fn(),
+      }),
+    {
+      getState: () => ({
+        artifactPinned: false,
+        lastWorkAreaPageByConversation: {},
+        setPendingWorkRestore: vi.fn(),
+        setWorkAreaOpen: mocks.setWorkAreaOpen,
+      }),
+    },
+  ),
 }))
 
 describe('ShellWorkspace', () => {
@@ -249,6 +265,7 @@ describe('ShellWorkspace', () => {
     mocks.params = new Map([['conv', 'conversation-123']])
     render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
     expect(screen.queryByRole('button', { name: 'Close full chat' })).toBeNull()
+    expect(mocks.selectConversation).toHaveBeenCalledWith('conversation-123')
   })
   it('reveals the work area after navigating to another surface', async () => {
     mocks.pathname = '/spaces'

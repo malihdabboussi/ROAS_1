@@ -34,6 +34,162 @@ Needed work: Extract campaign-brain resolve/bind helpers before the next search-
 
 Reason not done now: Bind is a few lines in the existing resolve path; splitting the file was out of scope for the retrieve-then-draft contract.
 
+## 2026-08-17 - [PAGE-GRADER] Portal Link UI + roas-api edge function still required after #284
+
+Status: Open
+
+Found while: Fixing Service Request tasks that arrived in The ROAS Portal unlinked and unassigned
+
+Evidence: Three separate surfaces. (1) ROAS platform #284 is merged (`e1d56ff6`) and this repo's API already sends `campaign_id` plus `source.origin: "page_grader"` and omits empty `assignees`. Railway `roas-platform` and Vercel `roas-api` (`api.roas.io`) succeeded for that commit. That Vercel project is NestJS, not the Portal edge function. (2) New Portal rows are created by `POST {baseUrl}/work` against the connected Supabase edge function `/functions/v1/roas-api`. Until that function is deployed to persist campaign id and From Pagegrader origin, new creates can still land unlinked even with #284 live. (3) The client Tasks / Requests "Link" control and "Failed to update campaign" toast are Portal UI. This repo does not own that PATCH.
+
+Needed work: Deploy the Portal `roas-api` edge function so `POST /work` applies `campaign_id` and `origin: "page_grader"`. In the Page Grader / Portal repo, fix PATCH of a fulfillment task's `campaign_id` for ROAS-sourced work (and confirm the toast maps the real error). After that deploy, retry Link on already-created Yasir Khan rows. Do not treat #284 as optional; new Service Requests still need this platform payload.
+
+Reason not done now: Portal UI and the Supabase `roas-api` edge function are not in this monorepo. #284 only supplies the create payload.
+
+## 2026-08-17 - [ARCH] WorkRequestChatFlow is at the component LOC limit
+
+Status: Open
+
+Found while: Moving Service Request finalize cards into the Pixel thread and hiding the inline composer
+
+Evidence: `wc -l` reports `apps/web/src/features/work-requests/components/WorkRequestChatFlow.tsx` at 396 LOC (component limit 400).
+
+Needed work: Extract save/submit + transcript helpers so inline vs page presentation can stay thin.
+
+Reason not done now: Requested work was card placement and a single composer; splitting the flow was out of scope.
+
+## 2026-08-17 - [ARCH] use-shell-menu-dock is over the hook LOC limit
+
+Status: Open
+
+Found while: Raising Simple menu drag max to default + 75% and sharing width constants
+
+Evidence: `wc -l` reports `apps/web/src/components/shell/use-shell-menu-dock.ts` at 359 LOC (hook limit 300). It was already 354 on main; this change only exported width constants.
+
+Needed work: Extract persist/hydrate helpers and dock hit-test wrappers so the Zustand store stays under the hook limit.
+
+Reason not done now: Requested work was compact-rail parity, logo-hover collapse, and a wider Simple drag max. Splitting the dock store would touch every dock consumer without changing that UX.
+
+## 2026-08-17 - [ARCH] SpaceConversationsList.test.tsx already exceeds max-lines
+
+Status: Open
+
+Found while: Adding Recents Filter pin coverage
+
+Evidence: `wc -l` reports `apps/web/src/components/conversations/SpaceConversationsList.test.tsx` at 434 LOC (eslint max-lines 400). Editing it fails lint-staged.
+
+Needed work: Split compact Recents / Pinned / dated-row cases into a dedicated compact-header test file.
+
+Reason not done now: Pin coverage went into `SpaceConversationsHeader.test.tsx` instead of growing the over-limit list test.
+
+## 2026-08-17 - [ARCH] ShellChatMenu and SpaceConversationsList sit on the component LOC limit
+
+Status: Open
+
+Found while: Pinning Recents actions while Filter is open and moving Show page onto the work card
+
+Evidence: `wc -l` reports `apps/web/src/components/shell/ShellChatMenu.tsx` at 399 LOC and `apps/web/src/components/conversations/SpaceConversationsList.tsx` at 401 LOC (component limit 400). `ChatHistoryFilterMenu.tsx` is 375.
+
+Needed work: Extract Recents filter/header wiring from ShellChatMenu, and split SpaceConversationsList section rendering from the list shell.
+
+Reason not done now: Requested work was control placement and keeping the filter menu anchored. Splitting those files would not change the bug.
+
+
+## 2026-08-17 - [ARCH] AgendaCard and MyTasksPanel sit on the component extract threshold
+
+Status: Open
+
+Found while: Replacing centered Meetings/My Tasks orbs with `ListSkeleton`
+
+Evidence: `wc -l` reports `AgendaCard.tsx` at 321 LOC and `MyTasksPanel.tsx` at 327 LOC (component limit 400; extract suggested at 320).
+
+Needed work: Split AgendaCard data/chrome from the list/calendar body switch, and extract MyTasksPanel search/empty/list into presentational pieces.
+
+Reason not done now: This change only swapped the in-place loading state. Decomposition would be a behavior-neutral refactor.
+
+## 2026-08-17 - [ARCH] Remaining work-area lists still use VibeyLoadingOrb
+
+Status: Open
+
+Found while: Replacing Meetings duplicate orbs with in-place `ListSkeleton`
+
+Evidence: Meetings, Inbox, My Tasks, All Tasks, Programs, Clients, Client Campaigns, meeting workspace/host, and the summary panel now use `ListSkeleton`. `rg VibeyLoadingOrb apps/web/src` still hits Spaces views (media, contacts, reporting, artifacts), settings modals, Team chat, work-request hosts, and picker/dialog spinners.
+
+Needed work: Convert remaining primary work-area list/page bodies (Spaces item views, contacts lists, reporting tables, artifact libraries) to `ListSkeleton` with chrome kept mounted. Leave `VibeyLoadingOrb` for chat/agent presence, button-row spinners, and blocking modal waits per design-guidelines §18.1.
+
+Reason not done now: This change fixed the duplicate Meetings flash and the same class of home/work-area lists. Replacing every remaining orb is a separate sweep across Spaces/settings.
+
+## 2026-08-17 - [ARCH] LockedInGroup is near the component LOC limit
+
+Status: Open
+
+Found while: Rotating live chat working status so Brain/tool labels do not freeze
+
+Evidence: `wc -l` reports `apps/web/src/features/studio/components/chat/LockedInGroup.tsx` at 348 LOC (component limit 400; extract suggested at 80% / 320).
+
+Needed work: Split activity-group labeling / classification from the expand/collapse chrome.
+
+Reason not done now: Requested work was the live working-status animation; extracting the group was out of scope.
+
+## 2026-08-17 - [ARCH] HomeTaskDetailHost is at the component LOC limit
+
+Status: Open
+
+Found while: Reusing the My Tasks right-side panel on All Tasks
+
+Evidence: `wc -l` reports `apps/web/src/features/home/components/HomeTaskDetailHost.tsx` at 397 LOC (component limit 400).
+
+Needed work: Extract store snapshot / space hydration helpers from the host so All Tasks and Home can keep sharing it without sitting on the limit.
+
+Reason not done now: All Tasks only composed the existing panel; splitting the host was out of scope.
+
+## 2026-08-17 - [ARCH] use-shell-store is at the store LOC ceiling
+
+Status: Open
+
+Found while: Adding `pageHeaderAction` so Clients/Client Campaigns Portal can live in the work-card header
+
+Evidence: `wc -l` reports `apps/web/src/components/shell/use-shell-store.ts` at 592 LOC (store/service limit 600; extract suggested at 80% / 480). Page breadcrumb + header-action setters now sit inline with drawer/artifact/work-area state.
+
+Needed work: Extract page chrome (`pageBreadcrumb`, `pageHeaderAction`, owners, setters) into `use-shell-store.page-chrome.ts` the same way artifact-conversation and work-area-conversation slices were split.
+
+Reason not done now: Requested work was clickable crumbs, title declutter, and Portal placement. A slice extract would touch every shell-store mock without changing product behavior.
+
+## 2026-08-17 - [ARCH] SidebarHqMoreFlyoutBody is over the 80% component extract threshold
+
+Status: Open
+
+Found while: More → Programs hover list and `/programs` overview
+
+Evidence: `wc -l` reports `apps/web/src/components/layout/sidebar/SidebarHqMoreFlyoutBody.tsx` at 337 LOC (component limit 400; extract suggested at 320). Programs hover was extracted to `SidebarHqMoreProgramsFlyout.tsx`; Projects create/list remains inline. `SidebarHqRail.tsx` is 398 LOC after moving `shouldPushRailHref` into helpers.
+
+Needed work: Extract the Projects nested flyout the same way as Programs/Team/Brain. Split remaining HQ rail panel-button rendering.
+
+Reason not done now: Requested work was Programs hover + `/programs` click. Further More-menu decomposition was out of scope.
+
+## 2026-08-17 - [FEATURE] In-app precall-prep backend still exists after UI removal
+
+Evidence: `runMeetingsPrecallPrepEvent` and `MeetingsPrecallPrepService` remain; automations still expose “Prep today’s calendar meetings”. Home no longer calls the event API.
+
+Needed work: Decide whether calendar enrichment / Drive agenda creation should stay as automation-only, then delete unused Home/API surfaces if the product is chat-prompt + Google Doc link only. `openYourTurnItemFromMeeting` is now unused after the UI removal but was left in `use-home-feed-open.ts` because staging that file fails the cross-feature import gate.
+
+Reason not done now: Requested work was remove the broken function from the app UI and split Start agenda / Prep for call / Google agenda. Backend/automation deletion is a separate product decision.
+
+## 2026-08-17 - [ARCH] MeetingWorkspaceService is near the service LOC limit
+
+Status: Open
+
+Found while: Linking an editable agenda Space Doc on meeting workspace load
+
+Evidence: `wc -l` reports `apps/api/src/modules/meetings/services/meeting-workspace.service.ts` at 526 LOC (service limit 600; extract suggested at 80% / 480).
+
+Needed work: Split getWorkspace hydration (recording hydrate + agenda-doc ensure) and display-title normalization out of the service.
+
+Reason not done now: In-scope work was agenda-doc ensure + UI; the service was already over the 80% extract hint before this change.
+
+## 2026-08-17 - [ARCH] ui-block-extractor still over utility LOC limit
+
+
 ## 2026-08-17 - [FEATURE] Page Grader must stamp conversation_id for shared review chat
 
 Status: Done (platform stamp + Slack backfill)

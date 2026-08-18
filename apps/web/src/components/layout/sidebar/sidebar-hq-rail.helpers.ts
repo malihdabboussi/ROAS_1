@@ -36,3 +36,9 @@ export function workContextSurfaceForPanel(
   if (panelId === 'spaces') return 'spaces'
   return 'general'
 }
+
+export function shouldPushRailHref(pathname: string, href: string): boolean {
+  if (pathname === href) return false
+  if (href !== '/' && pathname.startsWith(`${href}/`)) return false
+  return true
+}

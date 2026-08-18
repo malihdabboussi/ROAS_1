@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, type ReactNode } from 'react'
 import { SpaceVibeyChatPanel } from '@/features/spaces/components/chat/SpaceVibeyChatPanel'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
@@ -10,6 +10,7 @@ import { ChatCampaignBrainNudge } from '../components/ChatCampaignBrainNudge'
 import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendation'
 import { QuickMissionsHubHost } from '../components/QuickMissionsHubHost'
 import { useMeetingConversationAwareness } from '../hooks/use-meeting-conversation-awareness'
+import { useWorkRequestHomeChatSeed } from '../hooks/useWorkRequestHomeChatSeed'
 import { resolveMeetingChatPanel } from '../lib/resolve-meeting-chat-panel'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 import { useStickyGlobalChatPanelHost } from './global-chat-panel-host'
@@ -28,6 +29,9 @@ export function GlobalChatPanel({
   headerTrailingAction?: ReactNode
 } = {}) {
   const pathname = usePathname() ?? ''
+  const searchParams = useSearchParams()
+  const routeConversationId = searchParams.get('conv')?.trim() || null
+  useWorkRequestHomeChatSeed()
   const workContext = useGlobalChatStore((s) => s.workContext)
   const storedMeetingContext = useGlobalChatStore((s) => s.meetingContext)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
@@ -57,12 +61,16 @@ export function GlobalChatPanel({
   })
   const {
     meetingContext,
-    preferredConversationId,
+    preferredConversationId: meetingPreferredConversationId,
     awarenessContext: meetingAwarenessContext,
   } = resolveMeetingChatPanel({
     storedMeetingContext,
     activeConversationId,
   })
+  // /home?conv= (Service Request resume, Recents deep links) must prefer the URL
+  // conversation even when meeting context is absent — otherwise the panel can
+  // remount blank after pendingOpenConversationId is consumed.
+  const preferredConversationId = meetingPreferredConversationId ?? routeConversationId
   const conversationAwareness = useMeetingConversationAwareness(activeConversationId)
   useEffect(() => {
     if (

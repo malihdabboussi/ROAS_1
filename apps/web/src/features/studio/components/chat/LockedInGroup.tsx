@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChatWorkingStatusLabel } from '@/components/chat/ChatWorkingStatusLabel'
 import { useTypewriter } from '@/lib/hooks/use-typewriter'
 import type { MessageContentBlock } from '../../types'
 import { ToolBlockInline } from './FlowTimeline'
@@ -239,7 +240,8 @@ export function LockedInGroup({
 
   if (!hasVisibleContent) return null
 
-  const label = summaryLabel ?? buildActivityGroupLabel(blocks, hasActiveBlock)
+  const completedLabel = summaryLabel ?? buildActivityGroupLabel(blocks, false)
+  const activePinned = buildActivityGroupLabel(blocks, true)
 
   return (
     <div
@@ -250,11 +252,11 @@ export function LockedInGroup({
         onClick={() => setExpanded(!expanded)}
         className="flex w-full items-center gap-2 py-1 pl-0 pr-3"
       >
-        <span
-          className={`body-3 font-medium ${hasActiveBlock ? 'text-shimmer-gradient animate-[shimmer_4s_infinite_linear]' : 'text-muted-foreground'}`}
-        >
-          {label}
-        </span>
+        <ChatWorkingStatusLabel
+          pinned={hasActiveBlock ? activePinned : completedLabel}
+          active={hasActiveBlock}
+          idleText={completedLabel}
+        />
         {expanded ? (
           <ChevronDown className="text-muted-foreground h-3.5 w-3.5" />
         ) : (

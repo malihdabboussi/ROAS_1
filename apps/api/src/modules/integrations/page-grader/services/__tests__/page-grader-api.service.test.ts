@@ -24,6 +24,7 @@ describe('PageGraderApiService.sendWork', () => {
   const spaces = {
     getItem: vi.fn(),
     updateItem: vi.fn(),
+    getById: vi.fn().mockResolvedValue({ schema: { custom_data: {} } }),
   }
   const svc = {
     client: {
@@ -241,6 +242,52 @@ describe('PageGraderApiService.sendWork', () => {
       undefined,
     )
     expect(result.results[0]?.status).toBe('created')
+    expect(createPayload.work).not.toHaveProperty('assignees')
+  })
+
+  it('sends the Portal campaign id and omits empty assignees so default rules apply', async () => {
+    const campaignId = '99999999-9999-9999-9999-999999999999'
+    spaces.getItem.mockResolvedValue({
+      id: 'item-1',
+      title: 'Redesign replay page',
+      notes: 'Brief',
+      priority: 'high',
+      assignees: [],
+      custom_data: {
+        work_request: { page_grader_external_campaign_id: campaignId },
+      },
+      parent_item_id: null,
+    })
+    pageGrader.createWork.mockResolvedValue({
+      status: 201,
+      work: {
+        id: 'work-10',
+        kind: 'task_request',
+        client_id: '11111111-1111-1111-1111-111111111111',
+        url: 'https://portal.roas.io/launcher?task=work-10',
+        assignee_resolution: [],
+      },
+    })
+    spaces.updateItem.mockResolvedValue({})
+
+    await service.sendWork({} as never, 'user-1', {
+      client_id: '11111111-1111-1111-1111-111111111111',
+      origin: 'page_grader',
+      space_id: '22222222-2222-2222-2222-222222222222',
+      space_item_ids: ['33333333-3333-3333-3333-333333333333'],
+      task_type: 'funnel',
+    })
+
+    expect(pageGrader.createWork).toHaveBeenCalledWith(
+      'https://example.supabase.co/functions/v1/roas-api',
+      'test-key',
+      expect.objectContaining({
+        client_id: '11111111-1111-1111-1111-111111111111',
+        campaign_id: campaignId,
+        source: expect.objectContaining({ origin: 'page_grader' }),
+        work: expect.not.objectContaining({ assignees: expect.anything() }),
+      }),
+    )
   })
 
   it('pages through all Page Grader clients for settings listing', async () => {

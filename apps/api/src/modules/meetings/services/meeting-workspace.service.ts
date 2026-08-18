@@ -10,6 +10,7 @@ import {
 import { buildMeetingConversationId } from '../domain/meeting-conversation-id'
 import { buildFathomEventFromCallItem } from '../providers/build-fathom-event-from-call-item'
 import { resolveCanonicalFathomTitle } from '../providers/fathom-meeting-source'
+import { MeetingWorkspaceAgendaRepository } from '../repositories/meeting-workspace-agenda.repository'
 import { MeetingWorkspaceReadRepository } from '../repositories/meeting-workspace-read.repository'
 import {
   MeetingWorkspaceResolutionRepository,
@@ -31,6 +32,7 @@ export class MeetingWorkspaceService {
     private readonly conversations: ConversationsService,
     private readonly messages: MessagesRepository,
     @Optional() private readonly ingestion?: MeetingSourceIngestionService,
+    @Optional() private readonly agendaDocuments?: MeetingWorkspaceAgendaRepository,
   ) {}
 
   async resolveScheduledMeeting(
@@ -244,6 +246,27 @@ export class MeetingWorkspaceService {
       const hydrated = await this.hydrateMissingRecording(supabase, input, workspace)
       if (hydrated) {
         workspace = await this.requireMeeting(supabase, input)
+      }
+    }
+    const userId = text(input.userId)
+    const workspaceRow = record(workspace.workspace)
+    const agendaDocItemId = text(workspaceRow.agenda_doc_item_id)
+    if (userId && text(workspaceRow.meeting_item_id) && !agendaDocItemId && this.agendaDocuments) {
+      try {
+        await this.agendaDocuments.ensureAgendaDocument(supabase, {
+          meetingItemId: input.meetingItemId,
+          spaceId: input.spaceId,
+          userId,
+          orgId: input.orgId ?? text(record(workspace.meeting).org_id),
+          title: String(record(workspace.meeting).title ?? 'Untitled'),
+        })
+        workspace = await this.requireMeeting(supabase, input)
+      } catch (error) {
+        this.logger.warn(
+          `Ensure agenda document failed for ${input.meetingItemId}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        )
       }
     }
     return workspace

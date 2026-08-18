@@ -20,6 +20,10 @@ export async function mirrorWorkRequestFinalTask(
       draft.owner_user_id,
       {
         client_id: draft.page_grader_external_client_id,
+        ...(draft.page_grader_external_campaign_id
+          ? { campaign_id: draft.page_grader_external_campaign_id }
+          : {}),
+        origin: 'page_grader',
         space_id: String(task.space_id),
         space_item_ids: [String(task.id)],
         work_kind: 'task_request',
@@ -27,6 +31,7 @@ export async function mirrorWorkRequestFinalTask(
         due_date: draft.due_at?.slice(0, 10),
         // Do not send source_excerpt: Portal already formats description into
         // the ClickUp body. Repeating the brief duplicated Notes/Source folder.
+        // No assignee: omit so Portal From Pagegrader assignment rules apply.
         ...(draft.assignee_name ? { assignee: { name: draft.assignee_name } } : {}),
         note: `Finalized from ROAS Service Request ${draft.id}.`,
       },

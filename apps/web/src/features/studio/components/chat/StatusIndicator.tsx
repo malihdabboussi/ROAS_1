@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { TypewriterShimmer } from '@/components/chat/TypewriterShimmer'
 import { VibeyChatOrb, type OrbAnimationStyle } from '@/components/vibey/vibey-chat-orb'
+import { CHAT_WORKING_STATUS_PHRASES } from '@/lib/chat/chat-working-status'
+import { useWorkingStatusLabel } from '@/lib/chat/use-working-status-label'
 import { getLastAssistantMessage, isAssistantTurnComplete } from '../../lib/chat-turn-completion'
 import {
   useChatStore,
@@ -10,29 +13,14 @@ import {
   type FlowToolBlock,
 } from '../../store/use-chat-store'
 import { FlowTimeline } from './FlowTimeline'
-import { TypewriterShimmer } from './TypewriterShimmer'
 
 const ORB_STYLES: OrbAnimationStyle[] = ['elastic', 'trails', 'constellation', 'liquid', 'firefly']
-
-/**
- * Rotating status messages — cycles every 8s with typewriter effect.
- */
-const THINKING_MESSAGES = [
-  'Working...',
-  'Getting oriented...',
-  'Planning next moves...',
-  'Thinking through it...',
-  'Connecting the dots...',
-  'Moving things along...',
-  'Checking the next step...',
-  'Keeping the thread moving...',
-]
 
 /**
  * StatusIndicator — Shows progress while Pixel is working.
  *
  * Thinking (no tools yet) → emerald/green orb + typewriter rotating messages
- * Tool active             → orange orb + shimmer label
+ * Tool active             → orange orb + shimmer label that rotates if it stays put
  * Tool completed         → checkmark icon + muted label
  * Streaming (text)        → hidden (text is the progress)
  *
@@ -94,7 +82,6 @@ export function StatusIndicator({
   const lastAgentEventAt = useChatStore((s) =>
     effectiveConversationId ? (s.lastAgentEventAtByConversation[effectiveConversationId] ?? 0) : 0,
   )
-  const [thinkingIndex, setThinkingIndex] = useState(0)
   const [clock, setClock] = useState(() => Date.now())
   const lastVisibilitySignatureRef = useRef<string>('')
 
@@ -154,22 +141,15 @@ export function StatusIndicator({
     isStreaming &&
     !streamingMsgHasTextContent &&
     orderedBlocks.some((b) => b.type === 'artifact_preview' || b.type === 'document_card')
-  // Rotate thinking messages
-  useEffect(() => {
-    if (agentPhase !== 'thinking' && agentPhase !== 'executing' && agentPhase !== 'streaming')
-      return
-    if (flowTimeline.length > 0) return
-
-    const interval = setInterval(() => {
-      setThinkingIndex((prev) => (prev + 1) % THINKING_MESSAGES.length)
-    }, 8000)
-    return () => clearInterval(interval)
-  }, [agentPhase, flowTimeline.length])
-
-  // Reset thinking index when a new stream starts
-  useEffect(() => {
-    if (isStreaming) setThinkingIndex(0)
-  }, [isStreaming])
+  const pinnedWorkingLabel = activeTools[0]?.label ?? agentStatusMessage ?? null
+  const workingLabel = useWorkingStatusLabel(pinnedWorkingLabel, isStreaming)
+  const workingOrbStyle =
+    ORB_STYLES[
+      Math.max(
+        0,
+        CHAT_WORKING_STATUS_PHRASES.findIndex((phrase) => phrase === workingLabel),
+      ) % ORB_STYLES.length
+    ]
 
   // Gap filler: show a green orb if there's a 1s+ gap between any stream events.
   useEffect(() => {
@@ -228,9 +208,6 @@ export function StatusIndicator({
     !waitingForTextAfterRichCard
   const gapFillerState: 'thinking' | 'executing' =
     hasTools || streamingHasOrderedBlocks ? 'executing' : 'thinking'
-  const displayLabel = activeTools[0]?.label ?? agentStatusMessage ?? 'Working…'
-  const thinkingLabel =
-    agentStatusMessage ?? THINKING_MESSAGES[thinkingIndex % THINKING_MESSAGES.length] ?? 'Thinking…'
 
   useEffect(() => {
     const signature = JSON.stringify({
@@ -287,11 +264,9 @@ export function StatusIndicator({
       {showExecuting && (
         <div className="mx-2 flex items-center gap-2.5 py-0.5">
           <div className="flex h-5 w-5 shrink-0 items-center justify-center overflow-visible">
-            <VibeyChatOrb state="executing" style={ORB_STYLES[0]} />
+            <VibeyChatOrb state="executing" style={workingOrbStyle} />
           </div>
-          <span className="body-3 text-shimmer-gradient animate-[shimmer_4s_infinite_linear] font-medium">
-            {displayLabel}
-          </span>
+          <TypewriterShimmer key={workingLabel} text={workingLabel} />
         </div>
       )}
       {showGeneration && (
@@ -307,19 +282,17 @@ export function StatusIndicator({
       {showThinking && (
         <div className="mx-2 flex items-center gap-2.5 py-0.5">
           <div className="flex h-5 w-5 shrink-0 items-center justify-center overflow-visible">
-            <VibeyChatOrb state="thinking" style={ORB_STYLES[thinkingIndex % ORB_STYLES.length]} />
+            <VibeyChatOrb state="thinking" style={workingOrbStyle} />
           </div>
-          <TypewriterShimmer key={agentStatusMessage ?? thinkingIndex} text={thinkingLabel} />
+          <TypewriterShimmer key={workingLabel} text={workingLabel} />
         </div>
       )}
       {showGapFiller && (
         <div className="mx-2 flex items-center gap-2.5 py-0.5">
           <div className="flex h-5 w-5 shrink-0 items-center justify-center overflow-visible">
-            <VibeyChatOrb state={gapFillerState} style={ORB_STYLES[0]} />
+            <VibeyChatOrb state={gapFillerState} style={workingOrbStyle} />
           </div>
-          <span className="body-3 text-shimmer-gradient animate-[shimmer_4s_infinite_linear] font-medium">
-            {displayLabel}
-          </span>
+          <TypewriterShimmer key={workingLabel} text={workingLabel} />
         </div>
       )}
     </>

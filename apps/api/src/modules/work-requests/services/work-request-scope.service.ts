@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { PageGraderApiService } from '../../integrations/page-grader/services/page-grader-api.service'
 import {
   PageGraderBrainSyncService,
   type MappedClientRow,
@@ -17,9 +18,12 @@ import {
 
 @Injectable()
 export class WorkRequestScopeService {
+  private readonly logger = new Logger(WorkRequestScopeService.name)
+
   constructor(
     private readonly repository: WorkRequestRepository,
     private readonly pageGraderSync: PageGraderBrainSyncService,
+    private readonly pageGraderApi: PageGraderApiService,
   ) {}
 
   async resolveSignedMapping(
@@ -94,9 +98,10 @@ export class WorkRequestScopeService {
       }
     }
     const campaignIds = [...mapped.keys()]
-    const [campaignRows, spaceRows] = await Promise.all([
+    const [campaignRows, spaceRows, teamMembers] = await Promise.all([
       this.repository.listCampaignOptions(campaignIds),
       this.repository.listSpaceOptions(campaignIds),
+      this.listTeamMembers(draft.owner_user_id, draft.owner_org_id),
     ])
     const clients: WorkRequestScopeOption[] = campaignRows.flatMap((row) => {
       const id = String(row.id)
@@ -132,12 +137,35 @@ export class WorkRequestScopeService {
         },
       ]
     })
-    return { clients, spaces, teamMembers: await this.listTeamMembers(draft.owner_org_id) }
+    return { clients, spaces, teamMembers }
   }
 
-  private async listTeamMembers(ownerOrgId: string | null) {
+  /** Prefer Portal assignees (same roster as The ROAS Portal); fall back to org profiles. */
+  private async listTeamMembers(ownerUserId: string, ownerOrgId: string | null) {
+    const portal = await this.listPortalAssignees(ownerUserId)
+    if (portal.length > 0) return portal
     if (!ownerOrgId) return []
     return this.repository.listOrgTeamMembers(ownerOrgId)
+  }
+
+  private async listPortalAssignees(ownerUserId: string) {
+    try {
+      const { assignees } = await this.pageGraderApi.listAssignees(ownerUserId, { limit: 200 })
+      return assignees
+        .map((row) => ({
+          id: String(row.id),
+          name: String(row.name ?? '').trim(),
+        }))
+        .filter((row) => row.name.length > 0)
+        .sort((left, right) => left.name.localeCompare(right.name))
+    } catch (error) {
+      this.logger.warn(
+        `Portal assignee list unavailable for Service Request review: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+      return []
+    }
   }
 
   isScopedRow(row: Record<string, unknown>, ownerUserId: string, ownerOrgId: string | null) {

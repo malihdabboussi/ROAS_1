@@ -12,6 +12,7 @@ import {
   mapRoasPriority,
   mergeOperatorNoteIntoNotes,
   PAGE_GRADER_PROVIDER,
+  resolvePageGraderCampaignId,
   type PageGraderSendResult,
 } from './page-grader-api.helpers'
 
@@ -39,6 +40,7 @@ export class PageGraderSendWorkService {
     const workKind = dto.work_kind ?? 'task_request'
     const taskType = dto.task_type
     const results: PageGraderSendResult[] = []
+    const space = await this.loadSpace(supabase, userId, dto.space_id, orgId, orgRole)
 
     for (const itemId of dto.space_item_ids) {
       try {
@@ -59,19 +61,27 @@ export class PageGraderSendWorkService {
           customData.page_grader && typeof customData.page_grader === 'object'
             ? (customData.page_grader as Record<string, unknown>)
             : null
+        const campaignId = resolvePageGraderCampaignId({
+          dtoCampaignId: dto.campaign_id,
+          item,
+          space,
+        })
+        const source = {
+          system: 'roas',
+          origin: dto.origin ?? 'roas',
+          org_id: orgId ?? null,
+          space_id: dto.space_id,
+          space_item_id: itemId,
+          space_url: `${appUrl}/spaces/${dto.space_id}?item=${itemId}`,
+        }
 
         // Already linked: still call Page Grader create (idempotent) so ClickUp push can retry.
         if (typeof existingPg?.work_id === 'string' && existingPg.work_id.trim()) {
           try {
             const { work } = await this.pageGrader.createWork(creds.baseUrl, creds.apiKey, {
               client_id: dto.client_id,
-              source: {
-                system: 'roas',
-                org_id: orgId ?? null,
-                space_id: dto.space_id,
-                space_item_id: itemId,
-                space_url: `${appUrl}/spaces/${dto.space_id}?item=${itemId}`,
-              },
+              ...(campaignId ? { campaign_id: campaignId } : {}),
+              source,
               work: {
                 kind: workKind,
                 task_type: taskType,
@@ -178,14 +188,9 @@ export class PageGraderSendWorkService {
 
         const payload = {
           client_id: dto.client_id,
+          ...(campaignId ? { campaign_id: campaignId } : {}),
           note: operatorNote || undefined,
-          source: {
-            system: 'roas',
-            org_id: orgId ?? null,
-            space_id: dto.space_id,
-            space_item_id: itemId,
-            space_url: `${appUrl}/spaces/${dto.space_id}?item=${itemId}`,
-          },
+          source,
           work: {
             kind: workKind,
             task_type: taskType,
@@ -197,7 +202,8 @@ export class PageGraderSendWorkService {
             priority: mapRoasPriority(item.priority),
             due_at: dueAt,
             tags: nextTags,
-            assignees,
+            // Omit empty assignees so Portal From Pagegrader rules can assign.
+            ...(assignees.length > 0 ? { assignees } : {}),
             context: parentContext,
           },
         }
@@ -326,6 +332,23 @@ export class PageGraderSendWorkService {
         updated_at: new Date().toISOString(),
       })
       .eq('id', data.id)
+  }
+
+  private async loadSpace(
+    supabase: SupabaseClient,
+    userId: string,
+    spaceId: string,
+    orgId?: string | null,
+    orgRole?: import('@vibey/api-shared').OrgRole | null,
+  ): Promise<Record<string, unknown> | null> {
+    try {
+      return (await this.spaces.getById(supabase, userId, spaceId, orgId, orgRole)) as Record<
+        string,
+        unknown
+      >
+    } catch {
+      return null
+    }
   }
 
   private async resolveParentContext(

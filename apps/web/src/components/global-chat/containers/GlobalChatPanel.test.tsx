@@ -2,7 +2,10 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { GlobalChatPanel } from './GlobalChatPanel'
 
-vi.mock('next/navigation', () => ({ usePathname: () => '/home' }))
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/home',
+  useSearchParams: () => new URLSearchParams(),
+}))
 
 vi.mock('@/features/spaces/components/chat/SpaceVibeyChatPanel', () => ({
   SpaceVibeyChatPanel: () => <div>Chat surface</div>,
@@ -34,6 +37,9 @@ vi.mock('../components/ChatSurfaceRecommendation', () => ({
 vi.mock('../components/ChatCampaignBrainNudge', () => ({ ChatCampaignBrainNudge: () => null }))
 vi.mock('../components/QuickMissionsHubHost', () => ({
   QuickMissionsHubHost: () => <div data-testid="active-chat-quick-missions-host" />,
+}))
+vi.mock('../hooks/useWorkRequestHomeChatSeed', () => ({
+  useWorkRequestHomeChatSeed: () => undefined,
 }))
 
 describe('GlobalChatPanel', () => {

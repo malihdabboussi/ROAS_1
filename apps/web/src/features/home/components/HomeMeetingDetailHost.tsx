@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { ShellBreadcrumb } from '@/components/shell/ShellBreadcrumb'
 import { useShellStore } from '@/components/shell/use-shell-store'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { MeetingWorkspaceDialog } from '@/features/home/components/MeetingWorkspaceDialog'
+import { HOME_AGENDA_MESSAGES } from '@/features/home/config/home-agenda-messages.config'
 import { HOME_TOAST_ERRORS } from '@/features/home/config/home-toast-errors.config'
 import { resolveMeetingJoinUrl } from '@/features/home/lib/home-meeting-detail'
 import {
@@ -20,14 +21,36 @@ import {
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
+function MeetingWorkspaceBreadcrumb({
+  title,
+  onAgendaClick,
+}: {
+  title: string
+  onAgendaClick: () => void
+}) {
+  return (
+    <ShellBreadcrumb label={title}>
+      <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
+        <button
+          type="button"
+          onClick={onAgendaClick}
+          className="text-muted-foreground hover:text-foreground truncate"
+        >
+          Agenda
+        </button>
+        <span className="text-muted-foreground/50 select-none">/</span>
+        <span className="text-foreground min-w-0 truncate font-medium">{title}</span>
+      </nav>
+    </ShellBreadcrumb>
+  )
+}
+
 export function HomeMeetingDetailHost({
   event,
   onClose,
-  onOpenPrep,
 }: {
   event: CalendarAgendaEvent
   onClose: () => void
-  onOpenPrep: () => void
 }) {
   const recordWorkAreaPage = useShellStore((state) => state.recordWorkAreaPage)
   const related = event.related
@@ -94,13 +117,7 @@ export function HomeMeetingDetailHost({
   if (target) {
     return (
       <>
-        <ShellBreadcrumb label={meetingTitle}>
-          <div className="flex min-w-0 items-center gap-1.5 text-sm">
-            <span className="text-muted-foreground truncate">Agenda</span>
-            <span className="text-muted-foreground/50 select-none">/</span>
-            <span className="text-foreground min-w-0 truncate font-medium">{meetingTitle}</span>
-          </div>
-        </ShellBreadcrumb>
+        <MeetingWorkspaceBreadcrumb title={meetingTitle} onAgendaClick={onClose} />
         <MeetingWorkspaceDialog
           spaceId={target.space_id}
           meetingItemId={target.meeting_item_id}
@@ -111,7 +128,6 @@ export function HomeMeetingDetailHost({
           fallbackTitle={event.title}
           onBack={onClose}
           onClose={onClose}
-          onOpenPrep={onOpenPrep}
         />
       </>
     )
@@ -122,13 +138,7 @@ export function HomeMeetingDetailHost({
       aria-label="Preparing meeting workspace"
       className="surface-card border-border flex h-full min-h-0 w-full flex-col border"
     >
-      <ShellBreadcrumb label={meetingTitle}>
-        <div className="flex min-w-0 items-center gap-1.5 text-sm">
-          <span className="text-muted-foreground truncate">Agenda</span>
-          <span className="text-muted-foreground/50 select-none">/</span>
-          <span className="text-foreground min-w-0 truncate font-medium">{meetingTitle}</span>
-        </div>
-      </ShellBreadcrumb>
+      <MeetingWorkspaceBreadcrumb title={meetingTitle} onAgendaClick={onClose} />
       <p className="sr-only">
         Creating or reconnecting the workspace and persistent chat for this meeting.
       </p>
@@ -142,22 +152,22 @@ export function HomeMeetingDetailHost({
           <X className="icon-xs" />
         </button>
       </div>
-      <div className="p-spacing-6 flex min-h-0 flex-1 flex-col items-center justify-center">
-        {error ? (
-          <>
-            <p className="body-2 text-foreground text-center">{error}</p>
-            <button
-              type="button"
-              onClick={onClose}
-              className="button-default button-glass-neutral mt-spacing-4"
-            >
-              Close
-            </button>
-          </>
-        ) : (
-          <VibeyLoadingOrb text="Getting your meeting space ready..." />
-        )}
-      </div>
+      {error ? (
+        <div className="p-spacing-6 flex min-h-0 flex-1 flex-col items-center justify-center">
+          <p className="body-2 text-foreground text-center">{error}</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="button-default button-glass-neutral mt-spacing-4"
+          >
+            Close
+          </button>
+        </div>
+      ) : (
+        <div className="px-spacing-4 py-spacing-3 min-h-0 flex-1 overflow-hidden">
+          <ListSkeleton rows={6} label={HOME_AGENDA_MESSAGES.LOADING_MEETING_WORKSPACE.message} />
+        </div>
+      )}
     </section>
   )
 }

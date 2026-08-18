@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   openScopePicker: vi.fn(),
   routerPush: vi.fn(),
   seedComposer: vi.fn(),
+  clearMeetingContext: vi.fn(),
   meetingContext: null as {
     spaceId: string
     meetingItemId: string
@@ -16,14 +17,17 @@ const mocks = vi.hoisted(() => ({
     conversationScopePickerRequestNonce: 0,
     setRightPanelOpen: vi.fn(),
     setWorkAreaOpen: vi.fn(),
-    closeArtifactViewer: vi.fn(),
   },
   messagesByConversation: {
     'conversation-1': [
       { id: 'message-1', role: 'assistant', metadata: {}, created_at: '2026-08-15T00:00:00.000Z' },
     ],
   },
-  conversations: [] as Array<{ id: string; metadata?: Record<string, unknown> }>,
+  conversations: [] as Array<{
+    id: string
+    title?: string | null
+    metadata?: Record<string, unknown>
+  }>,
 }))
 
 vi.mock('next/navigation', () => ({
@@ -50,8 +54,16 @@ vi.mock('@/features/studio/store/use-chat-store', () => ({
 
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
   useGlobalChatStore: Object.assign(
-    (selector: (state: { meetingContext: typeof mocks.meetingContext }) => unknown) =>
-      selector({ meetingContext: mocks.meetingContext }),
+    (
+      selector: (state: {
+        meetingContext: typeof mocks.meetingContext
+        clearMeetingContext: () => void
+      }) => unknown,
+    ) =>
+      selector({
+        meetingContext: mocks.meetingContext,
+        clearMeetingContext: mocks.clearMeetingContext,
+      }),
     { getState: () => ({ seedComposer: mocks.seedComposer }) },
   ),
 }))
@@ -98,13 +110,25 @@ vi.mock('./ShellRightPanelConnections', async () => {
   return {
     ShellRightPanelConnections: ({
       pickerRef,
+      linkedMeeting,
+      meetingTitle,
+      onOpenMeeting,
     }: {
       pickerRef?: { current: { openMenuFromBanner: () => void } | null }
+      linkedMeeting?: { meetingItemId: string; spaceId: string } | null
+      meetingTitle?: string | null
+      onOpenMeeting?: () => void
     }) => {
       useImperativeHandle(pickerRef, () => ({ openMenuFromBanner: mocks.openScopePicker }))
+      const title = meetingTitle?.trim() || 'Meeting'
       return (
         <section aria-label="Connections">
           <h3>Connections</h3>
+          {linkedMeeting ? (
+            <button type="button" onClick={onOpenMeeting} aria-label={`Open ${title}`}>
+              {title}
+            </button>
+          ) : null}
         </section>
       )
     },
@@ -206,6 +230,7 @@ describe('ShellRightPanel', () => {
     mocks.conversations = [
       {
         id: 'conversation-1',
+        title: 'Client launch review',
         metadata: {
           context_type: 'meeting',
           meeting_item_id: 'meeting-item-1',
@@ -216,9 +241,8 @@ describe('ShellRightPanel', () => {
 
     render(<ShellRightPanel conversationId="conversation-1" />)
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Open meeting workspace' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Client launch review' }))
 
-    expect(mocks.shellState.closeArtifactViewer).toHaveBeenCalledTimes(1)
     expect(mocks.shellState.setWorkAreaOpen).toHaveBeenCalledWith(true)
     expect(mocks.routerPush).toHaveBeenCalledWith(
       '/home/meetings?meeting=meeting-item-1&space=space-1',
@@ -234,7 +258,7 @@ describe('ShellRightPanel', () => {
 
     render(<ShellRightPanel conversationId="conversation-1" />)
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Open meeting workspace' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Meeting' }))
 
     expect(mocks.routerPush).toHaveBeenCalledWith(
       '/home/meetings?meeting=meeting-live&space=space-live',
@@ -246,6 +270,7 @@ describe('ShellRightPanel', () => {
 
     expect(await screen.findByRole('heading', { name: 'Outputs' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Open meeting workspace' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Connections' })).not.toBeInTheDocument()
   })
 
   it('opens the campaign and space picker when the guidance prompt requests it', async () => {

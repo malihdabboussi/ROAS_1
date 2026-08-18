@@ -255,7 +255,7 @@ describe('ShellChatDrawer', () => {
     expect(useShellStore.getState().chatDrawer.width).toBe(420)
   })
 
-  it('keeps the page control in the Simple chat header whether the page is open or collapsed', () => {
+  it('puts Show page in the Simple chat header only while the page is collapsed', () => {
     useShellMenuDock.setState({ menuStyle: 'simple', dock: 'left' })
     const drawer = {
       open: true,
@@ -269,9 +269,10 @@ describe('ShellChatDrawer', () => {
 
     useShellStore.setState({ chatDrawer: drawer, workAreaOpen: true })
     rerender(<ShellChatDrawer />)
+    expect(screen.queryByRole('button', { name: 'Show page' })).not.toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: 'Collapse page — chat full screen' }),
-    ).toBeInTheDocument()
+      screen.queryByRole('button', { name: 'Collapse page — chat full screen' }),
+    ).not.toBeInTheDocument()
   })
 
   it('resizes the chat history rail independently in expanded chat', () => {

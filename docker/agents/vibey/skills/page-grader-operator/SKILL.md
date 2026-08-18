@@ -78,8 +78,12 @@ task", "ASAP", or names the human who should own that work.
 - For any Service Request type, discover the current MCP schema and use
   `page_grader_create_fulfillment_request` with the resolved `client_ref`,
   matching `task_type` (`design` | `copy` | `funnel` | `ghl` | `ad` | `video` |
-  `other` | `general`), a stable `idempotency_key`, and `assignee_name` when
-  the user named an owner. Format `description` as:
+  `other` | `general`), a stable `idempotency_key`, the resolved
+  `page_grader_campaign_id` when the work belongs to a known campaign, and
+  `assignee_name` when the user named an owner. Do not omit a known campaign
+  (that leaves the Portal task unlinked). When the user did not name an owner,
+  omit `assignee_name` so Portal From Pagegrader assignment rules apply.
+  Format `description` as:
   - Line 1: a short title only (≤ ~100 characters; no scope dump).
   - Blank line.
   - Remaining lines: full brief, links, scope, and constraints.

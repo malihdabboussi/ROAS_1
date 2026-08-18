@@ -87,8 +87,33 @@ describe('AgentTurnFeedbackActions', () => {
 
     expect(screen.queryByRole('button', { name: /thumbs up/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /thumbs down/i })).toBeNull()
+    expect(
+      screen.getAllByRole('button').map((button) => button.getAttribute('aria-label')),
+    ).toEqual(['Reply to message', 'Copy message'])
     fireEvent.click(screen.getByRole('button', { name: /reply to message/i }))
     expect(onReply).toHaveBeenCalledOnce()
+  })
+
+  it('places reply before copy and fork on chat messages', () => {
+    const onReply = vi.fn()
+    const onFork = vi.fn()
+
+    render(
+      <AgentTurnFeedbackActions
+        targetKind="conversation_message"
+        targetId={TARGET_ID}
+        sourceSurface="assistant_message"
+        content="Ready to help"
+        canFork
+        onFork={onFork}
+        showFeedback={false}
+        onReply={onReply}
+      />,
+    )
+
+    expect(
+      screen.getAllByRole('button').map((button) => button.getAttribute('aria-label')),
+    ).toEqual(['Reply to message', 'Copy message', 'Fork chat'])
   })
 
   it('saves a thumb vote immediately and opens the detail popover', async () => {

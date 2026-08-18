@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import { CheckCircle2, XCircle } from 'lucide-react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { formatHomeShortDate } from '@/features/home/components/HomeListCardShell'
 import { HomeTaskDetailHost } from '@/features/home/components/HomeTaskDetailHost'
 import { useHomeFeedOpen } from '@/features/home/hooks/use-home-feed-open'
@@ -11,14 +12,13 @@ import { DEFAULT_HOME_FEED_SCOPE } from '@/lib/home/home-feed-scope'
 import { cn } from '@/lib/utils/cn'
 import { extractConversationTaskRows } from './shell-conversation-summary'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
-import { ShellRightPanelSkeleton } from './ShellRightPanelSkeleton'
 
 function HomeRightPanelTasks() {
   const feed = useYourTurnFeed(DEFAULT_HOME_FEED_SCOPE)
   const { activeYourTurnItem, openYourTurnItem, closeYourTurnItem } = useHomeFeedOpen()
 
   if (feed.loading) {
-    return <ShellRightPanelSkeleton label={SHELL_RIGHT_PANEL_MESSAGES.homeTasksLoading} />
+    return <ListSkeleton label={SHELL_RIGHT_PANEL_MESSAGES.homeTasksLoading} />
   }
 
   if (feed.items.length === 0) {
