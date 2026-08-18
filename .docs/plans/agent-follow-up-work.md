@@ -1,3 +1,27 @@
+## 2026-08-18 - [ARCH] space-schema.ts remains far over the 600 LOC cap
+
+Status: Open
+
+Found while: Adding `client_and_team` to post-call `meeting_scope`
+
+Evidence: `wc -l` on `apps/web/src/features/spaces/types/space-schema.ts` is 1427. This change only widened a union.
+
+Needed work: Split Space automation action types out of the mega schema file.
+
+Reason not done now: Post-call Team vs Personal is a one-line type widen; splitting the schema file is a separate refactor.
+
+## 2026-08-18 - [ARCH] ui-block-extractor.ts is over the 600 LOC service cap
+
+Status: Open
+
+Found while: Adding campaign-draft work_request cards and create_campaign preview blocks
+
+Evidence: `wc -l` on `apps/agent-api/src/modules/shared/ui-block-extractor.ts` remains above the 600 LOC shared-module cap after a small create_campaign / campaign-draft matcher.
+
+Needed work: Split action output builders (work request, media, artifact previews) out of `ui-block-extractor.ts`.
+
+Reason not done now: The requested work was the invalid Service Request confirmation and campaign chat links; splitting the extractor was out of scope.
+
 ## 2026-08-18 - [ARCH] work-request.service.ts is at the 600 LOC service cap
 
 Status: Open

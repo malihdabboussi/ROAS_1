@@ -146,6 +146,13 @@ Grader`, `MCP`, tool names, schemas, idempotency keys, or retry mechanics.
   five automatic team assignments.
 - Urgent Delegation Desk intake dispatches only after duplicate, target, and
   destination checks and stores the confirmed destination receipt.
+- Campaign drafts use the same review-link pattern as Service Requests: Pixel
+  creates the Portal campaign draft, then posts an openable `review_url` (or
+  native campaign `url`) instead of interviewing in Slack. Follow-up questions
+  belong in that review chat.
+- After Service Request submit, the in-thread resume card shows the created
+  ROAS / ClickUp task links. A finalized review is not treated as an invalid
+  link.
 - Service Request fulfillment creates from a ROAS / Slack Pixel session stamp
   that conversation UUID onto the draft (`source_context.conversation_id` plus
   internal post-create stamp). Public `/request-review/:token` resumes that

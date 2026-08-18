@@ -6,6 +6,30 @@ Why: Not every Slack message is a client request. Starting at client lookup woul
 Impact: Client Resolve (N1) is a client-class branch only. Quote inherit remains the first runtime gap. Voice pack, CONNECTIONS bind, composer, and Service Request routing are explicitly out of rewrite scope.
 Files: `.docs/plans/pixel-slack-north-star-2026-08-18.md`
 
+## [2026-08-18 15:55] - [DOCS]
+What: Corrected the leftover Data Flow sentence that still said post-call is client-only.
+Why: The live rule is Team + Client run; Personal never enters the bot.
+Impact: Docs match the shipped trigger.
+Files: `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-18 15:50] - [FIX]
+What: Post-call bot now runs Team and Client calls. Personal calls never enter the bot. Team titles (weekly team, launch calendar) stay Team even when Fathom tagged one speaker.
+Why: The live Fathom Meeting Log was client-only, and internal team reviews were auto-labeled Personal, so the bot skipped the calls that should run and treated team work as confidential personal.
+Impact: Fathom Meeting Log scope is `client_and_team`. Personal stays off. Existing automatic Team-titled Personal rows are relabeled Team.
+Files: `post-call-meeting-scope.ts`, `meeting-call-kind.ts`, `space-template-catalog-personal-dashboard.ts`, `space-automation-action.dto.ts`, `supabase/migrations/20260818155000_post_call_team_not_personal.sql`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-18 15:26] - [FIX]
+What: Unblocked Vercel `roas-web` typecheck after merging #290–#298. Removed leftover unused `isStreaming` on Team `AgentChatThread`. Typed the Connections `fetchCampaign` test mock with the real `(id: string)` arity.
+Why: `next build` typechecks `apps/web` with unused locals. #290 deleted the composer tip that used `isStreaming`; #291 added a one-arg `fetchCampaign` mockImplementation on a zero-arg `vi.fn`. Every production web deploy failed.
+Impact: `pnpm --filter @vibey/web typecheck` passes so `app.roas.io` can ship the merged chat/Slack/campaign PRs.
+Files: `AgentChatThread.tsx`, `AgentChatPanel.tsx`, `ConversationScopePicker.test.tsx`
+
+## [2026-08-18 14:40] - [FIX]
+What: Service Request confirmation now shows the created ROAS/ClickUp task links after submit. Portal campaign drafts must post the same kind of openable chat/review URL instead of a Slack questionnaire.
+Why: After Nate submitted a review, the in-thread card treated `finalized` as an invalid link because it had no `message`. Campaign requests created a draft in Slack with no clickable portal URL.
+Impact: Submit shows SERVICE REQUEST SUBMITTED plus Open ROAS task / Open ClickUp task. Pixel posts `review_url` or `url` for campaign drafts. Native `create_campaign` returns `https://app.roas.io/campaigns/{id}`.
+Files: `WorkRequestChatResumeCard.tsx`, `artifact-north-star.service.ts`, `ui-block-extractor.ts`, `artifact-mcp-fulfillment-stamp.ts`, `platform-tools-template.ts`, `docker/agents/*/skills/page-grader-operator/SKILL.md`, `documentation/features/page-grader-mcp-bridge.md`
+
 ## [2026-08-18 14:20] - [DOCS]
 What: Wrote the Pixel Slack North Star plan: current vs proposed Slack→answer flow, 14 existing Slack processes, 10 proposed processes, Dylan’s 30 asks plus 25 stamp-derived requests with ladders, and a wave-based stress harness.
 Why: Slack Pixel still asks which client and skips retrieval even when `#roas-*` channels are mapped; we needed one resolve→retrieve→act spine before more skills.

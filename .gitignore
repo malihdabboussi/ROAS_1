@@ -74,6 +74,8 @@ docker/agents/vibey/*
 docker/agents/vibey/skills/*
 !docker/agents/vibey/skills/post-call-delivery/
 !docker/agents/vibey/skills/post-call-delivery/SKILL.md
+!docker/agents/vibey/skills/page-grader-operator/
+!docker/agents/vibey/skills/page-grader-operator/SKILL.md
 !docker/agents/vibey/skills/slack-signal-operator/
 !docker/agents/vibey/skills/slack-signal-operator/SKILL.md
 !docker/agents/vibey/skills/dylans-super-voice/

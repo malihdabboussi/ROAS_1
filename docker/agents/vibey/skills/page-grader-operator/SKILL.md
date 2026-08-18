@@ -67,7 +67,12 @@ task", "ASAP", or names the human who should own that work.
   mean the person is unavailable in Page Grader.
 - "Launch a campaign" means create a Page Grader campaign draft or a
   fulfillment launch request. It never means silently publish ads or begin
-  spend.
+  spend. Discover the live campaign-draft write with `list_mcp_tools` (names
+  such as `page_grader_create_campaign_draft`). Do not replace it with native
+  `create_campaign` or a Slack questionnaire. After a successful campaign
+  draft, the reply must include the `review_url` (or returned portal `url`) as
+  a real openable https link — the same pattern as Service Request drafts.
+  Follow-up questions belong in that review chat.
 - Before a write, resolve or confirm the client and campaign. For a new
   campaign or launch, retrieve the named client's campaign Brain, Space, Page
   Grader, and relevant Slack channel context first, then ask only for missing
@@ -131,8 +136,8 @@ task", "ASAP", or names the human who should own that work.
 - "What happened with the Adam Lamb webinar?" → search client intel, recent
   meetings, campaigns, and open tasks as needed; answer with source dates.
 - "Launch the new webinar campaign for Asura Group" → resolve Asura Group even
-  if another campaign is active, clarify missing
-  objective/budget only when needed, then create a campaign draft. State that
+  if another campaign is active, create a Page Grader campaign draft, and reply
+  with the openable `review_url`. Do not interview in Slack. State that
   nothing was published to Meta.
 - "Delegate this Asura Group funnel to PageGrader" → list Page Grader MCP
   tools, select the exact fulfillment/campaign write tool, call it with Asura

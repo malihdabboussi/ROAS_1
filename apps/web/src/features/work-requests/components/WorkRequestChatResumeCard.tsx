@@ -122,14 +122,7 @@ export function WorkRequestChatResumeCard({
     }
 
     if (review.state !== 'draft') {
-      return (
-        <div className="surface-card border-border mt-spacing-3 rounded-spacing-3 space-y-spacing-2 p-spacing-3 border">
-          <p className="body-2 font-medium">{title}</p>
-          <p className="body-3 text-muted-foreground">
-            {review.message || WORK_REQUEST_MESSAGES.invalidBody}
-          </p>
-        </div>
-      )
+      return <WorkRequestNonDraftCard title={title} review={review} />
     }
 
     return (
@@ -162,6 +155,75 @@ export function WorkRequestChatResumeCard({
       >
         Continue in chat
       </button>
+    </div>
+  )
+}
+
+function WorkRequestNonDraftCard({
+  title,
+  review,
+}: {
+  title: string
+  review: Exclude<WorkRequestReviewResponse, { state: 'draft' }>
+}) {
+  if (review.state === 'finalized') {
+    const body =
+      review.sync_status === 'synced'
+        ? `${WORK_REQUEST_MESSAGES.finalizedBody} The ClickUp mirror is confirmed.`
+        : WORK_REQUEST_MESSAGES.mirrorPending
+    return (
+      <div className="surface-card mt-spacing-3 rounded-spacing-3 space-y-spacing-3 border-success/30 bg-success/10 p-spacing-3 border">
+        <div>
+          <p className="body-2 font-medium">{WORK_REQUEST_MESSAGES.finalizedTitle}</p>
+          <p className="body-3 text-muted-foreground mt-spacing-1">{body}</p>
+        </div>
+        {review.task_url || review.clickup_url ? (
+          <div className="gap-spacing-2 flex flex-wrap">
+            {review.task_url ? (
+              <a
+                href={review.task_url}
+                className="button-default button-glass-primary"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open ROAS task
+              </a>
+            ) : null}
+            {review.clickup_url ? (
+              <a
+                href={review.clickup_url}
+                className="button-default button-glass-neutral"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open ClickUp task
+              </a>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  const copy =
+    review.state === 'expired'
+      ? { title: WORK_REQUEST_MESSAGES.expiredTitle, body: WORK_REQUEST_MESSAGES.expiredBody }
+      : review.state === 'revoked'
+        ? { title: WORK_REQUEST_MESSAGES.revokedTitle, body: WORK_REQUEST_MESSAGES.revokedBody }
+        : review.state === 'refresh_required'
+          ? {
+              title: WORK_REQUEST_MESSAGES.refreshRequiredTitle,
+              body: review.message || WORK_REQUEST_MESSAGES.refreshRequiredBody,
+            }
+          : {
+              title: WORK_REQUEST_MESSAGES.invalidTitle,
+              body: review.message || WORK_REQUEST_MESSAGES.invalidBody,
+            }
+
+  return (
+    <div className="surface-card border-border mt-spacing-3 rounded-spacing-3 space-y-spacing-2 p-spacing-3 border">
+      <p className="body-2 font-medium">{copy.title || title}</p>
+      <p className="body-3 text-muted-foreground">{copy.body}</p>
     </div>
   )
 }

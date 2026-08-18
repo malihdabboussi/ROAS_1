@@ -1,6 +1,7 @@
 import { createRef, Profiler } from 'react'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { Campaign } from '@/lib/campaigns'
 import type { Conversation } from '@/lib/conversations'
 import {
   ConversationScopePicker,
@@ -15,7 +16,7 @@ const mocks = vi.hoisted(() => ({
   fetchSpaces: vi.fn(),
   fetchSpaceById: vi.fn(),
   fetchCampaigns: vi.fn(),
-  fetchCampaign: vi.fn(async () => null),
+  fetchCampaign: vi.fn(async (_id: string): Promise<Campaign | null> => null),
   fetchPrograms: vi.fn(
     async (): Promise<Array<{ id: string; name: string; system_kind?: string | null }>> => [],
   ),
