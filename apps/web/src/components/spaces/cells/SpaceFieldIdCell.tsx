@@ -1,7 +1,6 @@
 'use client'
 
 import { CLIENT_CAMPAIGN_FIELD_ID } from '@/lib/agency-clients'
-import type { SpaceItem } from '@/lib/spaces'
 import type { ExtendedCellProps } from './cell-types'
 import { ClientCampaignCell } from './ClientCampaignCell'
 import { HostCell } from './HostCell'

@@ -29,13 +29,13 @@ export function useMeetingsCalendarMaterialize(
     let cancelled = false
     void cachedFetch(
       `meetings-materialize-agenda:${spaceId}:${start.toISOString()}:${end.toISOString()}`,
-      MATERIALIZE_TTL_MS,
       () =>
         fetchCalendarAgenda({
           start: start.toISOString(),
           end: end.toISOString(),
           timezone,
         }),
+      { ttlMs: MATERIALIZE_TTL_MS },
     )
       .then(async (agenda) => {
         if (cancelled) return
