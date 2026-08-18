@@ -10,6 +10,7 @@ import type { ArtifactCapabilityPolicy } from './artifact-capability.policy'
 import {
   extractFulfillmentDraftId,
   isFulfillmentCreateTool,
+  mcpToolFailureResult,
   stampConversationIntoFulfillmentArgs,
   stampDraftConversationViaApi,
 } from './artifact-mcp-fulfillment-stamp'
@@ -136,7 +137,11 @@ export class ArtifactMcpService {
         .filter((c) => c.type === 'text')
         .map((c) => c.text)
         .join('\n')
-      return { success: false, error: errorText || 'MCP tool call failed' }
+      return mcpToolFailureResult({
+        toolName,
+        serverName: server.name,
+        errorText,
+      })
     }
 
     const textContent = result.content

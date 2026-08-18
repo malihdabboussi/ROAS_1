@@ -40,6 +40,7 @@ describe('Page Grader human fulfillment routing', () => {
       expect(skill).toContain('Created:')
       expect(skill).toContain('page_grader_create_campaign_draft')
       expect(skill).toContain('create_campaign')
+      expect(skill).toMatch(/Missing VSL[\s\S]*not create-blockers/)
     }
   })
 
@@ -56,6 +57,20 @@ describe('Page Grader human fulfillment routing', () => {
     expect(migration).toContain('assignee_name:"Rafay"')
     expect(migration).toContain("RAISE EXCEPTION 'Vibey Page Grader human fulfillment routing")
     expect(migration).toContain("RAISE EXCEPTION 'Atlas Page Grader human fulfillment routing")
+  })
+
+  it('persists portal campaign create fallback on both agents', () => {
+    const campaignMigration = readFileSync(
+      resolve(repoRoot, 'supabase/migrations/20260818173000_portal_campaign_create_fallback.sql'),
+      'utf8',
+    )
+    expect(campaignMigration).toContain('## Portal campaign create')
+    expect(campaignMigration).toContain('Missing VSL, landing page, or creative assets')
+    expect(campaignMigration).toContain('native `create_campaign`')
+    expect(campaignMigration).toContain("file_name = 'TOOLS.md'")
+    expect(campaignMigration).toContain(
+      "RAISE EXCEPTION 'Portal campaign create fallback was not persisted for both agents'",
+    )
   })
 
   it('persists all-types Service Request intake on both agents', () => {
