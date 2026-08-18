@@ -6,6 +6,18 @@ Why: The Recents drag handle sat under the menu and width used a 300ms transitio
 Impact: Drag the Simple menu right edge to widen Recents (272–476px). Expanded ROAS sits left. Collapsed R sits in the icon column center.
 Files: `SidebarSimpleSection.tsx`, `SidebarSimpleResizeHandle.tsx`, `SidebarHqHubLogoButton.tsx`, `Sidebar.tsx`, `apps/web/src/app/globals.css`, `apps/website/src/app/globals.css`, `documentation/features/claude-chatgpt-shell.md`
 
+## [2026-08-18 17:35] - [FEATURE]
+What: All Meetings gained a Client / Campaign column. Operators map a call to a Page Grader client and that client’s campaign without moving the row. Mapped names link to the client and campaign Space; an Agenda link opens that meeting’s workspace. Call Kind stays independent. The same field id upgrades Delegation Desk from free text to the picker.
+Why: Meetings could classify Call Kind but could not tag which client and campaign a call belonged to, so later training and reference had no durable client/campaign label. There was also no explicit Agenda control on the All Meetings row.
+Impact: `custom_data.client_campaign` stores client_id/name, campaign_id/name, and optional roas_space_id. Agents hydrate that mapping on meeting items. Existing All Meetings spaces and the personal-dashboard template show the column after Call Kind.
+Files: `ClientCampaignCell.tsx`, `SpaceCell.tsx`, `client-campaign-mapping.ts`, `use-client-campaign-groups.ts`, `space-template-catalog-personal-dashboard.ts`, `20260818173000_meetings_client_campaign_field.sql`, `artifact-space-item-hydrate.helper.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-18 17:25] - [FIX]
+What: Portal campaign create no longer dies on a guessed MCP tool name. Pixel lists live Page Grader writes, refreshes stale MCP catalogs, and falls back to native `create_campaign` plus tasks when that write is missing. Missing VSL/landing-page assets are campaign tasks, not create-blockers. MCP campaign-draft failures now return a fixable contract instead of an unclassified reject.
+Why: After #298, Pixel tried `page_grader_create_campaign_draft`, the create was rejected before save, and instructions forbade native `create_campaign`, so Master Your Kraft never got a campaign or launch tasks.
+Impact: Slack "create a portal campaign" either posts a Portal `review_url` or a ROAS campaign `url` with tasks for unverified VSL/LP/assets. Retrying the same guessed tool is no longer the only path.
+Files: `artifact-mcp-tool-preflight.ts`, `artifact-mcp-fulfillment-stamp.ts`, `artifact-mcp.service.ts`, `artifact-action-preflight.ts`, `platform-tools-template.ts`, `page-grader-operator/SKILL.md`, `20260818173000_portal_campaign_create_fallback.sql`, `page-grader-mcp-bridge.md`
+
 ## [2026-08-18 16:20] - [FIX]
 What: Meetings Agenda Mine now DWD-pulls the signed-in user's Workspace Directory calendar (linked/suggested portal user, not login Gmail first). Team Google Calendar fetches paginate `nextPageToken` (page size 2500, `singleEvents=true`) and pin the caller inside the Directory people cap.
 Why: Mine only listed caller-owned Composio rows, so Dylan's work invites showed under Team (Directory mailbox) and disappeared on Mine. Recurring instances such as ROAS x Christian Osgood Weekly Standup were truncated when a covering-month `events.list` stopped at 250 events with no page token.

@@ -1,9 +1,11 @@
 'use client'
 
+import { CLIENT_CAMPAIGN_FIELD_ID } from '@/lib/agency-clients'
 import type { SpaceItem } from '@/lib/spaces'
 import { AssigneeCell } from './AssigneeCell'
 import type { ExtendedCellProps } from './cell-types'
 import { CheckboxCell } from './CheckboxCell'
+import { ClientCampaignCell } from './ClientCampaignCell'
 import { ContactCell } from './ContactCell'
 import { CurrencyCell } from './CurrencyCell'
 import { DateCell } from './DateCell'
@@ -66,6 +68,21 @@ export function SpaceCell({
         readonly={readonly}
         spaceItem={spaceItem}
         fieldRowVariant={fieldRowVariant}
+        onOpenDetail={onOpenDetail}
+      />
+    )
+  }
+
+  if (field.id === CLIENT_CAMPAIGN_FIELD_ID) {
+    return (
+      <ClientCampaignCell
+        field={field}
+        value={value}
+        onChange={onChange}
+        readonly={readonly}
+        fieldRowVariant={fieldRowVariant}
+        openOnMount={openOnMount}
+        spaceItem={spaceItem}
         onOpenDetail={onOpenDetail}
       />
     )
