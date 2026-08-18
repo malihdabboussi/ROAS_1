@@ -68,6 +68,25 @@ export class ArtifactLegacySessionCampaignRepository {
     }
   }
 
+  async listAccessibleCampaignNames(
+    supabase: SupabaseClient,
+    input: { userId: string; orgId?: string | null },
+  ): Promise<{ data: Array<Record<string, unknown>> | null; error: QueryError | null }> {
+    let query = supabase
+      .from('campaigns')
+      .select('id, name')
+      .neq('status', 'archived')
+      .order('updated_at', { ascending: false })
+      .limit(80)
+    query = input.orgId
+      ? query.eq('org_id', input.orgId)
+      : query.eq('user_id', input.userId).is('org_id', null)
+    return (await query) as {
+      data: Array<Record<string, unknown>> | null
+      error: QueryError | null
+    }
+  }
+
   async findSpaceCampaignId(
     supabase: SupabaseClient,
     spaceId: string,

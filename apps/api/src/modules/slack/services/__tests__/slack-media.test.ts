@@ -407,7 +407,7 @@ describe('SlackService media helpers', () => {
       expect(updateQuery.eq).toHaveBeenCalledWith('org_id', 'org-1')
     })
 
-    it('keeps Slack conversations organization-scoped instead of attaching a recent campaign', async () => {
+    it('keeps a named-client campaign on Slack conversation reuse', async () => {
       const service = createServiceWithRepository()
       const conversationLookup = createThenableQuery({
         data: { id: 'conversation-1', campaign_id: 'campaign-1', title: 'Slack Chat' },
@@ -439,7 +439,7 @@ describe('SlackService media helpers', () => {
       expect(result).toEqual({ id: 'conversation-1', title: expect.anything() })
       expect(result.id).toBe('conversation-1')
       expect(supabase.from).not.toHaveBeenCalledWith('campaigns')
-      expect(conversationUpdate.update).toHaveBeenCalledWith({ campaign_id: null })
+      expect(conversationUpdate.update).not.toHaveBeenCalled()
     })
   })
 

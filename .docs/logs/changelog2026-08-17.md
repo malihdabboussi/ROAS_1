@@ -153,6 +153,20 @@ Why: Match ChatGPT/Codex chat↔artifact memory without blocking cross-chat navi
 Impact: Switching chats restores that chat’s artifact by default; pin freezes the panel across switches; summary panel / explicit close still clears and unpins.
 Files: `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/shell/use-shell-store.artifact-conversation.ts`, `apps/web/src/components/shell/shell-artifact-conversation.ts`, `apps/web/src/components/shell/use-shell-artifact-conversation-sync.ts`, `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `documentation/features/claude-chatgpt-shell.md`
 
+## [2026-08-17 16:45] - [FIX]
+What: Pixel QC / Launch Agent Slack delivery now measures a client once. The first check-in is the parent DM; later webhooks for the same client stay quiet for 8 hours, then reply in that thread asking if the work was finalized. Finding IDs can rotate without opening a new top-level CRITICAL blast.
+Why: Hourly Launch Agent Check-ins for Impact Elite / The Lab repeated the same overdue tasks as new DMs. That was useful while testing and is noise in production. Viktor-style follow-through lives in one thread.
+Impact: Acknowledge / snooze / resolve buttons on the original message still work. Team Intelligence digest repetition is unchanged. QC still only appears when Page Grader sends a `quality_control` webhook; launch noise was drowning that DM.
+Files: `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-slack-bridge.service.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-follow-up.ts`, `apps/api/src/modules/spaces/repositories/slack-open-items.repository.ts`, `apps/api/src/modules/spaces/services/slack-open-items.service.ts`, `documentation/features/page-grader-campaign-brain-sync.md`
+
+## [2026-08-17 16:33] - [FIX]
+What: Slack Pixel named-client lookup now binds **this** portal conversation so CONNECTIONS shows the client, fuzzy-matches misspelled names (`Matser yoru kraft`, `Yasir / SPeka lke a ceo`), and refuses `[bracket]` Mad Libs drafts until Brain/Slack/Portal/Space were searched. Slack conversation reuse no longer wipes an already-bound campaign.
+Why: "Nothing linked" meant this chat had no campaign, not that client data was missing. Pixel treated messy client names as tone, searched User Brain first, and shipped placeholder Monday updates.
+Impact: Each Slack message still maps to its own portal chat. Naming a client on that chat links CONNECTIONS for that lookup. It does not lock the whole Pixel DM to one client. Existing TOOLS.md is repaired because the named-client heading is now required.
+Files: `packages/agent-policy/src/platform-tools-template.ts`, `apps/agent-api/src/modules/artifacts/services/campaign-name-match.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-actions.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-legacy-session-campaign.service.ts`, `apps/api/src/modules/slack/services/slack-service-conversation.base.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+
+
 ## [2026-08-17 05:49] - [FIX]
 What: Guaranteed Service Request review links resume the originating Pixel chat. Agent-api now injects the active session `conversation_id` into Page Grader fulfillment MCP args and stamps the draft via an internal API after create. Review/chat load also backfills from Slack channel+thread provenance when the id was missing, and idempotent create replays merge an incoming conversation id.
 Why: Slack-created drafts still opened the step wizard because provenance lacked `resume_conversation_id`; skill-only stamping was insufficient.

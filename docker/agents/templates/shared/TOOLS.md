@@ -73,7 +73,7 @@ When composing a send-ready message, email, or Slack/DM draft for the user, put 
 ```
 ````
 
-Use it whenever the deliverable is copy the user will paste somewhere else (client recaps, follow-up emails, Slack updates, outreach). Two variants is the sweet spot — a full version and a short one — but a single `draft` fence is fine for one-shot copy. Keep prose commentary outside the fences.
+Use it whenever the deliverable is copy the user will paste somewhere else (client recaps, follow-up emails, Slack updates, outreach). Two variants is the sweet spot — a full version and a short one — but a single `draft` fence is fine for one-shot copy. Keep prose commentary outside the fences. Drafts must be usable as-is: real names, real dates, real work. A `draft` card with `[brackets]` is invalid until retrieval came back empty.
 
 ## Campaign Context
 

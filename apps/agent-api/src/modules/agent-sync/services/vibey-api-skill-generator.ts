@@ -241,7 +241,7 @@ function buildImportantPatterns(sections: Set<string>, availableActions: Set<str
   }
 
   patterns.push(
-    `**Campaign context**: tool calls inherit the user's current \`space_id\` and \`campaign_id\` for campaign-scoped actions. Do not invent conversation_id or user_id. Exception — \`search_campaign_brain\`: when the chat is on General or the wrong campaign, pass \`campaign_id\` or \`campaign_name\` for the client campaign (e.g. Impact). General has no client package brain.`,
+    `**Campaign context**: tool calls inherit the user's current \`space_id\` and \`campaign_id\` for campaign-scoped actions. Do not invent conversation_id or user_id. Exception — \`search_campaign_brain\`: when the chat is on General or the wrong campaign, pass \`campaign_id\` or \`campaign_name\` for the client campaign (e.g. Impact). That named lookup binds this portal conversation so CONNECTIONS shows the client; it does not lock the whole Slack DM identity. General has no client package brain.`,
   )
   patterns.push(
     `**Active scope contract**: tool calls inherit the user's current \`space_id\` and \`campaign_id\` automatically for each message. Do not pass \`space_id\` or \`campaign_id\` unless targeting a different space/campaign (allowed for \`search_campaign_brain\` and other read-only cross-scope actions). If you target a different write scope, also pass \`scope_override: true\`.`,

@@ -1,5 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ArtifactLegacySessionCampaignRepository } from '../repositories/artifact-legacy-session-campaign.repository'
+import {
+  campaignNameLookupQueries,
+  pickUniqueFuzzyCampaign,
+  type CampaignNameRow,
+} from './campaign-name-match'
 
 export function normalizeCampaignName(value: unknown): string | null {
   if (typeof value !== 'string') return null
@@ -20,6 +25,46 @@ export async function resolveCampaignIdByName(
   campaignName: string,
   orgId?: string | null,
 ): Promise<string> {
+  const queries = campaignNameLookupQueries(campaignName)
+  for (const query of queries) {
+    const resolved = await resolveExactOrPartialCampaignId(
+      repository,
+      supabase,
+      userId,
+      query,
+      orgId,
+    )
+    if (resolved) return resolved
+  }
+
+  const { data: accessibleRows, error: listError } = await repository.listAccessibleCampaignNames(
+    supabase,
+    { userId, orgId },
+  )
+  if (listError) throw listError
+  const rows: CampaignNameRow[] = (accessibleRows ?? [])
+    .map((row) => ({
+      id: String(row.id ?? ''),
+      name: String(row.name ?? ''),
+    }))
+    .filter((row) => row.id && row.name)
+  const fuzzy = pickUniqueFuzzyCampaign(queries, rows)
+  if (fuzzy === 'ambiguous') {
+    throw new Error(
+      `campaign_name is ambiguous. Matching campaigns: ${formatCampaignMatches(rows)}`,
+    )
+  }
+  if (fuzzy) return fuzzy.id
+  throw new Error(`campaign_name not found for user: "${campaignName}"`)
+}
+
+async function resolveExactOrPartialCampaignId(
+  repository: ArtifactLegacySessionCampaignRepository,
+  supabase: SupabaseClient,
+  userId: string,
+  campaignName: string,
+  orgId?: string | null,
+): Promise<string | null> {
   const normalizedName = campaignName.toLowerCase()
   const { data: exactRows, error: exactError } = await repository.findCampaignNameMatches(
     supabase,
@@ -61,5 +106,5 @@ export async function resolveCampaignIdByName(
       `campaign_name is ambiguous. Matching campaigns: ${formatCampaignMatches(partialRows ?? [])}`,
     )
   }
-  throw new Error(`campaign_name not found for user: "${campaignName}"`)
+  return null
 }

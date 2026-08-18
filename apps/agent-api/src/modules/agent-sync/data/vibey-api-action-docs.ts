@@ -1298,7 +1298,7 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   search_campaign_brain: {
     section: 'Campaign',
     description:
-      'Searches the campaign brain (ns_memories on the campaign-scoped ns_brains row) for client research, onboarding intake, strategy notes, and ROAS-brain package knowledge. Requires query. Prefer campaign chat scope, or pass campaign_id / campaign_name when the chat is on General or another campaign (cross-scope read allowed). Never target General. Prefer over search_agent_brain / search_user_brain for Impact/client strategy work.',
+      'Searches the campaign brain (ns_memories on the campaign-scoped ns_brains row) for client research, onboarding intake, strategy notes, and ROAS-brain package knowledge. Requires query. Prefer campaign chat scope, or pass campaign_id / campaign_name when the chat is on General or another campaign (cross-scope read allowed). Passing campaign_id or campaign_name binds this portal conversation so CONNECTIONS shows that client; it does not lock the whole Slack DM identity. Never target General. Prefer over search_agent_brain / search_user_brain for Impact/client strategy work.',
     parameters:
       '```json\n{"action":"search_campaign_brain","label":"Searching campaign brain","data":{"query":"offer pricing ICP competitors onboarding form","campaign_id":"UUID","limit":15}}\n```\n```json\n{"action":"search_campaign_brain","label":"Searching Impact campaign brain","data":{"query":"onboarding form offer ICP","campaign_name":"Impact","limit":15}}\n```',
   },

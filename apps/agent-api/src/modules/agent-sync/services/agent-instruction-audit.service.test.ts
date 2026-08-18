@@ -177,6 +177,13 @@ describe('AgentInstructionAuditService', () => {
     })
     const current = evaluateToolsContent({
       content:
+        '# TOOLS.md\n\n## Runtime Operating Layers\n\nFor a named or misspelled client:\n\nUse `skills/vibey-api/SKILL.md` and `skills/{skill-key}/SKILL.md`.',
+      agentKey: 'vibey',
+      sourceKind: 'db_agent_tools',
+    })
+
+    const runtimeOnly = evaluateToolsContent({
+      content:
         '# TOOLS.md\n\n## Runtime Operating Layers\n\nUse `skills/vibey-api/SKILL.md` and `skills/{skill-key}/SKILL.md`.',
       agentKey: 'vibey',
       sourceKind: 'db_agent_tools',
@@ -186,6 +193,7 @@ describe('AgentInstructionAuditService', () => {
     expect(stale.target).toBe('TOOLS.md')
     expect(stale.classification).toBe('generated_placeholder')
     expect(stale.autoRepairAllowed).toBe(true)
+    expect(runtimeOnly.status).toBe('missing_contracts')
     expect(current.status).toBe('ok')
     expect(current.classification).toBe('platform_template_copy')
   })

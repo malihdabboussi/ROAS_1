@@ -296,6 +296,7 @@ export class ArtifactBrainSearchActionsService {
       if (generalBlock) return generalBlock
       const access = await this.assertCampaignReadable(target, userId, orgId, resolvedCampaignId)
       if (access) return access
+      await this.bindNamedClientConversation(target, input, userId, sessionKey, resolvedCampaignId)
       return { brainId: brain.id as string, campaignId: resolvedCampaignId }
     }
 
@@ -312,6 +313,8 @@ export class ArtifactBrainSearchActionsService {
     const access = await this.assertCampaignReadable(target, userId, orgId, campaignId)
     if (access) return access
 
+    await this.bindNamedClientConversation(target, input, userId, sessionKey, campaignId)
+
     const { data: brain, error } = await target.serviceClient
       .from('ns_brains')
       .select('id')
@@ -324,6 +327,30 @@ export class ArtifactBrainSearchActionsService {
       }
     }
     return { brainId: brain.id as string, campaignId }
+  }
+
+  private async bindNamedClientConversation(
+    target: Record<string, any>,
+    input: Record<string, unknown>,
+    userId: string,
+    sessionKey: string | undefined,
+    campaignId: string,
+  ): Promise<void> {
+    const namedLookup = Boolean(
+      String(input.campaign_id ?? '').trim() ||
+        String(input.campaign_name ?? input.campaignName ?? '').trim(),
+    )
+    if (!namedLookup || typeof target.bindConversationToNamedCampaign !== 'function') return
+    try {
+      await target.bindConversationToNamedCampaign(
+        target.serviceClient,
+        userId,
+        sessionKey,
+        campaignId,
+      )
+    } catch {
+      // Lookup still succeeds if CONNECTIONS bind fails.
+    }
   }
 
   private async rejectIfGeneralCampaign(

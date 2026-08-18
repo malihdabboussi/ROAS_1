@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK } from '../../../../../../packages/agent-policy/src/platform-tools-template.js'
+import {
+  PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK,
+  PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK,
+} from '../../../../../../packages/agent-policy/src/platform-tools-template.js'
 
 const repoRoot = resolve(__dirname, '../../../../../..')
 const migration = readFileSync(
@@ -57,6 +60,21 @@ describe('Pixel named-client delegation', () => {
     )
     expect(vibeySkill).toContain('Do not silently replace it with a')
     expect(vibeySkill).toContain('generic ROAS task, a native funnel')
+  })
+
+  it('binds this portal chat on named-client lookup before drafting', () => {
+    expect(PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK).toContain(
+      'Treat messy names as clients first, tone second',
+    )
+    expect(PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK).toContain(
+      'binds **this** portal conversation so CONNECTIONS shows that client',
+    )
+    expect(PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK).toContain(
+      'Do not search User Brain, Agent Brain, or file memory first',
+    )
+    expect(PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK).toContain(
+      'A `draft` card with `[brackets]` is invalid',
+    )
   })
 
   it('persists the routing contract into Pixel global tools and fails closed', () => {
