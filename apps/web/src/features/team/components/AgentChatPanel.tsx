@@ -1441,7 +1441,6 @@ export function AgentChatPanel({
                   composerInput={composerInput}
                   homeComposerStyle={homeComposerStyle}
                   compactLayout={compactLayout}
-                  isStreaming={isStreaming}
                   onScroll={handleScroll}
                   onScrollToBottom={handleScrollToBottom}
                   onEditSubmit={handleEditSubmit}

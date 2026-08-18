@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 15:26] - [FIX]
+What: Unblocked Vercel `roas-web` typecheck after merging #290–#298. Removed leftover unused `isStreaming` on Team `AgentChatThread`. Typed the Connections `fetchCampaign` test mock with the real `(id: string)` arity.
+Why: `next build` typechecks `apps/web` with unused locals. #290 deleted the composer tip that used `isStreaming`; #291 added a one-arg `fetchCampaign` mockImplementation on a zero-arg `vi.fn`. Every production web deploy failed.
+Impact: `pnpm --filter @vibey/web typecheck` passes so `app.roas.io` can ship the merged chat/Slack/campaign PRs.
+Files: `AgentChatThread.tsx`, `AgentChatPanel.tsx`, `ConversationScopePicker.test.tsx`
+
 ## [2026-08-18 14:40] - [FIX]
 What: Service Request confirmation now shows the created ROAS/ClickUp task links after submit. Portal campaign drafts must post the same kind of openable chat/review URL instead of a Slack questionnaire.
 Why: After Nate submitted a review, the in-thread card treated `finalized` as an invalid link because it had no `message`. Campaign requests created a draft in Slack with no clickable portal URL.
