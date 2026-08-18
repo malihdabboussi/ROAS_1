@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/features/home/services/meeting-workspace-api', () => ({
   fetchMeetingWorkspace: mocks.fetchMeetingWorkspace,
+  fetchMeetingRelatedCalls: vi.fn().mockResolvedValue([]),
   endMeetingCall: vi.fn(),
   startMeetingCall: vi.fn(),
   toggleMeetingActionStatus: vi.fn(),
@@ -64,6 +65,10 @@ vi.mock('@/components/shell/use-shell-store', () => ({
       recordWorkAreaPage: mocks.recordWorkAreaPage,
       chatDrawer: { conversationId: null },
     }),
+}))
+vi.mock('@/lib/spaces', () => ({
+  fetchSpaceById: vi.fn().mockResolvedValue({ id: 'space-1', title: 'Meetings' }),
+  updateSpaceItem: vi.fn(),
 }))
 vi.mock('@/lib/spaces/spaces-api', () => ({
   fetchSpaceById: vi.fn().mockResolvedValue({ id: 'space-1', title: 'Meetings' }),
@@ -155,37 +160,7 @@ describe('MeetingWorkspaceDialog agenda doc', () => {
     expect(content).toContain('Client reports')
   })
 
-  it('seeds Prep for call into the meeting chat instead of opening a Space prep item', async () => {
-    mocks.fetchMeetingWorkspace.mockResolvedValue(scheduledBundle)
-
-    render(
-      <MeetingWorkspaceDialog
-        spaceId="space-1"
-        meetingItemId="meeting-1"
-        joinUrl={null}
-        fallbackTitle="Strategy call"
-        onBack={vi.fn()}
-        onClose={vi.fn()}
-      />,
-    )
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Prep for call' })).toBeInTheDocument()
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Prep for call' }))
-
-    expect(mocks.seedComposer).toHaveBeenCalledWith(
-      expect.objectContaining({
-        conversationId: 'conversation-1',
-        content: expect.stringContaining('Give me prep notes for this meeting.'),
-      }),
-    )
-    expect(screen.queryByRole('button', { name: 'Open agenda prep' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Agenda & prep notes' })).toBeNull()
-  })
-
   it('opens a linked Google agenda instead of mixing it into Start agenda', async () => {
-    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
     mocks.fetchMeetingWorkspace.mockResolvedValue(scheduledBundle)
 
     render(
@@ -223,16 +198,14 @@ describe('MeetingWorkspaceDialog agenda doc', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Google agenda' })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Google agenda' })).toBeInTheDocument()
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Google agenda' }))
+    fireEvent.click(screen.getByRole('link', { name: 'Google agenda' }))
 
-    expect(open).toHaveBeenCalledWith(
+    expect(screen.getByRole('link', { name: 'Google agenda' })).toHaveAttribute(
+      'href',
       'https://docs.google.com/document/d/agenda-doc',
-      '_blank',
-      'noopener,noreferrer',
     )
     expect(mocks.seedComposer).not.toHaveBeenCalled()
-    open.mockRestore()
   })
 })

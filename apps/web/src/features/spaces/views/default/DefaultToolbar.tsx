@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import { AddColumnsButton } from '../_shared/AddColumnsButton'
 import { GroupByButton } from '../_shared/GroupByButton'
+import { MeetingsCallDateWindowChip } from '../_shared/MeetingsCallDateWindowChip'
 import { SaveViewSlot } from '../_shared/SaveViewSeparator'
 import { SpaceQuickFilterDock } from '../_shared/SpaceQuickFilterDock'
 import { ToolbarShell } from '../_shared/ToolbarShell'
@@ -58,6 +59,7 @@ export function DefaultToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
         <SaveViewSlot ctx={ctx} />
         <div className="flex shrink-0 items-center gap-1">
+          <MeetingsCallDateWindowChip view={activeView} onPatch={handleViewPatch} />
           <SpaceQuickFilterDock ctx={ctx} />
           <SpaceCustomizeButton
             schemaEditorOpen={schemaEditorOpen}

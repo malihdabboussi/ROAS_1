@@ -1,4 +1,5 @@
 import type { Campaign } from '@/lib/campaigns/campaign-api'
+import { isHiddenClientGeneralSpace } from '@/lib/spaces/page-grader-client-general-space'
 import type { Space } from '../types'
 
 export type WritableSpaceOption = {
@@ -43,6 +44,9 @@ export function groupOtherSpacesByCampaign(
   const other = allSpaces
     .filter(isWritableSpace)
     .filter((sp) => sp.id !== excludeSpaceId)
+    .filter(
+      (sp) => !isHiddenClientGeneralSpace(sp, campaigns.find((row) => row.id === sp.campaign_id)),
+    )
     .map(toWritableSpaceOption)
 
   return orderCampaignsForSpacePicker(campaigns)

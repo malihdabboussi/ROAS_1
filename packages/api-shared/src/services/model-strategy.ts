@@ -33,6 +33,7 @@ export interface ResolvedStrategyModel {
 const AUTO_MODEL_ID = 'openai/gpt-5.6-terra'
 const HIGH_STAKES_MODEL_ID = 'anthropic/claude-opus-5'
 const ECONOMY_MODEL_ID = 'openai/gpt-5.6-terra'
+const AUTO_WRITE_MODEL_ID = 'anthropic/claude-sonnet-4.6'
 const QUALITY_FALLBACK_MODEL_ID = 'anthropic/claude-sonnet-4.6'
 
 const AUTO_MODEL_SETTINGS = {
@@ -61,6 +62,12 @@ const CHAT_RESEARCH_MODEL_SETTINGS = {
 
 const CHAT_WRITER_MODEL_SETTINGS = {
   context_window_tokens: 128_000,
+  reasoning_effort: 'medium',
+  speed_mode: 'standard',
+} satisfies StrategyModelSettings
+
+const AUTO_WRITE_MODEL_SETTINGS = {
+  context_window_tokens: 64_000,
   reasoning_effort: 'medium',
   speed_mode: 'standard',
 } satisfies StrategyModelSettings
@@ -167,7 +174,7 @@ export function resolveChatStageModel(
   }
   return stage === 'research'
     ? routedModel(ECONOMY_MODEL_ID, CHAT_RESEARCH_MODEL_SETTINGS, 'auto_chat_research')
-    : routedModel(AUTO_MODEL_ID, CHAT_WRITER_MODEL_SETTINGS, 'auto_chat_write')
+    : routedModel(AUTO_WRITE_MODEL_ID, AUTO_WRITE_MODEL_SETTINGS, 'auto_chat_write')
 }
 
 const FALLBACK_MATRIX: Record<ModelStrategy, Record<TaskType, ResolvedStrategyModel>> = {

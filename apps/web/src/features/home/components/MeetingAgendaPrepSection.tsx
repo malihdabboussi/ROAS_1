@@ -13,6 +13,7 @@ export function MeetingAgendaPrepSection({
   prep,
   prepDescription,
   joinUrl,
+  googleAgendaHref,
   onCreateWithAi,
 }: {
   spaceId: string
@@ -21,9 +22,11 @@ export function MeetingAgendaPrepSection({
   prep: ParsedMeetingPrep
   prepDescription: string | null | undefined
   joinUrl: string | null
+  googleAgendaHref?: string | null
   onCreateWithAi?: () => void
 }) {
   const hasAgendaDoc = Boolean(agendaDocItemId?.trim())
+  const googleHref = googleAgendaHref?.trim() || null
   return (
     <>
       <div className="gap-spacing-2 flex items-center justify-between">
@@ -67,6 +70,16 @@ export function MeetingAgendaPrepSection({
             className="body-4 text-primary gap-spacing-1 inline-flex items-center"
           >
             Meeting link
+          </a>
+        ) : null}
+        {googleHref ? (
+          <a
+            href={googleHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="body-4 text-primary gap-spacing-1 inline-flex items-center"
+          >
+            {HOME_AGENDA_MESSAGES.GOOGLE_AGENDA.message}
           </a>
         ) : null}
         {prep.meetingId ? (

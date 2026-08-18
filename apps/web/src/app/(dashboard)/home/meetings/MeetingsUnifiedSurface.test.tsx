@@ -27,6 +27,10 @@ vi.mock('@/features/spaces', () => {
   }
 })
 
+vi.mock('@/features/home/hooks/use-meetings-calendar-materialize', () => ({
+  useMeetingsCalendarMaterialize: vi.fn(),
+}))
+
 describe('MeetingsUnifiedSurface', () => {
   afterEach(() => {
     cleanup()
@@ -38,7 +42,7 @@ describe('MeetingsUnifiedSurface', () => {
     mocks.spaceItemsContainer.mockReset()
   })
 
-  it('opens the canonical Meetings Space with Agenda first and selected', async () => {
+  it('opens the canonical Meetings Space with All Meetings first and selected', async () => {
     mocks.state.loadSpaces.mockImplementation(async () => {
       mocks.state.spaces = [
         {
@@ -59,12 +63,12 @@ describe('MeetingsUnifiedSurface', () => {
 
     await waitFor(() => expect(screen.getByTestId('space-views')).toBeInTheDocument())
     expect(mocks.state.setActiveSpace).toHaveBeenCalledWith('meetings-space')
-    expect(mocks.state.setActiveView).toHaveBeenCalledWith('agenda')
+    expect(mocks.state.setActiveView).toHaveBeenCalledWith('all-meetings')
     expect(mocks.spaceItemsContainer).toHaveBeenCalledWith(
       expect.objectContaining({
         embed: expect.objectContaining({
           hideBreadcrumbHeader: true,
-          leadingViewId: 'agenda',
+          leadingViewId: 'all-meetings',
           overrideView: expect.objectContaining({ id: 'agenda' }),
         }),
       }),
@@ -98,7 +102,7 @@ describe('MeetingsUnifiedSurface', () => {
     expect(screen.getByTestId('space-views')).toBeInTheDocument()
     expect(screen.getByText('Live calendar agenda')).toBeInTheDocument()
     expect(mocks.state.setActiveSpace).toHaveBeenCalledWith('meetings-space')
-    expect(mocks.state.setActiveView).toHaveBeenCalledWith('agenda')
+    expect(mocks.state.setActiveView).toHaveBeenCalledWith('all-meetings')
   })
 
   it('keeps the live Agenda available when a Meetings Space has not been created', async () => {

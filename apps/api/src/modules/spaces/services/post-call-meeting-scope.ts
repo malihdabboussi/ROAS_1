@@ -5,7 +5,9 @@ export function readMeetingCallKind(item: Record<string, unknown>): string {
     item.custom_data && typeof item.custom_data === 'object'
       ? (item.custom_data as Record<string, unknown>)
       : {}
-  return String(customData.call_kind ?? 'unknown')
+  const kind = String(customData.call_kind ?? 'unknown')
+  if (kind === 'impromptu') return 'team'
+  return kind
 }
 
 export function shouldRunPostCallSlackAction(

@@ -1,13 +1,21 @@
-import type { MeetingWorkspaceBundle } from '@/features/home/services/meeting-workspace-api'
+import type {
+  MeetingRelatedCall,
+  MeetingWorkspaceBundle,
+} from '@/features/home/services/meeting-workspace-api'
 
 export function buildMeetingAwarenessContext(input: {
   spaceId: string
   meetingItemId: string
   title: string
   bundle: MeetingWorkspaceBundle
+  relatedCalls?: Array<
+    Pick<MeetingRelatedCall, 'meeting_item_id' | 'title' | 'call_date' | 'recording_url'>
+  >
 }): string {
   const phase = input.bundle.workspace?.phase ?? 'scheduled'
   const recordings = input.bundle.recordings
+  const relatedCalls = input.relatedCalls ?? []
+  const relatedWithRecording = relatedCalls.filter((call) => call.recording_url?.trim())
   const actions = input.bundle.actions
     .filter((action) => action.status !== 'dismissed')
     .map(
@@ -30,6 +38,12 @@ export function buildMeetingAwarenessContext(input: {
       return `- [${role}] ${recording.title}${external}`
     })
     .join('\n')
+  const relatedRecordingLines = relatedWithRecording
+    .map((call) => {
+      const when = call.call_date ? ` date=${call.call_date}` : ''
+      return `- ${call.title}${when} meeting_item_id=${call.meeting_item_id} recording_url=${call.recording_url}`
+    })
+    .join('\n')
 
   const liveMode =
     phase === 'live'
@@ -45,20 +59,12 @@ export function buildMeetingAwarenessContext(input: {
           'Treat pasted text as possible call notes unless they clearly ask for a deliverable.',
         ].join('\n')
 
-  const recordingGuidance =
-    recordings.length === 0
-      ? [
-          'Linked recordings: none yet on this meeting workspace.',
-          'If the user asks for the recording, transcript, or action items:',
-          '1) First tell them to click Recordings + in the right meeting sidebar and pick the Fathom call — that links the recording into this workspace so you can use it.',
-          '2) Optionally try Fathom via use_integration (list_meetings → match title/participants/time → get_transcript). If that tool fails or Fathom is unavailable to you, do not say “Fathom isn’t connected” as if the user’s account is broken — say you cannot pull Fathom from chat right now and they should use Recordings +.',
-          'Do not invent a vague “check now” clarification. Do not claim the recording is missing from Fathom until list_meetings was tried or the user confirmed none exists.',
-        ].join('\n')
-      : [
-          `Linked recordings (${recordings.length}):`,
-          recordingLines,
-          'When they ask for action items or transcript details, use the linked recording evidence first. Prefer workspace action items when present; otherwise read the Fathom transcript for the linked external_id.',
-        ].join('\n')
+  const recordingGuidance = recordingGuidanceFor({
+    recordings,
+    recordingLines,
+    relatedWithRecording,
+    relatedRecordingLines,
+  })
 
   return [
     'You are the persistent AI partner inside a meeting workspace.',
@@ -74,6 +80,49 @@ export function buildMeetingAwarenessContext(input: {
     agendaGuidance(input.bundle.workspace?.agenda_doc_item_id),
     'Do not send external messages or create tasks unless the user explicitly asks.',
   ].join('\n\n')
+}
+
+function recordingGuidanceFor(input: {
+  recordings: MeetingWorkspaceBundle['recordings']
+  recordingLines: string
+  relatedWithRecording: Array<Pick<MeetingRelatedCall, 'title' | 'recording_url'>>
+  relatedRecordingLines: string
+}): string {
+  const relatedBlock =
+    input.relatedWithRecording.length > 0
+      ? [
+          `Related All Meetings recordings (${input.relatedWithRecording.length}) — already on those call rows:`,
+          input.relatedRecordingLines,
+          'If they ask about last week, a prior call, or “that recording,” use these related rows. Do not ask them to click Recordings + to re-link a Fathom that already lives on a related All Meetings row.',
+        ].join('\n')
+      : ''
+
+  if (input.recordings.length > 0) {
+    return [
+      `Linked recordings (${input.recordings.length}):`,
+      input.recordingLines,
+      'When they ask for action items or transcript details, use the linked recording evidence first. Prefer workspace action items when present; otherwise read the Fathom transcript for the linked external_id.',
+      relatedBlock,
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  if (input.relatedWithRecording.length > 0) {
+    return [
+      'Linked recordings: none yet on this meeting workspace.',
+      relatedBlock,
+      'Do not tell them to click Recordings + unless they want a recording for THIS call and none of the related rows cover it.',
+    ].join('\n')
+  }
+
+  return [
+    'Linked recordings: none yet on this meeting workspace.',
+    'If the user asks for the recording, transcript, or action items:',
+    '1) First tell them to click Recordings + in the right meeting sidebar and pick the Fathom call — that links the recording into this workspace so you can use it.',
+    '2) Optionally try Fathom via use_integration (list_meetings → match title/participants/time → get_transcript). If that tool fails or Fathom is unavailable to you, do not say “Fathom isn’t connected” as if the user’s account is broken — say you cannot pull Fathom from chat right now and they should use Recordings +.',
+    'Do not invent a vague “check now” clarification. Do not claim the recording is missing from Fathom until list_meetings was tried or the user confirmed none exists.',
+  ].join('\n')
 }
 
 function agendaGuidance(agendaDocItemId: string | null | undefined): string {

@@ -1,7 +1,7 @@
 # Meetings: one room, two doors
 
 **Date:** 2026-08-18
-**Status:** Approved direction (not implemented)
+**Status:** Implemented
 **Owner:** Meetings / All Meetings consolidation
 
 This is the product design for consolidating calendar events, All Meetings rows, and the meeting workspace onto **one call record**. It replaces the earlier “three homes” model.

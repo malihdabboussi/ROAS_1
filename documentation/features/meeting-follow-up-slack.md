@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-08-18 (All Meetings Client / Campaign mapping + Agenda link; post-call runs Team + Client, never Personal; agenda flicker fix; recordings/action-items top row; Create with AI writes Agenda & prep Space Doc; named-client lookup binds this portal chat CONNECTIONS; meeting workspace header Continue in chat)
+**Last Modified:** 2026-08-18 (one room: calendar events materialize onto All Meetings; Agenda and All Meetings are two doors on the same row; related-call transcripts in Pixel context)
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` uses those same stored drafts, sends account-manager reminders only to people classified Internal and individually set Active, and keeps the client-facing recap in the admin approval thread.
 
@@ -432,6 +432,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-08-17:** Named `campaign_id` / `campaign_name` on `search_campaign_brain` binds **this** portal conversation so CONNECTIONS shows that client. A Slack DM remains a shared Pixel thread; each message already maps to a specific portal chat. Binding does not glue the whole DM identity to one client forever.
 
 - **2026-08-18:** All Meetings has a Client / Campaign column. Mapping tags the call with the Page Grader client and that client’s campaign (`custom_data.client_campaign`) and does not transfer the row. Client and campaign names link to `/clients/{id}` and the campaign Space. An Agenda link opens the same meeting workspace as clicking the call. Call Kind stays independent.
+- **2026-08-18:** Calendar events materialize onto All Meetings rows without opening the specialized card. Host is the calendar organizer, else the Fathom recorder. Call status is blank / Live / Completed / No Show / Rescheduled (recording landing sets Completed). All Meetings is the default tab and filters past + today + tomorrow. Agenda still opens the specialized card; All Meetings opens the standard task card. Related calls on that card feed Pixel so last week’s recording is not a Recordings + ask. Prep tab and Prep for call are gone. Impromptu defaults to Team. Completing a call (status or recording) runs the existing post-call Pixel path.
 
 ## Related
 

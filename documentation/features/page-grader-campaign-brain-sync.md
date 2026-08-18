@@ -1,6 +1,6 @@
 # Page Grader Campaign Brain Sync
 
-Last Modified: August 17, 2026
+Last Modified: August 18, 2026
 
 ## Overview
 
@@ -8,7 +8,7 @@ Mapped Page Grader clients sync continuously into ROAS campaign brains. Page Gra
 
 ## Data Flow
 
-1. Operator maps a Page Grader client → ROAS campaign in Settings → Integrations → Page Grader → Map clients. The ROAS campaign is the client/brand container. An unmapped client creates a canonical **General** Space; later syncs deterministically reuse the Space marked `schema.custom_data.space_role = general`.
+1. Operator maps a Page Grader client → ROAS campaign in Settings → Integrations → Page Grader → Map clients. The ROAS campaign is the client/brand container. An unmapped client creates a canonical **General** Space (`schema.custom_data.space_role = general`); later syncs reuse that Space. That General Space is hidden in switchers and space flyouts. Opening it (`/spaces?space=…`) shows the client overview at `/campaigns/{id}?client=…` — it is not a second workspace and is not merged with org system General.
 2. **Create & import / Re-sync** pulls `GET /clients/:id/brain-package` and runs **deterministic dual ingest** (no Atlas LLM):
    - Upserts `ns_memories` (+ evidence chunks) on the campaign brain by `content_hash`
    - Embeds any Page Grader `ns_memories` rows whose Brain vector is still
@@ -141,6 +141,7 @@ Repeated manual requests use the deterministic Page Grader client and meeting ti
 
 ## Decision Log
 
+- **2026-08-18:** The Page Grader client **General** Space is the hidden client overview. Navigating to it opens `/campaigns/{id}?client=…`. It stays a real Space for Brain/Connections routing and is hidden from space switchers. Org system General is unchanged.
 - **2026-08-17:** Pixel QC and Launch Agent check-ins now measure a client once. Repeat Page Grader webhooks for the same client reply in that Slack thread (or stay quiet for eight hours) instead of posting a new hourly CRITICAL DM. Finding IDs can rotate; the parent thread is keyed by client, not finding UUID.
 - **2026-08-17:** Empty Slack period skips stay skipped, but they no longer toast. Background channel sync can finish several empty windows in a row; a global info toast for each one interrupted chat. The notifier still acknowledges those jobs so they do not repeat.
 - **2026-08-15:** Empty Slack periods are a skip, not an Atlas failure. The import runtime does not call Atlas when the formatted window has no message content, remaps Slack `JOB_STATUS:failed` empty-ingest reasons to skipped, and no longer surfaces that skip as an Atlas ingest error.

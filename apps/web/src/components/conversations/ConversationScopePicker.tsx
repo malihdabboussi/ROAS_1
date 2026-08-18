@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import { assignConversationScope, CONVERSATION_ACTIONS_TOAST_ERRORS } from '@/lib/conversations'
 import { useCampaignCacheVersion } from '@/lib/home'
 import { useOrgStore } from '@/lib/org'
+import { isHiddenClientGeneralSpace } from '@/lib/spaces/page-grader-client-general-space'
 import { positionFloatingMenuFromAnchorRect } from '@/lib/ui'
 import {
   buildConversationScopeLists,
@@ -294,7 +295,14 @@ export const ConversationScopePicker = forwardRef<
     [listedCampaigns, programs],
   )
   const visibleClients = filterScopeClients(scopeLists.clients, clientSearch)
+  const submenuCampaign =
+    submenu?.type === 'spaces'
+      ? campaigns.find((campaign) => campaign.id === submenu.campaignId) ?? null
+      : null
   const activeSpaces = submenu?.type === 'spaces' ? spacesByCampaign[submenu.campaignId] : undefined
+  const visibleSpaces = activeSpaces?.filter(
+    (space) => !isHiddenClientGeneralSpace(space, submenuCampaign),
+  )
   const programCampaigns =
     submenu?.type === 'program'
       ? (scopeLists.programs.find((program) => program.id === submenu.programId)?.campaigns ?? [])
@@ -320,7 +328,7 @@ export const ConversationScopePicker = forwardRef<
         submenu={submenu}
         loadingCampaignId={loadingCampaignId}
         programCampaigns={programCampaigns}
-        activeSpaces={activeSpaces}
+        activeSpaces={visibleSpaces}
         allowClear={allowClear}
         onSelectAll={allowClear ? () => void handleSelectScope(null, null) : undefined}
         onSelectGeneral={() => void handleSelectScope(generalCampaign?.id ?? null, null)}

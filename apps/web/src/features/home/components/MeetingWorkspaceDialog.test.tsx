@@ -23,6 +23,7 @@ vi.mock('@/lib/artifacts', () => ({
 vi.mock('@/features/home/services/meeting-workspace-api', () => ({
   endMeetingCall: mocks.endMeetingCall,
   fetchMeetingWorkspace: mocks.fetchMeetingWorkspace,
+  fetchMeetingRelatedCalls: vi.fn().mockResolvedValue([]),
   startMeetingCall: mocks.startMeetingCall,
   toggleMeetingActionStatus: mocks.toggleMeetingActionStatus,
   updateMeetingActionStatus: mocks.updateMeetingActionStatus,
@@ -71,7 +72,7 @@ vi.mock('@/components/global-chat/store/use-global-chat-store', () => {
 vi.mock('@/lib/campaigns/campaign-api', () => ({
   fetchCampaign: vi.fn().mockResolvedValue({ id: 'campaign-1', name: 'ROAS' }),
 }))
-vi.mock('@/lib/spaces/spaces-api', () => ({
+vi.mock('@/lib/spaces', () => ({
   fetchSpaceById: vi.fn().mockResolvedValue({ id: 'space-1', title: 'Meetings' }),
   updateSpaceItem: mocks.updateSpaceItem,
 }))
@@ -171,7 +172,8 @@ describe('MeetingWorkspaceDialog', () => {
     })
     expect(mocks.openChatDrawer).not.toHaveBeenCalled()
     expect(mocks.continueMeetingConversation).not.toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: 'Start call' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Call status')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Start agenda' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Close meeting workspace' }),
@@ -189,30 +191,6 @@ describe('MeetingWorkspaceDialog', () => {
     expect(mocks.openChatDrawer).toHaveBeenCalledWith('conversation-1')
   })
 
-  it('does not steal an unrelated open chat when the meeting workspace mounts', async () => {
-    mocks.fetchMeetingWorkspace.mockReset()
-    mocks.fetchMeetingWorkspace.mockResolvedValue(baseBundle)
-
-    render(
-      <MeetingWorkspaceDialog
-        spaceId="space-1"
-        meetingItemId="meeting-1"
-        joinUrl={null}
-        fallbackTitle="Strategy call"
-        onBack={vi.fn()}
-        onClose={vi.fn()}
-      />,
-    )
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole('region', { name: 'Strategy call meeting workspace' }),
-      ).toBeInTheDocument()
-    })
-    expect(mocks.continueMeetingConversation).not.toHaveBeenCalled()
-    expect(mocks.openChatDrawer).not.toHaveBeenCalled()
-  })
-
   it('ends a live call instead of rejoining', async () => {
     const liveBundle = {
       ...baseBundle,
@@ -222,17 +200,13 @@ describe('MeetingWorkspaceDialog', () => {
         live_started_at: '2026-08-04T17:00:00.000Z',
       },
     }
+    const completedBundle = {
+      ...liveBundle,
+      meeting: { ...liveBundle.meeting, custom_data: { call_status: 'completed' } },
+      workspace: { ...liveBundle.workspace, phase: 'processing' as const },
+    }
     mocks.fetchMeetingWorkspace.mockReset()
-    mocks.fetchMeetingWorkspace
-      .mockResolvedValueOnce(liveBundle)
-      .mockResolvedValueOnce({
-        ...liveBundle,
-        workspace: { ...liveBundle.workspace, phase: 'processing' as const },
-      })
-      .mockResolvedValue({
-        ...liveBundle,
-        workspace: { ...liveBundle.workspace, phase: 'processing' as const },
-      })
+    mocks.fetchMeetingWorkspace.mockResolvedValueOnce(liveBundle).mockResolvedValue(completedBundle)
     mocks.endMeetingCall.mockResolvedValue({
       ...liveBundle.workspace,
       phase: 'processing',
@@ -249,9 +223,7 @@ describe('MeetingWorkspaceDialog', () => {
       />,
     )
 
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'End call' })).toBeInTheDocument(),
-    )
+    await waitFor(() => expect(screen.getByLabelText('Call status')).toBeInTheDocument())
     expect(screen.getByRole('link', { name: 'Open call link' })).toHaveAttribute(
       'href',
       'https://zoom.example/j/1',
@@ -259,16 +231,15 @@ describe('MeetingWorkspaceDialog', () => {
     expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
     expect(mocks.continueMeetingConversation).not.toHaveBeenCalled()
 
-    fireEvent.click(screen.getByRole('button', { name: 'End call' }))
+    fireEvent.change(screen.getByLabelText('Call status'), { target: { value: 'completed' } })
     await waitFor(() => {
       expect(mocks.endMeetingCall).toHaveBeenCalledWith('space-1', 'meeting-1')
       expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: 'Start call' })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Recap message' })).toBeInTheDocument()
     })
   })
 
-  it('keeps Start call next to recap after the calendar meeting ends', async () => {
+  it('keeps call status next to recap after the calendar meeting ends', async () => {
     mocks.fetchMeetingWorkspace.mockReset()
     mocks.fetchMeetingWorkspace.mockResolvedValue(baseBundle)
 
@@ -285,8 +256,7 @@ describe('MeetingWorkspaceDialog', () => {
       />,
     )
 
-    await waitFor(() => expect(screen.getByText('Call complete')).toBeInTheDocument())
-    expect(screen.getByRole('button', { name: 'Start call' })).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByLabelText('Call status')).toBeInTheDocument())
     expect(screen.getByRole('button', { name: 'Recap message' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
 
