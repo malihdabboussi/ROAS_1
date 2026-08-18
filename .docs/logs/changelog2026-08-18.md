@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 02:25] - [FIX]
+What: Bound chat stream memory so heavy Pixel turns stop Chrome Aw Snap (error code 5). Cap tool progress tails and tool preview size; prune inactive conversation message caches on chat switch; clear message/stream maps on conversation remove; skip localStorage persist while any turn is streaming; slim persisted tool blocks; narrow StatusIndicator / useActiveMessages to the active conversation only.
+Why: Mid-turn store updates were keeping unbounded tool progress/previews in heap and re-serializing multi‑MB chat graphs to localStorage on every stream tick. The tab renderer OOM'd while the server finished — refresh showed the completed message.
+Impact: Heavy tool-heavy turns keep a bounded live footprint; localStorage only updates when the stream ends; switching chats drops inactive message arrays. Completed replies still land from the API after refresh.
+Files: `apps/web/src/features/studio/store/use-chat-store.ts`, `use-chat-store.test.ts`, `apps/web/src/features/studio/components/chat/StatusIndicator.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-18 00:17] - [FEATURE]
 What: Added Create with AI on Agenda & prep. It seeds the existing Start agenda prompt so Pixel writes the agenda Space Doc from open action items, launches, client reports, and related meeting context.
 Why: Agenda & prep had an empty or manual doc with no way to generate the agenda in place. Start agenda lived only in the call-status row and did not ask Pixel to pull launches or reports onto the page.

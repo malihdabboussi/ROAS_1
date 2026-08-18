@@ -295,6 +295,7 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 
 ## Decision Log
 
+- **2026-08-18:** Chrome Aw Snap (error code 5) after heavy Pixel turns is treated as client heap pressure, not a lost reply. Live tool progress is capped to a 20-entry tail, tool previews to 8k chars, inactive conversation message caches prune on chat switch, and Zustand chat persist skips localStorage writes while any conversation is streaming (resume when the stream clears). StatusIndicator and `useActiveMessages` subscribe to one conversation’s messages only.
 - **2026-08-17:** Simple compact rail uses the same destinations and selected-purple styling as the expanded menu (New chat, Inbox, Meetings, All Tasks, Clients, Client Campaigns, More) on a `surface-card` background. Collapse/expand lives only on ROAS logo hover in both states; the logo and drawer glyph share one overlay box so the R no longer flickers. Simple menu width stays 272px by default and can be dragged to 476px (default + 75%).
 - **2026-08-17:** All Tasks is the only tasks screen. It defaults to every open task. Assigned to me is a filter (`?scope=my`), not a separate My Tasks page or overlay. Expanding the Home My Tasks card goes to `/all-tasks?scope=my`.
 - **2026-08-17:** In-place list and page-body loads use `ListSkeleton` (`role="status"`) rather than a centered `VibeyLoadingOrb`. Meetings must not flash a full-work-area orb and then a second agenda-body orb; render Agenda chrome immediately and skeleton the list.
