@@ -80,8 +80,10 @@ describe('platform tools template', () => {
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('page_grader_create_campaign_draft')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
-      'Do **not** replace that with native `create_campaign`',
+      'Missing VSL, landing page, or creative assets are not create-blockers',
     )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('use native `create_campaign` (required: name)')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Do not invent a tool name')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'Never say "Created:" for a native task until finalization',
     )

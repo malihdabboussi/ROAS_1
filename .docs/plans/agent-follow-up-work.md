@@ -1,3 +1,15 @@
+## 2026-08-18 - [ARCH] artifact-action-preflight.ts remains over the 600 LOC cap after MCP extract
+
+Status: Open
+
+Found while: Fixing Portal campaign create rejected before save
+
+Evidence: `wc -l` on `apps/agent-api/src/modules/artifacts/services/artifact-action-preflight.ts` stays above the 600 LOC service cap after moving MCP catalog checks to `artifact-mcp-tool-preflight.ts`.
+
+Needed work: Split remaining validators (integration, Dream Ops, company brain, Meta insights) into per-family preflight files.
+
+Reason not done now: The requested fix was campaign-create recovery; further splits were out of scope.
+
 ## 2026-08-18 - [FIX] Agenda day dividers can label today as Tomorrow when navigator local dates disagree with the timezone query
 
 Status: Open
