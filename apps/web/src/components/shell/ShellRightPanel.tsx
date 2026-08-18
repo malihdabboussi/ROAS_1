@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react'
 import { type ConversationScopePickerHandle } from '@/components/conversations'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { homeMeetingHref } from '@/features/home/lib/home-meeting-work-restore'
+import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import {
   getConversationDisplayTitle,
@@ -13,6 +14,7 @@ import {
   type Conversation,
 } from '@/lib/conversations'
 import { useQuickMissionsLauncher } from '@/lib/missions'
+import { clientOverviewHrefFromSpace } from '@/lib/spaces/page-grader-client-general-space'
 import { cn } from '@/lib/utils/cn'
 import {
   extractConversationFileRows,
@@ -150,6 +152,7 @@ export function ShellRightPanel({
   const meetingTitle = linkedMeeting
     ? getConversationDisplayTitle(conversationForMeeting ?? {}) || 'Meeting'
     : null
+  const spaces = useSpacesStore((s) => s.spaces)
   const handleOpenMeetingWorkspace = useCallback(() => {
     if (!linkedMeeting) return
     setWorkAreaOpen(true)
@@ -158,9 +161,12 @@ export function ShellRightPanel({
   const handleOpenSpace = useCallback(
     (nextSpaceId: string) => {
       setWorkAreaOpen(true)
-      router.push(`/spaces?space=${encodeURIComponent(nextSpaceId)}`)
+      const space = spaces.find((row) => row.id === nextSpaceId)
+      router.push(
+        clientOverviewHrefFromSpace(space) ?? `/spaces?space=${encodeURIComponent(nextSpaceId)}`,
+      )
     },
-    [router, setWorkAreaOpen],
+    [router, setWorkAreaOpen, spaces],
   )
   const { mounted, visible } = useRightEdgePresence(open)
   const scopeVisible = showScope && Boolean(conversationId)

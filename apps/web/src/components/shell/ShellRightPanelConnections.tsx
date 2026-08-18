@@ -6,24 +6,12 @@ import {
   ConversationScopePicker,
   type ConversationScopePickerHandle,
 } from '@/components/conversations'
-import { programNameForCampaign } from '@/components/conversations/conversation-scope-groups'
-import { conversationScopeDisplayLabel } from '@/components/conversations/conversation-scope-picker-layout'
-import {
-  useConversationScopeCampaigns,
-  useConversationScopeFallbackCampaign,
-  useConversationScopeFallbackSpace,
-  useConversationScopePrograms,
-} from '@/components/conversations/use-conversation-scope-data'
+import { useConversationLocationLabel } from '@/components/conversations/use-conversation-location-label'
 import type { Conversation, MeetingConversationLink } from '@/lib/conversations'
 import { assignConversationScope } from '@/lib/conversations'
-import { useCampaignCacheVersion } from '@/lib/home'
-import { useOrgStore } from '@/lib/org'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
 import { ShellRightPanelEmpty } from './ShellRightPanelEmpty'
 import { ShellRightPanelSection } from './ShellRightPanelSection'
-
-/** Stable empty map — a fresh `{}` each render re-fires the fallback space fetch. */
-const EMPTY_SPACES_BY_CAMPAIGN: Record<string, never> = {}
 
 type ConnectionRowKind = 'meeting' | 'location'
 
@@ -69,19 +57,6 @@ export function ShellRightPanelConnections({
   const localPickerRef = useRef<ConversationScopePickerHandle>(null)
   const scopePickerRef = pickerRef ?? localPickerRef
   const addButtonRef = useRef<HTMLButtonElement>(null)
-  const activeOrgId = useOrgStore((s) => s.activeOrgId)
-  const cacheVersion = useCampaignCacheVersion()
-  const campaigns = useConversationScopeCampaigns(activeOrgId, cacheVersion)
-  const programs = useConversationScopePrograms(activeOrgId)
-  const fallbackCampaign = useConversationScopeFallbackCampaign(campaignId, campaigns)
-  const campaign = campaigns.find((row) => row.id === campaignId) ?? fallbackCampaign
-  const space = useConversationScopeFallbackSpace({
-    activeOrgId,
-    selectedCampaignId: null,
-    selectedSpaceId: spaceId,
-    spacesByCampaign: EMPTY_SPACES_BY_CAMPAIGN,
-  })
-
   // Meeting chats are scoped to the Meetings space — show the specific meeting
   // name instead of the generic space title, and open that meeting on click.
   // The meeting workspace is the main artifact, so it stays linked.
@@ -89,6 +64,8 @@ export function ShellRightPanelConnections({
   const hideMeetingHostSpace = Boolean(
     linkedMeeting && spaceId && spaceId === linkedMeeting.spaceId,
   )
+  const locationSpaceId = hideMeetingHostSpace ? null : spaceId
+  const location = useConversationLocationLabel(campaignId, locationSpaceId)
 
   const rows = useMemo((): ConnectionRow[] => {
     const next: ConnectionRow[] = []
@@ -103,38 +80,27 @@ export function ShellRightPanelConnections({
       })
     }
 
-    const locationSpaceId = hideMeetingHostSpace ? null : spaceId
-    if (campaignId || locationSpaceId) {
-      const title = conversationScopeDisplayLabel({
-        campaignName: campaign?.name,
-        spaceTitle: locationSpaceId ? space?.title : null,
-        programName: programNameForCampaign(campaign, programs),
-        campaignId,
-        spaceId: locationSpaceId,
-        emptyLabel: 'General',
-      })
+    if (!location.pending && (location.resolvedCampaignId || locationSpaceId)) {
       next.push({
         id: 'location',
         kind: 'location',
-        title,
+        title: location.label,
         icon: locationSpaceId ? Layers : FolderKanban,
         removable: true,
-        openCampaignId: campaignId,
+        openCampaignId: location.resolvedCampaignId,
         openSpaceId: locationSpaceId,
       })
     }
 
     return next
   }, [
-    campaign,
-    campaignId,
-    hideMeetingHostSpace,
     linkedMeeting,
+    location.label,
+    location.pending,
+    location.resolvedCampaignId,
+    locationSpaceId,
     meetingTitle,
-    programs,
     showMeetingRow,
-    space?.title,
-    spaceId,
   ])
 
   const clearScope = async () => {
@@ -152,11 +118,11 @@ export function ShellRightPanelConnections({
       onOpenMeeting?.()
       return
     }
-    if (row.openCampaignId) {
-      onOpenCampaign?.(row.openCampaignId)
+    if (row.openSpaceId) {
+      onOpenSpace?.(row.openSpaceId)
       return
     }
-    if (row.openSpaceId) onOpenSpace?.(row.openSpaceId)
+    if (row.openCampaignId) onOpenCampaign?.(row.openCampaignId)
   }
 
   const removeRow = (row: ConnectionRow) => {
@@ -190,7 +156,7 @@ export function ShellRightPanelConnections({
           </button>
         }
       >
-        {rows.length === 0 ? (
+        {location.pending ? null : rows.length === 0 ? (
           <ShellRightPanelEmpty
             art="connections"
             message={SHELL_RIGHT_PANEL_MESSAGES.connectionsEmpty}
@@ -202,7 +168,7 @@ export function ShellRightPanelConnections({
               const canOpen =
                 row.kind === 'meeting'
                   ? Boolean(onOpenMeeting)
-                  : Boolean(row.openCampaignId ? onOpenCampaign : row.openSpaceId && onOpenSpace)
+                  : Boolean(row.openSpaceId ? onOpenSpace : row.openCampaignId && onOpenCampaign)
               return (
                 <li key={row.id}>
                   {/* Click opens the linked artifact. Campaign/Space rows can be

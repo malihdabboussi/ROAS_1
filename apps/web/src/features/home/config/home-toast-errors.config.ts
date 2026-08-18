@@ -24,6 +24,9 @@ export const HOME_TOAST_ERRORS = {
   MEETINGS_SPACE_REQUIRED: {
     userMessage: 'Open or create your Meetings space first.',
   },
+  MEETINGS_MATERIALIZE_FAILED: {
+    userMessage: 'Could not add calendar meetings to All Meetings.',
+  },
 } as const
 
 export const HOME_TOAST_SUCCESS = {

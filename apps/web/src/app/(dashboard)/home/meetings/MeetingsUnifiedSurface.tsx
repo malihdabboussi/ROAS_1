@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
+import { useMeetingsCalendarMaterialize } from '@/features/home/hooks/use-meetings-calendar-materialize'
 import { rankPersonalMeetingsSpace } from '@/features/home/lib/resolve-meetings-space-id'
 import { SpaceItemsContainer, useSpacesStore } from '@/features/spaces'
 
@@ -21,7 +22,7 @@ function activateMeetingsSpace(spaceId: string | null) {
   if (!spaceId) return
   const store = useSpacesStore.getState()
   store.setActiveSpace(spaceId)
-  store.setActiveView('agenda')
+  store.setActiveView('all-meetings')
 }
 
 export function MeetingsUnifiedSurface({ agenda }: { agenda: ReactNode }) {
@@ -32,6 +33,8 @@ export function MeetingsUnifiedSurface({ agenda }: { agenda: ReactNode }) {
   })
   const loadSpaces = useSpacesStore((state) => state.loadSpaces)
   const loadRoster = useSpacesStore((state) => state.loadRoster)
+  const loadItems = useSpacesStore((state) => state.loadItems)
+  useMeetingsCalendarMaterialize(meetingsSpaceId, loadItems)
 
   useEffect(() => {
     let cancelled = false
@@ -55,7 +58,7 @@ export function MeetingsUnifiedSurface({ agenda }: { agenda: ReactNode }) {
       <SpaceItemsContainer
         embed={{
           hideBreadcrumbHeader: true,
-          leadingViewId: 'agenda',
+          leadingViewId: 'all-meetings',
           overrideView: { id: 'agenda', content: agenda },
         }}
       />

@@ -13,6 +13,7 @@ import {
   ZodValidationPipe,
   type RequestScope,
 } from '@vibey/api-shared'
+import { MeetingRelatedCallsService } from '../services/meeting-related-calls.service'
 import { MeetingWorkspaceService } from '../services/meeting-workspace.service'
 
 const MeetingParamsSchema = z.object({
@@ -50,7 +51,10 @@ const ActionCreateSchema = z.object({
 @Controller('spaces/:spaceId/meetings/:meetingItemId')
 @UseGuards(AuthGuard, ThrottlerGuard, OrgContextGuard, OrgRoleGuard)
 export class MeetingWorkspaceController {
-  constructor(private readonly meetings: MeetingWorkspaceService) {}
+  constructor(
+    private readonly meetings: MeetingWorkspaceService,
+    private readonly relatedCalls: MeetingRelatedCallsService,
+  ) {}
 
   @Get()
   @RequireOrgRole('viewer')
@@ -66,6 +70,16 @@ export class MeetingWorkspaceController {
       userId: user.id,
       orgId: scope.orgId,
     })
+  }
+
+  @Get('related-calls')
+  @RequireOrgRole('viewer')
+  listRelatedCalls(
+    @Supabase() supabase: SupabaseClient,
+    @Param(new ZodValidationPipe(MeetingParamsSchema))
+    params: z.infer<typeof MeetingParamsSchema>,
+  ) {
+    return this.relatedCalls.listRelatedCalls(supabase, params)
   }
 
   @Post('start')

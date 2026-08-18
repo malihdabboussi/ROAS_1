@@ -40,7 +40,7 @@ export class AgentManagementService {
   private static readonly STALE_SETUP_REPAIR_MS = 10 * 60 * 1000
   private static readonly VIBEY_BASE_CONFIG = {
     capability_domain: 'management',
-    model_id: 'auto',
+    model_id: 'auto:power',
   } as const
 
   constructor(

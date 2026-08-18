@@ -87,6 +87,17 @@ describe('SidebarSimpleSection', () => {
     expect(screen.getByText('Chat history')).toBeInTheDocument()
   })
 
+  it('left-aligns the expanded wordmark header and centers the compact R header', () => {
+    const { rerender, container } = render(<SidebarSimpleSection c={makeSidebarHqController()} />)
+    expect(container.querySelector('.hub-sidebar-logo-header-start')).toBeTruthy()
+    expect(container.querySelector('.hub-sidebar-logo-header')).toBeTruthy()
+
+    useShellMenuDock.setState({ menuStyle: 'simple', menuCompact: true })
+    rerender(<SidebarSimpleSection c={makeSidebarHqController()} />)
+    expect(container.querySelector('.hub-sidebar-logo-header-start')).toBeNull()
+    expect(container.querySelector('.hub-sidebar-logo-header')).toBeTruthy()
+  })
+
   it('keeps the collapsed rail closed on hover and expands it on click', () => {
     useShellMenuDock.setState({ menuStyle: 'simple', menuCompact: true })
     const controller = makeSidebarHqController()

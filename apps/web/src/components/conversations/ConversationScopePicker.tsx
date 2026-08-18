@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import { assignConversationScope, CONVERSATION_ACTIONS_TOAST_ERRORS } from '@/lib/conversations'
 import { useCampaignCacheVersion } from '@/lib/home'
 import { useOrgStore } from '@/lib/org'
+import { isHiddenClientGeneralSpace } from '@/lib/spaces/page-grader-client-general-space'
 import { positionFloatingMenuFromAnchorRect } from '@/lib/ui'
 import {
   buildConversationScopeLists,
@@ -43,6 +44,7 @@ import {
 import { ConversationScopeTrigger } from './ConversationScopeTrigger'
 import {
   useConversationScopeCampaigns,
+  useConversationScopeFallbackCampaign,
   useConversationScopeFallbackSpace,
   useConversationScopePrograms,
 } from './use-conversation-scope-data'
@@ -201,19 +203,21 @@ export const ConversationScopePicker = forwardRef<
     }
   }, [open, bannerAnchorRef])
 
-  const selectedCampaignId = conversation ? conversation.campaign_id : (campaignId ?? null)
-  const selectedCampaign = campaigns.find((campaign) => campaign.id === selectedCampaignId) ?? null
-  const generalCampaign = campaigns.find((campaign) => campaign.config?.system_kind === 'general')
-
+  const selectedCampaignIdFromProps = conversation ? conversation.campaign_id : (campaignId ?? null)
   const selectedSpaceId = conversation ? readConversationSpaceId(conversation) : (spaceId ?? null)
   const fallbackSpace = useConversationScopeFallbackSpace({
     activeOrgId,
-    selectedCampaignId,
+    selectedCampaignId: selectedCampaignIdFromProps,
     selectedSpaceId,
     spacesByCampaign,
   })
   const selectedSpace =
     findConversationScopeSpace(spacesByCampaign, selectedSpaceId) ?? fallbackSpace
+  const selectedCampaignId = selectedCampaignIdFromProps ?? selectedSpace?.campaign_id ?? null
+  const fallbackCampaign = useConversationScopeFallbackCampaign(selectedCampaignId, campaigns)
+  const selectedCampaign =
+    campaigns.find((campaign) => campaign.id === selectedCampaignId) ?? fallbackCampaign
+  const generalCampaign = campaigns.find((campaign) => campaign.config?.system_kind === 'general')
 
   const selectedProgramName = programNameForCampaign(selectedCampaign, programs)
   const selectedName = conversationScopeDisplayLabel({
@@ -291,7 +295,14 @@ export const ConversationScopePicker = forwardRef<
     [listedCampaigns, programs],
   )
   const visibleClients = filterScopeClients(scopeLists.clients, clientSearch)
+  const submenuCampaign =
+    submenu?.type === 'spaces'
+      ? campaigns.find((campaign) => campaign.id === submenu.campaignId) ?? null
+      : null
   const activeSpaces = submenu?.type === 'spaces' ? spacesByCampaign[submenu.campaignId] : undefined
+  const visibleSpaces = activeSpaces?.filter(
+    (space) => !isHiddenClientGeneralSpace(space, submenuCampaign),
+  )
   const programCampaigns =
     submenu?.type === 'program'
       ? (scopeLists.programs.find((program) => program.id === submenu.programId)?.campaigns ?? [])
@@ -317,7 +328,7 @@ export const ConversationScopePicker = forwardRef<
         submenu={submenu}
         loadingCampaignId={loadingCampaignId}
         programCampaigns={programCampaigns}
-        activeSpaces={activeSpaces}
+        activeSpaces={visibleSpaces}
         allowClear={allowClear}
         onSelectAll={allowClear ? () => void handleSelectScope(null, null) : undefined}
         onSelectGeneral={() => void handleSelectScope(generalCampaign?.id ?? null, null)}

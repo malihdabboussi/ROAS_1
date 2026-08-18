@@ -122,7 +122,7 @@ export class AgentOnboardingService {
       archetype: 'ceo',
       capability_profile: 'vibey_ceo',
       capability_domain: 'management',
-      model_id: 'auto',
+      model_id: 'auto:power',
     })
     const capabilityProfile = 'vibey_ceo'
     const capabilityDomain = 'shared'
@@ -138,7 +138,7 @@ export class AgentOnboardingService {
         archetype: normalizedArchetype,
         avatar_mode: avatarMode,
         needs_onboarding_chat: true,
-        model_id: 'auto',
+        model_id: 'auto:power',
         capability_profile: capabilityProfile,
         capability_domain: capabilityDomain,
       },

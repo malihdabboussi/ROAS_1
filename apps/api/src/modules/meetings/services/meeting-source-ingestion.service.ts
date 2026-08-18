@@ -13,6 +13,7 @@ import {
   resolveMeetingCallKind,
   shouldReplaceMeetingCallKind,
 } from '../domain/meeting-call-kind'
+import { resolveMeetingHost } from '../domain/meeting-host'
 import {
   reconcileMeetingRecordings,
   type MeetingRecordingCandidate,
@@ -327,6 +328,12 @@ export class MeetingSourceIngestionService {
         recordingUrl: source.recordingUrl,
         externalRecordingId: source.externalRecordingId,
         providerMeetingId: source.providerMeetingId,
+        host: resolveMeetingHost({
+          recordedBy: {
+            email: recordedByEmail(input.event),
+            name: text(record(input.event.recorded_by).name),
+          },
+        }),
       },
     )
   }

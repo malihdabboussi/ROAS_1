@@ -64,11 +64,6 @@
       "limit": 300,
       "lines": 400
     },
-    "apps/api/src/modules/integrations/services/integrations-calendar.service.ts": {
-      "kind": "service",
-      "limit": 600,
-      "lines": 736
-    },
     "apps/api/src/modules/spaces/repositories/space-items.repository.ts": {
       "kind": "repository",
       "limit": 400,

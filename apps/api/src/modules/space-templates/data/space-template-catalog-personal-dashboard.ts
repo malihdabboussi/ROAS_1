@@ -56,6 +56,20 @@ const fields = [
       { id: 'sales', label: 'Sales', color: 'orange' },
     ],
   },
+  { id: 'client_campaign', name: 'Client / Campaign', type: 'text' },
+  { id: 'host', name: 'Host', type: 'text' },
+  {
+    id: 'call_status',
+    name: 'Call status',
+    type: 'select',
+    required: false,
+    options: [
+      { id: 'live', label: 'Live', color: 'emerald' },
+      { id: 'completed', label: 'Completed', color: 'blue' },
+      { id: 'no_show', label: 'No Show', color: 'red' },
+      { id: 'rescheduled', label: 'Rescheduled', color: 'amber' },
+    ],
+  },
   PRIORITY_FIELD,
   { id: 'attendees', name: 'Attendees', type: 'multi_select', options: [] },
   { id: 'recording_url', name: 'Recording', type: 'url' },
@@ -104,34 +118,27 @@ const views = [
     type: 'list',
     name: 'All Meetings',
     field_value_filters: { entry_type: 'call' },
+    toolbar_call_date_window: 'past_through_tomorrow',
     sort: [{ field: 'call_date', dir: 'desc' }],
     visible_fields: [
-      'status',
       'title',
       'call_kind',
-      'attendees',
+      'client_campaign',
+      'host',
       'call_date',
+      'call_status',
       'recording_url',
-      'priority',
     ],
     column_widths: {
-      status: 140,
       title: 360,
       call_kind: 110,
-      attendees: 360,
+      client_campaign: 240,
+      host: 160,
       call_date: 170,
+      call_status: 140,
       recording_url: 220,
-      priority: 110,
     },
     date_display_formats: { call_date: 'date_time' },
-  },
-  {
-    id: 'prep',
-    type: 'list',
-    name: 'Prep',
-    field_value_filters: { entry_type: 'prep' },
-    sort: [{ field: 'call_date', dir: 'desc' }],
-    visible_fields: ['status', 'title', 'prep_status', 'attendees', 'call_date', 'priority'],
   },
   {
     id: 'follow-ups',
@@ -251,7 +258,7 @@ const fathomMeetingLog: SpaceTemplateAutomationSeed = {
     },
     {
       type: 'request_slack_follow_up_confirm',
-      meeting_scope: 'client',
+      meeting_scope: 'client_and_team',
       delivery_mode: 'shadow',
       channel_delivery: 'disabled',
       destination_channel_id: 'C0BN7P2BWRM',
@@ -260,6 +267,13 @@ const fathomMeetingLog: SpaceTemplateAutomationSeed = {
     },
   ],
   sort_order: 2,
+}
+
+const callCompletedLog: SpaceTemplateAutomationSeed = {
+  name: 'Call completed',
+  trigger: { type: 'field_changed', field_id: 'call_status', to: 'completed' },
+  actions: fathomMeetingLog.actions,
+  sort_order: 4,
 }
 
 const morningPrecallPrep: SpaceTemplateAutomationSeed = {
@@ -348,6 +362,12 @@ export const PERSONAL_DASHBOARD_TEMPLATES: SpaceTemplateSeed[] = [
         sort_order: 4,
       },
     ],
-    automations: [morningBrief, endOfDayClose, fathomMeetingLog, morningPrecallPrep],
+    automations: [
+      morningBrief,
+      endOfDayClose,
+      fathomMeetingLog,
+      morningPrecallPrep,
+      callCompletedLog,
+    ],
   },
 ]

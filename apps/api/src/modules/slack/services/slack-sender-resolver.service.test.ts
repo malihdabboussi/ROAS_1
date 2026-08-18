@@ -68,6 +68,63 @@ describe('SlackSenderResolverService', () => {
     )
   })
 
+  it('inherits Internal from a linked teammate identity even when that row was inferred', async () => {
+    const contactIdentifiers = {
+      resolveByKind: vi.fn().mockResolvedValue(null),
+      attachIdentifier: vi.fn(),
+    }
+    const slackApi = {
+      listUsers: vi.fn().mockResolvedValue([
+        {
+          id: 'U_PARTNER_CONNECT',
+          name: 'partner',
+          is_restricted: true,
+          profile: { display_name: 'Partner' },
+        },
+      ]),
+    }
+    const runtime = {
+      listSlackIdentityState: vi.fn().mockResolvedValue([
+        {
+          platform_id: 'U_PARTNER_CONNECT',
+          vibey_user_id: null,
+          contact_id: null,
+          person_brain_id: 'brain-partner',
+          relationship_kind: 'external',
+          relationship_source: 'inferred',
+          identity_match_method: 'none',
+        },
+      ]),
+      listLinkedSlackIdentityState: vi.fn().mockResolvedValue([
+        {
+          platform_id: 'U_PARTNER_INTERNAL',
+          vibey_user_id: null,
+          contact_id: null,
+          person_brain_id: 'brain-partner',
+          relationship_kind: 'internal',
+          relationship_source: 'inferred',
+          identity_match_method: 'none',
+        },
+      ]),
+      upsertResolvedSlackPerson: vi.fn().mockResolvedValue(undefined),
+      listActiveOrgMembersWithProfileEmails: vi.fn().mockResolvedValue([]),
+    }
+    const service = new SlackSenderResolverService(
+      contactIdentifiers as never,
+      slackApi as never,
+      runtime as never,
+    )
+
+    const result = await service.resolveSlackSenders({} as never, {
+      botToken: 'xoxb',
+      userId: 'owner-1',
+      orgId: 'org-1',
+      slackUserIds: ['U_PARTNER_CONNECT'],
+    })
+
+    expect(result.get('U_PARTNER_CONNECT')?.relationshipKind).toBe('internal')
+  })
+
   it('does not inherit trust from another Slack account by display name alone', async () => {
     const contactIdentifiers = {
       resolveByKind: vi.fn().mockResolvedValue(null),

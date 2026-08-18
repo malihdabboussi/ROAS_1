@@ -2562,7 +2562,7 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   create_campaign: {
     section: 'Campaign',
     description:
-      'Creates a Vibey campaign. Use when the user explicitly asks to create a new campaign, launch workspace, or campaign container. Required: name. Optional: campaign_type and config.',
+      'Creates a Vibey campaign. Required: name. Optional: campaign_type and config. The result includes `url` (https://app.roas.io/campaigns/{id}); the user-facing reply must include that url as a real openable https link. For a client Portal campaign, first list Page Grader tools and use the live campaign-draft write if it exists. If that write is missing or unavailable, use this native create, then create_task for missing VSL, landing page, or launch assets. Missing assets are tasks in the campaign, not a reason to skip create.',
     parameters:
       '```json\n{"action":"create_campaign","label":"Creating campaign","data":{"name":"Q3 Launch","campaign_type":"get-more-leads","config":{"goal":"lead generation"}}}\n```',
   },

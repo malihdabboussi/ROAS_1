@@ -24,11 +24,7 @@ import {
   type CalendarAccountReceipt,
   type CalendarConnectionRef,
 } from './integrations-calendar-connections'
-import {
-  dedupeCalendarAgendaEvents,
-  readGoogleIcalUid,
-  readOutlookIcalUid,
-} from './integrations-calendar-dedupe'
+import { dedupeCalendarAgendaEvents } from './integrations-calendar-dedupe'
 import { enrichAgendaWithPrecall } from './integrations-calendar-enrichment'
 import { fetchGoogleMultiCalendarAgenda } from './integrations-calendar-google-agenda'
 import {
@@ -44,6 +40,11 @@ import {
   ensureZSuffix,
   normalizeProviderEventId,
 } from './integrations-calendar-mutations'
+import {
+  parseGoogleEventsListResponse,
+  parseMutationEvent,
+  parseOutlookListEventsResponse,
+} from './integrations-calendar-parse'
 import { IntegrationsCalendarTeamService } from './integrations-calendar-team.service'
 import { isPersonalCrossContextProvider } from './personal-cross-context-providers'
 
@@ -65,6 +66,7 @@ export type CalendarAgendaEvent = {
   html_link: string | null
   color_id: string | null
   attendees: CalendarAttendee[]
+  organizer?: { name: string | null; email: string } | null
   source: 'google_calendar' | 'outlook' | 'fathom'
   /** Shared across calendars for the same invite (Google iCalUID / Outlook uid). */
   ical_uid?: string | null
@@ -130,7 +132,7 @@ export class IntegrationsCalendarService {
 
   async getAgenda(
     supabase: SupabaseClient,
-    user: { id: string },
+    user: { id: string; email?: string | null },
     scope: RequestScope,
     query: {
       start: string
@@ -196,7 +198,7 @@ export class IntegrationsCalendarService {
               start,
               end,
               timezone: tz,
-              parseEvents: (raw) => this.parseGoogleEventsListResponse(raw),
+              parseEvents: (raw) => parseGoogleEventsListResponse(raw),
             })
             return {
               events: (googleResult.events as CalendarAgendaEvent[]).map((event) => ({
@@ -227,7 +229,7 @@ export class IntegrationsCalendarService {
                 },
                 account.composioAccountId,
               )
-              const parsedO = this.parseOutlookListEventsResponse(raw).map((event) => ({
+              const parsedO = parseOutlookListEventsResponse(raw).map((event) => ({
                 ...event,
                 account_id: account.userIntegrationId,
                 account_label: account.label,
@@ -250,6 +252,20 @@ export class IntegrationsCalendarService {
       for (const result of settled) {
         events.push(...result.events)
         errors.push(...result.errors)
+      }
+    }
+
+    if (!providerFilter || providerFilter === 'google_calendar') {
+      const directoryMine = await this.teamAgenda.getCallerDirectoryAgenda(supabase, user, scope, {
+        start,
+        end,
+        timezone: tz,
+      })
+      events.push(...directoryMine.events)
+      errors.push(...directoryMine.errors)
+      accounts.push(...directoryMine.accounts)
+      if (directoryMine.events.length > 0 || directoryMine.accounts.length > 0) {
+        connected.google_calendar = true
       }
     }
 
@@ -311,7 +327,7 @@ export class IntegrationsCalendarService {
       connection.composioAccountId,
     )
 
-    const event = this.parseMutationEvent(provider, raw)
+    const event = parseMutationEvent(provider, raw)
     if (event) {
       event.account_id = connection.userIntegrationId
       event.account_label = connection.label
@@ -346,7 +362,7 @@ export class IntegrationsCalendarService {
       connection.composioAccountId,
     )
 
-    return { success: true, event: this.parseMutationEvent(provider, raw) }
+    return { success: true, event: parseMutationEvent(provider, raw) }
   }
 
   async deleteEvent(
@@ -395,21 +411,6 @@ export class IntegrationsCalendarService {
       throw new BadRequestException(message)
     }
     return connection
-  }
-
-  private parseMutationEvent(provider: CalendarProvider, raw: unknown): CalendarAgendaEvent | null {
-    try {
-      const payload = this.unwrapComposioPayload(raw)
-      const record = this.asRecord(payload)
-      if (!record) return null
-      const parsed =
-        provider === 'google_calendar'
-          ? this.parseGoogleEventsListResponse({ items: [record] })
-          : this.parseOutlookListEventsResponse({ value: [record] })
-      return parsed[0] ?? null
-    } catch {
-      return null
-    }
   }
 
   private async listScopedIntegrationRows(
@@ -477,256 +478,5 @@ export class IntegrationsCalendarService {
       integrationId,
       userIntegrationId,
     )
-  }
-
-  private parseGoogleEventsListResponse(raw: unknown): CalendarAgendaEvent[] {
-    const unwrapped = this.unwrapComposioPayload(raw)
-    const rec = this.asRecord(unwrapped)
-    if (!rec) return []
-    const items = this.asArray(rec.items) ?? this.asArray(rec.events)
-    if (!items) return []
-
-    const out: CalendarAgendaEvent[] = []
-    for (const item of items) {
-      const ev = this.asRecord(item)
-      if (!ev || String(ev.status ?? '').toLowerCase() === 'cancelled') continue
-      const id = typeof ev.id === 'string' ? ev.id : JSON.stringify(ev.id ?? Math.random())
-      const title = typeof ev.summary === 'string' ? ev.summary : '(No title)'
-      const colorId = typeof ev.colorId === 'string' ? ev.colorId : null
-      const icalUid = readGoogleIcalUid(ev)
-      const startObj = this.asRecord(ev.start)
-      const endObj = this.asRecord(ev.end)
-      if (!startObj || !endObj) continue
-      const startDate = typeof startObj.date === 'string' ? startObj.date : null
-      const endDate = typeof endObj.date === 'string' ? endObj.date : null
-      const startDt = typeof startObj.dateTime === 'string' ? startObj.dateTime : null
-      const endDt = typeof endObj.dateTime === 'string' ? endObj.dateTime : null
-
-      let startIso: string
-      let endIso: string
-      let allDay = false
-      if (startDate && endDate) {
-        allDay = true
-        startIso = `${startDate}T00:00:00.000Z`
-        endIso = `${endDate}T00:00:00.000Z`
-      } else if (startDt && endDt) {
-        startIso = startDt
-        endIso = endDt
-      } else {
-        continue
-      }
-
-      const hangout = typeof ev.hangoutLink === 'string' ? ev.hangoutLink : null
-      const conf = this.asRecord(ev.conferenceData)
-      const confSolution = conf ? this.asRecord(conf.conferenceSolution) : null
-      const entryPoints = conf ? this.asArray(conf.entryPoints) : null
-      let videoUrl = hangout
-      let videoLabel: string | null = null
-      if (!videoUrl && entryPoints) {
-        for (const ep of entryPoints) {
-          const epr = this.asRecord(ep)
-          if (epr && typeof epr.uri === 'string' && String(epr.entryPointType ?? '') === 'video') {
-            videoUrl = epr.uri
-            break
-          }
-        }
-      }
-      if (!videoUrl) {
-        const loc = typeof ev.location === 'string' ? ev.location : ''
-        const desc = typeof ev.description === 'string' ? ev.description : ''
-        const urlMatch = (loc + ' ' + desc).match(
-          /https?:\/\/[^\s<>"]+(?:zoom\.us|teams\.microsoft\.com|meet\.google\.com)[^\s<>"]+/i,
-        )
-        if (urlMatch) videoUrl = urlMatch[0]
-      }
-      if (videoUrl) {
-        if (confSolution && typeof confSolution.name === 'string') {
-          videoLabel = confSolution.name
-        } else if (videoUrl.includes('zoom.us')) {
-          videoLabel = 'Zoom'
-        } else if (videoUrl.includes('teams.microsoft')) {
-          videoLabel = 'Teams'
-        } else if (videoUrl.includes('meet.google')) {
-          videoLabel = 'Google Meet'
-        }
-      }
-      const htmlLink = typeof ev.htmlLink === 'string' ? ev.htmlLink : null
-
-      const attendees: CalendarAttendee[] = []
-      const rawAttendees = this.asArray(ev.attendees)
-      if (rawAttendees) {
-        for (const a of rawAttendees) {
-          const ar = this.asRecord(a)
-          if (!ar) continue
-          const email = typeof ar.email === 'string' ? ar.email : null
-          if (!email) continue
-          const name = typeof ar.displayName === 'string' ? ar.displayName : null
-          const rs = String(ar.responseStatus ?? '').toLowerCase()
-          const status: CalendarAttendee['status'] =
-            rs === 'accepted'
-              ? 'accepted'
-              : rs === 'declined'
-                ? 'declined'
-                : rs === 'tentative'
-                  ? 'tentative'
-                  : rs === 'needsaction'
-                    ? 'needsAction'
-                    : 'unknown'
-          attendees.push({ name, email, status })
-        }
-      }
-
-      const locationRaw = typeof ev.location === 'string' ? ev.location.trim() : ''
-      const descriptionRaw = typeof ev.description === 'string' ? ev.description.trim() : ''
-      out.push({
-        id: `google:${id}`,
-        title,
-        start: startIso,
-        end: endIso,
-        all_day: allDay,
-        location: locationRaw || null,
-        description: descriptionRaw || null,
-        video_url: videoUrl,
-        video_label: videoLabel,
-        html_link: htmlLink,
-        color_id: colorId,
-        attendees,
-        source: 'google_calendar',
-        ical_uid: icalUid,
-      })
-    }
-    return out
-  }
-
-  private parseOutlookListEventsResponse(raw: unknown): CalendarAgendaEvent[] {
-    const unwrapped = this.unwrapComposioPayload(raw)
-    const rec = this.asRecord(unwrapped)
-    if (!rec) return []
-    const value =
-      this.asArray(rec.value) ?? (Array.isArray(unwrapped) ? (unwrapped as unknown[]) : null)
-    if (!value) return []
-
-    const out: CalendarAgendaEvent[] = []
-    for (const item of value) {
-      const ev = this.asRecord(item)
-      if (!ev) continue
-      if (ev.isCancelled === true) continue
-      const id = typeof ev.id === 'string' ? ev.id : JSON.stringify(ev.id ?? Math.random())
-      const title = typeof ev.subject === 'string' ? ev.subject : '(No title)'
-      const startWrap = this.asRecord(ev.start)
-      const endWrap = this.asRecord(ev.end)
-      const startRaw =
-        startWrap && typeof startWrap.dateTime === 'string' ? startWrap.dateTime : null
-      const endRaw = endWrap && typeof endWrap.dateTime === 'string' ? endWrap.dateTime : null
-      if (!startRaw || !endRaw) continue
-      const allDay = ev.isAllDay === true
-      const om = this.asRecord(ev.onlineMeeting)
-      const videoUrl =
-        (typeof ev.onlineMeetingUrl === 'string' ? ev.onlineMeetingUrl : null) ??
-        (om && typeof om.joinUrl === 'string' ? om.joinUrl : null)
-      let videoLabel: string | null = null
-      if (videoUrl) {
-        const provider =
-          typeof ev.onlineMeetingProvider === 'string' ? ev.onlineMeetingProvider : ''
-        if (provider === 'teamsForBusiness' || provider === 'skypeForBusiness') videoLabel = 'Teams'
-        else if (videoUrl.includes('zoom.us')) videoLabel = 'Zoom'
-        else if (videoUrl.includes('meet.google')) videoLabel = 'Google Meet'
-        else if (provider) videoLabel = provider
-      }
-      const htmlLink = typeof ev.webLink === 'string' ? ev.webLink : null
-
-      const cats = this.asArray(ev.categories)
-      const colorId = cats && cats.length > 0 && typeof cats[0] === 'string' ? cats[0] : null
-
-      const attendees: CalendarAttendee[] = []
-      const rawAttendees = this.asArray(ev.attendees)
-      if (rawAttendees) {
-        for (const a of rawAttendees) {
-          const ar = this.asRecord(a)
-          if (!ar) continue
-          const ea = this.asRecord(ar.emailAddress)
-          const email = ea && typeof ea.address === 'string' ? ea.address : null
-          if (!email) continue
-          const name = ea && typeof ea.name === 'string' ? ea.name : null
-          const statusObj = this.asRecord(ar.status)
-          const rs = statusObj ? String(statusObj.response ?? '').toLowerCase() : ''
-          const status: CalendarAttendee['status'] =
-            rs === 'accepted'
-              ? 'accepted'
-              : rs === 'declined'
-                ? 'declined'
-                : rs === 'tentativelyaccepted' || rs === 'tentative'
-                  ? 'tentative'
-                  : rs === 'none' || rs === 'notresponded'
-                    ? 'needsAction'
-                    : 'unknown'
-          attendees.push({ name, email, status })
-        }
-      }
-
-      const locWrap = this.asRecord(ev.location)
-      const locationRaw =
-        locWrap && typeof locWrap.displayName === 'string'
-          ? locWrap.displayName.trim()
-          : typeof ev.location === 'string'
-            ? ev.location.trim()
-            : ''
-      const bodyWrap = this.asRecord(ev.body)
-      const descriptionRaw =
-        typeof ev.bodyPreview === 'string'
-          ? ev.bodyPreview.trim()
-          : bodyWrap && typeof bodyWrap.content === 'string'
-            ? bodyWrap.content.trim()
-            : ''
-      const icalUid = readOutlookIcalUid(ev)
-      out.push({
-        id: `outlook:${id}`,
-        title,
-        start: startRaw,
-        end: endRaw,
-        all_day: allDay,
-        location: locationRaw || null,
-        description: descriptionRaw || null,
-        video_url: videoUrl,
-        video_label: videoLabel,
-        html_link: htmlLink,
-        color_id: colorId,
-        attendees,
-        source: 'outlook',
-        ical_uid: icalUid,
-      })
-    }
-    return out
-  }
-
-  private unwrapComposioPayload(value: unknown): unknown {
-    let current: unknown = value
-    for (let i = 0; i < 4; i += 1) {
-      const record = this.asRecord(current)
-      if (!record) break
-      if (typeof record.error === 'string' && record.error.length > 0) {
-        throw new BadRequestException(record.error)
-      }
-      if (record.successful === false) {
-        throw new BadRequestException(
-          typeof record.error === 'string' ? record.error : 'Composio tool execution failed',
-        )
-      }
-      if ('data' in record && record.data !== undefined && record.data !== null) {
-        current = record.data
-        continue
-      }
-      break
-    }
-    return current
-  }
-
-  private asRecord(value: unknown): Record<string, unknown> | null {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return null
-    return value as Record<string, unknown>
-  }
-
-  private asArray(value: unknown): unknown[] | null {
-    return Array.isArray(value) ? value : null
   }
 }

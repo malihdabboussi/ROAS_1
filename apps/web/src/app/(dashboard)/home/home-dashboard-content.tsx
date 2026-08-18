@@ -62,6 +62,7 @@ export function HomeDashboardContent() {
             key={`${activeMeetingEvent.source}:${activeMeetingEvent.id}`}
             event={activeMeetingEvent}
             onClose={closeMeetingEvent}
+            onOpenRelated={openMeetingEvent}
           />
         ) : activeYourTurnItem ? (
           <HomeTaskDetailHost

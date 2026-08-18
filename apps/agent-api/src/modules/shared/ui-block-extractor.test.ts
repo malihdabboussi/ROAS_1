@@ -595,4 +595,65 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
       }),
     ])
   })
+
+  it('emits a work_request chat resume block from Portal campaign drafts', () => {
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'use_mcp_tool',
+      toolArgs: {
+        data: {
+          tool_name: 'page_grader_create_campaign_draft',
+        },
+      },
+      result: {
+        success: true,
+        draft: {
+          draft_id: 'campaign-draft-1',
+          title: 'Master Your Kraft | VSL Retargeting',
+          review_url: 'https://app.roas.io/request-review/campaign-token-abc',
+          status: 'draft',
+        },
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      {
+        type: 'work_request',
+        id: 'work-request-campaign-draft-1',
+        title: 'Master Your Kraft | VSL Retargeting',
+        reviewUrl: 'https://app.roas.io/request-review/campaign-token-abc',
+        draftId: 'campaign-draft-1',
+        status: 'pending',
+      },
+    ])
+  })
+
+  it('emits a campaign preview with the portal url after create_campaign', () => {
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'create_campaign',
+      result: {
+        id: '11111111-1111-4111-8111-111111111111',
+        name: 'Master Your Kraft | VSL Retargeting',
+        status: 'draft',
+        url: 'https://app.roas.io/campaigns/11111111-1111-4111-8111-111111111111',
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      expect.objectContaining({
+        type: 'artifact_preview',
+        artifactType: 'campaign',
+        artifactId: '11111111-1111-4111-8111-111111111111',
+        name: 'Master Your Kraft | VSL Retargeting',
+        status: 'draft',
+      }),
+    ])
+  })
 })

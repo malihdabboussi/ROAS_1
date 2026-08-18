@@ -22,6 +22,225 @@ Needed work: Preload Campaign Brain when CONNECTIONS is not General. Harden grap
 
 Reason not done now: This change restores the July 15 writer. Retrieval and graph view are separate root causes.
 
+## 2026-08-18 - [ARCH] MeetingWorkspaceDialog.tsx is near the 400 LOC component cap
+
+
+Status: Open
+
+Found while: Meetings one-room (status dropdown, related calls, Pixel context)
+
+Evidence: `wc -l` on `apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx` is 375. Cap is 400.
+
+Needed work: Extract hydrate/status/rename handlers into a hook so the dialog only composes sections.
+
+Reason not done now: In-scope work was wiring related calls and call status; splitting the dialog was not required to land the behavior.
+
+## 2026-08-18 - [FIX] Hidden client General item deep-links open client HQ list, not the item modal
+
+Status: Open
+
+Found while: Routing Page Grader client General (`space_role: general`) to `/campaigns/{id}?client=…`
+
+Evidence: `clientOverviewHrefFromSpace(..., { hasItem: true })` adds `view=list`. Agency client HQ list is not wired to open `?item=` the way `/spaces?space=&item=` is.
+
+Needed work: Open the space-item modal (or equivalent) on the client overview list when the hidden General space is the item host, or keep item URLs on `/spaces` until the list tab can host them.
+
+Reason not done now: The requested identity change is hidden-space → client overview. Item-modal wiring on the client HQ list is a separate surface.
+
+## 2026-08-18 - [ARCH] Org General and per-client General are still two different homes
+
+Status: Done (2026-08-18) — not a merge. Page Grader client General (`space_role: general`) is the hidden client overview; `/spaces?space=` for that space opens `/campaigns/{id}?client=…`. Org system General stays the unassigned catch-all.
+
+Found while: Fixing Connections flicker (General ↔ Meetings) and `Campaigns / General` crumbs with no client
+
+Evidence: Org system General (`config.system_kind === 'general'`) is the catch-all HQ (Meetings, Delegation Desk, Personal Dashboard, team slots). Client campaign hubs are a different Page Grader `client_id` campaign (tabs: Overview / Campaigns / Meetings). Clicking a Meetings connection previously opened org General HQ. Client campaign switchers only list Portal-synced campaign spaces (e.g. Webinar + Skool), not a merged client General.
+
+Needed work: Decide whether each client’s General space should be the same record as org General, a child of the client program, or remain split — then migrate existing spaces/docs/team so Connections, breadcrumbs, and the campaign dropdown share one identity.
+
+Reason not done now: Completed as hidden-space routing in `cursor/general-space-identity`.
+
+## 2026-08-18 - [FIX] Opening a Portal campaign space from the client Campaigns tab is slow
+
+Status: Open
+
+Found while: Client Campaigns → campaign row eventually shows `Campaigns / 1DS Collective / campaign` crumbs after a long wait
+
+Evidence: `AgencyClientCampaignsPanel` / campaign-space open goes to `/spaces?space=…` and hydrates the spaces store. Breadcrumbs wait on `fetchAgencyClient` / `fetchProgram` plus campaign list.
+
+Needed work: Prefetch the campaign space (or show the known client/campaign crumb immediately from the table row) so the work card does not sit empty while `/spaces` hydrates.
+
+Reason not done now: The requested bug was Connections opening org General and org General lacking identity copy. Slow space hydration is a separate load-path issue.
+
+## 2026-08-18 - [ARCH] SpaceCell.tsx is near the 400 LOC component cap
+
+Status: Done
+
+Found while: Adding the All Meetings Client / Campaign mapping intercept
+
+Evidence: Field-id intercepts now live in `SpaceFieldIdCell.tsx`. `SpaceCell.tsx` is 383 after that extract plus Host.
+
+Needed work: none for the dispatcher. Still near the cap if more intercepts land.
+
+Reason not done now: Dispatcher shipped with Meetings one-room Host cell.
+
+## 2026-08-18 - [ARCH] artifact-action-preflight.ts remains over the 600 LOC cap after MCP extract
+
+Status: Open
+
+Found while: Fixing Portal campaign create rejected before save
+
+Evidence: `wc -l` on `apps/agent-api/src/modules/artifacts/services/artifact-action-preflight.ts` stays above the 600 LOC service cap after moving MCP catalog checks to `artifact-mcp-tool-preflight.ts`.
+
+Needed work: Split remaining validators (integration, Dream Ops, company brain, Meta insights) into per-family preflight files.
+
+Reason not done now: The requested fix was campaign-create recovery; further splits were out of scope.
+
+## 2026-08-18 - [FIX] Agenda day dividers can label today as Tomorrow when navigator local dates disagree with the timezone query
+
+Status: Open
+
+Found while: Debugging missing recurring meetings on Agenda week of Aug 17–23
+
+Evidence: `agenda-list-grouping.tsx` `agendaListDayDividerLabel` never says Today; `delta === 1` is Tomorrow. `enumerateDayKeysInNavRange` walks local `setDate` from `agendaListFetchWindow` while event buckets use `dayKeyInTimeZone`. A TZ mismatch can put Aug 18 events under a Tomorrow divider.
+
+Needed work: Bucket and label day keys with the same timezone as the agenda query; add a Today label or keep weekday+date when delta is 0.
+
+Reason not done now: The empty Mine today list was Directory vs Composio, not the divider. Recurring misses were pagination + people-cap.
+
+## 2026-08-18 - [ARCH] space-schema.ts remains far over the 600 LOC cap
+
+Status: Open
+
+Found while: Adding `client_and_team` to post-call `meeting_scope`
+
+Evidence: `wc -l` on `apps/web/src/features/spaces/types/space-schema.ts` is 1427. This change only widened a union.
+
+Needed work: Split Space automation action types out of the mega schema file.
+
+Reason not done now: Post-call Team vs Personal is a one-line type widen; splitting the schema file is a separate refactor.
+
+## 2026-08-18 - [ARCH] ui-block-extractor.ts is over the 600 LOC service cap
+
+Status: Open
+
+Found while: Adding campaign-draft work_request cards and create_campaign preview blocks
+
+Evidence: `wc -l` on `apps/agent-api/src/modules/shared/ui-block-extractor.ts` remains above the 600 LOC shared-module cap after a small create_campaign / campaign-draft matcher.
+
+Needed work: Split action output builders (work request, media, artifact previews) out of `ui-block-extractor.ts`.
+
+Reason not done now: The requested work was the invalid Service Request confirmation and campaign chat links; splitting the extractor was out of scope.
+
+## 2026-08-18 - [ARCH] work-request.service.ts is at the 600 LOC service cap
+
+Status: Open
+
+Found while: Threading Service Request Slack follow-ups and moving the late nudge to 22 hours
+
+Evidence: `wc -l` reports `apps/api/src/modules/work-requests/services/work-request.service.ts` at 600. Reminder copy and Slack target selection now live in `work-request-reminders.ts`; process/claim/send still sit in the service.
+
+Needed work: Move `deliverReminder` + `processDueReminders` into a dedicated reminder service so the next draft-lifecycle change does not grow this file.
+
+Reason not done now: The requested change was reminder timing and thread+channel posting; extracting the remaining reminder loop was out of scope.
+
+## 2026-08-17 - [ARCH] slack-service-events.base.ts is over the 600 LOC service cap
+
+Status: Open
+
+Found while: Letting Internal senders use Pixel in group DMs / Slack Connect
+
+Evidence: `wc -l` on `apps/api/src/modules/slack/services/slack-service-events.base.ts` is ~634. This change only switched DM detection to `isSlackDirectConversation`.
+
+Needed work: Split message vs mention vs reaction handlers out of the events base.
+
+Reason not done now: The requested fix was the mixed-member access denial.
+
+## 2026-08-18 - [FEATURE] Org Pixel CEO skills still incomplete (weekly update / post-call); Super Voice + Power shipped
+
+Status: Open (partial)
+
+Found while: Defaulting Pixel message writing to Dylan Super Voice + Power
+
+Evidence: Migration `20260818023000_pixel_super_voice_power_defaults.sql` assigns `dylans-super-voice` to vibey and sets `model_id` to `auto:power`. TOOLS send-ready guidance now requires the skill. Weekly/Monday client-update and post-call-delivery assignment to org Pixel, plus Slack Pixel browser unblock, remain open from the prior CEO-operator follow-up.
+
+Needed work: Assign weekly/Monday client-update and confirm post-call-delivery on org Pixel; unblock Slack Pixel browser or make Pixel say it cannot click through; keep Lux as the designer.
+
+Reason not done now: This change only covers message-writing defaults (voice + Power + draft composer handoff).
+## 2026-08-18 - [ARCH] Chat store still far over LOC; list virtualization + dual content_delta deferred
+
+Status: Open
+
+Found while: Fixing Chrome Aw Snap / OOM on heavy `/home?conv=` Pixel turns
+
+Evidence: `wc -l` on `apps/web/src/features/studio/store/use-chat-store.ts` is ~2461 (store/module caps in project-architecture are far lower). Stream memory bounds (progress/preview caps, mid-stream persist skip, in-memory prune) land in this change. Chat message list still mounts full history without virtualization. Assistant turns still dual-write `content` plus ordered text blocks during `content_delta`. Backend can still emit large uncapped `tool_content_preview` payloads (client now truncates).
+
+Needed work: Split chat store by concern (messages / stream UI / persist). Virtualize ChatInterface message list. Stop dual content_delta writes once render path is ordered-blocks-only. Throttle or truncate tool preview payloads at the agent-api stream source.
+
+Reason not done now: Aw Snap fix targets the highest-impact heap growers without a store mega-refactor or render rewrite in the same change.
+
+## 2026-08-18 - [FIX] Static-ad format/mode terms still scan the full pasted message
+
+Status: Open
+
+Found while: Tightening the static-ad creation matcher so pasted Slack threads do not force the production-type card
+
+Evidence: `buildStaticAdChatRoutingInstruction` now detects creation from the first and last 240 characters of long pastes, but `findExplicitMode` and `STATIC_AD_FORMAT_TERMS` still run on the full normalized text once that gate matches. A wrapping “make ads from this:” plus buried “chat receipt” or “messaging angles” can still lock a lane.
+
+Needed work: Limit explicit mode and format-term matching on long pastes to the same head/tail windows used for creation detection.
+
+Reason not done now: The reported false positive was `selection_required` from distant want/need + ad-account language, which the collocation and window change already stops.
+
+
+## 2026-08-18 - [ARCH] Campaign detail page is over the 80% container budget
+
+Status: Open
+
+Found while: Registering clickable Campaigns / client / campaign breadcrumbs
+
+Evidence: `wc -l` on `apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx` is 561 (container cap 600). This change added `isSystemGeneral` on overview.
+
+Needed work: Extract client-workspace tab wiring and mobile chrome before the next campaign-page change.
+
+Reason not done now: Requested work was breadcrumbs on the existing page; splitting the page was out of scope.
+
+## 2026-08-18 - [ARCH] SpaceVibeyChatPanel remains far over the 400 LOC component cap
+
+Status: Open
+
+Found while: Stopping Home New chat from inventing a Meetings connection
+
+Evidence: `wc -l` on `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` is still ~2660 (component cap 400; container cap 600). This change only tightened post-load selection and the new-intent effect.
+
+Needed work: Split host, send, and conversation-list orchestration into dedicated hooks/containers before the next chat-runtime change. Optionally retarget an already-open Meetings thread when the user `@` mentions a campaign in that composer (Home send-time is fixed; in-thread `@` still only becomes a Source). Live Choose Space label from `@` is also unscoped (ChatInput already over 400 LOC).
+
+Reason not done now: Requested work was the Home Enter / `@` → Connections bug. Splitting the panel and growing ChatInput were out of scope.
+
+## 2026-08-18 - [FIX] Space folder crumbs still show a General campaign name without the client
+
+Status: Done (2026-08-18) — `spaceBreadcrumbFolderLabel` + `useSpaceCampaignName.folderLabel` now walk past General / Client Spaces to the client/program.
+
+Found while: Adding Campaigns / client / campaign breadcrumbs
+
+Evidence: `SpaceItemsContainer` sets `folderLabel` to `campaignName`, so a General campaign still reads `Campaigns / General / General` in `SpaceBreadcrumbHeader` even after Connections qualifies the same location as `Master Your Kraft General`.
+
+Needed work: Qualify the space folder label with the same ancestor walk used by `conversationScopeDisplayLabel`.
+
+Reason not done now: Completed in `cursor/general-space-identity`.
+
+
+## 2026-08-18 - [ARCH] SpaceVibeyChatPanel and other chat hosts remain far over LOC limits
+
+Status: Open
+
+Found while: Removing the streaming composer typewriter tip
+
+Evidence: `wc -l` reports `SpaceVibeyChatPanel.tsx` 2664, `ChatInterface.tsx` 1082, `TeamHrSideChatPanel.tsx` 694, `ProjectChatPane.tsx` 591 (container 600 / component 400). This change only deleted the active-run tip slot.
+
+Needed work: Split send/seed/header/composer orchestration out of these chat hosts.
+
+Reason not done now: Requested work was delete the old Tip strip. Decomposing the hosts was out of scope. `ProjectChatPane.tsx` still mounts a no-op Studio `ComposerActiveRunTipCard` because editing that file trips the cross-feature import gate.
+
+## 2026-08-17 - [FIX] Team Intelligence digest still repeats the same open threads
 
 Status: Open
 
@@ -35,15 +254,15 @@ Reason not done now: The requested fix was Launch/QC hourly DMs. Digest cadence 
 
 ## 2026-08-17 - [FEATURE] Org Pixel still lacks CEO operator skills (voice, weekly update, post-call)
 
-Status: Open
+Status: Superseded
 
 Found while: Making Slack Pixel retrieve-then-draft and bind this portal chat on named-client lookup
 
 Evidence: `UNIVERSAL_LIBRARY_SKILL_KEYS` (`dylans-super-voice`, `instagram-carousel`) skips system agents via `isSystemAgentKey`. Live org Pixel skill list remains ads/carousel/theme. Post-call delivery and meeting Slack follow-up live on Vibey. Slack Pixel browser tool remains denied while TOOLS QC policy names the browser.
 
-Needed work: Assign `dylans-super-voice`, weekly/Monday client-update, and post-call-delivery to org Pixel (not only `agent_key = vibey`); unblock Slack Pixel browser or make Pixel say it cannot click through; keep Lux as the designer.
+Needed work: See 2026-08-18 partial entry above. `dylans-super-voice` + Power shipped; weekly update / post-call / Slack browser remain.
 
-Reason not done now: This change fixes named lookup, CONNECTIONS bind, fuzzy names, and retrieve-then-draft policy. Skill backfill is a separate agent-sync/seeder change.
+Reason not done now: Superseded by the 2026-08-18 partial entry.
 
 ## 2026-08-17 - [ARCH] artifact-brain-search-actions.service.ts is near the 600 LOC service cap
 

@@ -79,7 +79,7 @@ function createService(repositoryOverrides: Record<string, unknown> = {}) {
     resolveOrgAssigneeByName: vi.fn().mockResolvedValue(null),
     assignTask: vi.fn(),
     listDueThreeHourReminders: vi.fn().mockResolvedValue([]),
-    listDueOneHourWarnings: vi.fn().mockResolvedValue([]),
+    listDueExpiryWarnings: vi.fn().mockResolvedValue([]),
     listDueSyncRetries: vi.fn().mockResolvedValue([]),
     claimReminder: vi.fn(),
     ...repositoryOverrides,
@@ -605,5 +605,63 @@ describe('WorkRequestService', () => {
     await expect(service.processDueReminders()).resolves.toEqual({ processed: 1, sent: 0 })
     expect(repository.claimReminder).toHaveBeenCalledTimes(1)
     expect(slack.sendMessage).not.toHaveBeenCalled()
+  })
+
+  it('loads the expiry warning 2 hours before the review link expires', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-17T10:00:00.000Z'))
+    try {
+      const { service, repository } = createService()
+      await service.processDueReminders()
+      expect(repository.listDueThreeHourReminders).toHaveBeenCalledWith(
+        '2026-08-17T07:00:00.000Z',
+        50,
+      )
+      expect(repository.listDueExpiryWarnings).toHaveBeenCalledWith('2026-08-17T12:00:00.000Z', 50)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('replies in the original task thread and also posts the follow-up in channel', async () => {
+    const row = draft()
+    const { service, slack } = createService({
+      listDueThreeHourReminders: vi.fn().mockResolvedValue([row]),
+      claimReminder: vi.fn().mockResolvedValue(true),
+    })
+    slack.sendMessage.mockResolvedValue({ success: true })
+
+    await expect(service.processDueReminders()).resolves.toEqual({ processed: 1, sent: 1 })
+    expect(slack.sendMessage).toHaveBeenCalledWith(
+      expect.anything(),
+      row.owner_user_id,
+      row.owner_org_id,
+      expect.objectContaining({
+        channel_id: 'C123',
+        thread_ts: '123.456',
+        reply_broadcast: true,
+        text: expect.stringContaining("It's been 3 hours"),
+      }),
+    )
+  })
+
+  it('says the second follow-up expires in 2 hours', async () => {
+    const row = draft({ title: 'Edited VSL for 1DS' })
+    const { service, slack } = createService({
+      listDueExpiryWarnings: vi.fn().mockResolvedValue([row]),
+      claimReminder: vi.fn().mockResolvedValue(true),
+    })
+    slack.sendMessage.mockResolvedValue({ success: true })
+
+    await expect(service.processDueReminders()).resolves.toEqual({ processed: 1, sent: 1 })
+    expect(slack.sendMessage).toHaveBeenCalledWith(
+      expect.anything(),
+      row.owner_user_id,
+      row.owner_org_id,
+      expect.objectContaining({
+        reply_broadcast: true,
+        text: expect.stringContaining('expires in 2 hours'),
+      }),
+    )
   })
 })

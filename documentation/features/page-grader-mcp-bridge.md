@@ -1,6 +1,6 @@
 # Page Grader MCP bridge
 
-Last Modified: 2026-08-17
+Last Modified: 2026-08-18
 
 ## Ownership
 
@@ -146,6 +146,15 @@ Grader`, `MCP`, tool names, schemas, idempotency keys, or retry mechanics.
   five automatic team assignments.
 - Urgent Delegation Desk intake dispatches only after duplicate, target, and
   destination checks and stores the confirmed destination receipt.
+- Campaign drafts use the same review-link pattern as Service Requests: Pixel
+  creates the Portal campaign draft when that live write exists, then posts an
+  openable `review_url`. If the live catalog has no campaign-draft write, Pixel
+  uses native `create_campaign` and posts the returned `url`. Missing VSL,
+  landing page, or creative assets become campaign tasks instead of blocking
+  create. Follow-up questions belong in that review chat, not a Slack interview.
+- After Service Request submit, the in-thread resume card shows the created
+  ROAS / ClickUp task links. A finalized review is not treated as an invalid
+  link.
 - Service Request fulfillment creates from a ROAS / Slack Pixel session stamp
   that conversation UUID onto the draft (`source_context.conversation_id` plus
   internal post-create stamp). Public `/request-review/:token` resumes that
@@ -162,3 +171,7 @@ Grader`, `MCP`, tool names, schemas, idempotency keys, or retry mechanics.
 - Slack inbound work is claimed once per `(team, channel, message_ts)`. Mapped
   channels skip `app_mention` when the `message` handler already owns the post,
   so one @Pixel ask cannot create two Service Request drafts.
+- Unreviewed Service Request drafts send two Slack follow-ups: 3 hours after
+  the review link is issued, then 22 hours after (2 hours before the 24-hour
+  expiry) with an expiry nudge. Both reply in the original task thread and
+  also post to the channel (`reply_broadcast`).

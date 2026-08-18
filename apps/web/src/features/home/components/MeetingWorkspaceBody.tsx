@@ -6,6 +6,7 @@ import { MeetingAgendaPrepSection } from '@/features/home/components/MeetingAgen
 import { MeetingNotesSection } from '@/features/home/components/MeetingNotesSection'
 import { MeetingPostCallSections } from '@/features/home/components/MeetingPostCallSections'
 import { MeetingRecordingsSection } from '@/features/home/components/MeetingRecordingsSection'
+import { MeetingRelatedCallsSection } from '@/features/home/components/MeetingRelatedCallsSection'
 import { MeetingWorkspaceAttachments } from '@/features/home/components/MeetingWorkspaceAttachments'
 import { HOME_AGENDA_MESSAGES } from '@/features/home/config/home-agenda-messages.config'
 import type { ParsedMeetingPrep } from '@/features/home/lib/meeting-workspace-display'
@@ -14,6 +15,7 @@ import type {
   MeetingSnippet,
   MeetingWorkspaceBundle,
 } from '@/features/home/services/meeting-workspace-api'
+import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 
 function SectionTitle({ children, count }: { children: string; count?: number }) {
   return (
@@ -26,9 +28,7 @@ function SectionTitle({ children, count }: { children: string; count?: number })
   )
 }
 
-/**
- * Recordings and action items sit in the top row. Agenda, recap, and notes follow.
- */
+/** Recordings, then related calls, then action items full width, then agenda and notes. */
 export function MeetingWorkspaceBody({
   spaceId,
   meetingItemId,
@@ -39,6 +39,9 @@ export function MeetingWorkspaceBody({
   prep,
   prepDescription,
   joinUrl,
+  googleAgendaHref,
+  relatedCalls,
+  onOpenRelated,
   onRecordingLinked,
   onNoteCreated,
   onActionCreated,
@@ -54,6 +57,15 @@ export function MeetingWorkspaceBody({
   prep: ParsedMeetingPrep
   prepDescription: string | null | undefined
   joinUrl: string | null
+  googleAgendaHref?: string | null
+  relatedCalls: Array<{
+    meeting_item_id: string
+    title: string
+    call_date: string | null
+    call_status: string | null
+    recording_url: string | null
+  }>
+  onOpenRelated?: (event: CalendarAgendaEvent) => void
   onRecordingLinked: () => void
   onNoteCreated: (snippet: MeetingSnippet) => void
   onActionCreated: (action: MeetingAction) => void
@@ -70,52 +82,56 @@ export function MeetingWorkspaceBody({
 
   return (
     <>
-      <div className="gap-spacing-4 flex flex-wrap items-start">
-        <section className="section-card p-spacing-4 min-w-spacing-72 flex-1">
-          <MeetingRecordingsSection
+      <section className="section-card p-spacing-4">
+        <MeetingRecordingsSection
+          spaceId={spaceId}
+          meetingItemId={meetingItemId}
+          recordings={bundle?.recordings ?? []}
+          isPostCall={isPostCall || isLive}
+          onLinked={onRecordingLinked}
+          attachmentCount={bundle?.deliverables.length ?? 0}
+        >
+          <MeetingWorkspaceAttachments
+            spaceId={spaceId}
+            deliverables={bundle?.deliverables ?? []}
+            loading={loading}
+            embedded
+          />
+        </MeetingRecordingsSection>
+      </section>
+
+      <MeetingRelatedCallsSection
+        spaceId={spaceId}
+        calls={relatedCalls}
+        onOpenRelated={onOpenRelated}
+      />
+
+      <section className="section-card overflow-hidden">
+        {bundle?.continuity.unresolved_commitments.length ? (
+          <div className="border-border p-spacing-4 border-b">
+            <SectionTitle count={bundle.continuity.unresolved_commitments.length}>
+              Open loops
+            </SectionTitle>
+            <div className="mt-spacing-3 gap-spacing-2 flex flex-col">
+              {bundle.continuity.unresolved_commitments.map((action) => (
+                <p key={action.id} className="body-3 text-foreground">
+                  {action.title}
+                </p>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        <div className="p-spacing-4">
+          <MeetingActionItemsSection
             spaceId={spaceId}
             meetingItemId={meetingItemId}
-            recordings={bundle?.recordings ?? []}
-            isPostCall={isPostCall || isLive}
-            onLinked={onRecordingLinked}
-            attachmentCount={bundle?.deliverables.length ?? 0}
-          >
-            <MeetingWorkspaceAttachments
-              spaceId={spaceId}
-              deliverables={bundle?.deliverables ?? []}
-              loading={loading}
-              embedded
-            />
-          </MeetingRecordingsSection>
-        </section>
-
-        <section className="section-card min-w-spacing-72 flex-1 overflow-hidden">
-          {bundle?.continuity.unresolved_commitments.length ? (
-            <div className="border-border p-spacing-4 border-b">
-              <SectionTitle count={bundle.continuity.unresolved_commitments.length}>
-                Open loops
-              </SectionTitle>
-              <div className="mt-spacing-3 gap-spacing-2 flex flex-col">
-                {bundle.continuity.unresolved_commitments.map((action) => (
-                  <p key={action.id} className="body-3 text-foreground">
-                    {action.title}
-                  </p>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          <div className="p-spacing-4">
-            <MeetingActionItemsSection
-              spaceId={spaceId}
-              meetingItemId={meetingItemId}
-              actions={bundle?.actions ?? []}
-              loading={loading}
-              onCreated={onActionCreated}
-              onReload={onActionsReload}
-            />
-          </div>
-        </section>
-      </div>
+            actions={bundle?.actions ?? []}
+            loading={loading}
+            onCreated={onActionCreated}
+            onReload={onActionsReload}
+          />
+        </div>
+      </section>
 
       <section className="section-card p-spacing-4 gap-spacing-2 flex flex-col">
         <MeetingAgendaPrepSection
@@ -125,6 +141,7 @@ export function MeetingWorkspaceBody({
           prep={prep}
           prepDescription={prepDescription}
           joinUrl={joinUrl}
+          googleAgendaHref={googleAgendaHref}
           onCreateWithAi={onCreateAgendaWithAi}
         />
       </section>

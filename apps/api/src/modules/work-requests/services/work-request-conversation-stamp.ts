@@ -38,7 +38,11 @@ export function readSlackThreadProvenance(provenance: unknown): {
       stringValue(root.thread_ts) ||
       stringValue(root.slack_thread_ts) ||
       stringValue(context.thread_ts) ||
-      stringValue(context.slack_thread_ts),
+      stringValue(context.slack_thread_ts) ||
+      stringValue(root.message_ts) ||
+      stringValue(root.slack_message_ts) ||
+      stringValue(context.message_ts) ||
+      stringValue(context.slack_message_ts),
   }
 }
 

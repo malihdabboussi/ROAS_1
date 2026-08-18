@@ -1,12 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import {
-  CheckSquare,
-  ClipboardList,
-  FileText,
-  ListChecks,
-  MessageSquareText,
-  Send,
-} from 'lucide-react'
+import { CheckSquare, ListChecks, MessageSquareText, Send } from 'lucide-react'
 
 /**
  * One-click post-call actions shown in the meeting workspace once a call is
@@ -119,24 +112,6 @@ export const MEETING_PRE_CALL_ACTIONS: MeetingPostCallAction[] = [
     label: 'Start agenda',
     icon: ListChecks,
     prompt: startAgendaPrompt(null),
-  },
-  {
-    id: 'prep-for-call',
-    label: 'Prep for call',
-    icon: ClipboardList,
-    prompt: [
-      'Give me prep notes for this meeting.',
-      '',
-      'Cover: where things stand with this client or team (last call, open commitments, anything overdue); what they are likely to bring up; risks or tension points I should be ready for; and the 2-3 things I should make sure to get out of this call.',
-      '',
-      'Keep it scannable — short lines, no fluff. End with a one-line suggested opening for the call.',
-    ].join('\n'),
-  },
-  {
-    id: 'google-agenda',
-    label: 'Google agenda',
-    icon: FileText,
-    prompt: googleAgendaPrompt(),
   },
 ]
 

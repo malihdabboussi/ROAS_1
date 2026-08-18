@@ -55,6 +55,7 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
       'End of Day Close',
       'Fathom Meeting Log',
       'Morning Pre-call Prep',
+      'Call completed',
     ])
     expect(automationsBySlug['sales-pipeline']).toEqual(['Fathom Call Follow-Ups'])
     expect(automationsBySlug['operations-hub']).toEqual(['Weekly Space Digest'])
@@ -90,13 +91,7 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
           type: 'list',
           field_value_filters: { entry_type: 'call' },
           sort: [{ field: 'call_date', dir: 'desc' }],
-          visible_fields: expect.arrayContaining(['status', 'attendees', 'recording_url']),
-        }),
-        expect.objectContaining({
-          id: 'prep',
-          type: 'list',
-          field_value_filters: { entry_type: 'prep' },
-          sort: [{ field: 'call_date', dir: 'desc' }],
+          visible_fields: expect.arrayContaining(['call_status', 'host', 'recording_url']),
         }),
         expect.objectContaining({
           id: 'follow-ups',
@@ -137,6 +132,11 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
     expect((dashboard?.automations[3]?.actions ?? []).map((a) => a.type)).toContain(
       'meetings_precall_prep',
     )
+    expect(dashboard?.automations[4]?.trigger).toMatchObject({
+      type: 'field_changed',
+      field_id: 'call_status',
+      to: 'completed',
+    })
     const actionTypes = (dashboard?.automations[2]?.actions ?? []).map((action) => action.type)
     expect(actionTypes).not.toContain('create_task')
     expect(actionTypes).toContain('change_status')
@@ -146,7 +146,7 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
     expect(dashboard?.automations[2]?.actions).toContainEqual(
       expect.objectContaining({
         type: 'request_slack_follow_up_confirm',
-        meeting_scope: 'client',
+        meeting_scope: 'client_and_team',
         delivery_mode: 'shadow',
       }),
     )
@@ -165,9 +165,19 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: 'all-meetings',
-          column_widths: expect.objectContaining({ attendees: 360 }),
+          column_widths: expect.objectContaining({
+            host: 160,
+            client_campaign: 240,
+            call_status: 140,
+          }),
           date_display_formats: expect.objectContaining({ call_date: 'date_time' }),
-          visible_fields: expect.arrayContaining(['call_date', 'call_kind']),
+          visible_fields: expect.arrayContaining([
+            'call_date',
+            'call_kind',
+            'client_campaign',
+            'host',
+            'call_status',
+          ]),
         }),
         expect.objectContaining({
           id: 'agenda',
@@ -195,6 +205,18 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
             expect.objectContaining({ id: 'client' }),
             expect.objectContaining({ id: 'partner' }),
             expect.objectContaining({ id: 'sales' }),
+          ]),
+        }),
+        expect.objectContaining({ id: 'client_campaign', name: 'Client / Campaign', type: 'text' }),
+        expect.objectContaining({ id: 'host', name: 'Host', type: 'text' }),
+        expect.objectContaining({
+          id: 'call_status',
+          name: 'Call status',
+          options: expect.arrayContaining([
+            expect.objectContaining({ id: 'live' }),
+            expect.objectContaining({ id: 'completed' }),
+            expect.objectContaining({ id: 'no_show' }),
+            expect.objectContaining({ id: 'rescheduled' }),
           ]),
         }),
         expect.objectContaining({ id: 'due_date', name: 'Due Date' }),
