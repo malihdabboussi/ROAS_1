@@ -19,6 +19,7 @@ export function useConversationLocationLabel(
   spaceId: string | null,
 ): {
   label: string
+  pending: boolean
   resolvedCampaignId: string | null
 } {
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
@@ -34,16 +35,23 @@ export function useConversationLocationLabel(
   const resolvedCampaignId = campaignId ?? space?.campaign_id ?? null
   const fallbackCampaign = useConversationScopeFallbackCampaign(resolvedCampaignId, campaigns)
   const campaign = campaigns.find((row) => row.id === resolvedCampaignId) ?? fallbackCampaign
+  // A connected space must keep its own name. Falling back to the parent
+  // campaign (often "General") while the space row loads is what made the
+  // summary panel flicker Meetings → General → Meetings.
+  const pending = Boolean(spaceId) && !space
 
   return {
     resolvedCampaignId,
-    label: conversationScopeDisplayLabel({
-      campaignName: campaign?.name,
-      spaceTitle: spaceId ? space?.title : null,
-      programName: programNameForCampaign(campaign, programs),
-      campaignId: resolvedCampaignId,
-      spaceId,
-      emptyLabel: 'General',
-    }),
+    pending,
+    label: pending
+      ? ''
+      : conversationScopeDisplayLabel({
+          campaignName: campaign?.name,
+          spaceTitle: spaceId ? space?.title : null,
+          programName: programNameForCampaign(campaign, programs),
+          campaignId: resolvedCampaignId,
+          spaceId,
+          emptyLabel: 'General',
+        }),
   }
 }

@@ -80,7 +80,7 @@ export function ShellRightPanelConnections({
       })
     }
 
-    if (location.resolvedCampaignId || locationSpaceId) {
+    if (!location.pending && (location.resolvedCampaignId || locationSpaceId)) {
       next.push({
         id: 'location',
         kind: 'location',
@@ -96,6 +96,7 @@ export function ShellRightPanelConnections({
   }, [
     linkedMeeting,
     location.label,
+    location.pending,
     location.resolvedCampaignId,
     locationSpaceId,
     meetingTitle,
@@ -117,11 +118,11 @@ export function ShellRightPanelConnections({
       onOpenMeeting?.()
       return
     }
-    if (row.openCampaignId) {
-      onOpenCampaign?.(row.openCampaignId)
+    if (row.openSpaceId) {
+      onOpenSpace?.(row.openSpaceId)
       return
     }
-    if (row.openSpaceId) onOpenSpace?.(row.openSpaceId)
+    if (row.openCampaignId) onOpenCampaign?.(row.openCampaignId)
   }
 
   const removeRow = (row: ConnectionRow) => {
@@ -155,7 +156,7 @@ export function ShellRightPanelConnections({
           </button>
         }
       >
-        {rows.length === 0 ? (
+        {location.pending ? null : rows.length === 0 ? (
           <ShellRightPanelEmpty
             art="connections"
             message={SHELL_RIGHT_PANEL_MESSAGES.connectionsEmpty}
@@ -167,7 +168,7 @@ export function ShellRightPanelConnections({
               const canOpen =
                 row.kind === 'meeting'
                   ? Boolean(onOpenMeeting)
-                  : Boolean(row.openCampaignId ? onOpenCampaign : row.openSpaceId && onOpenSpace)
+                  : Boolean(row.openSpaceId ? onOpenSpace : row.openCampaignId && onOpenCampaign)
               return (
                 <li key={row.id}>
                   {/* Click opens the linked artifact. Campaign/Space rows can be

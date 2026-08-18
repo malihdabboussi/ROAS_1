@@ -1,5 +1,17 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 11:54] - [FIX]
+What: Page Grader client General is a hidden space that opens the client overview. Switchers, HQ sidebar, and Choose Space flyouts omit it. `/spaces?space=` for that space replaces to `/campaigns/{id}?client=…`; Connections open that overview directly.
+Why: Client General was never a second workspace and is not org system General. The Page Grader import already stamps `space_role: general`; navigating to it should show the client HQ.
+Impact: Connections / deep links to a client General space land on Overview / Campaigns / Meetings. Org General and Portal campaign spaces (Webinar, Skool) are unchanged.
+Files: `page-grader-client-general-space.ts`, `SpacesContainer.tsx`, `use-space-campaign-name.ts`, `ConversationScopePicker.tsx`, `group-other-spaces-by-campaign.ts`, `CampaignOverviewTab.tsx`, `SidebarHqSpacesGroupedList.tsx`, `ShellRightPanel.tsx`, `documentation/features/page-grader-campaign-brain-sync.md`
+
+## [2026-08-18 10:44] - [FIX]
+What: Connections no longer flash General while a space name loads, and clicking a space row opens that space instead of the parent campaign HQ. Org General HQ now says it is the unassigned catch-all. Space breadcrumbs use the client/program as the folder when the campaign itself is named General.
+Why: A Meetings connection fell back to the parent General campaign for both the label and the click target, so the summary panel flickered and opened `Campaigns / General` with no client. That HQ is org-wide, not a client General.
+Impact: Meetings opens `/spaces?space=…`. Org General overview explains the catch-all. Client-named General spaces crumb as `Campaigns / {client} / {space}`. Combining org General with per-client General is logged as follow-up.
+Files: `ShellRightPanelConnections.tsx`, `use-conversation-location-label.ts`, `conversation-scope-sort.ts`, `CampaignOverviewTab.tsx`, `campaign-view-messages.config.ts`, `use-space-campaign-name.ts`, `space-breadcrumb-folder-label.ts`, `SpaceItemsContainer.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-18 16:20] - [FIX]
 What: Meetings Agenda Mine now DWD-pulls the signed-in user's Workspace Directory calendar (linked/suggested portal user, not login Gmail first). Team Google Calendar fetches paginate `nextPageToken` (page size 2500, `singleEvents=true`) and pin the caller inside the Directory people cap.
 Why: Mine only listed caller-owned Composio rows, so Dylan's work invites showed under Team (Directory mailbox) and disappeared on Mine. Recurring instances such as ROAS x Christian Osgood Weekly Standup were truncated when a covering-month `events.list` stopped at 250 events with no page token.

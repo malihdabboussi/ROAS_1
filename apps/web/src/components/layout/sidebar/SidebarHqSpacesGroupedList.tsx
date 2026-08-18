@@ -14,6 +14,7 @@ import {
   readProgramsLocalCache,
   type Program,
 } from '@/lib/programs'
+import { isHiddenClientGeneralSpace } from '@/lib/spaces/page-grader-client-general-space'
 import { groupSidebarCampaignsByProgram } from './group-sidebar-campaigns-by-program'
 import { toggleIdInSet } from './sidebar-expand-persistence'
 import { SidebarTreeDndProvider } from './sidebar-tree-dnd'
@@ -228,10 +229,15 @@ export function SidebarHqSpacesGroupedList({
   const q = (searchQuery ?? '').trim().toLowerCase()
   const searchActive = q.length > 0
   const matchSpace = (s: Space) => (s.title ?? '').toLowerCase().includes(q)
-  const ownedSpaces = spaces.filter((s) => !s.share_meta && !hiddenIds.has(s.id))
+  const visibleSpace = (s: Space) =>
+    !isHiddenClientGeneralSpace(
+      s,
+      campaigns.find((row) => row.id === s.campaign_id),
+    )
+  const ownedSpaces = spaces.filter((s) => !s.share_meta && !hiddenIds.has(s.id) && visibleSpace(s))
   const sharedSpaces = searchActive
-    ? spaces.filter((s) => !!s.share_meta && matchSpace(s))
-    : spaces.filter((s) => !!s.share_meta)
+    ? spaces.filter((s) => !!s.share_meta && matchSpace(s) && visibleSpace(s))
+    : spaces.filter((s) => !!s.share_meta && visibleSpace(s))
   const campaignBuckets = campaigns
     .map((c) => {
       const allSection = ownedSpaces.filter((s) => s.campaign_id === c.id)

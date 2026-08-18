@@ -18,9 +18,11 @@ import type { Mission, MissionAgent } from '@/features/mission-control/types'
 import type { CampaignTeamAgent } from '@/features/studio/services/campaign.service'
 import { createSpace, fetchSpaces } from '@/features/spaces/services/spaces.service'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
-import { matchesFlowsConceptSpace } from '@/lib/flows/flows-scope-storage'
-import { CampaignOverviewDocsSection } from './CampaignOverviewDocsSection'
 import type { Space } from '@/features/spaces/types'
+import { matchesFlowsConceptSpace } from '@/lib/flows/flows-scope-storage'
+import { isHiddenClientGeneralSpace } from '@/lib/spaces/page-grader-client-general-space'
+import { CAMPAIGN_VIEW_MESSAGES } from '../../_config/campaign-view-messages.config'
+import { CampaignOverviewDocsSection } from './CampaignOverviewDocsSection'
 
 interface CampaignOverviewTabProps {
   campaignId: string
@@ -28,6 +30,7 @@ interface CampaignOverviewTabProps {
   dashboardMissions: Mission[]
   dashboardAgents: MissionAgent[]
   campaignTeam: CampaignTeamAgent[]
+  isSystemGeneral?: boolean
   onOpenTab: (tab: 'dashboard' | 'knowledge' | 'reporting') => void
   onManageTeam: () => void
 }
@@ -38,6 +41,7 @@ export function CampaignOverviewTab({
   dashboardMissions,
   dashboardAgents,
   campaignTeam,
+  isSystemGeneral = false,
   onOpenTab,
   onManageTeam,
 }: CampaignOverviewTabProps) {
@@ -109,11 +113,19 @@ export function CampaignOverviewTab({
   }
 
   const trainKnowledgeHref = brainScopeHref(`campaign:${campaignId}`, 'add-info')
+  const visibleSpaces = spaces.filter((space) => !isHiddenClientGeneralSpace(space))
   const primarySpaceId =
-    spaces.find((space) => !matchesFlowsConceptSpace(space))?.id ?? spaces[0]?.id ?? null
+    visibleSpaces.find((space) => !matchesFlowsConceptSpace(space))?.id ??
+    visibleSpaces[0]?.id ??
+    null
 
   return (
     <div className="gap-spacing-6 flex flex-col pb-8">
+      {isSystemGeneral ? (
+        <p className="surface-card border-border rounded-spacing-3 body-3 text-muted-foreground border p-4">
+          {CAMPAIGN_VIEW_MESSAGES.generalWorkspaceIntro}
+        </p>
+      ) : null}
       <div className="gap-spacing-4 grid grid-cols-1 md:grid-cols-3">
         <button
           type="button"
@@ -121,9 +133,13 @@ export function CampaignOverviewTab({
           className="surface-card border-border rounded-spacing-3 hover:bg-hover-subtle gap-spacing-3 flex flex-col border p-4 text-left transition-colors"
         >
           <Brain className="text-primary h-5 w-5" />
-          <span className="body-2 text-foreground font-semibold">Train client knowledge</span>
+          <span className="body-2 text-foreground font-semibold">
+            {isSystemGeneral
+              ? CAMPAIGN_VIEW_MESSAGES.trainKnowledgeTitleGeneral
+              : CAMPAIGN_VIEW_MESSAGES.trainKnowledgeTitle}
+          </span>
           <span className="body-4 text-muted-foreground">
-            Brand voice, strategy docs, and campaign knowledge graph.
+            {CAMPAIGN_VIEW_MESSAGES.trainKnowledgeBody}
           </span>
         </button>
         <Link
@@ -131,9 +147,13 @@ export function CampaignOverviewTab({
           className="surface-card border-border rounded-spacing-3 hover:bg-hover-subtle gap-spacing-3 flex flex-col border p-4 transition-colors"
         >
           <Brain className="text-primary h-5 w-5" />
-          <span className="body-2 text-foreground font-semibold">Add knowledge in Brain</span>
+          <span className="body-2 text-foreground font-semibold">
+            {CAMPAIGN_VIEW_MESSAGES.addKnowledgeTitle}
+          </span>
           <span className="body-4 text-muted-foreground">
-            Import briefs, links, and calls into this client&apos;s knowledge.
+            {isSystemGeneral
+              ? CAMPAIGN_VIEW_MESSAGES.addKnowledgeBodyGeneral
+              : CAMPAIGN_VIEW_MESSAGES.addKnowledgeBody}
           </span>
         </Link>
         <button
@@ -167,13 +187,15 @@ export function CampaignOverviewTab({
           </div>
           {loadingSpaces ? (
             <VibeyLoadingOrb size="sm" text="Loading spaces…" state="processing" />
-          ) : spaces.length === 0 ? (
+          ) : visibleSpaces.length === 0 ? (
             <p className="body-3 text-muted-foreground">
-              No spaces yet. Create one for day-to-day client work — tasks, docs, and missions.
+              {isSystemGeneral
+                ? CAMPAIGN_VIEW_MESSAGES.emptySpacesGeneral
+                : CAMPAIGN_VIEW_MESSAGES.emptySpaces}
             </p>
           ) : (
             <ul className="space-y-1">
-              {spaces.map((space) => {
+              {visibleSpaces.map((space) => {
                 const icon =
                   typeof space.schema?.icon === 'string' && space.schema.icon.length > 0
                     ? space.schema.icon
@@ -214,8 +236,9 @@ export function CampaignOverviewTab({
           {dashboardAgents.length === 0 ? (
             <div className="gap-spacing-3 flex flex-col items-start">
               <p className="body-3 text-muted-foreground">
-                No agents assigned yet. Add specialists so missions and knowledge access work for
-                this client.
+                {isSystemGeneral
+                  ? CAMPAIGN_VIEW_MESSAGES.emptyTeamGeneral
+                  : CAMPAIGN_VIEW_MESSAGES.emptyTeam}
               </p>
               <button
                 type="button"

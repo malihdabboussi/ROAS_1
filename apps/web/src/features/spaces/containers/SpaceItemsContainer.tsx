@@ -496,7 +496,12 @@ export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbe
 
   const customizeStageBounds = useSpaceCustomizeStageBounds(spaceBelowViewTabsRef)
 
-  const { allCampaigns, campaignName, switcherTree } = useSpaceCampaignName(activeSpace)
+  const {
+    allCampaigns,
+    campaignName,
+    folderLabel: campaignFolderLabel,
+    switcherTree,
+  } = useSpaceCampaignName(activeSpace)
 
   const { customizeFlushCtxRef, flushPendingViewPatch, handleViewPatch, pendingViewPatchRef } =
     useViewPatchFlush({
@@ -850,7 +855,7 @@ export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbe
       activeView.type === 'calendar' ||
       activeView.type === 'missions')
 
-  const folderLabel = campaignName ?? (activeSpace.campaign_id ? '…' : 'Personal')
+  const folderLabel = campaignFolderLabel ?? (activeSpace.campaign_id ? '…' : 'Personal')
   const spaceIconName = activeSchema.icon ?? 'layout-grid'
   const spaceIconColor = getIconColor(activeSchema.icon_color)
 
