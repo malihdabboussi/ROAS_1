@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import { ArrowUp, Copy, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { DRAFT_CARD_USE_EVENT, type DraftCardUseDetail } from '@/lib/chat'
-import { type DraftVersion } from './draft-versions.utils'
+import { buildDraftComposerUseText, type DraftVersion } from './draft-versions.utils'
 
 const VERSION_LETTERS = 'ABCDEFGH'
 
@@ -44,9 +44,15 @@ export function DraftVersionsCard({ versions }: { versions: DraftVersion[] }) {
   }
 
   const useInComposer = () => {
+    const text = buildDraftComposerUseText({
+      draftText: activeText,
+      versionIndex: activeIndex,
+      versionCount: versions.length,
+      edited: activeEdited,
+    })
     window.dispatchEvent(
       new CustomEvent<DraftCardUseDetail>(DRAFT_CARD_USE_EVENT, {
-        detail: { text: activeText },
+        detail: { text },
       }),
     )
     toast.success('Draft added to the composer')

@@ -307,6 +307,8 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 
 ## Decision Log
 
+- **2026-08-18:** Draft card **Use in composer** seeds a Claude-style handoff: `I used option B and made some edits. Here it is.` (option letter + edit clause as applicable) followed by the draft body, so Pixel can acknowledge instead of receiving bare copy.
+- **2026-08-18:** Pixel message writing defaults to Power (`auto:power`) and must load `dylans-super-voice` for send-ready drafts ("write this message", Slack/DM/email copy). The skill ships on vibey; TOOLS runtime guidance requires it before drafting.
 - **2026-08-18:** Chrome Aw Snap (error code 5) after heavy Pixel turns is treated as client heap pressure, not a lost reply. Live tool progress is capped to a 20-entry tail, tool previews to 8k chars, inactive conversation message caches prune on chat switch, and Zustand chat persist skips localStorage writes while any conversation is streaming (resume when the stream clears). StatusIndicator and `useActiveMessages` subscribe to one conversation’s messages only.
 
 - **2026-08-18:** Home New chat no longer assigns the newest org General space (often Meetings) when Choose Space is empty. The last `@` campaign mention becomes the Connection. `/home?chat=starting` stays on the new thread and does not reuse a leftover Meetings host.

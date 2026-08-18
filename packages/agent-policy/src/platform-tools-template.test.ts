@@ -111,6 +111,12 @@ describe('platform tools template', () => {
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Hey Dylan 👋')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Slack does not reliably render Markdown tables')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Date — Spend: $328')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_HEADING)
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'For send-ready messages, emails, Slack/DM drafts, or "write this message":',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Default to Dylan Super Voice')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('skills/dylans-super-voice/SKILL.md')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(PLATFORM_TOOLS_MEDIA_ROUTING_HEADING)
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(PLATFORM_TOOLS_BROWSER_QC_HEADING)
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('click the real controls')
@@ -301,6 +307,33 @@ For unclear, destructive, publish/send, or expensive actions:
     expect(repaired).toContain('Treat messy names as clients first, tone second')
     expect(repaired).toContain('binds **this** portal conversation')
     expect(repaired.split(PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_HEADING)).toHaveLength(2)
+    expect(second).toBe(repaired)
+  })
+
+  it('adds send-ready Dylan Super Voice routing to an existing runtime policy', () => {
+    const oldContent = `# TOOLS.md
+
+## Runtime Operating Layers
+
+These layers exist to help the user get faster, more accurate work without repeating context or watching you stumble through avoidable tool errors.
+
+For call, meeting, recording, or transcript retrieval:
+- Do not ask the user to paste a transcript.
+
+For unclear, destructive, publish/send, or expensive actions:
+- Ask a focused clarification.`
+
+    const repaired = ensurePlatformToolsRuntimeGuidance(oldContent)
+    const second = ensurePlatformToolsRuntimeGuidance(repaired)
+
+    expect(repaired).toContain(
+      'For send-ready messages, emails, Slack/DM drafts, or "write this message":',
+    )
+    expect(repaired).toContain('Default to Dylan Super Voice')
+    expect(repaired).toContain('skills/dylans-super-voice/SKILL.md')
+    expect(
+      repaired.split('For send-ready messages, emails, Slack/DM drafts, or "write this message":'),
+    ).toHaveLength(2)
     expect(second).toBe(repaired)
   })
 

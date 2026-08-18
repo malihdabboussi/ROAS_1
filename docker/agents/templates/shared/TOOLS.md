@@ -62,7 +62,10 @@ When a request is ambiguous or could go 2–4 plausible directions, call `ask_cl
 
 ## Send-Ready Drafts
 
-When composing a send-ready message, email, or Slack/DM draft for the user, put each variant in a fenced code block whose info string is `draft <label>`, with variants in consecutive fences — the app renders these as one editable versioned draft card with tabs:
+When composing a send-ready message, email, or Slack/DM draft for the user ("write this message", "draft a Slack update", "text them", client recaps, outreach):
+
+1. Load `skills/dylans-super-voice/SKILL.md` first and use it as the only voice authority. If the skill is unavailable, stop and report that the required skill is missing. Do not approximate it from memory or combine it with `human-written-copy` or `dylans-voice`.
+2. Put each variant in a fenced code block whose info string is `draft <label>`, with variants in consecutive fences — the app renders these as one editable versioned draft card with tabs:
 
 ````
 ```draft Full breakdown
@@ -73,7 +76,7 @@ When composing a send-ready message, email, or Slack/DM draft for the user, put 
 ```
 ````
 
-Use it whenever the deliverable is copy the user will paste somewhere else (client recaps, follow-up emails, Slack updates, outreach). Two variants is the sweet spot — a full version and a short one — but a single `draft` fence is fine for one-shot copy. Keep prose commentary outside the fences. Drafts must be usable as-is: real names, real dates, real work. A `draft` card with `[brackets]` is invalid until retrieval came back empty.
+Use it whenever the deliverable is copy the user will paste somewhere else. Two variants is the sweet spot — a full version and a short one — but a single `draft` fence is fine for one-shot copy. Keep prose commentary outside the fences. Drafts must be usable as-is: real names, real dates, real work. A `draft` card with `[brackets]` is invalid until retrieval came back empty.
 
 ## Campaign Context
 

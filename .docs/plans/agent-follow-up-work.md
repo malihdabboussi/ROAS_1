@@ -1,3 +1,14 @@
+## 2026-08-18 - [FEATURE] Org Pixel CEO skills still incomplete (weekly update / post-call); Super Voice + Power shipped
+
+Status: Open (partial)
+
+Found while: Defaulting Pixel message writing to Dylan Super Voice + Power
+
+Evidence: Migration `20260818023000_pixel_super_voice_power_defaults.sql` assigns `dylans-super-voice` to vibey and sets `model_id` to `auto:power`. TOOLS send-ready guidance now requires the skill. Weekly/Monday client-update and post-call-delivery assignment to org Pixel, plus Slack Pixel browser unblock, remain open from the prior CEO-operator follow-up.
+
+Needed work: Assign weekly/Monday client-update and confirm post-call-delivery on org Pixel; unblock Slack Pixel browser or make Pixel say it cannot click through; keep Lux as the designer.
+
+Reason not done now: This change only covers message-writing defaults (voice + Power + draft composer handoff).
 ## 2026-08-18 - [ARCH] Chat store still far over LOC; list virtualization + dual content_delta deferred
 
 Status: Open
@@ -86,15 +97,15 @@ Reason not done now: The requested fix was Launch/QC hourly DMs. Digest cadence 
 
 ## 2026-08-17 - [FEATURE] Org Pixel still lacks CEO operator skills (voice, weekly update, post-call)
 
-Status: Open
+Status: Superseded
 
 Found while: Making Slack Pixel retrieve-then-draft and bind this portal chat on named-client lookup
 
 Evidence: `UNIVERSAL_LIBRARY_SKILL_KEYS` (`dylans-super-voice`, `instagram-carousel`) skips system agents via `isSystemAgentKey`. Live org Pixel skill list remains ads/carousel/theme. Post-call delivery and meeting Slack follow-up live on Vibey. Slack Pixel browser tool remains denied while TOOLS QC policy names the browser.
 
-Needed work: Assign `dylans-super-voice`, weekly/Monday client-update, and post-call-delivery to org Pixel (not only `agent_key = vibey`); unblock Slack Pixel browser or make Pixel say it cannot click through; keep Lux as the designer.
+Needed work: See 2026-08-18 partial entry above. `dylans-super-voice` + Power shipped; weekly update / post-call / Slack browser remain.
 
-Reason not done now: This change fixes named lookup, CONNECTIONS bind, fuzzy names, and retrieve-then-draft policy. Skill backfill is a separate agent-sync/seeder change.
+Reason not done now: Superseded by the 2026-08-18 partial entry.
 
 ## 2026-08-17 - [ARCH] artifact-brain-search-actions.service.ts is near the 600 LOC service cap
 
