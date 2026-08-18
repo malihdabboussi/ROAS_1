@@ -178,38 +178,38 @@ export function SidebarSimpleSection({
     </div>
   )
   const expandedSidebar = (
-    <div className="surface-card border-border flex h-full min-h-0 flex-col border-r">
-      <div className="px-spacing-3 py-spacing-2 gap-spacing-1 flex items-center">
-        <div className="min-w-0 flex-1">
-          <SidebarHqHubLogoButton expanded wordmark />
+    <div className="hub-sidebar-shell surface-card border-border flex h-full min-h-0 flex-col border-r">
+      <div className="hub-sidebar-logo-header hub-sidebar-logo-header-start gap-spacing-1">
+        <SidebarHqHubLogoButton expanded wordmark />
+        <div className="gap-spacing-1 flex items-center">
+          <button
+            type="button"
+            className="btn-icon-bare hover:bg-hover-subtle"
+            onClick={() => dispatchOpenStudioSearch()}
+            aria-label="Search"
+            title="Search"
+          >
+            <Search className="icon-sm" aria-hidden />
+          </button>
+          <button
+            type="button"
+            className="btn-icon-bare hover:bg-hover-subtle"
+            onClick={() => c.router.back()}
+            aria-label="Back"
+            title="Back"
+          >
+            <ChevronLeft className="icon-sm" aria-hidden />
+          </button>
+          <button
+            type="button"
+            className="btn-icon-bare hover:bg-hover-subtle"
+            onClick={() => c.router.forward()}
+            aria-label="Forward"
+            title="Forward"
+          >
+            <ChevronRight className="icon-sm" aria-hidden />
+          </button>
         </div>
-        <button
-          type="button"
-          className="btn-icon-bare hover:bg-hover-subtle"
-          onClick={() => dispatchOpenStudioSearch()}
-          aria-label="Search"
-          title="Search"
-        >
-          <Search className="icon-sm" aria-hidden />
-        </button>
-        <button
-          type="button"
-          className="btn-icon-bare hover:bg-hover-subtle"
-          onClick={() => c.router.back()}
-          aria-label="Back"
-          title="Back"
-        >
-          <ChevronLeft className="icon-sm" aria-hidden />
-        </button>
-        <button
-          type="button"
-          className="btn-icon-bare hover:bg-hover-subtle"
-          onClick={() => c.router.forward()}
-          aria-label="Forward"
-          title="Forward"
-        >
-          <ChevronRight className="icon-sm" aria-hidden />
-        </button>
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <SidebarSimpleRecents navigation={navigation} />
@@ -258,8 +258,8 @@ export function SidebarSimpleSection({
   }
   return (
     <div className="relative h-full">
-      <div className="surface-card border-border flex h-full min-h-0 flex-col border-r">
-        <div className="px-spacing-1 py-spacing-2 flex justify-center">
+      <div className="hub-sidebar-shell surface-card border-border flex h-full min-h-0 flex-col border-r">
+        <div className="hub-sidebar-logo-header">
           <SidebarHqHubLogoButton expanded={false} />
         </div>
         <nav className="px-spacing-1 gap-spacing-1 flex min-h-0 flex-1 flex-col overflow-y-auto">
