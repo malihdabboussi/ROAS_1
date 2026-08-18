@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 17:40] - [FIX]
+What: Restored Simple sidebar Recents resize, left-offset the expanded ROAS wordmark, and centered the compact R mark in the rail.
+Why: The Recents drag handle sat under the menu and width used a 300ms transition, so dragging did nothing useful. The wordmark lived in a padded flex-1 row so it read centered. Compact R padding plus an unconstrained PNG spilled right of the 56px rail.
+Impact: Drag the Simple menu right edge to widen Recents (272–476px). Expanded ROAS sits left. Collapsed R sits in the icon column center.
+Files: `SidebarSimpleSection.tsx`, `SidebarSimpleResizeHandle.tsx`, `SidebarHqHubLogoButton.tsx`, `Sidebar.tsx`, `apps/web/src/app/globals.css`, `apps/website/src/app/globals.css`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-18 16:20] - [FIX]
 What: Meetings Agenda Mine now DWD-pulls the signed-in user's Workspace Directory calendar (linked/suggested portal user, not login Gmail first). Team Google Calendar fetches paginate `nextPageToken` (page size 2500, `singleEvents=true`) and pin the caller inside the Directory people cap.
 Why: Mine only listed caller-owned Composio rows, so Dylan's work invites showed under Team (Directory mailbox) and disappeared on Mine. Recurring instances such as ROAS x Christian Osgood Weekly Standup were truncated when a covering-month `events.list` stopped at 250 events with no page token.

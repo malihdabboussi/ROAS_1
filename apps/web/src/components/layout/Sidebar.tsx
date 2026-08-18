@@ -18,8 +18,8 @@ import { NewCampaignModal } from './NewCampaignModal'
 import { NewProgramModal } from './NewProgramModal'
 import type { SidebarCampaignRow, SidebarProps } from './sidebar/sidebar-types'
 import { SidebarHqSection } from './sidebar/SidebarHqSection'
-import { SidebarSimpleSection } from './sidebar/SidebarSimpleSection'
 import { SidebarSimpleResizeHandle } from './sidebar/SidebarSimpleResizeHandle'
+import { SidebarSimpleSection } from './sidebar/SidebarSimpleSection'
 import { SidebarStudioFooter } from './sidebar/SidebarStudioFooter'
 import { SidebarStudioHeader } from './sidebar/SidebarStudioHeader'
 import { SidebarStudioSection } from './sidebar/SidebarStudioSection'
@@ -48,11 +48,11 @@ export function Sidebar(props: SidebarProps) {
         ? 'md:w-[56px]'
         : menuStyle === 'simple'
           ? 'md:w-[272px]'
-        : menuDock === 'work-top' || menuDock === 'work-bottom'
-          ? 'md:w-auto'
-          : sidebarPinned
-            ? 'md:w-[272px]'
-            : 'md:w-[72px]'
+          : menuDock === 'work-top' || menuDock === 'work-bottom'
+            ? 'md:w-auto'
+            : sidebarPinned
+              ? 'md:w-[272px]'
+              : 'md:w-[72px]'
       : c.desktopWidth
   const hqPeeking = c.sidebarMode === 'hq' && sidebarPeek && !sidebarPinned
   const {
@@ -110,9 +110,9 @@ export function Sidebar(props: SidebarProps) {
             ? { width: simpleMenuWidth }
             : undefined
         }
-        className={`relative flex flex-col transition-all duration-300 ease-in-out ${
-          c.sidebarMode === 'hq' ? '' : 'md:!bg-transparent'
-        } ${
+        className={`relative flex flex-col ${
+          menuStyle === 'simple' && !menuCompact ? '' : 'transition-all duration-300 ease-in-out'
+        } ${c.sidebarMode === 'hq' ? '' : 'md:!bg-transparent'} ${
           c.mobileDrawerOpen
             ? 'surface-card border-r-glass fixed inset-y-0 left-0 z-[999] h-dvh w-[280px]'
             : 'hidden h-full'
