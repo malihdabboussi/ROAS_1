@@ -21,6 +21,7 @@ export const SPACES_CELL_TOAST_ERRORS = {
   INVALID_URL: { userMessage: 'Enter a valid URL.' },
   RECURRING_REQUIRES_DUE_DATE: { userMessage: 'Recurring tasks require a due date.' },
   PUSH_TO_AGENT_FAILED: { userMessage: 'Failed to push to agent.' },
+  CLIENT_CAMPAIGN_LOAD_FAILED: { userMessage: 'Could not load clients and campaigns.' },
 } as const
 
 export const SPACES_CELL_TOAST_SUCCESS = {

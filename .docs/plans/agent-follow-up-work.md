@@ -1,3 +1,15 @@
+## 2026-08-18 - [ARCH] SpaceCell.tsx is near the 400 LOC component cap
+
+Status: Open
+
+Found while: Adding the All Meetings Client / Campaign mapping intercept
+
+Evidence: `wc -l` on `apps/web/src/components/spaces/cells/SpaceCell.tsx` is 380 after a thin `client_campaign` branch. Cap is 400.
+
+Needed work: Split field-id intercepts (`source_call`, `client_campaign`) into a small dispatcher so the type switch stays the only body.
+
+Reason not done now: The requested work was the mapping cell and Agenda link; extracting the dispatcher was out of scope.
+
 ## 2026-08-18 - [ARCH] artifact-action-preflight.ts remains over the 600 LOC cap after MCP extract
 
 Status: Open

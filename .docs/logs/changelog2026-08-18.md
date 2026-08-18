@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 17:35] - [FEATURE]
+What: All Meetings gained a Client / Campaign column. Operators map a call to a Page Grader client and that client’s campaign without moving the row. Mapped names link to the client and campaign Space; an Agenda link opens that meeting’s workspace. Call Kind stays independent. The same field id upgrades Delegation Desk from free text to the picker.
+Why: Meetings could classify Call Kind but could not tag which client and campaign a call belonged to, so later training and reference had no durable client/campaign label. There was also no explicit Agenda control on the All Meetings row.
+Impact: `custom_data.client_campaign` stores client_id/name, campaign_id/name, and optional roas_space_id. Agents hydrate that mapping on meeting items. Existing All Meetings spaces and the personal-dashboard template show the column after Call Kind.
+Files: `ClientCampaignCell.tsx`, `SpaceCell.tsx`, `client-campaign-mapping.ts`, `use-client-campaign-groups.ts`, `space-template-catalog-personal-dashboard.ts`, `20260818173000_meetings_client_campaign_field.sql`, `artifact-space-item-hydrate.helper.ts`, `documentation/features/meeting-follow-up-slack.md`
+
 ## [2026-08-18 17:25] - [FIX]
 What: Portal campaign create no longer dies on a guessed MCP tool name. Pixel lists live Page Grader writes, refreshes stale MCP catalogs, and falls back to native `create_campaign` plus tasks when that write is missing. Missing VSL/landing-page assets are campaign tasks, not create-blockers. MCP campaign-draft failures now return a fixable contract instead of an unclassified reject.
 Why: After #298, Pixel tried `page_grader_create_campaign_draft`, the create was rejected before save, and instructions forbade native `create_campaign`, so Master Your Kraft never got a campaign or launch tasks.
