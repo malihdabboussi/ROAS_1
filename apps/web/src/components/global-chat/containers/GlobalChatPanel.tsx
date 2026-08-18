@@ -31,6 +31,8 @@ export function GlobalChatPanel({
   const pathname = usePathname() ?? ''
   const searchParams = useSearchParams()
   const routeConversationId = searchParams.get('conv')?.trim() || null
+  const chatParam = searchParams.get('chat')
+  const freshChat = chatParam === 'starting' || chatParam === 'new'
   useWorkRequestHomeChatSeed()
   const workContext = useGlobalChatStore((s) => s.workContext)
   const storedMeetingContext = useGlobalChatStore((s) => s.meetingContext)
@@ -55,6 +57,7 @@ export function GlobalChatPanel({
     channelId,
     isSpacesRoute,
     forceGeneral: isAgencyWorkspaceRoute,
+    freshChat,
     activeSpaceId,
     activeSpaceCampaignId: activeSpace?.campaign_id ?? null,
     workContext,

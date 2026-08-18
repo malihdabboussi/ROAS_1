@@ -17,15 +17,41 @@ const STATIC_AD_FORMAT_TERMS = [
 ] as const
 
 const STATIC_AD_MODE_TERMS = {
-  validate_messaging: ['validate messaging', 'validate message', 'messaging angles', 'message angles'],
+  validate_messaging: [
+    'validate messaging',
+    'validate message',
+    'messaging angles',
+    'message angles',
+  ],
   image_brief: ['image brief'],
   static_ad_book: ['static ad book'],
 } as const
 
-export function buildStaticAdChatRoutingInstruction(
-  content: string,
-  channel: ChatChannel,
-): string {
+const CREATE_VERBS = new Set([
+  'make',
+  'create',
+  'generate',
+  'design',
+  'produce',
+  'build',
+  'want',
+  'need',
+])
+const AD_ACCOUNTISH = new Set([
+  'account',
+  'set',
+  'sets',
+  'spend',
+  'manager',
+  'library',
+  'group',
+  'groups',
+])
+const MAX_WORDS_BETWEEN = 5
+const PASTE_SCAN_CHARS = 240
+const PASTE_LENGTH_THRESHOLD = 480
+
+export function buildStaticAdChatRoutingInstruction(content: string, channel: ChatChannel): string {
   const normalized = normalize(content)
   const explicitMode = findExplicitMode(normalized)
   const isModeSelectionReply = explicitMode !== null && normalized.length <= 240
@@ -94,10 +120,69 @@ function isStaticAdCreationRequest(content: string): boolean {
     content.includes('static ad production')
   if (namesStaticWorkflow) return true
 
-  const asksForAds =
-    /\b(static ads?|image ads?|ad images?|ad creatives?|ads?)\b/.test(content) &&
-    /\b(make|create|generate|design|produce|build|want|need)\b/.test(content)
-  return asksForAds
+  return asksForAdCreation(content)
+}
+
+function asksForAdCreation(content: string): boolean {
+  if (content.length <= PASTE_LENGTH_THRESHOLD) {
+    return hasCreateVerbNearAdNoun(tokenize(content))
+  }
+  return (
+    hasCreateVerbNearAdNoun(tokenize(content.slice(0, PASTE_SCAN_CHARS))) ||
+    hasCreateVerbNearAdNoun(tokenize(content.slice(-PASTE_SCAN_CHARS)))
+  )
+}
+
+function tokenize(content: string): string[] {
+  return content
+    .split(' ')
+    .map((word) => word.replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, ''))
+    .filter(Boolean)
+}
+
+function hasCreateVerbNearAdNoun(words: string[]): boolean {
+  for (let index = 0; index < words.length; index += 1) {
+    const nounLength = adNounLengthAt(words, index)
+    if (nounLength > 0) {
+      const afterNoun = index + nounLength
+      const verbLimit = Math.min(words.length, afterNoun + MAX_WORDS_BETWEEN + 1)
+      for (let cursor = afterNoun; cursor < verbLimit; cursor += 1) {
+        if (CREATE_VERBS.has(words[cursor] ?? '')) return true
+      }
+    }
+    if (!CREATE_VERBS.has(words[index] ?? '')) continue
+    const nounLimit = Math.min(words.length, index + 2 + MAX_WORDS_BETWEEN)
+    for (let cursor = index + 1; cursor < nounLimit; cursor += 1) {
+      if (adNounLengthAt(words, cursor) > 0) return true
+    }
+  }
+  return false
+}
+
+function adNounLengthAt(words: string[], index: number): number {
+  const current = words[index] ?? ''
+  const next = words[index + 1] ?? ''
+  const afterNext = words[index + 2] ?? ''
+
+  if (current === 'static' && (next === 'ad' || next === 'ads')) {
+    return next === 'ad' && AD_ACCOUNTISH.has(afterNext) ? 0 : 2
+  }
+  if (current === 'image' && (next === 'ad' || next === 'ads')) {
+    return next === 'ad' && AD_ACCOUNTISH.has(afterNext) ? 0 : 2
+  }
+  if (
+    current === 'ad' &&
+    (next === 'image' || next === 'images' || next === 'creative' || next === 'creatives')
+  ) {
+    return 2
+  }
+  if (current === 'an' && next === 'ad') {
+    return AD_ACCOUNTISH.has(afterNext) ? 0 : 2
+  }
+  if (current === 'ads') {
+    return AD_ACCOUNTISH.has(next) ? 0 : 1
+  }
+  return 0
 }
 
 function findExplicitMode(
