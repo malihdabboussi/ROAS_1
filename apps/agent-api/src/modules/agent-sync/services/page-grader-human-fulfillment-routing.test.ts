@@ -38,6 +38,8 @@ describe('Page Grader human fulfillment routing', () => {
       expect(skill).toContain('review_url')
       expect(skill).toContain('openable')
       expect(skill).toContain('Created:')
+      expect(skill).toContain('page_grader_create_campaign_draft')
+      expect(skill).toContain('create_campaign')
     }
   })
 

@@ -68,3 +68,29 @@ describe('ArtifactNorthStarService list_campaigns relevance', () => {
     })
   })
 })
+
+describe('ArtifactNorthStarService create_campaign', () => {
+  it('returns a portal campaign url with the created campaign', async () => {
+    const service = new ArtifactNorthStarService()
+    const created = {
+      id: '11111111-1111-4111-8111-111111111111',
+      name: 'Master Your Kraft | VSL Retargeting',
+      status: 'draft',
+    }
+    const target = {
+      mainApiCall: vi.fn(async () => created),
+    }
+
+    const result = await service
+      .getHandlers(target)
+      .create_campaign({ name: 'Master Your Kraft | VSL Retargeting' }, 'agent:vibey:stub')
+
+    expect(target.mainApiCall).toHaveBeenCalledWith('POST', '/api/campaigns', 'agent:vibey:stub', {
+      name: 'Master Your Kraft | VSL Retargeting',
+    })
+    expect(result).toMatchObject({
+      ...created,
+      url: 'https://app.roas.io/campaigns/11111111-1111-4111-8111-111111111111',
+    })
+  })
+})

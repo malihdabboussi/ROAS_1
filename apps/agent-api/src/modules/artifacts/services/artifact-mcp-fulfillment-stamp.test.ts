@@ -13,7 +13,10 @@ describe('artifact-mcp-fulfillment-stamp', () => {
   it('detects Page Grader fulfillment create tools', () => {
     expect(isFulfillmentCreateTool('page_grader_create_fulfillment_request')).toBe(true)
     expect(isFulfillmentCreateTool('create_fulfillment_request')).toBe(true)
+    expect(isFulfillmentCreateTool('page_grader_create_campaign_draft')).toBe(true)
+    expect(isFulfillmentCreateTool('create_portal_campaign')).toBe(true)
     expect(isFulfillmentCreateTool('page_grader_list_clients')).toBe(false)
+    expect(isFulfillmentCreateTool('page_grader_list_campaigns')).toBe(false)
   })
 
   it('injects conversation_id into top-level and source_context without clobbering', () => {

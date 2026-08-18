@@ -1,3 +1,15 @@
+## 2026-08-18 - [ARCH] ui-block-extractor.ts is over the 600 LOC service cap
+
+Status: Open
+
+Found while: Adding campaign-draft work_request cards and create_campaign preview blocks
+
+Evidence: `wc -l` on `apps/agent-api/src/modules/shared/ui-block-extractor.ts` remains above the 600 LOC shared-module cap after a small create_campaign / campaign-draft matcher.
+
+Needed work: Split action output builders (work request, media, artifact previews) out of `ui-block-extractor.ts`.
+
+Reason not done now: The requested work was the invalid Service Request confirmation and campaign chat links; splitting the extractor was out of scope.
+
 ## 2026-08-17 - [FIX] Team Intelligence digest still repeats the same open threads
 
 Status: Open

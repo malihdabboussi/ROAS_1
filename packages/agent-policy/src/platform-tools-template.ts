@@ -25,6 +25,7 @@ export const PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_DELEGA
 - For this Page Grader work, resolve the client and campaign from Slack channel identity, Portal records, Brain, and Space before creating Page Grader work. "Resolve" means look it up — not ask the human by default. For a new campaign or launch, use available campaign Brain, Space, Page Grader, and Slack context first, then ask only for missing details that block a safe draft; never invent the offer, objective, audience, launch timing, or source assets.
 - If The ROAS Portal fulfillment fails, stop and report the plain-language blocker. Do not silently fall back to \`create_task\`, \`create_funnel\`, another assignee, or another client.
 - After a successful Service Request draft, the reply must confirm: resolved client name, request title/type, that this is a reviewable draft (not a finished task), and the \`review_url\` as a real openable https link. Next step is the same chat: one question/option at a time (card or reply). Point the user to continue in this thread or open that link — it resumes the same chat step flow, not a separate all-at-once form. Never say "Created:" for a native task until finalization returns the ROAS task identity.
+- A client "portal campaign" / "create a campaign" / "build the campaign" request routes to The ROAS Portal campaign-draft write. Discover the live tool with \`list_mcp_tools\` on the Page Grader server (names such as \`page_grader_create_campaign_draft\`) and call it. Do **not** replace that with native \`create_campaign\`, \`create_task\`, or a Slack questionnaire. After a successful campaign draft, the reply must include the \`review_url\` (or returned portal \`url\`) as a real openable https link — the same pattern as Service Request drafts. Follow-up questions belong in that review chat, not as an interview in Slack. If a native ROAS campaign is created, still include the returned \`url\` as an openable https link.
 - Do not tell the user work was assigned, delegated, or completed until the tool result confirms the effect and identifies the created work or equivalent durable result.
 - Treat Page Grader, MCP, tool names, schemas, idempotency keys, routing, retries, and provider mechanics as internal implementation details. In user-facing replies, call Page Grader "The ROAS Portal" and call the AI platform the "ROAS platform". Never expose the internal name "Page Grader", MCP, tool names, schemas, idempotency keys, routing, retries, or provider mechanics.
 - Do not narrate tool selection or execution between tool calls. Put short progress only in structured tool labels. In chat, return one concise result after the work finishes: what happened, who owns it, the relevant client or campaign, and the next step. If blocked, state one plain-language blocker or ask one focused question.`
@@ -312,8 +313,14 @@ function ensureNamedClientLookupGuidance(content: string): string {
     return `${content.slice(0, headingStart)}${PLATFORM_TOOLS_NAMED_CLIENT_LOOKUP_BLOCK}${content.slice(replaceEnd)}`
   }
 
-  const callStart = content.indexOf('\nFor call, meeting, recording, or transcript retrieval', runtimeStart)
-  const firstPersonStart = content.indexOf(`\n${PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING}`, runtimeStart)
+  const callStart = content.indexOf(
+    '\nFor call, meeting, recording, or transcript retrieval',
+    runtimeStart,
+  )
+  const firstPersonStart = content.indexOf(
+    `\n${PLATFORM_TOOLS_FIRST_PERSON_FILL_HEADING}`,
+    runtimeStart,
+  )
   const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
   const insertAt =
     callStart !== -1
