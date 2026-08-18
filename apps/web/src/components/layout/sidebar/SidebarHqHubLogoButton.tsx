@@ -88,7 +88,10 @@ export function SidebarHqHubLogoButton({
         if (holdStartedRef.current || useShellMenuDock.getState().dragging) return
         pointerActiveRef.current = false
       }}
-      className="hub-sidebar-logo-button group cursor-pointer rounded-lg p-1"
+      className={cn(
+        'hub-sidebar-logo-button group cursor-pointer rounded-lg',
+        wordmark ? 'p-1' : 'p-0',
+      )}
       aria-label={expanded ? 'Collapse menu' : 'Expand menu'}
       aria-expanded={expanded}
     >

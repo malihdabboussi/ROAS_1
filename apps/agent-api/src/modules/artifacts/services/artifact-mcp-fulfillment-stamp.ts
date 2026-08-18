@@ -12,6 +12,75 @@ export function isFulfillmentCreateTool(toolName: string): boolean {
   return PORTAL_DRAFT_CREATE_TOOL_RE.test(toolName.trim())
 }
 
+export function isPortalCampaignDraftTool(toolName: string): boolean {
+  return /create_campaign_draft|create_portal_campaign/i.test(toolName.trim())
+}
+
+export function formatMcpToolCallFailure(input: {
+  toolName: string
+  serverName: string
+  errorText?: string
+}): string {
+  const raw = (input.errorText ?? '').trim()
+  const base =
+    raw ||
+    `MCP tool ${input.toolName} on ${input.serverName} failed before a durable result. Call list_mcp_tools and follow the live inputSchema.`
+  if (!isPortalCampaignDraftTool(input.toolName)) return base
+  return `${base} If no live campaign-draft write exists, use native create_campaign, include the returned url, and create_task for missing VSL, landing page, or launch assets.`
+}
+
+export function mcpToolFailureResult(input: {
+  toolName: string
+  serverName: string
+  errorText?: string
+}): Record<string, unknown> {
+  const campaign = isPortalCampaignDraftTool(input.toolName)
+  return {
+    success: false,
+    error: formatMcpToolCallFailure(input),
+    error_code: 'ARTIFACT_MCP_TOOL_FAILED',
+    error_class: 'validation',
+    reliability: 'probable',
+    effect_state: 'failed_before_effect',
+    retry_policy: {
+      mode: 'retry_with_corrected_payload',
+      max_attempts: 1,
+      stop_after_same_error: true,
+      reason: campaign
+        ? 'Use a live campaign-draft write or native create_campaign.'
+        : 'Use a live MCP tool name and inputSchema.',
+    },
+    correction: {
+      summary: campaign
+        ? 'List live Portal tools, or create_campaign if no campaign-draft write exists.'
+        : 'List live MCP tools and retry with the exact name and schema.',
+      next_tool_preference: campaign
+        ? ['list_mcp_tools', 'create_campaign', 'create_task']
+        : ['list_mcp_tools'],
+    },
+    fallback: campaign
+      ? { summary: 'Create the campaign natively and add tasks for missing launch assets.' }
+      : null,
+    agent_diagnosis: 'The MCP write was rejected before a durable record was saved.',
+    agent_instruction: campaign
+      ? 'Do not retry the same guessed campaign-draft payload. Call list_mcp_tools and use the exact live write. If none exists, call native create_campaign with a name, post the returned url, and create_task for missing VSL, landing page, or launch assets.'
+      : 'Call list_mcp_tools and retry with an exact live tool name and inputSchema.',
+    user_explanation: {
+      intent: 'correct_and_retry',
+      sentence: campaign
+        ? 'I could not save that campaign through the Portal write, so I will create it in ROAS and add tasks for anything still missing.'
+        : 'I need to use a different available tool for that step.',
+    },
+    forbidden_user_framing: [
+      'platform error',
+      'platform problem',
+      'backend problem',
+      'internal issue',
+    ],
+    observability: { fingerprint: 'artifact.mcp_tool_failed' },
+  }
+}
+
 export function stampConversationIntoFulfillmentArgs(
   toolArgs: Record<string, unknown>,
   conversationId: string,

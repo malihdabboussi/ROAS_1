@@ -13,7 +13,8 @@ export function SidebarSimpleResizeHandle() {
 
   useEffect(() => {
     if (!dragging) return
-    const onMove = (event: PointerEvent) => setWidth(startWidth.current + event.clientX - startX.current)
+    const onMove = (event: PointerEvent) =>
+      setWidth(startWidth.current + event.clientX - startX.current)
     const onUp = () => setDragging(false)
     document.addEventListener('pointermove', onMove)
     document.addEventListener('pointerup', onUp)
@@ -24,7 +25,7 @@ export function SidebarSimpleResizeHandle() {
   }, [dragging, setWidth])
 
   return (
-    <div className="absolute inset-y-0 right-0 translate-x-1/2">
+    <div className="absolute inset-y-0 right-0 z-10 translate-x-1/2">
       <ResizableDivider
         compact
         showGrip={false}

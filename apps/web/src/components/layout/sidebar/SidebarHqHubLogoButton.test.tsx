@@ -61,6 +61,14 @@ describe('SidebarHqHubLogoButton', () => {
     const logo = screen.getByRole('button', { name: 'Collapse menu' })
     expect(logo.querySelector('.hub-sidebar-logo-mark-wordmark')).toBeTruthy()
     expect(screen.getAllByAltText('ROAS').length).toBeGreaterThan(0)
+    expect(logo).toHaveClass('p-1')
+  })
+
+  it('drops compact padding so the R mark can sit in the rail center', () => {
+    render(<SidebarHqHubLogoButton expanded={false} />)
+    const logo = screen.getByRole('button', { name: 'Expand menu' })
+    expect(logo).toHaveClass('p-0')
+    expect(logo.querySelector('.hub-sidebar-logo-mark-wordmark')).toBeNull()
   })
 
   it('turns a hold into a dock drag instead of collapse', async () => {

@@ -17,6 +17,13 @@ describe('artifact-space-item-hydrate.helper', () => {
         recording_url: 'https://fathom.video/calls/1',
         fathom_url: 'https://fathom.video/calls/1',
         attendees: ['opt-1'],
+        client_campaign: {
+          client_id: 'client-1',
+          client_name: '1DS Collective',
+          campaign_id: 'camp-a',
+          campaign_name: 'Launch',
+          roas_space_id: 'space-1',
+        },
         external_automation: {
           provider: 'fathom',
           meeting_id: '762669050',
@@ -32,6 +39,13 @@ describe('artifact-space-item-hydrate.helper', () => {
       transcript_link: 'https://fathom.video/calls/1',
       fathom_meeting_id: '762669050',
       summary: 'Discussed pricing and founding offer.',
+      client_campaign: {
+        client_id: 'client-1',
+        client_name: '1DS Collective',
+        campaign_id: 'camp-a',
+        campaign_name: 'Launch',
+        roas_space_id: 'space-1',
+      },
     })
     expect(meeting?.transcript_entries).toEqual([{ speaker: 'Nate', text: 'Hello' }])
   })

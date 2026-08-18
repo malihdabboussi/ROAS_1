@@ -1,16 +1,34 @@
 # Changelog - August 18, 2026
 
-## [2026-08-18 11:54] - [FIX]
-What: Page Grader client General is a hidden space that opens the client overview. Switchers, HQ sidebar, and Choose Space flyouts omit it. `/spaces?space=` for that space replaces to `/campaigns/{id}?client=…`; Connections open that overview directly.
-Why: Client General was never a second workspace and is not org system General. The Page Grader import already stamps `space_role: general`; navigating to it should show the client HQ.
-Impact: Connections / deep links to a client General space land on Overview / Campaigns / Meetings. Org General and Portal campaign spaces (Webinar, Skool) are unchanged.
-Files: `page-grader-client-general-space.ts`, `SpacesContainer.tsx`, `use-space-campaign-name.ts`, `ConversationScopePicker.tsx`, `group-other-spaces-by-campaign.ts`, `CampaignOverviewTab.tsx`, `SidebarHqSpacesGroupedList.tsx`, `ShellRightPanel.tsx`, `documentation/features/page-grader-campaign-brain-sync.md`
+## [2026-08-18 18:55] - [FIX]
+What: Declared `fieldRowVariant` on All Meetings `ClientCampaignCell` so SpaceCell can pass the shared kanban/default row variant.
+Why: #304 used `fieldRowVariant` in the cell and forwarded it from `SpaceCell`, but the props type omitted it. `next build` typecheck failed every `roas-web` deploy.
+Impact: `pnpm --filter @vibey/web typecheck` passes so `app.roas.io` can ship #304/#305.
+Files: `ClientCampaignCell.tsx`
 
-## [2026-08-18 10:44] - [FIX]
-What: Connections no longer flash General while a space name loads, and clicking a space row opens that space instead of the parent campaign HQ. Org General HQ now says it is the unassigned catch-all. Space breadcrumbs use the client/program as the folder when the campaign itself is named General.
-Why: A Meetings connection fell back to the parent General campaign for both the label and the click target, so the summary panel flickered and opened `Campaigns / General` with no client. That HQ is org-wide, not a client General.
-Impact: Meetings opens `/spaces?space=…`. Org General overview explains the catch-all. Client-named General spaces crumb as `Campaigns / {client} / {space}`. Combining org General with per-client General is logged as follow-up.
-Files: `ShellRightPanelConnections.tsx`, `use-conversation-location-label.ts`, `conversation-scope-sort.ts`, `CampaignOverviewTab.tsx`, `campaign-view-messages.config.ts`, `use-space-campaign-name.ts`, `space-breadcrumb-folder-label.ts`, `SpaceItemsContainer.tsx`, `documentation/features/claude-chatgpt-shell.md`
+## [2026-08-18 18:46] - [DOCS]
+What: Wrote the Meetings one-room plan: one All Meetings row per call, two doors (standard task card vs specialized meeting card), Live/Completed/No Show/Rescheduled only, related calls so Pixel can read last week’s recording without Recordings +.
+Why: Calendar, All Meetings, and the meeting workspace were three homes. Agenda opening a different card than All Meetings was the intended split; New/Upcoming is unnecessary because date already means upcoming.
+Impact: Implementation waits for approval. Mapping PR stays separate. Phase order is materialize rows → status/host/filter → two doors → related calls + Pixel context → both post-call automatics → card/tab cleanup.
+Files: `.docs/plans/meetings-one-room-2026-08-18.md`
+
+## [2026-08-18 17:40] - [FIX]
+What: Restored Simple sidebar Recents resize, left-offset the expanded ROAS wordmark, and centered the compact R mark in the rail.
+Why: The Recents drag handle sat under the menu and width used a 300ms transition, so dragging did nothing useful. The wordmark lived in a padded flex-1 row so it read centered. Compact R padding plus an unconstrained PNG spilled right of the 56px rail.
+Impact: Drag the Simple menu right edge to widen Recents (272–476px). Expanded ROAS sits left. Collapsed R sits in the icon column center.
+Files: `SidebarSimpleSection.tsx`, `SidebarSimpleResizeHandle.tsx`, `SidebarHqHubLogoButton.tsx`, `Sidebar.tsx`, `apps/web/src/app/globals.css`, `apps/website/src/app/globals.css`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-18 17:35] - [FEATURE]
+What: All Meetings gained a Client / Campaign column. Operators map a call to a Page Grader client and that client’s campaign without moving the row. Mapped names link to the client and campaign Space; an Agenda link opens that meeting’s workspace. Call Kind stays independent. The same field id upgrades Delegation Desk from free text to the picker.
+Why: Meetings could classify Call Kind but could not tag which client and campaign a call belonged to, so later training and reference had no durable client/campaign label. There was also no explicit Agenda control on the All Meetings row.
+Impact: `custom_data.client_campaign` stores client_id/name, campaign_id/name, and optional roas_space_id. Agents hydrate that mapping on meeting items. Existing All Meetings spaces and the personal-dashboard template show the column after Call Kind.
+Files: `ClientCampaignCell.tsx`, `SpaceCell.tsx`, `client-campaign-mapping.ts`, `use-client-campaign-groups.ts`, `space-template-catalog-personal-dashboard.ts`, `20260818173000_meetings_client_campaign_field.sql`, `artifact-space-item-hydrate.helper.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-18 17:25] - [FIX]
+What: Portal campaign create no longer dies on a guessed MCP tool name. Pixel lists live Page Grader writes, refreshes stale MCP catalogs, and falls back to native `create_campaign` plus tasks when that write is missing. Missing VSL/landing-page assets are campaign tasks, not create-blockers. MCP campaign-draft failures now return a fixable contract instead of an unclassified reject.
+Why: After #298, Pixel tried `page_grader_create_campaign_draft`, the create was rejected before save, and instructions forbade native `create_campaign`, so Master Your Kraft never got a campaign or launch tasks.
+Impact: Slack "create a portal campaign" either posts a Portal `review_url` or a ROAS campaign `url` with tasks for unverified VSL/LP/assets. Retrying the same guessed tool is no longer the only path.
+Files: `artifact-mcp-tool-preflight.ts`, `artifact-mcp-fulfillment-stamp.ts`, `artifact-mcp.service.ts`, `artifact-action-preflight.ts`, `platform-tools-template.ts`, `page-grader-operator/SKILL.md`, `20260818173000_portal_campaign_create_fallback.sql`, `page-grader-mcp-bridge.md`
 
 ## [2026-08-18 16:20] - [FIX]
 What: Meetings Agenda Mine now DWD-pulls the signed-in user's Workspace Directory calendar (linked/suggested portal user, not login Gmail first). Team Google Calendar fetches paginate `nextPageToken` (page size 2500, `singleEvents=true`) and pin the caller inside the Directory people cap.
@@ -60,11 +78,24 @@ Why: Follow-ups landed as easy-to-miss channel-only posts, and the late nudge st
 Impact: New drafts get a 3-hour then 22-hour Slack nudge in-thread and in-channel. Existing drafts already marked `reminder_1h_sent_at` are unchanged.
 Files: `work-request.service.ts`, `work-request-reminders.ts`, `work-request-conversation-stamp.ts`, `work-request.repository.ts`, `slack-agent-tools.service.ts`, `documentation/features/page-grader-mcp-bridge.md`
 
+## [2026-08-18 11:54] - [FIX]
+What: Page Grader client General is a hidden space that opens the client overview. Switchers, HQ sidebar, and Choose Space flyouts omit it. `/spaces?space=` for that space replaces to `/campaigns/{id}?client=…`; Connections open that overview directly.
+Why: Client General was never a second workspace and is not org system General. The Page Grader import already stamps `space_role: general`; navigating to it should show the client HQ.
+Impact: Connections / deep links to a client General space land on Overview / Campaigns / Meetings. Org General and Portal campaign spaces (Webinar, Skool) are unchanged.
+Files: `page-grader-client-general-space.ts`, `SpacesContainer.tsx`, `use-space-campaign-name.ts`, `ConversationScopePicker.tsx`, `group-other-spaces-by-campaign.ts`, `CampaignOverviewTab.tsx`, `SidebarHqSpacesGroupedList.tsx`, `ShellRightPanel.tsx`, `documentation/features/page-grader-campaign-brain-sync.md`
+
+## [2026-08-18 10:44] - [FIX]
+What: Connections no longer flash General while a space name loads, and clicking a space row opens that space instead of the parent campaign HQ. Org General HQ now says it is the unassigned catch-all. Space breadcrumbs use the client/program as the folder when the campaign itself is named General.
+Why: A Meetings connection fell back to the parent General campaign for both the label and the click target, so the summary panel flickered and opened `Campaigns / General` with no client. That HQ is org-wide, not a client General.
+Impact: Meetings opens `/spaces?space=…`. Org General overview explains the catch-all. Client-named General spaces crumb as `Campaigns / {client} / {space}`. Combining org General with per-client General is logged as follow-up.
+Files: `ShellRightPanelConnections.tsx`, `use-conversation-location-label.ts`, `conversation-scope-sort.ts`, `CampaignOverviewTab.tsx`, `campaign-view-messages.config.ts`, `use-space-campaign-name.ts`, `space-breadcrumb-folder-label.ts`, `SpaceItemsContainer.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-18 02:33] - [FEATURE]
 What: Pixel defaults to Power for chat and always loads Dylan Super Voice for "write this message" / send-ready drafts. Draft card Use in composer now seeds a Claude-style acknowledgment ("I used option B and made some edits. Here it is.") plus the draft body.
 Why: Message writing was weaker without Super Voice, and users were manually switching to Power. After editing a draft version, sending bare copy into chat gave Pixel no context to acknowledge.
 Impact: New and existing vibey/Pixel agents get `auto:power` plus the `dylans-super-voice` skill; TOOLS guidance requires the skill for drafts. Composer seed after Use in composer matches Claude's edit handoff.
 Files: `apps/web/src/features/studio/components/message-bubble/DraftVersionsCard.tsx`, `draft-versions.utils.ts`, `packages/agent-policy/src/platform-tools-template.ts`, `docker/agents/templates/shared/TOOLS.md`, `docker/agents/vibey/skills/dylans-super-voice/SKILL.md`, `apps/api/src/modules/missions/services/agent-management.service.ts`, `agent-onboarding.service.ts`, `supabase/migrations/20260818023000_pixel_super_voice_power_defaults.sql`, `.gitignore`
+
 ## [2026-08-18 02:25] - [FIX]
 What: Bound chat stream memory so heavy Pixel turns stop Chrome Aw Snap (error code 5). Cap tool progress tails and tool preview size; prune inactive conversation message caches on chat switch; clear message/stream maps on conversation remove; skip localStorage persist while any turn is streaming; slim persisted tool blocks; narrow StatusIndicator / useActiveMessages to the active conversation only.
 Why: Mid-turn store updates were keeping unbounded tool progress/previews in heap and re-serializing multi‑MB chat graphs to localStorage on every stream tick. The tab renderer OOM'd while the server finished — refresh showed the completed message.
@@ -77,7 +108,6 @@ Why: The matcher treated any “ad” plus a distant “want” or “need” as
 Impact: Short asks like “I want some ads” still get the card. Long pastes only scan the first and last 240 characters, require the verb next to an ads phrase, and ignore ad-account language.
 Files: `apps/agent-api/src/modules/chat/services/static-ad-chat-routing.ts`, `apps/agent-api/src/modules/chat/services/static-ad-chat-routing.test.ts`, `documentation/features/missions.md`
 
-
 ## [2026-08-18 02:05] - [FIX]
 **What:** Home **New chat** no longer auto-attaches org Meetings/General; `@` campaign chip creates a Connection and keeps `campaignId`.
 **Why:** Defaulting every Home thread to Meetings made `/home?conv=` look like a meeting chat and dropped campaign identity when creating from campaign pages.
@@ -89,7 +119,6 @@ Files: `apps/agent-api/src/modules/chat/services/static-ad-chat-routing.ts`, `ap
 **Why:** The rail listed every client as **General**; Home New chat dropped `spaceId`/`campaignId` so `/home?conv=` opened as a meeting chat.
 **Impact:** Client Connections look like **ROAS Media / General**. Campaign Connections show **Client / Campaign**. Home chats stay on `/home?conv=` with the attached campaign.
 **Files:** `apps/web/src/features/chat/components/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/chat/lib/use-home-chat-attached-location.ts`, `apps/web/src/features/chat/lib/use-home-chat-attached-location.test.ts`, `apps/web/src/features/spaces/components/SpaceChatSessionNav.tsx`, `apps/web/src/features/spaces/components/space-chat-nav-utils.ts`, `apps/web/src/features/spaces/components/space-chat-nav-utils.test.ts`, `documentation/features/claude-chatgpt-shell.md`
-
 
 ## [2026-08-18 01:20] - [FIX]
 What: Removed the streaming composer typewriter tip (`Tip: Ask any agent for campaign performance…` and the rest of that rotating strip).
