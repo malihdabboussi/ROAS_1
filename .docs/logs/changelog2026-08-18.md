@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 13:40] - [FIX]
+What: Service Request Slack follow-ups now reply in the original task thread and also post to the channel. The first reminder is 3 hours after create and says so; the second is 22 hours after create and says the review expires in 2 hours.
+Why: Follow-ups landed as easy-to-miss channel-only posts, and the late nudge still said "about one hour" while firing 1 hour before expiry.
+Impact: New drafts get a 3-hour then 22-hour Slack nudge in-thread and in-channel. Existing drafts already marked `reminder_1h_sent_at` are unchanged.
+Files: `work-request.service.ts`, `work-request-reminders.ts`, `work-request-conversation-stamp.ts`, `work-request.repository.ts`, `slack-agent-tools.service.ts`, `documentation/features/page-grader-mcp-bridge.md`
+
 ## [2026-08-18 00:17] - [FEATURE]
 What: Added Create with AI on Agenda & prep. It seeds the existing Start agenda prompt so Pixel writes the agenda Space Doc from open action items, launches, client reports, and related meeting context.
 Why: Agenda & prep had an empty or manual doc with no way to generate the agenda in place. Start agenda lived only in the call-status row and did not ask Pixel to pull launches or reports onto the page.
