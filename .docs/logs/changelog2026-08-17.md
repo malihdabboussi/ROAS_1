@@ -1,11 +1,5 @@
 # Changelog - August 17, 2026
 
-## [2026-08-17 19:21] - [FIX]
-What: Forked chats now restore recent turns, attached documents, and named outputs into the empty OpenClaw session instead of a weak oldest-first summary.
-Why: Fork copies the visible thread, but `sessionKey` includes the new conversation id, so Pixel treated "all this" as a blank chat. The old dump kept oldest 20k chars, 300-char assistant previews, and no `metadata.documents`.
-Impact: First message after Fork uses the prior work. `conversation_documents` rows are still not copied onto the fork.
-Files: `chat-session-history.context.ts`, `chat-session-history.service.ts`, `chat-gateway-input.service.ts`, `documentation/features/chat-stream-recovery.md`
-
 ## [2026-08-17 23:30] - [FIX]
 What: Fixed TypeScript errors that failed every Vercel `roas-web` production build after the meeting-workspace header landed. Meeting action reload now returns `Promise<void>`; review-chat seed maps to the studio message shape; unused Zustand `get` and `noUncheckedIndexedAccess` href split are gone; test fixtures typecheck.
 Why: `next build` typechecks `apps/web` with `strict` + unused locals. #282's `onActionsReload={hydrateWorkspace}` returned a bundle, so production never shipped Continue in chat.
@@ -131,6 +125,12 @@ What: More → Programs now lists every program on hover and opens `/programs` o
 Why: Programs was wired to the campaigns hub, so the More item skipped the programs overview and had no hover list.
 Impact: Clicking Programs opens the programs overview. Hovering it shows the same program list. Each program still opens `/programs/[id]`.
 Files: `apps/web/src/components/layout/sidebar/SidebarHqMoreFlyoutBody.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqMoreProgramsFlyout.tsx`, `apps/web/src/app/(dashboard)/programs/page.tsx`, `apps/web/src/app/(dashboard)/programs/_components/ProgramsIndex.tsx`, `apps/web/src/middleware.ts`, `documentation/features/programs.md`
+
+## [2026-08-17 19:21] - [FIX]
+What: Forked chats now restore recent turns, attached documents, and named outputs into the empty OpenClaw session instead of a weak oldest-first summary.
+Why: Fork copies the visible thread, but `sessionKey` includes the new conversation id, so Pixel treated "all this" as a blank chat. The old dump kept oldest 20k chars, 300-char assistant previews, and no `metadata.documents`.
+Impact: First message after Fork uses the prior work. `conversation_documents` rows are still not copied onto the fork.
+Files: `chat-session-history.context.ts`, `chat-session-history.service.ts`, `chat-gateway-input.service.ts`, `documentation/features/chat-stream-recovery.md`
 
 ## [2026-08-17 18:56] - [FIX]
 What: Auto chat write is Sonnet 4.6 again. Terra still runs the research/tool loop. Power stays Opus 5. Economy stays Terra.
