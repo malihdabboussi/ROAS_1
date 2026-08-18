@@ -1,3 +1,15 @@
+## 2026-08-18 - [ARCH] Chat store still far over LOC; list virtualization + dual content_delta deferred
+
+Status: Open
+
+Found while: Fixing Chrome Aw Snap / OOM on heavy `/home?conv=` Pixel turns
+
+Evidence: `wc -l` on `apps/web/src/features/studio/store/use-chat-store.ts` is ~2461 (store/module caps in project-architecture are far lower). Stream memory bounds (progress/preview caps, mid-stream persist skip, in-memory prune) land in this change. Chat message list still mounts full history without virtualization. Assistant turns still dual-write `content` plus ordered text blocks during `content_delta`. Backend can still emit large uncapped `tool_content_preview` payloads (client now truncates).
+
+Needed work: Split chat store by concern (messages / stream UI / persist). Virtualize ChatInterface message list. Stop dual content_delta writes once render path is ordered-blocks-only. Throttle or truncate tool preview payloads at the agent-api stream source.
+
+Reason not done now: Aw Snap fix targets the highest-impact heap growers without a store mega-refactor or render rewrite in the same change.
+
 ## 2026-08-18 - [FIX] Static-ad format/mode terms still scan the full pasted message
 
 Status: Open
