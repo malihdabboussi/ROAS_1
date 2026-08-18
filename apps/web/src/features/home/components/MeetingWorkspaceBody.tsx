@@ -27,8 +27,7 @@ function SectionTitle({ children, count }: { children: string; count?: number })
 }
 
 /**
- * The section stack of the meeting workspace: recordings & attachments up top,
- * agenda & prep, then post-call recap, notes, and the action-item list.
+ * Recordings and action items sit in the top row. Agenda, recap, and notes follow.
  */
 export function MeetingWorkspaceBody({
   spaceId,
@@ -69,23 +68,52 @@ export function MeetingWorkspaceBody({
 
   return (
     <>
-      <section className="section-card p-spacing-4">
-        <MeetingRecordingsSection
-          spaceId={spaceId}
-          meetingItemId={meetingItemId}
-          recordings={bundle?.recordings ?? []}
-          isPostCall={isPostCall || isLive}
-          onLinked={onRecordingLinked}
-          attachmentCount={bundle?.deliverables.length ?? 0}
-        >
-          <MeetingWorkspaceAttachments
+      <div className="gap-spacing-4 flex flex-wrap items-start">
+        <section className="section-card p-spacing-4 min-w-spacing-72 flex-1">
+          <MeetingRecordingsSection
             spaceId={spaceId}
-            deliverables={bundle?.deliverables ?? []}
-            loading={loading}
-            embedded
-          />
-        </MeetingRecordingsSection>
-      </section>
+            meetingItemId={meetingItemId}
+            recordings={bundle?.recordings ?? []}
+            isPostCall={isPostCall || isLive}
+            onLinked={onRecordingLinked}
+            attachmentCount={bundle?.deliverables.length ?? 0}
+          >
+            <MeetingWorkspaceAttachments
+              spaceId={spaceId}
+              deliverables={bundle?.deliverables ?? []}
+              loading={loading}
+              embedded
+            />
+          </MeetingRecordingsSection>
+        </section>
+
+        <section className="section-card min-w-spacing-72 flex-1 overflow-hidden">
+          {bundle?.continuity.unresolved_commitments.length ? (
+            <div className="border-border p-spacing-4 border-b">
+              <SectionTitle count={bundle.continuity.unresolved_commitments.length}>
+                Open loops
+              </SectionTitle>
+              <div className="mt-spacing-3 gap-spacing-2 flex flex-col">
+                {bundle.continuity.unresolved_commitments.map((action) => (
+                  <p key={action.id} className="body-3 text-foreground">
+                    {action.title}
+                  </p>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          <div className="p-spacing-4">
+            <MeetingActionItemsSection
+              spaceId={spaceId}
+              meetingItemId={meetingItemId}
+              actions={bundle?.actions ?? []}
+              loading={loading}
+              onCreated={onActionCreated}
+              onReload={onActionsReload}
+            />
+          </div>
+        </section>
+      </div>
 
       <section className="section-card p-spacing-4 gap-spacing-2 flex flex-col">
         <MeetingAgendaPrepSection
@@ -112,33 +140,6 @@ export function MeetingWorkspaceBody({
           snippets={bundle?.snippets ?? []}
           onCreated={onNoteCreated}
         />
-      </section>
-
-      <section className="section-card overflow-hidden">
-        {bundle?.continuity.unresolved_commitments.length ? (
-          <div className="border-border p-spacing-4 border-b">
-            <SectionTitle count={bundle.continuity.unresolved_commitments.length}>
-              Open loops
-            </SectionTitle>
-            <div className="mt-spacing-3 gap-spacing-2 flex flex-col">
-              {bundle.continuity.unresolved_commitments.map((action) => (
-                <p key={action.id} className="body-3 text-foreground">
-                  {action.title}
-                </p>
-              ))}
-            </div>
-          </div>
-        ) : null}
-        <div className="p-spacing-4">
-          <MeetingActionItemsSection
-            spaceId={spaceId}
-            meetingItemId={meetingItemId}
-            actions={bundle?.actions ?? []}
-            loading={loading}
-            onCreated={onActionCreated}
-            onReload={onActionsReload}
-          />
-        </div>
       </section>
     </>
   )

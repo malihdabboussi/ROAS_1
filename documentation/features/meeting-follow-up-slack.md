@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-08-17 (meeting workspace header Continue in chat; recordings and attachments share one card; action items use the All Tasks native list)
+**Last Modified:** 2026-08-18 (agenda editor no longer remounts on autosave; action items sit beside recordings)
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` uses those same stored drafts, sends account-manager reminders only to people classified Internal and individually set Active, and keeps the client-facing recap in the admin approval thread.
 
@@ -416,6 +416,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-08-17:** Meeting workspace Action items use the same native list as All Tasks (`AllTasksNativeList` / Space `ListView`): status, name, Client Workspace, Campaign Space, priority, assignee, due date, and **Add task**. Follow-up space-item fields (priority, assignee, due date) now travel with the workspace bundle so those columns are real, not empty captions.
 - **2026-08-14:** Opening a meeting workspace no longer auto-selects its linked chat or remounts the shell chat. That switch happens only on Continue in chat or a recap/follow-up action. Seeded meeting prompts now send into the linked conversation instead of creating a new unlinked thread, and a meeting-tagged conversation restores meeting identity so Pixel does not ask which meeting.
 - **2026-08-17:** Meeting workspace header drops the phase badge and close X. Continue in chat sits top-right. After a call ends, Start call sits next to Recap message so an accidental end can be restarted. Recordings and attachments share one card.
+- **2026-08-18:** Agenda Space Doc no longer remounts on its own autosave (that was the Loading document flicker). Open transcript is a text link beside Open recording. Link recording sits under those links. Action items sit in the top row beside Recordings & attachments.
 - **2026-08-04:** Default / live `Fathom Meeting Log` again includes grounded `agent_suggest_tasks` after lifecycle status steps. Suggest enrichs existing follow_ups (assignee/due/priority via `source_action_index` / provider key / title); empty `action_items` → `{tasks:[]}`. Attach-to-existing-call also runs this automation after ingest.
 - **2026-08-04:** Phase 3 gap repair: Meetings space calls with provider `meeting_actions` and 0 follow_ups were one-shot synced (14 follow_ups). Prod verification: recent calls with N actions have N follow_ups; calls with 0 stay at 0; live automation `ef3975a7-…` enabled with suggest-tasks.
 - **2026-07-29:** Calendar timestamps with explicit timezone offsets are accepted at scheduled-workspace resolution and normalized to UTC before they are stored.

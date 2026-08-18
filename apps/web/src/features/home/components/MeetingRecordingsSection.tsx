@@ -125,23 +125,17 @@ export function MeetingRecordingsSection({
     }
   }
 
-  return (
-    <section className="gap-spacing-4 flex flex-col">
-      <div className="flex items-center justify-between">
-        <h2 className="body-3 text-foreground font-semibold">Recordings & attachments</h2>
-        <div className="gap-spacing-2 flex items-center">
-          <button
-            type="button"
-            onClick={() => setPicking((open) => !open)}
-            className="button-compact button-glass-neutral"
-            aria-label={picking ? 'Close recording picker' : 'Link a call recording'}
-            aria-expanded={picking}
-          >
-            {picking ? 'Close' : 'Link recording'}
-          </button>
-        </div>
-      </div>
-
+  const linkRecordingControl = (
+    <div className="gap-spacing-3 flex flex-col">
+      <button
+        type="button"
+        onClick={() => setPicking((open) => !open)}
+        className="button-compact button-glass-neutral self-start"
+        aria-label={picking ? 'Close recording picker' : 'Link a call recording'}
+        aria-expanded={picking}
+      >
+        {picking ? 'Close' : 'Link recording'}
+      </button>
       {picking ? (
         <div className="border-border gap-spacing-3 rounded-spacing-2 p-spacing-3 flex flex-col border">
           <p className="typo-caption text-muted-foreground">
@@ -199,11 +193,17 @@ export function MeetingRecordingsSection({
           ) : null}
         </div>
       ) : null}
+    </div>
+  )
 
-      {recordings.map((recording) => (
+  return (
+    <section className="gap-spacing-4 flex flex-col">
+      <h2 className="body-3 text-foreground font-semibold">Recordings & attachments</h2>
+
+      {recordings.map((recording, index) => (
         <div
           key={recording.id}
-          className="border-border gap-spacing-2 rounded-spacing-2 p-spacing-3 flex flex-col border"
+          className="border-border gap-spacing-3 rounded-spacing-2 p-spacing-3 flex flex-col border"
         >
           <div className="gap-spacing-2 flex items-center">
             <Radio className="icon-sm text-primary" aria-hidden />
@@ -212,44 +212,52 @@ export function MeetingRecordingsSection({
           <p className="typo-caption text-muted-foreground">
             {recording.is_primary ? 'Primary recording' : 'Supplemental recording'}
           </p>
-          {recording.recording_url ? (
-            <a
-              href={recording.recording_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="typo-caption text-primary gap-spacing-1 inline-flex items-center"
-            >
-              Open recording <ExternalLink className="icon-xs" />
-            </a>
-          ) : null}
-          {recording.transcript_doc_item_id ? (
-            <button
-              type="button"
-              onClick={() =>
-                openDocumentInShell({
-                  documentId: recording.transcript_doc_item_id!,
-                  spaceItemId: recording.transcript_doc_item_id!,
-                  spaceId,
-                  title: `Transcript — ${recording.title}`,
-                })
-              }
-              className="button-compact button-glass-neutral self-start"
-            >
-              Open transcript
-            </button>
-          ) : null}
+          <div className="gap-spacing-3 flex flex-wrap items-center">
+            {recording.recording_url ? (
+              <a
+                href={recording.recording_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="typo-caption text-primary gap-spacing-1 inline-flex items-center"
+              >
+                Open recording <ExternalLink className="icon-xs" />
+              </a>
+            ) : null}
+            {recording.transcript_doc_item_id ? (
+              <button
+                type="button"
+                onClick={() =>
+                  openDocumentInShell({
+                    documentId: recording.transcript_doc_item_id!,
+                    spaceItemId: recording.transcript_doc_item_id!,
+                    spaceId,
+                    title: `Transcript — ${recording.title}`,
+                  })
+                }
+                className="typo-caption text-primary gap-spacing-1 inline-flex items-center"
+              >
+                Open transcript
+              </button>
+            ) : null}
+          </div>
+          {index === 0 ? linkRecordingControl : null}
         </div>
       ))}
 
-      {children}
-
-      {!picking && recordings.length === 0 && attachmentCount === 0 ? (
-        <p className="body-4 text-muted-foreground">
-          {isPostCall
-            ? 'No recording or attachments yet — link a Fathom recording.'
-            : 'Recordings and attachments will land here after the call.'}
-        </p>
+      {recordings.length === 0 ? (
+        <>
+          {!picking && attachmentCount === 0 ? (
+            <p className="body-4 text-muted-foreground">
+              {isPostCall
+                ? 'No recording or attachments yet — link a Fathom recording.'
+                : 'Recordings and attachments will land here after the call.'}
+            </p>
+          ) : null}
+          {linkRecordingControl}
+        </>
       ) : null}
+
+      {children}
     </section>
   )
 }

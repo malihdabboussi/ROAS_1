@@ -5,6 +5,7 @@ import { MeetingRecordingsSection } from './MeetingRecordingsSection'
 const mocks = vi.hoisted(() => ({
   listFathomMeetings: vi.fn(),
   linkMeetingRecording: vi.fn(),
+  openDocumentInShell: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }))
@@ -18,6 +19,10 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/lib/brain', () => ({
   listFathomMeetings: mocks.listFathomMeetings,
+}))
+
+vi.mock('@/lib/artifacts', () => ({
+  openDocumentInShell: mocks.openDocumentInShell,
 }))
 
 vi.mock('@/features/home/services/meeting-workspace-api', async () => {
@@ -99,5 +104,37 @@ describe('MeetingRecordingsSection', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: 'Link a call recording' }))
     expect(await screen.findByRole('button', { name: 'Aaron + Dylan' })).toBeInTheDocument()
+  })
+
+  it('puts Open transcript beside Open recording and Link recording under them', () => {
+    render(
+      <MeetingRecordingsSection
+        spaceId="space-1"
+        meetingItemId="meeting-1"
+        recordings={[
+          {
+            id: 'recording-1',
+            title: 'Strategy call',
+            provider: 'fathom',
+            recording_url: 'https://fathom.video/calls/1',
+            duration_seconds: 1800,
+            is_primary: true,
+            provider_summary: null,
+            transcript_doc_item_id: 'transcript-1',
+          },
+        ]}
+        onLinked={vi.fn()}
+      />,
+    )
+
+    const recordingLink = screen.getByRole('link', { name: /Open recording/i })
+    const transcript = screen.getByRole('button', { name: 'Open transcript' })
+    expect(recordingLink.compareDocumentPosition(transcript)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(
+      transcript.compareDocumentPosition(
+        screen.getByRole('button', { name: 'Link a call recording' }),
+      ),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(transcript.className).toContain('text-primary')
   })
 })

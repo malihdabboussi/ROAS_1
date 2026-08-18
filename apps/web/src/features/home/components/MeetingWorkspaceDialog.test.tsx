@@ -137,18 +137,15 @@ describe('MeetingWorkspaceDialog', () => {
       />,
     )
 
-    expect(screen.getByRole('status', { name: 'Loading meeting workspace' })).toBeInTheDocument()
+    expect(screen.getByRole('status', { name: 'Loading meeting details…' })).toBeInTheDocument()
     expect(screen.queryByText('Recordings & attachments')).not.toBeInTheDocument()
-    expect(screen.queryByText('No action items yet.')).not.toBeInTheDocument()
 
     resolveBundle?.(baseBundle)
     await waitFor(() => {
-      expect(screen.queryByRole('status', { name: 'Loading meeting workspace' })).toBeNull()
+      expect(screen.queryByRole('status', { name: 'Loading meeting details…' })).toBeNull()
       expect(screen.getByText('Recordings & attachments')).toBeInTheDocument()
     })
     expect(screen.getByRole('button', { name: 'Add task' })).toBeInTheDocument()
-    expect(screen.queryByText('No action items yet.')).not.toBeInTheDocument()
-    expect(screen.queryByText('Attachments')).not.toBeInTheDocument()
   })
 
   it('does not steal the open chat until Continue in chat', async () => {
@@ -367,8 +364,10 @@ describe('MeetingWorkspaceDialog', () => {
     expect(screen.queryByText('Attachments')).not.toBeInTheDocument()
 
     const recordings = screen.getByText('Recordings & attachments').closest('section')
+    const actions = screen.getByText(/Action items/).closest('section')
     const agenda = screen.getByText('Agenda & prep').closest('section')
-    expect(recordings?.compareDocumentPosition(agenda!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(recordings?.compareDocumentPosition(actions!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(actions?.compareDocumentPosition(agenda!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
   it('renders completed Space action items in the All Tasks table', async () => {
