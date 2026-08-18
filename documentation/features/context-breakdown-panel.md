@@ -44,7 +44,7 @@ The breakdown denominator is the effective context window for the run. When the 
 
 2026-06-06: Made the composer context ring render from a local estimate before the first completed run, while keeping stored backend breakdowns as the richer baseline when available.
 
-2026-06-06: Positioned the breakdown panel from the composer shell rather than the ring trigger so it opens directly above the input like the active-run tip.
+2026-06-06: Positioned the breakdown panel from the composer shell rather than the ring trigger so it opens directly above the input.
 
 2026-06-08: Preserved backend conversation slice totals in the live estimate so the ring does not undercount hidden session context after a completed run. Empty draft attachment/artifact/reference arrays no longer add phantom JSON tokens.
 

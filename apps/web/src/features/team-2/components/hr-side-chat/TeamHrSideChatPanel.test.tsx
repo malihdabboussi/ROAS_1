@@ -10,27 +10,14 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('@/components/chat', () => ({
-  ChatPanelSlideStack: ({
-    chatPanel,
-    subPanel,
-  }: {
-    chatPanel: ReactNode
-    subPanel: ReactNode
-  }) => (
+  ChatPanelSlideStack: ({ chatPanel, subPanel }: { chatPanel: ReactNode; subPanel: ReactNode }) => (
     <div>
       {chatPanel}
       {subPanel}
     </div>
   ),
   ChatTurnChangeDivider: () => null,
-  ComposerActiveRunTipCard: () => <div data-testid="active-run-tip" />,
-  ComposerInputStack: ({
-    children,
-    topSlot,
-  }: {
-    children: ReactNode
-    topSlot?: ReactNode
-  }) => (
+  ComposerInputStack: ({ children, topSlot }: { children: ReactNode; topSlot?: ReactNode }) => (
     <div data-testid="composer-input-stack">
       {topSlot}
       {children}
@@ -152,8 +139,7 @@ vi.mock('../../store/use-team-focus-store', () => ({
         agentsContext: null
         skillsContext: null
       }) => unknown,
-    ) =>
-      selector({ focusedAgent: null, page: null, agentsContext: null, skillsContext: null }),
+    ) => selector({ focusedAgent: null, page: null, agentsContext: null, skillsContext: null }),
     {
       getState: () => ({
         focusedAgent: null,
