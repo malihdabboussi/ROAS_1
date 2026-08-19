@@ -799,7 +799,7 @@ Three structural adjustments to the spine above, so the rest of this section bui
   4. **Campaign brains are healthy and the Yasir stats WERE there.** 24k memories, 131 brains; last 30d: `page_grader_slack` 14.6k, `page_grader_google_drive` 3.3k, `page_grader_clickup` 2.9k. Nefi's Aug 7 breakdown ("Ad Spend: $10,875.58 / Registrations: 1687 / VIP: 12…") is in Yasir's Campaign Brain (`page_grader_slack`, imported 08-16) **and** in `slack_observation_events` (channel `C0B5MKP7Y30`). Pixel's DM turn searched User Brain on General and never scoped Slack search to that channel → **retrieval, not ingestion.** Confirms 11.2 + 11.11 as the fix.
   5. **Meetings land in the wrong house.** `fathom_meeting` memories go to Dylan's **user** brain (1,046) and `fathom_call` to Customer Brain (101); only 17 `page_grader_call_transcript` + 4 `page_grader_calls` reach **campaign** brains. So "what did I promise Yasir last call" (R10) searched on the client brain misses. **Fix:** route Fathom meetings with a resolved client to that client's Campaign Brain (dual-write user + campaign).
   6. **Tasks/docs.** ClickUp tasks do reach campaign brains (`page_grader_clickup`). ROAS Space tasks do not; Space docs only via 167 `document` memories. Not urgent given ClickUp is the system of record.
-- **Revised first steps for 11.3.** (a) graph payload cap/trim (small PR); (b) Fathom → Campaign Brain dual-write; (c) Company Brain feeds: mapped Slack channels + meeting decisions + Company Cortex; (d) decision: are non-portal team members supposed to have user brains (invite them) or is Person Brain their memory — see 11.12 Q10.
+- **Revised first steps for 11.3.** (a) graph payload cap/trim (small PR); (b) Fathom → Campaign Brain dual-write; (c) Company Brain feeds: mapped Slack channels + meeting decisions + Company Cortex; (d) non-portal team members = **shadow Person Brains** (11.12 Q10) — verify Slack-managed person brains are being created and fed for the active team, not only Georgette.
 
 - **Status.** Audit done 2026-08-18; fixes not started.
 
@@ -868,7 +868,7 @@ Three structural adjustments to the spine above, so the rest of this section bui
 | 7 | "Active clients" (R13) | **Portal client status**, not ROAS mapped campaigns. |
 | 8 | Token budgets | Placeholders (4 general / 8 team / 8 client / 12 SR+retrieve) are fine for the first week of telemetry; propose real numbers after. |
 | 9 | Build order (§11.9) | Accepted as written. |
-| 10 | Team members without portal accounts (Nefi, Rafay, Aaron, Caleb…) — invite them so they get user brains, or treat Slack Person Brains as their memory? | **Open** (raised by 11.3 audit) |
+| 10 | Team members without portal accounts (Nefi, Rafay, Aaron, Caleb…) | **Shadow brains.** Do not invite. Build a Person Brain around each of them from Slack/meetings; the brain exists whether or not they ever get an account. Portal-less people are expected. |
 
 ### 11.9 Build order (supersedes §10 sequencing where they differ)
 
