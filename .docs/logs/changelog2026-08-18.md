@@ -1,5 +1,12 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 21:55] - [FIX]
+
+What: Unlocked the live browser for the Pixel you chat with (`vibey`) and required 1440 desktop + 390 mobile screenshots on funnel QC.
+Why: The Aug 14 click-through work allowed browser on the library `pixel` key. Chat Pixel still had the tool denied, fetched HTML, skipped mobile/desktop visual QA, and never produced a screenshot card.
+Impact: After agent-api deploy + Pixel workspace sync, a QC like "check this funnel on mobile and desktop" should open the live URL, screenshot both viewports, and show the browser preview in chat. A dedicated right-rail live browser pane is still not built.
+Files: `openclaw-gateway.service.ts`, `openclaw-gateway.visual-review.test.ts`, `platform-tools-template.ts`, `pixel-live-page-clickthrough.test.ts`, `docker/openclaw.json`, `20260819014500_pixel_vibey_browser_qc.sql`, `website-artifacts.md`
+
 ## [2026-08-18 21:53] - [FIX]
 What: Service Request due dates use ClickUp-style presets (Today / Later / Tomorrow / weekends / weeks) beside the calendar. Assignee picks keep The ROAS Portal user id and email through finalize so Portal/ClickUp get a real assignment, not a name pasted into the notes.
 Why: The date step was calendar-only. The dropdown stored `member.name` and dropped Portal id/email, so `rafay@roas.co` never mapped to a Portal user or ROAS org profile and ClickUp stayed unassigned.

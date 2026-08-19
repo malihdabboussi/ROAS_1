@@ -1,3 +1,15 @@
+## 2026-08-18 - [FEATURE] Browser QC still renders inline, not in the right-side summary card
+
+Status: Open
+
+Found while: Fixing Pixel funnel QC that skipped mobile/desktop visual QA
+
+Evidence: `BrowserPreviewPanel` only mounts inside the chat message when `browser` tool blocks or `browser_screenshot` blocks exist (`extractBrowserPanelData`). The right rail (COMP / OUT / SOL / TAS) is the workspace panel and has no live browser surface. Unlocking `vibey` browser will populate the inline chat card; it will not open a right-side live preview.
+
+Needed work: When Pixel starts a browser QC session, open the latest screenshot (and optional live URL) in the right-side summary/artifact pane instead of only the inline chat card.
+
+Reason not done now: The reported failure was Pixel never opening a browser at all. The right-rail pane is a separate UI job and would not have shown anything until the tool was allowed.
+
 ## 2026-08-18 - [ARCH] DueDateCell remains over the LOC cap
 
 Status: Open

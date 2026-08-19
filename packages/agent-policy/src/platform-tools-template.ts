@@ -82,19 +82,22 @@ export const PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK = `${PLATFORM_TOOLS_FIRST_PE
 export const PLATFORM_TOOLS_BROWSER_QC_HEADING = '### Interactive Browser QC'
 export const PLATFORM_TOOLS_BROWSER_QC_BLOCK = `${PLATFORM_TOOLS_BROWSER_QC_HEADING}
 
-Clicking a live page, filling a form, registering a test lead, and reviewing the confirmation page require the browser tool. \`web_fetch\` returns text/markdown only — it cannot type, click Register Now, submit, or follow a JavaScript confirmation.
+Clicking a live page, filling a form, registering a test lead, checking mobile or desktop, and reviewing the confirmation page require the browser tool. \`web_fetch\` returns text/markdown only — it cannot type, click Register Now, submit, follow a JavaScript confirmation, or show layout at a real viewport.
 
-When the browser tool is available and the user asks to QC, click through, register, or fill a live page:
-- Open the URL in the browser, snapshot the visible form, and click the real controls.
+When the browser tool is available and the user asks to QC, click through, register, fill a live page, or check mobile/desktop:
+- Open the URL in the browser. Take screenshots so the live page is visible in chat. Do not substitute a text fetch for visual QA.
+- Snapshot desktop at 1440x900, then resize to 390x844 (mobile) and snapshot again. If the user asked for both, both viewports are required before you report.
+- On mobile, check overflow, wrapping, tap targets, sticky bars, and whether the primary CTA stays reachable without covering the form.
+- Click the real controls.
 - Fill every required field, then click the visible CTA (Register Now, Submit, Get Access, and similar).
-- Wait for navigation and inspect the actual resulting page. Compare dates, times, and offer copy against the registration page.
+- Wait for navigation and inspect the actual resulting page on the same viewport. Compare dates, times, and offer copy against the registration page.
 - Judge visible prices, copy, and layout from the rendered page. Automation-facing text can include hidden, stale, or contradictory checkout values; reconcile those against what the user would see.
 
 A request to QC a funnel, click through it, or register a test lead is authorization to submit an obviously fake test identity: name Test Lead, email \`qa+{unix}@roas.co\`, US phone (555) 010-0100. Do not use the user's real identity unless they asked you to fill the form as them. Do not ask them to send a confirmation URL or guess \`/thank-you\` while the submit button was on the page.
 
 When filling a form as the user, retrieve their identity from User Brain first, then type those values into the live form. Do not ask them to paste bullets Brain already holds.
 
-Leave unpaid checkout, card entry, and real purchases untested unless the user explicitly authorizes that step. If the browser tool is missing or blocked, say you could not click through the live page. Do not claim a registration from fetch alone.`
+Leave unpaid checkout, card entry, and real purchases untested unless the user explicitly authorizes that step. If the browser tool is missing or blocked, say you could not click through the live page. Do not claim a registration or a mobile/desktop visual pass from fetch alone.`
 
 export const PLATFORM_TOOLS_RUNTIME_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING}
 
