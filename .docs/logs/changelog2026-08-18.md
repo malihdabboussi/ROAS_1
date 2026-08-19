@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 17:42] - [FIX]
+What: Brain graph endpoint now clamps the memory window to 2,000 nodes and ships a slim node projection (content ≤1,000 chars, `metadata` reduced to the preview keys the web reads). Stats report `node_window_capped`; the web treats a capped window as complete and stops re-requesting `limit=10000`.
+Why: The personal Brain page 500'd. Every DB call behind it is fast; the response for the largest prod brain (3.1k memories) serialised to 5.4 MB as full memory records, over the serverless response cap, so the API returned a bare 500. Measured against the same rows, the fix returns 2.99 MB and is bounded regardless of brain growth.
+Impact: Personal Brain graph loads again. Canvas shows at most 2,000 memory nodes; legend/stat totals still come from DB counts so nothing under-reports. Companion to §11.3 in `.docs/plans/pixel-slack-north-star-2026-08-18.md`.
+Files: `apps/api/src/modules/brain/services/graph-node-window.ts`, `graph-request.service.ts`, `graph.service.ts`, `graph-node-builders.ts`, `apps/api/src/modules/brain/controllers/graph.controller.test.ts`, `apps/web/src/features/brain/store/use-brain-store.ts`, `apps/web/src/features/brain/types/brain.types.ts`
+
 ## [2026-08-18 21:48] - [FIX]
 What: Unblocked Vercel `roas-web` typecheck after #308/#309. Calendar materialize now calls `cachedFetch(key, fetcher, { ttlMs })`. Removed unused `SpaceItem` import. Test fixtures use `as unknown as Space`.
 Why: `next build` typechecks `apps/web`. The one-room hook passed TTL as the fetcher argument, so agenda events never typed and the cache never actually TTL'd. Incomplete Space casts failed after adding `schema.custom_data`.

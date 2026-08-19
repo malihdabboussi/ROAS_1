@@ -39426,3 +39426,10 @@ Evidence: Four missions started from conversation `1d2d2b2b` are all titled exac
 Needed work: Name a mission at creation from its run context — playbook plus campaign/space, and a disambiguator when the same playbook runs more than once against the same scope.
 
 Reason not done now: The panel change mitigates this in the UI with a timestamp under each row, but the fix belongs in mission creation, which is worker/API work outside a chat-panel branch.
+
+## 2026-08-18 — Brain graph: paginate beyond the 2,000-node window
+- Feature/app: `apps/api` brain graph, `apps/web` brain visualization
+- Files: `apps/api/src/modules/brain/services/graph-node-window.ts`, `apps/web/src/features/brain/store/use-brain-store.ts`
+- Evidence: largest prod brain has 3.1k memories; full payload was 5.4 MB (over serverless cap). Fixed by clamping to 2,000 nodes + slim projection (2.99 MB).
+- Needed: cursor pagination (or server-side clustering) if anyone needs more than 2,000 memory nodes rendered at once. Also consider a `?fields=` projection so the graph never ships full memory records.
+- Why not now: the cap unblocks the 500 and is bounded; nobody can read 3k nodes on the canvas; pagination touches the store's SWR snapshot logic and deserves its own change.
