@@ -19,6 +19,7 @@ const SCREEN_ROUTES: ReadonlyArray<{ prefix: string } & ShellChatScreen> = [
   { prefix: '/home/my-tasks', key: 'all-tasks', label: 'All Tasks' },
   { prefix: '/home/delegation-desk', key: 'home:delegation-desk', label: 'Delegation Desk' },
   { prefix: '/client-campaigns', key: 'client-campaigns', label: 'Client Campaigns' },
+  { prefix: '/launches', key: 'launches', label: 'Launches' },
   { prefix: '/clients', key: 'clients', label: 'Clients' },
   { prefix: '/team', key: 'team', label: 'Team' },
   { prefix: '/brain', key: 'brain', label: 'Brain' },

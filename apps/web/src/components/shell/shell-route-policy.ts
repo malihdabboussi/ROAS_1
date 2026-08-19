@@ -5,6 +5,7 @@ export function isShellWorkspaceRoute(pathname: string): boolean {
     pathname.startsWith('/programs') ||
     pathname.startsWith('/clients') ||
     pathname.startsWith('/client-campaigns') ||
+    pathname.startsWith('/launches') ||
     pathname.startsWith('/all-tasks') ||
     pathname.startsWith('/brain') ||
     pathname.startsWith('/artifacts') ||

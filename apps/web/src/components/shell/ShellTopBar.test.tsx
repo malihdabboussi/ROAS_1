@@ -245,6 +245,11 @@ describe('ShellTopBar', () => {
     mocks.pathname = '/client-campaigns'
     render(<ShellTopBar />)
     expect(screen.getByText('Client Campaigns')).toBeInTheDocument()
+    cleanup()
+
+    mocks.pathname = '/launches'
+    render(<ShellTopBar />)
+    expect(screen.getByText('Launches')).toBeInTheDocument()
   })
 
   it('names All Tasks from the route', () => {

@@ -6,6 +6,7 @@ describe('breadcrumbFromPath', () => {
     expect(breadcrumbFromPath('/clients', null).label).toBe('Clients')
     expect(breadcrumbFromPath('/clients/client-1', null).label).toBe('Clients')
     expect(breadcrumbFromPath('/client-campaigns', null).label).toBe('Client Campaigns')
+    expect(breadcrumbFromPath('/launches', null).label).toBe('Launches')
   })
 
   it('names Programs from the route instead of falling back to Inbox', () => {
