@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { createResilientFetch } from '@vibey/api-shared'
+import type { SlackPixelTurnRow } from '../services/slack-turn-telemetry'
 
 type OrgMemberProfileRow = {
   user_id?: string
@@ -328,5 +329,11 @@ export class SlackRuntimeRepository {
       )
     }
     return data.signedUrl
+  }
+
+  /** North Star §11.0 — one row per inbound Slack Pixel turn. Never throws to the caller. */
+  async insertPixelTurn(row: SlackPixelTurnRow): Promise<void> {
+    const { error } = await this.getServiceRoleClient().from('slack_pixel_turns').insert(row)
+    if (error) throw new Error(`slack_pixel_turns insert failed: ${error.message}`)
   }
 }
