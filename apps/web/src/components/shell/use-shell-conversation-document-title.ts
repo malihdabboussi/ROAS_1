@@ -16,7 +16,7 @@ export function useShellConversationDocumentTitle(
 ): void {
   const title = useChatStore((s) => {
     if (!enabled || !conversationId) return null
-    return s.conversations.find((c) => c.id === conversationId)?.title?.trim() || null
+    return (s.conversations ?? []).find((c) => c.id === conversationId)?.title?.trim() || null
   })
   useEffect(() => {
     if (!enabled || typeof document === 'undefined') return
