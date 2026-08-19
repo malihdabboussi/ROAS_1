@@ -15,6 +15,7 @@ import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { cn } from '@/lib/utils/cn'
 import { getSpaceListDndInvalidToastMessage } from '../config/space-list-dnd-toast.config'
 import { displayColumnsForList } from '../lib/display-columns-list'
+import { buildListGridTemplate, fillNameColumnWidth } from '../lib/list-grid-template'
 import { groupItems } from '../lib/group-items'
 import { sortSpaceItemsCopy } from '../lib/sort-space-list-items'
 import {
@@ -278,16 +279,37 @@ export function ListView({
     () => activeView.column_widths ?? {},
   )
 
+  // Name column stretches to fill the list width unless the user resized it explicitly.
+  const listRootRef = useRef<HTMLDivElement | null>(null)
+  const [listWidth, setListWidth] = useState<number | null>(null)
+  useEffect(() => {
+    const el = listRootRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(([entry]) => {
+      const next = entry?.contentRect.width ?? 0
+      setListWidth((prev) => (Math.abs((prev ?? 0) - next) < 1 ? prev : next))
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   const columnWidths = useMemo(() => {
     const merged: Record<string, number> = {}
-    for (const f of displayCols) {
-      merged[f.id] = localWidths[f.id] ?? getDefaultWidth(f.id)
+    const ids = displayCols.map((f) => f.id)
+    const widthFor = (id: string) => localWidths[id] ?? getDefaultWidth(id)
+    for (const id of ids) merged[id] = widthFor(id)
+    if (localWidths.title === undefined && ids.includes('title')) {
+      merged.title = fillNameColumnWidth(ids, widthFor, 'title', listWidth)
     }
     return merged
-  }, [displayCols, localWidths])
+  }, [displayCols, localWidths, listWidth])
 
   const gridTemplateColumns = useMemo(
-    () => displayCols.map((f) => `${columnWidths[f.id]}px`).join(' ') + ' minmax(2rem, 1fr)',
+    () =>
+      buildListGridTemplate(
+        displayCols.map((f) => f.id),
+        (id) => columnWidths[id] ?? getDefaultWidth(id),
+      ),
     [displayCols, columnWidths],
   )
 
@@ -615,7 +637,10 @@ export function ListView({
 
   return (
     <div
-      ref={groups ? listScrollRef : undefined}
+      ref={(node) => {
+        listRootRef.current = node
+        if (groups) listScrollRef.current = node
+      }}
       className="flex flex-1 flex-col overflow-auto"
       onMouseUp={persistWidths}
     >

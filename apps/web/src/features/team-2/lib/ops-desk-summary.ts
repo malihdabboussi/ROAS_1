@@ -121,5 +121,8 @@ export function buildOpsDeskSummary(
 export function firstNameFromDisplayName(fullName: string, fallback: string): string {
   const trimmed = fullName.trim()
   if (!trimmed) return fallback
-  return trimmed.split(/\s+/)[0] ?? fallback
+  const first = trimmed.split(/\s+/)[0] ?? fallback
+  // Display names derived from an email local-part arrive lowercase ("dylan"); a greeting
+  // should still read "Hey Dylan." Leave mixed-case names (McKay, DJ) untouched.
+  return first === first.toLowerCase() ? first.charAt(0).toUpperCase() + first.slice(1) : first
 }
