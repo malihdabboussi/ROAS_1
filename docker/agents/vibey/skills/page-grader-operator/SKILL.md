@@ -84,7 +84,21 @@ task", "ASAP", or names the human who should own that work.
   audience, launch timing, source assets, budget, owner, or due date.
 - Build an idempotency key from the Slack event or ROAS action identifier so a
   retry cannot create a second campaign or task.
-- For any Service Request type, discover the current MCP schema and use
+- When the user asks to get **several** fulfillment jobs done in one message
+  (QC a funnel + check GHL + reset ads, "I need this done", a paste of 2+
+  discrete tasks) for a named or channel-stamped client:
+  1. Resolve the Portal client (`page_grader_list_clients` or the Slack
+     channel identity).
+  2. Resolve the Portal campaign with `page_grader_list_campaigns`. Prefer the
+     campaign named in the message (for example the current webinar). If zero
+     or many matches remain, ask **one** question: which campaign.
+  3. Call `list_mcp_tools`, then `page_grader_create_delegation_preview` **once**
+     with `client_ref`, the Portal `campaign_id`, `raw_text` (the full ask plus
+     any quoted thread), and a stable `idempotency_key`.
+  4. Reply with the returned `confirm_url` as a real openable https link. Tell
+     the user to review and Confirm in The ROAS Portal. Do **not** say tasks
+     were created. Do **not** loop `page_grader_create_fulfillment_request`.
+- For a **single** Service Request type, discover the current MCP schema and use
   `page_grader_create_fulfillment_request` with the resolved `client_ref`,
   matching `task_type` (`design` | `copy` | `funnel` | `ghl` | `ad` | `video` |
   `other` | `general`), a stable `idempotency_key`, the resolved
@@ -161,3 +175,8 @@ task", "ASAP", or names the human who should own that work.
   resolve the client from channel identity, create a Service Request draft with
   `task_type:"video"`, and reply with client name + draft confirmation +
   openable `review_url`. Do not call native `create_task`.
+- "I need this done for Yasir's webinar: QC the funnel, check GHL automations,
+  reset ads" → resolve Yasir + the webinar campaign, call
+  `page_grader_create_delegation_preview` once, and reply with the openable
+  `confirm_url`. Do not loop `page_grader_create_fulfillment_request`. Do not
+  say the tasks exist until Confirm.
