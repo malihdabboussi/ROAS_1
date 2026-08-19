@@ -1,6 +1,6 @@
 # Changelog - August 18, 2026
 
-## [2026-08-18 17:55] - [FIX]
+## [2026-08-18 17:42] - [FIX]
 What: Brain graph endpoint now clamps the memory window to 2,000 nodes and ships a slim node projection (content ≤1,000 chars, `metadata` reduced to the preview keys the web reads). Stats report `node_window_capped`; the web treats a capped window as complete and stops re-requesting `limit=10000`.
 Why: The personal Brain page 500'd. Every DB call behind it is fast; the response for the largest prod brain (3.1k memories) serialised to 5.4 MB as full memory records, over the serverless response cap, so the API returned a bare 500. Measured against the same rows, the fix returns 2.99 MB and is bounded regardless of brain growth.
 Impact: Personal Brain graph loads again. Canvas shows at most 2,000 memory nodes; legend/stat totals still come from DB counts so nothing under-reports. Companion to §11.3 in `.docs/plans/pixel-slack-north-star-2026-08-18.md`.
