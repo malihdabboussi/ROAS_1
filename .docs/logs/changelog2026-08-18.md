@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 16:00] - [DOCS]
+What: Recorded Dylan's decisions on the nine open North Star questions (§11.12): internal/admin share in mixed DMs, files to ROAS storage + client Drive, Slack Pixel = full Pixel capability incl. browser, add all agents to the org rather than hire per capability, harness channel `2`, Fathom-only calls, Portal client status, placeholder budgets accepted, build order accepted.
+Why: Unblocks 11.6, 11.10, 11.4, 11.7 and R08/R13 without further clarification.
+Impact: Docs only.
+Files: `.docs/plans/pixel-slack-north-star-2026-08-18.md`
+
 ## [2026-08-18 15:40] - [DOCS]
 What: Added §11.11 Client Context Bundle + channel-scoped Slack search to the North Star plan, and put it right after telemetry in the build order.
 Why: Pixel could not name Yasir's Slack channel from a DM (no client→channel tool) and could not search that channel end-to-end (`search_slack_messages` has no channel filter). This is the shared root cause behind the Yasir, Master Your Kraft, and 1DS misses.

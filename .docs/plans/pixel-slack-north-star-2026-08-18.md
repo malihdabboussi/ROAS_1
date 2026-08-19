@@ -741,7 +741,7 @@ Out of scope until Wave 0 ships: new MCP tools, new DB tables, a separate “pro
 | Forcing client resolve on every Slack ask | N0 first; general/team fixtures forbid `list_clients` |
 | Overwriting PR 288 / voice / composer | Expand policy headings and quote inherit only; no second TOOLS.md or composer |
 | Quote parser false-positives map the wrong `#channel` | Require `roas-` client channel pattern or a resolved observation row; if 0/N clients, ask once |
-| Client data in Slack Connect group DMs with an external present | S14 allows Internal **sender**. Product decision R54: prefer internal channel for Portal data if mixed; do not change fail-closed for External senders |
+| Client data in Slack Connect group DMs with an external present | **Decided 2026-08-18:** Internal/admin sender → share in place; External sender → deny (fail-closed unchanged). See 11.12 |
 | Depth ladder increases tokens | Classify first so general asks stay cheap; stop at first sufficient hit; one search per store; skip User Brain on client asks. Measure Wave 2 |
 | Org Pixel missing CEO/webinar skills / browser | Already in follow-up log. N7 must admit browser absence. N8 uses copywriter/ads_manager skills if Pixel lacks them via `ask_agent` **only when those skills are not on Pixel** — do not silently no-op |
 | Live Slack audit not run | Wave 0 fixtures from stamps + R31; live histogram when secrets exist |
@@ -846,6 +846,20 @@ Three structural adjustments to the spine above, so the rest of this section bui
 - **Why this is the class fix.** Every "Pixel didn't look deep enough" report so far (Master Your Kraft, 1DS, Yasir) reduces to *the model had to guess where the client's data lives*. The bundle removes the guess; 11.0 telemetry + 11.7 nightly harness surface the next miss on a scoreboard instead of in Dylan's DMs.
 - **First step.** Bundle builder from existing rows (`slack_observation_channels`, observation event metadata `page_grader_client_id`, campaigns, `ns_brains`, drive mapping); `channel_ids` on `search_slack_messages` with coverage; fixture: DM "Yasir Aug 6 webinar stats" → bundle has `#roas-yasir…` → channel-scoped search → results post found or coverage complete.
 - **Status.** Not started. Build immediately after 11.0.
+
+### 11.12 Decisions from Dylan (2026-08-18)
+
+| # | Question | Decision |
+| --- | --- | --- |
+| 1 | Client data in mixed Slack Connect DMs (R54) | **Admin or any Internal sender → share in place.** External sender → do not share (unchanged fail-closed). No redirect to `#roas-*` needed. |
+| 2 | Where re-hosted Slack files live (R56 / 11.10) | Attach to reliable ROAS storage **and** copy into the client's Drive folder when one is mapped. Watch large files; either alone is acceptable if size is a problem. |
+| 3 | Browser for Slack Pixel (N7) | **Yes.** Slack Pixel must have everything Vibey/Pixel has — same agent, same tools, same skills. No capability gap between Slack Pixel and app Pixel. |
+| 4 | Launch briefs / other agents (N8) | Do **not** require hiring a separate agent. Add all agents to the org so Pixel can reach them; if a capability is better on Pixel, put it on Pixel; only add a separate agent when that is genuinely better. |
+| 5 | Nightly harness test channel (11.7) | Use the existing Slack channel named **`2`** (literally "2"). |
+| 6 | "My calls" (R08/R09/R22) | **Fathom recordings only.** |
+| 7 | "Active clients" (R13) | **Portal client status**, not ROAS mapped campaigns. |
+| 8 | Token budgets | Placeholders (4 general / 8 team / 8 client / 12 SR+retrieve) are fine for the first week of telemetry; propose real numbers after. |
+| 9 | Build order (§11.9) | Accepted as written. |
 
 ### 11.9 Build order (supersedes §10 sequencing where they differ)
 
