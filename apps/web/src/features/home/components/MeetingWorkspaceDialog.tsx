@@ -317,56 +317,55 @@ export function MeetingWorkspaceDialog({
       </header>
 
       <main className="scrollbar-thin p-spacing-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <div className="gap-spacing-4 mx-auto flex w-full max-w-3xl flex-col">
-          <MeetingCallStatusSection
-            callStatus={
-              typeof bundle?.meeting.custom_data?.call_status === 'string'
-                ? bundle.meeting.custom_data.call_status
-                : null
-            }
-            hostLabel={
-              typeof bundle?.meeting.custom_data?.host === 'string'
-                ? bundle.meeting.custom_data.host
-                : null
-            }
-            isLive={isLive}
-            isPostCall={isPostCall}
-            hasRecording={Boolean(bundle?.recordings.length)}
-            joinUrl={joinUrl}
-            saving={starting || ending}
-            onCallStatusChange={(status) => void setCallStatus(status)}
-            onPostCallAction={runPostCallAction}
-          />
-
-          <MeetingWorkspaceBody
-            spaceId={spaceId}
-            meetingItemId={meetingItemId}
-            bundle={bundle}
-            loading={loading}
-            isLive={isLive}
-            isPostCall={isPostCall}
-            prep={prep}
-            prepDescription={prepDescription}
-            joinUrl={joinUrl}
-            googleAgendaHref={agendaEvent?.prep?.agenda_doc_link}
-            onRecordingLinked={() => {
-              void hydrateWorkspace()
-            }}
-            onNoteCreated={handleNoteCreated}
-            onActionCreated={handleActionCreated}
-            onActionsReload={async () => {
-              await hydrateWorkspace()
-            }}
-            onCreateAgendaWithAi={() => {
-              const startAgenda = MEETING_PRE_CALL_ACTIONS.find(
-                (action) => action.id === 'start-agenda',
-              )
-              if (startAgenda) runPostCallAction(startAgenda)
-            }}
-            relatedCalls={relatedCalls}
-            onOpenRelated={onOpenRelated}
-          />
-        </div>
+        <MeetingWorkspaceBody
+          spaceId={spaceId}
+          meetingItemId={meetingItemId}
+          bundle={bundle}
+          loading={loading}
+          isLive={isLive}
+          isPostCall={isPostCall}
+          prep={prep}
+          prepDescription={prepDescription}
+          joinUrl={joinUrl}
+          googleAgendaHref={agendaEvent?.prep?.agenda_doc_link}
+          onRecordingLinked={() => {
+            void hydrateWorkspace()
+          }}
+          onNoteCreated={handleNoteCreated}
+          onActionCreated={handleActionCreated}
+          onActionsReload={async () => {
+            await hydrateWorkspace()
+          }}
+          onCreateAgendaWithAi={() => {
+            const startAgenda = MEETING_PRE_CALL_ACTIONS.find(
+              (action) => action.id === 'start-agenda',
+            )
+            if (startAgenda) runPostCallAction(startAgenda)
+          }}
+          relatedCalls={relatedCalls}
+          onOpenRelated={onOpenRelated}
+          leading={
+            <MeetingCallStatusSection
+              callStatus={
+                typeof bundle?.meeting.custom_data?.call_status === 'string'
+                  ? bundle.meeting.custom_data.call_status
+                  : null
+              }
+              hostLabel={
+                typeof bundle?.meeting.custom_data?.host === 'string'
+                  ? bundle.meeting.custom_data.host
+                  : null
+              }
+              isLive={isLive}
+              isPostCall={isPostCall}
+              hasRecording={Boolean(bundle?.recordings.length)}
+              joinUrl={joinUrl}
+              saving={starting || ending}
+              onCallStatusChange={(status) => void setCallStatus(status)}
+              onPostCallAction={runPostCallAction}
+            />
+          }
+        />
       </main>
     </section>
   )

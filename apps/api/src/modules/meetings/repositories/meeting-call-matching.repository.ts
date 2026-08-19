@@ -199,7 +199,7 @@ export class MeetingCallMatchingRepository {
   ): Promise<Record<string, unknown>[]> {
     const { data, error } = await supabase
       .from('space_items')
-      .select('id, title, source, custom_data')
+      .select(RELATED_CALL_ITEM_COLUMNS)
       .eq('space_id', spaceId)
       .eq('custom_data->>entry_type', 'call')
       .limit(200)
@@ -207,6 +207,32 @@ export class MeetingCallMatchingRepository {
     return (data as Record<string, unknown>[]) ?? []
   }
 }
+
+const RELATED_CALL_ITEM_COLUMNS = [
+  'id',
+  'space_id',
+  'org_id',
+  'user_id',
+  'title',
+  'status',
+  'priority',
+  'assignee_type',
+  'assignee_id',
+  'assignees',
+  'start_date',
+  'due_date',
+  'parent_item_id',
+  'description',
+  'notes',
+  'source',
+  'linked_mission_id',
+  'form_id',
+  'is_private',
+  'sort_order',
+  'custom_data',
+  'created_at',
+  'updated_at',
+].join(', ')
 
 function firstText(...values: unknown[]): string | null {
   for (const value of values) {

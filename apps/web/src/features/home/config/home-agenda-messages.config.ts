@@ -66,16 +66,6 @@ export const HOME_AGENDA_MESSAGES = {
     message: 'Related calls',
     category: 'title',
   },
-  RELATED_CALL_OPEN: {
-    key: 'RELATED_CALL_OPEN',
-    message: 'Open',
-    category: 'button',
-  },
-  RELATED_CALL_RECORDING: {
-    key: 'RELATED_CALL_RECORDING',
-    message: 'Recording',
-    category: 'button',
-  },
   GOOGLE_AGENDA: {
     key: 'GOOGLE_AGENDA',
     message: 'Google agenda',

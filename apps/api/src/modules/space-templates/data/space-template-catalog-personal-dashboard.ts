@@ -56,7 +56,8 @@ const fields = [
       { id: 'sales', label: 'Sales', color: 'orange' },
     ],
   },
-  { id: 'client_campaign', name: 'Client / Campaign', type: 'text' },
+  { id: 'client_campaign', name: 'Campaign', type: 'text' },
+  { id: 'space_title', name: 'Space', type: 'text' },
   { id: 'host', name: 'Host', type: 'text' },
   {
     id: 'call_status',
@@ -124,6 +125,7 @@ const views = [
       'title',
       'call_kind',
       'client_campaign',
+      'space_title',
       'host',
       'call_date',
       'call_status',
@@ -132,7 +134,8 @@ const views = [
     column_widths: {
       title: 360,
       call_kind: 110,
-      client_campaign: 240,
+      client_campaign: 200,
+      space_title: 180,
       host: 160,
       call_date: 170,
       call_status: 140,

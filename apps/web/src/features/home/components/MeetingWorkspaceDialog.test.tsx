@@ -1,11 +1,12 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MeetingWorkspaceDialog } from './MeetingWorkspaceDialog'
 
 const mocks = vi.hoisted(() => ({
   clearMeetingContext: vi.fn(),
   endMeetingCall: vi.fn(),
   fetchMeetingWorkspace: vi.fn(),
+  fetchMeetingRelatedCalls: vi.fn(),
   openChatDrawer: vi.fn(),
   continueMeetingConversation: vi.fn(),
   seedComposer: vi.fn(),
@@ -23,7 +24,7 @@ vi.mock('@/lib/artifacts', () => ({
 vi.mock('@/features/home/services/meeting-workspace-api', () => ({
   endMeetingCall: mocks.endMeetingCall,
   fetchMeetingWorkspace: mocks.fetchMeetingWorkspace,
-  fetchMeetingRelatedCalls: vi.fn().mockResolvedValue([]),
+  fetchMeetingRelatedCalls: mocks.fetchMeetingRelatedCalls,
   startMeetingCall: mocks.startMeetingCall,
   toggleMeetingActionStatus: mocks.toggleMeetingActionStatus,
   updateMeetingActionStatus: mocks.updateMeetingActionStatus,
@@ -43,6 +44,15 @@ vi.mock('@/components/work-views/AllTasksNativeList', () => ({
         <div key={item.id}>{item.title}</div>
       ))}
       <button type="button">Add task</button>
+    </div>
+  ),
+}))
+vi.mock('@/components/work-views/AllMeetingsNativeList', () => ({
+  AllMeetingsNativeList: ({ items }: { items: Array<{ id: string; title: string }> }) => (
+    <div>
+      {items.map((item) => (
+        <div key={item.id}>{item.title}</div>
+      ))}
     </div>
   ),
 }))
@@ -111,6 +121,10 @@ const baseBundle = {
 }
 
 describe('MeetingWorkspaceDialog', () => {
+  beforeEach(() => {
+    mocks.fetchMeetingRelatedCalls.mockResolvedValue([])
+  })
+
   afterEach(() => {
     cleanup()
     for (const mock of Object.values(mocks)) {
@@ -336,8 +350,8 @@ describe('MeetingWorkspaceDialog', () => {
     const recordings = screen.getByText('Recordings & attachments').closest('section')
     const actions = screen.getByText(/Action items/).closest('section')
     const agenda = screen.getByText('Agenda & prep').closest('section')
-    expect(recordings?.compareDocumentPosition(actions!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
-    expect(actions?.compareDocumentPosition(agenda!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(recordings?.compareDocumentPosition(agenda!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(agenda?.compareDocumentPosition(actions!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
   it('renders completed Space action items in the All Tasks table', async () => {

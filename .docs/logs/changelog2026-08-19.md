@@ -17,3 +17,10 @@ What: Merged CONNECTIONS bind + Campaign Brain preload (#321) onto main without 
 Why: #321 edited `slack-service-events.base.ts` (campaignId on the channel-chat payload) which #317/#318/#320 also own.
 Impact: Slack client asks bind CONNECTIONS at turn start and still write `slack_pixel_turns`.
 Files: `slack-service-events.base.ts`
+
+## [2026-08-19 05:35] - [FIX]
+What: Related calls use All Meetings rows (Campaign + Space columns). Related calls and action items sit full width at the bottom of the meeting workspace. Relatedness requires the same mapped client; object `client_campaign` mappings now score, and different clients no longer rank from a shared host or generic title words.
+Why: The related list was a card of unrelated client calls because scoring treated `client_campaign` as a string and let title/recording bonuses include anyone. Campaign/Space were missing on All Meetings, and both lists were trapped in the narrow section-card column.
+Impact: Cydcor weeklies relate to Cydcor, not Barber. All Meetings and Related calls show the same columns. Action items and related calls span the workspace width.
+Files: `meeting-related-calls.ts`, `MeetingRelatedCallsSection.tsx`, `MeetingWorkspaceBody.tsx`, `AllMeetingsNativeList.tsx`, `all-meetings-list-columns.ts`, personal-dashboard template
+

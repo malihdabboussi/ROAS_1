@@ -1,6 +1,6 @@
 # Space Templates
 
-**Last Modified:** 2026-08-18 (Meetings one-room: All Meetings default, host/call_status, Prep view removed, Call completed automation)
+**Last Modified:** 2026-08-19 (All Meetings Campaign + Space columns)
 
 ## Overview
 
@@ -71,6 +71,7 @@ Home Agenda prep, related call enrichment, and default Home feed scope also read
 - **2026-07-20:** Home + Fathom Meetings resolve the personal-account dashboard only (`org_id IS NULL`), optionally attached to `system_kind=personal` campaign. Org-scoped Personal Dashboards remain separate per-member org workspaces.
 - **2026-07-20:** Home Agenda merges unmatched personal Meetings `entry_type=call` rows (Fathom) into the calendar window as `source: 'fathom'` events; matched calls stay related attachments on calendar rows.
 - **2026-08-18:** Personal Dashboard All Meetings is the default Meetings view. It stores Host and Call status, hides Priority/Status on that list, defaults the date window to past + today + tomorrow, drops the Prep view, and adds a Call completed automation (call_status → completed) that clones Fathom Meeting Log actions.
+- **2026-08-19:** Personal Dashboard All Meetings shows Campaign and Space columns. Existing Meetings spaces pick those columns up through `ensureAllMeetingsListColumns` when the All Meetings view loads.
 
 ## Regenerating seed SQL
 

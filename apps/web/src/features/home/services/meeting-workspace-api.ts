@@ -175,6 +175,7 @@ export type MeetingRelatedCall = {
   call_status: string | null
   recording_url: string | null
   score: number
+  item?: Record<string, unknown>
 }
 
 export function fetchMeetingRelatedCalls(spaceId: string, meetingItemId: string) {

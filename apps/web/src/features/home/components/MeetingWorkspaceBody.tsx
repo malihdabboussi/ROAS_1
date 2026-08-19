@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { MeetingActionItemsSection } from '@/features/home/components/MeetingActionItemsSection'
 import { MeetingAgendaPrepSection } from '@/features/home/components/MeetingAgendaPrepSection'
@@ -12,6 +13,7 @@ import { HOME_AGENDA_MESSAGES } from '@/features/home/config/home-agenda-message
 import type { ParsedMeetingPrep } from '@/features/home/lib/meeting-workspace-display'
 import type {
   MeetingAction,
+  MeetingRelatedCall,
   MeetingSnippet,
   MeetingWorkspaceBundle,
 } from '@/features/home/services/meeting-workspace-api'
@@ -28,7 +30,7 @@ function SectionTitle({ children, count }: { children: string; count?: number })
   )
 }
 
-/** Recordings, then related calls, then action items full width, then agenda and notes. */
+/** Narrow meeting details, then full-width related calls and action items. */
 export function MeetingWorkspaceBody({
   spaceId,
   meetingItemId,
@@ -41,6 +43,7 @@ export function MeetingWorkspaceBody({
   joinUrl,
   googleAgendaHref,
   relatedCalls,
+  leading,
   onOpenRelated,
   onRecordingLinked,
   onNoteCreated,
@@ -58,13 +61,8 @@ export function MeetingWorkspaceBody({
   prepDescription: string | null | undefined
   joinUrl: string | null
   googleAgendaHref?: string | null
-  relatedCalls: Array<{
-    meeting_item_id: string
-    title: string
-    call_date: string | null
-    call_status: string | null
-    recording_url: string | null
-  }>
+  relatedCalls: MeetingRelatedCall[]
+  leading?: ReactNode
   onOpenRelated?: (event: CalendarAgendaEvent) => void
   onRecordingLinked: () => void
   onNoteCreated: (snippet: MeetingSnippet) => void
@@ -74,7 +72,7 @@ export function MeetingWorkspaceBody({
 }) {
   if (loading) {
     return (
-      <div className="section-card p-spacing-4">
+      <div className="section-card p-spacing-4 mx-auto w-full max-w-3xl">
         <ListSkeleton rows={6} label={HOME_AGENDA_MESSAGES.LOADING_MEETING_DETAILS.message} />
       </div>
     )
@@ -82,85 +80,86 @@ export function MeetingWorkspaceBody({
 
   return (
     <>
-      <section className="section-card p-spacing-4">
-        <MeetingRecordingsSection
-          spaceId={spaceId}
-          meetingItemId={meetingItemId}
-          recordings={bundle?.recordings ?? []}
-          isPostCall={isPostCall || isLive}
-          onLinked={onRecordingLinked}
-          attachmentCount={bundle?.deliverables.length ?? 0}
-        >
-          <MeetingWorkspaceAttachments
+      <div className="gap-spacing-4 mx-auto flex w-full max-w-3xl flex-col">
+        {leading}
+        <section className="section-card p-spacing-4">
+          <MeetingRecordingsSection
             spaceId={spaceId}
-            deliverables={bundle?.deliverables ?? []}
-            loading={loading}
-            embedded
+            meetingItemId={meetingItemId}
+            recordings={bundle?.recordings ?? []}
+            isPostCall={isPostCall || isLive}
+            onLinked={onRecordingLinked}
+            attachmentCount={bundle?.deliverables.length ?? 0}
+          >
+            <MeetingWorkspaceAttachments
+              spaceId={spaceId}
+              deliverables={bundle?.deliverables ?? []}
+              loading={loading}
+              embedded
+            />
+          </MeetingRecordingsSection>
+        </section>
+
+        <section className="section-card p-spacing-4 gap-spacing-2 flex flex-col">
+          <MeetingAgendaPrepSection
+            spaceId={spaceId}
+            agendaDocItemId={bundle?.workspace?.agenda_doc_item_id}
+            agendaTitle={bundle?.meeting.title?.trim() || 'Agenda'}
+            prep={prep}
+            prepDescription={prepDescription}
+            joinUrl={joinUrl}
+            googleAgendaHref={googleAgendaHref}
+            onCreateWithAi={onCreateAgendaWithAi}
           />
-        </MeetingRecordingsSection>
-      </section>
+        </section>
 
-      <MeetingRelatedCallsSection
-        spaceId={spaceId}
-        calls={relatedCalls}
-        onOpenRelated={onOpenRelated}
-      />
+        {isPostCall ? (
+          <section className="section-card p-spacing-4 gap-spacing-3 flex flex-col">
+            <SectionTitle>Post-meeting recap</SectionTitle>
+            <MeetingPostCallSections recordings={bundle?.recordings ?? []} />
+          </section>
+        ) : null}
 
-      <section className="section-card overflow-hidden">
+        <section className="section-card p-spacing-4">
+          <MeetingNotesSection
+            spaceId={spaceId}
+            meetingItemId={meetingItemId}
+            snippets={bundle?.snippets ?? []}
+            onCreated={onNoteCreated}
+          />
+        </section>
+      </div>
+
+      <div className="gap-spacing-4 mt-spacing-4 flex w-full min-w-0 flex-col">
+        <MeetingRelatedCallsSection
+          spaceId={spaceId}
+          calls={relatedCalls}
+          onOpenRelated={onOpenRelated}
+          onReload={onActionsReload}
+        />
+
         {bundle?.continuity.unresolved_commitments.length ? (
-          <div className="border-border p-spacing-4 border-b">
+          <div className="gap-spacing-2 flex flex-col">
             <SectionTitle count={bundle.continuity.unresolved_commitments.length}>
               Open loops
             </SectionTitle>
-            <div className="mt-spacing-3 gap-spacing-2 flex flex-col">
-              {bundle.continuity.unresolved_commitments.map((action) => (
-                <p key={action.id} className="body-3 text-foreground">
-                  {action.title}
-                </p>
-              ))}
-            </div>
+            {bundle.continuity.unresolved_commitments.map((action) => (
+              <p key={action.id} className="body-3 text-foreground">
+                {action.title}
+              </p>
+            ))}
           </div>
         ) : null}
-        <div className="p-spacing-4">
-          <MeetingActionItemsSection
-            spaceId={spaceId}
-            meetingItemId={meetingItemId}
-            actions={bundle?.actions ?? []}
-            loading={loading}
-            onCreated={onActionCreated}
-            onReload={onActionsReload}
-          />
-        </div>
-      </section>
 
-      <section className="section-card p-spacing-4 gap-spacing-2 flex flex-col">
-        <MeetingAgendaPrepSection
-          spaceId={spaceId}
-          agendaDocItemId={bundle?.workspace?.agenda_doc_item_id}
-          agendaTitle={bundle?.meeting.title?.trim() || 'Agenda'}
-          prep={prep}
-          prepDescription={prepDescription}
-          joinUrl={joinUrl}
-          googleAgendaHref={googleAgendaHref}
-          onCreateWithAi={onCreateAgendaWithAi}
-        />
-      </section>
-
-      {isPostCall ? (
-        <section className="section-card p-spacing-4 gap-spacing-3 flex flex-col">
-          <SectionTitle>Post-meeting recap</SectionTitle>
-          <MeetingPostCallSections recordings={bundle?.recordings ?? []} />
-        </section>
-      ) : null}
-
-      <section className="section-card p-spacing-4">
-        <MeetingNotesSection
+        <MeetingActionItemsSection
           spaceId={spaceId}
           meetingItemId={meetingItemId}
-          snippets={bundle?.snippets ?? []}
-          onCreated={onNoteCreated}
+          actions={bundle?.actions ?? []}
+          loading={loading}
+          onCreated={onActionCreated}
+          onReload={onActionsReload}
         />
-      </section>
+      </div>
     </>
   )
 }

@@ -107,7 +107,7 @@ export function MeetingActionItemsSection({
   }
 
   return (
-    <section className="gap-spacing-3 flex flex-col">
+    <section className="gap-spacing-3 flex w-full min-w-0 flex-col">
       <h2 className="body-3 text-foreground font-semibold">Action items ({actions.length})</h2>
       <AllTasksNativeList
         items={items}
