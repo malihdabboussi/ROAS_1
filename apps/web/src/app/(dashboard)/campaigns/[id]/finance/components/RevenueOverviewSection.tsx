@@ -103,6 +103,8 @@ export function RevenueOverviewSection({
               type="button"
               onClick={() => void loadOverview()}
               disabled={overviewLoading}
+              aria-label="Refresh revenue"
+              title="Refresh revenue"
               className="btn-icon-glass rounded-spacing-2"
             >
               <RefreshCw className={`h-4 w-4 ${overviewLoading ? 'animate-spin' : ''}`} />

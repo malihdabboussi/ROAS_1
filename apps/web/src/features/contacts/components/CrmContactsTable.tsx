@@ -114,7 +114,7 @@ export function CrmContactsTable(props: {
                     </div>
                   )}
                   {columnVisibility.email && (
-                    <div className="body-3 text-foreground truncate">{row.email}</div>
+                    <div className="body-3 text-foreground truncate" title={row.email}>{row.email}</div>
                   )}
                   {columnVisibility.phone && (
                     <div className="body-3 text-muted-foreground truncate">{row.phone || '—'}</div>

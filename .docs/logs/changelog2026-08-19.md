@@ -176,6 +176,12 @@ Why: Rescued from `codex/program-card-views` onto current main.
 Impact: Programs browse as cards instead of the denser list-only hub layout.
 Files: `ProgramsCardGrid.tsx`, `campaigns/page.tsx`, `programs.md`
 
+## [2026-08-19 05:35] - [FIX]
+What: Related calls use All Meetings rows (Campaign + Space columns). Related calls and action items sit full width at the bottom of the meeting workspace. Relatedness requires the same mapped client; object `client_campaign` mappings now score, and different clients no longer rank from a shared host or generic title words.
+Why: The related list was a card of unrelated client calls because scoring treated `client_campaign` as a string and let title/recording bonuses include anyone. Campaign/Space were missing on All Meetings, and both lists were trapped in the narrow section-card column.
+Impact: Cydcor weeklies relate to Cydcor, not Barber. All Meetings and Related calls show the same columns. Action items and related calls span the workspace width.
+Files: `meeting-related-calls.ts`, `MeetingRelatedCallsSection.tsx`, `MeetingWorkspaceBody.tsx`, `AllMeetingsNativeList.tsx`, `all-meetings-list-columns.ts`, personal-dashboard template
+
 ## [2026-08-19 05:40] - [FIX]
 
 What: Restored the missing `apps/web/src/app/(auth)/login/config/auth-login.ts` module (withAuthLoginTimeout + resolveAuthLoginErrorMessage). Main's auth-login-resilience change (e0f10273) imports it but the file was never committed, so `pnpm typecheck` failed on main.
@@ -185,3 +191,33 @@ Why: Broken build on main, surfaced while merging main into this branch.
 Impact: /login compiles again; sign-in requests time out after 15s with a friendly message instead of hanging.
 
 Files: apps/web/src/app/(auth)/login/config/auth-login.ts (new)
+
+## [2026-08-19 09:12] - [FIX]
+
+What: Resolved `claude/ui-pass-2026-08-18` vs current main. Kept pin-as-flag tab semantics (`orderViewsForStrip` + no restack on pin, drag reconciles pin flags instead of clearing them) and the branded 404, while taking main's view-catalog extract, launches page, and auth-login module. 404 icon uses existing `h-spacing-14` / `w-spacing-14` / `mb-spacing-6` utilities.
+
+Why: Main's pin handler restacked the views array and drag-reorder cleared every pin, which undoes this PR's tab-strip product. Merge was blocked on those conflicts.
+
+Impact: UI-pass can merge onto main without dropping pinned-first tabs or the themed 404.
+
+Files: `use-customize-view-actions.ts`, `use-view-strip-actions.ts`, `order-views-for-strip.ts`, `ViewSwitcher.tsx`, `not-found.tsx`
+
+## [2026-08-19 09:20] - [FIX]
+
+What: Merged current main into related-calls (#333). Kept All Meetings related-call rows and full-width lists, plus main's task-status picker / Continue-in-chat row. Related calls stay outside the `max-w-3xl` details column. Persist callback accepts `Promise<unknown>` so `updateSpaceItem` typechecks. Dynamic `space_items` select uses `unknown` then `Record<string, unknown>[]`.
+
+Why: The branch conflicted with the status-row + UI-pass merges; Vercel failed on persistItem `Promise<SpaceItem>` vs `Promise<void>` and a Supabase `select(string)` GenericStringError cast.
+
+Impact: Related calls can merge onto main with the current meeting workspace chrome.
+
+Files: `MeetingWorkspaceDialog.tsx`, `MeetingWorkspaceBody.tsx`, `MeetingRelatedCallsSection.tsx`, `AllMeetingsNativeList.tsx`, `meeting-call-matching.repository.ts`
+
+## [2026-08-19 09:22] - [FIX]
+
+What: Merged current main into Clients pipeline-order (#335). Kept Portal `include_all_statuses` / `include_inactive` listClients coverage and main's listLaunches tests. Shared-surfaces Agency Clients row still documents pipeline-stage helpers.
+
+Why: The branch conflicted with the launches page and UI-pass docs after #332–#334 landed.
+
+Impact: Clients pipeline order can merge onto main without dropping launches coverage.
+
+Files: `page-grader.integration.test.ts`, `frontend-shared-surfaces.md`, `agent-follow-up-work.md`

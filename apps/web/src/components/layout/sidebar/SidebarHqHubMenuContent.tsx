@@ -10,7 +10,15 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react'
-import { Brain, BriefcaseBusiness, ChevronDown, Inbox, ListChecks, Users } from 'lucide-react'
+import {
+  Brain,
+  BriefcaseBusiness,
+  ChevronDown,
+  Inbox,
+  ListChecks,
+  Rocket,
+  Users,
+} from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import type { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
@@ -183,6 +191,18 @@ export function SidebarHqHubMenuContent({
         />
 
         <SidebarHqHubMenuNavRow
+          href="/launches"
+          active={c.isActive('/launches')}
+          icon={<Rocket />}
+          label="Launches"
+          onNavigate={() => {
+            setWorkContext({ surface: 'general' })
+            handleNavigate()
+          }}
+          onHover={() => scheduleClose()}
+        />
+
+        <SidebarHqHubMenuNavRow
           href="/team"
           active={c.pathname.startsWith('/team')}
           icon={<Users />}
@@ -266,7 +286,7 @@ export function SidebarHqHubMenuContent({
                 className="hub-menu-link-row"
               >
                 <ListChecks className="icon-md shrink-0" />
-                <span className="body-3 truncate">{camp.name}</span>
+                <span className="body-3 truncate" title={camp.name}>{camp.name}</span>
               </Link>
             ))}
           </div>

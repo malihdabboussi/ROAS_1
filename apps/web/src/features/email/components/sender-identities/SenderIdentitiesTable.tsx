@@ -66,6 +66,8 @@ export function SenderIdentitiesTable() {
                       onClick={() =>
                         setActionMenuId(actionMenuId === identity.id ? null : identity.id)
                       }
+                      aria-label="Sender actions"
+                      title="Sender actions"
                       className="btn-icon-glass"
                     >
                       <MoreHorizontal className="icon-sm" />
@@ -173,6 +175,8 @@ export function SenderIdentitiesTable() {
                           onClick={() =>
                             setActionMenuId(actionMenuId === identity.id ? null : identity.id)
                           }
+                          aria-label="Sender actions"
+                          title="Sender actions"
                           className="btn-icon-glass"
                         >
                           <MoreHorizontal className="icon-sm" />

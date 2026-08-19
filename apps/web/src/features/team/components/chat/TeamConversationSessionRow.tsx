@@ -192,6 +192,8 @@ export function TeamConversationSessionRow({
           <button
             type="button"
             onClick={() => void onSubmitRename()}
+            aria-label="Save name"
+            title="Save name"
             className="btn-icon-glass btn-icon-glass-sm"
           >
             <Check className="icon-xs" />
@@ -199,6 +201,8 @@ export function TeamConversationSessionRow({
           <button
             type="button"
             onClick={onCancelRename}
+            aria-label="Cancel rename"
+            title="Cancel rename"
             className="btn-icon-glass btn-icon-glass-sm"
           >
             <X className="icon-xs" />

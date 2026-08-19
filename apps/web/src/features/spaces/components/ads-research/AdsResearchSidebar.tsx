@@ -145,6 +145,8 @@ export function AdsResearchSidebar({
                               e.stopPropagation()
                               commitRename(search)
                             }}
+                            aria-label="Save name"
+                            title="Save name"
                             className="text-[var(--color-muted-foreground)] hover:text-[var(--foreground)]"
                           >
                             <Check className="h-3 w-3" />
@@ -155,6 +157,8 @@ export function AdsResearchSidebar({
                               e.stopPropagation()
                               setEditingId(null)
                             }}
+                            aria-label="Cancel rename"
+                            title="Cancel rename"
                             className="text-[var(--color-muted-foreground)] hover:text-[var(--foreground)]"
                           >
                             <X className="h-3 w-3" />

@@ -167,7 +167,8 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
           id: 'all-meetings',
           column_widths: expect.objectContaining({
             host: 160,
-            client_campaign: 240,
+            client_campaign: 200,
+            space_title: 180,
             call_status: 140,
           }),
           date_display_formats: expect.objectContaining({ call_date: 'date_time' }),
@@ -175,6 +176,7 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
             'call_date',
             'call_kind',
             'client_campaign',
+            'space_title',
             'host',
             'call_status',
           ]),
@@ -207,7 +209,8 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
             expect.objectContaining({ id: 'sales' }),
           ]),
         }),
-        expect.objectContaining({ id: 'client_campaign', name: 'Client / Campaign', type: 'text' }),
+        expect.objectContaining({ id: 'client_campaign', name: 'Campaign', type: 'text' }),
+        expect.objectContaining({ id: 'space_title', name: 'Space', type: 'text' }),
         expect.objectContaining({ id: 'host', name: 'Host', type: 'text' }),
         expect.objectContaining({
           id: 'call_status',

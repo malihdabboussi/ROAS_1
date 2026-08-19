@@ -145,6 +145,8 @@ function CategoryRow({
           ref={menuTriggerRef}
           type="button"
           onClick={() => setMenuOpen((o) => !o)}
+          aria-label="Category options"
+          title="Category options"
           className="shrink-0 rounded p-1 text-[var(--color-muted-foreground)] opacity-0 transition-opacity hover:text-[var(--foreground)] group-hover:opacity-100"
         >
           <MoreHorizontal className="h-3.5 w-3.5" />

@@ -1,7 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RequestScope } from '@vibey/api-shared'
-import type { PageGraderClientCampaign } from '../integrations/page-grader.integration'
+import type {
+  PageGraderClientCampaign,
+  PageGraderLaunch,
+} from '../integrations/page-grader.integration'
 import { PageGraderApiService } from './page-grader-api.service'
 import { PageGraderBrainImportService } from './page-grader-brain-import.service'
 
@@ -186,6 +189,62 @@ export class PageGraderAgencyWorkspaceService {
       return rows.map((row) => ({ ...row, roas_space_id: byExternalId.get(row.id) ?? null }))
     })
     return { campaigns: output.flat() }
+  }
+
+  async listLaunches(
+    supabase: SupabaseClient,
+    userId: string,
+    _scope: RequestScope,
+    opts: {
+      q?: string
+      clientId?: string
+      kind?: string
+      from?: string
+      to?: string
+      sync?: boolean
+    },
+  ) {
+    const launches = await this.api.listLaunches(userId, {
+      q: opts.q,
+      clientId: opts.clientId,
+      kind: opts.kind,
+      from: opts.from,
+      to: opts.to,
+      limit: 500,
+    })
+    if (opts.sync === false) {
+      return {
+        launches: launches.map((row) => ({ ...row, roas_space_id: null })),
+      }
+    }
+
+    const scopeMap = await this.api.getClientScopeMap(userId)
+    const uniqueClientIds = [
+      ...new Set(launches.map((row) => row.client_id).filter((id): id is string => Boolean(id))),
+    ]
+    const spacesByCampaignId = new Map<string, string>()
+    await mapWithConcurrency(
+      uniqueClientIds.filter((clientId) => scopeMap[clientId]),
+      8,
+      async (clientId) => {
+        const mapping = scopeMap[clientId]
+        if (!mapping) return
+        try {
+          const spaces = await this.loadCampaignSpaceMappings(supabase, mapping)
+          for (const space of spaces) {
+            spacesByCampaignId.set(space.page_grader_campaign_id, space.space_id)
+          }
+        } catch {
+          // Keep the live launch inventory available even if a Space refresh fails.
+        }
+      },
+    )
+    return {
+      launches: launches.map((row: PageGraderLaunch) => ({
+        ...row,
+        roas_space_id: row.campaign_id ? (spacesByCampaignId.get(row.campaign_id) ?? null) : null,
+      })),
+    }
   }
 
   async patchEntity(

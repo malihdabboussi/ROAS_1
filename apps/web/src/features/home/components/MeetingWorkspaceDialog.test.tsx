@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   clearMeetingContext: vi.fn(),
   endMeetingCall: vi.fn(),
   fetchMeetingWorkspace: vi.fn(),
+  fetchMeetingRelatedCalls: vi.fn(),
   openChatDrawer: vi.fn(),
   continueMeetingConversation: vi.fn(),
   seedComposer: vi.fn(),
@@ -24,7 +25,7 @@ vi.mock('@/lib/artifacts', () => ({
 vi.mock('@/features/home/services/meeting-workspace-api', () => ({
   endMeetingCall: mocks.endMeetingCall,
   fetchMeetingWorkspace: mocks.fetchMeetingWorkspace,
-  fetchMeetingRelatedCalls: vi.fn().mockResolvedValue([]),
+  fetchMeetingRelatedCalls: mocks.fetchMeetingRelatedCalls,
   startMeetingCall: mocks.startMeetingCall,
   toggleMeetingActionStatus: mocks.toggleMeetingActionStatus,
   updateMeetingActionStatus: mocks.updateMeetingActionStatus,
@@ -44,6 +45,15 @@ vi.mock('@/components/work-views/AllTasksNativeList', () => ({
         <div key={item.id}>{item.title}</div>
       ))}
       <button type="button">Add task</button>
+    </div>
+  ),
+}))
+vi.mock('@/components/work-views/AllMeetingsNativeList', () => ({
+  AllMeetingsNativeList: ({ items }: { items: Array<{ id: string; title: string }> }) => (
+    <div>
+      {items.map((item) => (
+        <div key={item.id}>{item.title}</div>
+      ))}
     </div>
   ),
 }))
@@ -139,6 +149,7 @@ function renderWorkspace(props: Partial<Parameters<typeof MeetingWorkspaceDialog
 
 describe('MeetingWorkspaceDialog', () => {
   beforeEach(() => {
+    mocks.fetchMeetingRelatedCalls.mockResolvedValue([])
     mocks.fetchSpaceById.mockResolvedValue({
       id: 'space-1',
       title: 'Meetings',
@@ -353,8 +364,8 @@ describe('MeetingWorkspaceDialog', () => {
     const recordings = screen.getByText('Recordings & attachments').closest('section')
     const actions = screen.getByText(/Action items/).closest('section')
     const agenda = screen.getByText('Agenda & prep').closest('section')
-    expect(recordings?.compareDocumentPosition(actions!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
-    expect(actions?.compareDocumentPosition(agenda!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(recordings?.compareDocumentPosition(agenda!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(agenda?.compareDocumentPosition(actions!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
   it('renders completed Space action items in the All Tasks table', async () => {

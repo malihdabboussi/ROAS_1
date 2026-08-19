@@ -1,3 +1,4 @@
+import { ensureAllMeetingsListColumns } from '@/lib/spaces/all-meetings-list-columns'
 import {
   DEFAULT_SPACE_SCHEMA,
   type FieldDef,
@@ -20,10 +21,11 @@ export function normalizeSpaceSchema(value: unknown): SpaceSchema {
   const missingFields = DEFAULT_SPACE_SCHEMA.fields.filter((field) => !existingIds.has(field.id))
   const existingViews = Array.isArray(raw.views) ? (raw.views as ViewDef[]) : []
 
-  return {
+  const normalized = {
     ...raw,
     version: 1,
     fields: [...existingFields, ...missingFields],
     views: existingViews.length > 0 ? existingViews : [...DEFAULT_SPACE_SCHEMA.views],
   } as SpaceSchema
+  return ensureAllMeetingsListColumns(normalized) as SpaceSchema
 }

@@ -209,6 +209,7 @@ export function SpaceQuickFilterDock({ ctx }: { ctx: SpaceToolbarContext }) {
                   type="button"
                   aria-label="Clear assignee filter"
                   onClick={clearToolbarAssigneeFilter}
+                  title="Clear assignee filter"
                   className="badge-glass badge-glass-blue rounded-spacing-2 group inline-flex shrink-0 cursor-pointer items-center border-0 px-2 py-1 shadow-none transition-opacity hover:opacity-90"
                 >
                   <span className="relative flex shrink-0 items-center justify-center">

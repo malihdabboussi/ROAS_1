@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { BriefcaseBusiness, PanelRightOpen, Search } from 'lucide-react'
+import { BriefcaseBusiness, PanelRightOpen, Rocket, Search } from 'lucide-react'
 import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
   fetchAgencyClients,
@@ -115,6 +115,9 @@ export function AgencyClientsPage() {
         </button>
         <Link href="/client-campaigns" className="button-compact button-glass-neutral">
           <BriefcaseBusiness className="icon-sm" /> Client Campaigns
+        </Link>
+        <Link href="/launches" className="button-compact button-glass-neutral">
+          <Rocket className="icon-sm" /> Launches
         </Link>
       </div>
 

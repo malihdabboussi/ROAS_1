@@ -243,6 +243,7 @@ export function TaskMetaCoreFields({
                 e.stopPropagation()
                 onUpdateField({ start_date: null, due_date: null, recurrence: null })
               }}
+              aria-label="Clear dates"
               className={CELL_CLEAR}
             >
               <X className="h-3 w-3" />
@@ -272,6 +273,7 @@ export function TaskMetaCoreFields({
                   e.stopPropagation()
                   onUpdateField(toFieldPatch(item, 'tags', []))
                 }}
+                aria-label="Clear tags"
                 className={CELL_CLEAR}
               >
                 <X className="h-3 w-3" />

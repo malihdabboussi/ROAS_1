@@ -35,7 +35,7 @@ export function TeamViewTabs({ active, onChange, trailing }: TeamViewTabsProps) 
               aria-pressed={isActive}
               aria-label={meta.label}
             >
-              <span className="max-w-[140px] truncate">{meta.label}</span>
+              <span className="max-w-[140px] truncate" title={meta.label}>{meta.label}</span>
               {isActive ? (
                 <span
                   aria-hidden

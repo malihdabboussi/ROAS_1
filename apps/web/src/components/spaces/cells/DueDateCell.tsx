@@ -167,12 +167,13 @@ function formatDisplayRangeLabel(
   return `${startLabel} → ${dueLabel}`
 }
 
-/** Urgency colors only apply to deadline-style relative dates — not historic Call Dates. */
-function dueDateTriggerColorClass(
-  dueValue: string | null,
-  displayFormat: DateDisplayFormat,
-): string {
-  if (displayFormat !== 'relative') return 'text-muted-foreground'
+/**
+ * Urgency colors for the Due Date trigger. This cell only ever renders `due_date` /
+ * `start_date` (Call Date uses the plain date cell), so an overdue deadline reads red
+ * whether the column shows "3d overdue" or "Jul 18, 10:00 AM" — lists default to the
+ * absolute format and previously lost the overdue signal entirely.
+ */
+function dueDateTriggerColorClass(dueValue: string | null): string {
   const due = parseDate(dueValue)
   if (!due) return 'text-muted-foreground'
   const now = new Date()
@@ -273,7 +274,7 @@ export function DueDateCell({
     </>
   ) : triggerField === 'due' && value.due_date ? (
     (() => {
-      const colorClass = dueDateTriggerColorClass(value.due_date, displayFormat)
+      const colorClass = dueDateTriggerColorClass(value.due_date)
       return (
         <>
           <Calendar className={`h-3.5 w-3.5 shrink-0 ${colorClass}`} />
@@ -299,7 +300,7 @@ export function DueDateCell({
     <Calendar className="h-3.5 w-3.5 shrink-0 text-[var(--color-muted-foreground)]" aria-hidden />
   ) : value.due_date ? (
     (() => {
-      const colorClass = dueDateTriggerColorClass(value.due_date, displayFormat)
+      const colorClass = dueDateTriggerColorClass(value.due_date)
       return (
         <>
           <Calendar className={`h-3.5 w-3.5 shrink-0 ${colorClass}`} />

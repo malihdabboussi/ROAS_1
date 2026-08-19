@@ -117,6 +117,8 @@ describe('ops-desk-summary', () => {
   it('extracts first name', () => {
     expect(firstNameFromDisplayName('Dylan Van As', 'there')).toBe('Dylan')
     expect(firstNameFromDisplayName('', 'there')).toBe('there')
+    expect(firstNameFromDisplayName('dylan', 'there')).toBe('Dylan')
+    expect(firstNameFromDisplayName('McKay Smith', 'there')).toBe('McKay')
   })
 })
 

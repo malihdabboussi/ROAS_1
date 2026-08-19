@@ -98,6 +98,7 @@ vi.mock('@/features/studio/store/use-chat-store', () => ({
       selector({
         activeConversationId: mocks.activeConversationId,
         setActiveConversationId: mocks.setActiveConversationId,
+        conversations: [],
       }),
     { getState: () => ({ activeConversationId: mocks.activeConversationId }) },
   ),

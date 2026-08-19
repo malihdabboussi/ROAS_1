@@ -101,20 +101,17 @@ export function SidebarHqHubLogoButton({
             <SidebarWordmark className="max-w-full" />
           </span>
         ) : (
-          <>
+          // One face wrapper: `.hub-sidebar-logo-face` forces display:flex, which would
+          // override Tailwind `.hidden` on the imgs and render both theme marks side by side.
+          <span className="hub-sidebar-logo-face">
             <img
               src="/Logos/roas/icon-white.png"
               alt=""
               draggable={false}
-              className="hub-sidebar-logo-face hidden dark:block"
+              className="hidden dark:block"
             />
-            <img
-              src="/Logos/roas/icon-black.png"
-              alt=""
-              draggable={false}
-              className="hub-sidebar-logo-face dark:hidden"
-            />
-          </>
+            <img src="/Logos/roas/icon-black.png" alt="" draggable={false} className="dark:hidden" />
+          </span>
         )}
         <CollapseGlyph
           className="hub-sidebar-logo-glyph icon-md text-muted-foreground"

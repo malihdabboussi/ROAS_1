@@ -30,4 +30,23 @@ describe('normalizeSpaceSchema', () => {
     )
     expect(normalized.views).toEqual(DEFAULT_SPACE_SCHEMA.views)
   })
+
+  it('adds Campaign and Space columns to All Meetings views', () => {
+    const normalized = normalizeSpaceSchema({
+      fields: [
+        { id: 'title', name: 'Name', type: 'text' },
+        { id: 'client_campaign', name: 'Client / Campaign', type: 'text' },
+      ],
+      views: [{ id: 'all-meetings', type: 'list', visible_fields: ['title', 'client_campaign'] }],
+    })
+    expect(normalized.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'client_campaign', name: 'Campaign' }),
+        expect.objectContaining({ id: 'space_title', name: 'Space' }),
+      ]),
+    )
+    expect(normalized.views[0]?.visible_fields).toEqual(
+      expect.arrayContaining(['client_campaign', 'space_title']),
+    )
+  })
 })

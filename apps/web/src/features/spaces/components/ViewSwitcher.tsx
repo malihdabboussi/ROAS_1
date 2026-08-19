@@ -73,7 +73,8 @@ interface ViewSwitcherProps {
   onSelectView: (viewId: string) => void
   onAddView?: (view: ViewDef) => void
   /** When set with ≥2 views, tabs reorder via drag (same affordance as list column headers). */
-  onReorderViews?: (nextViews: ViewDef[]) => void
+  /** `movedViewId` is the dragged tab, so the container can reconcile pin flags against the drop zone. */
+  onReorderViews?: (nextViews: ViewDef[], movedViewId?: string) => void
   rightSlot?: React.ReactNode
   /** When false, reporting views are greyed out in the add-view catalog. */
   hasCampaign?: boolean
@@ -168,7 +169,9 @@ function StaticViewTab({
         textColor={textColor}
         pinned={view.pinned_to_start ?? false}
       />
-      <span className="max-w-[140px] truncate">{view.name}</span>
+      <span className="max-w-[140px] truncate" title={view.name}>
+        {view.name}
+      </span>
       {selected && (
         <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[var(--foreground)]" />
       )}
@@ -527,7 +530,7 @@ export function ViewSwitcher({
       return
     }
     const hiddenViews = views.filter((view) => hideChannelViews && isChannelViewType(view.type))
-    onReorderViews([...nextViews, ...hiddenViews])
+    onReorderViews([...nextViews, ...hiddenViews], dragId)
     resetDragState()
   }
 
@@ -607,7 +610,9 @@ export function ViewSwitcher({
                       textColor={textColor}
                       pinned={view.pinned_to_start ?? false}
                     />
-                    <span className="max-w-[140px] truncate">{view.name}</span>
+                    <span className="max-w-[140px] truncate" title={view.name}>
+                      {view.name}
+                    </span>
                     {selected && (
                       <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[var(--foreground)]" />
                     )}

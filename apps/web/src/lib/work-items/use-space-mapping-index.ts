@@ -25,17 +25,30 @@ export function buildSpaceMappingIndex(
   return index
 }
 
+let cachedGroups: SpaceMappingGroup[] | null = null
+let inflight: Promise<SpaceMappingGroup[]> | null = null
+
+function loadSpaceMappingGroups(): Promise<SpaceMappingGroup[]> {
+  if (cachedGroups) return Promise.resolve(cachedGroups)
+  inflight ??= fetchSpaceMappingGroups().then((next) => {
+    cachedGroups = next
+    inflight = null
+    return next
+  })
+  return inflight
+}
+
 /**
  * Lazily loads a spaceId → mapping-label index once `enabled` first turns
  * true, so list rows can display where each item lives. `null` while loading.
  */
 export function useSpaceMappingIndex(enabled: boolean): Map<string, SpaceMappingIndexEntry> | null {
-  const [groups, setGroups] = useState<SpaceMappingGroup[] | null>(null)
+  const [groups, setGroups] = useState<SpaceMappingGroup[] | null>(cachedGroups)
 
   useEffect(() => {
     if (!enabled || groups !== null) return
     let cancelled = false
-    void fetchSpaceMappingGroups().then((next) => {
+    void loadSpaceMappingGroups().then((next) => {
       if (!cancelled) setGroups(next)
     })
     return () => {

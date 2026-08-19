@@ -100,7 +100,7 @@ export function SidebarProgramFolder({
             className="body-2 text-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 font-medium transition-colors"
           >
             <span className="gap-spacing-1 inline-flex max-w-full items-center">
-              <span className="truncate">{label}</span>
+              <span className="truncate" title={label}>{label}</span>
               {isRestricted ? (
                 <Lock className="icon-xs text-muted-foreground shrink-0" aria-label="Restricted" />
               ) : null}
@@ -113,7 +113,7 @@ export function SidebarProgramFolder({
             className="body-2 text-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 text-left font-medium transition-colors"
           >
             <span className="gap-spacing-1 inline-flex max-w-full items-center">
-              <span className="truncate">{label}</span>
+              <span className="truncate" title={label}>{label}</span>
               {isRestricted ? (
                 <Lock className="icon-xs text-muted-foreground shrink-0" aria-label="Restricted" />
               ) : null}

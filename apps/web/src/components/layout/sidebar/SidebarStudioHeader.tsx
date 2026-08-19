@@ -51,6 +51,8 @@ export function SidebarStudioHeader({
         <div className="flex h-14 items-center justify-center pt-1">
           <button
             onClick={() => c.setCollapsed(false)}
+            aria-label="Expand sidebar"
+            title="Expand sidebar"
             className="group flex h-10 w-10 items-center justify-center rounded-lg transition-all"
           >
             <span className="group-hover:hidden">

@@ -278,9 +278,9 @@ export function AssigneeCell({
                         >
                           <RosterMemberAvatar entry={entry} size={24} />
                           <div className="min-w-0 flex-1">
-                            <div className="truncate text-[var(--foreground)]">{label}</div>
+                            <div className="truncate text-[var(--foreground)]" title={label}>{label}</div>
                             {entry.email && entry.user_id !== currentUserId && (
-                              <div className="truncate text-[10px] text-[var(--color-muted-foreground)]">
+                              <div className="truncate text-[10px] text-[var(--color-muted-foreground)]" title={entry.email}>
                                 {entry.email}
                               </div>
                             )}

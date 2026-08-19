@@ -176,6 +176,7 @@ export type MeetingRelatedCall = {
   call_status: string | null
   recording_url: string | null
   score: number
+  item?: Record<string, unknown>
 }
 
 export function fetchMeetingRelatedCalls(spaceId: string, meetingItemId: string) {
@@ -192,29 +193,65 @@ export function endMeetingCall(spaceId: string, meetingItemId: string) {
   })
 }
 
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function safeEmail(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? ''
+  return EMAIL_SHAPE.test(trimmed) ? trimmed : null
+}
+
+/**
+ * All-day events arrive as bare `YYYY-MM-DD` dates; the API requires an ISO datetime
+ * with offset. Normalise anything Date can parse to a full ISO string.
+ */
+function isoDateTime(value: string): string {
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString()
+}
+
+function safeUrl(value: string | null | undefined): string | null {
+  if (!value) return null
+  try {
+    return new URL(value).toString()
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Wire shape for `/meetings/resolve` + `/meetings/materialize`. The API validates every
+ * field strictly (email attendees, absolute URLs, non-empty title) and rejects the whole
+ * request on one bad value — so a single calendar attendee without an email used to
+ * fail materialization for all events and toast on every Meetings load — in practice the
+ * all-day events' bare `YYYY-MM-DD` start/end were doing exactly that. Normalise or drop
+ * what the API would reject instead of sending it.
+ */
+export function toScheduledMeetingPayload(event: CalendarAgendaEvent) {
+  const organizerEmail = safeEmail(event.organizer?.email)
+  return {
+    calendar_event_id: event.id,
+    // Stable natural key — agenda row ids flip between providers/accounts.
+    ical_uid: event.ical_uid?.trim() ? event.ical_uid : null,
+    title: event.title.trim() || 'Untitled meeting',
+    start: isoDateTime(event.start),
+    end: isoDateTime(event.end),
+    description: event.description ?? null,
+    location: event.location ?? null,
+    video_url: safeUrl(event.video_url),
+    html_link: safeUrl(event.html_link),
+    attendees: event.attendees.flatMap((attendee) => {
+      const email = safeEmail(attendee.email)
+      return email ? [{ email, name: attendee.name ?? null }] : []
+    }),
+    organizer: organizerEmail ? { email: organizerEmail, name: event.organizer?.name ?? null } : null,
+  }
+}
+
 export function resolveScheduledMeeting(
   spaceId: string,
   event: CalendarAgendaEvent,
 ): Promise<ResolvedMeetingWorkspace> {
-  return backendPost(`/api/spaces/${spaceId}/meetings/resolve`, {
-    calendar_event_id: event.id,
-    // Stable natural key — agenda row ids flip between providers/accounts.
-    ical_uid: event.ical_uid ?? null,
-    title: event.title,
-    start: event.start,
-    end: event.end,
-    description: event.description ?? null,
-    location: event.location ?? null,
-    video_url: event.video_url,
-    html_link: event.html_link,
-    attendees: event.attendees.map((attendee) => ({
-      email: attendee.email,
-      name: attendee.name,
-    })),
-    organizer: event.organizer
-      ? { email: event.organizer.email, name: event.organizer.name }
-      : null,
-  })
+  return backendPost(`/api/spaces/${spaceId}/meetings/resolve`, toScheduledMeetingPayload(event))
 }
 
 export function materializeScheduledMeetings(
@@ -222,24 +259,7 @@ export function materializeScheduledMeetings(
   events: CalendarAgendaEvent[],
 ): Promise<{ created: number; linked: number; skipped: number }> {
   return backendPost(`/api/spaces/${spaceId}/meetings/materialize`, {
-    events: events.map((event) => ({
-      calendar_event_id: event.id,
-      ical_uid: event.ical_uid ?? null,
-      title: event.title,
-      start: event.start,
-      end: event.end,
-      description: event.description ?? null,
-      location: event.location ?? null,
-      video_url: event.video_url,
-      html_link: event.html_link,
-      attendees: event.attendees.map((attendee) => ({
-        email: attendee.email,
-        name: attendee.name,
-      })),
-      organizer: event.organizer
-        ? { email: event.organizer.email, name: event.organizer.name }
-        : null,
-    })),
+    events: events.map(toScheduledMeetingPayload),
   })
 }
 

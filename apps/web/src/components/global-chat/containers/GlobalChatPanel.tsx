@@ -51,7 +51,9 @@ export function GlobalChatPanel({
   const isChannelRoute = Boolean(channelId && pathname.startsWith('/home/channels/'))
   const isSpacesRoute = pathname.startsWith('/spaces') || pathname.startsWith('/campaigns')
   const isAgencyWorkspaceRoute =
-    pathname.startsWith('/clients') || pathname.startsWith('/client-campaigns')
+    pathname.startsWith('/clients') ||
+    pathname.startsWith('/client-campaigns') ||
+    pathname.startsWith('/launches')
   const host = useStickyGlobalChatPanelHost({
     isChannelRoute,
     channelId,

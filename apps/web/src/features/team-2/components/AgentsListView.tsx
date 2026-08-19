@@ -209,7 +209,7 @@ function AgentListRow({
             aria-label="Agent name"
           />
         ) : (
-          <span className="body-4 truncate font-medium">{agent.name}</span>
+          <span className="body-4 truncate font-medium" title={agent.name}>{agent.name}</span>
         )}
       </div>
       <div className="body-4 text-muted-foreground min-w-0 truncate">

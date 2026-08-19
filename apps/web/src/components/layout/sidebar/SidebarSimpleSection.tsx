@@ -11,6 +11,7 @@ import {
   Ellipsis,
   Inbox,
   ListTodo,
+  Rocket,
   Search,
   SquarePen,
   Users,
@@ -41,6 +42,7 @@ const SIMPLE_LINKS = [
   { href: '/all-tasks', label: 'All Tasks', icon: ListTodo },
   { href: '/clients', label: 'Clients', icon: Users },
   { href: '/client-campaigns', label: 'Client Campaigns', icon: BriefcaseBusiness },
+  { href: '/launches', label: 'Launches', icon: Rocket },
 ] as const
 export function SidebarSimpleSection({
   c,
