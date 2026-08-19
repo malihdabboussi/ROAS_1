@@ -38,6 +38,7 @@ describe('FathomController behavior', () => {
   let importJobs: any
   let customerBrain: any
   let spaceAutomation: any
+  let campaignBrainRoute: { enqueueForRoute: ReturnType<typeof vi.fn> }
   let fathomRepository: any
   let controller: FathomController
   let webhookService: FathomWebhookService
@@ -76,6 +77,10 @@ describe('FathomController behavior', () => {
 
     spaceAutomation = {
       processFathomRecordingEvent: vi.fn().mockResolvedValue({ processed: false }),
+    }
+
+    campaignBrainRoute = {
+      enqueueForRoute: vi.fn().mockResolvedValue({ routed: false, reason: 'no_space' }),
     }
 
     fathomRepository = {
@@ -123,6 +128,7 @@ describe('FathomController behavior', () => {
       customerBrain,
       spaceAutomation,
       fathomRepository,
+      campaignBrainRoute,
     )
     adminMock.upserts.length = 0
     adminMock.rowsByTable.clear()
@@ -236,6 +242,70 @@ describe('FathomController behavior', () => {
       }),
       null,
     )
+  })
+
+  it('dual-writes the same meeting into the client campaign brain from the Space route', async () => {
+    api.resolveUserByWebhookSecret.mockResolvedValue('user_2')
+    api.getAutoIngestSettings.mockResolvedValue({
+      autoIngest: true,
+      billingScope: 'org',
+      billingOrgId: 'org_9',
+    })
+    importJobs.enqueueFathomMeetingImport.mockResolvedValue({
+      jobId: 'job-1',
+      status: 'queued',
+      deduped: false,
+    })
+    spaceAutomation.processFathomRecordingEvent.mockResolvedValue({
+      processed: true,
+      space_id: 'space-1ds',
+      item_id: 'item-1',
+    })
+    campaignBrainRoute.enqueueForRoute.mockResolvedValue({
+      routed: true,
+      campaignId: 'camp-1ds',
+      jobId: 'job-2',
+    })
+
+    const event = {
+      id: 'meeting_1ds',
+      title: '1DS x ROAS Weekly Session',
+      transcript: [{ speaker: { display_name: 'Dylan' }, text: 'We agreed to ship the VSL edit' }],
+    }
+
+    await webhookService.processWebhookAsync(JSON.stringify(event), 'whsec_2')
+
+    expect(importJobs.enqueueFathomMeetingImport).toHaveBeenCalledTimes(1)
+    expect(campaignBrainRoute.enqueueForRoute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user_2',
+        orgId: 'org_9',
+        event: expect.objectContaining({ id: 'meeting_1ds' }),
+        spaceRoute: expect.objectContaining({ space_id: 'space-1ds' }),
+      }),
+    )
+  })
+
+  it('does not attempt the campaign brain route when the webhook has no transcript', async () => {
+    api.resolveUserByWebhookSecret.mockResolvedValue('user_2')
+    api.getAutoIngestSettings.mockResolvedValue({
+      autoIngest: true,
+      billingScope: 'personal',
+      billingOrgId: null,
+    })
+    api.getRecordingTranscript.mockResolvedValue(null)
+    spaceAutomation.processFathomRecordingEvent.mockResolvedValue({
+      processed: true,
+      space_id: 'space-1ds',
+      item_id: 'item-1',
+    })
+
+    await webhookService.processWebhookAsync(
+      JSON.stringify({ id: 'meeting_no_transcript', title: 'No transcript' }),
+      'whsec_2',
+    )
+
+    expect(campaignBrainRoute.enqueueForRoute).not.toHaveBeenCalled()
   })
 
   it('charges selected org when webhook billing is org scoped', async () => {

@@ -1,6 +1,6 @@
 # Pixel Slack North Star — Classify, Retrieve, Deliver (Brain / Agent rework)
 
-Last Modified: 2026-08-18 (§11 consolidated Brain/Agent workstreams; PRs #310/#311 opened)
+Last Modified: 2026-08-18 (§11.10 asset links; §11.11 client context bundle)
 
 ## Architect Summary
 
@@ -741,7 +741,7 @@ Out of scope until Wave 0 ships: new MCP tools, new DB tables, a separate “pro
 | Forcing client resolve on every Slack ask | N0 first; general/team fixtures forbid `list_clients` |
 | Overwriting PR 288 / voice / composer | Expand policy headings and quote inherit only; no second TOOLS.md or composer |
 | Quote parser false-positives map the wrong `#channel` | Require `roas-` client channel pattern or a resolved observation row; if 0/N clients, ask once |
-| Client data in Slack Connect group DMs with an external present | S14 allows Internal **sender**. Product decision R54: prefer internal channel for Portal data if mixed; do not change fail-closed for External senders |
+| Client data in Slack Connect group DMs with an external present | **Decided 2026-08-18:** Internal/admin sender → share in place; External sender → deny (fail-closed unchanged). See 11.12 |
 | Depth ladder increases tokens | Classify first so general asks stay cheap; stop at first sufficient hit; one search per store; skip User Brain on client asks. Measure Wave 2 |
 | Org Pixel missing CEO/webinar skills / browser | Already in follow-up log. N7 must admit browser absence. N8 uses copywriter/ads_manager skills if Pixel lacks them via `ask_agent` **only when those skills are not on Pixel** — do not silently no-op |
 | Live Slack audit not run | Wave 0 fixtures from stamps + R31; live histogram when secrets exist |
@@ -786,28 +786,37 @@ Three structural adjustments to the spine above, so the rest of this section bui
 - **Known.** Home / new chat defaults to the General campaign. `search_campaign_brain` auto-injects `CAMPAIGN_ID` when CONNECTIONS is a real client and rejects General. Named lookup (PR 288) binds only when a client is *typed*; "their last webinar" on General never binds. The platform preload (`brain-context.service.ts` → `[BRAIN CONTEXT]`) covers **user / agent / company / customer** families and deliberately excludes campaign — so a bound chat is still one Terra tool-choice away from "I couldn't find it".
 - **Unknown.** Whether implied-client detection (pronoun + recent client mention, channel stamp, Slack thread) can bind safely without wrong-client bleed; the retrieval budget for a campaign preload.
 - **First steps.** (a) Slack: bind CONNECTIONS from the channel stamp / N1 result at turn start, not only after a named tool call. (b) Studio: when CONNECTIONS ≠ General, add Campaign Brain to the preload packet under the same limits as User Brain (`brain-context-support.service.ts`). (c) Fixture: bound-client chat, "what were their last webinar stats" → Campaign Brain hit before any User Brain call.
-- **Status.** Not started. Depends on 11.1 for quality, independent for correctness.
+- **Status.** Shipped in PR #321 (Slack sends `campaign_id`; channel-chat binds before the turn; `buildFullContext` campaign lane; fixture "what were their last webinar stats" → Campaign Brain before User Brain).
 
 ### 11.3 Brain ingestion coverage ("everything should be recognizable by the Brain")
 
 - **Known paths.** Meetings: `apps/api/src/modules/brain/services/meeting-ingestion.service.ts` (Fathom → memories). Conversations: `apps/agent-api/src/modules/brain/services/conversation-processing.service.ts`. Slack: `slack-brain-mapping.service.ts` → Person / Campaign Brain (90-day backfill admin-gated), Slack-managed person brains (`20260720220000_slack_managed_person_brains.sql`). Personal-vs-org routing: `.docs/architecture/personal-vs-org.md`. Semantic-first cross-object search (May 21 spec) is **not shipped**.
 - **Unknown (must audit against production `lhfgtsjetcardinpgouq`).** (1) Are Fathom meetings actually landing as memories per campaign, and how stale? (2) Do tasks / Space docs feed Brain at all — no task→memory ingest path was found. (3) Company Brain: what is in it, who writes to it. (4) **User brains not populating** — is `ensureUserBrain`/default-brain creation running for every org member, and is `conversation-processing` writing to user scope? (5) Personal Brain page **500** — entry points `graph.controller.ts` → `graph.service.ts` → `find_connections_for_brain` / `MEMORY_GRAPH_SELECT`; footer stats work (2,803 memories) so data exists and the graph query/edge build is what fails. Get the API log line for the 500 first.
-- **First steps.** Read-only production audit (memory counts by brain scope × source_type × last 30 days; users with zero user-brain memories; graph endpoint error). Then fix in this order: 500 (visible, likely a query/limit bug) → user-brain population → task/doc ingest gap.
-- **Status.** Not started. Cursor began the 500 trace and was redirected.
+- **Audit findings (2026-08-18, read-only against prod, brains/memories tables).**
+  1. **Personal Brain 500 = payload size, not the DB.** Every graph RPC (`find_connections_for_brain`, legend/counts) returns in <200 ms for Dylan's brain (`8d5822bd…`, 3,099 memories). The web "full load" asks for `limit=10000`; the memory-field payload for that brain alone is ~3.5 MB before JSON/node overhead — the largest brain in prod by 2× — and `roas-api` runs on Vercel, whose response cap (~4.5 MB) yields a generic 500. Campaign brains (≤1.9 MB) load. **Fix:** cap the graph memory window server-side and trim `MEMORY_GRAPH_SELECT` for graph nodes (drop `metadata`, truncate `content`); page the rest.
+  2. **User brains are not empty — there are almost no users.** ROAS org has **2 members** (`dylan@dylanvanas.com` owner, `carol@roas.co`). Nefi, Rafay, Aaron, Caleb, etc. are Slack identities / Person Brains, not portal users, so they have no user brain to populate. Carol's is empty (0). Dylan's personal brain gets **only** `fathom_meeting` (1,046/30d) and `slack_period` (317/30d); conversation-derived memories are negligible (91 all-time). Dylan also has 92 user-scope brains, mostly April/May imports/tests — clutter, not a runaway creator (2 new on 08-18, person brains).
+  3. **Company Brain is stale.** 84 memories, all `google_drive`, all created 2026-07-20; nothing since. No Slack, meetings, or decisions flow to it. `slack_brain_mappings` has 25 rows, **all `target_kind='campaign'`** — no company/user targets.
+  4. **Campaign brains are healthy and the Yasir stats WERE there.** 24k memories, 131 brains; last 30d: `page_grader_slack` 14.6k, `page_grader_google_drive` 3.3k, `page_grader_clickup` 2.9k. Nefi's Aug 7 breakdown ("Ad Spend: $10,875.58 / Registrations: 1687 / VIP: 12…") is in Yasir's Campaign Brain (`page_grader_slack`, imported 08-16) **and** in `slack_observation_events` (channel `C0B5MKP7Y30`). Pixel's DM turn searched User Brain on General and never scoped Slack search to that channel → **retrieval, not ingestion.** Confirms 11.2 + 11.11 as the fix.
+  5. **Meetings land in the wrong house.** `fathom_meeting` memories go to Dylan's **user** brain (1,046) and `fathom_call` to Customer Brain (101); only 17 `page_grader_call_transcript` + 4 `page_grader_calls` reach **campaign** brains. So "what did I promise Yasir last call" (R10) searched on the client brain misses. **Fix:** route Fathom meetings with a resolved client to that client's Campaign Brain (dual-write user + campaign).
+  6. **Tasks/docs.** ClickUp tasks do reach campaign brains (`page_grader_clickup`). ROAS Space tasks do not; Space docs only via 167 `document` memories. Not urgent given ClickUp is the system of record.
+- **Revised first steps for 11.3.** (a) graph payload cap/trim (small PR); (b) Fathom → Campaign Brain dual-write; (c) Company Brain feeds: mapped Slack channels + meeting decisions + Company Cortex; (d) non-portal team members = **shadow Person Brains** (11.12 Q10) — verify Slack-managed person brains are being created and fed for the active team, not only Georgette.
+
+- **Status.** Audit done 2026-08-18; fixes not started.
 
 ### 11.4 Pixel operator skill kit (why Pixel only has carousel/theme skills)
 
 - **Known.** Live org Pixel's skill list is a Lux-shaped snapshot (carousel-designer, theme-builder, ad-builder). Hired agents get `dylans-super-voice` by default; system agents (Pixel) are skipped by the seeder. Post-call delivery + meeting follow-up Slack live on **Vibey**, not Pixel. Nate's launch-brief skills exist but Nate is not hired in this org. Slack Pixel's runtime **denies the browser tool** while TOOLS policy tells it to click through funnels. Most "Pixel" policy migrations only updated `agent_key = vibey`.
 - **Decision (Dylan, 08-17).** Pool as Pixel *modes*, not extra agents: retrieve → then draft / route (Portal SR, Nate, Lux) / do / ask-once. Leave carousel/theme on Lux.
 - **First steps.** (a) Assign to org Pixel: `dylans-super-voice`, post-call-delivery, a weekly/Monday client-update skill, slack-signal-operator; sync. (b) Patch Pixel **and** Vibey together in any TOOLS/skill migration. (c) Either enable browser for Slack Pixel or make N7 say it cannot click through — never fake a QC. (d) Launch brief: Pixel owns the Slack ask, delegates to strategist via `ask_agent`.
-- **Status.** Diagnosed three times, not built. Related: `agent-follow-up-work.md` org-Pixel skill/browser entries.
+- **Status.** PR #323. Prod audit showed the global vibey skill set already includes page-grader-operator / post-call-delivery / slack-signal-operator / dylans-super-voice; the real gaps were the browser deny (allowance targeted `pixel` = library designer, not `vibey`), the weekly-update mode, and launch-brief routing.
 
 ### 11.5 QC agent health
 
 - **Known.** QC and Launch share one webhook path (`PageGraderQcSlackBridgeService`, `page-grader-qc-follow-up.ts`); Launch was clearly firing hourly; measure-once + in-thread follow-up shipped in PR 288. QC only appears when Page Grader sends a `quality_control` payload.
 - **Unknown.** Whether Page Grader has sent any `quality_control` webhooks recently (producer stopped?) or whether they arrived and were buried under Launch noise.
 - **First step.** Query `agent_cases` for `case_type = 'quality_control'` (last 30 days) and the Page Grader webhook log; if zero, the producer is the bug, not Slack.
-- **Status.** Not investigated.
+- **Finding (2026-08-18, prod read-only).** `agent_cases` has zero `page_grader_qc` rows ever, while the ROAS bot posted 53 hourly "Launch Agent Check-in" DMs in 7 days. Cause: the only Page Grader connection is personal (`user_integrations.org_id NULL`) and every ledger/anchor call in the QC bridge was gated on `connection.orgId` — so PR 288's measure-once dedup never engaged. Producer is fine. Fix: PR #322 resolves the org from the finding's campaign / the user's single org membership.
+- **Status.** Root-caused; fix open (#322). Follow-up: reconnect Page Grader org-scoped.
 
 ### 11.6 Slack identity: 1DS "Andy or Krista?" (= N1)
 
@@ -827,8 +836,50 @@ Three structural adjustments to the spine above, so the rest of this section bui
 | Internal sender in group DM / Slack Connect | #295 | merged, `api.roas.io` live |
 | SR follow-ups in-thread + channel at 3h / 22h | #296 | merged |
 | North Star plan (client-first, then intent-first) | #297, #301 | merged |
-| Auto write back on Sonnet 4.6 | #310 | open |
-| Forked chat context restore | #311 | open |
+| Auto write back on Sonnet 4.6 | #310 | merged |
+| Forked chat context restore | #311 | merged |
+| Brain graph payload cap (personal Brain 500) — 11.3(1) | #315 | open |
+| Fathom → client Campaign Brain dual-write — 11.3(5) | #316 | open |
+| N0 ask-kind stamp + `slack_pixel_turns` telemetry — 11.0 (+ live-audit signals) | #317 | open (apply migration first) |
+| Client Context Bundle + client-scoped `SLACK_SEARCH_MESSAGES` — 11.11 | #318 | open |
+| N1 quote inherit: forwarded thread replies → quoted channel's client — 11.6 | #319 | open (stacked on #318) |
+| Direct asset links on SRs / ClickUp — 11.10 | #320 | open (stacked on #319) |
+| CONNECTIONS bind from Slack + Campaign Brain preload (+ bundle from `<#C…>` refs) — 11.2 | #321 | open (stacked on #320) |
+| QC/Launch ledger disabled by personal Page Grader row — 11.5 root cause | #322 | open |
+| Browser for real Pixel (vibey) + `client-weekly-update` skill + launch-brief routing — 11.4 | #323 | open |
+| Live ask audit + nightly harness runner (channel `2`) — 11.7 | #324 | open |
+
+### 11.10 Asset links on Service Requests (added 2026-08-18)
+
+- **Incident.** Dylan forwarded a `#roas-christian-osgood` thread containing `MFS_Elite.pdf` to Pixel; Pixel created the SR and the ClickUp task correctly, but the task's "Source PDF and Slack thread" is a **Slack archive URL**. Slack files are gated by workspace/channel membership, so the assignee (Rafay) may not be able to open the actual PDF from the task.
+- **Rule.** When the ask carries assets (Slack file upload, Drive/Docs/Sheets link, Figma, Loom, any URL), the SR / task must carry the **direct asset**, not only the thread: for Slack files, download via the bot token and re-host in ROAS storage (or attach to the SR) and link that; for Drive/Docs, the direct file URL (and flag if not shared org-wide); for other URLs, the URL itself. Keep the Slack thread link as provenance, secondary.
+- **Where.** Same path as N10 / S4: `page_grader_create_fulfillment_request` payload + the ClickUp sync (`_Synced from ROAS portal Workload tracker_`). Slack file download uses the existing `slack-file` handling in `slack-service-events.base.ts` (`event.files`) and forwarded attachments (`slack-forwarded-message-context.ts`).
+- **First step.** Fixture: forwarded message with one Slack PDF + one Drive link → SR `attachments[]` has a ROAS-hosted PDF URL and the Drive URL; ClickUp description lists them under "Assets"; Slack permalink stays under "Source thread". Test both a Slack-native file and a Slack Connect file (different token scope).
+- **Status.** Shipped in PR #320 (`[Assets]` block, forwarded-unfurl files, assets → SR description/ClickUp, `source_url` in agent-api doc context, skill/TOOLS migration). Deferred: Drive-folder copy, storage lifetime, Portal `/work` `attachments[]`.
+
+### 11.11 Client Context Bundle + channel-scoped Slack search (added 2026-08-18)
+
+- **Incident.** Pixel DM: "What was stats for Yasir's last webinar on Aug 6." Pixel found the pre-webinar plan in Campaign Brain, could not find Nefi's results post in Slack, and finally said it *could not confirm Yasir's Slack channel* and guessed Impact Elite. `#roas-yasir-khan-coaching-ltd-955` is stamped to Yasir in `slack_observation_channels`.
+- **Root cause (code, not policy).** (1) The channel→client map is only applied *inbound* (`[Slack channel identity]` when posting in the channel); there is **no tool that returns a client's Slack channels**, so from a DM the model cannot know. (2) `search_slack_messages` takes only `query` — no `channel_ids` — so it cannot search one client's channel end-to-end and report coverage. (3) Whether Nefi's post was ever imported into Campaign Brain is the 11.3 ingestion question.
+- **Fix — one deterministic step, not model discovery.** When N1 resolves a client (stamp, quote, name, or bind), `apps/api` builds and injects a **client context bundle**: Portal client id + name, Campaign Brain id, ROAS campaign ids, **Slack channel ids/names**, Drive folder, Space id, last N Fathom meetings. Then: `search_slack_messages` gains `channel_ids` (and `client_id` sugar) and searches those channels first, full history, `coverage.complete|partial`; the identity block lists the channels; 11.2 preload and CONNECTIONS bind read from the same bundle; every N2 ladder step reads the bundle so a new source is one field, not ten prompt edits.
+- **Why this is the class fix.** Every "Pixel didn't look deep enough" report so far (Master Your Kraft, 1DS, Yasir) reduces to *the model had to guess where the client's data lives*. The bundle removes the guess; 11.0 telemetry + 11.7 nightly harness surface the next miss on a scoreboard instead of in Dylan's DMs.
+- **First step.** Bundle builder from existing rows (`slack_observation_channels`, observation event metadata `page_grader_client_id`, campaigns, `ns_brains`, drive mapping); `channel_ids` on `search_slack_messages` with coverage; fixture: DM "Yasir Aug 6 webinar stats" → bundle has `#roas-yasir…` → channel-scoped search → results post found or coverage complete.
+- **Status.** Shipped in PR #318 (bundle + client-scoped search) and #321 (bundle from `<#C…>` references, CONNECTIONS bind, preload). Drive folder + recent meetings deferred (follow-up log).
+
+### 11.12 Decisions from Dylan (2026-08-18)
+
+| # | Question | Decision |
+| --- | --- | --- |
+| 1 | Client data in mixed Slack Connect DMs (R54) | **Admin or any Internal sender → share in place.** External sender → do not share (unchanged fail-closed). No redirect to `#roas-*` needed. |
+| 2 | Where re-hosted Slack files live (R56 / 11.10) | Attach to reliable ROAS storage **and** copy into the client's Drive folder when one is mapped. Watch large files; either alone is acceptable if size is a problem. |
+| 3 | Browser for Slack Pixel (N7) | **Yes.** Slack Pixel must have everything Vibey/Pixel has — same agent, same tools, same skills. No capability gap between Slack Pixel and app Pixel. |
+| 4 | Launch briefs / other agents (N8) | Do **not** require hiring a separate agent. Add all agents to the org so Pixel can reach them; if a capability is better on Pixel, put it on Pixel; only add a separate agent when that is genuinely better. |
+| 5 | Nightly harness test channel (11.7) | Use the existing Slack channel named **`2`** (literally "2"). |
+| 6 | "My calls" (R08/R09/R22) | **Fathom recordings only.** |
+| 7 | "Active clients" (R13) | **Portal client status**, not ROAS mapped campaigns. |
+| 8 | Token budgets | Placeholders (4 general / 8 team / 8 client / 12 SR+retrieve) are fine for the first week of telemetry; propose real numbers after. |
+| 9 | Build order (§11.9) | Accepted as written. |
+| 10 | Team members without portal accounts (Nefi, Rafay, Aaron, Caleb…) | **Shadow brains.** Do not invite. Build a Person Brain around each of them from Slack/meetings; the brain exists whether or not they ever get an account. Portal-less people are expected. |
 
 ### 11.9 Build order (supersedes §10 sequencing where they differ)
 
@@ -836,7 +887,9 @@ Three structural adjustments to the spine above, so the rest of this section bui
 merge #310 (Sonnet write) + #311 (fork context)
   → 11.3 prod audit: Brain 500, user-brain population, ingest coverage   ← data, not policy
   → 11.0 telemetry row + N0 stamp in apps/api
+  → 11.11 client context bundle + channel-scoped Slack search   ← the class fix
   → N1 quote inherit (11.6) after capturing a real payload
+  → 11.10 direct asset links on SRs / ClickUp (Slack file re-host, Drive URLs)
   → 11.2 CONNECTIONS bind from stamp + Campaign Brain preload
   → 11.4 Pixel skill kit + Pixel/Vibey co-migration
   → 11.5 QC producer check

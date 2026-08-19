@@ -6,6 +6,7 @@ import type {
   SlackWorkspaceChannel,
 } from '../types/slack.types'
 import { parseSlackForwardedMessage } from './slack-forwarded-message-context'
+import type { SlackTurnToolCall } from './slack-turn-telemetry'
 import { SlackMediaBase } from './slack-service-media.base'
 
 export abstract class SlackConversationBase extends SlackMediaBase {
@@ -59,21 +60,45 @@ export abstract class SlackConversationBase extends SlackMediaBase {
     threadTs: string,
     currentMessageTs?: string,
   ): Promise<string> {
+    const { context } = await this.buildSlackThreadReply(
+      botToken,
+      channelId,
+      threadTs,
+      currentMessageTs,
+    )
+    return context
+  }
+
+  /**
+   * Thread context plus whether Pixel posted the thread parent — the N0
+   * "continuation" signal (reply on a digest / SR nudge / QC thread).
+   */
+  protected async buildSlackThreadReply(
+    botToken: string,
+    channelId: string,
+    threadTs: string,
+    currentMessageTs?: string,
+  ): Promise<{ context: string; parentIsPixel: boolean }> {
     const messages = await this.slackApi.conversationsRepliesAll(botToken, channelId, threadTs)
+    const parent = messages.find((message) => message.ts === threadTs) ?? messages[0]
+    const parentIsPixel = Boolean(parent?.bot_id)
     const preceding = messages
       .filter((message) => {
         const text = String(message.text ?? '').trim()
         return text.length > 0 && message.ts !== currentMessageTs
       })
       .slice(-12)
-    if (preceding.length === 0) return ''
+    if (preceding.length === 0) return { context: '', parentIsPixel }
 
     const lines = preceding.map((message) => {
       const sender = message.bot_id ? 'Pixel' : message.user ? `<@${message.user}>` : 'Unknown'
       return `${sender}: ${String(message.text ?? '').trim()}`
     })
     const context = lines.join('\n')
-    return context.length > 12_000 ? context.slice(-12_000) : context
+    return {
+      context: context.length > 12_000 ? context.slice(-12_000) : context,
+      parentIsPixel,
+    }
   }
 
   protected async buildForwardedMessageContext(
@@ -269,10 +294,19 @@ export abstract class SlackConversationBase extends SlackMediaBase {
   // ---------------------------------------------------------------------------
 
   protected async collectSseResponse(response: Response): Promise<string | null> {
+    const turn = await this.collectSseTurn(response)
+    return turn.content
+  }
+
+  /** Full text plus the ordered tool events the agent emitted (for `slack_pixel_turns`). */
+  protected async collectSseTurn(
+    response: Response,
+  ): Promise<{ content: string | null; toolEvents: SlackTurnToolCall[] }> {
     const reader = response.body?.getReader()
-    if (!reader) return null
+    if (!reader) return { content: null, toolEvents: [] }
 
     const decoder = new TextDecoder()
+    const toolEvents: SlackTurnToolCall[] = []
     let fullContent = ''
     let buffer = ''
 
@@ -295,6 +329,15 @@ export abstract class SlackConversationBase extends SlackMediaBase {
           }
           if (event.type === 'content_delta' && typeof event.content === 'string') {
             fullContent += event.content
+          } else if (
+            (event.type === 'tool_start' || event.type === 'tool_update' || event.type === 'tool_end') &&
+            (typeof event.name === 'string' || typeof event.tool === 'string')
+          ) {
+            toolEvents.push({
+              name: String(event.name ?? event.tool),
+              ...(typeof event.action === 'string' ? { action: event.action } : {}),
+              status: event.type === 'tool_start' ? 'start' : event.type === 'tool_end' ? 'end' : 'update',
+            })
           } else if (event.type === 'error') {
             const detail =
               typeof event.message === 'string'
@@ -316,7 +359,7 @@ export abstract class SlackConversationBase extends SlackMediaBase {
       reader.releaseLock()
     }
 
-    return fullContent || null
+    return { content: fullContent || null, toolEvents }
   }
 
   // ---------------------------------------------------------------------------

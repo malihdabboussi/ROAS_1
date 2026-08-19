@@ -70,7 +70,12 @@ export class OpenClawGatewayService {
     'image',
     'tts',
   ] as const
-  private static readonly VISUAL_REVIEW_AGENT_KEYS = new Set(['designer', 'lux', 'pixel'])
+  /**
+   * Runtimes that keep the browser tool: designers for visual review, and Pixel
+   * (agent_key `vibey`; the library designer is keyed `pixel`) so app Pixel and
+   * Slack Pixel can click through funnels instead of faking a QC (§11.4/§11.12).
+   */
+  private static readonly VISUAL_REVIEW_AGENT_KEYS = new Set(['designer', 'lux', 'pixel', 'vibey'])
 
   private isVisualReviewAgent(agentId: string, role?: string, skills?: string[]): boolean {
     const agentKey = this.parseScopedAgentId(agentId)?.agentKey ?? agentId
