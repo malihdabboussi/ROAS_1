@@ -34,6 +34,7 @@ export function CampaignsHubProgramSection({
   onStartCreateInProgram,
   onChangeNewName,
   onSubmitCreate,
+  cardLayout = false,
 }: {
   group: ProgramCampaignGroup
   spacesByCampaignId: Map<string, Space[]>
@@ -58,6 +59,7 @@ export function CampaignsHubProgramSection({
   onStartCreateInProgram: () => void
   onChangeNewName: (value: string) => void
   onSubmitCreate: () => void
+  cardLayout?: boolean
 }) {
   const program = group.program
   const icon = program?.icon ?? 'folder-kanban'
@@ -66,53 +68,62 @@ export function CampaignsHubProgramSection({
 
   return (
     <li className="gap-spacing-2 flex flex-col">
-      <div className="gap-spacing-2 flex items-center">
-        <button
-          type="button"
-          onClick={onToggleProgram}
-          className="text-muted-foreground hover:text-foreground hover:bg-hover-subtle flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-          aria-expanded={programExpanded}
-          aria-label={programExpanded ? `Collapse ${group.label}` : `Expand ${group.label}`}
-        >
-          <ChevronRight
-            className={cn(
-              'h-4 w-4 transition-transform duration-150',
-              programExpanded && 'rotate-90',
-            )}
-          />
-        </button>
-        <LucideIcon name={icon} className={cn('h-4 w-4 shrink-0', iconColor)} />
-        <div className="min-w-0 flex-1">
-          {program ? (
-            <Link
-              href={`/programs/${program.id}`}
-              className="body-2 text-foreground hover:text-foreground font-medium transition-colors"
-            >
-              {group.label}
-            </Link>
-          ) : (
-            <p className="body-2 text-foreground font-medium">{group.label}</p>
-          )}
-          <p className="body-4 text-muted-foreground">
-            {group.campaigns.length === 0
-              ? 'No campaigns'
-              : `${group.campaigns.length} campaign${group.campaigns.length === 1 ? '' : 's'}`}
-          </p>
-        </div>
-        {program ? (
+      {!cardLayout ? (
+        <div className="gap-spacing-2 flex items-center">
           <button
             type="button"
-            onClick={onStartCreateInProgram}
-            className="chip-glass-neutral body-4 inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5"
+            onClick={onToggleProgram}
+            className="text-muted-foreground hover:text-foreground hover:bg-hover-subtle flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+            aria-expanded={programExpanded}
+            aria-label={programExpanded ? `Collapse ${group.label}` : `Expand ${group.label}`}
           >
-            <Plus className="h-3.5 w-3.5" />
-            Campaign
+            <ChevronRight
+              className={cn(
+                'h-4 w-4 transition-transform duration-150',
+                programExpanded && 'rotate-90',
+              )}
+            />
           </button>
-        ) : null}
-      </div>
+          <LucideIcon name={icon} className={cn('h-4 w-4 shrink-0', iconColor)} />
+          <div className="min-w-0 flex-1">
+            {program ? (
+              <Link
+                href={`/programs/${program.id}`}
+                className="body-2 text-foreground hover:text-foreground font-medium transition-colors"
+              >
+                {group.label}
+              </Link>
+            ) : (
+              <p className="body-2 text-foreground font-medium">{group.label}</p>
+            )}
+            <p className="body-4 text-muted-foreground">
+              {group.campaigns.length === 0
+                ? 'No campaigns'
+                : `${group.campaigns.length} campaign${group.campaigns.length === 1 ? '' : 's'}`}
+            </p>
+          </div>
+          {program ? (
+            <button
+              type="button"
+              onClick={onStartCreateInProgram}
+              className="chip-glass-neutral body-4 inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Campaign
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {programExpanded ? (
-        <ul className="gap-spacing-2 border-border ml-4 flex flex-col border-l pl-3">
+        <ul
+          className={cn(
+            'gap-spacing-3',
+            cardLayout
+              ? 'grid grid-cols-1 md:grid-cols-2'
+              : 'border-border ml-4 flex flex-col border-l pl-3',
+          )}
+        >
           {isCreatingHere ? (
             <li className="gap-spacing-2 flex items-center">
               <input

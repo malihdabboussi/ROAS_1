@@ -17,3 +17,9 @@ What: Merged CONNECTIONS bind + Campaign Brain preload (#321) onto main without 
 Why: #321 edited `slack-service-events.base.ts` (campaignId on the channel-chat payload) which #317/#318/#320 also own.
 Impact: Slack client asks bind CONNECTIONS at turn start and still write `slack_pixel_turns`.
 Files: `slack-service-events.base.ts`
+
+## [2026-08-19 05:26] - [FEATURE]
+What: Campaigns hub can use a card-first program navigation grid.
+Why: Rescued from `codex/program-card-views` onto current main.
+Impact: Programs browse as cards instead of the denser list-only hub layout.
+Files: `ProgramsCardGrid.tsx`, `campaigns/page.tsx`, `programs.md`
