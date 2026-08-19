@@ -18,6 +18,12 @@ Why: #321 edited `slack-service-events.base.ts` (campaignId on the channel-chat 
 Impact: Slack client asks bind CONNECTIONS at turn start and still write `slack_pixel_turns`.
 Files: `slack-service-events.base.ts`
 
+## [2026-08-19 05:20] - [FIX]
+What: Meeting workspace status is now the All Meetings task Status field (branded SelectCell: To action / Processing / Following up / Waiting / Done). Continue in chat moved onto the same row as Start/End call and Recap / Clean up / Follow-up. Removed the native Live / Completed / No Show / Rescheduled select from that page.
+Why: Calendar/meeting workspace showed a generic call-status dropdown that did not match the main task card, and Continue in chat sat in the header away from the post-call actions.
+Impact: Changing status on the meeting page updates the same `space_items.status` as All Meetings / the task card. Recording-driven `custom_data.call_status` is unchanged for related-call scoring.
+Files: `MeetingCallStatusSection.tsx`, `MeetingWorkspaceStatusSelect.tsx`, `MeetingWorkspaceDialog.tsx`, `use-meeting-space-status-field.ts`, tests, `meeting-follow-up-slack.md`
+
 ## [2026-08-19 05:25] - [FIX]
 What: Login and dashboard auth treat transient Supabase latency as retryable instead of a hard failure.
 Why: Brief Auth/API lag was bouncing users off login or the dashboard shell.
