@@ -196,6 +196,8 @@ export class PageGraderApiService {
           q: opts.q,
           limit: pageSize,
           offset,
+          includeAllStatuses: true,
+          includeInactive: true,
         })
         let added = 0
         for (const client of batch) {
@@ -213,6 +215,8 @@ export class PageGraderApiService {
         q: opts.q,
         limit: opts.limit ?? pageSize,
         offset: opts.offset ?? 0,
+        includeAllStatuses: true,
+        includeInactive: true,
       })
       clients.push(...batch)
     }

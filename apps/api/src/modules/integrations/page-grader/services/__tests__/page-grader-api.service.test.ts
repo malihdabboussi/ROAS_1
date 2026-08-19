@@ -324,13 +324,13 @@ describe('PageGraderApiService.sendWork', () => {
       1,
       'https://example.supabase.co/functions/v1/roas-api',
       'test-key',
-      { q: undefined, limit: 100, offset: 0 },
+      { q: undefined, limit: 100, offset: 0, includeAllStatuses: true, includeInactive: true },
     )
     expect(pageGrader.listClients).toHaveBeenNthCalledWith(
       2,
       'https://example.supabase.co/functions/v1/roas-api',
       'test-key',
-      { q: undefined, limit: 100, offset: 100 },
+      { q: undefined, limit: 100, offset: 100, includeAllStatuses: true, includeInactive: true },
     )
     expect(result.clients).toHaveLength(102)
   })

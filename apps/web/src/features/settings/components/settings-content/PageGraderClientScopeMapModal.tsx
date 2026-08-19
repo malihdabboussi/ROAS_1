@@ -43,6 +43,7 @@ export function PageGraderClientScopeMapModal({
   >({})
   const [importingClientId, setImportingClientId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [showInactive, setShowInactive] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -97,6 +98,7 @@ export function PageGraderClientScopeMapModal({
   useEffect(() => {
     if (!open) return
     setQuery('')
+    setShowInactive(false)
     void load()
   }, [open, load])
 
@@ -112,8 +114,8 @@ export function PageGraderClientScopeMapModal({
   }, [spaces])
 
   const filteredClients = useMemo(
-    () => filterPageGraderClientsByQuery(clients, query),
-    [clients, query],
+    () => filterPageGraderClientsByQuery(clients, query, { includeHidden: showInactive }),
+    [clients, query, showInactive],
   )
 
   const mappedCount = Object.values(draft).filter((row) => row.campaignId).length
@@ -297,6 +299,16 @@ export function PageGraderClientScopeMapModal({
                   className="border-border bg-background text-foreground placeholder:text-muted-foreground h-spacing-9 w-full rounded-md border py-1.5 pl-8 pr-2 text-xs outline-none"
                 />
               </label>
+              <button
+                type="button"
+                aria-pressed={showInactive}
+                onClick={() => setShowInactive((current) => !current)}
+                className={`button-compact rounded-spacing-2 border-border px-spacing-3 border ${
+                  showInactive ? 'nav-glass-selected-purple' : 'hover:bg-hover-subtle'
+                }`}
+              >
+                Show inactive
+              </button>
             </div>
 
             <div className="modal-nested-scroll-body px-4 py-3">

@@ -219,12 +219,22 @@ export class PageGraderIntegration {
   async listClients(
     baseUrl: string,
     apiKey: string,
-    opts?: { q?: string; limit?: number; offset?: number },
+    opts?: {
+      q?: string
+      limit?: number
+      offset?: number
+      includeInactive?: boolean
+      includeAllStatuses?: boolean
+    },
   ): Promise<PageGraderClient[]> {
     const params = new URLSearchParams()
     if (opts?.q?.trim()) params.set('q', opts.q.trim())
     if (opts?.limit != null) params.set('limit', String(opts.limit))
     if (opts?.offset != null) params.set('offset', String(opts.offset))
+    // Portal's default listing is active-only. Agency Clients needs intake/pre-launch
+    // plus a later UI hide for inactive/blocked/churned, so ask for every pipeline stage.
+    if (opts?.includeAllStatuses !== false) params.set('include_all_statuses', 'true')
+    if (opts?.includeInactive !== false) params.set('include_inactive', 'true')
     const qs = params.toString()
     const url = `${this.normalizeBaseUrl(baseUrl)}/clients${qs ? `?${qs}` : ''}`
     const res = await fetch(url, { headers: this.authHeaders(apiKey) })

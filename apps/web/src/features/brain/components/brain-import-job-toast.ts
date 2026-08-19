@@ -33,7 +33,9 @@ function isEmptySlackIngestFailure(job: BrainImportNotificationJob): boolean {
     err.includes('could not ingest') ||
     err.includes('processable content') ||
     err.includes('no message content') ||
-    err.includes('no significant knowledge')
+    err.includes('no significant knowledge') ||
+    (err.includes('campaign knowledge could not be saved') &&
+      !err.includes('campaign capability rejected'))
   )
 }
 

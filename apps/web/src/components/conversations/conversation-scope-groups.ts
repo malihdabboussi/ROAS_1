@@ -1,3 +1,4 @@
+import { compareClientsByPipeline, visiblePipelineClients } from '@/lib/agency-clients'
 import type { Campaign } from '@/lib/campaigns'
 import { programDisplayName, type Program } from '@/lib/programs'
 import { sortGeneralFirst } from './conversation-scope-sort'
@@ -103,12 +104,19 @@ export function buildConversationScopeLists(
   return {
     programs: sortGeneralFirst(programRows, (row) => row.name),
     ungroupedCampaigns: sortGeneralFirst(ungrouped, (row) => row.name),
-    clients: sortGeneralFirst(clients, (row) => row.name),
+    clients: sortScopeClients(clients),
   }
 }
 
+export function sortScopeClients(clients: Campaign[]): Campaign[] {
+  return [...clients].sort((left, right) => {
+    const leftGeneral = (left.name ?? '').trim().toLowerCase() === 'general'
+    const rightGeneral = (right.name ?? '').trim().toLowerCase() === 'general'
+    if (leftGeneral !== rightGeneral) return leftGeneral ? -1 : 1
+    return compareClientsByPipeline(left, right)
+  })
+}
+
 export function filterScopeClients(clients: Campaign[], query: string): Campaign[] {
-  const needle = query.trim().toLowerCase()
-  if (!needle) return clients
-  return clients.filter((client) => client.name.toLowerCase().includes(needle))
+  return visiblePipelineClients(clients, { query })
 }

@@ -1,8 +1,11 @@
-export function filterPageGraderClientsByQuery<T extends { name: string }>(
+import { visiblePipelineClients } from '@/lib/agency-clients'
+
+export function filterPageGraderClientsByQuery<
+  T extends { id?: string; name: string; status?: string; pipeline_stage?: string },
+>(
   clients: T[],
   query: string,
+  opts?: { includeHidden?: boolean; alwaysIncludeIds?: Iterable<string> },
 ): T[] {
-  const q = query.trim().toLowerCase()
-  if (!q) return clients
-  return clients.filter((client) => client.name.toLowerCase().includes(q))
+  return visiblePipelineClients(clients, { query, ...opts })
 }

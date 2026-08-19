@@ -19,7 +19,18 @@ export function isEmptySlackIngestReason(reason: string): boolean {
     normalized.includes('could not ingest') ||
     normalized.includes('processable content') ||
     normalized.includes('no message content') ||
-    normalized.includes('no significant knowledge')
+    normalized.includes('no significant knowledge') ||
+    isNoOpCampaignKnowledgeSaveReason(normalized)
+  )
+}
+
+export function isNoOpCampaignKnowledgeSaveReason(reason: string): boolean {
+  const normalized = reason.toLowerCase()
+  if (normalized.includes('campaign capability rejected')) return false
+  return (
+    normalized.includes('campaign knowledge could not be saved') ||
+    (normalized.includes('campaign knowledge') &&
+      normalized.includes('could not be saved at this time'))
   )
 }
 
@@ -37,10 +48,7 @@ export function interpretAtlasImportJobStatus(
         : status === 'failed'
           ? 'Unknown failure'
           : 'Skipped'
-    return coerceSlackEmptyIngestStatus(
-      { status, reason: reason || fallbackReason },
-      contentType,
-    )
+    return coerceSlackEmptyIngestStatus({ status, reason: reason || fallbackReason }, contentType)
   }
 
   const lower = text.toLowerCase()

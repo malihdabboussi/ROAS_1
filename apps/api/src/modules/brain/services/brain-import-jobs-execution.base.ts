@@ -1,7 +1,7 @@
 import {
-  SLACK_EMPTY_PERIOD_SKIP_REASON,
   interpretAtlasImportJobStatus,
   isSlackPeriodImportContent,
+  SLACK_EMPTY_PERIOD_SKIP_REASON,
 } from '@vibey/api-shared'
 import { BrainImportJobsEnqueueBase } from './brain-import-jobs-enqueue.base'
 import { BrainImportJobsBase } from './brain-import-jobs.base'
@@ -207,7 +207,7 @@ export abstract class BrainImportJobsExecutionBase extends BrainImportJobsEnqueu
         `  - source_title: "${sourceTitle}"`,
         temporalInstruction,
         `Do not call read_skill, describe_action, or save_user_memory. This prompt contains the complete save contract.`,
-        `Only report JOB_STATUS:completed after the save action returns success: true with memory_id or duplicate: true. If any save is rejected or returns success: false, report JOB_STATUS:failed.`,
+        `Only report JOB_STATUS:completed after the save action returns success: true with memory_id or duplicate: true. If the campaign cannot accept Campaign Brain writes, or there is nothing durable to save, report JOB_STATUS:skipped. If a save is rejected for any other reason, report JOB_STATUS:failed.`,
       ].join('\n')
     } else if (targetBrain === 'agent') {
       actionBlock = [
@@ -254,7 +254,7 @@ export abstract class BrainImportJobsExecutionBase extends BrainImportJobsEnqueu
           `Slack digest instructions:`,
           `Each line is annotated with sender identity in brackets, e.g. [contact_id=..., role=customer] or [vibey_user=..., role=host]. Use those annotations to decide who is speaking.`,
           `Most Slack threads are operational chatter. Save only meaningful decisions, strategic direction, customer insight, learning, or commitments. Skip logistics, banter, scheduling, and thank-you threads.`,
-          `If this Slack period has no messages or no significant knowledge, report JOB_STATUS:skipped. Do not report JOB_STATUS:failed for empty or chatter-only Slack windows.`,
+          `If this Slack period has no messages or no significant knowledge, report JOB_STATUS:skipped. Do not report JOB_STATUS:failed for empty or chatter-only Slack windows, and do not report JOB_STATUS:failed when campaign knowledge could not be saved at this time because there was nothing durable to write.`,
         ].join('\n')
       : ''
 

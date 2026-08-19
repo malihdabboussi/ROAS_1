@@ -105,3 +105,35 @@ describe('PageGraderIntegration.upsertClientMeeting', () => {
     expect(result).toMatchObject({ unchanged: true, meeting: { id: 'note-1' } })
   })
 })
+
+describe('PageGraderIntegration.listClients', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('asks Portal for every pipeline stage so intake clients are not dropped', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ clients: [{ id: 'c1', name: 'Intake', status: 'new_client_intake' }] }),
+        {
+          status: 200,
+        },
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const clients = await new PageGraderIntegration().listClients(
+      'https://portal.example/functions/v1/roas-api',
+      'secret-api-key',
+      { limit: 100, offset: 0 },
+    )
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://portal.example/functions/v1/roas-api/clients?limit=100&offset=0&include_all_statuses=true&include_inactive=true',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer secret-api-key' }),
+      }),
+    )
+    expect(clients).toEqual([{ id: 'c1', name: 'Intake', status: 'new_client_intake' }])
+  })
+})
