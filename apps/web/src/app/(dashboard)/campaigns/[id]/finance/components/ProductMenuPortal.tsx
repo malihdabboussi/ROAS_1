@@ -82,7 +82,7 @@ export function ProductMenuPortal({
           setProductMenuId(null)
           void handleDeleteProduct(id)
         }}
-        className="body-3 rounded-spacing-1 px-spacing-2 py-spacing-2 flex w-full items-center gap-2 text-left text-red-400 hover:bg-red-500/10"
+        className="body-3 rounded-spacing-1 px-spacing-2 py-spacing-2 text-destructive flex w-full items-center gap-2 text-left hover:bg-red-500/10"
       >
         <Trash2 className="h-3.5 w-3.5" /> Delete Product
       </button>

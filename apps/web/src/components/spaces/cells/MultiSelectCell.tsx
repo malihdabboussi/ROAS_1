@@ -355,6 +355,7 @@ export function MultiSelectCell({
       <button
         ref={triggerRef}
         type="button"
+        aria-label={field.name ? `Edit ${field.name}` : 'Edit tags'}
         onClick={(e) => {
           e.stopPropagation()
           setOpen((o) => !o)
@@ -540,7 +541,7 @@ export function MultiSelectCell({
               <button
                 type="button"
                 onClick={() => handleDeleteOption(optionMenu.optionId)}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-400 transition-colors hover:bg-[var(--color-hover-subtle)]"
+                className="text-destructive flex w-full items-center gap-2 px-3 py-1.5 text-xs transition-colors hover:bg-[var(--color-hover-subtle)]"
               >
                 <Trash2 className="h-3 w-3 shrink-0" />
                 Delete

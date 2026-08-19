@@ -30,6 +30,7 @@ export function SpaceCustomizeButton({
       <span className="inline-flex">
         <button
           type="button"
+          aria-label="Customize view"
           onClick={() => {
             if (schemaEditorOpen) {
               closeCustomizePanel()

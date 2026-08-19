@@ -13,7 +13,9 @@ describe('date-presets', () => {
   })
 
   it('labels farther presets with day and month', () => {
-    expect(formatPresetRightLabel('next_weekend', getPresetDate('next_weekend', now))).toBe('29 Aug')
+    expect(formatPresetRightLabel('next_weekend', getPresetDate('next_weekend', now))).toBe(
+      '29 Aug',
+    )
     expect(formatPresetRightLabel('two_weeks', getPresetDate('two_weeks', now))).toBe('1 Sep')
     expect(formatPresetRightLabel('four_weeks', getPresetDate('four_weeks', now))).toBe('15 Sep')
   })

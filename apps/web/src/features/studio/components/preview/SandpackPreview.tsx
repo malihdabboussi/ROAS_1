@@ -126,7 +126,7 @@ class SandpackErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryS
       return (
         this.props.fallback ?? (
           <div className="flex h-full flex-col items-center justify-center gap-2 p-4">
-            <AlertCircle className="h-8 w-8 text-red-400/60" />
+            <AlertCircle className="text-destructive/60 h-8 w-8" />
             <p className="body-3 text-[var(--color-muted-foreground)]">Preview failed to render</p>
             <p className="typo-caption text-[var(--color-muted-foreground)]/60 max-w-md text-center">
               {this.state.error?.message ?? 'An unexpected error occurred'}

@@ -92,14 +92,13 @@ export class GraphService {
       return { nodes: [], connections: [], stats: emptyGraphStats() }
     }
 
-    const [sources, entries, memories, rawMemoryConnections, cognition] =
-      await Promise.all([
-        this.graphRepo.findSkSources(supabase, brainId, limit ?? 200),
-        this.graphRepo.findSkEntries(supabase, brainId, limit ?? 500),
-        this.findMemoriesForBrain(supabase, brainId, limit),
-        this.memoriesRepo.findConnectionsForBrain(supabase, brainId),
-        this.fetchCognitionByBrain(supabase, brainId),
-      ])
+    const [sources, entries, memories, rawMemoryConnections, cognition] = await Promise.all([
+      this.graphRepo.findSkSources(supabase, brainId, limit ?? 200),
+      this.graphRepo.findSkEntries(supabase, brainId, limit ?? 500),
+      this.findMemoriesForBrain(supabase, brainId, limit),
+      this.memoriesRepo.findConnectionsForBrain(supabase, brainId),
+      this.fetchCognitionByBrain(supabase, brainId),
+    ])
     const sourceList = sources
     const entryList = entries
     const memoryNodes = enrichMemoryNodes(memories)
@@ -191,13 +190,12 @@ export class GraphService {
       .slice(0, 5)
       .map(([id, count]) => ({ id, connection_count: count }))
 
-    const [totalEntries, totalSources, legendStats, memoryConnTotal] =
-      await Promise.all([
-        this.graphRepo.countSkEntries(supabase, brainId),
-        this.graphRepo.countSkSources(supabase, brainId),
-        this.memoriesRepo.getLegendStatsForBrain(supabase, brainId),
-        this.memoriesRepo.countMemoryConnectionsForBrain(supabase, brainId),
-      ])
+    const [totalEntries, totalSources, legendStats, memoryConnTotal] = await Promise.all([
+      this.graphRepo.countSkEntries(supabase, brainId),
+      this.graphRepo.countSkSources(supabase, brainId),
+      this.memoriesRepo.getLegendStatsForBrain(supabase, brainId),
+      this.memoriesRepo.countMemoryConnectionsForBrain(supabase, brainId),
+    ])
 
     const emergedFrom = legendStats.connections_by_type.emerged_from ?? 0
 
@@ -412,5 +410,4 @@ export class GraphService {
   private async fetchCognition(supabase: SupabaseClient, subjectId: string) {
     return this.graphRepo.fetchCognition(supabase, subjectId)
   }
-
 }

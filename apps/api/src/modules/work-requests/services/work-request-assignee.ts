@@ -140,7 +140,9 @@ export function readWorkRequestAssignee(
 ): WorkRequestAssigneeIdentity {
   const raw = asRecord(asRecord(routing).assignee)
   const source =
-    raw.source === 'portal' || raw.source === 'org' || raw.source === 'free_text' ? raw.source : null
+    raw.source === 'portal' || raw.source === 'org' || raw.source === 'free_text'
+      ? raw.source
+      : null
   const name = stringOrNull(raw.name) ?? stringOrNull(fallbackName)
   const email = stringOrNull(raw.email)
   const pageGraderUserId = stringOrNull(raw.page_grader_user_id)

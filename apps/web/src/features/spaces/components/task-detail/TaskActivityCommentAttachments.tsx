@@ -58,7 +58,7 @@ function fileTypeBadge(filename: string, mimeType: string): string {
 }
 
 const FILE_BADGE_TONE: Record<string, { bg: string; text: string }> = {
-  pdf: { bg: 'bg-red-500/20 dark:bg-red-500/15', text: 'text-red-700 dark:text-red-300' },
+  pdf: { bg: 'bg-red-500/20 dark:bg-red-500/15', text: 'text-red-700 dark:text-destructive' },
   doc: { bg: 'bg-blue-500/20 dark:bg-blue-500/15', text: 'text-blue-700 dark:text-blue-300' },
   docx: { bg: 'bg-blue-500/20 dark:bg-blue-500/15', text: 'text-blue-700 dark:text-blue-300' },
   xls: {
@@ -186,7 +186,9 @@ function TaskActivityCommentAttachmentItem({
       rel="noopener noreferrer"
       className="card-glass group flex w-[280px] items-center gap-3 rounded-lg border border-[var(--color-border)] px-3 py-2.5 transition-colors hover:bg-[var(--color-hover-subtle)]"
     >
-      <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-md', tone.bg)}>
+      <div
+        className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-md', tone.bg)}
+      >
         <span className={`text-[10px] font-bold ${tone.text}`}>
           {fileTypeBadge(attachment.filename, mime)}
         </span>

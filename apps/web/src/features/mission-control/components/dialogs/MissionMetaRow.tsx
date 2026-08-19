@@ -58,7 +58,7 @@ const statusTextClass: Record<string, string> = {
 }
 
 const priorityOptions: { value: MissionPriority; label: string; color: string }[] = [
-  { value: 'urgent', label: 'Urgent', color: 'text-red-400' },
+  { value: 'urgent', label: 'Urgent', color: 'text-destructive' },
   { value: 'high', label: 'High', color: 'text-orange-400' },
   { value: 'medium', label: 'Medium', color: 'text-amber-400' },
   { value: 'low', label: 'Low', color: 'text-blue-400' },
@@ -136,7 +136,7 @@ export function MissionMetaRow({
   }))
 
   return (
-    <div className="gap-x-spacing-6 gap-y-spacing-2 grid flex-shrink-0 grid-cols-1 md:mt-spacing-2 md:grid-cols-2">
+    <div className="gap-x-spacing-6 gap-y-spacing-2 md:mt-spacing-2 grid flex-shrink-0 grid-cols-1 md:grid-cols-2">
       <div className="gap-y-spacing-2 flex flex-col">
         <div className="gap-spacing-3 flex items-center">
           <span className="body-3 text-muted-foreground w-20 shrink-0">Status</span>
@@ -169,8 +169,8 @@ export function MissionMetaRow({
             </button>
             {priorityOpen && (
               <>
-                <div className="fixed inset-0 z-dropdown" onClick={() => setPriorityOpen(false)} />
-                <div className="mt-spacing-1 absolute left-0 top-full z-dropdown" data-dropdown>
+                <div className="z-dropdown fixed inset-0" onClick={() => setPriorityOpen(false)} />
+                <div className="mt-spacing-1 z-dropdown absolute left-0 top-full" data-dropdown>
                   <div className="dropdown-menu-solid p-spacing-2 min-w-40">
                     <div className="space-y-spacing-1">
                       {priorityOptions.map((p) => {
@@ -226,10 +226,10 @@ export function MissionMetaRow({
                   <img
                     src={agent.image_url}
                     alt={agent.name}
-                    className="border-card h-5 w-5 rounded-full object-cover ring-2 ring-background"
+                    className="border-card ring-background h-5 w-5 rounded-full object-cover ring-2"
                   />
                 ) : (
-                  <div className="bg-primary/20 text-primary flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ring-2 ring-background">
+                  <div className="bg-primary/20 text-primary ring-background flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ring-2">
                     {(agent?.name ?? key).charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -241,7 +241,7 @@ export function MissionMetaRow({
         </div>
       </div>
 
-      <div className="gap-spacing-1 col-span-1 flex flex-col md:col-span-2 md:flex-row md:items-start md:gap-spacing-3">
+      <div className="gap-spacing-1 md:gap-spacing-3 col-span-1 flex flex-col md:col-span-2 md:flex-row md:items-start">
         <span className="body-3 text-muted-foreground w-20 shrink-0 md:pt-0.5">Description</span>
         <MissionDescriptionText description={description} />
       </div>

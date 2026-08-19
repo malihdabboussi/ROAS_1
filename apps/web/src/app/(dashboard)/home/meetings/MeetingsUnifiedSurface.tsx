@@ -60,6 +60,7 @@ export function MeetingsUnifiedSurface({ agenda }: { agenda: ReactNode }) {
           hideBreadcrumbHeader: true,
           leadingViewId: 'all-meetings',
           overrideView: { id: 'agenda', content: agenda },
+          defaultPinnedViewIds: ['agenda'],
         }}
       />
     </div>

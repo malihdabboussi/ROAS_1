@@ -22,7 +22,7 @@ export function ContactsToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
       {contactDetailOpen ? (
         <ContactsDetailToolbarSection {...ctx} />
       ) : (
-        <div className="flex min-w-0 flex-nowrap items-center gap-1">
+        <div className="flex shrink-0 flex-nowrap items-center gap-1">
           {showGroupByInToolbar ? <GroupByButton ctx={ctx} /> : null}
           {showAddColumnsToolbar ? (
             <Tooltip label="Add columns" side="bottom">
@@ -30,7 +30,7 @@ export function ContactsToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
                 <button
                   type="button"
                   onClick={() => openCustomizeFromToolbar('fields')}
-                  className="hover:bg-hover-subtle hover:text-foreground inline-flex h-spacing-7 w-7 shrink-0 items-center justify-center rounded-spacing-2 text-muted-foreground transition-colors"
+                  className="hover:bg-hover-subtle hover:text-foreground h-spacing-7 rounded-spacing-2 text-muted-foreground inline-flex w-7 shrink-0 items-center justify-center transition-colors"
                 >
                   <Columns3 className="icon-sm" />
                 </button>

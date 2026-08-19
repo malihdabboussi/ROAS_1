@@ -186,7 +186,7 @@ export function PhoneCell({
               }
             }}
             placeholder="Phone number"
-            className={`min-w-0 flex-1 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] ${error ? 'text-red-400' : ''}`}
+            className={`min-w-0 flex-1 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] ${error ? 'text-destructive' : ''}`}
           />
         </div>
         {countryOpen && (
@@ -224,7 +224,7 @@ export function PhoneCell({
           </div>
         )}
         {error && (
-          <div className="flex items-center gap-1.5 border-t border-[var(--color-border)] px-2 py-1.5 text-[11px] text-red-400">
+          <div className="text-destructive flex items-center gap-1.5 border-t border-[var(--color-border)] px-2 py-1.5 text-[11px]">
             <AlertCircle className="h-3 w-3 shrink-0" />
             {error}
           </div>
@@ -302,7 +302,7 @@ export function PhoneCell({
                   }
                 }}
                 placeholder="Phone number"
-                className={`min-w-0 flex-1 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] ${error ? 'text-red-400' : ''}`}
+                className={`min-w-0 flex-1 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] ${error ? 'text-destructive' : ''}`}
               />
             </div>
 
@@ -346,7 +346,7 @@ export function PhoneCell({
             )}
 
             {error && (
-              <div className="flex items-center gap-1.5 border-t border-[var(--color-border)] px-2 py-1.5 text-[11px] text-red-400">
+              <div className="text-destructive flex items-center gap-1.5 border-t border-[var(--color-border)] px-2 py-1.5 text-[11px]">
                 <AlertCircle className="h-3 w-3 shrink-0" />
                 {error}
               </div>

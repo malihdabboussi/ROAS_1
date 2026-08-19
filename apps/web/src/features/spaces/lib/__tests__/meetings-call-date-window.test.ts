@@ -17,5 +17,7 @@ describe('meetings call date window', () => {
     expect(isCallDateInPastThroughTomorrow('2026-08-01T17:00:00.000Z', now)).toBe(true)
     expect(isCallDateInPastThroughTomorrow('2026-08-19T17:00:00.000Z', now)).toBe(true)
     expect(isCallDateInPastThroughTomorrow('2026-08-21T17:00:00.000Z', now)).toBe(false)
+    // Undated calls stay visible so quick-added meetings don't vanish.
+    expect(isCallDateInPastThroughTomorrow(null, now)).toBe(true)
   })
 })

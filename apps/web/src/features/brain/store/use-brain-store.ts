@@ -1,6 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
+import { reportBrainError } from '../lib/report-brain-error'
 import {
   fetchBeliefPatterns,
   fetchBrainGraph,
@@ -8,7 +9,6 @@ import {
   fetchCustomerAvatars,
   fetchPerspectives,
 } from '../services/brain.service'
-import { reportBrainError } from '../lib/report-brain-error'
 import type {
   BeliefPattern,
   BrainGraphData,

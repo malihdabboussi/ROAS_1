@@ -44,7 +44,7 @@ export function SuggestedNextMoves({
     setExpanded(false)
     void fetchNextMoves()
       .then((result) => {
-        if (!cancelled) setItems(result.suggestions)
+        if (!cancelled) setItems(result?.suggestions ?? [])
       })
       .catch(() => {
         if (!cancelled) setItems([])
@@ -76,9 +76,14 @@ export function SuggestedNextMoves({
           return (
             <article
               key={item.id}
-              className="group hover:bg-hover-subtle gap-spacing-2 px-spacing-2 flex items-center rounded-lg transition-colors"
+              className="hover:bg-hover-subtle gap-spacing-2 px-spacing-2 group flex items-center rounded-lg transition-colors"
             >
-              <Tooltip label={suggestionReason(item)} wide delayMs={350} triggerClassName="min-w-0 flex-1">
+              <Tooltip
+                label={suggestionReason(item)}
+                wide
+                delayMs={350}
+                triggerClassName="min-w-0 flex-1"
+              >
                 <button
                   type="button"
                   aria-label={`${onSelectPrompt ? 'Use' : 'Open'} suggestion: ${item.title}`}

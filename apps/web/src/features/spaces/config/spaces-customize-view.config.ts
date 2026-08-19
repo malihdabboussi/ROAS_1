@@ -6,6 +6,9 @@
 export const SPACES_CUSTOMIZE_VIEW_LABELS = {
   AUTOSAVE_FOR_ME: 'Autosave for me',
   PIN_VIEW: 'Pin view',
+  UNPIN_VIEW: 'Unpin view',
+  CUSTOMIZE_VIEW: 'Customize view…',
+  DUPLICATE_VIEW: 'Duplicate view',
   SAVE_FOR_EVERYONE: 'Save for everyone',
   RESET_TO_DEFAULT: 'Reset to default',
   SHARING_PERMISSIONS: 'Sharing & permissions',
@@ -32,6 +35,7 @@ export const SPACES_CUSTOMIZE_VIEW_TOAST_SUCCESS = {
   RESET_TO_DEFAULT: { userMessage: 'View reset to default' },
   VIEW_REVERTED: { userMessage: 'Changes reverted' },
   VIEW_SAVED_AS_NEW: { userMessage: 'Saved as new view' },
+  VIEW_DUPLICATED: { userMessage: 'View duplicated' },
 } as const
 
 export const SPACES_CUSTOMIZE_VIEW_TOAST_ERRORS = {
@@ -40,4 +44,5 @@ export const SPACES_CUSTOMIZE_VIEW_TOAST_ERRORS = {
   SAVE_FOR_EVERYONE_FAILED: { userMessage: "Couldn't save for everyone. Try again." },
   RESET_FAILED: { userMessage: "Couldn't reset view. Try again." },
   SAVE_AS_NEW_VIEW_FAILED: { userMessage: "Couldn't save as new view. Try again." },
+  DUPLICATE_FAILED: { userMessage: "Couldn't duplicate view. Try again." },
 } as const

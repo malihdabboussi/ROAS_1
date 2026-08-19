@@ -98,6 +98,7 @@ export function BrainHomeToolbar({
               type="button"
               onClick={() => onViewChange('grid')}
               aria-pressed={view === 'grid'}
+              aria-label="Grid view"
               className={cn(
                 'btn-icon-glass',
                 view === 'grid' ? 'bg-hover-subtle text-foreground' : 'text-muted-foreground',
@@ -113,6 +114,7 @@ export function BrainHomeToolbar({
               type="button"
               onClick={() => onViewChange('list')}
               aria-pressed={view === 'list'}
+              aria-label="List view"
               className={cn(
                 'btn-icon-glass',
                 view === 'list' ? 'bg-hover-subtle text-foreground' : 'text-muted-foreground',

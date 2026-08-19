@@ -23,7 +23,7 @@ function scoreColor(score: number): string {
   if (score >= 8) return 'text-emerald-400'
   if (score >= 6) return 'text-emerald-500'
   if (score >= 4) return 'text-amber-400'
-  return 'text-red-400'
+  return 'text-destructive'
 }
 
 function QualityEvalScorecard({ eval: ev }: { eval: QualityEvalPayload }) {
@@ -35,7 +35,7 @@ function QualityEvalScorecard({ eval: ev }: { eval: QualityEvalPayload }) {
   const claims = ev.claimsVerification ?? []
 
   return (
-    <div className="rounded-spacing-2 space-y-spacing-2 mt-spacing-2 p-spacing-3 border border-border bg-surface-subtle">
+    <div className="rounded-spacing-2 space-y-spacing-2 mt-spacing-2 p-spacing-3 border-border bg-surface-subtle border">
       <div className="gap-spacing-3 flex items-center">
         <div className={`text-2xl font-bold leading-none ${scoreColor(overall)}`}>
           {overall.toFixed(1)}
@@ -112,7 +112,7 @@ function QualityEvalScorecard({ eval: ev }: { eval: QualityEvalPayload }) {
                 {c.verified ? (
                   <Check className="icon-xs mt-0.5 shrink-0 text-emerald-400" />
                 ) : (
-                  <X className="icon-xs mt-0.5 shrink-0 text-red-400" />
+                  <X className="icon-xs text-destructive mt-0.5 shrink-0" />
                 )}
                 <span>
                   {c.claim}
@@ -180,7 +180,7 @@ export function LogPayloadDetails({ payload, eventType }: LogPayloadDetailsProps
     <>
       {content && (
         <div
-          className={`body-3 mt-0.5 ${isError ? 'text-red-400' : 'text-[var(--color-muted-foreground)]'} ${CHAT_MARKDOWN_CLASSNAME}`}
+          className={`body-3 mt-0.5 ${isError ? 'text-destructive' : 'text-[var(--color-muted-foreground)]'} ${CHAT_MARKDOWN_CLASSNAME}`}
           dangerouslySetInnerHTML={{ __html: renderChatMarkdown(content) }}
         />
       )}

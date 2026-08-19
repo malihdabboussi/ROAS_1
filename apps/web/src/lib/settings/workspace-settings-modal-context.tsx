@@ -92,3 +92,16 @@ export function useWorkspaceSettingsModal() {
   }
   return context
 }
+
+/** Opens Workspace Settings → Integrations with the Library tab pre-selected via URL param. */
+export function useOpenIntegrationsLibrary() {
+  const { openWorkspaceSettings } = useWorkspaceSettingsModal()
+  return useCallback(() => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.set('tab', 'library')
+      window.history.replaceState({}, '', url.toString())
+    }
+    openWorkspaceSettings('integrations')
+  }, [openWorkspaceSettings])
+}

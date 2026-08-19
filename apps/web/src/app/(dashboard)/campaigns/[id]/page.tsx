@@ -449,7 +449,7 @@ export default function CampaignDetailPage() {
               dashboardMissions={detail.dashboardMissions}
               dashboardAgents={detail.dashboardAgents}
               campaignTeam={detail.campaignTeam}
-              isSystemGeneral={detail.campaign.config.system_kind === 'general'}
+              isSystemGeneral={detail.campaign.config?.system_kind === 'general'}
               onOpenTab={(tab) => handleTabChange(tab)}
               onManageTeam={handleManageTeam}
             />

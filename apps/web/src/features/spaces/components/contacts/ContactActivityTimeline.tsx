@@ -912,7 +912,7 @@ export function ContactActivityTimeline({
                           onClick={() => setRecordingState('finishing')}
                           className="button-glass-neutral flex h-8 w-8 items-center justify-center rounded-full"
                         >
-                          <Square className="h-3 w-3 text-red-500" />
+                          <Square className="text-destructive h-3 w-3" />
                         </button>
                       </Tooltip>
                       <Tooltip label="Cancel">

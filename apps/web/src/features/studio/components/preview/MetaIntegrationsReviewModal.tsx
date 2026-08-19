@@ -358,7 +358,7 @@ export function MetaIntegrationsReviewModal({
                     )}
                     {item.status === 'failed' && (
                       <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500/20">
-                        <AlertCircle className="h-3 w-3 text-red-400" />
+                        <AlertCircle className="text-destructive h-3 w-3" />
                       </div>
                     )}
                     {item.status === 'manual' && (
@@ -373,7 +373,7 @@ export function MetaIntegrationsReviewModal({
                         item.status === 'passed'
                           ? 'text-foreground'
                           : item.status === 'failed'
-                            ? 'text-red-400'
+                            ? 'text-destructive'
                             : 'text-muted-foreground'
                       }`}
                     >

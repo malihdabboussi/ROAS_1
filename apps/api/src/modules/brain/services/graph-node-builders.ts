@@ -1,7 +1,7 @@
 import { createHash } from 'crypto'
 import type { GraphEdge } from '../types/brain.types'
-import type { GraphStats } from './graph.service'
 import { slimGraphMemory } from './graph-node-window'
+import type { GraphStats } from './graph.service'
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
 const SEVEN_DAYS_MS = 7 * ONE_DAY_MS
@@ -358,7 +358,9 @@ function resolveExperienceLabel(
   }
 }
 
-function buildHubNodes(allConnections: GraphEdge[]): Array<{ id: string; connection_count: number }> {
+function buildHubNodes(
+  allConnections: GraphEdge[],
+): Array<{ id: string; connection_count: number }> {
   const connCount: Record<string, number> = {}
   for (const c of allConnections) {
     connCount[c.source_memory_id] = (connCount[c.source_memory_id] || 0) + 1

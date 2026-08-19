@@ -82,7 +82,7 @@ function QueueJobRow({
           )}
           {job.status === 'queued' && <Clock3 className="text-muted-foreground h-3 w-3" />}
           {job.status === 'succeeded' && <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />}
-          {job.status === 'failed' && <XCircle className="h-3.5 w-3.5 text-red-400" />}
+          {job.status === 'failed' && <XCircle className="text-destructive h-3.5 w-3.5" />}
         </div>
         <p className="body-4 text-foreground min-w-0 flex-1 truncate font-medium">{job.title}</p>
         {showActiveActions ? (
@@ -93,7 +93,7 @@ function QueueJobRow({
             <button
               type="button"
               onClick={() => onCancel(job.id)}
-              className="text-muted-foreground flex shrink-0 items-center justify-center rounded p-0.5 transition-colors hover:text-red-400"
+              className="text-muted-foreground hover:text-destructive flex shrink-0 items-center justify-center rounded p-0.5 transition-colors"
             >
               <Trash2 className="h-3 w-3" />
             </button>
@@ -116,7 +116,7 @@ function QueueJobRow({
                 <button
                   type="button"
                   onClick={() => onDismiss(job.id)}
-                  className="text-muted-foreground flex items-center justify-center rounded p-0.5 transition-colors hover:text-red-400"
+                  className="text-muted-foreground hover:text-destructive flex items-center justify-center rounded p-0.5 transition-colors"
                 >
                   <Trash2 className="h-3 w-3" />
                 </button>
@@ -143,7 +143,7 @@ function QueueJobRow({
                 Failed
                 {job.last_error?.trim() && (
                   <Tooltip label={job.last_error.trim()} side="top" wide>
-                    <Info className="h-3 w-3 cursor-help text-red-400/70" />
+                    <Info className="text-destructive/70 h-3 w-3 cursor-help" />
                   </Tooltip>
                 )}
               </>
@@ -275,7 +275,7 @@ export default function BrainProcessingQueue({
                   <button
                     type="button"
                     onClick={handleRemoveAll}
-                    className="text-muted-foreground flex items-center justify-center rounded p-0.5 transition-colors hover:text-red-400"
+                    className="text-muted-foreground hover:text-destructive flex items-center justify-center rounded p-0.5 transition-colors"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>

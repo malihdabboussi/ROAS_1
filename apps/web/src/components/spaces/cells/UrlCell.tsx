@@ -127,10 +127,10 @@ export function UrlCell({
               }
             }}
             placeholder="https://…"
-            className={`w-full min-w-0 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] ${error ? 'text-red-400' : ''}`}
+            className={`w-full min-w-0 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] ${error ? 'text-destructive' : ''}`}
           />
           {error ? (
-            <div className="flex items-center gap-1.5 text-[11px] text-red-400">
+            <div className="text-destructive flex items-center gap-1.5 text-[11px]">
               <AlertCircle className="h-3 w-3 shrink-0" />
               {error}
             </div>
@@ -215,11 +215,11 @@ export function UrlCell({
                   }
                 }}
                 placeholder="https://…"
-                className={`min-w-0 flex-1 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] ${error ? 'text-red-400' : ''}`}
+                className={`min-w-0 flex-1 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] ${error ? 'text-destructive' : ''}`}
               />
             </div>
             {error && (
-              <div className="flex items-center gap-1.5 border-t border-[var(--color-border)] px-2 py-1.5 text-[11px] text-red-400">
+              <div className="text-destructive flex items-center gap-1.5 border-t border-[var(--color-border)] px-2 py-1.5 text-[11px]">
                 <AlertCircle className="h-3 w-3 shrink-0" />
                 {error}
               </div>

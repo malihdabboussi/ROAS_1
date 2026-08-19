@@ -151,7 +151,7 @@ export function PresentationCommentComposer({
                   title="Stop recording"
                   aria-label="Stop recording"
                 >
-                  <Square className="h-3 w-3 text-red-500" />
+                  <Square className="text-destructive h-3 w-3" />
                 </button>
                 <button
                   type="button"

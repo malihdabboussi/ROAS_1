@@ -235,11 +235,7 @@ export class WorkRequestRepository {
     return (data as Record<string, unknown> | null) ?? null
   }
 
-  async resolveOrgAssigneeByName(
-    orgId: string,
-    name: string,
-    email?: string | null,
-  ) {
+  async resolveOrgAssigneeByName(orgId: string, name: string, email?: string | null) {
     const { data: members, error: membersError } = await this.client
       .from('org_members')
       .select('user_id')

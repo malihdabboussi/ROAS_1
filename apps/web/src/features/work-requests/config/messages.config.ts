@@ -17,4 +17,3 @@ export const WORK_REQUEST_MESSAGES = {
   submitting: 'Creating the ROAS task…',
   assigneeOtherPlaceholder: 'Type a Portal name or email',
 } as const
-

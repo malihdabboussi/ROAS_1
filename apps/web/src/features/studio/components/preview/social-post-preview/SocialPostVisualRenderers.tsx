@@ -105,7 +105,7 @@ export default function VibeySocialRoot() {
 
   if (error) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-zinc-900 p-4 text-sm text-red-400">
+      <div className="text-destructive flex h-full w-full items-center justify-center bg-zinc-900 p-4 text-sm">
         TSX Error: {String(error)}
       </div>
     )

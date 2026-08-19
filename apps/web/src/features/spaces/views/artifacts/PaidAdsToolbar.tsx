@@ -77,7 +77,7 @@ export function PaidAdsToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
 
   return (
     <ToolbarShell ctx={ctx}>
-      <div className="flex min-w-0 flex-nowrap items-center gap-1">
+      <div className="flex shrink-0 flex-nowrap items-center gap-1">
         {canSwitchMode ? (
           <PaidAdsWorkspaceModeToggle mode={workspaceMode} onChange={setWorkspaceMode} />
         ) : null}

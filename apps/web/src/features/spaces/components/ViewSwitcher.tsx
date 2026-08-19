@@ -6,17 +6,28 @@ import { createPortal } from 'react-dom'
 import { Pin } from 'lucide-react'
 import { getIconColor, LucideIcon } from '@/components/ui/IconPicker'
 import { ChannelPickerModal } from '@/features/channels'
-import type { Channel } from '@/features/channels/services/channels.service'
 import { useAccountContextGate } from '@/features/org/store/use-org-store'
 import { cn } from '@/lib/utils/cn'
-import { DEFAULT_CONTACT_VISIBLE_FIELD_IDS } from '../lib/contact-view-field-meta'
 import { useSpacesStore } from '../store/use-spaces-store'
 import { REPORTING_VIEW_TYPES, type ViewDef } from '../types/space-schema'
 import {
-  VIEW_ADD_PARENT_ARTIFACT,
-  VIEW_ADD_PARENT_REPORTING,
-  VIEW_META,
-} from './view-type-tab-meta'
+  ARTIFACT_PARENT_ROW,
+  buildChannelViewDef,
+  buildNewViewDef,
+  ensureUniqueViewIdentity,
+  findReusableTaskView,
+  isArtifactCatalogSection,
+  isCatalogParentRow,
+  isChannelViewType,
+  isEditorGatedViewType,
+  isSubmodalCatalogSection,
+  REPORTING_PARENT_ROW,
+  VIEW_CATALOG,
+  type ViewAddPanelItem,
+  type ViewCatalogItem,
+} from './view-catalog'
+import { ViewTabContextMenu, type ViewTabContextMenuState } from './view-tab-context-menu'
+import { VIEW_ADD_PARENT_REPORTING, VIEW_META } from './view-type-tab-meta'
 import { AddViewTemplateModal, type AddViewTemplateParent } from './views/AddViewTemplateModal'
 
 /** Same blue edge indicator as `DraggableColumnHeaders` (list view column drag). */
@@ -52,634 +63,9 @@ function viewTabStripMaskStyle(fadeEdges: {
   }
 }
 
-/** Re-export for modules that imported `getViewTypeTabMeta` from ViewSwitcher. */
+/** Re-exports for modules that imported these from ViewSwitcher. */
 export { getViewTypeTabMeta } from './view-type-tab-meta'
-
-type CatalogViewType = ViewDef['type']
-function isEditorGatedViewType(type: CatalogViewType): boolean {
-  return type === 'contacts' || REPORTING_VIEW_TYPES.has(type)
-}
-
-function isChannelViewType(type: CatalogViewType): boolean {
-  return type === 'channels' || type === 'channel'
-}
-
-const REUSABLE_TASK_VIEW_TYPES = new Set<CatalogViewType>(['list', 'table', 'kanban'])
-
-export function findReusableTaskView(type: CatalogViewType, views: ViewDef[]): ViewDef | null {
-  if (!REUSABLE_TASK_VIEW_TYPES.has(type)) return null
-  return views.find((view) => view.type === type) ?? null
-}
-
-interface ViewCatalogItem {
-  type: CatalogViewType
-  label: string
-  icon: string
-  description: string
-  /** If set, new view uses this `id` (e.g. `ig_research` for Instagram). */
-  newViewId?: string
-}
-
-type ViewCatalogParentRow = {
-  type: typeof VIEW_ADD_PARENT_REPORTING | typeof VIEW_ADD_PARENT_ARTIFACT
-  label: string
-  icon: string
-  description: string
-}
-
-type ViewAddPanelItem = ViewCatalogItem | ViewCatalogParentRow
-
-const REPORTING_PARENT_ROW: ViewCatalogParentRow = {
-  type: VIEW_ADD_PARENT_REPORTING,
-  label: 'All reporting views',
-  icon: 'bar-chart-3',
-  description: 'Overview, social, funnel, email, ads, finance',
-}
-
-const ARTIFACT_PARENT_ROW: ViewCatalogParentRow = {
-  type: VIEW_ADD_PARENT_ARTIFACT,
-  label: 'All artifact views',
-  icon: 'layers',
-  description: 'Funnels, forms, emails, ads, social, and more',
-}
-
-function isCatalogParentRow(item: ViewAddPanelItem): item is ViewCatalogParentRow {
-  return item.type === VIEW_ADD_PARENT_REPORTING || item.type === VIEW_ADD_PARENT_ARTIFACT
-}
-
-function isArtifactCatalogSection(section: string): boolean {
-  return section.startsWith('Artifacts')
-}
-
-function isSubmodalCatalogSection(section: string): boolean {
-  return isArtifactCatalogSection(section) || section === 'Reporting'
-}
-
-const VIEW_CATALOG: { section: string; items: ViewCatalogItem[] }[] = [
-  {
-    section: 'Tasks',
-    items: [
-      {
-        type: 'list',
-        label: 'List',
-        icon: 'list',
-        description: 'Rows, columns, and grouping',
-      },
-      {
-        type: 'table',
-        label: 'Table',
-        icon: 'table-2',
-        description: 'Dense spreadsheet-style layout',
-      },
-      {
-        type: 'kanban',
-        label: 'Board',
-        icon: 'columns-2',
-        description: 'Columns by status or field',
-      },
-      {
-        type: 'missions',
-        label: 'Missions',
-        icon: 'rocket',
-        description: 'Campaign mission control',
-      },
-      {
-        type: 'calendar',
-        label: 'Calendar',
-        icon: 'calendar-days',
-        description: 'Tasks and scheduled social posts by date',
-      },
-      {
-        type: 'canvas',
-        label: 'Canvas',
-        icon: 'panels-top-left',
-        description: 'Map campaign assets and their connections',
-        newViewId: 'canvas',
-      },
-    ],
-  },
-  {
-    section: 'Communications',
-    items: [
-      {
-        type: 'channels',
-        label: 'Channels',
-        icon: 'messages-square',
-        description: 'Multiple pinned chats with a sidebar',
-        newViewId: 'channels',
-      },
-      {
-        type: 'channel',
-        label: 'Channel',
-        icon: 'hash',
-        description: 'One channel as a dedicated tab',
-      },
-    ],
-  },
-  {
-    section: 'Docs & media',
-    items: [
-      {
-        type: 'docs',
-        label: 'Docs',
-        icon: 'file-text',
-        description: 'Documents with categories and pins',
-      },
-      {
-        type: 'media',
-        label: 'Media',
-        icon: 'images',
-        description: 'Images, video, and generated assets',
-        newViewId: 'media',
-      },
-    ],
-  },
-  {
-    section: 'Artifacts — Campaign',
-    items: [
-      {
-        type: 'all_artifacts',
-        label: 'All Artifacts',
-        icon: 'layers',
-        description: 'Funnels, offers, avatars, and more in one view',
-        newViewId: 'all_artifacts',
-      },
-      {
-        type: 'funnels',
-        label: 'Funnels',
-        icon: 'git-branch',
-        description: 'Sales and opt-in funnel assets',
-        newViewId: 'funnels',
-      },
-      {
-        type: 'forms',
-        label: 'Forms',
-        icon: 'clipboard-list',
-        description: 'Collect submissions and create tasks',
-        newViewId: 'forms',
-      },
-      {
-        type: 'websites',
-        label: 'Websites',
-        icon: 'globe',
-        description: 'Website funnels and blog posts',
-        newViewId: 'websites',
-      },
-      {
-        type: 'offers',
-        label: 'Offers',
-        icon: 'package',
-        description: 'Campaign offers and offer workbooks',
-        newViewId: 'offers',
-      },
-    ],
-  },
-  {
-    section: 'Artifacts — Marketing',
-    items: [
-      {
-        type: 'emails',
-        label: 'Emails',
-        icon: 'mail',
-        description: 'Draft emails from agents and flows',
-        newViewId: 'emails',
-      },
-      {
-        type: 'sequences',
-        label: 'Sequences',
-        icon: 'mail',
-        description: 'Email sequences and email counts',
-        newViewId: 'sequences',
-      },
-      {
-        type: 'social_posts',
-        label: 'Social Posts',
-        icon: 'share-2',
-        description: 'Draft, scheduled, and published posts',
-        newViewId: 'social_posts',
-      },
-      {
-        type: 'ads',
-        label: 'Paid Ads',
-        icon: 'megaphone',
-        description: 'Campaign structure, ad sets, and creatives',
-        newViewId: 'ads',
-      },
-    ],
-  },
-  {
-    section: 'Artifacts — Creative',
-    items: [
-      {
-        type: 'avatars',
-        label: 'Avatars',
-        icon: 'user',
-        description: 'Buyer personas and campaign avatars',
-        newViewId: 'avatars',
-      },
-      {
-        type: 'presentations',
-        label: 'Presentations',
-        icon: 'presentation',
-        description: 'Generated slide decks and presentations',
-        newViewId: 'presentations',
-      },
-    ],
-  },
-  {
-    section: 'CRM',
-    items: [
-      {
-        type: 'contacts',
-        label: 'Contacts',
-        icon: 'contact',
-        description: 'Campaign leads and contacts',
-        newViewId: 'contacts',
-      },
-    ],
-  },
-  {
-    section: 'Research',
-    items: [
-      {
-        type: 'all_social_research',
-        label: 'All Research',
-        icon: 'layers',
-        description: 'IG, TikTok, YouTube, and X in one view',
-        newViewId: 'all_research',
-      },
-      {
-        type: 'instagram_research',
-        label: 'IG Research',
-        icon: 'telescope',
-        description: 'Track accounts and content',
-        newViewId: 'ig_research',
-      },
-      {
-        type: 'tiktok_research',
-        label: 'TikTok Research',
-        icon: 'telescope',
-        description: 'Track accounts and content',
-        newViewId: 'tiktok_research',
-      },
-      {
-        type: 'youtube_research',
-        label: 'YouTube Research',
-        icon: 'telescope',
-        description: 'Track channels and content',
-        newViewId: 'youtube_research',
-      },
-      {
-        type: 'twitter_research',
-        label: 'X Research',
-        icon: 'twitter',
-        description: 'Track X accounts and tweets',
-        newViewId: 'twitter_research',
-      },
-      {
-        type: 'ads_research',
-        label: 'Ads Research',
-        icon: 'megaphone',
-        description: 'Meta, TikTok, and Google ad libraries',
-        newViewId: 'ads_research',
-      },
-    ],
-  },
-  {
-    section: 'Reporting',
-    items: [
-      {
-        type: 'campaign_overview',
-        label: 'Overview',
-        icon: 'layout-dashboard',
-        description: 'KPIs, trends, and alerts across all channels',
-        newViewId: 'campaign_overview',
-      },
-      {
-        type: 'social_reporting',
-        label: 'Social',
-        icon: 'share-2',
-        description: 'Instagram & LinkedIn performance',
-        newViewId: 'social_reporting',
-      },
-      {
-        type: 'funnel_analytics',
-        label: 'Funnel',
-        icon: 'filter',
-        description: 'Visitors, leads, and conversions',
-        newViewId: 'funnel_analytics',
-      },
-      {
-        type: 'email_analytics',
-        label: 'Email',
-        icon: 'mail',
-        description: 'Opens, clicks, and delivery rates',
-        newViewId: 'email_analytics',
-      },
-      {
-        type: 'ads_performance',
-        label: 'Ads',
-        icon: 'megaphone',
-        description: 'Meta spend, ROAS, and campaign drill-down',
-        newViewId: 'ads_performance',
-      },
-      {
-        type: 'finance_overview',
-        label: 'Finance',
-        icon: 'wallet',
-        description: 'Stripe revenue, products, and payment links',
-        newViewId: 'finance_overview',
-      },
-    ],
-  },
-]
-
-export function buildNewViewDef(item: ViewCatalogItem): ViewDef {
-  const id = item.newViewId ?? item.type
-  return {
-    id,
-    type: item.type,
-    name: item.label,
-    ...(item.type === 'kanban' ? { group_by: 'status' } : {}),
-    ...(item.type === 'calendar'
-      ? {
-          calendar_config: {
-            date_field: 'due_date',
-            default_zoom: 'month',
-            week_start: 1,
-            source_mode: 'space_items',
-            show_task_list: true,
-            time_format: '12h',
-            social_platform_filters: [],
-            sources: [
-              { id: 'space_items', type: 'space_items' as const, visible: true, color: 'blue' },
-              {
-                id: 'campaign_social_posts',
-                type: 'campaign_social_posts' as const,
-                visible: true,
-                color: 'purple',
-              },
-              { id: 'google_calendar', type: 'google_calendar' as const, visible: true, color: 'green' },
-              { id: 'outlook', type: 'outlook' as const, visible: true, color: 'blue' },
-            ],
-          },
-        }
-      : {}),
-    ...(item.type === 'docs'
-      ? {
-          group_by: 'category',
-          docs_config: { pinned_item_ids: [], display_mode: 'grid' },
-          visible_fields: ['title', 'category'],
-        }
-      : {}),
-    ...(item.type === 'channels'
-      ? {
-          icon: 'messages-square',
-          channels_config: { channel_ids: [] },
-        }
-      : {}),
-    ...(item.type === 'instagram_research' ? { ig_research_config: { tracked_accounts: [] } } : {}),
-    ...(item.type === 'tiktok_research'
-      ? { tiktok_research_config: { tracked_accounts: [] } }
-      : {}),
-    ...(item.type === 'youtube_research'
-      ? { youtube_research_config: { tracked_accounts: [] } }
-      : {}),
-    ...(item.type === 'twitter_research'
-      ? { twitter_research_config: { tracked_accounts: [], time_range: 'all' } }
-      : {}),
-    ...(item.type === 'all_social_research'
-      ? {
-          all_social_research_config: {
-            tracked_accounts: [],
-            platform_filters: ['instagram', 'tiktok', 'youtube', 'twitter'],
-            tracked_accounts_by_platform: {},
-            people_hidden_by_platform: {},
-          },
-        }
-      : {}),
-    ...(item.type === 'ads_research'
-      ? {
-          ads_research_config: {
-            display_mode: 'grid',
-            sort_by: 'days_running',
-            sort_dir: 'desc',
-          },
-        }
-      : {}),
-    ...(item.type === 'contacts'
-      ? {
-          contacts_config: { sort_by: 'created_at', sort_dir: 'desc', status_filter: 'all' },
-          visible_fields: [...DEFAULT_CONTACT_VISIBLE_FIELD_IDS],
-        }
-      : {}),
-    ...(item.type === 'media'
-      ? {
-          media_config: {
-            type_filters: [],
-            source_filter: 'all',
-            group_by: 'date',
-            group_sort: 'desc',
-            layout: 'gallery',
-            preview_card_size: 'preview',
-          },
-        }
-      : {}),
-    ...(item.type === 'all_artifacts'
-      ? {
-          all_artifacts_config: {
-            display_mode: 'grid',
-            time_range: 'all',
-            sort_by: 'created_at',
-            sort_dir: 'desc',
-            group_by: 'artifact_type',
-            group_sort: 'asc',
-            artifact_type_filters: [
-              'funnels',
-              'forms',
-              'websites',
-              'offers',
-              'emails',
-              'sequences',
-              'social_posts',
-              'ads',
-              'avatars',
-              'presentations',
-            ],
-          },
-        }
-      : {}),
-    ...(item.type === 'funnels'
-      ? {
-          funnels_config: {
-            display_mode: 'grid',
-            time_range: 'all',
-            sort_by: 'created_at',
-            sort_dir: 'desc',
-            funnel_card_fields: ['funnel_type', 'status'],
-          },
-        }
-      : {}),
-    ...(item.type === 'forms'
-      ? {
-          forms_config: {
-            display_mode: 'grid',
-            time_range: 'all',
-            sort_by: 'created_at',
-            sort_dir: 'desc',
-            form_card_fields: ['status', 'visibility', 'created_at'],
-          },
-        }
-      : {}),
-    ...(item.type === 'emails'
-      ? {
-          emails_config: {
-            display_mode: 'grid',
-            time_range: 'all',
-            sort_by: 'created_at',
-            sort_dir: 'desc',
-          },
-        }
-      : {}),
-    ...(item.type === 'websites'
-      ? {
-          websites_config: {
-            display_mode: 'grid',
-            time_range: 'all',
-            sort_by: 'created_at',
-            sort_dir: 'desc',
-          },
-        }
-      : {}),
-    ...(item.type === 'offers'
-      ? {
-          offers_config: {
-            display_mode: 'grid',
-            time_range: 'all',
-            sort_by: 'created_at',
-            sort_dir: 'desc',
-          },
-        }
-      : {}),
-    ...(item.type === 'avatars'
-      ? {
-          avatars_config: {
-            display_mode: 'grid',
-            time_range: 'all',
-            sort_by: 'created_at',
-            sort_dir: 'desc',
-            avatar_card_fields: ['offer', 'created_at'],
-          },
-        }
-      : {}),
-    ...(item.type === 'ads'
-      ? {
-          ads_config: {
-            display_mode: 'grid',
-            paid_ads_mode: 'structure',
-            time_range: 'all',
-            sort_by: 'created_at',
-            sort_dir: 'desc',
-            ad_card_fields: ['platform', 'placement', 'status', 'ad_set'],
-          },
-        }
-      : {}),
-    ...(item.type === 'ad_campaigns'
-      ? {
-          ad_campaigns_config: {
-            display_mode: 'grid',
-            time_range: 'all',
-            sort_by: 'created_at',
-            sort_dir: 'desc',
-          },
-        }
-      : {}),
-    ...(item.type === 'sequences'
-      ? {
-          sequences_config: {
-            display_mode: 'grid',
-            time_range: 'all',
-            sort_by: 'created_at',
-            sort_dir: 'desc',
-            sequence_card_fields: ['status', 'funnel', 'email_count'],
-          },
-        }
-      : {}),
-    ...(item.type === 'presentations'
-      ? {
-          presentations_config: {
-            display_mode: 'grid',
-            time_range: 'all',
-            sort_by: 'created_at',
-            sort_dir: 'desc',
-            presentation_card_fields: ['status', 'slide_count', 'published_url'],
-          },
-        }
-      : {}),
-    ...(item.type === 'social_posts'
-      ? {
-          social_posts_config: {
-            display_mode: 'grid',
-            time_range: 'all',
-            time_field: 'created_at',
-            sort_by: 'created_at',
-            sort_dir: 'desc',
-            social_post_card_fields: ['platform', 'post_type', 'status'],
-          },
-        }
-      : {}),
-    ...(REPORTING_VIEW_TYPES.has(item.type)
-      ? {
-          reporting_config: {
-            time_range: '30d',
-            chart_type: 'area',
-            ...(item.type === 'social_reporting'
-              ? {
-                  social_platform: 'instagram' as const,
-                  social_platforms: ['instagram'] as ('instagram' | 'linkedin')[],
-                }
-              : {}),
-          },
-        }
-      : {}),
-  }
-}
-
-function buildChannelViewDef(channel: Channel): ViewDef {
-  return {
-    id: `channel_${channel.id}`,
-    type: 'channel',
-    name: channel.name,
-    icon: 'hash',
-    channel_config: { channel_id: channel.id },
-  }
-}
-
-/**
- * When the same view type already exists, give the new tab a unique `id`
- * (`list`, `list_2`, `list_3` …) and a human-readable `name` ("List 2") so users
- * can keep multiple instances of the same view (different filters, group-bys, etc.).
- * `channel` views are skipped — uniqueness is per channel id, enforced by the picker.
- */
-function ensureUniqueViewIdentity(view: ViewDef, existingViews: ViewDef[]): ViewDef {
-  if (view.type === 'channel') return view
-  const existingIds = new Set(existingViews.map((v) => v.id))
-  const existingNames = new Set(existingViews.map((v) => v.name))
-  if (!existingIds.has(view.id) && !existingNames.has(view.name)) return view
-
-  let n = 2
-  let nextId = `${view.id}_${n}`
-  while (existingIds.has(nextId)) {
-    n += 1
-    nextId = `${view.id}_${n}`
-  }
-  let nextName = `${view.name} ${n}`
-  while (existingNames.has(nextName)) {
-    n += 1
-    nextName = `${view.name} ${n}`
-  }
-  return { ...view, id: nextId, name: nextName }
-}
+export { buildNewViewDef, findReusableTaskView } from './view-catalog'
 
 interface ViewSwitcherProps {
   views: ViewDef[]
@@ -695,6 +81,10 @@ interface ViewSwitcherProps {
   canAccessEditorViews?: boolean
   /** Right-click a view tab: opens customize UI as a dropdown below that tab (`anchorEl`). */
   onTabContextCustomize?: (viewId: string, anchorEl: HTMLElement) => void
+  /** With any of the three below, right-click opens a context menu (pin first) instead of jumping straight to customize. */
+  onTogglePinView?: (viewId: string, pinned: boolean) => void | Promise<void>
+  onDuplicateView?: (viewId: string) => void | Promise<void>
+  onDeleteView?: (viewId: string) => void | Promise<void>
 }
 
 /** Tab strip: type default glass + tint, or palette glass+text when user set `icon_color` (matches Add view / IconPicker badges). */
@@ -750,12 +140,12 @@ function StaticViewTab({
   view,
   selected,
   onSelect,
-  onContextCustomize,
+  onTabContextMenu,
 }: {
   view: ViewDef
   selected: boolean
   onSelect: () => void
-  onContextCustomize?: (anchorEl: HTMLElement) => void
+  onTabContextMenu?: (e: React.MouseEvent, anchorEl: HTMLElement) => void
 }) {
   const { iconName, textColor, glassClass } = viewTabGlyphAppearance(view)
   return (
@@ -764,7 +154,7 @@ function StaticViewTab({
       onClick={onSelect}
       onContextMenu={(e) => {
         e.preventDefault()
-        onContextCustomize?.(e.currentTarget as HTMLElement)
+        onTabContextMenu?.(e, e.currentTarget as HTMLElement)
       }}
       className={`relative flex min-w-0 shrink-0 items-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-colors hover:bg-[var(--color-hover-subtle)] ${
         selected
@@ -966,6 +356,9 @@ export function ViewSwitcher({
   hasCampaign = false,
   canAccessEditorViews = true,
   onTabContextCustomize,
+  onTogglePinView,
+  onDuplicateView,
+  onDeleteView,
 }: ViewSwitcherProps) {
   const { isAccountContextReady, isPersonalAccountContext } = useAccountContextGate()
   const hideChannelViews = !isAccountContextReady || isPersonalAccountContext
@@ -980,6 +373,18 @@ export function ViewSwitcher({
   const [overSide, setOverSide] = useState<'left' | 'right'>('right')
   const [channelPickerOpen, setChannelPickerOpen] = useState(false)
   const [templateParent, setTemplateParent] = useState<AddViewTemplateParent | null>(null)
+  const [tabMenu, setTabMenu] = useState<ViewTabContextMenuState | null>(null)
+  const hasTabMenuActions = Boolean(onTogglePinView || onDuplicateView || onDeleteView)
+  const handleTabContextMenu = useCallback(
+    (e: React.MouseEvent, viewId: string, anchorEl: HTMLElement) => {
+      if (hasTabMenuActions) {
+        setTabMenu({ viewId, x: e.clientX, y: e.clientY, tabEl: anchorEl })
+        return
+      }
+      onTabContextCustomize?.(viewId, anchorEl)
+    },
+    [hasTabMenuActions, onTabContextCustomize],
+  )
   const [addPanelAnchor, setAddPanelAnchor] = useState<{ top: number; left: number } | null>(null)
   const addButtonRef = useRef<HTMLButtonElement | null>(null)
   const onAddViewRef = useRef(onAddView)
@@ -1185,8 +590,7 @@ export function ViewSwitcher({
                     onClick={() => onSelectView(view.id)}
                     onContextMenu={(e) => {
                       e.preventDefault()
-                      if (onTabContextCustomize)
-                        onTabContextCustomize(view.id, e.currentTarget as HTMLElement)
+                      handleTabContextMenu(e, view.id, e.currentTarget as HTMLElement)
                     }}
                     className={cn(
                       'relative flex min-w-0 cursor-grab select-none items-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-colors active:cursor-grabbing',
@@ -1224,9 +628,9 @@ export function ViewSwitcher({
                 view={view}
                 selected={view.id === activeViewId}
                 onSelect={() => onSelectView(view.id)}
-                onContextCustomize={
-                  onTabContextCustomize
-                    ? (anchorEl) => onTabContextCustomize(view.id, anchorEl)
+                onTabContextMenu={
+                  hasTabMenuActions || onTabContextCustomize
+                    ? (e, anchorEl) => handleTabContextMenu(e, view.id, anchorEl)
                     : undefined
                 }
               />
@@ -1324,6 +728,19 @@ export function ViewSwitcher({
         hasCampaign={hasCampaign}
         canAccessEditorViews={canAccessEditorViews}
       />
+
+      {tabMenu ? (
+        <ViewTabContextMenu
+          state={tabMenu}
+          view={views.find((v) => v.id === tabMenu.viewId) ?? null}
+          viewCount={visibleViews.length}
+          onClose={() => setTabMenu(null)}
+          onTogglePin={onTogglePinView}
+          onCustomize={onTabContextCustomize}
+          onDuplicate={onDuplicateView}
+          onDelete={onDeleteView}
+        />
+      ) : null}
 
       {rightSlot && <div className="ml-auto flex shrink-0 items-center gap-1">{rightSlot}</div>}
     </div>

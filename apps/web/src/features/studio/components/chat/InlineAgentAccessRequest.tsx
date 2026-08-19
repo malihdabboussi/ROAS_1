@@ -2,11 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import {
-  getAgentPolicy,
-  setAgentOverrides,
-  type AgentCapabilityKind,
-} from '@/lib/agents'
+import { getAgentPolicy, setAgentOverrides, type AgentCapabilityKind } from '@/lib/agents'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import type { MessageContentBlock } from '../../types'
 
@@ -87,7 +83,7 @@ export function InlineAgentAccessRequest({
       ) : status === 'cancelled' ? (
         <p className="body-4 text-muted-foreground mt-3">Access request cancelled.</p>
       ) : status === 'failed' ? (
-        <p className="body-4 mt-3 text-red-400">{block.error ?? 'Failed to enable access.'}</p>
+        <p className="body-4 text-destructive mt-3">{block.error ?? 'Failed to enable access.'}</p>
       ) : (
         <div className="mt-3 flex gap-2">
           <button
