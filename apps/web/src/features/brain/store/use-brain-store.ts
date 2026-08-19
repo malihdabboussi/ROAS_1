@@ -34,13 +34,15 @@ function scopeCacheKey(agentId?: string, brainId?: string) {
 }
 
 /**
- * True when a graph payload already contains every node — the backend reports
- * `stats.nodes_truncated: false` when the load was not capped by its `limit`.
- * Undefined (older backend) is treated as possibly-truncated so the full
- * follow-up fetch still fires (pre-existing behavior).
+ * True when a graph payload is as complete as it can get — either the backend
+ * reports `stats.nodes_truncated: false` (the load was not capped by its
+ * `limit`), or `stats.node_window_capped: true` (the server clamped the window
+ * to its maximum, so a larger request would return the same nodes). Undefined
+ * (older backend) is treated as possibly-truncated so the full follow-up fetch
+ * still fires (pre-existing behavior).
  */
-function isCompleteGraph(data: BrainGraphData | null | undefined): boolean {
-  return data?.stats?.nodes_truncated === false
+export function isCompleteGraph(data: BrainGraphData | null | undefined): boolean {
+  return data?.stats?.nodes_truncated === false || data?.stats?.node_window_capped === true
 }
 
 /**

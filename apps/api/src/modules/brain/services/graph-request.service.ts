@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RequestScope } from '@vibey/api-shared'
 import { GraphRequestRepository } from '../repositories/graph-request.repository'
 import { BrainPermissionsService } from './brain-permissions.service'
+import { clampGraphLimit } from './graph-node-window'
 import { GraphService } from './graph.service'
 
 export interface GraphRequestInput {
@@ -28,12 +29,14 @@ export class GraphRequestService {
     input: GraphRequestInput,
   ) {
     const brainId = input.brainId?.trim()
+    const window = clampGraphLimit(input.limit ? Number(input.limit) : undefined)
     if (!brainId) {
       return this.graphService.buildGraph(supabase, {
         agent_id: input.agentId,
         owner_id: userId,
         org_id: scope.orgId,
-        limit: input.limit ? Number(input.limit) : undefined,
+        limit: window.limit,
+        node_window_capped: window.capped,
         min_significance: input.minSignificance ? Number(input.minSignificance) : undefined,
         memory_type: input.memoryType,
       })
@@ -47,7 +50,8 @@ export class GraphRequestService {
         owner_id: userId,
         org_id: scope.orgId,
         brain_id: brainId,
-        limit: input.limit ? Number(input.limit) : undefined,
+        limit: window.limit,
+        node_window_capped: window.capped,
         min_significance: input.minSignificance ? Number(input.minSignificance) : undefined,
         memory_type: input.memoryType,
       })
@@ -58,7 +62,8 @@ export class GraphRequestService {
       userId,
       brainId,
       scope.orgId,
-      input.limit ? Number(input.limit) : undefined,
+      window.limit,
+      window.capped,
     )
   }
 
