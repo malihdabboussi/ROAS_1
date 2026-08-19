@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PageGraderQcSlackBridgeService } from '../page-grader-qc-slack-bridge.service'
 
 describe('PageGraderQcSlackBridgeService', () => {
-  const svc = { client: {} }
+  const svc: { client: unknown } = { client: {} }
   const sync = { authorizeWebhookSecret: vi.fn() }
   const pageGraderApi = { applyQcAction: vi.fn(), getClientScopeMap: vi.fn() }
   const slackTools = { sendBlockMessageToTarget: vi.fn(), sendMessage: vi.fn() }
@@ -112,6 +112,53 @@ describe('PageGraderQcSlackBridgeService', () => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
     delete process.env.SLACK_SIGNING_SECRET
+  })
+
+  it('records cases + dedup anchor even when the Page Grader row is personal (org_id null)', async () => {
+    // Prod state 2026-08-18: the only Page Grader connection has org_id NULL, so
+    // the ledger was skipped and Launch check-ins repeated hourly (§11.5).
+    sync.authorizeWebhookSecret.mockResolvedValue([{ userId: 'user-1', orgId: null }])
+    const campaignsQuery: any = {
+      select: vi.fn(() => campaignsQuery),
+      in: vi.fn(() => campaignsQuery),
+      not: vi.fn(() => campaignsQuery),
+      limit: vi.fn(() => campaignsQuery),
+      maybeSingle: vi.fn(async () => ({ data: { org_id: 'org-from-campaign' }, error: null })),
+    }
+    svc.client = { from: vi.fn(() => campaignsQuery) } as never
+    const findingId = 'a960ed48-b7cf-4da3-a745-9f0dc96b2ddb'
+    await service.deliverNotification(
+      JSON.stringify({
+        notification_id: 'launch:personal-row',
+        admin_slack_user_id: 'U123',
+        fallback_text: 'Launch Agent Check-in',
+        finding_ids: [findingId],
+        findings: [
+          {
+            id: findingId,
+            type: 'proactive_launch',
+            summary: 'Yasir Khan Coaching LTD: Cohort Retargeting is overdue',
+            client_id: '1960ed48-b7cf-4da3-a745-9f0dc96b2ddb',
+            client_name: 'Yasir Khan Coaching LTD',
+          },
+        ],
+        blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'Launch Agent Check-in' } }],
+      }),
+      'pgwh-secret',
+    )
+    expect(cases.recordExternal).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ orgId: 'org-from-campaign', caseType: 'proactive_launch' }),
+    )
+    expect(cases.findQcSlackAnchor).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ orgId: 'org-from-campaign' }),
+    )
+    expect(cases.attachSlackDelivery).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ orgId: 'org-from-campaign', sourceKeys: [findingId] }),
+    )
+    svc.client = {} as never
   })
 
   it('uses the ROAS Slack connection and binds callback context to mutable buttons', async () => {
@@ -257,8 +304,7 @@ describe('PageGraderQcSlackBridgeService', () => {
       metadata: {
         slack_channel: 'D123',
         slack_parent_ts: '123.456',
-        slack_finding_fingerprint:
-          'proactive_launch:impact elite coaching: copywriting is overdue',
+        slack_finding_fingerprint: 'proactive_launch:impact elite coaching: copywriting is overdue',
         slack_last_follow_up_at: '2026-08-17T12:00:00.000Z',
       },
     })

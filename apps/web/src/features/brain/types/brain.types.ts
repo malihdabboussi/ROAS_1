@@ -388,6 +388,12 @@ export interface BrainGraphData {
      * backend) is treated as possibly-truncated.
      */
     nodes_truncated?: boolean
+    /**
+     * Backend signal: true when the requested window was clamped to the
+     * server maximum. A capped window is the complete loadable graph — the
+     * store must not keep re-requesting a larger one.
+     */
+    node_window_capped?: boolean
   }
 }
 
