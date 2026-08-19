@@ -18,11 +18,13 @@ export class MeetingRelatedCallsService {
       call_status: string | null
       recording_url: string | null
       score: number
+      item: Record<string, unknown>
     }>
   > {
     const current = await this.matching.findCallItemById(supabase, input.meetingItemId)
     if (!current) return []
     const candidates = await this.matching.listCallItemsForSpace(supabase, input.spaceId)
+    const byId = new Map(candidates.map((row) => [String(row.id ?? ''), row]))
     return rankRelatedCalls(
       relatedCallCandidateFromItem(current),
       candidates.map(relatedCallCandidateFromItem),
@@ -33,6 +35,7 @@ export class MeetingRelatedCallsService {
       call_status: row.callStatus,
       recording_url: row.recordingUrl,
       score: row.score,
+      item: byId.get(row.id) ?? { id: row.id, title: row.title, custom_data: {} },
     }))
   }
 }

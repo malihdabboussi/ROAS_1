@@ -31,6 +31,9 @@ vi.mock('@/features/home/components/MeetingAgendaDocEditor', () => ({
 vi.mock('@/components/work-views/AllTasksNativeList', () => ({
   AllTasksNativeList: () => <button type="button">Add task</button>,
 }))
+vi.mock('@/components/work-views/AllMeetingsNativeList', () => ({
+  AllMeetingsNativeList: () => null,
+}))
 vi.mock('@/lib/work-items', () => ({
   useSpaceMappingIndex: () => null,
 }))

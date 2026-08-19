@@ -329,36 +329,36 @@ export function MeetingWorkspaceDialog({
             onEnd={() => void endCall()}
             onPostCallAction={runPostCallAction}
           />
-
-          <MeetingWorkspaceBody
-            spaceId={spaceId}
-            meetingItemId={meetingItemId}
-            bundle={bundle}
-            loading={loading}
-            isLive={isLive}
-            isPostCall={isPostCall}
-            prep={prep}
-            prepDescription={prepDescription}
-            joinUrl={joinUrl}
-            googleAgendaHref={agendaEvent?.prep?.agenda_doc_link}
-            onRecordingLinked={() => {
-              void hydrateWorkspace()
-            }}
-            onNoteCreated={handleNoteCreated}
-            onActionCreated={handleActionCreated}
-            onActionsReload={async () => {
-              await hydrateWorkspace()
-            }}
-            onCreateAgendaWithAi={() => {
-              const startAgenda = MEETING_PRE_CALL_ACTIONS.find(
-                (action) => action.id === 'start-agenda',
-              )
-              if (startAgenda) runPostCallAction(startAgenda)
-            }}
-            relatedCalls={relatedCalls}
-            onOpenRelated={onOpenRelated}
-          />
         </div>
+
+        <MeetingWorkspaceBody
+          spaceId={spaceId}
+          meetingItemId={meetingItemId}
+          bundle={bundle}
+          loading={loading}
+          isLive={isLive}
+          isPostCall={isPostCall}
+          prep={prep}
+          prepDescription={prepDescription}
+          joinUrl={joinUrl}
+          googleAgendaHref={agendaEvent?.prep?.agenda_doc_link}
+          onRecordingLinked={() => {
+            void hydrateWorkspace()
+          }}
+          onNoteCreated={handleNoteCreated}
+          onActionCreated={handleActionCreated}
+          onActionsReload={async () => {
+            await hydrateWorkspace()
+          }}
+          onCreateAgendaWithAi={() => {
+            const startAgenda = MEETING_PRE_CALL_ACTIONS.find(
+              (action) => action.id === 'start-agenda',
+            )
+            if (startAgenda) runPostCallAction(startAgenda)
+          }}
+          relatedCalls={relatedCalls}
+          onOpenRelated={onOpenRelated}
+        />
       </main>
     </section>
   )

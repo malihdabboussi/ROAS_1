@@ -57,7 +57,7 @@ export function SpaceCell({
     dateDisplayFormat ??
     (field.id === 'call_date' ? 'date_time' : undefined)
 
-  if (isInterceptedSpaceFieldId(field.id)) {
+  if (isInterceptedSpaceFieldId(field.id, spaceItem)) {
     return (
       <SpaceFieldIdCell
         field={field}

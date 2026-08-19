@@ -166,6 +166,12 @@ Why: Rescued from `codex/program-card-views` onto current main.
 Impact: Programs browse as cards instead of the denser list-only hub layout.
 Files: `ProgramsCardGrid.tsx`, `campaigns/page.tsx`, `programs.md`
 
+## [2026-08-19 05:35] - [FIX]
+What: Related calls use All Meetings rows (Campaign + Space columns). Related calls and action items sit full width at the bottom of the meeting workspace. Relatedness requires the same mapped client; object `client_campaign` mappings now score, and different clients no longer rank from a shared host or generic title words.
+Why: The related list was a card of unrelated client calls because scoring treated `client_campaign` as a string and let title/recording bonuses include anyone. Campaign/Space were missing on All Meetings, and both lists were trapped in the narrow section-card column.
+Impact: Cydcor weeklies relate to Cydcor, not Barber. All Meetings and Related calls show the same columns. Action items and related calls span the workspace width.
+Files: `meeting-related-calls.ts`, `MeetingRelatedCallsSection.tsx`, `MeetingWorkspaceBody.tsx`, `AllMeetingsNativeList.tsx`, `all-meetings-list-columns.ts`, personal-dashboard template
+
 ## [2026-08-19 05:40] - [FIX]
 
 What: Restored the missing `apps/web/src/app/(auth)/login/config/auth-login.ts` module (withAuthLoginTimeout + resolveAuthLoginErrorMessage). Main's auth-login-resilience change (e0f10273) imports it but the file was never committed, so `pnpm typecheck` failed on main.
@@ -185,3 +191,13 @@ Why: Main's pin handler restacked the views array and drag-reorder cleared every
 Impact: UI-pass can merge onto main without dropping pinned-first tabs or the themed 404.
 
 Files: `use-customize-view-actions.ts`, `use-view-strip-actions.ts`, `order-views-for-strip.ts`, `ViewSwitcher.tsx`, `not-found.tsx`
+
+## [2026-08-19 09:20] - [FIX]
+
+What: Merged current main into related-calls (#333). Kept All Meetings related-call rows and full-width lists, plus main's task-status picker / Continue-in-chat row. Related calls stay outside the `max-w-3xl` details column. Persist callback accepts `Promise<unknown>` so `updateSpaceItem` typechecks. Dynamic `space_items` select uses `unknown` then `Record<string, unknown>[]`.
+
+Why: The branch conflicted with the status-row + UI-pass merges; Vercel failed on persistItem `Promise<SpaceItem>` vs `Promise<void>` and a Supabase `select(string)` GenericStringError cast.
+
+Impact: Related calls can merge onto main with the current meeting workspace chrome.
+
+Files: `MeetingWorkspaceDialog.tsx`, `MeetingWorkspaceBody.tsx`, `MeetingRelatedCallsSection.tsx`, `AllMeetingsNativeList.tsx`, `meeting-call-matching.repository.ts`

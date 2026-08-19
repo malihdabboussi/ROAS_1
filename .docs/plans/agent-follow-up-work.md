@@ -39511,10 +39511,10 @@ Reason not done now: The panel change mitigates this in the UI with a timestamp 
 
 ## 2026-08-19 - [ARCH] MeetingWorkspaceDialog.test.tsx near 400 LOC
 - Feature/app: Home / meeting workspace · apps/web
-- File: `apps/web/src/features/home/components/MeetingWorkspaceDialog.test.tsx` (372 LOC)
-- Evidence: `wc -l` is 372 after extracting `renderWorkspace`; eslint `max-lines` is 400.
-- Needed: split agenda-doc / status / action-row cases into a sibling test file so the dialog suite stays under the cap.
-- Why not now: in-scope tests already pass; splitting would be extra churn on this status-row change.
+- File: `apps/web/src/features/home/components/MeetingWorkspaceDialog.test.tsx`
+- Evidence: eslint `max-lines` is 400; related-calls coverage lives in `MeetingRelatedCallsSection.test.tsx`.
+- Needed: split remaining workspace cases (agenda-doc / status / action-row) into a sibling test file.
+- Why not now: related-calls and status-row tests already pass; splitting is extra churn on this merge.
 
 ## 2026-08-18 - [REFACTOR] Spaces list/switcher files far over the 400/600 LOC limits
 
