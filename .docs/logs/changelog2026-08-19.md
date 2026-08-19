@@ -221,3 +221,9 @@ Why: The branch conflicted with the launches page and UI-pass docs after #332–
 Impact: Clients pipeline order can merge onto main without dropping launches coverage.
 
 Files: `page-grader.integration.test.ts`, `frontend-shared-surfaces.md`, `agent-follow-up-work.md`
+
+## [2026-08-19 09:40] - [FIX]
+What: Typed `LABEL_BY_SLUG` / `RANK_BY_SLUG` in `agency-client-pipeline.ts` as `Map<string, …>` so lookups with unvalidated stage strings compile.
+Why: PR #335 inferred the maps as `Map<AgencyClientPipelineSlug, …>` while querying them with plain strings — `tsc` fails, and the Vercel roas-web build on main has been red since that merge (the PR merged before checks reported).
+Impact: main's roas-web deploy builds again; no behavior change (lookups already handled misses).
+Files: `apps/web/src/lib/agency-clients/agency-client-pipeline.ts`

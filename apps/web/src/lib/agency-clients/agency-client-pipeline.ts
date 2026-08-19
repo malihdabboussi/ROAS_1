@@ -36,11 +36,12 @@ const PIPELINE_ALIASES: Record<string, AgencyClientPipelineSlug> = {
   churned: 'churned_inactive',
 }
 
-const LABEL_BY_SLUG = new Map(
-  AGENCY_CLIENT_PIPELINE_STAGES.map((stage) => [stage.slug, stage.label] as const),
+// Keyed as plain strings: lookups pass unvalidated user/config values, not proven slugs.
+const LABEL_BY_SLUG = new Map<string, string>(
+  AGENCY_CLIENT_PIPELINE_STAGES.map((stage) => [stage.slug, stage.label]),
 )
-const RANK_BY_SLUG = new Map(
-  AGENCY_CLIENT_PIPELINE_STAGES.map((stage, index) => [stage.slug, index] as const),
+const RANK_BY_SLUG = new Map<string, number>(
+  AGENCY_CLIENT_PIPELINE_STAGES.map((stage, index) => [stage.slug, index]),
 )
 
 export type PipelineClientLike = {
