@@ -12,6 +12,7 @@ import {
 } from '@/lib/auth/access-routing'
 import { reportClientError } from '@/lib/log-client-error'
 import { createClient } from '@/lib/supabase/client'
+import { resolveAuthLoginErrorMessage, withAuthLoginTimeout } from './config/auth-login'
 
 const LAST_PROVIDER_KEY = 'vibey-last-auth-provider'
 
@@ -85,30 +86,34 @@ export default function LoginPage() {
     try {
       localStorage.setItem(LAST_PROVIDER_KEY, 'email')
     } catch {}
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (error) {
+    try {
+      const { error } = await withAuthLoginTimeout(
+        supabase.auth.signInWithPassword({ email, password }),
+      )
+      if (!error) {
+        window.location.href = buildAppRedirectUrl(window.location.origin, getRedirectPath(), {
+          promo: getPromoCode(),
+        }).toString()
+        return
+      }
+      const message = resolveAuthLoginErrorMessage(error)
       void reportClientError({
         feature: 'ui/auth_login',
         error_code: 'email_password_sign_in_failed',
-        message: error.message,
+        message,
       })
-      const msg = error.message || ''
-      if (msg.toLowerCase().includes('invalid login') || msg.toLowerCase().includes('invalid')) {
-        setError('Invalid email or password.')
-      } else if (
-        msg.toLowerCase().includes('email not confirmed') ||
-        msg.toLowerCase().includes('confirm')
-      ) {
-        setError('Please verify your email.')
-      } else {
-        setError(error.message)
-      }
-      return
+      setError(message)
+    } catch (error) {
+      const message = resolveAuthLoginErrorMessage(error)
+      void reportClientError({
+        feature: 'ui/auth_login',
+        error_code: 'email_password_sign_in_unavailable',
+        message,
+      })
+      setError(message)
+    } finally {
+      setLoading(false)
     }
-    window.location.href = buildAppRedirectUrl(window.location.origin, getRedirectPath(), {
-      promo: getPromoCode(),
-    }).toString()
   }
 
   const forgotPasswordHref = buildAuthContinuationPath(

@@ -23,3 +23,9 @@ What: Meeting workspace status is now the All Meetings task Status field (brande
 Why: Calendar/meeting workspace showed a generic call-status dropdown that did not match the main task card, and Continue in chat sat in the header away from the post-call actions.
 Impact: Changing status on the meeting page updates the same `space_items.status` as All Meetings / the task card. Recording-driven `custom_data.call_status` is unchanged for related-call scoring.
 Files: `MeetingCallStatusSection.tsx`, `MeetingWorkspaceStatusSelect.tsx`, `MeetingWorkspaceDialog.tsx`, `use-meeting-space-status-field.ts`, tests, `meeting-follow-up-slack.md`
+
+## [2026-08-19 05:25] - [FIX]
+What: Login and dashboard auth treat transient Supabase latency as retryable instead of a hard failure.
+Why: Brief Auth/API lag was bouncing users off login or the dashboard shell.
+Impact: Soft failures retry; only persistent auth errors force logout/login.
+Files: `auth-login.ts`, `login/page.tsx`, `dashboard/layout.tsx`
