@@ -138,26 +138,19 @@ export function useCustomizeViewActions(opts: {
   }, [clearSessionDraft, customizePanelTargetView])
 
   const handleViewPinToStart = useCallback(
-    async (pinned: boolean) => {
-      if (!customizePanelTargetView || !activeSchema || !activeSpace) return
-      const orgView = activeSchema.views.find((v) => v.id === customizePanelTargetView.id)
+    async (pinned: boolean, targetViewId?: string) => {
+      const viewId = targetViewId ?? customizePanelTargetView?.id
+      if (!viewId || !activeSchema || !activeSpace) return
+      const orgView = activeSchema.views.find((v) => v.id === viewId)
       if (!orgView) return
-      const nextSchema = pinned
-        ? {
-            ...activeSchema,
-            views: [
-              { ...orgView, pinned_to_start: true },
-              ...activeSchema.views
-                .filter((v) => v.id !== orgView.id)
-                .map((v) => ({ ...v, pinned_to_start: false })),
-            ],
-          }
-        : {
-            ...activeSchema,
-            views: activeSchema.views.map((v) =>
-              v.id === orgView.id ? { ...v, pinned_to_start: false } : v,
-            ),
-          }
+      // Pinning is a flag, not a position: the tab strip renders every pinned view first
+      // (see orderViewsForStrip), so several views can be pinned and nothing else moves.
+      const nextSchema = {
+        ...activeSchema,
+        views: activeSchema.views.map((v) =>
+          v.id === orgView.id ? { ...v, pinned_to_start: pinned } : v,
+        ),
+      }
       patchActiveSpaceSchema(nextSchema)
       try {
         await updateSpace(activeSpace.id, { schema: nextSchema })

@@ -687,7 +687,8 @@ interface ViewSwitcherProps {
   onSelectView: (viewId: string) => void
   onAddView?: (view: ViewDef) => void
   /** When set with ≥2 views, tabs reorder via drag (same affordance as list column headers). */
-  onReorderViews?: (nextViews: ViewDef[]) => void
+  /** `movedViewId` is the dragged tab, so the container can reconcile pin flags against the drop zone. */
+  onReorderViews?: (nextViews: ViewDef[], movedViewId?: string) => void
   rightSlot?: React.ReactNode
   /** When false, reporting views are greyed out in the add-view catalog. */
   hasCampaign?: boolean
@@ -695,6 +696,8 @@ interface ViewSwitcherProps {
   canAccessEditorViews?: boolean
   /** Right-click a view tab: opens customize UI as a dropdown below that tab (`anchorEl`). */
   onTabContextCustomize?: (viewId: string, anchorEl: HTMLElement) => void
+  /** Right-click a view tab: opens the quick context menu (pin/unpin, customize) at the pointer. Takes precedence over `onTabContextCustomize`. */
+  onTabContextMenu?: (viewId: string, point: { x: number; y: number }, anchorEl: HTMLElement) => void
 }
 
 /** Tab strip: type default glass + tint, or palette glass+text when user set `icon_color` (matches Add view / IconPicker badges). */
@@ -751,11 +754,13 @@ function StaticViewTab({
   selected,
   onSelect,
   onContextCustomize,
+  onContextMenu,
 }: {
   view: ViewDef
   selected: boolean
   onSelect: () => void
   onContextCustomize?: (anchorEl: HTMLElement) => void
+  onContextMenu?: (point: { x: number; y: number }, anchorEl: HTMLElement) => void
 }) {
   const { iconName, textColor, glassClass } = viewTabGlyphAppearance(view)
   return (
@@ -763,8 +768,10 @@ function StaticViewTab({
       type="button"
       onClick={onSelect}
       onContextMenu={(e) => {
+        if (!onContextMenu && !onContextCustomize) return
         e.preventDefault()
-        onContextCustomize?.(e.currentTarget as HTMLElement)
+        if (onContextMenu) onContextMenu({ x: e.clientX, y: e.clientY }, e.currentTarget as HTMLElement)
+        else onContextCustomize?.(e.currentTarget as HTMLElement)
       }}
       className={`relative flex min-w-0 shrink-0 items-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-colors hover:bg-[var(--color-hover-subtle)] ${
         selected
@@ -966,6 +973,7 @@ export function ViewSwitcher({
   hasCampaign = false,
   canAccessEditorViews = true,
   onTabContextCustomize,
+  onTabContextMenu,
 }: ViewSwitcherProps) {
   const { isAccountContextReady, isPersonalAccountContext } = useAccountContextGate()
   const hideChannelViews = !isAccountContextReady || isPersonalAccountContext
@@ -1122,7 +1130,7 @@ export function ViewSwitcher({
       return
     }
     const hiddenViews = views.filter((view) => hideChannelViews && isChannelViewType(view.type))
-    onReorderViews([...nextViews, ...hiddenViews])
+    onReorderViews([...nextViews, ...hiddenViews], dragId)
     resetDragState()
   }
 
@@ -1184,9 +1192,15 @@ export function ViewSwitcher({
                     onDragEnd={resetDragState}
                     onClick={() => onSelectView(view.id)}
                     onContextMenu={(e) => {
+                      if (!onTabContextMenu && !onTabContextCustomize) return
                       e.preventDefault()
-                      if (onTabContextCustomize)
-                        onTabContextCustomize(view.id, e.currentTarget as HTMLElement)
+                      if (onTabContextMenu)
+                        onTabContextMenu(
+                          view.id,
+                          { x: e.clientX, y: e.clientY },
+                          e.currentTarget as HTMLElement,
+                        )
+                      else onTabContextCustomize?.(view.id, e.currentTarget as HTMLElement)
                     }}
                     className={cn(
                       'relative flex min-w-0 cursor-grab select-none items-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-colors active:cursor-grabbing',
@@ -1227,6 +1241,11 @@ export function ViewSwitcher({
                 onContextCustomize={
                   onTabContextCustomize
                     ? (anchorEl) => onTabContextCustomize(view.id, anchorEl)
+                    : undefined
+                }
+                onContextMenu={
+                  onTabContextMenu
+                    ? (point, anchorEl) => onTabContextMenu(view.id, point, anchorEl)
                     : undefined
                 }
               />

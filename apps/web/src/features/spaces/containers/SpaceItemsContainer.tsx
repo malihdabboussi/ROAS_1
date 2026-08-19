@@ -29,6 +29,7 @@ import { SpaceModalsHost } from '../components/modals'
 import type { CampaignFinanceTabHandle } from '../components/reporting/FinanceOverviewView'
 import { SpaceItemUpdateProvider } from '../components/SpaceStatusCascadeConfirmProvider'
 import { ViewSwitcher } from '../components/ViewSwitcher'
+import { ViewTabContextMenu } from '../components/ViewTabContextMenu'
 import { useAllSocialResearchAccountActions } from '../hooks/use-all-social-research-account-actions'
 import { useCustomizeViewActions } from '../hooks/use-customize-view-actions'
 import { useSpaceActiveView } from '../hooks/use-space-active-view'
@@ -62,6 +63,11 @@ import { useSpaceUserState } from '../hooks/use-space-user-state'
 import { useUpdateItemWithSubtaskCompleteConfirm } from '../hooks/use-update-item-with-subtask-complete-confirm'
 import { useViewPatchFlush } from '../hooks/use-view-patch-flush'
 import { ALL_ARTIFACTS_GROUP_BY_OPTIONS, isArtifactSurfaceViewType } from '../lib/all-artifacts'
+import {
+  applyDefaultPins,
+  orderViewsForStrip,
+  reconcilePinsAfterReorder,
+} from '../lib/order-views-for-strip'
 import { getAllSocialResearchConfig } from '../lib/all-social-research'
 import { applySpaceToolbarFilters } from '../lib/apply-space-toolbar-filters'
 import { CONTACTS_GROUP_BY_OPTIONS } from '../lib/contacts-group-by-options'
@@ -117,6 +123,8 @@ const MediaImageWorkspacePanelHost = dynamic(
 export type SpaceItemsContainerEmbed = {
   hideBreadcrumbHeader?: boolean
   leadingViewId?: string
+  /** Views pinned by default on this surface — only while the user has never toggled the pin themselves (`pinned_to_start` undefined). */
+  defaultPinnedViewIds?: readonly string[]
   overrideView?: { id: string; content: ReactNode }
 }
 
@@ -396,14 +404,14 @@ export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbe
     canSaveForEveryone,
     canCustomizeViews,
   } = activeViewStuff
-  const orderedVisibleViews = useMemo(() => {
-    if (!embed?.leadingViewId) return visibleViews
-    return [...visibleViews].sort((left, right) => {
-      if (left.id === embed.leadingViewId) return -1
-      if (right.id === embed.leadingViewId) return 1
-      return 0
-    })
-  }, [embed?.leadingViewId, visibleViews])
+  const orderedVisibleViews = useMemo(
+    () =>
+      orderViewsForStrip(
+        applyDefaultPins(visibleViews, embed?.defaultPinnedViewIds),
+        embed?.leadingViewId,
+      ),
+    [embed?.defaultPinnedViewIds, embed?.leadingViewId, visibleViews],
+  )
 
   useSpaceFocusViewTypeEvent(activeSpaceId, setActiveView)
 
@@ -928,6 +936,11 @@ export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbe
   }, [isDocsView, activeSpace?.campaign_id, docsConfigToolbar.doc_source_filters, loadCampaignDocs])
 
   const [docsDriveBrowseActive, setDocsDriveBrowseActive] = useState(false)
+  const [viewTabMenu, setViewTabMenu] = useState<{
+    viewId: string
+    point: { x: number; y: number }
+    anchorEl: HTMLElement
+  } | null>(null)
   useEffect(() => {
     if (!isDocsView) setDocsDriveBrowseActive(false)
   }, [isDocsView, activeViewId])
@@ -1296,26 +1309,37 @@ export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbe
             await updateSpace(activeSpace.id, { schema: nextSchema })
             setActiveView(newView.id)
           }}
-          onReorderViews={async (reorderedVisible) => {
+          onReorderViews={async (reorderedVisible, movedViewId) => {
             if (!activeSchema || !activeSpace || reorderedVisible.length === 0) return
             const visibleIds = new Set(visibleViews.map((v) => v.id))
             const hiddenViews = activeSchema.views.filter((v) => !visibleIds.has(v.id))
-            const cleared = reorderedVisible.map((v) => ({ ...v, pinned_to_start: false }))
-            const nextSchema = { ...activeSchema, views: [...cleared, ...hiddenViews] }
+            const reconciled = reconcilePinsAfterReorder(
+              reorderedVisible,
+              movedViewId,
+              embed?.leadingViewId,
+            )
+            const nextSchema = { ...activeSchema, views: [...reconciled, ...hiddenViews] }
             patchActiveSpaceSchema(nextSchema)
             await updateSpace(activeSpace.id, { schema: nextSchema })
           }}
-          onTabContextCustomize={
+          onTabContextMenu={
             canCustomizeViews
-              ? (viewId, anchorEl) => {
-                  customizeDropdownAnchorRef.current = anchorEl
-                  setCustomizeSubjectViewId(viewId)
-                  setPanelInitialView('main')
-                  setSchemaEditorOpen(true)
-                }
+              ? (viewId, point, anchorEl) => setViewTabMenu({ viewId, point, anchorEl })
               : undefined
           }
           rightSlot={null}
+        />
+        <ViewTabContextMenu
+          position={viewTabMenu?.point ?? null}
+          view={orderedVisibleViews.find((v) => v.id === viewTabMenu?.viewId) ?? null}
+          onClose={() => setViewTabMenu(null)}
+          onTogglePin={(view, pinned) => void handleViewPinToStart(pinned, view.id)}
+          onCustomize={(view) => {
+            customizeDropdownAnchorRef.current = viewTabMenu?.anchorEl ?? null
+            setCustomizeSubjectViewId(view.id)
+            setPanelInitialView('main')
+            setSchemaEditorOpen(true)
+          }}
         />
 
         <div ref={spaceBelowViewTabsRef} className="flex min-h-0 flex-1 flex-row overflow-hidden">

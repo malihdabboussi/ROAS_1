@@ -100,6 +100,7 @@ const views = [
     id: 'agenda',
     type: 'calendar',
     name: 'Agenda',
+    pinned_to_start: true,
     calendar_config: {
       date_field: 'call_date',
       default_zoom: 'week',
