@@ -16,6 +16,10 @@ describe('portalTargetPathFromRoute', () => {
     expect(portalTargetPathFromRoute({ pathname: '/client-campaigns' })).toBe('/campaigns')
   })
 
+  it('opens Page Grader launches from the Launches screen', () => {
+    expect(portalTargetPathFromRoute({ pathname: '/launches' })).toBe('/launches')
+  })
+
   it('honors an explicit portal_path from a campaign action', () => {
     expect(
       portalTargetPathFromRoute({

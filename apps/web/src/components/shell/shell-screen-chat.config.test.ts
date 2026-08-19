@@ -35,6 +35,10 @@ describe('shellChatScreenForPathname', () => {
       key: 'client-campaigns',
       label: 'Client Campaigns',
     })
+    expect(shellChatScreenForPathname('/launches')).toEqual({
+      key: 'launches',
+      label: 'Launches',
+    })
     expect(shellChatScreenForPathname('/brain')).toEqual({ key: 'brain', label: 'Brain' })
     expect(shellChatScreenForPathname('/team/people')).toEqual({ key: 'team', label: 'Team' })
     expect(shellChatScreenForPathname('/programs/program-1')).toEqual({

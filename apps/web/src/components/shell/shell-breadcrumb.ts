@@ -10,6 +10,7 @@ import {
   ListChecks,
   ListTodo,
   MessageSquare,
+  Rocket,
   SendHorizontal,
   Users,
   Workflow,
@@ -40,6 +41,9 @@ export function breadcrumbFromPath(
   if (pathname.startsWith('/team')) return { label: 'Team', Icon: Users }
   if (pathname.startsWith('/client-campaigns')) {
     return { label: 'Client Campaigns', Icon: BriefcaseBusiness }
+  }
+  if (pathname.startsWith('/launches')) {
+    return { label: 'Launches', Icon: Rocket }
   }
   if (pathname.startsWith('/clients/')) return { label: 'Clients', Icon: ContactRound }
   if (pathname.startsWith('/clients')) return { label: 'Clients', Icon: ContactRound }
