@@ -33,7 +33,18 @@ export function clientSearchHintFromSlackChannelName(
   return words.join(' ')
 }
 
-export function formatSlackAskIdentityContext(stamp: SlackAskClientStamp): string {
+export type SlackAskIdentityOptions = {
+  /**
+   * N0 ask kind for this turn. On `general` asks the channel mapping is context
+   * only — the block must not tell Pixel to do client work.
+   */
+  askKind?: 'continuation' | 'client' | 'team' | 'general' | 'unclear'
+}
+
+export function formatSlackAskIdentityContext(
+  stamp: SlackAskClientStamp,
+  options: SlackAskIdentityOptions = {},
+): string {
   const lines = ['[Slack channel identity]']
   const channelLabel = stamp.channelName
     ? `#${stamp.channelName.replace(/^#/, '')}`
@@ -43,6 +54,7 @@ export function formatSlackAskIdentityContext(stamp: SlackAskClientStamp): strin
   const hint = clientSearchHintFromSlackChannelName(stamp.channelName)
   if (hint) lines.push(`Client search hint: ${hint}`)
 
+  const generalAsk = options.askKind === 'general'
   if (stamp.pageGraderClientId || stamp.pageGraderClientName) {
     lines.push(
       `Resolved ROAS Portal client: ${stamp.pageGraderClientName ?? 'unknown'}${
@@ -50,11 +62,15 @@ export function formatSlackAskIdentityContext(stamp: SlackAskClientStamp): strin
       }`,
     )
     lines.push(
-      'Use this client for Service Requests and Portal fulfillment. Do not ask which client unless this conflicts with an explicitly different named client.',
+      generalAsk
+        ? "This channel maps to that client, but the current ask is about the operator's own world. Do not treat this client as the work to do unless the ask names it."
+        : 'Use this client for Service Requests and Portal fulfillment. Do not ask which client unless this conflicts with an explicitly different named client.',
     )
   } else if (hint) {
     lines.push(
-      `Resolve the Portal client with list_clients using "${hint}" (and the channel name). If exactly one client matches, use it — do not ask the user which client.`,
+      generalAsk
+        ? `This channel name suggests a client ("${hint}"), but the current ask is about the operator's own world. Do not run list_clients for it.`
+        : `Resolve the Portal client with list_clients using "${hint}" (and the channel name). If exactly one client matches, use it — do not ask the user which client.`,
     )
   }
 

@@ -98,6 +98,7 @@ describe('GraphController', () => {
       org_id: 'org-1',
       brain_id: 'brain-1',
       limit: 25,
+      node_window_capped: false,
       min_significance: 0.4,
       memory_type: 'fact',
     })
@@ -117,6 +118,7 @@ describe('GraphController', () => {
       'brain-1',
       'org-1',
       50,
+      false,
     )
     expect(graphService.buildGraph).not.toHaveBeenCalled()
   })
@@ -134,6 +136,7 @@ describe('GraphController', () => {
       owner_id: 'user-1',
       org_id: 'org-1',
       limit: 10,
+      node_window_capped: false,
       min_significance: undefined,
       memory_type: undefined,
     })

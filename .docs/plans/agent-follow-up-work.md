@@ -39426,3 +39426,30 @@ Evidence: Four missions started from conversation `1d2d2b2b` are all titled exac
 Needed work: Name a mission at creation from its run context — playbook plus campaign/space, and a disambiguator when the same playbook runs more than once against the same scope.
 
 Reason not done now: The panel change mitigates this in the UI with a timestamp under each row, but the fix belongs in mission creation, which is worker/API work outside a chat-panel branch.
+
+## 2026-08-18 — slack-service-events.base.ts over the 600 LOC service limit
+- Feature/app: `apps/api` Slack Pixel inbound
+- File: `apps/api/src/modules/slack/services/slack-service-events.base.ts` (633 → 689 after N0 stamp + telemetry; was already over 600)
+- Evidence: two near-duplicate handlers (`handleMessageEvent`, `handleAppMentionEvent`) each assemble prompt/context inline.
+- Needed: route `handleAppMentionEvent` through `buildInboundSlackTurnPrompt` (it still builds its own `channelContext` string) and lift the shared "resolve stamp → forwarded → thread → prompt → processAndReply" sequence into one method; then the base file drops well under 600.
+- Why not now: the mention path composes a different context block (`buildChannelContext`); merging it safely needs its own scenario fixtures. Telemetry recorder and prompt assembly were already extracted in this change.
+
+## 2026-08-18 — slack_pixel_turns: tokens per turn
+- File: `apps/api/src/modules/slack/services/slack-turn-telemetry.ts`
+- Evidence: the agent SSE stream carries tool events but no usage; token counts live in the agent-api trace/billing tables keyed by conversation.
+- Needed: join `slack_pixel_turns.conversation_id` to the AI-usage trace rows (or emit usage on the SSE `done` event) so "tokens per kind" p50/p90 can be reported.
+- Why not now: agent-api change; the row already stores `conversation_id` for the join.
+
+## 2026-08-18 — Fathom → Campaign Brain: backfill + suppress redundant suggestions
+- Feature/app: `apps/api` Fathom webhook / brain import jobs
+- Files: `apps/api/src/modules/integrations/fathom/services/fathom-campaign-brain-route.service.ts`, `apps/api/src/modules/brain/services/brain-cross-pollinator.service.ts`
+- Evidence: prod has ~1,100 recent user-brain Fathom memories and ~21 campaign-brain ones; the new route only covers new webhooks.
+- Needed: (1) one-off backfill that walks recent `fathom_meeting_import` jobs with a Space route and enqueues `campaign_fathom_import`; (2) skip creating a cross-pollination suggestion for a campaign the route already imported into.
+- Why not now: backfill is a data job that should run with monitoring; suggestion suppression is a nicety, not a correctness issue (dedupe key prevents double import).
+
+## 2026-08-18 — Brain graph: paginate beyond the 2,000-node window
+- Feature/app: `apps/api` brain graph, `apps/web` brain visualization
+- Files: `apps/api/src/modules/brain/services/graph-node-window.ts`, `apps/web/src/features/brain/store/use-brain-store.ts`
+- Evidence: largest prod brain has 3.1k memories; full payload was 5.4 MB (over serverless cap). Fixed by clamping to 2,000 nodes + slim projection (2.99 MB).
+- Needed: cursor pagination (or server-side clustering) if anyone needs more than 2,000 memory nodes rendered at once. Also consider a `?fields=` projection so the graph never ships full memory records.
+- Why not now: the cap unblocks the 500 and is bounded; nobody can read 3k nodes on the canvas; pagination touches the store's SWR snapshot logic and deserves its own change.

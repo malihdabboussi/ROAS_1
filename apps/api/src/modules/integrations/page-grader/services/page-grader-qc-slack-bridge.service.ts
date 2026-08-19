@@ -7,11 +7,12 @@ import { SlackOpenItemsService } from '../../../spaces/services/slack-open-items
 import { PageGraderQcNotificationWebhookSchema } from '../dto/page-grader.dto'
 import { PageGraderApiService } from './page-grader-api.service'
 import { PageGraderBrainSyncService } from './page-grader-brain-sync.service'
+import { resolveQcConnectionOrg } from './page-grader-qc-connection-org'
 import {
-  QC_CASE_TYPES,
-  QC_SLACK_ANCHOR_LOOKBACK_MS,
   decideQcSlackDelivery,
   fingerprintFindings,
+  QC_CASE_TYPES,
+  QC_SLACK_ANCHOR_LOOKBACK_MS,
   qcSlackAnchorFromCase,
   uniqueFindingSummaries,
 } from './page-grader-qc-follow-up'
@@ -55,8 +56,9 @@ export class PageGraderQcSlackBridgeService {
     const connections = await this.sync.authorizeWebhookSecret(signature)
     const errors: string[] = []
 
-    for (const connection of connections) {
+    for (const rawConnection of connections) {
       try {
+        const connection = await this.withResolvedOrg(rawConnection, payload)
         const findings = await this.recordCases(connection, payload)
         const delivered = await this.deliverSlack(connection, payload, findings)
         return {
@@ -234,8 +236,7 @@ export class PageGraderQcSlackBridgeService {
         channelId: anchor.slack_channel,
         parentTs: anchor.slack_parent_ts,
         fingerprint,
-        followedUpAt:
-          anchor.slack_last_follow_up_at ?? anchor.first_seen_at ?? now.toISOString(),
+        followedUpAt: anchor.slack_last_follow_up_at ?? anchor.first_seen_at ?? now.toISOString(),
       })
       return { channel: anchor.slack_channel, ts: anchor.slack_parent_ts }
     }
@@ -304,6 +305,32 @@ export class PageGraderQcSlackBridgeService {
       sourceKeys,
       ...input,
     })
+  }
+
+  /** Personal Page Grader rows carry no org; derive it so the case ledger + dedup anchor work. */
+  private async withResolvedOrg(
+    connection: { userId: string; orgId: string | null },
+    payload: ReturnType<typeof PageGraderQcNotificationWebhookSchema.parse>,
+  ): Promise<{ userId: string; orgId: string | null }> {
+    if (connection.orgId) return connection
+    const scopeMap = await this.pageGraderApi.getClientScopeMap(connection.userId).catch(() => ({}))
+    const campaignIds = (payload.findings ?? []).map(
+      (finding) =>
+        finding.roas_campaign_id ??
+        (finding.client_id ? scopeMap[finding.client_id]?.campaign_id : null) ??
+        null,
+    )
+    const resolved = await resolveQcConnectionOrg(this.svc.client, connection, { campaignIds })
+    if (!resolved.orgId) {
+      this.logger.warn(
+        `Page Grader QC connection for user ${connection.userId} has no org; cases and dedup are disabled`,
+      )
+      return connection
+    }
+    this.logger.log(
+      `Page Grader QC connection for user ${connection.userId} resolved org ${resolved.orgId} via ${resolved.via}`,
+    )
+    return { userId: connection.userId, orgId: resolved.orgId }
   }
 
   private async recordCases(
