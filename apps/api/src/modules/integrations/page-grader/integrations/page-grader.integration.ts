@@ -354,6 +354,49 @@ export class PageGraderIntegration {
     )
   }
 
+  async createDelegationPreview(
+    baseUrl: string,
+    apiKey: string,
+    payload: Record<string, unknown>,
+  ): Promise<{
+    delegation_id: string
+    confirm_url: string
+    tasks: unknown[]
+    campaign_id: string | null
+  }> {
+    const url = `${this.normalizeBaseUrl(baseUrl)}/delegations`
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: this.authHeaders(apiKey),
+      body: JSON.stringify(payload),
+    })
+    const text = await res.text().catch(() => '')
+    let body: Record<string, unknown> = {}
+    try {
+      body = text ? (JSON.parse(text) as Record<string, unknown>) : {}
+    } catch {
+      body = { error: text }
+    }
+    if (!res.ok) {
+      const errMsg =
+        typeof body.error === 'string' ? body.error : text || res.statusText || 'Request failed'
+      throw new BadRequestException(
+        `The ROAS Portal could not parse the fulfillment batch (${res.status}): ${errMsg}`,
+      )
+    }
+    const delegationId = typeof body.delegation_id === 'string' ? body.delegation_id : ''
+    const confirmUrl = typeof body.confirm_url === 'string' ? body.confirm_url : ''
+    if (!delegationId || !confirmUrl) {
+      throw new BadRequestException('The ROAS Portal did not return a confirm URL')
+    }
+    return {
+      delegation_id: delegationId,
+      confirm_url: confirmUrl,
+      tasks: Array.isArray(body.tasks) ? body.tasks : [],
+      campaign_id: typeof body.campaign_id === 'string' ? body.campaign_id : null,
+    }
+  }
+
   async createWork(
     baseUrl: string,
     apiKey: string,

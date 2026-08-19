@@ -75,6 +75,10 @@ describe('platform tools template', () => {
       'Do **not** replace Service Request intake with `create_task`, `list_team`, `list_campaign_team`',
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('the `review_url` as a real openable https link')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('page_grader_create_delegation_preview')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'Do not loop `page_grader_create_fulfillment_request`',
+    )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'A client "portal campaign" / "create a campaign" / "build the campaign" request',
     )
