@@ -5,9 +5,6 @@ import { useMeetingsCalendarMaterialize } from '@/features/home/hooks/use-meetin
 import { rankPersonalMeetingsSpace } from '@/features/home/lib/resolve-meetings-space-id'
 import { SpaceItemsContainer, useSpacesStore } from '@/features/spaces'
 
-/** Agenda sits right after All Meetings by default; users can still unpin it from the tab menu. */
-const MEETINGS_DEFAULT_PINNED_VIEW_IDS = ['agenda'] as const
-
 function findMeetingsSpaceId(spaces: ReturnType<typeof useSpacesStore.getState>['spaces']) {
   let selectedId: string | null = null
   let selectedRank = -1
@@ -62,7 +59,6 @@ export function MeetingsUnifiedSurface({ agenda }: { agenda: ReactNode }) {
         embed={{
           hideBreadcrumbHeader: true,
           leadingViewId: 'all-meetings',
-          defaultPinnedViewIds: MEETINGS_DEFAULT_PINNED_VIEW_IDS,
           overrideView: { id: 'agenda', content: agenda },
           defaultPinnedViewIds: ['agenda'],
         }}

@@ -128,7 +128,6 @@ export function SpaceQuickFilterDock({ ctx }: { ctx: SpaceToolbarContext }) {
                       type="button"
                       aria-label="Search"
                       onClick={() => setSpaceToolbarSearchOpen(true)}
-                      aria-label="Search"
                       className="rounded-md p-1.5 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
                     >
                       <Search className="h-3.5 w-3.5" />
@@ -210,7 +209,6 @@ export function SpaceQuickFilterDock({ ctx }: { ctx: SpaceToolbarContext }) {
                   type="button"
                   aria-label="Clear assignee filter"
                   onClick={clearToolbarAssigneeFilter}
-                  aria-label="Clear assignee filter"
                   title="Clear assignee filter"
                   className="badge-glass badge-glass-blue rounded-spacing-2 group inline-flex shrink-0 cursor-pointer items-center border-0 px-2 py-1 shadow-none transition-opacity hover:opacity-90"
                 >
@@ -255,7 +253,6 @@ export function SpaceQuickFilterDock({ ctx }: { ctx: SpaceToolbarContext }) {
                       type="button"
                       aria-label="Filter by assignee"
                       onClick={() => setAssigneeFilterOpen(true)}
-                      aria-label="Filter by assignee"
                       className="rounded-md p-1.5 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
                     >
                       <Users className="h-3.5 w-3.5" />

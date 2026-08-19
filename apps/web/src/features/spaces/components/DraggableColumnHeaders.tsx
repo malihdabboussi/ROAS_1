@@ -495,7 +495,6 @@ export function DraggableColumnHeaders({
             type="button"
             aria-label="Add column"
             onClick={(e) => onAddField(e)}
-            aria-label="Add column"
             className={cn(
               'relative z-0 flex h-full w-full items-center justify-center rounded-md text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]',
               isTable &&
