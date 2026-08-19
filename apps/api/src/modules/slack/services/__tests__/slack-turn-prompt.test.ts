@@ -38,7 +38,7 @@ describe('buildInboundSlackTurnPrompt — N0 stamp leads the prompt', () => {
     })
     expect(p.askKind.kind).toBe('general')
     expect(p.fullMessage).toContain('[Slack channel identity]')
-    expect(p.fullMessage).toContain('the current ask is about the operator\'s own world')
+    expect(p.fullMessage).toContain("the current ask is about the operator's own world")
     expect(p.fullMessage).not.toContain('Use this client for Service Requests')
     // Telemetry still records where the turn happened.
     expect(p.clientSource).toBe('stamp')
@@ -76,7 +76,9 @@ describe('buildInboundSlackTurnPrompt — N0 stamp leads the prompt', () => {
     expect(p.askKind.kind).toBe('client')
     expect(p.askKind.signals).toContain('quoted client channel')
     expect(p.clientSource).toBe('quote')
-    expect(p.fullMessage.indexOf('[Ask kind]')).toBeLessThan(p.fullMessage.indexOf('[Forwarded Slack message]'))
+    expect(p.fullMessage.indexOf('[Ask kind]')).toBeLessThan(
+      p.fullMessage.indexOf('[Forwarded Slack message]'),
+    )
   })
 
   it('R55 "approve" on a Pixel thread: continuation, thread context wraps the current message', () => {
@@ -99,7 +101,9 @@ describe('buildInboundSlackTurnPrompt — N0 stamp leads the prompt', () => {
       isDirectMessage: false,
     })
     expect(p.clientSource).toBe('hint')
-    expect(p.fullMessage).toContain('Resolve the Portal client with list_clients using "yasir khan coaching"')
+    expect(p.fullMessage).toContain(
+      'Resolve the Portal client with list_clients using "yasir khan coaching"',
+    )
   })
 
   it('file-only turn still gets a kind and the file marker', () => {
@@ -119,7 +123,9 @@ describe('buildInboundSlackTurnPrompt — N0 stamp leads the prompt', () => {
     expect(p.askKind.kind).toBe('client')
     expect(p.clientSource).toBe('named')
     expect(p.clientId).toBe('b17dcee8')
-    expect(p.fullMessage.indexOf('[Ask kind]')).toBeLessThan(p.fullMessage.indexOf('[Client context]'))
+    expect(p.fullMessage.indexOf('[Ask kind]')).toBeLessThan(
+      p.fullMessage.indexOf('[Client context]'),
+    )
     expect(p.fullMessage.indexOf('[Client context]')).toBeLessThan(
       p.fullMessage.indexOf("What was stats for Yasir's last webinar on Aug 6?"),
     )

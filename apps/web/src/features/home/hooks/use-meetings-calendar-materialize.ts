@@ -39,8 +39,12 @@ export function useMeetingsCalendarMaterialize(
     )
       .then(async (agenda) => {
         if (cancelled) return
+        // Fathom/manual rows already exist as items; all-day entries (birthdays, OOO,
+        // holidays) are not calls and should not become All Meetings rows.
         const events = (agenda.events ?? [])
-          .filter((event) => event.source !== 'fathom' && event.source !== 'manual')
+          .filter(
+            (event) => event.source !== 'fathom' && event.source !== 'manual' && !event.all_day,
+          )
           .slice(0, MAX_EVENTS)
         if (events.length === 0) return
         await materializeScheduledMeetings(spaceId, events)

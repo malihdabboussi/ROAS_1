@@ -21,6 +21,7 @@ export const HOME_TOAST_ERRORS = {
   MEETING_RECORDING_LINK_FAILED: { userMessage: 'Could not link that recording.' },
   MEETING_NOTE_CREATE_FAILED: { userMessage: 'Could not save that note.' },
   MEETING_RENAME_FAILED: { userMessage: 'Could not rename this meeting.' },
+  MEETING_STATUS_UPDATE_FAILED: { userMessage: "Couldn't update that status — try again." },
   MEETINGS_SPACE_REQUIRED: {
     userMessage: 'Open or create your Meetings space first.',
   },

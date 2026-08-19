@@ -911,7 +911,7 @@ export function MainDashboardOverview({
           </div>
           <div>
             <p
-              className={`text-3xl font-bold tabular-nums leading-tight sm:text-4xl ${blockedMissionsCount > 0 ? 'text-red-400' : 'text-foreground'}`}
+              className={`text-3xl font-bold tabular-nums leading-tight sm:text-4xl ${blockedMissionsCount > 0 ? 'text-destructive' : 'text-foreground'}`}
             >
               <span className="inline-block whitespace-nowrap">
                 <AnimatedValue value={blockedMissionsCount} format={formatCount} />
@@ -1100,7 +1100,7 @@ export function MainDashboardOverview({
             {topProducts.map((p) => (
               <div
                 key={p.name}
-                className="group/item flex items-center justify-between gap-4 rounded-xl bg-surface-subtle p-3 transition-colors hover:bg-white/[0.05]"
+                className="group/item bg-surface-subtle flex items-center justify-between gap-4 rounded-xl p-3 transition-colors hover:bg-white/[0.05]"
               >
                 <span className="text-foreground body-3 min-w-0 truncate font-semibold tracking-tight">
                   {p.name}
@@ -1203,7 +1203,7 @@ export function MainDashboardOverview({
             {topFunnels.map((f) => (
               <div
                 key={f.funnel_id}
-                className="group/item flex items-center justify-between gap-4 rounded-xl bg-surface-subtle p-4 transition-colors hover:bg-white/[0.05]"
+                className="group/item bg-surface-subtle flex items-center justify-between gap-4 rounded-xl p-4 transition-colors hover:bg-white/[0.05]"
               >
                 <div className="flex min-w-0 flex-col gap-1">
                   <div className="text-foreground body-2 truncate font-bold tracking-tight">
@@ -1349,7 +1349,7 @@ export function MainDashboardOverview({
               tone="b"
             />
           </div>
-          <div className="mt-8 grid grid-cols-2 gap-4 rounded-xl bg-surface-subtle p-4 sm:grid-cols-4">
+          <div className="bg-surface-subtle mt-8 grid grid-cols-2 gap-4 rounded-xl p-4 sm:grid-cols-4">
             {[
               { label: 'Funnel', val: contribution.funnel_leads },
               { label: 'Ads', val: contribution.ad_leads },

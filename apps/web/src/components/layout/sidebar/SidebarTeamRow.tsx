@@ -151,7 +151,7 @@ export function SidebarTeamRow({
         >
           <LucideIcon name={team.icon || 'users'} className={`h-3 w-3 ${palette.textColor}`} />
         </span>
-        <span className="min-w-0 flex-1 truncate">{team.name}</span>
+        <span className="min-w-0 flex-1 truncate" title={team.name}>{team.name}</span>
       </Link>
       <div className="absolute right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center">
         <button

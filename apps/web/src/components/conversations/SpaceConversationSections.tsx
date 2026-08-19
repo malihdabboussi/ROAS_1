@@ -1,6 +1,6 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { Conversation, ConversationListGroup } from '@/lib/conversations'
 import { cn } from '@/lib/utils/cn'
@@ -21,7 +21,11 @@ export function PinnedConversationSection({
       <ConversationHubSectionHeader label={group.label} expanded={expanded} onToggle={onToggle} />
       {expanded ? (
         <div className="gap-spacing-1 flex flex-col">
-          {group.items.map((conversation) => renderConversationRow(conversation, group.id))}
+          {group.items.map((conversation) => (
+            <Fragment key={conversation.id}>
+              {renderConversationRow(conversation, group.id)}
+            </Fragment>
+          ))}
         </div>
       ) : null}
     </div>
@@ -108,7 +112,11 @@ export function SpaceConversationSections({
             ) : null}
             {!collapsed ? (
               <div className={cn('flex flex-col', !dividedRows && 'gap-spacing-1')}>
-                {visibleItems.map((conversation) => renderConversationRow(conversation, group.id))}
+                {visibleItems.map((conversation) => (
+                  <Fragment key={conversation.id}>
+                    {renderConversationRow(conversation, group.id)}
+                  </Fragment>
+                ))}
                 {hiddenRemaining > 0 ? (
                   <button
                     type="button"

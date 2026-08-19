@@ -91,7 +91,11 @@ export function OfferMenuDropdown({
 
   useLayoutEffect(() => {
     const anchor =
-      openSubmenu === 'move' ? moveButtonRef.current : openSubmenu === 'copy' ? copyButtonRef.current : null
+      openSubmenu === 'move'
+        ? moveButtonRef.current
+        : openSubmenu === 'copy'
+          ? copyButtonRef.current
+          : null
     if (!anchor) return
     const rect = anchor.getBoundingClientRect()
     const vw = window.innerWidth
@@ -147,124 +151,136 @@ export function OfferMenuDropdown({
     <>
       {!deleteModalOpen ? (
         <>
-      <div
-        data-offer-menu
-        ref={dropdownRef}
-        className="z-dropdown rounded-spacing-2 border-border surface-card p-spacing-2 fixed min-w-56 border shadow-lg"
-        style={{ top: pos.top, left: pos.left, transform: 'translateX(-100%)' }}
-      >
-        <div className="border-border mb-spacing-2 overflow-hidden rounded-md border">
-          <div className="divide-border flex w-full divide-x">
-            {actions.shareUrl ? (
-              <button type="button" onClick={wrap(actions.copyLink)} className={quickCellCls}>
-                Copy link
-              </button>
-            ) : null}
-            <button type="button" onClick={wrap(() => actions.copyId())} className={quickCellCls}>
-              Copy ID
-            </button>
-            {actions.shareUrl ? (
-              <button type="button" onClick={wrap(() => actions.openInNewTab())} className={quickCellCls}>
-                New tab
-              </button>
-            ) : null}
-          </div>
-        </div>
+          <div
+            data-offer-menu
+            ref={dropdownRef}
+            className="z-dropdown rounded-spacing-2 border-border surface-card p-spacing-2 fixed min-w-56 border shadow-lg"
+            style={{ top: pos.top, left: pos.left, transform: 'translateX(-100%)' }}
+          >
+            <div className="border-border mb-spacing-2 overflow-hidden rounded-md border">
+              <div className="divide-border flex w-full divide-x">
+                {actions.shareUrl ? (
+                  <button type="button" onClick={wrap(actions.copyLink)} className={quickCellCls}>
+                    Copy link
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={wrap(() => actions.copyId())}
+                  className={quickCellCls}
+                >
+                  Copy ID
+                </button>
+                {actions.shareUrl ? (
+                  <button
+                    type="button"
+                    onClick={wrap(() => actions.openInNewTab())}
+                    className={quickCellCls}
+                  >
+                    New tab
+                  </button>
+                ) : null}
+              </div>
+            </div>
 
-        <div className="flex flex-col gap-spacing-1 px-spacing-1">
-          {onOpenFullView ? (
-            <>
-              <button type="button" onClick={wrap(() => onOpenFullView())} className={itemCls}>
-                <Fullscreen className={itemIcon} />
-                <span>Full screen view</span>
+            <div className="gap-spacing-1 px-spacing-1 flex flex-col">
+              {onOpenFullView ? (
+                <>
+                  <button type="button" onClick={wrap(() => onOpenFullView())} className={itemCls}>
+                    <Fullscreen className={itemIcon} />
+                    <span>Full screen view</span>
+                  </button>
+                  <div className="border-border border-t" />
+                </>
+              ) : null}
+
+              <button type="button" onClick={wrap(actions.rename)} className={itemCls}>
+                <Edit2 className={itemIcon} />
+                <span>Rename</span>
               </button>
+
               <div className="border-border border-t" />
-            </>
-          ) : null}
 
-          <button type="button" onClick={wrap(actions.rename)} className={itemCls}>
-            <Edit2 className={itemIcon} />
-            <span>Rename</span>
-          </button>
+              <button
+                type="button"
+                onClick={wrap(actions.duplicateInCurrentCampaign)}
+                className={itemCls}
+                disabled={!offer.campaign_id}
+              >
+                <Copy className={itemIcon} />
+                <span>Duplicate</span>
+              </button>
+              <button
+                ref={copyButtonRef}
+                type="button"
+                onMouseEnter={() => {
+                  cancelClose()
+                  if (!actions.campaignsLoading && actions.campaigns.length > 1)
+                    setOpenSubmenu('copy')
+                }}
+                onMouseLeave={scheduleClose}
+                onFocus={() => {
+                  cancelClose()
+                  if (!actions.campaignsLoading && actions.campaigns.length > 1)
+                    setOpenSubmenu('copy')
+                }}
+                onClick={() => setOpenSubmenu((s) => (s === 'copy' ? null : 'copy'))}
+                className={itemCls}
+                disabled={actions.campaignsLoading || actions.campaigns.length <= 1}
+                aria-haspopup="menu"
+                aria-expanded={openSubmenu === 'copy'}
+              >
+                <Copy className={itemIcon} />
+                <span className="flex-1">Copy to</span>
+                <ChevronRight className="h-3 w-3 shrink-0" />
+              </button>
+              <button
+                ref={moveButtonRef}
+                type="button"
+                onMouseEnter={() => {
+                  cancelClose()
+                  if (!actions.campaignsLoading && actions.campaigns.length > 1)
+                    setOpenSubmenu('move')
+                }}
+                onMouseLeave={scheduleClose}
+                onFocus={() => {
+                  cancelClose()
+                  if (!actions.campaignsLoading && actions.campaigns.length > 1)
+                    setOpenSubmenu('move')
+                }}
+                onClick={() => setOpenSubmenu((s) => (s === 'move' ? null : 'move'))}
+                className={itemCls}
+                disabled={actions.campaignsLoading || actions.campaigns.length <= 1}
+                aria-haspopup="menu"
+                aria-expanded={openSubmenu === 'move'}
+              >
+                <FolderInput className={itemIcon} />
+                <span className="flex-1">Move to</span>
+                <ChevronRight className="h-3 w-3 shrink-0" />
+              </button>
 
-          <div className="border-border border-t" />
+              <div className="border-border border-t" />
 
-          <button
-            type="button"
-            onClick={wrap(actions.duplicateInCurrentCampaign)}
-            className={itemCls}
-            disabled={!offer.campaign_id}
-          >
-            <Copy className={itemIcon} />
-            <span>Duplicate</span>
-          </button>
-          <button
-            ref={copyButtonRef}
-            type="button"
-            onMouseEnter={() => {
-              cancelClose()
-              if (!actions.campaignsLoading && actions.campaigns.length > 1) setOpenSubmenu('copy')
-            }}
-            onMouseLeave={scheduleClose}
-            onFocus={() => {
-              cancelClose()
-              if (!actions.campaignsLoading && actions.campaigns.length > 1) setOpenSubmenu('copy')
-            }}
-            onClick={() => setOpenSubmenu((s) => (s === 'copy' ? null : 'copy'))}
-            className={itemCls}
-            disabled={actions.campaignsLoading || actions.campaigns.length <= 1}
-            aria-haspopup="menu"
-            aria-expanded={openSubmenu === 'copy'}
-          >
-            <Copy className={itemIcon} />
-            <span className="flex-1">Copy to</span>
-            <ChevronRight className="h-3 w-3 shrink-0" />
-          </button>
-          <button
-            ref={moveButtonRef}
-            type="button"
-            onMouseEnter={() => {
-              cancelClose()
-              if (!actions.campaignsLoading && actions.campaigns.length > 1) setOpenSubmenu('move')
-            }}
-            onMouseLeave={scheduleClose}
-            onFocus={() => {
-              cancelClose()
-              if (!actions.campaignsLoading && actions.campaigns.length > 1) setOpenSubmenu('move')
-            }}
-            onClick={() => setOpenSubmenu((s) => (s === 'move' ? null : 'move'))}
-            className={itemCls}
-            disabled={actions.campaignsLoading || actions.campaigns.length <= 1}
-            aria-haspopup="menu"
-            aria-expanded={openSubmenu === 'move'}
-          >
-            <FolderInput className={itemIcon} />
-            <span className="flex-1">Move to</span>
-            <ChevronRight className="h-3 w-3 shrink-0" />
-          </button>
-
-          <div className="border-border border-t" />
-
-          <button
-            type="button"
-            onClick={() => {
-              setOpenSubmenu(null)
-              setDeleteModalOpen(true)
-            }}
-            className="gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full items-center text-left text-red-600 transition-colors hover:bg-red-500/10 [&_svg]:text-red-600"
-          >
-            <Trash2 className={itemIcon} />
-            <span>Delete</span>
-          </button>
-        </div>
-      </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenSubmenu(null)
+                  setDeleteModalOpen(true)
+                }}
+                className="gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 text-destructive [&_svg]:text-destructive flex w-full items-center text-left transition-colors hover:bg-red-500/10"
+              >
+                <Trash2 className={itemIcon} />
+                <span>Delete</span>
+              </button>
+            </div>
+          </div>
 
           {openSubmenu ? (
             <div
               data-offer-menu
               onMouseEnter={cancelClose}
               onMouseLeave={scheduleClose}
-              className="z-dropdown rounded-spacing-2 border-border surface-card py-spacing-2 px-spacing-3 flex flex-col gap-spacing-1 fixed overflow-y-auto border shadow-lg"
+              className="z-dropdown rounded-spacing-2 border-border surface-card py-spacing-2 px-spacing-3 gap-spacing-1 fixed flex flex-col overflow-y-auto border shadow-lg"
               style={{
                 top: subPos.top,
                 left: subPos.left,
@@ -290,7 +306,9 @@ export function OfferMenuDropdown({
                 </>
               ) : null}
               {otherCampaigns.length === 0 ? (
-                <p className="px-spacing-2 py-spacing-1 body-3 text-muted-foreground/70">No other campaigns</p>
+                <p className="px-spacing-2 py-spacing-1 body-3 text-muted-foreground/70">
+                  No other campaigns
+                </p>
               ) : (
                 otherCampaigns.map((c) => (
                   <button

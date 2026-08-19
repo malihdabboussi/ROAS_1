@@ -12,6 +12,7 @@ import {
 } from '../../components/DraggableColumnHeaders'
 import type { ListColumnHeaderMenuConfig } from '../../components/list-column-header-menu'
 import { displayColumnsForList } from '../../lib/display-columns-list'
+import { buildListGridTemplate } from '../../lib/list-grid-template'
 import { sortSpaceItemsCopy } from '../../lib/sort-space-list-items'
 import type { SpaceItem } from '../../types'
 import type {
@@ -159,7 +160,11 @@ export function SpaceCalendarDayTaskList({
   }, [displayCols, localWidths])
 
   const gridTemplateColumns = useMemo(
-    () => displayCols.map((f) => `${columnWidths[f.id]}px`).join(' ') + ' minmax(2rem, 1fr)',
+    () =>
+      buildListGridTemplate(
+        displayCols.map((f) => f.id),
+        (id) => columnWidths[id] ?? getDefaultWidth(id),
+      ),
     [displayCols, columnWidths],
   )
 

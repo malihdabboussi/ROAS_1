@@ -143,6 +143,7 @@ export function DriveFileBrowserRowActions({
               e.stopPropagation()
               setMoreMenuFileId(isMenuOpen ? null : file.id)
             }}
+            aria-label="File actions"
             className="tooltip rounded-spacing-1 text-muted-foreground hover:bg-hover-subtle hover:text-foreground flex h-7 w-7 items-center justify-center transition-colors"
             data-tooltip="More"
           >

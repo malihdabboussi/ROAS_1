@@ -19,11 +19,11 @@ import {
 import { Tooltip } from '@/components/ui/tooltip'
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import { cn } from '@/lib/utils/cn'
-import { assigneeFieldValueForGroupKey, groupItems } from '../lib/group-items'
 import {
   resolveSpaceEntryType,
   viewPromotesFollowUpSubtasks,
 } from '../lib/apply-space-toolbar-filters'
+import { assigneeFieldValueForGroupKey, groupItems } from '../lib/group-items'
 import {
   kanbanBoardColumnTintSource,
   spaceGroupBadgeChipProps,
@@ -64,7 +64,7 @@ const COLUMN_BG: Record<string, string> = {
 }
 
 const FLAG_COLOR: Record<string, string> = {
-  red: 'text-red-600 dark:text-red-400',
+  red: 'text-destructive dark:text-destructive',
   orange: 'text-orange-600 dark:text-orange-400',
   blue: 'text-blue-600 dark:text-blue-400',
   slate: 'text-slate-600 dark:text-slate-400',
@@ -438,9 +438,7 @@ export function KanbanView({
 
   const topLevelItems = useMemo(() => {
     if (viewPromotesFollowUpSubtasks(view)) {
-      return items.filter(
-        (i) => !i.parent_item_id || resolveSpaceEntryType(i) === 'follow_up',
-      )
+      return items.filter((i) => !i.parent_item_id || resolveSpaceEntryType(i) === 'follow_up')
     }
     return items.filter((i) => !i.parent_item_id)
   }, [items, view])

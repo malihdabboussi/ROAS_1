@@ -51,7 +51,7 @@ export function useListColumnHeaderMenuAnchor() {
 const ITEM_CLS =
   'gap-spacing-2 body-3 rounded-spacing-2 text-muted-foreground hover:bg-[var(--color-hover-subtle)] hover:text-foreground px-spacing-2 py-spacing-1 flex w-full items-center text-left transition-colors disabled:opacity-50 disabled:hover:bg-transparent'
 const DANGER_ITEM_CLS =
-  'gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full items-center text-left text-red-600 transition-colors hover:bg-red-500/10 [&_svg]:text-red-600'
+  'gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full items-center text-left text-destructive transition-colors hover:bg-red-500/10 [&_svg]:text-destructive'
 const ITEM_ICON_CLS = 'h-3.5 w-3.5 shrink-0'
 const DATE_FORMAT_OPTIONS: Array<{ value: DateDisplayFormat; label: string }> = [
   { value: 'relative', label: 'Relative (6d)' },
@@ -143,7 +143,7 @@ export function ListColumnHeaderMenuPortal({
         }}
       >
         {icon}
-        <span className="flex-1 truncate">{label}</span>
+        <span className="flex-1 truncate" title={label}>{label}</span>
         {opts?.checked ? <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" /> : null}
       </button>
     )

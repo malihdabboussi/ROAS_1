@@ -103,7 +103,7 @@ export function SidebarHiddenFromSidebarDropdown({
                   }}
                 >
                   <LucideIcon name={c.icon} className={`h-3.5 w-3.5 shrink-0 ${iconColor}`} />
-                  <span className="min-w-0 flex-1 truncate">{c.name}</span>
+                  <span className="min-w-0 flex-1 truncate" title={c.name}>{c.name}</span>
                 </button>
               )
             })}
@@ -129,7 +129,7 @@ export function SidebarHiddenFromSidebarDropdown({
                   }}
                 >
                   <LucideIcon name={iconName} className={`h-3.5 w-3.5 shrink-0 ${iconColor}`} />
-                  <span className="min-w-0 flex-1 truncate">{s.title ?? 'Untitled'}</span>
+                  <span className="min-w-0 flex-1 truncate" title={s.title ?? 'Untitled'}>{s.title ?? 'Untitled'}</span>
                 </button>
               )
             })}

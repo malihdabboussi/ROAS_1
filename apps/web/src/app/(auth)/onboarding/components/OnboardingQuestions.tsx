@@ -325,7 +325,7 @@ export function OnboardingQuestions({ onComplete, onError }: OnboardingQuestions
             className="input-glass body-2 px-spacing-3 py-spacing-3 w-full"
             placeholder="yourcompany.com"
           />
-          {websiteError && <p className="body-4 mt-spacing-1 text-red-400">{websiteError}</p>}
+          {websiteError && <p className="body-4 mt-spacing-1 text-destructive">{websiteError}</p>}
         </label>
 
         <button

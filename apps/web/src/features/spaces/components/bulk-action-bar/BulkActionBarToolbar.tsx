@@ -166,6 +166,8 @@ export function BulkActionBarToolbar({
           <button
             type="button"
             onClick={onClearSelection}
+            aria-label="Clear selection"
+            title="Clear selection"
             className="ml-0.5 rounded p-0.5 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)]"
           >
             <X className="h-3 w-3" />

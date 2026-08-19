@@ -150,7 +150,7 @@ function InboxRow({
             className="border-border h-2.5 w-2.5 shrink-0 self-center rounded-full border-2"
             aria-hidden
           />
-          <span className="text-foreground min-w-0 max-w-[38%] flex-[1.1] basis-0 truncate font-medium sm:max-w-none sm:flex-[1.2] sm:basis-0">
+          <span className="text-foreground min-w-0 max-w-[38%] flex-[1.1] basis-0 truncate font-medium sm:max-w-none sm:flex-[1.2] sm:basis-0" title={item.title}>
             {item.title}
           </span>
           <span className="body-3 flex min-w-0 max-w-[34%] flex-1 basis-0 items-center justify-end gap-1.5 pl-0.5 sm:max-w-none sm:justify-start sm:pl-1 md:pl-2">

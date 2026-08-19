@@ -111,7 +111,7 @@ export function TelegramSetupDialog({
   }, [agentKey, botInfo, onConnected])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-modal-overlay px-4">
+    <div className="bg-modal-overlay fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="surface-card border-subtle rounded-spacing-3 p-spacing-5 relative w-full max-w-md border">
         <button
           type="button"
@@ -132,7 +132,7 @@ export function TelegramSetupDialog({
               <span className="text-foreground font-medium">{agentName}</span> so they can chat with
               people on Telegram.
             </p>
-            <div className="rounded-spacing-2 p-spacing-3 space-y-spacing-2 border border-border bg-surface-subtle">
+            <div className="rounded-spacing-2 p-spacing-3 space-y-spacing-2 border-border bg-surface-subtle border">
               <p className="body-4 text-muted-foreground/70 uppercase tracking-wide">Setup Steps</p>
               <ol className="body-3 text-muted-foreground space-y-spacing-1 list-inside list-decimal">
                 <li>
@@ -173,7 +173,7 @@ export function TelegramSetupDialog({
                 }}
               />
             </div>
-            {error && <p className="body-4 text-red-400">{error}</p>}
+            {error && <p className="body-4 text-destructive">{error}</p>}
             <div className="gap-spacing-2 flex">
               <button
                 type="button"
@@ -209,7 +209,7 @@ export function TelegramSetupDialog({
               Connect this bot to <span className="text-foreground font-medium">{agentName}</span>?
               Messages sent to the bot will be handled by this agent.
             </p>
-            {error && <p className="body-4 text-red-400">{error}</p>}
+            {error && <p className="body-4 text-destructive">{error}</p>}
             <div className="gap-spacing-2 flex">
               <button
                 type="button"
@@ -254,7 +254,7 @@ export function TelegramSetupDialog({
               This verifies you as the bot owner. Once you&apos;ve pressed Start, click Verify
               below.
             </p>
-            {error && <p className="body-4 text-red-400">{error}</p>}
+            {error && <p className="body-4 text-destructive">{error}</p>}
             <button
               type="button"
               onClick={() => void handleVerify()}
@@ -274,7 +274,7 @@ export function TelegramSetupDialog({
                 @{botInfo?.bot_username} is now linked to {agentName}
               </p>
             </div>
-            <div className="rounded-spacing-2 p-spacing-3 flex items-center justify-between border border-border bg-surface-subtle">
+            <div className="rounded-spacing-2 p-spacing-3 border-border bg-surface-subtle flex items-center justify-between border">
               <div>
                 <span className="body-3 text-foreground">Public Bot</span>
                 <p className="body-4 text-muted-foreground/60">

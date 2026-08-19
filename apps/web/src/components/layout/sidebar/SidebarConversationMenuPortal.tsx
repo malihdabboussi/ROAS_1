@@ -148,7 +148,7 @@ export function SidebarConversationMenuPortal({
                   }`}
                 >
                   <LucideIcon name={c.icon} className="h-4 w-4 shrink-0" />
-                  <span className="flex-1 truncate text-left">{c.name}</span>
+                  <span className="flex-1 truncate text-left" title={c.name}>{c.name}</span>
                   {conv.campaign_id === c.id && <Check className="text-primary ml-auto h-3 w-3" />}
                 </button>
               ))}

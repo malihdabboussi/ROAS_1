@@ -22,7 +22,7 @@ import type { AdCampaign, AdSet } from '@/lib/artifacts/artifact-types'
 const ROW_CLS =
   'flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-[var(--foreground)] hover:bg-[var(--color-hover-subtle)]'
 const DANGER_ROW_CLS =
-  'flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-red-400 hover:bg-[var(--color-hover-subtle)]'
+  'flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-destructive hover:bg-[var(--color-hover-subtle)]'
 const ROW_ICON_CLS = 'h-3.5 w-3.5 text-[var(--color-muted-foreground)]'
 const QUICK_CELL_CLS =
   'body-3 text-muted-foreground hover:bg-[var(--color-hover-subtle)] hover:text-foreground flex min-h-7 min-w-0 flex-1 items-center justify-center truncate px-2 text-center transition-colors'

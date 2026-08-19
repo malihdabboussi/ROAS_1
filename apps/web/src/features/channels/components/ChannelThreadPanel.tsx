@@ -246,6 +246,8 @@ export function ChannelThreadPanel({
               <button
                 type="button"
                 onClick={onClose}
+                aria-label="Close thread"
+                title="Close thread"
                 className="text-muted-foreground hover:text-foreground hover:bg-hover-subtle rounded p-1 transition-colors"
               >
                 <X className="h-4 w-4" />
@@ -305,6 +307,8 @@ export function ChannelThreadPanel({
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close thread"
+              title="Close thread"
               className="text-muted-foreground hover:text-foreground hover:bg-hover-subtle shrink-0 rounded p-1 transition-colors"
             >
               <X className="h-4 w-4" />

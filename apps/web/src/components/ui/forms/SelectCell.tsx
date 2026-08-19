@@ -5,8 +5,8 @@ import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Ban, Check, Flag, Pencil, Search } from 'lucide-react'
 import { OptionBadge, OptionDot } from '@/components/ui/status/OptionBadge'
-import { STATUS_CATEGORIES } from '@/lib/spaces/status-categories'
 import type { FieldDef } from '@/lib/spaces/space-schema-types'
+import { STATUS_CATEGORIES } from '@/lib/spaces/status-categories'
 import { cn } from '@/lib/utils/cn'
 
 function asString(value: unknown): string | null {
@@ -15,7 +15,7 @@ function asString(value: unknown): string | null {
 }
 
 const FLAG_COLOR: Record<string, string> = {
-  red: 'text-red-600 dark:text-red-400',
+  red: 'text-destructive dark:text-destructive',
   orange: 'text-orange-600 dark:text-orange-400',
   blue: 'text-blue-600 dark:text-blue-400',
   slate: 'text-slate-600 dark:text-slate-400',

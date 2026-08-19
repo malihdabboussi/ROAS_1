@@ -205,6 +205,8 @@ export function GroupSection({
                 if (groupByFieldId === 'status') onEditStatuses?.()
                 else onEditCategories?.()
               }}
+              aria-label="Group options"
+              title="Group options"
               className="ml-auto shrink-0 rounded p-1 text-[var(--color-muted-foreground)] opacity-0 transition-opacity hover:text-[var(--foreground)] group-hover/header:opacity-100"
             >
               <MoreHorizontal className="h-3.5 w-3.5" />
@@ -251,6 +253,8 @@ export function GroupSection({
                 if (groupByFieldId === 'status') onEditStatuses?.()
                 else onEditCategories?.()
               }}
+              aria-label="Group options"
+              title="Group options"
               className="ml-auto shrink-0 rounded p-1 text-[var(--color-muted-foreground)] opacity-0 transition-opacity hover:text-[var(--foreground)] group-hover/header:opacity-100"
             >
               <MoreHorizontal className="h-3.5 w-3.5" />

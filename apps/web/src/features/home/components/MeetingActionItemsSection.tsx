@@ -109,24 +109,27 @@ export function MeetingActionItemsSection({
   return (
     <section className="gap-spacing-3 flex w-full min-w-0 flex-col">
       <h2 className="body-3 text-foreground font-semibold">Action items ({actions.length})</h2>
-      <AllTasksNativeList
-        items={items}
-        reload={onReload}
-        onAddItem={submit}
-        persistItem={persistItem}
-        onOpenItem={(item) => {
-          window.dispatchEvent(
-            new CustomEvent('vibey-open-artifact', {
-              detail: {
-                artifactType: 'task',
-                artifactId: item.id,
-                spaceId: item.space_id,
-                name: item.title,
-              },
-            }),
-          )
-        }}
-      />
+      {/* The rollup list's columns can outgrow the dialog width — scroll instead of clipping. */}
+      <div className="min-w-0 overflow-x-auto">
+        <AllTasksNativeList
+          items={items}
+          reload={onReload}
+          onAddItem={submit}
+          persistItem={persistItem}
+          onOpenItem={(item) => {
+            window.dispatchEvent(
+              new CustomEvent('vibey-open-artifact', {
+                detail: {
+                  artifactType: 'task',
+                  artifactId: item.id,
+                  spaceId: item.space_id,
+                  name: item.title,
+                },
+              }),
+            )
+          }}
+        />
+      </div>
     </section>
   )
 }

@@ -94,6 +94,8 @@ export function MissionControlMobileToolbar({
       <button
         type="button"
         onClick={() => setActiveDropdown(activeDropdown === 'sort' ? null : 'sort')}
+        aria-label="Sort missions"
+        title="Sort missions"
         className="button-glass-blue h-spacing-8 px-spacing-2 flex shrink-0 items-center rounded-lg"
       >
         <ArrowUpDown className="icon-sm" />

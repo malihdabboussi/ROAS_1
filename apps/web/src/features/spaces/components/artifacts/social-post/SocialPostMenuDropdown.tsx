@@ -20,10 +20,7 @@ import {
   SOCIAL_POST_CAMPAIGN_SUBMENU_WIDTH,
   SocialPostCampaignSubmenu,
 } from './SocialPostCampaignSubmenu'
-import {
-  useSocialPostMenuActions,
-  type SocialPostMenuTarget,
-} from './use-social-post-menu-actions'
+import { useSocialPostMenuActions, type SocialPostMenuTarget } from './use-social-post-menu-actions'
 
 const HOVER_CLOSE_DELAY_MS = 140
 
@@ -185,7 +182,7 @@ export function SocialPostMenuDropdown({
               </div>
             </div>
 
-            <div className="flex flex-col gap-spacing-1 px-spacing-1">
+            <div className="gap-spacing-1 px-spacing-1 flex flex-col">
               {onOpenFullView ? (
                 <>
                   <button type="button" onClick={wrap(() => onOpenFullView())} className={itemCls}>
@@ -306,7 +303,7 @@ export function SocialPostMenuDropdown({
                   setOpenSubmenu(null)
                   setDeleteModalOpen(true)
                 }}
-                className="gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full items-center text-left text-red-600 transition-colors hover:bg-red-500/10 [&_svg]:text-red-600"
+                className="gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 text-destructive [&_svg]:text-destructive flex w-full items-center text-left transition-colors hover:bg-red-500/10"
               >
                 <Trash2 className={itemIcon} />
                 <span>Delete</span>

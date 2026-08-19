@@ -22,6 +22,7 @@ import {
 import Switch from '@/components/ui/forms/switch'
 import { fetchCampaigns, type Campaign } from '@/lib/campaigns/campaign-api'
 import { useOrgStore } from '@/lib/org/org-context-store'
+import { VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 import { cn } from '@/lib/utils/cn'
 import {
   spaceCustomizeDeleteModalTitle,
@@ -30,7 +31,6 @@ import {
 import { useSpacePermission } from '../hooks/use-space-permission'
 import { useSpacesStore } from '../store/use-spaces-store'
 import type { ViewDef } from '../types/space-schema'
-import { VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 
 export function CustomizeViewManagementSection({
   activeView,
@@ -213,8 +213,8 @@ export function CustomizeViewManagementSection({
             canDeleteView ? 'hover:opacity-80' : 'cursor-not-allowed opacity-40',
           )}
         >
-          <Trash2 className="h-3.5 w-3.5 text-red-400" />
-          <span className="body-3 font-semibold text-red-400">
+          <Trash2 className="text-destructive h-3.5 w-3.5" />
+          <span className="body-3 text-destructive font-semibold">
             {SPACES_CUSTOMIZE_VIEW_LABELS.DELETE_VIEW}
           </span>
         </div>
@@ -224,7 +224,7 @@ export function CustomizeViewManagementSection({
         createPortal(
           <div {...{ [VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD]: '' }}>
             <div
-              className="z-modal-backdrop fixed inset-0 bg-modal-overlay"
+              className="z-modal-backdrop bg-modal-overlay fixed inset-0"
               onClick={() => setDeleteOpen(false)}
             />
             <div className="z-modal-content fixed inset-0 flex items-center justify-center overflow-hidden p-2 sm:p-4 md:p-6">

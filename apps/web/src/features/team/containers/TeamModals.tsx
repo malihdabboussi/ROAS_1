@@ -2,7 +2,7 @@
 
 import type { FireEmployeeHandoffInput } from '@/features/mission-control/services/missions.service'
 import type { MissionAgent } from '@/features/mission-control/types'
-import type { Campaign } from '@/features/studio/types'
+import type { Campaign } from '@/lib/campaigns/campaign-api'
 import { FireEmployeeConfirmModal } from '../components/FireEmployeeConfirmModal'
 import { ReadyEmployeesModal } from '../components/ready-employees-modal'
 import { SlackSetupDialog } from '../components/SlackSetupDialog'
@@ -119,7 +119,7 @@ export function TeamModals({
       )}
 
       {showUpgradeModal && selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-modal-overlay px-4">
+        <div className="bg-modal-overlay fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="surface-card border-subtle rounded-spacing-3 p-spacing-5 w-full max-w-md border">
             <h3 className="text-foreground text-base font-semibold uppercase">ADD AGENT BRAIN</h3>
             <p className="body-3 text-muted-foreground mt-spacing-2">
@@ -127,7 +127,7 @@ export function TeamModals({
               {selected.name.split(' ')[0]} with your own data, docs, and context so they remember
               everything and perform like a real specialist on your team.
             </p>
-            {brainError && <p className="body-4 mt-spacing-2 text-red-400">{brainError}</p>}
+            {brainError && <p className="body-4 mt-spacing-2 text-destructive">{brainError}</p>}
             <div className="mt-spacing-4 gap-spacing-2 flex justify-end">
               <button
                 onClick={() => {

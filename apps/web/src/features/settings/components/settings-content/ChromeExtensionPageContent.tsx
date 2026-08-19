@@ -113,13 +113,13 @@ export default function ChromeExtensionPageContent() {
       <div className="min-w-0">
         <h1 className="typo-h2 uppercase">CHROME EXTENSION</h1>
         <p className="body-2 text-muted-foreground mt-spacing-2">
-          Manage the browser sessions captured by the ROAS Mini Chrome extension. Agents use
-          these sessions to browse the web as you.
+          Manage the browser sessions captured by the ROAS Mini Chrome extension. Agents use these
+          sessions to browse the web as you.
         </p>
       </div>
 
       <div className="surface-card rounded-spacing-3 p-spacing-4 sm:p-spacing-5">
-        <div className="flex flex-col gap-spacing-3 sm:flex-row sm:items-start">
+        <div className="gap-spacing-3 flex flex-col sm:flex-row sm:items-start">
           <Chrome className="icon-md shrink-0" />
           <div className="min-w-0 flex-1">
             <h2 className="body-1-medium">Install the extension</h2>
@@ -132,11 +132,11 @@ export default function ChromeExtensionPageContent() {
       </div>
 
       <div className="surface-card rounded-spacing-3 overflow-hidden">
-        <div className="px-spacing-4 py-spacing-3 flex flex-col gap-spacing-3 sm:flex-row sm:items-center sm:justify-between sm:px-spacing-5 sm:py-spacing-4">
+        <div className="px-spacing-4 py-spacing-3 gap-spacing-3 sm:px-spacing-5 sm:py-spacing-4 flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <h2 className="body-1-medium">Active sessions</h2>
           <button
             type="button"
-            className="button-glass-neutral inline-flex max-md:w-full max-md:justify-center rounded-spacing-2 px-spacing-3 py-spacing-2 body-3 font-medium"
+            className="button-glass-neutral rounded-spacing-2 px-spacing-3 py-spacing-2 body-3 inline-flex font-medium max-md:w-full max-md:justify-center"
             onClick={() => void load()}
             disabled={loading}
           >
@@ -151,14 +151,12 @@ export default function ChromeExtensionPageContent() {
           {loading && sessions == null && (
             <div className="p-spacing-4 body-3 text-muted-foreground sm:p-spacing-5">Loading…</div>
           )}
-          {err && (
-            <div className="p-spacing-4 body-3 text-red-500 sm:p-spacing-5">{err}</div>
-          )}
+          {err && <div className="p-spacing-4 body-3 text-destructive sm:p-spacing-5">{err}</div>}
           {!loading && sessions && sessions.length === 0 && (
             <div className="p-spacing-4 body-3 text-muted-foreground sm:p-spacing-5">
-              No sessions saved yet. Install the ROAS Mini extension, approve session sharing in
-              the sidepanel, then visit Instagram, TikTok, LinkedIn, X, YouTube, Facebook, or
-              Reddit while signed in.
+              No sessions saved yet. Install the ROAS Mini extension, approve session sharing in the
+              sidepanel, then visit Instagram, TikTok, LinkedIn, X, YouTube, Facebook, or Reddit
+              while signed in.
             </div>
           )}
           {sessions &&
@@ -171,10 +169,10 @@ export default function ChromeExtensionPageContent() {
               return (
                 <div
                   key={session.domain}
-                  className="px-spacing-4 py-spacing-4 border-border flex flex-col gap-spacing-3 border-t first:border-t-0 sm:px-spacing-5 sm:py-spacing-4 md:flex-row md:items-start md:justify-between md:gap-spacing-4"
+                  className="px-spacing-4 py-spacing-4 border-border gap-spacing-3 sm:px-spacing-5 sm:py-spacing-4 md:gap-spacing-4 flex flex-col border-t first:border-t-0 md:flex-row md:items-start md:justify-between"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-x-spacing-2 gap-y-spacing-1">
+                    <div className="gap-x-spacing-2 gap-y-spacing-1 flex flex-wrap items-center">
                       <span className="body-2-medium break-all">{session.domain}</span>
                       <span className={`badge-glass badge-glass-sm shrink-0 ${badgeClass}`}>
                         {status}
@@ -186,7 +184,7 @@ export default function ChromeExtensionPageContent() {
                       {formatRelative(session.min_expires_at)}
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-spacing-2 max-md:w-full max-md:justify-end">
+                  <div className="gap-spacing-2 flex shrink-0 items-center max-md:w-full max-md:justify-end">
                     <button
                       type="button"
                       className="button-glass-neutral body-3 rounded-spacing-2 px-spacing-2 py-1 font-medium leading-tight disabled:opacity-50"
@@ -197,7 +195,7 @@ export default function ChromeExtensionPageContent() {
                     </button>
                     <button
                       type="button"
-                      className="button-glass-neutral inline-flex size-7 items-center justify-center rounded-spacing-2 p-0 disabled:opacity-50 [&_svg]:size-3.5"
+                      className="button-glass-neutral rounded-spacing-2 inline-flex size-7 items-center justify-center p-0 disabled:opacity-50 [&_svg]:size-3.5"
                       disabled={pending}
                       onClick={() => void forget(session.domain)}
                       aria-label={`Forget ${session.domain}`}

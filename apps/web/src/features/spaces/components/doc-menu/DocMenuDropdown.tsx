@@ -267,7 +267,7 @@ export function DocMenuDropdown({
               <button
                 type="button"
                 onClick={wrap(actions.deleteDoc)}
-                className="gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full items-center text-left text-red-600 transition-colors hover:bg-red-500/10 [&_svg]:text-red-600"
+                className="gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 text-destructive [&_svg]:text-destructive flex w-full items-center text-left transition-colors hover:bg-red-500/10"
               >
                 <Trash2 className={itemIcon} />
                 <span>Delete</span>

@@ -81,7 +81,7 @@ export function DocThumbnail({ doc }: { doc: ConversationDocument }) {
     }
     return (
       <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-red-500/10">
-        <FileText className="h-4 w-4 text-red-400" />
+        <FileText className="text-destructive h-4 w-4" />
       </div>
     )
   }

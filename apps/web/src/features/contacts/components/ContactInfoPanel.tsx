@@ -340,7 +340,13 @@ export function ContactInfoPanel({ contact, onContactUpdated, onClose }: Contact
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="title-h6">CONTACT INFO</h2>
-        <button type="button" onClick={onClose} className="btn-icon-bare">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close contact panel"
+          title="Close contact panel"
+          className="btn-icon-bare"
+        >
           <X className="icon-sm" />
         </button>
       </div>
@@ -418,6 +424,8 @@ export function ContactInfoPanel({ contact, onContactUpdated, onClose }: Contact
                     <button
                       type="button"
                       onClick={() => handleToggleTag(tagName)}
+                      aria-label="Remove tag"
+                      title="Remove tag"
                       className="text-muted-foreground hover:text-destructive ml-spacing-1"
                     >
                       <X className="h-3 w-3" />

@@ -48,6 +48,18 @@ export const ListPageGraderAgencyCampaignsSchema = z.object({
     .transform((value) => (typeof value === 'string' ? value === 'true' : value)),
 })
 
+export const ListPageGraderAgencyLaunchesSchema = z.object({
+  q: z.string().max(200).optional(),
+  client_id: z.string().uuid().optional(),
+  kind: z.string().max(100).optional(),
+  from: z.string().max(10).optional(),
+  to: z.string().max(10).optional(),
+  sync: z
+    .union([z.literal('true'), z.literal('false'), z.boolean()])
+    .optional()
+    .transform((value) => (typeof value === 'string' ? value === 'true' : value)),
+})
+
 const NullableStringPatch = z.string().max(10_000).nullable()
 const WorkspacePatchSchema = z
   .record(z.string(), z.unknown())

@@ -1,6 +1,5 @@
 'use client'
 
-import type { ReactNode } from 'react'
 import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { MeetingActionItemsSection } from '@/features/home/components/MeetingActionItemsSection'
 import { MeetingAgendaPrepSection } from '@/features/home/components/MeetingAgendaPrepSection'
@@ -43,7 +42,6 @@ export function MeetingWorkspaceBody({
   joinUrl,
   googleAgendaHref,
   relatedCalls,
-  leading,
   onOpenRelated,
   onRecordingLinked,
   onNoteCreated,
@@ -62,7 +60,6 @@ export function MeetingWorkspaceBody({
   joinUrl: string | null
   googleAgendaHref?: string | null
   relatedCalls: MeetingRelatedCall[]
-  leading?: ReactNode
   onOpenRelated?: (event: CalendarAgendaEvent) => void
   onRecordingLinked: () => void
   onNoteCreated: (snippet: MeetingSnippet) => void
@@ -81,7 +78,6 @@ export function MeetingWorkspaceBody({
   return (
     <>
       <div className="gap-spacing-4 mx-auto flex w-full max-w-3xl flex-col">
-        {leading}
         <section className="section-card p-spacing-4">
           <MeetingRecordingsSection
             spaceId={spaceId}

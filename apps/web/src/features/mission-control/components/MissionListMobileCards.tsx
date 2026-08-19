@@ -226,7 +226,7 @@ export function MissionListMobileCards({
                 </button>
                 <button
                   onClick={(e) => onTrashClick(e, mission.id)}
-                  className="chip-glass-neutral body-4 flex items-center gap-1 rounded-full px-2 py-0.5 text-red-400"
+                  className="chip-glass-neutral body-4 text-destructive flex items-center gap-1 rounded-full px-2 py-0.5"
                 >
                   <Trash2 className="h-3 w-3" /> Remove
                 </button>

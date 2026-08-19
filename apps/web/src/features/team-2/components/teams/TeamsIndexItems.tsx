@@ -45,7 +45,7 @@ export function TeamIndexCard({
             <LucideIcon name={team.icon || 'users'} className={`h-4 w-4 ${palette.textColor}`} />
           </span>
           <span className="body-2 text-foreground gap-spacing-1 flex min-w-0 items-center font-semibold">
-            <span className="truncate">{team.name}</span>
+            <span className="truncate" title={team.name}>{team.name}</span>
             {team.is_system ? (
               <ShieldCheck
                 className="icon-xs text-muted-foreground shrink-0"
@@ -104,7 +104,7 @@ export function TeamListRow({
           <LucideIcon name={team.icon || 'users'} className={`h-3 w-3 ${palette.textColor}`} />
         </span>
         <span className="body-4 gap-spacing-1 flex min-w-0 items-center font-medium">
-          <span className="truncate">{team.name}</span>
+          <span className="truncate" title={team.name}>{team.name}</span>
           {team.is_system ? (
             <ShieldCheck
               className="icon-xs text-muted-foreground shrink-0"

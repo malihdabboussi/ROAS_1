@@ -7,12 +7,6 @@ import {
 import { classifySlackAskKind, formatSlackAskKindContext } from './slack-ask-kind'
 import { formatSlackClientContextBlock } from './slack-client-context'
 import { SlackConversationBase } from './slack-service-conversation.base'
-import { buildInboundSlackTurnPrompt } from './slack-turn-prompt'
-import {
-  recordSlackPixelTurn,
-  type SlackTurnSeed,
-  type SlackTurnToolCall,
-} from './slack-turn-telemetry'
 import {
   CREDITS_EXHAUSTED_SLACK_MESSAGE,
   GENERIC_SLACK_AGENT_ERROR_MESSAGE,
@@ -22,6 +16,12 @@ import {
   MACHINE_WAKE_START_SLACK_MESSAGE,
   SLACK_AGENT_STREAM_TIMEOUT_MS,
 } from './slack-service.shared'
+import { buildInboundSlackTurnPrompt } from './slack-turn-prompt'
+import {
+  recordSlackPixelTurn,
+  type SlackTurnSeed,
+  type SlackTurnToolCall,
+} from './slack-turn-telemetry'
 
 export type SlackAgentTurn = {
   content: string | null
@@ -359,9 +359,9 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       buildSlackAskAssets({ documents, texts: [text, forwardedContext] }),
       { sourcePermalink: forwardedContext.match(/^Source: (\S+)/m)?.[1] ?? null },
     )
-    const mentionText = (
-      assetsBlock ? `${attachmentText}\n\n${assetsBlock}`.trim() : attachmentText
-    ) || (documents.length > 0 ? '[User sent a file]' : '')
+    const mentionText =
+      (assetsBlock ? `${attachmentText}\n\n${assetsBlock}`.trim() : attachmentText) ||
+      (documents.length > 0 ? '[User sent a file]' : '')
     const thread = event.thread_ts
       ? await this.buildSlackThreadReply(
           fallback.botToken,

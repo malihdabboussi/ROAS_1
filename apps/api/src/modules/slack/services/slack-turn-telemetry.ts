@@ -153,7 +153,11 @@ export function recordSlackPixelTurn(input: {
     message: string
   }
   turn: SlackTurnSeed
-  result: { content: string | null; toolEvents: SlackTurnToolCall[]; conversationId: string | null } | null
+  result: {
+    content: string | null
+    toolEvents: SlackTurnToolCall[]
+    conversationId: string | null
+  } | null
   startedAt: number
   outcome: 'replied' | 'no_answer' | 'error'
   error: string | null

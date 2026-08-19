@@ -5,9 +5,9 @@ import { createPortal } from 'react-dom'
 import { AlertCircle, Loader2, X } from 'lucide-react'
 import type { FireEmployeeHandoffInput } from '@/features/mission-control/services/missions.service'
 import type { MissionAgent } from '@/features/mission-control/types'
-import { VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 import type { Campaign } from '@/features/studio/types'
 import { SYSTEM_LIKE_AGENT_KEYS } from '@/features/team/constants/team.constants'
+import { VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 
 type HandoffChoice = 'default' | 'agent' | 'campaign' | 'delete'
 
@@ -123,7 +123,7 @@ export function FireEmployeeConfirmModal({
 
   return createPortal(
     <div {...{ [VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD]: '' }}>
-      <div className="z-modal-backdrop fixed inset-0 bg-modal-overlay" onClick={onClose} />
+      <div className="z-modal-backdrop bg-modal-overlay fixed inset-0" onClick={onClose} />
       <div className="z-modal-content fixed inset-0 flex items-center justify-center overflow-hidden p-2 sm:p-4 md:p-6">
         <div
           className="surface-card wizard-container-border rounded-spacing-4 relative flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden"
@@ -231,7 +231,9 @@ export function FireEmployeeConfirmModal({
                 </p>
               )}
 
-              {fireError ? <p className="body-4 mt-spacing-3 text-red-400">{fireError}</p> : null}
+              {fireError ? (
+                <p className="body-4 mt-spacing-3 text-destructive">{fireError}</p>
+              ) : null}
 
               <div className="mt-spacing-4 space-y-spacing-2">
                 <label className="body-3 text-foreground block text-left">

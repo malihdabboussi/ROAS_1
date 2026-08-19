@@ -125,7 +125,7 @@ export function MissionDetailMobileShell({
                               setMobileMenuOpen(false)
                               onDelete()
                             }}
-                            className="body-3 hover:bg-hover-subtle rounded-spacing-1 px-spacing-2 py-spacing-2 flex w-full items-center gap-2 text-left text-red-400"
+                            className="body-3 hover:bg-hover-subtle rounded-spacing-1 px-spacing-2 py-spacing-2 text-destructive flex w-full items-center gap-2 text-left"
                           >
                             <Trash2 className="icon-sm" />
                             Delete

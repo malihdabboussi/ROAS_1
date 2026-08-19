@@ -461,7 +461,7 @@ export function AccountTracker(props: Readonly<AccountTrackerProps>) {
                   type="button"
                   onClick={() => handleRemove(account.handle)}
                   disabled={removingHandle === account.handle}
-                  className="rounded p-1 text-[var(--color-muted-foreground)] transition-colors hover:text-red-400 disabled:opacity-50"
+                  className="hover:text-destructive rounded p-1 text-[var(--color-muted-foreground)] transition-colors disabled:opacity-50"
                   title="Remove"
                 >
                   {removingHandle === account.handle ? (

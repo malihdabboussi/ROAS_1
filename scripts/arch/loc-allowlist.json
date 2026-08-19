@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-06-11T17:31:39.507Z",
+  "generatedAt": "2026-08-19T04:50:07.246Z",
   "locLimits": {
     "controller": 200,
     "service": 600,
@@ -9,105 +9,195 @@
     "web-component": 400
   },
   "files": {
-    "apps/agent-api/src/modules/agent-policy/agent-policy.service.ts": {
-      "kind": "service",
-      "limit": 600,
-      "lines": 728
+    "apps/agent-api/src/health.controller.ts": {
+      "kind": "controller",
+      "limit": 200,
+      "lines": 303
     },
-    "apps/agent-api/src/modules/artifacts/services/artifact-brain-scholar.service.ts": {
+    "apps/agent-api/src/modules/artifacts/services/artifact-brain-narrative-actions.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 2971
+      "lines": 635
     },
-    "apps/agent-api/src/modules/artifacts/services/artifact-documents.service.ts": {
+    "apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 1476
+      "lines": 606
     },
-    "apps/agent-api/src/modules/brain/services/brain-live.service.ts": {
+    "apps/agent-api/src/modules/billing/services/credits-balance.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 2317
+      "lines": 669
+    },
+    "apps/agent-api/src/modules/brain/services/brain-retrieval.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 604
     },
     "apps/agent-api/src/modules/channel-agent/services/channel-agent.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 1229
-    },
-    "apps/agent-api/src/modules/chat/controllers/chat.controller.ts": {
-      "kind": "controller",
-      "limit": 200,
-      "lines": 657
+      "lines": 629
     },
     "apps/agent-api/src/modules/chat/services/chat-run-event-store.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 601
+      "lines": 638
     },
     "apps/agent-api/src/modules/chat/services/chat.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 4493
+      "lines": 601
     },
-    "apps/agent-api/src/modules/chat/services/openclaw-proxy.service.ts": {
-      "kind": "service",
-      "limit": 600,
-      "lines": 2093
+    "apps/agent-api/src/modules/public-agent/controllers/public-chat.controller.ts": {
+      "kind": "controller",
+      "limit": 200,
+      "lines": 238
     },
     "apps/agent-api/src/modules/task-agent/services/task-agent.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 623
+      "lines": 626
     },
-    "apps/api/src/modules/integrations/services/integrations-calendar-dedupe.ts": {
-      "kind": "utility",
-      "limit": 300,
-      "lines": 400
+    "apps/api/src/modules/agents/controllers/agents.controller.ts": {
+      "kind": "controller",
+      "limit": 200,
+      "lines": 218
+    },
+    "apps/api/src/modules/brain/repositories/brain-retrieval.repository.ts": {
+      "kind": "repository",
+      "limit": 400,
+      "lines": 407
+    },
+    "apps/api/src/modules/brain/repositories/memory-stats.repository.ts": {
+      "kind": "repository",
+      "limit": 400,
+      "lines": 404
+    },
+    "apps/api/src/modules/composio/services/composio.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 674
+    },
+    "apps/api/src/modules/integrations/services/integrations-composio.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 631
+    },
+    "apps/api/src/modules/integrations/services/integrations-core.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 620
+    },
+    "apps/api/src/modules/slack/services/slack.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 613
+    },
+    "apps/api/src/modules/spaces/repositories/slack-open-items.repository.ts": {
+      "kind": "repository",
+      "limit": 400,
+      "lines": 471
     },
     "apps/api/src/modules/spaces/repositories/space-items.repository.ts": {
       "kind": "repository",
       "limit": 400,
-      "lines": 418
+      "lines": 422
     },
-    "apps/api/src/modules/spaces/services/meetings-precall-prep.helpers.ts": {
-      "kind": "utility",
-      "limit": 300,
-      "lines": 590
+    "apps/api/src/modules/spaces/repositories/spaces.repository.ts": {
+      "kind": "repository",
+      "limit": 400,
+      "lines": 445
     },
     "apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 629
+      "lines": 619
+    },
+    "apps/api/src/modules/spaces/services/space-flow-builder.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 634
+    },
+    "apps/api/src/modules/transcribe/controllers/transcribe.controller.ts": {
+      "kind": "controller",
+      "limit": 200,
+      "lines": 208
+    },
+    "apps/mission-worker/src/modules/brain-ops/customer-interaction-extraction.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 602
+    },
+    "apps/mission-worker/src/modules/missions/services/persistence/mission-state.repository.ts": {
+      "kind": "repository",
+      "limit": 400,
+      "lines": 735
     },
     "apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 2278
+      "lines": 2259
+    },
+    "apps/mission-worker/src/modules/missions/services/phases/mission-review-phase.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 1107
+    },
+    "apps/queue-worker/src/modules/single-emails/services/single-email.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 686
+    },
+    "apps/queue-worker/src/modules/social-posts/services/social-post.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 1097
+    },
+    "apps/web/src/components/calendar/CalendarBoard.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1622
     },
     "apps/web/src/components/conversations/ConversationShareModal.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 418
     },
-    "apps/web/src/components/layout/AvatarDropdown.tsx": {
+    "apps/web/src/components/layout/AvatarAccountMenuPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 544
+      "lines": 457
+    },
+    "apps/web/src/components/layout/DeleteCampaignDialog.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 468
+    },
+    "apps/web/src/components/layout/sidebar/SidebarHqRail.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 402
     },
     "apps/web/src/components/layout/sidebar/SidebarStudioSection.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 573
+      "lines": 578
     },
     "apps/web/src/components/menus/MoveCopySubmenu.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 678
     },
+    "apps/web/src/components/spaces/cells/date-picker/RecurrencePanel.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 721
+    },
     "apps/web/src/components/spaces/cells/DueDateCell.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 692
+      "lines": 691
     },
     "apps/web/src/components/spaces/cells/MediaCell.tsx": {
       "kind": "web-component",
@@ -117,147 +207,192 @@
     "apps/web/src/components/spaces/cells/MultiSelectCell.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 599
+      "lines": 600
     },
     "apps/web/src/components/spaces/cells/ProgressCell.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 601
     },
-    "apps/web/src/components/spaces/cells/date-picker/RecurrencePanel.tsx": {
+    "apps/web/src/components/ui/forms/rich-text-toolbar.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 722
+      "lines": 2252
+    },
+    "apps/web/src/components/ui/media/simple-chat-audio-recorder.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 548
+    },
+    "apps/web/src/components/vibey/vibey-loading-sphere-simple.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1035
     },
     "apps/web/src/features/billing/components/CreditPurchaseDialog.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 471
     },
-    "apps/web/src/features/brain/components/BrainHome.tsx": {
+    "apps/web/src/features/brain/components/training/TrainingModal.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 727
+      "lines": 401
     },
-    "apps/web/src/features/brain/components/ForceGraph.tsx": {
+    "apps/web/src/features/channels/components/ChannelThreadPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 1398
+      "lines": 402
     },
     "apps/web/src/features/contacts/components/ContactInfoPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 979
     },
+    "apps/web/src/features/email/components/sender-identities/AddSenderIdentityDialog.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 714
+    },
+    "apps/web/src/features/flows/components/flow-builder/FlowBuilderAddStepPicker.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 785
+    },
     "apps/web/src/features/flows/components/flow-builder/FlowBuilderStepSetupPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 419
     },
+    "apps/web/src/features/flows/components/flow-builder/FlowBuilderStepTestPanel.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 424
+    },
+    "apps/web/src/features/flows/components/flow-builder/FlowBuilderStudio.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 427
+    },
+    "apps/web/src/features/flows/components/FlowMenuDropdown.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 459
+    },
+    "apps/web/src/features/flows/components/FlowsManageGridView.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 859
+    },
+    "apps/web/src/features/flows/components/FlowsManageListView.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 417
+    },
     "apps/web/src/features/flows/containers/FlowsPage.tsx": {
       "kind": "web-container",
       "limit": 600,
-      "lines": 2400
+      "lines": 2110
     },
-    "apps/web/src/features/home/components/RecentAgentConversationsCard.tsx": {
+    "apps/web/src/features/home/components/AgendaCardEventEntry.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 535
+      "lines": 409
     },
-    "apps/web/src/features/mission-control/components/dialogs/DeliverablesCarousel.tsx": {
+    "apps/web/src/features/home/components/HomeHeroCarousel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 812
+      "lines": 493
+    },
+    "apps/web/src/features/mission-control/components/dialogs/PlanDetailModal.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 894
+    },
+    "apps/web/src/features/projects/components/ProjectChatPane.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 595
     },
     "apps/web/src/features/settings/components/settings-content/ConnectedIntegrationCard.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 641
+      "lines": 578
+    },
+    "apps/web/src/features/settings/components/settings-content/EmailGeneralSettingsContent.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 572
+    },
+    "apps/web/src/features/settings/components/settings-content/EmailLogsContent.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 772
+    },
+    "apps/web/src/features/settings/components/settings-content/McpPageContent.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 824
     },
     "apps/web/src/features/settings/components/settings-content/OrgSettingsContent.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 598
+      "lines": 637
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skill-detail-tree-panel.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 575
     },
     "apps/web/src/features/settings/components/settings-content/SkillsPageContent.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 491
+      "lines": 498
     },
     "apps/web/src/features/settings/components/settings-content/UsagePageContent.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 743
-    },
-    "apps/web/src/features/spaces/components/DocsView.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 2350
-    },
-    "apps/web/src/features/spaces/components/DraggableColumnHeaders.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 527
-    },
-    "apps/web/src/features/spaces/components/ListView.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 1263
-    },
-    "apps/web/src/features/spaces/components/ShareModal.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 803
-    },
-    "apps/web/src/features/spaces/components/SpaceItemRow.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 698
-    },
-    "apps/web/src/features/spaces/components/SpaceQuickAdd.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 736
-    },
-    "apps/web/src/features/spaces/components/ViewSwitcher.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 1324
+      "lines": 749
     },
     "apps/web/src/features/spaces/components/ads-research/AdAnalysisPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 1067
+      "lines": 1004
     },
     "apps/web/src/features/spaces/components/ads-research/AdSearchPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 700
+      "lines": 702
     },
     "apps/web/src/features/spaces/components/artifacts/ArtifactViews.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 1252
     },
-    "apps/web/src/features/spaces/components/artifacts/paid-ads/PaidAdsStructurePane.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 1029
-    },
     "apps/web/src/features/spaces/components/automations/ActionBuilder.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 2122
+      "lines": 2121
     },
     "apps/web/src/features/spaces/components/automations/AutomationFlowMap.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 783
     },
+    "apps/web/src/features/spaces/components/automations/AutomationsPanel.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1110
+    },
     "apps/web/src/features/spaces/components/automations/PromptTemplateEditor.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 1002
+    },
+    "apps/web/src/features/spaces/components/automations/TriggerBuilder.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1084
     },
     "apps/web/src/features/spaces/components/chat/PresentationDesignChatView.tsx": {
       "kind": "web-component",
@@ -267,22 +402,17 @@
     "apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 2674
+      "lines": 2642
     },
     "apps/web/src/features/spaces/components/contacts/ContactActivityTimeline.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 994
     },
-    "apps/web/src/features/spaces/components/contacts/ContactCommunicationPanel.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 716
-    },
     "apps/web/src/features/spaces/components/contacts/ContactInfoSection.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 1194
+      "lines": 1209
     },
     "apps/web/src/features/spaces/components/contacts/ContactsSegmentPanel.tsx": {
       "kind": "web-component",
@@ -292,17 +422,37 @@
     "apps/web/src/features/spaces/components/contacts/ContactsSpaceList.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 854
+      "lines": 856
     },
     "apps/web/src/features/spaces/components/contacts/ContactsView.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 698
+      "lines": 704
     },
     "apps/web/src/features/spaces/components/content/SpaceContentRouter.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 829
+      "lines": 821
+    },
+    "apps/web/src/features/spaces/components/customize/CustomizeViewPanelContainer.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 646
+    },
+    "apps/web/src/features/spaces/components/customize/views/default/DefaultViews.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 807
+    },
+    "apps/web/src/features/spaces/components/customize/views/instagram/IgResearchMainView.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 469
+    },
+    "apps/web/src/features/spaces/components/customize/views/missions/MissionsViews.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 465
     },
     "apps/web/src/features/spaces/components/doc-menu/DocMenuDropdown.tsx": {
       "kind": "web-component",
@@ -319,50 +469,95 @@
       "limit": 400,
       "lines": 986
     },
-    "apps/web/src/features/spaces/components/docs/DriveFoldersPanel.tsx": {
+    "apps/web/src/features/spaces/components/DocsView.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 427
+      "lines": 2442
+    },
+    "apps/web/src/features/spaces/components/DraggableColumnHeaders.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 526
+    },
+    "apps/web/src/features/spaces/components/group-by-toolbar-popover.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 645
+    },
+    "apps/web/src/features/spaces/components/GroupSection.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 789
+    },
+    "apps/web/src/features/spaces/components/instagram-research/AccountTracker.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 485
     },
     "apps/web/src/features/spaces/components/instagram-research/ContentAnalysisModal.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 1928
+      "lines": 1940
     },
     "apps/web/src/features/spaces/components/instagram-research/InstagramResearchList.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 720
+      "lines": 726
     },
     "apps/web/src/features/spaces/components/instagram-research/InstagramResearchView.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 1110
+      "lines": 1198
+    },
+    "apps/web/src/features/spaces/components/KanbanView.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1220
+    },
+    "apps/web/src/features/spaces/components/ListView.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1291
     },
     "apps/web/src/features/spaces/components/modals/SpaceModalsHost.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 552
+      "lines": 554
     },
-    "apps/web/src/features/spaces/components/reporting/shared/ReportingTimeRangeSelector.tsx": {
+    "apps/web/src/features/spaces/components/reporting/ReportingCustomizePanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 505
+      "lines": 1777
     },
-    "apps/web/src/features/spaces/components/reporting/shared/view-date-range-subview.tsx": {
+    "apps/web/src/features/spaces/components/ShareModal.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 410
+      "lines": 822
     },
     "apps/web/src/features/spaces/components/social-research/TopicSearchPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 1296
+      "lines": 1288
     },
-    "apps/web/src/features/spaces/components/task-detail/TaskSubtasks.tsx": {
+    "apps/web/src/features/spaces/components/SpaceItemRow.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 617
+      "lines": 758
+    },
+    "apps/web/src/features/spaces/components/SpaceQuickAdd.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 768
+    },
+    "apps/web/src/features/spaces/components/StatusEditorModal.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 706
+    },
+    "apps/web/src/features/spaces/components/ViewSwitcher.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 748
     },
     "apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx": {
       "kind": "web-container",
@@ -372,97 +567,142 @@
     "apps/web/src/features/spaces/services/social-research.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 632
+      "lines": 648
     },
     "apps/web/src/features/spaces/services/spaces.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 739
+      "lines": 657
     },
     "apps/web/src/features/spaces/views/calendar/SpaceCalendarView.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 811
-    },
-    "apps/web/src/features/spaces/views/contacts/ContactsToolbar.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 406
+      "lines": 492
     },
     "apps/web/src/features/spaces/views/docs/DocsToolbar.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 745
+      "lines": 762
+    },
+    "apps/web/src/features/studio/components/chat/AgentConversationThread.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1059
+    },
+    "apps/web/src/features/studio/components/chat/EmailSendConfirmCard.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 635
     },
     "apps/web/src/features/studio/components/ChatInput.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 5229
+      "lines": 629
     },
-    "apps/web/src/features/studio/components/message-bubble/MessageContentBlockSwitchPartA.tsx": {
+    "apps/web/src/features/studio/components/ChatInterface.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 425
+      "lines": 1082
+    },
+    "apps/web/src/features/studio/components/preview/AdsPerformanceView.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 988
     },
     "apps/web/src/features/studio/components/preview/AllContactsImportAcDialog.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 458
     },
-    "apps/web/src/features/studio/components/preview/AllContactsImportGhlDialog.tsx": {
+    "apps/web/src/features/studio/components/preview/artifacts/tree/ArtifactTreePane.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 403
+      "lines": 489
+    },
+    "apps/web/src/features/studio/components/preview/BlogPostPreview.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 593
+    },
+    "apps/web/src/features/studio/components/preview/BulkCreatorTab.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 528
     },
     "apps/web/src/features/studio/components/preview/FunnelToolbar.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 614
+      "lines": 540
+    },
+    "apps/web/src/features/studio/components/preview/LeadsTab.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 608
+    },
+    "apps/web/src/features/studio/components/preview/MainDashboardOverview.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1600
+    },
+    "apps/web/src/features/studio/components/preview/media/MediaPreviewPanes.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 406
+    },
+    "apps/web/src/features/studio/components/preview/MetaIntegrationsReviewModal.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 497
     },
     "apps/web/src/features/studio/components/preview/PresentationFullModeShell.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 466
+      "lines": 468
+    },
+    "apps/web/src/features/studio/components/preview/SandpackPreview.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 595
+    },
+    "apps/web/src/features/studio/components/preview/schedule/CalendarView.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 473
+    },
+    "apps/web/src/features/studio/components/preview/SocialPerformanceView.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 931
+    },
+    "apps/web/src/features/studio/components/preview/workflow/WorkflowCanvas.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1261
+    },
+    "apps/web/src/features/studio/components/StudioHome.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 851
+    },
+    "apps/web/src/features/studio/containers/StudioContainer.tsx": {
+      "kind": "web-container",
+      "limit": 600,
+      "lines": 609
     },
     "apps/web/src/features/studio/services/artifact-preview.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 1873
+      "lines": 1348
     },
     "apps/web/src/features/studio/services/chat.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 2967
-    },
-    "apps/web/src/features/team-2/components/AgentsGrid.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 465
-    },
-    "apps/web/src/features/team-2/components/ConversationScopePicker.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 421
-    },
-    "apps/web/src/features/team-2/components/Team2AgentChatWithConversations.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 573
+      "lines": 2993
     },
     "apps/web/src/features/team-2/components/hr-side-chat/TeamHrSideChatPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 708
-    },
-    "apps/web/src/features/team-2/components/teams/TeamAnalyticsView.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 696
-    },
-    "apps/web/src/features/team-2/components/teams/TeamOverviewView.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 1453
+      "lines": 694
     },
     "apps/web/src/features/team/components/AgentActionsMenu.tsx": {
       "kind": "web-component",
@@ -472,88 +712,232 @@
     "apps/web/src/features/team/components/AgentChatPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 2741
+      "lines": 1514
+    },
+    "apps/web/src/features/team/components/CampaignTeamManageModal.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1343
+    },
+    "apps/web/src/features/team/components/chat/agent-info-panel/AgentInfoPanelPortraitSection.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 457
     },
     "apps/web/src/features/team/containers/WidgetBuilderModal.tsx": {
       "kind": "web-container",
       "limit": 600,
       "lines": 1387
     },
-    "apps/web/src/features/studio/components/ChatInterface.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 1088
+    "apps/api/src/modules/work-requests/services/work-request.service.ts": {
+      "lines": 601
     }
   },
   "webFeatureImports": {
-    "apps/web/src/features/brain/components/BrainHome.tsx": {
-      "sourceFeature": "brain",
-      "count": 7,
+    "apps/web/src/features/autopilot/components/AutopilotModal.tsx": {
+      "sourceFeature": "autopilot",
+      "count": 6,
       "imports": {
+        "@/features/mission-control/components/AwarenessToggle": 1,
         "@/features/mission-control/services/missions.service": 1,
+        "@/features/mission-control/store/use-mission-dashboard-store": 1,
         "@/features/mission-control/types": 1,
-        "@/features/org/components/ShareModal": 1,
-        "@/features/org/store/use-org-store": 1,
-        "@/features/spaces/lib/space-group-badge-glass": 1,
-        "@/features/team-2/components/Team2FilterDropdown": 1,
-        "@/features/team-2/containers/TeamHrSideChatLayout": 1
+        "@/features/studio/services/campaign.service": 1,
+        "@/features/studio/types": 1
       }
     },
-    "apps/web/src/features/brain/components/BrainHomeListView.tsx": {
-      "sourceFeature": "brain",
+    "apps/web/src/features/autopilot/components/AwarenessActivityColumn.tsx": {
+      "sourceFeature": "autopilot",
+      "count": 2,
+      "imports": {
+        "@/features/mission-control/components/dialogs/detail-helpers": 1,
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/autopilot/components/StrategyEditor.tsx": {
+      "sourceFeature": "autopilot",
+      "count": 1,
+      "imports": {
+        "@/features/studio/services/campaign.service": 1
+      }
+    },
+    "apps/web/src/features/channels/components/CampaignContextConfirmCard.tsx": {
+      "sourceFeature": "channels",
+      "count": 1,
+      "imports": {
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/channels/components/ChannelContextTab.tsx": {
+      "sourceFeature": "channels",
+      "count": 3,
+      "imports": {
+        "@/features/home/lib/home-feed-campaign-cache": 1,
+        "@/features/studio/services/campaign.service": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/channels/components/ChannelHeader.tsx": {
+      "sourceFeature": "channels",
+      "count": 1,
+      "imports": {
+        "@/features/home/lib/home-feed-campaign-cache": 1
+      }
+    },
+    "apps/web/src/features/channels/components/ChannelOrderedBlocks.tsx": {
+      "sourceFeature": "channels",
+      "count": 7,
+      "imports": {
+        "@/features/mission-control/types": 1,
+        "@/features/studio/components/chat/BrowserPreviewPanel": 1,
+        "@/features/studio/components/chat/LockedInGroup": 1,
+        "@/features/studio/components/message-bubble/FinalOutputCards": 1,
+        "@/features/studio/components/message-bubble/message-bubble.utils": 1,
+        "@/features/studio/components/message-bubble/MessageContentBlockSwitch": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/channels/components/ThreadInlineProgress.tsx": {
+      "sourceFeature": "channels",
       "count": 2,
       "imports": {
         "@/features/mission-control/types": 1,
-        "@/features/spaces/lib/space-group-badge-glass": 1
+        "@/features/studio/types": 1
       }
     },
-    "apps/web/src/features/brain/components/BrainVisualization.tsx": {
-      "sourceFeature": "brain",
-      "count": 10,
+    "apps/web/src/features/composer/pasted-text/use-pasted-text-blocks.ts": {
+      "sourceFeature": "composer",
+      "count": 1,
       "imports": {
-        "@/features/mission-control/services/missions.service": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/org/components/ShareModal": 1,
-        "@/features/org/store/use-org-store": 1,
-        "@/features/spaces/components/reporting/shared/resolve-reporting-dates": 1,
-        "@/features/spaces/components/reporting/shared/view-date-range-subview": 1,
-        "@/features/spaces/lib/space-toolbar-motion": 1,
-        "@/features/spaces/types/space-schema": 1,
-        "@/features/studio/services/campaign-knowledge.service": 1,
-        "@/features/team-2/containers/TeamHrSideChatLayout": 1
+        "@/features/studio/store/use-chat-store": 1
       }
     },
-    "apps/web/src/features/brain/hooks/use-brain-scope-nav-options.ts": {
-      "sourceFeature": "brain",
-      "count": 6,
+    "apps/web/src/features/contacts/components/ContactInfoPanel.tsx": {
+      "sourceFeature": "contacts",
+      "count": 1,
       "imports": {
-        "@/features/mission-control/services/missions.service": 1,
-        "@/features/mission-control/types": 1,
+        "@/features/properties/constants/tag-picker-colors": 1
+      }
+    },
+    "apps/web/src/features/contacts/components/CrmContactsFilterDrawer.tsx": {
+      "sourceFeature": "contacts",
+      "count": 1,
+      "imports": {
+        "@/features/properties/constants/tag-picker-colors": 1
+      }
+    },
+    "apps/web/src/features/flows/components/flow-builder/FlowBuilderStepPanel.tsx": {
+      "sourceFeature": "flows",
+      "count": 4,
+      "imports": {
         "@/features/org/services/org.service": 1,
-        "@/features/org/store/use-org-store": 1,
-        "@/features/settings/services/billing-api": 1,
-        "@/features/studio/services/campaign.service": 1
+        "@/features/spaces/components/automations/ActionBuilder": 1,
+        "@/features/spaces/components/automations/TriggerBuilder": 1,
+        "@/features/spaces/types/space-schema": 1
+      }
+    },
+    "apps/web/src/features/flows/components/flow-builder/FlowBuilderStepSetupPanel.tsx": {
+      "sourceFeature": "flows",
+      "count": 4,
+      "imports": {
+        "@/features/org/services/org.service": 1,
+        "@/features/spaces/components/automations/automation-catalog": 1,
+        "@/features/spaces/components/automations/AutomationCategorizedSelect": 1,
+        "@/features/spaces/types/space-schema": 1
+      }
+    },
+    "apps/web/src/features/flows/components/flow-builder/FlowBuilderStepTestPanel.tsx": {
+      "sourceFeature": "flows",
+      "count": 2,
+      "imports": {
+        "@/features/org/services/org.service": 1,
+        "@/features/spaces/types/space-schema": 1
+      }
+    },
+    "apps/web/src/features/flows/components/flow-builder/FlowBuilderStudio.tsx": {
+      "sourceFeature": "flows",
+      "count": 2,
+      "imports": {
+        "@/features/org/services/org.service": 1,
+        "@/features/spaces/types/space-schema": 1
+      }
+    },
+    "apps/web/src/features/flows/components/flow-builder/FlowConnectedAppConnectField.tsx": {
+      "sourceFeature": "flows",
+      "count": 3,
+      "imports": {
+        "@/features/spaces/components/automations/AutomationLazySelect": 1,
+        "@/features/spaces/services/automations.service": 1,
+        "@/features/spaces/types/space-schema": 1
+      }
+    },
+    "apps/web/src/features/flows/components/FlowBuildPlanIntent.tsx": {
+      "sourceFeature": "flows",
+      "count": 1,
+      "imports": {
+        "@/features/studio/components/chat/ChatMarkdownView": 1
+      }
+    },
+    "apps/web/src/features/flows/components/FlowBuildVisualPanel.tsx": {
+      "sourceFeature": "flows",
+      "count": 3,
+      "imports": {
+        "@/features/org/services/org.service": 1,
+        "@/features/spaces/types/space-schema": 2
+      }
+    },
+    "apps/web/src/features/flows/components/FlowCampaignGroupedSpaceSelect.tsx": {
+      "sourceFeature": "flows",
+      "count": 1,
+      "imports": {
+        "@/features/spaces/components/automations/AutomationCategorizedSelect": 1
+      }
+    },
+    "apps/web/src/features/flows/components/FlowsEditorPanel.tsx": {
+      "sourceFeature": "flows",
+      "count": 1,
+      "imports": {
+        "@/features/spaces/types/space-schema": 1
+      }
+    },
+    "apps/web/src/features/flows/components/FlowsManageGridView.tsx": {
+      "sourceFeature": "flows",
+      "count": 1,
+      "imports": {
+        "@/features/settings/components/settings-content/ConfirmDialog": 1
+      }
+    },
+    "apps/web/src/features/flows/lib/sync-flow-clarifications-to-chat.ts": {
+      "sourceFeature": "flows",
+      "count": 2,
+      "imports": {
+        "@/features/studio/services/chat.service": 1,
+        "@/features/studio/store/use-chat-store": 1
+      }
+    },
+    "apps/web/src/features/home/components/cards/ApprovalQueueCard.tsx": {
+      "sourceFeature": "home",
+      "count": 4,
+      "imports": {
+        "@/features/inbox/lib/inbox-status-label": 1,
+        "@/features/spaces/components/OptionBadge": 1,
+        "@/features/spaces/components/space-item-values": 1,
+        "@/features/spaces/services/your-turn.service": 1
       }
     },
     "apps/web/src/features/home/components/cards/FavoriteCampaignsCard.tsx": {
       "sourceFeature": "home",
-      "count": 5,
+      "count": 2,
       "imports": {
         "@/features/spaces/hooks/use-cached-spaces": 1,
-        "@/features/spaces/types": 1,
-        "@/features/studio/services/campaign.service": 1,
-        "@/features/studio/services/chat.service": 1,
-        "@/features/studio/types": 1
+        "@/features/spaces/types": 1
       }
     },
     "apps/web/src/features/home/components/cards/FavoriteConversationsCard.tsx": {
       "sourceFeature": "home",
-      "count": 4,
+      "count": 1,
       "imports": {
-        "@/features/org/services/org.service": 1,
-        "@/features/spaces/components/chat/strip-legacy-spaces-conversation-title": 1,
-        "@/features/studio/services/chat.service": 1,
-        "@/features/studio/types": 1
+        "@/features/org/services/org.service": 1
       }
     },
     "apps/web/src/features/home/components/cards/FavoriteSpacesCard.tsx": {
@@ -578,16 +962,45 @@
         "@/features/spaces/types/space-schema": 1
       }
     },
+    "apps/web/src/features/home/components/cards/NotificationFeedCard.tsx": {
+      "sourceFeature": "home",
+      "count": 5,
+      "imports": {
+        "@/features/mission-control/types": 1,
+        "@/features/notifications/components/NotificationFeedFilterPicker": 1,
+        "@/features/notifications/components/NotificationFeedRow": 1,
+        "@/features/notifications/hooks/use-notifications-feed": 1,
+        "@/features/notifications/lib/notification-feed-filters": 1
+      }
+    },
     "apps/web/src/features/home/components/cards/OrgPulseCard.tsx": {
       "sourceFeature": "home",
-      "count": 6,
+      "count": 5,
       "imports": {
         "@/features/org/services/org.service": 1,
         "@/features/org/store/use-org-store": 1,
         "@/features/spaces/hooks/use-cached-spaces": 1,
         "@/features/spaces/hooks/use-your-turn-feed": 1,
-        "@/features/spaces/services/automations.service": 1,
-        "@/features/studio/services/chat.service": 1
+        "@/features/spaces/services/automations.service": 1
+      }
+    },
+    "apps/web/src/features/home/components/cards/RecentCommunicationsCard.tsx": {
+      "sourceFeature": "home",
+      "count": 4,
+      "imports": {
+        "@/features/channels/components/ChannelIcon": 1,
+        "@/features/org/store/use-org-store": 1,
+        "@/features/spaces/components/space-item-values": 1,
+        "@/features/team-2/lib/person-dm-nav": 1
+      }
+    },
+    "apps/web/src/features/home/components/CompletedSpaceAutomationsCard.tsx": {
+      "sourceFeature": "home",
+      "count": 3,
+      "imports": {
+        "@/features/org/store/use-org-store": 1,
+        "@/features/spaces/lib/automation-run-presentations": 1,
+        "@/features/spaces/services/automations.service": 1
       }
     },
     "apps/web/src/features/home/components/HomeCardsGrid.tsx": {
@@ -608,7 +1021,7 @@
     },
     "apps/web/src/features/home/components/HomeTaskDetailHost.tsx": {
       "sourceFeature": "home",
-      "count": 11,
+      "count": 12,
       "imports": {
         "@/features/org/services/org.service": 1,
         "@/features/spaces/components/SpaceStatusCascadeConfirmProvider": 1,
@@ -616,6 +1029,7 @@
         "@/features/spaces/components/task-detail/TaskDetailModal": 1,
         "@/features/spaces/components/your-turn/YourTurnSubtaskDrawer": 1,
         "@/features/spaces/hooks/use-space-field-option-actions": 1,
+        "@/features/spaces/hooks/use-task-detail-navigation": 1,
         "@/features/spaces/services/spaces.service": 1,
         "@/features/spaces/services/your-turn.service": 1,
         "@/features/spaces/store/use-spaces-store": 1,
@@ -623,11 +1037,90 @@
         "@/features/spaces/types/space-schema": 1
       }
     },
-    "apps/web/src/features/mission-control/services/missions.service.ts": {
-      "sourceFeature": "mission-control",
+    "apps/web/src/features/home/components/RecentAgentConversationsCard.tsx": {
+      "sourceFeature": "home",
+      "count": 2,
+      "imports": {
+        "@/features/org/services/org.service": 1,
+        "@/features/org/store/use-org-store": 1
+      }
+    },
+    "apps/web/src/features/home/config/daily-recommendation-copy.config.ts": {
+      "sourceFeature": "home",
+      "count": 2,
+      "imports": {
+        "@/features/settings/contexts/AccountSettingsModalContext": 1,
+        "@/features/settings/contexts/WorkspaceSettingsModalContext": 1
+      }
+    },
+    "apps/web/src/features/home/hooks/use-home-feed-open.ts": {
+      "sourceFeature": "home",
+      "count": 3,
+      "imports": {
+        "@/features/mission-control/services/missions.service": 1,
+        "@/features/mission-control/types": 1,
+        "@/features/spaces/services/your-turn.service": 1
+      }
+    },
+    "apps/web/src/features/home/lib/group-my-tasks-by-due.ts": {
+      "sourceFeature": "home",
       "count": 1,
       "imports": {
-        "@/features/studio/services/chat.service": 1
+        "@/features/spaces/services/your-turn.service": 1
+      }
+    },
+    "apps/web/src/features/inbox/components/InboxHubToolbar.tsx": {
+      "sourceFeature": "inbox",
+      "count": 1,
+      "imports": {
+        "@/features/spaces/services/your-turn.service": 1
+      }
+    },
+    "apps/web/src/features/inbox/components/InboxListView.tsx": {
+      "sourceFeature": "inbox",
+      "count": 1,
+      "imports": {
+        "@/features/spaces/services/your-turn.service": 1
+      }
+    },
+    "apps/web/src/features/inbox/containers/InboxContainer.tsx": {
+      "sourceFeature": "inbox",
+      "count": 2,
+      "imports": {
+        "@/features/spaces/components/your-turn/YourTurnSubtaskDrawer": 1,
+        "@/features/spaces/hooks/use-your-turn-feed": 1
+      }
+    },
+    "apps/web/src/features/inbox/lib/group-inbox-by-date.ts": {
+      "sourceFeature": "inbox",
+      "count": 1,
+      "imports": {
+        "@/features/spaces/services/your-turn.service": 1
+      }
+    },
+    "apps/web/src/features/inbox/lib/inbox-query.ts": {
+      "sourceFeature": "inbox",
+      "count": 1,
+      "imports": {
+        "@/features/spaces/services/your-turn.service": 1
+      }
+    },
+    "apps/web/src/features/my-work/containers/MyWorkContainer.tsx": {
+      "sourceFeature": "my-work",
+      "count": 3,
+      "imports": {
+        "@/features/inbox/components/InboxListView": 1,
+        "@/features/spaces/components/your-turn/YourTurnSubtaskDrawer": 1,
+        "@/features/spaces/hooks/use-your-turn-feed": 1
+      }
+    },
+    "apps/web/src/features/notifications/components/NotificationFeedRow.tsx": {
+      "sourceFeature": "notifications",
+      "count": 3,
+      "imports": {
+        "@/features/brain/services/brain-cross-suggestions.service": 1,
+        "@/features/mission-control/services/missions.service": 1,
+        "@/features/mission-control/types": 1
       }
     },
     "apps/web/src/features/notifications/hooks/use-notifications-feed.ts": {
@@ -639,49 +1132,137 @@
         "@/features/org/store/use-org-store": 1
       }
     },
-    "apps/web/src/features/settings/components/settings-content/skills-page/dialogs/skill-detail-mobile-fullscreen.tsx": {
-      "sourceFeature": "settings",
-      "count": 2,
+    "apps/web/src/features/notifications/lib/ask-notification-in-chat.ts": {
+      "sourceFeature": "notifications",
+      "count": 1,
       "imports": {
-        "@/features/mission-control/types": 1,
-        "@/features/team/constants/team.constants": 1
+        "@/features/studio/store/use-chat-store": 1
       }
     },
-    "apps/web/src/features/settings/components/settings-content/skills-page/skill-menu/skill-copy.util.ts": {
-      "sourceFeature": "settings",
+    "apps/web/src/features/projects/components/ProjectChatPane.tsx": {
+      "sourceFeature": "projects",
+      "count": 14,
+      "imports": {
+        "@/features/studio/components/chat/ArtifactAttachments": 1,
+        "@/features/studio/components/chat/ComposerActiveRunTipCard": 1,
+        "@/features/studio/components/chat/MessageQueue": 1,
+        "@/features/studio/components/chat/PlanStickyTracker": 1,
+        "@/features/studio/components/chat/RateLimitCard": 1,
+        "@/features/studio/components/chat/StatusIndicator": 1,
+        "@/features/studio/components/chat/StreamInterruptedBar": 1,
+        "@/features/studio/components/ChatInput": 1,
+        "@/features/studio/components/MessageBubble": 1,
+        "@/features/studio/config/chat-stream-errors.config": 1,
+        "@/features/studio/config/chat-toast-errors.config": 1,
+        "@/features/studio/services/chat.service": 1,
+        "@/features/studio/store/use-chat-store": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/projects/components/ProjectPage.tsx": {
+      "sourceFeature": "projects",
+      "count": 2,
+      "imports": {
+        "@/features/studio/components/layout/ResizableDivider": 1,
+        "@/features/studio/hooks/usePanelResize": 1
+      }
+    },
+    "apps/web/src/features/projects/hooks/useProjectChat.ts": {
+      "sourceFeature": "projects",
       "count": 3,
       "imports": {
-        "@/features/mission-control/services/missions.service": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/team/constants/team.constants": 1
+        "@/features/studio/services/chat.service": 1,
+        "@/features/studio/store/use-chat-store": 1,
+        "@/features/studio/types": 1
       }
     },
-    "apps/web/src/features/settings/components/settings-content/skills-page/skill-menu/use-skill-menu-actions.ts": {
-      "sourceFeature": "settings",
-      "count": 4,
+    "apps/web/src/features/projects/services/project-agents.service.ts": {
+      "sourceFeature": "projects",
+      "count": 2,
       "imports": {
-        "@/features/agent-teams/system-agent-keys": 1,
         "@/features/mission-control/services/missions.service": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/team/constants/team.constants": 1
+        "@/features/mission-control/types": 1
       }
     },
-    "apps/web/src/features/settings/components/settings-content/skills-page/skills-preview-panel.tsx": {
+    "apps/web/src/features/public-agent/containers/EmbeddedMessagesView.tsx": {
+      "sourceFeature": "public-agent",
+      "count": 2,
+      "imports": {
+        "@/features/studio/components/MessageBubble": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/public-agent/hooks/usePublicAgentChat.ts": {
+      "sourceFeature": "public-agent",
+      "count": 1,
+      "imports": {
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/AutopilotPageContent.tsx": {
+      "sourceFeature": "settings",
+      "count": 10,
+      "imports": {
+        "@/features/autopilot/components/AwarenessActivityColumn": 1,
+        "@/features/autopilot/components/CampaignStrategyTree": 1,
+        "@/features/autopilot/components/StrategyEditor": 1,
+        "@/features/autopilot/lib/rpso-coverage": 1,
+        "@/features/mission-control/components/AwarenessToggle": 1,
+        "@/features/mission-control/services/missions.service": 1,
+        "@/features/mission-control/store/use-mission-dashboard-store": 1,
+        "@/features/mission-control/types": 1,
+        "@/features/studio/services/campaign.service": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/billing-page/BillingPageContent.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/billing/components/PurchaseSuccessHandler": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/billing-page/PlansTabFooterSection.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/billing/components/CreditPurchaseDialog": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/EmailDomainsAndSendersContent.tsx": {
+      "sourceFeature": "settings",
+      "count": 8,
+      "imports": {
+        "@/features/email/components/domains/AddEmailDomainDialog": 1,
+        "@/features/email/components/domains/DnsRecordsDialog": 1,
+        "@/features/email/components/domains/EmailDomainsTable": 1,
+        "@/features/email/components/sender-identities/AddSenderIdentityDialog": 1,
+        "@/features/email/components/sender-identities/SenderIdentitiesTable": 1,
+        "@/features/email/providers/EmailDomainsProvider": 1,
+        "@/features/email/providers/SenderIdentitiesProvider": 1,
+        "@/features/email/types/email.types": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/EmailLogsContent.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/email/services/email-backend-api": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/EmailSettingsPageContent.tsx": {
       "sourceFeature": "settings",
       "count": 2,
       "imports": {
-        "@/features/mission-control/types": 1,
-        "@/features/team/constants/team.constants": 1
+        "@/features/email/providers/EmailDomainsProvider": 1,
+        "@/features/email/providers/SenderIdentitiesProvider": 1
       }
     },
-    "apps/web/src/features/settings/components/settings-content/skills-page/use-skills-agents-and-skills.ts": {
+    "apps/web/src/features/settings/components/settings-content/ModelsPageContent.tsx": {
       "sourceFeature": "settings",
-      "count": 4,
+      "count": 1,
       "imports": {
-        "@/features/mission-control/services/missions.service": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/studio/lib/campaign-markdown-pdf-export": 1,
-        "@/features/team/constants/team.constants": 1
+        "@/features/org/store/use-org-store": 1
       }
     },
     "apps/web/src/features/settings/components/settings-content/OrgSettingsContent.tsx": {
@@ -694,38 +1275,371 @@
         "@/features/org/store/use-org-store": 1
       }
     },
+    "apps/web/src/features/settings/components/settings-content/properties/segments/SegmentEditorDialog.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/properties/components/segments/SegmentFilterBuilder": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/dialogs/delete-skill-dialog.tsx": {
+      "sourceFeature": "settings",
+      "count": 2,
+      "imports": {
+        "@/features/mission-control/types": 1,
+        "@/features/team/constants/team.constants": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/dialogs/skill-detail-dialog.tsx": {
+      "sourceFeature": "settings",
+      "count": 2,
+      "imports": {
+        "@/features/mission-control/types": 1,
+        "@/features/team/constants/team.constants": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/resource-tree.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/spaces/components/SpaceListDndRow": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skill-agent-avatar-stack.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skill-detail-tree-panel.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skill-menu/OtherAgentsSubmenuList.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skill-menu/skill-copy.util.ts": {
+      "sourceFeature": "settings",
+      "count": 3,
+      "imports": {
+        "@/features/mission-control/services/missions.service": 1,
+        "@/features/mission-control/types": 1,
+        "@/features/team/constants/team.constants": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skill-menu/skill-menu.types.ts": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skill-menu/use-skill-menu-actions.ts": {
+      "sourceFeature": "settings",
+      "count": 3,
+      "imports": {
+        "@/features/mission-control/services/missions.service": 1,
+        "@/features/mission-control/types": 1,
+        "@/features/team/constants/team.constants": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skill-resource-body.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skill-resource-editor.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skill-resource-tree-dnd-apply.ts": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skill-tree-row-actions-menu.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skills-agent-tab-menu/SkillsAgentTabMenuDropdown.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skills-agents-panel.tsx": {
+      "sourceFeature": "settings",
+      "count": 3,
+      "imports": {
+        "@/features/mission-control/services/missions.service": 1,
+        "@/features/mission-control/types": 1,
+        "@/features/team/containers/TeamAgentsCarousel": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skills-catalog-sections.ts": {
+      "sourceFeature": "settings",
+      "count": 2,
+      "imports": {
+        "@/features/mission-control/types": 1,
+        "@/features/team/constants/team.constants": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skills-page.utils.ts": {
+      "sourceFeature": "settings",
+      "count": 2,
+      "imports": {
+        "@/features/mission-control/types": 1,
+        "@/features/team/constants/team.constants": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/skills-view-switcher.tsx": {
+      "sourceFeature": "settings",
+      "count": 2,
+      "imports": {
+        "@/features/mission-control/types": 1,
+        "@/features/team/components/RoleEmblem": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/use-skill-detail-resources.ts": {
+      "sourceFeature": "settings",
+      "count": 3,
+      "imports": {
+        "@/features/brain/services/sk.service": 1,
+        "@/features/mission-control/services/missions.service": 1,
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/use-skills-agents-and-skills.ts": {
+      "sourceFeature": "settings",
+      "count": 3,
+      "imports": {
+        "@/features/mission-control/services/missions.service": 1,
+        "@/features/mission-control/types": 1,
+        "@/features/team/constants/team.constants": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/skills-page/use-skills-create-flow.ts": {
+      "sourceFeature": "settings",
+      "count": 4,
+      "imports": {
+        "@/features/brain/services/sk.service": 1,
+        "@/features/mission-control/services/missions.service": 1,
+        "@/features/skill-recommendations/services/skill-recommendations.service": 1,
+        "@/features/skill-recommendations/types": 1
+      }
+    },
     "apps/web/src/features/settings/components/settings-content/SkillsPageContent.tsx": {
       "sourceFeature": "settings",
-      "count": 5,
+      "count": 3,
       "imports": {
         "@/features/mission-control/types": 1,
         "@/features/skill-recommendations/services/skill-recommendations.service": 1,
-        "@/features/team-2/containers/TeamHrSideChatLayout": 1,
-        "@/features/team-2/store/use-team-focus-store": 1,
-        "@/features/team/hooks/useAgentMenuActions": 1
+        "@/features/team-2/store/use-team-focus-store": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/team/TeamMemberAccordionRow.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/org/services/org.service": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/team/TeamMemberProfileForm.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/org/services/org.service": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/team/TeamMemberReadinessBadge.tsx": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/org/services/org.service": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/team/TeamTabPanel.tsx": {
+      "sourceFeature": "settings",
+      "count": 2,
+      "imports": {
+        "@/features/org/services/org.service": 1,
+        "@/features/org/store/use-org-store": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/ThemesPageContent.tsx": {
+      "sourceFeature": "settings",
+      "count": 3,
+      "imports": {
+        "@/features/themes/components/ThemeEditorDialog": 1,
+        "@/features/themes/services/themes.service": 1,
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/useIntegrations.ts": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/org/store/use-org-store": 1
+      }
+    },
+    "apps/web/src/features/settings/services/models-settings.service.ts": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/studio/services/chat.service": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/artifacts/ArtifactViews.tsx": {
+      "sourceFeature": "spaces",
+      "count": 2,
+      "imports": {
+        "@/features/studio/services/artifact-preview.service": 1,
+        "@/features/studio/services/workflow.service": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/artifacts/offer/use-offer-menu-actions.ts": {
+      "sourceFeature": "spaces",
+      "count": 3,
+      "imports": {
+        "@/features/studio/services/artifact-preview.service": 1,
+        "@/features/studio/services/campaign.service": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/artifacts/paid-ads/PaidAdsDetailPane.tsx": {
+      "sourceFeature": "spaces",
+      "count": 5,
+      "imports": {
+        "@/features/studio/components/preview/AdCampaignSettingsPanel": 1,
+        "@/features/studio/components/preview/AdPreview": 1,
+        "@/features/studio/components/preview/AdSetSettingsPanel": 1,
+        "@/features/studio/components/preview/AdUngroupedAssignPanel": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/artifacts/social-post/use-social-post-menu-actions.ts": {
+      "sourceFeature": "spaces",
+      "count": 3,
+      "imports": {
+        "@/features/studio/services/artifact-preview.service": 1,
+        "@/features/studio/services/campaign.service": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/automations/AutomationsPanel.tsx": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/org/services/org.service": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/automations/PromptTemplateEditor.tsx": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/studio/utils/textarea-caret-viewport": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/automations/TriggerBuilder.tsx": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/org/services/org.service": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/channels/ChannelsIndexView.tsx": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/channels": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/channels/SpaceChannelView.tsx": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/channels": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/chat/FunnelDesignChatView.tsx": {
+      "sourceFeature": "spaces",
+      "count": 4,
+      "imports": {
+        "@/features/studio/services/artifact-preview.service": 1,
+        "@/features/studio/store/use-funnel-design-chat-store": 1,
+        "@/features/studio/store/use-funnel-full-mode-store": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/chat/FunnelTweaksChatView.tsx": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/studio/components/preview/FunnelTweaksControls": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/chat/PresentationDesignChatView.tsx": {
+      "sourceFeature": "spaces",
+      "count": 5,
+      "imports": {
+        "@/features/studio/lib/presentation-direct-edit": 1,
+        "@/features/studio/store/use-presentation-design-chat-store": 1,
+        "@/features/studio/store/use-presentation-full-mode-store": 1,
+        "@/features/studio/types": 1,
+        "@/features/themes/components/FontPicker": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/chat/PresentationTweaksChatView.tsx": {
+      "sourceFeature": "spaces",
+      "count": 2,
+      "imports": {
+        "@/features/studio/components/preview/PresentationTweaksControls": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/chat/space-voice-live-transcript.logic.ts": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/brain/hooks/use-brain-live-session": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/chat/SpaceUndoButton.tsx": {
+      "sourceFeature": "spaces",
+      "count": 3,
+      "imports": {
+        "@/features/studio/services/chat.service": 1,
+        "@/features/studio/store/use-chat-store": 1,
+        "@/features/studio/types": 1
       }
     },
     "apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx": {
       "sourceFeature": "spaces",
-      "count": 32,
+      "count": 17,
       "imports": {
         "@/features/brain/hooks/use-brain-live-session": 1,
-        "@/features/org/services/org.service": 1,
-        "@/features/org/store/use-org-store": 1,
-        "@/features/studio/components/chat/ArtifactAttachments": 1,
-        "@/features/studio/components/chat/ChatTurnChangeDivider": 1,
-        "@/features/studio/components/chat/ComposerActiveRunTipCard": 1,
-        "@/features/studio/components/chat/MessageQueue": 1,
-        "@/features/studio/components/chat/PlanStickyTracker": 1,
         "@/features/studio/components/chat/RateLimitCard": 1,
         "@/features/studio/components/chat/StatusIndicator": 1,
         "@/features/studio/components/chat/StreamInterruptedBar": 1,
-        "@/features/studio/components/ChatInput": 1,
-        "@/features/studio/components/MessageBubble": 1,
-        "@/features/studio/config/chat-stream-errors.config": 1,
-        "@/features/studio/config/chat-toast-errors.config": 1,
-        "@/features/studio/hooks/useActiveArtifactSelectionSignal": 1,
-        "@/features/studio/services/campaign.service": 1,
         "@/features/studio/services/chat.service": 1,
         "@/features/studio/services/space-conversations-cache": 1,
         "@/features/studio/services/stream-resilience": 1,
@@ -738,505 +1652,32 @@
         "@/features/studio/store/use-presentation-design-chat-store": 1,
         "@/features/studio/store/use-presentation-full-mode-store": 1,
         "@/features/studio/store/use-presentation-tweaks-chat-store": 1,
-        "@/features/studio/types": 1,
-        "@/features/team/components/chat/ConversationSearch": 1,
-        "@/features/team/components/voice/VoiceApprovalContext": 1
-      }
-    },
-    "apps/web/src/features/spaces/containers/SpacesContainer.tsx": {
-      "sourceFeature": "spaces",
-      "count": 2,
-      "imports": {
-        "@/features/studio/components/layout/ResizableDivider": 1,
-        "@/features/studio/hooks/usePanelResize": 1
-      }
-    },
-    "apps/web/src/features/spaces/hooks/use-cached-spaces.ts": {
-      "sourceFeature": "spaces",
-      "count": 2,
-      "imports": {
-        "@/features/home/types/home-feed-scope": 1,
-        "@/features/org/store/use-org-store": 1
-      }
-    },
-    "apps/web/src/features/spaces/hooks/use-space-campaign-name.ts": {
-      "sourceFeature": "spaces",
-      "count": 2,
-      "imports": {
-        "@/features/studio/services/campaign.service": 1,
         "@/features/studio/types": 1
       }
     },
-    "apps/web/src/features/spaces/hooks/use-your-turn-feed.ts": {
+    "apps/web/src/features/spaces/components/chat/SpaceVoiceLiveTranscript.tsx": {
       "sourceFeature": "spaces",
       "count": 1,
       "imports": {
-        "@/features/home/types/home-feed-scope": 1
+        "@/features/brain/hooks/use-brain-live-session": 1
       }
     },
-    "apps/web/src/features/spaces/store/use-spaces-store.ts": {
+    "apps/web/src/features/spaces/components/chat/SpaceVoiceSessionView.tsx": {
       "sourceFeature": "spaces",
-      "count": 1,
-      "imports": {
-        "@/features/org/services/org.service": 1
-      }
-    },
-    "apps/web/src/features/studio/components/ChatInput.tsx": {
-      "sourceFeature": "studio",
-      "count": 4,
-      "imports": {
-        "@/features/composer/pasted-text": 1,
-        "@/features/settings/contexts/WorkspaceSettingsModalContext": 1,
-        "@/features/spaces/components/OptionBadge": 1,
-        "@/features/spaces/lib/presentation-import-events": 1
-      }
-    },
-    "apps/web/src/features/studio/components/preview/artifacts/preview/ArtifactPreviewPane.tsx": {
-      "sourceFeature": "studio",
-      "count": 5,
-      "imports": {
-        "@/features/spaces/components/artifacts/ad/AdMenuDropdown": 1,
-        "@/features/spaces/components/artifacts/artifact-display": 1,
-        "@/features/spaces/components/artifacts/email/EmailArtifactPreview": 1,
-        "@/features/spaces/components/artifacts/form/FormPreviewPane": 1,
-        "@/features/spaces/components/artifacts/funnel/FunnelMenuDropdown": 1
-      }
-    },
-    "apps/web/src/features/studio/store/use-chat-store.ts": {
-      "sourceFeature": "studio",
-      "count": 1,
-      "imports": {
-        "@/features/composer/pasted-text": 1
-      }
-    },
-    "apps/web/src/features/team-2/components/AgentsGrid.tsx": {
-      "sourceFeature": "team-2",
-      "count": 5,
-      "imports": {
-        "@/features/agent-teams/hooks/use-teams": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/studio/services/chat.service": 1,
-        "@/features/team/constants/team.constants": 1,
-        "@/features/team/hooks/useAgentMenuActions": 1
-      }
-    },
-    "apps/web/src/features/team-2/components/ConversationScopePicker.tsx": {
-      "sourceFeature": "team-2",
-      "count": 8,
-      "imports": {
-        "@/features/home/lib/home-feed-campaign-cache": 1,
-        "@/features/org/store/use-org-store": 1,
-        "@/features/spaces/services/spaces.service": 1,
-        "@/features/spaces/types": 1,
-        "@/features/studio/services/campaign.service": 1,
-        "@/features/studio/services/chat.service": 1,
-        "@/features/studio/types": 1,
-        "@/features/studio/utils/floating-menu-anchor": 1
-      }
-    },
-    "apps/web/src/features/team-2/components/Team2AgentChatWithConversations.tsx": {
-      "sourceFeature": "team-2",
-      "count": 12,
-      "imports": {
-        "@/features/mission-control/types": 1,
-        "@/features/org/services/org.service": 1,
-        "@/features/org/store/use-org-store": 1,
-        "@/features/spaces/components/artifacts/artifact-preview-selection": 1,
-        "@/features/spaces/components/artifacts/ArtifactPreviewPanelHost": 1,
-        "@/features/spaces/components/chat/ConversationShareModal": 1,
-        "@/features/spaces/components/chat/SpaceConversationsCollapsedRail": 1,
-        "@/features/spaces/components/chat/SpaceConversationsList": 1,
-        "@/features/studio/services/chat.service": 1,
-        "@/features/studio/store/use-chat-store": 1,
-        "@/features/studio/types": 1,
-        "@/features/team/components/AgentChatPanel": 1
-      }
-    },
-    "apps/web/src/features/team-2/containers/Team2Container.tsx": {
-      "sourceFeature": "team-2",
-      "count": 13,
-      "imports": {
-        "@/features/agent-teams/hooks/use-teams": 1,
-        "@/features/mission-control/services/missions.service": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/org/store/use-org-store": 1,
-        "@/features/studio/services/chat.service": 1,
-        "@/features/team/components/chat/AgentInfoPanel": 1,
-        "@/features/team/components/container/TeamModals": 1,
-        "@/features/team/constants/team.constants": 1,
-        "@/features/team/hooks/useAgentMenuActions": 1,
-        "@/features/team/hooks/useTeamContainerData": 1,
-        "@/features/team/hooks/useTeamContainerDerived": 1,
-        "@/features/team/hooks/useTeamContainerHandlers": 1,
-        "@/features/team/lib/agent-info-panel-tabs": 1
-      }
-    },
-    "apps/web/src/features/team-2/containers/TeamHrSideChatLayout.tsx": {
-      "sourceFeature": "team-2",
       "count": 3,
       "imports": {
-        "@/features/mission-control/types": 1,
-        "@/features/studio/components/layout/ResizableDivider": 1,
-        "@/features/studio/hooks/usePanelResize": 1
-      }
-    },
-    "apps/web/src/features/team/components/AgentActionsMenu.tsx": {
-      "sourceFeature": "team",
-      "count": 3,
-      "imports": {
-        "@/features/mission-control/types": 1,
-        "@/features/studio/services/campaign.service": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/team/components/AgentChatPanel.tsx": {
-      "sourceFeature": "team",
-      "count": 24,
-      "imports": {
-        "@/features/mission-control/services/missions.service": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/org/store/use-org-store": 1,
-        "@/features/studio/components/chat/ArtifactAttachments": 1,
-        "@/features/studio/components/chat/ComposerActiveRunTipCard": 1,
-        "@/features/studio/components/chat/MessageQueue": 1,
-        "@/features/studio/components/chat/PlanStickyTracker": 1,
-        "@/features/studio/components/chat/RateLimitCard": 1,
+        "@/features/brain/hooks/use-brain-live-session": 1,
         "@/features/studio/components/chat/StatusIndicator": 1,
-        "@/features/studio/components/chat/StreamInterruptedBar": 1,
-        "@/features/studio/components/ChatInput": 1,
-        "@/features/studio/components/layout/ResizableDivider": 1,
-        "@/features/studio/components/MessageBubble": 1,
-        "@/features/studio/components/preview/CampaignPreviewPanel": 1,
-        "@/features/studio/config/chat-stream-errors.config": 1,
-        "@/features/studio/config/chat-toast-errors.config": 1,
-        "@/features/studio/contexts/CampaignModeContext": 1,
-        "@/features/studio/hooks/useActiveArtifactSelectionSignal": 1,
-        "@/features/studio/hooks/usePanelResize": 1,
-        "@/features/studio/services/campaign.service": 1,
-        "@/features/studio/services/chat.service": 1,
-        "@/features/studio/services/stream-resilience": 1,
-        "@/features/studio/store/use-chat-store": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/team/components/chat/agent-info-panel/agent-info-panel.types.ts": {
-      "sourceFeature": "team",
-      "count": 2,
-      "imports": {
-        "@/features/mission-control/types": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/team/hooks/use-agent-user-state.ts": {
-      "sourceFeature": "team",
-      "count": 3,
-      "imports": {
-        "@/features/mission-control/services/missions.service": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/org/store/use-org-store": 1
-      }
-    },
-    "apps/web/src/features/team/hooks/useAgentMenuActions.ts": {
-      "sourceFeature": "team",
-      "count": 11,
-      "imports": {
-        "@/features/agent-teams/hooks/use-teams": 1,
-        "@/features/agent-teams/services/agent-teams.service": 1,
-        "@/features/brain/lib/brain-agent-modal.events": 1,
-        "@/features/mission-control/hooks/use-cached-agents": 1,
-        "@/features/mission-control/services/missions.service": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/settings/services/billing-api": 1,
-        "@/features/studio/services/campaign.service": 1,
-        "@/features/studio/types": 1,
-        "@/features/team-2/components/AgentGridCard": 1,
-        "@/features/team-2/hooks/use-team2-perms": 1
-      }
-    },
-    "apps/web/src/features/team/hooks/useTeamContainerData.ts": {
-      "sourceFeature": "team",
-      "count": 8,
-      "imports": {
-        "@/features/brain/services/brain.service": 1,
-        "@/features/mission-control/services/missions.service": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/org/store/use-org-store": 1,
-        "@/features/settings/services/billing-api": 1,
-        "@/features/studio/services/campaign.service": 1,
-        "@/features/studio/services/chat.service": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/team/hooks/useTeamContainerHandlers.ts": {
-      "sourceFeature": "team",
-      "count": 3,
-      "imports": {
-        "@/features/mission-control/services/missions.service": 1,
-        "@/features/settings/services/billing-api": 1,
-        "@/features/studio/services/campaign.service": 1
-      }
-    },
-    "apps/web/src/features/brain/hooks/use-brain-live-session.ts": {
-      "sourceFeature": "brain",
-      "count": 2,
-      "imports": {
-        "@/features/studio/store/use-chat-store": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/mission-control/components/dialogs/DeliverablesCarousel.tsx": {
-      "sourceFeature": "mission-control",
-      "count": 6,
-      "imports": {
-        "@/features/studio/components/chat/TsxMiniIframe": 1,
-        "@/features/studio/lib/offer-step-preview": 1,
-        "@/features/studio/services/artifact-preview.service": 1,
-        "@/features/spaces/lib/markdown-to-html": 1,
-        "@/features/spaces/services/spaces.service": 1,
-        "@/features/studio/lib/document-content-markdown": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/artifacts/use-space-artifact-preview-controller.ts": {
-      "sourceFeature": "spaces",
-      "count": 6,
-      "imports": {
-        "@/features/studio/components/preview/artifacts/preview/ArtifactPreviewPane": 1,
-        "@/features/studio/components/preview/artifacts/tree/buildArtifactTree": 1,
-        "@/features/studio/services/artifact-preview.service": 1,
-        "@/features/studio/services/campaign.service": 1,
-        "@/features/studio/types": 1,
-        "@/features/themes/services/themes.service": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/chat/FunnelCommentsChatView.tsx": {
-      "sourceFeature": "spaces",
-      "count": 2,
-      "imports": {
-        "@/features/studio/components/preview/PresentationCommentsEmptyMockup": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/chat/FunnelDesignChatView.tsx": {
-      "sourceFeature": "spaces",
-      "count": 8,
-      "imports": {
-        "@/features/studio/components/preview/PresentationDesignEmptyMockup": 1,
-        "@/features/studio/lib/presentation-design-utils": 1,
-        "@/features/studio/lib/funnel-direct-edit": 1,
-        "@/features/studio/services/artifact-preview.service": 1,
-        "@/features/studio/store/use-funnel-design-chat-store": 1,
-        "@/features/studio/store/use-funnel-full-mode-store": 1,
-        "@/features/studio/types": 1,
-        "@/features/themes/components/FontPicker": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/chat/FunnelTweaksChatView.tsx": {
-      "sourceFeature": "spaces",
-      "count": 1,
-      "imports": {
-        "@/features/studio/components/preview/FunnelTweaksControls": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/SpaceItemRow.tsx": {
-      "sourceFeature": "spaces",
-      "count": 2,
-      "imports": {
-        "@/features/org/services/org.service": 1,
-        "@/features/settings/components/settings-content/ConfirmDialog": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/SpaceQuickAdd.tsx": {
-      "sourceFeature": "spaces",
-      "count": 1,
-      "imports": {
-        "@/features/org/services/org.service": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/task-detail/TaskDetailModal.tsx": {
-      "sourceFeature": "spaces",
-      "count": 4,
-      "imports": {
-        "@/features/mission-control/components/dialogs/DeliverablesCarousel": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/org/services/org.service": 1,
-        "@/features/studio/services/campaign.service": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/task-detail/TaskSubtasks.tsx": {
-      "sourceFeature": "spaces",
-      "count": 1,
-      "imports": {
-        "@/features/org/services/org.service": 1
-      }
-    },
-    "apps/web/src/features/studio/components/message-bubble/MessageContentBlockSwitchPartA.tsx": {
-      "sourceFeature": "studio",
-      "count": 1,
-      "imports": {
-        "@/features/channels/lib/mission-deliverable-from-block": 1
-      }
-    },
-    "apps/web/src/features/studio/components/message-bubble/MessageContentBlockSwitchPartB.tsx": {
-      "sourceFeature": "studio",
-      "count": 1,
-      "imports": {
-        "@/features/flows/lib/flow-clarification-ui": 1
-      }
-    },
-    "apps/web/src/features/studio/components/preview/FunnelToolbar.tsx": {
-      "sourceFeature": "studio",
-      "count": 1,
-      "imports": {
-        "@/features/spaces/components/artifacts/funnel-status-glass": 1
-      }
-    },
-    "apps/web/src/features/studio/components/preview/FunnelTweaksControls.tsx": {
-      "sourceFeature": "studio",
-      "count": 3,
-      "imports": {
-        "@/features/themes/components/FontPicker": 1,
-        "@/features/themes/services/themes.service": 1,
-        "@/features/themes/types": 1
-      }
-    },
-    "apps/web/src/features/studio/store/use-funnel-full-mode-store.ts": {
-      "sourceFeature": "studio",
-      "count": 1,
-      "imports": {
-        "@/features/spaces/store/use-spaces-store": 1
-      }
-    },
-    "apps/web/src/features/channels/components/CampaignContextConfirmCard.tsx": {
-      "sourceFeature": "channels",
-      "count": 1,
-      "imports": {
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/channels/components/ChannelChat.tsx": {
-      "sourceFeature": "channels",
-      "count": 1,
-      "imports": {
-        "@/features/mission-control/types": 1
-      }
-    },
-    "apps/web/src/features/channels/components/ChannelContextTab.tsx": {
-      "sourceFeature": "channels",
-      "count": 3,
-      "imports": {
-        "@/features/home/lib/home-feed-campaign-cache": 1,
-        "@/features/studio/services/campaign.service": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/channels/components/ChannelHeader.tsx": {
-      "sourceFeature": "channels",
-      "count": 1,
-      "imports": {
-        "@/features/home/lib/home-feed-campaign-cache": 1
-      }
-    },
-    "apps/web/src/features/channels/components/ChannelOrderedBlocks.tsx": {
-      "sourceFeature": "channels",
-      "count": 6,
-      "imports": {
-        "@/features/mission-control/types": 1,
-        "@/features/studio/components/chat/BrowserPreviewPanel": 1,
-        "@/features/studio/components/chat/LockedInGroup": 1,
-        "@/features/studio/components/message-bubble/message-bubble.utils": 1,
-        "@/features/studio/components/message-bubble/MessageContentBlockSwitch": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/contacts/components/ContactInfoPanel.tsx": {
-      "sourceFeature": "contacts",
-      "count": 2,
-      "imports": {
-        "@/features/properties/constants/tag-picker-colors": 1,
-        "@/features/properties/hooks/useCustomFields": 1
-      }
-    },
-    "apps/web/src/features/flows/components/flow-builder/FlowBuilderStepSetupPanel.tsx": {
-      "sourceFeature": "flows",
-      "count": 4,
-      "imports": {
-        "@/features/org/services/org.service": 1,
-        "@/features/spaces/components/automations/automation-catalog": 1,
-        "@/features/spaces/components/automations/AutomationCategorizedSelect": 1,
-        "@/features/spaces/types/space-schema": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/automations/PromptTemplateEditor.tsx": {
-      "sourceFeature": "spaces",
-      "count": 1,
-      "imports": {
-        "@/features/studio/utils/textarea-caret-viewport": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/artifacts/artifact-view-rows.ts": {
-      "sourceFeature": "spaces",
-      "count": 2,
-      "imports": {
-        "@/features/studio/services/artifact-preview.service": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/artifacts/ArtifactViews.tsx": {
-      "sourceFeature": "spaces",
-      "count": 2,
-      "imports": {
-        "@/features/studio/services/artifact-preview.service": 1,
-        "@/features/studio/services/workflow.service": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/artifacts/paid-ads/use-paid-ads-data.ts": {
-      "sourceFeature": "spaces",
-      "count": 2,
-      "imports": {
-        "@/features/studio/services/artifact-preview.service": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/artifacts/PresentationCardMetaRows.tsx": {
-      "sourceFeature": "spaces",
-      "count": 1,
-      "imports": {
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/contacts/ContactCommunicationPanel.tsx": {
-      "sourceFeature": "spaces",
-      "count": 3,
-      "imports": {
-        "@/features/contacts/services/contacts-api": 1,
-        "@/features/properties/hooks/useCustomFields": 1,
-        "@/features/studio/components/preview/EmailPreviewEditor": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/contacts/ContactInfoSection.tsx": {
-      "sourceFeature": "spaces",
-      "count": 3,
-      "imports": {
-        "@/features/contacts/services/contacts-api": 2,
-        "@/features/contacts/services/crm-contacts-api": 1
+        "@/features/team/components/voice/agent-voice-mode/agent-voice-mode-utils": 1
       }
     },
     "apps/web/src/features/spaces/components/contacts/ContactsSegmentPanel.tsx": {
       "sourceFeature": "spaces",
-      "count": 5,
+      "count": 3,
       "imports": {
         "@/features/properties/hooks/useSegments": 1,
-        "@/features/properties/types/segments": 1,
-        "@/features/properties/utils/format-date": 1,
         "@/features/settings/components/settings-content/properties/segments/SegmentDeleteDialog": 1,
         "@/features/settings/components/settings-content/properties/segments/SegmentEditorDialog": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/contacts/ContactsView.tsx": {
-      "sourceFeature": "spaces",
-      "count": 1,
-      "imports": {
-        "@/features/contacts/services/contacts-api": 1
       }
     },
     "apps/web/src/features/spaces/components/content/SpaceContentRouter.tsx": {
@@ -1247,32 +1688,32 @@
         "@/features/org/store/use-org-store": 1
       }
     },
+    "apps/web/src/features/spaces/components/customize/funnels-customize/FunnelsListSubView.tsx": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/studio/services/artifact-preview.service": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/customize/views/channels/ChannelsMainView.tsx": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/channels": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/customize/views/instagram/IgResearchMainView.tsx": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/settings/contexts/WorkspaceSettingsModalContext": 1
+      }
+    },
     "apps/web/src/features/spaces/components/doc-menu/DocMenuDropdown.tsx": {
       "sourceFeature": "spaces",
       "count": 1,
       "imports": {
         "@/features/settings/components/settings-content/ConfirmDialog": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/docs/DocEditorPanel.tsx": {
-      "sourceFeature": "spaces",
-      "count": 1,
-      "imports": {
-        "@/features/org/services/org.service": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/docs/DocEditorPanelInner.tsx": {
-      "sourceFeature": "spaces",
-      "count": 1,
-      "imports": {
-        "@/features/org/services/org.service": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/docs/DriveFoldersPanel.tsx": {
-      "sourceFeature": "spaces",
-      "count": 1,
-      "imports": {
-        "@/features/settings/components/settings-content/integration-logo": 1
       }
     },
     "apps/web/src/features/spaces/components/DocsView.tsx": {
@@ -1285,7 +1726,14 @@
         "@/features/studio/hooks/usePanelResize": 1
       }
     },
-    "apps/web/src/features/spaces/components/ListView.tsx": {
+    "apps/web/src/features/spaces/components/GroupSection.tsx": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/org/services/org.service": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/KanbanView.tsx": {
       "sourceFeature": "spaces",
       "count": 1,
       "imports": {
@@ -1300,6 +1748,40 @@
         "@/features/org/store/use-org-store": 1
       }
     },
+    "apps/web/src/features/spaces/components/reporting/AdsPerformanceSpaceView.tsx": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/studio/components/preview/AdsPerformanceView": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/reporting/CampaignOverviewView.tsx": {
+      "sourceFeature": "spaces",
+      "count": 4,
+      "imports": {
+        "@/features/mission-control/services/missions.service": 1,
+        "@/features/mission-control/types": 1,
+        "@/features/studio/components/preview/MainDashboardOverview": 1,
+        "@/features/studio/services/analytics.service": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/reporting/ReportingCustomizePanel.tsx": {
+      "sourceFeature": "spaces",
+      "count": 2,
+      "imports": {
+        "@/features/studio/services/analytics.service": 1,
+        "@/features/studio/services/campaign.service": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/reporting/SocialReportingView.tsx": {
+      "sourceFeature": "spaces",
+      "count": 3,
+      "imports": {
+        "@/features/studio/components/preview/SocialPerformanceView": 1,
+        "@/features/studio/config/studio-inline-errors.config": 1,
+        "@/features/studio/services/analytics.service": 1
+      }
+    },
     "apps/web/src/features/spaces/components/ShareModal.tsx": {
       "sourceFeature": "spaces",
       "count": 3,
@@ -1307,6 +1789,14 @@
         "@/features/org/services/org.service": 1,
         "@/features/org/store/use-org-store": 1,
         "@/features/studio/components/preview/SettingsDropdown": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/SpaceItemRow.tsx": {
+      "sourceFeature": "spaces",
+      "count": 2,
+      "imports": {
+        "@/features/org/services/org.service": 1,
+        "@/features/settings/components/settings-content/ConfirmDialog": 1
       }
     },
     "apps/web/src/features/spaces/components/toolbar/DocsAddDocMenu.tsx": {
@@ -1317,11 +1807,12 @@
         "@/features/brain/utils/upload-validation": 1
       }
     },
-    "apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx": {
+    "apps/web/src/features/spaces/components/ViewSwitcher.tsx": {
       "sourceFeature": "spaces",
-      "count": 1,
+      "count": 2,
       "imports": {
-        "@/features/settings/contexts/WorkspaceSettingsModalContext": 1
+        "@/features/channels": 1,
+        "@/features/org/store/use-org-store": 1
       }
     },
     "apps/web/src/features/spaces/hooks/use-all-artifact-rows.ts": {
@@ -1332,63 +1823,435 @@
         "@/features/studio/services/workflow.service": 1
       }
     },
-    "apps/web/src/features/spaces/lib/apply-space-toolbar-filters.ts": {
+    "apps/web/src/features/spaces/hooks/use-space-artifact-actions.ts": {
       "sourceFeature": "spaces",
       "count": 1,
       "imports": {
-        "@/features/org/services/org.service": 1
+        "@/features/studio/services/artifact-preview.service": 1
       }
     },
-    "apps/web/src/features/spaces/services/contacts-view.service.ts": {
+    "apps/web/src/features/spaces/hooks/use-space-campaign-docs.ts": {
+      "sourceFeature": "spaces",
+      "count": 2,
+      "imports": {
+        "@/features/studio/services/artifact-preview.service": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/spaces/hooks/use-space-program-privacy.ts": {
       "sourceFeature": "spaces",
       "count": 1,
       "imports": {
-        "@/features/contacts/services/crm-contacts-api": 1
+        "@/features/org/store/use-org-store": 1
+      }
+    },
+    "apps/web/src/features/spaces/views/calendar/SpaceCalendarSelectedDayPanel.tsx": {
+      "sourceFeature": "spaces",
+      "count": 2,
+      "imports": {
+        "@/features/studio/components/preview/schedule/schedule-thumbnail": 1,
+        "@/features/studio/services/artifact-preview.service": 1
       }
     },
     "apps/web/src/features/spaces/views/calendar/SpaceCalendarView.tsx": {
       "sourceFeature": "spaces",
-      "count": 4,
+      "count": 3,
       "imports": {
-        "@/features/org/services/org.service": 1,
         "@/features/studio/components/preview/schedule/schedule-thumbnail": 1,
         "@/features/studio/components/preview/schedule/useScheduleData": 1,
         "@/features/studio/services/artifact-preview.service": 1
       }
     },
-    "apps/web/src/features/studio/components/preview/PresentationPreview.tsx": {
+    "apps/web/src/features/spaces/views/channels/ChannelsToolbar.tsx": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/channels": 1
+      }
+    },
+    "apps/web/src/features/studio/components/chat/AgentIntegrationConfirmCard.tsx": {
       "sourceFeature": "studio",
       "count": 1,
       "imports": {
-        "@/features/spaces/components/artifacts/presentation/PresentationMenuDropdown": 1
+        "@/features/projects/components/VibeyAgentsIcon": 1
       }
     },
-    "apps/web/src/features/studio/components/preview/PresentationToolbar.tsx": {
+    "apps/web/src/features/studio/components/chat/EmailSendConfirmCard.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/settings": 1
+      }
+    },
+    "apps/web/src/features/studio/components/ChatInput.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/composer/pasted-text": 1
+      }
+    },
+    "apps/web/src/features/studio/components/message-bubble/MessageContentBlockSwitchPartB.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/flows/lib/flow-clarification-ui": 1
+      }
+    },
+    "apps/web/src/features/studio/components/preview/AdsPerformanceView.tsx": {
       "sourceFeature": "studio",
       "count": 2,
       "imports": {
-        "@/features/spaces/components/artifacts/presentation/PresentationMenuDropdown": 2
+        "@/features/spaces/components/reporting/shared/reporting-toolbar.types": 1,
+        "@/features/spaces/types/space-schema": 1
       }
     },
-    "apps/web/src/features/projects/components/ProjectPage.tsx": {
-      "sourceFeature": "projects",
+    "apps/web/src/features/studio/components/preview/FunnelTweaksControls.tsx": {
+      "sourceFeature": "studio",
+      "count": 3,
+      "imports": {
+        "@/features/themes/components/FontPicker": 1,
+        "@/features/themes/services/themes.service": 1,
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/studio/components/preview/LeadsTab.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/contacts/components/ContactInfoPanel": 1
+      }
+    },
+    "apps/web/src/features/studio/components/preview/MainDashboardOverview.tsx": {
+      "sourceFeature": "studio",
+      "count": 6,
+      "imports": {
+        "@/features/mission-control/types": 1,
+        "@/features/spaces/components/reporting/CampaignOverviewDashboardGrid": 1,
+        "@/features/spaces/components/reporting/overview-custom-widgets": 1,
+        "@/features/spaces/components/reporting/overview-section-layout": 1,
+        "@/features/spaces/components/reporting/shared/resolve-overview-glass-colors": 1,
+        "@/features/spaces/types/space-schema": 1
+      }
+    },
+    "apps/web/src/features/studio/components/preview/MetaIntegrationsReviewModal.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/settings": 1
+      }
+    },
+    "apps/web/src/features/studio/components/preview/PresentationThemePalettePicker.tsx": {
+      "sourceFeature": "studio",
       "count": 2,
       "imports": {
-        "@/features/studio/components/layout/ResizableDivider": 1,
-        "@/features/studio/hooks/usePanelResize": 1
+        "@/features/themes/lib/theme-css-inject": 1,
+        "@/features/themes/types": 1
       }
     },
-    "apps/web/src/features/settings/components/settings-content/useIntegrations.ts": {
-      "sourceFeature": "settings",
+    "apps/web/src/features/studio/components/preview/PresentationTweaksControls.tsx": {
+      "sourceFeature": "studio",
+      "count": 3,
+      "imports": {
+        "@/features/themes/components/FontPicker": 1,
+        "@/features/themes/services/themes.service": 1,
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/studio/components/preview/SocialPerformanceView.tsx": {
+      "sourceFeature": "studio",
+      "count": 5,
+      "imports": {
+        "@/features/spaces/components/reporting/shared/FacebookReportingPagePicker": 1,
+        "@/features/spaces/components/reporting/shared/LinkedInReportingCompanyPagePicker": 1,
+        "@/features/spaces/components/reporting/shared/reporting-toolbar.types": 1,
+        "@/features/spaces/components/reporting/shared/YoutubeReportingChannelPicker": 1,
+        "@/features/spaces/types/space-schema": 1
+      }
+    },
+    "apps/web/src/features/studio/components/preview/workflow/WorkflowCanvas.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/settings": 1
+      }
+    },
+    "apps/web/src/features/studio/components/settings/theme-settings-color-shuffle.ts": {
+      "sourceFeature": "studio",
+      "count": 2,
+      "imports": {
+        "@/features/themes/config/theme-errors.config": 1,
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/studio/components/settings/theme-settings.constants.ts": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/studio/components/settings/ThemeSettings.tsx": {
+      "sourceFeature": "studio",
+      "count": 3,
+      "imports": {
+        "@/features/themes/components/ThemeBrandingImportDialog": 1,
+        "@/features/themes/components/ThemeFileImportDialog": 1,
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/studio/components/settings/ThemeSettingsBrandPanel.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/studio/components/settings/ThemeSettingsColorsPanel.tsx": {
+      "sourceFeature": "studio",
+      "count": 2,
+      "imports": {
+        "@/features/themes/components/TextColorPicker": 1,
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/studio/components/settings/ThemeSettingsDesignPanel.tsx": {
+      "sourceFeature": "studio",
+      "count": 2,
+      "imports": {
+        "@/features/themes/components/design": 1,
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/studio/components/settings/ThemeSettingsEmptyState.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/studio/components/settings/ThemeSettingsFontsPanel.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/themes/components/FontPicker": 1
+      }
+    },
+    "apps/web/src/features/studio/components/settings/ThemeSettingsHeader.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/studio/components/settings/ThemeSettingsImagesPanel.tsx": {
+      "sourceFeature": "studio",
+      "count": 2,
+      "imports": {
+        "@/features/themes/components/ImagesTab": 1,
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/studio/components/settings/ThemeSettingsLogoPanel.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/studio/components/settings/ThemeSettingsSocialPanel.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/studio/components/settings/ThemeSettingsThemeListDropdown.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/themes/types": 1
+      }
+    },
+    "apps/web/src/features/studio/components/settings/use-theme-settings-data.ts": {
+      "sourceFeature": "studio",
+      "count": 3,
+      "imports": {
+        "@/features/themes/services/themes.service": 1,
+        "@/features/themes/types": 2
+      }
+    },
+    "apps/web/src/features/studio/components/StudioHome.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/settings/contexts/WorkspaceSettingsModalContext": 1
+      }
+    },
+    "apps/web/src/features/studio/hooks/use-campaign-permission.ts": {
+      "sourceFeature": "studio",
       "count": 1,
       "imports": {
         "@/features/org/store/use-org-store": 1
+      }
+    },
+    "apps/web/src/features/studio/store/use-chat-store.ts": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/composer/pasted-text": 1
+      }
+    },
+    "apps/web/src/features/studio/store/use-funnel-full-mode-store.ts": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/spaces/store/use-spaces-store": 1
+      }
+    },
+    "apps/web/src/features/team-2/components/AgentAssignWorkModal.tsx": {
+      "sourceFeature": "team-2",
+      "count": 2,
+      "imports": {
+        "@/features/mission-control/components/MissionQuickCapture": 1,
+        "@/features/mission-control/services/missions.service": 1
+      }
+    },
+    "apps/web/src/features/team-2/components/tabs/BrainTab.tsx": {
+      "sourceFeature": "team-2",
+      "count": 4,
+      "imports": {
+        "@/features/brain/components/CortexMaxBrainView": 1,
+        "@/features/brain/services/brain.service": 1,
+        "@/features/brain/types": 1,
+        "@/features/settings/services/billing-api": 1
+      }
+    },
+    "apps/web/src/features/team-2/components/VibeyOpsDesk.tsx": {
+      "sourceFeature": "team-2",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/components/AwarenessToggle": 1
+      }
+    },
+    "apps/web/src/features/team/components/AgentActionsMenu.tsx": {
+      "sourceFeature": "team",
+      "count": 3,
+      "imports": {
+        "@/features/mission-control/types": 1,
+        "@/features/studio/services/campaign.service": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/team/components/AgentCard.tsx": {
+      "sourceFeature": "team",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/team/components/CampaignTeamManageModal.tsx": {
+      "sourceFeature": "team",
+      "count": 7,
+      "imports": {
+        "@/features/mission-control/services/missions.service": 1,
+        "@/features/mission-control/types": 1,
+        "@/features/studio/components/layout/ResizableDivider": 1,
+        "@/features/studio/hooks/usePanelResize": 1,
+        "@/features/studio/services/campaign.service": 1,
+        "@/features/studio/services/chat.service": 1,
+        "@/features/studio/store/use-chat-store": 1
+      }
+    },
+    "apps/web/src/features/team/components/chat/agent-info-panel/AgentInfoEditableName.tsx": {
+      "sourceFeature": "team",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/team/components/chat/agent-info-panel/AgentInfoPanelPortraitSection.tsx": {
+      "sourceFeature": "team",
+      "count": 2,
+      "imports": {
+        "@/features/mission-control/services/missions.service": 1,
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/team/components/chat/agent-info-panel/useAgentInfoPanelPortrait.ts": {
+      "sourceFeature": "team",
+      "count": 3,
+      "imports": {
+        "@/features/mission-control/services/missions.service": 1,
+        "@/features/mission-control/types": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/team/components/chat/TeamChatHeader.tsx": {
+      "sourceFeature": "team",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/team/components/FireEmployeeConfirmModal.tsx": {
+      "sourceFeature": "team",
+      "count": 3,
+      "imports": {
+        "@/features/mission-control/services/missions.service": 1,
+        "@/features/mission-control/types": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/team/components/ready-employees-modal/ReadyEmployeesModalDesktop.tsx": {
+      "sourceFeature": "team",
+      "count": 1,
+      "imports": {
+        "@/features/studio/components/layout/ResizableDivider": 1
+      }
+    },
+    "apps/web/src/features/team/components/TelegramSetupDialog.tsx": {
+      "sourceFeature": "team",
+      "count": 2,
+      "imports": {
+        "@/features/studio/services/campaign.service": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/team/components/voice/VoiceSessionTasks.tsx": {
+      "sourceFeature": "team",
+      "count": 2,
+      "imports": {
+        "@/features/studio/components/MessageBubble": 1,
+        "@/features/studio/types": 1
       }
     },
     "apps/web/src/features/team/containers/AgentWidgetSection.tsx": {
       "sourceFeature": "team",
       "count": 1,
       "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/team/containers/TeamAgentsCarousel.tsx": {
+      "sourceFeature": "team",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/team/containers/TeamMobileOverlays.tsx": {
+      "sourceFeature": "team",
+      "count": 2,
+      "imports": {
+        "@/features/mission-control/types": 1,
+        "@/features/studio/types": 1
+      }
+    },
+    "apps/web/src/features/team/containers/TeamModals.tsx": {
+      "sourceFeature": "team",
+      "count": 2,
+      "imports": {
+        "@/features/mission-control/services/missions.service": 1,
         "@/features/mission-control/types": 1
       }
     },
@@ -1400,188 +2263,6 @@
         "@/features/spaces/components/cells/field-color-presets-popover": 1,
         "@/features/studio/services/campaign.service": 1,
         "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/team/components/shared/CampaignDestinationField.tsx": {
-      "sourceFeature": "team",
-      "count": 1,
-      "imports": {
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/team/components/TelegramSetupDialog.tsx": {
-      "sourceFeature": "team",
-      "count": 2,
-      "imports": {
-        "@/features/studio/services/campaign.service": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/autopilot/components/StrategyEditor.tsx": {
-      "sourceFeature": "autopilot",
-      "count": 1,
-      "imports": {
-        "@/features/studio/services/campaign.service": 1
-      }
-    },
-    "apps/web/src/features/brain/hooks/use-brain-scope-menu-actions.ts": {
-      "sourceFeature": "brain",
-      "count": 4,
-      "imports": {
-        "@/features/mission-control/services/missions.service": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/org/store/use-org-store": 1,
-        "@/features/team-2/hooks/use-team2-perms": 1
-      }
-    },
-    "apps/web/src/features/channels/components/ChannelListActionsHost.tsx": {
-      "sourceFeature": "channels",
-      "count": 1,
-      "imports": {
-        "@/features/spaces/components/space-floating-control-attr": 1
-      }
-    },
-    "apps/web/src/features/home/components/DailyRecommendationStrip.tsx": {
-      "sourceFeature": "home",
-      "count": 5,
-      "imports": {
-        "@/features/brain/services/brain.service": 1,
-        "@/features/org/store/use-org-store": 1,
-        "@/features/settings/contexts/AccountSettingsModalContext": 1,
-        "@/features/settings/contexts/WorkspaceSettingsModalContext": 1,
-        "@/features/skill-recommendations/services/skill-recommendations.service": 1
-      }
-    },
-    "apps/web/src/features/home/components/RecentAgentConversationsCard.tsx": {
-      "sourceFeature": "home",
-      "count": 7,
-      "imports": {
-        "@/features/org/services/org.service": 1,
-        "@/features/org/store/use-org-store": 1,
-        "@/features/spaces/components/chat/ConversationShareModal": 1,
-        "@/features/spaces/components/chat/SpaceConversationActionsMenu": 1,
-        "@/features/spaces/components/chat/strip-legacy-spaces-conversation-title": 1,
-        "@/features/studio/services/chat.service": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/home/config/daily-recommendation-copy.config.ts": {
-      "sourceFeature": "home",
-      "count": 2,
-      "imports": {
-        "@/features/settings/contexts/AccountSettingsModalContext": 1,
-        "@/features/settings/contexts/WorkspaceSettingsModalContext": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/artifacts/paid-ads/PaidAdsStructurePane.tsx": {
-      "sourceFeature": "spaces",
-      "count": 2,
-      "imports": {
-        "@/features/studio/services/artifact-preview.service": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/chat/PresentationDesignChatView.tsx": {
-      "sourceFeature": "spaces",
-      "count": 7,
-      "imports": {
-        "@/features/studio/components/preview/PresentationDesignEmptyMockup": 1,
-        "@/features/studio/lib/presentation-design-utils": 1,
-        "@/features/studio/lib/presentation-direct-edit": 1,
-        "@/features/studio/store/use-presentation-design-chat-store": 1,
-        "@/features/studio/store/use-presentation-full-mode-store": 1,
-        "@/features/studio/types": 1,
-        "@/features/themes/components/FontPicker": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/contacts/ContactConversationThread.tsx": {
-      "sourceFeature": "spaces",
-      "count": 1,
-      "imports": {
-        "@/features/mission-control/hooks/use-cached-agents": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/header/SpaceMoreMenu.tsx": {
-      "sourceFeature": "spaces",
-      "count": 3,
-      "imports": {
-        "@/features/org/store/use-org-store": 1,
-        "@/features/settings/components/settings-content/ConfirmDialog": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/mission-menu/use-mission-menu-actions.ts": {
-      "sourceFeature": "spaces",
-      "count": 4,
-      "imports": {
-        "@/features/mission-control/config/mission-control-toast-errors.config": 1,
-        "@/features/mission-control/services/missions.service": 1,
-        "@/features/mission-control/types": 2
-      }
-    },
-    "apps/web/src/features/spaces/components/ViewSwitcher.tsx": {
-      "sourceFeature": "spaces",
-      "count": 3,
-      "imports": {
-        "@/features/channels": 1,
-        "@/features/channels/services/channels.service": 1,
-        "@/features/org/store/use-org-store": 1
-      }
-    },
-    "apps/web/src/features/spaces/lib/collect-task-deliverables.ts": {
-      "sourceFeature": "spaces",
-      "count": 3,
-      "imports": {
-        "@/features/channels/lib/mission-deliverable-from-block": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/spaces/views/types.ts": {
-      "sourceFeature": "spaces",
-      "count": 1,
-      "imports": {
-        "@/features/org/services/org.service": 1
-      }
-    },
-    "apps/web/src/features/team-2/components/teams/TeamAnalyticsView.tsx": {
-      "sourceFeature": "team-2",
-      "count": 7,
-      "imports": {
-        "@/features/agent-teams/services/agent-teams.service": 1,
-        "@/features/agent-teams/types": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/org/services/org.service": 1,
-        "@/features/settings/services/billing-api": 1,
-        "@/features/settings/types/billing.types": 1,
-        "@/features/spaces/components/reporting/shared/resolve-reporting-dates": 1
-      }
-    },
-    "apps/web/src/features/team-2/components/teams/TeamOverviewChatModal.tsx": {
-      "sourceFeature": "team-2",
-      "count": 3,
-      "imports": {
-        "@/features/studio/components/MessageBubble": 1,
-        "@/features/studio/services/chat.service": 1,
-        "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/team-2/components/teams/TeamOverviewView.tsx": {
-      "sourceFeature": "team-2",
-      "count": 5,
-      "imports": {
-        "@/features/mission-control/components/dialogs/MissionDetailModal": 1,
-        "@/features/mission-control/services/missions.service": 1,
-        "@/features/mission-control/types": 1,
-        "@/features/org/store/use-org-store": 1,
-        "@/features/spaces/components/reporting/shared/resolve-reporting-dates": 1
-      }
-    },
-    "apps/web/src/features/team/components/chat/TeamChatHeader.tsx": {
-      "sourceFeature": "team",
-      "count": 1,
-      "imports": {
-        "@/features/mission-control/types": 1
       }
     }
   },

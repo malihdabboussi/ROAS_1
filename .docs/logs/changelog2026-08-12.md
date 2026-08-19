@@ -70,6 +70,16 @@ Impact: No behavior change; dead code removed.
 
 Files: apps/web/src/features/home/components/MeetingActionMoveMenu.tsx (deleted), .docs/plans/agent-follow-up-work.md
 
+## [2026-08-12 15:28] - [FEATURE]
+
+What: Replaced the `/campaigns` hierarchy list with an All Programs card grid and made each Program's Overview render its campaigns as a responsive card grid by default.
+
+Why: Programs and Clients opened dense expanded lists that were difficult to scan and did not match the expected project-card navigation model.
+
+Impact: Clicking Programs now shows accessible Programs with their campaign counts. Clicking Clients or another Program opens campaign cards while the existing List, Board, Calendar, and Canvas switcher remains available.
+
+Files: `apps/web/src/app/(dashboard)/campaigns/`, `documentation/features/programs.md`, `.docs/logs/changelog2026-08-12.md`
+
 ## [2026-08-12 12:09] - [FIX]
 
 What: Atomic completion ownership for video generation jobs. Added completion_claimed_at/_by and billing_recorded_at to media_generation_jobs (migration 20260812150000). Every terminal transition in getVideoStatus (success completion, provider failure/cancel) and the sweeper's 24h expiry now first wins a single-UPDATE atomic claim (retakable after 10 minutes for crash recovery); losing callers reload and return the canonical result or processing. Credit debits are gated by a never-expiring one-shot billing_recorded_at flip; the hasProviderUsageEvent lookup remains only as a legacy pre-check. Consolidated the duplicated replicate/google billing blocks into recordVideoBillingOnce/resolveVideoRate.

@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, MoreVertical, Pencil, Pin, UserX } from 'lucide-react'
 import { VibeyLoadingSphereSimple } from '@/components/vibey/vibey-loading-sphere-simple'
 import type { MissionAgent } from '@/features/mission-control/types'
-import { SYSTEM_LIKE_AGENT_KEYS } from '../constants/team.constants'
 import { RoleEmblem } from '../components/RoleEmblem'
+import { SYSTEM_LIKE_AGENT_KEYS } from '../constants/team.constants'
 
 export interface CarouselScrollDelta {
   left?: number
@@ -259,6 +259,8 @@ export function CarouselSlide({
               }
               setMenuOpen((v) => !v)
             }}
+            aria-label="Agent options"
+            title="Agent options"
             className={`rounded-spacing-1 p-spacing-1 shrink-0 transition-opacity hover:bg-white/10 ${
               menuOpen ? 'opacity-100' : 'opacity-0 group-hover/agent:opacity-100'
             }`}
@@ -307,7 +309,7 @@ export function CarouselSlide({
                     <div className="border-border mx-spacing-2 my-spacing-1 border-t" />
                     <button
                       type="button"
-                      className="body-4 gap-spacing-2 px-spacing-3 py-spacing-2 flex w-full items-center text-red-400 hover:bg-white/10"
+                      className="body-4 gap-spacing-2 px-spacing-3 py-spacing-2 text-destructive flex w-full items-center hover:bg-white/10"
                       onClick={(e) => {
                         e.stopPropagation()
                         setMenuOpen(false)

@@ -26,7 +26,7 @@ export function MetaPublishModalChecklist({
             )}
             {check.status === 'failed' && (
               <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500/20">
-                <AlertCircle className="h-3 w-3 text-red-400" />
+                <AlertCircle className="text-destructive h-3 w-3" />
               </div>
             )}
           </div>
@@ -36,14 +36,14 @@ export function MetaPublishModalChecklist({
                 check.status === 'passed'
                   ? 'text-foreground'
                   : check.status === 'failed'
-                    ? 'text-red-400'
+                    ? 'text-destructive'
                     : 'text-muted-foreground'
               }`}
             >
               {check.label}
             </p>
             {check.status === 'failed' && check.error && (
-              <p className="typo-caption text-red-400/70">{check.error}</p>
+              <p className="typo-caption text-destructive/70">{check.error}</p>
             )}
           </div>
         </div>

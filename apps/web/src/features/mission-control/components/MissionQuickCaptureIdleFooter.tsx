@@ -1,5 +1,15 @@
 import type { RefObject } from 'react'
-import { Check, Cloud, Flag, FolderOpen, HardDrive, Mic, Paperclip, Plus, Upload } from 'lucide-react'
+import {
+  Check,
+  Cloud,
+  Flag,
+  FolderOpen,
+  HardDrive,
+  Mic,
+  Paperclip,
+  Plus,
+  Upload,
+} from 'lucide-react'
 import { CloudAttachMenuItems } from '@/components/media/CloudAttachMenuItems'
 import { LucideIcon } from '@/components/ui/IconPicker'
 import { Tooltip } from '@/components/ui/tooltip'
@@ -105,6 +115,7 @@ export function MissionQuickCaptureIdleFooter({
               type="button"
               onClick={() => setActiveDropdown(activeDropdown === 'attach' ? null : 'attach')}
               disabled={disabled}
+              aria-label="Attach file"
               className={`button-glass-neutral flex h-8 w-8 items-center justify-center rounded-full transition-all disabled:opacity-30 ${filesCount > 0 ? 'text-primary' : ''}`}
             >
               <Paperclip className="h-3.5 w-3.5" />
@@ -143,7 +154,7 @@ export function MissionQuickCaptureIdleFooter({
               disabled={disabled}
               className={`button-glass-neutral flex h-8 items-center gap-1.5 rounded-full px-2.5 transition-all disabled:opacity-30 ${
                 campaignError && !activeCampaign
-                  ? 'border-red-500/70 bg-red-500/10 text-red-300'
+                  ? 'text-destructive border-red-500/70 bg-red-500/10'
                   : activeCampaign
                     ? 'text-primary'
                     : ''
@@ -191,9 +202,14 @@ export function MissionQuickCaptureIdleFooter({
                           }}
                           className={`gap-spacing-2 px-spacing-2 py-spacing-2 rounded-spacing-1 body-3 flex w-full items-center text-left ${isSelected ? 'bg-primary/10 text-muted-foreground' : 'hover:bg-hover-subtle text-muted-foreground hover:text-foreground'}`}
                         >
-                          <LucideIcon name={c.icon ?? 'folder-kanban'} className="icon-sm shrink-0" />
+                          <LucideIcon
+                            name={c.icon ?? 'folder-kanban'}
+                            className="icon-sm shrink-0"
+                          />
                           <span>{c.name}</span>
-                          {isSelected && <Check className="icon-sm text-muted-foreground ml-auto" />}
+                          {isSelected && (
+                            <Check className="icon-sm text-muted-foreground ml-auto" />
+                          )}
                         </button>
                       )
                     })}
@@ -214,6 +230,7 @@ export function MissionQuickCaptureIdleFooter({
               type="button"
               onClick={() => setActiveDropdown(activeDropdown === 'priority' ? null : 'priority')}
               disabled={disabled}
+              aria-label="Set priority"
               className="button-glass-neutral flex h-8 w-8 items-center justify-center rounded-full transition-all disabled:opacity-30"
             >
               <Flag className={`h-3.5 w-3.5 ${active ? active.color : 'text-muted-foreground'}`} />
@@ -268,7 +285,12 @@ export function MissionQuickCaptureIdleFooter({
         ) : null}
         {isModernComposer ? (
           <Tooltip label="Voice input">
-            <button type="button" onClick={onStartRecording} disabled={disabled} className={iconBtnClass}>
+            <button
+              type="button"
+              onClick={onStartRecording}
+              disabled={disabled}
+              className={iconBtnClass}
+            >
               <Mic className="h-3.5 w-3.5" />
             </button>
           </Tooltip>

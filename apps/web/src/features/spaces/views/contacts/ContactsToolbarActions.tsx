@@ -107,6 +107,7 @@ export function ContactsToolbarActions({ ctx }: { ctx: SpaceToolbarContext }) {
                         if (contactsSearchOpen && !contactsSearch) setContactsSearchOpen(false)
                         else setContactsSearchOpen(true)
                       }}
+                      aria-label="Search contacts"
                       className={`inline-flex h-spacing-7 w-7 shrink-0 items-center justify-center rounded-spacing-2 transition-colors ${
                         contactsSearchOpen || contactsSearch
                           ? 'bg-hover-subtle text-foreground'
@@ -174,6 +175,7 @@ export function ContactsToolbarActions({ ctx }: { ctx: SpaceToolbarContext }) {
                     type="button"
                     onClick={() => contactsViewRef.current?.refresh()}
                     disabled={contactsLoading}
+                    aria-label="Refresh"
                     className="hover:bg-hover-subtle hover:text-foreground inline-flex h-spacing-7 w-7 shrink-0 items-center justify-center rounded-spacing-2 text-muted-foreground transition-colors"
                   >
                     <RefreshCw className={`icon-sm ${contactsLoading ? 'animate-spin' : ''}`} />

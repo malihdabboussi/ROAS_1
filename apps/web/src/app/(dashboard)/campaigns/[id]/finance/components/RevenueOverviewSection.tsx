@@ -103,6 +103,8 @@ export function RevenueOverviewSection({
               type="button"
               onClick={() => void loadOverview()}
               disabled={overviewLoading}
+              aria-label="Refresh revenue"
+              title="Refresh revenue"
               className="btn-icon-glass rounded-spacing-2"
             >
               <RefreshCw className={`h-4 w-4 ${overviewLoading ? 'animate-spin' : ''}`} />
@@ -119,7 +121,12 @@ export function RevenueOverviewSection({
             icon: DollarSign,
             color: 'text-emerald-400',
           },
-          { label: 'Refunds', value: overview?.refunds ?? 0, icon: Undo2, color: 'text-red-400' },
+          {
+            label: 'Refunds',
+            value: overview?.refunds ?? 0,
+            icon: Undo2,
+            color: 'text-destructive',
+          },
           {
             label: 'Stripe Fees',
             value: overview?.fees ?? 0,

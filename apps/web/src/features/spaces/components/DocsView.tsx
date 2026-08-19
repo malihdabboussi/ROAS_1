@@ -37,12 +37,12 @@ import type { useCloudAttach } from '@/lib/hooks/use-cloud-attach'
 import { listDriveFiles, type GoogleDriveFile } from '@/lib/services/google-drive-api'
 import { cn } from '@/lib/utils/cn'
 import { getDocsTreeDndInvalidToastMessage } from '../config/docs-tree-dnd-toast.config'
-import { buildDocsTreeReorder, type DocsTreeDndZone } from '../lib/docs-tree-dnd-apply'
-import { formatAbsoluteDateTime, formatRelativeDate } from '../lib/format-relative-date'
 import {
   buildDocToolbarSearchHaystack,
   filterItemsByToolbarSearch,
 } from '../lib/apply-space-toolbar-filters'
+import { buildDocsTreeReorder, type DocsTreeDndZone } from '../lib/docs-tree-dnd-apply'
+import { formatAbsoluteDateTime, formatRelativeDate } from '../lib/format-relative-date'
 import { groupItems, type GroupData } from '../lib/group-items'
 import { spaceGroupBadgeChipProps } from '../lib/space-group-badge-glass'
 import { getGroupByFieldSyncPatch, mergeSpaceItemPartials } from '../lib/space-list-groupby-patch'
@@ -62,7 +62,6 @@ import type { DocMenuTarget } from './doc-menu/use-doc-menu-actions'
 import { DocEditorPanel } from './docs/DocEditorPanel'
 import { ListView } from './ListView'
 import { ShareModal } from './ShareModal'
-import { DocsAddDocMenu } from './toolbar/DocsAddDocMenu'
 import {
   buildSpaceDocChatDragPayload,
   htmlToPlainTextPreview,
@@ -70,6 +69,7 @@ import {
   toFieldPatch,
 } from './space-item-values'
 import { SpaceListDndShell } from './SpaceListDndRow'
+import { DocsAddDocMenu } from './toolbar/DocsAddDocMenu'
 
 function DocsEmptyIllustration() {
   return (
@@ -2307,7 +2307,7 @@ export function DocsView({
             </div>
           )}
 
-          {groups ? (
+          {groups && groups.some((group) => group.items.length > 0) ? (
             <div className="gap-spacing-10 flex flex-col">
               {groups.map((group) => {
                 const collapsed = collapsedGroups[group.key] ?? false
@@ -2366,6 +2366,8 @@ export function DocsView({
                             e.stopPropagation()
                             onEditCategories()
                           }}
+                          aria-label="Category options"
+                          title="Category options"
                           className="ml-auto shrink-0 rounded p-1 text-[var(--color-muted-foreground)] opacity-0 transition-opacity hover:text-[var(--foreground)] group-hover/header:opacity-100"
                         >
                           <MoreHorizontal className="h-3.5 w-3.5" />

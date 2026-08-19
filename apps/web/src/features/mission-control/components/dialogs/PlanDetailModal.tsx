@@ -529,7 +529,13 @@ export function PlanDetailModal({
                   <Download className="icon-sm" />
                 )}
               </button>
-              <button type="button" onClick={onClose} className="btn-icon-bare">
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close plan"
+                title="Close plan"
+                className="btn-icon-bare"
+              >
                 <X className="icon-sm" />
               </button>
             </div>

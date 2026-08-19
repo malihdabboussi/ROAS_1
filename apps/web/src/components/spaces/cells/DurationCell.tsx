@@ -174,7 +174,7 @@ export function DurationCell({
                   }
                 }}
                 placeholder="0"
-                className={`w-10 bg-transparent text-center text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] ${error ? 'text-red-400' : ''}`}
+                className={`w-10 bg-transparent text-center text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] ${error ? 'text-destructive' : ''}`}
               />
               <span className="text-xs text-[var(--color-muted-foreground)]">h</span>
               <input
@@ -192,12 +192,12 @@ export function DurationCell({
                   }
                 }}
                 placeholder="0"
-                className={`w-10 bg-transparent text-center text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] ${error ? 'text-red-400' : ''}`}
+                className={`w-10 bg-transparent text-center text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] ${error ? 'text-destructive' : ''}`}
               />
               <span className="text-xs text-[var(--color-muted-foreground)]">m</span>
             </div>
             {error && (
-              <div className="flex items-center gap-1.5 border-t border-[var(--color-border)] px-2 py-1.5 text-[11px] text-red-400">
+              <div className="text-destructive flex items-center gap-1.5 border-t border-[var(--color-border)] px-2 py-1.5 text-[11px]">
                 <AlertCircle className="h-3 w-3 shrink-0" />
                 {error}
               </div>

@@ -204,7 +204,7 @@ export class MeetingCallMatchingRepository {
       .eq('custom_data->>entry_type', 'call')
       .limit(200)
     if (error) throw new BadRequestException(error.message)
-    return (data as Record<string, unknown>[]) ?? []
+    return ((data ?? []) as unknown as Record<string, unknown>[])
   }
 }
 

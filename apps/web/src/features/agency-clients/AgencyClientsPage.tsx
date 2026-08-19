@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { BriefcaseBusiness, PanelRightOpen, Search } from 'lucide-react'
+import { BriefcaseBusiness, PanelRightOpen, Rocket, Search } from 'lucide-react'
 import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { fetchAgencyClients, type AgencyClient } from '@/lib/agency-clients'
 import { cn } from '@/lib/utils/cn'
@@ -30,14 +30,14 @@ export function AgencyClientsPage() {
       try {
         const response = await fetchAgencyClients('', false)
         if (cancelled) return
-        setClients(response.clients)
+        setClients(response?.clients ?? [])
         setLoading(false)
 
         // Client cards should never wait for a potentially large Brain import. Reconcile
         // missing mappings after the canonical Page Grader list is already usable.
         void fetchAgencyClients('', true)
           .then((synced) => {
-            if (!cancelled) setClients(synced.clients)
+            if (!cancelled && synced?.clients) setClients(synced.clients)
           })
           .catch(() => undefined)
       } catch (reason) {
@@ -106,6 +106,9 @@ export function AgencyClientsPage() {
         <Link href="/client-campaigns" className="button-compact button-glass-neutral">
           <BriefcaseBusiness className="icon-sm" /> Client Campaigns
         </Link>
+        <Link href="/launches" className="button-compact button-glass-neutral">
+          <Rocket className="icon-sm" /> Launches
+        </Link>
       </div>
 
       {loading ? <ListSkeleton rows={8} label={AGENCY_CLIENT_MESSAGES.LOADING_CLIENTS} /> : null}
@@ -114,7 +117,9 @@ export function AgencyClientsPage() {
           {error}
         </p>
       ) : null}
-      {!loading && !error ? <AgencyClientsTable groups={groups} /> : null}
+      {!loading && !error ? (
+        <AgencyClientsTable groups={groups} showManagerColumn={groupMode !== 'manager'} />
+      ) : null}
     </main>
   )
 }

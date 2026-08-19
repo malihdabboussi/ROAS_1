@@ -19,17 +19,17 @@ import {
 } from '../repositories/work-request.repository'
 import { appendAssetsToDescription } from './work-request-assets'
 import {
+  assignWorkRequestFinalTask,
+  bindWorkRequestAssignee,
+  stampWorkRequestAssignee,
+} from './work-request-assignee'
+import {
   ensureDraftResumeConversation,
   loadOwnedConversationId,
   mergeConversationIntoProvenance,
   mergeIncomingDraftConversation,
 } from './work-request-conversation-stamp'
 import { mirrorWorkRequestFinalTask } from './work-request-mirror'
-import {
-  assignWorkRequestFinalTask,
-  bindWorkRequestAssignee,
-  stampWorkRequestAssignee,
-} from './work-request-assignee'
 import {
   slackReminderSendParams,
   WORK_REQUEST_EXPIRY_WARNING_MS,
@@ -182,10 +182,7 @@ export class WorkRequestService {
     ) {
       const identity = bindWorkRequestAssignee(input, options.teamMembers ?? [])
       values.assignee_name = identity.name
-      values.routing = stampWorkRequestAssignee(
-        asRecord(values.routing ?? draft.routing),
-        identity,
-      )
+      values.routing = stampWorkRequestAssignee(asRecord(values.routing ?? draft.routing), identity)
     }
     if (input.due_date !== undefined) {
       values.due_at = input.due_date ? `${input.due_date}T23:59:59.000Z` : null

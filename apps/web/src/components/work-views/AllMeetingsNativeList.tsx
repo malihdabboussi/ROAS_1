@@ -78,7 +78,7 @@ export function AllMeetingsNativeList({
   items: SpaceItem[]
   reload: () => Promise<void>
   onOpenItem?: (item: SpaceItem) => void
-  persistItem?: (item: SpaceItem, payload: Partial<SpaceItem>) => Promise<void>
+  persistItem?: (item: SpaceItem, payload: Partial<SpaceItem>) => Promise<unknown>
 }) {
   const router = useRouter()
   const roster = useSpacesStore((state) => state.roster)

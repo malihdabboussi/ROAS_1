@@ -267,7 +267,7 @@ export default function SocialPostPreview({
 
       {publishErrors.length > 0 && (
         <div className="shrink-0 px-3 pb-1 pt-0">
-          <div className="rounded border border-red-500/40 bg-red-500/10 px-2 py-1.5 text-xs text-red-300">
+          <div className="text-destructive rounded border border-red-500/40 bg-red-500/10 px-2 py-1.5 text-xs">
             {publishErrors.map((message, index) => (
               <div key={`${message}-${index}`}>{message}</div>
             ))}

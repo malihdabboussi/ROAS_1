@@ -10,6 +10,9 @@ import { spaceGroupBadgeChipProps } from '@/lib/ui/group-badge-glass'
 import { brainCardStatus, brainCardStatusLabel, statusDotClass } from './BrainHomeGridCard'
 import { CampaignBrainIconDisplay } from './CampaignBrainIconPicker'
 
+/** Health cells while brain stats load — a pulse bar instead of literal 'Loading' / '—' text. */
+const CELL_SKELETON_CLS = 'bg-secondary rounded-spacing-1 inline-block h-3 w-16 animate-pulse align-middle'
+
 export type BrainListSection = {
   id: string
   title: string
@@ -186,7 +189,10 @@ function BrainListRow({
       </div>
       <div className="flex items-center gap-1.5">
         {loading ? (
-          <span className="text-muted-foreground">Loading</span>
+          <span className="sr-only">Loading</span>
+        ) : null}
+        {loading ? (
+          <span className={CELL_SKELETON_CLS} aria-hidden />
         ) : (
           <>
             <span
@@ -198,10 +204,18 @@ function BrainListRow({
         )}
       </div>
       <div className="text-muted-foreground tabular-nums">
-        {loading ? '—' : memoryCount.toLocaleString()}
-        <span className="body-4 ml-1">{isKnowledgeScope ? 'objects' : 'memories'}</span>
+        {loading ? (
+          <span className={CELL_SKELETON_CLS} aria-hidden />
+        ) : (
+          <>
+            {memoryCount.toLocaleString()}
+            <span className="body-4 ml-1">{isKnowledgeScope ? 'objects' : 'memories'}</span>
+          </>
+        )}
       </div>
-      <div className="text-muted-foreground">{loading ? '—' : relativeTime(lastCapture)}</div>
+      <div className="text-muted-foreground">
+        {loading ? <span className={CELL_SKELETON_CLS} aria-hidden /> : relativeTime(lastCapture)}
+      </div>
     </div>
   )
 }

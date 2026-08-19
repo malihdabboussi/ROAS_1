@@ -111,6 +111,8 @@ export function MissionControlDesktopToolbar({
         <button
           type="button"
           onClick={() => setActiveDropdown(activeDropdown === 'sort' ? null : 'sort')}
+          aria-label="Sort missions"
+          title="Sort missions"
           className="button-glass-blue h-spacing-8 gap-spacing-1 px-spacing-3 flex items-center rounded-lg font-medium"
         >
           <span className="relative z-10">

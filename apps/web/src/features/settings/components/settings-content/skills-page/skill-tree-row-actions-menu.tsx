@@ -23,7 +23,7 @@ const itemCls =
   'gap-spacing-2 body-3 rounded-spacing-2 text-muted-foreground hover:bg-[var(--color-hover-subtle)] hover:text-foreground px-spacing-2 py-spacing-1 flex w-full items-center text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50'
 const itemIcon = 'icon-sm shrink-0'
 const destructiveCls =
-  'gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full items-center text-left text-red-600 transition-colors hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:text-red-600'
+  'gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full items-center text-left text-destructive transition-colors hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:text-destructive'
 
 export function SkillTreeRowActionsMenu({
   target,

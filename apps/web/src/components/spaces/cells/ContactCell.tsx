@@ -237,9 +237,9 @@ export function ContactCell({
                     {initials(label)}
                   </span>
                   <span className="min-w-0 flex-1 text-left">
-                    <span className="text-foreground block truncate">{label}</span>
+                    <span className="text-foreground block truncate" title={label}>{label}</span>
                     {contact.email ? (
-                      <span className="typo-caption text-muted-foreground block truncate">
+                      <span className="typo-caption text-muted-foreground block truncate" title={contact.email}>
                         {contact.email}
                       </span>
                     ) : null}

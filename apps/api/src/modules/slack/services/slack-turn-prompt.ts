@@ -1,5 +1,12 @@
-import { classifySlackAskKind, formatSlackAskKindContext, type SlackAskKindResult } from './slack-ask-kind'
-import { formatSlackAskIdentityContext, type SlackAskClientStamp } from './slack-ask-identity-context'
+import {
+  formatSlackAskIdentityContext,
+  type SlackAskClientStamp,
+} from './slack-ask-identity-context'
+import {
+  classifySlackAskKind,
+  formatSlackAskKindContext,
+  type SlackAskKindResult,
+} from './slack-ask-kind'
 import type { SlackTurnClientSource } from './slack-turn-telemetry'
 
 /**
@@ -52,10 +59,7 @@ export function buildInboundSlackTurnPrompt(input: SlackTurnPromptInput): SlackT
   if (input.currentStamp) {
     parts.push(formatSlackAskIdentityContext(input.currentStamp, { askKind: askKind.kind }))
   }
-  if (
-    input.clientContextBlock &&
-    (askKind.kind === 'client' || askKind.kind === 'unclear')
-  ) {
+  if (input.clientContextBlock && (askKind.kind === 'client' || askKind.kind === 'unclear')) {
     parts.push(input.clientContextBlock)
   }
   if (input.text) parts.push(input.text)

@@ -512,6 +512,8 @@ export function ReportingCustomizePanel({
         <button
           type="button"
           onClick={onClose}
+          aria-label="Close panel"
+          title="Close panel"
           className="shrink-0 rounded-md p-1 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
         >
           <X className="h-4 w-4" />
@@ -1013,6 +1015,8 @@ function ReportingDisplaySubView({
         <button
           type="button"
           onClick={onClose}
+          aria-label="Close panel"
+          title="Close panel"
           className="shrink-0 rounded-md p-1 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
         >
           <X className="h-4 w-4" />
@@ -1244,6 +1248,8 @@ function ReportingScopeSubView({
         <button
           type="button"
           onClick={onClose}
+          aria-label="Close panel"
+          title="Close panel"
           className="shrink-0 rounded-md p-1 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
         >
           <X className="h-4 w-4" />
@@ -1484,6 +1490,8 @@ function SocialAccountsReportingSubView({
         <button
           type="button"
           onClick={onClose}
+          aria-label="Close panel"
+          title="Close panel"
           className="shrink-0 rounded-md p-1 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
         >
           <X className="h-4 w-4" />
@@ -1744,6 +1752,8 @@ function OverviewChannelsSubView({
         <button
           type="button"
           onClick={onClose}
+          aria-label="Close panel"
+          title="Close panel"
           className="shrink-0 rounded-md p-1 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
         >
           <X className="h-4 w-4" />

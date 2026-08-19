@@ -39,8 +39,8 @@ export function DatabaseAuthPanel({ projectRef }: DatabaseAuthPanelProps) {
     setLoading(true)
     try {
       const result = await listAuthUsers(projectRef, page, PAGE_SIZE)
-      setUsers(result.users)
-      setTotal(result.total)
+      setUsers(result?.users ?? [])
+      setTotal(result?.total ?? 0)
     } catch {
       setUsers([])
       setTotal(0)

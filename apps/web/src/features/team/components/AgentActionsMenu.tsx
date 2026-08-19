@@ -60,7 +60,7 @@ function MenuItem({
       onClick={onClick}
       className={`gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full items-center text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
         destructive
-          ? 'text-red-400 hover:bg-[var(--color-hover-subtle)]'
+          ? 'text-destructive hover:bg-[var(--color-hover-subtle)]'
           : 'text-muted-foreground hover:text-foreground hover:bg-[var(--color-hover-subtle)]'
       }`}
     >

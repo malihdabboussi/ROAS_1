@@ -24,7 +24,7 @@ export function TaskListView({ items, onOpenTask }: TaskListViewProps) {
               onClick={() => onOpenTask(item)}
               className="hover:bg-hover-subtle body-3 text-foreground grid w-full grid-cols-1 gap-1 px-4 py-3 text-left md:grid-cols-12 md:items-center md:gap-2"
             >
-              <span className="col-span-4 truncate font-medium">{item.title}</span>
+              <span className="col-span-4 truncate font-medium" title={item.title}>{item.title}</span>
               <span className="text-muted-foreground col-span-2 truncate">
                 {item.campaign_name ?? '—'}
               </span>

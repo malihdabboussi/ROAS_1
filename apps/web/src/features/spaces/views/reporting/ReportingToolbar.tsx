@@ -36,7 +36,7 @@ export function ReportingToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
 
   return (
     <ToolbarShell ctx={ctx}>
-      <div className="flex min-w-0 flex-nowrap items-center gap-1">
+      <div className="flex shrink-0 flex-nowrap items-center gap-1">
         {isSocialReportingView && activeSpace.campaign_id && activeView ? (
           <SocialPlatformsToolbarMenu
             config={activeView.reporting_config ?? {}}
@@ -101,6 +101,7 @@ export function ReportingToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
                         if (financeSearchOpen && !financeToolbarSearch) setFinanceSearchOpen(false)
                         else setFinanceSearchOpen(true)
                       }}
+                      aria-label="Search"
                       className={`rounded-md p-1.5 transition-colors ${
                         financeSearchOpen || financeToolbarSearch
                           ? 'bg-[var(--color-hover-subtle)] text-[var(--foreground)]'
@@ -119,6 +120,7 @@ export function ReportingToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
                   type="button"
                   disabled={!reportingToolbarApi || reportingToolbarApi.refreshing}
                   onClick={() => void Promise.resolve(reportingToolbarApi?.refresh?.())}
+                  aria-label="Refresh"
                   className="rounded-md p-1.5 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)] disabled:pointer-events-none disabled:opacity-40"
                 >
                   <RefreshCw

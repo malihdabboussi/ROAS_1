@@ -45,6 +45,8 @@ export function CustomizePanelHeader({
       <button
         type="button"
         onClick={onClose}
+        aria-label="Close customize panel"
+        title="Close customize panel"
         className="shrink-0 rounded-md p-1 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
       >
         <X className="h-4 w-4" />

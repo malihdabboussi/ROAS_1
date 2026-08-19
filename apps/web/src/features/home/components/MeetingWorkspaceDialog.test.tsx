@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   recordWorkAreaPage: vi.fn(),
   startMeetingCall: vi.fn(),
   updateSpaceItem: vi.fn(),
+  fetchSpaceById: vi.fn(),
   toggleMeetingActionStatus: vi.fn(),
   updateMeetingActionStatus: vi.fn(),
 }))
@@ -83,7 +84,7 @@ vi.mock('@/lib/campaigns/campaign-api', () => ({
   fetchCampaign: vi.fn().mockResolvedValue({ id: 'campaign-1', name: 'ROAS' }),
 }))
 vi.mock('@/lib/spaces', () => ({
-  fetchSpaceById: vi.fn().mockResolvedValue({ id: 'space-1', title: 'Meetings' }),
+  fetchSpaceById: mocks.fetchSpaceById,
   updateSpaceItem: mocks.updateSpaceItem,
 }))
 vi.mock('@/components/shell/use-shell-store', () => ({
@@ -96,11 +97,23 @@ vi.mock('@/components/shell/use-shell-store', () => ({
     }),
 }))
 
+const meetingStatusField = {
+  id: 'status',
+  name: 'Status',
+  type: 'select' as const,
+  options: [
+    { id: 'logged', label: 'To action', color: 'blue', group: 'not_started' as const },
+    { id: 'needs_follow_up', label: 'Following up', color: 'orange', group: 'active' as const },
+    { id: 'done', label: 'Done', color: 'emerald', group: 'closed' as const },
+  ],
+}
+
 const baseBundle = {
   meeting: {
     id: 'meeting-1',
     title: 'Strategy call',
     description: 'Align on launch.',
+    status: 'needs_follow_up',
     custom_data: {},
   },
   workspace: {
@@ -120,9 +133,28 @@ const baseBundle = {
   continuity: { prior_meeting_item_id: null, unresolved_commitments: [] },
 }
 
+function renderWorkspace(props: Partial<Parameters<typeof MeetingWorkspaceDialog>[0]> = {}) {
+  return render(
+    <MeetingWorkspaceDialog
+      spaceId="space-1"
+      meetingItemId="meeting-1"
+      joinUrl={null}
+      fallbackTitle="Strategy call"
+      onBack={vi.fn()}
+      onClose={vi.fn()}
+      {...props}
+    />,
+  )
+}
+
 describe('MeetingWorkspaceDialog', () => {
   beforeEach(() => {
     mocks.fetchMeetingRelatedCalls.mockResolvedValue([])
+    mocks.fetchSpaceById.mockResolvedValue({
+      id: 'space-1',
+      title: 'Meetings',
+      schema: { version: 1, fields: [meetingStatusField], views: [] },
+    })
   })
 
   afterEach(() => {
@@ -141,16 +173,7 @@ describe('MeetingWorkspaceDialog', () => {
       }),
     )
 
-    render(
-      <MeetingWorkspaceDialog
-        spaceId="space-1"
-        meetingItemId="meeting-1"
-        joinUrl={null}
-        fallbackTitle="Strategy call"
-        onBack={vi.fn()}
-        onClose={vi.fn()}
-      />,
-    )
+    renderWorkspace()
 
     expect(screen.getByRole('status', { name: 'Loading meeting details…' })).toBeInTheDocument()
     expect(screen.queryByText('Recordings & attachments')).not.toBeInTheDocument()
@@ -167,16 +190,7 @@ describe('MeetingWorkspaceDialog', () => {
     mocks.fetchMeetingWorkspace.mockReset()
     mocks.fetchMeetingWorkspace.mockResolvedValue(baseBundle)
 
-    render(
-      <MeetingWorkspaceDialog
-        spaceId="space-1"
-        meetingItemId="meeting-1"
-        joinUrl={null}
-        fallbackTitle="Strategy call"
-        onBack={vi.fn()}
-        onClose={vi.fn()}
-      />,
-    )
+    renderWorkspace()
 
     await waitFor(() => {
       expect(mocks.setWorkAreaOpen).toHaveBeenCalledWith(true)
@@ -186,9 +200,10 @@ describe('MeetingWorkspaceDialog', () => {
     })
     expect(mocks.openChatDrawer).not.toHaveBeenCalled()
     expect(mocks.continueMeetingConversation).not.toHaveBeenCalled()
-    expect(screen.getByLabelText('Call status')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Start agenda' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Following up' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Call status')).not.toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Close meeting workspace' }),
     ).not.toBeInTheDocument()
@@ -216,7 +231,6 @@ describe('MeetingWorkspaceDialog', () => {
     }
     const completedBundle = {
       ...liveBundle,
-      meeting: { ...liveBundle.meeting, custom_data: { call_status: 'completed' } },
       workspace: { ...liveBundle.workspace, phase: 'processing' as const },
     }
     mocks.fetchMeetingWorkspace.mockReset()
@@ -226,18 +240,11 @@ describe('MeetingWorkspaceDialog', () => {
       phase: 'processing',
     })
 
-    render(
-      <MeetingWorkspaceDialog
-        spaceId="space-1"
-        meetingItemId="meeting-1"
-        joinUrl="https://zoom.example/j/1"
-        fallbackTitle="Strategy call"
-        onBack={vi.fn()}
-        onClose={vi.fn()}
-      />,
-    )
+    renderWorkspace({ joinUrl: 'https://zoom.example/j/1' })
 
-    await waitFor(() => expect(screen.getByLabelText('Call status')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'End call' })).toBeInTheDocument(),
+    )
     expect(screen.getByRole('link', { name: 'Open call link' })).toHaveAttribute(
       'href',
       'https://zoom.example/j/1',
@@ -245,7 +252,7 @@ describe('MeetingWorkspaceDialog', () => {
     expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
     expect(mocks.continueMeetingConversation).not.toHaveBeenCalled()
 
-    fireEvent.change(screen.getByLabelText('Call status'), { target: { value: 'completed' } })
+    fireEvent.click(screen.getByRole('button', { name: 'End call' }))
     await waitFor(() => {
       expect(mocks.endMeetingCall).toHaveBeenCalledWith('space-1', 'meeting-1')
       expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
@@ -253,26 +260,24 @@ describe('MeetingWorkspaceDialog', () => {
     })
   })
 
-  it('keeps call status next to recap after the calendar meeting ends', async () => {
+  it('keeps Continue in chat, task status, and recap on one row after the calendar meeting ends', async () => {
     mocks.fetchMeetingWorkspace.mockReset()
     mocks.fetchMeetingWorkspace.mockResolvedValue(baseBundle)
 
-    render(
-      <MeetingWorkspaceDialog
-        spaceId="space-1"
-        meetingItemId="meeting-1"
-        joinUrl={null}
-        meetingStart="2020-01-01T10:00:00.000Z"
-        meetingEnd="2020-01-01T10:30:00.000Z"
-        fallbackTitle="Past strategy call"
-        onBack={vi.fn()}
-        onClose={vi.fn()}
-      />,
-    )
+    renderWorkspace({
+      meetingStart: '2020-01-01T10:00:00.000Z',
+      meetingEnd: '2020-01-01T10:30:00.000Z',
+      fallbackTitle: 'Past strategy call',
+    })
 
-    await waitFor(() => expect(screen.getByLabelText('Call status')).toBeInTheDocument())
-    expect(screen.getByRole('button', { name: 'Recap message' })).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Recap message' })).toBeInTheDocument(),
+    )
     expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Following up' })).toBeInTheDocument()
+    const row = screen.getByRole('button', { name: 'Continue in chat' }).parentElement
+    expect(row).toContainElement(screen.getByRole('button', { name: 'Recap message' }))
+    expect(row).toContainElement(screen.getByRole('button', { name: 'Following up' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Continue in chat' }))
     expect(mocks.continueMeetingConversation).toHaveBeenCalledWith(
@@ -282,6 +287,25 @@ describe('MeetingWorkspaceDialog', () => {
       }),
     )
     expect(mocks.openChatDrawer).toHaveBeenLastCalledWith('conversation-1')
+  })
+
+  it('writes the All Meetings task status instead of Live/Completed call status', async () => {
+    mocks.fetchMeetingWorkspace.mockReset()
+    mocks.fetchMeetingWorkspace.mockResolvedValue(baseBundle)
+    mocks.updateSpaceItem.mockResolvedValue({})
+
+    renderWorkspace()
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Following up' })).toBeInTheDocument(),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Following up' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+    await waitFor(() => {
+      expect(mocks.updateSpaceItem).toHaveBeenCalledWith('space-1', 'meeting-1', { status: 'done' })
+    })
+    expect(mocks.endMeetingCall).not.toHaveBeenCalled()
+    expect(mocks.startMeetingCall).not.toHaveBeenCalled()
   })
 
   it('separates calendar prep from post-call recap and keeps recordings first', async () => {
@@ -317,26 +341,16 @@ describe('MeetingWorkspaceDialog', () => {
       ],
     })
 
-    render(
-      <MeetingWorkspaceDialog
-        spaceId="space-1"
-        meetingItemId="meeting-1"
-        agendaEvent={
-          {
-            id: 'calendar-1',
-            title: 'Strategy call',
-            description: 'Review launch goals before the meeting.',
-            start: '2026-08-10T17:00:00.000Z',
-            end: '2026-08-10T17:30:00.000Z',
-            attendees: [],
-          } as never
-        }
-        joinUrl={null}
-        fallbackTitle="Strategy call"
-        onBack={vi.fn()}
-        onClose={vi.fn()}
-      />,
-    )
+    renderWorkspace({
+      agendaEvent: {
+        id: 'calendar-1',
+        title: 'Strategy call',
+        description: 'Review launch goals before the meeting.',
+        start: '2026-08-10T17:00:00.000Z',
+        end: '2026-08-10T17:30:00.000Z',
+        attendees: [],
+      } as never,
+    })
 
     await waitFor(() => expect(screen.getByText('Post-meeting recap')).toBeInTheDocument())
     expect(screen.getByText('Review launch goals before the meeting.')).toBeInTheDocument()
@@ -367,16 +381,7 @@ describe('MeetingWorkspaceDialog', () => {
     mocks.fetchMeetingWorkspace.mockReset()
     mocks.fetchMeetingWorkspace.mockResolvedValue({ ...baseBundle, actions: [action] })
 
-    render(
-      <MeetingWorkspaceDialog
-        spaceId="space-1"
-        meetingItemId="meeting-1"
-        joinUrl={null}
-        fallbackTitle="Strategy call"
-        onBack={vi.fn()}
-        onClose={vi.fn()}
-      />,
-    )
+    renderWorkspace()
 
     expect(await screen.findByText('Send the launch recap')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Add task' })).toBeInTheDocument()

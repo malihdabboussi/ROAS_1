@@ -75,6 +75,8 @@ export function FavoritesSidebarSection({
             <button
               type="button"
               onClick={commitNewFolder}
+              aria-label="Save name"
+              title="Save name"
               className="text-[var(--color-muted-foreground)] hover:text-[var(--foreground)]"
             >
               <Check className="h-3 w-3" />
@@ -136,6 +138,8 @@ export function FavoritesSidebarSection({
                     e.stopPropagation()
                     commitFolderRename(folder)
                   }}
+                  aria-label="Save name"
+                  title="Save name"
                   className="text-[var(--color-muted-foreground)] hover:text-[var(--foreground)]"
                 >
                   <Check className="h-3 w-3" />

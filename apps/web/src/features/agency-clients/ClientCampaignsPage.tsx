@@ -25,14 +25,14 @@ export function ClientCampaignsPage() {
       try {
         const response = await fetchAgencyClientCampaigns(undefined, false)
         if (cancelled) return
-        setCampaigns(response.campaigns)
+        setCampaigns(response?.campaigns ?? [])
         setLoading(false)
 
         // Show the Page Grader campaign inventory first, then refresh Space links as
         // the two-way ROAS mapping pass finishes.
         void fetchAgencyClientCampaigns(undefined, true)
           .then((synced) => {
-            if (!cancelled) setCampaigns(synced.campaigns)
+            if (!cancelled && synced?.campaigns) setCampaigns(synced.campaigns)
           })
           .catch(() => undefined)
       } catch (reason) {
@@ -120,9 +120,12 @@ export function ClientCampaignsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
-                      <tr className="body-4 text-muted-foreground border-border bg-secondary border-b text-left">
+                      <tr className="body-4 text-muted-foreground border-border bg-secondary border-b text-left whitespace-nowrap">
                         <th className="px-spacing-4 py-spacing-3 font-medium">Stage</th>
-                        <th className="px-spacing-4 py-spacing-3 font-medium">Campaign Name</th>
+                        {/* Name absorbs the free width; every other column is nowrap so it sizes to content. */}
+                        <th className="px-spacing-4 py-spacing-3 w-full min-w-64 font-medium">
+                          Campaign Name
+                        </th>
                         <th className="px-spacing-4 py-spacing-3 font-medium">Type</th>
                         <th className="px-spacing-4 py-spacing-3 font-medium">Created By</th>
                         <th className="px-spacing-4 py-spacing-3 font-medium">Account Manager</th>
