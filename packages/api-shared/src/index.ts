@@ -53,6 +53,7 @@ export {
   SLACK_EMPTY_PERIOD_SKIP_REASON,
   interpretAtlasImportJobStatus,
   isEmptySlackIngestReason,
+  isNoOpCampaignKnowledgeSaveReason,
   isSlackPeriodImportContent,
 } from './utils/brain-import-job-status'
 export type {

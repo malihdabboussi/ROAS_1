@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
-  SLACK_EMPTY_PERIOD_SKIP_REASON,
   interpretAtlasImportJobStatus,
   isEmptySlackIngestReason,
   isSlackPeriodImportContent,
+  SLACK_EMPTY_PERIOD_SKIP_REASON,
 } from './brain-import-job-status'
 
 describe('interpretAtlasImportJobStatus', () => {
@@ -18,7 +18,10 @@ describe('interpretAtlasImportJobStatus', () => {
       reason: SLACK_EMPTY_PERIOD_SKIP_REASON,
     })
     expect(
-      interpretAtlasImportJobStatus('JOB_STATUS:failed — could not ingest', 'slack_period_customer'),
+      interpretAtlasImportJobStatus(
+        'JOB_STATUS:failed — could not ingest',
+        'slack_period_customer',
+      ),
     ).toEqual({
       status: 'skipped',
       reason: SLACK_EMPTY_PERIOD_SKIP_REASON,
@@ -57,8 +60,26 @@ describe('interpretAtlasImportJobStatus', () => {
 describe('isEmptySlackIngestReason', () => {
   it('matches Atlas empty-ingest phrasing', () => {
     expect(isEmptySlackIngestReason('Atlas could not process: could not ingest')).toBe(true)
+    expect(
+      isEmptySlackIngestReason(
+        'Atlas could not process: Campaign knowledge could not be saved at this time.',
+      ),
+    ).toBe(true)
     expect(isEmptySlackIngestReason('campaign brain save was rejected')).toBe(false)
+    expect(isEmptySlackIngestReason('campaign capability rejected the save')).toBe(false)
     expect(isSlackPeriodImportContent('slack_period')).toBe(true)
     expect(isSlackPeriodImportContent('campaign_file')).toBe(false)
+  })
+
+  it('skips Slack campaign-knowledge no-op failures', () => {
+    expect(
+      interpretAtlasImportJobStatus(
+        'JOB_STATUS:failed — Campaign knowledge could not be saved at this time.',
+        'slack_period',
+      ),
+    ).toEqual({
+      status: 'skipped',
+      reason: SLACK_EMPTY_PERIOD_SKIP_REASON,
+    })
   })
 })

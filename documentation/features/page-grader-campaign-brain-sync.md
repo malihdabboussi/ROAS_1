@@ -1,6 +1,6 @@
 # Page Grader Campaign Brain Sync
 
-Last Modified: August 18, 2026
+Last Modified: August 19, 2026
 
 ## Overview
 
@@ -47,7 +47,7 @@ Envelope fields:
 
 ROAS now presents the shared agency hierarchy directly:
 
-- **Clients** lists active Page Grader clients and defaults to pipeline-stage grouping. Operators can switch to account-manager grouping and search across clients and managers.
+- **Clients** lists every Page Grader pipeline stage (not Portal's active-only default), grouped by pipeline in Portal order: New Client Intake → Onboarding Call Booked → Pre-Launch → Re-Launch → Active/Happy → Waiting on Client → Paused → Inactive → Blocked → Done With You / Consulting → Churned/Inactive. Inactive, Blocked, and Churned/Inactive are hidden until **Show inactive** is on or the operator searches by name. The same default-hide applies to Map clients, Send to Page Grader, and Connections client pickers. Operators can switch to account-manager grouping.
 - **Client detail** is a quick account-manager briefing surface with Page Grader overview and client information plus current ROAS-mapped campaigns, fulfillment tasks, and client requests.
 - **Client Campaigns** lists every non-deleted Page Grader `client_campaign` in an all-campaign view or grouped by client. Date/event, budget, status, and next-action fields remain sourced from Page Grader.
 - A campaign row opens the stable ROAS Space whose `schema.custom_data.page_grader_campaign_id` matches the Page Grader campaign ID.
@@ -75,7 +75,7 @@ Page Grader env for push: `ROAS_BRAIN_WEBHOOK_URL`, `ROAS_BRAIN_WEBHOOK_SECRET` 
 
 `ROAS_SLACK_INGEST_WEBHOOK_URL` is optional. When omitted, Page Grader derives the Slack endpoint by replacing `/brain-package` in `ROAS_BRAIN_WEBHOOK_URL` with `/slack-messages`. Recent Page Grader Slack messages are also included in the Brain package as `page_grader_slack` channel knowledge, so the event loop gets immediate evidence while campaign Brain retains durable context. Closed or archived Page Grader clients are excluded before either handoff.
 
-Periodic mapped-channel imports use Atlas separately from the deterministic Page Grader package ingest. Campaign-targeted imports must call `atlas_save_brain_context` with the mapped ROAS `campaign_id`; `save_user_memory` is user-only. The campaign branch writes directly to the mapped `ns_brains` row, preserves Slack source and temporal identity, and requires a retrieval embedding before reporting success; General is not a valid Campaign Brain target. Import completion is fail-closed: the runtime reads the final status from both direct text and nested OpenResponses output, and it does not mark the job successful or advance the Slack mapping cursor unless Atlas returns an explicit `JOB_STATUS:completed` or `JOB_STATUS:skipped`. Empty Slack windows never call Atlas; they persist as skipped with a user-facing "nothing to save" toast. Any failed chunk stops a multi-chunk import at that chunk so retry can resume without silently losing part of the period.
+Periodic mapped-channel imports use Atlas separately from the deterministic Page Grader package ingest. Campaign-targeted imports must call `atlas_save_brain_context` with the mapped ROAS `campaign_id`; `save_user_memory` is user-only. The campaign branch writes directly to the mapped `ns_brains` row, preserves Slack source and temporal identity, and requires a retrieval embedding before reporting success; General is not a valid Campaign Brain target. Import completion is fail-closed: the runtime reads the final status from both direct text and nested OpenResponses output, and it does not mark the job successful or advance the Slack mapping cursor unless Atlas returns an explicit `JOB_STATUS:completed` or `JOB_STATUS:skipped`. Empty Slack windows never call Atlas; they persist as skipped with a user-facing "nothing to save" toast. Atlas paraphrases of empty campaign-knowledge saves (`Campaign knowledge could not be saved at this time`) are the same no-op: the job is skipped and the toast is silenced. Any failed chunk stops a multi-chunk import at that chunk so retry can resume without silently losing part of the period.
 
 `atlas_save_brain_context` must remain in Atlas's `system_brain` capability
 allowlist as well as its action contract, schema, lifecycle, preflight, MCP
@@ -136,7 +136,7 @@ Repeated manual requests use the deterministic Page Grader client and meeting ti
 | PG package + push       | `page-grader/.../roasBrainPackage.ts`, `roasBrainPush.ts`, `scheduled-brain-refresh`                                  |
 | Fathom meetings         | `page-grader-meeting-sync.service.ts`, `fathom-webhook.service.ts`, Page Grader `roas-api`                            |
 | Precall Drive agenda    | `meetings-precall-prep.service.ts`, `meetings-precall-drive-agenda.service.ts`, `meetings-precall-agenda-sections.ts` |
-| QC / Launch Slack       | `page-grader-qc-slack-bridge.service.ts`, `page-grader-qc-follow-up.ts`                                                |
+| QC / Launch Slack       | `page-grader-qc-slack-bridge.service.ts`, `page-grader-qc-follow-up.ts`                                               |
 | Agency client workspace | `page-grader-agency-workspace.service.ts`, `features/agency-clients`, Page Grader `roas-api`                          |
 
 ## Decision Log

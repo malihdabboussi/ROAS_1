@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { visiblePipelineClients } from '@/lib/agency-clients'
 import { useWorkspaceSettingsModal } from '@/lib/settings'
 import {
   collectSelectedTagIds,
@@ -213,11 +214,14 @@ export function PageGraderBulkSendPanel({
     selectedAssigneeId == null ? null : (assignees.find((a) => a.id === selectedAssigneeId) ?? null)
   const needsConnect = isNotConnectedError(loadError)
 
-  const filteredClients = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return clients
-    return clients.filter((client) => client.name.toLowerCase().includes(q))
-  }, [clients, query])
+  const filteredClients = useMemo(
+    () =>
+      visiblePipelineClients(clients, {
+        query,
+        alwaysIncludeIds: selectedClientId ? [selectedClientId] : [],
+      }),
+    [clients, query, selectedClientId],
+  )
 
   const filteredAssignees = useMemo(() => {
     const q = assigneeQuery.trim().toLowerCase()

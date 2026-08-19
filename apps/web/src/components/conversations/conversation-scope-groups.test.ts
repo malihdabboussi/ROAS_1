@@ -34,6 +34,21 @@ describe('buildConversationScopeLists', () => {
     expect(lists.clients.map((row) => row.name)).toEqual(['General', 'Above It', 'Yasir Khan'])
   })
 
+  it('hides inactive, blocked, and churned clients from the Connections list', () => {
+    const lists = buildConversationScopeLists(
+      [
+        campaign('c3', 'Yasir Khan', 'clients'),
+        {
+          ...campaign('c6', 'Sunset Co', 'clients'),
+          status: 'churned_inactive',
+        },
+      ],
+      [program('clients', 'Clients', 'clients')],
+    )
+    expect(filterScopeClients(lists.clients, '').map((row) => row.id)).toEqual(['c3'])
+    expect(filterScopeClients(lists.clients, 'sunset').map((row) => row.id)).toEqual(['c6'])
+  })
+
   it('filters clients by name without changing program rows', () => {
     const lists = buildConversationScopeLists(
       [campaign('c3', 'Yasir Khan', 'clients'), campaign('c5', 'Above It', 'clients')],

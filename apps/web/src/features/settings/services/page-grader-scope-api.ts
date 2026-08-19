@@ -6,6 +6,7 @@ export type PageGraderClient = {
   id: string
   name: string
   status: string
+  pipeline_stage?: string
 }
 
 export type PageGraderClientScopeEntry = {

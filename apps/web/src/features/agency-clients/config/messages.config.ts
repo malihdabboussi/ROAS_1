@@ -19,4 +19,8 @@ export const AGENCY_CLIENT_MESSAGES = {
   ADD_WRAP_UP: 'Add wrap-up',
   NO_RECENT_UPDATES: 'No recent updates',
   UNASSIGNED: 'Unassigned',
+  PIPELINE_STAGE: 'Pipeline stage',
+  ACCOUNT_MANAGER: 'Account manager',
+  SHOW_INACTIVE: 'Show inactive',
+  NO_VISIBLE_CLIENTS: 'No active clients. Show inactive to include blocked and churned accounts.',
 } as const

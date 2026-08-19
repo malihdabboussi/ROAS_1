@@ -46,6 +46,18 @@ describe('resolveBrainImportToast', () => {
     })
   })
 
+  it('does not toast Atlas campaign-knowledge no-op Slack failures', () => {
+    expect(
+      resolveBrainImportToast({
+        id: 'job-5',
+        job_type: 'campaign_slack_import',
+        title: 'Analyze Slack #sales',
+        status: 'failed',
+        last_error: 'Atlas could not process: Campaign knowledge could not be saved at this time.',
+      }),
+    ).toBeNull()
+  })
+
   it('keeps real Atlas save failures as errors', () => {
     expect(
       resolveBrainImportToast({

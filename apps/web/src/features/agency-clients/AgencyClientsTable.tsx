@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useState, type ReactNode } from 'react'
 import { FolderOpen, Hash, ListTodo, MoreHorizontal } from 'lucide-react'
-import type { AgencyClient } from '@/lib/agency-clients'
+import { formatPipelineStageLabel, type AgencyClient } from '@/lib/agency-clients'
 import { formatAgencyDate } from './agency-client-format'
 import { AGENCY_CLIENT_MESSAGES } from './config/messages.config'
 
@@ -101,8 +101,8 @@ function AgencyClientRow({
   return (
     <tr className="hover:bg-hover-subtle border-border border-b last:border-b-0">
       <td className={CELL}>
-        <span className="body-4 bg-secondary text-muted-foreground rounded-spacing-4 px-spacing-2 py-spacing-1 block max-w-full truncate capitalize">
-          {readableStatus(client.pipeline_stage || client.status)}
+        <span className="body-4 bg-secondary text-muted-foreground rounded-spacing-4 px-spacing-2 py-spacing-1 block max-w-full truncate">
+          {formatPipelineStageLabel(client.pipeline_stage || client.status)}
         </span>
       </td>
       <td className={CELL}>
@@ -261,10 +261,6 @@ function updateDotClass(tone: string) {
   if (tone === 'red') return `${base} bg-destructive`
   if (tone === 'yellow') return `${base} bg-warning`
   return `${base} bg-muted-foreground`
-}
-
-function readableStatus(value: string) {
-  return value.replace(/_/g, ' ').toLowerCase()
 }
 
 function text(value: unknown) {

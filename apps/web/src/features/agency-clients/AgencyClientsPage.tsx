@@ -4,7 +4,13 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { BriefcaseBusiness, PanelRightOpen, Rocket, Search } from 'lucide-react'
 import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
-import { fetchAgencyClients, type AgencyClient } from '@/lib/agency-clients'
+import {
+  fetchAgencyClients,
+  groupClientsByManager,
+  groupClientsByPipeline,
+  visiblePipelineClients,
+  type AgencyClient,
+} from '@/lib/agency-clients'
 import { cn } from '@/lib/utils/cn'
 import { AgencyClientsTable } from './AgencyClientsTable'
 import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
@@ -12,17 +18,13 @@ import { AGENCY_CLIENT_MESSAGES } from './config/messages.config'
 
 type GroupMode = 'pipeline' | 'manager'
 
-function groupLabel(client: AgencyClient, mode: GroupMode) {
-  if (mode === 'manager') return client.account_manager?.name || 'Unassigned'
-  return client.pipeline_stage || client.status || 'Active'
-}
-
 export function AgencyClientsPage() {
   const [clients, setClients] = useState<AgencyClient[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
-  const [groupMode, setGroupMode] = useState<GroupMode>('manager')
+  const [groupMode, setGroupMode] = useState<GroupMode>('pipeline')
+  const [showInactive, setShowInactive] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -42,7 +44,9 @@ export function AgencyClientsPage() {
           .catch(() => undefined)
       } catch (reason) {
         if (cancelled) return
-        setError(reason instanceof Error ? reason.message : 'Could not load clients')
+        setError(
+          reason instanceof Error ? reason.message : AGENCY_CLIENT_MESSAGES.LOAD_CLIENTS_ERROR,
+        )
         setLoading(false)
       }
     }
@@ -53,18 +57,11 @@ export function AgencyClientsPage() {
   }, [])
 
   const groups = useMemo(() => {
-    const filtered = clients.filter((client) =>
-      `${client.display_name || client.name} ${client.account_manager?.name || ''}`
-        .toLowerCase()
-        .includes(query.trim().toLowerCase()),
-    )
-    const map = new Map<string, AgencyClient[]>()
-    for (const client of filtered) {
-      const label = groupLabel(client, groupMode)
-      map.set(label, [...(map.get(label) ?? []), client])
-    }
-    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b))
-  }, [clients, groupMode, query])
+    const visible = visiblePipelineClients(clients, { query, includeHidden: showInactive })
+    return groupMode === 'manager'
+      ? groupClientsByManager(visible)
+      : groupClientsByPipeline(visible)
+  }, [clients, groupMode, query, showInactive])
 
   return (
     <main className="gap-spacing-6 p-spacing-8 mx-auto flex w-full max-w-7xl flex-col">
@@ -99,10 +96,23 @@ export function AgencyClientsPage() {
                 groupMode === mode ? 'nav-glass-selected-purple' : 'hover:bg-hover-subtle',
               )}
             >
-              {mode === 'pipeline' ? 'Pipeline stage' : 'Account manager'}
+              {mode === 'pipeline'
+                ? AGENCY_CLIENT_MESSAGES.PIPELINE_STAGE
+                : AGENCY_CLIENT_MESSAGES.ACCOUNT_MANAGER}
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          aria-pressed={showInactive}
+          onClick={() => setShowInactive((current) => !current)}
+          className={cn(
+            'button-compact rounded-spacing-2 border-border px-spacing-3 border',
+            showInactive ? 'nav-glass-selected-purple' : 'hover:bg-hover-subtle',
+          )}
+        >
+          {AGENCY_CLIENT_MESSAGES.SHOW_INACTIVE}
+        </button>
         <Link href="/client-campaigns" className="button-compact button-glass-neutral">
           <BriefcaseBusiness className="icon-sm" /> Client Campaigns
         </Link>
@@ -117,7 +127,12 @@ export function AgencyClientsPage() {
           {error}
         </p>
       ) : null}
-      {!loading && !error ? (
+      {!loading && !error && groups.length === 0 ? (
+        <p className="body-2 text-muted-foreground surface-card rounded-spacing-3 p-spacing-4">
+          {AGENCY_CLIENT_MESSAGES.NO_VISIBLE_CLIENTS}
+        </p>
+      ) : null}
+      {!loading && !error && groups.length > 0 ? (
         <AgencyClientsTable groups={groups} showManagerColumn={groupMode !== 'manager'} />
       ) : null}
     </main>

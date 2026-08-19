@@ -1,5 +1,15 @@
 # Changelog - [August 19, 2026]
 
+## [2026-08-19 15:50] - [FIX]
+
+What: Agency Clients now asks Portal for every pipeline stage (not the active-only default), groups in Portal order (New Client Intake → … → Churned/Inactive), and hides Inactive / Blocked / Churned/Inactive until Show inactive is on or the operator searches. The same default-hide applies to Map clients, Send to Page Grader, and Connections. Atlas “Campaign knowledge could not be saved at this time” Slack no-ops are skipped instead of toasting.
+
+Why: Operators were missing Portal clients (intake/pre-launch) because the listing followed Portal’s active-only default and grouped by manager; churned accounts were also crowding the working list. The morning Atlas toast was the same empty-ingest class as silenced Slack no-ops.
+
+Impact: Clients, Map clients, bulk send, Connections client pickers, Slack campaign import jobs.
+
+Files: apps/web/src/lib/agency-clients/agency-client-pipeline.ts, apps/web/src/features/agency-clients/AgencyClientsPage.tsx, apps/api/src/modules/integrations/page-grader/integrations/page-grader.integration.ts, packages/api-shared/src/utils/brain-import-job-status.ts, documentation/features/page-grader-campaign-brain-sync.md
+
 ## [2026-08-19 04:10] - [FEATURE]
 
 What: Right-click on a space view tab now opens a lightweight context menu (Pin/Unpin view, Customize view…, Duplicate view, Delete view with confirm) instead of jumping straight into the full Customize panel. Pinning now supports multiple pinned views and always orders pinned views at the start of the tab strip (stable within groups); unpinning drops the view right after the pinned prefix.
@@ -201,3 +211,13 @@ Why: The branch conflicted with the status-row + UI-pass merges; Vercel failed o
 Impact: Related calls can merge onto main with the current meeting workspace chrome.
 
 Files: `MeetingWorkspaceDialog.tsx`, `MeetingWorkspaceBody.tsx`, `MeetingRelatedCallsSection.tsx`, `AllMeetingsNativeList.tsx`, `meeting-call-matching.repository.ts`
+
+## [2026-08-19 09:22] - [FIX]
+
+What: Merged current main into Clients pipeline-order (#335). Kept Portal `include_all_statuses` / `include_inactive` listClients coverage and main's listLaunches tests. Shared-surfaces Agency Clients row still documents pipeline-stage helpers.
+
+Why: The branch conflicted with the launches page and UI-pass docs after #332–#334 landed.
+
+Impact: Clients pipeline order can merge onto main without dropping launches coverage.
+
+Files: `page-grader.integration.test.ts`, `frontend-shared-surfaces.md`, `agent-follow-up-work.md`
