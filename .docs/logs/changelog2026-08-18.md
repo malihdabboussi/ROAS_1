@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 18:14] - [FIX]
+What: Fathom webhook now dual-writes each client meeting into the client's Campaign Brain via the existing idempotent `campaign_fathom_import` job, keyed off the Space route's `campaign_id` (General/Personal skipped). New `FathomCampaignBrainRouteService` + tests; webhook e2e tests cover routed / no-transcript cases.
+Why: Prod audit: 1,046 `fathom_meeting` memories in the user brain vs ~21 in all campaign brains — client meetings only reached the client brain if a human accepted an LLM suggestion. Client-scoped asks (R10/R11) missed even when the recording existed.
+Impact: New recordings land in both brains automatically; re-delivered webhooks are safe (dedupe key). Existing backlog can be backfilled by re-enqueueing `campaign_fathom_import` for routed meetings (follow-up).
+Files: `apps/api/src/modules/integrations/fathom/services/fathom-campaign-brain-route.service.ts` (+test), `fathom-webhook.service.ts`, `fathom.module.ts`, `fathom.controller.test.ts`, `documentation/features/integration-connections.md`
+
 ## [2026-08-18 21:48] - [FIX]
 What: Unblocked Vercel `roas-web` typecheck after #308/#309. Calendar materialize now calls `cachedFetch(key, fetcher, { ttlMs })`. Removed unused `SpaceItem` import. Test fixtures use `as unknown as Space`.
 Why: `next build` typechecks `apps/web`. The one-room hook passed TTL as the fetcher argument, so agenda events never typed and the cache never actually TTL'd. Incomplete Space casts failed after adding `schema.custom_data`.
