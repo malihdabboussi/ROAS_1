@@ -155,3 +155,9 @@ What: Stopped the meeting agenda Space Doc from remounting on every autosave. Op
 Why: Realtime UPDATE on the agenda row remounted the editor after the 1s autosave, so "Loading document..." flickered every 1-2 seconds. Transcript used a button under the recording link, Link recording lived in the section header, and action items were buried at the bottom.
 Impact: Agenda stays open while it saves. Recording actions read as Open recording · Open transcript, then Link recording. Action items are in the top-right column under that row.
 Files: `apps/web/src/features/home/components/MeetingAgendaDocEditor.tsx`, `MeetingRecordingsSection.tsx`, `MeetingWorkspaceBody.tsx`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-18 19:15] - [FIX]
+What: QC / Launch case ledger for personal Page Grader connections (plan §11.5). `PageGraderQcSlackBridgeService` now resolves the org for a connection whose `user_integrations.org_id` is NULL (`resolveQcConnectionOrg`: connection org → org of the finding's ROAS campaign (scope map) → the user's single active `org_members` row) before recording cases and choosing the Slack delivery anchor.
+Why: Prod audit (read-only, 2026-08-18): the only Page Grader connection is personal (`org_id NULL`). Because every ledger/anchor call was gated on `connection.orgId`, ROAS has **zero** `page_grader_qc` cases ever, while the ROAS bot posted 53 "Launch Agent Check-in" DMs in 7 days and dozens of QC posts — the measure-once/follow-up dedup shipped in PR 288 could never engage. The QC producer is fine; the ledger was silently disabled.
+Impact: QC/Launch findings land in `agent_cases` (quality_control / proactive_launch / campaign_quality_control), Launch check-ins dedupe into one thread per client, follow-ups thread instead of repeating.
+Files: apps/api/src/modules/integrations/page-grader/services/page-grader-qc-slack-bridge.service.ts, page-grader-qc-connection-org.ts, tests
