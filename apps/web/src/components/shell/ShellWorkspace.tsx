@@ -27,6 +27,7 @@ import {
   useActiveShellMenuDock,
   useShellMenuDock,
 } from './use-shell-menu-dock'
+import { useShellConversationDocumentTitle } from './use-shell-conversation-document-title'
 import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
 import { useShellStore } from './use-shell-store'
 import { useShellWorkspaceScreenChat } from './use-shell-workspace-screen-chat'
@@ -79,6 +80,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     isShellHomeRoute(pathname) &&
     (Boolean(convParam) || chatParam === 'starting') &&
     chatParam !== 'new'
+  useShellConversationDocumentTitle(convParam, showFullConversation)
 
   useEffect(() => {
     const justOpened = chatDrawerOpen && !previousSimpleChatOpen.current
