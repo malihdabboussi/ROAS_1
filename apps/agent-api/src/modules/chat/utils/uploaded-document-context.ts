@@ -27,23 +27,25 @@ function shouldUseNativeFile(doc: UploadedDocumentContextInput): boolean {
   return intelligence.status === 'ready' && intelligence.strategy === 'native_file' && !!doc.fileUrl
 }
 
-export function buildUploadedDocumentContext(
-  documents: UploadedDocumentContextInput[],
-): string {
+export function buildUploadedDocumentContext(documents: UploadedDocumentContextInput[]): string {
   const textDocuments = documents.filter((doc) => doc.type === 'text')
   if (textDocuments.length === 0) return ''
 
   const parts: string[] = ['\n\n---\n**USER-UPLOADED DOCUMENTS**\n']
 
   for (const doc of textDocuments) {
+    // The hosted URL is the shareable asset link (Service Requests, tasks); the
+    // extracted text alone would leave the model unable to hand the file on.
+    const sourceLine = doc.fileUrl ? `- source_url: ${doc.fileUrl}\n` : ''
     if (hasUsableText(doc)) {
-      parts.push(`\n### ${doc.filename}\n\`\`\`\n${doc.text!.trim()}\n\`\`\`\n`)
+      parts.push(`\n### ${doc.filename}\n${sourceLine}\`\`\`\n${doc.text!.trim()}\n\`\`\`\n`)
       continue
     }
 
     if (shouldUseNativeFile(doc)) {
       parts.push(
         `\n### ${doc.filename}\n` +
+          sourceLine +
           `The original file is attached to this request for native model reading.\n` +
           `- mime: ${doc.mimeType ?? 'unknown'}\n` +
           `${doc.pageCount ? `- pages: ${doc.pageCount}\n` : ''}`,
@@ -54,6 +56,7 @@ export function buildUploadedDocumentContext(
     const reason = doc.documentIntelligence?.reason ?? 'text_unavailable'
     parts.push(
       `\n### ${doc.filename}\n` +
+        sourceLine +
         `No reliable extracted text is available for this file.\n` +
         `- reason: ${reason}\n` +
         `If the answer depends on this file, report that limitation clearly.\n`,

@@ -1,4 +1,9 @@
 import type { SlackBlock, SlackEventEnvelope } from '../types/slack.types'
+import {
+  buildSlackAskAssets,
+  collectInboundSlackFiles,
+  formatSlackAskAssetsBlock,
+} from './slack-ask-assets'
 import { SlackConversationBase } from './slack-service-conversation.base'
 import {
   CREDITS_EXHAUSTED_SLACK_MESSAGE,
@@ -154,11 +159,12 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     accessToken = await this.userSessionMint.mintAccessToken(userId)
 
     let fullMessage = text
+    const inboundFiles = collectInboundSlackFiles(event)
     const documents = await this.resolveInboundSlackFiles(
       botToken,
       userId,
       channelOrgId ?? null,
-      event.files,
+      inboundFiles,
     )
     if (channelOrgId) {
       const currentIdentity = await this.buildSlackAskContext(serviceSupabase, {
@@ -183,8 +189,13 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     if (forwardedContext) {
       fullMessage = fullMessage ? `${fullMessage}\n\n${forwardedContext}` : forwardedContext
     }
-    if (hasFiles && documents.length === 0) {
-      const fileContext = this.buildFileContext(event.files!)
+    const assetsBlock = formatSlackAskAssetsBlock(
+      buildSlackAskAssets({ documents, texts: [text, forwardedContext] }),
+      { sourcePermalink: forwardedContext.match(/^Source: (\S+)/m)?.[1] ?? null },
+    )
+    if (assetsBlock) fullMessage = fullMessage ? `${fullMessage}\n\n${assetsBlock}` : assetsBlock
+    if (inboundFiles.length > 0 && documents.length === 0) {
+      const fileContext = this.buildFileContext(inboundFiles)
       fullMessage = fullMessage ? `${fullMessage}\n\n${fileContext}` : fileContext
     }
     if (!fullMessage && documents.length > 0) {
@@ -284,7 +295,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       fallback.botToken,
       fallback.userId,
       fallback.orgId,
-      event.files,
+      collectInboundSlackFiles(event),
     )
     const forwardedContext = await this.buildForwardedMessageContext(
       serviceSupabase,
@@ -307,7 +318,14 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     })
 
     const attachmentText = forwardedContext ? `${text}\n\n${forwardedContext}`.trim() : text
-    const mentionText = attachmentText || (documents.length > 0 ? '[User sent a file]' : '')
+    const assetsBlock = formatSlackAskAssetsBlock(
+      buildSlackAskAssets({ documents, texts: [text, forwardedContext] }),
+      { sourcePermalink: forwardedContext.match(/^Source: (\S+)/m)?.[1] ?? null },
+    )
+    const textWithAssets = assetsBlock
+      ? `${attachmentText}\n\n${assetsBlock}`.trim()
+      : attachmentText
+    const mentionText = textWithAssets || (documents.length > 0 ? '[User sent a file]' : '')
     const messageWithContext = channelContext
       ? `${channelContext}\n\n[You were mentioned with]: ${mentionText}`
       : mentionText

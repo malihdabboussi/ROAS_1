@@ -39439,3 +39439,10 @@ Reason not done now: The panel change mitigates this in the UI with a timestamp 
 - File: `apps/api/src/modules/slack/services/slack-client-context.ts`
 - Evidence: plan §11.11 lists Drive folder and recent meetings in the bundle; v1 ships channels/campaigns/brains/spaces only (no reliable client→Drive folder source yet; meetings need the Fathom dual-write from PR #316 to land first).
 - Needed: add `drive_folder` once a canonical client→folder mapping exists; add last 3 Fathom meeting titles/dates from the Campaign Brain after #316 deploys.
+
+## 2026-08-18 - [FEATURE] SR assets: Drive-folder copy + long-lived storage + Portal /work attachments
+- Feature/app: Service Requests · apps/api
+- Files: `apps/api/src/modules/slack/repositories/slack-runtime.repository.ts` (`campaigns` bucket, 365-day signed URL), `apps/api/src/modules/work-requests/services/work-request-mirror.ts`, Portal `/work` contract
+- Evidence: §11.12 #2 asks for re-hosted files to also land in the client's Drive folder; no client→Drive-folder mapping exists yet. Signed URLs expire after a year; the Portal `/work` body has no `attachments` field, so assets ride in the description only.
+- Needed: (a) client Drive folder mapping + copy on SR create; (b) decide bucket/lifetime for SR assets; (c) `attachments[]` on Portal `/work` and forward `draft.assets` from the mirror.
+- Why not now: out of scope for the §11.10 first step; description path is the provable one today.

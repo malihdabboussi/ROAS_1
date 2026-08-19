@@ -124,6 +124,8 @@ export interface SlackMessageAttachment {
   ts?: string
   message_ts?: string
   is_msg_unfurl?: boolean
+  /** Files carried inside a forwarded/shared message unfurl. */
+  files?: SlackFileAttachment[]
 }
 
 export type SlackBlock =

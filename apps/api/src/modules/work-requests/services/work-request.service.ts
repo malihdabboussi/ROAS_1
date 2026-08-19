@@ -17,6 +17,7 @@ import {
   WorkRequestRepository,
   type WorkRequestDraftRow,
 } from '../repositories/work-request.repository'
+import { appendAssetsToDescription } from './work-request-assets'
 import {
   ensureDraftResumeConversation,
   loadOwnedConversationId,
@@ -188,6 +189,18 @@ export class WorkRequestService {
       }
     }
 
+    if (input.assets !== undefined || input.description !== undefined) {
+      // Description is the field that reaches the ClickUp body: keep assets in it.
+      const nextDescription =
+        (values.description as string | null | undefined) ?? draft.description ?? null
+      const nextAssets = (values.assets ?? draft.assets) as Array<{
+        name: string
+        url: string
+        kind?: string
+      }>
+      values.description = appendAssetsToDescription(nextDescription, nextAssets)
+    }
+
     const candidate = { ...draft, ...values } as WorkRequestDraftRow
     values.missing_fields = this.computeMissingFields(candidate)
     const updated = await this.repository.update(draft.id, values)
@@ -288,7 +301,9 @@ export class WorkRequestService {
       request_type: input.request_type,
       assignee_name: input.assignee_name,
       title: input.title,
-      description: input.description ?? null,
+      description: appendAssetsToDescription(input.description, input.assets, {
+        sourceUrl: input.provenance?.source_url ?? null,
+      }),
       due_at: input.due_date ? `${input.due_date}T23:59:59.000Z` : null,
       priority: input.priority,
       structured_fields: input.structured_fields,
