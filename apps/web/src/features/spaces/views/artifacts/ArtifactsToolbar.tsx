@@ -64,7 +64,7 @@ export function ArtifactsToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
 
   return (
     <ToolbarShell ctx={ctx}>
-      <div className="flex min-w-0 flex-nowrap items-center gap-1">
+      <div className="flex shrink-0 flex-nowrap items-center gap-1">
         {showGroupByInToolbar ? <GroupByButton ctx={ctx} /> : null}
         {showAddColumnsToolbar ? <AddColumnsButton ctx={ctx} /> : null}
       </div>

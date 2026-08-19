@@ -823,7 +823,24 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
       typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
         ? `temp:${crypto.randomUUID()}`
         : `temp:${Math.random().toString(36).slice(2)}${Date.now()}`
-    const extras = (extra ?? {}) as Record<string, unknown>
+    const extras = { ...(extra ?? {}) } as Record<string, unknown>
+    // Quick-adds inherit the active view's single-value field filters (e.g. All
+    // Meetings filters entry_type=call) so a new row doesn't instantly vanish
+    // from the view that created it.
+    const viewFilters = space?.schema?.views?.find(
+      (v) => v.id === get().activeViewId,
+    )?.field_value_filters
+    if (viewFilters) {
+      const currentCustom = (extras.custom_data as Record<string, unknown> | undefined) ?? {}
+      const inherited: Record<string, unknown> = {}
+      for (const [fieldId, value] of Object.entries(viewFilters)) {
+        if (typeof value !== 'string' || fieldId === 'status') continue
+        if (currentCustom[fieldId] === undefined) inherited[fieldId] = value
+      }
+      if (Object.keys(inherited).length > 0) {
+        extras.custom_data = { ...inherited, ...currentCustom }
+      }
+    }
     const parentItemId = (extras.parent_item_id as string | null | undefined) ?? null
     const sort_order = nextSpaceItemSortOrder(
       items,
@@ -871,7 +888,7 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
       const item = await createSpaceItemRequest(activeSpaceId, {
         title,
         sort_order,
-        ...extra,
+        ...extras,
       })
       invalidateSpaceItemsFetchCache(activeSpaceId)
       set((s) => ({

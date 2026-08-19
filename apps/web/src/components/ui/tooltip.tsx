@@ -95,6 +95,8 @@ export function Tooltip({
         ref={triggerRef}
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
+        // Clicking usually opens a popover/menu — hide the hint so they don't stack.
+        onMouseDown={handleLeave}
         className={triggerClassName ?? 'inline-flex'}
       >
         {children}

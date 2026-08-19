@@ -68,7 +68,7 @@ export function SpaceMediaToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
   return (
     <>
       <ToolbarShell ctx={ctx}>
-        <div className="relative flex min-w-0 flex-nowrap items-center gap-1">
+        <div className="relative flex shrink-0 flex-nowrap items-center gap-1">
           {showGroupByInToolbar ? <GroupByButton ctx={ctx} /> : null}
         </div>
 

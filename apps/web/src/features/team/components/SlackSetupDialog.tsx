@@ -94,7 +94,7 @@ export function SlackSetupDialog({
   }, [agentKey, channels, onConnected, selectedChannelId])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-modal-overlay px-4">
+    <div className="bg-modal-overlay fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="surface-card border-subtle rounded-spacing-3 p-spacing-5 relative w-full max-w-md border">
         <button
           type="button"
@@ -162,7 +162,7 @@ export function SlackSetupDialog({
             </div>
           )}
 
-          {error && <p className="body-4 text-red-400">{error}</p>}
+          {error && <p className="body-4 text-destructive">{error}</p>}
         </div>
       </div>
     </div>

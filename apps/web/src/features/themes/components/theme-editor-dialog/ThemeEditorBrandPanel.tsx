@@ -138,7 +138,7 @@ export function ThemeEditorBrandPanel({
                         tagline: prev?.tagline ?? null,
                       }))
                     }}
-                    className="rounded-spacing-1 flex h-8 w-8 shrink-0 items-center justify-center text-[var(--color-muted-foreground)] hover:bg-red-500/10 hover:text-red-500"
+                    className="rounded-spacing-1 hover:text-destructive flex h-8 w-8 shrink-0 items-center justify-center text-[var(--color-muted-foreground)] hover:bg-red-500/10"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

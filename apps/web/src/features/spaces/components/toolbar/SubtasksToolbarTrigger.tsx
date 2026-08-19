@@ -18,6 +18,7 @@ export function SubtasksToolbarTrigger({ open, setOpen, anchorRef }: SubtasksToo
           <button
             ref={anchorRef}
             type="button"
+            aria-label="Show subtasks"
             onClick={() => setOpen(!open)}
             className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
               open

@@ -120,7 +120,7 @@ export function MeetingWorkspaceDialog({
       cancelled = true
     }
   }, [hydrateWorkspace])
-  const title = bundle?.meeting.title?.trim() || fallbackTitle
+  const title = bundle?.meeting?.title?.trim() || fallbackTitle
   const phase = bundle?.workspace?.phase
   const isLive = phase === 'live'
   const meetingEndMs = meetingEnd ? new Date(meetingEnd).getTime() : NaN
@@ -128,7 +128,7 @@ export function MeetingWorkspaceDialog({
   const hasEnded = Number.isFinite(meetingEndMs) && meetingEndMs < Date.now()
   const hasStarted = Number.isFinite(meetingStartMs) && meetingStartMs <= Date.now()
   const isPostCall =
-    phase === 'complete' || hasEnded || (hasStarted && (bundle?.recordings.length ?? 0) > 0)
+    phase === 'complete' || hasEnded || (hasStarted && (bundle?.recordings?.length ?? 0) > 0)
   const awarenessContext = useMemo(() => {
     if (!bundle) return ''
     return buildMeetingAwarenessContext({
@@ -143,7 +143,7 @@ export function MeetingWorkspaceDialog({
   const conversationId = bundle?.workspace?.conversation_id?.trim() || null
   const prepDescription =
     agendaEvent?.description ??
-    (bundle?.meeting.source === 'calendar' ? bundle.meeting.description : null)
+    (bundle?.meeting?.source === 'calendar' ? bundle.meeting?.description : null)
   const prep = useMemo(() => parseMeetingPrep(prepDescription), [prepDescription])
   const whenLine = formatMeetingWhen(meetingStart, meetingEnd)
   const attendeeSummary = formatAttendeeSummary(agendaEvent?.attendees)
@@ -154,7 +154,7 @@ export function MeetingWorkspaceDialog({
     title,
     agendaEvent,
     awarenessContext,
-    timelineVersion: bundle?.snippets.length ?? 0,
+    timelineVersion: bundle?.snippets?.length ?? 0,
   })
 
   useEffect(() => {
@@ -173,7 +173,7 @@ export function MeetingWorkspaceDialog({
       meetingItemId,
       conversationId,
       awarenessContext,
-      timelineVersion: bundle?.snippets.length ?? 0,
+      timelineVersion: bundle?.snippets?.length ?? 0,
     })
     openChatDrawer(conversationId)
   }
@@ -216,7 +216,7 @@ export function MeetingWorkspaceDialog({
   }
 
   const setTaskStatus = async (status: string) => {
-    const previous = bundle?.meeting.status
+    const previous = bundle?.meeting?.status
     setBundle((current) =>
       current ? { ...current, meeting: { ...current.meeting, status } } : current,
     )
@@ -309,16 +309,16 @@ export function MeetingWorkspaceDialog({
         <div className="gap-spacing-4 mx-auto flex w-full max-w-3xl flex-col">
           <MeetingCallStatusSection
             statusField={statusField}
-            statusValue={bundle?.meeting.status}
+            statusValue={bundle?.meeting?.status}
             hostLabel={
-              typeof bundle?.meeting.custom_data?.host === 'string'
+              typeof bundle?.meeting?.custom_data?.host === 'string'
                 ? bundle.meeting.custom_data.host
                 : null
             }
             phase={phase}
             isLive={isLive}
             isPostCall={isPostCall}
-            hasRecording={Boolean(bundle?.recordings.length)}
+            hasRecording={Boolean(bundle?.recordings?.length)}
             joinUrl={joinUrl}
             starting={starting}
             ending={ending}

@@ -269,7 +269,9 @@ export function MissionControlContainer() {
         />
 
         {loadError ? (
-          <div className="body-3 rounded-md bg-red-500/10 px-3 py-2 text-red-300">{loadError}</div>
+          <div className="body-3 text-destructive rounded-md bg-red-500/10 px-3 py-2">
+            {loadError}
+          </div>
         ) : null}
       </div>
 

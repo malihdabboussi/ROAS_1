@@ -11,8 +11,8 @@ export function MetaPublishModalErrorSection({
     <div className="mt-spacing-4 space-y-spacing-3">
       <div className="border-border border-t" />
       <div className="rounded-spacing-2 p-spacing-3 bg-red-500/10">
-        <p className="body-3 font-medium text-red-400">Publish failed</p>
-        {publishError && <p className="typo-caption mt-1 text-red-400/70">{publishError}</p>}
+        <p className="body-3 text-destructive font-medium">Publish failed</p>
+        {publishError && <p className="typo-caption text-destructive/70 mt-1">{publishError}</p>}
       </div>
       <div className="gap-spacing-2 flex">
         <button

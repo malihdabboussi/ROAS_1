@@ -18,7 +18,7 @@ import { RatingStarsReadonly } from '../cells/RatingCell'
 import { OptionBadge } from '../OptionBadge'
 
 const PRIORITY_FLAG_COLOR: Record<string, string> = {
-  red: 'text-red-600 dark:text-red-400',
+  red: 'text-destructive dark:text-destructive',
   orange: 'text-orange-600 dark:text-orange-400',
   blue: 'text-blue-600 dark:text-blue-400',
   slate: 'text-slate-600 dark:text-slate-400',

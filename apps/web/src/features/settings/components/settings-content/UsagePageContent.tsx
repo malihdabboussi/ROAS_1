@@ -186,7 +186,7 @@ const usageSpendingChartConfig = {} satisfies ChartConfig
 function UsageLoadError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="gap-spacing-2 flex items-center justify-center">
-      <span className="body-3 text-red-300">{message}</span>
+      <span className="body-3 text-destructive">{message}</span>
       <button
         type="button"
         onClick={onRetry}
@@ -629,7 +629,7 @@ export default function UsagePageContent() {
                         {historyLoading ? 'Loading...' : 'Load more'}
                       </button>
                       {loadMoreError && !historyLoading ? (
-                        <p className="body-3 pt-spacing-2 text-red-300">
+                        <p className="body-3 pt-spacing-2 text-destructive">
                           Couldn&apos;t load more activity. Try again.
                         </p>
                       ) : null}

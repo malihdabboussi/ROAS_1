@@ -83,7 +83,7 @@ export const AgentHireSuggestionCard = memo(function AgentHireSuggestionCard(
           {hiring ? (
             <Loader2 className="text-primary h-4 w-4 animate-spin" />
           ) : error ? (
-            <AlertCircle className="h-4 w-4 text-red-500" />
+            <AlertCircle className="text-destructive h-4 w-4" />
           ) : (
             <Check className="h-4 w-4 text-green-500" />
           )}

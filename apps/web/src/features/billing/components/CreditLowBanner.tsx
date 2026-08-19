@@ -30,7 +30,7 @@ export function CreditLowBanner({
   const isUrgent = ratio < 0.05
   const borderColor = isUrgent ? 'border-red-500/30' : 'border-amber-500/30'
   const bgColor = isUrgent ? 'bg-red-500/5' : 'bg-amber-500/5'
-  const iconColor = isUrgent ? 'text-red-400' : 'text-amber-400'
+  const iconColor = isUrgent ? 'text-destructive' : 'text-amber-400'
 
   return (
     <div

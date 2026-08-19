@@ -6,8 +6,8 @@ import type {
   SlackWorkspaceChannel,
 } from '../types/slack.types'
 import { parseSlackForwardedMessage } from './slack-forwarded-message-context'
-import type { SlackTurnToolCall } from './slack-turn-telemetry'
 import { SlackMediaBase } from './slack-service-media.base'
+import type { SlackTurnToolCall } from './slack-turn-telemetry'
 
 export abstract class SlackConversationBase extends SlackMediaBase {
   protected async resolveFallbackRouting(
@@ -330,13 +330,20 @@ export abstract class SlackConversationBase extends SlackMediaBase {
           if (event.type === 'content_delta' && typeof event.content === 'string') {
             fullContent += event.content
           } else if (
-            (event.type === 'tool_start' || event.type === 'tool_update' || event.type === 'tool_end') &&
+            (event.type === 'tool_start' ||
+              event.type === 'tool_update' ||
+              event.type === 'tool_end') &&
             (typeof event.name === 'string' || typeof event.tool === 'string')
           ) {
             toolEvents.push({
               name: String(event.name ?? event.tool),
               ...(typeof event.action === 'string' ? { action: event.action } : {}),
-              status: event.type === 'tool_start' ? 'start' : event.type === 'tool_end' ? 'end' : 'update',
+              status:
+                event.type === 'tool_start'
+                  ? 'start'
+                  : event.type === 'tool_end'
+                    ? 'end'
+                    : 'update',
             })
           } else if (event.type === 'error') {
             const detail =

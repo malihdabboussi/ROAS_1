@@ -39,10 +39,18 @@ describe('detectForbiddenAsk', () => {
 
   it('does not flag when the kind is unclear or no client was resolved (one question is correct there)', () => {
     expect(
-      detectForbiddenAsk({ reply: 'Which client is this for?', askKind: 'unclear', clientResolved: false }),
+      detectForbiddenAsk({
+        reply: 'Which client is this for?',
+        askKind: 'unclear',
+        clientResolved: false,
+      }),
     ).toBe(false)
     expect(
-      detectForbiddenAsk({ reply: 'Which client is this for?', askKind: 'client', clientResolved: false }),
+      detectForbiddenAsk({
+        reply: 'Which client is this for?',
+        askKind: 'client',
+        clientResolved: false,
+      }),
     ).toBe(false)
     expect(detectForbiddenAsk({ reply: null, askKind: 'client', clientResolved: true })).toBe(false)
   })

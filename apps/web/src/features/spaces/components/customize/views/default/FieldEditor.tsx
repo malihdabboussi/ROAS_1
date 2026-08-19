@@ -137,7 +137,7 @@ export function FieldEditor({
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         <label className="block space-y-1.5">
           <span className="body-4 font-medium text-[var(--color-muted-foreground)]">
-            Field name <span className="text-red-500">*</span>
+            Field name <span className="text-destructive">*</span>
           </span>
           <input
             ref={nameInputRef}
@@ -155,7 +155,7 @@ export function FieldEditor({
         {showOptions ? (
           <div className="space-y-1.5">
             <span className="body-4 block font-medium text-[var(--color-muted-foreground)]">
-              {meta?.label ?? 'Dropdown'} options <span className="text-red-500">*</span>
+              {meta?.label ?? 'Dropdown'} options <span className="text-destructive">*</span>
             </span>
             <div className="space-y-1.5">
               {options.map((opt, idx) => (
@@ -177,7 +177,7 @@ export function FieldEditor({
                   <button
                     type="button"
                     onClick={() => setOptions((prev) => prev.filter((_, i) => i !== idx))}
-                    className="shrink-0 rounded-md p-1 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-red-500"
+                    className="hover:text-destructive shrink-0 rounded-md p-1 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)]"
                     aria-label={`Remove option ${idx + 1}`}
                   >
                     <X className="h-3 w-3" />
@@ -242,7 +242,7 @@ export function FieldEditor({
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-red-500 transition-colors hover:bg-red-500/10"
+                className="text-destructive flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-red-500/10"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 <span className="body-3">Delete field</span>

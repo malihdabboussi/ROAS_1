@@ -34,6 +34,7 @@ import { loadAllArtifactSupportMaps, useAllArtifactRows } from '../../hooks/use-
 import { getAllArtifactsConfig } from '../../lib/all-artifacts'
 import { useSpacesStore } from '../../store/use-spaces-store'
 import type { ArtifactViewBaseConfig, ViewDef } from '../../types/space-schema'
+import { SpaceNeedsCampaignState } from '../content/SpaceNeedsCampaignState'
 import type { ArtifactPreviewSelection } from './artifact-preview-selection'
 import {
   avatarRows,
@@ -62,13 +63,7 @@ interface ArtifactViewProps {
 }
 
 function MissingCampaign() {
-  return (
-    <div className="flex flex-1 items-center justify-center p-8 text-center">
-      <p className="body-3 text-muted-foreground">
-        This artifact view needs a campaign-linked space.
-      </p>
-    </div>
-  )
+  return <SpaceNeedsCampaignState viewLabel="This artifact view" />
 }
 
 function FunnelEmptyMockup() {

@@ -25,6 +25,11 @@ export function DelegationDeskWorkspace() {
   const [desk, setDesk] = useState<Space | null>(null)
   const [items, setItems] = useState<SpaceItem[]>([])
   const [thought, setThought] = useState('')
+  // Effect-set so SSR and first client render agree (avoids hydration mismatch).
+  const [addHint, setAddHint] = useState('⌘ Enter to add')
+  useEffect(() => {
+    if (!/Mac|iPhone|iPad/i.test(navigator.userAgent)) setAddHint('Ctrl+Enter to add')
+  }, [])
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<DelegationDeskFilter>('outstanding')
   const [loading, setLoading] = useState(true)
@@ -136,7 +141,7 @@ export function DelegationDeskWorkspace() {
             placeholder={DELEGATION_DESK_MESSAGES.PLACEHOLDER}
           />
           <div className="mt-spacing-2 flex items-center justify-between">
-            <span className="typo-caption text-muted-foreground">⌘ Enter to add</span>
+            <span className="typo-caption text-muted-foreground">{addHint}</span>
             <button
               type="button"
               className="button-default button-glass-primary body-3 gap-spacing-2"

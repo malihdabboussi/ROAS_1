@@ -218,7 +218,7 @@ function InlineImageGenComponent({
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/20">
               <svg
-                className="h-6 w-6 text-red-400"
+                className="text-destructive h-6 w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -231,7 +231,7 @@ function InlineImageGenComponent({
                 />
               </svg>
             </div>
-            <p className="text-center text-xs text-red-400">{error}</p>
+            <p className="text-destructive text-center text-xs">{error}</p>
             <button
               type="button"
               onClick={() => {

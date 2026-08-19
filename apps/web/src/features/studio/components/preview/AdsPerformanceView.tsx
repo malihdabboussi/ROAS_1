@@ -104,15 +104,7 @@ interface AdsPerformanceViewProps {
   adCampaignRowIdsFilter?: string[] | undefined
 }
 
-type AdsSortKey =
-  | 'spend'
-  | 'impressions'
-  | 'clicks'
-  | 'ctr'
-  | 'cpc'
-  | 'cpm'
-  | 'results'
-  | 'roas'
+type AdsSortKey = 'spend' | 'impressions' | 'clicks' | 'ctr' | 'cpc' | 'cpm' | 'results' | 'roas'
 
 function formatBudgetDollars(cents: number | null): string {
   if (!cents || cents <= 0) return ''
@@ -130,7 +122,7 @@ function formatBudgetCell(cents: number | null): string {
 function statusBadgeClass(status: string): string {
   if (status === 'ACTIVE') return 'bg-green-500/15 text-green-400'
   if (status === 'PAUSED') return 'bg-amber-500/15 text-amber-400'
-  if (status === 'DELETED' || status === 'ARCHIVED') return 'bg-red-500/15 text-red-400'
+  if (status === 'DELETED' || status === 'ARCHIVED') return 'bg-red-500/15 text-destructive'
   if (status === 'UNPUBLISHED') return 'bg-secondary text-muted-foreground'
   return 'bg-secondary text-muted-foreground'
 }

@@ -549,11 +549,11 @@ export function WidgetBuilderModal({
                       {snippet && (
                         <div className="shrink-0 px-3 py-3 sm:py-3.5">
                           <div className="mb-1.5 flex items-center gap-2">
-                            <Code className="h-4 w-4 text-muted-foreground" />
+                            <Code className="text-muted-foreground h-4 w-4" />
                             <p className="body-4 text-muted-foreground">Install snippet</p>
                           </div>
                           <div className="group relative">
-                            <pre className="body-4 max-h-28 overflow-x-auto overflow-y-auto rounded-lg border border-border bg-black/40 p-3 pr-10 text-white/90">
+                            <pre className="body-4 border-border max-h-28 overflow-x-auto overflow-y-auto rounded-lg border bg-black/40 p-3 pr-10 text-white/90">
                               {snippet}
                             </pre>
                             <button
@@ -562,7 +562,7 @@ export function WidgetBuilderModal({
                               title="Copy snippet"
                               aria-label="Copy snippet"
                               className={cn(
-                                'absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-md border border-border bg-black/70 text-white/70 transition-opacity hover:bg-white/10 hover:text-white',
+                                'border-border absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-md border bg-black/70 text-white/70 transition-opacity hover:bg-white/10 hover:text-white',
                                 copied
                                   ? 'opacity-100'
                                   : 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100',
@@ -640,13 +640,13 @@ function InputField({
 }) {
   return (
     <div>
-      <p className="body-4 mb-1 text-muted-foreground">{label}</p>
+      <p className="body-4 text-muted-foreground mb-1">{label}</p>
       <input
         type={type}
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="body-3 w-full rounded-lg border border-border bg-surface-subtle px-3 py-2 text-foreground outline-none placeholder:text-white/30 focus:border-white/20"
+        className="body-3 border-border bg-surface-subtle text-foreground w-full rounded-lg border px-3 py-2 outline-none placeholder:text-white/30 focus:border-white/20"
       />
     </div>
   )
@@ -708,7 +708,7 @@ function LinkUrlField({
 
   return (
     <div>
-      <p className="body-4 mb-1 text-muted-foreground">{label}</p>
+      <p className="body-4 text-muted-foreground mb-1">{label}</p>
       <input
         type="text"
         inputMode="url"
@@ -731,13 +731,13 @@ function LinkUrlField({
           }
         }}
         className={
-          'body-3 w-full rounded-lg border bg-surface-subtle px-3 py-2 text-foreground outline-none placeholder:text-white/30 ' +
+          'body-3 bg-surface-subtle text-foreground w-full rounded-lg border px-3 py-2 outline-none placeholder:text-white/30 ' +
           (error
             ? 'border-red-400/50 focus:border-red-400/60'
             : 'border-border focus:border-white/20')
         }
       />
-      {error ? <p className="body-4 mt-1 text-red-400/80">{error}</p> : null}
+      {error ? <p className="body-4 text-destructive/80 mt-1">{error}</p> : null}
     </div>
   )
 }
@@ -938,7 +938,7 @@ function GeneralTab({
 
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3 text-left">
-          <p className="body-4 shrink-0 text-muted-foreground">Accent color</p>
+          <p className="body-4 text-muted-foreground shrink-0">Accent color</p>
           <WidgetAccentColorRow
             value={config.widget_accent_color}
             onChange={(hex) => onUpdate('widget_accent_color', hex)}
@@ -946,7 +946,7 @@ function GeneralTab({
         </div>
         <div className="flex items-center justify-between gap-3 text-left">
           <div className="flex items-center gap-1.5">
-            <p className="body-4 shrink-0 text-muted-foreground">Position</p>
+            <p className="body-4 text-muted-foreground shrink-0">Position</p>
             <Tooltip
               label="Which corner of the screen the widget appears in"
               side="top"
@@ -969,7 +969,7 @@ function GeneralTab({
                 config.widget_position === 'bottom-left' ? 'bottom-right' : 'bottom-left',
               )
             }
-            className="body-3 min-w-[4.5rem] shrink-0 rounded-lg border border-border bg-surface-subtle px-3 py-2 text-foreground transition-colors hover:border-white/20 hover:bg-white/[0.06]"
+            className="body-3 border-border bg-surface-subtle text-foreground min-w-[4.5rem] shrink-0 rounded-lg border px-3 py-2 transition-colors hover:border-white/20 hover:bg-white/[0.06]"
           >
             {config.widget_position === 'bottom-left' ? 'Left' : 'Right'}
           </button>
@@ -1062,19 +1062,19 @@ function AllowedOriginsField({
               addEntry()
             }
           }}
-          className="body-3 flex-1 rounded-lg border border-border bg-surface-subtle px-3 py-2 text-foreground outline-none placeholder:text-white/30 focus:border-white/20"
+          className="body-3 border-border bg-surface-subtle text-foreground flex-1 rounded-lg border px-3 py-2 outline-none placeholder:text-white/30 focus:border-white/20"
         />
         <button
           type="button"
           onClick={addEntry}
           disabled={!draft.trim()}
-          className="body-3 shrink-0 rounded-lg border border-border bg-surface-subtle px-3 py-2 text-foreground transition-colors hover:border-white/20 hover:bg-white/[0.06] disabled:opacity-40 disabled:hover:border-border disabled:hover:bg-white/[0.03]"
+          className="body-3 border-border bg-surface-subtle text-foreground disabled:hover:border-border shrink-0 rounded-lg border px-3 py-2 transition-colors hover:border-white/20 hover:bg-white/[0.06] disabled:opacity-40 disabled:hover:bg-white/[0.03]"
         >
           Add
         </button>
       </div>
 
-      {error && <p className="body-4 text-red-400/80">{error}</p>}
+      {error && <p className="body-4 text-destructive/80">{error}</p>}
 
       {value.length === 0 ? (
         <p className="body-4 text-amber-400/70">
@@ -1085,13 +1085,13 @@ function AllowedOriginsField({
           {value.map((entry) => (
             <li
               key={entry}
-              className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface-subtle px-3 py-1.5"
+              className="border-border bg-surface-subtle flex items-center justify-between gap-2 rounded-lg border px-3 py-1.5"
             >
-              <span className="body-3 truncate text-muted-foreground">{entry}</span>
+              <span className="body-3 text-muted-foreground truncate">{entry}</span>
               <button
                 type="button"
                 onClick={() => removeEntry(entry)}
-                className="shrink-0 text-red-400/60 transition-colors hover:text-red-400"
+                className="text-destructive/60 hover:text-destructive shrink-0 transition-colors"
                 aria-label={`Remove ${entry}`}
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -1150,13 +1150,13 @@ function HomeTab({
   return (
     <div className="space-y-4">
       <div>
-        <p className="body-4 mb-1 text-muted-foreground">Hero text</p>
+        <p className="body-4 text-muted-foreground mb-1">Hero text</p>
         <textarea
           rows={3}
           value={home.heroText ?? ''}
           onChange={(e) => onUpdate({ ...home, heroText: e.target.value })}
           placeholder="Hello there.&#10;How can we help?"
-          className="body-3 w-full resize-none rounded-lg border border-border bg-surface-subtle px-3 py-2 text-foreground outline-none placeholder:text-white/30 focus:border-white/20"
+          className="body-3 border-border bg-surface-subtle text-foreground w-full resize-none rounded-lg border px-3 py-2 outline-none placeholder:text-white/30 focus:border-white/20"
         />
       </div>
 
@@ -1199,7 +1199,7 @@ function HomeTab({
           {cards.map((card) => {
             const isCollapsed = collapsed[card.id] ?? true
             return (
-              <div key={card.id} className="rounded-xl border border-border bg-surface-subtle p-3">
+              <div key={card.id} className="border-border bg-surface-subtle rounded-xl border p-3">
                 <div className="flex items-center justify-between">
                   <button
                     type="button"
@@ -1207,18 +1207,18 @@ function HomeTab({
                     className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
                   >
                     {isCollapsed ? (
-                      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <ChevronRight className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                     ) : (
-                      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <ChevronDown className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                     )}
-                    <p className="truncate text-xs font-medium text-muted-foreground">
+                    <p className="text-muted-foreground truncate text-xs font-medium">
                       {card.title || 'Card'}
                     </p>
                   </button>
                   <button
                     type="button"
                     onClick={() => removeCard(card.id)}
-                    className="shrink-0 text-red-400/60 transition-colors hover:text-red-400"
+                    className="text-destructive/60 hover:text-destructive shrink-0 transition-colors"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -1231,13 +1231,13 @@ function HomeTab({
                       onChange={(v) => updateCard(card.id, { title: v })}
                     />
                     <div>
-                      <p className="body-4 mb-1 text-muted-foreground">Body</p>
+                      <p className="body-4 text-muted-foreground mb-1">Body</p>
                       <textarea
                         rows={3}
                         value={card.body}
                         onChange={(e) => updateCard(card.id, { body: e.target.value })}
                         placeholder="Card description…"
-                        className="body-3 w-full resize-none rounded-lg border border-border bg-surface-subtle px-3 py-2 text-foreground outline-none placeholder:text-white/30 focus:border-white/20"
+                        className="body-3 border-border bg-surface-subtle text-foreground w-full resize-none rounded-lg border px-3 py-2 outline-none placeholder:text-white/30 focus:border-white/20"
                       />
                     </div>
                     <WidgetBuilderImageField
@@ -1297,7 +1297,7 @@ function NewsTab({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="body-4 font-medium text-muted-foreground">Updates</p>
+        <p className="body-4 text-muted-foreground font-medium">Updates</p>
         <button
           type="button"
           onClick={addItem}
@@ -1311,7 +1311,7 @@ function NewsTab({
         {items.map((item) => {
           const isCollapsed = collapsed[item.id] ?? true
           return (
-            <div key={item.id} className="rounded-xl border border-border bg-surface-subtle p-3">
+            <div key={item.id} className="border-border bg-surface-subtle rounded-xl border p-3">
               <div className="flex items-center justify-between">
                 <button
                   type="button"
@@ -1319,18 +1319,18 @@ function NewsTab({
                   className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
                 >
                   {isCollapsed ? (
-                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <ChevronRight className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                   ) : (
-                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <ChevronDown className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                   )}
-                  <p className="truncate text-xs font-medium text-muted-foreground">
+                  <p className="text-muted-foreground truncate text-xs font-medium">
                     {item.title || 'Update'}
                   </p>
                 </button>
                 <button
                   type="button"
                   onClick={() => removeItem(item.id)}
-                  className="shrink-0 text-red-400/60 transition-colors hover:text-red-400"
+                  className="text-destructive/60 hover:text-destructive shrink-0 transition-colors"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -1343,13 +1343,13 @@ function NewsTab({
                     onChange={(v) => updateItem(item.id, { title: v })}
                   />
                   <div>
-                    <p className="body-4 mb-1 text-muted-foreground">Body</p>
+                    <p className="body-4 text-muted-foreground mb-1">Body</p>
                     <textarea
                       rows={3}
                       value={item.body}
                       onChange={(e) => updateItem(item.id, { body: e.target.value })}
                       placeholder="What's new..."
-                      className="body-3 w-full resize-none rounded-lg border border-border bg-surface-subtle px-3 py-2 text-foreground outline-none placeholder:text-white/30 focus:border-white/20"
+                      className="body-3 border-border bg-surface-subtle text-foreground w-full resize-none rounded-lg border px-3 py-2 outline-none placeholder:text-white/30 focus:border-white/20"
                     />
                   </div>
                   <WidgetBuilderImageField
@@ -1378,7 +1378,7 @@ function NewsTab({
       </div>
 
       {items.length === 0 && (
-        <p className="py-4 text-center text-xs text-muted-foreground">
+        <p className="text-muted-foreground py-4 text-center text-xs">
           No updates yet. Add one to share news with your visitors.
         </p>
       )}

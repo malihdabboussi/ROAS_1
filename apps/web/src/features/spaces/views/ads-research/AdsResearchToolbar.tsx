@@ -46,7 +46,7 @@ export function AdsResearchToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
   if (!activeView || surface === 'runs') {
     return (
       <ToolbarShell ctx={ctx}>
-        <div className="flex min-w-0 flex-nowrap items-center gap-1" />
+        <div className="flex shrink-0 flex-nowrap items-center gap-1" />
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-1" />
       </ToolbarShell>
     )
@@ -66,7 +66,7 @@ export function AdsResearchToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
 
   return (
     <ToolbarShell ctx={ctx}>
-      <div className="flex min-w-0 flex-nowrap items-center gap-1">
+      <div className="flex shrink-0 flex-nowrap items-center gap-1">
         {/* Group by */}
         <div ref={groupMenuRef} className="relative shrink-0">
           <Tooltip label="Group by" side="bottom">

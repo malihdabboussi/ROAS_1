@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { SelectOption } from '@/lib/spaces/space-schema-types'
+
 export { OptionDot } from './OptionDot'
 
 function isHex(color?: string): boolean {
@@ -22,7 +23,7 @@ const OPTION_STYLE_BY_COLOR: Record<string, string> = {
   slate: 'bg-slate-500/20 text-slate-700 dark:bg-slate-500/15 dark:text-slate-300',
   blue: 'bg-blue-500/20 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
   orange: 'bg-orange-500/20 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300',
-  red: 'bg-red-500/20 text-red-700 dark:bg-red-500/15 dark:text-red-300',
+  red: 'bg-red-500/20 text-red-700 dark:bg-red-500/15 dark:text-destructive',
   pink: 'bg-pink-500/20 text-pink-700 dark:bg-pink-500/15 dark:text-pink-300',
   rose: 'bg-rose-500/20 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
   fuchsia: 'bg-fuchsia-500/20 text-fuchsia-700 dark:bg-fuchsia-500/15 dark:text-fuchsia-300',
@@ -56,7 +57,7 @@ export function OptionBadge({ option }: OptionBadgeProps) {
   const style = isCustom(option.color) ? customBadgeStyle(option.color!) : undefined
   return (
     <span
-      className={`inline-flex items-center rounded-full border border-current/20 px-2 py-0.5 text-xs font-semibold ${cls}`}
+      className={`border-current/20 inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${cls}`}
       style={style}
     >
       {option.label}

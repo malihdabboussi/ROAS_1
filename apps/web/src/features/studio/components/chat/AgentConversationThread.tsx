@@ -552,7 +552,7 @@ function AgentConversationModal({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="z-modal-backdrop fixed inset-0 bg-modal-overlay" />
+        <DialogPrimitive.Overlay className="z-modal-backdrop bg-modal-overlay fixed inset-0" />
         <DialogPrimitive.Content asChild>
           <motion.div
             className="z-modal-content rounded-spacing-4 border-border surface-card fixed inset-4 mx-auto flex flex-col overflow-hidden border shadow-xl sm:inset-y-8"
@@ -560,102 +560,106 @@ function AgentConversationModal({
             animate={{ maxWidth: isExpanded ? 1152 : 672 }}
             transition={{ type: 'spring', stiffness: 380, damping: 32 }}
           >
-          <VisuallyHidden.Root>
-            <DialogPrimitive.Title>Agent conversation</DialogPrimitive.Title>
-          </VisuallyHidden.Root>
-          <div className="gap-spacing-3 border-border px-spacing-4 py-spacing-3 flex items-center border-b">
-            {isBrainstorm ? (
-              <>
-                <div className="flex items-center -space-x-1.5">
-                  {participants.map((p) => (
-                    <AgentAvatar key={p.id} name={p.name} image={p.image} size={30} />
-                  ))}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-foreground text-sm font-medium">Brainstorm</div>
-                  <div className="text-muted-foreground text-xs">
-                    {participants.map((p) => p.name).join(', ')} · {messageCount} msg
-                    {messageCount !== 1 ? 's' : ''}
+            <VisuallyHidden.Root>
+              <DialogPrimitive.Title>Agent conversation</DialogPrimitive.Title>
+            </VisuallyHidden.Root>
+            <div className="gap-spacing-3 border-border px-spacing-4 py-spacing-3 flex items-center border-b">
+              {isBrainstorm ? (
+                <>
+                  <div className="flex items-center -space-x-1.5">
+                    {participants.map((p) => (
+                      <AgentAvatar key={p.id} name={p.name} image={p.image} size={30} />
+                    ))}
                   </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <AgentIdentity
-                  name={callerAgentName}
-                  image={callerAgentImage}
-                  role={callerAgentRole}
-                  size={36}
-                />
-                <div className="flex shrink-0 flex-col items-center gap-0.5">
-                  <span className="text-muted-foreground text-[10px] uppercase tracking-wider">
-                    {typeLabel}
-                  </span>
-                  <div className="bg-border h-3 w-px" />
-                </div>
-                <AgentIdentity
-                  name={targetAgentName}
-                  image={targetAgentImage}
-                  role={targetAgentRole}
-                  size={36}
-                />
-                <div className="gap-spacing-2 ml-auto flex shrink-0 items-center">
-                  <span className="text-muted-foreground text-xs tabular-nums">
-                    {messageCount} msg{messageCount !== 1 ? 's' : ''}
-                  </span>
-                </div>
-              </>
-            )}
-            <div className="gap-spacing-1 ml-auto flex shrink-0 items-center">
-              <button
-                type="button"
-                onClick={toggleExpanded}
-                className="btn-icon-bare rounded-full p-1.5 hover:bg-white/10"
-                aria-label={isExpanded ? 'Collapse conversation panel' : 'Expand conversation panel'}
-                title={isExpanded ? 'Collapse' : 'Expand'}
-              >
-                {isExpanded ? (
-                  <Minimize2 className="icon-sm text-muted-foreground" />
-                ) : (
-                  <Maximize2 className="icon-sm text-muted-foreground" />
-                )}
-              </button>
-              <DialogPrimitive.Close className="btn-icon-bare rounded-full p-1.5 hover:bg-white/10">
-                <X className="icon-sm text-muted-foreground" />
-              </DialogPrimitive.Close>
-            </div>
-          </div>
-
-          <div ref={scrollRef} className="px-spacing-4 py-spacing-2 flex-1 overflow-y-auto">
-            {turnGroups.map((group, gi) => {
-              const p = participantMap.get(group.from)
-              return (
-                <AgentTurnGroup
-                  key={`group-${gi}-${group.from}`}
-                  group={group}
-                  role={p?.role ?? (group.from === callerAgent ? callerAgentRole : targetAgentRole)}
-                  avatarSize={28}
-                  status={status}
-                  isLastGroup={gi === turnGroups.length - 1}
-                />
-              )
-            })}
-          </div>
-
-          <div className="gap-spacing-2 border-border px-spacing-4 py-spacing-2 flex items-center border-t">
-            {status === 'active' && (
-              <div className="flex h-4 w-4 shrink-0 items-center justify-center overflow-visible">
-                <VibeyChatOrb state="executing" style="elastic" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-foreground text-sm font-medium">Brainstorm</div>
+                    <div className="text-muted-foreground text-xs">
+                      {participants.map((p) => p.name).join(', ')} · {messageCount} msg
+                      {messageCount !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <AgentIdentity
+                    name={callerAgentName}
+                    image={callerAgentImage}
+                    role={callerAgentRole}
+                    size={36}
+                  />
+                  <div className="flex shrink-0 flex-col items-center gap-0.5">
+                    <span className="text-muted-foreground text-[10px] uppercase tracking-wider">
+                      {typeLabel}
+                    </span>
+                    <div className="bg-border h-3 w-px" />
+                  </div>
+                  <AgentIdentity
+                    name={targetAgentName}
+                    image={targetAgentImage}
+                    role={targetAgentRole}
+                    size={36}
+                  />
+                  <div className="gap-spacing-2 ml-auto flex shrink-0 items-center">
+                    <span className="text-muted-foreground text-xs tabular-nums">
+                      {messageCount} msg{messageCount !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </>
+              )}
+              <div className="gap-spacing-1 ml-auto flex shrink-0 items-center">
+                <button
+                  type="button"
+                  onClick={toggleExpanded}
+                  className="btn-icon-bare rounded-full p-1.5 hover:bg-white/10"
+                  aria-label={
+                    isExpanded ? 'Collapse conversation panel' : 'Expand conversation panel'
+                  }
+                  title={isExpanded ? 'Collapse' : 'Expand'}
+                >
+                  {isExpanded ? (
+                    <Minimize2 className="icon-sm text-muted-foreground" />
+                  ) : (
+                    <Maximize2 className="icon-sm text-muted-foreground" />
+                  )}
+                </button>
+                <DialogPrimitive.Close className="btn-icon-bare rounded-full p-1.5 hover:bg-white/10">
+                  <X className="icon-sm text-muted-foreground" />
+                </DialogPrimitive.Close>
               </div>
-            )}
-            {status === 'completed' && (
-              <MessageSquare className="text-muted-foreground h-3.5 w-3.5" />
-            )}
-            {status === 'failed' && <X className="h-3.5 w-3.5 text-red-500" />}
-            <span className="text-muted-foreground text-xs">
-              {status === 'active' ? 'Conversation in progress...' : 'Conversation complete'}
-            </span>
-          </div>
+            </div>
+
+            <div ref={scrollRef} className="px-spacing-4 py-spacing-2 flex-1 overflow-y-auto">
+              {turnGroups.map((group, gi) => {
+                const p = participantMap.get(group.from)
+                return (
+                  <AgentTurnGroup
+                    key={`group-${gi}-${group.from}`}
+                    group={group}
+                    role={
+                      p?.role ?? (group.from === callerAgent ? callerAgentRole : targetAgentRole)
+                    }
+                    avatarSize={28}
+                    status={status}
+                    isLastGroup={gi === turnGroups.length - 1}
+                  />
+                )
+              })}
+            </div>
+
+            <div className="gap-spacing-2 border-border px-spacing-4 py-spacing-2 flex items-center border-t">
+              {status === 'active' && (
+                <div className="flex h-4 w-4 shrink-0 items-center justify-center overflow-visible">
+                  <VibeyChatOrb state="executing" style="elastic" />
+                </div>
+              )}
+              {status === 'completed' && (
+                <MessageSquare className="text-muted-foreground h-3.5 w-3.5" />
+              )}
+              {status === 'failed' && <X className="text-destructive h-3.5 w-3.5" />}
+              <span className="text-muted-foreground text-xs">
+                {status === 'active' ? 'Conversation in progress...' : 'Conversation complete'}
+              </span>
+            </div>
           </motion.div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>

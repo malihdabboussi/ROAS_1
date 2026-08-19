@@ -63,9 +63,19 @@ export function AvatarDropdown({
         setMenuOpen(false)
       }
     }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMenuOpen(false)
+        triggerRef.current?.focus()
+      }
+    }
     if (menuOpen) {
       document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleKeyDown)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+        document.removeEventListener('keydown', handleKeyDown)
+      }
     }
     return undefined
   }, [menuOpen])
@@ -75,6 +85,9 @@ export function AvatarDropdown({
       <button
         ref={triggerRef}
         onClick={() => setMenuOpen(!menuOpen)}
+        aria-haspopup="menu"
+        aria-expanded={menuOpen}
+        aria-label={`Account menu for ${displayName}`}
         className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground rounded-spacing-2 gap-spacing-2 p-spacing-1 relative flex w-full cursor-pointer items-center text-left outline-none transition-colors"
       >
         <div className="relative flex-shrink-0">

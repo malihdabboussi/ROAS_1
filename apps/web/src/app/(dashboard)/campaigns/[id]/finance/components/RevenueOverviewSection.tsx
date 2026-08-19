@@ -119,7 +119,12 @@ export function RevenueOverviewSection({
             icon: DollarSign,
             color: 'text-emerald-400',
           },
-          { label: 'Refunds', value: overview?.refunds ?? 0, icon: Undo2, color: 'text-red-400' },
+          {
+            label: 'Refunds',
+            value: overview?.refunds ?? 0,
+            icon: Undo2,
+            color: 'text-destructive',
+          },
           {
             label: 'Stripe Fees',
             value: overview?.fees ?? 0,

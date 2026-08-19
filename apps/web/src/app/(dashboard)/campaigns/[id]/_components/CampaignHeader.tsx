@@ -110,7 +110,7 @@ export function CampaignHeader({
               {saveStatus === 'failed' && (
                 <button
                   onClick={() => void onRetrySave(context, resources)}
-                  className="body-4 flex items-center gap-1.5 rounded-md bg-red-500/10 px-2 py-1 text-red-400 transition-colors hover:bg-red-500/20"
+                  className="body-4 text-destructive flex items-center gap-1.5 rounded-md bg-red-500/10 px-2 py-1 transition-colors hover:bg-red-500/20"
                 >
                   <AlertTriangle className="h-3.5 w-3.5" /> Save failed — Retry
                 </button>

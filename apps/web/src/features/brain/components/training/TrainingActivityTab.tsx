@@ -79,7 +79,7 @@ function JobStatusIcon({ job }: { job: BrainQueueUiJob }) {
   if (job.status === 'succeeded') {
     return <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-400" />
   }
-  return <XCircle className="h-3.5 w-3.5 shrink-0 text-red-400" />
+  return <XCircle className="text-destructive h-3.5 w-3.5 shrink-0" />
 }
 
 function BrainCell({ option }: { option: BrainScopeNavOption }) {

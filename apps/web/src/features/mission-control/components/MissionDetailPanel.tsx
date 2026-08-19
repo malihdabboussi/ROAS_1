@@ -26,10 +26,10 @@ const STATUS_STYLE: Record<string, string> = {
   todo: 'bg-cyan-500/15 text-cyan-300',
   in_progress: 'bg-amber-500/15 text-amber-400',
   review: 'bg-violet-500/15 text-violet-300',
-  blocked: 'bg-red-500/15 text-red-400',
+  blocked: 'bg-red-500/15 text-destructive',
   done: 'bg-emerald-500/15 text-emerald-400',
-  error: 'bg-red-500/15 text-red-400',
-  failed: 'bg-red-700/20 text-red-300',
+  error: 'bg-red-500/15 text-destructive',
+  failed: 'bg-red-700/20 text-destructive',
 }
 
 export function MissionDetailPanel({
@@ -71,7 +71,7 @@ export function MissionDetailPanel({
           </p>
         )}
         {mission.error && (
-          <p className="body-4 mt-2 rounded-md bg-red-500/10 px-2 py-1 text-red-300">
+          <p className="body-4 text-destructive mt-2 rounded-md bg-red-500/10 px-2 py-1">
             {mission.error}
           </p>
         )}

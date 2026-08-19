@@ -39,7 +39,7 @@ export function FacebookPagePickerModal({
         setPages([])
         return
       }
-      setPages(res.pages)
+      setPages(res?.pages ?? [])
       if (res.hint) setHint(res.hint)
       if (res.pages.length === 1) {
         const only = res.pages[0]!
@@ -98,7 +98,7 @@ export function FacebookPagePickerModal({
     <div className="fixed inset-0 z-[100010] flex items-center justify-center p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-modal-overlay"
+        className="bg-modal-overlay absolute inset-0"
         aria-label="Close"
         onClick={onClose}
       />

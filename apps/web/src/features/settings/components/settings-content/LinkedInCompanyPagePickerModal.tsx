@@ -41,7 +41,7 @@ export function LinkedInCompanyPagePickerModal({
         setOrganizations([])
         return
       }
-      setOrganizations(res.organizations)
+      setOrganizations(res?.organizations ?? [])
       if (res.hint) setHint(res.hint)
       if (res.organizations.length === 1) {
         const only = res.organizations[0]!
@@ -100,7 +100,7 @@ export function LinkedInCompanyPagePickerModal({
     <div className="fixed inset-0 z-[100010] flex items-center justify-center p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-modal-overlay"
+        className="bg-modal-overlay absolute inset-0"
         aria-label="Close"
         onClick={onClose}
       />

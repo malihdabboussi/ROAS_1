@@ -11,8 +11,8 @@ import {
   ExternalLink,
   FolderInput,
   History,
-  Link2,
   LayoutTemplate,
+  Link2,
   MessageSquare,
   Pause,
   Play,
@@ -20,8 +20,8 @@ import {
   Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import type { SpaceSummary } from '@/lib/spaces/spaces-api'
 import { isUserFlowTemplate } from '@/lib/flows/flow-user-template.utils'
+import type { SpaceSummary } from '@/lib/spaces/spaces-api'
 import type { FlowAutomationSummary } from '../types/flow-automation.types'
 import type {
   FlowBuildSessionLink,
@@ -416,7 +416,7 @@ export function FlowMenuDropdown({
               event.preventDefault()
               onRequestDelete()
             }}
-            className="gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full items-center text-left text-red-600 transition-colors hover:bg-red-500/10 [&_svg]:text-red-600"
+            className="gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 text-destructive [&_svg]:text-destructive flex w-full items-center text-left transition-colors hover:bg-red-500/10"
           >
             <Trash2 className={itemIcon} />
             <span>{flow ? 'Delete flow' : 'Discard build'}</span>

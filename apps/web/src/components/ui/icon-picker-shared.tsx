@@ -31,7 +31,7 @@ export const ICON_COLORS = [
   { id: 'green', label: 'Green', glassClass: 'badge-glass-green', textColor: 'text-emerald-400' },
   { id: 'cyan', label: 'Cyan', glassClass: 'badge-glass-cyan', textColor: 'text-cyan-400' },
   { id: 'orange', label: 'Orange', glassClass: 'badge-glass-orange', textColor: 'text-orange-400' },
-  { id: 'red', label: 'Red', glassClass: 'badge-glass-red', textColor: 'text-red-400' },
+  { id: 'red', label: 'Red', glassClass: 'badge-glass-red', textColor: 'text-destructive' },
   { id: 'yellow', label: 'Yellow', glassClass: 'badge-glass-yellow', textColor: 'text-yellow-400' },
   {
     id: 'muted',

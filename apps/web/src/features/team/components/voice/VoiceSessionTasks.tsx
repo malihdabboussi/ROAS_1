@@ -15,7 +15,7 @@ import type { Message } from '@/features/studio/types'
 
 function TaskStatusIcon({ status }: { status: string }) {
   if (status === 'completed') return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-  if (status === 'failed') return <XCircle className="h-3.5 w-3.5 text-red-400" />
+  if (status === 'failed') return <XCircle className="text-destructive h-3.5 w-3.5" />
   if (status === 'running')
     return <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--color-accent)]" />
   return <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-muted-foreground)]" />
