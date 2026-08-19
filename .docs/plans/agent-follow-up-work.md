@@ -39426,3 +39426,16 @@ Evidence: Four missions started from conversation `1d2d2b2b` are all titled exac
 Needed work: Name a mission at creation from its run context — playbook plus campaign/space, and a disambiguator when the same playbook runs more than once against the same scope.
 
 Reason not done now: The panel change mitigates this in the UI with a timestamp under each row, but the fix belongs in mission creation, which is worker/API work outside a chat-panel branch.
+
+## 2026-08-18 - [ARCH] slack-agent-tools.service.ts near the 600 LOC limit
+- Feature/app: Slack Pixel · apps/api
+- File: `apps/api/src/modules/slack/services/slack-agent-tools.service.ts` (595 LOC after extracting `slack-client-scoped-search.ts`)
+- Evidence: was 552 before the client-scope work; the search-once refactor added ~40 lines.
+- Needed: move `searchMessagesOnce` + `searchFiles` into a `slack-message-search.service.ts` (or make `SlackArchiveSearchService` own the ladder) so the tools service is a thin dispatcher.
+- Why not now: out of scope for §11.11; the file is under limit.
+
+## 2026-08-18 - [FEATURE] Client Context Bundle: Drive folder + recent Fathom meetings
+- Feature/app: Slack Pixel · apps/api
+- File: `apps/api/src/modules/slack/services/slack-client-context.ts`
+- Evidence: plan §11.11 lists Drive folder and recent meetings in the bundle; v1 ships channels/campaigns/brains/spaces only (no reliable client→Drive folder source yet; meetings need the Fathom dual-write from PR #316 to land first).
+- Needed: add `drive_folder` once a canonical client→folder mapping exists; add last 3 Fathom meeting titles/dates from the Campaign Brain after #316 deploys.

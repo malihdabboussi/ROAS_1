@@ -3,11 +3,11 @@ import { SlackConversationBase } from './slack-service-conversation.base'
 import {
   CREDITS_EXHAUSTED_SLACK_MESSAGE,
   GENERIC_SLACK_AGENT_ERROR_MESSAGE,
+  isSlackDirectConversation,
   MACHINE_NOT_READY_SLACK_MESSAGE,
   MACHINE_UNREACHABLE_SLACK_MESSAGE,
   MACHINE_WAKE_START_SLACK_MESSAGE,
   SLACK_AGENT_STREAM_TIMEOUT_MS,
-  isSlackDirectConversation,
 } from './slack-service.shared'
 
 export abstract class SlackEventsBase extends SlackConversationBase {
@@ -161,11 +161,12 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       event.files,
     )
     if (channelOrgId) {
-      const currentIdentity = await this.buildSlackAskIdentityBlock(serviceSupabase, {
+      const currentIdentity = await this.buildSlackAskContext(serviceSupabase, {
         orgId: channelOrgId,
         slackTeamId: teamId,
         channelId,
         botToken,
+        text,
       }).catch(() => '')
       if (currentIdentity) {
         fullMessage = fullMessage ? `${currentIdentity}\n\n${fullMessage}` : currentIdentity
@@ -299,7 +300,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       fallback.userId,
       fallback.botToken,
       channelId,
-      { orgId: fallback.orgId, slackTeamId: teamId },
+      { orgId: fallback.orgId, slackTeamId: teamId, text },
     ).catch((err) => {
       this.logger.warn(`Failed to build channel context: ${err}`)
       return ''

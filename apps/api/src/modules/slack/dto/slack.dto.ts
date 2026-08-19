@@ -22,6 +22,11 @@ export const SlackSearchQuerySchema = z.object({
   sort: z.enum(['score', 'timestamp']).optional(),
   sort_dir: z.enum(['asc', 'desc']).optional(),
   cursor: z.string().optional(),
+  /** Scope to a client's mapped Slack channels (Client Context Bundle). */
+  client_id: z.string().min(1).optional(),
+  client_name: z.string().min(1).optional(),
+  /** Comma-separated Slack channel ids to search, in order. */
+  channel_ids: z.string().min(1).optional(),
 })
 export type SlackSearchQuery = z.infer<typeof SlackSearchQuerySchema>
 
