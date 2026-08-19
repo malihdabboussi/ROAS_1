@@ -208,10 +208,11 @@ export function GlobalArtifactsPage({
                 key={option.id}
                 type="button"
                 onClick={() => setFilter(option.id)}
+                aria-pressed={filter === option.id}
                 className={cn(
                   'body-3 px-spacing-3 py-spacing-1-5 rounded-full font-medium transition-colors',
                   filter === option.id
-                    ? 'bg-foreground text-background'
+                    ? 'nav-glass-selected-purple'
                     : 'bg-secondary text-muted-foreground hover:bg-hover-subtle hover:text-foreground',
                 )}
               >

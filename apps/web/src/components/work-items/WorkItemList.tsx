@@ -86,6 +86,7 @@ export function WorkItemListRow({
               'body-3 text-foreground block truncate font-medium',
               struck && 'line-through opacity-60',
             )}
+            title={title}
           >
             {title}
           </span>

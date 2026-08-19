@@ -102,7 +102,7 @@ export function ArtifactCardBody({
       <>
         <FunnelCardHeroPreview funnelId={row.id} />
         <div className="flex flex-col gap-1.5 px-3 py-2 pr-10">
-          <p className="line-clamp-2 min-h-[2lh] min-w-0 text-sm font-semibold leading-tight text-[var(--foreground)]">
+          <p className="line-clamp-2 min-h-[2lh] min-w-0 text-sm font-semibold leading-tight text-[var(--foreground)]" title={row.title}>
             {row.title}
           </p>
           {funnelRaw ? <FunnelCardMetaRows funnel={funnelRaw} fieldIds={funnelCardFieldIds} /> : null}
@@ -116,7 +116,7 @@ export function ArtifactCardBody({
       <>
         <SocialPostCardPreview post={socialRaw} />
         <div className="flex flex-col gap-1.5 px-3 py-2 pr-10">
-          <p className="line-clamp-2 min-h-[2lh] min-w-0 text-sm font-semibold leading-tight text-[var(--foreground)]">
+          <p className="line-clamp-2 min-h-[2lh] min-w-0 text-sm font-semibold leading-tight text-[var(--foreground)]" title={row.title}>
             {row.title}
           </p>
           <SocialPostCardMetaRows post={socialRaw} fieldIds={socialPostCardFieldIds} />
@@ -130,7 +130,7 @@ export function ArtifactCardBody({
       <>
         <AdCardPreview ad={adRaw} />
         <div className="flex flex-col gap-1.5 px-3 py-2 pr-10">
-          <p className="line-clamp-2 min-h-[2lh] min-w-0 text-sm font-semibold leading-tight text-[var(--foreground)]">
+          <p className="line-clamp-2 min-h-[2lh] min-w-0 text-sm font-semibold leading-tight text-[var(--foreground)]" title={row.title}>
             {row.title}
           </p>
           <AdCardMetaRows
@@ -146,7 +146,7 @@ export function ArtifactCardBody({
   if (isSequenceCard && sequenceRaw) {
     return (
       <>
-        <p className="line-clamp-2 min-h-[2lh] pr-10 text-sm font-semibold leading-tight text-[var(--foreground)]">
+        <p className="line-clamp-2 min-h-[2lh] pr-10 text-sm font-semibold leading-tight text-[var(--foreground)]" title={row.title}>
           {row.title}
         </p>
         <SequenceCardMetaRows
@@ -163,7 +163,7 @@ export function ArtifactCardBody({
       <>
         <PresentationCardHeroPreview presentationId={row.id} />
         <div className="flex flex-col gap-1.5 px-3 py-2 pr-10">
-          <p className="line-clamp-2 min-h-[2lh] min-w-0 text-sm font-semibold leading-tight text-[var(--foreground)]">
+          <p className="line-clamp-2 min-h-[2lh] min-w-0 text-sm font-semibold leading-tight text-[var(--foreground)]" title={row.title}>
             {row.title}
           </p>
           <PresentationCardMetaRows
@@ -197,7 +197,7 @@ export function ArtifactCardBody({
               </div>
             )}
           </div>
-          <p className="line-clamp-2 min-h-[2lh] min-w-0 flex-1 text-sm font-semibold leading-tight text-[var(--foreground)]">
+          <p className="line-clamp-2 min-h-[2lh] min-w-0 flex-1 text-sm font-semibold leading-tight text-[var(--foreground)]" title={row.title}>
             {row.title}
           </p>
         </div>
@@ -215,7 +215,7 @@ export function ArtifactCardBody({
   if (isFormCard && formRaw) {
     return (
       <div className="p-spacing-4 flex flex-col gap-2 pr-10">
-        <p className="line-clamp-2 min-h-[2lh] text-sm font-semibold leading-tight text-[var(--foreground)]">
+        <p className="line-clamp-2 min-h-[2lh] text-sm font-semibold leading-tight text-[var(--foreground)]" title={row.title}>
           {row.title}
         </p>
         <FormCardMetaRows
@@ -265,7 +265,7 @@ export function ArtifactCardBody({
   if (isOfferCard) {
     return (
       <>
-        <p className="line-clamp-2 min-h-[2lh] pr-7 text-sm font-semibold leading-tight text-[var(--foreground)]">
+        <p className="line-clamp-2 min-h-[2lh] pr-7 text-sm font-semibold leading-tight text-[var(--foreground)]" title={row.title}>
           {row.title}
         </p>
         <p className="mt-auto text-[10px] text-[var(--color-muted-foreground)]">
@@ -299,7 +299,7 @@ export function ArtifactCardBody({
           ))}
         </div>
         <div className="min-w-0">
-          <p className="line-clamp-2 text-sm font-semibold text-[var(--foreground)]">
+          <p className="line-clamp-2 text-sm font-semibold text-[var(--foreground)]" title={row.title}>
             {row.title}
           </p>
           {row.subtitle ? (

@@ -109,7 +109,10 @@ function AgencyClientRow({
         <Link href={`/clients/${client.id}`} className="gap-spacing-3 flex min-w-0 items-center">
           <ClientAvatar client={client} />
           <span className="min-w-0 flex-1">
-            <span className="body-3 text-foreground block truncate font-medium">
+            <span
+              className="body-3 text-foreground block truncate font-medium"
+              title={client.display_name || client.name}
+            >
               {client.display_name || client.name}
             </span>
             <span className="body-4 text-muted-foreground block truncate">
@@ -121,7 +124,7 @@ function AgencyClientRow({
       </td>
       {showManagerColumn ? (
         <td className={`body-3 text-muted-foreground ${CELL}`}>
-          <span className="block truncate">
+          <span className="block truncate" title={client.account_manager?.name || undefined}>
             {client.account_manager?.name || AGENCY_CLIENT_MESSAGES.UNASSIGNED}
           </span>
         </td>

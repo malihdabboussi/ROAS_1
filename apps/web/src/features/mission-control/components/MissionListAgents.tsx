@@ -23,7 +23,7 @@ export function AgentCell({ agentKey, agents }: { agentKey: string | null; agent
           {agent.name.charAt(0)}
         </div>
       )}
-      <span className="body-4 min-w-0 flex-1 truncate text-left font-medium leading-tight text-[var(--foreground)]">
+      <span className="body-4 min-w-0 flex-1 truncate text-left font-medium leading-tight text-[var(--foreground)]" title={agent.name}>
         {agent.name}
       </span>
     </div>

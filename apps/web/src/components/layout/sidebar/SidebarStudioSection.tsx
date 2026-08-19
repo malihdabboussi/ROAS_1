@@ -80,6 +80,7 @@ export function SidebarStudioSection({ c }: { c: SidebarControllerReturn }) {
         <button
           type="button"
           onClick={c.handleNewChat}
+          aria-label="New task"
           className={`body-2-medium nav-glass-emerald flex items-center justify-start gap-2 rounded-lg text-left ${
             c.collapsed ? 'p-2' : 'w-full px-2 py-2'
           }`}
@@ -108,6 +109,7 @@ export function SidebarStudioSection({ c }: { c: SidebarControllerReturn }) {
         <button
           type="button"
           onClick={() => c.setStudioSearchOpen(true)}
+          aria-label="Search tasks"
           className={`body-2-medium flex items-center justify-start gap-2 rounded-lg text-left transition-colors hover:bg-[var(--color-secondary)] ${
             c.collapsed ? 'p-2' : 'w-full px-2 py-2'
           }`}
@@ -369,7 +371,7 @@ export function SidebarStudioSection({ c }: { c: SidebarControllerReturn }) {
                               <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
                             )}
                             <LucideIcon name={campaign.icon} className="icon-md flex-shrink-0" />
-                            <span className="body-2 flex-1 truncate">{campaign.name}</span>
+                            <span className="body-2 flex-1 truncate" title={campaign.name}>{campaign.name}</span>
                             {hasUnread && !isAccordionOpen && (
                               <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" />
                             )}
@@ -467,6 +469,7 @@ export function SidebarStudioSection({ c }: { c: SidebarControllerReturn }) {
                                   <div key={conv.id} className="group/conv relative">
                                     <button
                                       onClick={() => void c.handleSelectConversation(conv.id)}
+                                      title={conv.title ?? 'New Task'}
                                       className={`nav-glass-hover-purple flex w-full items-center gap-2 rounded-lg border border-transparent px-3 py-1 text-left transition-all ${
                                         isConvActive
                                           ? 'nav-glass-selected-purple nav-glass-text-purple'

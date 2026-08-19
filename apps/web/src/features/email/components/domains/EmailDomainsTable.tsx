@@ -90,6 +90,8 @@ export function EmailDomainsTable() {
                         onClick={() =>
                           setActionMenuDomainId(actionMenuDomainId === domain.id ? null : domain.id)
                         }
+                        aria-label="Domain actions"
+                        title="Domain actions"
                         className="btn-icon-glass"
                       >
                         <MoreHorizontal className="icon-sm" />
@@ -215,6 +217,8 @@ export function EmailDomainsTable() {
                               actionMenuDomainId === domain.id ? null : domain.id,
                             )
                           }
+                          aria-label="Domain actions"
+                          title="Domain actions"
                           className="btn-icon-glass"
                         >
                           <MoreHorizontal className="icon-sm" />

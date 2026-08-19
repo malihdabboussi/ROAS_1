@@ -191,6 +191,7 @@ export function HomeCommunicationNav({
                           <ChannelIcon channel={ch} className="h-4 w-4 shrink-0" />
                           <span
                             className={`body-3 min-w-0 flex-1 truncate ${unread > 0 ? 'text-foreground font-semibold' : ''}`}
+                            title={ch.name}
                           >
                             {ch.name}
                           </span>

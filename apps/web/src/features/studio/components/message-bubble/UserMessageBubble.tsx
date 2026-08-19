@@ -253,6 +253,8 @@ export function UserMessageBubble({
               e.stopPropagation()
               setMenuOpen((p) => !p)
             }}
+            aria-label="Message options"
+            title="Message options"
             className="rounded p-0.5 opacity-0 transition-opacity hover:bg-[var(--color-secondary)] group-hover:opacity-100"
           >
             <MoreVertical className="text-muted-foreground h-3.5 w-3.5" />

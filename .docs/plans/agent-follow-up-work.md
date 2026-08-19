@@ -1,3 +1,15 @@
+## 2026-08-19 - [ARCH] ViewSwitcher.tsx is over the 600 LOC cap
+
+Status: Open
+
+Found while: Merging `claude/ui-pass-2026-08-18` onto main (pin-as-flag vs view-catalog extract)
+
+Evidence: `wc -l` on `apps/web/src/features/spaces/components/ViewSwitcher.tsx` is 753. Cap is 600.
+
+Needed work: Catalog extract already landed in `view-catalog.ts`; split drag-reorder + static tabs from the add-view panel so the switcher only composes them.
+
+Reason not done now: In-scope work was resolving merge conflicts and restoring pin-as-flag; decomposing the switcher was not required to land the PR.
+
 ## 2026-08-18 - [FEATURE] Browser QC still renders inline, not in the right-side summary card
 
 Status: Open
@@ -39504,3 +39516,62 @@ Reason not done now: The panel change mitigates this in the UI with a timestamp 
 - Needed: split agenda-doc / status / action-row cases into a sibling test file so the dialog suite stays under the cap.
 - Why not now: in-scope tests already pass; splitting would be extra churn on this status-row change.
 
+## 2026-08-18 - [REFACTOR] Spaces list/switcher files far over the 400/600 LOC limits
+
+Status: Open
+
+Found while: UI pass (claude/ui-pass-2026-08-18) — pinned-first tab ordering, tab context menu, name-column fill
+
+Evidence: `apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx` 1539 LOC, `components/ViewSwitcher.tsx` 1350, `components/ListView.tsx` 1316, `components/spaces/cells/DueDateCell.tsx` 692, `components/DraggableColumnHeaders.tsx` 529 (pre-existing; this pass added <40 lines across them and put new logic in `lib/order-views-for-strip.ts`, `lib/list-grid-template.ts`, `components/ViewTabContextMenu.tsx`).
+
+Needed work: Split ViewSwitcher (add-view catalog panel + drag strip), ListView (column-width state + grouped/flat renderers), SpaceItemsContainer (embed/meetings wiring, modals host props).
+
+Reason not done now: Out of scope for a UI pass; touching those seams risks the drag/drop and customize flows without dedicated coverage.
+
+## 2026-08-18 - [STYLE] Duplicated option-colour palette maps bypass tokens
+
+Status: Open
+
+Found while: Design-token audit during the UI pass
+
+Evidence: The same cyan/amber/red/emerald… Tailwind palette map is copy-pasted in `components/ui/status/OptionBadge.tsx`, `OptionDot.tsx`, `features/spaces/components/task-detail/task-meta-fields-helpers.ts`, `KanbanView.tsx`, `components/ui/forms/SelectCell.tsx`, `features/spaces/views/calendar/SpaceCalendarEventRenderers.tsx`, `TaskActivityFieldValuePreview.tsx` (~240 of ~2,100 palette hits); `view-type-tab-meta.ts` and `mission-list-config.ts` carry similar maps.
+
+Needed work: One tokenised `option-color` map (light + dark values as `--color-option-*` in both `apps/web` and `apps/website` globals.css) consumed by all seven files; then sweep the remaining `text-red-*` / `bg-white` in product chrome (mockup/device-frame files stay by design).
+
+Reason not done now: Needs new `--color-*` tokens (approval per AGENTS.md §5.5) and a visual regression pass across status badges/kanban/calendar.
+
+## 2026-08-18 - [FEATURE] Inbox System lane: group repeated import notices
+
+Status: Open
+
+Found while: UI pass — Inbox tour
+
+Evidence: System lane shows ~200 near-identical "Brain import complete: Slack #… managed_person fork" rows, the same channel repeated 4× in a row.
+
+Needed work: Collapse consecutive notices with the same title into one row with a count ("×4"), or dedupe on the emitter.
+
+Reason not done now: Product decision (grouping vs emitter dedupe) not mine to make in a UI pass.
+
+## 2026-08-18 - [DOCS] Chat summary "Outputs" also lists user uploads
+
+Status: Open
+
+Found while: UI pass — chat tour
+
+Evidence: `extractConversationFileRows` includes `metadata.documents` from user messages, so a `.docx` the user attached appears under **Outputs** and clicking it scrolls to the user's bubble.
+
+Needed work: Either rename the section (Files) or split uploads from agent outputs.
+
+Reason not done now: Label choice was a deliberate consolidation decision (chat summary panel polish, PR #236); flagging rather than changing.
+
+## 2026-08-18 - [FIX] Meetings space "Call Kind" cell renders two styles
+
+Status: Open
+
+Found while: UI pass — Meetings tour
+
+Evidence: Personal Meetings space renders Call Kind as dot + label; the org "Campaigns / General / Meetings" space renders plain grey pills (Team / Personal / Client) for the same field type.
+
+Needed work: Confirm both spaces use the same select-field option colours; likely the org space's field lacks `options[].color`.
+
+Reason not done now: Data/config difference between two spaces, not a component bug.

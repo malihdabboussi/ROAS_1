@@ -3,6 +3,7 @@ import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import {
   addMeetingSnippet,
   fetchMeetingWorkspaceEvent,
+  materializeScheduledMeetings,
   resolveScheduledMeeting,
   toggleMeetingActionStatus,
 } from './meeting-workspace-api'
@@ -160,5 +161,42 @@ describe('meeting workspace API', () => {
     )
     expect(result.status).toBe('resolved')
     expect(result.evidence.completion_origin).toEqual(expect.objectContaining({ kind: 'user' }))
+  })
+})
+
+describe('materializeScheduledMeetings', () => {
+  it('normalises all-day dates and drops values the API would reject instead of failing the whole batch', async () => {
+    mocks.backendPost.mockResolvedValue({ created: 0, linked: 0, skipped: 0 })
+
+    await materializeScheduledMeetings('space-1', [
+      {
+        ...baseEvent,
+        title: '   ',
+        start: '2026-08-01',
+        end: '2026-08-04',
+        all_day: true,
+        video_url: 'not a url',
+        html_link: 'https://calendar.google.com/event?eid=abc',
+        attendees: [
+          { email: 'ok@example.com', name: 'Ok', response_status: 'accepted', self: false },
+          { email: 'Room 4B (no email)', name: null, response_status: null, self: false },
+        ] as never,
+        organizer: { email: 'resource-calendar', name: 'Room' },
+      },
+    ])
+
+    expect(mocks.backendPost).toHaveBeenCalledWith('/api/spaces/space-1/meetings/materialize', {
+      events: [
+        expect.objectContaining({
+          title: 'Untitled meeting',
+          start: new Date('2026-08-01').toISOString(),
+          end: new Date('2026-08-04').toISOString(),
+          video_url: null,
+          html_link: 'https://calendar.google.com/event?eid=abc',
+          attendees: [{ email: 'ok@example.com', name: 'Ok' }],
+          organizer: null,
+        }),
+      ],
+    })
   })
 })

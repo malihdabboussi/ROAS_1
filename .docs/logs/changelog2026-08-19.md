@@ -175,3 +175,13 @@ Why: Broken build on main, surfaced while merging main into this branch.
 Impact: /login compiles again; sign-in requests time out after 15s with a friendly message instead of hanging.
 
 Files: apps/web/src/app/(auth)/login/config/auth-login.ts (new)
+
+## [2026-08-19 09:12] - [FIX]
+
+What: Resolved `claude/ui-pass-2026-08-18` vs current main. Kept pin-as-flag tab semantics (`orderViewsForStrip` + no restack on pin, drag reconciles pin flags instead of clearing them) and the branded 404, while taking main's view-catalog extract, launches page, and auth-login module. 404 icon uses existing `h-spacing-14` / `w-spacing-14` / `mb-spacing-6` utilities.
+
+Why: Main's pin handler restacked the views array and drag-reorder cleared every pin, which undoes this PR's tab-strip product. Merge was blocked on those conflicts.
+
+Impact: UI-pass can merge onto main without dropping pinned-first tabs or the themed 404.
+
+Files: `use-customize-view-actions.ts`, `use-view-strip-actions.ts`, `order-views-for-strip.ts`, `ViewSwitcher.tsx`, `not-found.tsx`

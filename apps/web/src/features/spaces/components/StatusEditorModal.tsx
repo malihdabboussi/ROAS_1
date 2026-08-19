@@ -151,6 +151,8 @@ function StatusRow({
         <button
           type="button"
           onClick={() => setMenuOpen((o) => !o)}
+          aria-label="Status options"
+          title="Status options"
           className="shrink-0 rounded p-1 text-[var(--color-muted-foreground)] opacity-0 transition-opacity hover:text-[var(--foreground)] group-hover:opacity-100"
         >
           <MoreHorizontal className="h-3.5 w-3.5" />
@@ -351,6 +353,8 @@ function CategorySection({
         <button
           type="button"
           onClick={() => setAdding(true)}
+          aria-label="Add status"
+          title="Add status"
           className="rounded p-0.5 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--foreground)]"
         >
           <Plus className="h-3.5 w-3.5" />

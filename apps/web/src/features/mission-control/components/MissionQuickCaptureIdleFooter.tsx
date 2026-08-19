@@ -115,6 +115,7 @@ export function MissionQuickCaptureIdleFooter({
               type="button"
               onClick={() => setActiveDropdown(activeDropdown === 'attach' ? null : 'attach')}
               disabled={disabled}
+              aria-label="Attach file"
               className={`button-glass-neutral flex h-8 w-8 items-center justify-center rounded-full transition-all disabled:opacity-30 ${filesCount > 0 ? 'text-primary' : ''}`}
             >
               <Paperclip className="h-3.5 w-3.5" />
@@ -229,6 +230,7 @@ export function MissionQuickCaptureIdleFooter({
               type="button"
               onClick={() => setActiveDropdown(activeDropdown === 'priority' ? null : 'priority')}
               disabled={disabled}
+              aria-label="Set priority"
               className="button-glass-neutral flex h-8 w-8 items-center justify-center rounded-full transition-all disabled:opacity-30"
             >
               <Flag className={`h-3.5 w-3.5 ${active ? active.color : 'text-muted-foreground'}`} />

@@ -150,20 +150,17 @@ export function useCustomizeViewActions(opts: {
       const applyDefaults =
         (defaultPinnedViewIds?.length ?? 0) > 0 &&
         activeSchema.views.every((v) => v.pinned_to_start === undefined)
-      // Pinned views always sort to the start of the tab strip (stable within groups).
-      const flagged = activeSchema.views.map((v) =>
-        v.id === viewId
-          ? { ...v, pinned_to_start: pinned }
-          : applyDefaults && defaultPinnedViewIds!.includes(v.id)
-            ? { ...v, pinned_to_start: true }
-            : v,
-      )
+      // Pinning is a flag, not a position: the tab strip renders pinned views first
+      // (see orderViewsForStrip), so several views can be pinned and nothing else moves.
       const nextSchema = {
         ...activeSchema,
-        views: [
-          ...flagged.filter((v) => v.pinned_to_start),
-          ...flagged.filter((v) => !v.pinned_to_start),
-        ],
+        views: activeSchema.views.map((v) =>
+          v.id === viewId
+            ? { ...v, pinned_to_start: pinned }
+            : applyDefaults && defaultPinnedViewIds!.includes(v.id)
+              ? { ...v, pinned_to_start: true }
+              : v,
+        ),
       }
       patchActiveSpaceSchema(nextSchema)
       try {
@@ -178,13 +175,14 @@ export function useCustomizeViewActions(opts: {
         toast.error(SPACES_CUSTOMIZE_VIEW_TOAST_ERRORS.PIN_FAILED.userMessage)
       }
     },
-    [activeSchema, activeSpace, patchActiveSpaceSchema, refresh],
+    [activeSchema, activeSpace, defaultPinnedViewIds, patchActiveSpaceSchema, refresh],
   )
 
   const handleViewPinToStart = useCallback(
-    async (pinned: boolean) => {
-      if (!customizePanelTargetView) return
-      await handleTogglePinViewById(customizePanelTargetView.id, pinned)
+    async (pinned: boolean, targetViewId?: string) => {
+      const viewId = targetViewId ?? customizePanelTargetView?.id
+      if (!viewId) return
+      await handleTogglePinViewById(viewId, pinned)
     },
     [customizePanelTargetView, handleTogglePinViewById],
   )

@@ -58,6 +58,8 @@ export function CampaignsFlyoutPortal({
         </span>
         <button
           onClick={onCreateNew}
+          aria-label="New campaign"
+          title="New campaign"
           className="rounded p-1 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
         >
           <Plus className="icon-md shrink-0" />

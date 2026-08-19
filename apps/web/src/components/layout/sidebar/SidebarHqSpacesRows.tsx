@@ -90,7 +90,7 @@ export function SpaceRow({
             }`}
           >
             <LucideIcon name={spaceIcon} className={`h-4 w-4 shrink-0 ${iconColor}`} />
-            <span className="body-2 min-w-0 flex-1 truncate">
+            <span className="body-2 min-w-0 flex-1 truncate" title={space.title}>
               {space.title}
               {viewSuffix ? ` • ${viewSuffix}` : ''}
             </span>
@@ -208,6 +208,7 @@ export function Section({
                   onOpenCampaignMenu(campaignRow, r)
                 }}
                 className="body-2 text-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 font-medium transition-colors"
+                title={label}
               >
                 {label}
               </Link>
@@ -254,6 +255,7 @@ export function Section({
                   onOpenCampaignMenu(campaignRow, r)
                 }}
                 className="body-2 text-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 font-medium transition-colors"
+                title={label}
               >
                 {label}
               </Link>
@@ -262,6 +264,7 @@ export function Section({
                 type="button"
                 onClick={() => onToggle(bucket)}
                 className="body-2 text-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 text-left font-medium transition-colors"
+                title={label}
               >
                 {label}
               </button>

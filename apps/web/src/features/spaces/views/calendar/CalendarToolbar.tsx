@@ -238,6 +238,7 @@ export function CalendarToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
                 : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground'
             }`}
             aria-pressed={showTaskList}
+            aria-label={showTaskList ? 'Hide selected day list' : 'Show selected day list'}
           >
             <List className="h-3.5 w-3.5" />
           </button>
@@ -248,6 +249,7 @@ export function CalendarToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
               type="button"
               onClick={() => setTimeFormatOpen((open) => !open)}
               className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground rounded-md p-1.5 transition-colors"
+              aria-label="Time format"
               aria-haspopup="menu"
               aria-expanded={timeFormatOpen}
             >

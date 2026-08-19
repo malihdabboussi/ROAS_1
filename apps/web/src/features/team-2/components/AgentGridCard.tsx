@@ -245,7 +245,10 @@ export function AgentGridCard({
               aria-label="Agent name"
             />
           ) : (
-            <span className="body-2 text-foreground min-w-0 flex-1 truncate font-medium">
+            <span
+              className="body-2 text-foreground min-w-0 flex-1 truncate font-medium"
+              title={agent.name}
+            >
               {agent.name}
             </span>
           )}

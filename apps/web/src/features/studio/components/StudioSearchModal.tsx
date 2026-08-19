@@ -238,6 +238,8 @@ export function StudioSearchModal({ open, onClose, campaigns, onSelect }: Studio
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close search"
+              title="Close search"
               className="text-muted-foreground hover:text-foreground flex h-6 w-6 items-center justify-center rounded transition-colors"
             >
               <X className="h-4 w-4" />

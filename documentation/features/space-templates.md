@@ -1,6 +1,6 @@
 # Space Templates
 
-**Last Modified:** 2026-08-18 (Meetings one-room: All Meetings default, host/call_status, Prep view removed, Call completed automation)
+**Last Modified:** 2026-08-18 (Agenda pinned by default; pinned views render first in the tab strip)
 
 ## Overview
 
@@ -71,6 +71,7 @@ Home Agenda prep, related call enrichment, and default Home feed scope also read
 - **2026-07-20:** Home + Fathom Meetings resolve the personal-account dashboard only (`org_id IS NULL`), optionally attached to `system_kind=personal` campaign. Org-scoped Personal Dashboards remain separate per-member org workspaces.
 - **2026-07-20:** Home Agenda merges unmatched personal Meetings `entry_type=call` rows (Fathom) into the calendar window as `source: 'fathom'` events; matched calls stay related attachments on calendar rows.
 - **2026-08-18:** Personal Dashboard All Meetings is the default Meetings view. It stores Host and Call status, hides Priority/Status on that list, defaults the date window to past + today + tomorrow, drops the Prep view, and adds a Call completed automation (call_status → completed) that clones Fathom Meeting Log actions.
+- 2026-08-18 — Personal dashboard template sets `pinned_to_start: true` on **Agenda**. `pinned_to_start` is a display flag, not a storage position: the web tab strip renders the leading view (Meetings: `all-meetings`), then every pinned view in schema order, then the rest (`orderViewsForStrip`). Several views can be pinned; drag-reorder keeps pins; the Meetings surface also treats `agenda` as pinned by default until the user explicitly unpins it (`embed.defaultPinnedViewIds`).
 
 ## Regenerating seed SQL
 

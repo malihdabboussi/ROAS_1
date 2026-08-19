@@ -11,6 +11,7 @@ import {
   useListColumnHeaderMenuAnchor,
   type ListColumnHeaderMenuConfig,
 } from './list-column-header-menu'
+import { buildListGridTemplate } from '../lib/list-grid-template'
 
 const DEFAULT_COL_WIDTHS: Record<string, number> = {
   title: 420,
@@ -27,8 +28,9 @@ const DEFAULT_COL_WIDTHS: Record<string, number> = {
   transcript: 128,
   priority: 120,
   assignee: 140,
-  due_date: 130,
-  start_date: 130,
+  // Fits the default 'Mon D, H:MM AM' date_time label without truncating.
+  due_date: 150,
+  start_date: 150,
   status: 120,
   mission: 100,
   email: 240,
@@ -240,9 +242,10 @@ export function DraggableColumnHeaders({
     }
   }, [resizingId, onColumnResize, nameColId])
 
-  const gridCols =
-    cols.map((f) => `${columnWidths[f.id] ?? getDefaultWidth(f.id)}px`).join(' ') +
-    ' minmax(2rem, 1fr)'
+  const gridCols = buildListGridTemplate(
+    cols.map((f) => f.id),
+    (id) => columnWidths[id] ?? getDefaultWidth(id),
+  )
 
   const isTable = surface === 'table'
   const glassTableHeader = isTable && tableEmbedGlass

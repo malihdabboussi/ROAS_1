@@ -167,6 +167,7 @@ export function PresentationPreview({
               }}
               data-tooltip="Presentation options"
               data-side="bottom"
+              aria-label="Presentation options"
               aria-haspopup="menu"
               aria-expanded={menuOpen}
               className="tooltip btn-icon-bare"
