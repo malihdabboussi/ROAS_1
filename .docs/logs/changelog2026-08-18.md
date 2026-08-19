@@ -155,3 +155,9 @@ What: Stopped the meeting agenda Space Doc from remounting on every autosave. Op
 Why: Realtime UPDATE on the agenda row remounted the editor after the 1s autosave, so "Loading document..." flickered every 1-2 seconds. Transcript used a button under the recording link, Link recording lived in the section header, and action items were buried at the bottom.
 Impact: Agenda stays open while it saves. Recording actions read as Open recording · Open transcript, then Link recording. Action items are in the top-right column under that row.
 Files: `apps/web/src/features/home/components/MeetingAgendaDocEditor.tsx`, `MeetingRecordingsSection.tsx`, `MeetingWorkspaceBody.tsx`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-18 19:31] - [DOCS]
+What: Live Slack audit report + Pixel Slack harness (plan §11.7). `.docs/reports/pixel-slack-live-audit-2026-08-18.md` (228 asks/30d, ask-kind histogram, under-weighted shapes, R-list adjustments) and `scripts/roas/pixel-slack-harness/` (fixtures.json = 12 R-catalog fixtures; run.mjs posts into channel `2`, waits for `slack_pixel_turns`, scores, writes a JSON report; dry-run verified).
+Why: The original ask included auditing real client channel traffic and a nightly harness; Cursor's R-list was fixture-only.
+Impact: Read-only; harness live mode requires the operator token and explicit go-ahead.
+Files: .docs/reports/pixel-slack-live-audit-2026-08-18.md, scripts/roas/pixel-slack-harness/fixtures.json, scripts/roas/pixel-slack-harness/run.mjs
