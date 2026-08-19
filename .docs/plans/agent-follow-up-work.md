@@ -39440,6 +39440,12 @@ Reason not done now: The panel change mitigates this in the UI with a timestamp 
 - Evidence: plan §11.11 lists Drive folder and recent meetings in the bundle; v1 ships channels/campaigns/brains/spaces only (no reliable client→Drive folder source yet; meetings need the Fathom dual-write from PR #316 to land first).
 - Needed: add `drive_folder` once a canonical client→folder mapping exists; add last 3 Fathom meeting titles/dates from the Campaign Brain after #316 deploys.
 
+## 2026-08-18 - [FEATURE] SR assets: Drive-folder copy + long-lived storage + Portal /work attachments
+- Feature/app: Service Requests · apps/api
+- Files: `apps/api/src/modules/slack/repositories/slack-runtime.repository.ts` (`campaigns` bucket, 365-day signed URL), `apps/api/src/modules/work-requests/services/work-request-mirror.ts`, Portal `/work` contract
+- Evidence: §11.12 #2 asks for re-hosted files to also land in the client's Drive folder; no client→Drive-folder mapping exists yet. Signed URLs expire after a year; the Portal `/work` body has no `attachments` field, so assets ride in the description only.
+- Needed: (a) client Drive folder mapping + copy on SR create; (b) decide bucket/lifetime for SR assets; (c) `attachments[]` on Portal `/work` and forward `draft.assets` from the mirror.
+- Why not now: out of scope for the §11.10 first step; description path is the provable one today.
 ## 2026-08-18 — slack-service-events.base.ts over the 600 LOC service limit
 - Feature/app: `apps/api` Slack Pixel inbound
 - File: `apps/api/src/modules/slack/services/slack-service-events.base.ts` (633 → 689 after N0; 699 after keeping #318 Client Context Bundle with #317 stamp)
@@ -39466,3 +39472,4 @@ Reason not done now: The panel change mitigates this in the UI with a timestamp 
 - Evidence: largest prod brain has 3.1k memories; full payload was 5.4 MB (over serverless cap). Fixed by clamping to 2,000 nodes + slim projection (2.99 MB).
 - Needed: cursor pagination (or server-side clustering) if anyone needs more than 2,000 memory nodes rendered at once. Also consider a `?fields=` projection so the graph never ships full memory records.
 - Why not now: the cap unblocks the 500 and is bounded; nobody can read 3k nodes on the canvas; pagination touches the store's SWR snapshot logic and deserves its own change.
+

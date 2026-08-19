@@ -1,4 +1,9 @@
 import type { SlackBlock, SlackEventEnvelope } from '../types/slack.types'
+import {
+  buildSlackAskAssets,
+  collectInboundSlackFiles,
+  formatSlackAskAssetsBlock,
+} from './slack-ask-assets'
 import { classifySlackAskKind, formatSlackAskKindContext } from './slack-ask-kind'
 import { formatSlackClientContextBlock } from './slack-client-context'
 import { SlackConversationBase } from './slack-service-conversation.base'
@@ -168,11 +173,12 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     accessToken = await this.userSessionMint.mintAccessToken(userId)
 
     let fullMessage = text
+    const inboundFiles = collectInboundSlackFiles(event)
     const documents = await this.resolveInboundSlackFiles(
       botToken,
       userId,
       channelOrgId ?? null,
-      event.files,
+      inboundFiles,
     )
     const currentStamp = channelOrgId
       ? await this.resolveSlackAskClientStamp(serviceSupabase, {
@@ -218,12 +224,20 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       threadContext: thread.context,
       threadParentIsPixel: thread.parentIsPixel,
       isDirectMessage: isSlackDirectConversation(event.channel_type, channelId),
-      fileContext: hasFiles && documents.length === 0 ? this.buildFileContext(event.files!) : undefined,
+      fileContext:
+        inboundFiles.length > 0 && documents.length === 0
+          ? this.buildFileContext(inboundFiles)
+          : undefined,
       hasDocuments: documents.length > 0,
       clientContextBlock: clientBundle ? formatSlackClientContextBlock(clientBundle) : undefined,
       namedClientId: clientBundle?.clientId ?? null,
     })
     fullMessage = prompt.fullMessage
+    const assetsBlock = formatSlackAskAssetsBlock(
+      buildSlackAskAssets({ documents, texts: [text, forwardedContext] }),
+      { sourcePermalink: forwardedContext.match(/^Source: (\S+)/m)?.[1] ?? null },
+    )
+    if (assetsBlock) fullMessage = `${fullMessage}\n\n${assetsBlock}`
     const askKind = prompt.askKind
     const clientSource = prompt.clientSource
 
@@ -309,7 +323,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       fallback.botToken,
       fallback.userId,
       fallback.orgId,
-      event.files,
+      collectInboundSlackFiles(event),
     )
     const forwardedContext = await this.buildForwardedMessageContext(
       serviceSupabase,
@@ -332,7 +346,13 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     })
 
     const attachmentText = forwardedContext ? `${text}\n\n${forwardedContext}`.trim() : text
-    const mentionText = attachmentText || (documents.length > 0 ? '[User sent a file]' : '')
+    const assetsBlock = formatSlackAskAssetsBlock(
+      buildSlackAskAssets({ documents, texts: [text, forwardedContext] }),
+      { sourcePermalink: forwardedContext.match(/^Source: (\S+)/m)?.[1] ?? null },
+    )
+    const mentionText = (
+      assetsBlock ? `${attachmentText}\n\n${assetsBlock}`.trim() : attachmentText
+    ) || (documents.length > 0 ? '[User sent a file]' : '')
     const thread = event.thread_ts
       ? await this.buildSlackThreadReply(
           fallback.botToken,

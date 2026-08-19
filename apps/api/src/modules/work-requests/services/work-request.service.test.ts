@@ -508,6 +508,70 @@ describe('WorkRequestService', () => {
     )
   })
 
+  it('writes direct asset links + source thread into the draft description (§11.10)', async () => {
+    const { service, repository, scope } = createService()
+    scope.resolveIntakeScope.mockResolvedValue({
+      mapping: {
+        userId: '22222222-2222-2222-2222-222222222222',
+        orgId: '33333333-3333-3333-3333-333333333333',
+        clientId: '55555555-5555-5555-5555-555555555555',
+        entry: { campaign_id: '44444444-4444-4444-4444-444444444444', space_id: '6666' },
+      },
+      ownerOrgId: '33333333-3333-3333-3333-333333333333',
+      generalSpace: { id: '66666666-6666-6666-6666-666666666666' },
+      campaignSpace: null,
+    })
+    repository.findByIdempotency.mockResolvedValue(null)
+    repository.create.mockImplementation((values) =>
+      Promise.resolve(draft({ ...(values as Partial<WorkRequestDraftRow>) })),
+    )
+
+    await service.createFromPageGrader('signed-secret', {
+      client_id: '55555555-5555-5555-5555-555555555555',
+      client_name: 'Christian Osgood',
+      request_type: 'design',
+      assignee_name: 'Rafay',
+      title: 'Rebuild MFS Elite PDF',
+      description: 'Rebuild the MFS Elite deck from the source PDF.',
+      priority: 'medium',
+      structured_fields: {},
+      required_fields: [],
+      assets: [
+        {
+          name: 'MFS_Elite.pdf',
+          url: 'https://storage.roas.io/campaigns/u1/slack/abc-MFS_Elite.pdf?token=x',
+          kind: 'pdf',
+        },
+        {
+          name: 'google drive',
+          url: 'https://drive.google.com/drive/folders/xyz',
+          kind: 'google_drive',
+        },
+      ],
+      dependencies: [],
+      provenance: {
+        source: 'slack',
+        source_url: 'https://roas.slack.com/archives/C07JDT099AL/p1723600000000100',
+      },
+      requester: {},
+      work_scope: 'general',
+      idempotency_key: 'event-assets-1',
+    })
+
+    const created = repository.create.mock.calls[0][0] as { description: string }
+    expect(created.description).toBe(
+      [
+        'Rebuild the MFS Elite deck from the source PDF.',
+        '',
+        'Assets:',
+        '- MFS_Elite.pdf (pdf): https://storage.roas.io/campaigns/u1/slack/abc-MFS_Elite.pdf?token=x',
+        '- google drive (google_drive): https://drive.google.com/drive/folders/xyz',
+        '',
+        'Source thread: https://roas.slack.com/archives/C07JDT099AL/p1723600000000100',
+      ].join('\n'),
+    )
+  })
+
   it('does not duplicate an idempotent draft', async () => {
     const existing = draft()
     const { service, repository, scope } = createService({

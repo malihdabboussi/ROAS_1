@@ -34,6 +34,12 @@ Why: #304 used `fieldRowVariant` in the cell and forwarded it from `SpaceCell`, 
 Impact: `pnpm --filter @vibey/web typecheck` passes so `app.roas.io` can ship #304/#305.
 Files: `ClientCampaignCell.tsx`
 
+## [2026-08-18 18:55] - [FEATURE]
+What: Direct asset links on Service Requests (plan §11.10). (1) Slack inbound: files inside forwarded unfurls are collected (`collectInboundSlackFiles`) and re-hosted like message files; a deterministic `[Assets]` block lists every re-hosted file URL and every Drive/Docs/Figma/Loom/… link from the message + forwarded text (Slack permalinks excluded, kept as "Source thread (provenance only)") with the rule to pass them as `source_context.assets` and under an "Assets" heading in the description. (2) Work requests: `appendAssetsToDescription` writes assets + source thread into the draft description at create and on review edits — the one field that reaches the finalized task and the ClickUp body. (3) agent-api uploaded-document context now prints `source_url` for text documents. (4) Migration patches `page-grader-operator` (vibey/atlas/pixel) + TOOLS.md (vibey/pixel) with the assets rule.
+Why: MFS_Elite.pdf incident — the ClickUp task carried only a Slack archive URL, which the assignee could not open. Slack files were already re-hosted, but the URL never reached the SR.
+Impact: SRs/ClickUp tasks carry openable asset links; Slack thread stays as provenance.
+Files: apps/api/src/modules/slack/services/slack-ask-assets.ts, slack-service-events.base.ts, apps/api/src/modules/slack/types/slack.types.ts, apps/api/src/modules/work-requests/services/work-request-assets.ts, work-request.service.ts, apps/agent-api/src/modules/chat/utils/uploaded-document-context.ts, supabase/migrations/20260818233000_service_request_direct_assets.sql, tests
+
 ## [2026-08-18 18:46] - [DOCS]
 What: Wrote the Meetings one-room plan: one All Meetings row per call, two doors (standard task card vs specialized meeting card), Live/Completed/No Show/Rescheduled only, related calls so Pixel can read last week’s recording without Recordings +.
 Why: Calendar, All Meetings, and the meeting workspace were three homes. Agenda opening a different card than All Meetings was the intended split; New/Upcoming is unnecessary because date already means upcoming.
