@@ -1,6 +1,6 @@
 # Changelog - August 18, 2026
 
-## [2026-08-18 18:53] - [FEATURE]
+## [2026-08-18 18:27] - [FEATURE]
 What: N0 ask-kind stamp + per-turn telemetry for Slack Pixel. `slack-ask-kind.ts` classifies each inbound turn (continuation/client/team/general/unclear) from cheap signals; `slack-turn-prompt.ts` assembles the prompt with `[Ask kind]` first and softens the channel identity on general asks; `slack-turn-telemetry.ts` + `slack_pixel_turns` migration record kind, client source, ordered tool calls (captured from the agent SSE stream), duration, outcome, and a forbidden-ask flag. `routeToAgent` now returns a turn (content + tool events + conversation id).
 Why: TOOLS.md holds the ladders but cannot force order; "what's on my task list" in a client channel was nudged toward Portal, and nothing measured whether Pixel looked deep enough. North Star §11.0.
 Impact: Every Slack turn is classified and logged. No model call added. Migration `20260818200000_slack_pixel_turns.sql` must be applied to prod (`lhfgtsjetcardinpgouq`) before the API deploy; the insert is fire-and-forget so a missing table only logs a warning.
