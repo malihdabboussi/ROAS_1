@@ -653,8 +653,7 @@
             "sessions_spawn",
             "subagents",
             "image",
-            "tts",
-            "browser"
+            "tts"
           ]
         }
       },
