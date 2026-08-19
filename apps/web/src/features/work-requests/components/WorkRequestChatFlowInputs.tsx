@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { MonthCalendar } from '@/components/calendar/MonthCalendar'
+import { DatePresetList } from '@/components/spaces/cells/date-picker/DatePresetList'
+import { dueDatePresetRows, getPresetDate } from '@/lib/spaces/date-presets'
 
 function parseYmd(value: string): Date | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
@@ -51,6 +53,7 @@ export function WorkRequestDateStep({
 }) {
   const selected = useMemo(() => parseYmd(value), [value])
   const [month, setMonth] = useState(() => selected ?? new Date())
+  const presets = useMemo(() => dueDatePresetRows(), [])
 
   useEffect(() => {
     if (selected) setMonth(selected)
@@ -58,26 +61,34 @@ export function WorkRequestDateStep({
 
   return (
     <div className="space-y-spacing-3">
-      <div className="surface-card card-glass rounded-spacing-2 p-spacing-2">
-        <MonthCalendar
-          month={month}
-          startDate={selected}
-          endDate={selected}
-          activeField="due"
-          recurrence={null}
-          onPrevMonth={() =>
-            setMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))
-          }
-          onNextMonth={() =>
-            setMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))
-          }
-          onSelectDate={(date) => onContinue(toYmd(date))}
-          onJumpToday={() => {
-            const today = new Date()
-            setMonth(today)
-            onContinue(toYmd(today))
-          }}
-        />
+      <div className="surface-card card-glass rounded-spacing-2 min-h-[290px] overflow-hidden">
+        <div className="grid min-h-[290px] grid-cols-2">
+          <DatePresetList
+            leftMode="presets"
+            presets={presets}
+            showRecurring={false}
+            onPresetSelect={(key) => onContinue(toYmd(getPresetDate(key)))}
+          />
+          <MonthCalendar
+            month={month}
+            startDate={selected}
+            endDate={selected}
+            activeField="due"
+            recurrence={null}
+            onPrevMonth={() =>
+              setMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))
+            }
+            onNextMonth={() =>
+              setMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))
+            }
+            onSelectDate={(date) => onContinue(toYmd(date))}
+            onJumpToday={() => {
+              const today = new Date()
+              setMonth(today)
+              onContinue(toYmd(today))
+            }}
+          />
+        </div>
       </div>
       <div className="gap-spacing-2 flex items-center justify-between">
         <div className="gap-spacing-2 flex items-center">

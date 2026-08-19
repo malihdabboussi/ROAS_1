@@ -83,8 +83,7 @@ export function MissionQuickCapture({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const activeCampaign = campaigns.find((c) => c.id === selectedCampaignId)
 
-  const [recordingState, setRecordingState] =
-    useState<MissionQuickCaptureRecordingState>('idle')
+  const [recordingState, setRecordingState] = useState<MissionQuickCaptureRecordingState>('idle')
   const [displayText, setDisplayText] = useState(value)
   const baseTextRef = useRef('')
   const insertPositionRef = useRef(0)
@@ -285,7 +284,7 @@ export function MissionQuickCapture({
       </div>
 
       {campaignError && !selectedCampaignId && (
-        <p className="body-3 mt-2 text-red-300">please choose a campaign first</p>
+        <p className="body-3 text-destructive mt-2">please choose a campaign first</p>
       )}
       {capabilityWarning && (
         <div className="border-border rounded-spacing-2 mt-2 flex items-center justify-between border bg-amber-500/10 px-3 py-2">

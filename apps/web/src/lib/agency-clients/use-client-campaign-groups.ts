@@ -29,7 +29,7 @@ export function useClientCampaignGroups(open: boolean): {
       .then((response) => {
         if (cancelled) return
         setFailed(false)
-        setGroups(buildClientCampaignGroups(response.campaigns))
+        setGroups(buildClientCampaignGroups(response?.campaigns ?? []))
       })
       .catch(() => {
         if (cancelled) return

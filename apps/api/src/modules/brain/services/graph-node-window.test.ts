@@ -24,7 +24,10 @@ describe('clampGraphLimit', () => {
 
 describe('slimGraphMemory', () => {
   it('caps content to the node-panel display length', () => {
-    const slim = slimGraphMemory({ id: 'm1', content: 'x'.repeat(GRAPH_NODE_CONTENT_MAX_CHARS + 50) })
+    const slim = slimGraphMemory({
+      id: 'm1',
+      content: 'x'.repeat(GRAPH_NODE_CONTENT_MAX_CHARS + 50),
+    })
     expect((slim.content as string).length).toBe(GRAPH_NODE_CONTENT_MAX_CHARS)
   })
 

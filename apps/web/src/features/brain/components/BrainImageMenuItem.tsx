@@ -121,7 +121,7 @@ export function BrainImageMenuItem({
                 className={cn(
                   'gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full items-center text-left transition-colors',
                   item.danger
-                    ? 'text-red-500 hover:bg-red-500/10'
+                    ? 'text-destructive hover:bg-red-500/10'
                     : 'text-muted-foreground hover:text-foreground hover:bg-[var(--color-hover-subtle)]',
                 )}
               >

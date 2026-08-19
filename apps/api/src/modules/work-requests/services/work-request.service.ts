@@ -19,6 +19,11 @@ import {
 } from '../repositories/work-request.repository'
 import { appendAssetsToDescription } from './work-request-assets'
 import {
+  assignWorkRequestFinalTask,
+  bindWorkRequestAssignee,
+  stampWorkRequestAssignee,
+} from './work-request-assignee'
+import {
   ensureDraftResumeConversation,
   loadOwnedConversationId,
   mergeConversationIntoProvenance,
@@ -34,9 +39,9 @@ import {
 import {
   asRecord,
   buildWorkRequestWebhookResult,
+  computeWorkRequestMissingFields,
   generateWorkRequestReviewToken,
   hashWorkRequestReviewToken,
-  isMissing,
   publicWorkRequestOptions,
   readResumeConversationId,
   safeWorkRequestError,
@@ -167,14 +172,17 @@ export class WorkRequestService {
       }
     }
 
-    for (const key of [
-      'request_type',
-      'assignee_name',
-      'title',
-      'description',
-      'priority',
-    ] as const) {
+    for (const key of ['request_type', 'title', 'description', 'priority'] as const) {
       if (input[key] !== undefined) values[key] = input[key]
+    }
+    if (
+      input.assignee_name !== undefined ||
+      input.assignee_id !== undefined ||
+      input.assignee_email !== undefined
+    ) {
+      const identity = bindWorkRequestAssignee(input, options.teamMembers ?? [])
+      values.assignee_name = identity.name
+      values.routing = stampWorkRequestAssignee(asRecord(values.routing ?? draft.routing), identity)
     }
     if (input.due_date !== undefined) {
       values.due_at = input.due_date ? `${input.due_date}T23:59:59.000Z` : null
@@ -202,7 +210,7 @@ export class WorkRequestService {
     }
 
     const candidate = { ...draft, ...values } as WorkRequestDraftRow
-    values.missing_fields = this.computeMissingFields(candidate)
+    values.missing_fields = computeWorkRequestMissingFields(candidate)
     const updated = await this.repository.update(draft.id, values)
     return {
       state: 'draft' as const,
@@ -328,7 +336,7 @@ export class WorkRequestService {
       ...baseValues,
       missing_fields: [],
     } as unknown as WorkRequestDraftRow
-    const missing = this.computeMissingFields(candidate)
+    const missing = computeWorkRequestMissingFields(candidate)
 
     let draft = await this.repository.findByIdempotency(
       mapping.userId,
@@ -467,26 +475,25 @@ export class WorkRequestService {
     draft: WorkRequestDraftRow,
     task: Record<string, unknown>,
   ): Promise<WorkRequestDraftRow> {
-    return mirrorWorkRequestFinalTask(this.repository, this.pageGraderApi, draft, task)
+    const assigned = await this.assignFinalTaskWhenMapped(draft, task)
+    return mirrorWorkRequestFinalTask(this.repository, this.pageGraderApi, draft, assigned)
   }
 
   private async assignFinalTaskWhenMapped(
     draft: WorkRequestDraftRow,
     task: Record<string, unknown>,
   ) {
-    if (!draft.owner_org_id || !draft.assignee_name || !draft.final_space_item_id) return task
-    try {
-      const assigneeId = await this.repository.resolveOrgAssigneeByName(
-        draft.owner_org_id,
-        draft.assignee_name,
-      )
-      if (!assigneeId || String(task.assignee_id ?? '') === assigneeId) return task
-      return await this.repository.assignTask(draft.final_space_item_id, assigneeId)
-    } catch {
-      // The requested name remains in Work Request provenance and the Page Grader
-      // adapter still resolves it for ClickUp. Ambiguous ROAS identities stay unassigned.
-      return task
-    }
+    if (!draft.assignee_name && !asRecord(draft.routing).assignee) return task
+    const options = await this.scope.loadScopedOptions(draft)
+    return assignWorkRequestFinalTask({
+      draft,
+      task,
+      teamMembers: options.teamMembers ?? [],
+      resolveOrgAssigneeByName: (orgId, name, email) =>
+        this.repository.resolveOrgAssigneeByName(orgId, name, email),
+      assignTask: (taskId, userId) => this.repository.assignTask(taskId, userId),
+      updateDraft: (id, values) => this.repository.update(id, values),
+    })
   }
 
   private async requireActiveDraft(tokenHash: string): Promise<WorkRequestDraftRow> {
@@ -507,30 +514,6 @@ export class WorkRequestService {
       return 'expired' as const
     }
     return 'draft' as const
-  }
-
-  private computeMissingFields(draft: WorkRequestDraftRow): string[] {
-    const routing = asRecord(draft.routing)
-    const values: Record<string, unknown> = {
-      ...asRecord(draft.structured_fields),
-      title: draft.title,
-      description: draft.description,
-      due_date: draft.due_at,
-      priority: draft.priority,
-      campaign_space_id: draft.campaign_space_id,
-      general_space_id: routing.general_space_id,
-      assets: draft.assets,
-      dependencies: draft.dependencies,
-      links: asRecord(draft.structured_fields).links,
-    }
-    const missing = draft.required_fields.filter((field) => isMissing(values[field]))
-    if (routing.work_scope === 'campaign' && !draft.campaign_space_id) {
-      missing.push('campaign_space_id')
-    }
-    if (routing.work_scope !== 'campaign' && isMissing(routing.general_space_id)) {
-      missing.push('general_space_id')
-    }
-    return [...new Set(missing)]
   }
 
   private async validateTargetSpace(draft: WorkRequestDraftRow) {

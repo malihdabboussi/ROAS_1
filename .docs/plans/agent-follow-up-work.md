@@ -1,3 +1,39 @@
+## 2026-08-19 - [ARCH] ViewSwitcher.tsx is over the 600 LOC cap
+
+Status: Open
+
+Found while: Merging `claude/ui-pass-2026-08-18` onto main (pin-as-flag vs view-catalog extract)
+
+Evidence: `wc -l` on `apps/web/src/features/spaces/components/ViewSwitcher.tsx` is 753. Cap is 600.
+
+Needed work: Catalog extract already landed in `view-catalog.ts`; split drag-reorder + static tabs from the add-view panel so the switcher only composes them.
+
+Reason not done now: In-scope work was resolving merge conflicts and restoring pin-as-flag; decomposing the switcher was not required to land the PR.
+
+## 2026-08-18 - [FEATURE] Browser QC still renders inline, not in the right-side summary card
+
+Status: Open
+
+Found while: Fixing Pixel funnel QC that skipped mobile/desktop visual QA
+
+Evidence: `BrowserPreviewPanel` only mounts inside the chat message when `browser` tool blocks or `browser_screenshot` blocks exist (`extractBrowserPanelData`). The right rail (COMP / OUT / SOL / TAS) is the workspace panel and has no live browser surface. Unlocking `vibey` browser will populate the inline chat card; it will not open a right-side live preview.
+
+Needed work: When Pixel starts a browser QC session, open the latest screenshot (and optional live URL) in the right-side summary/artifact pane instead of only the inline chat card.
+
+Reason not done now: The reported failure was Pixel never opening a browser at all. The right-rail pane is a separate UI job and would not have shown anything until the tool was allowed.
+
+## 2026-08-18 - [ARCH] DueDateCell remains over the LOC cap
+
+Status: Open
+
+Found while: Adding ClickUp-style Service Request due-date presets and Portal assignee identity
+
+Evidence: `wc -l` on `apps/web/src/components/spaces/cells/DueDateCell.tsx` is still 664 (component cap 400). `work-request.service.ts` is now 586 after extracting assignee + missing-field helpers.
+
+Needed work: Split DueDateCell trigger vs popover panel.
+
+Reason not done now: The requested work was the date-step UX and Portal/ClickUp assignment. The date-cell shell is pre-existing debt.
+
 ## 2026-08-17 - [FIX] Forked chats do not copy conversation_documents
 
 Status: Open
@@ -39472,6 +39508,13 @@ Reason not done now: The panel change mitigates this in the UI with a timestamp 
 - Evidence: largest prod brain has 3.1k memories; full payload was 5.4 MB (over serverless cap). Fixed by clamping to 2,000 nodes + slim projection (2.99 MB).
 - Needed: cursor pagination (or server-side clustering) if anyone needs more than 2,000 memory nodes rendered at once. Also consider a `?fields=` projection so the graph never ships full memory records.
 - Why not now: the cap unblocks the 500 and is bounded; nobody can read 3k nodes on the canvas; pagination touches the store's SWR snapshot logic and deserves its own change.
+
+## 2026-08-19 - [ARCH] MeetingWorkspaceDialog.test.tsx near 400 LOC
+- Feature/app: Home / meeting workspace · apps/web
+- File: `apps/web/src/features/home/components/MeetingWorkspaceDialog.test.tsx` (372 LOC)
+- Evidence: `wc -l` is 372 after extracting `renderWorkspace`; eslint `max-lines` is 400.
+- Needed: split agenda-doc / status / action-row cases into a sibling test file so the dialog suite stays under the cap.
+- Why not now: in-scope tests already pass; splitting would be extra churn on this status-row change.
 
 ## 2026-08-18 - [REFACTOR] Spaces list/switcher files far over the 400/600 LOC limits
 

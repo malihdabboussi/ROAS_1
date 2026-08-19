@@ -43,7 +43,6 @@ export function CampaignsHub({
   const { setActiveCampaign } = useCampaignMode()
   const setActiveSpace = useSpacesStore((s) => s.setActiveSpace)
   const { isOrgContext } = useOrgStore()
-
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [programs, setPrograms] = useState<Program[]>([])
   const [spaces, setSpaces] = useState<Space[]>([])
@@ -71,7 +70,7 @@ export function CampaignsHub({
       setCampaigns(campaignRows)
       setSpaces(spaceRows)
       setPrograms(programRows)
-      setExpandedIds(new Set(campaignRows.map((c) => c.id)))
+      setExpandedIds(embedded ? new Set() : new Set(campaignRows.map((c) => c.id)))
       setExpandedProgramIds(
         new Set([
           ...programRows.map((p) => p.id),
@@ -83,7 +82,7 @@ export function CampaignsHub({
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [embedded])
 
   useEffect(() => {
     void reload()
@@ -262,7 +261,9 @@ export function CampaignsHub({
 
   return (
     <div className="h-full min-h-0 overflow-y-auto">
-      <div className="p-spacing-4 md:p-spacing-6 mx-auto w-full max-w-3xl">
+      <div
+        className={`p-spacing-4 md:p-spacing-6 mx-auto w-full ${embedded ? 'max-w-none' : 'max-w-3xl'}`}
+      >
         <CampaignsHubHeaderControls
           embedded={embedded}
           focusProgram={focusProgram}
@@ -331,6 +332,7 @@ export function CampaignsHub({
                 }}
                 onChangeNewName={setNewCampaignName}
                 onSubmitCreate={() => void handleCreateCampaign(group.program?.id ?? null)}
+                cardLayout={embedded}
               />
             ))}
 

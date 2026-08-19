@@ -43,7 +43,7 @@ export function ReadyEmployeesModalDesktop({
   isProfileLocked,
 }: ReadyEmployeesModalDesktopProps) {
   return (
-    <div className="px-spacing-4 fixed inset-0 z-50 flex items-center justify-center bg-modal-overlay">
+    <div className="px-spacing-4 bg-modal-overlay fixed inset-0 z-50 flex items-center justify-center">
       <div className="surface-card border-subtle rounded-spacing-4 p-spacing-4 md:p-spacing-6 flex h-[90vh] w-full max-w-[1600px] flex-col border">
         <div className="mb-spacing-4 flex shrink-0 items-center justify-between">
           <div>
@@ -131,7 +131,7 @@ export function ReadyEmployeesModalDesktop({
         )}
 
         <div className="pt-spacing-4 flex shrink-0 items-center justify-end">
-          {error && <p className="body-3 mr-auto text-red-400">{error}</p>}
+          {error && <p className="body-3 text-destructive mr-auto">{error}</p>}
           {selected && !loading && (
             <div className="gap-spacing-2 flex items-center">
               <select

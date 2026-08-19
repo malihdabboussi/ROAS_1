@@ -43,6 +43,7 @@ export function portalTargetPathFromRoute(input: {
   }
   if (input.pathname === '/clients' || input.pathname.startsWith('/clients/')) return '/clients'
   if (input.pathname.startsWith('/client-campaigns')) return '/campaigns'
+  if (input.pathname.startsWith('/launches')) return '/launches'
 
   const fromSpace = pathFromSpace(input.space)
   if (

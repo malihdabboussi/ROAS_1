@@ -721,6 +721,7 @@ export function CalendarBoard({
   const splitDividerRef = useRef<HTMLDivElement>(null)
   const dayScrollRef = useRef<HTMLDivElement>(null)
   const weekScrollRef = useRef<HTMLDivElement>(null)
+  const monthScrollRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [compact, setCompact] = useState(false)
   const [timeResize, setTimeResize] = useState<TimeResizeState | null>(null)
@@ -757,6 +758,20 @@ export function CalendarBoard({
     d.setHours(0, 0, 0, 0)
     return d
   }, [])
+
+  // Month grids taller than the viewport open scrolled to the first week —
+  // when the visible month contains today, bring today's week into view instead.
+  useEffect(() => {
+    if (scope !== 'month') return
+    const container = monthScrollRef.current
+    if (!container) return
+    const cell = container.querySelector(`[data-calendar-month-cell="${dayKey(today)}"]`)
+    if (!(cell instanceof HTMLElement)) return
+    const cRect = container.getBoundingClientRect()
+    const eRect = cell.getBoundingClientRect()
+    const delta = eRect.top - cRect.top - (cRect.height - eRect.height) / 2
+    if (Math.abs(delta) > 4) container.scrollTop += delta
+  }, [scope, currentMonth, today])
 
   const eventsById = useMemo(
     () => new Map([...events, ...draggableEvents].map((event) => [event.id, event])),
@@ -1178,7 +1193,10 @@ export function CalendarBoard({
 
         {scope === 'month' && (
           <>
-            <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+            <div
+              ref={monthScrollRef}
+              className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto"
+            >
               <div className="grid shrink-0 grid-cols-7 gap-1">
                 {getWeekDays(new Date(2024, 0, weekStart === 1 ? 1 : 7), weekStart).map((day) => (
                   <div

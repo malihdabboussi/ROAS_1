@@ -13,8 +13,8 @@ import {
   Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { Tooltip } from '@/components/ui/tooltip'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
+import { Tooltip } from '@/components/ui/tooltip'
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import { ConfirmDialog } from '@/features/settings/components/settings-content/ConfirmDialog'
 import { cn } from '@/lib/utils/cn'
@@ -258,6 +258,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                           }}
                           aria-label="Add subtask"
                           className="btn-icon-glass-sm !h-[18px] !w-[18px] !rounded-[4px]"
+                          aria-label="Add subtask"
                         >
                           <Plus className="h-3 w-3" />
                         </button>
@@ -319,6 +320,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                         }}
                         aria-label="Edit name"
                         className="btn-icon-glass-sm !h-[18px] !w-[18px] !rounded-[4px]"
+                        aria-label="Edit name"
                       >
                         <Pencil className="h-3 w-3" />
                       </button>
@@ -334,7 +336,8 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                             e.stopPropagation()
                             setDeleteOpen(true)
                           }}
-                          className="btn-icon-glass-sm !h-[18px] !w-[18px] !rounded-[4px] text-red-400 hover:text-red-300"
+                          className="btn-icon-glass-sm text-destructive !h-[18px] !w-[18px] !rounded-[4px]"
+                          aria-label={isSubtask ? 'Delete subtask' : 'Delete task'}
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
@@ -402,6 +405,8 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                       {showChevron ? (
                         <button
                           type="button"
+                          aria-label={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
+                          aria-expanded={expanded}
                           onPointerDown={(e) => e.stopPropagation()}
                           onClick={(e) => {
                             e.stopPropagation()
@@ -456,6 +461,8 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                       {showChevron && (
                         <button
                           type="button"
+                          aria-label={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
+                          aria-expanded={expanded}
                           onPointerDown={(e) => e.stopPropagation()}
                           onClick={(e) => {
                             e.stopPropagation()

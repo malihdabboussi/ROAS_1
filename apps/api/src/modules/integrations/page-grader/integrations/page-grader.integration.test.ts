@@ -105,3 +105,54 @@ describe('PageGraderIntegration.upsertClientMeeting', () => {
     expect(result).toMatchObject({ unchanged: true, meeting: { id: 'note-1' } })
   })
 })
+
+describe('PageGraderIntegration.listLaunches', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('reads the Page Grader launches feed', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          items: [
+            {
+              id: 'campaign-1:launch:2026-08-20',
+              kind: 'launch',
+              day_key: '2026-08-20',
+              name: 'Fall Launch',
+              client_id: 'client-1',
+            },
+          ],
+          launches: [
+            {
+              id: 'campaign-1:launch:2026-08-20',
+              kind: 'launch',
+              day_key: '2026-08-20',
+              name: 'Fall Launch',
+              client_id: 'client-1',
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await new PageGraderIntegration().listLaunches(
+      'https://portal.example/functions/v1/roas-api/',
+      'secret-api-key',
+      { q: 'Fall', clientId: 'client-1' },
+    )
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://portal.example/functions/v1/roas-api/launches?q=Fall&client_id=client-1',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer secret-api-key' }),
+      }),
+    )
+    expect(result).toEqual([
+      expect.objectContaining({ id: 'campaign-1:launch:2026-08-20', kind: 'launch' }),
+    ])
+  })
+})

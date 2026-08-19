@@ -185,7 +185,7 @@ export function ProjectCodeView({ projectId, cachedFiles, onFilesLoaded }: Proje
     fetchAllProjectFiles(projectId)
       .then((result) => {
         if (cancelled) return
-        setFiles(result.files)
+        setFiles(result?.files ?? [])
         setEntryPoint(result.entryPoint)
         onFilesLoaded?.(result)
       })

@@ -25,6 +25,7 @@ export const PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_DELEGA
 - For this Page Grader work, resolve the client and campaign from Slack channel identity, Portal records, Brain, and Space before creating Page Grader work. "Resolve" means look it up — not ask the human by default. For a new campaign or launch, use available campaign Brain, Space, Page Grader, and Slack context first, then ask only for missing details that block a safe draft; never invent the offer, objective, audience, launch timing, or source assets.
 - If The ROAS Portal fulfillment fails, stop and report the plain-language blocker. Do not silently fall back to \`create_task\`, \`create_funnel\`, another assignee, or another client.
 - After a successful Service Request draft, the reply must confirm: resolved client name, request title/type, that this is a reviewable draft (not a finished task), and the \`review_url\` as a real openable https link. Next step is the same chat: one question/option at a time (card or reply). Point the user to continue in this thread or open that link — it resumes the same chat step flow, not a separate all-at-once form. Never say "Created:" for a native task until finalization returns the ROAS task identity.
+- When the user asks to get several fulfillment jobs done in one message (QC funnel + GHL + reset ads, "I need this done"), call \`list_mcp_tools\` then \`page_grader_create_delegation_preview\` once with the resolved Portal client and campaign. Reply with the returned \`confirm_url\` as a real openable https link. Do not loop \`page_grader_create_fulfillment_request\`. Do not say tasks were created until the operator Confirms in The ROAS Portal.
 - A client "portal campaign" / "create a campaign" / "build the campaign" request first calls \`list_mcp_tools\` on the Page Grader server, then uses the exact live campaign-draft write if one exists (names such as \`page_grader_create_campaign_draft\`). Do not invent a tool name. After a successful Portal draft, the reply must include the \`review_url\` as a real openable https link. Follow-up questions belong in that review chat, not as an interview in Slack.
 - Missing VSL, landing page, or creative assets are not create-blockers. Create the campaign first, then add those as campaign tasks. If \`list_mcp_tools\` shows no campaign-draft write, or that write is unavailable, use native \`create_campaign\` (required: name), include the returned \`url\` as an openable https link, and \`create_task\` for the missing launch work. Do not stop after a vague create rejection, and do not replace a successful Portal draft with native \`create_campaign\`.
 - Do not tell the user work was assigned, delegated, or completed until the tool result confirms the effect and identifies the created work or equivalent durable result.
@@ -81,19 +82,22 @@ export const PLATFORM_TOOLS_FIRST_PERSON_FILL_BLOCK = `${PLATFORM_TOOLS_FIRST_PE
 export const PLATFORM_TOOLS_BROWSER_QC_HEADING = '### Interactive Browser QC'
 export const PLATFORM_TOOLS_BROWSER_QC_BLOCK = `${PLATFORM_TOOLS_BROWSER_QC_HEADING}
 
-Clicking a live page, filling a form, registering a test lead, and reviewing the confirmation page require the browser tool. \`web_fetch\` returns text/markdown only — it cannot type, click Register Now, submit, or follow a JavaScript confirmation.
+Clicking a live page, filling a form, registering a test lead, checking mobile or desktop, and reviewing the confirmation page require the browser tool. \`web_fetch\` returns text/markdown only — it cannot type, click Register Now, submit, follow a JavaScript confirmation, or show layout at a real viewport.
 
-When the browser tool is available and the user asks to QC, click through, register, or fill a live page:
-- Open the URL in the browser, snapshot the visible form, and click the real controls.
+When the browser tool is available and the user asks to QC, click through, register, fill a live page, or check mobile/desktop:
+- Open the URL in the browser. Take screenshots so the live page is visible in chat. Do not substitute a text fetch for visual QA.
+- Snapshot desktop at 1440x900, then resize to 390x844 (mobile) and snapshot again. If the user asked for both, both viewports are required before you report.
+- On mobile, check overflow, wrapping, tap targets, sticky bars, and whether the primary CTA stays reachable without covering the form.
+- Click the real controls.
 - Fill every required field, then click the visible CTA (Register Now, Submit, Get Access, and similar).
-- Wait for navigation and inspect the actual resulting page. Compare dates, times, and offer copy against the registration page.
+- Wait for navigation and inspect the actual resulting page on the same viewport. Compare dates, times, and offer copy against the registration page.
 - Judge visible prices, copy, and layout from the rendered page. Automation-facing text can include hidden, stale, or contradictory checkout values; reconcile those against what the user would see.
 
 A request to QC a funnel, click through it, or register a test lead is authorization to submit an obviously fake test identity: name Test Lead, email \`qa+{unix}@roas.co\`, US phone (555) 010-0100. Do not use the user's real identity unless they asked you to fill the form as them. Do not ask them to send a confirmation URL or guess \`/thank-you\` while the submit button was on the page.
 
 When filling a form as the user, retrieve their identity from User Brain first, then type those values into the live form. Do not ask them to paste bullets Brain already holds.
 
-Leave unpaid checkout, card entry, and real purchases untested unless the user explicitly authorizes that step. If the browser tool is missing or blocked, say you could not click through the live page. Do not claim a registration from fetch alone.`
+Leave unpaid checkout, card entry, and real purchases untested unless the user explicitly authorizes that step. If the browser tool is missing or blocked, say you could not click through the live page. Do not claim a registration or a mobile/desktop visual pass from fetch alone.`
 
 export const PLATFORM_TOOLS_RUNTIME_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING}
 

@@ -42,7 +42,7 @@ function SingleChannelToolbarInner({ ctx }: { ctx: SpaceToolbarContext }) {
   return (
     <>
       <ToolbarShell ctx={ctx} channelsLayout>
-        <div className="flex min-w-0 flex-nowrap items-center gap-1" />
+        <div className="flex shrink-0 flex-nowrap items-center gap-1" />
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
           <SaveViewSlot ctx={ctx} />
           {singleChannelId ? (
@@ -116,7 +116,7 @@ function ChannelsIndexToolbarInner({ ctx }: { ctx: SpaceToolbarContext }) {
   return (
     <>
       <ToolbarShell ctx={ctx} channelsLayout>
-        <div className="flex min-w-0 flex-nowrap items-center gap-1" />
+        <div className="flex shrink-0 flex-nowrap items-center gap-1" />
 
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
           <SaveViewSlot ctx={ctx} />

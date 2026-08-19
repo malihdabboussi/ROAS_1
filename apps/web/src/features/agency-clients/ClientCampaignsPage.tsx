@@ -25,14 +25,14 @@ export function ClientCampaignsPage() {
       try {
         const response = await fetchAgencyClientCampaigns(undefined, false)
         if (cancelled) return
-        setCampaigns(response.campaigns)
+        setCampaigns(response?.campaigns ?? [])
         setLoading(false)
 
         // Show the Page Grader campaign inventory first, then refresh Space links as
         // the two-way ROAS mapping pass finishes.
         void fetchAgencyClientCampaigns(undefined, true)
           .then((synced) => {
-            if (!cancelled) setCampaigns(synced.campaigns)
+            if (!cancelled && synced?.campaigns) setCampaigns(synced.campaigns)
           })
           .catch(() => undefined)
       } catch (reason) {

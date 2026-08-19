@@ -8,6 +8,7 @@ import {
   Inbox,
   ListChecks,
   ListTodo,
+  Rocket,
   SendHorizontal,
   Star,
   Users,
@@ -35,6 +36,13 @@ export const manageRailItems: ManageRailItem[] = [
     type: 'link',
     href: '/client-campaigns',
     icon: <BriefcaseBusiness className="icon-md" />,
+  },
+  {
+    id: 'launches',
+    label: 'Launches',
+    type: 'link',
+    href: '/launches',
+    icon: <Rocket className="icon-md" />,
   },
   {
     id: 'inbox',

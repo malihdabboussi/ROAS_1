@@ -76,7 +76,7 @@ export default function UnsubscribePage() {
           <div className="text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
               <svg
-                className="h-6 w-6 text-red-400"
+                className="text-destructive h-6 w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -118,7 +118,7 @@ export default function UnsubscribePage() {
 
             {error && (
               <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3">
-                <p className="text-xs text-red-400">{error}</p>
+                <p className="text-destructive text-xs">{error}</p>
               </div>
             )}
 
@@ -183,7 +183,7 @@ export default function UnsubscribePage() {
           <div className="text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
               <svg
-                className="h-6 w-6 text-red-400"
+                className="text-destructive h-6 w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"

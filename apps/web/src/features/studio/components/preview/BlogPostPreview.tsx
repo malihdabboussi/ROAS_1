@@ -77,7 +77,7 @@ function SaveIndicator({ status }: { status: SaveIndicatorStatus }) {
           <span className="text-emerald-400">Saved</span>
         </>
       )}
-      {status === 'error' && <span className="text-red-400">Save failed</span>}
+      {status === 'error' && <span className="text-destructive">Save failed</span>}
     </span>
   )
 }

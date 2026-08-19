@@ -64,6 +64,7 @@ export function MeetingsUnifiedSurface({ agenda }: { agenda: ReactNode }) {
           leadingViewId: 'all-meetings',
           defaultPinnedViewIds: MEETINGS_DEFAULT_PINNED_VIEW_IDS,
           overrideView: { id: 'agenda', content: agenda },
+          defaultPinnedViewIds: ['agenda'],
         }}
       />
     </div>

@@ -237,7 +237,7 @@ export function EmbeddedMessagesView({
                     {identitySaving ? 'Saving…' : 'Save & continue'}
                   </button>
                   {identityError ? (
-                    <p className="mt-1 text-[11px] text-red-400">{identityError}</p>
+                    <p className="text-destructive mt-1 text-[11px]">{identityError}</p>
                   ) : null}
                 </div>
               ) : null}
@@ -291,7 +291,7 @@ export function EmbeddedMessagesView({
 
         {error && (
           <div className="px-4 py-2">
-            <p className="text-xs text-red-400">{error}</p>
+            <p className="text-destructive text-xs">{error}</p>
           </div>
         )}
 
@@ -315,7 +315,7 @@ export function EmbeddedMessagesView({
             <button
               type="button"
               onClick={stopStreaming}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-500/20 text-red-400 transition-colors hover:bg-red-500/30"
+              className="text-destructive flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-500/20 transition-colors hover:bg-red-500/30"
               aria-label="Stop"
             >
               <Square className="h-4 w-4" />

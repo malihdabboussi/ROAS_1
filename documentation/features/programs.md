@@ -1,6 +1,6 @@
 # Programs
 
-Last Modified: August 17, 2026 (All Tasks is the only tasks screen; My Tasks overlay retired)
+Last Modified: August 12, 2026 (card-first Program navigation)
 
 ## Overview
 
@@ -72,23 +72,15 @@ Roles (API `view`/`edit`, UI Viewer/Editor):
 
 ## UI (hub + sidebar)
 
-### Programs overview (`/programs`)
+### All Programs (`/campaigns`)
 
-- Lists every accessible program
-- Each row opens `/programs/[id]`
-- More → Programs click lands here (not `/campaigns`)
-- Hovering More → Programs lists the same programs
-
-### Campaigns hub (`/campaigns`)
-
-- Groups under program sections (empty programs still shown)
-- Per-program **Campaign** control creates into that program
-- Program name links to `/programs/[id]`
-- Menu: Move to program / General
+- Clicking **Programs** opens a responsive card grid of every accessible Program.
+- Each Program card shows its campaign count from the Programs API and links to `/programs/[id]`.
+- Program search filters the card grid by name.
 
 ### Program overview (`/programs/[id]`)
 
-- Same hub tree scoped to one program (Clients, ROAS Ops, …)
+- Overview defaults to a responsive campaign-card grid scoped to one Program (Clients, ROAS Ops, …). Cards retain Overview, Work, Space creation, Space expansion, sharing, move, and delete actions.
 - Top **New campaign** creates into that program
 - Link back to **All campaigns**
 - Uses the same configurable work-view model as Campaigns: Overview, List, Board, Calendar, and Canvas.

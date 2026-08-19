@@ -47,14 +47,14 @@ const options: WorkRequestOptions = {
     { id: 'space-2', name: 'Other space', client_workspace_id: 'ws-2' },
   ],
   team_members: [
-    { id: 'u-1', name: 'Sam Editor' },
-    { id: 'u-2', name: 'Alex Producer' },
+    { id: 'u-1', name: 'Sam Editor', email: 'sam@roas.co', source: 'portal' },
+    { id: 'u-2', name: 'Alex Producer', email: 'alex@roas.co', source: 'portal' },
   ],
 }
 
 describe('work-request-chat-steps', () => {
   it('builds one-at-a-time steps ending in confirm', () => {
-    const answers = draftToChatAnswers(draft)
+    const answers = draftToChatAnswers(draft, options)
     const steps = buildWorkRequestChatSteps(draft, options, answers)
     expect(steps[0]?.id).toBe('client_workspace_id')
     expect(steps.at(-1)?.kind).toBe('confirm')
@@ -68,7 +68,7 @@ describe('work-request-chat-steps', () => {
   })
 
   it('treats prefilled draft fields as known and only queues gaps', () => {
-    const answers = draftToChatAnswers(draft)
+    const answers = draftToChatAnswers(draft, options)
     const steps = buildWorkRequestChatSteps(draft, options, answers)
     const known = listKnownSteps(steps, answers)
     const pending = listPendingSteps(steps, answers)
@@ -100,16 +100,40 @@ describe('work-request-chat-steps', () => {
   })
 
   it('maps assignee unassigned choice to an empty name', () => {
-    let answers = draftToChatAnswers(draft)
+    let answers = draftToChatAnswers(draft, options)
     const steps = buildWorkRequestChatSteps(draft, options, answers)
     const assigneeStep = steps.find((step) => step.id === 'assignee_name')!
     answers = applyStepAnswer(answers, assigneeStep, '__unassigned__')
     expect(answers.assignee_name).toBe('')
+    expect(answers.assignee_id).toBe('')
     expect(answersToUpdate(answers).assignee_name).toBeNull()
+    expect(answersToUpdate(answers).assignee_id).toBeNull()
+  })
+
+  it('keeps Portal user id and email when picking a roster row', () => {
+    let answers = draftToChatAnswers(draft, options)
+    const steps = buildWorkRequestChatSteps(draft, options, answers)
+    const assigneeStep = steps.find((step) => step.id === 'assignee_name')!
+    answers = applyStepAnswer(answers, assigneeStep, 'u-1')
+    expect(answers.assignee_name).toBe('Sam Editor')
+    expect(answers.assignee_id).toBe('u-1')
+    expect(answers.assignee_email).toBe('sam@roas.co')
+    expect(answersToUpdate(answers)).toMatchObject({
+      assignee_name: 'Sam Editor',
+      assignee_id: 'u-1',
+      assignee_email: 'sam@roas.co',
+    })
+  })
+
+  it('maps a typed Portal email onto the roster member', () => {
+    const answers = draftToChatAnswers(draft, options)
+    const steps = buildWorkRequestChatSteps(draft, options, answers)
+    const assigneeStep = steps.find((step) => step.id === 'assignee_name')!
+    expect(resolveChoiceFromChat(assigneeStep, 'sam@roas.co')).toBe('u-1')
   })
 
   it('resolves free-text choice replies by label', () => {
-    const answers = draftToChatAnswers(draft)
+    const answers = draftToChatAnswers(draft, options)
     const steps = buildWorkRequestChatSteps(draft, options, answers)
     const workspaceStep = steps.find((step) => step.id === 'client_workspace_id')!
     expect(resolveChoiceFromChat(workspaceStep, 'Other client')).toBe('ws-2')
@@ -117,7 +141,7 @@ describe('work-request-chat-steps', () => {
   })
 
   it('maps answers into a draft update payload', () => {
-    let answers = draftToChatAnswers(draft)
+    let answers = draftToChatAnswers(draft, options)
     const steps = buildWorkRequestChatSteps(draft, options, answers)
     const typeStep = steps.find((step) => step.id === 'request_type')!
     answers = applyStepAnswer(answers, typeStep, 'funnel')

@@ -24,7 +24,7 @@ export function ConversationActionsMenuItem(props: ConversationActionsMenuItemPr
       className={cn(
         'gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full items-center text-left transition-colors disabled:opacity-50 disabled:hover:bg-transparent',
         destructive
-          ? 'text-red-600 hover:bg-red-500/10 [&_svg]:text-red-600'
+          ? 'text-destructive [&_svg]:text-destructive hover:bg-red-500/10'
           : 'text-muted-foreground hover:text-foreground hover:bg-[var(--color-hover-subtle)]',
       )}
     >

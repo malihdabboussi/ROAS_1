@@ -88,6 +88,11 @@ export function ShellTopBar() {
 
   const histIndex = useRef(0)
   const histMax = useRef(0)
+  // Effect-set so SSR and first client render agree (avoids hydration mismatch).
+  const [searchKbd, setSearchKbd] = useState('⌘K')
+  useEffect(() => {
+    if (!/Mac|iPhone|iPad/i.test(navigator.userAgent)) setSearchKbd('Ctrl+K')
+  }, [])
   const [canGoBack, setCanGoBack] = useState(true)
   const [canGoForward, setCanGoForward] = useState(false)
 
@@ -194,7 +199,7 @@ export function ShellTopBar() {
           >
             <Search className="shell-topbar-search-icon" aria-hidden />
             <span className="shell-topbar-search-label">Search</span>
-            <kbd className="shell-topbar-search-kbd">⌘K</kbd>
+            <kbd className="shell-topbar-search-kbd">{searchKbd}</kbd>
           </button>
         </div>
       ) : null}

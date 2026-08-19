@@ -251,6 +251,22 @@ export class PageGraderApiService {
     return this.pageGrader.listClientCampaigns(creds.baseUrl, creds.apiKey, opts)
   }
 
+  async listLaunches(
+    userId: string,
+    opts?: {
+      q?: string
+      clientId?: string
+      kind?: string
+      from?: string
+      to?: string
+      limit?: number
+      offset?: number
+    },
+  ) {
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.listLaunches(creds.baseUrl, creds.apiKey, opts)
+  }
+
   async updateWorkspaceEntity(userId: string, path: string, patch: Record<string, unknown>) {
     const creds = await this.getCreds(userId)
     return this.pageGrader.updateWorkspaceEntity(creds.baseUrl, creds.apiKey, path, patch)

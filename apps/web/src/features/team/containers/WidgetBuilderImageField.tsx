@@ -174,7 +174,7 @@ export function WidgetBuilderImageField({
       {isLogo && !showPreview && (
         <div className="flex w-full min-w-0 items-center justify-between gap-2 sm:gap-3">
           <p
-            className="body-4 min-w-0 flex-1 pr-1 text-muted-foreground"
+            className="body-4 text-muted-foreground min-w-0 flex-1 pr-1"
             title={hint ? `${label}. ${hint}` : label}
           >
             {label}
@@ -195,7 +195,7 @@ export function WidgetBuilderImageField({
       {isLogo && showPreview && (
         <div className="flex w-full min-w-0 items-start gap-2 sm:gap-3">
           <p
-            className="body-4 min-w-0 flex-1 pr-1 pt-0.5 text-muted-foreground"
+            className="body-4 text-muted-foreground min-w-0 flex-1 pr-1 pt-0.5"
             title={hint ? `${label}. ${hint}` : label}
           >
             {label}
@@ -250,7 +250,7 @@ export function WidgetBuilderImageField({
       {!isLogo && (
         <div className="flex w-full min-w-0 items-start gap-2 sm:gap-3">
           <p
-            className="body-4 min-w-0 flex-1 pr-1 pt-0.5 text-muted-foreground"
+            className="body-4 text-muted-foreground min-w-0 flex-1 pr-1 pt-0.5"
             title={hint ? `${label}. ${hint}` : label}
           >
             {label}
@@ -261,7 +261,7 @@ export function WidgetBuilderImageField({
               showPreview
                 ? 'border-white/20 bg-black/30'
                 : `cursor-pointer border-dashed ${
-                    dragOver ? 'border-white/40 bg-surface-subtle' : 'border-white/15 bg-black/30'
+                    dragOver ? 'bg-surface-subtle border-white/40' : 'border-white/15 bg-black/30'
                   }`
             }`}
             onClick={!showPreview ? () => fileInputRef.current?.click() : undefined}
@@ -475,15 +475,15 @@ function WidgetImageUrlDialog({
                 setPreviewOk(false)
               }}
               placeholder="https://…"
-              className="body-3 mb-3 w-full rounded-lg border border-border bg-surface-subtle px-3 py-2 text-foreground outline-none placeholder:text-white/30"
+              className="body-3 border-border bg-surface-subtle text-foreground mb-3 w-full rounded-lg border px-3 py-2 outline-none placeholder:text-white/30"
               autoFocus
             />
-            <div className="relative mb-4 flex min-h-[120px] w-full items-center justify-center overflow-hidden rounded-lg border border-border bg-black/30">
+            <div className="border-border relative mb-4 flex min-h-[120px] w-full items-center justify-center overflow-hidden rounded-lg border bg-black/30">
               {!isHttp && (
                 <p className="body-4 px-2 text-center text-white/40">Enter a URL to preview</p>
               )}
               {isHttp && previewErr && (
-                <p className="body-4 px-2 text-center text-red-300/90">Could not load image</p>
+                <p className="body-4 text-destructive/90 px-2 text-center">Could not load image</p>
               )}
               {isHttp && !previewErr && (
                 <>
@@ -508,7 +508,7 @@ function WidgetImageUrlDialog({
               <button
                 type="button"
                 onClick={onClose}
-                className="body-3 rounded-lg border border-border bg-surface-subtle px-3 py-2 text-muted-foreground"
+                className="body-3 border-border bg-surface-subtle text-muted-foreground rounded-lg border px-3 py-2"
               >
                 Cancel
               </button>

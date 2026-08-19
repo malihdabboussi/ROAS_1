@@ -31,6 +31,8 @@ export function useCustomizeViewActions(opts: {
   flushPendingViewPatch: () => Promise<void>
   closeCustomizePanel: () => void
   handleViewPatch: (patch: Partial<ViewDef>) => Promise<void>
+  /** Surface-default pins (e.g. Meetings pins Agenda) — materialized on the first explicit pin action. */
+  defaultPinnedViewIds?: string[]
 }) {
   const {
     customizePanelTargetView,
@@ -50,6 +52,7 @@ export function useCustomizeViewActions(opts: {
     flushPendingViewPatch,
     closeCustomizePanel,
     handleViewPatch,
+    defaultPinnedViewIds,
   } = opts
 
   const handleSaveForEveryone = useCallback(async () => {
@@ -137,18 +140,26 @@ export function useCustomizeViewActions(opts: {
     toast.success(SPACES_CUSTOMIZE_VIEW_TOAST_SUCCESS.VIEW_REVERTED.userMessage)
   }, [clearSessionDraft, customizePanelTargetView])
 
-  const handleViewPinToStart = useCallback(
-    async (pinned: boolean, targetViewId?: string) => {
-      const viewId = targetViewId ?? customizePanelTargetView?.id
-      if (!viewId || !activeSchema || !activeSpace) return
+  const handleTogglePinViewById = useCallback(
+    async (viewId: string, pinned: boolean) => {
+      if (!activeSchema || !activeSpace) return
       const orgView = activeSchema.views.find((v) => v.id === viewId)
       if (!orgView) return
-      // Pinning is a flag, not a position: the tab strip renders every pinned view first
+      // Until the user has expressed a pin preference, surface defaults count as pinned —
+      // materialize them so the first explicit pin doesn't silently drop them.
+      const applyDefaults =
+        (defaultPinnedViewIds?.length ?? 0) > 0 &&
+        activeSchema.views.every((v) => v.pinned_to_start === undefined)
+      // Pinning is a flag, not a position: the tab strip renders pinned views first
       // (see orderViewsForStrip), so several views can be pinned and nothing else moves.
       const nextSchema = {
         ...activeSchema,
         views: activeSchema.views.map((v) =>
-          v.id === orgView.id ? { ...v, pinned_to_start: pinned } : v,
+          v.id === viewId
+            ? { ...v, pinned_to_start: pinned }
+            : applyDefaults && defaultPinnedViewIds!.includes(v.id)
+              ? { ...v, pinned_to_start: true }
+              : v,
         ),
       }
       patchActiveSpaceSchema(nextSchema)
@@ -164,7 +175,67 @@ export function useCustomizeViewActions(opts: {
         toast.error(SPACES_CUSTOMIZE_VIEW_TOAST_ERRORS.PIN_FAILED.userMessage)
       }
     },
-    [customizePanelTargetView, activeSchema, activeSpace, patchActiveSpaceSchema, refresh],
+    [activeSchema, activeSpace, defaultPinnedViewIds, patchActiveSpaceSchema, refresh],
+  )
+
+  const handleViewPinToStart = useCallback(
+    async (pinned: boolean, targetViewId?: string) => {
+      const viewId = targetViewId ?? customizePanelTargetView?.id
+      if (!viewId) return
+      await handleTogglePinViewById(viewId, pinned)
+    },
+    [customizePanelTargetView, handleTogglePinViewById],
+  )
+
+  const handleDuplicateViewById = useCallback(
+    async (viewId: string) => {
+      if (!activeSchema || !activeSpace) return
+      const sourceIdx = activeSchema.views.findIndex((v) => v.id === viewId)
+      const source = activeSchema.views[sourceIdx]
+      if (!source) return
+      const newId = `${source.id}_${Date.now()}`
+      const clone: ViewDef = {
+        ...source,
+        id: newId,
+        name: `${source.name} (copy)`,
+        pinned_to_start: false,
+      }
+      const nextViews = [...activeSchema.views]
+      nextViews.splice(sourceIdx + 1, 0, clone)
+      const nextSchema = { ...activeSchema, views: nextViews }
+      patchActiveSpaceSchema(nextSchema)
+      try {
+        await updateSpace(activeSpace.id, { schema: nextSchema })
+        setActiveView(newId)
+        toast.success(SPACES_CUSTOMIZE_VIEW_TOAST_SUCCESS.VIEW_DUPLICATED.userMessage)
+      } catch {
+        await refresh()
+        toast.error(SPACES_CUSTOMIZE_VIEW_TOAST_ERRORS.DUPLICATE_FAILED.userMessage)
+      }
+    },
+    [activeSchema, activeSpace, patchActiveSpaceSchema, refresh, setActiveView],
+  )
+
+  const handleDeleteViewById = useCallback(
+    async (viewId: string) => {
+      if (!activeSchema || !activeSpace) return
+      if (activeSchema.views.length <= 1) return
+      const nextViews = activeSchema.views.filter((v) => v.id !== viewId)
+      const nextSchema = { ...activeSchema, views: nextViews }
+      patchActiveSpaceSchema(nextSchema)
+      try {
+        await updateSpace(activeSpace.id, { schema: nextSchema })
+      } catch {
+        await refresh()
+        toast.error(SPACES_CUSTOMIZE_VIEW_TOAST_ERRORS.VIEW_SAVE_FAILED.userMessage)
+        return
+      }
+      if (viewId === activeViewId) {
+        const nextId = nextViews[0]?.id
+        if (nextId) setActiveView(nextId)
+      }
+    },
+    [activeSchema, activeSpace, activeViewId, patchActiveSpaceSchema, refresh, setActiveView],
   )
 
   const handleDeleteActiveView = useCallback(async () => {
@@ -211,6 +282,9 @@ export function useCustomizeViewActions(opts: {
     handleSaveAsNewView,
     handleRevertViewDraft,
     handleViewPinToStart,
+    handleTogglePinViewById,
+    handleDuplicateViewById,
+    handleDeleteViewById,
     handleDeleteActiveView,
   }
 }

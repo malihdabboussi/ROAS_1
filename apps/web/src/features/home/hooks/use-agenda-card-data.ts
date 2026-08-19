@@ -4,11 +4,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { agendaBoardFallbackWindow } from '@/features/home/components/AgendaCalendarPanel'
 import { HOME_TOAST_ERRORS } from '@/features/home/config/home-toast-errors.config'
-import { readMinimizedAgendaKeys } from '@/features/home/lib/agenda-minimize'
 import {
   agendaListFetchWindow,
   filterEventsToWindow,
 } from '@/features/home/lib/agenda-fetch-window'
+import { readMinimizedAgendaKeys } from '@/features/home/lib/agenda-minimize'
 import { cachedFetch, peekCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { useOrgStore } from '@/lib/org'
 import {
@@ -61,9 +61,7 @@ export function useAgendaCardData() {
   const [loading, setLoading] = useState(true)
   const [initialized, setInitialized] = useState(false)
   const [nowTick, setNowTick] = useState(() => Date.now())
-  const [minimizedKeys, setMinimizedKeys] = useState<Set<string>>(() =>
-    readMinimizedAgendaKeys(),
-  )
+  const [minimizedKeys, setMinimizedKeys] = useState<Set<string>>(() => readMinimizedAgendaKeys())
   const [boardFetchWindow, setBoardFetchWindow] = useState<{
     start: Date
     end: Date
@@ -163,12 +161,10 @@ export function useAgendaCardData() {
       const cacheKey = `calendar-agenda:${activeOrgId ?? 'personal'}:${effectiveScope}:${start}:${end}:${timezone}:${providerParam ?? 'all'}`
       const peeked = peekCachedFetch<Awaited<ReturnType<typeof fetchCalendarAgenda>>>(cacheKey)
       if (peeked?.success && !scopeChanged) {
-        if (effectiveScope === 'personal') setConnected(peeked.connected)
+        if (effectiveScope === 'personal' && peeked.connected) setConnected(peeked.connected)
         setAccounts(peeked.accounts ?? [])
         setTeamAvailable(Boolean(peeked.team_available))
-        setTeamCoverage(
-          effectiveScope === 'team' ? (peeked.team_coverage ?? null) : null,
-        )
+        setTeamCoverage(effectiveScope === 'team' ? (peeked.team_coverage ?? null) : null)
         const warmed =
           view === 'list'
             ? filterEventsToWindow(peeked.events ?? [], viewStart, viewEnd)
@@ -193,8 +189,9 @@ export function useAgendaCardData() {
           }),
         { ttlMs: AGENDA_CACHE_TTL_MS },
       )
-      if (effectiveScope === 'personal') setConnected(res.connected)
-      else if (res.team_available) setConnected(res.connected)
+      if (res.connected && (effectiveScope === 'personal' || res.team_available)) {
+        setConnected(res.connected)
+      }
       setAccounts(res.accounts ?? [])
       setTeamAvailable(Boolean(res.team_available))
       setTeamCoverage(effectiveScope === 'team' ? (res.team_coverage ?? null) : null)

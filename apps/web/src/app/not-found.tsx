@@ -12,7 +12,7 @@ export default function NotFound() {
   return (
     <main className="bg-background flex min-h-dvh items-center justify-center p-spacing-6">
       <div className="max-w-md text-center">
-        <div className="border-border bg-muted mx-auto mb-spacing-5 flex h-spacing-12 w-spacing-12 items-center justify-center rounded-full border">
+        <div className="border-border bg-muted mx-auto mb-spacing-6 flex h-spacing-14 w-spacing-14 items-center justify-center rounded-full border">
           <Compass aria-hidden="true" className="icon-md text-muted-foreground" />
         </div>
         <h1 className="title-h3 text-foreground font-semibold">PAGE NOT FOUND</h1>

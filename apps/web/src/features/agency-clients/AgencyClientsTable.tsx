@@ -16,12 +16,12 @@ const AVATAR_BOX =
   'bg-secondary h-spacing-9 w-spacing-9 rounded-spacing-2 flex shrink-0 items-center justify-center overflow-hidden'
 const AVATAR_IMG = 'block h-spacing-9 w-spacing-9 object-cover'
 
-function ClientColgroup() {
+function ClientColgroup({ showManager }: { showManager: boolean }) {
   return (
     <colgroup>
       <col className="w-spacing-36" />
       <col className="w-spacing-64" />
-      <col className="w-spacing-36" />
+      {showManager ? <col className="w-spacing-36" /> : null}
       <col />
       <col />
       <col />
@@ -30,7 +30,14 @@ function ClientColgroup() {
   )
 }
 
-export function AgencyClientsTable({ groups }: { groups: ClientGroup[] }) {
+export function AgencyClientsTable({
+  groups,
+  /** Hide the Account Manager column (redundant while grouped by manager). */
+  showManagerColumn = true,
+}: {
+  groups: ClientGroup[]
+  showManagerColumn?: boolean
+}) {
   return (
     <div className="gap-spacing-4 flex flex-col">
       {groups.map(([label, clients]) => (
@@ -46,21 +53,27 @@ export function AgencyClientsTable({ groups }: { groups: ClientGroup[] }) {
           </header>
           <div className="overflow-x-auto">
             <table className={TABLE_CLASS}>
-              <ClientColgroup />
+              <ClientColgroup showManager={showManagerColumn} />
               <thead>
                 <tr className="body-4 text-muted-foreground border-border border-b text-left">
                   <th className="px-spacing-4 py-spacing-2 font-medium">Pipe</th>
                   <th className="px-spacing-4 py-spacing-2 font-medium">Client</th>
-                  <th className="px-spacing-4 py-spacing-2 font-medium">Account Manager</th>
+                  {showManagerColumn ? (
+                    <th className="px-spacing-4 py-spacing-2 font-medium">Account Manager</th>
+                  ) : null}
                   <th className="px-spacing-4 py-spacing-2 font-medium">Monday Updates</th>
                   <th className="px-spacing-4 py-spacing-2 font-medium">Friday Updates</th>
-                  <th className="px-spacing-4 py-spacing-2 font-medium">Slack Latest Update</th>
+                  <th className="px-spacing-4 py-spacing-2 font-medium">Latest Slack</th>
                   <th className="px-spacing-4 py-spacing-2 text-right font-medium">Options</th>
                 </tr>
               </thead>
               <tbody>
                 {clients.map((client) => (
-                  <AgencyClientRow key={client.id} client={client} />
+                  <AgencyClientRow
+                    key={client.id}
+                    client={client}
+                    showManagerColumn={showManagerColumn}
+                  />
                 ))}
               </tbody>
             </table>
@@ -71,7 +84,13 @@ export function AgencyClientsTable({ groups }: { groups: ClientGroup[] }) {
   )
 }
 
-function AgencyClientRow({ client }: { client: AgencyClient }) {
+function AgencyClientRow({
+  client,
+  showManagerColumn,
+}: {
+  client: AgencyClient
+  showManagerColumn: boolean
+}) {
   const update = client.weekly_update
   const monday = text(update?.current_work)
   const friday = text(update?.eow_what_we_did)
@@ -103,11 +122,13 @@ function AgencyClientRow({ client }: { client: AgencyClient }) {
           </span>
         </Link>
       </td>
-      <td className={`body-3 text-muted-foreground ${CELL}`}>
-        <span className="block truncate" title={client.account_manager?.name || undefined}>
-          {client.account_manager?.name || AGENCY_CLIENT_MESSAGES.UNASSIGNED}
-        </span>
-      </td>
+      {showManagerColumn ? (
+        <td className={`body-3 text-muted-foreground ${CELL}`}>
+          <span className="block truncate" title={client.account_manager?.name || undefined}>
+            {client.account_manager?.name || AGENCY_CLIENT_MESSAGES.UNASSIGNED}
+          </span>
+        </td>
+      ) : null}
       <td className={CELL}>
         <UpdateCell
           primary={monday || AGENCY_CLIENT_MESSAGES.ADD_UPDATE}
@@ -124,7 +145,7 @@ function AgencyClientRow({ client }: { client: AgencyClient }) {
       </td>
       <td className={CELL}>
         <p
-          className="body-3 text-foreground truncate"
+          className={`body-3 truncate ${slack ? 'text-foreground' : 'text-muted-foreground'}`}
           title={
             slackAt ? `${slack || AGENCY_CLIENT_MESSAGES.NO_RECENT_UPDATES} · ${slackAt}` : slack
           }

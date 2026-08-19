@@ -33,7 +33,7 @@ export function ImpersonationClientsSection({ onSelect }: { onSelect: () => void
     let cancelled = false
     void fetchImpersonationTargets()
       .then((res) => {
-        if (!cancelled) setTargets(res.targets)
+        if (!cancelled) setTargets(res?.targets ?? [])
       })
       .catch(() => {
         if (!cancelled) setTargets([])

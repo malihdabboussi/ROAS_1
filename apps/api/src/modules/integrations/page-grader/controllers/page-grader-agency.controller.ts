@@ -24,6 +24,7 @@ import {
   GetPageGraderAgencyClientSchema,
   ListPageGraderAgencyCampaignsSchema,
   ListPageGraderAgencyClientsSchema,
+  ListPageGraderAgencyLaunchesSchema,
   PatchPageGraderWorkspaceEntitySchema,
 } from '../dto/page-grader.dto'
 import { PageGraderAgencyWorkspaceService } from '../services/page-grader-agency-workspace.service'
@@ -83,6 +84,29 @@ export class PageGraderAgencyController {
       ...(await this.workspace.listCampaigns(supabase, user.id, scope, {
         q: validation.data.q,
         clientId: validation.data.client_id,
+        sync: validation.data.sync,
+      })),
+    }
+  }
+
+  @Get('launches')
+  @RequireOrgRole('viewer')
+  async listLaunches(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Query() query: Record<string, string | undefined>,
+  ) {
+    const validation = ListPageGraderAgencyLaunchesSchema.safeParse(query)
+    if (!validation.success) invalidRequest(validation.error.flatten())
+    return {
+      success: true,
+      ...(await this.workspace.listLaunches(supabase, user.id, scope, {
+        q: validation.data.q,
+        clientId: validation.data.client_id,
+        kind: validation.data.kind,
+        from: validation.data.from,
+        to: validation.data.to,
         sync: validation.data.sync,
       })),
     }

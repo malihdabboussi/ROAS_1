@@ -44,7 +44,7 @@ export function EmailDomainsTable() {
       case 'verified':
         return <ShieldCheck className="icon-sm text-green-500" />
       case 'failed':
-        return <ShieldX className="icon-sm text-red-500" />
+        return <ShieldX className="icon-sm text-destructive" />
       default:
         return <Shield className="icon-sm text-orange-500" />
     }

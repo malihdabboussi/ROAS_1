@@ -14,10 +14,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Tooltip } from '@/components/ui/tooltip'
-import {
-  connectCalendarIntegration,
-  type CalendarProvider,
-} from '@/lib/services/calendar-api'
+import { connectCalendarIntegration, type CalendarProvider } from '@/lib/services/calendar-api'
 import { SaveViewSlot } from '../_shared/SaveViewSeparator'
 import { SpaceQuickFilterDock } from '../_shared/SpaceQuickFilterDock'
 import { ToolbarShell } from '../_shared/ToolbarShell'
@@ -37,6 +34,7 @@ import {
   SPACE_CALENDAR_SOURCE_LABELS,
   type SpaceCalendarSourceId,
 } from './calendar-source-utils'
+
 function resolveCalendarConfig(ctx: SpaceToolbarContext): CalendarConfig {
   return ctx.activeView?.calendar_config ?? {}
 }
@@ -169,7 +167,7 @@ export function CalendarToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
 
   return (
     <ToolbarShell ctx={ctx}>
-      <div className="flex min-w-0 flex-nowrap items-center gap-1">
+      <div className="flex shrink-0 flex-nowrap items-center gap-1">
         <div ref={sourceRootRef} className="relative">
           <button
             type="button"
@@ -181,7 +179,7 @@ export function CalendarToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
             <ChevronDown className="icon-xs text-muted-foreground" />
           </button>
           {sourceOpen ? (
-            <div className="dropdown-menu-solid z-dropdown mt-spacing-1 py-spacing-1 absolute left-0 top-full w-spacing-60 overflow-hidden rounded-xl shadow-lg">
+            <div className="dropdown-menu-solid z-dropdown mt-spacing-1 py-spacing-1 w-spacing-60 absolute left-0 top-full overflow-hidden rounded-xl shadow-lg">
               <p className="px-spacing-3 py-spacing-1 typo-section-label text-muted-foreground">
                 Sources
               </p>
@@ -293,9 +291,7 @@ export function CalendarToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
 
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
         <SaveViewSlot ctx={ctx} />
-        {tasksVisible ? (
-          <SpaceQuickFilterDock ctx={ctx} />
-        ) : null}
+        {tasksVisible ? <SpaceQuickFilterDock ctx={ctx} /> : null}
         {socialVisible ? (
           <>
             <div

@@ -49,6 +49,14 @@ when strategy or brand interpretation is required, and call out disagreements.
    for the missing launch work.
 6. Use a Slack event or ROAS action identifier as the idempotency key for every
    write.
+6b. When the user asks to get several fulfillment jobs done in one message
+   (QC funnel + GHL + reset ads, "I need this done", a paste of 2+ discrete
+   tasks), do **not** loop `page_grader_create_fulfillment_request`. Resolve
+   the Portal client and campaign, then call `page_grader_create_delegation_preview`
+   once with `client_ref`, Portal `campaign_id`, `raw_text`, and
+   `idempotency_key`. Reply with the returned `confirm_url` as a real openable
+   https link. The operator Confirms in The ROAS Portal. Do not claim tasks
+   were created.
 7. Do not invent the offer, objective, audience, launch timing, source assets,
    budget, owner, deadline, or other campaign details.
 8. Save only sourced facts, decisions, and durable preferences as client

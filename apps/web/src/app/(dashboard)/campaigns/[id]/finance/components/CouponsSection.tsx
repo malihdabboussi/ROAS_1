@@ -75,7 +75,7 @@ export function CouponsSection({
               {couponsFiltered.map((coupon) => (
                 <div
                   key={coupon.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-surface-subtle px-4 py-3"
+                  className="bg-surface-subtle flex items-center justify-between gap-3 rounded-xl border border-white/5 px-4 py-3"
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-3">
                     <Tag className="text-muted-foreground h-4 w-4 shrink-0" />
@@ -88,7 +88,7 @@ export function CouponsSection({
                           <span className="body-4 text-muted-foreground">{coupon.name}</span>
                         )}
                         {!coupon.valid && (
-                          <span className="body-4 rounded-full bg-red-500/10 px-2 py-0.5 text-red-400">
+                          <span className="body-4 text-destructive rounded-full bg-red-500/10 px-2 py-0.5">
                             Expired
                           </span>
                         )}

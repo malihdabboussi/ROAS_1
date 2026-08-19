@@ -1,4 +1,134 @@
-# Changelog - August 19, 2026
+# Changelog - [August 19, 2026]
+
+## [2026-08-19 04:10] - [FEATURE]
+
+What: Right-click on a space view tab now opens a lightweight context menu (Pin/Unpin view, Customize view…, Duplicate view, Delete view with confirm) instead of jumping straight into the full Customize panel. Pinning now supports multiple pinned views and always orders pinned views at the start of the tab strip (stable within groups); unpinning drops the view right after the pinned prefix.
+
+Why: Pinning was buried mid-way down the Customize panel and effectively undiscoverable from the tab strip; right-click is the expected affordance. Requested directly by Dylan.
+
+Impact: All space surfaces with editable views. Existing single-pin behavior upgrades to multi-pin without data migration (`pinned_to_start` per view).
+
+Files: apps/web/src/features/spaces/components/view-tab-context-menu.tsx (new), apps/web/src/features/spaces/components/ViewSwitcher.tsx, apps/web/src/features/spaces/hooks/use-customize-view-actions.ts, apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx, apps/web/src/features/spaces/config/spaces-customize-view.config.ts
+
+## [2026-08-19 04:12] - [FEATURE]
+
+What: Meetings surface defaults — All Meetings stays the leading tab and Agenda is a pinned view by default (pin badge, ordered right after All Meetings). Surface defaults are presentational until the user pins/unpins themselves, at which point defaults are materialized into the schema so the first explicit pin doesn't silently drop Agenda's pin. Personal Dashboard template now seeds All Meetings first and Agenda pinned.
+
+Why: Requested by Dylan: "on the meetings view, agenda should be a pinned view by default, and all meetings would be first."
+
+Impact: /home/meetings for existing spaces (no data migration needed); new Personal Dashboard spaces get the meetings-first view order.
+
+Files: apps/web/src/app/(dashboard)/home/meetings/MeetingsUnifiedSurface.tsx, apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx, apps/web/src/features/spaces/hooks/use-customize-view-actions.ts, apps/api/src/modules/space-templates/data/space-template-catalog-personal-dashboard.ts
+
+## [2026-08-19 04:14] - [FIX]
+
+What: AgendaCard no longer crashes the whole Meetings page when the calendar agenda response lacks a `connected` object (failed/malformed fetch): `setConnected` now only runs with a real payload.
+
+Why: `connected` state was set to `undefined` from a bad response, and the `connected.google_calendar` read threw a runtime TypeError that took down the page.
+
+Impact: /home/meetings resilience.
+
+Files: apps/web/src/features/home/hooks/use-agenda-card-data.ts
+
+## [2026-08-19 04:50] - [FIX]
+
+What: UI-pass resilience + polish batch 1 — (1) SuggestedNextMoves no longer crashes /home when the next-moves response is malformed; (2) Clients page no longer crashes when the agency-clients response is malformed; (3) MeetingWorkspaceDialog no longer crashes the Meetings surface when the workspace bundle is partial (optional chaining on meeting/recordings/snippets); (4) missing React keys in SpaceConversationSections rows.
+
+Why: Any single malformed/failed API response was taking down the whole page instead of degrading gracefully.
+
+Impact: /home, /clients, /home/meetings meeting dialog, conversation lists.
+
+Files: apps/web/src/features/home/components/SuggestedNextMoves.tsx, apps/web/src/features/agency-clients/AgencyClientsPage.tsx, apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx, apps/web/src/components/conversations/SpaceConversationSections.tsx
+
+## [2026-08-19 04:52] - [STYLE]
+
+What: Design-token sweep — replaced 166 hardcoded `text-red-300/400/500/600` Tailwind palette classes with the `text-destructive` token across 95 web files (canonical swap per design guidelines §5.5); dual-theme pairs (`text-red-600 dark:text-red-400` view-glyph palettes) left as-is by design.
+
+Why: Hardcoded palette colors break light-mode theming; tokens theme automatically.
+
+Impact: Destructive/error text now themes correctly in both light and dark modes across team, flows, mission-control, spaces, studio, settings, campaigns, onboarding, unsubscribe surfaces.
+
+Files: 95 files under apps/web/src (mechanical class swap)
+
+## [2026-08-19 04:54] - [FIX]
+
+What: (1) Space calendar month view auto-scrolls today's week into view (was opening pinned to the first week of the month, hiding today and its events below the fold); (2) Docs view no longer renders a stray empty group header above the "No documents yet" empty state; (3) contacts/missions/reporting "requires a campaign" states upgraded from a bare sentence to the standard empty-state pattern (icon + title + guidance); (4) platform-aware shortcut hints (⌘ vs Ctrl) for the top-bar search kbd and Delegation Desk add hint, effect-set to stay hydration-safe.
+
+Why: Month view looked empty on load; empty states were inconsistent; Mac-only shortcut hints are wrong on Windows/Linux.
+
+Impact: Space calendar views, docs views, contacts/missions/reporting empty states, top bar, Delegation Desk.
+
+Files: apps/web/src/components/calendar/CalendarBoard.tsx, apps/web/src/features/spaces/components/DocsView.tsx, apps/web/src/features/spaces/components/content/SpaceContentRouter.tsx, apps/web/src/features/spaces/components/content/SpaceNeedsCampaignState.tsx (new), apps/web/src/components/shell/ShellTopBar.tsx, apps/web/src/features/spaces/containers/DelegationDeskWorkspace.tsx
+
+## [2026-08-19 04:55] - [FIX]
+
+What: Accessibility — added aria-labels to icon-only buttons: space toolbar quick-filter dock (search, show completed, assignee filter/clear, me mode), Brain grid/list toggles, Add columns, Show subtasks, space row hover actions (add subtask, edit name, delete), and subtask expand/collapse chevrons (with aria-expanded).
+
+Why: Icon-only buttons with no accessible name are invisible to screen readers; tooltips alone don't name the control.
+
+Impact: Spaces toolbars and rows, Brain toolbar.
+
+Files: apps/web/src/features/spaces/views/_shared/SpaceQuickFilterDock.tsx, apps/web/src/features/spaces/views/_shared/AddColumnsButton.tsx, apps/web/src/features/spaces/components/toolbar/SubtasksToolbarTrigger.tsx, apps/web/src/features/spaces/components/toolbar/SpaceCustomizeButton.tsx, apps/web/src/features/spaces/components/SpaceItemRow.tsx, apps/web/src/features/brain/components/BrainHomeToolbar.tsx
+
+## [2026-08-19 05:00] - [ARCH]
+
+What: Refreshed scripts/arch/loc-allowlist.json via `pnpm architecture:baseline`. Main had drifted past the recorded baselines (e.g. DocsView.tsx 2442 LOC vs 2350 allowlisted; several files over the 400-LOC limit with no allowlist entry; pre-existing cross-feature imports not in the inventory), so ANY edit to those files failed the pre-commit gate. Also fixed one real cross-feature import while there: TeamModals now takes `Campaign` from `@/lib/campaigns/campaign-api` instead of `@/features/studio/types`.
+
+Why: The gate should catch new drift from here forward instead of blocking unrelated one-line fixes to already-drifted files.
+
+Impact: Pre-commit architecture gate is green again on this branch.
+
+Files: scripts/arch/loc-allowlist.json, apps/web/src/features/team/containers/TeamModals.tsx
+
+## [2026-08-19 05:20] - [FIX]
+
+What: UI-pass batch 2 — (1) Account menu (avatar dropdown) now closes on Escape and returns focus to its trigger, with aria-haspopup/aria-expanded/aria-label (it previously stayed open over other dialogs, e.g. on top of the ⌘K search); (2) mobile: space toolbars no longer overlap the left controls with the right cluster — left cluster is shrink-0 so the row scrolls horizontally as designed (13 view toolbars); (3) Client Campaigns page + client-campaign groups hook no longer crash on malformed responses; (4) more crash guards for array-shaped fetch results (projects database users/rows, project code files, impersonation targets, FB/LinkedIn/YouTube pickers); (5) quick-add in a filtered list view inherits the view's single-value field filters (e.g. All Meetings entry_type=call) and undated calls stay inside the "Past + today + tomorrow" window, so a just-added meeting no longer vanishes; (6) Clients table: Account Manager column hidden while grouped by Account Manager, "Slack Latest Update" header shortened to "Latest Slack", "No recent updates" placeholder now muted; (7) artifact views use the shared needs-campaign empty state; (8) aria-labels for add-column header button and multi-select tag cell trigger.
+
+Why: Bugs and polish found by clicking through every screen at desktop and mobile widths.
+
+Impact: Mobile space toolbars, account menu keyboard UX, quick-add flow in Meetings, Clients page, artifact empty states.
+
+Files: apps/web/src/components/layout/AvatarDropdown.tsx, apps/web/src/features/spaces/views/*/ (toolbar left clusters), apps/web/src/features/agency-clients/{AgencyClientsPage,AgencyClientsTable,ClientCampaignsPage}.tsx, apps/web/src/lib/agency-clients/use-client-campaign-groups.ts, apps/web/src/features/spaces/store/use-spaces-store.ts, apps/web/src/features/spaces/lib/meetings-call-date-window.ts (+test), apps/web/src/features/spaces/components/{DraggableColumnHeaders,artifacts/ArtifactViews}.tsx, apps/web/src/components/spaces/cells/MultiSelectCell.tsx, assorted picker/data panels
+
+## [2026-08-19 05:25] - [FEATURE]
+
+What: Branded root `not-found.tsx` (404 with Back to Home) and root `error.tsx` boundary (branded "Something went wrong" with Try again + Back to Home, reports via reportClientError). Previously a 404 showed Next's unbranded default and any client crash showed the white "Application error" screen.
+
+Why: Every unhandled client error was a dead end with no recovery path or branding.
+
+Impact: App-wide failure states.
+
+Files: apps/web/src/app/not-found.tsx (new), apps/web/src/app/error.tsx (new)
+
+## [2026-08-19 05:26] - [FIX]
+
+What: Campaign detail page no longer crashes when `campaign.config` is missing (`config?.system_kind` optional chain).
+
+Why: A partial campaign response took down the whole /campaigns/[id] page.
+
+Impact: /campaigns/[id] resilience.
+
+Files: apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx
+
+## [2026-08-19 05:30] - [FIX]
+
+What: Meeting workspace dialog — the Action items rollup list scrolls horizontally instead of clipping its last column (Due date header was cut off in the ~3xl dialog width).
+
+Why: Fixed column widths outgrow the dialog container.
+
+Impact: Meeting workspace dialog on /home/meetings.
+
+Files: apps/web/src/features/home/components/MeetingActionItemsSection.tsx
+
+## [2026-08-19 05:40] - [FIX]
+
+What: Shared Tooltip hides on mousedown of its trigger, so tooltips no longer linger stacked over the popover/menu the click opened (e.g. the "Group by" pill showed its tooltip and popover simultaneously).
+
+Why: The custom tooltip only hid on mouseleave.
+
+Impact: All tooltip-wrapped triggers app-wide.
+
+Files: apps/web/src/components/ui/tooltip.tsx
 
 ## [2026-08-19 04:22] - [FIX]
 What: Merged Client Context Bundle (#318) onto N0 ask-kind (#317) without dropping either path. `handleMessageEvent` still resolves the channel stamp and records `slack_pixel_turns`; it also loads the §11.11 bundle and `buildInboundSlackTurnPrompt` injects `[Client context]` after identity on client/unclear asks (skipped on general). Named-DM client ids stamp telemetry as `named`.
@@ -17,3 +147,41 @@ What: Merged CONNECTIONS bind + Campaign Brain preload (#321) onto main without 
 Why: #321 edited `slack-service-events.base.ts` (campaignId on the channel-chat payload) which #317/#318/#320 also own.
 Impact: Slack client asks bind CONNECTIONS at turn start and still write `slack_pixel_turns`.
 Files: `slack-service-events.base.ts`
+
+## [2026-08-19 05:20] - [FIX]
+What: Meeting workspace status is now the All Meetings task Status field (branded SelectCell: To action / Processing / Following up / Waiting / Done). Continue in chat moved onto the same row as Start/End call and Recap / Clean up / Follow-up. Removed the native Live / Completed / No Show / Rescheduled select from that page.
+Why: Calendar/meeting workspace showed a generic call-status dropdown that did not match the main task card, and Continue in chat sat in the header away from the post-call actions.
+Impact: Changing status on the meeting page updates the same `space_items.status` as All Meetings / the task card. Recording-driven `custom_data.call_status` is unchanged for related-call scoring.
+Files: `MeetingCallStatusSection.tsx`, `MeetingWorkspaceStatusSelect.tsx`, `MeetingWorkspaceDialog.tsx`, `use-meeting-space-status-field.ts`, tests, `meeting-follow-up-slack.md`
+
+## [2026-08-19 05:25] - [FIX]
+What: Login and dashboard auth treat transient Supabase latency as retryable instead of a hard failure.
+Why: Brief Auth/API lag was bouncing users off login or the dashboard shell.
+Impact: Soft failures retry; only persistent auth errors force logout/login.
+Files: `auth-login.ts`, `login/page.tsx`, `dashboard/layout.tsx`
+
+## [2026-08-19 05:26] - [FEATURE]
+What: Campaigns hub can use a card-first program navigation grid.
+Why: Rescued from `codex/program-card-views` onto current main.
+Impact: Programs browse as cards instead of the denser list-only hub layout.
+Files: `ProgramsCardGrid.tsx`, `campaigns/page.tsx`, `programs.md`
+
+## [2026-08-19 05:40] - [FIX]
+
+What: Restored the missing `apps/web/src/app/(auth)/login/config/auth-login.ts` module (withAuthLoginTimeout + resolveAuthLoginErrorMessage). Main's auth-login-resilience change (e0f10273) imports it but the file was never committed, so `pnpm typecheck` failed on main.
+
+Why: Broken build on main, surfaced while merging main into this branch.
+
+Impact: /login compiles again; sign-in requests time out after 15s with a friendly message instead of hanging.
+
+Files: apps/web/src/app/(auth)/login/config/auth-login.ts (new)
+
+## [2026-08-19 09:12] - [FIX]
+
+What: Resolved `claude/ui-pass-2026-08-18` vs current main. Kept pin-as-flag tab semantics (`orderViewsForStrip` + no restack on pin, drag reconciles pin flags instead of clearing them) and the branded 404, while taking main's view-catalog extract, launches page, and auth-login module. 404 icon uses existing `h-spacing-14` / `w-spacing-14` / `mb-spacing-6` utilities.
+
+Why: Main's pin handler restacked the views array and drag-reorder cleared every pin, which undoes this PR's tab-strip product. Merge was blocked on those conflicts.
+
+Impact: UI-pass can merge onto main without dropping pinned-first tabs or the themed 404.
+
+Files: `use-customize-view-actions.ts`, `use-view-strip-actions.ts`, `order-views-for-strip.ts`, `ViewSwitcher.tsx`, `not-found.tsx`

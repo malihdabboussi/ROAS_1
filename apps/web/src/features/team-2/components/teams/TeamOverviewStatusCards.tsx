@@ -9,9 +9,18 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart'
 import { cn } from '@/lib/utils/cn'
-import type { TeamOverviewAgent, TeamOverviewSeriesPoint } from '../../services/team-overview.service'
+import type {
+  TeamOverviewAgent,
+  TeamOverviewSeriesPoint,
+} from '../../services/team-overview.service'
+import {
+  CHART_HEIGHT_SM,
+  CHART_LABEL,
+  deltaLabel,
+  formatLongDate,
+  pct,
+} from './team-overview-utils'
 import { CardHeader, CardShell } from './TeamOverviewShared'
-import { CHART_HEIGHT_SM, CHART_LABEL, deltaLabel, formatLongDate, pct } from './team-overview-utils'
 
 export function ActiveNowCard({
   total,
@@ -231,7 +240,7 @@ export function ThroughputCard({
               delta.tone === 'up'
                 ? 'text-emerald-300'
                 : delta.tone === 'down'
-                  ? 'text-red-300'
+                  ? 'text-destructive'
                   : 'text-muted-foreground',
             )}
           >

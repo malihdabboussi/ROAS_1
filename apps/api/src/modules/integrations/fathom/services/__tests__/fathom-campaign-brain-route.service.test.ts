@@ -27,7 +27,9 @@ const event = { id: 'rec-1', title: '1DS x ROAS Weekly Session', transcript: [] 
 
 describe('FathomCampaignBrainRouteService', () => {
   it('queues the meeting into the client campaign brain when the Space route resolves a client campaign', async () => {
-    const importJobs = { enqueueCampaignFathomImport: vi.fn(async () => ({ jobId: 'job-9', status: 'queued' })) }
+    const importJobs = {
+      enqueueCampaignFathomImport: vi.fn(async () => ({ jobId: 'job-9', status: 'queued' })),
+    }
     const service = new FathomCampaignBrainRouteService(importJobs as never)
 
     const decision = await service.enqueueForRoute({

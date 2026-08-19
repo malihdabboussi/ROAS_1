@@ -126,6 +126,7 @@ export function SpaceQuickFilterDock({ ctx }: { ctx: SpaceToolbarContext }) {
                   <span className="inline-flex">
                     <button
                       type="button"
+                      aria-label="Search"
                       onClick={() => setSpaceToolbarSearchOpen(true)}
                       aria-label="Search"
                       className="rounded-md p-1.5 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
@@ -180,6 +181,7 @@ export function SpaceQuickFilterDock({ ctx }: { ctx: SpaceToolbarContext }) {
                   <span className="inline-flex">
                     <button
                       type="button"
+                      aria-label="Show completed"
                       onClick={toggleToolbarShowCompleted}
                       className="rounded-md p-1.5 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
                     >
@@ -206,6 +208,7 @@ export function SpaceQuickFilterDock({ ctx }: { ctx: SpaceToolbarContext }) {
               >
                 <button
                   type="button"
+                  aria-label="Clear assignee filter"
                   onClick={clearToolbarAssigneeFilter}
                   aria-label="Clear assignee filter"
                   title="Clear assignee filter"
@@ -250,6 +253,7 @@ export function SpaceQuickFilterDock({ ctx }: { ctx: SpaceToolbarContext }) {
                   <span className="inline-flex">
                     <button
                       type="button"
+                      aria-label="Filter by assignee"
                       onClick={() => setAssigneeFilterOpen(true)}
                       aria-label="Filter by assignee"
                       className="rounded-md p-1.5 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
@@ -314,6 +318,7 @@ export function SpaceQuickFilterDock({ ctx }: { ctx: SpaceToolbarContext }) {
                   <span className="inline-flex">
                     <button
                       type="button"
+                      aria-label="Assigned to me"
                       onClick={toggleToolbarAssignedToMe}
                       disabled={!currentUserId}
                       className="inline-flex shrink-0 items-center justify-center rounded-full p-0.5 transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-40"

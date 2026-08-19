@@ -56,6 +56,37 @@ describe('PageGraderAgencyWorkspaceService', () => {
     ])
   })
 
+  it('lists launches without waiting for Space mapping when sync is disabled', async () => {
+    const api = {
+      listLaunches: vi.fn().mockResolvedValue([
+        {
+          id: 'campaign-1:launch:2026-08-20',
+          kind: 'launch',
+          day_key: '2026-08-20',
+          name: 'Fall Launch',
+          campaign_id: 'campaign-1',
+          client_id: 'client-1',
+        },
+      ]),
+      getClientScopeMap: vi.fn().mockResolvedValue({}),
+    }
+    const brainImport = { importClientBrain: vi.fn() }
+    const service = new PageGraderAgencyWorkspaceService(api as never, brainImport as never)
+
+    const result = await service.listLaunches({} as never, 'user-1', { orgId: 'org-1' } as never, {
+      sync: false,
+    })
+
+    expect(brainImport.importClientBrain).not.toHaveBeenCalled()
+    expect(api.getClientScopeMap).not.toHaveBeenCalled()
+    expect(result.launches).toEqual([
+      expect.objectContaining({
+        id: 'campaign-1:launch:2026-08-20',
+        roas_space_id: null,
+      }),
+    ])
+  })
+
   it('bootstraps unmapped clients through the Brain import', async () => {
     const api = {
       listClients: vi.fn().mockResolvedValue({

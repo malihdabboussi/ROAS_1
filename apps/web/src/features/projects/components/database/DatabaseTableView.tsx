@@ -42,7 +42,7 @@ export function DatabaseTableView({
     setLoading(true)
     try {
       const result = await fetchTableRows(projectRef, tableName, offset, PAGE_SIZE)
-      setRows(result.rows)
+      setRows(result?.rows ?? [])
       setTotalCount(result.totalCount)
     } catch {
       setRows([])

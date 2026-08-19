@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common'
 import { SupabaseServiceClient } from '@vibey/api-shared'
+import {
+  resolveUniqueAssigneeProfileId,
+  type OrgAssigneeProfile,
+} from '../services/work-request-assignee'
 
 export type WorkRequestDraftRow = {
   id: string
@@ -53,32 +57,7 @@ export type WorkRequestFinalizeResult = {
   task: Record<string, unknown>
 }
 
-type AssigneeProfile = { id: string; full_name: string | null }
-
-function normalizedName(value: string | null | undefined) {
-  return value?.trim().replace(/\s+/g, ' ').toLocaleLowerCase() ?? ''
-}
-
-export function resolveUniqueAssigneeProfileId(profiles: AssigneeProfile[], requestedName: string) {
-  const requested = normalizedName(requestedName)
-  if (!requested) return null
-  const exact = profiles.filter((profile) => normalizedName(profile.full_name) === requested)
-  if (exact.length === 1) return exact[0]?.id ?? null
-  if (exact.length > 1) return null
-
-  const requestedFirstName = requested.split(' ')[0]
-  const compatible = profiles.filter((profile) => {
-    const candidate = normalizedName(profile.full_name)
-    if (!candidate) return false
-    const candidateParts = candidate.split(' ')
-    return (
-      requested.startsWith(`${candidate} `) ||
-      candidate.startsWith(`${requested} `) ||
-      candidateParts[0] === requestedFirstName
-    )
-  })
-  return compatible.length === 1 ? (compatible[0]?.id ?? null) : null
-}
+type AssigneeProfile = OrgAssigneeProfile
 
 const DRAFT_COLUMNS = [
   'id',
@@ -256,7 +235,7 @@ export class WorkRequestRepository {
     return (data as Record<string, unknown> | null) ?? null
   }
 
-  async resolveOrgAssigneeByName(orgId: string, name: string) {
+  async resolveOrgAssigneeByName(orgId: string, name: string, email?: string | null) {
     const { data: members, error: membersError } = await this.client
       .from('org_members')
       .select('user_id')
@@ -268,11 +247,11 @@ export class WorkRequestRepository {
     if (userIds.length === 0) return null
     const { data, error } = await this.client
       .from('profiles')
-      .select('id, full_name')
+      .select('id, full_name, email')
       .in('id', userIds)
       .limit(100)
     if (error) throw new Error(`Could not resolve Service Request assignee: ${error.message}`)
-    return resolveUniqueAssigneeProfileId((data ?? []) as AssigneeProfile[], name)
+    return resolveUniqueAssigneeProfileId((data ?? []) as AssigneeProfile[], name, email)
   }
 
   async listOrgTeamMembers(orgId: string) {
@@ -287,7 +266,7 @@ export class WorkRequestRepository {
     if (userIds.length === 0) return []
     const { data, error } = await this.client
       .from('profiles')
-      .select('id, full_name')
+      .select('id, full_name, email')
       .in('id', userIds)
       .order('full_name', { ascending: true })
       .limit(100)
@@ -295,7 +274,8 @@ export class WorkRequestRepository {
     return ((data ?? []) as AssigneeProfile[])
       .map((row) => ({
         id: String(row.id),
-        name: String(row.full_name ?? '').trim(),
+        name: String(row.full_name ?? '').trim() || String(row.email ?? '').trim(),
+        email: String(row.email ?? '').trim() || null,
       }))
       .filter((row) => row.name.length > 0)
   }

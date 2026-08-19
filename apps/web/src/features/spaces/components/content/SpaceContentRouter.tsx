@@ -3,8 +3,8 @@
 import dynamic from 'next/dynamic'
 import type { ReactNode, RefObject } from 'react'
 import { toast } from 'sonner'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { CampaignCanvasView } from '@/components/canvas'
+import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import { useAccountContextGate } from '@/features/org/store/use-org-store'
 import type { useCloudAttach } from '@/lib/hooks/use-cloud-attach'
@@ -31,6 +31,7 @@ import type { CampaignFinanceTabHandle } from '../reporting/FinanceOverviewView'
 import type { ReportingToolbarApi } from '../reporting/shared/reporting-toolbar.types'
 import { buildSpaceTaskChatDragPayload } from '../space-item-values'
 import { EmptySpaceCanvas } from './EmptySpaceCanvas'
+import { SpaceNeedsCampaignState } from './SpaceNeedsCampaignState'
 
 function SpaceViewLoading() {
   return (
@@ -383,11 +384,7 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
             onCommunicationLoaded={handleCommunicationLoaded}
           />
         ) : (
-          <div className="flex flex-1 items-center justify-center p-8 text-center">
-            <p className="body-3 text-muted-foreground">
-              This space is not linked to a campaign. Contacts require a campaign.
-            </p>
-          </div>
+          <SpaceNeedsCampaignState viewLabel="Contacts" />
         )
       ) : isAdsResearchView ? (
         <AdsResearchView
@@ -458,11 +455,7 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
             }}
           />
         ) : (
-          <div className="flex flex-1 items-center justify-center p-8 text-center">
-            <p className="body-3 text-muted-foreground">
-              This space is not linked to a campaign. Missions require a campaign.
-            </p>
-          </div>
+          <SpaceNeedsCampaignState viewLabel="Missions" />
         )
       ) : activeView?.type === 'all_artifacts' ? (
         <AllArtifactsSpaceView
@@ -642,11 +635,7 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
             }
           })()
         ) : (
-          <div className="flex flex-1 items-center justify-center p-8 text-center">
-            <p className="body-3 text-muted-foreground">
-              This space is not linked to a campaign. Reporting views require a campaign.
-            </p>
-          </div>
+          <SpaceNeedsCampaignState viewLabel="Reporting" />
         )
       ) : activeView?.type === 'kanban' ? (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">

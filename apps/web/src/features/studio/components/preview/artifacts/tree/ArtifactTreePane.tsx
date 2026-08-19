@@ -278,7 +278,7 @@ export function ArtifactTreePane(props: ArtifactTreePaneProps) {
           </div>
         ) : props.fetchError ? (
           <div className="px-3 py-8 text-center">
-            <AlertCircle className="mx-auto mb-2 h-8 w-8 text-red-400/40" />
+            <AlertCircle className="text-destructive/40 mx-auto mb-2 h-8 w-8" />
             <p className="body-3 text-muted-foreground">{STUDIO_INLINE_ERRORS.LOAD_ARTIFACTS}</p>
             <p className="typo-caption text-muted-foreground/60 mt-1">{props.fetchError}</p>
           </div>
@@ -478,7 +478,7 @@ function BulkActionBar({
             type="button"
             onClick={onDelete}
             disabled={disabled}
-            className="text-destructive hover:text-destructive/80 p-1 transition-colors disabled:opacity-40"
+            className="text-destructive/80 p-1 transition-colors disabled:opacity-40"
           >
             <Trash2 className="h-4 w-4" />
           </button>

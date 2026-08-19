@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { TimePicker } from '@/components/datetime/TimePicker'
 import { SPACES_CELL_TOAST_ERRORS } from '@/lib/config/spaces-toast-errors.config'
 import type { DateDisplayFormat, FieldDef, RecurrenceSpec } from '@/lib/spaces'
-import { DUE_DATE_PRESETS, getPresetDate, type DueDatePresetKey } from '@/lib/spaces/date-presets'
+import { dueDatePresetRows, getPresetDate, type DueDatePresetKey } from '@/lib/spaces/date-presets'
 import { DEFAULT_RECURRENCE_SPEC, describeRecurrence } from '@/lib/spaces/recurrence'
 import { cn } from '@/lib/utils/cn'
 import { DatePresetList } from './date-picker/DatePresetList'
@@ -186,28 +186,6 @@ function dueDateTriggerColorClass(dueValue: string | null): string {
   return 'text-muted-foreground'
 }
 
-function formatPresetRightLabel(key: DueDatePresetKey, date: Date): string {
-  switch (key) {
-    case 'today':
-    case 'tomorrow':
-    case 'this_weekend':
-      return date.toLocaleDateString('en-US', { weekday: 'short' })
-    case 'later':
-      return date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      })
-    case 'next_week':
-    case 'next_weekend':
-    case 'two_weeks':
-    case 'four_weeks':
-      return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
-    default:
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  }
-}
-
 function toStartOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1)
 }
@@ -241,12 +219,7 @@ export function DueDateCell({
 
   const recurrenceSummary = useMemo(() => describeRecurrence(value.recurrence), [value.recurrence])
 
-  const presetRows = useMemo(() => {
-    return DUE_DATE_PRESETS.map((preset) => {
-      const date = getPresetDate(preset.key)
-      return { ...preset, rightLabel: formatPresetRightLabel(preset.key, date) }
-    })
-  }, [])
+  const presetRows = useMemo(() => dueDatePresetRows(), [])
 
   const startLabel = formatFieldLabel(value.start_date)
   const dueLabel = formatFieldLabel(value.due_date)

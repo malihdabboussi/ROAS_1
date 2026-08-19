@@ -91,6 +91,7 @@ export type MeetingWorkspaceBundle = {
     title: string
     description: string | null
     source?: string | null
+    status?: string | null
     custom_data: Record<string, unknown> | null
   }
   workspace: MeetingWorkspaceRecord | null

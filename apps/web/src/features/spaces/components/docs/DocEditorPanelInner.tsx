@@ -689,7 +689,7 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
                     />
                   ) : (
                     <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl border border-[var(--border)]">
-                      <p className="text-sm text-red-400">
+                      <p className="text-destructive text-sm">
                         Missing Drive file id on this document.
                       </p>
                     </div>

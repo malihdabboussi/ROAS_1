@@ -18,6 +18,8 @@ describe('shell route policy', () => {
     expect(isShellWorkspaceRoute('/clients/client-1')).toBe(true)
     expect(isShellWorkspaceRoute('/client-campaigns')).toBe(true)
     expect(isShellWorkspaceRoute('/client-campaigns/campaign-1')).toBe(true)
+    expect(isShellWorkspaceRoute('/launches')).toBe(true)
+    expect(isShellWorkspaceRoute('/launches/item-1')).toBe(true)
     expect(isShellWorkspaceRoute('/programs/program-1')).toBe(true)
   })
 

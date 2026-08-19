@@ -318,7 +318,7 @@ export default function ThemesPageContent() {
                             e.stopPropagation()
                             handleDelete(theme)
                           }}
-                          className="rounded-spacing-1 text-muted-foreground p-1.5 hover:bg-red-500/10 hover:text-red-500"
+                          className="rounded-spacing-1 text-muted-foreground hover:text-destructive p-1.5 hover:bg-red-500/10"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>

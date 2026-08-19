@@ -92,8 +92,8 @@ const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
   opened: { label: 'Opened', cls: 'bg-purple-500/20 text-purple-400' },
   clicked: { label: 'Clicked', cls: 'bg-indigo-500/20 text-indigo-400' },
   bounced: { label: 'Bounced', cls: 'bg-orange-500/20 text-orange-400' },
-  failed: { label: 'Failed', cls: 'bg-red-500/20 text-red-400' },
-  spam: { label: 'Spam', cls: 'bg-red-500/20 text-red-400' },
+  failed: { label: 'Failed', cls: 'bg-red-500/20 text-destructive' },
+  spam: { label: 'Spam', cls: 'bg-red-500/20 text-destructive' },
   unsubscribed: { label: 'Unsubscribed', cls: 'bg-yellow-500/20 text-yellow-400' },
 }
 const TYPE_BADGE: Record<string, { label: string; cls: string }> = {

@@ -142,15 +142,15 @@ export function AgentInfoDetailsTab(props: AgentInfoDetailsTabProps) {
       <div className="space-y-spacing-2">
         <p className="body-4 text-muted-foreground/60 uppercase tracking-wide">Evaluation</p>
         <div className="gap-spacing-2 flex">
-          <div className="rounded-spacing-2 px-spacing-2 py-spacing-2 flex-1 border border-border bg-surface-subtle text-center">
+          <div className="rounded-spacing-2 px-spacing-2 py-spacing-2 border-border bg-surface-subtle flex-1 border text-center">
             <p className="text-foreground text-lg font-bold">{completedThisMonth}</p>
             <p className="body-4 text-muted-foreground/60">This month</p>
           </div>
-          <div className="rounded-spacing-2 px-spacing-2 py-spacing-2 flex-1 border border-border bg-surface-subtle text-center">
+          <div className="rounded-spacing-2 px-spacing-2 py-spacing-2 border-border bg-surface-subtle flex-1 border text-center">
             <p className="text-foreground text-lg font-bold">{totalCompleted}</p>
             <p className="body-4 text-muted-foreground/60">Completed</p>
           </div>
-          <div className="rounded-spacing-2 px-spacing-2 py-spacing-2 flex-1 border border-border bg-surface-subtle text-center">
+          <div className="rounded-spacing-2 px-spacing-2 py-spacing-2 border-border bg-surface-subtle flex-1 border text-center">
             <p className="text-foreground text-lg font-bold">
               {successRate != null ? `${successRate}%` : '—'}
             </p>
@@ -158,7 +158,7 @@ export function AgentInfoDetailsTab(props: AgentInfoDetailsTabProps) {
           </div>
         </div>
         {avgCompletionRate != null && (
-          <div className="rounded-spacing-2 px-spacing-3 py-spacing-2 border border-border bg-surface-subtle">
+          <div className="rounded-spacing-2 px-spacing-3 py-spacing-2 border-border bg-surface-subtle border">
             <div className="flex items-center justify-between">
               <span className="body-4 text-muted-foreground">Avg. subtask completion</span>
               <span className="body-4 text-foreground font-medium">{avgCompletionRate}%</span>
@@ -174,7 +174,7 @@ export function AgentInfoDetailsTab(props: AgentInfoDetailsTabProps) {
         <p className="body-4 text-muted-foreground/60 uppercase tracking-wide">Performance</p>
         {hasStats ? (
           <>
-            <div className="gap-spacing-3 rounded-spacing-2 px-spacing-3 py-spacing-2 flex items-center border border-border bg-surface-subtle">
+            <div className="gap-spacing-3 rounded-spacing-2 px-spacing-3 py-spacing-2 border-border bg-surface-subtle flex items-center border">
               <div className={`text-3xl font-bold leading-none ${overallColor}`}>
                 {overall.toFixed(1)}
               </div>
@@ -352,7 +352,7 @@ export function AgentInfoDetailsTab(props: AgentInfoDetailsTabProps) {
               ) : (
                 <p className="body-4 text-muted-foreground">No campaign assignments yet.</p>
               )}
-              {campaignError && <p className="body-4 text-red-400">{campaignError}</p>}
+              {campaignError && <p className="body-4 text-destructive">{campaignError}</p>}
             </div>
           )}
 

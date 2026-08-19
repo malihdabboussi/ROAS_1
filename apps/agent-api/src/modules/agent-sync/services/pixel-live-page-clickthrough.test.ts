@@ -5,12 +5,15 @@ import { PLATFORM_TOOLS_BROWSER_QC_BLOCK } from '../../../../../../packages/agen
 
 const repoRoot = resolve(__dirname, '../../../../../..')
 const migration = readFileSync(
-  resolve(repoRoot, 'supabase/migrations/20260814140000_pixel_live_page_clickthrough.sql'),
+  resolve(repoRoot, 'supabase/migrations/20260819014500_pixel_vibey_browser_qc.sql'),
   'utf8',
 )
 const openclawConfig = JSON.parse(
   readFileSync(resolve(repoRoot, 'docker/openclaw.json'), 'utf8'),
-) as { browser: { enabled: boolean } }
+) as {
+  browser: { enabled: boolean }
+  agents: { list: Array<{ id: string; tools?: { deny?: string[] } }> }
+}
 const supervisord = readFileSync(resolve(repoRoot, 'docker/supervisord.conf'), 'utf8')
 const sidecar = readFileSync(resolve(repoRoot, 'docker/vibey-browser-sidecar.sh'), 'utf8')
 
@@ -20,6 +23,9 @@ describe('Pixel live-page click-through', () => {
     expect(PLATFORM_TOOLS_BROWSER_QC_BLOCK).toContain('Register Now')
     expect(PLATFORM_TOOLS_BROWSER_QC_BLOCK).toContain('qa+{unix}@roas.co')
     expect(PLATFORM_TOOLS_BROWSER_QC_BLOCK).toContain('Do not ask them to send a confirmation URL')
+    expect(PLATFORM_TOOLS_BROWSER_QC_BLOCK).toContain('1440x900')
+    expect(PLATFORM_TOOLS_BROWSER_QC_BLOCK).toContain('390x844')
+    expect(PLATFORM_TOOLS_BROWSER_QC_BLOCK).toContain('both viewports are required')
     expect(PLATFORM_TOOLS_BROWSER_QC_BLOCK).not.toContain(
       'State exactly which gated step remains untested',
     )
@@ -32,6 +38,8 @@ describe('Pixel live-page click-through', () => {
     expect(migration).toContain('Register Now')
     expect(migration).toContain('qa+{unix}@roas.co')
     expect(migration).toContain('Do not ask them to send a confirmation URL')
+    expect(migration).toContain('1440x900')
+    expect(migration).toContain('390x844')
     expect(migration).toContain(
       "RAISE EXCEPTION 'Pixel live-page click-through guidance was not persisted'",
     )
@@ -39,6 +47,8 @@ describe('Pixel live-page click-through', () => {
 
   it('keeps the production browser control path able to open public funnel pages', () => {
     expect(openclawConfig.browser.enabled).toBe(true)
+    const vibey = openclawConfig.agents.list.find((entry) => entry.id === 'vibey')
+    expect(vibey?.tools?.deny ?? []).not.toContain('browser')
     expect(supervisord).toMatch(/\[program:browser-sidecar\][\s\S]*?autostart=true/)
     expect(supervisord).not.toContain('OPENCLAW_SKIP_BROWSER_CONTROL_SERVER')
     expect(sidecar).not.toContain('--proxy-server')

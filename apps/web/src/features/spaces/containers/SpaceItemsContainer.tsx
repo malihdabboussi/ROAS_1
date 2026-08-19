@@ -11,10 +11,9 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { toast } from 'sonner'
 import { getIconColor } from '@/components/ui/IconPicker'
-import { useWorkspaceSettingsModal } from '@/features/settings/contexts/WorkspaceSettingsModalContext'
 import { useCloudAttach } from '@/lib/hooks/use-cloud-attach'
+import { useOpenIntegrationsLibrary } from '@/lib/settings/workspace-settings-modal-context'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
 import type { ArtifactPreviewSelection } from '../components/artifacts/artifact-preview-selection'
 import {
@@ -29,7 +28,6 @@ import { SpaceModalsHost } from '../components/modals'
 import type { CampaignFinanceTabHandle } from '../components/reporting/FinanceOverviewView'
 import { SpaceItemUpdateProvider } from '../components/SpaceStatusCascadeConfirmProvider'
 import { ViewSwitcher } from '../components/ViewSwitcher'
-import { ViewTabContextMenu } from '../components/ViewTabContextMenu'
 import { useAllSocialResearchAccountActions } from '../hooks/use-all-social-research-account-actions'
 import { useCustomizeViewActions } from '../hooks/use-customize-view-actions'
 import { useSpaceActiveView } from '../hooks/use-space-active-view'
@@ -62,12 +60,8 @@ import { useSpaceUrlViewSync } from '../hooks/use-space-url-view-sync'
 import { useSpaceUserState } from '../hooks/use-space-user-state'
 import { useUpdateItemWithSubtaskCompleteConfirm } from '../hooks/use-update-item-with-subtask-complete-confirm'
 import { useViewPatchFlush } from '../hooks/use-view-patch-flush'
+import { useViewStripActions } from '../hooks/use-view-strip-actions'
 import { ALL_ARTIFACTS_GROUP_BY_OPTIONS, isArtifactSurfaceViewType } from '../lib/all-artifacts'
-import {
-  applyDefaultPins,
-  orderViewsForStrip,
-  reconcilePinsAfterReorder,
-} from '../lib/order-views-for-strip'
 import { getAllSocialResearchConfig } from '../lib/all-social-research'
 import { applySpaceToolbarFilters } from '../lib/apply-space-toolbar-filters'
 import { CONTACTS_GROUP_BY_OPTIONS } from '../lib/contacts-group-by-options'
@@ -123,9 +117,9 @@ const MediaImageWorkspacePanelHost = dynamic(
 export type SpaceItemsContainerEmbed = {
   hideBreadcrumbHeader?: boolean
   leadingViewId?: string
-  /** Views pinned by default on this surface — only while the user has never toggled the pin themselves (`pinned_to_start` undefined). */
-  defaultPinnedViewIds?: readonly string[]
   overrideView?: { id: string; content: ReactNode }
+  /** Surface-default pins; applies only until any view carries an explicit `pinned_to_start`. */
+  defaultPinnedViewIds?: string[]
 }
 
 export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbed } = {}) {
@@ -368,15 +362,7 @@ export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbe
 
   useSpaceSelectedItemSync(items, selectedItem, setSelectedItem)
 
-  const { openWorkspaceSettings } = useWorkspaceSettingsModal()
-  const openIntegrationsLibrary = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href)
-      url.searchParams.set('tab', 'library')
-      window.history.replaceState({}, '', url.toString())
-    }
-    openWorkspaceSettings('integrations')
-  }, [openWorkspaceSettings])
+  const openIntegrationsLibrary = useOpenIntegrationsLibrary()
 
   const docsCloud = useCloudAttach({
     behavior: 'toast_if_disconnected',
@@ -404,14 +390,21 @@ export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbe
     canSaveForEveryone,
     canCustomizeViews,
   } = activeViewStuff
-  const orderedVisibleViews = useMemo(
-    () =>
-      orderViewsForStrip(
-        applyDefaultPins(visibleViews, embed?.defaultPinnedViewIds),
-        embed?.leadingViewId,
-      ),
-    [embed?.defaultPinnedViewIds, embed?.leadingViewId, visibleViews],
-  )
+  const {
+    orderedVisibleViews,
+    handleAddView,
+    handleReorderViews,
+    handleMoveSpaceToCampaign,
+    handleCopySpaceToCampaign,
+  } = useViewStripActions({
+    embedLeadingViewId: embed?.leadingViewId ?? null,
+    embedDefaultPinnedViewIds: embed?.defaultPinnedViewIds,
+    visibleViews,
+    activeSchema,
+    activeSpace,
+    patchActiveSpaceSchema: patchSchema,
+    setActiveView,
+  })
 
   useSpaceFocusViewTypeEvent(activeSpaceId, setActiveView)
 
@@ -534,6 +527,9 @@ export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbe
     handleSaveAsNewView,
     handleRevertViewDraft,
     handleViewPinToStart,
+    handleTogglePinViewById,
+    handleDuplicateViewById,
+    handleDeleteViewById,
     handleDeleteActiveView,
   } = useCustomizeViewActions({
     customizePanelTargetView,
@@ -553,6 +549,7 @@ export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbe
     flushPendingViewPatch,
     closeCustomizePanel,
     handleViewPatch,
+    defaultPinnedViewIds: embed?.defaultPinnedViewIds,
   })
 
   const activeDraft = customizePanelTargetView
@@ -936,11 +933,6 @@ export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbe
   }, [isDocsView, activeSpace?.campaign_id, docsConfigToolbar.doc_source_filters, loadCampaignDocs])
 
   const [docsDriveBrowseActive, setDocsDriveBrowseActive] = useState(false)
-  const [viewTabMenu, setViewTabMenu] = useState<{
-    viewId: string
-    point: { x: number; y: number }
-    anchorEl: HTMLElement
-  } | null>(null)
   useEffect(() => {
     if (!isDocsView) setDocsDriveBrowseActive(false)
   }, [isDocsView, activeViewId])
@@ -1264,36 +1256,8 @@ export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbe
               ? () => void toggleHidden(activeSpace.id, activeSpace.title ?? 'Untitled')
               : undefined
           }
-          onMoveToCampaign={async (cid) => {
-            if (!activeSpace) return
-            if ((activeSpace.campaign_id ?? null) === cid) return
-            try {
-              await updateSpace(activeSpace.id, { campaign_id: cid })
-              useSpacesStore.setState((s) => ({
-                spaces: s.spaces.map((sp) =>
-                  sp.id === activeSpace.id ? { ...sp, campaign_id: cid } : sp,
-                ),
-              }))
-              toast.success('Moved space')
-            } catch {
-              toast.error('Failed to move space')
-            }
-          }}
-          onCopyToCampaign={async (cid) => {
-            if (!activeSpace) return
-            try {
-              const dup = await createSpace(`${activeSpace.title} (copy)`)
-              if (cid !== null) await updateSpace(dup.id, { campaign_id: cid })
-              useSpacesStore.setState((s) => ({
-                spaces: s.spaces.map((sp) =>
-                  sp.id === dup.id ? { ...sp, campaign_id: cid ?? null } : sp,
-                ),
-              }))
-              toast.success(`Copied as "${dup.title}"`)
-            } catch {
-              toast.error('Failed to copy space')
-            }
-          }}
+          onMoveToCampaign={handleMoveSpaceToCampaign}
+          onCopyToCampaign={handleCopySpaceToCampaign}
         />
 
         <ViewSwitcher
@@ -1302,44 +1266,22 @@ export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbe
           onSelectView={(viewId) => setActiveView(viewId)}
           hasCampaign={!!activeSpace.campaign_id}
           canAccessEditorViews={canCustomizeViews}
-          onAddView={async (newView) => {
-            if (!activeSchema || !activeSpace) return
-            const nextSchema = { ...activeSchema, views: [...activeSchema.views, newView] }
-            patchActiveSpaceSchema(nextSchema)
-            await updateSpace(activeSpace.id, { schema: nextSchema })
-            setActiveView(newView.id)
-          }}
-          onReorderViews={async (reorderedVisible, movedViewId) => {
-            if (!activeSchema || !activeSpace || reorderedVisible.length === 0) return
-            const visibleIds = new Set(visibleViews.map((v) => v.id))
-            const hiddenViews = activeSchema.views.filter((v) => !visibleIds.has(v.id))
-            const reconciled = reconcilePinsAfterReorder(
-              reorderedVisible,
-              movedViewId,
-              embed?.leadingViewId,
-            )
-            const nextSchema = { ...activeSchema, views: [...reconciled, ...hiddenViews] }
-            patchActiveSpaceSchema(nextSchema)
-            await updateSpace(activeSpace.id, { schema: nextSchema })
-          }}
-          onTabContextMenu={
+          onAddView={handleAddView}
+          onReorderViews={handleReorderViews}
+          onTabContextCustomize={
             canCustomizeViews
-              ? (viewId, point, anchorEl) => setViewTabMenu({ viewId, point, anchorEl })
+              ? (viewId, anchorEl) => {
+                  customizeDropdownAnchorRef.current = anchorEl
+                  setCustomizeSubjectViewId(viewId)
+                  setPanelInitialView('main')
+                  setSchemaEditorOpen(true)
+                }
               : undefined
           }
+          onTogglePinView={canCustomizeViews ? handleTogglePinViewById : undefined}
+          onDuplicateView={canCustomizeViews ? handleDuplicateViewById : undefined}
+          onDeleteView={canCustomizeViews ? handleDeleteViewById : undefined}
           rightSlot={null}
-        />
-        <ViewTabContextMenu
-          position={viewTabMenu?.point ?? null}
-          view={orderedVisibleViews.find((v) => v.id === viewTabMenu?.viewId) ?? null}
-          onClose={() => setViewTabMenu(null)}
-          onTogglePin={(view, pinned) => void handleViewPinToStart(pinned, view.id)}
-          onCustomize={(view) => {
-            customizeDropdownAnchorRef.current = viewTabMenu?.anchorEl ?? null
-            setCustomizeSubjectViewId(view.id)
-            setPanelInitialView('main')
-            setSchemaEditorOpen(true)
-          }}
         />
 
         <div ref={spaceBelowViewTabsRef} className="flex min-h-0 flex-1 flex-row overflow-hidden">

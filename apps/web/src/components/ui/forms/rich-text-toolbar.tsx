@@ -2128,7 +2128,7 @@ export function RichTextToolbar({
                   <button
                     type="button"
                     onClick={removeLink}
-                    className="shrink-0 rounded px-2 py-0.5 text-xs text-red-400 transition-colors hover:bg-red-500/10"
+                    className="text-destructive shrink-0 rounded px-2 py-0.5 text-xs transition-colors hover:bg-red-500/10"
                   >
                     Remove
                   </button>

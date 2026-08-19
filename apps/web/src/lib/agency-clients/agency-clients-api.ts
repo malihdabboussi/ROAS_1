@@ -74,6 +74,29 @@ export type AgencyClientCampaign = {
   [key: string]: unknown
 }
 
+export type AgencyLaunch = {
+  id: string
+  kind: string
+  day_key: string
+  starts_at?: string | null
+  name: string
+  campaign_id?: string | null
+  campaign_name?: string | null
+  campaign_type?: string | null
+  campaign_status?: string | null
+  client_id: string
+  client_name?: string | null
+  client_logo_url?: string | null
+  assigned_user_id?: string | null
+  assignee_name?: string | null
+  event_time?: string | null
+  contact_name?: string | null
+  calendar_name?: string | null
+  portal_path?: string | null
+  roas_space_id?: string | null
+  [key: string]: unknown
+}
+
 export type AgencyClientWorkspace = {
   client: AgencyClient
   campaigns: AgencyClientCampaign[]
@@ -114,6 +137,16 @@ export async function fetchAgencyClientCampaigns(clientId?: string, sync?: boole
   const query = params.size ? `?${params}` : ''
   return backendGet<{ campaigns: AgencyClientCampaign[] }>(
     `/api/integrations/page-grader/agency/client-campaigns${query}`,
+  )
+}
+
+export async function fetchAgencyLaunches(clientId?: string, sync?: boolean) {
+  const params = new URLSearchParams()
+  if (clientId) params.set('client_id', clientId)
+  if (sync !== undefined) params.set('sync', String(sync))
+  const query = params.size ? `?${params}` : ''
+  return backendGet<{ launches: AgencyLaunch[] }>(
+    `/api/integrations/page-grader/agency/launches${query}`,
   )
 }
 

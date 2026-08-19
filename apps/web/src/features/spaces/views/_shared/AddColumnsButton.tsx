@@ -11,6 +11,7 @@ export function AddColumnsButton({ ctx }: { ctx: SpaceToolbarContext }) {
       <span className="inline-flex shrink-0 items-center">
         <button
           type="button"
+          aria-label="Add columns"
           onClick={() => ctx.openCustomizeFromToolbar('fields')}
           className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
         >

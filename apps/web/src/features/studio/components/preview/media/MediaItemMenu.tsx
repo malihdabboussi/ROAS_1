@@ -58,7 +58,7 @@ export function ItemMenuDropdown({
           onDelete()
           onClose()
         }}
-        className="gap-spacing-2 body-3 px-spacing-3 py-spacing-2 flex w-full items-center text-left text-red-600 hover:bg-red-500/10 [&_svg]:text-red-600"
+        className="gap-spacing-2 body-3 px-spacing-3 py-spacing-2 text-destructive [&_svg]:text-destructive flex w-full items-center text-left hover:bg-red-500/10"
       >
         <Trash2 className="h-4 w-4" />
         <span>Delete</span>

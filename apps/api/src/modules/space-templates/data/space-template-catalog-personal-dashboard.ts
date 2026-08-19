@@ -90,30 +90,8 @@ const fields = [
   { id: 'due_date', name: 'Due Date', type: 'date', system: true },
 ]
 
+// Meetings-first default: All Meetings leads the strip, Agenda is pinned right after.
 const views = [
-  {
-    ...viewList('Today', 'today'),
-    field_value_filters: { status: 'today' },
-  },
-  viewKanban('Priorities', 'priorities'),
-  {
-    id: 'agenda',
-    type: 'calendar',
-    name: 'Agenda',
-    pinned_to_start: true,
-    calendar_config: {
-      date_field: 'call_date',
-      default_zoom: 'week',
-      week_start: 1,
-      show_task_list: false,
-      time_format: '12h',
-      sources: [
-        { id: 'space_items', type: 'space_items', visible: true, color: 'blue' },
-        { id: 'google_calendar', type: 'google_calendar', visible: true, color: 'green' },
-        { id: 'outlook', type: 'outlook', visible: true, color: 'blue' },
-      ],
-    },
-  },
   {
     id: 'all-meetings',
     type: 'list',
@@ -141,6 +119,29 @@ const views = [
     },
     date_display_formats: { call_date: 'date_time' },
   },
+  {
+    id: 'agenda',
+    type: 'calendar',
+    name: 'Agenda',
+    pinned_to_start: true,
+    calendar_config: {
+      date_field: 'call_date',
+      default_zoom: 'week',
+      week_start: 1,
+      show_task_list: false,
+      time_format: '12h',
+      sources: [
+        { id: 'space_items', type: 'space_items', visible: true, color: 'blue' },
+        { id: 'google_calendar', type: 'google_calendar', visible: true, color: 'green' },
+        { id: 'outlook', type: 'outlook', visible: true, color: 'blue' },
+      ],
+    },
+  },
+  {
+    ...viewList('Today', 'today'),
+    field_value_filters: { status: 'today' },
+  },
+  viewKanban('Priorities', 'priorities'),
   {
     id: 'follow-ups',
     type: 'kanban',

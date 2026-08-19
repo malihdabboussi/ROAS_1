@@ -30,7 +30,7 @@ export function ThemeEditorDialogFooter({
           <button
             type="button"
             onClick={handleDelete}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-500/10"
+            className="text-destructive rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:bg-red-500/10"
           >
             Delete
           </button>

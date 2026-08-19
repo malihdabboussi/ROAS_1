@@ -195,7 +195,7 @@ export default function AdFrame() {
     return (
       <div className="relative w-full overflow-hidden bg-[#1a1a1a]" style={{ aspectRatio: ratio }}>
         <div className="flex flex-col items-center justify-center gap-2 p-4 text-center">
-          <span className="text-xs text-red-400">TSX error</span>
+          <span className="text-destructive text-xs">TSX error</span>
           <span className="line-clamp-2 text-xs text-white/60">{String(error)}</span>
           {fallbackImageUrl ? (
             <img

@@ -493,6 +493,7 @@ export function DraggableColumnHeaders({
         >
           <button
             type="button"
+            aria-label="Add column"
             onClick={(e) => onAddField(e)}
             aria-label="Add column"
             className={cn(

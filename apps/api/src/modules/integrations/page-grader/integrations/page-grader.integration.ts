@@ -33,11 +33,34 @@ export type PageGraderClientCampaign = {
   [key: string]: unknown
 }
 
+export type PageGraderLaunch = {
+  id: string
+  kind: string
+  day_key: string
+  starts_at?: string | null
+  name: string
+  campaign_id?: string | null
+  campaign_name?: string | null
+  campaign_type?: string | null
+  campaign_status?: string | null
+  client_id: string
+  client_name?: string | null
+  client_logo_url?: string | null
+  assigned_user_id?: string | null
+  assignee_name?: string | null
+  event_time?: string | null
+  contact_name?: string | null
+  calendar_name?: string | null
+  portal_path?: string | null
+  [key: string]: unknown
+}
+
 export type PageGraderClientWorkspace = {
   client: PageGraderClient & Record<string, unknown>
   campaigns: PageGraderClientCampaign[]
   tasks: Array<Record<string, unknown>>
   requests: Array<Record<string, unknown>>
+  launches?: PageGraderLaunch[]
   provenance: { source: 'page_grader'; generated_at: string }
 }
 
@@ -267,6 +290,34 @@ export class PageGraderIntegration {
     return Array.isArray(body.campaigns) ? (body.campaigns as PageGraderClientCampaign[]) : []
   }
 
+  async listLaunches(
+    baseUrl: string,
+    apiKey: string,
+    opts?: {
+      q?: string
+      clientId?: string
+      kind?: string
+      from?: string
+      to?: string
+      limit?: number
+      offset?: number
+    },
+  ): Promise<PageGraderLaunch[]> {
+    const params = new URLSearchParams()
+    if (opts?.q?.trim()) params.set('q', opts.q.trim())
+    if (opts?.clientId?.trim()) params.set('client_id', opts.clientId.trim())
+    if (opts?.kind?.trim()) params.set('kind', opts.kind.trim())
+    if (opts?.from?.trim()) params.set('from', opts.from.trim())
+    if (opts?.to?.trim()) params.set('to', opts.to.trim())
+    if (opts?.limit) params.set('limit', String(opts.limit))
+    if (opts?.offset) params.set('offset', String(opts.offset))
+    const url = `${this.normalizeBaseUrl(baseUrl)}/launches${params.size ? `?${params}` : ''}`
+    const body = await this.requestJson(baseUrl, apiKey, url, 'GET')
+    if (Array.isArray(body.launches)) return body.launches as PageGraderLaunch[]
+    if (Array.isArray(body.items)) return body.items as PageGraderLaunch[]
+    return []
+  }
+
   async updateWorkspaceEntity(
     baseUrl: string,
     apiKey: string,
@@ -352,6 +403,49 @@ export class PageGraderIntegration {
         Boolean(row.id.trim()) &&
         typeof row.name === 'string',
     )
+  }
+
+  async createDelegationPreview(
+    baseUrl: string,
+    apiKey: string,
+    payload: Record<string, unknown>,
+  ): Promise<{
+    delegation_id: string
+    confirm_url: string
+    tasks: unknown[]
+    campaign_id: string | null
+  }> {
+    const url = `${this.normalizeBaseUrl(baseUrl)}/delegations`
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: this.authHeaders(apiKey),
+      body: JSON.stringify(payload),
+    })
+    const text = await res.text().catch(() => '')
+    let body: Record<string, unknown> = {}
+    try {
+      body = text ? (JSON.parse(text) as Record<string, unknown>) : {}
+    } catch {
+      body = { error: text }
+    }
+    if (!res.ok) {
+      const errMsg =
+        typeof body.error === 'string' ? body.error : text || res.statusText || 'Request failed'
+      throw new BadRequestException(
+        `The ROAS Portal could not parse the fulfillment batch (${res.status}): ${errMsg}`,
+      )
+    }
+    const delegationId = typeof body.delegation_id === 'string' ? body.delegation_id : ''
+    const confirmUrl = typeof body.confirm_url === 'string' ? body.confirm_url : ''
+    if (!delegationId || !confirmUrl) {
+      throw new BadRequestException('The ROAS Portal did not return a confirm URL')
+    }
+    return {
+      delegation_id: delegationId,
+      confirm_url: confirmUrl,
+      tasks: Array.isArray(body.tasks) ? body.tasks : [],
+      campaign_id: typeof body.campaign_id === 'string' ? body.campaign_id : null,
+    }
   }
 
   async createWork(

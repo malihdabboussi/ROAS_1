@@ -4,6 +4,7 @@ import {
   fetchAgencyClient,
   fetchAgencyClientCampaigns,
   fetchAgencyClients,
+  fetchAgencyLaunches,
   updateAgencyWorkspaceEntity,
 } from './agency-clients-api'
 
@@ -37,6 +38,14 @@ describe('agency clients API', () => {
     await fetchAgencyClientCampaigns('client 1', false)
     expect(backendGet).toHaveBeenCalledWith(
       '/api/integrations/page-grader/agency/client-campaigns?client_id=client+1&sync=false',
+    )
+  })
+
+  it('loads launches with bootstrap sync disabled', async () => {
+    vi.mocked(backendGet).mockResolvedValue({ launches: [] })
+    await fetchAgencyLaunches('client 1', false)
+    expect(backendGet).toHaveBeenCalledWith(
+      '/api/integrations/page-grader/agency/launches?client_id=client+1&sync=false',
     )
   })
 
