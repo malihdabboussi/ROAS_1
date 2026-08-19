@@ -131,3 +131,9 @@ export const RateMissionDtoSchema = z
   })
 
 export type RateMissionDto = z.infer<typeof RateMissionDtoSchema>
+
+export const ExtendMissionDtoSchema = z.object({
+  action: z.enum(['post-call-strategy']),
+})
+
+export type ExtendMissionDto = z.infer<typeof ExtendMissionDtoSchema>

@@ -1,11 +1,14 @@
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { canRerunSubtask } from '@/lib/missions'
+import { MISSION_CONTROL_MESSAGES } from '../../config/messages.config'
 import type { MissionSubtask } from '../../types'
 import type { MissionDetailModalViewProps } from './mission-detail-modal-view.types'
 import { MissionAccessApprovalCard } from './MissionAccessApprovalCard'
 import { MissionDetailDesktopShell } from './MissionDetailDesktopShell'
 import { MissionDetailMobileShell } from './MissionDetailMobileShell'
 import { MissionDetailOverlayModals } from './MissionDetailOverlayModals'
+import { MissionTrackActions } from './MissionTrackActions'
 import {
   collectDependencySubtasks,
   collectSubtaskResourceLinks,
@@ -99,11 +102,30 @@ export function MissionDetailModalView({
   onDelete,
   onStatusChange,
   onPriorityChange,
+  onExtendTrack,
+  onRerunSubtask,
+  rerunningSubtaskId,
 }: MissionDetailModalViewProps) {
   const effectiveMission = liveMission ?? mission
   const selectedSubtask = selectedSubtaskId
     ? (subtasks.find((item) => item.id === selectedSubtaskId) ?? null)
     : null
+  const trackActions = (
+    <MissionTrackActions mission={effectiveMission} subtasks={subtasks} onExtend={onExtendTrack} />
+  )
+  const subtaskHeaderActions =
+    selectedSubtask && canRerunSubtask(selectedSubtask.status) ? (
+      <button
+        type="button"
+        disabled={rerunningSubtaskId === selectedSubtask.id}
+        onClick={() => void onRerunSubtask(selectedSubtask.id)}
+        className="body-3 bg-primary/15 hover:bg-primary/25 text-primary px-spacing-2 py-spacing-1 rounded-lg transition-colors disabled:opacity-50"
+      >
+        {rerunningSubtaskId === selectedSubtask.id
+          ? MISSION_CONTROL_MESSAGES.RERUNNING
+          : MISSION_CONTROL_MESSAGES.RERUN}
+      </button>
+    ) : null
   const visibleDeliverables = numberDeliverablesByTask(
     filterMissionDeliverables(
       selectedSubtask
@@ -299,6 +321,8 @@ export function MissionDetailModalView({
             missionId={effectiveMission.id}
             activityTimelineProps={activityTimelineProps}
             overlayModals={overlayModals}
+            trackActions={trackActions}
+            subtaskHeaderActions={subtaskHeaderActions}
           />,
           portalTarget,
         )
@@ -329,6 +353,8 @@ export function MissionDetailModalView({
       onSelectDeliverable={setPreviewDeliverable}
       activityTimelineProps={activityTimelineProps}
       overlayModals={overlayModals}
+      trackActions={trackActions}
+      subtaskHeaderActions={subtaskHeaderActions}
     />
   )
   if (presentation === 'panel') return desktopShell

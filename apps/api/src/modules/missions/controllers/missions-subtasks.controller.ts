@@ -21,6 +21,7 @@ import {
   ZodValidationPipe,
   type RequestScope,
 } from '@vibey/api-shared'
+import { CreditsGuard } from '../../billing/guards/credits.guard'
 import {
   BlockHumanSubtaskDtoSchema,
   BounceSubtaskToAgentDtoSchema,
@@ -40,6 +41,7 @@ import {
 import { MissionHumanSubtaskService } from '../services/mission-human-subtask.service'
 import { MissionsExecutionService } from '../services/missions-execution.service'
 import { MissionsQueryService } from '../services/missions-query.service'
+import { MissionsTrackService } from '../services/missions-track.service'
 
 @Controller('missions')
 @UseGuards(AuthGuard, ThrottlerGuard, OrgContextGuard, OrgRoleGuard)
@@ -48,6 +50,7 @@ export class MissionsSubtasksController {
     private readonly missionsQueryService: MissionsQueryService,
     private readonly missionsExecutionService: MissionsExecutionService,
     private readonly missionHumanSubtaskService: MissionHumanSubtaskService,
+    private readonly missionsTrackService: MissionsTrackService,
   ) {}
 
   @Get(':id/subtasks')
@@ -76,6 +79,26 @@ export class MissionsSubtasksController {
       subtaskParams.subtaskId,
       body,
       scope.orgId,
+    )
+  }
+
+  @Post(':id/subtasks/:subtaskId/retry')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(CreditsGuard)
+  async retrySubtask(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @Param(new ZodValidationPipe(MissionIdParamSchema)) params: MissionIdParam,
+    @Param(new ZodValidationPipe(SubtaskIdParamSchema)) subtaskParams: SubtaskIdParam,
+    @OrgContext() scope: RequestScope,
+  ) {
+    return this.missionsTrackService.retrySubtask(
+      supabase,
+      user.id,
+      params.id,
+      subtaskParams.subtaskId,
+      scope.orgId,
+      scope.orgRole,
     )
   }
 

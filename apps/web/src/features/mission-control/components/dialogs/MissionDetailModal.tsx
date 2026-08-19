@@ -31,6 +31,7 @@ import {
 import { MissionDetailModalView } from './MissionDetailModalView'
 import { useMissionAccessApproval } from './useMissionAccessApproval'
 import { useMissionDetailCommentAttachments } from './useMissionDetailCommentAttachments'
+import { useMissionTrackActions } from './useMissionTrackActions'
 import { useSubtaskDetailState } from './useSubtaskDetailState'
 
 export function MissionDetailModal({
@@ -107,6 +108,10 @@ export function MissionDetailModal({
     handleLibrarySelect,
     handleSendComment,
   } = useMissionDetailCommentAttachments({ mission, setMissionLogs, activityEndRef })
+  const { rerunningSubtaskId, handleExtendTrack, handleRerunSubtask } = useMissionTrackActions(
+    mission.id,
+    onUpdated,
+  )
 
   useEffect(() => {
     if (!liveMission) return
@@ -383,6 +388,9 @@ export function MissionDetailModal({
       onDelete={handleDelete}
       onStatusChange={handleStatusChange}
       onPriorityChange={handlePriorityChange}
+      onExtendTrack={handleExtendTrack}
+      onRerunSubtask={handleRerunSubtask}
+      rerunningSubtaskId={rerunningSubtaskId}
     />
   )
 }

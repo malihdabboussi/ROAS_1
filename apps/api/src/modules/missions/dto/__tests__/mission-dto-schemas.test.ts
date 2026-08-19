@@ -4,6 +4,7 @@ import {
   CompleteHumanSubtaskDtoSchema,
   CreateMissionDtoSchema,
   CreateMissionPlanDtoSchema,
+  ExtendMissionDtoSchema,
   FireAgentDtoSchema,
   HUMAN_ASSIGN_PREFIX_VALUE,
   InternalCreateMissionDtoSchema,
@@ -192,5 +193,9 @@ describe('mission DTO schemas', () => {
       }),
     ).toMatchObject({ thumbs_up: true })
     expect(RateMissionDtoSchema.safeParse({ feedback: 'missing score' }).success).toBe(false)
+    expect(ExtendMissionDtoSchema.parse({ action: 'post-call-strategy' })).toEqual({
+      action: 'post-call-strategy',
+    })
+    expect(ExtendMissionDtoSchema.safeParse({ action: 'webinar-fulfillment' }).success).toBe(false)
   })
 })

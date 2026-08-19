@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { ChevronRight, X } from 'lucide-react'
 import { formatWebinarSubtaskTitle } from '@/lib/missions'
 
@@ -6,6 +7,7 @@ interface SubtaskDetailHeaderProps {
   subtaskTitle: string
   onBack: () => void
   onClose: () => void
+  actions?: ReactNode
 }
 
 export function SubtaskDetailHeader({
@@ -13,6 +15,7 @@ export function SubtaskDetailHeader({
   subtaskTitle,
   onBack,
   onClose,
+  actions,
 }: SubtaskDetailHeaderProps) {
   return (
     <div className="gap-spacing-3 pb-spacing-2 flex items-start justify-between">
@@ -30,6 +33,7 @@ export function SubtaskDetailHeader({
         </h2>
       </div>
       <div className="gap-spacing-2 flex shrink-0 items-center">
+        {actions}
         <button
           type="button"
           onClick={onClose}

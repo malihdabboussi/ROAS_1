@@ -98,4 +98,7 @@ export interface MissionDetailModalViewProps {
   onDelete: () => void
   onStatusChange: (newStatus: MissionStatus) => Promise<void>
   onPriorityChange: (newPriority: MissionPriority) => Promise<void>
+  onExtendTrack: (action: 'post-call-strategy') => Promise<void>
+  onRerunSubtask: (subtaskId: string) => Promise<void>
+  rerunningSubtaskId: string | null
 }

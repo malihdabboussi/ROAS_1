@@ -30,6 +30,8 @@ interface MissionDetailMobileShellProps {
   missionId: string
   activityTimelineProps: ComponentProps<typeof ActivityTimeline>
   overlayModals: ReactNode
+  trackActions?: ReactNode
+  subtaskHeaderActions?: ReactNode
 }
 
 export function MissionDetailMobileShell({
@@ -55,6 +57,8 @@ export function MissionDetailMobileShell({
   missionId,
   activityTimelineProps,
   overlayModals,
+  trackActions,
+  subtaskHeaderActions,
 }: MissionDetailMobileShellProps) {
   return (
     <div className={`fixed inset-0 ${shellZ} bg-[var(--color-background)] md:hidden`}>
@@ -73,6 +77,7 @@ export function MissionDetailMobileShell({
               {selectedSubtask?.title || title || 'Mission'}
             </span>
             <div className="flex items-center gap-2">
+              {selectedSubtask ? subtaskHeaderActions : null}
               {!selectedSubtask ? (
                 <div className="relative">
                   <button
@@ -158,6 +163,7 @@ export function MissionDetailMobileShell({
                   <MissionMetaRow {...missionMetaProps} />
                 </div>
                 <SubtasksSection {...subtasksProps} />
+                {trackActions}
                 {accessApprovalCard}
               </>
             )}
