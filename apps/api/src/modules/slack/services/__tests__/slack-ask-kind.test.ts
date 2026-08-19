@@ -126,6 +126,43 @@ describe('classifySlackAskKind — continuation and unclear', () => {
     expect(result.signals).toContain('reply on Pixel thread')
   })
 
+  it('live-audit shapes: "make a task … ASAP" / "need this edited by EOW" over a forwarded message → client', () => {
+    // 2026-08-18 audit: 175/228 DM asks fell to "unclear"; most were Service Request
+    // intents over forwarded client content ("need to make a task to edit these videos ASAP").
+    expect(
+      classifySlackAskKind({ ...base, text: 'need to make a task to edit these videos ASAP' }),
+    ).toMatchObject({ kind: 'client' })
+    expect(
+      classifySlackAskKind({ ...base, text: 'need this edited VSL style by EOW' }),
+    ).toMatchObject({
+      kind: 'client',
+    })
+    expect(
+      classifySlackAskKind({
+        ...base,
+        text: 'Prepping for call with <#C0B5MKP7Y30> today.. what should i have ready',
+      }),
+    ).toMatchObject({
+      kind: 'client',
+      signals: expect.arrayContaining(['Slack channel referenced']),
+    })
+    expect(
+      classifySlackAskKind({
+        ...base,
+        text: 'Can you draft monday morning update for me for the client Yasir Khan',
+      }),
+    ).toMatchObject({ kind: 'client' })
+    expect(classifySlackAskKind({ ...base, text: 'Any campaigns off kpi?' })).toMatchObject({
+      kind: 'team',
+    })
+    expect(
+      classifySlackAskKind({
+        ...base,
+        text: 'hey give me a full breakdown of everything client wise on KPIs',
+      }),
+    ).toMatchObject({ kind: 'team' })
+  })
+
   it('no signals → unclear (ask one question, never default to client)', () => {
     expect(classifySlackAskKind({ ...base, text: 'thoughts?' }).kind).toBe('unclear')
   })

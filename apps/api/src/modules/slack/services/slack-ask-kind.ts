@@ -43,7 +43,10 @@ const GENERAL_PATTERNS: Array<[RegExp, string]> = [
 
 /** Voice/tone asks — the *facts* may still be a client's; only the voice is the operator's. */
 const VOICE_PATTERNS: Array<[RegExp, string]> = [
-  [/\b(rewrite|write|draft|clean up|polish) (my|this|the) (message|slack|dm|email|note|reply|update)\b/i, 'write as me'],
+  [
+    /\b(rewrite|write|draft|clean up|polish) (my|this|the) (message|slack|dm|email|note|reply|update)\b/i,
+    'write as me',
+  ],
   [/\b(in my voice|as me|sound like me|my tone)\b/i, 'write as me'],
 ]
 
@@ -54,18 +57,63 @@ const TEAM_PATTERNS: Array<[RegExp, string]> = [
   [/\bat risk\b/i, 'at risk'],
   [/\bhow many (active )?clients\b/i, 'client count'],
   [/\b(portfolio|every client|each client)\b/i, 'portfolio'],
+  // Live audit 2026-08-18: "any campaigns off KPI?", "everything client wise on KPIs".
+  [/\b(any|which|what) (client )?campaigns?\b/i, 'any campaigns'],
+  [/\b(client[- ]wise|everything client|all campaigns|off kpi)\b/i, 'across clients'],
 ]
 
 const CLIENT_PATTERNS: Array<[RegExp, string]> = [
   [/#roas-[a-z0-9-]+/i, '#roas- channel named'],
-  [/\b(campaign|webinar|funnel|ads?|creative|spend|cpl|cpa|roas|launch|vsl|landing page)\b/i, 'client work vocabulary'],
-  [/\b(service request|fulfillment|deliverable|design request|copy request)\b/i, 'fulfillment vocabulary'],
-  [/\b(what did (i|we) promise|what (did|have) we agree|last call with|onboarding call)\b/i, 'client call memory'],
+  // Slack renders channel references as <#C0B5MKP7Y30> or <#C0B5MKP7Y30|roas-yasir…>.
+  [/<#C[A-Z0-9]+(?:\|[^>]*)?>/, 'Slack channel referenced'],
+  [
+    /\b(stats?|results|numbers|kpis?|breakdown|performance) (for|on|of) \b/i,
+    'client performance ask',
+  ],
+  [
+    /\b(catch me up on|prepping for (a |the |my )?call with|peep the (client )?channel|check the .{0,40}channel)\b/i,
+    'client channel catch-up',
+  ],
+  [/\b(monday|weekly|client) (morning )?update\b/i, 'client update'],
+  [/\bfor (the )?client\b/i, 'for the client'],
+  [/\b(video|design|copy|editing|funnel) task\b/i, 'service request intent'],
+  [
+    /\b(campaign|webinar|funnel|ads?|creative|spend|cpl|cpa|roas|launch|vsl|landing page)\b/i,
+    'client work vocabulary',
+  ],
+  [
+    /\b(service request|fulfillment|deliverable|design request|copy request)\b/i,
+    'fulfillment vocabulary',
+  ],
+  // Live audit 2026-08-18: the most common DM shape is "make a task … ASAP" over a
+  // forwarded client message — a Service Request intent, so it is a client ask.
+  [
+    /\b(make|create|open|set up|spin up) (a |the |me a )?(task|ticket|request|sr)\b/i,
+    'service request intent',
+  ],
+  [
+    /\b(need|needs) (this|these|that|it) (edited|built|designed|written|rebuilt|redone|fixed|updated|done)\b/i,
+    'deliverable intent',
+  ],
+  [
+    /\b(by|before) (eow|eod|end of (the )?(week|day)|monday|tuesday|wednesday|thursday|friday|tomorrow)\b/i,
+    'delivery deadline',
+  ],
+  [
+    /\b(what did (i|we) promise|what (did|have) we agree|last call with|onboarding call)\b/i,
+    'client call memory',
+  ],
 ]
 
 const CONTINUATION_PATTERNS: Array<[RegExp, string]> = [
-  [/^\s*(approve|approved|yes|yep|yeah|go ahead|do it|ship it|looks good|lgtm|done|resolved|fixed)\b/i, 'affirmative reply'],
-  [/\b(is (that|this|it) still open|did we fix|was that (done|finalized|resolved)|status on (that|this))\b/i, 'follow-up on Pixel item'],
+  [
+    /^\s*(approve|approved|yes|yep|yeah|go ahead|do it|ship it|looks good|lgtm|done|resolved|fixed)\b/i,
+    'affirmative reply',
+  ],
+  [
+    /\b(is (that|this|it) still open|did we fix|was that (done|finalized|resolved)|status on (that|this))\b/i,
+    'follow-up on Pixel item',
+  ],
 ]
 
 function matchAll(text: string, patterns: Array<[RegExp, string]>): string[] {
@@ -92,7 +140,8 @@ export function classifySlackAskKind(input: SlackAskKindInput): SlackAskKindResu
   const voice = matchAll(text, VOICE_PATTERNS)
   const team = matchAll(text, TEAM_PATTERNS)
   const client = matchAll(text, CLIENT_PATTERNS)
-  const namesChannel = client.includes('#roas- channel named')
+  const namesChannel =
+    client.includes('#roas- channel named') || client.includes('Slack channel referenced')
 
   // 1. Explicit client identity: a quoted #roas-* thread, or a #roas-* channel named in the text.
   if (input.hasQuotedClientChannel) {
@@ -111,11 +160,19 @@ export function classifySlackAskKind(input: SlackAskKindInput): SlackAskKindResu
   if (input.hasChannelClientStamp) {
     return {
       kind: 'client',
-      signals: [...signals, 'client-mapped channel', ...client, ...voice.map((v) => `${v} (voice only)`)],
+      signals: [
+        ...signals,
+        'client-mapped channel',
+        ...client,
+        ...voice.map((v) => `${v} (voice only)`),
+      ],
     }
   }
   if (client.length > 0) {
-    return { kind: 'client', signals: [...signals, ...client, ...voice.map((v) => `${v} (voice only)`)] }
+    return {
+      kind: 'client',
+      signals: [...signals, ...client, ...voice.map((v) => `${v} (voice only)`)],
+    }
   }
 
   // 5. Pure voice ask with no client facts → general (User Brain for tone).
