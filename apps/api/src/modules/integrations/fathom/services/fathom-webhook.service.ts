@@ -10,6 +10,7 @@ import {
   readFathomAgendaExclusions,
 } from './fathom-agenda-exclusions'
 import { FathomApiService } from './fathom-api.service'
+import { FathomCampaignBrainRouteService } from './fathom-campaign-brain-route.service'
 import { buildFathomEnvelope } from './fathom-envelope.adapter'
 import type { FathomAutoIngestSettings } from './fathom-oauth.service'
 
@@ -23,6 +24,7 @@ export class FathomWebhookService {
     private readonly customerBrain: CustomerBrainService,
     private readonly spaceAutomation: SpaceAutomationService,
     private readonly repository: FathomRepository,
+    private readonly campaignBrainRoute: FathomCampaignBrainRouteService,
     private readonly pageGraderMeetings?: PageGraderMeetingSyncService,
   ) {}
 
@@ -137,6 +139,16 @@ export class FathomWebhookService {
     // Meetings call rows must still land for shared_team recordings even when
     // Fathom omits transcript from the webhook body (Slack follow-up is downstream).
     const spaceRoute = await this.processSpaceAutomationRoute(userId, event)
+    if (hasTranscript) {
+      // Same meeting, client's campaign brain — deterministic from the Space route.
+      await this.campaignBrainRoute.enqueueForRoute({
+        supabase: this.repository.getServiceClient(),
+        userId,
+        orgId: autoIngestSettings.billingScope === 'org' ? autoIngestSettings.billingOrgId : null,
+        event,
+        spaceRoute,
+      })
+    }
     await this.processPageGraderMeetingRoute(userId, event, spaceRoute)
   }
 
