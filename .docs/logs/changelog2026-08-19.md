@@ -17,3 +17,9 @@ What: Merged CONNECTIONS bind + Campaign Brain preload (#321) onto main without 
 Why: #321 edited `slack-service-events.base.ts` (campaignId on the channel-chat payload) which #317/#318/#320 also own.
 Impact: Slack client asks bind CONNECTIONS at turn start and still write `slack_pixel_turns`.
 Files: `slack-service-events.base.ts`
+
+## [2026-08-19 05:25] - [FIX]
+What: Login and dashboard auth treat transient Supabase latency as retryable instead of a hard failure.
+Why: Brief Auth/API lag was bouncing users off login or the dashboard shell.
+Impact: Soft failures retry; only persistent auth errors force logout/login.
+Files: `auth-login.ts`, `login/page.tsx`, `dashboard/layout.tsx`

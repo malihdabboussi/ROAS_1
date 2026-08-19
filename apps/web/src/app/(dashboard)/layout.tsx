@@ -22,8 +22,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
   try {
     const authResult = await withTimeout(supabase.auth.getUser(), SUPABASE_AUTH_TIMEOUT_MS)
     user = authResult?.data?.user ?? null
+    if (authResult === null) {
+      const sessionResult = await withTimeout(supabase.auth.getSession(), SUPABASE_AUTH_TIMEOUT_MS)
+      user = sessionResult?.data?.session?.user ?? null
+    }
   } catch {
-    user = null
+    try {
+      const sessionResult = await withTimeout(supabase.auth.getSession(), SUPABASE_AUTH_TIMEOUT_MS)
+      user = sessionResult?.data?.session?.user ?? null
+    } catch {
+      user = null
+    }
   }
 
   if (!user) {

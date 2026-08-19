@@ -1,5 +1,14 @@
 # Changelog - August 13, 2026
 
+## 2026-08-13 10:41 - [FIX]
+
+What: Added a bounded email-login wait, normalized empty authentication errors into actionable guidance, and allowed the dashboard layout to reuse the existing session when verified Supabase Auth is temporarily unavailable.
+
+Why: Production Supabase resource exhaustion caused Auth requests to stall, leaving the login button indefinitely busy, rendering `{}` as an error, or redirecting a valid session back to login after the server-side verification timeout.
+
+Impact: Authentication outages now stop with a clear retry message, and transient verification latency no longer discards an available session during dashboard rendering.
+
+Files: `apps/web/src/app/(auth)/config/auth-login.ts`, `apps/web/src/app/(auth)/config/auth-login.test.ts`, `apps/web/src/app/(auth)/login/page.tsx`, `apps/web/src/app/(dashboard)/layout.tsx`
 ## [2026-08-13 18:25] - [FIX]
 
 What: Added the canonical Expand/Collapse control to the Mission artifact pane, kept it available in both parent Mission and subtask headers without adding a duplicate shell header, and normalized the touched Mission title field to the foreground utilities.
