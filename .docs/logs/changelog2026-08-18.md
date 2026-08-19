@@ -1,11 +1,5 @@
 # Changelog - August 18, 2026
 
-## [2026-08-18 17:42] - [FIX]
-What: Brain graph endpoint now clamps the memory window to 2,000 nodes and ships a slim node projection (content ≤1,000 chars, `metadata` reduced to the preview keys the web reads). Stats report `node_window_capped`; the web treats a capped window as complete and stops re-requesting `limit=10000`.
-Why: The personal Brain page 500'd. Every DB call behind it is fast; the response for the largest prod brain (3.1k memories) serialised to 5.4 MB as full memory records, over the serverless response cap, so the API returned a bare 500. Measured against the same rows, the fix returns 2.99 MB and is bounded regardless of brain growth.
-Impact: Personal Brain graph loads again. Canvas shows at most 2,000 memory nodes; legend/stat totals still come from DB counts so nothing under-reports. Companion to §11.3 in `.docs/plans/pixel-slack-north-star-2026-08-18.md`.
-Files: `apps/api/src/modules/brain/services/graph-node-window.ts`, `graph-request.service.ts`, `graph.service.ts`, `graph-node-builders.ts`, `apps/api/src/modules/brain/controllers/graph.controller.test.ts`, `apps/web/src/features/brain/store/use-brain-store.ts`, `apps/web/src/features/brain/types/brain.types.ts`
-
 ## [2026-08-18 21:48] - [FIX]
 What: Unblocked Vercel `roas-web` typecheck after #308/#309. Calendar materialize now calls `cachedFetch(key, fetcher, { ttlMs })`. Removed unused `SpaceItem` import. Test fixtures use `as unknown as Space`.
 Why: `next build` typechecks `apps/web`. The one-room hook passed TTL as the fetcher argument, so agenda events never typed and the cache never actually TTL'd. Incomplete Space casts failed after adding `schema.custom_data`.
@@ -18,6 +12,17 @@ Why: Calendar, All Meetings, and the meeting workspace were three homes for one 
 Impact: Opening Meetings shows All Meetings first. Calendar events become rows without opening the card. Recording landing and Call status Completed both run post-call. Existing Spaces get host/call_status via migration.
 Files: `meeting-item-materialize.service.ts`, `meeting-host.ts`, `meeting-call-status.ts`, `meeting-related-calls.ts`, `space-template-catalog-personal-dashboard.ts`, `20260818194000_meetings_one_room_fields.sql`, `MeetingsUnifiedSurface.tsx`, `MeetingWorkspaceDialog.tsx`, `build-meeting-awareness-context.ts`, `MeetingsCallDateWindowChip.tsx`, `HostCell.tsx`
 
+## [2026-08-18 19:31] - [DOCS]
+What: Live Slack audit report + Pixel Slack harness (plan §11.7). `.docs/reports/pixel-slack-live-audit-2026-08-18.md` (228 asks/30d, ask-kind histogram, under-weighted shapes, R-list adjustments) and `scripts/roas/pixel-slack-harness/` (fixtures.json = 12 R-catalog fixtures; run.mjs posts into channel `2`, waits for `slack_pixel_turns`, scores, writes a JSON report; dry-run verified).
+Why: The original ask included auditing real client channel traffic and a nightly harness; Cursor's R-list was fixture-only.
+Impact: Read-only; harness live mode requires the operator token and explicit go-ahead.
+Files: .docs/reports/pixel-slack-live-audit-2026-08-18.md, scripts/roas/pixel-slack-harness/fixtures.json, scripts/roas/pixel-slack-harness/run.mjs
+
+## [2026-08-18 19:15] - [FIX]
+What: QC / Launch case ledger for personal Page Grader connections (plan §11.5). `PageGraderQcSlackBridgeService` now resolves the org for a connection whose `user_integrations.org_id` is NULL (`resolveQcConnectionOrg`: connection org → org of the finding's ROAS campaign (scope map) → the user's single active `org_members` row) before recording cases and choosing the Slack delivery anchor.
+Why: Prod audit (read-only, 2026-08-18): the only Page Grader connection is personal (`org_id NULL`). Because every ledger/anchor call was gated on `connection.orgId`, ROAS has **zero** `page_grader_qc` cases ever, while the ROAS bot posted 53 "Launch Agent Check-in" DMs in 7 days and dozens of QC posts — the measure-once/follow-up dedup shipped in PR 288 could never engage. The QC producer is fine; the ledger was silently disabled.
+Impact: QC/Launch findings land in `agent_cases` (quality_control / proactive_launch / campaign_quality_control), Launch check-ins dedupe into one thread per client, follow-ups thread instead of repeating.
+Files: apps/api/src/modules/integrations/page-grader/services/page-grader-qc-slack-bridge.service.ts, page-grader-qc-connection-org.ts, tests
 ## [2026-08-18 18:55] - [FIX]
 What: Declared `fieldRowVariant` on All Meetings `ClientCampaignCell` so SpaceCell can pass the shared kanban/default row variant.
 Why: #304 used `fieldRowVariant` in the cell and forwarded it from `SpaceCell`, but the props type omitted it. `next build` typecheck failed every `roas-web` deploy.
@@ -29,6 +34,18 @@ What: Wrote the Meetings one-room plan: one All Meetings row per call, two doors
 Why: Calendar, All Meetings, and the meeting workspace were three homes. Agenda opening a different card than All Meetings was the intended split; New/Upcoming is unnecessary because date already means upcoming.
 Impact: Implementation waits for approval. Mapping PR stays separate. Phase order is materialize rows → status/host/filter → two doors → related calls + Pixel context → both post-call automatics → card/tab cleanup.
 Files: `.docs/plans/meetings-one-room-2026-08-18.md`
+
+## [2026-08-18 18:14] - [FIX]
+What: Fathom webhook now dual-writes each client meeting into the client's Campaign Brain via the existing idempotent `campaign_fathom_import` job, keyed off the Space route's `campaign_id` (General/Personal skipped). New `FathomCampaignBrainRouteService` + tests; webhook e2e tests cover routed / no-transcript cases.
+Why: Prod audit: 1,046 `fathom_meeting` memories in the user brain vs ~21 in all campaign brains — client meetings only reached the client brain if a human accepted an LLM suggestion. Client-scoped asks (R10/R11) missed even when the recording existed.
+Impact: New recordings land in both brains automatically; re-delivered webhooks are safe (dedupe key). Existing backlog can be backfilled by re-enqueueing `campaign_fathom_import` for routed meetings (follow-up).
+Files: `apps/api/src/modules/integrations/fathom/services/fathom-campaign-brain-route.service.ts` (+test), `fathom-webhook.service.ts`, `fathom.module.ts`, `fathom.controller.test.ts`, `documentation/features/integration-connections.md`
+
+## [2026-08-18 17:42] - [FIX]
+What: Brain graph endpoint now clamps the memory window to 2,000 nodes and ships a slim node projection (content ≤1,000 chars, `metadata` reduced to the preview keys the web reads). Stats report `node_window_capped`; the web treats a capped window as complete and stops re-requesting `limit=10000`.
+Why: The personal Brain page 500'd. Every DB call behind it is fast; the response for the largest prod brain (3.1k memories) serialised to 5.4 MB as full memory records, over the serverless response cap, so the API returned a bare 500. Measured against the same rows, the fix returns 2.99 MB and is bounded regardless of brain growth.
+Impact: Personal Brain graph loads again. Canvas shows at most 2,000 memory nodes; legend/stat totals still come from DB counts so nothing under-reports. Companion to §11.3 in `.docs/plans/pixel-slack-north-star-2026-08-18.md`.
+Files: `apps/api/src/modules/brain/services/graph-node-window.ts`, `graph-request.service.ts`, `graph.service.ts`, `graph-node-builders.ts`, `apps/api/src/modules/brain/controllers/graph.controller.test.ts`, `apps/web/src/features/brain/store/use-brain-store.ts`, `apps/web/src/features/brain/types/brain.types.ts`
 
 ## [2026-08-18 17:40] - [FIX]
 What: Restored Simple sidebar Recents resize, left-offset the expanded ROAS wordmark, and centered the compact R mark in the rail.
@@ -48,6 +65,12 @@ Why: After #298, Pixel tried `page_grader_create_campaign_draft`, the create was
 Impact: Slack "create a portal campaign" either posts a Portal `review_url` or a ROAS campaign `url` with tasks for unverified VSL/LP/assets. Retrying the same guessed tool is no longer the only path.
 Files: `artifact-mcp-tool-preflight.ts`, `artifact-mcp-fulfillment-stamp.ts`, `artifact-mcp.service.ts`, `artifact-action-preflight.ts`, `platform-tools-template.ts`, `page-grader-operator/SKILL.md`, `20260818173000_portal_campaign_create_fallback.sql`, `page-grader-mcp-bridge.md`
 
+## [2026-08-18 16:40] - [DOCS]
+What: Recorded the 11.3 production Brain audit findings in the North Star plan: personal Brain 500 is a Vercel payload-size issue on the largest brain, ROAS org has 2 portal members (so "empty user brains" is mostly no users), Company Brain has had no writes since Jul 20, campaign brains are healthy and already contained the Yasir Aug 7 stats (retrieval miss, not ingestion), Fathom meetings land in the user brain instead of the client's campaign brain.
+Why: 11.3 was the first step of the build order; the findings reorder the fixes.
+Impact: Docs only. New open question 11.12 Q10 on portal accounts for team members.
+Files: `.docs/plans/pixel-slack-north-star-2026-08-18.md`
+
 ## [2026-08-18 16:20] - [FIX]
 What: Meetings Agenda Mine now DWD-pulls the signed-in user's Workspace Directory calendar (linked/suggested portal user, not login Gmail first). Team Google Calendar fetches paginate `nextPageToken` (page size 2500, `singleEvents=true`) and pin the caller inside the Directory people cap.
 Why: Mine only listed caller-owned Composio rows, so Dylan's work invites showed under Team (Directory mailbox) and disappeared on Mine. Recurring instances such as ROAS x Christian Osgood Weekly Standup were truncated when a covering-month `events.list` stopped at 250 events with no page token.
@@ -58,6 +81,12 @@ Files: `integrations-calendar.service.ts`, `integrations-calendar-parse.ts`, `in
 What: Revised the Pixel Slack North Star spine to classify ask kind (client / team / general / Pixel-thread continuation) before any client resolve, and mapped already-shipped Viktor-parity work as keep/expand.
 Why: Not every Slack message is a client request. Starting at client lookup would overwrite retrieve-then-draft, User Brain, and Team Intelligence paths already on main.
 Impact: Client Resolve (N1) is a client-class branch only. Quote inherit remains the first runtime gap. Voice pack, CONNECTIONS bind, composer, and Service Request routing are explicitly out of rewrite scope.
+Files: `.docs/plans/pixel-slack-north-star-2026-08-18.md`
+
+## [2026-08-18 16:00] - [DOCS]
+What: Recorded Dylan's decisions on the nine open North Star questions (§11.12): internal/admin share in mixed DMs, files to ROAS storage + client Drive, Slack Pixel = full Pixel capability incl. browser, add all agents to the org rather than hire per capability, harness channel `2`, Fathom-only calls, Portal client status, placeholder budgets accepted, build order accepted.
+Why: Unblocks 11.6, 11.10, 11.4, 11.7 and R08/R13 without further clarification.
+Impact: Docs only.
 Files: `.docs/plans/pixel-slack-north-star-2026-08-18.md`
 
 ## [2026-08-18 15:55] - [DOCS]
@@ -72,11 +101,23 @@ Why: The live Fathom Meeting Log was client-only, and internal team reviews were
 Impact: Fathom Meeting Log scope is `client_and_team`. Personal stays off. Existing automatic Team-titled Personal rows are relabeled Team.
 Files: `post-call-meeting-scope.ts`, `meeting-call-kind.ts`, `space-template-catalog-personal-dashboard.ts`, `space-automation-action.dto.ts`, `supabase/migrations/20260818155000_post_call_team_not_personal.sql`, `documentation/features/meeting-follow-up-slack.md`
 
+## [2026-08-18 15:40] - [DOCS]
+What: Added §11.11 Client Context Bundle + channel-scoped Slack search to the North Star plan, and put it right after telemetry in the build order.
+Why: Pixel could not name Yasir's Slack channel from a DM (no client→channel tool) and could not search that channel end-to-end (`search_slack_messages` has no channel filter). This is the shared root cause behind the Yasir, Master Your Kraft, and 1DS misses.
+Impact: Docs only. Defines the deterministic client bundle every ladder step reads from.
+Files: `.docs/plans/pixel-slack-north-star-2026-08-18.md`
+
 ## [2026-08-18 15:26] - [FIX]
 What: Unblocked Vercel `roas-web` typecheck after merging #290–#298. Removed leftover unused `isStreaming` on Team `AgentChatThread`. Typed the Connections `fetchCampaign` test mock with the real `(id: string)` arity.
 Why: `next build` typechecks `apps/web` with unused locals. #290 deleted the composer tip that used `isStreaming`; #291 added a one-arg `fetchCampaign` mockImplementation on a zero-arg `vi.fn`. Every production web deploy failed.
 Impact: `pnpm --filter @vibey/web typecheck` passes so `app.roas.io` can ship the merged chat/Slack/campaign PRs.
 Files: `AgentChatThread.tsx`, `AgentChatPanel.tsx`, `ConversationScopePicker.test.tsx`
+
+## [2026-08-18 15:05] - [DOCS]
+What: Added §11.10 to the North Star plan — Service Requests / ClickUp tasks created from forwarded Slack messages must carry direct asset links (re-hosted Slack files, Drive URLs), not only the gated Slack thread URL.
+Why: MFS Elite landing-page SR linked the Slack archive; the assignee may not have channel access to open the PDF.
+Impact: Docs only; slotted after N1 in the build order.
+Files: `.docs/plans/pixel-slack-north-star-2026-08-18.md`
 
 ## [2026-08-18 14:40] - [FIX]
 What: Service Request confirmation now shows the created ROAS/ClickUp task links after submit. Portal campaign drafts must post the same kind of openable chat/review URL instead of a Slack questionnaire.
@@ -162,8 +203,3 @@ Why: Realtime UPDATE on the agenda row remounted the editor after the 1s autosav
 Impact: Agenda stays open while it saves. Recording actions read as Open recording · Open transcript, then Link recording. Action items are in the top-right column under that row.
 Files: `apps/web/src/features/home/components/MeetingAgendaDocEditor.tsx`, `MeetingRecordingsSection.tsx`, `MeetingWorkspaceBody.tsx`, `documentation/features/meeting-follow-up-slack.md`
 
-## [2026-08-18 19:31] - [DOCS]
-What: Live Slack audit report + Pixel Slack harness (plan §11.7). `.docs/reports/pixel-slack-live-audit-2026-08-18.md` (228 asks/30d, ask-kind histogram, under-weighted shapes, R-list adjustments) and `scripts/roas/pixel-slack-harness/` (fixtures.json = 12 R-catalog fixtures; run.mjs posts into channel `2`, waits for `slack_pixel_turns`, scores, writes a JSON report; dry-run verified).
-Why: The original ask included auditing real client channel traffic and a nightly harness; Cursor's R-list was fixture-only.
-Impact: Read-only; harness live mode requires the operator token and explicit go-ahead.
-Files: .docs/reports/pixel-slack-live-audit-2026-08-18.md, scripts/roas/pixel-slack-harness/fixtures.json, scripts/roas/pixel-slack-harness/run.mjs
