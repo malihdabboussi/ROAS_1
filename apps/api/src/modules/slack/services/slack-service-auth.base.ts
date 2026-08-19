@@ -18,6 +18,29 @@ import {
   type OAuthStatePayload,
 } from './slack-service.shared'
 
+export type SlackAskContextInput = {
+  orgId: string
+  slackTeamId: string
+  channelId: string
+  botToken?: string
+  channelNameHint?: string | null
+  text?: string | null
+}
+
+export type SlackAskContextResult = {
+  text: string
+  /** Campaign mapped to the asking channel (authoritative). */
+  stampCampaignId: string | null
+  /** Campaign resolved from a client named in the message (DMs). */
+  bundleCampaignId: string | null
+}
+
+export type SlackChannelContextResult = {
+  context: string
+  stampCampaignId: string | null
+  bundleCampaignId: string | null
+}
+
 export abstract class SlackAuthBase extends SlackServiceBase {
   protected async getChannelAccessToken(
     serviceSupabase: SupabaseClient,
@@ -327,10 +350,12 @@ export abstract class SlackAuthBase extends SlackServiceBase {
     botToken: string,
     channelId: string,
     identity?: { orgId?: string | null; slackTeamId?: string | null; text?: string | null },
-  ): Promise<string> {
+  ): Promise<SlackChannelContextResult> {
     const sections: string[] = []
+    let stampCampaignId: string | null = null
+    let bundleCampaignId: string | null = null
     if (identity?.orgId && identity.slackTeamId) {
-      const identityBlock = await this.buildSlackAskContext(supabase, {
+      const askContext = await this.resolveSlackAskContext(supabase, {
         orgId: identity.orgId,
         slackTeamId: identity.slackTeamId,
         channelId,
@@ -342,14 +367,17 @@ export abstract class SlackAuthBase extends SlackServiceBase {
             error instanceof Error ? error.message : String(error)
           }`,
         )
-        return ''
+        return null
       })
-      if (identityBlock) sections.push(identityBlock)
+      if (askContext?.text) sections.push(askContext.text)
+      stampCampaignId = askContext?.stampCampaignId ?? null
+      bundleCampaignId = askContext?.bundleCampaignId ?? null
     }
+    const result = (context: string) => ({ context, stampCampaignId, bundleCampaignId })
 
     const messages = await this.slackApi.getChannelHistory(botToken, channelId, 10)
     const relevant = messages.filter((m) => !m.bot_id && m.text).reverse()
-    if (relevant.length === 0) return sections.join('\n\n')
+    if (relevant.length === 0) return result(sections.join('\n\n'))
 
     const userIds = [...new Set(relevant.map((m) => m.user).filter(Boolean))] as string[]
     const nameMap = new Map<string, string>()
@@ -372,7 +400,7 @@ export abstract class SlackAuthBase extends SlackServiceBase {
       lines.push(`@${name}: ${cleanText}`)
     }
     sections.push(lines.join('\n'))
-    return sections.join('\n\n')
+    return result(sections.join('\n\n'))
   }
 
   protected async buildSlackAskIdentityBlock(
@@ -397,15 +425,16 @@ export abstract class SlackAuthBase extends SlackServiceBase {
    */
   protected async buildSlackAskContext(
     supabase: SupabaseClient,
-    input: {
-      orgId: string
-      slackTeamId: string
-      channelId: string
-      botToken?: string
-      channelNameHint?: string | null
-      text?: string | null
-    },
+    input: SlackAskContextInput,
   ): Promise<string> {
+    return (await this.resolveSlackAskContext(supabase, input)).text
+  }
+
+  /** Same as `buildSlackAskContext`, plus the campaign ids the ask resolved to (CONNECTIONS bind). */
+  protected async resolveSlackAskContext(
+    supabase: SupabaseClient,
+    input: SlackAskContextInput,
+  ): Promise<SlackAskContextResult> {
     const stamp = await this.resolveSlackAskClientStamp(supabase, input)
     const sections: string[] = []
     if (stamp) sections.push(formatSlackAskIdentityContext(stamp))
@@ -422,7 +451,11 @@ export abstract class SlackAuthBase extends SlackServiceBase {
       return null
     })
     if (bundle) sections.push(formatSlackClientContextBlock(bundle))
-    return sections.join('\n\n')
+    return {
+      text: sections.join('\n\n'),
+      stampCampaignId: stamp?.roasCampaignId ?? null,
+      bundleCampaignId: bundle?.campaigns[0]?.id ?? null,
+    }
   }
 
   protected async resolveSlackClientBundle(

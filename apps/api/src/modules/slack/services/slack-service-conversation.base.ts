@@ -83,11 +83,12 @@ export abstract class SlackConversationBase extends SlackMediaBase {
     currentChannelId: string,
     attachments: SlackMessageAttachment[] | undefined,
     identity?: { orgId?: string | null; slackTeamId?: string | null },
-  ): Promise<string> {
+  ): Promise<{ context: string; campaignId: string | null }> {
     const forwarded = parseSlackForwardedMessage(attachments)
-    if (!forwarded) return ''
+    if (!forwarded) return { context: '', campaignId: null }
 
     const sections = [forwarded.context]
+    let campaignId: string | null = null
     let sourceChannelId = forwarded.channelId
     if (!sourceChannelId && forwarded.channelName && identity?.orgId && identity.slackTeamId) {
       // Thread-reply unfurls often carry only a footer name (N1 "Andy or Krista?" case).
@@ -102,18 +103,19 @@ export abstract class SlackConversationBase extends SlackMediaBase {
     if (sourceChannelId && sourceChannelId !== currentChannelId) {
       if (identity?.orgId && identity.slackTeamId) {
         // Quoted channel decides the client: stamp + Client Context Bundle for the source channel.
-        const forwardedIdentity = await this.buildSlackAskContext(supabase, {
+        const forwardedIdentity = await this.resolveSlackAskContext(supabase, {
           orgId: identity.orgId,
           slackTeamId: identity.slackTeamId,
           channelId: sourceChannelId,
           botToken,
           channelNameHint: forwarded.channelName,
-        }).catch(() => '')
-        if (forwardedIdentity) {
+        }).catch(() => null)
+        if (forwardedIdentity?.text) {
           sections.push(
-            `[Quoted message identity]\nThe forwarded message below belongs to the channel above; inherit its client. Do not ask which client.\n\n${forwardedIdentity}`,
+            `[Quoted message identity]\nThe forwarded message below belongs to the channel above; inherit its client. Do not ask which client.\n\n${forwardedIdentity.text}`,
           )
         }
+        campaignId = forwardedIdentity?.stampCampaignId ?? null
       }
       const threadTs = forwarded.threadTs
       if (threadTs) {
@@ -128,7 +130,7 @@ export abstract class SlackConversationBase extends SlackMediaBase {
     }
 
     if (!sourceChannelId || sourceChannelId === currentChannelId) {
-      return sections.join('\n\n')
+      return { context: sections.join('\n\n'), campaignId }
     }
 
     const channelContext = await this.buildChannelContext(
@@ -143,11 +145,11 @@ export abstract class SlackConversationBase extends SlackMediaBase {
           error instanceof Error ? error.message : String(error)
         }`,
       )
-      return ''
+      return { context: '', stampCampaignId: null, bundleCampaignId: null }
     })
 
-    if (channelContext) sections.push(channelContext)
-    return sections.join('\n\n')
+    if (channelContext.context) sections.push(channelContext.context)
+    return { context: sections.join('\n\n'), campaignId }
   }
 
   /** Name → id for channels the org observes; falls back to the bot's conversation list. */

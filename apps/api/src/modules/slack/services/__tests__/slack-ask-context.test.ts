@@ -19,6 +19,13 @@ class TestSlackAuth extends SlackAuthBase {
   askContext(supabase: never, input: Parameters<SlackAuthBase['buildSlackAskContext']>[1]) {
     return this.buildSlackAskContext(supabase, input)
   }
+
+  askContextResolved(
+    supabase: never,
+    input: Parameters<SlackAuthBase['resolveSlackAskContext']>[1],
+  ) {
+    return this.resolveSlackAskContext(supabase, input)
+  }
 }
 
 const YASIR_CLIENT = 'b17dcee8-2516-4318-aecc-1f7f449dfb92'
@@ -114,5 +121,37 @@ describe('buildSlackAskContext', () => {
       text: 'remind me to stretch at 3pm',
     })
     expect(text).toBe('')
+  })
+
+  it('exposes the campaign ids for the CONNECTIONS bind: stamp for channels, bundle for DMs', async () => {
+    const service = new TestSlackAuth({ getConversationName: vi.fn(async () => null) })
+    const channel = await service.askContextResolved(
+      yasirWorkspace({ stampedChannelId: 'C0B5MKP7Y30' }).client,
+      {
+        orgId: 'org-1',
+        slackTeamId: 'T1',
+        channelId: 'C0B5MKP7Y30',
+        text: 'numbers?',
+      },
+    )
+    expect(channel.stampCampaignId).toBe(YASIR_CAMPAIGN)
+    expect(channel.bundleCampaignId).toBe(YASIR_CAMPAIGN)
+
+    const dm = await service.askContextResolved(yasirWorkspace().client, {
+      orgId: 'org-1',
+      slackTeamId: 'T1',
+      channelId: 'D0DYLAN',
+      text: "Yasir's Aug 6 stats?",
+    })
+    expect(dm.stampCampaignId).toBeNull()
+    expect(dm.bundleCampaignId).toBe(YASIR_CAMPAIGN)
+
+    const general = await service.askContextResolved(yasirWorkspace().client, {
+      orgId: 'org-1',
+      slackTeamId: 'T1',
+      channelId: 'D0DYLAN',
+      text: 'remind me to stretch',
+    })
+    expect(general).toEqual({ text: '', stampCampaignId: null, bundleCampaignId: null })
   })
 })

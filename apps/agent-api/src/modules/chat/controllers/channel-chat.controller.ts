@@ -15,6 +15,7 @@ import { CreditsService } from '../../billing/services/credits.service'
 import { classifyChatStreamError } from '../chat-stream-errors'
 import { CHANNEL_CHAT_ERRORS } from '../config/errors.config'
 import { ChannelServiceGuard } from '../guards/channel-service.guard'
+import { bindChannelConversationCampaign } from '../services/channel-chat-campaign-bind'
 import { ChatService } from '../services/chat.service'
 
 @Controller('channel-chat')
@@ -41,6 +42,8 @@ export class ChannelChatController {
       access_token?: string
       refresh_token?: string
       org_id?: string | null
+      /** Client campaign the channel/ask resolved to; binds CONNECTIONS before the turn (§11.2). */
+      campaign_id?: string | null
       channel_user?: {
         platform_id: string
         username?: string
@@ -73,6 +76,7 @@ export class ChannelChatController {
       access_token,
       refresh_token,
       org_id,
+      campaign_id,
       channel_user,
       documents,
     } = body
@@ -95,6 +99,23 @@ export class ChannelChatController {
     }
 
     const supabase = this.svc.client
+
+    if (campaign_id) {
+      const bind = await bindChannelConversationCampaign(supabase, {
+        conversationId: conversation_id,
+        userId: user_id,
+        orgId: org_id ?? null,
+        campaignId: campaign_id,
+      }).catch((err) => {
+        this.logger.warn(`Channel chat campaign bind failed: ${err}`)
+        return null
+      })
+      if (bind && bind.status === 'rejected') {
+        this.logger.warn(
+          `Channel chat campaign bind rejected: ${bind.reason} conversation=${conversation_id}`,
+        )
+      }
+    }
 
     try {
       await this.creditsService.assertHasAvailableCredits(user_id, org_id)

@@ -23,6 +23,7 @@ import {
 } from './brain-context-support.service'
 import { BrainRetrievalService } from './brain-retrieval.service'
 import { BrainSpotlightService } from './brain-spotlight.service'
+import { campaignBrainContextLane, resolveCampaignBrainForPreload } from './campaign-brain-preload'
 import { CompanyContextCompilerService } from './company-context-compiler.service'
 import { EmbeddingService } from './embedding.service'
 
@@ -331,6 +332,7 @@ export class BrainContextService {
     skipUserBrain?: boolean,
     userBrainAccess?: boolean,
     useWikiContext?: boolean,
+    campaignId?: string | null,
   ): Promise<string> {
     const fullContextStartedAt = Date.now()
     let allowedFamilies: Set<BrainSearchFamily> | null = null
@@ -372,6 +374,16 @@ export class BrainContextService {
     const canUseAgentBrain = !!agentKey && canUseFamily('agent')
     const canUseCustomerBrain = canUseFamily('customer')
     const trimmedQuery = query?.trim()
+    // §11.2: a chat bound to a real client preloads that Campaign Brain too.
+    const campaignBrainTarget =
+      trimmedQuery && campaignId
+        ? await resolveCampaignBrainForPreload(this.supabase, { campaignId, orgId }).catch(
+            (err) => {
+              this.logger.warn(`Campaign brain preload resolve failed: ${err}`)
+              return null
+            },
+          )
+        : null
     const timingMeta: BrainContextTimingMeta = {
       userId,
       orgId: orgId ?? null,
@@ -390,7 +402,11 @@ export class BrainContextService {
     const billing = { userId, orgId }
     if (
       trimmedQuery &&
-      (hasUserBrainAccess || canUseAgentBrain || canUseCompanyBrain || canUseCustomerBrain)
+      (hasUserBrainAccess ||
+        canUseAgentBrain ||
+        canUseCompanyBrain ||
+        canUseCustomerBrain ||
+        campaignBrainTarget)
     ) {
       precomputedEmbedding = this.support.timeContextPart(
         'precompute_embedding',
@@ -408,14 +424,103 @@ export class BrainContextService {
     }
     const wikiEligible = useWikiContext || (agentKey != null && WIKI_AGENT_KEYS.has(agentKey))
     const useRetrievalContext = !!trimmedQuery && !!this.retrieval
-    const [companyContext, spotlightContext, userContext, agentContext, customerContext] =
-      await Promise.all([
-        this.support.timeContextPart(
-          'company_context',
-          timingMeta,
-          () =>
-            canUseCompanyBrain
-              ? this.support.buildCompanyBrainContext({
+    const [
+      companyContext,
+      campaignContext,
+      spotlightContext,
+      userContext,
+      agentContext,
+      customerContext,
+    ] = await Promise.all([
+      campaignBrainContextLane(this.support, this.logger, {
+        retrieval: this.retrieval,
+        target: campaignBrainTarget,
+        timingMeta,
+        userId,
+        orgId,
+        query,
+        agentKey,
+        precomputedEmbedding,
+      }),
+      this.support.timeContextPart(
+        'company_context',
+        timingMeta,
+        () =>
+          canUseCompanyBrain
+            ? this.support.buildCompanyBrainContext({
+                retrieval: this.retrieval,
+                userId,
+                query,
+                orgId,
+                agentKey,
+                precomputedEmbedding,
+              })
+            : Promise.resolve(''),
+        (value) => this.support.contextStringTiming(value),
+      ),
+      hasUserBrainAccess && !useRetrievalContext
+        ? this.support.timeContextPart(
+            'spotlight_context',
+            timingMeta,
+            () =>
+              this.support
+                .resolvePrecomputedEmbedding(precomputedEmbedding)
+                .then((embedding) =>
+                  this.spotlight.buildSpotlightContext(userId, query, orgId, embedding),
+                ),
+            (value) => this.support.contextStringTiming(value),
+          )
+        : Promise.resolve(''),
+      hasUserBrainAccess
+        ? this.support.timeContextPart(
+            'user_context',
+            timingMeta,
+            () =>
+              (wikiEligible
+                ? this.buildWikiContext(userId, query, orgId, precomputedEmbedding).then(
+                    (wiki) =>
+                      wiki ||
+                      this.buildUserBrainContext(
+                        userId,
+                        agentKey,
+                        query,
+                        orgId,
+                        precomputedEmbedding,
+                      ),
+                  )
+                : this.buildUserBrainContext(userId, agentKey, query, orgId, precomputedEmbedding)
+              ).catch((err) => {
+                this.logger.warn(`User brain context failed: ${err}`)
+                return ''
+              }),
+            (value) => this.support.contextStringTiming(value),
+          )
+        : Promise.resolve(''),
+      canUseAgentBrain
+        ? this.support.timeContextPart(
+            'agent_context',
+            timingMeta,
+            () =>
+              this.buildAgentBrainContext(
+                userId,
+                agentKey,
+                query,
+                orgId,
+                precomputedEmbedding,
+              ).catch((err) => {
+                this.logger.warn(`Agent brain context failed: ${err}`)
+                return ''
+              }),
+            (value) => this.support.contextStringTiming(value),
+          )
+        : Promise.resolve(''),
+      useRetrievalContext && canUseCustomerBrain
+        ? this.support.timeContextPart(
+            'customer_context',
+            timingMeta,
+            () =>
+              this.support
+                .buildCustomerBrainContext({
                   retrieval: this.retrieval,
                   userId,
                   query,
@@ -423,89 +528,17 @@ export class BrainContextService {
                   agentKey,
                   precomputedEmbedding,
                 })
-              : Promise.resolve(''),
-          (value) => this.support.contextStringTiming(value),
-        ),
-        hasUserBrainAccess && !useRetrievalContext
-          ? this.support.timeContextPart(
-              'spotlight_context',
-              timingMeta,
-              () =>
-                this.support
-                  .resolvePrecomputedEmbedding(precomputedEmbedding)
-                  .then((embedding) =>
-                    this.spotlight.buildSpotlightContext(userId, query, orgId, embedding),
-                  ),
-              (value) => this.support.contextStringTiming(value),
-            )
-          : Promise.resolve(''),
-        hasUserBrainAccess
-          ? this.support.timeContextPart(
-              'user_context',
-              timingMeta,
-              () =>
-                (wikiEligible
-                  ? this.buildWikiContext(userId, query, orgId, precomputedEmbedding).then(
-                      (wiki) =>
-                        wiki ||
-                        this.buildUserBrainContext(
-                          userId,
-                          agentKey,
-                          query,
-                          orgId,
-                          precomputedEmbedding,
-                        ),
-                    )
-                  : this.buildUserBrainContext(userId, agentKey, query, orgId, precomputedEmbedding)
-                ).catch((err) => {
-                  this.logger.warn(`User brain context failed: ${err}`)
+                .catch((err) => {
+                  this.logger.warn(`Customer brain context failed: ${err}`)
                   return ''
                 }),
-              (value) => this.support.contextStringTiming(value),
-            )
-          : Promise.resolve(''),
-        canUseAgentBrain
-          ? this.support.timeContextPart(
-              'agent_context',
-              timingMeta,
-              () =>
-                this.buildAgentBrainContext(
-                  userId,
-                  agentKey,
-                  query,
-                  orgId,
-                  precomputedEmbedding,
-                ).catch((err) => {
-                  this.logger.warn(`Agent brain context failed: ${err}`)
-                  return ''
-                }),
-              (value) => this.support.contextStringTiming(value),
-            )
-          : Promise.resolve(''),
-        useRetrievalContext && canUseCustomerBrain
-          ? this.support.timeContextPart(
-              'customer_context',
-              timingMeta,
-              () =>
-                this.support
-                  .buildCustomerBrainContext({
-                    retrieval: this.retrieval,
-                    userId,
-                    query,
-                    orgId,
-                    agentKey,
-                    precomputedEmbedding,
-                  })
-                  .catch((err) => {
-                    this.logger.warn(`Customer brain context failed: ${err}`)
-                    return ''
-                  }),
-              (value) => this.support.contextStringTiming(value),
-            )
-          : Promise.resolve(''),
-      ])
+            (value) => this.support.contextStringTiming(value),
+          )
+        : Promise.resolve(''),
+    ])
     const contextParts: string[] = []
     if (companyContext) contextParts.push(companyContext)
+    if (campaignContext) contextParts.push(campaignContext)
     if (spotlightContext) contextParts.push(spotlightContext)
     if (userContext) contextParts.push(userContext)
     if (agentContext) contextParts.push(agentContext)
@@ -515,6 +548,7 @@ export class BrainContextService {
       total_chars: finalContext.length,
       part_count: contextParts.length,
       company_chars: companyContext.length,
+      campaign_chars: campaignContext.length,
       user_chars: userContext.length,
       agent_chars: agentContext.length,
       customer_chars: customerContext.length,

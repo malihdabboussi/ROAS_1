@@ -98,7 +98,7 @@ describe('forwarded thread reply → client identity (N1 quote inherit)', () => 
     const service = new TestConversation(slackApi)
     const { client } = oneDsWorkspace()
 
-    const text = await service.forwarded(
+    const { context: text, campaignId } = await service.forwarded(
       client,
       [
         {
@@ -112,6 +112,7 @@ describe('forwarded thread reply → client identity (N1 quote inherit)', () => 
       'D0DYLAN',
     )
 
+    expect(campaignId).toBe(ONE_DS_CAMPAIGN)
     expect(text).toContain('[Forwarded Slack message]')
     expect(text).toContain('[Quoted message identity]')
     expect(text).toContain(`Resolved ROAS Portal client: 1DS Collective LLC (id=${ONE_DS_CLIENT})`)
@@ -136,7 +137,7 @@ describe('forwarded thread reply → client identity (N1 quote inherit)', () => 
     }
     const service = new TestConversation(slackApi)
     const { client } = oneDsWorkspace()
-    const text = await service.forwarded(
+    const { context: text } = await service.forwarded(
       client,
       [
         {
