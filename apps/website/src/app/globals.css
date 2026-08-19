@@ -3935,6 +3935,12 @@ html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollb
   user-select: none;
   -webkit-user-drag: none;
 }
+.hub-sidebar-logo-mark:not(.hub-sidebar-logo-mark-wordmark) .hub-sidebar-logo-face {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  justify-content: center;
+}
 .hub-sidebar-logo-mark:not(.hub-sidebar-logo-mark-wordmark) img {
   width: 100%;
   height: 100%;
@@ -3953,6 +3959,12 @@ html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollb
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.12s ease-out;
+}
+/* Wordmark header: the collapse glyph sits where the wordmark starts (left), not centred under it. */
+.hub-sidebar-logo-mark-wordmark .hub-sidebar-logo-glyph {
+  right: auto;
+  margin-left: 0;
+  margin-right: 0;
 }
 .hub-sidebar-logo-button:hover .hub-sidebar-logo-face,
 .hub-sidebar-logo-button:focus-visible .hub-sidebar-logo-face {

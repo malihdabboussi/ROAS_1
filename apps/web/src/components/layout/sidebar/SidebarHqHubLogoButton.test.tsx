@@ -51,7 +51,13 @@ describe('SidebarHqHubLogoButton', () => {
     const logo = screen.getByRole('button', { name: 'Expand menu' })
     expect(logo.querySelector('.hub-sidebar-logo-mark')).toBeTruthy()
     expect(logo.querySelector('.hub-sidebar-logo-glyph')).toHaveClass('icon-md')
-    expect(logo.querySelectorAll('img')[0]).toHaveClass('hub-sidebar-logo-face')
+    // Both theme marks live inside ONE face wrapper so `.hidden` on the imgs is not
+    // overridden by the face's display:flex (which used to render both marks side by side).
+    const face = logo.querySelector('.hub-sidebar-logo-face')
+    expect(face).toBeTruthy()
+    expect(face?.querySelectorAll('img')).toHaveLength(2)
+    expect(face?.querySelectorAll('img')[0]).toHaveClass('hidden')
+    expect(face?.querySelectorAll('img')[1]).toHaveClass('dark:hidden')
     expect(logo.querySelector('svg')).not.toHaveClass('hidden')
   })
 
