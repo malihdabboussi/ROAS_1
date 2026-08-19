@@ -179,3 +179,9 @@ What: CONNECTIONS bind from Slack + Campaign Brain preload (plan §11.2). apps/a
 Why: A bound chat was one Terra tool-choice away from "I couldn't find it": the preload excluded campaign brains, and Slack asks never bound CONNECTIONS unless the model typed a client name into a tool call.
 Impact: "what were their last webinar stats" in a bound chat hits the Campaign Brain before any User Brain call; Slack asks in client channels / quoting client threads / naming a client are bound at turn start.
 Files: apps/api slack-service-{auth,conversation,events}.base.ts; apps/agent-api brain/services/campaign-brain-preload.ts, brain-context.service.ts, chat/controllers/channel-chat.controller.ts, chat/services/channel-chat-campaign-bind.ts, chat-turn-gateway-preparation.service.ts, chat-turn-gateway-labels.ts; tests
+
+## [2026-08-18 19:29] - [FIX]
+What: Client Context Bundle from a referenced channel in DMs. `resolveSlackClientBundle` now treats a Slack channel reference in the ask text (`<#C0B5MKP7Y30>` / `<#C…|name>`) as authoritative: it stamps that channel and builds the bundle from it before falling back to client-name candidates.
+Why: Live audit (30d, 228 Pixel asks): "prepping for call with <#C…>", "peep the client channel <#C…>", "catch me up on client <#C…>" were the second most common client-ask shape and resolved to nothing.
+Impact: DM asks that point at a client channel get the client's channels/brain/campaign context and bind CONNECTIONS.
+Files: apps/api/src/modules/slack/services/slack-service-auth.base.ts, __tests__/slack-ask-context.test.ts

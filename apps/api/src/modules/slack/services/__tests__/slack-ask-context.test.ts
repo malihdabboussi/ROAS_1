@@ -111,6 +111,21 @@ describe('buildSlackAskContext', () => {
     expect(text).toContain('Slack channels: #roas-yasir-khan-coaching-ltd-955 (C0B5MKP7Y30)')
   })
 
+  it('DM referencing a client channel (<#C…>) → bundle from that channel (live-audit shape)', async () => {
+    const service = new TestSlackAuth({ getConversationName: vi.fn(async () => null) })
+    const { client } = yasirWorkspace({ stampedChannelId: 'C0B5MKP7Y30' })
+    const result = await service.askContextResolved(client, {
+      orgId: 'org-1',
+      slackTeamId: 'T1',
+      channelId: 'D0DYLAN',
+      text: 'Prepping for call with <#C0B5MKP7Y30> today.. what should i have ready',
+    })
+    expect(result.text).not.toContain('[Slack channel identity]')
+    expect(result.text).toContain('[Client context]')
+    expect(result.text).toContain('Slack channels: #roas-yasir-khan-coaching-ltd-955 (C0B5MKP7Y30)')
+    expect(result.bundleCampaignId).toBe(YASIR_CAMPAIGN)
+  })
+
   it('DM with no client named → empty context (general ask stays general)', async () => {
     const service = new TestSlackAuth({ getConversationName: vi.fn(async () => null) })
     const { client } = yasirWorkspace()

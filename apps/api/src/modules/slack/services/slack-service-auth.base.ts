@@ -440,6 +440,8 @@ export abstract class SlackAuthBase extends SlackServiceBase {
     if (stamp) sections.push(formatSlackAskIdentityContext(stamp))
     const bundle = await this.resolveSlackClientBundle(supabase, {
       orgId: input.orgId,
+      slackTeamId: input.slackTeamId,
+      botToken: input.botToken,
       stamp,
       text: input.text ?? null,
     }).catch((error) => {
@@ -460,7 +462,13 @@ export abstract class SlackAuthBase extends SlackServiceBase {
 
   protected async resolveSlackClientBundle(
     supabase: SupabaseClient,
-    input: { orgId: string; stamp: SlackAskClientStamp | null; text: string | null },
+    input: {
+      orgId: string
+      slackTeamId?: string | null
+      botToken?: string
+      stamp: SlackAskClientStamp | null
+      text: string | null
+    },
   ): Promise<SlackClientContextBundle | null> {
     if (input.stamp?.pageGraderClientId || input.stamp?.roasCampaignId) {
       return resolveSlackClientContext(supabase, {
@@ -471,6 +479,25 @@ export abstract class SlackAuthBase extends SlackServiceBase {
       })
     }
     if (!input.text) return null
+    // A referenced channel (<#C0B5MKP7Y30> / <#C…|roas-yasir…>) is authoritative:
+    // "prepping for call with <#C…>", "peep the client channel <#C…>" (live audit).
+    const referencedChannel = input.text.match(/<#(C[A-Z0-9]+)(?:\|[^>]*)?>/)?.[1] ?? null
+    if (referencedChannel && input.slackTeamId) {
+      const referenced = await this.resolveSlackAskClientStamp(supabase, {
+        orgId: input.orgId,
+        slackTeamId: input.slackTeamId,
+        channelId: referencedChannel,
+        botToken: input.botToken,
+      }).catch(() => null)
+      if (referenced?.pageGraderClientId || referenced?.roasCampaignId) {
+        return resolveSlackClientContext(supabase, {
+          orgId: input.orgId,
+          clientId: referenced.pageGraderClientId,
+          campaignId: referenced.roasCampaignId,
+          clientName: referenced.pageGraderClientName,
+        })
+      }
+    }
     for (const candidate of extractClientNameCandidates(input.text)) {
       const bundle = await resolveSlackClientContext(supabase, {
         orgId: input.orgId,
