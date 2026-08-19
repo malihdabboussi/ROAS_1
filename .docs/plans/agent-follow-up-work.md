@@ -39497,3 +39497,10 @@ Reason not done now: The panel change mitigates this in the UI with a timestamp 
 - Needed: cursor pagination (or server-side clustering) if anyone needs more than 2,000 memory nodes rendered at once. Also consider a `?fields=` projection so the graph never ships full memory records.
 - Why not now: the cap unblocks the 500 and is bounded; nobody can read 3k nodes on the canvas; pagination touches the store's SWR snapshot logic and deserves its own change.
 
+## 2026-08-19 - [ARCH] MeetingWorkspaceDialog.test.tsx near 400 LOC
+- Feature/app: Home / meeting workspace · apps/web
+- File: `apps/web/src/features/home/components/MeetingWorkspaceDialog.test.tsx` (372 LOC)
+- Evidence: `wc -l` is 372 after extracting `renderWorkspace`; eslint `max-lines` is 400.
+- Needed: split agenda-doc / status / action-row cases into a sibling test file so the dialog suite stays under the cap.
+- Why not now: in-scope tests already pass; splitting would be extra churn on this status-row change.
+

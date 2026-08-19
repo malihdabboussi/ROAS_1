@@ -1,120 +1,134 @@
 'use client'
 
+import { Play, Square } from 'lucide-react'
+import { MeetingWorkspaceStatusSelect } from '@/features/home/components/MeetingWorkspaceStatusSelect'
 import {
   MEETING_POST_CALL_ACTIONS,
   MEETING_PRE_CALL_ACTIONS,
   type MeetingPostCallAction,
 } from '@/features/home/config/meeting-post-call-actions.config'
+import type { FieldDef } from '@/lib/spaces/space-schema-types'
 
-const STATUS_OPTIONS: Array<{
-  id: '' | 'live' | 'completed' | 'no_show' | 'rescheduled'
-  label: string
-}> = [
-  { id: '', label: 'Status' },
-  { id: 'live', label: 'Live' },
-  { id: 'completed', label: 'Completed' },
-  { id: 'no_show', label: 'No Show' },
-  { id: 'rescheduled', label: 'Rescheduled' },
-]
+function ActionButtons({
+  actions,
+  onAction,
+}: {
+  actions: readonly MeetingPostCallAction[]
+  onAction: (action: MeetingPostCallAction) => void
+}) {
+  return actions.map((action) => {
+    const Icon = action.icon
+    return (
+      <button
+        key={action.id}
+        type="button"
+        onClick={() => onAction(action)}
+        className="button-compact button-glass-neutral gap-spacing-1 inline-flex items-center"
+      >
+        <Icon className="icon-xs" aria-hidden />
+        {action.label}
+      </button>
+    )
+  })
+}
 
 export function MeetingCallStatusSection({
-  callStatus,
+  statusField,
+  statusValue,
   hostLabel,
+  phase,
   isLive,
   isPostCall,
   hasRecording,
   joinUrl,
-  saving,
-  onCallStatusChange,
+  starting,
+  ending,
+  canContinue,
+  onStatusChange,
+  onContinue,
+  onStart,
+  onEnd,
   onPostCallAction,
 }: {
-  callStatus: string | null
+  statusField?: FieldDef
+  statusValue?: string | null
   hostLabel: string | null
+  phase?: string
   isLive: boolean
   isPostCall: boolean
   hasRecording: boolean
   joinUrl: string | null
-  saving: boolean
-  onCallStatusChange: (status: string | null) => void
+  starting: boolean
+  ending: boolean
+  canContinue: boolean
+  onStatusChange?: (status: string) => void
+  onContinue: () => void
+  onStart: () => void
+  onEnd: () => void
   onPostCallAction?: (action: MeetingPostCallAction) => void
 }) {
-  const showPostCallActions =
-    (isPostCall || callStatus === 'completed') && !isLive && onPostCallAction
-  const showPreCallActions =
-    !isLive && !isPostCall && callStatus !== 'completed' && onPostCallAction
+  const isProcessing = phase === 'processing'
+  const showPostCallActions = (isPostCall || isProcessing) && !isLive && onPostCallAction
+  const showPreCallActions = !isLive && !isPostCall && !isProcessing && onPostCallAction
   return (
-    <section className="border-border gap-spacing-4 py-spacing-4 flex flex-col border-b">
-      <div className="gap-spacing-3 flex flex-wrap items-center justify-between">
-        <div className="min-w-0 flex-1">
-          <label className="body-4 text-muted-foreground" htmlFor="meeting-call-status">
-            Call status
-          </label>
-          <div className="gap-spacing-2 mt-spacing-1 flex flex-wrap items-center">
-            <select
-              id="meeting-call-status"
-              value={callStatus ?? ''}
-              disabled={saving}
-              onChange={(event) => onCallStatusChange(event.target.value || null)}
-              className="border-border bg-background text-foreground body-3 px-spacing-2 py-spacing-1 rounded-md border"
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.id || 'blank'} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {hostLabel ? <p className="body-4 text-muted-foreground">Host: {hostLabel}</p> : null}
-          </div>
-          {isLive && joinUrl ? (
-            <a
-              href={joinUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="typo-caption text-primary mt-spacing-2 inline-flex"
-            >
-              Open call link
-            </a>
-          ) : null}
-          {hasRecording ? (
-            <p className="body-4 text-muted-foreground mt-spacing-1">Recording is on this call.</p>
-          ) : null}
-        </div>
+    <section className="border-border gap-spacing-3 py-spacing-4 flex flex-col border-b">
+      <div className="gap-spacing-2 flex w-full flex-wrap items-center">
+        <button
+          type="button"
+          onClick={onContinue}
+          disabled={!canContinue}
+          className="button-compact button-glass-neutral disabled:opacity-50"
+        >
+          Continue in chat
+        </button>
+        {statusField && onStatusChange ? (
+          <MeetingWorkspaceStatusSelect
+            field={statusField}
+            value={statusValue}
+            onChange={onStatusChange}
+          />
+        ) : null}
+        {isLive ? (
+          <button
+            type="button"
+            onClick={onEnd}
+            disabled={ending}
+            className="button-compact button-glass-destructive gap-spacing-1 inline-flex items-center disabled:opacity-50"
+          >
+            <Square className="icon-xs" aria-hidden />
+            {ending ? 'Ending…' : 'End call'}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onStart}
+            disabled={starting}
+            className="button-compact button-glass-primary gap-spacing-1 inline-flex items-center disabled:opacity-50"
+          >
+            <Play className="icon-xs" aria-hidden />
+            {starting ? 'Opening…' : 'Start call'}
+          </button>
+        )}
+        {showPreCallActions ? (
+          <ActionButtons actions={MEETING_PRE_CALL_ACTIONS} onAction={onPostCallAction} />
+        ) : null}
+        {showPostCallActions ? (
+          <ActionButtons actions={MEETING_POST_CALL_ACTIONS} onAction={onPostCallAction} />
+        ) : null}
       </div>
-      {showPreCallActions ? (
-        <div className="gap-spacing-2 flex w-full flex-wrap items-center">
-          {MEETING_PRE_CALL_ACTIONS.map((action) => {
-            const Icon = action.icon
-            return (
-              <button
-                key={action.id}
-                type="button"
-                onClick={() => onPostCallAction(action)}
-                className="button-compact button-glass-neutral gap-spacing-1 inline-flex items-center"
-              >
-                <Icon className="icon-xs" aria-hidden />
-                {action.label}
-              </button>
-            )
-          })}
-        </div>
+      {hostLabel ? <p className="body-4 text-muted-foreground">Host: {hostLabel}</p> : null}
+      {isLive && joinUrl ? (
+        <a
+          href={joinUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="typo-caption text-primary inline-flex"
+        >
+          Open call link
+        </a>
       ) : null}
-      {showPostCallActions ? (
-        <div className="gap-spacing-2 flex w-full flex-wrap items-center">
-          {MEETING_POST_CALL_ACTIONS.map((action) => {
-            const Icon = action.icon
-            return (
-              <button
-                key={action.id}
-                type="button"
-                onClick={() => onPostCallAction(action)}
-                className="button-compact button-glass-neutral gap-spacing-1 inline-flex items-center"
-              >
-                <Icon className="icon-xs" aria-hidden />
-                {action.label}
-              </button>
-            )
-          })}
-        </div>
+      {hasRecording ? (
+        <p className="body-4 text-muted-foreground">Recording is on this call.</p>
       ) : null}
     </section>
   )
