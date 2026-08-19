@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { SlackEventsBase } from '../slack-service-events.base'
+import { SlackEventsBase, type SlackAgentTurn } from '../slack-service-events.base'
 import { GENERIC_SLACK_AGENT_ERROR_MESSAGE } from '../slack-service.shared'
 
 class TestSlackEvents extends SlackEventsBase {
@@ -47,9 +47,9 @@ class TestSlackEvents extends SlackEventsBase {
     return this.buildSlackThreadReplyContext(botToken, channelId, threadTs, messageTs)
   }
 
-  protected async routeToAgent(): Promise<string | null> {
+  protected async routeToAgent(): Promise<SlackAgentTurn | null> {
     if (this.routeError) throw this.routeError
-    return this.response
+    return { content: this.response, toolEvents: [], conversationId: null }
   }
 
   protected async sendSlackReply(

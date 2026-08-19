@@ -1,0 +1,18 @@
+{
+  "_comment": "Pixel Slack harness fixtures (plan §11.7). Ids map to the request catalog (R01–R60). `expect.kind` = ask kind stamp; `expect.tools` = tool names that must appear in the turn; `expect.forbidden_ask` = must not ask the human to identify the client/channel. Posted verbatim into the harness channel `2`; nothing here mentions a real person by DM.",
+  "channel_name": "2",
+  "fixtures": [
+    { "id": "R01", "text": "What was stats for Yasir's last webinar on Aug 6?", "expect": { "kind": "client", "tools": ["search_campaign_brain", "SLACK_SEARCH_MESSAGES"], "forbidden_ask": false, "must_mention": ["roas-yasir"] } },
+    { "id": "R02", "text": "Prepping for call with <#C0B5MKP7Y30> today.. what should I have ready?", "expect": { "kind": "client", "tools": ["search_campaign_brain"], "forbidden_ask": false } },
+    { "id": "R05", "text": "Catch me up on client <#C0B6E0K3P53> — I'm meeting John in 10 to discuss offer / scaling.", "expect": { "kind": "client", "tools": ["search_campaign_brain", "SLACK_SEARCH_MESSAGES"], "forbidden_ask": false } },
+    { "id": "R08", "text": "Review my call with Aaron and Nate last night — what did Nate want me to do?", "expect": { "kind": "general", "tools": ["fathom"], "forbidden_ask": false } },
+    { "id": "R10", "text": "What did I promise Yasir on the last call?", "expect": { "kind": "client", "tools": ["search_campaign_brain"], "forbidden_ask": false } },
+    { "id": "R13", "text": "Any campaigns off KPI this week?", "expect": { "kind": "team", "tools": ["list_campaigns"], "forbidden_ask": false } },
+    { "id": "R20", "text": "Can you draft the Monday morning update for the client Yasir Khan / Speak Like a CEO?", "expect": { "kind": "client", "tools": ["search_campaign_brain", "SLACK_SEARCH_MESSAGES"], "forbidden_ask": false, "must_not_send": true } },
+    { "id": "R31", "text": "Need to make a task to edit these videos ASAP for 1DS — VSL style, due EOW. Assets: https://drive.google.com/drive/folders/harness-fixture", "expect": { "kind": "client", "tools": ["page_grader_create_fulfillment_request"], "forbidden_ask": false, "must_mention": ["review", "drive.google.com/drive/folders/harness-fixture"] } },
+    { "id": "R40", "text": "Remind me to stretch at 3pm", "expect": { "kind": "general", "tools": [], "forbidden_ask": false, "must_not_call": ["search_campaign_brain"] } },
+    { "id": "R44", "text": "Rewrite this in my voice: 'hey team, quick note, the 1DS VSL redirect goes live monday'", "expect": { "kind": "client", "tools": [], "forbidden_ask": false } },
+    { "id": "R50", "text": "Give me the accounts which are active but haven't been active on Slack lately", "expect": { "kind": "team", "tools": ["list_clients"], "forbidden_ask": false } },
+    { "id": "R55", "text": "thoughts?", "expect": { "kind": "unclear", "tools": [], "forbidden_ask": false, "must_ask_one_question": true } }
+  ]
+}
