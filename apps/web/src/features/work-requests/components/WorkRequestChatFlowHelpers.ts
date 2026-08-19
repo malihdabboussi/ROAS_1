@@ -46,7 +46,7 @@ export function buildWorkRequestChatSeedTranscript(
   draft: PublicWorkRequestDraft,
   options: WorkRequestOptions,
 ): WorkRequestChatTranscriptItem[] {
-  const seedAnswers = draftToChatAnswers(draft)
+  const seedAnswers = draftToChatAnswers(draft, options)
   const seedSteps = buildWorkRequestChatSteps(draft, options, seedAnswers)
   return [
     {
@@ -68,5 +68,6 @@ export function readWorkRequestChatStepValue(
     return answers.structured_fields[step.field.slice('structured:'.length)] ?? ''
   }
   if (step.field === 'confirm') return ''
+  if (step.field === 'assignee_name') return answers.assignee_id || answers.assignee_name
   return String(answers[step.field as keyof WorkRequestChatAnswers] ?? '')
 }

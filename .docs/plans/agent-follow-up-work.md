@@ -1,3 +1,15 @@
+## 2026-08-18 - [ARCH] DueDateCell remains over the LOC cap
+
+Status: Open
+
+Found while: Adding ClickUp-style Service Request due-date presets and Portal assignee identity
+
+Evidence: `wc -l` on `apps/web/src/components/spaces/cells/DueDateCell.tsx` is still 664 (component cap 400). `work-request.service.ts` is now 586 after extracting assignee + missing-field helpers.
+
+Needed work: Split DueDateCell trigger vs popover panel.
+
+Reason not done now: The requested work was the date-step UX and Portal/ClickUp assignment. The date-cell shell is pre-existing debt.
+
 ## 2026-08-17 - [FIX] Forked chats do not copy conversation_documents
 
 Status: Open

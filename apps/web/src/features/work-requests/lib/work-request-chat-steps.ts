@@ -64,6 +64,8 @@ export type WorkRequestChatAnswers = {
   request_type: WorkRequestType
   priority: WorkRequestPriority
   assignee_name: string
+  assignee_id: string
+  assignee_email: string
   title: string
   description: string
   due_date: string
@@ -73,13 +75,40 @@ export type WorkRequestChatAnswers = {
   structured_fields: Record<string, string>
 }
 
-export function draftToChatAnswers(draft: PublicWorkRequestDraft): WorkRequestChatAnswers {
+function isEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
+function matchTeamMember(
+  options: WorkRequestOptions,
+  value: string,
+): NonNullable<WorkRequestOptions['team_members']>[number] | undefined {
+  const needle = value.trim().toLocaleLowerCase()
+  if (!needle) return undefined
+  return (options.team_members ?? []).find((member) => {
+    const email = (member.email ?? '').trim().toLocaleLowerCase()
+    return (
+      member.id === value ||
+      member.name.trim().toLocaleLowerCase() === needle ||
+      (email && email === needle)
+    )
+  })
+}
+
+export function draftToChatAnswers(
+  draft: PublicWorkRequestDraft,
+  options: WorkRequestOptions = { client_workspaces: [], campaign_spaces: [] },
+): WorkRequestChatAnswers {
+  const rawName = draft.assignee_name ?? ''
+  const member = matchTeamMember(options, rawName)
   return {
     client_workspace_id: draft.client_workspace_id,
     campaign_space_id: draft.campaign_space_id ?? '',
     request_type: draft.request_type,
     priority: draft.priority,
-    assignee_name: draft.assignee_name ?? '',
+    assignee_name: member?.name ?? rawName,
+    assignee_id: member?.id ?? '',
+    assignee_email: member?.email ?? (isEmail(rawName) ? rawName.trim() : ''),
     title: draft.title,
     description: draft.description ?? '',
     due_date: draft.due_date ?? '',
@@ -157,15 +186,16 @@ export function buildWorkRequestChatSteps(
       hint:
         (options.team_members?.length ?? 0) > 0
           ? 'Pick a teammate from The ROAS Portal roster, or leave unassigned so Portal assignment rules apply.'
-          : 'Optional. Enter a teammate name, or skip so Portal assignment rules apply.',
+          : 'Optional. Enter a Portal teammate name or email, or skip so Portal assignment rules apply.',
       required: false,
       searchable: (options.team_members?.length ?? 0) > 0,
       allowOther: (options.team_members?.length ?? 0) > 0,
       options: [
         { id: '__unassigned__', label: 'Unassigned' },
         ...(options.team_members ?? []).map((member) => ({
-          id: member.name,
+          id: member.id,
           label: member.name,
+          description: member.email ?? undefined,
         })),
       ],
     },
@@ -266,11 +296,16 @@ export function listPendingSteps(
 }
 
 export function answersToUpdate(answers: WorkRequestChatAnswers): WorkRequestUpdate {
+  const assigneeName = answers.assignee_name.trim() || null
+  const typedEmail = assigneeName && isEmail(assigneeName) ? assigneeName : null
+  const assigneeEmail = answers.assignee_email.trim() || typedEmail
   return {
     client_workspace_id: answers.client_workspace_id,
     campaign_space_id: answers.campaign_space_id || null,
     request_type: answers.request_type,
-    assignee_name: answers.assignee_name.trim() || null,
+    assignee_name: assigneeName,
+    assignee_id: answers.assignee_id.trim() || null,
+    assignee_email: assigneeEmail,
     title: answers.title,
     description: answers.description || null,
     due_date: answers.due_date || null,
@@ -291,8 +326,11 @@ export function getAnswerDisplay(
     return answers.structured_fields[key]?.trim() || '—'
   }
   if (step.kind === 'single_choice') {
-    const raw = String(answers[step.field as keyof WorkRequestChatAnswers] ?? '')
-    if (step.field === 'assignee_name' && !raw) return '—'
+    const raw =
+      step.field === 'assignee_name'
+        ? answers.assignee_id || answers.assignee_name
+        : String(answers[step.field as keyof WorkRequestChatAnswers] ?? '')
+    if (step.field === 'assignee_name' && !answers.assignee_name) return '—'
     return step.options?.find((option) => option.id === raw)?.label ?? (raw || '—')
   }
   const value = answers[step.field as keyof WorkRequestChatAnswers]
@@ -330,9 +368,14 @@ export function applyStepAnswer(
     return { ...answers, priority: value as WorkRequestPriority }
   }
   if (step.field === 'assignee_name') {
+    const member = step.options?.find((option) => option.id === value)
+    const freeText = value === '__unassigned__' ? '' : value
+    const email = member?.description || (isEmail(freeText) ? freeText.trim() : '')
     return {
       ...answers,
-      assignee_name: value === '__unassigned__' ? '' : value,
+      assignee_id: member && member.id !== '__unassigned__' ? member.id : '',
+      assignee_name: member && member.id !== '__unassigned__' ? member.label : freeText,
+      assignee_email: email,
     }
   }
   return { ...answers, [step.field]: value } as WorkRequestChatAnswers
@@ -346,7 +389,8 @@ export function resolveChoiceFromChat(step: WorkRequestChatStep, text: string): 
   const exact = step.options.find(
     (option) =>
       option.id.toLocaleLowerCase() === normalized ||
-      option.label.toLocaleLowerCase() === normalized,
+      option.label.toLocaleLowerCase() === normalized ||
+      option.description?.toLocaleLowerCase() === normalized,
   )
   if (exact) return exact.id
   const partial = step.options.filter((option) =>

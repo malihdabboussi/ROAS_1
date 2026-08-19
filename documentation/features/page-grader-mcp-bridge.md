@@ -163,11 +163,12 @@ Grader`, `MCP`, tool names, schemas, idempotency keys, or retry mechanics.
 - Review finalize cards render **in the Pixel thread** immediately under the
   pasted `/request-review/` URL (shared `WorkRequestChatResumeCard`). Steps use
   Continue/Back (and Skip when optional); choice lists do not advance on click
-  alone. Assignee options prefer The ROAS Portal roster, with Other… for a
-  typed name. The review host and standalone page flow do not show a Message
-  Pixel composer — answers stay on the cards. Signed-in `/home?conv=&wr=` seeds
-  that conversation from the token chat API (with a short retry) when the home
-  pane would otherwise stay blank.
+  alone. Assignee options prefer The ROAS Portal roster (id + email kept through
+  finalize). Other… accepts a Portal name or email. Due date uses Today / Later /
+  Tomorrow presets beside the calendar. The review host and standalone page flow
+  do not show a Message Pixel composer — answers stay on the cards. Signed-in
+  `/home?conv=&wr=` seeds that conversation from the token chat API (with a
+  short retry) when the home pane would otherwise stay blank.
 - Slack inbound work is claimed once per `(team, channel, message_ts)`. Mapped
   channels skip `app_mention` when the `message` handler already owns the post,
   so one @Pixel ask cannot create two Service Request drafts.

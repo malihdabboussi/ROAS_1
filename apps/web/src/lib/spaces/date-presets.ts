@@ -53,7 +53,7 @@ export function getPresetDate(preset: DueDatePresetKey, nowInput = new Date()): 
       return atDefaultDueTime(now)
     case 'later': {
       const later = new Date(now)
-      later.setHours(later.getHours() + 3, 0, 0, 0)
+      later.setTime(later.getTime() + 3 * 60 * 60 * 1000)
       return later
     }
     case 'tomorrow':
@@ -71,4 +71,32 @@ export function getPresetDate(preset: DueDatePresetKey, nowInput = new Date()): 
     default:
       return atDefaultDueTime(now)
   }
+}
+
+export function formatPresetRightLabel(key: DueDatePresetKey, date: Date): string {
+  switch (key) {
+    case 'today':
+    case 'tomorrow':
+    case 'this_weekend':
+    case 'next_week':
+      return date.toLocaleDateString('en-US', { weekday: 'short' })
+    case 'later':
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    case 'next_weekend':
+    case 'two_weeks':
+    case 'four_weeks':
+      return `${date.getDate()} ${date.toLocaleDateString('en-US', { month: 'short' })}`
+    default:
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+}
+
+export function dueDatePresetRows(now = new Date()): Array<DueDatePreset & { rightLabel: string }> {
+  return DUE_DATE_PRESETS.map((preset) => {
+    const date = getPresetDate(preset.key, now)
+    return { ...preset, rightLabel: formatPresetRightLabel(preset.key, date) }
+  })
 }

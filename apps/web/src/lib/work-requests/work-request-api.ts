@@ -49,7 +49,12 @@ export type PublicWorkRequestDraft = {
 export type WorkRequestOptions = {
   client_workspaces: Array<{ id: string; name: string }>
   campaign_spaces: Array<{ id: string; name: string; client_workspace_id: string }>
-  team_members?: Array<{ id: string; name: string }>
+  team_members?: Array<{
+    id: string
+    name: string
+    email?: string | null
+    source?: 'portal' | 'org'
+  }>
 }
 
 export type WorkRequestReviewResponse =
@@ -69,6 +74,8 @@ export type WorkRequestUpdate = Partial<{
   campaign_space_id: string | null
   request_type: WorkRequestType
   assignee_name: string | null
+  assignee_id: string | null
+  assignee_email: string | null
   title: string
   description: string | null
   due_date: string | null

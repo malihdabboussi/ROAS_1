@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { SettingsDropdown } from '@/components/ui/forms/SettingsDropdown'
+import { WORK_REQUEST_MESSAGES } from '../config/messages.config'
 import { type WorkRequestChatStep } from '../lib/work-request-chat-steps'
 import { WorkRequestAssetsStep, WorkRequestDateStep } from './WorkRequestChatFlowInputs'
 
@@ -169,7 +170,7 @@ export function WorkRequestChatStepCard({
               value={otherText}
               onChange={(event) => setOtherText(event.target.value)}
               disabled={busy}
-              placeholder="Type a name"
+              placeholder={WORK_REQUEST_MESSAGES.assigneeOtherPlaceholder}
               className="body-3 rounded-spacing-2 border-border bg-background h-spacing-9 px-spacing-3 focus:ring-ring w-full border outline-none focus:ring-2"
             />
           ) : null}
