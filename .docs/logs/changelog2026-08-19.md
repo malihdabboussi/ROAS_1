@@ -29,3 +29,9 @@ What: Login and dashboard auth treat transient Supabase latency as retryable ins
 Why: Brief Auth/API lag was bouncing users off login or the dashboard shell.
 Impact: Soft failures retry; only persistent auth errors force logout/login.
 Files: `auth-login.ts`, `login/page.tsx`, `dashboard/layout.tsx`
+
+## [2026-08-19 05:26] - [FEATURE]
+What: Campaigns hub can use a card-first program navigation grid.
+Why: Rescued from `codex/program-card-views` onto current main.
+Impact: Programs browse as cards instead of the denser list-only hub layout.
+Files: `ProgramsCardGrid.tsx`, `campaigns/page.tsx`, `programs.md`
