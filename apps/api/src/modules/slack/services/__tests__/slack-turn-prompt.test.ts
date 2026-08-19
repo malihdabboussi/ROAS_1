@@ -107,4 +107,35 @@ describe('buildInboundSlackTurnPrompt — N0 stamp leads the prompt', () => {
     expect(p.fullMessage).toContain('[Ask kind]')
     expect(p.fullMessage).toContain('[User sent a file]')
   })
+
+  it('client ask in a DM: [Client context] follows [Ask kind], source=named', () => {
+    const p = buildInboundSlackTurnPrompt({
+      ...base,
+      text: "What was stats for Yasir's last webinar on Aug 6?",
+      clientContextBlock:
+        '[Client context]\nClient: Yasir Khan Coaching LTD (portal id=b17dcee8)\nSlack channels: #roas-yasir-khan-coaching-ltd-955 (C0B5MKP7Y30)',
+      namedClientId: 'b17dcee8',
+    })
+    expect(p.askKind.kind).toBe('client')
+    expect(p.clientSource).toBe('named')
+    expect(p.clientId).toBe('b17dcee8')
+    expect(p.fullMessage.indexOf('[Ask kind]')).toBeLessThan(p.fullMessage.indexOf('[Client context]'))
+    expect(p.fullMessage.indexOf('[Client context]')).toBeLessThan(
+      p.fullMessage.indexOf("What was stats for Yasir's last webinar on Aug 6?"),
+    )
+  })
+
+  it('general ask does not inject the client bundle even when one was resolved', () => {
+    const p = buildInboundSlackTurnPrompt({
+      ...base,
+      text: "What's on my task list today?",
+      currentStamp: yasirStamp,
+      isDirectMessage: false,
+      clientContextBlock: '[Client context]\nClient: Yasir Khan Coaching LTD',
+      namedClientId: 'b17dcee8-yasir',
+    })
+    expect(p.askKind.kind).toBe('general')
+    expect(p.fullMessage).not.toContain('[Client context]')
+    expect(p.clientSource).toBe('stamp')
+  })
 })

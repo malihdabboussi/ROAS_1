@@ -9,6 +9,7 @@ import type { SlackTurnClientSource } from './slack-turn-telemetry'
  *   [Current message]
  *     [Ask kind]                ← N0, first thing the model reads
  *     [Slack channel identity]  ← softened on general asks
+ *     [Client context]          ← bundle (channels/brains) on client asks
  *     <human text>
  *     [Forwarded Slack message] (+ its source-channel identity)
  *     [Files]
@@ -24,6 +25,9 @@ export type SlackTurnPromptInput = {
   isDirectMessage: boolean
   fileContext?: string
   hasDocuments: boolean
+  /** §11.11 Client Context Bundle. Injected after identity on client asks only. */
+  clientContextBlock?: string
+  namedClientId?: string | null
 }
 
 export type SlackTurnPrompt = {
@@ -48,6 +52,12 @@ export function buildInboundSlackTurnPrompt(input: SlackTurnPromptInput): SlackT
   if (input.currentStamp) {
     parts.push(formatSlackAskIdentityContext(input.currentStamp, { askKind: askKind.kind }))
   }
+  if (
+    input.clientContextBlock &&
+    (askKind.kind === 'client' || askKind.kind === 'unclear')
+  ) {
+    parts.push(input.clientContextBlock)
+  }
   if (input.text) parts.push(input.text)
   if (input.forwardedContext) parts.push(input.forwardedContext)
   if (input.fileContext) parts.push(input.fileContext)
@@ -58,14 +68,18 @@ export function buildInboundSlackTurnPrompt(input: SlackTurnPromptInput): SlackT
     fullMessage = `[Slack thread context]\n${input.threadContext}\n\n[Current message]\n${fullMessage}`
   }
 
-  const clientId = input.currentStamp?.pageGraderClientId ?? null
-  const clientSource: SlackTurnClientSource = clientId
+  const stampClientId = input.currentStamp?.pageGraderClientId ?? null
+  const namedClientId = input.namedClientId ?? null
+  const clientId = stampClientId ?? namedClientId
+  const clientSource: SlackTurnClientSource = stampClientId
     ? 'stamp'
     : askKind.signals.includes('quoted client channel')
       ? 'quote'
-      : input.currentStamp?.channelName
-        ? 'hint'
-        : 'none'
+      : namedClientId
+        ? 'named'
+        : input.currentStamp?.channelName
+          ? 'hint'
+          : 'none'
 
   return { fullMessage, askKind, clientSource, clientId }
 }

@@ -1,5 +1,6 @@
 import type { SlackBlock, SlackEventEnvelope } from '../types/slack.types'
 import { classifySlackAskKind, formatSlackAskKindContext } from './slack-ask-kind'
+import { formatSlackClientContextBlock } from './slack-client-context'
 import { SlackConversationBase } from './slack-service-conversation.base'
 import { buildInboundSlackTurnPrompt } from './slack-turn-prompt'
 import {
@@ -10,11 +11,11 @@ import {
 import {
   CREDITS_EXHAUSTED_SLACK_MESSAGE,
   GENERIC_SLACK_AGENT_ERROR_MESSAGE,
+  isSlackDirectConversation,
   MACHINE_NOT_READY_SLACK_MESSAGE,
   MACHINE_UNREACHABLE_SLACK_MESSAGE,
   MACHINE_WAKE_START_SLACK_MESSAGE,
   SLACK_AGENT_STREAM_TIMEOUT_MS,
-  isSlackDirectConversation,
 } from './slack-service.shared'
 
 export type SlackAgentTurn = {
@@ -181,6 +182,13 @@ export abstract class SlackEventsBase extends SlackConversationBase {
           botToken,
         }).catch(() => null)
       : null
+    const clientBundle = channelOrgId
+      ? await this.resolveSlackClientBundle(serviceSupabase, {
+          orgId: channelOrgId,
+          stamp: currentStamp,
+          text,
+        }).catch(() => null)
+      : null
     const forwardedContext = await this.buildForwardedMessageContext(
       serviceSupabase,
       userId,
@@ -212,6 +220,8 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       isDirectMessage: isSlackDirectConversation(event.channel_type, channelId),
       fileContext: hasFiles && documents.length === 0 ? this.buildFileContext(event.files!) : undefined,
       hasDocuments: documents.length > 0,
+      clientContextBlock: clientBundle ? formatSlackClientContextBlock(clientBundle) : undefined,
+      namedClientId: clientBundle?.clientId ?? null,
     })
     fullMessage = prompt.fullMessage
     const askKind = prompt.askKind
@@ -315,7 +325,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       fallback.userId,
       fallback.botToken,
       channelId,
-      { orgId: fallback.orgId, slackTeamId: teamId },
+      { orgId: fallback.orgId, slackTeamId: teamId, text },
     ).catch((err) => {
       this.logger.warn(`Failed to build channel context: ${err}`)
       return ''

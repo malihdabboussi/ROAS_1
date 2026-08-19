@@ -7,13 +7,16 @@ export const SLACK_LEGACY_CAPABILITIES: LegacyCapabilityRow[] = [
     execution_mode: 'legacy',
     display_name: 'Search Slack Messages',
     description:
-      'Search Slack with native full search when authorized and bounded historical channel retrieval otherwise. Named-channel fallback searches up to 120 days, expands threads, and returns complete or partial coverage. A partial zero-match result is not proof that a message is absent.',
+      "Search Slack with native full search when authorized and bounded historical channel retrieval otherwise. For a client question pass client_id (Portal client id) or client_name, or channel_ids: the search is then scoped to that client's mapped channels and returns client_context plus per-channel coverage — always name the channel searched. Named-channel fallback searches up to 120 days, expands threads, and returns complete or partial coverage. A partial zero-match result is not proof that a message is absent.",
     parameters: {
       query: { type: 'string', required: true },
       count: { type: 'number' },
       sort: { type: 'string' },
       sort_dir: { type: 'string' },
       cursor: { type: 'string' },
+      client_id: { type: 'string' },
+      client_name: { type: 'string' },
+      channel_ids: { type: 'string' },
     },
     examples: [],
     metadata: {},
