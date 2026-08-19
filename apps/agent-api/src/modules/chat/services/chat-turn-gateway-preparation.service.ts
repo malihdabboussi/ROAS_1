@@ -16,6 +16,7 @@ import { ChatSessionHistoryService } from './chat-session-history.service'
 import { ChatSetupEventsService } from './chat-setup-events.service'
 import type { ResolvedSlashCommand } from './chat-slash-command.service'
 import type { ChatStableTurnContext } from './chat-stable-turn-context.service'
+import { BRAIN_CONTEXT_TOOL, CONTEXT_READY_STATUS_LABELS } from './chat-turn-gateway-labels'
 import type { RecordChatTurnTimingSpan } from './chat-turn-session.service'
 import { IntegrationContextService } from './integration-context.service'
 import type { OpenClawInputMessage, OpenClawSkillCatalog } from './openclaw-proxy.service'
@@ -111,22 +112,6 @@ export interface PreparedGatewayTurn {
   inputArray: OpenClawInputMessage[]
 }
 
-const BRAIN_CONTEXT_TOOL_NAME = 'brain_context'
-const BRAIN_CONTEXT_TOOL_ACTION = 'read_brain_context'
-const BRAIN_CONTEXT_TOOL_LABELS = [
-  'Reading your Brain',
-  'Searching your Brain',
-  'Finding useful memories',
-  'Reviewing relevant Brain context',
-  'Pulling relevant Brain context',
-] as const
-const CONTEXT_READY_STATUS_LABELS = [
-  'Connecting the dots',
-  'Planning next moves',
-  'Thinking through it',
-  'Moving things along',
-  'Checking the next step',
-] as const
 const PUBLIC_AGENT_META_PROMPTS = [
   'how do you work',
   'what can you do',
@@ -248,9 +233,7 @@ export class ChatTurnGatewayPreparationService {
     const userBrainSummary = shouldBuildBrainContext
       ? await runPlatformTool(
           {
-            name: BRAIN_CONTEXT_TOOL_NAME,
-            action: BRAIN_CONTEXT_TOOL_ACTION,
-            labels: BRAIN_CONTEXT_TOOL_LABELS,
+            ...BRAIN_CONTEXT_TOOL,
             seed: brainContextSeed,
             id: `platform-brain-context-${conversationId}`,
           },
@@ -264,6 +247,7 @@ export class ChatTurnGatewayPreparationService {
                 !!channelUser,
                 userBrainAccess,
                 useWikiContext,
+                resolvedCampaignId,
               )
               .catch((err) => {
                 logger.warn(`Brain context failed: ${err}`)

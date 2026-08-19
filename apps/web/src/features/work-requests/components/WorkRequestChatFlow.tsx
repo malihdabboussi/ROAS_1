@@ -35,7 +35,9 @@ export function WorkRequestChatFlow({
   onSave,
   onSubmit,
 }: WorkRequestChatFlowProps) {
-  const [answers, setAnswers] = useState<WorkRequestChatAnswers>(() => draftToChatAnswers(draft))
+  const [answers, setAnswers] = useState<WorkRequestChatAnswers>(() =>
+    draftToChatAnswers(draft, options),
+  )
   const [stepIndex, setStepIndex] = useState(0)
   const [editingStepId, setEditingStepId] = useState<string | null>(null)
   const [busy, setBusy] = useState<'save' | 'submit' | null>(null)
@@ -68,7 +70,7 @@ export function WorkRequestChatFlow({
   useEffect(() => {
     if (draftIdRef.current === draft.id) return
     draftIdRef.current = draft.id
-    const nextAnswers = draftToChatAnswers(draft)
+    const nextAnswers = draftToChatAnswers(draft, options)
     const nextAll = buildWorkRequestChatSteps(draft, options, nextAnswers)
     setAnswers(nextAnswers)
     setStepIndex(0)

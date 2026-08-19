@@ -1,3 +1,4 @@
+import { pageGraderSendAssignee, resolveWorkRequestAssigneeIdentity } from './work-request-assignee'
 import type { SendPageGraderWorkDto } from '../../integrations/page-grader/dto/page-grader.dto'
 import type { PageGraderApiService } from '../../integrations/page-grader/services/page-grader-api.service'
 import type {
@@ -14,6 +15,9 @@ export async function mirrorWorkRequestFinalTask(
   task: Record<string, unknown>,
 ): Promise<WorkRequestDraftRow> {
   const attemptAt = new Date()
+  const assignee = pageGraderSendAssignee(
+    resolveWorkRequestAssigneeIdentity(draft.routing, draft.assignee_name, []),
+  )
   try {
     const result = await pageGraderApi.sendWork(
       repository.client,
@@ -31,8 +35,7 @@ export async function mirrorWorkRequestFinalTask(
         due_date: draft.due_at?.slice(0, 10),
         // Do not send source_excerpt: Portal already formats description into
         // the ClickUp body. Repeating the brief duplicated Notes/Source folder.
-        // No assignee: omit so Portal From Pagegrader assignment rules apply.
-        ...(draft.assignee_name ? { assignee: { name: draft.assignee_name } } : {}),
+        ...(assignee ? { assignee } : {}),
         note: `Finalized from ROAS Service Request ${draft.id}.`,
       },
       draft.owner_org_id,

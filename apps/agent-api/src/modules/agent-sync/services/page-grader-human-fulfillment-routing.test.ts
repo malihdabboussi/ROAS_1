@@ -20,6 +20,14 @@ const migration = readFileSync(
 )
 
 describe('Page Grader human fulfillment routing', () => {
+  it('routes multi-task Slack fulfillment through one Portal confirm link', () => {
+    for (const skill of [vibeySkill, atlasSkill]) {
+      expect(skill).toContain('page_grader_create_delegation_preview')
+      expect(skill).toContain('confirm_url')
+      expect(skill).toMatch(/[Dd]o \*\*not\*\* loop `page_grader_create_fulfillment_request`/)
+    }
+  })
+
   it('keeps named funnel owners inside Page Grader fulfillment', () => {
     expect(vibeySkill).toMatch(/use\s+Page Grader MCP even when the user names the human owner/)
     expect(vibeySkill).toContain('pass the canonical name in `assignee_name`')
@@ -84,6 +92,20 @@ describe('Page Grader human fulfillment routing', () => {
     expect(allTypesMigration).toContain("file_name = 'TOOLS.md'")
     expect(allTypesMigration).toContain(
       "RAISE EXCEPTION 'Service Request all-types intake was not persisted for both agents'",
+    )
+  })
+
+  it('persists campaign batch delegation preview on both agents', () => {
+    const previewMigration = readFileSync(
+      resolve(repoRoot, 'supabase/migrations/20260819020000_campaign_delegation_preview.sql'),
+      'utf8',
+    )
+    expect(previewMigration).toContain('## Campaign batch delegation preview')
+    expect(previewMigration).toContain('page_grader_create_delegation_preview')
+    expect(previewMigration).toContain('confirm_url')
+    expect(previewMigration).toContain("file_name = 'TOOLS.md'")
+    expect(previewMigration).toContain(
+      "RAISE EXCEPTION 'Campaign batch delegation preview was not persisted for both agents'",
     )
   })
 })

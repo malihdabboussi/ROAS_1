@@ -960,6 +960,7 @@ describe('ChatService prewarm context', () => {
       false,
       true,
       false,
+      'campaign-1',
     )
     expect(harness.runtimeSkillScope.resolveRuntimeSkillScope).toHaveBeenCalledWith(
       expect.objectContaining({ skillKeys: ['launch'] }),

@@ -13,6 +13,7 @@ import { SlackRepository } from '../repositories/slack.repository'
 import type { SlackBlock } from '../types/slack.types'
 import { SlackArchiveSearchService } from './slack-archive-search.service'
 import { searchSlackChannelHistory } from './slack-channel-history-search'
+import { searchSlackMessagesForClient } from './slack-client-scoped-search'
 
 /**
  * SlackAgentToolsService — executes agent-callable Slack actions using the Vibey bot token.
@@ -106,11 +107,53 @@ export class SlackAgentToolsService {
       sort?: 'score' | 'timestamp'
       sort_dir?: 'asc' | 'desc'
       cursor?: string
+      client_id?: string
+      client_name?: string
+      channel_ids?: string
     },
   ) {
     if (!params.query?.trim()) throw new BadRequestException('query is required')
-    const { botToken, userToken, teamId } = await this.resolveTokens(supabase, userId, orgId)
+    const tokens = await this.resolveTokens(supabase, userId, orgId)
     const count = params.count ?? 20
+    const wantsClientScope = Boolean(params.client_id || params.client_name || params.channel_ids)
+    if (!wantsClientScope || /\bin:#?[a-z0-9_-]+\b/i.test(params.query)) {
+      return this.searchMessagesOnce(supabase, userId, orgId, tokens, { ...params, count })
+    }
+    return searchSlackMessagesForClient({
+      supabase,
+      orgId,
+      params: { ...params, count },
+      searchOnce: (query) =>
+        this.searchMessagesOnce(supabase, userId, orgId, tokens, {
+          query,
+          count,
+          sort: params.sort,
+          sort_dir: params.sort_dir,
+        }),
+    })
+  }
+
+  private async searchMessagesOnce(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null | undefined,
+    tokens: { botToken: string; userToken: string | null; teamId: string | null },
+    params: {
+      query: string
+      count: number
+      sort?: 'score' | 'timestamp'
+      sort_dir?: 'asc' | 'desc'
+      cursor?: string
+    },
+  ): Promise<{
+    success: true
+    search_mode: string
+    coverage: { status: 'complete' | 'partial'; [key: string]: unknown }
+    messages?: { total?: number; matches?: unknown[] }
+    [key: string]: unknown
+  }> {
+    const { botToken, userToken, teamId } = tokens
+    const count = params.count
 
     if (userToken) {
       try {

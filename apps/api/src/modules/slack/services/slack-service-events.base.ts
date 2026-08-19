@@ -1,5 +1,11 @@
 import type { SlackBlock, SlackEventEnvelope } from '../types/slack.types'
+import {
+  buildSlackAskAssets,
+  collectInboundSlackFiles,
+  formatSlackAskAssetsBlock,
+} from './slack-ask-assets'
 import { classifySlackAskKind, formatSlackAskKindContext } from './slack-ask-kind'
+import { formatSlackClientContextBlock } from './slack-client-context'
 import { SlackConversationBase } from './slack-service-conversation.base'
 import { buildInboundSlackTurnPrompt } from './slack-turn-prompt'
 import {
@@ -10,11 +16,11 @@ import {
 import {
   CREDITS_EXHAUSTED_SLACK_MESSAGE,
   GENERIC_SLACK_AGENT_ERROR_MESSAGE,
+  isSlackDirectConversation,
   MACHINE_NOT_READY_SLACK_MESSAGE,
   MACHINE_UNREACHABLE_SLACK_MESSAGE,
   MACHINE_WAKE_START_SLACK_MESSAGE,
   SLACK_AGENT_STREAM_TIMEOUT_MS,
-  isSlackDirectConversation,
 } from './slack-service.shared'
 
 export type SlackAgentTurn = {
@@ -167,11 +173,12 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     accessToken = await this.userSessionMint.mintAccessToken(userId)
 
     let fullMessage = text
+    const inboundFiles = collectInboundSlackFiles(event)
     const documents = await this.resolveInboundSlackFiles(
       botToken,
       userId,
       channelOrgId ?? null,
-      event.files,
+      inboundFiles,
     )
     const currentStamp = channelOrgId
       ? await this.resolveSlackAskClientStamp(serviceSupabase, {
@@ -181,7 +188,16 @@ export abstract class SlackEventsBase extends SlackConversationBase {
           botToken,
         }).catch(() => null)
       : null
-    const forwardedContext = await this.buildForwardedMessageContext(
+    const clientBundle = channelOrgId
+      ? await this.resolveSlackClientBundle(serviceSupabase, {
+          orgId: channelOrgId,
+          slackTeamId: teamId,
+          botToken,
+          stamp: currentStamp,
+          text,
+        }).catch(() => null)
+      : null
+    const forwarded = await this.buildForwardedMessageContext(
       serviceSupabase,
       userId,
       botToken,
@@ -189,6 +205,9 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       event.attachments,
       { orgId: channelOrgId, slackTeamId: teamId },
     )
+    const forwardedContext = forwarded.context
+    const campaignId =
+      currentStamp?.roasCampaignId ?? forwarded.campaignId ?? clientBundle?.campaigns[0]?.id ?? null
     const thread = event.thread_ts
       ? await this.buildSlackThreadReply(botToken, channelId, event.thread_ts, event.ts).catch(
           (error) => {
@@ -210,10 +229,20 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       threadContext: thread.context,
       threadParentIsPixel: thread.parentIsPixel,
       isDirectMessage: isSlackDirectConversation(event.channel_type, channelId),
-      fileContext: hasFiles && documents.length === 0 ? this.buildFileContext(event.files!) : undefined,
+      fileContext:
+        inboundFiles.length > 0 && documents.length === 0
+          ? this.buildFileContext(inboundFiles)
+          : undefined,
       hasDocuments: documents.length > 0,
+      clientContextBlock: clientBundle ? formatSlackClientContextBlock(clientBundle) : undefined,
+      namedClientId: clientBundle?.clientId ?? null,
     })
     fullMessage = prompt.fullMessage
+    const assetsBlock = formatSlackAskAssetsBlock(
+      buildSlackAskAssets({ documents, texts: [text, forwardedContext] }),
+      { sourcePermalink: forwardedContext.match(/^Source: (\S+)/m)?.[1] ?? null },
+    )
+    if (assetsBlock) fullMessage = `${fullMessage}\n\n${assetsBlock}`
     const askKind = prompt.askKind
     const clientSource = prompt.clientSource
 
@@ -241,6 +270,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       },
       orgId: channelOrgId ?? null,
       documents: documents.length > 0 ? documents : undefined,
+      campaignId,
       turn: {
         askKind: askKind.kind,
         kindSignals: askKind.signals,
@@ -299,9 +329,9 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       fallback.botToken,
       fallback.userId,
       fallback.orgId,
-      event.files,
+      collectInboundSlackFiles(event),
     )
-    const forwardedContext = await this.buildForwardedMessageContext(
+    const forwarded = await this.buildForwardedMessageContext(
       serviceSupabase,
       fallback.userId,
       fallback.botToken,
@@ -309,20 +339,29 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       event.attachments,
       { orgId: fallback.orgId, slackTeamId: teamId },
     )
+    const forwardedContext = forwarded.context
 
-    const channelContext = await this.buildChannelContext(
+    const channel = await this.buildChannelContext(
       serviceSupabase,
       fallback.userId,
       fallback.botToken,
       channelId,
-      { orgId: fallback.orgId, slackTeamId: teamId },
+      { orgId: fallback.orgId, slackTeamId: teamId, text },
     ).catch((err) => {
       this.logger.warn(`Failed to build channel context: ${err}`)
-      return ''
+      return { context: '', stampCampaignId: null, bundleCampaignId: null }
     })
+    const channelContext = channel.context
+    const campaignId = channel.stampCampaignId ?? forwarded.campaignId ?? channel.bundleCampaignId
 
     const attachmentText = forwardedContext ? `${text}\n\n${forwardedContext}`.trim() : text
-    const mentionText = attachmentText || (documents.length > 0 ? '[User sent a file]' : '')
+    const assetsBlock = formatSlackAskAssetsBlock(
+      buildSlackAskAssets({ documents, texts: [text, forwardedContext] }),
+      { sourcePermalink: forwardedContext.match(/^Source: (\S+)/m)?.[1] ?? null },
+    )
+    const mentionText = (
+      assetsBlock ? `${attachmentText}\n\n${assetsBlock}`.trim() : attachmentText
+    ) || (documents.length > 0 ? '[User sent a file]' : '')
     const thread = event.thread_ts
       ? await this.buildSlackThreadReply(
           fallback.botToken,
@@ -366,6 +405,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       },
       orgId: fallback.orgId,
       documents: documents.length > 0 ? documents : undefined,
+      campaignId,
       turn: {
         askKind: askKind.kind,
         kindSignals: askKind.signals,
@@ -403,6 +443,8 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       mimeType?: string
       text?: string
     }>
+    /** Client campaign resolved for this ask; binds the conversation's CONNECTIONS (§11.2). */
+    campaignId?: string | null
     /** N0 stamp + client resolution for this turn; drives `slack_pixel_turns`. */
     turn?: SlackTurnSeed
   }): Promise<void> {
@@ -439,6 +481,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
         params.orgId,
         params.channelUser,
         params.documents,
+        params.campaignId,
       )
       const response = turnResult?.content ?? null
       this.logger.log(
@@ -525,6 +568,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       mimeType?: string
       text?: string
     }>,
+    campaignId?: string | null,
   ): Promise<SlackAgentTurn | null> {
     this.logger.log(
       `[TRACE] routeToAgent START: userId=${userId} agentKey=${agentKey} team=${slackTeamId} channel=${slackChannelId}`,
@@ -565,6 +609,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       org_id: orgId ?? null,
       ...(channelUser ? { channel_user: channelUser } : {}),
       ...(documents && documents.length > 0 ? { documents } : {}),
+      ...(campaignId ? { campaign_id: campaignId } : {}),
     })
     this.logger.log(`[TRACE] routeToAgent FETCH_START: payload_len=${chatPayload.length}`)
     const response = await this.userAgentApi.invoke(

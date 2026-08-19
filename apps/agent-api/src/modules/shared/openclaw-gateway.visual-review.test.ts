@@ -79,6 +79,18 @@ describe('OpenClawGatewayService visual review policy', () => {
     expect(deny).toContain('exec')
   })
 
+  it("enables browser for the org's Pixel (agent_key vibey) — same runtime on Slack and in the app", async () => {
+    const deny = await ensureScopedAgent({
+      agentKey: 'vibey',
+      name: 'Pixel',
+      role: 'CEO',
+      skills: ['vibey-api', 'page-grader-operator'],
+    })
+
+    expect(deny).not.toContain('browser')
+    expect(deny).toContain('exec')
+  })
+
   it('enables browser review for a trained custom designer role', async () => {
     const deny = await ensureScopedAgent({
       agentKey: 'creative-director',
@@ -106,6 +118,7 @@ describe('OpenClawGatewayService visual review policy', () => {
     const deny = await ensureScopedAgent({
       agentKey: 'ivy',
       name: 'Ivy',
+      role: 'Senior Conversion Copywriter',
       skills: ['funnel-site-design', 'vibey-api'],
     })
 

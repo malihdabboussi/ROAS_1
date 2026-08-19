@@ -18,6 +18,8 @@ export type WorkRequestSpaceOption = {
 export type WorkRequestTeamMemberOption = {
   id: string
   name: string
+  email?: string | null
+  source?: 'portal' | 'org'
 }
 
 export function publicWorkRequestOptions(options: {
@@ -32,7 +34,12 @@ export function publicWorkRequestOptions(options: {
       name,
       client_workspace_id: clientWorkspaceId,
     })),
-    team_members: (options.teamMembers ?? []).map(({ id, name }) => ({ id, name })),
+    team_members: (options.teamMembers ?? []).map(({ id, name, email, source }) => ({
+      id,
+      name,
+      email: email ?? null,
+      source: source ?? 'org',
+    })),
   }
 }
 
@@ -151,6 +158,30 @@ export function schemaData(value: unknown) {
     page_grader_client_id: stringValue(custom.page_grader_client_id),
     page_grader_campaign_id: stringValue(custom.page_grader_campaign_id),
   }
+}
+
+export function computeWorkRequestMissingFields(draft: WorkRequestDraftRow): string[] {
+  const routing = asRecord(draft.routing)
+  const values: Record<string, unknown> = {
+    ...asRecord(draft.structured_fields),
+    title: draft.title,
+    description: draft.description,
+    due_date: draft.due_at,
+    priority: draft.priority,
+    campaign_space_id: draft.campaign_space_id,
+    general_space_id: routing.general_space_id,
+    assets: draft.assets,
+    dependencies: draft.dependencies,
+    links: asRecord(draft.structured_fields).links,
+  }
+  const missing = draft.required_fields.filter((field) => isMissing(values[field]))
+  if (routing.work_scope === 'campaign' && !draft.campaign_space_id) {
+    missing.push('campaign_space_id')
+  }
+  if (routing.work_scope !== 'campaign' && isMissing(routing.general_space_id)) {
+    missing.push('general_space_id')
+  }
+  return [...new Set(missing)]
 }
 
 export function isMissing(value: unknown): boolean {

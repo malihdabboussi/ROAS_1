@@ -10,6 +10,18 @@ Needed work: When Pixel starts a browser QC session, open the latest screenshot 
 
 Reason not done now: The reported failure was Pixel never opening a browser at all. The right-rail pane is a separate UI job and would not have shown anything until the tool was allowed.
 
+## 2026-08-18 - [ARCH] DueDateCell remains over the LOC cap
+
+Status: Open
+
+Found while: Adding ClickUp-style Service Request due-date presets and Portal assignee identity
+
+Evidence: `wc -l` on `apps/web/src/components/spaces/cells/DueDateCell.tsx` is still 664 (component cap 400). `work-request.service.ts` is now 586 after extracting assignee + missing-field helpers.
+
+Needed work: Split DueDateCell trigger vs popover panel.
+
+Reason not done now: The requested work was the date-step UX and Portal/ClickUp assignment. The date-cell shell is pre-existing debt.
+
 ## 2026-08-17 - [FIX] Forked chats do not copy conversation_documents
 
 Status: Open
@@ -39439,12 +39451,31 @@ Needed work: Name a mission at creation from its run context — playbook plus c
 
 Reason not done now: The panel change mitigates this in the UI with a timestamp under each row, but the fix belongs in mission creation, which is worker/API work outside a chat-panel branch.
 
+## 2026-08-18 - [ARCH] slack-agent-tools.service.ts near the 600 LOC limit
+- Feature/app: Slack Pixel · apps/api
+- File: `apps/api/src/modules/slack/services/slack-agent-tools.service.ts` (595 LOC after extracting `slack-client-scoped-search.ts`)
+- Evidence: was 552 before the client-scope work; the search-once refactor added ~40 lines.
+- Needed: move `searchMessagesOnce` + `searchFiles` into a `slack-message-search.service.ts` (or make `SlackArchiveSearchService` own the ladder) so the tools service is a thin dispatcher.
+- Why not now: out of scope for §11.11; the file is under limit.
+
+## 2026-08-18 - [FEATURE] Client Context Bundle: Drive folder + recent Fathom meetings
+- Feature/app: Slack Pixel · apps/api
+- File: `apps/api/src/modules/slack/services/slack-client-context.ts`
+- Evidence: plan §11.11 lists Drive folder and recent meetings in the bundle; v1 ships channels/campaigns/brains/spaces only (no reliable client→Drive folder source yet; meetings need the Fathom dual-write from PR #316 to land first).
+- Needed: add `drive_folder` once a canonical client→folder mapping exists; add last 3 Fathom meeting titles/dates from the Campaign Brain after #316 deploys.
+
+## 2026-08-18 - [FEATURE] SR assets: Drive-folder copy + long-lived storage + Portal /work attachments
+- Feature/app: Service Requests · apps/api
+- Files: `apps/api/src/modules/slack/repositories/slack-runtime.repository.ts` (`campaigns` bucket, 365-day signed URL), `apps/api/src/modules/work-requests/services/work-request-mirror.ts`, Portal `/work` contract
+- Evidence: §11.12 #2 asks for re-hosted files to also land in the client's Drive folder; no client→Drive-folder mapping exists yet. Signed URLs expire after a year; the Portal `/work` body has no `attachments` field, so assets ride in the description only.
+- Needed: (a) client Drive folder mapping + copy on SR create; (b) decide bucket/lifetime for SR assets; (c) `attachments[]` on Portal `/work` and forward `draft.assets` from the mirror.
+- Why not now: out of scope for the §11.10 first step; description path is the provable one today.
 ## 2026-08-18 — slack-service-events.base.ts over the 600 LOC service limit
 - Feature/app: `apps/api` Slack Pixel inbound
-- File: `apps/api/src/modules/slack/services/slack-service-events.base.ts` (633 → 689 after N0 stamp + telemetry; was already over 600)
-- Evidence: two near-duplicate handlers (`handleMessageEvent`, `handleAppMentionEvent`) each assemble prompt/context inline.
+- File: `apps/api/src/modules/slack/services/slack-service-events.base.ts` (633 → 689 after N0; 699 after keeping #318 Client Context Bundle with #317 stamp)
+- Evidence: two near-duplicate handlers (`handleMessageEvent`, `handleAppMentionEvent`) each assemble prompt/context inline. `wc -l` is 699 after the #317+#318 keep-both merge.
 - Needed: route `handleAppMentionEvent` through `buildInboundSlackTurnPrompt` (it still builds its own `channelContext` string) and lift the shared "resolve stamp → forwarded → thread → prompt → processAndReply" sequence into one method; then the base file drops well under 600.
-- Why not now: the mention path composes a different context block (`buildChannelContext`); merging it safely needs its own scenario fixtures. Telemetry recorder and prompt assembly were already extracted in this change.
+- Why not now: merging #318 onto #317 required keeping both the turn/telemetry path and the client bundle; extracting the shared handler is still the right split but is not required to land §11.11.
 
 ## 2026-08-18 — slack_pixel_turns: tokens per turn
 - File: `apps/api/src/modules/slack/services/slack-turn-telemetry.ts`
@@ -39465,3 +39496,4 @@ Reason not done now: The panel change mitigates this in the UI with a timestamp 
 - Evidence: largest prod brain has 3.1k memories; full payload was 5.4 MB (over serverless cap). Fixed by clamping to 2,000 nodes + slim projection (2.99 MB).
 - Needed: cursor pagination (or server-side clustering) if anyone needs more than 2,000 memory nodes rendered at once. Also consider a `?fields=` projection so the graph never ships full memory records.
 - Why not now: the cap unblocks the 500 and is bounded; nobody can read 3k nodes on the canvas; pagination touches the store's SWR snapshot logic and deserves its own change.
+

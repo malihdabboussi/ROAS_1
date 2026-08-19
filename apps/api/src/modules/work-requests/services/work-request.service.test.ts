@@ -368,6 +368,84 @@ describe('WorkRequestService', () => {
     expect(payload).not.toHaveProperty('campaign_id')
   })
 
+  it('sends Portal user id and email so ClickUp assignment is not name-only', async () => {
+    const portalUserId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+    const reviewDraft = draft({ assignee_name: 'rafay@roas.co' })
+    const finalDraft = draft({
+      status: 'finalized',
+      final_space_item_id: '77777777-7777-7777-7777-777777777777',
+      review_token_used_at: '2026-08-16T12:00:00.000Z',
+      sync_status: 'sync_pending',
+      assignee_name: 'rafay@roas.co',
+    })
+    const { service, scope, pageGraderApi } = createService({
+      findByTokenHash: vi.fn().mockResolvedValue(reviewDraft),
+      findSpace: vi.fn().mockResolvedValue({
+        id: '66666666-6666-6666-6666-666666666666',
+        campaign_id: '44444444-4444-4444-4444-444444444444',
+        user_id: '22222222-2222-2222-2222-222222222222',
+        org_id: '33333333-3333-3333-3333-333333333333',
+        deleted_at: null,
+        schema: {
+          custom_data: {
+            space_role: 'general',
+            page_grader_client_id: '55555555-5555-5555-5555-555555555555',
+          },
+        },
+      }),
+      finalize: vi.fn().mockResolvedValue({
+        draft: finalDraft,
+        task: {
+          id: '77777777-7777-7777-7777-777777777777',
+          space_id: '66666666-6666-6666-6666-666666666666',
+        },
+      }),
+      update: vi
+        .fn()
+        .mockImplementation((_id, values) => Promise.resolve({ ...finalDraft, ...values })),
+      resolveOrgAssigneeByName: vi.fn().mockResolvedValue(null),
+    })
+    scope.loadScopedOptions.mockResolvedValue({
+      clients: [],
+      spaces: [],
+      teamMembers: [
+        {
+          id: portalUserId,
+          name: 'Rafay',
+          email: 'rafay@roas.co',
+          source: 'portal',
+        },
+      ],
+    })
+    pageGraderApi.sendWork.mockResolvedValue({
+      success: true,
+      results: [
+        {
+          space_item_id: '77777777-7777-7777-7777-777777777777',
+          status: 'created',
+          clickup_task_id: 'cu-1',
+          clickup_task_url: 'https://app.clickup.com/t/cu-1',
+        },
+      ],
+    })
+
+    await service.finalizeReview(TOKEN)
+
+    expect(pageGraderApi.sendWork).toHaveBeenCalledWith(
+      expect.anything(),
+      finalDraft.owner_user_id,
+      expect.objectContaining({
+        assignee: {
+          page_grader_user_id: portalUserId,
+          email: 'rafay@roas.co',
+          name: 'Rafay',
+        },
+      }),
+      finalDraft.owner_org_id,
+      'owner',
+    )
+  })
+
   it('mirrors the selected Portal campaign on finalize', async () => {
     const campaignId = '99999999-9999-9999-9999-999999999999'
     const campaignDraft = draft({
@@ -505,6 +583,70 @@ describe('WorkRequestService', () => {
         campaign_space_id: '88888888-8888-8888-8888-888888888888',
         page_grader_external_campaign_id: '99999999-9999-9999-9999-999999999999',
       }),
+    )
+  })
+
+  it('writes direct asset links + source thread into the draft description (§11.10)', async () => {
+    const { service, repository, scope } = createService()
+    scope.resolveIntakeScope.mockResolvedValue({
+      mapping: {
+        userId: '22222222-2222-2222-2222-222222222222',
+        orgId: '33333333-3333-3333-3333-333333333333',
+        clientId: '55555555-5555-5555-5555-555555555555',
+        entry: { campaign_id: '44444444-4444-4444-4444-444444444444', space_id: '6666' },
+      },
+      ownerOrgId: '33333333-3333-3333-3333-333333333333',
+      generalSpace: { id: '66666666-6666-6666-6666-666666666666' },
+      campaignSpace: null,
+    })
+    repository.findByIdempotency.mockResolvedValue(null)
+    repository.create.mockImplementation((values) =>
+      Promise.resolve(draft({ ...(values as Partial<WorkRequestDraftRow>) })),
+    )
+
+    await service.createFromPageGrader('signed-secret', {
+      client_id: '55555555-5555-5555-5555-555555555555',
+      client_name: 'Christian Osgood',
+      request_type: 'design',
+      assignee_name: 'Rafay',
+      title: 'Rebuild MFS Elite PDF',
+      description: 'Rebuild the MFS Elite deck from the source PDF.',
+      priority: 'medium',
+      structured_fields: {},
+      required_fields: [],
+      assets: [
+        {
+          name: 'MFS_Elite.pdf',
+          url: 'https://storage.roas.io/campaigns/u1/slack/abc-MFS_Elite.pdf?token=x',
+          kind: 'pdf',
+        },
+        {
+          name: 'google drive',
+          url: 'https://drive.google.com/drive/folders/xyz',
+          kind: 'google_drive',
+        },
+      ],
+      dependencies: [],
+      provenance: {
+        source: 'slack',
+        source_url: 'https://roas.slack.com/archives/C07JDT099AL/p1723600000000100',
+      },
+      requester: {},
+      work_scope: 'general',
+      idempotency_key: 'event-assets-1',
+    })
+
+    const created = repository.create.mock.calls[0][0] as { description: string }
+    expect(created.description).toBe(
+      [
+        'Rebuild the MFS Elite deck from the source PDF.',
+        '',
+        'Assets:',
+        '- MFS_Elite.pdf (pdf): https://storage.roas.io/campaigns/u1/slack/abc-MFS_Elite.pdf?token=x',
+        '- google drive (google_drive): https://drive.google.com/drive/folders/xyz',
+        '',
+        'Source thread: https://roas.slack.com/archives/C07JDT099AL/p1723600000000100',
+      ].join('\n'),
     )
   })
 

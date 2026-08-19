@@ -7,6 +7,13 @@ Why: The Aug 14 click-through work allowed browser on the library `pixel` key. C
 Impact: After agent-api deploy + Pixel workspace sync, a QC like "check this funnel on mobile and desktop" should open the live URL, screenshot both viewports, and show the browser preview in chat. A dedicated right-rail live browser pane is still not built.
 Files: `openclaw-gateway.service.ts`, `openclaw-gateway.visual-review.test.ts`, `platform-tools-template.ts`, `pixel-live-page-clickthrough.test.ts`, `docker/openclaw.json`, `20260819014500_pixel_vibey_browser_qc.sql`, `website-artifacts.md`
 
+## [2026-08-18 21:53] - [FIX]
+What: Service Request due dates use ClickUp-style presets (Today / Later / Tomorrow / weekends / weeks) beside the calendar. Assignee picks keep The ROAS Portal user id and email through finalize so Portal/ClickUp get a real assignment, not a name pasted into the notes.
+Why: The date step was calendar-only. The dropdown stored `member.name` and dropped Portal id/email, so `rafay@roas.co` never mapped to a Portal user or ROAS org profile and ClickUp stayed unassigned.
+Impact: One-click due dates. Picking a Portal teammate (or typing their email) assigns the ROAS task when the person is in the org and sends `page_grader_user_id` + email to Portal/ClickUp.
+Files: `WorkRequestChatFlowInputs.tsx`, `date-presets.ts`, `work-request-assignee.ts`, `work-request-mirror.ts`, `work-request.service.ts`, `work-request-chat-steps.ts`, `documentation/features/page-grader-mcp-bridge.md`
+
+
 ## [2026-08-18 21:48] - [FIX]
 What: Unblocked Vercel `roas-web` typecheck after #308/#309. Calendar materialize now calls `cachedFetch(key, fetcher, { ttlMs })`. Removed unused `SpaceItem` import. Test fixtures use `as unknown as Space`.
 Why: `next build` typechecks `apps/web`. The one-room hook passed TTL as the fetcher argument, so agenda events never typed and the cache never actually TTL'd. Incomplete Space casts failed after adding `schema.custom_data`.
@@ -25,16 +32,40 @@ Why: The original ask included auditing real client channel traffic and a nightl
 Impact: Read-only; harness live mode requires the operator token and explicit go-ahead.
 Files: .docs/reports/pixel-slack-live-audit-2026-08-18.md, scripts/roas/pixel-slack-harness/fixtures.json, scripts/roas/pixel-slack-harness/run.mjs
 
+## [2026-08-18 19:29] - [FIX]
+What: Client Context Bundle from a referenced channel in DMs. `resolveSlackClientBundle` now treats a Slack channel reference in the ask text (`<#C0B5MKP7Y30>` / `<#C…|name>`) as authoritative: it stamps that channel and builds the bundle from it before falling back to client-name candidates.
+Why: Live audit (30d, 228 Pixel asks): "prepping for call with <#C…>", "peep the client channel <#C…>", "catch me up on client <#C…>" were the second most common client-ask shape and resolved to nothing.
+Impact: DM asks that point at a client channel get the client's channels/brain/campaign context and bind CONNECTIONS.
+Files: apps/api/src/modules/slack/services/slack-service-auth.base.ts, __tests__/slack-ask-context.test.ts
+
+
+## [2026-08-18 19:25] - [FEATURE]
+What: Pixel operator skill kit (plan §11.4). (1) OpenClaw gateway keeps the `browser` tool for the org's Pixel (agent_key `vibey`) — the earlier "Pixel click-through" allowance targeted the library designer key `pixel`, so real Pixel (app and Slack, same runtime) was always denied. (2) New system skill `client-weekly-update` for vibey (bind → retrieve ladder → draft in voice → ask once → post). (3) TOOLS.md (vibey + pixel) gains "Launch briefs and browser QC": Pixel owns the Slack ask and delegates the write-up to the strategist via `ask_agent` (nate); browser QC must actually open the page or say it could not.
+Why: Prod audit: global vibey skills already include page-grader-operator, post-call-delivery, slack-signal-operator, dylans-super-voice (enabled, no denies) — the missing pieces were the browser denial and the weekly-update mode; §11.12 #3 requires Slack Pixel = app Pixel.
+Impact: Slack Pixel can click through funnels; Monday client updates have a repeatable process; launch briefs never bounce.
+Files: apps/agent-api/src/modules/shared/services/openclaw-gateway.service.ts, apps/agent-api/src/modules/shared/openclaw-gateway.visual-review.test.ts, supabase/migrations/20260818234500_pixel_operator_skill_kit.sql
 ## [2026-08-18 19:15] - [FIX]
 What: QC / Launch case ledger for personal Page Grader connections (plan §11.5). `PageGraderQcSlackBridgeService` now resolves the org for a connection whose `user_integrations.org_id` is NULL (`resolveQcConnectionOrg`: connection org → org of the finding's ROAS campaign (scope map) → the user's single active `org_members` row) before recording cases and choosing the Slack delivery anchor.
 Why: Prod audit (read-only, 2026-08-18): the only Page Grader connection is personal (`org_id NULL`). Because every ledger/anchor call was gated on `connection.orgId`, ROAS has **zero** `page_grader_qc` cases ever, while the ROAS bot posted 53 "Launch Agent Check-in" DMs in 7 days and dozens of QC posts — the measure-once/follow-up dedup shipped in PR 288 could never engage. The QC producer is fine; the ledger was silently disabled.
 Impact: QC/Launch findings land in `agent_cases` (quality_control / proactive_launch / campaign_quality_control), Launch check-ins dedupe into one thread per client, follow-ups thread instead of repeating.
 Files: apps/api/src/modules/integrations/page-grader/services/page-grader-qc-slack-bridge.service.ts, page-grader-qc-connection-org.ts, tests
+## [2026-08-18 19:10] - [FEATURE]
+What: CONNECTIONS bind from Slack + Campaign Brain preload (plan §11.2). apps/api: the ask context now returns the campaign ids it resolved (channel stamp → authoritative; quoted forwarded channel; client named in a DM) and `routeToAgent` sends `campaign_id` on `/api/channel-chat`. agent-api: `channel-chat` binds `conversations.campaign_id` before the turn (`bindChannelConversationCampaign`: rejects General / other org / unknown), and `buildFullContext` gains a campaign lane — when the chat is bound to a real client campaign, its Campaign Brain is preloaded (`CAMPAIGN BRAIN (<client>) — Retrieved Context:`, same 20-result limit, placed before the User Brain). Extracted turn-status labels to `chat-turn-gateway-labels.ts` to keep the gateway prep under 600 LOC.
+Why: A bound chat was one Terra tool-choice away from "I couldn't find it": the preload excluded campaign brains, and Slack asks never bound CONNECTIONS unless the model typed a client name into a tool call.
+Impact: "what were their last webinar stats" in a bound chat hits the Campaign Brain before any User Brain call; Slack asks in client channels / quoting client threads / naming a client are bound at turn start.
+Files: apps/api slack-service-{auth,conversation,events}.base.ts; apps/agent-api brain/services/campaign-brain-preload.ts, brain-context.service.ts, chat/controllers/channel-chat.controller.ts, chat/services/channel-chat-campaign-bind.ts, chat-turn-gateway-preparation.service.ts, chat-turn-gateway-labels.ts; tests
+
 ## [2026-08-18 18:55] - [FIX]
 What: Declared `fieldRowVariant` on All Meetings `ClientCampaignCell` so SpaceCell can pass the shared kanban/default row variant.
 Why: #304 used `fieldRowVariant` in the cell and forwarded it from `SpaceCell`, but the props type omitted it. `next build` typecheck failed every `roas-web` deploy.
 Impact: `pnpm --filter @vibey/web typecheck` passes so `app.roas.io` can ship #304/#305.
 Files: `ClientCampaignCell.tsx`
+
+## [2026-08-18 18:55] - [FEATURE]
+What: Direct asset links on Service Requests (plan §11.10). (1) Slack inbound: files inside forwarded unfurls are collected (`collectInboundSlackFiles`) and re-hosted like message files; a deterministic `[Assets]` block lists every re-hosted file URL and every Drive/Docs/Figma/Loom/… link from the message + forwarded text (Slack permalinks excluded, kept as "Source thread (provenance only)") with the rule to pass them as `source_context.assets` and under an "Assets" heading in the description. (2) Work requests: `appendAssetsToDescription` writes assets + source thread into the draft description at create and on review edits — the one field that reaches the finalized task and the ClickUp body. (3) agent-api uploaded-document context now prints `source_url` for text documents. (4) Migration patches `page-grader-operator` (vibey/atlas/pixel) + TOOLS.md (vibey/pixel) with the assets rule.
+Why: MFS_Elite.pdf incident — the ClickUp task carried only a Slack archive URL, which the assignee could not open. Slack files were already re-hosted, but the URL never reached the SR.
+Impact: SRs/ClickUp tasks carry openable asset links; Slack thread stays as provenance.
+Files: apps/api/src/modules/slack/services/slack-ask-assets.ts, slack-service-events.base.ts, apps/api/src/modules/slack/types/slack.types.ts, apps/api/src/modules/work-requests/services/work-request-assets.ts, work-request.service.ts, apps/agent-api/src/modules/chat/utils/uploaded-document-context.ts, supabase/migrations/20260818233000_service_request_direct_assets.sql, tests
 
 ## [2026-08-18 18:46] - [DOCS]
 What: Wrote the Meetings one-room plan: one All Meetings row per call, two doors (standard task card vs specialized meeting card), Live/Completed/No Show/Rescheduled only, related calls so Pixel can read last week’s recording without Recordings +.
@@ -42,6 +73,16 @@ Why: Calendar, All Meetings, and the meeting workspace were three homes. Agenda 
 Impact: Implementation waits for approval. Mapping PR stays separate. Phase order is materialize rows → status/host/filter → two doors → related calls + Pixel context → both post-call automatics → card/tab cleanup.
 Files: `.docs/plans/meetings-one-room-2026-08-18.md`
 
+## [2026-08-18 18:44] - [FIX]
+What: N1 quote inherit (plan §11.6). Forwarded Slack unfurls now parse thread-reply footers ("From a thread in #chan", "Shared from #chan"), keep `channelName` and `threadTs` (from `?thread_ts=`), resolve a footer-only channel name to its id via `slack_observation_channels` (fallback: bot conversation list), and stamp the *quoted* channel's client with a `[Quoted message identity]` block (identity + Client Context Bundle, "inherit its client, do not ask") plus the forwarded thread's messages as `[Forwarded thread context]`. Forwards inside the same client channel no longer restamp/reload.
+Why: 1DS incident — a thread reply forwarded from #roas-1ds-collective-llc-939 arrived with no channel id, so Pixel asked "Andy or Krista?" instead of inheriting the client from the quoted channel and thread.
+Impact: Any forwarded client message resolves the client deterministically; Pixel sees the whole quoted thread.
+Files: apps/api/src/modules/slack/services/slack-forwarded-message-context.ts, slack-service-conversation.base.ts, tests (__tests__/slack-forwarded-message-context.test.ts, slack-forwarded-thread-identity.test.ts)
+## [2026-08-18 18:40] - [FEATURE]
+What: Client Context Bundle for Slack Pixel (plan §11.11). New `slack-client-context.ts` resolves client → {portal client, ROAS campaigns, Campaign Brain ids, mapped Slack channels, Spaces} from `slack_brain_mappings` + `slack_observation_events` metadata + campaigns/ns_brains/spaces. `buildSlackAskContext` injects `[Client context]` after the channel identity stamp (client channels) or from a client named in the DM text. `SLACK_SEARCH_MESSAGES` gains `client_id` / `client_name` / `channel_ids`: search is scoped to the client's channels (per-channel `in:` needle, merged results, per-channel coverage, `client_context` in the response) and never widens to the whole workspace; unresolved clients return an `agent_instruction` instead of "absent".
+Why: Yasir DM incident — the Aug 6 webinar stats existed in #roas-yasir-khan-coaching-ltd-955 and the Campaign Brain, but Pixel had no way to go from "Yasir" to that channel and answered "channel unknown". This fixes the class: any client ask now carries the channel list, and Slack retrieval can be scoped by client id.
+Impact: Slack Pixel names the client channel and searches it; new migration updates the SLACK_SEARCH_MESSAGES capability description/params.
+Files: apps/api/src/modules/slack/services/slack-client-context.ts, slack-client-scoped-search.ts, slack-agent-tools.service.ts, slack-service-auth.base.ts, slack-service-events.base.ts, apps/api/src/modules/slack/dto/slack.dto.ts, apps/api/src/modules/composio/services/slack-legacy-capabilities.partial.ts, supabase/migrations/20260818230000_slack_search_client_scope.sql, tests (__tests__/slack-client-context.test.ts, slack-ask-context.test.ts, supabase-query-mock.ts, slack-agent-tools.service.test.ts)
 ## [2026-08-18 18:27] - [FEATURE]
 What: N0 ask-kind stamp + per-turn telemetry for Slack Pixel. `slack-ask-kind.ts` classifies each inbound turn (continuation/client/team/general/unclear) from cheap signals; `slack-turn-prompt.ts` assembles the prompt with `[Ask kind]` first and softens the channel identity on general asks; `slack-turn-telemetry.ts` + `slack_pixel_turns` migration record kind, client source, ordered tool calls (captured from the agent SSE stream), duration, outcome, and a forbidden-ask flag. `routeToAgent` now returns a turn (content + tool events + conversation id).
 Why: TOOLS.md holds the ladders but cannot force order; "what's on my task list" in a client channel was nudged toward Portal, and nothing measured whether Pixel looked deep enough. North Star §11.0.

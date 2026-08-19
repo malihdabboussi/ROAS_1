@@ -5,12 +5,41 @@ import {
   formatSlackAskIdentityContext,
   type SlackAskClientStamp,
 } from './slack-ask-identity-context'
+import {
+  extractClientNameCandidates,
+  formatSlackClientContextBlock,
+  resolveSlackClientContext,
+  type SlackClientContextBundle,
+} from './slack-client-context'
 import { SlackServiceBase } from './slack-service.base'
 import {
   SUPABASE_USER_ACCESS_TOKEN_KEY,
   SUPABASE_USER_REFRESH_TOKEN_KEY,
   type OAuthStatePayload,
 } from './slack-service.shared'
+
+export type SlackAskContextInput = {
+  orgId: string
+  slackTeamId: string
+  channelId: string
+  botToken?: string
+  channelNameHint?: string | null
+  text?: string | null
+}
+
+export type SlackAskContextResult = {
+  text: string
+  /** Campaign mapped to the asking channel (authoritative). */
+  stampCampaignId: string | null
+  /** Campaign resolved from a client named in the message (DMs). */
+  bundleCampaignId: string | null
+}
+
+export type SlackChannelContextResult = {
+  context: string
+  stampCampaignId: string | null
+  bundleCampaignId: string | null
+}
 
 export abstract class SlackAuthBase extends SlackServiceBase {
   protected async getChannelAccessToken(
@@ -320,29 +349,35 @@ export abstract class SlackAuthBase extends SlackServiceBase {
     userId: string,
     botToken: string,
     channelId: string,
-    identity?: { orgId?: string | null; slackTeamId?: string | null },
-  ): Promise<string> {
+    identity?: { orgId?: string | null; slackTeamId?: string | null; text?: string | null },
+  ): Promise<SlackChannelContextResult> {
     const sections: string[] = []
+    let stampCampaignId: string | null = null
+    let bundleCampaignId: string | null = null
     if (identity?.orgId && identity.slackTeamId) {
-      const identityBlock = await this.buildSlackAskIdentityBlock(supabase, {
+      const askContext = await this.resolveSlackAskContext(supabase, {
         orgId: identity.orgId,
         slackTeamId: identity.slackTeamId,
         channelId,
         botToken,
+        text: identity.text ?? null,
       }).catch((error) => {
         this.logger.warn(
           `Failed to build Slack channel identity: ${
             error instanceof Error ? error.message : String(error)
           }`,
         )
-        return ''
+        return null
       })
-      if (identityBlock) sections.push(identityBlock)
+      if (askContext?.text) sections.push(askContext.text)
+      stampCampaignId = askContext?.stampCampaignId ?? null
+      bundleCampaignId = askContext?.bundleCampaignId ?? null
     }
+    const result = (context: string) => ({ context, stampCampaignId, bundleCampaignId })
 
     const messages = await this.slackApi.getChannelHistory(botToken, channelId, 10)
     const relevant = messages.filter((m) => !m.bot_id && m.text).reverse()
-    if (relevant.length === 0) return sections.join('\n\n')
+    if (relevant.length === 0) return result(sections.join('\n\n'))
 
     const userIds = [...new Set(relevant.map((m) => m.user).filter(Boolean))] as string[]
     const nameMap = new Map<string, string>()
@@ -365,7 +400,7 @@ export abstract class SlackAuthBase extends SlackServiceBase {
       lines.push(`@${name}: ${cleanText}`)
     }
     sections.push(lines.join('\n'))
-    return sections.join('\n\n')
+    return result(sections.join('\n\n'))
   }
 
   protected async buildSlackAskIdentityBlock(
@@ -381,6 +416,96 @@ export abstract class SlackAuthBase extends SlackServiceBase {
     const stamp = await this.resolveSlackAskClientStamp(supabase, input)
     if (!stamp) return ''
     return formatSlackAskIdentityContext(stamp)
+  }
+
+  /**
+   * Identity stamp + Client Context Bundle for one inbound ask. The bundle is
+   * resolved from the channel's client when the channel is a client channel, or
+   * from a client named in the message when it is a DM / unmapped channel.
+   */
+  protected async buildSlackAskContext(
+    supabase: SupabaseClient,
+    input: SlackAskContextInput,
+  ): Promise<string> {
+    return (await this.resolveSlackAskContext(supabase, input)).text
+  }
+
+  /** Same as `buildSlackAskContext`, plus the campaign ids the ask resolved to (CONNECTIONS bind). */
+  protected async resolveSlackAskContext(
+    supabase: SupabaseClient,
+    input: SlackAskContextInput,
+  ): Promise<SlackAskContextResult> {
+    const stamp = await this.resolveSlackAskClientStamp(supabase, input)
+    const sections: string[] = []
+    if (stamp) sections.push(formatSlackAskIdentityContext(stamp))
+    const bundle = await this.resolveSlackClientBundle(supabase, {
+      orgId: input.orgId,
+      slackTeamId: input.slackTeamId,
+      botToken: input.botToken,
+      stamp,
+      text: input.text ?? null,
+    }).catch((error) => {
+      this.logger.warn(
+        `Failed to build Slack client context bundle: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+      return null
+    })
+    if (bundle) sections.push(formatSlackClientContextBlock(bundle))
+    return {
+      text: sections.join('\n\n'),
+      stampCampaignId: stamp?.roasCampaignId ?? null,
+      bundleCampaignId: bundle?.campaigns[0]?.id ?? null,
+    }
+  }
+
+  protected async resolveSlackClientBundle(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      slackTeamId?: string | null
+      botToken?: string
+      stamp: SlackAskClientStamp | null
+      text: string | null
+    },
+  ): Promise<SlackClientContextBundle | null> {
+    if (input.stamp?.pageGraderClientId || input.stamp?.roasCampaignId) {
+      return resolveSlackClientContext(supabase, {
+        orgId: input.orgId,
+        clientId: input.stamp.pageGraderClientId,
+        campaignId: input.stamp.roasCampaignId,
+        clientName: input.stamp.pageGraderClientName,
+      })
+    }
+    if (!input.text) return null
+    // A referenced channel (<#C0B5MKP7Y30> / <#C…|roas-yasir…>) is authoritative:
+    // "prepping for call with <#C…>", "peep the client channel <#C…>" (live audit).
+    const referencedChannel = input.text.match(/<#(C[A-Z0-9]+)(?:\|[^>]*)?>/)?.[1] ?? null
+    if (referencedChannel && input.slackTeamId) {
+      const referenced = await this.resolveSlackAskClientStamp(supabase, {
+        orgId: input.orgId,
+        slackTeamId: input.slackTeamId,
+        channelId: referencedChannel,
+        botToken: input.botToken,
+      }).catch(() => null)
+      if (referenced?.pageGraderClientId || referenced?.roasCampaignId) {
+        return resolveSlackClientContext(supabase, {
+          orgId: input.orgId,
+          clientId: referenced.pageGraderClientId,
+          campaignId: referenced.roasCampaignId,
+          clientName: referenced.pageGraderClientName,
+        })
+      }
+    }
+    for (const candidate of extractClientNameCandidates(input.text)) {
+      const bundle = await resolveSlackClientContext(supabase, {
+        orgId: input.orgId,
+        clientName: candidate,
+      })
+      if (bundle) return bundle
+    }
+    return null
   }
 
   protected async resolveSlackAskClientStamp(
