@@ -75,6 +75,8 @@ export const UpdateWorkRequestDraftSchema = z
     campaign_space_id: z.string().uuid().nullable().optional(),
     request_type: WorkRequestTypeSchema.optional(),
     assignee_name: z.string().trim().min(1).max(300).nullable().optional(),
+    assignee_id: z.string().uuid().nullable().optional(),
+    assignee_email: z.string().email().max(320).nullable().optional(),
     title: z.string().trim().min(1).max(1000).optional(),
     description: z.string().max(20_000).nullable().optional(),
     due_date: DueDateSchema.optional(),

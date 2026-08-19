@@ -15,4 +15,6 @@ export const WORK_REQUEST_MESSAGES = {
   saved: 'All set — your draft changes are saved.',
   saving: 'Saving your changes…',
   submitting: 'Creating the ROAS task…',
+  assigneeOtherPlaceholder: 'Type a Portal name or email',
 } as const
+

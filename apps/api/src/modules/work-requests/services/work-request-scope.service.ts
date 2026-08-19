@@ -145,7 +145,10 @@ export class WorkRequestScopeService {
     const portal = await this.listPortalAssignees(ownerUserId)
     if (portal.length > 0) return portal
     if (!ownerOrgId) return []
-    return this.repository.listOrgTeamMembers(ownerOrgId)
+    return (await this.repository.listOrgTeamMembers(ownerOrgId)).map((row) => ({
+      ...row,
+      source: 'org' as const,
+    }))
   }
 
   private async listPortalAssignees(ownerUserId: string) {
@@ -154,7 +157,9 @@ export class WorkRequestScopeService {
       return assignees
         .map((row) => ({
           id: String(row.id),
-          name: String(row.name ?? '').trim(),
+          name: String(row.name ?? '').trim() || String(row.email ?? '').trim(),
+          email: String(row.email ?? '').trim() || null,
+          source: 'portal' as const,
         }))
         .filter((row) => row.name.length > 0)
         .sort((left, right) => left.name.localeCompare(right.name))

@@ -1,5 +1,12 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 21:53] - [FIX]
+What: Service Request due dates use ClickUp-style presets (Today / Later / Tomorrow / weekends / weeks) beside the calendar. Assignee picks keep The ROAS Portal user id and email through finalize so Portal/ClickUp get a real assignment, not a name pasted into the notes.
+Why: The date step was calendar-only. The dropdown stored `member.name` and dropped Portal id/email, so `rafay@roas.co` never mapped to a Portal user or ROAS org profile and ClickUp stayed unassigned.
+Impact: One-click due dates. Picking a Portal teammate (or typing their email) assigns the ROAS task when the person is in the org and sends `page_grader_user_id` + email to Portal/ClickUp.
+Files: `WorkRequestChatFlowInputs.tsx`, `date-presets.ts`, `work-request-assignee.ts`, `work-request-mirror.ts`, `work-request.service.ts`, `work-request-chat-steps.ts`, `documentation/features/page-grader-mcp-bridge.md`
+
+
 ## [2026-08-18 21:48] - [FIX]
 What: Unblocked Vercel `roas-web` typecheck after #308/#309. Calendar materialize now calls `cachedFetch(key, fetcher, { ttlMs })`. Removed unused `SpaceItem` import. Test fixtures use `as unknown as Space`.
 Why: `next build` typechecks `apps/web`. The one-room hook passed TTL as the fetcher argument, so agenda events never typed and the cache never actually TTL'd. Incomplete Space casts failed after adding `schema.custom_data`.

@@ -11,10 +11,11 @@ interface Props {
   leftMode: LeftMode
   presets: Array<DueDatePreset & { rightLabel?: string }>
   onPresetSelect: (key: DueDatePresetKey) => void
-  onOpenRecurring: () => void
-  onBackFromRecurring: () => void
-  recurrenceInitial: RecurrenceSpec
-  onSaveRecurrence: (value: RecurrenceSpec) => void
+  showRecurring?: boolean
+  onOpenRecurring?: () => void
+  onBackFromRecurring?: () => void
+  recurrenceInitial?: RecurrenceSpec
+  onSaveRecurrence?: (value: RecurrenceSpec) => void
   statusField?: FieldDef
   onEditStatuses?: () => void
   onRecurrenceDraftChange?: (draft: RecurrenceSpec) => void
@@ -24,6 +25,7 @@ export function DatePresetList({
   leftMode,
   presets,
   onPresetSelect,
+  showRecurring = true,
   onOpenRecurring,
   onBackFromRecurring,
   recurrenceInitial,
@@ -32,9 +34,23 @@ export function DatePresetList({
   onEditStatuses,
   onRecurrenceDraftChange,
 }: Props) {
+  const recurringOpen = showRecurring && leftMode === 'recurrence' && recurrenceInitial
+
   return (
     <div className="border-border flex h-full min-h-0 min-w-0 flex-col overflow-hidden border-r">
-      {leftMode === 'presets' ? (
+      {recurringOpen ? (
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <RecurrencePanel
+            variant="embedded"
+            initialValue={recurrenceInitial}
+            onCancel={onBackFromRecurring ?? (() => undefined)}
+            onSave={onSaveRecurrence ?? (() => undefined)}
+            statusField={statusField}
+            onEditStatuses={onEditStatuses}
+            onDraftChange={onRecurrenceDraftChange}
+          />
+        </div>
+      ) : (
         <>
           <div className="py-spacing-1 min-h-0 flex-1 overflow-y-auto">
             {presets.map((preset) => (
@@ -52,29 +68,19 @@ export function DatePresetList({
             ))}
           </div>
 
-          <div className="border-border p-spacing-1 shrink-0 border-t">
-            <button
-              type="button"
-              onClick={onOpenRecurring}
-              className="body-3 text-muted-foreground hover:bg-hover-subtle hover:text-foreground gap-spacing-2 rounded-spacing-1 px-spacing-2 py-spacing-1-5 flex w-full items-center justify-between text-left transition-colors"
-            >
-              <span className="text-foreground font-medium">Set Recurring</span>
-              <ChevronRight className="icon-sm text-muted-foreground shrink-0" />
-            </button>
-          </div>
+          {showRecurring ? (
+            <div className="border-border p-spacing-1 shrink-0 border-t">
+              <button
+                type="button"
+                onClick={onOpenRecurring}
+                className="body-3 text-muted-foreground hover:bg-hover-subtle hover:text-foreground gap-spacing-2 rounded-spacing-1 px-spacing-2 py-spacing-1-5 flex w-full items-center justify-between text-left transition-colors"
+              >
+                <span className="text-foreground font-medium">Set Recurring</span>
+                <ChevronRight className="icon-sm text-muted-foreground shrink-0" />
+              </button>
+            </div>
+          ) : null}
         </>
-      ) : (
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <RecurrencePanel
-            variant="embedded"
-            initialValue={recurrenceInitial}
-            onCancel={onBackFromRecurring}
-            onSave={onSaveRecurrence}
-            statusField={statusField}
-            onEditStatuses={onEditStatuses}
-            onDraftChange={onRecurrenceDraftChange}
-          />
-        </div>
       )}
     </div>
   )
