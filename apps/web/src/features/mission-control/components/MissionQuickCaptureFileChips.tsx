@@ -23,6 +23,8 @@ export function MissionQuickCaptureFileChips({
           <button
             type="button"
             onClick={() => onRemoveFile(idx)}
+            aria-label="Remove attachment"
+            title="Remove attachment"
             className="text-muted-foreground hover:text-foreground rounded-full transition-colors"
           >
             <X className="h-3 w-3" />

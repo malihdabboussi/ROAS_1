@@ -143,7 +143,7 @@ export function ListColumnHeaderMenuPortal({
         }}
       >
         {icon}
-        <span className="flex-1 truncate">{label}</span>
+        <span className="flex-1 truncate" title={label}>{label}</span>
         {opts?.checked ? <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" /> : null}
       </button>
     )

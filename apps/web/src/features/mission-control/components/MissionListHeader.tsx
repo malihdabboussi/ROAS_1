@@ -138,6 +138,7 @@ export function MissionListHeader({
                 e.stopPropagation()
                 onAddColumn(e)
               }}
+              aria-label="Add column"
               className="relative z-0 flex h-full w-full items-center justify-center rounded-md text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
             >
               <PlusCircle className="h-3.5 w-3.5" />

@@ -785,7 +785,7 @@ function StaticViewTab({
         textColor={textColor}
         pinned={view.pinned_to_start ?? false}
       />
-      <span className="max-w-[140px] truncate">{view.name}</span>
+      <span className="max-w-[140px] truncate" title={view.name}>{view.name}</span>
       {selected && (
         <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[var(--foreground)]" />
       )}
@@ -1217,7 +1217,7 @@ export function ViewSwitcher({
                       textColor={textColor}
                       pinned={view.pinned_to_start ?? false}
                     />
-                    <span className="max-w-[140px] truncate">{view.name}</span>
+                    <span className="max-w-[140px] truncate" title={view.name}>{view.name}</span>
                     {selected && (
                       <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[var(--foreground)]" />
                     )}

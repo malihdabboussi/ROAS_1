@@ -102,6 +102,8 @@ export function MediaPickerLibraryAssetTile(options: {
           e.stopPropagation()
           onOpenMenu()
         }}
+        aria-label="Asset actions"
+        title="Asset actions"
         className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity hover:bg-black/70 group-hover:opacity-100"
       >
         <MoreVertical className="h-3.5 w-3.5" />

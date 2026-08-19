@@ -464,7 +464,12 @@ export function ShareModal({
               {headerTitle}
             </h2>
             <Tooltip label="Close" side="top" delayMs={200}>
-              <button type="button" onClick={onClose} className="btn-icon-bare shrink-0">
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="btn-icon-bare shrink-0"
+              >
                 <X className="icon-sm" />
               </button>
             </Tooltip>

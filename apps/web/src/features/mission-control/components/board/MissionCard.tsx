@@ -30,7 +30,7 @@ export function MissionCard({ mission, onClick }: MissionCardProps) {
       className="kanban-card-glass w-full cursor-pointer p-3 text-left"
     >
       <div className="flex items-start gap-2">
-        <h3 className="body-2 text-foreground line-clamp-2 min-w-0 flex-1 font-semibold">
+        <h3 className="body-2 text-foreground line-clamp-2 min-w-0 flex-1 font-semibold" title={mission.title}>
           {mission.title}
         </h3>
         <span title={mission.priority} className="mt-0.5 shrink-0">

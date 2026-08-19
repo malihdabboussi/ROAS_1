@@ -385,6 +385,7 @@ export default function CampaignDetailPage() {
                   key={tab.value}
                   type="button"
                   onClick={() => handleTabChange(tab.value)}
+                  aria-label={tab.label}
                   className={`gap-spacing-2 h-spacing-8 rounded-spacing-3 flex items-center transition-all duration-[600ms] ease-in-out ${isActive ? 'chip-glass-blue px-spacing-3' : 'chip-glass-neutral px-spacing-2'}`}
                 >
                   <Icon className="h-4 w-4" />

@@ -102,6 +102,7 @@ export function InboxHubToolbar({
             <button
               type="button"
               onClick={() => onSearchChange('')}
+              aria-label="Clear search"
               className="text-muted-foreground hover:text-foreground right-spacing-2 absolute top-1/2 -translate-y-1/2"
             >
               <X className="icon-sm" />
@@ -162,6 +163,8 @@ export function InboxHubToolbar({
           <button
             type="button"
             onClick={() => setActiveDropdown(activeDropdown === 'sort' ? null : 'sort')}
+            aria-label="Sort inbox"
+            title="Sort inbox"
             className="button-glass-blue h-spacing-8 px-spacing-2 flex shrink-0 items-center rounded-lg"
           >
             <ArrowUpDown className="icon-sm" />
@@ -231,6 +234,7 @@ export function InboxHubToolbar({
               <button
                 type="button"
                 onClick={() => onSearchChange('')}
+                aria-label="Clear search"
                 className="text-muted-foreground hover:text-foreground right-spacing-2 absolute top-1/2 -translate-y-1/2"
               >
                 <X className="icon-sm" />
@@ -241,6 +245,8 @@ export function InboxHubToolbar({
           <button
             type="button"
             onClick={() => setActiveDropdown(activeDropdown === 'sort' ? null : 'sort')}
+            aria-label="Sort inbox"
+            title="Sort inbox"
             className="button-glass-blue h-spacing-8 gap-spacing-1 px-spacing-3 flex items-center rounded-lg font-medium"
           >
             <span className="relative z-10">

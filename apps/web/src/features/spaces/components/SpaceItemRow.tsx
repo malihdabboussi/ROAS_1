@@ -256,6 +256,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                             e.stopPropagation()
                             onAddSubtask()
                           }}
+                          aria-label="Add subtask"
                           className="btn-icon-glass-sm !h-[18px] !w-[18px] !rounded-[4px]"
                         >
                           <Plus className="h-3 w-3" />
@@ -316,6 +317,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                           e.stopPropagation()
                           setEditingTitleInline(true)
                         }}
+                        aria-label="Edit name"
                         className="btn-icon-glass-sm !h-[18px] !w-[18px] !rounded-[4px]"
                       >
                         <Pencil className="h-3 w-3" />

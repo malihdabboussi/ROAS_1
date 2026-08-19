@@ -145,12 +145,16 @@ export function StudioHeaderBar() {
                   />
                   <button
                     onClick={() => void handleSubmitRename()}
+                    aria-label="Save name"
+                    title="Save name"
                     className="text-primary hover:bg-secondary flex h-5 w-5 items-center justify-center rounded"
                   >
                     <Check className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={handleCancelEdit}
+                    aria-label="Cancel rename"
+                    title="Cancel rename"
                     className="text-muted-foreground hover:bg-secondary flex h-5 w-5 items-center justify-center rounded"
                   >
                     <X className="h-3.5 w-3.5" />

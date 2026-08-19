@@ -259,6 +259,8 @@ export function CarouselSlide({
               }
               setMenuOpen((v) => !v)
             }}
+            aria-label="Agent options"
+            title="Agent options"
             className={`rounded-spacing-1 p-spacing-1 shrink-0 transition-opacity hover:bg-white/10 ${
               menuOpen ? 'opacity-100' : 'opacity-0 group-hover/agent:opacity-100'
             }`}

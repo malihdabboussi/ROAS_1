@@ -251,6 +251,7 @@ export function Team2Toolbar({
               type="button"
               onClick={() => onViewChange('grid')}
               aria-pressed={view === 'grid'}
+              aria-label="Grid view"
               className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
                 view === 'grid'
                   ? 'bg-[var(--color-hover-subtle)] text-[var(--foreground)]'
@@ -267,6 +268,7 @@ export function Team2Toolbar({
               type="button"
               onClick={() => onViewChange('list')}
               aria-pressed={view === 'list'}
+              aria-label="List view"
               className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
                 view === 'list'
                   ? 'bg-[var(--color-hover-subtle)] text-[var(--foreground)]'
@@ -325,6 +327,7 @@ export function Team2Toolbar({
                     <button
                       type="button"
                       onClick={() => onSearchOpenChange(true)}
+                      aria-label="Search"
                       className="rounded-md p-1.5 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
                     >
                       <Search className="h-3.5 w-3.5" />

@@ -85,6 +85,7 @@ export function CampaignDeliverablesHubToolbar({
           {searchValue && (
             <button
               onClick={() => onSearchChange('')}
+              aria-label="Clear search"
               className="text-muted-foreground hover:text-foreground right-spacing-2 absolute top-1/2 -translate-y-1/2"
             >
               <X className="icon-sm" />
@@ -108,6 +109,8 @@ export function CampaignDeliverablesHubToolbar({
         <button
           ref={sortBtnRef}
           onClick={() => setActiveSortDropdown(!activeSortDropdown)}
+          aria-label="Sort deliverables"
+          title="Sort deliverables"
           className="button-glass-blue h-spacing-8 gap-spacing-1 px-spacing-3 flex items-center rounded-lg font-medium"
         >
           <ArrowUpDown className="icon-sm" />

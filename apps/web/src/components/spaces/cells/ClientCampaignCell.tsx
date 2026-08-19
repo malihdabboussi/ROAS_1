@@ -290,7 +290,7 @@ function ClientCampaignMenu({
                         onClick={() => onPick(group, campaign)}
                         className="body-3 text-foreground hover:bg-hover-subtle gap-spacing-2 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full min-w-0 items-center transition-colors"
                       >
-                        <span className="min-w-0 truncate">{campaign.name}</span>
+                        <span className="min-w-0 truncate" title={campaign.name}>{campaign.name}</span>
                         {selected ? (
                           <span className="typo-caption text-muted-foreground shrink-0">
                             Mapped

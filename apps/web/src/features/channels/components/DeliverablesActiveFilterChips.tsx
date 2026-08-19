@@ -39,6 +39,7 @@ export function DeliverablesActiveFilterChips({
               onFilterStateChange((s) => ({ ...s, threadId: null }))
               onClearThreadFilter?.()
             }}
+            aria-label="Remove thread filter"
             className="hover:text-primary/70"
           >
             <X className="h-2.5 w-2.5" />
@@ -53,6 +54,7 @@ export function DeliverablesActiveFilterChips({
           <button
             type="button"
             onClick={() => onFilterStateChange((s) => ({ ...s, types: new Set() }))}
+            aria-label="Remove type filter"
             className="hover:text-primary/70"
           >
             <X className="h-2.5 w-2.5" />
@@ -65,6 +67,7 @@ export function DeliverablesActiveFilterChips({
           <button
             type="button"
             onClick={() => onFilterStateChange((s) => ({ ...s, time: 'any' }))}
+            aria-label="Remove time filter"
             className="hover:text-primary/70"
           >
             <X className="h-2.5 w-2.5" />
@@ -81,6 +84,7 @@ export function DeliverablesActiveFilterChips({
           <button
             type="button"
             onClick={() => onFilterStateChange((s) => ({ ...s, senders: new Set() }))}
+            aria-label="Remove sender filter"
             className="hover:text-primary/70"
           >
             <X className="h-2.5 w-2.5" />
@@ -97,6 +101,7 @@ export function DeliverablesActiveFilterChips({
           <button
             type="button"
             onClick={() => onFilterStateChange((s) => ({ ...s, campaigns: new Set() }))}
+            aria-label="Remove campaign filter"
             className="hover:text-primary/70"
           >
             <X className="h-2.5 w-2.5" />

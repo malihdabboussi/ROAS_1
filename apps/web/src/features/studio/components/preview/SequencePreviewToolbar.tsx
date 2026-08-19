@@ -97,6 +97,7 @@ export function SequencePreviewToolbar({
             }}
             data-tooltip="Sequence options"
             data-side="bottom"
+            aria-label="Sequence options"
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             className={ARTIFACT_KEBAB_ICON_CLASS}

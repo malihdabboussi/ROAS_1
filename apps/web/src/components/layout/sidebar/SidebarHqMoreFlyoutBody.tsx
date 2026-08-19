@@ -326,7 +326,7 @@ export function SidebarHqMoreFlyoutBody({
                 )}
               >
                 <FolderGit2 />
-                <span className="min-w-0 flex-1 truncate">{project.name}</span>
+                <span className="min-w-0 flex-1 truncate" title={project.name}>{project.name}</span>
               </Link>
             ))
           )}

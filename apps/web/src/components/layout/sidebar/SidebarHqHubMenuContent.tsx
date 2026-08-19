@@ -266,7 +266,7 @@ export function SidebarHqHubMenuContent({
                 className="hub-menu-link-row"
               >
                 <ListChecks className="icon-md shrink-0" />
-                <span className="body-3 truncate">{camp.name}</span>
+                <span className="body-3 truncate" title={camp.name}>{camp.name}</span>
               </Link>
             ))}
           </div>

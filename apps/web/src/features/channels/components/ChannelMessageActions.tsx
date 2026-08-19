@@ -121,6 +121,7 @@ export function ChannelMessageActions({
             <button
               type="button"
               onClick={startEdit}
+              aria-label="Edit"
               className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground flex h-7 w-7 items-center justify-center rounded transition-colors"
             >
               <Pencil className="h-3.5 w-3.5" />
@@ -132,6 +133,7 @@ export function ChannelMessageActions({
             ref={menuButtonRef}
             type="button"
             onClick={openMenu}
+            aria-label="More"
             className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground flex h-7 w-7 items-center justify-center rounded transition-colors"
           >
             <MoreHorizontal className="h-4 w-4" />

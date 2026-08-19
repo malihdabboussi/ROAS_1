@@ -105,6 +105,8 @@ export function CustomDomainsTable({
                       onClick={() =>
                         setActionMenuDomainId(actionMenuDomainId === domain.id ? null : domain.id)
                       }
+                      aria-label="Domain actions"
+                      title="Domain actions"
                       className="btn-icon-glass"
                     >
                       <MoreHorizontal className="icon-sm" />
@@ -201,6 +203,8 @@ export function CustomDomainsTable({
                               actionMenuDomainId === domain.id ? null : domain.id,
                             )
                           }
+                          aria-label="Domain actions"
+                          title="Domain actions"
                           className="btn-icon-glass"
                         >
                           <MoreHorizontal className="icon-sm" />

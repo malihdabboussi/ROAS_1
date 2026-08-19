@@ -292,7 +292,7 @@ export function FavoriteCampaignsCard() {
                   onClick={() => toggleExpanded(campaign.id)}
                   className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
                 >
-                  <span className="min-w-0 flex-1 truncate">{campaign.name ?? 'Untitled'}</span>
+                  <span className="min-w-0 flex-1 truncate" title={campaign.name ?? 'Untitled'}>{campaign.name ?? 'Untitled'}</span>
                 </button>
                 <span className="relative flex h-6 w-16 shrink-0 items-center justify-end">
                   <span className="text-muted-foreground typo-caption tabular-nums transition-all group-hover/campaign:scale-95 group-hover/campaign:opacity-0">
@@ -324,7 +324,7 @@ export function FavoriteCampaignsCard() {
                               name={icon}
                               className={cn('h-3.5 w-3.5 shrink-0', textColor)}
                             />
-                            <span className="min-w-0 flex-1 truncate">{space.title}</span>
+                            <span className="min-w-0 flex-1 truncate" title={space.title}>{space.title}</span>
                           </button>
                         </li>
                       )
