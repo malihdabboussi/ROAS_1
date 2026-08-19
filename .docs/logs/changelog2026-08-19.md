@@ -11,3 +11,9 @@ What: Merged Service Request direct-asset links (#320) onto main without droppin
 Why: #320 also edited `slack-service-events.base.ts`. Taking only the old prepend path would overwrite N0; taking only main would drop the MFS Elite asset rule.
 Impact: Slack asks still classify/log turns and now carry openable asset URLs into the Pixel prompt for SR creation.
 Files: `slack-service-events.base.ts`
+
+## [2026-08-19 04:35] - [FIX]
+What: Merged CONNECTIONS bind + Campaign Brain preload (#321) onto main without dropping N0, Client Context Bundle, quote inherit, or SR assets. Slack still classifies/logs the turn and appends `[Assets]`; `routeToAgent` also sends `campaign_id` on `/api/channel-chat`.
+Why: #321 edited `slack-service-events.base.ts` (campaignId on the channel-chat payload) which #317/#318/#320 also own.
+Impact: Slack client asks bind CONNECTIONS at turn start and still write `slack_pixel_turns`.
+Files: `slack-service-events.base.ts`

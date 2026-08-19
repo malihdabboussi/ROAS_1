@@ -191,11 +191,13 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     const clientBundle = channelOrgId
       ? await this.resolveSlackClientBundle(serviceSupabase, {
           orgId: channelOrgId,
+          slackTeamId: teamId,
+          botToken,
           stamp: currentStamp,
           text,
         }).catch(() => null)
       : null
-    const forwardedContext = await this.buildForwardedMessageContext(
+    const forwarded = await this.buildForwardedMessageContext(
       serviceSupabase,
       userId,
       botToken,
@@ -203,6 +205,9 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       event.attachments,
       { orgId: channelOrgId, slackTeamId: teamId },
     )
+    const forwardedContext = forwarded.context
+    const campaignId =
+      currentStamp?.roasCampaignId ?? forwarded.campaignId ?? clientBundle?.campaigns[0]?.id ?? null
     const thread = event.thread_ts
       ? await this.buildSlackThreadReply(botToken, channelId, event.thread_ts, event.ts).catch(
           (error) => {
@@ -265,6 +270,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       },
       orgId: channelOrgId ?? null,
       documents: documents.length > 0 ? documents : undefined,
+      campaignId,
       turn: {
         askKind: askKind.kind,
         kindSignals: askKind.signals,
@@ -325,7 +331,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       fallback.orgId,
       collectInboundSlackFiles(event),
     )
-    const forwardedContext = await this.buildForwardedMessageContext(
+    const forwarded = await this.buildForwardedMessageContext(
       serviceSupabase,
       fallback.userId,
       fallback.botToken,
@@ -333,8 +339,9 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       event.attachments,
       { orgId: fallback.orgId, slackTeamId: teamId },
     )
+    const forwardedContext = forwarded.context
 
-    const channelContext = await this.buildChannelContext(
+    const channel = await this.buildChannelContext(
       serviceSupabase,
       fallback.userId,
       fallback.botToken,
@@ -342,8 +349,10 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       { orgId: fallback.orgId, slackTeamId: teamId, text },
     ).catch((err) => {
       this.logger.warn(`Failed to build channel context: ${err}`)
-      return ''
+      return { context: '', stampCampaignId: null, bundleCampaignId: null }
     })
+    const channelContext = channel.context
+    const campaignId = channel.stampCampaignId ?? forwarded.campaignId ?? channel.bundleCampaignId
 
     const attachmentText = forwardedContext ? `${text}\n\n${forwardedContext}`.trim() : text
     const assetsBlock = formatSlackAskAssetsBlock(
@@ -396,6 +405,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       },
       orgId: fallback.orgId,
       documents: documents.length > 0 ? documents : undefined,
+      campaignId,
       turn: {
         askKind: askKind.kind,
         kindSignals: askKind.signals,
@@ -433,6 +443,8 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       mimeType?: string
       text?: string
     }>
+    /** Client campaign resolved for this ask; binds the conversation's CONNECTIONS (§11.2). */
+    campaignId?: string | null
     /** N0 stamp + client resolution for this turn; drives `slack_pixel_turns`. */
     turn?: SlackTurnSeed
   }): Promise<void> {
@@ -469,6 +481,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
         params.orgId,
         params.channelUser,
         params.documents,
+        params.campaignId,
       )
       const response = turnResult?.content ?? null
       this.logger.log(
@@ -555,6 +568,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       mimeType?: string
       text?: string
     }>,
+    campaignId?: string | null,
   ): Promise<SlackAgentTurn | null> {
     this.logger.log(
       `[TRACE] routeToAgent START: userId=${userId} agentKey=${agentKey} team=${slackTeamId} channel=${slackChannelId}`,
@@ -595,6 +609,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       org_id: orgId ?? null,
       ...(channelUser ? { channel_user: channelUser } : {}),
       ...(documents && documents.length > 0 ? { documents } : {}),
+      ...(campaignId ? { campaign_id: campaignId } : {}),
     })
     this.logger.log(`[TRACE] routeToAgent FETCH_START: payload_len=${chatPayload.length}`)
     const response = await this.userAgentApi.invoke(
