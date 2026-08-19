@@ -1,5 +1,11 @@
 # Changelog - August 18, 2026
 
+## [2026-08-18 16:40] - [DOCS]
+What: Recorded the 11.3 production Brain audit findings in the North Star plan: personal Brain 500 is a Vercel payload-size issue on the largest brain, ROAS org has 2 portal members (so "empty user brains" is mostly no users), Company Brain has had no writes since Jul 20, campaign brains are healthy and already contained the Yasir Aug 7 stats (retrieval miss, not ingestion), Fathom meetings land in the user brain instead of the client's campaign brain.
+Why: 11.3 was the first step of the build order; the findings reorder the fixes.
+Impact: Docs only. New open question 11.12 Q10 on portal accounts for team members.
+Files: `.docs/plans/pixel-slack-north-star-2026-08-18.md`
+
 ## [2026-08-18 16:00] - [DOCS]
 What: Recorded Dylan's decisions on the nine open North Star questions (§11.12): internal/admin share in mixed DMs, files to ROAS storage + client Drive, Slack Pixel = full Pixel capability incl. browser, add all agents to the org rather than hire per capability, harness channel `2`, Fathom-only calls, Portal client status, placeholder budgets accepted, build order accepted.
 Why: Unblocks 11.6, 11.10, 11.4, 11.7 and R08/R13 without further clarification.
