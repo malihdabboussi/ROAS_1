@@ -25,6 +25,8 @@ export interface GraphFilters {
   limit?: number
   min_significance?: number
   memory_type?: string
+  /** True when the requested window was clamped to the server maximum. */
+  node_window_capped?: boolean
 }
 
 export interface GraphStats {
@@ -41,6 +43,12 @@ export interface GraphStats {
    * already contains every node.
    */
   nodes_truncated?: boolean
+  /**
+   * True when the server clamped the requested window to its maximum. The
+   * client treats a capped window as the complete loadable graph and does not
+   * keep re-requesting a larger one.
+   */
+  node_window_capped?: boolean
 }
 
 // ── Service ─────────────────────────────────────────────────────────────────
@@ -68,6 +76,7 @@ export class GraphService {
     brainId: string,
     orgId?: string | null,
     limit?: number,
+    nodeWindowCapped = false,
   ): Promise<{
     nodes: Record<string, unknown>[]
     connections: GraphEdge[]
@@ -215,6 +224,7 @@ export class GraphService {
         sourceList.length >= (limit ?? 200) ||
         entryList.length >= (limit ?? 500) ||
         memoryNodes.length >= (limit ?? 200),
+      node_window_capped: nodeWindowCapped,
     }
 
     return {
@@ -343,7 +353,11 @@ export class GraphService {
     }
     // Memories are the only node family the `limit` window caps (snapshots are
     // hard-capped at 100 regardless), so truncation is decided by memories.
-    stats = { ...stats, nodes_truncated: memories.length >= (filters.limit ?? 200) }
+    stats = {
+      ...stats,
+      nodes_truncated: memories.length >= (filters.limit ?? 200),
+      node_window_capped: filters.node_window_capped === true,
+    }
 
     return {
       nodes: [...memoryNodes, ...docNodes, ...snapshotNodes, ...beliefNodes, ...perspectiveNodes],

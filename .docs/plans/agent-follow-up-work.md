@@ -39434,3 +39434,9 @@ Reason not done now: The panel change mitigates this in the UI with a timestamp 
 - Needed: (1) one-off backfill that walks recent `fathom_meeting_import` jobs with a Space route and enqueues `campaign_fathom_import`; (2) skip creating a cross-pollination suggestion for a campaign the route already imported into.
 - Why not now: backfill is a data job that should run with monitoring; suggestion suppression is a nicety, not a correctness issue (dedupe key prevents double import).
 
+## 2026-08-18 — Brain graph: paginate beyond the 2,000-node window
+- Feature/app: `apps/api` brain graph, `apps/web` brain visualization
+- Files: `apps/api/src/modules/brain/services/graph-node-window.ts`, `apps/web/src/features/brain/store/use-brain-store.ts`
+- Evidence: largest prod brain has 3.1k memories; full payload was 5.4 MB (over serverless cap). Fixed by clamping to 2,000 nodes + slim projection (2.99 MB).
+- Needed: cursor pagination (or server-side clustering) if anyone needs more than 2,000 memory nodes rendered at once. Also consider a `?fields=` projection so the graph never ships full memory records.
+- Why not now: the cap unblocks the 500 and is bounded; nobody can read 3k nodes on the canvas; pagination touches the store's SWR snapshot logic and deserves its own change.

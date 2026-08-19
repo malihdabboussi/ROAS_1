@@ -1,6 +1,7 @@
 import { createHash } from 'crypto'
 import type { GraphEdge } from '../types/brain.types'
 import type { GraphStats } from './graph.service'
+import { slimGraphMemory } from './graph-node-window'
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
 const SEVEN_DAYS_MS = 7 * ONE_DAY_MS
@@ -112,7 +113,8 @@ export function enrichMemoryNodes(
 ): Array<Record<string, unknown>> {
   const now = Date.now()
 
-  return memories.map((m) => {
+  return memories.map((raw) => {
+    const m = slimGraphMemory(raw)
     const createdAt = new Date(m.created_at as string).getTime()
     const age = now - createdAt
     const significance = m.significance as number
