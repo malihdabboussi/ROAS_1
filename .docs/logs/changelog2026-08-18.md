@@ -35,6 +35,12 @@ Why: Calendar, All Meetings, and the meeting workspace were three homes. Agenda 
 Impact: Implementation waits for approval. Mapping PR stays separate. Phase order is materialize rows → status/host/filter → two doors → related calls + Pixel context → both post-call automatics → card/tab cleanup.
 Files: `.docs/plans/meetings-one-room-2026-08-18.md`
 
+## [2026-08-18 18:27] - [FEATURE]
+What: N0 ask-kind stamp + per-turn telemetry for Slack Pixel. `slack-ask-kind.ts` classifies each inbound turn (continuation/client/team/general/unclear) from cheap signals; `slack-turn-prompt.ts` assembles the prompt with `[Ask kind]` first and softens the channel identity on general asks; `slack-turn-telemetry.ts` + `slack_pixel_turns` migration record kind, client source, ordered tool calls (captured from the agent SSE stream), duration, outcome, and a forbidden-ask flag. `routeToAgent` now returns a turn (content + tool events + conversation id).
+Why: TOOLS.md holds the ladders but cannot force order; "what's on my task list" in a client channel was nudged toward Portal, and nothing measured whether Pixel looked deep enough. North Star §11.0.
+Impact: Every Slack turn is classified and logged. No model call added. Migration `20260818200000_slack_pixel_turns.sql` must be applied to prod (`lhfgtsjetcardinpgouq`) before the API deploy; the insert is fire-and-forget so a missing table only logs a warning.
+Files: `apps/api/src/modules/slack/services/slack-ask-kind.ts`, `slack-turn-prompt.ts`, `slack-turn-telemetry.ts` (+tests), `slack-service-events.base.ts`, `slack-service-conversation.base.ts`, `slack-ask-identity-context.ts`, `slack-runtime.repository.ts`, `supabase/migrations/20260818200000_slack_pixel_turns.sql`, `documentation/features/integration-connections.md`
+
 ## [2026-08-18 18:14] - [FIX]
 What: Fathom webhook now dual-writes each client meeting into the client's Campaign Brain via the existing idempotent `campaign_fathom_import` job, keyed off the Space route's `campaign_id` (General/Personal skipped). New `FathomCampaignBrainRouteService` + tests; webhook e2e tests cover routed / no-transcript cases.
 Why: Prod audit: 1,046 `fathom_meeting` memories in the user brain vs ~21 in all campaign brains — client meetings only reached the client brain if a human accepted an LLM suggestion. Client-scoped asks (R10/R11) missed even when the recording existed.

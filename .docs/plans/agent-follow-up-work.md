@@ -39427,6 +39427,19 @@ Needed work: Name a mission at creation from its run context — playbook plus c
 
 Reason not done now: The panel change mitigates this in the UI with a timestamp under each row, but the fix belongs in mission creation, which is worker/API work outside a chat-panel branch.
 
+## 2026-08-18 — slack-service-events.base.ts over the 600 LOC service limit
+- Feature/app: `apps/api` Slack Pixel inbound
+- File: `apps/api/src/modules/slack/services/slack-service-events.base.ts` (633 → 689 after N0 stamp + telemetry; was already over 600)
+- Evidence: two near-duplicate handlers (`handleMessageEvent`, `handleAppMentionEvent`) each assemble prompt/context inline.
+- Needed: route `handleAppMentionEvent` through `buildInboundSlackTurnPrompt` (it still builds its own `channelContext` string) and lift the shared "resolve stamp → forwarded → thread → prompt → processAndReply" sequence into one method; then the base file drops well under 600.
+- Why not now: the mention path composes a different context block (`buildChannelContext`); merging it safely needs its own scenario fixtures. Telemetry recorder and prompt assembly were already extracted in this change.
+
+## 2026-08-18 — slack_pixel_turns: tokens per turn
+- File: `apps/api/src/modules/slack/services/slack-turn-telemetry.ts`
+- Evidence: the agent SSE stream carries tool events but no usage; token counts live in the agent-api trace/billing tables keyed by conversation.
+- Needed: join `slack_pixel_turns.conversation_id` to the AI-usage trace rows (or emit usage on the SSE `done` event) so "tokens per kind" p50/p90 can be reported.
+- Why not now: agent-api change; the row already stores `conversation_id` for the join.
+
 ## 2026-08-18 — Fathom → Campaign Brain: backfill + suppress redundant suggestions
 - Feature/app: `apps/api` Fathom webhook / brain import jobs
 - Files: `apps/api/src/modules/integrations/fathom/services/fathom-campaign-brain-route.service.ts`, `apps/api/src/modules/brain/services/brain-cross-pollinator.service.ts`
