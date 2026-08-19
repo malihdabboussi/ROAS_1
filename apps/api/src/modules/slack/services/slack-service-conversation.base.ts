@@ -3,6 +3,7 @@ import type {
   SlackHistoryMessage,
   SlackMessageAttachment,
   SlackResolvedSender,
+  SlackWorkspaceChannel,
 } from '../types/slack.types'
 import { parseSlackForwardedMessage } from './slack-forwarded-message-context'
 import { SlackMediaBase } from './slack-service-media.base'
@@ -87,18 +88,46 @@ export abstract class SlackConversationBase extends SlackMediaBase {
     if (!forwarded) return ''
 
     const sections = [forwarded.context]
-    if (identity?.orgId && identity.slackTeamId && forwarded.channelId) {
-      const forwardedIdentity = await this.buildSlackAskIdentityBlock(supabase, {
+    let sourceChannelId = forwarded.channelId
+    if (!sourceChannelId && forwarded.channelName && identity?.orgId && identity.slackTeamId) {
+      // Thread-reply unfurls often carry only a footer name (N1 "Andy or Krista?" case).
+      sourceChannelId = await this.resolveSlackChannelIdByName(supabase, {
         orgId: identity.orgId,
         slackTeamId: identity.slackTeamId,
-        channelId: forwarded.channelId,
+        channelName: forwarded.channelName,
         botToken,
-        channelNameHint: forwarded.context.match(/Channel: #([^\s]+)/)?.[1] ?? null,
-      }).catch(() => '')
-      if (forwardedIdentity) sections.push(forwardedIdentity)
+      }).catch(() => null)
     }
 
-    if (!forwarded.channelId || forwarded.channelId === currentChannelId) {
+    if (sourceChannelId && sourceChannelId !== currentChannelId) {
+      if (identity?.orgId && identity.slackTeamId) {
+        // Quoted channel decides the client: stamp + Client Context Bundle for the source channel.
+        const forwardedIdentity = await this.buildSlackAskContext(supabase, {
+          orgId: identity.orgId,
+          slackTeamId: identity.slackTeamId,
+          channelId: sourceChannelId,
+          botToken,
+          channelNameHint: forwarded.channelName,
+        }).catch(() => '')
+        if (forwardedIdentity) {
+          sections.push(
+            `[Quoted message identity]\nThe forwarded message below belongs to the channel above; inherit its client. Do not ask which client.\n\n${forwardedIdentity}`,
+          )
+        }
+      }
+      const threadTs = forwarded.threadTs
+      if (threadTs) {
+        const threadContext = await this.buildSlackThreadReplyContext(
+          botToken,
+          sourceChannelId,
+          threadTs,
+          '',
+        ).catch(() => '')
+        if (threadContext) sections.push(`[Forwarded thread context]\n${threadContext}`)
+      }
+    }
+
+    if (!sourceChannelId || sourceChannelId === currentChannelId) {
       return sections.join('\n\n')
     }
 
@@ -106,11 +135,11 @@ export abstract class SlackConversationBase extends SlackMediaBase {
       supabase,
       userId,
       botToken,
-      forwarded.channelId,
-      identity,
+      sourceChannelId,
+      undefined,
     ).catch((error) => {
       this.logger.warn(
-        `Failed to load forwarded Slack channel ${forwarded.channelId}: ${
+        `Failed to load forwarded Slack channel ${sourceChannelId}: ${
           error instanceof Error ? error.message : String(error)
         }`,
       )
@@ -119,6 +148,29 @@ export abstract class SlackConversationBase extends SlackMediaBase {
 
     if (channelContext) sections.push(channelContext)
     return sections.join('\n\n')
+  }
+
+  /** Name → id for channels the org observes; falls back to the bot's conversation list. */
+  protected async resolveSlackChannelIdByName(
+    supabase: SupabaseClient,
+    input: { orgId: string; slackTeamId: string; channelName: string; botToken?: string },
+  ): Promise<string | null> {
+    const name = input.channelName.replace(/^#/, '').trim().toLowerCase()
+    if (!name) return null
+    const { data } = await supabase
+      .from('slack_observation_channels')
+      .select('channel_id')
+      .eq('org_id', input.orgId)
+      .eq('slack_team_id', input.slackTeamId)
+      .eq('channel_name', name)
+      .limit(1)
+      .maybeSingle()
+    if (data?.channel_id) return String(data.channel_id)
+    if (!input.botToken) return null
+    const channels: SlackWorkspaceChannel[] = await this.slackApi
+      .listConversations(input.botToken)
+      .catch(() => [])
+    return channels.find((channel) => channel.name?.toLowerCase() === name)?.id ?? null
   }
 
   async pushSlackAwarenessPoint(userId: string, agentKey: string, content: string) {
