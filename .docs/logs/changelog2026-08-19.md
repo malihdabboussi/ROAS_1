@@ -279,3 +279,9 @@ What: Person-brain fork saves land in the target Person Brain. `save_user_memory
 Why: Prod audit 2026-08-19: 400 succeeded `slack_period_import` fork jobs targeted org-managed Person Brains (Nefi 101, Yasir 35, …) yet those brains hold 0–2 memories — every save fell through to the org owner's default user brain (317 slack_period memories), and once there, default-brain dedup silently swallowed genuine person-brain writes.
 Impact: Shadow Person Brains (plan §11.12 Q10) actually populate from the recurring Slack sync and the "Populate brains" backfill; re-running the backfill after deploy refills them (dedup now scoped per brain).
 Files: apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts, artifact-action-schemas.ts, artifact-legacy-team-brain.service.test.ts
+
+## [2026-08-19 19:20] - [UTIL]
+What: `scripts/roas/report-ask-kind-misses.mjs` — weekly read-only report over `slack_pixel_turns`: (1) unclear turns where a client WAS resolved (missed classifier signals), (2) client turns with no resolved client (over-firing), (3) forbidden asks. Points to the pattern file + tests to update.
+Why: The N0 classifier improves from live telemetry, not guesses; the first two prod days already show the "unclear + client named" shape.
+Impact: Read-only; run weekly (or after harness runs) and feed misses into slack-ask-kind.ts.
+Files: scripts/roas/report-ask-kind-misses.mjs
