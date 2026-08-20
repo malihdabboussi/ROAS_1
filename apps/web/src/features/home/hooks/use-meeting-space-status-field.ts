@@ -9,7 +9,9 @@ export function useMeetingSpaceStatusField(spaceId: string) {
     void fetchSpaceById(spaceId)
       .then((space) => {
         if (cancelled) return
-        const next = space.schema?.fields?.find((candidate) => candidate.id === 'status')
+        const next =
+          space.schema?.fields?.find((candidate) => candidate.id === 'call_status') ??
+          space.schema?.fields?.find((candidate) => candidate.id === 'status')
         if (next?.type === 'select') setField(next as FieldDef)
       })
       .catch(() => {
