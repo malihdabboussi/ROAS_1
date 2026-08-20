@@ -141,6 +141,56 @@ describe('ArtifactBrainSearchActionsService.searchCampaignBrain', () => {
     })
   })
 
+  it('falls back to the bound conversation campaign when campaign_name is unknown (Christian Osgood case)', async () => {
+    // "Christian Osgood" matches no campaign name (his campaign is
+    // "Multifamily Strategy"), but the chat is bound to it — the search must
+    // use the bound campaign instead of erroring "campaign_name not found",
+    // which the model narrates as "the Brain has nothing on him".
+    target.resolveCampaignIdByNameReadOnly = vi.fn(async () => {
+      throw new Error('campaign_name not found for user: "Christian Osgood"')
+    })
+    target.resolveCampaignId = vi.fn(async () => 'campaign-multifamily')
+    nsBrainsMaybeSingle.mockResolvedValue({ data: { id: 'brain-multifamily' }, error: null })
+
+    const result = (await service.searchCampaignBrain(
+      target,
+      { query: 'christian story positioning', campaign_name: 'Christian Osgood' },
+      'agent:vibey:conv-1',
+    )) as Record<string, unknown>
+
+    expect(result).toMatchObject({
+      success: true,
+      brain_id: 'brain-multifamily',
+      campaign_id: 'campaign-multifamily',
+    })
+  })
+
+  it('still errors with the name message when nothing else resolves, and keeps ambiguity fatal', async () => {
+    target.resolveCampaignIdByNameReadOnly = vi.fn(async () => {
+      throw new Error('campaign_name not found for user: "Nobody"')
+    })
+    target.resolveCampaignId = vi.fn(async () => null)
+    const notFound = (await service.searchCampaignBrain(
+      target,
+      { query: 'anything at all', campaign_name: 'Nobody' },
+      'agent:vibey:conv-1',
+    )) as Record<string, unknown>
+    expect(notFound.success).toBe(false)
+    expect(String(notFound.error)).toContain('campaign_name not found')
+
+    target.resolveCampaignIdByNameReadOnly = vi.fn(async () => {
+      throw new Error('campaign_name is ambiguous. Matching campaigns: A (1), B (2)')
+    })
+    target.resolveCampaignId = vi.fn(async () => null)
+    const ambiguous = (await service.searchCampaignBrain(
+      target,
+      { query: 'anything at all', campaign_name: 'Andy' },
+      'agent:vibey:conv-1',
+    )) as Record<string, unknown>
+    expect(String(ambiguous.error)).toContain('ambiguous')
+    expect(target.resolveCampaignId).not.toHaveBeenCalled()
+  })
+
   it('does not bind ambient session campaign fallback', async () => {
     nsBrainsMaybeSingle.mockResolvedValue({ data: { id: 'brain-campaign-1' }, error: null })
 

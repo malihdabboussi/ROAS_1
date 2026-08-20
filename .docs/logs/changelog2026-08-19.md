@@ -327,3 +327,9 @@ What: App-chat named-client CONNECTIONS bind (plan §11.2a, Studio side). `maybe
 Why: Live case 2026-08-19 — an app chat naming Christian Osgood ran unbound: no campaign brain search, no Slack channel lookup, Pixel asked 4 questions his Campaign Brain could answer. Slack inbound got this bind yesterday; the app path still depended on the model choosing to call search_campaign_brain with the name.
 Impact: App Pixel = Slack Pixel for named-client asks (§11.12 #3).
 Files: apps/agent-api/src/modules/chat/services/named-client-campaign-bind.ts (+test), chat.service.ts
+
+## [2026-08-19 21:26] - [FIX]
+What: `search_campaign_brain` no longer fails when the client's name differs from the campaign's name. (1) `resolveCampaignIdByName` falls back to the Portal client stamps on `slack_observation_events` (page_grader_client_name → roas_campaign_id, unique match, org-scoped) before throwing not-found. (2) `resolveCampaignBrainId` treats a not-found name as a fall-through to the conversation's bound campaign instead of returning the error (ambiguity stays fatal); the name error is only surfaced when nothing else resolves.
+Why: Live incident — chat bound to campaign "Multifamily Strategy" (1,170 memories), model searched with campaign_name "Christian Osgood", resolver threw "campaign_name not found", the model narrated it as "Brain has nothing on Christian" and wrote ad copy from spammy web sources, inventing specifics (a "12-year listing" that appears nowhere).
+Impact: Client-name searches reach the right Campaign Brain; a bound chat can never be told its own brain doesn't exist.
+Files: apps/agent-api/src/modules/artifacts/services/artifact-campaign-name-resolver.ts (+test), artifact-brain-search-actions.service.ts, artifact-brain-search-campaign-brain.test.ts
