@@ -141,7 +141,7 @@ function resolveWorkflowUiControl(field) {
 function resolveWorkflowSideEffect(capability) {
     if (capability.kind === 'trigger')
         return 'event_source';
-    if (['send_email', 'send_slack_message', 'send_channel_message'].includes(capability.type)) {
+    if (['send_email', 'send_slack_message', 'send_channel_message', 'observe_slack_team'].includes(capability.type)) {
         return 'external_communication';
     }
     if (['publish_artifact', 'unpublish_artifact', 'create_social_post'].includes(capability.type)) {
