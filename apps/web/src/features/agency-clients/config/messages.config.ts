@@ -23,4 +23,6 @@ export const AGENCY_CLIENT_MESSAGES = {
   ACCOUNT_MANAGER: 'Account manager',
   SHOW_INACTIVE: 'Show inactive',
   NO_VISIBLE_CLIENTS: 'No active clients. Show inactive to include blocked and churned accounts.',
+  NO_VISIBLE_CAMPAIGNS:
+    'No campaigns for active clients. Show inactive to include blocked and churned accounts.',
 } as const

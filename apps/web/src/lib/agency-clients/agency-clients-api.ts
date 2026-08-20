@@ -70,6 +70,9 @@ export type AgencyClientCampaign = {
     assigned_user_id?: string | null
     assignee_name?: string | null
     assignee_email?: string | null
+    pipeline_stage?: string | null
+    status?: string | null
+    pipeline_status?: string | null
   }
   [key: string]: unknown
 }

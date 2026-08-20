@@ -50,8 +50,16 @@ export type PipelineClientLike = {
   display_name?: string
   status?: string | null
   pipeline_stage?: string | null
+  pipeline_status?: string | null
   account_manager?: { name?: string | null } | null
   config?: Record<string, unknown>
+}
+
+export type PipelineCampaignLike = {
+  id?: string
+  name?: string | null
+  client_id?: string | null
+  clients?: unknown
 }
 
 export function normalizePipelineKey(value: string): string {
@@ -80,6 +88,9 @@ export function clientPipelineValue(client: PipelineClientLike): string {
   if (fromConfig) return fromConfig
   const stage = typeof client.pipeline_stage === 'string' ? client.pipeline_stage.trim() : ''
   if (stage) return stage
+  const pipelineStatus =
+    typeof client.pipeline_status === 'string' ? client.pipeline_status.trim() : ''
+  if (pipelineStatus) return pipelineStatus
   return typeof client.status === 'string' ? client.status : ''
 }
 
@@ -139,6 +150,82 @@ export function clientMatchesQuery(client: PipelineClientLike, query: string): b
     .includes(needle)
 }
 
+export function pipelineClientFromUnknown(value: unknown): PipelineClientLike {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  const record = value as Record<string, unknown>
+  const manager = record.account_manager
+  const managerRecord =
+    manager && typeof manager === 'object' && !Array.isArray(manager)
+      ? (manager as Record<string, unknown>)
+      : null
+  return {
+    id: stringField(record, 'id'),
+    name:
+      stringField(record, 'friendly_name') ||
+      stringField(record, 'name') ||
+      stringField(record, 'display_name'),
+    display_name:
+      stringField(record, 'display_name') ||
+      stringField(record, 'friendly_name') ||
+      stringField(record, 'name'),
+    status: stringField(record, 'status') ?? stringField(record, 'pipeline_status') ?? null,
+    pipeline_stage: stringField(record, 'pipeline_stage') ?? null,
+    pipeline_status: stringField(record, 'pipeline_status') ?? null,
+    account_manager: managerRecord
+      ? {
+          name:
+            stringField(managerRecord, 'name') ??
+            stringField(managerRecord, 'assignee_name') ??
+            null,
+        }
+      : undefined,
+  }
+}
+
+export function campaignParentPipelineClient(
+  campaign: PipelineCampaignLike,
+  catalogById?: Map<string, PipelineClientLike>,
+): PipelineClientLike {
+  const nested = pipelineClientFromUnknown(campaign.clients)
+  const catalog = campaign.client_id ? catalogById?.get(campaign.client_id) : undefined
+  return {
+    id: catalog?.id ?? nested.id ?? campaign.client_id ?? undefined,
+    name: catalog?.name ?? nested.name,
+    display_name: catalog?.display_name ?? nested.display_name ?? nested.name,
+    status: catalog?.status ?? nested.status,
+    pipeline_stage: catalog?.pipeline_stage ?? nested.pipeline_stage,
+    pipeline_status: catalog?.pipeline_status ?? nested.pipeline_status,
+    config: catalog?.config,
+    account_manager: catalog?.account_manager ?? nested.account_manager,
+  }
+}
+
+export function campaignMatchesQuery(campaign: PipelineCampaignLike, query: string): boolean {
+  const needle = query.trim().toLowerCase()
+  if (!needle) return true
+  const parent = pipelineClientFromUnknown(campaign.clients)
+  return `${campaign.name || ''} ${parent.display_name || parent.name || ''}`
+    .toLowerCase()
+    .includes(needle)
+}
+
+export function visiblePipelineCampaigns<T extends PipelineCampaignLike>(
+  campaigns: T[],
+  opts: {
+    query?: string
+    includeHidden?: boolean
+    catalogById?: Map<string, PipelineClientLike>
+  } = {},
+): T[] {
+  const query = opts.query ?? ''
+  const searching = query.trim().length > 0
+  return campaigns.filter((campaign) => {
+    if (!campaignMatchesQuery(campaign, query)) return false
+    if (opts.includeHidden || searching) return true
+    return !isDefaultHiddenClient(campaignParentPipelineClient(campaign, opts.catalogById))
+  })
+}
+
 export function visiblePipelineClients<T extends PipelineClientLike>(
   clients: T[],
   opts: { query?: string; includeHidden?: boolean; alwaysIncludeIds?: Iterable<string> } = {},
@@ -189,4 +276,9 @@ function pageGraderPipelineFromConfig(config: Record<string, unknown> | undefine
   if (typeof row.pipeline_stage === 'string' && row.pipeline_stage.trim()) return row.pipeline_stage
   if (typeof row.status === 'string' && row.status.trim()) return row.status
   return ''
+}
+
+function stringField(record: Record<string, unknown>, key: string): string | undefined {
+  const value = record[key]
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }

@@ -1,5 +1,11 @@
 # Changelog - August 20, 2026
 
+## [2026-08-20 22:43] - [FIX]
+What: Stamp Portal `pipeline_stage` onto ROAS campaign Page Grader config on import and catch-up (including hash-unchanged skips). Retry Portal `/clients` without `include_all_statuses` / `include_inactive` on 400/422. Hide Inactive/Blocked/Churned parent clients on Client Campaigns with Show inactive. Split `page-grader.integration.ts` under the integration LOC cap.
+Why: Connections could not hide churned clients because campaign config never stored pipeline. Portal unknown query params could 400 the whole Clients list. Client Campaigns still listed campaigns for hidden parents. The integration file was over the 400 LOC cap.
+Impact: Connections can hide/order from stamped config. Clients listing survives Portal rejecting the extra flags. Client Campaigns matches Clients default-hide. Page Grader HTTP/types live in focused files.
+Files: `page-grader-client-import.service.ts`, `page-grader-external-source.ts`, `page-grader-brain-package-ingest.service.ts`, `page-grader.integration.ts`, `page-grader.integration.http.ts`, `page-grader.integration.types.ts`, `agency-client-pipeline.ts`, `ClientCampaignsPage.tsx`, `page-grader-campaign-brain-sync.md`
+
 ## [2026-08-20 15:40] - [FIX]
 What: Export to Google / Open in Drive now actually open a Google tab. First export opens `about:blank` in the same click (before Drive status returns) so the browser cannot popup-block it; later opens are a real `target=_blank` link. Drive-synced Docs/Sheets/Slides without `_drive_web_view_link` (or with a Drive `file/view` link) open at `docs.google.com/.../edit` instead of `drive.google.com/file/d/.../view`.
 Why: `DocEditorExportDropdown` awaited `getGoogleDriveStatus()` before `window.open`, so connected-Google clicks were treated as popups and blocked. Native Google Docs with a null webViewLink used the Drive file/view URL, which does not open the editor.
@@ -23,7 +29,6 @@ What: Simple Recents always opens `/home?conv=` for the clicked chat. Remembered
 Why: Clicking Christian Osgood from Home Recents restored `/home/meetings?meeting=&space=`, which hid the thread behind New chat + empty files, then React #185 crashed the meetings identity loop. Console also showed 404s on a dead conversation and 500s on suggest-title.
 Impact: Recents loads the chat you clicked. Show page still restores the last meeting. Unmatched meeting URLs stop looping. Agent-created chat docs still render via the files-pane markdown viewer on this branch.
 Files: `shell-chat-menu-open.ts`, `shell-work-area-page.ts`, `use-shell-artifact-conversation-sync.ts`, `use-home-meeting-work-restore.ts`, `meeting-workspace-api.ts`, `claude-chatgpt-shell.md`
-
 ## [2026-08-20 02:50] - [FIX]
 What: Meeting workspace status now uses All Meetings Call status (`custom_data.call_status`: Live / Completed / No Show / Rescheduled). Connections labels the linked meeting with the meeting name, not the recap/chat title. Meeting threads no longer get first-message title autogen.
 Why: Call notes showed Following up (task Status) while All Meetings showed Completed (Call status) for the same Samin Yassar calls. Recap prompts renamed the meeting chat, so CONNECTIONS looked like a message linked to itself.

@@ -1,6 +1,6 @@
 # Page Grader Campaign Brain Sync
 
-Last Modified: August 19, 2026
+Last Modified: August 20, 2026
 
 ## Overview
 
@@ -47,9 +47,9 @@ Envelope fields:
 
 ROAS now presents the shared agency hierarchy directly:
 
-- **Clients** lists every Page Grader pipeline stage (not Portal's active-only default), grouped by pipeline in Portal order: New Client Intake → Onboarding Call Booked → Pre-Launch → Re-Launch → Active/Happy → Waiting on Client → Paused → Inactive → Blocked → Done With You / Consulting → Churned/Inactive. Inactive, Blocked, and Churned/Inactive are hidden until **Show inactive** is on or the operator searches by name. The same default-hide applies to Map clients, Send to Page Grader, and Connections client pickers. Operators can switch to account-manager grouping.
+- **Clients** lists every Page Grader pipeline stage (not Portal's active-only default), grouped by pipeline in Portal order: New Client Intake → Onboarding Call Booked → Pre-Launch → Re-Launch → Active/Happy → Waiting on Client → Paused → Inactive → Blocked → Done With You / Consulting → Churned/Inactive. Inactive, Blocked, and Churned/Inactive are hidden until **Show inactive** is on or the operator searches by name. The same default-hide applies to Map clients, Send to Page Grader, Connections client pickers, and Client Campaigns (by parent client). Operators can switch to account-manager grouping. ROAS campaign config stores that pipeline on `config.external_sources.page_grader.pipeline_stage` during import and catch-up so Connections can hide without a second Portal fetch.
 - **Client detail** is a quick account-manager briefing surface with Page Grader overview and client information plus current ROAS-mapped campaigns, fulfillment tasks, and client requests.
-- **Client Campaigns** lists every non-deleted Page Grader `client_campaign` in an all-campaign view or grouped by client. Date/event, budget, status, and next-action fields remain sourced from Page Grader.
+- **Client Campaigns** lists every non-deleted Page Grader `client_campaign` in an all-campaign view or grouped by client. Campaigns whose parent client is Inactive, Blocked, or Churned/Inactive stay hidden until **Show inactive** is on or the operator searches by name. Date/event, budget, status, and next-action fields remain sourced from Page Grader.
 - A campaign row opens the stable ROAS Space whose `schema.custom_data.page_grader_campaign_id` matches the Page Grader campaign ID.
 
 The agency list bootstraps unmapped clients through the existing deterministic Brain import. This creates or reuses the ROAS client campaign container, General Space, campaign Brain, and scope mapping before reconciling campaign Spaces. The existing SSO embed is retained for Page Grader-only workflows.
@@ -141,6 +141,7 @@ Repeated manual requests use the deterministic Page Grader client and meeting ti
 
 ## Decision Log
 
+- **2026-08-20:** Portal client import and Brain package ingest now merge `pipeline_stage` / `status` onto `campaigns.config.external_sources.page_grader` (including hash-unchanged skip, because pipeline can change without `content_hash` changing). `GET /clients` still asks for `include_all_statuses` and `include_inactive`, then retries without those flags on HTTP 400/422 so an unknown Portal query name cannot blank the Clients list.
 - **2026-08-18:** The Page Grader client **General** Space is the hidden client overview. Navigating to it opens `/campaigns/{id}?client=…`. It stays a real Space for Brain/Connections routing and is hidden from space switchers. Org system General is unchanged.
 - **2026-08-17:** Pixel QC and Launch Agent check-ins now measure a client once. Repeat Page Grader webhooks for the same client reply in that Slack thread (or stay quiet for eight hours) instead of posting a new hourly CRITICAL DM. Finding IDs can rotate; the parent thread is keyed by client, not finding UUID.
 - **2026-08-17:** Empty Slack period skips stay skipped, but they no longer toast. Background channel sync can finish several empty windows in a row; a global info toast for each one interrupted chat. The notifier still acknowledges those jobs so they do not repeat.

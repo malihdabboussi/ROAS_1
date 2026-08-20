@@ -136,6 +136,38 @@ describe('PageGraderIntegration.listClients', () => {
     )
     expect(clients).toEqual([{ id: 'c1', name: 'Intake', status: 'new_client_intake' }])
   })
+
+  it('retries without all-status flags when Portal rejects them', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: 'Unknown query parameter include_all_statuses' }), {
+          status: 400,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ clients: [{ id: 'c1', name: 'Active' }] }), { status: 200 }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const clients = await new PageGraderIntegration().listClients(
+      'https://portal.example/functions/v1/roas-api',
+      'secret-api-key',
+      { limit: 100, offset: 0 },
+    )
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      'https://portal.example/functions/v1/roas-api/clients?limit=100&offset=0&include_all_statuses=true&include_inactive=true',
+      expect.anything(),
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      'https://portal.example/functions/v1/roas-api/clients?limit=100&offset=0',
+      expect.anything(),
+    )
+    expect(clients).toEqual([{ id: 'c1', name: 'Active' }])
+  })
 })
 
 describe('PageGraderIntegration.listLaunches', () => {

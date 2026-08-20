@@ -81,7 +81,10 @@ describe('PageGraderBrainPackageIngestService', () => {
   })
 
   it('repairs missing Brain embeddings even when the Page Grader package is unchanged', async () => {
-    const pkg = { page_grader_client_id: 'pg-asura' }
+    const pkg = {
+      page_grader_client_id: 'pg-asura',
+      client: { id: 'pg-asura', pipeline_stage: 'blocked', status: 'blocked' },
+    }
     const contentHash = computePageGraderPackageContentHash(pkg)
     const campaignQuery: Record<string, unknown> = {
       select: vi.fn(() => campaignQuery),
@@ -92,12 +95,15 @@ describe('PageGraderBrainPackageIngestService', () => {
           id: 'campaign-1',
           name: 'Asura Group',
           config: {
-            external_sources: { page_grader: { content_hash: contentHash } },
+            external_sources: {
+              page_grader: { content_hash: contentHash, campaign_space_hash: 'keep-me' },
+            },
           },
           context: {},
         },
         error: null,
       })),
+      update: vi.fn(() => campaignQuery),
       limit: vi.fn(() => campaignQuery),
     }
     const brainQuery: Record<string, unknown> = {
@@ -134,5 +140,19 @@ describe('PageGraderBrainPackageIngestService', () => {
       memoriesEmbedded: 373,
       memoryEmbeddingFailures: 0,
     })
+    expect(campaignQuery.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: expect.objectContaining({
+          external_sources: {
+            page_grader: expect.objectContaining({
+              content_hash: contentHash,
+              campaign_space_hash: 'keep-me',
+              pipeline_stage: 'blocked',
+              status: 'blocked',
+            }),
+          },
+        }),
+      }),
+    )
   })
 })
