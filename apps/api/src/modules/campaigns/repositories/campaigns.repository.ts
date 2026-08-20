@@ -160,6 +160,7 @@ export class CampaignsRepository extends CampaignKnowledgeRepository {
       campaign_type: string
       config?: Record<string, unknown>
       org_id?: string | null
+      program_id?: string | null
     },
   ) {
     const { data, error } = await supabase.from('campaigns').insert(record).select().single()

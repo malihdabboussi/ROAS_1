@@ -39731,7 +39731,7 @@ Needed work: Convert opportunistically per surface; keep orbs only for in-button
 Reason not done now: Long tail; page-level jank was the user-visible complaint.
 ## 2026-08-19 - [FIX] Chat-created client campaigns never get a program (needs decision + backfill)
 
-Status: Open — needs Dylan
+Status: Resolved 2026-08-19 — Dylan decided: explicit-ask only; client-referenced → Clients program; standalone → General. createCampaign attaches via config.client; the three campaigns were backfilled through PATCH /campaigns/:id (product API). Left open: enforcement is prompt-level (useWhen/doNotUseWhen) — a hard preflight can't detect "user asked".
 
 Found while: Recents filter fixes (claude/recents-filter-fixes)
 

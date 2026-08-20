@@ -290,3 +290,9 @@ What: Recents filter fixes. (1) Clicking a chat under an active filter no longer
 Why: Dylan's report: filtered chat click pulled the chat up briefly then it vanished; filter tree listed campaigns as programs.
 Impact: Filtered recents clicks land and stay on the clicked chat with a visible loading state; the filter tree is truthfully sectioned (Programs / Campaigns / Clients). Client filtering = the existing Clients section + search; the three mislabeled client campaigns still need the program backfill (see follow-up log).
 Files: apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx, apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx, apps/web/src/components/conversations/ConversationScopePickerMenus.tsx, conversation-scope-picker.messages.config.ts
+
+## [2026-08-19 20:31] - [FIX]
+What: Campaign→program attachment per Dylan's rule. createCampaign now attaches client-referenced campaigns (config.client) to the org's Clients program; standalone campaigns stay program-less and group under General. create_campaign action contract: only when the user explicitly asked this turn (doNotUseWhen added), and client work must set config.client. Backfilled Claude Club Webinar + both Master Your Kraft VSL campaigns to the Clients program via the product API (PATCH /campaigns/:id, permission-checked).
+Why: Pixel-created client campaigns floated program-less and polluted the scope picker; Dylan: campaigns only on explicit ask, tied to their client, else General.
+Impact: New client campaigns land under their client automatically; the picker's Campaigns section now holds only genuinely standalone campaigns (verified live).
+Files: apps/api/src/modules/campaigns/services/campaigns-service-01.base.ts, apps/api/src/modules/campaigns/repositories/campaigns.repository.ts, apps/api/src/modules/campaigns/services/__tests__/campaigns.service.test.ts, apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts

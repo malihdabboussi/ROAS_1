@@ -420,12 +420,28 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
     if (config.system_kind === CampaignsServiceBase01.PERSONAL_SYSTEM_KIND) {
       return this.ensurePersonalCampaign(supabase, userId)
     }
+    // Client-referenced campaigns attach to the org's Clients program so they group
+    // under that client instead of floating program-less (which read as fake
+    // "programs" in scope pickers). Standalone campaigns stay ungrouped → General.
+    const clientRef = typeof config.client === 'string' ? config.client.trim() : ''
+    let programId: string | null = null
+    if (clientRef && orgId) {
+      const { data: clientsProgram } = await supabase
+        .from('programs')
+        .select('id')
+        .eq('org_id', orgId)
+        .eq('system_kind', 'clients')
+        .is('deleted_at', null)
+        .maybeSingle()
+      programId = clientsProgram ? String(clientsProgram.id) : null
+    }
     const created = await this.campaignsRepo.create(supabase, {
       user_id: userId,
       name: data.name,
       campaign_type: data.campaign_type ?? 'get-more-leads',
       config,
       org_id: orgId ?? null,
+      ...(programId ? { program_id: programId } : {}),
     })
     await this.ensureCoreCampaignAgents(supabase, userId, String(created.id), orgId)
     await this.ensureCampaignBrain(supabase, userId, String(created.id), data.name, orgId)
