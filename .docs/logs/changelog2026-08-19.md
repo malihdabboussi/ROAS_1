@@ -273,3 +273,9 @@ What: Typed `LABEL_BY_SLUG` / `RANK_BY_SLUG` in `agency-client-pipeline.ts` as `
 Why: PR #335 inferred the maps as `Map<AgencyClientPipelineSlug, …>` while querying them with plain strings — `tsc` fails, and the Vercel roas-web build on main has been red since that merge (the PR merged before checks reported).
 Impact: main's roas-web deploy builds again; no behavior change (lookups already handled misses).
 Files: `apps/web/src/lib/agency-clients/agency-client-pipeline.ts`
+
+## [2026-08-19 21:19] - [FIX]
+What: Conversation titles can never be injected context stamps. `stripInjectedContextBlocks` in conversation-title.util.ts removes platform blocks ([Ask kind], [Slack channel identity], [Client context], [Assets], thread wrappers, …) before any title is derived, and `needsGeneratedConversationTitle` treats an already-stamped title as needing regeneration. New repo script `scripts/roas/cleanup-stamped-conversation-titles.mjs` (dry-run default, --apply) retitles the 11 prod rows created before PR #339's source fix, deriving each title from the conversation's first real user message.
+Why: 11 Slack chats were titled "[Ask kind] Kind: client Signals: …" — the prompt stamp from #317 leaked into titles. #339 fixed the source; this is the belt-and-suspenders guard + the row cleanup, run via script instead of a manual prod write.
+Impact: Sidebar titles always reflect the human ask; cleanup is idempotent.
+Files: apps/api/src/modules/conversations/utils/conversation-title.util.ts (+test), scripts/roas/cleanup-stamped-conversation-titles.mjs
