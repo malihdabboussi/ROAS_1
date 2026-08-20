@@ -20,6 +20,7 @@ vi.mock('@/features/spaces', () => {
   )
   return {
     useSpacesStore,
+    useEnsureAllMeetingsColumns: vi.fn(),
     SpaceItemsContainer: (props: { embed?: { overrideView?: { content?: React.ReactNode } } }) => {
       mocks.spaceItemsContainer(props)
       return <div data-testid="space-views">{props.embed?.overrideView?.content}</div>

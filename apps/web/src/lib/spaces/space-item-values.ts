@@ -46,6 +46,14 @@ export function readItemAssignees(item: SpaceItem): AssigneeFieldValue {
   return []
 }
 
+export function visibleListStatusField(
+  allFields: FieldDef[],
+  visibleFields: FieldDef[],
+): FieldDef | undefined {
+  if (!visibleFields.some((field) => field.id === 'status')) return undefined
+  return allFields.find((field) => field.id === 'status')
+}
+
 export function readFieldValue(item: SpaceItem, fieldId: string): unknown {
   switch (fieldId) {
     case 'title':

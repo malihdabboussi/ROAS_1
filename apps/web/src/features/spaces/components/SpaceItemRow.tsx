@@ -17,6 +17,7 @@ import { useGlobalChatStore } from '@/components/global-chat/store/use-global-ch
 import { Tooltip } from '@/components/ui/tooltip'
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import { ConfirmDialog } from '@/features/settings/components/settings-content/ConfirmDialog'
+import { visibleListStatusField } from '@/lib/spaces/space-item-values'
 import { cn } from '@/lib/utils/cn'
 import type { SpaceListDndDragHandleProps } from '../lib/space-list-dnd-types'
 import type { SpaceItem } from '../types'
@@ -160,7 +161,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
     document.addEventListener('pointerdown', onDocPointerDown, true)
     return () => document.removeEventListener('pointerdown', onDocPointerDown, true)
   }, [surface])
-  const statusField = useMemo(() => allFields.find((f) => f.id === 'status'), [allFields])
+  const statusField = visibleListStatusField(allFields, visibleFields)
   const statusValue = readFieldValue(item, 'status')
   const statusOption = useMemo(
     () => statusField?.options?.find((o) => o.id === statusValue) ?? null,
@@ -561,7 +562,6 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                     </div>
                   ) : (
                     <>
-                      {/* Status dot + title — consistent gap-2.5 */}
                       <div
                         ref={titleCellRef}
                         className="ml-2.5 flex w-full min-w-0 flex-1 items-center gap-2.5 self-stretch"

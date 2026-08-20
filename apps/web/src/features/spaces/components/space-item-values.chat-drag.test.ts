@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SpaceItem } from '../types'
-import { buildSpaceTaskChatDragPayload } from './space-item-values'
+import { buildSpaceTaskChatDragPayload, visibleListStatusField } from './space-item-values'
 
 function makeItem(overrides: Partial<SpaceItem> = {}): SpaceItem {
   return {
@@ -47,5 +47,19 @@ describe('buildSpaceTaskChatDragPayload', () => {
 
   it('falls back to Task when title is empty', () => {
     expect(buildSpaceTaskChatDragPayload(makeItem({ title: '   ' })).label).toBe('Task')
+  })
+})
+
+describe('visibleListStatusField', () => {
+  const status = { id: 'status', name: 'Status', type: 'select' as const }
+
+  it('returns the status field only when Status is a visible column', () => {
+    expect(visibleListStatusField([status], [status])).toEqual(status)
+  })
+
+  it('hides name-column status chrome when Status is not visible', () => {
+    expect(
+      visibleListStatusField([status], [{ id: 'title', name: 'Name', type: 'text' }]),
+    ).toBeUndefined()
   })
 })
