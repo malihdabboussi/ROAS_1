@@ -39706,3 +39706,8 @@ Needed work: Split filter/reload/open-plan concerns out of ShellChatMenu.
 
 Reason not done now: Out of scope for the production crash unblock.
 
+
+## 2026-08-19 — chat/mission-control — pre-existing LOC overages adjacent to mission↔chat wiring
+- `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` — 2642 LOC (allowlisted; limit 600/400 for components). This change ended up not touching it (mission-focus subscription lives in `use-chat-send-awareness.ts`), but it still needs staged decomposition.
+- `apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.tsx` — 399 LOC, one line under the 400 component limit after extracting `useMissionDetailFocus`; the next addition will trip the gate. A state-wiring hook extraction would create headroom.
+- Reason not done now: decomposing them is unrelated refactoring risk on a targeted fix branch (claude/mission-chat-avatar-fixes).
