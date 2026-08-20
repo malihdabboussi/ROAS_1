@@ -104,6 +104,48 @@ describe('CompanyDailyDreamRunnerService contract', () => {
     expect(result.chunksProcessed).toBeGreaterThanOrEqual(1)
   })
 
+  it('warns when a completed dream yields zero signals', async () => {
+    const CompanyDailyDreamRunnerService = await loadDailyDreamRunner()
+    const warn = vi.fn()
+    const runRepository = {
+      findByDedupeKey: vi.fn().mockResolvedValue(null),
+      createRun: vi.fn().mockResolvedValue({ id: 'run-zero' }),
+      completeRun: vi.fn().mockResolvedValue(undefined),
+    }
+    const atlas = {
+      runDailyDreamChunk: vi.fn().mockResolvedValue({ signals: [] }),
+    }
+    const service = new CompanyDailyDreamRunnerService({
+      runRepository,
+      collector: {
+        collect: vi.fn().mockResolvedValue({
+          groups: [{ id: 'g1', text: 'quiet day' }],
+          sourceCounts: { conversations: 1 },
+        }),
+      },
+      triage: {
+        triageGroups: vi.fn().mockResolvedValue({ included: [{ id: 'g1', text: 'quiet day' }] }),
+      },
+      atlas,
+    })
+    ;(service as { logger: { warn: typeof warn; log: () => void } }).logger = {
+      warn,
+      log: vi.fn(),
+    } as never
+
+    const result = await service.runDailyDream({
+      orgId: 'org-1',
+      brainId: 'brain-1',
+      userId: 'user-1',
+      localDate: '2026-05-18',
+      windowStart: '2026-05-18T00:00:00.000Z',
+      windowEnd: '2026-05-19T00:00:00.000Z',
+    })
+
+    expect(result.signalsCreated).toBe(0)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('zero signals created'))
+  })
+
   it('does not reprocess the same org/day unless manual rerun is requested', async () => {
     const CompanyDailyDreamRunnerService = await loadDailyDreamRunner()
     const runRepository = {
