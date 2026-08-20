@@ -1,5 +1,11 @@
 # Changelog - August 20, 2026
 
+## [2026-08-20 02:50] - [FIX]
+What: Meeting workspace status now uses All Meetings Call status (`custom_data.call_status`: Live / Completed / No Show / Rescheduled). Connections labels the linked meeting with the meeting name, not the recap/chat title. Meeting threads no longer get first-message title autogen.
+Why: Call notes showed Following up (task Status) while All Meetings showed Completed (Call status) for the same Samin Yassar calls. Recap prompts renamed the meeting chat, so CONNECTIONS looked like a message linked to itself.
+Impact: Workspace picker and All Meetings share Call status. Recap chats still connect to the calendar meeting, labeled with that meeting’s title. Follow-up work keeps task Status.
+Files: `use-meeting-space-status-field.ts`, `MeetingWorkspaceDialog.tsx`, `ShellRightPanel.tsx`, `conversation-meeting-link.ts`, `conversation-title.ts`, `conversation-title-scheduler.ts`, `chat.service.ts`, `meeting-workspace.service.ts`
+
 ## [2026-08-20 00:56] - [FIX]
 What: Unblocked `roas-web` typecheck and stopped React #185 max-update-depth crashes on Choose Space / home shell.
 Why: Production showed the branded error boundary (`SOMETHING WENT WRONG`). `app_errors` logged React #185 on `/` and `/home/inbox`. Vercel `roas-web` deploys after #335 were failing typecheck (`agency-client-pipeline` slug typing + MissionTrackActions test cast), so later fixes could not ship.

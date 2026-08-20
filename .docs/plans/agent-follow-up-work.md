@@ -1,3 +1,15 @@
+## 2026-08-20 - [ARCH] chat.service.ts remains far over the 600 LOC service cap
+
+Status: Open
+
+Found while: Stopping recap prompts from renaming meeting chats
+
+Evidence: `wc -l` on `apps/web/src/features/studio/services/chat.service.ts` is 2992. Cap is 600. Allowlist is 2993. Meeting-title guards live in `conversation-title.ts` so this file did not grow.
+
+Needed work: Split send/stream/title/status orchestration out of `chat.service.ts`.
+
+Reason not done now: In-scope work was shared Call status and Connections meeting labels. The file was already over the cap.
+
 ## 2026-08-20 - [ARCH] SpaceItemRow.tsx is over the 400 LOC component cap
 
 Status: Open
