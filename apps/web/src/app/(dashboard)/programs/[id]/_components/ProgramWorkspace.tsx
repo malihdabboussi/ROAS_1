@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { CampaignCanvasView, CANVAS_VIEW_MESSAGES } from '@/components/canvas'
 import { ShellBreadcrumb } from '@/components/shell/ShellBreadcrumb'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { HierarchyViewBar, TaskWorkViewContent } from '@/components/work-views'
 import { fetchCampaigns, type Campaign } from '@/lib/campaigns'
 import { fetchProgram, programDisplayName, updateProgram, type Program } from '@/lib/programs'
@@ -129,8 +129,8 @@ export function ProgramWorkspace() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <VibeyLoadingOrb text={PROGRAM_VIEW_MESSAGES.loading} state="processing" size="lg" />
+      <div className="h-full">
+        <PageSkeleton label={PROGRAM_VIEW_MESSAGES.loading} />
       </div>
     )
   }

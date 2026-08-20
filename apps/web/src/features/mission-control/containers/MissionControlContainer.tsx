@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { billingApi } from '@/lib/billing/billing-api'
 import { fetchCampaignTeam } from '@/lib/campaigns/campaign-api'
 import { CHAT_MAX_FILES, CHAT_TOAST_ERRORS } from '@/lib/chat/chat-toast-errors.config'
@@ -234,8 +234,8 @@ export function MissionControlContainer() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <VibeyLoadingOrb text="Loading mission control..." state="processing" size="lg" />
+      <div className="h-full">
+        <PageSkeleton label="Loading mission control..." />
       </div>
     )
   }

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Check, ExternalLink, Radio } from 'lucide-react'
 import { toast } from 'sonner'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
   HOME_TOAST_ERRORS,
   HOME_TOAST_SUCCESS,
@@ -142,7 +143,7 @@ export function MeetingRecordingsSection({
             Select a Fathom recording to link to this meeting.
           </p>
           {loadingCandidates && candidates.length === 0 ? (
-            <p className="body-4 text-muted-foreground">Loading recordings…</p>
+            <ListSkeleton rows={2} label="Loading recordings…" />
           ) : null}
           {!loadingCandidates && candidates.length === 0 ? (
             <p className="body-4 text-muted-foreground">No Fathom recordings found.</p>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { YourTurnCard } from '../components/your-turn/YourTurnCard'
 import { YourTurnSubtaskDrawer } from '../components/your-turn/YourTurnSubtaskDrawer'
 import { useYourTurnFeed } from '../hooks/use-your-turn-feed'
@@ -22,8 +22,8 @@ export function YourTurnContainer() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <VibeyLoadingOrb state="processing" size="lg" text="Loading your queue..." />
+      <div className="h-full">
+        <PageSkeleton label="Loading your queue..." />
       </div>
     )
   }

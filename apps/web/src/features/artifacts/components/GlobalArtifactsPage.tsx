@@ -19,7 +19,7 @@ import {
   SlidersHorizontal,
   Workflow,
 } from 'lucide-react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { formatArtifactDate } from '@/lib/artifacts/artifact-date'
 import {
   fetchGlobalArtifacts,
@@ -253,12 +253,8 @@ export function GlobalArtifactsPage({
         </div>
 
         {loading ? (
-          <div className="flex min-h-64 items-center justify-center">
-            <VibeyLoadingOrb
-              text={ARTIFACT_LIBRARY_MESSAGES.loading}
-              state="processing"
-              size="sm"
-            />
+          <div className="min-h-64">
+            <ListSkeleton rows={6} label={ARTIFACT_LIBRARY_MESSAGES.loading} />
           </div>
         ) : error ? (
           <div className="surface-card border-border rounded-spacing-3 p-spacing-6 border text-center">

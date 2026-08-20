@@ -1,5 +1,6 @@
 import type { RefObject } from 'react'
 import { Clock } from 'lucide-react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import type { MissionAgent, MissionLog, MissionSubtask } from '../../types'
 import { ActivityTimelineLogItem } from './ActivityTimelineLogItem'
 
@@ -53,7 +54,7 @@ export function ActivityTimelineLogList({
   const body = (
     <>
       {logsLoading && isMissionLinked ? (
-        <p className="body-3 text-muted-foreground">Loading...</p>
+        <ListSkeleton rows={4} label="Loading..." />
       ) : showEmpty ? (
         <div className="text-muted-foreground/40 flex flex-col items-center py-spacing-8">
           <Clock className="icon-md" />

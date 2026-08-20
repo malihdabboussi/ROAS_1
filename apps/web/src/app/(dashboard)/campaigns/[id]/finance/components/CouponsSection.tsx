@@ -1,6 +1,7 @@
 'use client'
 
 import { ChevronDown, Plus, Tag } from 'lucide-react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import type { StripeCoupon } from '@/features/studio/services/analytics.service'
 import { NEW_BTN_CLASS } from '../constants'
 import { fmt } from '../utils/financeFormatters'
@@ -65,7 +66,7 @@ export function CouponsSection({
       {couponsOpen && (
         <div className="mt-4">
           {objectsLoading ? (
-            <p className="body-4 text-muted-foreground">Loading...</p>
+            <ListSkeleton rows={3} label="Loading..." />
           ) : coupons.length === 0 ? (
             <p className="body-4 text-muted-foreground">No coupons yet.</p>
           ) : couponsFiltered.length === 0 ? (

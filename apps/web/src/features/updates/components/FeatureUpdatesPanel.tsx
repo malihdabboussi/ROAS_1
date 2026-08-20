@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { FeatureUpdateMockup } from '@/features/updates/components/FeatureUpdateMockups'
 import type { FeatureUpdate } from '@/features/updates/types'
 
@@ -81,9 +81,8 @@ export function FeatureUpdatesPanel({
       </div>
       <div className="px-spacing-3 pb-spacing-3 flex flex-1 flex-col overflow-y-auto">
         {loading ? (
-          <div className="gap-spacing-4 py-spacing-8 flex flex-col items-center justify-center">
-            <VibeyLoadingOrb state="processing" size="sm" />
-            <p className="body-3 text-muted-foreground">Loading updates…</p>
+          <div className="px-spacing-2 py-spacing-4">
+            <ListSkeleton rows={4} label="Loading updates…" />
           </div>
         ) : updates.length === 0 ? (
           <p className="body-3 text-muted-foreground px-spacing-2 py-spacing-4 text-center">
