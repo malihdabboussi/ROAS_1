@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   Ban,
   Check,
@@ -16,10 +16,9 @@ import { AgentAvatar } from '@/components/agents'
 import { ConfirmDialog } from '@/components/ui/dialogs/ConfirmDialog'
 import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
-import { formatWebinarSubtaskTitle } from '@/lib/missions'
+import { formatSubtaskStatusLabel, formatWebinarSubtaskTitle } from '@/lib/missions'
 import { updateSubtask } from '../../services/missions.service'
 import type { MissionAgent, MissionSubtask, PrdContent, SubtaskStatus } from '../../types'
-import { formatSubtaskStatusLabel } from '@/lib/missions'
 import {
   formatAgentShortName,
   formatRelativeTime,
@@ -39,6 +38,7 @@ interface SubtasksSectionProps {
   onOpenSubtask: (subtaskId: string) => void
   onUpdated: () => void
   onSubtasksChange: (updater: (prev: MissionSubtask[]) => MissionSubtask[]) => void
+  extendSlot?: ReactNode
 }
 
 export function SubtasksSection({
@@ -54,6 +54,7 @@ export function SubtasksSection({
   onOpenSubtask,
   onUpdated,
   onSubtasksChange,
+  extendSlot,
 }: SubtasksSectionProps) {
   const [subtaskAssigneeOpenId, setSubtaskAssigneeOpenId] = useState<string | null>(null)
   const [completeConfirm, setCompleteConfirm] = useState<{
@@ -370,19 +371,25 @@ export function SubtasksSection({
                   </div>
                 )
               })}
+              {extendSlot}
             </div>
-          ) : planContent ? (
-            <div className="min-w-0">
-              {planContent.summary && (
-                <p className="body-2 text-muted-foreground mb-3">{planContent.summary}</p>
-              )}
-              {(planContent as { approach?: string }).approach && (
-                <p className="body-2 text-muted-foreground/70 mb-3 italic">
-                  {(planContent as { approach?: string }).approach}
-                </p>
-              )}
-            </div>
-          ) : null}
+          ) : (
+            <>
+              {planContent ? (
+                <div className="min-w-0">
+                  {planContent.summary && (
+                    <p className="body-2 text-muted-foreground mb-3">{planContent.summary}</p>
+                  )}
+                  {(planContent as { approach?: string }).approach && (
+                    <p className="body-2 text-muted-foreground/70 mb-3 italic">
+                      {(planContent as { approach?: string }).approach}
+                    </p>
+                  )}
+                </div>
+              ) : null}
+              {extendSlot}
+            </>
+          )}
         </div>
       </div>
     </div>

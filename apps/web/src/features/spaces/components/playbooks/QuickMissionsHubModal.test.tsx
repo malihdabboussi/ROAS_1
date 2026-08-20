@@ -31,6 +31,7 @@ describe('QuickMissionsHubModal', () => {
         ]}
         initialPlaybookKey="static-ad-production"
         initialClientSpaceId="space-1"
+        parentMissionId="mission-parent"
         sourceConversationId="conversation-1"
         onClose={vi.fn()}
         onStarted={onStarted}
@@ -57,6 +58,7 @@ describe('QuickMissionsHubModal', () => {
           title: 'Static Ad Production — Current Course',
           campaign_id: 'campaign-1',
           space_id: 'space-1',
+          parent_mission_id: 'mission-parent',
           input: {
             playbook_id: 'static-ad-production',
             source_conversation_id: 'conversation-1',

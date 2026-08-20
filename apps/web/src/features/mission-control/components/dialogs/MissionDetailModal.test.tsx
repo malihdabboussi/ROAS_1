@@ -26,6 +26,10 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }))
 
+vi.mock('@/components/global-chat/components/QuickMissionsHubHost', () => ({
+  QuickMissionsHubHost: () => null,
+}))
+
 vi.mock('sonner', () => ({
   toast: {
     error: vi.fn(),

@@ -80,6 +80,7 @@ export function QuickMissionsHubModal({
   clients,
   initialPlaybookKey,
   initialClientSpaceId,
+  parentMissionId,
   sourceConversationId,
   onClose,
   onResolveSourceConversation,
@@ -90,6 +91,7 @@ export function QuickMissionsHubModal({
   clients: QuickMissionClientOption[]
   initialPlaybookKey?: string | null
   initialClientSpaceId?: string | null
+  parentMissionId?: string | null
   sourceConversationId?: string | null
   onClose: () => void
   onResolveSourceConversation?: (input: {
@@ -172,6 +174,7 @@ export function QuickMissionsHubModal({
         },
         campaign_id: selectedClient.campaignId,
         space_id: selectedClient.spaceId,
+        ...(parentMissionId ? { parent_mission_id: parentMissionId } : {}),
         idempotency_key: `quick-mission-${selected.id}-${crypto.randomUUID()}`,
       })
       toast.success(QUICK_MISSIONS_MESSAGES.startedToast(missionTitle))

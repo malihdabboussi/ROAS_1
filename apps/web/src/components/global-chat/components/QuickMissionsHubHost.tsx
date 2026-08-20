@@ -118,6 +118,7 @@ export function QuickMissionsHubHost({
   const launcher = useQuickMissionsLauncher()
   const open = controlledOpen ?? launcher.open
   const initialPlaybookKey = controlledPlaybookKey ?? launcher.playbookKey
+  const parentMissionId = launcher.parentMissionId
 
   useEffect(() => {
     void loadSpaces()
@@ -143,12 +144,19 @@ export function QuickMissionsHubHost({
     () =>
       resolveQuickMissionDefaultSpaceId({
         clients,
-        contextSpaceId: workContext.spaceId,
+        contextSpaceId: launcher.spaceId ?? workContext.spaceId,
         contextCampaignId: workContext.campaignId,
         conversationCampaignId,
         activeSpaceId,
       }),
-    [activeSpaceId, clients, conversationCampaignId, workContext.campaignId, workContext.spaceId],
+    [
+      activeSpaceId,
+      clients,
+      conversationCampaignId,
+      launcher.spaceId,
+      workContext.campaignId,
+      workContext.spaceId,
+    ],
   )
 
   return (
@@ -157,9 +165,11 @@ export function QuickMissionsHubHost({
       clients={clients}
       initialPlaybookKey={initialPlaybookKey}
       initialClientSpaceId={initialClientSpaceId}
+      parentMissionId={parentMissionId}
       sourceConversationId={sourceConversationId}
       onResolveSourceConversation={async ({ missionTitle, campaignId, spaceId }) => {
         if (sourceConversationId) return sourceConversationId
+        if (parentMissionId) return null
         const conversation = await createNewConversation({
           title: missionTitle,
           campaign_id: campaignId,
