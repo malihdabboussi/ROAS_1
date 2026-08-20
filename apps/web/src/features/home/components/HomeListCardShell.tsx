@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { useHomeDashboardVisual } from '@/features/home/context/home-dashboard-visual-context'
 
 export function HomeListCardShell({
@@ -44,8 +44,8 @@ export function HomeListCardShell({
         </div>
         <div className="hd4-card-shell-body">
           {loading ? (
-            <div className="flex flex-1 items-center justify-center py-12">
-              <VibeyLoadingOrb state="processing" size="sm" />
+            <div className="flex-1 px-4 py-3">
+              <ListSkeleton rows={5} label={`Loading ${title}…`} />
             </div>
           ) : !hasRows ? (
             <div className="flex flex-1 items-center justify-center px-4 py-10 text-center text-[13px] text-[var(--hd4-text-3)]">
@@ -81,8 +81,8 @@ export function HomeListCardShell({
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {loading ? (
-          <div className="flex flex-1 items-center justify-center py-12">
-            <VibeyLoadingOrb state="processing" size="sm" />
+          <div className="flex-1 px-4 py-3">
+            <ListSkeleton rows={5} label={`Loading ${title}…`} />
           </div>
         ) : !hasRows ? (
           <div className="body-3 text-muted-foreground flex flex-1 items-center justify-center px-4 py-10 text-center">

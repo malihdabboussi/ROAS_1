@@ -29,3 +29,9 @@ What: Company Cortex daily dream auto-promotes signals with confidence >= 0.8 to
 Why: Dream always inserted `proposed` signals, formation only reads `active`, and the only promoter was a human approve click — so formation never ran and Company Cortex produced 0 objects.
 Impact: High-confidence Atlas signals form without waiting for review; operators still review low-confidence proposals. Logs no longer treat empty dream/formation runs as silent successes.
 Files: `company-daily-dream-atlas.service.ts`, `company-cortex-signal.repository.ts`, `company-cortex-formation.service.ts`, `company-daily-dream-runner.service.ts`, `company-cortex.repository.ts` (api), `dream-ops.md`
+
+## [2026-08-20 03:34] - [FIX]
+What: Attribute Fathom meetings to client Campaign Brains via Page Grader matched clients + client_scope_map (Space route is fallback only). Persist matched_client_ids on meeting_recordings.metadata. Add dry-run/live backfill script for succeeded fathom_meeting_import jobs.
+Why: One-room Meetings always lands recordings on General, so Space-route campaign brain dual-write exited as system_campaign and produced 0 campaign_fathom_import jobs.
+Impact: New Fathom webhooks enqueue client campaign imports when invitees/clients match a mapped campaign. Operators can backfill historical meetings with scripts/roas/backfill-fathom-campaign-brains.mjs.
+Files: fathom-campaign-brain-route.service.ts, fathom-webhook.service.ts, page-grader-meeting-sync.service.ts, backfill-fathom-campaign-brains.mjs, integration-connections.md

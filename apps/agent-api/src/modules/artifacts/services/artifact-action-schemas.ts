@@ -803,14 +803,26 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       config: 'object',
     },
     useWhen: [
-      'Create a new Vibey campaign.',
+      'Create a new Vibey campaign — ONLY when the user explicitly asked for a campaign to be created this turn.',
       'Fall back here when The ROAS Portal has no live campaign-draft write.',
       'Return the portal url in the result so the user can open the campaign.',
+      "Campaign work for a client: set config.client to the client's name so the campaign attaches to that client (Clients program) instead of floating alone.",
+    ],
+    doNotUseWhen: [
+      'The user did not explicitly ask to create a campaign — planning, strategizing, or discussing a campaign is not a request to create one.',
     ],
     examples: [
       {
         intent: 'create a lead campaign',
         data: { name: 'Q2 Launch', campaign_type: 'get-more-leads' },
+      },
+      {
+        intent: 'create a webinar campaign for client Claude Club',
+        data: {
+          name: 'Claude Club Webinar',
+          campaign_type: 'webinar',
+          config: { client: 'Claude Club' },
+        },
       },
     ],
   },
@@ -2556,7 +2568,7 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
     },
     descriptions: {
       playbook_id:
-        'Canonical mission playbook id. When the user names a playbook, pass it here instead of only mentioning it in the brief.',
+        'Canonical mission playbook id such as task-cleanup, client-strategy, webinar-fulfillment, static-ad-production, ig-organic-video-ad, meta-ads-launch, or meta-ads-audit. When the user names a playbook, pass it here instead of only mentioning it in the brief.',
       input:
         'Additional mission context. Playbook kickoff fields belong under input.playbook_kickoff.',
     },

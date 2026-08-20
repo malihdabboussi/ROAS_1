@@ -17,6 +17,7 @@ import {
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { FormSelectDropdown } from '@/app/(dashboard)/campaigns/[id]/finance/components/FormSelectDropdown'
 import { ChartContainer, ChartTooltip, type ChartConfig } from '@/components/ui/chart'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/navigation/tabs'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { billingApi } from '@/features/settings/services/billing-api'
@@ -490,7 +491,7 @@ export default function UsagePageContent() {
           Credits by feature in selected range
         </p>
         {analyticsLoading ? (
-          <p className="body-3 text-muted-foreground">Loading…</p>
+          <ListSkeleton rows={3} label="Loading…" />
         ) : analyticsError ? (
           <div className="flex justify-start">
             <UsageLoadError message="Couldn't load spend data." onRetry={retryAnalytics} />
@@ -652,7 +653,7 @@ export default function UsagePageContent() {
                 </div>
               </div>
               {analyticsLoading ? (
-                <p className="body-3 text-muted-foreground">Loading…</p>
+                <ListSkeleton rows={3} label="Loading…" />
               ) : analyticsError ? (
                 <div className="flex justify-start">
                   <UsageLoadError message="Couldn't load spend data." onRetry={retryAnalytics} />

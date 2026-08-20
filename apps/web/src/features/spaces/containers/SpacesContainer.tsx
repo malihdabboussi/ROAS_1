@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { clientOverviewHrefFromSpace } from '@/lib/spaces/page-grader-client-general-space'
 import { useSpacesStore } from '../store/use-spaces-store'
 import { SpaceItemsContainer } from './SpaceItemsContainer'
@@ -73,11 +73,9 @@ export function SpacesContainer() {
   // Keep painting when we already have spaces (stale-while-revalidate).
   if ((loading && spaces.length === 0) || creatingDefaultSpace || clientOverviewHref) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <VibeyLoadingOrb
-          state="processing"
-          size="lg"
-          text={clientOverviewHref ? 'Opening client workspace…' : 'Loading spaces...'}
+      <div className="h-full">
+        <PageSkeleton
+          label={clientOverviewHref ? 'Opening client workspace…' : 'Loading spaces...'}
         />
       </div>
     )

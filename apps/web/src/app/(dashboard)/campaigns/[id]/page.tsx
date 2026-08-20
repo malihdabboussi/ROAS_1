@@ -17,7 +17,7 @@ import {
 import { CampaignCanvasView } from '@/components/canvas'
 import { LucideIcon } from '@/components/ui/IconPicker'
 import { Tabs, TabsContent } from '@/components/ui/navigation/tabs'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import type { CampaignPatch } from '@/features/agency-clients/AgencyCampaignEditPanel'
 import { AgencyClientCampaignsPanel } from '@/features/agency-clients/AgencyClientCampaignsPanel'
 import { AgencyClientMeetingsPanel } from '@/features/agency-clients/AgencyClientMeetingsPanel'
@@ -331,8 +331,8 @@ export default function CampaignDetailPage() {
 
   if (detail.loading || roleLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <VibeyLoadingOrb text="Loading campaign..." state="processing" size="lg" />
+      <div className="h-full">
+        <PageSkeleton label="Loading campaign..." />
       </div>
     )
   }
@@ -431,7 +431,7 @@ export default function CampaignDetailPage() {
         <TabsContent value="overview" className="animate-tab-enter">
           {isClientWorkspace ? (
             clientWorkspaceLoading && !clientWorkspace ? (
-              <VibeyLoadingOrb text="Loading client workspace…" state="processing" />
+              <PageSkeleton showHeader={false} label="Loading client workspace…" />
             ) : clientWorkspaceError && !clientWorkspace ? (
               <p className="surface-card body-2 text-destructive rounded-spacing-3 p-spacing-4">
                 {clientWorkspaceError}

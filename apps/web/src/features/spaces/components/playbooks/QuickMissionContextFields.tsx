@@ -4,7 +4,14 @@ import type { MetaAdsAuditKickoffFields } from './meta-ads-audit'
 import type { MetaAdsLaunchKickoffFields } from './meta-ads-launch'
 import type { QuickMissionCatalogEntry } from './quick-missions-catalog'
 import type { StaticAdProductionKickoffFields } from './static-ad-production'
+import type { TaskCleanupKickoffFields, TaskCleanupWindow } from './task-cleanup'
 import type { PlaybookKickoffFields } from './webinar-fulfillment'
+
+const CLEANUP_WINDOWS: Array<{ value: TaskCleanupWindow; label: string }> = [
+  { value: 'this_week', label: 'This week' },
+  { value: 'last_7d', label: 'Last 7 days' },
+  { value: 'today', label: 'Today' },
+]
 
 export function QuickMissionContextFields({
   selection,
@@ -13,11 +20,13 @@ export function QuickMissionContextFields({
   videoFields,
   meta,
   audit,
+  cleanup,
   setWebinar,
   setStaticFields,
   setVideoFields,
   setMeta,
   setAudit,
+  setCleanup,
 }: {
   selection: QuickMissionCatalogEntry['selection']
   webinar: PlaybookKickoffFields
@@ -25,11 +34,13 @@ export function QuickMissionContextFields({
   videoFields: IgOrganicVideoKickoffFields
   meta: MetaAdsLaunchKickoffFields
   audit: MetaAdsAuditKickoffFields
+  cleanup: TaskCleanupKickoffFields
   setWebinar: (fields: PlaybookKickoffFields) => void
   setStaticFields: (fields: StaticAdProductionKickoffFields) => void
   setVideoFields: (fields: IgOrganicVideoKickoffFields) => void
   setMeta: (fields: MetaAdsLaunchKickoffFields) => void
   setAudit: (fields: MetaAdsAuditKickoffFields) => void
+  setCleanup: (fields: TaskCleanupKickoffFields) => void
 }) {
   if (selection === 'static' || selection === 'video') {
     return (
@@ -75,6 +86,41 @@ export function QuickMissionContextFields({
           label="Launch notes (optional)"
           value={meta.notes}
           onChange={(value) => setMeta({ ...meta, notes: value })}
+        />
+      </>
+    )
+  }
+  if (selection === 'cleanup') {
+    return (
+      <>
+        <div className="space-y-spacing-2">
+          <span className="body-3 text-foreground font-medium">Call window</span>
+          <div className="gap-spacing-2 flex flex-wrap">
+            {CLEANUP_WINDOWS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={
+                  cleanup.window === option.value
+                    ? 'button-glass-primary rounded-spacing-2 px-spacing-3 py-spacing-2'
+                    : 'button-glass-neutral rounded-spacing-2 px-spacing-3 py-spacing-2'
+                }
+                onClick={() => setCleanup({ ...cleanup, window: option.value })}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Field
+          label="Client filter (optional)"
+          value={cleanup.client_context}
+          onChange={(value) => setCleanup({ ...cleanup, client_context: value })}
+        />
+        <Field
+          label="Notes (optional)"
+          value={cleanup.notes}
+          onChange={(value) => setCleanup({ ...cleanup, notes: value })}
         />
       </>
     )

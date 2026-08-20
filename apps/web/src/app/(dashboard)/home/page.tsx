@@ -19,10 +19,14 @@ export default function HomePage() {
 
 function HomePageBootSkeleton() {
   return (
-    <div className="gap-spacing-6 p-spacing-6 flex min-h-0 flex-1 flex-col">
-      <div className="bg-secondary h-spacing-10 w-spacing-64 rounded-spacing-3" />
-      <div className="border-border bg-secondary h-spacing-32 rounded-spacing-4 border" />
-      <div className="border-border bg-secondary h-spacing-72 rounded-spacing-4 border" />
+    <div
+      className="gap-spacing-6 p-spacing-6 flex min-h-0 flex-1 flex-col"
+      role="status"
+      aria-label="Loading Home"
+    >
+      <div className="bg-secondary h-spacing-10 w-spacing-64 rounded-spacing-3 animate-pulse" />
+      <div className="border-border bg-secondary h-spacing-32 rounded-spacing-4 animate-pulse border" />
+      <div className="border-border bg-secondary h-spacing-72 rounded-spacing-4 animate-pulse border" />
     </div>
   )
 }

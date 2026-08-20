@@ -10,6 +10,7 @@ import {
   type SetStateAction,
 } from 'react'
 import { useShellStore } from '@/components/shell/use-shell-store'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { dispatchBrainAddAgentModal } from '@/features/brain/lib/brain-agent-modal.events'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
@@ -301,7 +302,9 @@ export function SidebarHqFlyouts({
         >
           <Suspense
             fallback={
-              <p className="body-3 text-muted-foreground px-3 py-6 text-center">Loading…</p>
+              <div className="px-3 py-6">
+                <ListSkeleton rows={3} label="Loading…" />
+              </div>
             }
           >
             <SidebarBrainNavLinks onNavigate={closeHover} />

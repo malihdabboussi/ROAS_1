@@ -28,6 +28,7 @@ import {
   UserRound,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { getIconColor, IconPicker, LucideIcon, type IconColorId } from '@/components/ui/IconPicker'
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import { ConfirmDialog } from '@/features/settings/components/settings-content/ConfirmDialog'
@@ -1909,7 +1910,9 @@ export function DocsView({
             {displayMode === 'list' ? (
               <div className="flex flex-col">
                 {driveListingLoading ? (
-                  <p className="body-3 p-4 text-[var(--color-muted-foreground)]">Loading Drive…</p>
+                  <div className="p-4">
+                    <ListSkeleton rows={5} label="Loading Drive…" />
+                  </div>
                 ) : driveListingFiles.length === 0 ? (
                   <p className="body-3 p-4 text-[var(--color-muted-foreground)]">
                     This folder is empty.
@@ -1963,7 +1966,7 @@ export function DocsView({
             ) : (
               <div className="flex flex-col gap-4 p-4">
                 {driveListingLoading ? (
-                  <p className="body-3 text-[var(--color-muted-foreground)]">Loading Drive…</p>
+                  <ListSkeleton rows={5} label="Loading Drive…" />
                 ) : driveListingFiles.length === 0 ? (
                   <p className="body-3 text-[var(--color-muted-foreground)]">
                     This folder is empty.

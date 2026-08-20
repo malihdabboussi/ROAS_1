@@ -1,5 +1,6 @@
 'use client'
 
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { useChannels } from '../hooks/use-channels'
 
 export function ChannelsListContainer() {
@@ -9,7 +10,9 @@ export function ChannelsListContainer() {
     <section className="bg-background flex h-full min-h-0 min-w-0 flex-1 flex-col">
       <div className="p-spacing-6 flex min-h-0 flex-1 items-center justify-center">
         {loading ? (
-          <p className="body-2 text-muted-foreground">Loading…</p>
+          <div className="w-full max-w-md">
+            <ListSkeleton rows={6} label="Loading…" />
+          </div>
         ) : error ? (
           <p className="body-2 text-destructive">{error}</p>
         ) : (

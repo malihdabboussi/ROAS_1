@@ -1,6 +1,6 @@
 'use client'
 
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { YourTurnSubtaskDrawer } from '@/features/spaces/components/your-turn/YourTurnSubtaskDrawer'
 import { useYourTurnFeed } from '@/features/spaces/hooks/use-your-turn-feed'
 import { InboxListView } from '../components/InboxListView'
@@ -19,8 +19,8 @@ export function InboxContainer() {
 
   if (loading) {
     return (
-      <div className="flex h-full min-h-0 items-center justify-center">
-        <VibeyLoadingOrb state="processing" size="lg" text="Loading inbox…" />
+      <div className="h-full min-h-0">
+        <PageSkeleton rows={8} label="Loading inbox…" />
       </div>
     )
   }
