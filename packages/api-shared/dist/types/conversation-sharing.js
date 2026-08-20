@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpsertConversationShareSchema = exports.ConversationIdParamSchema = exports.ConversationShareIdParamSchema = exports.ConversationShareEntityTypeSchema = exports.ConversationShareLevelSchema = void 0;
+exports.PassOffConversationShareSchema = exports.UpsertConversationShareSchema = exports.ConversationIdParamSchema = exports.ConversationShareIdParamSchema = exports.ConversationShareEntityTypeSchema = exports.ConversationShareLevelSchema = void 0;
 const zod_1 = require("zod");
 exports.ConversationShareLevelSchema = zod_1.z.enum(['view', 'edit', 'admin']);
 exports.ConversationShareEntityTypeSchema = zod_1.z.enum(['user', 'org']);
@@ -10,5 +10,13 @@ exports.UpsertConversationShareSchema = zod_1.z.object({
     entity_type: exports.ConversationShareEntityTypeSchema,
     entity_id: zod_1.z.string().uuid(),
     level: exports.ConversationShareLevelSchema,
+    notify: zod_1.z.boolean().optional(),
+    note: zod_1.z.string().max(500).optional(),
+});
+exports.PassOffConversationShareSchema = zod_1.z.object({
+    user_id: zod_1.z.string().uuid(),
+    level: exports.ConversationShareLevelSchema.default('edit'),
+    note: zod_1.z.string().max(500).optional(),
+    notify: zod_1.z.boolean().default(true),
 });
 //# sourceMappingURL=conversation-sharing.js.map

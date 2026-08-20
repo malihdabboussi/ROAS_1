@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
   renameAgent,
   updateAgentActive,
@@ -501,16 +501,16 @@ export function Team2Container() {
 
   if (dmUserIdFromUrl && (!isAccountContextReady || isPersonalAccountContext)) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <VibeyLoadingOrb text="Loading…" state="processing" size="lg" />
+      <div className="h-full">
+        <PageSkeleton label="Loading team…" />
       </div>
     )
   }
 
   if (data.loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <VibeyLoadingOrb text="Loading…" state="processing" size="lg" />
+      <div className="h-full">
+        <PageSkeleton label="Loading team…" />
       </div>
     )
   }

@@ -14,6 +14,7 @@ import {
 } from 'react'
 import { motion } from 'framer-motion'
 import { GripVertical, User } from 'lucide-react'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   fetchContact,
@@ -635,8 +636,8 @@ export const ContactsView = forwardRef<ContactsViewHandle, ContactsViewProps>(fu
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {loading && rows.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center">
-          <VibeyLoadingOrb text="Loading contacts..." state="processing" size="lg" />
+        <div className="flex-1">
+          <PageSkeleton showHeader={false} label="Loading contacts..." />
         </div>
       ) : rows.length === 0 ? (
         <div className="p-spacing-8 flex flex-1 items-center justify-center">

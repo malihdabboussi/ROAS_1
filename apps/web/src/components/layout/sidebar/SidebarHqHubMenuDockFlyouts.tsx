@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useState, type Dispatch, type RefObject, type SetStateAction } from 'react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { dispatchBrainAddAgentModal } from '@/features/brain/lib/brain-agent-modal.events'
 import type { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
 import { HubDockFlyout } from './HubDockFlyout'
@@ -205,7 +206,11 @@ export function SidebarHqHubMenuDockFlyouts({
         ]}
       >
         <Suspense
-          fallback={<p className="body-3 text-muted-foreground px-3 py-4 text-center">Loading…</p>}
+          fallback={
+            <div className="px-3 py-4">
+              <ListSkeleton rows={3} label="Loading…" />
+            </div>
+          }
         >
           <SidebarBrainNavLinks onNavigate={handleNavigate} />
         </Suspense>

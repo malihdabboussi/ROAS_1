@@ -20,6 +20,7 @@ import {
   expandStaticAdProductionPlaybook,
   STATIC_AD_PRODUCTION_PLAYBOOK_ID,
 } from './static-ad-production.playbook'
+import { expandTaskCleanupPlaybook, TASK_CLEANUP_PLAYBOOK_ID } from './task-cleanup.playbook'
 import {
   expandWebinarFulfillmentPlaybook,
   WEBINAR_FULFILLMENT_PLAYBOOK_ID,
@@ -54,5 +55,6 @@ export function expandMissionPlaybook(
     return expandStaticAdProductionPlaybook(input)
   if (input.playbookId === IG_ORGANIC_VIDEO_AD_PLAYBOOK_ID)
     return expandIgOrganicVideoAdPlaybook(input)
+  if (input.playbookId === TASK_CLEANUP_PLAYBOOK_ID) return expandTaskCleanupPlaybook(input)
   return null
 }

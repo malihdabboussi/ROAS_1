@@ -1,5 +1,6 @@
 'use client'
 
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { MISSION_CONTROL_MESSAGES } from '../config/messages.config'
 import type { Mission, MissionLog, MissionPlan } from '../types'
 import { MissionPlanView } from './MissionPlanView'
@@ -39,7 +40,7 @@ export function MissionDetailPanel({
   loading = false,
 }: MissionDetailPanelProps) {
   if (loading) {
-    return <div className="body-2 text-muted-foreground">Loading mission detail...</div>
+    return <PageSkeleton showHeader rows={6} label="Loading mission detail..." />
   }
 
   if (!mission) {

@@ -8,7 +8,7 @@ import type { AutomationRunDisplayMeta } from '@/components/flows/AutomationRuns
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import type { AutomationSolidOption } from '@/components/ui/forms/AutomationSolidSelect'
 import { OptionDot } from '@/components/ui/status/OptionDot'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { useUserRole } from '@/hooks/use-user-role'
 import {
   dispatchTeamHrChatCompose,
@@ -1940,8 +1940,8 @@ export function FlowsPage() {
 
   if (roleLoading || (role === 'admin' && spacesLoading)) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <VibeyLoadingOrb text="Loading Flows..." state="processing" size="lg" />
+      <div className="h-full">
+        <PageSkeleton label="Loading Flows..." />
       </div>
     )
   }

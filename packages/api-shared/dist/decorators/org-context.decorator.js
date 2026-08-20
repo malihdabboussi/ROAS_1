@@ -8,6 +8,8 @@ exports.OrgContext = (0, common_1.createParamDecorator)((_data, ctx) => {
         userId: request.user?.id,
         orgId: request.orgId ?? null,
         orgRole: request.orgRole ?? null,
+        orgMemberId: request.orgMemberId ?? null,
+        organizationWideDataAccess: request.organizationWideDataAccess === true,
     };
 });
 //# sourceMappingURL=org-context.decorator.js.map

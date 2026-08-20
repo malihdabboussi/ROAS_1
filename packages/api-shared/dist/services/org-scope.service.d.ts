@@ -2,6 +2,8 @@ export interface RequestScope {
     userId: string;
     orgId: string | null;
     orgRole: OrgRole | null;
+    orgMemberId?: string | null;
+    organizationWideDataAccess?: boolean;
 }
 export type OrgRole = 'owner' | 'admin' | 'creator' | 'editor' | 'viewer';
 export type OrgScopedQuery<Q> = {

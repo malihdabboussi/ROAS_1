@@ -376,7 +376,7 @@ describe('ArtifactMissionsService', () => {
     )
   })
 
-  it('adds mission comments through the mission comment endpoint', async () => {
+  it('adds mission comments stamped with the acting agent key', async () => {
     const { supabase } = makeSupabase({})
     const target = makeMissionTarget(supabase)
     target.mainApiCall.mockResolvedValueOnce({ success: true, id: 'comment-1' })
@@ -388,6 +388,26 @@ describe('ArtifactMissionsService', () => {
     )
 
     expect(result).toEqual({ success: true, id: 'comment-1' })
+    expect(target.mainApiCall).toHaveBeenCalledWith(
+      'POST',
+      '/api/missions/mission-1/comment',
+      'mission-session',
+      { message: 'Looks good', agent_key: 'pm' },
+    )
+  })
+
+  it('adds mission comments without an agent key when the session has none', async () => {
+    const { supabase } = makeSupabase({})
+    const target = makeMissionTarget(supabase)
+    target.parseAgentIdFromSessionKey.mockReturnValueOnce(null)
+    target.mainApiCall.mockResolvedValueOnce({ success: true, id: 'comment-2' })
+    const handlers = new ArtifactMissionsService().getHandlers(target)
+
+    await handlers.add_mission_comment(
+      { mission_id: 'mission-1', message: 'Looks good' },
+      'mission-session',
+    )
+
     expect(target.mainApiCall).toHaveBeenCalledWith(
       'POST',
       '/api/missions/mission-1/comment',

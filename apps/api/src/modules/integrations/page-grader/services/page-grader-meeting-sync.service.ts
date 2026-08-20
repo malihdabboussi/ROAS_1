@@ -7,7 +7,7 @@ import type { PageGraderClientScopeEntry } from './page-grader-api.helpers'
 import { PageGraderApiService } from './page-grader-api.service'
 
 type MeetingRoute = { space_id: string; item_id: string }
-type PageGraderClient = { id: string; name: string }
+type PageGraderClient = { id: string; name: string; website_url?: string | null }
 
 export type MeetingSyncResult = {
   source_meeting_id: string
@@ -319,6 +319,12 @@ export function resolveMeetingClients(input: {
   }
   if (matches.size > 0) return [...matches.values()]
 
+  const inviteeMatches = matchClientsByInviteeEmail({
+    attendees: input.meeting.attendees ?? [],
+    clients: input.clients,
+  })
+  if (inviteeMatches.length > 0) return inviteeMatches
+
   const haystack = normalizeText(
     [
       input.meeting.meeting_title,
@@ -333,6 +339,75 @@ export function resolveMeetingClients(input: {
     return name.length >= 4 && haystack.includes(name)
   })
   return textMatches.length === 1 ? [{ ...textMatches[0]!, matched_by: 'unique_client_name' }] : []
+}
+
+const INTERNAL_EMAIL_DOMAINS = new Set([
+  'roas.co',
+  'roas.io',
+  'dylanvanas.com',
+  'gmail.com',
+  'googlemail.com',
+  'outlook.com',
+  'hotmail.com',
+  'yahoo.com',
+  'icloud.com',
+])
+
+export function matchClientsByInviteeEmail(input: {
+  attendees: Array<Record<string, unknown>>
+  clients: PageGraderClient[]
+}): Array<{ id: string; name: string; matched_by: string }> {
+  const inviteeEmails = input.attendees
+    .map((row) => stringValue(row.email).toLowerCase())
+    .filter((email) => email.includes('@'))
+  const inviteeDomains = [
+    ...new Set(
+      inviteeEmails
+        .map((email) => email.split('@')[1] ?? '')
+        .filter((domain) => domain && !INTERNAL_EMAIL_DOMAINS.has(domain)),
+    ),
+  ]
+  if (inviteeDomains.length === 0) return []
+
+  const matches: Array<{ id: string; name: string; matched_by: string }> = []
+  for (const client of input.clients) {
+    const websiteHost = hostnameFromUrl(stringValue(client.website_url))
+    if (
+      websiteHost &&
+      inviteeDomains.some(
+        (domain) =>
+          domain === websiteHost ||
+          domain.endsWith(`.${websiteHost}`) ||
+          websiteHost.endsWith(`.${domain}`),
+      )
+    ) {
+      matches.push({ id: client.id, name: client.name, matched_by: 'invitee_email_domain' })
+      continue
+    }
+    const nameTokens = normalizeText(client.name)
+      .split(' ')
+      .filter((token) => token.length >= 4)
+    const domainHit = inviteeDomains.some((domain) => {
+      const domainText = normalizeText(domain.replace(/\./g, ' '))
+      return nameTokens.some((token) => domainText.includes(token) || domain.includes(token))
+    })
+    if (domainHit) {
+      matches.push({ id: client.id, name: client.name, matched_by: 'invitee_email_domain' })
+    }
+  }
+  return matches
+}
+
+function hostnameFromUrl(value: string): string | null {
+  if (!value) return null
+  try {
+    const host = new URL(value.includes('://') ? value : `https://${value}`).hostname
+      .toLowerCase()
+      .replace(/^www\./, '')
+    return host || null
+  } catch {
+    return null
+  }
 }
 
 function explicitClientIds(customData: Record<string, unknown>): string[] {

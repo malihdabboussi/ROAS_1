@@ -1,9 +1,5 @@
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 
 export default function StudioLoading() {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <VibeyLoadingOrb text="Opening Studio..." state="processing" size="lg" />
-    </div>
-  )
+  return <PageSkeleton label="Opening Studio..." />
 }

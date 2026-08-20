@@ -49,6 +49,7 @@ import { ChatSessionHistoryService } from './chat-session-history.service'
 import { ChatSetupEventsService } from './chat-setup-events.service'
 import { ChatSlashCommandService } from './chat-slash-command.service'
 import { ChatStableTurnContextService } from './chat-stable-turn-context.service'
+import { maybeBindNamedClientCampaign } from './named-client-campaign-bind'
 import { ChatStreamExecutionService } from './chat-stream-execution.service'
 import { ChatStreamMirrorService } from './chat-stream-mirror.service'
 import { ChatStreamRecoveryService } from './chat-stream-recovery.service'
@@ -397,7 +398,7 @@ export class ChatService {
     })
     selectedModelInput = stableTurnContext.selectedModelInput
     const {
-      resolvedCampaignId,
+      resolvedCampaignId: stableResolvedCampaignId,
       runtime,
       resolvedAgentId,
       selectedModelSource,
@@ -405,6 +406,25 @@ export class ChatService {
       selectedSettings,
       gatewayModelId,
     } = stableTurnContext
+    // §11.2a (app side): a message that NAMES a client binds CONNECTIONS before
+    // the turn — deterministic, so the Campaign Brain preload and campaign
+    // tools fire without waiting for the model to call search_campaign_brain.
+    const namedClientBind = await maybeBindNamedClientCampaign(turnSession.getDbSupabase(), {
+      conversationId,
+      userId,
+      orgId,
+      text: content,
+      currentCampaignId: stableResolvedCampaignId ?? null,
+    }).catch((err) => {
+      this.logger.warn(`Named-client campaign bind skipped: ${err}`)
+      return null
+    })
+    if (namedClientBind) {
+      this.logger.log(
+        `[CONNECTIONS] Bound conversation ${conversationId} to campaign ${namedClientBind.campaignId} (named "${namedClientBind.candidate}")`,
+      )
+    }
+    const resolvedCampaignId = namedClientBind?.campaignId ?? stableResolvedCampaignId
     this.logger.log(
       `[ModelRouter] strategy=${isModelStrategy(selectedModelInput) ? selectedModelInput : 'manual'} source=${selectedModelSource} task=chat requested=${selectedSettings.requestedModelId} resolved=${gatewayModelId} speed=${selectedSettings.request.speed_mode ?? 'standard'} reason=${resolvedModelSelection.reason}`,
     )

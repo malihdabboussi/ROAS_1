@@ -12,6 +12,7 @@ describe('MissionPlanPhaseService plan callback', () => {
 
   it('ensures the agency team before planning a client strategy mission', () => {
     expect(requiresAgencyTeamEnsure('client-strategy')).toBe(true)
+    expect(requiresAgencyTeamEnsure('task-cleanup')).toBe(true)
   })
 
   it('aborts and rejects a stalled plan callback instead of leaving the mission in Planning', async () => {

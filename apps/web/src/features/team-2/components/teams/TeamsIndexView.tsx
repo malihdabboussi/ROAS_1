@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { IconPicker, type IconColorId } from '@/components/ui/IconPicker'
 import {
   useCachedMissionAgents,
@@ -280,7 +281,9 @@ export function TeamsIndexView({
         ) : null}
 
         {loading ? (
-          <p className="body-3 text-muted-foreground p-spacing-6 text-center">Loading teams…</p>
+          <div className="p-spacing-6">
+            <ListSkeleton rows={6} label="Loading teams…" />
+          </div>
         ) : null}
         {error ? <p className="body-3 text-destructive p-spacing-6 text-center">{error}</p> : null}
         {!loading && !error && visibleTeams.length === 0 ? (

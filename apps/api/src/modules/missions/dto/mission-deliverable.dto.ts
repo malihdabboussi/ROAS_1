@@ -66,6 +66,13 @@ export const MissionCommentAttachmentDtoSchema = z.object({
 export const AddMissionCommentDtoSchema = z.object({
   message: z.string().min(1).max(4000),
   attachments: z.array(MissionCommentAttachmentDtoSchema).max(20).optional(),
+  // Set by agent-api when an agent relays a comment; attributes the timeline
+  // entry to that agent instead of the human viewer.
+  agent_key: z
+    .string()
+    .regex(/^[a-z0-9_-]+$/i)
+    .max(64)
+    .optional(),
 })
 
 export type AddMissionCommentDto = z.infer<typeof AddMissionCommentDtoSchema>

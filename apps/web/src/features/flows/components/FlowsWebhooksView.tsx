@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Copy, KeyRound, Plus, Save, Trash2, Webhook } from 'lucide-react'
 import { toast } from 'sonner'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
   createFlowWebhookEndpoint,
   deleteFlowWebhookEndpoint,
@@ -209,7 +210,7 @@ export function FlowsWebhooksView({ spaceId }: { spaceId: string | null }) {
         </div>
         <div className="space-y-spacing-2">
           {loading ? (
-            <div className="body-3 text-muted-foreground">Loading...</div>
+            <ListSkeleton rows={5} label="Loading..." />
           ) : endpoints.length === 0 ? (
             <div className="body-3 text-muted-foreground">No webhooks yet</div>
           ) : (
