@@ -12,6 +12,19 @@ describe('Google Doc export metadata', () => {
     expect(googleDocHref({ _google_doc_file_id: '../not-safe' })).toBeNull()
   })
 
+  it('reuses a saved Google Docs URL even when the file id is URL-shaped', () => {
+    expect(
+      googleDocHref({
+        _google_doc_file_id: 'https://docs.google.com/document/d/doc-url-id/edit',
+      }),
+    ).toBe('https://docs.google.com/document/d/doc-url-id/edit')
+    expect(
+      googleDocHref({
+        _google_doc_web_view_link: 'https://docs.google.com/document/d/from-link/edit',
+      }),
+    ).toBe('https://docs.google.com/document/d/from-link/edit')
+  })
+
   it('builds the shallow custom-data patch used after first export', () => {
     expect(
       googleDocMetadataPatch(

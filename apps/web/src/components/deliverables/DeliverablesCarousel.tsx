@@ -21,6 +21,11 @@ import {
   type DeliverableType,
   type MissionDeliverable,
 } from '@/lib/missions'
+import {
+  abandonGoogleExportTab,
+  finishGoogleExportTab,
+  openGoogleExportTab,
+} from '@/lib/spaces/google-export-tab'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
 export interface DeliverablesCarouselProps {
@@ -93,18 +98,16 @@ export function DeliverablesCarousel({
       toast.error(DELIVERABLE_PREVIEW_MESSAGES.GOOGLE_DOC_TABS_NONE)
       return
     }
-    const pendingTab = window.open('about:blank', '_blank')
-    if (pendingTab) pendingTab.opener = null
+    const pendingTab = openGoogleExportTab()
     setExportingGoogleDoc(true)
     try {
       const result = await exportMissionDeliverablesGoogleDoc(missionId)
       const href =
         result.file.webViewLink || `https://docs.google.com/document/d/${result.file.id}/edit`
-      if (pendingTab) pendingTab.location.replace(href)
-      else window.open(href, '_blank', 'noopener,noreferrer')
+      finishGoogleExportTab(pendingTab, href)
       toast.success(DELIVERABLE_PREVIEW_MESSAGES.GOOGLE_DOC_TABS_CREATED(result.tabCount))
     } catch (cause) {
-      pendingTab?.close()
+      abandonGoogleExportTab(pendingTab)
       toast.error(
         sanitizeUserError(cause, DELIVERABLE_PREVIEW_MESSAGES.GOOGLE_DOC_TABS_CREATE_FAILED),
       )

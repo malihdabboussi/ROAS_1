@@ -1,5 +1,11 @@
 # Changelog - August 20, 2026
 
+## [2026-08-20 15:40] - [FIX]
+What: Export to Google / Open in Drive now actually open a Google tab. First export opens `about:blank` in the same click (before Drive status returns) so the browser cannot popup-block it; later opens are a real `target=_blank` link. Drive-synced Docs/Sheets/Slides without `_drive_web_view_link` (or with a Drive `file/view` link) open at `docs.google.com/.../edit` instead of `drive.google.com/file/d/.../view`.
+Why: `DocEditorExportDropdown` awaited `getGoogleDriveStatus()` before `window.open`, so connected-Google clicks were treated as popups and blocked. Native Google Docs with a null webViewLink used the Drive file/view URL, which does not open the editor.
+Impact: Space doc header Export to Google Docs, deliverable export, Open in Drive on Drive-synced native Google files, and Drive file-browser Open in Drive.
+Files: `DocEditorExportDropdown.tsx`, `DocEditorGoogleHeaderAction.tsx`, `google-export-tab.ts`, `google-open-href.ts`, `space-doc-export.ts`, `DriveDocViewer.tsx`, `SpaceDocGoogleExportButton.tsx`, `DeliverablesCarousel.tsx`, `DriveFileBrowserRowActions.tsx`
+
 ## [2026-08-20 02:50] - [FIX]
 What: Meeting workspace status now uses All Meetings Call status (`custom_data.call_status`: Live / Completed / No Show / Rescheduled). Connections labels the linked meeting with the meeting name, not the recap/chat title. Meeting threads no longer get first-message title autogen.
 Why: Call notes showed Following up (task Status) while All Meetings showed Completed (Call status) for the same Samin Yassar calls. Recap prompts renamed the meeting chat, so CONNECTIONS looked like a message linked to itself.

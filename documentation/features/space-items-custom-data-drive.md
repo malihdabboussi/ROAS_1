@@ -1,6 +1,6 @@
 # Space Items `custom_data` Conventions for Drive Sync
 
-Last updated: 2026-07-19
+Last updated: 2026-08-19
 
 ## Scope
 
@@ -101,7 +101,7 @@ Drive files mirrored as leaf or intermediate nodes:
 
 - `_doc_kind`: `'file'`
 - `_drive_mime_type`: Google mime type
-- `_drive_web_view_link`: Google `webViewLink` (or equivalent)
+- `_drive_web_view_link`: Google `webViewLink` (or equivalent). **Open in Drive** uses the native Google app URL for Docs/Sheets/Slides (`docs.google.com/.../edit`) when this is missing or is a Drive `file/view` link.
 - `_drive_icon_link`: Google `iconLink` (optional but recommended)
 - `_drive_thumbnail_link`: Google `thumbnailLink` (optional)
 - `_drive_export_mime`: Export mime selected for body fetch (for Google-native types)
@@ -112,7 +112,8 @@ Native Space Docs can create one editable Google Doc through the user's existing
 connection. The editor exports its current rich-text HTML as a native
 `application/vnd.google-apps.document`, opens the new Google Doc, and saves the Google file identity
 back to the Space item. This is a one-time export, not a live sync: later clicks open the same Google
-Doc instead of creating duplicates.
+Doc instead of creating duplicates. The first export opens a tab in the same click (before waiting
+on Drive status) so the browser cannot popup-block it; later opens use a real `target=_blank` link.
 
 - `_google_doc_file_id`: created Google Doc file id
 - `_google_doc_web_view_link`: Google Docs edit URL returned by Drive
@@ -142,6 +143,7 @@ Sync diffs should treat this pair as identity for insert/update/delete decisions
 
 ## Decision Log
 
+- 2026-08-19: **Open in Drive** for native Google Docs/Sheets/Slides uses `docs.google.com` / `sheets` / `presentation` edit URLs when `_drive_web_view_link` is null or a Drive `file/view` URL. Space Doc **Export to Google Docs** opens `about:blank` in the same click so Drive status cannot popup-block the new tab.
 - 2026-07-19: Bulk multi-tab export formatting: do not prepend deliverable title when `doc_body`
   already has an H1; secondary tabs render markdown tables via Docs `insertTable` (not TSV
   paragraphs); preserve blank markdown paragraphs for spacing between labeled fields.

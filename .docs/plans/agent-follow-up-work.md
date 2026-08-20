@@ -1,3 +1,15 @@
+## 2026-08-20 - [ARCH] DocEditorExportDropdown is at the 400 LOC component cap
+
+Status: Open
+
+Found while: Fixing Export to Google / Open in Drive not opening Google
+
+Evidence: `wc -l` on `apps/web/src/features/spaces/components/docs/editor/DocEditorExportDropdown.tsx` is 400. Cap is 400. Header Google action is already extracted to `DocEditorGoogleHeaderAction.tsx`.
+
+Needed work: Extract Canva/PDF/markdown/HTML/DOCX menu rows so another export action does not grow this file.
+
+Reason not done now: In-scope work was opening Google in the same click and using native Docs URLs. The dropdown stayed at the cap.
+
 ## 2026-08-20 - [ARCH] chat.service.ts remains far over the 600 LOC service cap
 
 Status: Open
