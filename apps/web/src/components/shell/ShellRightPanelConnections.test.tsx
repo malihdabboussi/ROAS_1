@@ -1,10 +1,12 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ShellRightPanelConnections } from './ShellRightPanelConnections'
 
 const mocks = vi.hoisted(() => ({
   openScopePicker: vi.fn(),
   assignConversationScope: vi.fn(),
+  fetchConversationConnections: vi.fn(),
+  removeConversationConnection: vi.fn(),
   campaigns: [{ id: 'campaign-1', name: 'Yasir VIP Upgrade' }] as Array<{
     id: string
     name: string
@@ -33,7 +35,12 @@ vi.mock('@/components/conversations/use-conversation-scope-data', () => ({
 
 vi.mock('@/lib/conversations', async () => {
   const actual = await vi.importActual<typeof import('@/lib/conversations')>('@/lib/conversations')
-  return { ...actual, assignConversationScope: mocks.assignConversationScope }
+  return {
+    ...actual,
+    assignConversationScope: mocks.assignConversationScope,
+    fetchConversationConnections: mocks.fetchConversationConnections,
+    removeConversationConnection: mocks.removeConversationConnection,
+  }
 })
 vi.mock('@/lib/home', () => ({ useCampaignCacheVersion: () => 0 }))
 vi.mock('@/lib/org', () => ({
@@ -49,6 +56,11 @@ describe('ShellRightPanelConnections', () => {
     mocks.programs = []
     mocks.space = null
     mocks.assignConversationScope.mockResolvedValue({ id: 'conversation-1' })
+    mocks.fetchConversationConnections.mockResolvedValue({ connections: [] })
+    mocks.removeConversationConnection.mockResolvedValue({
+      connections: [],
+      conversation: { id: 'conversation-1', campaign_id: null, metadata: {} },
+    })
   })
 
   const renderPanel = (open: boolean, onOpenChange = vi.fn()) => {
@@ -269,6 +281,69 @@ describe('ShellRightPanelConnections', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove Yasir VIP Upgrade connection' }))
     expect(onScopeChanged).toHaveBeenCalledWith({ campaignId: null, spaceId: null })
+  })
+
+  it('removes an extra campaign without clearing the primary connection', async () => {
+    mocks.campaigns = [
+      { id: 'campaign-1', name: 'Yasir VIP Upgrade' },
+      { id: 'campaign-2', name: 'Multifamily Strategy' },
+    ]
+    mocks.fetchConversationConnections.mockResolvedValue({
+      connections: [
+        {
+          id: 'row-2',
+          conversation_id: 'conversation-1',
+          org_id: 'org-1',
+          entity_type: 'campaign',
+          entity_id: 'campaign-2',
+          is_primary: false,
+          created_at: '2026-08-20T00:00:00.000Z',
+          source: 'table',
+        },
+      ],
+    })
+    mocks.removeConversationConnection.mockResolvedValue({
+      connections: [],
+      conversation: {
+        id: 'conversation-1',
+        campaign_id: 'campaign-1',
+        metadata: {},
+      },
+    })
+    const onScopeChanged = vi.fn()
+    render(
+      <ShellRightPanelConnections
+        conversation={{
+          id: 'conversation-1',
+          user_id: 'user-1',
+          campaign_id: 'campaign-1',
+          title: 'Chat',
+          agent_id: null,
+          status: 'active',
+          metadata: {},
+          created_at: '2026-08-20T00:00:00.000Z',
+          updated_at: '2026-08-20T00:00:00.000Z',
+        }}
+        campaignId="campaign-1"
+        spaceId={null}
+        open
+        onOpenChange={vi.fn()}
+        onScopeChanged={onScopeChanged}
+      />,
+    )
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Remove Multifamily Strategy connection' }),
+    )
+    await waitFor(() =>
+      expect(mocks.removeConversationConnection).toHaveBeenCalledWith(
+        'conversation-1',
+        'campaign',
+        'campaign-2',
+      ),
+    )
+    expect(onScopeChanged).not.toHaveBeenCalled()
+    expect(screen.getByText('Yasir VIP Upgrade')).toBeInTheDocument()
   })
 
   it('shows the meeting workspace even when no live space id is attached', () => {

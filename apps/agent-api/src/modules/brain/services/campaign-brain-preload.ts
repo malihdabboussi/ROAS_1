@@ -12,7 +12,10 @@ import {
   type BrainContextTimingMeta,
   type PrecomputedEmbedding,
 } from './brain-context-support.service'
+import type { BrainRetrievalReceipt } from './brain-retrieval-receipt'
 import type { BrainRetrievalService } from './brain-retrieval.service'
+
+export const EXTRA_CAMPAIGN_BRAIN_PRELOAD_LIMIT = 2
 
 export type CampaignBrainPreloadTarget = {
   brainId: string
@@ -25,12 +28,14 @@ const asRecord = (value: unknown): Record<string, unknown> =>
     ? (value as Record<string, unknown>)
     : {}
 
-/** General / system campaigns never preload: they are the "no client" default. */
+/** Org system General never preloads. A client campaign named General still does. */
 export function isGeneralCampaignRow(row: { name?: string | null; config?: unknown }): boolean {
   const config = asRecord(row.config)
-  if (config.system_kind === 'general' || config.is_general === true || config.isSystemGeneral)
-    return true
-  return (row.name ?? '').trim().toLowerCase() === 'general'
+  return (
+    config.system_kind === 'general' ||
+    config.is_general === true ||
+    Boolean(config.isSystemGeneral)
+  )
 }
 
 export async function resolveCampaignBrainForPreload(
@@ -61,6 +66,37 @@ export async function resolveCampaignBrainForPreload(
   }
 }
 
+export async function resolveCampaignBrainLaneTargets(
+  supabase: SupabaseClient,
+  input: {
+    campaignId?: string | null
+    extraCampaignIds?: string[]
+    orgId?: string | null
+  },
+): Promise<{
+  primary: CampaignBrainPreloadTarget | null
+  extras: CampaignBrainPreloadTarget[]
+}> {
+  const primary = await resolveCampaignBrainForPreload(supabase, {
+    campaignId: input.campaignId,
+    orgId: input.orgId,
+  })
+  const extras: CampaignBrainPreloadTarget[] = []
+  const extraIds = [
+    ...new Set((input.extraCampaignIds ?? []).map((id) => id.trim()).filter(Boolean)),
+  ]
+    .filter((id) => id !== primary?.campaignId && id !== input.campaignId)
+    .slice(0, EXTRA_CAMPAIGN_BRAIN_PRELOAD_LIMIT)
+  for (const campaignId of extraIds) {
+    const target = await resolveCampaignBrainForPreload(supabase, {
+      campaignId,
+      orgId: input.orgId,
+    })
+    if (target) extras.push(target)
+  }
+  return { primary, extras }
+}
+
 export function campaignBrainHeading(target: CampaignBrainPreloadTarget): string {
   return `CAMPAIGN BRAIN${target.campaignName ? ` (${target.campaignName})` : ''} — Retrieved Context:`
 }
@@ -76,6 +112,7 @@ export async function buildCampaignBrainContext(
     query?: string
     agentKey?: string
     precomputedEmbedding?: PrecomputedEmbedding
+    onRetrievalReceipt?: (receipt: BrainRetrievalReceipt) => void
   },
 ): Promise<string> {
   const trimmedQuery = input.query?.trim()
@@ -91,6 +128,9 @@ export async function buildCampaignBrainContext(
     agentKey: input.agentKey,
     embedding: support.retrievalEmbeddingInput(input.precomputedEmbedding),
     limit: PRELOAD_RETRIEVAL_LIMIT,
+    receiptScope: 'campaign',
+    brainName: input.target.campaignName,
+    onRetrievalReceipt: input.onRetrievalReceipt,
   })
 }
 
@@ -101,24 +141,32 @@ export function campaignBrainContextLane(
   input: {
     retrieval?: BrainRetrievalService
     target: CampaignBrainPreloadTarget | null
+    extraTargets?: CampaignBrainPreloadTarget[]
     timingMeta: BrainContextTimingMeta
     userId: string
     orgId?: string | null
     query?: string
     agentKey?: string
     precomputedEmbedding?: PrecomputedEmbedding
+    onRetrievalReceipt?: (receipt: BrainRetrievalReceipt) => void
   },
 ): Promise<string> {
-  const target = input.target
-  if (!target) return Promise.resolve('')
+  const targets = [...(input.target ? [input.target] : []), ...(input.extraTargets ?? [])]
+  if (targets.length === 0) return Promise.resolve('')
   return support.timeContextPart(
     'campaign_context',
     input.timingMeta,
-    () =>
-      buildCampaignBrainContext(support, { ...input, target }).catch((err) => {
-        logger.warn(`Campaign brain context failed: ${err}`)
-        return ''
-      }),
+    async () => {
+      const parts: string[] = []
+      for (const target of targets) {
+        const part = await buildCampaignBrainContext(support, { ...input, target }).catch((err) => {
+          logger.warn(`Campaign brain context failed: ${err}`)
+          return ''
+        })
+        if (part) parts.push(part)
+      }
+      return parts.join('\n\n')
+    },
     (value) => support.contextStringTiming(value),
   )
 }

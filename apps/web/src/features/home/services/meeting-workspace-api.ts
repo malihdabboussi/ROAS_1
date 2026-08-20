@@ -161,7 +161,7 @@ export async function fetchMeetingWorkspaceEvent(
     source: meetingSource(bundle.meeting.source),
     related: {
       space_id: spaceId,
-      call_item_id: meetingItemId,
+      call_item_id: firstText(bundle.meeting.id) ?? meetingItemId,
       title: bundle.meeting.title,
       recording_url: primaryRecording?.recording_url ?? null,
       follow_ups: [],
@@ -243,7 +243,9 @@ export function toScheduledMeetingPayload(event: CalendarAgendaEvent) {
       const email = safeEmail(attendee.email)
       return email ? [{ email, name: attendee.name ?? null }] : []
     }),
-    organizer: organizerEmail ? { email: organizerEmail, name: event.organizer?.name ?? null } : null,
+    organizer: organizerEmail
+      ? { email: organizerEmail, name: event.organizer?.name ?? null }
+      : null,
   }
 }
 

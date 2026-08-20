@@ -1,4 +1,89 @@
+## 2026-08-20 - [FEATURE] Recents client folders ignore extra conversation connections
+
+Status: Open
+
+Found while: Adding Recents Filter Group by Clients
+
+Evidence: Folders key off `conversations.campaign_id` only. Extra `conversation_connections` campaign rows from Connections `+` do not create or join a folder.
+
+Needed work: Union primary `campaign_id` with extra campaign connection ids when building client folders, without duplicating a chat in two folders (primary wins, extras as additional membership or skip).
+
+Reason not done now: Recents list payload does not include extra connections. In-scope work was Filter → Clients folders from the primary client.
+
+## 2026-08-20 - [ARCH] conversation-list-query.ts remains over the 300 LOC utility cap
+
+Status: Open
+
+Found while: Adding Recents Group by Clients
+
+Evidence: `wc -l` on `apps/web/src/lib/conversations/conversation-list-query.ts` is over 300 (utility cap). Client grouping added `groupByClientFolders` in this file.
+
+Needed work: Split date/status/campaign/client grouping helpers into `conversation-list-groups.ts`.
+
+Reason not done now: The file was already over cap. In-scope work was the Clients option and folder UI.
+
+## 2026-08-20 - [FIX] Home new-chat bounce back to greeting is still unproven
+
+Status: Open
+
+Found while: Fixing Pixel asking which campaign after Choose Space attached Above It General
+
+Evidence: User first saw the thread start, then Good morning / New chat, then recovered via Recents with Connections showing Above It General. Greeting requires `/home` with no `conv` and `chat !== starting`. `ShellWorkspace` `chat=starting` snapshots `activeConversationId` then nulls it; a later effect re-run can recapture the new id as "before" and wipe it. `handleNewConversation` also nulls on `chatRailIntent === 'new'`.
+
+Needed work: Snapshot the pre-start conversation once per starting session; do not recapture a newly created id. Confirm whether `/home` (no query) is a New-chat click, history back, or that wipe.
+
+Reason not done now: The remaining user-visible failure after Connections attached was Pixel asking which campaign (Personal space awareness + client-General brain skip). Bounce was not reproduced in code with a failing test.
+
+## 2026-08-20 - [ARCH] persistConversationModelPrefs still PATCHes tombstoned conversations
+
+Status: Open
+
+Found while: Fixing Recents → meetings React #185 crash
+
+Evidence: Console on the crashed meetings URL logged `Failed to save conversation model preferences: Error: Conversation not found` plus 404 `/api/proxy/conversations/...0fbd2fc8`. `persistConversationModelPrefs` PATCHes even after `selectConversation` tombstones the id in `deadConversationIds`. `apps/web/src/features/studio/services/chat.service.ts` is 3016 LOC (cap 600).
+
+Needed work: Skip persist when `deadConversationIds` has the id, and tombstone on 404 instead of throwing to the composer effect.
+
+Reason not done now: Recents no longer navigates onto that meetings+dead-chat path. Growing `chat.service.ts` further was out of scope.
+
+## 2026-08-19 - [ARCH] conversation_documents document_type has no markdown/doc value
+
+Status: Open
+
+Found while: Fixing Chat Files empty state for agent-created docs
+
+Evidence: Latest check constraint `conversation_documents_document_type_check` (`supabase/migrations/20260723144500_allow_conversation_image_uploads.sql`) allows `offer|avatar|funnel|lead_magnet|sequence|email|upload|image_upload|content-plan`. `save_document` defaults to `upload`. Prod agent markdown rows are `upload` with inline JSON-string content.
+
+Needed work: Add a `markdown` or `doc` document_type via migration, then default `save_document` to that when there is no file payload. Viewer fallback already renders existing `upload` rows.
+
+Reason not done now: Changing the write default without a constraint migration would fail inserts. Viewer fallback was the mandatory fix for existing rows.
+
+## 2026-08-19 - [ARCH] chat.service.ts (web + agent-api) remain over the 600 LOC service cap
+
+Status: Open
+
+Found while: Work-summary Create button, multi-connections, and retrieval receipts
+
+Evidence: `wc -l` on `apps/web/src/features/studio/services/chat.service.ts` is 3016 (was 2992 on main; cap 600). `apps/agent-api/src/modules/chat/services/chat.service.ts` is 625 (was 621). This change added `web_source` / `retrieval_receipt` switch cases and a preload receipt emit loop.
+
+Needed work: Split send/stream/title/status orchestration out of both chat.service.ts files.
+
+Reason not done now: Both files were already over the cap. In-scope work was source-panel events, not a chat.service split.
+
+## 2026-08-19 - [ARCH] brain-retrieval.service.ts remains over the 600 LOC service cap
+
+Status: Open
+
+Found while: Adding unconditional brain-search receipt warn logs
+
+Evidence: `wc -l` on `apps/agent-api/src/modules/brain/services/brain-retrieval.service.ts` is 622 (was 604 on main; cap 600). Warn-log call sites stay in this file; the JSON payload helper moved to `brain-retrieval-receipt.ts`.
+
+Needed work: Finish extracting search/empty-result logging and timing wrappers so the service is under 600.
+
+Reason not done now: The file was already over the cap. This change only added required warn logs for empty vs hit searches.
+
 ## 2026-08-20 - [ARCH] chat.service.ts remains far over the 600 LOC service cap
+
 
 Status: Open
 

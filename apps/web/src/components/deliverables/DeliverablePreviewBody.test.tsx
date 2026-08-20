@@ -154,4 +154,31 @@ describe('DeliverablePreviewBody', () => {
       'mission-google-action',
     )
   })
+
+  it('renders JSON-string conversation document markdown instead of the empty state', () => {
+    const markdown =
+      '# Christian Osgood — Free + Shipping Book Funnel: Modular UGC Ad Scripts\n\n## Hook\nFirst line of the ad script.'
+    render(
+      <DeliverablePreviewBody
+        contentRef={createRef<HTMLDivElement>()}
+        deliverable={{
+          ...entityDeliverable,
+          type: 'file',
+          title: 'Christian Osgood — Free + Shipping Book Funnel: Modular UGC Ad Scripts',
+          content: JSON.stringify(markdown),
+          entity_id: '946a12f3-21e0-431f-87d9-eec0860e3a23',
+          entity_table: 'conversation_documents',
+        }}
+        entityContentLoading={false}
+        isEntityType={false}
+        isTextContent={false}
+        effectiveContent={null}
+        viewMode="wide"
+        renderEntityPreview={bodyMocks.renderEntityPreview}
+      />,
+    )
+
+    expect(screen.getByTestId('markdown-renderer').textContent).toBe(markdown)
+    expect(screen.queryByText('No content to display')).not.toBeInTheDocument()
+  })
 })

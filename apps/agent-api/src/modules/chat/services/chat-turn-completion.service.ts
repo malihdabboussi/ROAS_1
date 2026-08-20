@@ -18,10 +18,10 @@ import type {
   RecordChatRunCheckpointInput,
 } from './chat-run-checkpoint.service'
 import { ChatRunEventStoreService } from './chat-run-event-store.service'
+import type { ChatTurnTimingSpan } from './chat-turn-session.service'
 import { MessageTimelineService } from './message-timeline.service'
 import type { SendFn } from './openclaw-proxy.service'
 import { StreamRegistryService } from './stream-registry.service'
-import type { ChatTurnTimingSpan } from './chat-turn-session.service'
 
 type DbOperation = <T>(operation: (supabase: SupabaseClient) => Promise<T>) => Promise<T>
 type CompletionLogger = Pick<Logger, 'error' | 'warn'>
@@ -55,6 +55,8 @@ interface PersistSuccessfulTurnInput {
   timingSpans: ChatTurnTimingSpan[]
   getAccumulatedContent: () => string
   getCompletedVisibleToolCount: () => number
+  getRetrievalReceipts?: () => Record<string, unknown>[]
+  getWebResearchUrls?: () => Record<string, unknown>[]
   clearFlushTimer: () => void
   recordRunCheckpoint: RecordRunCheckpoint
   dbOp: DbOperation
@@ -85,6 +87,8 @@ interface FlushFinalMessageInput {
   resolvedModelId?: string
   timingSpans: ChatTurnTimingSpan[]
   getAccumulatedContent: () => string
+  getRetrievalReceipts?: () => Record<string, unknown>[]
+  getWebResearchUrls?: () => Record<string, unknown>[]
   clearFlushTimer: () => void
   dbOp: DbOperation
   logger: CompletionLogger
@@ -120,6 +124,20 @@ function resolveAssistantMessageContent(
   const accumulated = getAccumulatedContent()
   const streamed = streamedContent ?? ''
   return accumulated.length >= streamed.length ? accumulated : streamed
+}
+
+function sourcePanelMetadata(input: {
+  getRetrievalReceipts?: () => Record<string, unknown>[]
+  getWebResearchUrls?: () => Record<string, unknown>[]
+}): Record<string, unknown> {
+  const retrievalReceipts = input.getRetrievalReceipts?.() ?? []
+  const webResearchUrls = input.getWebResearchUrls?.() ?? []
+  return {
+    ...(retrievalReceipts.length > 0
+      ? { retrieval_receipts: structuredClone(retrievalReceipts) }
+      : {}),
+    ...(webResearchUrls.length > 0 ? { web_research_urls: structuredClone(webResearchUrls) } : {}),
+  }
 }
 
 @Injectable()
@@ -195,6 +213,7 @@ export class ChatTurnCompletionService {
         ...(input.timingSpans.length > 0
           ? { timing_spans: structuredClone(input.timingSpans) }
           : {}),
+        ...sourcePanelMetadata(input),
         model_settings: input.selectedSettings.request,
         requested_model_id: input.selectedSettings.requestedModelId,
         resolved_model_id: input.selectedSettings.resolvedModelId,
@@ -214,10 +233,7 @@ export class ChatTurnCompletionService {
     })
   }
 
-  async updateAssistantMessage(
-    messageId: string,
-    updates: Record<string, unknown>,
-  ): Promise<void> {
+  async updateAssistantMessage(messageId: string, updates: Record<string, unknown>): Promise<void> {
     await this.messages.update(this.svc.client, messageId, updates)
   }
 
@@ -257,6 +273,7 @@ export class ChatTurnCompletionService {
         ...(input.timingSpans.length > 0
           ? { timing_spans: structuredClone(input.timingSpans) }
           : {}),
+        ...sourcePanelMetadata(input),
         model_settings: input.selectedSettings.request,
         requested_model_id: input.selectedSettings.requestedModelId,
         resolved_model_id: input.selectedSettings.resolvedModelId,

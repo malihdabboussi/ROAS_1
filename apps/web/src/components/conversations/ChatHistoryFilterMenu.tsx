@@ -40,6 +40,7 @@ const STATUS_OPTIONS: ChatHistoryStatusFilter[] = ['active', 'archived', 'all']
 const ACTIVITY_OPTIONS: ChatHistoryActivityFilter[] = ['1d', '3d', '7d', '30d', 'all']
 const GROUP_BY_OPTIONS: ChatHistoryGroupBy[] = [
   'none',
+  'client',
   'date',
   'status',
   'campaign',

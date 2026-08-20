@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Plus } from 'lucide-react'
 import { type ConversationScopePickerHandle } from '@/components/conversations'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { homeMeetingHref } from '@/features/home/lib/home-meeting-work-restore'
@@ -25,6 +24,7 @@ import {
 import type { ShellCreateMenuItem } from './shell-create-menu.config'
 import { ShellCreateMenuPanel } from './ShellCreateMenuPanel'
 import { ShellRightPanelConnections } from './ShellRightPanelConnections'
+import { ShellRightPanelCreateHeader } from './ShellRightPanelCreateHeader'
 import { ShellRightPanelFiles } from './ShellRightPanelFiles'
 import { ShellRightPanelProgress } from './ShellRightPanelProgress'
 import { ShellRightPanelSection } from './ShellRightPanelSection'
@@ -234,13 +234,19 @@ export function ShellRightPanel({
         aria-label="Work summary"
         aria-hidden={!visible}
       >
+        {conversationId ? (
+          <ShellRightPanelCreateHeader
+            createOpen={createOpen}
+            onOpenCreate={() => setCreateOpen(true)}
+            onBack={() => setCreateOpen(false)}
+          />
+        ) : null}
         {createOpen ? (
           <div className="scrollbar-thin py-spacing-1 min-h-0 flex-1 overflow-y-auto">
             <ShellCreateMenuPanel
               onSelectCreateItem={handleCreateSelect}
               onSelectMissionPlaybook={(playbookKey) => openLauncher(playbookKey)}
               onCloseMenu={() => setCreateOpen(false)}
-              onBack={() => setCreateOpen(false)}
             />
           </div>
         ) : (
@@ -277,18 +283,6 @@ export function ShellRightPanel({
                   title="Outputs"
                   open={isSectionOpen('outputs', hasOutputs)}
                   onToggle={() => toggleSection('outputs', hasOutputs)}
-                  action={
-                    <button
-                      type="button"
-                      onClick={() => setCreateOpen(true)}
-                      className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground p-spacing-1 shrink-0 rounded-lg transition-colors"
-                      aria-label="Create"
-                      aria-expanded={createOpen}
-                      title="Create"
-                    >
-                      <Plus className="icon-sm" aria-hidden />
-                    </button>
-                  }
                 >
                   <ShellRightPanelFiles conversationId={conversationId} messages={messages} />
                 </ShellRightPanelSection>

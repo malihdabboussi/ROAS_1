@@ -45,4 +45,19 @@ describe('extractMarkdownFromDocumentContent', () => {
       }),
     ).toBe('This is a long enough markdown payload stored on an unknown key for fallback parsing.')
   })
+
+  it.each([
+    {
+      id: '946a12f3-21e0-431f-87d9-eec0860e3a23',
+      title: 'Christian Osgood — Free + Shipping Book Funnel: Modular UGC Ad Scripts',
+    },
+    {
+      id: '5d90acb9-a2fc-4202-b7b1-ee1aeb1ea630',
+      title: 'Christian Osgood — Free + Shipping Book Funnel: Modular UGC Ad Scripts',
+    },
+  ])('unwraps JSON-string conversation_documents.content for $id', ({ title }) => {
+    const markdown = `# ${title}\n\n## Hook\nFirst line of the ad script.`
+    expect(extractMarkdownFromDocumentContent(JSON.stringify(markdown))).toBe(markdown)
+    expect(extractMarkdownFromDocumentContent(markdown)).toBe(markdown)
+  })
 })

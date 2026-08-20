@@ -8,6 +8,8 @@ import {
 } from '@/lib/api/backend-client'
 import type {
   Conversation,
+  ConversationConnection,
+  ConversationConnectionEntityType,
   ConversationShareEntityType,
   ConversationShareLevel,
   ConversationShareRecord,
@@ -230,6 +232,40 @@ export async function assignConversationScope(
     campaign_id: campaignId,
     metadata: { space_id: spaceId },
   })
+}
+
+export async function fetchConversationConnections(
+  conversationId: string,
+): Promise<{ connections: ConversationConnection[] }> {
+  if (isPendingConversationId(conversationId)) return { connections: [] }
+  return backendGet<{ connections: ConversationConnection[] }>(
+    `/api/conversations/${conversationId}/connections`,
+  )
+}
+
+export async function addConversationConnection(
+  conversationId: string,
+  input: { entity_type: ConversationConnectionEntityType; entity_id: string },
+): Promise<{
+  connection: ConversationConnection
+  promoted_primary: boolean
+  conversation: Conversation
+}> {
+  if (isPendingConversationId(conversationId)) {
+    throw new Error('Cannot add a connection to a pending conversation')
+  }
+  return backendPost(`/api/conversations/${conversationId}/connections`, input)
+}
+
+export async function removeConversationConnection(
+  conversationId: string,
+  entityType: ConversationConnectionEntityType,
+  entityId: string,
+): Promise<{ connections: ConversationConnection[]; conversation: Conversation }> {
+  if (isPendingConversationId(conversationId)) {
+    throw new Error('Cannot remove a connection from a pending conversation')
+  }
+  return backendDelete(`/api/conversations/${conversationId}/connections/${entityType}/${entityId}`)
 }
 
 export async function deleteConversation(id: string): Promise<void> {

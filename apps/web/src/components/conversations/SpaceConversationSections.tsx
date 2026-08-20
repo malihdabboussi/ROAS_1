@@ -1,7 +1,7 @@
 'use client'
 
 import { Fragment, type ReactNode } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Folder } from 'lucide-react'
 import type { Conversation, ConversationListGroup } from '@/lib/conversations'
 import { cn } from '@/lib/utils/cn'
 
@@ -68,6 +68,8 @@ interface SpaceConversationSectionsProps {
   /** When true, skip section headers (flat list / groupBy none). */
   hideEmptyLabels?: boolean
   dividedRows?: boolean
+  /** Client Recents folders: pill header + indented chats. */
+  folderSections?: boolean
 }
 
 export function SpaceConversationSections({
@@ -79,6 +81,7 @@ export function SpaceConversationSections({
   renderConversationRow,
   hideEmptyLabels = true,
   dividedRows = false,
+  folderSections = false,
 }: SpaceConversationSectionsProps) {
   return (
     <div className="flex flex-col">
@@ -89,29 +92,45 @@ export function SpaceConversationSections({
         const visibleItems = collapsed ? [] : group.items.slice(0, cap)
         const hiddenRemaining = collapsed ? 0 : Math.max(0, group.items.length - cap)
         return (
-          <div key={group.id} className="flex flex-col">
+          <div key={group.id} className={cn('flex flex-col', folderSections && 'gap-spacing-1')}>
             {showHeader ? (
-              <button
-                type="button"
-                onClick={() => onToggleSectionCollapsed(group.id)}
-                aria-expanded={!collapsed}
-                className={cn(
-                  'group/section typo-xs text-muted-foreground hover:text-foreground gap-spacing-1 rounded-spacing-2 px-spacing-2 pb-spacing-1 flex w-full items-center text-left font-semibold transition-colors',
-                  index === 0 ? 'pt-spacing-1' : 'pt-spacing-4',
-                )}
-              >
-                <span>{group.label}</span>
-                <ChevronRight
-                  className={cn(
-                    'icon-sm shrink-0 opacity-0 transition-[opacity,transform] duration-200 group-hover/section:opacity-100 group-focus-visible/section:opacity-100',
-                    collapsed ? 'rotate-0' : 'rotate-90',
-                  )}
-                  aria-hidden
+              folderSections ? (
+                <ConversationFolderHeader
+                  label={group.label}
+                  expanded={!collapsed}
+                  onToggle={() => onToggleSectionCollapsed(group.id)}
                 />
-              </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onToggleSectionCollapsed(group.id)}
+                  aria-expanded={!collapsed}
+                  className={cn(
+                    'group/section typo-xs text-muted-foreground hover:text-foreground gap-spacing-1 rounded-spacing-2 px-spacing-2 pb-spacing-1 flex w-full items-center text-left font-semibold transition-colors',
+                    index === 0 ? 'pt-spacing-1' : 'pt-spacing-4',
+                  )}
+                >
+                  <span>{group.label}</span>
+                  <ChevronRight
+                    className={cn(
+                      'icon-sm shrink-0 opacity-0 transition-[opacity,transform] duration-200 group-hover/section:opacity-100 group-focus-visible/section:opacity-100',
+                      collapsed ? 'rotate-0' : 'rotate-90',
+                    )}
+                    aria-hidden
+                  />
+                </button>
+              )
             ) : null}
             {!collapsed ? (
-              <div className={cn('flex flex-col', !dividedRows && 'gap-spacing-1')}>
+              <div
+                className={cn(
+                  'flex flex-col',
+                  !dividedRows && 'gap-spacing-1',
+                  folderSections &&
+                    showHeader &&
+                    'border-border ml-spacing-3 pl-spacing-2 border-l',
+                )}
+              >
                 {visibleItems.map((conversation) => (
                   <Fragment key={conversation.id}>
                     {renderConversationRow(conversation, group.id)}
@@ -132,5 +151,32 @@ export function SpaceConversationSections({
         )
       })}
     </div>
+  )
+}
+
+function ConversationFolderHeader({
+  label,
+  expanded,
+  onToggle,
+}: {
+  label: string
+  expanded: boolean
+  onToggle: () => void
+}) {
+  const Chevron = expanded ? ChevronDown : ChevronRight
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={expanded}
+      className="bg-secondary hover:bg-hover-subtle gap-spacing-2 rounded-spacing-2 px-spacing-2 py-spacing-1 group/folder flex w-full items-center text-left transition-colors"
+    >
+      <Folder className="icon-sm text-muted-foreground shrink-0" aria-hidden />
+      <span className="body-3 text-foreground min-w-0 flex-1 truncate font-medium">{label}</span>
+      <Chevron
+        className="icon-xs text-muted-foreground shrink-0 opacity-0 transition-opacity group-hover/folder:opacity-100 group-focus-visible/folder:opacity-100"
+        aria-hidden
+      />
+    </button>
   )
 }

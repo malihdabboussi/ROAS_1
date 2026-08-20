@@ -11,12 +11,11 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { toast } from 'sonner'
-import { assignConversationScope, CONVERSATION_ACTIONS_TOAST_ERRORS } from '@/lib/conversations'
 import { useCampaignCacheVersion } from '@/lib/home'
 import { useOrgStore } from '@/lib/org'
 import { isHiddenClientGeneralSpace } from '@/lib/spaces/page-grader-client-general-space'
 import { positionFloatingMenuFromAnchorRect } from '@/lib/ui'
+import { applyConversationScopePickerSelection } from './conversation-scope-add'
 import {
   buildConversationScopeLists,
   filterScopeClients,
@@ -36,7 +35,6 @@ import {
   type ConversationScopePickerHandle,
   type ConversationScopePickerProps,
 } from './conversation-scope-picker-layout'
-import { buildConversationScopeChange } from './conversation-scope-select'
 import { isGeneralLabel } from './conversation-scope-sort'
 import {
   ConversationScopePickerMenus,
@@ -69,6 +67,7 @@ export const ConversationScopePicker = forwardRef<
     bannerAnchorRef,
     hideTrigger = false,
     allowClear = false,
+    selectionMode = 'replace',
   } = props
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const cacheVersion = useCampaignCacheVersion()
@@ -240,34 +239,22 @@ export const ConversationScopePicker = forwardRef<
       if (saving) return
       setSaving(true)
       try {
-        let resolvedSpaceId = nextSpaceId
-        // Campaign-only picks attach that campaign's General space so Connections
-        // and the agent share one concrete location (not a stale prior space).
-        if (nextCampaignId && resolvedSpaceId == null) {
-          resolvedSpaceId = await resolveGeneralSpaceId(nextCampaignId)
-        }
-        if (conversation) {
-          const updated = await assignConversationScope(
-            conversation.id,
-            nextCampaignId,
-            resolvedSpaceId,
-          )
-          onConversationUpdated?.(updated)
-        }
-        onScopeChanged?.(
-          buildConversationScopeChange({
-            campaignId: nextCampaignId,
-            spaceId: resolvedSpaceId,
-            campaigns,
-            programs,
-            spacesByCampaign,
-            fallbackSpace,
-          }),
-        )
+        await applyConversationScopePickerSelection({
+          selectionMode,
+          conversation,
+          nextCampaignId,
+          nextSpaceId,
+          resolveGeneralSpaceId,
+          campaigns,
+          programs,
+          spacesByCampaign,
+          fallbackSpace,
+          onConversationUpdated,
+          onScopeChanged,
+        })
         setOpen(false)
-      } catch (error) {
-        console.error('Move conversation scope failed:', error)
-        toast.error(CONVERSATION_ACTIONS_TOAST_ERRORS.MOVE_CONVERSATION_FAILED.userMessage)
+      } catch {
+        // Toast is owned by applyConversationScopePickerSelection.
       } finally {
         setSaving(false)
       }
@@ -281,6 +268,7 @@ export const ConversationScopePicker = forwardRef<
       programs,
       resolveGeneralSpaceId,
       saving,
+      selectionMode,
       spacesByCampaign,
     ],
   )

@@ -58,7 +58,7 @@ export function useChatSendAwareness(input: {
         teamAwareness: input.teamAwareness,
         campaignId: input.campaignId,
         spaceId: input.spaceId,
-        connectedLocationLabel: connectedLocation.label,
+        connectedLocationLabel: connectedLocation.awarenessLabel,
         scopeMatchesVisibleSpace: input.scopeMatchesVisibleSpace,
         campaignName: input.campaignName,
         activeViewType: input.activeViewType,
@@ -67,7 +67,7 @@ export function useChatSendAwareness(input: {
         focusedMission: focusedMissionRef.current,
       }),
     [
-      connectedLocation.label,
+      connectedLocation.awarenessLabel,
       input.awarenessContextOverride,
       input.brainAwareness,
       input.campaignId,

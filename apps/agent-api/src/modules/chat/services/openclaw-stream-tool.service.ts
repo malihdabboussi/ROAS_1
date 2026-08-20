@@ -1,11 +1,13 @@
 import { Injectable, Optional } from '@nestjs/common'
 import { ErrorReporter, RouteTraceReporter } from '@vibey/api-shared'
+import { extractRetrievalReceiptsFromToolResult } from '../../brain/services/brain-retrieval-receipt'
 import {
   isCampaignToolName,
   isRecord,
   resolveUiBlocksFromToolResult,
 } from '../../shared/ui-block-extractor'
-import { convertUiBlockToText } from './openclaw-ui-block-text'
+import type { OpenClawStreamContext, OpenClawStreamState } from './openclaw-stream-state'
+import { logFirstStreamTiming } from './openclaw-stream-state'
 import {
   extractCampaignAction,
   formatToolFailureMessage,
@@ -15,9 +17,9 @@ import {
   resolveToolUpdateDetail,
 } from './openclaw-tool-events'
 import { buildToolTraceSummary } from './openclaw-tool-trace-summary'
-import type { OpenClawStreamContext, OpenClawStreamState } from './openclaw-stream-state'
-import { logFirstStreamTiming } from './openclaw-stream-state'
+import { convertUiBlockToText } from './openclaw-ui-block-text'
 import { ResponseFilterService } from './response-filter.service'
+import { extractWebResearchSourceUrls } from './web-research-source-urls'
 
 @Injectable()
 export class OpenClawStreamToolService {
@@ -225,6 +227,7 @@ export class OpenClawStreamToolService {
       result,
     })
     this.reportToolFailureIfNeeded(name, action, toolCallId, errorDetail, context, traceSummary)
+    await this.emitSourceReceipts(name, result, toolArgs, context)
 
     state.hiddenToolEndCount++
     if (isError) state.hiddenToolFailedCount++
@@ -532,9 +535,7 @@ export class OpenClawStreamToolService {
       name: string
       instagram_business_account?: { id: string; username?: string }
     } = { id, name }
-    const iba = isRecord(entry.instagram_business_account)
-      ? entry.instagram_business_account
-      : null
+    const iba = isRecord(entry.instagram_business_account) ? entry.instagram_business_account : null
     if (iba && typeof iba.id === 'string') {
       pageItem.instagram_business_account = {
         id: iba.id,
@@ -542,6 +543,21 @@ export class OpenClawStreamToolService {
       }
     }
     return pageItem
+  }
+
+  private async emitSourceReceipts(
+    name: string,
+    result: unknown,
+    toolArgs: Record<string, unknown> | undefined,
+    context: OpenClawStreamContext,
+  ): Promise<void> {
+    const receipts = extractRetrievalReceiptsFromToolResult(result)
+    for (const receipt of receipts) {
+      await context.options.send('retrieval_receipt', receipt)
+    }
+    for (const source of extractWebResearchSourceUrls(name, result, toolArgs)) {
+      await context.options.send('web_source', source)
+    }
   }
 
   private clearToolState(
@@ -559,7 +575,10 @@ export class OpenClawStreamToolService {
     toolName: string,
     partialResult: unknown,
   ): Record<string, unknown> | null {
-    if (!OpenClawStreamToolService.A2A_ACTION_NAMES.has(toolName) && !isCampaignToolName(toolName)) {
+    if (
+      !OpenClawStreamToolService.A2A_ACTION_NAMES.has(toolName) &&
+      !isCampaignToolName(toolName)
+    ) {
       const partial = isRecord(partialResult) ? partialResult : null
       const action = partial?.action as string | undefined
       if (!action || !OpenClawStreamToolService.A2A_ACTION_NAMES.has(action)) return null

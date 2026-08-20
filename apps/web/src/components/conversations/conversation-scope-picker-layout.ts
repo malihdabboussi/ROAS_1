@@ -41,6 +41,8 @@ export interface ConversationScopePickerProps {
   hideTrigger?: boolean
   /** Adds an All row that clears campaign and space. Recents/history filters use this. */
   allowClear?: boolean
+  /** Connections + adds another campaign/space. Recents Filter stays replace. */
+  selectionMode?: 'replace' | 'add'
 }
 
 /** Visible name for a selected campaign or space. Never leave a generic Space label when a real name exists. */

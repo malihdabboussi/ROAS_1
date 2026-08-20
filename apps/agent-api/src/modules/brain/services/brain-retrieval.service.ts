@@ -12,6 +12,7 @@ import { BrainRetrievalRelationRepository } from '../repositories/brain-retrieva
 import { BrainRetrievalSearchRepository } from '../repositories/brain-retrieval-search.repository'
 import { BrainRerankerService } from './brain-reranker.service'
 import { BrainRetrievalQueryExpansionService } from './brain-retrieval-query-expansion.service'
+import { buildEmptyBrainSearchResult, warnBrainSearchReceipt } from './brain-retrieval-receipt'
 import { BrainRetrievalRelatedContextService } from './brain-retrieval-related-context.service'
 import { BrainRetrievalSearchLaneService } from './brain-retrieval-search-lane.service'
 import { BrainRetrievalTimingService } from './brain-retrieval-timing.service'
@@ -282,6 +283,7 @@ export class BrainRetrievalService {
       contextSufficient: sufficiency.sufficient,
       latencyMs: Date.now() - startedAt,
     })
+    warnBrainSearchReceipt(this.logger, input.family, brain.id, query, ranked.length)
     return {
       success: true,
       query,
@@ -325,18 +327,13 @@ export class BrainRetrievalService {
     family: BrainSearchFamily,
     reason: string,
   ): BrainRetrievalSearchResult {
-    const sufficiency = this.evaluateSufficiencyFallback(query, [])
-    return {
-      success: true,
+    warnBrainSearchReceipt(this.logger, family, null, query, 0, reason)
+    return buildEmptyBrainSearchResult(
       query,
       family,
-      count: 0,
-      context_sufficient: false,
-      sufficiency: { ...sufficiency, reason },
-      missing: sufficiency.missing,
-      suggested_next_queries: sufficiency.suggested_next_queries,
-      results: [],
-    }
+      reason,
+      this.evaluateSufficiencyFallback(query, []),
+    )
   }
 
   async resolveUserBrainId(
