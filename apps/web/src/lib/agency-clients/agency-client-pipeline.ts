@@ -36,11 +36,12 @@ const PIPELINE_ALIASES: Record<string, AgencyClientPipelineSlug> = {
   churned: 'churned_inactive',
 }
 
-const LABEL_BY_SLUG = new Map(
-  AGENCY_CLIENT_PIPELINE_STAGES.map((stage) => [stage.slug, stage.label] as const),
+// Keyed as plain strings: lookups pass unvalidated user/config values, not proven slugs.
+const LABEL_BY_SLUG = new Map<string, string>(
+  AGENCY_CLIENT_PIPELINE_STAGES.map((stage) => [stage.slug, stage.label]),
 )
-const RANK_BY_SLUG = new Map(
-  AGENCY_CLIENT_PIPELINE_STAGES.map((stage, index) => [stage.slug, index] as const),
+const RANK_BY_SLUG = new Map<string, number>(
+  AGENCY_CLIENT_PIPELINE_STAGES.map((stage, index) => [stage.slug, index]),
 )
 
 export type PipelineClientLike = {
@@ -61,13 +62,17 @@ export function normalizePipelineKey(value: string): string {
     .replace(/\s+/g, ' ')
 }
 
-export function resolvePipelineSlug(value: string | null | undefined): string | null {
+export function resolvePipelineSlug(
+  value: string | null | undefined,
+): AgencyClientPipelineSlug | null {
   const key = normalizePipelineKey(typeof value === 'string' ? value : '')
   if (!key) return null
-  return (
-    PIPELINE_ALIASES[key] ??
-    (RANK_BY_SLUG.has(key.replace(/ /g, '_')) ? key.replace(/ /g, '_') : null)
-  )
+  const aliased = PIPELINE_ALIASES[key]
+  if (aliased) return aliased
+  const asSlug = key.replace(/ /g, '_')
+  return RANK_BY_SLUG.has(asSlug as AgencyClientPipelineSlug)
+    ? (asSlug as AgencyClientPipelineSlug)
+    : null
 }
 
 export function clientPipelineValue(client: PipelineClientLike): string {

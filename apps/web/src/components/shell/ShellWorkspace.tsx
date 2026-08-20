@@ -9,6 +9,7 @@ import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { ShellArtifactViewerAdapter } from '@/features/studio/components/preview/ShellArtifactViewerAdapter'
 import { selectConversation } from '@/features/studio/services/chat.service'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
+import { openArtifactPreviewInShell } from '@/lib/artifacts'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils/cn'
 import { isShellHomeRoute, isShellWorkspaceRoute } from './shell-route-policy'
@@ -21,13 +22,13 @@ import { ShellTopBar } from './ShellTopBar'
 import { SpaceWorkDock } from './SpaceWorkDock'
 import { useRightEdgePresence } from './use-right-edge-presence'
 import { useShellArtifactConversationSync } from './use-shell-artifact-conversation-sync'
+import { useShellConversationDocumentTitle } from './use-shell-conversation-document-title'
 import {
   isWorkAttachedDock,
   resolveShellMenuDockForLayout,
   useActiveShellMenuDock,
   useShellMenuDock,
 } from './use-shell-menu-dock'
-import { useShellConversationDocumentTitle } from './use-shell-conversation-document-title'
 import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
 import { useShellStore } from './use-shell-store'
 import { useShellWorkspaceScreenChat } from './use-shell-workspace-screen-chat'
@@ -38,6 +39,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams()
   const chatParam = searchParams.get('chat')
   const convParam = searchParams.get('conv')
+  const missionParam = searchParams.get('mission')
 
   const workAreaOpen = useShellStore((s) => s.workAreaOpen)
   const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
@@ -137,6 +139,18 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     router.replace(`/home?conv=${encodeURIComponent(activeConversationId)}`)
   }, [activeConversationId, chatParam, pathname, router])
 
+  // `/home?mission=<id>` (notifications, mission links) opens the mission as the shell's
+  // right-side card. The legacy handler lived in the Home dashboard content, which no
+  // longer mounts under the shell greeting — the deep link silently did nothing.
+  useEffect(() => {
+    if (!missionParam || !isShellHomeRoute(pathname)) return
+    openArtifactPreviewInShell({
+      artifactType: 'mission',
+      artifactId: missionParam,
+      name: 'Mission',
+    })
+  }, [missionParam, pathname])
+
   const onSpaces = pathname.startsWith('/spaces')
   const workAreaCollapsible = !showFullNewChat && !showFullConversation
   const workAreaRequestedOpen = workAreaCollapsible ? workAreaOpen : true
@@ -146,7 +160,9 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   )
   const workAreaCollapsed = workAreaCollapsible && !workAreaMounted
   const mobileChatVisible = workAreaCollapsible && !desktop && chatDrawerOpen && !artifactTarget
-  const artifactBesideConversation = Boolean(artifactTarget) && showFullConversation && desktop
+  // New chat keeps an open card docked right (chat left, card right) instead of hiding it.
+  const artifactBesideConversation =
+    Boolean(artifactTarget) && (showFullConversation || showFullNewChat) && desktop
   const artifactReplacesWorkArea = Boolean(artifactTarget) && !artifactBesideConversation
 
   useEffect(() => {

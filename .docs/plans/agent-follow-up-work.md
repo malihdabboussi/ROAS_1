@@ -39658,3 +39658,39 @@ Evidence: Personal Meetings space renders Call Kind as dot + label; the org "Cam
 Needed work: Confirm both spaces use the same select-field option colours; likely the org space's field lacks `options[].color`.
 
 Reason not done now: Data/config difference between two spaces, not a component bug.
+## 2026-08-19 - [FIX] Mission viewer close control has a tiny hit target
+
+Status: Open
+
+Found while: New-chat-beside-card fix (claude/new-chat-beside-card)
+
+Evidence: The mission card's header ✕ (`MissionDetailDesktopShell` panel presentation) is ~16px with no padding; repeated pointer clicks at its coordinates missed while an a11y-targeted click worked.
+
+Needed work: Give the panel close/expand controls the standard `btn-icon-bare` 28px hit area.
+
+Reason not done now: Cosmetic; mission shell files are actively being edited by another agent (mission-extend-track work).
+
+## 2026-08-20 - [ARCH] ConversationScopePicker over component LOC cap
+
+Status: Open
+
+Found while: Fixing React #185 max update depth on Choose Space
+
+Evidence: `wc -l` is 404 (component cap 400).
+
+Needed work: Split layout measurement / submenu open handlers from the picker shell.
+
+Reason not done now: Production crash fix had to stay minimal and shipable.
+
+## 2026-08-20 - [ARCH] ShellChatMenu remains near the component LOC cap
+
+Status: Open
+
+Found while: Stopping no-op conversation merge re-renders during the React #185 fix
+
+Evidence: On main it was already 399 LOC; after extracting merge helper it is 387.
+
+Needed work: Split filter/reload/open-plan concerns out of ShellChatMenu.
+
+Reason not done now: Out of scope for the production crash unblock.
+

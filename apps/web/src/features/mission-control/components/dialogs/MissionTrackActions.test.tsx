@@ -7,7 +7,7 @@ const mission = {
   id: 'mission-1',
   title: 'Claude Club Pre-Call Strategy Map',
   input: { playbook_id: 'client-strategy' },
-} as Mission
+} as unknown as Mission
 
 const preCall: MissionSubtask = {
   id: 'subtask-1',

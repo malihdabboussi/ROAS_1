@@ -115,3 +115,27 @@ export function placeSpacesMenuFromRowRect(
   )
   return { top, left, maxHeight }
 }
+
+export function sameConversationScopeMenuLayout(
+  prev: {
+    campaign: ConversationScopeMenuGeom
+    spaces: ConversationScopeMenuGeom | null
+  } | null,
+  campaign: ConversationScopeMenuGeom,
+  spaces: ConversationScopeMenuGeom | null,
+): boolean {
+  if (!prev) return false
+  if (
+    prev.campaign.top !== campaign.top ||
+    prev.campaign.left !== campaign.left ||
+    prev.campaign.maxHeight !== campaign.maxHeight
+  ) {
+    return false
+  }
+  if (prev.spaces == null || spaces == null) return prev.spaces == null && spaces == null
+  return (
+    prev.spaces.top === spaces.top &&
+    prev.spaces.left === spaces.left &&
+    prev.spaces.maxHeight === spaces.maxHeight
+  )
+}
