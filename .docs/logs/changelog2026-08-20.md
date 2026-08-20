@@ -11,3 +11,9 @@ What: All Meetings now shows Client / Campaign, Host, and Call status (Live / Co
 Why: The stored All Meetings view never received Host/Call status/Client, while the read-path injected a Space column and left Priority + task Status in place. Enabling Status still only opened the name-column picker because list columns strip `status`.
 Impact: Opening Meetings rewrites the All Meetings columns to the one-room set. Priority and task Status remain as fields (Hidden). Space is no longer a default column.
 Files: `all-meetings-list-columns.ts`, `use-ensure-all-meetings-columns.ts`, `SpaceItemRow.tsx`, `space-template-catalog-personal-dashboard.ts`, `20260820004500_meetings_all_meetings_one_room_columns.sql`
+
+## [2026-08-20 03:36] - [DOCS]
+What: Appended already-applied 20260818200000/230000/233000/234500 migrations to scripts/roas/migration-order.txt (before 20260819014500).
+Why: Order file ended at 20260819014500 and omitted four migrations that are already on prod.
+Impact: Migration bookkeeping matches prod for those four; 20260819020000_campaign_delegation_preview still withheld until Portal delegation tool is live.
+Files: scripts/roas/migration-order.txt
