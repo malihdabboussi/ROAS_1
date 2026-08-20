@@ -1,4 +1,5 @@
 import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import Switch from '@/components/ui/forms/switch'
 import { SettingsDropdown } from '@/components/ui/forms/SettingsDropdown'
 import type {
@@ -57,7 +58,9 @@ export function ConversationSharePeopleList({
       <p className="body-3 text-muted-foreground mb-spacing-2">Share with</p>
 
       {loading ? (
-        <p className="body-3 text-muted-foreground py-3 text-center">Loading...</p>
+        <div className="py-3">
+          <ListSkeleton rows={3} label="Loading..." />
+        </div>
       ) : (
         <>
           <button

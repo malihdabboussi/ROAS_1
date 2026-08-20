@@ -39671,3 +39671,26 @@ Needed work: Split filter/reload/open-plan concerns out of ShellChatMenu.
 
 Reason not done now: Out of scope for the production crash unblock.
 
+## 2026-08-19 - [FIX] New-chat submit can select a stale meeting conversation
+
+Status: Open
+
+Found while: Verifying the new-chat flash fix (claude/loading-skeletons)
+
+Evidence: Submitting from Home (/home?chat=starting) created the new conversation correctly, but the panel briefly displayed a previous meeting-derived conversation (v5 id) and the §11 URL-replace effect wrote that stale id into /home?conv=… — same family as Dylan's "clicking a filtered chat pulls it up briefly then it goes away". Suspect the per-screen sticky chat restore (use-shell-workspace-screen-chat) races the new-chat seed and does not stand down for chat=starting.
+
+Needed work: Suppress screen-chat restore while chat=starting / a pending send seed exists; guard the URL-replace effect against ids not created by this submit.
+
+Reason not done now: Being taken as the next work item (task list #11) with the recents-filter bugs.
+
+## 2026-08-19 - [STYLE] Remaining ~190 small loading orbs
+
+Status: Open
+
+Found while: Skeleton sweep (claude/loading-skeletons)
+
+Evidence: 245 VibeyLoadingOrb sites before the sweep; ~55 page/pane-level ones converted. Remaining are size sm/md orbs inside buttons, settings tabs, studio preview panes, media pickers — low-jank but inconsistent.
+
+Needed work: Convert opportunistically per surface; keep orbs only for in-button spinners and branded moments (BrainConstellationLoader stays).
+
+Reason not done now: Long tail; page-level jank was the user-visible complaint.

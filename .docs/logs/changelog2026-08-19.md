@@ -251,3 +251,15 @@ Why: The branch conflicted with the launches page and UI-pass docs after #332–
 Impact: Clients pipeline order can merge onto main without dropping launches coverage.
 
 Files: `page-grader.integration.test.ts`, `frontend-shared-surfaces.md`, `agent-follow-up-work.md`
+
+## [2026-08-19 19:24] - [STYLE]
+What: Skeleton loading across the platform. New PageSkeleton primitive (components/ui/feedback/ListSkeleton.tsx) — title + toolbar chips + pulsing rows, role="status". Converted ~55 loading states: all dashboard route loading.tsx files (root, campaigns, contacts, studio), full-page orbs (Spaces, Inbox, Team, Flows, Brain home, Mission Control, My Work, Your Turn, Delegation Desk, CRM contacts, Missions/Contacts views, program workspace, client detail/resolver, campaign detail, artifacts library) and raw-text "Loading…" panes (sidebar flyouts + comms nav, home cards, meeting transcript/recordings, mission detail panel + shell mission card, channels, docs Drive panes, subtasks, activity timeline, teams index/detail, webhooks, finance sections, usage cards, cortex/training, contact custom fields, share lists, updates panel, reporting account pickers). Home boot skeleton gets pulse + role=status. Branded BrainConstellationLoader kept by design.
+Why: Dylan: "use skeleton loading across the platform anywhere there's loading stuff" — orbs/centered text made pages jump and read as broken.
+Impact: Loading keeps each surface's shape; content replaces the placeholder in place.
+Files: ~55 under apps/web/src (see PR).
+
+## [2026-08-19 19:24] - [FIX]
+What: Submitting a new chat from Home no longer flashes the half-loaded agent identity. A queued send seed (or its in-flight application) now suppresses the empty-chat agent hero and shows a small sending skeleton until the optimistic message lands (isPendingSendSeedForPanel + seedSendInFlight gate in SpaceVibeyChatPanel).
+Why: Dylan: submit showed "the agent in the middle of the screen… looks like a broken load" — the hero rendered for the conversation-create round trip with a fallback avatar.
+Impact: Submit goes straight from composer to thread; no centered identity flash.
+Files: apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx, apps/web/src/components/global-chat/lib/global-chat-seed-match.ts(+test)

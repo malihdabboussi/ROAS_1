@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { globalChatSeedMatchesPanel, normalizeGlobalChatSeed } from './global-chat-seed-match'
+import { isPendingSendSeedForPanel, globalChatSeedMatchesPanel, normalizeGlobalChatSeed } from './global-chat-seed-match'
 
 describe('globalChatSeedMatchesPanel', () => {
   it('matches a space-targeted seed to the same panel space', () => {
@@ -78,5 +78,17 @@ describe('normalizeGlobalChatSeed', () => {
   it('rejects empty seeds with no attachments or references', () => {
     expect(normalizeGlobalChatSeed({ content: '', seedMode: 'attach' }, undefined)).toBeNull()
     expect(normalizeGlobalChatSeed({ content: '' }, undefined)).toBeNull()
+  })
+})
+
+describe('isPendingSendSeedForPanel', () => {
+  it('is true for a queued send seed matching the panel', () => {
+    expect(isPendingSendSeedForPanel({ content: 'hello', railIntent: 'new' }, undefined)).toBe(true)
+  })
+
+  it('is false for attach seeds, empty seeds, and no seed', () => {
+    expect(isPendingSendSeedForPanel({ content: 'x', seedMode: 'attach' }, undefined)).toBe(false)
+    expect(isPendingSendSeedForPanel({ content: '   ' }, undefined)).toBe(false)
+    expect(isPendingSendSeedForPanel(null, undefined)).toBe(false)
   })
 })

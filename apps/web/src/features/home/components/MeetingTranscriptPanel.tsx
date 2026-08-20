@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { extractCallTranscriptText } from '@/features/home/lib/extract-call-transcript'
 import { fetchSpaceItem } from '@/lib/spaces/spaces-api'
 
@@ -58,9 +59,7 @@ export function MeetingTranscriptPanel({
       </button>
       {open ? (
         <div className="border-border bg-secondary max-h-64 overflow-y-auto rounded-lg border px-3 py-2">
-          {loading ? (
-            <p className="typo-caption text-muted-foreground">Loading transcript…</p>
-          ) : null}
+          {loading ? <ListSkeleton rows={6} label="Loading transcript…" /> : null}
           {error ? <p className="typo-caption text-muted-foreground">{error}</p> : null}
           {transcript ? (
             <p className="body-3 text-foreground whitespace-pre-wrap">{transcript}</p>

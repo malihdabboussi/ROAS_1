@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { fetchAgencyClient } from '@/lib/agency-clients'
 import { AGENCY_CLIENT_MESSAGES } from './config/messages.config'
 
@@ -44,8 +44,8 @@ export function AgencyClientRouteResolver({ clientId }: { clientId: string }) {
   }
 
   return (
-    <main className="flex min-h-full items-center justify-center">
-      <VibeyLoadingOrb text="Opening client workspace…" state="processing" />
+    <main className="min-h-full">
+      <PageSkeleton label="Opening client workspace…" />
     </main>
   )
 }

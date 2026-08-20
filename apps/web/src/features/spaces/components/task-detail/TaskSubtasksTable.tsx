@@ -8,6 +8,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import type { SpaceItem } from '../../types'
 import type { FieldDef, SelectOption } from '../../types/space-schema'
@@ -162,7 +163,9 @@ export function TaskSubtasksTable({
   return (
     <>
       {loading && openSubtasks.length === 0 && closedSubtasks.length === 0 && (
-        <p className="body-3 py-2 text-[var(--color-muted-foreground)]">Loading...</p>
+        <div className="py-2">
+          <ListSkeleton rows={3} label="Loading..." />
+        </div>
       )}
 
       <div className="scrollbar-thin w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
