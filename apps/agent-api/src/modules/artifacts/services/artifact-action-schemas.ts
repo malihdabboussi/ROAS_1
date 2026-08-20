@@ -2843,6 +2843,9 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       'tags',
       'domain',
       'contact_id',
+      // Target a specific user-scope brain (e.g. an org-managed Person Brain
+      // during import jobs); omitted → the caller's default user brain.
+      'brain_id',
       ...BRAIN_TEMPORAL_OPTIONAL_KEYS,
     ],
     types: {
@@ -2854,6 +2857,7 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       significance: 'number',
       domain: 'string',
       contact_id: 'string',
+      brain_id: 'string',
       ...BRAIN_TEMPORAL_PARAM_TYPES,
     },
   },

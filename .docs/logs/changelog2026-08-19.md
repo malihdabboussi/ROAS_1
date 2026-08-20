@@ -1,5 +1,16 @@
 # Changelog - [August 19, 2026]
 
+## [2026-08-19 17:45] - [FEATURE]
+
+What: Mission Details now shows Extend this mission under the last subtask. Post-call still continues Client Strategy in place. Other Quick Mission playbooks open the existing kickoff hub and create a child mission with parent_mission_id.
+
+Why: The dedicated Post-call button sat below the task list, failed with a generic toast when /extend was unreachable, and could not start the other missions operators actually run next.
+
+Impact: Mission Details panel/modal. Chat mission-card Extend is still not in this pass.
+
+Files: `apps/web/src/lib/missions/mission-track-actions.ts`, `apps/web/src/lib/missions/quick-missions-launcher.ts`, `apps/web/src/features/mission-control/components/dialogs/MissionTrackActions.tsx`, `SubtasksSection.tsx`, `MissionDetailModalView.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx`, `documentation/features/missions.md`
+
+
 ## [2026-08-19 17:05] - [FIX]
 
 What: Pixel now treats “make this a task” / “task this” as a Service Request, and if the ask is still unclear it asks exactly “Did you want me to create a task for this?” ClickUp-pending Service Request cards show the failure reason plus a Retry ClickUp button that re-runs finalize remirror.
@@ -251,6 +262,29 @@ Why: The branch conflicted with the launches page and UI-pass docs after #332–
 Impact: Clients pipeline order can merge onto main without dropping launches coverage.
 
 Files: `page-grader.integration.test.ts`, `frontend-shared-surfaces.md`, `agent-follow-up-work.md`
+
+## [2026-08-19 17:50] - [FIX]
+What: (1) New chat with an open right-side card (mission viewer, artifact) now shows the fresh-chat greeting on the left with the card docked right, instead of the card covering the greeting so the click looked broken. (2) `/home?mission=<id>` deep links (notifications, mission rows) open the mission as the shell right-side card again — the legacy handler lived in the Home dashboard content, which no longer mounts under the shell greeting, so the link silently did nothing. (3) Slack conversations are named from the raw inbound message instead of the prompt-wrapped turn, which led with the injected `[Ask kind]` classification block — sidebar rows were all "[Ask kind] Kind: client …". Existing mis-titled rows self-heal on their next message.
+Why: Dylan's PR-review reports: New chat appeared to do nothing with a mission card open; recents full of "[Ask kind]" titles.
+Impact: New chat always visibly responds (chat left, card right; close the card for full view). Mission deep links work under the Simple shell. Slack chat titles read as topics.
+Files: `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/api/src/modules/slack/services/slack-service-events.base.ts`, `apps/api/src/modules/slack/services/__tests__/slack-route-title-text.test.ts`
+## [2026-08-19 09:40] - [FIX]
+What: Typed `LABEL_BY_SLUG` / `RANK_BY_SLUG` in `agency-client-pipeline.ts` as `Map<string, …>` so lookups with unvalidated stage strings compile.
+Why: PR #335 inferred the maps as `Map<AgencyClientPipelineSlug, …>` while querying them with plain strings — `tsc` fails, and the Vercel roas-web build on main has been red since that merge (the PR merged before checks reported).
+Impact: main's roas-web deploy builds again; no behavior change (lookups already handled misses).
+Files: `apps/web/src/lib/agency-clients/agency-client-pipeline.ts`
+
+## [2026-08-19 19:18 ] - [FIX]
+What: Person-brain fork saves land in the target Person Brain. `save_user_memory` now applies the brain-job target (`::brain:user:<id>` session key) or an explicit `brain_id` input to `record.brain_id` for user-scope targets (previously customer-only), and `checkDuplicate` checks the target brain instead of the caller's default brain. `brain_id` added to the tool schema.
+Why: Prod audit 2026-08-19: 400 succeeded `slack_period_import` fork jobs targeted org-managed Person Brains (Nefi 101, Yasir 35, …) yet those brains hold 0–2 memories — every save fell through to the org owner's default user brain (317 slack_period memories), and once there, default-brain dedup silently swallowed genuine person-brain writes.
+Impact: Shadow Person Brains (plan §11.12 Q10) actually populate from the recurring Slack sync and the "Populate brains" backfill; re-running the backfill after deploy refills them (dedup now scoped per brain).
+Files: apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts, artifact-action-schemas.ts, artifact-legacy-team-brain.service.test.ts
+
+## [2026-08-19 19:20] - [UTIL]
+What: `scripts/roas/report-ask-kind-misses.mjs` — weekly read-only report over `slack_pixel_turns`: (1) unclear turns where a client WAS resolved (missed classifier signals), (2) client turns with no resolved client (over-firing), (3) forbidden asks. Points to the pattern file + tests to update.
+Why: The N0 classifier improves from live telemetry, not guesses; the first two prod days already show the "unclear + client named" shape.
+Impact: Read-only; run weekly (or after harness runs) and feed misses into slack-ask-kind.ts.
+Files: scripts/roas/report-ask-kind-misses.mjs
 
 ## [2026-08-19 19:24] - [STYLE]
 What: Skeleton loading across the platform. New PageSkeleton primitive (components/ui/feedback/ListSkeleton.tsx) — title + toolbar chips + pulsing rows, role="status". Converted ~55 loading states: all dashboard route loading.tsx files (root, campaigns, contacts, studio), full-page orbs (Spaces, Inbox, Team, Flows, Brain home, Mission Control, My Work, Your Turn, Delegation Desk, CRM contacts, Missions/Contacts views, program workspace, client detail/resolver, campaign detail, artifacts library) and raw-text "Loading…" panes (sidebar flyouts + comms nav, home cards, meeting transcript/recordings, mission detail panel + shell mission card, channels, docs Drive panes, subtasks, activity timeline, teams index/detail, webhooks, finance sections, usage cards, cortex/training, contact custom fields, share lists, updates panel, reporting account pickers). Home boot skeleton gets pulse + role=status. Branded BrainConstellationLoader kept by design.

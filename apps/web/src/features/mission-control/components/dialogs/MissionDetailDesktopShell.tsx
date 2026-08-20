@@ -38,7 +38,6 @@ interface MissionDetailDesktopShellProps {
   onSelectDeliverable: (deliverable: MissionDeliverable) => void
   activityTimelineProps: ComponentProps<typeof ActivityTimeline>
   overlayModals: ReactNode
-  trackActions?: ReactNode
   subtaskHeaderActions?: ReactNode
 }
 
@@ -65,7 +64,6 @@ export function MissionDetailDesktopShell({
   onSelectDeliverable,
   activityTimelineProps,
   overlayModals,
-  trackActions,
   subtaskHeaderActions,
 }: MissionDetailDesktopShellProps) {
   const surfaceRef = useRef<HTMLDivElement>(null)
@@ -196,7 +194,6 @@ export function MissionDetailDesktopShell({
                   <div className="py-spacing-4 flex min-h-0 flex-1 flex-col overflow-hidden">
                     <MissionMetaRow {...missionMetaProps} />
                     <SubtasksSection {...subtasksProps} />
-                    {trackActions}
                     {accessApprovalCard}
                   </div>
                 )}
@@ -235,7 +232,6 @@ export function MissionDetailDesktopShell({
                 <div className="py-spacing-4 flex min-h-0 flex-1 flex-col overflow-hidden">
                   <MissionMetaRow {...missionMetaProps} />
                   <SubtasksSection {...subtasksProps} />
-                  {trackActions}
                   {accessApprovalCard}
                 </div>
               )}

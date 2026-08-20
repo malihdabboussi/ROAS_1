@@ -33,8 +33,7 @@ const MEETING_FIELDS: FieldDef[] = [
       { id: 'sales', label: 'Sales', color: 'orange' },
     ],
   },
-  { id: 'client_campaign', name: 'Campaign', type: 'text' },
-  { id: 'space_title', name: 'Space', type: 'text' },
+  { id: 'client_campaign', name: 'Client / Campaign', type: 'text' },
   { id: 'host', name: 'Host', type: 'text' },
   {
     id: 'call_status',
@@ -59,8 +58,7 @@ const DEFAULT_MEETINGS_VIEW: ViewDef = {
   column_widths: {
     title: 360,
     call_kind: 110,
-    client_campaign: 200,
-    space_title: 180,
+    client_campaign: 240,
     host: 160,
     call_date: 170,
     call_status: 140,

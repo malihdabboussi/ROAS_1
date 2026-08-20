@@ -172,6 +172,7 @@ export function MeetingWorkspaceDialog({
       spaceId,
       meetingItemId,
       conversationId,
+      meetingTitle: title,
       awarenessContext,
       timelineVersion: bundle?.snippets?.length ?? 0,
     })
@@ -215,16 +216,28 @@ export function MeetingWorkspaceDialog({
     }
   }
 
-  const setTaskStatus = async (status: string) => {
-    const previous = bundle?.meeting?.status
+  const setCallStatus = async (callStatus: string) => {
+    const previousCustom = bundle?.meeting?.custom_data ?? {}
     setBundle((current) =>
-      current ? { ...current, meeting: { ...current.meeting, status } } : current,
+      current
+        ? {
+            ...current,
+            meeting: {
+              ...current.meeting,
+              custom_data: { ...(current.meeting.custom_data ?? {}), call_status: callStatus },
+            },
+          }
+        : current,
     )
     try {
-      await updateSpaceItem(spaceId, meetingItemId, { status })
+      await updateSpaceItem(spaceId, meetingItemId, {
+        custom_data: { ...previousCustom, call_status: callStatus },
+      })
     } catch {
       setBundle((current) =>
-        current ? { ...current, meeting: { ...current.meeting, status: previous } } : current,
+        current
+          ? { ...current, meeting: { ...current.meeting, custom_data: previousCustom } }
+          : current,
       )
       toast.error(HOME_TOAST_ERRORS.MEETING_STATUS_UPDATE_FAILED.userMessage)
     }
@@ -309,7 +322,11 @@ export function MeetingWorkspaceDialog({
         <div className="gap-spacing-4 mx-auto flex w-full max-w-3xl flex-col">
           <MeetingCallStatusSection
             statusField={statusField}
-            statusValue={bundle?.meeting?.status}
+            statusValue={
+              typeof bundle?.meeting?.custom_data?.call_status === 'string'
+                ? bundle.meeting.custom_data.call_status
+                : null
+            }
             hostLabel={
               typeof bundle?.meeting?.custom_data?.host === 'string'
                 ? bundle.meeting.custom_data.host
@@ -323,7 +340,7 @@ export function MeetingWorkspaceDialog({
             starting={starting}
             ending={ending}
             canContinue={Boolean(conversationId)}
-            onStatusChange={(status) => void setTaskStatus(status)}
+            onStatusChange={(status) => void setCallStatus(status)}
             onContinue={focusMeetingChat}
             onStart={() => void startCall()}
             onEnd={() => void endCall()}
