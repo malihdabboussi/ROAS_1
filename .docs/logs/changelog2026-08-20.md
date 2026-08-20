@@ -4,7 +4,7 @@
 What: Stamp Portal `pipeline_stage` onto ROAS campaign Page Grader config on import and catch-up (including hash-unchanged skips). Retry Portal `/clients` without `include_all_statuses` / `include_inactive` on 400/422. Hide Inactive/Blocked/Churned parent clients on Client Campaigns with Show inactive. Split `page-grader.integration.ts` under the integration LOC cap.
 Why: Connections could not hide churned clients because campaign config never stored pipeline. Portal unknown query params could 400 the whole Clients list. Client Campaigns still listed campaigns for hidden parents. The integration file was over the 400 LOC cap.
 Impact: Connections can hide/order from stamped config. Clients listing survives Portal rejecting the extra flags. Client Campaigns matches Clients default-hide. Page Grader HTTP/types live in focused files.
-Files: `page-grader-client-import.service.ts`, `page-grader-brain-package-ingest.service.ts`, `page-grader.integration.ts`, `page-grader.integration.http.ts`, `page-grader.integration.types.ts`, `agency-client-pipeline.ts`, `ClientCampaignsPage.tsx`, `page-grader-campaign-brain-sync.md`
+Files: `page-grader-client-import.service.ts`, `page-grader-external-source.ts`, `page-grader-brain-package-ingest.service.ts`, `page-grader.integration.ts`, `page-grader.integration.http.ts`, `page-grader.integration.types.ts`, `agency-client-pipeline.ts`, `ClientCampaignsPage.tsx`, `page-grader-campaign-brain-sync.md`
 
 ## [2026-08-20 02:50] - [FIX]
 What: Meeting workspace status now uses All Meetings Call status (`custom_data.call_status`: Live / Completed / No Show / Rescheduled). Connections labels the linked meeting with the meeting name, not the recap/chat title. Meeting threads no longer get first-message title autogen.

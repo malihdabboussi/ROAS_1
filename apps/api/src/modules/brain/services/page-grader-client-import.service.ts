@@ -21,6 +21,7 @@ import {
   syncCanonicalStrategyEntities,
   titleCaseWords,
 } from './page-grader-client-strategy-import'
+import { pendingPageGraderExternalSource } from './page-grader-external-source'
 import {
   buildPageGraderGeneralSpaceSchema,
   PAGE_GRADER_GENERAL_SPACE_TITLE,
@@ -78,23 +79,11 @@ export class PageGraderClientImportService {
       campaigns: pkg.client_campaigns ?? [],
       metaContext: body.metaContext,
     })
-    const externalSource = {
-      page_grader: {
-        client_id: pageGraderClientId || null,
-        unique_client_id: uniqueClientId || null,
-        package_version: stringValue(pkg.envelope?.package_version) || '1',
-        last_exported_at: stringValue(pkg.envelope?.exported_at) || null,
-        content_hash: null, // ingest stamps the hash after memories write
-        last_sync_status: 'pending',
-        pipeline_stage:
-          stringValue(
-            pkg.client?.pipeline_stage,
-            pkg.client?.status,
-            pkg.client?.pipeline_status,
-          ) || null,
-        status: stringValue(pkg.client?.status) || null,
-      },
-    }
+    const externalSource = pendingPageGraderExternalSource({
+      pkg,
+      pageGraderClientId,
+      uniqueClientId,
+    })
 
     const existingCampaign = body.campaignId
       ? await this.findCampaignById(supabase, body.campaignId, userId, scope.orgId)

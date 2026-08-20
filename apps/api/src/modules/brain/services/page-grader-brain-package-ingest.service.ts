@@ -12,6 +12,7 @@ import {
   type PageGraderMemoryRow,
   type PageGraderPackage,
 } from './page-grader-brain-package-build'
+import { pageGraderPipelineStageFromPackage } from './page-grader-external-source'
 import { PageGraderKnowledgeIndexService } from './page-grader-knowledge-index.service'
 import { PageGraderMemoryEmbeddingService } from './page-grader-memory-embedding.service'
 
@@ -434,11 +435,7 @@ export class PageGraderBrainPackageIngestService {
         ? (externalSources.page_grader as Record<string, unknown>)
         : {}
     const pipelineStage =
-      pageGraderStringValue(
-        stamp.pkg.client?.pipeline_stage,
-        stamp.pkg.client?.status,
-        stamp.pkg.client?.pipeline_status,
-      ) ||
+      pageGraderPipelineStageFromPackage(stamp.pkg) ||
       pageGraderStringValue(previousPageGrader.pipeline_stage) ||
       null
     externalSources.page_grader = {

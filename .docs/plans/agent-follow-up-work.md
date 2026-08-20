@@ -106,18 +106,6 @@ Needed work: Add an Extend action on the in-chat mission card that uses the same
 
 Reason not done now: The panel they already open after clicking the mission is the requested surface. Chat card and catalog unification are follow-on surfaces.
 
-## 2026-08-20 - [ARCH] page-grader-client-import.service.ts is at the 600 LOC service cap
-
-Status: Open
-
-Found while: Stamping Portal pipeline_stage onto ROAS campaign config
-
-Evidence: `wc -l` on `apps/api/src/modules/brain/services/page-grader-client-import.service.ts` is 600 (service cap 600). This change added `pipeline_stage` / `status` to the create-campaign Page Grader source object.
-
-Needed work: Extract campaign lookup/create from import orchestration so the next import change does not exceed the cap.
-
-Reason not done now: The requested work was the pipeline stamp and ingest merge. The file stayed at the cap without growing past it.
-
 ## 2026-08-19 - [ARCH] ViewSwitcher.tsx is over the 600 LOC cap
 
 Status: Open
