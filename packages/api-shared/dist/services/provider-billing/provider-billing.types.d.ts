@@ -2,6 +2,8 @@ export declare const PROVIDER_BILLING_ATTEMPT_STATUSES: readonly ["pending_provi
 export type ProviderBillingAttemptStatus = (typeof PROVIDER_BILLING_ATTEMPT_STATUSES)[number];
 export type ProviderBillingOwnerType = 'personal' | 'org' | 'platform' | 'subscription';
 export type ProviderBillingServiceType = 'text' | 'image' | 'audio' | 'fixed' | string;
+export declare const PROVIDER_OUTPUT_VALIDATION_STATES: readonly ["not_required", "pending", "validated", "provider_failed", "output_invalid", "paid_output_invalid"];
+export type ProviderOutputValidationState = (typeof PROVIDER_OUTPUT_VALIDATION_STATES)[number];
 export interface ProviderBillingAttemptInput {
     attemptKey: string;
     sourceApp: string;

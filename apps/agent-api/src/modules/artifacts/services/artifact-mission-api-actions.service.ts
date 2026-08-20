@@ -34,7 +34,16 @@ export class ArtifactMissionApiActionsService {
     const missionId = this.requireMissionId(input)
     const message = (input.message as string) ?? ''
     if (!message.trim()) return { success: false, error: 'message is required' }
-    return target.mainApiCall('POST', `/api/missions/${missionId}/comment`, sessionKey, { message })
+    // Stamp the acting agent so the mission timeline attributes the comment to
+    // the agent instead of the human viewer. Resolved from the session key, not
+    // model input, so agents cannot impersonate each other.
+    const agentKey = sessionKey
+      ? ((target.parseAgentIdFromSessionKey?.(sessionKey) as string | null) ?? null)
+      : null
+    return target.mainApiCall('POST', `/api/missions/${missionId}/comment`, sessionKey, {
+      message,
+      ...(agentKey ? { agent_key: agentKey } : {}),
+    })
   }
 
   async compileWebinarLaunchBible(

@@ -1,11 +1,33 @@
 'use client'
 
-import { useCallback, type RefObject } from 'react'
+import { useCallback, useEffect, useRef, type RefObject } from 'react'
 import { useConversationLocationLabel } from '@/components/conversations/use-conversation-location-label'
+import {
+  MISSION_DETAIL_FOCUS_EVENT,
+  readMissionDetailFocusEvent,
+  type MissionDetailFocus,
+} from '@/lib/missions'
 import {
   resolveChatSendAwarenessContext,
   type ChatSendFocusedArtifact,
 } from './build-space-awareness-context'
+
+/**
+ * Tracks which mission detail panel is open (any surface) so chat sends can
+ * carry the mission id without the panel and chat knowing about each other.
+ */
+function useFocusedMissionRef(): RefObject<MissionDetailFocus | null> {
+  const focusedMissionRef = useRef<MissionDetailFocus | null>(null)
+  useEffect(() => {
+    const handleMissionFocus = (event: Event) => {
+      focusedMissionRef.current = readMissionDetailFocusEvent(event)
+    }
+    window.addEventListener(MISSION_DETAIL_FOCUS_EVENT, handleMissionFocus as EventListener)
+    return () =>
+      window.removeEventListener(MISSION_DETAIL_FOCUS_EVENT, handleMissionFocus as EventListener)
+  }, [])
+  return focusedMissionRef
+}
 
 export function useChatSendAwareness(input: {
   awarenessContextOverride?: string | null
@@ -23,6 +45,7 @@ export function useChatSendAwareness(input: {
   focusedArtifactRef: RefObject<ChatSendFocusedArtifact | null>
 }): () => string {
   const connectedLocation = useConversationLocationLabel(input.campaignId, input.spaceId)
+  const focusedMissionRef = useFocusedMissionRef()
 
   return useCallback(
     () =>
@@ -41,6 +64,7 @@ export function useChatSendAwareness(input: {
         activeViewType: input.activeViewType,
         activeViewName: input.activeViewName,
         focusedArtifact: input.focusedArtifactRef.current,
+        focusedMission: focusedMissionRef.current,
       }),
     [
       connectedLocation.label,
@@ -51,6 +75,7 @@ export function useChatSendAwareness(input: {
       input.channelAwareness,
       input.chatSurface,
       input.focusedArtifactRef,
+      focusedMissionRef,
       input.isChannelScope,
       input.spaceId,
       input.scopeMatchesVisibleSpace,

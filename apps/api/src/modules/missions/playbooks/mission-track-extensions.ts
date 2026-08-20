@@ -130,6 +130,7 @@ export function buildPostCallStrategySubtasks(input: {
       title: POST_CALL_TRANSCRIPT_TITLE,
       assignTo: input.atlas,
       dependsOn: [],
+      publishToTaskList: false,
       assertionKeys: ['A-track-transcript'],
       intent: {
         why: 'Turn the real onboarding call into trusted context before strategy is corrected.',
@@ -144,6 +145,7 @@ export function buildPostCallStrategySubtasks(input: {
       title: POST_CALL_STRATEGY_TITLE,
       assignTo: input.strategist,
       dependsOn: ['st-atlas-transcript'],
+      publishToTaskList: false,
       assertionKeys: ['A-track-strategy'],
       intent: {
         why: 'Correct the proposed strategy using what the client actually said.',

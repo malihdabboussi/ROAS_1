@@ -49,6 +49,8 @@ let OrgScopeService = class OrgScopeService {
             userId: request.user?.id,
             orgId: request.orgId ?? null,
             orgRole: request.orgRole ?? null,
+            orgMemberId: request.orgMemberId ?? null,
+            organizationWideDataAccess: request.organizationWideDataAccess === true,
         };
     }
 };

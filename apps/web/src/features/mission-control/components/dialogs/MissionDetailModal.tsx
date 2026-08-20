@@ -6,6 +6,7 @@ import { backendPost } from '@/lib/api/backend-client'
 import { useCloudAttach } from '@/lib/hooks/use-cloud-attach'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import { useMissionDetailData } from '../../hooks/useMissionDetailData'
+import { useMissionDetailFocus } from '../../hooks/useMissionDetailFocus'
 import {
   approveMissionPlan,
   fetchProfileSettings,
@@ -120,6 +121,8 @@ export function MissionDetailModal({
     setCurrentStatus(liveMission.status)
     setCurrentPriority(liveMission.priority)
   }, [liveMission])
+
+  useMissionDetailFocus(mission.id, title, currentStatus)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

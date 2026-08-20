@@ -61,5 +61,10 @@ const flow_capabilities_1 = require("./flow-capabilities");
             },
         });
     });
+    (0, vitest_1.it)('describes Slack sender analysis separately from recipient and Person Brain scope', () => {
+        const capability = (0, flow_capabilities_1.getFlowCapability)('action.observe_slack_team');
+        (0, vitest_1.expect)(capability?.description).toContain('every non-Ignored sender');
+        (0, vitest_1.expect)(capability?.description).toContain('person_ids restricts Active delivery');
+    });
 });
 //# sourceMappingURL=flow-capabilities.test.js.map

@@ -77,6 +77,12 @@ const workflow_capabilities_1 = require("./workflow-capabilities");
             control: 'text',
         });
     });
+    (0, vitest_1.it)('classifies Slack team loops as external communication because Active mode can send', () => {
+        (0, vitest_1.expect)((0, workflow_capabilities_1.getWorkflowCapability)('action.observe_slack_team')).toMatchObject({
+            side_effect: 'external_communication',
+            approval_policy: 'user_review',
+        });
+    });
     (0, vitest_1.it)('filters by query, kind, and category', () => {
         const result = (0, workflow_capabilities_1.searchWorkflowCapabilities)({
             query: 'status',

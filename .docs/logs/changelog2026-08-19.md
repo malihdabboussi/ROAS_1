@@ -333,3 +333,17 @@ What: `search_campaign_brain` no longer fails when the client's name differs fro
 Why: Live incident — chat bound to campaign "Multifamily Strategy" (1,170 memories), model searched with campaign_name "Christian Osgood", resolver threw "campaign_name not found", the model narrated it as "Brain has nothing on Christian" and wrote ad copy from spammy web sources, inventing specifics (a "12-year listing" that appears nowhere).
 Impact: Client-name searches reach the right Campaign Brain; a bound chat can never be told its own brain doesn't exist.
 Files: apps/agent-api/src/modules/artifacts/services/artifact-campaign-name-resolver.ts (+test), artifact-brain-search-actions.service.ts, artifact-brain-search-campaign-brain.test.ts
+
+## [2026-08-19 19:27] - [FIX]
+
+What: Pixel identity + mission↔chat wiring fixes. (1) `normalizeDefaultAgentIdentity` now keeps a custom `agents_registry.image_url` (onboarding portrait) and only falls back to the lamp `/pixel-avatar.png` when the row has no avatar — chat roster now matches mission Activity/Assignees. (2) Mission detail modal emits a `mission:detail-focus` window event; SpaceVibeyChatPanel tracks it and `resolveChatSendAwarenessContext` appends an "Open mission: … (mission, id, status)" line on every chat surface, so main-chat messages sent while a mission panel is open carry the mission id. (3) `add_mission_comment` (agent-api) stamps the acting agent key (from the session key, not model input); the missions API stores it on the `user.comment` log (`agent_key` column + `commented_by_agent_key` payload, both lifecycle paths) and the Activity timeline renders agent-relayed comments with the agent header instead of the viewer's own name/avatar.
+Why: Pixel showed a portrait in missions but the lamp in chat (roster normalizer discarded custom avatars despite its doc claim); main chat had no knowledge of the open mission; agent tool comments rendered as if the user wrote them.
+Impact: Consistent Pixel avatar everywhere; Pixel can act on the mission the user is looking at; mission timeline attribution is truthful. No agent-facing tool input schema changes (agent_key injected server-side).
+Files: `apps/web/src/lib/team/default-agent-identity.ts(+test)`, `apps/web/src/lib/missions/mission-detail-focus.ts` (new) + `index.ts`, `apps/web/src/features/spaces/components/chat/build-space-awareness-context.ts(+test)`, `use-chat-send-awareness.ts`, `SpaceVibeyChatPanel.tsx`, `apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.tsx`, `ActivityTimelineLogItem.tsx`, `apps/agent-api/src/modules/artifacts/services/artifact-mission-api-actions.service.ts(+test)`, `apps/api/src/modules/missions/dto/mission-deliverable.dto.ts`, `services/mission-lifecycle.service.ts`, `services/mission-lifecycle-native-tx.service.ts(+test)`
+
+## [2026-08-19 19:45] - [FIX]
+
+What: Added the required `publishToTaskList: false` to the two post-call strategy subtask templates in `mission-track-extensions.ts`.
+Why: Merged main (#342) fails `nest start --watch` with TS2741 — `ManagerAppendSubtasksDto` subtasks require `publishToTaskList` and the new track-extension templates omitted it, so apps/api dev cannot boot on main.
+Impact: apps/api compiles and boots again; behavior matches the schema default (false).
+Files: `apps/api/src/modules/missions/playbooks/mission-track-extensions.ts`
