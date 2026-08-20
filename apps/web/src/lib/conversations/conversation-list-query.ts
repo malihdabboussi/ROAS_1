@@ -10,7 +10,14 @@ import type { Conversation } from './conversation.types'
 export type ChatHistoryStatusFilter = 'all' | 'active' | 'archived'
 export type ChatHistoryActivityFilter = 'all' | '1d' | '3d' | '7d' | '30d'
 export type ChatHistoryTypeFilter = 'all' | 'in_app' | 'slack' | 'telegram'
-export type ChatHistoryGroupBy = 'none' | 'date' | 'status' | 'campaign' | 'agent' | 'channel'
+export type ChatHistoryGroupBy =
+  | 'none'
+  | 'client'
+  | 'date'
+  | 'status'
+  | 'campaign'
+  | 'agent'
+  | 'channel'
 /** What each conversation row shows on the left. */
 export type ChatHistoryLeadingIcon = 'agent' | 'logo' | 'status' | 'none'
 
@@ -46,6 +53,8 @@ export interface ConversationListGroupOptions {
   groupBy: ChatHistoryGroupBy
   agentNameByKey?: Record<string, string>
   campaignNameById?: Record<string, string>
+  /** Client-program campaign ids. Unmatched chats land in Other. */
+  clientCampaignIds?: ReadonlySet<string>
   /** Cap for campaign/agent/channel sections before remaining rows fall into Other. */
   softCap?: number
   now?: Date
@@ -84,7 +93,9 @@ export function matchesChatHistoryFilters(
   if (filters.campaignId && conversation.campaign_id !== filters.campaignId) return false
   if (filters.spaceId) {
     const spaceId =
-      typeof conversation.metadata?.space_id === 'string' ? conversation.metadata.space_id.trim() : ''
+      typeof conversation.metadata?.space_id === 'string'
+        ? conversation.metadata.space_id.trim()
+        : ''
     if (spaceId !== filters.spaceId) return false
   }
 
@@ -270,6 +281,24 @@ function resolveStatusGroupId(conversation: Conversation, runtimePhase?: string 
   return 'ready'
 }
 
+function groupByClientFolders(
+  conversations: Conversation[],
+  options: ConversationListGroupOptions,
+): ConversationListGroup[] {
+  const allowed = options.clientCampaignIds
+  const map = new Map<string, Conversation[]>()
+  for (const conversation of conversations) {
+    const campaignId = conversation.campaign_id?.trim() || ''
+    const key = campaignId && (!allowed || allowed.has(campaignId)) ? campaignId : 'other'
+    pushIntoMap(map, key, conversation)
+  }
+  return groupsFromMap(
+    map,
+    (key) => (key === 'other' ? 'Other' : (options.campaignNameById?.[key] ?? 'Client')),
+    { otherLabel: 'Other' },
+  )
+}
+
 function partitionPinnedConversations(conversations: Conversation[]): {
   pinned: Conversation[]
   rest: Conversation[]
@@ -338,6 +367,10 @@ export function groupConversationsForHistory(
       .map((id) => ({ id, label: labels[id] ?? id, items: map.get(id) ?? [] }))
   }
 
+  if (options.groupBy === 'client') {
+    return groupByClientFolders(sorted, options)
+  }
+
   if (options.groupBy === 'campaign') {
     const map = new Map<string, Conversation[]>()
     for (const conversation of sorted) {
@@ -400,6 +433,8 @@ export function chatHistoryGroupByLabel(value: ChatHistoryGroupBy): string {
   switch (value) {
     case 'none':
       return 'None'
+    case 'client':
+      return 'Clients'
     case 'date':
       return 'Date'
     case 'status':

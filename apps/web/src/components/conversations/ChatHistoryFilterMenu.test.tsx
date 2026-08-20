@@ -111,6 +111,22 @@ describe('ChatHistoryFilterMenu', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
   })
 
+  it('lets Recents group chats into client folders', () => {
+    const onChange = vi.fn()
+    render(
+      <ChatHistoryFilterMenu value={{ ...DEFAULT_CHAT_HISTORY_FILTERS }} onChange={onChange} />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Filter conversations' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Group by None' }))
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Clients' }))
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        groupBy: 'client',
+      }),
+    )
+  })
+
   it('lets Recents filter by a campaign without picking a space', () => {
     const onChange = vi.fn()
     render(

@@ -1,3 +1,5 @@
+import { QUICK_MISSION_PLAYBOOKS } from '@/lib/spaces/quick-missions-catalog'
+
 export const POST_CALL_STRATEGY_ACTION = 'post-call-strategy' as const
 
 export type MissionTrackActionId = typeof POST_CALL_STRATEGY_ACTION
@@ -7,6 +9,10 @@ export type MissionTrackAction = {
   title: string
   description: string
 }
+
+export type MissionExtendOption =
+  | { kind: 'continue'; id: MissionTrackActionId; title: string; description: string }
+  | { kind: 'playbook'; id: string; title: string; description: string }
 
 const CLIENT_STRATEGY_PLAYBOOK_ID = 'client-strategy'
 const WEBINAR_FULFILLMENT_PLAYBOOK_ID = 'webinar-fulfillment'
@@ -66,6 +72,31 @@ export function listMissionTrackActions(
   if (!isClientStrategyTrack(mission, subtasks)) return []
   if (subtasks.some((subtask) => POST_CALL_TITLE_RE.test(String(subtask.title || '')))) return []
   return [POST_CALL_ACTION]
+}
+
+export function listMissionExtendOptions(
+  mission: MissionLike,
+  subtasks: SubtaskLike[],
+): MissionExtendOption[] {
+  const currentPlaybookId = resolveMissionPlaybookId(mission.input ?? null)
+  const options: MissionExtendOption[] = listMissionTrackActions(mission, subtasks).map(
+    (action) => ({
+      kind: 'continue',
+      id: action.id,
+      title: action.title,
+      description: action.description,
+    }),
+  )
+  for (const playbook of QUICK_MISSION_PLAYBOOKS) {
+    if (playbook.id === currentPlaybookId) continue
+    options.push({
+      kind: 'playbook',
+      id: playbook.id,
+      title: playbook.name,
+      description: playbook.description,
+    })
+  }
+  return options
 }
 
 export function canRerunSubtask(status: string | null | undefined): boolean {

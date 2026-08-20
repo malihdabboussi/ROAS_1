@@ -55,11 +55,23 @@ export class ArtifactLegacyTeamBrainMemoryService {
     const conversationId = sessionKey ? target.parseConversationId(sessionKey) : null
     const trimmedContent = content.trim()
 
+    // A brain job's parsed target (session key `::brain:user:<id>`), or an
+    // explicit brain_id on the input, decides which brain receives the memory.
+    // Person-period fork jobs target org-managed Person Brains — falling back
+    // to the caller's default user brain sent every fork save to the org
+    // owner's personal brain while the person brains stayed empty.
+    const targetBrainId =
+      brainJobTarget?.brainId ??
+      (typeof input.brain_id === 'string' && input.brain_id.trim() ? input.brain_id.trim() : null)
+
     const contentHash = target.embeddingService.computeContentHash(trimmedContent)
+    // Dedup must check the brain the write goes to, not the default brain —
+    // otherwise content already saved elsewhere silently swallows the write.
     const isDuplicate = await target.memoriesRepo.checkDuplicate(
       target.serviceClient,
       contentHash,
       userId,
+      targetBrainId ?? undefined,
     )
     if (isDuplicate) {
       return { success: true, duplicate: true }
@@ -110,6 +122,9 @@ export class ArtifactLegacyTeamBrainMemoryService {
           temporal: temporalFields,
         },
       }
+      if (targetBrainId && brainJobTarget?.targetBrain !== 'customer') {
+        record.brain_id = targetBrainId
+      }
       if (brainJobTarget?.targetBrain === 'customer') {
         if (!brainJobTarget.brainId) {
           return { success: false, error: 'customer brain_id is required' }
@@ -117,8 +132,7 @@ export class ArtifactLegacyTeamBrainMemoryService {
         if (!inputContactId && !resolvedSourceId) {
           return {
             success: false,
-            error:
-              'contact_id or durable source identity is required for customer brain memories',
+            error: 'contact_id or durable source identity is required for customer brain memories',
           }
         }
         record.brain_id = brainJobTarget.brainId

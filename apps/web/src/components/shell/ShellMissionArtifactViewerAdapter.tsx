@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Maximize2, Minimize2 } from 'lucide-react'
 import { MissionDetailModal } from '@/components/missions/MissionDetailModalAdapter'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { Tooltip } from '@/components/ui/tooltip'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
 import { fetchMissionById, type Mission } from '@/lib/missions'
@@ -48,8 +49,8 @@ export function ShellMissionArtifactViewerAdapter({
   }
   if (!mission) {
     return (
-      <div className="surface-card body-3 text-muted-foreground p-spacing-4 h-full">
-        {SHELL_RIGHT_PANEL_MESSAGES.missionLoading}
+      <div className="surface-card p-spacing-4 h-full">
+        <PageSkeleton rows={6} label={SHELL_RIGHT_PANEL_MESSAGES.missionLoading} className="p-0" />
       </div>
     )
   }

@@ -26,6 +26,8 @@ let OrgContextGuard = OrgContextGuard_1 = class OrgContextGuard {
         if (!orgId) {
             request.orgId = null;
             request.orgRole = null;
+            request.orgMemberId = null;
+            request.organizationWideDataAccess = false;
             return true;
         }
         if (!userId) {
@@ -33,7 +35,7 @@ let OrgContextGuard = OrgContextGuard_1 = class OrgContextGuard {
         }
         const { data: membership, error } = await this.serviceClient.client
             .from('org_members')
-            .select('id, role, status')
+            .select('id, role, status, ai_data_admin')
             .eq('org_id', orgId)
             .eq('user_id', userId)
             .maybeSingle();
@@ -47,6 +49,8 @@ let OrgContextGuard = OrgContextGuard_1 = class OrgContextGuard {
         request.orgId = orgId;
         request.orgRole = membership.role;
         request.orgMemberId = membership.id;
+        request.organizationWideDataAccess =
+            membership.role === 'owner' || membership.ai_data_admin === true;
         return true;
     }
 };

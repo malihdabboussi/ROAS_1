@@ -6,6 +6,7 @@ import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { toast } from 'sonner'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   fetchBeliefPatterns,
@@ -311,11 +312,8 @@ export default function CortexMaxModal({
                 </button>
               </div>
             ) : loading ? (
-              <div className="flex flex-1 flex-col items-center justify-center gap-4">
-                <div className="h-12 w-12">
-                  <VibeyLoadingOrb state="processing" size="sm" />
-                </div>
-                <p className="body-2 text-muted-foreground">Loading your library...</p>
+              <div className="flex-1 p-6">
+                <ListSkeleton rows={4} label="Loading your library..." />
               </div>
             ) : (
               <div className="flex min-h-0 flex-1 flex-col">

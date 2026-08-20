@@ -45,17 +45,20 @@ export class MissionLifecycleNativeTxService {
               user_id,
               org_id,
               event_type,
+              agent_key,
               payload
             )
-            VALUES ($1::uuid, $2::uuid, $3::uuid, 'user.comment', $4::jsonb)
+            VALUES ($1::uuid, $2::uuid, $3::uuid, 'user.comment', $4::text, $5::jsonb)
             RETURNING *
           `,
           [
             missionId,
             userId,
             orgId ?? null,
+            dto.agent_key ?? null,
             JSON.stringify({
               message: dto.message,
+              ...(dto.agent_key ? { commented_by_agent_key: dto.agent_key } : {}),
               ...(dto.attachments?.length ? { attachments: dto.attachments } : {}),
             }),
           ],

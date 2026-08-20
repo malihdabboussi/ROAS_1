@@ -1,3 +1,124 @@
+## 2026-08-20 - [FEATURE] Recents client folders ignore extra conversation connections
+
+Status: Open
+
+Found while: Adding Recents Filter Group by Clients
+
+Evidence: Folders key off `conversations.campaign_id` only. Extra `conversation_connections` campaign rows from Connections `+` do not create or join a folder.
+
+Needed work: Union primary `campaign_id` with extra campaign connection ids when building client folders, without duplicating a chat in two folders (primary wins, extras as additional membership or skip).
+
+Reason not done now: Recents list payload does not include extra connections. In-scope work was Filter → Clients folders from the primary client.
+
+## 2026-08-20 - [ARCH] conversation-list-query.ts remains over the 300 LOC utility cap
+
+Status: Open
+
+Found while: Adding Recents Group by Clients
+
+Evidence: `wc -l` on `apps/web/src/lib/conversations/conversation-list-query.ts` is over 300 (utility cap). Client grouping added `groupByClientFolders` in this file.
+
+Needed work: Split date/status/campaign/client grouping helpers into `conversation-list-groups.ts`.
+
+Reason not done now: The file was already over cap. In-scope work was the Clients option and folder UI.
+
+## 2026-08-20 - [FIX] Home new-chat bounce back to greeting is still unproven
+
+Status: Open
+
+Found while: Fixing Pixel asking which campaign after Choose Space attached Above It General
+
+Evidence: User first saw the thread start, then Good morning / New chat, then recovered via Recents with Connections showing Above It General. Greeting requires `/home` with no `conv` and `chat !== starting`. `ShellWorkspace` `chat=starting` snapshots `activeConversationId` then nulls it; a later effect re-run can recapture the new id as "before" and wipe it. `handleNewConversation` also nulls on `chatRailIntent === 'new'`.
+
+Needed work: Snapshot the pre-start conversation once per starting session; do not recapture a newly created id. Confirm whether `/home` (no query) is a New-chat click, history back, or that wipe.
+
+Reason not done now: The remaining user-visible failure after Connections attached was Pixel asking which campaign (Personal space awareness + client-General brain skip). Bounce was not reproduced in code with a failing test.
+
+## 2026-08-20 - [ARCH] persistConversationModelPrefs still PATCHes tombstoned conversations
+
+Status: Open
+
+Found while: Fixing Recents → meetings React #185 crash
+
+Evidence: Console on the crashed meetings URL logged `Failed to save conversation model preferences: Error: Conversation not found` plus 404 `/api/proxy/conversations/...0fbd2fc8`. `persistConversationModelPrefs` PATCHes even after `selectConversation` tombstones the id in `deadConversationIds`. `apps/web/src/features/studio/services/chat.service.ts` is 3016 LOC (cap 600).
+
+Needed work: Skip persist when `deadConversationIds` has the id, and tombstone on 404 instead of throwing to the composer effect.
+
+Reason not done now: Recents no longer navigates onto that meetings+dead-chat path. Growing `chat.service.ts` further was out of scope.
+
+## 2026-08-19 - [ARCH] conversation_documents document_type has no markdown/doc value
+
+Status: Open
+
+Found while: Fixing Chat Files empty state for agent-created docs
+
+Evidence: Latest check constraint `conversation_documents_document_type_check` (`supabase/migrations/20260723144500_allow_conversation_image_uploads.sql`) allows `offer|avatar|funnel|lead_magnet|sequence|email|upload|image_upload|content-plan`. `save_document` defaults to `upload`. Prod agent markdown rows are `upload` with inline JSON-string content.
+
+Needed work: Add a `markdown` or `doc` document_type via migration, then default `save_document` to that when there is no file payload. Viewer fallback already renders existing `upload` rows.
+
+Reason not done now: Changing the write default without a constraint migration would fail inserts. Viewer fallback was the mandatory fix for existing rows.
+
+## 2026-08-19 - [ARCH] chat.service.ts (web + agent-api) remain over the 600 LOC service cap
+
+Status: Open
+
+Found while: Work-summary Create button, multi-connections, and retrieval receipts
+
+Evidence: `wc -l` on `apps/web/src/features/studio/services/chat.service.ts` is 3016 (was 2992 on main; cap 600). `apps/agent-api/src/modules/chat/services/chat.service.ts` is 625 (was 621). This change added `web_source` / `retrieval_receipt` switch cases and a preload receipt emit loop.
+
+Needed work: Split send/stream/title/status orchestration out of both chat.service.ts files.
+
+Reason not done now: Both files were already over the cap. In-scope work was source-panel events, not a chat.service split.
+
+## 2026-08-19 - [ARCH] brain-retrieval.service.ts remains over the 600 LOC service cap
+
+Status: Open
+
+Found while: Adding unconditional brain-search receipt warn logs
+
+Evidence: `wc -l` on `apps/agent-api/src/modules/brain/services/brain-retrieval.service.ts` is 622 (was 604 on main; cap 600). Warn-log call sites stay in this file; the JSON payload helper moved to `brain-retrieval-receipt.ts`.
+
+Needed work: Finish extracting search/empty-result logging and timing wrappers so the service is under 600.
+
+Reason not done now: The file was already over the cap. This change only added required warn logs for empty vs hit searches.
+
+## 2026-08-20 - [ARCH] chat.service.ts remains far over the 600 LOC service cap
+
+
+Status: Open
+
+Found while: Stopping recap prompts from renaming meeting chats
+
+Evidence: `wc -l` on `apps/web/src/features/studio/services/chat.service.ts` is 2992. Cap is 600. Allowlist is 2993. Meeting-title guards live in `conversation-title.ts` so this file did not grow.
+
+Needed work: Split send/stream/title/status orchestration out of `chat.service.ts`.
+
+Reason not done now: In-scope work was shared Call status and Connections meeting labels. The file was already over the cap.
+
+## 2026-08-19 - [ARCH] QuickMissionsHubModal is near the 400 LOC cap
+
+Status: Open
+
+Found while: Adding Task Cleanup as a Quick Mission
+
+Evidence: `wc -l` on `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx` is 372 (component cap 400). This change added cleanup kickoff state, reset, and payload routing.
+
+Needed work: Extract `buildPayload` and empty-field constants into a hub payload helper so another playbook does not push the modal over the cap.
+
+Reason not done now: The requested work was the Task Cleanup playbook and launcher fields. The file stayed under 400.
+
+## 2026-08-19 - [FEATURE] Task Cleanup open-task inventory is attached-Space only
+
+Status: Open
+
+Found while: Adding Task Cleanup as a Quick Mission
+
+Evidence: Native `list_tasks` requires `space_id`. The playbook inventories open tasks on the selected Space (`assigned_to_me` included) and operator-wide Fathom/Fireflies calls for the window.
+
+Needed work: Add a true operator-wide open-task list (all Spaces) if operators need previously open work outside the Space they launch into.
+
+Reason not done now: No existing agent action lists the operator's open tasks across Spaces. Expanding `list_tasks` is a separate contract change.
+
 ## 2026-08-20 - [ARCH] SpaceItemRow.tsx is over the 400 LOC component cap
 
 Status: Open
@@ -10,7 +131,19 @@ Needed work: Split name-column chrome (status/title/actions) from data-cell rend
 
 Reason not done now: In-scope work was Host / Call status / Client columns on All Meetings. The row was already over the cap.
 
+## 2026-08-19 - [ARCH] SubtasksSection is near the 400 LOC cap
 
+Status: Open
+
+Found while: Moving Extend this mission under the last subtask
+
+Evidence: `wc -l` on `apps/web/src/features/mission-control/components/dialogs/SubtasksSection.tsx` is 398 (component cap 400). This change only added an `extendSlot` after the last row.
+
+Needed work: Extract assignee picker or complete-confirm into a focused subcomponent so the list can keep growing.
+
+Reason not done now: The requested work was the extend picker placement, not a SubtasksSection split.
+
+## 2026-08-19 - [ARCH] Slack events base remains over the LOC cap
 
 Status: Open
 
@@ -50,13 +183,13 @@ Reason not done now: Prompt + mention expansion unblocks the reported miss; a to
 
 Status: Open
 
-Found while: Adding in-place Client Strategy post-call extend + subtask rerun in Mission Details
+Found while: Adding in-place Client Strategy post-call extend + subtask rerun in Mission Details, then replacing the bottom Continue-this-track button with an Extend picker
 
-Evidence: Continue this track lives on the mission panel only. Chat cards still only open the mission. API `mission-track-extensions.ts` and web `mission-track-actions.ts` duplicate playbook detection.
+Evidence: Extend this mission now lives under the last subtask in Mission Details. Chat cards still only open the mission. API `mission-track-extensions.ts` and web `mission-track-actions.ts` still duplicate Client Strategy detection.
 
-Needed work: Add an Extend action on the in-chat mission card that posts the same `/extend` endpoint, and collapse the catalog helper into one shared package/module.
+Needed work: Add an Extend action on the in-chat mission card that uses the same option list (`/extend` for post-call, Quick Missions hub for other playbooks), and collapse the catalog helper into one shared package/module.
 
-Reason not done now: v1 was the panel they already open after clicking the mission. Chat card and catalog unification are follow-on surfaces.
+Reason not done now: The panel they already open after clicking the mission is the requested surface. Chat card and catalog unification are follow-on surfaces.
 
 ## 2026-08-19 - [ARCH] PageGraderIntegration remains over the LOC cap
 
@@ -39694,3 +39827,61 @@ Needed work: Split filter/reload/open-plan concerns out of ShellChatMenu.
 
 Reason not done now: Out of scope for the production crash unblock.
 
+## 2026-08-19 - [FIX] New-chat submit can select a stale meeting conversation
+
+Status: Open
+
+Found while: Verifying the new-chat flash fix (claude/loading-skeletons)
+
+Evidence: Submitting from Home (/home?chat=starting) created the new conversation correctly, but the panel briefly displayed a previous meeting-derived conversation (v5 id) and the §11 URL-replace effect wrote that stale id into /home?conv=… — same family as Dylan's "clicking a filtered chat pulls it up briefly then it goes away". Suspect the per-screen sticky chat restore (use-shell-workspace-screen-chat) races the new-chat seed and does not stand down for chat=starting.
+
+Needed work: Suppress screen-chat restore while chat=starting / a pending send seed exists; guard the URL-replace effect against ids not created by this submit.
+
+Reason not done now: Being taken as the next work item (task list #11) with the recents-filter bugs.
+
+## 2026-08-19 - [STYLE] Remaining ~190 small loading orbs
+
+Status: Open
+
+Found while: Skeleton sweep (claude/loading-skeletons)
+
+Evidence: 245 VibeyLoadingOrb sites before the sweep; ~55 page/pane-level ones converted. Remaining are size sm/md orbs inside buttons, settings tabs, studio preview panes, media pickers — low-jank but inconsistent.
+
+Needed work: Convert opportunistically per surface; keep orbs only for in-button spinners and branded moments (BrainConstellationLoader stays).
+
+Reason not done now: Long tail; page-level jank was the user-visible complaint.
+## 2026-08-19 - [FIX] Chat-created client campaigns never get a program (needs decision + backfill)
+
+Status: Resolved 2026-08-19 — Dylan decided: explicit-ask only; client-referenced → Clients program; standalone → General. createCampaign attaches via config.client; the three campaigns were backfilled through PATCH /campaigns/:id (product API). Left open: enforcement is prompt-level (useWhen/doNotUseWhen) — a hard preflight can't detect "user asked".
+
+Found while: Recents filter fixes (claude/recents-filter-fixes)
+
+Evidence: `createCampaign` (apps/api/src/modules/campaigns/services/campaigns-service-01.base.ts:410) never sets `program_id`, so Pixel-created client campaigns ("Claude Club Webinar", both "Master Your Kraft | VSL …") sit program-less and used to render under PROGRAMS in the scope picker. Portal-imported client campaigns correctly get the org's `clients` program.
+
+Needed work: (a) Decision: should chat-created campaigns attach to the Clients program when a client is referenced (config.client / client context), or should the agent be required to pick? (b) Prod backfill (blocked by permission classifier in-session; run manually):
+```sql
+update campaigns c set program_id = p.id, updated_at = now()
+from programs p
+where p.org_id = c.org_id and p.system_kind = 'clients' and p.deleted_at is null
+  and c.deleted_at is null and c.program_id is null
+  and c.name in ('Claude Club Webinar','Master Your Kraft | VSL Warm Retargeting','Master Your Kraft | VSL Retargeting');
+```
+
+Reason not done now: Prod write denied by permission policy; creation-path default is a product decision.
+
+## 2026-08-19 - [FIX] Duplicate React keys for streamed tool steps
+
+Status: Open
+
+Found while: Recents filter repro (console)
+
+Evidence: 59 console errors "Encountered two children with the same key `tool-Claude Club — Channel Plan…`" — `use-chat-store.ts` builds tool ids as `tool-${name}-${ts}`; identical name+ts (or missing toolCallId) collide and React may drop/duplicate tool rows.
+
+Needed work: Include a monotonically increasing index or the stream event id in the fallback id.
+
+Reason not done now: The id doubles as the stream-update correlation key; changing it needs stream-dedup regression coverage.
+
+## 2026-08-19 — chat/mission-control — pre-existing LOC overages adjacent to mission↔chat wiring
+- `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` — 2642 LOC (allowlisted; limit 600/400 for components). This change ended up not touching it (mission-focus subscription lives in `use-chat-send-awareness.ts`), but it still needs staged decomposition.
+- `apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.tsx` — 399 LOC, one line under the 400 component limit after extracting `useMissionDetailFocus`; the next addition will trip the gate. A state-wiring hook extraction would create headroom.
+- Reason not done now: decomposing them is unrelated refactoring risk on a targeted fix branch (claude/mission-chat-avatar-fixes).

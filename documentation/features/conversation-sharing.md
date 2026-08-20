@@ -1,6 +1,6 @@
 # Conversation Sharing
 
-Last Modified: 2026-05-25 22:38
+Last Modified: 2026-08-19
 
 ## Overview
 
@@ -21,11 +21,13 @@ Conversation sharing makes conversations private by default. The creator keeps a
 5. `GET /api/conversations/shared-with-me` lists only conversations explicitly shared with the authenticated user or active org.
 6. API services call `ConversationPermissionsService.assertCanAccessConversation(...)` before read/write actions.
 7. Spaces UI receives `effective_level` on conversation rows and disables write actions for read-only users.
+8. Extra campaign/space links live in `conversation_connections`. `conversations.campaign_id` remains the primary connection (Slack channel-chat bind and named-client bind write that column). Read paths union `campaign_id` / `metadata.space_id` with table rows. `GET/POST /api/conversations/:id/connections` and `DELETE /api/conversations/:id/connections/:entityType/:entityId` add or remove one row; adding a campaign does not overwrite an existing primary.
 
 ## Backend Layer
 
 - `apps/api/src/modules/conversations/services/conversation-permissions.service.ts` resolves and asserts effective levels.
 - `apps/api/src/modules/conversations/controllers/conversations.controller.ts` exposes `GET/POST/DELETE /conversations/:id/shares`.
+- `apps/api/src/modules/conversations/controllers/conversation-connections.controller.ts` exposes `GET/POST /conversations/:id/connections` and `DELETE /conversations/:id/connections/:entityType/:entityId`.
 - `apps/api/src/modules/conversations/repositories/conversations.repository.ts` lists owned conversations and explicitly shared conversations through separate query paths.
 
 ## Frontend Layer
@@ -41,3 +43,4 @@ Conversation sharing makes conversations private by default. The creator keeps a
 - 2026-05-03: Email invites and public links are out of scope for v1.
 - 2026-05-10: Org owner/admin baseline access was removed from conversation listing and runtime access. Users see their own conversations in the main list; shared conversations require explicit `conversation_shares` rows.
 - 2026-05-25: Empty chat drafts no longer appear in conversation lists. `New` selects a local blank composer, while the database row is created on first send and draft metadata is cleared after the first successful exchange.
+- 2026-08-19: A conversation can have multiple Connections. `campaign_id` stays primary; extra campaigns/spaces are additive `conversation_connections` rows. Slack bind still writes only `campaign_id`.

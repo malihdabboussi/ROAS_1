@@ -11,12 +11,14 @@ const mocks = vi.hoisted(() => ({
     spaceId: string
     meetingItemId: string
     conversationId: string
+    meetingTitle?: string
   } | null,
   shellState: {
     rightPanel: { open: true },
     conversationScopePickerRequestNonce: 0,
     setRightPanelOpen: vi.fn(),
     setWorkAreaOpen: vi.fn(),
+    lastWorkAreaPageByConversation: {} as Record<string, { title: string; href: string }>,
   },
   messagesByConversation: {
     'conversation-1': [
@@ -141,6 +143,7 @@ describe('ShellRightPanel', () => {
   beforeEach(() => {
     mocks.shellState.rightPanel.open = true
     mocks.shellState.conversationScopePickerRequestNonce = 0
+    mocks.shellState.lastWorkAreaPageByConversation = {}
     mocks.meetingContext = null
     mocks.conversations = []
     vi.clearAllMocks()
@@ -167,9 +170,10 @@ describe('ShellRightPanel', () => {
     expect(screen.getByRole('heading', { name: 'Tasks' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Connections' })).toBeInTheDocument()
     expect(screen.queryByText('Campaign & space')).not.toBeInTheDocument()
-    // The create entry point rides the Outputs section header.
+    const panel = screen.getByRole('complementary', { name: 'Work summary' })
+    expect(within(panel).getByRole('button', { name: 'Create' })).toBeInTheDocument()
     const outputs = screen.getByRole('region', { name: 'Outputs' })
-    expect(within(outputs).getByRole('button', { name: 'Create' })).toBeInTheDocument()
+    expect(within(outputs).queryByRole('button', { name: 'Create' })).not.toBeInTheDocument()
   })
 
   it('opens sections that have content and folds away the ones that do not', async () => {
@@ -216,12 +220,13 @@ describe('ShellRightPanel', () => {
   it('opens the create catalog inside the bubble instead of a clipped dropdown', async () => {
     render(<ShellRightPanel conversationId="conversation-1" />)
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Create' }))
+    const panel = await screen.findByRole('complementary', { name: 'Work summary' })
+    fireEvent.click(within(panel).getByRole('button', { name: 'Create' }))
 
     expect(screen.getByTestId('create-catalog')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Outputs' })).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    fireEvent.click(within(panel).getByRole('button', { name: 'Back' }))
     expect(screen.queryByTestId('create-catalog')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Outputs' })).toBeInTheDocument()
   })
@@ -230,11 +235,12 @@ describe('ShellRightPanel', () => {
     mocks.conversations = [
       {
         id: 'conversation-1',
-        title: 'Client launch review',
+        title: 'Write my post-call recap message for the client',
         metadata: {
           context_type: 'meeting',
           meeting_item_id: 'meeting-item-1',
           space_id: 'space-1',
+          meeting_title: 'Client launch review',
         },
       },
     ]
@@ -249,16 +255,42 @@ describe('ShellRightPanel', () => {
     )
   })
 
+  it('does not label the meeting connection with the recap or chat title', async () => {
+    mocks.conversations = [
+      {
+        id: 'conversation-1',
+        title: 'Write my post-call recap message for the client',
+        metadata: {
+          context_type: 'meeting',
+          meeting_item_id: 'meeting-item-1',
+          space_id: 'space-1',
+        },
+      },
+    ]
+
+    render(<ShellRightPanel conversationId="conversation-1" />)
+
+    expect(await screen.findByRole('button', { name: 'Open Meeting' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', {
+        name: 'Open Write my post-call recap message for the client',
+      }),
+    ).toBeNull()
+  })
+
   it('prefers the live meeting context over conversation metadata', async () => {
     mocks.meetingContext = {
       spaceId: 'space-live',
       meetingItemId: 'meeting-live',
       conversationId: 'conversation-1',
+      meetingTitle: 'ROAS onboarding, Samin AI education scale',
     }
 
     render(<ShellRightPanel conversationId="conversation-1" />)
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Open Meeting' }))
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Open ROAS onboarding, Samin AI education scale' }),
+    )
 
     expect(mocks.routerPush).toHaveBeenCalledWith(
       '/home/meetings?meeting=meeting-live&space=space-live',

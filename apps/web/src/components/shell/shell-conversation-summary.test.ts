@@ -90,6 +90,54 @@ describe('shell conversation summary', () => {
     ])
   })
 
+  it('renders brain retrieval receipts including zero-hit searches', () => {
+    expect(
+      extractConversationSourceRows([
+        message({
+          metadata: {
+            retrieval_receipts: [
+              {
+                brain_id: 'brain-1',
+                brain_name: 'Multifamily Strategy',
+                scope: 'campaign',
+                query: 'Christian story',
+                results_count: 12,
+              },
+              {
+                brain_id: 'brain-1',
+                brain_name: 'Multifamily Strategy',
+                scope: 'campaign',
+                query: 'Christian story',
+                results_count: 0,
+              },
+            ],
+          },
+        }),
+      ]).map((row) => row.title),
+    ).toEqual([
+      'CAMPAIGN BRAIN — Multifamily Strategy · 12 memories',
+      "CAMPAIGN BRAIN — Multifamily Strategy · 0 results — searched 'Christian story'",
+    ])
+  })
+
+  it('renders fetched web-research URLs next to brain receipts', () => {
+    expect(
+      extractConversationSourceRows([
+        message({
+          metadata: {
+            web_research_urls: [{ url: 'https://example.com/report', title: 'Market report' }],
+          },
+        }),
+      ]),
+    ).toEqual([
+      expect.objectContaining({
+        title: 'Market report',
+        kind: 'link',
+        href: 'https://example.com/report',
+      }),
+    ])
+  })
+
   it('extracts missions this conversation started from their receipts', () => {
     const rows = extractConversationMissionRows([
       message({
@@ -168,5 +216,4 @@ describe('shell conversation summary', () => {
 
     expect(rows).toHaveLength(1)
   })
-
 })

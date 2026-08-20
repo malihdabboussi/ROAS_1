@@ -30,7 +30,6 @@ interface MissionDetailMobileShellProps {
   missionId: string
   activityTimelineProps: ComponentProps<typeof ActivityTimeline>
   overlayModals: ReactNode
-  trackActions?: ReactNode
   subtaskHeaderActions?: ReactNode
 }
 
@@ -57,7 +56,6 @@ export function MissionDetailMobileShell({
   missionId,
   activityTimelineProps,
   overlayModals,
-  trackActions,
   subtaskHeaderActions,
 }: MissionDetailMobileShellProps) {
   return (
@@ -163,7 +161,6 @@ export function MissionDetailMobileShell({
                   <MissionMetaRow {...missionMetaProps} />
                 </div>
                 <SubtasksSection {...subtasksProps} />
-                {trackActions}
                 {accessApprovalCard}
               </>
             )}

@@ -131,4 +131,31 @@ describe('CompanyCortexFormationService', () => {
       'Your previous response could not be parsed as JSON.',
     )
   })
+
+  it('warns and returns zeros when no active signals are eligible for formation', async () => {
+    const listFormationSignals = vi.fn().mockResolvedValue([])
+    const warn = vi.fn()
+    const service = new CompanyCortexFormationService(
+      {} as never,
+      { listFormationSignals } as never,
+      {} as never,
+    )
+    ;(service as { logger: { warn: typeof warn } }).logger = { warn } as never
+
+    const result = await service.runFormation({
+      outboxId: 'outbox-empty',
+      userId: 'user-1',
+      orgId: 'org-1',
+      brainId: 'brain-1',
+      payload: { signal_ids: ['missing'] },
+    })
+
+    expect(result).toEqual({ objectsCreated: 0, edgesCreated: 0, signalsMerged: 0 })
+    expect(listFormationSignals).toHaveBeenCalledWith({
+      brainId: 'brain-1',
+      limit: 50,
+      signalIds: ['missing'],
+    })
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('zero active signals eligible'))
+  })
 })

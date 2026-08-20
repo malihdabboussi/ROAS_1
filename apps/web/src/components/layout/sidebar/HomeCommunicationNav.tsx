@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { CheckCheck, Lock, MoreHorizontal, Plus } from 'lucide-react'
 import { ChannelIcon, ChannelListActionsHost, CreateChannelModal } from '@/components/channels'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { Tooltip } from '@/components/ui/tooltip'
 import {
   stashPendingChannelAddPeople,
@@ -123,7 +124,9 @@ export function HomeCommunicationNav({
       </div>
 
       {loading && (
-        <p className="home-sidebar-comm-loading typo-caption text-muted-foreground">Loading…</p>
+        <div className="home-sidebar-comm-loading">
+          <ListSkeleton rows={3} label="Loading…" />
+        </div>
       )}
 
       {!loading &&

@@ -8,6 +8,47 @@ const LEGACY_DEFAULTS = [
   /^untitled conversation$/i,
 ]
 
+/**
+ * Injected context blocks the platform prepends to agent prompts. They must
+ * never become conversation titles: strip them before deriving a title, and
+ * treat any title that begins with one as needing regeneration. (Prod 2026-08-19:
+ * eleven Slack chats were titled "[Ask kind] Kind: client Signals: …".)
+ */
+const INJECTED_CONTEXT_HEADERS = [
+  'Ask kind',
+  'Slack channel identity',
+  'Client context',
+  'Assets',
+  'Slack thread context',
+  'Current message',
+  'Quoted message identity',
+  'Forwarded Slack message',
+  'Forwarded thread context',
+  'Recent channel discussion',
+]
+const INJECTED_HEADER_PATTERN = new RegExp(
+  `^\\[(?:${INJECTED_CONTEXT_HEADERS.join('|')})\\]`,
+)
+
+export function stripInjectedContextBlocks(raw: string | null | undefined): string {
+  let text = raw ?? ''
+  if (!text.includes('[')) return text
+  // The thread wrapper labels the human's ask explicitly — prefer it outright.
+  const current = text.match(/\[Current message\]\n([^]+)/)?.[1]
+  if (current) text = current
+  const headers = INJECTED_CONTEXT_HEADERS.join('|')
+  // Drop each bracketed block: its header line through the blank line ending it.
+  text = text.replace(
+    new RegExp(`\\[(?:${headers})\\][^]*?(\\n\\n|$)`, 'g'),
+    '\n',
+  )
+  return text.trim()
+}
+
+export function startsWithInjectedContextHeader(raw: string | null | undefined): boolean {
+  return INJECTED_HEADER_PATTERN.test((raw ?? '').trim())
+}
+
 const RAW_OPENERS =
   /^(hi|hey|hello|yo|sup|all right|alright|ok|okay|so|can you|could you|do we|do you|let me|please|thanks|thank you|hrey)\b/i
 
@@ -22,6 +63,7 @@ export function needsGeneratedConversationTitle(
   firstUserMessage?: string | null,
 ): boolean {
   if (isPlaceholderConversationTitle(raw)) return true
+  if (startsWithInjectedContextHeader(raw)) return true
   const title = (raw ?? '').replace(/\s+/g, ' ').trim()
   if (!title) return true
   if (/<[#@]!?[A-Z0-9]+/i.test(title)) return true
@@ -38,7 +80,7 @@ export function needsGeneratedConversationTitle(
 }
 
 export function titleFromFirstUserMessage(raw: string | null | undefined, maxLen = 48): string {
-  const collapsed = (raw ?? '')
+  const collapsed = stripInjectedContextBlocks(raw)
     .replace(/<((?:https?:\/\/|mailto:)[^>|]+)\|([^>]+)>/g, '$2')
     .replace(/<(https?:\/\/[^>]+)>/g, '')
     .replace(/<@([A-Z0-9]+)>/gi, '')

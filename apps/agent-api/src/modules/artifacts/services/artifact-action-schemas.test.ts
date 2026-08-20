@@ -2190,7 +2190,7 @@ describe('validateActionData', () => {
       expect(describeActionContract('create_mission')).toMatchObject({
         optional: expect.arrayContaining(['playbook_id']),
         descriptions: expect.objectContaining({
-          playbook_id: expect.stringContaining('playbook'),
+          playbook_id: expect.stringContaining('task-cleanup'),
         }),
       })
       expect(validateActionData('list_missions', { limit: 10 })).toBeNull()

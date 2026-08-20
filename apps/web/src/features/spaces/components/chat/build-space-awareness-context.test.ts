@@ -35,6 +35,36 @@ describe('resolveChatSendAwarenessContext', () => {
     ).toBe('')
   })
 
+  it('carries the open mission on Home chat even with nothing connected', () => {
+    const context = resolveChatSendAwarenessContext({
+      isChannelScope: false,
+      chatSurface: 'general',
+      campaignId: null,
+      spaceId: null,
+      connectedLocationLabel: 'General',
+      scopeMatchesVisibleSpace: false,
+      focusedMission: { id: 'mission-1', title: 'Claude Club Strategy', status: 'planning' },
+    })
+    expect(context).toContain('Open mission: Claude Club Strategy')
+    expect(context).toContain('id: mission-1')
+    expect(context).toContain('status: planning')
+  })
+
+  it('appends the open mission after the space context', () => {
+    const context = resolveChatSendAwarenessContext({
+      isChannelScope: false,
+      chatSurface: 'spaces',
+      campaignId: 'campaign-1',
+      spaceId: 'space-1',
+      connectedLocationLabel: 'Master Your Kraft General',
+      scopeMatchesVisibleSpace: true,
+      campaignName: 'Visible campaign',
+      focusedMission: { id: 'mission-1', title: 'Claude Club Strategy', status: 'planning' },
+    })
+    expect(context).toContain('Campaign: Visible campaign')
+    expect(context).toContain('Open mission: Claude Club Strategy')
+  })
+
   it('uses the visible Space campaign when the chat is already on that Space', () => {
     expect(
       resolveChatSendAwarenessContext({
@@ -49,5 +79,23 @@ describe('resolveChatSendAwarenessContext', () => {
         activeViewType: 'overview',
       }),
     ).toContain('Campaign: Visible campaign')
+  })
+
+  it('uses the Connections label on Home when Choose Space attached a client', () => {
+    expect(
+      resolveChatSendAwarenessContext({
+        isChannelScope: false,
+        chatSurface: 'spaces',
+        campaignId: 'campaign-1',
+        spaceId: null,
+        connectedLocationLabel: 'Above It General',
+        scopeMatchesVisibleSpace: true,
+        campaignName: null,
+      }),
+    ).toBe(
+      buildSpaceAwarenessContext({
+        campaignName: 'Above It General',
+      }),
+    )
   })
 })

@@ -1,3 +1,9 @@
+export type ChatSendFocusedMission = {
+  id: string
+  title: string
+  status: string
+}
+
 export type ChatSendFocusedArtifact = {
   type: string
   id: string
@@ -35,6 +41,19 @@ export function buildSpaceAwarenessContext({
   return lines.join('\n').slice(0, 500)
 }
 
+/**
+ * The mission detail panel can be open next to chat on any surface, so the open
+ * mission is appended after surface resolution instead of inside one branch.
+ */
+export function appendFocusedMissionContext(
+  context: string,
+  mission: ChatSendFocusedMission | null | undefined,
+): string {
+  if (!mission) return context
+  const line = `Open mission: ${mission.title.slice(0, 120)} (mission, id: ${mission.id}, status: ${mission.status}) — the user has this mission's detail panel open; mission messages likely refer to it.`
+  return context ? `${context}\n${line}` : line
+}
+
 export function resolveChatSendAwarenessContext(input: {
   awarenessContextOverride?: string | null
   isChannelScope: boolean
@@ -50,7 +69,14 @@ export function resolveChatSendAwarenessContext(input: {
   activeViewType?: string
   activeViewName?: string
   focusedArtifact?: BuildSpaceAwarenessContextInput['focusedArtifact']
+  focusedMission?: ChatSendFocusedMission | null
 }): string {
+  return appendFocusedMissionContext(resolveSurfaceAwarenessContext(input), input.focusedMission)
+}
+
+function resolveSurfaceAwarenessContext(
+  input: Parameters<typeof resolveChatSendAwarenessContext>[0],
+): string {
   const override = input.awarenessContextOverride?.trim()
   if (override) return override
   if (input.isChannelScope) return input.channelAwareness ?? ''
@@ -63,9 +89,16 @@ export function resolveChatSendAwarenessContext(input: {
   return buildSpaceAwarenessContext({
     activeViewType: input.scopeMatchesVisibleSpace ? input.activeViewType : undefined,
     activeViewName: input.scopeMatchesVisibleSpace ? input.activeViewName : undefined,
-    campaignName: input.scopeMatchesVisibleSpace
-      ? input.campaignName
-      : input.connectedLocationLabel,
+    campaignName: awarenessCampaignName(input),
     focusedArtifact: input.scopeMatchesVisibleSpace ? input.focusedArtifact : null,
   })
+}
+
+/** Home Choose Space is `spaces` with no visible Space title — use Connections. */
+function awarenessCampaignName(
+  input: Parameters<typeof resolveChatSendAwarenessContext>[0],
+): string | null {
+  const visible = input.scopeMatchesVisibleSpace ? input.campaignName?.trim() : ''
+  const connected = input.connectedLocationLabel.trim()
+  return visible || connected || null
 }

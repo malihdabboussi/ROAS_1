@@ -55,7 +55,49 @@ export async function resolveCampaignIdByName(
     )
   }
   if (fuzzy) return fuzzy.id
+
+  // Client name ≠ campaign name is common ("Christian Osgood" → campaign
+  // "Multifamily Strategy"). Resolve via the Portal client stamps on Slack
+  // observation events before declaring the name unknown — the same source
+  // the Slack-side Client Context Bundle and the app-chat bind use.
+  const stamped = await resolveCampaignIdByClientStamp(supabase, campaignName, orgId)
+  if (stamped) return stamped
+
   throw new Error(`campaign_name not found for user: "${campaignName}"`)
+}
+
+function clientNameMatches(needle: string, haystack: string): boolean {
+  const words = needle
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((word) => word.length > 1)
+  if (words.length === 0) return false
+  const target = haystack.toLowerCase()
+  return words.every((word) => target.includes(word))
+}
+
+async function resolveCampaignIdByClientStamp(
+  supabase: SupabaseClient,
+  clientName: string,
+  orgId?: string | null,
+): Promise<string | null> {
+  if (!orgId) return null
+  const firstWord = clientName.trim().split(/\s+/)[0] ?? clientName
+  const { data } = await supabase
+    .from('slack_observation_events')
+    .select('metadata')
+    .eq('org_id', orgId)
+    .ilike('metadata->>page_grader_client_name', `%${firstWord}%`)
+    .not('metadata->>roas_campaign_id', 'is', null)
+    .order('observed_at', { ascending: false })
+    .limit(20)
+  const campaignIds = new Set<string>()
+  for (const row of (data ?? []) as Array<{ metadata: Record<string, unknown> }>) {
+    const stampedName = String(row.metadata?.page_grader_client_name ?? '')
+    const campaignId = String(row.metadata?.roas_campaign_id ?? '')
+    if (campaignId && clientNameMatches(clientName, stampedName)) campaignIds.add(campaignId)
+  }
+  return campaignIds.size === 1 ? [...campaignIds][0] : null
 }
 
 async function resolveExactOrPartialCampaignId(

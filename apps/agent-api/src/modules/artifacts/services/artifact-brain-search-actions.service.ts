@@ -1,4 +1,8 @@
 import { Injectable } from '@nestjs/common'
+import {
+  receiptsFromFamilySearchHits,
+  toBrainRetrievalReceipt,
+} from '../../brain/services/brain-retrieval-receipt'
 import { ArtifactBrainScholarRepository } from '../repositories/artifact-brain-scholar.repository'
 import { ArtifactBrainAccessService } from './artifact-brain-access.service'
 
@@ -164,6 +168,7 @@ export class ArtifactBrainSearchActionsService {
       by_family: byFamily,
       allowed_families: Array.from(allowedFamilies),
       results: mergedResults,
+      retrieval_receipts: receiptsFromFamilySearchHits(query, successful),
     }
   }
 
@@ -188,6 +193,7 @@ export class ArtifactBrainSearchActionsService {
     const resolved = await this.resolveCampaignBrainId(target, input, userId, orgId, sessionKey)
     if ('error' in resolved) return { success: false, error: resolved.error }
     const { brainId, campaignId } = resolved
+    const campaignName = String(input.campaign_name ?? input.campaignName ?? '').trim()
 
     if (!target.brainRetrievalService || typeof target.getUserClient !== 'function') {
       return { success: false, error: 'Brain retrieval service is unavailable' }
@@ -214,6 +220,16 @@ export class ArtifactBrainSearchActionsService {
       brain_id: brainId,
       campaign_id: campaignId,
       family: 'campaign',
+      retrieval_receipts: [
+        toBrainRetrievalReceipt({
+          brainId,
+          brainName: campaignName || null,
+          scope: 'campaign',
+          query,
+          resultsCount: Number(result?.count ?? 0),
+          results: result?.results,
+        }),
+      ],
     }
   }
 
@@ -230,6 +246,7 @@ export class ArtifactBrainSearchActionsService {
 
     // Prefer explicit ids/names over session scope so General chats can still
     // read a client campaign brain (search_campaign_brain is cross-scope).
+    let nameLookupError: string | null = null
     if (
       !campaignId &&
       campaignName &&
@@ -244,10 +261,14 @@ export class ArtifactBrainSearchActionsService {
         )
         if (typeof resolved === 'string' && resolved.trim()) campaignId = resolved.trim()
       } catch (err) {
-        return {
-          error:
-            err instanceof Error ? err.message : `Failed to resolve campaign_name: ${campaignName}`,
-        }
+        const message =
+          err instanceof Error ? err.message : `Failed to resolve campaign_name: ${campaignName}`
+        // Ambiguity needs the human; an unknown name falls through to the
+        // conversation's bound campaign. Returning "not found" here is what a
+        // model narrates as "the Brain has nothing on <client>" — while the
+        // bound campaign brain is sitting right there.
+        if (message.includes('ambiguous')) return { error: message }
+        nameLookupError = message
       }
     }
 
@@ -303,6 +324,7 @@ export class ArtifactBrainSearchActionsService {
     if (!campaignId) {
       return {
         error:
+          nameLookupError ??
           'campaign_id (or campaign_name) is required. Client package knowledge is not on General — pass the client campaign id/name or open that campaign chat.',
       }
     }
@@ -338,7 +360,7 @@ export class ArtifactBrainSearchActionsService {
   ): Promise<void> {
     const namedLookup = Boolean(
       String(input.campaign_id ?? '').trim() ||
-        String(input.campaign_name ?? input.campaignName ?? '').trim(),
+      String(input.campaign_name ?? input.campaignName ?? '').trim(),
     )
     if (!namedLookup || typeof target.bindConversationToNamedCampaign !== 'function') return
     try {

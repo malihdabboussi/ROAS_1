@@ -173,7 +173,10 @@ describe('MeetingWorkspaceService', () => {
         id: buildMeetingConversationId('meeting-1'),
         title: 'Client review',
         campaign_id: 'campaign-1',
-        metadata: expect.objectContaining({ space_id: 'space-1' }),
+        metadata: expect.objectContaining({
+          space_id: 'space-1',
+          meeting_title: 'Client review',
+        }),
       }),
       null,
     )

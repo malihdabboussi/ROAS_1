@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { getIconColor, IconPicker, LucideIcon, type IconColorId } from '@/components/ui/IconPicker'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { Tooltip } from '@/components/ui/tooltip'
 import { HomeCommunicationNav } from './HomeCommunicationNav'
 import { SidebarAgentDmRow } from './SidebarAgentDmRow'
@@ -147,7 +148,7 @@ export function SidebarTeam2Flyout({ pathname, embedded = false }: SidebarTeam2F
                 )
               })()}
             {(teamsLoading || (bootstrapLoading && sortedTeams.length === 0)) && (
-              <p className="px-3 py-1 text-[11px] text-[var(--color-muted-foreground)]">Loading…</p>
+              <div className="px-3 py-1"><ListSkeleton rows={3} label="Loading…" /></div>
             )}
             {!teamsLoading && !bootstrapLoading && sortedTeams.length === 0 && (
               <p className="px-3 py-1 text-[11px] text-[var(--color-muted-foreground)]">
@@ -186,7 +187,7 @@ export function SidebarTeam2Flyout({ pathname, embedded = false }: SidebarTeam2F
         <div>
           <p className="hub-dock-flyout-caption">Direct messages</p>
           {(agentsLoading || (bootstrapLoading && sortedAgents.length === 0)) && (
-            <p className="px-3 py-1 text-[11px] text-[var(--color-muted-foreground)]">Loading…</p>
+            <div className="px-3 py-1"><ListSkeleton rows={3} label="Loading…" /></div>
           )}
           {!agentsLoading && !bootstrapLoading && sortedAgents.length === 0 && (
             <p className="px-3 py-1 text-[11px] text-[var(--color-muted-foreground)]">
@@ -224,7 +225,7 @@ export function SidebarTeam2Flyout({ pathname, embedded = false }: SidebarTeam2F
           <div>
             <p className="hub-dock-flyout-caption">People</p>
             {(peopleLoading || (bootstrapLoading && people.length === 0)) && (
-              <p className="px-3 py-1 text-[11px] text-[var(--color-muted-foreground)]">Loading…</p>
+              <div className="px-3 py-1"><ListSkeleton rows={3} label="Loading…" /></div>
             )}
             {!peopleLoading && !bootstrapLoading && people.length === 0 && (
               <p className="px-3 py-1 text-[11px] text-[var(--color-muted-foreground)]">

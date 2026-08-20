@@ -139,17 +139,19 @@ export class FathomWebhookService {
     // Meetings call rows must still land for shared_team recordings even when
     // Fathom omits transcript from the webhook body (Slack follow-up is downstream).
     const spaceRoute = await this.processSpaceAutomationRoute(userId, event)
+    const pageGraderSync = await this.processPageGraderMeetingRoute(userId, event, spaceRoute)
     if (hasTranscript) {
-      // Same meeting, client's campaign brain — deterministic from the Space route.
-      await this.campaignBrainRoute.enqueueForRoute({
+      // Primary: Portal-matched clients → client_scope_map campaign brains.
+      // Fallback: Space route campaign (often General in the one-room model).
+      await this.campaignBrainRoute.routeAfterPageGraderSync({
         supabase: this.repository.getServiceClient(),
         userId,
         orgId: autoIngestSettings.billingScope === 'org' ? autoIngestSettings.billingOrgId : null,
         event,
         spaceRoute,
+        matchedClients: pageGraderSync?.matched_clients ?? [],
       })
     }
-    await this.processPageGraderMeetingRoute(userId, event, spaceRoute)
   }
 
   private readTranscriptEntries(event: Record<string, unknown>): Array<{
@@ -280,8 +282,8 @@ export class FathomWebhookService {
     userId: string,
     event: Record<string, unknown>,
     routeResult: Record<string, unknown> | null,
-  ): Promise<void> {
-    if (!this.pageGraderMeetings) return
+  ): Promise<{ matched_clients: Array<{ id: string; name: string; matched_by: string }> } | null> {
+    if (!this.pageGraderMeetings) return null
     // A Fathom recording now lands on exactly one canonical Space route, so the
     // automation result carries a single space_id/item_id pointer instead of a
     // fan-out array.
@@ -305,12 +307,14 @@ export class FathomWebhookService {
           needs_client_mapping: result.needs_client_mapping,
         })}`,
       )
+      return result
     } catch (error) {
       this.logger.warn(
         `[FATHOM-DEBUG] Page Grader meeting sync skipped: ${
           error instanceof Error ? error.message : String(error)
         }`,
       )
+      return null
     }
   }
 

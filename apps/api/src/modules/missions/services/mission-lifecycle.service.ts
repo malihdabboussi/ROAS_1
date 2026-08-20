@@ -146,9 +146,11 @@ export class MissionLifecycleService {
         user_id: missionOwnerId,
         org_id: orgId ?? null,
         event_type: 'user.comment',
+        ...(dto.agent_key ? { agent_key: dto.agent_key } : {}),
         payload: {
           message: dto.message,
           commented_by_user_id: userId,
+          ...(dto.agent_key ? { commented_by_agent_key: dto.agent_key } : {}),
           ...(dto.attachments?.length ? { attachments: dto.attachments } : {}),
         },
       })
@@ -458,9 +460,7 @@ export class MissionLifecycleService {
         mission_id: missionId,
         user_id: userId,
         org_id: orgId ?? null,
-        event_type: statusChanged
-          ? 'mission.subtask.status_updated'
-          : 'mission.subtask.reassigned',
+        event_type: statusChanged ? 'mission.subtask.status_updated' : 'mission.subtask.reassigned',
         agent_key: (result?.assigned_agent_key as string | null) ?? undefined,
         payload: {
           subtask_id: subtaskId,

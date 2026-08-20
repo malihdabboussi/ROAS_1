@@ -1,21 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { ActiveWorkingSet } from '../../shared/services/request-context.service'
-import { ChatRunEventStoreService } from './chat-run-event-store.service'
-import { ChatContextAccountingService } from './chat-context-accounting.service'
-import { ChatTurnCompletionService } from './chat-turn-completion.service'
-import type { ChatTurnStreamingState } from './chat-turn-streaming-state.service'
-import { ChatTurnStreamService } from './chat-turn-stream.service'
-import type { ChatModelSettings, ValidatedModelSettings } from './chat-model-input.service'
 import type { ContextBreakdown } from '@vibey/context-breakdown'
-import type { OpenClawInputMessage, OpenClawSkillCatalog, SendFn } from './openclaw-proxy.service'
-import type { ResolvedSlashCommand } from './chat-slash-command.service'
+import type { ActiveWorkingSet } from '../../shared/services/request-context.service'
+import { ChatContextAccountingService } from './chat-context-accounting.service'
 import type { ChatGatewayInputContext } from './chat-gateway-input.service'
+import type { ChatModelSettings, ValidatedModelSettings } from './chat-model-input.service'
+import { ChatRunEventStoreService } from './chat-run-event-store.service'
+import type { ResolvedSlashCommand } from './chat-slash-command.service'
 import type { ChatStreamMirrorState } from './chat-stream-mirror.service'
 import { ChatStreamMirrorService } from './chat-stream-mirror.service'
+import { ChatTurnCompletionService } from './chat-turn-completion.service'
+import type { ChatTurnTimingSpan, RecordChatTurnTimingSpan } from './chat-turn-session.service'
+import { ChatTurnStreamService } from './chat-turn-stream.service'
+import type { ChatTurnStreamingState } from './chat-turn-streaming-state.service'
+import type { OpenClawInputMessage, OpenClawSkillCatalog, SendFn } from './openclaw-proxy.service'
 import { StreamRegistryService } from './stream-registry.service'
 import { TracingService } from './tracing.service'
-import type { ChatTurnTimingSpan, RecordChatTurnTimingSpan } from './chat-turn-session.service'
 
 type DbOperation = <T>(operation: (supabase: SupabaseClient) => Promise<T>) => Promise<T>
 type ChatProcessTerminalStatus = 'done' | 'failed' | 'failed_recoverable' | 'cancelled'
@@ -201,6 +201,8 @@ export class ChatTurnTerminalService {
         timingSpans: input.getTimingSpans(),
         getAccumulatedContent: input.streamingState.getAccumulatedContent,
         getCompletedVisibleToolCount: input.streamingState.getCompletedVisibleToolCount,
+        getRetrievalReceipts: input.streamingState.getRetrievalReceipts,
+        getWebResearchUrls: input.streamingState.getWebResearchUrls,
         clearFlushTimer: input.streamingState.clearFlushTimer,
         recordRunCheckpoint: input.streamingState.recordRunCheckpoint,
         dbOp: input.dbOp,
@@ -278,6 +280,8 @@ export class ChatTurnTerminalService {
         resolvedModelId,
         timingSpans: input.getTimingSpans(),
         getAccumulatedContent: input.streamingState.getAccumulatedContent,
+        getRetrievalReceipts: input.streamingState.getRetrievalReceipts,
+        getWebResearchUrls: input.streamingState.getWebResearchUrls,
         clearFlushTimer: input.streamingState.clearFlushTimer,
         dbOp: input.dbOp,
         logger: input.logger,

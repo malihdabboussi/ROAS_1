@@ -238,6 +238,52 @@ describe('MissionsService native PG path', () => {
     expect(calls.some((sql) => sql.includes('INSERT INTO mission_outbox'))).toBe(true)
   })
 
+  it('stamps agent-relayed comments with the acting agent key', async () => {
+    const userId = '37212aea-db05-4178-a6d2-265111a81a78'
+    const missionId = '4fd24e49-fd75-4701-93ca-4ac8d8c8c21d'
+    const correlationId = '14a117fa-8570-4f9d-ac7f-4b48d9ac68e4'
+    const commentId = '3c55496a-9919-4ec2-a251-6cc08a95db32'
+    const commentInserts: Array<unknown[] | undefined> = []
+
+    const { executionService } = createServiceWithNativePg(
+      async (sql: string, values?: unknown[]) => {
+        if (sql.includes('FROM missions') && sql.includes('LIMIT 1')) {
+          return {
+            rowCount: 1,
+            rows: [
+              {
+                id: missionId,
+                user_id: userId,
+                status: 'done',
+                assigned_agent_key: 'vibey',
+                current_agent_key: null,
+                correlation_id: correlationId,
+              },
+            ],
+          }
+        }
+        if (sql.includes('INSERT INTO missions_logs') && sql.includes("'user.comment'")) {
+          commentInserts.push(values)
+          return { rowCount: 1, rows: [{ id: commentId }] }
+        }
+        return { rowCount: 1, rows: [] }
+      },
+    )
+
+    await executionService.addUserComment({} as SupabaseClient, userId, missionId, {
+      message: 'Client renamed to Claude Club',
+      agent_key: 'vibey',
+    })
+
+    expect(commentInserts).toHaveLength(1)
+    const values = commentInserts[0] as unknown[]
+    expect(values[3]).toBe('vibey')
+    expect(JSON.parse(String(values[4]))).toMatchObject({
+      message: 'Client renamed to Claude Club',
+      commented_by_agent_key: 'vibey',
+    })
+  })
+
   it('writes callback log with default event type when omitted', async () => {
     const userId = '37212aea-db05-4178-a6d2-265111a81a78'
     const missionId = '4fd24e49-fd75-4701-93ca-4ac8d8c8c21d'

@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
+  conversationHistoryAgentNameByKey,
+  conversationHistoryRowShowsSubtitle,
+  conversationHistoryRuntimePhaseById,
+  conversationHistorySectionCap,
+  conversationHistoryShowMoreVisibleRows,
   getConversationAgentDisplay,
   getConversationDisplayTitle,
   groupConversationsForHistory,
@@ -63,6 +68,7 @@ export interface SpaceConversationsListProps {
   pinHeaderActions?: boolean
   groupBy?: ChatHistoryGroupBy
   campaignNameById?: Record<string, string>
+  clientCampaignIds?: readonly string[]
   headerStartSlot?: ReactNode
   beforeHeaderSlot?: ReactNode
   compactHeaderTitle?: string
@@ -72,9 +78,6 @@ export interface SpaceConversationsListProps {
   showConversationTypeIcon?: boolean
   splitPinnedSection?: boolean
 }
-
-const INITIAL_SECTION_VISIBLE = 6
-const SECTION_VISIBLE_INCREMENT = 6
 
 export function SpaceConversationsList({
   conversations,
@@ -123,6 +126,7 @@ export function SpaceConversationsList({
   compactHeaderTitleClassName,
   groupBy = 'none',
   campaignNameById,
+  clientCampaignIds,
   showUpdatedAt,
   dividedRows,
   showConversationTypeIcon,
@@ -157,38 +161,40 @@ export function SpaceConversationsList({
     })
   }, [agentByKey, conversations, includeAgentInSearch, q])
 
-  const groups = useMemo(() => {
-    const agentNameByKey: Record<string, string> = {}
-    if (agentByKey) {
-      for (const [key, value] of Object.entries(agentByKey)) {
-        agentNameByKey[key] = value.name
-      }
-    }
-    const runtimePhaseById: Record<string, string | null | undefined> = {}
-    if (conversationRuntimeById) {
-      for (const [id, runtime] of Object.entries(conversationRuntimeById)) {
-        runtimePhaseById[id] = runtime?.phase
-      }
-    }
-    return groupConversationsForHistory(visible, {
-      groupBy,
-      agentNameByKey,
+  const groups = useMemo(
+    () =>
+      groupConversationsForHistory(visible, {
+        groupBy,
+        agentNameByKey: conversationHistoryAgentNameByKey(agentByKey),
+        campaignNameById,
+        clientCampaignIds: clientCampaignIds ? new Set(clientCampaignIds) : undefined,
+        runtimePhaseById: conversationHistoryRuntimePhaseById(conversationRuntimeById),
+        splitPinned: splitPinnedSection,
+      }),
+    [
+      agentByKey,
       campaignNameById,
-      runtimePhaseById,
-      splitPinned: splitPinnedSection,
-    })
-  }, [agentByKey, campaignNameById, conversationRuntimeById, groupBy, splitPinnedSection, visible])
+      clientCampaignIds,
+      conversationRuntimeById,
+      groupBy,
+      splitPinnedSection,
+      visible,
+    ],
+  )
 
   useEffect(() => {
     setSectionVisibleRows({})
     setSectionCollapsed({})
   }, [q, groupBy])
 
-  const rowCapForSection = (section: string, total: number) => {
-    if (groupBy === 'none' || splitPinnedSection) return total
-    const cap = sectionVisibleRows[section] ?? INITIAL_SECTION_VISIBLE
-    return Math.min(Math.max(cap, 0), total)
-  }
+  const rowCapForSection = (section: string, total: number) =>
+    conversationHistorySectionCap({
+      groupBy,
+      splitPinned: splitPinnedSection,
+      visibleRows: sectionVisibleRows,
+      sectionId: section,
+      total,
+    })
 
   const toggleSectionCollapsed = (section: string) => {
     setSectionCollapsed((prevColl) => {
@@ -205,10 +211,7 @@ export function SpaceConversationsList({
   }
 
   const showMoreInSection = (section: string) => {
-    setSectionVisibleRows((prev) => {
-      const cur = prev[section] ?? INITIAL_SECTION_VISIBLE
-      return { ...prev, [section]: cur + SECTION_VISIBLE_INCREMENT }
-    })
+    setSectionVisibleRows((prev) => conversationHistoryShowMoreVisibleRows(prev, section))
   }
 
   const menuConversation = useMemo(
@@ -270,11 +273,7 @@ export function SpaceConversationsList({
   const renderConversationRow = (conversation: Conversation, sectionId: string) => {
     const selected = conversation.id === selectedConversationId
     const renaming = renameId === conversation.id
-    const showSubtitle =
-      sectionId === 'today' ||
-      sectionId === 'pinned' ||
-      sectionId === 'recents' ||
-      groupBy === 'none'
+    const showSubtitle = conversationHistoryRowShowsSubtitle(sectionId, groupBy)
     return (
       <SpaceConversationRow
         key={conversation.id}
@@ -368,6 +367,7 @@ export function SpaceConversationsList({
               onShowMoreInSection={showMoreInSection}
               renderConversationRow={renderConversationRow}
               dividedRows={dividedRows}
+              folderSections={groupBy === 'client'}
             />
           )}
         </div>

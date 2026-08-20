@@ -16,6 +16,7 @@ import {
   Users,
 } from 'lucide-react'
 import { ShareModal } from '@/components/org'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { BrainScopeContextMenu } from '@/features/brain/components/BrainScopeContextMenu'
 import { useBrainScopeMenuActions } from '@/features/brain/hooks/use-brain-scope-menu-actions'
 import type { BrainScopeNavOption } from '@/features/brain/hooks/use-brain-scope-nav-options'
@@ -121,7 +122,9 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
         </button>
       </div>
       {loading ? (
-        <p className="px-3 py-1 text-[11px] text-[var(--color-muted-foreground)]">Loading…</p>
+        <div className="px-3 py-1">
+          <ListSkeleton rows={3} label="Loading…" />
+        </div>
       ) : (
         <div className="gap-spacing-1 flex flex-col">
           <div className="space-y-0.5">

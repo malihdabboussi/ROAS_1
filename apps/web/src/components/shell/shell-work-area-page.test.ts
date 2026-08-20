@@ -3,6 +3,7 @@ import {
   rememberWorkAreaPage,
   resolveWorkAreaPageForConversationChange,
   sanitizeLastWorkAreaPageByConversation,
+  shouldRestoreWorkAreaHrefOnConversationChange,
   workAreaHrefsMatch,
 } from './shell-work-area-page'
 
@@ -57,5 +58,23 @@ describe('shell-work-area-page', () => {
     expect(workAreaHrefsMatch('/home/meetings?meeting=evt-1', '/home/meetings?meeting=evt-2')).toBe(
       false,
     )
+  })
+
+  it('does not auto-navigate Simple Recents or /home onto a remembered work page', () => {
+    expect(
+      shouldRestoreWorkAreaHrefOnConversationChange({
+        menuStyle: 'simple',
+        pathname: '/campaigns',
+      }),
+    ).toBe(false)
+    expect(
+      shouldRestoreWorkAreaHrefOnConversationChange({ menuStyle: 'advanced', pathname: '/home' }),
+    ).toBe(false)
+    expect(
+      shouldRestoreWorkAreaHrefOnConversationChange({
+        menuStyle: 'advanced',
+        pathname: '/campaigns',
+      }),
+    ).toBe(true)
   })
 })

@@ -8,10 +8,9 @@ import {
   backendPatch,
   backendPost,
 } from '@/lib/api/backend-client'
-import type { ChatModelSettings, ModelReasoningEffort } from '@/lib/chat/chat-model-settings'
+import type { ChatModelSettings } from '@/lib/chat/chat-model-settings'
 import {
-  isPlaceholderConversationTitle,
-  shouldReaffirmFirstMessageTitle,
+  canApplyFirstMessageTitle,
   titleFromFirstUserMessage,
 } from '@/lib/conversations/conversation-title'
 import {
@@ -41,6 +40,7 @@ import type {
   Message,
   SendMessageParams,
 } from '../types'
+import { applySourcePanelEvent } from './apply-retrieval-receipt-event'
 import { ensureGeneralCampaign } from './campaign.service'
 import { buildChatResumeContext } from './chat-resume-context'
 import { isConversationUnavailableError } from './conversation-load-errors'
@@ -62,6 +62,7 @@ export {
 } from '@/lib/conversations/conversations-api'
 export { readConversationModelSettings } from '@/lib/chat/chat-model-settings'
 export type { ChatModelSettings, ModelReasoningEffort } from '@/lib/chat/chat-model-settings'
+export type { LlmModelOption } from '../types'
 
 function normalizeUiBlock(block: unknown): Record<string, unknown> | null {
   if (!block || typeof block !== 'object' || Array.isArray(block)) return null
@@ -240,39 +241,13 @@ export function applyRecoveredTimelineEvents(
         )
         break
       }
+      case 'retrieval_receipt':
+      case 'web_source':
+        applySourcePanelEvent(conversationId, messageId, payload)
+        break
     }
     appliedTimelineSeqByMessage.set(key, event.seq)
   }
-}
-
-export interface LlmModelOption {
-  id: string
-  provider: string
-  modelName: string
-  label: string
-  billingSource?: 'vibey' | 'subscription'
-  contextWindow: number
-  maxOutputTokens: number | null
-  supportsImages: boolean
-  inputModalities: string[]
-  outputModalities: string[]
-  supportedParameters: string[]
-  capabilityProfile?: Record<string, unknown>
-  contextOptions: Array<{ tokens: number; label: string; pricingProfile?: string }>
-  reasoningLevels: ModelReasoningEffort[]
-  speedModes: Array<'standard' | 'fast'>
-  pricing: Record<string, number>
-  pricingTiers: Array<{
-    pricingProfile: string
-    thresholdMinTokens: number
-    thresholdMaxTokens: number | null
-    inputTokens1k: number | null
-    outputTokens1k: number | null
-    cacheRead1k: number | null
-    cacheWrite1k: number | null
-    currency: string
-    source: string
-  }>
 }
 
 function blockRecord(block: unknown): Record<string, unknown> | null {
@@ -1434,6 +1409,15 @@ async function resumeConversationStream(params: {
               }
               break
             }
+            case 'retrieval_receipt':
+            case 'web_source': {
+              applySourcePanelEvent(
+                conversationId,
+                activeMessageId,
+                event as Record<string, unknown>,
+              )
+              break
+            }
             case 'status': {
               const phase = (event.phase as string) ?? 'thinking'
               const message =
@@ -2152,7 +2136,7 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
     if (isFirstUserTurn) {
       const earlyTitle = titleFromFirstUserMessage(params.content, 200)
       const existing = store.conversations.find((c) => c.id === conversationId)
-      if (earlyTitle && isPlaceholderConversationTitle(existing?.title)) {
+      if (earlyTitle && canApplyFirstMessageTitle(existing)) {
         store.updateConversation(conversationId, {
           title: earlyTitle,
           last_message_at: activityAt,
@@ -2266,7 +2250,7 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
       // and conversations are always in sync in the same render cycle
       if (!store.conversations.some((c) => c.id === conv.id)) {
         store.addConversation(conv)
-      } else if (initialTitle && isPlaceholderConversationTitle(conv.title)) {
+      } else if (initialTitle && canApplyFirstMessageTitle(conv)) {
         store.updateConversation(conv.id, {
           title: initialTitle,
           updated_at: new Date().toISOString(),
@@ -2464,6 +2448,16 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
                 if (contextBreakdown?.version === 1) {
                   store.setContextBreakdown(conversationId!, contextBreakdown)
                 }
+                break
+              }
+
+              case 'retrieval_receipt':
+              case 'web_source': {
+                applySourcePanelEvent(
+                  conversationId!,
+                  assistantMessageId,
+                  event as Record<string, unknown>,
+                )
                 break
               }
 
@@ -2890,8 +2884,8 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
     const allMessages = store.messagesByConversation[conversationId!] ?? []
     if (allMessages.length <= 2) {
       const title = titleFromFirstUserMessage(params.content, 200)
-      const currentTitle = store.conversations.find((row) => row.id === conversationId)?.title
-      if (title && shouldReaffirmFirstMessageTitle(currentTitle)) {
+      const current = store.conversations.find((row) => row.id === conversationId)
+      if (title && canApplyFirstMessageTitle(current, 'reaffirm')) {
         store.updateConversation(conversationId!, {
           title,
           updated_at: new Date().toISOString(),

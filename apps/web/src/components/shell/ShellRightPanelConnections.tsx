@@ -1,19 +1,37 @@
 'use client'
 
-import { useMemo, useRef, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { CalendarDays, FolderKanban, Layers, Plus, X, type LucideIcon } from 'lucide-react'
+import { toast } from 'sonner'
 import {
   ConversationScopePicker,
   type ConversationScopePickerHandle,
 } from '@/components/conversations'
+import { readConversationSpaceId } from '@/components/conversations/conversation-scope-picker-layout'
 import { useConversationLocationLabel } from '@/components/conversations/use-conversation-location-label'
-import type { Conversation, MeetingConversationLink } from '@/lib/conversations'
-import { assignConversationScope } from '@/lib/conversations'
+import { useConversationScopeCampaigns } from '@/components/conversations/use-conversation-scope-data'
+import type {
+  Conversation,
+  ConversationConnection,
+  MeetingConversationLink,
+} from '@/lib/conversations'
+import {
+  CONVERSATION_ACTIONS_TOAST_ERRORS,
+  fetchConversationConnections,
+  removeConversationConnection,
+} from '@/lib/conversations'
+import { useCampaignCacheVersion } from '@/lib/home'
+import { useOrgStore } from '@/lib/org'
+import {
+  capVisibleConnectionRows,
+  extraConnectionTitle,
+  extraConversationConnections,
+} from './shell-right-panel-connection-rows'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
 import { ShellRightPanelEmpty } from './ShellRightPanelEmpty'
 import { ShellRightPanelSection } from './ShellRightPanelSection'
 
-type ConnectionRowKind = 'meeting' | 'location'
+type ConnectionRowKind = 'meeting' | 'location' | 'extra'
 
 type ConnectionRow = {
   id: string
@@ -23,6 +41,7 @@ type ConnectionRow = {
   removable: boolean
   openCampaignId?: string | null
   openSpaceId?: string | null
+  extraType?: ConversationConnection['entity_type']
 }
 
 export function ShellRightPanelConnections({
@@ -57,15 +76,37 @@ export function ShellRightPanelConnections({
   const localPickerRef = useRef<ConversationScopePickerHandle>(null)
   const scopePickerRef = pickerRef ?? localPickerRef
   const addButtonRef = useRef<HTMLButtonElement>(null)
-  // Meeting chats are scoped to the Meetings space — show the specific meeting
-  // name instead of the generic space title, and open that meeting on click.
-  // The meeting workspace is the main artifact, so it stays linked.
+  const activeOrgId = useOrgStore((s) => s.activeOrgId)
+  const cacheVersion = useCampaignCacheVersion()
+  const campaigns = useConversationScopeCampaigns(activeOrgId, cacheVersion)
+  const [extraConnections, setExtraConnections] = useState<ConversationConnection[]>([])
   const showMeetingRow = Boolean(linkedMeeting)
   const hideMeetingHostSpace = Boolean(
     linkedMeeting && spaceId && spaceId === linkedMeeting.spaceId,
   )
   const locationSpaceId = hideMeetingHostSpace ? null : spaceId
   const location = useConversationLocationLabel(campaignId, locationSpaceId)
+
+  useEffect(() => {
+    if (!conversation?.id) {
+      setExtraConnections([])
+      return
+    }
+    let cancelled = false
+    void fetchConversationConnections(conversation.id)
+      .then((result) => {
+        if (cancelled) return
+        setExtraConnections(
+          extraConversationConnections(result.connections, campaignId, locationSpaceId),
+        )
+      })
+      .catch(() => {
+        if (!cancelled) setExtraConnections([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [campaignId, conversation?.id, locationSpaceId])
 
   const rows = useMemo((): ConnectionRow[] => {
     const next: ConnectionRow[] = []
@@ -92,8 +133,23 @@ export function ShellRightPanelConnections({
       })
     }
 
-    return next
+    for (const connection of extraConnections) {
+      next.push({
+        id: `extra:${connection.entity_type}:${connection.entity_id}`,
+        kind: 'extra',
+        title: extraConnectionTitle(connection, campaigns),
+        icon: connection.entity_type === 'space' ? Layers : FolderKanban,
+        removable: true,
+        extraType: connection.entity_type,
+        openCampaignId: connection.entity_type === 'campaign' ? connection.entity_id : null,
+        openSpaceId: connection.entity_type === 'space' ? connection.entity_id : null,
+      })
+    }
+
+    return capVisibleConnectionRows(next)
   }, [
+    campaigns,
+    extraConnections,
     linkedMeeting,
     location.label,
     location.pending,
@@ -103,13 +159,50 @@ export function ShellRightPanelConnections({
     showMeetingRow,
   ])
 
-  const clearScope = async () => {
-    if (!conversation) {
-      onScopeChanged?.({ campaignId: null, spaceId: null })
+  const applyRemovedConversation = (
+    updated: Conversation,
+    connections: ConversationConnection[],
+    notifyScope: boolean,
+  ) => {
+    onConversationUpdated?.(updated)
+    setExtraConnections(
+      extraConversationConnections(
+        connections,
+        updated.campaign_id,
+        readConversationSpaceId(updated),
+      ),
+    )
+    if (notifyScope) {
+      onScopeChanged?.({
+        campaignId: updated.campaign_id,
+        spaceId: readConversationSpaceId(updated),
+      })
+    }
+  }
+
+  const removeRow = (row: ConnectionRow) => {
+    if (!row.removable) return
+    if (row.kind === 'extra' && conversation && row.extraType) {
+      const entityId = row.extraType === 'space' ? row.openSpaceId : row.openCampaignId
+      if (!entityId) return
+      void removeConversationConnection(conversation.id, row.extraType, entityId)
+        .then((result) => applyRemovedConversation(result.conversation, result.connections, false))
+        .catch(() => {
+          toast.error(CONVERSATION_ACTIONS_TOAST_ERRORS.REMOVE_CONNECTION_FAILED.userMessage)
+        })
       return
     }
-    const updated = await assignConversationScope(conversation.id, null, null)
-    onConversationUpdated?.(updated)
+    if (conversation && row.kind === 'location') {
+      const entityType = row.openSpaceId ? 'space' : 'campaign'
+      const entityId = row.openSpaceId ?? row.openCampaignId
+      if (!entityId) return
+      void removeConversationConnection(conversation.id, entityType, entityId)
+        .then((result) => applyRemovedConversation(result.conversation, result.connections, true))
+        .catch(() => {
+          toast.error(CONVERSATION_ACTIONS_TOAST_ERRORS.REMOVE_CONNECTION_FAILED.userMessage)
+        })
+      return
+    }
     onScopeChanged?.({ campaignId: null, spaceId: null })
   }
 
@@ -125,13 +218,6 @@ export function ShellRightPanelConnections({
     if (row.openCampaignId) onOpenCampaign?.(row.openCampaignId)
   }
 
-  const removeRow = (row: ConnectionRow) => {
-    if (!row.removable) return
-    void clearScope()
-  }
-
-  // Adding from a collapsed section would drop the new row out of sight, so
-  // opening the picker expands the section first.
   const handleAdd = () => {
     onOpenChange(true)
     scopePickerRef.current?.openMenuFromBanner()
@@ -171,8 +257,6 @@ export function ShellRightPanelConnections({
                   : Boolean(row.openSpaceId ? onOpenSpace : row.openCampaignId && onOpenCampaign)
               return (
                 <li key={row.id}>
-                  {/* Click opens the linked artifact. Campaign/Space rows can be
-                      unlinked; the meeting workspace cannot. */}
                   <div className="gap-spacing-2 px-spacing-3 py-spacing-1-5 hover:bg-hover-subtle group flex items-center rounded-lg transition-colors">
                     {canOpen ? (
                       <button
@@ -214,15 +298,13 @@ export function ShellRightPanelConnections({
           </ul>
         )}
       </ShellRightPanelSection>
-      {/* Outside the collapsible body on purpose: collapsing the section must
-          not unmount the picker, or the "+" and the shell's open-picker
-          request would both break. */}
       <ConversationScopePicker
         ref={scopePickerRef}
         conversation={conversation}
         campaignId={campaignId}
         spaceId={spaceId}
         hideTrigger
+        selectionMode="add"
         bannerAnchorRef={addButtonRef}
         onConversationUpdated={onConversationUpdated}
         onScopeChanged={onScopeChanged}

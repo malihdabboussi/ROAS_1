@@ -118,6 +118,32 @@ describe('fetchMeetingWorkspaceEvent', () => {
     )
     expect(mocks.backendGet).toHaveBeenCalledWith('/api/spaces/space-1/meetings/call-9')
   })
+
+  it('stamps the persisted meeting item id even when the lookup used another identity', async () => {
+    mocks.backendGet.mockResolvedValue({
+      meeting: {
+        id: 'call-9',
+        title: 'Client review',
+        description: null,
+        source: 'google_calendar',
+        custom_data: { calendar_event_id: 'calendar-9' },
+      },
+      workspace: null,
+      recordings: [],
+      actions: [],
+      snippets: [],
+      deliverables: [],
+      context_links: [],
+      continuity: { prior_meeting_item_id: null, unresolved_commitments: [] },
+    })
+
+    await expect(fetchMeetingWorkspaceEvent('space-1', 'calendar-9')).resolves.toEqual(
+      expect.objectContaining({
+        id: 'calendar-9',
+        related: expect.objectContaining({ call_item_id: 'call-9' }),
+      }),
+    )
+  })
 })
 
 describe('meeting workspace API', () => {

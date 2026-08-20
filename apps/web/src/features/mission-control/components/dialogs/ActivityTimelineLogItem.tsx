@@ -77,6 +77,21 @@ function AgentActivityHeader({
     </div>
   )
 }
+/** A user.comment relayed by an agent (add_mission_comment) — agent-attributed. */
+function AgentCommentActivity({ log, agents }: { log: MissionLog; agents: MissionAgent[] }) {
+  const payload = log.payload as { message?: string }
+  return (
+    <div className="space-y-spacing-1 min-w-0">
+      <AgentActivityHeader log={log} agents={agents} createdAt={log.created_at} />
+      <div
+        className={`body-3 text-foreground min-w-0 break-words ${CHAT_MARKDOWN_CLASSNAME}`}
+        dangerouslySetInnerHTML={{
+          __html: renderChatMarkdown(payload.message ?? ''),
+        }}
+      />
+    </div>
+  )
+}
 function LinkedSubtaskStatus({
   subtask,
   subtaskTitle,
@@ -328,6 +343,8 @@ export function ActivityTimelineLogItem(props: ActivityTimelineLogItemProps) {
       <div className="min-w-0 flex-1 pb-1">
         {log.event_type === 'user.rating' ? (
           <UserRatingActivity log={log} userProfile={userProfile} />
+        ) : log.event_type === 'user.comment' && log.agent_key ? (
+          <AgentCommentActivity log={log} agents={agents} />
         ) : log.event_type === 'user.comment' ? (
           <UserCommentActivity log={log} userProfile={userProfile} />
         ) : log.event_type === 'mission.progress' ? (

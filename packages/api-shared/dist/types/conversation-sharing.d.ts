@@ -23,16 +23,39 @@ export declare const UpsertConversationShareSchema: z.ZodObject<{
     entity_type: z.ZodEnum<["user", "org"]>;
     entity_id: z.ZodString;
     level: z.ZodEnum<["view", "edit", "admin"]>;
+    notify: z.ZodOptional<z.ZodBoolean>;
+    note: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    entity_type: "user" | "org";
+    entity_type: "org" | "user";
     entity_id: string;
     level: "admin" | "edit" | "view";
+    notify?: boolean | undefined;
+    note?: string | undefined;
 }, {
-    entity_type: "user" | "org";
+    entity_type: "org" | "user";
     entity_id: string;
     level: "admin" | "edit" | "view";
+    notify?: boolean | undefined;
+    note?: string | undefined;
 }>;
 export type UpsertConversationShareDto = z.infer<typeof UpsertConversationShareSchema>;
+export declare const PassOffConversationShareSchema: z.ZodObject<{
+    user_id: z.ZodString;
+    level: z.ZodDefault<z.ZodEnum<["view", "edit", "admin"]>>;
+    note: z.ZodOptional<z.ZodString>;
+    notify: z.ZodDefault<z.ZodBoolean>;
+}, "strip", z.ZodTypeAny, {
+    user_id: string;
+    level: "admin" | "edit" | "view";
+    notify: boolean;
+    note?: string | undefined;
+}, {
+    user_id: string;
+    level?: "admin" | "edit" | "view" | undefined;
+    notify?: boolean | undefined;
+    note?: string | undefined;
+}>;
+export type PassOffConversationShareDto = z.infer<typeof PassOffConversationShareSchema>;
 export interface ConversationShareRecord {
     id: string;
     conversation_id: string;

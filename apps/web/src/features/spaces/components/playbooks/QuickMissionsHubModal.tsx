@@ -31,6 +31,7 @@ import {
   CLIENT_STRATEGY_PLAYBOOK_ID,
   findQuickMissionByKey,
   QUICK_MISSION_PLAYBOOKS,
+  TASK_CLEANUP_PLAYBOOK_ID,
   type QuickMissionCatalogEntry,
   type QuickMissionPlaybookId,
 } from './quick-missions-catalog'
@@ -41,6 +42,11 @@ import {
   STATIC_AD_PRODUCTION_PLAYBOOK_ID,
   type StaticAdProductionKickoffFields,
 } from './static-ad-production'
+import {
+  buildTaskCleanupMissionPayload,
+  EMPTY_TASK_CLEANUP_FIELDS,
+  type TaskCleanupKickoffFields,
+} from './task-cleanup'
 import {
   buildWebinarFulfillmentMissionPayload,
   type PlaybookKickoffFields,
@@ -80,6 +86,7 @@ export function QuickMissionsHubModal({
   clients,
   initialPlaybookKey,
   initialClientSpaceId,
+  parentMissionId,
   sourceConversationId,
   onClose,
   onResolveSourceConversation,
@@ -90,6 +97,7 @@ export function QuickMissionsHubModal({
   clients: QuickMissionClientOption[]
   initialPlaybookKey?: string | null
   initialClientSpaceId?: string | null
+  parentMissionId?: string | null
   sourceConversationId?: string | null
   onClose: () => void
   onResolveSourceConversation?: (input: {
@@ -112,6 +120,7 @@ export function QuickMissionsHubModal({
   const [videoFields, setVideoFields] = useState(EMPTY_IG_VIDEO_FIELDS)
   const [meta, setMeta] = useState(EMPTY_META)
   const [audit, setAudit] = useState(EMPTY_AUDIT)
+  const [cleanup, setCleanup] = useState(EMPTY_TASK_CLEANUP_FIELDS)
 
   useEffect(() => {
     if (!open) return
@@ -124,6 +133,7 @@ export function QuickMissionsHubModal({
     setVideoFields(EMPTY_IG_VIDEO_FIELDS)
     setMeta(EMPTY_META)
     setAudit(EMPTY_AUDIT)
+    setCleanup(EMPTY_TASK_CLEANUP_FIELDS)
   }, [open, initialClientSpaceId, initialPlaybookKey])
 
   const selectedClient = useMemo(
@@ -145,6 +155,7 @@ export function QuickMissionsHubModal({
       videoFields,
       meta,
       audit,
+      cleanup,
     })
     const missionTitle = `${payload.title} — ${selectedClient.title}`
     toast.info(QUICK_MISSIONS_MESSAGES.startingToast(missionTitle))
@@ -172,6 +183,7 @@ export function QuickMissionsHubModal({
         },
         campaign_id: selectedClient.campaignId,
         space_id: selectedClient.spaceId,
+        ...(parentMissionId ? { parent_mission_id: parentMissionId } : {}),
         idempotency_key: `quick-mission-${selected.id}-${crypto.randomUUID()}`,
       })
       toast.success(QUICK_MISSIONS_MESSAGES.startedToast(missionTitle))
@@ -272,11 +284,13 @@ export function QuickMissionsHubModal({
                   videoFields={videoFields}
                   meta={meta}
                   audit={audit}
+                  cleanup={cleanup}
                   setWebinar={setWebinar}
                   setStaticFields={setStaticFields}
                   setVideoFields={setVideoFields}
                   setMeta={setMeta}
                   setAudit={setAudit}
+                  setCleanup={setCleanup}
                 />
               ) : null}
             </div>
@@ -333,8 +347,12 @@ function buildPayload(
     videoFields: IgOrganicVideoKickoffFields
     meta: MetaAdsLaunchKickoffFields
     audit: MetaAdsAuditKickoffFields
+    cleanup: TaskCleanupKickoffFields
   },
 ) {
+  if (playbookId === TASK_CLEANUP_PLAYBOOK_ID) {
+    return buildTaskCleanupMissionPayload(fields.cleanup)
+  }
   if (playbookId === CLIENT_STRATEGY_PLAYBOOK_ID) {
     return buildClientStrategyMissionPayload(fields.webinar)
   }

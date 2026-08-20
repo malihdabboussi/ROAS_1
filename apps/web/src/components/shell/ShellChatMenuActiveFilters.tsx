@@ -1,7 +1,11 @@
 'use client'
 
 import { X } from 'lucide-react'
-import type { ChatHistoryFilterState, ConversationAgentDisplay } from '@/lib/conversations'
+import {
+  chatHistoryGroupByLabel,
+  type ChatHistoryFilterState,
+  type ConversationAgentDisplay,
+} from '@/lib/conversations'
 
 export function ShellChatMenuActiveFilters({
   historyAgentKey,
@@ -22,6 +26,7 @@ export function ShellChatMenuActiveFilters({
     Boolean(historyAgentKey) ||
     filters.type !== 'all' ||
     filters.lastActivity !== 'all' ||
+    filters.groupBy !== 'none' ||
     Boolean(filters.campaignId || filters.spaceId)
   if (!hasActiveFilters) return null
 
@@ -49,6 +54,14 @@ export function ShellChatMenuActiveFilters({
           onRemove={() =>
             onFiltersChange({ ...filters, campaignId: null, spaceId: null, scopeLabel: null })
           }
+        />
+      ) : null}
+      {filters.groupBy !== 'none' ? (
+        <ChatHistoryFilterChip
+          label={chatHistoryGroupByLabel(filters.groupBy)}
+          description={`Group by: ${chatHistoryGroupByLabel(filters.groupBy)}`}
+          tone="muted"
+          onRemove={() => onFiltersChange({ ...filters, groupBy: 'none' })}
         />
       ) : null}
       {filters.type !== 'all' ? (

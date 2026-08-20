@@ -72,10 +72,11 @@ export function GlobalChatPanel({
     storedMeetingContext,
     activeConversationId,
   })
-  // /home?conv= (Service Request resume, Recents deep links) must prefer the URL
-  // conversation even when meeting context is absent — otherwise the panel can
-  // remount blank after pendingOpenConversationId is consumed.
-  const preferredConversationId = meetingPreferredConversationId ?? routeConversationId
+  // /home?conv= (Recents deep links, Service Request resume) is the user's explicit
+  // pick — it must win over a lingering meeting context, which otherwise hijacks the
+  // panel back to the meeting thread ("clicked chat opens, then goes away"). Meeting
+  // preference still applies on meeting routes, which carry no conv param.
+  const preferredConversationId = routeConversationId ?? meetingPreferredConversationId
   const conversationAwareness = useMeetingConversationAwareness(activeConversationId)
   useEffect(() => {
     if (

@@ -31,6 +31,7 @@ describe('QuickMissionsHubModal', () => {
         ]}
         initialPlaybookKey="static-ad-production"
         initialClientSpaceId="space-1"
+        parentMissionId="mission-parent"
         sourceConversationId="conversation-1"
         onClose={vi.fn()}
         onStarted={onStarted}
@@ -57,6 +58,7 @@ describe('QuickMissionsHubModal', () => {
           title: 'Static Ad Production — Current Course',
           campaign_id: 'campaign-1',
           space_id: 'space-1',
+          parent_mission_id: 'mission-parent',
           input: {
             playbook_id: 'static-ad-production',
             source_conversation_id: 'conversation-1',
@@ -209,6 +211,48 @@ describe('QuickMissionsHubModal', () => {
               offer_context: 'A course for agency owners.',
               selected_scene_ids: ['golden-hour-infinity-pool', 'hillside-pool-terrace'],
             }),
+          },
+        }),
+      ),
+    )
+  })
+
+  it('starts task cleanup with the selected call window', async () => {
+    vi.mocked(createMission).mockResolvedValue({ id: 'mission-cleanup' } as never)
+
+    render(
+      <QuickMissionsHubModal
+        open
+        clients={[{ spaceId: 'space-1', campaignId: 'campaign-1', title: 'Personal Ops' }]}
+        initialPlaybookKey="task-cleanup"
+        initialClientSpaceId="space-1"
+        sourceConversationId="conversation-1"
+        onClose={vi.fn()}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    expect(screen.getByRole('button', { name: 'This week' })).toHaveClass('button-glass-primary')
+    fireEvent.click(screen.getByRole('button', { name: 'Last 7 days' }))
+    fireEvent.change(screen.getByLabelText('Client filter (optional)'), {
+      target: { value: 'Yasir' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Run mission' }))
+
+    await waitFor(() =>
+      expect(createMission).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Task Cleanup — Personal Ops',
+          campaign_id: 'campaign-1',
+          space_id: 'space-1',
+          input: {
+            playbook_id: 'task-cleanup',
+            source_conversation_id: 'conversation-1',
+            source_surface: 'chat_quick_mission',
+            playbook_kickoff: {
+              window: 'last_7d',
+              client_context: 'Yasir',
+            },
           },
         }),
       ),

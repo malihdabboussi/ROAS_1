@@ -200,14 +200,16 @@ export class CompanyCortexRepository {
     orgId: string
     userId: string
     signalId: string
+    source?: 'human_review' | 'auto_high_confidence'
   }) {
+    const source = input.source ?? 'human_review'
     const { error } = await this.serviceClient.client.from('brain_ops_outbox').insert({
       brain_id: input.brainId,
       user_id: input.userId,
       org_id: input.orgId,
       event_type: 'company_cortex_formation',
       dedupe_key: `company-cortex-formation-review-${input.brainId}-${input.signalId}`,
-      payload: { source: 'human_review', signal_ids: [input.signalId] },
+      payload: { source, signal_ids: [input.signalId] },
     })
     if (error) throw new Error(`Failed to enqueue Company Cortex formation: ${error.message}`)
   }

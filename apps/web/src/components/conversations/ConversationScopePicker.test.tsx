@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
     async (): Promise<Array<{ id: string; name: string; system_kind?: string | null }>> => [],
   ),
   assignConversationScope: vi.fn(),
+  addConversationConnection: vi.fn(),
   positionFloatingMenuFromAnchorRect: vi.fn(),
 }))
 
@@ -61,6 +62,7 @@ vi.mock('@/lib/conversations', async (importOriginal) => {
   return {
     ...actual,
     assignConversationScope: mocks.assignConversationScope,
+    addConversationConnection: mocks.addConversationConnection,
   }
 })
 

@@ -1,4 +1,6 @@
 export const SHELL_RIGHT_PANEL_MESSAGES = {
+  create: 'Create',
+  createBack: 'Back',
   homeTasksEmpty: 'No tasks in your queue.',
   homeTasksLoading: 'Loading tasks…',
   chatTasksEmpty: 'Nothing run in this chat yet.',

@@ -27,6 +27,7 @@ import { ChatAssistantTurnService } from './chat-assistant-turn.service'
 import { ChatCompletionSideEffectsService } from './chat-completion-side-effects.service'
 import { ChatContactLinkingService } from './chat-contact-linking.service'
 import { ChatContextAccountingService } from './chat-context-accounting.service'
+import { recordChatOrganizationDataAccess } from './chat-data-access-audit'
 import { ChatDocumentContextService } from './chat-document-context.service'
 import { ChatGatewayInputService } from './chat-gateway-input.service'
 import { ChatMessageEnrichmentService } from './chat-message-enrichment.service'
@@ -56,6 +57,7 @@ import type { ActiveTurnSnapshot } from './chat-turn-query.service'
 import { DocumentParserService } from './document-parser.service'
 import { IntegrationContextService } from './integration-context.service'
 import { MessageTimelineService } from './message-timeline.service'
+import { maybeBindNamedClientCampaign } from './named-client-campaign-bind'
 import { OpenClawProxyService } from './openclaw-proxy.service'
 import { OpenRouterCostService } from './openrouter-cost.service'
 import { SkillRecommendationEventRecorderService } from './skill-recommendation-event-recorder.service'
@@ -397,7 +399,7 @@ export class ChatService {
     })
     selectedModelInput = stableTurnContext.selectedModelInput
     const {
-      resolvedCampaignId,
+      resolvedCampaignId: stableResolvedCampaignId,
       runtime,
       resolvedAgentId,
       selectedModelSource,
@@ -405,6 +407,25 @@ export class ChatService {
       selectedSettings,
       gatewayModelId,
     } = stableTurnContext
+    // §11.2a (app side): a message that NAMES a client binds CONNECTIONS before
+    // the turn — deterministic, so the Campaign Brain preload and campaign
+    // tools fire without waiting for the model to call search_campaign_brain.
+    const namedClientBind = await maybeBindNamedClientCampaign(turnSession.getDbSupabase(), {
+      conversationId,
+      userId,
+      orgId,
+      text: content,
+      currentCampaignId: stableResolvedCampaignId ?? null,
+    }).catch((err) => {
+      this.logger.warn(`Named-client campaign bind skipped: ${err}`)
+      return null
+    })
+    if (namedClientBind) {
+      this.logger.log(
+        `[CONNECTIONS] Bound conversation ${conversationId} to campaign ${namedClientBind.campaignId} (named "${namedClientBind.candidate}")`,
+      )
+    }
+    const resolvedCampaignId = namedClientBind?.campaignId ?? stableResolvedCampaignId
     this.logger.log(
       `[ModelRouter] strategy=${isModelStrategy(selectedModelInput) ? selectedModelInput : 'manual'} source=${selectedModelSource} task=chat requested=${selectedSettings.requestedModelId} resolved=${gatewayModelId} speed=${selectedSettings.request.speed_mode ?? 'standard'} reason=${resolvedModelSelection.reason}`,
     )
@@ -419,6 +440,7 @@ export class ChatService {
       instructions,
       measuredContextSlices,
       inputArray,
+      retrievalReceipts,
     } = await this.collaborators.getChatTurnGatewayPreparationService().prepare({
       conversationId,
       content,
@@ -443,7 +465,9 @@ export class ChatService {
       recordTimingSpan,
       logger: this.logger,
     })
-    await this.recordOrganizationDataAccess({
+    await recordChatOrganizationDataAccess({
+      client: this.svc.client,
+      logger: this.logger,
       orgId,
       orgMemberId,
       userId,
@@ -512,6 +536,7 @@ export class ChatService {
       logger: this.logger,
       referenceContextService,
     })
+    await streamingState.sendRetrievalReceipts(retrievalReceipts)
     turnSession.setRequestContextRefreshState({
       conversationId,
       userId,
@@ -573,29 +598,5 @@ export class ChatService {
       hasActiveWorkingSetEntries: (workingSet) =>
         referenceContextService.hasActiveWorkingSetEntries(workingSet),
     })
-  }
-
-  private async recordOrganizationDataAccess(input: {
-    orgId?: string
-    orgMemberId?: string | null
-    userId: string
-    conversationId: string
-    allowed: boolean
-  }): Promise<void> {
-    if (!input.orgId || !input.allowed) return
-    const { error } = await this.svc.client.from('ai_data_access_audit').insert({
-      org_id: input.orgId,
-      org_member_id: input.orgMemberId ?? null,
-      user_id: input.userId,
-      surface: 'ai_chat',
-      resource_type: 'conversation',
-      resource_id: input.conversationId,
-      outcome: 'allowed',
-      reason: 'organization_wide_ai_data_access_enabled',
-      metadata: {},
-    })
-    if (error) {
-      this.logger.warn(`AI data access audit failed: ${error.message}`)
-    }
   }
 }
