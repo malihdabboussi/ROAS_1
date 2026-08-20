@@ -8,6 +8,7 @@ import {
   channelMembersToRosterKeys,
 } from '@/components/channels/AddPeopleToChannelModal'
 import { StartBrainstormModal } from '@/components/channels/StartBrainstormModal'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
 import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
@@ -266,8 +267,8 @@ export function ChannelChatContainer({
       />
 
       {channelsLoading && !selectedChannel ? (
-        <div className="flex min-h-0 flex-1 items-center justify-center">
-          <p className="body-2 text-muted-foreground">Loading channel…</p>
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <PageSkeleton showHeader={false} rows={8} label="Loading channel…" />
         </div>
       ) : (
         <div className="flex h-full min-h-0 min-w-0 flex-1 overflow-hidden">

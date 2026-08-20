@@ -24,6 +24,8 @@ Chat launches missions from the shared **Create** catalog; the former standalone
 
 The **Client Strategy** playbook is the reusable non-webinar strategy path. It runs the validated opening stages of Webinar Fulfillment—Atlas campaign/Brain context preparation followed by the strategist's pre-call map—and stops before webinar call intake, production, or activation. Its native output is `Client Strategy Map`. Before planning, it uses the same agency-team provisioning path as the other guided playbooks, so an empty campaign team is populated instead of leaving the mission blocked. Mission Details shows **Extend this mission** under the last subtask. Client Strategy tracks can continue in place with **Post-call strategy** (Atlas transcript intake and a Reed/Nate Strategy v2 step on the same mission). The same menu also starts any other Quick Mission playbook through the existing kickoff hub, linked as a child via `parent_mission_id`. Completed or stuck steps can be **Rerun** from the subtask header. Webinar Fulfillment already contains the post-call stages, so it does not offer that in-place continue action.
 
+The **Task Cleanup** playbook is the operator-wide call-and-task audit. Kickoff chooses a call window (`this_week`, `last_7d`, or `today`) plus an optional client filter. Analysis covers the operator's calls in that window, not only the attached client, unless a filter is set. The selected campaign/Space is where the board and tasks land. Atlas gathers Fathom/Fireflies transcripts and open native tasks, then writes a native `Task Cleanup Board` with Outstanding for you, Proposed new, Already open (keep, with task ids), and Close candidates. It does not call `create_task` until the operator uses **Approve & continue** on the human gate. After approval, Atlas files only approved Proposed new rows as native Space tasks and only completes Close candidates that already have a durable task id. It does not create Service Requests or ClickUp-only work. Before planning, it uses the same agency-team provisioning path as the other guided playbooks.
+
 The Missions Space view now has **Mission List** and **Mission Views** surfaces. The list remains the operational table. Mission Views presents supported deterministic playbooks as action-oriented reports using one registry-backed phase contract rather than a custom page per mission.
 
 The global **Start playbook** and Chat **Quick Missions** dialogs expose the same canonical Static Ad Production and IG Organic Video payload builders used by Ads Research. Quick Missions prefills the attached chat Space/campaign or active Space, then presents the searchable campaign-and-Space picker for explicit confirmation. A successful Chat launch persists a typed Mission card in the originating conversation instead of adding a browser-only receipt. The mission input records `source_conversation_id` and `source_surface = chat_quick_mission`, preserving the launch origin through worker execution and refresh. Receipt creation is idempotent by mission id, so retrying the callback cannot duplicate the card. Static production starts with one of three explicit lanes: Validate Messaging, qualified image brief generation, or the static-ad-book template library. The Builder and chat clarification cards show visual examples for these lanes and the Static Ad Book formats. An ambiguous conversational request such as “make me ads” receives a turn-level routing guard that requires the three-choice clarification card before copy or rendering; Slack receives the same choices as numbered text. The guard requires a create verb within five words of an ads phrase, ignores ad-account language, and on long pastes only reads the first and last 240 characters so buried thread text cannot open the card. An explicit lane stays authoritative, so Validate Messaging and Image Brief cannot fall back to Myth vs. System. Static Ad Book then asks for a format family and one or more matching layouts, while an existing Builder kickoff or an explicit mode/format skips duplicate questions. No production lane or Static Ad Book format is preselected. Template runs support multiple selected formats with an independent variation count for each; both static and video production default to **Write for me**, while **Use my exact copy** expands the required copy fields. Video runs collect one or more scenes, footage strategy, exact sticker copy or write-for-me context, CTA, and an approved emoji. The dialogs cannot submit either production playbook until the required copy and output selections are present.
@@ -40,8 +42,22 @@ Static Ad Production missions persist `production_mode`, exact output count, per
 - Webinar Fulfillment groups the existing subtasks and deliverables into Strategy, Copy, Creative, and Activation phases. Each phase links its native outputs and opens the exact subtask in Mission Details. The first unresolved human gate appears as the primary `Review now` action.
 - Meta Ads Launch groups preparation, paused build, and activation.
 - Meta Ads Audit groups analysis, recommendations, and applied verification.
+- Task Cleanup groups gather, board plus approval, and filing.
 
 The report does not duplicate mission state. Completion, current action, approvals, and outputs are derived from persisted `missions`, `mission_subtasks`, and `mission_deliverables`. Mission Details remains the execution and feedback authority.
+
+### Task Cleanup kickoff
+
+```json
+{
+  "playbook_id": "task-cleanup",
+  "playbook_kickoff": {
+    "window": "this_week",
+    "client_context": "optional client name",
+    "notes": "optional operator notes"
+  }
+}
+```
 
 ## Mission execution leases and restart recovery
 
@@ -315,6 +331,8 @@ If the direct pool hits a transport failure, the worker removes it from service 
 Outbox mission-status validation uses the direct pool when available, keeping queue publication independent of PostgREST latency. The worker's Supabase HTTP fallback allows 60 seconds per request with two retries, matching the API client. This is intentionally longer than the former seven-second window: a production Webinar Fulfillment smoke run reached an active BullMQ consumer while authenticated PostgREST reads took about 29 seconds, so the shorter timeout repeatedly aborted otherwise viable requests and left the mission in `inbox`.
 
 ## Decision Log
+
+- 2026-08-19: Added Task Cleanup as a Quick Mission. Atlas audits a call window plus open native tasks, writes `Task Cleanup Board`, waits for Approve & continue, then files only approved proposed work as native `create_task` rows. Analysis is operator-wide unless a client filter is set; the selected Space is where the board and tasks land.
 
 - 2026-08-19: Mission Details **Extend this mission** sits under the last subtask. Post-call stays an in-place Client Strategy continuation. Other catalog playbooks open the existing Quick Missions hub with this mission as `parent_mission_id` instead of appending a second playbook onto the same plan.
 - 2026-08-19: Client Strategy stays one mission. Post-call is an in-place track extension (Atlas transcript + strategist Strategy v2) instead of a new mission; rerun uses the existing manager subtask retry. Webinar Fulfillment is excluded because those steps are already in its plan.

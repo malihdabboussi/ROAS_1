@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ArrowUp, CalendarDays, RefreshCw, Search, SendHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { formatRelativeArtifactDate, openArtifactInShell } from '@/lib/artifacts'
 import { cn } from '@/lib/utils/cn'
 import {
@@ -82,8 +82,8 @@ export function DelegationDeskWorkspace() {
 
   if (loading) {
     return (
-      <main className="flex h-full items-center justify-center">
-        <VibeyLoadingOrb size="lg" text={DELEGATION_DESK_MESSAGES.LOADING} />
+      <main className="h-full">
+        <PageSkeleton label={DELEGATION_DESK_MESSAGES.LOADING} />
       </main>
     )
   }

@@ -5,7 +5,7 @@ import { ArrowRight, Check, Circle, LayoutDashboard } from 'lucide-react'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
 import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { MissionDetailModal } from '@/components/missions/MissionDetailModalAdapter'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
   fetchDeliverablesForMissions,
   fetchSubtasks,
@@ -74,8 +74,8 @@ export function MissionViewsSurface({
 
   if (selected && loading) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <VibeyLoadingOrb text="Loading mission view…" state="processing" size="lg" />
+      <div className="flex-1">
+        <PageSkeleton showHeader={false} rows={6} label="Loading mission view…" />
       </div>
     )
   }

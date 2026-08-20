@@ -122,7 +122,9 @@ export function ConversationScopePickerMenus({
           </ScopeTextButton>
           {showPrograms ? (
             <>
-              <p className="hub-menu-section-label !mb-0 px-3 pt-2">{M.programs}</p>
+              {programs.length > 0 ? (
+                <p className="hub-menu-section-label !mb-0 px-3 pt-2">{M.programs}</p>
+              ) : null}
               {programs.map((program) => (
                 <ScopeFlyoutRow
                   key={program.id}
@@ -132,6 +134,11 @@ export function ConversationScopePickerMenus({
                   onHover={(row) => onOpenProgram(program.id, row)}
                 />
               ))}
+              {/* Program-less campaigns are NOT programs — give them their own
+                  section so "Claude Club Webinar" never reads as a program. */}
+              {ungroupedCampaigns.length > 0 ? (
+                <p className="hub-menu-section-label !mb-0 px-3 pt-2">{M.campaigns}</p>
+              ) : null}
               {ungroupedCampaigns.map((campaign) => (
                 <ScopeCampaignRow
                   key={campaign.id}

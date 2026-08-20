@@ -2,6 +2,7 @@
 
 import { useMemo, type ReactNode } from 'react'
 import { Bot, Brain, Building2, CheckCircle2, Loader2, Share2, Users, XCircle } from 'lucide-react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { CampaignBrainIconDisplay } from '@/features/brain/components/CampaignBrainIconPicker'
 import { useBrainQueue, type BrainQueueUiJob } from '@/features/brain/hooks/use-brain-queue'
 import { useBrainScopeNavOptions } from '@/features/brain/hooks/use-brain-scope-nav-options'
@@ -151,9 +152,8 @@ export function TrainingActivityTab({ open }: { open: boolean }) {
         </div>
         <div className="min-h-0 flex-1 overflow-auto">
           {loading && sortedJobs.length === 0 ? (
-            <div className="gap-spacing-2 text-muted-foreground p-spacing-4 flex items-center justify-center">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="body-4">Loading activity…</span>
+            <div className="p-spacing-4">
+              <ListSkeleton rows={4} label="Loading activity…" />
             </div>
           ) : sortedJobs.length === 0 ? (
             <p className="body-4 text-muted-foreground p-spacing-4 text-center">

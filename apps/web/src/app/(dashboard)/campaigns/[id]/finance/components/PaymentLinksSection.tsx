@@ -1,6 +1,7 @@
 'use client'
 
 import { ChevronDown, Copy, ExternalLink, Plus } from 'lucide-react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import type { StripePaymentLink } from '@/features/studio/services/analytics.service'
 import { NEW_BTN_CLASS } from '../constants'
 import { fmtPrice } from '../utils/financeFormatters'
@@ -59,7 +60,7 @@ export function PaymentLinksSection({
       {linksOpen && (
         <div className="mt-4">
           {objectsLoading ? (
-            <p className="body-4 text-muted-foreground">Loading...</p>
+            <ListSkeleton rows={3} label="Loading..." />
           ) : paymentLinks.length === 0 ? (
             <p className="body-4 text-muted-foreground">No payment links yet.</p>
           ) : linksFiltered.length === 0 ? (
