@@ -31,6 +31,7 @@ import {
   findConversationScopeSpace,
   placeSpacesMenuFromRowRect,
   readConversationSpaceId,
+  sameConversationScopeMenuLayout,
   type ConversationScopeMenuGeom,
   type ConversationScopePickerHandle,
   type ConversationScopePickerProps,
@@ -147,28 +148,23 @@ export const ConversationScopePicker = forwardRef<
       )
       spacesGeom = placeSpacesMenuFromRowRect(hoverRowEl.getBoundingClientRect(), subPlacementH)
     }
-    setMenuLayout({ campaign: campaignGeom, spaces: spacesGeom })
+    setMenuLayout((prev) =>
+      sameConversationScopeMenuLayout(prev, campaignGeom, spacesGeom)
+        ? prev
+        : { campaign: campaignGeom, spaces: spacesGeom },
+    )
   }, [open, mounted, submenu, hoverRowEl, bannerAnchorRef])
 
   useLayoutEffect(() => {
     if (!open) {
-      setMenuLayout(null)
+      setMenuLayout((prev) => (prev == null ? prev : null))
       openFromBannerRef.current = false
-      setHoverRowEl(null)
+      setHoverRowEl((prev) => (prev == null ? prev : null))
       return
     }
     if (!mounted) return
     measureMenus()
-  }, [
-    open,
-    mounted,
-    submenu,
-    hoverRowEl,
-    measureMenus,
-    campaigns.length,
-    loadingCampaignId,
-    clientSearch,
-  ])
+  }, [open, mounted, submenu, hoverRowEl, measureMenus, clientSearch])
 
   useEffect(() => {
     if (!open) return
@@ -297,7 +293,7 @@ export const ConversationScopePicker = forwardRef<
   const visibleClients = filterScopeClients(scopeLists.clients, clientSearch)
   const submenuCampaign =
     submenu?.type === 'spaces'
-      ? campaigns.find((campaign) => campaign.id === submenu.campaignId) ?? null
+      ? (campaigns.find((campaign) => campaign.id === submenu.campaignId) ?? null)
       : null
   const activeSpaces = submenu?.type === 'spaces' ? spacesByCampaign[submenu.campaignId] : undefined
   const visibleSpaces = activeSpaces?.filter(
@@ -334,18 +330,28 @@ export const ConversationScopePicker = forwardRef<
         onSelectGeneral={() => void handleSelectScope(generalCampaign?.id ?? null, null)}
         onSelectCampaign={(nextCampaignId) => void handleSelectScope(nextCampaignId, null)}
         onOpenProgram={(programId, row) => {
-          setHoverRowEl(row)
-          setSubmenu({ type: 'program', programId })
+          setHoverRowEl((prev) => (prev === row ? prev : row))
+          setSubmenu((prev) =>
+            prev?.type === 'program' && prev.programId === programId
+              ? prev
+              : { type: 'program', programId },
+          )
         }}
         onOpenClients={(row) => {
-          setHoverRowEl(row)
-          setSubmenu({ type: 'clients' })
+          setHoverRowEl((prev) => (prev === row ? prev : row))
+          setSubmenu((prev) => (prev?.type === 'clients' ? prev : { type: 'clients' }))
         }}
         onOpenCampaignSpaces={(nextCampaignId, row) => {
           // Keep the Clients-folder anchor when drilling client → spaces so the
           // flyout does not jump after the client row unmounts.
-          if (submenu?.type !== 'clients') setHoverRowEl(row)
-          setSubmenu({ type: 'spaces', campaignId: nextCampaignId })
+          if (submenu?.type !== 'clients') {
+            setHoverRowEl((prev) => (prev === row ? prev : row))
+          }
+          setSubmenu((prev) =>
+            prev?.type === 'spaces' && prev.campaignId === nextCampaignId
+              ? prev
+              : { type: 'spaces', campaignId: nextCampaignId },
+          )
           fetchSpacesForCampaign(nextCampaignId)
         }}
         onSelectSpace={(nextCampaignId, nextSpaceId) =>

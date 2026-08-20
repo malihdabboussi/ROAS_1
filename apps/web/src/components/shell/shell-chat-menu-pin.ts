@@ -6,12 +6,51 @@ import {
   type Conversation,
 } from '@/lib/conversations'
 
+export function mergeConversationsWithStore(
+  prev: Conversation[],
+  storeConversations: Conversation[],
+  historyAgentKey: string | null,
+): Conversation[] {
+  const scopedStoreRows = storeConversations.filter(
+    (row) => historyAgentKey === null || row.agent_id === historyAgentKey,
+  )
+  if (scopedStoreRows.length === 0) return prev
+  const previousIds = new Set(prev.map((row) => row.id))
+  const storeRowById = new Map(scopedStoreRows.map((row) => [row.id, row]))
+  const insertedRows = scopedStoreRows.filter((row) => !previousIds.has(row.id))
+  let changed = insertedRows.length > 0
+  const mergedRows = prev.map((row) => {
+    const storeRow = storeRowById.get(row.id)
+    if (!storeRow) return row
+    const merged = mergeStoreConversationRow(row, storeRow)
+    if (merged !== row) changed = true
+    return merged
+  })
+  if (!changed) return prev
+  return [...insertedRows, ...mergedRows]
+}
+
 export function mergeStoreConversationRow(row: Conversation, storeRow: Conversation): Conversation {
-  return {
+  const metadata = { ...row.metadata, ...storeRow.metadata }
+  const next: Conversation = {
     ...row,
     ...storeRow,
-    metadata: { ...row.metadata, ...storeRow.metadata },
+    metadata,
   }
+  if (
+    next.title === row.title &&
+    next.updated_at === row.updated_at &&
+    next.campaign_id === row.campaign_id &&
+    next.agent_id === row.agent_id &&
+    next.status === row.status &&
+    next.last_message_at === row.last_message_at &&
+    next.is_unread === row.is_unread &&
+    next.needs_action === row.needs_action &&
+    JSON.stringify(next.metadata) === JSON.stringify(row.metadata)
+  ) {
+    return row
+  }
+  return next
 }
 
 function applyMetadata(

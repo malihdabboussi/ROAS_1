@@ -25,7 +25,7 @@ import {
 } from '@/lib/conversations'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
 import { historyConversationOpenPlan } from './shell-chat-menu-open'
-import { mergeStoreConversationRow, persistConversationPinned } from './shell-chat-menu-pin'
+import { mergeConversationsWithStore, persistConversationPinned } from './shell-chat-menu-pin'
 import { conversationCacheKey, peekConversationCache } from './shell-conversation-cache'
 import { isShellHomeRoute } from './shell-route-policy'
 import { ShellChatMenuActiveFilters } from './ShellChatMenuActiveFilters'
@@ -105,21 +105,9 @@ export function ShellChatMenu({
 
   useEffect(() => {
     if (storeConversations.length === 0) return
-    setConversations((prev) => {
-      const scopedStoreRows = storeConversations.filter(
-        (row) => historyAgentKey === null || row.agent_id === historyAgentKey,
-      )
-      if (scopedStoreRows.length === 0) return prev
-      const previousIds = new Set(prev.map((row) => row.id))
-      const storeRowById = new Map(scopedStoreRows.map((row) => [row.id, row]))
-      const insertedRows = scopedStoreRows.filter((row) => !previousIds.has(row.id))
-      const mergedRows = prev.map((row) => {
-        const storeRow = storeRowById.get(row.id)
-        if (!storeRow) return row
-        return mergeStoreConversationRow(row, storeRow)
-      })
-      return [...insertedRows, ...mergedRows]
-    })
+    setConversations((prev) =>
+      mergeConversationsWithStore(prev, storeConversations, historyAgentKey),
+    )
   }, [historyAgentKey, storeConversations])
   const chatAgents = useMemo(
     () => roster.filter((entry) => entry.kind === 'agent' && Boolean(entry.agent_key?.trim())),
