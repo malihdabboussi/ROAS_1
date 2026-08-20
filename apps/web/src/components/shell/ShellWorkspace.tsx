@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatPanel'
+import { openArtifactPreviewInShell } from '@/lib/artifacts'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { ShellArtifactViewerAdapter } from '@/features/studio/components/preview/ShellArtifactViewerAdapter'
@@ -38,6 +39,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams()
   const chatParam = searchParams.get('chat')
   const convParam = searchParams.get('conv')
+  const missionParam = searchParams.get('mission')
 
   const workAreaOpen = useShellStore((s) => s.workAreaOpen)
   const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
@@ -137,6 +139,18 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     router.replace(`/home?conv=${encodeURIComponent(activeConversationId)}`)
   }, [activeConversationId, chatParam, pathname, router])
 
+  // `/home?mission=<id>` (notifications, mission links) opens the mission as the shell's
+  // right-side card. The legacy handler lived in the Home dashboard content, which no
+  // longer mounts under the shell greeting — the deep link silently did nothing.
+  useEffect(() => {
+    if (!missionParam || !isShellHomeRoute(pathname)) return
+    openArtifactPreviewInShell({
+      artifactType: 'mission',
+      artifactId: missionParam,
+      name: 'Mission',
+    })
+  }, [missionParam, pathname])
+
   const onSpaces = pathname.startsWith('/spaces')
   const workAreaCollapsible = !showFullNewChat && !showFullConversation
   const workAreaRequestedOpen = workAreaCollapsible ? workAreaOpen : true
@@ -146,7 +160,9 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   )
   const workAreaCollapsed = workAreaCollapsible && !workAreaMounted
   const mobileChatVisible = workAreaCollapsible && !desktop && chatDrawerOpen && !artifactTarget
-  const artifactBesideConversation = Boolean(artifactTarget) && showFullConversation && desktop
+  // New chat keeps an open card docked right (chat left, card right) instead of hiding it.
+  const artifactBesideConversation =
+    Boolean(artifactTarget) && (showFullConversation || showFullNewChat) && desktop
   const artifactReplacesWorkArea = Boolean(artifactTarget) && !artifactBesideConversation
 
   useEffect(() => {

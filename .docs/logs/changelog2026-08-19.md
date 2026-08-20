@@ -251,3 +251,9 @@ Why: The branch conflicted with the launches page and UI-pass docs after #332–
 Impact: Clients pipeline order can merge onto main without dropping launches coverage.
 
 Files: `page-grader.integration.test.ts`, `frontend-shared-surfaces.md`, `agent-follow-up-work.md`
+
+## [2026-08-19 17:50] - [FIX]
+What: (1) New chat with an open right-side card (mission viewer, artifact) now shows the fresh-chat greeting on the left with the card docked right, instead of the card covering the greeting so the click looked broken. (2) `/home?mission=<id>` deep links (notifications, mission rows) open the mission as the shell right-side card again — the legacy handler lived in the Home dashboard content, which no longer mounts under the shell greeting, so the link silently did nothing. (3) Slack conversations are named from the raw inbound message instead of the prompt-wrapped turn, which led with the injected `[Ask kind]` classification block — sidebar rows were all "[Ask kind] Kind: client …". Existing mis-titled rows self-heal on their next message.
+Why: Dylan's PR-review reports: New chat appeared to do nothing with a mission card open; recents full of "[Ask kind]" titles.
+Impact: New chat always visibly responds (chat left, card right; close the card for full view). Mission deep links work under the Simple shell. Slack chat titles read as topics.
+Files: `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/api/src/modules/slack/services/slack-service-events.base.ts`, `apps/api/src/modules/slack/services/__tests__/slack-route-title-text.test.ts`
