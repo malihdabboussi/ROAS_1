@@ -1,6 +1,6 @@
 # Claude/ChatGPT shell (apps/web)
 
-Last Modified: 2026-08-18
+Last Modified: 2026-08-20
 
 ## Overview
 
@@ -83,7 +83,7 @@ The history list has its own persisted drag width and collapse state. Dragging i
 
 ### 2026-08-17: Connections rows open their artifact; meetings show by name
 
-- A connected meeting shows the specific meeting title (not the generic Meetings space). Clicking the row opens that meeting workspace; the meeting row is not removable.
+- A connected meeting shows the specific **meeting** title from meeting context, `metadata.meeting_title`, or the work-area page — never the chat or recap title. Clicking the row opens that meeting workspace; the meeting row is not removable.
 - Campaign and Space connection rows are likewise clickable to open that attachment (a space opens the space, not its parent campaign); **X** remains remove-only for those rows.
 
 ### 2026-08-17: Artifacts stay open when moving screens
@@ -156,7 +156,8 @@ The history list has its own persisted drag width and collapse state. Dragging i
 - **2026-08-12:** Sidebar navigation must never replace an open chat. It may offer the target screen's remembered conversation non-blockingly; an empty pane starts fresh. The association stays shell-local and does not extend the conversation API or compete with Space/channel scope ownership.
 - **2026-08-14:** Opening a meeting workspace must not replace an open chat. Continue in chat is the only control that selects the meeting's linked conversation.
 - **2026-08-17:** Meeting workspace header Continue in chat is the chat switch. Back returns to Agenda. The header no longer has a close X that leaves the work area empty.
-- **2026-08-19:** Continue in chat sits on the meeting action row with the All Meetings task status picker and Recap / Clean up / Follow-up. Back still returns to Agenda.
+- **2026-08-19:** Continue in chat sits on the meeting action row with the All Meetings Call status picker and Recap / Clean up / Follow-up. Back still returns to Agenda.
+- **2026-08-20:** Meeting workspace Call status is `custom_data.call_status` (Live / Completed / No Show / Rescheduled), the same field All Meetings shows. Connections labels the linked meeting with that meeting's name, not the recap or chat title.
 
 - **2026-08-11:** Cross-chat recall uses a dedicated authenticated, read-only action rather than broadening current-thread context. Search is scoped by the resolved user and organization, matches active conversation titles, and returns only bounded excerpts needed to identify the thread.
 - **2026-08-11:** Full-screen Home chat keeps the page-restore control visible in the top-right corner. Restoring a recent page preserves the conversation id so chat transitions back to the attached drawer instead of losing the current thread.
@@ -235,7 +236,7 @@ The history list has its own persisted drag width and collapse state. Dragging i
 
 # Claude/ChatGPT shell (apps/web)
 
-Last Modified: 2026-08-18
+Last Modified: 2026-08-20
 
 ## Overview
 

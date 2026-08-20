@@ -61,7 +61,12 @@ export class CompanyCortexFormationService {
       limit: 50,
       signalIds: requestedSignalIds,
     })
-    if (signals.length === 0) return { objectsCreated: 0, edgesCreated: 0, signalsMerged: 0 }
+    if (signals.length === 0) {
+      this.logger.warn(
+        `company_cortex_formation: zero active signals eligible (brain_id=${input.brainId}, outbox_id=${input.outboxId}, requested=${requestedSignalIds?.length ?? 0})`,
+      )
+      return { objectsCreated: 0, edgesCreated: 0, signalsMerged: 0 }
+    }
     const activeSignalIds = new Set(signals.map((signal) => String(signal.id)))
 
     const fakeMission = {

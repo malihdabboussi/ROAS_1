@@ -1,8 +1,8 @@
 'use client'
 
 import {
-  needsGeneratedConversationTitle,
   resolveSuggestedConversationTitle,
+  shouldAutogenConversationTitle,
 } from '@/lib/conversations/conversation-title'
 import { renameConversation } from '@/lib/conversations/conversations-api'
 import { useChatStore } from '../store/use-chat-store'
@@ -30,6 +30,7 @@ export function scheduleConversationTitleSuggestion(
   void suggestConversationTitle(trimmed)
     .then(async (res) => {
       const existing = useChatStore.getState().conversations.find((c) => c.id === conversationId)
+      if (existing && !shouldAutogenConversationTitle(existing, trimmed)) return
       const title = resolveSuggestedConversationTitle(res.title, trimmed, 60)
       if (!title || title === existing?.title) return
       await renameConversation(conversationId, title)
@@ -40,7 +41,7 @@ export function scheduleConversationTitleSuggestion(
     })
     .catch(async () => {
       const existing = useChatStore.getState().conversations.find((c) => c.id === conversationId)
-      if (existing && !needsGeneratedConversationTitle(existing.title, trimmed)) return
+      if (existing && !shouldAutogenConversationTitle(existing, trimmed)) return
       const title = resolveSuggestedConversationTitle(null, trimmed, 60)
       if (!title || title === existing?.title) return
       try {
@@ -77,7 +78,7 @@ export function initConversationTitleAutogen(): void {
       const firstUser = messages.find((message) => message.role === 'user')
       const content = typeof firstUser?.content === 'string' ? firstUser.content : ''
       const existing = conversations.find((row) => row.id === conversationId)
-      if (existing && !needsGeneratedConversationTitle(existing.title, content)) continue
+      if (existing && !shouldAutogenConversationTitle(existing, content)) continue
       if (content.trim()) scheduleConversationTitleSuggestion(conversationId, content)
     }
   }

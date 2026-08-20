@@ -167,7 +167,10 @@ describe('ArtifactLegacyTeamBrainService', () => {
       if (record.table === 'agent_definitions') {
         return {
           data: [
-            { file_name: 'SOUL.md', content: 'DISC Profile: D/I (Driver)\n## Values\n1. **Clarity**' },
+            {
+              file_name: 'SOUL.md',
+              content: 'DISC Profile: D/I (Driver)\n## Values\n1. **Clarity**',
+            },
             { file_name: 'ROLE.md', content: '## Purpose\nWrite customer-facing copy.\n## Next' },
             {
               file_name: 'IDENTITY.md',
@@ -263,16 +266,14 @@ describe('ArtifactLegacyTeamBrainService', () => {
     const service = new ArtifactLegacyTeamBrainService()
     const target = makeTarget(client)
 
-    const audit = (await service.auditTeamAgentsAndSkills(
-      target,
-      {},
-      'session-key',
-    )) as Record<string, any>
-    const coverage = (await service.compareTeamSkillCoverage(
-      target,
-      {},
-      'session-key',
-    )) as Record<string, any>
+    const audit = (await service.auditTeamAgentsAndSkills(target, {}, 'session-key')) as Record<
+      string,
+      any
+    >
+    const coverage = (await service.compareTeamSkillCoverage(target, {}, 'session-key')) as Record<
+      string,
+      any
+    >
     const summary = (await service.summarizeAgentCapabilities(
       target,
       { agent_key: 'Copywriter!' },
@@ -346,16 +347,20 @@ describe('ArtifactLegacyTeamBrainService', () => {
         }
       }
       if (record.table === 'agents_registry') {
-        return { data: [{ agent_key: 'copywriter', role: 'Copywriter', level: 'employee' }], error: null }
+        return {
+          data: [{ agent_key: 'copywriter', role: 'Copywriter', level: 'employee' }],
+          error: null,
+        }
       }
       return { data: null, error: null }
     })
     const service = new ArtifactLegacyTeamBrainService()
 
-    const result = (await service.listCampaignTeam(makeTarget(client), {}, 'session-key')) as Record<
-      string,
-      any
-    >
+    const result = (await service.listCampaignTeam(
+      makeTarget(client),
+      {},
+      'session-key',
+    )) as Record<string, any>
 
     expect(result).toMatchObject({
       success: true,
@@ -510,6 +515,7 @@ describe('ArtifactLegacyTeamBrainService', () => {
       client,
       'hash-1',
       'user-1',
+      undefined,
     )
     expect(target.memoriesRepo.create).toHaveBeenCalledWith(
       client,
@@ -532,6 +538,58 @@ describe('ArtifactLegacyTeamBrainService', () => {
     expect(records.find((record) => record.table === 'conversations')).toMatchObject({
       filters: { id: 'conversation-1' },
     })
+  })
+
+  it('saves a person-period fork memory into the TARGET person brain, not the default user brain', async () => {
+    // Prod bug: 400 fork jobs "succeeded" while every save landed in the org
+    // owner's default user brain — record.brain_id was only set for customer
+    // targets, and dedup checked the default brain.
+    const { client } = makeQueryClient(() => ({ data: null, error: null }))
+    const target = makeTarget(client)
+    const service = new ArtifactLegacyTeamBrainService()
+    const sessionKey = 'agent:atlas:atlas-user-1-brain-job-42::brain:user:person-brain-nefi'
+
+    const result = await service.saveMemory(
+      target,
+      {
+        content: 'Nefi runs the Yasir webinar follow-up sequence every Monday.',
+        memory_type: 'fact',
+        source_type: 'slack_period',
+      },
+      sessionKey,
+    )
+
+    expect(result).toEqual({ success: true, memory_id: 'memory-1' })
+    expect(target.memoriesRepo.checkDuplicate).toHaveBeenCalledWith(
+      client,
+      'hash-1',
+      'user-1',
+      'person-brain-nefi',
+    )
+    expect(target.memoriesRepo.create).toHaveBeenCalledWith(
+      client,
+      expect.objectContaining({ brain_id: 'person-brain-nefi', source_type: 'slack_period' }),
+    )
+  })
+
+  it('honors an explicit brain_id input outside brain jobs', async () => {
+    const { client } = makeQueryClient(() => ({ data: null, error: null }))
+    const target = makeTarget(client)
+    const service = new ArtifactLegacyTeamBrainService()
+
+    await service.saveMemory(
+      target,
+      {
+        content: 'Explicit person brain note that is long enough to store.',
+        memory_type: 'fact',
+        brain_id: 'person-brain-explicit',
+      },
+      'session-key',
+    )
+    expect(target.memoriesRepo.create).toHaveBeenCalledWith(
+      client,
+      expect.objectContaining({ brain_id: 'person-brain-explicit' }),
+    )
   })
 
   it('classifies credit-aware errors for user-facing artifact failures', () => {
