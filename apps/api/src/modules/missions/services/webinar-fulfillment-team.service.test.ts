@@ -17,5 +17,6 @@ describe('WebinarFulfillmentTeamService playbook support', () => {
     expect(service.supportsPlaybook('static-ad-production')).toBe(true)
     expect(service.supportsPlaybook('meta-ads-launch')).toBe(true)
     expect(service.supportsPlaybook('meta-ads-audit')).toBe(true)
+    expect(service.supportsPlaybook('task-cleanup')).toBe(true)
   })
 })

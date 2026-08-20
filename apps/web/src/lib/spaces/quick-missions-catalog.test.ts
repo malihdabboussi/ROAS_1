@@ -11,6 +11,7 @@ describe('quick-missions-catalog', () => {
     expect(findQuickMissionByKey('webinar-fulfillment')?.name).toBe('Webinar Fulfillment')
     expect(findQuickMissionByKey('client-strategy')?.name).toBe('Client Strategy')
     expect(findQuickMissionByKey('meta-ads-audit')?.id).toBe('meta-ads-audit')
+    expect(findQuickMissionByKey('task-cleanup')?.name).toBe('Task Cleanup')
     expect(findQuickMissionByKey('missing')).toBeUndefined()
   })
 })

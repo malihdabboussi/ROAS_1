@@ -27,4 +27,20 @@ describe('mission view registry', () => {
     expect(getMissionViewDefinition(undefined)).toBeUndefined()
     expect(getMissionViewDefinition('unknown')).toBeUndefined()
   })
+
+  it('maps task cleanup work into gather, board, and file phases', () => {
+    const definition = getMissionViewDefinition('task-cleanup')
+    const board = definition?.phases.find((phase) => phase.id === 'board')
+    expect(definition?.eyebrow).toBe('TASK CLEANUP')
+    expect(
+      matchesMissionPhase(board!, {
+        title: 'Task 2 — Task Cleanup Board',
+      } as MissionSubtask),
+    ).toBe(true)
+    expect(
+      matchesMissionPhaseDeliverable(board!, {
+        title: 'Task Cleanup Board',
+      } as MissionDeliverable),
+    ).toBe(true)
+  })
 })

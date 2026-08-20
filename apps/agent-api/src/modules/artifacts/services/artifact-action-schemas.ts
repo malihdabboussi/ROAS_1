@@ -2568,7 +2568,7 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
     },
     descriptions: {
       playbook_id:
-        'Canonical mission playbook id. When the user names a playbook, pass it here instead of only mentioning it in the brief.',
+        'Canonical mission playbook id such as task-cleanup, client-strategy, webinar-fulfillment, static-ad-production, ig-organic-video-ad, meta-ads-launch, or meta-ads-audit. When the user names a playbook, pass it here instead of only mentioning it in the brief.',
       input:
         'Additional mission context. Playbook kickoff fields belong under input.playbook_kickoff.',
     },

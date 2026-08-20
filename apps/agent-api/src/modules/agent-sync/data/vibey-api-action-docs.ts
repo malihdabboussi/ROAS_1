@@ -1100,7 +1100,7 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   create_mission: {
     section: 'Missions',
     description:
-      'Creates a mission. User sees: mission card in Mission Control. When: delegating work to team agents or tracking a multi-step objective. Fields: title (required), brief, description, priority (low/medium/high/urgent), campaign_id, assigned_agent_key, playbook_id, input (arbitrary context object), idempotency_key, parent_mission_id. When the user names a playbook, always pass its id in playbook_id; put playbook-specific kickoff values under input.playbook_kickoff.',
+      'Creates a mission. User sees: mission card in Mission Control. When: delegating work to team agents or tracking a multi-step objective. Fields: title (required), brief, description, priority (low/medium/high/urgent), campaign_id, assigned_agent_key, playbook_id, input (arbitrary context object), idempotency_key, parent_mission_id. When the user names a playbook, always pass its id in playbook_id (task-cleanup, client-strategy, webinar-fulfillment, static-ad-production, ig-organic-video-ad, meta-ads-launch, meta-ads-audit); put playbook-specific kickoff values under input.playbook_kickoff. For task-cleanup, kickoff.window is this_week, last_7d, or today.',
     parameters:
       '```json\n{"action":"create_mission","label":"Creating mission brief","data":{"title":"IG Organic Story Ad","brief":"Render one approved story ad","priority":"medium","campaign_id":"UUID","playbook_id":"ig-organic-video-ad","input":{"playbook_kickoff":{"output_count":1}}}}\n```\n\nMinimal:\n```json\n{"action":"create_mission","label":"Creating mission","data":{"title":"Mission title"}}\n```',
   },

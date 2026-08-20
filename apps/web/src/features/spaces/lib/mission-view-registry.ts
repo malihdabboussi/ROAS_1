@@ -100,6 +100,30 @@ const META_AUDIT_PHASES: MissionViewPhase[] = [
   },
 ]
 
+const TASK_CLEANUP_PHASES: MissionViewPhase[] = [
+  {
+    id: 'gather',
+    label: 'Gather',
+    description: 'Pull this window of calls and currently open native tasks.',
+    subtaskPatterns: [/pull calls/i, /open tasks/i],
+    deliverablePatterns: [],
+  },
+  {
+    id: 'board',
+    label: 'Board',
+    description: 'Write the cleanup board and wait for approval before filing.',
+    subtaskPatterns: [/task cleanup board/i, /approve proposed/i],
+    deliverablePatterns: [/task cleanup board/i],
+  },
+  {
+    id: 'file',
+    label: 'File',
+    description: 'Create only the approved proposed tasks as native platform tasks.',
+    subtaskPatterns: [/file approved/i],
+    deliverablePatterns: [],
+  },
+]
+
 const DEFINITIONS: MissionViewDefinition[] = [
   {
     playbookId: 'webinar-fulfillment',
@@ -115,6 +139,11 @@ const DEFINITIONS: MissionViewDefinition[] = [
     playbookId: 'meta-ads-audit',
     eyebrow: 'META ADS ANALYSIS',
     phases: META_AUDIT_PHASES,
+  },
+  {
+    playbookId: 'task-cleanup',
+    eyebrow: 'TASK CLEANUP',
+    phases: TASK_CLEANUP_PHASES,
   },
 ]
 
