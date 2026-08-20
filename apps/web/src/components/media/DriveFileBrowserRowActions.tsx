@@ -17,6 +17,7 @@ import { FOLDER_MIME } from '@/components/media/drive-file-browser-modal.constan
 import type { DriveFileBrowserContextConfig } from '@/components/media/drive-file-browser-modal.types'
 import { DriveFileBrowserActionButton } from '@/components/media/DriveFileBrowserActionButton'
 import type { GoogleDriveFile } from '@/lib/services/google-drive-api'
+import { driveOpenHref } from '@/lib/spaces/google-open-href'
 
 export function DriveFileBrowserRowActions({
   file,
@@ -128,11 +129,11 @@ export function DriveFileBrowserRowActions({
           }}
         />
       )}
-      {contextConfig.showOpenInDrive && file.webViewLink && (
+      {contextConfig.showOpenInDrive && (
         <DriveFileBrowserActionButton
           icon={ExternalLink}
           label="Open in Drive"
-          href={file.webViewLink}
+          href={driveOpenHref(file.id, file.webViewLink, file.mimeType)}
         />
       )}
       {contextConfig.showMoreMenu && (

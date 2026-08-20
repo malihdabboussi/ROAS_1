@@ -1,5 +1,11 @@
 # Changelog - August 20, 2026
 
+## [2026-08-20 15:40] - [FIX]
+What: Export to Google / Open in Drive now actually open a Google tab. First export opens `about:blank` in the same click (before Drive status returns) so the browser cannot popup-block it; later opens are a real `target=_blank` link. Drive-synced Docs/Sheets/Slides without `_drive_web_view_link` (or with a Drive `file/view` link) open at `docs.google.com/.../edit` instead of `drive.google.com/file/d/.../view`.
+Why: `DocEditorExportDropdown` awaited `getGoogleDriveStatus()` before `window.open`, so connected-Google clicks were treated as popups and blocked. Native Google Docs with a null webViewLink used the Drive file/view URL, which does not open the editor.
+Impact: Space doc header Export to Google Docs, deliverable export, Open in Drive on Drive-synced native Google files, and Drive file-browser Open in Drive.
+Files: `DocEditorExportDropdown.tsx`, `DocEditorGoogleHeaderAction.tsx`, `google-export-tab.ts`, `google-open-href.ts`, `space-doc-export.ts`, `DriveDocViewer.tsx`, `SpaceDocGoogleExportButton.tsx`, `DeliverablesCarousel.tsx`, `DriveFileBrowserRowActions.tsx`
+
 ## [2026-08-20 11:30] - [FEATURE]
 What: Recents Filter Group by now includes Clients. Simple Recents honors Group by and nests chats under client folder rows. Unassigned chats sit in Other. A Clients chip clears the grouping.
 Why: Recents stayed a flat list even after Group by Campaign existed, and Simple Recents forced groupBy none. Client chats need folders in the sidebar filter, not another campaign-name section label.

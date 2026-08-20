@@ -8,20 +8,12 @@ import {
   type DriveFileContent,
 } from '@/lib/services/drive-content-api'
 
+/** Primary **Open in Drive** URL when item **custom_data** has no **`_drive_web_view_link`**. */
+export { driveOpenHref as driveFallbackOpenHref } from '@/lib/spaces/google-open-href'
+
 const DRIVE_EMBED_UI_TRIM_PX = 52
 
 const DRIVE_FOLDER_MIME = 'application/vnd.google-apps.folder'
-
-/** Primary **Open in Drive** URL when item **custom_data** has no **`_drive_web_view_link`**. */
-export function driveFallbackOpenHref(
-  driveFileId: string,
-  webViewLink: string | null | undefined,
-  mimeType: string | null | undefined,
-): string {
-  if (webViewLink) return webViewLink
-  if (mimeType === DRIVE_FOLDER_MIME) return `https://drive.google.com/drive/folders/${driveFileId}`
-  return `https://drive.google.com/file/d/${driveFileId}/view`
-}
 
 function sanitizePreviewHtml(html: string): string {
   if (typeof window === 'undefined') return html
@@ -60,9 +52,9 @@ function DriveDocViewerContent({
     const sanitized = sanitizePreviewHtml(content.content ?? '')
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="h-full min-h-0 flex-1 overflow-auto rounded-xl border border-border bg-background p-4">
+        <div className="border-border bg-background h-full min-h-0 flex-1 overflow-auto rounded-xl border p-4">
           <div
-            className="prose prose-sm dark:prose-invert max-w-none text-foreground"
+            className="prose prose-sm dark:prose-invert text-foreground max-w-none"
             dangerouslySetInnerHTML={{ __html: sanitized || '<p>No content available.</p>' }}
           />
         </div>
@@ -74,23 +66,20 @@ function DriveDocViewerContent({
     const rows = parseCsvRows(content.content ?? '')
     if (rows.length === 0) {
       return (
-        <div className="flex h-full items-center justify-center rounded-xl border border-border">
-          <p className="text-sm text-muted-foreground">No CSV rows found.</p>
+        <div className="border-border flex h-full items-center justify-center rounded-xl border">
+          <p className="text-muted-foreground text-sm">No CSV rows found.</p>
         </div>
       )
     }
     const [header, ...body] = rows
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="h-full min-h-0 flex-1 overflow-auto rounded-xl border border-border bg-background">
+        <div className="border-border bg-background h-full min-h-0 flex-1 overflow-auto rounded-xl border">
           <table className="w-full min-w-0 table-fixed border-collapse text-xs">
-            <thead className="sticky top-0 bg-secondary">
+            <thead className="bg-secondary sticky top-0">
               <tr>
                 {header?.map((cell, index) => (
-                  <th
-                    key={`h-${index}`}
-                    className="border-b border-border px-2 py-1.5 text-left"
-                  >
+                  <th key={`h-${index}`} className="border-border border-b px-2 py-1.5 text-left">
                     {cell || `Column ${index + 1}`}
                   </th>
                 ))}
@@ -115,12 +104,11 @@ function DriveDocViewerContent({
 
   if (content.kind === 'embed' && content.mime_type === DRIVE_FOLDER_MIME) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 rounded-xl border border-border px-6 py-8 text-center">
-        <p className="max-w-md text-sm text-muted-foreground">
+      <div className="border-border flex h-full flex-col items-center justify-center gap-3 rounded-xl border px-6 py-8 text-center">
+        <p className="text-muted-foreground max-w-md text-sm">
           Google does not allow Drive folder UIs inside embedded previews, so you may see a 403
           there. Your link and sync are still valid — use{' '}
-          <strong className="text-foreground">Open in Drive</strong> in the title bar
-          above.
+          <strong className="text-foreground">Open in Drive</strong> in the title bar above.
         </p>
       </div>
     )
@@ -133,20 +121,18 @@ function DriveDocViewerContent({
 
   if (!previewUrl) {
     return (
-      <div className="flex h-full items-center justify-center rounded-xl border border-border">
-        <p className="text-sm text-muted-foreground">
-          Preview unavailable for this Drive file.
-        </p>
+      <div className="border-border flex h-full items-center justify-center rounded-xl border">
+        <p className="text-muted-foreground text-sm">Preview unavailable for this Drive file.</p>
       </div>
     )
   }
 
   return (
-    <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl border border-border">
+    <div className="border-border relative min-h-0 flex-1 overflow-hidden rounded-xl border">
       <iframe
         src={previewUrl}
         title="Drive preview"
-        className="pointer-events-auto absolute inset-x-0 top-0 w-full border-0 bg-background"
+        className="bg-background pointer-events-auto absolute inset-x-0 top-0 w-full border-0"
         style={{ height: `calc(100% + ${DRIVE_EMBED_UI_TRIM_PX}px)` }}
       />
     </div>
@@ -189,12 +175,12 @@ export function DriveDocViewer({ driveFileId, modifiedTime, webViewLink }: Drive
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">
       {loading ? (
-        <div className="flex h-full min-h-0 flex-1 items-center justify-center rounded-xl border border-border">
+        <div className="border-border flex h-full min-h-0 flex-1 items-center justify-center rounded-xl border">
           <VibeyLoadingOrb size="md" state="processing" text="Loading document…" />
         </div>
       ) : error ? (
-        <div className="flex h-full items-center justify-center rounded-xl border border-border">
-          <p className="px-4 text-center text-sm text-destructive">{error}</p>
+        <div className="border-border flex h-full items-center justify-center rounded-xl border">
+          <p className="text-destructive px-4 text-center text-sm">{error}</p>
         </div>
       ) : content ? (
         <div className="flex min-h-0 flex-1 flex-col">
@@ -205,8 +191,8 @@ export function DriveDocViewer({ driveFileId, modifiedTime, webViewLink }: Drive
           />
         </div>
       ) : (
-        <div className="flex h-full items-center justify-center rounded-xl border border-border">
-          <p className="text-sm text-muted-foreground">No preview available.</p>
+        <div className="border-border flex h-full items-center justify-center rounded-xl border">
+          <p className="text-muted-foreground text-sm">No preview available.</p>
         </div>
       )}
     </div>

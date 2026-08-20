@@ -5,7 +5,7 @@ export function DriveDocTitleChromeActions({ openInDriveHref }: { openInDriveHre
     <a
       href={openInDriveHref}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener noreferrer"
       className="inline-flex items-center gap-1 text-[11px] text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--foreground)]"
     >
       Open in Drive
