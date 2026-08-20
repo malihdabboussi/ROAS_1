@@ -98,13 +98,14 @@ vi.mock('@/components/shell/use-shell-store', () => ({
 }))
 
 const meetingStatusField = {
-  id: 'status',
-  name: 'Status',
+  id: 'call_status',
+  name: 'Call status',
   type: 'select' as const,
   options: [
-    { id: 'logged', label: 'To action', color: 'blue', group: 'not_started' as const },
-    { id: 'needs_follow_up', label: 'Following up', color: 'orange', group: 'active' as const },
-    { id: 'done', label: 'Done', color: 'emerald', group: 'closed' as const },
+    { id: 'live', label: 'Live', color: 'emerald' },
+    { id: 'completed', label: 'Completed', color: 'blue' },
+    { id: 'no_show', label: 'No Show', color: 'red' },
+    { id: 'rescheduled', label: 'Rescheduled', color: 'amber' },
   ],
 }
 
@@ -114,7 +115,7 @@ const baseBundle = {
     title: 'Strategy call',
     description: 'Align on launch.',
     status: 'needs_follow_up',
-    custom_data: {},
+    custom_data: { call_status: 'completed' },
   },
   workspace: {
     meeting_item_id: 'meeting-1',
@@ -202,7 +203,7 @@ describe('MeetingWorkspaceDialog', () => {
     expect(mocks.continueMeetingConversation).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: 'Start agenda' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Following up' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Completed' })).toBeInTheDocument()
     expect(screen.queryByLabelText('Call status')).not.toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Close meeting workspace' }),
@@ -215,6 +216,7 @@ describe('MeetingWorkspaceDialog', () => {
         meetingItemId: 'meeting-1',
         spaceId: 'space-1',
         conversationId: 'conversation-1',
+        meetingTitle: 'Strategy call',
       }),
     )
     expect(mocks.openChatDrawer).toHaveBeenCalledWith('conversation-1')
@@ -260,7 +262,7 @@ describe('MeetingWorkspaceDialog', () => {
     })
   })
 
-  it('keeps Continue in chat, task status, and recap on one row after the calendar meeting ends', async () => {
+  it('keeps Continue in chat, Call status, and recap on one row after the calendar meeting ends', async () => {
     mocks.fetchMeetingWorkspace.mockReset()
     mocks.fetchMeetingWorkspace.mockResolvedValue(baseBundle)
 
@@ -274,10 +276,10 @@ describe('MeetingWorkspaceDialog', () => {
       expect(screen.getByRole('button', { name: 'Recap message' })).toBeInTheDocument(),
     )
     expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Following up' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Completed' })).toBeInTheDocument()
     const row = screen.getByRole('button', { name: 'Continue in chat' }).parentElement
     expect(row).toContainElement(screen.getByRole('button', { name: 'Recap message' }))
-    expect(row).toContainElement(screen.getByRole('button', { name: 'Following up' }))
+    expect(row).toContainElement(screen.getByRole('button', { name: 'Completed' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Continue in chat' }))
     expect(mocks.continueMeetingConversation).toHaveBeenCalledWith(
@@ -289,7 +291,7 @@ describe('MeetingWorkspaceDialog', () => {
     expect(mocks.openChatDrawer).toHaveBeenLastCalledWith('conversation-1')
   })
 
-  it('writes the All Meetings task status instead of Live/Completed call status', async () => {
+  it('writes All Meetings Call status instead of task Status', async () => {
     mocks.fetchMeetingWorkspace.mockReset()
     mocks.fetchMeetingWorkspace.mockResolvedValue(baseBundle)
     mocks.updateSpaceItem.mockResolvedValue({})
@@ -297,12 +299,14 @@ describe('MeetingWorkspaceDialog', () => {
     renderWorkspace()
 
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Following up' })).toBeInTheDocument(),
+      expect(screen.getByRole('button', { name: 'Completed' })).toBeInTheDocument(),
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Following up' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Completed' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Live' }))
     await waitFor(() => {
-      expect(mocks.updateSpaceItem).toHaveBeenCalledWith('space-1', 'meeting-1', { status: 'done' })
+      expect(mocks.updateSpaceItem).toHaveBeenCalledWith('space-1', 'meeting-1', {
+        custom_data: { call_status: 'live' },
+      })
     })
     expect(mocks.endMeetingCall).not.toHaveBeenCalled()
     expect(mocks.startMeetingCall).not.toHaveBeenCalled()

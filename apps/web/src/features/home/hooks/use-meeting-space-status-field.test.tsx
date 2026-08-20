@@ -18,7 +18,32 @@ describe('useMeetingSpaceStatusField', () => {
     fetchSpaceById.mockReset()
   })
 
-  it('loads the space Status field options', async () => {
+  it('loads Call status options when both Call status and task Status exist', async () => {
+    fetchSpaceById.mockResolvedValue({
+      schema: {
+        fields: [
+          {
+            id: 'status',
+            name: 'Status',
+            type: 'select',
+            options: [{ id: 'needs_follow_up', label: 'Following up', group: 'active' }],
+          },
+          {
+            id: 'call_status',
+            name: 'Call status',
+            type: 'select',
+            options: [{ id: 'completed', label: 'Completed', group: 'done' }],
+          },
+        ],
+      },
+    })
+    render(<Probe spaceId="space-1" />)
+    expect(await screen.findByText('Completed')).toBeInTheDocument()
+    expect(screen.queryByText('Following up')).toBeNull()
+    expect(fetchSpaceById).toHaveBeenCalledWith('space-1')
+  })
+
+  it('falls back to the space Status field when Call status is missing', async () => {
     fetchSpaceById.mockResolvedValue({
       schema: {
         fields: [
@@ -33,6 +58,5 @@ describe('useMeetingSpaceStatusField', () => {
     })
     render(<Probe spaceId="space-1" />)
     expect(await screen.findByText('To action')).toBeInTheDocument()
-    expect(fetchSpaceById).toHaveBeenCalledWith('space-1')
   })
 })

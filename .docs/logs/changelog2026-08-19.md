@@ -273,6 +273,19 @@ What: Typed `LABEL_BY_SLUG` / `RANK_BY_SLUG` in `agency-client-pipeline.ts` as `
 Why: PR #335 inferred the maps as `Map<AgencyClientPipelineSlug, …>` while querying them with plain strings — `tsc` fails, and the Vercel roas-web build on main has been red since that merge (the PR merged before checks reported).
 Impact: main's roas-web deploy builds again; no behavior change (lookups already handled misses).
 Files: `apps/web/src/lib/agency-clients/agency-client-pipeline.ts`
+
+## [2026-08-19 19:18 ] - [FIX]
+What: Person-brain fork saves land in the target Person Brain. `save_user_memory` now applies the brain-job target (`::brain:user:<id>` session key) or an explicit `brain_id` input to `record.brain_id` for user-scope targets (previously customer-only), and `checkDuplicate` checks the target brain instead of the caller's default brain. `brain_id` added to the tool schema.
+Why: Prod audit 2026-08-19: 400 succeeded `slack_period_import` fork jobs targeted org-managed Person Brains (Nefi 101, Yasir 35, …) yet those brains hold 0–2 memories — every save fell through to the org owner's default user brain (317 slack_period memories), and once there, default-brain dedup silently swallowed genuine person-brain writes.
+Impact: Shadow Person Brains (plan §11.12 Q10) actually populate from the recurring Slack sync and the "Populate brains" backfill; re-running the backfill after deploy refills them (dedup now scoped per brain).
+Files: apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts, artifact-action-schemas.ts, artifact-legacy-team-brain.service.test.ts
+
+## [2026-08-19 19:20] - [UTIL]
+What: `scripts/roas/report-ask-kind-misses.mjs` — weekly read-only report over `slack_pixel_turns`: (1) unclear turns where a client WAS resolved (missed classifier signals), (2) client turns with no resolved client (over-firing), (3) forbidden asks. Points to the pattern file + tests to update.
+Why: The N0 classifier improves from live telemetry, not guesses; the first two prod days already show the "unclear + client named" shape.
+Impact: Read-only; run weekly (or after harness runs) and feed misses into slack-ask-kind.ts.
+Files: scripts/roas/report-ask-kind-misses.mjs
+
 ## [2026-08-19 19:24] - [STYLE]
 What: Skeleton loading across the platform. New PageSkeleton primitive (components/ui/feedback/ListSkeleton.tsx) — title + toolbar chips + pulsing rows, role="status". Converted ~55 loading states: all dashboard route loading.tsx files (root, campaigns, contacts, studio), full-page orbs (Spaces, Inbox, Team, Flows, Brain home, Mission Control, My Work, Your Turn, Delegation Desk, CRM contacts, Missions/Contacts views, program workspace, client detail/resolver, campaign detail, artifacts library) and raw-text "Loading…" panes (sidebar flyouts + comms nav, home cards, meeting transcript/recordings, mission detail panel + shell mission card, channels, docs Drive panes, subtasks, activity timeline, teams index/detail, webhooks, finance sections, usage cards, cortex/training, contact custom fields, share lists, updates panel, reporting account pickers). Home boot skeleton gets pulse + role=status. Branded BrainConstellationLoader kept by design.
 Why: Dylan: "use skeleton loading across the platform anywhere there's loading stuff" — orbs/centered text made pages jump and read as broken.
@@ -284,6 +297,7 @@ What: Submitting a new chat from Home no longer flashes the half-loaded agent id
 Why: Dylan: submit showed "the agent in the middle of the screen… looks like a broken load" — the hero rendered for the conversation-create round trip with a fallback avatar.
 Impact: Submit goes straight from composer to thread; no centered identity flash.
 Files: apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx, apps/web/src/components/global-chat/lib/global-chat-seed-match.ts(+test)
+
 
 ## [2026-08-19 19:50] - [FIX]
 What: Recents filter fixes. (1) Clicking a chat under an active filter no longer gets hijacked or stranded: /home?conv= now beats a lingering meeting context in GlobalChatPanel (the meeting thread could shadow the clicked conversation — "opens then goes away"), and a conversation whose messages are still hydrating shows a "Loading conversation…" skeleton instead of a blank pane (SpaceVibeyChatPanel; empty-chat hero suppressed only while hydration is pending). (2) The scope picker's program-less campaigns render under their own "Campaigns" section label instead of inside "Programs" — "Claude Club Webinar" / "Master Your Kraft | VSL …" are campaigns, not programs; the Programs label only renders when a real program has campaigns.

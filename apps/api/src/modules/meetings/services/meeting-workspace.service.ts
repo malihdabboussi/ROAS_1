@@ -466,6 +466,7 @@ export class MeetingWorkspaceService {
           context_type: 'meeting',
           meeting_item_id: input.meetingItemId,
           space_id: input.spaceId,
+          meeting_title: input.title.slice(0, 500),
         },
       },
       input.orgId,
