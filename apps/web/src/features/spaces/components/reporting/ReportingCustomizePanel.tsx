@@ -51,6 +51,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { ColorPickerPanelStandalone } from '@/components/ui/ColorPicker'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import Switch from '@/components/ui/forms/switch'
 import { getIconColor, IconPicker, LucideIcon, type IconColorId } from '@/components/ui/IconPicker'
 import {
@@ -1512,7 +1513,7 @@ function SocialAccountsReportingSubView({
             <span className="body-3 font-semibold text-[var(--foreground)]">Instagram</span>
           </div>
           {loading ? (
-            <p className="body-3 px-3 py-2 text-[var(--color-muted-foreground)]">Loading…</p>
+            <div className="px-3 py-2"><ListSkeleton rows={3} label="Loading…" /></div>
           ) : (
             <div className="space-y-0.5">
               <button
@@ -1552,7 +1553,7 @@ function SocialAccountsReportingSubView({
             <span className="body-3 font-semibold text-[var(--foreground)]">LinkedIn</span>
           </div>
           {loading ? (
-            <p className="body-3 px-3 py-2 text-[var(--color-muted-foreground)]">Loading…</p>
+            <div className="px-3 py-2"><ListSkeleton rows={3} label="Loading…" /></div>
           ) : (
             <div className="space-y-0.5">
               <button
@@ -1599,7 +1600,7 @@ function SocialAccountsReportingSubView({
             <span className="body-3 font-semibold text-[var(--foreground)]">Facebook</span>
           </div>
           {loading ? (
-            <p className="body-3 px-3 py-2 text-[var(--color-muted-foreground)]">Loading…</p>
+            <div className="px-3 py-2"><ListSkeleton rows={3} label="Loading…" /></div>
           ) : (
             <div className="space-y-0.5">
               <button
@@ -1646,7 +1647,7 @@ function SocialAccountsReportingSubView({
             <span className="body-3 font-semibold text-[var(--foreground)]">YouTube</span>
           </div>
           {loading ? (
-            <p className="body-3 px-3 py-2 text-[var(--color-muted-foreground)]">Loading…</p>
+            <div className="px-3 py-2"><ListSkeleton rows={3} label="Loading…" /></div>
           ) : (
             <div className="space-y-0.5">
               <button

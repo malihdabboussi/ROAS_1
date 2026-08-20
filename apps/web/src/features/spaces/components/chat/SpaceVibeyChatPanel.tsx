@@ -14,6 +14,7 @@ import { VoiceApprovalProvider } from '@/components/chat/VoiceApprovalContext'
 import { ConversationShareModal } from '@/components/conversations'
 import { ChatComposerTryTip } from '@/components/global-chat/components/ChatComposerTryTip'
 import * as globalChatSeed from '@/components/global-chat/lib/global-chat-seed-match'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
   GLOBAL_CHAT_AGENT_SWITCH_EVENT,
   GLOBAL_CHAT_SEED_EVENT,
@@ -30,7 +31,6 @@ import { ShellRightPanel } from '@/components/shell/ShellRightPanel'
 import { useShellChatQuickStart } from '@/components/shell/use-shell-chat-quick-start'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { useSummaryPanelLayout } from '@/components/shell/use-summary-panel-docked'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   useBrainLiveSession,
   type BrainLiveScope,
@@ -554,6 +554,14 @@ export function SpaceVibeyChatPanel({
     () => resolveSpaceChatEmptyStateAgent(chatAgents, activeAgentKey, VIBEY_ROSTER_FALLBACK),
     [activeAgentKey, chatAgents],
   )
+  // A queued Home submit is about to land in this thread: keep the agent hero out of the
+  // way (it flashes half-loaded for the conversation-create round trip) and show a
+  // sending placeholder until the optimistic user message arrives.
+  const pendingSeedDetail = useGlobalChatStore((s) => s.pendingSeed)
+  const [seedSendInFlight, setSeedSendInFlight] = useState(false)
+  const pendingSeedSend =
+    seedSendInFlight ||
+    globalChatSeed.isPendingSendSeedForPanel(pendingSeedDetail, effectiveSpaceId ?? undefined)
   const turnData = useMemo(() => buildSpaceChatTurnData(displayMessages), [displayMessages])
   const streamRecoveryTriggerKey = useMemo(() => {
     const lastAssistant = getLastAssistantMessage(messages)
@@ -1970,16 +1978,21 @@ export function SpaceVibeyChatPanel({
         return
       }
 
-      await sendWithToast(
-        content,
-        documents,
-        seed.artifacts as AttachedArtifact[] | undefined,
-        seed.model,
-        seed.references as MessageReference[] | undefined,
-        seed.modelSettings as ChatModelSettings | undefined,
-        undefined,
-        resolveSpaceChatSeedSendOptions(seed, activeAgentKey),
-      )
+      setSeedSendInFlight(true)
+      try {
+        await sendWithToast(
+          content,
+          documents,
+          seed.artifacts as AttachedArtifact[] | undefined,
+          seed.model,
+          seed.references as MessageReference[] | undefined,
+          seed.modelSettings as ChatModelSettings | undefined,
+          undefined,
+          resolveSpaceChatSeedSendOptions(seed, activeAgentKey),
+        )
+      } finally {
+        setSeedSendInFlight(false)
+      }
     },
     [
       activeAgentKey,
@@ -2260,16 +2273,32 @@ export function SpaceVibeyChatPanel({
                           ref={contentRef}
                           className="mx-auto flex min-h-full w-full max-w-3xl flex-col"
                         >
-                          {isLoadingMessages && messages.length === 0 && selectedConversationId ? (
-                            <div className="flex flex-1 flex-col items-center justify-center py-24">
-                              <VibeyLoadingOrb
-                                text="Loading conversation…"
-                                state="processing"
-                                size="md"
-                              />
+                          {messages.length === 0 &&
+                          selectedConversationId &&
+                          (isLoadingMessages ||
+                            conversationNeedsMessageHydration(
+                              selectedConversationId,
+                              useChatStore.getState(),
+                            )) ? (
+                            <div className="py-spacing-6">
+                              <ListSkeleton rows={4} label="Loading conversation…" />
                             </div>
                           ) : null}
-                          {messages.length === 0 && !isLoadingMessages ? (
+                          {messages.length === 0 && !isLoadingMessages && pendingSeedSend ? (
+                            <div className="py-spacing-6">
+                              <ListSkeleton rows={2} label="Sending…" />
+                            </div>
+                          ) : null}
+                          {messages.length === 0 &&
+                          !isLoadingMessages &&
+                          !pendingSeedSend &&
+                          !(
+                            selectedConversationId &&
+                            conversationNeedsMessageHydration(
+                              selectedConversationId,
+                              useChatStore.getState(),
+                            )
+                          ) ? (
                             <SpaceChatAgentEmptyState
                               agent={emptyStateAgent}
                               agentPicker={renderAgentPicker('hero')}

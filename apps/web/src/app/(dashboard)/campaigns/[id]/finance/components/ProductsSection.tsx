@@ -1,6 +1,7 @@
 'use client'
 
 import { ChevronDown, MoreVertical, Plus } from 'lucide-react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { NEW_BTN_CLASS } from '../constants'
 import type { ProductWithPrices } from '../types'
 import { fmtPrice } from '../utils/financeFormatters'
@@ -86,7 +87,7 @@ export function ProductsSection({
       {productsOpen && (
         <div className="mt-4">
           {objectsLoading ? (
-            <p className="body-4 text-muted-foreground">Loading...</p>
+            <ListSkeleton rows={3} label="Loading..." />
           ) : products.length === 0 ? (
             <p className="body-4 text-muted-foreground">No products yet.</p>
           ) : productsFiltered.length === 0 ? (
@@ -157,7 +158,9 @@ export function ProductsSection({
                     </div>
 
                     {product.pricesLoading ? (
-                      <p className="body-4 text-muted-foreground mt-3">Loading prices...</p>
+                      <div className="mt-3">
+                        <ListSkeleton rows={3} label="Loading prices..." />
+                      </div>
                     ) : visiblePrices.length > 0 ? (
                       <table className="mt-3 w-full">
                         <thead>

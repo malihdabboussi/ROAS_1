@@ -1,3 +1,15 @@
+## 2026-08-20 - [ARCH] chat.service.ts remains far over the 600 LOC service cap
+
+Status: Open
+
+Found while: Stopping recap prompts from renaming meeting chats
+
+Evidence: `wc -l` on `apps/web/src/features/studio/services/chat.service.ts` is 2992. Cap is 600. Allowlist is 2993. Meeting-title guards live in `conversation-title.ts` so this file did not grow.
+
+Needed work: Split send/stream/title/status orchestration out of `chat.service.ts`.
+
+Reason not done now: In-scope work was shared Call status and Connections meeting labels. The file was already over the cap.
+
 ## 2026-08-19 - [ARCH] QuickMissionsHubModal is near the 400 LOC cap
 
 Status: Open
@@ -39730,3 +39742,56 @@ Needed work: Split filter/reload/open-plan concerns out of ShellChatMenu.
 
 Reason not done now: Out of scope for the production crash unblock.
 
+## 2026-08-19 - [FIX] New-chat submit can select a stale meeting conversation
+
+Status: Open
+
+Found while: Verifying the new-chat flash fix (claude/loading-skeletons)
+
+Evidence: Submitting from Home (/home?chat=starting) created the new conversation correctly, but the panel briefly displayed a previous meeting-derived conversation (v5 id) and the §11 URL-replace effect wrote that stale id into /home?conv=… — same family as Dylan's "clicking a filtered chat pulls it up briefly then it goes away". Suspect the per-screen sticky chat restore (use-shell-workspace-screen-chat) races the new-chat seed and does not stand down for chat=starting.
+
+Needed work: Suppress screen-chat restore while chat=starting / a pending send seed exists; guard the URL-replace effect against ids not created by this submit.
+
+Reason not done now: Being taken as the next work item (task list #11) with the recents-filter bugs.
+
+## 2026-08-19 - [STYLE] Remaining ~190 small loading orbs
+
+Status: Open
+
+Found while: Skeleton sweep (claude/loading-skeletons)
+
+Evidence: 245 VibeyLoadingOrb sites before the sweep; ~55 page/pane-level ones converted. Remaining are size sm/md orbs inside buttons, settings tabs, studio preview panes, media pickers — low-jank but inconsistent.
+
+Needed work: Convert opportunistically per surface; keep orbs only for in-button spinners and branded moments (BrainConstellationLoader stays).
+
+Reason not done now: Long tail; page-level jank was the user-visible complaint.
+## 2026-08-19 - [FIX] Chat-created client campaigns never get a program (needs decision + backfill)
+
+Status: Resolved 2026-08-19 — Dylan decided: explicit-ask only; client-referenced → Clients program; standalone → General. createCampaign attaches via config.client; the three campaigns were backfilled through PATCH /campaigns/:id (product API). Left open: enforcement is prompt-level (useWhen/doNotUseWhen) — a hard preflight can't detect "user asked".
+
+Found while: Recents filter fixes (claude/recents-filter-fixes)
+
+Evidence: `createCampaign` (apps/api/src/modules/campaigns/services/campaigns-service-01.base.ts:410) never sets `program_id`, so Pixel-created client campaigns ("Claude Club Webinar", both "Master Your Kraft | VSL …") sit program-less and used to render under PROGRAMS in the scope picker. Portal-imported client campaigns correctly get the org's `clients` program.
+
+Needed work: (a) Decision: should chat-created campaigns attach to the Clients program when a client is referenced (config.client / client context), or should the agent be required to pick? (b) Prod backfill (blocked by permission classifier in-session; run manually):
+```sql
+update campaigns c set program_id = p.id, updated_at = now()
+from programs p
+where p.org_id = c.org_id and p.system_kind = 'clients' and p.deleted_at is null
+  and c.deleted_at is null and c.program_id is null
+  and c.name in ('Claude Club Webinar','Master Your Kraft | VSL Warm Retargeting','Master Your Kraft | VSL Retargeting');
+```
+
+Reason not done now: Prod write denied by permission policy; creation-path default is a product decision.
+
+## 2026-08-19 - [FIX] Duplicate React keys for streamed tool steps
+
+Status: Open
+
+Found while: Recents filter repro (console)
+
+Evidence: 59 console errors "Encountered two children with the same key `tool-Claude Club — Channel Plan…`" — `use-chat-store.ts` builds tool ids as `tool-${name}-${ts}`; identical name+ts (or missing toolCallId) collide and React may drop/duplicate tool rows.
+
+Needed work: Include a monotonically increasing index or the stream event id in the fallback id.
+
+Reason not done now: The id doubles as the stream-update correlation key; changing it needs stream-dedup regression coverage.

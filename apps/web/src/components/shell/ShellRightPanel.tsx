@@ -9,8 +9,8 @@ import { homeMeetingHref } from '@/features/home/lib/home-meeting-work-restore'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import {
-  getConversationDisplayTitle,
   readMeetingConversationLink,
+  resolveLinkedMeetingTitle,
   type Conversation,
 } from '@/lib/conversations'
 import { useQuickMissionsLauncher } from '@/lib/missions'
@@ -67,6 +67,7 @@ export function ShellRightPanel({
   const { openLauncher } = useQuickMissionsLauncher()
   const open = useShellStore((s) => s.rightPanel.open)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
+  const lastWorkAreaPageByConversation = useShellStore((s) => s.lastWorkAreaPageByConversation)
   const conversationScopePickerRequestNonce = useShellStore(
     (s) => s.conversationScopePickerRequestNonce,
   )
@@ -150,7 +151,16 @@ export function ShellRightPanel({
       ? { spaceId: meetingContext.spaceId, meetingItemId: meetingContext.meetingItemId }
       : metadataMeeting
   const meetingTitle = linkedMeeting
-    ? getConversationDisplayTitle(conversationForMeeting ?? {}) || 'Meeting'
+    ? resolveLinkedMeetingTitle({
+        contextTitle:
+          meetingContext && conversationId && meetingContext.conversationId === conversationId
+            ? meetingContext.meetingTitle
+            : null,
+        metadata: conversationForMeeting?.metadata,
+        workAreaTitle: conversationId
+          ? lastWorkAreaPageByConversation[conversationId]?.title
+          : null,
+      })
     : null
   const spaces = useSpacesStore((s) => s.spaces)
   const handleOpenMeetingWorkspace = useCallback(() => {

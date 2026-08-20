@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { getOrgScopedKey } from '@/lib/utils/org-storage'
 import {
   listCrmContacts,
@@ -196,8 +196,8 @@ export function CrmContactsContainer() {
 
       {/* Body */}
       {loading && rows.length === 0 ? (
-        <div className="p-spacing-8 flex h-full min-h-[400px] w-full flex-col items-center justify-center">
-          <VibeyLoadingOrb text="Loading your contacts..." state="processing" size="lg" />
+        <div className="h-full min-h-[400px] w-full">
+          <PageSkeleton label="Loading your contacts..." />
         </div>
       ) : (
         <div className="surface-card border-border rounded-spacing-2 p-spacing-4 border">

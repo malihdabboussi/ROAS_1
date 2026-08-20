@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { ShareModal } from '@/components/org'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { BRAIN_TOAST_ERRORS } from '@/features/brain/config/brain-toast-errors.config'
 import { useBrainScopeMenuActions } from '@/features/brain/hooks/use-brain-scope-menu-actions'
 import {
@@ -270,8 +270,8 @@ export default function BrainHome() {
 
   if (scopeLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <VibeyLoadingOrb text="Loading brains..." state="processing" size="lg" />
+      <div className="h-full">
+        <PageSkeleton label="Loading brains..." />
       </div>
     )
   }

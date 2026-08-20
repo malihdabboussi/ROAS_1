@@ -1,6 +1,7 @@
 export const CONVERSATION_SCOPE_PICKER_MESSAGES = {
   search: 'Search',
   programs: 'Programs',
+  campaigns: 'Campaigns',
   clients: 'Clients',
   noMatchingClients: 'No matching clients',
   loadingSpaces: 'Loading spaces...',
