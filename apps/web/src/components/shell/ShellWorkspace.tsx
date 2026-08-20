@@ -4,12 +4,12 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatPanel'
-import { openArtifactPreviewInShell } from '@/lib/artifacts'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { ShellArtifactViewerAdapter } from '@/features/studio/components/preview/ShellArtifactViewerAdapter'
 import { selectConversation } from '@/features/studio/services/chat.service'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
+import { openArtifactPreviewInShell } from '@/lib/artifacts'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils/cn'
 import { isShellHomeRoute, isShellWorkspaceRoute } from './shell-route-policy'
@@ -22,13 +22,13 @@ import { ShellTopBar } from './ShellTopBar'
 import { SpaceWorkDock } from './SpaceWorkDock'
 import { useRightEdgePresence } from './use-right-edge-presence'
 import { useShellArtifactConversationSync } from './use-shell-artifact-conversation-sync'
+import { useShellConversationDocumentTitle } from './use-shell-conversation-document-title'
 import {
   isWorkAttachedDock,
   resolveShellMenuDockForLayout,
   useActiveShellMenuDock,
   useShellMenuDock,
 } from './use-shell-menu-dock'
-import { useShellConversationDocumentTitle } from './use-shell-conversation-document-title'
 import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
 import { useShellStore } from './use-shell-store'
 import { useShellWorkspaceScreenChat } from './use-shell-workspace-screen-chat'

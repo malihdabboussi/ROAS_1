@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useMeetingsCalendarMaterialize } from '@/features/home/hooks/use-meetings-calendar-materialize'
 import { rankPersonalMeetingsSpace } from '@/features/home/lib/resolve-meetings-space-id'
-import { SpaceItemsContainer, useSpacesStore } from '@/features/spaces'
+import { SpaceItemsContainer, useEnsureAllMeetingsColumns, useSpacesStore } from '@/features/spaces'
 
 function findMeetingsSpaceId(spaces: ReturnType<typeof useSpacesStore.getState>['spaces']) {
   let selectedId: string | null = null
@@ -35,6 +35,7 @@ export function MeetingsUnifiedSurface({ agenda }: { agenda: ReactNode }) {
   const loadRoster = useSpacesStore((state) => state.loadRoster)
   const loadItems = useSpacesStore((state) => state.loadItems)
   useMeetingsCalendarMaterialize(meetingsSpaceId, loadItems)
+  useEnsureAllMeetingsColumns(meetingsSpaceId)
 
   useEffect(() => {
     let cancelled = false

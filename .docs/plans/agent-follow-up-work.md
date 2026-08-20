@@ -1,4 +1,16 @@
-## 2026-08-19 - [ARCH] Slack events base remains over the LOC cap
+## 2026-08-20 - [ARCH] SpaceItemRow.tsx is over the 400 LOC component cap
+
+Status: Open
+
+Found while: All Meetings one-room columns (hide task Status chrome when Status is not a visible field)
+
+Evidence: `wc -l` on `apps/web/src/features/spaces/components/SpaceItemRow.tsx` is 758. Cap is 400. The allowlist forbids growing this file.
+
+Needed work: Split name-column chrome (status/title/actions) from data-cell rendering.
+
+Reason not done now: In-scope work was Host / Call status / Client columns on All Meetings. The row was already over the cap.
+
+
 
 Status: Open
 

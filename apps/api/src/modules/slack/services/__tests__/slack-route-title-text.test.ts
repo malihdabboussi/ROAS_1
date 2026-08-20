@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { SlackEventsBase } from '../slack-service-events.base'
 
-const WRAPPED = '[Ask kind]\nKind: client\nSignals: channel stamp\n\ncan you pull the webinar numbers?'
+const WRAPPED =
+  '[Ask kind]\nKind: client\nSignals: channel stamp\n\ncan you pull the webinar numbers?'
 const RAW = 'can you pull the webinar numbers?'
 
 /**
