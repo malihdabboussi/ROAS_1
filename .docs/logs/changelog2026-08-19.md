@@ -273,3 +273,9 @@ What: Typed `LABEL_BY_SLUG` / `RANK_BY_SLUG` in `agency-client-pipeline.ts` as `
 Why: PR #335 inferred the maps as `Map<AgencyClientPipelineSlug, …>` while querying them with plain strings — `tsc` fails, and the Vercel roas-web build on main has been red since that merge (the PR merged before checks reported).
 Impact: main's roas-web deploy builds again; no behavior change (lookups already handled misses).
 Files: `apps/web/src/lib/agency-clients/agency-client-pipeline.ts`
+
+## [2026-08-19 19:18 ] - [FIX]
+What: Person-brain fork saves land in the target Person Brain. `save_user_memory` now applies the brain-job target (`::brain:user:<id>` session key) or an explicit `brain_id` input to `record.brain_id` for user-scope targets (previously customer-only), and `checkDuplicate` checks the target brain instead of the caller's default brain. `brain_id` added to the tool schema.
+Why: Prod audit 2026-08-19: 400 succeeded `slack_period_import` fork jobs targeted org-managed Person Brains (Nefi 101, Yasir 35, …) yet those brains hold 0–2 memories — every save fell through to the org owner's default user brain (317 slack_period memories), and once there, default-brain dedup silently swallowed genuine person-brain writes.
+Impact: Shadow Person Brains (plan §11.12 Q10) actually populate from the recurring Slack sync and the "Populate brains" backfill; re-running the backfill after deploy refills them (dedup now scoped per brain).
+Files: apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts, artifact-action-schemas.ts, artifact-legacy-team-brain.service.test.ts
