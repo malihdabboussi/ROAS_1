@@ -74,7 +74,14 @@ describe('platform tools template', () => {
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'Do **not** replace Service Request intake with `create_task`, `list_team`, `list_campaign_team`',
     )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('make this a task')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Did you want me to create a task for this?')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('the `review_url` as a real openable https link')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'A Slack @mention of a teammate on client fulfillment is still a Service Request',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('[Slack teammates mentioned]')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Harry M.` is not `Harry/Haroon')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('page_grader_create_delegation_preview')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'Do not loop `page_grader_create_fulfillment_request`',

@@ -1,11 +1,36 @@
 import type { SendPageGraderWorkDto } from '../../integrations/page-grader/dto/page-grader.dto'
+import type { PageGraderSendResult } from '../../integrations/page-grader/services/page-grader-api.helpers'
 import type { PageGraderApiService } from '../../integrations/page-grader/services/page-grader-api.service'
 import type {
   WorkRequestDraftRow,
   WorkRequestRepository,
 } from '../repositories/work-request.repository'
-import { pageGraderSendAssignee, resolveWorkRequestAssigneeIdentity } from './work-request-assignee'
+import {
+  pageGraderSendAssignee,
+  resolveWorkRequestAssigneeIdentity,
+  type WorkRequestAssigneeIdentity,
+  type WorkRequestTeamMember,
+} from './work-request-assignee'
 import { safeWorkRequestError } from './work-request-review-security'
+
+export function clickUpMirrorLastError(
+  first: PageGraderSendResult | undefined,
+  identity: WorkRequestAssigneeIdentity,
+  mirrored: boolean,
+): string {
+  if (first?.error) return first.error
+  const unmapped = (first?.assignee_resolution ?? []).filter((row) => row.status === 'unmapped')
+  if (unmapped.length > 0) {
+    return 'ClickUp does not have a mapped user for this assignee yet.'
+  }
+  if (mirrored && !first?.clickup_task_id) {
+    if (!identity.pageGraderUserId && identity.name) {
+      return `ClickUp mirror is pending. Assignee "${identity.name}" was sent without a Portal user id.`
+    }
+    return 'ClickUp mirror is pending'
+  }
+  return 'Page Grader mirror failed'
+}
 
 /** Mirror a finalized native Space task into Portal/ClickUp once. */
 export async function mirrorWorkRequestFinalTask(
@@ -13,11 +38,15 @@ export async function mirrorWorkRequestFinalTask(
   pageGraderApi: PageGraderApiService,
   draft: WorkRequestDraftRow,
   task: Record<string, unknown>,
+  teamMembers: WorkRequestTeamMember[] = [],
 ): Promise<WorkRequestDraftRow> {
   const attemptAt = new Date()
-  const assignee = pageGraderSendAssignee(
-    resolveWorkRequestAssigneeIdentity(draft.routing, draft.assignee_name, []),
+  const identity = resolveWorkRequestAssigneeIdentity(
+    draft.routing,
+    draft.assignee_name,
+    teamMembers,
   )
+  const assignee = pageGraderSendAssignee(identity)
   try {
     const result = await pageGraderApi.sendWork(
       repository.client,
@@ -66,9 +95,7 @@ export async function mirrorWorkRequestFinalTask(
       next_retry_at: success ? null : new Date(attemptAt.getTime() + 15 * 60 * 1000).toISOString(),
       last_error: success
         ? null
-        : safeWorkRequestError(
-            first?.error ?? (mirrored ? 'ClickUp mirror is pending' : 'Page Grader mirror failed'),
-          ),
+        : safeWorkRequestError(clickUpMirrorLastError(first, identity, mirrored)),
     })
   } catch (error) {
     return repository.update(draft.id, {

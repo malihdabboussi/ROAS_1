@@ -1,3 +1,39 @@
+## 2026-08-19 - [ARCH] Slack events base remains over the LOC cap
+
+Status: Open
+
+Found while: Fixing Pixel Slack @mention → missing review URL / wrong Harry/Haroon assignee / ClickUp pending
+
+Evidence: `wc -l` on `apps/api/src/modules/slack/services/slack-service-events.base.ts` is 763 (service cap 600). Mention expansion was added in-place. `work-request.service.ts` is 592 after extracting `publicWorkRequestFinalized`.
+
+Needed work: Split Slack message vs app_mention handlers out of the events base.
+
+Reason not done now: In-scope work was mention expansion, assignee identity, and ClickUp last_error. Decomposition would mix an unrelated structural PR with a live Pixel bugfix.
+
+## 2026-08-19 - [ARCH] work-request-chat-steps.ts is over the 400 LOC cap
+
+Status: Open
+
+Found while: Stopping Harry M. from prefilling Harry/Haroon on the Service Request assignee step
+
+Evidence: `wc -l` on `apps/web/src/features/work-requests/lib/work-request-chat-steps.ts` is 437 (component/lib cap 400). Token matching was tightened in place and duplicated from the API assignee helper.
+
+Needed work: Extract assignee/option matching; share the token rule with the API if a shared package is acceptable.
+
+Reason not done now: The requested fix was the Harry M. vs Harry/Haroon mismatch. Sharing packages was out of scope.
+
+## 2026-08-19 - [FIX] Prompt-only guard still lets Pixel call native create_task on tagged fulfillment
+
+Status: Open
+
+Found while: Yasir SMS/GHL Slack DM where tagging Harry produced “Task is created” with no review_url
+
+Evidence: Policy/skill/migration now say Slack @mention stays on `page_grader_create_fulfillment_request`. Runtime still allows native `create_task` if the model ignores that prompt.
+
+Needed work: Hard interceptor or tool-choice filter so client fulfillment + Slack teammate mention cannot call `create_task`.
+
+Reason not done now: Prompt + mention expansion unblocks the reported miss; a tool interceptor is a separate agent-runtime change.
+
 ## 2026-08-19 - [FEATURE] Chat mission-card Extend and shared track catalog
 
 Status: Open

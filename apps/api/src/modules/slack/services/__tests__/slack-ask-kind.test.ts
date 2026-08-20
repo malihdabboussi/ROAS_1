@@ -130,8 +130,21 @@ describe('classifySlackAskKind — continuation and unclear', () => {
     // 2026-08-18 audit: 175/228 DM asks fell to "unclear"; most were Service Request
     // intents over forwarded client content ("need to make a task to edit these videos ASAP").
     expect(
+      classifySlackAskKind({
+        ...base,
+        text: 'Can you make this a task for CRM for @Harry M.',
+      }),
+    ).toMatchObject({ kind: 'client', signals: expect.arrayContaining(['service request intent']) })
+    expect(
       classifySlackAskKind({ ...base, text: 'need to make a task to edit these videos ASAP' }),
     ).toMatchObject({ kind: 'client' })
+    expect(
+      classifySlackAskKind({ ...base, text: 'Can you turn this into a task for GHL?' }),
+    ).toMatchObject({ kind: 'client', signals: expect.arrayContaining(['service request intent']) })
+    expect(classifySlackAskKind({ ...base, text: 'task this for CRM' })).toMatchObject({
+      kind: 'client',
+      signals: expect.arrayContaining(['service request intent']),
+    })
     expect(
       classifySlackAskKind({ ...base, text: 'need this edited VSL style by EOW' }),
     ).toMatchObject({
@@ -163,8 +176,11 @@ describe('classifySlackAskKind — continuation and unclear', () => {
     ).toMatchObject({ kind: 'team' })
   })
 
-  it('no signals → unclear (ask one question, never default to client)', () => {
+  it('no signals → unclear (ask whether to create a task, never default to client)', () => {
     expect(classifySlackAskKind({ ...base, text: 'thoughts?' }).kind).toBe('unclear')
+    expect(formatSlackAskKindContext({ kind: 'unclear', signals: [] })).toContain(
+      'Did you want me to create a task for this?',
+    )
   })
 })
 
@@ -175,5 +191,14 @@ describe('formatSlackAskKindContext', () => {
     expect(block).toContain('Kind: general')
     expect(block).toContain('Signals: my tasks')
     expect(block).toContain('Do not call list_clients')
+  })
+
+  it('tells Pixel to assume task-create language is a Service Request', () => {
+    expect(formatSlackAskKindContext({ kind: 'client', signals: ['service request intent'] })).toContain(
+      'If they asked to make/create a task, that is a Service Request',
+    )
+    expect(formatSlackAskKindContext({ kind: 'client', signals: ['service request intent'] })).toContain(
+      'Did you want me to create a task for this?',
+    )
   })
 })

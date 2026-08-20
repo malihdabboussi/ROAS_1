@@ -132,6 +132,21 @@ describe('work-request-chat-steps', () => {
     expect(resolveChoiceFromChat(assigneeStep, 'sam@roas.co')).toBe('u-1')
   })
 
+  it('does not prefill Harry M. as the Harry/Haroon Portal alias', () => {
+    const answers = draftToChatAnswers(
+      { ...draft, assignee_name: 'Harry M.' },
+      {
+        ...options,
+        team_members: [
+          ...(options.team_members ?? []),
+          { id: 'u-3', name: 'Harry/Haroon', email: 'haroon@roas.co', source: 'portal' },
+        ],
+      },
+    )
+    expect(answers.assignee_name).toBe('Harry M.')
+    expect(answers.assignee_id).toBe('')
+  })
+
   it('resolves free-text choice replies by label', () => {
     const answers = draftToChatAnswers(draft, options)
     const steps = buildWorkRequestChatSteps(draft, options, answers)

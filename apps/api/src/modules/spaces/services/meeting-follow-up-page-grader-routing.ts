@@ -59,6 +59,7 @@ export function resolvePageGraderAssigneeForFollowUp(
   })
   if (candidates.length === 1) return candidates[0] ?? null
 
+  if (ownerTokens.length !== 1) return null
   const first = ownerTokens[0]
   if (!first) return null
   const firstNameMatches = assignees.filter(

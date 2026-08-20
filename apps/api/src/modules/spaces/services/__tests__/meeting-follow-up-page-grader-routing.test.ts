@@ -55,4 +55,13 @@ describe('meeting follow-up Page Grader routing', () => {
     expect(resolvePageGraderAssigneeForFollowUp('Nefi Blanco', assignees)).toEqual(assignees[0])
     expect(resolvePageGraderAssigneeForFollowUp('James', assignees)).toEqual(assignees[1])
   })
+
+  it('does not map Harry M. onto a Harry/Haroon slash alias', () => {
+    const assignees = [
+      { id: 'haroon', name: 'Harry/Haroon', email: 'haroon@example.com' },
+      { id: 'nefi', name: 'Nefi Blanco', email: 'nefi@example.com' },
+    ]
+    expect(resolvePageGraderAssigneeForFollowUp('Harry M.', assignees)).toBeNull()
+    expect(resolvePageGraderAssigneeForFollowUp('Haroon', assignees)).toEqual(assignees[0])
+  })
 })

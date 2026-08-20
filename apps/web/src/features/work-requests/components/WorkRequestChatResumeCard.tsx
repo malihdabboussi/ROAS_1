@@ -14,6 +14,7 @@ import {
 import { WORK_REQUEST_ERRORS } from '../config/errors.config'
 import { WORK_REQUEST_MESSAGES } from '../config/messages.config'
 import { WorkRequestChatFlow } from './WorkRequestChatFlow'
+import { WorkRequestFinalizedActions, workRequestFinalizedBody } from './WorkRequestFinalizedActions'
 import { useWorkRequestReviewForceOpenToken } from './WorkRequestReviewForceOpenContext'
 
 type Props = {
@@ -36,10 +37,11 @@ export function WorkRequestChatResumeCard({
   const autoOpen = Boolean(
     token && (searchParams.get('wr') === token || (forceOpenToken && forceOpenToken === token)),
   )
-  const [open, setOpen] = useState(autoOpen)
+  const [open, setOpen] = useState(autoOpen || status === 'submitted')
   const [review, setReview] = useState<WorkRequestReviewResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [retrying, setRetrying] = useState(false)
 
   useEffect(() => {
     if (autoOpen) setOpen(true)
@@ -89,22 +91,36 @@ export function WorkRequestChatResumeCard({
     return finalized
   }
 
-  if (status === 'submitted') {
-    return (
-      <div className="surface-card mt-spacing-3 rounded-spacing-2 border-success/30 bg-success/10 p-spacing-3 border">
-        <p className="body-2 font-medium">{title}</p>
-        <p className="body-3 text-muted-foreground mt-spacing-1">
-          {summary || 'Service Request submitted. Open the task links in this chat.'}
-        </p>
-      </div>
-    )
+  const remirror = async () => {
+    if (!token) throw new Error(WORK_REQUEST_ERRORS.MIRROR_RETRY_FAILED.userMessage)
+    const next = await finalizeWorkRequestReview(token)
+    setReview(next)
+    return next
+  }
+
+  const retryMirror = async () => {
+    setRetrying(true)
+    setError(null)
+    try {
+      await remirror()
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : WORK_REQUEST_ERRORS.MIRROR_RETRY_FAILED.userMessage,
+      )
+    } finally {
+      setRetrying(false)
+    }
   }
 
   if (open) {
     if (loading || !review) {
       return (
         <div className="surface-card border-border mt-spacing-3 rounded-spacing-3 p-spacing-3 border">
-          <p className="body-3 text-muted-foreground">{error || WORK_REQUEST_MESSAGES.loading}</p>
+          <p className="body-3 text-muted-foreground">
+            {error || summary || WORK_REQUEST_MESSAGES.loading}
+          </p>
           {error ? (
             <button
               type="button"
@@ -122,7 +138,21 @@ export function WorkRequestChatResumeCard({
     }
 
     if (review.state !== 'draft') {
-      return <WorkRequestNonDraftCard title={title} review={review} />
+      return (
+        <div>
+          <WorkRequestNonDraftCard
+            title={title}
+            review={review}
+            retrying={retrying}
+            onRetry={review.state === 'finalized' ? () => void retryMirror() : undefined}
+          />
+          {error ? (
+            <p role="alert" className="body-3 text-destructive mt-spacing-2">
+              {error}
+            </p>
+          ) : null}
+        </div>
+      )
     }
 
     return (
@@ -132,6 +162,7 @@ export function WorkRequestChatResumeCard({
         presentation="inline"
         onSave={save}
         onSubmit={submit}
+        onRetryMirror={remirror}
       />
     )
   }
@@ -162,45 +193,28 @@ export function WorkRequestChatResumeCard({
 function WorkRequestNonDraftCard({
   title,
   review,
+  retrying = false,
+  onRetry,
 }: {
   title: string
   review: Exclude<WorkRequestReviewResponse, { state: 'draft' }>
+  retrying?: boolean
+  onRetry?: () => void
 }) {
   if (review.state === 'finalized') {
-    const body =
-      review.sync_status === 'synced'
-        ? `${WORK_REQUEST_MESSAGES.finalizedBody} The ClickUp mirror is confirmed.`
-        : WORK_REQUEST_MESSAGES.mirrorPending
     return (
       <div className="surface-card mt-spacing-3 rounded-spacing-3 space-y-spacing-3 border-success/30 bg-success/10 p-spacing-3 border">
         <div>
           <p className="body-2 font-medium">{WORK_REQUEST_MESSAGES.finalizedTitle}</p>
-          <p className="body-3 text-muted-foreground mt-spacing-1">{body}</p>
+          <p className="body-3 text-muted-foreground mt-spacing-1">
+            {workRequestFinalizedBody(review)}
+          </p>
         </div>
-        {review.task_url || review.clickup_url ? (
-          <div className="gap-spacing-2 flex flex-wrap">
-            {review.task_url ? (
-              <a
-                href={review.task_url}
-                className="button-default button-glass-primary"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Open ROAS task
-              </a>
-            ) : null}
-            {review.clickup_url ? (
-              <a
-                href={review.clickup_url}
-                className="button-default button-glass-neutral"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Open ClickUp task
-              </a>
-            ) : null}
-          </div>
-        ) : null}
+        <WorkRequestFinalizedActions
+          receipt={review}
+          retrying={retrying}
+          onRetry={review.sync_status === 'synced' ? undefined : onRetry}
+        />
       </div>
     )
   }

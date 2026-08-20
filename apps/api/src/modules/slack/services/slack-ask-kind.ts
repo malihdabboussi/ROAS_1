@@ -88,9 +88,19 @@ const CLIENT_PATTERNS: Array<[RegExp, string]> = [
   // Live audit 2026-08-18: the most common DM shape is "make a task … ASAP" over a
   // forwarded client message — a Service Request intent, so it is a client ask.
   [
-    /\b(make|create|open|set up|spin up) (a |the |me a )?(task|ticket|request|sr)\b/i,
+    /\b(make|create|open|set up|spin up) (a |the |me a |this |it |that |this a |it a |that a )?(task|ticket|request|sr)\b/i,
     'service request intent',
   ],
+  [/\b(task|ticket|request) for (crm|ghl|design|copy|video|ads?)\b/i, 'service request intent'],
+  [
+    /\b(turn|convert) (this|it|that) into a (task|ticket|request)\b/i,
+    'service request intent',
+  ],
+  [
+    /\b(put|send|add) (this|it|that) (in|into|to) (clickup|the portal|roas)\b/i,
+    'service request intent',
+  ],
+  [/\btask (this|it|that)\b/i, 'service request intent'],
   [
     /\b(need|needs) (this|these|that|it) (edited|built|designed|written|rebuilt|redone|fixed|updated|done)\b/i,
     'deliverable intent',
@@ -185,12 +195,12 @@ const KIND_GUIDANCE: Record<SlackAskKind, string> = {
   continuation:
     'This is a reply on a thread Pixel started (digest, Service Request nudge, QC follow-up). Continue that process in this thread. Do not open a new Service Request or start a new client lookup unless the human clearly asks for new work.',
   client:
-    'This is about one client. Resolve the client first (channel identity, quoted channel, named client, unique list_clients hint), bind CONNECTIONS to that client, then retrieve in order: Campaign Brain → Portal → the client Slack channel → tasks → meetings → Meta. Do not search User Brain first. Do not ask which client when the identity block already resolves one.',
+    'This is about one client. Resolve the client first (channel identity, quoted channel, named client, unique list_clients hint), bind CONNECTIONS to that client, then retrieve in order: Campaign Brain → Portal → the client Slack channel → tasks → meetings → Meta. Do not search User Brain first. Do not ask which client when the identity block already resolves one. If they asked to make/create a task, that is a Service Request. If they described client work but did not ask for a task, ask exactly: "Did you want me to create a task for this?" Do not invent a task until they confirm.',
   team: 'This spans clients or internal ops. Use agent_cases / open work, Space tasks across campaigns, Company Brain, and Slack search of the cited channels. Do not bind a single Portal client as if it were the whole ask.',
   general:
     "This is about the operator's own world (their tasks, calendar, User Brain, reminders, first-person voice). Use User Brain, the caller's calendar, and their tasks. Do not call list_clients, Campaign Brain, or bind CONNECTIONS. If the channel is mapped to a client, that mapping is context only — it is not the work to do.",
   unclear:
-    'The ask kind is not clear from cheap signals. Ask one short question naming the fork (e.g. "your calendar, or a client?"). Do not default to a client lookup.',
+    'The ask kind is not clear from cheap signals. Ask one short question: "Did you want me to create a task for this?" Do not invent a task until they confirm. Do not default to a client lookup.',
 }
 
 export function formatSlackAskKindContext(result: SlackAskKindResult): string {

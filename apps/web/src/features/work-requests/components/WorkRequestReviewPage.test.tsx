@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchWorkRequestReview, requestWorkRequestRefresh } from '@/lib/work-requests'
+import { fetchWorkRequestReview, finalizeWorkRequestReview, requestWorkRequestRefresh } from '@/lib/work-requests'
 import { WorkRequestReviewPage } from './WorkRequestReviewPage'
 
 vi.mock('next/navigation', () => ({
@@ -138,14 +138,46 @@ describe('WorkRequestReviewPage', () => {
       state: 'finalized',
       final_task_id: 'task-1',
       sync_status: 'sync_failed',
+      last_error: 'ClickUp does not have a mapped user for this assignee yet.',
     })
 
     render(<WorkRequestReviewPage token="safe-token" />)
 
     expect(await screen.findByText('SERVICE REQUEST SUBMITTED')).toBeInTheDocument()
     expect(
-      screen.getByText('The ROAS task is saved. The ClickUp mirror still needs another try.'),
+      screen.getByText(
+        'The ROAS task is saved. The ClickUp mirror still needs another try. ClickUp does not have a mapped user for this assignee yet.',
+      ),
     ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry ClickUp' })).toBeInTheDocument()
+  })
+
+  it('retries ClickUp from the submitted page', async () => {
+    vi.mocked(fetchWorkRequestReview).mockResolvedValue({
+      state: 'finalized',
+      final_task_id: 'task-1',
+      sync_status: 'sync_pending',
+      task_url: '/spaces?space=space-1&item=task-1',
+      last_error: 'ClickUp does not have a mapped user for this assignee yet.',
+    })
+    vi.mocked(finalizeWorkRequestReview).mockResolvedValue({
+      state: 'finalized',
+      final_task_id: 'task-1',
+      sync_status: 'synced',
+      task_url: '/spaces?space=space-1&item=task-1',
+      clickup_url: 'https://app.clickup.com/t/868ku9u52',
+      last_error: null,
+    })
+
+    render(<WorkRequestReviewPage token="safe-token" />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Retry ClickUp' }))
+
+    expect(await screen.findByText(/The ClickUp mirror is confirmed/)).toBeInTheDocument()
+    expect(finalizeWorkRequestReview).toHaveBeenCalledWith('safe-token')
+    expect(screen.getByRole('link', { name: 'Open ClickUp task' })).toHaveAttribute(
+      'href',
+      'https://app.clickup.com/t/868ku9u52',
+    )
   })
 
   it('opens the shared conversation chat host when a resume conversation exists', async () => {

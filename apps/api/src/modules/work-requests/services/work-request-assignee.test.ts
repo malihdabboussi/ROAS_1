@@ -59,6 +59,39 @@ describe('work-request-assignee', () => {
     expect(pageGraderSendAssignee(identity)?.email).toBe('rafay@roas.co')
   })
 
+  it('does not bind Harry M. to a Harry/Haroon slash alias', () => {
+    const roster = [
+      ...portal,
+      {
+        id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+        name: 'Harry/Haroon',
+        email: 'haroon@roas.co',
+        source: 'portal' as const,
+      },
+    ]
+    const identity = bindWorkRequestAssignee({ assignee_name: 'Harry M.' }, roster)
+    expect(identity).toMatchObject({
+      name: 'Harry M.',
+      pageGraderUserId: null,
+      source: 'free_text',
+    })
+  })
+
+  it('binds a unique first name onto a slash-alias roster row', () => {
+    const roster = [
+      ...portal,
+      {
+        id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+        name: 'Harry/Haroon',
+        email: 'haroon@roas.co',
+        source: 'portal' as const,
+      },
+    ]
+    const identity = bindWorkRequestAssignee({ assignee_name: 'Haroon' }, roster)
+    expect(identity.pageGraderUserId).toBe('cccccccc-cccc-4ccc-8ccc-cccccccccccc')
+    expect(identity.name).toBe('Harry/Haroon')
+  })
+
   it('stamps routing so finalize can send Portal id even after reload', () => {
     const identity = bindWorkRequestAssignee(
       { assignee_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' },

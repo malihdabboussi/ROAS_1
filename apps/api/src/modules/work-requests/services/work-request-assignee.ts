@@ -32,6 +32,34 @@ function normalize(value: string | null | undefined): string {
   return value?.trim().replace(/\s+/g, ' ').toLowerCase() ?? ''
 }
 
+function nameTokens(value: string | null | undefined): string[] {
+  return normalize(value)
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+}
+
+function namesShareIdentityTokens(query: string[], candidate: string[]): boolean {
+  if (query.length === 0 || candidate.length === 0) return false
+  return query.every((token) => candidate.includes(token)) || candidate.every((token) => query.includes(token))
+}
+
+/** Unique roster match: exact name, or tokens are a unique subset either way. */
+export function findUniqueWorkRequestTeamMemberByName(
+  teamMembers: WorkRequestTeamMember[],
+  name: string,
+): WorkRequestTeamMember | undefined {
+  const requested = name.trim()
+  if (!requested || isAssigneeEmail(requested)) return undefined
+  const exact = teamMembers.filter((member) => normalize(member.name) === normalize(requested))
+  if (exact.length === 1) return exact[0]
+  const tokens = nameTokens(requested)
+  if (tokens.length === 0) return undefined
+  const compatible = teamMembers.filter((member) => namesShareIdentityTokens(tokens, nameTokens(member.name)))
+  return compatible.length === 1 ? compatible[0] : undefined
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -75,17 +103,11 @@ export function resolveUniqueAssigneeProfileId(
   if (exact.length > 1) return null
   if (requested.includes('@')) return null
 
-  const requestedFirstName = requested.split(' ')[0]
-  const compatible = profiles.filter((profile) => {
-    const candidate = normalize(profile.full_name)
-    if (!candidate) return false
-    const candidateParts = candidate.split(' ')
-    return (
-      requested.startsWith(`${candidate} `) ||
-      candidate.startsWith(`${requested} `) ||
-      candidateParts[0] === requestedFirstName
-    )
-  })
+  const tokens = nameTokens(requested)
+  if (tokens.length === 0) return null
+  const compatible = profiles.filter((profile) =>
+    namesShareIdentityTokens(tokens, nameTokens(profile.full_name)),
+  )
   return compatible.length === 1 ? (compatible[0]?.id ?? null) : null
 }
 
@@ -107,11 +129,7 @@ export function bindWorkRequestAssignee(
     ? teamMembers.filter((member) => memberEmail(member) === emailHint)
     : []
   const uniqueEmail = emailMatches.length === 1 ? emailMatches[0] : undefined
-  const nameMatches =
-    name && !isAssigneeEmail(name)
-      ? teamMembers.filter((member) => normalize(member.name) === normalize(name))
-      : []
-  const uniqueName = nameMatches.length === 1 ? nameMatches[0] : undefined
+  const uniqueName = name ? findUniqueWorkRequestTeamMemberByName(teamMembers, name) : undefined
   const member = byId ?? uniqueEmail ?? uniqueName
   if (member) return identityFromMember(member)
 
@@ -207,6 +225,35 @@ export function pageGraderSendAssignee(identity: WorkRequestAssigneeIdentity): {
     ...(identity.email ? { email: identity.email } : {}),
     ...(identity.name ? { name: identity.name } : {}),
   }
+}
+
+export async function bindCreatedWorkRequestAssignee(params: {
+  draft: {
+    id: string
+    assignee_name: string | null
+    routing: Record<string, unknown>
+  }
+  teamMembers: WorkRequestTeamMember[]
+  updateDraft: (
+    id: string,
+    values: { routing: Record<string, unknown>; assignee_name: string | null },
+  ) => Promise<{
+    id: string
+    assignee_name: string | null
+    routing: Record<string, unknown>
+  }>
+}) {
+  const { draft, teamMembers } = params
+  if (!draft.assignee_name) return draft
+  const identity = bindWorkRequestAssignee({ assignee_name: draft.assignee_name }, teamMembers)
+  const routing = stampWorkRequestAssignee(asRecord(draft.routing), identity)
+  const updated = await params.updateDraft(draft.id, {
+    routing,
+    assignee_name: identity.name,
+  })
+  draft.routing = updated?.routing ?? routing
+  draft.assignee_name = updated?.assignee_name ?? identity.name
+  return updated ?? draft
 }
 
 export async function assignWorkRequestFinalTask(params: {

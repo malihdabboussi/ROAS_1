@@ -4,8 +4,11 @@ Use the `Page Grader` MCP server whenever a request depends on Page Grader-only
 client, campaign, fulfillment, meeting, memory, or cached Meta information, or
 asks for a client Service Request / fulfillment deliverable of any type
 (design, copy, funnel/landing page, GHL, ad creative, video edit/production,
-or general client work), including when the user says "make a task", "ASAP",
-or names the human who should own that work.
+or general client work), including when the user says "make a task",
+"make this a task", "ASAP", or names the human who should own that work.
+If they describe client work but have not asked to create a task, ask exactly:
+"Did you want me to create a task for this?" Do not invent a task until they
+confirm.
 
 ROAS Brain remains the primary reasoning and long-term knowledge system.
 Page Grader remains authoritative for its portal records. Cross-reference both
@@ -87,6 +90,14 @@ when strategy or brand interpretation is required, and call out disagreements.
     The portal uses the first line as the task title and the rest as the body.
     Never put the entire brief on one line.
     Never use native `create_task` for this class of work.
+    A Slack @mention of a teammate does not change this path. Keep
+    `page_grader_create_fulfillment_request` and post the `review_url`. Use the
+    Slack display name and email from any `[Slack teammates mentioned]` block
+    for `assignee_name`. Do not replace the tagged person with a different
+    slash-alias roster row (`Harry M.` is not `Harry/Haroon` unless email or
+    id matches). When they refer to making or creating a task, assume Service
+    Request intake. If unsure, ask exactly: "Did you want me to create a task
+    for this?"
     When this request is created from a ROAS / Pixel conversation, always include
     that conversation's UUID in `source_context.conversation_id` (or
     `conversationId`) so the review link resumes the **same** chat session.

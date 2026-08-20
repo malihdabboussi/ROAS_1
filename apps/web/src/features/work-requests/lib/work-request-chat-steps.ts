@@ -83,16 +83,32 @@ function matchTeamMember(
   options: WorkRequestOptions,
   value: string,
 ): NonNullable<WorkRequestOptions['team_members']>[number] | undefined {
-  const needle = value.trim().toLocaleLowerCase()
+  const needle = value.trim()
   if (!needle) return undefined
-  return (options.team_members ?? []).find((member) => {
-    const email = (member.email ?? '').trim().toLocaleLowerCase()
+  const members = options.team_members ?? []
+  const byId = members.find((member) => member.id === value)
+  if (byId) return byId
+  const email = needle.toLocaleLowerCase()
+  const byEmail = members.filter((member) => (member.email ?? '').trim().toLocaleLowerCase() === email)
+  if (byEmail.length === 1) return byEmail[0]
+  const exact = members.filter((member) => member.name.trim().toLocaleLowerCase() === email)
+  if (exact.length === 1) return exact[0]
+  const tokens = email.replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/).filter(Boolean)
+  if (tokens.length === 0) return undefined
+  const compatible = members.filter((member) => {
+    const candidate = member.name
+      .trim()
+      .toLocaleLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
     return (
-      member.id === value ||
-      member.name.trim().toLocaleLowerCase() === needle ||
-      (email && email === needle)
+      tokens.every((token) => candidate.includes(token)) ||
+      candidate.every((token) => tokens.includes(token))
     )
   })
+  return compatible.length === 1 ? compatible[0] : undefined
 }
 
 export function draftToChatAnswers(

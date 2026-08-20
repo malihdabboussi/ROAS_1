@@ -6,6 +6,7 @@ import {
 } from './slack-ask-assets'
 import { classifySlackAskKind, formatSlackAskKindContext } from './slack-ask-kind'
 import { formatSlackClientContextBlock } from './slack-client-context'
+import { expandInboundSlackMentions } from './slack-inbound-mention-expansion'
 import { SlackConversationBase } from './slack-service-conversation.base'
 import {
   CREDITS_EXHAUSTED_SLACK_MESSAGE,
@@ -92,12 +93,13 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     let agentKey: string
     let accessToken: string
     let ownerSlackUserId: string | null
+    let botUserId: string | null = null
 
     if (channel) {
       const pc = channel.provider_config as Record<string, unknown>
       botToken = typeof pc.bot_token === 'string' ? pc.bot_token : ''
       ownerSlackUserId = typeof pc.authed_user_id === 'string' ? pc.authed_user_id : null
-      const botUserId = typeof pc.bot_user_id === 'string' ? pc.bot_user_id : null
+      botUserId = typeof pc.bot_user_id === 'string' ? pc.bot_user_id : null
       if (botUserId && event.user === botUserId) {
         this.logger.warn(
           `[TRACE] handleMessageEvent EXIT: message is from bot itself user=${event.user} botUserId=${botUserId}`,
@@ -127,6 +129,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
         agentKey = fallback.agentKey
         channelOrgId = fallback.orgId
         ownerSlackUserId = fallback.ownerSlackUserId
+        botUserId = fallback.botUserId
       }
     } else if (
       event.channel_type === 'im' ||
@@ -151,6 +154,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       agentKey = fallback.agentKey
       channelOrgId = fallback.orgId
       ownerSlackUserId = fallback.ownerSlackUserId
+      botUserId = fallback.botUserId
     } else {
       this.logger.warn(
         `[TRACE] handleMessageEvent EXIT: unmapped channel team=${teamId} channel=${channelId} channel_type=${event.channel_type ?? 'unknown'}`,
@@ -172,7 +176,18 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     if (!principal) return
     accessToken = await this.userSessionMint.mintAccessToken(userId)
 
-    let fullMessage = text
+    const mentions = await expandInboundSlackMentions({
+      supabase: serviceSupabase,
+      slackApi: this.slackApi,
+      orgId: channelOrgId ?? null,
+      ownerUserId: userId,
+      botToken,
+      botUserId,
+      text,
+    }).catch(() => ({ text, directoryBlock: '' }))
+    const inboundText = mentions.text
+
+    let fullMessage = inboundText
     const inboundFiles = collectInboundSlackFiles(event)
     const documents = await this.resolveInboundSlackFiles(
       botToken,
@@ -194,7 +209,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
           slackTeamId: teamId,
           botToken,
           stamp: currentStamp,
-          text,
+          text: inboundText,
         }).catch(() => null)
       : null
     const forwarded = await this.buildForwardedMessageContext(
@@ -223,7 +238,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
 
     // N0 — classify before Pixel sees any client identity (North Star §3, §11.0).
     const prompt = buildInboundSlackTurnPrompt({
-      text,
+      text: inboundText,
       currentStamp,
       forwardedContext,
       threadContext: thread.context,
@@ -239,10 +254,11 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     })
     fullMessage = prompt.fullMessage
     const assetsBlock = formatSlackAskAssetsBlock(
-      buildSlackAskAssets({ documents, texts: [text, forwardedContext] }),
+      buildSlackAskAssets({ documents, texts: [inboundText, forwardedContext] }),
       { sourcePermalink: forwardedContext.match(/^Source: (\S+)/m)?.[1] ?? null },
     )
     if (assetsBlock) fullMessage = `${fullMessage}\n\n${assetsBlock}`
+    if (mentions.directoryBlock) fullMessage = `${fullMessage}\n\n${mentions.directoryBlock}`
     const askKind = prompt.askKind
     const clientSource = prompt.clientSource
 
@@ -289,7 +305,6 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     if (!channelId) return
 
     let text = event.text ?? ''
-    text = text.replace(/<@[A-Z0-9]+>\s*/g, '').trim()
     const hasFiles = Array.isArray(event.files) && event.files.length > 0
     const hasAttachments = Array.isArray(event.attachments) && event.attachments.length > 0
     if (!text && !hasFiles && !hasAttachments) return
@@ -324,6 +339,17 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       threadTs: event.thread_ts ?? event.ts,
     })
     if (!principal) return
+
+    const mentions = await expandInboundSlackMentions({
+      supabase: serviceSupabase,
+      slackApi: this.slackApi,
+      orgId: fallback.orgId,
+      ownerUserId: fallback.userId,
+      botToken: fallback.botToken,
+      botUserId: fallback.botUserId,
+      text,
+    }).catch(() => ({ text, directoryBlock: '' }))
+    text = mentions.text
 
     const documents = await this.resolveInboundSlackFiles(
       fallback.botToken,
@@ -384,13 +410,16 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       ? `[Slack thread context]\n${thread.context}\n\n[Current message]\n${messageWithContext}`
       : messageWithContext
     const mentionClientId = channelContext.match(/\(id=([^)]+)\)/)?.[1] ?? null
+    const mentionMessage = mentions.directoryBlock
+      ? `${mentionWithThreadContext}\n\n${mentions.directoryBlock}`
+      : mentionWithThreadContext
 
     await this.processAndReply({
       userId: fallback.userId,
       agentKey: fallback.agentKey,
       botToken: fallback.botToken,
       channelId,
-      message: mentionWithThreadContext,
+      message: mentionMessage,
       teamId,
       threadTs: event.thread_ts ?? event.ts,
       messageTs: event.ts,

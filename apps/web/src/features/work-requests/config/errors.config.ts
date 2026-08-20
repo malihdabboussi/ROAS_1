@@ -26,4 +26,13 @@ export const WORK_REQUEST_ERRORS = {
     logToAdmin: false,
     httpStatus: 400,
   },
+  MIRROR_RETRY_FAILED: {
+    code: 'WORK_REQUEST_MIRROR_RETRY_FAILED',
+    userMessage: "ClickUp still didn't take it. Check the reason on the card, then retry.",
+    logMessage: 'Public Service Request ClickUp retry failed',
+    severity: 'error',
+    retryable: true,
+    logToAdmin: false,
+    httpStatus: 400,
+  },
 } as const

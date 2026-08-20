@@ -69,7 +69,7 @@ function createService(repositoryOverrides: Record<string, unknown> = {}) {
     findById: vi.fn(),
     findByIdempotency: vi.fn(),
     create: vi.fn(),
-    update: vi.fn(),
+    update: vi.fn().mockImplementation((_id, values) => Promise.resolve(draft({ ...values }))),
     finalize: vi.fn(),
     listConnectionScopeRows: vi.fn().mockResolvedValue([]),
     listCampaignOptions: vi.fn().mockResolvedValue([]),
@@ -291,6 +291,7 @@ describe('WorkRequestService', () => {
     expect(repository.finalize).toHaveBeenCalledWith(hashWorkRequestReviewToken(TOKEN))
     expect(result.draft.final_task_id).toBe('77777777-7777-7777-7777-777777777777')
     expect(result.draft.sync_status).toBe('sync_failed')
+    expect(result.last_error).toBe('ClickUp unavailable')
     expect(repository.update).toHaveBeenCalledWith(
       finalDraft.id,
       expect.objectContaining({ sync_status: 'sync_failed' }),
@@ -582,6 +583,135 @@ describe('WorkRequestService', () => {
       expect.objectContaining({
         campaign_space_id: '88888888-8888-8888-8888-888888888888',
         page_grader_external_campaign_id: '99999999-9999-9999-9999-999999999999',
+      }),
+    )
+  })
+
+  it('stamps a unique Portal roster assignee at intake so ClickUp is not name-only', async () => {
+    const portalUserId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+    const { service, repository, scope } = createService()
+    scope.resolveIntakeScope.mockResolvedValue({
+      mapping: {
+        userId: '22222222-2222-2222-2222-222222222222',
+        orgId: '33333333-3333-3333-3333-333333333333',
+        clientId: '55555555-5555-5555-5555-555555555555',
+        entry: { campaign_id: '44444444-4444-4444-4444-444444444444', space_id: '6666' },
+      },
+      ownerOrgId: '33333333-3333-3333-3333-333333333333',
+      generalSpace: { id: '66666666-6666-6666-6666-666666666666' },
+      campaignSpace: null,
+    })
+    scope.loadScopedOptions.mockResolvedValue({
+      clients: [],
+      spaces: [],
+      teamMembers: [
+        { id: portalUserId, name: 'Harry/Haroon', email: 'haroon@roas.co', source: 'portal' },
+      ],
+    })
+    repository.findByIdempotency.mockResolvedValue(null)
+    repository.create.mockImplementation((values) =>
+      Promise.resolve(draft({ ...(values as Partial<WorkRequestDraftRow>) })),
+    )
+    repository.update.mockImplementation((_id, values) =>
+      Promise.resolve(draft({ ...(values as Partial<WorkRequestDraftRow>) })),
+    )
+
+    await service.createFromPageGrader('signed-secret', {
+      client_id: '55555555-5555-5555-5555-555555555555',
+      client_name: 'Yasir Khan Coaching LTD',
+      campaign_id: undefined,
+      request_type: 'ghl',
+      assignee_name: 'Harry/Haroon',
+      title: 'Investigate SMS deliverability',
+      description: null,
+      priority: 'urgent',
+      structured_fields: {},
+      required_fields: [],
+      assets: [],
+      dependencies: [],
+      provenance: {},
+      requester: {},
+      work_scope: 'general',
+      idempotency_key: 'event-harry',
+    })
+
+    expect(repository.update).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        assignee_name: 'Harry/Haroon',
+        routing: expect.objectContaining({
+          assignee: expect.objectContaining({
+            page_grader_user_id: portalUserId,
+            email: 'haroon@roas.co',
+            source: 'portal',
+          }),
+        }),
+      }),
+    )
+  })
+
+  it('does not stamp Harry M. onto the Harry/Haroon roster row at intake', async () => {
+    const { service, repository, scope } = createService()
+    scope.resolveIntakeScope.mockResolvedValue({
+      mapping: {
+        userId: '22222222-2222-2222-2222-222222222222',
+        orgId: '33333333-3333-3333-3333-333333333333',
+        clientId: '55555555-5555-5555-5555-555555555555',
+        entry: { campaign_id: '44444444-4444-4444-4444-444444444444', space_id: '6666' },
+      },
+      ownerOrgId: '33333333-3333-3333-3333-333333333333',
+      generalSpace: { id: '66666666-6666-6666-6666-666666666666' },
+      campaignSpace: null,
+    })
+    scope.loadScopedOptions.mockResolvedValue({
+      clients: [],
+      spaces: [],
+      teamMembers: [
+        {
+          id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+          name: 'Harry/Haroon',
+          email: 'haroon@roas.co',
+          source: 'portal',
+        },
+      ],
+    })
+    repository.findByIdempotency.mockResolvedValue(null)
+    repository.create.mockImplementation((values) =>
+      Promise.resolve(draft({ ...(values as Partial<WorkRequestDraftRow>) })),
+    )
+    repository.update.mockImplementation((_id, values) =>
+      Promise.resolve(draft({ ...(values as Partial<WorkRequestDraftRow>) })),
+    )
+
+    await service.createFromPageGrader('signed-secret', {
+      client_id: '55555555-5555-5555-5555-555555555555',
+      client_name: 'Yasir Khan Coaching LTD',
+      campaign_id: undefined,
+      request_type: 'ghl',
+      assignee_name: 'Harry M.',
+      title: 'Investigate SMS deliverability',
+      description: null,
+      priority: 'urgent',
+      structured_fields: {},
+      required_fields: [],
+      assets: [],
+      dependencies: [],
+      provenance: {},
+      requester: {},
+      work_scope: 'general',
+      idempotency_key: 'event-harry-m',
+    })
+
+    expect(repository.update).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        assignee_name: 'Harry M.',
+        routing: expect.objectContaining({
+          assignee: expect.objectContaining({
+            page_grader_user_id: null,
+            source: 'free_text',
+          }),
+        }),
       }),
     )
   })

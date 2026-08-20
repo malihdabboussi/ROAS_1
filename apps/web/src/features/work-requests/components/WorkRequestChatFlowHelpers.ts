@@ -22,6 +22,7 @@ export type WorkRequestChatFinalizedReceipt = {
   sync_status?: string
   task_url?: string | null
   clickup_url?: string | null
+  last_error?: string | null
 }
 
 export type WorkRequestChatFlowProps = {
@@ -30,6 +31,7 @@ export type WorkRequestChatFlowProps = {
   presentation?: 'page' | 'inline'
   onSave: (update: WorkRequestUpdate) => Promise<WorkRequestReviewResponse>
   onSubmit: (update: WorkRequestUpdate) => Promise<WorkRequestReviewResponse>
+  onRetryMirror?: () => Promise<WorkRequestReviewResponse>
 }
 
 export function buildWorkRequestChatIntro(knownCount: number, gapCount: number): string {
