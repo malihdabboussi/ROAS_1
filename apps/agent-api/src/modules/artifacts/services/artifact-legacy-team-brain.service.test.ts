@@ -510,6 +510,7 @@ describe('ArtifactLegacyTeamBrainService', () => {
       client,
       'hash-1',
       'user-1',
+      undefined,
     )
     expect(target.memoriesRepo.create).toHaveBeenCalledWith(
       client,
@@ -532,6 +533,59 @@ describe('ArtifactLegacyTeamBrainService', () => {
     expect(records.find((record) => record.table === 'conversations')).toMatchObject({
       filters: { id: 'conversation-1' },
     })
+  })
+
+  it('saves a person-period fork memory into the TARGET person brain, not the default user brain', async () => {
+    // Prod bug: 400 fork jobs "succeeded" while every save landed in the org
+    // owner's default user brain — record.brain_id was only set for customer
+    // targets, and dedup checked the default brain.
+    const { client } = makeQueryClient(() => ({ data: null, error: null }))
+    const target = makeTarget(client)
+    const service = new ArtifactLegacyTeamBrainService()
+    const sessionKey =
+      'agent:atlas:atlas-user-1-brain-job-42::brain:user:person-brain-nefi'
+
+    const result = await service.saveMemory(
+      target,
+      {
+        content: 'Nefi runs the Yasir webinar follow-up sequence every Monday.',
+        memory_type: 'fact',
+        source_type: 'slack_period',
+      },
+      sessionKey,
+    )
+
+    expect(result).toEqual({ success: true, memory_id: 'memory-1' })
+    expect(target.memoriesRepo.checkDuplicate).toHaveBeenCalledWith(
+      client,
+      'hash-1',
+      'user-1',
+      'person-brain-nefi',
+    )
+    expect(target.memoriesRepo.create).toHaveBeenCalledWith(
+      client,
+      expect.objectContaining({ brain_id: 'person-brain-nefi', source_type: 'slack_period' }),
+    )
+  })
+
+  it('honors an explicit brain_id input outside brain jobs', async () => {
+    const { client } = makeQueryClient(() => ({ data: null, error: null }))
+    const target = makeTarget(client)
+    const service = new ArtifactLegacyTeamBrainService()
+
+    await service.saveMemory(
+      target,
+      {
+        content: 'Explicit person brain note that is long enough to store.',
+        memory_type: 'fact',
+        brain_id: 'person-brain-explicit',
+      },
+      'session-key',
+    )
+    expect(target.memoriesRepo.create).toHaveBeenCalledWith(
+      client,
+      expect.objectContaining({ brain_id: 'person-brain-explicit' }),
+    )
   })
 
   it('classifies credit-aware errors for user-facing artifact failures', () => {
