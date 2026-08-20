@@ -16,6 +16,26 @@ describe('quick missions launcher', () => {
     expect(result.current).toMatchObject({
       open: true,
       playbookKey: 'client-strategy',
+      spaceId: null,
+      parentMissionId: null,
+    })
+  })
+
+  it('stores the source mission and space for extend launches', () => {
+    const { result } = renderHook(() => useQuickMissionsLauncher(), { wrapper })
+
+    act(() =>
+      result.current.openLauncher('webinar-fulfillment', {
+        spaceId: 'space-1',
+        parentMissionId: 'mission-1',
+      }),
+    )
+
+    expect(result.current).toMatchObject({
+      open: true,
+      playbookKey: 'webinar-fulfillment',
+      spaceId: 'space-1',
+      parentMissionId: 'mission-1',
     })
   })
 })

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { canRerunSubtask } from '@/lib/missions'
+import { QuickMissionsHubHost } from '@/components/global-chat/components/QuickMissionsHubHost'
+import { canRerunSubtask, QuickMissionsLauncherProvider } from '@/lib/missions'
 import { MISSION_CONTROL_MESSAGES } from '../../config/messages.config'
 import type { MissionSubtask } from '../../types'
 import type { MissionDetailModalViewProps } from './mission-detail-modal-view.types'
@@ -197,6 +198,7 @@ export function MissionDetailModalView({
     onUpdated,
     onSubtasksChange: (updater: (prev: MissionSubtask[]) => MissionSubtask[]) =>
       setSubtasks((prev) => updater(prev)),
+    extendSlot: trackActions,
   }
   const missionActivityTimelineProps = {
     logsLoading,
@@ -294,70 +296,65 @@ export function MissionDetailModalView({
   )
   const portalTarget = typeof document !== 'undefined' ? document.body : null
   const shellZ = elevatedStacking ? 'z-modal-layer-4' : 'z-50'
-
-  if (isMobile) {
-    return portalTarget
-      ? createPortal(
-          <MissionDetailMobileShell
-            shellZ={shellZ}
-            mobileScreen={mobileScreen}
-            setMobileScreen={setMobileScreen}
-            mobileMenuOpen={mobileMenuOpen}
-            setMobileMenuOpen={setMobileMenuOpen}
-            title={title}
-            selectedSubtask={selectedSubtask}
-            subtaskDetailProps={subtaskDetailProps}
-            onBackToMission={() => setSelectedSubtaskId(null)}
-            onClose={onClose}
-            currentStatus={currentStatus}
-            onRetry={onRetry}
-            onArchive={onArchive}
-            onDelete={onDelete}
-            missionMetaProps={missionMetaProps}
-            subtasksProps={subtasksProps}
-            accessApprovalCard={accessApprovalCard}
-            deliverables={visibleDeliverables}
-            onSelectDeliverable={setPreviewDeliverable}
-            missionId={effectiveMission.id}
-            activityTimelineProps={activityTimelineProps}
-            overlayModals={overlayModals}
-            trackActions={trackActions}
-            subtaskHeaderActions={subtaskHeaderActions}
-          />,
-          portalTarget,
-        )
-      : null
-  }
-
-  const desktopShell = (
-    <MissionDetailDesktopShell
-      presentation={presentation}
-      shellZ={shellZ}
-      hideMissionSurface={previewDeliverable != null}
-      onClose={onClose}
-      title={title}
-      selectedSubtask={selectedSubtask}
-      subtaskDetailProps={subtaskDetailProps}
-      onBackToMission={() => setSelectedSubtaskId(null)}
-      onTitleChange={setTitle}
-      onOpenMenu={setMenuAnchor}
-      menuAnchor={menuAnchor}
-      menuMission={effectiveMission}
-      onCloseMenu={() => setMenuAnchor(null)}
-      onUpdated={onUpdated}
-      onDelete={onDelete}
-      missionMetaProps={missionMetaProps}
-      subtasksProps={subtasksProps}
-      accessApprovalCard={accessApprovalCard}
-      deliverables={visibleDeliverables}
-      onSelectDeliverable={setPreviewDeliverable}
-      activityTimelineProps={activityTimelineProps}
-      overlayModals={overlayModals}
-      trackActions={trackActions}
-      subtaskHeaderActions={subtaskHeaderActions}
-    />
+  const tree = (
+    <QuickMissionsLauncherProvider>
+      {isMobile ? (
+        <MissionDetailMobileShell
+          shellZ={shellZ}
+          mobileScreen={mobileScreen}
+          setMobileScreen={setMobileScreen}
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+          title={title}
+          selectedSubtask={selectedSubtask}
+          subtaskDetailProps={subtaskDetailProps}
+          onBackToMission={() => setSelectedSubtaskId(null)}
+          onClose={onClose}
+          currentStatus={currentStatus}
+          onRetry={onRetry}
+          onArchive={onArchive}
+          onDelete={onDelete}
+          missionMetaProps={missionMetaProps}
+          subtasksProps={subtasksProps}
+          accessApprovalCard={accessApprovalCard}
+          deliverables={visibleDeliverables}
+          onSelectDeliverable={setPreviewDeliverable}
+          missionId={effectiveMission.id}
+          activityTimelineProps={activityTimelineProps}
+          overlayModals={overlayModals}
+          subtaskHeaderActions={subtaskHeaderActions}
+        />
+      ) : (
+        <MissionDetailDesktopShell
+          presentation={presentation}
+          shellZ={shellZ}
+          hideMissionSurface={previewDeliverable != null}
+          onClose={onClose}
+          title={title}
+          selectedSubtask={selectedSubtask}
+          subtaskDetailProps={subtaskDetailProps}
+          onBackToMission={() => setSelectedSubtaskId(null)}
+          onTitleChange={setTitle}
+          onOpenMenu={setMenuAnchor}
+          menuAnchor={menuAnchor}
+          menuMission={effectiveMission}
+          onCloseMenu={() => setMenuAnchor(null)}
+          onUpdated={onUpdated}
+          onDelete={onDelete}
+          missionMetaProps={missionMetaProps}
+          subtasksProps={subtasksProps}
+          accessApprovalCard={accessApprovalCard}
+          deliverables={visibleDeliverables}
+          onSelectDeliverable={setPreviewDeliverable}
+          activityTimelineProps={activityTimelineProps}
+          overlayModals={overlayModals}
+          subtaskHeaderActions={subtaskHeaderActions}
+        />
+      )}
+      <QuickMissionsHubHost />
+    </QuickMissionsLauncherProvider>
   )
-  if (presentation === 'panel') return desktopShell
 
-  return portalTarget ? createPortal(desktopShell, portalTarget) : null
+  if (!isMobile && presentation === 'panel') return tree
+  return portalTarget ? createPortal(tree, portalTarget) : null
 }

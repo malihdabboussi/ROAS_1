@@ -10,7 +10,19 @@ Needed work: Split name-column chrome (status/title/actions) from data-cell rend
 
 Reason not done now: In-scope work was Host / Call status / Client columns on All Meetings. The row was already over the cap.
 
+## 2026-08-19 - [ARCH] SubtasksSection is near the 400 LOC cap
 
+Status: Open
+
+Found while: Moving Extend this mission under the last subtask
+
+Evidence: `wc -l` on `apps/web/src/features/mission-control/components/dialogs/SubtasksSection.tsx` is 398 (component cap 400). This change only added an `extendSlot` after the last row.
+
+Needed work: Extract assignee picker or complete-confirm into a focused subcomponent so the list can keep growing.
+
+Reason not done now: The requested work was the extend picker placement, not a SubtasksSection split.
+
+## 2026-08-19 - [ARCH] Slack events base remains over the LOC cap
 
 Status: Open
 
@@ -50,13 +62,13 @@ Reason not done now: Prompt + mention expansion unblocks the reported miss; a to
 
 Status: Open
 
-Found while: Adding in-place Client Strategy post-call extend + subtask rerun in Mission Details
+Found while: Adding in-place Client Strategy post-call extend + subtask rerun in Mission Details, then replacing the bottom Continue-this-track button with an Extend picker
 
-Evidence: Continue this track lives on the mission panel only. Chat cards still only open the mission. API `mission-track-extensions.ts` and web `mission-track-actions.ts` duplicate playbook detection.
+Evidence: Extend this mission now lives under the last subtask in Mission Details. Chat cards still only open the mission. API `mission-track-extensions.ts` and web `mission-track-actions.ts` still duplicate Client Strategy detection.
 
-Needed work: Add an Extend action on the in-chat mission card that posts the same `/extend` endpoint, and collapse the catalog helper into one shared package/module.
+Needed work: Add an Extend action on the in-chat mission card that uses the same option list (`/extend` for post-call, Quick Missions hub for other playbooks), and collapse the catalog helper into one shared package/module.
 
-Reason not done now: v1 was the panel they already open after clicking the mission. Chat card and catalog unification are follow-on surfaces.
+Reason not done now: The panel they already open after clicking the mission is the requested surface. Chat card and catalog unification are follow-on surfaces.
 
 ## 2026-08-19 - [ARCH] PageGraderIntegration remains over the LOC cap
 

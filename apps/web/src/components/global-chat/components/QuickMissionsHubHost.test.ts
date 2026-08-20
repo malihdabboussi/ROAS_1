@@ -135,6 +135,51 @@ describe('QuickMissionsHubHost', () => {
     expect(mocks.modalProps).toMatchObject({ open: true, initialPlaybookKey: null })
   })
 
+  it('prefills the launcher space and skips a new chat when extending a mission', async () => {
+    useSpacesStore.setState({
+      spaces: [
+        {
+          id: 'space-1',
+          campaign_id: 'campaign-1',
+          title: 'Course One',
+          space_kind: 'campaign',
+        } as never,
+      ],
+      activeSpaceId: 'space-2',
+      loadSpaces: vi.fn(),
+    })
+    renderHost()
+
+    act(() => {
+      launcher.openLauncher('webinar-fulfillment', {
+        spaceId: 'space-1',
+        parentMissionId: 'mission-parent',
+      })
+    })
+
+    expect(mocks.modalProps).toMatchObject({
+      open: true,
+      initialPlaybookKey: 'webinar-fulfillment',
+      initialClientSpaceId: 'space-1',
+      parentMissionId: 'mission-parent',
+    })
+
+    const resolveSourceConversation = mocks.modalProps?.onResolveSourceConversation as (
+      input: Record<string, string>,
+    ) => Promise<string | null>
+    let conversationId: string | null = 'unset'
+    await act(async () => {
+      conversationId = await resolveSourceConversation({
+        missionTitle: 'Webinar Fulfillment',
+        campaignId: 'campaign-1',
+        spaceId: 'space-1',
+      })
+    })
+
+    expect(conversationId).toBeNull()
+    expect(mocks.createNewConversation).not.toHaveBeenCalled()
+  })
+
   it('creates and opens a conversation before a blank-chat mission starts', async () => {
     mocks.createNewConversation.mockResolvedValue({ id: 'conversation-new-chat' })
     mocks.persistQuickMissionReceipt.mockResolvedValue({

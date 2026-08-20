@@ -20,9 +20,9 @@ export const MISSION_CONTROL_MESSAGES = {
   SUBTASK_OUTPUT_HUMAN_TITLE: 'Your note',
   AGENT_PANEL_TITLE: 'Agent Status',
   DETAIL_EMPTY: 'Select a mission to see plan, timeline, and output.',
-  TRACK_HEADING: 'Continue this track',
-  TRACK_BODY:
-    'Keep this mission moving. Post-call takes the map you already have and corrects it from the real conversation.',
+  TRACK_EXTEND: 'Extend this mission',
+  TRACK_CONTINUE_SECTION: 'Continue this track',
+  TRACK_PLAYBOOKS_SECTION: 'Start another mission',
   TRACK_POST_CALL: 'Post-call strategy',
   TRACK_QUEUING: 'Queuing…',
   TRACK_QUEUED:

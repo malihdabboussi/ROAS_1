@@ -1,5 +1,16 @@
 # Changelog - [August 19, 2026]
 
+## [2026-08-19 17:45] - [FEATURE]
+
+What: Mission Details now shows Extend this mission under the last subtask. Post-call still continues Client Strategy in place. Other Quick Mission playbooks open the existing kickoff hub and create a child mission with parent_mission_id.
+
+Why: The dedicated Post-call button sat below the task list, failed with a generic toast when /extend was unreachable, and could not start the other missions operators actually run next.
+
+Impact: Mission Details panel/modal. Chat mission-card Extend is still not in this pass.
+
+Files: `apps/web/src/lib/missions/mission-track-actions.ts`, `apps/web/src/lib/missions/quick-missions-launcher.ts`, `apps/web/src/features/mission-control/components/dialogs/MissionTrackActions.tsx`, `SubtasksSection.tsx`, `MissionDetailModalView.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx`, `documentation/features/missions.md`
+
+
 ## [2026-08-19 17:05] - [FIX]
 
 What: Pixel now treats “make this a task” / “task this” as a Service Request, and if the ask is still unclear it asks exactly “Did you want me to create a task for this?” ClickUp-pending Service Request cards show the failure reason plus a Retry ClickUp button that re-runs finalize remirror.
