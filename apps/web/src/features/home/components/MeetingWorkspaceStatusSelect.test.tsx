@@ -4,13 +4,14 @@ import type { FieldDef } from '@/lib/spaces/space-schema-types'
 import { MeetingWorkspaceStatusSelect } from './MeetingWorkspaceStatusSelect'
 
 const statusField: FieldDef = {
-  id: 'status',
-  name: 'Status',
+  id: 'call_status',
+  name: 'Call status',
   type: 'select',
   options: [
-    { id: 'logged', label: 'To action', color: 'blue', group: 'not_started' },
-    { id: 'needs_follow_up', label: 'Following up', color: 'orange', group: 'active' },
-    { id: 'done', label: 'Done', color: 'emerald', group: 'closed' },
+    { id: 'live', label: 'Live', color: 'emerald' },
+    { id: 'completed', label: 'Completed', color: 'blue' },
+    { id: 'no_show', label: 'No Show', color: 'red' },
+    { id: 'rescheduled', label: 'Rescheduled', color: 'amber' },
   ],
 }
 
@@ -19,18 +20,14 @@ describe('MeetingWorkspaceStatusSelect', () => {
     cleanup()
   })
 
-  it('uses the branded status picker and writes the task status id', () => {
+  it('uses the branded status picker and writes the Call status id', () => {
     const onChange = vi.fn()
     render(
-      <MeetingWorkspaceStatusSelect
-        field={statusField}
-        value="needs_follow_up"
-        onChange={onChange}
-      />,
+      <MeetingWorkspaceStatusSelect field={statusField} value="completed" onChange={onChange} />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Following up' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Done' }))
-    expect(onChange).toHaveBeenCalledWith('done')
+    fireEvent.click(screen.getByRole('button', { name: 'Completed' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Live' }))
+    expect(onChange).toHaveBeenCalledWith('live')
   })
 })
