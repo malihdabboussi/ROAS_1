@@ -57,7 +57,8 @@ const fields = [
     ],
   },
   { id: 'client_campaign', name: 'Client / Campaign', type: 'text' },
-  { id: 'space_title', name: 'Space', type: 'text' },
+  { id: 'campaign_name', name: 'Client Workspace', type: 'text' },
+  { id: 'space_title', name: 'Campaign Space', type: 'text' },
   { id: 'host', name: 'Host', type: 'text' },
   {
     id: 'call_status',
@@ -103,7 +104,8 @@ const views = [
     visible_fields: [
       'title',
       'call_kind',
-      'client_campaign',
+      'campaign_name',
+      'space_title',
       'host',
       'call_date',
       'call_status',
@@ -112,7 +114,8 @@ const views = [
     column_widths: {
       title: 360,
       call_kind: 110,
-      client_campaign: 240,
+      campaign_name: 180,
+      space_title: 180,
       host: 160,
       call_date: 170,
       call_status: 140,

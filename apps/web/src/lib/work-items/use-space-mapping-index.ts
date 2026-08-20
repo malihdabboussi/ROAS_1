@@ -5,6 +5,7 @@ import { fetchSpaceMappingGroups, type SpaceMappingGroup } from './space-mapping
 
 export interface SpaceMappingIndexEntry {
   spaceTitle: string
+  campaignName: string
   /** Full "Program · Campaign · Space" path. */
   pathLabel: string
 }
@@ -18,6 +19,7 @@ export function buildSpaceMappingIndex(
     for (const space of group.spaces) {
       index.set(space.id, {
         spaceTitle: space.title,
+        campaignName: group.campaignName,
         pathLabel: `${group.label} · ${space.title}`,
       })
     }

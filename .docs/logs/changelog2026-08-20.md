@@ -30,6 +30,13 @@ Why: Call notes showed Following up (task Status) while All Meetings showed Comp
 Impact: Workspace picker and All Meetings share Call status. Recap chats still connect to the calendar meeting, labeled with that meeting’s title. Follow-up work keeps task Status.
 Files: `use-meeting-space-status-field.ts`, `MeetingWorkspaceDialog.tsx`, `ShellRightPanel.tsx`, `conversation-meeting-link.ts`, `conversation-title.ts`, `conversation-title-scheduler.ts`, `chat.service.ts`, `meeting-workspace.service.ts`
 
+
+## [2026-08-20 02:35] - [FIX]
+What: All Meetings keeps the name-column status dropdown (Call status) while Call status stays its own column. Default columns are now Client Workspace and Campaign Space like All Tasks, mapped from the call’s client/campaign space. Host is a people dropdown. Removed the Map + Agenda Client / Campaign default column.
+Why: Status as a column should not hide the ClickUp-style name picker. Client / Campaign was a mapper control, not the All Tasks Client Workspace / Campaign Space pair.
+Impact: Existing All Meetings views splice in those two columns and keep Host / Call status. Mapping payload stays on `custom_data.client_campaign`.
+Files: `all-meetings-list-columns.ts`, `MeetingLocationCell.tsx`, `HostCell.tsx`, `SpaceItemRow.tsx`, `space-template-catalog-personal-dashboard.ts`, `20260820031500_meetings_client_workspace_columns.sql`
+
 ## [2026-08-20 00:56] - [FIX]
 What: Unblocked `roas-web` typecheck and stopped React #185 max-update-depth crashes on Choose Space / home shell.
 Why: Production showed the branded error boundary (`SOMETHING WENT WRONG`). `app_errors` logged React #185 on `/` and `/home/inbox`. Vercel `roas-web` deploys after #335 were failing typecheck (`agency-client-pipeline` slug typing + MissionTrackActions test cast), so later fixes could not ship.

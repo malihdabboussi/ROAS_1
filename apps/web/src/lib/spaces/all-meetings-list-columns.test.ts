@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   ALL_MEETINGS_LIST_FIELD_IDS,
   ensureAllMeetingsListColumns,
+  withClientWorkspaceColumns,
 } from './all-meetings-list-columns'
 
 describe('ensureAllMeetingsListColumns', () => {
-  it('replaces Priority and Space with Client / Campaign, Host, and Call status', () => {
+  it('replaces Priority with Client Workspace, Campaign Space, Host, and Call status', () => {
     const next = ensureAllMeetingsListColumns({
       fields: [
         { id: 'title', name: 'Name', type: 'text' },
@@ -24,6 +25,8 @@ describe('ensureAllMeetingsListColumns', () => {
 
     expect(next.fields).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({ id: 'campaign_name', name: 'Client Workspace' }),
+        expect.objectContaining({ id: 'space_title', name: 'Campaign Space' }),
         expect.objectContaining({ id: 'client_campaign', name: 'Client / Campaign' }),
         expect.objectContaining({ id: 'host', name: 'Host' }),
         expect.objectContaining({
@@ -42,12 +45,13 @@ describe('ensureAllMeetingsListColumns', () => {
       expect.arrayContaining([expect.objectContaining({ id: 'priority' })]),
     )
     expect(next.views[0]?.visible_fields).toEqual([...ALL_MEETINGS_LIST_FIELD_IDS])
+    expect(next.views[0]?.visible_fields).not.toContain('client_campaign')
     expect(next.views[0]?.visible_fields).not.toEqual(
       expect.arrayContaining(['priority', 'status']),
     )
   })
 
-  it('keeps a later customization once Host and Call status are already on the view', () => {
+  it('inserts Client Workspace and Campaign Space without wiping later columns', () => {
     const schema = {
       fields: [
         { id: 'title', name: 'Name', type: 'text' },
@@ -63,6 +67,8 @@ describe('ensureAllMeetingsListColumns', () => {
     }
     expect(ensureAllMeetingsListColumns(schema).views[0]?.visible_fields).toEqual([
       'title',
+      'campaign_name',
+      'space_title',
       'host',
       'call_status',
       'priority',
@@ -77,11 +83,13 @@ describe('ensureAllMeetingsListColumns', () => {
     expect(ensureAllMeetingsListColumns(schema)).toBe(schema)
   })
 
-  it('returns the same schema object when All Meetings already has the one-room columns', () => {
+  it('returns the same schema object when All Meetings already has the workspace columns', () => {
     const schema = {
       fields: [
         { id: 'title', name: 'Name', type: 'text' },
         { id: 'client_campaign', name: 'Client / Campaign', type: 'text' },
+        { id: 'campaign_name', name: 'Client Workspace', type: 'text' },
+        { id: 'space_title', name: 'Campaign Space', type: 'text' },
         { id: 'host', name: 'Host', type: 'text' },
         { id: 'call_status', name: 'Call status', type: 'select' },
       ],
@@ -95,7 +103,7 @@ describe('ensureAllMeetingsListColumns', () => {
     expect(ensureAllMeetingsListColumns(schema)).toBe(schema)
   })
 
-  it('rewrites a live All Meetings view that still shows Space, Priority, and Status', () => {
+  it('rewrites a live All Meetings view that still shows Priority and Status', () => {
     const next = ensureAllMeetingsListColumns({
       fields: [
         { id: 'title', name: 'Name', type: 'text' },
@@ -121,11 +129,30 @@ describe('ensureAllMeetingsListColumns', () => {
       ],
     })
     expect(next.views[0]?.visible_fields).toEqual([...ALL_MEETINGS_LIST_FIELD_IDS])
-    expect(next.views[0]?.visible_fields).not.toContain('space_title')
+    expect(next.views[0]?.visible_fields).toContain('space_title')
+    expect(next.views[0]?.visible_fields).not.toContain('client_campaign')
     expect(next.fields).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({ id: 'campaign_name', name: 'Client Workspace' }),
+        expect.objectContaining({ id: 'space_title', name: 'Campaign Space' }),
         expect.objectContaining({ id: 'client_campaign', name: 'Client / Campaign' }),
       ]),
     )
+  })
+})
+
+describe('withClientWorkspaceColumns', () => {
+  it('replaces Client / Campaign with the All Tasks workspace columns', () => {
+    expect(
+      withClientWorkspaceColumns([
+        'title',
+        'call_kind',
+        'client_campaign',
+        'host',
+        'call_date',
+        'call_status',
+        'recording_url',
+      ]),
+    ).toEqual([...ALL_MEETINGS_LIST_FIELD_IDS])
   })
 })
