@@ -310,3 +310,9 @@ What: Campaign→program attachment per Dylan's rule. createCampaign now attache
 Why: Pixel-created client campaigns floated program-less and polluted the scope picker; Dylan: campaigns only on explicit ask, tied to their client, else General.
 Impact: New client campaigns land under their client automatically; the picker's Campaigns section now holds only genuinely standalone campaigns (verified live).
 Files: apps/api/src/modules/campaigns/services/campaigns-service-01.base.ts, apps/api/src/modules/campaigns/repositories/campaigns.repository.ts, apps/api/src/modules/campaigns/services/__tests__/campaigns.service.test.ts, apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts
+
+## [2026-08-19 20:41] - [FEATURE]
+What: App-chat named-client CONNECTIONS bind (plan §11.2a, Studio side). `maybeBindNamedClientCampaign` runs at turn start in `chat.service.processMessage`: when the message names a client ("for Christian Osgood's multi-family…"), the conversation is unbound or on General, and exactly one org campaign matches the name, the conversation binds to that campaign before the turn — so the Campaign Brain preload (#321) and campaign-scoped tools fire deterministically. Never rebinds a chat already on a real client; ambiguous names bind nothing.
+Why: Live case 2026-08-19 — an app chat naming Christian Osgood ran unbound: no campaign brain search, no Slack channel lookup, Pixel asked 4 questions his Campaign Brain could answer. Slack inbound got this bind yesterday; the app path still depended on the model choosing to call search_campaign_brain with the name.
+Impact: App Pixel = Slack Pixel for named-client asks (§11.12 #3).
+Files: apps/agent-api/src/modules/chat/services/named-client-campaign-bind.ts (+test), chat.service.ts
