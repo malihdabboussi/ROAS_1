@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Campaign } from '@/lib/campaigns/campaign-api'
 import type { Program } from '@/lib/programs'
 import type { SpaceSummary } from '@/lib/spaces'
-import { buildSpaceMappingGroups } from './space-mapping'
+import { buildSpaceMappingGroups, campaignNameFromMappingPath } from './space-mapping'
 import { buildSpaceMappingIndex } from './use-space-mapping-index'
 
 function campaign(overrides: Partial<Campaign>): Campaign {
@@ -76,14 +76,23 @@ describe('buildSpaceMappingGroups', () => {
     const index = buildSpaceMappingIndex([
       {
         campaignId: 'c-1',
+        campaignName: 'Launch',
         label: 'Acme Co · Launch',
         spaces: [{ id: 's-1', title: 'Ad Production', visibility: 'team' }],
       },
     ])
     expect(index.get('s-1')).toEqual({
       spaceTitle: 'Ad Production',
+      campaignName: 'Launch',
       pathLabel: 'Acme Co · Launch · Ad Production',
     })
+  })
+
+  it('reads Client Workspace from the campaign segment of a mapping path', () => {
+    expect(campaignNameFromMappingPath('ROAS · General · Meetings')).toBe('General')
+    expect(campaignNameFromMappingPath('Launch · Ad Production')).toBe('Launch')
+    expect(campaignNameFromMappingPath('Meetings')).toBeNull()
+    expect(campaignNameFromMappingPath(undefined)).toBeNull()
   })
 
   it('defaults space visibility to private', () => {

@@ -46,12 +46,12 @@ export function readItemAssignees(item: SpaceItem): AssigneeFieldValue {
   return []
 }
 
-export function visibleListStatusField(
-  allFields: FieldDef[],
-  visibleFields: FieldDef[],
-): FieldDef | undefined {
-  if (!visibleFields.some((field) => field.id === 'status')) return undefined
-  return allFields.find((field) => field.id === 'status')
+/** Name-column status dropdown. Prefer Call status on Meetings; keep showing it when Status is also a column. */
+export function listRowStatusField(allFields: FieldDef[]): FieldDef | undefined {
+  return (
+    allFields.find((field) => field.id === 'call_status') ??
+    allFields.find((field) => field.id === 'status')
+  )
 }
 
 export function readFieldValue(item: SpaceItem, fieldId: string): unknown {

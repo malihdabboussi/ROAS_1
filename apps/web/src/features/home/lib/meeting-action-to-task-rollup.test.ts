@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { MeetingAction } from '@/features/home/services/meeting-workspace-api'
-import {
-  campaignNameFromMappingPath,
-  meetingActionToTaskRollupItem,
-} from './meeting-action-to-task-rollup'
+import { meetingActionToTaskRollupItem } from './meeting-action-to-task-rollup'
 
 function action(overrides: Partial<MeetingAction> = {}): MeetingAction {
   return {
@@ -56,11 +53,5 @@ describe('meetingActionToTaskRollupItem', () => {
         campaignName: null,
       }).status,
     ).toBe('done')
-  })
-})
-
-describe('campaignNameFromMappingPath', () => {
-  it('uses the campaign segment from a program · campaign · space path', () => {
-    expect(campaignNameFromMappingPath('ROAS · General · Meetings')).toBe('General')
   })
 })

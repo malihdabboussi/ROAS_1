@@ -52,7 +52,8 @@ describe('useEnsureAllMeetingsColumns', () => {
               visible_fields: [
                 'title',
                 'call_kind',
-                'client_campaign',
+                'campaign_name',
+                'space_title',
                 'host',
                 'call_date',
                 'call_status',
@@ -73,6 +74,8 @@ describe('useEnsureAllMeetingsColumns', () => {
           fields: [
             { id: 'title', name: 'Name', type: 'text' },
             { id: 'client_campaign', name: 'Client / Campaign', type: 'text' },
+            { id: 'campaign_name', name: 'Client Workspace', type: 'text' },
+            { id: 'space_title', name: 'Campaign Space', type: 'text' },
             { id: 'host', name: 'Host', type: 'text' },
             { id: 'call_status', name: 'Call status', type: 'select' },
           ],
@@ -82,7 +85,8 @@ describe('useEnsureAllMeetingsColumns', () => {
               visible_fields: [
                 'title',
                 'call_kind',
-                'client_campaign',
+                'campaign_name',
+                'space_title',
                 'host',
                 'call_date',
                 'call_status',

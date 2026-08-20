@@ -7,10 +7,7 @@ import {
   HOME_TOAST_ERRORS,
   HOME_TOAST_SUCCESS,
 } from '@/features/home/config/home-toast-errors.config'
-import {
-  campaignNameFromMappingPath,
-  meetingActionToTaskRollupItem,
-} from '@/features/home/lib/meeting-action-to-task-rollup'
+import { meetingActionToTaskRollupItem } from '@/features/home/lib/meeting-action-to-task-rollup'
 import {
   createMeetingAction,
   updateMeetingActionStatus,
@@ -18,7 +15,7 @@ import {
 } from '@/features/home/services/meeting-workspace-api'
 import { updateSpaceItem, type SpaceItem } from '@/lib/spaces'
 import type { TaskRollupItem } from '@/lib/tasks'
-import { useSpaceMappingIndex } from '@/lib/work-items'
+import { campaignNameFromMappingPath, useSpaceMappingIndex } from '@/lib/work-items'
 
 const DONE_STATUSES = new Set(['done', 'complete', 'completed', 'resolved'])
 
@@ -49,7 +46,8 @@ export function MeetingActionItemsSection({
   const mappingIndex = useSpaceMappingIndex(actions.length > 0)
   const mappingEntry = mappingIndex?.get(spaceId)
   const spaceTitle = mappingEntry?.spaceTitle ?? ''
-  const campaignName = campaignNameFromMappingPath(mappingEntry?.pathLabel)
+  const campaignName =
+    mappingEntry?.campaignName?.trim() || campaignNameFromMappingPath(mappingEntry?.pathLabel)
 
   const items = useMemo(
     () =>
