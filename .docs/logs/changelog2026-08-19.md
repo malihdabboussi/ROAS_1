@@ -284,3 +284,9 @@ What: Submitting a new chat from Home no longer flashes the half-loaded agent id
 Why: Dylan: submit showed "the agent in the middle of the screen… looks like a broken load" — the hero rendered for the conversation-create round trip with a fallback avatar.
 Impact: Submit goes straight from composer to thread; no centered identity flash.
 Files: apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx, apps/web/src/components/global-chat/lib/global-chat-seed-match.ts(+test)
+
+## [2026-08-19 19:50] - [FIX]
+What: Recents filter fixes. (1) Clicking a chat under an active filter no longer gets hijacked or stranded: /home?conv= now beats a lingering meeting context in GlobalChatPanel (the meeting thread could shadow the clicked conversation — "opens then goes away"), and a conversation whose messages are still hydrating shows a "Loading conversation…" skeleton instead of a blank pane (SpaceVibeyChatPanel; empty-chat hero suppressed only while hydration is pending). (2) The scope picker's program-less campaigns render under their own "Campaigns" section label instead of inside "Programs" — "Claude Club Webinar" / "Master Your Kraft | VSL …" are campaigns, not programs; the Programs label only renders when a real program has campaigns.
+Why: Dylan's report: filtered chat click pulled the chat up briefly then it vanished; filter tree listed campaigns as programs.
+Impact: Filtered recents clicks land and stay on the clicked chat with a visible loading state; the filter tree is truthfully sectioned (Programs / Campaigns / Clients). Client filtering = the existing Clients section + search; the three mislabeled client campaigns still need the program backfill (see follow-up log).
+Files: apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx, apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx, apps/web/src/components/conversations/ConversationScopePickerMenus.tsx, conversation-scope-picker.messages.config.ts
