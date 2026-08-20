@@ -347,3 +347,9 @@ What: Added the required `publishToTaskList: false` to the two post-call strateg
 Why: Merged main (#342) fails `nest start --watch` with TS2741 — `ManagerAppendSubtasksDto` subtasks require `publishToTaskList` and the new track-extension templates omitted it, so apps/api dev cannot boot on main.
 Impact: apps/api compiles and boots again; behavior matches the schema default (false).
 Files: `apps/api/src/modules/missions/playbooks/mission-track-extensions.ts`
+
+## [2026-08-19 21:19] - [FIX]
+What: Conversation titles can never be injected context stamps. `stripInjectedContextBlocks` in conversation-title.util.ts removes platform blocks ([Ask kind], [Slack channel identity], [Client context], [Assets], thread wrappers, …) before any title is derived, and `needsGeneratedConversationTitle` treats an already-stamped title as needing regeneration. New repo script `scripts/roas/cleanup-stamped-conversation-titles.mjs` (dry-run default, --apply) retitles the 11 prod rows created before PR #339's source fix, deriving each title from the conversation's first real user message.
+Why: 11 Slack chats were titled "[Ask kind] Kind: client Signals: …" — the prompt stamp from #317 leaked into titles. #339 fixed the source; this is the belt-and-suspenders guard + the row cleanup, run via script instead of a manual prod write.
+Impact: Sidebar titles always reflect the human ask; cleanup is idempotent.
+Files: apps/api/src/modules/conversations/utils/conversation-title.util.ts (+test), scripts/roas/cleanup-stamped-conversation-titles.mjs
