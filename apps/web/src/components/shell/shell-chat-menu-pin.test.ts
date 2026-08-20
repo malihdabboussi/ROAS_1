@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Conversation } from '@/lib/conversations'
-import { mergeStoreConversationRow, persistConversationPinned } from './shell-chat-menu-pin'
+import {
+  mergeConversationsWithStore,
+  mergeStoreConversationRow,
+  persistConversationPinned,
+} from './shell-chat-menu-pin'
 
 const mocks = vi.hoisted(() => ({
   updateConversation: vi.fn(),
@@ -48,6 +52,26 @@ describe('shell chat menu pin', () => {
       conversation({ id: 'c1', metadata: { source: 'slack' } }),
     )
     expect(merged.metadata).toMatchObject({ source: 'slack', pinned: true })
+  })
+
+  it('returns the same row reference when the store row adds nothing new', () => {
+    const current = conversation({ id: 'c1', metadata: { source: 'slack', pinned: true } })
+    const merged = mergeStoreConversationRow(
+      current,
+      conversation({ id: 'c1', metadata: { source: 'slack', pinned: true } }),
+    )
+    expect(merged).toBe(current)
+  })
+
+  it('skips rebuilding the chat list when store rows are unchanged', () => {
+    const current = conversation({ id: 'c1', metadata: { source: 'slack', pinned: true } })
+    const prev = [current]
+    const next = mergeConversationsWithStore(
+      prev,
+      [conversation({ id: 'c1', metadata: { source: 'slack', pinned: true } })],
+      null,
+    )
+    expect(next).toBe(prev)
   })
 
   it('pins immediately and keeps the flag from the persisted conversation', async () => {

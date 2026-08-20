@@ -61,13 +61,17 @@ export function normalizePipelineKey(value: string): string {
     .replace(/\s+/g, ' ')
 }
 
-export function resolvePipelineSlug(value: string | null | undefined): string | null {
+export function resolvePipelineSlug(
+  value: string | null | undefined,
+): AgencyClientPipelineSlug | null {
   const key = normalizePipelineKey(typeof value === 'string' ? value : '')
   if (!key) return null
-  return (
-    PIPELINE_ALIASES[key] ??
-    (RANK_BY_SLUG.has(key.replace(/ /g, '_')) ? key.replace(/ /g, '_') : null)
-  )
+  const aliased = PIPELINE_ALIASES[key]
+  if (aliased) return aliased
+  const asSlug = key.replace(/ /g, '_')
+  return RANK_BY_SLUG.has(asSlug as AgencyClientPipelineSlug)
+    ? (asSlug as AgencyClientPipelineSlug)
+    : null
 }
 
 export function clientPipelineValue(client: PipelineClientLike): string {
