@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import type { AgentTeam } from '@/lib/agents'
 import { useOrgStore } from '@/lib/org'
 import { useTeam2Perms } from '../../hooks/use-team2-perms'
@@ -177,7 +178,9 @@ export function TeamDetailView({ teamId, initialTeam, embedded = false }: TeamDe
         <div className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden md:flex-row">
           <div className="p-spacing-4 min-h-0 min-w-0 flex-1 overflow-auto">
             {data.loading ? (
-              <p className="body-3 text-muted-foreground p-spacing-6 text-center">Loading…</p>
+              <div className="p-spacing-6">
+                <ListSkeleton rows={6} label="Loading…" />
+              </div>
             ) : activeTab === 'overview' ? (
               <TeamOverviewView
                 teamId={teamId}

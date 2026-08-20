@@ -50,3 +50,17 @@ export function normalizeGlobalChatSeed(
     seedKey: `${panelSpaceId ?? 'general'}:${seed.seedMode ?? 'send'}:${seed.conversationId ?? ''}:${content}:${documentKey ?? ''}:${referenceKey}`,
   }
 }
+
+/**
+ * True while a queued SEND seed for this panel has not been applied yet. The empty-chat
+ * agent hero must not render during that window — after a Home submit it flashes a
+ * half-loaded agent identity for the length of the conversation-create round trip.
+ */
+export function isPendingSendSeedForPanel(
+  seed: GlobalChatSeedDetail | null,
+  panelSpaceId: string | undefined,
+): boolean {
+  if (!seed || seed.seedMode === 'attach') return false
+  if (!seed.content?.trim()) return false
+  return globalChatSeedMatchesPanel(seed, panelSpaceId)
+}

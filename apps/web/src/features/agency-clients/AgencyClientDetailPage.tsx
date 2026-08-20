@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { ExternalLink, PanelRightOpen, Pencil } from 'lucide-react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
   fetchAgencyClient,
   updateAgencyWorkspaceEntity,
@@ -161,8 +161,8 @@ export function AgencyClientDetailPage({ clientId }: { clientId: string }) {
   }
   if (loading)
     return (
-      <main className="flex min-h-full items-center justify-center">
-        <VibeyLoadingOrb />
+      <main className="min-h-full">
+        <PageSkeleton label="Loading client…" />
       </main>
     )
   if (error || !workspace)

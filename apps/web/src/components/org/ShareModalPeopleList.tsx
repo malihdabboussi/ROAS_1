@@ -1,6 +1,7 @@
 'use client'
 
 import { ChevronDown, ChevronRight, Crown, Users } from 'lucide-react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { SettingsSelect } from '@/components/ui/forms/SettingsSelect'
 import Switch from '@/components/ui/forms/switch'
 import {
@@ -42,8 +43,8 @@ export function ShareModalPeopleList({
       <p className="body-3 text-muted-foreground mb-spacing-3">Share with</p>
 
       {loading ? (
-        <div className="py-spacing-6 flex items-center justify-center">
-          <p className="body-3 text-muted-foreground">Loading team...</p>
+        <div className="py-spacing-6">
+          <ListSkeleton rows={3} label="Loading team..." />
         </div>
       ) : memberStates.length === 0 ? (
         <div className="py-spacing-4 text-center">
