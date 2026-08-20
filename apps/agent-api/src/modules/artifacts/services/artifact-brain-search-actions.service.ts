@@ -230,6 +230,7 @@ export class ArtifactBrainSearchActionsService {
 
     // Prefer explicit ids/names over session scope so General chats can still
     // read a client campaign brain (search_campaign_brain is cross-scope).
+    let nameLookupError: string | null = null
     if (
       !campaignId &&
       campaignName &&
@@ -244,10 +245,14 @@ export class ArtifactBrainSearchActionsService {
         )
         if (typeof resolved === 'string' && resolved.trim()) campaignId = resolved.trim()
       } catch (err) {
-        return {
-          error:
-            err instanceof Error ? err.message : `Failed to resolve campaign_name: ${campaignName}`,
-        }
+        const message =
+          err instanceof Error ? err.message : `Failed to resolve campaign_name: ${campaignName}`
+        // Ambiguity needs the human; an unknown name falls through to the
+        // conversation's bound campaign. Returning "not found" here is what a
+        // model narrates as "the Brain has nothing on <client>" — while the
+        // bound campaign brain is sitting right there.
+        if (message.includes('ambiguous')) return { error: message }
+        nameLookupError = message
       }
     }
 
@@ -303,6 +308,7 @@ export class ArtifactBrainSearchActionsService {
     if (!campaignId) {
       return {
         error:
+          nameLookupError ??
           'campaign_id (or campaign_name) is required. Client package knowledge is not on General — pass the client campaign id/name or open that campaign chat.',
       }
     }
