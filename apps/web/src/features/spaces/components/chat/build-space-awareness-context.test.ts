@@ -80,4 +80,22 @@ describe('resolveChatSendAwarenessContext', () => {
       }),
     ).toContain('Campaign: Visible campaign')
   })
+
+  it('uses the Connections label on Home when Choose Space attached a client', () => {
+    expect(
+      resolveChatSendAwarenessContext({
+        isChannelScope: false,
+        chatSurface: 'spaces',
+        campaignId: 'campaign-1',
+        spaceId: null,
+        connectedLocationLabel: 'Above It General',
+        scopeMatchesVisibleSpace: true,
+        campaignName: null,
+      }),
+    ).toBe(
+      buildSpaceAwarenessContext({
+        campaignName: 'Above It General',
+      }),
+    )
+  })
 })

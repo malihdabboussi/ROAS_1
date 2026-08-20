@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common'
-import type { SendFn } from './openclaw-proxy.service'
-import type { RecordChatTurnTimingSpan } from './chat-turn-session.service'
 import {
   ChatOrderedBlocksService,
   type ChatOrderedBlocksState,
   type CompletedPlatformToolBlock,
 } from './chat-ordered-blocks.service'
+import type { RecordChatTurnTimingSpan } from './chat-turn-session.service'
+import type { SendFn } from './openclaw-proxy.service'
 
 type OrderedBlock = Record<string, unknown>
 type ToolStep = { name: string; label: string; status: string }
@@ -17,8 +17,12 @@ export interface ChatProgressiveStreamState {
   flushTimer: ReturnType<typeof setTimeout> | null
   lastFlushBlockCount: number
   lastFlushLength: number
+  lastFlushReceiptCount: number
+  lastFlushWebCount: number
   lastToolCheckpointAt: number
   orderedBlocksState: ChatOrderedBlocksState
+  retrievalReceipts: Record<string, unknown>[]
+  webResearchUrls: Record<string, unknown>[]
 }
 
 export interface ChatProgressiveStreamSendInput {
@@ -65,8 +69,12 @@ export class ChatProgressiveStreamService {
       flushTimer: null,
       lastFlushBlockCount: 0,
       lastFlushLength: 0,
+      lastFlushReceiptCount: 0,
+      lastFlushWebCount: 0,
       lastToolCheckpointAt: Date.now(),
       orderedBlocksState: this.orderedBlocksService.createState(messageId, completedPlatformTools),
+      retrievalReceipts: [],
+      webResearchUrls: [],
     }
   }
 
@@ -76,6 +84,14 @@ export class ChatProgressiveStreamService {
 
   getCompletedVisibleToolCount(state: ChatProgressiveStreamState): number {
     return state.completedVisibleToolCount
+  }
+
+  getRetrievalReceipts(state: ChatProgressiveStreamState): Record<string, unknown>[] {
+    return state.retrievalReceipts
+  }
+
+  getWebResearchUrls(state: ChatProgressiveStreamState): Record<string, unknown>[] {
+    return state.webResearchUrls
   }
 
   getOrderedBlocks(state: ChatProgressiveStreamState): OrderedBlock[] {
@@ -95,10 +111,14 @@ export class ChatProgressiveStreamService {
     const orderedBlocks = this.getOrderedBlocks(state)
     const contentChanged = state.accumulatedContent.length > state.lastFlushLength
     const blocksChanged = orderedBlocks.length > state.lastFlushBlockCount
-    if (!contentChanged && !blocksChanged) return
+    const receiptsChanged = state.retrievalReceipts.length > state.lastFlushReceiptCount
+    const webChanged = state.webResearchUrls.length > state.lastFlushWebCount
+    if (!contentChanged && !blocksChanged && !receiptsChanged && !webChanged) return
 
     state.lastFlushLength = state.accumulatedContent.length
     state.lastFlushBlockCount = orderedBlocks.length
+    state.lastFlushReceiptCount = state.retrievalReceipts.length
+    state.lastFlushWebCount = state.webResearchUrls.length
 
     await input
       .updateMessage({
@@ -107,6 +127,12 @@ export class ChatProgressiveStreamService {
           ...(input.getToolSteps().length > 0 ? { tool_steps: input.getToolSteps() } : {}),
           ...(orderedBlocks.length > 0
             ? { content_blocks_ordered: structuredClone(orderedBlocks) }
+            : {}),
+          ...(state.retrievalReceipts.length > 0
+            ? { retrieval_receipts: structuredClone(state.retrievalReceipts) }
+            : {}),
+          ...(state.webResearchUrls.length > 0
+            ? { web_research_urls: structuredClone(state.webResearchUrls) }
             : {}),
         },
       })
@@ -166,17 +192,23 @@ export class ChatProgressiveStreamService {
   ): Promise<void> {
     const orderedBlocks = this.getOrderedBlocks(state)
 
+    if (type === 'retrieval_receipt') {
+      state.retrievalReceipts.push({ ...data })
+      return
+    }
+
+    if (type === 'web_source') {
+      state.webResearchUrls.push({ ...data })
+      return
+    }
+
     if (type === 'status' && data.phase) {
       if (data.phase === 'compacting') {
         const label =
           typeof data.message === 'string' && data.message.trim().length > 0
             ? data.message.trim()
             : 'Summarizing our conversation'
-        this.orderedBlocksService.pushSessionCompaction(
-          state.orderedBlocksState,
-          label,
-          Date.now(),
-        )
+        this.orderedBlocksService.pushSessionCompaction(state.orderedBlocksState, label, Date.now())
       } else {
         this.orderedBlocksService.completeSessionCompaction(state.orderedBlocksState, Date.now())
         if (data.phase === 'thinking') {
@@ -339,7 +371,9 @@ export class ChatProgressiveStreamService {
       type === 'generation_start' ||
       type === 'generation_end' ||
       type === 'ui_block' ||
-      type === 'a2a_message'
+      type === 'a2a_message' ||
+      type === 'retrieval_receipt' ||
+      type === 'web_source'
     )
   }
 

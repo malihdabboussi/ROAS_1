@@ -8,6 +8,11 @@ import {
   type BrainSearchFamily,
 } from '@vibey/api-shared'
 import { BrainContextRepository } from '../repositories/brain-context.repository'
+import {
+  toBrainRetrievalReceipt,
+  type BrainRetrievalReceipt,
+  type BrainRetrievalReceiptScope,
+} from './brain-retrieval-receipt'
 import { BrainRetrievalService } from './brain-retrieval.service'
 import { CompanyContextCompilerService } from './company-context-compiler.service'
 import { EmbeddingService } from './embedding.service'
@@ -124,6 +129,7 @@ export class BrainContextSupportService {
     orgId?: string | null
     agentKey?: string
     precomputedEmbedding?: PrecomputedEmbedding
+    onRetrievalReceipt?: (receipt: BrainRetrievalReceipt) => void
   }): Promise<string> {
     const trimmedQuery = input.query?.trim()
     if (!trimmedQuery || !input.retrieval) return ''
@@ -139,6 +145,7 @@ export class BrainContextSupportService {
       embedding: this.retrievalEmbeddingInput(input.precomputedEmbedding),
       limit: PRELOAD_RETRIEVAL_LIMIT,
       includeKinds: AUTO_CUSTOMER_CONTEXT_KINDS,
+      onRetrievalReceipt: input.onRetrievalReceipt,
     }).catch((err) => {
       this.logger.warn(`Customer brain retrieval context failed: ${err}`)
       return INSUFFICIENT_CONTEXT_STATUS
@@ -152,6 +159,7 @@ export class BrainContextSupportService {
     orgId?: string | null
     agentKey?: string
     precomputedEmbedding?: PrecomputedEmbedding
+    onRetrievalReceipt?: (receipt: BrainRetrievalReceipt) => void
   }): Promise<string> {
     const trimmedQuery = input.query?.trim()
     if (trimmedQuery && input.retrieval) {
@@ -165,6 +173,7 @@ export class BrainContextSupportService {
         agentKey: input.agentKey,
         embedding: this.retrievalEmbeddingInput(input.precomputedEmbedding),
         limit: PRELOAD_RETRIEVAL_LIMIT,
+        onRetrievalReceipt: input.onRetrievalReceipt,
       }).catch((err) => {
         this.logger.warn(`Company Brain retrieval context failed: ${err}`)
         return INSUFFICIENT_CONTEXT_STATUS
@@ -196,6 +205,9 @@ export class BrainContextSupportService {
     embedding?: number[] | Promise<number[] | null>
     limit: number
     includeKinds?: BrainCandidateKind[]
+    receiptScope?: BrainRetrievalReceiptScope
+    brainName?: string | null
+    onRetrievalReceipt?: (receipt: BrainRetrievalReceipt) => void
   }): Promise<string> {
     if (!input.retrieval) return ''
     const result = await input.retrieval.search({
@@ -212,6 +224,16 @@ export class BrainContextSupportService {
       limit: input.limit,
       includeKinds: input.includeKinds,
     })
+    input.onRetrievalReceipt?.(
+      toBrainRetrievalReceipt({
+        brainId: result.results[0]?.brain_id ?? input.brainId,
+        brainName: input.brainName,
+        scope: input.receiptScope ?? input.family,
+        query: input.query,
+        resultsCount: result.count,
+        results: result.results,
+      }),
+    )
     return this.formatRetrievalContext(input.heading, result)
   }
 
@@ -361,7 +383,9 @@ export class BrainContextSupportService {
   async fetchSnapshotsWithRecency(
     brainId: string,
     ids: string[],
-  ): Promise<Array<{ id: string; name: string; core: string; confidence: number; updated_at?: string }>> {
+  ): Promise<
+    Array<{ id: string; name: string; core: string; confidence: number; updated_at?: string }>
+  > {
     if (!ids.length) return []
     const { data } = await this.repository.listSnapshotsByIds(this.supabase, brainId, ids)
     return (data ?? []) as Array<{
@@ -434,7 +458,7 @@ export class BrainContextSupportService {
     }
   }
 
-  private logContextTiming(
+  logContextTiming(
     stage: string,
     meta: BrainContextTimingMeta,
     latencyMs: number,

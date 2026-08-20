@@ -9,19 +9,19 @@ const meetingPage = {
 }
 
 describe('historyConversationOpenPlan', () => {
-  it('reopens the remembered work page beside chat instead of /home?conv=', () => {
+  it('opens Simple Recents as full-page chat even when a meeting page is remembered', () => {
     expect(
       historyConversationOpenPlan({
         conversationId: 'conv-1',
         simpleSidebar: true,
         rememberedPage: meetingPage,
-        pathname: '/campaigns',
+        pathname: '/home',
         hasHomeConvParam: false,
       }),
     ).toEqual({
-      href: meetingPage.href,
-      openDrawer: true,
-      restore: meetingPage.restore,
+      href: '/home?conv=conv-1',
+      openDrawer: false,
+      restore: undefined,
     })
   })
 
@@ -38,6 +38,22 @@ describe('historyConversationOpenPlan', () => {
       href: '/home?conv=conv-1',
       openDrawer: false,
       restore: undefined,
+    })
+  })
+
+  it('reopens the remembered work page beside Advanced history instead of /home?conv=', () => {
+    expect(
+      historyConversationOpenPlan({
+        conversationId: 'conv-1',
+        simpleSidebar: false,
+        rememberedPage: meetingPage,
+        pathname: '/campaigns',
+        hasHomeConvParam: false,
+      }),
+    ).toEqual({
+      href: meetingPage.href,
+      openDrawer: true,
+      restore: meetingPage.restore,
     })
   })
 })

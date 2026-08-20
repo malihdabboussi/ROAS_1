@@ -73,7 +73,47 @@ describe('ShellRightPanelFiles', () => {
 
     fireEvent.click(screen.getByText('Generated proposal'))
     expect(mocks.openArtifactInShell).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'document-1', conversationId: 'conversation-1' }),
+      expect.objectContaining({
+        id: 'document-1',
+        conversationId: 'conversation-1',
+        type: 'file',
+        fileUrl: 'https://cdn.example.com/proposal.docx',
+      }),
+    )
+  })
+
+  it('opens agent-created markdown docs as docs when there is no storage file', async () => {
+    mocks.fetchConversationDocuments.mockResolvedValue([
+      {
+        id: '946a12f3-21e0-431f-87d9-eec0860e3a23',
+        conversation_id: 'conversation-1',
+        campaign_id: null,
+        resource_id: null,
+        document_type: 'upload',
+        title: 'Christian Osgood — Free + Shipping Book Funnel: Modular UGC Ad Scripts',
+        content: JSON.stringify(
+          '# Christian Osgood — Free + Shipping Book Funnel: Modular UGC Ad Scripts\n\n## Hook\nFirst line of the ad script.',
+        ),
+        created_at: '2026-08-19T20:00:00.000Z',
+        updated_at: '2026-08-19T20:00:00.000Z',
+      },
+    ])
+
+    render(<ShellRightPanelFiles conversationId="conversation-1" messages={[]} />)
+
+    fireEvent.click(
+      await screen.findByText(
+        'Christian Osgood — Free + Shipping Book Funnel: Modular UGC Ad Scripts',
+      ),
+    )
+    expect(mocks.openArtifactInShell).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: '946a12f3-21e0-431f-87d9-eec0860e3a23',
+        type: 'doc',
+        entityId: '946a12f3-21e0-431f-87d9-eec0860e3a23',
+        entityTable: 'conversation_documents',
+        fileUrl: null,
+      }),
     )
   })
 

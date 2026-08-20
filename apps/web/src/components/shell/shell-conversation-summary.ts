@@ -1,5 +1,10 @@
 import type { Message } from '@/lib/conversations'
 import { extractLinksFromText, extractMediaFromText } from '@/lib/conversations'
+import {
+  formatRetrievalSourceTitle,
+  isBrainRetrievalReceipt,
+  isWebResearchSource,
+} from '@/lib/conversations/retrieval-receipts'
 
 type UnknownRow = Record<string, unknown>
 
@@ -296,6 +301,33 @@ export function extractConversationSourceRows(messages: Message[]): Conversation
   const seen = new Set<string>()
 
   for (const message of messages) {
+    for (const receipt of asRows(message.metadata.retrieval_receipts)) {
+      if (!isBrainRetrievalReceipt(receipt)) continue
+      const key = `receipt:${receipt.scope ?? ''}:${receipt.brain_id ?? ''}:${receipt.query ?? ''}:${receipt.results_count ?? 0}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      rows.push({
+        id: `${message.id}:${key}`,
+        title: formatRetrievalSourceTitle(receipt),
+        kind: 'brain',
+        href: null,
+        createdAt: message.created_at,
+      })
+    }
+
+    for (const source of asRows(message.metadata.web_research_urls)) {
+      if (!isWebResearchSource(source)) continue
+      if (seen.has(source.url)) continue
+      seen.add(source.url)
+      rows.push({
+        id: `${message.id}:web:${source.url}`,
+        title: source.title || source.url,
+        kind: 'link',
+        href: source.url,
+        createdAt: message.created_at,
+      })
+    }
+
     for (const reference of asRows(message.metadata.message_references)) {
       const id = stringField(reference, 'id')
       const kind = stringField(reference, 'kind')

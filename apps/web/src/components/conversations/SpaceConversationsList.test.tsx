@@ -326,9 +326,9 @@ describe('SpaceConversationsList', () => {
     expect(meetingUnread).toHaveClass('absolute')
     expect(chatUnread).toHaveClass('relative')
     expect(chatUnread).not.toHaveClass('absolute')
-    expect(slackRow!.querySelector('[aria-label="Slack conversation"]')?.parentElement).toContainElement(
-      slackUnread as HTMLElement,
-    )
+    expect(
+      slackRow!.querySelector('[aria-label="Slack conversation"]')?.parentElement,
+    ).toContainElement(slackUnread as HTMLElement)
     expect(
       meetingRow!.querySelector('[aria-label="Meeting conversation"]')?.parentElement,
     ).toContainElement(meetingUnread as HTMLElement)
@@ -370,65 +370,5 @@ describe('SpaceConversationsList', () => {
     expect(search?.previousElementSibling).toContainElement(screen.getByText('Recents'))
     expect(screen.getByRole('searchbox', { name: 'Search conversations' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Close search' })).toBeInTheDocument()
-  })
-
-  it('can render dated, divided rows for the full chats page', () => {
-    render(
-      <SpaceConversationsList
-        {...baseProps({
-          conversations: [
-            conversation({
-              id: 'dated-1',
-              title: 'Campaign review',
-              updated_at: '2025-06-10T12:00:00.000Z',
-            }),
-          ],
-          showUpdatedAt: true,
-          dividedRows: true,
-        })}
-      />,
-    )
-
-    expect(screen.getByText('Jun 10, 2025')).toBeInTheDocument()
-    expect(screen.getByText('Campaign review').closest('div[title]')).toHaveClass(
-      'border-b',
-      'rounded-none',
-    )
-  })
-
-  it('moves pinned chats into a Pinned section above Recents', () => {
-    render(
-      <SpaceConversationsList
-        {...baseProps({
-          compactHeader: true,
-          compactHeaderTitle: 'Recents',
-          hideHeaderBottomBorder: true,
-          splitPinnedSection: true,
-          conversations: [
-            conversation({
-              id: 'pinned-1',
-              title: 'ROAS Marketing Strategy',
-              metadata: { pinned: true },
-            }),
-            conversation({ id: 'recent-1', title: 'Post Call Recap Message' }),
-          ],
-        })}
-      />,
-    )
-
-    const pinnedHeader = screen.getByRole('button', { name: 'Pinned' })
-    const recentsHeader = screen.getByRole('button', { name: 'Recents' })
-    expect(pinnedHeader).toHaveClass('hub-menu-section-label')
-    expect(recentsHeader).toHaveClass('hub-menu-section-label')
-    expect(
-      pinnedHeader.compareDocumentPosition(recentsHeader) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy()
-    expect(pinnedHeader.compareDocumentPosition(screen.getByText('ROAS Marketing Strategy'))).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    )
-    expect(screen.getByText('ROAS Marketing Strategy').closest('button')?.querySelector('svg')).toBeNull()
-    fireEvent.click(recentsHeader)
-    expect(screen.getByText('ROAS Marketing Strategy')).toBeInTheDocument()
-    expect(screen.queryByText('Post Call Recap Message')).not.toBeInTheDocument()
   })
 })

@@ -21,9 +21,10 @@ import {
   type SkRow,
   type SnapshotRow,
 } from './brain-context-support.service'
+import type { BrainRetrievalReceipt } from './brain-retrieval-receipt'
 import { BrainRetrievalService } from './brain-retrieval.service'
 import { BrainSpotlightService } from './brain-spotlight.service'
-import { campaignBrainContextLane, resolveCampaignBrainForPreload } from './campaign-brain-preload'
+import { campaignBrainContextLane, resolveCampaignBrainLaneTargets } from './campaign-brain-preload'
 import { CompanyContextCompilerService } from './company-context-compiler.service'
 import { EmbeddingService } from './embedding.service'
 
@@ -55,6 +56,7 @@ export class BrainContextService {
     query?: string,
     orgId?: string | null,
     precomputedEmbedding?: PrecomputedEmbedding,
+    onRetrievalReceipt?: (receipt: BrainRetrievalReceipt) => void,
   ): Promise<string> {
     const trimmedQuery = resolveUserBrainSearchQuery(query?.trim())
     if (trimmedQuery && this.retrieval) {
@@ -71,6 +73,7 @@ export class BrainContextService {
               ? this.support.retrievalEmbeddingInput(precomputedEmbedding)
               : undefined,
           limit: PRELOAD_RETRIEVAL_LIMIT,
+          onRetrievalReceipt,
         })
         .catch((err) => {
           this.logger.warn(`User brain retrieval context failed: ${err}`)
@@ -145,6 +148,7 @@ export class BrainContextService {
     query?: string,
     orgId?: string | null,
     precomputedEmbedding?: PrecomputedEmbedding,
+    onRetrievalReceipt?: (receipt: BrainRetrievalReceipt) => void,
   ): Promise<string> {
     const { brainId } = await this.resolveAgentBrainPresence(userId, agentKey, orgId)
     if (!brainId) return ''
@@ -162,6 +166,7 @@ export class BrainContextService {
           agentKey,
           embedding: this.support.retrievalEmbeddingInput(precomputedEmbedding),
           limit: PRELOAD_RETRIEVAL_LIMIT,
+          onRetrievalReceipt,
         })
         .catch((err) => {
           this.logger.warn(`Agent brain retrieval context failed: ${err}`)
@@ -333,6 +338,10 @@ export class BrainContextService {
     userBrainAccess?: boolean,
     useWikiContext?: boolean,
     campaignId?: string | null,
+    options?: {
+      extraCampaignIds?: string[]
+      onRetrievalReceipt?: (receipt: BrainRetrievalReceipt) => void
+    },
   ): Promise<string> {
     const fullContextStartedAt = Date.now()
     let allowedFamilies: Set<BrainSearchFamily> | null = null
@@ -375,15 +384,17 @@ export class BrainContextService {
     const canUseCustomerBrain = canUseFamily('customer')
     const trimmedQuery = query?.trim()
     // §11.2: a chat bound to a real client preloads that Campaign Brain too.
-    const campaignBrainTarget =
-      trimmedQuery && campaignId
-        ? await resolveCampaignBrainForPreload(this.supabase, { campaignId, orgId }).catch(
-            (err) => {
-              this.logger.warn(`Campaign brain preload resolve failed: ${err}`)
-              return null
-            },
-          )
-        : null
+    const campaignLaneTargets = trimmedQuery
+      ? await resolveCampaignBrainLaneTargets(this.supabase, {
+          campaignId,
+          extraCampaignIds: options?.extraCampaignIds,
+          orgId,
+        }).catch((err) => {
+          this.logger.warn(`Campaign brain preload resolve failed: ${err}`)
+          return { primary: null, extras: [] }
+        })
+      : { primary: null, extras: [] }
+    const campaignBrainTarget = campaignLaneTargets.primary
     const timingMeta: BrainContextTimingMeta = {
       userId,
       orgId: orgId ?? null,
@@ -391,7 +402,7 @@ export class BrainContextService {
       queryChars: trimmedQuery?.length ?? 0,
       useWikiContext,
     }
-    this.logContextTiming('full_context_start', timingMeta, 0, {
+    this.support.logContextTiming('full_context_start', timingMeta, 0, {
       skip_user_brain: skipUserBrain === true,
       requested_user_brain_access:
         userBrainAccess === undefined ? 'unspecified' : userBrainAccess === true,
@@ -406,7 +417,8 @@ export class BrainContextService {
         canUseAgentBrain ||
         canUseCompanyBrain ||
         canUseCustomerBrain ||
-        campaignBrainTarget)
+        campaignBrainTarget ||
+        campaignLaneTargets.extras.length > 0)
     ) {
       precomputedEmbedding = this.support.timeContextPart(
         'precompute_embedding',
@@ -425,8 +437,8 @@ export class BrainContextService {
     const wikiEligible = useWikiContext || (agentKey != null && WIKI_AGENT_KEYS.has(agentKey))
     const useRetrievalContext = !!trimmedQuery && !!this.retrieval
     const [
-      companyContext,
       campaignContext,
+      companyContext,
       spotlightContext,
       userContext,
       agentContext,
@@ -435,12 +447,14 @@ export class BrainContextService {
       campaignBrainContextLane(this.support, this.logger, {
         retrieval: this.retrieval,
         target: campaignBrainTarget,
+        extraTargets: campaignLaneTargets.extras,
         timingMeta,
         userId,
         orgId,
         query,
         agentKey,
         precomputedEmbedding,
+        onRetrievalReceipt: options?.onRetrievalReceipt,
       }),
       this.support.timeContextPart(
         'company_context',
@@ -454,6 +468,7 @@ export class BrainContextService {
                 orgId,
                 agentKey,
                 precomputedEmbedding,
+                onRetrievalReceipt: options?.onRetrievalReceipt,
               })
             : Promise.resolve(''),
         (value) => this.support.contextStringTiming(value),
@@ -486,9 +501,17 @@ export class BrainContextService {
                         query,
                         orgId,
                         precomputedEmbedding,
+                        options?.onRetrievalReceipt,
                       ),
                   )
-                : this.buildUserBrainContext(userId, agentKey, query, orgId, precomputedEmbedding)
+                : this.buildUserBrainContext(
+                    userId,
+                    agentKey,
+                    query,
+                    orgId,
+                    precomputedEmbedding,
+                    options?.onRetrievalReceipt,
+                  )
               ).catch((err) => {
                 this.logger.warn(`User brain context failed: ${err}`)
                 return ''
@@ -507,6 +530,7 @@ export class BrainContextService {
                 query,
                 orgId,
                 precomputedEmbedding,
+                options?.onRetrievalReceipt,
               ).catch((err) => {
                 this.logger.warn(`Agent brain context failed: ${err}`)
                 return ''
@@ -527,6 +551,7 @@ export class BrainContextService {
                   orgId,
                   agentKey,
                   precomputedEmbedding,
+                  onRetrievalReceipt: options?.onRetrievalReceipt,
                 })
                 .catch((err) => {
                   this.logger.warn(`Customer brain context failed: ${err}`)
@@ -537,50 +562,28 @@ export class BrainContextService {
         : Promise.resolve(''),
     ])
     const contextParts: string[] = []
-    if (companyContext) contextParts.push(companyContext)
     if (campaignContext) contextParts.push(campaignContext)
+    if (companyContext) contextParts.push(companyContext)
     if (spotlightContext) contextParts.push(spotlightContext)
     if (userContext) contextParts.push(userContext)
     if (agentContext) contextParts.push(agentContext)
     if (customerContext) contextParts.push(customerContext)
     const finalContext = contextParts.join('\n\n')
-    this.logContextTiming('full_context_complete', timingMeta, Date.now() - fullContextStartedAt, {
-      total_chars: finalContext.length,
-      part_count: contextParts.length,
-      company_chars: companyContext.length,
-      campaign_chars: campaignContext.length,
-      user_chars: userContext.length,
-      agent_chars: agentContext.length,
-      customer_chars: customerContext.length,
-    })
-    return finalContext
-  }
-
-  private logContextTiming(
-    stage: string,
-    meta: BrainContextTimingMeta,
-    latencyMs: number,
-    extra?: Record<string, unknown>,
-  ): void {
-    if (!this.contextTimingLogsEnabled()) return
-    this.logger.log(
-      JSON.stringify({
-        feature: 'brain_context_timing_v1',
-        stage,
-        user_id: meta.userId,
-        org_id: meta.orgId ?? null,
-        agent_key: meta.agentKey ?? null,
-        query_chars: meta.queryChars,
-        use_wiki_context: meta.useWikiContext === true,
-        latency_ms: latencyMs,
-        ...(extra ?? {}),
-      }),
+    this.support.logContextTiming(
+      'full_context_complete',
+      timingMeta,
+      Date.now() - fullContextStartedAt,
+      {
+        total_chars: finalContext.length,
+        part_count: contextParts.length,
+        company_chars: companyContext.length,
+        campaign_chars: campaignContext.length,
+        user_chars: userContext.length,
+        agent_chars: agentContext.length,
+        customer_chars: customerContext.length,
+      },
     )
-  }
-
-  private contextTimingLogsEnabled(): boolean {
-    const setting = process.env.BRAIN_CONTEXT_TIMING_LOGS
-    return setting !== undefined && !['0', 'false', 'off', 'no'].includes(setting.toLowerCase())
+    return finalContext
   }
 
   private async resolveUserBrainIdLegacy(

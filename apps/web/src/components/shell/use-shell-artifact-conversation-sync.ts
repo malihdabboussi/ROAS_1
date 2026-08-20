@@ -6,8 +6,10 @@ import { useChatStore } from '@/features/studio/store/use-chat-store'
 import {
   currentWorkAreaHref,
   resolveWorkAreaPageForConversationChange,
+  shouldRestoreWorkAreaHrefOnConversationChange,
   workAreaHrefsMatch,
 } from './shell-work-area-page'
+import { useShellMenuDock } from './use-shell-menu-dock'
 import { useShellStore } from './use-shell-store'
 
 /**
@@ -18,6 +20,7 @@ export function useShellArtifactConversationSync(): void {
   const router = useRouter()
   const pathname = usePathname() ?? '/home'
   const searchParams = useSearchParams()
+  const menuStyle = useShellMenuDock((s) => s.menuStyle)
   const activeConversationId = useChatStore((s) => s.activeConversationId)
   const syncArtifactViewerForConversation = useShellStore(
     (s) => s.syncArtifactViewerForConversation,
@@ -32,6 +35,7 @@ export function useShellArtifactConversationSync(): void {
     if (previousConversationIdRef.current === activeConversationId) return
     previousConversationIdRef.current = activeConversationId
     syncArtifactViewerForConversation(activeConversationId)
+    if (!shouldRestoreWorkAreaHrefOnConversationChange({ menuStyle, pathname })) return
 
     const state = useShellStore.getState()
     const page = resolveWorkAreaPageForConversationChange({
@@ -45,5 +49,12 @@ export function useShellArtifactConversationSync(): void {
     const current = currentWorkAreaHref(pathname, searchParams.toString())
     if (workAreaHrefsMatch(current, page.href)) return
     router.push(page.href)
-  }, [activeConversationId, pathname, router, searchParams, syncArtifactViewerForConversation])
+  }, [
+    activeConversationId,
+    menuStyle,
+    pathname,
+    router,
+    searchParams,
+    syncArtifactViewerForConversation,
+  ])
 }

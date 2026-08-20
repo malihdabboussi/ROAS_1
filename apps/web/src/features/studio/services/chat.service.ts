@@ -8,7 +8,7 @@ import {
   backendPatch,
   backendPost,
 } from '@/lib/api/backend-client'
-import type { ChatModelSettings, ModelReasoningEffort } from '@/lib/chat/chat-model-settings'
+import type { ChatModelSettings } from '@/lib/chat/chat-model-settings'
 import {
   canApplyFirstMessageTitle,
   titleFromFirstUserMessage,
@@ -40,6 +40,7 @@ import type {
   Message,
   SendMessageParams,
 } from '../types'
+import { applySourcePanelEvent } from './apply-retrieval-receipt-event'
 import { ensureGeneralCampaign } from './campaign.service'
 import { buildChatResumeContext } from './chat-resume-context'
 import { isConversationUnavailableError } from './conversation-load-errors'
@@ -61,6 +62,7 @@ export {
 } from '@/lib/conversations/conversations-api'
 export { readConversationModelSettings } from '@/lib/chat/chat-model-settings'
 export type { ChatModelSettings, ModelReasoningEffort } from '@/lib/chat/chat-model-settings'
+export type { LlmModelOption } from '../types'
 
 function normalizeUiBlock(block: unknown): Record<string, unknown> | null {
   if (!block || typeof block !== 'object' || Array.isArray(block)) return null
@@ -239,39 +241,13 @@ export function applyRecoveredTimelineEvents(
         )
         break
       }
+      case 'retrieval_receipt':
+      case 'web_source':
+        applySourcePanelEvent(conversationId, messageId, payload)
+        break
     }
     appliedTimelineSeqByMessage.set(key, event.seq)
   }
-}
-
-export interface LlmModelOption {
-  id: string
-  provider: string
-  modelName: string
-  label: string
-  billingSource?: 'vibey' | 'subscription'
-  contextWindow: number
-  maxOutputTokens: number | null
-  supportsImages: boolean
-  inputModalities: string[]
-  outputModalities: string[]
-  supportedParameters: string[]
-  capabilityProfile?: Record<string, unknown>
-  contextOptions: Array<{ tokens: number; label: string; pricingProfile?: string }>
-  reasoningLevels: ModelReasoningEffort[]
-  speedModes: Array<'standard' | 'fast'>
-  pricing: Record<string, number>
-  pricingTiers: Array<{
-    pricingProfile: string
-    thresholdMinTokens: number
-    thresholdMaxTokens: number | null
-    inputTokens1k: number | null
-    outputTokens1k: number | null
-    cacheRead1k: number | null
-    cacheWrite1k: number | null
-    currency: string
-    source: string
-  }>
 }
 
 function blockRecord(block: unknown): Record<string, unknown> | null {
@@ -1433,6 +1409,15 @@ async function resumeConversationStream(params: {
               }
               break
             }
+            case 'retrieval_receipt':
+            case 'web_source': {
+              applySourcePanelEvent(
+                conversationId,
+                activeMessageId,
+                event as Record<string, unknown>,
+              )
+              break
+            }
             case 'status': {
               const phase = (event.phase as string) ?? 'thinking'
               const message =
@@ -2463,6 +2448,16 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
                 if (contextBreakdown?.version === 1) {
                   store.setContextBreakdown(conversationId!, contextBreakdown)
                 }
+                break
+              }
+
+              case 'retrieval_receipt':
+              case 'web_source': {
+                applySourcePanelEvent(
+                  conversationId!,
+                  assistantMessageId,
+                  event as Record<string, unknown>,
+                )
                 break
               }
 

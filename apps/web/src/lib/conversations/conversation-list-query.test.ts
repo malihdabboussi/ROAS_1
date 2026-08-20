@@ -189,6 +189,32 @@ describe('conversation list query', () => {
     expect(groups.at(-1)?.items.length).toBeGreaterThanOrEqual(3)
   })
 
+  it('groups Recents into client folders without a per-folder cap', () => {
+    const rows = [
+      conversation({
+        id: 'above-1',
+        campaign_id: 'above-it',
+        updated_at: '2026-06-23T11:00:00.000Z',
+      }),
+      conversation({
+        id: 'above-2',
+        campaign_id: 'above-it',
+        updated_at: '2026-06-23T10:00:00.000Z',
+      }),
+      conversation({ id: 'unbound', campaign_id: null }),
+      conversation({ id: 'ops', campaign_id: 'roas-ops' }),
+    ]
+    const groups = groupConversationsForHistory(rows, {
+      groupBy: 'client',
+      campaignNameById: { 'above-it': 'Above It' },
+      clientCampaignIds: new Set(['above-it']),
+    })
+
+    expect(groups.map((group) => group.label)).toEqual(['Above It', 'Other'])
+    expect(groups[0]?.items.map((row) => row.id)).toEqual(['above-1', 'above-2'])
+    expect(groups[1]?.items.map((row) => row.id)).toEqual(['unbound', 'ops'])
+  })
+
   it('defaults to logo identity icons and flat grouping', () => {
     expect(DEFAULT_CHAT_HISTORY_FILTERS).toMatchObject({
       status: 'active',

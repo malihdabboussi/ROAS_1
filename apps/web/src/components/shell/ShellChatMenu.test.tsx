@@ -179,8 +179,8 @@ describe('ShellChatMenu', () => {
     expect(mocks.openChatDrawer).not.toHaveBeenCalled()
   })
 
-  it('reopens the remembered meeting workspace for that chat instead of /home?conv=', () => {
-    mocks.pathname = '/campaigns'
+  it('opens a Simple-sidebar history conversation in the full chat even when a meeting is remembered', () => {
+    mocks.pathname = '/home'
     mocks.lastWorkAreaPageByConversation = {
       'conversation-1': {
         id: '/home/meetings?meeting=evt-1',
@@ -193,14 +193,10 @@ describe('ShellChatMenu', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Select conversation' }))
 
-    expect(mocks.setPendingWorkRestore).toHaveBeenCalledWith({
-      feature: 'home_meeting',
-      data: { id: 'evt-1' },
-    })
-    expect(mocks.setWorkAreaOpen).toHaveBeenCalledWith(true)
-    expect(mocks.openChatDrawer).toHaveBeenCalledWith('conversation-1')
-    expect(mocks.push).toHaveBeenCalledWith('/home/meetings?meeting=evt-1')
-    expect(mocks.setActiveConversationId).not.toHaveBeenCalled()
+    expect(mocks.setActiveConversationId).toHaveBeenCalledWith('conversation-1')
+    expect(mocks.push).toHaveBeenCalledWith('/home?conv=conversation-1')
+    expect(mocks.openChatDrawer).not.toHaveBeenCalled()
+    expect(mocks.setPendingWorkRestore).not.toHaveBeenCalled()
   })
 
   it('opens the real conversation sharing dialog from the conversation menu', () => {

@@ -1,6 +1,7 @@
 export type ConversationStatus = 'active' | 'archived' | 'deleted'
 export type ConversationShareLevel = 'view' | 'edit' | 'admin'
 export type ConversationShareEntityType = 'user' | 'org'
+export type ConversationConnectionEntityType = 'campaign' | 'space'
 
 export interface ConversationCreator {
   id: string
@@ -59,4 +60,15 @@ export interface ConversationShareRecord {
   level: ConversationShareLevel
   created_by: string
   created_at: string
+}
+
+export interface ConversationConnection {
+  id: string | null
+  conversation_id: string
+  org_id: string | null
+  entity_type: ConversationConnectionEntityType
+  entity_id: string
+  is_primary: boolean
+  created_at: string
+  source: 'column' | 'table'
 }
