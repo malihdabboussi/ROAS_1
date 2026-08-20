@@ -111,4 +111,29 @@ describe('Page Grader meeting sync', () => {
       }),
     ).toEqual([])
   })
+
+  it('matches a client from invitee email domain before title inference', () => {
+    const matches = resolveMeetingClients({
+      meeting: {
+        source_meeting_id: 'meeting-email',
+        meeting_title: 'Weekly strategy',
+        meeting_date: '2026-08-20T16:00:00.000Z',
+        attendees: [{ email: 'christian@multifamilystrategy.com', name: 'Christian' }],
+      },
+      clients: [
+        {
+          id: 'client-mfs',
+          name: 'Multifamily Strategy',
+          website_url: 'https://www.multifamilystrategy.com',
+        },
+        { id: 'client-sakha', name: 'Sakha Media Group', website_url: 'https://sakha.example' },
+      ],
+      scopeMap: {},
+      contexts: [],
+    })
+
+    expect(matches).toEqual([
+      { id: 'client-mfs', name: 'Multifamily Strategy', matched_by: 'invitee_email_domain' },
+    ])
+  })
 })

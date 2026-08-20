@@ -11,3 +11,9 @@ What: All Meetings now shows Client / Campaign, Host, and Call status (Live / Co
 Why: The stored All Meetings view never received Host/Call status/Client, while the read-path injected a Space column and left Priority + task Status in place. Enabling Status still only opened the name-column picker because list columns strip `status`.
 Impact: Opening Meetings rewrites the All Meetings columns to the one-room set. Priority and task Status remain as fields (Hidden). Space is no longer a default column.
 Files: `all-meetings-list-columns.ts`, `use-ensure-all-meetings-columns.ts`, `SpaceItemRow.tsx`, `space-template-catalog-personal-dashboard.ts`, `20260820004500_meetings_all_meetings_one_room_columns.sql`
+
+## [2026-08-20 03:34] - [FIX]
+What: Attribute Fathom meetings to client Campaign Brains via Page Grader matched clients + client_scope_map (Space route is fallback only). Persist matched_client_ids on meeting_recordings.metadata. Add dry-run/live backfill script for succeeded fathom_meeting_import jobs.
+Why: One-room Meetings always lands recordings on General, so Space-route campaign brain dual-write exited as system_campaign and produced 0 campaign_fathom_import jobs.
+Impact: New Fathom webhooks enqueue client campaign imports when invitees/clients match a mapped campaign. Operators can backfill historical meetings with scripts/roas/backfill-fathom-campaign-brains.mjs.
+Files: fathom-campaign-brain-route.service.ts, fathom-webhook.service.ts, page-grader-meeting-sync.service.ts, backfill-fathom-campaign-brains.mjs, integration-connections.md
