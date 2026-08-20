@@ -89,9 +89,16 @@ function resolveSurfaceAwarenessContext(
   return buildSpaceAwarenessContext({
     activeViewType: input.scopeMatchesVisibleSpace ? input.activeViewType : undefined,
     activeViewName: input.scopeMatchesVisibleSpace ? input.activeViewName : undefined,
-    campaignName: input.scopeMatchesVisibleSpace
-      ? input.campaignName
-      : input.connectedLocationLabel,
+    campaignName: awarenessCampaignName(input),
     focusedArtifact: input.scopeMatchesVisibleSpace ? input.focusedArtifact : null,
   })
+}
+
+/** Home Choose Space is `spaces` with no visible Space title — use Connections. */
+function awarenessCampaignName(
+  input: Parameters<typeof resolveChatSendAwarenessContext>[0],
+): string | null {
+  const visible = input.scopeMatchesVisibleSpace ? input.campaignName?.trim() : ''
+  const connected = input.connectedLocationLabel.trim()
+  return visible || connected || null
 }

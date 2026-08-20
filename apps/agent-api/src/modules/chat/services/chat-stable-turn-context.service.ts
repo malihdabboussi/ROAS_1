@@ -17,11 +17,13 @@ import {
   type ValidatedModelSettings,
 } from './chat-model-input.service'
 import type { ChatStablePrewarmContext } from './chat-prewarm-context.service'
+import { listAdditionalConversationCampaignIds } from './conversation-extra-campaigns'
 
 export interface ChatStableTurnContext {
   conversationCampaignId: string | undefined
   conversationAgentId: string | undefined
   resolvedCampaignId: string | undefined
+  extraCampaignIds: string[]
   runtime: { gatewayAgentId: string; agentKey: string }
   resolvedAgentId: string
   configuredModel: string | null
@@ -261,10 +263,17 @@ export class ChatStableTurnContextService {
       )
     }
 
+    const extraCampaignIds = await listAdditionalConversationCampaignIds(
+      dbSupabase,
+      conversationId,
+      resolvedCampaignId,
+    )
+
     return {
       conversationCampaignId,
       conversationAgentId,
       resolvedCampaignId,
+      extraCampaignIds,
       runtime,
       resolvedAgentId,
       configuredModel,

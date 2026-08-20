@@ -333,6 +333,9 @@ export {
 
 // Conversation sharing
 export {
+  AddConversationConnectionSchema,
+  ConversationConnectionEntityTypeSchema,
+  ConversationConnectionParamSchema,
   ConversationIdParamSchema,
   ConversationShareEntityTypeSchema,
   ConversationShareIdParamSchema,
@@ -341,6 +344,9 @@ export {
   UpsertConversationShareSchema,
 } from './types/conversation-sharing'
 export type {
+  AddConversationConnectionDto,
+  ConversationConnectionEntityType,
+  ConversationConnectionParam,
   ConversationIdParam,
   ConversationShareEntityType,
   ConversationShareIdParam,

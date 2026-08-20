@@ -21,6 +21,7 @@ import {
 import { SpaceDocDeliverablePreview } from '@/components/deliverables/SpaceDocDeliverablePreview'
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
 import { VibeyChatOrb } from '@/components/vibey/vibey-chat-orb'
+import { extractMarkdownFromDocumentContent } from '@/lib/content/document-content-markdown'
 import type { MissionDeliverable } from '@/lib/missions'
 
 export function DeliverablePreviewBody({
@@ -48,7 +49,10 @@ export function DeliverablePreviewBody({
   spaceDocActionTarget?: HTMLElement | null
   renderEntityPreview: DeliverableEntityPreviewRenderer
 }) {
-  const textToRender = deliverable.content || effectiveContent
+  const rawText = deliverable.content || effectiveContent
+  const textToRender =
+    extractMarkdownFromDocumentContent(rawText) ||
+    (typeof rawText === 'string' && rawText.trim() ? rawText : null)
   const isDocxFile = isDocxDeliverable(deliverable)
   const spaceDocCtx = isSpaceItemDocDeliverable(deliverable)
     ? resolveSpaceDocDeliverableContext(deliverable, fallbackSpaceId)

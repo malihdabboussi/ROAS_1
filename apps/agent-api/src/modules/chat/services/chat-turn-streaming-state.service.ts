@@ -112,6 +112,9 @@ export interface ChatTurnStreamingState {
   orderedBlocks: Record<string, unknown>[]
   getAccumulatedContent: () => string
   getCompletedVisibleToolCount: () => number
+  getRetrievalReceipts: () => Record<string, unknown>[]
+  getWebResearchUrls: () => Record<string, unknown>[]
+  sendRetrievalReceipts: (receipts: unknown[]) => Promise<void>
   recordRunCheckpoint: (
     kind: ChatRunCheckpointKind,
     checkpoint: {
@@ -148,6 +151,9 @@ export class ChatTurnStreamingStateService {
       orderedBlocks: [],
       getAccumulatedContent: () => '',
       getCompletedVisibleToolCount: () => 0,
+      getRetrievalReceipts: () => [],
+      getWebResearchUrls: () => [],
+      sendRetrievalReceipts: async () => undefined,
       recordRunCheckpoint: async () => undefined,
       progressiveSend: async () => undefined,
       setModelStreamStartedAt: () => undefined,
@@ -166,6 +172,10 @@ export class ChatTurnStreamingStateService {
       this.progressiveStreamService.getAccumulatedContent(progressiveStreamState)
     state.getCompletedVisibleToolCount = () =>
       this.progressiveStreamService.getCompletedVisibleToolCount(progressiveStreamState)
+    state.getRetrievalReceipts = () =>
+      this.progressiveStreamService.getRetrievalReceipts(progressiveStreamState)
+    state.getWebResearchUrls = () =>
+      this.progressiveStreamService.getWebResearchUrls(progressiveStreamState)
     state.recordRunCheckpoint = async (kind, checkpoint): Promise<void> => {
       await this.checkpointService.record({
         runId: input.runId,
@@ -227,6 +237,11 @@ export class ChatTurnStreamingStateService {
     })
     state.clearFlushTimer = () =>
       this.progressiveStreamService.clearFlushTimer(progressiveStreamState)
+    state.sendRetrievalReceipts = async (receipts) => {
+      for (const receipt of receipts) {
+        await state.progressiveSend('retrieval_receipt', receipt)
+      }
+    }
 
     this.seedRequestContext(input)
     return state

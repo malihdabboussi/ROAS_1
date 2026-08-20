@@ -12,16 +12,19 @@ export function historyConversationOpenPlan(input: {
   openDrawer: boolean
   restore: ShellWorkAreaPageTarget['restore']
 } {
-  const page = input.rememberedPage
-  if (page) {
-    return { href: page.href, openDrawer: true, restore: page.restore }
-  }
+  // Simple Recents always opens the thread. Remembered meeting/work pages stay
+  // on Show page — restoring them here hid the chat (greeting + files) then
+  // crashed Meetings on an unmatched ?meeting= identity.
   if (input.simpleSidebar) {
     return {
       href: `/home?conv=${encodeURIComponent(input.conversationId)}`,
       openDrawer: false,
       restore: undefined,
     }
+  }
+  const page = input.rememberedPage
+  if (page) {
+    return { href: page.href, openDrawer: true, restore: page.restore }
   }
   if (isShellHomeRoute(input.pathname) && input.hasHomeConvParam) {
     return { href: '/home', openDrawer: true, restore: undefined }

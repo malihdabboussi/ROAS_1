@@ -27,6 +27,7 @@ import { ChatAssistantTurnService } from './chat-assistant-turn.service'
 import { ChatCompletionSideEffectsService } from './chat-completion-side-effects.service'
 import { ChatContactLinkingService } from './chat-contact-linking.service'
 import { ChatContextAccountingService } from './chat-context-accounting.service'
+import { recordChatOrganizationDataAccess } from './chat-data-access-audit'
 import { ChatDocumentContextService } from './chat-document-context.service'
 import { ChatGatewayInputService } from './chat-gateway-input.service'
 import { ChatMessageEnrichmentService } from './chat-message-enrichment.service'
@@ -49,7 +50,6 @@ import { ChatSessionHistoryService } from './chat-session-history.service'
 import { ChatSetupEventsService } from './chat-setup-events.service'
 import { ChatSlashCommandService } from './chat-slash-command.service'
 import { ChatStableTurnContextService } from './chat-stable-turn-context.service'
-import { maybeBindNamedClientCampaign } from './named-client-campaign-bind'
 import { ChatStreamExecutionService } from './chat-stream-execution.service'
 import { ChatStreamMirrorService } from './chat-stream-mirror.service'
 import { ChatStreamRecoveryService } from './chat-stream-recovery.service'
@@ -57,6 +57,7 @@ import type { ActiveTurnSnapshot } from './chat-turn-query.service'
 import { DocumentParserService } from './document-parser.service'
 import { IntegrationContextService } from './integration-context.service'
 import { MessageTimelineService } from './message-timeline.service'
+import { maybeBindNamedClientCampaign } from './named-client-campaign-bind'
 import { OpenClawProxyService } from './openclaw-proxy.service'
 import { OpenRouterCostService } from './openrouter-cost.service'
 import { SkillRecommendationEventRecorderService } from './skill-recommendation-event-recorder.service'
@@ -439,6 +440,7 @@ export class ChatService {
       instructions,
       measuredContextSlices,
       inputArray,
+      retrievalReceipts,
     } = await this.collaborators.getChatTurnGatewayPreparationService().prepare({
       conversationId,
       content,
@@ -463,7 +465,9 @@ export class ChatService {
       recordTimingSpan,
       logger: this.logger,
     })
-    await this.recordOrganizationDataAccess({
+    await recordChatOrganizationDataAccess({
+      client: this.svc.client,
+      logger: this.logger,
       orgId,
       orgMemberId,
       userId,
@@ -532,6 +536,7 @@ export class ChatService {
       logger: this.logger,
       referenceContextService,
     })
+    await streamingState.sendRetrievalReceipts(retrievalReceipts)
     turnSession.setRequestContextRefreshState({
       conversationId,
       userId,
@@ -593,29 +598,5 @@ export class ChatService {
       hasActiveWorkingSetEntries: (workingSet) =>
         referenceContextService.hasActiveWorkingSetEntries(workingSet),
     })
-  }
-
-  private async recordOrganizationDataAccess(input: {
-    orgId?: string
-    orgMemberId?: string | null
-    userId: string
-    conversationId: string
-    allowed: boolean
-  }): Promise<void> {
-    if (!input.orgId || !input.allowed) return
-    const { error } = await this.svc.client.from('ai_data_access_audit').insert({
-      org_id: input.orgId,
-      org_member_id: input.orgMemberId ?? null,
-      user_id: input.userId,
-      surface: 'ai_chat',
-      resource_type: 'conversation',
-      resource_id: input.conversationId,
-      outcome: 'allowed',
-      reason: 'organization_wide_ai_data_access_enabled',
-      metadata: {},
-    })
-    if (error) {
-      this.logger.warn(`AI data access audit failed: ${error.message}`)
-    }
   }
 }

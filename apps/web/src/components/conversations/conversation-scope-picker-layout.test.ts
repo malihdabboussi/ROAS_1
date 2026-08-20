@@ -25,6 +25,18 @@ describe('conversationScopeDisplayLabel', () => {
     ).toBe('Yasir Khan General')
   })
 
+  it('names a client General campaign when the space title has not loaded', () => {
+    expect(
+      conversationScopeDisplayLabel({
+        campaignName: 'General',
+        programName: 'Above It',
+        campaignId: 'campaign-1',
+        spaceId: 'space-1',
+        emptyLabel: '',
+      }),
+    ).toBe('Above It General')
+  })
+
   it('qualifies a General space when the campaign is also General', () => {
     expect(
       conversationScopeDisplayLabel({

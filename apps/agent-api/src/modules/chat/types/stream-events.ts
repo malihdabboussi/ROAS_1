@@ -28,6 +28,8 @@ export type StreamEventType =
   | 'generation_start'
   | 'generation_end'
   | 'context_update'
+  | 'retrieval_receipt'
+  | 'web_source'
   | 'content_delta'
   | 'content_snapshot'
   | 'thinking_delta'

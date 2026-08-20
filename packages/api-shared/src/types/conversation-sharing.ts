@@ -12,6 +12,24 @@ export type ConversationShareIdParam = z.infer<typeof ConversationShareIdParamSc
 export const ConversationIdParamSchema = z.object({ id: z.string().uuid() })
 export type ConversationIdParam = z.infer<typeof ConversationIdParamSchema>
 
+export const ConversationConnectionEntityTypeSchema = z.enum(['campaign', 'space'])
+export type ConversationConnectionEntityType = z.infer<
+  typeof ConversationConnectionEntityTypeSchema
+>
+
+export const AddConversationConnectionSchema = z.object({
+  entity_type: ConversationConnectionEntityTypeSchema,
+  entity_id: z.string().uuid(),
+})
+export type AddConversationConnectionDto = z.infer<typeof AddConversationConnectionSchema>
+
+export const ConversationConnectionParamSchema = z.object({
+  id: z.string().uuid(),
+  entityType: ConversationConnectionEntityTypeSchema,
+  entityId: z.string().uuid(),
+})
+export type ConversationConnectionParam = z.infer<typeof ConversationConnectionParamSchema>
+
 export const UpsertConversationShareSchema = z.object({
   entity_type: ConversationShareEntityTypeSchema,
   entity_id: z.string().uuid(),

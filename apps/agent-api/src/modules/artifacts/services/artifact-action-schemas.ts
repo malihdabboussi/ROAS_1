@@ -3100,6 +3100,7 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       'Searching an Agent Brain (use search_agent_brain), User Brain (search_user_brain), Customer Brain (search_customer_brain), or Company Brain (search_company_brain).',
       'Searching Space docs/tasks only (use search_space_context).',
       'Using the General campaign as target — General has no client package brain.',
+      'Claiming a campaign brain is empty without stating which brain you searched and how many results came back. A zero-result semantic search is not proof of absence.',
     ],
     examples: [
       {

@@ -266,4 +266,27 @@ describe('useHomeMeetingWorkRestore', () => {
     await waitFor(() => expect(mocks.fetchMeetingWorkspaceEvent).toHaveBeenCalledTimes(1))
     expect(open).not.toHaveBeenCalled()
   })
+
+  it('strips a space-linked meeting that does not match the URL instead of rewriting into a loop', async () => {
+    mocks.params = new URLSearchParams('meeting=call-9&space=space-1')
+    mocks.fetchMeetingWorkspaceEvent.mockResolvedValue({
+      ...event,
+      id: 'calendar-other',
+      related: {
+        space_id: 'space-1',
+        call_item_id: 'call-other',
+        title: 'Different meeting',
+        recording_url: null,
+        follow_ups: [],
+      },
+    })
+    const open = vi.fn()
+
+    renderHook(() => useHomeMeetingWorkRestore(open, null))
+
+    await waitFor(() =>
+      expect(mocks.replace).toHaveBeenCalledWith('/home/meetings', { scroll: false }),
+    )
+    expect(open).not.toHaveBeenCalled()
+  })
 })

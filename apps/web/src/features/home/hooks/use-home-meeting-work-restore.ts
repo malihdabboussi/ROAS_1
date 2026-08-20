@@ -94,7 +94,12 @@ export function useHomeMeetingWorkRestore(
       try {
         if (meetingSpaceParam) {
           const event = await fetchMeetingWorkspaceEvent(meetingSpaceParam, meetingParam)
-          if (!cancelled && paramRequestSeqRef.current === requestSeq) openMeetingEvent(event)
+          if (cancelled || paramRequestSeqRef.current !== requestSeq) return
+          if (!agendaEventMatchesMeetingParam(event, meetingParam)) {
+            stripParam()
+            return
+          }
+          openMeetingEvent(event)
           return
         }
         const { fetchStart, fetchEnd } = agendaListFetchWindow(new Date(), 'week')
