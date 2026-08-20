@@ -167,7 +167,10 @@ describe('ArtifactLegacyTeamBrainService', () => {
       if (record.table === 'agent_definitions') {
         return {
           data: [
-            { file_name: 'SOUL.md', content: 'DISC Profile: D/I (Driver)\n## Values\n1. **Clarity**' },
+            {
+              file_name: 'SOUL.md',
+              content: 'DISC Profile: D/I (Driver)\n## Values\n1. **Clarity**',
+            },
             { file_name: 'ROLE.md', content: '## Purpose\nWrite customer-facing copy.\n## Next' },
             {
               file_name: 'IDENTITY.md',
@@ -263,16 +266,14 @@ describe('ArtifactLegacyTeamBrainService', () => {
     const service = new ArtifactLegacyTeamBrainService()
     const target = makeTarget(client)
 
-    const audit = (await service.auditTeamAgentsAndSkills(
-      target,
-      {},
-      'session-key',
-    )) as Record<string, any>
-    const coverage = (await service.compareTeamSkillCoverage(
-      target,
-      {},
-      'session-key',
-    )) as Record<string, any>
+    const audit = (await service.auditTeamAgentsAndSkills(target, {}, 'session-key')) as Record<
+      string,
+      any
+    >
+    const coverage = (await service.compareTeamSkillCoverage(target, {}, 'session-key')) as Record<
+      string,
+      any
+    >
     const summary = (await service.summarizeAgentCapabilities(
       target,
       { agent_key: 'Copywriter!' },
@@ -346,16 +347,20 @@ describe('ArtifactLegacyTeamBrainService', () => {
         }
       }
       if (record.table === 'agents_registry') {
-        return { data: [{ agent_key: 'copywriter', role: 'Copywriter', level: 'employee' }], error: null }
+        return {
+          data: [{ agent_key: 'copywriter', role: 'Copywriter', level: 'employee' }],
+          error: null,
+        }
       }
       return { data: null, error: null }
     })
     const service = new ArtifactLegacyTeamBrainService()
 
-    const result = (await service.listCampaignTeam(makeTarget(client), {}, 'session-key')) as Record<
-      string,
-      any
-    >
+    const result = (await service.listCampaignTeam(
+      makeTarget(client),
+      {},
+      'session-key',
+    )) as Record<string, any>
 
     expect(result).toMatchObject({
       success: true,
@@ -542,8 +547,7 @@ describe('ArtifactLegacyTeamBrainService', () => {
     const { client } = makeQueryClient(() => ({ data: null, error: null }))
     const target = makeTarget(client)
     const service = new ArtifactLegacyTeamBrainService()
-    const sessionKey =
-      'agent:atlas:atlas-user-1-brain-job-42::brain:user:person-brain-nefi'
+    const sessionKey = 'agent:atlas:atlas-user-1-brain-job-42::brain:user:person-brain-nefi'
 
     const result = await service.saveMemory(
       target,

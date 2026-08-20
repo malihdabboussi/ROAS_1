@@ -132,8 +132,7 @@ export class ArtifactLegacyTeamBrainMemoryService {
         if (!inputContactId && !resolvedSourceId) {
           return {
             success: false,
-            error:
-              'contact_id or durable source identity is required for customer brain memories',
+            error: 'contact_id or durable source identity is required for customer brain memories',
           }
         }
         record.brain_id = brainJobTarget.brainId
