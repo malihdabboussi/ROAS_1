@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { readMeetingConversationLink } from './conversation-meeting-link'
+import {
+  readMeetingConversationLink,
+  readMeetingConversationTitle,
+  resolveLinkedMeetingTitle,
+} from './conversation-meeting-link'
 
 describe('readMeetingConversationLink', () => {
   it('reads canonical meeting metadata', () => {
@@ -36,5 +40,42 @@ describe('readMeetingConversationLink', () => {
         space_id: 'space-1',
       }),
     ).toBeNull()
+  })
+})
+
+describe('resolveLinkedMeetingTitle', () => {
+  it('reads the stamped meeting title from metadata', () => {
+    expect(
+      readMeetingConversationTitle({
+        meeting_title: '  Saminyasar Cloud Club onboarding strategy  ',
+      }),
+    ).toBe('Saminyasar Cloud Club onboarding strategy')
+    expect(readMeetingConversationTitle({ meeting_title: '   ' })).toBeNull()
+  })
+
+  it('never falls back to a recap or chat title', () => {
+    expect(
+      resolveLinkedMeetingTitle({
+        contextTitle: 'ROAS onboarding, Samin AI education scale',
+        metadata: { meeting_title: 'Older meeting name' },
+        workAreaTitle: 'Work area leftover',
+      }),
+    ).toBe('ROAS onboarding, Samin AI education scale')
+    expect(
+      resolveLinkedMeetingTitle({
+        metadata: { meeting_title: 'Saminyasar Cloud Club onboarding strategy' },
+        workAreaTitle: 'Write my post-call recap message for the client',
+      }),
+    ).toBe('Saminyasar Cloud Club onboarding strategy')
+    expect(
+      resolveLinkedMeetingTitle({
+        workAreaTitle: 'Saminyasar Cloud Club onboarding strategy',
+      }),
+    ).toBe('Saminyasar Cloud Club onboarding strategy')
+    expect(
+      resolveLinkedMeetingTitle({
+        metadata: { meeting_item_id: 'meeting-1', space_id: 'space-1' },
+      }),
+    ).toBe('Meeting')
   })
 })

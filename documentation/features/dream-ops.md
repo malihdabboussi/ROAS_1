@@ -1,6 +1,6 @@
 # Dream Ops
 
-Last Modified: 2026-07-20
+Last Modified: 2026-08-20
 
 ## Overview
 
@@ -27,6 +27,7 @@ Dream Ops only queues work when the operation has evidence in the configured win
 10. Operation-specific services keep their existing domain storage:
 
 - Atlas still writes Company Cortex signals and existing Company Cortex dream run data.
+  High-confidence daily-dream signals (`confidence >= 0.8`) are auto-promoted to `active` and enqueue `company_cortex_formation` with payload `source: auto_high_confidence`. Lower-confidence signals stay `proposed` for human review.
 - Jaime writes customer-visible proposals and hidden route-outs to `agent_improvement_proposals` through Dream Ops-only tools.
 
 ## Tables
@@ -73,3 +74,5 @@ The final model text is not authoritative. The database rows written by proposal
 2026-06-24: Jaime proposal storage was renamed from the legacy skill-recommendation table names to `agent_improvement_candidates`, `agent_improvement_jobs`, and `agent_improvement_proposals`.
 
 2026-07-20: Successful Dream Ops runs now persist their completion timestamp. Company Cortex health reports the last successful company dream, and its status bar uses company-specific Objects, Relationships, Signals, and Last dream vocabulary.
+
+2026-08-20: Company daily dream auto-promotes signals with confidence >= 0.8 to active and enqueues formation (`auto_high_confidence`). Lower-confidence signals stay proposed for human review. Zero-signal dream completions and empty formation eligibility now warn in worker logs.

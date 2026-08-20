@@ -58,6 +58,7 @@ export interface GlobalMeetingChatContext {
   spaceId: string
   meetingItemId: string
   conversationId: string
+  meetingTitle?: string
   awarenessContext: string
   timelineVersion: number
 }
@@ -188,6 +189,7 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
       current.spaceId === meetingContext.spaceId &&
       current.meetingItemId === meetingContext.meetingItemId &&
       current.conversationId === meetingContext.conversationId &&
+      current.meetingTitle === meetingContext.meetingTitle &&
       current.awarenessContext === meetingContext.awarenessContext &&
       current.timelineVersion === meetingContext.timelineVersion
     ) {

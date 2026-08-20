@@ -44,6 +44,26 @@ export function isPlaceholderConversationTitle(raw: string | null | undefined): 
   return stripLegacySpacesConversationTitle(raw).length === 0
 }
 
+/** Meeting threads keep the meeting name. Recap prompts must not rename them. */
+export function shouldAutogenConversationTitle(
+  conversation: ConversationTitleRecord,
+  firstUserMessage?: string | null,
+): boolean {
+  if (isMeetingConversation(conversation)) return false
+  return needsGeneratedConversationTitle(conversation.title, firstUserMessage)
+}
+
+/** First-message titles never replace a meeting thread's meeting name. */
+export function canApplyFirstMessageTitle(
+  conversation: ConversationTitleRecord | null | undefined,
+  mode: 'placeholder' | 'reaffirm' = 'placeholder',
+): boolean {
+  if (!conversation || isMeetingConversation(conversation)) return false
+  return mode === 'reaffirm'
+    ? shouldReaffirmFirstMessageTitle(conversation.title)
+    : isPlaceholderConversationTitle(conversation.title)
+}
+
 /**
  * True when the stored title still looks like a raw first-message dump (or a
  * legacy placeholder) rather than a short topic label like Claude/ChatGPT.

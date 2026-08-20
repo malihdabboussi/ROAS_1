@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
+  canApplyFirstMessageTitle,
   getConversationDisplayTitle,
   isMeetingConversation,
   isPlaceholderConversationTitle,
   needsGeneratedConversationTitle,
   resolveGeneratedConversationTitle,
   resolveSuggestedConversationTitle,
+  shouldAutogenConversationTitle,
   shouldReaffirmFirstMessageTitle,
   stripLegacySpacesConversationTitle,
   titleFromFirstUserMessage,
@@ -117,6 +119,36 @@ describe('needsGeneratedConversationTitle', () => {
       needsGeneratedConversationTitle(
         'Fix the slack agent responses',
         'Fix the slack agent responses',
+      ),
+    ).toBe(true)
+  })
+})
+
+describe('canApplyFirstMessageTitle', () => {
+  it('blocks first-message stamps on meeting threads', () => {
+    expect(canApplyFirstMessageTitle(meetingConversation)).toBe(false)
+    expect(canApplyFirstMessageTitle(meetingConversation, 'reaffirm')).toBe(false)
+    expect(
+      canApplyFirstMessageTitle({
+        title: 'Untitled conversation',
+        metadata: { context_type: 'chat' },
+      }),
+    ).toBe(true)
+  })
+})
+
+describe('shouldAutogenConversationTitle', () => {
+  it('skips meeting threads even when the first message looks like a recap dump', () => {
+    expect(
+      shouldAutogenConversationTitle(
+        meetingConversation,
+        'Write my post-call recap message for the client',
+      ),
+    ).toBe(false)
+    expect(
+      shouldAutogenConversationTitle(
+        { title: 'Untitled conversation', metadata: { context_type: 'chat' } },
+        'Write my post-call recap message for the client',
       ),
     ).toBe(true)
   })
