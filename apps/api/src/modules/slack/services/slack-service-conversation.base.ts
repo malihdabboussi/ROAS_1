@@ -20,6 +20,7 @@ export abstract class SlackConversationBase extends SlackMediaBase {
     accessToken: string
     orgId: string | null
     ownerSlackUserId: string | null
+    botUserId: string | null
   } | null> {
     const channel = await this.slackRepo.findFallbackChannelByTeam(serviceSupabase, teamId)
     if (!channel) {
@@ -51,6 +52,7 @@ export abstract class SlackConversationBase extends SlackMediaBase {
       orgId: channel.org_id ?? null,
       ownerSlackUserId:
         typeof providerConfig.authed_user_id === 'string' ? providerConfig.authed_user_id : null,
+      botUserId: typeof providerConfig.bot_user_id === 'string' ? providerConfig.bot_user_id : null,
     }
   }
 

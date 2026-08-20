@@ -15,6 +15,7 @@ import {
 import { WORK_REQUEST_ERRORS } from '../config/errors.config'
 import { WORK_REQUEST_MESSAGES } from '../config/messages.config'
 import { WorkRequestChatFlow } from './WorkRequestChatFlow'
+import { WorkRequestFinalizedActions, workRequestFinalizedBody } from './WorkRequestFinalizedActions'
 import { WorkRequestReviewChatHost } from './WorkRequestReviewChatHost'
 
 export function WorkRequestReviewPage({ token }: { token: string }) {
@@ -22,6 +23,8 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
   const [review, setReview] = useState<WorkRequestReviewResponse | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [retrying, setRetrying] = useState(false)
+  const [mirrorError, setMirrorError] = useState<string | null>(null)
   const [authRedirecting, setAuthRedirecting] = useState(false)
 
   const load = useCallback(async () => {
@@ -80,6 +83,28 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
     return finalized
   }
 
+  const remirror = async () => {
+    const next = await finalizeWorkRequestReview(token)
+    setReview(next)
+    return next
+  }
+
+  const retryMirror = async () => {
+    setRetrying(true)
+    setMirrorError(null)
+    try {
+      await remirror()
+    } catch (error) {
+      setMirrorError(
+        error instanceof Error
+          ? error.message
+          : WORK_REQUEST_ERRORS.MIRROR_RETRY_FAILED.userMessage,
+      )
+    } finally {
+      setRetrying(false)
+    }
+  }
+
   const askForRefresh = async () => {
     setRefreshing(true)
     try {
@@ -128,6 +153,7 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
             options={review.options}
             onSave={save}
             onSubmit={submit}
+            onRetryMirror={remirror}
           />
         ) : (
           <WorkRequestChatFlow
@@ -137,6 +163,7 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
             presentation="page"
             onSave={save}
             onSubmit={submit}
+            onRetryMirror={remirror}
           />
         )
       ) : review?.state === 'expired' ? (
@@ -183,36 +210,16 @@ export function WorkRequestReviewPage({ token }: { token: string }) {
           <StateCard
             success
             title={WORK_REQUEST_MESSAGES.finalizedTitle}
-            body={
-              review.sync_status === 'synced'
-                ? `${WORK_REQUEST_MESSAGES.finalizedBody} The ClickUp mirror is confirmed.`
-                : WORK_REQUEST_MESSAGES.mirrorPending
-            }
+            body={workRequestFinalizedBody(review)}
+            error={mirrorError}
             action={
-              review.task_url || review.clickup_url ? (
-                <div className="gap-spacing-2 flex flex-wrap">
-                  {review.task_url ? (
-                    <a
-                      href={review.task_url}
-                      className="button-default button-glass-primary"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Open ROAS task
-                    </a>
-                  ) : null}
-                  {review.clickup_url ? (
-                    <a
-                      href={review.clickup_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="button-default button-glass-neutral"
-                    >
-                      Open ClickUp task
-                    </a>
-                  ) : null}
-                </div>
-              ) : undefined
+              <WorkRequestFinalizedActions
+                receipt={review}
+                retrying={retrying}
+                onRetry={
+                  review.sync_status === 'synced' ? undefined : () => void retryMirror()
+                }
+              />
             }
           />
         </div>
@@ -232,11 +239,13 @@ function StateCard({
   title,
   body,
   action,
+  error,
   success = false,
 }: {
   title: string
   body: string
   action?: ReactNode
+  error?: string | null
   success?: boolean
 }) {
   return (
@@ -255,6 +264,11 @@ function StateCard({
         </span>
         <h2 className="title-h6 uppercase">{title}</h2>
         <p className="body-3 text-muted-foreground">{body}</p>
+        {error ? (
+          <p role="alert" className="body-3 text-destructive">
+            {error}
+          </p>
+        ) : null}
       </div>
       {action}
     </section>

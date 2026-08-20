@@ -1,6 +1,10 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchWorkRequestReview, type WorkRequestReviewResponse } from '@/lib/work-requests'
+import {
+  fetchWorkRequestReview,
+  finalizeWorkRequestReview,
+  type WorkRequestReviewResponse,
+} from '@/lib/work-requests'
 import { WorkRequestChatResumeCard } from './WorkRequestChatResumeCard'
 
 const mocks = vi.hoisted(() => ({
@@ -81,6 +85,7 @@ describe('WorkRequestChatResumeCard', () => {
     mocks.forceOpenToken = null
     vi.mocked(fetchWorkRequestReview).mockReset()
     vi.mocked(fetchWorkRequestReview).mockResolvedValue(draftReview())
+    vi.mocked(finalizeWorkRequestReview).mockReset()
   })
   afterEach(cleanup)
 
@@ -130,5 +135,66 @@ describe('WorkRequestChatResumeCard', () => {
     expect(
       screen.queryByText('This Service Request review link is not valid.'),
     ).not.toBeInTheDocument()
+  })
+
+  it('shows the ClickUp pending reason after submit', async () => {
+    mocks.forceOpenToken = token
+    vi.mocked(fetchWorkRequestReview).mockResolvedValue({
+      state: 'finalized',
+      sync_status: 'sync_pending',
+      task_url: '/spaces?space=space-1&item=task-1',
+      clickup_url: null,
+      last_error: 'ClickUp does not have a mapped user for this assignee yet.',
+    })
+
+    render(
+      <WorkRequestChatResumeCard
+        title="Service Request ready"
+        reviewUrl={`https://app.roas.io/request-review/${token}`}
+      />,
+    )
+
+    expect(await screen.findByText('SERVICE REQUEST SUBMITTED')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'The ROAS task is saved. The ClickUp mirror still needs another try. ClickUp does not have a mapped user for this assignee yet.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry ClickUp' })).toBeInTheDocument()
+  })
+
+  it('retries ClickUp from the pending card and then shows the task link', async () => {
+    mocks.forceOpenToken = token
+    vi.mocked(fetchWorkRequestReview).mockResolvedValue({
+      state: 'finalized',
+      sync_status: 'sync_pending',
+      task_url: '/spaces?space=space-1&item=task-1',
+      clickup_url: null,
+      last_error: 'ClickUp does not have a mapped user for this assignee yet.',
+    })
+    vi.mocked(finalizeWorkRequestReview).mockResolvedValue({
+      state: 'finalized',
+      sync_status: 'synced',
+      task_url: '/spaces?space=space-1&item=task-1',
+      clickup_url: 'https://app.clickup.com/t/868ku9u52',
+      last_error: null,
+    })
+
+    render(
+      <WorkRequestChatResumeCard
+        title="Service Request ready"
+        reviewUrl={`https://app.roas.io/request-review/${token}`}
+      />,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Retry ClickUp' }))
+
+    expect(await screen.findByText(/The ClickUp mirror is confirmed/)).toBeInTheDocument()
+    expect(finalizeWorkRequestReview).toHaveBeenCalledWith(token)
+    expect(screen.getByRole('link', { name: 'Open ClickUp task' })).toHaveAttribute(
+      'href',
+      'https://app.clickup.com/t/868ku9u52',
+    )
+    expect(screen.queryByRole('button', { name: 'Retry ClickUp' })).not.toBeInTheDocument()
   })
 })

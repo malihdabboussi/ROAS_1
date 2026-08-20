@@ -66,6 +66,7 @@ export type WorkRequestReviewResponse =
       sync_status?: string
       task_url?: string | null
       clickup_url?: string | null
+      last_error?: string | null
       message?: string
     }
 

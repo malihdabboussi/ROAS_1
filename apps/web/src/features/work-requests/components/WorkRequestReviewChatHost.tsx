@@ -23,9 +23,17 @@ type Props = {
   options: WorkRequestOptions
   onSave: (update: WorkRequestUpdate) => Promise<WorkRequestReviewResponse>
   onSubmit: (update: WorkRequestUpdate) => Promise<WorkRequestReviewResponse>
+  onRetryMirror?: () => Promise<WorkRequestReviewResponse>
 }
 
-export function WorkRequestReviewChatHost({ token, draft, options, onSave, onSubmit }: Props) {
+export function WorkRequestReviewChatHost({
+  token,
+  draft,
+  options,
+  onSave,
+  onSubmit,
+  onRetryMirror,
+}: Props) {
   const {
     messages,
     conversationId,
@@ -53,6 +61,7 @@ export function WorkRequestReviewChatHost({ token, draft, options, onSave, onSub
         presentation="page"
         onSave={onSave}
         onSubmit={onSubmit}
+        onRetryMirror={onRetryMirror}
       />
     )
   }

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Check } from 'lucide-react'
 import { WORK_REQUEST_ERRORS } from '../config/errors.config'
-import { WORK_REQUEST_MESSAGES } from '../config/messages.config'
+import { WORK_REQUEST_MESSAGES, workRequestMirrorPendingBody } from '../config/messages.config'
 import {
   answersToUpdate,
   applyStepAnswer,
@@ -23,6 +23,7 @@ import {
   type WorkRequestChatTranscriptItem,
 } from './WorkRequestChatFlowHelpers'
 import { WorkRequestChatBubble, WorkRequestChatStepCard } from './WorkRequestChatFlowParts'
+import { WorkRequestFinalizedActions, workRequestFinalizedBody } from './WorkRequestFinalizedActions'
 import {
   WorkRequestChatConfirmCard,
   WorkRequestKnownAnswersCard,
@@ -34,13 +35,14 @@ export function WorkRequestChatFlow({
   presentation = 'page',
   onSave,
   onSubmit,
+  onRetryMirror,
 }: WorkRequestChatFlowProps) {
   const [answers, setAnswers] = useState<WorkRequestChatAnswers>(() =>
     draftToChatAnswers(draft, options),
   )
   const [stepIndex, setStepIndex] = useState(0)
   const [editingStepId, setEditingStepId] = useState<string | null>(null)
-  const [busy, setBusy] = useState<'save' | 'submit' | null>(null)
+  const [busy, setBusy] = useState<'save' | 'submit' | 'retry' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [finalized, setFinalized] = useState<WorkRequestChatFinalizedReceipt | null>(null)
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -193,16 +195,47 @@ export function WorkRequestChatFlow({
           sync_status: result.sync_status,
           task_url: result.task_url,
           clickup_url: result.clickup_url,
+          last_error: result.last_error,
         })
         pushAssistant(
           result.sync_status === 'synced'
             ? `${WORK_REQUEST_MESSAGES.finalizedBody} The ClickUp mirror is confirmed.`
-            : WORK_REQUEST_MESSAGES.mirrorPending,
+            : workRequestMirrorPendingBody(result.last_error),
         )
       }
     } catch (caught) {
       setError(
         caught instanceof Error ? caught.message : WORK_REQUEST_ERRORS.FINALIZE_FAILED.userMessage,
+      )
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const retryMirror = async () => {
+    if (!onRetryMirror) return
+    setBusy('retry')
+    setError(null)
+    try {
+      const result = await onRetryMirror()
+      if (result.state === 'finalized') {
+        setFinalized({
+          sync_status: result.sync_status,
+          task_url: result.task_url,
+          clickup_url: result.clickup_url,
+          last_error: result.last_error,
+        })
+        pushAssistant(
+          result.sync_status === 'synced'
+            ? `${WORK_REQUEST_MESSAGES.finalizedBody} The ClickUp mirror is confirmed.`
+            : workRequestMirrorPendingBody(result.last_error),
+        )
+      }
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : WORK_REQUEST_ERRORS.MIRROR_RETRY_FAILED.userMessage,
       )
     } finally {
       setBusy(null)
@@ -279,7 +312,7 @@ export function WorkRequestChatFlow({
           <WorkRequestChatConfirmCard
             steps={allSteps.filter((step) => step.kind !== 'confirm')}
             answers={answers}
-            busy={busy}
+            busy={busy === 'save' || busy === 'submit' ? busy : null}
             onBack={goBack}
             onSubmit={() => void submitRequest()}
             onEdit={setEditingStepId}
@@ -292,33 +325,12 @@ export function WorkRequestChatFlow({
               <Check className="icon-sm text-success" />
               <span className="body-2 font-medium">{WORK_REQUEST_MESSAGES.finalizedTitle}</span>
             </div>
-            <p className="body-3 text-muted-foreground">
-              {finalized.sync_status === 'synced'
-                ? `${WORK_REQUEST_MESSAGES.finalizedBody} The ClickUp mirror is confirmed.`
-                : WORK_REQUEST_MESSAGES.mirrorPending}
-            </p>
-            <div className="gap-spacing-2 flex flex-wrap">
-              {finalized.task_url ? (
-                <a
-                  href={finalized.task_url}
-                  className="button-default button-glass-primary"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open ROAS task
-                </a>
-              ) : null}
-              {finalized.clickup_url ? (
-                <a
-                  href={finalized.clickup_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="button-default button-glass-neutral"
-                >
-                  Open ClickUp task
-                </a>
-              ) : null}
-            </div>
+            <p className="body-3 text-muted-foreground">{workRequestFinalizedBody(finalized)}</p>
+            <WorkRequestFinalizedActions
+              receipt={finalized}
+              retrying={busy === 'retry'}
+              onRetry={onRetryMirror ? () => void retryMirror() : undefined}
+            />
           </div>
         )}
 

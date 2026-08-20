@@ -1,6 +1,6 @@
 # Page Grader MCP bridge
 
-Last Modified: 2026-08-18
+Last Modified: 2026-08-19
 
 ## Ownership
 
@@ -152,9 +152,15 @@ Grader`, `MCP`, tool names, schemas, idempotency keys, or retry mechanics.
   uses native `create_campaign` and posts the returned `url`. Missing VSL,
   landing page, or creative assets become campaign tasks instead of blocking
   create. Follow-up questions belong in that review chat, not a Slack interview.
-- After Service Request submit, the in-thread resume card shows the created
-  ROAS / ClickUp task links. A finalized review is not treated as an invalid
-  link.
+- After Service Request submit, the in-thread resume card and public review
+  page show the created ROAS / ClickUp task links. If ClickUp is still pending,
+  the card shows the sanitized Portal/ClickUp reason (for example an unmapped
+  assignee) and a **Retry ClickUp** button that re-runs finalize remirror. A
+  finalized review is not treated as an invalid link.
+- When the user refers to making or creating a task, Pixel treats that as a
+  Service Request. If the ask is still unclear, Pixel asks exactly: "Did you
+  want me to create a task for this?" and does not invent a task until they
+  confirm. "Make this a task" is Service Request intent.
 - Service Request fulfillment creates from a ROAS / Slack Pixel session stamp
   that conversation UUID onto the draft (`source_context.conversation_id` plus
   internal post-create stamp). Public `/request-review/:token` resumes that
@@ -172,6 +178,13 @@ Grader`, `MCP`, tool names, schemas, idempotency keys, or retry mechanics.
 - Slack inbound work is claimed once per `(team, channel, message_ts)`. Mapped
   channels skip `app_mention` when the `message` handler already owns the post,
   so one @Pixel ask cannot create two Service Request drafts.
+- Slack `@` mentions of teammates are expanded to display name + email (and a
+  linked ROAS name when mapped) before Pixel sees the message. Pixel's own bot
+  mention is stripped; teammate mentions are kept. A tagged human on client
+  fulfillment (GHL/SMS/CRM) still uses `page_grader_create_fulfillment_request`
+  and an openable `review_url` — never native `create_task`. `Harry M.` is not
+  substituted with a slash-alias roster row such as `Harry/Haroon` unless email
+  or id matches.
 - Unreviewed Service Request drafts send two Slack follow-ups: 3 hours after
   the review link is issued, then 22 hours after (2 hours before the 24-hour
   expiry) with an expiry nudge. Both reply in the original task thread and

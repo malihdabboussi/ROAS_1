@@ -108,4 +108,30 @@ describe('Page Grader human fulfillment routing', () => {
       "RAISE EXCEPTION 'Campaign batch delegation preview was not persisted for both agents'",
     )
   })
+
+  it('keeps Slack teammate tags on Service Request intake', () => {
+    for (const skill of [vibeySkill, atlasSkill]) {
+      expect(skill).toContain('[Slack teammates mentioned]')
+      expect(skill).toContain('Harry M.')
+      expect(skill).toContain('Harry/Haroon')
+      expect(skill).toContain('page_grader_create_fulfillment_request')
+      expect(skill).toContain('review_url')
+      expect(skill).toContain('Did you want me to create a task for this?')
+      expect(skill).toContain('make this a task')
+    }
+    const mentionMigration = readFileSync(
+      resolve(
+        repoRoot,
+        'supabase/migrations/20260819234500_slack_mention_service_request_routing.sql',
+      ),
+      'utf8',
+    )
+    expect(mentionMigration).toContain('## Slack mention Service Request routing')
+    expect(mentionMigration).toContain('[Slack teammates mentioned]')
+    expect(mentionMigration).toContain('Did you want me to create a task for this?')
+    expect(mentionMigration).toContain("file_name = 'TOOLS.md'")
+    expect(mentionMigration).toContain(
+      "RAISE EXCEPTION 'Slack mention Service Request routing was not persisted for both agents'",
+    )
+  })
 })

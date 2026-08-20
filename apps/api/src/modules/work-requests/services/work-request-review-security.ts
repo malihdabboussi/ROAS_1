@@ -98,6 +98,19 @@ export function sanitizeWorkRequestDraft(draft: WorkRequestDraftRow) {
   }
 }
 
+export function publicWorkRequestFinalized(draft: WorkRequestDraftRow) {
+  const publicDraft = sanitizeWorkRequestDraft(draft)
+  return {
+    state: 'finalized' as const,
+    draft: publicDraft,
+    final_task_id: draft.final_space_item_id,
+    sync_status: draft.sync_status,
+    task_url: publicDraft.task_url,
+    clickup_url: publicDraft.clickup_url,
+    last_error: draft.sync_status === 'synced' ? null : draft.last_error,
+  }
+}
+
 /** Safe public resume id for logged-in deep-link into the originating ROAS chat. */
 export function readResumeConversationId(provenance: unknown): string | null {
   const root = asRecord(provenance)

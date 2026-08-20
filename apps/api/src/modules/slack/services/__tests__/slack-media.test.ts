@@ -386,6 +386,7 @@ describe('SlackService media helpers', () => {
         accessToken: 'tok',
         orgId: 'org-1',
         ownerSlackUserId: null,
+        botUserId: null,
       })
     })
   })

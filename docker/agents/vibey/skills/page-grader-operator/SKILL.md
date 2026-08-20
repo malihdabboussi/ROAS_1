@@ -5,7 +5,10 @@ campaign, fulfillment task, client meeting, portal memory, cached Meta
 reporting, or asks for a client Service Request / fulfillment deliverable of
 any type (design, copy, funnel/landing page, GHL, ad creative, video
 edit/production, or general client work), including when the user says "make a
-task", "ASAP", or names the human who should own that work.
+task", "make this a task", "ASAP", or names the human who should own that work.
+If they describe client work but have not asked to create a task, ask exactly:
+"Did you want me to create a task for this?" Do not invent a task until they
+confirm.
 
 ## Source routing
 
@@ -113,6 +116,13 @@ task", "ASAP", or names the human who should own that work.
   The portal uses the first line as the task title and the rest as the body.
   Never put the entire brief on one line.
   Never use native `create_task` for this class of work.
+  A Slack @mention of a teammate does not change this path. Keep
+  `page_grader_create_fulfillment_request` and post the `review_url`. Use the
+  Slack display name and email from any `[Slack teammates mentioned]` block for
+  `assignee_name`. Do not replace the tagged person with a different slash-alias
+  roster row (`Harry M.` is not `Harry/Haroon` unless email or id matches).
+  When they refer to making or creating a task, assume Service Request intake.
+  If unsure, ask exactly: "Did you want me to create a task for this?"
 - A successful Service Request intake result is a draft review link, not an
   active task. The user-facing reply must include the resolved client name, the
   request title/type, that this is a reviewable draft awaiting confirmation,
@@ -175,6 +185,10 @@ task", "ASAP", or names the human who should own that work.
   resolve the client from channel identity, create a Service Request draft with
   `task_type:"video"`, and reply with client name + draft confirmation +
   openable `review_url`. Do not call native `create_task`.
+- "Can you make this a task for CRM for @Harry M." in a Pixel DM about Yasir
+  SMS/GHL → still a Service Request (`task_type:"ghl"`). Use the Slack display
+  name/email from `[Slack teammates mentioned]`, post the openable `review_url`,
+  and do not substitute `Harry/Haroon` or call native `create_task`.
 - "I need this done for Yasir's webinar: QC the funnel, check GHL automations,
   reset ads" → resolve Yasir + the webinar campaign, call
   `page_grader_create_delegation_preview` once, and reply with the openable

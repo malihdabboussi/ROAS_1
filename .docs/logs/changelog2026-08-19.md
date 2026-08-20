@@ -1,15 +1,24 @@
 # Changelog - [August 19, 2026]
 
-## [2026-08-19 14:13] - [FEATURE]
+## [2026-08-19 17:05] - [FIX]
 
-What: Client Strategy missions can now continue in place. Mission Details shows Continue this track → Post-call strategy (Atlas transcript + Reed/Nate Strategy v2 on the same mission) and a Rerun action on completed or stuck subtasks.
+What: Pixel now treats “make this a task” / “task this” as a Service Request, and if the ask is still unclear it asks exactly “Did you want me to create a task for this?” ClickUp-pending Service Request cards show the failure reason plus a Retry ClickUp button that re-runs finalize remirror.
 
-Why: A finished pre-call map was a dead end. Starting a second mission broke the track. Operators need to extend or rerun from the mission they already opened.
+Why: The Yasir CRM example classified as Kind: unclear, and when ClickUp missed there was no way to see why or push it through again.
 
-Impact: Mission Details panel/modal for Client Strategy (and pre-call-titled) missions. Webinar Fulfillment is unchanged. Chat mission-card Extend is not in this pass.
+Impact: Slack Pixel ask-kind, Service Request review chat/page, ClickUp remirror retries.
 
-Files: apps/api/src/modules/missions/playbooks/mission-track-extensions.ts, apps/api/src/modules/missions/services/missions-track.service.ts, apps/api/src/modules/missions/controllers/missions-lifecycle.controller.ts, apps/api/src/modules/missions/controllers/missions-subtasks.controller.ts, apps/web/src/lib/missions/mission-track-actions.ts, apps/web/src/features/mission-control/components/dialogs/MissionTrackActions.tsx, apps/web/src/features/mission-control/components/dialogs/useMissionTrackActions.ts, apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.tsx, documentation/features/missions.md
+Files: `apps/api/src/modules/slack/services/slack-ask-kind.ts`, `apps/web/src/features/work-requests/components/WorkRequestFinalizedActions.tsx`, `WorkRequestChatFlow.tsx`, `WorkRequestChatResumeCard.tsx`, `WorkRequestReviewPage.tsx`, `packages/agent-policy/src/platform-tools-template.ts`, `docker/agents/*/skills/page-grader-operator/SKILL.md`, `supabase/migrations/20260819234500_slack_mention_service_request_routing.sql`, `documentation/features/page-grader-mcp-bridge.md`
 
+## [2026-08-19 16:35] - [FIX]
+
+What: Slack teammate @mentions on client fulfillment now expand to display name + email before Pixel sees them (Pixel's own mention is still stripped). Assignee matching no longer maps `Harry M.` onto a `Harry/Haroon` slash alias. Intake stamps Portal id/email when the roster uniquely matches, ClickUp mirror reuses that roster, and the submitted Service Request UI shows the sanitized ClickUp pending reason.
+
+Why: Tagging Harry in a Pixel DM caused a native “task created” reply with no review link, the wrong Portal owner (`Harry/Haroon`), and a ROAS task that did not mirror to ClickUp.
+
+Impact: Pixel Slack DMs/mentions, Service Request review chat, ClickUp mirror retries.
+
+Files: apps/api/src/modules/slack/services/slack-inbound-mention-expansion.ts, apps/api/src/modules/slack/services/slack-service-events.base.ts, apps/api/src/modules/work-requests/services/work-request-assignee.ts, apps/api/src/modules/work-requests/services/work-request-mirror.ts, apps/api/src/modules/work-requests/services/work-request.service.ts, apps/web/src/features/work-requests/, packages/agent-policy/src/platform-tools-template.ts, docker/agents/*/skills/page-grader-operator/SKILL.md, supabase/migrations/20260819234500_slack_mention_service_request_routing.sql, documentation/features/page-grader-mcp-bridge.md
 
 ## [2026-08-19 15:50] - [FIX]
 
@@ -20,6 +29,16 @@ Why: Operators were missing Portal clients (intake/pre-launch) because the listi
 Impact: Clients, Map clients, bulk send, Connections client pickers, Slack campaign import jobs.
 
 Files: apps/web/src/lib/agency-clients/agency-client-pipeline.ts, apps/web/src/features/agency-clients/AgencyClientsPage.tsx, apps/api/src/modules/integrations/page-grader/integrations/page-grader.integration.ts, packages/api-shared/src/utils/brain-import-job-status.ts, documentation/features/page-grader-campaign-brain-sync.md
+
+## [2026-08-19 14:13] - [FEATURE]
+
+What: Client Strategy missions can now continue in place. Mission Details shows Continue this track → Post-call strategy (Atlas transcript + Reed/Nate Strategy v2 on the same mission) and a Rerun action on completed or stuck subtasks.
+
+Why: A finished pre-call map was a dead end. Starting a second mission broke the track. Operators need to extend or rerun from the mission they already opened.
+
+Impact: Mission Details panel/modal for Client Strategy (and pre-call-titled) missions. Webinar Fulfillment is unchanged. Chat mission-card Extend is not in this pass.
+
+Files: apps/api/src/modules/missions/playbooks/mission-track-extensions.ts, apps/api/src/modules/missions/services/missions-track.service.ts, apps/api/src/modules/missions/controllers/missions-lifecycle.controller.ts, apps/api/src/modules/missions/controllers/missions-subtasks.controller.ts, apps/web/src/lib/missions/mission-track-actions.ts, apps/web/src/features/mission-control/components/dialogs/MissionTrackActions.tsx, apps/web/src/features/mission-control/components/dialogs/useMissionTrackActions.ts, apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.tsx, documentation/features/missions.md
 
 ## [2026-08-19 04:10] - [FEATURE]
 

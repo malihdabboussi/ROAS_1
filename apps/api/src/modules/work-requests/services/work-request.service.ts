@@ -20,6 +20,7 @@ import {
 import { appendAssetsToDescription } from './work-request-assets'
 import {
   assignWorkRequestFinalTask,
+  bindCreatedWorkRequestAssignee,
   bindWorkRequestAssignee,
   stampWorkRequestAssignee,
 } from './work-request-assignee'
@@ -42,6 +43,7 @@ import {
   computeWorkRequestMissingFields,
   generateWorkRequestReviewToken,
   hashWorkRequestReviewToken,
+  publicWorkRequestFinalized,
   publicWorkRequestOptions,
   readResumeConversationId,
   safeWorkRequestError,
@@ -73,6 +75,8 @@ export class WorkRequestService {
         sync_status: draft.sync_status,
         task_url: publicDraft.task_url,
         clickup_url: publicDraft.clickup_url,
+        last_error:
+          state === 'finalized' && draft.sync_status !== 'synced' ? draft.last_error : null,
       }
     }
     draft = await ensureDraftResumeConversation({
@@ -234,15 +238,7 @@ export class WorkRequestService {
           if (draft.sync_status !== 'synced') current = await this.mirrorFinalTask(draft, task)
         }
       }
-      const publicDraft = sanitizeWorkRequestDraft(current)
-      return {
-        state: 'finalized' as const,
-        draft: publicDraft,
-        final_task_id: current.final_space_item_id,
-        sync_status: current.sync_status,
-        task_url: publicDraft.task_url,
-        clickup_url: publicDraft.clickup_url,
-      }
+      return publicWorkRequestFinalized(current)
     }
     if (draft.missing_fields.length > 0) {
       throw new BadRequestException('Complete the missing request context before submitting')
@@ -251,27 +247,10 @@ export class WorkRequestService {
     const finalized = await this.repository.finalize(tokenHash)
     finalized.task = await this.assignFinalTaskWhenMapped(finalized.draft, finalized.task)
     if (finalized.draft.sync_status === 'synced') {
-      const publicDraft = sanitizeWorkRequestDraft(finalized.draft)
-      return {
-        state: 'finalized' as const,
-        draft: publicDraft,
-        final_task_id: finalized.draft.final_space_item_id,
-        sync_status: finalized.draft.sync_status,
-        task_url: publicDraft.task_url,
-        clickup_url: publicDraft.clickup_url,
-      }
+      return publicWorkRequestFinalized(finalized.draft)
     }
 
-    const mirrored = await this.mirrorFinalTask(finalized.draft, finalized.task)
-    const publicDraft = sanitizeWorkRequestDraft(mirrored)
-    return {
-      state: 'finalized' as const,
-      draft: publicDraft,
-      final_task_id: mirrored.final_space_item_id,
-      sync_status: mirrored.sync_status,
-      task_url: publicDraft.task_url,
-      clickup_url: publicDraft.clickup_url,
-    }
+    return publicWorkRequestFinalized(await this.mirrorFinalTask(finalized.draft, finalized.task))
   }
 
   async requestPublicRefresh(token: string) {
@@ -384,6 +363,14 @@ export class WorkRequestService {
       })
       return this.webhookResult(draft, null, 'existing')
     }
+    if (draft.assignee_name) {
+      const options = await this.scope.loadScopedOptions(draft)
+      draft = (await bindCreatedWorkRequestAssignee({
+        draft,
+        teamMembers: options.teamMembers ?? [],
+        updateDraft: (id, values) => this.repository.update(id, values),
+      })) as WorkRequestDraftRow
+    }
     return this.webhookResult(draft, token, 'created')
   }
 
@@ -476,7 +463,14 @@ export class WorkRequestService {
     task: Record<string, unknown>,
   ): Promise<WorkRequestDraftRow> {
     const assigned = await this.assignFinalTaskWhenMapped(draft, task)
-    return mirrorWorkRequestFinalTask(this.repository, this.pageGraderApi, draft, assigned)
+    const options = await this.scope.loadScopedOptions(draft)
+    return mirrorWorkRequestFinalTask(
+      this.repository,
+      this.pageGraderApi,
+      draft,
+      assigned,
+      options.teamMembers ?? [],
+    )
   }
 
   private async assignFinalTaskWhenMapped(
