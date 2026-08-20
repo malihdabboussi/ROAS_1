@@ -39741,3 +39741,33 @@ Evidence: 245 VibeyLoadingOrb sites before the sweep; ~55 page/pane-level ones c
 Needed work: Convert opportunistically per surface; keep orbs only for in-button spinners and branded moments (BrainConstellationLoader stays).
 
 Reason not done now: Long tail; page-level jank was the user-visible complaint.
+## 2026-08-19 - [FIX] Chat-created client campaigns never get a program (needs decision + backfill)
+
+Status: Resolved 2026-08-19 — Dylan decided: explicit-ask only; client-referenced → Clients program; standalone → General. createCampaign attaches via config.client; the three campaigns were backfilled through PATCH /campaigns/:id (product API). Left open: enforcement is prompt-level (useWhen/doNotUseWhen) — a hard preflight can't detect "user asked".
+
+Found while: Recents filter fixes (claude/recents-filter-fixes)
+
+Evidence: `createCampaign` (apps/api/src/modules/campaigns/services/campaigns-service-01.base.ts:410) never sets `program_id`, so Pixel-created client campaigns ("Claude Club Webinar", both "Master Your Kraft | VSL …") sit program-less and used to render under PROGRAMS in the scope picker. Portal-imported client campaigns correctly get the org's `clients` program.
+
+Needed work: (a) Decision: should chat-created campaigns attach to the Clients program when a client is referenced (config.client / client context), or should the agent be required to pick? (b) Prod backfill (blocked by permission classifier in-session; run manually):
+```sql
+update campaigns c set program_id = p.id, updated_at = now()
+from programs p
+where p.org_id = c.org_id and p.system_kind = 'clients' and p.deleted_at is null
+  and c.deleted_at is null and c.program_id is null
+  and c.name in ('Claude Club Webinar','Master Your Kraft | VSL Warm Retargeting','Master Your Kraft | VSL Retargeting');
+```
+
+Reason not done now: Prod write denied by permission policy; creation-path default is a product decision.
+
+## 2026-08-19 - [FIX] Duplicate React keys for streamed tool steps
+
+Status: Open
+
+Found while: Recents filter repro (console)
+
+Evidence: 59 console errors "Encountered two children with the same key `tool-Claude Club — Channel Plan…`" — `use-chat-store.ts` builds tool ids as `tool-${name}-${ts}`; identical name+ts (or missing toolCallId) collide and React may drop/duplicate tool rows.
+
+Needed work: Include a monotonically increasing index or the stream event id in the fallback id.
+
+Reason not done now: The id doubles as the stream-update correlation key; changing it needs stream-dedup regression coverage.

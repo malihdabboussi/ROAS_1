@@ -31,7 +31,6 @@ import { ShellRightPanel } from '@/components/shell/ShellRightPanel'
 import { useShellChatQuickStart } from '@/components/shell/use-shell-chat-quick-start'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { useSummaryPanelLayout } from '@/components/shell/use-summary-panel-docked'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   useBrainLiveSession,
   type BrainLiveScope,
@@ -2274,13 +2273,15 @@ export function SpaceVibeyChatPanel({
                           ref={contentRef}
                           className="mx-auto flex min-h-full w-full max-w-3xl flex-col"
                         >
-                          {isLoadingMessages && messages.length === 0 && selectedConversationId ? (
-                            <div className="flex flex-1 flex-col items-center justify-center py-24">
-                              <VibeyLoadingOrb
-                                text="Loading conversation…"
-                                state="processing"
-                                size="md"
-                              />
+                          {messages.length === 0 &&
+                          selectedConversationId &&
+                          (isLoadingMessages ||
+                            conversationNeedsMessageHydration(
+                              selectedConversationId,
+                              useChatStore.getState(),
+                            )) ? (
+                            <div className="py-spacing-6">
+                              <ListSkeleton rows={4} label="Loading conversation…" />
                             </div>
                           ) : null}
                           {messages.length === 0 && !isLoadingMessages && pendingSeedSend ? (
@@ -2288,7 +2289,16 @@ export function SpaceVibeyChatPanel({
                               <ListSkeleton rows={2} label="Sending…" />
                             </div>
                           ) : null}
-                          {messages.length === 0 && !isLoadingMessages && !pendingSeedSend ? (
+                          {messages.length === 0 &&
+                          !isLoadingMessages &&
+                          !pendingSeedSend &&
+                          !(
+                            selectedConversationId &&
+                            conversationNeedsMessageHydration(
+                              selectedConversationId,
+                              useChatStore.getState(),
+                            )
+                          ) ? (
                             <SpaceChatAgentEmptyState
                               agent={emptyStateAgent}
                               agentPicker={renderAgentPicker('hero')}

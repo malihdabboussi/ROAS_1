@@ -253,6 +253,34 @@ describe('CampaignsService', () => {
       )
     })
 
+    it('attaches client-referenced campaigns to the org Clients program', async () => {
+      mockRepo.create.mockResolvedValue({ id: '1' })
+      const mockSubabase = supabaseWithEmptyAgentRegistry()
+      // First maybeSingle resolves the clients program lookup.
+      const chain = mockSubabase.from()
+      chain.maybeSingle.mockResolvedValueOnce({ data: { id: 'clients-prog' }, error: null })
+
+      await service.createCampaign(
+        mockSubabase,
+        'user-1',
+        { name: 'Claude Club Webinar', config: { client: 'Claude Club' } },
+        'org-1',
+      )
+      expect(mockRepo.create).toHaveBeenCalledWith(
+        mockSubabase,
+        expect.objectContaining({ program_id: 'clients-prog' }),
+      )
+    })
+
+    it('leaves standalone campaigns program-less (grouped under General)', async () => {
+      mockRepo.create.mockResolvedValue({ id: '1' })
+      const mockSubabase = supabaseWithEmptyAgentRegistry()
+
+      await service.createCampaign(mockSubabase, 'user-1', { name: 'Solo' }, 'org-1')
+      const record = mockRepo.create.mock.calls.at(-1)?.[1] as Record<string, unknown>
+      expect(record).not.toHaveProperty('program_id')
+    })
+
     it('should use provided campaign_type', async () => {
       mockRepo.create.mockResolvedValue({ id: '1' })
       const mockSubabase = supabaseWithEmptyAgentRegistry()
