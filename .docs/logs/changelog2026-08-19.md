@@ -1,5 +1,16 @@
 # Changelog - [August 19, 2026]
 
+## [2026-08-19 20:20] - [FEATURE]
+
+What: Added a Task Cleanup Quick Mission. Atlas inventories this week of calls plus open native tasks, writes a Task Cleanup Board, waits for Approve & continue, then files only approved proposed work as native platform tasks.
+
+Why: Promises and agreements from calls were staying buried in transcripts instead of becoming closeable tasks.
+
+Impact: Create / Quick Missions / slash, Mission Views, `create_mission` playbook_id guidance. Does not use Service Requests or ClickUp-only work.
+
+Files: `apps/mission-worker/src/modules/missions/playbooks/task-cleanup.playbook.ts`, `mission-playbook.registry.ts`, `apps/web/src/lib/spaces/quick-missions-catalog.ts`, `QuickMissionsHubModal.tsx`, `QuickMissionContextFields.tsx`, `apps/web/src/features/spaces/components/playbooks/task-cleanup.ts`, `apps/web/src/features/spaces/lib/mission-view-registry.ts`, `apps/api/src/modules/missions/services/webinar-fulfillment-team.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts`, `documentation/features/missions.md`
+
+
 ## [2026-08-19 17:45] - [FEATURE]
 
 What: Mission Details now shows Extend this mission under the last subtask. Post-call still continues Client Strategy in place. Other Quick Mission playbooks open the existing kickoff hub and create a child mission with parent_mission_id.

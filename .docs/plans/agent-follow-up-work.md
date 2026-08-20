@@ -1,3 +1,27 @@
+## 2026-08-19 - [ARCH] QuickMissionsHubModal is near the 400 LOC cap
+
+Status: Open
+
+Found while: Adding Task Cleanup as a Quick Mission
+
+Evidence: `wc -l` on `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx` is 372 (component cap 400). This change added cleanup kickoff state, reset, and payload routing.
+
+Needed work: Extract `buildPayload` and empty-field constants into a hub payload helper so another playbook does not push the modal over the cap.
+
+Reason not done now: The requested work was the Task Cleanup playbook and launcher fields. The file stayed under 400.
+
+## 2026-08-19 - [FEATURE] Task Cleanup open-task inventory is attached-Space only
+
+Status: Open
+
+Found while: Adding Task Cleanup as a Quick Mission
+
+Evidence: Native `list_tasks` requires `space_id`. The playbook inventories open tasks on the selected Space (`assigned_to_me` included) and operator-wide Fathom/Fireflies calls for the window.
+
+Needed work: Add a true operator-wide open-task list (all Spaces) if operators need previously open work outside the Space they launch into.
+
+Reason not done now: No existing agent action lists the operator's open tasks across Spaces. Expanding `list_tasks` is a separate contract change.
+
 ## 2026-08-20 - [ARCH] SpaceItemRow.tsx is over the 400 LOC component cap
 
 Status: Open

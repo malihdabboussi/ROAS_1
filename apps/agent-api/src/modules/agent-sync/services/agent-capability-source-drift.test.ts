@@ -97,7 +97,9 @@ describe('agent capability source drift guardrail', () => {
 
   it('keeps named mission playbooks materializable from agent-facing docs', () => {
     expect(ACTION_SCHEMAS.create_mission?.optional).toContain('playbook_id')
+    expect(ACTION_SCHEMAS.create_mission?.descriptions?.playbook_id).toContain('task-cleanup')
     expect(VIBEY_API_ACTION_DOCS.create_mission.description).toContain('playbook_id')
+    expect(VIBEY_API_ACTION_DOCS.create_mission.description).toContain('task-cleanup')
 
     const examples = extractDocExamples('create_mission')
     expect(examples).toEqual(

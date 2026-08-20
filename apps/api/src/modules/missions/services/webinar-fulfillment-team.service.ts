@@ -52,6 +52,7 @@ export class WebinarFulfillmentTeamService {
       'static-ad-production',
       'meta-ads-launch',
       'meta-ads-audit',
+      'task-cleanup',
     ].includes(String(playbookId || '').trim())
   }
 

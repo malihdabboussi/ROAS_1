@@ -22,6 +22,7 @@ const AGENCY_TEAM_PLAYBOOK_IDS = new Set([
   'static-ad-production',
   'meta-ads-launch',
   'meta-ads-audit',
+  'task-cleanup',
 ])
 
 export function requiresAgencyTeamEnsure(playbookId: string): boolean {
