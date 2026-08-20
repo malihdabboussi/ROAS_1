@@ -10,6 +10,8 @@ function makeQuery(rows: unknown[], onUpdate?: (values: unknown) => void) {
     eq: vi.fn(() => query),
     is: vi.fn(() => query),
     ilike: vi.fn(() => query),
+    not: vi.fn(() => query),
+    order: vi.fn(() => query),
     limit: vi.fn(() => query),
     update: vi.fn((values: unknown) => {
       onUpdate?.(values)
@@ -67,6 +69,42 @@ describe('extractNamedClientCandidates', () => {
 })
 
 describe('maybeBindNamedClientCampaign', () => {
+  it('resolves a client whose campaign has a different name via Slack client stamps (Christian → Multifamily Strategy)', async () => {
+    const updates: unknown[] = []
+    const MULTIFAMILY = { id: 'camp-mfs', name: 'Multifamily Strategy', config: {}, org_id: 'org-1' }
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === 'campaigns') {
+          const query = makeQuery([])
+          // ilike scan finds nothing ("Christian" not in "Multifamily Strategy");
+          // the by-id lookup after the stamp match returns the campaign.
+          query.maybeSingle = vi.fn(async () => ({ data: MULTIFAMILY, error: null }))
+          return query
+        }
+        if (table === 'slack_observation_events')
+          return makeQuery([
+            {
+              metadata: {
+                page_grader_client_name: 'Christian Osgood / Multifamily Strategy',
+                roas_campaign_id: 'camp-mfs',
+              },
+            },
+          ])
+        if (table === 'conversations') return makeQuery([{ campaign_id: null }], (v) => updates.push(v))
+        return makeQuery([])
+      }),
+    }
+    const result = await maybeBindNamedClientCampaign(supabase as never, {
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      orgId: 'org-1',
+      text: "for Christian Osgood's multi-family strategy, write video ad scripts",
+      currentCampaignId: null,
+    })
+    expect(result).toMatchObject({ campaignId: 'camp-mfs' })
+    expect(updates).toEqual([{ campaign_id: 'camp-mfs' }])
+  })
+
   const base = { conversationId: 'conv-1', userId: 'user-1', orgId: 'org-1' }
 
   it("binds the Christian Osgood chat before the turn (screenshot case: unbound chat naming a client)", async () => {

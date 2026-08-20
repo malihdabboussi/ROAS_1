@@ -93,9 +93,39 @@ export async function maybeBindNamedClientCampaign(
       .is('deleted_at', null)
       .ilike('name', `%${firstWord}%`)
       .limit(MATCH_SCAN_LIMIT)
-    const rows = ((data ?? []) as Array<{ id: string; name: string | null; config: unknown }>)
+    let rows = ((data ?? []) as Array<{ id: string; name: string | null; config: unknown }>)
       .filter((row) => !isGeneralCampaignRow(row))
       .filter((row) => nameMatches(candidate, row.name))
+    if (rows.length === 0) {
+      // Client name ≠ campaign name is common ("Christian Osgood" → campaign
+      // "Multifamily Strategy"). Resolve via the Portal client stamps on Slack
+      // observation events, the same source the Slack-side bundle uses.
+      const { data: stamped } = await supabase
+        .from('slack_observation_events')
+        .select('metadata')
+        .eq('org_id', input.orgId)
+        .ilike('metadata->>page_grader_client_name', `%${firstWord}%`)
+        .not('metadata->>roas_campaign_id', 'is', null)
+        .order('observed_at', { ascending: false })
+        .limit(MATCH_SCAN_LIMIT)
+      const campaignIds = new Set<string>()
+      for (const event of (stamped ?? []) as Array<{ metadata: Record<string, unknown> }>) {
+        const clientName = String(event.metadata?.page_grader_client_name ?? '')
+        const campaignId = String(event.metadata?.roas_campaign_id ?? '')
+        if (campaignId && nameMatches(candidate, clientName)) campaignIds.add(campaignId)
+      }
+      if (campaignIds.size === 1) {
+        const { data: campaign } = await supabase
+          .from('campaigns')
+          .select('id, name, config')
+          .eq('id', [...campaignIds][0])
+          .is('deleted_at', null)
+          .maybeSingle()
+        if (campaign && !isGeneralCampaignRow(campaign)) {
+          rows = [campaign as { id: string; name: string | null; config: unknown }]
+        }
+      }
+    }
     if (rows.length !== 1) continue
 
     const bind = await bindChannelConversationCampaign(supabase, {
