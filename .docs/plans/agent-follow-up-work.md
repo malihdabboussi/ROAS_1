@@ -106,29 +106,18 @@ Needed work: Add an Extend action on the in-chat mission card that uses the same
 
 Reason not done now: The panel they already open after clicking the mission is the requested surface. Chat card and catalog unification are follow-on surfaces.
 
-## 2026-08-19 - [ARCH] PageGraderIntegration remains over the LOC cap
+## 2026-08-20 - [ARCH] page-grader-client-import.service.ts is at the 600 LOC service cap
 
 Status: Open
 
-Found while: Asking Portal `/clients` for every pipeline stage
+Found while: Stamping Portal pipeline_stage onto ROAS campaign config
 
-Evidence: `wc -l` on `apps/api/src/modules/integrations/page-grader/integrations/page-grader.integration.ts` is 637 (service/integration cap 600). This change added `include_all_statuses` / `include_inactive` query params only.
+Evidence: `wc -l` on `apps/api/src/modules/brain/services/page-grader-client-import.service.ts` is 600 (service cap 600). This change added `pipeline_stage` / `status` to the create-campaign Page Grader source object.
 
-Needed work: Split health/QC vs client/workspace vs meetings methods into focused integration files.
+Needed work: Extract campaign lookup/create from import orchestration so the next import change does not exceed the cap.
 
-Reason not done now: In-scope work was the client-list query contract; splitting the integration is unrelated cleanup.
+Reason not done now: The requested work was the pipeline stamp and ingest merge. The file stayed at the cap without growing past it.
 
-## 2026-08-19 - [FIX] Stamp Page Grader pipeline stage onto ROAS campaign config
-
-Status: Open
-
-Found while: Ordering/hiding Clients by Portal pipeline and applying the same filter in Connections
-
-Evidence: Page Grader client import writes `campaigns.status = 'active'` and `config.external_sources.page_grader` without `pipeline_stage`. Connections clients are ROAS campaigns, so Inactive/Blocked/Churned hide only works when that stage is on `campaign.status` or `config.external_sources.page_grader`. Catch-up stamp in `page-grader-brain-package-ingest.service.ts` also overwrites the page_grader object without a pipeline field.
-
-Needed work: Persist `pipeline_stage` (and status) from the Portal package onto `config.external_sources.page_grader` on create and ingest stamp, then Connections can hide/order without a second Portal fetch.
-
-Reason not done now: Clients/Map/Send lists already receive Portal `pipeline_stage`/`status` on the live catalog. Stamping campaign config is a separate sync-contract change.
 ## 2026-08-19 - [ARCH] ViewSwitcher.tsx is over the 600 LOC cap
 
 Status: Open

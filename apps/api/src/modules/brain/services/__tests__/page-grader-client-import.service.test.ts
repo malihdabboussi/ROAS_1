@@ -28,6 +28,8 @@ const christianPackage = {
     id: 'pg-client-christian',
     unique_client_id: 'christian-osgood',
     name: 'Christian Osgood',
+    pipeline_stage: 'pre_launch',
+    status: 'pre_launch',
   },
   client_campaigns: [{ id: 'pg-campaign-1', name: 'Multi-Family Strategy' }],
   client_strategies: [{ id: 'strategy-1', title: 'Multi-family strategy', content: 'Strategy' }],
@@ -147,6 +149,8 @@ describe('PageGraderClientImportService', () => {
             page_grader: expect.objectContaining({
               content_hash: null,
               last_sync_status: 'pending',
+              pipeline_stage: 'pre_launch',
+              status: 'pre_launch',
             }),
           },
         }),
