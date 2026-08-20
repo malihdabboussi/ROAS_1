@@ -54,6 +54,7 @@ export function useMeetingWorkspaceSurface({
       spaceId,
       meetingItemId,
       conversationId,
+      meetingTitle: title,
       awarenessContext,
       timelineVersion,
     })

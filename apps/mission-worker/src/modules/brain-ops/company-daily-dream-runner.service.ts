@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common'
 import type { CompanyDreamGroup } from './company-dream-signal-triage.service'
 
 type DreamRunRepository = {
@@ -46,6 +47,8 @@ const MAX_GROUPS_PER_DIGEST = 50
 const MAX_GROUPS_PER_CHUNK = 8
 
 export class CompanyDailyDreamRunnerService {
+  private readonly logger = new Logger(CompanyDailyDreamRunnerService.name)
+
   constructor(
     private readonly deps: {
       runRepository: DreamRunRepository
@@ -110,6 +113,16 @@ export class CompanyDailyDreamRunnerService {
       chunks_processed: chunksProcessed,
       signals_created: signalsCreated,
     })
+
+    if (signalsCreated === 0) {
+      this.logger.warn(
+        `company_daily_dream: zero signals created (run_id=${run.id}, org_id=${input.orgId}, brain_id=${input.brainId}, chunks=${chunksProcessed}, sources=${JSON.stringify(collected.sourceCounts)})`,
+      )
+    } else {
+      this.logger.log(
+        `company_daily_dream: created ${signalsCreated} signal(s) (run_id=${run.id}, org_id=${input.orgId}, brain_id=${input.brainId}, chunks=${chunksProcessed})`,
+      )
+    }
 
     return {
       runId: run.id,

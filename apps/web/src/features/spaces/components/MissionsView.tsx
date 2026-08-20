@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
 import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { MissionDetailModal } from '@/components/missions/MissionDetailModalAdapter'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { billingApi } from '@/lib/billing/billing-api'
 import { fetchCampaignTeam } from '@/lib/campaigns'
 import type { DocumentAttachment } from '@/lib/chat/document-attachments'
@@ -269,8 +269,8 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center py-16">
-        <VibeyLoadingOrb text="Loading missions…" state="processing" size="lg" />
+      <div className="flex-1 py-16">
+        <PageSkeleton showHeader={false} label="Loading missions…" />
       </div>
     )
   }

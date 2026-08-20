@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react'
 import { ArrowLeft, Eye, GitBranch, Pencil, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { cn } from '@/lib/utils/cn'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import { useAgentCheckpoints } from '../../hooks/useAgentCheckpoints'
@@ -119,7 +120,9 @@ export function AgentCheckpointsSidebar({
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           {loading && (
-            <p className="body-4 text-muted-foreground p-4 text-center">Loading history…</p>
+            <div className="p-4">
+              <ListSkeleton rows={4} label="Loading history…" />
+            </div>
           )}
           {error && <p className="body-4 text-destructive p-4 text-center">{error}</p>}
           {!loading && !error && checkpoints.length === 0 && (

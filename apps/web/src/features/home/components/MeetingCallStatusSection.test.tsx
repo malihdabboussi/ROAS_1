@@ -4,13 +4,14 @@ import type { FieldDef } from '@/lib/spaces/space-schema-types'
 import { MeetingCallStatusSection } from './MeetingCallStatusSection'
 
 const statusField: FieldDef = {
-  id: 'status',
-  name: 'Status',
+  id: 'call_status',
+  name: 'Call status',
   type: 'select',
   options: [
-    { id: 'logged', label: 'To action', color: 'blue', group: 'not_started' },
-    { id: 'needs_follow_up', label: 'Following up', color: 'orange', group: 'active' },
-    { id: 'done', label: 'Done', color: 'emerald', group: 'closed' },
+    { id: 'live', label: 'Live', color: 'emerald' },
+    { id: 'completed', label: 'Completed', color: 'blue' },
+    { id: 'no_show', label: 'No Show', color: 'red' },
+    { id: 'rescheduled', label: 'Rescheduled', color: 'amber' },
   ],
 }
 
@@ -19,12 +20,12 @@ describe('MeetingCallStatusSection', () => {
     cleanup()
   })
 
-  it('puts Continue in chat, task status, and recap actions on one row', () => {
+  it('puts Continue in chat, Call status, and recap actions on one row', () => {
     const onContinue = vi.fn()
     render(
       <MeetingCallStatusSection
         statusField={statusField}
-        statusValue="needs_follow_up"
+        statusValue="completed"
         hostLabel={null}
         isLive={false}
         isPostCall
@@ -43,7 +44,7 @@ describe('MeetingCallStatusSection', () => {
 
     const continueButton = screen.getByRole('button', { name: 'Continue in chat' })
     const row = continueButton.parentElement
-    expect(row).toContainElement(screen.getByRole('button', { name: 'Following up' }))
+    expect(row).toContainElement(screen.getByRole('button', { name: 'Completed' }))
     expect(row).toContainElement(screen.getByRole('button', { name: 'Start call' }))
     expect(row).toContainElement(screen.getByRole('button', { name: 'Recap message' }))
     expect(row).toContainElement(screen.getByRole('button', { name: 'Clean up action items' }))

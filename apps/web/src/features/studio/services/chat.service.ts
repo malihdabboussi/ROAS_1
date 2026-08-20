@@ -10,8 +10,7 @@ import {
 } from '@/lib/api/backend-client'
 import type { ChatModelSettings, ModelReasoningEffort } from '@/lib/chat/chat-model-settings'
 import {
-  isPlaceholderConversationTitle,
-  shouldReaffirmFirstMessageTitle,
+  canApplyFirstMessageTitle,
   titleFromFirstUserMessage,
 } from '@/lib/conversations/conversation-title'
 import {
@@ -2152,7 +2151,7 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
     if (isFirstUserTurn) {
       const earlyTitle = titleFromFirstUserMessage(params.content, 200)
       const existing = store.conversations.find((c) => c.id === conversationId)
-      if (earlyTitle && isPlaceholderConversationTitle(existing?.title)) {
+      if (earlyTitle && canApplyFirstMessageTitle(existing)) {
         store.updateConversation(conversationId, {
           title: earlyTitle,
           last_message_at: activityAt,
@@ -2266,7 +2265,7 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
       // and conversations are always in sync in the same render cycle
       if (!store.conversations.some((c) => c.id === conv.id)) {
         store.addConversation(conv)
-      } else if (initialTitle && isPlaceholderConversationTitle(conv.title)) {
+      } else if (initialTitle && canApplyFirstMessageTitle(conv)) {
         store.updateConversation(conv.id, {
           title: initialTitle,
           updated_at: new Date().toISOString(),
@@ -2890,8 +2889,8 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
     const allMessages = store.messagesByConversation[conversationId!] ?? []
     if (allMessages.length <= 2) {
       const title = titleFromFirstUserMessage(params.content, 200)
-      const currentTitle = store.conversations.find((row) => row.id === conversationId)?.title
-      if (title && shouldReaffirmFirstMessageTitle(currentTitle)) {
+      const current = store.conversations.find((row) => row.id === conversationId)
+      if (title && canApplyFirstMessageTitle(current, 'reaffirm')) {
         store.updateConversation(conversationId!, {
           title,
           updated_at: new Date().toISOString(),

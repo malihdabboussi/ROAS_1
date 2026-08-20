@@ -18,6 +18,7 @@ import {
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { toast } from 'sonner'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { tagNameToColorKey } from '@/features/properties/constants/tag-picker-colors'
 import { backendGet } from '@/lib/api/backend-client'
 import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
@@ -560,9 +561,8 @@ export function ContactInfoPanel({ contact, onContactUpdated, onClose }: Contact
 
         <div className="gap-spacing-3 pt-spacing-2 grid grid-cols-[minmax(100px,auto)_1fr] items-center">
           {customFieldsLoading ? (
-            <div className="gap-spacing-2 body-3 text-muted-foreground col-span-2 flex items-center">
-              <Loader className="icon-xs animate-spin" />
-              <span>Loading custom fields...</span>
+            <div className="col-span-2">
+              <ListSkeleton rows={3} label="Loading custom fields..." />
             </div>
           ) : (
             <>

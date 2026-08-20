@@ -38,7 +38,10 @@ describe('FathomController behavior', () => {
   let importJobs: any
   let customerBrain: any
   let spaceAutomation: any
-  let campaignBrainRoute: { enqueueForRoute: ReturnType<typeof vi.fn> }
+  let campaignBrainRoute: {
+    enqueueForRoute: ReturnType<typeof vi.fn>
+    routeAfterPageGraderSync: ReturnType<typeof vi.fn>
+  }
   let fathomRepository: any
   let controller: FathomController
   let webhookService: FathomWebhookService
@@ -81,6 +84,9 @@ describe('FathomController behavior', () => {
 
     campaignBrainRoute = {
       enqueueForRoute: vi.fn().mockResolvedValue({ routed: false, reason: 'no_space' }),
+      routeAfterPageGraderSync: vi
+        .fn()
+        .mockResolvedValue([{ routed: false, reason: 'no_matched_clients' }]),
     }
 
     fathomRepository = {
@@ -244,7 +250,7 @@ describe('FathomController behavior', () => {
     )
   })
 
-  it('dual-writes the same meeting into the client campaign brain from the Space route', async () => {
+  it('dual-writes the same meeting into the client campaign brain from matched clients / Space fallback', async () => {
     api.resolveUserByWebhookSecret.mockResolvedValue('user_2')
     api.getAutoIngestSettings.mockResolvedValue({
       autoIngest: true,
@@ -261,11 +267,14 @@ describe('FathomController behavior', () => {
       space_id: 'space-1ds',
       item_id: 'item-1',
     })
-    campaignBrainRoute.enqueueForRoute.mockResolvedValue({
-      routed: true,
-      campaignId: 'camp-1ds',
-      jobId: 'job-2',
-    })
+    campaignBrainRoute.routeAfterPageGraderSync.mockResolvedValue([
+      {
+        routed: true,
+        campaignId: 'camp-1ds',
+        jobId: 'job-2',
+        source: 'matched_client',
+      },
+    ])
 
     const event = {
       id: 'meeting_1ds',
@@ -276,12 +285,13 @@ describe('FathomController behavior', () => {
     await webhookService.processWebhookAsync(JSON.stringify(event), 'whsec_2')
 
     expect(importJobs.enqueueFathomMeetingImport).toHaveBeenCalledTimes(1)
-    expect(campaignBrainRoute.enqueueForRoute).toHaveBeenCalledWith(
+    expect(campaignBrainRoute.routeAfterPageGraderSync).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 'user_2',
         orgId: 'org_9',
         event: expect.objectContaining({ id: 'meeting_1ds' }),
         spaceRoute: expect.objectContaining({ space_id: 'space-1ds' }),
+        matchedClients: [],
       }),
     )
   })
@@ -305,7 +315,7 @@ describe('FathomController behavior', () => {
       'whsec_2',
     )
 
-    expect(campaignBrainRoute.enqueueForRoute).not.toHaveBeenCalled()
+    expect(campaignBrainRoute.routeAfterPageGraderSync).not.toHaveBeenCalled()
   })
 
   it('charges selected org when webhook billing is org scoped', async () => {

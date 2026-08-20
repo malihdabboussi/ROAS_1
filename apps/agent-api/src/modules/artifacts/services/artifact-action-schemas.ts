@@ -803,14 +803,26 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       config: 'object',
     },
     useWhen: [
-      'Create a new Vibey campaign.',
+      'Create a new Vibey campaign — ONLY when the user explicitly asked for a campaign to be created this turn.',
       'Fall back here when The ROAS Portal has no live campaign-draft write.',
       'Return the portal url in the result so the user can open the campaign.',
+      "Campaign work for a client: set config.client to the client's name so the campaign attaches to that client (Clients program) instead of floating alone.",
+    ],
+    doNotUseWhen: [
+      'The user did not explicitly ask to create a campaign — planning, strategizing, or discussing a campaign is not a request to create one.',
     ],
     examples: [
       {
         intent: 'create a lead campaign',
         data: { name: 'Q2 Launch', campaign_type: 'get-more-leads' },
+      },
+      {
+        intent: 'create a webinar campaign for client Claude Club',
+        data: {
+          name: 'Claude Club Webinar',
+          campaign_type: 'webinar',
+          config: { client: 'Claude Club' },
+        },
       },
     ],
   },
@@ -2843,6 +2855,9 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       'tags',
       'domain',
       'contact_id',
+      // Target a specific user-scope brain (e.g. an org-managed Person Brain
+      // during import jobs); omitted → the caller's default user brain.
+      'brain_id',
       ...BRAIN_TEMPORAL_OPTIONAL_KEYS,
     ],
     types: {
@@ -2854,6 +2869,7 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       significance: 'number',
       domain: 'string',
       contact_id: 'string',
+      brain_id: 'string',
       ...BRAIN_TEMPORAL_PARAM_TYPES,
     },
   },

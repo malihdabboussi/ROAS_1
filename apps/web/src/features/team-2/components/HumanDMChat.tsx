@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { useDmUnread } from '../hooks/use-dm-unread'
 import { useHumanDmMessages } from '../hooks/use-human-dm-messages'
 import type { DmMessage, DmPartnerProfile } from '../services/dm.service'
@@ -137,7 +138,9 @@ export function HumanDMChat({
     <section className="bg-background flex h-full min-h-0 min-w-0 flex-1 flex-col">
       <div ref={scrollRef} className="px-spacing-3 py-spacing-2 min-h-0 flex-1 overflow-y-auto">
         {loading && messages.length === 0 && (
-          <p className="body-3 text-muted-foreground py-spacing-3 text-center">Loading…</p>
+          <div className="py-spacing-3">
+            <ListSkeleton rows={4} label="Loading…" />
+          </div>
         )}
         {error && <p className="body-3 text-destructive py-spacing-3 text-center">{error}</p>}
         {!loading && !error && messages.length === 0 && (

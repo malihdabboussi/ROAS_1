@@ -3,6 +3,7 @@ import { MissionOpenclawGateway } from '../missions/services/gateways/mission-op
 import { MissionJsonService } from '../missions/services/utils/mission-json.service'
 import {
   CompanyCortexSignalRepository,
+  shouldAutoPromoteCompanyCortexSignal,
   type CompanyCortexSignalDraft,
 } from './company-cortex-signal.repository'
 
@@ -70,8 +71,50 @@ export class CompanyDailyDreamAtlasService {
       brainId,
       runId,
     })
-    await this.signals.insertProposedSignals(parsedSignals)
+    const inserted = await this.signals.insertProposedSignals(parsedSignals)
+    await this.autoPromoteHighConfidenceSignals({
+      orgId,
+      brainId,
+      userId: String(input.userId ?? ''),
+      inserted,
+    })
     return { signals: parsedSignals }
+  }
+
+  async autoPromoteHighConfidenceSignals(input: {
+    orgId: string
+    brainId: string
+    userId: string
+    inserted: Array<{ id: string; confidence: number }>
+  }): Promise<{ promotedSignalIds: string[] }> {
+    const eligibleIds = input.inserted
+      .filter((row) => shouldAutoPromoteCompanyCortexSignal(row.confidence))
+      .map((row) => row.id)
+    if (eligibleIds.length === 0 || !input.userId) {
+      return { promotedSignalIds: [] }
+    }
+
+    const promotedSignalIds = await this.signals.promoteHighConfidenceSignals({
+      brainId: input.brainId,
+      orgId: input.orgId,
+      signalIds: eligibleIds,
+      reviewedBy: input.userId,
+    })
+    for (const signalId of promotedSignalIds) {
+      await this.signals.insertFormationOutbox({
+        brainId: input.brainId,
+        orgId: input.orgId,
+        userId: input.userId,
+        signalId,
+        source: 'auto_high_confidence',
+      })
+    }
+    if (promotedSignalIds.length > 0) {
+      this.logger.log(
+        `company_daily_dream: auto-promoted ${promotedSignalIds.length} high-confidence signal(s) (brain_id=${input.brainId})`,
+      )
+    }
+    return { promotedSignalIds }
   }
 
   private async callAtlasWithJsonRetry(
