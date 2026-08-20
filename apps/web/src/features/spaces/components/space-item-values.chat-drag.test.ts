@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SpaceItem } from '../types'
-import { buildSpaceTaskChatDragPayload, visibleListStatusField } from './space-item-values'
+import { buildSpaceTaskChatDragPayload, listRowStatusField } from './space-item-values'
 
 function makeItem(overrides: Partial<SpaceItem> = {}): SpaceItem {
   return {
@@ -50,16 +50,15 @@ describe('buildSpaceTaskChatDragPayload', () => {
   })
 })
 
-describe('visibleListStatusField', () => {
+describe('listRowStatusField', () => {
   const status = { id: 'status', name: 'Status', type: 'select' as const }
+  const callStatus = { id: 'call_status', name: 'Call status', type: 'select' as const }
 
-  it('returns the status field only when Status is a visible column', () => {
-    expect(visibleListStatusField([status], [status])).toEqual(status)
+  it('keeps the name-column dropdown even when Status is also a column', () => {
+    expect(listRowStatusField([status])).toEqual(status)
   })
 
-  it('hides name-column status chrome when Status is not visible', () => {
-    expect(
-      visibleListStatusField([status], [{ id: 'title', name: 'Name', type: 'text' }]),
-    ).toBeUndefined()
+  it('uses Call status on Meetings so the name dropdown matches that column', () => {
+    expect(listRowStatusField([status, callStatus])).toEqual(callStatus)
   })
 })

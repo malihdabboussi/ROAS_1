@@ -12,6 +12,7 @@ export interface SpaceMappingSpace {
 /** One campaign row in the program · campaign → space cascade. */
 export interface SpaceMappingGroup {
   campaignId: string
+  campaignName: string
   /** "Program · Campaign" when the campaign belongs to a program. */
   label: string
   spaces: SpaceMappingSpace[]
@@ -37,6 +38,7 @@ export function buildSpaceMappingGroups(
       const programName = campaign.program_id ? programNameById.get(campaign.program_id) : undefined
       return {
         campaignId: campaign.id,
+        campaignName: campaign.name,
         label: programName ? `${programName} · ${campaign.name}` : campaign.name,
         spaces: spaces
           .filter((space) => space.campaign_id === campaign.id && space.id !== excludeSpaceId)
@@ -49,6 +51,17 @@ export function buildSpaceMappingGroups(
       }
     })
     .filter((group) => group.spaces.length > 0)
+}
+
+/** Client Workspace name from "Program · Campaign · Space" (second-to-last segment). */
+export function campaignNameFromMappingPath(pathLabel: string | undefined): string | null {
+  if (!pathLabel) return null
+  const parts = pathLabel
+    .split(' · ')
+    .map((part) => part.trim())
+    .filter(Boolean)
+  if (parts.length >= 2) return parts[parts.length - 2] ?? null
+  return null
 }
 
 export async function fetchSpaceMappingGroups(

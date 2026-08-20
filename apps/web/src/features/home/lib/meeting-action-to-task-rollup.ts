@@ -1,5 +1,6 @@
 import type { MeetingAction } from '@/features/home/services/meeting-workspace-api'
 import type { TaskRollupItem } from '@/lib/tasks'
+import { campaignNameFromMappingPath } from '@/lib/work-items'
 
 const DONE_STATUSES = new Set(['done', 'complete', 'completed', 'resolved'])
 
@@ -72,14 +73,4 @@ export function meetingActionToTaskRollupItem(
     created_at: action.created_at ?? new Date(0).toISOString(),
     updated_at: action.updated_at ?? null,
   }
-}
-
-export function campaignNameFromMappingPath(pathLabel: string | undefined): string | null {
-  if (!pathLabel) return null
-  const parts = pathLabel
-    .split(' · ')
-    .map((part) => part.trim())
-    .filter(Boolean)
-  if (parts.length >= 2) return parts[parts.length - 2] ?? null
-  return null
 }

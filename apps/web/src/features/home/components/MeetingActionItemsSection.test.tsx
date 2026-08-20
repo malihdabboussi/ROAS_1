@@ -26,9 +26,13 @@ vi.mock('@/lib/spaces', async (importOriginal) => {
   }
 })
 
-vi.mock('@/lib/work-items', () => ({
-  useSpaceMappingIndex: mocks.useSpaceMappingIndex,
-}))
+vi.mock('@/lib/work-items', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/work-items')>()
+  return {
+    ...actual,
+    useSpaceMappingIndex: mocks.useSpaceMappingIndex,
+  }
+})
 
 vi.mock('sonner', () => ({
   toast: {
@@ -143,7 +147,16 @@ describe('MeetingActionItemsSection', () => {
 
   it('fills Client Workspace and Campaign Space from the mapping path', () => {
     mocks.useSpaceMappingIndex.mockReturnValue(
-      new Map([['space-1', { spaceTitle: 'Meetings', pathLabel: 'ROAS · General · Meetings' }]]),
+      new Map([
+        [
+          'space-1',
+          {
+            spaceTitle: 'Meetings',
+            campaignName: 'General',
+            pathLabel: 'ROAS · General · Meetings',
+          },
+        ],
+      ]),
     )
 
     render(
