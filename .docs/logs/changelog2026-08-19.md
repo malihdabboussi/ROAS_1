@@ -257,3 +257,8 @@ What: (1) New chat with an open right-side card (mission viewer, artifact) now s
 Why: Dylan's PR-review reports: New chat appeared to do nothing with a mission card open; recents full of "[Ask kind]" titles.
 Impact: New chat always visibly responds (chat left, card right; close the card for full view). Mission deep links work under the Simple shell. Slack chat titles read as topics.
 Files: `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/api/src/modules/slack/services/slack-service-events.base.ts`, `apps/api/src/modules/slack/services/__tests__/slack-route-title-text.test.ts`
+## [2026-08-19 09:40] - [FIX]
+What: Typed `LABEL_BY_SLUG` / `RANK_BY_SLUG` in `agency-client-pipeline.ts` as `Map<string, …>` so lookups with unvalidated stage strings compile.
+Why: PR #335 inferred the maps as `Map<AgencyClientPipelineSlug, …>` while querying them with plain strings — `tsc` fails, and the Vercel roas-web build on main has been red since that merge (the PR merged before checks reported).
+Impact: main's roas-web deploy builds again; no behavior change (lookups already handled misses).
+Files: `apps/web/src/lib/agency-clients/agency-client-pipeline.ts`

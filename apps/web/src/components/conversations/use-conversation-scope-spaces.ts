@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import {
   generalSpaceIdFromRows,
   loadCampaignSpacesSorted,
@@ -10,10 +10,12 @@ export function useConversationScopeSpaces(activeOrgId: string | null) {
     Record<string, ConversationScopeSpace[]>
   >({})
   const [loadingCampaignId, setLoadingCampaignId] = useState<string | null>(null)
+  const spacesByCampaignRef = useRef(spacesByCampaign)
+  spacesByCampaignRef.current = spacesByCampaign
 
   const fetchSpacesForCampaign = useCallback(
     (nextCampaignId: string) => {
-      if (spacesByCampaign[nextCampaignId]) return
+      if (spacesByCampaignRef.current[nextCampaignId]) return
       setLoadingCampaignId(nextCampaignId)
       void loadCampaignSpacesSorted(nextCampaignId, activeOrgId)
         .then((sorted) => {
@@ -26,12 +28,12 @@ export function useConversationScopeSpaces(activeOrgId: string | null) {
           setLoadingCampaignId((current) => (current === nextCampaignId ? null : current))
         })
     },
-    [activeOrgId, spacesByCampaign],
+    [activeOrgId],
   )
 
   const resolveGeneralSpaceId = useCallback(
     async (nextCampaignId: string): Promise<string | null> => {
-      const cached = spacesByCampaign[nextCampaignId]
+      const cached = spacesByCampaignRef.current[nextCampaignId]
       if (cached) return generalSpaceIdFromRows(cached)
       setLoadingCampaignId(nextCampaignId)
       try {
@@ -45,7 +47,7 @@ export function useConversationScopeSpaces(activeOrgId: string | null) {
         setLoadingCampaignId((current) => (current === nextCampaignId ? null : current))
       }
     },
-    [activeOrgId, spacesByCampaign],
+    [activeOrgId],
   )
 
   return {
