@@ -1,5 +1,16 @@
 # Changelog - [August 19, 2026]
 
+## [2026-08-19 14:13] - [FEATURE]
+
+What: Client Strategy missions can now continue in place. Mission Details shows Continue this track → Post-call strategy (Atlas transcript + Reed/Nate Strategy v2 on the same mission) and a Rerun action on completed or stuck subtasks.
+
+Why: A finished pre-call map was a dead end. Starting a second mission broke the track. Operators need to extend or rerun from the mission they already opened.
+
+Impact: Mission Details panel/modal for Client Strategy (and pre-call-titled) missions. Webinar Fulfillment is unchanged. Chat mission-card Extend is not in this pass.
+
+Files: apps/api/src/modules/missions/playbooks/mission-track-extensions.ts, apps/api/src/modules/missions/services/missions-track.service.ts, apps/api/src/modules/missions/controllers/missions-lifecycle.controller.ts, apps/api/src/modules/missions/controllers/missions-subtasks.controller.ts, apps/web/src/lib/missions/mission-track-actions.ts, apps/web/src/features/mission-control/components/dialogs/MissionTrackActions.tsx, apps/web/src/features/mission-control/components/dialogs/useMissionTrackActions.ts, apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.tsx, documentation/features/missions.md
+
+
 ## [2026-08-19 15:50] - [FIX]
 
 What: Agency Clients now asks Portal for every pipeline stage (not the active-only default), groups in Portal order (New Client Intake → … → Churned/Inactive), and hides Inactive / Blocked / Churned/Inactive until Show inactive is on or the operator searches. The same default-hide applies to Map clients, Send to Page Grader, and Connections. Atlas “Campaign knowledge could not be saved at this time” Slack no-ops are skipped instead of toasting.

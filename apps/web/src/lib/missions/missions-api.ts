@@ -72,6 +72,20 @@ export async function fetchSubtasks(missionId: string): Promise<MissionSubtask[]
   return backendGet<MissionSubtask[]>(`/api/missions/${missionId}/subtasks`)
 }
 
+export async function extendMission(
+  missionId: string,
+  action: 'post-call-strategy',
+): Promise<{ ok: boolean; appended?: number; idempotent?: boolean }> {
+  return backendPost(`/api/missions/${missionId}/extend`, { action })
+}
+
+export async function retryMissionSubtask(
+  missionId: string,
+  subtaskId: string,
+): Promise<{ ok: boolean; idempotent?: boolean }> {
+  return backendPost(`/api/missions/${missionId}/subtasks/${subtaskId}/retry`, {})
+}
+
 export async function completeHumanMissionSubtask(
   missionId: string,
   subtaskId: string,

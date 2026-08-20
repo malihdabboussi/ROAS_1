@@ -39,11 +39,11 @@ import { AgentProvisioningService } from './services/agent-provisioning.service'
 import { AgentSkillManagementService } from './services/agent-skill-management.service'
 import { MissionAgentGatewayService } from './services/gateways/mission-agent-gateway.service'
 import { MissionAvatarService } from './services/media/mission-avatar.service'
+import { MissionCreateCoordinatorService } from './services/mission-create-coordinator.service'
 import { MissionDeliverablesGoogleExportService } from './services/mission-deliverables-google-export.service'
 import { MissionHumanSubtaskService } from './services/mission-human-subtask.service'
 import { MissionInternalService } from './services/mission-internal.service'
 import { MissionLifecycleNativeTxService } from './services/mission-lifecycle-native-tx.service'
-import { MissionCreateCoordinatorService } from './services/mission-create-coordinator.service'
 import { MissionLifecycleService } from './services/mission-lifecycle.service'
 import { MissionListSummaryService } from './services/mission-list-summary.service'
 import { MissionOutboxService } from './services/mission-outbox.service'
@@ -56,6 +56,7 @@ import { MissionsExecutionService } from './services/missions-execution.service'
 import { MissionsInternalOperationsService } from './services/missions-internal-operations.service'
 import { MissionsPlanDecisionService } from './services/missions-plan-decision.service'
 import { MissionsQueryService } from './services/missions-query.service'
+import { MissionsTrackService } from './services/missions-track.service'
 import { MissionsUserOperationsService } from './services/missions-user-operations.service'
 import { NotificationsInboxService } from './services/notifications-inbox.service'
 import { SkillCatalogOrganizationService } from './services/skill-catalog-organization.service'
@@ -94,6 +95,7 @@ import { WebinarFulfillmentTeamService } from './services/webinar-fulfillment-te
   ],
   providers: [
     MissionsQueryService,
+    MissionsTrackService,
     MissionDeliverablesGoogleExportService,
     MissionsCreationService,
     MissionsExecutionService,

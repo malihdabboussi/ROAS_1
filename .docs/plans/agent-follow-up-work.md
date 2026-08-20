@@ -1,3 +1,15 @@
+## 2026-08-19 - [FEATURE] Chat mission-card Extend and shared track catalog
+
+Status: Open
+
+Found while: Adding in-place Client Strategy post-call extend + subtask rerun in Mission Details
+
+Evidence: Continue this track lives on the mission panel only. Chat cards still only open the mission. API `mission-track-extensions.ts` and web `mission-track-actions.ts` duplicate playbook detection.
+
+Needed work: Add an Extend action on the in-chat mission card that posts the same `/extend` endpoint, and collapse the catalog helper into one shared package/module.
+
+Reason not done now: v1 was the panel they already open after clicking the mission. Chat card and catalog unification are follow-on surfaces.
+
 ## 2026-08-19 - [ARCH] PageGraderIntegration remains over the LOC cap
 
 Status: Open

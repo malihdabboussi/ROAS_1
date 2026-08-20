@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { backendGet, backendPost } from '@/lib/api/backend-client'
 import {
   createMission,
+  extendMission,
   fetchDeliverablesForMissions,
   fetchMissionById,
   fetchMissions,
   fetchSubtasks,
+  retryMissionSubtask,
 } from './missions-api'
 
 vi.mock('@/lib/api/backend-client', () => ({
@@ -213,5 +215,43 @@ describe('fetchSubtasks', () => {
     await expect(fetchSubtasks('mission-1')).resolves.toEqual(subtasks)
 
     expect(backendGetMock).toHaveBeenCalledWith('/api/missions/mission-1/subtasks')
+  })
+})
+
+describe('extendMission', () => {
+  beforeEach(() => {
+    backendGetMock.mockReset()
+    backendPostMock.mockReset()
+  })
+
+  it('posts the post-call track action to the mission extend endpoint', async () => {
+    backendPostMock.mockResolvedValue({ ok: true, appended: 2 })
+
+    await expect(extendMission('mission-1', 'post-call-strategy')).resolves.toEqual({
+      ok: true,
+      appended: 2,
+    })
+
+    expect(backendPostMock).toHaveBeenCalledWith('/api/missions/mission-1/extend', {
+      action: 'post-call-strategy',
+    })
+  })
+})
+
+describe('retryMissionSubtask', () => {
+  beforeEach(() => {
+    backendGetMock.mockReset()
+    backendPostMock.mockReset()
+  })
+
+  it('posts retry to the subtask retry endpoint', async () => {
+    backendPostMock.mockResolvedValue({ ok: true })
+
+    await expect(retryMissionSubtask('mission-1', 'subtask-1')).resolves.toEqual({ ok: true })
+
+    expect(backendPostMock).toHaveBeenCalledWith(
+      '/api/missions/mission-1/subtasks/subtask-1/retry',
+      {},
+    )
   })
 })

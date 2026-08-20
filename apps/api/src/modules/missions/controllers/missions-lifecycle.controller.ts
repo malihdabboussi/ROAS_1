@@ -28,10 +28,12 @@ import { CreditsGuard } from '../../billing/guards/credits.guard'
 import {
   AddMissionCommentDtoSchema,
   CreateMissionDtoSchema,
+  ExtendMissionDtoSchema,
   MissionIdParamSchema,
   UpdateMissionDtoSchema,
   type AddMissionCommentDto,
   type CreateMissionDto,
+  type ExtendMissionDto,
   type MissionIdParam,
   type UpdateMissionDto,
 } from '../dto'
@@ -39,6 +41,7 @@ import { MissionsCancellationService } from '../services/missions-cancellation.s
 import { MissionsCreationService } from '../services/missions-creation.service'
 import { MissionsExecutionService } from '../services/missions-execution.service'
 import { MissionsPlanDecisionService } from '../services/missions-plan-decision.service'
+import { MissionsTrackService } from '../services/missions-track.service'
 import { MissionsUserOperationsService } from '../services/missions-user-operations.service'
 
 @Controller('missions')
@@ -50,6 +53,7 @@ export class MissionsLifecycleController {
     private readonly missionsPlanDecisionService: MissionsPlanDecisionService,
     private readonly missionsCancellationService: MissionsCancellationService,
     private readonly missionsUserOperationsService: MissionsUserOperationsService,
+    private readonly missionsTrackService: MissionsTrackService,
   ) {}
 
   @Post()
@@ -131,6 +135,26 @@ export class MissionsLifecycleController {
     @OrgContext() scope: RequestScope,
   ) {
     return this.missionsExecutionService.retry(supabase, user.id, params.id, scope.orgId)
+  }
+
+  @Post(':id/extend')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(CreditsGuard)
+  async extend(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @Param(new ZodValidationPipe(MissionIdParamSchema)) params: MissionIdParam,
+    @Body(new ZodValidationPipe(ExtendMissionDtoSchema)) body: ExtendMissionDto,
+    @OrgContext() scope: RequestScope,
+  ) {
+    return this.missionsTrackService.extend(
+      supabase,
+      user.id,
+      params.id,
+      body.action,
+      scope.orgId,
+      scope.orgRole,
+    )
   }
 
   @Delete(':id')

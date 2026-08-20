@@ -20,4 +20,16 @@ export const MISSION_CONTROL_MESSAGES = {
   SUBTASK_OUTPUT_HUMAN_TITLE: 'Your note',
   AGENT_PANEL_TITLE: 'Agent Status',
   DETAIL_EMPTY: 'Select a mission to see plan, timeline, and output.',
+  TRACK_HEADING: 'Continue this track',
+  TRACK_BODY:
+    'Keep this mission moving. Post-call takes the map you already have and corrects it from the real conversation.',
+  TRACK_POST_CALL: 'Post-call strategy',
+  TRACK_QUEUING: 'Queuing…',
+  TRACK_QUEUED:
+    'Post-call is on this mission now. Atlas will pull the call, then Reed writes Strategy v2.',
+  TRACK_EXTEND_FAILED: "I couldn't extend this mission. Try again in a moment.",
+  RERUN: 'Rerun',
+  RERUNNING: 'Rerunning…',
+  RERUN_STARTED: 'That step is running again. Downstream work stays on this same track.',
+  RERUN_FAILED: "I couldn't rerun that step. Try once more.",
 } as const

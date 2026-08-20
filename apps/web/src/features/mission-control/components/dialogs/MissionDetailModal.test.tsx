@@ -86,6 +86,15 @@ vi.mock('../../services/mission-human-subtasks.service', () => ({
   completeHumanSubtask: mocks.completeHumanSubtask,
 }))
 
+vi.mock('@/lib/missions', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/missions')>()
+  return {
+    ...actual,
+    extendMission: vi.fn().mockResolvedValue({ ok: true, appended: 2 }),
+    retryMissionSubtask: vi.fn().mockResolvedValue({ ok: true }),
+  }
+})
+
 function createMatchMedia(matches: boolean) {
   return vi.fn().mockImplementation((query: string) => ({
     matches,
