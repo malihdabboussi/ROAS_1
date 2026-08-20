@@ -17,3 +17,9 @@ What: All Meetings now shows Client / Campaign, Host, and Call status (Live / Co
 Why: The stored All Meetings view never received Host/Call status/Client, while the read-path injected a Space column and left Priority + task Status in place. Enabling Status still only opened the name-column picker because list columns strip `status`.
 Impact: Opening Meetings rewrites the All Meetings columns to the one-room set. Priority and task Status remain as fields (Hidden). Space is no longer a default column.
 Files: `all-meetings-list-columns.ts`, `use-ensure-all-meetings-columns.ts`, `SpaceItemRow.tsx`, `space-template-catalog-personal-dashboard.ts`, `20260820004500_meetings_all_meetings_one_room_columns.sql`
+
+## [2026-08-20 03:29] - [FIX]
+What: Company Cortex daily dream auto-promotes signals with confidence >= 0.8 to active and enqueues formation; leaves lower confidence as proposed for human review. Warns on zero-signal dream completions and empty formation eligibility.
+Why: Dream always inserted `proposed` signals, formation only reads `active`, and the only promoter was a human approve click — so formation never ran and Company Cortex produced 0 objects.
+Impact: High-confidence Atlas signals form without waiting for review; operators still review low-confidence proposals. Logs no longer treat empty dream/formation runs as silent successes.
+Files: `company-daily-dream-atlas.service.ts`, `company-cortex-signal.repository.ts`, `company-cortex-formation.service.ts`, `company-daily-dream-runner.service.ts`, `company-cortex.repository.ts` (api), `dream-ops.md`
