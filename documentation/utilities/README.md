@@ -4,7 +4,7 @@
 
 | Utility                                     | Purpose                                                                  | Docs                                                    |
 | ------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------- |
-| `@/lib/spaces/all-meetings-list-columns.ts` | Ensures All Meetings Campaign + Space columns                            | `documentation/utilities/all-meetings-list-columns.md`  |
+| `@/lib/spaces/all-meetings-list-columns.ts` | Ensures All Meetings Client / Campaign, Host, and Call status columns    | `documentation/utilities/all-meetings-list-columns.md`  |
 | `architecture behavior lock`                | Route inventory, HTTP characterization, and parity diff tooling          | `documentation/utilities/architecture-behavior-lock.md` |
 | `asset_ref`                                 | Normalized file handle for Vibey, storage, and external-provider assets  | `documentation/utilities/asset-ref.md`                  |
 | `auth/access-routing.ts`                    | Safe post-auth app destinations and authenticated access decisions       | `documentation/utilities/auth-access-routing.md`        |
@@ -23,6 +23,7 @@
 
 ## Recently Added
 
+- 2026-08-20: `all-meetings-list-columns` All Meetings Client / Campaign, Host, Call status
 - 2026-08-19: `all-meetings-list-columns` All Meetings Campaign + Space column ensure
 - 2026-08-17: `chat-working-status` rotating live-chat working phrases
 - 2026-08-13: `quick-missions-events` shared chat-to-Quick-Missions event contract

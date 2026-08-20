@@ -272,6 +272,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       botToken,
       channelId,
       message: fullMessage,
+      titleText: inboundText,
       teamId,
       threadTs: event.thread_ts ?? event.ts,
       messageTs: event.ts,
@@ -420,6 +421,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       botToken: fallback.botToken,
       channelId,
       message: mentionMessage,
+      titleText: mentionText,
       teamId,
       threadTs: event.thread_ts ?? event.ts,
       messageTs: event.ts,
@@ -474,6 +476,12 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     }>
     /** Client campaign resolved for this ask; binds the conversation's CONNECTIONS (§11.2). */
     campaignId?: string | null
+    /**
+     * Raw human message used ONLY for conversation naming. `message` is the prompt-wrapped
+     * turn (leads with the `[Ask kind]` block), so titling from it names sidebar rows
+     * "[Ask kind] Kind: client …". Falls back to `message` when omitted.
+     */
+    titleText?: string
     /** N0 stamp + client resolution for this turn; drives `slack_pixel_turns`. */
     turn?: SlackTurnSeed
   }): Promise<void> {
@@ -511,6 +519,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
         params.channelUser,
         params.documents,
         params.campaignId,
+        params.titleText,
       )
       const response = turnResult?.content ?? null
       this.logger.log(
@@ -598,6 +607,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       text?: string
     }>,
     campaignId?: string | null,
+    titleText?: string,
   ): Promise<SlackAgentTurn | null> {
     this.logger.log(
       `[TRACE] routeToAgent START: userId=${userId} agentKey=${agentKey} team=${slackTeamId} channel=${slackChannelId}`,
@@ -612,7 +622,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       slackChannelId,
       slackThreadTs,
       orgId,
-      userMessage,
+      titleText ?? userMessage,
     )
     const conversationId = conversation.id
     this.logger.log(`[TRACE] routeToAgent CONVERSATION: conversationId=${conversationId}`)
@@ -620,7 +630,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       serviceSupabase,
       conversationId,
       userId,
-      userMessage,
+      titleText ?? userMessage,
       conversation.title,
     ).catch((err) =>
       this.logger.warn(

@@ -1,3 +1,15 @@
+## 2026-08-20 - [ARCH] SpaceItemRow.tsx is over the 400 LOC component cap
+
+Status: Open
+
+Found while: All Meetings one-room columns (hide task Status chrome when Status is not a visible field)
+
+Evidence: `wc -l` on `apps/web/src/features/spaces/components/SpaceItemRow.tsx` is 758. Cap is 400. The allowlist forbids growing this file.
+
+Needed work: Split name-column chrome (status/title/actions) from data-cell rendering.
+
+Reason not done now: In-scope work was Host / Call status / Client columns on All Meetings. The row was already over the cap.
+
 ## 2026-08-19 - [ARCH] SubtasksSection is near the 400 LOC cap
 
 Status: Open
@@ -39658,6 +39670,17 @@ Evidence: Personal Meetings space renders Call Kind as dot + label; the org "Cam
 Needed work: Confirm both spaces use the same select-field option colours; likely the org space's field lacks `options[].color`.
 
 Reason not done now: Data/config difference between two spaces, not a component bug.
+## 2026-08-19 - [FIX] Mission viewer close control has a tiny hit target
+
+Status: Open
+
+Found while: New-chat-beside-card fix (claude/new-chat-beside-card)
+
+Evidence: The mission card's header ✕ (`MissionDetailDesktopShell` panel presentation) is ~16px with no padding; repeated pointer clicks at its coordinates missed while an a11y-targeted click worked.
+
+Needed work: Give the panel close/expand controls the standard `btn-icon-bare` 28px hit area.
+
+Reason not done now: Cosmetic; mission shell files are actively being edited by another agent (mission-extend-track work).
 
 ## 2026-08-20 - [ARCH] ConversationScopePicker over component LOC cap
 
