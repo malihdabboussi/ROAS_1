@@ -9,7 +9,6 @@ import { useGlobalChatStore } from '@/components/global-chat/store/use-global-ch
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
-import { fetchCampaigns } from '@/lib/campaigns'
 import {
   assignConversationCampaign,
   DEFAULT_CHAT_HISTORY_FILTERS,
@@ -30,6 +29,7 @@ import { conversationCacheKey, peekConversationCache } from './shell-conversatio
 import { isShellHomeRoute } from './shell-route-policy'
 import { ShellChatMenuActiveFilters } from './ShellChatMenuActiveFilters'
 import { ShellChatMenuFilterControls } from './ShellChatMenuFilterControls'
+import { useChatHistoryGroupLabels } from './use-chat-history-group-labels'
 import { useShellStore } from './use-shell-store'
 
 const PIXEL_AGENT_KEY = 'vibey'
@@ -70,7 +70,7 @@ export function ShellChatMenu({
   const [listQuery, setListQuery] = useState('')
   const [filterMenuOpen, setFilterMenuOpen] = useState(false)
   const [shareConversation, setShareConversation] = useState<Conversation | null>(null)
-  const [campaignNameById, setCampaignNameById] = useState<Record<string, string>>({})
+  const { campaignNameById, clientCampaignIds } = useChatHistoryGroupLabels(filters.groupBy)
   const initialConversations = peekConversationCache(simpleSidebar, historyAgentKey, activeOrgId)
   const [conversations, setConversations] = useState<Conversation[]>(
     () => initialConversations ?? [],
@@ -83,25 +83,6 @@ export function ShellChatMenu({
   useEffect(() => {
     setHistoryAgentKey(simpleSidebar || activeAgentKey === PIXEL_AGENT_KEY ? null : activeAgentKey)
   }, [activeAgentKey, simpleSidebar])
-  useEffect(() => {
-    if (filters.groupBy !== 'campaign') return
-    let cancelled = false
-    void fetchCampaigns()
-      .then((campaigns) => {
-        if (cancelled) return
-        const map: Record<string, string> = {}
-        for (const campaign of campaigns) {
-          map[campaign.id] = campaign.name?.trim() || 'Campaign'
-        }
-        setCampaignNameById(map)
-      })
-      .catch(() => {
-        if (!cancelled) setCampaignNameById({})
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [filters.groupBy])
 
   useEffect(() => {
     if (storeConversations.length === 0) return
@@ -362,8 +343,13 @@ export function ShellChatMenu({
           leadingIcon={filters.leadingIcon}
           showConversationTypeIcon={false}
           agentByKey={agentByKey}
-          groupBy={simpleSidebar ? 'none' : filters.groupBy}
+          groupBy={filters.groupBy}
           campaignNameById={campaignNameById}
+          clientCampaignIds={
+            filters.groupBy === 'client' && clientCampaignIds.length > 0
+              ? clientCampaignIds
+              : undefined
+          }
           splitPinnedSection={simpleSidebar}
           headerEndSlot={filterControls}
           pinHeaderActions={filterMenuOpen}

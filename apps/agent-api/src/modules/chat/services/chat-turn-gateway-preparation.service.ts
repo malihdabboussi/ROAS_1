@@ -3,6 +3,7 @@ import type { DocumentIntelligenceMetadata } from '@vibey/api-shared'
 import type { ContextCategorySlice } from '@vibey/context-breakdown'
 import { AgentPolicyService } from '../../agent-policy/services/agent-policy.service'
 import { BrainContextService } from '../../brain/services/brain-context.service'
+import type { BrainRetrievalReceipt } from '../../brain/services/brain-retrieval-receipt'
 import { AgentRuntimeService } from '../../shared/services/agent-runtime.service'
 import { CampaignContextService } from './campaign-context.service'
 import { ChatContextAccountingService } from './chat-context-accounting.service'
@@ -110,6 +111,7 @@ export interface PreparedGatewayTurn {
   instructions: string
   measuredContextSlices: ContextCategorySlice[]
   inputArray: OpenClawInputMessage[]
+  retrievalReceipts: BrainRetrievalReceipt[]
 }
 
 const PUBLIC_AGENT_META_PROMPTS = [
@@ -166,6 +168,7 @@ export class ChatTurnGatewayPreparationService {
     } = input
     const {
       resolvedCampaignId,
+      extraCampaignIds = [],
       runtime,
       resolvedAgentId,
       agentReg,
@@ -230,6 +233,7 @@ export class ChatTurnGatewayPreparationService {
       : ''
     const shouldBuildBrainContext = cortexMaxEnabled && !publicAgentQuickContext
     const brainContextStartedAt = Date.now()
+    const retrievalReceipts: BrainRetrievalReceipt[] = []
     const userBrainSummary = shouldBuildBrainContext
       ? await runPlatformTool(
           {
@@ -248,6 +252,10 @@ export class ChatTurnGatewayPreparationService {
                 userBrainAccess,
                 useWikiContext,
                 resolvedCampaignId,
+                {
+                  extraCampaignIds,
+                  onRetrievalReceipt: (receipt) => retrievalReceipts.push(receipt),
+                },
               )
               .catch((err) => {
                 logger.warn(`Brain context failed: ${err}`)
@@ -396,6 +404,7 @@ export class ChatTurnGatewayPreparationService {
       latestUserContent,
       conversationHistoryBlock,
       sessionContextGap,
+      retrievalReceipts,
       logChatTiming,
     })
   }
@@ -410,6 +419,7 @@ export class ChatTurnGatewayPreparationService {
     latestUserContent: string
     conversationHistoryBlock: string
     sessionContextGap: unknown
+    retrievalReceipts: BrainRetrievalReceipt[]
     logChatTiming: (stage: string, extra?: Record<string, unknown>) => void
   }): PreparedGatewayTurn {
     input.logChatTiming('session_integrity_checked', {
@@ -446,6 +456,7 @@ export class ChatTurnGatewayPreparationService {
       instructions: input.gatewayInputContext.instructions,
       measuredContextSlices: input.gatewayInputContext.measuredContextSlices,
       inputArray,
+      retrievalReceipts: input.retrievalReceipts,
     }
   }
 

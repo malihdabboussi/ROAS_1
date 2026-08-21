@@ -19,6 +19,8 @@ export function useConversationLocationLabel(
   spaceId: string | null,
 ): {
   label: string
+  /** Campaign/program name even while the space row is still loading. */
+  awarenessLabel: string
   pending: boolean
   resolvedCampaignId: string | null
 } {
@@ -40,18 +42,19 @@ export function useConversationLocationLabel(
   // summary panel flicker Meetings → General → Meetings.
   const pending = Boolean(spaceId) && !space
 
+  const awarenessLabel = conversationScopeDisplayLabel({
+    campaignName: campaign?.name,
+    spaceTitle: pending ? null : spaceId ? space?.title : null,
+    programName: programNameForCampaign(campaign, programs),
+    campaignId: resolvedCampaignId,
+    spaceId,
+    emptyLabel: '',
+  })
+
   return {
     resolvedCampaignId,
     pending,
-    label: pending
-      ? ''
-      : conversationScopeDisplayLabel({
-          campaignName: campaign?.name,
-          spaceTitle: spaceId ? space?.title : null,
-          programName: programNameForCampaign(campaign, programs),
-          campaignId: resolvedCampaignId,
-          spaceId,
-          emptyLabel: 'General',
-        }),
+    awarenessLabel,
+    label: pending ? '' : awarenessLabel || 'General',
   }
 }

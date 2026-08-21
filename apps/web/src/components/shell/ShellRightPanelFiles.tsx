@@ -22,21 +22,12 @@ import type { DeliverableType } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
 import { showConversationMessageInChat } from './shell-chat-message-navigation'
 import { extractConversationFileRows, type ConversationFileRow } from './shell-conversation-summary'
+import {
+  conversationDocumentFileUrl,
+  conversationDocumentViewerType,
+} from './shell-right-panel-files-target'
 import { SHELL_RIGHT_PANEL_MESSAGES } from './shell-right-panel.messages.config'
 import { ShellRightPanelEmpty } from './ShellRightPanelEmpty'
-
-function documentFileUrl(document: ConversationDocument): string | null {
-  const value = document.content?.file_url
-  return typeof value === 'string' && value.trim() ? value.trim() : null
-}
-
-function documentTargetType(document: ConversationDocument): DeliverableType {
-  if (isArtifactDocumentType(document.document_type) && document.resource_id) {
-    return document.document_type
-  }
-  if (document.document_type === 'image_upload') return 'image'
-  return document.document_type === 'pdf' ? 'pdf' : 'file'
-}
 
 function messageTargetType(row: ConversationFileRow): DeliverableType {
   if (row.kind === 'artifact') return (row.entityType as DeliverableType | null) ?? 'file'
@@ -96,7 +87,7 @@ export function ShellRightPanelFiles({
   const documentKeys = useMemo(() => {
     const keys = new Set<string>()
     for (const document of documents) {
-      const fileUrl = documentFileUrl(document)
+      const fileUrl = conversationDocumentFileUrl(document)
       if (fileUrl) keys.add(fileUrl)
       const title = document.title?.trim()
       if (title) keys.add(`title:${title}`)
@@ -130,7 +121,7 @@ export function ShellRightPanelFiles({
           const artifact = isArtifactDocumentType(document.document_type)
           const Icon =
             document.document_type === 'image_upload' ? ImageIcon : artifact ? Boxes : FileText
-          const fileUrl = documentFileUrl(document)
+          const fileUrl = conversationDocumentFileUrl(document)
           return (
             <li key={`document:${document.id}`}>
               <button
@@ -139,7 +130,7 @@ export function ShellRightPanelFiles({
                   openArtifactInShell({
                     id: document.id,
                     title: document.title?.trim() || 'Untitled file',
-                    type: documentTargetType(document),
+                    type: conversationDocumentViewerType(document),
                     entityId: document.resource_id ?? document.id,
                     entityTable: document.resource_id ? null : 'conversation_documents',
                     conversationId,

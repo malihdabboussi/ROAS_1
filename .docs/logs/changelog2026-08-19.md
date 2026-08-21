@@ -1,5 +1,26 @@
 # Changelog - [August 19, 2026]
 
+## [2026-08-19 22:20] - [FIX]
+
+What: Chat Files now opens agent-created conversation documents that have no storage file as markdown docs. The viewer loads `conversation_documents.content` and unwraps JSON-quoted markdown instead of showing "No content to display". Real `.docx` uploads still preview as files.
+
+Why: Files pane opened every `document_type: upload` row as `type: file`, so the loader never fetched inline markdown. Existing agent docs (including Christian Osgood UGC scripts) store content as a JSON string under `upload`.
+
+Impact: `Chat / files / <title>` for inline docs. Chat document cards were already on this path. Distinct `document_type` for agent markdown needs a constraint migration and was not changed.
+
+Files: `ShellRightPanelFiles.tsx`, `shell-right-panel-files-target.ts`, `use-deliverable-entity-content.ts`, `DeliverablePreviewBody.tsx`, `document-content-markdown.test.ts`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-19 22:05] - [FEATURE]
+
+What: Work summary now has a full-width Create header (Outputs + removed). Conversations can keep extra campaign/space Connections without overwriting `campaign_id`. Sources shows brain retrieval receipts (including 0-hit searches) and fetched web URLs, and agents must state which brain and how many results came back before claiming a brain is empty.
+
+Why: Operators could not find Create, a second Connection replaced the first, and a bound Campaign Brain with memories still looked empty because Sources had no receipt of the search.
+
+Impact: Work-summary Create/Back, Connections +, agent campaign preload (primary + up to 2 extras), Sources rows, Brain Knowledge Protocol v3. Slack channel-chat bind still writes only `campaign_id`. #352 covers unbound/wrong-name lookup; this covers bound-but-claims-empty.
+
+Files: `ShellRightPanel.tsx`, `ShellRightPanelCreateHeader.tsx`, `ShellRightPanelConnections.tsx`, `ConversationScopePicker.tsx`, `conversation-connections.service.ts`, `campaign-brain-preload.ts`, `brain-retrieval-receipt.ts`, `shell-conversation-summary.ts`, `supabase/migrations/20260820020000_conversation_connections.sql`, `documentation/features/conversation-sharing.md`, `documentation/frontend-shared-surfaces.md`
+
+
 ## [2026-08-19 20:20] - [FEATURE]
 
 What: Added a Task Cleanup Quick Mission. Atlas inventories this week of calls plus open native tasks, writes a Task Cleanup Board, waits for Approve & continue, then files only approved proposed work as native platform tasks.

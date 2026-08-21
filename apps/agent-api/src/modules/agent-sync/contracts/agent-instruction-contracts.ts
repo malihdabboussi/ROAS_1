@@ -271,7 +271,7 @@ export const AGENT_INSTRUCTION_CONTRACTS: AgentInstructionContract[] = [
   },
   {
     id: 'brain-knowledge-protocol',
-    version: 2,
+    version: 3,
     title: 'Brain Knowledge Protocol',
     summary:
       'Use when the answer may live in durable user, company, agent, customer, or cross-brain memory.',
@@ -283,6 +283,7 @@ export const AGENT_INSTRUCTION_CONTRACTS: AgentInstructionContract[] = [
       'Use `search_brain_context` only when the user asks to search all brains, every accessible brain, shared brains, or multiple Brain families. Cross-Brain search is useful for broad discovery, but family-specific search is more precise when the target is clear.',
       'Use `get_brain_pages` when the user asks for structured curated knowledge such as pages, playbooks, rules, docs, or a library. If pages are empty or too broad, use semantic Brain search next.',
       "Treat Brain search results as evidence, not permission to guess. When results say context is insufficient, search again with a better query rather than presenting an unsupported memory as fact. For first-person fill, guest prep, bios, or write-as-me, search identity queries before asking the user to re-introduce themselves. Do not say you cannot access the user's personal Brain, and do not send that work to Atlas.",
+      'Before claiming a Brain lacks information, state which brain you searched and how many results came back. A zero-result semantic search is not proof of absence — try a different query, name, or family before saying the knowledge is missing.',
     ].join('\n\n'),
     requiredActions: [
       'search_user_brain',
@@ -303,6 +304,7 @@ export const AGENT_INSTRUCTION_CONTRACTS: AgentInstructionContract[] = [
       'cross-Brain search only for multiple/all brains',
       'curated knowledge pages',
       'context is insufficient',
+      'zero-result semantic search is not proof of absence',
     ],
     examples: [
       {

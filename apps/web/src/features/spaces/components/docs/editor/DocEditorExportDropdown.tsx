@@ -1,5 +1,5 @@
 'use client'
-import Image from 'next/image'
+
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Download, ExternalLink, FileCode, FileText, Palette } from 'lucide-react'
@@ -13,6 +13,11 @@ import {
   getGoogleDriveStatus,
   type GoogleDriveFile,
 } from '@/lib/services/google-drive-api'
+import {
+  abandonGoogleExportTab,
+  finishGoogleExportTab,
+  openGoogleExportTab,
+} from '@/lib/spaces/google-export-tab'
 import { buildSpaceDocExportHtml, googleDocHref } from '@/lib/spaces/space-doc-export'
 import { cn } from '@/lib/utils/cn'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
@@ -26,6 +31,8 @@ import {
   exportSpaceDocVisualPdf,
 } from '../../doc-menu/export-space-doc'
 import { useOpenSpaceDocInCanva } from '../../doc-menu/use-open-space-doc-in-canva'
+import { DocEditorGoogleHeaderAction } from './DocEditorGoogleHeaderAction'
+
 export function DocEditorExportDropdown({
   title,
   getDocBody,
@@ -119,23 +126,21 @@ export function DocEditorExportDropdown({
 
     setCreatingGoogleDoc(true)
     setOpen(false)
-    let pendingTab: Window | null = null
+    const pendingTab = openGoogleExportTab()
     try {
       const status = await getGoogleDriveStatus()
       if (!status.connected) {
+        abandonGoogleExportTab(pendingTab)
         toast.error(SPACES_ACTIONS_TOAST_ERRORS.GOOGLE_DRIVE_NOT_CONNECTED.userMessage)
         return
       }
-      pendingTab = window.open('about:blank', '_blank')
-      if (pendingTab) pendingTab.opener = null
       const result = await createGoogleDocFromHtml(
         resolvedTitle,
         buildSpaceDocExportHtml(resolvedTitle, getDocBody()),
       )
       const href =
         result.file.webViewLink || `https://docs.google.com/document/d/${result.file.id}/edit`
-      if (pendingTab) pendingTab.location.replace(href)
-      else window.open(href, '_blank', 'noopener,noreferrer')
+      finishGoogleExportTab(pendingTab, href)
 
       try {
         await onGoogleDocCreated?.(result.file)
@@ -144,7 +149,7 @@ export function DocEditorExportDropdown({
         toast.error(SPACES_ACTIONS_TOAST_ERRORS.SAVE_GOOGLE_DOC_LINK_FAILED.userMessage)
       }
     } catch (error) {
-      pendingTab?.close()
+      abandonGoogleExportTab(pendingTab)
       toast.error(
         sanitizeUserError(error, SPACES_ACTIONS_TOAST_ERRORS.CREATE_GOOGLE_DOC_FAILED.userMessage),
       )
@@ -248,15 +253,28 @@ export function DocEditorExportDropdown({
       {availability.canExportDocBody ? (
         <>
           {!googleActionTarget ? (
-            <button
-              type="button"
-              onClick={() => void openGoogleDoc()}
-              disabled={creatingGoogleDoc}
-              className={rowCls}
-            >
-              <ExternalLink className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-              <span>{creatingGoogleDoc ? 'Creating…' : 'Open in Google Docs'}</span>
-            </button>
+            savedGoogleDocHref ? (
+              <a
+                href={savedGoogleDocHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={rowCls}
+                onClick={() => setOpen(false)}
+              >
+                <ExternalLink className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                <span>Open in Google Docs</span>
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void openGoogleDoc()}
+                disabled={creatingGoogleDoc}
+                className={rowCls}
+              >
+                <ExternalLink className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                <span>{creatingGoogleDoc ? 'Creating…' : 'Open in Google Docs'}</span>
+              </button>
+            )
           ) : null}
           <button
             type="button"
@@ -335,29 +353,11 @@ export function DocEditorExportDropdown({
   const googleAction =
     googleActionTarget && availability.canExportDocBody && typeof document !== 'undefined'
       ? createPortal(
-          <button
-            type="button"
-            onClick={() => void openGoogleDoc()}
-            disabled={creatingGoogleDoc}
-            className="button-glass-neutral body-3 gap-spacing-2 px-spacing-3 py-spacing-2 inline-flex items-center whitespace-nowrap"
-            aria-label={savedGoogleDocHref ? 'Open Google Doc' : 'Export to Google Docs'}
-          >
-            <Image
-              src="/Integrations/GoogleDocs.png"
-              alt=""
-              width={16}
-              height={16}
-              unoptimized
-              className="icon-sm shrink-0 object-contain"
-            />
-            <span>
-              {creatingGoogleDoc
-                ? 'Creating…'
-                : savedGoogleDocHref
-                  ? 'Open Google Doc'
-                  : 'Export to Google Docs'}
-            </span>
-          </button>,
+          <DocEditorGoogleHeaderAction
+            savedGoogleDocHref={savedGoogleDocHref}
+            creating={creatingGoogleDoc}
+            onExport={() => void openGoogleDoc()}
+          />,
           googleActionTarget,
         )
       : null

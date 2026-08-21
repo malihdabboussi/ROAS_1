@@ -17,7 +17,7 @@ import { useGlobalChatStore } from '@/components/global-chat/store/use-global-ch
 import { Tooltip } from '@/components/ui/tooltip'
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import { ConfirmDialog } from '@/features/settings/components/settings-content/ConfirmDialog'
-import { visibleListStatusField } from '@/lib/spaces/space-item-values'
+import { listRowStatusField } from '@/lib/spaces/space-item-values'
 import { cn } from '@/lib/utils/cn'
 import type { SpaceListDndDragHandleProps } from '../lib/space-list-dnd-types'
 import type { SpaceItem } from '../types'
@@ -161,8 +161,8 @@ export const SpaceItemRow = memo(function SpaceItemRow({
     document.addEventListener('pointerdown', onDocPointerDown, true)
     return () => document.removeEventListener('pointerdown', onDocPointerDown, true)
   }, [surface])
-  const statusField = visibleListStatusField(allFields, visibleFields)
-  const statusValue = readFieldValue(item, 'status')
+  const statusField = listRowStatusField(allFields)
+  const statusValue = readFieldValue(item, statusField?.id ?? 'status')
   const statusOption = useMemo(
     () => statusField?.options?.find((o) => o.id === statusValue) ?? null,
     [statusField, statusValue],
@@ -507,7 +507,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                               field={statusField}
                               value={statusValue}
                               onChange={(next) => {
-                                const patch = toFieldPatch(item, 'status', next)
+                                const patch = toFieldPatch(item, statusField.id, next)
                                 void onUpdateItem(item.id, patch)
                               }}
                               onEditStatuses={onEditStatuses}
@@ -577,7 +577,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                                 field={statusField}
                                 value={statusValue}
                                 onChange={(next) => {
-                                  const patch = toFieldPatch(item, 'status', next)
+                                  const patch = toFieldPatch(item, statusField.id, next)
                                   void onUpdateItem(item.id, patch)
                                 }}
                                 onEditStatuses={onEditStatuses}

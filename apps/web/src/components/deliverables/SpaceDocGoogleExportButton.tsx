@@ -6,6 +6,11 @@ import { toast } from 'sonner'
 import { DELIVERABLE_PREVIEW_MESSAGES } from '@/components/deliverables/deliverable-preview-messages.config'
 import { createGoogleDocFromHtml } from '@/lib/services/google-drive-api'
 import {
+  abandonGoogleExportTab,
+  finishGoogleExportTab,
+  openGoogleExportTab,
+} from '@/lib/spaces/google-export-tab'
+import {
   buildSpaceDocExportHtml,
   googleDocHref,
   googleDocMetadataPatch,
@@ -32,14 +37,9 @@ export function SpaceDocGoogleExportButton({
   const savedGoogleDocHref = googleDocHref(customData)
 
   const exportToGoogleDocs = useCallback(async () => {
-    if (!docBody.trim() || creating) return
-    if (savedGoogleDocHref) {
-      window.open(savedGoogleDocHref, '_blank', 'noopener,noreferrer')
-      return
-    }
+    if (!docBody.trim() || creating || savedGoogleDocHref) return
 
-    const pendingTab = window.open('about:blank', '_blank')
-    if (pendingTab) pendingTab.opener = null
+    const pendingTab = openGoogleExportTab()
     setCreating(true)
     try {
       const resolvedTitle = title.trim() || 'Untitled'
@@ -49,8 +49,7 @@ export function SpaceDocGoogleExportButton({
       )
       const href =
         result.file.webViewLink || `https://docs.google.com/document/d/${result.file.id}/edit`
-      if (pendingTab) pendingTab.location.replace(href)
-      else window.open(href, '_blank', 'noopener,noreferrer')
+      finishGoogleExportTab(pendingTab, href)
 
       const nextCustomData = {
         ...customData,
@@ -64,7 +63,7 @@ export function SpaceDocGoogleExportButton({
         toast.error(DELIVERABLE_PREVIEW_MESSAGES.GOOGLE_DOC_LINK_SAVE_FAILED)
       }
     } catch (cause) {
-      pendingTab?.close()
+      abandonGoogleExportTab(pendingTab)
       toast.error(sanitizeUserError(cause, DELIVERABLE_PREVIEW_MESSAGES.GOOGLE_DOC_CREATE_FAILED))
     } finally {
       setCreating(false)
@@ -80,18 +79,31 @@ export function SpaceDocGoogleExportButton({
     title,
   ])
 
+  if (savedGoogleDocHref) {
+    return (
+      <a
+        href={savedGoogleDocHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="button-glass-neutral body-3 gap-spacing-2 px-spacing-3 py-spacing-2 inline-flex shrink-0 items-center whitespace-nowrap"
+        aria-label="Open Google Doc"
+      >
+        <ExternalLink className="icon-sm shrink-0" />
+        <span>Open Google Doc</span>
+      </a>
+    )
+  }
+
   return (
     <button
       type="button"
       onClick={() => void exportToGoogleDocs()}
       disabled={creating}
       className="button-glass-neutral body-3 gap-spacing-2 px-spacing-3 py-spacing-2 inline-flex shrink-0 items-center whitespace-nowrap"
-      aria-label={savedGoogleDocHref ? 'Open Google Doc' : 'Export to Google Docs'}
+      aria-label="Export to Google Docs"
     >
       <ExternalLink className="icon-sm shrink-0" />
-      <span>
-        {creating ? 'Creating…' : savedGoogleDocHref ? 'Open Google Doc' : 'Export to Google Docs'}
-      </span>
+      <span>{creating ? 'Creating…' : 'Export to Google Docs'}</span>
     </button>
   )
 }

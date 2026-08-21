@@ -127,4 +127,43 @@ describe('useDeliverableEntityContent', () => {
     expect(entityMocks.fetchDocument).not.toHaveBeenCalled()
     expect(screen.getByTestId('effective-content').textContent).toBe('Existing doc body')
   })
+
+  it.each([
+    {
+      id: '946a12f3-21e0-431f-87d9-eec0860e3a23',
+      title: 'Christian Osgood — Free + Shipping Book Funnel: Modular UGC Ad Scripts',
+      type: 'file' as const,
+    },
+    {
+      id: '5d90acb9-a2fc-4202-b7b1-ee1aeb1ea630',
+      title: 'Christian Osgood — Free + Shipping Book Funnel: Modular UGC Ad Scripts',
+      type: 'doc' as const,
+    },
+  ])(
+    'renders JSON-string conversation_documents.content for $type $id',
+    async ({ id, title, type }) => {
+      const markdown = `# ${title}\n\n## Hook\nFirst line of the ad script.`
+      entityMocks.fetchDocument.mockResolvedValue({
+        id,
+        title,
+        document_type: 'upload',
+        content: JSON.stringify(markdown),
+      })
+
+      renderHarness({
+        ...baseDeliverable,
+        type,
+        title,
+        content: null,
+        file_url: null,
+        entity_id: id,
+        entity_table: 'conversation_documents',
+      })
+
+      await waitFor(() =>
+        expect(screen.getByTestId('effective-content').textContent).toBe(markdown),
+      )
+      expect(entityMocks.fetchDocument).toHaveBeenCalledWith(id)
+    },
+  )
 })

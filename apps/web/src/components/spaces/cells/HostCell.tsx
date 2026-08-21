@@ -1,5 +1,7 @@
 'use client'
 
+import { FileText } from 'lucide-react'
+import { SelectCell } from '@/components/ui/forms/SelectCell'
 import type { SpaceItem } from '@/lib/spaces'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import type { BaseCellProps } from './cell-types'
@@ -28,6 +30,28 @@ export function formatMeetingHostLabel(input: {
   return isMine ? `${label} (Mine)` : label
 }
 
+export function hostSelectOptions(input: {
+  roster?: TeamRosterEntry[]
+  currentLabel: string
+}): Array<{ id: string; label: string }> {
+  const seen = new Set<string>()
+  const options: Array<{ id: string; label: string }> = []
+  for (const entry of input.roster ?? []) {
+    if (entry.kind !== 'human') continue
+    const label = entry.display_name.trim()
+    if (!label) continue
+    const key = label.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    options.push({ id: label, label })
+  }
+  const current = input.currentLabel.replace(/\s*\(Mine\)\s*$/, '').trim()
+  if (current && !seen.has(current.toLowerCase())) {
+    options.push({ id: current, label: current })
+  }
+  return options.sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }))
+}
+
 export function HostCell({
   field,
   value,
@@ -44,13 +68,37 @@ export function HostCell({
   fieldRowVariant?: 'default' | 'kanban'
 }) {
   const label = formatMeetingHostLabel({ value, spaceItem, roster, currentUserId })
+  const options = hostSelectOptions({ roster, currentLabel: label })
+  if (options.length === 0) {
+    return (
+      <TextCell
+        field={field}
+        value={label || value}
+        onChange={onChange}
+        readonly={readonly}
+        fieldRowVariant={fieldRowVariant}
+      />
+    )
+  }
+  const selectedId =
+    typeof value === 'string' && value.trim()
+      ? value.trim()
+      : (options.find((option) => option.label === label.replace(/\s*\(Mine\)\s*$/, '').trim())
+          ?.id ?? '')
   return (
-    <TextCell
-      field={field}
-      value={label || value}
+    <SelectCell
+      field={{ ...field, type: 'select', options }}
+      value={selectedId}
       onChange={onChange}
       readonly={readonly}
       fieldRowVariant={fieldRowVariant}
+      customTrigger={
+        <span className="flex min-w-0 items-center gap-1.5">
+          <FileText className="text-muted-foreground h-3.5 w-3.5 shrink-0" aria-hidden />
+          {label ? <span className="text-foreground min-w-0 truncate text-xs">{label}</span> : null}
+        </span>
+      }
+      triggerInline
     />
   )
 }

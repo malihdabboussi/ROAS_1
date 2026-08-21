@@ -6,6 +6,7 @@ import {
   TEXT_TYPES,
 } from '@/components/deliverables/deliverable-preview-modal.constants'
 import {
+  avatarToText,
   fetchAd,
   fetchAvatar,
   fetchDocument,
@@ -14,7 +15,6 @@ import {
   fetchPresentation,
   fetchSequence,
   fetchSocialPost,
-  avatarToText,
   offerToText,
   presentationToText,
   sequenceToText,
@@ -22,10 +22,20 @@ import {
 import { extractMarkdownFromDocumentContent } from '@/lib/content/document-content-markdown'
 import type { MissionDeliverable } from '@/lib/missions'
 
+export function shouldFetchConversationDocumentMarkdown(deliverable: MissionDeliverable): boolean {
+  if (!deliverable.entity_id || deliverable.file_url) return false
+  if (deliverable.entity_table === 'space_items') return false
+  return deliverable.type === 'doc' || deliverable.entity_table === 'conversation_documents'
+}
+
 export function useDeliverableEntityContent(deliverable: MissionDeliverable) {
   const isEntityType = !!deliverable.entity_id && !!ENTITY_ARTIFACT_TYPE_MAP[deliverable.type]
   const isTextType = TEXT_TYPES.has(deliverable.type)
-  const isTextContent = !deliverable.file_url && !!deliverable.content
+  const inlineMarkdown = !deliverable.file_url
+    ? extractMarkdownFromDocumentContent(deliverable.content)
+    : null
+  const isTextContent = !deliverable.file_url && !!(inlineMarkdown || deliverable.content)
+  const fetchConversationDoc = shouldFetchConversationDocumentMarkdown(deliverable)
   const hasSourcePdfFile =
     !!deliverable.file_url &&
     (deliverable.type === 'pdf' ||
@@ -37,11 +47,11 @@ export function useDeliverableEntityContent(deliverable: MissionDeliverable) {
   const [entityContentLoading, setEntityContentLoading] = useState(false)
 
   useEffect(() => {
-    if (!isEntityType || !deliverable.entity_id) {
+    if (deliverable.entity_table === 'space_items' && deliverable.type === 'doc') {
       setEntityContentLoading(false)
       return
     }
-    if (deliverable.entity_table === 'space_items' && deliverable.type === 'doc') {
+    if ((!isEntityType && !fetchConversationDoc) || !deliverable.entity_id) {
       setEntityContentLoading(false)
       return
     }
@@ -89,19 +99,10 @@ export function useDeliverableEntityContent(deliverable: MissionDeliverable) {
           data = entity
           const parts = [entity.primary_text, entity.headline].filter(Boolean)
           text = parts.join('\n\n') || null
-        } else if (t === 'doc') {
+        } else if (t === 'doc' || fetchConversationDoc) {
           const doc = await fetchDocument(entityId)
           data = doc
-          const { content } = doc
-          const direct =
-            typeof content === 'string'
-              ? content
-              : content &&
-                  typeof content === 'object' &&
-                  typeof (content as { text?: unknown }).text === 'string'
-                ? (content as { text: string }).text
-                : null
-          text = direct?.trim() ? direct : extractMarkdownFromDocumentContent(content as unknown)
+          text = extractMarkdownFromDocumentContent(doc.content)
         }
         if (!cancelled) {
           if (text) setEntityTextContent(text)
@@ -117,9 +118,16 @@ export function useDeliverableEntityContent(deliverable: MissionDeliverable) {
     return () => {
       cancelled = true
     }
-  }, [isEntityType, deliverable.entity_id, deliverable.type, deliverable.entity_table])
+  }, [
+    isEntityType,
+    fetchConversationDoc,
+    deliverable.entity_id,
+    deliverable.type,
+    deliverable.entity_table,
+    deliverable.file_url,
+  ])
 
-  const effectiveContent = deliverable.content || entityTextContent
+  const effectiveContent = inlineMarkdown || entityTextContent || deliverable.content
 
   return {
     entityTextContent,

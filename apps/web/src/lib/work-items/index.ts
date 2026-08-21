@@ -1,5 +1,6 @@
 export {
   buildSpaceMappingGroups,
+  campaignNameFromMappingPath,
   fetchSpaceMappingGroups,
   transferItemToSpace,
   type SpaceMappingGroup,

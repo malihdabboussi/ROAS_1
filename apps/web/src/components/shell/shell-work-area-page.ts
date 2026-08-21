@@ -95,6 +95,15 @@ export function rememberWorkAreaPage(
   )
 }
 
+/** Simple Recents and `/home` own navigation; do not auto-push a remembered meeting. */
+export function shouldRestoreWorkAreaHrefOnConversationChange(input: {
+  menuStyle: 'simple' | 'advanced'
+  pathname: string
+}): boolean {
+  if (input.menuStyle === 'simple') return false
+  return input.pathname !== '/home'
+}
+
 /** Chat-switch contract: pinned artifacts keep the current screen; otherwise restore this chat's page. */
 export function resolveWorkAreaPageForConversationChange(input: {
   artifactPinned: boolean

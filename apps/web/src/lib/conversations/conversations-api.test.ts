@@ -1,17 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { backendDelete, backendGet, backendPatch, backendPost } from '@/lib/api/backend-client'
 import {
+  addConversationConnection,
   assignConversationCampaign,
   assignConversationSpace,
   deleteConversation,
   deleteConversationShare,
   duplicateConversation,
   fetchConversationAssets,
+  fetchConversationConnections,
   fetchConversations,
   fetchConversationShares,
   fetchMessages,
   markConversationRead,
   persistQuickMissionReceipt,
+  removeConversationConnection,
   renameConversation,
   setConversationArchived,
   setConversationPinned,
@@ -319,6 +322,49 @@ describe('conversations api', () => {
     })
     expect(backendDeleteMock).toHaveBeenCalledWith(
       '/api/conversations/conversation-1/shares/share-1',
+    )
+  })
+
+  it('adds and removes conversation connections', async () => {
+    backendGetMock.mockResolvedValue({ connections: [] })
+    backendPostMock.mockResolvedValue({
+      connection: { entity_id: 'campaign-2' },
+      promoted_primary: false,
+      conversation: { id: 'conversation-1' },
+    })
+    backendDeleteMock.mockResolvedValue({
+      connections: [],
+      conversation: { id: 'conversation-1' },
+    })
+
+    await expect(fetchConversationConnections('conversation-1')).resolves.toEqual({
+      connections: [],
+    })
+    await expect(
+      addConversationConnection('conversation-1', {
+        entity_type: 'campaign',
+        entity_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      }),
+    ).resolves.toEqual({
+      connection: { entity_id: 'campaign-2' },
+      promoted_primary: false,
+      conversation: { id: 'conversation-1' },
+    })
+    await expect(
+      removeConversationConnection(
+        'conversation-1',
+        'campaign',
+        'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      ),
+    ).resolves.toEqual({ connections: [], conversation: { id: 'conversation-1' } })
+
+    expect(backendGetMock).toHaveBeenCalledWith('/api/conversations/conversation-1/connections')
+    expect(backendPostMock).toHaveBeenCalledWith('/api/conversations/conversation-1/connections', {
+      entity_type: 'campaign',
+      entity_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    })
+    expect(backendDeleteMock).toHaveBeenCalledWith(
+      '/api/conversations/conversation-1/connections/campaign/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     )
   })
 })

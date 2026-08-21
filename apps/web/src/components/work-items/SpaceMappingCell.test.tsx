@@ -24,6 +24,7 @@ vi.mock('sonner', () => ({
 const GROUPS = [
   {
     campaignId: 'campaign-1',
+    campaignName: 'Launch',
     label: 'Acme Co · Launch',
     spaces: [{ id: 'space-2', title: 'Ad Production', visibility: 'team' as const }],
   },

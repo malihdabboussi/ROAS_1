@@ -57,8 +57,58 @@ describe('DocEditorHeaderActions', () => {
     expect(screen.getByRole('button', { name: 'PDF' })).toBeTruthy()
   })
 
-  it('explains a missing Drive connection without opening a disposable tab', async () => {
-    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null)
+  it('opens a real link for a saved Google Doc so the browser cannot popup-block it', async () => {
+    render(
+      <DocEditorHeaderActions
+        title="Launch plan"
+        getDocBody={() => '<h1>Launch plan</h1><p>Ship it.</p>'}
+        customData={{ _google_doc_file_id: 'doc_123-abc' }}
+      />,
+    )
+
+    const link = await screen.findByRole('link', { name: 'Open Google Doc' })
+    expect(link).toHaveAttribute('href', 'https://docs.google.com/document/d/doc_123-abc/edit')
+    expect(link).toHaveAttribute('target', '_blank')
+  })
+
+  it('opens the export tab in the same click before Drive status returns', async () => {
+    let resolveStatus: (value: { connected: boolean }) => void = () => {}
+    headerMocks.getGoogleDriveStatus.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveStatus = resolve
+        }),
+    )
+    headerMocks.createGoogleDocFromHtml.mockResolvedValue({
+      file: { id: 'doc-1', webViewLink: 'https://docs.google.com/document/d/doc-1/edit' },
+    })
+    const pendingTab = { close: vi.fn(), location: { replace: vi.fn() }, opener: window }
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(pendingTab as unknown as Window)
+
+    render(
+      <DocEditorHeaderActions
+        title="Launch plan"
+        getDocBody={() => '<h1>Launch plan</h1><p>Ship it.</p>'}
+        customData={{}}
+      />,
+    )
+    fireEvent.click(await screen.findByRole('button', { name: 'Export to Google Docs' }))
+    expect(openSpy).toHaveBeenCalledWith('about:blank', '_blank')
+    expect(headerMocks.createGoogleDocFromHtml).not.toHaveBeenCalled()
+
+    resolveStatus({ connected: true })
+    await waitFor(() =>
+      expect(pendingTab.location.replace).toHaveBeenCalledWith(
+        'https://docs.google.com/document/d/doc-1/edit',
+      ),
+    )
+    expect(headerMocks.createGoogleDocFromHtml).toHaveBeenCalledOnce()
+    openSpy.mockRestore()
+  })
+
+  it('explains a missing Drive connection and closes the pending tab', async () => {
+    const pendingTab = { close: vi.fn(), location: { replace: vi.fn() }, opener: window }
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(pendingTab as unknown as Window)
     headerMocks.getGoogleDriveStatus.mockResolvedValue({ connected: false })
     render(
       <DocEditorHeaderActions
@@ -75,7 +125,8 @@ describe('DocEditorHeaderActions', () => {
         'Google Drive is not connected. Connect it in Settings → Integrations, then try again.',
       ),
     )
-    expect(openSpy).not.toHaveBeenCalled()
+    expect(openSpy).toHaveBeenCalledWith('about:blank', '_blank')
+    expect(pendingTab.close).toHaveBeenCalled()
     expect(headerMocks.createGoogleDocFromHtml).not.toHaveBeenCalled()
     openSpy.mockRestore()
   })
