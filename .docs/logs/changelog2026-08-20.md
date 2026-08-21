@@ -29,7 +29,6 @@ What: Simple Recents always opens `/home?conv=` for the clicked chat. Remembered
 Why: Clicking Christian Osgood from Home Recents restored `/home/meetings?meeting=&space=`, which hid the thread behind New chat + empty files, then React #185 crashed the meetings identity loop. Console also showed 404s on a dead conversation and 500s on suggest-title.
 Impact: Recents loads the chat you clicked. Show page still restores the last meeting. Unmatched meeting URLs stop looping. Agent-created chat docs still render via the files-pane markdown viewer on this branch.
 Files: `shell-chat-menu-open.ts`, `shell-work-area-page.ts`, `use-shell-artifact-conversation-sync.ts`, `use-home-meeting-work-restore.ts`, `meeting-workspace-api.ts`, `claude-chatgpt-shell.md`
-
 ## [2026-08-20 02:50] - [FIX]
 What: Meeting workspace status now uses All Meetings Call status (`custom_data.call_status`: Live / Completed / No Show / Rescheduled). Connections labels the linked meeting with the meeting name, not the recap/chat title. Meeting threads no longer get first-message title autogen.
 Why: Call notes showed Following up (task Status) while All Meetings showed Completed (Call status) for the same Samin Yassar calls. Recap prompts renamed the meeting chat, so CONNECTIONS looked like a message linked to itself.
