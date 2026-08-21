@@ -12,6 +12,7 @@ import {
   type PageGraderMemoryRow,
   type PageGraderPackage,
 } from './page-grader-brain-package-build'
+import { pageGraderPipelineStageFromPackage } from './page-grader-external-source'
 import { PageGraderKnowledgeIndexService } from './page-grader-knowledge-index.service'
 import { PageGraderMemoryEmbeddingService } from './page-grader-memory-embedding.service'
 
@@ -69,6 +70,11 @@ export class PageGraderBrainPackageIngestService {
         userId: input.userId,
         orgId: input.orgId ?? null,
       })
+      await this.stampCampaignSync(
+        supabase,
+        campaign,
+        this.syncStampFromPackage(pkg, pageGraderClientId, contentHash),
+      )
       return {
         brainId,
         contentHash,
@@ -126,21 +132,11 @@ export class PageGraderBrainPackageIngestService {
       )
     }
 
-    await this.stampCampaignSync(supabase, campaign, {
-      pageGraderClientId,
-      uniqueClientId: pageGraderStringValue(
-        pkg.envelope?.unique_client_id,
-        pkg.unique_client_id,
-        pkg.client?.unique_client_id,
-      ),
-      packageVersion:
-        pageGraderStringValue(pkg.envelope?.package_version, pkg.package_version) || '1',
-      exportedAt:
-        pageGraderStringValue(pkg.envelope?.exported_at, pkg.exported_at) ||
-        new Date().toISOString(),
-      contentHash,
-      status: 'succeeded',
-    })
+    await this.stampCampaignSync(
+      supabase,
+      campaign,
+      this.syncStampFromPackage(pkg, pageGraderClientId, contentHash),
+    )
 
     await this.recordSucceededSyncJob(supabase, {
       userId: input.userId,
@@ -384,6 +380,29 @@ export class PageGraderBrainPackageIngestService {
     }
   }
 
+  private syncStampFromPackage(
+    pkg: PageGraderPackage,
+    pageGraderClientId: string,
+    contentHash: string,
+  ) {
+    return {
+      pageGraderClientId,
+      uniqueClientId: pageGraderStringValue(
+        pkg.envelope?.unique_client_id,
+        pkg.unique_client_id,
+        pkg.client?.unique_client_id,
+      ),
+      packageVersion:
+        pageGraderStringValue(pkg.envelope?.package_version, pkg.package_version) || '1',
+      exportedAt:
+        pageGraderStringValue(pkg.envelope?.exported_at, pkg.exported_at) ||
+        new Date().toISOString(),
+      contentHash,
+      status: 'succeeded' as const,
+      pkg,
+    }
+  }
+
   private async stampCampaignSync(
     supabase: SupabaseClient,
     campaign: {
@@ -398,6 +417,7 @@ export class PageGraderBrainPackageIngestService {
       exportedAt: string
       contentHash: string
       status: 'succeeded' | 'failed'
+      pkg: PageGraderPackage
     },
   ) {
     const config = {
@@ -408,7 +428,18 @@ export class PageGraderBrainPackageIngestService {
         ? (config.external_sources as Record<string, unknown>)
         : {}),
     }
+    const previousPageGrader =
+      externalSources.page_grader &&
+      typeof externalSources.page_grader === 'object' &&
+      !Array.isArray(externalSources.page_grader)
+        ? (externalSources.page_grader as Record<string, unknown>)
+        : {}
+    const pipelineStage =
+      pageGraderPipelineStageFromPackage(stamp.pkg) ||
+      pageGraderStringValue(previousPageGrader.pipeline_stage) ||
+      null
     externalSources.page_grader = {
+      ...previousPageGrader,
       client_id: stamp.pageGraderClientId || null,
       unique_client_id: stamp.uniqueClientId || null,
       package_version: stamp.packageVersion,
@@ -416,6 +447,8 @@ export class PageGraderBrainPackageIngestService {
       content_hash: stamp.contentHash,
       last_synced_at: new Date().toISOString(),
       last_sync_status: stamp.status,
+      pipeline_stage: pipelineStage,
+      status: pageGraderStringValue(stamp.pkg.client?.status, previousPageGrader.status) || null,
     }
     config.source = 'page_grader'
     config.external_sources = externalSources

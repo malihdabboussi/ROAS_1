@@ -4,7 +4,13 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { ExternalLink, FolderKanban, PanelRightOpen, Search } from 'lucide-react'
 import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
-import { fetchAgencyClientCampaigns, type AgencyClientCampaign } from '@/lib/agency-clients'
+import {
+  fetchAgencyClientCampaigns,
+  fetchAgencyClients,
+  visiblePipelineCampaigns,
+  type AgencyClientCampaign,
+  type PipelineClientLike,
+} from '@/lib/agency-clients'
 import { cn } from '@/lib/utils/cn'
 import { formatAgencyDate } from './agency-client-format'
 import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
@@ -18,14 +24,20 @@ export function ClientCampaignsPage() {
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [view, setView] = useState<ViewMode>('all')
+  const [showInactive, setShowInactive] = useState(false)
+  const [clientCatalog, setClientCatalog] = useState<PipelineClientLike[]>([])
 
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       try {
-        const response = await fetchAgencyClientCampaigns(undefined, false)
+        const [response, clients] = await Promise.all([
+          fetchAgencyClientCampaigns(undefined, false),
+          fetchAgencyClients('', false).catch(() => ({ clients: [] as PipelineClientLike[] })),
+        ])
         if (cancelled) return
         setCampaigns(response?.campaigns ?? [])
+        setClientCatalog(clients?.clients ?? [])
         setLoading(false)
 
         // Show the Page Grader campaign inventory first, then refresh Space links as
@@ -37,7 +49,9 @@ export function ClientCampaignsPage() {
           .catch(() => undefined)
       } catch (reason) {
         if (cancelled) return
-        setError(reason instanceof Error ? reason.message : 'Could not load campaigns')
+        setError(
+          reason instanceof Error ? reason.message : AGENCY_CLIENT_MESSAGES.LOAD_CAMPAIGNS_ERROR,
+        )
         setLoading(false)
       }
     }
@@ -47,14 +61,22 @@ export function ClientCampaignsPage() {
     }
   }, [])
 
+  const catalogById = useMemo(() => {
+    const map = new Map<string, PipelineClientLike>()
+    for (const client of clientCatalog) {
+      if (client.id) map.set(client.id, client)
+    }
+    return map
+  }, [clientCatalog])
+
   const filtered = useMemo(
     () =>
-      campaigns.filter((campaign) =>
-        `${campaign.name} ${campaign.clients?.friendly_name || campaign.clients?.name || ''}`
-          .toLowerCase()
-          .includes(query.trim().toLowerCase()),
-      ),
-    [campaigns, query],
+      visiblePipelineCampaigns(campaigns, {
+        query,
+        includeHidden: showInactive,
+        catalogById,
+      }),
+    [campaigns, catalogById, query, showInactive],
   )
   const groups = useMemo(() => {
     if (view === 'all') return [['All campaigns', filtered] as const]
@@ -105,10 +127,26 @@ export function ClientCampaignsPage() {
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          aria-pressed={showInactive}
+          onClick={() => setShowInactive((current) => !current)}
+          className={cn(
+            'button-compact rounded-spacing-2 border-border px-spacing-3 border',
+            showInactive ? 'nav-glass-selected-purple' : 'hover:bg-hover-subtle',
+          )}
+        >
+          {AGENCY_CLIENT_MESSAGES.SHOW_INACTIVE}
+        </button>
       </div>
       {loading ? <ListSkeleton rows={8} label={AGENCY_CLIENT_MESSAGES.LOADING_CAMPAIGNS} /> : null}
       {error ? <p className="body-2 text-destructive">{error}</p> : null}
-      {!loading && !error
+      {!loading && !error && filtered.length === 0 ? (
+        <p className="body-2 text-muted-foreground surface-card rounded-spacing-3 p-spacing-4">
+          {AGENCY_CLIENT_MESSAGES.NO_VISIBLE_CAMPAIGNS}
+        </p>
+      ) : null}
+      {!loading && !error && filtered.length > 0
         ? groups.map(([label, rows]) => (
             <section key={label} className="gap-spacing-3 flex flex-col">
               <div className="gap-spacing-2 flex items-center">
@@ -120,7 +158,7 @@ export function ClientCampaignsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
-                      <tr className="body-4 text-muted-foreground border-border bg-secondary border-b text-left whitespace-nowrap">
+                      <tr className="body-4 text-muted-foreground border-border bg-secondary whitespace-nowrap border-b text-left">
                         <th className="px-spacing-4 py-spacing-3 font-medium">Stage</th>
                         {/* Name absorbs the free width; every other column is nowrap so it sizes to content. */}
                         <th className="px-spacing-4 py-spacing-3 w-full min-w-64 font-medium">

@@ -1,9 +1,17 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchAgencyClientCampaigns } from '@/lib/agency-clients'
+import { fetchAgencyClientCampaigns, fetchAgencyClients } from '@/lib/agency-clients'
 import { ClientCampaignsPage } from './ClientCampaignsPage'
 
-vi.mock('@/lib/agency-clients', () => ({ fetchAgencyClientCampaigns: vi.fn() }))
+vi.mock('@/lib/agency-clients', async () => {
+  const actual =
+    await vi.importActual<typeof import('@/lib/agency-clients')>('@/lib/agency-clients')
+  return {
+    ...actual,
+    fetchAgencyClientCampaigns: vi.fn(),
+    fetchAgencyClients: vi.fn(),
+  }
+})
 
 vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
@@ -39,7 +47,10 @@ const campaign = {
 }
 
 describe('ClientCampaignsPage', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(fetchAgencyClients).mockResolvedValue({ clients: [] } as never)
+  })
   afterEach(cleanup)
 
   it('shows campaigns before the background Space mapping pass completes', async () => {
@@ -62,5 +73,35 @@ describe('ClientCampaignsPage', () => {
       expect(fetchAgencyClientCampaigns).toHaveBeenNthCalledWith(1, undefined, false)
       expect(fetchAgencyClientCampaigns).toHaveBeenNthCalledWith(2, undefined, true)
     })
+  })
+
+  it('hides campaigns for churned clients until Show inactive is on', async () => {
+    const churned = {
+      ...campaign,
+      id: '33333333-3333-3333-3333-333333333333',
+      client_id: '44444444-4444-4444-4444-444444444444',
+      name: 'Sunset Ads',
+      clients: {
+        id: '44444444-4444-4444-4444-444444444444',
+        name: 'Churned Co',
+        pipeline_stage: 'churned_inactive',
+      },
+    }
+    vi.mocked(fetchAgencyClientCampaigns).mockResolvedValue({
+      campaigns: [campaign, churned],
+    } as never)
+    vi.mocked(fetchAgencyClients).mockResolvedValue({
+      clients: [
+        { id: campaign.client_id, name: 'Clogged Club', pipeline_stage: 'active_happy' },
+        { id: churned.client_id, name: 'Churned Co', pipeline_stage: 'churned_inactive' },
+      ],
+    } as never)
+
+    render(<ClientCampaignsPage />)
+
+    expect(await screen.findByText('Evergreen Leads')).toBeInTheDocument()
+    expect(screen.queryByText('Sunset Ads')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Show inactive' }))
+    expect(screen.getByText('Sunset Ads')).toBeInTheDocument()
   })
 })

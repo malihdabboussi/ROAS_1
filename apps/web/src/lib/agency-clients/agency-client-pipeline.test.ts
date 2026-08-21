@@ -6,6 +6,7 @@ import {
   isDefaultHiddenClient,
   isDefaultHiddenPipelineStage,
   resolvePipelineSlug,
+  visiblePipelineCampaigns,
   visiblePipelineClients,
 } from './agency-client-pipeline'
 
@@ -80,5 +81,37 @@ describe('agency client pipeline', () => {
       ['Active/Happy', ['2']],
     ])
     expect(formatPipelineStageLabel('active_happy')).toBe('Active/Happy')
+  })
+
+  it('hides campaigns whose parent client is inactive, blocked, or churned', () => {
+    const campaigns = [
+      {
+        id: 'camp-a',
+        name: 'Happy Ads',
+        client_id: 'a',
+        clients: { id: 'a', name: 'Active Co', pipeline_stage: 'active_happy' },
+      },
+      {
+        id: 'camp-b',
+        name: 'Churned Ads',
+        client_id: 'b',
+        clients: { id: 'b', name: 'Churned Co' },
+      },
+    ]
+    const catalogById = new Map([
+      ['a', { id: 'a', name: 'Active Co', pipeline_stage: 'active_happy' }],
+      ['b', { id: 'b', name: 'Churned Co', pipeline_stage: 'churned_inactive' }],
+    ])
+    expect(visiblePipelineCampaigns(campaigns, { catalogById }).map((row) => row.id)).toEqual([
+      'camp-a',
+    ])
+    expect(
+      visiblePipelineCampaigns(campaigns, { catalogById, includeHidden: true }).map(
+        (row) => row.id,
+      ),
+    ).toEqual(['camp-a', 'camp-b'])
+    expect(
+      visiblePipelineCampaigns(campaigns, { catalogById, query: 'churned' }).map((row) => row.id),
+    ).toEqual(['camp-b'])
   })
 })
