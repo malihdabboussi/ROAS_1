@@ -54,7 +54,7 @@ when strategy or brand interpretation is required, and call out disagreements.
    write.
 6b. When the user asks to get several fulfillment jobs done in one message
    (QC funnel + GHL + reset ads, "I need this done", a paste of 2+ discrete
-   tasks), do **not** loop `page_grader_create_fulfillment_request`. Resolve
+   tasks, or a post-call recap with IN PROGRESS / TO-DO items), do **not** loop `page_grader_create_fulfillment_request`. Skip ✅ DONE lines. Resolve
    the Portal client and campaign, then call `page_grader_create_delegation_preview`
    once with `client_ref`, Portal `campaign_id`, `raw_text`, and
    `idempotency_key`. Reply with the returned `confirm_url` as a real openable

@@ -83,6 +83,8 @@ describe('platform tools template', () => {
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('[Slack teammates mentioned]')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Harry M.` is not `Harry/Haroon')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('page_grader_create_delegation_preview')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('IN PROGRESS / TO-DO')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Skip ✅ DONE lines')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'Do not loop `page_grader_create_fulfillment_request`',
     )
