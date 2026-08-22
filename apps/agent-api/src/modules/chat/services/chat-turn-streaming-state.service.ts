@@ -5,6 +5,7 @@ import type {
   DocumentIntelligenceMetadata,
   SupabaseServiceClient,
 } from '@vibey/api-shared'
+import type { BrainRetrievalReceipt } from '../../brain/services/brain-retrieval-receipt'
 import { MessagesRepository } from '../../conversations/repositories/messages.repository'
 import type { RequestUploadAttachment } from '../../shared/services/request-context.service'
 import { RequestContextService } from '../../shared/services/request-context.service'
@@ -114,7 +115,7 @@ export interface ChatTurnStreamingState {
   getCompletedVisibleToolCount: () => number
   getRetrievalReceipts: () => Record<string, unknown>[]
   getWebResearchUrls: () => Record<string, unknown>[]
-  sendRetrievalReceipts: (receipts: unknown[]) => Promise<void>
+  sendRetrievalReceipts: (receipts: BrainRetrievalReceipt[]) => Promise<void>
   recordRunCheckpoint: (
     kind: ChatRunCheckpointKind,
     checkpoint: {

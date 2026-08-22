@@ -39,3 +39,13 @@ Why: The canonical agenda now supports structured discussion topics and optional
 Impact: Runtime behavior is unchanged, and future Page Grader agenda contract changes now flow through the adapter's type boundary instead of drifting silently.
 
 Files: `apps/api/src/modules/spaces/services/meetings-precall-drive-agenda.service.ts`.
+
+## 2026-08-22 15:11 - [FIX]
+
+What: Typed the initial chat retrieval-receipt stream as `BrainRetrievalReceipt[]` instead of `unknown[]`.
+
+Why: The Fly production image correctly rejected the untyped receipt at the `SendFn` boundary, which requires a structured record and prevented the merged Claude MCP release from compiling.
+
+Impact: Initial Brain retrieval receipts retain their existing runtime payload while the Agent API production build can verify the stream contract statically.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-turn-streaming-state.service.ts`.
