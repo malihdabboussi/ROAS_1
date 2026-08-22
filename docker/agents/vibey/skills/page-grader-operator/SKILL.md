@@ -89,7 +89,8 @@ confirm.
   retry cannot create a second campaign or task.
 - When the user asks to get **several** fulfillment jobs done in one message
   (QC a funnel + check GHL + reset ads, "I need this done", a paste of 2+
-  discrete tasks) for a named or channel-stamped client:
+  discrete tasks, or a post-call recap with IN PROGRESS / TO-DO items) for a
+  named or channel-stamped client:
   1. Resolve the Portal client (`page_grader_list_clients` or the Slack
      channel identity).
   2. Resolve the Portal campaign with `page_grader_list_campaigns`. Prefer the
@@ -194,3 +195,7 @@ confirm.
   `page_grader_create_delegation_preview` once, and reply with the openable
   `confirm_url`. Do not loop `page_grader_create_fulfillment_request`. Do not
   say the tasks exist until Confirm.
+- "I just did this Yasir call. Here's the recap — delegate the remaining work"
+  → skip ✅ DONE lines, keep (IN PROGRESS) and (TO-DO), resolve Yasir + the
+  current webinar campaign, call `page_grader_create_delegation_preview` once,
+  and reply with the openable `confirm_url`. Do not create the tasks yet.

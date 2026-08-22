@@ -24,6 +24,7 @@ describe('Page Grader human fulfillment routing', () => {
     for (const skill of [vibeySkill, atlasSkill]) {
       expect(skill).toContain('page_grader_create_delegation_preview')
       expect(skill).toContain('confirm_url')
+      expect(skill).toContain('IN PROGRESS')
       expect(skill).toMatch(/[Dd]o \*\*not\*\* loop `page_grader_create_fulfillment_request`/)
     }
   })
@@ -92,6 +93,20 @@ describe('Page Grader human fulfillment routing', () => {
     expect(allTypesMigration).toContain("file_name = 'TOOLS.md'")
     expect(allTypesMigration).toContain(
       "RAISE EXCEPTION 'Service Request all-types intake was not persisted for both agents'",
+    )
+  })
+
+  it('persists post-call recap delegation on both agents', () => {
+    const recapMigration = readFileSync(
+      resolve(repoRoot, 'supabase/migrations/20260820221500_post_call_recap_delegation.sql'),
+      'utf8',
+    )
+    expect(recapMigration).toContain('## Post-call recap delegation')
+    expect(recapMigration).toContain('page_grader_create_delegation_preview')
+    expect(recapMigration).toContain('IN PROGRESS')
+    expect(recapMigration).toContain("file_name = 'TOOLS.md'")
+    expect(recapMigration).toContain(
+      "RAISE EXCEPTION 'Post-call recap delegation was not persisted for both agents'",
     )
   })
 

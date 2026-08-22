@@ -49,6 +49,7 @@ describe('MeetingCallStatusSection', () => {
     expect(row).toContainElement(screen.getByRole('button', { name: 'Recap message' }))
     expect(row).toContainElement(screen.getByRole('button', { name: 'Clean up action items' }))
     expect(row).toContainElement(screen.getByRole('button', { name: 'Follow-up message' }))
+    expect(row).toContainElement(screen.getByRole('button', { name: 'Delegate remaining work' }))
     expect(screen.queryByLabelText('Call status')).toBeNull()
     expect(screen.queryByRole('combobox')).toBeNull()
     fireEvent.click(continueButton)

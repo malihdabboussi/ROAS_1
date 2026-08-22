@@ -75,19 +75,14 @@ export function buildPrecallPrompt(input: {
     '',
     'Document sections (use these exact markdown headings):',
     "## What's on the agenda?",
-    'Four to six short topic labels only. Use markdown bullets; Page Grader converts them to native Google Doc checkboxes. Do not explain the topics in this section.',
-    '## What we worked on this week',
-    'Three to five concrete client-safe updates from Meetings context, Slack, tasks, campaign activity, and supplied memories. Describe completed work in natural language, not internal workflow language.',
-    "## What we're working on next week",
-    'Three to five specific priorities already supported by the context. Frame each as the plan, not as a question or tentative suggestion.',
-    '## Raw performance data',
-    'Show the reporting range, account totals, then one concise line for every live campaign with spend, leads, and CPL where supplied. Keep this factual and easy to scan; do not add source caveats or analysis paragraphs.',
-    '## Wins',
-    'Two to four plain-English wins that a client will immediately understand. Explain the useful result without inflated strategic language.',
-    '## Campaign notes / recommendations',
-    'Two to five short, specific observations or recommendations. Name the campaign when relevant, but write like an experienced account manager—not a system report.',
-    '## Needs / blockers',
-    'Only genuine approvals, assets, feedback, or decisions needed from the client. Phrase each as a clean client request. If nothing is blocking progress, write “Nothing blocking progress this week.”',
+    'Four to six short topic labels only. Use markdown bullets; they become native Google Doc checkboxes. Do not explain the topics in this section.',
+    '## Discussion',
+    'Write one 🏆 section for EACH TOC topic, in the same order. Format exactly:',
+    '🏆  Topic title',
+    'Then 2-6 bullets of facts, results, options, and the decision we need for that topic.',
+    'Separate 🏆 sections with a line of ━━━. Put performance numbers under the TOC topic they belong to (usually the first performance/stats topic). Do not add topics that are not in the TOC. Do not include Actions here.',
+    '## Actions',
+    'Four to eight concrete work items our team still owns after this call. Markdown bullets; they become checkboxes. Carry forward unfinished action items. Mark already-done items with ✅. Items needing client approval start with NEED APPROVAL. Do not dump every open task — only this week\'s hit list.',
     '',
     'These exact sections feed the client Google Doc. Do not include placeholders such as “review performance”, “discuss blockers”, “none captured”, “pending”, “data unavailable”, “not supplied”, or “see dashboard”.',
     'Do not mention Brain, Page Grader, MCP, Portal, Meta dashboard, CRM source, source pack, snapshot availability, data freshness, or internal preparation systems in the output.',
@@ -109,6 +104,9 @@ export function buildPrecallPrompt(input: {
 /** Parse Vibey prep markdown into Google Doc agenda sections. */
 export function parsePrepDocToAgendaSections(body: string): {
   agenda: string
+  discussion: string
+  topics: Array<{ title: string; body: string }>
+  actions: string
   this_week: string
   next_week: string
   wins: string
@@ -145,8 +143,23 @@ export function parsePrepDocToAgendaSections(body: string): {
     'Commitments / next steps',
   )
   const performance = get('RAW PERFORMANCE DATA', 'Performance', 'Performance data')
+  const discussion =
+    get('Discussion', 'DISCUSSION') ||
+    composeDiscussionFromLegacy({
+      performance,
+      thisWeek,
+      nextWeek,
+      wins,
+      campaignNotes,
+    })
+  const actions =
+    get('Actions', '🏆 ACTIONS', '🏆  ACTIONS', 'Action items', 'ACTION ITEMS') || needs
+  const topics = parseTrophyDiscussionToTopics(discussion)
   return {
     agenda,
+    discussion,
+    topics,
+    actions,
     this_week: thisWeek,
     next_week: nextWeek,
     wins,
@@ -154,6 +167,51 @@ export function parsePrepDocToAgendaSections(body: string): {
     needs_blockers: needs,
     ...(performance ? { performance } : {}),
   }
+}
+
+export function parseTrophyDiscussionToTopics(discussion: string): Array<{
+  title: string
+  body: string
+}> {
+  const topics: Array<{ title: string; body: string }> = []
+  const chunks = String(discussion ?? '').split(/(?=🏆)/)
+  for (const chunk of chunks) {
+    const trimmed = chunk.trim()
+    if (!trimmed) continue
+    const lines = trimmed.split(/\r?\n/)
+    const heading = lines[0]!.replace(/^🏆\s*/, '').trim()
+    const body = lines
+      .slice(1)
+      .join('\n')
+      .replace(/^[━─\-_]{8,}\s*$/gm, '')
+      .trim()
+    if (!heading && !body) continue
+    topics.push({ title: heading || 'Talking point', body })
+  }
+  return topics
+}
+
+function composeDiscussionFromLegacy(input: {
+  performance?: string
+  thisWeek?: string
+  nextWeek?: string
+  wins?: string
+  campaignNotes?: string
+}): string {
+  const blocks: string[] = []
+  const push = (title: string, body?: string) => {
+    const text = body?.trim()
+    if (!text) return
+    blocks.push(`🏆  ${title}\n\n${text}`)
+  }
+  push('Workshop performance', input.performance)
+  push('What we worked on this week', input.thisWeek)
+  push("What we're working on next week", input.nextWeek)
+  push('Wins', input.wins)
+  push('Campaign notes / recommendations', input.campaignNotes)
+  return blocks.join(
+    '\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n',
+  )
 }
 
 export type MeetingReadyAgendaSections = ReturnType<typeof parsePrepDocToAgendaSections>
@@ -178,12 +236,8 @@ const LAZY_PLACEHOLDER_PATTERNS = [
 export function validateMeetingReadyAgendaSections(sections: MeetingReadyAgendaSections): string[] {
   const fields: Array<[string, string | undefined]> = [
     ['Agenda', sections.agenda],
-    ['What we worked on this week', sections.this_week],
-    ["What we're working on next week", sections.next_week],
-    ['Performance', sections.performance],
-    ['Wins', sections.wins],
-    ['Campaign notes', sections.campaign_notes],
-    ['Needs / blockers', sections.needs_blockers],
+    ['Discussion', sections.discussion],
+    ['Actions', sections.actions],
   ]
   const problems: string[] = []
   for (const [label, value] of fields) {

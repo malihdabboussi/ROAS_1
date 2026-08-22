@@ -529,6 +529,9 @@ describe('meetings-precall-prep.helpers', () => {
 - Need offer approval
 `)
     expect(sections.agenda).toContain('Review lead quality')
+    expect(sections.discussion).toContain('landing page')
+    expect(sections.discussion).toContain('59 leads')
+    expect(sections.actions).toContain('offer approval')
     expect(sections.this_week).toContain('landing page')
     expect(sections.next_week).toContain('creative test')
     expect(sections.performance).toContain('59 leads')
@@ -579,8 +582,9 @@ describe('meetings-precall-prep.helpers', () => {
     expect(prompt).toContain('screen-shared with the client')
     expect(prompt).toContain('Resolve the offer decision')
     expect(prompt).toContain("## What's on the agenda?")
-    expect(prompt).toContain('## What we worked on this week')
-    expect(prompt).toContain("## What we're working on next week")
+    expect(prompt).toContain('## Discussion')
+    expect(prompt).toContain('## Actions')
+    expect(prompt).not.toContain('## What we worked on this week')
     expect(prompt).toContain('Do not add timestamps')
     expect(prompt).toContain('Never mention another client')
     expect(prompt).not.toContain('say exactly which source is unavailable')
@@ -623,6 +627,36 @@ describe('meetings-precall-prep.helpers', () => {
 ## Needs / blockers
 - Creative approval is the only item needed to keep testing on schedule.`)
 
+    expect(validateMeetingReadyAgendaSections(sections)).toEqual([])
+  })
+
+  it('parses trophy discussion topics and an ACTIONS hit list', () => {
+    const sections = parsePrepDocToAgendaSections(`## What's on the agenda?
+- Workshop performance
+- Follower ads
+
+## Discussion
+🏆  Workshop performance
+- VIP close rate is stronger than $999 buyers.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🏆  Follower ads
+- Followers up 53% from baseline.
+
+## Actions
+- Clarify VIP upsell path so free vs paid is obvious
+- Clean up SMS + WhatsApp reminders
+- ✅ Exclude attendees (confirmed)
+`)
+    expect(sections.discussion).toContain('🏆  Workshop performance')
+    expect(sections.topics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ title: 'Workshop performance' }),
+        expect.objectContaining({ title: 'Follower ads' }),
+      ]),
+    )
+    expect(sections.actions).toContain('Clarify VIP upsell')
     expect(validateMeetingReadyAgendaSections(sections)).toEqual([])
   })
 

@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { CheckSquare, ListChecks, MessageSquareText, Send } from 'lucide-react'
+import { CheckSquare, ListChecks, ListTodo, MessageSquareText, Send } from 'lucide-react'
 
 /**
  * One-click post-call actions shown in the meeting workspace once a call is
@@ -30,11 +30,14 @@ export const MEETING_POST_CALL_ACTIONS: MeetingPostCallAction[] = [
       'Write my post-call recap message for the client channel from this meeting — use the transcript, recording summary, and action items.',
       '',
       'Structure it the way I write these:',
-      '- One warm opening line, then straight into it.',
-      "- A section headed WHAT'S HAPPENING BEFORE <the next key date from the call> listing each workstream as: owner — concrete deliverable — deadline, with the why in one short line.",
-      '- Anything already finished gets a ✅ DONE line up top.',
+      '- One warm opening line, then straight into what we covered.',
+      '- One short paragraph on the core focus of the call.',
+      "- A hit list headed something like \"Here's our hit list of actions on our end:\"",
+      '- ✅ (DONE) lines first for work already confirmed or finished on the call.',
+      '- (IN PROGRESS) lines for work we still own this week.',
+      '- (TO-DO) lines for work not started yet.',
       '- Direct asks go to named people (@name) with exactly what I need from them.',
-      '- Close with one line inviting anything I missed.',
+      '- Close with one line looking ahead to the week, not a formal sign-off.',
       '',
       "Only include real commitments. Fathom over-captures — skip conversational asides like someone saying they'll keep an eye on something unless a concrete deliverable and date were agreed.",
       'Do not pause to ask for missing dates. Draft the message now from confirmed facts; omit an unknown deadline or label a reasonable date as proposed, then mention any remaining question after the drafts.',
@@ -71,6 +74,23 @@ export const MEETING_POST_CALL_ACTIONS: MeetingPostCallAction[] = [
       'Inside draft fences use send-ready plain text only. Do not use Markdown emphasis markers such as ** or __.',
       '',
       'Give me two versions in draft fences: ```draft Full message``` and ```draft Short version``` (tight, a few lines).',
+    ].join('\n'),
+  },
+  {
+    id: 'delegate-remaining',
+    label: 'Delegate remaining work',
+    icon: ListTodo,
+    prompt: [
+      'I just finished this call. Collect every remaining work item our team still owns and send me one confirm link in The ROAS Portal.',
+      '',
+      'Sources, in order: the recap hit list if one exists, then the transcript, recording summary, and action items.',
+      'Keep (IN PROGRESS) and (TO-DO) items. Skip anything marked ✅ DONE, already confirmed on the call, or owned by the client.',
+      '',
+      'Resolve the Portal client from this meeting and the current campaign (prefer the webinar/campaign named in the recap or agenda). If zero or many campaigns remain, ask one question: which campaign.',
+      'Call list_mcp_tools, then page_grader_create_delegation_preview once with client_ref, the Portal campaign_id, raw_text = the full remaining-work list (not titles only), and a stable idempotency_key from this meeting id.',
+      '',
+      'Reply with the confirm_url as a real openable https link. Tell me to review and Confirm in The ROAS Portal.',
+      'Do not create tasks. Do not loop page_grader_create_fulfillment_request. Do not send work silently. Do not say the tasks exist until I Confirm.',
     ].join('\n'),
   },
 ]
@@ -121,6 +141,8 @@ export function googleAgendaPrompt(): string {
     '',
     'If a Google agenda is already linked on the calendar invite, open and update that doc.',
     'Otherwise create or open the Page Grader portal agenda Google Doc for this call.',
+    '',
+    "Shape it like the live client agenda: WHAT'S ON THE AGENDA? as a short TOC, then one 🏆 section per topic, then 🏆 ACTIONS as a checkbox hit list at the bottom.",
     '',
     'Keep the Space Doc agenda untouched unless I ask for it.',
   ].join('\n')
