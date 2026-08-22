@@ -1,6 +1,10 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type {
+  PageGraderMeetingAgendaResult,
+  PageGraderMeetingAgendaWrite,
+} from '../../integrations/page-grader/integrations/page-grader.integration.types'
 import {
   buildGoogleDocTabLink,
   buildPrecallPrompt,
@@ -24,20 +28,8 @@ type PageGraderApiLike = {
   writeMeetingAgenda: (
     userId: string,
     clientId: string,
-    payload: {
-      meeting_date: string
-      sections: Record<string, string>
-      insert_ad_previews?: boolean
-      roas_prep_item_id?: string | null
-      notes?: string | null
-    },
-  ) => Promise<{
-    doc_id: string | null
-    doc_link: string | null
-    tab_id: string | null
-    tab_name: string | null
-    meeting_agenda_id: string | null
-  }>
+    payload: PageGraderMeetingAgendaWrite,
+  ) => Promise<PageGraderMeetingAgendaResult>
 }
 
 @Injectable()

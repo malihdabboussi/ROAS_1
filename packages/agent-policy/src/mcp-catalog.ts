@@ -562,6 +562,41 @@ export const MCP_V1_TOOL_CATALOG = [
     description: 'List Vibey missions available to the authenticated user.',
     inputMode: 'action_schema',
   },
+  {
+    toolName: 'get_mission',
+    action: 'get_mission',
+    requiredScopes: [MCP_BASE_SCOPE, 'manage_tasks_missions'],
+    description: 'Read one mission with its current subtasks and activity logs.',
+    inputMode: 'action_schema',
+  },
+  {
+    toolName: 'get_mission_plan',
+    action: 'get_mission_plan',
+    requiredScopes: [MCP_BASE_SCOPE, 'manage_tasks_missions'],
+    description: 'Read the execution plan for one mission.',
+    inputMode: 'action_schema',
+  },
+  {
+    toolName: 'list_mission_subtasks',
+    action: 'list_mission_subtasks',
+    requiredScopes: [MCP_BASE_SCOPE, 'manage_tasks_missions'],
+    description: 'List the execution subtasks for one mission.',
+    inputMode: 'action_schema',
+  },
+  {
+    toolName: 'get_mission_logs',
+    action: 'get_mission_logs',
+    requiredScopes: [MCP_BASE_SCOPE, 'manage_tasks_missions'],
+    description: 'Read execution logs for one mission.',
+    inputMode: 'action_schema',
+  },
+  {
+    toolName: 'get_mission_deliverables',
+    action: 'get_mission_deliverables',
+    requiredScopes: [MCP_BASE_SCOPE, 'manage_tasks_missions'],
+    description: 'List durable deliverables produced by one mission.',
+    inputMode: 'action_schema',
+  },
 ] as const satisfies readonly McpToolCatalogEntry[]
 
 const MCP_V1_DOMAIN_SCOPES = Array.from(
@@ -751,6 +786,11 @@ export const MCP_PERMISSION_GROUPS = [
       'get_task',
       'list_missions',
       'create_mission',
+      'get_mission',
+      'get_mission_plan',
+      'list_mission_subtasks',
+      'get_mission_logs',
+      'get_mission_deliverables',
     ],
   },
 ] as const satisfies readonly McpPermissionGroup[]

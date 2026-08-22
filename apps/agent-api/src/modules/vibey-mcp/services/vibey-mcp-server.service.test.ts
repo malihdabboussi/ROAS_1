@@ -176,4 +176,130 @@ describe('VibeyMcpServerService', () => {
       },
     })
   })
+
+  it('preserves classified tool failures as MCP tool results', async () => {
+    const classifiedFailure = {
+      success: false,
+      error: 'mission_id is required',
+      error_code: 'ARTIFACT_VALIDATION',
+      error_class: 'validation',
+      effect_state: 'failed_before_effect',
+      retry_policy: {
+        mode: 'retry_with_corrected_payload',
+        max_attempts: 1,
+        stop_after_same_error: true,
+        reason: 'Correct the payload.',
+      },
+      correction: { summary: 'Add mission_id.' },
+      agent_instruction: 'Correct mission_id before retrying.',
+      user_explanation: { intent: 'correct_and_retry', sentence: 'I need the mission ID.' },
+      forbidden_user_framing: ['platform error'],
+      observability: { fingerprint: 'artifact.artifact_validation' },
+    }
+    const service = createService({
+      artifacts: { executeAction: vi.fn(async () => classifiedFailure) } as any,
+      policy: { assertAllowed: vi.fn(() => ({ action: 'get_mission' })) } as any,
+      sessions: { buildSessionKey: vi.fn(async () => 'session-key') } as any,
+    })
+
+    await expect(
+      service.handleRpc(
+        {
+          id: 8,
+          method: 'tools/call',
+          params: { name: 'get_mission', arguments: {} },
+        },
+        { user_id: 'user-1', client_id: 'client-1' } as any,
+      ),
+    ).resolves.toMatchObject({
+      jsonrpc: '2.0',
+      id: 8,
+      result: {
+        isError: true,
+        structuredContent: classifiedFailure,
+        content: [{ type: 'text', text: 'I need the mission ID.' }],
+      },
+    })
+  })
+
+  it('classifies thrown tool failures before returning them to an MCP client', async () => {
+    const service = createService({
+      artifacts: {
+        executeAction: vi.fn(async () => Promise.reject(new Error('unexpected'))),
+      } as any,
+      policy: { assertAllowed: vi.fn(() => ({ action: 'get_mission' })) } as any,
+      sessions: { buildSessionKey: vi.fn(async () => 'session-key') } as any,
+    })
+
+    await expect(
+      service.handleRpc(
+        {
+          id: 9,
+          method: 'tools/call',
+          params: { name: 'get_mission', arguments: { mission_id: 'mission-1' } },
+        },
+        { user_id: 'user-1', client_id: 'client-1' } as any,
+      ),
+    ).resolves.toMatchObject({
+      jsonrpc: '2.0',
+      id: 9,
+      result: {
+        isError: true,
+        structuredContent: expect.objectContaining({
+          success: false,
+          error_class: 'system_fault',
+          workflow_class: 'get_mission',
+          effect_state: 'unknown_effect',
+          retry_policy: expect.any(Object),
+          correction: expect.any(Object),
+          agent_instruction: expect.any(String),
+          user_explanation: expect.any(Object),
+          forbidden_user_framing: expect.any(Array),
+          observability: expect.any(Object),
+        }),
+      },
+    })
+  })
+
+  it('completes incomplete returned failures with the full tool error contract', async () => {
+    const service = createService({
+      artifacts: {
+        executeAction: vi.fn(async () => ({
+          success: false,
+          error: 'mission_id is required',
+          error_code: 'LEGACY_VALIDATION',
+        })),
+      } as any,
+      policy: { assertAllowed: vi.fn(() => ({ action: 'get_mission' })) } as any,
+      sessions: { buildSessionKey: vi.fn(async () => 'session-key') } as any,
+    })
+
+    await expect(
+      service.handleRpc(
+        {
+          id: 10,
+          method: 'tools/call',
+          params: { name: 'get_mission', arguments: {} },
+        },
+        { user_id: 'user-1', client_id: 'client-1' } as any,
+      ),
+    ).resolves.toMatchObject({
+      result: {
+        isError: true,
+        structuredContent: {
+          success: false,
+          error_code: expect.stringMatching(/^ARTIFACT_/),
+          error_class: expect.any(String),
+          workflow_class: 'get_mission',
+          effect_state: expect.any(String),
+          retry_policy: expect.any(Object),
+          correction: expect.any(Object),
+          agent_instruction: expect.any(String),
+          user_explanation: expect.any(Object),
+          forbidden_user_framing: expect.any(Array),
+          observability: expect.objectContaining({ fingerprint: expect.any(String) }),
+        },
+      },
+    })
+  })
 })

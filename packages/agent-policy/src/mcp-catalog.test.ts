@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { DOMAINS } from './domains.js'
 import { ON_HOLD_PROMPTMODE_ACTIONS } from './action-lifecycle.js'
+import { DOMAINS } from './domains.js'
 import {
   assertMcpCatalogIntegrity,
   assertNoForbiddenMcpIdentityArgs,
@@ -79,6 +79,11 @@ describe('MCP catalog', () => {
     expect(toolActions).toContain('attach_form_asset')
     expect(toolActions).toContain('list_sequences')
     expect(toolActions).toContain('list_missions')
+    expect(toolActions).toContain('get_mission')
+    expect(toolActions).toContain('get_mission_plan')
+    expect(toolActions).toContain('get_mission_logs')
+    expect(toolActions).toContain('get_mission_deliverables')
+    expect(toolActions).toContain('list_mission_subtasks')
     expect(toolActions).toContain('list_spaces')
     expect(toolActions).toContain('get_space')
     expect(toolActions).toContain('list_space_views')
@@ -252,6 +257,9 @@ describe('MCP catalog', () => {
     )
     expect(grants.find((grant) => grant.id === 'missions')?.includedActions).toContain(
       'create_space_status',
+    )
+    expect(grants.find((grant) => grant.id === 'missions')?.includedActions).toContain(
+      'get_mission_deliverables',
     )
   })
 

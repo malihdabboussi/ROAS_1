@@ -1,6 +1,6 @@
 ---
-title: "The ROAS MCP"
-description: "Connect ROAS to Claude, ChatGPT, Cursor, and other AI tools so they can work with your Brain, Spaces, campaigns, and missions."
+title: 'The ROAS MCP'
+description: 'Connect ROAS to Claude, ChatGPT, Cursor, and other AI tools so they can work with your Brain, Spaces, campaigns, and missions.'
 ---
 
 ROAS has its own MCP server at **`https://mcp.roas.io`**. Add it to your favorite AI tool — Claude, ChatGPT, Cursor, and others — and that tool can work with your ROAS workspace directly.
@@ -8,22 +8,23 @@ ROAS has its own MCP server at **`https://mcp.roas.io`**. Add it to your favorit
 This means you can sit in Claude and ask it to search your Company Brain, save a note to your memories, create a campaign, or kick off a mission — and it all lands in ROAS, exactly as if you'd done it in the app.
 
 <Callout type="info">
-  Looking for the opposite — connecting outside tools *into* your ROAS agents? That's covered in [MCP Servers](/integrations/mcp-servers).
+  Looking for the opposite — connecting outside tools *into* your ROAS agents? That's covered in
+  [MCP Servers](/integrations/mcp-servers).
 </Callout>
 
 ## What You Can Do
 
 Once connected, your AI tool can:
 
-| Area | What it can do |
-|---|---|
-| **The Brain** | Search your Personal, Company, Customer, and Agent Brains, and save new memories and knowledge |
-| **Documents** | Read, search, and save documents in your Spaces, including downloadable Word docs |
-| **Spaces & Tasks** | Browse your Spaces, views, items, and tasks |
-| **Campaigns** | View your campaigns and create new ones |
-| **Marketing** | View and create funnels, websites, pages, and email sequences |
-| **Missions** | View your missions and send new ones to your team |
-| **Agent Skills** | View your agents' skills and teach them new ones |
+| Area               | What it can do                                                                                  |
+| ------------------ | ----------------------------------------------------------------------------------------------- |
+| **The Brain**      | Search your Personal, Company, Customer, and Agent Brains, and save new memories and knowledge  |
+| **Documents**      | Read, search, and save documents in your Spaces, including downloadable Word docs               |
+| **Spaces & Tasks** | Browse your Spaces, views, items, and tasks                                                     |
+| **Campaigns**      | View your campaigns and create new ones                                                         |
+| **Marketing**      | View and create funnels, websites, pages, and email sequences                                   |
+| **Missions**       | Launch missions, inspect their plans and subtasks, follow logs, and verify durable deliverables |
+| **Agent Skills**   | View your agents' skills and teach them new ones                                                |
 
 ## What It Will Never Do
 
@@ -46,10 +47,12 @@ The address is the same everywhere: `https://mcp.roas.io`
         In Claude (web or desktop), go to **Settings → Connectors**.
       </Step>
       <Step title="Add a Custom Connector">
-        Click **Add custom connector**, name it **ROAS**, and paste `https://mcp.roas.io` as the URL.
+        Click **Add custom connector**, name it **ROAS**, and paste `https://mcp.roas.io` as the
+        URL.
       </Step>
       <Step title="Sign In to ROAS">
-        Claude opens the ROAS approval screen. Sign in, choose your account, pick the permissions, and click **Allow**.
+        Claude opens the ROAS approval screen. Sign in, choose your account, pick the permissions,
+        and click **Allow**.
       </Step>
       <Step title="Start Talking">
         Try: *"Search my ROAS Company Brain for our pricing strategy."*
@@ -59,13 +62,15 @@ The address is the same everywhere: `https://mcp.roas.io`
   <Tab label="ChatGPT">
     <Steps>
       <Step title="Open Connector Settings">
-        In ChatGPT, go to **Settings → Connectors**. (Availability depends on your ChatGPT plan — connectors may be under **Apps & Connectors**.)
+        In ChatGPT, go to **Settings → Connectors**. (Availability depends on your ChatGPT plan —
+        connectors may be under **Apps & Connectors**.)
       </Step>
       <Step title="Add ROAS">
         Add a new connector with the URL `https://mcp.roas.io` and name it **ROAS**.
       </Step>
       <Step title="Sign In to ROAS">
-        ChatGPT opens the ROAS approval screen. Sign in, choose your account, pick the permissions, and click **Allow**.
+        ChatGPT opens the ROAS approval screen. Sign in, choose your account, pick the permissions,
+        and click **Allow**.
       </Step>
       <Step title="Start Talking">
         Try: *"List my ROAS campaigns and summarize what's active."*
@@ -81,7 +86,8 @@ The address is the same everywhere: `https://mcp.roas.io`
         Name it **ROAS**, choose the **HTTP** type, and paste `https://mcp.roas.io` as the URL.
       </Step>
       <Step title="Sign In to ROAS">
-        Cursor opens the ROAS approval screen in your browser. Sign in, choose your account, pick the permissions, and click **Allow**.
+        Cursor opens the ROAS approval screen in your browser. Sign in, choose your account, pick
+        the permissions, and click **Allow**.
       </Step>
       <Step title="Start Talking">
         Try: *"Save this architecture decision to my ROAS user brain."*
@@ -103,8 +109,19 @@ The address is the same everywhere: `https://mcp.roas.io`
   </Tab>
 </Tabs>
 
+## Claude Missions Plugin
+
+The repository also contains the **ROAS Missions** Claude plugin. It bundles the hosted connector with two reusable skills: a general mission runner and the Pixel Ladder 1–30 validation runbook.
+
+For an organization-managed install, add the `dylanvanas1/roas-platform` GitHub repository under **Organization settings → Plugins → Add plugins → GitHub**, enable **ROAS Missions**, and authenticate the `roas-platform` connector when Claude asks. The repository marketplace manifest is `.claude-plugin/marketplace.json`; the plugin is stored in `plugins/roas-missions`.
+
+The mission workflow does not treat a launch receipt as completion. Claude follows the mission id through `get_mission`, `get_mission_plan`, `list_mission_subtasks`, `get_mission_logs`, and `get_mission_deliverables`, then reports the observed state and evidence. Human approval gates remain human decisions.
+
+Try: _"Run the Pixel Ladder test runbook, classify blocked items first, and show PASS, FAIL, or BLOCKED evidence for every requested check."_
+
 <Callout type="tip">
-  Any other app that supports remote MCP servers works too — just give it the address `https://mcp.roas.io` and sign in when asked.
+  Any other app that supports remote MCP servers works too — just give it the address
+  `https://mcp.roas.io` and sign in when asked.
 </Callout>
 
 ## The Approval Screen
@@ -127,8 +144,8 @@ The ROAS MCP doesn't just hand over tools — it teaches the connected AI how to
 
 ## Good Things to Try
 
-- *"Search my Customer Brain — what objections come up most on sales calls?"*
-- *"Save this competitor research to my Company Brain."*
-- *"Create a funnel for the spring webinar and add a registration page."*
-- *"What tasks are open in my Launch space?"*
-- *"Send a mission to write three email subject lines for the new offer."*
+- _"Search my Customer Brain — what objections come up most on sales calls?"_
+- _"Save this competitor research to my Company Brain."_
+- _"Create a funnel for the spring webinar and add a registration page."_
+- _"What tasks are open in my Launch space?"_
+- _"Send a mission to write three email subject lines for the new offer."_

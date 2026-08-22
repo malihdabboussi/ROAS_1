@@ -135,6 +135,26 @@ const PROMPTS = [
       'Use Brain search only when the user asks for Brain knowledge. Use search_space_context for campaign or Space context.',
     ].join('\n'),
   ),
+  textPrompt(
+    'vibey_mission_operations',
+    'Launch a Vibey mission, supervise execution, and report evidence-backed results.',
+    [
+      'Use this workflow when the user wants Vibey to execute a bounded body of work.',
+      '',
+      'Scope and launch:',
+      '1. Use list_campaigns and list_spaces to resolve the intended campaign_id and space_id.',
+      '2. Confirm the resolved campaign and Space before create_mission when the user did not already provide exact ids.',
+      '3. Call create_mission with a complete brief and a stable idempotency_key so a retry cannot create duplicate work.',
+      '',
+      'Supervision:',
+      '1. Save the returned mission id.',
+      '2. Use get_mission for current status and get_mission_plan for planned execution.',
+      '3. Use list_mission_subtasks to inspect step status and get_mission_logs for execution evidence.',
+      '4. Use get_mission_deliverables before claiming that work is complete.',
+      '',
+      'Report each requested check as PASS, FAIL, or BLOCKED with the mission id and the exact log, subtask, or deliverable evidence. Never infer completion from mission creation alone.',
+    ].join('\n'),
+  ),
 ] as const satisfies readonly VibeyMcpPromptDefinition[]
 
 @Injectable()

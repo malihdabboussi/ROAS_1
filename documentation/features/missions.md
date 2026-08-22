@@ -1,6 +1,14 @@
 # Missions harness
 
-Last updated: 2026-08-19
+Last updated: 2026-08-22
+
+## External Claude mission supervision
+
+The hosted ROAS MCP mission surface supports the full external supervision loop. Alongside `create_mission` and `list_missions`, authenticated clients can call `get_mission`, `get_mission_plan`, `list_mission_subtasks`, `get_mission_logs`, and `get_mission_deliverables`. These actions reuse the existing mission schemas, lifecycle classification, preflight coverage, permission domain, and artifact execution path. Sensitive detail reads continue to enforce edit-level mission access.
+
+The MCP publishes `vibey_mission_operations` guidance and the `vibey://mcp/workflows/missions` resource. Both require a client to preserve the returned mission id, respect human gates, use a stable idempotency key for launch retries, and verify durable deliverables before claiming completion. Returned and thrown execution failures remain MCP tool results with the structured tool-error contract intact, including retry guidance and workflow classification.
+
+The repository Claude marketplace exposes the `roas-missions` plugin from `plugins/roas-missions`. Its general mission skill uses the complete supervision loop, while its Pixel Ladder skill carries the 1–30 acceptance runbook, production safety constraints, deployment gates, and `PASS`/`FAIL`/`BLOCKED` evidence format.
 
 ## Full subtask workspace
 
@@ -331,6 +339,8 @@ If the direct pool hits a transport failure, the worker removes it from service 
 Outbox mission-status validation uses the direct pool when available, keeping queue publication independent of PostgREST latency. The worker's Supabase HTTP fallback allows 60 seconds per request with two retries, matching the API client. This is intentionally longer than the former seven-second window: a production Webinar Fulfillment smoke run reached an active BullMQ consumer while authenticated PostgREST reads took about 29 seconds, so the shorter timeout repeatedly aborted otherwise viable requests and left the mission in `inbox`.
 
 ## Decision Log
+
+- 2026-08-22: Added complete mission supervision to the hosted MCP and a GitHub-distributed Claude plugin for general ROAS missions and the Pixel Ladder 1–30 runbook. External clients now verify plans, subtasks, logs, and deliverables instead of treating mission creation as completion, and MCP failures preserve the structured tool-error contract.
 
 - 2026-08-19: Added Task Cleanup as a Quick Mission. Atlas audits a call window plus open native tasks, writes `Task Cleanup Board`, waits for Approve & continue, then files only approved proposed work as native `create_task` rows. Analysis is operator-wide unless a client filter is set; the selected Space is where the board and tasks land.
 

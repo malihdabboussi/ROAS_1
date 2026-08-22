@@ -1,0 +1,18 @@
+{
+  "name": "roas-plugins",
+  "description": "Claude plugins for operating the ROAS platform.",
+  "owner": {
+    "name": "ROAS"
+  },
+  "plugins": [
+    {
+      "name": "roas-missions",
+      "source": "./plugins/roas-missions",
+      "description": "Run and verify ROAS missions from Claude through the hosted ROAS MCP connector.",
+      "version": "0.1.0",
+      "author": {
+        "name": "ROAS"
+      }
+    }
+  ]
+}

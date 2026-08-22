@@ -11,6 +11,7 @@ describe('VibeyMcpToolCatalogService', () => {
     const createSpaceField = findTool('create_space_field')
     const skillReference = findTool('create_agent_skill_reference')
     const imageReference = findTool('upload_agent_skill_image_reference')
+    const getMission = findTool('get_mission')
 
     expect(saveUserMemory?.inputSchema).toMatchObject({
       type: 'object',
@@ -76,6 +77,13 @@ describe('VibeyMcpToolCatalogService', () => {
           description: expect.stringContaining('skill-assets'),
         }),
         asset_ref: expect.objectContaining({ type: 'object' }),
+      }),
+    })
+    expect(getMission?.inputSchema).toMatchObject({
+      type: 'object',
+      required: ['mission_id'],
+      properties: expect.objectContaining({
+        mission_id: expect.objectContaining({ type: 'string' }),
       }),
     })
   })

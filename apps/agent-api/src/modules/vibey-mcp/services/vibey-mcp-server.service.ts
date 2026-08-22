@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { buildErrorEnvelope } from '../../artifacts/services/artifact-error-classifier'
 import { ArtifactsService } from '../../artifacts/services/artifacts.service'
 import type { VibeyMcpTokenClaims } from '../types/vibey-mcp.types'
 import { VibeyMcpInstructionsService } from './vibey-mcp-instructions.service'
@@ -75,18 +76,25 @@ export class VibeyMcpServerService {
         body.params?.arguments && typeof body.params.arguments === 'object'
           ? (body.params.arguments as Record<string, unknown>)
           : {}
-      const tool = this.policy.assertAllowed({ toolName: name, args, claims })
-      const sessionKey = await this.sessions.buildSessionKey(claims, args)
-      const result = await this.artifacts.executeAction(tool.action, args, sessionKey)
-      const maybeRecord =
-        result && typeof result === 'object' ? (result as Record<string, unknown>) : null
-      if (maybeRecord?.success === false) {
-        return this.error(body.id, -32000, String(maybeRecord.error ?? 'MCP tool failed'))
+      try {
+        const tool = this.policy.assertAllowed({ toolName: name, args, claims })
+        const sessionKey = await this.sessions.buildSessionKey(claims, args)
+        const result = await this.artifacts.executeAction(tool.action, args, sessionKey)
+        const maybeRecord =
+          result && typeof result === 'object' ? (result as Record<string, unknown>) : null
+        if (maybeRecord?.success === false) {
+          return this.toolError(body.id, this.completeToolFailure(maybeRecord, tool.action))
+        }
+        return this.result(body.id, {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          structuredContent: this.toStructuredContent(result),
+        })
+      } catch (error) {
+        return this.toolError(
+          body.id,
+          buildErrorEnvelope(error, { workflowClass: name || 'unknown_mcp_tool' }),
+        )
       }
-      return this.result(body.id, {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-        structuredContent: this.toStructuredContent(result),
-      })
     }
     return this.error(body.id, -32601, `Unknown MCP method: ${body.method ?? 'unknown'}`)
   }
@@ -97,6 +105,50 @@ export class VibeyMcpServerService {
 
   private error(id: JsonRpcRequest['id'], code: number, message: string) {
     return { jsonrpc: '2.0', id: id ?? null, error: { code, message } }
+  }
+
+  private completeToolFailure(
+    failure: Record<string, unknown>,
+    workflowClass: string,
+  ): Record<string, unknown> {
+    if (
+      typeof failure.error_code === 'string' &&
+      typeof failure.error_class === 'string' &&
+      typeof failure.effect_state === 'string' &&
+      typeof failure.retry_policy === 'object' &&
+      typeof failure.correction === 'object' &&
+      typeof failure.agent_instruction === 'string' &&
+      typeof failure.user_explanation === 'object' &&
+      Array.isArray(failure.forbidden_user_framing) &&
+      typeof failure.observability === 'object'
+    ) {
+      return {
+        ...failure,
+        workflow_class:
+          typeof failure.workflow_class === 'string' ? failure.workflow_class : workflowClass,
+      }
+    }
+    return {
+      ...failure,
+      ...buildErrorEnvelope(failure.error ?? 'MCP tool failed', { workflowClass }),
+    }
+  }
+
+  private toolError(id: JsonRpcRequest['id'], failure: object) {
+    const failureRecord = { ...failure } as Record<string, unknown>
+    const userExplanation =
+      failureRecord.user_explanation && typeof failureRecord.user_explanation === 'object'
+        ? (failureRecord.user_explanation as Record<string, unknown>)
+        : null
+    const text =
+      typeof userExplanation?.sentence === 'string'
+        ? userExplanation.sentence
+        : String(failureRecord.error ?? 'The MCP tool could not complete this request.')
+    return this.result(id, {
+      content: [{ type: 'text', text }],
+      structuredContent: failureRecord,
+      isError: true,
+    })
   }
 
   /** MCP structuredContent must be a JSON object; wrap bare arrays and primitives. */

@@ -39874,3 +39874,27 @@ Reason not done now: The id doubles as the stream-update correlation key; changi
 - `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` — 2642 LOC (allowlisted; limit 600/400 for components). This change ended up not touching it (mission-focus subscription lives in `use-chat-send-awareness.ts`), but it still needs staged decomposition.
 - `apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.tsx` — 399 LOC, one line under the 400 component limit after extracting `useMissionDetailFocus`; the next addition will trip the gate. A state-wiring hook extraction would create headroom.
 - Reason not done now: decomposing them is unrelated refactoring risk on a targeted fix branch (claude/mission-chat-avatar-fixes).
+
+## 2026-08-22 — agent-policy — hosted MCP catalog is near the data-file LOC cap
+
+Status: Open
+
+Found while: Adding Claude mission supervision tools to the hosted MCP catalog.
+
+Evidence: `packages/agent-policy/src/mcp-catalog.ts` is 960 LOC after the requested change, near the 1,000-line data/config file limit.
+
+Needed work: Split tool entries and permission-group definitions into domain-owned catalog modules while retaining one composed export and the existing drift tests.
+
+Reason not done now: Catalog decomposition is a behavior-neutral architecture refactor outside the Claude mission plugin scope.
+
+## 2026-08-22 - [ARCH] Studio chat service remains over the frontend service limit
+
+Status: Open
+
+Found while: Unblocking the `roas-web` Vercel preview for the Claude mission plugin PR.
+
+Evidence: `wc -l` reports `apps/web/src/features/studio/services/chat.service.ts` at 2,988 LOC after restoring one missing type-only import, far above the 600 LOC project-architecture limit. The service still combines conversation management, model catalog access, stream recovery, SSE parsing, and optimistic store updates.
+
+Needed work: Move model catalog access to the existing shared `apps/web/src/lib/chat/llm-models-api.ts` surface, then continue splitting stream recovery and transport orchestration into focused modules without changing the compatibility exports.
+
+Reason not done now: The requested branch needs a one-line compiler repair to make its deployment checks actionable; a Studio service migration is unrelated, high-risk refactoring.

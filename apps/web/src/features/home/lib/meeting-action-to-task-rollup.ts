@@ -1,6 +1,5 @@
 import type { MeetingAction } from '@/features/home/services/meeting-workspace-api'
 import type { TaskRollupItem } from '@/lib/tasks'
-import { campaignNameFromMappingPath } from '@/lib/work-items'
 
 const DONE_STATUSES = new Set(['done', 'complete', 'completed', 'resolved'])
 

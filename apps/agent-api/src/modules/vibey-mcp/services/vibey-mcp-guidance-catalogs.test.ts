@@ -66,4 +66,27 @@ describe('Vibey MCP guidance catalogs', () => {
     expect(text).not.toContain('write local SKILL.md')
     expect(text).not.toContain('create a local SKILL.md')
   })
+
+  it('documents mission launch, supervision, and evidence collection', () => {
+    const prompt = new VibeyMcpPromptCatalogService().getPrompt('vibey_mission_operations')
+    const resource = new VibeyMcpResourceCatalogService().getResource(
+      'vibey://mcp/workflows/missions',
+    )
+    const text = [
+      prompt?.description,
+      ...(prompt?.messages.map((message) => message.content.text) ?? []),
+      resource?.text,
+    ].join('\n')
+
+    expect(text).toContain('create_mission')
+    expect(text).toContain('get_mission')
+    expect(text).toContain('get_mission_plan')
+    expect(text).toContain('list_mission_subtasks')
+    expect(text).toContain('get_mission_logs')
+    expect(text).toContain('get_mission_deliverables')
+    expect(text).toContain('idempotency_key')
+    expect(text).toContain('PASS')
+    expect(text).toContain('FAIL')
+    expect(text).toContain('BLOCKED')
+  })
 })

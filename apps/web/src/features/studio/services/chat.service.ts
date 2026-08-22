@@ -37,6 +37,7 @@ import type {
   ChatStatusResponse,
   ChatTimelineEvent,
   Conversation,
+  LlmModelOption,
   Message,
   SendMessageParams,
 } from '../types'
