@@ -67,6 +67,7 @@ describe('MCP catalog', () => {
   it('exposes read tools for each granted read scope', () => {
     const toolActions = new Set(MCP_V1_TOOL_CATALOG.map((tool) => tool.action))
     expect(toolActions).toContain('list_user_brain_memories')
+    expect(toolActions).toContain('synthesize_user_brain_topic')
     expect(toolActions).toContain('list_available_brain_scopes')
     expect(toolActions).toContain('resolve_agent_brain')
     expect(toolActions).toContain('atlas_save_brain_context')

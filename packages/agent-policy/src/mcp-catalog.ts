@@ -63,6 +63,14 @@ export const MCP_V1_TOOL_CATALOG = [
     inputMode: 'action_schema',
   },
   {
+    toolName: 'synthesize_user_brain_topic',
+    action: 'synthesize_user_brain_topic',
+    requiredScopes: [MCP_BASE_SCOPE, 'read_brain_personal'],
+    description:
+      'Build a source-grounded User Brain dossier for questions about the authenticated user.',
+    inputMode: 'action_schema',
+  },
+  {
     toolName: 'list_user_brain_memories',
     action: 'list_user_brain_memories',
     requiredScopes: [MCP_BASE_SCOPE, 'read_brain_personal'],
@@ -620,12 +628,13 @@ export const MCP_PERMISSION_GROUPS = [
   {
     id: 'personal_brain',
     label: 'Personal brain',
-    description: 'Search and save memories in your personal brain.',
+    description: 'Search, synthesize, and save memories in your personal brain.',
     readScopes: ['read_brain_personal'],
     writeScopes: ['write_user_memory'],
     includedActions: [
       'search_brain_context',
       'search_user_brain',
+      'synthesize_user_brain_topic',
       'list_user_brain_memories',
       'list_available_brain_scopes',
       'save_user_memory',

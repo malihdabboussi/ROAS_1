@@ -140,6 +140,7 @@ import { ArtifactSpaceSchemaService } from './services/artifact-space-schema.ser
 import { ArtifactStateMetaIntegrationsGithubTeamBrainService } from './services/artifact-state-meta-integrations-github-team-brain.service'
 import { ArtifactTasksService } from './services/artifact-tasks.service'
 import { ArtifactThemesService } from './services/artifact-themes.service'
+import { ArtifactUserBrainTopicSynthesisService } from './services/artifact-user-brain-topic-synthesis.service'
 import { ArtifactVisualDocService } from './services/artifact-visual-doc.service'
 import { ArtifactsService } from './services/artifacts.service'
 import { MissionContextEnricherService } from './services/mission-context-enricher.service'
@@ -180,6 +181,7 @@ import { MissionContextEnricherService } from './services/mission-context-enrich
     ArtifactBrainReadActionsService,
     ArtifactBrainSearchActionsService,
     ArtifactBrainTimelineActionsService,
+    ArtifactUserBrainTopicSynthesisService,
     ArtifactCampaignBrainContextService,
     ArtifactOffersAdsService,
     ArtifactFunnelFileSupportService,

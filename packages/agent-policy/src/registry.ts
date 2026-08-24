@@ -260,6 +260,7 @@ export const ACTION_TO_DOMAIN = {
   save_user_memory: 'write_user_memory',
   atlas_save_brain_context: 'write_brain',
   search_user_brain: 'read_brain_personal',
+  synthesize_user_brain_topic: 'read_brain_personal',
   search_brain_context: 'read_brain_personal',
   update_campaign_context: 'edit_campaign',
   create_awareness_point: 'edit_campaign',

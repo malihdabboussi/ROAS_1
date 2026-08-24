@@ -39898,3 +39898,15 @@ Evidence: `wc -l` reports `apps/web/src/features/studio/services/chat.service.ts
 Needed work: Move model catalog access to the existing shared `apps/web/src/lib/chat/llm-models-api.ts` surface, then continue splitting stream recovery and transport orchestration into focused modules without changing the compatibility exports.
 
 Reason not done now: The requested branch needs a one-line compiler repair to make its deployment checks actionable; a Studio service migration is unrelated, high-risk refactoring.
+
+## 2026-08-23 - [ARCH] User Brain synthesis touched oversized shared action catalogs
+
+Status: Open
+
+Found while: Adding the hosted MCP User Brain topic-synthesis action and Claude skill.
+
+Evidence: `wc -l` reports `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts` at 4,442 LOC, `apps/agent-api/src/modules/artifacts/services/artifact-capability.policy.ts` at 1,437 LOC, `apps/agent-api/src/modules/artifacts/services/artifact-action.registry.ts` at 734 LOC, `apps/agent-api/src/modules/agent-sync/contracts/agent-instruction-contracts.ts` at 749 LOC, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts` at 2,761 LOC, `packages/agent-policy/src/action-contracts.ts` at 1,203 LOC, `packages/agent-policy/src/mcp-catalog.ts` at 969 LOC, and `docker/tools/vibey-backend/index.ts` at 1,194 LOC. The new focused synthesis service is 280 LOC, the workflow circuit classifier is 281 LOC, and `artifact-brain-scholar.service.ts` remains within the service limit at 462 LOC.
+
+Needed work: Split action schemas, capability sets, registries, generated action docs, instruction contracts, policy contracts, backend tool allowlists, and hosted MCP catalog entries into domain-owned modules while retaining composed exports and exhaustive drift tests.
+
+Reason not done now: Those centralized surfaces are required by the current agent-tool contract, and decomposing all action families is unrelated architecture work with broader regression risk than this scoped read action.

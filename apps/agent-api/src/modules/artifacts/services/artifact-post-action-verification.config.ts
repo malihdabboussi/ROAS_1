@@ -118,6 +118,7 @@ const STATUS_ONLY_ACTIONS = new Map<string, string>([
 
 const INTENTIONALLY_NOT_REQUIRED_ACTIONS = new Map<string, string>([
   ['supabase_list_tables', 'read-only Supabase schema lookup'],
+  ['synthesize_user_brain_topic', 'read-only User Brain topic synthesis'],
   ['transcribe_audio', 'direct transcript output; it does not persist a separate artifact'],
   ['dream_inspect_agent', 'read-only Dream Ops agent inspection'],
   ['dream_search_evidence', 'read-only Dream Ops evidence lookup'],
@@ -203,7 +204,10 @@ function startsWithAny(action: string, prefixes: readonly string[]): boolean {
 }
 
 function getRequiredStrategies(action: string): ArtifactPostActionVerificationStrategy[] {
-  const strategies = new Set<ArtifactPostActionVerificationStrategy>(['db_readback', 'provider_ack'])
+  const strategies = new Set<ArtifactPostActionVerificationStrategy>([
+    'db_readback',
+    'provider_ack',
+  ])
 
   if (URL_OUTPUT_ACTIONS.has(action)) {
     strategies.add('asset_ref')
@@ -251,7 +255,8 @@ export function getPostActionVerificationPolicy(
   if (status === 'required') {
     return {
       status,
-      reason: 'write/output action must prove the created, updated, or external result technically exists',
+      reason:
+        'write/output action must prove the created, updated, or external result technically exists',
       strategies: getRequiredStrategies(action),
     }
   }

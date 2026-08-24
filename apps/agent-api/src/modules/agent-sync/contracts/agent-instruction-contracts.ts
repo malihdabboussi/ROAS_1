@@ -271,7 +271,7 @@ export const AGENT_INSTRUCTION_CONTRACTS: AgentInstructionContract[] = [
   },
   {
     id: 'brain-knowledge-protocol',
-    version: 3,
+    version: 4,
     title: 'Brain Knowledge Protocol',
     summary:
       'Use when the answer may live in durable user, company, agent, customer, or cross-brain memory.',
@@ -279,7 +279,7 @@ export const AGENT_INSTRUCTION_CONTRACTS: AgentInstructionContract[] = [
     why: 'Brain is durable knowledge that survives conversations. Choosing the right Brain family keeps personal preferences, company rules, agent expertise, and customer knowledge distinct, so agents retrieve evidence from the right long-term memory instead of mixing scopes.',
     instruction: [
       'Use Brain when the user asks about remembered facts, preferences, strategy, customer patterns, company rules, agent expertise, or knowledge that should persist beyond the current Space or conversation.',
-      "Search the most specific Brain family first. Use `search_user_brain` for the user's personal knowledge, preferences, decisions, and working style. Use `search_company_brain` for company-wide rules, positioning, policies, strategy, and shared operating context. Use `resolve_agent_brain` before `search_agent_brain` when the knowledge belongs to a specific agent role. Use `search_customer_brain` for customer, avatar, interview, prospect, and account knowledge.",
+      'Search the most specific Brain family first. Use `synthesize_user_brain_topic` when the user asks what they think, believe, prefer, decided, learned, or repeatedly said about one topic; cite its E1...En evidence refs. Use `search_user_brain` for raw personal Brain search. Use `search_company_brain` for company-wide rules, positioning, policies, strategy, and shared operating context. Use `resolve_agent_brain` before `search_agent_brain` when the knowledge belongs to a specific agent role. Use `search_customer_brain` for customer, avatar, interview, prospect, and account knowledge.',
       'Use `search_brain_context` only when the user asks to search all brains, every accessible brain, shared brains, or multiple Brain families. Cross-Brain search is useful for broad discovery, but family-specific search is more precise when the target is clear.',
       'Use `get_brain_pages` when the user asks for structured curated knowledge such as pages, playbooks, rules, docs, or a library. If pages are empty or too broad, use semantic Brain search next.',
       "Treat Brain search results as evidence, not permission to guess. When results say context is insufficient, search again with a better query rather than presenting an unsupported memory as fact. For first-person fill, guest prep, bios, or write-as-me, search identity queries before asking the user to re-introduce themselves. Do not say you cannot access the user's personal Brain, and do not send that work to Atlas.",
@@ -287,6 +287,7 @@ export const AGENT_INSTRUCTION_CONTRACTS: AgentInstructionContract[] = [
     ].join('\n\n'),
     requiredActions: [
       'search_user_brain',
+      'synthesize_user_brain_topic',
       'search_company_brain',
       'resolve_agent_brain',
       'search_agent_brain',
@@ -311,6 +312,12 @@ export const AGENT_INSTRUCTION_CONTRACTS: AgentInstructionContract[] = [
         userRequest: 'What do you remember about how I like landing pages?',
         use: 'search_user_brain.',
         reason: "The request is about the user's personal preferences and working style.",
+      },
+      {
+        userRequest: 'What do I think about webinars?',
+        use: 'synthesize_user_brain_topic with topic webinars and the full question, then answer from cited evidence refs.',
+        reason:
+          "The request asks for a cross-source synthesis of the user's beliefs and decisions about one topic.",
       },
       {
         userRequest: "Here's a link, help me fill this out.",

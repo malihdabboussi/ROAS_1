@@ -275,6 +275,7 @@ const SUPPORTED_ACTIONS = [
   'transfer_brain_node',
   'delete_brain_node',
   'search_user_brain',
+  'synthesize_user_brain_topic',
   'search_brain_context',
   'search_agent_brain',
   'search_campaign_brain',

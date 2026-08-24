@@ -12,6 +12,7 @@ import { ArtifactBrainPerspectiveActionsService } from './artifact-brain-perspec
 import { ArtifactBrainReadActionsService } from './artifact-brain-read-actions.service'
 import { ArtifactBrainSearchActionsService } from './artifact-brain-search-actions.service'
 import { ArtifactBrainTimelineActionsService } from './artifact-brain-timeline-actions.service'
+import { ArtifactUserBrainTopicSynthesisService } from './artifact-user-brain-topic-synthesis.service'
 
 @Injectable()
 export class ArtifactBrainScholarService {
@@ -28,6 +29,7 @@ export class ArtifactBrainScholarService {
     private readonly brainReadActionsService: ArtifactBrainReadActionsService = new ArtifactBrainReadActionsService(),
     private readonly brainSearchActionsService: ArtifactBrainSearchActionsService = new ArtifactBrainSearchActionsService(),
     private readonly brainTimelineActionsService: ArtifactBrainTimelineActionsService = new ArtifactBrainTimelineActionsService(),
+    private readonly userBrainTopicSynthesisService: ArtifactUserBrainTopicSynthesisService = new ArtifactUserBrainTopicSynthesisService(),
   ) {}
 
   getHandlers(target: Record<string, any>): Record<string, ArtifactActionHandler> {
@@ -45,6 +47,8 @@ export class ArtifactBrainScholarService {
         this.brainReadActionsService.listBrainScopes(target, data, sessionKey),
       list_user_brain_memories: (data, sessionKey) =>
         this.brainReadActionsService.listRecentMemories(target, data, sessionKey),
+      synthesize_user_brain_topic: (data, sessionKey) =>
+        this.userBrainTopicSynthesisService.synthesizeTopic(target, data, sessionKey),
       list_agent_brain_domains: (data, sessionKey) =>
         this.brainReadActionsService.listBrainDomains(target, data, sessionKey),
       get_agent_brain_gaps: (data, sessionKey) =>
@@ -455,5 +459,4 @@ export class ArtifactBrainScholarService {
       includeLegacySubjectFallback,
     }
   }
-
 }

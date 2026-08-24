@@ -16,6 +16,7 @@ import {
 const canonicalBrainActions = [
   'save_user_memory',
   'search_user_brain',
+  'synthesize_user_brain_topic',
   'search_brain_context',
   'crystallize_user_brain',
   'ingest_user_brain_text',
@@ -395,8 +396,9 @@ describe('artifact action scope helpers', () => {
     const sessionKey =
       'agent:atlas:brain_ops:atlas:user-1:outbox-1::brain:187a9756-564a-44d5-9a5e-485d69555806'
 
-    expect(withBrainOpsActionDefaults('search_customer_brain', { query: 'pricing' }, sessionKey))
-      .toEqual({ query: 'pricing' })
+    expect(
+      withBrainOpsActionDefaults('search_customer_brain', { query: 'pricing' }, sessionKey),
+    ).toEqual({ query: 'pricing' })
   })
 
   it('passes matching scope', () => {

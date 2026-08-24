@@ -1,6 +1,6 @@
 # MCP Brain Audit
 
-Last Modified: 2026-06-04
+Last Modified: 2026-08-23
 
 ## Summary
 
@@ -10,6 +10,7 @@ The practical MCP use case is intentionally small:
 
 - Discover accessible Brain scopes, especially Agent Brains and campaign/Space-related context.
 - Search those brains for information.
+- Synthesize an evidence-backed answer about what the authenticated user thinks about one topic.
 - Save information through the supported memory/write path, usually by routing the request to Atlas/user-memory handling rather than exposing every low-level Brain model.
 
 ## Personal Brain
@@ -26,6 +27,7 @@ What exists internally:
 What MCP exposes today:
 
 - `search_user_brain`
+- `synthesize_user_brain_topic`
 - `list_user_brain_memories`
 - `save_user_memory`
 - `search_brains`
@@ -41,8 +43,36 @@ Recommended MCP hierarchy:
 ```text
 list_user_brain_memories(limit?)
 → search_user_brain(query)
+→ synthesize_user_brain_topic(topic, question?, evidence_limit?)
 → save_user_memory(content, memory_type)
 ```
+
+### Topic synthesis data flow
+
+`synthesize_user_brain_topic` is a read-only personal Brain action. OAuth resolves the current user and optional organization; clients cannot pass either identity in tool arguments.
+
+```text
+Claude question
+→ personal Brain OAuth scope check
+→ four bounded retrieval angles
+→ candidate deduplication and evidence diversity
+→ grouped topic dossier with stable E1...En refs
+→ Claude writes the answer from cited evidence
+```
+
+The server returns evidence groups rather than generating uncited prose. Groups include beliefs, decisions, preferences, frameworks and strategies, stories and examples, perspectives, synthesized context, and supporting evidence. `coverage.context_sufficient`, source counts, confidence, and gaps tell the client when not to claim a complete answer.
+
+Example:
+
+```json
+{
+  "topic": "webinars",
+  "question": "What do I think about webinars?",
+  "evidence_limit": 24
+}
+```
+
+Claude should build the opening answer from `synthesis.short_answer_basis`, cite refs such as `[E1]` after material claims, and state the returned gaps when coverage is insufficient.
 
 ## Agent Brain
 
@@ -146,4 +176,8 @@ propose_company_brain_signal(truth, signal_type?, evidence_refs?, source metadat
 
 ## Decision
 
-Do not add broad Brain model tools in the Spaces change. The next Brain MCP pass should stay small: expose brain scope discovery, Agent Brain resolution, campaign/Space context search, and the approved memory save route. Pages, logs, beliefs, perspectives, lint, and edge/object mutation tools are not part of the normal MCP use case yet.
+Do not expose broad Brain model mutation tools solely to answer personal topic questions. The topic-synthesis path composes the existing permission-scoped retrieval lanes—including returned beliefs and perspectives—behind one bounded read tool, then leaves final prose synthesis to the MCP client so every claim can remain tied to returned evidence. Pages, logs, lint, and edge/object mutation tools are not part of this normal MCP use case.
+
+## Decision Log
+
+- 2026-08-23: Added `synthesize_user_brain_topic` as a read-only User Brain dossier action. Kept retrieval and evidence packing server-side, final prose client-side, and reused the existing MCP OAuth, action preflight, structured error, and workflow circuit paths.

@@ -71,6 +71,7 @@ Use `vibey_backend` for Brain operations. Choose the action family that matches 
 ### User Brain
 
 - `search_user_brain` - Search the authenticated user's personal default brain.
+- `synthesize_user_brain_topic` - Build a cited personal Brain dossier for one topic.
 - `save_user_memory` - Save one personal memory.
 - `ingest_user_brain_text` - Ingest text into User Brain.
 - `ingest_user_brain_link` - Ingest a URL into User Brain.

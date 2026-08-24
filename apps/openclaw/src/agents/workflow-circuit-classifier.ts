@@ -110,7 +110,7 @@ function classifyGenericAction(action: string, params: unknown): WorkflowClass {
     // circuit classes so wrong-family read failures cannot open a circuit
     // that blocks the correct family (e.g. search_agent_brain ≠ search_campaign_brain).
     const isBrainRead =
-      /^(search|get|list|read|resolve|describe|check|show|validate)_/.test(action) ||
+      /^(search|synthesize|get|list|read|resolve|describe|check|show|validate)_/.test(action) ||
       action === "list_available_brain_scopes";
     if (isBrainRead) {
       if (action.includes("campaign")) return "brain_campaign_read";
@@ -262,7 +262,8 @@ export function resolveVerifiedRecoveryOptions(
   if (workflowClass === "brain_campaign_read") {
     return [
       {
-        label: "Confirm the conversation is scoped to the client campaign or pass an explicit campaign_id.",
+        label:
+          "Confirm the conversation is scoped to the client campaign or pass an explicit campaign_id.",
         requires_user_choice: false,
       },
       {

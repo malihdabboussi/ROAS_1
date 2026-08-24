@@ -68,6 +68,12 @@ describe("workflow circuit classifier", () => {
     expect(
       resolveWorkflowClass({
         toolName: "campaign_capability",
+        params: { action: "synthesize_user_brain_topic", data: { topic: "webinars" } },
+      }),
+    ).toBe("memory_read");
+    expect(
+      resolveWorkflowClass({
+        toolName: "campaign_capability",
         params: { action: "ingest_user_brain_text", data: { text: "note", title: "t" } },
       }),
     ).toBe("memory_save");

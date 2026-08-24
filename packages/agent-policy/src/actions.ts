@@ -257,6 +257,7 @@ export const ACTIONS = [
   'save_user_memory',
   'atlas_save_brain_context',
   'search_user_brain',
+  'synthesize_user_brain_topic',
   'search_brain_context',
   'update_campaign_context',
   'create_awareness_point',

@@ -1281,6 +1281,13 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
     parameters:
       '```json\n{"action":"search_user_brain","label":"Searching your brain","data":{"query":"webinar follow-up strategy for conversions"}}\n```',
   },
+  synthesize_user_brain_topic: {
+    section: 'Brain',
+    description:
+      'Builds a source-grounded dossier for questions about what the authenticated user thinks, believes, prefers, decided, learned, or repeatedly said about one topic. Required: topic. Optional: the full question, brain_id, evidence_limit, and temporal filters. The result groups stable E1...En evidence refs across beliefs, decisions, preferences, frameworks, stories, perspectives, and synthesized context. Check coverage.context_sufficient and gaps before answering; cite evidence refs after material claims and do not invent missing beliefs or chronology.',
+    parameters:
+      '```json\n{"action":"synthesize_user_brain_topic","label":"Synthesizing your Brain evidence","data":{"topic":"webinars","question":"What do I think about webinars?","evidence_limit":24}}\n```',
+  },
   search_brain_context: {
     section: 'Brain',
     description:

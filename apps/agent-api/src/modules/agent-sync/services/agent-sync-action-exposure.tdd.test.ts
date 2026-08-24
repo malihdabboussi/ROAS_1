@@ -219,6 +219,7 @@ describe('runtime action exposure', () => {
     const { skillMd, referenceFiles } = generateScopedVibeyApiSkill(
       new Set([
         'search_user_brain',
+        'synthesize_user_brain_topic',
         'search_company_brain',
         'resolve_agent_brain',
         'search_agent_brain',
@@ -241,6 +242,7 @@ describe('runtime action exposure', () => {
     expect(referenceFiles['references/protocols/brain-knowledge-protocol.md']).toContain(
       'search_brain_context',
     )
+    expect(referenceFiles['references/brain.md']).toContain('## synthesize_user_brain_topic')
   })
 
   it('links actions to relevant workflow skills in reference docs', () => {
@@ -280,8 +282,7 @@ describe('runtime action exposure', () => {
       'flows',
     )
     const flowReference = referenceFiles['references/flows.md']
-    const schemaReference =
-      referenceFiles['references/protocols/space-schema-mutation-protocol.md']
+    const schemaReference = referenceFiles['references/protocols/space-schema-mutation-protocol.md']
     const spacesReference = referenceFiles['references/spaces.md']
     const output = [skillMd, flowReference, schemaReference, spacesReference].join('\n')
 

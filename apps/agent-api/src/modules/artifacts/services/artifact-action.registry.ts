@@ -40,6 +40,7 @@ function describeScope(scope: ChatScope): string {
 const GLOBAL_SCOPE_ACTIONS = new Set<string>([
   'save_user_memory',
   'search_user_brain',
+  'synthesize_user_brain_topic',
   'search_brain_context',
   'ingest_user_brain_link',
   'ingest_user_brain_text',
@@ -596,6 +597,7 @@ export const ACTION_METHOD_MAP: Record<ArtifactAction, string> = {
   save_user_memory: 'saveMemory',
   atlas_save_brain_context: 'atlasSaveBrainContext',
   search_user_brain: 'searchMemory',
+  synthesize_user_brain_topic: 'synthesizeUserBrainTopic',
   search_brain_context: 'searchBrainContext',
   update_campaign_context: 'updateCampaignContext',
   create_awareness_point: 'createAwarenessPoint',

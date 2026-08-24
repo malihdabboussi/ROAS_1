@@ -91,6 +91,7 @@ describe('agent instruction contracts', () => {
 
     expect(contract.requiredActions).toEqual([
       'search_user_brain',
+      'synthesize_user_brain_topic',
       'search_company_brain',
       'resolve_agent_brain',
       'search_agent_brain',
@@ -249,6 +250,7 @@ describe('agent instruction contracts', () => {
         'list_space_view_items',
         'list_tasks',
         'search_user_brain',
+        'synthesize_user_brain_topic',
         'search_company_brain',
         'resolve_agent_brain',
         'search_agent_brain',

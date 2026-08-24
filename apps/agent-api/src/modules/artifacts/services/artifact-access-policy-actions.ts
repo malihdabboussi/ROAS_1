@@ -1,6 +1,7 @@
 export const PERSONAL_BRAIN_POLICY_ACTIONS = new Set([
   'save_user_memory',
   'search_user_brain',
+  'synthesize_user_brain_topic',
   'list_user_brain_memories',
   'crystallize_user_brain',
   'ingest_user_brain_link',

@@ -97,6 +97,7 @@ describe('@vibey/agent-policy registry', () => {
       answer_mission_question: 'manage_mission_control',
       retry_mission_subtask: 'manage_mission_control',
       search_user_brain: 'read_brain_personal',
+      synthesize_user_brain_topic: 'read_brain_personal',
       search_brain_context: 'read_brain_personal',
       search_space_context: 'read_space_context',
       list_contacts: 'read_contacts',

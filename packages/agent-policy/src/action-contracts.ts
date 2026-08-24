@@ -656,6 +656,22 @@ const EXPLICIT_ACTION_CONTRACTS = {
     accessProof: 'canExecuteAction',
   },
 
+  synthesize_user_brain_topic: {
+    family: 'brain.memory',
+    operation: 'search',
+    sharedOwners: ['vibey', 'atlas', 'hr', 'delegator', 'managed'],
+    userPolicyAddable: true,
+    requiresExplicitUserIntent: false,
+    forbiddenUnlessExplicit: false,
+    hideFromArtifactTurns: false,
+    delegateResolution: 'none',
+    nearMissActions: ['search_user_brain', 'search_brain_context', 'get_brain_belief_patterns'],
+    skillKeys: ['brain-scholar', 'vibey-api'],
+    schemaRef: 'ACTION_SCHEMAS.synthesize_user_brain_topic',
+    userVisibleResult: 'User Brain topic synthesis dossier',
+    accessProof: 'canExecuteAction',
+  },
+
   ingest_user_brain_document: atlasIngestionContract('ingest_user_brain_document'),
   ingest_agent_brain_text: atlasIngestionContract('ingest_agent_brain_text'),
 

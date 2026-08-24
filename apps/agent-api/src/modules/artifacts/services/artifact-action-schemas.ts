@@ -2997,6 +2997,35 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       'Searching an Agent, Customer, or Company Brain; use the family-specific Brain search action instead.',
     ],
   },
+  synthesize_user_brain_topic: {
+    required: ['topic'],
+    optional: ['question', 'brain_id', 'evidence_limit', ...BRAIN_TEMPORAL_SEARCH_KEYS],
+    types: {
+      topic: 'string',
+      question: 'string',
+      brain_id: 'string',
+      evidence_limit: 'number',
+      ...BRAIN_TEMPORAL_SEARCH_TYPES,
+    },
+    useWhen: [
+      'Answer a question about what the authenticated user thinks, believes, prefers, decided, or has learned about one topic.',
+      'Build one evidence-backed topical dossier across User Brain memories, beliefs, perspectives, snapshots, and narrative context.',
+    ],
+    doNotUseWhen: [
+      'The user wants raw search results instead of a topical synthesis dossier; use search_user_brain.',
+      'The requested knowledge belongs to an Agent, Customer, Company, Campaign, or Space context; use that family-specific search action.',
+    ],
+    examples: [
+      {
+        intent: 'explain what the user thinks about webinars',
+        data: {
+          topic: 'webinars',
+          question: 'What do I think about webinars?',
+          evidence_limit: 24,
+        },
+      },
+    ],
+  },
   search_brain_context: {
     required: ['query'],
     optional: [

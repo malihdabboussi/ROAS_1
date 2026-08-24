@@ -149,6 +149,7 @@ const CAT_DOCUMENTS = new Set<string>([
 const CAT_MEMORY = new Set<string>([
   'save_user_memory',
   'search_user_brain',
+  'synthesize_user_brain_topic',
   'search_brain_context',
   'resolve_agent_brain',
   'search_agent_brain',
@@ -764,6 +765,7 @@ export const BRAIN_SCHOLAR_ALLOWED_ACTIONS = new Set<string>([
   'update_document',
   'compile_webinar_launch_bible',
   'search_user_brain',
+  'synthesize_user_brain_topic',
   'search_brain_context',
   'save_user_memory',
   'atlas_save_brain_context',
@@ -874,6 +876,7 @@ export const BUILDER_ALLOWED_ACTIONS = new Set<string>([
   'check_integration_connection',
   'save_user_memory',
   'search_user_brain',
+  'synthesize_user_brain_topic',
   'search_brain_context',
   'search_agent_brain',
   'search_campaign_brain',

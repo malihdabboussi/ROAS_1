@@ -1,12 +1,12 @@
 {
   "name": "roas-missions",
   "displayName": "ROAS Missions",
-  "version": "0.1.0",
-  "description": "Run, supervise, and verify ROAS missions and Pixel Ladder tests from Claude.",
+  "version": "0.2.0",
+  "description": "Run ROAS missions, validate Pixel Ladder tests, and synthesize personal Brain topics from Claude.",
   "author": {
     "name": "ROAS"
   },
   "homepage": "https://docs.roas.io/integrations/vibey-mcp",
   "repository": "https://github.com/dylanvanas1/roas-platform",
-  "keywords": ["roas", "missions", "pixel", "mcp"]
+  "keywords": ["roas", "missions", "pixel", "brain", "mcp"]
 }

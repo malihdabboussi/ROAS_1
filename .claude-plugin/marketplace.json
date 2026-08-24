@@ -8,8 +8,8 @@
     {
       "name": "roas-missions",
       "source": "./plugins/roas-missions",
-      "description": "Run and verify ROAS missions from Claude through the hosted ROAS MCP connector.",
-      "version": "0.1.0",
+      "description": "Run ROAS missions and synthesize personal Brain topics through the hosted ROAS MCP connector.",
+      "version": "0.2.0",
       "author": {
         "name": "ROAS"
       }
