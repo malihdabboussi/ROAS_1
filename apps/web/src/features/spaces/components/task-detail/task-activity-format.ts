@@ -6,11 +6,11 @@ import {
 } from '../../lib/format-field-change-activity'
 import type { FieldDef } from '../../types/space-schema'
 import { formatPageGraderFieldChangeLabel } from './page-grader-activity'
+import type { ActivityMeta, TaskActivityMetaArgs } from './task-activity-types'
 import {
   formatFileFieldActivityLabel,
   formatUrlFieldActivityLabel,
 } from './TaskActivityFilePreview'
-import type { ActivityMeta, TaskActivityMetaArgs } from './task-activity-types'
 
 const FIELD_LABELS: Record<string, string> = {
   title: 'Title',
@@ -48,6 +48,22 @@ export function resolveActivityMeta({
   authAvatarUrl,
 }: TaskActivityMetaArgs): ActivityMeta {
   const et = entry.event_type
+  const externalActorName =
+    typeof entry.payload.external_actor_name === 'string'
+      ? entry.payload.external_actor_name.trim()
+      : ''
+  if (externalActorName) {
+    return {
+      label: externalActorName,
+      senderLabel: externalActorName,
+      avatarUrl:
+        typeof entry.payload.external_actor_avatar_url === 'string'
+          ? entry.payload.external_actor_avatar_url
+          : null,
+      isAgent: false,
+      isSystem: false,
+    }
+  }
   if (et === 'automation_comment' || et === 'automation_action') {
     return {
       label: 'Flow',

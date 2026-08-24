@@ -5,8 +5,6 @@ import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
 import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
-import type { MissionAgent } from '@/lib/agents/mission-agents-api'
-import { fetchCampaignTeam } from '@/lib/campaigns'
 import type { MissionDeliverable } from '@/lib/missions'
 import {
   resolveSpaceTaskUpdateError,
@@ -21,12 +19,14 @@ import { ShareModal } from '../ShareModal'
 import { useSpaceItemUpdate } from '../SpaceStatusCascadeConfirmProvider'
 import { TaskMenuDropdown } from '../task-menu/TaskMenuDropdown'
 import { SendTaskToAgentModal, type SendToAgentInstructionsSeed } from './SendTaskToAgentModal'
-import { campaignTeamToMissionAgents } from './task-campaign-agents'
 import type { TaskDetailModalProps } from './task-detail-modal.types'
 import { TaskActivity } from './TaskActivity'
 import { TaskDetailHeader } from './TaskDetailHeader'
 import { TaskDetailMainPanel } from './TaskDetailMainPanel'
 import { TaskDetailPresentationShell } from './TaskDetailPresentationShell'
+import { useCampaignTaskAgents } from './use-campaign-task-agents'
+
+export * from './home-task-detail-entry'
 
 export function TaskDetailModal({
   presentation = 'modal',
@@ -47,6 +47,8 @@ export function TaskDetailModal({
   onOpenConversationById,
   onClose,
   onUpdated,
+  onUpdateItem,
+  externalTaskMirror,
   onEditStatuses,
   onEditCategories,
   onCreateOption,
@@ -74,16 +76,7 @@ export function TaskDetailModal({
     appendActivityRow,
   } = useTaskDetailData(item)
   const [previewDeliverable, setPreviewDeliverable] = useState<MissionDeliverable | null>(null)
-  const [missionAgents, setMissionAgents] = useState<MissionAgent[]>([])
-  useEffect(() => {
-    if (!campaignId) {
-      setMissionAgents([])
-      return
-    }
-    fetchCampaignTeam(campaignId)
-      .then((team) => setMissionAgents(campaignTeamToMissionAgents(team)))
-      .catch(() => setMissionAgents([]))
-  }, [campaignId])
+  const missionAgents = useCampaignTaskAgents(campaignId)
   useEffect(() => {
     setPortalTarget(document.body)
   }, [])
@@ -156,7 +149,8 @@ export function TaskDetailModal({
             toast.message(SPACES_ACTIONS_TOAST_ERRORS.LINKED_AGENT_STEP_STATUS_MANAGED.userMessage),
           ))
         if (!canUpdate) return
-        await storeUpdateItem(item.id, patch)
+        if (onUpdateItem) await onUpdateItem(item, patch)
+        else await storeUpdateItem(item.id, patch)
         const fresh = useSpacesStore.getState().items.find((row) => row.id === item.id)
         if (fresh) setItem(fresh)
         else setItem((current) => ({ ...current, ...patch }) as SpaceItem)
@@ -170,7 +164,7 @@ export function TaskDetailModal({
         )
       }
     },
-    [item, storeUpdateItem],
+    [item, onUpdateItem, storeUpdateItem],
   )
   const handleTitleBlur = useCallback(() => {
     const trimmed = title.trim()
@@ -346,6 +340,7 @@ export function TaskDetailModal({
             }}
             onActivityEntryAdded={appendActivityRow}
             isAgentWorking={item.task_execution_status === 'running'}
+            onSendExternalComment={externalTaskMirror?.onSendComment}
           />
         ) : null}
       </div>

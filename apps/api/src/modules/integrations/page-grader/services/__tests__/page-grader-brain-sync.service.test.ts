@@ -295,6 +295,10 @@ describe('PageGraderBrainSyncService', () => {
   })
 
   it('writes a completed Page Grader work status back to the ROAS action ledger', async () => {
+    const agencyWorkspace = {
+      getClient: vi.fn().mockResolvedValue({ tasks: [] }),
+      getTaskDetail: vi.fn().mockResolvedValue({ task: {}, thread: {} }),
+    }
     const updateEq = vi.fn().mockResolvedValue({ error: null })
     const update = vi.fn(() => ({ eq: updateEq }))
     const integrationRows = [
@@ -326,6 +330,8 @@ describe('PageGraderBrainSyncService', () => {
         query.maybeSingle = vi.fn().mockResolvedValue({
           data: {
             id: '22222222-2222-2222-2222-222222222222',
+            user_id: 'user-1',
+            org_id: null,
             custom_data: {
               page_grader: {
                 client_id: '11111111-1111-1111-1111-111111111111',
@@ -352,6 +358,7 @@ describe('PageGraderBrainSyncService', () => {
       {} as never,
       {} as never,
       {} as never,
+      agencyWorkspace as never,
     )
 
     const result = await service.processWorkStatusWebhook(
@@ -363,11 +370,27 @@ describe('PageGraderBrainSyncService', () => {
         clickup_task_url: 'https://app.clickup.com/t/cu-1',
         status: 'complete',
         updated_at: '2026-07-21T06:00:00.000Z',
+        refresh_thread: true,
       }),
       'whsec',
     )
 
     expect(result).toMatchObject({ status: 'done' })
+    expect(agencyWorkspace.getClient).toHaveBeenCalledWith(
+      expect.anything(),
+      'user-1',
+      expect.objectContaining({ userId: 'user-1', orgId: null }),
+      '11111111-1111-1111-1111-111111111111',
+      { sync: true },
+    )
+    expect(agencyWorkspace.getTaskDetail).toHaveBeenCalledWith(
+      expect.anything(),
+      'user-1',
+      expect.objectContaining({ userId: 'user-1', orgId: null }),
+      '11111111-1111-1111-1111-111111111111',
+      '33333333-3333-3333-3333-333333333333',
+      '22222222-2222-2222-2222-222222222222',
+    )
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
         custom_data: expect.objectContaining({

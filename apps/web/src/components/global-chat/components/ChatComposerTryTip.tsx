@@ -29,20 +29,22 @@ export function ChatComposerTryTip({
   const [dismissedIds, setDismissedIds] = useState(readTryTipDismissedIds)
   const hiddenConversationsRef = useRef(new Set<string>())
   const [, setHiddenVersion] = useState(0)
-  const [rotationIndex, setRotationIndex] = useState(() =>
-    composerTryTipRotationSeed(conversationId),
-  )
+  const conversationKey = conversationTipKey(conversationId)
+  const [rotation, setRotation] = useState(() => ({
+    conversationKey,
+    index: composerTryTipRotationSeed(conversationId),
+  }))
+  const rotationIndex =
+    rotation.conversationKey === conversationKey
+      ? rotation.index
+      : composerTryTipRotationSeed(conversationId)
   const tip = pickComposerTryTip(dismissedIds, rotationIndex)
-  const hidden = hiddenConversationsRef.current.has(conversationTipKey(conversationId))
+  const hidden = hiddenConversationsRef.current.has(conversationKey)
 
   const hideInConversation = useCallback((id?: string | null) => {
     hiddenConversationsRef.current.add(conversationTipKey(id))
     setHiddenVersion((version) => version + 1)
   }, [])
-
-  useEffect(() => {
-    setRotationIndex(composerTryTipRotationSeed(conversationId))
-  }, [conversationId])
 
   useEffect(() => {
     if (hidden || !tip) return
@@ -51,10 +53,16 @@ export function ChatComposerTryTip({
     ).length
     if (remainingCount < 2) return
     const timer = window.setInterval(() => {
-      setRotationIndex((prev) => prev + 1)
+      setRotation((previous) => ({
+        conversationKey,
+        index:
+          (previous.conversationKey === conversationKey
+            ? previous.index
+            : composerTryTipRotationSeed(conversationId)) + 1,
+      }))
     }, COMPOSER_TRY_TIP_ROTATE_MS)
     return () => window.clearInterval(timer)
-  }, [dismissedIds, hidden, tip])
+  }, [conversationId, conversationKey, dismissedIds, hidden, tip])
 
   const dismiss = useCallback((id: string) => {
     setDismissedIds(addTryTipDismissedId(id))

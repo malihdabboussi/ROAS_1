@@ -7,8 +7,16 @@ import type {
 } from '../entity-search.types'
 import { EntitySearchRepository } from '../repositories/entity-search.repository'
 import { EntityArtifactSearchService } from './entity-artifact-search.service'
+import {
+  pageGraderClientMetadata,
+  pageGraderClientSearchResult,
+  pageGraderRequestSearchResult,
+} from './page-grader-entity-search.mapper'
 
 const ALL_KINDS: EntitySearchKind[] = [
+  'client',
+  'campaign',
+  'request',
   'person',
   'agent',
   'task',
@@ -77,6 +85,10 @@ export class EntitySearchService {
     switch (kind) {
       case 'task':
         return this.searchSpaceItems(supabase, userId, orgId, q, limit, offset, 'task')
+      case 'client':
+        return this.searchClients(supabase, userId, orgId, q, limit, offset)
+      case 'request':
+        return this.searchRequests(supabase, userId, orgId, q, limit, offset)
       case 'doc':
         return this.searchSpaceItems(supabase, userId, orgId, q, limit, offset, 'doc')
       case 'space':
@@ -101,6 +113,72 @@ export class EntitySearchService {
         throw new BadRequestException(`Unsupported entity kind: ${neverKind}`)
       }
     }
+  }
+
+  private async searchClients(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null,
+    q: string,
+    limit: number,
+    offset: number,
+  ): Promise<EntitySearchResult[]> {
+    const rows = await this.entitySearchRepository.searchPageGraderClients(
+      supabase,
+      userId,
+      orgId,
+      q,
+      limit,
+      offset,
+    )
+    return rows.map(pageGraderClientSearchResult)
+  }
+
+  private async searchRequests(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null,
+    q: string,
+    limit: number,
+    offset: number,
+  ): Promise<EntitySearchResult[]> {
+    const [directRows, matchingClients] = await Promise.all([
+      this.entitySearchRepository.searchPageGraderRequests(
+        supabase,
+        userId,
+        orgId,
+        q,
+        limit,
+        offset,
+      ),
+      q
+        ? this.entitySearchRepository.searchPageGraderClients(supabase, userId, orgId, q, limit, 0)
+        : Promise.resolve([]),
+    ])
+    const clientNames = new Map<string, string>()
+    for (const row of matchingClients) {
+      const clientId = pageGraderClientMetadata(row).clientId
+      if (clientId) clientNames.set(clientId, String(row.name || 'Client'))
+    }
+    const clientRows = await this.entitySearchRepository.searchPageGraderRequestsByClientIds(
+      supabase,
+      userId,
+      orgId,
+      [...clientNames.keys()],
+      limit,
+      offset,
+    )
+    const rows = [...directRows, ...clientRows].filter(
+      (row, index, all) => all.findIndex((candidate) => candidate.id === row.id) === index,
+    )
+    return rows
+      .slice(0, limit)
+      .map((row: any) =>
+        pageGraderRequestSearchResult(
+          row,
+          clientNames.get(String(row.custom_data?.page_grader_client_id ?? '')),
+        ),
+      )
   }
 
   private async searchSpaceItems(
@@ -197,23 +275,47 @@ export class EntitySearchService {
     limit: number,
     offset: number,
   ): Promise<EntitySearchResult[]> {
-    const rows = await this.entitySearchRepository.searchCampaigns(
-      supabase,
-      userId,
-      orgId,
-      q,
-      limit,
-      offset,
+    const [spaceRows, campaignRows] = await Promise.all([
+      this.entitySearchRepository.searchPageGraderCampaignSpaces(
+        supabase,
+        userId,
+        orgId,
+        q,
+        limit,
+        offset,
+      ),
+      this.entitySearchRepository.searchCampaigns(supabase, userId, orgId, q, limit, offset),
+    ])
+    const pageGraderResults: EntitySearchResult[] = spaceRows.map((row: any) => {
+      const custom = (row.schema?.custom_data ?? {}) as Record<string, any>
+      return {
+        kind: 'campaign' as const,
+        id: row.id,
+        label: row.title?.trim() || 'Untitled campaign',
+        subtitle: custom.page_grader_client_name
+          ? `${String(custom.page_grader_client_name)} · Campaign`
+          : 'Client campaign',
+        iconUrl: null,
+        url: `/spaces?space=${encodeURIComponent(row.id)}`,
+        campaignId: row.campaign_id ?? null,
+        clientId: custom.page_grader_client_id ?? null,
+      }
+    })
+    const clientCampaignIds = new Set(
+      spaceRows.map((row: any) => String(row.campaign_id ?? '')).filter(Boolean),
     )
-    return rows.map((row: any) => ({
-      kind: 'campaign',
-      id: row.id,
-      label: row.name?.trim() || 'Untitled campaign',
-      subtitle: 'Campaign',
-      iconUrl: null,
-      url: null,
-      campaignIcon: row.icon ?? null,
-    }))
+    const nativeResults: EntitySearchResult[] = campaignRows
+      .filter((row: any) => !clientCampaignIds.has(String(row.id)))
+      .map((row: any) => ({
+        kind: 'campaign',
+        id: row.id,
+        label: row.name?.trim() || 'Untitled campaign',
+        subtitle: 'Campaign',
+        iconUrl: null,
+        url: null,
+        campaignIcon: null,
+      }))
+    return [...pageGraderResults, ...nativeResults].slice(0, limit)
   }
 
   private async searchArtifacts(

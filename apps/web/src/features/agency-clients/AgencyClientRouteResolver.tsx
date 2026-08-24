@@ -12,7 +12,10 @@ export function AgencyClientRouteResolver({ clientId }: { clientId: string }) {
 
   useEffect(() => {
     let cancelled = false
-    void fetchAgencyClient(clientId, true)
+    // Resolve the existing ROAS workspace immediately. The destination client page
+    // performs its own non-blocking live sync, so routing must not wait on the full
+    // Page Grader -> ClickUp -> ROAS reconciliation pass.
+    void fetchAgencyClient(clientId, false)
       .then((workspace) => {
         if (cancelled) return
         const campaignId = workspace.mapping?.campaign_id

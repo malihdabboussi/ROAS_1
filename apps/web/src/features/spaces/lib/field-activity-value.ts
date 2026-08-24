@@ -72,6 +72,7 @@ export function resolveMultiSelectOptions(
   if (!Array.isArray(value) || value.length === 0) return []
   return value
     .map((entry) => {
+      if (typeof entry !== 'string' && typeof entry !== 'number') return null
       const id = String(entry).trim()
       if (!id) return null
       return options?.find((o) => o.id === id) ?? { id, label: fallbackIdLabel(id) }

@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import {
+  BriefcaseBusiness,
   CalendarDays,
   CheckSquare,
   FileText,
+  FolderKanban,
   MessageSquare,
   Package,
+  Plus,
   Rocket,
   Target,
+  Users,
 } from 'lucide-react'
 import { LucideIcon } from '@/components/ui/IconPicker'
 import type { StudioGlobalSearchResult } from '@/features/studio/services/studio-search-api.service'
@@ -65,6 +69,8 @@ export function resultBadge(result: StudioGlobalSearchResult): string {
   }
   if (result.kind === 'preset') return 'Preset'
   if (result.kind === 'mission') return 'Mission'
+  if (result.kind === 'client') return 'Client'
+  if (result.kind === 'request') return 'Request'
   const labels: Record<'task' | 'doc' | 'deliverable' | 'conversation' | 'campaign', string> = {
     task: 'Task',
     doc: 'Doc',
@@ -77,6 +83,8 @@ export function resultBadge(result: StudioGlobalSearchResult): string {
 
 export function ResultIcon({ result }: { result: StudioGlobalSearchResult }) {
   const className = 'h-4 w-4'
+  if (result.kind === 'client') return <Users className={className} />
+  if (result.kind === 'request') return <BriefcaseBusiness className={className} />
   if (result.kind === 'task') return <CheckSquare className={className} />
   if (result.kind === 'doc') return <FileText className={className} />
   if (result.kind === 'deliverable' || result.kind === 'artifact') {
@@ -86,9 +94,16 @@ export function ResultIcon({ result }: { result: StudioGlobalSearchResult }) {
     return <LucideIcon name={result.campaignIcon ?? 'folder-kanban'} className={className} />
   }
   if (result.kind === 'mission') return <Rocket className={className} />
-  if (result.kind === 'preset' && result.id === 'meetings') {
+  if (result.kind === 'preset' && result.id === 'launches') {
     return <CalendarDays className={className} />
   }
+  if (result.kind === 'preset' && result.id === 'clients') return <Users className={className} />
+  if (result.kind === 'preset' && result.id === 'client-campaigns')
+    return <FolderKanban className={className} />
+  if (result.kind === 'preset' && result.id === 'all-tasks')
+    return <CheckSquare className={className} />
+  if (result.kind === 'preset' && result.id.startsWith('create-'))
+    return <Plus className={className} />
   if (result.kind === 'preset') return <Target className={className} />
   return <MessageSquare className={className} />
 }

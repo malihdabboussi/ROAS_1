@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef } from 'react'
+import { AgencyLaunchArtifactViewer } from '@/components/agency/AgencyLaunchArtifactViewer'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
 import { DeliverablePreviewBody } from '@/components/deliverables/DeliverablePreviewBody'
 import { FunnelFullPreview } from '@/components/deliverables/FunnelFullPreview'
@@ -192,6 +193,9 @@ export function ShellArtifactViewerAdapter() {
     )
   }
   if (target.type === 'mission') return <ShellMissionArtifactViewerAdapter target={target} />
+  if (target.type === 'custom_object' && target.entityTable === 'page_grader_launches') {
+    return <AgencyLaunchArtifactViewer target={target} />
+  }
   if (target.type === 'flow') return null
   if (target.type === 'image' || target.type === 'video' || target.type === 'audio') {
     return <ShellMediaArtifactViewer target={target} />

@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
 export const EntitySearchKindSchema = z.enum([
+  'client',
+  'request',
   'task',
   'doc',
   'channel',

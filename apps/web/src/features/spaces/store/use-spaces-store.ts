@@ -454,8 +454,15 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
 
   pendingOpenConversationId: null,
   openConversationInSpaceChat: (conversationId) =>
-    set({ pendingOpenConversationId: conversationId }),
-  clearPendingOpenConversation: () => set({ pendingOpenConversationId: null }),
+    set((state) =>
+      state.pendingOpenConversationId === conversationId
+        ? state
+        : { pendingOpenConversationId: conversationId },
+    ),
+  clearPendingOpenConversation: () =>
+    set((state) =>
+      state.pendingOpenConversationId === null ? state : { pendingOpenConversationId: null },
+    ),
 
   loadRoster: async () => {
     try {

@@ -1,8 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { ChannelMember, ChannelMention } from '@/lib/channels'
 import { fetchCampaignTeam } from '@/lib/campaigns'
+import type { ChannelMember, ChannelMention } from '@/lib/channels'
 import { createClient } from '@/lib/supabase/client'
 import type { TeamRosterEntry } from '@/lib/team'
 import { mergeActivityEntry } from '../../lib/merge-activity-entry'
@@ -27,6 +27,7 @@ interface UseTaskActivityStateArgs {
   roster: TeamRosterEntry[]
   currentUserId: string | null
   onActivityEntryAdded?: (entry: SpaceItemActivity) => void
+  onSendExternalComment?: (input: { content: string; authorName: string }) => Promise<void>
 }
 
 export function useTaskActivityState({
@@ -37,6 +38,7 @@ export function useTaskActivityState({
   roster,
   currentUserId,
   onActivityEntryAdded,
+  onSendExternalComment,
 }: UseTaskActivityStateArgs) {
   const [activity, setActivity] = useState<SpaceItemActivity[]>([])
   const [loading, setLoading] = useState(true)
@@ -210,6 +212,15 @@ export function useTaskActivityState({
         label: m.label,
       }))
       const attachments = activityAttachmentsFromUrls(payload.attachments ?? [])
+      if (onSendExternalComment) {
+        void onSendExternalComment({
+          content: payload.content,
+          authorName: authProfile.displayName || 'ROAS user',
+        })
+          .then(loadActivity)
+          .catch(() => {})
+        return
+      }
       addItemComment(spaceId, itemId, payload.content, {
         mentions: mentions.length > 0 ? mentions : undefined,
         attachments: attachments.length > 0 ? attachments : undefined,
@@ -221,7 +232,14 @@ export function useTaskActivityState({
         })
         .catch(() => {})
     },
-    [spaceId, itemId, onActivityEntryAdded],
+    [
+      spaceId,
+      itemId,
+      onActivityEntryAdded,
+      onSendExternalComment,
+      authProfile.displayName,
+      loadActivity,
+    ],
   )
 
   const handleAssignToMeFromComposer = useCallback(() => {

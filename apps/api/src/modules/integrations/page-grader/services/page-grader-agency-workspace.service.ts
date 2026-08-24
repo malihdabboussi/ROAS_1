@@ -5,6 +5,7 @@ import type {
   PageGraderClientCampaign,
   PageGraderLaunch,
 } from '../integrations/page-grader.integration'
+import { PageGraderAgencyTaskSyncService } from './page-grader-agency-task-sync.service'
 import { PageGraderApiService } from './page-grader-api.service'
 import { PageGraderBrainImportService } from './page-grader-brain-import.service'
 
@@ -34,6 +35,9 @@ export class PageGraderAgencyWorkspaceService {
   constructor(
     private readonly api: PageGraderApiService,
     private readonly brainImport: PageGraderBrainImportService,
+    private readonly taskSync: PageGraderAgencyTaskSyncService = new PageGraderAgencyTaskSyncService(
+      api,
+    ),
   ) {}
 
   async listClients(
@@ -116,7 +120,29 @@ export class PageGraderAgencyWorkspaceService {
     const mapping = scopeMap[clientId]
     if (!mapping) throw new BadRequestException('The client could not be mapped into ROAS')
     const campaignSpaces = readImportedCampaignSpaces(imported)
-    return { ...workspace, mapping, campaign_spaces: campaignSpaces }
+    const taskSync = await this.taskSync.syncWorkspaceTasks(
+      supabase,
+      userId,
+      scope,
+      clientId,
+      workspace.tasks ?? [],
+      mapping,
+      campaignSpaces,
+    )
+    return {
+      ...workspace,
+      tasks: (workspace.tasks ?? []).map((task) => ({
+        ...task,
+        roas_space_item_id: taskSync.itemIds.get(stringValue(task.id)) ?? null,
+      })),
+      mapping,
+      campaign_spaces: campaignSpaces,
+      task_sync: {
+        synced: taskSync.synced,
+        skipped: taskSync.skipped,
+        errors: taskSync.errors,
+      },
+    }
   }
 
   async listCampaigns(
@@ -247,6 +273,71 @@ export class PageGraderAgencyWorkspaceService {
     }
   }
 
+  async createLaunch(
+    userId: string,
+    input: {
+      client_id: string
+      campaign_id: string
+      launch_name: string
+      launch_date: string
+      launch_time?: string
+      event_date?: string
+      event_time?: string
+    },
+  ) {
+    return this.api.createLaunch(userId, input)
+  }
+
+  async getCampaignOverview(
+    supabase: SupabaseClient,
+    userId: string,
+    scope: RequestScope,
+    clientId: string,
+    campaignId: string,
+  ) {
+    const [overview, initialScopeMap] = await Promise.all([
+      this.api.getCampaignOverview(userId, clientId, campaignId),
+      this.api.getClientScopeMap(userId),
+    ])
+    let mapping = initialScopeMap[clientId]
+    let campaignSpaces: CampaignSpaceMapping[] = []
+    if (!mapping) {
+      const imported = await this.brainImport.importClientBrain(
+        supabase,
+        userId,
+        { client_id: clientId },
+        scope.orgId,
+      )
+      mapping = (await this.api.getClientScopeMap(userId))[clientId]
+      campaignSpaces = readImportedCampaignSpaces(imported)
+    }
+    if (!mapping) throw new BadRequestException('The client could not be mapped into ROAS')
+    if (campaignSpaces.length === 0) {
+      campaignSpaces = await this.loadCampaignSpaceMappings(supabase, mapping)
+    }
+    const campaignTaskSync = await this.taskSync.syncWorkspaceTasks(
+      supabase,
+      userId,
+      scope,
+      clientId,
+      overview.tasks ?? [],
+      mapping,
+      campaignSpaces,
+    )
+    return {
+      ...overview,
+      task_sync: {
+        synced: campaignTaskSync.synced,
+        skipped: campaignTaskSync.skipped,
+        errors: campaignTaskSync.errors,
+      },
+      tasks: (overview.tasks ?? []).map((task) => ({
+        ...task,
+        roas_space_item_id: campaignTaskSync.itemIds.get(stringValue(task.id)) ?? null,
+      })),
+    }
+  }
+
   async patchEntity(
     supabase: SupabaseClient,
     userId: string,
@@ -278,6 +369,63 @@ export class PageGraderAgencyWorkspaceService {
       scope.orgId,
     )
     return { mutation, brain_sync: brainSync }
+  }
+
+  async deleteCampaign(userId: string, clientId: string, campaignId: string) {
+    return this.api.deleteWorkspaceEntity(
+      userId,
+      `/clients/${encodeURIComponent(clientId)}/campaigns/${encodeURIComponent(campaignId)}`,
+    )
+  }
+
+  async getTaskDetail(
+    supabase: SupabaseClient,
+    userId: string,
+    scope: RequestScope,
+    clientId: string,
+    taskId: string,
+    spaceItemId?: string,
+  ) {
+    const detail = await this.api.getTaskDetail(userId, clientId, taskId)
+    if (spaceItemId) {
+      await this.taskSync.syncTaskThreadActivity(
+        supabase,
+        userId,
+        scope,
+        clientId,
+        taskId,
+        spaceItemId,
+        detail.thread,
+      )
+    }
+    return detail
+  }
+
+  async createTaskComment(
+    supabase: SupabaseClient,
+    userId: string,
+    scope: RequestScope,
+    clientId: string,
+    taskId: string,
+    payload: { body: string; authorName: string; spaceItemId?: string },
+  ) {
+    const result = await this.api.createTaskComment(userId, clientId, taskId, {
+      body: payload.body,
+      author_name: payload.authorName,
+    })
+    if (payload.spaceItemId) {
+      const detail = await this.api.getTaskDetail(userId, clientId, taskId)
+      await this.taskSync.syncTaskThreadActivity(
+        supabase,
+        userId,
+        scope,
+        clientId,
+        taskId,
+        payload.spaceItemId,
+        detail.thread,
+      )
+    }
+    return result
   }
 
   private async loadCampaignSpaceMappings(

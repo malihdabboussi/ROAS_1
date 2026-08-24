@@ -66,6 +66,7 @@ export function ShellChatDrawer({
   const historyDragStartWidth = useRef(historyWidth)
   const historyDragRawWidth = useRef(historyWidth)
   const lastHandledNewChatNonceRef = useRef(0)
+  const lastOpenedConversationIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     initConversationTitleAutogen()
@@ -83,10 +84,15 @@ export function ShellChatDrawer({
   }, [open])
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      lastOpenedConversationIdRef.current = null
+      return
+    }
     // Keep legacy global chat collapsed — shell owns the drawer.
     setCollapsed(true)
     if (conversationId) {
+      if (lastOpenedConversationIdRef.current === conversationId) return
+      lastOpenedConversationIdRef.current = conversationId
       // Selecting a history row must cancel a stale "new chat" intent so list
       // hydration cannot wipe the panel while the drawer still highlights the row.
       setChatRailIntent(null)
@@ -95,6 +101,7 @@ export function ShellChatDrawer({
       void selectConversation(conversationId)
       return
     }
+    lastOpenedConversationIdRef.current = null
     // Fresh chat request (pen while open / green New): clear the panel thread.
     if (newChatNonce > lastHandledNewChatNonceRef.current) {
       lastHandledNewChatNonceRef.current = newChatNonce

@@ -28,18 +28,12 @@ import type { ContactCommunicationTab } from '../contacts/ContactCommunicationPa
 import type { ContactsViewHandle } from '../contacts/ContactsView'
 import type { MissionsViewHandle } from '../MissionsView'
 import type { CampaignFinanceTabHandle } from '../reporting/FinanceOverviewView'
+import { buildPageGraderOverviewContext } from '../reporting/page-grader-overview-context'
 import type { ReportingToolbarApi } from '../reporting/shared/reporting-toolbar.types'
 import { buildSpaceTaskChatDragPayload } from '../space-item-values'
+import { SpaceViewLoading } from '../SpaceLoadingStates'
 import { EmptySpaceCanvas } from './EmptySpaceCanvas'
 import { SpaceNeedsCampaignState } from './SpaceNeedsCampaignState'
-
-function SpaceViewLoading() {
-  return (
-    <div className="flex flex-1 items-center justify-center">
-      <VibeyLoadingOrb text="Getting everything ready..." state="processing" size="lg" />
-    </div>
-  )
-}
 
 const ChannelsIndexView = dynamic(
   () => import('../channels/ChannelsIndexView').then((mod) => mod.ChannelsIndexView),
@@ -610,6 +604,7 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
               activeView: activeView!,
               onViewPatch: handleViewPatch,
               onRegisterReportingToolbar: setReportingToolbarApi,
+              ...buildPageGraderOverviewContext(activeSpace, items, openSpaceItemModal),
             }
             switch (activeView!.type) {
               case 'campaign_overview':

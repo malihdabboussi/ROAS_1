@@ -59,3 +59,22 @@ Why: MCP-created conversations were indistinguishable because every row had the 
 Impact: New rows read like `Claude · Synthesize User Brain Topic`, MCP activity overlays a recognizable client identity, and historical rows receive unique names such as `Claude · MCP call 17` plus the best available client identity instead of remaining blank generic sessions.
 
 Files: `apps/api/src/modules/mcp/repositories/mcp-oauth.repository.ts`, `apps/api/src/modules/mcp/services/mcp-oauth.service.ts`, `apps/agent-api/src/modules/vibey-mcp/services/vibey-mcp-session.service.ts`, `apps/agent-api/src/modules/vibey-mcp/services/vibey-mcp-token-introspection.service.ts`, `apps/agent-api/src/modules/vibey-mcp/services/vibey-mcp-server.service.ts`, `apps/agent-api/src/modules/vibey-mcp/types/vibey-mcp.types.ts`, `apps/web/src/components/conversations/ConversationRowLeadingIcon.tsx`, `apps/web/src/lib/conversations/conversation-activity.ts`, `supabase/migrations/20260824133000_backfill_mcp_conversation_identity.sql`, `documentation/features/claude-chatgpt-shell.md`
+## 2026-08-24 14:57 - [FEATURE]
+
+What: Converged Page Grader agency operations into the ROAS shell: Launches now defaults to the live calendar and opens launch details in the right artifact rail; Clients and Client Campaigns use the approved operational tables; campaign Overview combines requests, mapped Meta performance, and top ads; Command-K prioritizes Clients, Campaigns, Requests, then Chats; and Page Grader/ClickUp tasks open in the native ROAS task modal with two-way fields, comments, attachments, and activity.
+
+Why: ROAS is the primary fulfillment app, while Page Grader remains the onboarding and micro-tool portal. Operators need the same canonical client, campaign, launch, and ClickUp work data without switching products or losing provenance.
+
+Impact: Page Grader tasks are mirrored to native Space items, edits and comments write through to ClickUp, and signed Page Grader webhook refreshes update the native item and activity rows so existing Supabase realtime subscriptions refresh the visible task. Campaign creation and Service Request creation from navigation both start in Pixel using the same Page Grader MCP policy used by Slack Pixel.
+
+Files: `apps/api/src/modules/integrations/page-grader/`, `apps/api/src/modules/entity-search/`, `apps/web/src/features/agency-clients/`, `apps/web/src/features/spaces/components/reporting/`, `apps/web/src/features/spaces/components/task-detail/`, `apps/web/src/features/studio/components/StudioSearchModal.tsx`, `documentation/features/page-grader-roas-operations-convergence.md`
+
+## 2026-08-24 16:08 - [FIX]
+
+What: Made existing client workspaces open immediately while their Page Grader refresh continues in the background, made task-name clicks reliably open the canonical task detail modal, stabilized chat drawer and rotating composer-tip state, and corrected Command-K Page Grader client/request discovery to use the current campaign configuration schema.
+
+Why: The full ClickUp hydration can take more than a minute, nested list cells could swallow task-title clicks, state setters could retrigger shell effects, and legacy search projections referenced columns that no longer exist.
+
+Impact: Operators can enter a mapped client workspace without waiting for the external refresh, open mirrored ClickUp tasks from their names, navigate without render loops, and find Page Grader clients and their requests in the approved Clients → Campaigns → Requests → Chats search order.
+
+Files: `apps/web/src/features/agency-clients/AgencyClientRouteResolver.tsx`, `apps/web/src/features/spaces/components/SpaceItemRow.tsx`, `apps/web/src/components/global-chat/components/ChatComposerTryTip.tsx`, `apps/web/src/components/shell/ShellChatDrawer.tsx`, `apps/web/src/features/spaces/store/use-spaces-store.ts`, `apps/api/src/modules/entity-search/`

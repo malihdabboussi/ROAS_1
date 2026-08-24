@@ -18,6 +18,7 @@ export type StudioSearchModalSelection =
   | { type: 'conversation'; id: string }
   | { type: 'campaign'; id: string; name: string; icon?: string | null }
   | { type: 'url'; url: string }
+  | { type: 'action'; action: 'create-campaign' | 'create-request' }
   | {
       type: 'artifact'
       campaignId: string

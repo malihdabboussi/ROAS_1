@@ -11,6 +11,7 @@ import {
 } from '../dto/page-grader.dto'
 import { PageGraderIntegration } from '../integrations/page-grader.integration'
 import { PageGraderBrainSyncRepository } from '../repositories/page-grader-brain-sync.repository'
+import { PageGraderAgencyWorkspaceService } from './page-grader-agency-workspace.service'
 import {
   PAGE_GRADER_LABEL_API_KEY,
   PAGE_GRADER_LABEL_BASE_URL,
@@ -20,15 +21,11 @@ import {
 } from './page-grader-api.helpers'
 import { PageGraderApiService } from './page-grader-api.service'
 import { PageGraderBrainImportService } from './page-grader-brain-import.service'
+import type { MappedClientRow } from './page-grader-brain-sync.types'
 import { verifySignedPageGraderSlackClient } from './page-grader-slack-client-authorization'
+import { asRecord, refreshPageGraderTaskMirror } from './page-grader-work-status-sync'
 
-export type MappedClientRow = {
-  userId: string
-  orgId: string | null
-  clientId: string
-  entry: PageGraderClientScopeEntry
-  webhookSecret: string | null
-}
+export type { MappedClientRow } from './page-grader-brain-sync.types'
 
 type ConnectedPageGraderRow = {
   userId: string
@@ -51,6 +48,7 @@ export class PageGraderBrainSyncService {
     private readonly repository: PageGraderBrainSyncRepository,
     private readonly pageGraderApi: PageGraderApiService,
     private readonly precallPrep: MeetingsPrecallPrepService,
+    private readonly agencyWorkspace?: PageGraderAgencyWorkspaceService,
   ) {}
 
   async ensureWebhookSecret(userId: string): Promise<string> {
@@ -168,7 +166,7 @@ export class PageGraderBrainSyncService {
 
     const { data: item, error } = await this.svc.client
       .from('space_items')
-      .select('id, custom_data')
+      .select('id, user_id, org_id, custom_data')
       .eq('id', payload.space_item_id)
       .maybeSingle()
     if (error) throw new BadRequestException(error.message)
@@ -177,10 +175,23 @@ export class PageGraderBrainSyncService {
     const customData = asRecord(item.custom_data)
     const pageGrader = asRecord(customData.page_grader)
     if (
-      String(pageGrader.client_id ?? '') !== payload.client_id ||
-      String(pageGrader.work_id ?? '') !== payload.work_id
+      String(pageGrader.client_id ?? customData.page_grader_client_id ?? '') !==
+        payload.client_id ||
+      String(pageGrader.work_id ?? customData.page_grader_work_id ?? '') !== payload.work_id
     ) {
       throw new UnauthorizedException('Work-status payload does not match the linked ROAS item')
+    }
+
+    if (payload.refresh_thread) {
+      await refreshPageGraderTaskMirror({
+        agencyWorkspace: this.agencyWorkspace,
+        supabase: this.svc.client,
+        mapped,
+        item,
+        clientId: payload.client_id,
+        workId: payload.work_id,
+        spaceItemId: payload.space_item_id,
+      })
     }
 
     const actionLedger = asRecord(customData.action_ledger)
@@ -583,10 +594,4 @@ export class PageGraderBrainSyncService {
     if (verified.length > 0) return verified
     throw new UnauthorizedException('Unknown webhook secret or unmapped client')
   }
-}
-
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {}
 }

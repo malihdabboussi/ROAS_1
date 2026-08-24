@@ -5,12 +5,14 @@ import { McpModule } from '../../mcp/mcp.module'
 import { SlackModule } from '../../slack/slack.module'
 import { SpacesModule } from '../../spaces/spaces.module'
 import { IntegrationConnectionsRepository } from '../repositories/integration-connections.repository'
+import { PageGraderAgencyWorkController } from './controllers/page-grader-agency-work.controller'
 import { PageGraderAgencyController } from './controllers/page-grader-agency.controller'
 import { PageGraderMeetingController } from './controllers/page-grader-meeting.controller'
 import { PageGraderWebhooksController } from './controllers/page-grader-webhooks.controller'
 import { PageGraderController } from './controllers/page-grader.controller'
 import { PageGraderIntegration } from './integrations/page-grader.integration'
 import { PageGraderBrainSyncRepository } from './repositories/page-grader-brain-sync.repository'
+import { PageGraderAgencyTaskSyncService } from './services/page-grader-agency-task-sync.service'
 import { PageGraderAgencyWorkspaceService } from './services/page-grader-agency-workspace.service'
 import { PageGraderApiService } from './services/page-grader-api.service'
 import { PageGraderBrainImportService } from './services/page-grader-brain-import.service'
@@ -26,6 +28,7 @@ import { PageGraderSlackIngestService } from './services/page-grader-slack-inges
   imports: [ConfigModule, SpacesModule, BrainModule, McpModule, SlackModule],
   controllers: [
     PageGraderAgencyController,
+    PageGraderAgencyWorkController,
     PageGraderController,
     PageGraderMeetingController,
     PageGraderWebhooksController,
@@ -33,6 +36,7 @@ import { PageGraderSlackIngestService } from './services/page-grader-slack-inges
   providers: [
     PageGraderIntegration,
     PageGraderAgencyWorkspaceService,
+    PageGraderAgencyTaskSyncService,
     PageGraderSendWorkService,
     PageGraderApiService,
     PageGraderBrainImportService,

@@ -30,6 +30,7 @@ import type {
 import { SelectCell } from './cells/SelectCell'
 import { SpaceCell } from './cells/SpaceCell'
 import { buildSpaceTaskChatDragPayload, readFieldValue, toFieldPatch } from './space-item-values'
+import { handleSpaceRowClick } from './space-row-click'
 import { SendTaskToAgentModal } from './task-detail/SendTaskToAgentModal'
 import { TaskMenuDropdown } from './task-menu/TaskMenuDropdown'
 import { TaskExecutionStatusIndicator } from './TaskExecutionStatusIndicator'
@@ -205,12 +206,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
             gridTemplateColumns ??
             `${displayFields.map(() => 'minmax(0,1fr)').join(' ')} minmax(2rem, 1fr)`,
         }}
-        onClick={(e) => {
-          if (readOnly || !onOpenDetail) return
-          const target = e.target as HTMLElement
-          if (target.closest('button, a, input, select, [data-dropdown], [data-cell]')) return
-          onOpenDetail(item)
-        }}
+        onClick={(event) => handleSpaceRowClick(event, readOnly, onOpenDetail, item)}
         onContextMenu={(e) => {
           if (readOnly) return
           e.preventDefault()
@@ -348,6 +344,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
             return (
               <div
                 key={`${item.id}:title`}
+                data-row-title-open-target=""
                 className={cn(
                   'sticky flex min-w-0 items-stretch py-0.5',
                   surface === 'table'

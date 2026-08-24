@@ -62,6 +62,28 @@ export type PageGraderClientWorkspace = {
   provenance: { source: 'page_grader'; generated_at: string }
 }
 
+export type PageGraderTaskDetail = {
+  task: Record<string, unknown>
+  thread: {
+    comments: Array<Record<string, unknown>>
+    portal_comments: Array<Record<string, unknown>>
+    attachments: Array<Record<string, unknown>>
+    activity: Array<Record<string, unknown>>
+    hydration: { hydrated: boolean; error?: string }
+  }
+}
+
+export type PageGraderCampaignOverview = {
+  campaign: PageGraderClientCampaign & Record<string, unknown>
+  tasks: Array<Record<string, unknown>>
+  performance: Record<string, number | null>
+  top_ads: Array<Record<string, unknown>>
+  linked_meta_campaign_ids: string[]
+  snapshot_at: string | null
+  top_ads_error: string | null
+  provenance: { source: 'page_grader'; generated_at: string }
+}
+
 export type PageGraderWorkResult = {
   id: string
   kind: string

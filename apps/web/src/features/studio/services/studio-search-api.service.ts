@@ -16,6 +16,8 @@ export type StudioSearchArtifactKind =
   | 'page'
 
 export type StudioGlobalSearchResultKind =
+  | 'client'
+  | 'request'
   | 'task'
   | 'doc'
   | 'deliverable'
@@ -32,6 +34,7 @@ export interface StudioGlobalSearchResult {
   subtitle: string | null
   url: string | null
   campaignId?: string | null
+  clientId?: string | null
   campaignIcon?: string | null
   artifactKind?: StudioSearchArtifactKind
   sequenceId?: string
@@ -53,33 +56,56 @@ export interface StudioSearchIdlePayload {
 }
 
 const STUDIO_CORE_SEARCH_KINDS: StudioGlobalSearchResultKind[] = [
-  'task',
-  'doc',
-  'deliverable',
-  'conversation',
+  'client',
   'campaign',
+  'request',
+  'conversation',
 ]
 
-const STUDIO_IDLE_RECENT_KINDS: StudioGlobalSearchResultKind[] = [
-  'conversation',
-  'campaign',
-  'mission',
-]
+const STUDIO_IDLE_RECENT_KINDS: StudioGlobalSearchResultKind[] = ['client']
 
 export const STUDIO_SEARCH_IDLE_PRESETS: StudioGlobalSearchResult[] = [
   {
     kind: 'preset',
-    id: 'meetings',
-    label: 'Meetings',
-    subtitle: 'Home',
-    url: '/home/meetings',
+    id: 'clients',
+    label: 'Clients',
+    subtitle: 'Client workspaces',
+    url: '/clients',
   },
   {
     kind: 'preset',
-    id: 'mission-control',
-    label: 'Mission Control',
-    subtitle: 'Missions',
-    url: '/mission-control',
+    id: 'client-campaigns',
+    label: 'Client Campaigns',
+    subtitle: 'All campaigns',
+    url: '/client-campaigns',
+  },
+  {
+    kind: 'preset',
+    id: 'launches',
+    label: 'Launches',
+    subtitle: 'Launch calendar',
+    url: '/launches',
+  },
+  {
+    kind: 'preset',
+    id: 'all-tasks',
+    label: 'All Tasks',
+    subtitle: 'All client work',
+    url: '/all-tasks',
+  },
+  {
+    kind: 'preset',
+    id: 'create-campaign',
+    label: 'New Campaign',
+    subtitle: 'Build with Pixel',
+    url: 'action:create-campaign',
+  },
+  {
+    kind: 'preset',
+    id: 'create-request',
+    label: 'New Service Request',
+    subtitle: 'Delegate work with Pixel',
+    url: 'action:create-request',
   },
 ]
 
@@ -110,7 +136,7 @@ export async function fetchStudioGlobalSearch(
   return successful
 }
 
-/** Empty-query recents (chats, campaigns, missions) plus Go-to presets. */
+/** Empty-query recent clients plus navigation and creation actions. */
 export async function fetchStudioSearchIdle(
   signal?: AbortSignal,
 ): Promise<StudioSearchIdlePayload> {

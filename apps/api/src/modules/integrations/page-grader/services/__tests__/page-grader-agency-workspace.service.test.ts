@@ -162,6 +162,77 @@ describe('PageGraderAgencyWorkspaceService', () => {
     )
   })
 
+  it('mirrors campaign overview tasks before returning clickable ROAS task ids', async () => {
+    const api = {
+      getCampaignOverview: vi.fn().mockResolvedValue({
+        campaign: { id: 'page-grader-campaign-1' },
+        tasks: [{ id: 'task-1', campaign_id: 'page-grader-campaign-1' }],
+      }),
+      getClientScopeMap: vi.fn().mockResolvedValue({
+        'client-1': { campaign_id: 'roas-campaign-1', space_id: 'general-space' },
+      }),
+    }
+    const taskSync = {
+      syncWorkspaceTasks: vi.fn().mockResolvedValue({
+        itemIds: new Map([['task-1', 'space-item-1']]),
+        synced: 1,
+        skipped: 0,
+        errors: [],
+      }),
+    }
+    const service = new PageGraderAgencyWorkspaceService(
+      api as never,
+      {} as never,
+      taskSync as never,
+    )
+    const supabase = {
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn().mockResolvedValue({
+            data: [
+              {
+                id: 'campaign-space-1',
+                title: 'Launch',
+                schema: {
+                  custom_data: { page_grader_campaign_id: 'page-grader-campaign-1' },
+                },
+              },
+            ],
+            error: null,
+          }),
+        })),
+      })),
+    }
+
+    const result = await service.getCampaignOverview(
+      supabase as never,
+      'user-1',
+      { orgId: 'org-1' } as never,
+      'client-1',
+      'page-grader-campaign-1',
+    )
+
+    expect(taskSync.syncWorkspaceTasks).toHaveBeenCalledWith(
+      supabase,
+      'user-1',
+      { orgId: 'org-1' },
+      'client-1',
+      [{ id: 'task-1', campaign_id: 'page-grader-campaign-1' }],
+      { campaign_id: 'roas-campaign-1', space_id: 'general-space' },
+      [
+        {
+          page_grader_campaign_id: 'page-grader-campaign-1',
+          space_id: 'campaign-space-1',
+          space_title: 'Launch',
+        },
+      ],
+    )
+    expect(result.tasks).toEqual([
+      expect.objectContaining({ id: 'task-1', roas_space_item_id: 'space-item-1' }),
+    ])
+    expect(result.task_sync).toEqual({ synced: 1, skipped: 0, errors: [] })
+  })
+
   it('does not duplicate a successful Page Grader Brain webhook', async () => {
     const api = {
       updateWorkspaceEntity: vi.fn().mockResolvedValue({

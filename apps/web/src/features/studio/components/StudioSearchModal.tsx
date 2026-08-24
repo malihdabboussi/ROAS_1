@@ -117,11 +117,18 @@ export function StudioSearchModal({ open, onClose, campaigns, onSelect }: Studio
       })
     }
     for (const result of idlePresets) {
+      const firstCreateIndex = idlePresets.findIndex((item) => item.id.startsWith('create-'))
+      const presetIndex = idlePresets.indexOf(result)
       next.push({
         key: `preset-${result.kind}-${result.id}`,
         index: next.length,
         result,
-        section: next.length === idleRecents.length ? STUDIO_SEARCH_MESSAGES.PRESETS : undefined,
+        section:
+          presetIndex === 0
+            ? STUDIO_SEARCH_MESSAGES.PRESETS
+            : presetIndex === firstCreateIndex
+              ? STUDIO_SEARCH_MESSAGES.CREATE
+              : undefined,
       })
     }
     return next
@@ -175,6 +182,13 @@ export function StudioSearchModal({ open, onClose, campaigns, onSelect }: Studio
       }
       if (result.url) {
         onClose()
+        if (result.url === 'action:create-campaign' || result.url === 'action:create-request') {
+          onSelect({
+            type: 'action',
+            action: result.url === 'action:create-campaign' ? 'create-campaign' : 'create-request',
+          })
+          return
+        }
         onSelect({ type: 'url', url: result.url })
       }
     },
@@ -218,7 +232,7 @@ export function StudioSearchModal({ open, onClose, campaigns, onSelect }: Studio
         role="presentation"
       >
         <div
-          className="border-border surface-card rounded-spacing-4 w-full max-w-[560px] overflow-hidden border shadow-2xl"
+          className="border-border surface-card rounded-spacing-4 w-full max-w-xl overflow-hidden border shadow-2xl"
           onClick={(event) => event.stopPropagation()}
           onKeyDown={handleKeyDown}
         >

@@ -28,6 +28,11 @@ export interface TaskDetailModalProps {
   onOpenConversationById?: (conversationId: string) => void
   onClose: () => void
   onUpdated: () => void
+  /** Optional integration-aware persistence. Falls back to the native Space update. */
+  onUpdateItem?: (item: SpaceItem, patch: Partial<SpaceItem>) => Promise<void>
+  externalTaskMirror?: {
+    onSendComment: (input: { content: string; authorName: string }) => Promise<void>
+  }
   onEditStatuses?: () => void
   onEditCategories?: () => void
   onCreateOption?: (fieldId: string, option: SelectOption) => void

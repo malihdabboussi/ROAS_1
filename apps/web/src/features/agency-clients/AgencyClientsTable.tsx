@@ -34,9 +34,11 @@ export function AgencyClientsTable({
   groups,
   /** Hide the Account Manager column (redundant while grouped by manager). */
   showManagerColumn = true,
+  onStatusChange,
 }: {
   groups: ClientGroup[]
   showManagerColumn?: boolean
+  onStatusChange?: (client: AgencyClient, status: string) => Promise<void>
 }) {
   return (
     <div className="gap-spacing-4 flex flex-col">
@@ -73,6 +75,7 @@ export function AgencyClientsTable({
                     key={client.id}
                     client={client}
                     showManagerColumn={showManagerColumn}
+                    onStatusChange={onStatusChange}
                   />
                 ))}
               </tbody>
@@ -87,9 +90,11 @@ export function AgencyClientsTable({
 function AgencyClientRow({
   client,
   showManagerColumn,
+  onStatusChange,
 }: {
   client: AgencyClient
   showManagerColumn: boolean
+  onStatusChange?: (client: AgencyClient, status: string) => Promise<void>
 }) {
   const update = client.weekly_update
   const monday = text(update?.current_work)
@@ -101,9 +106,18 @@ function AgencyClientRow({
   return (
     <tr className="hover:bg-hover-subtle border-border border-b last:border-b-0">
       <td className={CELL}>
-        <span className="body-4 bg-secondary text-muted-foreground rounded-spacing-4 px-spacing-2 py-spacing-1 block max-w-full truncate">
-          {formatPipelineStageLabel(client.pipeline_stage || client.status)}
-        </span>
+        <select
+          value={client.pipeline_stage || client.status}
+          onChange={(event) => void onStatusChange?.(client, event.target.value)}
+          className="body-4 bg-secondary text-muted-foreground rounded-spacing-4 border-border px-spacing-2 py-spacing-1 block max-w-full border"
+          aria-label={`Update status for ${client.display_name || client.name}`}
+        >
+          {clientStatusOptions(client).map((status) => (
+            <option key={status} value={status}>
+              {formatPipelineStageLabel(status)}
+            </option>
+          ))}
+        </select>
       </td>
       <td className={CELL}>
         <Link href={`/clients/${client.id}`} className="gap-spacing-3 flex min-w-0 items-center">
@@ -265,4 +279,20 @@ function updateDotClass(tone: string) {
 
 function text(value: unknown) {
   return typeof value === 'string' ? value : ''
+}
+
+function clientStatusOptions(client: AgencyClient) {
+  return Array.from(
+    new Set(
+      [
+        client.pipeline_stage || client.status,
+        'onboarding',
+        'active',
+        'paused',
+        'blocked',
+        'offboarding',
+        'churned_inactive',
+      ].filter(Boolean),
+    ),
+  )
 }

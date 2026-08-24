@@ -6,7 +6,17 @@ import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { orgService, type TeamRosterEntry } from '@/features/org/services/org.service'
 import { SpaceStatusCascadeConfirmProvider } from '@/features/spaces/components/SpaceStatusCascadeConfirmProvider'
 import { StatusEditorModal } from '@/features/spaces/components/StatusEditorModal'
-import { TaskDetailModal } from '@/features/spaces/components/task-detail/TaskDetailModal'
+import {
+  captureHomeTaskStoreSnapshot,
+  hydrateStoreForHomeTask,
+  mergeHomeTaskSchema,
+  openHomeTaskWithHistory,
+  pickHomeTaskDetailView,
+  restoreHomeTaskStoreSnapshot,
+  TaskDetailModal,
+  usePageGraderTaskSync,
+  type HomeTaskStoreSnapshot,
+} from '@/features/spaces/components/task-detail/TaskDetailModal'
 import { YourTurnSubtaskDrawer } from '@/features/spaces/components/your-turn/YourTurnSubtaskDrawer'
 import { useSpaceFieldOptionActions } from '@/features/spaces/hooks/use-space-field-option-actions'
 import { useTaskDetailNavigation } from '@/features/spaces/hooks/use-task-detail-navigation'
@@ -20,86 +30,11 @@ import type { YourTurnItem } from '@/features/spaces/services/your-turn.service'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { Space, SpaceItem } from '@/features/spaces/types'
 import {
-  DEFAULT_SPACE_SCHEMA,
   isSpaceFieldVisibleInUi,
   type SpaceSchema,
   type ViewDef,
 } from '@/features/spaces/types/space-schema'
 import { createClient } from '@/lib/supabase/client'
-
-type StoreSnapshot = {
-  activeSpaceId: string | null
-  activeViewId: string | null
-  items: SpaceItem[]
-  spaces: Space[]
-  itemsLoadedForSpaceId: string | null
-}
-
-const TASK_DETAIL_VIEW_TYPES = new Set<ViewDef['type']>(['list', 'table', 'kanban'])
-
-function captureStoreSnapshot(): StoreSnapshot {
-  const s = useSpacesStore.getState()
-  return {
-    activeSpaceId: s.activeSpaceId,
-    activeViewId: s.activeViewId,
-    items: s.items,
-    spaces: s.spaces,
-    itemsLoadedForSpaceId: s.itemsLoadedForSpaceId,
-  }
-}
-
-function restoreStoreSnapshot(snapshot: StoreSnapshot) {
-  useSpacesStore.setState({
-    activeSpaceId: snapshot.activeSpaceId,
-    activeViewId: snapshot.activeViewId,
-    items: snapshot.items,
-    spaces: snapshot.spaces,
-    itemsLoadedForSpaceId: snapshot.itemsLoadedForSpaceId,
-  })
-}
-
-function mergeSchema(raw: SpaceSchema): SpaceSchema {
-  const existingIds = new Set(raw.fields.map((f) => f.id))
-  const missingFields = DEFAULT_SPACE_SCHEMA.fields.filter((f) => !existingIds.has(f.id))
-  if (missingFields.length === 0) return raw
-  return { ...raw, fields: [...raw.fields, ...missingFields] }
-}
-
-function pickTaskDetailView(schema: SpaceSchema): ViewDef {
-  const match = schema.views.find((view) => TASK_DETAIL_VIEW_TYPES.has(view.type))
-  return match ?? schema.views[0]!
-}
-
-function hydrateStoreForSpaceTask(space: Space, items: SpaceItem[], viewId: string) {
-  useSpacesStore.setState((s) => ({
-    activeSpaceId: space.id,
-    activeViewId: viewId,
-    items,
-    itemsLoadedForSpaceId: space.id,
-    spaces: s.spaces.some((sp) => sp.id === space.id) ? s.spaces : [space, ...s.spaces],
-  }))
-}
-
-function openSpaceItemWithHistory(
-  item: SpaceItem,
-  items: SpaceItem[],
-  setSelectedItem: (item: SpaceItem | null) => void,
-  setTaskHistory: (updater: (stack: SpaceItem[]) => SpaceItem[]) => void,
-) {
-  if (!item.parent_item_id) {
-    setTaskHistory(() => [])
-    setSelectedItem(item)
-    return
-  }
-  const parent = items.find((i) => i.id === item.parent_item_id)
-  if (parent) {
-    setTaskHistory(() => [parent])
-    setSelectedItem(item)
-  } else {
-    setTaskHistory(() => [])
-    setSelectedItem(item)
-  }
-}
 
 export function HomeTaskDetailHost({
   item,
@@ -163,7 +98,7 @@ function HomeSpaceTaskDetailHost({
   const [roster, setRoster] = useState<TeamRosterEntry[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [statusEditorOpen, setStatusEditorOpen] = useState(false)
-  const storeSnapshotRef = useRef<StoreSnapshot | null>(null)
+  const storeSnapshotRef = useRef<HomeTaskStoreSnapshot | null>(null)
 
   const fieldsForUi = useMemo(
     () => (schema?.fields ?? []).filter(isSpaceFieldVisibleInUi),
@@ -216,7 +151,7 @@ function HomeSpaceTaskDetailHost({
 
   useEffect(() => {
     let cancelled = false
-    storeSnapshotRef.current = captureStoreSnapshot()
+    storeSnapshotRef.current = captureHomeTaskStoreSnapshot()
     setLoading(true)
 
     void (async () => {
@@ -229,8 +164,8 @@ function HomeSpaceTaskDetailHost({
           return
         }
 
-        const mergedSchema = mergeSchema(loadedSpace.schema)
-        const view = pickTaskDetailView(mergedSchema)
+        const mergedSchema = mergeHomeTaskSchema(loadedSpace.schema)
+        const view = pickHomeTaskDetailView(mergedSchema)
         let targetItem = items.find((i) => i.id === itemId) ?? null
         if (!targetItem) {
           try {
@@ -239,16 +174,16 @@ function HomeSpaceTaskDetailHost({
             targetItem = null
           }
         }
+
         if (!targetItem) {
           toast.error('Task not found')
           onClose()
           return
         }
-
         const hydratedItems = items.some((i) => i.id === targetItem!.id)
           ? items
           : [targetItem, ...items]
-        hydrateStoreForSpaceTask({ ...loadedSpace, schema: mergedSchema }, hydratedItems, view.id)
+        hydrateStoreForHomeTask({ ...loadedSpace, schema: mergedSchema }, hydratedItems, view.id)
 
         // Always load roster (personal = self + agents; org = team members).
         // Skipping personal spaces left Assignee Empty even when assignee_id was set.
@@ -262,7 +197,7 @@ function HomeSpaceTaskDetailHost({
         setSpace({ ...loadedSpace, schema: mergedSchema })
         setSchema(mergedSchema)
         setActiveView(view)
-        openSpaceItemWithHistory(targetItem, hydratedItems, setSelectedItem, setTaskHistory)
+        openHomeTaskWithHistory(targetItem, hydratedItems, setSelectedItem, setTaskHistory)
       } catch (err) {
         if (!cancelled) {
           toast.error('Failed to open task')
@@ -276,7 +211,7 @@ function HomeSpaceTaskDetailHost({
     return () => {
       cancelled = true
       if (storeSnapshotRef.current) {
-        restoreStoreSnapshot(storeSnapshotRef.current)
+        restoreHomeTaskStoreSnapshot(storeSnapshotRef.current)
         storeSnapshotRef.current = null
       }
     }
@@ -284,7 +219,7 @@ function HomeSpaceTaskDetailHost({
 
   const handleClose = useCallback(() => {
     if (storeSnapshotRef.current) {
-      restoreStoreSnapshot(storeSnapshotRef.current)
+      restoreHomeTaskStoreSnapshot(storeSnapshotRef.current)
       storeSnapshotRef.current = null
     }
     onClose()
@@ -313,6 +248,12 @@ function HomeSpaceTaskDetailHost({
   }, [])
 
   const handleViewPatch = useCallback(async (_patch: Partial<ViewDef>) => {}, [])
+
+  const { onUpdateItem, externalTaskMirror } = usePageGraderTaskSync({
+    selectedItem,
+    roster,
+    refresh,
+  })
 
   const {
     openConversationById: handleOpenConversationById,
@@ -375,6 +316,8 @@ function HomeSpaceTaskDetailHost({
         onOpenConversationById={handleOpenConversationById}
         onClose={handleClose}
         onUpdated={() => void refresh()}
+        onUpdateItem={onUpdateItem}
+        externalTaskMirror={externalTaskMirror}
         onEditStatuses={() => setStatusEditorOpen(true)}
         onCreateOption={handleCreateFieldOption}
         onUpdateOption={handleUpdateFieldOption}

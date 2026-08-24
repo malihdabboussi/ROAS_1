@@ -6,7 +6,6 @@ import {
   isMeetingCallItem,
   ShellMeetingWorkspaceAdapter,
 } from '@/components/shell/ShellMeetingWorkspaceAdapter'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { useSpaceProgramPrivacy } from '../../hooks/use-space-program-privacy'
@@ -17,23 +16,17 @@ import type { FieldDef, SelectOption, SpaceSchema, ViewDef } from '../../types/s
 import { AssigneeFilterSlideOver } from '../AssigneeFilterSlideOver'
 import { CategoryEditorModal } from '../CategoryEditorModal'
 import type { ContactsViewHandle } from '../contacts/ContactsView'
+import { SpaceModalChunkLoading } from '../SpaceLoadingStates'
 import { StatusEditorModal } from '../StatusEditorModal'
-
-function ModalChunkLoading() {
-  return (
-    <div className="fixed inset-0 z-[50] flex items-center justify-center">
-      <VibeyLoadingOrb state="processing" size="md" />
-    </div>
-  )
-}
+import { usePageGraderTaskSync } from '../task-detail/use-page-grader-task-sync'
 
 const DocEditorPanel = dynamic(
   () => import('../docs/DocEditorPanel').then((mod) => mod.DocEditorPanel),
-  { loading: ModalChunkLoading },
+  { loading: SpaceModalChunkLoading },
 )
 const TaskDetailModal = dynamic(
   () => import('../task-detail/TaskDetailModal').then((mod) => mod.TaskDetailModal),
-  { loading: ModalChunkLoading },
+  { loading: SpaceModalChunkLoading },
 )
 const AutomationsPanel = dynamic(
   () => import('../automations/AutomationsPanel').then((mod) => mod.AutomationsPanel),
@@ -79,7 +72,6 @@ const AllContactsImportAcDialog = dynamic(
     ),
   { loading: () => null },
 )
-
 /**
  * Latches true on first open so always-mounted `open`-prop panels only load
  * their chunk when first used, while staying mounted afterwards (close/exit
@@ -90,7 +82,6 @@ function useMountOnFirstOpen(open: boolean): boolean {
   if (open && !mounted) setMounted(true)
   return mounted || open
 }
-
 export type SpaceModalsHostProps = {
   activeSpace: Space
   activeView: ViewDef | null
@@ -256,6 +247,12 @@ export function SpaceModalsHost(p: SpaceModalsHostProps) {
     handleTagCustomSwatchesChange,
     onDocEditorDismiss,
   } = p
+
+  const { onUpdateItem, externalTaskMirror } = usePageGraderTaskSync({
+    selectedItem,
+    roster,
+    refresh,
+  })
 
   const customizeResolvedView = customizePanelTargetView ?? activeView
 
@@ -462,6 +459,8 @@ export function SpaceModalsHost(p: SpaceModalsHostProps) {
           onOpenTaskByItem={pushTaskAndOpen}
           onClose={() => setSelectedItem(null)}
           onUpdated={() => void refresh()}
+          onUpdateItem={onUpdateItem}
+          externalTaskMirror={externalTaskMirror}
           onEditStatuses={() => setStatusEditorOpen(true)}
           onEditCategories={() => setCategoryEditorOpen(true)}
           onCreateOption={handleCreateFieldOption}

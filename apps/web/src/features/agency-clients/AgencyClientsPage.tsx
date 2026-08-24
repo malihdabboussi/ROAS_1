@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { BriefcaseBusiness, PanelRightOpen, Rocket, Search } from 'lucide-react'
+import { PanelRightOpen, Search } from 'lucide-react'
 import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
   fetchAgencyClients,
   groupClientsByManager,
   groupClientsByPipeline,
+  updateAgencyWorkspaceEntity,
   visiblePipelineClients,
   type AgencyClient,
 } from '@/lib/agency-clients'
@@ -63,6 +64,13 @@ export function AgencyClientsPage() {
       : groupClientsByPipeline(visible)
   }, [clients, groupMode, query, showInactive])
 
+  const updateClientStatus = async (client: AgencyClient, status: string) => {
+    await updateAgencyWorkspaceEntity(client.id, { kind: 'client', patch: { status } })
+    setClients((rows) =>
+      rows.map((row) => (row.id === client.id ? { ...row, status, pipeline_stage: status } : row)),
+    )
+  }
+
   return (
     <main className="gap-spacing-6 p-spacing-8 mx-auto flex w-full max-w-7xl flex-col">
       <h1 className="sr-only">CLIENTS</h1>
@@ -113,12 +121,6 @@ export function AgencyClientsPage() {
         >
           {AGENCY_CLIENT_MESSAGES.SHOW_INACTIVE}
         </button>
-        <Link href="/client-campaigns" className="button-compact button-glass-neutral">
-          <BriefcaseBusiness className="icon-sm" /> Client Campaigns
-        </Link>
-        <Link href="/launches" className="button-compact button-glass-neutral">
-          <Rocket className="icon-sm" /> Launches
-        </Link>
       </div>
 
       {loading ? <ListSkeleton rows={8} label={AGENCY_CLIENT_MESSAGES.LOADING_CLIENTS} /> : null}
@@ -133,7 +135,11 @@ export function AgencyClientsPage() {
         </p>
       ) : null}
       {!loading && !error && groups.length > 0 ? (
-        <AgencyClientsTable groups={groups} showManagerColumn={groupMode !== 'manager'} />
+        <AgencyClientsTable
+          groups={groups}
+          showManagerColumn={groupMode !== 'manager'}
+          onStatusChange={updateClientStatus}
+        />
       ) : null}
     </main>
   )

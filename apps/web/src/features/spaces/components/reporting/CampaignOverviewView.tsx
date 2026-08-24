@@ -20,8 +20,10 @@ import {
   type SocialAnalyticsResponse,
 } from '@/features/studio/services/analytics.service'
 import { SPACES_REPORTING_TOAST_ERRORS } from '../../config/spaces-toast-errors.config'
+import type { SpaceItem } from '../../types'
 import type { ViewDef } from '../../types/space-schema'
 import { newOverviewCustomWidgetId } from './overview-section-layout'
+import { PageGraderCampaignOverviewView } from './PageGraderCampaignOverviewView'
 import {
   OVERVIEW_CHANNEL_BY_SECTION_ID,
   OVERVIEW_CHANNEL_IDS,
@@ -37,9 +39,36 @@ interface CampaignOverviewViewProps {
   activeView: ViewDef
   onViewPatch: (patch: Partial<ViewDef>) => void
   onRegisterReportingToolbar?: (api: ReportingToolbarApi | null) => void
+  pageGraderClientId?: string | null
+  pageGraderCampaignId?: string | null
+  spaceItems?: SpaceItem[]
+  spaceId?: string | null
+  onOpenTask?: (item: SpaceItem) => void
 }
 
 export function CampaignOverviewView({
+  pageGraderClientId,
+  pageGraderCampaignId,
+  spaceItems = [],
+  spaceId,
+  onOpenTask,
+  ...props
+}: CampaignOverviewViewProps) {
+  if (pageGraderClientId && pageGraderCampaignId && onOpenTask) {
+    return (
+      <PageGraderCampaignOverviewView
+        clientId={pageGraderClientId}
+        pageGraderCampaignId={pageGraderCampaignId}
+        spaceItems={spaceItems}
+        spaceId={spaceId || ''}
+        onOpenTask={onOpenTask}
+      />
+    )
+  }
+  return <NativeCampaignOverviewView {...props} />
+}
+
+function NativeCampaignOverviewView({
   campaignId,
   activeView,
   onViewPatch,
@@ -224,7 +253,7 @@ export function CampaignOverviewView({
   )
 
   return (
-    <div className="scrollbar-thin flex h-0 min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto px-4 py-3">
+    <div className="scrollbar-thin flex h-0 min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-4 py-3">
       {initialLoading ? (
         <div className="flex flex-1 items-center justify-center">
           <VibeyLoadingOrb size="sm" text="Loading overview..." />

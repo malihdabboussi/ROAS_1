@@ -36,6 +36,7 @@ interface TaskActivityProps {
   onActivityEntryAdded?: (entry: SpaceItemActivity) => void
   /** True while an automation/agent step is executing on this task. */
   isAgentWorking?: boolean
+  onSendExternalComment?: (input: { content: string; authorName: string }) => Promise<void>
 }
 
 const BOTTOM_SCROLL_THRESHOLD = 80
@@ -55,6 +56,7 @@ export function TaskActivity({
   onOpenSendToAgent,
   onActivityEntryAdded,
   isAgentWorking = false,
+  onSendExternalComment,
 }: TaskActivityProps) {
   const space = useSpacesStore((s) => s.spaces.find((sp) => sp.id === spaceId) ?? null)
   const perm = useSpacePermission(space)
@@ -79,6 +81,7 @@ export function TaskActivity({
     roster,
     currentUserId,
     onActivityEntryAdded,
+    onSendExternalComment,
   })
   const scrollRef = useRef<HTMLDivElement>(null)
   const [userScrolledUp, setUserScrolledUp] = useState(false)

@@ -1,16 +1,21 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import { ExternalLink, FolderKanban, PanelRightOpen, Search } from 'lucide-react'
+import { FolderKanban, MoreHorizontal, PanelRightOpen, Plus, Search } from 'lucide-react'
 import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
+  deleteAgencyClientCampaign,
   fetchAgencyClientCampaigns,
   fetchAgencyClients,
+  updateAgencyWorkspaceEntity,
   visiblePipelineCampaigns,
   type AgencyClientCampaign,
   type PipelineClientLike,
 } from '@/lib/agency-clients'
+import { useChatStore } from '@/lib/chat/studio-chat-runtime-adapter'
 import { cn } from '@/lib/utils/cn'
 import { formatAgencyDate } from './agency-client-format'
 import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
@@ -19,6 +24,7 @@ import { AGENCY_CLIENT_MESSAGES } from './config/messages.config'
 type ViewMode = 'all' | 'client'
 
 export function ClientCampaignsPage() {
+  const router = useRouter()
   const [campaigns, setCampaigns] = useState<AgencyClientCampaign[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -26,6 +32,7 @@ export function ClientCampaignsPage() {
   const [view, setView] = useState<ViewMode>('all')
   const [showInactive, setShowInactive] = useState(false)
   const [clientCatalog, setClientCatalog] = useState<PipelineClientLike[]>([])
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -88,6 +95,30 @@ export function ClientCampaignsPage() {
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b))
   }, [filtered, view])
 
+  const campaignHref = (campaign: AgencyClientCampaign) =>
+    campaign.roas_space_id
+      ? `/spaces?space=${encodeURIComponent(campaign.roas_space_id)}`
+      : `/client-campaigns?surface=portal&portal_path=${encodeURIComponent(`/campaigns/${campaign.id}`)}`
+
+  const patchCampaign = async (campaign: AgencyClientCampaign, patch: Record<string, unknown>) => {
+    await updateAgencyWorkspaceEntity(campaign.client_id, {
+      kind: 'campaign',
+      entity_id: campaign.id,
+      patch,
+    })
+    setCampaigns((rows) => rows.map((row) => (row.id === campaign.id ? { ...row, ...patch } : row)))
+  }
+
+  const openCampaignCreationChat = () => {
+    useChatStore
+      .getState()
+      .setComposerDraft(
+        'new',
+        'Help me create a new client campaign. Start by asking me which client this is for, then work through the campaign details and required tasks with me.',
+      )
+    router.push('/home')
+  }
+
   return (
     <main className="gap-spacing-6 p-spacing-8 mx-auto flex w-full max-w-7xl flex-col">
       <h1 className="sr-only">CLIENT CAMPAIGNS</h1>
@@ -102,6 +133,15 @@ export function ClientCampaignsPage() {
           </Link>
         }
       />
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={openCampaignCreationChat}
+          className="button-primary gap-spacing-2"
+        >
+          <Plus className="icon-sm" /> New campaign
+        </button>
+      </div>
       <div className="surface-card gap-spacing-2 rounded-spacing-3 border-border p-spacing-3 flex flex-wrap items-center border">
         <label className="relative min-w-64 flex-1">
           <Search className="icon-sm text-muted-foreground left-spacing-3 absolute top-1/2 -translate-y-1/2" />
@@ -160,15 +200,15 @@ export function ClientCampaignsPage() {
                     <thead>
                       <tr className="body-4 text-muted-foreground border-border bg-secondary whitespace-nowrap border-b text-left">
                         <th className="px-spacing-4 py-spacing-3 font-medium">Stage</th>
-                        {/* Name absorbs the free width; every other column is nowrap so it sizes to content. */}
+                        <th className="px-spacing-4 py-spacing-3 font-medium">Date Created</th>
+                        <th className="px-spacing-4 py-spacing-3 font-medium">Client Name</th>
                         <th className="px-spacing-4 py-spacing-3 w-full min-w-64 font-medium">
                           Campaign Name
                         </th>
                         <th className="px-spacing-4 py-spacing-3 font-medium">Type</th>
-                        <th className="px-spacing-4 py-spacing-3 font-medium">Created By</th>
-                        <th className="px-spacing-4 py-spacing-3 font-medium">Account Manager</th>
-                        <th className="px-spacing-4 py-spacing-3 font-medium">Client</th>
+                        <th className="px-spacing-4 py-spacing-3 font-medium">Owner</th>
                         <th className="px-spacing-4 py-spacing-3 font-medium">Launch Day</th>
+                        <th className="px-spacing-4 py-spacing-3 font-medium">Created By</th>
                         <th className="px-spacing-4 py-spacing-3 text-right font-medium">
                           Options
                         </th>
@@ -181,32 +221,64 @@ export function ClientCampaignsPage() {
                         return (
                           <tr
                             key={campaign.id}
-                            className="hover:bg-hover-subtle border-border border-b last:border-b-0"
+                            onClick={() => router.push(campaignHref(campaign))}
+                            className="hover:bg-hover-subtle border-border cursor-pointer border-b last:border-b-0"
                           >
                             <td className="px-spacing-4 py-spacing-3 align-top">
-                              <span className="body-4 bg-secondary text-muted-foreground px-spacing-2 py-spacing-1 inline-flex whitespace-nowrap rounded-full capitalize">
-                                {readable(campaign.status || campaign.platform_status)}
+                              <select
+                                value={campaign.status || campaign.platform_status || 'planning'}
+                                onClick={(event) => event.stopPropagation()}
+                                onChange={(event) =>
+                                  void patchCampaign(campaign, { status: event.target.value })
+                                }
+                                className="body-4 bg-secondary text-muted-foreground rounded-spacing-4 border-border px-spacing-2 py-spacing-1 max-w-40 border capitalize"
+                                aria-label={`Update status for ${campaign.name}`}
+                              >
+                                {campaignStatusOptions(campaign).map((status) => (
+                                  <option key={status} value={status}>
+                                    {readable(status)}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className="body-3 text-muted-foreground px-spacing-4 py-spacing-3 whitespace-nowrap align-top">
+                              {formatAgencyDate(String(campaign.created_at || ''))}
+                            </td>
+                            <td className="px-spacing-4 py-spacing-3 align-top">
+                              <span className="gap-spacing-2 flex min-w-40 items-center">
+                                <span className="bg-secondary h-spacing-7 w-spacing-7 rounded-spacing-2 flex shrink-0 items-center justify-center overflow-hidden">
+                                  {campaign.clients?.logo_url ||
+                                  campaign.clients?.brand_logo_url ? (
+                                    <Image
+                                      src={
+                                        campaign.clients.logo_url ||
+                                        campaign.clients.brand_logo_url ||
+                                        ''
+                                      }
+                                      alt=""
+                                      width={28}
+                                      height={28}
+                                      unoptimized
+                                      className="h-spacing-7 w-spacing-7 object-cover"
+                                    />
+                                  ) : (
+                                    <span className="body-4 font-semibold">
+                                      {clientName.slice(0, 1)}
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="body-3 text-muted-foreground whitespace-nowrap">
+                                  {clientName}
+                                </span>
                               </span>
                             </td>
                             <td className="px-spacing-4 py-spacing-3 align-top">
-                              {campaign.roas_space_id ? (
-                                <Link
-                                  href={`/spaces?space=${encodeURIComponent(campaign.roas_space_id)}`}
-                                  className="body-3 text-foreground hover:text-primary font-medium"
-                                >
-                                  {campaign.name}
-                                </Link>
-                              ) : (
-                                <span className="body-3 text-foreground font-medium">
-                                  {campaign.name}
-                                </span>
-                              )}
+                              <span className="body-3 text-foreground font-medium">
+                                {campaign.name}
+                              </span>
                             </td>
                             <td className="body-3 text-muted-foreground px-spacing-4 py-spacing-3 whitespace-nowrap align-top capitalize">
                               {readable(String(campaign.campaign_type || 'Not set'))}
-                            </td>
-                            <td className="body-3 text-muted-foreground px-spacing-4 py-spacing-3 whitespace-nowrap align-top">
-                              {String(campaign.created_by_name || 'Portal')}
                             </td>
                             <td className="body-3 text-muted-foreground px-spacing-4 py-spacing-3 whitespace-nowrap align-top">
                               {campaign.clients?.assignee_name ||
@@ -214,24 +286,81 @@ export function ClientCampaignsPage() {
                                 'Unassigned'}
                             </td>
                             <td className="body-3 text-muted-foreground px-spacing-4 py-spacing-3 whitespace-nowrap align-top">
-                              {clientName}
-                            </td>
-                            <td className="body-3 text-muted-foreground px-spacing-4 py-spacing-3 whitespace-nowrap align-top">
                               {formatAgencyDate(campaign.start_date)}
                             </td>
+                            <td className="body-3 text-muted-foreground px-spacing-4 py-spacing-3 whitespace-nowrap align-top">
+                              {String(campaign.created_by_name || 'Portal')}
+                            </td>
                             <td className="px-spacing-4 py-spacing-3 align-top">
-                              <div className="flex justify-end">
-                                <Link
-                                  href={
-                                    campaign.roas_space_id
-                                      ? `/spaces?space=${encodeURIComponent(campaign.roas_space_id)}`
-                                      : `/client-campaigns?surface=portal&portal_path=${encodeURIComponent(`/campaigns/${campaign.id}`)}`
+                              <div
+                                className="relative flex justify-end"
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                <button
+                                  type="button"
+                                  className="btn-icon-bare"
+                                  aria-label={`Options for ${campaign.name}`}
+                                  onClick={() =>
+                                    setOpenMenuId((current) =>
+                                      current === campaign.id ? null : campaign.id,
+                                    )
                                   }
-                                  aria-label={`Open ${campaign.name}`}
-                                  className="btn-icon-bare hover:bg-hover-subtle text-muted-foreground hover:text-foreground"
                                 >
-                                  <ExternalLink className="icon-sm" />
-                                </Link>
+                                  <MoreHorizontal className="icon-sm" />
+                                </button>
+                                {openMenuId === campaign.id ? (
+                                  <div className="dropdown-menu-solid p-spacing-1 z-dropdown absolute right-0 top-8 flex min-w-40 flex-col">
+                                    <button
+                                      type="button"
+                                      className="hub-dock-flyout-row"
+                                      onClick={() => {
+                                        const name = window
+                                          .prompt('Rename campaign', campaign.name)
+                                          ?.trim()
+                                        setOpenMenuId(null)
+                                        if (name) void patchCampaign(campaign, { name })
+                                      }}
+                                    >
+                                      Rename
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="hub-dock-flyout-row"
+                                      onClick={() => {
+                                        const status = window
+                                          .prompt(
+                                            'Update campaign status',
+                                            campaign.status ||
+                                              campaign.platform_status ||
+                                              'planning',
+                                          )
+                                          ?.trim()
+                                        setOpenMenuId(null)
+                                        if (status) void patchCampaign(campaign, { status })
+                                      }}
+                                    >
+                                      Update status
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="hub-dock-flyout-row text-destructive"
+                                      onClick={() => {
+                                        setOpenMenuId(null)
+                                        if (!window.confirm(`Delete ${campaign.name}?`)) return
+                                        void deleteAgencyClientCampaign(
+                                          campaign.client_id,
+                                          campaign.id,
+                                        ).then(() =>
+                                          setCampaigns((current) =>
+                                            current.filter((row) => row.id !== campaign.id),
+                                          ),
+                                        )
+                                      }}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                ) : null}
                               </div>
                             </td>
                           </tr>
@@ -250,4 +379,19 @@ export function ClientCampaignsPage() {
 
 function readable(value: string) {
   return value.replace(/[_-]/g, ' ').toLowerCase()
+}
+
+function campaignStatusOptions(campaign: AgencyClientCampaign) {
+  return Array.from(
+    new Set([
+      campaign.status || campaign.platform_status || 'planning',
+      'draft',
+      'planning',
+      'pending strategy review',
+      'building',
+      'live',
+      'paused',
+      'complete',
+    ]),
+  )
 }

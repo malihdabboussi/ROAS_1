@@ -9,6 +9,7 @@ import {
 import {
   isPageGraderMetaContext,
   type PageGraderAssignee,
+  type PageGraderCampaignOverview,
   type PageGraderClient,
   type PageGraderClientCampaign,
   type PageGraderClientPackage,
@@ -21,6 +22,7 @@ import {
   type PageGraderMeetingUpsert,
   type PageGraderMetaContext,
   type PageGraderQcActionResult,
+  type PageGraderTaskDetail,
   type PageGraderTaskType,
   type PageGraderWorkResult,
 } from './page-grader.integration.types'
@@ -160,6 +162,26 @@ export class PageGraderIntegration {
     return []
   }
 
+  async createLaunch(
+    baseUrl: string,
+    apiKey: string,
+    payload: {
+      client_id: string
+      campaign_id: string
+      launch_name: string
+      launch_date: string
+      launch_time?: string
+      event_date?: string
+      event_time?: string
+    },
+  ): Promise<Record<string, unknown>> {
+    const url = `${normalizePageGraderBaseUrl(baseUrl)}/launches`
+    return requirePageGraderJson(url, apiKey, 'The ROAS Portal launch request failed', {
+      method: 'POST',
+      body: payload,
+    })
+  }
+
   async updateWorkspaceEntity(
     baseUrl: string,
     apiKey: string,
@@ -170,6 +192,70 @@ export class PageGraderIntegration {
     return requirePageGraderJson(url, apiKey, 'The ROAS Portal workspace request failed', {
       method: 'PATCH',
       body: patch,
+    })
+  }
+
+  async deleteWorkspaceEntity(
+    baseUrl: string,
+    apiKey: string,
+    path: string,
+  ): Promise<Record<string, unknown>> {
+    const url = `${normalizePageGraderBaseUrl(baseUrl)}${path}`
+    return requirePageGraderJson(url, apiKey, 'The ROAS Portal delete request failed', {
+      method: 'DELETE',
+    })
+  }
+
+  async getTaskDetail(
+    baseUrl: string,
+    apiKey: string,
+    clientId: string,
+    taskId: string,
+  ): Promise<PageGraderTaskDetail> {
+    const root = normalizePageGraderBaseUrl(baseUrl)
+    const url = `${root}/clients/${encodeURIComponent(clientId)}/tasks/${encodeURIComponent(taskId)}`
+    const body = await requirePageGraderJson(
+      url,
+      apiKey,
+      'The ROAS Portal task detail request failed',
+    )
+    if (!body.task || !body.thread) {
+      throw new BadRequestException('The ROAS Portal task detail response was invalid')
+    }
+    return body as PageGraderTaskDetail
+  }
+
+  async getCampaignOverview(
+    baseUrl: string,
+    apiKey: string,
+    clientId: string,
+    campaignId: string,
+  ): Promise<PageGraderCampaignOverview> {
+    const root = normalizePageGraderBaseUrl(baseUrl)
+    const url = `${root}/clients/${encodeURIComponent(clientId)}/campaigns/${encodeURIComponent(campaignId)}/overview`
+    const body = await requirePageGraderJson(
+      url,
+      apiKey,
+      'The ROAS Portal campaign overview request failed',
+    )
+    if (!body.overview || typeof body.overview !== 'object' || Array.isArray(body.overview)) {
+      throw new BadRequestException('The ROAS Portal campaign overview response was invalid')
+    }
+    return body.overview as PageGraderCampaignOverview
+  }
+
+  async createTaskComment(
+    baseUrl: string,
+    apiKey: string,
+    clientId: string,
+    taskId: string,
+    payload: { body: string; author_name: string },
+  ): Promise<Record<string, unknown>> {
+    const root = normalizePageGraderBaseUrl(baseUrl)
+    const url = `${root}/clients/${encodeURIComponent(clientId)}/tasks/${encodeURIComponent(taskId)}/comments`
+    return requirePageGraderJson(url, apiKey, 'The ROAS Portal task comment failed', {
+      method: 'POST',
+      body: payload,
     })
   }
 

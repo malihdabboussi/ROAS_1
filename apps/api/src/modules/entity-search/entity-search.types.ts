@@ -1,4 +1,6 @@
 export type EntitySearchKind =
+  | 'client'
+  | 'request'
   | 'task'
   | 'doc'
   | 'channel'
@@ -40,6 +42,7 @@ export interface EntitySearchResult {
   /** Status option label from the space schema (e.g. 'In Progress'). */
   statusLabel?: string | null
   campaignId?: string | null
+  clientId?: string | null
   campaignIcon?: string | null
   artifactKind?: EntitySearchArtifactKind
   sequenceId?: string

@@ -1,9 +1,14 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchAgencyLaunches } from '@/lib/agency-clients'
 import { LaunchesPage } from './LaunchesPage'
 
+const openArtifactInShell = vi.fn()
+
 vi.mock('@/lib/agency-clients', () => ({ fetchAgencyLaunches: vi.fn() }))
+vi.mock('@/lib/artifacts', () => ({
+  openArtifactInShell: (...args: unknown[]) => openArtifactInShell(...args),
+}))
 
 vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
@@ -49,14 +54,18 @@ describe('LaunchesPage', () => {
     render(<LaunchesPage />)
 
     expect(await screen.findByText('Fall Launch')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'LAUNCHES' })).toHaveClass('sr-only')
+    expect(screen.getByRole('heading', { name: 'LAUNCHES' })).toBeVisible()
     expect(screen.getByRole('link', { name: 'Portal' })).toHaveAttribute(
       'href',
       '/launches?surface=portal&portal_path=/launches',
     )
-    expect(screen.getByRole('link', { name: 'Open Fall Launch' })).toHaveAttribute(
-      'href',
-      '/launches?surface=portal&portal_path=%2Fcampaigns%2F22222222-2222-2222-2222-222222222222',
+    fireEvent.click(screen.getByRole('button', { name: /Fall Launch/i }))
+    expect(openArtifactInShell).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entityTable: 'page_grader_launches',
+        title: 'Fall Launch',
+        type: 'custom_object',
+      }),
     )
     expect(screen.queryByRole('status', { name: 'Loading launches...' })).not.toBeInTheDocument()
     await waitFor(() => {

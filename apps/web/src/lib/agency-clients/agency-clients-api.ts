@@ -1,4 +1,4 @@
-import { backendGet, backendPost } from '@/lib/api/backend-client'
+import { backendDelete, backendGet, backendPost } from '@/lib/api/backend-client'
 
 export type AgencyClient = {
   id: string
@@ -73,6 +73,8 @@ export type AgencyClientCampaign = {
     pipeline_stage?: string | null
     status?: string | null
     pipeline_status?: string | null
+    logo_url?: string | null
+    brand_logo_url?: string | null
   }
   [key: string]: unknown
 }
@@ -117,6 +119,21 @@ export type AgencyClientWorkspace = {
   }>
 }
 
+export type AgencyCampaignOverview = {
+  campaign: AgencyClientCampaign
+  tasks: Array<Record<string, unknown>>
+  performance: Record<string, number | null>
+  top_ads: Array<Record<string, unknown>>
+  linked_meta_campaign_ids: string[]
+  snapshot_at: string | null
+  top_ads_error: string | null
+  task_sync?: {
+    synced: number
+    skipped: number
+    errors: Array<{ task_id: string; error: string }>
+  }
+}
+
 export async function fetchAgencyClients(search = '', sync = true) {
   const params = new URLSearchParams()
   if (search.trim()) params.set('q', search.trim())
@@ -153,6 +170,24 @@ export async function fetchAgencyLaunches(clientId?: string, sync?: boolean) {
   )
 }
 
+export async function createAgencyLaunch(input: {
+  client_id: string
+  campaign_id: string
+  launch_name: string
+  launch_date: string
+  launch_time?: string
+  event_date?: string
+  event_time?: string
+}) {
+  return backendPost('/api/integrations/page-grader/agency/launches', input)
+}
+
+export async function deleteAgencyClientCampaign(clientId: string, campaignId: string) {
+  return backendDelete(
+    `/api/integrations/page-grader/agency/clients/${encodeURIComponent(clientId)}/campaigns/${encodeURIComponent(campaignId)}`,
+  )
+}
+
 export async function updateAgencyWorkspaceEntity(
   clientId: string,
   input: {
@@ -163,6 +198,49 @@ export async function updateAgencyWorkspaceEntity(
 ) {
   return backendPost(
     `/api/integrations/page-grader/agency/clients/${encodeURIComponent(clientId)}/update`,
+    input,
+  )
+}
+
+export async function fetchAgencyTaskDetail(
+  clientId: string,
+  taskId: string,
+  spaceItemId?: string,
+) {
+  const params = new URLSearchParams()
+  if (spaceItemId) params.set('space_item_id', spaceItemId)
+  const query = params.size ? `?${params}` : ''
+  const response = await backendGet<{
+    detail: {
+      task: Record<string, unknown>
+      thread: {
+        comments: Array<Record<string, unknown>>
+        portal_comments: Array<Record<string, unknown>>
+        attachments: Array<Record<string, unknown>>
+        activity: Array<Record<string, unknown>>
+        hydration: { hydrated: boolean; error?: string }
+      }
+    }
+  }>(
+    `/api/integrations/page-grader/agency/clients/${encodeURIComponent(clientId)}/tasks/${encodeURIComponent(taskId)}${query}`,
+  )
+  return response.detail
+}
+
+export async function fetchAgencyCampaignOverview(clientId: string, campaignId: string) {
+  const response = await backendGet<{ overview: AgencyCampaignOverview }>(
+    `/api/integrations/page-grader/agency/clients/${encodeURIComponent(clientId)}/campaigns/${encodeURIComponent(campaignId)}/overview`,
+  )
+  return response.overview
+}
+
+export async function createAgencyTaskComment(
+  clientId: string,
+  taskId: string,
+  input: { body: string; author_name: string; space_item_id?: string },
+) {
+  return backendPost(
+    `/api/integrations/page-grader/agency/clients/${encodeURIComponent(clientId)}/tasks/${encodeURIComponent(taskId)}/comments`,
     input,
   )
 }

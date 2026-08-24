@@ -60,6 +60,25 @@ export const ListPageGraderAgencyLaunchesSchema = z.object({
     .transform((value) => (typeof value === 'string' ? value === 'true' : value)),
 })
 
+export const CreatePageGraderAgencyLaunchSchema = z.object({
+  client_id: z.string().uuid(),
+  campaign_id: z.string().uuid(),
+  launch_name: z.string().trim().min(1).max(500),
+  launch_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  launch_time: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .optional(),
+  event_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  event_time: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .optional(),
+})
+
 const NullableStringPatch = z.string().max(10_000).nullable()
 const WorkspacePatchSchema = z
   .record(z.string(), z.unknown())
@@ -194,6 +213,8 @@ export const PageGraderWorkStatusWebhookSchema = z.object({
   status: z.string().min(1).max(120).nullable().optional(),
   status_color: z.string().max(40).nullable().optional(),
   updated_at: z.string().datetime().optional(),
+  event: z.string().max(120).nullable().optional(),
+  refresh_thread: z.boolean().optional().default(false),
 })
 
 export type PageGraderWorkStatusWebhookDto = z.infer<typeof PageGraderWorkStatusWebhookSchema>

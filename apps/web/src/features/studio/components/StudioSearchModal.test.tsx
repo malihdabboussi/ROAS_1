@@ -33,35 +33,27 @@ describe('StudioSearchModal', () => {
     mocks.idleMock.mockResolvedValue({
       recents: [
         {
-          kind: 'conversation',
-          id: 'conv-1',
-          label: 'Offer strategy chat',
-          subtitle: 'ROAS',
-          url: null,
-        },
-        {
-          kind: 'campaign',
-          id: 'camp-1',
-          label: 'Webinar Offer',
-          subtitle: 'Campaign',
-          url: null,
-          campaignIcon: 'target',
-        },
-        {
-          kind: 'mission',
-          id: 'mission-1',
-          label: 'Research mission',
-          subtitle: 'active',
-          url: '/missions/mission-1',
+          kind: 'client',
+          id: 'client-1',
+          label: '1DS Collective',
+          subtitle: 'Client',
+          url: '/clients/client-1',
         },
       ],
       presets: [
         {
           kind: 'preset',
-          id: 'meetings',
-          label: 'Meetings',
-          subtitle: 'Home',
-          url: '/home/meetings',
+          id: 'clients',
+          label: 'Clients',
+          subtitle: 'Client workspaces',
+          url: '/clients',
+        },
+        {
+          kind: 'preset',
+          id: 'create-campaign',
+          label: 'New Campaign',
+          subtitle: 'Build with Pixel',
+          url: 'action:create-campaign',
         },
       ],
     })
@@ -69,13 +61,13 @@ describe('StudioSearchModal', () => {
     render(<StudioSearchModal open onClose={vi.fn()} campaigns={[]} onSelect={vi.fn()} />)
 
     await waitFor(() => {
-      expect(screen.getByText('Offer strategy chat')).toBeTruthy()
+      expect(screen.getByText('1DS Collective')).toBeTruthy()
     })
-    expect(screen.getByText('Recents')).toBeTruthy()
-    expect(screen.getByText('Webinar Offer')).toBeTruthy()
-    expect(screen.getByText('Research mission')).toBeTruthy()
-    expect(screen.getByText('Go to')).toBeTruthy()
-    expect(screen.getByText('Meetings')).toBeTruthy()
+    expect(screen.getByText('Recent clients')).toBeTruthy()
+    expect(screen.getByText('Navigate')).toBeTruthy()
+    expect(screen.getByText('Clients')).toBeTruthy()
+    expect(screen.getByText('Create')).toBeTruthy()
+    expect(screen.getByText('New Campaign')).toBeTruthy()
     expect(mocks.searchMock).not.toHaveBeenCalled()
     expect(mocks.idleMock).toHaveBeenCalled()
   })
@@ -134,9 +126,12 @@ describe('StudioSearchModal', () => {
       />,
     )
 
-    fireEvent.change(screen.getByPlaceholderText('Search everything…'), {
-      target: { value: 'strategy' },
-    })
+    fireEvent.change(
+      screen.getByPlaceholderText('Search clients, campaigns, requests, or chats…'),
+      {
+        target: { value: 'strategy' },
+      },
+    )
     await act(async () => {
       await vi.advanceTimersByTimeAsync(220)
       await Promise.resolve()
@@ -157,9 +152,12 @@ describe('StudioSearchModal', () => {
 
     render(<StudioSearchModal open onClose={vi.fn()} campaigns={[]} onSelect={vi.fn()} />)
 
-    fireEvent.change(screen.getByPlaceholderText('Search everything…'), {
-      target: { value: 'strategy' },
-    })
+    fireEvent.change(
+      screen.getByPlaceholderText('Search clients, campaigns, requests, or chats…'),
+      {
+        target: { value: 'strategy' },
+      },
+    )
     await act(async () => {
       await vi.advanceTimersByTimeAsync(220)
       await Promise.resolve()

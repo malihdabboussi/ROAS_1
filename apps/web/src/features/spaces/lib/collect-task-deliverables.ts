@@ -10,6 +10,55 @@ function mimeToDeliverableType(mime: string): MissionDeliverable['type'] {
   return 'file'
 }
 
+function externalAttachmentToDeliverable(
+  attachment: unknown,
+  row: SpaceItemActivity,
+  index: number,
+): MissionDeliverable | null {
+  if (!attachment || typeof attachment !== 'object' || Array.isArray(attachment)) return null
+  const value = attachment as Record<string, unknown>
+  const fileUrl =
+    typeof value.url === 'string'
+      ? value.url
+      : typeof value.fileUrl === 'string'
+        ? value.fileUrl
+        : ''
+  if (!fileUrl) return null
+  const fileName =
+    (typeof value.name === 'string' && value.name.trim()) ||
+    (typeof value.filename === 'string' && value.filename.trim()) ||
+    'Attachment'
+  const mimeType =
+    (typeof value.mime_type === 'string' && value.mime_type) ||
+    (typeof value.mimeType === 'string' && value.mimeType) ||
+    'application/octet-stream'
+  const externalId = typeof value.id === 'string' && value.id ? value.id : String(index)
+  return {
+    id: `${row.id}-external-att-${externalId}`,
+    mission_id: '',
+    user_id: row.user_id,
+    campaign_id: null,
+    agent_key: 'clickup',
+    type: mimeToDeliverableType(mimeType),
+    title: fileName,
+    content: null,
+    file_url: fileUrl,
+    file_name: fileName,
+    file_size: typeof value.size_bytes === 'number' ? value.size_bytes : null,
+    mime_type: mimeType,
+    metadata: {
+      source: 'external_task_attachment',
+      provider: 'clickup',
+      spaceId: row.space_id,
+      itemId: row.item_id,
+      activityId: row.id,
+      ...(typeof value.thumbnail_url === 'string' ? { thumbnail: value.thumbnail_url } : {}),
+    },
+    source: 'chat',
+    created_at: row.created_at,
+  }
+}
+
 /**
  * Convert a `LinkPreview` (Drive pick, pasted URL, etc.) into a
  * `MissionDeliverable` so it can render in the deliverables carousel and
@@ -76,6 +125,7 @@ export function collectTaskDeliverablesFromActivity(
 ): MissionDeliverable[] {
   const out: MissionDeliverable[] = []
   const seen = new Set<string>()
+  const seenExternalAttachmentUrls = new Set<string>()
 
   const sorted = [...rows].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
@@ -158,6 +208,27 @@ export function collectTaskDeliverablesFromActivity(
         seen.add(d.id)
         out.push(d)
       }
+    }
+
+    if (
+      row.event_type === 'field_change' &&
+      typeof row.payload.field === 'string' &&
+      /^(attachments?|files?|media|documents?)$/i.test(row.payload.field)
+    ) {
+      const attachments = Array.isArray(row.payload.to) ? row.payload.to : []
+      attachments.forEach((attachment, index) => {
+        const deliverable = externalAttachmentToDeliverable(attachment, row, index)
+        if (
+          !deliverable ||
+          seen.has(deliverable.id) ||
+          (deliverable.file_url && seenExternalAttachmentUrls.has(deliverable.file_url))
+        ) {
+          return
+        }
+        seen.add(deliverable.id)
+        if (deliverable.file_url) seenExternalAttachmentUrls.add(deliverable.file_url)
+        out.push(deliverable)
+      })
     }
   }
 

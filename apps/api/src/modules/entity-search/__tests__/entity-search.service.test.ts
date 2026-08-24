@@ -7,6 +7,8 @@ function createQuery(result: Record<string, unknown>) {
     select: vi.fn(() => query),
     eq: vi.fn(() => query),
     is: vi.fn(() => query),
+    not: vi.fn(() => query),
+    in: vi.fn(() => query),
     ilike: vi.fn(() => query),
     order: vi.fn(() => query),
     range: vi.fn(() => query),
@@ -143,9 +145,8 @@ describe('EntitySearchService', () => {
 
   it('returns campaign and artifact results through the unified search contract', async () => {
     const repository = {
-      searchCampaigns: vi.fn(async () => [
-        { id: 'campaign-1', name: 'Launch strategy', icon: 'target' },
-      ]),
+      searchPageGraderCampaignSpaces: vi.fn(async () => []),
+      searchCampaigns: vi.fn(async () => [{ id: 'campaign-1', name: 'Launch strategy' }]),
     }
     const artifactService = {
       search: vi.fn(async () => ({
@@ -181,7 +182,7 @@ describe('EntitySearchService', () => {
           subtitle: 'Campaign',
           iconUrl: null,
           url: null,
-          campaignIcon: 'target',
+          campaignIcon: null,
         },
         {
           kind: 'artifact',
@@ -195,6 +196,67 @@ describe('EntitySearchService', () => {
         },
       ],
     })
+  })
+
+  it('finds Page Grader clients from campaign config and their requests by client name', async () => {
+    const client = {
+      id: 'campaign-client-1',
+      name: 'Yasir Khan Coaching LTD',
+      config: {
+        external_sources: { page_grader: { client_id: 'pg-yasir' } },
+      },
+      context: {},
+    }
+    const request = {
+      id: 'request-1',
+      title: '8 Ad Graphics',
+      space_id: 'space-1',
+      status: 'approved_qc',
+      custom_data: {
+        page_grader_work_id: 'work-1',
+        page_grader_client_id: 'pg-yasir',
+      },
+    }
+    const repository = {
+      searchPageGraderClients: vi.fn(async () => [client]),
+      searchPageGraderRequests: vi.fn(async () => []),
+      searchPageGraderRequestsByClientIds: vi.fn(async () => [request]),
+    }
+    const service = new EntitySearchService(repository as never)
+
+    await expect(
+      service.search({} as never, 'user-1', 'org-1', 'Yasir', ['client', 'request'], 10, 0),
+    ).resolves.toEqual({
+      results: [
+        {
+          kind: 'client',
+          id: 'pg-yasir',
+          label: 'Yasir Khan Coaching LTD',
+          subtitle: 'Client',
+          iconUrl: null,
+          url: '/clients/pg-yasir',
+          clientId: 'pg-yasir',
+        },
+        {
+          kind: 'request',
+          id: 'request-1',
+          label: '8 Ad Graphics',
+          subtitle: 'Yasir Khan Coaching LTD · Request · approved qc',
+          iconUrl: null,
+          url: '/spaces?space=space-1&item=request-1',
+          clientId: 'pg-yasir',
+          campaignId: null,
+        },
+      ],
+    })
+    expect(repository.searchPageGraderRequestsByClientIds).toHaveBeenCalledWith(
+      {},
+      'user-1',
+      'org-1',
+      ['pg-yasir'],
+      10,
+      0,
+    )
   })
 
   it('does not truncate a blank account artifact listing to the search result limit', async () => {

@@ -99,7 +99,10 @@ export function TaskActivityComment({
   )
   const previewUrls = new Set(commentPreviews.map((p) => p.url))
   const displayHtml = stripPreviewedUrls(messageHtml, previewUrls)
-  const editable = canEdit && isEditableComment(entry.event_type, entry.user_id, currentUserId)
+  const editable =
+    entry.payload.external_read_only !== true &&
+    canEdit &&
+    isEditableComment(entry.event_type, entry.user_id, currentUserId)
   const attachments = Array.isArray(entry.payload.attachments)
     ? (entry.payload.attachments as TaskActivityCommentAttachment[])
     : []
@@ -205,7 +208,7 @@ export function TaskActivityComment({
                   <button
                     type="button"
                     onClick={handleSendToAgent}
-                    className="flex h-5 w-5 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-colors hover:text-primary"
+                    className="hover:text-primary flex h-5 w-5 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-colors"
                     aria-label="Send to agent"
                   >
                     <Bot className="h-3 w-3" />
@@ -217,7 +220,7 @@ export function TaskActivityComment({
                   type="button"
                   onClick={() => void handleDelete()}
                   disabled={deleting}
-                  className="flex h-5 w-5 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-colors hover:text-destructive disabled:opacity-50"
+                  className="hover:text-destructive flex h-5 w-5 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-colors disabled:opacity-50"
                   aria-label="Delete comment"
                 >
                   <Trash2 className="h-3 w-3" />

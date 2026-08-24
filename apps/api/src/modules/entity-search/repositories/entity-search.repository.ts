@@ -20,6 +20,91 @@ function applyRange(query: any, offset: number, limit: number) {
 
 @Injectable()
 export class EntitySearchRepository {
+  async searchPageGraderClients(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null,
+    q: string,
+    limit: number,
+    offset: number,
+  ): Promise<any[]> {
+    let query = supabase
+      .from('campaigns')
+      .select('id,name,config,context,updated_at')
+      .not('config->external_sources->page_grader->>client_id', 'is', null)
+      .order('updated_at', { ascending: false })
+    query = applyTextFilter(query, 'name', q)
+    query = scoped(query, userId, orgId)
+    query = applyRange(query, offset, limit)
+    const { data, error } = await query
+    if (error) return []
+    return data ?? []
+  }
+
+  async searchPageGraderCampaignSpaces(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null,
+    q: string,
+    limit: number,
+    offset: number,
+  ): Promise<any[]> {
+    let query = supabase
+      .from('spaces')
+      .select('id,title,description,campaign_id,schema,updated_at')
+      .not('schema->custom_data->>page_grader_campaign_id', 'is', null)
+      .order('updated_at', { ascending: false })
+    query = applyTextFilter(query, 'title', q)
+    query = scoped(query, userId, orgId)
+    query = applyRange(query, offset, limit)
+    const { data, error } = await query
+    if (error) return []
+    return data ?? []
+  }
+
+  async searchPageGraderRequests(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null,
+    q: string,
+    limit: number,
+    offset: number,
+  ): Promise<any[]> {
+    let query = supabase
+      .from('space_items')
+      .select('id,title,space_id,status,custom_data,updated_at')
+      .not('custom_data->>page_grader_work_id', 'is', null)
+      .order('updated_at', { ascending: false })
+    query = applyTextFilter(query, 'title', q)
+    query = scoped(query, userId, orgId)
+    query = applyRange(query, offset, limit)
+    const { data, error } = await query
+    if (error) return []
+    return data ?? []
+  }
+
+  async searchPageGraderRequestsByClientIds(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null,
+    clientIds: string[],
+    limit: number,
+    offset: number,
+  ): Promise<any[]> {
+    if (clientIds.length === 0) return []
+    let query = supabase
+      .from('space_items')
+      .select('id,title,space_id,status,custom_data,updated_at')
+      .not('custom_data->>page_grader_work_id', 'is', null)
+      .in('custom_data->>page_grader_client_id', clientIds)
+      .order('updated_at', { ascending: false })
+    query = scoped(query, userId, orgId)
+    query = applyRange(query, offset, limit)
+    const { data, error } = await query
+    if (error) return []
+    return data ?? []
+  }
+
   async searchCampaigns(
     supabase: SupabaseClient,
     userId: string,
@@ -30,7 +115,7 @@ export class EntitySearchRepository {
   ): Promise<any[]> {
     let query = supabase
       .from('campaigns')
-      .select('id,name,icon,updated_at')
+      .select('id,name,updated_at')
       .order('updated_at', { ascending: false })
     query = applyTextFilter(query, 'name', q)
     query = scoped(query, userId, orgId)

@@ -271,9 +271,50 @@ export class PageGraderApiService {
     return this.pageGrader.listLaunches(creds.baseUrl, creds.apiKey, opts)
   }
 
+  async createLaunch(
+    userId: string,
+    payload: {
+      client_id: string
+      campaign_id: string
+      launch_name: string
+      launch_date: string
+      launch_time?: string
+      event_date?: string
+      event_time?: string
+    },
+  ) {
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.createLaunch(creds.baseUrl, creds.apiKey, payload)
+  }
+
   async updateWorkspaceEntity(userId: string, path: string, patch: Record<string, unknown>) {
     const creds = await this.getCreds(userId)
     return this.pageGrader.updateWorkspaceEntity(creds.baseUrl, creds.apiKey, path, patch)
+  }
+
+  async deleteWorkspaceEntity(userId: string, path: string) {
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.deleteWorkspaceEntity(creds.baseUrl, creds.apiKey, path)
+  }
+
+  async getTaskDetail(userId: string, clientId: string, taskId: string) {
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.getTaskDetail(creds.baseUrl, creds.apiKey, clientId, taskId)
+  }
+
+  async getCampaignOverview(userId: string, clientId: string, campaignId: string) {
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.getCampaignOverview(creds.baseUrl, creds.apiKey, clientId, campaignId)
+  }
+
+  async createTaskComment(
+    userId: string,
+    clientId: string,
+    taskId: string,
+    payload: { body: string; author_name: string },
+  ) {
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.createTaskComment(creds.baseUrl, creds.apiKey, clientId, taskId, payload)
   }
 
   async getClientScopeMap(userId: string) {
