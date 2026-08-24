@@ -31,6 +31,7 @@ type ClientCampaignCellProps = BaseCellProps & {
   spaceItem?: SpaceItem
   fieldRowVariant?: 'default' | 'kanban'
   onOpenDetail?: (item: SpaceItem) => void
+  displayMode?: 'combined' | 'client' | 'space'
 }
 
 export function ClientCampaignCell({
@@ -41,6 +42,7 @@ export function ClientCampaignCell({
   openOnMount,
   spaceItem,
   onOpenDetail,
+  displayMode = 'combined',
 }: ClientCampaignCellProps) {
   const mapping = parseClientCampaignMapping(value)
   const [open, setOpen] = useState(!!openOnMount)
@@ -106,6 +108,18 @@ export function ClientCampaignCell({
   const clientHref = mapping ? clientCampaignClientHref(mapping) : null
   const campaignHref = mapping ? clientCampaignSpaceHref(mapping) : null
   const showAgenda = Boolean(spaceItem && onOpenDetail && isCallItem(spaceItem))
+  const selectLabel =
+    displayMode === 'client'
+      ? 'Select client workspace'
+      : displayMode === 'space'
+        ? 'Select campaign space'
+        : 'Map client and campaign'
+  const changeLabel =
+    displayMode === 'client'
+      ? 'Change client workspace'
+      : displayMode === 'space'
+        ? 'Change campaign space'
+        : `Change client and campaign — currently ${label}`
 
   return (
     <div
@@ -115,7 +129,12 @@ export function ClientCampaignCell({
       onClick={(event) => event.stopPropagation()}
     >
       {mapping && !readonly ? (
-        <MappedLinks mapping={mapping} clientHref={clientHref} campaignHref={campaignHref} />
+        <MappedLinks
+          mapping={mapping}
+          clientHref={clientHref}
+          campaignHref={campaignHref}
+          displayMode={displayMode}
+        />
       ) : null}
       {readonly ? (
         <span
@@ -141,9 +160,7 @@ export function ClientCampaignCell({
           )}
           aria-haspopup="menu"
           aria-expanded={open}
-          aria-label={
-            mapping ? `Change client and campaign — currently ${label}` : 'Map client and campaign'
-          }
+          aria-label={mapping ? changeLabel : selectLabel}
         >
           <span className="min-w-0 truncate">{mapping ? 'Change' : 'Map'}</span>
           <ChevronDown className="text-muted-foreground h-3 w-3 shrink-0" aria-hidden />
@@ -185,16 +202,18 @@ function MappedLinks({
   mapping,
   clientHref,
   campaignHref,
+  displayMode,
 }: {
   mapping: ClientCampaignMapping
   clientHref: string | null
   campaignHref: string | null
+  displayMode: 'combined' | 'client' | 'space'
 }) {
   const client = mapping.client_name.trim()
   const campaign = mapping.campaign_name.trim()
   return (
     <span className="typo-caption text-foreground flex min-w-0 items-center truncate">
-      {client ? (
+      {displayMode !== 'space' && client ? (
         clientHref ? (
           <Link href={clientHref} className="hover:text-primary min-w-0 truncate">
             {client}
@@ -203,8 +222,10 @@ function MappedLinks({
           <span className="min-w-0 truncate">{client}</span>
         )
       ) : null}
-      {client && campaign ? <span className="text-muted-foreground px-0.5">·</span> : null}
-      {campaign ? (
+      {displayMode === 'combined' && client && campaign ? (
+        <span className="text-muted-foreground px-0.5">·</span>
+      ) : null}
+      {displayMode !== 'client' && campaign ? (
         campaignHref ? (
           <Link href={campaignHref} className="hover:text-primary min-w-0 truncate">
             {campaign}
@@ -290,7 +311,9 @@ function ClientCampaignMenu({
                         onClick={() => onPick(group, campaign)}
                         className="body-3 text-foreground hover:bg-hover-subtle gap-spacing-2 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full min-w-0 items-center transition-colors"
                       >
-                        <span className="min-w-0 truncate" title={campaign.name}>{campaign.name}</span>
+                        <span className="min-w-0 truncate" title={campaign.name}>
+                          {campaign.name}
+                        </span>
                         {selected ? (
                           <span className="typo-caption text-muted-foreground shrink-0">
                             Mapped

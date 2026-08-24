@@ -31,7 +31,7 @@ describe('normalizeSpaceSchema', () => {
     expect(normalized.views).toEqual(DEFAULT_SPACE_SCHEMA.views)
   })
 
-  it('adds Client Workspace, Campaign Space, Host, and Call status to All Meetings views', () => {
+  it('adds workspace, Host, Attendees, and Call status fields to All Meetings views', () => {
     const normalized = normalizeSpaceSchema({
       fields: [{ id: 'title', name: 'Name', type: 'text' }],
       views: [
@@ -47,6 +47,7 @@ describe('normalizeSpaceSchema', () => {
         expect.objectContaining({ id: 'campaign_name', name: 'Client Workspace' }),
         expect.objectContaining({ id: 'space_title', name: 'Campaign Space' }),
         expect.objectContaining({ id: 'host', name: 'Host' }),
+        expect.objectContaining({ id: 'attendees', name: 'Attendees' }),
         expect.objectContaining({ id: 'call_status', name: 'Call status' }),
       ]),
     )
@@ -56,6 +57,7 @@ describe('normalizeSpaceSchema', () => {
       'campaign_name',
       'space_title',
       'host',
+      'attendees',
       'call_date',
       'call_status',
       'recording_url',

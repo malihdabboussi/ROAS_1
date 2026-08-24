@@ -9,6 +9,7 @@ export const ALL_MEETINGS_LIST_FIELD_IDS = [
   'campaign_name',
   'space_title',
   'host',
+  'attendees',
   'call_date',
   'call_status',
   'recording_url',
@@ -46,6 +47,14 @@ const HOST_FIELD: MeetingsListField = {
   type: 'text',
 }
 
+const ATTENDEES_FIELD: MeetingsListField = {
+  id: 'attendees',
+  name: 'Attendees',
+  type: 'multi_select',
+  required: false,
+  options: [],
+}
+
 const CALL_STATUS_FIELD: MeetingsListField = {
   id: 'call_status',
   name: 'Call status',
@@ -65,6 +74,7 @@ const ONE_ROOM_COLUMN_WIDTHS: Record<string, number> = {
   campaign_name: 180,
   space_title: 180,
   host: 160,
+  attendees: 260,
   call_date: 170,
   call_status: 140,
   recording_url: 220,
@@ -88,6 +98,7 @@ const REQUIRED_FIELDS = [
   CLIENT_WORKSPACE_FIELD,
   MAPPED_SPACE_FIELD,
   HOST_FIELD,
+  ATTENDEES_FIELD,
   CALL_STATUS_FIELD,
 ]
 
@@ -114,8 +125,16 @@ export function withClientWorkspaceColumns(visible: string[]): string[] {
   return [...without.slice(0, at), 'campaign_name', 'space_title', ...without.slice(at)]
 }
 
+/** Restore the meeting participant column immediately after Host without resetting user order. */
+export function withAttendeesColumn(visible: string[]): string[] {
+  if (visible.includes('attendees')) return visible
+  const afterHost = visible.indexOf('host')
+  const at = afterHost >= 0 ? afterHost + 1 : visible.length
+  return [...visible.slice(0, at), 'attendees', ...visible.slice(at)]
+}
+
 /**
- * All Meetings one-room columns: Client Workspace, Campaign Space, Host, Call status.
+ * All Meetings one-room columns: Client Workspace, Campaign Space, Host, Attendees, Call status.
  * Hides Priority and task Status on that view. Does not delete those fields.
  * Client / Campaign mapping stays as a field; it is not a default column.
  */
@@ -154,6 +173,7 @@ export function ensureAllMeetingsListColumns<
           campaign_name: 180,
           space_title: 180,
           host: view.column_widths?.host ?? 160,
+          attendees: view.column_widths?.attendees ?? 260,
           call_status: view.column_widths?.call_status ?? 140,
         },
         toolbar_call_date_window: view.toolbar_call_date_window ?? 'past_through_tomorrow',
@@ -163,7 +183,9 @@ export function ensureAllMeetingsListColumns<
         },
       }
     }
-    const visible_fields = withClientWorkspaceColumns(view.visible_fields ?? [])
+    const visible_fields = withAttendeesColumn(
+      withClientWorkspaceColumns(view.visible_fields ?? []),
+    )
     if (
       visible_fields === view.visible_fields ||
       arraysEqual(visible_fields, view.visible_fields)
@@ -178,6 +200,7 @@ export function ensureAllMeetingsListColumns<
         ...view.column_widths,
         campaign_name: view.column_widths?.campaign_name ?? 180,
         space_title: view.column_widths?.space_title ?? 180,
+        attendees: view.column_widths?.attendees ?? 260,
       },
     }
   })

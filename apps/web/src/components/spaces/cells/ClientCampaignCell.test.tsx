@@ -147,4 +147,27 @@ describe('ClientCampaignCell', () => {
       '/spaces?space=space-1',
     )
   })
+
+  it('renders a workspace-specific trigger while preserving the same mapping picker', () => {
+    mocks.useClientCampaignGroups.mockReturnValue({ groups: GROUPS, failed: false })
+    const onChange = vi.fn()
+
+    render(
+      <ClientCampaignCell
+        field={{ id: 'campaign_name', name: 'Client Workspace', type: 'text' }}
+        value={null}
+        onChange={onChange}
+        displayMode="client"
+        spaceItem={callItem()}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select client workspace' }))
+    fireEvent.click(screen.getByRole('button', { name: /1DS Collective/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Launch' }))
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ client_name: '1DS Collective', campaign_name: 'Launch' }),
+    )
+  })
 })

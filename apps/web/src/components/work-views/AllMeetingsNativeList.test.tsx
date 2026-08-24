@@ -81,11 +81,11 @@ describe('AllMeetingsNativeList', () => {
     push.mockReset()
   })
 
-  it('uses All Meetings columns including Client Workspace, Campaign Space, Host, and Call status', () => {
+  it('uses All Meetings columns including workspaces, Host, Attendees, and Call status', () => {
     render(<AllMeetingsNativeList items={[item]} reload={async () => undefined} />)
     expect(
       screen.getByText(
-        'title,call_kind,campaign_name,space_title,host,call_date,call_status,recording_url',
+        'title,call_kind,campaign_name,space_title,host,attendees,call_date,call_status,recording_url',
       ),
     ).toBeInTheDocument()
   })

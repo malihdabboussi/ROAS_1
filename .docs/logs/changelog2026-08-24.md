@@ -10,6 +10,16 @@ Impact: Successfully fetched empty chats now render their empty state, and produ
 
 Files: `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.ts`, `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.test.ts`, `apps/web/src/features/studio/services/chat.service.ts`, `apps/web/src/features/studio/store/use-chat-store.ts`, `supabase/migrations/20260820020000_conversation_connections.sql`, `documentation/features/claude-chatgpt-shell.md`
 
+## 2026-08-24 14:14 - [FIX]
+
+What: Restored the Attendees column after Host in All Meetings, made Client Workspace and Campaign Space open the shared client/campaign picker, added each client's General workspace to that picker, and added a conservative historical backfill for uniquely matched client calls.
+
+Why: Existing meeting rows showed blank workspace columns that could not be edited, the All Meetings view no longer exposed its stored attendee data, and historical calls had never received the new client/campaign mapping.
+
+Impact: Operators can manually map a call from either visible workspace column without moving it. Existing schemas and templates regain Attendees without resetting custom column order. The migration fills 38 currently unmapped calls whose titles identify exactly one real client and leaves ambiguous rows blank for manual selection.
+
+Files: `apps/web/src/components/spaces/cells/ClientCampaignCell.tsx`, `apps/web/src/components/spaces/cells/SpaceFieldIdCell.tsx`, `apps/web/src/components/work-views/AllMeetingsNativeList.tsx`, `apps/web/src/lib/agency-clients/client-campaign-mapping.ts`, `apps/web/src/lib/agency-clients/use-client-campaign-groups.ts`, `apps/web/src/lib/spaces/all-meetings-list-columns.ts`, `supabase/migrations/20260824213000_meetings_workspace_attendees_backfill.sql`, `documentation/features/meeting-follow-up-slack.md`, `documentation/features/space-templates.md`, `documentation/utilities/all-meetings-list-columns.md`, `documentation/utilities/README.md`, `documentation/frontend-shared-surfaces.md`
+
 ## 2026-08-24 13:18 - [FIX]
 
 What: Changed primary sidebar navigation to open destination cards without AI Chat, preserved conversation-specific detailed artifact restoration and artifact pinning, and made New chat open beside card-only workspaces or full-screen when chat is already visible. Removed the obsolete per-screen remembered-chat prompt and persistence slice.

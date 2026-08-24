@@ -29,7 +29,7 @@ describe('useEnsureAllMeetingsColumns', () => {
     mocks.spaces = []
   })
 
-  it('persists Host and Call status when All Meetings still has the old columns', () => {
+  it('persists Host, Attendees, and Call status when All Meetings has old columns', () => {
     mocks.spaces = [
       {
         id: 'meetings-space',
@@ -55,6 +55,7 @@ describe('useEnsureAllMeetingsColumns', () => {
                 'campaign_name',
                 'space_title',
                 'host',
+                'attendees',
                 'call_date',
                 'call_status',
                 'recording_url',
@@ -77,6 +78,13 @@ describe('useEnsureAllMeetingsColumns', () => {
             { id: 'campaign_name', name: 'Client Workspace', type: 'text' },
             { id: 'space_title', name: 'Campaign Space', type: 'text' },
             { id: 'host', name: 'Host', type: 'text' },
+            {
+              id: 'attendees',
+              name: 'Attendees',
+              type: 'multi_select',
+              required: false,
+              options: [],
+            },
             { id: 'call_status', name: 'Call status', type: 'select' },
           ],
           views: [
@@ -88,6 +96,7 @@ describe('useEnsureAllMeetingsColumns', () => {
                 'campaign_name',
                 'space_title',
                 'host',
+                'attendees',
                 'call_date',
                 'call_status',
                 'recording_url',

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   ALL_MEETINGS_LIST_FIELD_IDS,
   ensureAllMeetingsListColumns,
+  withAttendeesColumn,
   withClientWorkspaceColumns,
 } from './all-meetings-list-columns'
 
@@ -29,6 +30,7 @@ describe('ensureAllMeetingsListColumns', () => {
         expect.objectContaining({ id: 'space_title', name: 'Campaign Space' }),
         expect.objectContaining({ id: 'client_campaign', name: 'Client / Campaign' }),
         expect.objectContaining({ id: 'host', name: 'Host' }),
+        expect.objectContaining({ id: 'attendees', name: 'Attendees', type: 'multi_select' }),
         expect.objectContaining({
           id: 'call_status',
           name: 'Call status',
@@ -45,6 +47,7 @@ describe('ensureAllMeetingsListColumns', () => {
       expect.arrayContaining([expect.objectContaining({ id: 'priority' })]),
     )
     expect(next.views[0]?.visible_fields).toEqual([...ALL_MEETINGS_LIST_FIELD_IDS])
+    expect(next.views[0]?.visible_fields).toContain('attendees')
     expect(next.views[0]?.visible_fields).not.toContain('client_campaign')
     expect(next.views[0]?.visible_fields).not.toEqual(
       expect.arrayContaining(['priority', 'status']),
@@ -70,8 +73,44 @@ describe('ensureAllMeetingsListColumns', () => {
       'campaign_name',
       'space_title',
       'host',
+      'attendees',
       'call_status',
       'priority',
+    ])
+  })
+
+  it('restores Attendees after Host without resetting a customized column order', () => {
+    const next = ensureAllMeetingsListColumns({
+      fields: [
+        { id: 'title', name: 'Name', type: 'text' },
+        { id: 'campaign_name', name: 'Client Workspace', type: 'text' },
+        { id: 'space_title', name: 'Campaign Space', type: 'text' },
+        { id: 'host', name: 'Host', type: 'text' },
+        { id: 'call_status', name: 'Call status', type: 'select' },
+      ],
+      views: [
+        {
+          id: 'all-meetings',
+          visible_fields: [
+            'call_status',
+            'title',
+            'campaign_name',
+            'space_title',
+            'host',
+            'call_date',
+          ],
+        },
+      ],
+    })
+
+    expect(next.views[0]?.visible_fields).toEqual([
+      'call_status',
+      'title',
+      'campaign_name',
+      'space_title',
+      'host',
+      'attendees',
+      'call_date',
     ])
   })
 
@@ -91,6 +130,7 @@ describe('ensureAllMeetingsListColumns', () => {
         { id: 'campaign_name', name: 'Client Workspace', type: 'text' },
         { id: 'space_title', name: 'Campaign Space', type: 'text' },
         { id: 'host', name: 'Host', type: 'text' },
+        { id: 'attendees', name: 'Attendees', type: 'multi_select' },
         { id: 'call_status', name: 'Call status', type: 'select' },
       ],
       views: [
@@ -144,15 +184,17 @@ describe('ensureAllMeetingsListColumns', () => {
 describe('withClientWorkspaceColumns', () => {
   it('replaces Client / Campaign with the All Tasks workspace columns', () => {
     expect(
-      withClientWorkspaceColumns([
-        'title',
-        'call_kind',
-        'client_campaign',
-        'host',
-        'call_date',
-        'call_status',
-        'recording_url',
-      ]),
+      withAttendeesColumn(
+        withClientWorkspaceColumns([
+          'title',
+          'call_kind',
+          'client_campaign',
+          'host',
+          'call_date',
+          'call_status',
+          'recording_url',
+        ]),
+      ),
     ).toEqual([...ALL_MEETINGS_LIST_FIELD_IDS])
   })
 })

@@ -2,10 +2,10 @@
 
 import { CLIENT_CAMPAIGN_FIELD_ID } from '@/lib/agency-clients'
 import type { SpaceItem } from '@/lib/spaces'
+import { CLIENT_WORKSPACE_FIELD_ID, MAPPED_SPACE_FIELD_ID } from '@/lib/spaces'
 import type { ExtendedCellProps } from './cell-types'
 import { ClientCampaignCell } from './ClientCampaignCell'
 import { HostCell } from './HostCell'
-import { isMeetingLocationField, MeetingLocationCell } from './MeetingLocationCell'
 import { SourceCallCell } from './SourceCallCell'
 
 export function isInterceptedSpaceFieldId(fieldId: string, spaceItem?: SpaceItem): boolean {
@@ -13,6 +13,11 @@ export function isInterceptedSpaceFieldId(fieldId: string, spaceItem?: SpaceItem
     return true
   }
   return isMeetingLocationField(fieldId, spaceItem)
+}
+
+function isMeetingLocationField(fieldId: string, spaceItem?: SpaceItem): boolean {
+  if (spaceItem?.custom_data?.entry_type !== 'call') return false
+  return fieldId === CLIENT_WORKSPACE_FIELD_ID || fieldId === MAPPED_SPACE_FIELD_ID
 }
 
 export function SpaceFieldIdCell(props: ExtendedCellProps) {
@@ -26,6 +31,7 @@ export function SpaceFieldIdCell(props: ExtendedCellProps) {
     onOpenDetail,
     roster,
     currentUserId,
+    onItemPatch,
   } = props
   if (field.id === 'source_call') {
     return (
@@ -70,13 +76,26 @@ export function SpaceFieldIdCell(props: ExtendedCellProps) {
   }
   if (isMeetingLocationField(field.id, spaceItem)) {
     return (
-      <MeetingLocationCell
+      <ClientCampaignCell
         field={field}
-        value={value}
-        onChange={onChange}
+        value={spaceItem?.custom_data?.client_campaign}
+        onChange={(next) => {
+          if (!spaceItem || !onItemPatch) {
+            onChange(next)
+            return
+          }
+          onItemPatch({
+            custom_data: {
+              ...spaceItem.custom_data,
+              client_campaign: next,
+              client_campaign_source: next ? 'manual' : 'manual_cleared',
+            },
+          })
+        }}
         readonly={readonly}
         fieldRowVariant={fieldRowVariant}
         spaceItem={spaceItem}
+        displayMode={field.id === CLIENT_WORKSPACE_FIELD_ID ? 'client' : 'space'}
       />
     )
   }

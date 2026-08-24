@@ -1,6 +1,6 @@
 # Space Templates
 
-**Last Modified:** 2026-08-20 (All Meetings Client Workspace, Campaign Space, Host, Call status)
+**Last Modified:** 2026-08-24 (All Meetings Attendees restore and interactive client-General mapping)
 
 ## Overview
 
@@ -73,6 +73,7 @@ Home Agenda prep, related call enrichment, and default Home feed scope also read
 - **2026-08-18:** Personal Dashboard All Meetings is the default Meetings view. It stores Host and Call status, hides Priority/Status on that list, defaults the date window to past + today + tomorrow, drops the Prep view, and adds a Call completed automation (call_status → completed) that clones Fathom Meeting Log actions.
 - 2026-08-18 — Personal dashboard template sets `pinned_to_start: true` on **Agenda**. `pinned_to_start` is a display flag, not a storage position: the web tab strip renders the leading view (Meetings: `all-meetings`), then every pinned view in schema order, then the rest (`orderViewsForStrip`). Several views can be pinned; drag-reorder keeps pins; the Meetings surface also treats `agenda` as pinned by default until the user explicitly unpins it (`embed.defaultPinnedViewIds`).
 - **2026-08-20:** Personal Dashboard All Meetings default columns are Name, Call Kind, Client Workspace, Campaign Space, Host, Call date, Call status, Recording. Those workspace columns use the same field ids and mapping as All Tasks. Priority and task Status stay as fields but are hidden on that view. The name-column status dropdown still shows Call status. Existing Meetings spaces pick this up through `ensureAllMeetingsListColumns` and a schema persist when Meetings opens.
+- **2026-08-24:** All Meetings restores Attendees immediately after Host without resetting custom column order. Client Workspace and Campaign Space now open the shared mapping picker, including each client's General workspace. Migration `20260824213000_meetings_workspace_attendees_backfill.sql` updates existing schemas/templates and fills only unmapped historical calls with one strict client-name match.
 - **2026-08-19:** Personal Dashboard All Meetings shows Campaign and Space columns. Existing Meetings spaces pick those columns up through `ensureAllMeetingsListColumns` when the All Meetings view loads.
 
 ## Regenerating seed SQL

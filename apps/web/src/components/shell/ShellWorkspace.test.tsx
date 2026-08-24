@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ShellWorkspace } from './ShellWorkspace'
+
 const mocks = vi.hoisted(() => ({
   pathname: '/home',
   params: new Map<string, string>(),

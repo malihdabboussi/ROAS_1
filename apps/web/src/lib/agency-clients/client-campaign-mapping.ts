@@ -1,4 +1,4 @@
-import type { AgencyClientCampaign } from './agency-clients-api'
+import type { AgencyClient, AgencyClientCampaign } from './agency-clients-api'
 
 export const CLIENT_CAMPAIGN_FIELD_ID = 'client_campaign'
 
@@ -55,6 +55,7 @@ export function clientCampaignMappingLabel(mapping: ClientCampaignMapping | null
 
 export function buildClientCampaignGroups(
   campaigns: AgencyClientCampaign[],
+  clients: AgencyClient[] = [],
 ): ClientCampaignGroup[] {
   const groups = new Map<string, ClientCampaignGroup>()
   for (const campaign of campaigns) {
@@ -74,11 +75,41 @@ export function buildClientCampaignGroups(
     })
     groups.set(key, existing)
   }
+  for (const client of clients) {
+    const clientId = client.id?.trim()
+    const mapping = client.mapping
+    const generalId = mapping?.campaign_id?.trim()
+    const generalSpaceId = mapping?.space_id?.trim()
+    if (!clientId || !generalId || !generalSpaceId) continue
+    const clientName =
+      client.display_name?.trim() || client.name?.trim() || mapping?.campaign_name?.trim()
+    if (!clientName) continue
+    const existing = groups.get(clientId) ?? {
+      clientId,
+      clientName,
+      campaigns: [],
+    }
+    const alreadyIncluded = existing.campaigns.some(
+      (campaign) => campaign.id === generalId || campaign.roasSpaceId === generalSpaceId,
+    )
+    if (!alreadyIncluded) {
+      existing.campaigns.unshift({
+        id: generalId,
+        name: mapping?.space_title?.trim() || 'General',
+        roasSpaceId: generalSpaceId,
+      })
+    }
+    groups.set(clientId, existing)
+  }
   return [...groups.values()]
     .map((group) => ({
       ...group,
       campaigns: [...group.campaigns].sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+        a.name === 'General'
+          ? -1
+          : b.name === 'General'
+            ? 1
+            : a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
       ),
     }))
     .sort((a, b) => a.clientName.localeCompare(b.clientName, undefined, { sensitivity: 'base' }))

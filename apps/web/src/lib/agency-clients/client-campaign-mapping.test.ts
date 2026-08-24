@@ -62,6 +62,39 @@ describe('client-campaign-mapping', () => {
     expect(groups[0]?.campaigns.map((campaign) => campaign.name)).toEqual(['Launch', 'Wholesale'])
   })
 
+  it('puts each client General workspace first, including clients without active campaigns', () => {
+    const groups = buildClientCampaignGroups(
+      [],
+      [
+        {
+          id: 'client-1',
+          name: '1DS Collective',
+          status: 'active',
+          mapping: {
+            campaign_id: 'roas-campaign-1',
+            campaign_name: '1DS Collective',
+            space_id: 'general-space-1',
+            space_title: 'General',
+          },
+        },
+      ],
+    )
+
+    expect(groups).toEqual([
+      {
+        clientId: 'client-1',
+        clientName: '1DS Collective',
+        campaigns: [
+          {
+            id: 'roas-campaign-1',
+            name: 'General',
+            roasSpaceId: 'general-space-1',
+          },
+        ],
+      },
+    ])
+  })
+
   it('labels a mapped meeting as Client · Campaign', () => {
     const mapping = toClientCampaignMapping(
       { clientId: 'client-1', clientName: '1DS Collective', campaigns: [] },
