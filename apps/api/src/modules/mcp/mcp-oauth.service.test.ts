@@ -294,6 +294,10 @@ describe('McpOAuthService token replay protection', () => {
       revoked_at: null,
       supabase_refresh_vault_secret_id: 'stale-browser-session-secret',
       mcp_oauth_consents: { status: 'active' },
+      mcp_oauth_clients: {
+        client_name: 'Claude',
+        logo_uri: 'https://claude.ai/favicon.ico',
+      },
     }
     const oauthRepository = {
       findTokenByAccessHash: vi.fn().mockResolvedValue(row),
@@ -305,12 +309,16 @@ describe('McpOAuthService token replay protection', () => {
     }
     const service = createService({ from: vi.fn() }, userSessionMint, oauthRepository)
 
-    await expect(service.introspect({ token: 'mcp-access-token' }, 'internal-token')).resolves.toEqual(
+    await expect(
+      service.introspect({ token: 'mcp-access-token' }, 'internal-token'),
+    ).resolves.toEqual(
       expect.objectContaining({
         active: true,
         user_id: 'user-1',
         org_id: 'org-1',
         client_id: 'client-1',
+        client_name: 'Claude',
+        client_logo_uri: 'https://claude.ai/favicon.ico',
         supabase_access_token: 'isolated-mcp-user-access-token',
         supabase_refresh_token: null,
       }),

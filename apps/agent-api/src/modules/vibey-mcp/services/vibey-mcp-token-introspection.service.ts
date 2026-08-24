@@ -41,6 +41,14 @@ export class VibeyMcpTokenIntrospectionService {
       user_id: body.user_id,
       org_id: body.org_id ?? null,
       client_id: body.client_id,
+      client_name:
+        typeof body.client_name === 'string' && body.client_name.trim()
+          ? body.client_name.trim()
+          : null,
+      client_logo_uri:
+        typeof body.client_logo_uri === 'string' && body.client_logo_uri.trim()
+          ? body.client_logo_uri.trim()
+          : null,
       scopes: Array.isArray(body.scopes)
         ? body.scopes
         : typeof body.scope === 'string'

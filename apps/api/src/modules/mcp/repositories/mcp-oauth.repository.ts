@@ -60,7 +60,7 @@ export class McpOAuthRepository {
   async findTokenByAccessHash(supabase: SupabaseClient, tokenHash: string) {
     const { data, error } = await supabase
       .from('mcp_oauth_tokens')
-      .select('*, mcp_oauth_consents!inner(status)')
+      .select('*, mcp_oauth_consents!inner(status), mcp_oauth_clients!inner(client_name, logo_uri)')
       .eq('access_token_hash', tokenHash)
       .maybeSingle()
     if (error) throw new BadRequestException(error.message)

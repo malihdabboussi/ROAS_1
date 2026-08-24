@@ -1,7 +1,7 @@
 'use client'
 
-import type { ReactNode } from 'react'
-import { CalendarDays } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { CalendarDays, Plug } from 'lucide-react'
 import { ConversationChannelIcon } from '@/components/chat/ConversationChannelIcon'
 import { Tooltip } from '@/components/ui/tooltip'
 import {
@@ -48,6 +48,34 @@ function ConversationAgentAvatar({
   )
 }
 
+function metadataText(metadata: Record<string, unknown> | null | undefined, key: string) {
+  const value = metadata?.[key]
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function McpConversationIcon({ conversation }: { conversation: Conversation }) {
+  const [logoFailed, setLogoFailed] = useState(false)
+  const clientName = metadataText(conversation.metadata, 'mcp_client_name')
+  const logoUri = metadataText(conversation.metadata, 'mcp_client_logo_uri')
+  const label = clientName ? `${clientName} MCP conversation` : 'MCP conversation'
+
+  return (
+    <span aria-label={label}>
+      {logoUri && !logoFailed ? (
+        <img
+          src={logoUri}
+          alt=""
+          referrerPolicy="no-referrer"
+          className="icon-xs rounded-spacing-1 object-contain"
+          onError={() => setLogoFailed(true)}
+        />
+      ) : (
+        <Plug className="text-muted-foreground icon-xs" aria-hidden />
+      )}
+    </span>
+  )
+}
+
 export function ConversationRowLeadingIcon({
   conversation,
   leadingIcon,
@@ -77,6 +105,9 @@ export function ConversationRowLeadingIcon({
       </span>,
       activity,
     )
+  }
+  if (source === 'mcp') {
+    return withActivityOverlay(<McpConversationIcon conversation={conversation} />, activity)
   }
   if (isMeetingConversation(conversation)) {
     return withActivityOverlay(

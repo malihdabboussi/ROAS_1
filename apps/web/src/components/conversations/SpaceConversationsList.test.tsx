@@ -257,7 +257,7 @@ describe('SpaceConversationsList', () => {
     expect(screen.getByLabelText('Chat conversation')).toBeInTheDocument()
   })
 
-  it('shows Slack and meeting logos in the identity slot without a generic chat dot', () => {
+  it('shows Slack, MCP, and meeting logos in the identity slot without a generic chat dot', () => {
     render(
       <SpaceConversationsList
         {...baseProps({
@@ -273,6 +273,15 @@ describe('SpaceConversationsList', () => {
               metadata: { context_type: 'meeting', meeting_item_id: 'item-1' },
             }),
             conversation({ id: 'chat-1', title: 'Post-call recap' }),
+            conversation({
+              id: 'mcp-1',
+              title: 'Claude · Search User Brain',
+              metadata: {
+                source: 'mcp',
+                mcp_client_name: 'Claude',
+                mcp_client_logo_uri: 'https://claude.ai/favicon.ico',
+              },
+            }),
           ],
           leadingIcon: 'logo',
         })}
@@ -281,6 +290,9 @@ describe('SpaceConversationsList', () => {
 
     expect(screen.getByLabelText('Slack conversation')).toBeInTheDocument()
     expect(screen.getByLabelText('Meeting conversation')).toBeInTheDocument()
+    const mcpIdentity = screen.getByLabelText('Claude MCP conversation')
+    fireEvent.error(mcpIdentity.querySelector('img') as HTMLImageElement)
+    expect(mcpIdentity.querySelector('.lucide-plug')).toBeInTheDocument()
     expect(screen.queryByLabelText('Chat conversation')).not.toBeInTheDocument()
   })
 

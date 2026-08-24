@@ -275,11 +275,14 @@ export class McpOAuthService {
     if (new Date(row.access_expires_at).getTime() <= Date.now()) return { active: false }
     const supabaseAccessToken = await this.userSessionMint.mintAccessToken(row.user_id)
     await this.oauthRepository.touchTokenLastUsed(this.serviceClient, row.id)
+    const client = row.mcp_oauth_clients as { client_name?: unknown; logo_uri?: unknown } | null
     return {
       active: true,
       user_id: row.user_id,
       org_id: row.org_id,
       client_id: row.client_id,
+      client_name: typeof client?.client_name === 'string' ? client.client_name : row.client_id,
+      client_logo_uri: typeof client?.logo_uri === 'string' ? client.logo_uri : null,
       scope: row.scopes.join(' '),
       scopes: row.scopes,
       exp: Math.floor(new Date(row.access_expires_at).getTime() / 1000),

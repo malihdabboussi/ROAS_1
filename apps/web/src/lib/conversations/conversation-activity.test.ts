@@ -11,9 +11,10 @@ describe('resolveConversationActivity', () => {
     expect(resolveConversationActivity({})).toBe('idle')
   })
 
-  it('treats Slack, Telegram, and meeting threads as identity-icon rows', () => {
+  it('treats Slack, Telegram, MCP, and meeting threads as identity-icon rows', () => {
     expect(conversationHasIdentityIcon({ metadata: { source: 'slack' } })).toBe(true)
     expect(conversationHasIdentityIcon({ metadata: { source: 'telegram' } })).toBe(true)
+    expect(conversationHasIdentityIcon({ metadata: { source: 'mcp' } })).toBe(true)
     expect(
       conversationHasIdentityIcon({ metadata: { context_type: 'meeting', meeting_item_id: 'm1' } }),
     ).toBe(true)

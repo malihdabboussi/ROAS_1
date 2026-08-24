@@ -6,6 +6,15 @@ import type { VibeyMcpTokenClaims } from '../types/vibey-mcp.types'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+function humanizeToolName(toolName: string): string {
+  return toolName
+    .trim()
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`)
+    .join(' ')
+}
+
 @Injectable()
 export class VibeyMcpSessionService {
   constructor(
@@ -17,6 +26,7 @@ export class VibeyMcpSessionService {
   async buildSessionKey(
     claims: VibeyMcpTokenClaims,
     args: Record<string, unknown>,
+    toolName: string,
   ): Promise<string> {
     const supabase = this.clientFactory.createUserClient(claims.supabase_access_token)
     const requestedConversationId = this.optionalUuid(args.conversation_id)
@@ -29,7 +39,7 @@ export class VibeyMcpSessionService {
           claims.user_id,
           claims.org_id,
         )
-      : await this.createConversation(supabase, claims, campaignId)
+      : await this.createConversation(supabase, claims, campaignId, toolName)
 
     this.requestContext.set(
       conversationId,
@@ -73,14 +83,23 @@ export class VibeyMcpSessionService {
     supabase: ReturnType<SupabaseClientFactory['createUserClient']>,
     claims: VibeyMcpTokenClaims,
     campaignId: string | null,
+    toolName: string,
   ): Promise<string> {
+    const clientName = claims.client_name?.trim() || 'MCP'
+    const readableToolName = humanizeToolName(toolName) || 'Conversation'
     const row = await this.conversations.create(supabase, {
       user_id: claims.user_id,
-      title: 'MCP session',
+      title: `${clientName} · ${readableToolName}`.slice(0, 200),
       campaign_id: campaignId,
       agent_id: 'vibey',
       org_id: claims.org_id,
-      metadata: { source: 'mcp', mcp_client_id: claims.client_id },
+      metadata: {
+        source: 'mcp',
+        mcp_client_id: claims.client_id,
+        mcp_client_name: claims.client_name,
+        mcp_client_logo_uri: claims.client_logo_uri,
+        mcp_tool_name: toolName,
+      },
     })
     return String(row.id)
   }

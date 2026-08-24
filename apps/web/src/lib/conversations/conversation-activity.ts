@@ -1,14 +1,14 @@
-import type { ConversationStatus } from './conversation.types'
 import { isMeetingConversation } from './conversation-title'
+import type { ConversationStatus } from './conversation.types'
 
 export type ConversationActivity = 'needs_action' | 'working' | 'unread' | 'idle'
 
-/** Slack, Telegram, and meeting rows own a leading identity mark. */
+/** Slack, Telegram, MCP, and meeting rows own a leading identity mark. */
 export function conversationHasIdentityIcon(conversation: {
   metadata?: Record<string, unknown> | null
 }): boolean {
   const source = conversation.metadata?.source
-  if (source === 'slack' || source === 'telegram') return true
+  if (source === 'slack' || source === 'telegram' || source === 'mcp') return true
   return isMeetingConversation(conversation)
 }
 

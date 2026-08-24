@@ -78,7 +78,7 @@ export class VibeyMcpServerService {
           : {}
       try {
         const tool = this.policy.assertAllowed({ toolName: name, args, claims })
-        const sessionKey = await this.sessions.buildSessionKey(claims, args)
+        const sessionKey = await this.sessions.buildSessionKey(claims, args, tool.toolName ?? name)
         const result = await this.artifacts.executeAction(tool.action, args, sessionKey)
         const maybeRecord =
           result && typeof result === 'object' ? (result as Record<string, unknown>) : null

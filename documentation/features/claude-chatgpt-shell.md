@@ -1,6 +1,6 @@
 # Claude/ChatGPT shell (apps/web)
 
-Last Modified: 2026-08-20
+Last Modified: 2026-08-24
 
 ## Overview
 
@@ -9,6 +9,8 @@ Dashboard chrome inspired by Claude/ChatGPT and ClickUp: a Simple-by-default com
 Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `shell-state.md`).
 
 ## Data Flow
+
+MCP conversation flow: OAuth introspection carries the registered client name and logo into the agent runtime. A tool call that does not supply an existing `conversation_id` creates a Recents row named `<client> · <tool>` and stores the client/tool identity in conversation metadata. Recents renders the registered client logo, falls back to a plug icon when no usable logo is available, and overlays activity on that identity mark.
 
 1. `useShellStore` (`components/shell/use-shell-store.ts`) owns chat drawer/history widths, page work-area collapse, the shared artifact viewer, right panel, page breadcrumbs, and page header actions. Legacy sidebar pin/peek prefs are cleared so the HQ rail stays icon-only.
 2. `DashboardFrame` renders `ShellMenuDockLayout`. Appearance → Menu style persists `simple` or `advanced` in `vibey.shell.menu-style.v1`; Simple is the default. Simple gives the menu and chat the full-height frame with no global bar above them. The breadcrumb, Open in, and Workspace/Portal live in the right work card's own header. **Summary** always stays in the conversation title bar top-right. **Show page** sits beside it only while the work card is closed; when the page is open, that same control lives in the work-card header so it can expand the page over chat. The menu header keeps the ROAS wordmark, global search, collapse, back, and forward controls in one row, followed by New chat, Inbox, Meetings, All Tasks, inline favorites, Programs, More, and the conversation list. `/home` is the New chat surface rather than a separate dashboard destination. Pinned chats sit in a collapsible **Pinned** section above **Recents**; both section labels use the same `hub-menu-section-label` type and hover chevron as Favorites. Recents still owns a constrained flex region with independent vertical scrolling. The account menu is a full-width, divider-separated footer row with the user's name and email. Advanced retains the five-position movable workspace rail and its existing dock preference.3. Feature pages publish rich breadcrumbs with `ShellBreadcrumb` and optional top-right actions with `ShellHeaderAction`; `ShellTopBar` renders them in place of the path-label fallback. Ancestor crumbs are links or buttons (meeting **Agenda** closes the workspace). Publishers include Team, Spaces, Flows, Skills, agency Clients/Client Campaigns, Programs, campaign detail (`Campaigns / client-or-program / campaign`), and meeting workspaces. `/all-tasks` is named by the path fallback.
@@ -236,7 +238,7 @@ The history list has its own persisted drag width and collapse state. Dragging i
 
 # Claude/ChatGPT shell (apps/web)
 
-Last Modified: 2026-08-20
+Last Modified: 2026-08-24
 
 ## Overview
 
@@ -245,6 +247,8 @@ Dashboard chrome inspired by Claude/ChatGPT and ClickUp: top bar with centered S
 Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `shell-state.md`).
 
 ## Data Flow
+
+MCP conversation flow: OAuth introspection carries the registered client name and logo into the agent runtime. A tool call that does not supply an existing `conversation_id` creates a Recents row named `<client> · <tool>` and stores the client/tool identity in conversation metadata. Recents renders the registered client logo, falls back to a plug icon when no usable logo is available, and overlays activity on that identity mark.
 
 1. `useShellStore` (`components/shell/use-shell-store.ts`) owns chat drawer/history widths, page work-area collapse, the shared artifact viewer, right panel, page breadcrumbs, and page header actions. Legacy sidebar pin/peek prefs are cleared so the HQ rail stays icon-only.
 2. `DashboardFrame` renders `ShellMenuDockLayout`, which places the HQ menu on one of five persisted homes — never over AI Chat: frame **left** (far left of the chat drawer, only while chat is open), or one of four work-card-relative docks (`components/shell/use-shell-menu-dock.ts`): **work** (left of the work card; **product default** for new users and anyone still on the old default `left`), **work-top** (compact menu centered on the top of the work card — does not span over chat), **work-bottom** (compact menu centered on the bottom of the work card), and **work-right** (far right of the work card). Storage key `vibey.shell.menu-dock.v2`; legacy `v1` `left` migrates to `work`, while other custom `v1` docks are kept. Legacy `top` / `bottom` / `right` values are normalized to `work-top` / `work-bottom` / `work-right` on load. Holding the R logo soft-locks the **real** menu into each candidate seam as the pointer enters it (vertical on left/right, horizontal on top/bottom) so you can see the docked layout before release; between seams the menu free-floats under the pointer. Seam hit-testing uses narrow bands (top/bottom only in the centered middle of the work card), a dead-zone that keeps the sticky candidate, and hysteresis — no purple drop guidelines. Top/bottom docks float as a compact centered glass pill over the work card (`.shell-menu-dock-float`) rather than inserting a full-width layout rail; left/right keep the in-flow glass rail. Releasing commits the sticky candidate. Frame `left` mounts the rail around `main`; the four `work-*` docks mount the same single sidebar instance inside `[data-shell-work-area]`. A normal click on R toggles the menu between expanded and **compact** (Option A) without changing its docked position — the rail collapses to just the R chip plus a chevron to re-expand, and Home is reached via the Home rail icon, not by clicking R. When AI chat is closed, dragging toward the left maps to the work-card left seam (`work`) instead of the empty chat column; a saved `left` dock also remaps onto `work` until chat reopens. On `/spaces`, `ShellWorkspace` keeps the Space page mounted inside `SpaceWorkDock`; collapse hides the dock and shows full chat without unmounting Space. If a `work-*` dock is saved but the work column is collapsed, hidden by the artifact viewer, or unavailable on full-page Home chat, the rail temporarily falls back to frame `left` without clearing the preference. When the work card itself collapses, a work-attached dock rides with it and renders as a thin vertical rail (`.shell-menu-dock-collapsed-right`) beside the chat drawer instead of disappearing; the bottom of that rail carries its own **Show page** chevron (`.shell-menu-dock-collapsed-right-expand`) that calls the same `useShellStore().setWorkAreaOpen(true)` action as the top-bar `ShellWorkAreaControl`, so the work card can be restored directly from the rail without reaching for the top bar.
@@ -310,6 +314,7 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 
 ## Decision Log
 
+- **2026-08-24:** MCP-created conversations use the registered OAuth client plus invoked tool for their initial title (for example, `Claude · Search User Brain`). Recents uses the registered client logo with a plug fallback. Historical MCP rows predate stored tool identity and contain no messages or runtime records, so the migration gives them deterministic per-client names such as `Claude · MCP call 17` without inventing a topic.
 - **2026-08-19:** Chat Files rows with no storage `file_url` open as `doc` and render inline `conversation_documents.content` as markdown (JSON-quoted strings included). Real `.docx`/PDF uploads still open as files. Agent `save_document` still writes `document_type: upload` because the table check constraint has no markdown/doc value.
 - **2026-08-18:** Draft card **Use in composer** seeds a Claude-style handoff: `I used option B and made some edits. Here it is.` (option letter + edit clause as applicable) followed by the draft body, so Pixel can acknowledge instead of receiving bare copy.
 - **2026-08-18:** Pixel message writing defaults to Power (`auto:power`) and must load `dylans-super-voice` for send-ready drafts ("write this message", Slack/DM/email copy). The skill ships on vibey; TOOLS runtime guidance requires it before drafting.
