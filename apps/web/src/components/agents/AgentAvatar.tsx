@@ -1,7 +1,7 @@
 'use client'
 
-import { VibeyLoadingSphereSimple } from '@/components/vibey/vibey-loading-sphere-simple'
 import type { MissionAgent } from '@/lib/agents'
+import { DEFAULT_AGENT_AVATAR_URL, DEFAULT_AGENT_KEY } from '@/lib/team/default-agent-identity'
 import { cn } from '@/lib/utils/cn'
 import { AgentRoleEmblem } from './AgentRoleEmblem'
 
@@ -11,29 +11,24 @@ export interface AgentAvatarProps {
 }
 
 export function AgentAvatar({ agent, className }: AgentAvatarProps) {
-  const showVibeyAnimation = agent.agent_key === 'vibey' && !agent.image_url
   const shellCls = cn(
     'relative flex shrink-0 items-center justify-center overflow-hidden rounded-full',
     className,
   )
+  // The default agent always renders the lamp mark, even when a generated portrait
+  // is stored in agents_registry.image_url (canonical brand identity).
+  const imageUrl =
+    agent.agent_key === DEFAULT_AGENT_KEY ? DEFAULT_AGENT_AVATAR_URL : agent.image_url
 
-  if (agent.image_url) {
+  if (imageUrl) {
     return (
       <span className={shellCls}>
         <img
-          src={agent.image_url}
+          src={imageUrl}
           alt=""
           className="h-full w-full object-cover"
           draggable={false}
         />
-      </span>
-    )
-  }
-
-  if (showVibeyAnimation) {
-    return (
-      <span className={cn(shellCls, 'bg-hover-subtle')}>
-        <VibeyLoadingSphereSimple size="small" state="idle" showBackground={false} />
       </span>
     )
   }

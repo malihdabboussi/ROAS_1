@@ -1,8 +1,9 @@
 import type { MissionAgent } from '@/lib/agents/mission-agents-api'
+import { normalizeDefaultAgentIdentity } from '@/lib/team/default-agent-identity'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 
 export function missionAgentToRosterEntry(agent: MissionAgent): TeamRosterEntry {
-  return {
+  return normalizeDefaultAgentIdentity({
     participant_id: `agent:${agent.agent_key}`,
     kind: 'agent',
     org_id: null,
@@ -24,5 +25,5 @@ export function missionAgentToRosterEntry(agent: MissionAgent): TeamRosterEntry 
     email: null,
     created_at: agent.created_at,
     updated_at: agent.updated_at,
-  }
+  })
 }

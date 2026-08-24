@@ -64,6 +64,9 @@ export function useSummaryPanelLayout(
   useEffect(() => {
     if (!ready || !docked || !selectedConversationId) return
     if (autoOpenedConversationRef.current === selectedConversationId) return
+    // An open artifact column replaces the summary — auto-opening the summary here
+    // would close the artifact the chat-switch restore just brought back.
+    if (useShellStore.getState().artifactViewer.target) return
     autoOpenedConversationRef.current = selectedConversationId
     setRightPanelOpen(true)
   }, [docked, ready, selectedConversationId, setRightPanelOpen])

@@ -33,6 +33,10 @@ import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
 import { useShellStore } from './use-shell-store'
 import { useShellWorkspaceScreenChat } from './use-shell-workspace-screen-chat'
 
+// Module-scoped: ShellWorkspace remounts across conversation switches (Suspense), so a
+// ref would reset and swallow the artifact chat-switch sync on every switch.
+let lastArtifactSyncKey: string | undefined = undefined
+
 export function ShellWorkspace({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? '/home'
   const router = useRouter()
@@ -83,6 +87,34 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     (Boolean(convParam) || chatParam === 'starting') &&
     chatParam !== 'new'
   useShellConversationDocumentTitle(convParam, showFullConversation)
+
+  // Chat-switch contract for the artifact column: switching conversations restores that
+  // chat's last artifact (or closes the viewer when it has none; pinned keeps it). The
+  // slice has owned this contract for a while — nothing invoked it on switch, so a stale
+  // artifact used to sit beside the next chat until closed by hand.
+  const syncArtifactViewerForConversation = useShellStore(
+    (state) => state.syncArtifactViewerForConversation,
+  )
+  useEffect(() => {
+    const syncKey = isShellHomeRoute(pathname) ? (convParam ?? 'home:new-chat') : `page:${pathname}`
+    if (lastArtifactSyncKey === undefined) {
+      // First render after a full load: leave a persisted viewer alone.
+      lastArtifactSyncKey = syncKey
+      return
+    }
+    if (lastArtifactSyncKey === syncKey) return
+    lastArtifactSyncKey = syncKey
+    if (isShellHomeRoute(pathname)) {
+      // Entering/switching a chat restores that chat's last artifact (or closes; pin keeps).
+      if (showFullConversation || showFullNewChat) {
+        syncArtifactViewerForConversation(convParam)
+      }
+      return
+    }
+    // Leaving chat for a page screen (All Tasks, Meetings, …): an unpinned artifact
+    // column must not replace that page's work area.
+    syncArtifactViewerForConversation(null)
+  }, [convParam, pathname, showFullConversation, showFullNewChat, syncArtifactViewerForConversation])
 
   useEffect(() => {
     const justOpened = chatDrawerOpen && !previousSimpleChatOpen.current

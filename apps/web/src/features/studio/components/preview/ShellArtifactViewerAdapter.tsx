@@ -14,7 +14,11 @@ import { ShellTaskArtifactViewerAdapter } from '@/components/shell/ShellTaskArti
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { SpaceDocEditorPanelAdapter } from '@/components/spaces/SpaceDocEditorPanelAdapter'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
-import { SHELL_ARTIFACT_OPEN_EVENT, type ShellArtifactViewerTarget } from '@/lib/artifacts'
+import {
+  consumePendingShellArtifactOpen,
+  SHELL_ARTIFACT_OPEN_EVENT,
+  type ShellArtifactViewerTarget,
+} from '@/lib/artifacts'
 import { isShellCodeArtifactTarget } from '@/lib/chat/chat-code-artifact'
 import {
   VIBEY_OPEN_MEDIA_EVENT,
@@ -100,8 +104,7 @@ export function ShellArtifactViewerAdapter() {
   const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
 
   useEffect(() => {
-    const onOpen = (event: Event) => {
-      const detail = (event as CustomEvent<ShellArtifactViewerTarget>).detail
+    const openTarget = (detail: ShellArtifactViewerTarget | null) => {
       if (!detail?.id || !detail.title) return
       const conversationId =
         detail.conversationId ??
@@ -109,7 +112,15 @@ export function ShellArtifactViewerAdapter() {
         useShellStore.getState().chatDrawer.conversationId
       openArtifactViewer(detail, conversationId)
     }
+    const onOpen = (event: Event) => {
+      // Consume the buffered copy so a later remount doesn't reopen a handled request.
+      consumePendingShellArtifactOpen()
+      openTarget((event as CustomEvent<ShellArtifactViewerTarget>).detail)
+    }
     window.addEventListener(SHELL_ARTIFACT_OPEN_EVENT, onOpen)
+    // An open fired while this adapter was unmounted (Suspense fallback, dock swap)
+    // is replayed here instead of being lost.
+    openTarget(consumePendingShellArtifactOpen())
     return () => window.removeEventListener(SHELL_ARTIFACT_OPEN_EVENT, onOpen)
   }, [openArtifactViewer])
 

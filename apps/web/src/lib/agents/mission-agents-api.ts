@@ -1,4 +1,5 @@
 import { backendDelete, backendGet, backendPatch, backendPost } from '@/lib/api/backend-client'
+import { DEFAULT_AGENT_AVATAR_URL, DEFAULT_AGENT_KEY } from '@/lib/team/default-agent-identity'
 import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import type { ChatModelSettings } from '@/lib/chat/chat-model-settings'
 import type { FireEmployeeHandoffInput } from './agent-fire-handoff'
@@ -118,15 +119,31 @@ export function invalidateMissionAgentsCache(): void {
   invalidateCachedFetch(AGENTS_LIST_CACHE_KEY)
 }
 
+/**
+ * The default agent renders as the lamp mark everywhere, even when onboarding stored a
+ * generated portrait in agents_registry.image_url (see normalizeDefaultAgentIdentity).
+ */
+export function normalizeDefaultMissionAgent<
+  T extends { agent_key: string; image_url?: string | null },
+>(agent: T): T {
+  if (agent.agent_key !== DEFAULT_AGENT_KEY) return agent
+  return { ...agent, image_url: DEFAULT_AGENT_AVATAR_URL }
+}
+
 export async function fetchMissionAgents(opts?: { force?: boolean }): Promise<MissionAgent[]> {
   if (opts?.force) invalidateMissionAgentsCache()
-  return cachedFetch(AGENTS_LIST_CACHE_KEY, () => backendGet<MissionAgent[]>('/api/agents'), {
-    ttlMs: 60_000,
-  })
+  // Normalize inside the fetcher: callers also read the AGENTS_LIST_CACHE_KEY entry
+  // directly (use-team-container-roster), so the cached value itself must be normalized.
+  return cachedFetch(
+    AGENTS_LIST_CACHE_KEY,
+    async () => (await backendGet<MissionAgent[]>('/api/agents')).map(normalizeDefaultMissionAgent),
+    { ttlMs: 60_000 },
+  )
 }
 
 export async function fetchMissionAgentsSlim(): Promise<MissionAgentSidebar[]> {
-  return backendGet<MissionAgentSidebar[]>('/api/agents/slim')
+  const agents = await backendGet<MissionAgentSidebar[]>('/api/agents/slim')
+  return agents.map(normalizeDefaultMissionAgent)
 }
 
 export async function backfillBrainScholar(): Promise<{

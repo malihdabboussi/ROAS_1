@@ -25,11 +25,30 @@ export type ShellArtifactViewerTarget = {
   contextUrl?: string | null
 }
 
+/**
+ * The viewer adapter listens for SHELL_ARTIFACT_OPEN_EVENT inside ShellWorkspace, which
+ * sits under a Suspense boundary — during hydration/route transitions the listener can be
+ * unmounted, and a plain CustomEvent fired then is silently lost (first click on an
+ * Outputs row did nothing). Buffer the last request so the adapter can consume it when
+ * it (re)mounts; a mounted listener clears the buffer synchronously via consume below.
+ */
+let pendingOpenTarget: { target: ShellArtifactViewerTarget; at: number } | null = null
+const PENDING_OPEN_MAX_AGE_MS = 10_000
+
 export function openArtifactInShell(target: ShellArtifactViewerTarget): void {
   if (typeof window === 'undefined') return
+  pendingOpenTarget = { target, at: Date.now() }
   window.dispatchEvent(
     new CustomEvent<ShellArtifactViewerTarget>(SHELL_ARTIFACT_OPEN_EVENT, { detail: target }),
   )
+}
+
+/** Adapter-only: returns a recent un-handled open request (and clears it), else null. */
+export function consumePendingShellArtifactOpen(): ShellArtifactViewerTarget | null {
+  const pending = pendingOpenTarget
+  pendingOpenTarget = null
+  if (!pending) return null
+  return Date.now() - pending.at <= PENDING_OPEN_MAX_AGE_MS ? pending.target : null
 }
 
 const PREVIEW_TO_ENTITY_TABLE: Record<ArtifactPreviewType, string> = {

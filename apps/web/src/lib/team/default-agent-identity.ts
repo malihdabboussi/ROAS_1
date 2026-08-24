@@ -17,19 +17,21 @@ function isLegacyDefaultDisplayName(displayName: string): boolean {
 }
 
 /**
- * Presents the default agent as "Pixel", but only when the org is still on the
- * seeded default identity. Orgs that renamed their agent are left untouched, and
- * a custom avatar (e.g. an onboarding-generated portrait) always wins over the
- * lamp so chat matches the mission surfaces that read agents_registry.image_url.
+ * Presents the default agent as "Pixel" with the lamp mark. The lamp is the canonical
+ * brand identity for the default agent on every surface — it always replaces a stored
+ * portrait (onboarding used to generate human portraits into agents_registry.image_url,
+ * which made chat show a person while previews showed the lamp). Orgs that renamed
+ * their agent keep their custom name.
  */
 export function normalizeDefaultAgentIdentity<
   T extends { agent_key: string | null; display_name: string; avatar_url: string | null },
 >(entry: T): T {
   if (entry.agent_key !== DEFAULT_AGENT_KEY) return entry
-  if (!isLegacyDefaultDisplayName(entry.display_name)) return entry
   return {
     ...entry,
-    display_name: DEFAULT_AGENT_DISPLAY_NAME,
-    avatar_url: entry.avatar_url?.trim() ? entry.avatar_url : DEFAULT_AGENT_AVATAR_URL,
+    display_name: isLegacyDefaultDisplayName(entry.display_name)
+      ? DEFAULT_AGENT_DISPLAY_NAME
+      : entry.display_name,
+    avatar_url: DEFAULT_AGENT_AVATAR_URL,
   }
 }

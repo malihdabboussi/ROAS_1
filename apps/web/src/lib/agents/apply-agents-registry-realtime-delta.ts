@@ -1,3 +1,4 @@
+import { DEFAULT_AGENT_KEY } from '@/lib/team/default-agent-identity'
 import type { AgentStatus, MissionAgent } from './mission-agents-api'
 
 const AGENT_STATUSES = new Set<AgentStatus>(['online', 'idle', 'working', 'offline'])
@@ -28,7 +29,11 @@ export function applyAgentsRegistryRealtimeDelta(
 
   const status = asAgentStatus(row.status)
   const name = typeof row.name === 'string' ? row.name : undefined
-  const imageUrl = typeof row.image_url === 'string' ? row.image_url : undefined
+  // Default agent keeps the lamp mark — a registry UPDATE must not re-inject a portrait.
+  const imageUrl =
+    typeof row.image_url === 'string' && agentKey !== DEFAULT_AGENT_KEY
+      ? row.image_url
+      : undefined
   const isActive = typeof row.is_active === 'boolean' ? row.is_active : undefined
 
   let matched = false

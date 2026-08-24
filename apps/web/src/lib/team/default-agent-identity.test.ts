@@ -12,10 +12,10 @@ const base = {
 }
 
 describe('normalizeDefaultAgentIdentity', () => {
-  it('renames the seeded default agent to Pixel and keeps a custom avatar', () => {
+  it('renames the seeded default agent to Pixel and replaces a stored portrait with the lamp', () => {
     const result = normalizeDefaultAgentIdentity({ ...base, display_name: 'Vibey' })
     expect(result.display_name).toBe(DEFAULT_AGENT_DISPLAY_NAME)
-    expect(result.avatar_url).toBe(base.avatar_url)
+    expect(result.avatar_url).toBe(DEFAULT_AGENT_AVATAR_URL)
   })
 
   it('falls back to the lamp avatar when the row has no avatar', () => {
@@ -42,13 +42,13 @@ describe('normalizeDefaultAgentIdentity', () => {
   it('also normalizes seeded names with a role suffix', () => {
     const result = normalizeDefaultAgentIdentity({ ...base, display_name: 'Vibey · CEO' })
     expect(result.display_name).toBe(DEFAULT_AGENT_DISPLAY_NAME)
-    expect(result.avatar_url).toBe(base.avatar_url)
+    expect(result.avatar_url).toBe(DEFAULT_AGENT_AVATAR_URL)
   })
 
-  it('respects orgs that customized the agent name', () => {
+  it('keeps a customized agent name but still uses the lamp mark', () => {
     const result = normalizeDefaultAgentIdentity({ ...base, display_name: 'Nova' })
     expect(result.display_name).toBe('Nova')
-    expect(result.avatar_url).toBe(base.avatar_url)
+    expect(result.avatar_url).toBe(DEFAULT_AGENT_AVATAR_URL)
   })
 
   it('leaves non-default agents untouched', () => {
