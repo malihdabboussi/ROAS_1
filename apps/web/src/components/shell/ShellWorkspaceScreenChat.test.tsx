@@ -5,9 +5,7 @@ import { ShellWorkspace } from './ShellWorkspace'
 const mocks = vi.hoisted(() => ({
   pathname: '/home/inbox',
   params: new Map<string, string>(),
-  chatDrawerConversationId: null as string | null,
-  handleScreenNavigation: vi.fn(),
-  recordScreenConversation: vi.fn(),
+  showScreenOnly: vi.fn(),
   setWorkAreaOpen: vi.fn(),
 }))
 
@@ -22,7 +20,7 @@ vi.mock('@/lib/hooks/use-media-query', () => ({
 }))
 
 vi.mock('./use-shell-prefs-hydrated', () => ({
-  useShellPrefsHydrated: () => false,
+  useShellPrefsHydrated: () => true,
 }))
 
 vi.mock('./use-shell-menu-dock', async () => {
@@ -87,13 +85,13 @@ vi.mock('./use-shell-store', () => ({
       artifactViewer: { target: null },
       chatDrawer: {
         open: true,
-        conversationId: mocks.chatDrawerConversationId,
+        conversationId: null,
         width: 420,
       },
       openChatDrawer: vi.fn(),
       minimizeChatDrawer: vi.fn(),
-      handleScreenNavigation: mocks.handleScreenNavigation,
-      recordScreenConversation: mocks.recordScreenConversation,
+      showScreenOnly: mocks.showScreenOnly,
+      syncArtifactViewerForConversation: vi.fn(),
       requestNewChat: vi.fn(),
       setWorkAreaOpen: mocks.setWorkAreaOpen,
       setRightPanelOpen: vi.fn(),
@@ -106,25 +104,21 @@ describe('ShellWorkspace screen-scoped chat navigation', () => {
   beforeEach(() => {
     mocks.pathname = '/home/inbox'
     mocks.params = new Map()
-    mocks.chatDrawerConversationId = null
   })
   afterEach(() => {
     cleanup()
     vi.clearAllMocks()
   })
 
-  it('routes navigation between sidebar screens through the screen-chat contract', async () => {
+  it('shows a primary destination by itself on initial load and later navigation', async () => {
     const { rerender } = render(<ShellWorkspace>Inbox workspace</ShellWorkspace>)
-    expect(mocks.handleScreenNavigation).not.toHaveBeenCalled()
+    await waitFor(() => expect(mocks.showScreenOnly).toHaveBeenCalledTimes(1))
 
     mocks.pathname = '/home/meetings'
     rerender(<ShellWorkspace>Meetings workspace</ShellWorkspace>)
 
     await waitFor(() => {
-      expect(mocks.handleScreenNavigation).toHaveBeenCalledWith({
-        key: 'home:meetings',
-        label: 'Meetings',
-      })
+      expect(mocks.showScreenOnly).toHaveBeenCalledTimes(2)
     })
   })
 
@@ -134,25 +128,7 @@ describe('ShellWorkspace screen-scoped chat navigation', () => {
     rerender(<ShellWorkspace>Space page</ShellWorkspace>)
 
     await waitFor(() => {
-      expect(mocks.handleScreenNavigation).toHaveBeenCalledWith(null)
+      expect(mocks.setWorkAreaOpen).toHaveBeenCalledWith(true)
     })
-  })
-
-  it('stamps a newly opened conversation onto the current screen, not onto later screens', async () => {
-    const { rerender } = render(<ShellWorkspace>Inbox workspace</ShellWorkspace>)
-
-    mocks.chatDrawerConversationId = 'conv-1'
-    rerender(<ShellWorkspace>Inbox workspace</ShellWorkspace>)
-    await waitFor(() => {
-      expect(mocks.recordScreenConversation).toHaveBeenCalledWith('home:inbox', 'conv-1')
-    })
-
-    mocks.recordScreenConversation.mockClear()
-    mocks.pathname = '/home/meetings'
-    rerender(<ShellWorkspace>Meetings workspace</ShellWorkspace>)
-    await waitFor(() => {
-      expect(mocks.handleScreenNavigation).toHaveBeenCalled()
-    })
-    expect(mocks.recordScreenConversation).not.toHaveBeenCalled()
   })
 })

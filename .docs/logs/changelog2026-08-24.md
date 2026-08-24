@@ -10,6 +10,16 @@ Impact: Successfully fetched empty chats now render their empty state, and produ
 
 Files: `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.ts`, `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.test.ts`, `apps/web/src/features/studio/services/chat.service.ts`, `apps/web/src/features/studio/store/use-chat-store.ts`, `supabase/migrations/20260820020000_conversation_connections.sql`, `documentation/features/claude-chatgpt-shell.md`
 
+## 2026-08-24 13:18 - [FIX]
+
+What: Changed primary sidebar navigation to open destination cards without AI Chat, preserved conversation-specific detailed artifact restoration and artifact pinning, and made New chat open beside card-only workspaces or full-screen when chat is already visible. Removed the obsolete per-screen remembered-chat prompt and persistence slice.
+
+Why: Inbox, Meetings, All Tasks, Clients, and related destinations inherited an open chat pane, while New chat did not consistently respect whether the user was viewing a card or an active conversation.
+
+Impact: Destination cards now open alone. Conversation selection still restores its saved detailed artifact; pin keeps the visible artifact fixed while browsing chats without changing saved associations.
+
+Files: `apps/web/src/components/layout/sidebar/SidebarSimpleSection.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/ShellChatDrawer.tsx`, `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/shell/use-shell-workspace-screen-chat.ts`, related shell/sidebar tests, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-08-24 11:15] - [STYLE]
 
 What: Promoted Artifacts from the More flyout to a first-level main-menu destination immediately below Launches across simple, compact, advanced, and mobile navigation variants.

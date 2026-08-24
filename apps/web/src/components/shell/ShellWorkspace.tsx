@@ -78,7 +78,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const spaceParam = searchParams.get('space')
   const previousSimpleChatOpen = useRef(false)
   const conversationBeforeNewChatRef = useRef<string | null>(null)
-  useShellWorkspaceScreenChat(pathname, spaceParam)
+  useShellWorkspaceScreenChat(pathname, spaceParam, shellPrefsHydrated)
   useShellArtifactConversationSync()
 
   const showFullNewChat = isShellHomeRoute(pathname) && !convParam && chatParam !== 'starting'
@@ -114,7 +114,13 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     // Leaving chat for a page screen (All Tasks, Meetings, …): an unpinned artifact
     // column must not replace that page's work area.
     syncArtifactViewerForConversation(null)
-  }, [convParam, pathname, showFullConversation, showFullNewChat, syncArtifactViewerForConversation])
+  }, [
+    convParam,
+    pathname,
+    showFullConversation,
+    showFullNewChat,
+    syncArtifactViewerForConversation,
+  ])
 
   useEffect(() => {
     const justOpened = chatDrawerOpen && !previousSimpleChatOpen.current

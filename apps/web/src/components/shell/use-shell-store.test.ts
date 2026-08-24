@@ -405,146 +405,45 @@ describe('shell work area', () => {
   })
 })
 
-describe('screen-scoped chat navigation', () => {
-  const inbox = { key: 'home:inbox', label: 'Inbox' }
-  const meetings = { key: 'home:meetings', label: 'Meetings' }
-
+describe('screen-only destination navigation', () => {
   beforeEach(() => {
-    resetShellStoreHydrationForTests()
     window.localStorage.removeItem(STORAGE_KEY)
     useShellStore.setState({
-      chatDrawer: { open: true, conversationId: null, width: 420, minimized: false },
-      lastConversationByScreen: {},
-      screenChatPrompt: null,
-      newChatNonce: 0,
-    })
-  })
-
-  it('records the last conversation per screen and persists it', () => {
-    useShellStore.getState().recordScreenConversation('home:inbox', 'conv-inbox')
-    useShellStore.getState().recordScreenConversation('home:meetings', 'conv-meetings')
-
-    expect(useShellStore.getState().lastConversationByScreen).toEqual({
-      'home:inbox': 'conv-inbox',
-      'home:meetings': 'conv-meetings',
-    })
-    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject({
-      screenConversations: { 'home:inbox': 'conv-inbox', 'home:meetings': 'conv-meetings' },
-    })
-  })
-
-  it('restores per-screen conversations after a refresh', () => {
-    window.localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ screenConversations: { 'home:inbox': 'conv-inbox', bad: 42 } }),
-    )
-    hydrateShellStoreFromStorage()
-    expect(useShellStore.getState().lastConversationByScreen).toEqual({
-      'home:inbox': 'conv-inbox',
-    })
-  })
-
-  it('keeps the open chat and offers the target screen’s last chat on navigation', () => {
-    useShellStore.setState({
       chatDrawer: { open: true, conversationId: 'conv-current', width: 420, minimized: false },
-      lastConversationByScreen: { 'home:inbox': 'conv-inbox' },
-    })
-
-    useShellStore.getState().handleScreenNavigation(inbox)
-
-    expect(useShellStore.getState().chatDrawer.conversationId).toBe('conv-current')
-    expect(useShellStore.getState().screenChatPrompt).toEqual({
-      screenKey: 'home:inbox',
-      screenLabel: 'Inbox',
-      conversationId: 'conv-inbox',
+      artifactViewer: { target, width: 480 },
+      artifactPinned: true,
+      lastArtifactByConversation: { 'conv-current': target },
+      workAreaOpen: false,
     })
   })
 
-  it('shows no prompt when the open chat already belongs to the screen or none exists', () => {
-    useShellStore.setState({
-      chatDrawer: { open: true, conversationId: 'conv-inbox', width: 420, minimized: false },
-      lastConversationByScreen: { 'home:inbox': 'conv-inbox' },
-    })
-    useShellStore.getState().handleScreenNavigation(inbox)
-    expect(useShellStore.getState().screenChatPrompt).toBeNull()
-
-    useShellStore.getState().handleScreenNavigation(meetings)
-    expect(useShellStore.getState().screenChatPrompt).toBeNull()
-  })
-
-  it('starts a fresh screen-scoped chat when no conversation is open in the pane', () => {
-    const nonceBefore = useShellStore.getState().newChatNonce
-    useShellStore.getState().handleScreenNavigation(inbox)
-
-    expect(useShellStore.getState().newChatNonce).toBe(nonceBefore + 1)
-    expect(useShellStore.getState().chatDrawer.conversationId).toBeNull()
-    expect(useShellStore.getState().screenChatPrompt).toBeNull()
-  })
-
-  it('does not force the pane open on navigation when the drawer is closed', () => {
-    useShellStore.setState({
-      chatDrawer: { open: false, conversationId: null, width: 420, minimized: false },
-    })
-    const nonceBefore = useShellStore.getState().newChatNonce
-    useShellStore.getState().handleScreenNavigation(inbox)
-
-    expect(useShellStore.getState().chatDrawer.open).toBe(false)
-    expect(useShellStore.getState().newChatNonce).toBe(nonceBefore)
-    expect(useShellStore.getState().screenChatPrompt).toBeNull()
-  })
-
-  it('clears a stale prompt when navigating to an unscoped route', () => {
-    useShellStore.setState({
-      screenChatPrompt: { screenKey: 'home:inbox', screenLabel: 'Inbox', conversationId: 'c1' },
-    })
-    useShellStore.getState().handleScreenNavigation(null)
-    expect(useShellStore.getState().screenChatPrompt).toBeNull()
-  })
-
-  it('accepting the prompt opens that conversation, records it, and clears the prompt', () => {
-    useShellStore.setState({
-      chatDrawer: { open: true, conversationId: 'conv-current', width: 420, minimized: false },
-      lastConversationByScreen: { 'home:inbox': 'conv-inbox' },
-      screenChatPrompt: {
-        screenKey: 'home:inbox',
-        screenLabel: 'Inbox',
-        conversationId: 'conv-inbox',
-      },
-    })
-
-    useShellStore.getState().acceptScreenChatPrompt()
+  it('shows the destination alone without forgetting the current conversation artifact', () => {
+    useShellStore.getState().showScreenOnly()
 
     expect(useShellStore.getState().chatDrawer).toMatchObject({
-      open: true,
-      conversationId: 'conv-inbox',
+      open: false,
+      minimized: true,
+      conversationId: 'conv-current',
     })
-    expect(useShellStore.getState().screenChatPrompt).toBeNull()
+    expect(useShellStore.getState().artifactViewer.target).toBeNull()
+    expect(useShellStore.getState().artifactPinned).toBe(false)
+    expect(useShellStore.getState().workAreaOpen).toBe(true)
+    expect(useShellStore.getState().lastArtifactByConversation['conv-current']).toEqual(target)
   })
 
-  it('a newly opened conversation invalidates any pending switch prompt', () => {
-    useShellStore.setState({
-      screenChatPrompt: {
-        screenKey: 'home:inbox',
-        screenLabel: 'Inbox',
-        conversationId: 'conv-inbox',
-      },
-    })
-    useShellStore.getState().recordScreenConversation('home:inbox', 'conv-other')
-    expect(useShellStore.getState().screenChatPrompt).toBeNull()
+  it('keeps an open card beside a fresh docked chat', () => {
+    useShellStore.getState().openFreshChatDrawer()
+
+    expect(useShellStore.getState().chatDrawer).toMatchObject({ open: true, conversationId: null })
+    expect(useShellStore.getState().artifactViewer.target).toEqual(target)
   })
 
-  it('dismissing the prompt keeps the current chat', () => {
-    useShellStore.setState({
-      chatDrawer: { open: true, conversationId: 'conv-current', width: 420, minimized: false },
-      screenChatPrompt: {
-        screenKey: 'home:inbox',
-        screenLabel: 'Inbox',
-        conversationId: 'conv-inbox',
-      },
-    })
-    useShellStore.getState().dismissScreenChatPrompt()
+  it('clears the visible card for full-screen new chat without deleting saved chat artifacts', () => {
+    useShellStore.getState().requestNewChat()
 
-    expect(useShellStore.getState().screenChatPrompt).toBeNull()
-    expect(useShellStore.getState().chatDrawer.conversationId).toBe('conv-current')
+    expect(useShellStore.getState().chatDrawer).toMatchObject({ open: false, conversationId: null })
+    expect(useShellStore.getState().artifactViewer.target).toBeNull()
+    expect(useShellStore.getState().artifactPinned).toBe(false)
+    expect(useShellStore.getState().lastArtifactByConversation['conv-current']).toEqual(target)
   })
 })

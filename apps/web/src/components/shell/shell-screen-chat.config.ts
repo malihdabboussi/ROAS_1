@@ -39,39 +39,3 @@ export function shellChatScreenForPathname(pathname: string): ShellChatScreen | 
   const match = SCREEN_ROUTES.find((route) => pathname.startsWith(route.prefix))
   return match ? { key: match.key, label: match.label } : null
 }
-
-export type ShellScreenChatDecision =
-  | { type: 'none' }
-  | { type: 'keep-and-prompt'; conversationId: string }
-  | { type: 'fresh-chat' }
-
-/**
- * Dylan's navigation contract (2026-08-12): a chat that is open in the pane
- * is never swapped out by navigation — at most the pane offers the target
- * screen's last chat. An empty pane starts fresh instead of resurrecting an
- * unrelated conversation.
- */
-export function resolveScreenChatNavigation(input: {
-  screen: ShellChatScreen | null
-  chatPaneOpen: boolean
-  openConversationId: string | null
-  lastScreenConversationId: string | null
-}): ShellScreenChatDecision {
-  if (!input.screen || !input.chatPaneOpen) return { type: 'none' }
-  if (input.openConversationId) {
-    if (
-      input.lastScreenConversationId &&
-      input.lastScreenConversationId !== input.openConversationId
-    ) {
-      return { type: 'keep-and-prompt', conversationId: input.lastScreenConversationId }
-    }
-    return { type: 'none' }
-  }
-  return { type: 'fresh-chat' }
-}
-
-export const SHELL_SCREEN_CHAT_MESSAGES = {
-  switchPrompt: (screenLabel: string) => `Switch to your last ${screenLabel} chat?`,
-  switchLabel: (screenLabel: string) => `Open your last ${screenLabel} chat`,
-  dismissLabel: 'Dismiss chat switch suggestion',
-} as const

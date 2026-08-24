@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
+import { useShellStore } from '@/components/shell/use-shell-store'
 import { makeSidebarHqController } from './SidebarHqSection.test-support'
 import { SidebarSimpleSection } from './SidebarSimpleSection'
 
@@ -57,6 +58,10 @@ vi.mock('./SidebarHqMoreFlyoutBody', () => ({
 describe('SidebarSimpleSection', () => {
   beforeEach(() => {
     useShellMenuDock.setState({ menuStyle: 'simple', menuCompact: false })
+    useShellStore.setState({
+      chatDrawer: { open: false, conversationId: null, width: 420, minimized: false },
+      artifactViewer: { target: null, width: 480 },
+    })
     programMocks.invalidateProgramsListCache.mockReset()
     programMocks.loadProgramsCached.mockReset().mockResolvedValue([])
     programMocks.updateProgramUserState.mockReset().mockResolvedValue({ is_favorite: false })
@@ -108,7 +113,7 @@ describe('SidebarSimpleSection', () => {
 
     expect(newChat.querySelector('svg')).toHaveClass('nav-glass-text-purple')
     fireEvent.click(newChat)
-    expect(controller.router.push).toHaveBeenCalledWith('/home')
+    expect(controller.router.push).toHaveBeenCalledWith('/home?chat=new')
     expect(screen.getByRole('link', { name: 'Inbox' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Meetings' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'All Tasks' })).toBeInTheDocument()
@@ -127,6 +132,48 @@ describe('SidebarSimpleSection', () => {
     expect(screen.getByText('Chat history')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Collapse menu' })).toBeInTheDocument()
     expect(screen.getByText('All Tasks')).toBeInTheDocument()
+  })
+
+  it('opens a docked fresh chat beside a destination card', () => {
+    const controller = makeSidebarHqController({ pathname: '/home/inbox' })
+    const nonceBefore = useShellStore.getState().newChatNonce
+    render(<SidebarSimpleSection c={controller} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }))
+
+    expect(controller.router.push).not.toHaveBeenCalled()
+    expect(useShellStore.getState().chatDrawer).toMatchObject({ open: true, conversationId: null })
+    expect(useShellStore.getState().newChatNonce).toBe(nonceBefore + 1)
+  })
+
+  it('opens full-screen new chat when a chat is already visible', () => {
+    useShellStore.setState({
+      chatDrawer: { open: true, conversationId: 'conv-1', width: 420, minimized: false },
+    })
+    const controller = makeSidebarHqController({ pathname: '/home/inbox' })
+    render(<SidebarSimpleSection c={controller} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }))
+
+    expect(controller.router.push).toHaveBeenCalledWith('/home?chat=new')
+  })
+
+  it('shows primary destinations without the open chat or artifact viewer', () => {
+    useShellStore.setState({
+      chatDrawer: { open: true, conversationId: 'conv-1', width: 420, minimized: false },
+      artifactViewer: {
+        target: { id: 'doc-1', title: 'Plan', type: 'doc', conversationId: 'conv-1' },
+        width: 480,
+      },
+      artifactPinned: true,
+    })
+    render(<SidebarSimpleSection c={makeSidebarHqController()} />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Inbox' }))
+
+    expect(useShellStore.getState().chatDrawer.open).toBe(false)
+    expect(useShellStore.getState().artifactViewer.target).toBeNull()
+    expect(useShellStore.getState().artifactPinned).toBe(false)
   })
 
   it('opens More only after the More row is clicked', () => {

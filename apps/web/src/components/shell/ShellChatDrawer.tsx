@@ -13,7 +13,6 @@ import { ARTIFACT_VIEWER_WIDTH_MIN } from '@/lib/artifacts/artifact-viewer-layou
 import { cn } from '@/lib/utils/cn'
 import { ShellChatHeaderPageControl } from './ShellChatHeaderPageControl'
 import { ShellChatMenu } from './ShellChatMenu'
-import { ShellScreenChatPrompt } from './ShellScreenChatPrompt'
 import { useShellMenuDock } from './use-shell-menu-dock'
 import { useShellStore } from './use-shell-store'
 
@@ -261,7 +260,6 @@ export function ShellChatDrawer({
             )}
             aria-hidden={mobile && !simpleMenu && !historyCollapsed}
           >
-            <ShellScreenChatPrompt />
             <GlobalChatPanel
               shellSidebarChrome
               presentation="full"

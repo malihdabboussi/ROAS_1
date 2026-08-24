@@ -20,6 +20,7 @@ import {
 import { ConversationHubSectionHeader } from '@/components/conversations/SpaceConversationSections'
 import { AvatarDropdown } from '@/components/layout/AvatarDropdown'
 import { useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
+import { useShellStore } from '@/components/shell/use-shell-store'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
 import { dispatchOpenStudioSearch } from '@/features/studio/utils/open-studio-search-result'
@@ -54,6 +55,10 @@ export function SidebarSimpleSection({
   featureUpdates?: { hasUnread: boolean; onOpen: (anchor: HTMLElement) => void }
 }) {
   const menuCompact = useShellMenuDock((state) => state.menuCompact)
+  const chatOpen = useShellStore((state) => state.chatDrawer.open)
+  const artifactOpen = useShellStore((state) => Boolean(state.artifactViewer.target))
+  const openFreshChatDrawer = useShellStore((state) => state.openFreshChatDrawer)
+  const showScreenOnly = useShellStore((state) => state.showScreenOnly)
   const searchParams = useSearchParams()
   const activeOrgId = useOrgStore((state) => state.activeOrgId)
   const spaceUserState = useSpaceUserState()
@@ -103,6 +108,13 @@ export function SidebarSimpleSection({
   }
   const newChatSelected =
     c.pathname === '/home' && !searchParams?.get('conv') && searchParams?.get('chat') !== 'starting'
+  const handleNewChat = () => {
+    if (!chatOpen && (c.pathname !== '/home' || artifactOpen)) {
+      openFreshChatDrawer()
+      return
+    }
+    c.router.push('/home?chat=new')
+  }
   const navigation = (
     <div>
       <div className="px-spacing-3 pb-spacing-1 space-y-0">
@@ -112,7 +124,7 @@ export function SidebarSimpleSection({
             'hub-menu-link-row !py-spacing-1 w-full',
             newChatSelected && 'nav-glass-selected-purple',
           )}
-          onClick={() => c.router.push('/home')}
+          onClick={handleNewChat}
         >
           <SquarePen className="icon-sm nav-glass-text-purple" aria-hidden />
           <span className="body-2">New chat</span>
@@ -126,6 +138,7 @@ export function SidebarSimpleSection({
             <Link
               key={item.href}
               href={item.href}
+              onClick={showScreenOnly}
               className={cn(
                 'hub-menu-link-row !py-spacing-1',
                 active && 'nav-glass-selected-purple',
@@ -273,7 +286,7 @@ export function SidebarSimpleSection({
               'hub-menu-link-row justify-center',
               newChatSelected && 'nav-glass-selected-purple',
             )}
-            onClick={() => c.router.push('/home')}
+            onClick={handleNewChat}
             aria-label="New chat"
             title="New chat"
           >
@@ -286,6 +299,7 @@ export function SidebarSimpleSection({
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={showScreenOnly}
                 className={cn(
                   'hub-menu-link-row justify-center',
                   active && 'nav-glass-selected-purple',

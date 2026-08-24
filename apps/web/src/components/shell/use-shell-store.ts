@@ -23,17 +23,11 @@ import {
   type ShellArtifactConversationSlice,
 } from './use-shell-store.artifact-conversation'
 import {
-  createShellScreenChatSlice,
-  sanitizeScreenConversations,
-  type ShellScreenChatSlice,
-} from './use-shell-store.screen-chat'
-import {
   createShellWorkAreaConversationSlice,
   type ShellWorkAreaConversationSlice,
 } from './use-shell-store.work-area-conversation'
 
 export type { ShellWorkAreaPageTarget, ShellWorkAreaRestore }
-
 const STORAGE_KEY = 'vibey.shell.v1'
 
 export type ShellMenuMode = 'home' | 'work'
@@ -70,7 +64,6 @@ type PersistedShell = {
   lastArtifactByConversation?: Record<string, ShellArtifactViewerTarget>
   lastWorkAreaPageByConversation?: Record<string, ShellWorkAreaPageTarget>
   artifactPinned?: boolean
-  screenConversations?: Record<string, string>
 }
 
 function readPersisted(): PersistedShell {
@@ -123,8 +116,7 @@ function clampChatHistoryWidth(width: number): number {
   return Math.min(CHAT_HISTORY_WIDTH_MAX, Math.max(CHAT_HISTORY_WIDTH_MIN, width))
 }
 
-interface ShellStore
-  extends ShellScreenChatSlice, ShellArtifactConversationSlice, ShellWorkAreaConversationSlice {
+interface ShellStore extends ShellArtifactConversationSlice, ShellWorkAreaConversationSlice {
   sidebarPinned: boolean
   sidebarPeek: boolean
   menuMode: ShellMenuMode
@@ -161,6 +153,7 @@ interface ShellStore
   minimizeChatDrawer: () => void
   restoreChatDrawer: () => void
   closeChatDrawer: () => void
+  showScreenOnly: () => void
   setChatDrawerWidth: (width: number) => void
   setChatHistoryWidth: (width: number) => void
   setChatHistoryCollapsed: (collapsed: boolean) => void
@@ -174,7 +167,6 @@ interface ShellStore
   closeArtifactViewer: (conversationId?: string | null) => void
   setArtifactViewerWidth: (width: number) => void
   requestNewChat: () => void
-  /** Fresh chat in the docked left drawer (workspace routes); stays on current page. */
   openFreshChatDrawer: () => void
   bumpSidebarFlyoutClose: () => void
   setPageBreadcrumb: (node: ReactNode | null, owner?: object | null, label?: string | null) => void
@@ -211,7 +203,6 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   },
   recentArtifactTargets: [],
   recentWorkAreaPages: [],
-  ...createShellScreenChatSlice(set, get, writePersisted),
   ...createShellArtifactConversationSlice(set, get, writePersisted),
   ...createShellWorkAreaConversationSlice(set, writePersisted),
   newChatNonce: 0,
@@ -329,6 +320,22 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       chatDrawerOpen: false,
       chatDrawerConversationId: null,
       chatDrawerMinimized: false,
+    })
+  },
+  showScreenOnly: () => {
+    set((s) => ({
+      chatDrawer: { ...s.chatDrawer, open: false, minimized: true },
+      artifactViewer: { ...s.artifactViewer, target: null },
+      artifactPinned: false,
+      workAreaOpen: true,
+    }))
+    writePersisted({
+      chatDrawerOpen: false,
+      chatDrawerConversationId: get().chatDrawer.conversationId,
+      chatDrawerMinimized: true,
+      artifactViewerTarget: null,
+      artifactPinned: false,
+      workAreaOpen: true,
     })
   },
   setChatDrawerWidth: (width) => {
@@ -466,15 +473,18 @@ export const useShellStore = create<ShellStore>((set, get) => ({
         conversationId: null,
         minimized: false,
       },
+      artifactViewer: { ...s.artifactViewer, target: null },
+      artifactPinned: false,
       workAreaOpen: true,
     }))
     writePersisted({
       chatDrawerOpen: false,
       chatDrawerConversationId: null,
       chatDrawerMinimized: false,
+      artifactViewerTarget: null,
+      artifactPinned: false,
       workAreaOpen: true,
     })
-    get().syncArtifactViewerForConversation(null)
   },
   openFreshChatDrawer: () => {
     set((s) => ({
@@ -494,7 +504,6 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       chatDrawerMinimized: false,
       rightPanelOpen: false,
     })
-    get().syncArtifactViewerForConversation(null)
   },
   setPageBreadcrumb: (node, owner = null, label = null) => {
     if (node === null) {
@@ -568,7 +577,6 @@ export function hydrateShellStoreFromStorage(): void {
     },
     chatHistoryWidth: clampChatHistoryWidth(persisted.chatHistoryWidth ?? 200),
     chatHistoryCollapsed: persisted.chatHistoryCollapsed ?? false,
-    lastConversationByScreen: sanitizeScreenConversations(persisted.screenConversations),
     lastArtifactByConversation,
     lastWorkAreaPageByConversation,
     artifactPinned,
