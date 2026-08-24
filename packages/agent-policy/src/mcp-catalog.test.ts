@@ -118,6 +118,15 @@ describe('MCP catalog', () => {
     expect(toolActions).toContain('upload_skill_asset')
   })
 
+  it('describes the UI General workspace route without changing general filtering semantics', () => {
+    const listSpaces = MCP_V1_TOOL_CATALOG.find((tool) => tool.toolName === 'list_spaces')
+
+    expect(listSpaces?.description).toContain('UI General workspace')
+    expect(listSpaces?.description).toContain('config.system_kind="general"')
+    expect(listSpaces?.description).toContain('general=true')
+    expect(listSpaces?.description).toContain('campaign_id is null')
+  })
+
   it('exposes Company Brain writes as signal proposals, not raw object creation', () => {
     const toolActions = new Set(MCP_V1_TOOL_CATALOG.map((tool) => tool.action))
     expect(toolActions).toContain('propose_company_brain_signal')

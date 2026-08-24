@@ -43,6 +43,7 @@ export class VibeyMcpInstructionsService {
       '- Call describe_vibey_action before calling an unfamiliar tool so you have the exact action contract.',
       '- Use search_vibey_docs for Vibey product, policy, and workflow questions before guessing behavior.',
       '- Prefer read/list tools before create/update tools when you need existing IDs.',
+      '- For the UI General workspace, list accessible campaigns, select the unique campaign with config.system_kind="general", then call list_spaces with its campaign_id. general=true only returns Spaces where campaign_id is null.',
       '- For skills, the database is the source of truth; use Agent Skill MCP tools, not filesystem-only SKILL.md files.',
       '- For saving to any Brain/context surface, prefer atlas_save_brain_context unless the user explicitly asks for a direct low-level tool.',
       '',

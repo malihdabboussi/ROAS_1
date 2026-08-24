@@ -89,4 +89,21 @@ describe('Vibey MCP guidance catalogs', () => {
     expect(text).toContain('FAIL')
     expect(text).toContain('BLOCKED')
   })
+
+  it('distinguishes uncampaigned Spaces from the UI General workspace', () => {
+    const spacesPrompt = new VibeyMcpPromptCatalogService().getPrompt('vibey_spaces_navigation')
+    const spacesResource = new VibeyMcpResourceCatalogService().getResource(
+      'vibey://mcp/workflows/spaces',
+    )
+    const text = [
+      ...(spacesPrompt?.messages.map((message) => message.content.text) ?? []),
+      spacesResource?.text,
+    ].join('\n')
+
+    expect(text).toContain('config.system_kind="general"')
+    expect(text).toContain('list_campaigns')
+    expect(text).toContain('list_spaces with campaign_id')
+    expect(text).toContain('general=true')
+    expect(text).toContain('campaign_id is null')
+  })
 })

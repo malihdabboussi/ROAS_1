@@ -5,7 +5,7 @@ description: 'Connect ROAS to Claude, ChatGPT, Cursor, and other AI tools so the
 
 ROAS has its own MCP server at **`https://mcp.roas.io`**. Add it to your favorite AI tool — Claude, ChatGPT, Cursor, and others — and that tool can work with your ROAS workspace directly.
 
-This means you can sit in Claude and ask it to search your Company Brain, save a note to your memories, create a campaign, or kick off a mission — and it all lands in ROAS, exactly as if you'd done it in the app.
+This means you can sit in Claude and ask it to search your Company Brain, save a memory, create a campaign, or kick off a mission — and it all lands in ROAS, exactly as if you'd done it in the app.
 
 <Callout type="info">
   Looking for the opposite — connecting outside tools *into* your ROAS agents? That's covered in
@@ -141,6 +141,20 @@ The ROAS MCP doesn't just hand over tools — it teaches the connected AI how to
 - Every connected tool receives instructions explaining what's safe, what each permission means, and how to call ROAS correctly.
 - A built-in **docs search** tool lets the AI look up these very docs before acting, so it answers questions about ROAS accurately.
 - A **describe action** tool lets the AI check exactly what an action needs before calling it, so fewer things go wrong.
+
+The hosted endpoint follows MCP Streamable HTTP response semantics: JSON-RPC requests return
+`200 OK`, while accepted notifications return `202 Accepted` without a response body. This keeps
+the same connector interoperable across Claude and other remote MCP clients.
+
+The **General** workspace shown in ROAS is a system campaign. To browse its Spaces, the connected
+AI lists accessible campaigns, selects the unique campaign whose `config.system_kind` is
+`"general"`, then calls `list_spaces` with that campaign id. The separate `general: true` filter
+means uncampaigned Spaces where `campaign_id` is null; it does not mean the General workspace.
+
+Direct Personal Brain memories use one of these types: `decision`, `insight`, `preference`, `fact`,
+`story`, `framework`, or `event`. Invalid types are rejected before a write. If any MCP tool fails,
+the friendly explanation and the complete structured error contract are returned in model-visible
+text as well as `structuredContent`, so the connected AI can correct its payload or stop retrying.
 
 ## Good Things to Try
 

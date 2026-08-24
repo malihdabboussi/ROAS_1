@@ -49,3 +49,23 @@ Why: The Fly production image correctly rejected the untyped receipt at the `Sen
 Impact: Initial Brain retrieval receipts retain their existing runtime payload while the Agent API production build can verify the stream contract statically.
 
 Files: `apps/agent-api/src/modules/chat/services/chat-turn-streaming-state.service.ts`.
+
+## 2026-08-22 19:28 - [FIX]
+
+What: Corrected the hosted MCP POST transport to return `200 OK` for JSON-RPC requests and `202 Accepted` with no body for notifications.
+
+Why: NestJS defaulted successful POSTs to `201 Created`. Direct OAuth diagnostics proved the token, organization context, tool catalog, and mission actions were valid, but Claude rejected the non-standard transport status before exposing the tool result.
+
+Impact: Claude and other Streamable HTTP MCP clients can accept successful ROAS tool responses, while notification handling now matches the MCP transport contract.
+
+Files: `apps/agent-api/src/modules/vibey-mcp/controllers/vibey-mcp.controller.ts`, `apps/agent-api/src/modules/vibey-mcp/controllers/vibey-mcp.controller.test.ts`, `apps/docs/content/integrations/vibey-mcp.mdx`.
+
+## 2026-08-22 20:33 - [FIX]
+
+What: Clarified the hosted MCP route from the system General campaign into its child Spaces, constrained Personal Brain memory types in the hard action schema, and mirrored the complete structured error envelope into MCP text content.
+
+Why: Claude interpreted `general: true` as the UI General workspace even though that filter means `campaign_id IS NULL`, accepted the unsupported `note` memory type until runtime, and could not reliably see structured error details returned only through `structuredContent`.
+
+Impact: Claude and other MCP clients can resolve the real General workspace without false access conclusions, reject invalid memory writes before side effects, and receive actionable error codes, correction instructions, retry policy, and workflow evidence on every agent-visible failure.
+
+Files: `packages/agent-policy/src/mcp-catalog.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts`, `apps/agent-api/src/modules/vibey-mcp/services/**`, `apps/docs/content/integrations/vibey-mcp.mdx`.

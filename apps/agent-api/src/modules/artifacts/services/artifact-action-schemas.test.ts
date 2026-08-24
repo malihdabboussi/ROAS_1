@@ -882,6 +882,17 @@ describe('validateActionData', () => {
           memory_type: 'insight',
         }),
       ).toBeNull()
+      expect(
+        validateActionData('save_user_memory', {
+          content: 'A durable user insight.',
+          memory_type: 'note',
+        }),
+      ).toMatch(/memory_type.*one of.*decision.*insight.*fact/i)
+      expect(describeActionContract('save_user_memory')).toMatchObject({
+        allowed_values: {
+          memory_type: ['decision', 'insight', 'preference', 'fact', 'story', 'framework', 'event'],
+        },
+      })
       expect(validateActionData('search_user_brain', {})).toMatch(/query.*required/i)
       expect(validateActionData('search_user_brain', { query: 'launch patterns' })).toBeNull()
       expect(validateActionData('search_brain_context', {})).toMatch(/query.*required/i)
@@ -1535,6 +1546,12 @@ describe('validateActionData', () => {
     it('accepts valid minimal task payloads', () => {
       expect(validateActionData('list_spaces', {})).toBeNull()
       expect(validateActionData('list_spaces', { campaign_id: 'c1' })).toBeNull()
+      expect(describeActionContract('list_spaces')).toMatchObject({
+        descriptions: {
+          general: expect.stringContaining('campaign_id is null'),
+        },
+        use_when: expect.arrayContaining([expect.stringContaining('config.system_kind="general"')]),
+      })
       expect(
         validateActionData('search_space_context', { query: 'retainer guardrails' }),
       ).toBeNull()
@@ -1682,9 +1699,7 @@ describe('validateActionData', () => {
       expect(
         validateActionData('search_conversations', { query: 'brand reputation', limit: 'many' }),
       ).toMatch(/limit.*number/i)
-      expect(
-        describeActionContract('search_conversations'),
-      ).toMatchObject({
+      expect(describeActionContract('search_conversations')).toMatchObject({
         action: 'search_conversations',
         required: ['query'],
         optional: ['limit'],

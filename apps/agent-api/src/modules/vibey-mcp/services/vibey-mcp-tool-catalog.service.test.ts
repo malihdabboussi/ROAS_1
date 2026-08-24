@@ -12,13 +12,17 @@ describe('VibeyMcpToolCatalogService', () => {
     const skillReference = findTool('create_agent_skill_reference')
     const imageReference = findTool('upload_agent_skill_image_reference')
     const getMission = findTool('get_mission')
+    const listSpaces = findTool('list_spaces')
 
     expect(saveUserMemory?.inputSchema).toMatchObject({
       type: 'object',
       required: expect.arrayContaining(['content', 'memory_type']),
       properties: expect.objectContaining({
         content: expect.objectContaining({ type: 'string' }),
-        memory_type: expect.objectContaining({ type: 'string' }),
+        memory_type: expect.objectContaining({
+          type: 'string',
+          enum: ['decision', 'insight', 'preference', 'fact', 'story', 'framework', 'event'],
+        }),
       }),
     })
     expect(docsSearch?.inputSchema).toMatchObject({
@@ -85,6 +89,18 @@ describe('VibeyMcpToolCatalogService', () => {
       properties: expect.objectContaining({
         mission_id: expect.objectContaining({ type: 'string' }),
       }),
+    })
+    expect(listSpaces).toMatchObject({
+      description: expect.stringContaining('UI General workspace'),
+      inputSchema: {
+        description: expect.stringContaining('config.system_kind="general"'),
+        properties: expect.objectContaining({
+          general: expect.objectContaining({
+            type: 'boolean',
+            description: expect.stringContaining('campaign_id is null'),
+          }),
+        }),
+      },
     })
   })
 

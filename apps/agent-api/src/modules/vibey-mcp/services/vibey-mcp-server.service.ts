@@ -140,10 +140,24 @@ export class VibeyMcpServerService {
       failureRecord.user_explanation && typeof failureRecord.user_explanation === 'object'
         ? (failureRecord.user_explanation as Record<string, unknown>)
         : null
-    const text =
+    const userFacingText =
       typeof userExplanation?.sentence === 'string'
         ? userExplanation.sentence
         : String(failureRecord.error ?? 'The MCP tool could not complete this request.')
+    const modelVisibleFailure = {
+      success: failureRecord.success,
+      error_code: failureRecord.error_code,
+      error_class: failureRecord.error_class,
+      workflow_class: failureRecord.workflow_class,
+      effect_state: failureRecord.effect_state,
+      retry_policy: failureRecord.retry_policy,
+      correction: failureRecord.correction,
+      agent_instruction: failureRecord.agent_instruction,
+      user_explanation: failureRecord.user_explanation,
+      forbidden_user_framing: failureRecord.forbidden_user_framing,
+      observability: failureRecord.observability,
+    }
+    const text = `${userFacingText}\n\nStructured MCP error:\n${JSON.stringify(modelVisibleFailure, null, 2)}`
     return this.result(id, {
       content: [{ type: 'text', text }],
       structuredContent: failureRecord,

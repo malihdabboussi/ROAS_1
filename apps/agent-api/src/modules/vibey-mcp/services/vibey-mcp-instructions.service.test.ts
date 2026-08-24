@@ -32,5 +32,8 @@ describe('VibeyMcpInstructionsService', () => {
     expect(instructions).toContain('database is the source of truth')
     expect(instructions).toContain('atlas_save_brain_context')
     expect(instructions).toContain('Do not pass user_id or org_id')
+    expect(instructions).toContain('config.system_kind="general"')
+    expect(instructions).toContain('general=true')
+    expect(instructions).toContain('campaign_id is null')
   })
 })

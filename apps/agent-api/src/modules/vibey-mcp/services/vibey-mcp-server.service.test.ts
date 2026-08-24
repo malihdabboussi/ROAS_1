@@ -217,7 +217,14 @@ describe('VibeyMcpServerService', () => {
       result: {
         isError: true,
         structuredContent: classifiedFailure,
-        content: [{ type: 'text', text: 'I need the mission ID.' }],
+        content: [
+          {
+            type: 'text',
+            text: expect.stringMatching(
+              /I need the mission ID\.[\s\S]*"error_code": "ARTIFACT_VALIDATION"[\s\S]*"agent_instruction": "Correct mission_id before retrying\."/,
+            ),
+          },
+        ],
       },
     })
   })
@@ -231,20 +238,26 @@ describe('VibeyMcpServerService', () => {
       sessions: { buildSessionKey: vi.fn(async () => 'session-key') } as any,
     })
 
-    await expect(
-      service.handleRpc(
-        {
-          id: 9,
-          method: 'tools/call',
-          params: { name: 'get_mission', arguments: { mission_id: 'mission-1' } },
-        },
-        { user_id: 'user-1', client_id: 'client-1' } as any,
-      ),
-    ).resolves.toMatchObject({
+    const response = await service.handleRpc(
+      {
+        id: 9,
+        method: 'tools/call',
+        params: { name: 'get_mission', arguments: { mission_id: 'mission-1' } },
+      },
+      { user_id: 'user-1', client_id: 'client-1' } as any,
+    )
+
+    expect(response).toMatchObject({
       jsonrpc: '2.0',
       id: 9,
       result: {
         isError: true,
+        content: [
+          {
+            type: 'text',
+            text: expect.stringMatching(/"error_code"[\s\S]*"agent_instruction"/),
+          },
+        ],
         structuredContent: expect.objectContaining({
           success: false,
           error_class: 'system_fault',
@@ -259,6 +272,7 @@ describe('VibeyMcpServerService', () => {
         }),
       },
     })
+    expect((response as any).result.content[0].text).not.toContain('"error": "unexpected"')
   })
 
   it('completes incomplete returned failures with the full tool error contract', async () => {

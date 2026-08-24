@@ -3,13 +3,16 @@ import {
   Controller,
   Get,
   Head,
+  HttpCode,
+  HttpStatus,
   MethodNotAllowedException,
   Post,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common'
 import { ThrottlerGuard } from '@nestjs/throttler'
-import type { Request } from 'express'
+import type { Request, Response } from 'express'
 import { MCP_V1_SCOPES } from '@vibey/agent-policy'
 import { VibeyMcpOAuthGuard } from '../guards/vibey-mcp-oauth.guard'
 import { VibeyMcpServerService } from '../services/vibey-mcp-server.service'
@@ -51,8 +54,15 @@ export class VibeyMcpController {
 
   @Post(['', 'mcp', 'vibey-mcp'])
   @UseGuards(VibeyMcpOAuthGuard, ThrottlerGuard)
-  async handleMcp(@Body() body: Record<string, unknown>, @Req() request: RequestWithMcp) {
-    return this.server.handleRpc(body, request.vibeyMcp!.claims)
+  @HttpCode(HttpStatus.OK)
+  async handleMcp(
+    @Body() body: Record<string, unknown>,
+    @Req() request: RequestWithMcp,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.server.handleRpc(body, request.vibeyMcp!.claims)
+    if (result === null) response.status(HttpStatus.ACCEPTED)
+    return result
   }
 
   private metadata() {

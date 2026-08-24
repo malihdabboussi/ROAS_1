@@ -1417,6 +1417,19 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       limit: 'number',
       scope_override: 'boolean',
     },
+    descriptions: {
+      campaign_id: 'Return Spaces owned by this exact campaign id.',
+      general:
+        'When true, return only uncampaigned Spaces where campaign_id is null. This does not mean the UI General workspace.',
+      limit: 'Maximum number of Spaces to return.',
+      scope_override: 'Allow an explicitly authorized scope override.',
+    },
+    useWhen: [
+      'For the UI General workspace, call list_campaigns with mode="accessible", select the unique campaign with config.system_kind="general", then call list_spaces with that campaign_id.',
+    ],
+    doNotUseWhen: [
+      'Do not use general=true to find the UI General workspace; it only returns Spaces where campaign_id is null.',
+    ],
   },
   search_conversations: {
     required: ['query'],
@@ -2871,6 +2884,9 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       contact_id: 'string',
       brain_id: 'string',
       ...BRAIN_TEMPORAL_PARAM_TYPES,
+    },
+    allowedValues: {
+      memory_type: ['decision', 'insight', 'preference', 'fact', 'story', 'framework', 'event'],
     },
   },
   atlas_save_brain_context: {

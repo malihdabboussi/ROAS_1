@@ -222,7 +222,8 @@ export const MCP_V1_TOOL_CATALOG = [
     toolName: 'list_spaces',
     action: 'list_spaces',
     requiredScopes: [MCP_BASE_SCOPE, 'manage_tasks_missions'],
-    description: 'List Vibey Spaces, optionally filtered by campaign.',
+    description:
+      'List Vibey Spaces, optionally filtered by campaign. For the UI General workspace, find the accessible campaign with config.system_kind="general" and pass its campaign_id; general=true means campaign_id is null.',
     inputMode: 'action_schema',
   },
   {
