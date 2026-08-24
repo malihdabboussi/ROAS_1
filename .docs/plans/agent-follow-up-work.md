@@ -39910,3 +39910,14 @@ Evidence: `wc -l` reports `apps/agent-api/src/modules/artifacts/services/artifac
 Needed work: Split action schemas, capability sets, registries, generated action docs, instruction contracts, policy contracts, backend tool allowlists, and hosted MCP catalog entries into domain-owned modules while retaining composed exports and exhaustive drift tests.
 
 Reason not done now: Those centralized surfaces are required by the current agent-tool contract, and decomposing all action families is unrelated architecture work with broader regression risk than this scoped read action.
+## 2026-08-24 - [ARCH] Campaign detail still needs client-tab orchestration extraction
+
+Status: Open
+
+Found while: Replacing the broken client conversation card with Chats & Missions
+
+Evidence: `apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx` is 573 LOC against the 600 LOC container cap and still owns campaign data, responsive navigation, client-workspace tab routing, tab content, autosave, and team modal state.
+
+Needed work: Extract the client-workspace tab configuration, route normalization, and tab-content composition into focused modules before adding another campaign-page feature.
+
+Reason not done now: The requested fix required one client-only tab and removal of a dead route; restructuring the full campaign container would materially widen this production UI fix.

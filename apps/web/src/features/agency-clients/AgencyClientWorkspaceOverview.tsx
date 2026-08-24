@@ -11,7 +11,6 @@ import {
   Hash,
   Link2,
   ListTodo,
-  MessageSquare,
   Settings2,
 } from 'lucide-react'
 import type { AgencyClientWorkspace } from '@/lib/agency-clients'
@@ -160,52 +159,33 @@ export function AgencyClientWorkspaceOverview({
         </section>
       </div>
 
-      <div className="gap-spacing-4 grid lg:grid-cols-2">
-        <section className="surface-card rounded-spacing-3 border-border p-spacing-5 border">
-          <div className="flex items-center justify-between">
-            <h2 className="body-2 text-foreground font-semibold">Current work</h2>
-            <button type="button" onClick={onOpenTasks} className="body-3 text-primary">
-              View all
-            </button>
-          </div>
-          <div className="mt-spacing-3 gap-spacing-2 flex flex-col">
-            {openTasks.length ? (
-              openTasks.slice(0, 5).map((task) => (
-                <div
-                  key={String(task.id)}
-                  className="rounded-spacing-2 border-border px-spacing-3 py-spacing-2 flex items-center border"
-                >
-                  <span className="body-3 text-foreground min-w-0 flex-1 truncate">
-                    {String(task.title || task.task_description || 'Untitled task')}
-                  </span>
-                  <span className="body-4 text-muted-foreground capitalize">
-                    {String(task.status || task.clickup_status || 'Open')}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="body-3 text-muted-foreground">No open tasks.</p>
-            )}
-          </div>
-        </section>
-
-        <section className="surface-card rounded-spacing-3 border-border p-spacing-5 border">
-          <div className="gap-spacing-2 flex items-center">
-            <MessageSquare className="icon-sm text-muted-foreground" />
-            <h2 className="body-2 text-foreground font-semibold">Recent conversations</h2>
-          </div>
-          <p className="body-3 text-muted-foreground mt-spacing-3 line-clamp-3">
-            {client.latest_slack_message ||
-              'Client and Campaign Space conversations will appear here as they are linked.'}
-          </p>
-          <Link
-            href={`/chat?campaign=${encodeURIComponent(campaignId)}`}
-            className="button-compact button-glass-neutral mt-spacing-4"
-          >
-            Open client conversations
-          </Link>
-        </section>
-      </div>
+      <section className="surface-card rounded-spacing-3 border-border p-spacing-5 border">
+        <div className="flex items-center justify-between">
+          <h2 className="body-2 text-foreground font-semibold">Current work</h2>
+          <button type="button" onClick={onOpenTasks} className="body-3 text-primary">
+            View all
+          </button>
+        </div>
+        <div className="mt-spacing-3 gap-spacing-2 flex flex-col">
+          {openTasks.length ? (
+            openTasks.slice(0, 5).map((task) => (
+              <div
+                key={String(task.id)}
+                className="rounded-spacing-2 border-border px-spacing-3 py-spacing-2 flex items-center border"
+              >
+                <span className="body-3 text-foreground min-w-0 flex-1 truncate">
+                  {String(task.title || task.task_description || 'Untitled task')}
+                </span>
+                <span className="body-4 text-muted-foreground capitalize">
+                  {String(task.status || task.clickup_status || 'Open')}
+                </span>
+              </div>
+            ))
+          ) : (
+            <p className="body-3 text-muted-foreground">No open tasks.</p>
+          )}
+        </div>
+      </section>
     </div>
   )
 }

@@ -11,15 +11,17 @@ import {
   LayoutGrid,
   List,
   Menu,
+  MessageSquare,
   PanelsTopLeft,
   PieChart,
 } from 'lucide-react'
 import { CampaignCanvasView } from '@/components/canvas'
+import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { LucideIcon } from '@/components/ui/IconPicker'
 import { Tabs, TabsContent } from '@/components/ui/navigation/tabs'
-import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import type { CampaignPatch } from '@/features/agency-clients/AgencyCampaignEditPanel'
 import { AgencyClientCampaignsPanel } from '@/features/agency-clients/AgencyClientCampaignsPanel'
+import { AgencyClientChatsMissionsPanel } from '@/features/agency-clients/AgencyClientChatsMissionsPanel'
 import { AgencyClientMeetingsPanel } from '@/features/agency-clients/AgencyClientMeetingsPanel'
 import { AgencyClientWorkspaceOverview } from '@/features/agency-clients/AgencyClientWorkspaceOverview'
 import { updateCampaign } from '@/features/studio/services/campaign.service'
@@ -49,7 +51,7 @@ import {
   type ToggleableCampaignTabId,
 } from './_lib/campaign-nav-tabs'
 
-const MOBILE_TAB_ICONS: Partial<Record<ToggleableCampaignTabId, typeof BarChart3>> = {
+const MOBILE_TAB_ICONS: Partial<Record<string, typeof BarChart3>> = {
   overview: LayoutGrid,
   dashboard: BarChart3,
   list: List,
@@ -59,6 +61,7 @@ const MOBILE_TAB_ICONS: Partial<Record<ToggleableCampaignTabId, typeof BarChart3
   assets: FolderOpen,
   knowledge: BookOpen,
   reporting: PieChart,
+  communications: MessageSquare,
 }
 
 const CLIENT_WORKSPACE_NAV_TABS = [
@@ -67,12 +70,14 @@ const CLIENT_WORKSPACE_NAV_TABS = [
   { value: 'list', label: 'Tasks & Requests', icon: 'list' },
   { value: 'reporting', label: 'Performance', icon: 'pie-chart' },
   { value: 'calendar', label: 'Meetings', icon: 'calendar-days' },
+  { value: 'communications', label: 'Chats & Missions', icon: 'message-square' },
   { value: 'knowledge', label: 'Brain', icon: 'brain' },
 ] as const
 
 const CLIENT_WORKSPACE_TAB_IDS = new Set<string>(CLIENT_WORKSPACE_NAV_TABS.map((tab) => tab.value))
 
 function resolveTabFromSearch(viewParam: string | null, tabParam: string | null): string {
+  if (viewParam === 'communications' || tabParam === 'communications') return 'communications'
   const normalized =
     normalizeCampaignTabId(viewParam ?? '') ?? normalizeCampaignTabId(tabParam ?? '')
   return normalized ?? DEFAULT_CAMPAIGN_TAB
@@ -503,6 +508,16 @@ export default function CampaignDetailPage() {
           ) : (
             <CampaignTaskTab campaignId={id} view="calendar" />
           )}
+        </TabsContent>
+
+        <TabsContent value="communications" className="animate-tab-enter">
+          {isClientWorkspace ? (
+            <AgencyClientChatsMissionsPanel
+              campaignId={id}
+              missions={detail.dashboardMissions}
+              onMissionsChanged={() => void detail.load()}
+            />
+          ) : null}
         </TabsContent>
 
         <TabsContent value="canvas" className="animate-tab-enter flex min-h-0 flex-1">

@@ -10,6 +10,16 @@ Impact: Successfully fetched empty chats now render their empty state, and produ
 
 Files: `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.ts`, `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.test.ts`, `apps/web/src/features/studio/services/chat.service.ts`, `apps/web/src/features/studio/store/use-chat-store.ts`, `supabase/migrations/20260820020000_conversation_connections.sql`, `documentation/features/claude-chatgpt-shell.md`
 
+## [2026-08-24 14:20] - [FIX]
+
+What: Added a campaign-scoped Chats & Missions tab to Page Grader client workspaces, opened chats in the shared chat drawer and missions in the shared detail surface, and removed the overview's raw Slack-message card and retired `/chat?campaign=…` link.
+
+Why: The overview exposed raw Slack emoji shortcodes and sent Open client conversations to a route that no longer exists.
+
+Impact: Client communication and mission history now has a dedicated working surface, emoji-only titles receive a readable fallback, and the client overview no longer contains a dead navigation action.
+
+Files: `apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx`, `apps/web/src/features/agency-clients/AgencyClientChatsMissionsPanel.tsx`, `apps/web/src/features/agency-clients/AgencyClientWorkspaceOverview.tsx`, `apps/web/src/features/agency-clients/config/messages.config.ts`, focused tests, and `documentation/features/page-grader-campaign-brain-sync.md`.
+
 ## 2026-08-24 14:14 - [FIX]
 
 What: Restored the Attendees column after Host in All Meetings, made Client Workspace and Campaign Space open the shared client/campaign picker, added each client's General workspace to that picker, and added a conservative historical backfill for uniquely matched client calls.
