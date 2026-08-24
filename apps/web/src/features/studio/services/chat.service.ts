@@ -1953,6 +1953,7 @@ export async function selectConversation(conversationId: string): Promise<void> 
     emptyRevalidatedConversationIds.add(conversationId)
     if (isCurrent()) {
       useChatStore.getState().setMessages(conversationId, [])
+      useChatStore.getState().markMessagesHydrated(conversationId)
     }
     if (!isConversationUnavailableError(error)) throw error
   } finally {
@@ -1979,9 +1980,13 @@ export async function fetchMessages(
   if (options?.limit) params.set('limit', String(options.limit))
   if (options?.before) params.set('before', options.before)
   const query = params.toString()
-  return backendGet<Message[]>(
+  const messages = await backendGet<Message[]>(
     `/api/conversations/${conversationId}/messages${query ? `?${query}` : ''}`,
   )
+  // Server truth received: even an empty thread is now hydrated, so loading
+  // skeletons must stop (paged history reads don't change that fact either).
+  useChatStore.getState().markMessagesHydrated(conversationId)
+  return messages
 }
 
 export type ConversationAssetsScope = 'artifacts' | 'documents' | 'media' | 'links'

@@ -330,6 +330,8 @@ interface ChatState {
 
   // Messages
   messagesByConversation: Record<string, Message[]>
+  /** Conversations whose messages have been read from the backend at least once this session. A fetched-empty thread is NOT still "hydrating". */
+  messagesHydratedConversationIds: Record<string, true>
   isLoadingMessages: boolean
 
   // Streaming
@@ -423,6 +425,7 @@ interface ChatState {
 
   // Actions — Messages
   setMessages: (conversationId: string, messages: Message[]) => void
+  markMessagesHydrated: (conversationId: string) => void
   addMessage: (conversationId: string, message: Message) => void
   removeMessage: (conversationId: string, messageId: string) => void
   updateMessage: (conversationId: string, messageId: string, updates: Partial<Message>) => void
@@ -726,6 +729,7 @@ export const useChatStore = create<ChatState>()(
       conversations: [],
       activeConversationId: null,
       messagesByConversation: {},
+      messagesHydratedConversationIds: {},
       isLoadingMessages: false,
       streamingMessageId: null,
       streamingMessageIdsByConversation: {},
@@ -941,6 +945,18 @@ export const useChatStore = create<ChatState>()(
             [conversationId]: messages,
           },
         })),
+
+      markMessagesHydrated: (conversationId) =>
+        set((state) =>
+          state.messagesHydratedConversationIds[conversationId]
+            ? state
+            : {
+                messagesHydratedConversationIds: {
+                  ...state.messagesHydratedConversationIds,
+                  [conversationId]: true,
+                },
+              },
+        ),
 
       addMessage: (conversationId, message) =>
         set((state) => {

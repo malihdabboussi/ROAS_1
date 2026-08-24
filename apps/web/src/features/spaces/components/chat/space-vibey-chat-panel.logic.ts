@@ -380,11 +380,14 @@ export function conversationNeedsMessageHydration(
   state: {
     activeConversationId: string | null
     messagesByConversation: Record<string, { length: number } | undefined>
+    messagesHydratedConversationIds?: Record<string, true>
   },
 ): boolean {
   // An empty entry is not proof of hydration: meeting links and drawer opens
   // seed `[]` before any fetch, and trusting that left real history invisible.
-  // selectConversation background-revalidates cached entries without flicker.
+  // But once the backend has answered (hydration stamp), an empty thread is a
+  // real empty thread — without the stamp it skeletoned forever.
+  if (state.messagesHydratedConversationIds?.[conversationId]) return false
   const entry = state.messagesByConversation[conversationId]
   return !entry || entry.length === 0
 }

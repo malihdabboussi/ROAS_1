@@ -333,6 +333,23 @@ describe('space ROAS chat panel logic', () => {
     ).toBe(false)
   })
 
+  it('treats a fetched-empty conversation as hydrated so it cannot skeleton forever', () => {
+    expect(
+      conversationNeedsMessageHydration('conv-1', {
+        activeConversationId: 'conv-1',
+        messagesByConversation: { 'conv-1': [] },
+        messagesHydratedConversationIds: { 'conv-1': true },
+      }),
+    ).toBe(false)
+    expect(
+      conversationNeedsMessageHydration('conv-1', {
+        activeConversationId: 'conv-1',
+        messagesByConversation: { 'conv-1': [] },
+        messagesHydratedConversationIds: {},
+      }),
+    ).toBe(true)
+  })
+
   it('waits for a pending shell conversation to exist before resolving its agent', () => {
     const luxConversation = conversation({
       id: 'lux-conversation',
