@@ -6,6 +6,7 @@ import {
   Ellipsis,
   House,
   Inbox,
+  Layers3,
   ListChecks,
   ListTodo,
   Rocket,
@@ -43,6 +44,13 @@ export const manageRailItems: ManageRailItem[] = [
     type: 'link',
     href: '/launches',
     icon: <Rocket className="icon-md" />,
+  },
+  {
+    id: 'artifacts',
+    label: 'Artifacts',
+    type: 'link',
+    href: '/artifacts',
+    icon: <Layers3 className="icon-md" />,
   },
   {
     id: 'inbox',

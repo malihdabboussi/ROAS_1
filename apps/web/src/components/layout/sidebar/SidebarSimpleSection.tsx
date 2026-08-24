@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Ellipsis,
   Inbox,
+  Layers3,
   ListTodo,
   Rocket,
   Search,
@@ -43,6 +44,7 @@ const SIMPLE_LINKS = [
   { href: '/clients', label: 'Clients', icon: Users },
   { href: '/client-campaigns', label: 'Client Campaigns', icon: BriefcaseBusiness },
   { href: '/launches', label: 'Launches', icon: Rocket },
+  { href: '/artifacts', label: 'Artifacts', icon: Layers3 },
 ] as const
 export function SidebarSimpleSection({
   c,

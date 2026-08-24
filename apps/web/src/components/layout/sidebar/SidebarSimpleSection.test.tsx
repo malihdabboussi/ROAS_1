@@ -81,6 +81,7 @@ describe('SidebarSimpleSection', () => {
       '/client-campaigns',
     )
     expect(screen.getByRole('link', { name: 'Launches' })).toHaveAttribute('href', '/launches')
+    expect(screen.getByRole('link', { name: 'Artifacts' })).toHaveAttribute('href', '/artifacts')
     expect(screen.getByRole('link', { name: 'All Tasks' })).toHaveAttribute('href', '/all-tasks')
     expect(screen.queryByText('Favorites')).not.toBeInTheDocument()
     expect(screen.queryByText('No favorites yet')).not.toBeInTheDocument()
@@ -114,6 +115,7 @@ describe('SidebarSimpleSection', () => {
     expect(screen.getByRole('link', { name: 'Clients' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Client Campaigns' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Launches' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Artifacts' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Search' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Show favorites' })).not.toBeInTheDocument()

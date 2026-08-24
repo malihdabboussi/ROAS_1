@@ -10,6 +10,16 @@ Impact: Successfully fetched empty chats now render their empty state, and produ
 
 Files: `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.ts`, `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.test.ts`, `apps/web/src/features/studio/services/chat.service.ts`, `apps/web/src/features/studio/store/use-chat-store.ts`, `supabase/migrations/20260820020000_conversation_connections.sql`, `documentation/features/claude-chatgpt-shell.md`
 
+## [2026-08-24 11:15] - [STYLE]
+
+What: Promoted Artifacts from the More flyout to a first-level main-menu destination immediately below Launches across simple, compact, advanced, and mobile navigation variants.
+
+Why: Artifacts is a primary agency destination and should be directly accessible without opening More.
+
+Impact: Users can open All Artifacts from the main menu in one action, while More now contains only its remaining secondary destinations.
+
+Files: `apps/web/src/components/layout/sidebar/SidebarSimpleSection.tsx`, `apps/web/src/components/layout/sidebar/manage-rail-items.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqHubMenuContent.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqMoreFlyoutBody.tsx`, and focused sidebar tests.
+
 ## 2026-08-24 13:23 - [FIX]
 
 What: Named new MCP conversations from the registered OAuth client and invoked tool, persisted the client logo identity, rendered that logo or a plug fallback in Recents, and added a migration that numbers historical `MCP session` rows per client.

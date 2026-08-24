@@ -233,6 +233,7 @@ describe('SidebarHqSection', () => {
       'Clients',
       'Client Campaigns',
       'Launches',
+      'Artifacts',
       'Inbox',
       'Meetings',
       'All Tasks',

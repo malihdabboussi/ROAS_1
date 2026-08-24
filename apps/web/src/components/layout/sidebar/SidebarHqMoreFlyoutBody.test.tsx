@@ -74,6 +74,7 @@ describe('SidebarHqMoreFlyoutBody', () => {
     )
 
     expect(screen.getByRole('link', { name: 'Programs' })).toHaveAttribute('href', '/programs')
+    expect(screen.queryByRole('link', { name: 'Artifacts' })).not.toBeInTheDocument()
 
     fireEvent.mouseEnter(screen.getByRole('link', { name: 'Team' }))
     expect(screen.getByText('Previous Team menu')).toBeInTheDocument()

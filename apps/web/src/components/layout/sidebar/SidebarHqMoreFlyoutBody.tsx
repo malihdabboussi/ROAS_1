@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Brain, FolderGit2, Layers3, ListChecks, Users, Workflow } from 'lucide-react'
+import { Brain, FolderGit2, ListChecks, Users, Workflow } from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import {
@@ -219,22 +219,6 @@ export function SidebarHqMoreFlyoutBody({
         <span className="min-w-0 flex-1 truncate">Flows</span>
       </Link>
 
-      <Link
-        href="/artifacts"
-        data-hub-dock-navigate
-        onClick={() => {
-          setWorkContext({ surface: 'general' })
-          onNavigate?.()
-        }}
-        className={cn(
-          'hub-dock-flyout-row',
-          c.pathname.startsWith('/artifacts') && 'hub-dock-flyout-row-active',
-        )}
-      >
-        <Layers3 />
-        <span className="min-w-0 flex-1 truncate">Artifacts</span>
-      </Link>
-
       {subDock === 'programs' ? (
         <SidebarHqMoreProgramsFlyout
           programs={programs}
@@ -326,7 +310,9 @@ export function SidebarHqMoreFlyoutBody({
                 )}
               >
                 <FolderGit2 />
-                <span className="min-w-0 flex-1 truncate" title={project.name}>{project.name}</span>
+                <span className="min-w-0 flex-1 truncate" title={project.name}>
+                  {project.name}
+                </span>
               </Link>
             ))
           )}

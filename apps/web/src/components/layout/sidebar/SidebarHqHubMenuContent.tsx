@@ -15,6 +15,7 @@ import {
   BriefcaseBusiness,
   ChevronDown,
   Inbox,
+  Layers3,
   ListChecks,
   Rocket,
   Users,
@@ -203,6 +204,18 @@ export function SidebarHqHubMenuContent({
         />
 
         <SidebarHqHubMenuNavRow
+          href="/artifacts"
+          active={c.isActive('/artifacts')}
+          icon={<Layers3 />}
+          label="Artifacts"
+          onNavigate={() => {
+            setWorkContext({ surface: 'general' })
+            handleNavigate()
+          }}
+          onHover={() => scheduleClose()}
+        />
+
+        <SidebarHqHubMenuNavRow
           href="/team"
           active={c.pathname.startsWith('/team')}
           icon={<Users />}
@@ -259,10 +272,7 @@ export function SidebarHqHubMenuContent({
           icon={<ChevronDown className="hub-menu-more-chevron" />}
           label="More"
           active={
-            dock === 'more' ||
-            c.pathname.startsWith('/projects') ||
-            c.pathname.startsWith('/flows') ||
-            c.pathname.startsWith('/artifacts')
+            dock === 'more' || c.pathname.startsWith('/projects') || c.pathname.startsWith('/flows')
           }
           rowRef={(el) => {
             rowEls.current.more = el
@@ -286,7 +296,9 @@ export function SidebarHqHubMenuContent({
                 className="hub-menu-link-row"
               >
                 <ListChecks className="icon-md shrink-0" />
-                <span className="body-3 truncate" title={camp.name}>{camp.name}</span>
+                <span className="body-3 truncate" title={camp.name}>
+                  {camp.name}
+                </span>
               </Link>
             ))}
           </div>
