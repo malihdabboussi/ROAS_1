@@ -1,5 +1,15 @@
 # Changelog - August 25, 2026
 
+## [2026-08-25 09:00] - [STYLE]
+
+What: Moved the Client Campaigns New campaign action into the shared search and filter controls row.
+
+Why: The primary creation action was visually detached above the controls it belongs with.
+
+Impact: Search, grouping, inactive visibility, and campaign creation now sit in one responsive toolbar while the existing Pixel chat creation flow remains unchanged.
+
+Files: `apps/web/src/features/agency-clients/ClientCampaignsPage.tsx` and `apps/web/src/features/agency-clients/ClientCampaignsPage.test.tsx`.
+
 ## 2026-08-25 11:03 - [FIX]
 
 What: Made the global Client Workspace selector independently scrollable, added a fixed search field, and hid inactive, blocked, and churned clients by default using the canonical Clients list pipeline rules.

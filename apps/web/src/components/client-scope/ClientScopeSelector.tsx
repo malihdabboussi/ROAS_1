@@ -57,7 +57,7 @@ export function ClientScopeSelector() {
       </button>
       {open ? (
         <div className="z-dropdown mt-spacing-1 absolute left-0 top-full">
-          <div className="dropdown-menu-solid min-w-64 max-h-80 flex flex-col overflow-hidden">
+          <div className="dropdown-menu-solid flex max-h-80 min-w-64 flex-col overflow-hidden">
             <div className="px-spacing-2 py-spacing-1 gap-spacing-2 flex items-center">
               <span className="body-3 text-foreground flex-1 font-medium">Client workspace</span>
               {selectedClientId ? (

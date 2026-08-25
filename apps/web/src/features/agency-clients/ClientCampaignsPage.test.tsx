@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchAgencyClientCampaigns, fetchAgencyClients } from '@/lib/agency-clients'
 import { ClientCampaignsPage } from './ClientCampaignsPage'
@@ -136,7 +136,11 @@ describe('ClientCampaignsPage', () => {
 
     render(<ClientCampaignsPage />)
 
-    fireEvent.click(await screen.findByRole('button', { name: 'New campaign' }))
+    const controls = await screen.findByRole('group', { name: 'Campaign controls' })
+    expect(within(controls).getByPlaceholderText('Search campaigns or clients')).toBeInTheDocument()
+    const newCampaign = within(controls).getByRole('button', { name: 'New campaign' })
+
+    fireEvent.click(newCampaign)
     expect(setPendingComposerTextMock).toHaveBeenCalledWith(
       expect.stringContaining('Help me create a new client campaign'),
     )

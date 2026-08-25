@@ -66,9 +66,13 @@ describe('ClientScopeSelector', () => {
 
     fireEvent.click(trigger)
 
-    const clientButtons = screen.getAllByRole('button').filter((button) =>
-      ['All clients', 'Blocked Client', 'Active Client'].includes(button.textContent?.trim() ?? ''),
-    )
+    const clientButtons = screen
+      .getAllByRole('button')
+      .filter((button) =>
+        ['All clients', 'Blocked Client', 'Active Client'].includes(
+          button.textContent?.trim() ?? '',
+        ),
+      )
     expect(clientButtons.map((button) => button.textContent?.trim())).toEqual([
       'All clients',
       'Blocked Client',

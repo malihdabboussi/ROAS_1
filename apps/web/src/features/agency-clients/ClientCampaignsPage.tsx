@@ -137,16 +137,11 @@ export function ClientCampaignsPage() {
           </Link>
         }
       />
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={openCampaignCreationChat}
-          className="button-primary gap-spacing-2"
-        >
-          <Plus className="icon-sm" /> New campaign
-        </button>
-      </div>
-      <div className="surface-card gap-spacing-2 rounded-spacing-3 border-border p-spacing-3 flex flex-wrap items-center border">
+      <div
+        role="group"
+        aria-label="Campaign controls"
+        className="surface-card gap-spacing-2 rounded-spacing-3 border-border p-spacing-3 flex flex-wrap items-center border"
+      >
         <label className="relative min-w-64 flex-1">
           <Search className="icon-sm text-muted-foreground left-spacing-3 absolute top-1/2 -translate-y-1/2" />
           <input
@@ -181,6 +176,13 @@ export function ClientCampaignsPage() {
           )}
         >
           {AGENCY_CLIENT_MESSAGES.SHOW_INACTIVE}
+        </button>
+        <button
+          type="button"
+          onClick={openCampaignCreationChat}
+          className="button-primary gap-spacing-2"
+        >
+          <Plus className="icon-sm" /> New campaign
         </button>
       </div>
       {loading ? <ListSkeleton rows={8} label={AGENCY_CLIENT_MESSAGES.LOADING_CAMPAIGNS} /> : null}
@@ -380,9 +382,7 @@ export function ClientCampaignsPage() {
     </main>
   )
 }
-function readable(value: string) {
-  return value.replace(/[_-]/g, ' ').toLowerCase()
-}
+const readable = (value: string) => value.replace(/[_-]/g, ' ').toLowerCase()
 
 function campaignStatusOptions(campaign: AgencyClientCampaign) {
   return Array.from(
