@@ -28,7 +28,7 @@ While a selected client is resolving, the provider fails closed and does not ren
 - 2026-08-24: Client scope uses the external Page Grader client id as its URL identity while resolving internal ROAS campaign and Space ids for filtering.
 - 2026-08-24: Recent artifacts remain conversation-owned. Switching to a client that excludes the active conversation closes that conversation; the existing shell artifact sync preserves only explicitly pinned artifacts.
 - 2026-08-24: Client changes fail closed during mapping resolution so delayed or invalid selections cannot expose another client's data.
-- 2026-08-24: Recents cache entries and live-store merges are partitioned by selected client campaign to prevent cross-client flashes during refresh.
+- 2026-08-24: Recents cache entries are partitioned by selected client. Both fetched and live-store conversations are matched against direct client ids, the Client Workspace campaign, and every mapped Campaign Space; unattributed or mismatched chats fail closed.
 - 2026-08-24: Client Campaigns and Launches clear previous-scope rows before loading a newly selected client.
 
 Last Modified: 2026-08-24

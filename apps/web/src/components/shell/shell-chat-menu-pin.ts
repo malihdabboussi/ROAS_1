@@ -1,5 +1,6 @@
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { clientScopeMatchesRecord, type ResolvedClientScope } from '@/lib/client-scope'
 import {
   setConversationPinned,
   withConversationPinned,
@@ -10,12 +11,12 @@ export function mergeConversationsWithStore(
   prev: Conversation[],
   storeConversations: Conversation[],
   historyAgentKey: string | null,
-  campaignId?: string | null,
+  clientScope?: ResolvedClientScope | null,
 ): Conversation[] {
   const scopedStoreRows = storeConversations.filter(
     (row) =>
       (historyAgentKey === null || row.agent_id === historyAgentKey) &&
-      (!campaignId || row.campaign_id === campaignId),
+      (!clientScope || clientScopeMatchesRecord(clientScope, row)),
   )
   if (scopedStoreRows.length === 0) return prev
   const previousIds = new Set(prev.map((row) => row.id))

@@ -9,7 +9,7 @@ import { useGlobalChatStore } from '@/components/global-chat/store/use-global-ch
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
-import { clientScopeHref, useClientScope } from '@/lib/client-scope'
+import { clientScopeHref, clientScopeMatchesRecord, useClientScope } from '@/lib/client-scope'
 import {
   assignConversationCampaign,
   DEFAULT_CHAT_HISTORY_FILTERS,
@@ -95,14 +95,9 @@ export function ShellChatMenu({
   useEffect(() => {
     if (storeConversations.length === 0) return
     setConversations((prev) =>
-      mergeConversationsWithStore(
-        prev,
-        storeConversations,
-        historyAgentKey,
-        clientScope?.campaignId,
-      ),
+      mergeConversationsWithStore(prev, storeConversations, historyAgentKey, clientScope),
     )
-  }, [clientScope?.campaignId, historyAgentKey, storeConversations])
+  }, [clientScope, historyAgentKey, storeConversations])
   const chatAgents = useMemo(
     () => roster.filter((entry) => entry.kind === 'agent' && Boolean(entry.agent_key?.trim())),
     [roster],
@@ -151,11 +146,12 @@ export function ShellChatMenu({
         () =>
           fetchConversations(undefined, historyAgentKey, undefined, {
             ...(simpleSidebar ? { feedScope: 'all' as const } : {}),
-            ...(clientScope?.campaignId ? { campaign_id: clientScope.campaignId } : {}),
           }),
         { ttlMs: 30_000 },
       )
-      setConversations(rows)
+      setConversations(
+        clientScope ? rows.filter((row) => clientScopeMatchesRecord(clientScope, row)) : rows,
+      )
     } catch {
       if (!peeked) setConversations([])
     } finally {
@@ -167,8 +163,14 @@ export function ShellChatMenu({
     void reloadConversations()
   }, [reloadConversations])
   const visibleConversations = useMemo(
-    () => filterConversationsForHistory(conversations, filters),
-    [conversations, filters],
+    () =>
+      filterConversationsForHistory(
+        clientScope
+          ? conversations.filter((row) => clientScopeMatchesRecord(clientScope, row))
+          : conversations,
+        filters,
+      ),
+    [clientScope, conversations, filters],
   )
   const openConversation = useCallback(
     (id: string) => {

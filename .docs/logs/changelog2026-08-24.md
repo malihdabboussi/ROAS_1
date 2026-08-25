@@ -117,3 +117,13 @@ Why: Although stale requests were canceled correctly, the previous client's rend
 Impact: Fast client switching no longer exposes stale campaign or launch rows during loading.
 
 Files: `apps/web/src/features/agency-clients/ClientCampaignsPage.tsx`, `apps/web/src/features/agency-clients/ClientCampaignsPage.test.tsx`, `apps/web/src/features/agency-clients/LaunchesPage.tsx`, `apps/web/src/features/agency-clients/LaunchesPage.test.tsx`, `documentation/utilities/client-scope.md`
+
+## 2026-08-24 22:07 - [FIX]
+
+What: Filtered fetched and live-store Recents against the complete selected-client association contract instead of relying on one optional Client Workspace campaign id.
+
+Why: A client without that single campaign mapping caused the conversation request to remain unscoped, exposing unrelated chats even though the global client selector was active.
+
+Impact: Recents now fails closed to conversations associated through the direct client id, Client Workspace campaign, or any mapped Campaign Space.
+
+Files: `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/components/shell/shell-chat-menu-pin.ts`, `apps/web/src/components/shell/shell-chat-menu-pin.test.ts`, `apps/web/src/lib/client-scope/index.ts`, `documentation/utilities/client-scope.md`

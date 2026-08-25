@@ -46,6 +46,13 @@ function conversation(overrides: Partial<Conversation> & { id: string }): Conver
 }
 
 describe('shell chat menu pin', () => {
+  const clientScope = {
+    clientId: 'client-1',
+    clientName: 'Acme',
+    campaignId: 'campaign-1',
+    spaceIds: ['space-1', 'space-2'],
+  }
+
   it('keeps local pin metadata when the live store row omits it', () => {
     const merged = mergeStoreConversationRow(
       conversation({ id: 'c1', metadata: { source: 'slack', pinned: true } }),
@@ -74,18 +81,20 @@ describe('shell chat menu pin', () => {
     expect(next).toBe(prev)
   })
 
-  it('does not merge another client campaign from the live store', () => {
+  it('merges only conversations associated with the selected client', () => {
     const current = conversation({ id: 'c1', campaign_id: 'campaign-1' })
     const prev = [current]
     const next = mergeConversationsWithStore(
       prev,
-      [conversation({ id: 'c2', campaign_id: 'campaign-2' })],
+      [
+        conversation({ id: 'c2', campaign_id: 'campaign-2' }),
+        conversation({ id: 'c3', campaign_id: null, metadata: { space_id: 'space-2' } }),
+      ],
       null,
-      'campaign-1',
+      clientScope,
     )
 
-    expect(next).toBe(prev)
-    expect(next).toEqual([current])
+    expect(next.map((row) => row.id)).toEqual(['c3', 'c1'])
   })
 
   it('pins immediately and keeps the flag from the persisted conversation', async () => {
