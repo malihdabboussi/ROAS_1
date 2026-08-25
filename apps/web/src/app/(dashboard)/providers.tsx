@@ -16,6 +16,7 @@ import { cachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { CampaignModeProvider } from '@/features/studio/contexts/CampaignModeContext'
 import { dispatchOpenStudioSearch } from '@/features/studio/utils/open-studio-search-result'
+import { ClientScopeProvider } from '@/lib/client-scope'
 import { installFreezeDiagnostics, reportFreezeEvent } from '@/lib/debug/freeze-diagnostics'
 import { broadcastIntegrationOAuthEvent } from '@/lib/integrations/composio-oauth'
 import { useOrgStore } from '@/lib/org'
@@ -225,27 +226,29 @@ export function DashboardProviders({
 }) {
   return (
     <CampaignModeProvider initialSidebarMode={initialSidebarMode}>
-      <TransferDialogProvider>
-        <ShellStoreHydrator />
-        {children}
-        <ImpersonationBanner />
-        <Suspense fallback={null}>
-          <OrgBootstrap />
-          <FreezeDiagnosticsInstaller />
-        </Suspense>
-        <ActiveOrgLinkContextPropagator />
-        <OrgOnboardingGuard />
-        <CreateOrgDialog />
-        <StudioSearchHotkey />
-        <AddAgentBrainModals />
-        <TrainBrainModalHost />
-        <BrainImagePickerHost />
-        <Suspense fallback={null}>
-          <IntegrationReturnHandler />
-          <PurchaseSuccessHandler />
-          <PromoRedemptionHandler />
-        </Suspense>
-      </TransferDialogProvider>
+      <ClientScopeProvider>
+        <TransferDialogProvider>
+          <ShellStoreHydrator />
+          {children}
+          <ImpersonationBanner />
+          <Suspense fallback={null}>
+            <OrgBootstrap />
+            <FreezeDiagnosticsInstaller />
+          </Suspense>
+          <ActiveOrgLinkContextPropagator />
+          <OrgOnboardingGuard />
+          <CreateOrgDialog />
+          <StudioSearchHotkey />
+          <AddAgentBrainModals />
+          <TrainBrainModalHost />
+          <BrainImagePickerHost />
+          <Suspense fallback={null}>
+            <IntegrationReturnHandler />
+            <PurchaseSuccessHandler />
+            <PromoRedemptionHandler />
+          </Suspense>
+        </TransferDialogProvider>
+      </ClientScopeProvider>
     </CampaignModeProvider>
   )
 }

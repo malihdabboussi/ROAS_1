@@ -7,9 +7,10 @@
 | `@/lib/spaces/all-meetings-list-columns.ts` | Ensures All Meetings Client Workspace, Campaign Space, Host, Attendees, and Call status columns | `documentation/utilities/all-meetings-list-columns.md`  |
 | `architecture behavior lock`                | Route inventory, HTTP characterization, and parity diff tooling                                 | `documentation/utilities/architecture-behavior-lock.md` |
 | `asset_ref`                                 | Normalized file handle for Vibey, storage, and external-provider assets                         | `documentation/utilities/asset-ref.md`                  |
-| `auth/access-routing.ts`                    | Safe post-auth app destinations and authenticated access decisions                              | `documentation/utilities/auth-access-routing.md`        |
+| `auth/access-routing.ts`                    | Safe post-auth app destinations and authenticated access decisions                              | `documentation/utilities/auth/access-routing.md`        |
 | `canva-design-import`                       | Shared native-file handoff into the Canva editor                                                | `documentation/utilities/canva-design-import.md`        |
 | `chat-working-status`                       | Cursor-style rotating chat working phrases while an agent turn is live                          | `documentation/utilities/chat-working-status.md`        |
+| `client-scope`                              | Global Client Workspace and Campaign Space isolation                                            | `documentation/utilities/client-scope.md`               |
 | `floating-menu-anchor.ts`                   | Shared fixed portal positioning and style helpers for frontend menus                            | `documentation/utilities/floating-menu-anchor.md`       |
 | `global-artifacts-api.ts`                   | Account-wide artifact aggregation and shared viewer normalization                               | `documentation/utilities/global-artifacts-api.md`       |
 | `open-in-new-tab.ts`                        | Internal new-tab navigation with active org URL context                                         | `documentation/utilities/open-in-new-tab.md`            |
@@ -23,11 +24,12 @@
 
 ## Recently Added
 
+- 2026-08-24: `client-scope` global Client Workspace and Campaign Space isolation
 - 2026-08-24: `all-meetings-list-columns` restores Attendees after Host while preserving custom column order
 - 2026-08-20: `all-meetings-list-columns` All Meetings Client Workspace, Campaign Space, Host, Call status
 - 2026-08-19: `all-meetings-list-columns` All Meetings Campaign + Space column ensure
 - 2026-08-17: `chat-working-status` rotating live-chat working phrases
-- 2026-08-13: `quick-missions-events` shared chat-to-Quick-Missions event contract
+- 2026-08-13: `quick-missions-events` shared chat-to-Quick-Missions browser event contract
 - 2026-07-25: `shared work status` cross-feature status labels, colors, and Space lookup
 - 2026-07-18: `presentation-slide-count` for HTML-bundle presentation metadata
 - 2026-07-17: `global-artifacts-api.ts` complete account-wide artifact aggregation and source filters

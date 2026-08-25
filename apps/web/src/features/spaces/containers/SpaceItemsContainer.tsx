@@ -75,6 +75,7 @@ import { usesPaidAdsInlineDetail } from '../lib/paid-ads-display-mode'
 import { resolveTaskCapableViewId } from '../lib/resolve-task-capable-view'
 import { updateSpace } from '../services/spaces.service'
 import { useSpacesStore } from '../store/use-spaces-store'
+import type { SpaceItem } from '../types'
 import {
   DEFAULT_MEDIA_VIEW_CONFIG,
   DEFAULT_SOCIAL_RESEARCH_CONFIG,
@@ -120,10 +121,15 @@ export type SpaceItemsContainerEmbed = {
   overrideView?: { id: string; content: ReactNode }
   /** Surface-default pins; applies only until any view carries an explicit `pinned_to_start`. */
   defaultPinnedViewIds?: string[]
+  itemFilter?: (item: SpaceItem) => boolean
 }
 
 export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbed } = {}) {
-  const items = useSpacesStore((s) => s.items)
+  const storeItems = useSpacesStore((s) => s.items)
+  const items = useMemo(
+    () => (embed?.itemFilter ? storeItems.filter(embed.itemFilter) : storeItems),
+    [embed?.itemFilter, storeItems],
+  )
   const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
   const itemsLoadedForSpaceId = useSpacesStore((s) => s.itemsLoadedForSpaceId)
   const spaces = useSpacesStore((s) => s.spaces)

@@ -9,6 +9,7 @@ import { useGlobalChatStore } from '@/components/global-chat/store/use-global-ch
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { clientScopeHref, useClientScope } from '@/lib/client-scope'
 import {
   assignConversationCampaign,
   DEFAULT_CHAT_HISTORY_FILTERS,
@@ -62,6 +63,7 @@ export function ShellChatMenu({
   const activeConversationId = useChatStore((s) => s.activeConversationId)
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const activeOrgName = useOrgStore((s) => s.getActiveOrg()?.organizations.name ?? 'Workspace')
+  const { scope: clientScope } = useClientScope()
   const isOrgContext = Boolean(activeOrgId)
   const [filters, setFilters] = useState<ChatHistoryFilterState>(DEFAULT_CHAT_HISTORY_FILTERS)
   const [historyAgentKey, setHistoryAgentKey] = useState<string | null>(() =>
@@ -71,7 +73,13 @@ export function ShellChatMenu({
   const [filterMenuOpen, setFilterMenuOpen] = useState(false)
   const [shareConversation, setShareConversation] = useState<Conversation | null>(null)
   const { campaignNameById, clientCampaignIds } = useChatHistoryGroupLabels(filters.groupBy)
-  const initialConversations = peekConversationCache(simpleSidebar, historyAgentKey, activeOrgId)
+  const conversationCacheArgs = [
+    simpleSidebar,
+    historyAgentKey,
+    activeOrgId,
+    clientScope?.clientId,
+  ] as const
+  const initialConversations = peekConversationCache(...conversationCacheArgs)
   const [conversations, setConversations] = useState<Conversation[]>(
     () => initialConversations ?? [],
   )
@@ -87,9 +95,14 @@ export function ShellChatMenu({
   useEffect(() => {
     if (storeConversations.length === 0) return
     setConversations((prev) =>
-      mergeConversationsWithStore(prev, storeConversations, historyAgentKey),
+      mergeConversationsWithStore(
+        prev,
+        storeConversations,
+        historyAgentKey,
+        clientScope?.campaignId,
+      ),
     )
-  }, [historyAgentKey, storeConversations])
+  }, [clientScope?.campaignId, historyAgentKey, storeConversations])
   const chatAgents = useMemo(
     () => roster.filter((entry) => entry.kind === 'agent' && Boolean(entry.agent_key?.trim())),
     [roster],
@@ -123,24 +136,23 @@ export function ShellChatMenu({
     (agent) => agent.agent_key?.trim() === historyAgentKey,
   )
   const reloadConversations = useCallback(async () => {
-    const cacheKey = conversationCacheKey(simpleSidebar, historyAgentKey, activeOrgId)
-    const peeked = peekConversationCache(simpleSidebar, historyAgentKey, activeOrgId)
+    const cacheKey = conversationCacheKey(...conversationCacheArgs)
+    const peeked = peekConversationCache(...conversationCacheArgs)
     if (peeked) {
       setConversations(peeked)
       setLoading(false)
     } else {
+      setConversations([])
       setLoading(true)
     }
     try {
       const rows = await cachedFetch(
         cacheKey,
         () =>
-          fetchConversations(
-            undefined,
-            historyAgentKey,
-            undefined,
-            simpleSidebar ? { feedScope: 'all' } : undefined,
-          ),
+          fetchConversations(undefined, historyAgentKey, undefined, {
+            ...(simpleSidebar ? { feedScope: 'all' as const } : {}),
+            ...(clientScope?.campaignId ? { campaign_id: clientScope.campaignId } : {}),
+          }),
         { ttlMs: 30_000 },
       )
       setConversations(rows)
@@ -149,7 +161,7 @@ export function ShellChatMenu({
     } finally {
       setLoading(false)
     }
-  }, [activeOrgId, historyAgentKey, simpleSidebar])
+  }, [activeOrgId, clientScope?.campaignId, clientScope?.clientId, historyAgentKey, simpleSidebar])
 
   useEffect(() => {
     void reloadConversations()
@@ -178,11 +190,12 @@ export function ShellChatMenu({
       } else {
         setActiveConversationId(id)
       }
-      if (plan.href) router.push(plan.href)
+      if (plan.href) router.push(clientScopeHref(plan.href, clientScope?.clientId ?? null))
       onOpenChat?.()
     },
     [
       conversations,
+      clientScope?.clientId,
       clearMeetingContext,
       meetingContext,
       onOpenChat,
@@ -199,17 +212,18 @@ export function ShellChatMenu({
     if (meetingContext) clearMeetingContext()
     setActiveConversationId(null)
     if (simpleSidebar) {
-      router.push('/home')
+      router.push(clientScopeHref('/home', clientScope?.clientId ?? null))
       onOpenChat?.()
       return
     }
     if (isShellHomeRoute(pathname) && (searchParams.get('conv') || searchParams.get('chat'))) {
-      router.push('/home')
+      router.push(clientScopeHref('/home', clientScope?.clientId ?? null))
     }
     openFreshChatDrawer()
     onOpenChat?.()
   }, [
     onOpenChat,
+    clientScope?.clientId,
     clearMeetingContext,
     meetingContext,
     openFreshChatDrawer,
@@ -318,7 +332,11 @@ export function ShellChatMenu({
             openConversation(created.id)
           }}
           onCopyConversationLink={(conversationId) => {
-            const url = `${window.location.origin}/home?conv=${encodeURIComponent(conversationId)}`
+            const href = clientScopeHref(
+              `/home?conv=${encodeURIComponent(conversationId)}`,
+              clientScope?.clientId ?? null,
+            )
+            const url = `${window.location.origin}${href}`
             void navigator.clipboard.writeText(url)
             toast.success('Link copied')
           }}
@@ -327,7 +345,12 @@ export function ShellChatMenu({
             toast.success('Conversation ID copied')
           }}
           onOpenConversationInNewTab={(conversationId) => {
-            openInNewTab(`/home?conv=${encodeURIComponent(conversationId)}`)
+            openInNewTab(
+              clientScopeHref(
+                `/home?conv=${encodeURIComponent(conversationId)}`,
+                clientScope?.clientId ?? null,
+              ),
+            )
           }}
           onShareConversation={setShareConversation}
           onBack={() => undefined}

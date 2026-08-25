@@ -8,6 +8,11 @@ import { InboxListRow } from '@/components/notifications/InboxListRow'
 import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { SettingsSelect } from '@/components/ui/forms/SettingsSelect'
 import { Tooltip } from '@/components/ui/tooltip'
+import {
+  clientScopeMatchesActionUrl,
+  clientScopeMatchesRecord,
+  useClientScope,
+} from '@/lib/client-scope'
 import { fetchMissionById } from '@/lib/missions'
 import {
   INBOX_MESSAGES,
@@ -44,6 +49,7 @@ export function InboxFeed({
 }) {
   const router = useRouter()
   const inbox = useInboxTriage(initialView)
+  const { scope: clientScope } = useClientScope()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [sourceStatus, setSourceStatus] = useState<string | null>(null)
@@ -58,8 +64,15 @@ export function InboxFeed({
 
   const visibleNotifications = useMemo(() => {
     const query = search.trim().toLocaleLowerCase()
-    if (!query) return inbox.notifications
-    return inbox.notifications.filter((notification) => {
+    const scopedNotifications = clientScope
+      ? inbox.notifications.filter(
+          (notification) =>
+            clientScopeMatchesRecord(clientScope, notification) ||
+            clientScopeMatchesActionUrl(clientScope, notification.action_url),
+        )
+      : inbox.notifications
+    if (!query) return scopedNotifications
+    return scopedNotifications.filter((notification) => {
       const haystack = [
         notification.title,
         notification.body ?? '',
@@ -69,17 +82,40 @@ export function InboxFeed({
         .toLocaleLowerCase()
       return haystack.includes(query)
     })
-  }, [inbox.notifications, search])
+  }, [clientScope, inbox.notifications, search])
 
   const selectedNotification =
-    inbox.notifications.find((notification) => notification.id === selectedId) ?? null
+    visibleNotifications.find((notification) => notification.id === selectedId) ?? null
 
   useEffect(() => {
     if (!selectedId) return
-    if (!inbox.notifications.some((notification) => notification.id === selectedId)) {
+    if (!visibleNotifications.some((notification) => notification.id === selectedId)) {
       setSelectedId(null)
     }
-  }, [inbox.notifications, selectedId])
+  }, [selectedId, visibleNotifications])
+
+  const unreadVisibleNotifications = visibleNotifications.filter(
+    (notification) => !notification.read_at,
+  )
+
+  const markVisibleRead = () => {
+    if (!clientScope) {
+      void inbox.markAllRead()
+      return
+    }
+    void Promise.all(
+      unreadVisibleNotifications.map((notification) => inbox.toggleRead(notification)),
+    )
+  }
+
+  const clearVisible = () => {
+    setSelectedId(null)
+    if (!clientScope) {
+      void inbox.clearCurrentView()
+      return
+    }
+    void Promise.all(visibleNotifications.map((notification) => inbox.clear(notification)))
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -131,29 +167,28 @@ export function InboxFeed({
         )}
 
         <div className="gap-spacing-2 ml-auto flex items-center">
-          {inbox.counts.primary + inbox.counts.system + inbox.counts.other + inbox.counts.later >
-          0 ? (
+          {clientScope ? (
+            unreadVisibleNotifications.length > 0
+          ) : inbox.counts.primary + inbox.counts.system + inbox.counts.other + inbox.counts.later >
+            0 ? (
             <Tooltip label={INBOX_MESSAGES.ACTIONS.readAll} side="bottom">
               <button
                 type="button"
                 className="btn-icon-glass text-muted-foreground hover:text-foreground"
                 aria-label={INBOX_MESSAGES.ACTIONS.readAll}
-                onClick={() => void inbox.markAllRead()}
+                onClick={markVisibleRead}
               >
                 <CheckCheck className="icon-sm" />
               </button>
             </Tooltip>
           ) : null}
-          {inbox.view !== 'cleared' && inbox.view !== 'all' && inbox.notifications.length > 0 ? (
+          {inbox.view !== 'cleared' && inbox.view !== 'all' && visibleNotifications.length > 0 ? (
             <Tooltip label={INBOX_MESSAGES.ACTIONS.clearView} side="bottom">
               <button
                 type="button"
                 className="btn-icon-glass text-muted-foreground hover:text-foreground"
                 aria-label={INBOX_MESSAGES.ACTIONS.clearView}
-                onClick={() => {
-                  setSelectedId(null)
-                  void inbox.clearCurrentView()
-                }}
+                onClick={clearVisible}
               >
                 <Archive className="icon-sm" />
               </button>
@@ -195,7 +230,7 @@ export function InboxFeed({
               }`}
             >
               {option.label}
-              {inbox.counts[option.id] > 0 ? (
+              {!clientScope && inbox.counts[option.id] > 0 ? (
                 <span className="typo-caption tabular-nums">{inbox.counts[option.id]}</span>
               ) : null}
             </button>

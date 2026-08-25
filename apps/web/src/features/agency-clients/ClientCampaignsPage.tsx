@@ -16,6 +16,7 @@ import {
   type PipelineClientLike,
 } from '@/lib/agency-clients'
 import { useChatStore } from '@/lib/chat/studio-chat-runtime-adapter'
+import { useClientScope } from '@/lib/client-scope'
 import { cn } from '@/lib/utils/cn'
 import { formatAgencyDate } from './agency-client-format'
 import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
@@ -25,6 +26,7 @@ type ViewMode = 'all' | 'client'
 
 export function ClientCampaignsPage() {
   const router = useRouter()
+  const { selectedClientId } = useClientScope()
   const [campaigns, setCampaigns] = useState<AgencyClientCampaign[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -36,10 +38,13 @@ export function ClientCampaignsPage() {
 
   useEffect(() => {
     let cancelled = false
+    setCampaigns([])
+    setLoading(true)
+    setError(null)
     const load = async () => {
       try {
         const [response, clients] = await Promise.all([
-          fetchAgencyClientCampaigns(undefined, false),
+          fetchAgencyClientCampaigns(selectedClientId ?? undefined, false),
           fetchAgencyClients('', false).catch(() => ({ clients: [] as PipelineClientLike[] })),
         ])
         if (cancelled) return
@@ -49,7 +54,7 @@ export function ClientCampaignsPage() {
 
         // Show the Page Grader campaign inventory first, then refresh Space links as
         // the two-way ROAS mapping pass finishes.
-        void fetchAgencyClientCampaigns(undefined, true)
+        void fetchAgencyClientCampaigns(selectedClientId ?? undefined, true)
           .then((synced) => {
             if (!cancelled && synced?.campaigns) setCampaigns(synced.campaigns)
           })
@@ -66,7 +71,7 @@ export function ClientCampaignsPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [selectedClientId])
 
   const catalogById = useMemo(() => {
     const map = new Map<string, PipelineClientLike>()
@@ -375,7 +380,6 @@ export function ClientCampaignsPage() {
     </main>
   )
 }
-
 function readable(value: string) {
   return value.replace(/[_-]/g, ' ').toLowerCase()
 }

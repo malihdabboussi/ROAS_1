@@ -17,6 +17,7 @@ import {
   SquarePen,
   Users,
 } from 'lucide-react'
+import { ClientScopeSelector } from '@/components/client-scope'
 import { ConversationHubSectionHeader } from '@/components/conversations/SpaceConversationSections'
 import { AvatarDropdown } from '@/components/layout/AvatarDropdown'
 import { useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
@@ -24,6 +25,7 @@ import { useShellStore } from '@/components/shell/use-shell-store'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
 import { dispatchOpenStudioSearch } from '@/features/studio/utils/open-studio-search-result'
+import { clientScopeHref, useClientScope } from '@/lib/client-scope'
 import {
   invalidateProgramsListCache,
   loadProgramsCached,
@@ -61,6 +63,7 @@ export function SidebarSimpleSection({
   const showScreenOnly = useShellStore((state) => state.showScreenOnly)
   const searchParams = useSearchParams()
   const activeOrgId = useOrgStore((state) => state.activeOrgId)
+  const { selectedClientId } = useClientScope()
   const spaceUserState = useSpaceUserState()
   const [programs, setPrograms] = useState<Program[]>([])
   const [favoritesOpen, setFavoritesOpen] = useState(true)
@@ -137,7 +140,7 @@ export function SidebarSimpleSection({
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={clientScopeHref(item.href, selectedClientId)}
               onClick={showScreenOnly}
               className={cn(
                 'hub-menu-link-row !py-spacing-1',
@@ -199,6 +202,7 @@ export function SidebarSimpleSection({
       <div className="hub-sidebar-logo-header hub-sidebar-logo-header-start gap-spacing-1">
         <SidebarHqHubLogoButton expanded wordmark />
         <div className="gap-spacing-1 flex items-center">
+          <ClientScopeSelector />
           <button
             type="button"
             className="btn-icon-bare hover:bg-hover-subtle"
@@ -298,7 +302,7 @@ export function SidebarSimpleSection({
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={clientScopeHref(item.href, selectedClientId)}
                 onClick={showScreenOnly}
                 className={cn(
                   'hub-menu-link-row justify-center',

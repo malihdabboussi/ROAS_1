@@ -39921,3 +39921,15 @@ Evidence: `apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx` is 573 LOC agai
 Needed work: Extract the client-workspace tab configuration, route normalization, and tab-content composition into focused modules before adding another campaign-page feature.
 
 Reason not done now: The requested fix required one client-only tab and removal of a dead route; restructuring the full campaign container would materially widen this production UI fix.
+
+## 2026-08-24 - [ARCH] Client scope touches oversized Studio and Spaces containers
+
+Status: Open
+
+Found while: Adding global Client Workspace scope to new-chat context and Meetings.
+
+Evidence: `apps/web/src/features/studio/components/ChatInterface.tsx` is 1,086 LOC and `apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx` is 1,487 LOC after the scoped additions. `apps/web/src/components/shell/ShellChatMenu.tsx` is 390 LOC and is near the 400-line component limit.
+
+Needed work: Continue decomposing chat campaign-context orchestration, extract the Space embed/list projection boundary, and extract Recents data loading before adding unrelated behavior to these files.
+
+Reason not done now: The requested global scope must integrate at the existing ownership points; decomposing these broad, pre-existing surfaces is a separate behavior-neutral refactor with a larger regression area.

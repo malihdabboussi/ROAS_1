@@ -16,6 +16,7 @@ export function AllTasksScopeFilters({
   onScopeChange,
   onProgramChange,
   onCampaignChange,
+  campaignLocked = false,
 }: {
   scope: TaskRollupView
   programId: string
@@ -25,6 +26,7 @@ export function AllTasksScopeFilters({
   onScopeChange: (scope: TaskRollupView) => void
   onProgramChange: (programId: string) => void
   onCampaignChange: (campaignId: string) => void
+  campaignLocked?: boolean
 }) {
   return (
     <div className="gap-spacing-2 flex flex-wrap items-center">
@@ -68,6 +70,7 @@ export function AllTasksScopeFilters({
           ...campaigns.map((campaign) => ({ value: campaign.id, label: campaign.name })),
         ]}
         onChange={onCampaignChange}
+        disabled={campaignLocked}
         ariaLabel="Filter by campaign"
         wrapperClassName="relative w-spacing-44"
         triggerClassName="input-glass rounded-spacing-2 gap-spacing-2 h-spacing-9 px-spacing-3 flex w-full items-center justify-between"

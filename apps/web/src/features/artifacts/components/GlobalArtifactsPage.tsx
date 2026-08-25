@@ -27,6 +27,7 @@ import {
   type GlobalArtifactItem,
 } from '@/lib/artifacts/global-artifacts-api'
 import { openArtifactInShell } from '@/lib/artifacts/shell-artifact-viewer'
+import { clientScopeMatches, useClientScope } from '@/lib/client-scope'
 import { cn } from '@/lib/utils/cn'
 import { ARTIFACT_LIBRARY_ERRORS } from '../config/artifact-library-errors.config'
 import {
@@ -78,6 +79,7 @@ export function GlobalArtifactsPage({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
+  const { scope: clientScope } = useClientScope()
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 220)
@@ -106,16 +108,24 @@ export function GlobalArtifactsPage({
   }, [debouncedQuery, reloadKey])
 
   const visibleItems = useMemo(() => {
+    const scopedItems = clientScope
+      ? items.filter((item) =>
+          clientScopeMatches(clientScope, {
+            campaignId: item.viewer.campaignId,
+            spaceId: item.viewer.spaceId,
+          }),
+        )
+      : items
     const sourceItems =
       sourceFilter === 'all'
-        ? items
+        ? scopedItems
         : sourceFilter === 'uploaded'
-          ? items.filter((item) => item.sourceKind === 'uploaded')
-          : items.filter((item) => item.sourceKind !== 'uploaded')
+          ? scopedItems.filter((item) => item.sourceKind === 'uploaded')
+          : scopedItems.filter((item) => item.sourceKind !== 'uploaded')
     const categoryItems =
       filter === 'all' ? sourceItems : sourceItems.filter((item) => item.category === filter)
     return categoryItems
-  }, [filter, items, sourceFilter])
+  }, [clientScope, filter, items, sourceFilter])
 
   const emptyMessage = debouncedQuery
     ? ARTIFACT_LIBRARY_MESSAGES.emptySearch

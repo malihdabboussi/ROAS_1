@@ -12,6 +12,7 @@ import {
   visiblePipelineClients,
   type AgencyClient,
 } from '@/lib/agency-clients'
+import { useClientScope } from '@/lib/client-scope'
 import { cn } from '@/lib/utils/cn'
 import { AgencyClientsTable } from './AgencyClientsTable'
 import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
@@ -20,6 +21,7 @@ import { AGENCY_CLIENT_MESSAGES } from './config/messages.config'
 type GroupMode = 'pipeline' | 'manager'
 
 export function AgencyClientsPage() {
+  const { selectedClientId } = useClientScope()
   const [clients, setClients] = useState<AgencyClient[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -58,11 +60,14 @@ export function AgencyClientsPage() {
   }, [])
 
   const groups = useMemo(() => {
-    const visible = visiblePipelineClients(clients, { query, includeHidden: showInactive })
+    const scopedClients = selectedClientId
+      ? clients.filter((client) => client.id === selectedClientId)
+      : clients
+    const visible = visiblePipelineClients(scopedClients, { query, includeHidden: showInactive })
     return groupMode === 'manager'
       ? groupClientsByManager(visible)
       : groupClientsByPipeline(visible)
-  }, [clients, groupMode, query, showInactive])
+  }, [clients, groupMode, query, selectedClientId, showInactive])
 
   const updateClientStatus = async (client: AgencyClient, status: string) => {
     await updateAgencyWorkspaceEntity(client.id, { kind: 'client', patch: { status } })

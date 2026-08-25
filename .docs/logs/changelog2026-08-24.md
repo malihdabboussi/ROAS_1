@@ -78,3 +78,42 @@ Why: The full ClickUp hydration can take more than a minute, nested list cells c
 Impact: Operators can enter a mapped client workspace without waiting for the external refresh, open mirrored ClickUp tasks from their names, navigate without render loops, and find Page Grader clients and their requests in the approved Clients → Campaigns → Requests → Chats search order.
 
 Files: `apps/web/src/features/agency-clients/AgencyClientRouteResolver.tsx`, `apps/web/src/features/spaces/components/SpaceItemRow.tsx`, `apps/web/src/components/global-chat/components/ChatComposerTryTip.tsx`, `apps/web/src/components/shell/ShellChatDrawer.tsx`, `apps/web/src/features/spaces/store/use-spaces-store.ts`, `apps/api/src/modules/entity-search/`
+## 2026-08-24 14:05 - [FEATURE]
+
+What: Added a persistent global client selector beside Search and applied its Client Workspace campaign plus Campaign Spaces to Recents, new chats, Inbox, Meetings, All Tasks, Clients, Client Campaigns, Launches, and Artifacts.
+
+Why: Agency users need to isolate the whole ROAS workspace to one client while navigating, creating chats, and returning to chat-owned artifacts.
+
+Impact: Client selection persists per organization and through internal navigation. Unattributed records stay available under All clients but cannot leak into a selected client. Switching away from an active chat uses the existing pinned/unpinned artifact restoration contract.
+
+Files: `apps/web/src/lib/client-scope/`, `apps/web/src/components/client-scope/`, `apps/web/src/app/(dashboard)/providers.tsx`, `apps/web/src/components/layout/sidebar/SidebarSimpleSection.tsx`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/notifications/InboxFeed.tsx`, `apps/web/src/app/(dashboard)/home/meetings/MeetingsUnifiedSurface.tsx`, `apps/web/src/features/all-tasks/`, `apps/web/src/features/agency-clients/`, `apps/web/src/features/artifacts/components/GlobalArtifactsPage.tsx`, `apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx`, `apps/web/src/features/studio/components/ChatInterface.tsx`, `documentation/utilities/client-scope.md`
+
+## 2026-08-24 14:18 - [FIX]
+
+What: Made client-scope resolution fail closed while a selected Client Workspace is loading or invalid, and prevented a previous client's workspace mapping from being reused during a client switch.
+
+Why: A delayed or failed workspace request could otherwise briefly render unscoped data or combine the newly selected client with stale Campaign Spaces.
+
+Impact: Selected-client navigation now remains isolated throughout loading and safely clears invalid client URLs only after resolution finishes.
+
+Files: `apps/web/src/lib/client-scope/ClientScopeProvider.tsx`, `apps/web/src/lib/client-scope/ClientScopeProvider.test.tsx`, `documentation/utilities/client-scope.md`
+
+## 2026-08-24 14:39 - [FIX]
+
+What: Partitioned the Recents cache by client and prevented the live chat store from merging conversations owned by another Client Workspace campaign.
+
+Why: A scoped API response could still be preceded or overwritten by unscoped cached conversations during a client switch.
+
+Impact: Recents now remains client-isolated before, during, and after its scoped refresh instead of briefly exposing another client's chats.
+
+Files: `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/components/shell/shell-chat-menu-pin.ts`, `apps/web/src/components/shell/shell-chat-menu-pin.test.ts`, `apps/web/src/components/shell/shell-conversation-cache.ts`, `apps/web/src/components/shell/shell-conversation-cache.test.ts`, `documentation/utilities/client-scope.md`
+
+## 2026-08-24 14:42 - [FIX]
+
+What: Cleared Client Campaigns and Launches results immediately when the global client selection changes, with regression coverage for pending replacement requests.
+
+Why: Although stale requests were canceled correctly, the previous client's rendered rows remained visible until the new client's request completed.
+
+Impact: Fast client switching no longer exposes stale campaign or launch rows during loading.
+
+Files: `apps/web/src/features/agency-clients/ClientCampaignsPage.tsx`, `apps/web/src/features/agency-clients/ClientCampaignsPage.test.tsx`, `apps/web/src/features/agency-clients/LaunchesPage.tsx`, `apps/web/src/features/agency-clients/LaunchesPage.test.tsx`, `documentation/utilities/client-scope.md`

@@ -32,6 +32,7 @@ import {
   persistAgendaEventMinimized,
 } from '@/features/home/services/agenda-minimize.service'
 import { invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { clientScopeMatchesRecord, useClientScope } from '@/lib/client-scope'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { useWorkspaceSettingsModal } from '@/lib/settings/workspace-settings-modal-context'
 import type { YourTurnItem } from '@/lib/your-turn/types'
@@ -52,6 +53,7 @@ export function AgendaCard({
   presentation?: 'card' | 'page'
 } = {}) {
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
+  const { scope: clientScope } = useClientScope()
   const [instantMeetingOpen, setInstantMeetingOpen] = useState(false)
   // Tracks which keys the server already knows, plus in-flight user intent so a
   // late fetch/persist response never overwrites a newer local toggle.
@@ -106,14 +108,17 @@ export function AgendaCard({
   }, [day])
 
   const visibleEvents = useMemo(() => {
-    const sorted = [...events].sort(
+    const scopedEvents = clientScope
+      ? events.filter((event) => clientScopeMatchesRecord(clientScope, event))
+      : events
+    const sorted = [...scopedEvents].sort(
       (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime(),
     )
     // Team API already collapses the same invite across people. Client fuzzy
     // dedupe would incorrectly merge different teammates' similarly named calls.
     const deduped = effectiveScope === 'team' ? sorted : dedupeAgendaEvents(sorted)
     return deduped
-  }, [events, effectiveScope])
+  }, [clientScope, events, effectiveScope])
 
   const eventKey = (ev: CalendarAgendaEvent) => `${ev.account_id ?? ev.source}:${ev.id}`
   const todayDayKey = useMemo(

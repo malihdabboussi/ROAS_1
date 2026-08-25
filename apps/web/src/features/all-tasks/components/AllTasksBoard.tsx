@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { AllTasksNativeList } from '@/components/work-views/AllTasksNativeList'
 import { fetchCampaigns, type Campaign } from '@/lib/campaigns'
+import { useClientScope } from '@/lib/client-scope'
 import { fetchPrograms, type Program } from '@/lib/programs'
 import type { TaskRollupItem, TaskRollupView } from '@/lib/tasks'
 import { useTaskRollup } from '@/lib/work-views'
@@ -22,6 +23,7 @@ export function AllTasksBoard({
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { scope: clientScope } = useClientScope()
   const [scope, setScope] = useState<TaskRollupView>(
     searchParams.get('scope') === 'my' ? 'my' : 'all',
   )
@@ -46,7 +48,7 @@ export function AllTasksBoard({
   const { items, loading, reload } = useTaskRollup({
     scope,
     programId: programId || null,
-    campaignId: campaignId || null,
+    campaignId: (clientScope?.campaignId ?? campaignId) || null,
     onError: handleLoadError,
   })
 
@@ -81,9 +83,12 @@ export function AllTasksBoard({
   )
 
   const campaignOptions = useMemo(() => {
+    if (clientScope?.campaignId) {
+      return campaigns.filter((campaign) => campaign.id === clientScope.campaignId)
+    }
     if (!programId) return campaigns
     return campaigns.filter((c) => c.program_id === programId)
-  }, [campaigns, programId])
+  }, [campaigns, clientScope?.campaignId, programId])
 
   return (
     <div className="h-full min-h-0">
@@ -94,7 +99,7 @@ export function AllTasksBoard({
           <AllTasksScopeFilters
             scope={scope}
             programId={programId}
-            campaignId={campaignId}
+            campaignId={clientScope?.campaignId ?? campaignId}
             programs={programs.map((program) => ({ id: program.id, name: program.name }))}
             campaigns={campaignOptions.map((campaign) => ({
               id: campaign.id,
@@ -113,6 +118,7 @@ export function AllTasksBoard({
               setCampaignId(nextCampaignId)
               updateSearch({ campaign: nextCampaignId })
             }}
+            campaignLocked={Boolean(clientScope)}
           />
         </div>
 

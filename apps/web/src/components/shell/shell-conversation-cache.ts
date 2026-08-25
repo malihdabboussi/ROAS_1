@@ -5,17 +5,19 @@ export function conversationCacheKey(
   simpleSidebar: boolean,
   agentKey: string | null,
   activeOrgId: string | null,
+  clientId?: string | null,
 ): string {
   const scopeKey = simpleSidebar ? 'all-scopes' : (activeOrgId ?? 'personal')
-  return `shell-conversations:${scopeKey}:${agentKey ?? 'all'}`
+  return `shell-conversations:${scopeKey}:${agentKey ?? 'all'}:client:${clientId ?? 'all'}`
 }
 
 export function peekConversationCache(
   simpleSidebar: boolean,
   agentKey: string | null,
   activeOrgId: string | null,
+  clientId?: string | null,
 ): Conversation[] | undefined {
   return peekCachedFetch<Conversation[]>(
-    conversationCacheKey(simpleSidebar, agentKey, activeOrgId),
+    conversationCacheKey(simpleSidebar, agentKey, activeOrgId, clientId),
   )
 }

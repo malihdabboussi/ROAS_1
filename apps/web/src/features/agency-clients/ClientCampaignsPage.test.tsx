@@ -9,6 +9,12 @@ const { pushMock, setPendingComposerTextMock, setWantsNewConversationMock } = vi
   setWantsNewConversationMock: vi.fn(),
 }))
 
+const clientScope = vi.hoisted(() => ({ selectedClientId: null as string | null }))
+
+vi.mock('@/lib/client-scope', () => ({
+  useClientScope: () => clientScope,
+}))
+
 vi.mock('@/lib/agency-clients', async () => {
   const actual =
     await vi.importActual<typeof import('@/lib/agency-clients')>('@/lib/agency-clients')
@@ -68,6 +74,7 @@ const campaign = {
 describe('ClientCampaignsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    clientScope.selectedClientId = null
     vi.mocked(fetchAgencyClients).mockResolvedValue({ clients: [] } as never)
   })
   afterEach(cleanup)
@@ -135,5 +142,22 @@ describe('ClientCampaignsPage', () => {
     )
     expect(setWantsNewConversationMock).toHaveBeenCalledWith(true)
     expect(pushMock).toHaveBeenCalledWith('/home')
+  })
+
+  it('clears the previous client campaigns while a new client loads', async () => {
+    const pending = new Promise<never>(() => undefined)
+    vi.mocked(fetchAgencyClientCampaigns)
+      .mockResolvedValueOnce({ campaigns: [campaign] } as never)
+      .mockReturnValueOnce(pending)
+      .mockReturnValueOnce(pending)
+
+    const view = render(<ClientCampaignsPage />)
+    expect(await screen.findByText('Evergreen Leads')).toBeInTheDocument()
+
+    clientScope.selectedClientId = 'client-2'
+    view.rerender(<ClientCampaignsPage />)
+
+    expect(screen.queryByText('Evergreen Leads')).not.toBeInTheDocument()
+    expect(screen.getByRole('status', { name: 'Loading campaigns...' })).toBeInTheDocument()
   })
 })

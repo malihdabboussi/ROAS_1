@@ -10,6 +10,7 @@ import { ShellArtifactViewerAdapter } from '@/features/studio/components/preview
 import { selectConversation } from '@/features/studio/services/chat.service'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { openArtifactPreviewInShell } from '@/lib/artifacts'
+import { useClientScope } from '@/lib/client-scope'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils/cn'
 import { isShellHomeRoute, isShellWorkspaceRoute } from './shell-route-policy'
@@ -44,6 +45,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const chatParam = searchParams.get('chat')
   const convParam = searchParams.get('conv')
   const missionParam = searchParams.get('mission')
+  const { scope: clientScope } = useClientScope()
 
   const workAreaOpen = useShellStore((s) => s.workAreaOpen)
   const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
@@ -56,6 +58,26 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const chatDrawerConversationId = useShellStore((s) => s.chatDrawer.conversationId)
   const lastWorkAreaPageByConversation = useShellStore((s) => s.lastWorkAreaPageByConversation)
   const previousArtifactTargetRef = useRef(artifactTarget)
+
+  useEffect(() => {
+    if (!clientScope?.campaignId) return
+    const chat = useChatStore.getState()
+    const activeConversation = chat.conversations.find(
+      (conversation) => conversation.id === chat.activeConversationId,
+    )
+    if (!chat.activeConversationId || activeConversation?.campaign_id === clientScope.campaignId) {
+      return
+    }
+    chat.setActiveConversationId(null)
+    const shell = useShellStore.getState()
+    shell.openFreshChatDrawer()
+    shell.syncArtifactViewerForConversation(null)
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('conv')
+    params.delete('chat')
+    const query = params.toString()
+    router.replace(`${pathname}${query ? `?${query}` : ''}`, { scroll: false })
+  }, [clientScope?.campaignId, pathname, router, searchParams])
   const shellPrefsHydrated = useShellPrefsHydrated()
   const desktop = useMediaQuery('(min-width: 768px)')
   const savedMenuDock = useShellMenuDock((s) => s.dock)

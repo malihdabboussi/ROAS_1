@@ -12,6 +12,7 @@ import type { AnimationState } from '@/components/vibey/animation-states.config'
 import { backendGet } from '@/lib/api/backend-client'
 import { resolvePinnedAssistantMessageId } from '@/lib/chat/assistant-message-actions'
 import { CHAT_TOAST_ERRORS } from '@/lib/chat/chat-toast-errors.config'
+import { useClientScope } from '@/lib/client-scope'
 import type { MissionDeliverable } from '@/lib/missions'
 import { toastMessageForChatSendError } from '../config/chat-stream-errors.config'
 import { useCampaignMode } from '../contexts/CampaignModeContext'
@@ -122,6 +123,9 @@ export function ChatInterface() {
   const updateConversation = useChatStore((s) => s.updateConversation)
   const { activeCampaignId, activeCampaignName, setActiveCampaign, minimizePanel } =
     useCampaignMode()
+  const { scope: clientScope } = useClientScope()
+  const scopedCampaignId = clientScope?.campaignId ?? activeCampaignId
+  const scopedCampaignName = clientScope?.clientName ?? activeCampaignName
   const vibeyState = useVibeyState()
   const [recentCampaigns, setRecentCampaigns] = useState<Campaign[]>([])
   const [pickedCampaignId, setPickedCampaignId] = useState<string | null>(null)
@@ -135,7 +139,7 @@ export function ChatInterface() {
   const [knownSkillKeys, setKnownSkillKeys] = useState<Set<string>>(new Set())
   const [previewStudioDeliverable, setPreviewStudioDeliverable] =
     useState<MissionDeliverable | null>(null)
-  const chatScrollAreaMounted = messages.length > 0 || !!activeCampaignId
+  const chatScrollAreaMounted = messages.length > 0 || !!scopedCampaignId
 
   useEffect(() => {
     backendGet<{ id: string; skill_key: string }[]>('/api/agents/vibey/skills')
@@ -153,7 +157,7 @@ export function ChatInterface() {
 
   // Fetch recent campaigns when no active campaign (new chat)
   useEffect(() => {
-    if (!activeCampaignId) {
+    if (!scopedCampaignId) {
       fetchCampaigns()
         .then((campaigns) => {
           const sorted = [...campaigns].sort(
@@ -166,10 +170,10 @@ export function ChatInterface() {
       setRecentCampaigns([])
       setPickedCampaignId(null)
     }
-  }, [activeCampaignId])
+  }, [scopedCampaignId])
 
   useEffect(() => {
-    const campaignId = activeCampaignId ?? pickedCampaignId
+    const campaignId = scopedCampaignId ?? pickedCampaignId
     if (!campaignId) {
       setCampaignModelStrategy(null)
       return
@@ -189,7 +193,7 @@ export function ChatInterface() {
     return () => {
       cancelled = true
     }
-  }, [activeCampaignId, pickedCampaignId, campaignConfigVersion])
+  }, [campaignConfigVersion, pickedCampaignId, scopedCampaignId])
 
   useEffect(() => {
     const el = scrollRef.current
@@ -317,7 +321,7 @@ export function ChatInterface() {
   const conversationCampaignId = activeConversation?.campaign_id ?? null
   const effectiveCampaignId = activeConversationId
     ? (conversationCampaignId ?? undefined)
-    : (activeCampaignId ?? pickedCampaignId ?? undefined)
+    : (scopedCampaignId ?? pickedCampaignId ?? undefined)
   const canAttachCampaignWithChip = activeConversationId ? conversationCampaignId === null : true
 
   const handleCampaignChipClick = useCallback(
@@ -363,7 +367,7 @@ export function ChatInterface() {
       if (activeConversationId && activeConversationStopping) return
       try {
         let resolvedCampaignId = overrideCampaignId ?? effectiveCampaignId ?? undefined
-        if (overrideCampaignId && !activeCampaignId) {
+        if (overrideCampaignId && !scopedCampaignId) {
           const selectedCampaign = await fetchCampaign(overrideCampaignId)
           const selectedIcon =
             ((selectedCampaign.config as Record<string, unknown>)?.icon as string) ??
@@ -414,10 +418,10 @@ export function ChatInterface() {
     [
       activeConversationId,
       activeConversationStopping,
-      activeCampaignId,
       effectiveCampaignId,
       setActiveCampaign,
       minimizePanel,
+      scopedCampaignId,
       uiSelectedArtifact,
     ],
   )
@@ -732,7 +736,7 @@ export function ChatInterface() {
     [messages],
   )
 
-  const showHome = messages.length === 0 && !activeCampaignId
+  const showHome = messages.length === 0 && !scopedCampaignId
 
   if (showHome) {
     return (
@@ -769,10 +773,10 @@ export function ChatInterface() {
               <h1 className="title-h2 text-center text-[var(--color-foreground)]">
                 WHAT ARE WE BUILDING?
               </h1>
-              {activeCampaignName && (
+              {scopedCampaignName && (
                 <p className="body-3 text-muted-foreground mt-2 text-center">
                   Campaign:{' '}
-                  <span className="text-foreground font-medium">{activeCampaignName}</span>
+                  <span className="text-foreground font-medium">{scopedCampaignName}</span>
                 </p>
               )}
             </div>
@@ -947,7 +951,7 @@ export function ChatInterface() {
         )}
         <div className="w-full max-w-3xl">
           {/* Campaign chips — shown when no active campaign */}
-          {!activeCampaignId && canAttachCampaignWithChip && recentCampaigns.length > 0 && (
+          {!scopedCampaignId && canAttachCampaignWithChip && recentCampaigns.length > 0 && (
             <div className="mb-4 flex flex-col items-center gap-1.5">
               <span className="body-3 text-[var(--color-muted-foreground)]">
                 Add this task to a campaign:
@@ -1072,7 +1076,7 @@ export function ChatInterface() {
         <DeliverablePreviewModal
           deliverable={previewStudioDeliverable}
           agents={[]}
-          campaignId={activeCampaignId}
+          campaignId={scopedCampaignId}
           renderEntityPreview={renderDeliverableEntityPreview}
           onClose={() => setPreviewStudioDeliverable(null)}
         />

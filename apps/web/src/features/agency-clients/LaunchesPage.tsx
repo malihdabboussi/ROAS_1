@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight, List, PanelRightOpen, Plus } from 'lucide-react'
 import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { fetchAgencyLaunches, type AgencyLaunch } from '@/lib/agency-clients'
+import { useClientScope } from '@/lib/client-scope'
 import { cn } from '@/lib/utils/cn'
 import { AgencyWorkspaceBreadcrumb } from './AgencyWorkspaceBreadcrumb'
 import { AGENCY_CLIENT_MESSAGES } from './config/messages.config'
@@ -13,6 +14,7 @@ import { LaunchCalendar } from './launches/LaunchCalendar'
 import { addMonths, calendarDays, dateKey, startOfMonth } from './launches/launches-utils'
 
 export function LaunchesPage() {
+  const { selectedClientId } = useClientScope()
   const [launches, setLaunches] = useState<AgencyLaunch[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -38,13 +40,16 @@ export function LaunchesPage() {
 
   useEffect(() => {
     let cancelled = false
+    setLaunches([])
+    setLoading(true)
+    setError(null)
     const load = async () => {
       try {
-        const response = await fetchAgencyLaunches(undefined, false)
+        const response = await fetchAgencyLaunches(selectedClientId ?? undefined, false)
         if (cancelled) return
         setLaunches(response.launches)
         setLoading(false)
-        void fetchAgencyLaunches(undefined, true)
+        void fetchAgencyLaunches(selectedClientId ?? undefined, true)
           .then((synced) => {
             if (!cancelled) setLaunches(synced.launches)
           })
@@ -61,7 +66,7 @@ export function LaunchesPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [selectedClientId])
 
   const visibleLaunches = useMemo(
     () => launches.filter((launch) => showAssetsDue || launch.kind !== 'assets_due'),

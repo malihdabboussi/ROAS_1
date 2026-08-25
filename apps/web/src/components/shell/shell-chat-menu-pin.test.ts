@@ -74,6 +74,20 @@ describe('shell chat menu pin', () => {
     expect(next).toBe(prev)
   })
 
+  it('does not merge another client campaign from the live store', () => {
+    const current = conversation({ id: 'c1', campaign_id: 'campaign-1' })
+    const prev = [current]
+    const next = mergeConversationsWithStore(
+      prev,
+      [conversation({ id: 'c2', campaign_id: 'campaign-2' })],
+      null,
+      'campaign-1',
+    )
+
+    expect(next).toBe(prev)
+    expect(next).toEqual([current])
+  })
+
   it('pins immediately and keeps the flag from the persisted conversation', async () => {
     const current = conversation({ id: 'c1' })
     const rows = [current]

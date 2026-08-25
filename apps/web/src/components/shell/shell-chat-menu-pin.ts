@@ -10,9 +10,12 @@ export function mergeConversationsWithStore(
   prev: Conversation[],
   storeConversations: Conversation[],
   historyAgentKey: string | null,
+  campaignId?: string | null,
 ): Conversation[] {
   const scopedStoreRows = storeConversations.filter(
-    (row) => historyAgentKey === null || row.agent_id === historyAgentKey,
+    (row) =>
+      (historyAgentKey === null || row.agent_id === historyAgentKey) &&
+      (!campaignId || row.campaign_id === campaignId),
   )
   if (scopedStoreRows.length === 0) return prev
   const previousIds = new Set(prev.map((row) => row.id))

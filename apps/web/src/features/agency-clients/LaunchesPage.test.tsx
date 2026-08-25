@@ -4,6 +4,11 @@ import { fetchAgencyLaunches } from '@/lib/agency-clients'
 import { LaunchesPage } from './LaunchesPage'
 
 const openArtifactInShell = vi.fn()
+const clientScope = vi.hoisted(() => ({ selectedClientId: null as string | null }))
+
+vi.mock('@/lib/client-scope', () => ({
+  useClientScope: () => clientScope,
+}))
 
 vi.mock('@/lib/agency-clients', () => ({ fetchAgencyLaunches: vi.fn() }))
 vi.mock('@/lib/artifacts', () => ({
@@ -42,7 +47,10 @@ const launch = {
 }
 
 describe('LaunchesPage', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    clientScope.selectedClientId = null
+  })
   afterEach(cleanup)
 
   it('shows launches before the background Space mapping pass completes', async () => {
@@ -72,5 +80,22 @@ describe('LaunchesPage', () => {
       expect(fetchAgencyLaunches).toHaveBeenNthCalledWith(1, undefined, false)
       expect(fetchAgencyLaunches).toHaveBeenNthCalledWith(2, undefined, true)
     })
+  })
+
+  it('clears the previous client launches while a new client loads', async () => {
+    const pending = new Promise<never>(() => undefined)
+    vi.mocked(fetchAgencyLaunches)
+      .mockResolvedValueOnce({ launches: [launch] } as never)
+      .mockReturnValueOnce(pending)
+      .mockReturnValueOnce(pending)
+
+    const view = render(<LaunchesPage />)
+    expect(await screen.findByText('Fall Launch')).toBeInTheDocument()
+
+    clientScope.selectedClientId = 'client-2'
+    view.rerender(<LaunchesPage />)
+
+    expect(screen.queryByText('Fall Launch')).not.toBeInTheDocument()
+    expect(screen.getByRole('status', { name: 'Loading launches...' })).toBeInTheDocument()
   })
 })
