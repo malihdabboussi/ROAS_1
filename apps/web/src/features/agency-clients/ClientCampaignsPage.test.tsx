@@ -3,6 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchAgencyClientCampaigns, fetchAgencyClients } from '@/lib/agency-clients'
 import { ClientCampaignsPage } from './ClientCampaignsPage'
 
+const { pushMock, setComposerDraftMock } = vi.hoisted(() => ({
+  pushMock: vi.fn(),
+  setComposerDraftMock: vi.fn(),
+}))
+
 vi.mock('@/lib/agency-clients', async () => {
   const actual =
     await vi.importActual<typeof import('@/lib/agency-clients')>('@/lib/agency-clients')
@@ -22,7 +27,13 @@ vi.mock('next/link', () => ({
 }))
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: pushMock }),
+}))
+
+vi.mock('@/lib/chat/studio-chat-runtime-adapter', () => ({
+  useChatStore: {
+    getState: () => ({ setComposerDraft: setComposerDraftMock }),
+  },
 }))
 
 vi.mock('@/components/shell/ShellBreadcrumb', () => ({
@@ -107,5 +118,18 @@ describe('ClientCampaignsPage', () => {
     expect(screen.queryByText('Sunset Ads')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Show inactive' }))
     expect(screen.getByText('Sunset Ads')).toBeInTheDocument()
+  })
+
+  it('opens a fresh Pixel chat with the campaign creation prompt', async () => {
+    vi.mocked(fetchAgencyClientCampaigns).mockResolvedValue({ campaigns: [campaign] } as never)
+
+    render(<ClientCampaignsPage />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'New campaign' }))
+    expect(setComposerDraftMock).toHaveBeenCalledWith(
+      'new',
+      expect.stringContaining('Help me create a new client campaign'),
+    )
+    expect(pushMock).toHaveBeenCalledWith('/home?chat=new')
   })
 })

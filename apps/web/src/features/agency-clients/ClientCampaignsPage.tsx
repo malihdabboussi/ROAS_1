@@ -116,7 +116,7 @@ export function ClientCampaignsPage() {
         'new',
         'Help me create a new client campaign. Start by asking me which client this is for, then work through the campaign details and required tasks with me.',
       )
-    router.push('/home')
+    router.push('/home?chat=new')
   }
 
   return (
