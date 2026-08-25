@@ -11,14 +11,19 @@ export function ClientScopeSelector() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const rootRef = useRef<HTMLDivElement>(null)
-  const visibleClients = useMemo(
-    () =>
-      visiblePipelineClients(clients, {
-        query,
-        alwaysIncludeIds: selectedClientId ? [selectedClientId] : [],
-      }),
-    [clients, query, selectedClientId],
-  )
+  const visibleClients = useMemo(() => {
+    const filteredClients = visiblePipelineClients(clients, {
+      query,
+      alwaysIncludeIds: selectedClientId ? [selectedClientId] : [],
+    })
+
+    if (!selectedClientId) return filteredClients
+
+    const selectedClient = filteredClients.find((client) => client.id === selectedClientId)
+    if (!selectedClient) return filteredClients
+
+    return [selectedClient, ...filteredClients.filter((client) => client.id !== selectedClientId)]
+  }, [clients, query, selectedClientId])
 
   const closeMenu = useCallback(() => {
     setOpen(false)
@@ -40,7 +45,7 @@ export function ClientScopeSelector() {
         type="button"
         className={cn(
           'btn-icon-bare hover:bg-hover-subtle',
-          selectedClientId && 'nav-glass-selected-purple px-spacing-2 gap-spacing-1 max-w-28',
+          selectedClientId && 'nav-glass-selected-purple px-spacing-2 gap-spacing-1',
         )}
         aria-label={scope ? `Client filter: ${scope.clientName}` : 'Filter by client'}
         title={scope ? `Client: ${scope.clientName}` : 'Filter by client'}
@@ -48,7 +53,7 @@ export function ClientScopeSelector() {
         onClick={() => (open ? closeMenu() : setOpen(true))}
       >
         <Building2 className="icon-sm" aria-hidden />
-        {scope ? <span className="body-4 truncate">{scope.clientName}</span> : null}
+        {scope ? <span className="body-4">1</span> : null}
       </button>
       {open ? (
         <div className="z-dropdown mt-spacing-1 absolute left-0 top-full">

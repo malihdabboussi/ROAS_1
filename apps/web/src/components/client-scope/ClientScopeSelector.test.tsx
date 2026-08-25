@@ -4,6 +4,8 @@ import { ClientScopeSelector } from './ClientScopeSelector'
 
 const mocks = vi.hoisted(() => ({
   setSelectedClientId: vi.fn(),
+  selectedClientId: null as string | null,
+  scope: null as { clientName: string } | null,
   clients: [
     { id: 'active-1', name: 'Active Client', status: 'active', pipeline_stage: 'active_happy' },
     { id: 'inactive-1', name: 'Inactive Client', status: 'inactive' },
@@ -14,8 +16,8 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/lib/client-scope', () => ({
   useClientScope: () => ({
     clients: mocks.clients,
-    selectedClientId: null,
-    scope: null,
+    selectedClientId: mocks.selectedClientId,
+    scope: mocks.scope,
     loading: false,
     setSelectedClientId: mocks.setSelectedClientId,
   }),
@@ -24,6 +26,8 @@ vi.mock('@/lib/client-scope', () => ({
 afterEach(() => {
   cleanup()
   mocks.setSelectedClientId.mockReset()
+  mocks.selectedClientId = null
+  mocks.scope = null
 })
 
 describe('ClientScopeSelector', () => {
@@ -49,5 +53,26 @@ describe('ClientScopeSelector', () => {
 
     expect(screen.getByText('Inactive Client')).toBeInTheDocument()
     expect(screen.queryByText('Active Client')).not.toBeInTheDocument()
+  })
+
+  it('shows a compact selected count and pins the selected client below All clients', () => {
+    mocks.selectedClientId = 'blocked-1'
+    mocks.scope = { clientName: 'Blocked Client' }
+    render(<ClientScopeSelector />)
+
+    const trigger = screen.getByRole('button', { name: 'Client filter: Blocked Client' })
+    expect(trigger).toHaveTextContent('1')
+    expect(trigger).not.toHaveTextContent('Blocked Client')
+
+    fireEvent.click(trigger)
+
+    const clientButtons = screen.getAllByRole('button').filter((button) =>
+      ['All clients', 'Blocked Client', 'Active Client'].includes(button.textContent?.trim() ?? ''),
+    )
+    expect(clientButtons.map((button) => button.textContent?.trim())).toEqual([
+      'All clients',
+      'Blocked Client',
+      'Active Client',
+    ])
   })
 })
