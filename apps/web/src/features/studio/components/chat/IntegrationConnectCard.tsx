@@ -69,13 +69,19 @@ const LEGACY_CONNECT_ENDPOINTS: Record<string, string> = {
   stripe: '/api/integrations/stripe/connect',
   dropbox: '/api/integrations/dropbox/connect',
   calendly: '/api/integrations/calendly/connect',
-  gohighlevel: '/api/integrations/lhg/connect',
   fathom: '/api/integrations/fathom/connect',
   paypal: '/api/integrations/paypal/connect',
   supabase: '/api/integrations/supabase/connect',
 }
 
-const API_KEY_PROVIDERS = new Set(['active_campaign', 'whop', 'fireflies', 'fanbasis', 'vercel'])
+const API_KEY_PROVIDERS = new Set([
+  'active_campaign',
+  'gohighlevel',
+  'whop',
+  'fireflies',
+  'fanbasis',
+  'vercel',
+])
 
 /** Backend / DB use `active_campaign`; agents may emit `activecampaign` or `active-campaign`. */
 function resolveIntegrationId(raw: string): string {

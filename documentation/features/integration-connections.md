@@ -4,7 +4,7 @@ Last Modified: August 20, 2026
 
 ## Data Flow
 
-1. Users connect integrations through Settings or an agent repair card.
+1. Users connect integrations through Settings or an agent repair card. GoHighLevel is a Private Integration Token (PIT) plus location ID pasted in Settings, vaulted like ActiveCampaign — not marketplace OAuth.
 2. Composio-backed connections store a `user_integrations` row with scope, status, agent access, and Composio account metadata.
 3. Connect flows reuse an existing active Composio account when possible instead of forcing another OAuth round trip, unless the client sends `force_new: true` (Library or Manage → “Add another account”).
 4. Overview personal sync matches each Composio connected-account id to its own `user_integrations` row (never one-row-wins upsert by `integration_id`). Duplicate labels across distinct account ids are re-resolved with the identity tool for that account.
@@ -132,6 +132,7 @@ Reconnect result:
 
 ## Decision Log
 
+- 2026-08-20: GoHighLevel connect switched from marketplace OAuth to a Private Integration Token (PIT) + location ID pasted in Settings. The PIT is vaulted; API v2 calls use the same Bearer + Version headers. Marketplace client id/secret/refresh are unused.
 - 2026-08-20: Fathom → Campaign Brain attribution switched from Space-route campaign_id (always General in the one-room Meetings model) to Page Grader matched clients → `client_scope_map`, with Space route kept as fallback. `matched_client_ids` land on `meeting_recordings.metadata`. Backfill: `scripts/roas/backfill-fathom-campaign-brains.mjs`.
 - 2026-08-18: Mine is not “Composio personal only.” Work invites live on the Directory mailbox (often `dylan@roas.co`) while the portal login is personal Gmail, so Mine DWD-pulls the caller’s Directory calendar. Team `events.list` must paginate; a covering-month fetch with `maxResults=250` and no `nextPageToken` dropped later recurring instances (weekly standup, wholesale). The people cap pins the signed-in Directory user instead of slicing alphabetical email order.
 - 2026-08-17: Pixel authorizes the sender, not the rest of the conversation. Internal people and the Slack installer can use Pixel in group DMs and Slack Connect threads. Linked Slack Connect/workspace identities inherit Internal. External senders remain denied.

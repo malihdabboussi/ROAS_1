@@ -1,10 +1,11 @@
 import { z } from 'zod'
 
-export const StartGhlOAuthSchema = z.object({
-  redirectTo: z.string().min(1, 'redirectTo is required'),
+export const ConnectGhlPitSchema = z.object({
+  pit: z.string().min(8, 'Private Integration Token is required'),
+  locationId: z.string().min(1, 'locationId is required'),
 })
 
-export type StartGhlOAuthDto = z.infer<typeof StartGhlOAuthSchema>
+export type ConnectGhlPitDto = z.infer<typeof ConnectGhlPitSchema>
 
 export const UpsertGhlLeadContactSchema = z.object({
   leadId: z.string().uuid('leadId must be a UUID'),

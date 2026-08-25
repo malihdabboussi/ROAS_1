@@ -313,6 +313,7 @@ export class IntegrationsOverviewService {
     const pageGraderVaultLinked =
       (await this.vault.hasSecret(user.id, 'page_grader', 'base_url')) &&
       (await this.vault.hasSecret(user.id, 'page_grader', 'api_key'))
+    const ghlVaultLinked = await this.vault.hasSecret(user.id, 'gohighlevel', 'pit')
 
     const integrations = (
       data as Array<{
@@ -381,7 +382,8 @@ export class IntegrationsOverviewService {
         !hasComposioAccount &&
         !NATIVE_OAUTH_OVERRIDES.includes(row.integration_id) &&
         !(row.integration_id === 'active_campaign' && activeCampaignVaultLinked) &&
-        !(row.integration_id === 'page_grader' && pageGraderVaultLinked)
+        !(row.integration_id === 'page_grader' && pageGraderVaultLinked) &&
+        !(row.integration_id === 'gohighlevel' && ghlVaultLinked)
       ) {
         return {
           ...row,
@@ -476,6 +478,22 @@ export class IntegrationsOverviewService {
 
       if (!fanbasisSecret) {
         connectedSet.delete('fanbasis')
+      }
+    }
+    if (connectedSet.has('gohighlevel')) {
+      const { data: ghlSecret } = await this.repository
+        .table(supabase, 'vault_secrets')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('provider', 'gohighlevel')
+        .eq('label', 'pit')
+        .maybeSingle()
+
+      if (!ghlSecret) {
+        connectedSet.delete('gohighlevel')
+        integrations.forEach((row) => {
+          if (row.integration_id === 'gohighlevel') row.status = 'disconnected'
+        })
       }
     }
     if (connectedSet.has('google_workspace') && scope.orgId) {

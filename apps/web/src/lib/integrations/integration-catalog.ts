@@ -177,8 +177,32 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     id: 'gohighlevel',
     provider: 'gohighlevel',
     name: 'GoHighLevel',
-    description: 'OAuth connection used for sending via GoHighLevel.',
+    description:
+      'Connect GoHighLevel with a Private Integration Token for CRM, email, and automations.',
     category: 'email_marketing',
+    auth_type: 'api_key',
+    connection_fields: [
+      {
+        name: 'generic_api_key',
+        label: 'Private Integration Token',
+        placeholder: 'pit_…',
+        required: true,
+        helpTitle: 'Create a Private Integration Token',
+        helpText:
+          'In GoHighLevel open the sub-account, then Settings → Private Integrations. Enable it in Labs if the page is missing. Copy the token immediately — HighLevel shows it once.',
+        helpSteps: [
+          'Open the GHL sub-account → Settings → Private Integrations',
+          'Create an integration and select only the scopes you need',
+          'Copy the token, then paste the Location ID from the URL after /location/',
+        ],
+      },
+      {
+        name: 'location_id',
+        label: 'Location ID',
+        placeholder: 'Sub-account location ID',
+        required: true,
+      },
+    ],
     is_active: true,
   },
   {

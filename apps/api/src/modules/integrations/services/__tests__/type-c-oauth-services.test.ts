@@ -5,7 +5,7 @@ import { CalendlyOAuthService } from '../../calendly/services/calendly-oauth.ser
 import { DropboxOAuthService } from '../../dropbox/services/dropbox-oauth.service'
 import { FanbasisApiService } from '../../fanbasis/services/fanbasis-api.service'
 import { GitHubOAuthService } from '../../github/services/github-oauth.service'
-import { GoHighLevelOAuthService } from '../../gohighlevel/services/gohighlevel-oauth.service'
+import { GoHighLevelApiService } from '../../gohighlevel/services/gohighlevel-api.service'
 import { MetaOAuthService } from '../../meta/services/meta-oauth.service'
 import { PaypalOAuthService } from '../../paypal/services/paypal-oauth.service'
 import { StripeOAuthService } from '../../stripe/services/stripe-oauth.service'
@@ -57,7 +57,6 @@ const config = {
       CALENDLY_OAUTH_STATE_SECRET: 'state-secret',
       GITHUB_OAUTH_STATE_SECRET: 'state-secret',
       META_OAUTH_STATE_SECRET: 'state-secret',
-      GHL_OAUTH_STATE_SECRET: 'state-secret',
       PUBLIC_API_URL: 'https://api.vibey.test',
       SUPABASE_OAUTH_CLIENT_ID: 'supabase-client-id',
       SUPABASE_OAUTH_CLIENT_SECRET: 'supabase-client-secret',
@@ -408,36 +407,34 @@ describe('Type C integration OAuth service behavior', () => {
     expect(calendly.refreshAccessToken).toHaveBeenCalledWith('cal-refresh')
   })
 
-  it('refreshes GoHighLevel tokens through the connected integration', async () => {
-    supabaseMock.rowsByTable.set('user_integrations', [
-      makeRow({
-        access_token: 'old-ghl-access',
-        refresh_token: 'ghl-refresh',
-        token_expires_at: '2026-06-16T08:00:00.000Z',
-        metadata: { locationId: 'loc-1' },
-      }),
-    ])
+  it('connects GoHighLevel after validating the Private Integration Token', async () => {
     const ghl = {
-      isConfigured: () => true,
-      refreshAccessToken: vi.fn().mockResolvedValue({
-        access_token: 'new-ghl-access',
-        refresh_token: 'new-ghl-refresh',
-        expires_in: 3600,
+      getLocation: vi.fn().mockResolvedValue({
+        id: 'loc-1',
+        name: 'Main Location',
+        companyId: 'co-1',
       }),
     }
+    const vault = { storeSecret: vi.fn() }
     const repo = {
-      getConnectedIntegration: vi.fn().mockResolvedValue({
-        id: 'integration-1',
-        refresh_token: 'ghl-refresh',
-      }),
-      updateTokens: vi.fn().mockResolvedValue(undefined),
+      upsertConnection: vi.fn().mockResolvedValue(undefined),
     }
-    const service = new (GoHighLevelOAuthService as any)(config, ghl, repo)
+    const service = new (GoHighLevelApiService as any)(ghl, vault, repo)
 
-    await expect(
-      service.refreshAccessToken(supabaseMock.client as never, 'user-1'),
-    ).resolves.toBeUndefined()
-    expect(ghl.refreshAccessToken).toHaveBeenCalledWith('ghl-refresh')
+    await expect(service.connect('user-1', 'Bearer pit_test', 'loc-1')).resolves.toEqual({
+      connected: true,
+      locationId: 'loc-1',
+      locationName: 'Main Location',
+    })
+    expect(ghl.getLocation).toHaveBeenCalledWith('pit_test', 'loc-1')
+    expect(vault.storeSecret).toHaveBeenCalledWith(
+      'user-1',
+      'gohighlevel',
+      'pit',
+      'pit_test',
+      'api_key',
+      { locationId: 'loc-1' },
+    )
   })
 
   it('connects FanBasis after validating the API key and storing the vault secret', async () => {

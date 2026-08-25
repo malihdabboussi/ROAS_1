@@ -15,28 +15,28 @@ The canonical lead entity is the **`contacts`** table. The legacy `leads` table 
 
 Base definition: `supabase/schema.sql:360-373`. TypeScript types: `packages/db/src/types.ts:962-1006`.
 
-| Field | Type | Required | Description | External sharing |
-|---|---|---|---|---|
-| `id` | UUID | yes (default) | Primary key | **Safe** — use as external lead reference |
-| `user_id` | UUID | yes | Owning Vibey user (`profiles.id`) | Internal only |
-| `org_id` | UUID | no | Tenant org scope (`...20260327100001_add_org_id_to_existing_tables.sql:35`) | Internal only |
-| `email` | TEXT | no | Contact email | **Safe** (PII — needs consent basis) |
-| `first_name` | TEXT | no | First name | **Safe** (PII) |
-| `last_name` | TEXT | no | Last name | **Safe** (PII) |
-| `phone` | TEXT | no | Phone | **Safe** (PII) |
-| `tags` | TEXT[] | yes (default `{}`) | Array of tag IDs referencing `contact_tags` | Safe after resolving IDs → names |
-| `source` | TEXT | no | Legacy origin enum: `funnel` \| `import` \| `manual` | Safe |
-| `source_id` | UUID | no | Originating resource (e.g. funnel id) | Internal only (opaque UUID) |
-| `custom_fields` | JSONB | yes (default `{}`) | Custom field values keyed by `field_key` | Case-by-case (may hold PII) |
-| `contact_type` | TEXT | yes (default `'lead'`) | `lead` \| `customer` \| `unknown` (`supabase/migrations/20260218*_022_contacts_crm_fields.sql:9`) | **Safe** |
-| `contact_source` | TEXT | no | Normalized channel enum: `funnel` \| `form` \| `widget` \| `telegram` \| `import` \| `manual` \| `automation` \| `integration` (`supabase/migrations/20260610150500_contacts_source_channel_normalization.sql`) | **Safe** |
-| `contact_source_detail` | TEXT | no | Channel variant, e.g. `csv`, `activecampaign` (same migration:4) | Safe |
-| `contact_type_source` | TEXT | yes (default `'inferred'`) | How `contact_type` was set: `inferred` \| `manual` \| `integration` (`supabase/migrations/20260507142000_customer_brain_infra.sql:58`) | Internal only |
-| `contact_type_confidence` | NUMERIC | yes (default 0.5) | 0–1 confidence of classification (same:59) | Internal only |
-| `contact_type_set_at` | TIMESTAMPTZ | yes | When classification was set (same:60) | Internal only |
-| `is_archived` / `archived_at` | BOOL / TIMESTAMPTZ | yes / no | Soft-delete flag (`022_contacts_crm_fields.sql:15-18`) | Internal only |
-| `business_name`, `website`, `city`, `state`, `country` | TEXT | no | Optional firmographic/geo fields (`022_contacts_crm_fields.sql:22-34`) | **Safe** |
-| `created_at`, `updated_at` | TIMESTAMPTZ | yes | Timestamps | Safe |
+| Field                                                  | Type               | Required                   | Description                                                                                                                                                                                                     | External sharing                          |
+| ------------------------------------------------------ | ------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `id`                                                   | UUID               | yes (default)              | Primary key                                                                                                                                                                                                     | **Safe** — use as external lead reference |
+| `user_id`                                              | UUID               | yes                        | Owning Vibey user (`profiles.id`)                                                                                                                                                                               | Internal only                             |
+| `org_id`                                               | UUID               | no                         | Tenant org scope (`...20260327100001_add_org_id_to_existing_tables.sql:35`)                                                                                                                                     | Internal only                             |
+| `email`                                                | TEXT               | no                         | Contact email                                                                                                                                                                                                   | **Safe** (PII — needs consent basis)      |
+| `first_name`                                           | TEXT               | no                         | First name                                                                                                                                                                                                      | **Safe** (PII)                            |
+| `last_name`                                            | TEXT               | no                         | Last name                                                                                                                                                                                                       | **Safe** (PII)                            |
+| `phone`                                                | TEXT               | no                         | Phone                                                                                                                                                                                                           | **Safe** (PII)                            |
+| `tags`                                                 | TEXT[]             | yes (default `{}`)         | Array of tag IDs referencing `contact_tags`                                                                                                                                                                     | Safe after resolving IDs → names          |
+| `source`                                               | TEXT               | no                         | Legacy origin enum: `funnel` \| `import` \| `manual`                                                                                                                                                            | Safe                                      |
+| `source_id`                                            | UUID               | no                         | Originating resource (e.g. funnel id)                                                                                                                                                                           | Internal only (opaque UUID)               |
+| `custom_fields`                                        | JSONB              | yes (default `{}`)         | Custom field values keyed by `field_key`                                                                                                                                                                        | Case-by-case (may hold PII)               |
+| `contact_type`                                         | TEXT               | yes (default `'lead'`)     | `lead` \| `customer` \| `unknown` (`supabase/migrations/20260218*_022_contacts_crm_fields.sql:9`)                                                                                                               | **Safe**                                  |
+| `contact_source`                                       | TEXT               | no                         | Normalized channel enum: `funnel` \| `form` \| `widget` \| `telegram` \| `import` \| `manual` \| `automation` \| `integration` (`supabase/migrations/20260610150500_contacts_source_channel_normalization.sql`) | **Safe**                                  |
+| `contact_source_detail`                                | TEXT               | no                         | Channel variant, e.g. `csv`, `activecampaign` (same migration:4)                                                                                                                                                | Safe                                      |
+| `contact_type_source`                                  | TEXT               | yes (default `'inferred'`) | How `contact_type` was set: `inferred` \| `manual` \| `integration` (`supabase/migrations/20260507142000_customer_brain_infra.sql:58`)                                                                          | Internal only                             |
+| `contact_type_confidence`                              | NUMERIC            | yes (default 0.5)          | 0–1 confidence of classification (same:59)                                                                                                                                                                      | Internal only                             |
+| `contact_type_set_at`                                  | TIMESTAMPTZ        | yes                        | When classification was set (same:60)                                                                                                                                                                           | Internal only                             |
+| `is_archived` / `archived_at`                          | BOOL / TIMESTAMPTZ | yes / no                   | Soft-delete flag (`022_contacts_crm_fields.sql:15-18`)                                                                                                                                                          | Internal only                             |
+| `business_name`, `website`, `city`, `state`, `country` | TEXT               | no                         | Optional firmographic/geo fields (`022_contacts_crm_fields.sql:22-34`)                                                                                                                                          | **Safe**                                  |
+| `created_at`, `updated_at`                             | TIMESTAMPTZ        | yes                        | Timestamps                                                                                                                                                                                                      | Safe                                      |
 
 Unique constraint: one email per tenant — `(COALESCE(org_id, user_id), email)` (`supabase/migrations/20260610180000_contacts_owner_scoped_email_unique.sql`).
 
@@ -87,12 +87,12 @@ Implication for the proposal: a "journey summary" field in an outbound lead payl
 What Vibey does have for pushing data out:
 
 1. **Per-provider server-to-server REST clients** (the relevant pattern):
-   - **GoHighLevel lead push** — the only true outbound *lead* push today. `upsertLeadContactInGhl` (`apps/api/src/modules/integrations/gohighlevel/services/gohighlevel-oauth.service.ts:165-210`) finds a contact by email, then POST/PUT to `https://services.leadconnectorhq.com/contacts/` (`apps/api/src/modules/integrations/gohighlevel/integrations/gohighlevel.integration.ts:262-329`).
-     - Auth: `Authorization: Bearer <OAuth access token>` (token refresh handled in the OAuth service).
+   - **GoHighLevel lead push** — the only true outbound _lead_ push today. `upsertLeadContactInGhl` (`apps/api/src/modules/integrations/gohighlevel/services/gohighlevel-api.service.ts`) finds a contact by email, then POST/PUT to `https://services.leadconnectorhq.com/contacts/` (`apps/api/src/modules/integrations/gohighlevel/integrations/gohighlevel.integration.ts`).
+     - Auth: `Authorization: Bearer <Private Integration Token>` stored in `vault_secrets`.
      - Headers: `Content-Type: application/json`, `Accept: application/json`, provider `Version` header.
    - **ActiveCampaign client** — `apps/api/src/modules/integrations/activecampaign/integrations/activecampaign.integration.ts`. Auth: `Api-Token: <key>` header (line 32); bodies wrapped per AC convention `{ "contact": { ... } }` (lines 68-92); includes `/contact/sync` upsert (line 90-92).
    - Credentials are stored AES-256-GCM-encrypted in `vault_secrets` (`supabase/migrations/20260224170000_vault_and_fireflies.sql`); decryption at call time (`apps/queue-worker/src/modules/crm-sync/services/crm-sync.service.ts:138-169`).
-2. **Queue-based job runner** (`crm_sync_jobs` table + `apps/queue-worker/src/modules/crm-sync/`) — note this currently runs **imports** (pulls contacts *from* AC/GHL *into* Vibey), but it is the established pattern for long-running CRM jobs: BullMQ worker, job rows with `status`/`fetched`/`imported`/`skipped`/`last_error`, unique partial index preventing duplicate active jobs per `(user_id, source)` (`supabase/migrations/20260324140000_crm_sync_jobs.sql:25-27`).
+2. **Queue-based job runner** (`crm_sync_jobs` table + `apps/queue-worker/src/modules/crm-sync/`) — note this currently runs **imports** (pulls contacts _from_ AC/GHL _into_ Vibey), but it is the established pattern for long-running CRM jobs: BullMQ worker, job rows with `status`/`fetched`/`imported`/`skipped`/`last_error`, unique partial index preventing duplicate active jobs per `(user_id, source)` (`supabase/migrations/20260324140000_crm_sync_jobs.sql:25-27`).
 3. **Internal outbox** (`mission_outbox`, `apps/mission-worker/src/modules/missions/services/missions.outbox-dispatcher.service.ts`) — internal-only event delivery, but its reliability profile is the house standard: 8 attempts, exponential backoff 2 s base / 60 s cap, circuit breaker after 5 consecutive failures (30 s open), `dedupe_key` idempotency, dead-letter handling.
 
 ### 2.2 Honest gaps
@@ -104,7 +104,7 @@ What Vibey does have for pushing data out:
 
 ### 2.3 Recommended mechanism for Synbiotix
 
-Build a **Synbiotix integration module following the GHL pattern** (dedicated REST client + OAuth/API-key creds in `vault_secrets`), with delivery executed through a **queue-worker job** (the `crm_sync_jobs` pattern) rather than inline in the request path. This is recommended because it reuses the two patterns that already exist in production (typed per-provider client; job table with status/error tracking and duplicate-job protection), and the queue layer is where retry/backoff and an idempotency key (use `contacts.id` as `external_ref`) can be added without touching the request path. Lightest viable hardening to promise Synbiotix: `X-Vibey-Event-Id: <uuid>` header + `external_ref` in the body for dedupe, and optional HMAC-SHA256 of the body in an `X-Vibey-Signature` header — the HMAC helper pattern already exists in the codebase for OAuth state signing (`gohighlevel-oauth.service.ts:227-231`).
+Build a **Synbiotix integration module following the GHL pattern** (dedicated REST client + API-key/PIT creds in `vault_secrets`), with delivery executed through a **queue-worker job** (the `crm_sync_jobs` pattern) rather than inline in the request path. This is recommended because it reuses the two patterns that already exist in production (typed per-provider client; job table with status/error tracking and duplicate-job protection), and the queue layer is where retry/backoff and an idempotency key (use `contacts.id` as `external_ref`) can be added without touching the request path. Lightest viable hardening to promise Synbiotix: `X-Vibey-Event-Id: <uuid>` header + `external_ref` in the body for dedupe, and optional HMAC-SHA256 of the body in an `X-Vibey-Signature` header.
 
 ---
 
@@ -178,17 +178,17 @@ So for Synbiotix revenue: the realistic build is a **polling sync job** (Drive-s
 
 ### 4.2 Fields we need per revenue record
 
-| Field | Requirement | Why |
-|---|---|---|
-| `external_lead_ref` | **Required** | Must echo back the `external_ref` (our `contacts.id`) we sent in the lead POST. This is the only way to attribute revenue — we have no other join key. Fallback: patient email (matchable via `contact_identifiers` kind=`email`), but email matching is fuzzy and should be fallback only. |
-| `transaction_id` | **Required** | Stable unique ID on their side, for idempotent upsert (dedupe on re-poll). |
-| `amount` | **Required** | Integer minor units (cents/pence) preferred — matches the Stripe convention already used in our analytics layer (`stripe.types.ts`, amounts in cents). |
-| `currency` | **Required** | ISO 4217 lowercase (Stripe convention). |
-| `transaction_date` | **Required** | ISO 8601 UTC. |
-| `service_identifier` | **Required** | Treatment/service code + display name; maps to our per-product attribution pattern (`metadata.product_id`/`product_name` in `stripe-api.service.ts`). |
-| `patient_status` | Nice-to-have | e.g. `enquiry` \| `consultation_booked` \| `treated`; would drive our `contact_type` lead→customer transition (`contacts.contact_type`, `contact_type_source='integration'`). |
-| `status` / refund flag | Nice-to-have | To net out refunds the way our Stripe overview does. |
-| `location/clinic id` | Nice-to-have | Only if multi-site reporting is in scope. |
+| Field                  | Requirement  | Why                                                                                                                                                                                                                                                                                         |
+| ---------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `external_lead_ref`    | **Required** | Must echo back the `external_ref` (our `contacts.id`) we sent in the lead POST. This is the only way to attribute revenue — we have no other join key. Fallback: patient email (matchable via `contact_identifiers` kind=`email`), but email matching is fuzzy and should be fallback only. |
+| `transaction_id`       | **Required** | Stable unique ID on their side, for idempotent upsert (dedupe on re-poll).                                                                                                                                                                                                                  |
+| `amount`               | **Required** | Integer minor units (cents/pence) preferred — matches the Stripe convention already used in our analytics layer (`stripe.types.ts`, amounts in cents).                                                                                                                                      |
+| `currency`             | **Required** | ISO 4217 lowercase (Stripe convention).                                                                                                                                                                                                                                                     |
+| `transaction_date`     | **Required** | ISO 8601 UTC.                                                                                                                                                                                                                                                                               |
+| `service_identifier`   | **Required** | Treatment/service code + display name; maps to our per-product attribution pattern (`metadata.product_id`/`product_name` in `stripe-api.service.ts`).                                                                                                                                       |
+| `patient_status`       | Nice-to-have | e.g. `enquiry` \| `consultation_booked` \| `treated`; would drive our `contact_type` lead→customer transition (`contacts.contact_type`, `contact_type_source='integration'`).                                                                                                               |
+| `status` / refund flag | Nice-to-have | To net out refunds the way our Stripe overview does.                                                                                                                                                                                                                                        |
+| `location/clinic id`   | Nice-to-have | Only if multi-site reporting is in scope.                                                                                                                                                                                                                                                   |
 
 ### 4.3 Preferred GET conventions (grounded in patterns we already consume)
 
@@ -221,6 +221,7 @@ Leads become patients, so treat lead data as potentially health-adjacent (an enq
 **Safe to promise:** TLS in transit; tenant-isolated storage (RLS); encrypted credential storage; GDPR data-subject-rights handling (manual fulfillment); only the minimal field set in Section 3 is transmitted; UK/EU GDPR lawful-basis language per the existing privacy policy.
 
 **Must disclaim / not promise:**
+
 - **HIPAA/BAA:** the pitch deck claims "SOC 2 + HIPAA" (`apps/website/src/app/vibey-pitch/PitchDeckV1.tsx`) but there is no BAA template, no PHI encryption at rest, and no HIPAA audit logging in the codebase. Do not assert HIPAA compliance in the proposal. (If the client is UK NHS-adjacent, UK GDPR/DPA 2018 + a DPA contract is the relevant frame anyway, not HIPAA.)
 - Field-level encryption of contact PII (does not exist).
 - Automated retention/erasure schedules (do not exist).
@@ -231,4 +232,4 @@ Leads become patients, so treat lead data as potentially health-adjacent (an enq
 
 ---
 
-*Generated 2026-06-12 from codebase inspection. Every file path above was verified against the working tree on that date.*
+_Generated 2026-06-12 from codebase inspection. Every file path above was verified against the working tree on that date._

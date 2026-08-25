@@ -38,7 +38,6 @@ function StudioSearchHotkey() {
 }
 
 const INTEGRATION_RETURN_KEYS = [
-  'ghl_connected',
   'github_connected',
   'stripe_connected',
   'paypal_connected',

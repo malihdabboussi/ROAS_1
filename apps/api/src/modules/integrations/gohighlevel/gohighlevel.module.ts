@@ -1,14 +1,12 @@
 import { Module } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
+import { IntegrationConnectionsRepository } from '../repositories/integration-connections.repository'
 import { GoHighLevelController } from './controllers/gohighlevel.controller'
 import { GoHighLevelIntegration } from './integrations/gohighlevel.integration'
-import { IntegrationConnectionsRepository } from '../repositories/integration-connections.repository'
-import { GoHighLevelOAuthService } from './services/gohighlevel-oauth.service'
+import { GoHighLevelApiService } from './services/gohighlevel-api.service'
 
 @Module({
-  imports: [ConfigModule],
   controllers: [GoHighLevelController],
-  providers: [GoHighLevelIntegration, IntegrationConnectionsRepository, GoHighLevelOAuthService],
-  exports: [GoHighLevelIntegration, GoHighLevelOAuthService],
+  providers: [GoHighLevelIntegration, IntegrationConnectionsRepository, GoHighLevelApiService],
+  exports: [GoHighLevelIntegration, GoHighLevelApiService],
 })
 export class GoHighLevelModule {}
