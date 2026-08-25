@@ -13,6 +13,7 @@
     "build": "turbo build",
     "test": "turbo test",
     "test:e2e": "turbo test:e2e",
+    "test:e2e:task-sync": "node scripts/e2e/roas-clickup-task-lifecycle.mjs",
     "typecheck": "turbo typecheck",
     "lint": "turbo lint",
     "lint:fix": "turbo lint:fix",
