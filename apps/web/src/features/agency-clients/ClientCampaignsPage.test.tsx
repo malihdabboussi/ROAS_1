@@ -3,9 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchAgencyClientCampaigns, fetchAgencyClients } from '@/lib/agency-clients'
 import { ClientCampaignsPage } from './ClientCampaignsPage'
 
-const { pushMock, setComposerDraftMock } = vi.hoisted(() => ({
+const { pushMock, setPendingComposerTextMock, setWantsNewConversationMock } = vi.hoisted(() => ({
   pushMock: vi.fn(),
-  setComposerDraftMock: vi.fn(),
+  setPendingComposerTextMock: vi.fn(),
+  setWantsNewConversationMock: vi.fn(),
 }))
 
 vi.mock('@/lib/agency-clients', async () => {
@@ -32,7 +33,10 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/lib/chat/studio-chat-runtime-adapter', () => ({
   useChatStore: {
-    getState: () => ({ setComposerDraft: setComposerDraftMock }),
+    getState: () => ({
+      setPendingComposerText: setPendingComposerTextMock,
+      setWantsNewConversation: setWantsNewConversationMock,
+    }),
   },
 }))
 
@@ -126,10 +130,10 @@ describe('ClientCampaignsPage', () => {
     render(<ClientCampaignsPage />)
 
     fireEvent.click(await screen.findByRole('button', { name: 'New campaign' }))
-    expect(setComposerDraftMock).toHaveBeenCalledWith(
-      'new',
+    expect(setPendingComposerTextMock).toHaveBeenCalledWith(
       expect.stringContaining('Help me create a new client campaign'),
     )
-    expect(pushMock).toHaveBeenCalledWith('/home?chat=new')
+    expect(setWantsNewConversationMock).toHaveBeenCalledWith(true)
+    expect(pushMock).toHaveBeenCalledWith('/home')
   })
 })

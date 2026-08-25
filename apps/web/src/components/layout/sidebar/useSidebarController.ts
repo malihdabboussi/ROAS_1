@@ -561,8 +561,9 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
           sel.action === 'create-campaign'
             ? 'Help me create a new client campaign. Start by asking me which client this is for, then work through the campaign details and required tasks with me.'
             : 'Help me create a new service request. Start by asking which client and campaign this is for, then collect the minimum details required to draft and delegate the work.'
-        useChatStore.getState().setComposerDraft('new', prompt)
-        useChatStore.getState().setWantsNewConversation(true)
+        const chat = useChatStore.getState()
+        chat.setPendingComposerText(prompt)
+        chat.setWantsNewConversation(true)
         setStudioSearchOpen(false)
         router.push('/home')
         return

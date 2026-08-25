@@ -110,13 +110,12 @@ export function ClientCampaignsPage() {
   }
 
   const openCampaignCreationChat = () => {
-    useChatStore
-      .getState()
-      .setComposerDraft(
-        'new',
-        'Help me create a new client campaign. Start by asking me which client this is for, then work through the campaign details and required tasks with me.',
-      )
-    router.push('/home?chat=new')
+    const chat = useChatStore.getState()
+    chat.setPendingComposerText(
+      'Help me create a new client campaign. Start by asking me which client this is for, then work through the campaign details and required tasks with me.',
+    )
+    chat.setWantsNewConversation(true)
+    router.push('/home')
   }
 
   return (
