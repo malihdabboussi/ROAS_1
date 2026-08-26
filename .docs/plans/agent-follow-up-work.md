@@ -39945,3 +39945,15 @@ Evidence: `apps/web/src/features/mission-control/components/dialogs/MissionDetai
 Needed work: Extract the plan and rating action orchestration into focused hooks while preserving the existing modal/view contract and Mission regression coverage.
 
 Reason not done now: The requested change only passes stable panel-state primitives through this controller; decomposing unrelated Mission behavior would materially widen the UI stability fix.
+
+## 2026-08-26 - [ARCH] Slack open-items repository exceeds the service limit
+
+Status: Open
+
+Found while: Consolidating Page Grader QC into a recipient-wide attention window.
+
+Evidence: `apps/api/src/modules/spaces/repositories/slack-open-items.repository.ts` is 476 LOC against the 400-line service/repository limit and owns open-item queries, lifecycle mutations, Slack delivery metadata, and QC anchor matching.
+
+Needed work: Split QC Slack anchor and delivery metadata operations into a focused repository while preserving the existing `SlackOpenItemsService` contract and repository tests.
+
+Reason not done now: The overage is pre-existing, and decomposing all open-item persistence would materially widen this targeted notification-policy fix.

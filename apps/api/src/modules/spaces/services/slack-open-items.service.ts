@@ -98,6 +98,7 @@ export class SlackOpenItemsService {
       externalClientId?: string | null
       clientLabel?: string | null
       sourceKeys?: string[]
+      pageGraderUserId?: string
     },
   ): Promise<SlackOpenItem | null> {
     return this.items.findQcSlackAnchor(supabase, input)

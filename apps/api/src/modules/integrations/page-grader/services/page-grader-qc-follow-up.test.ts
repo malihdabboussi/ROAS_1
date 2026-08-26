@@ -84,7 +84,7 @@ describe('page-grader QC Slack follow-up', () => {
     if (unchanged.mode === 'thread') {
       expect(unchanged.text).toContain('Impact Elite Coaching')
       expect(unchanged.text).toContain('finalized')
-      expect(unchanged.text).toContain('will not start a new check-in')
+      expect(unchanged.text).toContain('next daily digest')
     }
 
     const changed = decideQcSlackDelivery({

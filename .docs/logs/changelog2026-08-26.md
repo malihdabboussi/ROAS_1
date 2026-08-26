@@ -49,3 +49,13 @@ Why: Backfilled and newly inferred client IDs were stored in sync metadata but r
 Impact: Existing high-confidence backfills render after refresh, future unique client calls map automatically, ambiguous/internal calls remain unassigned, and manual mappings or clears are preserved.
 
 Files: `apps/web/src/lib/spaces/all-meetings-list-columns.ts`, `apps/web/src/lib/spaces/all-meetings-list-columns.test.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-meeting-sync.service.ts`, `apps/api/src/modules/integrations/page-grader/services/__tests__/page-grader-meeting-sync.service.test.ts`, `documentation/utilities/all-meetings-list-columns.md`, `documentation/features/space-templates.md`
+
+## 2026-08-26 11:33 - [FIX]
+
+What: Consolidated Page Grader QC Slack delivery into one recipient-wide 24-hour attention window and accepted structured Campaign QC findings from Page Grader.
+
+Why: Client- and finding-scoped cooldowns let rotating campaign hygiene findings repeatedly open or refresh Pixel noise without adding a new decision.
+
+Impact: Campaigns can rotate without creating another top-level QC DM, follow-ups wait one day, and structured findings retain their real client, campaign, severity, and source identity instead of becoming an unscoped digest fallback.
+
+Files: `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-follow-up.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-follow-up.messages.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-slack-bridge.service.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-follow-up.test.ts`, `apps/api/src/modules/integrations/page-grader/services/__tests__/page-grader-qc-slack-bridge.service.test.ts`, `apps/api/src/modules/spaces/services/slack-open-items.service.ts`, `apps/api/src/modules/spaces/repositories/slack-open-items.repository.ts`, `documentation/features/page-grader-campaign-brain-sync.md`

@@ -284,6 +284,7 @@ export class SlackOpenItemsRepository {
       externalClientId?: string | null
       clientLabel?: string | null
       sourceKeys?: string[]
+      pageGraderUserId?: string
     },
   ): Promise<SlackOpenItem | null> {
     const { data, error } = await supabase
@@ -295,13 +296,17 @@ export class SlackOpenItemsRepository {
       .in('status', ['open', 'acknowledged', 'snoozed', 'resolved'])
       .gte('last_activity_at', input.sinceIso)
       .not('metadata->>slack_parent_ts', 'is', null)
-      .order('first_seen_at', { ascending: true })
+      .order('first_seen_at', { ascending: false })
       .limit(200)
     if (error) throw new Error(`Failed to load QC Slack thread: ${error.message}`)
     const match = ((data as SlackOpenItem[] | null) ?? []).find((item) => {
       const parentTs =
         typeof item.metadata.slack_parent_ts === 'string' ? item.metadata.slack_parent_ts.trim() : ''
-      return parentTs.length > 0 && this.matchesQcSlackScope(item, input)
+      if (!parentTs) return false
+      if (input.pageGraderUserId) {
+        return item.metadata.page_grader_user_id === input.pageGraderUserId
+      }
+      return this.matchesQcSlackScope(item, input)
     })
     return match ?? null
   }
