@@ -84,13 +84,18 @@ export class PageGraderMeetingSyncService {
       }
     }
 
-    await this.stampRoutes(input.supabase, contexts, {
-      status: result.failed > 0 ? 'partial_failure' : 'synced',
-      source_meeting_id: meeting.source_meeting_id,
-      clients: matches,
-      synced_at: new Date().toISOString(),
-      failed: result.failed,
-    })
+    await this.stampRoutes(
+      input.supabase,
+      contexts,
+      {
+        status: result.failed > 0 ? 'partial_failure' : 'synced',
+        source_meeting_id: meeting.source_meeting_id,
+        clients: matches,
+        synced_at: new Date().toISOString(),
+        failed: result.failed,
+      },
+      matches.length === 1 ? clientCampaignMapping(matches[0]!, catalog.client_scope_map) : null,
+    )
     return result
   }
 
@@ -228,20 +233,44 @@ export class PageGraderMeetingSyncService {
     supabase: SupabaseClient,
     contexts: Array<{ item_id: string; custom_data: Record<string, unknown> }>,
     meetingSync: Record<string, unknown>,
+    automaticMapping: Record<string, unknown> | null = null,
   ) {
     for (const context of contexts) {
       const pageGrader = asRecord(context.custom_data.page_grader)
+      const mappingSource = stringValue(context.custom_data.client_campaign_source)
+      const preserveManualMapping = mappingSource === 'manual' || mappingSource === 'manual_cleared'
       const { error } = await supabase
         .from('space_items')
         .update({
           custom_data: {
             ...context.custom_data,
             page_grader: { ...pageGrader, meeting_sync: meetingSync },
+            ...(automaticMapping && !preserveManualMapping
+              ? {
+                  client_campaign: automaticMapping,
+                  client_campaign_source: 'automatic_meeting_match',
+                }
+              : {}),
           },
         })
         .eq('id', context.item_id)
       if (error) this.logger.warn(`Could not stamp Page Grader meeting sync: ${error.message}`)
     }
+  }
+}
+
+export function clientCampaignMapping(
+  match: { id: string; name: string },
+  scopeMap: Record<string, PageGraderClientScopeEntry>,
+): Record<string, unknown> {
+  const scope = scopeMap[match.id]
+  return {
+    client_id: match.id,
+    client_name: match.name,
+    campaign_id: scope?.campaign_id ?? '',
+    campaign_name: scope?.campaign_name ?? match.name,
+    ...(scope?.space_id ? { space_id: scope.space_id } : {}),
+    ...(scope?.space_title ? { space_title: scope.space_title } : {}),
   }
 }
 

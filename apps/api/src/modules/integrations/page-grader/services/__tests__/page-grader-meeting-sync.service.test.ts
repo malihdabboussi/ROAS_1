@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeFathomMeeting, resolveMeetingClients } from '../page-grader-meeting-sync.service'
+import {
+  clientCampaignMapping,
+  normalizeFathomMeeting,
+  resolveMeetingClients,
+} from '../page-grader-meeting-sync.service'
 
 const clients = [
   { id: 'client-mfs', name: 'Multifamily Strategy' },
@@ -7,6 +11,29 @@ const clients = [
 ]
 
 describe('Page Grader meeting sync', () => {
+  it('turns a unique client match into the mapping rendered by All Meetings', () => {
+    expect(
+      clientCampaignMapping(
+        { id: 'client-one-percent', name: 'The One Percent Life' },
+        {
+          'client-one-percent': {
+            campaign_id: 'campaign-one-percent',
+            campaign_name: 'The One Percent Life',
+            space_id: 'space-general',
+            space_title: 'General',
+          },
+        },
+      ),
+    ).toEqual({
+      client_id: 'client-one-percent',
+      client_name: 'The One Percent Life',
+      campaign_id: 'campaign-one-percent',
+      campaign_name: 'The One Percent Life',
+      space_id: 'space-general',
+      space_title: 'General',
+    })
+  })
+
   it('normalizes a Fathom call into the Page Grader meeting contract', () => {
     const result = normalizeFathomMeeting({
       recording_id: 'recording-1',
@@ -55,6 +82,31 @@ describe('Page Grader meeting sync', () => {
 
     expect(matches).toEqual([
       { id: 'client-mfs', name: 'Multifamily Strategy', matched_by: 'roas_campaign_mapping' },
+    ])
+  })
+
+  it('keeps a unique meeting match suitable for the Client Workspace mapping', () => {
+    const matches = resolveMeetingClients({
+      meeting: {
+        source_meeting_id: 'meeting-adam',
+        meeting_title: 'Adam Lamb x ROAS Weekly Meeting',
+        meeting_date: '2026-08-19T19:26:45.000Z',
+      },
+      clients: [{ id: 'one-percent', name: 'The One Percent Life' }],
+      scopeMap: {},
+      contexts: [
+        {
+          space_id: 'meetings',
+          campaign_id: null,
+          title: 'Adam Lamb x ROAS Weekly Meeting',
+          description: 'Client call for The One Percent Life',
+          custom_data: {},
+        },
+      ],
+    })
+
+    expect(matches).toEqual([
+      { id: 'one-percent', name: 'The One Percent Life', matched_by: 'unique_client_name' },
     ])
   })
 

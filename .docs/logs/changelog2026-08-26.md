@@ -19,3 +19,13 @@ Why: A generic Campaign Knowledge row could mark catch-up successful while all C
 Impact: Incomplete imports remain retryable, cannot advance sync stamps or success jobs, and catch-up repairs mapped clients until their Page Grader context is retrievable by chat.
 
 Files: `apps/api/src/modules/integrations/page-grader/repositories/page-grader-brain-sync.repository.ts`, `apps/api/src/modules/integrations/page-grader/repositories/page-grader-brain-sync.repository.test.ts`, `apps/api/src/modules/brain/services/page-grader-brain-package-ingest.service.ts`, `apps/api/src/modules/brain/services/__tests__/page-grader-brain-package-ingest.service.test.ts`, `documentation/features/page-grader-campaign-brain-sync.md`
+
+## 2026-08-26 10:40 - [FIX]
+
+What: Reduced All Meetings to one visible Client Workspace association and made unique Page Grader meeting matches persist the shared `client_campaign` mapping used by the table.
+
+Why: Backfilled and newly inferred client IDs were stored in sync metadata but remained invisible because meeting rows render a different mapping contract; Campaign Space also duplicated the client context.
+
+Impact: Existing high-confidence backfills render after refresh, future unique client calls map automatically, ambiguous/internal calls remain unassigned, and manual mappings or clears are preserved.
+
+Files: `apps/web/src/lib/spaces/all-meetings-list-columns.ts`, `apps/web/src/lib/spaces/all-meetings-list-columns.test.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-meeting-sync.service.ts`, `apps/api/src/modules/integrations/page-grader/services/__tests__/page-grader-meeting-sync.service.test.ts`, `documentation/utilities/all-meetings-list-columns.md`, `documentation/features/space-templates.md`

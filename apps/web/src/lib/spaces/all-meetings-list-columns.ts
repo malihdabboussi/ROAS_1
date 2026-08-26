@@ -7,7 +7,6 @@ export const ALL_MEETINGS_LIST_FIELD_IDS = [
   'title',
   'call_kind',
   'campaign_name',
-  'space_title',
   'host',
   'attendees',
   'call_date',
@@ -72,7 +71,6 @@ const ONE_ROOM_COLUMN_WIDTHS: Record<string, number> = {
   title: 360,
   call_kind: 110,
   campaign_name: 180,
-  space_title: 180,
   host: 160,
   attendees: 260,
   call_date: 170,
@@ -96,7 +94,6 @@ type MeetingsListSchema<TField extends MeetingsListField, TView extends Meetings
 const REQUIRED_FIELDS = [
   CLIENT_CAMPAIGN_FIELD,
   CLIENT_WORKSPACE_FIELD,
-  MAPPED_SPACE_FIELD,
   HOST_FIELD,
   ATTENDEES_FIELD,
   CALL_STATUS_FIELD,
@@ -114,15 +111,15 @@ export function allMeetingsNeedsOneRoomColumns(view: MeetingsListView | undefine
   return !visible.includes('host') || !visible.includes('call_status')
 }
 
-/** Insert All Tasks Client Workspace + Campaign Space columns in place of Client / Campaign. */
+/** Insert Client Workspace in place of the legacy combined/Space columns. */
 export function withClientWorkspaceColumns(visible: string[]): string[] {
-  if (visible.includes('campaign_name') && visible.includes('space_title')) return visible
+  if (visible.includes('campaign_name') && !visible.includes('space_title')) return visible
   const without = visible.filter(
     (id) => id !== 'client_campaign' && id !== 'campaign_name' && id !== 'space_title',
   )
   const afterKind = without.indexOf('call_kind')
   const at = afterKind >= 0 ? afterKind + 1 : Math.max(without.indexOf('title') + 1, 0)
-  return [...without.slice(0, at), 'campaign_name', 'space_title', ...without.slice(at)]
+  return [...without.slice(0, at), 'campaign_name', ...without.slice(at)]
 }
 
 /** Restore the meeting participant column immediately after Host without resetting user order. */
@@ -134,7 +131,7 @@ export function withAttendeesColumn(visible: string[]): string[] {
 }
 
 /**
- * All Meetings one-room columns: Client Workspace, Campaign Space, Host, Attendees, Call status.
+ * All Meetings one-room columns: Client Workspace, Host, Attendees, Call status.
  * Hides Priority and task Status on that view. Does not delete those fields.
  * Client / Campaign mapping stays as a field; it is not a default column.
  */
@@ -171,7 +168,6 @@ export function ensureAllMeetingsListColumns<
           ...ONE_ROOM_COLUMN_WIDTHS,
           ...view.column_widths,
           campaign_name: 180,
-          space_title: 180,
           host: view.column_widths?.host ?? 160,
           attendees: view.column_widths?.attendees ?? 260,
           call_status: view.column_widths?.call_status ?? 140,
@@ -199,7 +195,6 @@ export function ensureAllMeetingsListColumns<
       column_widths: {
         ...view.column_widths,
         campaign_name: view.column_widths?.campaign_name ?? 180,
-        space_title: view.column_widths?.space_title ?? 180,
         attendees: view.column_widths?.attendees ?? 260,
       },
     }
