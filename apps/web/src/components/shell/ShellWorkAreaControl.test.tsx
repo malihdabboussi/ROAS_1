@@ -36,7 +36,7 @@ describe('ShellWorkAreaControl', () => {
   it('keeps the active surface available while collapsing and restoring it', () => {
     render(<ShellWorkAreaControl currentPage={currentPage} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Collapse page — chat full screen' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Close page' }))
     expect(useShellStore.getState().workAreaOpen).toBe(false)
     expect(useShellStore.getState().artifactViewer.target).toEqual(target)
 
@@ -64,7 +64,7 @@ describe('ShellWorkAreaControl', () => {
     })
     render(<ShellWorkAreaControl currentPage={currentPage} />)
 
-    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Collapse page — chat full screen' }))
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Close page' }))
     expect(screen.getByRole('menu', { name: 'Recent work surfaces' })).toHaveClass('w-spacing-64')
     expect(screen.getByRole('menuitem', { name: 'Agenda' })).toHaveClass('text-left')
     expect(screen.getByRole('menuitem', { name: 'Aaron x Dylan x Nate' })).toBeInTheDocument()
@@ -81,7 +81,7 @@ describe('ShellWorkAreaControl', () => {
   it('navigates to a different named page from history', () => {
     render(<ShellWorkAreaControl currentPage={currentPage} />)
 
-    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Collapse page — chat full screen' }))
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Close page' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Skills' }))
     expect(useShellStore.getState().artifactViewer.target).toEqual(target)
     expect(useShellStore.getState().workAreaOpen).toBe(true)
@@ -93,7 +93,7 @@ describe('ShellWorkAreaControl', () => {
     useShellStore.setState({ pendingWorkRestore: pending })
     render(<ShellWorkAreaControl currentPage={currentPage} />)
 
-    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Collapse page — chat full screen' }))
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Close page' }))
     fireEvent.click(screen.getByRole('menuitem', { name: 'Skills' }))
 
     expect(useShellStore.getState().pendingWorkRestore).toEqual(pending)

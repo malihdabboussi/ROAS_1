@@ -74,7 +74,7 @@ describe('ShellArtifactViewerPanel', () => {
     )
     expect(screen.queryByRole('button', { name: 'Open' })).toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Close artifact viewer' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Close page' }))
     expect(useShellStore.getState().artifactViewer.target).toBeNull()
   })
 
@@ -105,7 +105,7 @@ describe('ShellArtifactViewerPanel', () => {
     const collapse = screen.getByRole('button', { name: 'Collapse artifact viewer' })
     expect(controls).toContainElement(collapse)
     expect(collapse.querySelector('.lucide-minimize-2')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Close artifact viewer' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Close page' })).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Collapse artifact viewer' }))
     expect(container.querySelector('[data-shell-artifact-viewer]')?.className).not.toContain(
@@ -143,6 +143,6 @@ describe('ShellArtifactViewerPanel', () => {
       'truncate',
     )
     expect(screen.getByRole('button', { name: 'Expand artifact viewer' })).toHaveClass('shrink-0')
-    expect(screen.getByRole('button', { name: 'Close artifact viewer' })).toHaveClass('shrink-0')
+    expect(screen.getByRole('button', { name: 'Close page' })).toHaveClass('shrink-0')
   })
 })

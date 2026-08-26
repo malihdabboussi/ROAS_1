@@ -14,9 +14,12 @@ vi.mock('@/lib/missions', () => ({
 
 vi.mock('@/components/missions/MissionDetailModalAdapter', () => ({
   MissionDetailModal: (props: Record<string, unknown>) => (
-    <div data-testid="mission-detail" data-has-header-actions={String('headerActions' in props)}>
+    <div data-testid="mission-detail" data-panel-expanded={String(props.panelExpanded)}>
+      <button type="button" onClick={props.onTogglePanelExpanded as () => void}>
+        {props.panelExpanded ? 'Collapse mission viewer' : 'Expand mission viewer'}
+      </button>
       <button type="button" onClick={props.onClose as () => void}>
-        Close mission
+        Close page
       </button>
     </div>
   ),
@@ -44,7 +47,7 @@ describe('ShellMissionArtifactViewerAdapter', () => {
     const { container } = render(<ShellMissionArtifactViewerAdapter target={target} />)
 
     expect(await screen.findByTestId('mission-detail')).toHaveAttribute(
-      'data-has-header-actions',
+      'data-panel-expanded',
       'false',
     )
     fireEvent.click(screen.getByRole('button', { name: 'Expand mission viewer' }))
@@ -53,6 +56,7 @@ describe('ShellMissionArtifactViewerAdapter', () => {
       'absolute',
     )
     expect(screen.getByRole('button', { name: 'Collapse mission viewer' })).toBeTruthy()
+    expect(screen.getByTestId('mission-detail')).toHaveAttribute('data-panel-expanded', 'true')
 
     fireEvent.click(screen.getByRole('button', { name: 'Collapse mission viewer' }))
     expect(
@@ -63,7 +67,7 @@ describe('ShellMissionArtifactViewerAdapter', () => {
   it('keeps the existing Mission close action wired to the shell viewer', async () => {
     render(<ShellMissionArtifactViewerAdapter target={target} />)
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Close mission' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Close page' }))
 
     expect(useShellStore.getState().artifactViewer.target).toBeNull()
   })

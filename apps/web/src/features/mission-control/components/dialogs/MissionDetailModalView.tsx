@@ -22,6 +22,8 @@ import {
 export function MissionDetailModalView({
   mission,
   presentation,
+  panelExpanded,
+  onTogglePanelExpanded,
   liveMission,
   title,
   setTitle,
@@ -327,6 +329,8 @@ export function MissionDetailModalView({
       ) : (
         <MissionDetailDesktopShell
           presentation={presentation}
+          panelExpanded={panelExpanded}
+          onTogglePanelExpanded={onTogglePanelExpanded}
           shellZ={shellZ}
           hideMissionSurface={previewDeliverable != null}
           onClose={onClose}

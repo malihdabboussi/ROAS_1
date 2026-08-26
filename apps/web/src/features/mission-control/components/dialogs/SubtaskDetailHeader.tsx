@@ -8,6 +8,8 @@ interface SubtaskDetailHeaderProps {
   onBack: () => void
   onClose: () => void
   actions?: ReactNode
+  panelAction?: ReactNode
+  closeLabel?: string
 }
 
 export function SubtaskDetailHeader({
@@ -16,6 +18,8 @@ export function SubtaskDetailHeader({
   onBack,
   onClose,
   actions,
+  panelAction,
+  closeLabel = 'Close',
 }: SubtaskDetailHeaderProps) {
   return (
     <div className="gap-spacing-3 pb-spacing-2 flex items-start justify-between">
@@ -34,11 +38,13 @@ export function SubtaskDetailHeader({
       </div>
       <div className="gap-spacing-2 flex shrink-0 items-center">
         {actions}
+        {panelAction}
         <button
           type="button"
           onClick={onClose}
           className="btn-icon-bare shrink-0"
-          aria-label="Close"
+          aria-label={closeLabel}
+          title={closeLabel}
         >
           <X className="icon-sm" />
         </button>

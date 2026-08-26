@@ -39933,3 +39933,15 @@ Evidence: `apps/web/src/features/studio/components/ChatInterface.tsx` is 1,086 L
 Needed work: Continue decomposing chat campaign-context orchestration, extract the Space embed/list projection boundary, and extract Recents data loading before adding unrelated behavior to these files.
 
 Reason not done now: The requested global scope must integrate at the existing ownership points; decomposing these broad, pre-existing surfaces is a separate behavior-neutral refactor with a larger regression area.
+
+## 2026-08-26 - [ARCH] Mission detail controller is at the component LOC cap
+
+Status: Open
+
+Found while: Stabilizing the Mission page Expand/Collapse and Close Page controls.
+
+Evidence: `apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.tsx` is exactly 400 LOC, the maximum component limit, and still owns mission state, access approvals, attachment orchestration, plan actions, rating submission, and view projection.
+
+Needed work: Extract the plan and rating action orchestration into focused hooks while preserving the existing modal/view contract and Mission regression coverage.
+
+Reason not done now: The requested change only passes stable panel-state primitives through this controller; decomposing unrelated Mission behavior would materially widen the UI stability fix.

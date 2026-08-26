@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react'
+import { Maximize2, Minimize2 } from 'lucide-react'
 import { ResizableDivider } from '@/components/layout/ResizableDivider'
 import { usePanelResize } from '@/components/layout/usePanelResize'
+import { Tooltip } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils/cn'
 import type { Mission, MissionDeliverable, MissionSubtask } from '../../types'
 import { MissionMenuDropdown } from '../mission-menu/MissionMenuDropdown'
@@ -17,6 +19,8 @@ import { SubtasksSection } from './SubtasksSection'
 
 interface MissionDetailDesktopShellProps {
   presentation?: 'modal' | 'panel'
+  panelExpanded?: boolean
+  onTogglePanelExpanded?: () => void
   shellZ: string
   hideMissionSurface: boolean
   onClose: () => void
@@ -43,6 +47,8 @@ interface MissionDetailDesktopShellProps {
 
 export function MissionDetailDesktopShell({
   presentation = 'modal',
+  panelExpanded = false,
+  onTogglePanelExpanded,
   shellZ,
   hideMissionSurface,
   onClose,
@@ -87,6 +93,22 @@ export function MissionDetailDesktopShell({
 
   const isActiveHumanGate =
     selectedSubtask?.assignee_type === 'human' && selectedSubtask.status === 'awaiting_human'
+  const panelAction = onTogglePanelExpanded ? (
+    <Tooltip label={panelExpanded ? 'Collapse' : 'Expand'} side="bottom">
+      <button
+        type="button"
+        onClick={onTogglePanelExpanded}
+        aria-label={panelExpanded ? 'Collapse mission viewer' : 'Expand mission viewer'}
+        className="btn-icon-bare shrink-0"
+      >
+        {panelExpanded ? (
+          <Minimize2 className="icon-sm" aria-hidden />
+        ) : (
+          <Maximize2 className="icon-sm" aria-hidden />
+        )}
+      </button>
+    </Tooltip>
+  ) : null
 
   const gateLeadSlot =
     isActiveHumanGate && subtaskDetailProps ? (
@@ -132,6 +154,8 @@ export function MissionDetailDesktopShell({
             onBack={onBackToMission}
             onClose={onClose}
             actions={subtaskHeaderActions}
+            panelAction={panelAction}
+            closeLabel={presentation === 'panel' ? 'Close page' : 'Close'}
           />
         ) : (
           <MissionDetailHeader
@@ -139,6 +163,8 @@ export function MissionDetailDesktopShell({
             onTitleChange={onTitleChange}
             onClose={onClose}
             onOpenMenu={onOpenMenu}
+            panelAction={panelAction}
+            closeLabel={presentation === 'panel' ? 'Close page' : 'Close'}
           />
         )}
         {!selectedSubtask && menuAnchor ? (

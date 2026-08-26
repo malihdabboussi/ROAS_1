@@ -1,10 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Maximize2, Minimize2 } from 'lucide-react'
 import { MissionDetailModal } from '@/components/missions/MissionDetailModalAdapter'
 import { PageSkeleton } from '@/components/ui/feedback/ListSkeleton'
-import { Tooltip } from '@/components/ui/tooltip'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
 import { fetchMissionById, type Mission } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
@@ -20,6 +18,7 @@ export function ShellMissionArtifactViewerAdapter({
   const [mission, setMission] = useState<Mission | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const handleToggleExpanded = useCallback(() => setExpanded((current) => !current), [])
   const load = useCallback(async () => {
     setLoadFailed(false)
     try {
@@ -54,44 +53,19 @@ export function ShellMissionArtifactViewerAdapter({
       </div>
     )
   }
-  const expansionControl = expanded ? (
-    <Tooltip label="Collapse" side="bottom">
-      <button
-        type="button"
-        onClick={() => setExpanded(false)}
-        aria-label="Collapse mission viewer"
-        className="btn-icon-bare shrink-0"
-      >
-        <Minimize2 className="icon-sm" />
-      </button>
-    </Tooltip>
-  ) : (
-    <Tooltip label="Expand" side="bottom">
-      <button
-        type="button"
-        onClick={() => setExpanded(true)}
-        aria-label="Expand mission viewer"
-        className="btn-icon-bare shrink-0"
-      >
-        <Maximize2 className="icon-sm" />
-      </button>
-    </Tooltip>
-  )
-
   return (
     <div
       className={cn(
-        'relative flex h-full min-h-0 w-full',
-        expanded && 'z-modal-content absolute inset-0 w-full',
+        'flex h-full min-h-0 w-full',
+        expanded ? 'z-modal-content absolute inset-0 w-full' : 'relative',
       )}
       data-shell-mission-artifact-viewer
     >
-      <div className="right-spacing-10 top-spacing-4 z-dropdown absolute">
-        {expansionControl}
-      </div>
       <MissionDetailModal
         mission={mission}
         presentation="panel"
+        panelExpanded={expanded}
+        onTogglePanelExpanded={handleToggleExpanded}
         onClose={close}
         onUpdated={() => void load()}
       />

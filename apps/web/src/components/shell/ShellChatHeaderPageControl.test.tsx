@@ -31,10 +31,9 @@ describe('ShellChatHeaderPageControl', () => {
 
   afterEach(cleanup)
 
-  it('collapses the page from the chat header while the page is open', () => {
+  it('does not render a page control in chat while the page is open', () => {
     render(<ShellChatHeaderPageControl />)
-    fireEvent.click(screen.getByRole('button', { name: 'Collapse page — chat full screen' }))
-    expect(useShellStore.getState().workAreaOpen).toBe(false)
+    expect(screen.queryByRole('button', { name: 'Show page' })).toBeNull()
   })
 
   it('shows the page from the chat header while the page is collapsed', () => {

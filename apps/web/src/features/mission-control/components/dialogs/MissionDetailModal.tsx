@@ -42,6 +42,8 @@ export function MissionDetailModal({
   elevatedStacking = false,
   initialSubtaskId = null,
   presentation = 'modal',
+  panelExpanded,
+  onTogglePanelExpanded,
 }: MissionDetailModalProps) {
   const [title, setTitle] = useState(mission.title)
   const [description, setDescription] = useState(mission.brief ?? mission.description ?? '')
@@ -58,7 +60,6 @@ export function MissionDetailModal({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const activityEndRef = useRef<HTMLDivElement>(null)
-
   const {
     prd,
     prdLoading,
@@ -123,7 +124,6 @@ export function MissionDetailModal({
   }, [liveMission])
 
   useMissionDetailFocus(mission.id, title, currentStatus)
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
@@ -229,7 +229,6 @@ export function MissionDetailModal({
   }, [mission.id, onUpdated])
 
   const pendingAccessRequests = accessRequests.filter((request) => request.status === 'pending')
-
   const { approvingAccess, denyingAccess, handleApproveAccess, handleDenyAccess } =
     useMissionAccessApproval({
       missionId: mission.id,
@@ -310,6 +309,8 @@ export function MissionDetailModal({
     <MissionDetailModalView
       mission={mission}
       presentation={presentation}
+      panelExpanded={panelExpanded}
+      onTogglePanelExpanded={onTogglePanelExpanded}
       liveMission={liveMission}
       title={title}
       setTitle={setTitle}

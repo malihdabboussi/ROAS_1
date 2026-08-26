@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { MoreHorizontal, X } from 'lucide-react'
 
 interface MissionDetailHeaderProps {
@@ -8,6 +8,8 @@ interface MissionDetailHeaderProps {
   onTitleChange: (value: string) => void
   onClose: () => void
   onOpenMenu?: (anchor: HTMLElement) => void
+  panelAction?: ReactNode
+  closeLabel?: string
 }
 
 export function MissionDetailHeader({
@@ -15,6 +17,8 @@ export function MissionDetailHeader({
   onTitleChange,
   onClose,
   onOpenMenu,
+  panelAction,
+  closeLabel = 'Close',
 }: MissionDetailHeaderProps) {
   const menuButtonRef = useRef<HTMLButtonElement>(null)
 
@@ -42,11 +46,13 @@ export function MissionDetailHeader({
             </button>
           </span>
         ) : null}
+        {panelAction}
         <button
           type="button"
           onClick={onClose}
           className="btn-icon-bare shrink-0"
-          aria-label="Close"
+          aria-label={closeLabel}
+          title={closeLabel}
         >
           <X className="icon-sm" />
         </button>

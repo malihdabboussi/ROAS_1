@@ -1,5 +1,15 @@
 # Changelog - August 26, 2026
 
+## 2026-08-26 10:20 - [FIX]
+
+What: Stabilized shell page visibility and Mission artifact expansion controls. Chat now shows Show Page only when the page is closed; open pages use Close Page in their own header; Mission More, Expand/Collapse, and Close Page controls share one header row.
+
+Why: Mission expansion combined conflicting relative and absolute positioning, while the chat and page headers exposed overlapping collapse controls that could resize, hide, or reopen the wrong surface.
+
+Impact: Expand/Collapse changes only the Mission pane layout, Close Page changes only page visibility, and the controls remain predictable across Mission, artifact, and standard page surfaces.
+
+Files: apps/web/src/components/shell/ShellArtifactViewerPanel.tsx, apps/web/src/components/shell/ShellChatHeaderPageControl.tsx, apps/web/src/components/shell/ShellMissionArtifactViewerAdapter.tsx, apps/web/src/components/shell/ShellWorkAreaControl.tsx, apps/web/src/features/mission-control/components/dialogs/, documentation/features/missions.md
+
 ## 2026-08-26 10:28 - [FIX]
 
 What: Made the Home New Chat composer inherit the globally selected Client Workspace campaign and prefer its mapped General Space, with a mapped-Space fallback.
@@ -9,6 +19,16 @@ Why: New Chat remained unscoped even while the platform-wide client filter was a
 Impact: The composer displays the selected client context immediately and seeds new conversations with the same client campaign and Space IDs.
 
 Files: `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx`, `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.test.tsx`, `documentation/utilities/client-scope.md`
+
+## 2026-08-26 10:32 - [FIX]
+
+What: Top-aligned Conversation scope flyouts with the row that opens them while retaining horizontal viewport flipping and vertical edge clamping.
+
+Why: Nested campaign, client, and Space flyouts were bottom-aligned, placing their content above the hovered row and making the pointer path feel disconnected.
+
+Impact: Home, Recents filters, and Connections now open nested scope menus directly beside the hovered item for a predictable horizontal navigation path.
+
+Files: apps/web/src/components/conversations/conversation-scope-picker-layout.ts, apps/web/src/components/conversations/conversation-scope-picker-layout.test.ts
 
 ## 2026-08-26 10:36 - [FIX]
 
