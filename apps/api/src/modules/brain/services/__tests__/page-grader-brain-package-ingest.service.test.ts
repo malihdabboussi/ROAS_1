@@ -155,4 +155,54 @@ describe('PageGraderBrainPackageIngestService', () => {
       }),
     )
   })
+
+  it('does not mark an unchanged package synced when Brain embeddings remain missing', async () => {
+    const pkg = {
+      page_grader_client_id: 'pg-prospecting-on-demand',
+      client: { id: 'pg-prospecting-on-demand' },
+    }
+    const contentHash = computePageGraderPackageContentHash(pkg)
+    const campaignQuery: Record<string, unknown> = {
+      select: vi.fn(() => campaignQuery),
+      eq: vi.fn(() => campaignQuery),
+      is: vi.fn(() => campaignQuery),
+      maybeSingle: vi.fn(async () => ({
+        data: {
+          id: 'campaign-1',
+          name: 'Prospecting On Demand',
+          config: { external_sources: { page_grader: { content_hash: contentHash } } },
+          context: {},
+        },
+        error: null,
+      })),
+      update: vi.fn(() => campaignQuery),
+      limit: vi.fn(() => campaignQuery),
+    }
+    const brainQuery: Record<string, unknown> = {
+      select: vi.fn(() => brainQuery),
+      eq: vi.fn(() => brainQuery),
+      limit: vi.fn(() => brainQuery),
+      maybeSingle: vi.fn(async () => ({ data: { id: 'brain-1' }, error: null })),
+    }
+    const supabase = {
+      from: vi.fn((table: string) => (table === 'campaigns' ? campaignQuery : brainQuery)),
+    }
+    const service = new PageGraderBrainPackageIngestService(
+      {} as never,
+      {} as never,
+      {
+        repairBrain: vi.fn(async () => ({ found: 32, embedded: 0, failed: 32 })),
+      } as never,
+    )
+
+    await expect(
+      service.ingestPackage(supabase as never, {
+        userId: 'user-1',
+        orgId: 'org-1',
+        campaignId: 'campaign-1',
+        package: pkg,
+      }),
+    ).rejects.toThrow('32 Page Grader memories are missing retrieval embeddings')
+    expect(campaignQuery.update).not.toHaveBeenCalled()
+  })
 })

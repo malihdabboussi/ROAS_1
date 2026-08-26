@@ -1,6 +1,6 @@
 # Page Grader Campaign Brain Sync
 
-Last Modified: August 24, 2026
+Last Modified: August 26, 2026
 
 ## Overview
 
@@ -13,6 +13,9 @@ Mapped Page Grader clients sync continuously into ROAS campaign brains. Page Gra
    - Upserts `ns_memories` (+ evidence chunks) on the campaign brain by `content_hash`
    - Embeds any Page Grader `ns_memories` rows whose Brain vector is still
      missing, including unchanged packages from older imports
+   - Fails the import and leaves it retryable when any Page Grader memory still
+     lacks a retrieval embedding; sync cursors and success jobs advance only
+     after every imported memory is searchable
    - Indexes seed memories into Campaign Knowledge via `SpaceRetrievalIndexService` / `space_semantic_objects`
    - Stamps cursors on `campaigns.config.external_sources.page_grader` and `user_integrations.metadata.client_scope_map`
    - Records a succeeded `page_grader_brain_sync` job for the Brain processing queue
@@ -25,7 +28,8 @@ Mapped Page Grader clients sync continuously into ROAS campaign brains. Page Gra
    - Reconciliation mirrors the Page Grader campaign screen: soft-deleted rows and `archived` campaigns are excluded.
    - A previously synced inactive Space is deleted only when it still contains generated Page Grader content exclusively. Spaces with operator-added content are retained for review.
 5. Unchanged `content_hash` skips package writes only when the mapped campaign
-   already has indexed Campaign Knowledge **and** the campaign/Meta fingerprint
+   already has Page Grader memories in its mapped Campaign Brain, every one of
+   those memories has a retrieval embedding, **and** the campaign/Meta fingerprint
    (`campaign_space_hash`) also matches, so operational Space structure cannot
    become stale behind an unchanged memory hash. It still repairs missing
    Campaign Brain embeddings before returning. If the campaign is an empty
@@ -141,6 +145,7 @@ Repeated manual requests use the deterministic Page Grader client and meeting ti
 
 ## Decision Log
 
+- **2026-08-26:** Catch-up readiness now verifies Page Grader `ns_memories` and their retrieval embeddings in the mapped Campaign Brain. Generic `space_semantic_objects` no longer proves that Pixel can retrieve client context. Deterministic imports fail before stamping their cursor or recording success when embedding repair leaves any Page Grader memory unsearchable; unchanged packages remain eligible for retry.
 - **2026-08-24:** Replaced the client overview's raw latest-Slack-message card and retired `/chat?campaign=…` link with a campaign-scoped **Chats & Missions** tab. Emoji-only Slack shortcodes fall back to a readable conversation label, chats open in the shared drawer, and missions open in the existing mission detail surface.
 - **2026-08-20:** Portal client import and Brain package ingest now merge `pipeline_stage` / `status` onto `campaigns.config.external_sources.page_grader` (including hash-unchanged skip, because pipeline can change without `content_hash` changing). `GET /clients` still asks for `include_all_statuses` and `include_inactive`, then retries without those flags on HTTP 400/422 so an unknown Portal query name cannot blank the Clients list.
 - **2026-08-18:** The Page Grader client **General** Space is the hidden client overview. Navigating to it opens `/campaigns/{id}?client=…`. It stays a real Space for Brain/Connections routing and is hidden from space switchers. Org system General is unchanged.
