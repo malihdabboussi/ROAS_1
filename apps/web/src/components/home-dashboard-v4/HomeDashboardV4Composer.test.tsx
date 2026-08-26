@@ -19,6 +19,12 @@ const mocks = vi.hoisted(() => ({
   >,
   ensureGeneralSpace: vi.fn(),
   toastError: vi.fn(),
+  clientScope: null as null | {
+    clientId: string
+    clientName: string
+    campaignId: string | null
+    spaceIds: string[]
+  },
 }))
 
 vi.mock('sonner', () => ({ toast: { error: mocks.toastError } }))
@@ -184,6 +190,10 @@ vi.mock('@/lib/flows/flows-scope-storage', () => ({
   matchesFlowsConceptSpace: () => false,
 }))
 
+vi.mock('@/lib/client-scope', () => ({
+  useClientScope: () => ({ scope: mocks.clientScope }),
+}))
+
 vi.mock('@/lib/programs', () => ({
   fetchPrograms: vi.fn(() => Promise.resolve([])),
 }))
@@ -194,6 +204,7 @@ describe('HomeDashboardV4Composer', () => {
     mocks.isOrgOnly = true
     mocks.campaignRows = []
     mocks.spaceRows = [{ id: 'space-1', title: 'Workspace', campaign_id: 'campaign-1' }]
+    mocks.clientScope = null
     mocks.ensureGeneralSpace.mockResolvedValue({
       id: 'general-space',
       title: 'General',
@@ -318,6 +329,39 @@ describe('HomeDashboardV4Composer', () => {
       await screen.findByRole('button', { name: 'Yasir Khan Coaching LTD' }),
     ).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Choose Space' })).toBeNull()
+  })
+
+  it('defaults a new chat to the globally selected client workspace', async () => {
+    mocks.campaignRows = [{ id: 'client-campaign', name: 'Prospecting On Demand' }]
+    mocks.spaceRows = [
+      { id: 'client-launch', title: 'Launch', campaign_id: 'client-campaign' },
+      { id: 'client-general', title: 'General', campaign_id: 'client-campaign' },
+    ]
+    mocks.clientScope = {
+      clientId: 'client-1',
+      clientName: 'Prospecting On Demand',
+      campaignId: 'client-campaign',
+      spaceIds: ['client-launch', 'client-general'],
+    }
+    render(<HomeDashboardV4Composer />)
+
+    expect(
+      await screen.findByRole('button', { name: 'Prospecting On Demand General' }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send test message' }))
+
+    await waitFor(() => {
+      expect(mocks.seedComposer).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workContext: {
+            surface: 'spaces',
+            campaignId: 'client-campaign',
+            spaceId: 'client-general',
+          },
+        }),
+      )
+    })
   })
 
   it('seeds campaign scope with an explicit spaceId field so stale spaces clear', async () => {

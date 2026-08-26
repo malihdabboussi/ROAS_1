@@ -11,6 +11,7 @@ import {
 } from '@/components/conversations'
 import {
   campaignIdFromMessageReferences,
+  generalSpaceIdForCampaign,
   resolveConversationConnection,
   workContextFromConnection,
 } from '@/components/conversations/conversation-scope-from-mentions'
@@ -36,6 +37,7 @@ import { campaignListCacheKey, fetchCampaigns } from '@/features/studio/services
 import type { ChatModelSettings } from '@/features/studio/services/chat.service'
 import type { Campaign, DocumentAttachment, MessageReference } from '@/features/studio/types'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { useClientScope } from '@/lib/client-scope'
 import { matchesFlowsConceptSpace } from '@/lib/flows/flows-scope-storage'
 import { QuickMissionsLauncherProvider } from '@/lib/missions'
 import { fetchPrograms, type Program } from '@/lib/programs'
@@ -67,6 +69,7 @@ export function HomeDashboardV4Composer() {
   const chooseSpaceButtonRef = useRef<HTMLButtonElement>(null)
   const scopePickerRef = useRef<ConversationScopePickerHandle>(null)
   const isOrgOnly = useOrgStore((s) => s.isOrgOnly)
+  const { scope: clientScope } = useClientScope()
 
   useEffect(() => {
     void loadRoster()
@@ -109,6 +112,18 @@ export function HomeDashboardV4Composer() {
           .map((space) => ({ id: space.id, title: space.title })),
       }))
   }, [campaigns, programs, spaces])
+
+  useEffect(() => {
+    const mappedSpaces = clientScope
+      ? spaces.filter((space) => clientScope.spaceIds.includes(space.id))
+      : []
+    const generalSpaceId = clientScope?.campaignId
+      ? generalSpaceIdForCampaign(mappedSpaces, clientScope.campaignId)
+      : null
+
+    setTargetCampaignId(clientScope?.campaignId ?? null)
+    setTargetSpaceId(generalSpaceId ?? mappedSpaces[0]?.id ?? null)
+  }, [clientScope, spaces])
 
   const defaultGeneralSpace = useMemo(() => {
     const generalCampaignId =

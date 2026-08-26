@@ -7,8 +7,9 @@
 1. `ClientScopeProvider` reads the `client` URL parameter or the organization-scoped persisted selection.
 2. It loads the Page Grader client catalog and selected client workspace.
 3. `resolveClientScope` maps the selected client to its ROAS Client Workspace campaign and every Campaign Space.
-4. Scope-aware surfaces filter by direct client id, Client Workspace campaign id, or Campaign Space id.
-5. Internal navigation retains the `client` parameter. Clearing the selector removes both URL and persisted scope.
+4. New Chat preselects that Client Workspace campaign and its mapped primary Space when available.
+5. Scope-aware surfaces filter by direct client id, Client Workspace campaign id, or Campaign Space id.
+6. Internal navigation retains the `client` parameter. Clearing the selector removes both URL and persisted scope.
 
 Unattributed records remain visible under **All clients** and are excluded from a selected client.
 While a selected client is resolving, the provider fails closed and does not render unscoped workspace data. Stale workspace mappings are discarded before a different client resolves.
@@ -34,5 +35,6 @@ When scoped, the compact trigger shows one selected client and the selected clie
 - 2026-08-24: Client Campaigns and Launches clear previous-scope rows before loading a newly selected client.
 - 2026-08-25: The global selector became searchable and independently scrollable, with inactive clients hidden by the canonical Clients list pipeline rules unless searched.
 - 2026-08-25: The selected selector trigger uses a compact count, while the selected client name stays visible as the first client row beneath **All clients**.
+- 2026-08-26: New Chat inherits the globally selected client's mapped Client Workspace campaign and primary Space instead of starting unscoped.
 
-Last Modified: 2026-08-25
+Last Modified: 2026-08-26
