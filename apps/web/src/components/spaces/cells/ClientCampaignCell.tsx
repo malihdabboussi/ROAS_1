@@ -1,14 +1,11 @@
 'use client'
 
-import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import {
-  clientCampaignClientHref,
   clientCampaignMappingLabel,
-  clientCampaignSpaceHref,
   parseClientCampaignMapping,
   toClientCampaignMapping,
   useClientCampaignGroups,
@@ -104,9 +101,14 @@ export function ClientCampaignCell({
     setOpen(false)
   }
 
-  const label = clientCampaignMappingLabel(mapping) || 'Map'
-  const clientHref = mapping ? clientCampaignClientHref(mapping) : null
-  const campaignHref = mapping ? clientCampaignSpaceHref(mapping) : null
+  const label = clientCampaignMappingLabel(mapping)
+  const displayLabel = mapping
+    ? displayMode === 'client'
+      ? mapping.client_name.trim()
+      : displayMode === 'space'
+        ? mapping.campaign_name.trim()
+        : label
+    : ''
   const showAgenda = Boolean(spaceItem && onOpenDetail && isCallItem(spaceItem))
   const selectLabel =
     displayMode === 'client'
@@ -128,14 +130,6 @@ export function ClientCampaignCell({
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
     >
-      {mapping && !readonly ? (
-        <MappedLinks
-          mapping={mapping}
-          clientHref={clientHref}
-          campaignHref={campaignHref}
-          displayMode={displayMode}
-        />
-      ) : null}
       {readonly ? (
         <span
           className={cn(
@@ -144,7 +138,7 @@ export function ClientCampaignCell({
             fieldRowVariant === 'kanban' && 'text-xs',
           )}
         >
-          {mapping ? label : '—'}
+          {mapping ? displayLabel : '—'}
         </span>
       ) : (
         <button
@@ -153,8 +147,8 @@ export function ClientCampaignCell({
           onClick={toggle}
           className={cn(
             'typo-caption hover:bg-hover-subtle hover:text-foreground',
-            'border-border rounded-spacing-2 flex min-w-0 items-center gap-1 border',
-            'px-1.5 py-0.5 transition-colors',
+            'rounded-spacing-2 flex min-h-6 min-w-0 flex-1 items-center text-left',
+            'px-spacing-1 transition-colors',
             mapping ? 'text-foreground' : 'text-muted-foreground',
             fieldRowVariant === 'kanban' && 'text-xs',
           )}
@@ -162,8 +156,7 @@ export function ClientCampaignCell({
           aria-expanded={open}
           aria-label={mapping ? changeLabel : selectLabel}
         >
-          <span className="min-w-0 truncate">{mapping ? 'Change' : 'Map'}</span>
-          <ChevronDown className="text-muted-foreground h-3 w-3 shrink-0" aria-hidden />
+          <span className="min-w-0 truncate">{displayLabel}</span>
         </button>
       )}
       {showAgenda && spaceItem && onOpenDetail ? (
@@ -195,46 +188,6 @@ export function ClientCampaignCell({
           )
         : null}
     </div>
-  )
-}
-
-function MappedLinks({
-  mapping,
-  clientHref,
-  campaignHref,
-  displayMode,
-}: {
-  mapping: ClientCampaignMapping
-  clientHref: string | null
-  campaignHref: string | null
-  displayMode: 'combined' | 'client' | 'space'
-}) {
-  const client = mapping.client_name.trim()
-  const campaign = mapping.campaign_name.trim()
-  return (
-    <span className="typo-caption text-foreground flex min-w-0 items-center truncate">
-      {displayMode !== 'space' && client ? (
-        clientHref ? (
-          <Link href={clientHref} className="hover:text-primary min-w-0 truncate">
-            {client}
-          </Link>
-        ) : (
-          <span className="min-w-0 truncate">{client}</span>
-        )
-      ) : null}
-      {displayMode === 'combined' && client && campaign ? (
-        <span className="text-muted-foreground px-0.5">·</span>
-      ) : null}
-      {displayMode !== 'client' && campaign ? (
-        campaignHref ? (
-          <Link href={campaignHref} className="hover:text-primary min-w-0 truncate">
-            {campaign}
-          </Link>
-        ) : (
-          <span className="min-w-0 truncate">{campaign}</span>
-        )
-      ) : null}
-    </span>
   )
 }
 

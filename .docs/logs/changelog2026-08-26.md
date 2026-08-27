@@ -59,3 +59,13 @@ Why: Client- and finding-scoped cooldowns let rotating campaign hygiene findings
 Impact: Campaigns can rotate without creating another top-level QC DM, follow-ups wait one day, and structured findings retain their real client, campaign, severity, and source identity instead of becoming an unscoped digest fallback.
 
 Files: `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-follow-up.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-follow-up.messages.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-slack-bridge.service.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-follow-up.test.ts`, `apps/api/src/modules/integrations/page-grader/services/__tests__/page-grader-qc-slack-bridge.service.test.ts`, `apps/api/src/modules/spaces/services/slack-open-items.service.ts`, `apps/api/src/modules/spaces/repositories/slack-open-items.repository.ts`, `documentation/features/page-grader-campaign-brain-sync.md`
+
+## 2026-08-26 11:39 - [FIX]
+
+What: Replaced the separate Map and Change controls in Client Workspace cells with one full-cell mapping trigger. Mapped cells show only their workspace label; unmapped cells remain visually empty.
+
+Why: The auxiliary action labels cluttered the table and the linked client label navigated away instead of editing the row's mapping.
+
+Impact: Clicking either a workspace label or an empty editable cell opens the existing mapping dropdown without changing mapping persistence.
+
+Files: `apps/web/src/components/spaces/cells/ClientCampaignCell.tsx`, `apps/web/src/components/spaces/cells/ClientCampaignCell.test.tsx`, `documentation/utilities/all-meetings-list-columns.md`, `documentation/features/space-templates.md`
