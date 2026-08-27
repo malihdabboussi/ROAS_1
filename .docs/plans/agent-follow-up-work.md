@@ -39957,6 +39957,18 @@ Evidence: `apps/api/src/modules/spaces/repositories/slack-open-items.repository.
 Needed work: Split QC Slack anchor and delivery metadata operations into a focused repository while preserving the existing `SlackOpenItemsService` contract and repository tests.
 
 Reason not done now: The overage is pre-existing, and decomposing all open-item persistence would materially widen this targeted notification-policy fix.
+## 2026-08-26 - [ARCH] URL transcript orchestration service is near its LOC limit
+
+Status: Open
+
+Found while: Adding a `yt-dlp` manual and auto-caption fallback for Pixel video transcript requests.
+
+Evidence: `apps/agent-api/src/modules/artifacts/services/artifact-missions-media-transcript.service.ts` is 524 LOC against the 600-line service limit and coordinates native captions, saved browser sessions, `yt-dlp` subtitles, Social Analysis, audio download, Deepgram, billing, metadata, and structured failures.
+
+Needed work: Extract platform detection and YouTube caption-attempt orchestration into focused modules while preserving the action response and structured-error contract.
+
+Reason not done now: The requested reliability fix must land in the current transcript action; decomposing the complete multi-platform workflow is a separate behavior-neutral refactor with broader regression risk.
+
 ## 2026-08-26 — Meeting follow-up Slack workflow service remains above the service LOC limit
 
 - Feature/app: Meeting follow-up / API

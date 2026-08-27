@@ -9,6 +9,7 @@ function makeService(overrides?: {
   scrapeCreators?: { fetchTranscriptBody: ReturnType<typeof vi.fn> }
   process?: {
     downloadViaYtDlp: ReturnType<typeof vi.fn>
+    fetchYtDlpSubtitles: ReturnType<typeof vi.fn>
     transcodeAudioToMp3: ReturnType<typeof vi.fn>
     fetchYtDlpMetadata: ReturnType<typeof vi.fn>
   }
@@ -28,6 +29,7 @@ function makeService(overrides?: {
     downloadViaYtDlp: vi.fn(async () => {
       throw new Error('yt-dlp blocked')
     }),
+    fetchYtDlpSubtitles: vi.fn(async () => null),
     transcodeAudioToMp3: vi.fn(async () => undefined),
     fetchYtDlpMetadata: vi.fn(async () => null),
   }
@@ -111,6 +113,38 @@ describe('ArtifactMissionsMediaTranscriptService extractUrlTranscript', () => {
       transcript: 'Native captions.',
     })
     expect(mainApiCall).not.toHaveBeenCalled()
+  })
+
+  it('uses yt-dlp auto-captions before Social Analysis and audio transcription', async () => {
+    const process = {
+      downloadViaYtDlp: vi.fn(),
+      fetchYtDlpSubtitles: vi.fn(async () => ({
+        transcript: 'Auto caption line.',
+        segments: [{ start: 0, end: 1.5, text: 'Auto caption line.' }],
+        language: 'en',
+      })),
+      transcodeAudioToMp3: vi.fn(),
+      fetchYtDlpMetadata: vi.fn(async () => null),
+    }
+    const { service, scrapeCreators } = makeService({ process })
+    const mainApiCall = vi.fn()
+
+    const result = (await service.extractUrlTranscript(
+      { mainApiCall, resolveUserId: vi.fn(() => 'user-1') },
+      { url: YOUTUBE_URL, include_metadata: false },
+      'agent:pixel:conversation-1',
+    )) as Record<string, unknown>
+
+    expect(result).toMatchObject({
+      success: true,
+      source: 'yt_dlp_captions',
+      transcript: 'Auto caption line.',
+      language: 'en',
+    })
+    expect(process.fetchYtDlpSubtitles).toHaveBeenCalledTimes(1)
+    expect(mainApiCall).not.toHaveBeenCalled()
+    expect(scrapeCreators.fetchTranscriptBody).not.toHaveBeenCalled()
+    expect(process.downloadViaYtDlp).not.toHaveBeenCalled()
   })
 
   it('calls the TikTok Social Analysis transcript route for TikTok URLs', async () => {
