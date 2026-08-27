@@ -1,10 +1,12 @@
 'use client'
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { Settings2 } from 'lucide-react'
 import { useMeetingsCalendarMaterialize } from '@/features/home/hooks/use-meetings-calendar-materialize'
 import { rankPersonalMeetingsSpace } from '@/features/home/lib/resolve-meetings-space-id'
 import { SpaceItemsContainer, useEnsureAllMeetingsColumns, useSpacesStore } from '@/features/spaces'
 import { clientScopeMatchesRecord, useClientScope } from '@/lib/client-scope'
+import { useWorkspaceSettingsModal } from '@/lib/settings/workspace-settings-modal-context'
 import type { SpaceItem } from '@/lib/spaces'
 
 function findMeetingsSpaceId(spaces: ReturnType<typeof useSpacesStore.getState>['spaces']) {
@@ -28,6 +30,7 @@ function activateMeetingsSpace(spaceId: string | null) {
 }
 
 export function MeetingsUnifiedSurface({ agenda }: { agenda: ReactNode }) {
+  const { openWorkspaceSettings } = useWorkspaceSettingsModal()
   const { scope: clientScope } = useClientScope()
   const [meetingsSpaceId, setMeetingsSpaceId] = useState<string | null>(() => {
     const spaceId = findMeetingsSpaceId(useSpacesStore.getState().spaces)
@@ -70,6 +73,17 @@ export function MeetingsUnifiedSurface({ agenda }: { agenda: ReactNode }) {
           overrideView: { id: 'agenda', content: agenda },
           defaultPinnedViewIds: ['agenda'],
           itemFilter,
+          viewStripRightSlot: (
+            <button
+              type="button"
+              className="btn-icon-bare"
+              aria-label="Configure meeting integrations"
+              title="Configure meeting integrations"
+              onClick={() => openWorkspaceSettings('integrations')}
+            >
+              <Settings2 className="icon-sm" aria-hidden />
+            </button>
+          ),
         }}
       />
     </div>

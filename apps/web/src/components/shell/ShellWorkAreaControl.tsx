@@ -25,7 +25,6 @@ export function ShellWorkAreaControl({ currentPage }: ShellWorkAreaControlProps)
   const router = useRouter()
   const [historyOpen, setHistoryOpen] = useState(false)
   const workAreaOpen = useShellStore((state) => state.workAreaOpen)
-  const toggleWorkAreaOpen = useShellStore((state) => state.toggleWorkAreaOpen)
   const setWorkAreaOpen = useShellStore((state) => state.setWorkAreaOpen)
   const activeTarget = useShellStore((state) => state.artifactViewer.target)
   const recentTargets = useShellStore((state) => state.recentArtifactTargets)
@@ -61,11 +60,11 @@ export function ShellWorkAreaControl({ currentPage }: ShellWorkAreaControlProps)
     >
       <button
         type="button"
-        title={workAreaOpen ? 'Collapse page — chat full screen' : 'Show page'}
-        aria-label={workAreaOpen ? 'Collapse page — chat full screen' : 'Show page'}
+        title={workAreaOpen ? 'Close page' : 'Show page'}
+        aria-label={workAreaOpen ? 'Close page' : 'Show page'}
         aria-pressed={!workAreaOpen}
         aria-expanded={historyOpen}
-        onClick={() => toggleWorkAreaOpen()}
+        onClick={() => setWorkAreaOpen(!workAreaOpen)}
         onFocus={() => setHistoryOpen(true)}
         className={cn('shell-topbar-icon-btn', !workAreaOpen && 'shell-topbar-icon-btn-active')}
       >

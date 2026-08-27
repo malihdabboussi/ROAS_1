@@ -1,8 +1,8 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-08-24 (interactive meeting workspace mapping, historical client-General backfill, and Attendees column restore)
+**Last Modified:** 2026-08-26 (Slack recap → guided meeting-chat review)
 
-First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` uses those same stored drafts, sends account-manager reminders only to people classified Internal and individually set Active, and keeps the client-facing recap in the admin approval thread.
+First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` sends the admin one concise meeting summary with the follow-up count and a **Review meeting follow-ups** link. The link opens the canonical meeting workspace and its existing chat; task delegation and the editable client message finish there without an automatic client send.
 
 ## Meeting workspace architecture (2026-07-28)
 
@@ -27,6 +27,7 @@ The canonical post-call path is now meeting-first rather than automation-task-fi
 17. Notes accept relevant links and render them as clickable content immediately after save. Meeting recap documents repair provider Markdown embedded in HTML paragraphs on open, and post-call draft cards normalize Markdown emphasis to plain text.
 18. Recap and follow-up quick actions draft from available meeting evidence immediately. Missing dates are omitted or proposed instead of blocking the first draft with a clarification request.
 19. Related calls require the same mapped client/campaign. A different mapped client never ranks, even with a recording or a shared host. Unmapped series can still match on a distinctive title token or two-plus overlapping attendees. Generic words like strategy/growth/webinar are not relatedness.
+20. Pixel's active post-call recap links to `/home/meetings?meeting=…&space=…&review=follow-up`. The meeting workspace stays visible while its persistent conversation opens once and starts a three-stage review: confirm/correct meeting context, launch the existing ROAS Portal bulk delegation preview, then revise the final client message in the existing editable draft card. The URL marker is consumed after opening so refreshes do not restart the cycle.
 
 Exact Fathom `action_items` are mirrored into Meetings `follow_up` space_items on ingest (Programs Action items + Home). When the webhook payload has zero actions, we refetch the meeting once from Fathom; if still empty we do not invent tasks from the transcript. The default `Fathom Meeting Log` automation runs lifecycle status updates plus grounded `agent_suggest_tasks` (enrich assignees/due/priority onto those follow_ups — never invent when `action_items` is empty). Slack confirm remains an explicit downstream workflow, not an automatic side effect of ingest.
 
@@ -36,12 +37,12 @@ Legacy Fathom call rows are backfilled into workspaces and recording sources. Ex
 
 | Area                                                   | State                                                                                                      |
 | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| DM with purpose / takeaways / owners / Fathom link     | Working                                                                                                    |
+| DM with concise meeting summary + follow-up count/link | Implemented                                                                                                |
 | ✅ `white_check_mark` → stamp follow-ups in ROAS       | Working                                                                                                    |
 | Shareable thread recap after ✅                        | Pixel-written, exact approved draft reused                                                                 |
 | Database-backed `post-call-delivery` skill             | Implemented; runtime copy and production row synchronized                                                  |
 | Shadow proposal in Team → People → Conversations       | Implemented                                                                                                |
-| Flow-level Shadow / Active delivery                    | Implemented; Shadow processes without Slack sends, Active sends eligible internal reminders                |
+| Flow-level Shadow / Active delivery                    | Implemented; Shadow sends nothing, Active sends only the admin review entry before human review            |
 | Slack org token resolution (personal call + org Slack) | Fixed                                                                                                      |
 | Topics truncation mid-word                             | Fixed (brief skips Topics dump)                                                                            |
 | Fathom markdown links → Slack mrkdwn                   | Fixed                                                                                                      |
@@ -81,12 +82,13 @@ Fathom recording ready (my_recordings OR shared_team_recordings)
   → store the exact recap in the Shadow ledger
   → request_slack_follow_up_confirm
        Shadow: store recap + account-manager drafts in Conversations; send nothing
-       Active: DM admin review + send eligible Internal/Active account-manager drafts
-  → human reacts ✅
-  → stamp follow-ups confirmed in ROAS
-  → reply in Slack thread with the exact approved recap
-  → (later) share to channel / attendees
-  → confirmed fulfillment item → Page Grader + ClickUp → status back to Action Ledger
+       Active: DM concise summary + follow-up count + one review link; keep reminder drafts unsent
+  → link opens canonical meeting workspace + persistent meeting chat
+  → confirm/correct context in chat
+  → one page_grader_create_delegation_preview call → existing Portal task-by-task Confirm UI
+  → user reports delegation review complete
+  → Pixel returns the final client message in the existing editable draft card
+  → user copies the message; ROAS does not send it automatically
 ```
 
 Team meetings (teammate-hosted Fathom recordings shared to your plan) use the same path. Pixel/Slack follow-up is downstream of the Meetings call row — if the webhook never creates that row, no Slack agent work runs.
@@ -119,36 +121,29 @@ The skill is database-first in `agent_skills` and mirrored under `docker/agents/
    Before generation, Agent API loads the meeting workspace's portal agenda, canonical recap, transcript documents, and Pixel's available Brain context. The direct call/follow-up payload remains the final grounding source.
 4. Writes that draft to `slack_shadow_actions` as a `workflow` proposal, linked to the admin's Slack person record when an email match exists.
 5. Creates one Shadow `message` proposal per follow-up assignee matched to an **Internal** Slack person (grouped tasks, friendly reminder tone). Skips unmatched, External, Ignored, and `delivery_mode=off`. IDs are stored on `assignee_shadow_action_ids`.
-6. In `delivery_mode=shadow`, stores the run payload and stops without opening a DM or sending any Slack message. In `delivery_mode=active` with channel delivery disabled, opens the admin review DM, posts the proposed recap in its thread, then approves and sends only account-manager proposals whose person record is also Active. Channel posting is a separate explicit switch: only `delivery_mode=active` plus `channel_delivery=automatic` sends the complete Call Summary → Action Items → Client Recap Message package to the configured destination channel. The installed destination is `#roas-call-recaps-internal`, but the switch remains disabled until human approval.
+6. In `delivery_mode=shadow`, stores the run payload and stops without opening a DM or sending any Slack message. In `delivery_mode=active` with channel delivery disabled, opens the admin review DM and posts only the concise meeting summary, follow-up count, and guided-review link. The client draft and account-manager reminder proposals remain stored and unsent while the operator completes the chat review. Channel posting remains a separate legacy explicit switch; the installed destination is `#roas-call-recaps-internal`, and the switch remains disabled.
 7. Stores the Shadow or pending payload on the **call** item:
 
    `custom_data.slack_follow_up_confirm = { status, delivery_mode, channel_id, message_ts, space_item_ids, confirm_reaction, assignee_shadow_action_ids?, assignee_sent_action_ids?, ... }`
 
-8. Slack Events API `reaction_added` → `SlackService.handleReactionAddedEvent` → `MeetingFollowUpSlackConfirmService.handleReactionAdded`.
-9. On match (pending + correct reaction + channel/ts):
+8. For legacy pending records created by the former reaction-based flow, Slack Events API `reaction_added` → `SlackService.handleReactionAddedEvent` → `MeetingFollowUpSlackConfirmService.handleReactionAdded` remains supported.
+9. On a legacy match (pending + correct reaction + channel/ts):
    - Call payload → `status: approved`
    - Each follow-up gets `custom_data.slack_follow_up_confirm_status: approved`
    - Thread reply uses `draft_message` byte-for-byte; the legacy template builder is used only for pending records created before this change
    - Matching Shadow action advances through approved → sending → sent
 10. Slack send org is the call's organization when present; personal call items resolve the user’s active Slack `agent_channels` organization.
 
-Before approval, a human reply in the review thread is treated as revision feedback. Pixel receives the current client-facing draft plus the feedback, creates a complete replacement draft, stores it as a new Shadow action that supersedes the prior proposal, and posts the updated draft in the thread. The original proposal is dismissed so an older version cannot inherit approval.
+For legacy pending records, a human reply in the review thread is still treated as revision feedback. The current guided review edits the follow-up message in the linked meeting chat and leaves final delivery to the operator by copying the completed draft.
 
 ## Message shape
 
-**Review DM (message 1)**
+**Review DM**
 
-- Bold `Call Summary` heading with title, purpose, and key takeaways
-- Short `Call Recording` Fathom link after the internal summary (no bottom recording footer)
-- Timestamp jump links use a leading clock label (`31:12` …) then plain takeaway text
-- Bold `Action Items` heading with `_owner: Name_`
-- Meetings link + ✅ CTA
-- Does **not** embed the client-facing draft (keeps under Slack’s ~4k limit)
-
-**Client recap message (message 2, threaded under review)**
-
-- Bold `Client Recap Message` heading
-- Exact Pixel `draft_message`; legacy leading recording links and trailing recording footers are stripped because the internal review already owns the recording link
+- Meeting title plus the existing compact purpose/key-takeaway summary
+- One natural-language follow-up count (for example, “I found 5 follow-ups to review”)
+- One **Review meeting follow-ups** link
+- No separate call-status block, action-item dump, reaction CTA, or threaded client-message draft
 - Link unfurls disabled so Fathom URLs stay compact
 
 **Per-assignee Shadow reminders (People)**
@@ -157,10 +152,9 @@ Before approval, a human reply in the review thread is treated as revision feedb
 - Friendly nudge listing only that person’s tasks with an inline `linked here` call link
 - Closes with “Feel free to message me if you have questions.”
 - Every proposal and delivered message is visible in Team → People → Conversations with a post-call label, call title, timestamp, status, and rationale
-- Flow Shadow never sends; Flow Active sends automatically only when the recipient is Internal and their person delivery mode is Active
+- The guided meeting-review path keeps these proposals in Shadow and unsent while the operator reviews and delegates the tasks
 - External and Ignored people never receive proactive post-call messages
-- The admin client recap still requires its own Slack review-thread approval
-- On Approve & Send, Shadow is stamped `sent` with `metadata.slack_message_ts` + `metadata.slack_channel_id` so Conversations can track the DM
+- Legacy explicit channel delivery and old pending-record approval remain supported separately; they are not part of the guided review cycle
 - Ops/`chat.postMessage` samples are **not** tracked unless they go through `sendShadowAction` (or mark the matching Shadow sent after post)
 - If an ops sample is DMed to a different person than the ledger target (e.g. Aaron reminder content posted to Dylan’s Pixel DM), retarget `target_member_id` to the real recipient and keep `metadata.ops_manual` / `original_target_member_id` for audit — do not leave “Sent” under the wrong person
 
@@ -172,12 +166,12 @@ Before approval, a human reply in the review thread is treated as revision feedb
 
 **Thread replies**
 
-- Pending **review** thread → revise client-facing draft (existing)
+- Legacy pending **review** thread → revise the stored client-facing draft
 - Ops sample / no pending confirm → normal Pixel path: eyes reaction + agent reply
 - Sent **assignee-reminder** thread → same Pixel path, with a bounded call brief (purpose + takeaways from the Meetings call item summary/description) plus that person's action items prepended from the Shadow ledger (`call_item_id` + `follow_up_ids`)
 - Pixel keeps 👀 while the agent is working. After the response is accepted by Slack, Pixel adds ✅ and removes 👀. A provider-busy response waits five seconds and retries the selected model before using the configured fallback. If all attempts fail, Pixel removes 👀, explains that it is temporarily busy, and never marks the request complete.
 
-**Confirm reply (after ✅)**
+**Legacy confirm reply (after ✅)**
 
 - Exact `draft_message` shown during review, posted in the review thread
 - No regeneration after approval
@@ -197,8 +191,8 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 
 ### Phase 1 — Post-call delivery loop (current)
 
-- Fathom/Meetings trigger, agent-written recap, owned follow-ups, Shadow ledger, ✅ approval, exact-draft delivery.
-- Per-assignee Shadow message proposals (grouped action-item reminders) created with the review DM for People review.
+- Fathom/Meetings trigger, concise Slack recap, guided meeting-chat review, existing bulk task delegation, editable follow-up-message draft, and operator copy.
+- Per-assignee Shadow message proposals (grouped action-item reminders) are created but remain unsent during the guided review.
 - Team → People exposes both the person directory and Conversations; a person opens their combined real Slack + Shadow timeline.
 
 ### Phase 2 — Conversation command center (implemented foundation)
@@ -431,6 +425,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-08-12:** The live Fathom Meeting Log invokes Pixel's post-call workflow for canonical Client calls only. It starts in Shadow so drafts, action ownership, and Brain-backed context can be reviewed without posting to Slack; channel delivery remains disabled until approval.
 - **2026-08-12:** Call-kind classification now gives explicit sales/demo and partner titles precedence, then treats a mostly-external meeting as Client before inspecting ordinary transcript discussion. Client performance calls can discuss sales or partnerships without being mislabeled. Pixel's post-call draft input now includes the portal agenda, recap, full transcript documents, and Brain context.
 - **2026-08-12:** Channel delivery is an independent fail-closed action setting. The client recap channel ID is preconfigured, but only an explicit change to `channel_delivery=automatic` on an Active flow can post there; the rollout migration leaves it disabled for DM review.
+- **2026-08-26:** Pixel's post-call DM is now a concise meeting summary plus follow-up count and one review link. That link opens the existing Meetings workspace and persistent chat, guides context confirmation before the existing Portal bulk delegation preview, and finishes with the Claude-style editable draft message. Initial Slack delivery no longer posts the client draft thread or sends assignee reminders; the operator copies the completed message instead of ROAS sending it.
 
 - **2026-08-17:** Named `campaign_id` / `campaign_name` on `search_campaign_brain` binds **this** portal conversation so CONNECTIONS shows that client. A Slack DM remains a shared Pixel thread; each message already maps to a specific portal chat. Binding does not glue the whole DM identity to one client forever.
 

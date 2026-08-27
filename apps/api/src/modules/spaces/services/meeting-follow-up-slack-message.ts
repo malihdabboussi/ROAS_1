@@ -278,31 +278,23 @@ export function buildConfirmMessage(input: {
   callTitle: string
   callItem: Record<string, unknown> | null
   followUps: Array<Record<string, unknown>>
-  confirmReaction: string
   meetingUrl: string
 }): string {
   const title = String(input.callTitle || 'Meeting').trim() || 'Meeting'
-  // Keep the review DM under Slack's ~4k limit: purpose + takeaways + action items only.
-  // The shareable recap is a separate threaded message (see buildProposedShareableRecapMessage).
+  // Keep Pixel's recap useful on its own, then move all task-by-task review into chat.
   const brief = briefMeetingSummary(input.callItem, { includeNextSteps: false })
-  const fathomUrl = resolveFathomUrl(input.callItem)
-  const lines =
-    input.followUps.length > 0
-      ? input.followUps.map((item, index) => formatFollowUpLine(item, index))
-      : ['• No action items proposed.']
+  const count = input.followUps.length
+  const followUpLine = count
+    ? `I found ${count} follow-up${count === 1 ? '' : 's'} to review, plus a client follow-up message.`
+    : 'I did not find any follow-ups, but the client follow-up message is ready to review.'
 
   return [
-    `*Call Summary*`,
     `*${title}*`,
     '',
     ...(brief ? [brief, ''] : []),
-    ...(fathomUrl ? [`<${fathomUrl}|Call Recording>`, ''] : []),
-    `*Action Items*`,
-    ...lines,
+    followUpLine,
     '',
-    `React with :${input.confirmReaction}: to confirm — I'll post a shareable recap in this thread.`,
-    `Reply in this thread with any changes. I'll return an updated client-facing draft here.`,
-    `<${input.meetingUrl}|Open in Meetings>`,
+    `<${input.meetingUrl}|Review meeting follow-ups>`,
   ].join('\n')
 }
 

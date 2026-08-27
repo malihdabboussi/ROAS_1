@@ -39945,3 +39945,58 @@ Evidence: `apps/web/src/features/studio/components/ChatInterface.tsx` is 1,086 L
 Needed work: Continue decomposing chat campaign-context orchestration, extract the Space embed/list projection boundary, and extract Recents data loading before adding unrelated behavior to these files.
 
 Reason not done now: The requested global scope must integrate at the existing ownership points; decomposing these broad, pre-existing surfaces is a separate behavior-neutral refactor with a larger regression area.
+
+## 2026-08-26 - [ARCH] Mission detail controller is at the component LOC cap
+
+Status: Open
+
+Found while: Stabilizing the Mission page Expand/Collapse and Close Page controls.
+
+Evidence: `apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.tsx` is exactly 400 LOC, the maximum component limit, and still owns mission state, access approvals, attachment orchestration, plan actions, rating submission, and view projection.
+
+Needed work: Extract the plan and rating action orchestration into focused hooks while preserving the existing modal/view contract and Mission regression coverage.
+
+Reason not done now: The requested change only passes stable panel-state primitives through this controller; decomposing unrelated Mission behavior would materially widen the UI stability fix.
+
+## 2026-08-26 - [ARCH] Slack open-items repository exceeds the service limit
+
+Status: Open
+
+Found while: Consolidating Page Grader QC into a recipient-wide attention window.
+
+Evidence: `apps/api/src/modules/spaces/repositories/slack-open-items.repository.ts` is 476 LOC against the 400-line service/repository limit and owns open-item queries, lifecycle mutations, Slack delivery metadata, and QC anchor matching.
+
+Needed work: Split QC Slack anchor and delivery metadata operations into a focused repository while preserving the existing `SlackOpenItemsService` contract and repository tests.
+
+Reason not done now: The overage is pre-existing, and decomposing all open-item persistence would materially widen this targeted notification-policy fix.
+## 2026-08-26 - [ARCH] URL transcript orchestration service is near its LOC limit
+
+Status: Open
+
+Found while: Adding a `yt-dlp` manual and auto-caption fallback for Pixel video transcript requests.
+
+Evidence: `apps/agent-api/src/modules/artifacts/services/artifact-missions-media-transcript.service.ts` is 524 LOC against the 600-line service limit and coordinates native captions, saved browser sessions, `yt-dlp` subtitles, Social Analysis, audio download, Deepgram, billing, metadata, and structured failures.
+
+Needed work: Extract platform detection and YouTube caption-attempt orchestration into focused modules while preserving the action response and structured-error contract.
+
+Reason not done now: The requested reliability fix must land in the current transcript action; decomposing the complete multi-platform workflow is a separate behavior-neutral refactor with broader regression risk.
+
+## 2026-08-26 — Meeting follow-up Slack workflow service remains above the service LOC limit
+
+- Feature/app: Meeting follow-up / API
+- File: `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.workflow.ts` (1,030 LOC after this change; 600 LOC service limit)
+- Evidence: The existing workflow combines proposal creation, Slack compatibility handlers, approval, assignee reminder context, and post-call draft generation. This change reduced the active pre-review send path but did not create the overage.
+- Needed work: Extract the legacy Slack reaction/revision compatibility path and post-call draft gateway into focused services while retaining the existing action-ledger and structured tool-error contracts.
+- Reason deferred: That behavior-neutral decomposition is outside the requested recap-to-chat review cycle and would materially widen the regression surface.
+
+## 2026-08-26 - [ARCH] Space item row remains over the component limit
+
+Status: Open
+
+Found while: Moving task controls out of customizable columns and into the fixed row rail.
+
+Evidence: `apps/web/src/features/spaces/components/SpaceItemRow.tsx` is 764 LOC against the 400-line component limit and still owns title editing, per-field rendering, task actions, dialogs, and row interaction state. The changed wrapper and rail files remain within their component limits.
+
+Needed work: Extract title-cell rendering and row action/dialog orchestration into focused components while retaining the shared list/table row contract.
+
+Reason not done now: The requested behavior required removing duplicated controls from the existing title renderer; decomposing unrelated title editing and action behavior would materially widen the row-control fix.

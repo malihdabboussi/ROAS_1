@@ -21,6 +21,37 @@ export interface MeetingPostCallAction {
   prompt: string
 }
 
+export const MEETING_FOLLOW_UP_REVIEW_PARAM = 'review'
+export const MEETING_FOLLOW_UP_REVIEW_VALUE = 'follow-up'
+
+/**
+ * Guided review opened from Pixel's post-call Slack recap. The meeting workspace
+ * stays visible beside the linked conversation while Pixel walks the operator
+ * through context, the existing Portal delegation preview, and the editable
+ * draft-message card in that order.
+ */
+export const MEETING_FOLLOW_UP_REVIEW_PROMPT = [
+  'Start the post-meeting follow-up review for this meeting.',
+  '',
+  'Stage 1 — confirm the meeting context:',
+  '- Show one compact summary using the linked meeting workspace: meeting summary, Client Workspace, who attended, and how many follow-ups exist.',
+  '- Ask me to confirm it or tell you what to change. Keep the meeting workspace as the source of truth and apply any corrections there.',
+  '- Do not delegate tasks or draft the client message until I confirm the context.',
+  '',
+  'Stage 2 — confirm and delegate tasks:',
+  '- After I confirm the context, collect every remaining work item our team owns from the recap, transcript, recording summary, and meeting action items.',
+  '- Let me add, edit, or dismiss items in chat before delegation. Skip client-owned work and anything already marked done.',
+  '- Use the existing bulk delegation flow exactly: call list_mcp_tools, then call page_grader_create_delegation_preview once with the resolved Portal client, Portal campaign_id, the full remaining-work list, and a stable idempotency_key from this meeting id.',
+  '- Return the real confirm_url and stop while I review each task in The ROAS Portal. Do not create tasks another way and do not claim they exist before I Confirm there.',
+  '',
+  'Stage 3 — finish the follow-up message:',
+  '- After I tell you the delegation review is complete, write the editable client follow-up using the final confirmed tasks.',
+  '- Return the full send-ready message in a ```draft Follow-up message``` fence so the existing editable message card is used.',
+  '- Help me revise it in chat. Do not send it. The final action is for me to copy the completed message.',
+  '',
+  'Work through one stage at a time and wait for my confirmation between stages.',
+].join('\n')
+
 export const MEETING_POST_CALL_ACTIONS: MeetingPostCallAction[] = [
   {
     id: 'recap-message',
@@ -32,7 +63,7 @@ export const MEETING_POST_CALL_ACTIONS: MeetingPostCallAction[] = [
       'Structure it the way I write these:',
       '- One warm opening line, then straight into what we covered.',
       '- One short paragraph on the core focus of the call.',
-      "- A hit list headed something like \"Here's our hit list of actions on our end:\"",
+      '- A hit list headed something like "Here\'s our hit list of actions on our end:"',
       '- ✅ (DONE) lines first for work already confirmed or finished on the call.',
       '- (IN PROGRESS) lines for work we still own this week.',
       '- (TO-DO) lines for work not started yet.',

@@ -1,6 +1,6 @@
 import { QC_FOLLOW_UP_MESSAGES } from './page-grader-qc-follow-up.messages'
 
-export const QC_FOLLOW_UP_COOLDOWN_MS = 8 * 60 * 60_000
+export const QC_FOLLOW_UP_COOLDOWN_MS = 24 * 60 * 60_000
 export const QC_SLACK_ANCHOR_LOOKBACK_MS = 14 * 24 * 60 * 60_000
 export const QC_CASE_TYPES = [
   'quality_control',

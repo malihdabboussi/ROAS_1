@@ -1,5 +1,46 @@
-import { describe, expect, it } from 'vitest'
-import { conversationScopeDisplayLabel } from './conversation-scope-picker-layout'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import {
+  conversationScopeDisplayLabel,
+  placeSpacesMenuFromRowRect,
+} from './conversation-scope-picker-layout'
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+describe('placeSpacesMenuFromRowRect', () => {
+  it('top-aligns a flyout with the hovered row', () => {
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1400)
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(900)
+    const row = {
+      top: 360,
+      right: 640,
+      bottom: 400,
+      left: 380,
+    } as DOMRect
+
+    expect(placeSpacesMenuFromRowRect(row, 160)).toMatchObject({
+      top: 360,
+      left: 644,
+    })
+  })
+
+  it('keeps row alignment until the viewport requires clamping', () => {
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(800)
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(600)
+    const row = {
+      top: 520,
+      right: 760,
+      bottom: 560,
+      left: 500,
+    } as DOMRect
+
+    expect(placeSpacesMenuFromRowRect(row, 160)).toMatchObject({
+      top: 432,
+      left: 236,
+    })
+  })
+})
 
 describe('conversationScopeDisplayLabel', () => {
   it('qualifies a General space with the campaign name', () => {

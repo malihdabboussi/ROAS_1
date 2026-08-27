@@ -7,11 +7,16 @@ const mocks = vi.hoisted(() => {
     spaces: [] as Array<Record<string, unknown>>,
     loadSpaces: vi.fn<() => Promise<void>>(),
     loadRoster: vi.fn<() => Promise<void>>(),
+    loadItems: vi.fn<() => Promise<void>>(),
     setActiveSpace: vi.fn(),
     setActiveView: vi.fn(),
   }
   return { state, spaceItemsContainer: vi.fn() }
 })
+
+vi.mock('@/lib/settings/workspace-settings-modal-context', () => ({
+  useWorkspaceSettingsModal: () => ({ openWorkspaceSettings: vi.fn() }),
+}))
 
 vi.mock('@/features/spaces', () => {
   const useSpacesStore = Object.assign(

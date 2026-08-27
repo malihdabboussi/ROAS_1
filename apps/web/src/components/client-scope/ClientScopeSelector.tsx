@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Building2, Check, Search, X } from 'lucide-react'
-import { visiblePipelineClients } from '@/lib/agency-clients'
+import { alphabeticalClientSections } from '@/lib/agency-clients'
 import { useClientScope } from '@/lib/client-scope'
 import { cn } from '@/lib/utils/cn'
 
@@ -11,19 +11,8 @@ export function ClientScopeSelector() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const rootRef = useRef<HTMLDivElement>(null)
-  const visibleClients = useMemo(() => {
-    const filteredClients = visiblePipelineClients(clients, {
-      query,
-      alwaysIncludeIds: selectedClientId ? [selectedClientId] : [],
-    })
-
-    if (!selectedClientId) return filteredClients
-
-    const selectedClient = filteredClients.find((client) => client.id === selectedClientId)
-    if (!selectedClient) return filteredClients
-
-    return [selectedClient, ...filteredClients.filter((client) => client.id !== selectedClientId)]
-  }, [clients, query, selectedClientId])
+  const clientSections = useMemo(() => alphabeticalClientSections(clients, query), [clients, query])
+  const visibleClients = [...clientSections.active, ...clientSections.inactive]
 
   const closeMenu = useCallback(() => {
     setOpen(false)
@@ -99,7 +88,7 @@ export function ClientScopeSelector() {
                 </span>
                 <span className="body-3">All clients</span>
               </button>
-              {visibleClients.map((client) => (
+              {clientSections.active.map((client) => (
                 <button
                   key={client.id}
                   type="button"
@@ -117,6 +106,31 @@ export function ClientScopeSelector() {
                   </span>
                 </button>
               ))}
+              {clientSections.inactive.length > 0 ? (
+                <>
+                  <p className="typo-caption text-muted-foreground border-border px-spacing-2 pb-spacing-1 pt-spacing-3 mt-spacing-1 border-t">
+                    Inactive Clients
+                  </p>
+                  {clientSections.inactive.map((client) => (
+                    <button
+                      key={client.id}
+                      type="button"
+                      className="hover:bg-hover-subtle px-spacing-2 py-spacing-2 gap-spacing-2 rounded-spacing-1 flex w-full items-center text-left"
+                      onClick={() => {
+                        setSelectedClientId(client.id)
+                        closeMenu()
+                      }}
+                    >
+                      <span className="h-spacing-5 w-spacing-5 flex items-center justify-center">
+                        {selectedClientId === client.id ? <Check className="icon-sm" /> : null}
+                      </span>
+                      <span className="body-3 min-w-0 flex-1 truncate">
+                        {client.display_name?.trim() || client.name}
+                      </span>
+                    </button>
+                  ))}
+                </>
+              ) : null}
               {loading && clients.length === 0 ? (
                 <p className="body-4 text-muted-foreground px-spacing-2 py-spacing-2">
                   Loading clients…

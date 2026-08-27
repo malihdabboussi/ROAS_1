@@ -70,6 +70,7 @@ export class PageGraderBrainPackageIngestService {
         userId: input.userId,
         orgId: input.orgId ?? null,
       })
+      this.assertEmbeddingRepairComplete(repaired)
       await this.stampCampaignSync(
         supabase,
         campaign,
@@ -105,6 +106,7 @@ export class PageGraderBrainPackageIngestService {
       userId: input.userId,
       orgId: input.orgId ?? null,
     })
+    this.assertEmbeddingRepairComplete(repaired)
     const evidenceUpserted = await this.upsertEvidence(supabase, brainId, evidence)
 
     const spaceId =
@@ -177,6 +179,13 @@ export class PageGraderBrainPackageIngestService {
       memoryEmbeddingFailures: repaired.failed,
       skippedUnchanged: false,
     }
+  }
+
+  private assertEmbeddingRepairComplete(repaired: { failed: number }): void {
+    if (repaired.failed === 0) return
+    throw new BadRequestException(
+      `Campaign Brain import is incomplete: ${repaired.failed} Page Grader memories are missing retrieval embeddings`,
+    )
   }
 
   private async loadCampaign(supabase: SupabaseClient, campaignId: string) {

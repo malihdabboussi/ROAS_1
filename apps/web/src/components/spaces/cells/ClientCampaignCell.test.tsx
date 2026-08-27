@@ -119,7 +119,7 @@ describe('ClientCampaignCell', () => {
     expect(onOpenDetail).toHaveBeenCalledWith(item)
   })
 
-  it('links the mapped client and campaign space', () => {
+  it('uses the mapped label as the dropdown trigger instead of navigation', () => {
     mocks.useClientCampaignGroups.mockReturnValue({ groups: GROUPS, failed: false })
 
     render(
@@ -138,17 +138,16 @@ describe('ClientCampaignCell', () => {
       />,
     )
 
-    expect(screen.getByRole('link', { name: '1DS Collective' })).toHaveAttribute(
-      'href',
-      '/clients/client-1',
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Change client and campaign — currently 1DS Collective · Launch',
+      }),
     )
-    expect(screen.getByRole('link', { name: 'Launch' })).toHaveAttribute(
-      'href',
-      '/spaces?space=space-1',
-    )
+    expect(screen.getByRole('menu')).toBeInTheDocument()
   })
 
-  it('renders a workspace-specific trigger while preserving the same mapping picker', () => {
+  it('maps Client Workspace directly without forcing a campaign selection', () => {
     mocks.useClientCampaignGroups.mockReturnValue({ groups: GROUPS, failed: false })
     const onChange = vi.fn()
 
@@ -164,10 +163,32 @@ describe('ClientCampaignCell', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Select client workspace' }))
     fireEvent.click(screen.getByRole('button', { name: /1DS Collective/ }))
-    fireEvent.click(screen.getByRole('button', { name: 'Launch' }))
 
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ client_name: '1DS Collective', campaign_name: 'Launch' }),
+    expect(onChange).toHaveBeenCalledWith({
+      client_id: 'client-1',
+      client_name: '1DS Collective',
+      campaign_id: '',
+      campaign_name: '',
+      roas_space_id: null,
+    })
+  })
+
+  it('renders an unlabeled empty cell as the mapping trigger', () => {
+    mocks.useClientCampaignGroups.mockReturnValue({ groups: GROUPS, failed: false })
+
+    render(
+      <ClientCampaignCell
+        field={{ id: 'campaign_name', name: 'Client Workspace', type: 'text' }}
+        value={null}
+        onChange={vi.fn()}
+        displayMode="client"
+        spaceItem={callItem()}
+      />,
     )
+
+    const trigger = screen.getByRole('button', { name: 'Select client workspace' })
+    expect(trigger.textContent).toBe('')
+    expect(screen.queryByText('Map')).not.toBeInTheDocument()
+    expect(screen.queryByText('Change')).not.toBeInTheDocument()
   })
 })

@@ -33,6 +33,9 @@ vi.mock('@/features/home/services/meeting-workspace-api', () => ({
 vi.mock('@/features/home/lib/sync-agenda-fathom-recording', () => ({
   syncAgendaFathomRecordingToWorkspace: vi.fn().mockResolvedValue(false),
 }))
+vi.mock('@/features/home/hooks/use-meeting-follow-up-review-entry', () => ({
+  useMeetingFollowUpReviewEntry: vi.fn(),
+}))
 vi.mock('@/features/home/components/MeetingAgendaDocEditor', () => ({
   MeetingAgendaDocEditor: ({ itemId }: { itemId: string }) => (
     <div data-testid="meeting-agenda-doc" data-item-id={itemId} />
@@ -58,6 +61,7 @@ vi.mock('@/components/work-views/AllMeetingsNativeList', () => ({
   ),
 }))
 vi.mock('@/lib/work-items', () => ({
+  campaignNameFromMappingPath: () => '',
   useSpaceMappingIndex: () => null,
 }))
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => {

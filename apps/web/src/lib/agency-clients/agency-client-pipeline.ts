@@ -142,6 +142,28 @@ export function compareClientsByPipeline(
   return leftName.localeCompare(rightName, undefined, { sensitivity: 'base' })
 }
 
+export function compareClientsAlphabetically(
+  left: PipelineClientLike,
+  right: PipelineClientLike,
+): number {
+  const leftName = (left.display_name || left.name || '').trim()
+  const rightName = (right.display_name || right.name || '').trim()
+  return leftName.localeCompare(rightName, undefined, { sensitivity: 'base' })
+}
+
+export function alphabeticalClientSections<T extends PipelineClientLike>(
+  clients: T[],
+  query = '',
+): { active: T[]; inactive: T[] } {
+  const matching = clients.filter((client) => clientMatchesQuery(client, query))
+  return {
+    active: matching
+      .filter((client) => !isDefaultHiddenClient(client))
+      .sort(compareClientsAlphabetically),
+    inactive: matching.filter(isDefaultHiddenClient).sort(compareClientsAlphabetically),
+  }
+}
+
 export function clientMatchesQuery(client: PipelineClientLike, query: string): boolean {
   const needle = query.trim().toLowerCase()
   if (!needle) return true

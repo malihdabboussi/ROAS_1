@@ -100,6 +100,8 @@ export interface SpaceItemRowProps {
   onRowContextMenu?: (item: SpaceItem, position: { x: number; y: number }) => void
   dateDisplayFormat?: DateDisplayFormat
   dateDisplayFormats?: DateDisplayFormats
+  /** Row chrome owns drag, selection, expansion, and status outside customizable columns. */
+  externalRowControls?: boolean
 }
 
 export const SpaceItemRow = memo(function SpaceItemRow({
@@ -138,6 +140,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
   onRowContextMenu,
   dateDisplayFormat,
   dateDisplayFormats,
+  externalRowControls = false,
 }: SpaceItemRowProps) {
   const [editingTitleInline, setEditingTitleInline] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -390,7 +393,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                 )}
                 <div className={cn('relative z-[2] flex min-w-0 flex-1 items-center')}>
                   {/* Grouped: chevron -> gap -> status -> gap -> title */}
-                  {groupColor && (
+                  {groupColor && !externalRowControls && (
                     <div
                       className={`flex shrink-0 items-center gap-2.5 ${
                         isSubtask && !separateSubtaskFlushRow && !subtaskPanelRow
@@ -424,66 +427,72 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                     </div>
                   )}
                   {/* Flat: grip (dnd) -> checkbox -> chevron */}
-                  {!groupColor && !readOnly && (onToggleSelect || dndDrag) && (
-                    <div
-                      className={`flex shrink-0 items-center gap-2.5 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}
-                    >
-                      {dndDrag ? (
-                        <button
-                          type="button"
-                          className="-ml-0.5 shrink-0 cursor-grab touch-none rounded p-0.5 text-[var(--color-muted-foreground)] active:cursor-grabbing"
-                          onClick={(e) => e.stopPropagation()}
-                          aria-label="Drag to reorder"
-                        >
-                          <GripVertical className="h-3 w-3" />
-                        </button>
-                      ) : (
-                        <GripVertical className="h-3 w-3 shrink-0 cursor-grab text-[var(--color-muted-foreground)]" />
-                      )}
-                      {onToggleSelect && (
-                        <input
-                          type="checkbox"
-                          checked={selected}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => {
-                            e.stopPropagation()
-                            onToggleSelect(item.id)
-                          }}
-                          className="checkbox-glass-green shrink-0"
-                          aria-label="Select row"
-                        />
-                      )}
-                      {showChevron && (
-                        <button
-                          type="button"
-                          aria-label={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
-                          aria-expanded={expanded}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onToggleExpand?.()
-                          }}
-                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-all hover:text-[var(--foreground)] ${
-                            chevronAlwaysVisible
-                              ? 'opacity-100'
-                              : 'opacity-0 group-hover:opacity-100'
-                          }`}
-                        >
-                          <ChevronRight
-                            className={`h-3.5 w-3.5 transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
+                  {!groupColor &&
+                    !externalRowControls &&
+                    !readOnly &&
+                    (onToggleSelect || dndDrag) && (
+                      <div
+                        className={`flex shrink-0 items-center gap-2.5 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}
+                      >
+                        {dndDrag ? (
+                          <button
+                            type="button"
+                            className="-ml-0.5 shrink-0 cursor-grab touch-none rounded p-0.5 text-[var(--color-muted-foreground)] active:cursor-grabbing"
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label="Drag to reorder"
+                          >
+                            <GripVertical className="h-3 w-3" />
+                          </button>
+                        ) : (
+                          <GripVertical className="h-3 w-3 shrink-0 cursor-grab text-[var(--color-muted-foreground)]" />
+                        )}
+                        {onToggleSelect && (
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              e.stopPropagation()
+                              onToggleSelect(item.id)
+                            }}
+                            className="checkbox-glass-green shrink-0"
+                            aria-label="Select row"
                           />
-                        </button>
-                      )}
-                      {/* Ungrouped nested subtasks: extra chevron-width spacers vs parent row. */}
-                      {!showChevron && isSubtask && !separateSubtaskFlushRow && !onToggleSelect && (
-                        <span className="inline-block h-4 w-4 shrink-0" aria-hidden />
-                      )}
-                      {!showChevron && isSubtask && !separateSubtaskFlushRow && (
-                        <span className="inline-block h-4 w-4 shrink-0" aria-hidden />
-                      )}
-                    </div>
-                  )}
+                        )}
+                        {showChevron && (
+                          <button
+                            type="button"
+                            aria-label={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
+                            aria-expanded={expanded}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onToggleExpand?.()
+                            }}
+                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-all hover:text-[var(--foreground)] ${
+                              chevronAlwaysVisible
+                                ? 'opacity-100'
+                                : 'opacity-0 group-hover:opacity-100'
+                            }`}
+                          >
+                            <ChevronRight
+                              className={`h-3.5 w-3.5 transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
+                            />
+                          </button>
+                        )}
+                        {/* Ungrouped nested subtasks: extra chevron-width spacers vs parent row. */}
+                        {!showChevron &&
+                          isSubtask &&
+                          !separateSubtaskFlushRow &&
+                          !onToggleSelect && (
+                            <span className="inline-block h-4 w-4 shrink-0" aria-hidden />
+                          )}
+                        {!showChevron && isSubtask && !separateSubtaskFlushRow && (
+                          <span className="inline-block h-4 w-4 shrink-0" aria-hidden />
+                        )}
+                      </div>
+                    )}
                   {/* Flat nested subtask indent (not interleaved separate rows). */}
                   {!groupColor && isSubtask && !separateSubtaskFlushRow && (
                     <div className="inline-block w-1 shrink-0" />
@@ -495,7 +504,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                     >
                       {leadingItemSlot ? (
                         <div className="shrink-0">{leadingItemSlot}</div>
-                      ) : statusField ? (
+                      ) : statusField && !externalRowControls ? (
                         <div className="shrink-0" onPointerDown={(e) => e.stopPropagation()}>
                           {readOnly ? (
                             statusTrigger
@@ -565,7 +574,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                       >
                         {leadingItemSlot ? (
                           <div className="shrink-0">{leadingItemSlot}</div>
-                        ) : statusField ? (
+                        ) : statusField && !externalRowControls ? (
                           <div onPointerDown={(e) => e.stopPropagation()}>
                             {readOnly ? (
                               statusTrigger

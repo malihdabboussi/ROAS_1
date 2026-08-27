@@ -16,6 +16,7 @@ import {
   startAgendaPrompt,
   type MeetingPostCallAction,
 } from '@/features/home/config/meeting-post-call-actions.config'
+import { useMeetingFollowUpReviewEntry } from '@/features/home/hooks/use-meeting-follow-up-review-entry'
 import { useMeetingSpaceStatusField } from '@/features/home/hooks/use-meeting-space-status-field'
 import { useMeetingWorkspaceSurface } from '@/features/home/hooks/use-meeting-workspace-surface'
 import { buildMeetingAwarenessContext } from '@/features/home/lib/build-meeting-awareness-context'
@@ -153,6 +154,14 @@ export function MeetingWorkspaceDialog({
     conversationId,
     title,
     agendaEvent,
+    awarenessContext,
+    timelineVersion: bundle?.snippets?.length ?? 0,
+  })
+  useMeetingFollowUpReviewEntry({
+    spaceId,
+    meetingItemId,
+    conversationId,
+    meetingTitle: title,
     awarenessContext,
     timelineVersion: bundle?.snippets?.length ?? 0,
   })

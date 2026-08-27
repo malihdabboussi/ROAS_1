@@ -221,6 +221,7 @@ export class PageGraderQcSlackBridgeService {
         externalClientId,
         clientLabel,
         sourceKeys,
+        pageGraderUserId: connection.userId,
       }))
     const anchor = anchorItem ? qcSlackAnchorFromCase(anchorItem) : null
     const decision = decideQcSlackDelivery({

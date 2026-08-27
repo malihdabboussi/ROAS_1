@@ -7,6 +7,8 @@ export interface MissionDetailModalProps {
   elevatedStacking?: boolean
   initialSubtaskId?: string | null
   presentation?: 'modal' | 'panel'
+  panelExpanded?: boolean
+  onTogglePanelExpanded?: () => void
 }
 
 export function getMissionDetailDisplayData(prdContent: PrdContent | null, logs: MissionLog[]) {

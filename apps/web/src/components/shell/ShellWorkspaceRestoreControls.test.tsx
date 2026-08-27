@@ -102,6 +102,8 @@ vi.mock('@/features/studio/store/use-chat-store', () => ({
   ),
 }))
 
+vi.mock('@/features/studio/services/chat.service', () => ({ selectConversation: vi.fn() }))
+
 vi.mock('@/features/studio/components/preview/ShellArtifactViewerAdapter', () => ({
   ShellArtifactViewerAdapter: () => (
     <div data-testid="artifact-viewer-adapter">

@@ -209,7 +209,8 @@ export function ShellArtifactViewerPanel({
           <button
             type="button"
             onClick={() => close()}
-            aria-label="Close artifact viewer"
+            aria-label="Close page"
+            title="Close page"
             className="btn-icon-glass text-muted-foreground hover:text-foreground h-7 w-7 shrink-0"
           >
             <X className="icon-sm" />

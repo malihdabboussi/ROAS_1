@@ -152,7 +152,10 @@ describe('PageGraderQcSlackBridgeService', () => {
     )
     expect(cases.findQcSlackAnchor).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ orgId: 'org-from-campaign' }),
+      expect.objectContaining({
+        orgId: 'org-from-campaign',
+        pageGraderUserId: 'user-1',
+      }),
     )
     expect(cases.attachSlackDelivery).toHaveBeenCalledWith(
       expect.anything(),
@@ -322,7 +325,7 @@ describe('PageGraderQcSlackBridgeService', () => {
       }),
     )
 
-    vi.setSystemTime(new Date('2026-08-17T21:00:00.000Z'))
+    vi.setSystemTime(new Date('2026-08-18T12:00:00.000Z'))
     await service.deliverNotification(body(laterIds), 'pgwh-secret')
     expect(slackTools.sendBlockMessageToTarget).toHaveBeenCalledTimes(1)
     expect(slackTools.sendMessage).toHaveBeenCalledTimes(1)
@@ -331,7 +334,7 @@ describe('PageGraderQcSlackBridgeService', () => {
       thread_ts: '123.456',
     })
     expect(slackTools.sendMessage.mock.calls[0][3].text).toContain('Impact Elite Coaching')
-    expect(slackTools.sendMessage.mock.calls[0][3].text).toContain('finalized')
+    expect(slackTools.sendMessage.mock.calls[0][3].text).toContain('next daily digest')
     vi.useRealTimers()
   })
 })

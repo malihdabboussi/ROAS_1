@@ -88,7 +88,7 @@ export function findConversationScopeSpace(
   return null
 }
 
-/** Bottom-align spaces submenu to the hovered campaign row, mirroring row-anchored submenu placement. */
+/** Top-align the submenu with its hovered row so the pointer can travel straight across. */
 export function placeSpacesMenuFromRowRect(
   rowRect: DOMRect,
   placementHeight: number,
@@ -102,7 +102,7 @@ export function placeSpacesMenuFromRowRect(
   }
   if (left < CONVERSATION_SCOPE_VIEWPORT_MARGIN) left = CONVERSATION_SCOPE_VIEWPORT_MARGIN
 
-  let top = rowRect.bottom - placementHeight
+  let top = rowRect.top
   top = Math.max(
     CONVERSATION_SCOPE_VIEWPORT_MARGIN,
     Math.min(top, viewportHeight - CONVERSATION_SCOPE_VIEWPORT_MARGIN - placementHeight),

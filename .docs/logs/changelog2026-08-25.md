@@ -1,5 +1,15 @@
 # Changelog - August 25, 2026
 
+## 2026-08-25 12:05 - [TEST]
+
+What: Added a fail-closed ROAS entrypoint for the Page Grader and ClickUp task lifecycle E2E.
+
+Why: The migration had focused tests and manual evidence, but no durable command that proves the task lifecycle across both repositories and ClickUp.
+
+Impact: Maintainers can explicitly opt into a live test that verifies outbound priority and comment sync, inbound webhook activity, and restores the selected task afterward.
+
+Files: `package.json`, `scripts/e2e/roas-clickup-task-lifecycle.mjs`
+
 ## [2026-08-25 09:00] - [STYLE]
 
 What: Moved the Client Campaigns New campaign action into the shared search and filter controls row.

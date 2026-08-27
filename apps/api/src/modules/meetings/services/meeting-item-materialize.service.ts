@@ -2,9 +2,11 @@ import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   buildMeetingCallIdentity,
+  isMeetingCallKind,
   resolveMeetingCallKind,
   shouldReplaceMeetingCallKind,
   type MeetingCallIdentity,
+  type MeetingCallKind,
 } from '../domain/meeting-call-kind'
 import { callStatusWhenInviteMoved, inviteTimesMoved } from '../domain/meeting-call-status'
 import {
@@ -108,16 +110,26 @@ export class MeetingItemMaterializeService {
         start: input.event.start,
       })
     }
-    const callKind = resolveMeetingCallKind({
-      identity: input.identity,
-      recordedByEmail: '',
-      attendees: input.event.attendees,
-      attendeeLabels: input.event.attendees.map(
-        (attendee) => attendee.name?.trim() || attendee.email.trim(),
-      ),
-      titleHint: input.event.title,
-      summary: input.event.description,
-    })
+    const learnedCallKind = icalUid
+      ? await this.findRecurringManualCallKind(supabase, input.userId, icalUid)
+      : null
+    const existingCustomData = record(existing?.custom_data)
+    const callKind =
+      learnedCallKind ??
+      resolveMeetingCallKind({
+        identity: input.identity,
+        recordedByEmail: '',
+        attendees: input.event.attendees,
+        attendeeLabels: input.event.attendees.map(
+          (attendee) => attendee.name?.trim() || attendee.email.trim(),
+        ),
+        titleHint: input.event.title,
+        summary: input.event.description,
+        hasConfirmedClient: Boolean(
+          text(record(existingCustomData.client_campaign).client_id) ||
+          text(record(existingCustomData.page_grader).client_id),
+        ),
+      })
     if (!existing) {
       await this.resolutionRepository.createScheduledMeeting(supabase, {
         spaceId: input.spaceId,
@@ -130,6 +142,30 @@ export class MeetingItemMaterializeService {
     }
     await this.syncExistingCall(supabase, existing, input.event, callKind)
     return 'linked'
+  }
+
+  private async findRecurringManualCallKind(
+    supabase: SupabaseClient,
+    userId: string,
+    icalUid: string,
+  ): Promise<MeetingCallKind | null> {
+    // Unit repository doubles do not provide the Supabase query builder.
+    if (typeof (supabase as unknown as { from?: unknown }).from !== 'function') return null
+    const { data, error } = await supabase
+      .from('space_items')
+      .select('custom_data, updated_at')
+      .eq('user_id', userId)
+      .eq('custom_data->>ical_uid', icalUid)
+      .eq('custom_data->>call_kind_source', 'manual')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (error) {
+      this.logger.warn(`Could not load recurring call-kind rule: ${error.message}`)
+      return null
+    }
+    const value = record(data?.custom_data).call_kind
+    return isMeetingCallKind(value) ? value : null
   }
 
   private async syncExistingCall(

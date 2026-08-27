@@ -7,7 +7,7 @@ import {
 } from './all-meetings-list-columns'
 
 describe('ensureAllMeetingsListColumns', () => {
-  it('replaces Priority with Client Workspace, Campaign Space, Host, and Call status', () => {
+  it('replaces Priority with Client Workspace, Host, and Call status', () => {
     const next = ensureAllMeetingsListColumns({
       fields: [
         { id: 'title', name: 'Name', type: 'text' },
@@ -27,7 +27,6 @@ describe('ensureAllMeetingsListColumns', () => {
     expect(next.fields).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'campaign_name', name: 'Client Workspace' }),
-        expect.objectContaining({ id: 'space_title', name: 'Campaign Space' }),
         expect.objectContaining({ id: 'client_campaign', name: 'Client / Campaign' }),
         expect.objectContaining({ id: 'host', name: 'Host' }),
         expect.objectContaining({ id: 'attendees', name: 'Attendees', type: 'multi_select' }),
@@ -54,7 +53,7 @@ describe('ensureAllMeetingsListColumns', () => {
     )
   })
 
-  it('inserts Client Workspace and Campaign Space without wiping later columns', () => {
+  it('inserts Client Workspace without wiping later columns', () => {
     const schema = {
       fields: [
         { id: 'title', name: 'Name', type: 'text' },
@@ -71,7 +70,6 @@ describe('ensureAllMeetingsListColumns', () => {
     expect(ensureAllMeetingsListColumns(schema).views[0]?.visible_fields).toEqual([
       'title',
       'campaign_name',
-      'space_title',
       'host',
       'attendees',
       'call_status',
@@ -84,21 +82,13 @@ describe('ensureAllMeetingsListColumns', () => {
       fields: [
         { id: 'title', name: 'Name', type: 'text' },
         { id: 'campaign_name', name: 'Client Workspace', type: 'text' },
-        { id: 'space_title', name: 'Campaign Space', type: 'text' },
         { id: 'host', name: 'Host', type: 'text' },
         { id: 'call_status', name: 'Call status', type: 'select' },
       ],
       views: [
         {
           id: 'all-meetings',
-          visible_fields: [
-            'call_status',
-            'title',
-            'campaign_name',
-            'space_title',
-            'host',
-            'call_date',
-          ],
+          visible_fields: ['call_status', 'title', 'campaign_name', 'host', 'call_date'],
         },
       ],
     })
@@ -107,7 +97,6 @@ describe('ensureAllMeetingsListColumns', () => {
       'call_status',
       'title',
       'campaign_name',
-      'space_title',
       'host',
       'attendees',
       'call_date',
@@ -128,7 +117,6 @@ describe('ensureAllMeetingsListColumns', () => {
         { id: 'title', name: 'Name', type: 'text' },
         { id: 'client_campaign', name: 'Client / Campaign', type: 'text' },
         { id: 'campaign_name', name: 'Client Workspace', type: 'text' },
-        { id: 'space_title', name: 'Campaign Space', type: 'text' },
         { id: 'host', name: 'Host', type: 'text' },
         { id: 'attendees', name: 'Attendees', type: 'multi_select' },
         { id: 'call_status', name: 'Call status', type: 'select' },
@@ -169,12 +157,11 @@ describe('ensureAllMeetingsListColumns', () => {
       ],
     })
     expect(next.views[0]?.visible_fields).toEqual([...ALL_MEETINGS_LIST_FIELD_IDS])
-    expect(next.views[0]?.visible_fields).toContain('space_title')
+    expect(next.views[0]?.visible_fields).not.toContain('space_title')
     expect(next.views[0]?.visible_fields).not.toContain('client_campaign')
     expect(next.fields).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'campaign_name', name: 'Client Workspace' }),
-        expect.objectContaining({ id: 'space_title', name: 'Campaign Space' }),
         expect.objectContaining({ id: 'client_campaign', name: 'Client / Campaign' }),
       ]),
     )
@@ -182,7 +169,7 @@ describe('ensureAllMeetingsListColumns', () => {
 })
 
 describe('withClientWorkspaceColumns', () => {
-  it('replaces Client / Campaign with the All Tasks workspace columns', () => {
+  it('replaces Client / Campaign and Campaign Space with Client Workspace', () => {
     expect(
       withAttendeesColumn(
         withClientWorkspaceColumns([

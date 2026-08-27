@@ -1,6 +1,7 @@
 'use client'
 
-import { GripVertical } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { ChevronRight, GripVertical } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { SpaceListDndDragHandleProps } from '../lib/space-list-dnd-types'
 
@@ -52,6 +53,11 @@ export function GroupedRowGripColumn({
   dndDrag,
   surface = 'list',
   tableRowLabel,
+  expanded,
+  showChevron = false,
+  chevronAlwaysVisible = false,
+  onToggleExpand,
+  statusControl,
 }: {
   itemId: string
   isSelected: boolean
@@ -64,6 +70,11 @@ export function GroupedRowGripColumn({
   surface?: 'list' | 'table'
   /** When set in table mode, row index shown; hover swaps to checkbox (no grip in table). */
   tableRowLabel?: string | number | null
+  expanded?: boolean
+  showChevron?: boolean
+  chevronAlwaysVisible?: boolean
+  onToggleExpand?: () => void
+  statusControl?: ReactNode
 }) {
   const isTable = surface === 'table'
   const showRowNum = isTable && !reserveLayoutOnly && tableRowLabel != null && tableRowLabel !== ''
@@ -87,7 +98,8 @@ export function GroupedRowGripColumn({
   return (
     <div
       className={cn(
-        'relative sticky left-0 z-30 flex w-10 shrink-0 flex-col items-center justify-center gap-1 self-stretch py-1',
+        'relative sticky left-0 z-30 flex shrink-0 items-center justify-center gap-1 self-stretch py-1',
+        statusControl ? 'w-28 flex-row px-1' : 'w-10 flex-col',
         isTable && 'group/gripcol box-border min-h-[2.25rem] bg-[var(--background)]',
         isTable &&
           !isSelected &&
@@ -110,7 +122,7 @@ export function GroupedRowGripColumn({
         />
       )}
 
-      {isTable && !reserveLayoutOnly && (
+      {isTable && !reserveLayoutOnly && !statusControl && (
         <div className="relative z-[2] grid h-4 w-full place-items-center">
           {showRowNum && !isSelected && (
             <span className="col-start-1 row-start-1 select-none text-[11px] tabular-nums leading-none text-[var(--color-muted-foreground)] opacity-100 transition-opacity duration-150 group-hover/row:pointer-events-none group-hover/row:opacity-0">
@@ -132,7 +144,54 @@ export function GroupedRowGripColumn({
         <div className="relative z-[2] h-4 w-4 shrink-0" aria-hidden />
       )}
 
-      {!isTable && (
+      {!reserveLayoutOnly && statusControl ? (
+        <div className="relative z-[2] flex w-full items-center justify-start gap-1">
+          <div
+            className={cn(
+              'flex items-center gap-1 transition-opacity duration-0',
+              isSelected ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100',
+            )}
+          >
+            {!hideGrip ? (
+              <GripVertical className="text-muted-foreground h-3 w-3 shrink-0 cursor-grab" />
+            ) : null}
+            {checkbox}
+          </div>
+          {showChevron ? (
+            <button
+              type="button"
+              aria-label={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
+              aria-expanded={expanded}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation()
+                onToggleExpand?.()
+              }}
+              className={cn(
+                'text-muted-foreground hover:text-foreground flex h-4 w-4 shrink-0 items-center justify-center rounded transition-all',
+                chevronAlwaysVisible ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100',
+              )}
+            >
+              <ChevronRight
+                className={cn(
+                  'h-3.5 w-3.5 transition-transform duration-150',
+                  expanded && 'rotate-90',
+                )}
+              />
+            </button>
+          ) : (
+            <span className="h-4 w-4 shrink-0" aria-hidden />
+          )}
+          <div
+            className="flex h-5 w-5 shrink-0 items-center justify-center"
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            {statusControl}
+          </div>
+        </div>
+      ) : null}
+
+      {!isTable && !statusControl && (
         <div className="relative z-[2] flex flex-col items-center gap-0.5">
           <div
             className={cn(

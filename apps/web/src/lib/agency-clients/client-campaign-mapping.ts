@@ -1,3 +1,4 @@
+import { isDefaultHiddenClient } from './agency-client-pipeline'
 import type { AgencyClient, AgencyClientCampaign } from './agency-clients-api'
 
 export const CLIENT_CAMPAIGN_FIELD_ID = 'client_campaign'
@@ -20,6 +21,7 @@ export type ClientCampaignGroup = {
   clientId: string
   clientName: string
   campaigns: ClientCampaignOption[]
+  inactive?: boolean
 }
 
 export function parseClientCampaignMapping(value: unknown): ClientCampaignMapping | null {
@@ -35,10 +37,12 @@ export function parseClientCampaignMapping(value: unknown): ClientCampaignMappin
   const row = value as Record<string, unknown>
   const campaignName = typeof row.campaign_name === 'string' ? row.campaign_name.trim() : ''
   const campaignId = typeof row.campaign_id === 'string' ? row.campaign_id.trim() : ''
-  if (!campaignName && !campaignId) return null
+  const clientName = typeof row.client_name === 'string' ? row.client_name.trim() : ''
+  const clientId = typeof row.client_id === 'string' ? row.client_id.trim() : ''
+  if (!campaignName && !campaignId && !clientName && !clientId) return null
   return {
-    client_id: typeof row.client_id === 'string' ? row.client_id.trim() : '',
-    client_name: typeof row.client_name === 'string' ? row.client_name.trim() : '',
+    client_id: clientId,
+    client_name: clientName,
     campaign_id: campaignId,
     campaign_name: campaignName,
     roas_space_id: typeof row.roas_space_id === 'string' ? row.roas_space_id : null,
@@ -80,7 +84,7 @@ export function buildClientCampaignGroups(
     const mapping = client.mapping
     const generalId = mapping?.campaign_id?.trim()
     const generalSpaceId = mapping?.space_id?.trim()
-    if (!clientId || !generalId || !generalSpaceId) continue
+    if (!clientId) continue
     const clientName =
       client.display_name?.trim() || client.name?.trim() || mapping?.campaign_name?.trim()
     if (!clientName) continue
@@ -88,11 +92,16 @@ export function buildClientCampaignGroups(
       clientId,
       clientName,
       campaigns: [],
+      ...(isDefaultHiddenClient(client) ? { inactive: true } : {}),
     }
-    const alreadyIncluded = existing.campaigns.some(
-      (campaign) => campaign.id === generalId || campaign.roasSpaceId === generalSpaceId,
-    )
-    if (!alreadyIncluded) {
+    if (isDefaultHiddenClient(client)) existing.inactive = true
+    const alreadyIncluded =
+      generalId &&
+      generalSpaceId &&
+      existing.campaigns.some(
+        (campaign) => campaign.id === generalId || campaign.roasSpaceId === generalSpaceId,
+      )
+    if (generalId && generalSpaceId && !alreadyIncluded) {
       existing.campaigns.unshift({
         id: generalId,
         name: mapping?.space_title?.trim() || 'General',
@@ -113,6 +122,16 @@ export function buildClientCampaignGroups(
       ),
     }))
     .sort((a, b) => a.clientName.localeCompare(b.clientName, undefined, { sensitivity: 'base' }))
+}
+
+export function toClientOnlyMapping(group: ClientCampaignGroup): ClientCampaignMapping {
+  return {
+    client_id: group.clientId,
+    client_name: group.clientName,
+    campaign_id: '',
+    campaign_name: '',
+    roas_space_id: null,
+  }
 }
 
 export function toClientCampaignMapping(

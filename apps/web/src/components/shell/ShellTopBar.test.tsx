@@ -75,7 +75,7 @@ vi.mock('./ShellWorkAreaControl', () => ({
     <button
       type="button"
       data-page-title={currentPage.title}
-      title={mocks.shellState.workAreaOpen ? 'Collapse page — chat full screen' : 'Show page'}
+      title={mocks.shellState.workAreaOpen ? 'Close page' : 'Show page'}
       onClick={mocks.shellState.toggleWorkAreaOpen}
     />
   ),
@@ -132,7 +132,7 @@ describe('ShellTopBar', () => {
     expect(screen.queryByText('Agenda')).not.toBeInTheDocument()
     expect(screen.queryByTitle('Search')).not.toBeInTheDocument()
     expect(screen.queryByText('AI Chat')).not.toBeInTheDocument()
-    expect(screen.getByTitle('Collapse page — chat full screen')).toBeInTheDocument()
+    expect(screen.getByTitle('Close page')).toBeInTheDocument()
   })
 
   it('keeps the Simple work-area control on the page header while the page is open beside chat', () => {
@@ -142,7 +142,7 @@ describe('ShellTopBar', () => {
 
     render(<ShellTopBar />)
 
-    expect(screen.getByTitle('Collapse page — chat full screen')).toBeInTheDocument()
+    expect(screen.getByTitle('Close page')).toBeInTheDocument()
   })
 
   it('hides the Simple work-area control while the page is collapsed so the chat header owns Show page', () => {
@@ -152,7 +152,7 @@ describe('ShellTopBar', () => {
 
     render(<ShellTopBar />)
 
-    expect(screen.queryByTitle('Collapse page — chat full screen')).not.toBeInTheDocument()
+    expect(screen.queryByTitle('Close page')).not.toBeInTheDocument()
     expect(screen.queryByTitle('Show page')).not.toBeInTheDocument()
   })
 
@@ -161,7 +161,7 @@ describe('ShellTopBar', () => {
       mocks.pathname = route
       render(<ShellTopBar />)
 
-      expect(screen.queryByTitle('Collapse page — chat full screen')).not.toBeInTheDocument()
+      expect(screen.queryByTitle('Close page')).not.toBeInTheDocument()
       cleanup()
     }
 
@@ -172,11 +172,8 @@ describe('ShellTopBar', () => {
     mocks.shellState.chatDrawer = { open: true }
 
     render(<ShellTopBar />)
-    expect(screen.getByTitle('Collapse page — chat full screen')).toHaveAttribute(
-      'data-page-title',
-      'Home',
-    )
-    fireEvent.click(screen.getByTitle('Collapse page — chat full screen'))
+    expect(screen.getByTitle('Close page')).toHaveAttribute('data-page-title', 'Home')
+    fireEvent.click(screen.getByTitle('Close page'))
 
     expect(mocks.shellState.toggleWorkAreaOpen).toHaveBeenCalledTimes(1)
   })
@@ -186,7 +183,7 @@ describe('ShellTopBar', () => {
 
     render(<ShellTopBar />)
 
-    expect(screen.queryByTitle('Collapse page — chat full screen')).not.toBeInTheDocument()
+    expect(screen.queryByTitle('Close page')).not.toBeInTheDocument()
   })
 
   it('offers the reverse control once the work area is collapsed', () => {
@@ -288,7 +285,7 @@ describe('ShellTopBar', () => {
     render(<ShellTopBar />)
 
     expect(mocks.shellState.recordWorkAreaPage).not.toHaveBeenCalled()
-    expect(screen.queryByTitle('Collapse page — chat full screen')).not.toBeInTheDocument()
+    expect(screen.queryByTitle('Close page')).not.toBeInTheDocument()
   })
 
   it('drops transient chat and surface params from the recorded page identity', () => {
