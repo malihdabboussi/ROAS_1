@@ -203,7 +203,6 @@ export class MeetingFollowUpSlackConfirmService {
       shadowActionId = action.id
     }
 
-    const autoSendAssigneeActionIds: string[] = []
     const assigneeShadowActionIds = await this.createAssigneeReminderShadows({
       supabase: input.supabase,
       userId: input.userId,
@@ -214,10 +213,9 @@ export class MeetingFollowUpSlackConfirmService {
       callItem,
       followUps,
       nameKnowledge: draft.name_knowledge,
-      deliveryMode,
-      onCreated: (actionId, personDeliveryMode) => {
-        if (personDeliveryMode === 'active') autoSendAssigneeActionIds.push(actionId)
-      },
+      // The chat review owns delegation. Keep reminder proposals reviewable,
+      // but never deliver them before the operator completes that flow.
+      deliveryMode: 'shadow',
     })
 
     if (deliveryMode === 'shadow') {
@@ -326,19 +324,15 @@ export class MeetingFollowUpSlackConfirmService {
       process.env.APP_URL ||
       'https://app.roas.io'
     ).replace(/\/+$/, '')
-    const meetingUrl = `${appUrl}/spaces/${input.spaceId}?item=${input.callItemId}`
+    const meetingUrl = `${appUrl}/home/meetings?meeting=${encodeURIComponent(
+      input.callItemId,
+    )}&space=${encodeURIComponent(input.spaceId)}&review=follow-up`
     const reviewText = buildConfirmMessage({
       callTitle: input.callTitle,
       callItem,
       followUps,
-      confirmReaction,
       meetingUrl,
     })
-    const draftText = buildProposedShareableRecapMessage({
-      shareableDraft: draft.message,
-      fathomUrl: resolveFathomUrl(callItem),
-    })
-
     const noUnfurl = { unfurl_links: false, unfurl_media: false } as const
     const sent = await slackTools.sendMessage(input.supabase, input.userId, slackOrgId, {
       channel_id: channelId,
@@ -347,24 +341,6 @@ export class MeetingFollowUpSlackConfirmService {
     })
     const messageTs = String((sent as { ts?: string }).ts ?? '').trim()
     if (!messageTs) throw new Error('Slack DM did not return a message ts')
-
-    let draftMessageTs: string | undefined
-    if (draftText) {
-      const draftSent = await slackTools.sendMessage(input.supabase, input.userId, slackOrgId, {
-        channel_id: channelId,
-        text: draftText,
-        thread_ts: messageTs,
-        ...noUnfurl,
-      })
-      draftMessageTs = String((draftSent as { ts?: string }).ts ?? '').trim() || undefined
-    }
-
-    const assigneeSentActionIds = await this.deliverAssigneeShadows({
-      supabase: input.supabase,
-      userId: input.userId,
-      orgId: slackOrgId,
-      actionIds: autoSendAssigneeActionIds,
-    })
 
     const payload: SlackFollowUpConfirmPayload = {
       status: 'pending',
@@ -378,13 +354,10 @@ export class MeetingFollowUpSlackConfirmService {
       dm_email: dmEmail,
       requested_at: new Date().toISOString(),
       ...(shadowActionId ? { shadow_action_id: shadowActionId } : {}),
-      ...(draftMessageTs ? { draft_message_ts: draftMessageTs } : {}),
       ...(assigneeShadowActionIds.length > 0
         ? { assignee_shadow_action_ids: assigneeShadowActionIds }
         : {}),
-      ...(assigneeSentActionIds.length > 0
-        ? { assignee_sent_action_ids: assigneeSentActionIds }
-        : {}),
+      assignee_sent_action_ids: [],
       draft_message: draft.message,
       draft_rationale: draft.rationale,
       draft_context_sources: draft.context_sources,
@@ -405,7 +378,7 @@ export class MeetingFollowUpSlackConfirmService {
       confirm_reaction: confirmReaction,
       assignee_shadow_count: assigneeShadowActionIds.length,
       assignee_shadow_action_ids: assigneeShadowActionIds,
-      assignee_sent_action_ids: assigneeSentActionIds,
+      assignee_sent_action_ids: [],
     }
   }
 

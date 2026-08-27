@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   googleAgendaPrompt,
+  MEETING_FOLLOW_UP_REVIEW_PROMPT,
   MEETING_POST_CALL_ACTIONS,
   startAgendaPrompt,
 } from './meeting-post-call-actions.config'
@@ -53,5 +54,14 @@ describe('MEETING_POST_CALL_ACTIONS', () => {
     expect(delegate?.prompt).toContain('confirm_url')
     expect(delegate?.prompt).toContain('Skip anything marked ✅ DONE')
     expect(delegate?.prompt).toContain('Do not loop page_grader_create_fulfillment_request')
+  })
+})
+
+describe('MEETING_FOLLOW_UP_REVIEW_PROMPT', () => {
+  it('walks through context, the existing delegation preview, and an editable unsent draft', () => {
+    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('Stage 1 — confirm the meeting context')
+    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('page_grader_create_delegation_preview once')
+    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('```draft Follow-up message```')
+    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('Do not send it')
   })
 })

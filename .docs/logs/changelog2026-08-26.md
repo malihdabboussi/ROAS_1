@@ -70,6 +70,16 @@ Impact: Clicking either a workspace label or an empty editable cell opens the ex
 
 Files: `apps/web/src/components/spaces/cells/ClientCampaignCell.tsx`, `apps/web/src/components/spaces/cells/ClientCampaignCell.test.tsx`, `documentation/utilities/all-meetings-list-columns.md`, `documentation/features/space-templates.md`
 
+## 2026-08-26 19:05 - [FEATURE]
+
+What: Replaced Pixel's reaction/thread-heavy post-call DM with a concise meeting summary, follow-up count, and one guided review link that opens the canonical meeting workspace and linked chat. The chat confirms context, launches the existing ROAS Portal bulk delegation preview, then returns the final client copy in the existing editable draft card.
+
+Why: Post-call review needed one coherent human-confirmed cycle while preserving the Meetings workspace, the proven bulk delegation UI, and the existing Claude-style message editor.
+
+Impact: Opening the review link starts the meeting conversation once; no client draft thread or assignee reminder is sent before review, and the final message is copied by the operator rather than sent automatically.
+
+Files: `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.workflow.ts`, `apps/api/src/modules/spaces/services/meeting-follow-up-slack-message.ts`, `apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx`, `apps/web/src/features/home/config/meeting-post-call-actions.config.ts`, `apps/web/src/features/home/hooks/use-meeting-follow-up-review-entry.ts`, focused tests, `documentation/features/meeting-follow-up-slack.md`
+
 ## 2026-08-26 10:52 - [FIX]
 
 What: Deduplicated calendar events before Meetings materialization, excluded timed calendar blocks without attendees or meeting links, invalidated the stale item cache before reloading, simplified Client Workspace cells to one clickable value or dash, and added a Meetings shortcut to Integration settings.

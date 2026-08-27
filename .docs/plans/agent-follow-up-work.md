@@ -39957,6 +39957,13 @@ Evidence: `apps/api/src/modules/spaces/repositories/slack-open-items.repository.
 Needed work: Split QC Slack anchor and delivery metadata operations into a focused repository while preserving the existing `SlackOpenItemsService` contract and repository tests.
 
 Reason not done now: The overage is pre-existing, and decomposing all open-item persistence would materially widen this targeted notification-policy fix.
+## 2026-08-26 — Meeting follow-up Slack workflow service remains above the service LOC limit
+
+- Feature/app: Meeting follow-up / API
+- File: `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.workflow.ts` (1,030 LOC after this change; 600 LOC service limit)
+- Evidence: The existing workflow combines proposal creation, Slack compatibility handlers, approval, assignee reminder context, and post-call draft generation. This change reduced the active pre-review send path but did not create the overage.
+- Needed work: Extract the legacy Slack reaction/revision compatibility path and post-call draft gateway into focused services while retaining the existing action-ledger and structured tool-error contracts.
+- Reason deferred: That behavior-neutral decomposition is outside the requested recap-to-chat review cycle and would materially widen the regression surface.
 
 ## 2026-08-26 - [ARCH] Space item row remains over the component limit
 

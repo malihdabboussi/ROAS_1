@@ -112,9 +112,7 @@ describe('MeetingFollowUpSlackConfirmService', () => {
     })
     slackTools.findUserByEmail.mockResolvedValue({ success: true, user: { id: 'U_DYLAN' } })
     slackTools.openDm.mockResolvedValue({ success: true, channel_id: 'D123' })
-    slackTools.sendMessage
-      .mockResolvedValueOnce({ success: true, ts: '1710000000.000100' })
-      .mockResolvedValueOnce({ success: true, ts: '1710000000.000200' })
+    slackTools.sendMessage.mockResolvedValueOnce({ success: true, ts: '1710000000.000100' })
     repo.updateItem.mockResolvedValue({})
 
     const result = await service.requestConfirm({
@@ -148,32 +146,16 @@ describe('MeetingFollowUpSlackConfirmService', () => {
         channel_id: 'D123',
         unfurl_links: false,
         text: expect.stringMatching(
-          /Call Summary[\s\S]*Purpose[\s\S]*Align on urgent[\s\S]*Key takeaways[\s\S]*Operational bandwidth[\s\S]*Call Recording[\s\S]*Action Items[\s\S]*Ship AM loop — _owner: Dylan_[\s\S]*Fix reporting SoT — _owner: Nate_/,
+          /Nate and Dylan ops[\s\S]*Purpose[\s\S]*Align on urgent[\s\S]*Key takeaways[\s\S]*Operational bandwidth[\s\S]*2 follow-ups to review[\s\S]*Review meeting follow-ups/,
         ),
       }),
     )
     expect(slackTools.sendMessage.mock.calls[0][3].text).toContain(
-      '<https://fathom.video/calls/753783387|Call Recording>',
+      'https://app.roas.io/home/meetings?meeting=call-1&space=space-1&review=follow-up',
     )
     expect(slackTools.sendMessage.mock.calls[0][3].text).not.toContain('Call report')
     expect(slackTools.sendMessage.mock.calls[0][3].text).not.toContain('Open Fathom recording')
-    expect(slackTools.sendMessage).toHaveBeenNthCalledWith(
-      2,
-      expect.anything(),
-      'user-1',
-      'org-1',
-      expect.objectContaining({
-        channel_id: 'D123',
-        thread_ts: '1710000000.000100',
-        unfurl_links: false,
-        text: expect.stringMatching(
-          /Client Recap Message[\s\S]*Good connecting today[\s\S]*ship the AM loop/,
-        ),
-      }),
-    )
-    expect(slackTools.sendMessage.mock.calls[1][3].text).not.toContain('Call report')
-    expect(slackTools.sendMessage.mock.calls[1][3].text).not.toContain('Call Recording')
-    expect(slackTools.sendMessage.mock.calls[1][3].text).not.toContain('Open the call recording')
+    expect(slackTools.sendMessage).toHaveBeenCalledTimes(1)
     expect(repo.updateItem).toHaveBeenCalledWith(
       expect.anything(),
       'user-1',
@@ -185,7 +167,6 @@ describe('MeetingFollowUpSlackConfirmService', () => {
             status: 'pending',
             channel_id: 'D123',
             message_ts: '1710000000.000100',
-            draft_message_ts: '1710000000.000200',
             space_item_ids: ['fu-1', 'fu-2'],
             confirm_reaction: 'white_check_mark',
             dm_email: DEFAULT_ADMIN_DM_EMAIL,
@@ -468,7 +449,7 @@ describe('MeetingFollowUpSlackConfirmService', () => {
     )
   })
 
-  it('sends the same stored account-manager drafts when the flow is Active', async () => {
+  it('keeps account-manager drafts reviewable until the chat delegation is complete', async () => {
     repo.findItemsByIds.mockResolvedValue([
       {
         id: 'fu-1',
@@ -504,22 +485,12 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       deliveryMode: 'active',
     })
 
-    expect(slackPeople.reviewShadowAction).toHaveBeenCalledWith(
-      expect.anything(),
-      'user-1',
-      'org-1',
-      'shadow-betty',
-      'approved',
-    )
-    expect(slackPeople.sendShadowAction).toHaveBeenCalledWith(
-      expect.anything(),
-      'user-1',
-      'org-1',
-      'shadow-betty',
-    )
+    expect(slackPeople.reviewShadowAction).not.toHaveBeenCalled()
+    expect(slackPeople.sendShadowAction).not.toHaveBeenCalled()
     expect(result).toMatchObject({
       delivery_mode: 'active',
-      assignee_sent_action_ids: ['shadow-betty'],
+      assignee_shadow_action_ids: ['shadow-betty'],
+      assignee_sent_action_ids: [],
     })
   })
 
@@ -642,13 +613,13 @@ describe('MeetingFollowUpSlackConfirmService', () => {
     })
     expect(result).toMatchObject({ suggestion_count: 0, channel_id: 'D123' })
     expect(userAgentApi.invoke).toHaveBeenCalled()
-    expect(slackTools.sendMessage).toHaveBeenCalledTimes(2)
+    expect(slackTools.sendMessage).toHaveBeenCalledTimes(1)
     expect(slackTools.sendMessage).toHaveBeenNthCalledWith(
       1,
       expect.anything(),
       'user-1',
       'org-1',
-      expect.objectContaining({ text: expect.stringContaining('No action items proposed') }),
+      expect.objectContaining({ text: expect.stringContaining('did not find any follow-ups') }),
     )
   })
 
