@@ -8,12 +8,15 @@ import { SpaceItemsContainer, useEnsureAllMeetingsColumns, useSpacesStore } from
 import { clientScopeMatchesRecord, useClientScope } from '@/lib/client-scope'
 import { useWorkspaceSettingsModal } from '@/lib/settings/workspace-settings-modal-context'
 import type { SpaceItem } from '@/lib/spaces'
+import { getActiveOrgIdFromStorage } from '@/lib/utils/org-storage'
 
 function findMeetingsSpaceId(spaces: ReturnType<typeof useSpacesStore.getState>['spaces']) {
+  const activeOrgId = getActiveOrgIdFromStorage()
   let selectedId: string | null = null
   let selectedRank = -1
   for (const space of spaces) {
-    const rank = rankPersonalMeetingsSpace(space)
+    const scopeRank = activeOrgId && space.org_id === activeOrgId ? 1_000 : space.org_id ? 100 : 0
+    const rank = rankPersonalMeetingsSpace(space) + scopeRank
     if (rank > selectedRank) {
       selectedId = space.id
       selectedRank = rank

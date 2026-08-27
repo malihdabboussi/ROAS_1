@@ -1,8 +1,11 @@
 # Changelog - August 27, 2026
 
-## 2026-08-27 11:05 - [FIX]
+## 2026-08-27 16:20 - [FIX]
 
-What: Ensured every opened meeting workspace has a persistent, dedicated conversation and enabled Continue in chat for scheduled meetings.
-Why: Materialized meetings could have no conversation, leaving Continue in chat disabled; the existing recovery path intentionally skipped scheduled calls because it would incorrectly mark them live.
-Impact: Opening a meeting now creates its deterministic chat when needed without changing call status or phase, and Continue in chat opens that exact conversation.
-Files: apps/api/src/modules/meetings/controllers/meeting-workspace.controller.ts, apps/api/src/modules/meetings/services/meeting-workspace.service.ts, apps/web/src/features/home/components/MeetingWorkspaceDialog.tsx, apps/web/src/features/home/services/meeting-workspace-api.ts, documentation/features/meeting-follow-up-slack.md
+What: Made the Meetings surface deterministically select the active organization Meetings space when a legacy personal duplicate is present.
+
+Why: Equal-ranked duplicate spaces let stale and refreshed space lists switch the visible call dataset, causing new calls to appear and disappear.
+
+Impact: Meetings remains on one canonical dataset; production history was consolidated and the latest Yasir call was mapped to Yasir Khan Coaching LTD.
+
+Files: `apps/web/src/app/(dashboard)/home/meetings/MeetingsUnifiedSurface.tsx`, `apps/web/src/app/(dashboard)/home/meetings/MeetingsUnifiedSurface.test.tsx`, `documentation/features/meeting-follow-up-slack.md`

@@ -18,6 +18,11 @@ vi.mock('@/lib/settings/workspace-settings-modal-context', () => ({
   useWorkspaceSettingsModal: () => ({ openWorkspaceSettings: vi.fn() }),
 }))
 
+vi.mock('@/lib/utils/org-storage', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/utils/org-storage')>()),
+  getActiveOrgIdFromStorage: () => 'org-1',
+}))
+
 vi.mock('@/features/spaces', () => {
   const useSpacesStore = Object.assign(
     (selector: (state: typeof mocks.state) => unknown) => selector(mocks.state),
@@ -109,6 +114,32 @@ describe('MeetingsUnifiedSurface', () => {
     expect(screen.getByText('Live calendar agenda')).toBeInTheDocument()
     expect(mocks.state.setActiveSpace).toHaveBeenCalledWith('meetings-space')
     expect(mocks.state.setActiveView).toHaveBeenCalledWith('all-meetings')
+  })
+
+  it('keeps the organization Meetings space when a legacy personal duplicate exists', async () => {
+    mocks.state.spaces = [
+      {
+        id: 'legacy-meetings',
+        title: 'Meetings',
+        org_id: null,
+        schema: { icon: 'video', fields: [{ id: 'entry_type' }] },
+      },
+      {
+        id: 'organization-meetings',
+        title: 'Meetings',
+        org_id: 'org-1',
+        schema: { icon: 'video', fields: [{ id: 'entry_type' }] },
+      },
+    ]
+    mocks.state.loadSpaces.mockResolvedValue()
+    mocks.state.loadRoster.mockResolvedValue()
+
+    render(<MeetingsUnifiedSurface agenda={<div>Live calendar agenda</div>} />)
+
+    await waitFor(() =>
+      expect(mocks.state.setActiveSpace).toHaveBeenLastCalledWith('organization-meetings'),
+    )
+    expect(mocks.state.setActiveSpace).not.toHaveBeenCalledWith('legacy-meetings')
   })
 
   it('keeps the live Agenda available when a Meetings Space has not been created', async () => {
