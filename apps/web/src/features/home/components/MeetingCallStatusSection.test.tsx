@@ -46,7 +46,7 @@ describe('MeetingCallStatusSection', () => {
     const row = continueButton.parentElement
     expect(row).toContainElement(screen.getByRole('button', { name: 'Completed' }))
     expect(row).toContainElement(screen.getByRole('button', { name: 'Start call' }))
-    expect(row).toContainElement(screen.getByRole('button', { name: 'Recap message' }))
+    expect(row).toContainElement(screen.getByRole('button', { name: 'Run post-call flow' }))
     expect(row).toContainElement(screen.getByRole('button', { name: 'Clean up action items' }))
     expect(row).toContainElement(screen.getByRole('button', { name: 'Follow-up message' }))
     expect(row).toContainElement(screen.getByRole('button', { name: 'Delegate remaining work' }))

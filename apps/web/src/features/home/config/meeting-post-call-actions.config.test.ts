@@ -39,12 +39,10 @@ describe('googleAgendaPrompt', () => {
 })
 
 describe('MEETING_POST_CALL_ACTIONS', () => {
-  it('writes recaps as a DONE / IN PROGRESS / TO-DO hit list', () => {
-    const recap = MEETING_POST_CALL_ACTIONS.find((action) => action.id === 'recap-message')
-    expect(recap?.prompt).toContain('(IN PROGRESS)')
-    expect(recap?.prompt).toContain('(TO-DO)')
-    expect(recap?.prompt).toContain('✅ (DONE)')
-    expect(recap?.prompt).not.toContain("WHAT'S HAPPENING BEFORE")
+  it('runs the same guided post-call flow used by Pixel review links', () => {
+    const action = MEETING_POST_CALL_ACTIONS.find((row) => row.id === 'run-post-call-flow')
+    expect(action?.label).toBe('Run post-call flow')
+    expect(action?.prompt).toBe(MEETING_FOLLOW_UP_REVIEW_PROMPT)
   })
 
   it('delegates remaining IN PROGRESS and TO-DO work through one Portal confirm link', () => {

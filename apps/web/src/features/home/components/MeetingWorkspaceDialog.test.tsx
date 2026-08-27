@@ -265,7 +265,7 @@ describe('MeetingWorkspaceDialog', () => {
     await waitFor(() => {
       expect(mocks.endMeetingCall).toHaveBeenCalledWith('space-1', 'meeting-1')
       expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: 'Recap message' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Run post-call flow' })).toBeInTheDocument()
     })
   })
 
@@ -280,12 +280,12 @@ describe('MeetingWorkspaceDialog', () => {
     })
 
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Recap message' })).toBeInTheDocument(),
+      expect(screen.getByRole('button', { name: 'Run post-call flow' })).toBeInTheDocument(),
     )
     expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Completed' })).toBeInTheDocument()
     const row = screen.getByRole('button', { name: 'Continue in chat' }).parentElement
-    expect(row).toContainElement(screen.getByRole('button', { name: 'Recap message' }))
+    expect(row).toContainElement(screen.getByRole('button', { name: 'Run post-call flow' }))
     expect(row).toContainElement(screen.getByRole('button', { name: 'Completed' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Continue in chat' }))

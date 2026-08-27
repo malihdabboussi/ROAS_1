@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { CheckSquare, ListChecks, ListTodo, MessageSquareText, Send } from 'lucide-react'
+import { CheckSquare, ListChecks, ListTodo, Send } from 'lucide-react'
 
 /**
  * One-click post-call actions shown in the meeting workspace once a call is
@@ -54,28 +54,10 @@ export const MEETING_FOLLOW_UP_REVIEW_PROMPT = [
 
 export const MEETING_POST_CALL_ACTIONS: MeetingPostCallAction[] = [
   {
-    id: 'recap-message',
-    label: 'Recap message',
-    icon: MessageSquareText,
-    prompt: [
-      'Write my post-call recap message for the client channel from this meeting — use the transcript, recording summary, and action items.',
-      '',
-      'Structure it the way I write these:',
-      '- One warm opening line, then straight into what we covered.',
-      '- One short paragraph on the core focus of the call.',
-      '- A hit list headed something like "Here\'s our hit list of actions on our end:"',
-      '- ✅ (DONE) lines first for work already confirmed or finished on the call.',
-      '- (IN PROGRESS) lines for work we still own this week.',
-      '- (TO-DO) lines for work not started yet.',
-      '- Direct asks go to named people (@name) with exactly what I need from them.',
-      '- Close with one line looking ahead to the week, not a formal sign-off.',
-      '',
-      "Only include real commitments. Fathom over-captures — skip conversational asides like someone saying they'll keep an eye on something unless a concrete deliverable and date were agreed.",
-      'Do not pause to ask for missing dates. Draft the message now from confirmed facts; omit an unknown deadline or label a reasonable date as proposed, then mention any remaining question after the drafts.',
-      'Inside draft fences use send-ready plain text only. Do not use Markdown emphasis markers such as ** or __.',
-      '',
-      'Give me two versions in draft fences: ```draft Full breakdown``` and ```draft Short version``` (tight, Slack-length).',
-    ].join('\n'),
+    id: 'run-post-call-flow',
+    label: 'Run post-call flow',
+    icon: ListChecks,
+    prompt: MEETING_FOLLOW_UP_REVIEW_PROMPT,
   },
   {
     id: 'action-items-pass',
