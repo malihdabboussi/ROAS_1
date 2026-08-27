@@ -6,6 +6,54 @@ import {
 } from './meeting-workspace.service'
 
 describe('MeetingWorkspaceService', () => {
+  it('creates a chat for a scheduled meeting without changing its phase', async () => {
+    const workspace = {
+      meeting_item_id: 'meeting-1',
+      phase: 'scheduled',
+      conversation_id: null,
+    }
+    const repository = { upsertWorkspace: vi.fn() }
+    const resolutionRepository = {
+      findSpaceOrgId: vi.fn().mockResolvedValue(null),
+      findSpaceCampaignId: vi.fn().mockResolvedValue('campaign-1'),
+    }
+    const readRepository = {
+      getWorkspaceBundle: vi.fn().mockResolvedValue({
+        meeting: { id: 'meeting-1', title: 'AOS Sales' },
+        workspace,
+      }),
+    }
+    const stateRepository = { updateWorkspace: vi.fn().mockResolvedValue({}) }
+    const conversations = {
+      createConversation: vi.fn().mockResolvedValue({ id: 'conversation-1' }),
+    }
+    const service = new MeetingWorkspaceService(
+      repository as never,
+      resolutionRepository as never,
+      readRepository as never,
+      stateRepository as never,
+      conversations as never,
+      { create: vi.fn() } as never,
+    )
+
+    await expect(
+      service.ensureMeetingConversation({} as never, {
+        spaceId: 'space-1',
+        meetingItemId: 'meeting-1',
+        userId: 'user-1',
+        orgId: null,
+      }),
+    ).resolves.toEqual({ ...workspace, conversation_id: 'conversation-1' })
+    expect(stateRepository.updateWorkspace).toHaveBeenCalledWith(expect.anything(), 'meeting-1', {
+      conversation_id: 'conversation-1',
+    })
+    expect(stateRepository.updateWorkspace).not.toHaveBeenCalledWith(
+      expect.anything(),
+      'meeting-1',
+      expect.objectContaining({ phase: expect.anything() }),
+    )
+  })
+
   it('normalizes legacy generic Fathom titles across recordings and deliverables', () => {
     const result = normalizeWorkspaceDisplayTitles({
       recordings: [

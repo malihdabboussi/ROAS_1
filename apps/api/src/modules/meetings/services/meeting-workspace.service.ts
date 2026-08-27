@@ -231,6 +231,42 @@ export class MeetingWorkspaceService {
     return normalizeWorkspaceDisplayTitles(workspace)
   }
 
+  async ensureMeetingConversation(
+    supabase: SupabaseClient,
+    input: {
+      spaceId: string
+      meetingItemId: string
+      userId: string
+      orgId: string | null
+    },
+  ): Promise<Record<string, unknown>> {
+    const bundle = await this.readRepository.getWorkspaceBundle(supabase, input)
+    if (!bundle) throw new NotFoundException('Meeting not found')
+    const meeting = record(bundle.meeting)
+    const orgId = await this.resolutionRepository.findSpaceOrgId(supabase, input.spaceId)
+    const existingWorkspace = bundle.workspace
+    const workspace =
+      existingWorkspace &&
+      typeof existingWorkspace === 'object' &&
+      !Array.isArray(existingWorkspace)
+        ? record(existingWorkspace)
+        : await this.repository.upsertWorkspace(supabase, {
+            meetingItemId: input.meetingItemId,
+            spaceId: input.spaceId,
+            userId: input.userId,
+            orgId,
+            calendarEventId: text(record(meeting.custom_data)?.calendar_event_id),
+            phase: 'scheduled',
+          })
+    const conversationId = await this.ensureConversation(supabase, {
+      ...input,
+      orgId,
+      title: text(meeting.title) ?? 'Meeting',
+      workspace,
+    })
+    return { ...workspace, conversation_id: conversationId }
+  }
+
   async getWorkspace(
     supabase: SupabaseClient,
     input: {

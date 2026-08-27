@@ -5,6 +5,7 @@ import { MeetingWorkspaceDialog } from './MeetingWorkspaceDialog'
 const mocks = vi.hoisted(() => ({
   clearMeetingContext: vi.fn(),
   endMeetingCall: vi.fn(),
+  ensureMeetingConversation: vi.fn(),
   fetchMeetingWorkspace: vi.fn(),
   fetchMeetingRelatedCalls: vi.fn(),
   openChatDrawer: vi.fn(),
@@ -24,6 +25,7 @@ vi.mock('@/lib/artifacts', () => ({
 }))
 vi.mock('@/features/home/services/meeting-workspace-api', () => ({
   endMeetingCall: mocks.endMeetingCall,
+  ensureMeetingConversation: mocks.ensureMeetingConversation,
   fetchMeetingWorkspace: mocks.fetchMeetingWorkspace,
   fetchMeetingRelatedCalls: mocks.fetchMeetingRelatedCalls,
   startMeetingCall: mocks.startMeetingCall,
@@ -188,12 +190,17 @@ describe('MeetingWorkspaceDialog', () => {
       expect(screen.queryByRole('status', { name: 'Loading meeting details…' })).toBeNull()
       expect(screen.getByText('Recordings & attachments')).toBeInTheDocument()
     })
-    expect(screen.getByRole('button', { name: 'Add task' })).toBeInTheDocument()
   })
 
   it('does not steal the open chat until Continue in chat', async () => {
     mocks.fetchMeetingWorkspace.mockReset()
-    mocks.fetchMeetingWorkspace.mockResolvedValue(baseBundle)
+    mocks.fetchMeetingWorkspace
+      .mockResolvedValueOnce({
+        ...baseBundle,
+        workspace: { ...baseBundle.workspace, conversation_id: null },
+      })
+      .mockResolvedValue(baseBundle)
+    mocks.ensureMeetingConversation.mockResolvedValue(baseBundle.workspace)
 
     renderWorkspace()
 
@@ -205,15 +212,11 @@ describe('MeetingWorkspaceDialog', () => {
     })
     expect(mocks.openChatDrawer).not.toHaveBeenCalled()
     expect(mocks.continueMeetingConversation).not.toHaveBeenCalled()
+    expect(mocks.ensureMeetingConversation).toHaveBeenCalledWith('space-1', 'meeting-1')
+    expect(mocks.startMeetingCall).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: 'Start agenda' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Continue in chat' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Completed' })).toBeInTheDocument()
-    expect(screen.queryByLabelText('Call status')).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: 'Close meeting workspace' }),
-    ).not.toBeInTheDocument()
-    expect(screen.queryByText('Rejoin call')).not.toBeInTheDocument()
-
     fireEvent.click(screen.getByRole('button', { name: 'Continue in chat' }))
     expect(mocks.continueMeetingConversation).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -98,6 +98,22 @@ export class MeetingWorkspaceController {
     })
   }
 
+  @Post('conversation')
+  @RequireOrgRole('editor')
+  ensureConversation(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param(new ZodValidationPipe(MeetingParamsSchema))
+    params: z.infer<typeof MeetingParamsSchema>,
+  ) {
+    return this.meetings.ensureMeetingConversation(supabase, {
+      ...params,
+      userId: user.id,
+      orgId: scope.orgId,
+    })
+  }
+
   @Patch('phase')
   @RequireOrgRole('editor')
   setPhase(
