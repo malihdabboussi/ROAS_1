@@ -260,9 +260,15 @@ export class IntegrationsStatusService {
     if (integrationId === 'anthropic_claude' && connected) {
       connected = await this.vault.hasSecret(user.id, 'anthropic', 'setup-token:default')
     }
+    if (integrationId === 'gohighlevel' && connected) {
+      connected = await this.vault.hasSecret(user.id, 'gohighlevel', 'pit')
+    }
     const statusValue =
       forcedStatus ??
-      ((integrationId === 'openai_codex' || integrationId === 'anthropic_claude') && !connected
+      ((integrationId === 'openai_codex' ||
+        integrationId === 'anthropic_claude' ||
+        integrationId === 'gohighlevel') &&
+      !connected
         ? 'disconnected'
         : connected
           ? 'connected'

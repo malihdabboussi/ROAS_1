@@ -94,6 +94,18 @@ Needed work: Finish extracting search/empty-result logging and timing wrappers s
 
 Reason not done now: The file was already over the cap. This change only added required warn logs for empty vs hit searches.
 
+## 2026-08-20 - [ARCH] useIntegrations.ts remains over the 600 LOC cap
+
+Status: Open
+
+Found while: Switching GoHighLevel connect from marketplace OAuth to Private Integration Token
+
+Evidence: `wc -l` on `apps/web/src/features/settings/components/settings-content/useIntegrations.ts` is 872. Cap is 600. This change added a PIT connect branch (~12 lines) and removed the GHL OAuth popup branch.
+
+Needed work: Split provider connect/disconnect handlers out of `useIntegrations.ts`.
+
+Reason not done now: In-scope work was GHL PIT auth. The file was already over the cap.
+
 ## 2026-08-20 - [ARCH] chat.service.ts remains far over the 600 LOC service cap
 
 

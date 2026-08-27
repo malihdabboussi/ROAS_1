@@ -790,3 +790,4 @@
 20260818234500_pixel_operator_skill_kit.sql
 20260819014500_pixel_vibey_browser_qc.sql
 20260820020000_conversation_connections.sql
+20260820180000_ghl_private_integration_token.sql

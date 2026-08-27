@@ -27,11 +27,6 @@ export default () => ({
     apiKey: process.env.SENDGRID_API_KEY || '',
   },
 
-  highlevel: {
-    clientId: process.env.GHL_OAUTH_CLIENT_ID || '',
-    clientSecret: process.env.GHL_OAUTH_CLIENT_SECRET || '',
-  },
-
   composio: {
     apiKey: process.env.COMPOSIO_API_KEY || '',
     baseUrl: process.env.COMPOSIO_BASE_URL || '',

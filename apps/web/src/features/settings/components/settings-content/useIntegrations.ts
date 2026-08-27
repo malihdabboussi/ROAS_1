@@ -347,6 +347,17 @@ export function useIntegrations() {
         return
       }
 
+      if (provider === 'gohighlevel') {
+        if (!connectionData?.generic_api_key || !connectionData?.location_id)
+          throw new Error('Private Integration Token and Location ID are required')
+        await backendPost('/api/integrations/lhg/connect', {
+          pit: connectionData.generic_api_key,
+          locationId: connectionData.location_id,
+        })
+        await loadData()
+        return { completedSynchronously: true }
+      }
+
       if (provider === 'active_campaign') {
         if (!connectionData?.full || !connectionData?.generic_api_key)
           throw new Error('API URL and API Key are required')
@@ -411,7 +422,6 @@ export function useIntegrations() {
         .trim()
         .toLowerCase()
       const LEGACY_OAUTH_PROVIDERS = new Set([
-        'gohighlevel',
         'stripe',
         'paypal',
         'meta',
@@ -465,14 +475,7 @@ export function useIntegrations() {
         return
       }
 
-      if (provider === 'gohighlevel') {
-        const res = await backendPost<{ success: boolean; authorizeUrl: string }>(
-          '/api/integrations/lhg/connect',
-          { redirectTo },
-        )
-        if (!res?.authorizeUrl) throw new Error('Missing authorizeUrl')
-        window.open(res.authorizeUrl, '_blank', 'noopener,noreferrer')
-      } else if (provider === 'stripe') {
+      if (provider === 'stripe') {
         const res = await backendPost<{ success: boolean; authorizeUrl: string }>(
           '/api/integrations/stripe/connect',
           { redirectTo, ...(connectionScope ? { connection_scope: connectionScope } : {}) },

@@ -1,15 +1,3 @@
-export type GhlTokenResponse = {
-  access_token: string
-  token_type: string
-  expires_in: number
-  refresh_token: string
-  scope: string
-  userType?: 'Location' | 'Company'
-  locationId?: string
-  companyId?: string
-  userId?: string
-}
-
 export type GhlUserIntegration = {
   id: string
   user_id: string
@@ -23,6 +11,12 @@ export type GhlUserIntegration = {
   last_sync_at: string | null
   error_message: string | null
   metadata: Record<string, unknown> | null
+}
+
+export type GhlLocation = {
+  id: string
+  name?: string
+  companyId?: string
 }
 
 export type GhlContact = {
