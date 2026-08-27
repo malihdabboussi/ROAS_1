@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import {
   addMeetingSnippet,
+  ensureMeetingConversation,
   fetchMeetingWorkspaceEvent,
   materializeScheduledMeetings,
   resolveScheduledMeeting,
@@ -147,6 +148,17 @@ describe('fetchMeetingWorkspaceEvent', () => {
 })
 
 describe('meeting workspace API', () => {
+  it('ensures the meeting chat without starting the call', async () => {
+    mocks.backendPost.mockResolvedValue({ conversation_id: 'conversation-1' })
+
+    await ensureMeetingConversation('space-1', 'meeting-1')
+
+    expect(mocks.backendPost).toHaveBeenCalledWith(
+      '/api/spaces/space-1/meetings/meeting-1/conversation',
+      {},
+    )
+  })
+
   it('unwraps a newly saved note so the UI can render it immediately', async () => {
     const snippet = {
       id: 'note-1',

@@ -28,6 +28,7 @@ import {
 import { syncAgendaFathomRecordingToWorkspace } from '@/features/home/lib/sync-agenda-fathom-recording'
 import {
   endMeetingCall,
+  ensureMeetingConversation,
   fetchMeetingRelatedCalls,
   fetchMeetingWorkspace,
   startMeetingCall,
@@ -77,12 +78,9 @@ export function MeetingWorkspaceDialog({
   )
   const hydrateWorkspace = useCallback(async () => {
     let next = await fetchMeetingWorkspace(spaceId, meetingItemId)
-    const phase = next.workspace?.phase
     const missingConversation = !next.workspace?.conversation_id?.trim()
-    // startCall ensures the linked conversation; for complete it keeps phase complete.
-    // For live it is idempotent. Do not call for scheduled/processing (would force live).
-    if (missingConversation && (phase === 'complete' || phase === 'live')) {
-      await startMeetingCall(spaceId, meetingItemId)
+    if (missingConversation) {
+      await ensureMeetingConversation(spaceId, meetingItemId)
       next = await fetchMeetingWorkspace(spaceId, meetingItemId)
     }
     // Pull the agenda's already-linked Fathom recording into this workspace.

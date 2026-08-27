@@ -39976,3 +39976,15 @@ Evidence: `apps/web/src/features/spaces/components/SpaceItemRow.tsx` is 764 LOC 
 Needed work: Extract title-cell rendering and row action/dialog orchestration into focused components while retaining the shared list/table row contract.
 
 Reason not done now: The requested behavior required removing duplicated controls from the existing title renderer; decomposing unrelated title editing and action behavior would materially widen the row-control fix.
+
+## 2026-08-27 - [ARCH] Meeting workspace dialog test is at the test-file limit
+
+Status: Open
+
+Found while: Adding scheduled-meeting conversation recovery coverage.
+
+Evidence: `apps/web/src/features/home/components/MeetingWorkspaceDialog.test.tsx` is exactly 400 LOC, the configured test-file limit, after consolidating the new regression into an existing interaction test.
+
+Needed work: Split meeting loading/chat behavior from status, agenda, recording, and action-item coverage using shared test fixtures.
+
+Reason not done now: The file remains compliant, and extracting the broader fixture/mocking setup would materially widen this focused meeting-chat fix.

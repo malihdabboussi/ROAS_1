@@ -187,6 +187,10 @@ export function startMeetingCall(spaceId: string, meetingItemId: string) {
   return backendPost<MeetingWorkspaceRecord>(`${path(spaceId, meetingItemId)}/start`, {})
 }
 
+export function ensureMeetingConversation(spaceId: string, meetingItemId: string) {
+  return backendPost<MeetingWorkspaceRecord>(`${path(spaceId, meetingItemId)}/conversation`, {})
+}
+
 export function endMeetingCall(spaceId: string, meetingItemId: string) {
   return backendPatch<MeetingWorkspaceRecord>(`${path(spaceId, meetingItemId)}/phase`, {
     phase: 'processing',
