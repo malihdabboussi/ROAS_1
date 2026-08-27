@@ -297,6 +297,11 @@ export function useChatInputComposerAccess({
           return
         }
 
+        if (provider === 'gohighlevel') {
+          window.dispatchEvent(new CustomEvent('open-account-settings', { detail: 'integrations' }))
+          return
+        }
+
         const endpoint = CONNECT_ENDPOINTS[provider]
         if (!endpoint) return
         const result = (await postJson(endpoint, { redirectTo })) as IntegrationConnectResult

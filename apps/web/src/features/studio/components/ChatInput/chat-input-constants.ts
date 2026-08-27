@@ -106,7 +106,6 @@ export const CONNECT_ENDPOINTS: Record<string, string> = {
   paypal: '/api/integrations/paypal/connect',
   dropbox: '/api/integrations/dropbox/connect',
   calendly: '/api/integrations/calendly/connect',
-  gohighlevel: '/api/integrations/lhg/connect',
   fathom: '/api/integrations/fathom/connect',
 }
 

@@ -57,7 +57,7 @@ Image-to-image edit using asset_ref, a parent image asset id, or a parent image 
 
 **Types:** `url`: string
 
-Extracts transcript text from a public video URL when supported.
+Extracts transcript text from a public video URL. You MUST call this action when the user asks you to check, summarize, quote, or analyze a linked video transcript. Never substitute a title, description, or search snippet for the transcript. For YouTube, the backend tries native captions, manual and auto-generated subtitle tracks, Social Analysis, and audio transcription before returning a structured failure. Retry the action once when instructed; do not ask the user to paste or upload the transcript prematurely.
 
 ```json
 {"action":"extract_url_transcript","label":"Pulling transcript","data":{"url":"https://..."}}

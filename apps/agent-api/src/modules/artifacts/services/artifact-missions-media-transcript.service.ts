@@ -74,6 +74,30 @@ export class ArtifactMissionsMediaTranscriptService {
             error: 'unavailable or blocked from this host',
           })
         }
+
+        const viaYtDlpCaptions = await this.transcribeViaYtDlpCaptions(
+          target,
+          sessionKey,
+          url,
+          lang,
+          tempRoot,
+          attempts,
+          onProgress,
+        )
+        if (viaYtDlpCaptions) {
+          const metadata = includeMetadata ? await this.fetchMetadata(onProgress, url) : null
+          return {
+            success: true,
+            platform,
+            url,
+            ...(metadata ? { metadata } : {}),
+            transcript: viaYtDlpCaptions.transcript,
+            segments: viaYtDlpCaptions.segments,
+            language: viaYtDlpCaptions.language,
+            source: 'yt_dlp_captions',
+            attempts,
+          }
+        }
       }
 
       const viaSocialAnalysis = await this.transcribeViaSocialAnalysis(
@@ -210,6 +234,57 @@ export class ArtifactMissionsMediaTranscriptService {
       })
       return false
     }
+  }
+
+  private async transcribeViaYtDlpCaptions(
+    target: Record<string, any>,
+    sessionKey: string | undefined,
+    url: string,
+    lang: string,
+    tempRoot: string,
+    attempts: TranscriptAttempt[],
+    onProgress?: (message: string) => void | Promise<void>,
+  ) {
+    const languages = [...new Set([lang, lang.split('-')[0], 'en', 'en-US', 'en-GB'])]
+    const userCookieFile = await this.resolveYtDlpCookieFile(target, sessionKey, 'youtube')
+    const variants = userCookieFile
+      ? [
+          { cookieFile: userCookieFile, usedCookies: true },
+          { cookieFile: null, usedCookies: false },
+        ]
+      : [{ cookieFile: null, usedCookies: false }]
+
+    for (const variant of variants) {
+      try {
+        await onProgress?.(
+          variant.usedCookies
+            ? 'Fetching YouTube captions with your saved session'
+            : 'Fetching YouTube auto-captions',
+        )
+        const result = await this.processClient.fetchYtDlpSubtitles(
+          url,
+          join(tempRoot, `captions-${randomUUID()}`),
+          languages,
+          variant.cookieFile,
+        )
+        if (result) {
+          attempts.push({ method: 'yt-dlp_captions', used_cookies: variant.usedCookies })
+          return result
+        }
+        attempts.push({
+          method: 'yt-dlp_captions',
+          used_cookies: variant.usedCookies,
+          error: 'no manual or auto-generated subtitle track returned',
+        })
+      } catch (error) {
+        attempts.push({
+          method: 'yt-dlp_captions',
+          used_cookies: variant.usedCookies,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+    }
+    return null
   }
 
   private async transcribeViaSocialAnalysis(

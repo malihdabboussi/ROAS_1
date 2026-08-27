@@ -57,14 +57,6 @@ export function useIntegrationsOAuthReturnParams(input: UseIntegrationsOAuthRetu
     const url = new URL(window.location.href)
     let mutated = false
 
-    if (searchParams.get('ghl_connected') === '1') {
-      toast.success(
-        INTEGRATION_CONNECT_SUCCESS_BY_PROVIDER.gohighlevel ?? INTEGRATION_CONNECT_SUCCESS_FALLBACK,
-      )
-      input.loadData()
-      url.searchParams.delete('ghl_connected')
-      mutated = true
-    }
     if (searchParams.get('github_connected') === '1') {
       toast.success(
         INTEGRATION_CONNECT_SUCCESS_BY_PROVIDER.github ?? INTEGRATION_CONNECT_SUCCESS_FALLBACK,

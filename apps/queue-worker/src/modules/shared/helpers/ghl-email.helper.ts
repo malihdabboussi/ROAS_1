@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { DatabaseService } from '../../../lib/services/database.service'
+import { decryptVaultValue } from '../../../lib/services/vault-decrypt'
 import { QueueLoggerService } from '../../logger'
 
 const USE_INTEGRATION_SCOPE_RESOLVER_V2 = process.env.INTEGRATION_SCOPE_RESOLVER_V2 !== '0'
@@ -37,12 +38,6 @@ export interface GhlSendEmailResult {
   error?: string
 }
 
-interface GhlTokenResponse {
-  access_token: string
-  refresh_token: string
-  expires_in?: number
-}
-
 interface GhlContact {
   id: string
 }
@@ -52,19 +47,12 @@ export class GhlEmailHelper {
   private readonly logger = new Logger(GhlEmailHelper.name)
 
   private readonly API_BASE = 'https://services.leadconnectorhq.com'
-  private readonly TOKEN_URL = 'https://services.leadconnectorhq.com/oauth/token'
-
-  private readonly clientId: string
-  private readonly clientSecret: string
 
   constructor(
     private readonly configService: ConfigService,
     private readonly databaseService: DatabaseService,
     private readonly queueLoggerService: QueueLoggerService,
-  ) {
-    this.clientId = this.configService.get<string>('highlevel.clientId') || ''
-    this.clientSecret = this.configService.get<string>('highlevel.clientSecret') || ''
-  }
+  ) {}
 
   async ensureLeadHasGhlContactId(params: {
     userId: string
@@ -82,7 +70,7 @@ export class GhlEmailHelper {
     const locationId = integration.metadata?.locationId
     if (!locationId) throw new Error('Missing GoHighLevel locationId in integration metadata')
 
-    const accessToken = await this.ensureValidToken(supabase, integration)
+    const accessToken = await this.getPit(supabase, integration.user_id)
 
     if (params.existingContactId) {
       return params.existingContactId
@@ -124,7 +112,7 @@ export class GhlEmailHelper {
     if (!integration) throw new Error('No connected GoHighLevel integration found')
     const locationId = integration.metadata?.locationId
     if (!locationId) throw new Error('Missing GoHighLevel locationId in integration metadata')
-    const accessToken = await this.ensureValidToken(supabase, integration)
+    const accessToken = await this.getPit(supabase, integration.user_id)
     return this.fetchContactsListPage(accessToken, locationId, opts)
   }
 
@@ -197,7 +185,7 @@ export class GhlEmailHelper {
       if (!integration)
         return { success: false, error: 'No connected GoHighLevel integration found' }
 
-      const accessToken = await this.ensureValidToken(supabase, integration)
+      const accessToken = await this.getPit(supabase, integration.user_id)
       const result = await this.callGhlSendEmailApi(accessToken, options)
       return result
     } catch (error) {
@@ -246,66 +234,24 @@ export class GhlEmailHelper {
     return this.pickPreferredGhlIntegration(rows, userId)
   }
 
-  private async ensureValidToken(
-    supabase: SupabaseClient,
-    integration: GhlIntegrationRow,
-  ): Promise<string> {
-    const expiresAt = integration.token_expires_at ? new Date(integration.token_expires_at) : null
-    const fiveMinutesFromNow = new Date(Date.now() + 5 * 60 * 1000)
-
-    if (!expiresAt || expiresAt <= fiveMinutesFromNow) {
-      if (!integration.refresh_token)
-        throw new Error('GHL token expired and no refresh token available. Please reconnect.')
-      const newTokens = await this.refreshAccessToken(integration.refresh_token)
-      await this.updateTokens(supabase, integration.id, newTokens)
-      return newTokens.access_token
+  private async getPit(supabase: SupabaseClient, userId: string): Promise<string> {
+    const keyHex = this.configService.get<string>('vault.encryptionKey') || ''
+    if (!keyHex || Buffer.from(keyHex, 'hex').length !== 32) {
+      throw new Error('VAULT_ENCRYPTION_KEY must be 64 hex characters (32 bytes)')
     }
-
-    if (!integration.access_token) throw new Error('Missing GHL access_token on integration')
-    return integration.access_token
-  }
-
-  private async refreshAccessToken(refreshToken: string): Promise<GhlTokenResponse> {
-    if (!this.clientId || !this.clientSecret) {
-      throw new Error(
-        'Missing GHL OAuth configuration (GHL_OAUTH_CLIENT_ID / GHL_OAUTH_CLIENT_SECRET)',
-      )
+    const { data, error } = await supabase
+      .from('vault_secrets')
+      .select('encrypted_value')
+      .eq('user_id', userId)
+      .eq('provider', 'gohighlevel')
+      .eq('label', 'pit')
+      .maybeSingle()
+    if (error) throw new Error(`Vault read failed: ${error.message}`)
+    const encrypted = data?.encrypted_value as string | undefined
+    if (!encrypted) {
+      throw new Error('GoHighLevel is not connected (missing Private Integration Token)')
     }
-
-    const params = new URLSearchParams({
-      grant_type: 'refresh_token',
-      client_id: this.clientId,
-      client_secret: this.clientSecret,
-      refresh_token: refreshToken,
-    })
-
-    const response = await fetch(this.TOKEN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
-      body: params.toString(),
-    })
-
-    const raw = await response.text()
-    if (!response.ok)
-      throw new Error(`GHL token refresh failed (${response.status}): ${raw.slice(0, 200)}`)
-    return JSON.parse(raw) as GhlTokenResponse
-  }
-
-  private async updateTokens(
-    supabase: SupabaseClient,
-    integrationId: string,
-    tokens: GhlTokenResponse,
-  ): Promise<void> {
-    const expiresAt = tokens.expires_in ? new Date(Date.now() + tokens.expires_in * 1000) : null
-    await supabase
-      .from('user_integrations')
-      .update({
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        token_expires_at: expiresAt?.toISOString() || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', integrationId)
+    return decryptVaultValue(encrypted, keyHex)
   }
 
   private async findContactByEmail(

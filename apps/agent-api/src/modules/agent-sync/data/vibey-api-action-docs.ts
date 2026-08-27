@@ -1927,7 +1927,7 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   extract_url_transcript: {
     section: 'Media',
     description:
-      'Pulls the transcript from a public YouTube, TikTok, Instagram, X, or Facebook video URL. Uses native captions when available, then the platform Social Analysis transcript API (the same youtube_video_transcript / tiktok_video_transcript / instagram_media_transcript / twitter_tweet_transcript / facebook_post_transcript routes as use_integration). Do not ask the user to paste or upload a transcript, and do not tell them captions are unavailable, unless this action fails twice.',
+      'Pulls the transcript from a public YouTube, TikTok, Instagram, X, or Facebook video URL. You MUST call this action when a user asks you to check, summarize, quote, or analyze a linked video transcript; never substitute the title, description, or search snippets for the transcript. For YouTube it tries native captions, manual and auto-generated subtitle tracks with the saved browser session when available, the platform Social Analysis transcript API, and finally audio transcription. Do not ask the user to paste or upload a transcript, and do not tell them captions are unavailable, unless this action fails twice.',
     parameters:
       '```json\n{"action":"extract_url_transcript","label":"Pulling transcript","data":{"url":"https://..."}}\n```',
   },

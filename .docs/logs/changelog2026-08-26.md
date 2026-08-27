@@ -60,6 +60,16 @@ Impact: Campaigns can rotate without creating another top-level QC DM, follow-up
 
 Files: `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-follow-up.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-follow-up.messages.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-slack-bridge.service.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-qc-follow-up.test.ts`, `apps/api/src/modules/integrations/page-grader/services/__tests__/page-grader-qc-slack-bridge.service.test.ts`, `apps/api/src/modules/spaces/services/slack-open-items.service.ts`, `apps/api/src/modules/spaces/repositories/slack-open-items.repository.ts`, `documentation/features/page-grader-campaign-brain-sync.md`
 
+## 2026-08-26 12:36 - [FIX]
+
+What: Added a deterministic `yt-dlp` manual/auto-caption stage to Pixel's URL transcript pipeline, including saved-session and anonymous attempts, and made transcript requests require the transcript action instead of title or search inference.
+
+Why: YouTube auto-captions could exist while the native caption library was blocked, sending Pixel directly into costlier fallbacks and allowing an unverified title-based answer when extraction failed.
+
+Impact: Pixel now tries native captions, `yt-dlp` subtitle tracks, Social Analysis, and audio transcription in order; successful subtitle pulls retain timestamped segments and language metadata.
+
+Files: `apps/agent-api/src/modules/artifacts/integrations/artifact-missions-media-process.client.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-missions-media-transcript.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-missions-media-transcript.service.test.ts`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `docker/agents/atlas/skills/vibey-api/references/media.md`
+
 ## 2026-08-26 11:39 - [FIX]
 
 What: Replaced the separate Map and Change controls in Client Workspace cells with one full-cell mapping trigger. Mapped cells show only their workspace label; unmapped cells remain visually empty.
