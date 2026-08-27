@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-08-26 (Slack recap → guided meeting-chat review)
+**Last Modified:** 2026-08-27 (inline Slack-recap review → Portal delegation)
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` sends the admin one concise meeting summary with the follow-up count and a **Review meeting follow-ups** link. The link opens the canonical meeting workspace and its existing chat; task delegation and the editable client message finish there without an automatic client send.
 
@@ -27,7 +27,7 @@ The canonical post-call path is now meeting-first rather than automation-task-fi
 17. Notes accept relevant links and render them as clickable content immediately after save. Meeting recap documents repair provider Markdown embedded in HTML paragraphs on open, and post-call draft cards normalize Markdown emphasis to plain text.
 18. Recap and follow-up quick actions draft from available meeting evidence immediately. Missing dates are omitted or proposed instead of blocking the first draft with a clarification request.
 19. Related calls require the same mapped client/campaign. A different mapped client never ranks, even with a recording or a shared host. Unmapped series can still match on a distinctive title token or two-plus overlapping attendees. Generic words like strategy/growth/webinar are not relatedness.
-20. Pixel's active post-call recap links to `/home/meetings?meeting=…&space=…&review=follow-up`. The meeting workspace stays visible while its persistent conversation opens once and starts a three-stage review: confirm/correct meeting context, launch the existing ROAS Portal bulk delegation preview, then revise the final client message in the existing editable draft card. The URL marker is consumed after opening so refreshes do not restart the cycle.
+20. Pixel's active post-call recap links to `/home/meetings?meeting=…&space=…&review=follow-up`. The meeting workspace stays visible while its persistent conversation opens once with an inline editable card already populated from the exact Slack summary and prepared client message, the mapped client workspace and attendees, plus the current non-dismissed meeting follow-ups and their live count. **Continue to task review** invokes the existing ROAS Portal / Page Grader bulk-delegation preview through `use_mcp_tool`; it never uses native `create_task` or the Delegation Desk. After the operator completes that task-by-task review, Pixel returns the prepared client message in the existing editable draft card. The URL marker is consumed after opening so refreshes do not restart the cycle.
 
 Exact Fathom `action_items` are mirrored into Meetings `follow_up` space_items on ingest (Programs Action items + Home). When the webhook payload has zero actions, we refetch the meeting once from Fathom; if still empty we do not invent tasks from the transcript. The default `Fathom Meeting Log` automation runs lifecycle status updates plus grounded `agent_suggest_tasks` (enrich assignees/due/priority onto those follow_ups — never invent when `action_items` is empty). Slack confirm remains an explicit downstream workflow, not an automatic side effect of ingest.
 
@@ -84,7 +84,7 @@ Fathom recording ready (my_recordings OR shared_team_recordings)
        Shadow: store recap + account-manager drafts in Conversations; send nothing
        Active: DM concise summary + follow-up count + one review link; keep reminder drafts unsent
   → link opens canonical meeting workspace + persistent meeting chat
-  → confirm/correct context in chat
+  → edit/confirm the persisted Slack recap/message, mapped context, and current follow-up list inline
   → one page_grader_create_delegation_preview call → existing Portal task-by-task Confirm UI
   → user reports delegation review complete
   → Pixel returns the final client message in the existing editable draft card
@@ -124,7 +124,7 @@ The skill is database-first in `agent_skills` and mirrored under `docker/agents/
 6. In `delivery_mode=shadow`, stores the run payload and stops without opening a DM or sending any Slack message. In `delivery_mode=active` with channel delivery disabled, opens the admin review DM and posts only the concise meeting summary, follow-up count, and guided-review link. The client draft and account-manager reminder proposals remain stored and unsent while the operator completes the chat review. Channel posting remains a separate legacy explicit switch; the installed destination is `#roas-call-recaps-internal`, and the switch remains disabled.
 7. Stores the Shadow or pending payload on the **call** item:
 
-   `custom_data.slack_follow_up_confirm = { status, delivery_mode, channel_id, message_ts, space_item_ids, confirm_reaction, assignee_shadow_action_ids?, assignee_sent_action_ids?, ... }`
+   `custom_data.slack_follow_up_confirm = { status, delivery_mode, channel_id, message_ts, space_item_ids, review_summary, draft_message, confirm_reaction, assignee_shadow_action_ids?, assignee_sent_action_ids?, ... }`
 
 8. For legacy pending records created by the former reaction-based flow, Slack Events API `reaction_added` → `SlackService.handleReactionAddedEvent` → `MeetingFollowUpSlackConfirmService.handleReactionAdded` remains supported.
 9. On a legacy match (pending + correct reaction + channel/ts):
@@ -436,6 +436,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-08-18:** Calendar events materialize onto All Meetings rows without opening the specialized card. Host is the calendar organizer, else the Fathom recorder. Call status is blank / Live / Completed / No Show / Rescheduled (recording landing sets Completed). All Meetings is the default tab and filters past + today + tomorrow. Agenda still opens the specialized card; All Meetings opens the standard task card. Related calls on that card feed Pixel so last week’s recording is not a Recordings + ask. Prep tab and Prep for call are gone. Impromptu defaults to Team. Completing a call (status or recording) runs the existing post-call Pixel path.
 - **2026-08-27:** Meetings always prefers the active organization’s canonical Meetings space over a legacy personal duplicate. Production history was consolidated into the organization space so cached and refreshed space lists cannot swap between different call datasets.
 - **2026-08-27:** Completed meeting workspaces expose **Run post-call flow** instead of the former recap-only action. It starts the same guided context confirmation, bulk delegation review link, and editable unsent follow-up-message sequence used by Pixel's Slack review link.
+- **2026-08-27:** The guided post-call action uses the actual MCP execution contract: discover the connected Portal server, list its tools by `server_id`, then invoke `page_grader_create_delegation_preview` through `use_mcp_tool`. It never falls back to native Delegation Desk writes from the meeting Space.
 
 ## Related
 

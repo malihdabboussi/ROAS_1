@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   fetchMeetingRelatedCalls: vi.fn(),
   openChatDrawer: vi.fn(),
   continueMeetingConversation: vi.fn(),
-  seedComposer: vi.fn(),
+  seedComposer: vi.fn(), startPostCallReview: vi.fn(),
   openDocumentInShell: vi.fn(),
   setWorkAreaOpen: vi.fn(),
   recordWorkAreaPage: vi.fn(),
@@ -80,7 +80,7 @@ vi.mock('@/components/global-chat/store/use-global-chat-store', () => {
       }),
     {
       getState: () => ({
-        seedComposer: mocks.seedComposer,
+        seedComposer: mocks.seedComposer, startPostCallReview: mocks.startPostCallReview,
       }),
     },
   )

@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   fetchMeetingWorkspace: vi.fn(),
   openChatDrawer: vi.fn(),
   seedComposer: vi.fn(),
+  startPostCallReview: vi.fn(),
   setWorkAreaOpen: vi.fn(),
   recordWorkAreaPage: vi.fn(),
 }))
@@ -23,6 +24,9 @@ vi.mock('@/features/home/services/meeting-workspace-api', () => ({
 vi.mock('@/features/home/lib/sync-agenda-fathom-recording', () => ({
   syncAgendaFathomRecordingToWorkspace: vi.fn().mockResolvedValue(false),
 }))
+vi.mock('@/features/home/hooks/use-meeting-follow-up-review-entry', () => ({
+  useMeetingFollowUpReviewEntry: vi.fn(),
+}))
 vi.mock('@/features/home/components/MeetingAgendaDocEditor', () => ({
   MeetingAgendaDocEditor: ({ itemId }: { itemId: string }) => (
     <div data-testid="meeting-agenda-doc" data-item-id={itemId} />
@@ -35,6 +39,7 @@ vi.mock('@/components/work-views/AllMeetingsNativeList', () => ({
   AllMeetingsNativeList: () => null,
 }))
 vi.mock('@/lib/work-items', () => ({
+  campaignNameFromMappingPath: () => '',
   useSpaceMappingIndex: () => null,
 }))
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => {
@@ -49,7 +54,12 @@ vi.mock('@/components/global-chat/store/use-global-chat-store', () => {
         clearMeetingContext: mocks.clearMeetingContext,
         continueMeetingConversation: mocks.continueMeetingConversation,
       }),
-    { getState: () => ({ seedComposer: mocks.seedComposer }) },
+    {
+      getState: () => ({
+        seedComposer: mocks.seedComposer,
+        startPostCallReview: mocks.startPostCallReview,
+      }),
+    },
   )
   return { useGlobalChatStore }
 })

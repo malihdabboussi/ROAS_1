@@ -56,9 +56,16 @@ describe('MEETING_POST_CALL_ACTIONS', () => {
 })
 
 describe('MEETING_FOLLOW_UP_REVIEW_PROMPT', () => {
-  it('walks through context, the existing delegation preview, and an editable unsent draft', () => {
-    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('Stage 1 — confirm the meeting context')
-    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('page_grader_create_delegation_preview once')
+  it('starts after inline context confirmation and uses the existing delegation preview', () => {
+    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('already-confirmed meeting context')
+    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).not.toContain('Stage 1')
+    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('call list_mcp_servers')
+    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('call use_mcp_tool once')
+    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain(
+      'tool_name page_grader_create_delegation_preview',
+    )
+    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('Do not use create_task')
+    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('meeting Space scope does not block')
     expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('```draft Follow-up message```')
     expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('Do not send it')
   })

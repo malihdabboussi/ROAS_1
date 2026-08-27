@@ -57,6 +57,8 @@ export type SlackFollowUpConfirmPayload = {
   shadow_action_id?: string
   /** Optional only for pending records created before agent-written drafts were introduced. */
   draft_message?: string
+  /** Exact summary shown in Pixel's Slack review message. */
+  review_summary?: string
   draft_rationale?: string
   draft_context_sources?: string[]
   /** Threaded proposed-recap message (separate from the review DM). */
@@ -172,6 +174,7 @@ export class MeetingFollowUpSlackConfirmService {
       callItem,
       followUps,
     })
+    const reviewSummary = briefMeetingSummary(callItem, { includeNextSteps: false })
 
     const slackOrgId = await this.resolveSlackSendOrgId(input.supabase, input.userId, input.orgId)
 
@@ -236,6 +239,7 @@ export class MeetingFollowUpSlackConfirmService {
           : {}),
         assignee_sent_action_ids: [],
         draft_message: draft.message,
+        review_summary: reviewSummary,
         draft_rationale: draft.rationale,
         draft_context_sources: draft.context_sources,
         agent_key: 'vibey',
@@ -288,6 +292,7 @@ export class MeetingFollowUpSlackConfirmService {
         requested_at: new Date().toISOString(),
         approved_at: new Date().toISOString(),
         draft_message: draft.message,
+        review_summary: reviewSummary,
         draft_rationale: draft.rationale,
         draft_context_sources: draft.context_sources,
         agent_key: 'vibey',
@@ -359,6 +364,7 @@ export class MeetingFollowUpSlackConfirmService {
         : {}),
       assignee_sent_action_ids: [],
       draft_message: draft.message,
+      review_summary: reviewSummary,
       draft_rationale: draft.rationale,
       draft_context_sources: draft.context_sources,
       agent_key: 'vibey',

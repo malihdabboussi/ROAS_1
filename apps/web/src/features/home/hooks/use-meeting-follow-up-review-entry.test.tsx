@@ -1,13 +1,12 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { MEETING_FOLLOW_UP_REVIEW_PROMPT } from '@/features/home/config/meeting-post-call-actions.config'
 import { useMeetingFollowUpReviewEntry } from './use-meeting-follow-up-review-entry'
 
 const mocks = vi.hoisted(() => ({
   continueMeetingConversation: vi.fn(),
   openChatDrawer: vi.fn(),
   replace: vi.fn(),
-  seedComposer: vi.fn(),
+  startPostCallReview: vi.fn(),
   search: 'meeting=meeting-1&space=space-1&review=follow-up',
 }))
 
@@ -23,11 +22,11 @@ vi.mock('@/components/shell/use-shell-store', () => ({
 }))
 
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => {
-  const useGlobalChatStore = Object.assign(
-    (selector: (state: Record<string, unknown>) => unknown) =>
-      selector({ continueMeetingConversation: mocks.continueMeetingConversation }),
-    { getState: () => ({ seedComposer: mocks.seedComposer }) },
-  )
+  const useGlobalChatStore = (selector: (state: Record<string, unknown>) => unknown) =>
+    selector({
+      continueMeetingConversation: mocks.continueMeetingConversation,
+      startPostCallReview: mocks.startPostCallReview,
+    })
   return { useGlobalChatStore }
 })
 
@@ -36,7 +35,7 @@ describe('useMeetingFollowUpReviewEntry', () => {
     mocks.continueMeetingConversation.mockClear()
     mocks.openChatDrawer.mockClear()
     mocks.replace.mockClear()
-    mocks.seedComposer.mockClear()
+    mocks.startPostCallReview.mockClear()
     mocks.search = 'meeting=meeting-1&space=space-1&review=follow-up'
   })
 
@@ -49,10 +48,21 @@ describe('useMeetingFollowUpReviewEntry', () => {
         meetingTitle: 'Strategy call',
         awarenessContext: 'Meeting context',
         timelineVersion: 2,
+        review: {
+          conversationId: 'conversation-1',
+          meetingItemId: 'meeting-1',
+          meetingTitle: 'Strategy call',
+          summary: 'Reviewed the launch.',
+          clientWorkspace: 'Acme',
+          attendees: 'Dylan, Alex',
+          followUpCount: 3,
+          followUps: [{ id: 'follow-up-1', title: 'Ship recap', status: 'proposed' }],
+          followUpMessage: 'Thanks for the call.',
+        },
       }),
     )
 
-    await waitFor(() => expect(mocks.seedComposer).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(mocks.startPostCallReview).toHaveBeenCalledTimes(1))
     expect(mocks.continueMeetingConversation).toHaveBeenCalledWith({
       spaceId: 'space-1',
       meetingItemId: 'meeting-1',
@@ -62,17 +72,15 @@ describe('useMeetingFollowUpReviewEntry', () => {
       timelineVersion: 2,
     })
     expect(mocks.openChatDrawer).toHaveBeenCalledWith('conversation-1')
-    expect(mocks.seedComposer).toHaveBeenCalledWith({
-      content: MEETING_FOLLOW_UP_REVIEW_PROMPT,
-      conversationId: 'conversation-1',
-      workContext: { surface: 'spaces', spaceId: 'space-1' },
-    })
+    expect(mocks.startPostCallReview).toHaveBeenCalledWith(
+      expect.objectContaining({ summary: 'Reviewed the launch.', followUpCount: 3 }),
+    )
     expect(mocks.replace).toHaveBeenCalledWith('/home/meetings?meeting=meeting-1&space=space-1', {
       scroll: false,
     })
 
     rerender()
-    expect(mocks.seedComposer).toHaveBeenCalledTimes(1)
+    expect(mocks.startPostCallReview).toHaveBeenCalledTimes(1)
   })
 
   it('waits for a linked conversation before consuming the review marker', () => {
@@ -84,10 +92,11 @@ describe('useMeetingFollowUpReviewEntry', () => {
         meetingTitle: 'Strategy call',
         awarenessContext: 'Meeting context',
         timelineVersion: 0,
+        review: null,
       }),
     )
 
-    expect(mocks.seedComposer).not.toHaveBeenCalled()
+    expect(mocks.startPostCallReview).not.toHaveBeenCalled()
     expect(mocks.replace).not.toHaveBeenCalled()
   })
 })

@@ -2,11 +2,13 @@
 
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, type ReactNode } from 'react'
+import { buildMeetingFollowUpTaskReviewPrompt } from '@/features/home/config/meeting-post-call-actions.config'
 import { SpaceVibeyChatPanel } from '@/features/spaces/components/chat/SpaceVibeyChatPanel'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { QuickMissionsLauncherProvider } from '@/lib/missions'
 import { ChatCampaignBrainNudge } from '../components/ChatCampaignBrainNudge'
+import { MeetingPostCallReviewCard } from '../components/MeetingPostCallReviewCard'
 import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendation'
 import { QuickMissionsHubHost } from '../components/QuickMissionsHubHost'
 import { useMeetingConversationAwareness } from '../hooks/use-meeting-conversation-awareness'
@@ -36,6 +38,8 @@ export function GlobalChatPanel({
   useWorkRequestHomeChatSeed()
   const workContext = useGlobalChatStore((s) => s.workContext)
   const storedMeetingContext = useGlobalChatStore((s) => s.meetingContext)
+  const postCallReview = useGlobalChatStore((s) => s.postCallReview)
+  const clearPostCallReview = useGlobalChatStore((s) => s.clearPostCallReview)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
   const clearMeetingContext = useGlobalChatStore((s) => s.clearMeetingContext)
   const activeConversationId = useChatStore((s) => s.activeConversationId)
@@ -100,6 +104,19 @@ export function GlobalChatPanel({
         <QuickMissionsHubHost />
         <ChatSurfaceRecommendation />
         <ChatCampaignBrainNudge />
+        {postCallReview && postCallReview.conversationId === preferredConversationId ? (
+          <MeetingPostCallReviewCard
+            review={postCallReview}
+            onContinue={(confirmed) => {
+              clearPostCallReview()
+              useGlobalChatStore.getState().seedComposer({
+                content: buildMeetingFollowUpTaskReviewPrompt(confirmed),
+                conversationId: confirmed.conversationId,
+                workContext: { surface: 'spaces', spaceId: meetingContext?.spaceId },
+              })
+            }}
+          />
+        ) : null}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <SpaceVibeyChatPanel
             key={

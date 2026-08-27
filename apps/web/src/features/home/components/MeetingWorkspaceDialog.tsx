@@ -20,6 +20,7 @@ import { useMeetingFollowUpReviewEntry } from '@/features/home/hooks/use-meeting
 import { useMeetingSpaceStatusField } from '@/features/home/hooks/use-meeting-space-status-field'
 import { useMeetingWorkspaceSurface } from '@/features/home/hooks/use-meeting-workspace-surface'
 import { buildMeetingAwarenessContext } from '@/features/home/lib/build-meeting-awareness-context'
+import { buildMeetingPostCallReview } from '@/features/home/lib/build-meeting-post-call-review'
 import {
   formatAttendeeSummary,
   formatMeetingWhen,
@@ -146,6 +147,10 @@ export function MeetingWorkspaceDialog({
   const prep = useMemo(() => parseMeetingPrep(prepDescription), [prepDescription])
   const whenLine = formatMeetingWhen(meetingStart, meetingEnd)
   const attendeeSummary = formatAttendeeSummary(agendaEvent?.attendees)
+  const postCallReview =
+    bundle && conversationId
+      ? buildMeetingPostCallReview(bundle, conversationId, meetingItemId, title, attendeeSummary)
+      : null
   useMeetingWorkspaceSurface({
     spaceId,
     meetingItemId,
@@ -162,6 +167,7 @@ export function MeetingWorkspaceDialog({
     meetingTitle: title,
     awarenessContext,
     timelineVersion: bundle?.snippets?.length ?? 0,
+    review: postCallReview,
   })
 
   useEffect(() => {
@@ -196,6 +202,10 @@ export function MeetingWorkspaceDialog({
     }
     if (!conversationId) return
     focusMeetingChat()
+    if (action.id === 'run-post-call-flow' && postCallReview) {
+      useGlobalChatStore.getState().startPostCallReview(postCallReview)
+      return
+    }
     // The chat panel drops seeds whose work context doesn't match its space
     // scope, so target the meeting's space explicitly.
     const content =

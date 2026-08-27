@@ -63,6 +63,18 @@ export interface GlobalMeetingChatContext {
   timelineVersion: number
 }
 
+export interface MeetingPostCallReview {
+  conversationId: string
+  meetingItemId: string
+  meetingTitle: string
+  summary: string
+  clientWorkspace: string
+  attendees: string
+  followUpCount: number
+  followUps: Array<{ id: string; title: string; status: string }>
+  followUpMessage: string
+}
+
 function defaultWorkContext(): GlobalWorkContext {
   return { surface: 'general' }
 }
@@ -74,6 +86,7 @@ interface GlobalChatStore {
   activeAgentKey: string
   workContext: GlobalWorkContext
   meetingContext: GlobalMeetingChatContext | null
+  postCallReview: MeetingPostCallReview | null
   suggestedWorkContext: GlobalWorkContext | null
   roster: TeamRosterEntry[]
   rosterLoaded: boolean
@@ -89,6 +102,8 @@ interface GlobalChatStore {
   setWorkContext: (patch: Partial<GlobalWorkContext>) => void
   attachMeetingContext: (context: GlobalMeetingChatContext) => void
   continueMeetingConversation: (context: GlobalMeetingChatContext) => void
+  startPostCallReview: (review: MeetingPostCallReview) => void
+  clearPostCallReview: () => void
   clearMeetingContext: () => void
   setSuggestedWorkContext: (ctx: GlobalWorkContext | null) => void
   syncRouteContext: (pathname: string) => void
@@ -118,6 +133,7 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
   activeAgentKey: persisted.activeAgentKey ?? GLOBAL_CHAT_DEFAULT_AGENT,
   workContext: persisted.workContext ?? defaultWorkContext(),
   meetingContext: null,
+  postCallReview: null,
   suggestedWorkContext: null,
   roster: [],
   rosterLoaded: false,
@@ -219,6 +235,10 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
     get().setRailIntent(null)
     get().expandAndFocus({ railIntent: null })
   },
+
+  startPostCallReview: (postCallReview) => set({ postCallReview }),
+
+  clearPostCallReview: () => set({ postCallReview: null }),
 
   clearMeetingContext: () => set({ meetingContext: null }),
 

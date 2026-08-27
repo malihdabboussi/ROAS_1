@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import { CheckSquare, ListChecks, ListTodo, Send } from 'lucide-react'
+import type { MeetingPostCallReview } from '@/components/global-chat/store/use-global-chat-store'
 
 /**
  * One-click post-call actions shown in the meeting workspace once a call is
@@ -24,6 +25,17 @@ export interface MeetingPostCallAction {
 export const MEETING_FOLLOW_UP_REVIEW_PARAM = 'review'
 export const MEETING_FOLLOW_UP_REVIEW_VALUE = 'follow-up'
 
+export const MEETING_POST_CALL_REVIEW_MESSAGES = {
+  title: 'Review meeting context',
+  description: 'Confirm or edit these details before reviewing the tasks.',
+  summaryLabel: 'Meeting summary',
+  clientWorkspaceLabel: 'Client Workspace',
+  attendeesLabel: 'Attendees',
+  followUpCountLabel: 'Follow-ups to review',
+  followUpMessageLabel: 'Follow-up message',
+  continueLabel: 'Continue to task review',
+} as const
+
 /**
  * Guided review opened from Pixel's post-call Slack recap. The meeting workspace
  * stays visible beside the linked conversation while Pixel walks the operator
@@ -31,26 +43,41 @@ export const MEETING_FOLLOW_UP_REVIEW_VALUE = 'follow-up'
  * draft-message card in that order.
  */
 export const MEETING_FOLLOW_UP_REVIEW_PROMPT = [
-  'Start the post-meeting follow-up review for this meeting.',
-  '',
-  'Stage 1 — confirm the meeting context:',
-  '- Show one compact summary using the linked meeting workspace: meeting summary, Client Workspace, who attended, and how many follow-ups exist.',
-  '- Ask me to confirm it or tell you what to change. Keep the meeting workspace as the source of truth and apply any corrections there.',
-  '- Do not delegate tasks or draft the client message until I confirm the context.',
-  '',
-  'Stage 2 — confirm and delegate tasks:',
+  'Continue the post-meeting follow-up review with the already-confirmed meeting context.',
   '- After I confirm the context, collect every remaining work item our team owns from the recap, transcript, recording summary, and meeting action items.',
   '- Let me add, edit, or dismiss items in chat before delegation. Skip client-owned work and anything already marked done.',
-  '- Use the existing bulk delegation flow exactly: call list_mcp_tools, then call page_grader_create_delegation_preview once with the resolved Portal client, Portal campaign_id, the full remaining-work list, and a stable idempotency_key from this meeting id.',
+  '- Use the existing bulk delegation flow exactly: call list_mcp_servers, identify the connected ROAS Portal / Page Grader server, call list_mcp_tools with its exact server_id, then call use_mcp_tool once with that server_id, tool_name page_grader_create_delegation_preview, and arguments containing the resolved Portal client, Portal campaign_id, the full remaining-work list, and a stable idempotency_key from this meeting id.',
+  '- Do not use create_task, create_space_item, or the native Delegation Desk. A meeting Space scope does not block an MCP delegation preview.',
   '- Return the real confirm_url and stop while I review each task in The ROAS Portal. Do not create tasks another way and do not claim they exist before I Confirm there.',
   '',
-  'Stage 3 — finish the follow-up message:',
+  'After delegation review — finish the follow-up message:',
   '- After I tell you the delegation review is complete, write the editable client follow-up using the final confirmed tasks.',
   '- Return the full send-ready message in a ```draft Follow-up message``` fence so the existing editable message card is used.',
   '- Help me revise it in chat. Do not send it. The final action is for me to copy the completed message.',
   '',
-  'Work through one stage at a time and wait for my confirmation between stages.',
+  'Stop after returning the delegation confirm_url. Wait for me to finish that review before drafting the message.',
 ].join('\n')
+
+export function buildMeetingFollowUpTaskReviewPrompt(review: MeetingPostCallReview): string {
+  return [
+    MEETING_FOLLOW_UP_REVIEW_PROMPT,
+    '',
+    'Confirmed meeting context:',
+    `- Meeting: ${review.meetingTitle}`,
+    `- Summary: ${review.summary}`,
+    `- Client Workspace: ${review.clientWorkspace || 'Not assigned'}`,
+    `- Attendees: ${review.attendees || 'Not listed'}`,
+    `- Follow-ups to review: ${review.followUpCount}`,
+    ...(review.followUps.length > 0
+      ? [
+          '- Current follow-up tasks:',
+          ...review.followUps.map((item) => `  - [${item.status}] ${item.title}`),
+        ]
+      : ['- Current follow-up tasks: none']),
+    `- Prepared follow-up message: ${review.followUpMessage || 'No prepared message'}`,
+    `- Meeting id for the idempotency_key: ${review.meetingItemId}`,
+  ].join('\n')
+}
 
 export const MEETING_POST_CALL_ACTIONS: MeetingPostCallAction[] = [
   {
@@ -100,7 +127,8 @@ export const MEETING_POST_CALL_ACTIONS: MeetingPostCallAction[] = [
       'Keep (IN PROGRESS) and (TO-DO) items. Skip anything marked ✅ DONE, already confirmed on the call, or owned by the client.',
       '',
       'Resolve the Portal client from this meeting and the current campaign (prefer the webinar/campaign named in the recap or agenda). If zero or many campaigns remain, ask one question: which campaign.',
-      'Call list_mcp_tools, then page_grader_create_delegation_preview once with client_ref, the Portal campaign_id, raw_text = the full remaining-work list (not titles only), and a stable idempotency_key from this meeting id.',
+      'Call list_mcp_servers, identify the connected ROAS Portal / Page Grader server, call list_mcp_tools with its exact server_id, then call use_mcp_tool once with that server_id, tool_name page_grader_create_delegation_preview, and arguments containing client_ref, the Portal campaign_id, raw_text = the full remaining-work list (not titles only), and a stable idempotency_key from this meeting id.',
+      'Do not use create_task, create_space_item, or the native Delegation Desk. A meeting Space scope does not block an MCP delegation preview.',
       '',
       'Reply with the confirm_url as a real openable https link. Tell me to review and Confirm in The ROAS Portal.',
       'Do not create tasks. Do not loop page_grader_create_fulfillment_request. Do not send work silently. Do not say the tasks exist until I Confirm.',

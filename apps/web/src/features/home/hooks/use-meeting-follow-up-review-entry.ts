@@ -2,11 +2,13 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef } from 'react'
-import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
+import {
+  useGlobalChatStore,
+  type MeetingPostCallReview,
+} from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import {
   MEETING_FOLLOW_UP_REVIEW_PARAM,
-  MEETING_FOLLOW_UP_REVIEW_PROMPT,
   MEETING_FOLLOW_UP_REVIEW_VALUE,
 } from '@/features/home/config/meeting-post-call-actions.config'
 
@@ -18,6 +20,7 @@ export function useMeetingFollowUpReviewEntry(input: {
   meetingTitle: string
   awarenessContext: string
   timelineVersion: number
+  review: MeetingPostCallReview | null
 }): void {
   const pathname = usePathname()
   const router = useRouter()
@@ -26,6 +29,7 @@ export function useMeetingFollowUpReviewEntry(input: {
   const continueMeetingConversation = useGlobalChatStore(
     (state) => state.continueMeetingConversation,
   )
+  const startPostCallReview = useGlobalChatStore((state) => state.startPostCallReview)
   const openedRef = useRef<string | null>(null)
   const searchParamsKey = searchParams.toString()
 
@@ -34,6 +38,7 @@ export function useMeetingFollowUpReviewEntry(input: {
     const params = new URLSearchParams(searchParamsKey)
     if (
       !conversationId ||
+      !input.review ||
       params.get(MEETING_FOLLOW_UP_REVIEW_PARAM) !== MEETING_FOLLOW_UP_REVIEW_VALUE
     ) {
       return
@@ -52,11 +57,7 @@ export function useMeetingFollowUpReviewEntry(input: {
       timelineVersion: input.timelineVersion,
     })
     openChatDrawer(conversationId)
-    useGlobalChatStore.getState().seedComposer({
-      content: MEETING_FOLLOW_UP_REVIEW_PROMPT,
-      conversationId,
-      workContext: { surface: 'spaces', spaceId: input.spaceId },
-    })
+    startPostCallReview(input.review)
 
     params.delete(MEETING_FOLLOW_UP_REVIEW_PARAM)
     const query = params.toString()
@@ -67,11 +68,13 @@ export function useMeetingFollowUpReviewEntry(input: {
     input.conversationId,
     input.meetingItemId,
     input.meetingTitle,
+    input.review,
     input.spaceId,
     input.timelineVersion,
     openChatDrawer,
     pathname,
     router,
     searchParamsKey,
+    startPostCallReview,
   ])
 }
