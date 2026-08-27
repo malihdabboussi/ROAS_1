@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  callStatusForScheduledMeeting,
   callStatusWhenInviteMoved,
   callStatusWhenRecordingLands,
   inviteTimesMoved,
@@ -7,13 +8,26 @@ import {
 } from './meeting-call-status'
 
 describe('meeting call status', () => {
-  it('accepts only Live, Completed, No Show, and Rescheduled', () => {
+  it('accepts Upcoming, Live, Completed, No Show, and Rescheduled', () => {
+    expect(isMeetingCallStatus('upcoming')).toBe(true)
     expect(isMeetingCallStatus('live')).toBe(true)
     expect(isMeetingCallStatus('completed')).toBe(true)
     expect(isMeetingCallStatus('no_show')).toBe(true)
     expect(isMeetingCallStatus('rescheduled')).toBe(true)
-    expect(isMeetingCallStatus('upcoming')).toBe(false)
     expect(isMeetingCallStatus('')).toBe(false)
+  })
+
+  it('derives Upcoming and Live from scheduled meeting times', () => {
+    const now = new Date('2026-08-27T17:00:00.000Z')
+    expect(
+      callStatusForScheduledMeeting('2026-08-27T18:00:00.000Z', '2026-08-27T19:00:00.000Z', now),
+    ).toBe('upcoming')
+    expect(
+      callStatusForScheduledMeeting('2026-08-27T16:30:00.000Z', '2026-08-27T17:30:00.000Z', now),
+    ).toBe('live')
+    expect(
+      callStatusForScheduledMeeting('2026-08-27T15:00:00.000Z', '2026-08-27T16:00:00.000Z', now),
+    ).toBeNull()
   })
 
   it('marks the call completed when a recording lands', () => {

@@ -2,6 +2,10 @@ import { createHash } from 'node:crypto'
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SupabaseServiceClient } from '@vibey/api-shared'
+import {
+  attributeMeetingClient,
+  type MeetingClientAttribution,
+} from '../domain/meeting-client-attribution'
 import type { PageGraderMeetingUpsert } from '../integrations/page-grader.integration'
 import type { PageGraderClientScopeEntry } from './page-grader-api.helpers'
 import { PageGraderApiService } from './page-grader-api.service'
@@ -37,11 +41,23 @@ export class PageGraderMeetingSyncService {
     const routes = dedupeRoutes(input.routes ?? [])
     const catalog = await this.pageGrader.listClients(input.userId, { all: true })
     const contexts = await this.loadRouteContexts(input.supabase, routes)
+    const recurringClientIds = await this.findRecurringClientIds(
+      input.supabase,
+      input.userId,
+      contexts,
+    )
+    const attributionContexts = withLearnedClientIds(contexts, recurringClientIds)
+    const inferredAttribution = inferMeetingClientAttribution({
+      meeting,
+      clients: catalog.clients,
+      scopeMap: catalog.client_scope_map,
+      contexts: attributionContexts,
+    })
     const matches = resolveMeetingClients({
       meeting,
       clients: catalog.clients,
       scopeMap: catalog.client_scope_map,
-      contexts,
+      contexts: attributionContexts,
     })
 
     const result: MeetingSyncResult = {
@@ -54,10 +70,16 @@ export class PageGraderMeetingSyncService {
     }
 
     if (matches.length === 0) {
-      await this.stampRoutes(input.supabase, contexts, {
-        status: 'needs_client_mapping',
-        source_meeting_id: meeting.source_meeting_id,
-      })
+      await this.stampRoutes(
+        input.supabase,
+        contexts,
+        {
+          status: 'needs_client_mapping',
+          source_meeting_id: meeting.source_meeting_id,
+        },
+        null,
+        inferredAttribution,
+      )
       return result
     }
 
@@ -95,6 +117,7 @@ export class PageGraderMeetingSyncService {
         failed: result.failed,
       },
       matches.length === 1 ? clientCampaignMapping(matches[0]!, catalog.client_scope_map) : null,
+      attributionReceipt(inferredAttribution, matches),
     )
     return result
   }
@@ -229,11 +252,48 @@ export class PageGraderMeetingSyncService {
     })
   }
 
+  private async findRecurringClientIds(
+    supabase: SupabaseClient,
+    userId: string,
+    contexts: Array<{ custom_data: Record<string, unknown> }>,
+  ): Promise<string[]> {
+    const icalUids = [
+      ...new Set(
+        contexts.map((context) => stringValue(context.custom_data.ical_uid)).filter(Boolean),
+      ),
+    ]
+    if (icalUids.length === 0) return []
+    const { data, error } = await supabase
+      .from('space_items')
+      .select('custom_data, updated_at')
+      .eq('user_id', userId)
+      .in('custom_data->>ical_uid', icalUids)
+      .not('custom_data->client_campaign', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(50)
+    if (error) {
+      this.logger.warn(`Could not load recurring meeting attribution: ${error.message}`)
+      return []
+    }
+    const newestManual = (data ?? []).find(
+      (row) =>
+        stringValue(asRecord(row.custom_data).client_campaign_source) === 'manual' &&
+        explicitClientIds(asRecord(row.custom_data)).length > 0,
+    )
+    if (newestManual) return explicitClientIds(asRecord(newestManual.custom_data)).slice(0, 1)
+
+    const ids = [
+      ...new Set((data ?? []).flatMap((row) => explicitClientIds(asRecord(row.custom_data)))),
+    ]
+    return ids.length === 1 ? ids : []
+  }
+
   private async stampRoutes(
     supabase: SupabaseClient,
     contexts: Array<{ item_id: string; custom_data: Record<string, unknown> }>,
     meetingSync: Record<string, unknown>,
     automaticMapping: Record<string, unknown> | null = null,
+    attribution?: MeetingClientAttribution,
   ) {
     for (const context of contexts) {
       const pageGrader = asRecord(context.custom_data.page_grader)
@@ -245,10 +305,12 @@ export class PageGraderMeetingSyncService {
           custom_data: {
             ...context.custom_data,
             page_grader: { ...pageGrader, meeting_sync: meetingSync },
+            ...(attribution ? { client_campaign_attribution: attribution } : {}),
             ...(automaticMapping && !preserveManualMapping
               ? {
                   client_campaign: automaticMapping,
                   client_campaign_source: 'automatic_meeting_match',
+                  client_campaign_evidence: attribution,
                 }
               : {}),
           },
@@ -348,116 +410,115 @@ export function resolveMeetingClients(input: {
   }
   if (matches.size > 0) return [...matches.values()]
 
-  const inviteeMatches = matchClientsByInviteeEmail({
-    attendees: input.meeting.attendees ?? [],
-    clients: input.clients,
-  })
-  if (inviteeMatches.length > 0) return inviteeMatches
+  return inferMeetingClientAttribution(input).matches
+}
 
-  const haystack = normalizeText(
-    [
-      input.meeting.meeting_title,
-      input.meeting.summary,
-      ...input.contexts.flatMap((context) => [context.title, context.description]),
-    ]
+export function inferMeetingClientAttribution(input: {
+  meeting: PageGraderMeetingUpsert
+  clients: PageGraderClient[]
+  scopeMap: Record<string, PageGraderClientScopeEntry>
+  contexts: Array<{
+    space_id: string
+    campaign_id: string | null
+    title: string | null
+    description: string | null
+    custom_data: Record<string, unknown>
+  }>
+}): MeetingClientAttribution {
+  return attributeMeetingClient({
+    title: input.meeting.meeting_title,
+    contextText: input.contexts
+      .flatMap((context) => [context.title, context.description])
       .filter(Boolean)
       .join(' '),
-  )
-  const textMatches = input.clients.filter((client) => {
-    const name = normalizeText(client.name)
-    return name.length >= 4 && haystack.includes(name)
+    narrativeText: [input.meeting.summary, input.meeting.transcript].filter(Boolean).join(' '),
+    attendees: input.meeting.attendees ?? [],
+    clients: input.clients.map((client) => ({
+      id: client.id,
+      name: client.name,
+      websiteUrl: client.website_url,
+      campaignName: input.scopeMap[client.id]?.campaign_name,
+    })),
   })
-  return textMatches.length === 1 ? [{ ...textMatches[0]!, matched_by: 'unique_client_name' }] : []
 }
 
-const INTERNAL_EMAIL_DOMAINS = new Set([
-  'roas.co',
-  'roas.io',
-  'dylanvanas.com',
-  'gmail.com',
-  'googlemail.com',
-  'outlook.com',
-  'hotmail.com',
-  'yahoo.com',
-  'icloud.com',
-])
-
-export function matchClientsByInviteeEmail(input: {
-  attendees: Array<Record<string, unknown>>
-  clients: PageGraderClient[]
-}): Array<{ id: string; name: string; matched_by: string }> {
-  const inviteeEmails = input.attendees
-    .map((row) => stringValue(row.email).toLowerCase())
-    .filter((email) => email.includes('@'))
-  const inviteeDomains = [
-    ...new Set(
-      inviteeEmails
-        .map((email) => email.split('@')[1] ?? '')
-        .filter((domain) => domain && !INTERNAL_EMAIL_DOMAINS.has(domain)),
-    ),
-  ]
-  if (inviteeDomains.length === 0) return []
-
-  const matches: Array<{ id: string; name: string; matched_by: string }> = []
-  for (const client of input.clients) {
-    const websiteHost = hostnameFromUrl(stringValue(client.website_url))
-    if (
-      websiteHost &&
-      inviteeDomains.some(
-        (domain) =>
-          domain === websiteHost ||
-          domain.endsWith(`.${websiteHost}`) ||
-          websiteHost.endsWith(`.${domain}`),
-      )
-    ) {
-      matches.push({ id: client.id, name: client.name, matched_by: 'invitee_email_domain' })
-      continue
-    }
-    const nameTokens = normalizeText(client.name)
-      .split(' ')
-      .filter((token) => token.length >= 4)
-    const domainHit = inviteeDomains.some((domain) => {
-      const domainText = normalizeText(domain.replace(/\./g, ' '))
-      return nameTokens.some((token) => domainText.includes(token) || domain.includes(token))
-    })
-    if (domainHit) {
-      matches.push({ id: client.id, name: client.name, matched_by: 'invitee_email_domain' })
-    }
+function attributionReceipt(
+  inferred: MeetingClientAttribution,
+  matches: Array<{ id: string; name: string; matched_by: string }>,
+): MeetingClientAttribution {
+  if (matches.length === 0 || inferred.status === 'matched') return inferred
+  return {
+    status: 'matched',
+    confidence: 100,
+    matches,
+    candidates: matches.map((match) => ({
+      id: match.id,
+      name: match.name,
+      confidence: 100,
+      signals: [{ kind: 'context_alias', value: match.matched_by, weight: 100 }],
+    })),
   }
-  return matches
 }
 
-function hostnameFromUrl(value: string): string | null {
-  if (!value) return null
-  try {
-    const host = new URL(value.includes('://') ? value : `https://${value}`).hostname
-      .toLowerCase()
-      .replace(/^www\./, '')
-    return host || null
-  } catch {
-    return null
-  }
+function withLearnedClientIds<T extends { custom_data: Record<string, unknown> }>(
+  contexts: T[],
+  clientIds: string[],
+): T[] {
+  if (clientIds.length !== 1 || contexts.length === 0) return contexts
+  return contexts.map((context, index) => {
+    if (index > 0 || explicitClientIds(context.custom_data).length > 0) return context
+    const pageGrader = asRecord(context.custom_data.page_grader)
+    return {
+      ...context,
+      custom_data: {
+        ...context.custom_data,
+        page_grader: { ...pageGrader, client_ids: clientIds },
+      },
+    }
+  })
 }
 
 function explicitClientIds(customData: Record<string, unknown>): string[] {
   const pageGrader = asRecord(customData.page_grader)
+  const clientCampaign = asRecord(customData.client_campaign)
   const values = [
+    clientCampaign.client_id,
     pageGrader.client_id,
     ...(Array.isArray(pageGrader.client_ids) ? pageGrader.client_ids : []),
   ]
   return [...new Set(values.map((value) => stringValue(value)).filter(Boolean))]
 }
 
-function fathomEventFromSpaceItem(item: Record<string, unknown>): Record<string, unknown> {
+export function fathomEventFromSpaceItem(item: Record<string, unknown>): Record<string, unknown> {
   const custom = asRecord(item.custom_data)
   const external = asRecord(custom.external_automation)
+  const attendeeEmails = Array.isArray(custom.participant_emails)
+    ? custom.participant_emails.map((value) => stringValue(value)).filter(Boolean)
+    : []
+  const attendeeLabels = Array.isArray(custom.attendees)
+    ? custom.attendees.map((value) => stringValue(value)).filter(Boolean)
+    : []
+  const calendarInvitees = [
+    ...attendeeEmails.map((email) => ({ email })),
+    ...attendeeLabels.map((label) => {
+      const email = attendeeTokenEmail(label)
+      return email ? { email, name: label } : { name: label }
+    }),
+  ]
   return {
     id: stringValue(external.meeting_id),
     title: item.title,
     created_at: custom.call_date ?? item.created_at,
     url: custom.recording_url ?? custom.fathom_url,
     default_summary: { markdown_formatted: item.description },
+    calendar_invitees: calendarInvitees,
   }
+}
+
+function attendeeTokenEmail(value: string): string | null {
+  const match = value.toLowerCase().match(/^att_([^_]+)_(.+)_(com|co|io|net|org)$/)
+  if (!match) return null
+  return `${match[1]}@${match[2]!.replace(/_/g, '.')}.${match[3]}`
 }
 
 function contextMapsToClient(
@@ -512,11 +573,4 @@ function durationMinutes(start: unknown, end: unknown): number | null {
   const endMs = new Date(stringValue(end)).getTime()
   if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) return null
   return Math.round((endMs - startMs) / 60_000)
-}
-
-function normalizeText(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
 }

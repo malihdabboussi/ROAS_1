@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   clientCampaignMappingLabel,
   parseClientCampaignMapping,
   toClientCampaignMapping,
+  toClientOnlyMapping,
   useClientCampaignGroups,
   type ClientCampaignGroup,
   type ClientCampaignMapping,
@@ -44,6 +45,7 @@ export function ClientCampaignCell({
   const mapping = parseClientCampaignMapping(value)
   const [open, setOpen] = useState(!!openOnMount)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
   const buttonRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
@@ -99,6 +101,12 @@ export function ClientCampaignCell({
   const pick = (group: ClientCampaignGroup, campaign: ClientCampaignOption) => {
     onChange(toClientCampaignMapping(group, campaign))
     setOpen(false)
+  }
+
+  const pickClient = (group: ClientCampaignGroup) => {
+    onChange(toClientOnlyMapping(group))
+    setOpen(false)
+    setQuery('')
   }
 
   const label = clientCampaignMappingLabel(mapping)
@@ -177,8 +185,12 @@ export function ClientCampaignCell({
               groups={groups}
               mapping={mapping}
               expandedId={expandedId}
+              displayMode={displayMode}
+              query={query}
+              onQueryChange={setQuery}
               onExpand={setExpandedId}
               onPick={pick}
+              onPickClient={pickClient}
               onClear={() => {
                 onChange(null)
                 setOpen(false)
@@ -197,8 +209,12 @@ function ClientCampaignMenu({
   groups,
   mapping,
   expandedId,
+  displayMode,
+  query,
+  onQueryChange,
   onExpand,
   onPick,
+  onPickClient,
   onClear,
 }: {
   panelRef: React.RefObject<HTMLDivElement | null>
@@ -206,10 +222,22 @@ function ClientCampaignMenu({
   groups: ClientCampaignGroup[] | null
   mapping: ClientCampaignMapping | null
   expandedId: string | null
+  displayMode: 'combined' | 'client' | 'space'
+  query: string
+  onQueryChange: (query: string) => void
   onExpand: (id: string | null) => void
   onPick: (group: ClientCampaignGroup, campaign: ClientCampaignOption) => void
+  onPickClient: (group: ClientCampaignGroup) => void
   onClear: () => void
 }) {
+  const filteredGroups = (groups ?? []).filter((group) =>
+    `${group.clientName} ${group.campaigns.map((campaign) => campaign.name).join(' ')}`
+      .toLowerCase()
+      .includes(query.trim().toLowerCase()),
+  )
+  const activeGroups = filteredGroups.filter((group) => !group.inactive)
+  const inactiveGroups = filteredGroups.filter((group) => group.inactive)
+
   return (
     <div
       ref={panelRef}
@@ -224,62 +252,119 @@ function ClientCampaignMenu({
       }}
     >
       <p className="typo-caption text-muted-foreground px-spacing-2 pt-spacing-1">
-        Map to client campaign
+        {displayMode === 'client' ? 'Client workspace' : 'Map to client campaign'}
       </p>
+      <label className="border-border px-spacing-2 py-spacing-2 gap-spacing-2 flex items-center border-y">
+        <Search className="icon-sm text-muted-foreground shrink-0" aria-hidden />
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder="Search clients"
+          className="input-glass body-4 placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent outline-none"
+          autoFocus
+        />
+      </label>
       {groups === null ? (
         <p className="px-spacing-2 py-spacing-1 body-3 text-muted-foreground">Loading…</p>
-      ) : groups.length === 0 ? (
+      ) : filteredGroups.length === 0 ? (
         <p className="px-spacing-2 py-spacing-1 body-3 text-muted-foreground">No clients to map</p>
       ) : (
-        groups.map((group) => {
-          const expanded = expandedId === group.clientId
-          return (
-            <div key={group.clientId} className="mb-spacing-1">
-              <button
-                type="button"
-                aria-expanded={expanded}
-                onClick={() => onExpand(expanded ? null : group.clientId)}
-                className="body-3 text-muted-foreground hover:bg-hover-subtle hover:text-foreground gap-spacing-2 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full min-w-0 items-center font-semibold transition-colors"
-              >
-                <ChevronRight
-                  className={cn(
-                    'text-muted-foreground h-3 w-3 shrink-0 transition-transform duration-150',
-                    expanded && 'rotate-90',
-                  )}
-                  aria-hidden
-                />
-                <span className="min-w-0 flex-1 truncate text-left">{group.clientName}</span>
-                <span className="typo-caption text-muted-foreground shrink-0">
-                  {group.campaigns.length}
-                </span>
-              </button>
-              {expanded ? (
-                <div className="border-border mt-spacing-1 ml-spacing-1 pl-spacing-2 flex flex-col border-l">
-                  {group.campaigns.map((campaign) => {
-                    const selected = mapping?.campaign_id === campaign.id
-                    return (
-                      <button
-                        key={campaign.id}
-                        type="button"
-                        onClick={() => onPick(group, campaign)}
-                        className="body-3 text-foreground hover:bg-hover-subtle gap-spacing-2 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full min-w-0 items-center transition-colors"
-                      >
-                        <span className="min-w-0 truncate" title={campaign.name}>
-                          {campaign.name}
-                        </span>
-                        {selected ? (
-                          <span className="typo-caption text-muted-foreground shrink-0">
-                            Mapped
+        <>
+          {activeGroups.map((group) => {
+            const expanded = expandedId === group.clientId
+            return (
+              <div key={group.clientId} className="mb-spacing-1">
+                <button
+                  type="button"
+                  aria-expanded={expanded}
+                  onClick={() =>
+                    displayMode === 'client'
+                      ? onPickClient(group)
+                      : onExpand(expanded ? null : group.clientId)
+                  }
+                  className="body-3 text-muted-foreground hover:bg-hover-subtle hover:text-foreground gap-spacing-2 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full min-w-0 items-center font-semibold transition-colors"
+                >
+                  {displayMode !== 'client' ? (
+                    <ChevronRight
+                      className={cn(
+                        'text-muted-foreground h-3 w-3 shrink-0 transition-transform duration-150',
+                        expanded && 'rotate-90',
+                      )}
+                      aria-hidden
+                    />
+                  ) : null}
+                  <span className="min-w-0 flex-1 truncate text-left">{group.clientName}</span>
+                  {displayMode !== 'client' ? (
+                    <span className="typo-caption text-muted-foreground shrink-0">
+                      {group.campaigns.length}
+                    </span>
+                  ) : null}
+                </button>
+                {expanded && displayMode !== 'client' ? (
+                  <div className="border-border mt-spacing-1 ml-spacing-1 pl-spacing-2 flex flex-col border-l">
+                    {group.campaigns.map((campaign) => {
+                      const selected = mapping?.campaign_id === campaign.id
+                      return (
+                        <button
+                          key={campaign.id}
+                          type="button"
+                          onClick={() => onPick(group, campaign)}
+                          className="body-3 text-foreground hover:bg-hover-subtle gap-spacing-2 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full min-w-0 items-center transition-colors"
+                        >
+                          <span className="min-w-0 truncate" title={campaign.name}>
+                            {campaign.name}
                           </span>
-                        ) : null}
-                      </button>
-                    )
-                  })}
+                          {selected ? (
+                            <span className="typo-caption text-muted-foreground shrink-0">
+                              Mapped
+                            </span>
+                          ) : null}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : null}
+              </div>
+            )
+          })}
+          {inactiveGroups.length > 0 ? (
+            <div className="border-border mt-spacing-1 border-t">
+              <p className="typo-caption text-muted-foreground px-spacing-2 pb-spacing-1 pt-spacing-3">
+                Inactive Clients
+              </p>
+              {inactiveGroups.map((group) => (
+                <div key={group.clientId}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      displayMode === 'client'
+                        ? onPickClient(group)
+                        : onExpand(expandedId === group.clientId ? null : group.clientId)
+                    }
+                    className="body-3 text-muted-foreground hover:bg-hover-subtle hover:text-foreground rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full min-w-0 items-center font-semibold transition-colors"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-left">{group.clientName}</span>
+                  </button>
+                  {displayMode !== 'client' && expandedId === group.clientId ? (
+                    <div className="border-border mt-spacing-1 ml-spacing-1 pl-spacing-2 flex flex-col border-l">
+                      {group.campaigns.map((campaign) => (
+                        <button
+                          key={campaign.id}
+                          type="button"
+                          onClick={() => onPick(group, campaign)}
+                          className="body-3 text-foreground hover:bg-hover-subtle rounded-spacing-2 px-spacing-2 py-spacing-1 w-full min-w-0 text-left transition-colors"
+                        >
+                          <span className="block min-w-0 truncate">{campaign.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
+              ))}
             </div>
-          )
-        })
+          ) : null}
+        </>
       )}
       {mapping ? (
         <button

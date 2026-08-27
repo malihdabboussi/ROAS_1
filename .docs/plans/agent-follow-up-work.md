@@ -39957,3 +39957,15 @@ Evidence: `apps/api/src/modules/spaces/repositories/slack-open-items.repository.
 Needed work: Split QC Slack anchor and delivery metadata operations into a focused repository while preserving the existing `SlackOpenItemsService` contract and repository tests.
 
 Reason not done now: The overage is pre-existing, and decomposing all open-item persistence would materially widen this targeted notification-policy fix.
+
+## 2026-08-26 - [ARCH] Space item row remains over the component limit
+
+Status: Open
+
+Found while: Moving task controls out of customizable columns and into the fixed row rail.
+
+Evidence: `apps/web/src/features/spaces/components/SpaceItemRow.tsx` is 764 LOC against the 400-line component limit and still owns title editing, per-field rendering, task actions, dialogs, and row interaction state. The changed wrapper and rail files remain within their component limits.
+
+Needed work: Extract title-cell rendering and row action/dialog orchestration into focused components while retaining the shared list/table row contract.
+
+Reason not done now: The requested behavior required removing duplicated controls from the existing title renderer; decomposing unrelated title editing and action behavior would materially widen the row-control fix.

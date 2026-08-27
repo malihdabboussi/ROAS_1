@@ -13,7 +13,7 @@ export const MEETING_CALL_KIND_OPTIONS: Array<{
   color: string
 }> = [
   { id: 'private', label: 'Personal', color: 'emerald' },
-  { id: 'team', label: 'Team', color: 'violet' },
+  { id: 'team', label: 'Internal Team', color: 'violet' },
   { id: 'executive', label: 'Executive', color: 'amber' },
   { id: 'client', label: 'Client', color: 'cyan' },
   { id: 'partner', label: 'Partner', color: 'blue' },
@@ -121,13 +121,18 @@ export function resolveMeetingCallKind(input: {
   attendeeLabels: string[]
   titleHint?: string | null
   summary?: string | null
+  hasConfirmedClient?: boolean
 }): MeetingCallKind {
   const title = String(input.titleHint ?? '')
   const blob = `${title}\n${String(input.summary ?? '')}`
   const { external, known } = countExternalAttendees(input.attendees, input.identity)
   const mostlyExternal = known > 0 && external / known >= 0.5
   const ownerPresent = ownerOnCall(input)
-  const participantCount = Math.max(known, input.attendees.length, input.attendeeLabels.length)
+
+  // A confirmed workspace mapping is stronger evidence than topic words in a
+  // title. Existing clients commonly hold calls about sales, pricing, or
+  // partnerships without the meeting becoming a prospect/vendor call.
+  if (input.hasConfirmedClient) return 'client'
 
   // The title expresses the meeting's purpose more reliably than transcript
   // discussion. Client reviews routinely discuss sales and partnerships; those
@@ -141,7 +146,9 @@ export function resolveMeetingCallKind(input: {
   // Team titles win over a one-speaker Fathom recording so a weekly team
   // review is not treated as a confidential personal call.
   if (external === 0 && isTeamMeetingTitle(title)) return 'team'
-  if (ownerPresent && (isPersonalMeetingTitle(title) || participantCount <= 1)) return 'private'
+  // Incomplete calendar/Fathom participants must not silently turn a call into
+  // Personal. Personal is reserved for an explicit personal/1:1 title.
+  if (ownerPresent && isPersonalMeetingTitle(title)) return 'private'
   return 'team'
 }
 

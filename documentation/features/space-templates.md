@@ -1,6 +1,6 @@
 # Space Templates
 
-**Last Modified:** 2026-08-26 (All Meetings client-only mapping and automatic match persistence)
+**Last Modified:** 2026-08-26 (stable meeting row controls, selectors, status, and recurring rules)
 
 ## Overview
 
@@ -76,6 +76,8 @@ Home Agenda prep, related call enrichment, and default Home feed scope also read
 - **2026-08-24:** All Meetings restores Attendees immediately after Host without resetting custom column order. Client Workspace and Campaign Space now open the shared mapping picker, including each client's General workspace. Migration `20260824213000_meetings_workspace_attendees_backfill.sql` updates existing schemas/templates and fills only unmapped historical calls with one strict client-name match.
 - **2026-08-26:** All Meetings now shows one Client Workspace association instead of separate Client Workspace and Campaign Space columns. Unique Page Grader/Fathom client matches persist the shared interactive mapping automatically; ambiguous and internal calls remain unmapped, and manual choices remain authoritative.
 - **2026-08-26:** Client Workspace mapping remains directly editable without separate Map or Change controls. The client name opens the picker when mapped, and the visually empty cell opens it when unmapped.
+- **2026-08-26:** Meeting ingestion now scores client evidence from attendee domains and identities, exact title aliases, route context, and transcript or summary narrative. Unique high-confidence matches map automatically; narrative-only, ambiguous, and unresolved results remain reviewable suggestions in `client_campaign_attribution`. Explicit Client Workspace choices or clears remain authoritative, recurring calendar series can reuse one prior unambiguous client through `ical_uid`, and automatic mappings store their supporting signals in `client_campaign_evidence`.
+- **2026-08-26:** All Meetings uses the shared searchable client selector: active clients are alphabetical and inactive clients are alphabetical in a separate bottom section. Client Workspace maps directly to the client without requiring a campaign. The newest manual client and Call Kind correction on a recurring `ical_uid` becomes the rule for later occurrences. Future calendar rows start as Upcoming, Team is labeled Internal Team, confirmed clients outrank sales-topic words, and incomplete participant data no longer defaults a call to Personal. The list row's drag, hover selection, subtask chevron, and task-status control live in a fixed leading rail outside customizable columns.
 - **2026-08-19:** Personal Dashboard All Meetings shows Campaign and Space columns. Existing Meetings spaces pick those columns up through `ensureAllMeetingsListColumns` when the All Meetings view loads.
 
 ## Regenerating seed SQL

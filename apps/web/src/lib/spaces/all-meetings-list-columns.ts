@@ -60,6 +60,7 @@ const CALL_STATUS_FIELD: MeetingsListField = {
   type: 'select',
   required: false,
   options: [
+    { id: 'upcoming', label: 'Upcoming', color: 'slate' },
     { id: 'live', label: 'Live', color: 'emerald' },
     { id: 'completed', label: 'Completed', color: 'blue' },
     { id: 'no_show', label: 'No Show', color: 'red' },

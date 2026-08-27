@@ -8,10 +8,14 @@ import {
   type DraggableSyntheticListeners,
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
+import { listRowStatusField } from '@/lib/spaces/space-item-values'
 import { cn } from '@/lib/utils/cn'
 import type { SpaceListDndDragHandleProps } from '../lib/space-list-dnd-types'
+import { SelectCell } from './cells/SelectCell'
+import { readFieldValue, toFieldPatch } from './space-item-values'
 import { GroupedRowGripColumn, SPACE_LIST_ROW_SELECTED_TINT } from './space-list-group-chrome'
 import { SpaceItemRow, type SpaceItemRowProps } from './SpaceItemRow'
+import { TaskExecutionStatusIndicator } from './TaskExecutionStatusIndicator'
 
 export type { SpaceListDndDragHandleProps }
 
@@ -195,6 +199,33 @@ export function SpaceListDndGroupChromeRow({
   ...row
 }: SpaceListDndGroupChromeRowProps) {
   const isSelected = row.selected === true
+  const statusField = listRowStatusField(row.allFields)
+  const statusValue = readFieldValue(row.item, statusField?.id ?? 'status')
+  const statusOption = statusField?.options?.find((option) => option.id === statusValue)
+  const statusTrigger = (
+    <TaskExecutionStatusIndicator
+      color={statusOption?.color}
+      active={row.item.task_execution_status === 'running'}
+      size="sm"
+    />
+  )
+  const statusControl = statusField ? (
+    readOnly ? (
+      statusTrigger
+    ) : (
+      <SelectCell
+        field={statusField}
+        value={statusValue}
+        onChange={(next) => {
+          const patch = toFieldPatch(row.item, statusField.id, next)
+          void row.onUpdateItem(row.item.id, patch)
+        }}
+        onEditStatuses={row.onEditStatuses}
+        triggerInline
+        customTrigger={statusTrigger}
+      />
+    )
+  ) : null
 
   const rowInner = (dnd: SpaceListDndDragHandleProps | undefined) => (
     <div className="group/row relative">
@@ -222,6 +253,11 @@ export function SpaceListDndGroupChromeRow({
           tableRowLabel={tableRowLabel}
           hideGrip={readOnly}
           reserveLayoutOnly={readOnly}
+          showChevron={!row.isSubtask && !row.suppressSubtaskChevron}
+          chevronAlwaysVisible={(row.subtaskCount ?? 0) > 0 || row.expanded}
+          expanded={row.expanded}
+          onToggleExpand={row.onToggleExpand}
+          statusControl={statusControl}
         />
         <div className={cn('min-w-0 flex-1', surface !== 'table' && 'pr-4')}>
           <SpaceItemRow
@@ -231,6 +267,7 @@ export function SpaceListDndGroupChromeRow({
             dndDrag={undefined}
             onToggleSelect={undefined}
             surface={surface}
+            externalRowControls
           />
         </div>
       </div>

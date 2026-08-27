@@ -26,7 +26,7 @@ const MEETING_FIELDS: FieldDef[] = [
     type: 'select',
     options: [
       { id: 'private', label: 'Personal', color: 'emerald' },
-      { id: 'team', label: 'Team', color: 'violet' },
+      { id: 'team', label: 'Internal Team', color: 'violet' },
       { id: 'executive', label: 'Executive', color: 'amber' },
       { id: 'client', label: 'Client', color: 'cyan' },
       { id: 'partner', label: 'Partner', color: 'blue' },
@@ -43,6 +43,7 @@ const MEETING_FIELDS: FieldDef[] = [
     name: 'Call status',
     type: 'select',
     options: [
+      { id: 'upcoming', label: 'Upcoming', color: 'slate' },
       { id: 'live', label: 'Live', color: 'emerald' },
       { id: 'completed', label: 'Completed', color: 'blue' },
       { id: 'no_show', label: 'No Show', color: 'red' },

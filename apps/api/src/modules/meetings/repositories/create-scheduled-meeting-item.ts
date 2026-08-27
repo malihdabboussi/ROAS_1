@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { MeetingCallKind } from '../domain/meeting-call-kind'
+import { callStatusForScheduledMeeting } from '../domain/meeting-call-status'
 import { meetingHostCustomData, resolveMeetingHost } from '../domain/meeting-host'
 import type { ScheduledMeetingEvent } from './meeting-workspace-resolution.repository'
 
@@ -36,6 +37,8 @@ export async function createScheduledMeetingItem(
         entry_type: 'call',
         call_kind: input.callKind,
         call_kind_source: 'automatic',
+        call_status: callStatusForScheduledMeeting(input.event.start, input.event.end),
+        call_status_source: 'automatic',
         calendar_event_id: input.event.calendarEventId,
         ...(icalUid ? { ical_uid: icalUid } : {}),
         call_date: input.event.start,

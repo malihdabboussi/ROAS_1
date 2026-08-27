@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  alphabeticalClientSections,
   comparePipelineStages,
   formatPipelineStageLabel,
   groupClientsByPipeline,
@@ -69,6 +70,17 @@ describe('agency client pipeline', () => {
     expect(
       visiblePipelineClients(clients, { alwaysIncludeIds: ['c'] }).map((row) => row.id),
     ).toEqual(['a', 'c'])
+  })
+
+  it('builds alphabetical active and inactive selector sections', () => {
+    const sections = alphabeticalClientSections([
+      { id: 'd', name: 'Zulu Archived', pipeline_stage: 'inactive' },
+      { id: 'b', name: 'Beta Active', pipeline_stage: 'active_happy' },
+      { id: 'c', name: 'Alpha Archived', pipeline_stage: 'churned_inactive' },
+      { id: 'a', name: 'Alpha Active', pipeline_stage: 'pre_launch' },
+    ])
+    expect(sections.active.map((client) => client.id)).toEqual(['a', 'b'])
+    expect(sections.inactive.map((client) => client.id)).toEqual(['c', 'd'])
   })
 
   it('groups by canonical pipeline labels in Portal order', () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   clientCampaignMapping,
+  fathomEventFromSpaceItem,
   normalizeFathomMeeting,
   resolveMeetingClients,
 } from '../page-grader-meeting-sync.service'
@@ -58,6 +59,24 @@ describe('Page Grader meeting sync', () => {
     expect(result.sync_hash).toMatch(/^[a-f0-9]{64}$/)
   })
 
+  it('preserves saved attendee evidence when replaying a meeting catch-up', () => {
+    const event = fathomEventFromSpaceItem({
+      title: '1DS x ROAS Weekly Session',
+      description: 'Weekly client call',
+      custom_data: {
+        external_automation: { meeting_id: 'meeting-1' },
+        participant_emails: ['john@1dscollective.com'],
+        attendees: ['att_sam_1dscollective_com', 'att_dylan_dylanvanas_com'],
+      },
+    })
+
+    expect(event.calendar_invitees).toEqual([
+      { email: 'john@1dscollective.com' },
+      { email: 'sam@1dscollective.com', name: 'att_sam_1dscollective_com' },
+      { email: 'dylan@dylanvanas.com', name: 'att_dylan_dylanvanas_com' },
+    ])
+  })
+
   it('uses an explicit or mapped ROAS client before title inference', () => {
     const matches = resolveMeetingClients({
       meeting: {
@@ -106,7 +125,7 @@ describe('Page Grader meeting sync', () => {
     })
 
     expect(matches).toEqual([
-      { id: 'one-percent', name: 'The One Percent Life', matched_by: 'unique_client_name' },
+      { id: 'one-percent', name: 'The One Percent Life', matched_by: 'context_alias' },
     ])
   })
 
@@ -133,6 +152,34 @@ describe('Page Grader meeting sync', () => {
     expect(matches.map((match) => match.id)).toEqual(['client-mfs', 'client-sakha'])
   })
 
+  it('treats a manually selected Client Workspace as authoritative attribution', () => {
+    const matches = resolveMeetingClients({
+      meeting: {
+        source_meeting_id: 'meeting-manual',
+        meeting_title: 'Weekly review',
+        meeting_date: '2026-08-26T16:00:00.000Z',
+      },
+      clients,
+      scopeMap: {},
+      contexts: [
+        {
+          space_id: 'meetings',
+          campaign_id: null,
+          title: null,
+          description: null,
+          custom_data: {
+            client_campaign_source: 'manual',
+            client_campaign: { client_id: 'client-sakha' },
+          },
+        },
+      ],
+    })
+
+    expect(matches).toEqual([
+      { id: 'client-sakha', name: 'Sakha Media Group', matched_by: 'explicit_client' },
+    ])
+  })
+
   it('matches one unique client name but refuses an ambiguous multi-client call', () => {
     const base = {
       clients,
@@ -148,9 +195,7 @@ describe('Page Grader meeting sync', () => {
           meeting_date: '2026-07-22T16:00:00.000Z',
         },
       }),
-    ).toEqual([
-      { id: 'client-mfs', name: 'Multifamily Strategy', matched_by: 'unique_client_name' },
-    ])
+    ).toEqual([{ id: 'client-mfs', name: 'Multifamily Strategy', matched_by: 'title_alias' }])
 
     expect(
       resolveMeetingClients({
@@ -185,7 +230,7 @@ describe('Page Grader meeting sync', () => {
     })
 
     expect(matches).toEqual([
-      { id: 'client-mfs', name: 'Multifamily Strategy', matched_by: 'invitee_email_domain' },
+      { id: 'client-mfs', name: 'Multifamily Strategy', matched_by: 'invitee_domain' },
     ])
   })
 })

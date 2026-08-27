@@ -18,7 +18,7 @@ describe('meeting call-kind classification', () => {
   it('exposes the complete taxonomy with a Personal user-facing label', () => {
     expect(MEETING_CALL_KIND_OPTIONS).toEqual([
       { id: 'private', label: 'Personal', color: 'emerald' },
-      { id: 'team', label: 'Team', color: 'violet' },
+      { id: 'team', label: 'Internal Team', color: 'violet' },
       { id: 'executive', label: 'Executive', color: 'amber' },
       { id: 'client', label: 'Client', color: 'cyan' },
       { id: 'partner', label: 'Partner', color: 'blue' },
@@ -48,7 +48,7 @@ describe('meeting call-kind classification', () => {
       'team',
     )
     expect(classify('Define a new role and compensation plan', [{ email: 'owner@roas.co' }])).toBe(
-      'private',
+      'team',
     )
     expect(
       classify('Executive leadership review', [
@@ -128,5 +128,30 @@ describe('meeting call-kind classification', () => {
     expect(resolveMeetingCallKind({ ...common, titleHint: 'Vendor partnership review' })).toBe(
       'partner',
     )
+  })
+
+  it('uses a confirmed client mapping ahead of sales-topic words', () => {
+    expect(
+      resolveMeetingCallKind({
+        identity,
+        recordedByEmail: 'owner@roas.co',
+        attendees: [{ email: 'owner@roas.co' }],
+        attendeeLabels: ['Owner Person'],
+        titleHint: 'AOS Sales',
+        hasConfirmedClient: true,
+      }),
+    ).toBe('client')
+  })
+
+  it('does not classify incomplete participant data as Personal', () => {
+    expect(
+      resolveMeetingCallKind({
+        identity,
+        recordedByEmail: 'owner@roas.co',
+        attendees: [],
+        attendeeLabels: [],
+        titleHint: 'Campaign performance review',
+      }),
+    ).toBe('team')
   })
 })

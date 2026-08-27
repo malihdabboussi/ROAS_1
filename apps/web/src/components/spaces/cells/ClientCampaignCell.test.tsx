@@ -147,7 +147,7 @@ describe('ClientCampaignCell', () => {
     expect(screen.getByRole('menu')).toBeInTheDocument()
   })
 
-  it('renders a workspace-specific trigger while preserving the same mapping picker', () => {
+  it('maps Client Workspace directly without forcing a campaign selection', () => {
     mocks.useClientCampaignGroups.mockReturnValue({ groups: GROUPS, failed: false })
     const onChange = vi.fn()
 
@@ -163,11 +163,14 @@ describe('ClientCampaignCell', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Select client workspace' }))
     fireEvent.click(screen.getByRole('button', { name: /1DS Collective/ }))
-    fireEvent.click(screen.getByRole('button', { name: 'Launch' }))
 
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ client_name: '1DS Collective', campaign_name: 'Launch' }),
-    )
+    expect(onChange).toHaveBeenCalledWith({
+      client_id: 'client-1',
+      client_name: '1DS Collective',
+      campaign_id: '',
+      campaign_name: '',
+      roas_space_id: null,
+    })
   })
 
   it('renders an unlabeled empty cell as the mapping trigger', () => {

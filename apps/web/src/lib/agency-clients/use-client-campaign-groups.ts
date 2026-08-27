@@ -25,7 +25,7 @@ export function useClientCampaignGroups(open: boolean): {
     if (attemptedOpen.current) return
     attemptedOpen.current = true
     let cancelled = false
-    void Promise.all([fetchAgencyClientCampaigns(undefined, false), fetchAgencyClients('', false)])
+    void Promise.all([fetchAgencyClientCampaigns(undefined, true), fetchAgencyClients('', true)])
       .then(([campaignResponse, clientResponse]) => {
         if (cancelled) return
         setFailed(false)

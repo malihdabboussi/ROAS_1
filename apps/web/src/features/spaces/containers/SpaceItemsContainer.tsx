@@ -122,6 +122,7 @@ export type SpaceItemsContainerEmbed = {
   /** Surface-default pins; applies only until any view carries an explicit `pinned_to_start`. */
   defaultPinnedViewIds?: string[]
   itemFilter?: (item: SpaceItem) => boolean
+  viewStripRightSlot?: ReactNode
 }
 
 export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbed } = {}) {
@@ -1287,7 +1288,7 @@ export function SpaceItemsContainer({ embed }: { embed?: SpaceItemsContainerEmbe
           onTogglePinView={canCustomizeViews ? handleTogglePinViewById : undefined}
           onDuplicateView={canCustomizeViews ? handleDuplicateViewById : undefined}
           onDeleteView={canCustomizeViews ? handleDeleteViewById : undefined}
-          rightSlot={null}
+          rightSlot={embed?.viewStripRightSlot ?? null}
         />
 
         <div ref={spaceBelowViewTabsRef} className="flex min-h-0 flex-1 flex-row overflow-hidden">

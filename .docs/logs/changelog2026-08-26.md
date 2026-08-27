@@ -69,3 +69,43 @@ Why: The auxiliary action labels cluttered the table and the linked client label
 Impact: Clicking either a workspace label or an empty editable cell opens the existing mapping dropdown without changing mapping persistence.
 
 Files: `apps/web/src/components/spaces/cells/ClientCampaignCell.tsx`, `apps/web/src/components/spaces/cells/ClientCampaignCell.test.tsx`, `documentation/utilities/all-meetings-list-columns.md`, `documentation/features/space-templates.md`
+
+## 2026-08-26 10:52 - [FIX]
+
+What: Deduplicated calendar events before Meetings materialization, excluded timed calendar blocks without attendees or meeting links, invalidated the stale item cache before reloading, simplified Client Workspace cells to one clickable value or dash, and added a Meetings shortcut to Integration settings.
+
+Why: Refreshing Meetings could briefly add rows and then remove them from the visible list, duplicate cross-account calendar occurrences, persist note-like events as calls, and require separate Map/Change controls.
+
+Impact: Calendar meetings persist consistently after refresh, non-meeting notes stay out of All Meetings, repeated provider copies collapse before persistence, workspace mapping is edited directly from the cell value, and calendar integrations are configurable from the Meetings view.
+
+Files: `apps/web/src/features/home/hooks/use-meetings-calendar-materialize.ts`, `apps/web/src/features/home/hooks/use-meetings-calendar-materialize.test.ts`, `apps/web/src/app/(dashboard)/home/meetings/MeetingsUnifiedSurface.tsx`, `apps/web/src/app/(dashboard)/home/meetings/MeetingsUnifiedSurface.test.tsx`, `apps/web/src/components/spaces/cells/ClientCampaignCell.tsx`, `apps/web/src/components/spaces/cells/ClientCampaignCell.test.tsx`, `apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx`
+
+## 2026-08-26 11:17 - [FIX]
+
+What: Preserved saved meeting attendee emails and legacy attendee identities when replaying Page Grader meeting catch-up, including recoverable Fathom attendee tokens.
+
+Why: Historical catch-up reconstructed meetings without attendees, so deterministic client-domain evidence such as `@1dscollective.com` never reached the client matcher.
+
+Impact: Future meeting backfills can resolve clients from the same attendee evidence used during live Fathom ingestion while ambiguous or internal calls remain unmapped.
+
+Files: `apps/api/src/modules/integrations/page-grader/services/page-grader-meeting-sync.service.ts`, `apps/api/src/modules/integrations/page-grader/services/__tests__/page-grader-meeting-sync.service.test.ts`
+
+## 2026-08-26 11:36 - [FEATURE]
+
+What: Added confidence-scored meeting-to-client attribution using attendee domains and identities, exact title and route aliases, transcript or summary evidence, explicit mappings, and learned recurring calendar-series mappings. Every inference now records its status, confidence, candidates, and evidence signals.
+
+Why: Client meeting attribution required repeated manual backfills, while transcript-only guesses could incorrectly attach internal or ambiguous calls to a client.
+
+Impact: Unique high-confidence meetings map automatically; narrative-only or tied candidates remain reviewable suggestions; manual Client Workspace choices and clears stay authoritative; and recurring series reuse a previously confirmed client without changing unrelated calls.
+
+Files: `apps/api/src/modules/integrations/page-grader/domain/meeting-client-attribution.ts`, `apps/api/src/modules/integrations/page-grader/domain/meeting-client-attribution.test.ts`, `apps/api/src/modules/integrations/page-grader/services/page-grader-meeting-sync.service.ts`, `apps/api/src/modules/integrations/page-grader/services/__tests__/page-grader-meeting-sync.service.test.ts`, `documentation/features/space-templates.md`
+
+## 2026-08-26 18:59 - [FEATURE]
+
+What: Added a fixed leading task-row control rail; made client selectors searchable and alphabetical with inactive clients at the bottom; allowed direct client-level Meeting mappings; added Upcoming status and Internal Team labeling; and taught recurring meetings to reuse the newest manual client and Call Kind corrections.
+
+Why: Custom column order moved row controls into whichever column happened to contain Name, Client Workspace forced an unrelated campaign selection, incomplete enrichment mislabeled calls as Personal, and repeated meetings required the same corrections every occurrence.
+
+Impact: Drag, selection, subtask expansion, and task status stay left of configurable columns; client selection is consistent and searchable; future calls have an explicit status; confirmed client mappings outrank topic keywords; and later recurring calls inherit the user's latest correction.
+
+Files: `apps/web/src/features/spaces/components/space-list-group-chrome.tsx`, `apps/web/src/features/spaces/components/SpaceListDndRow.tsx`, `apps/web/src/features/spaces/components/SpaceItemRow.tsx`, `apps/web/src/components/client-scope/ClientScopeSelector.tsx`, `apps/web/src/components/spaces/cells/ClientCampaignCell.tsx`, `apps/web/src/lib/agency-clients`, `apps/web/src/lib/spaces/all-meetings-list-columns.ts`, `apps/api/src/modules/meetings`, `apps/api/src/modules/integrations/page-grader/services/page-grader-meeting-sync.service.ts`, `apps/api/src/modules/space-templates/data/space-template-catalog-personal-dashboard.ts`, `documentation/features/space-templates.md`
