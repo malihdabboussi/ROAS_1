@@ -88,4 +88,14 @@ describe('meeting-follow-up-actions', () => {
     expect(meetingActionStatusToFollowUpStatus('resolved')).toBe('done')
     expect(meetingActionStatusToFollowUpStatus('confirmed')).toBe('logged')
   })
+
+  it('preserves a dismissed follow-up in the meeting action shape', () => {
+    const action = mapFollowUpSpaceItemToMeetingAction({
+      id: 'follow-up-1',
+      title: 'Skip this',
+      status: 'logged',
+      custom_data: { entry_type: 'follow_up', dismissed_at: '2026-08-27T20:00:00.000Z' },
+    })
+    expect(action.status).toBe('dismissed')
+  })
 })

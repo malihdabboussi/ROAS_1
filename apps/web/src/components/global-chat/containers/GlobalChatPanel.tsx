@@ -3,13 +3,15 @@
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, type ReactNode } from 'react'
 import { buildMeetingFollowUpTaskReviewPrompt } from '@/features/home/config/meeting-post-call-actions.config'
+import { updateMeetingActionStatus } from '@/features/home/services/meeting-workspace-api'
 import { SpaceVibeyChatPanel } from '@/features/spaces/components/chat/SpaceVibeyChatPanel'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { QuickMissionsLauncherProvider } from '@/lib/missions'
+import { updateSpaceItem } from '@/lib/spaces/spaces-api'
 import { ChatCampaignBrainNudge } from '../components/ChatCampaignBrainNudge'
-import { MeetingPostCallReviewCard } from '../components/MeetingPostCallReviewCard'
 import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendation'
+import { MeetingPostCallReviewCard } from '../components/MeetingPostCallReviewCard'
 import { QuickMissionsHubHost } from '../components/QuickMissionsHubHost'
 import { useMeetingConversationAwareness } from '../hooks/use-meeting-conversation-awareness'
 import { useWorkRequestHomeChatSeed } from '../hooks/useWorkRequestHomeChatSeed'
@@ -107,7 +109,35 @@ export function GlobalChatPanel({
         {postCallReview && postCallReview.conversationId === preferredConversationId ? (
           <MeetingPostCallReviewCard
             review={postCallReview}
-            onContinue={(confirmed) => {
+            onContinue={async (confirmed) => {
+              const remainingIds = new Set(confirmed.followUps.map((item) => item.id))
+              const dismissed = postCallReview.followUps.filter(
+                (item) => !remainingIds.has(item.id),
+              )
+              await Promise.all([
+                updateSpaceItem(confirmed.spaceId, confirmed.meetingItemId, {
+                  custom_data: {
+                    meeting_summary: confirmed.summary,
+                    client_campaign: confirmed.clientCampaign,
+                    attendee_labels: confirmed.attendees
+                      .split(',')
+                      .map((label) => label.trim())
+                      .filter(Boolean),
+                    slack_follow_up_confirm: {
+                      draft_message: confirmed.followUpMessage,
+                      review_summary: confirmed.summary,
+                    },
+                  },
+                }),
+                ...dismissed.map((item) =>
+                  updateMeetingActionStatus(
+                    confirmed.spaceId,
+                    confirmed.meetingItemId,
+                    item.id,
+                    'dismissed',
+                  ),
+                ),
+              ])
               clearPostCallReview()
               useGlobalChatStore.getState().seedComposer({
                 content: buildMeetingFollowUpTaskReviewPrompt(confirmed),

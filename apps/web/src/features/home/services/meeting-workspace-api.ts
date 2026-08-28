@@ -104,6 +104,7 @@ export type MeetingWorkspaceBundle = {
     prior_meeting_item_id: string | null
     unresolved_commitments: MeetingAction[]
   }
+  attendee_labels?: string[]
 }
 
 function path(spaceId: string, meetingItemId: string): string {
@@ -283,7 +284,7 @@ export function updateMeetingActionStatus(
   spaceId: string,
   meetingItemId: string,
   actionId: string,
-  status: 'confirmed' | 'resolved',
+  status: 'confirmed' | 'resolved' | 'dismissed',
 ) {
   return backendPatch<MeetingAction>(`${path(spaceId, meetingItemId)}/actions/${actionId}`, {
     status,

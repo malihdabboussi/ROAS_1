@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from 'node:crypto'
 import { Injectable, Logger, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ModuleRef } from '@nestjs/core'
@@ -69,6 +70,9 @@ export type SlackFollowUpConfirmPayload = {
   agent_key?: 'vibey'
   skill_key?: 'post-call-delivery'
   revision_count?: number
+  review_token_hash?: string
+  review_token_expires_at?: string
+  review_started_at?: string
 }
 
 /** Coordinates the multi-step Slack review, approval, and delivery workflow. */
@@ -122,6 +126,9 @@ export class MeetingFollowUpSlackConfirmService {
     dmEmail?: string
     confirmReaction?: string
   }): Promise<Record<string, unknown>> {
+    const reviewToken = randomBytes(32).toString('base64url')
+    const reviewTokenHash = createHash('sha256').update(reviewToken, 'utf8').digest('hex')
+    const reviewTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     const deliveryMode = input.deliveryMode === 'active' ? 'active' : 'shadow'
     const channelDelivery = input.channelDelivery === 'automatic' ? 'automatic' : 'disabled'
     if (deliveryMode === 'active' && !this.slackTools) {
@@ -244,6 +251,8 @@ export class MeetingFollowUpSlackConfirmService {
         draft_context_sources: draft.context_sources,
         agent_key: 'vibey',
         skill_key: 'post-call-delivery',
+        review_token_hash: reviewTokenHash,
+        review_token_expires_at: reviewTokenExpiresAt,
       }
       await this.storeConfirmPayload(input, payload)
       return {
@@ -329,9 +338,7 @@ export class MeetingFollowUpSlackConfirmService {
       process.env.APP_URL ||
       'https://app.roas.io'
     ).replace(/\/+$/, '')
-    const meetingUrl = `${appUrl}/home/meetings?meeting=${encodeURIComponent(
-      input.callItemId,
-    )}&space=${encodeURIComponent(input.spaceId)}&review=follow-up`
+    const meetingUrl = `${appUrl}/meeting-review/${encodeURIComponent(reviewToken)}`
     const reviewText = buildConfirmMessage({
       callTitle: input.callTitle,
       callItem,
@@ -369,6 +376,8 @@ export class MeetingFollowUpSlackConfirmService {
       draft_context_sources: draft.context_sources,
       agent_key: 'vibey',
       skill_key: 'post-call-delivery',
+      review_token_hash: reviewTokenHash,
+      review_token_expires_at: reviewTokenExpiresAt,
     }
 
     await this.storeConfirmPayload(input, payload)

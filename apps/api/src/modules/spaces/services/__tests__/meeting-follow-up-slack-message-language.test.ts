@@ -17,6 +17,8 @@ describe('meeting follow-up Slack message language', () => {
       callTitle: 'Yasir weekly review',
       callItem: {
         custom_data: {
+          call_date: '2026-08-27T19:47:07.000Z',
+          client_campaign: { client_name: 'Yasir Khan Coaching LTD' },
           summary: 'Meeting Purpose\nReview the webinar.\nKey Takeaways\nLaunch is on track.',
         },
       },
@@ -26,6 +28,8 @@ describe('meeting follow-up Slack message language', () => {
     })
 
     expect(message).toContain('I found 2 follow-ups to review')
+    expect(message).toContain('<!date^1787860027^{date_short_pretty} at {time}|')
+    expect(message).toContain('*Yasir Khan Coaching LTD*')
     expect(message).toContain('Review meeting follow-ups')
     expect(message).not.toContain('*Action Items*')
     expect(message).not.toContain('React with')

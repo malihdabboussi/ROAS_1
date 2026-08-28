@@ -49,11 +49,13 @@ describe('useMeetingFollowUpReviewEntry', () => {
         awarenessContext: 'Meeting context',
         timelineVersion: 2,
         review: {
+          spaceId: 'space-1',
           conversationId: 'conversation-1',
           meetingItemId: 'meeting-1',
           meetingTitle: 'Strategy call',
           summary: 'Reviewed the launch.',
           clientWorkspace: 'Acme',
+          clientCampaign: null,
           attendees: 'Dylan, Alex',
           followUpCount: 3,
           followUps: [{ id: 'follow-up-1', title: 'Ship recap', status: 'proposed' }],

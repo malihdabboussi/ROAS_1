@@ -3,6 +3,7 @@
 import { create } from 'zustand'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
+import type { ClientCampaignMapping } from '@/lib/agency-clients'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { fetchTeamRoster, type TeamRosterEntry } from '@/lib/team/team-roster-api'
 import {
@@ -64,11 +65,13 @@ export interface GlobalMeetingChatContext {
 }
 
 export interface MeetingPostCallReview {
+  spaceId: string
   conversationId: string
   meetingItemId: string
   meetingTitle: string
   summary: string
   clientWorkspace: string
+  clientCampaign: ClientCampaignMapping | null
   attendees: string
   followUpCount: number
   followUps: Array<{ id: string; title: string; status: string }>

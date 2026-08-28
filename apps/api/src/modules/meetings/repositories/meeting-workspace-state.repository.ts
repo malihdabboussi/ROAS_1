@@ -76,10 +76,16 @@ export class MeetingWorkspaceStateRepository {
     const followUp = await this.findFollowUpAction(supabase, input)
     if (followUp) {
       const nextStatus = meetingActionStatusToFollowUpStatus(input.patch.status)
+      const currentCustom = record(followUp.custom_data)
+      const dismissed = String(input.patch.status ?? '') === 'dismissed'
       const { data, error } = await supabase
         .from('space_items')
         .update({
           status: nextStatus,
+          custom_data: {
+            ...currentCustom,
+            dismissed_at: dismissed ? new Date().toISOString() : null,
+          },
           updated_at: new Date().toISOString(),
         })
         .eq('id', input.actionId)

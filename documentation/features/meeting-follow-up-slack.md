@@ -140,7 +140,7 @@ For legacy pending records, a human reply in the review thread is still treated 
 
 **Review DM**
 
-- Meeting title plus the existing compact purpose/key-takeaway summary
+- Meeting title followed immediately by the canonical call date/time and mapped Client Workspace, then the compact purpose/key-takeaway summary
 - One natural-language follow-up count (for example, “I found 5 follow-ups to review”)
 - One **Review meeting follow-ups** link
 - No separate call-status block, action-item dump, reaction CTA, or threaded client-message draft
@@ -446,6 +446,8 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-08-27:** Completed meeting workspaces expose **Run post-call flow** instead of the former recap-only action. It starts the same guided context confirmation, bulk delegation review link, and editable unsent follow-up-message sequence used by Pixel's Slack review link.
 - **2026-08-27:** The guided post-call action uses the actual MCP execution contract: discover the connected Portal server, list its tools by `server_id`, then invoke `page_grader_create_delegation_preview` through `use_mcp_tool`. It never falls back to native Delegation Desk writes from the meeting Space.
 - **2026-08-27:** Pixel's prepared and final client follow-up now uses a conversational Slack recap, one central “As discussed…” takeaway, an actual status-led hit list, and a short forward-looking close. The meeting records determine the number of bullets; Pixel cannot preserve a stale count or invent completed work.
+- **2026-08-27:** Pixel's post-call review DM now identifies the exact canonical call with its Slack-localized date/time and mapped Client Workspace directly under the title. Its action remains the ROAS **Review meeting follow-ups** link; a Fathom recording link is never substituted for the task-delegation review.
+- **2026-08-27:** Post-call review links now use an expiring, hashed guest token at `/meeting-review/:token`. Signed-out and incognito reviewers can confirm the one linked meeting and continue its constrained Pixel chat without gaining access to the Meetings workspace. The review resolves attendee option IDs to names, uses the canonical Client Workspace mapping picker, persists dismissed follow-ups, and carries the prepared follow-up message through task delegation into the editable final message card.
 
 ## Related
 

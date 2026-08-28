@@ -49,3 +49,23 @@ Why: The generic owner-based “Next steps” draft did not match the natural fo
 Impact: The editable follow-up now includes exactly the grounded meeting actions, preserves their real `(DONE)`, `(IN PROGRESS)`, or `(TO-DO)` states, and remains copy-only with no automatic send.
 
 Files: `docker/agents/vibey/skills/post-call-delivery/SKILL.md`, `supabase/migrations/20260827174500_improve_post_call_follow_up_voice.sql`, `apps/web/src/features/home/config/meeting-post-call-actions.config.ts`, its test, `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-08-27 17:25 - [FIX]
+
+What: Added the canonical call date/time and mapped Client Workspace directly below the meeting title in Pixel's post-call review DM.
+
+Why: A client-name-only request could make a recap look plausible even when the wrong provider meeting was selected, and a recording link did not identify or open the ROAS delegation-review flow.
+
+Impact: Every normal Pixel post-call review now makes the selected meeting identity visible before the summary and retains the ROAS **Review meeting follow-ups** action.
+
+Files: `apps/api/src/modules/spaces/services/meeting-follow-up-slack-message.ts`, its focused tests, `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-08-27 17:28 - [FIX]
+
+What: Completed the post-call review card and replaced its authenticated Meetings deep link with an expiring public meeting-review link.
+
+Why: Client Workspace was free text, attendee option IDs were not resolved, follow-ups could not be dismissed, the prepared message could be blank or disappear, and incognito reviewers were redirected to login.
+
+Impact: Pixel's link now opens one token-scoped review in signed-out browsers; reviewers can map the real client workspace, see and edit attendees, dismiss irrelevant follow-ups, continue into the existing Portal delegation instructions, and retain the prepared message through the editable final chat draft.
+
+Files: `apps/api/src/modules/meetings/`, `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.workflow.ts`, `apps/web/src/app/meeting-review/`, `apps/web/src/components/global-chat/`, `apps/web/src/features/home/`, `apps/web/src/middleware.test.ts`, `documentation/features/meeting-follow-up-slack.md`

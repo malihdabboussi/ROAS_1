@@ -31,6 +31,7 @@ describe('buildMeetingPostCallReview', () => {
         context_links: [],
         continuity: { prior_meeting_item_id: null, unresolved_commitments: [] },
       },
+      'space-1',
       'conversation-1',
       'meeting-1',
       'Yasir webinar review',
@@ -40,6 +41,7 @@ describe('buildMeetingPostCallReview', () => {
     expect(review).toMatchObject({
       summary: 'The same summary shown in Slack.',
       clientWorkspace: 'Yasir Khan',
+      clientCampaign: null,
       followUpCount: 2,
       followUps: [
         { id: 'follow-up-1', title: 'First task', status: 'proposed' },
@@ -47,5 +49,45 @@ describe('buildMeetingPostCallReview', () => {
       ],
       followUpMessage: 'Client-ready follow-up.',
     })
+  })
+
+  it('resolves attendee labels and prepares a fallback follow-up message', () => {
+    const review = buildMeetingPostCallReview(
+      {
+        meeting: {
+          id: 'meeting-1',
+          title: 'Yasir webinar review',
+          description: null,
+          custom_data: {
+            meeting_summary: 'We aligned on the webinar plan.',
+            client_campaign: {
+              client_id: 'client-1',
+              client_name: 'Yasir Khan Coaching LTD',
+              campaign_id: 'campaign-1',
+              campaign_name: 'Webinar',
+            },
+          },
+        },
+        workspace: null,
+        recordings: [],
+        actions: [
+          { id: 'follow-up-1', title: 'Build the VSL funnel', status: 'confirmed' },
+        ] as MeetingWorkspaceBundle['actions'],
+        snippets: [],
+        deliverables: [],
+        context_links: [],
+        continuity: { prior_meeting_item_id: null, unresolved_commitments: [] },
+        attendee_labels: ['Yasir Khan', 'Dylan Vanas'],
+      },
+      'space-1',
+      'conversation-1',
+      'meeting-1',
+      'Yasir webinar review',
+      '',
+    )
+
+    expect(review.attendees).toBe('Yasir Khan, Dylan Vanas')
+    expect(review.clientCampaign?.client_id).toBe('client-1')
+    expect(review.followUpMessage).toContain('(TO-DO) Build the VSL funnel')
   })
 })

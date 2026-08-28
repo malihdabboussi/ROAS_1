@@ -149,7 +149,14 @@ export function MeetingWorkspaceDialog({
   const attendeeSummary = formatAttendeeSummary(agendaEvent?.attendees)
   const postCallReview =
     bundle && conversationId
-      ? buildMeetingPostCallReview(bundle, conversationId, meetingItemId, title, attendeeSummary)
+      ? buildMeetingPostCallReview(
+          bundle,
+          spaceId,
+          conversationId,
+          meetingItemId,
+          title,
+          attendeeSummary,
+        )
       : null
   useMeetingWorkspaceSurface({
     spaceId,

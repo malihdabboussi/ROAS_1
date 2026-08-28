@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SupabaseServiceClient } from '@vibey/api-shared'
 import { PageGraderApiService } from '../../../integrations/page-grader/services/page-grader-api.service'
@@ -107,6 +108,8 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       description:
         'Meeting Purpose\n\nAlign on urgent operational challenges and define immediate priorities.\n\nKey Takeaways\n\n- Operational bandwidth',
       custom_data: {
+        call_date: '2026-08-27T19:47:07.000Z',
+        client_campaign: { client_name: 'Yasir Khan Coaching LTD' },
         fathom_url: 'https://fathom.video/calls/753783387',
       },
     })
@@ -146,13 +149,23 @@ describe('MeetingFollowUpSlackConfirmService', () => {
         channel_id: 'D123',
         unfurl_links: false,
         text: expect.stringMatching(
-          /Nate and Dylan ops[\s\S]*Purpose[\s\S]*Align on urgent[\s\S]*Key takeaways[\s\S]*Operational bandwidth[\s\S]*2 follow-ups to review[\s\S]*Review meeting follow-ups/,
+          /Nate and Dylan ops[\s\S]*Yasir Khan Coaching LTD[\s\S]*Purpose[\s\S]*Align on urgent[\s\S]*Key takeaways[\s\S]*Operational bandwidth[\s\S]*2 follow-ups to review[\s\S]*Review meeting follow-ups/,
         ),
       }),
     )
-    expect(slackTools.sendMessage.mock.calls[0][3].text).toContain(
-      'https://app.roas.io/home/meetings?meeting=call-1&space=space-1&review=follow-up',
+    expect(slackTools.sendMessage.mock.calls[0][3].text).toMatch(
+      /https:\/\/app\.roas\.io\/meeting-review\/[A-Za-z0-9_-]+/,
     )
+    const reviewToken = slackTools.sendMessage.mock.calls[0][3].text.match(
+      /meeting-review\/([A-Za-z0-9_-]+)/,
+    )?.[1]
+    const storedPayload = repo.updateItem.mock.calls.find(
+      (call) => call[3] === 'call-1' && call[4]?.custom_data?.slack_follow_up_confirm,
+    )?.[4].custom_data.slack_follow_up_confirm
+    expect(storedPayload.review_token_hash).toBe(
+      createHash('sha256').update(String(reviewToken), 'utf8').digest('hex'),
+    )
+    expect(Date.parse(storedPayload.review_token_expires_at)).toBeGreaterThan(Date.now())
     expect(slackTools.sendMessage.mock.calls[0][3].text).not.toContain('Call report')
     expect(slackTools.sendMessage.mock.calls[0][3].text).not.toContain('Open Fathom recording')
     expect(slackTools.sendMessage).toHaveBeenCalledTimes(1)

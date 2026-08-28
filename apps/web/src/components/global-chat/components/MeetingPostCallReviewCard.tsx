@@ -1,17 +1,31 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { X } from 'lucide-react'
 import { MEETING_POST_CALL_REVIEW_MESSAGES } from '@/features/home/config/meeting-post-call-actions.config'
+import {
+  toClientOnlyMapping,
+  useClientCampaignGroups,
+  type ClientCampaignMapping,
+} from '@/lib/agency-clients'
 import type { MeetingPostCallReview } from '../store/use-global-chat-store'
 
 export function MeetingPostCallReviewCard({
   review,
   onContinue,
+  clientWorkspaceOptions,
 }: {
   review: MeetingPostCallReview
-  onContinue: (review: MeetingPostCallReview) => void
+  onContinue: (review: MeetingPostCallReview) => void | Promise<void>
+  clientWorkspaceOptions?: ClientCampaignMapping[]
 }) {
   const [draft, setDraft] = useState(review)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const { groups } = useClientCampaignGroups(clientWorkspaceOptions === undefined)
+  const options =
+    clientWorkspaceOptions ??
+    (groups ?? []).filter((group) => !group.inactive).map(toClientOnlyMapping)
 
   useEffect(() => setDraft(review), [review])
 
@@ -34,7 +48,9 @@ export function MeetingPostCallReviewCard({
           <textarea
             value={draft.summary}
             rows={4}
-            onChange={(event) => setDraft((current) => ({ ...current, summary: event.target.value }))}
+            onChange={(event) =>
+              setDraft((current) => ({ ...current, summary: event.target.value }))
+            }
             className="body-3 rounded-spacing-2 border-border bg-background px-spacing-3 py-spacing-2 focus:ring-ring w-full resize-y border outline-none focus:ring-2"
           />
         </label>
@@ -43,13 +59,27 @@ export function MeetingPostCallReviewCard({
           <span className="body-3 text-muted-foreground">
             {MEETING_POST_CALL_REVIEW_MESSAGES.clientWorkspaceLabel}
           </span>
-          <input
-            value={draft.clientWorkspace}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, clientWorkspace: event.target.value }))
-            }
-            className="body-3 rounded-spacing-2 border-border bg-background h-spacing-9 px-spacing-3 focus:ring-ring w-full border outline-none focus:ring-2"
-          />
+          <select
+            value={draft.clientCampaign?.client_id ?? ''}
+            onChange={(event) => {
+              const selected =
+                options.find((option) => option.client_id === event.target.value) ?? null
+              setDraft((current) => ({
+                ...current,
+                clientCampaign: selected,
+                clientWorkspace: selected?.client_name ?? '',
+              }))
+            }}
+            className="input-glass body-3 rounded-spacing-2 border-border bg-background h-spacing-9 px-spacing-3 focus:ring-ring w-full border outline-none focus:ring-2"
+            aria-label={MEETING_POST_CALL_REVIEW_MESSAGES.clientWorkspaceLabel}
+          >
+            <option value="">Select client workspace</option>
+            {options.map((option) => (
+              <option key={option.client_id} value={option.client_id}>
+                {option.client_name}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="gap-spacing-1 flex flex-col">
@@ -58,7 +88,9 @@ export function MeetingPostCallReviewCard({
           </span>
           <input
             value={draft.attendees}
-            onChange={(event) => setDraft((current) => ({ ...current, attendees: event.target.value }))}
+            onChange={(event) =>
+              setDraft((current) => ({ ...current, attendees: event.target.value }))
+            }
             className="body-3 rounded-spacing-2 border-border bg-background h-spacing-9 px-spacing-3 focus:ring-ring w-full border outline-none focus:ring-2"
           />
         </label>
@@ -70,9 +102,22 @@ export function MeetingPostCallReviewCard({
           {draft.followUps.map((followUp) => (
             <div
               key={followUp.id}
-              className="border-border rounded-spacing-2 body-3 px-spacing-3 py-spacing-2 border"
+              className="border-border rounded-spacing-2 body-3 gap-spacing-2 px-spacing-3 py-spacing-2 flex items-center border"
             >
-              {followUp.title}
+              <span className="min-w-0 flex-1">{followUp.title}</span>
+              <button
+                type="button"
+                className="btn-icon-bare text-destructive shrink-0"
+                aria-label={`Dismiss ${followUp.title}`}
+                onClick={() =>
+                  setDraft((current) => {
+                    const followUps = current.followUps.filter((item) => item.id !== followUp.id)
+                    return { ...current, followUps, followUpCount: followUps.length }
+                  })
+                }
+              >
+                <X className="icon-xs" aria-hidden />
+              </button>
             </div>
           ))}
         </div>
@@ -94,13 +139,30 @@ export function MeetingPostCallReviewCard({
         <div className="flex justify-end">
           <button
             type="button"
-            onClick={() => onContinue(draft)}
-            disabled={!draft.summary.trim()}
+            onClick={async () => {
+              setSubmitting(true)
+              setSubmitError(null)
+              try {
+                await onContinue(draft)
+              } catch {
+                setSubmitError(MEETING_POST_CALL_REVIEW_MESSAGES.continueError)
+              } finally {
+                setSubmitting(false)
+              }
+            }}
+            disabled={!draft.summary.trim() || submitting}
             className="button-glass-accent rounded-spacing-2 body-3 px-spacing-4 py-spacing-2 font-medium disabled:opacity-50"
           >
-            {MEETING_POST_CALL_REVIEW_MESSAGES.continueLabel}
+            {submitting
+              ? MEETING_POST_CALL_REVIEW_MESSAGES.continuingLabel
+              : MEETING_POST_CALL_REVIEW_MESSAGES.continueLabel}
           </button>
         </div>
+        {submitError ? (
+          <p role="alert" className="body-3 text-destructive">
+            {submitError}
+          </p>
+        ) : null}
       </div>
     </div>
   )

@@ -21,8 +21,9 @@ export class MeetingWorkspaceReadRepository {
     if (meetingError) throw new BadRequestException(meetingError.message)
     if (!meeting) return null
 
-    const [workspace, recordings, legacyActions, contextLinks, snippets, children, prior] =
+    const [space, workspace, recordings, legacyActions, contextLinks, snippets, children, prior] =
       await Promise.all([
+        supabase.from('spaces').select('schema').eq('id', input.spaceId).maybeSingle(),
         supabase
           .from('meeting_workspaces')
           .select('*')
@@ -67,6 +68,7 @@ export class MeetingWorkspaceReadRepository {
           .maybeSingle(),
       ])
     for (const result of [
+      space,
       workspace,
       recordings,
       legacyActions,
@@ -79,6 +81,7 @@ export class MeetingWorkspaceReadRepository {
     }
 
     const childRows = (children.data as Record<string, unknown>[]) ?? []
+    const attendeeLabels = resolveAttendeeLabels(meeting, space.data)
     const followUps = childRows.filter((row) => isFollowUpSpaceItem(row))
     const deliverables = childRows.filter(
       (row) => !isFollowUpSpaceItem(row) && !isMeetingAgendaSpaceItem(row),
@@ -130,6 +133,52 @@ export class MeetingWorkspaceReadRepository {
         prior_meeting_item_id: priorMeetingItemId || null,
         unresolved_commitments: unresolvedCommitments,
       },
+      attendee_labels: attendeeLabels,
     }
   }
+}
+
+function resolveAttendeeLabels(
+  meeting: Record<string, unknown>,
+  space: Record<string, unknown> | null,
+): string[] {
+  const custom = record(meeting.custom_data)
+  const ids = Array.isArray(custom.attendees) ? custom.attendees.map(String) : []
+  const savedLabels = Array.isArray(custom.attendee_labels)
+    ? custom.attendee_labels
+        .map(String)
+        .map((label) => label.trim())
+        .filter(Boolean)
+    : []
+  if (savedLabels.length > 0) return [...new Set(savedLabels)]
+  const fields = Array.isArray(record(record(space).schema).fields)
+    ? (record(record(space).schema).fields as Array<Record<string, unknown>>)
+    : []
+  const attendeeField = fields.find((field) => String(field.id ?? '') === 'attendees')
+  const options = Array.isArray(attendeeField?.options)
+    ? (attendeeField.options as Array<Record<string, unknown>>)
+    : []
+  const labels = ids.flatMap((id) => {
+    const option = options.find((candidate) => String(candidate.id ?? '') === id)
+    const label = String(option?.label ?? '').trim()
+    return label ? [label] : []
+  })
+  if (labels.length > 0) return [...new Set(labels)]
+
+  const raw = Array.isArray(custom.fathom_attendees) ? custom.fathom_attendees : []
+  return [
+    ...new Set(
+      raw.flatMap((candidate) => {
+        const attendee = record(candidate)
+        const label = String(attendee.name ?? attendee.email ?? '').trim()
+        return label ? [label] : []
+      }),
+    ),
+  ]
+}
+
+function record(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
 }

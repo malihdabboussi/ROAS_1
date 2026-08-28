@@ -166,4 +166,16 @@ describe('middleware access checks', () => {
       'https://app.vibey.test/login?redirect=%2Fprojects%2Fproject-1%3Ftab%3Dnotes',
     )
   })
+
+  it('keeps a signed-out meeting review link public', async () => {
+    supabaseMockState.getUser.mockResolvedValue({ data: { user: null } })
+    supabaseMockState.getSession.mockResolvedValue({ data: { session: null } })
+    const { middleware } = await import('./middleware')
+
+    const response = await middleware(
+      createMiddlewareRequest('https://app.vibey.test/meeting-review/public-token'),
+    )
+
+    expect(response.headers.get('location')).toBeNull()
+  })
 })

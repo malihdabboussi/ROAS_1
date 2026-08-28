@@ -34,6 +34,8 @@ export const MEETING_POST_CALL_REVIEW_MESSAGES = {
   followUpCountLabel: 'Follow-ups to review',
   followUpMessageLabel: 'Follow-up message',
   continueLabel: 'Continue to task review',
+  continuingLabel: 'Preparing task review...',
+  continueError: 'The meeting review could not be saved. Try again.',
 } as const
 
 /**

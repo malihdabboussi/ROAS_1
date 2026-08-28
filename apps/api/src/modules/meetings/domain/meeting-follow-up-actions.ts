@@ -43,6 +43,7 @@ export function mapFollowUpSpaceItemToMeetingAction(
     !Array.isArray(custom.completion_origin)
       ? (custom.completion_origin as Record<string, unknown>)
       : null
+  const dismissed = Boolean(firstText(custom.dismissed_at))
 
   return {
     id: String(item.id),
@@ -50,7 +51,7 @@ export function mapFollowUpSpaceItemToMeetingAction(
     source_type: sourceType,
     source_key: `follow_up:${String(item.id)}`,
     source_text: String(item.title ?? '').trim() || null,
-    status: resolved ? 'resolved' : 'confirmed',
+    status: dismissed ? 'dismissed' : resolved ? 'resolved' : 'confirmed',
     task_status: String(item.status ?? '').trim() || (resolved ? 'done' : 'logged'),
     priority: firstText(item.priority),
     due_at: firstText(item.due_date),

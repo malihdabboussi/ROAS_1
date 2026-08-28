@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common'
 import { BrainModule } from '../brain/brain.module'
 import { ConversationsModule } from '../conversations/conversations.module'
+import { UserAgentApiModule } from '../user-agent-api/user-agent-api.module'
+import { MeetingFollowUpReviewController } from './controllers/meeting-follow-up-review.controller'
 import { MeetingMergeController } from './controllers/meeting-merge.controller'
 import { MeetingWorkspaceResolutionController } from './controllers/meeting-workspace-resolution.controller'
 import { MeetingWorkspaceController } from './controllers/meeting-workspace.controller'
@@ -15,6 +17,7 @@ import { MeetingWorkspaceResolutionRepository } from './repositories/meeting-wor
 import { MeetingWorkspaceStateRepository } from './repositories/meeting-workspace-state.repository'
 import { MeetingWorkspaceRepository } from './repositories/meeting-workspace.repository'
 import { MeetingConversationDeduplicationService } from './services/meeting-conversation-deduplication.service'
+import { MeetingFollowUpReviewService } from './services/meeting-follow-up-review.service'
 import { MeetingItemMaterializeService } from './services/meeting-item-materialize.service'
 import { MeetingMergeService } from './services/meeting-merge.service'
 import { MeetingRelatedCallsService } from './services/meeting-related-calls.service'
@@ -22,11 +25,12 @@ import { MeetingSourceIngestionService } from './services/meeting-source-ingesti
 import { MeetingWorkspaceService } from './services/meeting-workspace.service'
 
 @Module({
-  imports: [BrainModule, ConversationsModule],
+  imports: [BrainModule, ConversationsModule, UserAgentApiModule],
   controllers: [
     MeetingWorkspaceController,
     MeetingWorkspaceResolutionController,
     MeetingMergeController,
+    MeetingFollowUpReviewController,
   ],
   providers: [
     MeetingWorkspaceRepository,
@@ -45,6 +49,7 @@ import { MeetingWorkspaceService } from './services/meeting-workspace.service'
     MeetingWorkspaceService,
     MeetingItemMaterializeService,
     MeetingRelatedCallsService,
+    MeetingFollowUpReviewService,
   ],
   exports: [
     MeetingRecordingBackfillRepository,

@@ -218,6 +218,38 @@ export function resolveFathomUrl(callItem: Record<string, unknown> | null): stri
   return columnUrl.startsWith('http') ? columnUrl : null
 }
 
+export function formatMeetingIdentityLine(
+  callItem: Record<string, unknown> | null,
+): string | null {
+  if (!callItem) return null
+  const customData =
+    callItem.custom_data && typeof callItem.custom_data === 'object'
+      ? (callItem.custom_data as Record<string, unknown>)
+      : {}
+  const clientCampaign =
+    customData.client_campaign && typeof customData.client_campaign === 'object'
+      ? (customData.client_campaign as Record<string, unknown>)
+      : {}
+  const pageGrader =
+    customData.page_grader && typeof customData.page_grader === 'object'
+      ? (customData.page_grader as Record<string, unknown>)
+      : {}
+  const client = String(
+    clientCampaign.client_name ??
+      customData.client_workspace_name ??
+      customData.client_name ??
+      pageGrader.client_name ??
+      '',
+  ).trim()
+  const callDate = String(customData.call_date ?? '').trim()
+  const epochSeconds = callDate ? Math.floor(new Date(callDate).getTime() / 1000) : Number.NaN
+  const date = Number.isFinite(epochSeconds)
+    ? `<!date^${epochSeconds}^{date_short_pretty} at {time}|${callDate}>`
+    : ''
+  if (!date && !client) return null
+  return [date, client ? `*${client}*` : ''].filter(Boolean).join(' · ')
+}
+
 export function buildShareableConfirmReply(input: {
   callItem: Record<string, unknown> | null
   followUps: Array<Record<string, unknown>>
@@ -282,6 +314,7 @@ export function buildConfirmMessage(input: {
 }): string {
   const title = String(input.callTitle || 'Meeting').trim() || 'Meeting'
   // Keep Pixel's recap useful on its own, then move all task-by-task review into chat.
+  const identity = formatMeetingIdentityLine(input.callItem)
   const brief = briefMeetingSummary(input.callItem, { includeNextSteps: false })
   const count = input.followUps.length
   const followUpLine = count
@@ -290,6 +323,7 @@ export function buildConfirmMessage(input: {
 
   return [
     `*${title}*`,
+    ...(identity ? [identity] : []),
     '',
     ...(brief ? [brief, ''] : []),
     followUpLine,
