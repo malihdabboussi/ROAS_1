@@ -166,26 +166,19 @@ export function AgentChatThread({
                       data-turn-id={turn.user.id}
                       className={`relative flex flex-col ${isLastTurn && !compactLayout ? 'flex-1' : ''}`}
                     >
-                      <div
-                        ref={isLastTurn ? lastUserPromptRef : undefined}
-                        className="sticky top-0 z-10"
-                      >
-                        <div className="surface-bg">
-                          <MessageBubble
-                            message={turn.user}
-                            isStreaming={false}
-                            stickyUser
-                            isEditable={turn.user.id === lastUserMessageId}
-                            onEditSubmit={
-                              turn.user.id === lastUserMessageId ? onEditSubmit : undefined
-                            }
-                            conversationIdOverride={selectedSessionId}
-                            knownSkillKeys={knownSkillKeys}
-                            agentKey={agentKey}
-                            campaignId={activeCampaignId ?? undefined}
-                          />
-                        </div>
-                        <div className="pointer-events-none h-6 bg-gradient-to-b from-[var(--color-background)] to-transparent" />
+                      <div ref={isLastTurn ? lastUserPromptRef : undefined}>
+                        <MessageBubble
+                          message={turn.user}
+                          isStreaming={false}
+                          isEditable={turn.user.id === lastUserMessageId}
+                          onEditSubmit={
+                            turn.user.id === lastUserMessageId ? onEditSubmit : undefined
+                          }
+                          conversationIdOverride={selectedSessionId}
+                          knownSkillKeys={knownSkillKeys}
+                          agentKey={agentKey}
+                          campaignId={activeCampaignId ?? undefined}
+                        />
                       </div>
 
                       <div

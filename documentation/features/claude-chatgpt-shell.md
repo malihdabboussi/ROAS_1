@@ -1,6 +1,6 @@
 # Claude/ChatGPT shell (apps/web)
 
-Last Modified: 2026-08-24
+Last Modified: 2026-08-28
 
 ## Overview
 
@@ -314,6 +314,7 @@ MCP conversation flow: OAuth introspection carries the registered client name an
 
 ## Decision Log
 
+- **2026-08-28:** User prompts remain in the normal conversation scroll instead of sticking beneath the chat header. Persisted timestamps render above flat, shadow-free user bubbles, and edit/copy/reply/fork actions stay hidden until the pointer or keyboard focus reaches that exact message.
 - **2026-08-24:** Primary sidebar destinations open their work card with chat closed. Conversation selection restores that chat's detailed artifact; pin keeps the current artifact fixed across chat selection without rewriting saved associations. New chat opens beside a card-only workspace and opens full-screen when chat is already visible. The old per-screen remembered-chat prompt is retired.
 - **2026-08-24:** MCP-created conversations use the registered OAuth client plus invoked tool for their initial title (for example, `Claude · Search User Brain`). Recents uses the registered client logo with a plug fallback. Historical MCP rows predate stored tool identity and contain no messages or runtime records, so the migration gives them deterministic per-client names such as `Claude · MCP call 17` without inventing a topic.
 - **2026-08-19:** Chat Files rows with no storage `file_url` open as `doc` and render inline `conversation_documents.content` as markdown (JSON-quoted strings included). Real `.docx`/PDF uploads still open as files. Agent `save_document` still writes `document_type: upload` because the table check constraint has no markdown/doc value.

@@ -30,7 +30,6 @@ const EMPTY_IMAGE_EVENTS: ImageGeneratedEvent[] = []
 function MessageBubbleComponent({
   message,
   isStreaming = false,
-  stickyUser = false,
   isEditable = false,
   onEditSubmit,
   conversationIdOverride,
@@ -93,11 +92,11 @@ function MessageBubbleComponent({
     return (
       <UserMessageBubble
         messageId={message.id}
+        createdAt={message.created_at}
         content={content}
         documents={messageDocuments}
         highlightedArtifacts={highlightedArtifacts}
         messageReferences={messageReferences}
-        stickyUser={stickyUser}
         isEditable={isEditable}
         onEditSubmit={onEditSubmit}
         conversationId={effectiveConversationId}
@@ -205,7 +204,10 @@ function MessageBubbleComponent({
 
   if (!hasMedia && !hasSseImages && !showPersistedSteps) {
     return (
-      <div data-message={message.id} className="body-1 text-chat px-spacing-2 group flex flex-col">
+      <div
+        data-message={message.id}
+        className="body-1 text-chat px-spacing-2 group/message flex flex-col"
+      >
         <div className="gap-spacing-3 flex flex-col">
           <MarkdownContent content={content} streaming={isCurrentlyStreaming} />
           <ChatAttachmentPreviews documents={messageDocuments} />
@@ -228,7 +230,10 @@ function MessageBubbleComponent({
     : -1
 
   return (
-    <div data-message={message.id} className="body-1 text-chat px-spacing-2 group flex flex-col">
+    <div
+      data-message={message.id}
+      className="body-1 text-chat px-spacing-2 group/message flex flex-col"
+    >
       <div className="gap-spacing-3 flex flex-col">
         {showPersistedFlow && <PersistedFlowTimeline blocks={persistedFlowBlocks} />}
         {showPersistedSteps && <PersistedToolSteps steps={toolSteps} />}
@@ -284,7 +289,6 @@ export const MessageBubble = memo(
     prev.message.content === next.message.content &&
     prev.message.metadata === next.message.metadata &&
     prev.isStreaming === next.isStreaming &&
-    prev.stickyUser === next.stickyUser &&
     prev.isEditable === next.isEditable &&
     prev.onEditSubmit === next.onEditSubmit &&
     prev.conversationIdOverride === next.conversationIdOverride &&

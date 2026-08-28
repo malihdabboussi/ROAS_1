@@ -60,17 +60,13 @@ export function AgentVoiceTranscript({
                   data-turn-id={turn.user.id}
                   className={`relative flex flex-col ${isLastTurn ? 'flex-1' : ''}`}
                 >
-                  <div ref={isLastTurn ? lastUserPromptRef : undefined} className="sticky top-0 z-10">
-                    <div className="surface-bg">
-                      <MessageBubble
-                        message={turn.user}
-                        isStreaming={false}
-                        stickyUser
-                        isEditable={false}
-                        conversationIdOverride={conversationId}
-                      />
-                    </div>
-                    <div className="from-background pointer-events-none h-6 bg-gradient-to-b to-transparent" />
+                  <div ref={isLastTurn ? lastUserPromptRef : undefined}>
+                    <MessageBubble
+                      message={turn.user}
+                      isStreaming={false}
+                      isEditable={false}
+                      conversationIdOverride={conversationId}
+                    />
                   </div>
 
                   <div

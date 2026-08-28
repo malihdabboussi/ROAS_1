@@ -16,7 +16,6 @@ export function AssistantActions({
   conversationId,
   allowFork = true,
   inlineAction,
-  pinActions = false,
 }: {
   content: string
   isStreaming?: boolean
@@ -25,6 +24,7 @@ export function AssistantActions({
   allowFork?: boolean
   /** Optional icon button rendered to the left of the 3-dot menu in the same row. */
   inlineAction?: React.ReactNode
+  /** Retained for caller compatibility; actions are always scoped to exact-message hover. */
   pinActions?: boolean
 }) {
   const router = useRouter()
@@ -85,7 +85,7 @@ export function AssistantActions({
     <div
       className={cn(
         'py-spacing-4 flex w-full justify-end transition-opacity duration-200 ease-out',
-        pinActions ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+        'opacity-0 group-hover/message:opacity-100',
       )}
     >
       <div className="gap-spacing-1 flex shrink-0 items-center">

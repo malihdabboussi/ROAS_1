@@ -39,7 +39,6 @@ export type ContentBlockRenderContext = {
 export interface MessageBubbleProps {
   message: Message
   isStreaming?: boolean
-  stickyUser?: boolean
   isEditable?: boolean
   onEditSubmit?: (
     newContent: string,

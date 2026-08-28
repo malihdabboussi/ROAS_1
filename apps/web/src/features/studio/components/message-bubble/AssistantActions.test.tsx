@@ -111,7 +111,7 @@ describe('AssistantActions', () => {
     )
   })
 
-  it('keeps actions visible when pinActions is true', () => {
+  it('keeps actions hidden until exact-message hover even when a legacy caller requests pinning', () => {
     const { container } = render(
       <AssistantActions
         content="Ready to help"
@@ -122,8 +122,8 @@ describe('AssistantActions', () => {
     )
 
     const row = container.firstElementChild
-    expect(row?.className).toContain('opacity-100')
-    expect(row?.className).not.toContain('group-hover:opacity-100')
+    expect(row?.className).toContain('opacity-0')
+    expect(row?.className).toContain('group-hover/message:opacity-100')
   })
 
   it('hides actions until row hover when pinActions is false', () => {
@@ -137,7 +137,7 @@ describe('AssistantActions', () => {
 
     const row = container.firstElementChild
     expect(row?.className).toContain('opacity-0')
-    expect(row?.className).toContain('group-hover:opacity-100')
+    expect(row?.className).toContain('group-hover/message:opacity-100')
   })
 
   it('opens the newly created conversation after a successful fork', async () => {

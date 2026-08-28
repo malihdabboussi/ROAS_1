@@ -813,27 +813,18 @@ export function ChatInterface() {
                     previousUserMessage={previousTurn?.user ?? null}
                     userMessage={turn.user}
                   />
-                  {/* Sticky User Prompt — top-spacing-5 aligns bubble top with minimized header icon tops */}
-                  <div
-                    ref={isLastTurn ? lastUserPromptRef : undefined}
-                    className="top-spacing-5 sticky z-20"
-                  >
-                    <div className="surface-bg">
-                      <MessageBubble
-                        message={turn.user}
-                        isStreaming={false}
-                        stickyUser
-                        isEditable={turn.user.id === editableUserMessageId}
-                        onEditSubmit={
-                          turn.user.id === editableUserMessageId ? handleEditSubmit : undefined
-                        }
-                        knownSkillKeys={knownSkillKeys}
-                        agentKey="vibey"
-                        onOpenDeliverablePreview={setPreviewStudioDeliverable}
-                      />
-                    </div>
-                    {/* Shadow-like fade: makes following text look like it's going "inside" as it scrolls up */}
-                    <div className="pointer-events-none h-6 bg-gradient-to-b from-[var(--color-background)] to-transparent" />
+                  <div ref={isLastTurn ? lastUserPromptRef : undefined}>
+                    <MessageBubble
+                      message={turn.user}
+                      isStreaming={false}
+                      isEditable={turn.user.id === editableUserMessageId}
+                      onEditSubmit={
+                        turn.user.id === editableUserMessageId ? handleEditSubmit : undefined
+                      }
+                      knownSkillKeys={knownSkillKeys}
+                      agentKey="vibey"
+                      onOpenDeliverablePreview={setPreviewStudioDeliverable}
+                    />
                   </div>
 
                   {/* Assistant Responses for this turn */}

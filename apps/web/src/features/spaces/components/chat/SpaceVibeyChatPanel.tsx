@@ -14,7 +14,6 @@ import { VoiceApprovalProvider } from '@/components/chat/VoiceApprovalContext'
 import { ConversationShareModal } from '@/components/conversations'
 import { ChatComposerTryTip } from '@/components/global-chat/components/ChatComposerTryTip'
 import * as globalChatSeed from '@/components/global-chat/lib/global-chat-seed-match'
-import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
   GLOBAL_CHAT_AGENT_SWITCH_EVENT,
   GLOBAL_CHAT_SEED_EVENT,
@@ -31,6 +30,7 @@ import { ShellRightPanel } from '@/components/shell/ShellRightPanel'
 import { useShellChatQuickStart } from '@/components/shell/use-shell-chat-quick-start'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { useSummaryPanelLayout } from '@/components/shell/use-summary-panel-docked'
+import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
   useBrainLiveSession,
   type BrainLiveScope,
@@ -2341,28 +2341,21 @@ export function SpaceVibeyChatPanel({
                                     previousUserMessage={previousTurn?.user ?? null}
                                     userMessage={turn.user}
                                   />
-                                  <div
-                                    ref={isLastTurn ? lastUserPromptRef : undefined}
-                                    className="sticky top-0 z-10"
-                                  >
-                                    <div className="surface-bg">
-                                      <MessageBubble
-                                        message={turn.user}
-                                        isStreaming={false}
-                                        stickyUser
-                                        isEditable={turn.user.id === lastUserMessageId}
-                                        onEditSubmit={
-                                          turn.user.id === lastUserMessageId
-                                            ? handleEditSubmit
-                                            : undefined
-                                        }
-                                        conversationIdOverride={selectedConversationId}
-                                        knownSkillKeys={knownSkillKeys}
-                                        agentKey={activeAgentKey}
-                                        campaignId={effectiveCampaignId ?? undefined}
-                                      />
-                                    </div>
-                                    <div className="pointer-events-none h-6 bg-gradient-to-b from-[var(--color-background)] to-transparent" />
+                                  <div ref={isLastTurn ? lastUserPromptRef : undefined}>
+                                    <MessageBubble
+                                      message={turn.user}
+                                      isStreaming={false}
+                                      isEditable={turn.user.id === lastUserMessageId}
+                                      onEditSubmit={
+                                        turn.user.id === lastUserMessageId
+                                          ? handleEditSubmit
+                                          : undefined
+                                      }
+                                      conversationIdOverride={selectedConversationId}
+                                      knownSkillKeys={knownSkillKeys}
+                                      agentKey={activeAgentKey}
+                                      campaignId={effectiveCampaignId ?? undefined}
+                                    />
                                   </div>
 
                                   <div

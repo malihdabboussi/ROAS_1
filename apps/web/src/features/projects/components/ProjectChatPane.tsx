@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
-import type { AttachedArtifact } from '@/features/studio/components/chat/ArtifactAttachments'
 import { ComposerInputStack } from '@/components/chat/ComposerInputStack'
+import type { AttachedArtifact } from '@/features/studio/components/chat/ArtifactAttachments'
 import { ComposerActiveRunTipCard } from '@/features/studio/components/chat/ComposerActiveRunTipCard'
 import { MessageQueue } from '@/features/studio/components/chat/MessageQueue'
 import { PlanStickyTracker } from '@/features/studio/components/chat/PlanStickyTracker'
@@ -469,26 +469,17 @@ export function ProjectChatPane({
                   data-turn-id={turn.user.id}
                   className={`relative flex flex-col ${isLastTurn ? 'flex-1' : ''}`}
                 >
-                  {/* Sticky User Prompt */}
-                  <div
-                    ref={isLastTurn ? lastUserPromptRef : undefined}
-                    className="sticky top-0 z-10"
-                  >
-                    <div className="surface-bg">
-                      <MessageBubble
-                        message={turn.user}
-                        isStreaming={false}
-                        stickyUser
-                        isEditable={turn.user.id === editableUserMessageId}
-                        onEditSubmit={
-                          turn.user.id === editableUserMessageId ? handleEditSubmit : undefined
-                        }
-                        conversationIdOverride={conversationId}
-                        knownSkillKeys={knownSkillKeys}
-                      />
-                    </div>
-                    {/* Shadow-like fade */}
-                    <div className="pointer-events-none h-6 bg-gradient-to-b from-[var(--color-background)] to-transparent" />
+                  <div ref={isLastTurn ? lastUserPromptRef : undefined}>
+                    <MessageBubble
+                      message={turn.user}
+                      isStreaming={false}
+                      isEditable={turn.user.id === editableUserMessageId}
+                      onEditSubmit={
+                        turn.user.id === editableUserMessageId ? handleEditSubmit : undefined
+                      }
+                      conversationIdOverride={conversationId}
+                      knownSkillKeys={knownSkillKeys}
+                    />
                   </div>
 
                   {/* Assistant Responses for this turn */}

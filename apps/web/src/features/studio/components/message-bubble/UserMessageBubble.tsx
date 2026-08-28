@@ -86,11 +86,11 @@ function ReferenceIndicator({ references }: { references: MessageReference[] }) 
 
 export interface UserMessageBubbleProps {
   messageId: string
+  createdAt?: string | null
   content: string
   documents: DocumentAttachment[]
   highlightedArtifacts: HighlightedArtifact[]
   messageReferences: MessageReference[]
-  stickyUser: boolean
   isEditable?: boolean
   onEditSubmit?: (
     newContent: string,
@@ -108,11 +108,11 @@ const USER_MSG_MAX_LINES = 3
 
 export function UserMessageBubble({
   messageId,
+  createdAt,
   content,
   documents,
   highlightedArtifacts,
   messageReferences,
-  stickyUser,
   isEditable,
   onEditSubmit,
   conversationId,
@@ -132,6 +132,17 @@ export function UserMessageBubble({
   const bubbleRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const editNonceRef = useRef('')
+  const timestampLabel = useMemo(() => {
+    if (!createdAt) return null
+    const timestamp = new Date(createdAt)
+    if (Number.isNaN(timestamp.getTime())) return null
+    return timestamp.toLocaleString([], {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    })
+  }, [createdAt])
 
   useEffect(() => {
     if (!isEditing) return
@@ -224,107 +235,115 @@ export function UserMessageBubble({
     <div
       ref={bubbleRef}
       data-message={messageId}
-      className={[
-        'card-glass card-glass-user px-spacing-4 py-spacing-2 group relative',
-        // ChatGPT-style: user turns hug their content on the right instead of
-        // stretching a short "hi" into a full-width bar.
-        'ml-auto w-fit min-w-[8rem] max-w-[85%]',
-        stickyUser && '!bg-[var(--color-background)]',
-        (isEditable || !expanded) && 'cursor-pointer',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      role="button"
-      tabIndex={0}
-      aria-label={isEditable ? 'Edit message' : expanded ? 'Collapse message' : 'Expand message'}
-      onClick={handleActivate}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget) return
-        if (event.key !== 'Enter' && event.key !== ' ') return
-        event.preventDefault()
-        handleActivate()
-      }}
+      className="group/message ml-auto flex w-fit min-w-[8rem] max-w-[85%] flex-col items-end"
     >
-      {isEditable ? (
-        <div ref={menuRef} className="absolute right-2 top-2 z-10">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              setMenuOpen((p) => !p)
-            }}
-            aria-label="Message options"
-            title="Message options"
-            className="rounded p-0.5 opacity-0 transition-opacity hover:bg-[var(--color-secondary)] group-hover:opacity-100"
-          >
-            <MoreVertical className="text-muted-foreground h-3.5 w-3.5" />
-          </button>
-          {menuOpen && (
-            <div
-              className="absolute right-0 top-full mt-1 w-32 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-1 shadow-lg"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={handleEdit}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-[var(--color-foreground)] hover:bg-[var(--color-secondary)]"
-              >
-                <Pencil className="h-3 w-3" /> Edit
-              </button>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-[var(--color-foreground)] hover:bg-[var(--color-secondary)]"
-              >
-                <Copy className="h-3 w-3" /> Copy
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="absolute right-2 top-2 z-10">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              handleCopy()
-            }}
-            className="rounded p-0.5 opacity-0 transition-opacity hover:bg-[var(--color-secondary)] group-hover:opacity-100"
-          >
-            {copied ? (
-              <Check className="text-muted-foreground h-3.5 w-3.5" />
-            ) : (
-              <Copy className="text-muted-foreground h-3.5 w-3.5" />
-            )}
-          </button>
-        </div>
-      )}
+      {timestampLabel ? (
+        <time
+          dateTime={createdAt ?? undefined}
+          className="typo-caption text-muted-foreground mb-spacing-1 self-center"
+        >
+          {timestampLabel}
+        </time>
+      ) : null}
       <div
-        className="body-1 text-chat overflow-hidden"
-        style={{
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-          ...(expanded
-            ? {}
-            : {
-                display: '-webkit-box',
-                WebkitLineClamp: USER_MSG_MAX_LINES,
-                WebkitBoxOrient: 'vertical',
-                WebkitMaskImage:
-                  'linear-gradient(to bottom, black 0%, black 82%, transparent 100%)',
-                maskImage: 'linear-gradient(to bottom, black 0%, black 82%, transparent 100%)',
-              }),
+        className={[
+          'bg-secondary rounded-spacing-3 px-spacing-4 py-spacing-3 relative w-fit max-w-full',
+          (isEditable || !expanded) && 'cursor-pointer',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        role="button"
+        tabIndex={0}
+        aria-label={isEditable ? 'Edit message' : expanded ? 'Collapse message' : 'Expand message'}
+        onClick={handleActivate}
+        onKeyDown={(event) => {
+          if (event.target !== event.currentTarget) return
+          if (event.key !== 'Enter' && event.key !== ' ') return
+          event.preventDefault()
+          handleActivate()
         }}
       >
-        {highlighted}
-      </div>
-      {documents.length > 0 || highlightedArtifacts.length > 0 || messageReferences.length > 0 ? (
-        <div className="mt-spacing-2 flex flex-wrap items-center gap-1.5">
-          <PersistedFileChips documents={documents} className="contents" />
-          <ArtifactIndicator artifacts={highlightedArtifacts} />
-          <ReferenceIndicator references={messageReferences} />
+        {isEditable ? (
+          <div ref={menuRef} className="absolute right-2 top-2 z-10">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setMenuOpen((p) => !p)
+              }}
+              aria-label="Message options"
+              title="Message options"
+              className={`rounded p-0.5 transition-opacity hover:bg-[var(--color-hover-subtle)] ${menuOpen ? 'opacity-100' : 'opacity-0 focus-visible:opacity-100 group-hover/message:opacity-100'}`}
+            >
+              <MoreVertical className="text-muted-foreground h-3.5 w-3.5" />
+            </button>
+            {menuOpen && (
+              <div
+                className="absolute right-0 top-full mt-1 w-32 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-1 shadow-lg"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={handleEdit}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-[var(--color-foreground)] hover:bg-[var(--color-secondary)]"
+                >
+                  <Pencil className="h-3 w-3" /> Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-[var(--color-foreground)] hover:bg-[var(--color-secondary)]"
+                >
+                  <Copy className="h-3 w-3" /> Copy
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="absolute right-2 top-2 z-10">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleCopy()
+              }}
+              className="rounded p-0.5 opacity-0 transition-opacity hover:bg-[var(--color-hover-subtle)] focus-visible:opacity-100 group-hover/message:opacity-100"
+            >
+              {copied ? (
+                <Check className="text-muted-foreground h-3.5 w-3.5" />
+              ) : (
+                <Copy className="text-muted-foreground h-3.5 w-3.5" />
+              )}
+            </button>
+          </div>
+        )}
+        <div
+          className="body-1 text-chat overflow-hidden"
+          style={{
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            ...(expanded
+              ? {}
+              : {
+                  display: '-webkit-box',
+                  WebkitLineClamp: USER_MSG_MAX_LINES,
+                  WebkitBoxOrient: 'vertical',
+                  WebkitMaskImage:
+                    'linear-gradient(to bottom, black 0%, black 82%, transparent 100%)',
+                  maskImage: 'linear-gradient(to bottom, black 0%, black 82%, transparent 100%)',
+                }),
+          }}
+        >
+          {highlighted}
         </div>
-      ) : null}
+        {documents.length > 0 || highlightedArtifacts.length > 0 || messageReferences.length > 0 ? (
+          <div className="mt-spacing-2 flex flex-wrap items-center gap-1.5">
+            <PersistedFileChips documents={documents} className="contents" />
+            <ArtifactIndicator artifacts={highlightedArtifacts} />
+            <ReferenceIndicator references={messageReferences} />
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }
