@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
-import { X } from 'lucide-react'
+import { Calendar, X } from 'lucide-react'
 import { ClientCampaignCell } from '@/components/spaces/cells/ClientCampaignCell'
+import { DueDateCell } from '@/components/spaces/cells/DueDateCell'
 import { MultiSelectCell } from '@/components/spaces/cells/MultiSelectCell'
 import { SelectCell } from '@/components/ui/forms/SelectCell'
+import { OptionDot } from '@/components/ui/status/OptionBadge'
 import { MEETING_POST_CALL_REVIEW_MESSAGES } from '@/features/home/config/meeting-post-call-actions.config'
 import {
   useClientCampaignGroups,
@@ -22,7 +24,7 @@ export function MeetingPostCallReviewCard({
   onContinue: (review: MeetingPostCallReview) => void | Promise<void>
   clientWorkspaceOptions?: ClientCampaignMapping[]
 }) {
-  const [draft, setDraft] = useState(review)
+  const [draft, setDraft] = useState(() => normalizeReviewSummary(review))
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const loaded = useClientCampaignGroups(clientWorkspaceOptions === undefined)
@@ -45,7 +47,7 @@ export function MeetingPostCallReviewCard({
     (item) => item.title.trim() && item.owner.trim() && item.dueDate,
   )
 
-  useEffect(() => setDraft(review), [review])
+  useEffect(() => setDraft(normalizeReviewSummary(review)), [review])
 
   return (
     <div className="border-border bg-background px-spacing-4 py-spacing-3 border-b">
@@ -62,7 +64,7 @@ export function MeetingPostCallReviewCard({
           <span className="body-3 text-muted-foreground">Meeting summary</span>
           <textarea
             value={draft.summary}
-            rows={4}
+            rows={summaryRows(draft.summary)}
             onChange={(event) =>
               setDraft((current) => ({ ...current, summary: event.target.value }))
             }
@@ -93,10 +95,15 @@ export function MeetingPostCallReviewCard({
               groupsOverride={groups}
               onChange={(value) => {
                 const selected = value as ClientCampaignMapping | null
+                const canonical = selected
+                  ? (clientWorkspaceOptions?.find(
+                      (option) => option.client_id === selected.client_id,
+                    ) ?? selected)
+                  : null
                 setDraft((current) => ({
                   ...current,
-                  clientCampaign: selected,
-                  clientWorkspace: selected?.client_name ?? '',
+                  clientCampaign: canonical,
+                  clientWorkspace: canonical?.client_name ?? '',
                 }))
               }}
             />
@@ -158,14 +165,40 @@ export function MeetingPostCallReviewCard({
                 />
                 <label className="gap-spacing-1 flex min-w-0 flex-1 flex-col">
                   <span className="typo-caption text-muted-foreground">WHEN</span>
-                  <input
-                    type="date"
-                    className="input-glass body-3 border-border rounded-spacing-2 h-spacing-9 px-spacing-3 border"
-                    value={followUp.dueDate}
-                    onChange={(event) =>
-                      updateFollowUp(setDraft, followUp.id, { dueDate: event.target.value })
-                    }
-                  />
+                  <div className="input-glass body-3 border-border rounded-spacing-2 h-spacing-9 px-spacing-3 flex items-center border">
+                    <DueDateCell
+                      value={{
+                        start_date: null,
+                        due_date: followUp.dueDate || null,
+                        recurrence: null,
+                      }}
+                      triggerField="due"
+                      displayFormat="date"
+                      fullWidthCustomTrigger
+                      customTrigger={
+                        <span className="gap-spacing-2 flex w-full min-w-0 items-center">
+                          <Calendar
+                            className="icon-sm text-muted-foreground shrink-0"
+                            aria-hidden
+                          />
+                          <span
+                            className={
+                              followUp.dueDate
+                                ? 'body-3 text-foreground min-w-0 truncate'
+                                : 'body-3 text-muted-foreground min-w-0 truncate'
+                            }
+                          >
+                            {formatTaskDueDate(followUp.dueDate)}
+                          </span>
+                        </span>
+                      }
+                      onChange={(patch) =>
+                        updateFollowUp(setDraft, followUp.id, {
+                          dueDate: patch.due_date?.slice(0, 10) ?? '',
+                        })
+                      }
+                    />
+                  </div>
                 </label>
               </div>
             </div>
@@ -217,14 +250,50 @@ function MeetingSelect({
   value: string
   onChange: (value: string) => void
 }) {
+  const selected = field.options?.find((option) => option.id === value)
+
   return (
     <div className="gap-spacing-1 flex flex-col">
       <span className="body-3 text-muted-foreground">{label}</span>
       <div className="input-glass border-border rounded-spacing-2 h-spacing-9 px-spacing-3 flex items-center border">
-        <SelectCell field={field} value={value} onChange={(next) => onChange(String(next ?? ''))} />
+        <SelectCell
+          field={field}
+          value={value}
+          customTrigger={
+            <span className="gap-spacing-2 flex w-full min-w-0 items-center">
+              <OptionDot color={selected?.color} />
+              <span className="body-3 text-foreground min-w-0 truncate">
+                {selected?.label ?? value}
+              </span>
+            </span>
+          }
+          onChange={(next) => onChange(String(next ?? ''))}
+        />
       </div>
     </div>
   )
+}
+
+function normalizeReviewSummary(review: MeetingPostCallReview): MeetingPostCallReview {
+  return { ...review, summary: stripSlackHeadingMarkers(review.summary) }
+}
+
+function stripSlackHeadingMarkers(summary: string): string {
+  return summary.replace(/^[\t ]*\*([^*\n]+)\*[\t ]*$/gm, '$1').trim()
+}
+
+function summaryRows(summary: string): number {
+  const visualLines = summary
+    .split('\n')
+    .reduce((total, line) => total + Math.max(1, Math.ceil(line.length / 90)), 0)
+  return Math.min(14, Math.max(8, visualLines))
+}
+
+function formatTaskDueDate(value: string): string {
+  if (!value) return 'Select a date'
+  const date = new Date(`${value}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return 'Select a date'
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function TaskInput({

@@ -224,6 +224,7 @@ export class MeetingFollowUpReviewService {
       )
       .join('\n\n')
     const result = await pageGrader.createDelegationPreview(String(call.user_id), {
+      client_id: clientId,
       client_ref: clientId,
       campaign_id: campaignId,
       raw_text: rawText,

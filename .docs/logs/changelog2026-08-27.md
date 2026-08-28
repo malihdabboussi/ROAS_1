@@ -79,3 +79,13 @@ Why: The former transition sent a long Pixel chat prompt with a 15-minute timeou
 Impact: Call Kind, Call status, Client Workspace, and attendees now reuse Meetings field controls; tasks can be edited or removed and require WHO, WHAT, and WHEN; the Portal confirmation link is created directly with a 30-second browser timeout; and the copy-only client message appears only after task review.
 
 Files: `apps/api/src/modules/integrations/page-grader/services/page-grader-api.service.ts`, `apps/api/src/modules/meetings/`, `apps/web/src/components/global-chat/`, `apps/web/src/components/spaces/cells/ClientCampaignCell.tsx`, `apps/web/src/features/home/`, `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-08-27 19:05 - [FIX]
+
+What: Made the public post-call context form preserve its mapped client/campaign and task dates through failed retries, send the Portal's required client identifier, and reuse the standard Meetings selectors and task date picker.
+
+Why: A client-only picker result dropped the campaign mapping, the direct Portal request omitted `client_id`, and replacing the saved payload before preview success reset the operator's due dates after an error.
+
+Impact: The context form keeps WHO, WHAT, WHEN, and Client Workspace edits intact, opens full-container call selectors, shows a readable uncollapsed summary without Slack heading markers, and can continue into the existing Portal task review with the canonical client and campaign.
+
+Files: `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.test.ts`, `apps/web/src/components/global-chat/components/MeetingPostCallReviewCard.tsx`, `apps/web/src/components/global-chat/components/MeetingPostCallReviewCard.test.tsx`, `apps/web/src/features/home/components/PublicMeetingFollowUpReviewPage.tsx`, `documentation/features/meeting-follow-up-slack.md`

@@ -68,8 +68,9 @@ export function PublicMeetingFollowUpReviewPage({ token }: { token: string }) {
           due_date: item.dueDate,
         })),
       })
+      const delegationPreview = await createMeetingDelegationPreview(token)
       setPayload(saved)
-      setPreview(await createMeetingDelegationPreview(token))
+      setPreview(delegationPreview)
       setStage('tasks')
     } catch (caught) {
       setError(
