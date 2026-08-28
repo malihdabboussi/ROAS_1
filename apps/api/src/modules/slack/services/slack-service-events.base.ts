@@ -17,7 +17,10 @@ import {
   MACHINE_WAKE_START_SLACK_MESSAGE,
   SLACK_AGENT_STREAM_TIMEOUT_MS,
 } from './slack-service.shared'
-import { buildInboundSlackTurnPrompt } from './slack-turn-prompt'
+import {
+  buildInboundSlackTurnPrompt,
+  buildSlackMentionClientLookupText,
+} from './slack-turn-prompt'
 import {
   recordSlackPixelTurn,
   type SlackTurnSeed,
@@ -368,12 +371,25 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     )
     const forwardedContext = forwarded.context
 
+    const thread = event.thread_ts
+      ? await this.buildSlackThreadReply(
+          fallback.botToken,
+          channelId,
+          event.thread_ts,
+          event.ts,
+        ).catch(() => ({ context: '', parentIsPixel: false }))
+      : { context: '', parentIsPixel: false }
+
     const channel = await this.buildChannelContext(
       serviceSupabase,
       fallback.userId,
       fallback.botToken,
       channelId,
-      { orgId: fallback.orgId, slackTeamId: teamId, text },
+      {
+        orgId: fallback.orgId,
+        slackTeamId: teamId,
+        text: buildSlackMentionClientLookupText(text, thread.context),
+      },
     ).catch((err) => {
       this.logger.warn(`Failed to build channel context: ${err}`)
       return { context: '', stampCampaignId: null, bundleCampaignId: null }
@@ -389,14 +405,6 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     const mentionText =
       (assetsBlock ? `${attachmentText}\n\n${assetsBlock}`.trim() : attachmentText) ||
       (documents.length > 0 ? '[User sent a file]' : '')
-    const thread = event.thread_ts
-      ? await this.buildSlackThreadReply(
-          fallback.botToken,
-          channelId,
-          event.thread_ts,
-          event.ts,
-        ).catch(() => ({ context: '', parentIsPixel: false }))
-      : { context: '', parentIsPixel: false }
     const askKind = classifySlackAskKind({
       text,
       hasChannelClientStamp: /Resolved ROAS Portal client:/.test(channelContext),

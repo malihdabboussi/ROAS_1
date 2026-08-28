@@ -1,5 +1,15 @@
 # Changelog - August 28, 2026
 
+## 2026-08-28 15:35 - [FIX]
+
+What: Made unmapped-channel `@Pixel` mentions resolve named clients from the surrounding Slack thread before binding the agent conversation, and made exact campaign names win over broader partial name matches.
+
+Why: A short follow-up such as “do you have it?” in `#roas-review` discarded the earlier Claude Club identity, searched generic Brain/integration context, and incorrectly claimed an available onboarding recording was not linked.
+
+Impact: Thread follow-ups can bind the correct client Campaign Brain even when the current mention contains only a pronoun; client-name parsing no longer crosses Slack message lines, and genuinely ambiguous names still fail closed.
+
+Files: `apps/api/src/modules/slack/services/slack-service-events.base.ts`, `apps/api/src/modules/slack/services/slack-turn-prompt.ts`, `apps/api/src/modules/slack/services/slack-client-context.ts`, `apps/api/src/modules/slack/services/__tests__/slack-turn-prompt.test.ts`, `apps/api/src/modules/slack/services/__tests__/slack-client-context.test.ts`, `documentation/features/meeting-follow-up-slack.md`
+
 ## 2026-08-28 12:25 - [FIX]
 
 What: Aligned Space task-list headers with the external selection, expansion, and status controls, and made a childless task's expand chevron open the inline Add subtask composer.

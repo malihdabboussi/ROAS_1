@@ -44,6 +44,11 @@ export type SlackTurnPrompt = {
   clientId: string | null
 }
 
+/** Client identity often lives earlier in a Slack thread, not in the short @Pixel mention. */
+export function buildSlackMentionClientLookupText(text: string, threadContext: string): string {
+  return [text.trim(), threadContext.trim()].filter(Boolean).join('\n')
+}
+
 const QUOTED_CLIENT_CHANNEL = /Channel: #roas-|\[Slack channel identity\]/
 
 export function buildInboundSlackTurnPrompt(input: SlackTurnPromptInput): SlackTurnPrompt {

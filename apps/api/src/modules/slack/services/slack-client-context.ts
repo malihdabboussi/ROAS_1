@@ -75,9 +75,12 @@ async function resolveCampaignsByName(
     .ilike('name', `%${firstWord}%`)
     .limit(CAMPAIGN_NAME_MATCH_LIMIT * 4)
   const rows = (data ?? []) as Array<{ id: string; name: string | null }>
-  return rows
-    .filter((row) => clientNameMatches(clientName, row.name))
-    .slice(0, CAMPAIGN_NAME_MATCH_LIMIT)
+  const matches = rows.filter((row) => clientNameMatches(clientName, row.name))
+  const normalizedClientName = clientName.trim().toLowerCase().replace(/\s+/g, ' ')
+  const exact = matches.filter(
+    (row) => row.name?.trim().toLowerCase().replace(/\s+/g, ' ') === normalizedClientName,
+  )
+  return (exact.length === 1 ? exact : matches).slice(0, CAMPAIGN_NAME_MATCH_LIMIT)
 }
 
 export async function resolveSlackClientContext(
@@ -255,13 +258,13 @@ export function extractClientNameCandidates(text: string): string[] {
   const candidates = new Set<string>()
   const cleaned = text.replace(/<[^>]+>/g, ' ')
   const patterns = [
-    /\b(?:for|from|with|about|re)\s+([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*){0,3})/g,
-    /\b([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*){0,3})['’]s\b/g,
-    /\bclient\s+([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*){0,3})/gi,
+    /\b(?:for|from|with|about|re)[ \t]+([A-Z][\w&.-]*(?:[ \t]+[A-Z][\w&.-]*){0,3})/g,
+    /\b([A-Z][\w&.-]*(?:[ \t]+[A-Z][\w&.-]*){0,3})['’]s\b/g,
+    /\bclient[ \t]+([A-Z][\w&.-]*(?:[ \t]+[A-Z][\w&.-]*){0,3})/gi,
   ]
   for (const pattern of patterns) {
     for (const match of cleaned.matchAll(pattern)) {
-      const value = match[1]?.trim()
+      const value = match[1]?.trim().replace(/[.,:;!?-]+$/, '')
       if (value && value.length > 1 && !/^(I|We|You|The|This|That|Pixel|Slack)$/i.test(value)) {
         candidates.add(value)
       }

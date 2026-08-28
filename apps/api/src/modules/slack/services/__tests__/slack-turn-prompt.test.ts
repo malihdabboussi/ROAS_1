@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { buildInboundSlackTurnPrompt } from '../slack-turn-prompt'
+import {
+  buildInboundSlackTurnPrompt,
+  buildSlackMentionClientLookupText,
+} from '../slack-turn-prompt'
 
 const yasirStamp = {
   channelId: 'C0B5MKP7Y30',
@@ -143,5 +146,17 @@ describe('buildInboundSlackTurnPrompt — N0 stamp leads the prompt', () => {
     expect(p.askKind.kind).toBe('general')
     expect(p.fullMessage).not.toContain('[Client context]')
     expect(p.clientSource).toBe('stamp')
+  })
+})
+
+describe('buildSlackMentionClientLookupText', () => {
+  it('keeps the surrounding thread available when the @Pixel mention is only a pronoun', () => {
+    const lookupText = buildSlackMentionClientLookupText(
+      '- do you have it',
+      'Dylan: We went deep on the onboarding call for Claude Club.',
+    )
+
+    expect(lookupText).toContain('- do you have it')
+    expect(lookupText).toContain('onboarding call for Claude Club')
   })
 })

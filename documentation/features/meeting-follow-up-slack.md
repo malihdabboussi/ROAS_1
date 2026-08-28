@@ -1,6 +1,10 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-08-27 (deterministic public and meeting-chat Portal handoff)
+**Last Modified:** 2026-08-28 (thread-aware Slack recording retrieval)
+
+## Thread-aware recording retrieval
+
+When Pixel is mentioned inside an existing Slack thread, client resolution uses both the current mention and the preceding thread. This matters for short follow-ups such as “do you have it?” where the client name, onboarding-call request, and task context appear earlier. The resolved client campaign is bound to the Slack conversation before agent execution so Campaign Brain meeting evidence remains available even in shared review channels. Exact campaign-name matches take priority over broader partial matches; unresolved ambiguity still fails closed.
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` sends the admin one concise meeting summary with the follow-up count and a **Review meeting follow-ups** link. The link opens the canonical meeting workspace and its existing chat; task delegation and the editable client message finish there without an automatic client send.
 

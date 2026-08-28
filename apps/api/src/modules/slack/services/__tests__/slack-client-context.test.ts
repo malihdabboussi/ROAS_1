@@ -96,6 +96,35 @@ describe('resolveSlackClientContext', () => {
     ).toBeNull()
   })
 
+  it('prefers one exact campaign name over broader partial matches', async () => {
+    const { client } = createSupabaseMock({
+      slack_observation_events: [],
+      slack_brain_mappings: [],
+      campaigns: (calls) => {
+        const ids = calls.find((call) => call.method === 'in')?.args[1] as string[] | undefined
+        const rows = [
+          { id: 'claude-club', name: 'Claude Club' },
+          { id: 'claude-webinar', name: 'Claude Club Webinar' },
+        ]
+        return ids ? rows.filter((row) => ids.includes(row.id)) : rows
+      },
+      ns_brains: (calls) => {
+        const ids = calls.find((call) => call.method === 'in')?.args[1] as string[] | undefined
+        const rows = [{ id: 'claude-brain', campaign_id: 'claude-club' }]
+        return ids ? rows.filter((row) => ids.includes(row.campaign_id)) : rows
+      },
+      spaces: [],
+    })
+
+    const bundle = await resolveSlackClientContext(client, {
+      orgId: 'org-1',
+      clientName: 'Claude Club',
+    })
+
+    expect(bundle?.campaigns).toEqual([{ id: 'claude-club', name: 'Claude Club' }])
+    expect(bundle?.campaignBrainIds).toEqual(['claude-brain'])
+  })
+
   it('still returns a bundle (without channels) when the campaign has no Slack mapping yet', async () => {
     const { client } = createSupabaseMock({
       slack_observation_events: [],
@@ -154,5 +183,15 @@ describe('extractClientNameCandidates', () => {
     expect(clientNameMatches('Yasir', 'Yasir Khan Coaching LTD')).toBe(true)
     expect(clientNameMatches('Trade Launch', 'Trade Launch')).toBe(true)
     expect(clientNameMatches('Trade Rocket', 'Trade Launch')).toBe(false)
+  })
+
+  it('finds the client named earlier in a review thread for a short @Pixel follow-up', () => {
+    const thread = [
+      'Pixel: Salman Mehdi — task ready for review: Claude Club — Social Ad Graphics',
+      'Dylan: We went deep on the onboarding call for Claude Club.',
+      'Dylan: @Pixel - do you have it',
+    ].join('\n')
+
+    expect(extractClientNameCandidates(thread)).toContain('Claude Club')
   })
 })

@@ -40024,3 +40024,14 @@ Evidence: `apps/api/src/modules/meetings/services/meeting-follow-up-review.servi
 Needed work: Extract Portal campaign/preview orchestration and guest chat streaming into focused services while preserving the public and authenticated review contracts.
 
 Reason not done now: Decomposing unrelated token and chat behavior would materially widen this production preview fix.
+## 2026-08-28 - [ARCH] Slack event orchestration remains above the service limit
+
+Status: Open
+
+Found while: Repairing thread-aware client and Campaign Brain routing for short `@Pixel` recording follow-ups.
+
+Evidence: `wc -l` reports `apps/api/src/modules/slack/services/slack-service-events.base.ts` at 781 LOC against the 600-line service limit. The class still combines Slack event dispatch, message/mention context assembly, agent routing, reaction lifecycle, telemetry, and welcome-message behavior.
+
+Needed work: Extract message and app-mention context assembly into focused collaborators while preserving the shared deduplication, authorization, campaign binding, and telemetry contracts.
+
+Reason not done now: The requested root-cause fix changes the ordering at the existing app-mention boundary; decomposing both inbound paths would materially widen this production routing repair.
