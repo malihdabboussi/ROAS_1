@@ -2,6 +2,72 @@ import { describe, expect, it, vi } from 'vitest'
 import { MeetingFollowUpReviewService } from './meeting-follow-up-review.service'
 
 describe('MeetingFollowUpReviewService', () => {
+  it('fills a missing meeting campaign id from the connected client scope map', async () => {
+    const chain = (result: { data: unknown; error: null }) => {
+      const promise = Promise.resolve(result)
+      const value = {
+        select: () => value,
+        eq: () => value,
+        or: () => value,
+        order: () => promise,
+        maybeSingle: () => promise,
+        then: promise.then.bind(promise),
+      }
+      return value
+    }
+    const service = new MeetingFollowUpReviewService(
+      {
+        client: {
+          from: vi.fn((table: string) => {
+            if (table === 'meeting_workspaces') {
+              return chain({ data: { conversation_id: 'conversation-1' }, error: null })
+            }
+            if (table === 'spaces') return chain({ data: { schema: {} }, error: null })
+            if (table === 'space_items') return chain({ data: [], error: null })
+            return chain({
+              data: [
+                {
+                  metadata: {
+                    client_scope_map: {
+                      'client-1': {
+                        campaign_id: 'campaign-1',
+                        campaign_name: 'Yasir Khan Coaching LTD',
+                        space_id: 'client-space-1',
+                      },
+                    },
+                  },
+                },
+              ],
+              error: null,
+            })
+          }),
+        },
+      } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    )
+    vi.spyOn(service as never, 'requireCall').mockResolvedValue({
+      id: 'meeting-1',
+      space_id: 'space-1',
+      user_id: 'user-1',
+      title: 'Yasir call',
+      custom_data: {
+        client_campaign: { client_id: 'client-1', client_name: 'Yasir Khan Coaching LTD' },
+      },
+    })
+
+    const review = await service.getReview('review-token')
+
+    expect(review.meeting.client_campaign).toEqual(
+      expect.objectContaining({
+        client_id: 'client-1',
+        campaign_id: 'campaign-1',
+        roas_space_id: 'client-space-1',
+      }),
+    )
+  })
+
   it('sends the mapped Portal client id and campaign id to delegation preview', async () => {
     const createDelegationPreview = vi.fn().mockResolvedValue({
       delegation_id: 'delegation-1',

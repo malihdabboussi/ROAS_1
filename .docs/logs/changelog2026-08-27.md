@@ -99,3 +99,13 @@ Why: Continuing from **Run post-call flow** still handed the confirmed meeting t
 Impact: The public Slack link and meeting-chat button now deterministically submit the same confirmed meeting, client mapping, and WHO/WHAT/WHEN tasks to the existing Portal bulk-delegation preview. The client message remains hidden until task review is marked complete.
 
 Files: `apps/api/src/modules/meetings/controllers/meeting-follow-up-review.controller.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.test.ts`, `apps/web/src/components/global-chat/components/MeetingPostCallReviewStages.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.test.tsx`, `apps/web/src/features/home/components/PublicMeetingFollowUpReviewPage.tsx`, `apps/web/src/features/home/services/meeting-follow-up-review-api.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-08-27 21:03 - [FIX]
+
+What: Resolved a meeting's missing Portal campaign ID from its connected client scope mapping before post-call preview creation.
+
+Why: The live Yasir browser test proved that a correctly selected Client Workspace could still store only the Portal client ID, causing the delegation preview to reject the meeting as unmapped.
+
+Impact: Client-only meeting mappings now inherit their canonical Portal campaign and Space without resetting the operator's visible selection or WHO/WHAT/WHEN edits.
+
+Files: `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`

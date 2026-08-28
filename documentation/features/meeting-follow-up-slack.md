@@ -450,6 +450,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-08-27:** Post-call review links now use an expiring, hashed guest token at `/meeting-review/:token`. Signed-out and incognito reviewers can confirm the one linked meeting and continue its constrained Pixel chat without gaining access to the Meetings workspace. The review resolves attendee option IDs to names, uses the canonical Client Workspace mapping picker, persists dismissed follow-ups, and carries the prepared follow-up message through task delegation into the editable final message card.
 - **2026-08-27:** The public context form retains canonical client/campaign IDs and local WHO/WHAT/WHEN edits when Portal preview creation fails. Its delegation request now supplies the Portal's required `client_id`; summary formatting is cleaned for display, selectors use their complete containers, and due dates reuse the standard task picker.
 - **2026-08-27:** The authenticated meeting-chat flow now uses the same deterministic backend delegation-preview endpoint and shared task-review/follow-up stages as the public review. Continuing from the context card no longer seeds Pixel or lets the model reinterpret, omit, or reroute confirmed tasks.
+- **2026-08-27:** A meeting mapped to a Portal client but not an explicit campaign inherits that client's canonical campaign and Space from the connected Page Grader scope map before preview creation. The visible Client Workspace remains authoritative while the delegation request receives the required campaign ID.
 
 ## Related
 

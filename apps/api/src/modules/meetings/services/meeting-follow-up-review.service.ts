@@ -59,6 +59,8 @@ export class MeetingFollowUpReviewService {
       .map(mapFollowUpSpaceItemToMeetingAction)
       .filter((action) => action.status !== 'dismissed')
     const clientCampaign = record(custom.client_campaign)
+    const clientWorkspaces = resolveClientOptions(integrations.data ?? [], clientCampaign)
+    const resolvedClientCampaign = resolveClientCampaign(clientCampaign, clientWorkspaces)
     const schema = record(space.data)
     const fields = resolveMeetingFields(custom, schema)
     return {
@@ -77,7 +79,7 @@ export class MeetingFollowUpReviewService {
           custom.client_workspace_name,
           custom.client_name,
         ),
-        client_campaign: Object.keys(clientCampaign).length > 0 ? clientCampaign : null,
+        client_campaign: resolvedClientCampaign,
         attendee_ids: fields.attendees.value,
         attendees: resolveAttendeeLabels(custom, schema),
         call_kind: fields.call_kind.value,
@@ -93,7 +95,7 @@ export class MeetingFollowUpReviewService {
         follow_up_message: firstText(slack.draft_message),
         conversation_id: firstText(workspace.data?.conversation_id),
       },
-      client_workspaces: resolveClientOptions(integrations.data ?? [], clientCampaign),
+      client_workspaces: clientWorkspaces,
       expires_at: firstText(slack.review_token_expires_at),
       review_started: Boolean(firstText(slack.review_started_at)),
     }
@@ -429,6 +431,23 @@ function resolveClientOptions(rows: unknown[], current: Record<string, unknown>)
     })
   }
   return [...options.values()].sort((a, b) => a.name.localeCompare(b.name))
+}
+
+function resolveClientCampaign(
+  current: Record<string, unknown>,
+  options: Array<{ id: string; name: string; campaign_id: string; space_id: string | null }>,
+) {
+  if (Object.keys(current).length === 0) return null
+  if (firstText(current.campaign_id)) return current
+  const option = options.find((candidate) => candidate.id === firstText(current.client_id))
+  if (!option) return current
+  return {
+    ...current,
+    campaign_id: option.campaign_id,
+    campaign_name: firstText(current.campaign_name, option.name),
+    client_name: firstText(current.client_name, option.name),
+    roas_space_id: firstText(current.roas_space_id, option.space_id),
+  }
 }
 
 function resolveMeetingFields(custom: Record<string, unknown>, space: Record<string, unknown>) {
