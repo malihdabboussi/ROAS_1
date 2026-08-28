@@ -251,8 +251,8 @@ export class MeetingFollowUpReviewService {
     const review = await this.getReviewForCall(call)
     const campaign = record(review.meeting.client_campaign)
     const clientId = firstText(campaign.client_id)
-    const campaignId = firstText(campaign.campaign_id)
-    if (!clientId || !campaignId) {
+    const mappedCampaignId = firstText(campaign.campaign_id)
+    if (!clientId || !mappedCampaignId) {
       throw new BadRequestException('Choose a mapped Client Workspace before task review')
     }
     const tasks = review.meeting.follow_ups as Array<{
@@ -265,6 +265,34 @@ export class MeetingFollowUpReviewService {
       throw new BadRequestException('Every follow-up needs a responsible person and due date')
     }
     const pageGrader = this.moduleRef.get(PageGraderApiService, { strict: false })
+    const portalCampaigns = await pageGrader.listClientCampaigns(String(call.user_id), {
+      clientId,
+      limit: 100,
+    })
+    const mappedCampaign = portalCampaigns.find(
+      (candidate) => String(candidate.id) === mappedCampaignId,
+    )
+    const liveCampaigns = portalCampaigns.filter(
+      (candidate) => String(candidate.platform_status).toLowerCase() === 'live',
+    )
+    const portalCampaign = mappedCampaign ?? (liveCampaigns.length === 1 ? liveCampaigns[0] : null)
+    if (!portalCampaign) {
+      throw new BadRequestException('Choose a current Client Workspace campaign before task review')
+    }
+    const campaignId = String(portalCampaign.id)
+    const repairedCampaign = {
+      ...campaign,
+      campaign_id: campaignId,
+      campaign_name: firstText(portalCampaign.name, campaign.campaign_name),
+    }
+    if (!mappedCampaign) {
+      await pageGrader.mergeClientScopeEntry(String(call.user_id), {
+        clientId,
+        campaignId,
+        campaignName: firstText(portalCampaign.name),
+        spaceId: firstText(campaign.roas_space_id, campaign.space_id) || null,
+      })
+    }
     const rawText = tasks
       .map(
         (task, index) =>
@@ -286,6 +314,7 @@ export class MeetingFollowUpReviewService {
       .update({
         custom_data: {
           ...custom,
+          client_campaign: repairedCampaign,
           slack_follow_up_confirm: {
             ...slack,
             delegation_preview: result,

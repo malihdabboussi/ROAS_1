@@ -76,6 +76,17 @@ describe('MeetingFollowUpReviewService', () => {
       campaign_id: 'campaign-1',
     })
     const updateResult = { error: null }
+    const pageGrader = {
+      listClientCampaigns: vi.fn().mockResolvedValue([
+        {
+          id: 'campaign-1',
+          client_id: 'client-1',
+          name: 'Current campaign',
+          platform_status: 'live',
+        },
+      ]),
+      createDelegationPreview,
+    }
     const service = new MeetingFollowUpReviewService(
       {
         client: {
@@ -88,7 +99,7 @@ describe('MeetingFollowUpReviewService', () => {
       } as never,
       {} as never,
       {} as never,
-      { get: vi.fn(() => ({ createDelegationPreview })) } as never,
+      { get: vi.fn(() => pageGrader) } as never,
     )
     vi.spyOn(service as never, 'requireCall').mockResolvedValue({
       id: 'meeting-1',
@@ -113,6 +124,77 @@ describe('MeetingFollowUpReviewService', () => {
         campaign_id: 'campaign-1',
       }),
     )
+  })
+
+  it('replaces a deleted mapped campaign with the only live Portal campaign', async () => {
+    const createDelegationPreview = vi.fn().mockResolvedValue({
+      delegation_id: 'delegation-1',
+      confirm_url: 'https://portal.roas.io/delegations/delegation-1',
+      tasks: [],
+      campaign_id: 'campaign-live',
+    })
+    const mergeClientScopeEntry = vi.fn().mockResolvedValue(undefined)
+    const pageGrader = {
+      listClientCampaigns: vi.fn().mockResolvedValue([
+        {
+          id: 'campaign-live',
+          client_id: 'client-1',
+          name: 'Current webinar',
+          platform_status: 'live',
+        },
+        {
+          id: 'campaign-closed',
+          client_id: 'client-1',
+          name: 'Old cohort',
+          platform_status: 'on_hold_closed',
+        },
+      ]),
+      mergeClientScopeEntry,
+      createDelegationPreview,
+    }
+    const service = new MeetingFollowUpReviewService(
+      {
+        client: {
+          from: vi.fn(() => ({
+            update: vi.fn(() => ({
+              eq: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+            })),
+          })),
+        },
+      } as never,
+      {} as never,
+      {} as never,
+      { get: vi.fn(() => pageGrader) } as never,
+    )
+    vi.spyOn(service as never, 'requireCall').mockResolvedValue({
+      id: 'meeting-1',
+      space_id: 'meeting-space-1',
+      user_id: 'user-1',
+      custom_data: { client_campaign: { client_id: 'client-1', campaign_id: 'campaign-deleted' } },
+    })
+    vi.spyOn(service as never, 'getReviewForCall').mockResolvedValue({
+      meeting: {
+        client_campaign: {
+          client_id: 'client-1',
+          campaign_id: 'campaign-deleted',
+          roas_space_id: 'client-space-1',
+        },
+        follow_ups: [{ title: 'Send the notes', owner: 'Nate', due_date: '2026-08-28' }],
+      },
+    } as never)
+
+    await service.createDelegationPreview('review-token')
+
+    expect(createDelegationPreview).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({ campaign_id: 'campaign-live' }),
+    )
+    expect(mergeClientScopeEntry).toHaveBeenCalledWith('user-1', {
+      clientId: 'client-1',
+      campaignId: 'campaign-live',
+      campaignName: 'Current webinar',
+      spaceId: 'client-space-1',
+    })
   })
 
   it('uses the owned meeting path for the authenticated inline preview', async () => {

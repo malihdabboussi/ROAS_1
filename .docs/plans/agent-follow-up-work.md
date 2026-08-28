@@ -40012,3 +40012,15 @@ Evidence: `apps/web/src/features/home/components/MeetingWorkspaceDialog.test.tsx
 Needed work: Split meeting loading/chat behavior from status, agenda, recording, and action-item coverage using shared test fixtures.
 
 Reason not done now: The file remains compliant, and extracting the broader fixture/mocking setup would materially widen this focused meeting-chat fix.
+
+## 2026-08-27 - [ARCH] Meeting follow-up review service exceeds the service limit
+
+Status: Open
+
+Found while: Repairing stale Portal campaign mappings during post-call delegation preview creation.
+
+Evidence: `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.ts` is over 500 LOC and owns token access, review persistence, Portal preview orchestration, and guest chat streaming.
+
+Needed work: Extract Portal campaign/preview orchestration and guest chat streaming into focused services while preserving the public and authenticated review contracts.
+
+Reason not done now: Decomposing unrelated token and chat behavior would materially widen this production preview fix.

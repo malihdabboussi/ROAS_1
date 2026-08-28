@@ -451,6 +451,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-08-27:** The public context form retains canonical client/campaign IDs and local WHO/WHAT/WHEN edits when Portal preview creation fails. Its delegation request now supplies the Portal's required `client_id`; summary formatting is cleaned for display, selectors use their complete containers, and due dates reuse the standard task picker.
 - **2026-08-27:** The authenticated meeting-chat flow now uses the same deterministic backend delegation-preview endpoint and shared task-review/follow-up stages as the public review. Continuing from the context card no longer seeds Pixel or lets the model reinterpret, omit, or reroute confirmed tasks.
 - **2026-08-27:** A meeting mapped to a Portal client but not an explicit campaign inherits that client's canonical campaign and Space from the connected Page Grader scope map before preview creation. The visible Client Workspace remains authoritative while the delegation request receives the required campaign ID.
+- **2026-08-27:** Delegation preview creation validates the saved campaign against the Portal's current client campaign catalog. If that campaign was deleted and the client has one live campaign, the review uses that live campaign and repairs the saved client scope mapping before opening the task review.
 
 ## Related
 

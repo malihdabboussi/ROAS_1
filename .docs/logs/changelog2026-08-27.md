@@ -109,3 +109,13 @@ Why: The live Yasir browser test proved that a correctly selected Client Workspa
 Impact: Client-only meeting mappings now inherit their canonical Portal campaign and Space without resetting the operator's visible selection or WHO/WHAT/WHEN edits.
 
 Files: `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-08-27 21:33 - [FIX]
+
+What: Validated post-call delegation campaigns against the live Portal catalog and repaired stale mappings when a client has one current live campaign.
+
+Why: Yasir's saved client scope referenced a deleted Portal campaign, so the otherwise-correct post-call preview request failed with `campaign_id not found`.
+
+Impact: A deleted campaign mapping no longer blocks the meeting review when the selected client has one unambiguous live campaign; the repaired mapping is reused by later reviews. The Portal's existing additive `pixel_delegations.campaign_id` migration was also applied to production so accepted previews persist their review ID and confirmation URL.
+
+Files: `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`
