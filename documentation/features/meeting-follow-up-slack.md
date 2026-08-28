@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-08-27 (natural status-led client follow-up voice)
+**Last Modified:** 2026-08-27 (canonical public post-call review fields and direct task handoff)
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` sends the admin one concise meeting summary with the follow-up count and a **Review meeting follow-ups** link. The link opens the canonical meeting workspace and its existing chat; task delegation and the editable client message finish there without an automatic client send.
 
@@ -27,7 +27,7 @@ The canonical post-call path is now meeting-first rather than automation-task-fi
 17. Notes accept relevant links and render them as clickable content immediately after save. Meeting recap documents repair provider Markdown embedded in HTML paragraphs on open, and post-call draft cards normalize Markdown emphasis to plain text.
 18. Recap and follow-up quick actions draft from available meeting evidence immediately. Missing dates are omitted or proposed instead of blocking the first draft with a clarification request.
 19. Related calls require the same mapped client/campaign. A different mapped client never ranks, even with a recording or a shared host. Unmapped series can still match on a distinctive title token or two-plus overlapping attendees. Generic words like strategy/growth/webinar are not relatedness.
-20. Pixel's active post-call recap links to `/home/meetings?meeting=…&space=…&review=follow-up`. The meeting workspace stays visible while its persistent conversation opens once with an inline editable card already populated from the exact Slack summary and prepared client message, the mapped client workspace and attendees, plus the current non-dismissed meeting follow-ups and their live count. **Continue to task review** invokes the existing ROAS Portal / Page Grader bulk-delegation preview through `use_mcp_tool`; it never uses native `create_task` or the Delegation Desk. After the operator completes that task-by-task review, Pixel returns the prepared client message in the existing editable draft card. The URL marker is consumed after opening so refreshes do not restart the cycle.
+20. Pixel's active post-call recap links to the token-scoped `/meeting-review/:token` page, which works without an authenticated ROAS session. The context step edits the canonical meeting fields with the same Meetings controls: summary, Call Kind, Call status, Client Workspace, and attendee badges. Every retained follow-up is editable and removable and must include WHO, WHAT, and WHEN before continuing. **Continue to task review** calls the connected ROAS Portal delegation-preview API directly with one stable meeting idempotency key; it never sends a chat prompt, uses native `create_task`, or writes to the Delegation Desk. The returned `confirm_url` opens the existing Portal task-by-task review. Only after the operator marks that review complete does the prepared client message appear in the existing editable draft card for copy; it is never sent automatically.
 
 Exact Fathom `action_items` are mirrored into Meetings `follow_up` space_items on ingest (Programs Action items + Home). When the webhook payload has zero actions, we refetch the meeting once from Fathom; if still empty we do not invent tasks from the transcript. The default `Fathom Meeting Log` automation runs lifecycle status updates plus grounded `agent_suggest_tasks` (enrich assignees/due/priority onto those follow_ups — never invent when `action_items` is empty). Slack confirm remains an explicit downstream workflow, not an automatic side effect of ingest.
 
@@ -83,11 +83,11 @@ Fathom recording ready (my_recordings OR shared_team_recordings)
   → request_slack_follow_up_confirm
        Shadow: store recap + account-manager drafts in Conversations; send nothing
        Active: DM concise summary + follow-up count + one review link; keep reminder drafts unsent
-  → link opens canonical meeting workspace + persistent meeting chat
-  → edit/confirm the persisted Slack recap/message, mapped context, and current follow-up list inline
-  → one page_grader_create_delegation_preview call → existing Portal task-by-task Confirm UI
-  → user reports delegation review complete
-  → Pixel returns the final client message in the existing editable draft card
+  → link opens the public token-scoped view of the canonical meeting
+  → edit/confirm canonical meeting fields and WHO / WHAT / WHEN for current follow-ups
+  → one direct Page Grader delegation-preview request → existing Portal task-by-task Confirm UI
+  → user marks the delegation review complete
+  → the prepared client message appears in the existing editable draft card
   → user copies the message; ROAS does not send it automatically
 ```
 

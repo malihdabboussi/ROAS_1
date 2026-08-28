@@ -5,6 +5,7 @@ import { PageGraderSendWorkService } from '../page-grader-send-work.service'
 describe('PageGraderApiService.sendWork', () => {
   const pageGrader = {
     createWork: vi.fn(),
+    createDelegationPreview: vi.fn(),
     healthCheck: vi.fn(),
     listClients: vi.fn(),
     getClientMetaContext: vi.fn(),
@@ -85,6 +86,28 @@ describe('PageGraderApiService.sendWork', () => {
         metadata: expect.objectContaining({ base_url_host: 'portal.example.com' }),
       }),
     )
+  })
+
+  it('creates a delegation preview with the connected Portal credentials', async () => {
+    const preview = {
+      delegation_id: 'delegation-1',
+      confirm_url: 'https://portal.example.com/delegations/delegation-1',
+      tasks: [],
+      campaign_id: 'campaign-1',
+    }
+    pageGrader.createDelegationPreview.mockResolvedValue(preview)
+
+    const result = await service.createDelegationPreview('user-1', {
+      campaign_id: 'campaign-1',
+      raw_text: '1. WHAT: Ship recap\nWHO: Dylan\nWHEN: 2026-08-28',
+    })
+
+    expect(pageGrader.createDelegationPreview).toHaveBeenCalledWith(
+      'https://example.supabase.co/functions/v1/roas-api',
+      'test-key',
+      expect.objectContaining({ campaign_id: 'campaign-1' }),
+    )
+    expect(result).toEqual(preview)
   })
 
   it('preserves the client scope map and webhook secret when reconnecting', async () => {

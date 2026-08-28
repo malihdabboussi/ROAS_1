@@ -1,4 +1,5 @@
 import type { ClientCampaignMapping } from '@/lib/agency-clients'
+import type { FieldDef } from '@/lib/spaces/space-schema-types'
 
 export type PublicMeetingFollowUpReview = {
   meeting: {
@@ -8,8 +9,18 @@ export type PublicMeetingFollowUpReview = {
     summary: string
     client_workspace: string
     client_campaign: ClientCampaignMapping | null
+    attendee_ids: string[]
     attendees: string[]
-    follow_ups: Array<{ id: string; title: string; status: string }>
+    call_kind: string
+    call_status: string
+    fields: { call_kind: FieldDef; call_status: FieldDef; attendees: FieldDef }
+    follow_ups: Array<{
+      id: string
+      title: string
+      status: string
+      owner: string
+      due_date: string
+    }>
     follow_up_message: string
     conversation_id: string
   }
@@ -46,9 +57,12 @@ export function updateMeetingFollowUpReview(
   input: {
     summary: string
     client_campaign: ClientCampaignMapping | null
-    attendees: string[]
+    attendee_ids: string[]
+    call_kind: string
+    call_status: string
     follow_up_message: string
     dismissed_follow_up_ids: string[]
+    follow_ups: Array<{ id: string; title: string; owner: string; due_date: string }>
   },
 ) {
   return request<PublicMeetingFollowUpReview>(token, {
@@ -56,6 +70,21 @@ export function updateMeetingFollowUpReview(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   })
+}
+
+export type MeetingDelegationPreview = {
+  delegation_id: string
+  confirm_url: string
+  tasks: unknown[]
+  campaign_id: string | null
+}
+
+export function createMeetingDelegationPreview(token: string) {
+  return request<MeetingDelegationPreview>(
+    token,
+    { method: 'POST', signal: AbortSignal.timeout(30_000) },
+    '/delegation-preview',
+  )
 }
 
 export type PublicMeetingReviewChat = {

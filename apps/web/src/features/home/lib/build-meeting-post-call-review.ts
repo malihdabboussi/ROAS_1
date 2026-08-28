@@ -1,5 +1,6 @@
 import type { MeetingPostCallReview } from '@/components/global-chat/store/use-global-chat-store'
 import { parseClientCampaignMapping } from '@/lib/agency-clients'
+import type { FieldDef } from '@/lib/spaces/space-schema-types'
 import type { MeetingWorkspaceBundle } from '../services/meeting-workspace-api'
 
 function text(...values: unknown[]): string {
@@ -45,7 +46,14 @@ export function buildMeetingPostCallReview(
   )
   const followUps = bundle.actions
     .filter((action) => action.status !== 'dismissed')
-    .map((action) => ({ id: action.id, title: action.title, status: action.status }))
+    .map((action) => ({
+      id: action.id,
+      title: action.title,
+      status: action.status,
+      owner: action.canonical_assignee_name ?? '',
+      dueDate: action.due_at?.slice(0, 10) ?? '',
+    }))
+  const attendeeIds = Array.isArray(custom.attendees) ? custom.attendees.map(String) : []
 
   return {
     spaceId,
@@ -56,6 +64,14 @@ export function buildMeetingPostCallReview(
     clientWorkspace,
     clientCampaign: clientCampaignMapping,
     attendees: attendees || (bundle.attendee_labels ?? []).join(', '),
+    attendeeIds,
+    callKind: text(custom.call_kind),
+    callStatus: text(custom.call_status),
+    fields: {
+      callKind: basicField('call_kind', 'Call Kind'),
+      callStatus: basicField('call_status', 'Call status'),
+      attendees: basicField('attendees', 'Attendees', 'multi_select'),
+    },
     followUpCount: followUps.length,
     followUps,
     followUpMessage:
@@ -80,4 +96,12 @@ function buildFallbackFollowUpMessage(
     '',
     'Looking forward to a good week. I\u2019ll let you know if anything else gets updated or changed.',
   ].join('\n')
+}
+
+function basicField(
+  id: string,
+  name: string,
+  type: 'select' | 'multi_select' = 'select',
+): FieldDef {
+  return { id, name, type, options: [] }
 }

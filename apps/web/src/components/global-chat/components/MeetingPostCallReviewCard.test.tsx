@@ -2,15 +2,10 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { MeetingPostCallReviewCard } from './MeetingPostCallReviewCard'
 
-vi.mock('@/lib/agency-clients', () => ({
+vi.mock('@/lib/agency-clients', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/agency-clients')>()),
   useClientCampaignGroups: () => ({
     groups: [{ clientId: 'client-1', clientName: 'Yasir Khan', campaigns: [] }],
-  }),
-  toClientOnlyMapping: (group: { clientId: string; clientName: string }) => ({
-    client_id: group.clientId,
-    client_name: group.clientName,
-    campaign_id: '',
-    campaign_name: '',
   }),
 }))
 
@@ -32,21 +27,34 @@ describe('MeetingPostCallReviewCard', () => {
             campaign_id: '',
             campaign_name: '',
           },
+          attendeeIds: [],
           attendees: 'Yasir, Dylan, Nate',
+          callKind: 'client',
+          callStatus: 'completed',
+          fields: {
+            callKind: { id: 'call_kind', name: 'Call Kind', type: 'select', options: [] },
+            callStatus: { id: 'call_status', name: 'Call status', type: 'select', options: [] },
+            attendees: { id: 'attendees', name: 'Attendees', type: 'multi_select', options: [] },
+          },
           followUpCount: 7,
-          followUps: [{ id: 'follow-up-1', title: 'Build the VSL funnel', status: 'proposed' }],
+          followUps: [
+            {
+              id: 'follow-up-1',
+              title: 'Build the VSL funnel',
+              status: 'proposed',
+              owner: 'Dylan',
+              dueDate: '2026-08-28',
+            },
+          ],
           followUpMessage: 'Original follow-up',
         }}
         onContinue={onContinue}
       />,
     )
 
-    expect(screen.getByText('Build the VSL funnel')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Build the VSL funnel')).toBeInTheDocument()
     fireEvent.change(screen.getByDisplayValue('Original summary'), {
       target: { value: 'Edited summary' },
-    })
-    fireEvent.change(screen.getByDisplayValue('Original follow-up'), {
-      target: { value: 'Edited follow-up' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss Build the VSL funnel' }))
     fireEvent.click(screen.getByRole('button', { name: 'Continue to task review' }))
@@ -54,7 +62,7 @@ describe('MeetingPostCallReviewCard', () => {
     expect(onContinue).toHaveBeenCalledWith(
       expect.objectContaining({
         summary: 'Edited summary',
-        followUpMessage: 'Edited follow-up',
+        followUpMessage: 'Original follow-up',
         followUps: [],
         followUpCount: 0,
       }),

@@ -340,6 +340,11 @@ export class PageGraderApiService {
     return { assignees }
   }
 
+  async createDelegationPreview(userId: string, payload: Record<string, unknown>) {
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.createDelegationPreview(creds.baseUrl, creds.apiKey, payload)
+  }
+
   async upsertClientScopeMap(userId: string, dto: UpsertPageGraderClientScopeMapDto) {
     await this.getCreds(userId)
     const next: Record<string, PageGraderClientScopeEntry> = {}

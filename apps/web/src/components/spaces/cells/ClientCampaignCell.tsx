@@ -30,6 +30,7 @@ type ClientCampaignCellProps = BaseCellProps & {
   fieldRowVariant?: 'default' | 'kanban'
   onOpenDetail?: (item: SpaceItem) => void
   displayMode?: 'combined' | 'client' | 'space'
+  groupsOverride?: ClientCampaignGroup[]
 }
 
 export function ClientCampaignCell({
@@ -41,6 +42,7 @@ export function ClientCampaignCell({
   spaceItem,
   onOpenDetail,
   displayMode = 'combined',
+  groupsOverride,
 }: ClientCampaignCellProps) {
   const mapping = parseClientCampaignMapping(value)
   const [open, setOpen] = useState(!!openOnMount)
@@ -49,7 +51,9 @@ export function ClientCampaignCell({
   const buttonRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
-  const { groups, failed } = useClientCampaignGroups(open && !readonly)
+  const loaded = useClientCampaignGroups(open && !readonly && groupsOverride === undefined)
+  const groups = groupsOverride ?? loaded.groups
+  const failed = groupsOverride === undefined && loaded.failed
 
   useEffect(() => {
     if (failed) toast.error(SPACES_CELL_TOAST_ERRORS.CLIENT_CAMPAIGN_LOAD_FAILED.userMessage)

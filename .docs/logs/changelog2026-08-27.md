@@ -69,3 +69,13 @@ Why: Client Workspace was free text, attendee option IDs were not resolved, foll
 Impact: Pixel's link now opens one token-scoped review in signed-out browsers; reviewers can map the real client workspace, see and edit attendees, dismiss irrelevant follow-ups, continue into the existing Portal delegation instructions, and retain the prepared message through the editable final chat draft.
 
 Files: `apps/api/src/modules/meetings/`, `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.workflow.ts`, `apps/web/src/app/meeting-review/`, `apps/web/src/components/global-chat/`, `apps/web/src/features/home/`, `apps/web/src/middleware.test.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-08-27 18:15 - [FIX]
+
+What: Rebuilt the public post-call review as a canonical meeting context step, a direct ROAS Portal bulk-delegation handoff, and a final editable follow-up-message step.
+
+Why: The former transition sent a long Pixel chat prompt with a 15-minute timeout, leaving the page on **Preparing task review** instead of opening the existing delegation preview. The public context also used disconnected form values and exposed the follow-up message too early.
+
+Impact: Call Kind, Call status, Client Workspace, and attendees now reuse Meetings field controls; tasks can be edited or removed and require WHO, WHAT, and WHEN; the Portal confirmation link is created directly with a 30-second browser timeout; and the copy-only client message appears only after task review.
+
+Files: `apps/api/src/modules/integrations/page-grader/services/page-grader-api.service.ts`, `apps/api/src/modules/meetings/`, `apps/web/src/components/global-chat/`, `apps/web/src/components/spaces/cells/ClientCampaignCell.tsx`, `apps/web/src/features/home/`, `documentation/features/meeting-follow-up-slack.md`

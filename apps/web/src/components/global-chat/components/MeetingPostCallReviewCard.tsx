@@ -1,11 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 import { X } from 'lucide-react'
+import { ClientCampaignCell } from '@/components/spaces/cells/ClientCampaignCell'
+import { MultiSelectCell } from '@/components/spaces/cells/MultiSelectCell'
+import { SelectCell } from '@/components/ui/forms/SelectCell'
 import { MEETING_POST_CALL_REVIEW_MESSAGES } from '@/features/home/config/meeting-post-call-actions.config'
 import {
-  toClientOnlyMapping,
   useClientCampaignGroups,
+  type ClientCampaignGroup,
   type ClientCampaignMapping,
 } from '@/lib/agency-clients'
 import type { MeetingPostCallReview } from '../store/use-global-chat-store'
@@ -22,10 +25,25 @@ export function MeetingPostCallReviewCard({
   const [draft, setDraft] = useState(review)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const { groups } = useClientCampaignGroups(clientWorkspaceOptions === undefined)
-  const options =
-    clientWorkspaceOptions ??
-    (groups ?? []).filter((group) => !group.inactive).map(toClientOnlyMapping)
+  const loaded = useClientCampaignGroups(clientWorkspaceOptions === undefined)
+  const groups = useMemo<ClientCampaignGroup[] | undefined>(() => {
+    if (clientWorkspaceOptions === undefined) return loaded.groups ?? undefined
+    return clientWorkspaceOptions.map((option) => ({
+      clientId: option.client_id,
+      clientName: option.client_name,
+      inactive: false,
+      campaigns: [
+        {
+          id: option.campaign_id,
+          name: option.campaign_name || option.client_name,
+          roasSpaceId: option.roas_space_id ?? null,
+        },
+      ],
+    }))
+  }, [clientWorkspaceOptions, loaded.groups])
+  const completeTasks = draft.followUps.every(
+    (item) => item.title.trim() && item.owner.trim() && item.dueDate,
+  )
 
   useEffect(() => setDraft(review), [review])
 
@@ -40,105 +58,129 @@ export function MeetingPostCallReviewCard({
             {MEETING_POST_CALL_REVIEW_MESSAGES.description}
           </p>
         </div>
-
         <label className="gap-spacing-1 flex flex-col">
-          <span className="body-3 text-muted-foreground">
-            {MEETING_POST_CALL_REVIEW_MESSAGES.summaryLabel}
-          </span>
+          <span className="body-3 text-muted-foreground">Meeting summary</span>
           <textarea
             value={draft.summary}
             rows={4}
             onChange={(event) =>
               setDraft((current) => ({ ...current, summary: event.target.value }))
             }
-            className="body-3 rounded-spacing-2 border-border bg-background px-spacing-3 py-spacing-2 focus:ring-ring w-full resize-y border outline-none focus:ring-2"
+            className="input-glass body-3 rounded-spacing-2 border-border bg-background px-spacing-3 py-spacing-2 focus:ring-ring w-full resize-y border outline-none focus:ring-2"
           />
         </label>
-
-        <label className="gap-spacing-1 flex flex-col">
-          <span className="body-3 text-muted-foreground">
-            {MEETING_POST_CALL_REVIEW_MESSAGES.clientWorkspaceLabel}
-          </span>
-          <select
-            value={draft.clientCampaign?.client_id ?? ''}
-            onChange={(event) => {
-              const selected =
-                options.find((option) => option.client_id === event.target.value) ?? null
-              setDraft((current) => ({
-                ...current,
-                clientCampaign: selected,
-                clientWorkspace: selected?.client_name ?? '',
-              }))
-            }}
-            className="input-glass body-3 rounded-spacing-2 border-border bg-background h-spacing-9 px-spacing-3 focus:ring-ring w-full border outline-none focus:ring-2"
-            aria-label={MEETING_POST_CALL_REVIEW_MESSAGES.clientWorkspaceLabel}
-          >
-            <option value="">Select client workspace</option>
-            {options.map((option) => (
-              <option key={option.client_id} value={option.client_id}>
-                {option.client_name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="gap-spacing-1 flex flex-col">
-          <span className="body-3 text-muted-foreground">
-            {MEETING_POST_CALL_REVIEW_MESSAGES.attendeesLabel}
-          </span>
-          <input
-            value={draft.attendees}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, attendees: event.target.value }))
-            }
-            className="body-3 rounded-spacing-2 border-border bg-background h-spacing-9 px-spacing-3 focus:ring-ring w-full border outline-none focus:ring-2"
+        <div className="gap-spacing-3 grid sm:grid-cols-2">
+          <MeetingSelect
+            label="Call Kind"
+            field={draft.fields.callKind}
+            value={draft.callKind}
+            onChange={(callKind) => setDraft((current) => ({ ...current, callKind }))}
           />
-        </label>
-
+          <MeetingSelect
+            label="Call status"
+            field={draft.fields.callStatus}
+            value={draft.callStatus}
+            onChange={(callStatus) => setDraft((current) => ({ ...current, callStatus }))}
+          />
+        </div>
         <div className="gap-spacing-1 flex flex-col">
-          <span className="body-3 text-muted-foreground">
-            {MEETING_POST_CALL_REVIEW_MESSAGES.followUpCountLabel} ({draft.followUps.length})
-          </span>
+          <span className="body-3 text-muted-foreground">Client Workspace</span>
+          <div className="input-glass border-border rounded-spacing-2 min-h-spacing-9 px-spacing-2 flex items-center border">
+            <ClientCampaignCell
+              field={{ id: 'client_workspace', name: 'Client Workspace', type: 'text' }}
+              value={draft.clientCampaign}
+              displayMode="client"
+              groupsOverride={groups}
+              onChange={(value) => {
+                const selected = value as ClientCampaignMapping | null
+                setDraft((current) => ({
+                  ...current,
+                  clientCampaign: selected,
+                  clientWorkspace: selected?.client_name ?? '',
+                }))
+              }}
+            />
+          </div>
+        </div>
+        <div className="gap-spacing-1 flex flex-col">
+          <span className="body-3 text-muted-foreground">Attendees</span>
+          <div className="input-glass border-border rounded-spacing-2 min-h-spacing-9 px-spacing-2 flex items-center border">
+            <MultiSelectCell
+              field={draft.fields.attendees}
+              value={draft.attendeeIds}
+              onChange={(value) =>
+                setDraft((current) => ({
+                  ...current,
+                  attendeeIds: Array.isArray(value) ? value.map(String) : [],
+                }))
+              }
+            />
+          </div>
+        </div>
+        <div className="gap-spacing-2 flex flex-col">
+          <div>
+            <p className="body-3 text-muted-foreground">
+              Follow-ups to review ({draft.followUps.length})
+            </p>
+            <p className="body-4 text-muted-foreground">Every task requires WHO, WHAT, and WHEN.</p>
+          </div>
           {draft.followUps.map((followUp) => (
             <div
               key={followUp.id}
-              className="border-border rounded-spacing-2 body-3 gap-spacing-2 px-spacing-3 py-spacing-2 flex items-center border"
+              className="border-border rounded-spacing-2 gap-spacing-2 p-spacing-3 flex flex-col border"
             >
-              <span className="min-w-0 flex-1">{followUp.title}</span>
-              <button
-                type="button"
-                className="btn-icon-bare text-destructive shrink-0"
-                aria-label={`Dismiss ${followUp.title}`}
-                onClick={() =>
-                  setDraft((current) => {
-                    const followUps = current.followUps.filter((item) => item.id !== followUp.id)
-                    return { ...current, followUps, followUpCount: followUps.length }
-                  })
-                }
-              >
-                <X className="icon-xs" aria-hidden />
-              </button>
+              <div className="gap-spacing-2 flex items-start">
+                <TaskInput
+                  label="WHAT"
+                  value={followUp.title}
+                  onChange={(title) => updateFollowUp(setDraft, followUp.id, { title })}
+                />
+                <button
+                  type="button"
+                  className="btn-icon-bare text-destructive shrink-0"
+                  aria-label={`Dismiss ${followUp.title}`}
+                  onClick={() =>
+                    setDraft((current) => {
+                      const followUps = current.followUps.filter((item) => item.id !== followUp.id)
+                      return { ...current, followUps, followUpCount: followUps.length }
+                    })
+                  }
+                >
+                  <X className="icon-xs" aria-hidden />
+                </button>
+              </div>
+              <div className="gap-spacing-2 grid sm:grid-cols-2">
+                <TaskInput
+                  label="WHO"
+                  value={followUp.owner}
+                  placeholder="Responsible person"
+                  onChange={(owner) => updateFollowUp(setDraft, followUp.id, { owner })}
+                />
+                <label className="gap-spacing-1 flex min-w-0 flex-1 flex-col">
+                  <span className="typo-caption text-muted-foreground">WHEN</span>
+                  <input
+                    type="date"
+                    className="input-glass body-3 border-border rounded-spacing-2 h-spacing-9 px-spacing-3 border"
+                    value={followUp.dueDate}
+                    onChange={(event) =>
+                      updateFollowUp(setDraft, followUp.id, { dueDate: event.target.value })
+                    }
+                  />
+                </label>
+              </div>
             </div>
           ))}
         </div>
-
-        <label className="gap-spacing-1 flex flex-col">
-          <span className="body-3 text-muted-foreground">
-            {MEETING_POST_CALL_REVIEW_MESSAGES.followUpMessageLabel}
-          </span>
-          <textarea
-            value={draft.followUpMessage}
-            rows={6}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, followUpMessage: event.target.value }))
-            }
-            className="body-3 rounded-spacing-2 border-border bg-background px-spacing-3 py-spacing-2 focus:ring-ring w-full resize-y border outline-none focus:ring-2"
-          />
-        </label>
-
+        {!completeTasks ? (
+          <p className="body-3 text-warning">Add a responsible person and date to every task.</p>
+        ) : null}
         <div className="flex justify-end">
           <button
             type="button"
+            disabled={
+              !draft.summary.trim() || !draft.clientCampaign || !completeTasks || submitting
+            }
+            className="button-default button-glass-accent disabled:opacity-50"
             onClick={async () => {
               setSubmitting(true)
               setSubmitError(null)
@@ -150,12 +192,8 @@ export function MeetingPostCallReviewCard({
                 setSubmitting(false)
               }
             }}
-            disabled={!draft.summary.trim() || submitting}
-            className="button-glass-accent rounded-spacing-2 body-3 px-spacing-4 py-spacing-2 font-medium disabled:opacity-50"
           >
-            {submitting
-              ? MEETING_POST_CALL_REVIEW_MESSAGES.continuingLabel
-              : MEETING_POST_CALL_REVIEW_MESSAGES.continueLabel}
+            {submitting ? 'Preparing task review...' : 'Continue to task review'}
           </button>
         </div>
         {submitError ? (
@@ -166,4 +204,60 @@ export function MeetingPostCallReviewCard({
       </div>
     </div>
   )
+}
+
+function MeetingSelect({
+  label,
+  field,
+  value,
+  onChange,
+}: {
+  label: string
+  field: MeetingPostCallReview['fields']['callKind']
+  value: string
+  onChange: (value: string) => void
+}) {
+  return (
+    <div className="gap-spacing-1 flex flex-col">
+      <span className="body-3 text-muted-foreground">{label}</span>
+      <div className="input-glass border-border rounded-spacing-2 h-spacing-9 px-spacing-3 flex items-center border">
+        <SelectCell field={field} value={value} onChange={(next) => onChange(String(next ?? ''))} />
+      </div>
+    </div>
+  )
+}
+
+function TaskInput({
+  label,
+  value,
+  placeholder,
+  onChange,
+}: {
+  label: string
+  value: string
+  placeholder?: string
+  onChange: (value: string) => void
+}) {
+  return (
+    <label className="gap-spacing-1 flex min-w-0 flex-1 flex-col">
+      <span className="typo-caption text-muted-foreground">{label}</span>
+      <input
+        className="input-glass body-3 border-border rounded-spacing-2 h-spacing-9 px-spacing-3 border"
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  )
+}
+
+function updateFollowUp(
+  setDraft: Dispatch<SetStateAction<MeetingPostCallReview>>,
+  id: string,
+  patch: Partial<MeetingPostCallReview['followUps'][number]>,
+) {
+  setDraft((current) => ({
+    ...current,
+    followUps: current.followUps.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+  }))
 }

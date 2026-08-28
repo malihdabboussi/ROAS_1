@@ -1,7 +1,9 @@
 import { createHash } from 'node:crypto'
 import { BadRequestException, GoneException, Injectable, NotFoundException } from '@nestjs/common'
+import { ModuleRef } from '@nestjs/core'
 import type { Response } from 'express'
 import { SupabaseServiceClient, UserSessionMintService } from '@vibey/api-shared'
+import { PageGraderApiService } from '../../integrations/page-grader/services/page-grader-api.service'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import {
   isFollowUpSpaceItem,
@@ -14,6 +16,7 @@ export class MeetingFollowUpReviewService {
     private readonly serviceClient: SupabaseServiceClient,
     private readonly userSessionMint: UserSessionMintService,
     private readonly userAgentApi: UserAgentApiService,
+    private readonly moduleRef: ModuleRef,
   ) {}
 
   async getReview(token: string) {
@@ -29,7 +32,9 @@ export class MeetingFollowUpReviewService {
       this.client.from('spaces').select('schema').eq('id', String(call.space_id)).maybeSingle(),
       this.client
         .from('space_items')
-        .select('id, title, source, status, custom_data, parent_item_id, space_id')
+        .select(
+          'id, title, source, status, custom_data, parent_item_id, space_id, due_date, assignee_type, assignee_id, assignees, description, priority',
+        )
         .eq('space_id', String(call.space_id))
         .or(
           `parent_item_id.eq.${String(call.id)},custom_data->>source_call_item_id.eq.${String(call.id)}`,
@@ -50,6 +55,8 @@ export class MeetingFollowUpReviewService {
       .map(mapFollowUpSpaceItemToMeetingAction)
       .filter((action) => action.status !== 'dismissed')
     const clientCampaign = record(custom.client_campaign)
+    const schema = record(space.data)
+    const fields = resolveMeetingFields(custom, schema)
     return {
       meeting: {
         id: String(call.id),
@@ -67,16 +74,22 @@ export class MeetingFollowUpReviewService {
           custom.client_name,
         ),
         client_campaign: Object.keys(clientCampaign).length > 0 ? clientCampaign : null,
-        attendees: resolveAttendeeLabels(custom, record(space.data)),
+        attendee_ids: fields.attendees.value,
+        attendees: resolveAttendeeLabels(custom, schema),
+        call_kind: fields.call_kind.value,
+        call_status: fields.call_status.value,
+        fields,
         follow_ups: actions.map((action) => ({
           id: String(action.id),
           title: String(action.title),
           status: String(action.status),
+          owner: firstText(action.canonical_assignee_name),
+          due_date: firstText(action.due_at),
         })),
         follow_up_message: firstText(slack.draft_message),
         conversation_id: firstText(workspace.data?.conversation_id),
       },
-      client_workspaces: resolveClientOptions(integrations.data ?? [], call.org_id),
+      client_workspaces: resolveClientOptions(integrations.data ?? [], clientCampaign),
       expires_at: firstText(slack.review_token_expires_at),
       review_started: Boolean(firstText(slack.review_started_at)),
     }
@@ -87,9 +100,12 @@ export class MeetingFollowUpReviewService {
     input: {
       summary: string
       client_campaign: Record<string, unknown> | null
-      attendees: string[]
+      attendee_ids: string[]
+      call_kind: string
+      call_status: string
       follow_up_message: string
       dismissed_follow_up_ids: string[]
+      follow_ups: Array<{ id: string; title: string; owner: string; due_date: string }>
     },
   ) {
     const call = await this.requireCall(token)
@@ -102,7 +118,9 @@ export class MeetingFollowUpReviewService {
           ...custom,
           meeting_summary: input.summary,
           client_campaign: input.client_campaign,
-          attendee_labels: input.attendees,
+          attendees: input.attendee_ids,
+          call_kind: input.call_kind,
+          call_status: input.call_status,
           slack_follow_up_confirm: {
             ...slack,
             review_summary: input.summary,
@@ -144,7 +162,92 @@ export class MeetingFollowUpReviewService {
           ),
       )
     }
+    const followUpIds = input.follow_ups.map((followUp) => followUp.id)
+    const existingFollowUps = followUpIds.length
+      ? await this.client
+          .from('space_items')
+          .select('id, custom_data')
+          .in('id', followUpIds)
+          .eq('space_id', String(call.space_id))
+      : { data: [], error: null }
+    if (existingFollowUps.error) throw new BadRequestException(existingFollowUps.error.message)
+    const customById = new Map(
+      ((existingFollowUps.data ?? []) as Record<string, unknown>[]).map((row) => [
+        String(row.id),
+        record(row.custom_data),
+      ]),
+    )
+    const followUpUpdates = await Promise.all(
+      input.follow_ups.map((followUp) =>
+        this.client
+          .from('space_items')
+          .update({
+            title: followUp.title,
+            due_date: followUp.due_date,
+            custom_data: {
+              ...customById.get(followUp.id),
+              suggested_assignee_name: followUp.owner,
+            },
+          })
+          .eq('id', followUp.id)
+          .eq('space_id', String(call.space_id)),
+      ),
+    )
+    const updateError = followUpUpdates.find((result) => result.error)?.error
+    if (updateError) throw new BadRequestException(updateError.message)
     return this.getReview(token)
+  }
+
+  async createDelegationPreview(token: string) {
+    const call = await this.requireCall(token)
+    const review = await this.getReview(token)
+    const campaign = record(review.meeting.client_campaign)
+    const clientId = firstText(campaign.client_id)
+    const campaignId = firstText(campaign.campaign_id)
+    if (!clientId || !campaignId) {
+      throw new BadRequestException('Choose a mapped Client Workspace before task review')
+    }
+    const tasks = review.meeting.follow_ups as Array<{
+      title: string
+      owner: string
+      due_date: string
+    }>
+    if (tasks.length === 0) throw new BadRequestException('Add at least one follow-up to review')
+    if (tasks.some((task) => !task.owner || !task.due_date)) {
+      throw new BadRequestException('Every follow-up needs a responsible person and due date')
+    }
+    const pageGrader = this.moduleRef.get(PageGraderApiService, { strict: false })
+    const rawText = tasks
+      .map(
+        (task, index) =>
+          `${index + 1}. WHAT: ${task.title}\nWHO: ${task.owner}\nWHEN: ${task.due_date}`,
+      )
+      .join('\n\n')
+    const result = await pageGrader.createDelegationPreview(String(call.user_id), {
+      client_ref: clientId,
+      campaign_id: campaignId,
+      raw_text: rawText,
+      source: 'roas_platform',
+      idempotency_key: `meeting-post-call:${String(call.id)}`,
+    })
+    const custom = record(call.custom_data)
+    const slack = record(custom.slack_follow_up_confirm)
+    const { error } = await this.client
+      .from('space_items')
+      .update({
+        custom_data: {
+          ...custom,
+          slack_follow_up_confirm: {
+            ...slack,
+            delegation_preview: result,
+            task_review_started_at: new Date().toISOString(),
+          },
+        },
+      })
+      .eq('id', String(call.id))
+      .eq('space_id', String(call.space_id))
+    if (error) throw new BadRequestException(error.message)
+    return result
   }
 
   async getChat(token: string) {
@@ -231,14 +334,13 @@ export class MeetingFollowUpReviewService {
   }
 }
 
-function resolveClientOptions(rows: unknown[], orgId: unknown) {
+function resolveClientOptions(rows: unknown[], current: Record<string, unknown>) {
   const options = new Map<
     string,
     { id: string; name: string; campaign_id: string; space_id: string | null }
   >()
   for (const rowValue of rows) {
     const row = record(rowValue)
-    if ((row.org_id ?? null) !== (orgId ?? null)) continue
     const scopeMap = record(record(row.metadata).client_scope_map)
     for (const [id, value] of Object.entries(scopeMap)) {
       const entry = record(value)
@@ -252,28 +354,67 @@ function resolveClientOptions(rows: unknown[], orgId: unknown) {
       })
     }
   }
+  const currentId = firstText(current.client_id)
+  const currentCampaignId = firstText(current.campaign_id)
+  if (currentId && currentCampaignId && !options.has(currentId)) {
+    options.set(currentId, {
+      id: currentId,
+      name: firstText(current.client_name, current.campaign_name) || 'Client workspace',
+      campaign_id: currentCampaignId,
+      space_id: firstText(current.space_id, current.roas_space_id) || null,
+    })
+  }
   return [...options.values()].sort((a, b) => a.name.localeCompare(b.name))
 }
 
-function resolveAttendeeLabels(custom: Record<string, unknown>, space: Record<string, unknown>) {
-  const saved = Array.isArray(custom.attendee_labels)
-    ? custom.attendee_labels
-        .map(String)
-        .map((label) => label.trim())
-        .filter(Boolean)
+function resolveMeetingFields(custom: Record<string, unknown>, space: Record<string, unknown>) {
+  const fields = Array.isArray(record(space.schema).fields)
+    ? (record(space.schema).fields as Array<Record<string, unknown>>)
     : []
-  if (saved.length > 0) return [...new Set(saved)]
+  const pick = (id: string, value: unknown, fallbackName: string) => {
+    const field = fields.find((candidate) => String(candidate.id ?? '') === id) ?? {}
+    return {
+      id,
+      name: firstText(field.name) || fallbackName,
+      type: firstText(field.type) || (id === 'attendees' ? 'multi_select' : 'select'),
+      options: Array.isArray(field.options) ? field.options : [],
+      value:
+        id === 'attendees' ? (Array.isArray(value) ? value.map(String) : []) : firstText(value),
+    }
+  }
+  return {
+    call_kind: pick('call_kind', custom.call_kind, 'Call Kind'),
+    call_status: pick('call_status', custom.call_status, 'Call status'),
+    attendees: pick('attendees', custom.attendees, 'Attendees'),
+  }
+}
+
+function resolveAttendeeLabels(custom: Record<string, unknown>, space: Record<string, unknown>) {
   const ids = Array.isArray(custom.attendees) ? custom.attendees.map(String) : []
   const fields = Array.isArray(record(space.schema).fields)
     ? (record(space.schema).fields as Array<Record<string, unknown>>)
     : []
   const options = fields.find((field) => String(field.id ?? '') === 'attendees')?.options
-  if (!Array.isArray(options)) return []
-  return ids.flatMap((id) => {
+  if (!Array.isArray(options)) return savedAttendeeLabels(custom)
+  const labels = ids.flatMap((id) => {
     const option = options.find((candidate) => String(record(candidate).id ?? '') === id)
     const label = firstText(record(option).label)
     return label ? [label] : []
   })
+  return labels.length > 0 ? [...new Set(labels)] : savedAttendeeLabels(custom)
+}
+
+function savedAttendeeLabels(custom: Record<string, unknown>) {
+  return Array.isArray(custom.attendee_labels)
+    ? [
+        ...new Set(
+          custom.attendee_labels
+            .map(String)
+            .map((label) => label.trim())
+            .filter(Boolean),
+        ),
+      ]
+    : []
 }
 
 function record(value: unknown): Record<string, unknown> {

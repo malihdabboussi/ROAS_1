@@ -20,9 +20,21 @@ const TokenSchema = z.object({ token: z.string().min(32).max(200) })
 const UpdateSchema = z.object({
   summary: z.string().trim().min(1).max(50_000),
   client_campaign: z.record(z.unknown()).nullable(),
-  attendees: z.array(z.string().trim().min(1).max(500)).max(100),
+  attendee_ids: z.array(z.string().trim().min(1).max(500)).max(100),
+  call_kind: z.string().trim().max(200),
+  call_status: z.string().trim().max(200),
   follow_up_message: z.string().max(100_000),
   dismissed_follow_up_ids: z.array(z.string().uuid()).max(200),
+  follow_ups: z
+    .array(
+      z.object({
+        id: z.string().uuid(),
+        title: z.string().trim().min(1).max(2_000),
+        owner: z.string().trim().min(1).max(500),
+        due_date: z.string().date(),
+      }),
+    )
+    .max(200),
 })
 const ChatSchema = z.object({ content: z.string().trim().min(1).max(50_000) })
 
@@ -45,6 +57,13 @@ export class MeetingFollowUpReviewController {
     @Body(new ZodValidationPipe(UpdateSchema)) body: z.infer<typeof UpdateSchema>,
   ) {
     return this.reviews.updateReview(params.token, body)
+  }
+
+  @Public()
+  @Post(':token/delegation-preview')
+  @HttpCode(HttpStatus.OK)
+  createDelegationPreview(@Param(new ZodValidationPipe(TokenSchema)) params: { token: string }) {
+    return this.reviews.createDelegationPreview(params.token)
   }
 
   @Public()

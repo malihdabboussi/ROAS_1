@@ -5,6 +5,7 @@ import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import type { ClientCampaignMapping } from '@/lib/agency-clients'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import type { FieldDef } from '@/lib/spaces/space-schema-types'
 import { fetchTeamRoster, type TeamRosterEntry } from '@/lib/team/team-roster-api'
 import {
   defaultAgentForSurface,
@@ -73,8 +74,22 @@ export interface MeetingPostCallReview {
   clientWorkspace: string
   clientCampaign: ClientCampaignMapping | null
   attendees: string
+  attendeeIds: string[]
+  callKind: string
+  callStatus: string
+  fields: {
+    callKind: FieldDef
+    callStatus: FieldDef
+    attendees: FieldDef
+  }
   followUpCount: number
-  followUps: Array<{ id: string; title: string; status: string }>
+  followUps: Array<{
+    id: string
+    title: string
+    status: string
+    owner: string
+    dueDate: string
+  }>
   followUpMessage: string
 }
 

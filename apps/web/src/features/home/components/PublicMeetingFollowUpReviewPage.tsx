@@ -7,23 +7,22 @@ import { MeetingPostCallReviewCard } from '@/components/global-chat/components/M
 import type { MeetingPostCallReview } from '@/components/global-chat/store/use-global-chat-store'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { WorkspaceSettingsModalProvider } from '@/lib/settings/workspace-settings-modal-context'
-import { buildMeetingFollowUpTaskReviewPrompt } from '../config/meeting-post-call-actions.config'
 import {
+  createMeetingDelegationPreview,
   fetchMeetingFollowUpReview,
-  fetchMeetingFollowUpReviewChat,
-  sendMeetingFollowUpReviewChat,
   updateMeetingFollowUpReview,
+  type MeetingDelegationPreview,
   type PublicMeetingFollowUpReview,
-  type PublicMeetingReviewChat,
 } from '../services/meeting-follow-up-review-api'
+
+type ReviewStage = 'context' | 'tasks' | 'message'
 
 export function PublicMeetingFollowUpReviewPage({ token }: { token: string }) {
   const [payload, setPayload] = useState<PublicMeetingFollowUpReview | null>(null)
-  const [chat, setChat] = useState<PublicMeetingReviewChat | null>(null)
+  const [stage, setStage] = useState<ReviewStage>('context')
+  const [preview, setPreview] = useState<MeetingDelegationPreview | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [sending, setSending] = useState(false)
-  const [message, setMessage] = useState('')
-  const [confirmedReview, setConfirmedReview] = useState<MeetingPostCallReview | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -35,179 +34,192 @@ export function PublicMeetingFollowUpReviewPage({ token }: { token: string }) {
 
   useEffect(() => void load(), [load])
 
-  useEffect(() => {
-    if (!payload?.review_started || chat) return
-    void fetchMeetingFollowUpReviewChat(token)
-      .then(setChat)
-      .catch((caught) =>
-        setError(caught instanceof Error ? caught.message : 'Meeting review chat unavailable'),
-      )
-  }, [chat, payload?.review_started, token])
-
-  const review = useMemo<MeetingPostCallReview | null>(() => {
-    if (!payload) return null
-    const meeting = payload.meeting
-    return {
-      spaceId: meeting.space_id,
-      conversationId: meeting.conversation_id,
-      meetingItemId: meeting.id,
-      meetingTitle: meeting.title,
-      summary: meeting.summary,
-      clientWorkspace: meeting.client_workspace,
-      clientCampaign: meeting.client_campaign,
-      attendees: meeting.attendees.join(', '),
-      followUpCount: meeting.follow_ups.length,
-      followUps: meeting.follow_ups,
-      followUpMessage: meeting.follow_up_message,
-    }
-  }, [payload])
-
+  const review = useMemo(() => (payload ? toReview(payload) : null), [payload])
   const clientOptions = useMemo(
     () =>
       (payload?.client_workspaces ?? []).map((option) => ({
         client_id: option.id,
         client_name: option.name,
         campaign_id: option.campaign_id,
-        campaign_name: '',
+        campaign_name: option.name,
         roas_space_id: option.space_id,
       })),
     [payload],
   )
 
-  useEffect(() => {
-    if (payload?.review_started && review) setConfirmedReview(review)
-  }, [payload?.review_started, review])
-
   const continueReview = async (confirmed: MeetingPostCallReview) => {
-    setSending(true)
+    setSubmitting(true)
     setError(null)
     try {
       const originalIds = new Set(payload?.meeting.follow_ups.map((item) => item.id) ?? [])
       const remainingIds = new Set(confirmed.followUps.map((item) => item.id))
-      await updateMeetingFollowUpReview(token, {
+      const saved = await updateMeetingFollowUpReview(token, {
         summary: confirmed.summary,
         client_campaign: confirmed.clientCampaign,
-        attendees: confirmed.attendees
-          .split(',')
-          .map((label) => label.trim())
-          .filter(Boolean),
+        attendee_ids: confirmed.attendeeIds,
+        call_kind: confirmed.callKind,
+        call_status: confirmed.callStatus,
         follow_up_message: confirmed.followUpMessage,
         dismissed_follow_up_ids: [...originalIds].filter((id) => !remainingIds.has(id)),
+        follow_ups: confirmed.followUps.map((item) => ({
+          id: item.id,
+          title: item.title,
+          owner: item.owner,
+          due_date: item.dueDate,
+        })),
       })
-      setConfirmedReview(confirmed)
-      await sendMeetingFollowUpReviewChat(
-        token,
-        buildMeetingFollowUpTaskReviewPrompt(confirmed),
-        () => undefined,
+      setPayload(saved)
+      setPreview(await createMeetingDelegationPreview(token))
+      setStage('tasks')
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'Task review could not be prepared. Please try again.',
       )
-      setChat(await fetchMeetingFollowUpReviewChat(token))
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Meeting review could not continue')
     } finally {
-      setSending(false)
+      setSubmitting(false)
     }
   }
 
-  const send = async () => {
-    const content = message.trim()
-    if (!content || sending) return
-    setSending(true)
-    setMessage('')
-    try {
-      await sendMeetingFollowUpReviewChat(token, content, () => undefined)
-      setChat(await fetchMeetingFollowUpReviewChat(token))
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Message could not be sent')
-    } finally {
-      setSending(false)
-    }
-  }
-
-  if (!payload && !error) {
-    return <VibeyLoadingOrb size="lg" text="Opening meeting review..." />
-  }
+  if (!payload && !error) return <VibeyLoadingOrb size="lg" text="Opening meeting review..." />
 
   return (
     <WorkspaceSettingsModalProvider>
       <main className="bg-background text-foreground min-h-dvh">
-        <header className="border-border px-spacing-4 py-spacing-3 border-b">
-          <div className="mx-auto w-full max-w-3xl">
-            <p className="typo-caption text-muted-foreground uppercase">Pixel post-call flow</p>
-            <h1 className="title-h6 mt-spacing-1 uppercase">
-              {payload?.meeting.title ?? 'MEETING REVIEW'}
-            </h1>
-          </div>
-        </header>
+        <ReviewHeader title={payload?.meeting.title ?? 'MEETING REVIEW'} />
         <div className="mx-auto w-full max-w-3xl">
-          {error ? (
-            <p role="alert" className="body-3 text-destructive p-spacing-4">
-              {error}
-            </p>
-          ) : null}
-          {review && !chat && !payload?.review_started ? (
+          {error ? <ReviewError message={error} onRetry={() => setError(null)} /> : null}
+          {review && stage === 'context' ? (
             <MeetingPostCallReviewCard
               review={review}
               clientWorkspaceOptions={clientOptions}
               onContinue={continueReview}
             />
           ) : null}
-          {sending && !chat ? <VibeyLoadingOrb text="Preparing task review..." /> : null}
-          {payload?.review_started && !chat && !sending ? (
-            <VibeyLoadingOrb text="Opening task review..." />
+          {submitting ? <VibeyLoadingOrb text="Preparing task review..." /> : null}
+          {stage === 'tasks' && preview ? (
+            <TaskReviewStep preview={preview} onComplete={() => setStage('message')} />
           ) : null}
-          {chat ? (
-            <section className="gap-spacing-3 p-spacing-4 flex flex-col">
-              {chat.messages.map((item) => (
-                <MessageBubble
-                  key={item.id}
-                  message={item as MessageBubbleProps['message']}
-                  isEditable={false}
-                  allowFork={false}
-                  conversationIdOverride={chat.conversation_id}
-                />
-              ))}
-              <label className="gap-spacing-2 flex flex-col">
-                <span className="body-3 text-muted-foreground">Message Pixel</span>
-                <textarea
-                  value={message}
-                  onChange={(event) => setMessage(event.target.value)}
-                  rows={3}
-                  className="input-glass body-3 rounded-spacing-2 border-border bg-background p-spacing-3 focus:ring-ring border outline-none focus:ring-2"
-                />
-              </label>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  disabled={!message.trim() || sending}
-                  onClick={() => void send()}
-                  className="button-default button-glass-primary disabled:opacity-50"
-                >
-                  {sending ? 'Sending...' : 'Send'}
-                </button>
-              </div>
-              {confirmedReview ? (
-                <section className="surface-card border-border rounded-spacing-3 p-spacing-3 gap-spacing-2 flex flex-col border">
-                  <p className="body-2 text-foreground font-medium">Prepared follow-up message</p>
-                  <p className="body-3 text-muted-foreground">
-                    This stays available while you finish the task review. Pixel’s final draft will
-                    appear above as an editable message card.
-                  </p>
-                  <textarea
-                    value={confirmedReview.followUpMessage}
-                    onChange={(event) =>
-                      setConfirmedReview((current) =>
-                        current ? { ...current, followUpMessage: event.target.value } : current,
-                      )
-                    }
-                    rows={8}
-                    className="input-glass body-3 rounded-spacing-2 border-border bg-background p-spacing-3 focus:ring-ring border outline-none focus:ring-2"
-                  />
-                </section>
-              ) : null}
-            </section>
-          ) : null}
+          {stage === 'message' && review ? <FollowUpMessageStep review={review} /> : null}
         </div>
       </main>
     </WorkspaceSettingsModalProvider>
+  )
+}
+
+function toReview(payload: PublicMeetingFollowUpReview): MeetingPostCallReview {
+  const meeting = payload.meeting
+  return {
+    spaceId: meeting.space_id,
+    conversationId: meeting.conversation_id,
+    meetingItemId: meeting.id,
+    meetingTitle: meeting.title,
+    summary: meeting.summary,
+    clientWorkspace: meeting.client_workspace,
+    clientCampaign: meeting.client_campaign,
+    attendeeIds: meeting.attendee_ids,
+    attendees: meeting.attendees.join(', '),
+    callKind: meeting.call_kind,
+    callStatus: meeting.call_status,
+    fields: {
+      callKind: meeting.fields.call_kind,
+      callStatus: meeting.fields.call_status,
+      attendees: meeting.fields.attendees,
+    },
+    followUpCount: meeting.follow_ups.length,
+    followUps: meeting.follow_ups.map((item) => ({
+      id: item.id,
+      title: item.title,
+      status: item.status,
+      owner: item.owner,
+      dueDate: item.due_date,
+    })),
+    followUpMessage: meeting.follow_up_message,
+  }
+}
+
+function ReviewHeader({ title }: { title: string }) {
+  return (
+    <header className="border-border px-spacing-4 py-spacing-3 border-b">
+      <div className="mx-auto w-full max-w-3xl">
+        <p className="typo-caption text-muted-foreground uppercase">Pixel post-call flow</p>
+        <h1 className="title-h6 mt-spacing-1 uppercase">{title}</h1>
+      </div>
+    </header>
+  )
+}
+
+function ReviewError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div
+      role="alert"
+      className="surface-card border-border rounded-spacing-3 m-spacing-4 p-spacing-4 gap-spacing-3 flex items-center justify-between border"
+    >
+      <p className="body-3 text-destructive">{message}</p>
+      <button type="button" className="button-default button-glass-neutral" onClick={onRetry}>
+        Try again
+      </button>
+    </div>
+  )
+}
+
+function TaskReviewStep({
+  preview,
+  onComplete,
+}: {
+  preview: MeetingDelegationPreview
+  onComplete: () => void
+}) {
+  return (
+    <section className="surface-card border-border rounded-spacing-3 m-spacing-4 p-spacing-4 gap-spacing-3 flex flex-col border">
+      <div>
+        <h2 className="title-h6 uppercase">REVIEW AND DELEGATE TASKS</h2>
+        <p className="body-3 text-muted-foreground mt-spacing-1">
+          Open the existing bulk task review, confirm each task, then return here.
+        </p>
+      </div>
+      <div className="gap-spacing-2 flex flex-wrap justify-end">
+        <a
+          className="button-default button-glass-accent"
+          href={preview.confirm_url}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Open task review
+        </a>
+        <button type="button" className="button-default button-glass-primary" onClick={onComplete}>
+          I finished task review
+        </button>
+      </div>
+    </section>
+  )
+}
+
+function FollowUpMessageStep({ review }: { review: MeetingPostCallReview }) {
+  const message: MessageBubbleProps['message'] = {
+    id: `meeting-follow-up-${review.meetingItemId}`,
+    conversation_id: review.conversationId || review.meetingItemId,
+    role: 'assistant',
+    content: `\`\`\`draft Follow-up message\n${review.followUpMessage}\n\`\`\``,
+    content_blocks: null,
+    metadata: {},
+    created_at: new Date().toISOString(),
+  }
+  return (
+    <section className="p-spacing-4 gap-spacing-2 flex flex-col">
+      <div>
+        <h2 className="title-h6 uppercase">FINALIZE FOLLOW-UP MESSAGE</h2>
+        <p className="body-3 text-muted-foreground mt-spacing-1">
+          Edit the prepared message, then copy it when it is ready. Nothing is sent automatically.
+        </p>
+      </div>
+      <MessageBubble
+        message={message}
+        isEditable={false}
+        allowFork={false}
+        conversationIdOverride={message.conversation_id}
+      />
+    </section>
   )
 }
