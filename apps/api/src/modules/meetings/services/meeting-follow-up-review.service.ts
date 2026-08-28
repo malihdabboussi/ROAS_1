@@ -10,6 +10,22 @@ import {
   mapFollowUpSpaceItemToMeetingAction,
 } from '../domain/meeting-follow-up-actions'
 
+function normalizePortalDelegationUrl(result: {
+  confirm_url: string
+  delegation_id?: string
+}) {
+  if (!result.confirm_url || !result.delegation_id) return result.confirm_url
+  try {
+    const url = new URL(result.confirm_url)
+    if (url.hostname !== 'portal.roas.io') return result.confirm_url
+    url.pathname = '/dashboard'
+    url.searchParams.set('delegation', result.delegation_id)
+    return url.toString()
+  } catch {
+    return result.confirm_url
+  }
+}
+
 @Injectable()
 export class MeetingFollowUpReviewService {
   constructor(
@@ -307,6 +323,10 @@ export class MeetingFollowUpReviewService {
       source: 'roas_platform',
       idempotency_key: `meeting-post-call:${String(call.id)}`,
     })
+    const delegationPreview = {
+      ...result,
+      confirm_url: normalizePortalDelegationUrl(result),
+    }
     const custom = record(call.custom_data)
     const slack = record(custom.slack_follow_up_confirm)
     const { error } = await this.client
@@ -317,7 +337,7 @@ export class MeetingFollowUpReviewService {
           client_campaign: repairedCampaign,
           slack_follow_up_confirm: {
             ...slack,
-            delegation_preview: result,
+            delegation_preview: delegationPreview,
             task_review_started_at: new Date().toISOString(),
           },
         },
@@ -325,7 +345,7 @@ export class MeetingFollowUpReviewService {
       .eq('id', String(call.id))
       .eq('space_id', String(call.space_id))
     if (error) throw new BadRequestException(error.message)
-    return result
+    return delegationPreview
   }
 
   async getChat(token: string) {

@@ -1,5 +1,12 @@
 # Changelog - August 27, 2026
 
+## [2026-08-27 22:02] - [FIX]
+
+What: Normalized Portal delegation review links to the Portal dashboard deep-link route before persisting and returning the post-call handoff.
+Why: The Portal root route redirected signed-in reviewers to `/dashboard` and discarded the delegation query, so the generated review opened the dashboard instead of the task-by-task review.
+Impact: Post-call task-review links now preserve the delegation ID and open the existing Portal bulk-delegation UI.
+Files: `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.test.ts`
+
 ## 2026-08-27 16:20 - [FIX]
 
 What: Made the Meetings surface deterministically select the active organization Meetings space when a legacy personal duplicate is present.

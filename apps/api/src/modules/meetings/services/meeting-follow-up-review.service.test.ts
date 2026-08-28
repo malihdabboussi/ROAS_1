@@ -114,7 +114,7 @@ describe('MeetingFollowUpReviewService', () => {
       },
     } as never)
 
-    await service.createDelegationPreview('review-token')
+    const result = await service.createDelegationPreview('review-token')
 
     expect(createDelegationPreview).toHaveBeenCalledWith(
       'user-1',
@@ -123,6 +123,9 @@ describe('MeetingFollowUpReviewService', () => {
         client_ref: 'client-1',
         campaign_id: 'campaign-1',
       }),
+    )
+    expect(result.confirm_url).toBe(
+      'https://portal.roas.io/dashboard?delegation=delegation-1',
     )
   })
 
