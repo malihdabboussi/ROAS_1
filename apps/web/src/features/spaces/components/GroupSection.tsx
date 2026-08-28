@@ -440,7 +440,13 @@ export function GroupSection({
                               subtaskCount={subCount}
                               expanded={subBlockOpen}
                               suppressSubtaskChevron={suppressSubtaskChevron}
-                              onToggleExpand={() => void onToggleExpand(item.id)}
+                              onToggleExpand={() => {
+                                const opening = !isExpanded
+                                if (opening && subCount === 0) setAddingSubtaskId(item.id)
+                                if (!opening && addingSubtaskId === item.id)
+                                  setAddingSubtaskId(null)
+                                void onToggleExpand(item.id)
+                              }}
                               onAddSubtask={() => {
                                 setAddingSubtaskId(item.id)
                                 if (!isExpanded && subtasksDisplayMode !== 'separate')

@@ -58,7 +58,10 @@ import {
 import { GroupSection } from './GroupSection'
 import type { ListColumnHeaderMenuConfig } from './list-column-header-menu'
 import { OptionDot } from './OptionBadge'
-import { GroupedRowGripColumn } from './space-list-group-chrome'
+import {
+  GroupedRowGripColumn,
+  SPACE_LIST_EXTERNAL_CONTROL_RAIL_WIDTH,
+} from './space-list-group-chrome'
 import { ListTopListSentinel } from './SpaceListDndListSentinels'
 import { SpaceListDndGroupChromeRow, type SpaceListChatDragPayload } from './SpaceListDndRow'
 import { SpaceQuickAdd } from './SpaceQuickAdd'
@@ -617,14 +620,20 @@ export function ListView({
     })
   }, [subtasksMode, subtaskCountMap])
 
-  const toggleExpand = useCallback((itemId: string) => {
-    setExpandedItems((prev) => {
-      const next = new Set(prev)
-      if (next.has(itemId)) next.delete(itemId)
-      else next.add(itemId)
-      return next
-    })
-  }, [])
+  const toggleExpand = useCallback(
+    (itemId: string) => {
+      const opening = !expandedItems.has(itemId)
+      if (opening && (subtaskCountMap[itemId] ?? 0) === 0) setAddingSubtaskId(itemId)
+      if (!opening && addingSubtaskId === itemId) setAddingSubtaskId(null)
+      setExpandedItems((prev) => {
+        const next = new Set(prev)
+        if (next.has(itemId)) next.delete(itemId)
+        else next.add(itemId)
+        return next
+      })
+    },
+    [addingSubtaskId, expandedItems, subtaskCountMap],
+  )
 
   const handleCreateSubtask = useCallback(async (parentId: string, title: string) => {
     try {
@@ -790,7 +799,8 @@ export function ListView({
                   <div className="flex w-full min-w-0 items-stretch">
                     <div
                       className={cn(
-                        'relative sticky left-0 z-30 flex w-10 shrink-0 items-center',
+                        'relative sticky left-0 z-30 flex shrink-0 items-center',
+                        SPACE_LIST_EXTERNAL_CONTROL_RAIL_WIDTH,
                         surface === 'table'
                           ? 'box-border min-h-[2.25rem] justify-center py-0 pl-0'
                           : 'pb-1.5 pl-[21px] pt-1',
@@ -845,12 +855,18 @@ export function ListView({
                         tableEmbedGlass={surface === 'table'}
                         readOnly={readOnly}
                         listColumnHeaderMenu={listColumnHeaderMenu}
+                        externalRowControls
                       />
                     </div>
                   </div>
                   {surface !== 'table' && (
                     <div className="flex w-full min-w-0" aria-hidden>
-                      <div className="sticky left-0 z-[35] h-[0.5px] w-10 shrink-0 bg-[var(--background)]" />
+                      <div
+                        className={cn(
+                          'sticky left-0 z-[35] h-[0.5px] shrink-0 bg-[var(--background)]',
+                          SPACE_LIST_EXTERNAL_CONTROL_RAIL_WIDTH,
+                        )}
+                      />
                       <div className="mr-4 h-[0.5px] min-h-[0.5px] min-w-0 flex-1 bg-[var(--border)]" />
                     </div>
                   )}
@@ -896,8 +912,12 @@ export function ListView({
                                 gridTemplateColumns={gridTemplateColumns}
                                 subtaskCount={pCount}
                                 suppressSubtaskChevron={suppressChev}
-                                expanded={false}
-                                onToggleExpand={() => {}}
+                                expanded={addingSubtaskId === item.id}
+                                onToggleExpand={() => {
+                                  setAddingSubtaskId((current) =>
+                                    current === item.id ? null : item.id,
+                                  )
+                                }}
                                 onAddSubtask={() => {
                                   setAddingSubtaskId(item.id)
                                 }}

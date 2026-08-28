@@ -8,6 +8,9 @@ import type { SpaceListDndDragHandleProps } from '../lib/space-list-dnd-types'
 export const SPACE_LIST_ROW_SELECTED_TINT =
   'bg-gradient-to-br from-emerald-500/15 via-emerald-400/18 to-emerald-600/10'
 
+/** Width reserved when selection, subtask expansion, and status live outside the name column. */
+export const SPACE_LIST_EXTERNAL_CONTROL_RAIL_WIDTH = 'w-28'
+
 /** Full-width 0.5px line with opaque w-10 under grip so border does not show through on horizontal scroll (matches column header). */
 export function GriplessHairline({
   edge,
@@ -99,7 +102,7 @@ export function GroupedRowGripColumn({
     <div
       className={cn(
         'relative sticky left-0 z-30 flex shrink-0 items-center justify-center gap-1 self-stretch py-1',
-        statusControl ? 'w-28 flex-row px-1' : 'w-10 flex-col',
+        statusControl ? `${SPACE_LIST_EXTERNAL_CONTROL_RAIL_WIDTH} flex-row px-1` : 'w-10 flex-col',
         isTable && 'group/gripcol box-border min-h-[2.25rem] bg-[var(--background)]',
         isTable &&
           !isSelected &&

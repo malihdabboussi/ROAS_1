@@ -94,6 +94,8 @@ interface DraggableColumnHeadersProps {
   listColumnHeaderMenu?: ListColumnHeaderMenuConfig
   /** Label for the trailing flex column (e.g. IG research list Actions). */
   trailingColumnLabel?: string
+  /** Name text aligns after selection, expansion, and status controls rendered outside the grid. */
+  externalRowControls?: boolean
 }
 
 export function SpaceListHeaderCheckbox({
@@ -149,6 +151,7 @@ export function DraggableColumnHeaders({
   readOnly = false,
   listColumnHeaderMenu,
   trailingColumnLabel,
+  externalRowControls = false,
 }: DraggableColumnHeadersProps) {
   const headerMenuUi = useListColumnHeaderMenuAnchor()
   const cols = visibleFields.filter((f) => f.id !== 'status')
@@ -326,7 +329,8 @@ export function DraggableColumnHeaders({
             onDragOver={(e) => handleDragOver(e, field.id)}
             onDragEnd={nameDrag ? reset : undefined}
             className={cn(
-              'block min-w-0 max-w-full select-none truncate rounded px-1.5 transition-colors',
+              'block min-w-0 max-w-full select-none truncate rounded transition-colors',
+              externalRowControls ? 'pl-2.5 pr-1.5' : 'px-1.5',
               nameDrag && 'cursor-grab active:cursor-grabbing',
               isTable ? 'py-0' : 'py-0.5',
               !isTable && 'hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]',

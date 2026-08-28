@@ -1,6 +1,6 @@
 # Space Items `custom_data` Conventions for Drive Sync
 
-Last updated: 2026-08-19
+Last updated: 2026-08-28
 
 ## Scope
 
@@ -143,6 +143,7 @@ Sync diffs should treat this pair as identity for insert/update/delete decisions
 
 ## Decision Log
 
+- 2026-08-28: Space task lists reserve an unlabeled control rail for selection, expansion, and status before the Name column so every header aligns with its row values. Expanding a task with no subtasks opens the existing inline **Add subtask** composer, matching the row add-subtask action.
 - 2026-08-19: **Open in Drive** for native Google Docs/Sheets/Slides uses `docs.google.com` / `sheets` / `presentation` edit URLs when `_drive_web_view_link` is null or a Drive `file/view` URL. Space Doc **Export to Google Docs** opens `about:blank` in the same click so Drive status cannot popup-block the new tab.
 - 2026-07-19: Bulk multi-tab export formatting: do not prepend deliverable title when `doc_body`
   already has an H1; secondary tabs render markdown tables via Docs `insertTable` (not TSV
