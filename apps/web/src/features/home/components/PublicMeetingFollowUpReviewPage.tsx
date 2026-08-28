@@ -1,9 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { MessageBubble } from '@/components/chat/MessageBubbleAdapter'
-import type { MessageBubbleProps } from '@/components/chat/MessageBubbleAdapter'
 import { MeetingPostCallReviewCard } from '@/components/global-chat/components/MeetingPostCallReviewCard'
+import {
+  MeetingFollowUpMessageStep,
+  MeetingTaskReviewStep,
+} from '@/components/global-chat/components/MeetingPostCallReviewStages'
 import type { MeetingPostCallReview } from '@/components/global-chat/store/use-global-chat-store'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { WorkspaceSettingsModalProvider } from '@/lib/settings/workspace-settings-modal-context'
@@ -100,9 +102,9 @@ export function PublicMeetingFollowUpReviewPage({ token }: { token: string }) {
           ) : null}
           {submitting ? <VibeyLoadingOrb text="Preparing task review..." /> : null}
           {stage === 'tasks' && preview ? (
-            <TaskReviewStep preview={preview} onComplete={() => setStage('message')} />
+            <MeetingTaskReviewStep preview={preview} onComplete={() => setStage('message')} />
           ) : null}
-          {stage === 'message' && review ? <FollowUpMessageStep review={review} /> : null}
+          {stage === 'message' && review ? <MeetingFollowUpMessageStep review={review} /> : null}
         </div>
       </main>
     </WorkspaceSettingsModalProvider>
@@ -162,65 +164,5 @@ function ReviewError({ message, onRetry }: { message: string; onRetry: () => voi
         Try again
       </button>
     </div>
-  )
-}
-
-function TaskReviewStep({
-  preview,
-  onComplete,
-}: {
-  preview: MeetingDelegationPreview
-  onComplete: () => void
-}) {
-  return (
-    <section className="surface-card border-border rounded-spacing-3 m-spacing-4 p-spacing-4 gap-spacing-3 flex flex-col border">
-      <div>
-        <h2 className="title-h6 uppercase">REVIEW AND DELEGATE TASKS</h2>
-        <p className="body-3 text-muted-foreground mt-spacing-1">
-          Open the existing bulk task review, confirm each task, then return here.
-        </p>
-      </div>
-      <div className="gap-spacing-2 flex flex-wrap justify-end">
-        <a
-          className="button-default button-glass-accent"
-          href={preview.confirm_url}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Open task review
-        </a>
-        <button type="button" className="button-default button-glass-primary" onClick={onComplete}>
-          I finished task review
-        </button>
-      </div>
-    </section>
-  )
-}
-
-function FollowUpMessageStep({ review }: { review: MeetingPostCallReview }) {
-  const message: MessageBubbleProps['message'] = {
-    id: `meeting-follow-up-${review.meetingItemId}`,
-    conversation_id: review.conversationId || review.meetingItemId,
-    role: 'assistant',
-    content: `\`\`\`draft Follow-up message\n${review.followUpMessage}\n\`\`\``,
-    content_blocks: null,
-    metadata: {},
-    created_at: new Date().toISOString(),
-  }
-  return (
-    <section className="p-spacing-4 gap-spacing-2 flex flex-col">
-      <div>
-        <h2 className="title-h6 uppercase">FINALIZE FOLLOW-UP MESSAGE</h2>
-        <p className="body-3 text-muted-foreground mt-spacing-1">
-          Edit the prepared message, then copy it when it is ready. Nothing is sent automatically.
-        </p>
-      </div>
-      <MessageBubble
-        message={message}
-        isEditable={false}
-        allowFork={false}
-        conversationIdOverride={message.conversation_id}
-      />
-    </section>
   )
 }

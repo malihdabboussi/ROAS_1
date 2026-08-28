@@ -89,3 +89,13 @@ Why: A client-only picker result dropped the campaign mapping, the direct Portal
 Impact: The context form keeps WHO, WHAT, WHEN, and Client Workspace edits intact, opens full-container call selectors, shows a readable uncollapsed summary without Slack heading markers, and can continue into the existing Portal task review with the canonical client and campaign.
 
 Files: `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.test.ts`, `apps/web/src/components/global-chat/components/MeetingPostCallReviewCard.tsx`, `apps/web/src/components/global-chat/components/MeetingPostCallReviewCard.test.tsx`, `apps/web/src/features/home/components/PublicMeetingFollowUpReviewPage.tsx`, `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-08-27 20:33 - [FIX]
+
+What: Replaced the authenticated meeting-chat post-call prompt with a direct delegation-preview request and shared task-review and follow-up-message stages.
+
+Why: Continuing from **Run post-call flow** still handed the confirmed meeting tasks back to Pixel, which could reinterpret the task list, ask another question, or fail to return the Portal review link.
+
+Impact: The public Slack link and meeting-chat button now deterministically submit the same confirmed meeting, client mapping, and WHO/WHAT/WHEN tasks to the existing Portal bulk-delegation preview. The client message remains hidden until task review is marked complete.
+
+Files: `apps/api/src/modules/meetings/controllers/meeting-follow-up-review.controller.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.test.ts`, `apps/web/src/components/global-chat/components/MeetingPostCallReviewStages.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.test.tsx`, `apps/web/src/features/home/components/PublicMeetingFollowUpReviewPage.tsx`, `apps/web/src/features/home/services/meeting-follow-up-review-api.ts`, `documentation/features/meeting-follow-up-slack.md`

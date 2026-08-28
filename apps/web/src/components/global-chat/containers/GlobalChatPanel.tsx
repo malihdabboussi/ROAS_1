@@ -1,17 +1,22 @@
 'use client'
 
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, type ReactNode } from 'react'
-import { buildMeetingFollowUpTaskReviewPrompt } from '@/features/home/config/meeting-post-call-actions.config'
-import { updateMeetingActionStatus } from '@/features/home/services/meeting-workspace-api'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  createAuthenticatedMeetingDelegationPreview,
+  type MeetingDelegationPreview,
+} from '@/features/home/services/meeting-follow-up-review-api'
 import { SpaceVibeyChatPanel } from '@/features/spaces/components/chat/SpaceVibeyChatPanel'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { QuickMissionsLauncherProvider } from '@/lib/missions'
-import { updateSpaceItem } from '@/lib/spaces/spaces-api'
 import { ChatCampaignBrainNudge } from '../components/ChatCampaignBrainNudge'
 import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendation'
 import { MeetingPostCallReviewCard } from '../components/MeetingPostCallReviewCard'
+import {
+  MeetingFollowUpMessageStep,
+  MeetingTaskReviewStep,
+} from '../components/MeetingPostCallReviewStages'
 import { QuickMissionsHubHost } from '../components/QuickMissionsHubHost'
 import { useMeetingConversationAwareness } from '../hooks/use-meeting-conversation-awareness'
 import { useWorkRequestHomeChatSeed } from '../hooks/useWorkRequestHomeChatSeed'
@@ -41,10 +46,11 @@ export function GlobalChatPanel({
   const workContext = useGlobalChatStore((s) => s.workContext)
   const storedMeetingContext = useGlobalChatStore((s) => s.meetingContext)
   const postCallReview = useGlobalChatStore((s) => s.postCallReview)
-  const clearPostCallReview = useGlobalChatStore((s) => s.clearPostCallReview)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
   const clearMeetingContext = useGlobalChatStore((s) => s.clearMeetingContext)
   const activeConversationId = useChatStore((s) => s.activeConversationId)
+  const [delegationPreview, setDelegationPreview] = useState<MeetingDelegationPreview | null>(null)
+  const [postCallStage, setPostCallStage] = useState<'context' | 'tasks' | 'message'>('context')
   const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
   const spaces = useSpacesStore((s) => s.spaces)
   const activeSpace = useMemo(
@@ -93,6 +99,10 @@ export function GlobalChatPanel({
       clearMeetingContext()
     }
   }, [activeConversationId, clearMeetingContext, storedMeetingContext])
+  useEffect(() => {
+    setDelegationPreview(null)
+    setPostCallStage('context')
+  }, [postCallReview?.meetingItemId])
   const spaceId = meetingContext?.spaceId ?? host.spaceId
   const awarenessSurface = meetingContext
     ? 'spaces'
@@ -106,46 +116,45 @@ export function GlobalChatPanel({
         <QuickMissionsHubHost />
         <ChatSurfaceRecommendation />
         <ChatCampaignBrainNudge />
-        {postCallReview && postCallReview.conversationId === preferredConversationId ? (
+        {postCallReview &&
+        postCallReview.conversationId === preferredConversationId &&
+        postCallStage === 'context' ? (
           <MeetingPostCallReviewCard
             review={postCallReview}
             onContinue={async (confirmed) => {
               const remainingIds = new Set(confirmed.followUps.map((item) => item.id))
-              const dismissed = postCallReview.followUps.filter(
-                (item) => !remainingIds.has(item.id),
-              )
-              await Promise.all([
-                updateSpaceItem(confirmed.spaceId, confirmed.meetingItemId, {
-                  custom_data: {
-                    meeting_summary: confirmed.summary,
-                    client_campaign: confirmed.clientCampaign,
-                    attendee_labels: confirmed.attendees
-                      .split(',')
-                      .map((label) => label.trim())
-                      .filter(Boolean),
-                    slack_follow_up_confirm: {
-                      draft_message: confirmed.followUpMessage,
-                      review_summary: confirmed.summary,
-                    },
-                  },
-                }),
-                ...dismissed.map((item) =>
-                  updateMeetingActionStatus(
-                    confirmed.spaceId,
-                    confirmed.meetingItemId,
-                    item.id,
-                    'dismissed',
-                  ),
-                ),
-              ])
-              clearPostCallReview()
-              useGlobalChatStore.getState().seedComposer({
-                content: buildMeetingFollowUpTaskReviewPrompt(confirmed),
-                conversationId: confirmed.conversationId,
-                workContext: { surface: 'spaces', spaceId: meetingContext?.spaceId },
+              const preview = await createAuthenticatedMeetingDelegationPreview({
+                space_id: confirmed.spaceId,
+                meeting_item_id: confirmed.meetingItemId,
+                summary: confirmed.summary,
+                client_campaign: confirmed.clientCampaign,
+                attendee_ids: confirmed.attendeeIds,
+                call_kind: confirmed.callKind,
+                call_status: confirmed.callStatus,
+                follow_up_message: confirmed.followUpMessage,
+                dismissed_follow_up_ids: postCallReview.followUps
+                  .filter((item) => !remainingIds.has(item.id))
+                  .map((item) => item.id),
+                follow_ups: confirmed.followUps.map((item) => ({
+                  id: item.id,
+                  title: item.title,
+                  owner: item.owner,
+                  due_date: item.dueDate,
+                })),
               })
+              setDelegationPreview(preview)
+              setPostCallStage('tasks')
             }}
           />
+        ) : null}
+        {postCallReview && postCallStage === 'tasks' && delegationPreview ? (
+          <MeetingTaskReviewStep
+            preview={delegationPreview}
+            onComplete={() => setPostCallStage('message')}
+          />
+        ) : null}
+        {postCallReview && postCallStage === 'message' ? (
+          <MeetingFollowUpMessageStep review={postCallReview} />
         ) : null}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <SpaceVibeyChatPanel

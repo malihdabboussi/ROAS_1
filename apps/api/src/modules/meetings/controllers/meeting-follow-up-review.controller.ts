@@ -13,7 +13,7 @@ import {
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler'
 import type { Response } from 'express'
 import { z } from 'zod'
-import { AuthGuard, Public, ZodValidationPipe } from '@vibey/api-shared'
+import { AuthGuard, CurrentUser, Public, ZodValidationPipe } from '@vibey/api-shared'
 import { MeetingFollowUpReviewService } from '../services/meeting-follow-up-review.service'
 
 const TokenSchema = z.object({ token: z.string().min(32).max(200) })
@@ -37,12 +37,26 @@ const UpdateSchema = z.object({
     .max(200),
 })
 const ChatSchema = z.object({ content: z.string().trim().min(1).max(50_000) })
+const AuthenticatedPreviewSchema = UpdateSchema.extend({
+  space_id: z.string().uuid(),
+  meeting_item_id: z.string().uuid(),
+})
 
 @Controller('meeting-follow-up-reviews')
 @UseGuards(AuthGuard, ThrottlerGuard)
 @Throttle({ default: { limit: 60, ttl: 60_000 } })
 export class MeetingFollowUpReviewController {
   constructor(private readonly reviews: MeetingFollowUpReviewService) {}
+
+  @Post('delegation-preview')
+  @HttpCode(HttpStatus.OK)
+  createAuthenticatedDelegationPreview(
+    @CurrentUser() user: { id: string },
+    @Body(new ZodValidationPipe(AuthenticatedPreviewSchema))
+    body: z.infer<typeof AuthenticatedPreviewSchema>,
+  ) {
+    return this.reviews.createAuthenticatedDelegationPreview(user.id, body)
+  }
 
   @Public()
   @Get(':token')

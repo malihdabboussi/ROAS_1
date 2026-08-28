@@ -21,6 +21,10 @@ export class MeetingFollowUpReviewService {
 
   async getReview(token: string) {
     const call = await this.requireCall(token)
+    return this.getReviewForCall(call)
+  }
+
+  private async getReviewForCall(call: Record<string, unknown>) {
     const custom = record(call.custom_data)
     const slack = record(custom.slack_follow_up_confirm)
     const [workspace, space, children, integrations] = await Promise.all([
@@ -109,29 +113,48 @@ export class MeetingFollowUpReviewService {
     },
   ) {
     const call = await this.requireCall(token)
+    await this.updateReviewForCall(call, input)
+    return this.getReviewForCall(call)
+  }
+
+  private async updateReviewForCall(
+    call: Record<string, unknown>,
+    input: {
+      summary: string
+      client_campaign: Record<string, unknown> | null
+      attendee_ids: string[]
+      call_kind: string
+      call_status: string
+      follow_up_message: string
+      dismissed_follow_up_ids: string[]
+      follow_ups: Array<{ id: string; title: string; owner: string; due_date: string }>
+    },
+  ) {
     const custom = record(call.custom_data)
     const slack = record(custom.slack_follow_up_confirm)
+    const updatedCustomData = {
+      ...custom,
+      meeting_summary: input.summary,
+      client_campaign: input.client_campaign,
+      attendees: input.attendee_ids,
+      call_kind: input.call_kind,
+      call_status: input.call_status,
+      slack_follow_up_confirm: {
+        ...slack,
+        review_summary: input.summary,
+        draft_message: input.follow_up_message,
+        review_started_at: firstText(slack.review_started_at) || new Date().toISOString(),
+      },
+    }
     const { error } = await this.client
       .from('space_items')
       .update({
-        custom_data: {
-          ...custom,
-          meeting_summary: input.summary,
-          client_campaign: input.client_campaign,
-          attendees: input.attendee_ids,
-          call_kind: input.call_kind,
-          call_status: input.call_status,
-          slack_follow_up_confirm: {
-            ...slack,
-            review_summary: input.summary,
-            draft_message: input.follow_up_message,
-            review_started_at: firstText(slack.review_started_at) || new Date().toISOString(),
-          },
-        },
+        custom_data: updatedCustomData,
       })
       .eq('id', String(call.id))
       .eq('space_id', String(call.space_id))
     if (error) throw new BadRequestException(error.message)
+    call.custom_data = updatedCustomData
     if (input.dismissed_follow_up_ids.length > 0) {
       const rows = await this.client
         .from('space_items')
@@ -195,12 +218,35 @@ export class MeetingFollowUpReviewService {
     )
     const updateError = followUpUpdates.find((result) => result.error)?.error
     if (updateError) throw new BadRequestException(updateError.message)
-    return this.getReview(token)
   }
 
   async createDelegationPreview(token: string) {
     const call = await this.requireCall(token)
-    const review = await this.getReview(token)
+    return this.createDelegationPreviewForCall(call)
+  }
+
+  async createAuthenticatedDelegationPreview(
+    userId: string,
+    input: {
+      space_id: string
+      meeting_item_id: string
+      summary: string
+      client_campaign: Record<string, unknown> | null
+      attendee_ids: string[]
+      call_kind: string
+      call_status: string
+      follow_up_message: string
+      dismissed_follow_up_ids: string[]
+      follow_ups: Array<{ id: string; title: string; owner: string; due_date: string }>
+    },
+  ) {
+    const call = await this.requireOwnedCall(userId, input.space_id, input.meeting_item_id)
+    await this.updateReviewForCall(call, input)
+    return this.createDelegationPreviewForCall(call)
+  }
+
+  private async createDelegationPreviewForCall(call: Record<string, unknown>) {
+    const review = await this.getReviewForCall(call)
     const campaign = record(review.meeting.client_campaign)
     const clientId = firstText(campaign.client_id)
     const campaignId = firstText(campaign.campaign_id)
@@ -331,6 +377,23 @@ export class MeetingFollowUpReviewService {
     )
     if (!expiry || Date.parse(expiry) <= Date.now())
       throw new GoneException('Meeting review link expired')
+    return data as Record<string, unknown>
+  }
+
+  private async requireOwnedCall(
+    userId: string,
+    spaceId: string,
+    meetingItemId: string,
+  ): Promise<Record<string, unknown>> {
+    const { data, error } = await this.client
+      .from('space_items')
+      .select('id, space_id, user_id, org_id, title, description, custom_data')
+      .eq('id', meetingItemId)
+      .eq('space_id', spaceId)
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (error) throw new BadRequestException(error.message)
+    if (!data) throw new NotFoundException('Meeting review not found')
     return data as Record<string, unknown>
   }
 }

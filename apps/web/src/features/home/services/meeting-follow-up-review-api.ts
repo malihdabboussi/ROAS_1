@@ -1,4 +1,5 @@
 import type { ClientCampaignMapping } from '@/lib/agency-clients'
+import { backendPost } from '@/lib/api/backend-client'
 import type { FieldDef } from '@/lib/spaces/space-schema-types'
 
 export type PublicMeetingFollowUpReview = {
@@ -85,6 +86,26 @@ export function createMeetingDelegationPreview(token: string) {
     { method: 'POST', signal: AbortSignal.timeout(30_000) },
     '/delegation-preview',
   )
+}
+
+export function createAuthenticatedMeetingDelegationPreview(
+  review: MeetingPostCallReviewInput & { space_id: string; meeting_item_id: string },
+) {
+  return backendPost<MeetingDelegationPreview>(
+    '/api/meeting-follow-up-reviews/delegation-preview',
+    review,
+  )
+}
+
+export type MeetingPostCallReviewInput = {
+  summary: string
+  client_campaign: ClientCampaignMapping | null
+  attendee_ids: string[]
+  call_kind: string
+  call_status: string
+  follow_up_message: string
+  dismissed_follow_up_ids: string[]
+  follow_ups: Array<{ id: string; title: string; owner: string; due_date: string }>
 }
 
 export type PublicMeetingReviewChat = {
