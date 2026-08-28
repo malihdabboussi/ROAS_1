@@ -1,4 +1,8 @@
-# Post-call delivery
+-- Keep Pixel's client follow-up conversational while preserving the meeting's
+-- actual follow-up count and evidence-backed status for every action.
+UPDATE public.agent_skills
+SET
+  markdown_content = $skillbody$# Post-call delivery
 
 Turn completed meeting context into a friendly, shareable Slack recap and a clear set of owned follow-ups. Use this skill after a recorded meeting or call when the user wants a recap, approval draft, follow-up message, or post-call delivery loop.
 
@@ -67,3 +71,23 @@ Output:
   "context_sources": ["meeting summary", "follow-up records"]
 }
 ```
+$skillbody$,
+  updated_at = now()
+WHERE agent_key = 'vibey'
+  AND skill_key = 'post-call-delivery'
+  AND user_id IS NULL
+  AND org_id IS NULL;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.agent_skills
+    WHERE agent_key = 'vibey'
+      AND skill_key = 'post-call-delivery'
+      AND user_id IS NULL
+      AND org_id IS NULL
+  ) THEN
+    RAISE EXCEPTION 'System post-call-delivery skill was not found';
+  END IF;
+END $$;

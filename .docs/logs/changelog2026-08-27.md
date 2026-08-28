@@ -39,3 +39,13 @@ Why: Re-generating Stage 1 changed seven proposed follow-ups into ten meeting ac
 Impact: Slack links and the meeting **Run post-call flow** button now enter the same review state; Continue uses the existing Page Grader bulk-delegation preview and preserves the final editable message without sending it.
 
 Files: `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.workflow.ts`, `apps/web/src/components/global-chat/`, `apps/web/src/features/home/`, `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-08-27 17:45 - [FIX]
+
+What: Updated Pixel's post-call delivery skill and guided-review prompt to produce a conversational Slack recap with a central takeaway, status-led hit list, and short forward-looking close.
+
+Why: The generic owner-based “Next steps” draft did not match the natural follow-up style used with clients and could carry a stale task count into the final message.
+
+Impact: The editable follow-up now includes exactly the grounded meeting actions, preserves their real `(DONE)`, `(IN PROGRESS)`, or `(TO-DO)` states, and remains copy-only with no automatic send.
+
+Files: `docker/agents/vibey/skills/post-call-delivery/SKILL.md`, `supabase/migrations/20260827174500_improve_post_call_follow_up_voice.sql`, `apps/web/src/features/home/config/meeting-post-call-actions.config.ts`, its test, `documentation/features/meeting-follow-up-slack.md`

@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-08-27 (inline Slack-recap review → Portal delegation)
+**Last Modified:** 2026-08-27 (natural status-led client follow-up voice)
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` sends the admin one concise meeting summary with the follow-up count and a **Review meeting follow-ups** link. The link opens the canonical meeting workspace and its existing chat; task delegation and the editable client message finish there without an automatic client send.
 
@@ -145,6 +145,14 @@ For legacy pending records, a human reply in the review thread is still treated 
 - One **Review meeting follow-ups** link
 - No separate call-status block, action-item dump, reaction CTA, or threaded client-message draft
 - Link unfurls disabled so Fathom URLs stay compact
+
+**Editable client follow-up**
+
+- Opens conversationally, then states the meeting's central focus in one concise “As discussed…” paragraph
+- Introduces team-owned work as “Here’s our hit list of actions on our end:”
+- Includes the actual grounded follow-ups for that meeting rather than a fixed task count
+- Prefixes each action with its evidence-backed `(DONE)`, `(IN PROGRESS)`, or `(TO-DO)` status and preserves useful links, owners, and dates when supplied
+- Ends with a brief forward-looking line; it remains an editable copy-only draft and is never sent automatically
 
 **Per-assignee Shadow reminders (People)**
 
@@ -437,6 +445,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-08-27:** Meetings always prefers the active organization’s canonical Meetings space over a legacy personal duplicate. Production history was consolidated into the organization space so cached and refreshed space lists cannot swap between different call datasets.
 - **2026-08-27:** Completed meeting workspaces expose **Run post-call flow** instead of the former recap-only action. It starts the same guided context confirmation, bulk delegation review link, and editable unsent follow-up-message sequence used by Pixel's Slack review link.
 - **2026-08-27:** The guided post-call action uses the actual MCP execution contract: discover the connected Portal server, list its tools by `server_id`, then invoke `page_grader_create_delegation_preview` through `use_mcp_tool`. It never falls back to native Delegation Desk writes from the meeting Space.
+- **2026-08-27:** Pixel's prepared and final client follow-up now uses a conversational Slack recap, one central “As discussed…” takeaway, an actual status-led hit list, and a short forward-looking close. The meeting records determine the number of bullets; Pixel cannot preserve a stale count or invent completed work.
 
 ## Related
 

@@ -66,6 +66,11 @@ describe('MEETING_FOLLOW_UP_REVIEW_PROMPT', () => {
     )
     expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('Do not use create_task')
     expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('meeting Space scope does not block')
+    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain(
+      'Here’s our hit list of actions on our end:',
+    )
+    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('(DONE), (IN PROGRESS), or (TO-DO)')
+    expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('Do not preserve or invent a fixed task count')
     expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('```draft Follow-up message```')
     expect(MEETING_FOLLOW_UP_REVIEW_PROMPT).toContain('Do not send it')
   })
