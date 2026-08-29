@@ -229,3 +229,13 @@ Why: Production browser QA found that closing a Canvas opened from one chat coul
 Impact: Closing a directly routed output now returns to the chat that opened it, and **Show page** on that chat reopens the exact output page without cross-chat leakage.
 
 Files: `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.test.tsx`, `documentation/features/claude-chatgpt-shell.md`, `.docs/logs/changelog2026-08-29.md`.
+
+## [2026-08-29 12:51] - [FIX]
+
+What: Split operational agenda inventory from first-action recommendations. Direct agenda questions still render bounded canonical task/calendar data, while “what should I do first?” sends that same verified evidence through the tool-free writer.
+
+Why: Signed-in production QA found that a contextual prioritization follow-up repeated the entire agenda instead of choosing the user's next action.
+
+Impact: Pixel can now work through the day conversationally: it preserves the fast, owner-scoped retrieval path and gives a reasoned first step without Brain fan-out, invented tasks, or organization-wide widening.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-operational-agenda.util.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, focused tests, `documentation/features/meeting-follow-up-slack.md`, `.docs/plans/agent-follow-up-work.md`

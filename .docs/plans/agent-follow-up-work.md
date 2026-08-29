@@ -40175,3 +40175,15 @@ Evidence: `apps/agent-api/src/modules/artifacts/services/__tests__/artifact-task
 Needed work: Extract the cross-Space My Tasks query tests and reusable fake Supabase query builder into focused test modules without duplicating the shared fixture semantics.
 
 Reason not done now: The production omission is fixed with two regression cases; restructuring the mature test harness is behavior-neutral architecture work outside this release correction.
+
+## 2026-08-29 - [ARCH] Chat stream execution and regression suite reached decomposition thresholds
+
+Status: Open
+
+Found while: Separating deterministic daily-focus inventory from conversational first-action recommendations.
+
+Evidence: `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts` is 596 LOC against the 600-line service hard limit, and `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts` is 591 LOC after adding the production-regression case.
+
+Needed work: Extract Auto operational/campaign route orchestration and its fixtures into focused collaborators and test modules while preserving generation-stage recovery, structured tool failures, and deterministic direct-output behavior.
+
+Reason not done now: The requested user-facing regression is isolated and within the hard limit; decomposing the mature recovery and route harness would materially widen this release.

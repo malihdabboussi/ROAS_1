@@ -6,6 +6,8 @@ import {
   resolveFallbackForStrategy,
   type ModelStrategy,
 } from '@vibey/api-shared'
+import { ArtifactsService } from '../../artifacts/services/artifacts.service'
+import { executeArtifactRead } from './chat-artifact-read-execution'
 import {
   AUTO_WRITER_INSTRUCTIONS,
   buildAutoWriterInput,
@@ -13,25 +15,25 @@ import {
   withGenerationStage,
 } from './chat-auto-pipeline'
 import {
+  formatCampaignIntelligenceResearch,
+  isCampaignStatusRequest,
+} from './chat-campaign-intelligence.util'
+import { runCanonicalTaskLookup } from './chat-canonical-task-lookup.util'
+import {
   ChatModelInputService,
   type ChatModelSettings,
   type ValidatedModelSettings,
 } from './chat-model-input.service'
+import { formatOperationalAgenda } from './chat-operational-agenda-format.util'
 import {
   extractCanonicalTaskLookupTitle,
   isOperationalCalendarRequest,
+  isOperationalPriorityRecommendationRequest,
   isOperationalTaskRequest,
   resolveOperationalCalendarWindow,
   shouldSkipBrainContextForOperationalAgenda,
 } from './chat-operational-agenda.util'
-import { runCanonicalTaskLookup } from './chat-canonical-task-lookup.util'
-import {
-  formatCampaignIntelligenceResearch,
-  isCampaignStatusRequest,
-} from './chat-campaign-intelligence.util'
-import { formatOperationalAgenda } from './chat-operational-agenda-format.util'
 import type { ChatRunCheckpointKind } from './chat-run-checkpoint.service'
-import { executeArtifactRead } from './chat-artifact-read-execution'
 import { ChatStreamRecoveryService } from './chat-stream-recovery.service'
 import {
   OpenClawProxyService,
@@ -42,7 +44,6 @@ import {
   type TraceRecoveryEvent,
 } from './openclaw-proxy.service'
 import type { ToolStep } from './openclaw-proxy.service'
-import { ArtifactsService } from '../../artifacts/services/artifacts.service'
 
 const CONTINUATION_PROMPT =
   'Continue your previous response from exactly where you left off. Do not repeat prior text. Produce only the continuation.'
@@ -166,9 +167,9 @@ export class ChatStreamExecutionService {
   ): Promise<OpenClawCompletionResult> {
     const researchRoute = resolveChatStageModel('auto', 'research')
     const writerRoute = resolveChatStageModel('auto', 'write')
-    const operationalAgendaQuickPath = shouldSkipBrainContextForOperationalAgenda(
-      input.userContent,
-    )
+    const operationalAgendaQuickPath = shouldSkipBrainContextForOperationalAgenda(input.userContent)
+    const operationalPriorityRecommendation =
+      operationalAgendaQuickPath && isOperationalPriorityRecommendationRequest(input.userContent)
     const canonicalTaskLookupTitle = extractCanonicalTaskLookupTitle(input.userContent)
     const campaignIntelligenceQuickPath = isCampaignStatusRequest(input.userContent)
     const writerModelSettings = operationalAgendaQuickPath
@@ -176,17 +177,18 @@ export class ChatStreamExecutionService {
       : writerRoute.modelSettings
     const researchSettings =
       canonicalTaskLookupTitle || operationalAgendaQuickPath || campaignIntelligenceQuickPath
-      ? null
-      : await this.modelInputService.validateModelSettings(
-          researchRoute.modelId,
-          researchRoute.modelSettings,
-        )
-    const writerSettings = canonicalTaskLookupTitle || operationalAgendaQuickPath
-      ? null
-      : await this.modelInputService.validateModelSettings(
-          writerRoute.modelId,
-          writerModelSettings,
-        )
+        ? null
+        : await this.modelInputService.validateModelSettings(
+            researchRoute.modelId,
+            researchRoute.modelSettings,
+          )
+    const writerSettings =
+      canonicalTaskLookupTitle || (operationalAgendaQuickPath && !operationalPriorityRecommendation)
+        ? null
+        : await this.modelInputService.validateModelSettings(
+            writerRoute.modelId,
+            writerModelSettings,
+          )
     const researchSend: SendFn = async (type, data) => {
       if (type === 'content_delta' || type === 'thinking_delta') return
       await input.progressiveSend(type, data)
@@ -213,7 +215,10 @@ export class ChatStreamExecutionService {
     ) {
       return withGenerationStage(researchResult, 'research')
     }
-    if (canonicalTaskLookupTitle || operationalAgendaQuickPath) {
+    if (
+      canonicalTaskLookupTitle ||
+      (operationalAgendaQuickPath && !operationalPriorityRecommendation)
+    ) {
       await input.progressiveSend('content_delta', { content: researchResult.content })
       return withGenerationStage(researchResult, 'research')
     }
