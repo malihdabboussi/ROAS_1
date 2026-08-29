@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChatScopeKind, DocumentIntelligenceMetadata } from '@vibey/api-shared'
+import type { ChannelSourceContext } from '../../shared/services/request-context.service'
 import type { ChatModelSettings } from './chat-model-input.service'
 import type { ChatTurnTimingSpan } from './chat-turn-session.service'
 import type { SendFn } from './openclaw-proxy.service'
@@ -53,6 +54,7 @@ export interface ChannelUser {
   is_connection_owner?: boolean
   personal_brain_access?: boolean
   organization_wide_data_access?: boolean
+  source_context?: ChannelSourceContext
 }
 
 export interface ProcessMessageOptions {

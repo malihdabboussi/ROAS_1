@@ -8,7 +8,10 @@ import type {
 import type { BrainRetrievalReceipt } from '../../brain/services/brain-retrieval-receipt'
 import { MessagesRepository } from '../../conversations/repositories/messages.repository'
 import type { RequestUploadAttachment } from '../../shared/services/request-context.service'
-import { RequestContextService } from '../../shared/services/request-context.service'
+import {
+  RequestContextService,
+  type ChannelSourceContext,
+} from '../../shared/services/request-context.service'
 import { ChatProgressiveStreamService } from './chat-progressive-stream.service'
 import { ChatReferenceContextService } from './chat-reference-context.service'
 import type { ChatRunCheckpointKind } from './chat-run-checkpoint.service'
@@ -30,6 +33,7 @@ interface ChannelUser {
   is_connection_owner?: boolean
   personal_brain_access?: boolean
   organization_wide_data_access?: boolean
+  source_context?: ChannelSourceContext
 }
 
 interface StreamDocument {

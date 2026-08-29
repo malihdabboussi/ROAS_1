@@ -147,16 +147,31 @@ export class ArtifactTaskActivityHelper {
     if (!conversationId || typeof target.requestContext?.get !== 'function') return null
     const context = target.requestContext.get(conversationId) as {
       channel?: unknown
-      channelMember?: { platform_id?: unknown } | null
+      channelMember?: {
+        platform_id?: unknown
+        source_context?: Record<string, unknown> | null
+      } | null
     } | null
     if (context?.channel !== 'slack') return null
+    const source = context.channelMember?.source_context ?? {}
+    const sourceId =
+      typeof source.slack_message_ts === 'string' && source.slack_message_ts.trim()
+        ? `slack:${String(source.slack_team_id ?? '')}:${String(source.slack_channel_id ?? '')}:${source.slack_message_ts}`
+        : `slack:${conversationId}`
     return {
       source_kind: 'slack_thread',
-      source_id: `slack:${conversationId}`,
-      source_excerpt: String(title ?? '')
-        .trim()
-        .slice(0, 500),
+      source_id: sourceId,
+      source_excerpt:
+        typeof source.source_excerpt === 'string' && source.source_excerpt.trim()
+          ? source.source_excerpt.trim().slice(0, 500)
+          : String(title ?? '')
+              .trim()
+              .slice(0, 500),
       conversation_id: conversationId,
+      slack_team_id: source.slack_team_id ?? null,
+      slack_channel_id: source.slack_channel_id ?? null,
+      slack_thread_ts: source.slack_thread_ts ?? null,
+      slack_message_ts: source.slack_message_ts ?? null,
       slack_user_id:
         typeof context.channelMember?.platform_id === 'string'
           ? context.channelMember.platform_id

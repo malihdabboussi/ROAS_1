@@ -60,12 +60,19 @@ class TestRoute extends SlackEventsBase {
       WRAPPED,
       'T1',
       'C0B5MKP7Y30',
-      undefined,
+      '1.0',
       'access',
       'xoxb',
       '1.1',
       'org-1',
-      undefined,
+      {
+        platform_id: 'U1',
+        display_name: 'Dylan',
+        relationship_kind: 'internal',
+        is_connection_owner: true,
+        personal_brain_access: true,
+        organization_wide_data_access: true,
+      },
       undefined,
       null,
       titleText,
@@ -82,6 +89,13 @@ describe('routeToAgent conversation naming', () => {
     expect(service.retitleSeenMessages).toEqual([RAW])
     const body = JSON.parse((invoke.mock.calls[0][2] as { body: string }).body)
     expect(body.content).toBe(WRAPPED)
+    expect(body.channel_user.source_context).toEqual({
+      slack_team_id: 'T1',
+      slack_channel_id: 'C0B5MKP7Y30',
+      slack_thread_ts: '1.0',
+      slack_message_ts: '1.1',
+      source_excerpt: WRAPPED,
+    })
   })
 
   it('falls back to the full message when no raw text is provided', async () => {

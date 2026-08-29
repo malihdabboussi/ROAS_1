@@ -516,7 +516,16 @@ describe('ArtifactTasksService', () => {
     const target = makeTarget(db, {
       requestContext: {
         channel: 'slack',
-        channelMember: { platform_id: 'U123' },
+        channelMember: {
+          platform_id: 'U123',
+          source_context: {
+            slack_team_id: 'T123',
+            slack_channel_id: 'C123',
+            slack_thread_ts: '100.1',
+            slack_message_ts: '101.2',
+            source_excerpt: 'Hey Pixel, make sure I send Curtis the recap.',
+          },
+        },
       },
     })
 
@@ -530,9 +539,13 @@ describe('ArtifactTasksService', () => {
     expect(result.success).toBe(true)
     expect(result.task.custom_data.action_provenance).toEqual({
       source_kind: 'slack_thread',
-      source_id: `slack:${conversationId}`,
-      source_excerpt: 'Send Curtis the recap',
+      source_id: 'slack:T123:C123:101.2',
+      source_excerpt: 'Hey Pixel, make sure I send Curtis the recap.',
       conversation_id: conversationId,
+      slack_team_id: 'T123',
+      slack_channel_id: 'C123',
+      slack_thread_ts: '100.1',
+      slack_message_ts: '101.2',
       slack_user_id: 'U123',
     })
   })

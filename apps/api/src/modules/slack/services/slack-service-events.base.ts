@@ -17,10 +17,7 @@ import {
   MACHINE_WAKE_START_SLACK_MESSAGE,
   SLACK_AGENT_STREAM_TIMEOUT_MS,
 } from './slack-service.shared'
-import {
-  buildInboundSlackTurnPrompt,
-  buildSlackMentionClientLookupText,
-} from './slack-turn-prompt'
+import { buildInboundSlackTurnPrompt, buildSlackMentionClientLookupText } from './slack-turn-prompt'
 import {
   recordSlackPixelTurn,
   type SlackTurnSeed,
@@ -654,7 +651,20 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       source: 'slack',
       access_token: accessToken,
       org_id: orgId ?? null,
-      ...(channelUser ? { channel_user: channelUser } : {}),
+      ...(channelUser
+        ? {
+            channel_user: {
+              ...channelUser,
+              source_context: {
+                slack_team_id: slackTeamId,
+                slack_channel_id: slackChannelId,
+                slack_thread_ts: slackThreadTs ?? messageTs ?? null,
+                slack_message_ts: messageTs ?? null,
+                source_excerpt: userMessage.slice(0, 500),
+              },
+            },
+          }
+        : {}),
       ...(documents && documents.length > 0 ? { documents } : {}),
       ...(campaignId ? { campaign_id: campaignId } : {}),
     })

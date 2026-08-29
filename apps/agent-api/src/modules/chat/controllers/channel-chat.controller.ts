@@ -16,6 +16,7 @@ import { classifyChatStreamError } from '../chat-stream-errors'
 import { CHANNEL_CHAT_ERRORS } from '../config/errors.config'
 import { ChannelServiceGuard } from '../guards/channel-service.guard'
 import { bindChannelConversationCampaign } from '../services/channel-chat-campaign-bind'
+import type { ChannelUser } from '../services/chat-process-message.types'
 import { ChatService } from '../services/chat.service'
 
 @Controller('channel-chat')
@@ -44,16 +45,7 @@ export class ChannelChatController {
       org_id?: string | null
       /** Client campaign the channel/ask resolved to; binds CONNECTIONS before the turn (§11.2). */
       campaign_id?: string | null
-      channel_user?: {
-        platform_id: string
-        username?: string
-        display_name: string
-        language?: string
-        relationship_kind?: 'internal'
-        is_connection_owner?: boolean
-        personal_brain_access?: boolean
-        organization_wide_data_access?: boolean
-      }
+      channel_user?: ChannelUser
       documents?: Array<{
         filename: string
         type: 'text' | 'image' | 'video'
