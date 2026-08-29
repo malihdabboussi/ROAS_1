@@ -199,3 +199,13 @@ Why: Home, All Tasks, and Pixel could disagree because Home independently recons
 Impact: Home and New Chat now surface the same personal task lifecycle as My Tasks without changing task status. Operators can explicitly mark a suggestion not relevant, and product quality can be measured against the current canonical task while Slack delivery remains approval-gated.
 
 Files: `apps/api/src/modules/home/`, `apps/web/src/features/home/components/SuggestedNextMoves.tsx`, `apps/web/src/features/home/services/next-moves.service.ts`, `apps/web/src/features/home/config/next-moves-messages.config.ts`, `supabase/migrations/20260829173000_action_recommendation_quality.sql`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-29 11:40] - [FIX]
+
+What: Included assigned child actions in the canonical cross-Space My Tasks query, honored `include_closed` on that query, and bypassed Brain preload for exact quoted-task provenance questions.
+
+Why: Signed-in production QA proved that a Fathom action could be correctly assigned to Dylan and retain exact recording evidence while My Tasks and Pixel omitted it solely because meeting actions are child records beneath the canonical meeting item.
+
+Impact: Call-derived commitments now appear everywhere that reads My Tasks, completed commitments remain available for lifecycle/source explanations when explicitly requested, and direct assignment/source questions perform only the canonical task read.
+
+Files: `apps/agent-api/src/modules/artifacts/repositories/artifact-tasks.repository.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-my-tasks.helper.ts`, `apps/agent-api/src/modules/artifacts/services/__tests__/artifact-tasks.service.test.ts`, `apps/agent-api/src/modules/chat/services/chat-operational-agenda.util.ts`, `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparation.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`

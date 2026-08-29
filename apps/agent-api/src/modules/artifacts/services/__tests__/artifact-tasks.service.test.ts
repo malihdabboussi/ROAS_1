@@ -1265,6 +1265,18 @@ describe('ArtifactTasksService', () => {
           assignees: [{ type: 'human', id: 'user-1' }],
         },
         {
+          id: 'mine-call-action',
+          space_id: 'space-1',
+          org_id: 'org-1',
+          user_id: 'user-1',
+          title: 'Action assigned during a call',
+          status: 'working',
+          parent_item_id: 'meeting-record-1',
+          assignee_type: 'human',
+          assignee_id: 'user-1',
+          assignees: [{ type: 'human', id: 'user-1' }],
+        },
+        {
           id: 'mine-closed',
           space_id: 'space-2',
           org_id: 'org-1',
@@ -1304,9 +1316,42 @@ describe('ArtifactTasksService', () => {
 
     expect(result.success).toBe(true)
     expect(result.scope).toBe('assigned_to_me')
-    expect(result.tasks).toEqual([
-      expect.objectContaining({ id: 'mine-open', space_title: 'Tasks' }),
-    ])
+    expect(result.tasks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'mine-open', space_title: 'Tasks' }),
+        expect.objectContaining({ id: 'mine-call-action', space_title: 'Tasks' }),
+      ]),
+    )
+    expect(result.tasks).toHaveLength(2)
+  })
+
+  it('honors include_closed for assigned tasks across spaces', async () => {
+    const db: Db = {
+      spaces: [makeSpace(workflowSchema)],
+      space_items: [
+        {
+          id: 'mine-closed',
+          space_id: 'space-1',
+          org_id: 'org-1',
+          user_id: 'user-1',
+          title: 'Completed assigned task',
+          status: 'done',
+          assignee_type: 'human',
+          assignee_id: 'user-1',
+          assignees: [{ type: 'human', id: 'user-1' }],
+        },
+      ],
+      space_item_activity: [],
+    }
+    const service = new ArtifactTasksService()
+
+    const result = (await service.getHandlers(makeTarget(db, { orgId: 'org-1' })).list_tasks(
+      { assigned_to_me: true, include_closed: true, fields: 'summary' },
+      'agent:vibey:stub',
+    )) as { success: boolean; tasks: Record<string, unknown>[] }
+
+    expect(result.success).toBe(true)
+    expect(result.tasks).toEqual([expect.objectContaining({ id: 'mine-closed' })])
   })
 
   it('keeps assigned-to-me scope across spaces when the agent also sends a space id', async () => {

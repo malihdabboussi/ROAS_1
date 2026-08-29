@@ -71,8 +71,11 @@ async function listAssignedTasksAcrossSpaces(input: {
   )
   if (spacesError) throw spacesError
   const spacesById = new Map((spaces ?? []).map((space) => [String(space.id), space]))
-  const openTasks = rows
+  const includeClosed =
+    input.query.include_closed === true || input.query.include_closed === 'true'
+  const matchingTasks = rows
     .filter((task) => {
+      if (includeClosed) return true
       const space = spacesById.get(String(task.space_id ?? ''))
       if (!space) return false
       const statusField = input.schema.fieldsById(input.schema.schemaFromSpace(space)).get('status')
@@ -86,11 +89,11 @@ async function listAssignedTasksAcrossSpaces(input: {
         campaign_id: typeof space.campaign_id === 'string' ? space.campaign_id : null,
       }
     })
-  const tasks = openTasks.slice(0, input.limit)
+  const tasks = matchingTasks.slice(0, input.limit)
   return {
     success: true,
     scope: 'assigned_to_me',
     tasks,
-    ...(shouldIncludeSpaceItemCount(input.query) ? { total_count: openTasks.length } : {}),
+    ...(shouldIncludeSpaceItemCount(input.query) ? { total_count: matchingTasks.length } : {}),
   }
 }

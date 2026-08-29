@@ -16,6 +16,7 @@ const QUOTED_TASK_TITLE = /[\u201c"]([^\u201d"]{3,240})[\u201d"]/u
 
 export function shouldSkipBrainContextForOperationalAgenda(content: string): boolean {
   const normalized = content.trim()
+  if (extractCanonicalTaskLookupTitle(normalized)) return true
   if (!normalized || !OPERATIONAL_AGENDA_INTENT.test(normalized)) return false
   return !CONVERSATIONAL_CONTEXT_INTENT.test(normalized)
 }

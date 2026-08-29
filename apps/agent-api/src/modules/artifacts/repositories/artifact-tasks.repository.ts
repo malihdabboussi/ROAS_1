@@ -207,7 +207,6 @@ export class ArtifactTasksRepository {
           .select(getSpaceItemSelect(input.queryInput), { count: 'exact' })
       : supabase.from('space_items').select(getSpaceItemSelect(input.queryInput))
     query = input.orgId ? query.eq('org_id', input.orgId) : query.is('org_id', null)
-    query = query.is('parent_item_id', null)
     query = applySpaceItemFilters(query, input.queryInput)
     query = applySpaceItemAssignedToMeFilter(query, input.queryInput, input.userId)
     query = applySpaceItemSearch(query, input.queryInput)
