@@ -1,5 +1,15 @@
 # Changelog - August 28, 2026
 
+## [2026-08-28 22:31] - [FIX]
+
+**What:** Added page-level regression coverage for the complete public post-call review sequence from meeting context through the inline delegation preview and final follow-up message.
+
+**Why:** Production QA needed a non-destructive way to prove the stage orchestration without confirming task creation or sending a client message.
+
+**Impact:** The full public review flow now fails in CI if it stops opening the existing bulk-delegation review inline or stops revealing the prepared follow-up message afterward.
+
+**Files:** `apps/web/src/features/home/components/PublicMeetingFollowUpReviewPage.test.tsx`
+
 ## 2026-08-28 15:35 - [FIX]
 
 What: Made unmapped-channel `@Pixel` mentions resolve named clients from the surrounding Slack thread before binding the agent conversation, and made exact campaign names win over broader partial name matches.
