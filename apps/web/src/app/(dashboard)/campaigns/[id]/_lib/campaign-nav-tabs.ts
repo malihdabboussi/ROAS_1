@@ -13,6 +13,17 @@ export const TOGGLEABLE_CAMPAIGN_TAB_IDS = [
 
 export type ToggleableCampaignTabId = (typeof TOGGLEABLE_CAMPAIGN_TAB_IDS)[number]
 
+export const CLIENT_WORKSPACE_NAV_TABS = [
+  { value: 'overview', label: 'Overview', icon: 'layout-grid' },
+  { value: 'dashboard', label: 'Campaigns', icon: 'folder-kanban' },
+  { value: 'list', label: 'Tasks & Requests', icon: 'list' },
+  { value: 'reporting', label: 'Performance', icon: 'pie-chart' },
+  { value: 'calendar', label: 'Meetings', icon: 'calendar-days' },
+  { value: 'communications', label: 'Chats & Missions', icon: 'message-square' },
+  { value: 'canvas', label: 'Canvas', icon: 'panels-top-left' },
+  { value: 'knowledge', label: 'Brain', icon: 'brain' },
+] as const
+
 /** Default agency client hub: overview + brand + reporting; work (missions) included. */
 export const DEFAULT_VISIBLE_CAMPAIGN_TABS: ToggleableCampaignTabId[] = [
   'overview',

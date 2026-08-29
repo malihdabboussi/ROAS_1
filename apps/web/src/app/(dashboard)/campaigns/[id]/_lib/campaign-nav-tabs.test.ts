@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  CLIENT_WORKSPACE_NAV_TABS,
   DEFAULT_VISIBLE_CAMPAIGN_TABS,
   normalizeCampaignTabId,
   readVisibleCampaignTabs,
@@ -21,6 +22,10 @@ describe('campaign-nav-tabs', () => {
 
   it('normalizes the campaign canvas view', () => {
     expect(normalizeCampaignTabId('canvas')).toBe('canvas')
+  })
+
+  it('keeps Canvas reachable from fixed client workspaces', () => {
+    expect(CLIENT_WORKSPACE_NAV_TABS.map((tab) => tab.value)).toContain('canvas')
   })
 
   it('normalizes legacy visible_campaign_tabs', () => {
