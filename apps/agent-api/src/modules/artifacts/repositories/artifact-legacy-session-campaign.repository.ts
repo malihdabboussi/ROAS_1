@@ -59,9 +59,7 @@ export class ArtifactLegacySessionCampaignRepository {
       .ilike('name', input.ilikeValue)
       .order('updated_at', { ascending: false })
       .limit(5)
-    query = input.orgId
-      ? query.eq('org_id', input.orgId)
-      : query.eq('user_id', input.userId).is('org_id', null)
+    query = input.orgId ? query.eq('org_id', input.orgId) : query.eq('user_id', input.userId)
     return (await query) as {
       data: Array<Record<string, unknown>> | null
       error: QueryError | null
@@ -78,9 +76,7 @@ export class ArtifactLegacySessionCampaignRepository {
       .neq('status', 'archived')
       .order('updated_at', { ascending: false })
       .limit(80)
-    query = input.orgId
-      ? query.eq('org_id', input.orgId)
-      : query.eq('user_id', input.userId).is('org_id', null)
+    query = input.orgId ? query.eq('org_id', input.orgId) : query.eq('user_id', input.userId)
     return (await query) as {
       data: Array<Record<string, unknown>> | null
       error: QueryError | null
