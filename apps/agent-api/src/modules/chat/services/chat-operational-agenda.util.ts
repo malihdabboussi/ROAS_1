@@ -13,6 +13,8 @@ const TOMORROW_CALENDAR_REQUEST = /\btomorrow\b/i
 const TASK_LOOKUP_CONTEXT =
   /\b(?:assign(?:ed|ment)?|source|origin|came from|come from|meeting|call|slack|transcript|provenance)\b/i
 const QUOTED_TASK_TITLE = /[\u201c"]([^\u201d"]{3,240})[\u201d"]/u
+const OPERATIONAL_PRIORITY_RECOMMENDATION =
+  /\b(?:what should i do first|what should i start with(?: first)?|which (?:task|action|item) should i (?:do|start with|prioritize) first|what should i prioritize first|where should i start)\b/i
 
 export function shouldSkipBrainContextForOperationalAgenda(content: string): boolean {
   const normalized = content.trim()
@@ -29,6 +31,8 @@ export function extractCanonicalTaskLookupTitle(content: string): string | null 
 export const isOperationalTaskRequest = (content: string): boolean => TASK_REQUEST.test(content)
 export const isOperationalCalendarRequest = (content: string): boolean =>
   CALENDAR_REQUEST.test(content)
+export const isOperationalPriorityRecommendationRequest = (content: string): boolean =>
+  OPERATIONAL_PRIORITY_RECOMMENDATION.test(content)
 export const isExtendedCalendarRequest = (content: string): boolean =>
   EXTENDED_CALENDAR_REQUEST.test(content)
 

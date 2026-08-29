@@ -226,12 +226,10 @@ describe('ChatStreamExecutionService', () => {
   })
 
   it('uses the fast bounded research route for a canonical operational agenda request', async () => {
-    const streamCompletion = vi
-      .fn()
-      .mockResolvedValueOnce({
-        content: 'Here are your nine open tasks and today\'s meeting.',
-        toolSteps: [],
-      })
+    const streamCompletion = vi.fn().mockResolvedValueOnce({
+      content: "Here are your nine open tasks and today's meeting.",
+      toolSteps: [],
+    })
     const validateModelSettings = vi.fn(async (modelId, settings) => ({
       requestedModelId: modelId,
       resolvedModelId: modelId,
@@ -274,6 +272,49 @@ describe('ChatStreamExecutionService', () => {
       'content_delta',
       expect.objectContaining({ content: expect.stringContaining('## Open tasks (1)') }),
     )
+  })
+
+  it('uses bounded operational data and a writer to choose the first action', async () => {
+    const streamCompletion = vi.fn(async () => ({
+      content: 'Start with Assigned task before Today meeting.',
+      toolSteps: [],
+    }))
+    const validateModelSettings = vi.fn(async (modelId, settings) => ({
+      requestedModelId: modelId,
+      resolvedModelId: modelId,
+      request: settings ?? {},
+      openClaw: { reasoningEffort: settings?.reasoning_effort },
+    }))
+    const progressiveSend = vi.fn(async () => undefined)
+    const service = makeService({ streamCompletion, validateModelSettings })
+
+    const result = await service.run(
+      makeRunInput({
+        selectedModelInput: 'auto',
+        progressiveSend,
+        userContent:
+          'Given that schedule and task list, what should I do first before my next meeting?',
+      }),
+    )
+
+    expect(validateModelSettings).toHaveBeenCalledTimes(1)
+    expect(validateModelSettings).toHaveBeenCalledWith(
+      'anthropic/claude-sonnet-4.6',
+      expect.objectContaining({ reasoning_effort: 'low' }),
+    )
+    expect(streamCompletion).toHaveBeenCalledTimes(1)
+    expect(streamCompletion.mock.calls[0]?.[0]).toMatchObject({
+      model: 'anthropic/claude-sonnet-4.6',
+      generationStage: 'write',
+      toolChoice: 'none',
+    })
+    expect(JSON.stringify(streamCompletion.mock.calls[0]?.[0].input)).toContain('Assigned task')
+    expect(JSON.stringify(streamCompletion.mock.calls[0]?.[0].input)).toContain('Today meeting')
+    expect(progressiveSend).not.toHaveBeenCalledWith(
+      'content_delta',
+      expect.objectContaining({ content: expect.stringContaining('## Open tasks') }),
+    )
+    expect(result.content).toBe('Start with Assigned task before Today meeting.')
   })
 
   it('preserves full Auto reasoning for contextual agenda questions', async () => {
@@ -361,9 +402,7 @@ describe('ChatStreamExecutionService', () => {
     expect(result.content).toContain('is assigned to you')
     expect(result.content).toContain('Dylan and Shannon collaboration planning')
     expect(result.content).toContain('00:24:47')
-    expect(result.content).toContain(
-      'https://fathom.video/calls/789735438?timestamp=1487.9999',
-    )
+    expect(result.content).toContain('https://fathom.video/calls/789735438?timestamp=1487.9999')
     expect(progressiveSend).toHaveBeenCalledWith(
       'content_delta',
       expect.objectContaining({ content: result.content }),
@@ -447,7 +486,10 @@ describe('ChatStreamExecutionService', () => {
 
   it('retrieves only the seven-day calendar window for an ongoing meeting follow-up', async () => {
     const executeAction = vi.fn(async () => ({ events: [] }))
-    const streamCompletion = vi.fn(async () => ({ content: 'No upcoming meetings.', toolSteps: [] }))
+    const streamCompletion = vi.fn(async () => ({
+      content: 'No upcoming meetings.',
+      toolSteps: [],
+    }))
     const service = makeService({ executeAction, streamCompletion })
 
     await service.run(
@@ -505,7 +547,9 @@ describe('ChatStreamExecutionService', () => {
       phase: 'executing',
       message: "Retrieving tomorrow's meetings",
     })
-    expect(result.content).toBe("## Tomorrow's meetings\n\nNo meetings are scheduled in this window.")
+    expect(result.content).toBe(
+      "## Tomorrow's meetings\n\nNo meetings are scheduled in this window.",
+    )
   })
 
   it('shows the research answer when the Sonnet writing pass fails', async () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   extractCanonicalTaskLookupTitle,
+  isOperationalPriorityRecommendationRequest,
   shouldSkipBrainContextForOperationalAgenda,
 } from './chat-operational-agenda.util'
 
@@ -24,9 +25,26 @@ describe('shouldSkipBrainContextForOperationalAgenda', () => {
   })
 
   it('keeps retrieval for unrelated knowledge questions', () => {
-    expect(shouldSkipBrainContextForOperationalAgenda('What positioning did Curtis recommend?')).toBe(
-      false,
-    )
+    expect(
+      shouldSkipBrainContextForOperationalAgenda('What positioning did Curtis recommend?'),
+    ).toBe(false)
+  })
+})
+
+describe('isOperationalPriorityRecommendationRequest', () => {
+  it.each([
+    'Given that schedule and task list, what should I do first before my next meeting?',
+    'Which task should I prioritize first?',
+    'What should I start with today?',
+  ])('recognizes a request to choose the first action: %s', (content) => {
+    expect(isOperationalPriorityRecommendationRequest(content)).toBe(true)
+  })
+
+  it.each([
+    'What should I focus on today? Show my open tasks and meetings.',
+    'What meetings do I have coming up?',
+  ])('keeps inventory-only agenda requests deterministic: %s', (content) => {
+    expect(isOperationalPriorityRecommendationRequest(content)).toBe(false)
   })
 })
 
