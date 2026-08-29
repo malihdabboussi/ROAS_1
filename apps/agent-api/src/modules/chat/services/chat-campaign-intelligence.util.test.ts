@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   appendCampaignEvidenceReceipt,
-  formatCampaignIntelligenceResearch,
+  formatCampaignStatus,
   isCampaignStatusRequest,
 } from './chat-campaign-intelligence.util'
 
@@ -20,34 +20,6 @@ describe('campaign intelligence routing', () => {
       expect(isCampaignStatusRequest(text)).toBe(false)
     },
   )
-
-  it('keeps reporting canonical and Brain contextual in the research contract', () => {
-    const content = formatCampaignIntelligenceResearch('campaign-1', [
-      {
-        name: 'get_campaign_main_dashboard',
-        action: 'get_campaign_main_dashboard',
-        label: 'dashboard',
-        status: 'completed',
-        result: { fetched_at: '2026-08-29T12:00:00.000Z', kpis: { roas: 2.4 } },
-      },
-      {
-        name: 'search_campaign_brain',
-        action: 'search_campaign_brain',
-        label: 'brain',
-        status: 'completed',
-        result: { results: [{ content: 'Budget was approved.' }] },
-      },
-    ])
-
-    expect(JSON.parse(content)).toMatchObject({
-      routing_contract: {
-        canonical_source: 'campaign_reporting',
-        as_of: '2026-08-29T12:00:00.000Z',
-        brain_context: { results: [{ content: 'Budget was approved.' }] },
-      },
-      live_campaign_dashboard: { kpis: { roas: 2.4 } },
-    })
-  })
 
   it('appends a deterministic source, freshness, Brain, and task receipt', () => {
     const content = appendCampaignEvidenceReceipt('Campaign performance is flat.', [
@@ -85,5 +57,49 @@ describe('campaign intelligence routing', () => {
     expect(content).toContain('2026-08-29T12:00:00.000Z')
     expect(content).toContain('Campaign Brain: 0 relevant context')
     expect(content).toContain('Open campaign tasks: 4 open tasks')
+  })
+
+  it('formats campaign status without inferring causes from zero reporting', () => {
+    const content = formatCampaignStatus([
+      {
+        name: 'get_campaign_main_dashboard',
+        action: 'get_campaign_main_dashboard',
+        label: 'dashboard',
+        status: 'completed',
+        result: {
+          canonical_source: { system: 'campaign_reporting', owner: 'main_dashboard' },
+          as_of: '2026-08-29T12:00:00.000Z',
+          overview: { leads: 0, visitors: 0, conversion_rate: 0 },
+          sources: {
+            funnels: { visitors: 0, leads: 0 },
+            emails: { sent: 0, opened: 0, clicked: 0 },
+            ads: { total_ads: 0, ad_visitors: 0, ad_leads: 0 },
+            social: { reach: 0, post_count: 0 },
+          },
+          alerts: [{ level: 'critical', source: 'cross', message: 'No activity recorded.' }],
+          partial: { funnels: true, emails: false },
+        },
+      },
+      {
+        name: 'search_campaign_brain',
+        action: 'search_campaign_brain',
+        label: 'brain',
+        status: 'completed',
+        result: { results: [] },
+      },
+      {
+        name: 'list_tasks',
+        action: 'list_tasks',
+        label: 'tasks',
+        status: 'completed',
+        result: { tasks: [], total_count: 0 },
+      },
+    ])
+
+    expect(content).toContain('| Leads | 0 |')
+    expect(content).toContain('CRITICAL · cross: No activity recorded.')
+    expect(content).toContain('Partial reporting: funnels.')
+    expect(content).toContain('not treated as proof that campaign assets are inactive')
+    expect(content).toContain('campaign_reporting / main_dashboard')
   })
 })

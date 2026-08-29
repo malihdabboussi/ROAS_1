@@ -269,3 +269,13 @@ Why: Signed-in production QA confirmed that the canonical dashboard, Campaign Br
 Impact: Every scoped campaign-status answer now states the exact live reporting source and freshness, Campaign Brain result count, and open-task count. Missing evidence is labeled unavailable, and zero or missing metrics are no longer instructions to invent an operational cause.
 
 Files: `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence-execution.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence.util.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence.util.test.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test-helpers.ts`, `documentation/features/meeting-follow-up-slack.md`, `.docs/plans/agent-follow-up-work.md`
+
+## [2026-08-29 14:02] - [FIX]
+
+What: Replaced the scoped campaign-status writer pass with a deterministic formatter over the canonical dashboard, Campaign Brain, and open-task reads, and corrected direct content streaming to use the platform's `content` event field.
+
+Why: Exact-SHA production QA showed that the model-written answer took 49 seconds, inferred unsupported causes from zero metrics, and dropped the evidence receipt because the appended stream event used an ignored `delta` field.
+
+Impact: Scoped campaign status now returns immediately after the three parallel source reads, reports canonical metrics and source freshness, labels partial data, and cannot invent why a zero or missing value occurred. Direct fallback content also persists through the same supported stream contract.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence-execution.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence.util.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence.util.test.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`

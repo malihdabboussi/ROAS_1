@@ -176,7 +176,7 @@ export class ChatStreamExecutionService {
     const campaignScopeRequired = campaignIntelligenceQuickPath && !input.campaignId
     const directResearchOutput =
       canonicalTaskLookupTitle ||
-      campaignScopeRequired ||
+      campaignIntelligenceQuickPath ||
       (operationalAgendaQuickPath && !operationalPriorityRecommendation)
     const writerModelSettings = operationalAgendaQuickPath
       ? { ...writerRoute.modelSettings, reasoning_effort: 'low' as const }
@@ -256,7 +256,7 @@ export class ChatStreamExecutionService {
             researchResult.toolSteps,
           )
         : researchResult.content
-      await input.progressiveSend('content_delta', { delta: fallbackContent })
+      await input.progressiveSend('content_delta', { content: fallbackContent })
       return mergeAutoStageResults(stagedResearch, stagedWriter, {
         content: fallbackContent,
         failed: undefined,
@@ -273,7 +273,7 @@ export class ChatStreamExecutionService {
       : writerResult.content
     if (finalContent !== writerResult.content) {
       await input.progressiveSend('content_delta', {
-        delta: finalContent.slice(writerResult.content.length),
+        content: finalContent.slice(writerResult.content.length),
       })
     }
     return mergeAutoStageResults(stagedResearch, stagedWriter, {

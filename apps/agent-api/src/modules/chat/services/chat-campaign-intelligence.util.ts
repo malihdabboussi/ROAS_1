@@ -14,29 +14,68 @@ export function isCampaignStatusRequest(text: string): boolean {
   )
 }
 
-export function formatCampaignIntelligenceResearch(
-  campaignId: string,
-  toolSteps: ToolStep[],
-): string {
+export function formatCampaignStatus(toolSteps: ToolStep[]): string {
   const byAction = new Map(toolSteps.map((step) => [step.action ?? step.name, step]))
-  return JSON.stringify({
-    purpose: 'campaign_status',
-    campaign_id: campaignId,
-    routing_contract: {
-      canonical_source: 'campaign_reporting',
-      as_of: readAsOf(byAction.get('get_campaign_main_dashboard')?.result),
-      evidence: toolSteps.map((step) => ({
-        action: step.action ?? step.name,
-        status: step.status,
-        error: step.error ?? null,
-      })),
-      brain_context: byAction.get('search_campaign_brain')?.result ?? null,
-    },
-    live_campaign_dashboard: byAction.get('get_campaign_main_dashboard')?.result ?? null,
-    open_campaign_tasks: byAction.get('list_tasks')?.result ?? null,
-    instructions:
-      'Answer from live_campaign_dashboard for mutable metrics. Use brain_context only for durable decisions and conversational interpretation. Do not infer causes for zero or missing data unless brain_context explicitly supports them. State the source and as-of time. Call out missing or failed evidence instead of guessing.',
-  })
+  const dashboard = byAction.get('get_campaign_main_dashboard')
+  if (!dashboard || dashboard.status === 'failed') {
+    return appendCampaignEvidenceReceipt(
+      'I could not retrieve the live campaign dashboard, so I cannot safely report current performance.',
+      toolSteps,
+    )
+  }
+
+  const dashboardRecord = asRecord(dashboard.result)
+  const overview = asRecord(dashboardRecord.overview)
+  const sources = asRecord(dashboardRecord.sources)
+  const funnels = asRecord(sources.funnels)
+  const emails = asRecord(sources.emails)
+  const ads = asRecord(sources.ads)
+  const social = asRecord(sources.social)
+  const alerts = Array.isArray(dashboardRecord.alerts) ? dashboardRecord.alerts : []
+  const partial = asRecord(dashboardRecord.partial)
+  const partialSources = Object.entries(partial)
+    .filter(([, value]) => value === true)
+    .map(([source]) => source)
+
+  const sections = [
+    '## Campaign status',
+    '',
+    '| Metric | Current reporting |',
+    '| --- | ---: |',
+    `| Leads | ${formatMetric(overview.leads)} |`,
+    `| Visitors | ${formatMetric(overview.visitors)} |`,
+    `| Conversion rate | ${formatPercent(overview.conversion_rate)} |`,
+    `| Email open rate | ${formatPercent(overview.email_open_rate)} |`,
+    `| Email click rate | ${formatPercent(overview.email_click_rate)} |`,
+    `| Social reach | ${formatMetric(overview.social_reach)} |`,
+    '',
+    '### Channel snapshot',
+    `- Funnel: ${formatMetric(funnels.visitors)} visitors, ${formatMetric(funnels.leads)} leads`,
+    `- Email: ${formatMetric(emails.sent)} sent, ${formatMetric(emails.opened)} opened, ${formatMetric(emails.clicked)} clicked`,
+    `- Ads: ${formatMetric(ads.total_ads)} ads, ${formatMetric(ads.ad_visitors)} visitors, ${formatMetric(ads.ad_leads)} leads`,
+    `- Social: ${formatMetric(social.reach)} reach across ${formatMetric(social.post_count)} posts`,
+  ]
+
+  if (alerts.length > 0) {
+    sections.push('', '### Reported alerts')
+    for (const alert of alerts.slice(0, 5)) {
+      const record = asRecord(alert)
+      const message = readText(record.message)
+      if (!message) continue
+      const level = readText(record.level)?.toUpperCase() ?? 'INFO'
+      const source = readText(record.source) ?? 'campaign'
+      sections.push(`- ${level} · ${source}: ${message}`)
+    }
+  }
+
+  if (partialSources.length > 0) {
+    sections.push('', `Partial reporting: ${partialSources.join(', ')}.`)
+  }
+  sections.push(
+    '',
+    'Zero or missing reporting values are not treated as proof that campaign assets are inactive; a cause requires supporting campaign context.',
+  )
+  return appendCampaignEvidenceReceipt(sections.join('\n'), toolSteps)
 }
 
 export function appendCampaignEvidenceReceipt(content: string, toolSteps: ToolStep[]): string {
@@ -96,4 +135,12 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function readText(value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null
+}
+
+function formatMetric(value: unknown): string {
+  return typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString('en-US') : '—'
+}
+
+function formatPercent(value: unknown): string {
+  return typeof value === 'number' && Number.isFinite(value) ? `${value}%` : '—'
 }

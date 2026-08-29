@@ -1,6 +1,6 @@
 import type { ArtifactsService } from '../../artifacts/services/artifacts.service'
 import { executeArtifactRead } from './chat-artifact-read-execution'
-import { formatCampaignIntelligenceResearch } from './chat-campaign-intelligence.util'
+import { formatCampaignStatus } from './chat-campaign-intelligence.util'
 import type { ChatStreamExecutionInput } from './chat-stream-execution.service'
 import type { OpenClawCompletionResult } from './openclaw-proxy.service'
 
@@ -18,7 +18,7 @@ export async function runCampaignIntelligenceResearch(
   if (!input.campaignId) {
     return {
       content:
-        'I need one specific client campaign before I can retrieve live reporting. Select the client campaign or name it unambiguously, then ask again.',
+        'I need one specific client campaign before I can retrieve live reporting. Select the client campaign, then ask again.',
       toolSteps: [],
       failed: 'campaign_scope_required',
     }
@@ -42,14 +42,8 @@ export async function runCampaignIntelligenceResearch(
       data: { campaign_id: campaignId, include_closed: false, include_count: true },
     }),
   ])
-  const dashboard = toolSteps.find(
-    (step) => (step.action ?? step.name) === 'get_campaign_main_dashboard',
-  )
   return {
-    content: formatCampaignIntelligenceResearch(campaignId, toolSteps),
+    content: formatCampaignStatus(toolSteps),
     toolSteps,
-    ...(dashboard?.status === 'failed'
-      ? { failed: dashboard.error ?? 'get_campaign_main_dashboard failed' }
-      : {}),
   }
 }

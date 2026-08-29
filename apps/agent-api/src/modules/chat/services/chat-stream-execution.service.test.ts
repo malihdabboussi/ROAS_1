@@ -346,7 +346,13 @@ describe('ChatStreamExecutionService', () => {
             owner: 'main_dashboard',
           },
           as_of: '2026-08-29T12:00:00.000Z',
-          kpis: { roas: 2.4, leads: 18 },
+          overview: { leads: 18, visitors: 240, conversion_rate: 7.5 },
+          sources: {
+            funnels: { visitors: 240, leads: 18 },
+            emails: { sent: 100, opened: 40, clicked: 8 },
+            ads: { total_ads: 3, ad_visitors: 120, ad_leads: 9 },
+            social: { reach: 4000, post_count: 5 },
+          },
         }
       }
       if (action === 'search_campaign_brain') {
@@ -389,25 +395,19 @@ describe('ChatStreamExecutionService', () => {
       { campaign_id: 'campaign-1', include_closed: false, include_count: true },
       'session-1',
     )
-    expect(streamCompletion).toHaveBeenCalledTimes(1)
-    expect(JSON.stringify(streamCompletion.mock.calls[0]?.[0].input)).toContain(
-      'campaign_reporting',
-    )
-    expect(JSON.stringify(streamCompletion.mock.calls[0]?.[0].input)).toContain(
-      'Approved budget is $30k.',
-    )
-    expect(result.content).toContain('Live ROAS is 2.4')
+    expect(streamCompletion).not.toHaveBeenCalled()
+    expect(result.content).toContain('| Leads | 18 |')
     expect(result.content).toContain('campaign_reporting / main_dashboard')
     expect(result.content).toContain('Reporting as of: 2026-08-29T12:00:00.000Z')
     expect(result.content).toContain('Campaign Brain: 1 relevant context')
     expect(result.content).toContain('Open campaign tasks: 1 open tasks')
     expect(progressiveSend).toHaveBeenCalledWith(
       'content_delta',
-      expect.objectContaining({ delta: expect.stringContaining('**Evidence**') }),
+      expect.objectContaining({ content: expect.stringContaining('**Evidence**') }),
     )
   })
 
-  it('keeps the campaign evidence receipt when the writer fails', async () => {
+  it('keeps the campaign evidence receipt without invoking a writer', async () => {
     const executeAction = vi.fn(async (action: string) =>
       action === 'get_campaign_main_dashboard'
         ? {
@@ -434,7 +434,8 @@ describe('ChatStreamExecutionService', () => {
     )
 
     expect(result.failed).toBeUndefined()
-    expect(result.content).toContain('could not safely complete the narrative summary')
+    expect(streamCompletion).not.toHaveBeenCalled()
+    expect(result.content).toContain('## Campaign status')
     expect(result.content).toContain('campaign_reporting / main_dashboard')
     expect(result.content).toContain('Reporting as of: 2026-08-29T12:00:00.000Z')
   })
@@ -558,7 +559,7 @@ describe('ChatStreamExecutionService', () => {
     expect(streamCompletion).toHaveBeenCalledTimes(2)
     expect(result.content).toBe('Useful researched answer.')
     expect(progressiveSend).toHaveBeenCalledWith('content_delta', {
-      delta: 'Useful researched answer.',
+      content: 'Useful researched answer.',
     })
     expect(result.recoveryEvents).toEqual([
       expect.objectContaining({
