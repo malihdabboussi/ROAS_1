@@ -93,6 +93,14 @@ describe('campaign intelligence execution', () => {
           spaces: [
             { id: 'space-general', title: 'General' },
             {
+              id: 'space-low-ticket',
+              title: 'Low Ticket - Christian Osgood - My First Deal Low Ticket Funnel',
+            },
+            {
+              id: 'space-webinar',
+              title: 'Webinar - Evergreen Weekly Webinar 2026 - Multifamily Strategy',
+            },
+            {
               id: 'space-multifamily-vsl',
               title: 'VSL - MultiFamily Strategy - Ongoing VSL & Call Booking',
             },

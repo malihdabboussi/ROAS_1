@@ -1,5 +1,15 @@
 # Changelog - August 29, 2026
 
+## [2026-08-29 15:39] - [FIX]
+
+What: Prioritized a uniquely explicit full campaign Space title in status prompts before running fuzzy Space-name matching.
+
+Why: Production returned all six correct client Spaces, but several shared “MultiFamily Strategy” wording. The fuzzy ambiguity guard therefore withheld the task read even though the user had typed one complete Space title.
+
+Impact: Exact named campaign questions retrieve only that Space's open tasks, while genuinely ambiguous or multi-Space questions continue to fail closed.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence-execution.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence-execution.test.ts`, `documentation/features/meeting-follow-up-slack.md`, `.docs/logs/changelog2026-08-29.md`.
+
 ## [2026-08-29 15:20] - [FIX]
 
 What: Bound deterministic campaign-status evidence to the canonical campaign and its uniquely named Space, added explicit read-only scope override validation for live dashboard reads, and made Campaign Brain retain deterministic evidence when the optional LLM reranker fails.

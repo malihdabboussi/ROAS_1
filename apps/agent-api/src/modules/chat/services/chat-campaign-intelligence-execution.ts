@@ -2,6 +2,7 @@ import type { ArtifactsService } from '../../artifacts/services/artifacts.servic
 import {
   campaignNameLookupQueries,
   isGeneralCampaignName,
+  normalizeCampaignNameForMatch,
   pickUniqueFuzzyCampaign,
 } from '../../artifacts/services/campaign-name-match'
 import { executeArtifactRead } from './chat-artifact-read-execution'
@@ -101,6 +102,13 @@ function resolveTargetSpaceId(query: string, step: ToolStep): string | null {
       }
     })
     .filter((space) => space.id && space.name)
+  const normalizedQuery = normalizeCampaignNameForMatch(query)
+  const explicitMatches = rows.filter(
+    (space) =>
+      !isGeneralCampaignName(space.name) &&
+      normalizedQuery.includes(normalizeCampaignNameForMatch(space.name)),
+  )
+  if (explicitMatches.length === 1) return explicitMatches[0]!.id
   const matched = pickUniqueFuzzyCampaign(campaignNameLookupQueries(query), rows)
   if (matched && matched !== 'ambiguous') return matched.id
   const nonGeneral = rows.filter((space) => !isGeneralCampaignName(space.name))
