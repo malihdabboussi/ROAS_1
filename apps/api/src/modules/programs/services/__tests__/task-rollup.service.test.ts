@@ -66,7 +66,12 @@ describe('TaskRollupService', () => {
       },
     ])
 
-    const mine = await service.list(supabase, 'user-1', { view: 'my', limit: 5 }, 'org-1')
+    const mine = await service.list(
+      supabase,
+      'user-1',
+      { view: 'my', focus: 'current', limit: 5 },
+      'org-1',
+    )
     expect(mine.map((r) => r.id)).toEqual(['i1'])
     expect(mine[0]?.program_name).toBe('Clients')
     expect(mine[0]?.source_url).toContain('/spaces?space=s1&item=i1')
@@ -74,6 +79,7 @@ describe('TaskRollupService', () => {
       spaceIds: ['s1'],
       orgId: 'org-1',
       assigneeUserId: 'user-1',
+      excludeNeedsReview: true,
       limit: 5,
     })
 
@@ -113,6 +119,7 @@ describe('TaskRollupService', () => {
       spaceIds: ['s1'],
       orgId: 'org-1',
       assigneeUserId: undefined,
+      excludeNeedsReview: false,
       limit: 50,
     })
   })

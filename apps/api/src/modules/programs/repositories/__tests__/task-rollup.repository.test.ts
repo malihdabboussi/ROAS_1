@@ -33,12 +33,16 @@ describe('TaskRollupRepository', () => {
       spaceIds: ['space-1'],
       orgId: 'org-1',
       assigneeUserId: 'user-1',
+      excludeNeedsReview: true,
       limit: 5,
     })
 
     expect(query.contains).toHaveBeenCalledWith('assignees', '[{"type":"human","id":"user-1"}]')
     expect(query.or).toHaveBeenCalledWith(
       'parent_item_id.is.null,custom_data->>entry_type.eq.follow_up',
+    )
+    expect(query.or).toHaveBeenCalledWith(
+      'custom_data->action_lifecycle->>review_state.is.null,custom_data->action_lifecycle->>review_state.neq.needs_review',
     )
     expect(query.limit).toHaveBeenCalledWith(5)
     expect(calls).toEqual(['contains', 'order', 'limit'])

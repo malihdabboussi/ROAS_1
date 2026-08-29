@@ -359,3 +359,13 @@ Why: Exact-SHA production QA proved that the nested Campaign Brain action could 
 Impact: Named campaign status cannot leak or display General reporting, all three evidence sources stay on the same campaign, and a Campaign Brain failure no longer hides correctly scoped live metrics or open work.
 
 Files: `apps/agent-api/src/modules/artifacts/services/artifacts.service.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence-execution.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence-execution.test.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test-helpers.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-08-29 16:13 - [FIX]
+
+What: Added a canonical `focus=current` task-rollup read and applied it to both New Chat task cards and proactive next moves. The repository now excludes lifecycle rows awaiting owner review before limiting results.
+
+Why: Signed-in production QA showed the chat correctly prioritizing current work while New Chat still promoted overdue July tasks from the Needs Review queue.
+
+Impact: Homepage suggestions and “In your court” now surface current assigned work; stale tasks remain available in My Tasks for explicit owner reconciliation.
+
+Files: `apps/api/src/modules/programs/dto/task-rollup.dto.ts`, `apps/api/src/modules/programs/services/task-rollup.service.ts`, `apps/api/src/modules/programs/repositories/task-rollup.repository.ts`, `apps/api/src/modules/home/services/next-moves.service.ts`, `apps/web/src/lib/tasks/tasks-api.ts`, `apps/web/src/components/shell/ShellNewChatTasks.tsx`, tests, and `documentation/features/meeting-follow-up-slack.md`.

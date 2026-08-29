@@ -37,7 +37,7 @@ export function ShellNewChatTasks() {
 
   useEffect(() => {
     let cancelled = false
-    void fetchTaskRollup({ view: 'my', limit: TASK_LIMIT })
+    void fetchTaskRollup({ view: 'my', focus: 'current', limit: TASK_LIMIT })
       .then((tasks) => {
         if (!cancelled) setItems(tasks.slice(0, TASK_LIMIT))
       })

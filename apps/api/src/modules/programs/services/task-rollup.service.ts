@@ -57,6 +57,7 @@ export class TaskRollupService {
       spaceIds: spaces.map((s) => s.id),
       orgId,
       assigneeUserId: query.view === 'my' ? userId : undefined,
+      excludeNeedsReview: query.focus === 'current',
       limit: query.limit,
     })
 

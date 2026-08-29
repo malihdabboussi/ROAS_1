@@ -23,7 +23,7 @@ export class NextMovesService {
       this.taskRollup.list(
         supabase,
         scope.userId,
-        { view: 'my', limit: 100 },
+        { view: 'my', focus: 'current', limit: 100 },
         scope.orgId,
         scope.orgRole,
       ),
@@ -121,7 +121,9 @@ function toSuggestion(item: TaskRollupItem) {
           type: 'slack' as const,
           title: 'Slack conversation',
           occurredAt: slackOccurredAt(provenance.slack_message_ts) ?? item.created_at,
-          url: conversationId ? `/home?conv=${encodeURIComponent(conversationId)}` : item.source_url,
+          url: conversationId
+            ? `/home?conv=${encodeURIComponent(conversationId)}`
+            : item.source_url,
           sourceKind,
         }
       : {

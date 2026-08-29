@@ -40,7 +40,11 @@ describe('ShellNewChatTasks', () => {
 
     expect(await screen.findByText('Send Curtis the revised plan')).toBeInTheDocument()
     expect(screen.getByText(/From a call/)).toBeInTheDocument()
-    expect(mockedFetchTaskRollup).toHaveBeenCalledWith({ view: 'my', limit: 5 })
+    expect(mockedFetchTaskRollup).toHaveBeenCalledWith({
+      view: 'my',
+      focus: 'current',
+      limit: 5,
+    })
   })
 
   it('stays out of the way when there are no assigned tasks', async () => {
