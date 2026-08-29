@@ -289,3 +289,13 @@ Why: Production QA proved that an older campaign-titled conversation was actuall
 Impact: A named campaign status request can repair stale General scope and keeps reporting, Brain context, and tasks on one client campaign. If no client campaign resolves, the route stops before showing General data.
 
 Files: `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence-execution.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `apps/agent-api/src/modules/artifacts/services/campaign-name-match.test.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-29 14:29] - [FIX]
+
+What: Extracted hyphen-delimited campaign phrases from natural-language campaign status questions before exact campaign-name lookup.
+
+Why: Signed-in production QA showed that passing the whole question reached the bounded 80-campaign fuzzy fallback, where an older Multifamily Strategy campaign was absent and the stale General conversation scope was rejected.
+
+Impact: Named campaign resolution now finds the canonical campaign directly regardless of its age, while unresolved or ambiguous requests continue to fail closed before reporting is read.
+
+Files: `apps/agent-api/src/modules/artifacts/services/campaign-name-match.ts`, `apps/agent-api/src/modules/artifacts/services/campaign-name-match.test.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-campaign-name-resolver.test.ts`, `documentation/features/meeting-follow-up-slack.md`

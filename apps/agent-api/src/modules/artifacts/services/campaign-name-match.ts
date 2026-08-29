@@ -7,7 +7,7 @@ export function campaignNameLookupQueries(raw: string): string[] {
   const trimmed = raw.trim()
   if (!trimmed) return []
   const parts = trimmed
-    .split(/[/|,]+/)
+    .split(/[/|,]+|\s+[-–—]\s+/)
     .map((part) => part.trim())
     .filter((part) => part.length >= 3)
   return [...new Set([trimmed, ...parts])]
@@ -38,8 +38,7 @@ export function campaignNameSimilarity(query: string, candidate: string): number
 
   const leftTokens = left.split(' ').filter(Boolean)
   const rightTokens = right.split(' ').filter(Boolean)
-  const stringScore =
-    1 - levenshtein(left, right) / Math.max(left.length, right.length, 1)
+  const stringScore = 1 - levenshtein(left, right) / Math.max(left.length, right.length, 1)
 
   if (leftTokens.length >= 2 && leftTokens.length === rightTokens.length) {
     const tokenAvg =
