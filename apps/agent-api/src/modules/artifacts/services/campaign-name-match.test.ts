@@ -25,22 +25,38 @@ describe('campaign-name-match', () => {
   })
 
   it('picks a unique fuzzy campaign from accessible names', () => {
-    const match = pickUniqueFuzzyCampaign(['Matser yoru kraft'], [
-      { id: 'kraft', name: 'Master Your Kraft' },
-      { id: 'speak', name: 'Speak Like a CEO' },
-      { id: 'general', name: 'General' },
-    ])
+    const match = pickUniqueFuzzyCampaign(
+      ['Matser yoru kraft'],
+      [
+        { id: 'kraft', name: 'Master Your Kraft' },
+        { id: 'speak', name: 'Speak Like a CEO' },
+        { id: 'general', name: 'General' },
+      ],
+    )
     expect(match).toEqual({ id: 'kraft', name: 'Master Your Kraft' })
   })
 
   it('uses the client phrase after a slash', () => {
+    const match = pickUniqueFuzzyCampaign(campaignNameLookupQueries('Yasir / SPeka lke a ceo'), [
+      { id: 'kraft', name: 'Master Your Kraft' },
+      { id: 'speak', name: 'Speak Like a CEO' },
+    ])
+    expect(match).toEqual({ id: 'speak', name: 'Speak Like a CEO' })
+  })
+
+  it('resolves a campaign name embedded in a natural-language status question', () => {
     const match = pickUniqueFuzzyCampaign(
-      campaignNameLookupQueries('Yasir / SPeka lke a ceo'),
+      campaignNameLookupQueries(
+        "What's the current status of the VSL - MultiFamily Strategy - Ongoing VSL & Call Booking campaign?",
+      ),
       [
-        { id: 'kraft', name: 'Master Your Kraft' },
-        { id: 'speak', name: 'Speak Like a CEO' },
+        { id: 'multifamily', name: 'Multifamily Strategy' },
+        { id: 'black-swan', name: 'Black Swan Group - Multi-family Strategy' },
+        { id: 'power-circle', name: 'Power Circle - Multi-family Strategy' },
+        { id: 'general', name: 'General' },
       ],
     )
-    expect(match).toEqual({ id: 'speak', name: 'Speak Like a CEO' })
+
+    expect(match).toEqual({ id: 'multifamily', name: 'Multifamily Strategy' })
   })
 })

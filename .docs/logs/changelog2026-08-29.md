@@ -279,3 +279,13 @@ Why: Exact-SHA production QA showed that the model-written answer took 49 second
 Impact: Scoped campaign status now returns immediately after the three parallel source reads, reports canonical metrics and source freshness, labels partial data, and cannot invent why a zero or missing value occurred. Direct fallback content also persists through the same supported stream contract.
 
 Files: `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence-execution.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence.util.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence.util.test.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-29 14:18] - [FIX]
+
+What: Resolved a named campaign through Campaign Brain before reading its live dashboard and tasks, then used the returned canonical campaign ID for both remaining reads.
+
+Why: Production QA proved that an older campaign-titled conversation was actually bound to the system General campaign, causing zero-value General reporting and a rejected Campaign Brain read even though the prompt unambiguously named Multifamily Strategy.
+
+Impact: A named campaign status request can repair stale General scope and keeps reporting, Brain context, and tasks on one client campaign. If no client campaign resolves, the route stops before showing General data.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence-execution.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `apps/agent-api/src/modules/artifacts/services/campaign-name-match.test.ts`, `documentation/features/meeting-follow-up-slack.md`
