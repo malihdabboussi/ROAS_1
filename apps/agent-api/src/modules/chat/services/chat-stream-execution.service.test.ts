@@ -357,6 +357,7 @@ describe('ChatStreamExecutionService', () => {
       }
       if (action === 'search_campaign_brain') {
         return {
+          campaign_id: 'campaign-1',
           results: [{ content: 'Approved budget is $30k.' }],
           context_sufficient: true,
         }
@@ -387,7 +388,9 @@ describe('ChatStreamExecutionService', () => {
     )
     expect(executeAction).toHaveBeenCalledWith(
       'search_campaign_brain',
-      expect.objectContaining({ campaign_id: 'campaign-1' }),
+      expect.objectContaining({
+        campaign_name: 'What is the current status of this live campaign?',
+      }),
       'session-1',
     )
     expect(executeAction).toHaveBeenCalledWith(
@@ -407,6 +410,57 @@ describe('ChatStreamExecutionService', () => {
     )
   })
 
+  it('resolves a named client campaign instead of reading the General campaign', async () => {
+    const executeAction = vi.fn(async (action: string) => {
+      if (action === 'search_campaign_brain') {
+        return { campaign_id: 'campaign-multifamily', results: [], count: 0 }
+      }
+      if (action === 'get_campaign_main_dashboard') {
+        return {
+          canonical_source: { system: 'campaign_reporting', owner: 'main_dashboard' },
+          as_of: '2026-08-29T12:00:00.000Z',
+          overview: { leads: 4 },
+          sources: {},
+        }
+      }
+      return { tasks: [], total_count: 0 }
+    })
+    const service = makeService({ executeAction })
+
+    const result = await service.run(
+      makeRunInput({
+        campaignId: 'general-campaign',
+        selectedModelInput: 'auto',
+        userContent:
+          "What's the current status of the VSL - MultiFamily Strategy - Ongoing VSL & Call Booking campaign?",
+      }),
+    )
+
+    expect(executeAction).toHaveBeenNthCalledWith(
+      1,
+      'search_campaign_brain',
+      expect.objectContaining({
+        campaign_name: expect.stringContaining('MultiFamily Strategy'),
+      }),
+      'session-1',
+    )
+    expect(executeAction).toHaveBeenCalledWith(
+      'get_campaign_main_dashboard',
+      { campaign_id: 'campaign-multifamily', refresh: true },
+      'session-1',
+    )
+    expect(executeAction).toHaveBeenCalledWith(
+      'list_tasks',
+      {
+        campaign_id: 'campaign-multifamily',
+        include_closed: false,
+        include_count: true,
+      },
+      'session-1',
+    )
+    expect(result.content).toContain('| Leads | 4 |')
+  })
+
   it('keeps the campaign evidence receipt without invoking a writer', async () => {
     const executeAction = vi.fn(async (action: string) =>
       action === 'get_campaign_main_dashboard'
@@ -415,7 +469,7 @@ describe('ChatStreamExecutionService', () => {
             as_of: '2026-08-29T12:00:00.000Z',
           }
         : action === 'search_campaign_brain'
-          ? { results: [] }
+          ? { campaign_id: 'campaign-1', results: [] }
           : { tasks: [], total_count: 0 },
     )
     const streamCompletion = vi.fn(async () => ({
