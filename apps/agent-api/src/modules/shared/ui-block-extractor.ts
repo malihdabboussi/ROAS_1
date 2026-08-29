@@ -1,3 +1,10 @@
+import { DURABLE_ARTIFACT_OUTPUT_DEFINITIONS } from './durable-artifact-output-registry'
+
+export {
+  DURABLE_ARTIFACT_OUTPUT_ACTIONS,
+  DURABLE_ARTIFACT_OUTPUT_DEFINITIONS,
+} from './durable-artifact-output-registry'
+
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value)
 }
@@ -256,6 +263,17 @@ function collectCandidateRecords(result: unknown): Array<Record<string, unknown>
       'media',
       'media_asset',
       'document',
+      'offer',
+      'avatar',
+      'presentation',
+      'sequence',
+      'email',
+      'social_post',
+      'socialPost',
+      'blog_post',
+      'blogPost',
+      'campaign',
+      'canvas',
       'form',
       'task',
       'item',
@@ -283,6 +301,20 @@ function firstString(records: Array<Record<string, unknown> | undefined>, keys: 
   for (const record of records) {
     if (!record) continue
     for (const key of keys) {
+      const value = stringValue(record[key])
+      if (value) return value
+    }
+  }
+  return ''
+}
+
+function firstStringByKeyPriority(
+  records: Array<Record<string, unknown> | undefined>,
+  keys: string[],
+): string {
+  for (const key of keys) {
+    for (const record of records) {
+      if (!record) continue
       const value = stringValue(record[key])
       if (value) return value
     }
@@ -431,7 +463,7 @@ function buildArtifactPreviewBlock(input: {
   status?: string
 }): Array<Record<string, unknown>> {
   const records = [...collectCandidateRecords(input.result), input.data]
-  const artifactId = firstString(records, input.idKeys)
+  const artifactId = firstStringByKeyPriority(records, input.idKeys)
   if (!artifactId) return []
   const name = firstString(records, input.nameKeys) || input.defaultName
   const subtitle = firstString(records, ['subtitle', 'summary', 'description'])
@@ -456,12 +488,36 @@ function buildArtifactPreviewBlock(input: {
   ]
 }
 
+function buildRegisteredArtifactOutputBlock(
+  action: string,
+  result: unknown,
+  data: Record<string, unknown>,
+): Array<Record<string, unknown>> {
+  const definition = DURABLE_ARTIFACT_OUTPUT_DEFINITIONS.find((candidate) =>
+    candidate.actions.includes(action),
+  )
+  if (!definition) return []
+  const records = [...collectCandidateRecords(result), data]
+  const resultStatus = firstString(records, ['status'])
+  const fallbackStatus = /^(create|generate|define|extract)_/.test(action) ? 'created' : 'updated'
+  return buildArtifactPreviewBlock({
+    artifactType: definition.artifactType,
+    result,
+    data,
+    idKeys: definition.idKeys,
+    nameKeys: definition.nameKeys,
+    defaultName: definition.defaultName,
+    status:
+      action === 'create_campaign' ? resultStatus || 'draft' : resultStatus || fallbackStatus,
+  })
+}
+
 function buildProjectPreviewBlock(
   result: unknown,
   data: Record<string, unknown>,
 ): Array<Record<string, unknown>> {
   const records = [...collectCandidateRecords(result), data]
-  const projectId = firstString(records, ['project_id', 'projectId', 'id'])
+  const projectId = firstStringByKeyPriority(records, ['project_id', 'projectId', 'id'])
   if (!projectId) return []
   const filesRecord = records.find((record) => Array.isArray(record.files))
   return [
@@ -472,6 +528,128 @@ function buildProjectPreviewBlock(
       name: firstString(records, ['name', 'title']) || 'Project',
       entry_point: firstString(records, ['entry_point', 'entryPoint']) || undefined,
       ...(filesRecord ? { files: filesRecord.files } : {}),
+    },
+  ]
+}
+
+function buildDocumentOutputBlock(
+  result: unknown,
+  data: Record<string, unknown>,
+): Array<Record<string, unknown>> {
+  const records = [...collectCandidateRecords(result), data]
+  const documentId = firstStringByKeyPriority(records, [
+    'document_id',
+    'documentId',
+    'conversation_document_id',
+    'space_item_id',
+    'item_id',
+    'id',
+  ])
+  if (!documentId) return []
+  const spaceId = firstStringByKeyPriority(records, ['space_id', 'spaceId'])
+  const spaceItemId = firstStringByKeyPriority(records, ['space_item_id', 'spaceItemId'])
+  return [
+    {
+      type: 'document_card',
+      id: `document-${documentId}`,
+      title: firstString(records, ['title', 'name']) || 'Document',
+      documentId,
+      snippet: firstString(records, ['snippet', 'summary', 'description', 'content']),
+      ...(spaceId ? { spaceId } : {}),
+      ...(spaceItemId ? { spaceItemId } : {}),
+    },
+  ]
+}
+
+function buildCanvasOutputBlock(
+  action: string,
+  result: unknown,
+  data: Record<string, unknown>,
+): Array<Record<string, unknown>> {
+  const records = [...collectCandidateRecords(result), data]
+  const boardId = firstStringByKeyPriority(records, ['board_id', 'boardId'])
+  const campaignId = firstStringByKeyPriority(records, ['campaign_id', 'campaignId'])
+  if (!boardId || !campaignId) return []
+  const campaignLabel = firstString(records, ['campaign_label', 'campaignLabel'])
+  const subtitle =
+    action === 'build_campaign_blueprint'
+      ? 'Campaign blueprint updated'
+      : action === 'complete_canvas_placeholder'
+        ? 'Canvas asset updated'
+        : 'Canvas updated'
+
+  return [
+    {
+      type: 'artifact_preview',
+      id: `artifact-canvas-${boardId}`,
+      artifactType: 'canvas',
+      artifactId: boardId,
+      campaignId,
+      internalUrl: `/campaigns/${encodeURIComponent(campaignId)}?view=canvas`,
+      name: campaignLabel ? `${campaignLabel} Canvas` : 'Campaign Canvas',
+      subtitle,
+      status: 'updated',
+    },
+  ]
+}
+
+function buildGeneratedFileOutputBlock(
+  action: string,
+  result: unknown,
+): Array<Record<string, unknown>> {
+  if ((action !== 'create_pdf' && action !== 'create_docx') || !isRecord(result)) return []
+  if (result.success === false) return []
+  const fileUrl = stringValue(result.file_url)
+  const fileName = stringValue(result.file_name)
+  const document = isRecord(result.document) ? result.document : null
+  const documentId = document ? stringValue(document.id) : ''
+  const extension = action === 'create_docx' ? 'docx' : 'pdf'
+  const defaultTitle = action === 'create_docx' ? 'DOCX' : 'PDF'
+  const title =
+    (document ? stringValue(document.title) : '') ||
+    stringValue(result.title) ||
+    (fileName ? fileName.replace(new RegExp(`\\.${extension}$`, 'i'), '') : '') ||
+    defaultTitle
+  if (documentId) {
+    return [
+      {
+        type: 'document_card',
+        id: `document-${documentId}`,
+        title,
+        documentId,
+        snippet: defaultTitle,
+      },
+    ]
+  }
+  if (!fileUrl) return []
+  return [
+    {
+      type: action === 'create_docx' ? 'docx_file' : 'pdf_file',
+      id: `${extension}-file-${Date.now()}`,
+      url: fileUrl,
+      label: fileName || `${title}.${extension}`,
+    },
+  ]
+}
+
+function buildBrowserScreenshotBlock(result: unknown): Array<Record<string, unknown>> {
+  const browserResult = isRecord(result) ? result : null
+  const details = browserResult && isRecord(browserResult.details) ? browserResult.details : null
+  const screenshotPath =
+    stringValue(browserResult?.path) ||
+    stringValue(browserResult?.imagePath) ||
+    stringValue(details?.path) ||
+    stringValue(details?.imagePath)
+  if (!screenshotPath) return []
+  const filename = screenshotPath.split('/').pop() ?? ''
+  if (!filename) return []
+  const pageUrl = stringValue(browserResult?.url) || stringValue(details?.url) || undefined
+  return [
+    {
+      type: 'browser_screenshot',
+      id: `browser-screenshot-${Date.now()}`,
+      imageUrl: `/api/chat/browser-media/${encodeURIComponent(filename)}`,
+      pageUrl,
     },
   ]
 }
@@ -532,6 +710,26 @@ function buildActionOutputBlocks(
   result: unknown,
   data: Record<string, unknown>,
 ): Array<Record<string, unknown>> {
+  if (action === 'generate_image' || action === 'edit_image') {
+    return buildMediaAssetBlock({
+      action,
+      data,
+      result,
+      defaultKind: 'image',
+      defaultTitle: action === 'edit_image' ? 'Edited image' : 'Generated image',
+      urlKeys: ['image_url'],
+    })
+  }
+  if (action === 'generate_video' || action === 'get_video_status') {
+    return buildMediaAssetBlock({
+      action,
+      data,
+      result,
+      defaultKind: 'video',
+      defaultTitle: 'Generated video',
+      urlKeys: ['video_url'],
+    })
+  }
   if (action === 'process_media') {
     const registeredImages = buildRegisteredImageBlocks(result, data)
     if (registeredImages.length > 0) return registeredImages
@@ -543,122 +741,69 @@ function buildActionOutputBlocks(
       defaultTitle: 'Processed media',
     })
   }
-  if (action === 'create_project') return buildProjectPreviewBlock(result, data)
+  if (action === 'create_pdf' || action === 'create_docx') {
+    return buildGeneratedFileOutputBlock(action, result)
+  }
+  if (
+    action === 'create_project' ||
+    action === 'create_file' ||
+    action === 'update_file' ||
+    action === 'patch_file' ||
+    action === 'update_project_deps' ||
+    action === 'import_github_repo'
+  ) {
+    return buildProjectPreviewBlock(result, data)
+  }
+  if (action === 'save_document' || action === 'update_document') {
+    return buildDocumentOutputBlock(result, data)
+  }
+  if (
+    action === 'build_campaign_blueprint' ||
+    action === 'apply_canvas_operations' ||
+    action === 'complete_canvas_placeholder'
+  ) {
+    return buildCanvasOutputBlock(action, result, data)
+  }
 
-  if (action === 'create_form' || action === 'publish_form' || action === 'attach_form_asset') {
-    return buildArtifactPreviewBlock({
-      artifactType: 'form',
-      result,
-      data,
-      idKeys: ['form_id', 'formId', 'id'],
-      nameKeys: ['name', 'title'],
-      defaultName: 'Form',
-    })
-  }
-  if (action === 'create_campaign') {
-    return buildArtifactPreviewBlock({
-      artifactType: 'campaign',
-      result,
-      data,
-      idKeys: ['campaign_id', 'campaignId', 'id'],
-      nameKeys: ['name', 'title'],
-      defaultName: 'Campaign',
-      status: firstString([...collectCandidateRecords(result), data], ['status']) || 'draft',
-    })
-  }
-  if (action === 'create_task') {
-    return buildArtifactPreviewBlock({
-      artifactType: 'task',
-      result,
-      data,
-      idKeys: ['task_id', 'item_id', 'taskId', 'itemId', 'id'],
-      nameKeys: ['title', 'name'],
-      defaultName: 'Task',
-    })
-  }
-  if (action === 'create_mission') {
-    return buildArtifactPreviewBlock({
-      artifactType: 'mission',
-      result,
-      data,
-      idKeys: ['mission_id', 'missionId', 'id'],
-      nameKeys: ['title', 'name'],
-      defaultName: 'Mission',
-    })
-  }
-  if (action === 'create_flow_draft' || action === 'publish_flow') {
-    return buildArtifactPreviewBlock({
-      artifactType: 'flow',
-      result,
-      data,
-      idKeys: ['automation_id', 'flow_id', 'automationId', 'flowId', 'id'],
-      nameKeys: ['name', 'title'],
-      defaultName: 'Flow',
-      status: action === 'create_flow_draft' ? 'draft' : undefined,
-    })
-  }
-  if (action === 'create_website') {
-    return buildArtifactPreviewBlock({
-      artifactType: 'website',
-      result,
-      data,
-      idKeys: ['website_id', 'funnel_id', 'websiteId', 'funnelId', 'id'],
-      nameKeys: ['name', 'title'],
-      defaultName: 'Website',
-    })
-  }
-  if (action === 'create_funnel') {
-    return buildArtifactPreviewBlock({
-      artifactType: 'funnel',
-      result,
-      data,
-      idKeys: ['funnel_id', 'funnelId', 'id'],
-      nameKeys: ['name', 'title'],
-      defaultName: 'Funnel',
-    })
-  }
-  if (action === 'create_theme' || action === 'extract_website_theme') {
-    return buildArtifactPreviewBlock({
-      artifactType: 'theme',
-      result,
-      data,
-      idKeys: ['theme_id', 'themeId', 'id'],
-      nameKeys: ['name', 'title'],
-      defaultName: 'Theme',
-    })
-  }
-  if (action === 'create_object' || action === 'define_object_type') {
-    return buildArtifactPreviewBlock({
-      artifactType: 'custom-object',
-      result,
-      data,
-      idKeys: ['object_id', 'object_type_id', 'record_id', 'slug', 'id'],
-      nameKeys: ['title', 'name', 'slug'],
-      defaultName: action === 'define_object_type' ? 'Object type' : 'Object',
-    })
-  }
-  if (action === 'create_ad_set') {
-    return buildArtifactPreviewBlock({
-      artifactType: 'ad-set',
-      result,
-      data,
-      idKeys: ['ad_set_id', 'adSetId', 'id'],
-      nameKeys: ['name', 'title'],
-      defaultName: 'Ad Set',
-    })
-  }
-  if (action === 'generate_visual_html') {
-    return buildArtifactPreviewBlock({
-      artifactType: 'visual-doc',
-      result,
-      data,
-      idKeys: ['space_item_id', 'item_id', 'document_id', 'spaceItemId', 'itemId', 'id'],
-      nameKeys: ['title', 'name'],
-      defaultName: 'Visual Doc',
-    })
-  }
+  const registeredArtifactBlock = buildRegisteredArtifactOutputBlock(action, result, data)
+  if (registeredArtifactBlock.length > 0) return registeredArtifactBlock
 
   return []
+}
+
+const DURABLE_OUTPUT_BLOCK_TYPES = new Set([
+  'artifact_preview',
+  'browser_screenshot',
+  'document_card',
+  'docx_file',
+  'media_asset',
+  'pdf_file',
+  'project_preview',
+])
+
+function withActionOutputReceipt(input: {
+  blocks: Array<Record<string, unknown>>
+  name: string
+  action?: string
+  toolArgs?: Record<string, unknown>
+  result: unknown
+}): Array<Record<string, unknown>> {
+  if (input.name === 'browser') {
+    if (input.blocks.some((block) => stringValue(block.type) === 'browser_screenshot')) {
+      return input.blocks
+    }
+    const screenshotBlocks = buildBrowserScreenshotBlock(input.result)
+    return screenshotBlocks.length > 0 ? [...input.blocks, ...screenshotBlocks] : input.blocks
+  }
+  if (!isCampaignToolName(input.name) || !input.action) return input.blocks
+  if (input.blocks.some((block) => DURABLE_OUTPUT_BLOCK_TYPES.has(stringValue(block.type)))) {
+    return input.blocks
+  }
+  const data = isRecord(input.toolArgs?.data)
+    ? (input.toolArgs.data as Record<string, unknown>)
+    : {}
+  const outputBlocks = buildActionOutputBlocks(input.action, input.result, data)
+  return outputBlocks.length > 0 ? [...input.blocks, ...outputBlocks] : input.blocks
 }
 
 export function resolveUiBlocksFromToolResult(params: {
@@ -679,16 +824,28 @@ export function resolveUiBlocksFromToolResult(params: {
 
   if (isRecord(result)) {
     const genericBlocks = normalizeUiBlocks(result.ui_blocks)
-    if (genericBlocks.length > 0) return genericBlocks
+    if (genericBlocks.length > 0) {
+      return withActionOutputReceipt({ blocks: genericBlocks, name, action, toolArgs, result })
+    }
     if (isRecord(result.result)) {
       const nestedResultBlocks = normalizeUiBlocks(
         (result.result as Record<string, unknown>).ui_blocks,
       )
-      if (nestedResultBlocks.length > 0) return nestedResultBlocks
+      if (nestedResultBlocks.length > 0) {
+        return withActionOutputReceipt({
+          blocks: nestedResultBlocks,
+          name,
+          action,
+          toolArgs,
+          result,
+        })
+      }
     }
     if (isRecord(result.data)) {
       const nestedDataBlocks = normalizeUiBlocks((result.data as Record<string, unknown>).ui_blocks)
-      if (nestedDataBlocks.length > 0) return nestedDataBlocks
+      if (nestedDataBlocks.length > 0) {
+        return withActionOutputReceipt({ blocks: nestedDataBlocks, name, action, toolArgs, result })
+      }
     }
 
     if (isCampaignToolName(name) && Array.isArray(result.content)) {
@@ -701,12 +858,22 @@ export function resolveUiBlocksFromToolResult(params: {
           parsed = JSON.parse(text) as Record<string, unknown>
         } catch {
           const uiBlocksFallback = extractUiBlocksFromMalformedJson(text)
-          if (uiBlocksFallback.length > 0) return uiBlocksFallback
+          if (uiBlocksFallback.length > 0) {
+            return withActionOutputReceipt({
+              blocks: uiBlocksFallback,
+              name,
+              action,
+              toolArgs,
+              result,
+            })
+          }
           continue
         }
         if (parsed && Array.isArray(parsed.ui_blocks)) {
           const blocks = normalizeUiBlocks(parsed.ui_blocks)
-          if (blocks.length > 0) return blocks
+          if (blocks.length > 0) {
+            return withActionOutputReceipt({ blocks, name, action, toolArgs, result })
+          }
         }
         if (
           parsed &&
@@ -714,7 +881,9 @@ export function resolveUiBlocksFromToolResult(params: {
           Array.isArray((parsed.result as Record<string, unknown>).ui_blocks)
         ) {
           const blocks = normalizeUiBlocks((parsed.result as Record<string, unknown>).ui_blocks)
-          if (blocks.length > 0) return blocks
+          if (blocks.length > 0) {
+            return withActionOutputReceipt({ blocks, name, action, toolArgs, result })
+          }
         }
         if (
           parsed &&
@@ -722,70 +891,21 @@ export function resolveUiBlocksFromToolResult(params: {
           Array.isArray((parsed.data as Record<string, unknown>).ui_blocks)
         ) {
           const blocks = normalizeUiBlocks((parsed.data as Record<string, unknown>).ui_blocks)
-          if (blocks.length > 0) return blocks
+          if (blocks.length > 0) {
+            return withActionOutputReceipt({ blocks, name, action, toolArgs, result })
+          }
         }
       }
     }
   }
 
   if (name === 'browser' && status === 'completed') {
-    const browserResult = isRecord(result) ? result : null
-    const details = browserResult && isRecord(browserResult.details) ? browserResult.details : null
-    const screenshotPath =
-      typeof browserResult?.path === 'string'
-        ? browserResult.path
-        : typeof browserResult?.imagePath === 'string'
-          ? browserResult.imagePath
-          : typeof details?.path === 'string'
-            ? details.path
-            : typeof details?.imagePath === 'string'
-              ? details.imagePath
-              : null
-    const pageUrlFromResult =
-      typeof browserResult?.url === 'string'
-        ? browserResult.url
-        : typeof details?.url === 'string'
-          ? details.url
-          : undefined
-    if (screenshotPath) {
-      const filename = screenshotPath.split('/').pop() ?? ''
-      if (filename) {
-        return [
-          {
-            type: 'browser_screenshot',
-            id: `browser-screenshot-${Date.now()}`,
-            imageUrl: `/api/chat/browser-media/${encodeURIComponent(filename)}`,
-            pageUrl: pageUrlFromResult,
-          },
-        ]
-      }
-    }
+    const screenshotBlocks = buildBrowserScreenshotBlock(result)
+    if (screenshotBlocks.length > 0) return screenshotBlocks
   }
 
   if (!isCampaignToolName(name) || !action) return []
   const data = isRecord(toolArgs?.data) ? (toolArgs.data as Record<string, unknown>) : {}
-
-  if (action === 'generate_image' || action === 'edit_image') {
-    return buildMediaAssetBlock({
-      action,
-      data,
-      result,
-      defaultKind: 'image',
-      defaultTitle: action === 'edit_image' ? 'Edited image' : 'Generated image',
-      urlKeys: ['image_url'],
-    })
-  }
-
-  if (action === 'generate_video' || action === 'get_video_status') {
-    return buildMediaAssetBlock({
-      action,
-      data,
-      result,
-      defaultKind: 'video',
-      defaultTitle: 'Generated video',
-      urlKeys: ['video_url'],
-    })
-  }
 
   const actionOutputBlocks = buildActionOutputBlocks(action, result, data)
   if (actionOutputBlocks.length > 0) return actionOutputBlocks
@@ -957,49 +1077,6 @@ export function resolveUiBlocksFromToolResult(params: {
   ) {
     const workRequestBlock = buildWorkRequestChatBlock(result, data)
     if (workRequestBlock.length > 0) return workRequestBlock
-  }
-
-  if (
-    (action === 'create_pdf' || action === 'create_docx') &&
-    isRecord(result) &&
-    result.success !== false
-  ) {
-    const fileUrl = typeof result.file_url === 'string' ? result.file_url.trim() : ''
-    const fileName = typeof result.file_name === 'string' ? result.file_name.trim() : ''
-    const doc = isRecord(result.document) ? result.document : null
-    const documentId = doc && typeof doc.id === 'string' ? doc.id : ''
-    const extension = action === 'create_docx' ? 'docx' : 'pdf'
-    const defaultTitle = action === 'create_docx' ? 'DOCX' : 'PDF'
-    const title =
-      (doc && typeof doc.title === 'string' && doc.title.trim().length > 0
-        ? doc.title.trim()
-        : null) ??
-      (typeof result.title === 'string' && result.title.trim().length > 0
-        ? result.title.trim()
-        : null) ??
-      (fileName ? fileName.replace(new RegExp(`\\.${extension}$`, 'i'), '') : null) ??
-      defaultTitle
-    if (documentId) {
-      return [
-        {
-          type: 'document_card',
-          id: `document-${documentId}`,
-          title,
-          documentId,
-          snippet: defaultTitle,
-        },
-      ]
-    }
-    if (fileUrl) {
-      return [
-        {
-          type: action === 'create_docx' ? 'docx_file' : 'pdf_file',
-          id: `${extension}-file-${Date.now()}`,
-          url: fileUrl,
-          label: fileName || `${title}.${extension}`,
-        },
-      ]
-    }
   }
 
   if (action === 'create_chat_plan' || action === 'update_chat_plan') {

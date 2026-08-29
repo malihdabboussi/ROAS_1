@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { resolveUiBlocksFromToolResult } from './ui-block-extractor'
+import {
+  DURABLE_ARTIFACT_OUTPUT_DEFINITIONS,
+  resolveUiBlocksFromToolResult,
+} from './ui-block-extractor'
 
 describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
   afterEach(() => {
@@ -150,6 +153,118 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
         mimeType: 'image/png',
         prompt: 'A product shot',
       }),
+    ])
+  })
+
+  it('keeps explicit progress blocks and appends the durable artifact receipt', () => {
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'create_offer',
+      toolArgs: { data: { name: 'Growth Offer' } },
+      result: {
+        success: true,
+        offer_id: 'offer-1',
+        ui_blocks: [{ type: 'tool_progress', id: 'progress-1', label: 'Offer saved' }],
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      { type: 'tool_progress', id: 'progress-1', label: 'Offer saved' },
+      expect.objectContaining({
+        type: 'artifact_preview',
+        artifactType: 'offer',
+        artifactId: 'offer-1',
+        name: 'Growth Offer',
+        status: 'created',
+      }),
+    ])
+  })
+
+  it('does not duplicate an explicit durable output receipt', () => {
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'generate_image',
+      toolArgs: { data: { prompt: 'A product shot' } },
+      result: {
+        success: true,
+        image_url: 'https://cdn.vibey.ai/image.png',
+        ui_blocks: [
+          {
+            type: 'media_asset',
+            id: 'media-explicit',
+            url: 'https://cdn.vibey.ai/image.png',
+            kind: 'image',
+          },
+        ],
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      {
+        type: 'media_asset',
+        id: 'media-explicit',
+        url: 'https://cdn.vibey.ai/image.png',
+        kind: 'image',
+      },
+    ])
+  })
+
+  it('appends a generated-file receipt when explicit progress blocks are present', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(790)
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'create_pdf',
+      toolArgs: { data: {} },
+      result: {
+        success: true,
+        file_url: 'https://cdn.vibey.ai/strategy.pdf',
+        file_name: 'strategy.pdf',
+        ui_blocks: [{ type: 'tool_progress', id: 'progress-pdf', label: 'PDF ready' }],
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      { type: 'tool_progress', id: 'progress-pdf', label: 'PDF ready' },
+      {
+        type: 'pdf_file',
+        id: 'pdf-file-790',
+        url: 'https://cdn.vibey.ai/strategy.pdf',
+        label: 'strategy.pdf',
+      },
+    ])
+  })
+
+  it('appends a browser screenshot receipt when explicit progress blocks are present', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(791)
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'browser',
+      result: {
+        path: '/tmp/screenshots/client-home.png',
+        url: 'https://client.example/home',
+        ui_blocks: [{ type: 'tool_progress', id: 'progress-browser', label: 'Page captured' }],
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      { type: 'tool_progress', id: 'progress-browser', label: 'Page captured' },
+      {
+        type: 'browser_screenshot',
+        id: 'browser-screenshot-791',
+        imageUrl: '/api/chat/browser-media/client-home.png',
+        pageUrl: 'https://client.example/home',
+      },
     ])
   })
 
@@ -654,6 +769,169 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
         name: 'Master Your Kraft | VSL Retargeting',
         status: 'draft',
       }),
+    ])
+  })
+
+  it('covers every supported artifact preview family with a durable receipt definition', () => {
+    expect(
+      new Set([
+        ...DURABLE_ARTIFACT_OUTPUT_DEFINITIONS.map((definition) => definition.artifactType),
+        'canvas',
+      ]),
+    ).toEqual(
+      new Set([
+        'campaign',
+        'canvas',
+        'offer',
+        'funnel',
+        'avatar',
+        'sequence',
+        'presentation',
+        'ad',
+        'ad-set',
+        'ad-campaign',
+        'social-post',
+        'blog-post',
+        'email',
+        'visual-doc',
+        'form',
+        'task',
+        'mission',
+        'flow',
+        'website',
+        'theme',
+        'custom-object',
+      ]),
+    )
+  })
+
+  it.each(
+    DURABLE_ARTIFACT_OUTPUT_DEFINITIONS.flatMap((definition) =>
+      definition.actions.map((action) => ({
+        action,
+        artifactType: definition.artifactType,
+        idKey: definition.idKeys[0]!,
+      })),
+    ),
+  )('synthesizes a stable $artifactType receipt after $action', ({ action, artifactType, idKey }) => {
+    const artifactId = `${artifactType}-stable-id`
+    const createsResource = /^(create|generate|define|extract)_/.test(action)
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action,
+      toolArgs: {
+        data: createsResource
+          ? { name: `${artifactType} output` }
+          : { [idKey]: artifactId, name: `${artifactType} output` },
+      },
+      result: createsResource
+        ? { success: true, [idKey]: artifactId, name: `${artifactType} output` }
+        : { success: true, id: 'nested-child-id' },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      expect.objectContaining({
+        type: 'artifact_preview',
+        id: `artifact-${artifactType}-${artifactId}`,
+        artifactType,
+        artifactId,
+        name: `${artifactType} output`,
+        status:
+          action === 'create_campaign' ? 'draft' : createsResource ? 'created' : 'updated',
+      }),
+    ])
+  })
+
+  it.each([
+    'create_project',
+    'create_file',
+    'update_file',
+    'patch_file',
+    'update_project_deps',
+    'import_github_repo',
+  ])('keeps the project output linked after %s', (action) => {
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action,
+      toolArgs: { data: { project_id: 'project-1', name: 'Client app' } },
+      result: { success: true },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      expect.objectContaining({
+        type: 'project_preview',
+        id: 'project-project-1',
+        project_id: 'project-1',
+        name: 'Client app',
+      }),
+    ])
+  })
+
+  it.each(['save_document', 'update_document'])(
+    'keeps the document output linked after %s',
+    (action) => {
+      const blocks = resolveUiBlocksFromToolResult({
+        name: 'vibey_backend',
+        action,
+        toolArgs: {
+          data: { document_id: 'document-1', title: 'Strategy brief', space_id: 'space-1' },
+        },
+        result: { success: true },
+        status: 'completed',
+        cachedMetaAdAccounts: [],
+        cachedMetaPages: [],
+      })
+
+      expect(blocks).toEqual([
+        expect.objectContaining({
+          type: 'document_card',
+          id: 'document-document-1',
+          documentId: 'document-1',
+          title: 'Strategy brief',
+          spaceId: 'space-1',
+        }),
+      ])
+    },
+  )
+
+  it.each([
+    ['build_campaign_blueprint', 'Client webinar Canvas', 'Campaign blueprint updated'],
+    ['apply_canvas_operations', 'Campaign Canvas', 'Canvas updated'],
+    ['complete_canvas_placeholder', 'Campaign Canvas', 'Canvas asset updated'],
+  ])('emits a linked durable Canvas output after %s', (action, name, subtitle) => {
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action,
+      toolArgs: { data: {} },
+      result: {
+        success: true,
+        board_id: 'board-1',
+        campaign_id: 'campaign-1',
+        campaign_label: action === 'build_campaign_blueprint' ? 'Client webinar' : undefined,
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      {
+        type: 'artifact_preview',
+        id: 'artifact-canvas-board-1',
+        artifactType: 'canvas',
+        artifactId: 'board-1',
+        campaignId: 'campaign-1',
+        internalUrl: '/campaigns/campaign-1?view=canvas',
+        name,
+        subtitle,
+        status: 'updated',
+      },
     ])
   })
 })

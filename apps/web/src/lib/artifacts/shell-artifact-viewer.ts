@@ -52,6 +52,8 @@ export function consumePendingShellArtifactOpen(): ShellArtifactViewerTarget | n
 }
 
 const PREVIEW_TO_ENTITY_TABLE: Record<ArtifactPreviewType, string> = {
+  campaign: 'campaigns',
+  canvas: 'canvas_boards',
   offer: 'offers',
   funnel: 'funnels',
   avatar: 'avatars',
@@ -74,6 +76,8 @@ const PREVIEW_TO_ENTITY_TABLE: Record<ArtifactPreviewType, string> = {
 }
 
 const PREVIEW_TO_DELIVERABLE_TYPE: Record<ArtifactPreviewType, DeliverableType> = {
+  campaign: 'campaign',
+  canvas: 'canvas',
   offer: 'offer',
   funnel: 'funnel',
   avatar: 'avatar',
@@ -108,21 +112,29 @@ export function openArtifactPreviewInShell(input: {
   artifactId: string
   name: string
   spaceId?: string | null
+  campaignId?: string | null
+  internalUrl?: string | null
 }): void {
   const internalUrl =
-    input.artifactType === 'mission'
+    input.internalUrl ??
+    (input.artifactType === 'mission'
       ? `/home?mission=${encodeURIComponent(input.artifactId)}`
       : input.artifactType === 'flow'
         ? `/flows?flow_id=${encodeURIComponent(input.artifactId)}${
             input.spaceId ? `&space_id=${encodeURIComponent(input.spaceId)}` : ''
           }`
-        : null
+        : input.artifactType === 'campaign'
+          ? `/campaigns/${encodeURIComponent(input.artifactId)}`
+          : input.artifactType === 'canvas' && input.campaignId
+            ? `/campaigns/${encodeURIComponent(input.campaignId)}?view=canvas`
+            : null)
 
   openArtifactInShell({
     id: input.artifactId,
     entityId: input.artifactId,
     entityTable: artifactPreviewTypeToEntityTable(input.artifactType),
     internalUrl,
+    campaignId: input.campaignId,
     spaceId: input.spaceId,
     title: input.name,
     type: artifactPreviewTypeToDeliverableType(input.artifactType),

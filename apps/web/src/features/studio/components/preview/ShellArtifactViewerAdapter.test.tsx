@@ -175,6 +175,51 @@ describe('ShellArtifactViewerAdapter', () => {
     expect(screen.queryByTestId('lightweight-preview')).toBeNull()
   })
 
+  it('navigates a Canvas output to the exact campaign Canvas route', async () => {
+    useShellStore.setState({
+      artifactViewer: {
+        width: 480,
+        target: {
+          id: 'board-1',
+          entityId: 'board-1',
+          entityTable: 'canvas_boards',
+          campaignId: 'campaign-1',
+          title: 'Client webinar Canvas',
+          type: 'canvas',
+          internalUrl: '/campaigns/campaign-1?view=canvas',
+        },
+      },
+    })
+
+    render(<ShellArtifactViewerAdapter />)
+
+    await waitFor(() =>
+      expect(routerPush).toHaveBeenCalledWith('/campaigns/campaign-1?view=canvas'),
+    )
+    expect(screen.queryByTestId('lightweight-preview')).toBeNull()
+  })
+
+  it('navigates a project output to its canonical project route', async () => {
+    useShellStore.setState({
+      artifactViewer: {
+        width: 480,
+        target: {
+          id: 'project-1',
+          entityId: 'project-1',
+          entityTable: 'projects',
+          title: 'Client app',
+          type: 'text',
+          internalUrl: '/projects/project-1',
+        },
+      },
+    })
+
+    render(<ShellArtifactViewerAdapter />)
+
+    await waitFor(() => expect(routerPush).toHaveBeenCalledWith('/projects/project-1'))
+    expect(screen.queryByTestId('lightweight-preview')).toBeNull()
+  })
+
   it('renders presentations with the canonical full editor instead of the lightweight preview', async () => {
     useShellStore.setState({
       artifactViewer: {

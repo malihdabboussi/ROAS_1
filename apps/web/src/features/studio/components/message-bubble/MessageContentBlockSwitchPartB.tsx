@@ -319,6 +319,8 @@ export function messageContentBlockPartB(
         emailSubject={block.emailSubject}
         funnelPageId={block.funnelPageId}
         spaceId={block.spaceId}
+        campaignId={block.campaignId}
+        internalUrl={block.internalUrl}
         imageUrl={block.imageUrl}
         videoUrl={block.videoUrl}
         status={block.status}

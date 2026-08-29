@@ -44,6 +44,8 @@ describe('small artifact action data access', () => {
       ),
     ).resolves.toEqual({
       success: true,
+      board_id: 'board-1',
+      campaign_id: 'campaign-1',
       operation_id: 'operation-5',
       committed_revision: 5,
     })
@@ -79,6 +81,8 @@ describe('small artifact action data access', () => {
       success: true,
       blueprint_id: 'client-webinar',
       campaign_label: 'Client webinar',
+      board_id: 'board-1',
+      campaign_id: 'campaign-1',
       item_count: 5,
       connector_count: 2,
       batch_count: 3,
@@ -177,6 +181,8 @@ describe('small artifact action data access', () => {
       node_id: 'placeholder-1',
       resource_type: 'sequence',
       resource_id: 'sequence-1',
+      board_id: 'board-1',
+      campaign_id: 'campaign-1',
       committed_revision: 9,
     })
     expect(repository.applyCanvasOperations).toHaveBeenCalledWith(

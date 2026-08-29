@@ -27,6 +27,8 @@ export function ArtifactInlinePreviewCard({
   emailSubject,
   funnelPageId,
   spaceId,
+  campaignId,
+  internalUrl,
   imageUrl,
   videoUrl,
   status,
@@ -37,7 +39,14 @@ export function ArtifactInlinePreviewCard({
       openPreviewOverride()
       return
     }
-    openArtifactPreviewInShell({ artifactType, artifactId, name, spaceId })
+    openArtifactPreviewInShell({
+      artifactType,
+      artifactId,
+      name,
+      spaceId,
+      campaignId,
+      internalUrl,
+    })
   }
 
   if (artifactType === 'avatar') {

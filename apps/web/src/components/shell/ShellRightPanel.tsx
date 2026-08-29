@@ -294,7 +294,7 @@ export function ShellRightPanel({
               </>
             ) : null}
             <ShellRightPanelSection
-              title="Tasks"
+              title={conversationId ? 'Activity' : 'Tasks'}
               open={isSectionOpen('tasks', hasTasks)}
               onToggle={() => toggleSection('tasks', hasTasks)}
             >

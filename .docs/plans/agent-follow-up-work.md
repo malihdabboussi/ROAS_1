@@ -40118,3 +40118,13 @@ Evidence: `apps/agent-api/src/modules/chat/services/chat-prewarm-context.service
 Needed work: Split campaign asset summaries from Theme resolution, separate campaign-asset queries from general chat-context persistence, and extract stable prewarm campaign-context assembly while preserving scoped access, cache behavior, and context accounting.
 
 Reason not done now: The requested parity gap is fixed and tested; decomposing the remaining mature chat-context surfaces would be a broader behavior-neutral refactor.
+
+## 2026-08-28 - Chat durable outputs - pre-existing shared extractor size
+
+Feature/app: Agent API chat output extraction and web conversation summaries.
+
+Evidence: `apps/agent-api/src/modules/shared/ui-block-extractor.ts` is 1,122 lines and remains above the 600-line service limit after generalized durable-output coverage. The web summary debt found during this task was resolved in scope: `shell-conversation-summary.ts` is now 328 lines and output-block conversion lives in the focused 252-line `shell-conversation-output-rows.ts` helper, both below their utility limits.
+
+Needed work: Split the remaining Agent API output builders (media/files, durable artifacts, integrations/Meta, clarification/plans) into domain-focused modules while preserving `resolveUiBlocksFromToolResult` as the shared transport contract.
+
+Reason not done now: The web extraction was completed because it was local and behavior-locked. Splitting the oversized Agent API transport chokepoint is broader architecture work than the requested output-contract change.

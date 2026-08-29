@@ -13,6 +13,8 @@ export function openFinalOutputInShell(block: FinalOutputBlock) {
       artifactId: block.artifactId,
       name: block.name,
       spaceId: block.spaceId,
+      campaignId: block.campaignId,
+      internalUrl: block.internalUrl,
     })
     return
   }

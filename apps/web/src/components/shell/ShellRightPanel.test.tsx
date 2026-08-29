@@ -163,12 +163,12 @@ describe('ShellRightPanel', () => {
     expect(screen.getByTestId('create-catalog')).toBeInTheDocument()
   })
 
-  it('stacks Connections, Outputs, Sources, and Tasks sections for an active conversation', async () => {
+  it('stacks Connections, Outputs, Sources, and Activity sections for an active conversation', async () => {
     render(<ShellRightPanel conversationId="conversation-1" showScope />)
 
     expect(await screen.findByRole('heading', { name: 'Outputs' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Sources' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Tasks' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Activity' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Connections' })).toBeInTheDocument()
     expect(screen.queryByText('Campaign & space')).not.toBeInTheDocument()
     const panel = screen.getByRole('complementary', { name: 'Work summary' })
@@ -180,9 +180,9 @@ describe('ShellRightPanel', () => {
   it('opens sections that have content and folds away the ones that do not', async () => {
     render(<ShellRightPanel conversationId="conversation-1" showScope />)
 
-    // Empty Outputs / Tasks stay collapsed until they have rows or the user asks.
-    const tasks = await screen.findByRole('button', { name: 'Tasks' })
-    expect(tasks).toHaveAttribute('aria-expanded', 'false')
+    // Empty Outputs / Activity stay collapsed until they have rows or the user asks.
+    const activity = await screen.findByRole('button', { name: 'Activity' })
+    expect(activity).toHaveAttribute('aria-expanded', 'false')
     expect(screen.queryByTestId('tasks-context')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Outputs' })).toHaveAttribute(
       'aria-expanded',
@@ -191,8 +191,8 @@ describe('ShellRightPanel', () => {
     expect(screen.queryByText('Chat files')).not.toBeInTheDocument()
 
     // An explicit toggle still wins over the emptiness default.
-    fireEvent.click(tasks)
-    expect(tasks).toHaveAttribute('aria-expanded', 'true')
+    fireEvent.click(activity)
+    expect(activity).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByTestId('tasks-context')).toHaveTextContent('conversation-1')
   })
 

@@ -108,6 +108,36 @@ describe('FinalOutputCards', () => {
     })
   })
 
+  it('renders and opens a Canvas output from the chat transcript', () => {
+    const blocks: FinalOutputBlock[] = [
+      {
+        type: 'artifact_preview',
+        id: 'artifact-canvas-board-1',
+        artifactType: 'canvas',
+        artifactId: 'board-1',
+        campaignId: 'campaign-1',
+        internalUrl: '/campaigns/campaign-1?view=canvas',
+        name: 'Client webinar Canvas',
+        subtitle: 'Campaign blueprint updated',
+        status: 'updated',
+      },
+    ]
+
+    render(<FinalOutputCards blocks={blocks} />)
+    expect(screen.getByText('Canvas')).toBeInTheDocument()
+    expect(screen.getByText('Campaign blueprint updated')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Client webinar Canvas/i }))
+
+    expect(openArtifactPreviewInShell).toHaveBeenCalledWith({
+      artifactType: 'canvas',
+      artifactId: 'board-1',
+      name: 'Client webinar Canvas',
+      spaceId: undefined,
+      campaignId: 'campaign-1',
+      internalUrl: '/campaigns/campaign-1?view=canvas',
+    })
+  })
+
   it('automatically opens a newly created output while the agent is working', () => {
     const blocks: FinalOutputBlock[] = [
       {

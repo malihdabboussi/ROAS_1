@@ -15,6 +15,8 @@ import type { ArtifactNodeType } from '@/lib/chat/attached-artifact'
 import type { ArtifactPreviewType } from './artifact-inline-preview.types'
 
 export const ICON_MAP: Record<ArtifactPreviewType, ReactNode> = {
+  campaign: <LayoutTemplate className="icon-sm shrink-0" aria-hidden />,
+  canvas: <LayoutTemplate className="icon-sm shrink-0" aria-hidden />,
   offer: <Briefcase className="icon-sm shrink-0" aria-hidden />,
   funnel: <LayoutTemplate className="icon-sm shrink-0" aria-hidden />,
   avatar: <User className="icon-sm shrink-0" aria-hidden />,
@@ -37,6 +39,8 @@ export const ICON_MAP: Record<ArtifactPreviewType, ReactNode> = {
 }
 
 export const LABEL_MAP: Record<ArtifactPreviewType, string> = {
+  campaign: 'Campaign',
+  canvas: 'Canvas',
   offer: 'Offer',
   funnel: 'Funnel',
   avatar: 'Avatar',
@@ -59,6 +63,7 @@ export const LABEL_MAP: Record<ArtifactPreviewType, string> = {
 }
 
 export function artifactTypeToNodeType(t: ArtifactPreviewType): ArtifactNodeType {
+  if (t === 'campaign' || t === 'canvas') return 'document'
   if (t === 'social-post') return 'document'
   if (t === 'blog-post') return 'document'
   if (t === 'email') return 'document'

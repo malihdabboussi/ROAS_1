@@ -131,6 +131,8 @@ export interface CreateMissionInput {
 }
 
 export type DeliverableType =
+  | 'campaign'
+  | 'canvas'
   | 'doc'
   | 'text'
   | 'image'
@@ -159,6 +161,8 @@ export type DeliverableType =
   | 'visual_doc'
 
 export const CORE_DELIVERABLE_TYPES = new Set<DeliverableType>([
+  'campaign',
+  'canvas',
   'offer',
   'funnel',
   'form',

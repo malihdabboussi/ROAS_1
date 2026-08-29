@@ -6,17 +6,23 @@ import { ShellRightPanelFiles } from './ShellRightPanelFiles'
 const mocks = vi.hoisted(() => ({
   fetchConversationDocuments: vi.fn(),
   openArtifactInShell: vi.fn(),
+  openArtifactPreviewInShell: vi.fn(),
+  openDocumentInShell: vi.fn(),
 }))
 
 vi.mock('@/lib/artifacts', () => ({
   fetchConversationDocuments: mocks.fetchConversationDocuments,
   openArtifactInShell: mocks.openArtifactInShell,
+  openArtifactPreviewInShell: mocks.openArtifactPreviewInShell,
+  openDocumentInShell: mocks.openDocumentInShell,
 }))
 
 describe('ShellRightPanelFiles', () => {
   beforeEach(() => {
     mocks.fetchConversationDocuments.mockReset()
     mocks.openArtifactInShell.mockReset()
+    mocks.openArtifactPreviewInShell.mockReset()
+    mocks.openDocumentInShell.mockReset()
   })
 
   afterEach(cleanup)
@@ -166,6 +172,100 @@ describe('ShellRightPanelFiles', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show in chat' }))
 
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' })
+  })
+
+  it('opens a chat-created Canvas at its campaign Canvas route', async () => {
+    mocks.fetchConversationDocuments.mockResolvedValue([])
+    const messages: Message[] = [
+      {
+        id: 'canvas-receipt-1',
+        conversation_id: 'conversation-1',
+        role: 'assistant',
+        content: 'The canvas is live.',
+        content_blocks: null,
+        metadata: {
+          content_blocks_ordered: [
+            {
+              type: 'artifact_preview',
+              id: 'artifact-canvas-board-1',
+              artifactType: 'canvas',
+              artifactId: 'board-1',
+              campaignId: 'campaign-1',
+              internalUrl: '/campaigns/campaign-1?view=canvas',
+              name: 'Client webinar Canvas',
+              subtitle: 'Campaign blueprint updated',
+              status: 'updated',
+            },
+          ],
+        },
+        created_at: '2026-08-28T20:00:00.000Z',
+      },
+    ]
+
+    render(<ShellRightPanelFiles conversationId="conversation-1" messages={messages} />)
+    fireEvent.click(await screen.findByText('Client webinar Canvas'))
+
+    expect(mocks.openArtifactPreviewInShell).toHaveBeenCalledWith({
+      artifactType: 'canvas',
+      artifactId: 'board-1',
+      name: 'Client webinar Canvas',
+      campaignId: 'campaign-1',
+      internalUrl: '/campaigns/campaign-1?view=canvas',
+    })
+  })
+
+  it('opens persisted document and project receipts from Outputs', async () => {
+    mocks.fetchConversationDocuments.mockResolvedValue([])
+    const messages: Message[] = [
+      {
+        id: 'output-receipts-1',
+        conversation_id: 'conversation-1',
+        role: 'assistant',
+        content: 'Your outputs are ready.',
+        content_blocks: null,
+        metadata: {
+          content_blocks_ordered: [
+            {
+              type: 'document_card',
+              id: 'document-doc-1',
+              documentId: 'doc-1',
+              spaceItemId: 'space-doc-1',
+              spaceId: 'space-1',
+              title: 'Strategy brief',
+            },
+            {
+              type: 'project_preview',
+              id: 'project-project-1',
+              project_id: 'project-1',
+              name: 'Client app',
+              entry_point: 'src/main.tsx',
+              files: ['src/main.tsx'],
+            },
+          ],
+        },
+        created_at: '2026-08-28T20:00:00.000Z',
+      },
+    ]
+
+    render(<ShellRightPanelFiles conversationId="conversation-1" messages={messages} />)
+
+    fireEvent.click(await screen.findByText('Strategy brief'))
+    expect(mocks.openDocumentInShell).toHaveBeenCalledWith({
+      documentId: 'doc-1',
+      title: 'Strategy brief',
+      spaceId: 'space-1',
+      spaceItemId: 'space-doc-1',
+    })
+
+    fireEvent.click(screen.getByText('Client app'))
+    expect(mocks.openArtifactInShell).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'project-1',
+        entityTable: 'projects',
+        internalUrl: '/projects/project-1',
+        conversationId: 'conversation-1',
+      }),
+    )
   })
 
   it('does not list the same chat file twice when documents and messages overlap', async () => {

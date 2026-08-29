@@ -5,27 +5,20 @@ import {
   isBrainRetrievalReceipt,
   isWebResearchSource,
 } from '@/lib/conversations/retrieval-receipts'
+import {
+  conversationOutputRow,
+  type ConversationFileRow,
+} from './shell-conversation-output-rows'
+
+export type { ConversationFileRow } from './shell-conversation-output-rows'
 
 type UnknownRow = Record<string, unknown>
 
 export type ConversationTaskRow = {
   id: string
   title: string
-  state: 'complete' | 'failed'
-  createdAt: string
-}
-
-export type ConversationFileRow = {
-  id: string
-  messageId: string
-  title: string
-  subtitle: string | null
-  kind: 'artifact' | 'image' | 'video' | 'audio' | 'file'
-  fileUrl: string | null
-  mimeType: string | null
-  mediaAssetId: string | null
-  entityId: string | null
-  entityType: string | null
+  state: 'active' | 'complete' | 'failed'
+  detail: string | null
   createdAt: string
 }
 
@@ -69,6 +62,15 @@ function orderedBlocks(message: Message): UnknownRow[] {
   return asRows(message.metadata.content_blocks_ordered)
 }
 
+function latestToolProgressDetail(block: UnknownRow): string | null {
+  const progress = asRows(block.progress)
+  for (let index = progress.length - 1; index >= 0; index -= 1) {
+    const detail = stringField(progress[index]!, 'detail')
+    if (detail) return detail
+  }
+  return null
+}
+
 export function extractConversationTaskRows(messages: Message[]): ConversationTaskRow[] {
   const rows: ConversationTaskRow[] = []
   const seen = new Set<string>()
@@ -77,7 +79,10 @@ export function extractConversationTaskRows(messages: Message[]): ConversationTa
   for (const message of messages) {
     if (message.role !== 'assistant') continue
     for (const block of orderedBlocks(message)) {
-      if (block.type !== 'tool' || (block.state !== 'complete' && block.state !== 'failed'))
+      if (
+        block.type !== 'tool' ||
+        (block.state !== 'active' && block.state !== 'complete' && block.state !== 'failed')
+      )
         continue
       const title =
         stringField(block, 'label') ?? stringField(block, 'action') ?? stringField(block, 'name')
@@ -92,6 +97,7 @@ export function extractConversationTaskRows(messages: Message[]): ConversationTa
         id,
         title,
         state: block.state,
+        detail: latestToolProgressDetail(block),
         createdAt: endedAt ? new Date(endedAt).toISOString() : message.created_at,
       })
     }
@@ -113,6 +119,7 @@ export function extractConversationTaskRows(messages: Message[]): ConversationTa
         id: `${message.id}:tool-step:${index}`,
         title,
         state,
+        detail: null,
         createdAt: message.created_at,
       })
     })
@@ -169,12 +176,18 @@ function attachmentKind(row: UnknownRow): ConversationFileRow['kind'] {
 
 export function extractConversationFileRows(messages: Message[]): ConversationFileRow[] {
   const rows: ConversationFileRow[] = []
-  const seen = new Set<string>()
+  const rowIndexByKey = new Map<string, number>()
 
   const push = (row: ConversationFileRow) => {
     const dedupeKey = row.fileUrl ?? `${row.kind}:${row.entityId ?? row.id}`
-    if (seen.has(dedupeKey)) return
-    seen.add(dedupeKey)
+    const existingIndex = rowIndexByKey.get(dedupeKey)
+    if (existingIndex != null) {
+      if (Date.parse(row.createdAt) > Date.parse(rows[existingIndex]!.createdAt)) {
+        rows[existingIndex] = row
+      }
+      return
+    }
+    rowIndexByKey.set(dedupeKey, rows.length)
     rows.push(row)
   }
 
@@ -193,6 +206,9 @@ export function extractConversationFileRows(messages: Message[]): ConversationFi
         mediaAssetId: stringField(document, 'mediaAssetId'),
         entityId: null,
         entityType: null,
+        campaignId: null,
+        internalUrl: null,
+        status: null,
         createdAt: message.created_at,
       })
     }
@@ -212,68 +228,16 @@ export function extractConversationFileRows(messages: Message[]): ConversationFi
         mediaAssetId: null,
         entityId,
         entityType,
+        campaignId: stringField(artifact, 'campaignId') ?? stringField(artifact, 'campaign_id'),
+        internalUrl: stringField(artifact, 'internalUrl') ?? stringField(artifact, 'internal_url'),
+        status: stringField(artifact, 'status'),
         createdAt: message.created_at,
       })
     }
 
     for (const block of orderedBlocks(message)) {
-      const type = stringField(block, 'type')
-      if (type === 'artifact_preview') {
-        const entityId = stringField(block, 'artifactId')
-        const entityType = stringField(block, 'artifactType')
-        if (!entityId || !entityType) continue
-        push({
-          id: stringField(block, 'id') ?? `${message.id}:artifact:${entityId}`,
-          messageId: message.id,
-          title: stringField(block, 'name') ?? 'Artifact',
-          subtitle: stringField(block, 'subtitle'),
-          kind: 'artifact',
-          fileUrl: null,
-          mimeType: null,
-          mediaAssetId: null,
-          entityId,
-          entityType,
-          createdAt: message.created_at,
-        })
-      }
-      if (type === 'pdf_file' || type === 'docx_file') {
-        const fileUrl = stringField(block, 'url')
-        if (!fileUrl) continue
-        push({
-          id: stringField(block, 'id') ?? `${message.id}:${fileUrl}`,
-          messageId: message.id,
-          title: stringField(block, 'label') ?? 'Document',
-          subtitle: null,
-          kind: 'file',
-          fileUrl,
-          mimeType:
-            type === 'pdf_file'
-              ? 'application/pdf'
-              : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          mediaAssetId: null,
-          entityId: null,
-          entityType: null,
-          createdAt: message.created_at,
-        })
-      }
-      if (type === 'media_asset') {
-        const fileUrl = stringField(block, 'url')
-        const kind = stringField(block, 'kind')
-        if (!fileUrl || !kind || !['image', 'video', 'audio', 'file'].includes(kind)) continue
-        push({
-          id: stringField(block, 'id') ?? `${message.id}:${fileUrl}`,
-          messageId: message.id,
-          title: stringField(block, 'title') ?? stringField(block, 'fileName') ?? 'Media',
-          subtitle: stringField(block, 'prompt'),
-          kind: kind as ConversationFileRow['kind'],
-          fileUrl,
-          mimeType: stringField(block, 'mimeType'),
-          mediaAssetId: stringField(block, 'mediaAssetId'),
-          entityId: null,
-          entityType: null,
-          createdAt: message.created_at,
-        })
-      }
+      const row = conversationOutputRow(block, message.id, message.created_at)
+      if (row) push(row)
     }
 
     for (const media of extractMediaFromText(messagePlainText(message))) {
@@ -288,6 +252,9 @@ export function extractConversationFileRows(messages: Message[]): ConversationFi
         mediaAssetId: null,
         entityId: null,
         entityType: null,
+        campaignId: null,
+        internalUrl: null,
+        status: null,
         createdAt: message.created_at,
       })
     }

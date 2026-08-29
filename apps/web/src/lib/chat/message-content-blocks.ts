@@ -320,6 +320,8 @@ export type MessageContentBlock =
       type: 'artifact_preview'
       id: string
       artifactType:
+        | 'campaign'
+        | 'canvas'
         | 'offer'
         | 'funnel'
         | 'avatar'
@@ -341,6 +343,8 @@ export type MessageContentBlock =
         | 'custom-object'
       artifactId: string
       spaceId?: string
+      campaignId?: string
+      internalUrl?: string
       name: string
       subtitle?: string
       career?: string

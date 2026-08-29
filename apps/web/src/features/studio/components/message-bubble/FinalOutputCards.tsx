@@ -40,6 +40,8 @@ const ARTIFACT_LABELS: Record<string, string> = {
   website: 'Website',
   theme: 'Theme',
   'custom-object': 'Object',
+  campaign: 'Campaign',
+  canvas: 'Canvas',
 }
 
 function cleanText(value: string | undefined): string {
@@ -58,7 +60,9 @@ function artifactNodeType(artifactType: string): ArtifactNodeType {
     artifactType === 'mission' ||
     artifactType === 'flow' ||
     artifactType === 'theme' ||
-    artifactType === 'custom-object'
+    artifactType === 'custom-object' ||
+    artifactType === 'canvas' ||
+    artifactType === 'campaign'
   ) {
     return 'document'
   }

@@ -14,6 +14,8 @@ export interface ArtifactInlinePreviewCardProps {
   emailSubject?: string
   funnelPageId?: string
   spaceId?: string
+  campaignId?: string
+  internalUrl?: string
   imageUrl?: string
   videoUrl?: string
   status?: string

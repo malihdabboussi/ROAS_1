@@ -99,6 +99,26 @@ Impact: A branch can now set `BACKEND_URL` to its exact protected API deployment
 
 Files: `apps/web/src/app/api/proxy/[...path]/route.ts`, `apps/web/src/app/api/proxy/[...path]/proxy-upstream-headers.ts`, `apps/web/src/app/api/proxy/[...path]/proxy-upstream-headers.test.ts`
 
+## 2026-08-28 15:31 - [FIX]
+
+What: Generalized chat output receipts across every active durable artifact action family, retained them alongside explicit service progress blocks, and added persisted Outputs aggregation and canonical opening for document, project, widget, and browser-screenshot blocks.
+
+Why: Canvas exposed the wider contract gap: successful create/update actions could return a durable resource without a persisted linked receipt, while several already-persisted block families were omitted from the Outputs side card after refresh.
+
+Impact: Supported create and material-update actions now share one registry-backed receipt fallback, receipt coverage drifts with the action schema/preflight surface, Outputs restores all supported persisted block families, and projects/documents open their canonical destinations. The web summary extractor was split below repository line limits.
+
+Files: `apps/agent-api/src/modules/shared/durable-artifact-output-registry.ts`, `apps/agent-api/src/modules/shared/ui-block-extractor.ts`, `apps/agent-api/src/modules/shared/ui-block-extractor.test.ts`, `apps/agent-api/src/modules/agent-sync/services/creation-output-capability-drift.test.ts`, `apps/web/src/components/shell/shell-conversation-output-rows.ts`, `apps/web/src/components/shell/shell-conversation-summary.ts`, `apps/web/src/components/shell/ShellRightPanelFiles.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
+## 2026-08-28 14:40 - [FIX]
+
+What: Made Canvas mutations emit linked, persisted chat outputs; extended the shared artifact contract with campaign/Canvas targets; showed active tool progress under Activity; and made repeated updates keep the newest output summary.
+
+Why: Chat could claim a Canvas was live while Outputs remained empty, and the side card discarded active progress and retained stale receipts for repeatedly updated resources.
+
+Impact: Direct chat and Mission/task Canvas work now share the standard inline-output and sidebar path, survive transcript reloads, open the correct campaign Canvas, and expose live execution detail. Existing durable artifact, document, media, project, and widget outputs continue through the same persisted contract.
+
+Files: `apps/agent-api/src/modules/artifacts/services/artifact-strategy.service.ts`, `apps/agent-api/src/modules/shared/ui-block-extractor.ts`, `apps/web/src/lib/chat/message-content-blocks.ts`, `apps/web/src/lib/artifacts/artifact-preview-types.ts`, `apps/web/src/lib/artifacts/shell-artifact-viewer.ts`, `apps/web/src/lib/missions/mission-types.ts`, `apps/web/src/components/artifacts/artifact-inline-preview-card/`, `apps/web/src/features/studio/components/message-bubble/`, `apps/web/src/components/shell/`, `documentation/features/claude-chatgpt-shell.md`
+
 ## 2026-08-28 16:58 - [FIX]
 
 What: Added a preview-only runtime override for exact branch QA and made the Fly secret importer support an app's first deployment before any machines exist.

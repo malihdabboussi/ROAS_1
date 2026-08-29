@@ -21,21 +21,168 @@ function message(overrides: Partial<Message>): Message {
 }
 
 describe('shell conversation summary', () => {
-  it('extracts completed agent work from persisted tool activity', () => {
+  it('extracts live progress and completed agent work from persisted tool activity', () => {
     const rows = extractConversationTaskRows([
       message({
         metadata: {
           content_blocks_ordered: [
             { type: 'tool', id: 'done-1', label: 'Created proposal', state: 'complete' },
-            { type: 'tool', id: 'active-1', label: 'Still researching', state: 'active' },
+            {
+              type: 'tool',
+              id: 'active-1',
+              label: 'Still researching',
+              state: 'active',
+              progress: [{ detail: 'Reading Client Brain', at: 1784937600000 }],
+            },
+          ],
+        },
+      }),
+    ])
+
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'done-1', title: 'Created proposal', state: 'complete' }),
+        expect.objectContaining({
+          id: 'active-1',
+          title: 'Still researching',
+          state: 'active',
+          detail: 'Reading Client Brain',
+        }),
+      ]),
+    )
+  })
+
+  it('extracts a linked Canvas as a durable conversation output', () => {
+    const rows = extractConversationFileRows([
+      message({
+        metadata: {
+          content_blocks_ordered: [
+            {
+              type: 'artifact_preview',
+              id: 'artifact-canvas-board-1',
+              artifactType: 'canvas',
+              artifactId: 'board-1',
+              campaignId: 'campaign-1',
+              internalUrl: '/campaigns/campaign-1?view=canvas',
+              name: 'Client webinar Canvas',
+              subtitle: 'Campaign blueprint updated',
+              status: 'updated',
+            },
           ],
         },
       }),
     ])
 
     expect(rows).toEqual([
-      expect.objectContaining({ id: 'done-1', title: 'Created proposal', state: 'complete' }),
+      expect.objectContaining({
+        entityId: 'board-1',
+        entityType: 'canvas',
+        campaignId: 'campaign-1',
+        internalUrl: '/campaigns/campaign-1?view=canvas',
+        status: 'updated',
+      }),
     ])
+  })
+
+  it('keeps the newest receipt when chat updates the same durable output', () => {
+    const output = (messageId: string, createdAt: string, subtitle: string) =>
+      message({
+        id: messageId,
+        created_at: createdAt,
+        metadata: {
+          content_blocks_ordered: [
+            {
+              type: 'artifact_preview',
+              artifactType: 'canvas',
+              artifactId: 'board-1',
+              name: 'Campaign Canvas',
+              subtitle,
+            },
+          ],
+        },
+      })
+
+    expect(
+      extractConversationFileRows([
+        output('older', '2026-08-28T19:00:00.000Z', 'Canvas created'),
+        output('newer', '2026-08-28T20:00:00.000Z', 'Canvas updated'),
+      ]),
+    ).toEqual([
+      expect.objectContaining({
+        messageId: 'newer',
+        subtitle: 'Canvas updated',
+      }),
+    ])
+  })
+
+  it('extracts document, project, widget, and browser outputs from persisted chat blocks', () => {
+    const rows = extractConversationFileRows([
+      message({
+        metadata: {
+          content_blocks_ordered: [
+            {
+              type: 'document_card',
+              id: 'document-doc-1',
+              documentId: 'doc-1',
+              spaceItemId: 'space-doc-1',
+              spaceId: 'space-1',
+              title: 'Strategy brief',
+              snippet: 'One-page strategy',
+            },
+            {
+              type: 'project_preview',
+              id: 'project-project-1',
+              project_id: 'project-1',
+              name: 'Client app',
+              entry_point: 'src/main.tsx',
+              files: ['src/main.tsx'],
+            },
+            {
+              type: 'widget_preview',
+              id: 'widget-1',
+              name: 'Revenue widget',
+              widget_definition: { type: 'metric' },
+              data_dependencies: [],
+            },
+            {
+              type: 'browser_screenshot',
+              id: 'screenshot-1',
+              imageUrl: '/api/chat/browser-media/screenshot.png',
+              pageUrl: 'https://example.com/pricing',
+            },
+          ],
+        },
+      }),
+    ])
+
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Strategy brief',
+          entityType: 'document',
+          entityId: 'space-doc-1',
+          documentId: 'doc-1',
+          spaceItemId: 'space-doc-1',
+          spaceId: 'space-1',
+        }),
+        expect.objectContaining({
+          title: 'Client app',
+          entityType: 'project',
+          entityId: 'project-1',
+          internalUrl: '/projects/project-1',
+        }),
+        expect.objectContaining({
+          title: 'Revenue widget',
+          entityType: 'widget',
+          entityId: 'widget-1',
+        }),
+        expect.objectContaining({
+          title: 'Screenshot — example.com',
+          kind: 'image',
+          fileUrl: '/api/chat/browser-media/screenshot.png',
+        }),
+      ]),
+    )
   })
 
   it('extracts attached files, artifacts, generated media, references, and links', () => {

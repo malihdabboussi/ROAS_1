@@ -14,6 +14,8 @@ export type ArtifactPreviewSelection =
   | { type: 'social_post'; id: string; title: string }
 
 export type ArtifactPreviewType =
+  | 'campaign'
+  | 'canvas'
   | 'offer'
   | 'funnel'
   | 'avatar'

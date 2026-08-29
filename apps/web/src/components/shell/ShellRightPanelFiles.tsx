@@ -15,6 +15,8 @@ import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import {
   fetchConversationDocuments,
   openArtifactInShell,
+  openArtifactPreviewInShell,
+  openDocumentInShell,
   type ConversationDocument,
 } from '@/lib/artifacts'
 import { isArtifactDocumentType, type Message } from '@/lib/conversations'
@@ -165,6 +167,52 @@ export function ShellRightPanelFiles({
           const canOpen = Boolean(row.fileUrl || row.entityId)
           const openRow = () => {
             if (!canOpen) return
+            if (row.kind === 'artifact' && row.entityType === 'document' && row.entityId) {
+              openDocumentInShell({
+                documentId: row.documentId ?? row.entityId,
+                title: row.title,
+                spaceId: row.spaceId,
+                spaceItemId: row.spaceItemId,
+              })
+              return
+            }
+            if (row.kind === 'artifact' && row.entityType === 'project' && row.entityId) {
+              openArtifactInShell({
+                id: row.entityId,
+                entityId: row.entityId,
+                entityTable: 'projects',
+                title: row.title,
+                type: 'text',
+                content: row.content,
+                internalUrl: row.internalUrl,
+                conversationId,
+                contextLabel: 'Chat',
+              })
+              return
+            }
+            if (row.kind === 'artifact' && row.entityType === 'widget' && row.entityId) {
+              openArtifactInShell({
+                id: row.entityId,
+                title: row.title,
+                type: 'text',
+                content: row.content,
+                conversationId,
+                contextLabel: 'Chat',
+              })
+              return
+            }
+            if (row.kind === 'artifact' && row.entityId && row.entityType) {
+              openArtifactPreviewInShell({
+                artifactType: row.entityType as Parameters<
+                  typeof openArtifactPreviewInShell
+                >[0]['artifactType'],
+                artifactId: row.entityId,
+                name: row.title,
+                campaignId: row.campaignId,
+                internalUrl: row.internalUrl,
+              })
+              return
+            }
             openArtifactInShell({
               id: row.id,
               title: row.title,

@@ -164,9 +164,22 @@ export function ShellArtifactViewerAdapter() {
   }, [openArtifactViewer])
 
   useEffect(() => {
-    if (target?.type !== 'flow') return
+    const routesDirectly =
+      target &&
+      (['flow', 'campaign', 'canvas'].includes(target.type) ||
+        (target.entityTable === 'projects' && Boolean(target.internalUrl)))
+    if (!target || !routesDirectly) return
     const entityId = target.entityId || target.id
-    const internalUrl = target.internalUrl || `/flows?flow_id=${encodeURIComponent(entityId)}`
+    const internalUrl =
+      target.internalUrl ||
+      (target.type === 'flow'
+        ? `/flows?flow_id=${encodeURIComponent(entityId)}`
+        : target.type === 'campaign'
+          ? `/campaigns/${encodeURIComponent(entityId)}`
+          : target.campaignId
+            ? `/campaigns/${encodeURIComponent(target.campaignId)}?view=canvas`
+            : '')
+    if (!internalUrl) return
     closeArtifactViewer()
     router.push(internalUrl)
   }, [closeArtifactViewer, router, target])
@@ -196,7 +209,8 @@ export function ShellArtifactViewerAdapter() {
   if (target.type === 'custom_object' && target.entityTable === 'page_grader_launches') {
     return <AgencyLaunchArtifactViewer target={target} />
   }
-  if (target.type === 'flow') return null
+  if (target.type === 'flow' || target.type === 'campaign' || target.type === 'canvas') return null
+  if (target.entityTable === 'projects' && target.internalUrl) return null
   if (target.type === 'image' || target.type === 'video' || target.type === 'audio') {
     return <ShellMediaArtifactViewer target={target} />
   }

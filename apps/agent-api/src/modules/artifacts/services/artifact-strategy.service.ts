@@ -44,7 +44,7 @@ export class ArtifactStrategyService {
     if (result.error || !result.data) {
       return { error: result.error?.message ?? 'Canvas could not be loaded.' }
     }
-    return { supabase, board: result.data, userId }
+    return { supabase, board: result.data, userId, campaignId }
   }
 
   private async getCanvasBoard(
@@ -98,7 +98,12 @@ export class ArtifactStrategyService {
       actorAgentKey,
     })
     if (result.error) return { success: false, error: result.error.message }
-    return { success: true, ...(result.data as Record<string, unknown>) }
+    return {
+      success: true,
+      board_id: resolved.board.id,
+      campaign_id: resolved.campaignId,
+      ...(result.data as Record<string, unknown>),
+    }
   }
 
   private async buildCampaignBlueprint(
@@ -169,6 +174,8 @@ export class ArtifactStrategyService {
       success: true,
       blueprint_id: blueprintId,
       campaign_label: campaignLabel,
+      board_id: resolved.board.id,
+      campaign_id: resolved.campaignId,
       item_count: operations.filter((operation) => operation.op === 'create_item').length,
       connector_count: operations.filter((operation) => operation.op === 'create_connector').length,
       batch_count: batches.length,
@@ -253,6 +260,8 @@ export class ArtifactStrategyService {
       node_id: nodeId,
       resource_type: resourceType,
       resource_id: resourceId,
+      board_id: resolved.board.id,
+      campaign_id: resolved.campaignId,
       ...(result.data as Record<string, unknown>),
     }
   }

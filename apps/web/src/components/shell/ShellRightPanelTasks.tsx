@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { CheckCircle2, XCircle } from 'lucide-react'
+import { CheckCircle2, LoaderCircle, XCircle } from 'lucide-react'
 import { ListSkeleton } from '@/components/ui/feedback/ListSkeleton'
 import { formatHomeShortDate } from '@/features/home/components/HomeListCardShell'
 import { HomeTaskDetailHost } from '@/features/home/components/HomeTaskDetailHost'
@@ -74,7 +74,8 @@ function ConversationRightPanelTasks({ messages }: { messages: Message[] }) {
   return (
     <ul className="space-y-spacing-1">
       {rows.map((row) => {
-        const Icon = row.state === 'complete' ? CheckCircle2 : XCircle
+        const Icon =
+          row.state === 'active' ? LoaderCircle : row.state === 'complete' ? CheckCircle2 : XCircle
         return (
           <li
             key={row.id}
@@ -83,12 +84,19 @@ function ConversationRightPanelTasks({ messages }: { messages: Message[] }) {
             <Icon
               className={cn(
                 'icon-sm mt-spacing-1 shrink-0',
-                row.state === 'complete' ? 'text-primary' : 'text-destructive',
+                row.state === 'active'
+                  ? 'text-primary animate-spin'
+                  : row.state === 'complete'
+                    ? 'text-primary'
+                    : 'text-destructive',
               )}
               aria-hidden
             />
             <div className="min-w-0 flex-1">
               <p className="body-3 text-foreground line-clamp-2">{row.title}</p>
+              {row.detail ? (
+                <p className="body-4 text-muted-foreground line-clamp-2">{row.detail}</p>
+              ) : null}
               <p className="body-4 text-muted-foreground">
                 {formatHomeShortDate(new Date(row.createdAt))}
               </p>
