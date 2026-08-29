@@ -128,6 +128,7 @@ describe('shell persisted prefs hydration', () => {
             title: 'Strategy call',
             href: '/home/meetings?meeting=evt-1',
             restore: { feature: 'home_meeting', data: { id: 'evt-1' } },
+            conversationBound: true,
           },
         },
       }),
@@ -377,6 +378,7 @@ describe('shell work area', () => {
       {
         href: '/home/meetings?meeting=evt-1',
         conversationId: 'conversation-1',
+        conversationBound: true,
       },
     )
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject({
@@ -386,7 +388,7 @@ describe('shell work area', () => {
     })
   })
 
-  it('snapshots the current work page when opening an artifact in a chat', () => {
+  it('does not attach the current navigation page when opening an artifact in a chat', () => {
     useShellStore.setState({
       lastWorkAreaPageByConversation: {},
       recentWorkAreaPages: [
@@ -399,9 +401,9 @@ describe('shell work area', () => {
     })
     useShellStore.getState().openArtifactViewer(target, 'conversation-1')
 
-    expect(useShellStore.getState().lastWorkAreaPageByConversation['conversation-1']?.href).toBe(
-      '/home/meetings?meeting=evt-1',
-    )
+    expect(
+      useShellStore.getState().lastWorkAreaPageByConversation['conversation-1'],
+    ).toBeUndefined()
   })
 })
 

@@ -20,6 +20,7 @@ describe('shell-work-area-page', () => {
     expect(map['conv-1']).toMatchObject({
       href: meetingPage.href,
       conversationId: 'conv-1',
+      conversationBound: true,
       restore: meetingPage.restore,
     })
     expect(
@@ -38,14 +39,16 @@ describe('shell-work-area-page', () => {
     ).toBeNull()
   })
 
-  it('hydrates persisted conversation work pages and drops junk', () => {
+  it('hydrates only explicitly bound conversation work pages', () => {
     const hydrated = sanitizeLastWorkAreaPageByConversation({
-      'conv-1': meetingPage,
+      'conv-1': { ...meetingPage, conversationBound: true },
+      stale: meetingPage,
       bad: { title: 'Nope' },
       '': meetingPage,
     })
     expect(Object.keys(hydrated)).toEqual(['conv-1'])
     expect(hydrated['conv-1']?.conversationId).toBe('conv-1')
+    expect(hydrated['conv-1']?.conversationBound).toBe(true)
   })
 
   it('treats equivalent meeting hrefs as the same surface', () => {

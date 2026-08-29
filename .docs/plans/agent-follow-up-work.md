@@ -40152,3 +40152,14 @@ Evidence: `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-a
 Needed work: Split campaign-Brain resolution from multi-family search and extract Auto research-route selection from stream recovery while preserving fail-closed client binding, tool errors, and generation-stage recovery.
 
 Reason not done now: The requested routing and live-reporting behavior is isolated and compliant; decomposing the mature search and recovery pipelines further would widen this release beyond the source-of-truth contract.
+## 2026-08-29 - [ARCH] use-shell-store.ts is near the 600 LOC shared-store limit
+
+Status: Open
+
+Found while: Making Show page conversation-owned and removing recent-page leakage from artifact opens
+
+Evidence: `wc -l apps/web/src/components/shell/use-shell-store.ts` reports 591 lines after this change removed nine lines of obsolete page-snapshot logic. The shared module limit is 600 lines.
+
+Needed work: Continue extracting independent shell preference/state slices so the root store composes them without owning their action implementations.
+
+Reason not done now: The requested fix removes the incorrect coupling and reduces the file. A broader store decomposition is separate structural work.

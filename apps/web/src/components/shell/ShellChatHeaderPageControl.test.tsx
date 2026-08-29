@@ -43,21 +43,17 @@ describe('ShellChatHeaderPageControl', () => {
     expect(useShellStore.getState().workAreaOpen).toBe(true)
   })
 
-  it('restores the last work page from a full Home conversation', () => {
+  it('does not offer Show page when a full Home conversation has no attached page', () => {
     mocks.pathname = '/home'
     mocks.conv = 'conversation-1'
     useShellStore.setState({ workAreaOpen: true })
 
     render(<ShellChatHeaderPageControl />)
-    fireEvent.click(screen.getByRole('button', { name: 'Show page' }))
-
-    expect(useShellStore.getState().chatDrawer.open).toBe(true)
-    expect(useShellStore.getState().chatDrawer.conversationId).toBe('conversation-1')
-    expect(useShellStore.getState().workAreaOpen).toBe(true)
-    expect(mocks.push).toHaveBeenCalledWith('/home/meetings')
+    expect(screen.queryByRole('button', { name: 'Show page' })).toBeNull()
+    expect(mocks.push).not.toHaveBeenCalled()
   })
 
-  it('prefers the conversation’s remembered meeting page over the global recents list', () => {
+  it('restores the conversation’s explicitly attached meeting page', () => {
     mocks.pathname = '/home'
     mocks.conv = 'conversation-1'
     useShellStore.setState({
@@ -68,6 +64,8 @@ describe('ShellChatHeaderPageControl', () => {
           title: 'Strategy call',
           href: '/home/meetings?meeting=evt-1',
           restore: { feature: 'home_meeting', data: { id: 'evt-1' } },
+          conversationId: 'conversation-1',
+          conversationBound: true,
         },
       },
     })
@@ -80,5 +78,28 @@ describe('ShellChatHeaderPageControl', () => {
       data: { id: 'evt-1' },
     })
     expect(mocks.push).toHaveBeenCalledWith('/home/meetings?meeting=evt-1')
+  })
+
+  it('does not offer the attached page while an exact artifact is already open', () => {
+    mocks.pathname = '/home'
+    mocks.conv = 'conversation-1'
+    useShellStore.setState({
+      artifactViewer: {
+        target: { id: 'doc-1', title: 'Launch brief', type: 'doc' },
+        width: 880,
+      },
+      lastWorkAreaPageByConversation: {
+        'conversation-1': {
+          id: '/home/meetings?meeting=evt-1',
+          title: 'Strategy call',
+          href: '/home/meetings?meeting=evt-1',
+          conversationId: 'conversation-1',
+          conversationBound: true,
+        },
+      },
+    })
+
+    render(<ShellChatHeaderPageControl />)
+    expect(screen.queryByRole('button', { name: 'Show page' })).toBeNull()
   })
 })

@@ -11,6 +11,8 @@ export type ShellWorkAreaPageTarget = {
   restore?: ShellWorkAreaRestore
   /** Chat that last used this work surface. */
   conversationId?: string
+  /** True only when a feature explicitly bound this page to that conversation. */
+  conversationBound?: true
 }
 
 const LAST_PAGE_MAP_LIMIT = 40
@@ -21,8 +23,8 @@ export function stampWorkAreaConversation(
 ): ShellWorkAreaPageTarget {
   const id = typeof conversationId === 'string' ? conversationId.trim() : ''
   if (!id) return page
-  if (page.conversationId === id) return page
-  return { ...page, conversationId: id }
+  if (page.conversationId === id && page.conversationBound) return page
+  return { ...page, conversationId: id, conversationBound: true }
 }
 
 export function sanitizeWorkAreaPage(value: unknown): ShellWorkAreaPageTarget | null {
@@ -38,12 +40,14 @@ export function sanitizeWorkAreaPage(value: unknown): ShellWorkAreaPageTarget | 
   const restore = sanitizeWorkAreaRestore(candidate.restore)
   const conversationId =
     typeof candidate.conversationId === 'string' ? candidate.conversationId.trim() : ''
+  const conversationBound = candidate.conversationBound === true
   return {
     id: candidate.id,
     title: candidate.title,
     href: candidate.href,
     ...(restore ? { restore } : {}),
     ...(conversationId ? { conversationId } : {}),
+    ...(conversationBound ? { conversationBound: true as const } : {}),
   }
 }
 
@@ -55,7 +59,7 @@ export function sanitizeLastWorkAreaPageByConversation(
   for (const [conversationId, raw] of Object.entries(value as Record<string, unknown>)) {
     if (!conversationId.trim()) continue
     const page = sanitizeWorkAreaPage(raw)
-    if (!page) continue
+    if (!page?.conversationBound) continue
     next[conversationId] = stampWorkAreaConversation(page, conversationId)
   }
   return next

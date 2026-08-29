@@ -179,3 +179,13 @@ Why: Signed-in production QA found that asking where one visible task came from 
 Impact: Exact task assignment/source questions no longer invoke model-led research. They remain scoped to the signed-in user's tasks, include completed rows for lifecycle explanations, require an exact title match, and cite stored Fathom timestamps/playback links or Slack provenance without cross-client widening.
 
 Files: `apps/agent-api/src/modules/chat/services/chat-operational-agenda.util.ts`, `apps/agent-api/src/modules/chat/services/chat-canonical-task-lookup.util.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparation.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-29 11:27] - [FIX]
+
+What: Made **Show page** depend on an explicitly conversation-bound work page, removed global recent-page and Meetings fallbacks, stopped artifact opens from attaching the latest navigation page, and invalidated legacy unmarked page associations during shell hydration.
+
+Why: Full chat could advertise a page that did not belong to the conversation, and opening an output could silently save an unrelated recently visited page as that chat's restore destination.
+
+Impact: Output clicks retain their exact conversation artifact, linked meeting pages remain restorable, ordinary menu navigation stays independent, and chats without a real page no longer show a misleading control.
+
+Files: `apps/web/src/components/shell/ShellChatHeaderPageControl.tsx`, `apps/web/src/components/shell/shell-chat-header-page.ts`, `apps/web/src/components/shell/shell-work-area-page.ts`, `apps/web/src/components/shell/use-shell-store.ts`, focused shell tests, `documentation/features/claude-chatgpt-shell.md`, `.docs/logs/changelog2026-08-29.md`.

@@ -11,7 +11,6 @@ import {
 } from '@/lib/artifacts/artifact-viewer-layout'
 import { sanitizeLastArtifactByConversation } from './shell-artifact-conversation'
 import {
-  rememberWorkAreaPage,
   sanitizeLastWorkAreaPageByConversation,
   type ShellWorkAreaPageTarget,
   type ShellWorkAreaRestore,
@@ -414,24 +413,16 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       conversationId ?? target.conversationId,
       target,
     )
-    const conversationKey = remembered.target.conversationId
-    const currentPage = get().recentWorkAreaPages[0]
-    const lastWorkAreaPageByConversation =
-      conversationKey && currentPage
-        ? rememberWorkAreaPage(get().lastWorkAreaPageByConversation, conversationKey, currentPage)
-        : get().lastWorkAreaPageByConversation
     writePersisted({
       rightPanelOpen: false,
       workAreaOpen: true,
       artifactViewerTarget: remembered.target,
       artifactViewerWidth: width,
       lastArtifactByConversation: remembered.lastArtifactByConversation,
-      lastWorkAreaPageByConversation,
     })
     set((s) => ({
       artifactViewer: { ...s.artifactViewer, target: remembered.target, width },
       lastArtifactByConversation: remembered.lastArtifactByConversation,
-      lastWorkAreaPageByConversation,
       recentArtifactTargets: [
         remembered.target,
         ...s.recentArtifactTargets.filter((entry) => entry.id !== remembered.target.id),

@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { PanelRight } from 'lucide-react'
-import { isFullHomeConversation, resolveWorkAreaRestoreHref } from './shell-chat-header-page'
+import { isFullHomeConversation } from './shell-chat-header-page'
 import { useShellStore } from './use-shell-store'
 
 /** Page show/collapse control. Chat header owns it only while the page card is closed. */
@@ -11,9 +11,9 @@ export function ShellChatHeaderPageControl() {
   const router = useRouter()
   const convParam = useSearchParams().get('conv')
   const workAreaOpen = useShellStore((state) => state.workAreaOpen)
+  const artifactTarget = useShellStore((state) => state.artifactViewer.target)
   const setWorkAreaOpen = useShellStore((state) => state.setWorkAreaOpen)
   const openChatDrawer = useShellStore((state) => state.openChatDrawer)
-  const recentPages = useShellStore((state) => state.recentWorkAreaPages)
   const lastWorkAreaPageByConversation = useShellStore(
     (state) => state.lastWorkAreaPageByConversation,
   )
@@ -22,19 +22,19 @@ export function ShellChatHeaderPageControl() {
   const rememberedPage = conversationId ? lastWorkAreaPageByConversation[conversationId] : undefined
   const fullHomeConversation = isFullHomeConversation(pathname, convParam)
 
-  if (!fullHomeConversation && workAreaOpen) return null
+  if (artifactTarget || (fullHomeConversation ? !rememberedPage : workAreaOpen)) return null
 
   return (
     <button
       type="button"
       onClick={() => {
-        if (fullHomeConversation) {
+        if (fullHomeConversation && rememberedPage) {
           if (convParam) openChatDrawer(convParam)
           setWorkAreaOpen(true)
           if (rememberedPage?.restore) {
             useShellStore.getState().setPendingWorkRestore(rememberedPage.restore)
           }
-          router.push(rememberedPage?.href ?? resolveWorkAreaRestoreHref(recentPages))
+          router.push(rememberedPage.href)
           return
         }
         setWorkAreaOpen(true)
