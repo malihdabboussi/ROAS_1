@@ -15,6 +15,14 @@ describe('campaign-name-match', () => {
     ])
   })
 
+  it('extracts a campaign name from a hyphen-delimited status question', () => {
+    expect(
+      campaignNameLookupQueries(
+        "What's the current status of the VSL - MultiFamily Strategy - Ongoing VSL & Call Booking campaign?",
+      ),
+    ).toContain('MultiFamily Strategy')
+  })
+
   it('matches transposition typos to Master Your Kraft and Speak Like a CEO', () => {
     expect(campaignNameSimilarity('Matser yoru kraft', 'Master Your Kraft')).toBeGreaterThan(0.72)
     expect(campaignNameSimilarity('SPeka lke a ceo', 'Speak Like a CEO')).toBeGreaterThan(0.72)

@@ -23,6 +23,30 @@ function makeSupabase(stampRows: Array<{ metadata: Record<string, unknown> }>) {
 }
 
 describe('resolveCampaignIdByName client-stamp fallback', () => {
+  it('resolves an older campaign directly from a natural-language status question', async () => {
+    const repository = {
+      findCampaignNameMatches: vi.fn(async (_supabase: unknown, input: { ilikeValue: string }) => ({
+        data:
+          input.ilikeValue.toLowerCase() === 'multifamily strategy'
+            ? [{ id: 'camp-mfs', name: 'Multifamily Strategy' }]
+            : [],
+        error: null,
+      })),
+      listAccessibleCampaignNames: vi.fn(async () => ({ data: [], error: null })),
+    } as never
+
+    await expect(
+      resolveCampaignIdByName(
+        repository,
+        makeSupabase([]),
+        'user-1',
+        "What's the current status of the VSL - MultiFamily Strategy - Ongoing VSL & Call Booking campaign?",
+        'org-1',
+      ),
+    ).resolves.toBe('camp-mfs')
+    expect(repository.listAccessibleCampaignNames).not.toHaveBeenCalled()
+  })
+
   it('resolves a client whose campaign has a different name (Christian Osgood → Multifamily Strategy)', async () => {
     const repository = makeRepository([{ id: 'camp-mfs', name: 'Multifamily Strategy' }])
     const supabase = makeSupabase([
