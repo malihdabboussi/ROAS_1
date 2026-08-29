@@ -9,6 +9,7 @@ describe('shouldSkipBrainContextForOperationalAgenda', () => {
     'What meetings do I have coming up?',
     'What should I focus on today, which open tasks are assigned to me, and what meetings are coming up?',
     "What's on top for today? Show only open tasks assigned to me, plus today's meetings.",
+    'What about “Introduce Shannon to Adley for the Sphere Rockets golf event” — is that actually assigned to me, and what meeting or Slack message did it come from?',
   ])('skips retrieval for canonical task and calendar reads: %s', (content) => {
     expect(shouldSkipBrainContextForOperationalAgenda(content)).toBe(true)
   })

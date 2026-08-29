@@ -15,6 +15,7 @@ import {
   DailyRecommendationKeySchema,
   DailyRecommendationQuerySchema,
   ListRecentCommunicationsQuerySchema,
+  NextMoveFeedbackBodySchema,
   NextMoveParamsSchema,
   NextMoveSnoozeBodySchema,
   type DailyRecommendationQuery,
@@ -77,5 +78,16 @@ export class HomeController {
     body: { duration: 'week' | 'dismiss' },
   ) {
     return this.nextMovesService.snooze(supabase, scope, params.id, body.duration)
+  }
+
+  @Post('next-moves/:id/feedback')
+  recordNextMoveFeedback(
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param(new ZodValidationPipe(NextMoveParamsSchema)) params: { id: string },
+    @Body(new ZodValidationPipe(NextMoveFeedbackBodySchema))
+    body: { feedback: 'accepted' | 'false_positive' },
+  ) {
+    return this.nextMovesService.feedback(supabase, scope, params.id, body.feedback)
   }
 }

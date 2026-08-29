@@ -40163,3 +40163,15 @@ Evidence: `wc -l apps/web/src/components/shell/use-shell-store.ts` reports 591 l
 Needed work: Continue extracting independent shell preference/state slices so the root store composes them without owning their action implementations.
 
 Reason not done now: The requested fix removes the incorrect coupling and reduces the file. A broader store decomposition is separate structural work.
+
+## 2026-08-29 - [ARCH] Artifact task service test remains over the file limit
+
+Status: Open
+
+Found while: Correcting the shared My Tasks query so assigned meeting-child actions and explicitly requested closed tasks are returned.
+
+Evidence: `apps/agent-api/src/modules/artifacts/services/__tests__/artifact-tasks.service.test.ts` is 1,537 LOC and covers the complete task/Space query fixture plus list, schema, assignment, lifecycle, and mutation behaviors.
+
+Needed work: Extract the cross-Space My Tasks query tests and reusable fake Supabase query builder into focused test modules without duplicating the shared fixture semantics.
+
+Reason not done now: The production omission is fixed with two regression cases; restructuring the mature test harness is behavior-neutral architecture work outside this release correction.

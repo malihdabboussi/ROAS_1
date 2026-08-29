@@ -32,3 +32,7 @@ export const NextMoveParamsSchema = z.object({
 export const NextMoveSnoozeBodySchema = z.object({
   duration: z.enum(['week', 'dismiss']),
 })
+
+export const NextMoveFeedbackBodySchema = z.object({
+  feedback: z.enum(['accepted', 'false_positive']),
+})
