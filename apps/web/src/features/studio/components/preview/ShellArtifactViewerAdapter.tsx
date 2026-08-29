@@ -103,6 +103,8 @@ export function ShellArtifactViewerAdapter() {
   const target = useShellStore((s) => s.artifactViewer.target)
   const openArtifactViewer = useShellStore((s) => s.openArtifactViewer)
   const closeArtifactViewer = useShellStore((s) => s.closeArtifactViewer)
+  const openChatDrawer = useShellStore((s) => s.openChatDrawer)
+  const recordWorkAreaPage = useShellStore((s) => s.recordWorkAreaPage)
 
   useEffect(() => {
     const openTarget = (detail: ShellArtifactViewerTarget | null) => {
@@ -180,9 +182,22 @@ export function ShellArtifactViewerAdapter() {
             ? `/campaigns/${encodeURIComponent(target.campaignId)}?view=canvas`
             : '')
     if (!internalUrl) return
-    closeArtifactViewer()
+    const conversationId =
+      target.conversationId ??
+      useChatStore.getState().activeConversationId ??
+      useShellStore.getState().chatDrawer.conversationId
+    closeArtifactViewer(conversationId)
+    recordWorkAreaPage(
+      {
+        id: internalUrl,
+        title: target.title,
+        href: internalUrl,
+      },
+      conversationId,
+    )
+    if (conversationId) openChatDrawer(conversationId)
     router.push(internalUrl)
-  }, [closeArtifactViewer, router, target])
+  }, [closeArtifactViewer, openChatDrawer, recordWorkAreaPage, router, target])
 
   if (!target) return null
   if (isShellCodeArtifactTarget(target)) {

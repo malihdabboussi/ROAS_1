@@ -177,6 +177,12 @@ describe('ShellArtifactViewerAdapter', () => {
 
   it('navigates a Canvas output to the exact campaign Canvas route', async () => {
     useShellStore.setState({
+      chatDrawer: {
+        open: true,
+        minimized: false,
+        conversationId: 'stale-conversation',
+        width: 420,
+      },
       artifactViewer: {
         width: 480,
         target: {
@@ -187,6 +193,7 @@ describe('ShellArtifactViewerAdapter', () => {
           title: 'Client webinar Canvas',
           type: 'canvas',
           internalUrl: '/campaigns/campaign-1?view=canvas',
+          conversationId: 'owning-conversation',
         },
       },
     })
@@ -196,6 +203,16 @@ describe('ShellArtifactViewerAdapter', () => {
     await waitFor(() =>
       expect(routerPush).toHaveBeenCalledWith('/campaigns/campaign-1?view=canvas'),
     )
+    expect(useShellStore.getState().chatDrawer.conversationId).toBe('owning-conversation')
+    expect(useShellStore.getState().lastWorkAreaPageByConversation).toEqual({
+      'owning-conversation': expect.objectContaining({
+        id: '/campaigns/campaign-1?view=canvas',
+        title: 'Client webinar Canvas',
+        href: '/campaigns/campaign-1?view=canvas',
+        conversationId: 'owning-conversation',
+        conversationBound: true,
+      }),
+    })
     expect(screen.queryByTestId('lightweight-preview')).toBeNull()
   })
 

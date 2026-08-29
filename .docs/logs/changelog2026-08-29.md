@@ -219,3 +219,13 @@ Why: Signed-in production QA proved that including meeting child actions fixed p
 Impact: Pixel now gives a usable workday agenda while preserving every task in My Tasks and keeping exact quoted-task provenance lookup complete. Old commitments remain visible as a review count with explicit Done / Keep open guidance instead of masquerading as today’s priorities.
 
 Files: `apps/agent-api/src/modules/chat/services/chat-operational-agenda-format.util.ts`, `apps/agent-api/src/modules/chat/services/chat-operational-agenda-format.util.test.ts`, `documentation/features/meeting-follow-up-slack.md`, `.docs/logs/changelog2026-08-29.md`
+
+## [2026-08-29 12:04] - [FIX]
+
+What: Bound direct-route chat outputs to their exact owning conversation and work-page destination before navigating to Canvas, Campaign, Flow, or Project surfaces.
+
+Why: Production browser QA found that closing a Canvas opened from one chat could reveal a stale drawer conversation and then attach that Canvas to the wrong chat's **Show page** control.
+
+Impact: Closing a directly routed output now returns to the chat that opened it, and **Show page** on that chat reopens the exact output page without cross-chat leakage.
+
+Files: `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.tsx`, `apps/web/src/features/studio/components/preview/ShellArtifactViewerAdapter.test.tsx`, `documentation/features/claude-chatgpt-shell.md`, `.docs/logs/changelog2026-08-29.md`.
