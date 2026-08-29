@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, Optional } from '@nestjs/common'
+import { ModuleRef } from '@nestjs/core'
 import {
   isModelStrategy,
   resolveChatStageModel,
@@ -16,6 +17,13 @@ import {
   type ChatModelSettings,
   type ValidatedModelSettings,
 } from './chat-model-input.service'
+import {
+  isOperationalCalendarRequest,
+  isOperationalTaskRequest,
+  resolveOperationalCalendarWindow,
+  shouldSkipBrainContextForOperationalAgenda,
+} from './chat-operational-agenda.util'
+import { formatOperationalAgenda } from './chat-operational-agenda-format.util'
 import type { ChatRunCheckpointKind } from './chat-run-checkpoint.service'
 import { ChatStreamRecoveryService } from './chat-stream-recovery.service'
 import {
@@ -26,10 +34,11 @@ import {
   type SendFn,
   type TraceRecoveryEvent,
 } from './openclaw-proxy.service'
+import type { ToolStep } from './openclaw-proxy.service'
+import { ArtifactsService } from '../../artifacts/services/artifacts.service'
 
 const CONTINUATION_PROMPT =
   'Continue your previous response from exactly where you left off. Do not repeat prior text. Produce only the continuation.'
-
 type RecordCheckpoint = (
   kind: ChatRunCheckpointKind,
   checkpoint: {
@@ -86,6 +95,7 @@ export class ChatStreamExecutionService {
     private readonly openClaw: OpenClawProxyService,
     private readonly streamRecoveryService: ChatStreamRecoveryService,
     private readonly modelInputService: ChatModelInputService,
+    @Optional() private readonly moduleRef?: ModuleRef,
   ) {}
 
   async run(input: ChatStreamExecutionInput): Promise<OpenClawCompletionResult> {
@@ -149,30 +159,47 @@ export class ChatStreamExecutionService {
   ): Promise<OpenClawCompletionResult> {
     const researchRoute = resolveChatStageModel('auto', 'research')
     const writerRoute = resolveChatStageModel('auto', 'write')
-    const [researchSettings, writerSettings] = await Promise.all([
-      this.modelInputService.validateModelSettings(
-        researchRoute.modelId,
-        researchRoute.modelSettings,
-      ),
-      this.modelInputService.validateModelSettings(writerRoute.modelId, writerRoute.modelSettings),
-    ])
+    const operationalAgendaQuickPath = shouldSkipBrainContextForOperationalAgenda(
+      input.userContent,
+    )
+    const writerModelSettings = operationalAgendaQuickPath
+      ? { ...writerRoute.modelSettings, reasoning_effort: 'low' as const }
+      : writerRoute.modelSettings
+    const researchSettings = operationalAgendaQuickPath
+      ? null
+      : await this.modelInputService.validateModelSettings(
+          researchRoute.modelId,
+          researchRoute.modelSettings,
+        )
+    const writerSettings = operationalAgendaQuickPath
+      ? null
+      : await this.modelInputService.validateModelSettings(
+          writerRoute.modelId,
+          writerModelSettings,
+        )
     const researchSend: SendFn = async (type, data) => {
       if (type === 'content_delta' || type === 'thinking_delta') return
       await input.progressiveSend(type, data)
     }
-    const researchInput: ChatStreamExecutionInput = {
-      ...input,
-      gatewayModelId: researchRoute.modelId,
-      generationStage: 'research',
-      progressiveSend: researchSend,
-      selectedModelInput: 'auto:economy',
-      selectedSettings: researchSettings,
-    }
-    const researchResult = await this.runWithRecovery(researchInput)
+    const researchResult = operationalAgendaQuickPath
+      ? await this.runOperationalAgendaResearch(input)
+      : await this.runWithRecovery({
+          ...input,
+          gatewayModelId: researchRoute.modelId,
+          generationStage: 'research',
+          instructions: input.instructions,
+          progressiveSend: researchSend,
+          selectedModelInput: 'auto:economy',
+          selectedSettings: researchSettings!,
+        })
     if (
       researchResult.failed ||
       (researchResult.content.trim().length === 0 && researchResult.toolSteps.length === 0)
     ) {
+      return withGenerationStage(researchResult, 'research')
+    }
+    if (operationalAgendaQuickPath) {
+      await input.progressiveSend('content_delta', { content: researchResult.content })
       return withGenerationStage(researchResult, 'research')
     }
 
@@ -183,12 +210,12 @@ export class ChatStreamExecutionService {
         gatewayModelId: writerRoute.modelId,
         instructions: AUTO_WRITER_INSTRUCTIONS,
         inputArray: writerInput,
-        selectedSettings: writerSettings,
+        selectedSettings: writerSettings!,
         sessionKey: `${input.sessionKey}:writer:${input.runId ?? input.messageId ?? 'turn'}`,
       },
       writerInput,
       writerRoute.modelId,
-      writerSettings.openClaw,
+      writerSettings!.openClaw,
       {
         generationStage: 'write',
         sessionKey: `${input.sessionKey}:writer:${input.runId ?? input.messageId ?? 'turn'}`,
@@ -215,6 +242,121 @@ export class ChatStreamExecutionService {
       content: writerResult.content,
       failed: writerResult.failed,
     })
+  }
+
+  private async runOperationalAgendaResearch(
+    input: ChatStreamExecutionInput,
+  ): Promise<OpenClawCompletionResult> {
+    const artifacts = this.moduleRef?.get(ArtifactsService, { strict: false })
+    if (!artifacts) {
+      return {
+        content: '',
+        toolSteps: [],
+        failed: 'operational_agenda_executor_unavailable',
+      }
+    }
+
+    const wantsTasks = isOperationalTaskRequest(input.userContent)
+    const wantsCalendar = isOperationalCalendarRequest(input.userContent)
+    const actions: Array<Promise<ToolStep>> = []
+    if (wantsTasks) {
+      actions.push(
+        this.executeOperationalRead(input, artifacts, {
+          action: 'list_tasks',
+          label: 'Retrieving your open assigned tasks',
+          data: { assigned_to_me: true, include_closed: false, include_count: true },
+        }),
+      )
+    }
+    if (wantsCalendar) {
+      const { start, end, label } = resolveOperationalCalendarWindow(input.userContent)
+      actions.push(
+        this.executeOperationalRead(input, artifacts, {
+          action: 'list_calendar_events',
+          label,
+          data: { start, end },
+        }),
+      )
+    }
+
+    const toolSteps = await Promise.all(actions)
+    const failedStep = toolSteps.find((step) => step.status === 'failed')
+    return {
+      content: formatOperationalAgenda(toolSteps),
+      toolSteps,
+      ...(failedStep ? { failed: failedStep.error ?? `${failedStep.name} failed` } : {}),
+    }
+  }
+
+  private async executeOperationalRead(
+    input: ChatStreamExecutionInput,
+    artifacts: ArtifactsService,
+    request: { action: string; label: string; data: Record<string, unknown> },
+  ): Promise<ToolStep> {
+    const toolCallId = `operational-${request.action}-${input.messageId ?? input.runId ?? 'turn'}`
+    await input.progressiveSend('status', { phase: 'executing', message: request.label })
+    await input.progressiveSend('tool_start', {
+      name: request.action,
+      action: request.action,
+      label: request.label,
+      tool_call_id: toolCallId,
+    })
+    try {
+      const result = await artifacts.executeAction(request.action, request.data, input.sessionKey)
+      const record = this.asRecord(result)
+      const failed = record.success === false || typeof record.error_code === 'string'
+      const error = failed ? this.readActionError(record, request.action) : undefined
+      await input.progressiveSend('tool_end', {
+        name: request.action,
+        action: request.action,
+        label: request.label,
+        tool_call_id: toolCallId,
+        status: failed ? 'failed' : 'completed',
+        ...(error ? { error } : {}),
+      })
+      return {
+        name: request.action,
+        action: request.action,
+        label: request.label,
+        tool_call_id: toolCallId,
+        input: request.data,
+        result: record,
+        status: failed ? 'failed' : 'completed',
+        ...(error ? { error } : {}),
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      await input.progressiveSend('tool_end', {
+        name: request.action,
+        action: request.action,
+        label: request.label,
+        tool_call_id: toolCallId,
+        status: 'failed',
+        error: message,
+      })
+      return {
+        name: request.action,
+        action: request.action,
+        label: request.label,
+        tool_call_id: toolCallId,
+        input: request.data,
+        status: 'failed',
+        error: message,
+      }
+    }
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : { data: value }
+  }
+
+  private readActionError(record: Record<string, unknown>, action: string): string {
+    const explanation = this.asRecord(record.user_explanation)
+    if (typeof explanation.sentence === 'string') return explanation.sentence
+    if (typeof record.error === 'string') return record.error
+    return `${action} failed`
   }
 
   private streamCompletion(

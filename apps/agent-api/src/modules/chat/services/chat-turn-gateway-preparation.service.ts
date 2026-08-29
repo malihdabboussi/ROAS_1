@@ -11,6 +11,7 @@ import { ChatDocumentContextService } from './chat-document-context.service'
 import { ChatGatewayInputService, type ChatGatewayInputContext } from './chat-gateway-input.service'
 import { ChatMessageEnrichmentService } from './chat-message-enrichment.service'
 import { ChatModelInputService, type ChatModelSettings } from './chat-model-input.service'
+import { shouldSkipBrainContextForOperationalAgenda } from './chat-operational-agenda.util'
 import type { ChatStablePrewarmContext } from './chat-prewarm-context.service'
 import { ChatProfileContextService } from './chat-profile-context.service'
 import { ChatSessionHistoryService } from './chat-session-history.service'
@@ -23,7 +24,6 @@ import { IntegrationContextService } from './integration-context.service'
 import type { OpenClawInputMessage, OpenClawSkillCatalog } from './openclaw-proxy.service'
 
 type ChatGatewayChannel = 'telegram' | 'slack' | 'studio'
-
 interface ChatPreparationDocument {
   filename: string
   type: 'text' | 'image' | 'video' | 'audio'
@@ -231,7 +231,9 @@ export class ChatTurnGatewayPreparationService {
     const publicAgentQuickContext = this.shouldUsePublicAgentQuickContext(source, lastUserMessage)
       ? this.buildPublicAgentQuickContext(agentReg, resolvedAgentId)
       : ''
-    const shouldBuildBrainContext = cortexMaxEnabled && !publicAgentQuickContext
+    const operationalAgendaQuickPath = shouldSkipBrainContextForOperationalAgenda(lastUserMessage)
+    const shouldBuildBrainContext =
+      cortexMaxEnabled && !publicAgentQuickContext && !operationalAgendaQuickPath
     const brainContextStartedAt = Date.now()
     const retrievalReceipts: BrainRetrievalReceipt[] = []
     const userBrainSummary = shouldBuildBrainContext
@@ -269,6 +271,8 @@ export class ChatTurnGatewayPreparationService {
         ? 'cortex_max_disabled'
         : publicAgentQuickContext
           ? 'public_agent_low_context'
+          : operationalAgendaQuickPath
+            ? 'canonical_operational_agenda'
           : null,
       brain_context_chars: userBrainSummary.length,
       quick_context_chars: publicAgentQuickContext.length,
@@ -286,6 +290,7 @@ export class ChatTurnGatewayPreparationService {
       brain_context_chars: userBrainSummary.length,
       quick_context_chars: publicAgentQuickContext.length,
       skipped_for_public_intent: Boolean(publicAgentQuickContext),
+      skipped_for_operational_agenda: operationalAgendaQuickPath,
       user_brain_access: userBrainAccess,
       use_wiki_context: useWikiContext,
       cortex_max: cortexMaxEnabled,

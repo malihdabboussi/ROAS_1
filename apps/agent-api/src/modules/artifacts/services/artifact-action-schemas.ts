@@ -2409,8 +2409,9 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
     },
   },
   list_tasks: {
-    required: ['space_id'],
+    required: [],
     optional: [
+      'space_id',
       'status',
       'category',
       'filters',

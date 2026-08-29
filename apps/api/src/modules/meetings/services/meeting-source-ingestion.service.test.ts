@@ -169,12 +169,15 @@ describe('MeetingSourceIngestionService', () => {
     const providerActions = {
       upsertProviderActions: vi.fn().mockResolvedValue(['action-1']),
     }
+    const stateRepository = {
+      upsertProviderFollowUps: vi.fn().mockResolvedValue(['fu-1']),
+    }
     const service = new MeetingSourceIngestionService(
       repository as never,
       providerActions as never,
       resolutionRepository as never,
       recaps as never,
-      { upsertProviderFollowUps: vi.fn().mockResolvedValue(['fu-1']) } as never,
+      stateRepository as never,
     )
 
     const result = await service.ingestFathomSource({} as never, {
@@ -224,6 +227,12 @@ describe('MeetingSourceIngestionService', () => {
         meetingItemId: 'meeting-1',
         recordingId: 'source-1',
         actions: [expect.objectContaining({ sourceKey: 'fathom:rec-1:action:0' })],
+        assignees: expect.any(Map),
+      }),
+    )
+    expect(stateRepository.upsertProviderFollowUps).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
         assignees: expect.any(Map),
       }),
     )

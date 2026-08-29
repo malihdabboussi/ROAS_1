@@ -20,11 +20,15 @@ import {
   resolveMachineProfileColumns,
   resolveMachineProfileRow,
 } from '@/lib/runtime/machine-profile-env'
+import { applyVercelProtectionBypass } from './proxy-upstream-headers'
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:3001'
 const AGENT_BACKEND_URL = process.env.AGENT_BACKEND_URL ?? 'http://localhost:3003'
+const FORCE_AGENT_BACKEND_URL =
+  process.env.VERCEL_ENV !== 'production' && process.env.FORCE_AGENT_BACKEND_URL === '1'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
+const VERCEL_AUTOMATION_BYPASS_SECRET = process.env.VERCEL_AUTOMATION_BYPASS_SECRET
 
 /** Path prefixes routed to Agent Backend (user's Fly.io machine) */
 const AGENT_PATHS = ['chat', 'apps', 'project-files']
@@ -271,8 +275,10 @@ async function resolveImpersonatedProfile(
   impersonateUserId: string,
 ): Promise<AgentRouteProfile> {
   const url = new URL(`/api/admin/impersonation/machine-target/${impersonateUserId}`, BACKEND_URL)
+  const headers = new Headers({ Authorization: authHeader })
+  applyVercelProtectionBypass(headers, BACKEND_URL, VERCEL_AUTOMATION_BYPASS_SECRET)
   const res = await fetch(url.toString(), {
-    headers: { Authorization: authHeader },
+    headers,
   })
   if (!res.ok) {
     const body = await res.text().catch(() => '')
@@ -290,6 +296,10 @@ async function resolveAgentInfo(
   requiredRuntime?: MachineWakeRuntimeRequirement,
   impersonateUserId: string | null = null,
 ): Promise<AgentRouteTarget> {
+  if (FORCE_AGENT_BACKEND_URL) {
+    return { url: AGENT_BACKEND_URL, machineId: null, source: 'fallback-agent' }
+  }
+
   if (AGENT_BACKEND_URL.includes('localhost') || AGENT_BACKEND_URL.includes('127.0.0.1')) {
     return { url: AGENT_BACKEND_URL, machineId: null, source: 'fallback-agent' }
   }
@@ -979,6 +989,9 @@ async function proxyRequest(
       appendSearchParams(url, request)
 
       const headers = copyAgentHeaders(baseHeaders, agentInfo?.machineId ?? null)
+      if (!agentInfo) {
+        applyVercelProtectionBypass(headers, targetUrl, VERCEL_AUTOMATION_BYPASS_SECRET)
+      }
       const eventPrefix = agentInfo ? runtimeFetchEventPrefix(agentInfo.source) : null
 
       const fetchOptions: RequestInit = {

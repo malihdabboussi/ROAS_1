@@ -45,22 +45,10 @@ class QueryBuilder {
     return this
   }
 
-  or(filters: string) {
-    const match = filters.match(
-      /^and\(assignee_type\.eq\.human,assignee_id\.eq\.([^)]+)\),assignees\.cs\.(.+)$/,
-    )
-    if (!match) return this
-    const userId = match[1]
-    let assignees: Array<{ type?: unknown; id?: unknown }> = []
-    try {
-      assignees = JSON.parse(match[2])
-    } catch {
-      assignees = []
-    }
-    const expected = assignees[0]
+  contains(key: string, value: unknown) {
     this.filters.push({
-      key: '__assigned_to_me',
-      value: { userId, expected },
+      key: `__contains:${key}`,
+      value,
       mode: 'eq',
     })
     return this
@@ -133,18 +121,16 @@ class QueryBuilder {
         const value = this.valueAt(row, filter.key)
         return value === filter.value || (filter.value === null && value === undefined)
       }
-      if (filter.key === '__assigned_to_me') {
-        const value = filter.value as {
-          userId?: unknown
-          expected?: { type?: unknown; id?: unknown }
-        }
-        const userId = String(value.userId ?? '')
-        const assignees = Array.isArray(row.assignees) ? row.assignees : []
+      if (filter.key.startsWith('__contains:')) {
+        const rowValues = this.valueAt(row, filter.key.slice('__contains:'.length))
+        const expected =
+          typeof filter.value === 'string'
+            ? (JSON.parse(filter.value) as Array<Record<string, unknown>>)
+            : []
         return (
-          (row.assignee_type === 'human' && row.assignee_id === userId) ||
-          assignees.some(
-            (assignee) =>
-              assignee?.type === value.expected?.type && assignee?.id === value.expected?.id,
+          Array.isArray(rowValues) &&
+          expected.every((entry) =>
+            rowValues.some((rowEntry) => JSON.stringify(rowEntry) === JSON.stringify(entry)),
           )
         )
       }
@@ -1177,7 +1163,7 @@ describe('ArtifactTasksService', () => {
           status: 'working',
           assignee_type: 'human',
           assignee_id: 'user-1',
-          assignees: [],
+          assignees: [{ type: 'human', id: 'user-1' }],
         },
         {
           id: 'multi-human-1',
@@ -1212,6 +1198,138 @@ describe('ArtifactTasksService', () => {
     expect(result.total_count).toBe(2)
     expect(result.tasks).toHaveLength(1)
     expect(result.tasks[0].id).toBe('primary-human-1')
+  })
+
+  it('lists only the current users open tasks across spaces without a space id', async () => {
+    const secondSpace = {
+      ...makeSpace(workflowSchema),
+      id: 'space-2',
+      title: 'Client B',
+      campaign_id: 'campaign-2',
+    }
+    const db: Db = {
+      spaces: [makeSpace(workflowSchema), secondSpace],
+      space_items: [
+        {
+          id: 'mine-open',
+          space_id: 'space-1',
+          org_id: 'org-1',
+          user_id: 'user-1',
+          title: 'My open task',
+          status: 'working',
+          assignee_type: 'human',
+          assignee_id: 'user-1',
+          assignees: [{ type: 'human', id: 'user-1' }],
+        },
+        {
+          id: 'mine-closed',
+          space_id: 'space-2',
+          org_id: 'org-1',
+          user_id: 'user-1',
+          title: 'Already finished',
+          status: 'done',
+          assignee_type: 'human',
+          assignee_id: 'user-1',
+          assignees: [{ type: 'human', id: 'user-1' }],
+        },
+        {
+          id: 'someone-elses',
+          space_id: 'space-2',
+          org_id: 'org-1',
+          user_id: 'user-1',
+          title: 'Not mine',
+          status: 'working',
+          assignee_type: 'human',
+          assignee_id: 'user-2',
+          assignees: [{ type: 'human', id: 'user-2' }],
+        },
+      ],
+      space_item_activity: [],
+    }
+    const service = new ArtifactTasksService()
+
+    const result = (await service
+      .getHandlers(makeTarget(db, { orgId: 'org-1' }))
+      .list_tasks(
+        { assigned_to_me: true, fields: 'summary', include_count: true, limit: 20 },
+        'agent:vibey:stub',
+      )) as {
+      success: boolean
+      scope: string
+      tasks: Record<string, unknown>[]
+    }
+
+    expect(result.success).toBe(true)
+    expect(result.scope).toBe('assigned_to_me')
+    expect(result.tasks).toEqual([
+      expect.objectContaining({ id: 'mine-open', space_title: 'Tasks' }),
+    ])
+  })
+
+  it('keeps assigned-to-me scope across spaces when the agent also sends a space id', async () => {
+    const secondSpace = {
+      ...makeSpace(workflowSchema),
+      id: 'space-2',
+      title: 'Client B',
+      campaign_id: 'campaign-2',
+    }
+    const db: Db = {
+      spaces: [makeSpace(workflowSchema), secondSpace],
+      space_items: [
+        {
+          id: 'mine-in-another-space',
+          space_id: 'space-2',
+          org_id: 'org-1',
+          user_id: 'user-1',
+          title: 'My task outside the incidental space',
+          status: 'working',
+          assignee_type: 'human',
+          assignee_id: 'user-1',
+          assignees: [{ type: 'human', id: 'user-1' }],
+        },
+      ],
+      space_item_activity: [],
+    }
+    const service = new ArtifactTasksService()
+
+    const result = (await service
+      .getHandlers(makeTarget(db, { orgId: 'org-1' }))
+      .list_tasks(
+        {
+          space_id: 'space-1',
+          assigned_to_me: true,
+          fields: 'summary',
+          include_count: true,
+          limit: 20,
+        },
+        'agent:vibey:stub',
+      )) as {
+      success: boolean
+      scope: string
+      tasks: Record<string, unknown>[]
+    }
+
+    expect(result.success).toBe(true)
+    expect(result.scope).toBe('assigned_to_me')
+    expect(result.tasks).toEqual([
+      expect.objectContaining({ id: 'mine-in-another-space', space_title: 'Client B' }),
+    ])
+  })
+
+  it('fails closed when list_tasks omits both space id and assigned-to-me scope', async () => {
+    const service = new ArtifactTasksService()
+
+    const result = (await service
+      .getHandlers(makeTarget({ spaces: [], space_items: [] }))
+      .list_tasks({ fields: 'summary' }, 'agent:vibey:stub')) as {
+      success: boolean
+      error: string
+    }
+
+    expect(result).toEqual({
+      success: false,
+      error: 'space_id is required unless assigned_to_me is true',
+    })
   })
 
   it('filters list_space_view_items by view type and custom filters before applying limit', async () => {

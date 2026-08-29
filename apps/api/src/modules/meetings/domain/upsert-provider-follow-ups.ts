@@ -1,5 +1,12 @@
 import type { FathomSourceAction } from '../providers/fathom-meeting-source'
 import { findMatchingMeetingAction, normalizeMeetingActionText } from './meeting-action-dedupe'
+import type { CanonicalMeetingAssignee } from './meeting-assignee-identity'
+
+type ProviderFollowUpAssignment = {
+  assignee_type: 'human'
+  assignee_id: string
+  assignees: Array<{ type: 'human'; id: string }>
+}
 
 export type ProviderFollowUpUpsertPlan =
   | {
@@ -8,12 +15,14 @@ export type ProviderFollowUpUpsertPlan =
       title: string
       status: string
       customData: Record<string, unknown>
+      assignment: ProviderFollowUpAssignment | null
     }
   | {
       kind: 'insert'
       title: string
       status: string
       customData: Record<string, unknown>
+      assignment: ProviderFollowUpAssignment | null
     }
 
 /**
@@ -24,6 +33,7 @@ export function planProviderFollowUpUpserts(input: {
   meetingItemId: string
   meetingTitle: string | null
   actions: readonly FathomSourceAction[]
+  assignees?: ReadonlyMap<string, CanonicalMeetingAssignee>
   existingFollowUps: ReadonlyArray<Record<string, unknown>>
   reopenDismissed?: boolean
 }): ProviderFollowUpUpsertPlan[] {
@@ -46,6 +56,15 @@ export function planProviderFollowUpUpserts(input: {
     const byTitle = byKey ?? findMatchingMeetingAction(input.existingFollowUps, title) ?? null
 
     const status = action.completed ? 'done' : 'logged'
+    const canonicalAssignee = input.assignees?.get(action.sourceKey) ?? null
+    const assignment =
+      canonicalAssignee?.type === 'user'
+        ? {
+            assignee_type: 'human' as const,
+            assignee_id: canonicalAssignee.id,
+            assignees: [{ type: 'human' as const, id: canonicalAssignee.id }],
+          }
+        : null
     const baseCustom: Record<string, unknown> = {
       entry_type: 'follow_up',
       source_call_item_id: input.meetingItemId,
@@ -54,6 +73,14 @@ export function planProviderFollowUpUpserts(input: {
       provider: 'fathom',
       ...(action.assigneeName ? { suggested_assignee_name: action.assigneeName } : {}),
       ...(action.assigneeEmail ? { suggested_assignee_email: action.assigneeEmail } : {}),
+      ...(canonicalAssignee
+        ? {
+            canonical_assignee_type: canonicalAssignee.type,
+            canonical_assignee_id: canonicalAssignee.id,
+            canonical_assignee_name: canonicalAssignee.name,
+            canonical_assignee_email: canonicalAssignee.email,
+          }
+        : {}),
       provider_evidence: {
         recording_timestamp: action.recordingTimestamp,
         recording_playback_url: action.recordingPlaybackUrl,
@@ -83,6 +110,7 @@ export function planProviderFollowUpUpserts(input: {
             ? 'done'
             : String(byTitle.status ?? status),
         customData,
+        assignment,
       })
       continue
     }
@@ -92,6 +120,7 @@ export function planProviderFollowUpUpserts(input: {
       title,
       status,
       customData: baseCustom,
+      assignment,
     })
   }
 

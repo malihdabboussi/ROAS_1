@@ -215,17 +215,19 @@ export class MeetingSourceIngestionService {
       userId: input.userId,
       orgId: input.orgId,
     })
+    const resolvedAssignees = resolveMeetingActionAssignees(refinedActions, assigneeCandidates)
     const providerActionIds = await this.providerActions.upsertProviderActions(supabase, {
       ...scope,
       recordingId,
       actions: refinedActions,
-      assignees: resolveMeetingActionAssignees(refinedActions, assigneeCandidates),
+      assignees: resolvedAssignees,
     })
     // Canonical Action items UI reads follow_up space_items — refined
     // commitments land there; raw Fathom items stay archived on the recording.
     await this.stateRepository.upsertProviderFollowUps(supabase, {
       ...scope,
       actions: refinedActions,
+      assignees: resolvedAssignees,
       meetingTitle: source.title,
     })
     const recordings = await this.repository.listRecordings(supabase, input.meetingItemId)

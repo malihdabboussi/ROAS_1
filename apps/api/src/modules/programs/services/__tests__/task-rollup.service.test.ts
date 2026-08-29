@@ -44,12 +44,40 @@ describe('TaskRollupService', () => {
     ).resolves.toEqual([])
   })
 
-  it('filters my view to the current human assignee', async () => {
+  it('filters my view in the repository before applying the requested limit', async () => {
     repo.listCampaigns.mockResolvedValue([{ id: 'c1', name: 'Sakha', program_id: 'prog-1' }])
     repo.listSpacesForCampaigns.mockResolvedValue([
       { id: 's1', title: 'General', campaign_id: 'c1' },
     ])
     repo.listOpenSpaceItems.mockResolvedValue([
+      {
+        id: 'i1',
+        title: 'Mine',
+        status: 'todo',
+        due_date: '2026-07-23',
+        assignee_type: 'human',
+        assignee_id: 'user-1',
+        assignees: [{ type: 'human', id: 'user-1' }],
+        space_id: 's1',
+        created_at: '2026-07-01',
+        updated_at: null,
+        suggestion_state: null,
+        parent_item_id: null,
+      },
+    ])
+
+    const mine = await service.list(supabase, 'user-1', { view: 'my', limit: 5 }, 'org-1')
+    expect(mine.map((r) => r.id)).toEqual(['i1'])
+    expect(mine[0]?.program_name).toBe('Clients')
+    expect(mine[0]?.source_url).toContain('/spaces?space=s1&item=i1')
+    expect(repo.listOpenSpaceItems).toHaveBeenLastCalledWith(supabase, {
+      spaceIds: ['s1'],
+      orgId: 'org-1',
+      assigneeUserId: 'user-1',
+      limit: 5,
+    })
+
+    repo.listOpenSpaceItems.mockResolvedValueOnce([
       {
         id: 'i1',
         title: 'Mine',
@@ -79,14 +107,14 @@ describe('TaskRollupService', () => {
         parent_item_id: null,
       },
     ])
-
-    const mine = await service.list(supabase, 'user-1', { view: 'my', limit: 50 }, 'org-1')
-    expect(mine.map((r) => r.id)).toEqual(['i1'])
-    expect(mine[0]?.program_name).toBe('Clients')
-    expect(mine[0]?.source_url).toContain('/spaces?space=s1&item=i1')
-
     const all = await service.list(supabase, 'user-1', { view: 'all', limit: 50 }, 'org-1')
     expect(all.map((r) => r.id)).toEqual(['i1', 'i2'])
+    expect(repo.listOpenSpaceItems).toHaveBeenLastCalledWith(supabase, {
+      spaceIds: ['s1'],
+      orgId: 'org-1',
+      assigneeUserId: undefined,
+      limit: 50,
+    })
   })
 
   it('scopes campaigns by program_id before loading items', async () => {

@@ -51,5 +51,9 @@ print(f'Prepared {len(rows)} Fly secrets')
 PY
 
 "${FLY}" secrets import --app "${APP}" --stage < "${TMP}"
-"${FLY}" secrets deploy --app "${APP}"
-echo "Fly secrets staged and deployed for ${APP}"
+if "${FLY}" machines list --app "${APP}" --json | rg -q '"id"'; then
+  "${FLY}" secrets deploy --app "${APP}"
+  echo "Fly secrets staged and deployed for ${APP}"
+else
+  echo "Fly secrets staged for new app ${APP}; the first app deploy will apply them"
+fi

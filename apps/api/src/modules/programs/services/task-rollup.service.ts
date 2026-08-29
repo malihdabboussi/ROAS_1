@@ -56,15 +56,11 @@ export class TaskRollupService {
     const items = await this.taskRollupRepo.listOpenSpaceItems(supabase, {
       spaceIds: spaces.map((s) => s.id),
       orgId,
-      // Over-fetch slightly so client-side "my" filter still fills the limit.
-      limit: query.view === 'my' ? Math.min(500, query.limit * 3) : query.limit,
+      assigneeUserId: query.view === 'my' ? userId : undefined,
+      limit: query.limit,
     })
 
-    const visible = items.filter((item) => {
-      if (item.suggestion_state === 'dismissed') return false
-      if (query.view !== 'my') return true
-      return isAssignedToUser(item.assignee_type, item.assignee_id, item.assignees, userId)
-    })
+    const visible = items.filter((item) => item.suggestion_state !== 'dismissed')
 
     const programIds = [
       ...new Set(
@@ -90,20 +86,4 @@ export class TaskRollupService {
         return a.title.localeCompare(b.title)
       })
   }
-}
-
-function isAssignedToUser(
-  assigneeType: string | null,
-  assigneeId: string | null,
-  assignees: unknown,
-  userId: string,
-): boolean {
-  if (assigneeType === 'human' && assigneeId === userId) return true
-  if (!Array.isArray(assignees)) return false
-  return assignees.some((entry) => {
-    if (!entry || typeof entry !== 'object') return false
-    return (
-      (entry as { type?: unknown }).type === 'human' && (entry as { id?: unknown }).id === userId
-    )
-  })
 }

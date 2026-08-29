@@ -7,6 +7,7 @@ function makeService(input?: {
   streamCompletion?: ReturnType<typeof vi.fn>
   recovery?: ChatStreamRecoveryService
   validateModelSettings?: ReturnType<typeof vi.fn>
+  executeAction?: ReturnType<typeof vi.fn>
 }) {
   const openClaw = {
     streamCompletion:
@@ -16,6 +17,13 @@ function makeService(input?: {
         toolSteps: [],
       })),
   }
+  const executeAction =
+    input?.executeAction ??
+    vi.fn(async (action: string) =>
+      action === 'list_tasks'
+        ? { tasks: [{ id: 'task-1', title: 'Assigned task' }], total_count: 1 }
+        : { events: [{ id: 'event-1', title: 'Today meeting' }] },
+    )
   return new ChatStreamExecutionService(
     openClaw as any,
     input?.recovery ?? new ChatStreamRecoveryService(),
@@ -33,6 +41,9 @@ function makeService(input?: {
           },
         })),
     } as unknown as ChatModelInputService,
+    {
+      get: vi.fn(() => ({ executeAction })),
+    } as any,
   )
 }
 
@@ -212,6 +223,153 @@ describe('ChatStreamExecutionService', () => {
       expect.objectContaining({ generationId: 'gen-research', stage: 'research' }),
       expect.objectContaining({ generationId: 'gen-write', stage: 'write' }),
     ])
+  })
+
+  it('uses the fast bounded research route for a canonical operational agenda request', async () => {
+    const streamCompletion = vi
+      .fn()
+      .mockResolvedValueOnce({
+        content: 'Here are your nine open tasks and today\'s meeting.',
+        toolSteps: [],
+      })
+    const validateModelSettings = vi.fn(async (modelId, settings) => ({
+      requestedModelId: modelId,
+      resolvedModelId: modelId,
+      request: settings ?? {},
+      openClaw: { reasoningEffort: settings?.reasoning_effort },
+    }))
+    const executeAction = vi.fn(async (action: string) =>
+      action === 'list_tasks'
+        ? { tasks: [{ id: 'task-1', title: 'Assigned task' }], total_count: 1 }
+        : { events: [{ id: 'event-1', title: 'Today meeting' }] },
+    )
+    const progressiveSend = vi.fn(async () => undefined)
+    const service = makeService({ streamCompletion, validateModelSettings, executeAction })
+
+    await service.run(
+      makeRunInput({
+        selectedModelInput: 'auto',
+        progressiveSend,
+        userContent: "What should I focus on today? Show my open tasks and today's meetings.",
+      }),
+    )
+
+    expect(validateModelSettings).not.toHaveBeenCalled()
+    expect(streamCompletion).not.toHaveBeenCalled()
+    expect(executeAction).toHaveBeenCalledWith(
+      'list_tasks',
+      { assigned_to_me: true, include_closed: false, include_count: true },
+      'session-1',
+    )
+    expect(executeAction).toHaveBeenCalledWith(
+      'list_calendar_events',
+      expect.objectContaining({ start: expect.any(String), end: expect.any(String) }),
+      'session-1',
+    )
+    expect(progressiveSend).toHaveBeenCalledWith(
+      'tool_start',
+      expect.objectContaining({ name: 'list_tasks' }),
+    )
+    expect(progressiveSend).toHaveBeenCalledWith(
+      'content_delta',
+      expect.objectContaining({ content: expect.stringContaining('## Open tasks (1)') }),
+    )
+  })
+
+  it('preserves full Auto reasoning for contextual agenda questions', async () => {
+    const streamCompletion = vi
+      .fn()
+      .mockResolvedValueOnce({ content: 'Call evidence.', toolSteps: [] })
+      .mockResolvedValueOnce({ content: 'Contextual answer.', toolSteps: [] })
+    const validateModelSettings = vi.fn(async (modelId, settings) => ({
+      requestedModelId: modelId,
+      resolvedModelId: modelId,
+      request: settings ?? {},
+      openClaw: { reasoningEffort: settings?.reasoning_effort },
+    }))
+    const service = makeService({ streamCompletion, validateModelSettings })
+
+    await service.run(
+      makeRunInput({
+        selectedModelInput: 'auto',
+        userContent: 'Which tasks came from recent calls or Slack, and why?',
+      }),
+    )
+
+    expect(validateModelSettings).toHaveBeenNthCalledWith(
+      1,
+      'openai/gpt-5.6-terra',
+      expect.objectContaining({ reasoning_effort: 'low' }),
+    )
+    expect(validateModelSettings).toHaveBeenNthCalledWith(
+      2,
+      'anthropic/claude-sonnet-4.6',
+      expect.objectContaining({ reasoning_effort: 'medium' }),
+    )
+    expect(streamCompletion.mock.calls[0]?.[0].instructions).toBe('Answer the user.')
+  })
+
+  it('retrieves only the seven-day calendar window for an ongoing meeting follow-up', async () => {
+    const executeAction = vi.fn(async () => ({ events: [] }))
+    const streamCompletion = vi.fn(async () => ({ content: 'No upcoming meetings.', toolSteps: [] }))
+    const service = makeService({ executeAction, streamCompletion })
+
+    await service.run(
+      makeRunInput({
+        selectedModelInput: 'auto',
+        userContent: 'What meetings do I have over the next few days?',
+      }),
+    )
+
+    expect(executeAction).toHaveBeenCalledTimes(1)
+    expect(executeAction.mock.calls[0]?.[0]).toBe('list_calendar_events')
+    const data = executeAction.mock.calls[0]?.[1] as { start: string; end: string }
+    expect(new Date(data.end).getTime() - new Date(data.start).getTime()).toBe(7 * 86_400_000)
+  })
+
+  it('starts after today when an ongoing meeting follow-up excludes today', async () => {
+    const executeAction = vi.fn(async () => ({ events: [] }))
+    const service = makeService({ executeAction })
+    const before = new Date()
+    before.setUTCHours(0, 0, 0, 0)
+    before.setUTCDate(before.getUTCDate() + 1)
+
+    await service.run(
+      makeRunInput({
+        selectedModelInput: 'auto',
+        userContent: 'What meetings do I have coming up after today?',
+      }),
+    )
+
+    const data = executeAction.mock.calls[0]?.[1] as { start: string; end: string }
+    expect(data.start).toBe(before.toISOString())
+    expect(new Date(data.end).getTime() - new Date(data.start).getTime()).toBe(7 * 86_400_000)
+  })
+
+  it('retrieves and labels tomorrow as a one-day future window', async () => {
+    const executeAction = vi.fn(async () => ({ events: [] }))
+    const progressiveSend = vi.fn(async () => undefined)
+    const service = makeService({ executeAction })
+    const tomorrow = new Date()
+    tomorrow.setUTCHours(0, 0, 0, 0)
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
+
+    const result = await service.run(
+      makeRunInput({
+        progressiveSend,
+        selectedModelInput: 'auto',
+        userContent: 'What meetings do I have tomorrow?',
+      }),
+    )
+
+    const data = executeAction.mock.calls[0]?.[1] as { start: string; end: string }
+    expect(data.start).toBe(tomorrow.toISOString())
+    expect(new Date(data.end).getTime() - new Date(data.start).getTime()).toBe(86_400_000)
+    expect(progressiveSend).toHaveBeenCalledWith('status', {
+      phase: 'executing',
+      message: "Retrieving tomorrow's meetings",
+    })
+    expect(result.content).toBe("## Tomorrow's meetings\n\nNo meetings are scheduled in this window.")
   })
 
   it('shows the research answer when the Sonnet writing pass fails', async () => {

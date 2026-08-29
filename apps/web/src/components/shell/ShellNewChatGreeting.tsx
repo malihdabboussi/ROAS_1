@@ -13,6 +13,7 @@ import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils/cn'
 import { ShellNewChatAgentBar } from './ShellNewChatAgentBar'
+import { ShellNewChatTasks } from './ShellNewChatTasks'
 
 function daypartGreeting(): string {
   const h = new Date().getHours()
@@ -65,6 +66,8 @@ export function ShellNewChatGreeting({
       <div className={cn('mt-4 flex justify-center', compact && 'shell-composer-narrow')}>
         <HomeDashboardV4Composer />
       </div>
+
+      {!inDrawer && !compact ? <ShellNewChatTasks /> : null}
     </>
   )
 

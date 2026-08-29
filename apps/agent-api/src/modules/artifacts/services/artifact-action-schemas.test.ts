@@ -1496,7 +1496,8 @@ describe('validateActionData', () => {
       expect(validateActionData('update_space_view', { space_id: 's1' })).toMatch(
         /view_id.*required/i,
       )
-      expect(validateActionData('list_tasks', {})).toMatch(/space_id.*required/i)
+      expect(validateActionData('list_tasks', {})).toBeNull()
+      expect(validateActionData('list_tasks', { assigned_to_me: true })).toBeNull()
       expect(validateActionData('get_task', { space_id: 's1' })).toMatch(/task_id.*required/i)
       expect(validateActionData('create_task', { space_id: 's1' })).toMatch(/title.*required/i)
       expect(validateActionData('update_task', { space_id: 's1' })).toMatch(/task_id.*required/i)

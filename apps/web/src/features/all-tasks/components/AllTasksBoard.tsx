@@ -25,7 +25,7 @@ export function AllTasksBoard({
   const searchParams = useSearchParams()
   const { scope: clientScope } = useClientScope()
   const [scope, setScope] = useState<TaskRollupView>(
-    searchParams.get('scope') === 'my' ? 'my' : 'all',
+    searchParams.get('scope') === 'all' ? 'all' : 'my',
   )
   const [programId, setProgramId] = useState(searchParams.get('program') ?? '')
   const [campaignId, setCampaignId] = useState(searchParams.get('campaign') ?? '')
@@ -62,7 +62,7 @@ export function AllTasksBoard({
   }, [reload, reloadToken])
 
   useEffect(() => {
-    const nextScope = searchParams.get('scope') === 'my' ? 'my' : 'all'
+    const nextScope = searchParams.get('scope') === 'all' ? 'all' : 'my'
     setScope(nextScope)
     setProgramId(searchParams.get('program') ?? '')
     setCampaignId(searchParams.get('campaign') ?? '')
@@ -107,7 +107,7 @@ export function AllTasksBoard({
             }))}
             onScopeChange={(nextScope) => {
               setScope(nextScope)
-              updateSearch({ scope: nextScope === 'my' ? 'my' : '' })
+              updateSearch({ scope: nextScope === 'all' ? 'all' : '' })
             }}
             onProgramChange={(nextProgramId) => {
               setProgramId(nextProgramId)

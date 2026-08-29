@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveScopedOrgId } from '@vibey/api-shared'
 import { ArtifactTasksRepository } from '../repositories/artifact-tasks.repository'
 import type { ArtifactActionHandler } from './artifact-action.registry'
+import { listTasksForAgent } from './artifact-my-tasks.helper'
 import { buildHydratedSpaceItemResponse } from './artifact-space-item-get.helper'
 import { ArtifactTaskActivityHelper } from './artifact-task-activity-helper'
 import { resolveAgentAssigneePayload } from './artifact-task-assignee-resolver'
@@ -272,37 +273,18 @@ export class ArtifactTasksService {
     input: Record<string, unknown>,
     sessionKey?: string,
   ) {
-    const spaceId = String(input.space_id ?? '').trim()
-    if (!spaceId) return { success: false, error: 'space_id is required' }
-    const { userId } = this.resolveContext(target, sessionKey)
+    const { userId, orgId } = this.resolveContext(target, sessionKey)
     const supabase = await this.getUserClient(target, userId, sessionKey)
-    const limit = parseSpaceItemLimit(input.limit, 50, 250)
-    const space = await this.loadSpace(supabase, spaceId)
-    if (!space) return { success: false, error: 'Space not found' }
-    const schema = this.taskSchema.schemaFromSpace(space)
-    const normalized = this.taskSchema.normalizeListInputAgainstSchema(schema, input)
-    if (normalized.error) return { success: false, error: normalized.error }
-    const queryInput = normalized.input ?? input
-    const statusField = this.taskSchema.fieldsById(schema).get('status')
-    const closedIds = this.taskSchema.closedStatusIds(statusField)
-
-    const { data, error, count } = await this.tasksRepository.listTasks(supabase, {
-      spaceId,
-      queryInput,
+    return listTasksForAgent({
+      supabase,
+      query: input,
       userId,
-      closedStatusIds: closedIds,
-      limit,
+      orgId,
+      limit: parseSpaceItemLimit(input.limit, 50, 250),
+      repository: this.tasksRepository,
+      schema: this.taskSchema,
+      loadSpace: (spaceId) => this.loadSpace(supabase, spaceId),
     })
-    if (error) throw error
-    const tasks = ((data ?? []) as unknown as Record<string, unknown>[]).map((task) =>
-      this.taskSchema.decorateSpaceItemForAgent(task, schema),
-    )
-    return {
-      success: true,
-      schema_summary: this.taskSchema.taskSchemaSummary(schema),
-      tasks,
-      ...(shouldIncludeSpaceItemCount(input) ? { total_count: count ?? tasks.length } : {}),
-    }
   }
 
   private async getTask(

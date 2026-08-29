@@ -93,6 +93,8 @@ describe('chat proxy warm-up stream', () => {
     delete process.env.AGENT_BACKEND_URL
     delete process.env.NEXT_PUBLIC_SUPABASE_URL
     delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    delete process.env.FORCE_AGENT_BACKEND_URL
+    delete process.env.VERCEL_ENV
   })
 
   it('emits warm-up status before machine readiness resolves', async () => {
@@ -305,6 +307,38 @@ describe('chat proxy warm-up stream', () => {
         ([url]) => String(url) === 'https://railway-agent.vibey.test/api/chat',
       ),
     ).toBe(true)
+  })
+
+  it('routes preview QA through the configured agent backend without a profile lookup', async () => {
+    process.env.VERCEL_ENV = 'preview'
+    process.env.FORCE_AGENT_BACKEND_URL = '1'
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
+      const url = String(input)
+      if (url === 'https://fallback-agent.vibey.test/api/chat') {
+        const headers = init?.headers as Headers
+        expect(headers.get('fly-force-instance-id')).toBeNull()
+        return Promise.resolve(
+          new Response('data: {"type":"done"}\n\n', {
+            headers: { 'Content-Type': 'text/event-stream' },
+          }),
+        )
+      }
+      return Promise.reject(new Error(`Unexpected fetch: ${url}`))
+    })
+
+    const { POST } = await loadRoute()
+    const response = await POST(createChatRequest(), {
+      params: Promise.resolve({ path: ['chat'] }),
+    })
+    const text = await response.text()
+
+    expect(text).toContain('"type":"done"')
+    expect(supabaseMocks.single).not.toHaveBeenCalled()
+    expect(
+      fetchMock.mock.calls.some(([url]) =>
+        String(url).includes('/api/proxy/machines/ensure-running'),
+      ),
+    ).toBe(false)
   })
 
   it('does not fall back to Fly when shared Railway chat fails before streaming', async () => {

@@ -3,7 +3,7 @@ type QueryBuilderLike = {
   is: (key: string, value: unknown) => QueryBuilderLike
   in?: (key: string, values: unknown[]) => QueryBuilderLike
   ilike?: (key: string, value: string) => QueryBuilderLike
-  or?: (filters: string) => QueryBuilderLike
+  contains?: (key: string, value: unknown) => QueryBuilderLike
   order: (key: string, options?: { ascending?: boolean }) => QueryBuilderLike
   limit: (limit: number) => QueryBuilderLike
 }
@@ -162,11 +162,9 @@ export function applySpaceItemAssignedToMeFilter<T extends QueryBuilderLike>(
   userId: string,
 ): T {
   if (!isAssignedToMe(input)) return query
-  if (typeof query.or === 'function') {
+  if (typeof query.contains === 'function') {
     const assigneesMatch = JSON.stringify([{ type: 'human', id: userId }])
-    return query.or(
-      `and(assignee_type.eq.human,assignee_id.eq.${userId}),assignees.cs.${assigneesMatch}`,
-    ) as T
+    return query.contains('assignees', assigneesMatch) as T
   }
   return query.eq('assignee_type', 'human').eq('assignee_id', userId) as T
 }

@@ -20,6 +20,17 @@ describe('planProviderFollowUpUpserts', () => {
         meetingItemId: 'meeting-1',
         meetingTitle: 'Weekly',
         actions: [action('Send recap')],
+        assignees: new Map([
+          [
+            'fathom:1:action:0',
+            {
+              type: 'user' as const,
+              id: 'user-1',
+              name: 'Nate Smith',
+              email: 'nate@roas.co',
+            },
+          ],
+        ]),
         existingFollowUps: [],
       }),
     ).toEqual([
@@ -27,10 +38,16 @@ describe('planProviderFollowUpUpserts', () => {
         kind: 'insert',
         title: 'Send recap',
         status: 'logged',
+        assignment: {
+          assignee_type: 'human',
+          assignee_id: 'user-1',
+          assignees: [{ type: 'human', id: 'user-1' }],
+        },
         customData: expect.objectContaining({
           entry_type: 'follow_up',
           provider_source_key: 'fathom:1:action:0',
           suggested_assignee_email: 'nate@roas.co',
+          canonical_assignee_id: 'user-1',
           provider_evidence: expect.objectContaining({ completed_in_provider: false }),
         }),
       }),
@@ -42,6 +59,7 @@ describe('planProviderFollowUpUpserts', () => {
       meetingItemId: 'meeting-1',
       meetingTitle: 'Weekly',
       actions: [action('Send Recap!')],
+      assignees: new Map(),
       existingFollowUps: [
         {
           id: 'fu-1',
@@ -73,6 +91,7 @@ describe('planProviderFollowUpUpserts', () => {
         meetingItemId: 'meeting-1',
         meetingTitle: null,
         actions: [],
+        assignees: new Map(),
         existingFollowUps: [],
       }),
     ).toEqual([])
@@ -108,6 +127,7 @@ describe('planProviderFollowUpUpserts', () => {
 
     expect(normalPlan[0]).toEqual(
       expect.objectContaining({
+        assignment: null,
         customData: expect.objectContaining({ dismissed_at: '2026-08-27T20:00:00.000Z' }),
       }),
     )

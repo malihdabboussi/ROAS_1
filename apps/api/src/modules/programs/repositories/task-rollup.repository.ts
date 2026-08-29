@@ -83,7 +83,12 @@ export class TaskRollupRepository {
 
   async listOpenSpaceItems(
     supabase: SupabaseClient,
-    input: { spaceIds: string[]; orgId?: string | null; limit: number },
+    input: {
+      spaceIds: string[]
+      orgId?: string | null
+      assigneeUserId?: string
+      limit: number
+    },
   ): Promise<SpaceItemRow[]> {
     if (input.spaceIds.length === 0) return []
 
@@ -95,13 +100,18 @@ export class TaskRollupRepository {
       .in('space_id', input.spaceIds)
       .is('parent_item_id', null)
       .not('status', 'in', '(done,archived)')
-      .order('due_date', { ascending: true, nullsFirst: false })
-      .limit(input.limit)
 
     if (input.orgId) query = query.eq('org_id', input.orgId)
     else query = query.is('org_id', null)
 
+    if (input.assigneeUserId) {
+      const assigneesMatch = JSON.stringify([{ type: 'human', id: input.assigneeUserId }])
+      query = query.contains('assignees', assigneesMatch)
+    }
+
     const { data, error } = await query
+      .order('due_date', { ascending: true, nullsFirst: false })
+      .limit(input.limit)
     if (error) throw new Error(`Failed to list rollup items: ${error.message}`)
     return (data ?? []) as SpaceItemRow[]
   }

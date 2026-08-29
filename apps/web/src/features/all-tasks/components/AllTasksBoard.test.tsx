@@ -32,16 +32,26 @@ describe('AllTasksBoard', () => {
     navigation.replace.mockReset()
   })
 
-  it('defaults to All Tasks instead of the retired My Tasks screen', () => {
+  it('defaults to tasks assigned to the signed-in user', () => {
+    render(<AllTasksBoard />)
+
+    expect(screen.getByRole('button', { name: ALL_TASKS_MESSAGES.allTasks })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+    expect(screen.getByRole('button', { name: ALL_TASKS_MESSAGES.assignedToMe })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
+
+  it('keeps All Tasks as an explicit URL filter', () => {
+    navigation.params = new URLSearchParams('scope=all')
     render(<AllTasksBoard />)
 
     expect(screen.getByRole('button', { name: ALL_TASKS_MESSAGES.allTasks })).toHaveAttribute(
       'aria-pressed',
       'true',
-    )
-    expect(screen.getByRole('button', { name: ALL_TASKS_MESSAGES.assignedToMe })).toHaveAttribute(
-      'aria-pressed',
-      'false',
     )
   })
 

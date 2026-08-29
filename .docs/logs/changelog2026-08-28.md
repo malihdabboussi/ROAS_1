@@ -58,3 +58,73 @@ Why: Refresh returned success while restored tasks stayed hidden because their d
 Impact: Reviewers can recover grounded meeting tasks and see previously saved dates before continuing to the inline delegation review; routine Fathom syncs still respect intentional task dismissals.
 
 Files: `apps/api/src/modules/meetings/domain/upsert-provider-follow-ups.ts`, `apps/api/src/modules/meetings/domain/upsert-provider-follow-ups.test.ts`, `apps/api/src/modules/meetings/repositories/meeting-workspace-state.repository.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.test.ts`, `apps/web/src/components/global-chat/components/MeetingPostCallReviewCard.tsx`, `apps/web/src/components/global-chat/components/MeetingPostCallReviewCard.test.tsx`, `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-08-28 12:39 - [FEATURE]
+
+What: Carried canonical Fathom assignees into meeting follow-up tasks, made Assigned to me the default Tasks scope, and surfaced the same My Tasks rollup on New Chat.
+
+Why: Call commitments already created canonical follow-up tasks, but their resolved user assignment stopped at `meeting_actions`, leaving My Tasks incomplete and forcing users to hunt across meeting and task surfaces.
+
+Impact: Explicit call commitments assigned to a known organization user now enter that user's My Tasks automatically. Review and Portal delegation continue to operate on the existing task, while New Chat provides a compact source-aware queue without creating duplicate records.
+
+Files: `apps/api/src/modules/meetings/domain/upsert-provider-follow-ups.ts`, `apps/api/src/modules/meetings/repositories/meeting-workspace-state.repository.ts`, `apps/api/src/modules/meetings/services/meeting-source-ingestion.service.ts`, `apps/web/src/features/all-tasks/components/AllTasksBoard.tsx`, `apps/web/src/components/shell/ShellNewChatTasks.tsx`, `apps/web/src/components/shell/ShellNewChatGreeting.tsx`, `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-08-28 13:00 - [FIX]
+
+What: Added a cross-Space, assigned-to-current-user mode to Pixel's existing `list_tasks` action and taught daily-focus prompts to combine that single fail-closed task read with the authoritative calendar read.
+
+Why: Pixel previously had to discover Spaces before listing tasks. When that path failed, the model retried without the ownership filter and ranked stale, delegated, and unrelated client work as Dylan's priorities.
+
+Impact: “What should I focus on today?” can retrieve every open task assigned to the signed-in user in one call, remove configured closed statuses per Space, and cannot silently broaden into all tasks. Brain remains interpretation context rather than a source of task records.
+
+Files: `apps/agent-api/src/modules/artifacts/repositories/artifact-tasks.repository.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-tasks.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-my-tasks.helper.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `apps/agent-api/src/modules/agent-sync/services/vibey-api-skill-generator.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-08-28 14:58 - [FIX]
+
+What: Applied the task-rollup current-user assignment filter in the database query before ordering and limiting results, and standardized both web/API and agent task reads on native JSONB assignee containment with regression coverage.
+
+Why: The API previously limited the cross-Space task pool before filtering assignments in memory. Small consumers such as New Chat could therefore receive zero My Tasks even though the Tasks page found the same user's work with a larger limit.
+
+Impact: Every `view=my` task-rollup consumer and Pixel's `assigned_to_me` action now receives genuinely assigned tasks without broadening to teammates' work, depending on unrelated tasks appearing early in the global result set, or emitting a malformed PostgREST logic expression.
+
+Files: `apps/api/src/modules/programs/repositories/task-rollup.repository.ts`, `apps/api/src/modules/programs/repositories/__tests__/task-rollup.repository.test.ts`, `apps/api/src/modules/programs/services/task-rollup.service.ts`, `apps/api/src/modules/programs/services/__tests__/task-rollup.service.test.ts`, `apps/agent-api/src/modules/artifacts/services/space-item-query.util.ts`, `apps/agent-api/src/modules/artifacts/services/__tests__/artifact-tasks.service.test.ts`
+
+## 2026-08-28 15:18 - [FIX]
+
+What: Added opt-in Vercel deployment-protection authentication to the web platform proxy for preview-to-preview API requests.
+
+Why: Signed-in branch QA previously mixed preview UI with the production API because protected API previews could not be reached server-to-server. That hid branch backend changes from real browser verification.
+
+Impact: A branch can now set `BACKEND_URL` to its exact protected API deployment and provide `VERCEL_AUTOMATION_BYPASS_SECRET`; production and non-Vercel targets remain unchanged when the variable is absent.
+
+Files: `apps/web/src/app/api/proxy/[...path]/route.ts`, `apps/web/src/app/api/proxy/[...path]/proxy-upstream-headers.ts`, `apps/web/src/app/api/proxy/[...path]/proxy-upstream-headers.test.ts`
+
+## 2026-08-28 16:58 - [FIX]
+
+What: Added a preview-only runtime override for exact branch QA and made the Fly secret importer support an app's first deployment before any machines exist.
+
+Why: Signed-in browser QA otherwise followed Dylan's existing runtime profile instead of the isolated branch runtime, while the approved Fly deployment script stopped after staging secrets because a brand-new app had no machines to restart yet.
+
+Impact: Preview deployments can opt into an isolated `AGENT_BACKEND_URL` without changing user profiles or production routing, and temporary Fly apps can complete their first deployment through the repository script.
+
+Files: `apps/web/src/app/api/proxy/[...path]/route.ts`, `apps/web/src/app/api/proxy/[...path]/route.test.ts`, `scripts/roas/apply-fly-secrets.sh`
+
+## 2026-08-28 21:08 - [FIX]
+
+What: Made current-user ownership authoritative when Pixel sends `assigned_to_me` together with an incidental `space_id`, and preserved the pre-limit open-task count for that cross-Space result.
+
+Why: A fresh daily-focus chat correctly requested current-user tasks but also supplied a Space discovered during planning. The task service treated the Space as higher precedence, returned zero tasks from that one Space, and falsely told the user no work was assigned to them.
+
+Impact: My Tasks questions now stay cross-Space and fail closed to the signed-in user's assignments even when the model adds a Space. The returned count still describes the open assigned set before the response limit.
+
+Files: `apps/agent-api/src/modules/artifacts/services/artifact-my-tasks.helper.ts`, `apps/agent-api/src/modules/artifacts/services/__tests__/artifact-tasks.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-08-28 21:20 - [FIX]
+
+What: Added a fail-closed fast path that skips semantic Brain retrieval for purely operational task and calendar questions while retaining Brain retrieval whenever the prompt asks for calls, Slack, campaign, client, recommendation, or rationale context.
+
+Why: Signed-in browser traces showed a fresh daily-focus request spending about 25 seconds reranking irrelevant Brain candidates before the chat stream started, including a failed reranker parse, while the canonical assigned-task query completed in 243 ms.
+
+Impact: “What is on top today?”, My Tasks, calendar, schedule, and meeting-list questions can start directly with canonical tools. Questions that need conversational or client knowledge still use Brain, preserving the source-of-truth boundary instead of treating Brain as the task or calendar database.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-operational-agenda.util.ts`, `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparation.service.ts`, `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparation.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`

@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { findMatchingMeetingAction } from '../domain/meeting-action-dedupe'
+import type { CanonicalMeetingAssignee } from '../domain/meeting-assignee-identity'
 import {
   isFollowUpSpaceItem,
   mapFollowUpSpaceItemToMeetingAction,
@@ -188,6 +189,7 @@ export class MeetingWorkspaceStateRepository {
     supabase: SupabaseClient,
     input: MeetingScope & {
       actions: readonly FathomSourceAction[]
+      assignees?: ReadonlyMap<string, CanonicalMeetingAssignee>
       meetingTitle?: string | null
       reopenDismissed?: boolean
     },
@@ -208,6 +210,7 @@ export class MeetingWorkspaceStateRepository {
       meetingItemId: input.meetingItemId,
       meetingTitle: input.meetingTitle?.trim() || String(meeting.title ?? '').trim() || null,
       actions: input.actions,
+      assignees: input.assignees,
       existingFollowUps: existing,
       reopenDismissed: input.reopenDismissed,
     })
@@ -223,6 +226,7 @@ export class MeetingWorkspaceStateRepository {
           .update({
             title: plan.title,
             status: plan.status,
+            ...(plan.assignment ?? {}),
             custom_data: plan.customData,
             updated_at: new Date().toISOString(),
           })
@@ -245,6 +249,7 @@ export class MeetingWorkspaceStateRepository {
           status: plan.status,
           source: 'fathom',
           parent_item_id: input.meetingItemId,
+          ...(plan.assignment ?? {}),
           custom_data: plan.customData,
         })
         .select('id')
@@ -263,7 +268,9 @@ export class MeetingWorkspaceStateRepository {
   ): Promise<Record<string, unknown>[]> {
     const { data, error } = await supabase
       .from('space_items')
-      .select('id, title, source, status, custom_data, created_at, updated_at, space_id')
+      .select(
+        'id, title, source, status, custom_data, created_at, updated_at, space_id, assignee_type, assignee_id, assignees',
+      )
       .eq('space_id', spaceId)
       .or(
         `parent_item_id.eq.${meetingItemId},custom_data->>source_call_item_id.eq.${meetingItemId}`,

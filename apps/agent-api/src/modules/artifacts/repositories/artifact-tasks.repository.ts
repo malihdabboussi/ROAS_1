@@ -192,6 +192,39 @@ export class ArtifactTasksRepository {
     return (await query) as QueryListResult<Record<string, unknown>>
   }
 
+  async listAssignedTasksAcrossSpaces(
+    supabase: SupabaseClient,
+    input: {
+      queryInput: Record<string, unknown>
+      userId: string
+      orgId: string | null
+      limit: number
+    },
+  ): Promise<QueryListResult<Record<string, unknown>>> {
+    let query = shouldIncludeSpaceItemCount(input.queryInput)
+      ? supabase
+          .from('space_items')
+          .select(getSpaceItemSelect(input.queryInput), { count: 'exact' })
+      : supabase.from('space_items').select(getSpaceItemSelect(input.queryInput))
+    query = input.orgId ? query.eq('org_id', input.orgId) : query.is('org_id', null)
+    query = query.is('parent_item_id', null)
+    query = applySpaceItemFilters(query, input.queryInput)
+    query = applySpaceItemAssignedToMeFilter(query, input.queryInput, input.userId)
+    query = applySpaceItemSearch(query, input.queryInput)
+    query = applySpaceItemOrder(query, input.queryInput, 'due_date').limit(input.limit)
+    return (await query) as QueryListResult<Record<string, unknown>>
+  }
+
+  async listSpacesByIds(
+    supabase: SupabaseClient,
+    spaceIds: string[],
+  ): Promise<QueryListResult<Record<string, unknown>>> {
+    if (spaceIds.length === 0) return { data: [], error: null }
+    return (await supabase.from('spaces').select('*').in('id', spaceIds)) as QueryListResult<
+      Record<string, unknown>
+    >
+  }
+
   async listSubtasks(
     supabase: SupabaseClient,
     input: { spaceId: string; parentItemId: string },

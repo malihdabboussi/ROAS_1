@@ -40047,3 +40047,26 @@ Evidence: `wc -l` reports `apps/api/src/modules/slack/services/slack-service-eve
 Needed work: Extract message and app-mention context assembly into focused collaborators while preserving the shared deduplication, authorization, campaign binding, and telemetry contracts.
 
 Reason not done now: The requested root-cause fix changes the ordering at the existing app-mention boundary; decomposing both inbound paths would materially widen this production routing repair.
+## 2026-08-28 - [ARCH] Artifact task service test exceeds the test-file limit
+
+Status: Open
+
+Found while: Replacing the malformed assigned-to-me PostgREST filter with canonical JSONB containment.
+
+Evidence: `apps/agent-api/src/modules/artifacts/services/__tests__/artifact-tasks.service.test.ts` is 1,401 LOC against the 600-line file limit and covers task CRUD, schema validation, activity, filtering, and cross-Space My Tasks in one fixture-heavy suite.
+
+Needed work: Split list/filter/My Tasks coverage from mutation and activity coverage while extracting the in-memory Supabase query fixture into a shared test utility.
+
+Reason not done now: The overage is pre-existing; restructuring the full task test harness would materially widen this targeted production query correction.
+
+## 2026-08-28 - [ARCH] API proxy route and test exceed file limits
+
+Status: Open
+
+Found while: Adding a preview-only runtime override for isolated signed-in browser QA.
+
+Evidence: `apps/web/src/app/api/proxy/[...path]/route.ts` is 1,307 LOC and `route.test.ts` is 468 LOC after this change; both were already above the architecture limits and combine runtime resolution, wake-up, retries, streaming, request forwarding, and their fixtures.
+
+Needed work: Extract agent runtime selection and its tests into a focused server module while preserving pinned-machine isolation, shared-runtime fail-closed behavior, and proxy observability.
+
+Reason not done now: Decomposing the entire proxy would materially widen the exact-branch QA routing change and its regression surface.

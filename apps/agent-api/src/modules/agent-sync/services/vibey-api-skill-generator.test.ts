@@ -149,4 +149,17 @@ describe('vibey-api skill generator', () => {
     expect(output).toContain('mode: "accessible"')
     expect(output).toContain('missing or partial data')
   })
+
+  it('teaches a fail-closed cross-Space daily brief', () => {
+    const { skillMd } = generateScopedVibeyApiSkill(
+      new Set(['list_tasks', 'list_calendar_events', 'search_brain_context']),
+      'operations',
+    )
+
+    expect(skillMd).toContain('My Tasks is a cross-Space, fail-closed query')
+    expect(skillMd).toContain('assigned_to_me: true')
+    expect(skillMd).toContain('no `space_id`')
+    expect(skillMd).toContain('Never retry without `assigned_to_me`')
+    expect(skillMd).toContain('Brain explains context but is not a task source')
+  })
 })
