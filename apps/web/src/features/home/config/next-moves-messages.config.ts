@@ -6,4 +6,5 @@ export const NEXT_MOVES_MESSAGES = {
   snooze: 'Snooze',
   dismiss: 'Dismiss',
   snoozeFailed: "I couldn't hide that suggestion. Try again.",
+  feedbackFailed: "I couldn't save that feedback. Your task is unchanged.",
 } as const

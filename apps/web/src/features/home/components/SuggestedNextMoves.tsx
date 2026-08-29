@@ -2,12 +2,23 @@
 
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
-import { CalendarDays, ChevronDown, Clock3, Sparkles, X, type LucideIcon } from 'lucide-react'
+import {
+  CalendarDays,
+  ChevronDown,
+  Clock3,
+  ListChecks,
+  MessageSquare,
+  Sparkles,
+  ThumbsDown,
+  X,
+  type LucideIcon,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { Tooltip } from '@/components/ui/tooltip'
 import { NEXT_MOVES_MESSAGES } from '@/features/home/config/next-moves-messages.config'
 import {
   fetchNextMoves,
+  recordNextMoveFeedback,
   snoozeNextMove,
   type SuggestedNextMove,
 } from '@/features/home/services/next-moves.service'
@@ -18,12 +29,17 @@ const COLLAPSED_COUNT = 3
 /** One glyph per surface a suggestion can come from — the "where" at a glance. */
 const SOURCE_ICONS: Record<SuggestedNextMove['source']['type'], LucideIcon> = {
   meeting: CalendarDays,
+  slack: MessageSquare,
+  task: ListChecks,
 }
 
 function suggestionReason(item: SuggestedNextMove): string {
   const date = formatSourceDate(item.source.occurredAt)
   if (item.source.type === 'meeting') {
     return `Suggested because it came up in your "${item.source.title}" meeting on ${date}`
+  }
+  if (item.source.type === 'slack') {
+    return `Suggested because it came up in ${item.source.title} on ${date}`
   }
   return `${NEXT_MOVES_MESSAGES.sourcePrefix} ${item.source.title} · ${date}`
 }
@@ -63,6 +79,15 @@ export function SuggestedNextMoves({
     }
   }, [])
 
+  const reject = useCallback(async (item: SuggestedNextMove) => {
+    try {
+      await recordNextMoveFeedback(item.id, 'false_positive')
+      setItems((current) => current.filter((candidate) => candidate.id !== item.id))
+    } catch {
+      toast.error(NEXT_MOVES_MESSAGES.feedbackFailed)
+    }
+  }, [])
+
   if (items.length === 0) return null
 
   const visible = expanded ? items : items.slice(0, COLLAPSED_COUNT)
@@ -89,13 +114,14 @@ export function SuggestedNextMoves({
                   aria-label={`${onSelectPrompt ? 'Use' : 'Open'} suggestion: ${item.title}`}
                   className="gap-spacing-2 py-spacing-2 flex w-full min-w-0 items-center text-left"
                   onClick={() => {
+                    void recordNextMoveFeedback(item.id, 'accepted').catch(() => {
+                      toast.error(NEXT_MOVES_MESSAGES.feedbackFailed)
+                    })
                     if (onSelectPrompt) {
                       onSelectPrompt(item.prompt)
                       return
                     }
-                    router.push(
-                      `/spaces?space=${encodeURIComponent(item.source.spaceId)}&item=${encodeURIComponent(item.source.meetingItemId)}`,
-                    )
+                    router.push(item.source.url)
                   }}
                 >
                   <Icon className="icon-sm text-muted-foreground shrink-0" aria-hidden="true" />
@@ -105,6 +131,15 @@ export function SuggestedNextMoves({
               </Tooltip>
 
               <div className="gap-spacing-1 flex shrink-0 items-center opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+                <button
+                  type="button"
+                  className="btn-icon-bare"
+                  aria-label={`Not relevant: ${item.title}`}
+                  title="Not relevant"
+                  onClick={() => void reject(item)}
+                >
+                  <ThumbsDown className="icon-xs" aria-hidden="true" />
+                </button>
                 <button
                   type="button"
                   className="btn-icon-bare"

@@ -189,3 +189,13 @@ Why: Full chat could advertise a page that did not belong to the conversation, a
 Impact: Output clicks retain their exact conversation artifact, linked meeting pages remain restorable, ordinary menu navigation stays independent, and chats without a real page no longer show a misleading control.
 
 Files: `apps/web/src/components/shell/ShellChatHeaderPageControl.tsx`, `apps/web/src/components/shell/shell-chat-header-page.ts`, `apps/web/src/components/shell/shell-work-area-page.ts`, `apps/web/src/components/shell/use-shell-store.ts`, focused shell tests, `documentation/features/claude-chatgpt-shell.md`, `.docs/logs/changelog2026-08-29.md`.
+
+## [2026-08-29 10:15] - [FEATURE]
+
+What: Replaced Home's meeting-only next-move projection with the canonical assigned-task rollup, added meeting/Slack/task provenance icons and source routing, and added owner-scoped accepted, snoozed, dismissed, and false-positive telemetry with a live edited/completed/stale quality view.
+
+Why: Home, All Tasks, and Pixel could disagree because Home independently reconstructed call follow-ups from attendance, and there was no measurable way to distinguish useful recommendations from stale or incorrectly surfaced work.
+
+Impact: Home and New Chat now surface the same personal task lifecycle as My Tasks without changing task status. Operators can explicitly mark a suggestion not relevant, and product quality can be measured against the current canonical task while Slack delivery remains approval-gated.
+
+Files: `apps/api/src/modules/home/`, `apps/web/src/features/home/components/SuggestedNextMoves.tsx`, `apps/web/src/features/home/services/next-moves.service.ts`, `apps/web/src/features/home/config/next-moves-messages.config.ts`, `supabase/migrations/20260829173000_action_recommendation_quality.sql`, `documentation/features/meeting-follow-up-slack.md`

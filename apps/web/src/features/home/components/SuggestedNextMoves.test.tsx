@@ -6,12 +6,14 @@ const mocks = vi.hoisted(() => ({
   fetchNextMoves: vi.fn(),
   push: vi.fn(),
   snoozeNextMove: vi.fn(),
+  recordNextMoveFeedback: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }))
 vi.mock('@/features/home/services/next-moves.service', () => ({
   fetchNextMoves: mocks.fetchNextMoves,
   snoozeNextMove: mocks.snoozeNextMove,
+  recordNextMoveFeedback: mocks.recordNextMoveFeedback,
 }))
 vi.mock('@/lib/org', () => ({
   useOrgStore: (selector: (state: { activeOrgId: string }) => unknown) =>
@@ -30,13 +32,13 @@ describe('SuggestedNextMoves', () => {
             type: 'meeting',
             title: 'August 5 offer call',
             occurredAt: '2026-08-05T12:00:00.000Z',
-            spaceId: 'space-1',
-            meetingItemId: 'meeting-1',
+            url: '/spaces?space=space-1&item=meeting-1',
           },
         },
       ],
     })
     mocks.snoozeNextMove.mockResolvedValue({ success: true })
+    mocks.recordNextMoveFeedback.mockResolvedValue({ success: true })
   })
 
   afterEach(() => {
@@ -51,6 +53,7 @@ describe('SuggestedNextMoves', () => {
     expect(screen.getByText(/August 5 offer call/)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Open suggestion: Send the revised offer' }))
     expect(mocks.push).toHaveBeenCalledWith('/spaces?space=space-1&item=meeting-1')
+    expect(mocks.recordNextMoveFeedback).toHaveBeenCalledWith('action-1', 'accepted')
   })
 
   it('removes a snoozed suggestion', async () => {
@@ -75,6 +78,7 @@ describe('SuggestedNextMoves', () => {
       'Use the call context and help me send the revised offer.',
     )
     expect(mocks.push).not.toHaveBeenCalled()
+    expect(mocks.recordNextMoveFeedback).toHaveBeenCalledWith('action-1', 'accepted')
   })
 
   it('keeps additional suggested actions behind See more', async () => {
@@ -95,5 +99,16 @@ describe('SuggestedNextMoves', () => {
     fireEvent.click(screen.getByRole('button', { name: 'See more (1)' }))
 
     expect(screen.getByText('Suggested action 4')).toBeTruthy()
+  })
+
+  it('lets the user mark a falsely surfaced suggestion without completing the task', async () => {
+    render(<SuggestedNextMoves />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Not relevant: Send the revised offer' }))
+
+    await waitFor(() => {
+      expect(mocks.recordNextMoveFeedback).toHaveBeenCalledWith('action-1', 'false_positive')
+    })
+    expect(screen.queryByText('Send the revised offer')).toBeNull()
   })
 })
