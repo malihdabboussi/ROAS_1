@@ -69,7 +69,7 @@ describe('NextMovesService', () => {
     expect(taskRollup.list).toHaveBeenCalledWith(
       supabase,
       'user-1',
-      expect.objectContaining({ view: 'my' }),
+      expect.objectContaining({ view: 'my', focus: 'current' }),
       'org-1',
       'editor',
     )
@@ -102,18 +102,12 @@ describe('NextMovesService', () => {
       'next_move:action-2',
       '2036-08-07T12:00:00.000Z',
     )
-    expect(repository.recordEvents).toHaveBeenNthCalledWith(
-      1,
-      supabase,
-      scope,
-      [{ taskId: 'action-1', eventType: 'snoozed', sourceKind: null }],
-    )
-    expect(repository.recordEvents).toHaveBeenNthCalledWith(
-      2,
-      supabase,
-      scope,
-      [{ taskId: 'action-2', eventType: 'dismissed', sourceKind: null }],
-    )
+    expect(repository.recordEvents).toHaveBeenNthCalledWith(1, supabase, scope, [
+      { taskId: 'action-1', eventType: 'snoozed', sourceKind: null },
+    ])
+    expect(repository.recordEvents).toHaveBeenNthCalledWith(2, supabase, scope, [
+      { taskId: 'action-2', eventType: 'dismissed', sourceKind: null },
+    ])
   })
 
   it('records an explicit false-positive outcome and durably hides the task', async () => {

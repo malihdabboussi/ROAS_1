@@ -87,6 +87,7 @@ export class TaskRollupRepository {
       spaceIds: string[]
       orgId?: string | null
       assigneeUserId?: string
+      excludeNeedsReview: boolean
       limit: number
     },
   ): Promise<SpaceItemRow[]> {
@@ -107,6 +108,12 @@ export class TaskRollupRepository {
     if (input.assigneeUserId) {
       const assigneesMatch = JSON.stringify([{ type: 'human', id: input.assigneeUserId }])
       query = query.contains('assignees', assigneesMatch)
+    }
+
+    if (input.excludeNeedsReview) {
+      query = query.or(
+        'custom_data->action_lifecycle->>review_state.is.null,custom_data->action_lifecycle->>review_state.neq.needs_review',
+      )
     }
 
     const { data, error } = await query

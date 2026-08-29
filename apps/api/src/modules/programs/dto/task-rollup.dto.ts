@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const TaskRollupQuerySchema = z.object({
   view: z.enum(['my', 'all']).default('my'),
+  focus: z.enum(['all', 'current']).optional(),
   program_id: z.string().uuid().optional(),
   campaign_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(500).optional().default(200),
