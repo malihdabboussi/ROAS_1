@@ -13,6 +13,7 @@ import {
   PERSONAL_BRAIN_POLICY_ACTIONS,
 } from '../../artifacts/services/artifact-access-policy-actions'
 import { ChannelInstructionsService } from './channel-instructions.service'
+import { SOURCE_OF_TRUTH_INSTRUCTIONS } from './chat-source-truth-instructions'
 import { ChatContextAccountingService } from './chat-context-accounting.service'
 import { ChatDocumentContextService } from './chat-document-context.service'
 import { ChatModelInputService } from './chat-model-input.service'
@@ -136,6 +137,7 @@ export class ChatGatewayInputService {
       channelGuidance,
       input.teamRosterSummary,
       input.campaignTeamSummary,
+      SOURCE_OF_TRUTH_INSTRUCTIONS,
       supportHardening,
       staticAdRouting,
     ]

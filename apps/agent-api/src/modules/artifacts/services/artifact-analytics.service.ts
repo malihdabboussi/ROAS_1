@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { ArtifactAnalyticsRepository } from '../repositories/artifact-analytics.repository'
 import type { ArtifactActionHandler } from './artifact-action.registry'
+import { sourceTruthAsOf, withSourceTruth } from './artifact-source-truth-contract'
 
 @Injectable()
 export class ArtifactAnalyticsService {
@@ -143,7 +144,27 @@ export class ArtifactAnalyticsService {
         `/api/campaigns/${resolved.campaignId}/main-dashboard${qs ? `?${qs}` : ''}`,
         sessionKey,
       )
-      return data
+      const record: Record<string, unknown> =
+        data && typeof data === 'object' && !Array.isArray(data)
+          ? (data as Record<string, unknown>)
+          : { data }
+      return withSourceTruth(record, {
+        canonical_source: {
+          system: 'campaign_reporting',
+          owner: 'main_dashboard',
+          mutable: true,
+          campaign_id: resolved.campaignId,
+        },
+        as_of: sourceTruthAsOf(record.fetched_at ?? record.generated_at),
+        evidence: [
+          {
+            action: 'get_campaign_main_dashboard',
+            campaign_id: resolved.campaignId,
+            refresh_requested: refresh,
+          },
+        ],
+        brain_context: null,
+      })
     } catch (err) {
       target.logger?.error?.(`[get_campaign_main_dashboard] ${(err as Error).message}`)
       return { success: false, error: (err as Error).message }

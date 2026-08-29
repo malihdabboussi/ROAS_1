@@ -5,6 +5,17 @@ import {
 } from '../../brain/services/brain-retrieval-receipt'
 import { ArtifactBrainScholarRepository } from '../repositories/artifact-brain-scholar.repository'
 import { ArtifactBrainAccessService } from './artifact-brain-access.service'
+import {
+  brainSearchSourceTruth,
+  campaignBrainSourceTruth,
+} from './artifact-brain-source-truth'
+import {
+  familyForBrainScope,
+  parseBrainFamilies,
+  parseStringArray,
+  temporalSearchInput,
+} from './artifact-brain-search-input'
+import { withSourceTruth } from './artifact-source-truth-contract'
 
 @Injectable()
 export class ArtifactBrainSearchActionsService {
@@ -31,8 +42,8 @@ export class ArtifactBrainSearchActionsService {
         ? (target.parseAgentIdFromSessionKey(sessionKey) ?? null)
         : null
     const userClient = await target.getUserClient(userId, sessionKey as string)
-    const requestedFamilies = this.parseBrainFamilies(input.families)
-    const requestedBrainIds = this.parseStringArray(input.brain_ids ?? input.brainIds)
+    const requestedFamilies = parseBrainFamilies(input.families)
+    const requestedBrainIds = parseStringArray(input.brain_ids ?? input.brainIds)
     const limit = typeof input.limit === 'number' ? Math.min(Math.max(input.limit, 1), 50) : 10
 
     const allowedFamilies = await this.resolveAllowedBrainSearchFamilies(
@@ -61,7 +72,7 @@ export class ArtifactBrainSearchActionsService {
 
     const brains = await this.resolveSearchableBrainRows(target, userId, orgId, requestedBrainIds)
     const filteredBrains = brains.filter((brain) => {
-      const family = this.familyForBrainScope(brain.scope)
+      const family = familyForBrainScope(brain.scope)
       if (!family) return false
       if (!allowedFamilies.has(family)) return false
       if (
@@ -94,7 +105,7 @@ export class ArtifactBrainSearchActionsService {
 
     const searches = await Promise.all(
       filteredBrains.map(async (brain) => {
-        const family = this.familyForBrainScope(brain.scope)
+        const family = familyForBrainScope(brain.scope)
         if (!family) return null
         try {
           const result = await target.brainRetrievalService.search({
@@ -107,7 +118,7 @@ export class ArtifactBrainSearchActionsService {
             orgId: brain.org_id ?? orgId,
             requiredAccess: 'query',
             limit,
-            ...this.temporalSearchInput(input),
+            ...temporalSearchInput(input),
           })
           return { brain, family, result }
         } catch {
@@ -157,19 +168,28 @@ export class ArtifactBrainSearchActionsService {
       ),
     ]
 
-    return {
-      success: true,
-      query,
-      searched_brain_count: filteredBrains.length,
-      count: mergedResults.length,
-      context_sufficient: contextSufficient,
-      missing,
-      suggested_next_queries: suggestedNextQueries,
-      by_family: byFamily,
-      allowed_families: Array.from(allowedFamilies),
-      results: mergedResults,
-      retrieval_receipts: receiptsFromFamilySearchHits(query, successful),
-    }
+    const retrievalReceipts = receiptsFromFamilySearchHits(query, successful)
+    return withSourceTruth(
+      {
+        success: true,
+        query,
+        searched_brain_count: filteredBrains.length,
+        count: mergedResults.length,
+        context_sufficient: contextSufficient,
+        missing,
+        suggested_next_queries: suggestedNextQueries,
+        by_family: byFamily,
+        allowed_families: Array.from(allowedFamilies),
+        results: mergedResults,
+        retrieval_receipts: retrievalReceipts,
+      },
+      brainSearchSourceTruth({
+        receipts: retrievalReceipts,
+        families: Object.keys(byFamily),
+        contextSufficient,
+        resultCount: mergedResults.length,
+      }),
+    )
   }
 
   /**
@@ -211,26 +231,36 @@ export class ArtifactBrainSearchActionsService {
       orgId,
       requiredAccess: 'query',
       limit,
-      ...this.temporalSearchInput(input),
+      ...temporalSearchInput(input),
     })
 
-    return {
-      ...result,
-      success: result?.success !== false,
-      brain_id: brainId,
-      campaign_id: campaignId,
-      family: 'campaign',
-      retrieval_receipts: [
-        toBrainRetrievalReceipt({
-          brainId,
-          brainName: campaignName || null,
-          scope: 'campaign',
-          query,
-          resultsCount: Number(result?.count ?? 0),
-          results: result?.results,
-        }),
-      ],
-    }
+    const retrievalReceipts = [
+      toBrainRetrievalReceipt({
+        brainId,
+        brainName: campaignName || null,
+        scope: 'campaign',
+        query,
+        resultsCount: Number(result?.count ?? 0),
+        results: result?.results,
+      }),
+    ]
+    return withSourceTruth(
+      {
+        ...result,
+        success: result?.success !== false,
+        brain_id: brainId,
+        campaign_id: campaignId,
+        family: 'campaign',
+        retrieval_receipts: retrievalReceipts,
+      },
+      campaignBrainSourceTruth({
+        receipts: retrievalReceipts,
+        brainId,
+        campaignId,
+        contextSufficient: result?.context_sufficient === true,
+        resultCount: Number(result?.count ?? 0),
+      }),
+    )
   }
 
   private async resolveCampaignBrainId(
@@ -465,7 +495,7 @@ export class ArtifactBrainSearchActionsService {
         orgId,
         requiredAccess: 'query',
         limit: Number(input.limit ?? 10),
-        ...this.temporalSearchInput(input),
+        ...temporalSearchInput(input),
       })
     }
     const access = await this.brainAccessService.assertCanAccessBrain(
@@ -518,42 +548,6 @@ export class ArtifactBrainSearchActionsService {
       scope,
     )
     return new Set(families)
-  }
-
-  private parseBrainFamilies(value: unknown): Array<'user' | 'agent' | 'customer' | 'company'> {
-    if (!Array.isArray(value)) return []
-    const allowed = new Set(['user', 'agent', 'customer', 'company'])
-    return value
-      .map((item) => String(item).trim())
-      .filter((item): item is 'user' | 'agent' | 'customer' | 'company' => allowed.has(item))
-  }
-
-  private parseStringArray(value: unknown): string[] {
-    if (!Array.isArray(value)) return []
-    return value.map((item) => String(item).trim()).filter(Boolean)
-  }
-
-  private temporalSearchInput(input: Record<string, unknown>): Record<string, unknown> {
-    const timeMode = typeof input.time_mode === 'string' ? input.time_mode.trim() : ''
-    const asOf = typeof input.as_of === 'string' ? input.as_of.trim() : ''
-    const occurredFrom = typeof input.occurred_from === 'string' ? input.occurred_from.trim() : ''
-    const occurredTo = typeof input.occurred_to === 'string' ? input.occurred_to.trim() : ''
-    return {
-      ...(timeMode ? { time_mode: timeMode } : {}),
-      ...(asOf ? { as_of: asOf } : {}),
-      ...(occurredFrom ? { occurred_from: occurredFrom } : {}),
-      ...(occurredTo ? { occurred_to: occurredTo } : {}),
-      ...(typeof input.include_historical === 'boolean'
-        ? { include_historical: input.include_historical }
-        : {}),
-    }
-  }
-
-  private familyForBrainScope(scope: string): 'user' | 'agent' | 'customer' | 'company' | null {
-    if (scope === 'user' || scope === 'agent' || scope === 'customer' || scope === 'company') {
-      return scope
-    }
-    return null
   }
 
   private async resolveSearchableBrainRows(

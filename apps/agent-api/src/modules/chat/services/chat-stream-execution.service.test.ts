@@ -309,6 +309,81 @@ describe('ChatStreamExecutionService', () => {
     expect(streamCompletion.mock.calls[0]?.[0].instructions).toBe('Answer the user.')
   })
 
+  it('deterministically combines live reporting, Brain context, and campaign tasks', async () => {
+    const executeAction = vi.fn(async (action: string) => {
+      if (action === 'get_campaign_main_dashboard') {
+        return {
+          fetched_at: '2026-08-29T12:00:00.000Z',
+          kpis: { roas: 2.4, leads: 18 },
+        }
+      }
+      if (action === 'search_campaign_brain') {
+        return {
+          results: [{ content: 'Approved budget is $30k.' }],
+          context_sufficient: true,
+        }
+      }
+      return { tasks: [{ id: 'task-1', title: 'Refresh creative' }], total_count: 1 }
+    })
+    const streamCompletion = vi.fn(async ({ input }) => ({
+      content: 'Live ROAS is 2.4 as of Aug 29; the approved budget is $30k.',
+      toolSteps: [],
+      llmInput: input,
+    }))
+    const service = makeService({ executeAction, streamCompletion })
+
+    const result = await service.run(
+      makeRunInput({
+        campaignId: 'campaign-1',
+        selectedModelInput: 'auto',
+        userContent: 'What is the current status of this live campaign?',
+      }),
+    )
+
+    expect(executeAction).toHaveBeenCalledTimes(3)
+    expect(executeAction).toHaveBeenCalledWith(
+      'get_campaign_main_dashboard',
+      { campaign_id: 'campaign-1', refresh: true },
+      'session-1',
+    )
+    expect(executeAction).toHaveBeenCalledWith(
+      'search_campaign_brain',
+      expect.objectContaining({ campaign_id: 'campaign-1' }),
+      'session-1',
+    )
+    expect(executeAction).toHaveBeenCalledWith(
+      'list_tasks',
+      { campaign_id: 'campaign-1', include_closed: false, include_count: true },
+      'session-1',
+    )
+    expect(streamCompletion).toHaveBeenCalledTimes(1)
+    expect(JSON.stringify(streamCompletion.mock.calls[0]?.[0].input)).toContain(
+      'campaign_reporting',
+    )
+    expect(JSON.stringify(streamCompletion.mock.calls[0]?.[0].input)).toContain(
+      'Approved budget is $30k.',
+    )
+    expect(result.content).toContain('Live ROAS is 2.4')
+  })
+
+  it('fails closed when a campaign status question has no resolved client campaign', async () => {
+    const executeAction = vi.fn()
+    const streamCompletion = vi.fn()
+    const service = makeService({ executeAction, streamCompletion })
+
+    const result = await service.run(
+      makeRunInput({
+        selectedModelInput: 'auto',
+        userContent: 'What is the current campaign status?',
+      }),
+    )
+
+    expect(result.failed).toBe('campaign_scope_required')
+    expect(result.content).toContain('specific client campaign')
+    expect(executeAction).not.toHaveBeenCalled()
+    expect(streamCompletion).not.toHaveBeenCalled()
+  })
+
   it('retrieves only the seven-day calendar window for an ongoing meeting follow-up', async () => {
     const executeAction = vi.fn(async () => ({ events: [] }))
     const streamCompletion = vi.fn(async () => ({ content: 'No upcoming meetings.', toolSteps: [] }))
