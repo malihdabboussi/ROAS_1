@@ -309,3 +309,13 @@ Why: Production receipts and a direct production-data resolver check proved that
 Impact: Pixel can resolve user-owned organization campaigns from a named chat request even when runtime org context is unavailable. Explicit organization context remains organization-scoped, and duplicate names still fail closed.
 
 Files: `apps/agent-api/src/modules/artifacts/repositories/artifact-legacy-session-campaign.repository.ts`, `apps/agent-api/src/modules/artifacts/repositories/artifact-legacy-session-campaign.repository.test.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-29 14:57] - [FIX]
+
+What: Moved named-campaign resolution to the authenticated campaign-status service boundary, then passed one canonical campaign ID to Brain, live reporting, and task reads in parallel.
+
+Why: Exact-SHA production QA proved that the nested Campaign Brain action could still inherit a stale General conversation even though the same user and organization resolved the named Multifamily Strategy campaign directly.
+
+Impact: Named campaign status cannot leak or display General reporting, all three evidence sources stay on the same campaign, and a Campaign Brain failure no longer hides correctly scoped live metrics or open work.
+
+Files: `apps/agent-api/src/modules/artifacts/services/artifacts.service.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence-execution.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence-execution.test.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test-helpers.ts`, `documentation/features/meeting-follow-up-slack.md`

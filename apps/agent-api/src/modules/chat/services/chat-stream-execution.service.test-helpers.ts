@@ -8,6 +8,7 @@ export function makeChatStreamExecutionService(input?: {
   recovery?: ChatStreamRecoveryService
   validateModelSettings?: ReturnType<typeof vi.fn>
   executeAction?: ReturnType<typeof vi.fn>
+  resolveCampaignIdByNameForContext?: ReturnType<typeof vi.fn>
 }) {
   const openClaw = {
     streamCompletion:
@@ -42,7 +43,11 @@ export function makeChatStreamExecutionService(input?: {
         })),
     } as unknown as ChatModelInputService,
     {
-      get: vi.fn(() => ({ executeAction })),
+      get: vi.fn(() => ({
+        executeAction,
+        resolveCampaignIdByNameForContext:
+          input?.resolveCampaignIdByNameForContext ?? vi.fn(async () => 'campaign-1'),
+      })),
     } as any,
   )
 }

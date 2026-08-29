@@ -24,21 +24,27 @@ export async function runCampaignIntelligenceResearch(
     }
   }
 
-  const brainStep = await executeArtifactRead(input, artifacts, {
-    action: 'search_campaign_brain',
-    label: 'Resolving and cross-referencing campaign context',
-    data: { campaign_name: input.userContent, query: input.userContent, limit: 10 },
-  })
-  const resolvedCampaignId = readText(asRecord(brainStep.result).campaign_id)
-  if (!resolvedCampaignId) {
+  let resolvedCampaignId: string
+  try {
+    resolvedCampaignId = await artifacts.resolveCampaignIdByNameForContext(
+      input.userId,
+      input.userContent,
+      input.orgId,
+    )
+  } catch {
     return {
       content:
         'I need one specific client campaign before I can retrieve live reporting. Select the client campaign, then ask again.',
-      toolSteps: [brainStep],
+      toolSteps: [],
     }
   }
 
-  const remainingSteps = await Promise.all([
+  const toolSteps = await Promise.all([
+    executeArtifactRead(input, artifacts, {
+      action: 'search_campaign_brain',
+      label: 'Cross-referencing campaign context',
+      data: { campaign_id: resolvedCampaignId, query: input.userContent, limit: 10 },
+    }),
     executeArtifactRead(input, artifacts, {
       action: 'get_campaign_main_dashboard',
       label: 'Retrieving live campaign performance',
@@ -50,19 +56,8 @@ export async function runCampaignIntelligenceResearch(
       data: { campaign_id: resolvedCampaignId, include_closed: false, include_count: true },
     }),
   ])
-  const toolSteps = [brainStep, ...remainingSteps]
   return {
     content: formatCampaignStatus(toolSteps),
     toolSteps,
   }
-}
-
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {}
-}
-
-function readText(value: unknown): string | null {
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null
 }

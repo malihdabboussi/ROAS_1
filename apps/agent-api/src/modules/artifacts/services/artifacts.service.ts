@@ -119,7 +119,7 @@ export class ArtifactsService extends LegacyArtifactsService {
     embeddingService: EmbeddingService,
     emotionalTagging: EmotionalTaggingService,
     memoriesRepo: MemoriesRepository,
-    svc: SupabaseServiceClient,
+    private readonly artifactServiceClient: SupabaseServiceClient,
     clientFactory: SupabaseClientFactory,
     composioService: ComposioService,
     crystallizationService: CrystallizationService,
@@ -153,7 +153,7 @@ export class ArtifactsService extends LegacyArtifactsService {
       embeddingService,
       emotionalTagging,
       memoriesRepo,
-      svc,
+      artifactServiceClient,
       clientFactory,
       errorReporter,
       undefined,
@@ -290,6 +290,19 @@ export class ArtifactsService extends LegacyArtifactsService {
   ): Promise<string> {
     return this.sessionCampaignService.resolveCampaignIdByNameReadOnly(
       supabase,
+      userId,
+      campaignName,
+      orgId,
+    )
+  }
+
+  async resolveCampaignIdByNameForContext(
+    userId: string,
+    campaignName: string,
+    orgId?: string | null,
+  ): Promise<string> {
+    return this.resolveCampaignIdByNameReadOnly(
+      this.artifactServiceClient.client,
       userId,
       campaignName,
       orgId,
